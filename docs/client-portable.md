@@ -1,21 +1,31 @@
-# Shaiya GX portable client
+# Shaiya GX portable client and server
 
-The [complete current portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip)
-contains `Client/` and `Server/`, both operating systems, external fonts and
-the updated server seed/maps. Add the separately downloaded client data to
-`Client/data/`; the GitHub archive contains no proprietary client resources.
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1mh79HOAoGlnTJIiRdc7WQVpHche78RDD/view?usp=sharing)
 
-Download the [updated client data/portable bundle](https://drive.google.com/file/d/1ash33lTYREdbvDZRFwlCfvVu0nC8b412/view?usp=sharing) from Google Drive and extract it to a writable location. Use its client `data/` directory with the current GitHub executables, even if the Drive archive contains an older build. The resulting client layout is:
+**gx-v0.1.8 for Windows and Linux.** This Google Drive package includes both
+executables, GX Server, client game data, fonts and the development database.
+Extract the entire package into a writable folder:
 
 ```text
-Shaiya GX/
-  Shaiya GX
-  Shaiya GX.exe
-  data/
-  licenses/
+Shaiya GX gx-v0.1.8 Portable/
+  Client/
+    Shaiya GX
+    Shaiya GX.exe
+    data/
+    licenses/
+  Server/
+    build/
+    data/
 ```
 
-On Linux, open `Shaiya GX`; on Windows, open `Shaiya GX.exe`. Keep `data/` beside the executables and preserve the licenses. Client game data is hosted separately from this source repository.
+Start `Server/build/gx_server` on Linux or `Server/build/gx_server.exe` on Windows,
+then click **Start server**. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
+Keep `Client/data/` beside the client executables and preserve all licenses.
+
+The [GitHub combined binary portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip)
+has the same `Client/` and `Server/` layout, with fonts and the server seed/maps,
+but requires client game data separately. Original client resources are not
+included in the source repository or GitHub archives.
 
 [GitHub releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest) provide updated packages with external fonts for each OS, with `SHA256SUMS.txt`. To update, close the client, extract the appropriate package and replace that OS's executable and merge the included `data/fonts/` into your existing `data/`. Retain the accompanying notices and licenses. The GitHub client packages include fonts and licenses, but no original game artwork/audio/maps or server database; GX Server is a separate download. A future release may require a matching data update, so check its release notes.
 

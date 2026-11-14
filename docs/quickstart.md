@@ -65,7 +65,7 @@ The tool prompts for a password; avoid putting passwords in shell commands. It i
 
 ## Run the client
 
-Download the complete [updated client data/portable bundle](https://drive.google.com/file/d/1ash33lTYREdbvDZRFwlCfvVu0nC8b412/view?usp=sharing) from Drive and extract it. Keep both executables, `data/` and `licenses/` together. Run `Shaiya GX` on Linux or `Shaiya GX.exe` on Windows. The game discovers its adjacent data automatically; no build tools or data conversion are needed for this package. Start GX Server separately before signing in.
+Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1mh79HOAoGlnTJIiRdc7WQVpHche78RDD/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_server` (Linux) or `Server/build/gx_server.exe` (Windows), then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. The game discovers its data automatically; no build tools or data conversion are needed.
 
 See [portable client requirements and updates](client-portable.md). GitHub releases provide executable updates without data. Developers can instead [build from source](building.md) and [import their compatible archives](data-formats.md); keep game data outside Git. Do not use the original `Game.exe` to run GX.
 
