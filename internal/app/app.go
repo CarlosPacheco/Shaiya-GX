@@ -48,6 +48,7 @@ const (
 )
 
 type App struct {
+	missingInterfaces                   int
 	tooltipMuted                        bool
 	forgeQuoteSerial                    uint32
 	npcSkillDefs                        map[sdata.SkillKey]sdata.Skill
@@ -421,6 +422,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		a.gameMenu.SetCurrentDisplayMode(cfg.CurrentDisplayMode())
 	}
 	a.applyClientSettings()
+	if a.missingInterfaces > 0 {
+		a.login.Message = "Interface resources missing or damaged. See diagnostic log."
+	}
 	return a, nil
 }
 
@@ -431,12 +435,17 @@ func (a *App) Interface(name string) (*render.Texture, error) {
 		return t, nil
 	}
 	b, err := a.arc.ReadFile("interface/" + name)
-	if err != nil {
-		return nil, err
+	var t img.Texture
+	if err == nil {
+		t, err = img.DecodeResource("interface/"+name, b)
 	}
-	t, err := img.DecodeResource("interface/"+name, b)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", name, err)
+		// Interface artwork is presentation, never authoritative game data.
+		// Cache a visible substitute so an absent atlas cannot prevent startup
+		// or flood the log on every frame. Keep normal control hit regions.
+		log.Printf("WARNING interface/%s: %v; using placeholder", name, err)
+		a.missingInterfaces++
+		t = missingInterfaceTexture()
 	}
 	tex := render.Upload(t)
 	a.cache[key] = tex

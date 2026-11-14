@@ -2,6 +2,13 @@
 
 This log records delivered changes and data-package updates. Client data is hosted separately on Drive; changing it does not automatically produce a new executable release.
 
+## gx-v0.1.8 — 2026-11-14
+
+Resilient startup with interface placeholders, persistent diagnostics and visible
+blocking errors. Refresh the distributed development database and data download;
+rebuild native Linux/Windows client and server portables. The cumulative
+[Discord-sized patch notes](docs/releases/gx-v0.1.8.md) also summarize gx-v0.1.7.
+
 ## gx-v0.1.7 — November 14, 2026
 
 [Full patch notes](docs/releases/gx-v0.1.7.md).

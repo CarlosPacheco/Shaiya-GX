@@ -1,5 +1,23 @@
 # Troubleshooting and worked examples
 
+## Startup and incomplete interface resources
+
+The client writes `logs/client.log` beside its executable and retains the previous
+session in `client.previous.log`. If the installation is read-only, it tries
+`Shaiya GX/logs` under the user cache directory, then `shaiya-gx-logs` under the
+temporary directory. The log identifies the build, selected data directory and
+individual missing or damaged resources; it does not record command arguments,
+passwords or account credentials. Runtime crash output also goes to the log.
+
+Missing or damaged interface images use a neutral checkerboard placeholder so
+controls can still initialize. A login warning identifies this degraded state;
+restore the matching resource pack to recover the artwork. Game definitions,
+external fonts and graphics initialization still have to be valid. A blocking
+error reports the reason and diagnostic path in a native Windows dialog. Linux
+uses Zenity or KDialog when available, with terminal and file diagnostics always
+available. Automated screenshot/autoplay runs log failures without opening a
+blocking desktop dialog.
+
 ## Linking example
 
 For a lapis with ReqIg 31, without a blessing modifier, the base chance is

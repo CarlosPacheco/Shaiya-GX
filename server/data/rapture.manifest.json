@@ -20,10 +20,10 @@
     "PS_GameData_CharApplySkills": 44,
     "PS_GameData_CharBacks": 0,
     "PS_GameData_CharEvents": 0,
-    "PS_GameData_CharItems": 148,
+    "PS_GameData_CharItems": 184,
     "PS_GameData_CharQuests": 1,
     "PS_GameData_CharQuickSlotBacks": 0,
-    "PS_GameData_CharQuickSlots": 11,
+    "PS_GameData_CharQuickSlots": 12,
     "PS_GameData_CharRenameLog": 0,
     "PS_GameData_CharSavePoint": 0,
     "PS_GameData_CharSavePointBack": 0,
@@ -55,7 +55,7 @@
     "PS_GameData_MarketItems_DelLog": 0,
     "PS_GameData_PointErrorLog": 0,
     "PS_GameData_PointGiftNotify": 0,
-    "PS_GameData_PointLog": 30,
+    "PS_GameData_PointLog": 83,
     "PS_GameData_ProductLog": 0,
     "PS_GameData_QuestAward": 0,
     "PS_GameData_TmpGuildEtin": 0,
@@ -84,7 +84,7 @@
     "PS_UserData_UserLeaveLog": 0,
     "PS_UserData_UserLoginLog": 0,
     "PS_UserData_UserLoginStatus": 9,
-    "PS_UserData_UserOnlineTimeLog": 3365,
+    "PS_UserData_UserOnlineTimeLog": 3413,
     "PS_UserData_UserPauseLog": 0,
     "PS_UserData_UserPointChargeLog": 0,
     "PS_UserData_Users_Block": 4,
@@ -95,7 +95,7 @@
     "PS_UserData_Users_Updatelog": 0,
     "PS_UserData_WebPointLog": 0,
     "PS_UserData_dtproperties": 0,
-    "Rapture_LoginLog": 40
+    "Rapture_LoginLog": 136
   },
-  "sha256": "bdb83aa6f5f16746f6935ebd4aba1492335de44d59c31e8bac66c08ad93449d7"
+  "sha256": "fab99ca9b18371082201dc924a1f37c38ab02a27db44c501cbd695e6a7cf6728"
 }

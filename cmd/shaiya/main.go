@@ -5,7 +5,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -22,7 +21,18 @@ import (
 
 func init() { platform.LockMainThread() }
 
-func main() {
+func main() { os.Exit(clientMain()) }
+
+func clientMain() (code int) {
+	diagnostics := startDiagnostics()
+	defer diagnostics.Close()
+	interactive := true
+	defer func() {
+		if value := recover(); value != nil {
+			diagnostics.fail(fmt.Errorf("unexpected client failure: %v", value), interactive)
+			code = 1
+		}
+	}()
 	dataDir := flag.String("data", os.Getenv("SHAIYA_DATA"), "loose data directory (defaults to data beside the executable)")
 	login := flag.String("login", "127.0.0.1:30800", "login server address")
 	worldPort := flag.Int("world-port", 30810, "world server port")
@@ -36,6 +46,7 @@ func main() {
 	autoCast := flag.Int("autoplay-cast-slot", 0, "with -autoplay: activate slot 1..10 and wait for cast start")
 	autoplay := flag.String("autoplay", "", "account to log in with (SHAIYA_PASSWORD) offscreen until in world, then save -screenshot")
 	flag.Parse()
+	interactive = *shot == "" && *autoplay == ""
 	if *dataDir == "" {
 		if exe, err := os.Executable(); err == nil {
 			dir := filepath.Dir(exe)
@@ -45,14 +56,19 @@ func main() {
 		}
 	}
 	if *autoCast < 0 || *autoCast > 10 {
-		log.Fatal("-autoplay-cast-slot must be 0..10")
+		diagnostics.fail(fmt.Errorf("-autoplay-cast-slot must be 0..10"), interactive)
+		return 1
 	}
 	if *dataDir == "" {
-		log.Fatal("place the data folder beside Shaiya GX, or set -data / SHAIYA_DATA")
+		diagnostics.fail(fmt.Errorf("place the data folder beside Shaiya GX, or set -data / SHAIYA_DATA"), interactive)
+		return 1
 	}
+	diagnostics.data(*dataDir)
 	if err := run(*dataDir, app.Config{LoginAddr: *login, WorldPort: *worldPort, Version: proto.ClientVersion, Volume: *volume}, *width, *height, *debug, *shot, *shotScreen, *autoplay, *autoSelect, *autoCast); err != nil {
-		log.Fatal(err)
+		diagnostics.fail(err, interactive)
+		return 1
 	}
+	return 0
 }
 
 func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen, autoUser string, autoSelect, autoCast int) error {
@@ -60,7 +76,7 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 	defer stop()
 	arc, err := archive.OpenDirectory(dataDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("open game data %q: %w", dataDir, err)
 	}
 	defer arc.Close()
 	restoreSize := true
@@ -76,7 +92,7 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 	}
 	defer win.Close()
 	if err := render.Init(debug); err != nil {
-		return err
+		return fmt.Errorf("initialize graphics: %w", err)
 	}
 	if shot != "" || autoUser != "" {
 		cfg.Volume = 0
@@ -87,7 +103,7 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 	cfg.OverrideDisplay = !restoreSize
 	a, err := app.New(cfg, arc)
 	if err != nil {
-		return err
+		return fmt.Errorf("initialize client resources: %w", err)
 	}
 	defer a.Close()
 	cursors := a.LoadCursors(win)

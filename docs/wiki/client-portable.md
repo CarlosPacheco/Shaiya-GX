@@ -1,6 +1,11 @@
 # Shaiya GX portable client
 
-Download the complete [portable client for Linux and Windows](https://drive.google.com/file/d/15BFHAGpLi_JJZbZ4fi8jpDsFQLdHmOyq/view?usp=sharing) from Google Drive and extract the entire folder to a writable location. It includes the shared `data/` directory and both executables:
+The [complete current portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip)
+contains `Client/` and `Server/`, both operating systems, external fonts and
+the updated server seed/maps. Add the separately downloaded client data to
+`Client/data/`; the GitHub archive contains no proprietary client resources.
+
+Download the [updated client data/portable bundle](https://drive.google.com/file/d/1ash33lTYREdbvDZRFwlCfvVu0nC8b412/view?usp=sharing) from Google Drive and extract it to a writable location. Use its client `data/` directory with the current GitHub executables, even if the Drive archive contains an older build. The resulting client layout is:
 
 ```text
 Shaiya GX/
@@ -22,12 +27,12 @@ The executable discovers adjacent data independently of the working directory. F
 
 Source, build instructions and third-party font sources: https://github.com/Spelunkern/Shaiya-GX
 
-For gx-v0.1.4, update GX Server as well as the client: both endpoints now use
-UTF-8 text with fixed protocol byte budgets. The Drive bundle has not been
-reuploaded by this release. See the [current patch notes](releases/gx-v0.1.5.md).
+Update GX Server and the client together. Use the updated data bundle linked
+above and the gx-v0.1.8 native executables; preserve existing server runtime
+databases when upgrading. See the [current patch notes](releases/gx-v0.1.5.md).
 
 
-A combined binary-only `Cliente/` + `Servidor/` folder can be generated from the
+A combined binary-only `Client/` + `Server/` folder can be generated from the
 four verified native archives with `tools/package_bundle.py --without-data`.
 Add updated loose client game resources separately and retain the packaged
 external fonts. Server maps and the development seed remain included.

@@ -1,6 +1,11 @@
 # Shaiya GX portable client
 
-Download the complete [portable client for Linux and Windows](https://drive.google.com/file/d/15BFHAGpLi_JJZbZ4fi8jpDsFQLdHmOyq/view?usp=sharing) from Google Drive and extract the entire folder to a writable location. It includes the shared `data/` directory and both executables:
+The [complete current portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip)
+contains `Client/` and `Server/`, both operating systems, external fonts and
+the updated server seed/maps. Add the separately downloaded client data to
+`Client/data/`; the GitHub archive contains no proprietary client resources.
+
+Download the [updated client data/portable bundle](https://drive.google.com/file/d/1ash33lTYREdbvDZRFwlCfvVu0nC8b412/view?usp=sharing) from Google Drive and extract it to a writable location. Use its client `data/` directory with the current GitHub executables, even if the Drive archive contains an older build. The resulting client layout is:
 
 ```text
 Shaiya GX/
@@ -22,19 +27,27 @@ The executable discovers adjacent data independently of the working directory. F
 
 Source, build instructions and third-party font sources: https://github.com/Spelunkern/Shaiya-GX
 
-For gx-v0.1.4, update GX Server as well as the client: both endpoints now use
-UTF-8 text with fixed protocol byte budgets. The Drive bundle has not been
-reuploaded by this release. See the [current patch notes](releases/gx-v0.1.7.md).
+Update GX Server and the client together. Use the updated data bundle linked
+above and the gx-v0.1.8 native executables; preserve existing server runtime
+databases when upgrading. See the [current patch notes](releases/gx-v0.1.8.md).
 
 
 To combine verified native release archives without copying local client game
 data, run:
 
 ```sh
-python3 tools/package_bundle.py --archives /path/to/archives --without-data --output /path/to/new-folder --tag gx-v0.1.7
+python3 tools/package_bundle.py --archives /path/to/archives --without-data --output /path/to/new-folder --tag gx-v0.1.8
 ```
 
-The resulting `Cliente/` and `Servidor/` directories contain both operating
-systems. Add updated game resources to `Cliente/data/` separately, retaining the
+The resulting `Client/` and `Server/` directories contain both operating
+systems. Add updated game resources to `Client/data/` separately, retaining the
 packaged external fonts. The server includes its distributable maps and seed;
 keep an existing personal runtime separate during upgrades.
+
+## Startup diagnostics
+
+Missing or damaged interface images use placeholders instead of aborting startup.
+See `logs/client.log` beside the executable (and `client.previous.log` for the
+preceding session). Read-only installations fall back to the user cache or
+temporary directory. Blocking errors display the diagnostic location; see
+[troubleshooting](wiki/troubleshooting.md#startup-and-incomplete-interface-resources).

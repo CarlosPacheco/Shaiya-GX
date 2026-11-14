@@ -88,7 +88,7 @@ def prepare(archives, data, output, tag):
                 with tarfile.open(path) as archive:
                     archive.extractall(extracted, filter='data')
         stage = temporary / 'bundle'
-        client, server = stage / 'Cliente', stage / 'Servidor'
+        client, server = stage / 'Client', stage / 'Server'
         merge(extracted / 'gx-client-linux-amd64', client)
         merge(extracted / 'gx-client-windows-amd64', client)
         if data is not None:
@@ -111,24 +111,24 @@ def prepare(archives, data, output, tag):
             verify_cash_copies(client / 'data', server / 'data')
         files = {p.relative_to(server).as_posix(): digest(p) for p in sorted(server.rglob('*')) if p.is_file()}
         (server / 'package.manifest.json').write_text(json.dumps({'platform': 'linux-amd64+windows-amd64', 'files': files}, indent=2) + '\n')
-        data_instruction = ('Add your updated loose game data to Cliente/data/ before starting the client.\nKeep the supplied data/fonts/ directory and its licenses. No local game resources were copied.\n\n' if data is None else '')
+        data_instruction = ('Add your updated loose game data to Client/data/ before starting the client.\nKeep the supplied data/fonts/ directory and its licenses. No local game resources were copied.\n\n' if data is None else '')
         (stage / 'README.txt').write_text(f'''Shaiya GX {tag} — Windows and Linux
 
-{data_instruction}1. Open Servidor/build/gx_server (Linux) or gx_server.exe (Windows) and start the server.
+{data_instruction}1. Open Server/build/gx_server (Linux) or gx_server.exe (Windows) and start the server.
    Console launchers Start GX Server.sh and Start GX Server.bat are also included.
-2. Open Cliente/Shaiya GX (Linux) or Cliente/Shaiya GX.exe (Windows).
+2. Open Client/Shaiya GX (Linux) or Client/Shaiya GX.exe (Windows).
 
-The client executables share Cliente/data/, including external fonts and licenses.
+The client executables share Client/data/, including external fonts and licenses.
 Keep the complete folder together. An OpenGL 4.5-capable GPU/driver is required.
 Default local endpoints: 127.0.0.1:30800 and 127.0.0.1:30810.
 
-GM role and commands: Servidor/docs/gm.md. Example: /nmake 1 1 creates merchant 1.
+GM role and commands: Server/docs/gm.md. Example: /nmake 1 1 creates merchant 1.
 The supplied development seed has GM test accounts. Server startup creates a new
-independent runtime database; no personal runtime or local credentials are included.
+independent runtime database; the seed includes the requested development snapshot.
 SQLite is embedded development storage and will be replaced in the future.
 
 Original game resources retain their respective ownership. Font and software
-licenses are included in Cliente/ and Servidor/. SHA256SUMS.txt verifies this folder.
+licenses are included in Client/ and Server/. SHA256SUMS.txt verifies this folder.
 ''')
         (stage / 'SHA256SUMS.txt').write_text(''.join(digest(p) + '  ' + p.relative_to(stage).as_posix() + '\n'
                                                   for p in sorted(stage.rglob('*')) if p.is_file()))

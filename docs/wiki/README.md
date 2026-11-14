@@ -4,7 +4,7 @@ The reference for current GX gameplay features, item data, administration and
 operation. GX is a Go client with an integrated authoritative world/login
 server, using original EP5 interface resources and protocol foundations.
 
-**Version scope:** updated for [gx-v0.1.7](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.7). These pages describe current development behavior. A released
+**Version scope:** updated for [gx-v0.1.8](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.8). These pages describe current development behavior. A released
 binary may predate a documented change. Use matching client/server builds and
 consult release notes when reproducing behavior. Publishing documentation does
 not update executable files, client assets or a running database.
