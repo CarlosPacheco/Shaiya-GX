@@ -120,6 +120,22 @@ func TestForgeDetailsOriginalAssetsGL(t *testing.T) {
 	a.state.Inventory[a.blacksmith.keys[1]] = a.blacksmith.items[1]
 	a.blacksmith.selected[1] = true
 	capture("lapisia-compatible-targets", 1)
+	// Cost must render from the static lapisia table even without a quote.
+	a.blacksmith.quote = forgeQuoteView{}
+	capture("lapisia-static-gold-cost", 1)
+	x, y := a.blacksmithUI.Origin(1024, 768)
+	pixels := make([]byte, 202*16*4)
+	gl.ReadPixels(int32(x+26), int32(768-y-181-16), 202, 16, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+	yellow := 0
+	for i := 0; i < len(pixels); i += 4 {
+		if pixels[i] > 200 && pixels[i+1] > 200 && pixels[i+2] < 80 {
+			yellow++
+		}
+	}
+	if yellow < 10 {
+		t.Fatal("missing yellow lapisia gold cost without quote", yellow)
+	}
+
 	if !strings.Contains(tooltipRowsText(a.tooltip), a.msg.Get(5181)) {
 		t.Fatal("lapisia native target heading missing")
 	}

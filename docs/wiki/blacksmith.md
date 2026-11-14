@@ -193,3 +193,12 @@ Linking hammers (`Special=36`, real family26) show `Linking bonus: +N%` from
 ReqVg as added percentage points. Extraction hammers (`Special=58`) show
 `Extraction chance: N%`, clamped0–100. These footers use client definitions only;
 no additional quote request or server mutation is needed to hover an item.
+
+
+Lapisia gold cost appears in yellow beneath the operation instructions, as soon
+as a lapisia is placed, without waiting for a quote. Client and server share the
+static ReqIg cost table in `internal/forgecost`; native client ReqIg fields match
+SQL for lapis and lapisias. Insufficient balances use the original operation
+messages: SysMsg 10010 for linking, 10013 for extraction and 10102 for enchanting.
+Rejected attempts consume nothing. A paid chance failure remains a chance
+failure even when the remaining balance is below the next attempt's cost.

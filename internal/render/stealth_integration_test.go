@@ -90,17 +90,24 @@ func TestStealthSurfaceDepthAndStateRestoreGL(t *testing.T) {
 	}
 	back := NewSkinMesh(vertices, []uint32{0, 1, 2, 0, 2, 3})
 	defer back.Delete()
-	gl.ClearColor(0, 0, 1, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	s.Begin()
-	k.Begin(s, 1)
-	k.SetOpacity(StealthOpacity)
-	k.SetPose(Identity(), nil)
-	k.Draw(back, tex, .5)
-	var backPixel [4]byte
-	gl.ReadPixels(32, 32, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&backPixel[0]))
-	if backPixel != [4]byte{0, 0, 255, 255} {
-		t.Fatal("rear face is visible through the head", backPixel)
+	for _, opacity := range []float32{1, StealthOpacity} {
+		gl.ClearColor(0, 0, 1, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		s.Begin()
+		k.Begin(s, 1)
+		k.SetOpacity(opacity)
+		k.SetPose(Identity(), nil)
+		k.Draw(back, tex, .5)
+		var backPixel [4]byte
+		gl.ReadPixels(32, 32, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&backPixel[0]))
+		if backPixel != [4]byte{0, 0, 255, 255} {
+			t.Fatal("inward-facing surface rendered", opacity, backPixel)
+		}
+		var frontFace int32
+		gl.GetIntegerv(gl.FRONT_FACE, &frontFace)
+		if frontFace != gl.CCW || gl.IsEnabled(gl.CULL_FACE) || gl.IsEnabled(gl.BLEND) {
+			t.Fatal("skin draw leaked raster state", opacity, frontFace)
+		}
 	}
 	front := draw(true)
 	green := Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{0, 255, 0, 255}}})

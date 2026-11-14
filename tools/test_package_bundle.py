@@ -41,3 +41,47 @@ class CashCatalogBundleTests(unittest.TestCase):
             with self.assertRaises(ValueError): verify_cash_copies(client, server)
             (server / 'rapture.sqlite').write_bytes(b'database')
             verify_cash_copies(client, server)
+
+class BinaryOnlyBundleTests(unittest.TestCase):
+    def test_dual_os_bundle_keeps_client_resources_separate(self):
+        import hashlib
+        import json
+        import tarfile
+        import zipfile
+        from unittest.mock import patch
+        from package_bundle import ARCHIVES, digest, prepare
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);archives=root/'archives';archives.mkdir()
+            for name in ARCHIVES:
+                stem=name.removesuffix('.tar.gz').removesuffix('.zip')
+                source=root/'source'/stem;source.mkdir(parents=True)
+                windows='windows' in name
+                if name.startswith('gx-client-'):
+                    (source/('Shaiya GX.exe' if windows else 'Shaiya GX')).write_bytes(b'native executable')
+                    fonts=source/'data/fonts';fonts.mkdir(parents=True)
+                    (fonts/'LICENSE.txt').write_text('packaged licensed fonts')
+                else:
+                    (source/'build').mkdir();(source/'data').mkdir()
+                    (source/'build'/('gx_world.exe' if windows else 'gx_world')).write_bytes(b'native server')
+                    (source/'data/rapture.sqlite').write_bytes(b'approved development seed')
+                    record={'files':{p.relative_to(source).as_posix():digest(p) for p in source.rglob('*') if p.is_file()}}
+                    (source/'package.manifest.json').write_text(json.dumps(record))
+                if name.endswith('.zip'):
+                    with zipfile.ZipFile(archives/name,'w') as archive:
+                        for path in source.rglob('*'):
+                            if path.is_file():archive.write(path,path.relative_to(source.parent))
+                else:
+                    with tarfile.open(archives/name,'w:gz') as archive:archive.add(source,arcname=stem)
+            (archives/'SHA256SUMS.txt').write_text(''.join(digest(archives/n)+'  '+n+'\n' for n in ARCHIVES))
+            output=root/'portable'
+            with patch('package_bundle.validate') as validate:
+                prepare(archives,None,output,'gx-v-test')
+                validate.assert_called_once()
+                self.assertEqual(validate.call_args.args[0].parts[-2:],('data','fonts'))
+            self.assertTrue((output/'Cliente/Shaiya GX').is_file())
+            self.assertTrue((output/'Cliente/Shaiya GX.exe').is_file())
+            self.assertEqual([p.name for p in (output/'Cliente/data').iterdir()],['fonts'])
+            self.assertFalse((output/'Cliente/data/Cash.SData').exists())
+            self.assertTrue((output/'Servidor/data/rapture.sqlite').is_file())
+            self.assertIn('Add your updated loose game data',(output/'README.txt').read_text())
+            self.assertIn('Cliente/Shaiya GX.exe',(output/'SHA256SUMS.txt').read_text())

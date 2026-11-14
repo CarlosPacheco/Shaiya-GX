@@ -234,10 +234,10 @@ func TestPanelsAgainstRapture(t *testing.T) {
 	}
 	cost := a.skillDefs[learn].Points
 	click(752, 715, false)
-	if !a.skills.open || a.inventory.open {
-		t.Fatal("bottom skill control did not replace inventory")
+	if !a.skills.open || !a.inventory.open {
+		t.Fatal("bottom skill control closed inventory")
 	}
-	bx, by := ui.SkillBookOrigin(1024, 768)
+	bx, by := a.skillBook.Origin(1024, 768)
 	category := int(a.skillDefs[learn].Show) - 1
 	click(bx+4, by+75+category*62, false)
 	row := -1

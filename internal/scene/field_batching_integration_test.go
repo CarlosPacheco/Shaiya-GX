@@ -102,7 +102,7 @@ func TestFieldBatchingPreservesVisiblePixelsGL(t *testing.T) {
 							m := s.assets.models[o.file]
 							if m != nil {
 								for _, p := range m.Parts {
-									r.DrawModel(p.Mesh, p.Tex, o.world, render.NativeWorldAlphaRef(o.mani), false)
+									r.DrawWorldModel(p.Mesh, p.Tex, o.world, render.NativeWorldAlphaRef(o.mani))
 								}
 							}
 						}

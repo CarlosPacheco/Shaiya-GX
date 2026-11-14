@@ -73,19 +73,19 @@ Sources: [`newDroppedItem` / mob loot](../../server/internal/world/drops.go),
 
 All variants retain `Special=62`; `ReqVg` selects their extra behavior. The
 ordinary rune uses 0 and retains the full native reroll. Custom rune keys use
-Type 101, TypeID 1–18, sharing the original rune artwork and service effect.
+Type 101, TypeID 1–28, sharing the original rune artwork and service effect.
 
-| Stat | Random TypeID / ReqVg | Perfect TypeID / ReqVg |
-|---|---|---|
-| STR | 1 / 101 | 10 / 201 |
-| DEX | 2 / 102 | 11 / 202 |
-| REC | 3 / 103 | 12 / 203 |
-| INT | 4 / 104 | 13 / 204 |
-| WIS | 5 / 105 | 14 / 205 |
-| LUC | 6 / 106 | 15 / 206 |
-| HP | 7 / 107 | 16 / 207 |
-| MP | 8 / 108 | 17 / 208 |
-| SP | 9 / 109 | 18 / 209 |
+| Stat | Random TypeID / ReqVg | Perfect TypeID / ReqVg | Removal TypeID / ReqVg |
+|---|---|---|---|
+| STR | 1 / 101 | 10 / 201 | 19 / 301 |
+| DEX | 2 / 102 | 11 / 202 | 20 / 302 |
+| REC | 3 / 103 | 12 / 203 | 21 / 303 |
+| INT | 4 / 104 | 13 / 204 | 22 / 304 |
+| WIS | 5 / 105 | 14 / 205 | 23 / 305 |
+| LUC | 6 / 106 | 15 / 206 | 24 / 306 |
+| HP | 7 / 107 | 16 / 207 | 25 / 307 |
+| MP | 8 / 108 | 17 / 208 | 26 / 308 |
+| SP | 9 / 109 | 18 / 209 | 27 / 309 |
 
 Random runes roll only their named stat from 1 through `min(ReqWis,99)`.
 Perfect runes set only that stat to this maximum. HP/MP/SP still use hundreds.
@@ -98,7 +98,21 @@ at its distinct-stat limit, the operation is rejected rather than deleting a
 sibling stat. Updating a stat already present does not need another OJ slot.
 Unknown nonzero ReqVg values are rejected. Refused operations consume nothing.
 Each accepted operation consumes exactly one rune and keeps the remaining stack
-placed. All 18 variants stack to 255 and have dedicated 255-unit mall products.
+placed. All 28 variants stack to 255 and have dedicated 255-unit mall products.
+
+Removal runes set only their named recreation pair to zero. They preserve all
+other recreation pairs, the base item definition, enchantment and socketed lapis.
+They may remove a pre-existing legacy HP/MP/SP pair even on equipment whose
+current recreation pool would not allow adding that pair. Removal never adds a
+stat and does not require a free OJ slot. An absent selected stat, or malformed
+recreation data, is rejected without consuming a rune.
+
+The **General Removal Recreation Rune** uses Type 101, TypeID 28, ReqVg 400.
+It sets all nine recreation pairs to zero while preserving enchantment (the
+tenth pair), lapis and base item stats. If all recreation pairs are already zero,
+it refuses without consumption. Neither variant changes equipment identity,
+quality or quantities. All accepted removals use the existing blacksmith
+Recreation button and consume exactly one rune.
 
 `tools/update_recreation_content.py` creates the definitions and aligned native
 mall products in explicitly selected offline databases/client data, with backups
@@ -114,3 +128,13 @@ resource pairs. For example, `Max OJ 13/1300` means at most 13 STR/DEX/etc. or
 The distinct-stat count remains Server and the equipment pool.
 The required enhancement material is displayed once with a text-sized icon
 before its name; that inline icon does not have an independent hover tooltip.
+
+
+The 27 older mall variants (Type 100, IDs 205–227, 237, 241, 243, 244 as
+listed by `rune_aliases()` in the content tool) use the same explicit ReqVg
+selectors as their GX counterparts. Their former mode/stat encodings in item
+requirements and intrinsic bonuses are cleared, along with the inherited
+requirements on the ordinary and GX runes. Existing owned items retain their
+identities and quantities; corrected definitions apply when the server/client
+reload them. Successful recreation prints only native SysMsg 111 (`Used <i>`);
+there are no before/after or generic recreated-attributes chat lines.

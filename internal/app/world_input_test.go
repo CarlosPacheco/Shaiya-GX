@@ -66,17 +66,18 @@ func TestBottomMenuSharesPanelTogglesAndOwnsPointer(t *testing.T) {
 	a.skills.open = true
 	a.skills.assign = &proto.QuickSlot{Bag: 100, Number: 1}
 	click(717, 715) // Native inventory: (646+2*35, h-64+10).
-	if !a.inventory.open || a.skills.open || a.skills.assign != nil {
-		t.Fatal("inventory menu did not replace skills/assignment")
+	if !a.inventory.open || !a.skills.open || a.skills.assign != nil {
+		t.Fatal("inventory menu closed skills or retained assignment")
 	}
 	click(752, 715)
-	if !a.skills.open || a.inventory.open || a.skills.assignMode {
-		t.Fatal("skills menu did not open the normal skill book")
+	if a.skills.open || !a.inventory.open || a.skills.assignMode {
+		t.Fatal("skills menu did not close only the skill book")
 	}
 	click(752, 715)
-	if a.skills.open {
-		t.Fatal("second skill click did not close the book")
+	if !a.skills.open {
+		t.Fatal("second skill click did not reopen the book")
 	}
+	click(717, 715) // Close inventory independently before checking release ownership.
 	// The release of a world press cannot open a menu; a menu press released
 	// over the world cannot select a target or begin camera movement.
 	a.worldControls(&platform.Input{MouseX: 400, MouseY: 400, Pressed: true, MouseDown: true}, 1024, 768)
@@ -161,17 +162,17 @@ func TestPanelPressCannotActivateAnotherPanelOrWorld(t *testing.T) {
 		t.Fatal("normal inventory click retained the old move selection")
 	}
 }
-func TestPanelToggleCancelsOverlappingPanelAssignment(t *testing.T) {
+func TestPanelTogglePreservesOtherWindowsAndCancelsAssignment(t *testing.T) {
 	a := inputApp()
 	a.skills.open = true
 	a.skills.assign = &proto.QuickSlot{Bag: 100, Number: 1}
 	a.worldControls(&platform.Input{Chars: []rune{'i'}}, 1024, 768)
-	if !a.inventory.open || a.skills.open || a.skills.assign != nil {
-		t.Fatal("inventory did not replace the overlapping skill panel")
+	if !a.inventory.open || !a.skills.open || a.skills.assign != nil {
+		t.Fatal("inventory closed skills or retained an active assignment")
 	}
 	a.worldControls(&platform.Input{Chars: []rune{'k'}}, 1024, 768)
-	if !a.skills.open || a.inventory.open {
-		t.Fatal("skills did not replace inventory")
+	if a.skills.open || !a.inventory.open {
+		t.Fatal("closing skills closed inventory")
 	}
 }
 func TestClosedPanelStillChecksPendingTimeout(t *testing.T) {

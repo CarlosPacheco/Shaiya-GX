@@ -40,10 +40,12 @@ func TestMallAgainstRapture(t *testing.T) {
 	}
 	// Older catalogs may keep the probe SKU hidden.
 	price := uint32(0)
+	quantity := uint16(0)
 	skuVisible := false
 	for _, product := range a1.mallCatalog {
 		if product.Code == "AP_1" {
 			price = product.Cost
+			quantity = product.Items[0].Count
 			if product.Bag != 0 {
 				skuVisible = true
 			}
@@ -120,7 +122,7 @@ func TestMallAgainstRapture(t *testing.T) {
 		t.Fatal("purchase result", s1.Mall.LastPurchase)
 	}
 	bought := s1.Mall.LastPurchase.Items[0]
-	if it := s1.Inventory[[2]uint8{bought.Bag, bought.Slot}]; it.Type != 100 || it.TypeID != 251 || it.Count != 1 {
+	if it := s1.Inventory[[2]uint8{bought.Bag, bought.Slot}]; it.Type != 100 || it.TypeID != 251 || it.Count != quantity {
 		t.Fatal("confirmed purchase inventory", it)
 	}
 	a1.mallCommand("/mall buy INVALID_CODE")
@@ -169,7 +171,7 @@ func TestMallAgainstRapture(t *testing.T) {
 	claimed := false
 	var claimedItem proto.InventoryItem
 	for _, it := range s2.Inventory {
-		if it.Type == 100 && it.TypeID == 251 && it.Count == 1 {
+		if it.Type == 100 && it.TypeID == 251 && it.Count == quantity {
 			claimed = true
 			claimedItem = it
 		}
@@ -190,7 +192,7 @@ func TestMallAgainstRapture(t *testing.T) {
 	st, _, _, _ := testworld.EnterAs(t, os.Getenv("SHAIYA_TEST_PARTNER"), os.Getenv("SHAIYA_TEST_PARTNER_PASSWORD"))
 	claimed = false
 	for _, it := range st.Inventory {
-		if it.Type == 100 && it.TypeID == 251 && it.Count == 1 {
+		if it.Type == 100 && it.TypeID == 251 && it.Count == quantity {
 			if it != claimedItem {
 				t.Fatalf("claimed inventory differs after reload: %+v -> %+v", claimedItem, it)
 			}

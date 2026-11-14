@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Explicit offline content migration: 255 gems, 18 targeted runes and native mall.
+"""Explicit offline content migration: 255 gems, 28 targeted/general runes and native mall.
 
 Back up each named DB and both client tables. Only Items/ProductList change;
 existing accounts, characters and inventory quantities are left untouched.
@@ -20,10 +20,38 @@ from contextlib import closing
 STATS = ('STR','DEX','REC','INT','WIS','LUC','HP','MP','SP')
 
 def runes():
-    return [dict(type_id=mode*9+n+1, req_vg=(mode+1)*100+n+1,
+    targeted = [dict(type_id=mode*9+n+1, req_vg=(mode+1)*100+n+1,
                  name=f'{"Random" if mode==0 else "Perfect"} {stat} Recreation Rune',
                  description=f'{"Rerolls" if mode==0 else "Maximizes"} only {stat}. Preserves other recreation stats, enchantment and lapis. Respects the equipment stat pool, maximum OJ count and roll limit. Used at the blacksmith; consumes one rune.')
             for mode in range(2) for n,stat in enumerate(STATS)]
+    removers = [dict(type_id=19+n, req_vg=301+n,
+                     name=f'{stat} Removal Recreation Rune',
+                     description=f'Removes only the {stat} recreation stat. Preserves other recreation stats, base item stats, enchantment and lapis. Used at the blacksmith; consumes one rune only when the stat is present.')
+                for n,stat in enumerate(STATS)]
+    general = dict(type_id=28, req_vg=400, name='General Removal Recreation Rune',
+                   description='Removes all nine recreation stats. Preserves base item stats, enchantment and lapis. Used at the blacksmith; consumes one rune only when recreation stats are present.')
+    return targeted + removers + [general]
+
+def rune_aliases():
+    # Existing mall bundles used these EP5 custom IDs before the GX namespace.
+    families = [('STR',(205,206,207)),('DEX',(208,209,210)),
+                ('REC',(211,212,213)),('WIS',(214,215,216)),
+                ('INT',(217,218,219)),('LUC',(220,221,222)),
+                ('HP',(223,224,225)),('MP',(226,227,237)),('SP',(241,243,244))]
+    definitions = runes()
+    return {old: definitions[mode*9+STATS.index(stat)]
+            for stat, ids in families for mode, old in enumerate(ids)}
+
+
+def clean_rune_body(body, req_vg):
+    body = bytearray(body)
+    body[16:28] = bytes(12)  # No legacy STR/DEX/REC/INT/WIS/LUC requirements.
+    body[31:34] = bytes(3)  # No use cooldown or item-cast skill selector.
+    body[47:65] = bytes(18)  # No recovery values or intrinsic stat bonuses.
+    body[35], body[80] = 62, 255
+    struct.pack_into('<H', body, 28, req_vg)
+    return body
+
 
 class Native:
     def __init__(self, raw): self.raw,self.pos=raw,0
@@ -39,19 +67,27 @@ def string(value):
     if isinstance(value,str):value=value.encode('utf-8')
     return struct.pack('<I',len(value))+value
 
-def patch_items(raw):
+def patch_items(raw, forge_grades=None):
     src=Native(raw); count=src.word()
     if not 1<=count<=256: raise ValueError('Expected plaintext Item.SData')
-    groups=[];template=None;seen=set()
+    groups=[];template=None;seen=set();aliases=rune_aliases()
     for _ in range(count):
         records=[]
         for _ in range(src.word()):
             name,desc,body=src.string(),src.string(),bytearray(src.take(81))
             seen.add((body[0],body[1]))
+            if forge_grades is not None and body[0]*1000+body[1] in forge_grades:
+                body[31]=forge_grades[body[0]*1000+body[1]]
             if body[0] in (30,95):body[80]=255
+            if body[35]==62:
+                body=clean_rune_body(body,struct.unpack_from('<H',body,28)[0])
+            if body[0]==100 and body[1] in aliases:
+                definition=aliases[body[1]]
+                body=clean_rune_body(body,definition['req_vg'])
+                name,desc=definition['name'].encode(),definition['description'].encode()
             if (body[0],body[1])==(100,171):template=body[:]
             # Idempotent migrations replace only our reserved definitions.
-            if body[0]==101 and 1<=body[1]<=18:
+            if body[0]==101 and 1<=body[1]<=28:
                 expected=next(r for r in runes() if r['type_id']==body[1])
                 if body[35]!=62 or struct.unpack_from('<H',body,28)[0]!=expected['req_vg']:
                     raise ValueError('Reserved native rune ID already occupied')
@@ -62,7 +98,7 @@ def patch_items(raw):
     if template is None:raise ValueError('Missing original recreation rune')
     while len(groups)<101:groups.append([])
     for rune in runes():
-        body=template[:];body[0],body[1],body[35],body[80]=101,rune['type_id'],62,255
+        body=clean_rune_body(template,rune['req_vg']);body[0],body[1]=101,rune['type_id']
         struct.pack_into('<H',body,28,rune['req_vg'])
         groups[100].append((rune['name'].encode(),rune['description'].encode(),body))
     out=bytearray(struct.pack('<I',len(groups)))
@@ -91,7 +127,7 @@ def patch_cash(raw):
     for r in runes():
         code=f'GX_Recreate_{r["type_id"]:02}'.encode()
         existing=next((p for p in products if p['fields'][1]==code),None)
-        fields=[r['name'].encode(),code,r['description'].encode()]
+        fields=[(r['name']+' x255').encode(),code,('Contains: '+r['name']+' x255. '+r['description']).encode()]
         items=[[101000+r['type_id'],255]]+[[0,0] for _ in range(23)]
         if existing:existing.update(items=items,fields=fields)
         else:
@@ -110,6 +146,20 @@ def apply_database(path,products):
             template=db.execute('SELECT * FROM PS_GameDefs_Items WHERE Type=100 AND TypeID=171').fetchone()
             if template is None:raise ValueError('Missing SQL recreation rune')
             db.execute('UPDATE PS_GameDefs_Items SET Count=255 WHERE Type IN (30,95)')
+            empty_fields=('ReqStr','ReqDex','ReqRec','ReqInt','ReqWis','ReqLuc',
+                          'ReqIg','Range','AttackTime','Effect1','Effect2','Effect3','Effect4',
+                          'ConstHP','ConstSP','ConstMP','ConstStr','ConstDex','ConstRec','ConstInt','ConstWis','ConstLuc')
+            db.execute('UPDATE PS_GameDefs_Items SET '+','.join(k+'=0' for k in empty_fields)+' WHERE Special=62')
+            template=dict(template)
+            template.update({k:0 for k in empty_fields})
+            for old,rune in rune_aliases().items():
+                key=100000+old
+                if db.execute('SELECT 1 FROM PS_GameDefs_Items WHERE ItemID=?',(key,)).fetchone() is None:
+                    continue
+                values=dict(template)
+                values.update(ItemID=key,Type=100,TypeID=old,ItemName=rune['name'],ReqVg=rune['req_vg'],Count=255,Special=62)
+                keys=[k for k in values if k not in ('RowID','ItemID')]
+                db.execute('UPDATE PS_GameDefs_Items SET '+','.join('"'+k+'"=?' for k in keys)+' WHERE ItemID=?',[values[k] for k in keys]+[key])
             for rune in runes():
                 key=101000+rune['type_id']
                 existing=db.execute('SELECT Special,ReqVg FROM PS_GameDefs_Items WHERE ItemID=?',(key,)).fetchone()
@@ -154,7 +204,14 @@ def main():
     ap.add_argument('--backup-dir',type=Path,required=True)
     args=ap.parse_args();args.backup_dir.mkdir(parents=True,exist_ok=False)
     item=args.client_data/'Item/Item.SData';cash=args.client_data/'Cash.SData'
-    patched_items=patch_items(item.read_bytes());patched_cash,products=patch_cash(cash.read_bytes())
+    forge_grades=None
+    for path in args.database:
+        if not path.is_file():raise ValueError('Missing explicit database')
+        with closing(sqlite3.connect(path.resolve().as_uri()+'?mode=ro',uri=True)) as db:
+            current=dict(db.execute('SELECT ItemID,ReqIg FROM PS_GameDefs_Items WHERE Type IN (30,95)'))
+        if forge_grades is not None and current!=forge_grades:raise ValueError('Forge gold selectors differ between target databases')
+        forge_grades=current
+    patched_items=patch_items(item.read_bytes(),forge_grades);patched_cash,products=patch_cash(cash.read_bytes())
     shutil.copy2(item,args.backup_dir/'Item.SData');shutil.copy2(cash,args.backup_dir/'Cash.SData')
     for i,path in enumerate(args.database):
         if not path.is_file():raise ValueError('Missing explicit database')
@@ -171,7 +228,7 @@ def main():
     for target,content in ((item,patched_items),(cash,patched_cash)):
         staged=target.with_suffix('.gx-new');staged.write_bytes(content);os.replace(staged,target)
     output=io.StringIO();writer=csv.writer(output,lineterminator='\n');writer.writerow(['item_id','max_stack']);writer.writerows(limits)
-    for target in (args.client_data/'item-stack-limits.csv',args.database[0].parent/'item-stack-limits.csv'):target.write_text(output.getvalue())
+    for target in [args.client_data/'item-stack-limits.csv']+[path.parent/'item-stack-limits.csv' for path in args.database]:target.write_text(output.getvalue())
     print(json.dumps({'runes':runes(),'products':len(products),'databases':[str(p) for p in args.database]},indent=2))
 
 if __name__=='__main__':main()

@@ -4,17 +4,16 @@ import (
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
-	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 func TestStatusHotkeyFooterAndPointerOwnership(t *testing.T) {
 	a := inputApp()
 	a.inventory.open = true
 	a.worldControls(&platform.Input{Chars: []rune{'T'}}, 1024, 768)
-	if !a.status.open || a.inventory.open {
-		t.Fatal("native Status hotkey did not replace inventory")
+	if !a.status.open || !a.inventory.open {
+		t.Fatal("native Status hotkey closed inventory")
 	}
-	x, y := ui.StatusOrigin(1024, 768, false)
+	x, y := a.statusUI.Origin(1024, 768)
 	a.worldControls(&platform.Input{MouseX: x + 2, MouseY: y + 157, Pressed: true, MouseDown: true, Down: "W"}, 1024, 768)
 	controls := a.worldControls(&platform.Input{MouseX: x + 2, MouseY: y + 157, Clicked: true, Down: "W"}, 1024, 768)
 	if !a.statusUI.Expanded || controls.Clicked || controls.Down != "W" {
@@ -30,7 +29,7 @@ func TestStatusHotkeyFooterAndPointerOwnership(t *testing.T) {
 		t.Fatal("status footer button did not open")
 	}
 	a.toggleSkills(false)
-	if a.status.open || !a.skills.open {
-		t.Fatal("status overlapped another right-side panel")
+	if !a.status.open || !a.skills.open {
+		t.Fatal("opening skills closed status")
 	}
 }

@@ -14,8 +14,8 @@ Encrypted original SData and plaintext binary tables are supported. Categories
 1–4 are visible tabs; category 0 preserves hidden legacy products. Codes fit
 20 ASCII bytes. Packed item IDs use type * 1000 + type ID.
 
-The local testing catalog retains all 300 products, including the added supplies
-and kits; 216 are visible and every price is zero. Stackable supplies deliver up
+The local testing catalog retains all 310 products, including the added supplies
+and kits; 226 are visible and every price is zero. Stackable supplies deliver up
 to 255 per occupied bundle slot; non-stackable items remain single. Purchase,
 gift and claim storage remain authoritative in SQL. Native inventory icons are
 used when a testing product has no authored mall icon.
@@ -37,4 +37,36 @@ without converting it to CSV.
 
 Lapis and lapisias all have a 255 definition stack limit. Every occupied mall
 bundle slot containing either family delivers 255. The catalog also contains
-18 targeted recreation runes, each delivered as 255; see the recreation guide.
+28 recreation runes (9 random, 9 perfect, 9 stat removal and 1 general removal), each delivered as 255; see the recreation guide.
+
+
+Use `tools/sync_mall_content.py` for an explicit offline synchronization of
+existing native client tables and named databases. It normalizes stackable
+Item.SData definitions and occupied stackable mall slots to 255, exports the
+same SQL stack limits, and derives product quantity text from the actual bundle
+contents. Equipment remains unstackable; bundles can contain several pieces.
+The tool validates all targets on disposable copies before applying changes,
+backs up both native tables and each database, and verifies that every table
+except Items and ProductList is unchanged. It never replaces a runtime database.
+Stop affected clients and services before using it, and restart them afterward:
+
+```sh
+python3 tools/sync_mall_content.py \
+  --client-data /path/to/client/data \
+  --database /path/to/server/data/rapture.sqlite \
+  --database /path/to/server/runtime/rapture.sqlite \
+  --backup-dir /path/to/new/private-backup
+```
+
+Purchases commit the point charge, point log and complete item delivery in one
+transaction. Gifts commit the charge and entire gift delivery together. Gifted
+equipment bundles occupy one box slot per piece; claims of older unsplit bundles
+preserve the remainder for subsequent claims. A failed delivery or insufficient
+balance rolls back the entire operation. Invalid, empty, duplicate and unknown
+item products are rejected while loading definitions.
+
+The opt-in `TestEntireMallCatalogAgainstIsolatedGX` probe purchases, gifts and
+claims all 310 native products over encrypted connections, comparing actual item
+identities and totals with Cash.SData and client stack limits. It requires two
+disposable GM accounts and `SHAIYA_TEST_ALL_MALL=1`; never use personal accounts.
+This checks delivery, quantities and persistence, not every item's gameplay effect.

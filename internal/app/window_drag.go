@@ -89,15 +89,6 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 		}
 	}
 	// Match drawing order: the right-hand panels cover the shop when overlapped.
-	if a.subActionsOpen && a.subActionsUI != nil {
-		x, y := a.subActionsUI.Origin(w, h)
-		if start(&a.subActionsUI.Position, x, y, ui.SubActionWidth, ui.SubActionHeight, 25, 225) {
-			return true
-		}
-		if pointInside(in, x, y, ui.SubActionWidth, ui.SubActionHeight) {
-			return false
-		}
-	}
 	if a.status.open && a.statusUI != nil {
 		x, y := a.statusUI.Origin(w, h)
 		width, handleX := ui.StatusWidth, 0
@@ -109,6 +100,15 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return true
 		}
 		if pointInside(in, x, y, width, ui.StatusHeight) {
+			return false
+		}
+	}
+	if a.subActionsOpen && a.subActionsUI != nil {
+		x, y := a.subActionsUI.Origin(w, h)
+		if start(&a.subActionsUI.Position, x, y, ui.SubActionWidth, ui.SubActionHeight, 25, 225) {
+			return true
+		}
+		if pointInside(in, x, y, ui.SubActionWidth, ui.SubActionHeight) {
 			return false
 		}
 	}

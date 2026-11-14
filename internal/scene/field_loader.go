@@ -33,6 +33,7 @@ type fieldAssetJob struct {
 type fieldAssetResult struct {
 	textureIndex map[string]string
 	lods         [][]staticLODCPU
+	cullBack     []bool
 	job          fieldAssetJob
 	texture      img.Texture
 	smod         *world.SMOD
@@ -87,6 +88,7 @@ func newFieldLoader(arc *archive.Archive) *fieldLoader {
 					case fieldSMOD:
 						r.smod, err = world.ParseSMOD(b)
 						if err == nil {
+							r.smod, r.cullBack = prepareStaticSurfaces(r.smod)
 							r.lods = buildStaticLODs(r.smod)
 						}
 					case fieldVANI:
@@ -256,7 +258,7 @@ func (s *fieldStream) ensureModel(o cellObject, deadline time.Time) bool {
 	if o.vani {
 		s.vanis[key.file], _ = uploadVani(s.assets, o.file, r.vani)
 	} else {
-		s.assets.models[key.file], _ = s.assets.uploadSMOD(key.file, r.smod, r.lods)
+		s.assets.models[key.file], _ = s.assets.uploadSMOD(key.file, r.smod, r.lods, r.cullBack)
 	}
 	if d := time.Since(started); d > s.loader.slowestUpload {
 		s.loader.slowestUpload = d

@@ -95,4 +95,24 @@ func TestInventoryModelInCompleteFrameGL(t *testing.T) {
 		t.Fatalf("inventory actor invisible in complete reverse-depth frame: %d changed pixels", different)
 	}
 	t.Logf("full Draw path: inventory model covers %d pixels", different)
+	// Exercise the complete composition with both native frames open.
+	a.inventory.previewLoaded = false
+	a.worldControls(&platform.Input{Chars: []rune{'t'}}, 1024, 768)
+	if !a.status.open || !a.inventory.open {
+		t.Fatal("stats closed inventory")
+	}
+	both := capture("inventory-and-status.png")
+	sx, sy := a.statusUI.Origin(1024, 768)
+	changes := 0
+	for py := sy; py < sy+486; py++ {
+		for px := sx; px < sx+277; px++ {
+			if both.At(px, py) != hidden.At(px, py) {
+				changes++
+			}
+		}
+	}
+	if changes < 10000 {
+		t.Fatalf("stats frame absent from full composition: %d pixels", changes)
+	}
+
 }

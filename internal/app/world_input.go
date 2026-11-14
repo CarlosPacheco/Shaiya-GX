@@ -43,10 +43,11 @@ func (a *App) checkPendingActions() bool {
 	return true
 }
 
-// Right-side panels are mutually exclusive in the delivery layout. A shop
-// can stay open beside them. Captured events never reach a world target or
-// logout, while the original held-key callback keeps movement available.
+// Independent panels can stay open together. Captured events never reach a
+// world target or logout; held movement keys remain available.
 func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
+	opened := a.personalPanelMask()
+	defer func() { a.placeNewPersonalPanels(opened, w, h) }()
 	controls := *in
 	v := a.wv
 	if a.socialInviteUI != nil && a.socialInviteUI.Visible {
@@ -161,7 +162,7 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		}
 	}
 
-	for index, update := range []func(*platform.Input, int, int) bool{a.updateMall, a.updateGuild, a.updateQuickPotions, a.updateBarEditing, a.updateSubActions, a.updateSkills, a.updateDuel, a.updateExchange, a.updateQuestLog, a.updateInventory, a.updateShop, a.updateBottom, a.updateHUDPointer, a.updateChatPointer, a.updateStatus, a.updateBuffs, a.updateMinimap, a.updatePartyPointer} {
+	for index, update := range []func(*platform.Input, int, int) bool{a.updateMall, a.updateGuild, a.updateQuickPotions, a.updateBarEditing, a.updateQuestLog, a.updateStatus, a.updateSubActions, a.updateSkills, a.updateInventory, a.updateDuel, a.updateExchange, a.updateShop, a.updateBottom, a.updateHUDPointer, a.updateChatPointer, a.updateBuffs, a.updateMinimap, a.updatePartyPointer} {
 		if captured {
 			break
 		}

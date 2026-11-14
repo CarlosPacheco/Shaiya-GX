@@ -154,10 +154,10 @@ func (w *World) drawDungeonObjects(s *render.Scene3D, f render.Frustum) {
 			}
 			p := pending.Parts[0]
 			if len(matrices) == 1 {
-				s.DrawModel(p.Mesh, p.Tex, matrices[0], render.NativeWorldAlphaRef(mani), false)
+				s.DrawWorldModel(p.Mesh, p.Tex, matrices[0], render.NativeWorldAlphaRef(mani))
 			} else {
 				s.SetInstances(matrices)
-				s.DrawInstanced(p.Mesh, p.Tex, render.NativeWorldAlphaRef(mani))
+				s.DrawWorldInstanced(p.Mesh, p.Tex, render.NativeWorldAlphaRef(mani))
 			}
 			w.dungeonInstances = w.dungeonInstances[:0]
 		}
@@ -181,7 +181,7 @@ func (w *World) drawDungeonObjects(s *render.Scene3D, f render.Frustum) {
 				pending = nil
 				for _, p := range model.Parts {
 					if dungeonMeshVisible(s, f, p.Mesh, object.World) {
-						s.DrawModel(p.Mesh, p.Tex, object.World, render.NativeWorldAlphaRef(mani), false)
+						s.DrawWorldModel(p.Mesh, p.Tex, object.World, render.NativeWorldAlphaRef(mani))
 					}
 				}
 			}

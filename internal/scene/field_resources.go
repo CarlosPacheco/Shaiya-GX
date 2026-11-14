@@ -321,9 +321,9 @@ func (s *fieldStream) drawWithClipCulling(r *render.Scene3D, clipCulling bool) {
 				mesh := p.meshAtLOD(level)
 				s.submittedTriangles += int(mesh.Count) / 3 * len(worlds)
 				if len(worlds) == 1 {
-					r.DrawModel(mesh, p.Tex, worlds[0], render.NativeWorldAlphaRef(batch.key.mani), false)
+					r.DrawWorldModel(mesh, p.Tex, worlds[0], render.NativeWorldAlphaRef(batch.key.mani))
 				} else {
-					r.DrawInstanced(mesh, p.Tex, render.NativeWorldAlphaRef(batch.key.mani))
+					r.DrawWorldInstanced(mesh, p.Tex, render.NativeWorldAlphaRef(batch.key.mani))
 				}
 			}
 		}

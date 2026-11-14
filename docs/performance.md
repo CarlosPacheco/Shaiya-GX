@@ -196,3 +196,27 @@ Regression checks also cover the ordinary field batching/terrain mask, the login
 MAni backdrop, the character's dungeon shadow, alpha mip handling, an open doorway
 and camera changes. Evidence is kept locally under `work/dungeon-render/` and
 `work/dungeon-*-gl.log`; these resources and captures are not distribution assets.
+
+
+## Stable lighting on coincident world surfaces
+
+Some SMOD assets author front and back surfaces at the same position with
+opposite normals and different triangle diagonals. Drawing both sheets into the
+float depth buffer makes subpixel camera movement alternate between their
+lighting. The map 1 market wood walls are a reproducible example.
+
+Static model preparation now identifies opposite coplanar coverage, checking
+vertices, edge midpoints and triangle centers. These faces use clockwise
+back-face culling. Unpaired surfaces retain two-sided coverage, including
+cutout foliage and thin decorations. Mixed material parts split into compact
+vertex/index buffers; UVs, normals, textures, collisions and authored files stay
+unchanged. Async streaming performs this classification on its CPU workers,
+before GL upload, and LOD meshes retain the resulting surface contract.
+
+The rendering change applies to streamed and eager world objects and instanced
+copies. It does not depend on an asset filename or an anti-aliasing option and
+uses no depth bias. Mixed parts may add a draw call; no general FPS improvement
+is claimed. A float-depth map 1 regression checks camera motion from eight views
+in normal and reverse depth. Separate GL tests check both sides, cutout holes,
+unpaired foliage and raster-state cleanup; field/dungeon batching comparisons
+use the same surface contract.

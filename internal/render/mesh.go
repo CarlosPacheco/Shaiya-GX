@@ -17,6 +17,7 @@ const vertexSize = int(unsafe.Sizeof(Vertex{}))
 
 // Mesh is an indexed triangle list on the GPU.
 type Mesh struct {
+	CullBack         bool // World mesh contains authored coincident front/back faces.
 	minimum, maximum V3
 	boundsValid      bool
 	instanceBuffer   uint32

@@ -43,7 +43,7 @@ func TestSkinPaletteSupportsFullByteIndicesAndZeroWeightGL(t *testing.T) {
 	for _, p := range []V3{{-.3, -.3, .5}, {.3, -.3, .5}, {.3, .3, .5}, {-.3, .3, .5}} {
 		vertices = append(vertices, SkinVertex{Pos: p, Normal: V3{0, 1, 0}, Weight: 1, Bone0: 200, Bone1: 255})
 	}
-	mesh := NewSkinMesh(vertices, []uint32{0, 1, 2, 0, 2, 3})
+	mesh := NewSkinMesh(vertices, []uint32{0, 2, 1, 0, 3, 2})
 	bones := make([]M4, 256)
 	for i := range bones {
 		bones[i] = Identity()

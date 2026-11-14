@@ -8,10 +8,7 @@ import (
 func (a *App) toggleSubActions() {
 	a.subActionsOpen = !a.subActionsOpen
 	if a.subActionsOpen {
-		a.inventory.open = false
-		a.skills.open = false
 		a.skills.assign = nil
-		a.status.open = false
 	}
 }
 func (a *App) updateSubActions(in *platform.Input, w, h int) bool {

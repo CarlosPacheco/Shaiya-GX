@@ -42,7 +42,7 @@ func TestMallStateUsesConfirmedPackets(t *testing.T) {
 	if _, err := s.Apply(bad.Bytes()); err == nil {
 		t.Fatal("duplicate gift slot accepted")
 	}
-	if len(s.Mall.Stored) != 1 || s.Mall.Stored[12].Type != 1 {
+	if len(s.Mall.Stored) != 2 || s.Mall.Stored[12].Type != 1 || s.Mall.Stored[5].Count != 2 {
 		t.Fatal("bad gift snapshot modified state")
 	}
 	buy := proto.NewWriter(proto.PointBuy)

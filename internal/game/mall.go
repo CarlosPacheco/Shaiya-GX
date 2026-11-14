@@ -86,6 +86,11 @@ func (s *State) ResolveMallClaim(quality uint16, maxStack uint16) bool {
 	}
 	item := proto.InventoryItem{Bag: claim.Destination.Bag, Slot: claim.Destination.InventorySlot, Type: claim.Gift.Type, TypeID: claim.Gift.TypeID, Count: min(claim.Gift.Count, maxStack), Quality: quality}
 	s.applyItem(item)
+	if remaining := claim.Gift.Count - item.Count; remaining > 0 {
+		gift := claim.Gift
+		gift.Count = remaining
+		s.Mall.Stored[gift.Slot] = gift
+	}
 	s.Mall.PendingClaim = nil
 	return true
 }

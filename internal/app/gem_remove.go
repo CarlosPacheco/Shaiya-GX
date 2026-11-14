@@ -6,6 +6,9 @@ import (
 )
 
 type gemRemoveView struct {
+	hammerCount                  uint16
+	cost                         uint32
+	noGold                       bool
 	item                         [2]uint8
 	itemName                     string
 	hammer                       [2]uint8
@@ -34,7 +37,11 @@ func (a *App) sendGemRemove(key [2]uint8, tool ...[2]uint8) bool {
 	if socket < 0 {
 		return false
 	}
-	a.gemRemove = gemRemoveView{item: key, pending: true, hammer: tool[0], withHammer: true, itemName: a.gemItemName(item.Type, item.TypeID)}
+	cost := a.forgeGoldFor(proto.InventoryItem{Type: 30, TypeID: item.Gems[socket]})
+	if a.insufficientForgeGold(a.state.Details.Money, cost, 10013) {
+		return false
+	}
+	a.gemRemove = gemRemoveView{hammerCount: hammer.Count, cost: cost, item: key, pending: true, hammer: tool[0], withHammer: true, itemName: a.gemItemName(item.Type, item.TypeID)}
 	packet := proto.GemRemoveHammerPacket(key, tool[0], uint8(socket))
 	a.shop.pending, a.shop.deadline = true, a.clock+10
 	if err := a.world.Send(packet); err != nil {
@@ -57,6 +64,7 @@ func (a *App) confirmedGemRemove(p []byte) {
 		}
 		// A failure can mean rejection or loss of the selected lapis.
 		// Query the source slot even on success to resolve partial extraction.
+		v.noGold = result.Result != 1 && result.Money < v.cost
 		v.success, v.refreshing = result.Result == 1, true
 		keys := [][2]uint8{v.item}
 		if v.withHammer {
@@ -75,6 +83,10 @@ func (a *App) confirmedGemRemove(p []byte) {
 			v.pending, a.shop.pending = false, false
 			a.syncBlacksmithItems()
 			a.forgeResult(v.success)
+			if v.noGold && a.state.Inventory[v.hammer].Count == v.hammerCount {
+				a.insufficientForgeGold(0, v.cost, 10013)
+				return
+			}
 			id := 58
 			if v.success {
 				id = 57

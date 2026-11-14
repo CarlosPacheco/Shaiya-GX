@@ -8,6 +8,7 @@ import (
 
 // All recreation runes share Special 62. ReqVg 0 retains the full native roll;
 // 101..109 reroll STR..SP individually; 201..209 set that stat to its maximum.
+// 301..309 remove one stat; 400 removes all nine recreation stats.
 // Existing attributes and enchantment survive a targeted operation. A new stat
 // cannot exceed Server's distinct-attribute budget or the equipment's pool.
 func recreateWithRune(rune, target *db.ItemDef, item db.Item) (string, error) {
@@ -17,6 +18,24 @@ func recreateWithRune(rune, target *db.ItemDef, item db.Item) (string, error) {
 	maxValue := uint32(min(target.ReqWis, 99))
 	if rune.ReqVg == 0 {
 		return rollCraftName(min(target.Server, 9), uint8(maxValue), rollsStatsOnly(item.Type), item.CraftName), nil
+	}
+	if rune.ReqVg == 400 || rune.ReqVg >= 301 && rune.ReqVg <= 309 {
+		craft, ok := ParseCraftName(item.CraftName)
+		if !ok {
+			return "", fmt.Errorf("item has no valid recreation stats")
+		}
+		pairs := craftPairs(craft)
+		changed := false
+		for stat := range 9 {
+			if rune.ReqVg == 400 || stat == int(rune.ReqVg)-301 {
+				changed = changed || pairs[stat] != 0
+				pairs[stat] = 0
+			}
+		}
+		if !changed {
+			return "", fmt.Errorf("requested recreation stat is absent")
+		}
+		return craftString(pairs), nil
 	}
 	mode, stat := int(rune.ReqVg)/100, int(rune.ReqVg)%100-1
 	if (mode != 1 && mode != 2) || stat < 0 || stat >= 9 {

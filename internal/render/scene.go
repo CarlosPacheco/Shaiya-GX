@@ -205,8 +205,8 @@ func NewScene3D() (*Scene3D, error) {
 		LightDir: V3{-1, -1, -1}, Ambient: 128.0 / 255}, nil
 }
 
-// Begin sets the frame state: D3D depth range, no culling (EP5 draws
-// two-sided), depth test on.
+// Begin establishes D3D depth range and two-sided drawing. World meshes
+// scope back-face culling only for proven coincident front/back surfaces.
 func (s *Scene3D) Begin() {
 	s.worldUniformsValid = false
 	gl.ClipControl(gl.LOWER_LEFT, gl.ZERO_TO_ONE)

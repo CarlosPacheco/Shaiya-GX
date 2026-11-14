@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/forgecost"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
@@ -49,6 +50,13 @@ func (a *App) blacksmithHoveredItem(mx, my int) (proto.InventoryItem, bool, bool
 }
 func (a *App) drawBlacksmithDetails(w, h int) {
 	x, y := a.blacksmithUI.Origin(w, h)
+	if a.blacksmithUI.Mode == ui.ForgeEnchant && a.blacksmith.selected[1] {
+		it := a.state.Inventory[a.blacksmith.keys[1]]
+		if d := a.forgeDefinition(it); d != nil && it.Type == 95 {
+			line := fmt.Sprintf("Gold: %d", forgecost.Gold(d.ReqIg))
+			a.font.Draw(a.sprites, line, x+26, y+181, [4]float32{1, 1, 0, 1}, 202)
+		}
+	}
 	if a.blacksmithUI.Mode == ui.ForgeEnchant && a.blacksmith.selected[0] && a.blacksmith.quote.known {
 		q := a.blacksmith.quote.value
 		line := fmt.Sprintf("Success: %s%%", forgePercent(q.Rate))

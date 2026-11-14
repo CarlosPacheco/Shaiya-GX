@@ -141,7 +141,7 @@ func TestDungeonVisibilityPreservesPixelsGL(t *testing.T) {
 				for _, rotor := range w.rotors {
 					matrix := rotor.transform(w.elapsed)
 					for _, p := range rotor.model.Parts {
-						r.DrawModel(p.Mesh, p.Tex, matrix, render.NativeWorldAlphaRef(true), false)
+						r.DrawWorldModel(p.Mesh, p.Tex, matrix, render.NativeWorldAlphaRef(true))
 					}
 				}
 				for _, mani := range []bool{true, false} {
@@ -150,7 +150,7 @@ func TestDungeonVisibilityPreservesPixelsGL(t *testing.T) {
 							continue
 						}
 						for _, p := range object.Model.Parts {
-							r.DrawModel(p.Mesh, p.Tex, object.World, render.NativeWorldAlphaRef(mani), false)
+							r.DrawWorldModel(p.Mesh, p.Tex, object.World, render.NativeWorldAlphaRef(mani))
 						}
 					}
 				}

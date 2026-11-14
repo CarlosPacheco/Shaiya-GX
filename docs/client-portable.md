@@ -24,4 +24,17 @@ Source, build instructions and third-party font sources: https://github.com/Spel
 
 For gx-v0.1.4, update GX Server as well as the client: both endpoints now use
 UTF-8 text with fixed protocol byte budgets. The Drive bundle has not been
-reuploaded by this release. See the [current patch notes](releases/gx-v0.1.5.md).
+reuploaded by this release. See the [current patch notes](releases/gx-v0.1.7.md).
+
+
+To combine verified native release archives without copying local client game
+data, run:
+
+```sh
+python3 tools/package_bundle.py --archives /path/to/archives --without-data --output /path/to/new-folder --tag gx-v0.1.7
+```
+
+The resulting `Cliente/` and `Servidor/` directories contain both operating
+systems. Add updated game resources to `Cliente/data/` separately, retaining the
+packaged external fonts. The server includes its distributable maps and seed;
+keep an existing personal runtime separate during upgrades.

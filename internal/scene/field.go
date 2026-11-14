@@ -249,7 +249,7 @@ func (w *World) Draw(s *render.Scene3D) {
 			if !dungeonMeshVisible(s, frustum, p.Mesh, transform) {
 				continue
 			}
-			s.DrawModel(p.Mesh, p.Tex, transform, render.NativeWorldAlphaRef(true), false)
+			s.DrawWorldModel(p.Mesh, p.Tex, transform, render.NativeWorldAlphaRef(true))
 		}
 	}
 	// Retain native MAni/SMOD order; consecutive single-material placements

@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/forgecost"
 	"math/rand/v2"
 	"strings"
 
@@ -46,17 +47,7 @@ func buildEnchantResult(result, lBag, lSlot uint8, lCount uint16, mBag, mSlot ui
 }
 
 // lapisiaMoney is GetGemMoneyByGrade (0x0045f6e0) by the lapisia's ReqIg.
-func lapisiaMoney(reqIg uint8) uint32 {
-	low := [11]uint32{1000, 4095, 11250, 22965, 41280, 137900, 365000, 480000, 627000, 814000, 1040000}
-	high := [5]uint32{2500000, 3500000, 5500000, 7500000, 9800000}
-	switch {
-	case reqIg >= 30 && reqIg <= 40:
-		return low[reqIg-30]
-	case reqIg >= 96 && reqIg <= 100:
-		return high[reqIg-96]
-	}
-	return 0
-}
+func lapisiaMoney(reqIg uint8) uint32 { return forgecost.Gold(reqIg) }
 
 // lapisiaFits is CUser::EnableLapisianAdd's target check: real type 24
 // always; otherwise the lapisia's own fields name what it enchants

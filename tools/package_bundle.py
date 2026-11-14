@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Combine verified native releases and local loose data into a dual-OS folder.
+"""Combine verified native releases into a dual-OS folder, optionally with local data.
 
 Original game resources remain local; this command does not upload them.
 """
@@ -61,7 +61,7 @@ def verify_cash_copies(client_data, server_data):
 def prepare(archives, data, output, tag):
     if output.exists():
         raise ValueError('output already exists; choose a new folder')
-    if not data.is_dir() or output.is_relative_to(data):
+    if data is not None and (not data.is_dir() or output.is_relative_to(data)):
         raise ValueError('invalid loose data source/output')
     expected = {}
     for line in (archives / 'SHA256SUMS.txt').read_text().splitlines():
@@ -91,9 +91,10 @@ def prepare(archives, data, output, tag):
         client, server = stage / 'Cliente', stage / 'Servidor'
         merge(extracted / 'gx-client-linux-amd64', client)
         merge(extracted / 'gx-client-windows-amd64', client)
-        print('Copying local loose game data...', flush=True)
-        shutil.copytree(data, client / 'data', dirs_exist_ok=True,
-                        ignore=lambda directory, names: ['fonts'] if Path(directory) == data else [])
+        if data is not None:
+            print('Copying local loose game data...', flush=True)
+            shutil.copytree(data, client / 'data', dirs_exist_ok=True,
+                            ignore=lambda directory, names: ['fonts'] if Path(directory) == data else [])
         validate(client / 'data/fonts')
         for platform in ('linux-amd64', 'windows-amd64'):
             source = extracted / ('gx-server-' + platform)
@@ -106,12 +107,14 @@ def prepare(archives, data, output, tag):
             shutil.copy2(manifest, server / 'manifests' / (platform + '.json'))
             manifest.unlink()
             merge(source, server)
-        verify_cash_copies(client / 'data', server / 'data')
+        if data is not None:
+            verify_cash_copies(client / 'data', server / 'data')
         files = {p.relative_to(server).as_posix(): digest(p) for p in sorted(server.rglob('*')) if p.is_file()}
         (server / 'package.manifest.json').write_text(json.dumps({'platform': 'linux-amd64+windows-amd64', 'files': files}, indent=2) + '\n')
+        data_instruction = ('Add your updated loose game data to Cliente/data/ before starting the client.\nKeep the supplied data/fonts/ directory and its licenses. No local game resources were copied.\n\n' if data is None else '')
         (stage / 'README.txt').write_text(f'''Shaiya GX {tag} — Windows and Linux
 
-1. Open Servidor/build/gx_server (Linux) or gx_server.exe (Windows) and start the server.
+{data_instruction}1. Open Servidor/build/gx_server (Linux) or gx_server.exe (Windows) and start the server.
    Console launchers Start GX Server.sh and Start GX Server.bat are also included.
 2. Open Cliente/Shaiya GX (Linux) or Cliente/Shaiya GX.exe (Windows).
 
@@ -136,11 +139,13 @@ licenses are included in Cliente/ and Servidor/. SHA256SUMS.txt verifies this fo
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--archives', type=Path, required=True)
-    parser.add_argument('--data', type=Path, required=True)
+    data_source = parser.add_mutually_exclusive_group(required=True)
+    data_source.add_argument('--data', type=Path)
+    data_source.add_argument('--without-data', action='store_true', help='Keep client game resources separate; include only packaged fonts')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--tag', required=True)
     args = parser.parse_args()
-    prepare(args.archives.resolve(), args.data.resolve(), args.output.resolve(), args.tag)
+    prepare(args.archives.resolve(), args.data.resolve() if args.data is not None else None, args.output.resolve(), args.tag)
 
 
 if __name__ == '__main__':

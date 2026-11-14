@@ -89,9 +89,12 @@ func TestComposeAgainstRapture(t *testing.T) {
 	if !a.compose.success || st.Inventory[runeKey].Count != 1 || len(craft) != 20 || !strings.HasSuffix(craft, "09") || craft == item.Craft {
 		t.Fatal("confirmed recreation or rune consumption missing")
 	}
-	if len(st.Chat) < 2 || st.Chat[len(st.Chat)-2].Text != "Before: No bonus attributes" || st.Chat[len(st.Chat)-1].Text != "After: "+craftSummary(craft) {
-		t.Fatal("confirmed recreation comparison missing from chat")
+	for _, line := range st.Chat {
+		if strings.HasPrefix(line.Text, "Before:") || strings.HasPrefix(line.Text, "After:") || line.Text == "Equipment attributes recreated." {
+			t.Fatal("recreation debug message leaked", line)
+		}
 	}
+
 	if err := world.Shutdown(10 * time.Second); err != nil {
 		t.Fatal(err)
 	}

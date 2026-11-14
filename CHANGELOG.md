@@ -2,6 +2,25 @@
 
 This log records delivered changes and data-package updates. Client data is hosted separately on Drive; changing it does not automatically produce a new executable release.
 
+## gx-v0.1.7 — November 14, 2026
+
+[Full patch notes](docs/releases/gx-v0.1.7.md).
+
+- Stabilize coincident world surfaces and opaque NPC armor; preserve cutout foliage, terrain and authored geometry.
+- Allow Inventory, Status, Skills and Actions to remain open together with correct input ownership.
+- Add nine recreation stat removers and a general remover; repair all 27 older bundle variants alongside the 28 GX variants.
+- Restore native insufficient-gold notices, show yellow lapisia costs and retain only the native Used rune message.
+- Synchronize 310 mall products and full stacks; make purchases and gifts atomic and preserve remaining legacy gift quantities.
+- Publish updated native client/server portables, patch notes and a combined binary-only Cliente/Servidor distribution option.
+
+## gx-v0.1.6 — November 14, 2026
+
+[Full patch notes](docs/releases/gx-v0.1.6.md).
+
+- Complete native blacksmith workflows, directed recreation, elemental combat and item badges.
+- Add authoritative stealth, GM protection and map-wide quest metadata with event-driven client caching.
+- Correct HUD presentation, equipment-bar switching, actor depth and ground-item labels; publish native client/server portables and the gameplay wiki.
+
 ## gx-v0.1.5 — November 13, 2026
 
 [Full patch notes](docs/releases/gx-v0.1.5.md).

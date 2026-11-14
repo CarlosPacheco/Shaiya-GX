@@ -583,14 +583,26 @@ func loadDefs() (*Defs, error) {
 				rows.Close()
 				return nil, fmt.Errorf("ProductList %q slot %d exceeds quantity limit", p.Code, i+1)
 			}
-			if ids[i] > 0 && counts[i] > 0 {
-				p.Items = append(p.Items, ProductItem{clampU8(ids[i] / 1000), clampU8(ids[i] % 1000), counts[i]})
+			if ids[i] == 0 && counts[i] == 0 {
+				continue
 			}
+			if ids[i]/1000 < 1 || ids[i]/1000 > 255 || ids[i]%1000 < 1 || ids[i]%1000 > 255 || counts[i] == 0 {
+				rows.Close()
+				return nil, fmt.Errorf("ProductList %q slot %d has invalid item identity/quantity", p.Code, i+1)
+			}
+			entry := ProductItem{uint8(ids[i] / 1000), uint8(ids[i] % 1000), counts[i]}
+			if d.Item(entry.Type, entry.TypeID) == nil {
+				rows.Close()
+				return nil, fmt.Errorf("ProductList %q slot %d references missing item", p.Code, i+1)
+			}
+			p.Items = append(p.Items, entry)
 		}
 		product := p
-		if product.Code != "" {
-			d.Products[product.Code] = &product
+		if product.Code == "" || len(product.Code) > 20 || len(product.Items) == 0 || d.Products[product.Code] != nil || cost < 0 || cost > 0xffffffff {
+			rows.Close()
+			return nil, fmt.Errorf("invalid, empty or duplicate ProductList product %q", product.Code)
 		}
+		d.Products[product.Code] = &product
 	}
 	rows.Close()
 	return d, nil

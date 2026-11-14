@@ -60,7 +60,7 @@ func TestMallOriginalAssetsGL(t *testing.T) {
 	testingIcons := 0
 	for _, products := range a.mall.products {
 		for _, p := range products {
-			if strings.HasPrefix(p.Code, "T_") {
+			if strings.HasPrefix(p.Code, "T_") || strings.HasPrefix(p.Code, "GX_Recreate_") {
 				testingIcons++
 				if p.Icon == nil {
 					t.Fatalf("testing product has no native item icon: %s", p.Code)
@@ -68,7 +68,7 @@ func TestMallOriginalAssetsGL(t *testing.T) {
 			}
 		}
 	}
-	t.Logf("%d testing product icons resolved", testingIcons)
+	t.Logf("%d supply and recreation rune icons resolved", testingIcons)
 	gl.Viewport(0, 0, 1024, 768)
 	gl.ClearColor(.06, .06, .06, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -92,6 +92,25 @@ func TestMallOriginalAssetsGL(t *testing.T) {
 			}
 		}
 		a.mallUI.Category = 0
+	}
+	if dir := os.Getenv("SHAIYA_TEST_ARTIFACTS"); dir != "" {
+		for category, products := range a.mall.products {
+			for index, product := range products {
+				if product.Code != "GX_Recreate_28" {
+					continue
+				}
+				a.mallUI.Category = category
+				a.mallUI.Scroll = max(0, index/2-2)
+				gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+				a.sprites.Begin(1024, 768)
+				a.drawMall(1024, 768)
+				a.sprites.End()
+				if err := render.SavePNG(filepath.Join(dir, "mall-removal-runes.png"), 1024, 768); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}
+		a.mallUI.Category, a.mallUI.Scroll = 0, 0
 	}
 	x, y := a.mallUI.Origin(1024, 768)
 	click := func(dx, dy int) {

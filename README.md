@@ -14,7 +14,7 @@ GX reads loose assets from a `data/` folder beside the **Shaiya GX** executable.
 
 **SQLite is used during development because an embedded database makes setup and distribution easy. It is temporary: the database backend will change in the future. The replacement and migration format are not selected yet.**
 
-[**gx-v0.1.6 patch notes**](docs/releases/gx-v0.1.6.md) · [Latest client/server downloads](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
+[**gx-v0.1.7 patch notes**](docs/releases/gx-v0.1.7.md) · [Latest client/server downloads](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
 
 ## On-screen metrics panel
 

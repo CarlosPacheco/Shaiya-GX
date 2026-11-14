@@ -6,6 +6,9 @@ import (
 )
 
 type gemLinkView struct {
+	gemCount                     uint16
+	cost                         uint32
+	noGold                       bool
 	gem, item                    [2]uint8
 	itemName, gemName            string
 	pending, success, refreshing bool
@@ -37,8 +40,12 @@ func (a *App) sendGemLink(gemKey, itemKey [2]uint8, hammer ...[2]uint8) bool {
 			return false
 		}
 	}
+	cost := a.forgeGoldFor(gem)
+	if a.insufficientForgeGold(a.state.Details.Money, cost, 10010) {
+		return false
+	}
 	v := &a.gemLink
-	*v = gemLinkView{gem: gemKey, item: itemKey, pending: true, hammer: hammerKey, withHammer: len(hammer) == 1}
+	*v = gemLinkView{gemCount: gem.Count, cost: cost, gem: gemKey, item: itemKey, pending: true, hammer: hammerKey, withHammer: len(hammer) == 1}
 	if d := a.gemItemName(item.Type, item.TypeID); d != "" {
 		v.itemName = d
 	}
@@ -75,6 +82,7 @@ func (a *App) confirmedGemLink(p []byte) {
 		if v.withHammer {
 			slots = append(slots, v.hammer)
 		}
+		v.noGold = result.Result != 1 && result.Money < v.cost && result.GemCount == v.gemCount
 		v.success, v.refreshing = result.Result == 1, true
 		v.refresh.start(slots)
 		for key := range v.refresh.pending {
@@ -100,6 +108,10 @@ func (a *App) finishGemLink(success bool) {
 	a.gemLink.pending = false
 	a.syncBlacksmithItems()
 	a.shop.pending = false
+	if a.gemLink.noGold {
+		a.insufficientForgeGold(0, a.gemLink.cost, 10010)
+		return
+	}
 	id := 56
 	if success {
 		id = 55

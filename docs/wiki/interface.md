@@ -6,6 +6,10 @@ and [Recreation](recreation-and-loot.md); those pages supersede historical
 service notes below. Assets and visual coverage require local runtime validation.
 
 
+Inventory, Stats, Skills and Actions can remain open together. New windows use available space beside existing windows; manually positioned windows keep their positions. Input and Escape follow the visible window order.
+
+World rendering uses clockwise back-face culling for skinned models and proven paired static surfaces. This removes dark inward armor surfaces and camera-dependent flicker on overlapping wood panels while preserving ordinary two-sided cutouts and vegetation.
+
 The interface is being reconstructed incrementally from original EP5 artwork and recovered parameters. Phoenix is an auxiliary reference. Data and original artwork are not stored in this repository.
 
 | Area | Current implementation | Remaining work |

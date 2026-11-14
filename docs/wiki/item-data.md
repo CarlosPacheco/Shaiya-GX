@@ -91,6 +91,6 @@ accounts and all test mutations belong only to a temporary copy of the seed.
 
 Targeted recreation properties are implemented in
 `server/internal/world/recreation_runes.go`. ReqVg 101–109 selects individual
-random stats; 201–209 selects perfect stats. Type101 IDs1–18 use those properties.
+random stats; 201–209 selects perfect stats. Type101 IDs1–18 use those properties. IDs19–27 use ReqVg301–309 to remove one recreation stat; ID28 uses ReqVg400 to remove all nine while preserving enchantment and lapis.
 The client now retains native Server to determine eligibility for its Max OJ
 footer. Keep it and ReqWis aligned with SQL. See [Recreation](recreation-and-loot.md).

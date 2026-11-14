@@ -7,6 +7,9 @@ import (
 )
 
 type enchantView struct {
+	lapCount, materialCount      uint16
+	cost                         uint32
+	noGold                       bool
 	lap, material, item          [2]uint8
 	pending, success, refreshing bool
 	refresh                      gemRefresh
@@ -24,7 +27,11 @@ func (a *App) sendEnchant(lapKey, materialKey, itemKey [2]uint8, count uint16) b
 	if !l || !m || !i || lap.Type != 95 || lap.Count == 0 || item.Count != 1 || count == 0 || count > 100 || count > material.Count {
 		return false
 	}
-	a.enchant = enchantView{lap: lapKey, material: materialKey, item: itemKey, pending: true}
+	cost := a.forgeGoldFor(lap)
+	if a.insufficientForgeGold(a.state.Details.Money, cost, 10102) {
+		return false
+	}
+	a.enchant = enchantView{lapCount: lap.Count, materialCount: material.Count, cost: cost, lap: lapKey, material: materialKey, item: itemKey, pending: true}
 	a.shop.pending, a.shop.deadline = true, a.clock+10
 	if err := a.world.Send(proto.EnchantPacket(lapKey[0], lapKey[1], materialKey[0], materialKey[1], count, itemKey[0], itemKey[1])); err != nil {
 		a.backToLogin("Unable to request enchantment.")
@@ -44,6 +51,7 @@ func (a *App) confirmedEnchant(p []byte) {
 		if err != nil || v.refreshing || v.lap != [2]uint8{r.LapisiaBag, r.LapisiaSlot} || v.material != [2]uint8{r.MaterialBag, r.MaterialSlot} || v.item != [2]uint8{r.ItemBag, r.ItemSlot} {
 			return
 		}
+		v.noGold = r.Result != 1 && r.Money < v.cost && r.LapisiaCount == v.lapCount && r.MaterialCount == v.materialCount
 		v.success, v.refreshing = r.Result == 1, true
 		v.refresh.start([][2]uint8{v.item})
 		a.shop.deadline = a.clock + 10
@@ -55,7 +63,9 @@ func (a *App) confirmedEnchant(p []byte) {
 			v.pending, a.shop.pending = false, false
 			a.syncBlacksmithItems()
 			a.forgeResult(v.success)
-			if v.success {
+			if v.noGold {
+				a.insufficientForgeGold(0, v.cost, 10102)
+			} else if v.success {
 				a.questMessage("Equipment enchanted.")
 			} else {
 				a.questMessage("Enchantment failed or was refused.")

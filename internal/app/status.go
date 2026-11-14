@@ -17,9 +17,6 @@ func (a *App) toggleStatus() {
 		a.statusUI.Clear()
 	}
 	if a.status.open {
-		a.subActionsOpen = false
-		a.inventory.open = false
-		a.skills.open = false
 		a.skills.assign = nil
 	}
 }

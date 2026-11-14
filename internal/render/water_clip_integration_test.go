@@ -46,7 +46,7 @@ func TestWaterClipStaticAndSkinnedGL(t *testing.T) {
 		skin = append(skin, SkinVertex{Pos: p, Normal: V3{0, 1, 0}})
 	}
 	indices := []uint32{0, 1, 2, 0, 2, 3}
-	mesh, skinMesh := NewMesh(vertices, indices), NewSkinMesh(skin, indices)
+	mesh, skinMesh := NewMesh(vertices, indices), NewSkinMesh(skin, []uint32{0, 2, 1, 0, 3, 2})
 	defer mesh.Delete()
 	defer skinMesh.Delete()
 	for _, skinned := range []bool{false, true} {

@@ -201,12 +201,13 @@ func (k *Skinner) Draw(m *SkinMesh, t *Texture, alphaRef float32) {
 		return
 	}
 	gl.Uniform1f(k.uRef, alphaRef)
+	// Native skinned surfaces use clockwise front faces, including opaque NPCs.
+	gl.Enable(gl.CULL_FACE)
+	gl.FrontFace(gl.CW)
+	gl.CullFace(gl.BACK)
 	if k.opacity < 1 {
 		gl.Enable(gl.BLEND)
 		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-		gl.Enable(gl.CULL_FACE)
-		gl.FrontFace(gl.CW)
-		gl.CullFace(gl.BACK)
 		gl.DepthMask(true)
 	} else {
 		gl.Disable(gl.BLEND)

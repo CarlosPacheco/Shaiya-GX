@@ -139,10 +139,13 @@ func (s *Assets) SMOD(file string) (*Model, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", file, err)
 	}
-	return s.uploadSMOD(key, sm)
+	return s.uploadSMOD(key, sm, nil, nil)
 }
 
-func (s *Assets) uploadSMOD(key string, sm *world.SMOD, preparedLODs ...[][]staticLODCPU) (*Model, error) {
+func (s *Assets) uploadSMOD(key string, sm *world.SMOD, preparedLODs [][]staticLODCPU, cullBack []bool) (*Model, error) {
+	if cullBack == nil {
+		sm, cullBack = prepareStaticSurfaces(sm)
+	}
 	m := &Model{colliders: sm.Colliders}
 	var lo, hi render.V3
 	hasBounds := false
@@ -166,6 +169,7 @@ func (s *Assets) uploadSMOD(key string, sm *world.SMOD, preparedLODs ...[][]stat
 			}
 		}
 		p := Part{Mesh: render.NewMesh(v, idx)}
+		p.Mesh.CullBack = cullBack[meshIndex]
 		if mesh.Texture != "" {
 			p.Tex = s.worldTexture("Entity/Texture/" + DDSName(path.Base(strings.ReplaceAll(mesh.Texture, `\`, "/"))))
 			p.Alpha = p.Tex != nil
@@ -173,13 +177,14 @@ func (s *Assets) uploadSMOD(key string, sm *world.SMOD, preparedLODs ...[][]stat
 				p.Tex.SetWrap(true)
 			}
 		}
-		if len(preparedLODs) > 0 && meshIndex < len(preparedLODs[0]) {
+		if meshIndex < len(preparedLODs) {
 			p.lods = make([]staticMeshLOD, 2)
-			for level, lod := range preparedLODs[0][meshIndex] {
+			for level, lod := range preparedLODs[meshIndex] {
 				if len(lod.indices) == 0 {
 					continue
 				}
 				p.lods[level] = staticMeshLOD{mesh: render.NewMesh(lod.vertices, lod.indices), error: lod.error}
+				p.lods[level].mesh.CullBack = p.Mesh.CullBack
 				m.lodAvailable[level] = true
 				m.lodErrors[level] = max(m.lodErrors[level], lod.error)
 			}

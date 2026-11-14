@@ -90,13 +90,13 @@ func (v *vaniAsset) draw(s *render.Scene3D, elapsed float64) {
 	}
 	if len(v.worlds) == 1 {
 		for _, part := range v.parts {
-			s.DrawModel(part.mesh, part.texture, v.worlds[0], render.NativeWorldAlphaRef(false), false)
+			s.DrawWorldModel(part.mesh, part.texture, v.worlds[0], render.NativeWorldAlphaRef(false))
 		}
 		return
 	}
 	s.SetInstances(v.worlds)
 	for _, part := range v.parts {
-		s.DrawInstanced(part.mesh, part.texture, render.NativeWorldAlphaRef(false))
+		s.DrawWorldInstanced(part.mesh, part.texture, render.NativeWorldAlphaRef(false))
 	}
 }
 

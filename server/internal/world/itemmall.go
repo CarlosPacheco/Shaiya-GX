@@ -93,50 +93,51 @@ func (s *Session) handlePointBuy(p []byte) {
 		s.send(buildPointBuyResult(pointBuyNotEnoughPoints, s.points, code, prod.BuyCost, nil), "0x2602 point buy result")
 		return
 	}
-	need := 0
-	for _, it := range prod.Items {
-		ms := maxStackOf(it.Type, it.TypeID)
-		need += (int(it.Count) + int(ms) - 1) / int(ms)
-	}
-	if need > len(freeInventorySlots(s.items)) {
-		s.send(buildPointBuyResult(pointBuyNotEnoughSlots, s.points, code, prod.BuyCost, nil), "0x2602 point buy result")
-		return
-	}
-	left, err := db.SpendPoints(s.accountID, s.char.ID, prod.BuyCost, code, "", 1)
-	if err != nil {
-		s.log.Printf("GX Server World point buy failed: %v", err)
-		if errors.Is(err, db.ErrNotEnoughPoints) {
-			s.points = left
-		}
-		s.send(buildPointBuyResult(pointBuyNotEnoughPoints, s.points, code, prod.BuyCost, nil), "0x2602 point buy result")
-		return
-	}
-	s.points = left
+	free := freeInventorySlots(s.items)
+	var delivery []db.Item
 	defs := db.MustDefs()
-	var granted []grantedItem
 	for _, pi := range prod.Items {
 		def := defs.Item(pi.Type, pi.TypeID)
-		if def == nil {
-			continue
+		if def == nil || pi.Count == 0 {
+			s.send(buildPointBuyResult(pointBuyNoProduct, s.points, code, 0, nil), "invalid mall definition")
+			return
 		}
-		ms := def.MaxStack()
 		for remaining := pi.Count; remaining > 0; {
-			free := freeInventorySlots(s.items)
-			if len(free) == 0 {
-				break
+			if len(delivery) >= len(free) {
+				s.send(buildPointBuyResult(pointBuyNotEnoughSlots, s.points, code, prod.BuyCost, nil), "0x2602 point buy result")
+				return
 			}
-			n := min(remaining, ms)
-			it := db.Item{Bag: free[0][0], Slot: free[0][1], Type: pi.Type, TypeID: pi.TypeID, Quality: def.Quality, Count: n, MakeType: "B"}
-			if err := db.AddCharacterItem(s.char.ID, &it); err != nil {
-				s.log.Printf("GX Server World point buy item insert failed: %v", err)
-				break
-			}
-			s.items = append(s.items, it)
-			s.send(buildAddItem(&it), "0x0205 point buy add item")
-			granted = append(granted, grantedItem{it.Bag, it.Slot, it.Type, it.TypeID, n})
+			n := min(remaining, def.MaxStack())
+			slot := free[len(delivery)]
+			delivery = append(delivery, db.Item{Bag: slot[0], Slot: slot[1], Type: pi.Type, TypeID: pi.TypeID, Quality: def.Quality, Count: n, MakeType: "B"})
 			remaining -= n
 		}
 	}
+	if len(delivery) == 0 {
+		s.send(buildPointBuyResult(pointBuyNoProduct, s.points, code, 0, nil), "empty mall definition")
+		return
+	}
+	left, err := db.PurchaseMallItems(s.accountID, s.char.ID, prod, delivery)
+	if err != nil {
+		s.log.Printf("GX Server World point buy transaction failed: %v", err)
+		result := uint8(pointBuyNoProduct)
+		if errors.Is(err, db.ErrNotEnoughPoints) {
+			result = pointBuyNotEnoughPoints
+			if balance, e := db.Points(s.accountID); e == nil {
+				s.points = balance
+			}
+		}
+		s.send(buildPointBuyResult(result, s.points, code, prod.BuyCost, nil), "0x2602 point buy result")
+		return
+	}
+	s.points = left
+	var granted []grantedItem
+	for _, it := range delivery {
+		s.items = append(s.items, it)
+		s.send(buildAddItem(&it), "0x0205 point buy add item")
+		granted = append(granted, grantedItem{it.Bag, it.Slot, it.Type, it.TypeID, it.Count})
+	}
+
 	s.log.Printf("GX Server World point buy product=%s cost=%d items=%d points_left=%d", code, prod.BuyCost, len(granted), s.points)
 	s.send(buildPointBuyResult(pointBuyOK, s.points, code, prod.BuyCost, granted), "0x2602 point buy result")
 }
@@ -159,18 +160,21 @@ func (s *Session) handleGiftSend(p []byte) {
 		reply(giftNotEnoughPoints, prod.BuyCost)
 		return
 	}
-	result, targetUID, err := db.StoreGift(target, s.accountID, prod)
+	result, targetUID, left, err := db.PurchaseGift(target, s.accountID, s.char.ID, prod)
 	if err != nil {
-		s.log.Printf("GX Server World gift store failed: %v", err)
+		s.log.Printf("GX Server World gift transaction failed: %v", err)
+		if errors.Is(err, db.ErrNotEnoughPoints) {
+			result = giftNotEnoughPoints
+			if balance, e := db.Points(s.accountID); e == nil {
+				s.points = balance
+			}
+		}
 	}
 	if result != db.GiftOK {
 		reply(result, prod.BuyCost)
 		return
 	}
-	left, err := db.SpendPoints(s.accountID, s.char.ID, prod.BuyCost, code, target, 2)
-	if err != nil {
-		s.log.Printf("GX Server World gift point deduction failed after storing the gift: %v", err)
-	}
+
 	s.points = left
 	s.log.Printf("GX Server World gift sent product=%s to=%q account=%d", code, target, targetUID)
 	reply(db.GiftOK, prod.BuyCost)

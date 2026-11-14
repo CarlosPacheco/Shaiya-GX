@@ -43,20 +43,64 @@ func SpendPoints(userUID, charID, cost uint32, productCode, targetName string, u
 	defer cancel()
 	var remaining uint32
 	e = withTx(c, p, func(tx *sql.Tx) error {
-		res, e := tx.ExecContext(c, `UPDATE PS_UserData_Users_Master SET Point=Point-?2 WHERE UserUID=?1 AND Point>=?2`, int32(userUID), int32(cost))
-		if e != nil {
-			return e
-		}
-		if n, _ := res.RowsAffected(); n != 1 {
-			return ErrNotEnoughPoints
-		}
-		if e = tx.QueryRowContext(c, `SELECT Point FROM PS_UserData_Users_Master WHERE UserUID=?1`, int32(userUID)).Scan(&remaining); e != nil {
-			return e
-		}
-		_, e = tx.ExecContext(c, `INSERT INTO PS_GameData_PointLog(UseType,UserUID,CharID,UsePoint,ProductCode,TargetName,UseDate,RemainPoint) VALUES(?1,?2,?3,?4,?5,?6,CURRENT_TIMESTAMP,?7)`, useType, int32(userUID), int32(charID), int32(cost), productCode, targetName, int32(remaining))
-		return e
+		var err error
+		remaining, err = spendPointsTx(c, tx, userUID, charID, cost, productCode, targetName, useType)
+		return err
 	})
 	return remaining, e
+}
+
+// spendPointsTx keeps charging and delivery in the same transaction.
+func spendPointsTx(c context.Context, tx *sql.Tx, userUID, charID, cost uint32, productCode, targetName string, useType uint8) (uint32, error) {
+	var remaining uint32
+	res, err := tx.ExecContext(c, `UPDATE PS_UserData_Users_Master SET Point=Point-?2 WHERE UserUID=?1 AND Point>=?2`, int32(userUID), int64(cost))
+	if err != nil {
+		return 0, err
+	}
+	if n, _ := res.RowsAffected(); n != 1 {
+		return 0, ErrNotEnoughPoints
+	}
+	if err = tx.QueryRowContext(c, `SELECT Point FROM PS_UserData_Users_Master WHERE UserUID=?1`, int32(userUID)).Scan(&remaining); err != nil {
+		return 0, err
+	}
+	_, err = tx.ExecContext(c, `INSERT INTO PS_GameData_PointLog(UseType,UserUID,CharID,UsePoint,ProductCode,TargetName,UseDate,RemainPoint) VALUES(?1,?2,?3,?4,?5,?6,CURRENT_TIMESTAMP,?7)`, useType, int32(userUID), int32(charID), int64(cost), productCode, targetName, int64(remaining))
+	return remaining, err
+}
+
+// PurchaseMallItems atomically charges, logs and inserts a validated delivery.
+// The caller publishes packets and updates session memory only after commit.
+func PurchaseMallItems(userUID, charID uint32, product *Product, items []Item) (uint32, error) {
+	pool, err := Pool(GameData)
+	if err != nil {
+		return 0, err
+	}
+	c, cancel := ctx()
+	defer cancel()
+	var remaining uint32
+	err = withTx(c, pool, func(tx *sql.Tx) error {
+		var err error
+		remaining, err = spendPointsTx(c, tx, userUID, charID, product.BuyCost, product.Code, "", 1)
+		if err != nil {
+			return err
+		}
+		for i := range items {
+			it := &items[i]
+			if it.UID == 0 {
+				it.UID = NewItemUID()
+			}
+			if it.MakeTime.IsZero() {
+				it.MakeTime = time.Now()
+			}
+			_, err = tx.ExecContext(c, `INSERT INTO PS_GameData_CharItems
+			(CharID,Bag,Slot,ItemID,Type,TypeID,ItemUID,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype)
+			VALUES(?,?,?,?,?,?,?,?,0,0,0,0,0,0,'',?,?, 'B')`, int32(charID), it.Bag, it.Slot, it.ItemID(), it.Type, it.TypeID, it.UID, it.Quality, it.Count, makeTime(it))
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return remaining, err
 }
 
 // GiftEntry is one gift-box slot.
@@ -108,67 +152,101 @@ const (
 
 // StoreGift puts every item of product into the gift box of the account
 // owning targetName, in free slots, atomically.
-func StoreGift(targetName string, senderUID uint32, product *Product) (result uint8, targetUID uint32, err error) {
+func StoreGift(targetName string, senderUID uint32, product *Product) (uint8, uint32, error) {
+	result, target, _, err := storeGift(targetName, senderUID, 0, product, false)
+	return result, target, err
+}
+
+// PurchaseGift charges the sender and stores every gift in one transaction.
+func PurchaseGift(targetName string, senderUID, charID uint32, product *Product) (uint8, uint32, uint32, error) {
+	return storeGift(targetName, senderUID, charID, product, true)
+}
+
+func storeGift(targetName string, senderUID, charID uint32, product *Product, charge bool) (result uint8, targetUID, points uint32, err error) {
 	pool, err := Pool(GameData)
 	if err != nil {
-		return GiftInsertError, 0, err
+		return GiftInsertError, 0, 0, err
 	}
 	c, cancel := ctx()
 	defer cancel()
-	var uid sql.NullInt32
-	if err := pool.QueryRowContext(c, `SELECT UserUID FROM PS_GameData_Chars WHERE CharName = ?1 AND Del = 0 LIMIT 1`,
-		targetName).Scan(&uid); err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return GiftInsertError, 0, err
-	}
-	if !uid.Valid || uid.Int32 == 0 {
-		return GiftNoSuchChar, 0, nil
-	}
-	targetUID = uint32(uid.Int32)
-	if targetUID == senderUID {
-		return GiftSameAccount, targetUID, nil
-	}
+	defs := MustDefs()
 	err = withTx(c, pool, func(tx *sql.Tx) error {
-		used := map[uint8]bool{}
-		rows, err := tx.QueryContext(c, `SELECT Slot FROM PS_GameData_UserStoredPointItems  WHERE UserUID = ?1`, int32(targetUID))
+		var uid sql.NullInt32
+		err := tx.QueryRowContext(c, `SELECT UserUID FROM PS_GameData_Chars WHERE CharName=? AND Del=0 LIMIT 1`, targetName).Scan(&uid)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+		if !uid.Valid || uid.Int32 == 0 {
+			result = GiftNoSuchChar
+			return errRollback
+		}
+		targetUID = uint32(uid.Int32)
+		if targetUID == senderUID {
+			result = GiftSameAccount
+			return errRollback
+		}
+		used := map[int]bool{}
+		rows, err := tx.QueryContext(c, `SELECT Slot FROM PS_GameData_UserStoredPointItems WHERE UserUID=?`, targetUID)
 		if err != nil {
 			return err
 		}
 		for rows.Next() {
-			var slot uint8
-			rows.Scan(&slot)
+			var slot int
+			if err = rows.Scan(&slot); err != nil {
+				rows.Close()
+				return err
+			}
 			used[slot] = true
 		}
+		err = rows.Err()
 		rows.Close()
+		if err != nil {
+			return err
+		}
 		if len(used) >= GiftBoxSlots {
 			result = GiftBoxFull
 			return errRollback
 		}
-		next := uint8(0)
+		next := 0
 		for _, item := range product.Items {
-			for int(next) < GiftBoxSlots && used[next] {
-				next++
+			def := defs.Item(item.Type, item.TypeID)
+			if def == nil || item.Count == 0 {
+				return fmt.Errorf("invalid gift item %d/%d", item.Type, item.TypeID)
 			}
-			if int(next) >= GiftBoxSlots {
-				result = GiftNotEnoughSlots
-				return errRollback
+			// Equipment bundles occupy one gift slot per individual piece.
+			for remaining := item.Count; remaining > 0; {
+				for next < GiftBoxSlots && used[next] {
+					next++
+				}
+				if next >= GiftBoxSlots {
+					result = GiftNotEnoughSlots
+					return errRollback
+				}
+				n := min(remaining, def.MaxStack())
+				_, err := tx.ExecContext(c, `INSERT INTO PS_GameData_UserStoredPointItems(UserUID,Slot,ItemID,ItemCount,BuyDate) VALUES(?,?,?,?,CURRENT_TIMESTAMP)`, targetUID, next, int32(item.Type)*1000+int32(item.TypeID), n)
+				if err != nil {
+					return err
+				}
+				used[next] = true
+				remaining -= n
 			}
-			if _, err := tx.ExecContext(c, `INSERT INTO PS_GameData_UserStoredPointItems (UserUID, Slot, ItemID, ItemCount, BuyDate)
-				VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)`, int32(targetUID), next,
-				int32(item.Type)*1000+int32(item.TypeID), item.Count); err != nil {
-				result = GiftInsertError
-				return err
-			}
-			used[next] = true
+		}
+		if len(product.Items) == 0 {
+			return fmt.Errorf("empty gift product")
+		}
+		if charge {
+			points, err = spendPointsTx(c, tx, senderUID, charID, product.BuyCost, product.Code, targetName, 2)
+			return err
 		}
 		return nil
 	})
 	if errors.Is(err, errRollback) {
-		return result, targetUID, nil
+		return result, targetUID, 0, nil
 	}
 	if err != nil {
-		return GiftInsertError, targetUID, err
+		return GiftInsertError, targetUID, 0, err
 	}
-	return GiftOK, targetUID, nil
+	return GiftOK, targetUID, points, nil
 }
 
 // ClaimGift moves gift-box slot into the character's inventory as it, in
@@ -189,14 +267,30 @@ func ClaimGift(userUID, charID uint32, giftSlot uint8, it *Item) (bool, error) {
 	}
 	claimed := false
 	err = withTx(c, pool, func(tx *sql.Tx) error {
-		res, err := tx.ExecContext(c, `DELETE FROM PS_GameData_UserStoredPointItems WHERE UserUID = ?1 AND Slot = ?2`,
-			int32(userUID), giftSlot)
+		if it.Count == 0 {
+			return errRollback
+		}
+		var available uint16
+		var identity int32
+		err := tx.QueryRowContext(c, `SELECT ItemID,ItemCount FROM PS_GameData_UserStoredPointItems WHERE UserUID=? AND Slot=?`, userUID, giftSlot).Scan(&identity, &available)
+		if errors.Is(err, sql.ErrNoRows) {
+			return errRollback
+		}
 		if err != nil {
 			return err
 		}
-		if n, _ := res.RowsAffected(); n != 1 {
+		if identity != it.ItemID() || available < it.Count {
 			return errRollback
 		}
+		if available == it.Count {
+			_, err = tx.ExecContext(c, `DELETE FROM PS_GameData_UserStoredPointItems WHERE UserUID=? AND Slot=?`, userUID, giftSlot)
+		} else {
+			_, err = tx.ExecContext(c, `UPDATE PS_GameData_UserStoredPointItems SET ItemCount=ItemCount-? WHERE UserUID=? AND Slot=?`, it.Count, userUID, giftSlot)
+		}
+		if err != nil {
+			return err
+		}
+
 		if _, err := tx.ExecContext(c, `INSERT INTO PS_GameData_CharItems (CharID, Bag, Slot, ItemID, Type, TypeID, ItemUID,
 			Quality, Gem1, Gem2, Gem3, Gem4, Gem5, Gem6, Craftname, Count, Maketime, Maketype)
 			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, 0, 0, 0, 0, 0, '', ?9, ?10, 'B')`,
