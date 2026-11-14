@@ -2,10 +2,11 @@
 
 ## Download and play
 
-### [Download Shaiya GX gx-v0.1.8 — Client + Server + Data](https://drive.google.com/file/d/1mh79HOAoGlnTJIiRdc7WQVpHche78RDD/view?usp=sharing)
+### [Download Shaiya GX gx-v0.1.8 — Client + Server + Data](https://drive.google.com/file/d/1XU2Tk05VfO9hrtx3yIMevo9ALqFq4pW3/view?usp=sharing)
 
 **One Google Drive download for Windows and Linux. Includes the client, GX Server,
-game data, external fonts and the development database. No build tools required.**
+game data, external fonts and the development database. Everything is included:
+no separate data download, Go installation or build tools required.**
 
 1. Extract the entire package to a writable folder. Keep `Client/` and `Server/` intact.
 2. Start `Server/build/gx_server.exe` (Windows) or `Server/build/gx_server` (Linux), then click **Start server**.
@@ -117,4 +118,4 @@ Inventory: left-click uses an item, right-click equips/replaces it, drag moves i
 
 Source is [BSD 3-Clause](LICENSE). The original server copyright and terms are retained in [server/LICENSE](server/LICENSE). Third-party notices are in [NOTICE](NOTICE). Original Shaiya game content and trademarks retain their respective ownership; the source license does not grant rights to game assets.
 
-The complete [Client + Server + Data portable](https://drive.google.com/file/d/1mh79HOAoGlnTJIiRdc7WQVpHche78RDD/view?usp=sharing) is hosted on Drive. Updated client builds with external fonts are available in [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest); those archives do not include game data. Both executables may share one adjacent `data/` directory; see [portable client instructions](docs/client-portable.md).
+The complete [Client + Server + Data portable](https://drive.google.com/file/d/1XU2Tk05VfO9hrtx3yIMevo9ALqFq4pW3/view?usp=sharing) is hosted on Drive. Updated client builds with external fonts are available in [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest); those archives do not include game data. Both executables may share one adjacent `data/` directory; see [portable client instructions](docs/client-portable.md).
