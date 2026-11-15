@@ -1017,6 +1017,19 @@ func TestUserAttack(t *testing.T) {
 	if attacker.hostileUser(enemy.char.ID) != nil {
 		t.Fatal("a dead user is attackable")
 	}
+	// Native g_tKillInfo/g_tDeathInfo[15]: counters saturate at 200000.
+	attacker.char.Kills = pvpKillCap - 1
+	attacker.killPCTo()
+	attacker.killPCTo()
+	if attacker.char.Kills != pvpKillCap {
+		t.Fatal("PvP kill counter exceeded native cap")
+	}
+	enemy.char.Deaths = pvpDeathCap - 1
+	enemy.killPCFrom(attacker.player)
+	enemy.killPCFrom(attacker.player)
+	if enemy.char.Deaths != pvpDeathCap {
+		t.Fatal("PvP death counter exceeded native cap")
+	}
 }
 
 // TestUserSkills follows CUser::SkillAttack / SkillDebuff (user target)

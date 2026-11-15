@@ -58,6 +58,9 @@ func (a *App) updateShop(in *platform.Input, w, h int) bool {
 		return false
 	}
 	e := a.state.Entities[v.npcID]
+	if e.NpcType == 4 && a.pvpRewardUI != nil {
+		return a.updatePvPRewards(in, w, h)
+	}
 	if e.NpcType == 11 && a.guildDirectoryUI != nil {
 		return a.updateGuildDirectory(in, w, h, e)
 	}
@@ -163,6 +166,9 @@ func (a *App) openNPC(id uint32) {
 		return
 	}
 	a.shop.npcID, a.shop.page, a.shop.questMode = id, 0, false
+	if e.NpcType == 4 {
+		a.openPvPRewards()
+	}
 	if e.NpcType == 2 && a.gateUI != nil {
 		a.gateUI.ResetWelcomeScroll()
 	}
@@ -172,6 +178,10 @@ func (a *App) drawShop(w, h int) {
 	v := &a.shop
 	e := a.state.Entities[v.npcID]
 	if e == nil {
+		return
+	}
+	if e.NpcType == 4 && a.pvpRewardUI != nil {
+		a.drawPvPRewards(w, h)
 		return
 	}
 	if e.NpcType == 11 && a.guildDirectoryUI != nil {

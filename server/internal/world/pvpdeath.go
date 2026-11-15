@@ -17,8 +17,8 @@ import (
 //     not to the last hit. A mob or the user itself at the top gives
 //     nothing. With no entry at all, a type-1 death still runs
 //     ItemDropByUser for the reported killer.
-//   - Normal PvP (PvPGetDeathType 3; duels are 4 and 5 and do not exist
-//     yet): a killer without a party gets CUser::GetExp 0x004581b0 x 1.2
+//   - Normal PvP (PvPGetDeathType 3; duel deaths 4 and 5 are handled
+//     separately): a killer without a party gets CUser::GetExp 0x004581b0 x 1.2
 //     through AddExpFromUser (exp charms apply), KillPCFrom, then
 //     ItemDropByUser. In a party, every member within 100 units gets
 //     GetExp(own level) x m_PartyExp[size] (m_RaidPartyExp for a raid) x
@@ -45,8 +45,8 @@ import (
 //     on the ground; else (or nobody in range) it lies on the ground for
 //     the killer and the killer's party.
 //
-// Not modeled: CWorld::AddKillCount (the country kill tally behind the
-// KC status), duel and guild duel deaths.
+// Country blessing and duel counters are handled by killcount.go, duel.go and
+// guildduel.go. Native redeemable reward stages are in pvpreward.go.
 
 const (
 	damageByUser       = 1

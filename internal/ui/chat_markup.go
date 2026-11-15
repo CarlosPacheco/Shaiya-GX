@@ -22,6 +22,10 @@ type chatRun struct {
 
 // Only trusted native notices interpret color markup. Player chat is literal.
 func wrapChatMarkup(f *Font, text string, base [4]float32, markup bool, itemIcon ...bool) ([][]chatRun, []string) {
+	return wrapMarkupWidth(f, text, base, markup, 316, itemIcon...)
+}
+
+func wrapMarkupWidth(f *Font, text string, base [4]float32, markup bool, width int, itemIcon ...bool) ([][]chatRun, []string) {
 	var glyphs []chatGlyph
 	color := base
 	for len(text) > 0 {
@@ -68,7 +72,7 @@ func wrapChatMarkup(f *Font, text string, base [4]float32, markup bool, itemIcon
 		}
 		candidate := ""
 		for _, cluster := range textwire.Graphemes(remaining.String()) {
-			if cut > 0 && chatMarkupWidth(f, candidate+cluster, markup && len(itemIcon) > 0 && itemIcon[0]) > 316 {
+			if cut > 0 && chatMarkupWidth(f, candidate+cluster, markup && len(itemIcon) > 0 && itemIcon[0]) > width {
 				break
 			}
 			if cluster == " " {

@@ -148,7 +148,19 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 	}
-	if e := a.state.Entities[a.shop.npcID]; e != nil && a.npcQuestUI != nil && (a.shop.questMode || e.NpcType != 1 && e.NpcType != 2 && e.NpcType != 3 && e.NpcType != 6 && e.NpcType != 11) {
+	if e := a.state.Entities[a.shop.npcID]; e != nil && e.NpcType == 4 && a.pvpRewardUI != nil {
+		if a.pvpRewardMessage != nil && a.pvpRewardMessage.Visible {
+			return false
+		}
+		x, y := a.pvpRewardUI.Origin(w, h)
+		if start(&a.pvpRewardUI.Position, x, y, ui.PvPRewardWidth, ui.PvPRewardHeight, 75, 400) {
+			return true
+		}
+		if pointInside(in, x, y, ui.PvPRewardWidth, ui.PvPRewardHeight) {
+			return false
+		}
+	}
+	if e := a.state.Entities[a.shop.npcID]; e != nil && a.npcQuestUI != nil && (a.shop.questMode || e.NpcType != 1 && e.NpcType != 2 && e.NpcType != 3 && (e.NpcType != 4 || a.pvpRewardUI == nil) && e.NpcType != 6 && e.NpcType != 11) {
 		a.npcQuestUI.Detail = a.npcQuest.selected != 0
 		x, y := a.npcQuestUI.Origin(w, h)
 		height := 391
@@ -325,6 +337,9 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 	}
 	if a.marketUI != nil {
 		out["shop"] = &a.marketUI.Position
+	}
+	if a.pvpRewardUI != nil {
+		out["pvp_rewards"] = &a.pvpRewardUI.Position
 	}
 	if a.gateUI != nil {
 		out["gatekeeper"] = &a.gateUI.Position

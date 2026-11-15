@@ -111,6 +111,9 @@ type App struct {
 	inventoryUI                         *ui.Inventory
 	statusUI                            *ui.Status
 	marketUI                            *ui.Market
+	pvpRewardUI                         *ui.PvPRewardPanel
+	pvpRewardMessage                    *ui.Message
+	pvpReward                           pvpRewardView
 	mallUI                              *ui.Mall
 	mallConfirm                         *ui.Message
 	mall                                mallView
@@ -395,6 +398,12 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.marketUI, err = ui.NewMarket(a); err != nil {
 		return nil, err
 	}
+	if a.pvpRewardUI, err = ui.NewPvPRewardPanel(a); err != nil {
+		return nil, err
+	}
+	if a.pvpRewardMessage, err = ui.NewMessage(a); err != nil {
+		return nil, err
+	}
 	if a.mallUI, err = ui.NewMall(a, a.white); err != nil {
 		return nil, err
 	}
@@ -627,6 +636,9 @@ func (a *App) drawFrame(w, h int) {
 	if a.screen == screenWorld && a.duelMessage != nil {
 		a.duelMessage.Draw(a.sprites, a.font, w, h)
 	}
+	if a.screen == screenWorld && a.pvpRewardMessage != nil {
+		a.pvpRewardMessage.Draw(a.sprites, a.font, w, h)
+	}
 	if a.screen == screenWorld && a.guildCreateUI != nil {
 		a.guildCreateUI.Draw(a.sprites, a.font, w, h)
 	}
@@ -716,6 +728,10 @@ func (a *App) backToLogin(msg string) {
 	a.enchant = enchantView{}
 	a.compose = composeView{}
 	a.bank = warehouseView{}
+	a.pvpReward = pvpRewardView{}
+	if a.pvpRewardMessage != nil {
+		a.pvpRewardMessage.Visible = false
+	}
 	a.questLog = questLogView{}
 	a.exchange = exchangeView{}
 	a.playerContext = playerContext{}
@@ -888,6 +904,7 @@ func (a *App) pumpWorld() {
 			a.confirmedAnimation(p)
 			a.confirmedGesture(ev.Op)
 			a.confirmedSkills(ev.Op)
+			a.confirmedPvPReward(ev.Op)
 			a.confirmedSkillFeedback(ev.Op)
 			if ev.Op == proto.SkillDetectInfo {
 				v := a.state.LastDetectInfo

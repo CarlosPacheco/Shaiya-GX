@@ -553,6 +553,8 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 			id, _ := packet.U32(p[2:])
 			s.useNpc(id)
 		}
+	case packet.Opcode(proto.PvPRewardStatus), packet.Opcode(proto.PvPRewardKill), packet.Opcode(proto.PvPRewardDeath):
+		s.handlePvPReward(op, p)
 	case packet.PartyInvite, packet.PartyInviteName:
 		s.handlePartyInvite(op, p)
 	case packet.PartyAnswer:

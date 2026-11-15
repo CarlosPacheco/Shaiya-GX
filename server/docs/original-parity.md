@@ -71,6 +71,41 @@ gaps; **invented** is still a GX Server rule to replace.
 | Guild ranking battle and ranking | `CMap::IsGuildRankMapOpenTime` 0x00428d20, `GetGuildRankNotices` 0x00428eb0, `CUser::ZoneEnterUserMove`, `CMob::ItemDrop` -> `CGuild::SendRankingZone` 0x0042c6e0, `CZone::UpdateCloseGuildRanking`, `CWorldSendThread::Run`, `CGuildMgr::UpdateGuildPointRank` 0x00432b70, usp_Save_GuildInfo_E2 | done: CreateType R maps (map 50, Sunday 21:00 for 1 hour) open per CreateTime (two slots, past-midnight wrap); notices 0x0D26 (map, start hour at 30/10 minutes before, 100 open, 101/102 ten/one minute before the close); each guild enters its own instance during the battle (no guild or closed: the move fails), every entry counted; Money1 0 / Money2 > 0 mobs give Money2 points to the killer's guild instead of gold, 0x0D27 (guild points, country best and its guild) to the members inside; at the close everyone goes to the bind point and empty instances are removed; 30 minutes later each guild's value is points + min(25 x entries + duel bonus, points / 2), each country ranks its guilds with a value (equal values keep the first, as the original map insert), top 30 ranked 1-30 and the rest 31, stored with usp_Save_GuildInfo_E2 and sent per country (0x0D37). Not modelled: the duel bonus (no guild duels yet) and the house keep-etin settlement |
 | Guilds (rest) | house, NPC upgrades, etin | missing |
 
+## PvP rank titles and rewards
+
+The client reference is EP5.4 SHA256
+`8e5ef14a2a3bfef15bae61b03d185e551b6c3fd44d09a2861d57428400bb3263`.
+The 31 kill thresholds at 0x0070b2e8 drive both `grade2` nameplate icons
+(0x00443f90) and Status titles (0x00504285). Native title IDs are 5450/5451
+plus 5389-5403, with 5404 alone for the last rank. The full nameplate path
+compensates its temporary -6px offset before the final name draw
+(0x0044bd3c, 0x0044be19, 0x0044bfbf-0x0044c068); icons sit 1px beyond the
+name and 3px above it. GX loads the atlas only for a visible ranked label.
+
+The server reference is SHA256
+`0fb7c9f13b5bcf186118f8bfe73ab214226b93e8aa502b8e6fded4a8312bc547`.
+Its `g_tKillInfo` at 0x00541d70 and `g_tDeathInfo` at 0x00541eb0 each have
+16 stages ending at 200,000; `g_nMaxKillGrow` at 0x00541f70 is 16 for all
+three eligible modes. `KillPCTo` / `KillPCFrom` retain those counter caps.
+The inactive NEW_SERVER doubling option is not enabled in GX.
+
+`CUser::PacketMaininterface` admits native reward requests 0x0218-0x021A
+for non-easy characters at level 16+. `StatusKillDeathResult` (0x0048c8a0)
+reports next stages. `StatusKillResult` (0x0048c640) and `StatusDeathResult`
+(0x0048c750) redeem the next earned stage only, saving `KillLevel`/`DeadLevel`
+with the updated stat pool/gold. The reply layouts are two u8 stage fields,
+result u8 plus stat delta u8, and result u8 plus gold delta u32. A failed
+claim grants nothing; GX initializes its failed delta to zero. Gold addition
+saturates at uint32 maximum. No client-supplied count, point amount or gold
+amount is accepted.
+
+`StatResetStatus` (0x00480660, store 0x0048089e to CUser+0x15c) clears
+claimed kill rewards and restores level-derived points, leaving earned kills
+and death claims intact. Their PvP stat rewards can be claimed again after
+the reset. The EP5 client previews 31 reward rows; these do not authorize
+stages beyond the reference server's 16. The client updates Title, stat pool,
+gold and claim controls from confirmed packets, including re-entry and reset.
+
 ## Obelisk source audit
 
 Relic gameplay remains pending in GX. The reference executable is the local

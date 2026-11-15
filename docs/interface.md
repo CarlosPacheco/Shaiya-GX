@@ -257,6 +257,30 @@ with counts remaining readable above cooldown shading. Skill levels keep
 their existing colour. The inventory actor has frontal light and full ambient
 fill; this affects only its preview, preserving the world and portrait lighting.
 
+Player names with PvP kills show the original kill rank icon from `grade2.tga`
+(31 ranks, from 1 to 1,000,000 kills; ranks 1-16 in the left column, 17-31 in
+the right) 1px to the right of the name and 3px above it. The name stays centred;
+the native temporary -6px offset is compensated before its final draw.
+Own kills come from 0x020E/0x0105 and other players' from 0x0522; a character
+without kills shows no icon.
+
+Status (T) shows server-confirmed kills, deaths, duel victories and defeats.
+Its Title field uses the same rank table as the world icon: ranks 1-15 combine
+SysMsg 5450 with 5389-5403, ranks 16-30 use 5451 with those names, and rank 31
+uses 5404 alone. Zero kills leaves Title blank. Names are read from the external
+SysMsg table; they are not translated or hardcoded in the client.
+
+The PvP Manager (NPC type 4) opens the original Warrior Reward panel, with its
+portrait, coloured explanation, rank guide, scroll controls and two confirmed
+claim actions. Normal mode or higher and level 16 are required. Native
+0x0218/0x0219/0x021A carry next claim stages, awarded stat points and death-benefit
+gold. Each action redeems one earned stage; reconnects retain claimed stages.
+The reference EP4.5 server has 16 reward stages and caps kills/deaths at 200,000;
+the EP5 client contains 31 display/preview ranks. The extended artwork/table
+does not raise the server limit. A stat reset preserves the earned kill count
+and clears its claimed reward stages, allowing their points to be redeemed
+again; death-benefit claims are preserved.
+
 Swimming and floating use the original 007_swim and 006_swnormal clips, including
 race/sex filename aliases. Entering swimming releases a previous locked pose;
 water locomotion takes precedence over sitting in presentation. Surface contact

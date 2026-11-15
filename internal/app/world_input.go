@@ -70,6 +70,15 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		a.updateGateConfirm(in, w, h)
 		return platform.Input{MouseX: in.MouseX, MouseY: in.MouseY}
 	}
+	if a.pvpRewardMessage != nil && a.pvpRewardMessage.Visible {
+		if a.state.Self.Dead || a.state.Entities[a.shop.npcID] == nil {
+			a.pvpRewardMessage.Visible = false
+			a.pvpReward.confirm = 0
+		} else {
+			a.updatePvPRewards(in, w, h)
+		}
+		return platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}
+	}
 	if a.blacksmith.quantity {
 		a.updateEnchantQuantity(in)
 		return platform.Input{MouseX: in.MouseX, MouseY: in.MouseY}

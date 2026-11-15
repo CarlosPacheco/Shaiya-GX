@@ -50,3 +50,28 @@ func TestStatusUsesOnlyConfirmedNativeSpeedMessages(t *testing.T) {
 		t.Fatal("native blocked labels", s)
 	}
 }
+
+func TestStatusTitleFollowsConfirmedKillUpdates(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID = 100
+	a.msg = map[int]string{5450: "Blue", 5451: "Yellow", 5389: "localized first", 5392: "localized fourth", 5404: "localized final"}
+	for _, c := range []struct {
+		op    proto.Opcode
+		kills uint32
+		want  string
+	}{{proto.UserKillCountUpdate, 1000, "Blue localized fourth"}, {proto.CharacterPvPKills, 200000, "Yellow localized first"}, {proto.UserKillCountUpdate, 1000000, "localized final"}, {proto.UserKillCountUpdate, 0, ""}} {
+		w := proto.NewWriter(c.op)
+		if c.op == proto.UserKillCountUpdate {
+			w.U8(0)
+		} else {
+			w.U32(100)
+		}
+		w.U32(c.kills)
+		if _, err := a.state.Apply(w.Bytes()); err != nil {
+			t.Fatal(err)
+		}
+		if got := a.statusState().Title; got != c.want {
+			t.Fatalf("kills %d title %q, want %q", c.kills, got, c.want)
+		}
+	}
+}

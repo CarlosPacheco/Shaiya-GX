@@ -890,6 +890,10 @@ func (a *App) releaseWorld() {
 			a.socialUI.Name = ui.TextField{Max: 20}
 		}
 		a.guildDuel = guildDuelView{}
+		a.pvpReward = pvpRewardView{}
+		if a.pvpRewardMessage != nil {
+			a.pvpRewardMessage.Visible = false
+		}
 		if a.guildDuelMessage != nil {
 			a.guildDuelMessage.Visible = false
 		}

@@ -157,6 +157,8 @@ type State struct {
 	LastAttack             proto.AttackResult
 	LastFallDamage         proto.FallDamage
 	PvPCountsKnown         [4]bool
+	PvPRewards             proto.PvPRewards
+	LastPvPReward          proto.PvPRewardResult
 	Phase                  Phase
 	Faction                proto.Faction
 	Slots                  map[uint8]proto.CharacterSlot // non-empty slots only
@@ -254,6 +256,31 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		s.Blessing.apply(op, value, s.Phase == PhaseLoading)
+	case proto.PvPRewardStatus:
+		value, err := proto.DecodePvPRewards(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.PvPRewards = value
+	case proto.PvPRewardKill, proto.PvPRewardDeath:
+		value, err := proto.DecodePvPRewardResult(p, op == proto.PvPRewardDeath)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastPvPReward = value
+		if value.OK {
+			if op == proto.PvPRewardKill {
+				s.Details.StatPoint += uint16(value.Value)
+				if s.PvPRewards.KillStage < 17 {
+					s.PvPRewards.KillStage++
+				}
+			} else {
+				s.Details.Money = uint32(min(uint64(s.Details.Money)+uint64(value.Value), uint64(^uint32(0))))
+				if s.PvPRewards.DeathStage < 17 {
+					s.PvPRewards.DeathStage++
+				}
+			}
+		}
 	case proto.UserKillCountUpdate:
 		value, err := proto.DecodePvPCountUpdate(p)
 		if err != nil {
@@ -554,6 +581,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		if d.Result == 1 {
 			s.Details.StatPoint, s.StatsKnown = d.Points, false
+			s.PvPRewards.KillStage = 1
 			for i, c := range s.Slots {
 				if c.ID == s.SelfID {
 					c.Str, c.Rec, c.Int, c.Wis, c.Dex, c.Luc = d.Str, d.Rec, d.Int, d.Wis, d.Dex, d.Luc
@@ -1003,6 +1031,8 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			s.DeathLossFree = false
 			s.Blessing = BlessingState{}
 			s.PvPCountsKnown = [4]bool{}
+			s.PvPRewards = proto.PvPRewards{}
+			s.LastPvPReward = proto.PvPRewardResult{}
 			s.Mall = MallState{}
 			s.Exchange = ExchangeState{}
 			s.Duel = DuelState{}

@@ -24,6 +24,7 @@ type Status struct {
 }
 
 type StatusState struct {
+	Title                  string
 	Class, Mode            string
 	AttackSpeed, MoveSpeed string
 	Base                   proto.StatPoints
@@ -162,6 +163,9 @@ func (v *Status) Draw(s *render.Sprites, f *Font, w, h int, state StatusState) {
 	text := func(value string, dx, dy, width int) { f.Draw(s, value, mainX+dx, y+dy, white, width) }
 	text(state.Class, 75, 80, 66)
 	text(state.Mode, 190, 80, 68)
+	// Native 0x0050436a-0x005043e0: title centred in the 182px field
+	// at (73, 99+2), relative to the main sheet even when expanded.
+	text(state.Title, 73+max(0, (182-f.Width(state.Title))/2), 101, 182)
 	text(fmt.Sprintf("%d / %d", state.Details.Exp, state.Details.NextExp), 78, 132, 180)
 	for i, index := range statOrder {
 		text(fmt.Sprint(state.Base[index]), 78+i/3*114, 174+i%3*20, 67)

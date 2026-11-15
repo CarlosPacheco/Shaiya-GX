@@ -220,6 +220,9 @@ func resetStats(ch *db.Character) {
 	ch.Wis += probe.Wis
 	ch.Luc += probe.Luc
 	ch.StatPoint = probe.StatPoint
+	// Native StatResetStatus 0x0048089e clears the claimed-kill threshold
+	// (CUser+0x15c). Earned kills remain; their rewards can be redeemed again.
+	ch.KillLevel = 0
 }
 
 // equipSlotRealType is the real item type each equipment slot takes in
