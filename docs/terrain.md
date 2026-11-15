@@ -89,6 +89,6 @@ thin ladders and climbable ivy remain visible from either direction. They stay
 non-solid as in Phoenix; this visual support does not introduce a climbing
 movement mode or change server collision resources.
 
-Server-authoritative falling now applies the separate [GX fall-damage
+Server-authoritative falling can apply the optional, default-disabled [GX fall-damage
 rules](fall-damage.md) on supported landings. Spawn settling, teleport resets
 and deep-water entry do not inherit an earlier drop.

@@ -21,6 +21,7 @@ func TestFallDamageCurve(t *testing.T) {
 }
 func fallSession(t *testing.T, height float32) (*Session, time.Time) {
 	t.Helper()
+	t.Setenv("RAPTURE_FALL_DAMAGE", "true")
 	s, _ := forgeRuleSession(t)
 	g := &mapgeometry.Geometry{}
 	g.Reindex()
@@ -141,5 +142,15 @@ func TestFallLandingSendsFramedDamageThenAuthoritativePools(t *testing.T) {
 		case <-timer.C:
 			t.Fatal("fall notification or hp frame missing")
 		}
+	}
+}
+
+func TestFallDamageDisabledByDefault(t *testing.T) {
+	s, now := fallSession(t, 32)
+	t.Setenv("RAPTURE_FALL_DAMAGE", "")
+	before := s.char.CurrentHP
+	finishTestFall(s, now)
+	if s.char.CurrentHP != before || s.dead {
+		t.Fatal("disabled fall damage changed health or killed player")
 	}
 }

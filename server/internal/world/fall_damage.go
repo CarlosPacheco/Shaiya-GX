@@ -2,6 +2,7 @@ package world
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 	"math"
 )
@@ -15,7 +16,7 @@ func fallDamage(drop float32, maxHP uint32) uint32 {
 	return uint32(math.Ceil(float64(maxHP) * fraction * fraction))
 }
 func (s *Session) applyFallDamage(drop float32) {
-	if s.char == nil || s.dead || s.invulnerable() {
+	if !config.FallDamageEnabled() || s.char == nil || s.dead || s.invulnerable() {
 		return
 	}
 	st := s.stats()

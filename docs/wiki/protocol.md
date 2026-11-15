@@ -43,7 +43,8 @@ item requirements, database contents, existing packet layouts or movement rules.
 The client falls back to its local catalog when connected to an older server.
 Update and restart both client and world to apply the synchronized fit.
 
-`0x7F0C` is a server-only fall-damage notification: target ID and actual damage
+`0x7F0C` is a server-only fall-damage notification (the feature is ready but
+disabled by default; opt in with `RAPTURE_FALL_DAMAGE=true`): target ID and actual damage
 (`uint32` each; 10 bytes including opcode, 12 including the server length).
 Native `0x0521` still supplies health. The server never accepts client-reported
 fall distances/damage. SysMsg 5 reports the confirmed amount. See

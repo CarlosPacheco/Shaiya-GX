@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -116,4 +117,10 @@ func sqliteURIPath(path string) string {
 		return "/" + path
 	}
 	return path
+}
+
+// FallDamageEnabled enables the completed optional GX landing rule. Invalid or absent values keep it off.
+func FallDamageEnabled() bool {
+	enabled, _ := strconv.ParseBool(os.Getenv("RAPTURE_FALL_DAMAGE"))
+	return enabled
 }

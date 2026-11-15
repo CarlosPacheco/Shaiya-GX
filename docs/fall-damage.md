@@ -1,5 +1,10 @@
 # GX fall damage
 
+The feature is implemented and tested, but **disabled by default**. Enable it
+explicitly with `RAPTURE_FALL_DAMAGE=true` in the server environment (or
+`.local/runtime.env`) and restart the world server. Missing, false or invalid
+values keep it inactive; disabled landings never change HP or emit damage notices.
+
 Fall damage is a GX rule, chosen independently of native EP5 damage formulas.
 The world server tracks the highest point of an airborne interval and evaluates
 its vertical drop once a solid supported landing is reached.
