@@ -359,7 +359,10 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 	c.modeButton.OriginY = y
 	c.modeButton.Draw(s)
 	label := c.ChannelNames[min(int(c.Channel), 5)]
-	f.Draw(s, label, 7, y+6, white, 44)
+	// Centre the font cell in the 22px row; a fixed +6 left the larger chat
+	// font touching the bottom border.
+	textY := chatEntryTextY(y, f.Height)
+	f.Draw(s, label, 7, textY, white, 44)
 	// Keep the measured field width while omitting the language icon by request.
 	s.Draw(c.input, 64, float32(y), 2, 22, 0, .5, 2.0/512, 150.0/256, white)
 	s.Draw(c.input, 66, float32(y), 288, 22, 2.0/512, .5, 270.0/512, 150.0/256, white)
@@ -368,12 +371,17 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 	for len(shown) > 0 && f.Width(shown) > 262 {
 		shown = textwire.DropFirst(shown)
 	}
-	restoreClip := s.ClipRect(69, float32(y+4), 264, 17)
-	f.Draw(s, shown, 69, y+6, white, 262)
+	restoreClip := s.ClipRect(69, float32(y+2), 264, 19)
+	f.Draw(s, shown, 69, textY, white, 262)
 	if typing && chatNow().UnixMilli()%1000 < 500 {
-		s.Draw(blank, float32(69+f.Width(shown)), float32(y+6), 1, float32(f.Height), 0, 0, 1, 1, white)
+		s.Draw(blank, float32(69+f.Width(shown)), float32(textY), 1, float32(f.Height), 0, 0, 1, 1, white)
 	}
 	restoreClip()
+}
+
+// chatEntryTextY centres a font cell in the 22px entry row.
+func chatEntryTextY(rowY, fontHeight int) int {
+	return rowY + max(0, 22-fontHeight)/2
 }
 
 var chatChannelNames = [6]string{"Normal", "Trade", "Guild", "Party", "Area", "Whisper"}
