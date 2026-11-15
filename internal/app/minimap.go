@@ -256,7 +256,10 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 		return v.dragging || panelPointer(in, x, y, int(544*scale), int(579*scale))
 	}
 	x, y := a.minimap.Origin(w, h)
-	if a.wv.world != nil && a.wv.world.WLD != nil && a.wv.world.WLD.MapSize > 0 {
+	if action.Zoom != 0 {
+		v.click = mapClick{} // Button hit boxes can overlap the circular map edge.
+	}
+	if action.Zoom == 0 && a.wv.world != nil && a.wv.world.WLD != nil && a.wv.world.WLD.MapSize > 0 {
 		fx, fy := float32(in.MouseX-x-16)/136, float32(in.MouseY-y-16)/136
 		dx, dy := fx-.5, fy-.5
 		if v.click.update(in, dx*dx+dy*dy <= .25) {
