@@ -13,16 +13,24 @@ one-second *remaining* portion of a longer cooldown. Entry snapshots, server
 reuse validation/persistence, confirmed client timers and action-bar duration
 use this same rule. Mob AI reuse is unchanged.
 
-The 800ms attack/skill pause restricts **movement**, not the next skill request.
-A shared **300ms per-player cast cadence** prevents rapid packet/key floods.
-It applies across different skills, buffs and self-heals, independently of their
-reuse timers. An accepted instant release starts this interval; prepared casts
-reserve it at the start and renew it on release. Completing a prepared cast is
-never rejected by its own request cadence. Rejected requests do not extend the
-server interval. Buff cancellation and ordinary item reuse are unaffected.
-Client prediction uses the same interval; instant acknowledgments do not add
-another network round trip to it. Instant skills can still chain during the
-800ms movement pause, at roughly three to four casts per second.
+Basic attacks, skills and combos now use **one shared attack-speed action clock**.
+The live server index selects the native interval: 4000ms unarmed, 2000ms Normal,
+1500ms Fast, 1250ms Very Fast and **1000ms Extremely Fast**. The full 0–9 table is
+in [Attack speed](wiki/attack-speed.md). Equipment, mastery, haste and slows affect
+this same recovery immediately; alternation and stop/start requests cannot bypass
+it. The temporary fixed 300ms spell interval has been removed.
+
+An accepted instant skill reserves the action clock at release. A prepared skill
+reserves it at the start; its release completes without charging a second full
+attack interval. Authored preparation times and longer per-skill cooldowns still
+apply. The separate 800ms movement stop is unchanged.
+
+The client retains only the latest spell pressed during recovery. It stops basic
+auto-repeat without clearing the shared clock, then revalidates and sends that
+spell when recovery permits it. This avoids automatic basics consuming every
+available action slot. Manual movement, death, mounting, expiry or a changed
+non-self recipient cancel the queued intent; repeated keys replace it rather than
+building a burst. Buff cancellation and ordinary item reuse are unaffected.
 Ordered instant predictions keep older acknowledgments from restarting the next
 combo animation; area/multi-hit replies likewise preserve newer predictions.
 Real cast times, MP/SP costs, action restrictions and each longer skill cooldown

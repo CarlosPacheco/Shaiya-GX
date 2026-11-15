@@ -19,7 +19,12 @@ The weapon field is the index itself: subtracting one selects the wrong delay.
 | 9 | Extremely fast | 1000 |
 | 255 | Cannot attack | Blocked |
 
-Both PvE and PvP autoattacks use this table and the last server-side swing time.
+PvE basics, PvP basics, player skills and combos use this table and **one shared
+server-side action timestamp**. Instant skills reserve it on release; prepared
+casts reserve it on start and complete without charging the interval twice.
+Extremely Fast is the fastest tier for all of them: **1000ms**. There is no
+independent 300ms spell rate. The client buffers only the latest spell intent
+during recovery and stops basic auto-repeat so the queued spell gets its turn.
 Restart requests, target switches, stop/start floods and client speed packets do
 not reset that clock. Removing or expiring a bonus changes the next allowed
 swing according to the new derived interval. Stun, sleep, mounting and active

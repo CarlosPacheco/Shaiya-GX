@@ -19,6 +19,7 @@ func TestAttackSpeedAgainstIsolatedGX(t *testing.T) {
 	b, _, _, waitB := testworld.EnterAs(t, os.Getenv("SHAIYA_TEST_PARTNER"), os.Getenv("SHAIYA_TEST_PARTNER_PASSWORD"))
 	waitB(func() bool { e := b.Entities[a.SelfID]; return e != nil && e.Speed != nil && e.Speed.Attack == 7 })
 	wait(func() bool { return a.Entities[b.SelfID] != nil })
+	var lastSwing time.Time
 	cadence := func(ms int) {
 		t.Helper()
 		send(proto.UserAttackPacket(b.SelfID))
@@ -39,6 +40,7 @@ func TestAttackSpeedAgainstIsolatedGX(t *testing.T) {
 					continue
 				}
 				now := time.Now()
+				lastSwing = now
 				if !previous.IsZero() {
 					delta := now.Sub(previous)
 					if delta < time.Duration(ms-70)*time.Millisecond || delta > time.Duration(ms+500)*time.Millisecond {
@@ -63,6 +65,8 @@ func TestAttackSpeedAgainstIsolatedGX(t *testing.T) {
 	wait(func() bool { return a.Self.Speed.Attack == 8 })
 	waitB(func() bool { return b.Entities[a.SelfID].Speed.Attack == 8 })
 	cadence(1250) // Native Flash Ring AttackTime +1.
+	// Haste shares recovery with the preceding basic attack.
+	time.Sleep(time.Until(lastSwing.Add(1300 * time.Millisecond)))
 	send(proto.UseSkillPacket(41, a.SelfID, true))
 	wait(func() bool { return a.Self.Speed.Attack == 9 })
 	waitB(func() bool { return b.Entities[a.SelfID].Speed.Attack == 9 })

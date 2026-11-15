@@ -125,7 +125,7 @@ func (s *Session) skillOnce(k db.CharacterSkill, def *db.SkillDef, target uint32
 		s.sendUserSkillRangeFailure(k, p)
 		return
 	}
-	s.startCooldown(k, def)
+	s.startCooldown(k, def, len(completed) > 0 && completed[0])
 	sp, mp := s.skillCosts(def, &stats)
 	s.spendDelta(mp, sp)
 	s.persist()

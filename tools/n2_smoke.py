@@ -148,6 +148,19 @@ with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
      for item_type,type_id,bag,slot,gem in ((1,1,0,5,64),(22,56,1,20,0)):
       c.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,?,?,?,?,?,?,0,?,0,0,0,0,0,'',1,datetime('now'),'N2',0)",(char_id,item_type*1000+type_id,item_uid,item_type,type_id,bag,slot,gem));item_uid+=1
   subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestAttackSpeedAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_ATTACK_SPEED='1'),check=True,timeout=90)
+  # Basics and spells share the Ext. Fast recovery; exercise the client queue too.
+  with sqlite3.connect(db) as c:
+   char_id=c.execute('SELECT CharID FROM PS_GameData_Chars WHERE UserUID=? AND Del=0',(users[0][2],)).fetchone()[0]
+   assert not c.execute('SELECT 1 FROM PS_GameData_CharItems WHERE CharID=? AND Bag=0 AND Slot=9 AND Del=0',(char_id,)).fetchone()
+   for skill,number in ((30,42),(31,43)):
+    c.execute('INSERT INTO PS_GameData_CharSkills(CharID,SkillID,SkillLevel,Number,Delay,Del) VALUES(?,?,1,?,0,0)',(char_id,skill,number))
+   item_uid=c.execute('SELECT COALESCE(MAX(ItemUID),0)+1 FROM PS_GameData_CharItems').fetchone()[0]
+   c.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,22213,?,22,213,0,9,0,0,0,0,0,0,0,'',1,datetime('now'),'N2_SHARED',0)",(char_id,item_uid))
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestSharedCombatSpeedAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_SHARED_SPEED='1'),check=True,timeout=60)
+  with sqlite3.connect(db) as c:
+   c.execute("DELETE FROM PS_GameData_CharItems WHERE CharID=? AND Maketype='N2_SHARED'",(char_id,))
+   c.execute('DELETE FROM PS_GameData_CharSkills WHERE CharID=? AND SkillID IN(30,31) AND Number IN(42,43)',(char_id,))
+   c.execute('DELETE FROM PS_GameData_CharApplySkills WHERE CharID=? AND SkillID IN(30,31)',(char_id,))
   subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestAttackMovementAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_ATTACK_MOVEMENT='1'),check=True,timeout=60)
   # Map clicks carry normalized X/Z only; the server resolves outdoor/dungeon Y.
   with sqlite3.connect(db) as c:

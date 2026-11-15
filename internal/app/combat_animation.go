@@ -129,6 +129,9 @@ func (a *App) confirmedAnimation(p []byte) {
 		}
 	case proto.CharacterMobAutoAttack, proto.CharacterUserAutoAttack, proto.MobAttackCharacter:
 		result := a.state.LastAttack
+		if a.state.SelfID != 0 && result.Source == a.state.SelfID {
+			a.markCombatAction()
+		}
 		ranged := false
 		if actor := a.playerActor(result.Source); actor != nil {
 			typ := a.playerWeapon(result.Source)

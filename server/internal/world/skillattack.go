@@ -72,7 +72,7 @@ func (s *Session) skillAttack(k db.CharacterSkill, def *db.SkillDef, target uint
 	}
 	sp, mp := s.skillCosts(def, &stats)
 	s.breakStealth()
-	s.startCooldown(k, def)
+	s.startCooldown(k, def, castPos != nil)
 	s.spendDelta(mp, sp)
 	s.persist()
 	s.send(buildSkillUsedSpMp(sp, mp), "0x050C skill used sp/mp")

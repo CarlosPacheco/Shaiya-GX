@@ -140,7 +140,7 @@ func (s *Session) friendlySkill(k db.CharacterSkill, def *db.SkillDef, target ui
 		s.sendFriendlySkillFailure(k, def, target)
 		return
 	}
-	s.startCooldown(k, def)
+	s.startCooldown(k, def, len(completed) > 0 && completed[0])
 	sp, mp := s.skillCosts(def, &stats)
 	s.spendDelta(mp, sp)
 	s.persist()

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -28,8 +29,7 @@ type weaponCombat struct {
 
 // weaponAttackDelay takes the native zero-based attack index, not index+1.
 func weaponAttackDelay(tier uint8) (time.Duration, bool) {
-	ms, ok := attackspeed.Milliseconds(tier)
-	return time.Duration(ms) * time.Millisecond, ok
+	return skilltiming.Interval(tier)
 }
 
 func equippedWeaponCombat(items []db.Item) (weaponCombat, bool) {
@@ -87,7 +87,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	// CUser::GetAttackSpeedNow: the swing index moves with gems, passives
 	// and buffs (0..9 over g_ConstUserAttackSpeed).
 	wc.Delay, _ = weaponAttackDelay(attackspeed.Tier(wc.AttackTime, stats.AttackSpeed))
-	if !s.lastAutoAttackAt.IsZero() && time.Since(s.lastAutoAttackAt) < wc.Delay {
+	if !s.lastActionAt.IsZero() && time.Since(s.lastActionAt) < wc.Delay {
 		return true
 	}
 	mob, ok := MobByID(ch.MapID, target)
@@ -127,7 +127,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	}
 	s.commitAttackStop(time.Now())
 	s.breakStealth()
-	s.lastAutoAttackAt, s.lastCombatAt = time.Now(), time.Now()
+	s.lastActionAt, s.lastCombatAt = time.Now(), time.Now()
 	SetMobAggro(ch.MapID, target, ch.ID)
 	// CUser::AttackSuccess, then CUser::AttackDamage; 0x0503 result is
 	// 0 normal, 1 critical, 3 miss.

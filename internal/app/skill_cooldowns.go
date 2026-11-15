@@ -12,7 +12,7 @@ func (a *App) confirmedSkills(op proto.Opcode) {
 	v := &a.skills
 	if op == proto.CharacterSkills {
 		a.loadSkills()
-		v.nextCastAt = 0
+		v.queuedSkill = nil
 		v.cooldowns = map[uint16]float64{}
 		v.assign = nil
 		v.editing = false
@@ -42,8 +42,5 @@ func (a *App) confirmedSkills(op proto.Opcode) {
 		v.cooldowns = map[uint16]float64{}
 	}
 	d := a.skillDefs[sdata.SkillKey{ID: r.ID, Level: r.Level}]
-	if d.ReadyTime > 0 {
-		v.nextCastAt = max(v.nextCastAt, a.clock+skilltiming.CastInterval.Seconds())
-	}
 	v.cooldowns[r.ID] = a.clock + float64(skilltiming.ReuseSeconds(d.ResetTime))
 }

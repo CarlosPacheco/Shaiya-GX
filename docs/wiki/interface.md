@@ -536,11 +536,12 @@ ladders use W/S to ascend/descend and hold position when released; see
 [ladder controls and validation](../ladders.md).
 
 Selected mobs and players show confirmed buffs/debuffs below their target HP
-frame, with native 16px icons and 18px pitch. Instant skills can chain during the
-movement pause; authored one-second player reuse values are treated as zero.
+frame, with native 16px icons and 18px pitch. Skills and basics share the native
+attack-speed recovery; authored one-second reuse values add no separate cooldown.
 See [skill targeting and effects](../skill-targeting-and-effects.md) for native
 evidence, cooldown rules and visibility validation.
 
-Skill chaining has a lightweight global 300ms cadence, enforced by GX Server
-across different spells, buffs and self-heals. The independent movement stop
-remains 800ms; authored one-second reuse values still do not add a full cooldown.
+Basics, spells, buffs and self-heals share the native attack-speed action clock,
+capped at Extremely Fast (1000ms). One pending spell can wait for recovery,
+without allowing a queued burst. The independent movement stop remains 800ms;
+authored one-second reuse values add no separate cooldown.

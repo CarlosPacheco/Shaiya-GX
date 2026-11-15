@@ -227,6 +227,10 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	if v == nil {
 		return
 	}
+	a.updateQueuedSkill(in)
+	if a.wv != v {
+		return
+	}
 	a.updateTargetEffects()
 	if a.wv != v {
 		return

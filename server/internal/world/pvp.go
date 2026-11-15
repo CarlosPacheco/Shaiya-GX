@@ -286,7 +286,7 @@ func (s *Session) userAttackSwing(target uint32) bool {
 	}
 	stats := StatsFor(ch, s.equipment())
 	wc.Delay, _ = weaponAttackDelay(attackspeed.Tier(wc.AttackTime, stats.AttackSpeed))
-	if !s.lastAutoAttackAt.IsZero() && time.Since(s.lastAutoAttackAt) < wc.Delay {
+	if !s.lastActionAt.IsZero() && time.Since(s.lastActionAt) < wc.Delay {
 		return true
 	}
 	p := s.hostileUser(target)
@@ -313,7 +313,7 @@ func (s *Session) userAttackSwing(target uint32) bool {
 	}
 	s.commitAttackStop(time.Now())
 	s.breakStealth()
-	s.lastAutoAttackAt, s.lastCombatAt = time.Now(), time.Now()
+	s.lastActionAt, s.lastCombatAt = time.Now(), time.Now()
 	p.QueueUserHit(pendingUserHit{AttackerID: ch.ID, Stats: stats, Kind: kind, X: ch.PosX, Z: ch.PosZ})
 	return true
 }
@@ -329,7 +329,7 @@ func (s *Session) tickUserHits() {
 		}
 		if s.applyUserHit(h) {
 			s.dead, s.autoAttack, s.cast = true, false, nil
-			s.lastAutoAttackAt = time.Time{}
+			s.lastActionAt = time.Time{}
 			s.clearBuffsOnDeath()
 		}
 	}

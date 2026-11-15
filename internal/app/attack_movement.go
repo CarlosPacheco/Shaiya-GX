@@ -4,7 +4,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
-	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 )
 
 func (a *App) attackMovementAllowed() bool {
@@ -44,7 +43,8 @@ func (a *App) prepareSkillMovement(p []byte) bool {
 	if len(p) != 7 || proto.Op(p) != proto.SkillUse && proto.Op(p) != proto.SkillUseNoTarget {
 		return true
 	}
-	if a.clock < a.skills.nextCastAt {
+	if !a.combatActionReady() {
+		a.queueSkill(p)
 		return false
 	}
 	k, ok := a.state.Skills[proto.NewReader(p).U8()]
@@ -63,6 +63,7 @@ func (a *App) prepareSkillMovement(p []byte) bool {
 	if !a.stopForAttack() {
 		return false
 	}
-	a.skills.nextCastAt = a.clock + skilltiming.CastInterval.Seconds()
+	a.skills.queuedSkill = nil
+	a.markCombatAction()
 	return true
 }

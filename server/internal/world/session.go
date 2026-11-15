@@ -28,7 +28,6 @@ const (
 // Session is one client connection. Only its own goroutine touches its
 // fields; other sessions reach it through its ConnectedPlayer.
 type Session struct {
-	nextSkillAt     time.Time
 	effectWatchID   uint32
 	effectWatchKind uint8
 	effectWatchAt   time.Time
@@ -82,7 +81,7 @@ type Session struct {
 	damageLedger     []damageEntry // CDamage: HP damage taken per attacker since the last death
 	duelDeathMark    bool          // the last death was a lost duel (m_nVehicleStatus -1)
 	itemAttacking    bool          // m_bItemAttack: casting gem skills
-	lastAutoAttackAt time.Time
+	lastActionAt     time.Time
 	attackMoveUntil  time.Time
 
 	positionDirty    bool
@@ -265,7 +264,7 @@ func (s *Session) tick(idle bool) {
 			}
 			if s.applyIncomingMobDamage(d) {
 				s.dead, s.autoAttack, s.cast = true, false, nil
-				s.lastAutoAttackAt = time.Time{}
+				s.lastActionAt = time.Time{}
 				s.clearBuffsOnDeath()
 			}
 		}
@@ -815,7 +814,7 @@ func (s *Session) selectCharacter(id uint32) {
 	s.skills, err = db.CharacterSkills(id)
 	s.logErr("load skills", err)
 	s.effectWatchID = 0
-	s.nextSkillAt = time.Time{}
+	s.lastActionAt = time.Time{}
 	s.skillCooldowns, s.itemCooldowns = map[uint16]time.Time{}, map[uint8]time.Time{}
 	for i := range s.skills {
 		k := &s.skills[i]

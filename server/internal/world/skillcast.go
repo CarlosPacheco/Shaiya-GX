@@ -147,9 +147,6 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		s.cancelBuff(id)
 		return
 	}
-	if time.Now().Before(s.nextSkillAt) {
-		return
-	}
 	target, _ := packet.U32(p[3:])
 	if s.mounted || s.cast != nil || s.actionBlocked() {
 		s.log.Printf("GX Server World rejected skill use (mounted, casting, stunned or asleep) character_id=%d", ch.ID)
@@ -158,6 +155,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	k, def, ok := s.knownSkill(number)
 	if !ok {
 		s.log.Printf("GX Server World rejected skill use: no skill in slot number=%d", number)
+		return
+	}
+	s.autoAttack = false
+	if !s.combatActionReady(time.Now()) {
 		return
 	}
 	if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && !s.attackMovementAllowed(time.Now()) {
@@ -241,7 +242,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		pos = &[2]float32{}
 	}
 	now := time.Now()
-	s.nextSkillAt = now.Add(skilltiming.CastInterval)
+	s.lastActionAt = now
 	s.cast = &pendingCast{target, number, op, now.Add(castTime), pos}
 	s.autoAttack = false
 	s.syncPlayerSpeed(false)
@@ -258,9 +259,11 @@ func (s *Session) processPendingCast() {
 	s.resolveSkill(c.targetMobID, c.number, c.op, c.targetPos)
 }
 
-func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef) {
+func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef, prepared ...bool) {
 	now := time.Now()
-	s.nextSkillAt = now.Add(skilltiming.CastInterval)
+	if len(prepared) == 0 || !prepared[0] {
+		s.lastActionAt = now
+	}
 	s.commitAttackStop(now)
 	reuse := skilltiming.ReuseSeconds(def.ResetTimeSeconds)
 	if reuse == 0 {

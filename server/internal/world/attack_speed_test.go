@@ -74,13 +74,13 @@ func TestAttackCadenceCannotBeBypassedByRestartOrTargetSwitch(t *testing.T) {
 		if d, ok := weaponAttackDelay(tier); !ok || d != time.Duration(ms)*time.Millisecond {
 			t.Fatal("delay mismatch")
 		}
-		s.lastAutoAttackAt = time.Now().Add(-time.Duration(ms-100) * time.Millisecond)
-		last := s.lastAutoAttackAt
+		s.lastActionAt = time.Now().Add(-time.Duration(ms-100) * time.Millisecond)
+		last := s.lastActionAt
 		// Fake targets must not even reach target lookup while still cooling down.
 		for i := range 200 {
 			s.dispatch(packet.AutoAttackStop, proto.StopAttackPacket())
 			s.dispatch(packet.CharacterMobAutoAttack, proto.MobAttackPacket(uint32(980000+i)))
-			if s.lastAutoAttackAt != last || !s.autoAttack {
+			if s.lastActionAt != last || !s.autoAttack {
 				t.Fatalf("tier %d restart bypassed cadence", tier)
 			}
 		}
