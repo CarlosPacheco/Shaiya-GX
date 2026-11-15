@@ -2,17 +2,52 @@ package collision
 
 import "math"
 
-const cellSize = 16
+const (
+	cellSize          = 16
+	triangleBlockSize = 32
+)
+
+// triangleRefs preserves insertion order while bounding consecutive groups of
+// references. Bounds are built once; queries skip distant groups before dedup.
+type triangleRefs struct {
+	ids    []int
+	bounds []Box
+}
+
+func (r *triangleRefs) add(id int, b Box) {
+	block := len(r.ids) / triangleBlockSize
+	if len(r.ids)%triangleBlockSize == 0 {
+		r.bounds = append(r.bounds, b)
+	} else {
+		for a := range 3 {
+			r.bounds[block].Min[a] = min(r.bounds[block].Min[a], b.Min[a])
+			r.bounds[block].Max[a] = max(r.bounds[block].Max[a], b.Max[a])
+		}
+	}
+	r.ids = append(r.ids, id)
+}
+
+func (r triangleRefs) visit(b Box, emit func(int)) {
+	for block, bounds := range r.bounds {
+		if !b.Overlaps(bounds) {
+			continue
+		}
+		start := block * triangleBlockSize
+		for _, id := range r.ids[start:min(start+triangleBlockSize, len(r.ids))] {
+			emit(id)
+		}
+	}
+}
 
 // Index is an immutable uniform-grid broad phase. Queries own their scratch
 // state; a prepared index can be read concurrently without render residency.
 type Index struct {
 	triangles []Triangle
-	cells     map[[2]int][]int
-	global    []int
+	cells     map[[2]int]triangleRefs
+	global    triangleRefs
 }
 
-func NewIndex() *Index { return &Index{cells: map[[2]int][]int{}} }
+func NewIndex() *Index { return &Index{cells: map[[2]int]triangleRefs{}} }
 func (i *Index) Len() int {
 	if i == nil {
 		return 0
@@ -27,18 +62,20 @@ func (i *Index) Add(t Triangle) {
 	i.triangles = append(i.triangles, t)
 	b := t.Bounds()
 	if !gridBox(b) {
-		i.global = append(i.global, id)
+		i.global.add(id, b)
 		return
 	}
 	x0, x1, z0, z1 := cells(b)
 	if (x1-x0+1)*(z1-z0+1) > 64 {
-		i.global = append(i.global, id)
+		i.global.add(id, b)
 		return
 	}
 	for z := z0; z <= z1; z++ {
 		for x := x0; x <= x1; x++ {
 			key := [2]int{x, z}
-			i.cells[key] = append(i.cells[key], id)
+			refs := i.cells[key]
+			refs.add(id, b)
+			i.cells[key] = refs
 		}
 	}
 }
@@ -51,18 +88,17 @@ func (i *Index) Visit(b Box, visit func(Triangle)) {
 	}
 	seen := map[int]struct{}{}
 	emit := func(id int) {
+		t := i.triangles[id]
+		if !b.Overlaps(t.Bounds()) {
+			return
+		}
 		if _, ok := seen[id]; ok {
 			return
 		}
 		seen[id] = struct{}{}
-		t := i.triangles[id]
-		if b.Overlaps(t.Bounds()) {
-			visit(t)
-		}
+		visit(t)
 	}
-	for _, id := range i.global {
-		emit(id)
-	}
+	i.global.visit(b, emit)
 	if !gridBox(b) {
 		for id := range i.triangles {
 			emit(id)
@@ -78,9 +114,7 @@ func (i *Index) Visit(b Box, visit func(Triangle)) {
 	}
 	for z := z0; z <= z1; z++ {
 		for x := x0; x <= x1; x++ {
-			for _, id := range i.cells[[2]int{x, z}] {
-				emit(id)
-			}
+			i.cells[[2]int{x, z}].visit(b, emit)
 		}
 	}
 }

@@ -53,6 +53,13 @@ remove blockers. SMOD collision readers retain display positions/faces for the o
 DG readers skip unused display buffers. Animation files are not collision inputs.
 Missing or malformed required collision data reports a map-loading error.
 
+The shared uniform-grid index bounds consecutive groups of 32 triangle references
+when building each cell and the global list. Queries skip disjoint groups, then
+reject disjoint triangle bounds before adding IDs to query-local deduplication.
+This reduces repeated sliding, stepping and support work against dense meshes
+without changing candidate order, contact rules or collision geometry. The index
+is rebuilt at load time; existing geometry resources require no regeneration.
+
 VANI and MANI remain in the visual scene and continue animating. The shared
 physics loader omits those instances entirely, including static-looking MANI
 placements; neither animation bounds nor display triangles create a blocker.
