@@ -16,7 +16,7 @@ import (
 // ep5_weapon_bindings.json probes. IT2 archetypes follow Parsec ItmCharacterCode.
 var itemBones = map[string][4]int{
 	"humf": {24, 14, 10, 0}, "huwf": {27, 17, 13, 1}, "humm": {24, 14, 10, 2}, "huwm": {27, 17, 13, 3},
-	"elmr": {22, 14, 10, 4}, "elwr": {26, 18, 14, 5}, "elmm": {26, 17, 10, 6}, "elwm": {26, 18, 14, 7},
+	"elmr": {22, 14, 10, 4}, "elwr": {26, 18, 14, 5}, "elmm": {26, 17, 13, 6}, "elwm": {26, 18, 14, 7},
 	"vimm": {22, 14, 10, 8}, "viwm": {28, 21, 16, 9}, "vimr": {24, 14, 10, 10}, "viwr": {30, 20, 16, 11},
 	"demf": {24, 14, 10, 12}, "dewf": {28, 18, 14, 13}, "demr": {24, 14, 10, 14}, "dewr": {28, 18, 14, 15},
 }
@@ -120,27 +120,12 @@ func (c *Character) attachItem(typ, index uint8, shield bool, enchant uint8) {
 		return
 	}
 	base := itemBaseType(typ)
-	bone := bones[0]
-	if base == 11 || base == 13 {
-		bone = bones[1]
-	}
-	if shield {
-		bone = bones[2]
-	}
-	extra := render.Identity()
-	reversed := func() render.M4 { m := render.Identity(); m[0], m[5], m[12] = -1, -1, 0.04; return m }
-	if base == 9 {
-		extra = reversed()
-	}
 	count := 1
 	if base == 5 || base == 15 {
 		count = 2
 	}
 	for i := 0; i < count; i++ {
-		if i == 1 {
-			bone = bones[1]
-			extra = reversed()
-		}
+		bone, extra := itemAttachmentBinding(c.prefix, base, shield, i == 1)
 		if table.Signature == "IT2" {
 			binding := record.Bindings[bones[3]][i]
 			bone = int(binding.Bone)
@@ -181,4 +166,26 @@ func (c *Character) drawAttachments(s *render.Scene3D, finals []render.M4) {
 	}
 	gl.DepthMask(true)
 	gl.Disable(gl.BLEND)
+}
+
+// Phoenix's wield profiles, checked against native rigid attachment columns.
+// The fourth itemBones value is the IT2 archetype, not a secondary bone.
+func itemAttachmentBinding(prefix string, base uint8, shield, secondary bool) (int, render.M4) {
+	bones := itemBones[prefix]
+	bone, extra := bones[0], render.Identity()
+	if base == 13 || base == 14 {
+		bone = bones[1]
+	}
+	if shield {
+		bone = bones[2]
+	}
+	reverse := base == 9
+	if secondary {
+		bone = bones[1]
+		reverse = strings.HasPrefix(prefix, "hu") || strings.HasPrefix(prefix, "de")
+	}
+	if reverse {
+		extra[0], extra[5], extra[12] = -1, -1, .04
+	}
+	return bone, extra
 }

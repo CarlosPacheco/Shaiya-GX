@@ -71,3 +71,9 @@ Random births use stable analytical streams rather than the original random
 generator. Exact particle-by-particle visual equivalence and all camera/animation
 states still need comparison against the original running client. Phoenix's
 additional dynamic lights are not part of this implementation.
+
+Rigid equipment now follows Phoenix's recovered wield profiles for all 16
+character prefixes: bows and crossbows use the ranged hand; javelins use the
+ordinary weapon hand. Dual secondary reversal is limited to Human/DeathEater
+rigs, and the corrected Elf male mage shield uses bone 13. Authored IT2 bindings
+still take precedence over the legacy ITM fallback table.
