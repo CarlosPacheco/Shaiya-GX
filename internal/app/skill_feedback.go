@@ -6,6 +6,9 @@ import (
 
 // Skill damage is presentation only. HP and resources follow server snapshots.
 func (a *App) confirmedSkillFeedback(op proto.Opcode) {
+	if a.wv != nil {
+		a.wv.physicalSkillQueued = false
+	}
 	if a.state == nil {
 		return
 	}
@@ -26,6 +29,13 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 		}
 		if r.HealedHP > 0 {
 			a.showCombatNumber(r.Source, r.HealedHP, r.Result == 1, false, true)
+		}
+		if a.wv != nil {
+			d, ok := a.skillDefinition(r.ID, r.Level)
+			secondary := op == proto.SkillPartyMember || op == proto.SkillMobOther
+			if ok && a.queuePhysicalSkill(r, d, secondary) {
+				return
+			}
 		}
 		if r.Result == 3 {
 			label = "Miss"

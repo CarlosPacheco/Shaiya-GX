@@ -71,3 +71,8 @@ Random births use stable analytical streams rather than the original random
 generator. Exact particle-by-particle visual equivalence and all camera/animation
 states still need comparison against the original running client. Phoenix's
 additional dynamic lights are not part of this implementation.
+
+Weapon attachments now follow the corrected wield table for every character
+prefix: bow/crossbow in the ranged hand, javelin in the ordinary weapon hand,
+Human/DeathEater-only secondary reversal and Elf male mage shield bone13.
+Authored IT2 bindings retain precedence over the legacy fallback table.

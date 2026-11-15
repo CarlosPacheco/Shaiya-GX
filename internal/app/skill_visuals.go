@@ -38,6 +38,9 @@ func (a *App) startSkillResultEffects(r proto.SkillResult) {
 		return
 	}
 	a.startSkillReleaseEffect(r, d)
+	if a.wv.physicalSkillQueued {
+		return
+	}
 	flight, impact := skillEffectLibraries(r, d)
 	if r.Target == 0 && d.Target == 6 {
 		r.Target = r.Source
@@ -70,6 +73,9 @@ func (a *App) startSkillResultEffects(r proto.SkillResult) {
 // Area, party and additional hits have already announced the cast; render an
 // impact for each successful target without restarting the caster's animation.
 func (a *App) startSkillSecondaryEffect(r proto.SkillResult) {
+	if a.wv != nil && a.wv.physicalSkillQueued {
+		return
+	}
 	if a.wv == nil || r.Level == 0 || r.Level == 100 || r.Target == 0 || r.Result > 1 {
 		return
 	}

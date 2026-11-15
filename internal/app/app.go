@@ -254,7 +254,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		return nil, err
 	}
 
-	// Native English locale3 uses a 15px regular chat font (0x541490).
+	// Native English locale3 uses a 15px regular chat font (0x544620 / 0x54bdf0).
 	if a.chatTextFont, err = fonts.Load(15); err != nil {
 		return nil, err
 	}

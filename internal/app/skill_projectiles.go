@@ -117,6 +117,7 @@ func (a *App) updateResolvedEffects() {
 	a.updateSkillImpactCues()
 	dt := float32(min(max(a.frameDT, 0), .25))
 	a.updateSkillReleaseEffects(dt)
+	a.updatePhysicalProjectiles(dt)
 	kept := v.projectiles[:0]
 	for _, p := range v.projectiles {
 		p.age += dt
@@ -172,6 +173,7 @@ func (a *App) updateResolvedEffects() {
 }
 
 func (a *App) drawResolvedEffects() {
+	a.drawPhysicalProjectiles()
 	if !a.clientSettings().SkillEffects {
 		return
 	}

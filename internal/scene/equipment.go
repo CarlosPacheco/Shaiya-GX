@@ -140,7 +140,10 @@ func (c *Character) drawAttachments(s *render.Scene3D, finals []render.M4) {
 		return
 	}
 	s.Begin()
-	for _, a := range c.attachments {
+	for i, a := range c.attachments {
+		if i == 0 && c.hiddenWeaponAction != 0 && c.hiddenWeaponAction == c.ActionID() {
+			continue
+		}
 		if a.bone < 0 || a.bone >= len(finals) {
 			continue
 		}
@@ -160,6 +163,9 @@ func (c *Character) drawAttachments(s *render.Scene3D, finals []render.M4) {
 	}
 	for i := range c.attachments {
 		a := &c.attachments[i]
+		if i == 0 && c.hiddenWeaponAction != 0 && c.hiddenWeaponAction == c.ActionID() {
+			continue
+		}
 		if a.enchant != nil && a.bone >= 0 && a.bone < len(finals) {
 			c.drawWeaponEnchant(s, a, a.extra.Mul(finals[a.bone]).Mul(c.World))
 		}
@@ -188,4 +194,28 @@ func itemAttachmentBinding(prefix string, base uint8, shield, secondary bool) (i
 		extra[0], extra[5], extra[12] = -1, -1, .04
 	}
 	return bone, extra
+}
+
+func (c *Character) PrimaryWeaponPart() *Part {
+	if c == nil || len(c.attachments) == 0 {
+		return nil
+	}
+	return c.attachments[0].part
+}
+func (c *Character) PrimaryWeaponMatrix() (render.M4, bool) {
+	if c == nil || len(c.attachments) == 0 {
+		return render.M4{}, false
+	}
+	a := c.attachments[0]
+	f := c.finals()
+	if a.bone < 0 || a.bone >= len(f) {
+		return render.M4{}, false
+	}
+	return a.extra.Mul(f[a.bone]).Mul(c.World), true
+}
+func (c *Character) HideThrownWeapon(action uint64) { c.hiddenWeaponAction = action }
+func (c *Character) RestoreThrownWeapon(action uint64) {
+	if c != nil && c.hiddenWeaponAction == action {
+		c.hiddenWeaponAction = 0
+	}
 }

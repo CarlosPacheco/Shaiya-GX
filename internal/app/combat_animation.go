@@ -115,6 +115,7 @@ func (a *App) confirmedAnimation(p []byte) {
 		}
 	case proto.CharacterMobAutoAttack, proto.CharacterUserAutoAttack, proto.MobAttackCharacter:
 		result := a.state.LastAttack
+		ranged := false
 		if actor := a.playerActor(result.Source); actor != nil {
 			typ := a.playerWeapon(result.Source)
 			if result.Source == a.state.SelfID {
@@ -131,19 +132,22 @@ func (a *App) confirmedAnimation(p []byte) {
 				if result.Source == a.state.SelfID {
 					v.attackActionID = actor.ActionID()
 				}
-				a.queueAttackSounds(result, typ, actor)
+				ranged = a.startPhysicalProjectile(result, typ, actor)
+				if !ranged {
+					a.queueAttackSounds(result, typ, actor)
+				}
 			}
 		}
 		if mob := v.mobs[result.Source]; mob != nil && mob.actor != nil {
 			mob.attackTarget = result.Target
 			mob.actor.PlayOnce(mob.actor.AttackAction(0))
 		}
-		if result.HP > 0 {
+		if !ranged && result.HP > 0 {
 			if mob := v.mobs[result.Target]; mob != nil && mob.actor != nil {
 				mob.actor.PlayOnce(7)
 			}
 		}
-		if result.Source == a.state.SelfID || result.Target == a.state.SelfID || result.Target == a.state.Target {
+		if !ranged && (result.Source == a.state.SelfID || result.Target == a.state.SelfID || result.Target == a.state.Target) {
 			a.showCombatNumber(result.Target, result.HP, result.Result == 1, result.Result == 3, false)
 		}
 	case proto.CharacterDeath:

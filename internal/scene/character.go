@@ -89,6 +89,7 @@ type Character struct {
 	prefix               string
 	assets               *Assets
 	Mounted              bool
+	hiddenWeaponAction   uint64
 	lastFinals           []render.M4
 	lastFinalsClip       *Clip
 	lastFinalsTime       float32

@@ -29,6 +29,12 @@ func (a *App) showCombatNumberAmount(target, amount uint32, critical, missed, he
 		return
 	}
 	point[1] += a.combatNumberHeight(target)
+	a.emitCombatNumberAt(point, amount, critical, missed, healing)
+}
+func (a *App) emitCombatNumberAt(point render.V3, amount uint32, critical, missed, healing bool) {
+	if a.wv == nil || amount == 0 && !missed {
+		return
+	}
 	for _, v := range point {
 		if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {
 			return

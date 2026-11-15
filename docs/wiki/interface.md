@@ -521,3 +521,11 @@ changes and ground-item removal still wait for server confirmation.
 Portrait HP/MP/SP labels use the native 12-cell resource font, white text with
 a one-pixel black shadow and the original centering/row positions. Player names
 retain their separate warm font; displayed current resources are capped at maximum.
+
+Physical bows, crossbows and javelins now have their original arrow/thrown-weapon
+models for basic attacks and offensive physical skills. Nocked arrows use the
+actual weapon bone; launched shots own their target independently of later
+animations and show recipient feedback at arrival. See [ranged projectile
+behavior](../ranged-projectiles.md). Floating-number anchors use native user
+logical origins and creature MON heights. WLD Ladder objects render on both
+sides and remain non-solid, matching Phoenix's visual object section.

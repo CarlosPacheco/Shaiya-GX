@@ -139,7 +139,8 @@ not a replacement for a matched native/live screenshot comparison.
 
 ## Font measurement follow-up
 
-`0x541490` selects font creation by locale. English (locale3) creates the regular
+Renderer initialization `0x544620` selects font creation by locale, through
+helper `0x54bdf0`. English (locale3) creates the regular
 chat font at **15px, weight400, Arial**, and the optional large font belongs to
 other locale branches. GX was reusing its 13px tooltip font. Chat now owns a
 dedicated 15px font loaded from the existing external font pack; tooltips and

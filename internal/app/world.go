@@ -104,6 +104,8 @@ type worldView struct {
 	runEffectAt             map[uint32]float64
 	castEffects             []castEffect
 	projectiles             []skillProjectile
+	physicalProjectiles     []physicalProjectile
+	physicalSkillQueued     bool
 	impacts                 []skillImpact
 	impactCues              []skillImpactCue
 	attackSounds            []attackSound
