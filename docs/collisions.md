@@ -70,7 +70,11 @@ Keyboard movement, strafing, autorun, click-to-move displacement, jumping and
 vertical water motion use the same model/blocker queries. Ground settling lets
 characters stand on authored model floors and fall after leaving them. Existing
 terrain height fans, water thresholds and server position reconciliation remain
-part of the movement flow. Click-to-move does not add a new pathfinder around
+part of the movement flow. Without a terrain heightmap (dungeons), the click ray
+meets the nearest collision surface and walks there when it is a floor (normal
+within 60 degrees of upward vertical and facing the ray); walls, pillars,
+ceilings and platform undersides occlude the pick without selecting a destination.
+Click-to-move does not add a new pathfinder around
 obstacles. Native ladder/ivy interaction and moving-platform passenger attachment remain
 outside the validated scope.
 

@@ -9,11 +9,20 @@ import (
 // loot, NPCs and panels, so a consumed click never becomes a terrain command.
 func (a *App) moveToGround(in *platform.Input, width, height int) {
 	v := a.wv
-	if a.scene3d == nil || !v.world.HasTerrain() {
+	if a.scene3d == nil || v.world == nil {
 		return
 	}
 	origin, direction, ok := clickRay(in.MouseX, in.MouseY, width, height, a.scene3d.View.Mul(a.scene3d.Proj))
 	if !ok {
+		return
+	}
+	// Dungeons have no heightmap: walk to the nearest walkable collision
+	// surface under the cursor (floors, ramps, platforms).
+	if !v.world.HasTerrain() {
+		if p, hit := v.world.RayFloor(origin, direction, clickMoveDistance); hit {
+			v.destination, v.travel, v.autoRun = p, true, false
+			a.startTravelEffect()
+		}
 		return
 	}
 	inside := func(p render.V3) bool {
@@ -22,7 +31,7 @@ func (a *App) moveToGround(in *platform.Input, width, height int) {
 	}
 	// Bracket the first terrain crossing, then refine it in native world units.
 	previous := float32(0)
-	for distance := float32(.5); distance <= 400; distance += .5 {
+	for distance := float32(.5); distance <= clickMoveDistance; distance += .5 {
 		p := origin.Add(direction.Scale(distance))
 		if !inside(p) {
 			previous = distance
@@ -49,3 +58,6 @@ func (a *App) moveToGround(in *platform.Input, width, height int) {
 		return
 	}
 }
+
+// clickMoveDistance is the farthest point a click can select.
+const clickMoveDistance = 400
