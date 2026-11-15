@@ -149,3 +149,9 @@ matching the measured cell height does not claim identical Arial glyph raster.
 The right-hand language icon has subsequently been removed by user request,
 while preserving the measured entry width/position. This supersedes the 13px
 and icon-preserved statements in the historical audit above.
+
+Item-acquisition notice 52 includes the acquired item's atlas icon immediately
+before its name. The inline square follows chat font height, participates in the
+316px line wrap and history fade, and uses the same icon and elemental badge
+renderer as inventory items. Only confirmed item-add packets attach structured
+item metadata; player text cannot inject icons or trusted color markup.

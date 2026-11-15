@@ -10,11 +10,12 @@ import (
 )
 
 type ChatEntry struct {
-	Text   string
-	System bool
-	Color  [4]float32
-	Style  uint8
-	Markup bool
+	ItemType, ItemID uint8
+	Text             string
+	System           bool
+	Color            [4]float32
+	Style            uint8
+	Markup           bool
 }
 
 type chatPane struct {
@@ -63,6 +64,7 @@ func (c *ChatPanel) ShowHistory() {
 // ChatPanel follows Phoenix chat_hud.gd and ep4_chat.gd: flat persistent
 // histories and 16px rows, with the native 64px selector and 292px input strip.
 type ChatPanel struct {
+	DrawItem                         func(typ, id uint8, x, y, size int, alpha float32)
 	FocusRequested                   bool
 	Resized, ChannelChanged          bool
 	scroll, input                    *render.Texture
@@ -129,9 +131,16 @@ func (c *ChatPanel) SetEntries(f *Font, entries []ChatEntry) {
 		if entry.System {
 			pane = &c.panes[0]
 		}
-		runs, rows := wrapChatMarkup(f, entry.Text, entry.Color, entry.Markup)
+		runs, rows := wrapChatMarkup(f, entry.Text, entry.Color, entry.Markup, entry.ItemType != 0)
 		if entryIndex >= overlap {
 			added[index] += len(rows)
+		}
+		for row := range runs {
+			for n := range runs[row] {
+				if runs[row][n].icon {
+					runs[row][n].itemType, runs[row][n].itemID = entry.ItemType, entry.ItemID
+				}
+			}
 		}
 		pane.runs = append(pane.runs, runs...)
 		pane.lines = append(pane.lines, rows...)
@@ -318,6 +327,12 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 		for row := start; row < end; row++ {
 			yText := c.lineY(h, i, row, end, f.Height)
 			for _, run := range p.runs[row] {
+				if run.icon {
+					if c.DrawItem != nil {
+						c.DrawItem(run.itemType, run.itemID, 25+run.x, yText, f.Height, a)
+					}
+					continue
+				}
 				tint := run.color
 				if tint[3] == 0 {
 					tint = white

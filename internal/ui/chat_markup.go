@@ -9,16 +9,19 @@ import (
 
 type chatGlyph struct {
 	char  rune
+	icon  bool
 	color [4]float32
 }
 type chatRun struct {
-	text  string
-	color [4]float32
-	x     int
+	text             string
+	icon             bool
+	itemType, itemID uint8
+	color            [4]float32
+	x                int
 }
 
 // Only trusted native notices interpret color markup. Player chat is literal.
-func wrapChatMarkup(f *Font, text string, base [4]float32, markup bool) ([][]chatRun, []string) {
+func wrapChatMarkup(f *Font, text string, base [4]float32, markup bool, itemIcon ...bool) ([][]chatRun, []string) {
 	var glyphs []chatGlyph
 	color := base
 	for len(text) > 0 {
@@ -49,7 +52,7 @@ func wrapChatMarkup(f *Font, text string, base [4]float32, markup bool) ([][]cha
 			}
 		}
 		r, size := utf8.DecodeRuneInString(text)
-		glyphs = append(glyphs, chatGlyph{r, color})
+		glyphs = append(glyphs, chatGlyph{char: r, color: color, icon: markup && len(itemIcon) > 0 && itemIcon[0] && r == '\uFFFC'})
 		text = text[size:]
 	}
 	var rows [][]chatRun
@@ -65,7 +68,7 @@ func wrapChatMarkup(f *Font, text string, base [4]float32, markup bool) ([][]cha
 		}
 		candidate := ""
 		for _, cluster := range textwire.Graphemes(remaining.String()) {
-			if cut > 0 && f.Width(candidate+cluster) > 316 {
+			if cut > 0 && chatMarkupWidth(f, candidate+cluster, markup && len(itemIcon) > 0 && itemIcon[0]) > 316 {
 				break
 			}
 			if cluster == " " {
@@ -83,7 +86,13 @@ func wrapChatMarkup(f *Font, text string, base [4]float32, markup bool) ([][]cha
 		x := 0
 		for start := 0; start < len(row); {
 			end := start + 1
-			for end < len(row) && row[start].color == row[end].color {
+			if row[start].icon {
+				runs = append(runs, chatRun{icon: true, x: x, color: row[start].color})
+				x += f.Height
+				start++
+				continue
+			}
+			for end < len(row) && !row[end].icon && row[start].color == row[end].color {
 				end++
 			}
 			var b strings.Builder
@@ -91,7 +100,7 @@ func wrapChatMarkup(f *Font, text string, base [4]float32, markup bool) ([][]cha
 				b.WriteRune(g.char)
 			}
 			value := b.String()
-			runs = append(runs, chatRun{value, row[start].color, x})
+			runs = append(runs, chatRun{text: value, color: row[start].color, x: x})
 			plain.WriteString(value)
 			x += f.Width(value)
 			start = end
@@ -108,4 +117,16 @@ func wrapChatMarkup(f *Font, text string, base [4]float32, markup bool) ([][]cha
 		}
 	}
 	return rows, lines
+}
+
+func chatMarkupWidth(f *Font, value string, icon bool) int {
+	if !icon {
+		return f.Width(value)
+	}
+	parts := strings.Split(value, "\uFFFC")
+	width := (len(parts) - 1) * f.Height
+	for _, part := range parts {
+		width += f.Width(part)
+	}
+	return width
 }

@@ -70,14 +70,15 @@ type Entity struct {
 
 // ChatLine is one received message.
 type ChatLine struct {
-	Raid      bool
-	MessageID int
-	Style     uint8
-	Op        proto.Opcode
-	Direction uint8
-	SenderID  uint32
-	Sender    string
-	Text      string
+	ItemType, ItemID uint8
+	Raid             bool
+	MessageID        int
+	Style            uint8
+	Op               proto.Opcode
+	Direction        uint8
+	SenderID         uint32
+	Sender           string
+	Text             string
 }
 
 // Event tells the caller what a payload changed; Text is for logs.

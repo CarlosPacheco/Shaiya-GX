@@ -154,6 +154,7 @@ func (a *App) drawChat(w, h int) {
 			a.chatUI.ChannelNames[i] = label
 		}
 	}
+	a.chatUI.DrawItem = a.drawChatItem
 	a.chatUI.SetEntries(f, a.formattedChat())
 	shown := ""
 	if a.chatOpen {
@@ -213,7 +214,7 @@ func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
 	}
 	rgb := ui.ChatRGB(style)
 
-	return ui.ChatEntry{Text: body, System: game.ChatSystemPane(style), Color: ui.RGBColor(rgb), Style: style, Markup: c.Op == 0}
+	return ui.ChatEntry{ItemType: c.ItemType, ItemID: c.ItemID, Text: body, System: game.ChatSystemPane(style), Color: ui.RGBColor(rgb), Style: style, Markup: c.Op == 0}
 }
 
 func (a *App) updateChatPointer(in *platform.Input, _, h int) bool {
@@ -249,4 +250,13 @@ func phoenixChannelCommand(value string) (uint8, string, bool) {
 	channels := map[string]uint8{"/s": 0, "/say": 0, "/p": 3, "/party": 3, "/g": 2, "/guild": 2, "/1": 4, "/area": 4, "/shout": 4, "/2": 1, "/trade": 1}
 	channel, ok := channels[strings.ToLower(command)]
 	return channel, strings.TrimSpace(body), ok
+}
+
+func (a *App) drawChatItem(typ, id uint8, x, y, size int, alpha float32) {
+	if a.assets == nil {
+		return
+	}
+	if d := a.itemsItem(typ, id); d != nil {
+		a.drawItemIcon(d, x, y, size, [4]float32{1, 1, 1, alpha})
+	}
 }

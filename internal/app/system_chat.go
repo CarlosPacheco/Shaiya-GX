@@ -90,7 +90,9 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		it, err := proto.DecodeItemAdd(p)
 		if err == nil && it.Type != 26 {
 			if name := itemName(it.Type, it.TypeID); name != "" {
-				a.systemMessage(3, 52, map[string]string{"i": name})
+				if a.msg.Get(52) != "" {
+					a.state.AddChat(game.ChatLine{Text: a.msg.Format(52, map[string]string{"i": "\uFFFC " + name}), Style: 3, MessageID: 52, ItemType: it.Type, ItemID: it.TypeID})
+				}
 			}
 		}
 	case proto.UseItem:
