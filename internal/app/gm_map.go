@@ -33,12 +33,33 @@ func (a *App) gmMapTeleport(mapID uint16, view ui.UV, fx, fy float32) {
 	if a.world == nil || a.state == nil || !a.state.Self.IsGM {
 		return
 	}
-	// A size of one returns normalized X/Z; map-image V points downward.
-	u, z, ok := ui.MapCoordinates(view, fx, fy, 1)
+	u, v, ok := a.mapTeleportCoordinates(mapID, view, fx, fy)
 	if !ok {
 		return
 	}
-	if err := a.world.Send(proto.GMMapTeleportPacket(mapID, u, 1-z)); err != nil {
+	if err := a.world.Send(proto.GMMapTeleportPacket(mapID, u, v)); err != nil {
 		log.Printf("GM map teleport: %v", err)
 	}
+}
+
+func (a *App) mapTeleportCoordinates(mapID uint16, view ui.UV, fx, fy float32) (float32, float32, bool) {
+	// A size of one returns normalized X/Z; map-image V points downward.
+	u, z, ok := ui.MapCoordinates(view, fx, fy, 1)
+	if !ok {
+		return 0, 0, false
+	}
+	// Dungeon images have independent native scales and no WLD world extent.
+	// Convert their image coordinates to the existing normalized server request.
+	if a.wv != nil && mapID == a.wv.mapID && a.wv.world != nil && a.wv.world.WLD != nil && a.wv.world.WLD.Dungeon {
+		projection := a.mapProjection(a.mapState())
+		size := a.minimapWorldSize(mapID)
+		if projection.Width <= 0 || projection.Height <= 0 || size <= 0 {
+			return 0, 0, false
+		}
+		u, z = u*projection.Width/size, z*projection.Height/size
+		if u < 0 || u > 1 || z < 0 || z > 1 {
+			return 0, 0, false
+		}
+	}
+	return u, 1 - z, true
 }

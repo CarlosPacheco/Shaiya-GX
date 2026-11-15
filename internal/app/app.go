@@ -177,6 +177,7 @@ type App struct {
 	login3                              *scene.LoginScene
 	login3Failed                        bool
 	wv                                  *worldView
+	dungeonMinimaps                     dungeonMinimapData
 	hoverPicking                        bool
 	lastMouseX                          int
 	lastMouseY                          int

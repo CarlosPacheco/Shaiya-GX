@@ -176,3 +176,41 @@ asset import produces them alongside the other interface resources.
 Item Mall runtime data uses the native binary `Cash.SData` table and SQL
 ProductList on the server, with byte quantities up to 255. The asset importer
 preserves Cash.SData. See [cash catalog](cash-catalog.md).
+
+## Dungeon minimaps
+
+Native `Dungeon_MiniMap.cfg` lists numbered image calibrations. Its `[WorldMap]`
+count enumerates `[0]`…`[count-1]`; each row has `MapNum`, `ImgPos_x`, `ImgPos_y`.
+The last two fields are independent fixed-point pixel scales, divided by 1000.
+For an image of width W and height H, image U = world X × scaleX / W and
+V = 1 − world Z × scaleY / H. They are not offsets or the dungeon's physical
+size. Dungeon WLD files do not contain the field MapSize member.
+
+GX applies these scales to the circular view, expanded map, player and
+party/quest/obelisk markers, hover coordinates and GM map clicks. Field images
+retain the existing WLD-size projection. Missing image/calibration is normal;
+GX does not invent artwork or infer another map's image.
+
+After extracting original files with Parsec, stage the loose data and run:
+
+```sh
+python3 tools/import_dungeon_minimaps.py \
+  --source /path/to/core-extracted --data /path/to/staged-gx-data \
+  --server-maps server/data/maps --report /path/to/import-report.json
+```
+
+The importer needs Pillow. It retains existing numbered PNGs byte for byte,
+imports only missing playable-map artwork, verifies decoded RGBA pixels after
+PNG conversion, and copies the native CFG intact. If source world files are
+available, incompatible field/dungeon types or different dungeon layouts are
+reported and skipped. The current import adds 43 images, preserves 16, leaves
+50–54/62–64 without source images, and skips mismatched Core map 60. Resources
+remain local and are not included in source history or a new public resource
+release.
+
+Generated `interface/MiniMap/map-sizes.json` maps numeric IDs to matching server
+SVMAP world extents. It only converts dungeon image clicks into the existing
+normalized GM request; server geometry, permissions and safe-destination checks
+remain authoritative. It does not replace native CFG calibration. See the
+[server connectivity audit](map-connectivity.md) for orphan maps and the map-60
+content mismatch.

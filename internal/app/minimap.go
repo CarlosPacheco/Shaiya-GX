@@ -259,14 +259,14 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 	if action.Zoom != 0 {
 		v.click = mapClick{} // Button hit boxes can overlap the circular map edge.
 	}
-	if action.Zoom == 0 && a.wv.world != nil && a.wv.world.WLD != nil && a.wv.world.WLD.MapSize > 0 {
+	if action.Zoom == 0 && a.wv.world != nil && a.wv.world.WLD != nil {
+		projection := a.mapProjection(v)
 		fx, fy := float32(in.MouseX-x-16)/136, float32(in.MouseY-y-16)/136
 		dx, dy := fx-.5, fy-.5
 		if v.click.update(in, dx*dx+dy*dy <= .25) {
-			size := float32(a.wv.world.WLD.MapSize)
-			u, z, ok := ui.MapPosition(a.wv.pos[0], a.wv.pos[2], size)
+			_, _, ok := projection.Position(a.wv.pos[0], a.wv.pos[2])
 			if ok {
-				a.gmMapTeleport(a.wv.mapID, ui.MapWindow(u, z, v.diameter/size), fx, fy)
+				a.gmMapTeleport(a.wv.mapID, projection.Window(a.wv.pos[0], a.wv.pos[2], v.diameter), fx, fy)
 			}
 		}
 	}
@@ -294,14 +294,17 @@ func (a *App) drawMinimap(w, h int, full bool) {
 			log.Printf("minimap quest data: %v", err)
 		}
 	}
-	u, z, ok := ui.MapPosition(a.wv.pos[0], a.wv.pos[2], float32(a.wv.world.WLD.MapSize))
+	projection := a.mapProjection(v)
+	u, z, ok := projection.Position(a.wv.pos[0], a.wv.pos[2])
 	if !ok {
 		u, z = -1, -1
 	}
 	heading := float32(math.Atan2(float64(a.wv.facing[0]), float64(a.wv.facing[2])))
-	markers := relicMapMarkers(a.state, float32(a.wv.world.WLD.MapSize), v.markers[:0])
-	markers = partyMapMarkers(a.state, float32(a.wv.world.WLD.MapSize), markers)
-	markers = a.questMapMarkers(float32(a.wv.world.WLD.MapSize), markers)
+	square := max(projection.Width, projection.Height)
+	markers := relicMapMarkers(a.state, square, v.markers[:0])
+	markers = partyMapMarkers(a.state, square, markers)
+	markers = a.questMapMarkers(square, markers)
+	markers = calibrateMapMarkers(markers, projection, square)
 	v.markers = markers
 
 	a.minimap.MapName = ui.MapName(a.msg, a.wv.mapID)
@@ -319,7 +322,7 @@ func (a *App) drawMinimap(w, h int, full bool) {
 		a.font.DrawScaled(a.sprites, position, float32(x)+(272-float32(a.font.Width(position))/2)*scale, float32(y)+23*scale, scale, white, 0)
 		fx := (float32(a.lastMouseX-x) - 16*scale) / (512 * scale)
 		fy := (float32(a.lastMouseY-y) - 43*scale) / (512 * scale)
-		if px, pz, inside := ui.MapCoordinates(ui.MapWindow(v.u, v.v, 1/v.zoom), fx, fy, float32(a.wv.world.WLD.MapSize)); inside {
+		if px, pz, inside := projection.Coordinates(ui.MapWindow(v.u, v.v, 1/v.zoom), fx, fy); inside {
 			label := fmt.Sprintf("X: %.0f  Z: %.0f", px, pz)
 			width := a.font.Width(label) + 8
 			left, top := min(a.lastMouseX+16, w-width), min(a.lastMouseY+20, h-a.font.Height-8)
@@ -328,10 +331,7 @@ func (a *App) drawMinimap(w, h int, full bool) {
 		}
 		return
 	}
-	span := float32(1)
-	if size := a.wv.world.WLD.MapSize; size > 0 {
-		span = v.diameter / float32(size)
-	}
+	view := projection.Window(a.wv.pos[0], a.wv.pos[2], v.diameter)
 	a.minimap.Caption = time.Now().Format("02/01/2006 15:04:05")
-	a.minimap.Draw(a.sprites, a.font, v.image, a.white, w, h, ui.MapWindow(u, z, span), u, z, heading, a.wv.mapID, a.wv.pos[0], a.wv.pos[2], markers)
+	a.minimap.Draw(a.sprites, a.font, v.image, a.white, w, h, view, u, z, heading, a.wv.mapID, a.wv.pos[0], a.wv.pos[2], markers)
 }

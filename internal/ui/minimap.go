@@ -21,10 +21,7 @@ func MapPosition(x, z, mapSize float32) (u, v float32, ok bool) {
 }
 
 func MapWindow(u, v, span float32) UV {
-	span = min(1, max(.001, span))
-	half := span / 2
-	u, v = min(1-half, max(half, u)), min(1-half, max(half, v))
-	return UV{u - half, v - half, u + half, v + half}
+	return MapWindowXY(u, v, span, span)
 }
 
 func MapPoint(u, v float32, view UV) (float32, float32, bool) {
