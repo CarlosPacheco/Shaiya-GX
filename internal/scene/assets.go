@@ -169,7 +169,9 @@ func (s *Assets) uploadSMOD(key string, sm *world.SMOD, preparedLODs [][]staticL
 			}
 		}
 		p := Part{Mesh: render.NewMesh(v, idx)}
-		p.Mesh.CullBack = cullBack[meshIndex]
+		// WLD Objects is the native Ladder section: thin sheets must remain
+		// visible from either side, matching Phoenix. No solid collision is added.
+		p.Mesh.CullBack = cullBack[meshIndex] && !strings.HasPrefix(strings.ToLower(key), "entity/object/")
 		if mesh.Texture != "" {
 			p.Tex = s.worldTexture("Entity/Texture/" + DDSName(path.Base(strings.ReplaceAll(mesh.Texture, `\`, "/"))))
 			p.Alpha = p.Tex != nil

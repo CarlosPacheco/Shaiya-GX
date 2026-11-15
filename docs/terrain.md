@@ -82,3 +82,9 @@ independent of the physical time spent airborne. Once it finishes, continued
 falling uses run or walk only while horizontal movement is active. Releasing
 movement returns to the standard idle pose; uncommanded falls also use idle. Switching clips at action completion prevents a
 wrapped first jump frame from appearing during the transition.
+
+The WLD `Objects` group is Phoenix's `Ladder` section. Its original SMOD models
+are loaded by both static and streamed rendering, with two-sided surfaces so
+thin ladders and climbable ivy remain visible from either direction. They stay
+non-solid as in Phoenix; this visual support does not introduce a climbing
+movement mode or change server collision resources.
