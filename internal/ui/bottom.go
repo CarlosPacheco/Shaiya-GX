@@ -2,9 +2,11 @@ package ui
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 type BottomAction uint8
@@ -28,7 +30,8 @@ type BottomBar struct {
 	buttons              [8]Button
 	hover                int
 	expHover             bool
-	blessHover           bool
+	blessActive          bool
+	blessStartedAt       float64
 	QuestOpen, GuildOpen bool
 }
 
@@ -121,8 +124,6 @@ func (b *BottomBar) Update(in *platform.Input, w, h int, inventory, skills, stat
 		x0, y0, x1, y1 = 16, 50, 353, 60
 	}
 	b.expHover = in.MouseX >= g.x+x0 && in.MouseX < g.x+x1 && in.MouseY >= g.y+y0 && in.MouseY < g.y+y1
-	bx, by, bw := blessingLayout(g.variant)
-	b.blessHover = in.MouseX >= g.x+bx && in.MouseX < g.x+bx+bw && in.MouseY >= g.y+by-3 && in.MouseY < g.y+by+9
 	over := in.MouseX >= g.x && in.MouseX < g.x+g.width && in.MouseY >= g.y && in.MouseY < h
 	captured := over && (in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.RightDown || in.Wheel != 0)
 	return action, captured || held && in.Clicked
@@ -130,7 +131,7 @@ func (b *BottomBar) Update(in *platform.Input, w, h int, inventory, skills, stat
 
 func blessingLayout(variant int) (x, y, width int) {
 	if variant == 0 {
-		return 445, 53, 337
+		return 446, 53, 336
 	}
 	return 572, 49, 428
 }
@@ -147,14 +148,52 @@ func (b *BottomBar) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h
 	n := progress(state.Exp, state.PrevExp, state.NextExp)
 	s.Draw(b.bars[g.variant], float32(x+ex), float32(y+ey), 512*n, 7, 0, 0, 1, uvEnd, white)
 	f.Draw(s, fmt.Sprintf("%.1f%%", n*100), x+textX, y+49, white, 70)
+	active := state.BlessKnown && state.BlessRemainingMS > 0
+	if active && !b.blessActive {
+		b.blessStartedAt = state.Clock
+	}
+	b.blessActive = active
 	if state.BlessKnown && state.BlessMax > 0 {
 		bx, by, width := blessingLayout(g.variant)
 		value := progress(state.BlessCount, 0, state.BlessMax)
-		s.Draw(b.bars[g.variant], float32(x+bx), float32(y+by), float32(width)*value, 6, 0, .5, float32(width)*value/512, .875, white)
-		label := fmt.Sprintf("%.1f%%", value*100)
-		f.Draw(s, label, x+bx+(width-f.Width(label))/2, y+by-3, white, width)
+		if state.BlessRemainingMS > 0 {
+			value = progress(state.BlessRemainingMS, 0, 600000)
+		}
+		filled := int(float32(width) * value)
+		// Original 00485680: crop the same right-anchored atlas region,
+		// not a stretched bar. No percentage label is drawn over blessing.
+		draw := func(alpha float32, v1 float32) {
+			s.Draw(b.bars[g.variant], float32(x+bx+width-filled), float32(y+by), float32(filled), 7,
+				float32(width-filled)/512, .5, float32(width)/512, v1, [4]float32{1, 1, 1, alpha})
+		}
+		draw(1, .9)
+		if state.BlessRemainingMS > 0 {
+			// Native 00864e2c cycles 2 -> 0 at two units per second;
+			// alpha is triangular, with an additive second atlas pass.
+			phase := math.Mod(max(0, state.Clock-b.blessStartedAt)*2, 2)
+			alpha := float32(1 - math.Abs(1-phase))
+			v1 := float32(.9)
+			if g.variant == 0 {
+				v1 = 1
+			}
+			s.Flush()
+			gl.BlendFunc(gl.SRC_ALPHA, gl.ONE)
+			draw(alpha, v1)
+			s.Flush()
+			gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+		}
 	}
 	for i := range b.buttons {
 		b.buttons[i].Draw(s)
 	}
+}
+
+// BlessingAt uses the native footer hit box, including its transparent margin.
+func (b *BottomBar) BlessingAt(mx, my, w, h int) bool {
+	g := bottomLayout(w, h)
+	x0, y0, x1, y1 := 570, 47, 1002, 59
+	if g.variant == 0 {
+		x0, y0, x1, y1 = 445, 50, 783, 60
+	}
+	return mx >= g.x+x0 && mx < g.x+x1 && my >= g.y+y0 && my < g.y+y1
 }

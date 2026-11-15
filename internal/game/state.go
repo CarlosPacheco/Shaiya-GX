@@ -258,7 +258,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		if err != nil {
 			return fail(err)
 		}
-		s.Blessing.apply(op, value, s.Phase == PhaseLoading)
+		s.Blessing.apply(op, value)
 	case proto.PvPRewardStatus:
 		value, err := proto.DecodePvPRewards(p)
 		if err != nil {

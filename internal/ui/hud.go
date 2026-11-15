@@ -25,6 +25,9 @@ type HUDState struct {
 	Exp, PrevExp, NextExp uint32
 	BlessCount, BlessMax  uint32
 	BlessKnown            bool
+	BlessCountry          uint8
+	BlessRemainingMS      uint32
+	Clock                 float64
 	TargetName            string
 	TargetHP              Resource
 	TargetKnown           bool

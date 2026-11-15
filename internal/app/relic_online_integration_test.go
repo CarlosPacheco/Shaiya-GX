@@ -4,6 +4,7 @@ package app
 
 import (
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -21,6 +22,13 @@ func TestObeliskAgainstIsolatedGX(t *testing.T) {
 	wait(func() bool { return st.Self.IsGM && st.MapID == 0 && len(st.Relics) == 7 })
 	send(proto.ChatPacket(proto.ChannelNormal, false, "/turbo"))
 	wait(func() bool { return st.GMTurbo }) // Barrier after the complete entry/view snapshot.
+	initialBless := st.Blessing.Count
+	if expected := os.Getenv("SHAIYA_TEST_BLESSING_COUNT"); expected != "" {
+		count, _ := strconv.ParseUint(expected, 10, 32)
+		if initialBless != uint32(count) {
+			t.Fatal("entry blessing snapshot", st.Blessing)
+		}
+	}
 	owner := uint8(0)
 	if phase == "restored" {
 		owner = 1
@@ -56,6 +64,10 @@ func TestObeliskAgainstIsolatedGX(t *testing.T) {
 		wait(func() bool {
 			return st.Relics[0].Owner == 1 && st.LastRelicNotice.NewOwner == 1 && st.LastRelicNotice.MobID == 52
 		})
+		if os.Getenv("SHAIYA_TEST_BLESSING_COUNT") != "" {
+			wait(func() bool { return st.Blessing.Count == initialBless+1366 })
+			t.Logf("altar shared blessing counter: %d -> %d", initialBless, st.Blessing.Count)
+		}
 		for _, guard := range guards {
 			if st.Entities[guard] != nil {
 				t.Fatal("dependent guard survived capture", guard)

@@ -163,6 +163,9 @@ type App struct {
 	items                               map[sdata.ItemKey]*sdata.Item
 	mallCatalog                         []cash.Product
 	blessingMax                         [2]uint32
+	blessingTiers                       []sdata.BlessingTier
+	blessingBannerUntil                 float64
+	blessingFeedbackActive              bool
 	blessingLoaded                      bool
 	actor                               *scene.Character
 	actorID                             uint32
@@ -492,6 +495,9 @@ func (a *App) Update(in *platform.Input, w, h int, dt float64) {
 		break
 	}
 	a.pumpWorld()
+	if a.state != nil {
+		a.state.Blessing.Advance(dt)
+	}
 	loading := a.updateMapLoading()
 	a.updateAudio()
 	if loading {
@@ -918,6 +924,7 @@ func (a *App) pumpWorld() {
 			a.confirmedSocial(ev.Op)
 			a.confirmedEffects(p)
 			a.confirmedSound(p)
+			a.confirmedBlessing(ev.Op)
 			a.confirmedChatBubble(ev.Op)
 			if ev.Op == proto.SetStatPoint || ev.Op == proto.StatsReset {
 				a.status.pending = false

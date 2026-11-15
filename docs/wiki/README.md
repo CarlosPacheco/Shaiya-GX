@@ -19,6 +19,9 @@ not update executable files, client assets or a running database.
 
 ## Gameplay and items
 
+- [Goddess blessing](goddess-blessing.md): faction counters, original tier effects,
+  PvP/altar contributions, database restoration, footer UI and tooltips.
+
 - [Obelisks and linked bosses](obelisks.md): capture, guards, persistent ownership,
   goddess blessing, map icons, linked portals and boss phases.
 

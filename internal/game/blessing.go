@@ -3,34 +3,38 @@ package game
 import "github.com/Spelunkern/Shaiya-GX/internal/proto"
 
 type BlessingState struct {
-	Country                   uint8
-	Count, RemainingMS        uint32
-	Known                     bool
-	entryInit, entryBroadcast bool
+	Country            uint8
+	Count, RemainingMS uint32
+	Known              bool
+	fractionalMS       float64
 }
 
-func (b *BlessingState) apply(op proto.Opcode, value proto.BlessingUpdate, loading bool) {
-	// Rapture sends a real initial snapshot and later an unconditional zero
-	// placeholder in the same loading sequence. A real intervening broadcast
-	// always wins, including a reset to zero. See docs/discrepancias.md #5.
-	if op == proto.BlessInit && loading && b.entryInit && !b.entryBroadcast && b.Known && b.Country == value.Country && b.Count != 0 && value.Count == 0 && value.RemainingMS == 0 {
-		return
-	}
+func (b *BlessingState) apply(op proto.Opcode, value proto.BlessingUpdate) {
 	if op == proto.CountryKillCount {
-		if b.Country != value.Country {
+		if b.Country != value.Country || value.Count == 0 {
 			b.RemainingMS = 0
-		}
-		if value.Count == 0 {
-			b.RemainingMS = 0
-		}
-		if loading {
-			b.entryBroadcast = true
+			b.fractionalMS = 0
 		}
 	} else {
 		b.RemainingMS = value.RemainingMS
-		if loading {
-			b.entryInit = true
-		}
+		b.fractionalMS = 0
 	}
 	b.Country, b.Count, b.Known = value.Country, value.Count, true
+}
+
+// Advance only animates the native countdown; ownership/count resets remain
+// authoritative packets. Keep sub-millisecond frame time instead of drifting.
+func (b *BlessingState) Advance(seconds float64) {
+	if seconds <= 0 || b.RemainingMS == 0 {
+		return
+	}
+	ms := seconds*1000 + b.fractionalMS
+	if ms >= float64(b.RemainingMS) {
+		b.RemainingMS = 0
+		b.fractionalMS = 0
+		return
+	}
+	elapsed := uint32(ms)
+	b.RemainingMS -= elapsed
+	b.fractionalMS = ms - float64(elapsed)
 }

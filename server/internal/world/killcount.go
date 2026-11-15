@@ -1,7 +1,6 @@
 package world
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"math"
@@ -10,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -27,7 +27,7 @@ import (
 //     tier holds 10 minutes and resets the other country to 0 at once
 //     (ResetKillCount); CWorld::UpdateKillCount then resets this one too.
 //     Counts are announced to the country with 0x020F (country, count up
-//     to the top tier's) on each change and every 10 minutes, saved with
+//     to the top tier's) on tier transitions and every 10 minutes, saved with
 //     usp_Save_GodBless_E, loaded from usp_Read_GodBless_R, and sent at
 //     world entry with 0x0211 (country, count, ms until the reset).
 //   - CUser::UpdateKCStatus 0x0048b780 / InitKCStatus: the tier's types on
@@ -78,30 +78,24 @@ func loadKillStatus(log *logx.Logger) error {
 	if err != nil {
 		return err
 	}
-	if len(b) < 4 {
-		return fmt.Errorf("short file")
+	rows, err := sdata.ParseBlessing(b)
+	if err != nil {
+		return err
 	}
-	n := int(binary.LittleEndian.Uint32(b))
 	var tiers [2][]kcTier
-	o := 4
-	for i := 0; i < n; i++ {
-		if o+7+18 > len(b) {
-			return fmt.Errorf("record %d truncated", i)
-		}
-		country := b[o]
-		t := kcTier{Kill: binary.LittleEndian.Uint32(b[o+1:])}
-		o += 7
-		for j := 0; j < 6; j++ {
-			typ, v := b[o], binary.LittleEndian.Uint16(b[o+1:])
-			o += 3
-			if typ != 0 && typ < kcTypes {
-				t.Status[typ] = int32(v)
+	for _, row := range rows {
+		t := kcTier{Kill: row.Kills}
+		for _, e := range row.Effects {
+			if e.Type > 0 && e.Type < kcTypes {
+				t.Status[e.Type] = int32(e.Value)
 			}
 		}
-		if country < 2 {
-			tiers[country] = append(tiers[country], t)
-		}
+		tiers[row.Country] = append(tiers[row.Country], t)
 	}
+	if len(tiers[0]) == 0 || len(tiers[1]) == 0 {
+		return fmt.Errorf("blessing: both countries need tiers")
+	}
+
 	for c := range tiers {
 		for i := 1; i < len(tiers[c]); i++ {
 			for k := range tiers[c][i].Status {
@@ -194,6 +188,7 @@ func AddKillCount(c uint8, n uint32, log logPrinter) {
 		kcWorld[other].resetAt = time.Time{}
 	}
 	light, dark := kcWorld[0].count, kcWorld[1].count
+	count, index := w.count, w.index
 	kcMu.Unlock()
 	kcApplyCountry(int(c))
 	kcAnnounce(int(c))
@@ -203,7 +198,7 @@ func AddKillCount(c uint8, n uint32, log logPrinter) {
 		kcSave(light, dark, log)
 		ResetRelics(now, log)
 	}
-	log.Printf("GX Server World country %d kill count %d reached tier %d (maxed=%t)", c, w.count, w.index, maxed)
+	log.Printf("GX Server World country %d kill count %d reached tier %d (maxed=%t)", c, count, index, maxed)
 }
 
 // TickKillCount is CWorld::UpdateKillCount.

@@ -894,7 +894,6 @@ func (s *Session) sendInitialState(st *CharacterStats) {
 	}
 	for _, p := range []labeled{
 		{buildCharacterActiveBuffs(s.buffs), "0x010A active buffs"},
-		{buildBlessInit(s.faction), "0x0211 bless"},
 		{buildZeroCount(packet.BankItemList), "0xB101 bank"},
 		{buildWarehouseItemList(s.stored), "0x0711 warehouse"},
 		{buildZeroCount(packet.TeleportSavePositionList), "0x0225 saved teleports"},

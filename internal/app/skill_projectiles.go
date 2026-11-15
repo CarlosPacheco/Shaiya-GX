@@ -19,9 +19,10 @@ type skillProjectile struct {
 	arrived    bool
 }
 type skillImpact struct {
-	target   uint32
-	age      float32
-	instance *scene.Effect
+	authoredLifetime bool
+	target           uint32
+	age              float32
+	instance         *scene.Effect
 }
 
 // Native magic mode 2 (0x57e320 -> 0x450650 -> 0x40e760): start at
@@ -159,7 +160,7 @@ func (a *App) updateResolvedEffects() {
 		} else {
 			p.instance.Stop()
 		}
-		if p.age >= 5 {
+		if !p.authoredLifetime && p.age >= 5 {
 			p.instance.Stop()
 		} // Bound lingering authored loops in this first delivery.
 		p.instance.Update(advance)

@@ -5,7 +5,6 @@ import (
 	"log"
 	"math"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -218,23 +217,9 @@ func (a *App) drawCombat(w, h int) {
 		Exp:      s.Details.Exp, PrevExp: s.Details.PrevExp, NextExp: s.Details.NextExp,
 	}
 	if s.Blessing.Known && s.Blessing.Country < 2 {
-		if !a.blessingLoaded && a.arc != nil {
-			a.blessingLoaded = true
-			data, err := a.arc.ReadFile("Character/KillStatus.SData")
-			if err == nil {
-				var tiers []sdata.BlessingTier
-				tiers, err = sdata.ParseBlessing(data)
-				if err == nil {
-					for country := range a.blessingMax {
-						a.blessingMax[country] = sdata.BlessingMaximum(tiers, uint8(country))
-					}
-				}
-			}
-			if err != nil {
-				log.Printf("blessing data: %v", err)
-			}
-		}
+		a.loadBlessing()
 		view.BlessCount, view.BlessMax, view.BlessKnown = s.Blessing.Count, a.blessingMax[s.Blessing.Country], true
+		view.BlessRemainingMS, view.BlessCountry, view.Clock = s.Blessing.RemainingMS, s.Blessing.Country, a.clock
 	}
 	for _, slot := range s.Slots {
 		if slot.ID == s.SelfID {
@@ -277,6 +262,8 @@ func (a *App) drawCombat(w, h int) {
 	}
 	a.bottom.QuestOpen, a.bottom.GuildOpen = a.questLog.open, a.guild.open
 	a.bottom.Draw(a.sprites, a.font, a.white, w, h, view, a.inventory.open, a.skills.open, a.status.open, a.subActionsOpen)
+	a.drawBlessingTooltip(w, h)
+	a.drawBlessingBanner(w, h)
 }
 
 func (a *App) selectSelf() {

@@ -5,6 +5,8 @@ sweeps start. The supplied file defines nine obelisks (seven on map 0, one on
 18, one on 30), 25 linked boss definitions and no active relic-to-portal links.
 Its portal section is a configuration template, not an enabled dependency.
 
+See [Goddess blessing](goddess-blessing.md) for its complete tables, benefits and UI.
+
 ## Capture and goddess blessing
 
 A relic has neutral, Light and Fury monster variants. Initial ownership follows
