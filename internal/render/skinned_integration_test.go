@@ -69,6 +69,33 @@ func TestSkinPaletteSupportsFullByteIndicesAndZeroWeightGL(t *testing.T) {
 	if pixel != [4]byte{255, 0, 0, 255} {
 		t.Fatal("bone200 or zero-weight NaN bone corrupts skin", pixel)
 	}
+	// Cloak shoulder DDS alpha can be near zero even for an opaque material.
+	// Offscreen world/portrait composition must receive opaque actor alpha.
+	shoulder := Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{255, 0, 0, 24}}})
+	defer shoulder.Delete()
+	original := tex
+	tex = shoulder
+	draw(bones)
+	gl.ReadPixels(48, 32, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixel[0]))
+	tex = original
+	if pixel != [4]byte{255, 0, 0, 255} {
+		t.Fatal("opaque shoulder leaks texture alpha into scene composition", pixel)
+	}
+
+	// The opacity fix must preserve cutout rejection and intentional stealth.
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	k.Draw(mesh, shoulder, .5)
+	gl.ReadPixels(48, 32, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixel[0]))
+	if pixel != [4]byte{0, 0, 0, 255} {
+		t.Fatal("low-alpha cutout was not rejected", pixel)
+	}
+	k.SetOpacity(StealthOpacity)
+	k.Draw(mesh, shoulder, -1)
+	gl.ReadPixels(48, 32, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixel[0]))
+	if pixel[0] < 160 || pixel[0] > 170 || pixel[1] != 0 || pixel[2] != 0 {
+		t.Fatal("opaque material change broke intended stealth", pixel)
+	}
+
 	// A later short palette must not use the stale matrices of a previous actor.
 	short := []M4{Identity(), Identity(), Identity(), Identity()}
 	short[3][12] = -.5

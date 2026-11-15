@@ -165,7 +165,10 @@ func (k *Skinner) Begin(s *Scene3D, ambient float32) {
 	gl.Uniform3f(k.uFogColor, s.FogColor[0], s.FogColor[1], s.FogColor[2])
 	gl.Uniform2f(k.uFogRange, s.FogStart, s.FogEnd)
 	gl.Uniform1f(k.uDetailBias, s.DetailBias)
-	gl.Uniform1i(k.uMode, 0)
+	// Native skin uses material/actor opacity, not DDS alpha, after the
+	// alpha-test decision. Low-alpha shoulder textures must still write an
+	// opaque surface into offscreen world and portrait buffers.
+	gl.Uniform1i(k.uMode, 10)
 	if s.Shadow {
 		gl.Uniform1i(k.uMode, 7)
 	}
@@ -197,14 +200,27 @@ func (k *Skinner) Delete() {
 }
 
 func (k *Skinner) Draw(m *SkinMesh, t *Texture, alphaRef float32) {
+	k.draw(m, t, alphaRef, false)
+}
+
+// DrawTwoSided preserves the native cloak-shoulder pass's D3DCULL_NONE.
+func (k *Skinner) DrawTwoSided(m *SkinMesh, t *Texture, alphaRef float32) {
+	k.draw(m, t, alphaRef, true)
+}
+
+func (k *Skinner) draw(m *SkinMesh, t *Texture, alphaRef float32, twoSided bool) {
 	if m.Count == 0 {
 		return
 	}
 	gl.Uniform1f(k.uRef, alphaRef)
 	// Native skinned surfaces use clockwise front faces, including opaque NPCs.
-	gl.Enable(gl.CULL_FACE)
-	gl.FrontFace(gl.CW)
-	gl.CullFace(gl.BACK)
+	if twoSided {
+		gl.Disable(gl.CULL_FACE)
+	} else {
+		gl.Enable(gl.CULL_FACE)
+		gl.FrontFace(gl.CW)
+		gl.CullFace(gl.BACK)
+	}
 	if k.opacity < 1 {
 		gl.Enable(gl.BLEND)
 		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -220,6 +236,12 @@ func (k *Skinner) Draw(m *SkinMesh, t *Texture, alphaRef float32) {
 	gl.FrontFace(gl.CCW)
 	gl.Disable(gl.BLEND)
 	drawCalls++
+}
+
+// SetAmbient selects a part's native lighting. Cloak shoulders disable D3D
+// lighting and therefore use their texture at full brightness.
+func (k *Skinner) SetAmbient(ambient float32) {
+	gl.Uniform1f(k.uAmb, ambient)
 }
 
 // SetOpacity applies a scoped ghost alpha; Begin restores opaque drawing.

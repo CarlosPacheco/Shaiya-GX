@@ -62,6 +62,8 @@ type skinPart struct {
 	tex      *render.Texture
 	bones    []render.M4 // B (inverse bind) per bone
 	cut      bool        // MLT Visibility mode: alpha test
+	unlit    bool        // native cloak shoulder disables lighting
+	twoSided bool        // native cloak shoulder keeps D3DCULL_NONE
 	pose     []render.M4
 }
 
@@ -585,7 +587,17 @@ func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
 		if p.cut {
 			ref = 0.5
 		}
-		k.Draw(p.mesh, p.tex, ref)
+		if p.unlit {
+			k.SetAmbient(1)
+		}
+		if p.twoSided {
+			k.DrawTwoSided(p.mesh, p.tex, ref)
+		} else {
+			k.Draw(p.mesh, p.tex, ref)
+		}
+		if p.unlit {
+			k.SetAmbient(ambient)
+		}
 	}
 	if c.cloak != nil {
 		c.cloak.draw(s, c.World, c.Concealed)

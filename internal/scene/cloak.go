@@ -135,7 +135,10 @@ func (c *Character) attachCloak(a Appearance) {
 	cp := *g.shoulder
 	// Native 0x415b88/0x5519c0 draws the shoulder as an opaque skinned
 	// part. Its texture alpha is not a cutout mask (often below 0.5).
-	cp.tex, cp.cut = g.texture, false
+	// 0x415b75 disables lighting for this draw, then restores it.
+	// D3DCULL_NONE set at 0x415212 remains active until 0x415bdb,
+	// after the shoulder draw. Its winding is mixed; do not cull it.
+	cp.tex, cp.cut, cp.unlit, cp.twoSided = g.texture, false, true, true
 	c.parts = append(c.parts, &cp)
 	rest := make([]render.V3, len(g.vertices))
 	for i, v := range g.vertices {

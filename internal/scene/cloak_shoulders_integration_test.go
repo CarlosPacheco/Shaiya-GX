@@ -3,6 +3,7 @@
 package scene
 
 import (
+	"bytes"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -94,13 +95,26 @@ func TestCloakShoulderVisibilityGL(t *testing.T) {
 				}
 			}
 			t.Logf("fit=%d back=%v shoulder contribution=%d", fit, back, n)
+			if fit == 7 && back && n < 3000 {
+				t.Fatal("back faces of the shoulder were culled")
+			}
 			if fit == 7 && n < 100 {
 				t.Fatal("correct armor fit did not expose the shoulder")
 			}
 			cloth := a.cloak
 			a.cloak = nil
 			a.parts = []*skinPart{parts[len(parts)-1]}
-			draw()
+			only := draw()
+			for i := 3; i < len(only); i += 4 {
+				if only[i] != 255 {
+					t.Fatal("shoulder texture alpha leaked into composed image", only[i])
+				}
+			}
+			r.CharacterAmbient = .1
+			if dark := draw(); !bytes.Equal(only, dark) {
+				t.Fatal("native unlit shoulder inherited character lighting")
+			}
+			r.CharacterAmbient = 0
 			if err := render.SavePNG(filepath.Join(dir, name+"-only.png"), 800, 600); err != nil {
 				t.Fatal(err)
 			}
