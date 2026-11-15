@@ -83,7 +83,7 @@ func (w *World) CameraIntersection(origin, eye render.V3) (render.V3, bool) {
 			}
 			matrix := o.world
 			if o.rotor != nil {
-				matrix = o.rotor.transform(w.elapsed)
+				matrix = o.rotor.transform(w.DynamicTime())
 			}
 			project(s.assets.models[o.file], matrix)
 		}
@@ -103,7 +103,7 @@ func (w *World) CameraIntersection(origin, eye render.V3) (render.V3, bool) {
 			project(o.Model, o.World)
 		}
 		for _, o := range w.rotors {
-			project(o.model, o.transform(w.elapsed))
+			project(o.model, o.transform(w.DynamicTime()))
 		}
 	}
 	for i := range w.dgColliders {

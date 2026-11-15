@@ -601,3 +601,42 @@ func TestTargetStateMarksReceivedZeroHPAsDead(t *testing.T) {
 		t.Fatal("server corpse remained attackable")
 	}
 }
+
+func TestMobHeightSnapshotsAndMovement(t *testing.T) {
+	s := New()
+	w := proto.NewWriter(proto.GXMobEnter)
+	w.U32(42)
+	w.Bool(true)
+	w.U16(10)
+	w.F32(3)
+	w.F32(11.4)
+	w.F32(5)
+	if _, err := s.Apply(w.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	e := s.Entities[42]
+	if e == nil || !e.MobHeightKnown || e.Y != 11.4 {
+		t.Fatalf("authoritative spawn height: %+v", e)
+	}
+	w = proto.NewWriter(proto.GXMobMove)
+	w.U32(42)
+	w.U8(1)
+	w.F32(4)
+	w.F32(12.1)
+	w.F32(6)
+	w.U32(250)
+	if _, err := s.Apply(w.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	if e.MobMoveDurationMS != 250 || e.Y != 12.1 || e.X != 4 || e.Z != 6 || e.MoveSerial != 1 || !e.MobHeightKnown {
+		t.Fatalf("authoritative motion: %+v", e)
+	}
+	w = proto.NewWriter(proto.GXMobMove)
+	w.U32(42)
+	if _, err := s.Apply(w.Bytes()); err == nil {
+		t.Fatal("truncated height packet accepted")
+	}
+	if e.Y != 12.1 {
+		t.Fatal("truncated packet changed entity")
+	}
+}

@@ -27,6 +27,7 @@ type ItemDef struct {
 	ReqIg                                  uint8
 	Range                                  int16
 	AttackTime                             uint8
+	Speed                                  uint8 // native equipment / Sonic movement tier bonus
 	Special                                uint8
 	Attrib                                 uint8
 	Slot                                   uint8
@@ -323,7 +324,7 @@ func loadDefs() (*Defs, error) {
 		Attackfighter, Defensefighter, Patrolrogue, Shootrogue, Attackmage, Defensemage, Grow,
 		ReqStr, ReqDex, ReqRec, ReqInt, ReqWis, Reqluc, ReqIg, Range, AttackTime, Special, COALESCE(Attrib,0), Slot, Quality,
 		Effect1, Effect2, Effect3, Effect4, ConstHP, ConstSP, ConstMP, ConstStr, ConstDex, ConstRec,
-		ConstInt, ConstWis, ConstLuc, Buy, Sell, Grade, COALESCE([Drop],0), Server, Count, ReqVg, COALESCE(Exp,0), COALESCE(ReqOg,0) FROM PS_GameDefs_Items`)
+		ConstInt, ConstWis, ConstLuc, Buy, Sell, Grade, COALESCE([Drop],0), Server, Count, ReqVg, COALESCE(Exp,0), COALESCE(ReqOg,0), COALESCE(Speed,0) FROM PS_GameDefs_Items`)
 	if err != nil {
 		return nil, fmt.Errorf("load Items: %w", err)
 	}
@@ -336,7 +337,7 @@ func loadDefs() (*Defs, error) {
 			&it.ReqStr, &it.ReqDex, &it.ReqRec, &it.ReqInt, &it.ReqWis, &it.ReqLuc, &it.ReqIg, &it.Range,
 			&it.AttackTime, &it.Special, &it.Attrib, &it.Slot, &quality, &it.Effect1, &it.Effect2, &it.Effect3, &it.Effect4,
 			&it.ConstHP, &it.ConstSP, &it.ConstMP, &it.ConstStr, &it.ConstDex, &it.ConstRec, &it.ConstInt,
-			&it.ConstWis, &it.ConstLuc, &it.Buy, &it.Sell, &grade, &drop, &it.Server, &it.Count, &it.ReqVg, &it.ExpAbsorb, &it.ReqOg); err != nil {
+			&it.ConstWis, &it.ConstLuc, &it.Buy, &it.Sell, &grade, &drop, &it.Server, &it.Count, &it.ReqVg, &it.ExpAbsorb, &it.ReqOg, &it.Speed); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("scan Items: %w", err)
 		}

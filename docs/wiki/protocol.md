@@ -19,3 +19,18 @@ updates. See [Stealth and GM protection](stealth-and-gm-protection.md).
 GX `0x7F04` sends an atomically assembled, chunked map quest-NPC catalog. It
 contains definition keys and X/Z anchors without interactive entity IDs. See
 [Quests and map markers](quests-and-map.md) for layout and cache invalidation.
+
+## Map-click GM teleport
+
+Revision `0x11122208` adds client request `0x7F09`: map ID (`uint16`),
+normalized image U and V (`float32` each). Values must be finite and within
+0–1. X = U × map size; Z = (1 − V) × map size. The server verifies its account
+GM role, rejects unknown/instance IDs, blocked destinations and active trades,
+and resolves an exact supported X/Z destination and height with its navigation
+and original collision geometry. Success uses the normal map-position and
+movement responses; diagnostics use `GXGMState`. There is no `/goto` command.
+
+`0x7F0A` publishes equipment OJ metadata at entry in chunks: row count
+(`uint16`), then type, type ID, maximum distinct stats and per-stat value
+(`uint8` each). Zero count/value disables recreation for that definition.
+The client uses server limits in item tooltips instead of stale catalog fields.

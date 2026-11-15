@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
 
 func TestStatusHotkeyFooterAndPointerOwnership(t *testing.T) {
@@ -31,5 +32,21 @@ func TestStatusHotkeyFooterAndPointerOwnership(t *testing.T) {
 	a.toggleSkills(false)
 	if !a.status.open || !a.skills.open {
 		t.Fatal("opening skills closed status")
+	}
+}
+
+func TestStatusUsesOnlyConfirmedNativeSpeedMessages(t *testing.T) {
+	a := inputApp()
+	a.msg = map[int]string{5271: "none", 5276: "normal", 5278: "fast", 5280: "extremely fast", 5281: "can't attack", 5282: "can't move"}
+	if s := a.statusState(); s.AttackSpeed != "-" || s.MoveSpeed != "-" {
+		t.Fatal("unconfirmed speed inferred", s)
+	}
+	a.state.Self.Speed = &proto.CharacterSpeed{Attack: 9, Move: 3}
+	if s := a.statusState(); s.AttackSpeed != "extremely fast" || s.MoveSpeed != "fast" {
+		t.Fatal("native confirmed labels", s)
+	}
+	a.state.Self.Speed = &proto.CharacterSpeed{Attack: 255, Move: 255}
+	if s := a.statusState(); s.AttackSpeed != "can't attack" || s.MoveSpeed != "can't move" {
+		t.Fatal("native blocked labels", s)
 	}
 }

@@ -484,3 +484,17 @@ NPC visibility range. Their eligibility is cached and refreshed on quest,
 character, relevant inventory, catalog or minimum-time changes; moving the
 camera or player does not rescan every quest. Distant NPCs remain metadata, not
 3D entities. Party and nearby creature-objective positions stay live overlays.
+
+
+Stats now displays confirmed attack and movement speeds in its original fields,
+using native SysMsg descriptions. See [Attack speed](attack-speed.md) and
+[Movement speed](movement-speed.md) for equipment bonuses, limits and timing.
+The cast indicator projects the native logical actor origin (GX feet +0.9)
+plus 0.5 units along horizontal camera-right, independent of camera pitch.
+The original vertical blue bar style and elapsed-fill behavior are preserved.
+
+Jump is a single original ALT action, not a looping airborne clip. Continued
+falling uses run/walk after that action finishes, including remote players.
+Moving jump requests first flush pending position so the server tests the same
+support surface. Active landing no longer rewinds the owner to an older X/Z
+snapshot; invalid movement and idle gravity remain server-authoritative.

@@ -8,16 +8,17 @@ SQL in `server/tools/enable_test_gms.sql` can update those named accounts in an
 intentionally selected offline database.
 
 GM characters display a light-blue `(GM)` prefix (`#66CCFF`) beside their white
-world name when visible to the viewer. GMs start invisible and invulnerable;
-ordinary players of both factions cannot see a hidden GM. Other GMs can. Stored character names are
+world name when visible to the viewer. GMs start visible and vulnerable;
+skill-based stealth follows the ordinary faction visibility rules. Stored character names are
 unchanged. Turbo starts disabled for GM sessions; `/turbo` enables it and multiplies movement speed by
 12, including backward movement, mounts and swimming; server immobilization and
 death still prevent movement.
 
+The `/char` and `/attack` controls, including both on/off forms, are temporarily
+unavailable. Skill-based stealth remains available.
+
 | Command | Result |
 |---|---|
-| `/char on` / `/char off` | Enable/disable GM invisibility (on by default). |
-| `/attack on` / `/attack off` | Enable/disable immunity to damage and external skill effects, including allied effects; own positive skills remain usable (on by default). |
 | `/iclear` | Permanently deletes the issuing character's carried items (bags 1–5). Equipped items, mounts, other characters and account storage are preserved. |
 | `/turbo` | Toggles the issuing GM's turbo off/on for this session. |
 | `/getitem type id quantity` | Grants the complete quantity, respecting definition stack limits and free bag slots. `/getitem 25 1 200` grants 200 apples in one stack with the current 255 limit. |
@@ -32,7 +33,6 @@ immediately. Spawned NPCs follow terrain height on clients. Spawned entities liv
 Maps without a known safe arrival are rejected. Commands are case-insensitive,
 validated on the server, and never broadcast as ordinary chat when handled.
 Finish an active exchange before issuing inventory, movement or spawn commands.
-The `/char` and `/attack` protection controls remain available during a trade.
 
 The client sends commands through the normal chat request independently of the
 selected UI channel. GX server response `0x7F01` contains self character ID `u32`,
@@ -89,3 +89,28 @@ selecting a database, and [Item data](item-data.md) for definition identifiers.
 See [Stealth and GM protection](stealth-and-gm-protection.md) for visibility,
 combat disengagement, ordinary stealth reveal rules, persistent GM command modes
 and the recovered visual.
+
+## Collision diagnostics (local development)
+
+`/cview` toggles the in-game collision overlay; `/cview on` and `/cview off`
+select an explicit state. The client handles this presentation command locally
+after checking its server-confirmed GM role. It consumes the command privately,
+and revoking GM status disables the view. Movement continues to collide.
+
+Gold shows blocking faces, cyan model support surfaces, blue the terrain and
+magenta the player's ellipsoid. Grass, decorative VANI and models without
+collision remain traversable according to the recovered original rules.
+See [Original world collisions](../collisions.md) for geometry selection,
+native evidence, validation and the subsequent authoritative-server stage.
+
+## Teleport from a map
+
+GM accounts can click the circular minimap or the full local map to teleport
+to that exact X/Z point. Dragging the full map pans it without teleporting.
+In World Map, select a region and click its map preview to teleport there;
+GM previews allow both factions. No `/goto` chat command is added.
+The server validates the account role and map, rejects trading or blocked
+destinations, and resolves the destination floor from its own physics resources.
+The client never supplies a height. On layered maps the nearest navigable
+floor to the current height is used locally; cross-map arrivals use the map's
+terrain height as the floor hint.

@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
+	"github.com/Spelunkern/Shaiya-GX/internal/itemtype"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
 
@@ -119,6 +121,19 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 		name = fmt.Sprintf("%s [%d]", name, craft.enchant)
 	}
 	add(name, [4]float32{1, 1, 0, 1})
+	rt := itemtype.Real(def.Type)
+	equipment := rt >= 1 && rt <= 25 && !itemHasRestoration(def.Type)
+	if rt >= 1 && rt <= 15 {
+		add(label(5192+int(attackspeed.Tier(def.AttackTime, 0)), "Attack speed"), white)
+	} else if (equipment || def.Type == 30) && def.AttackTime > 0 {
+		// SysMsg supplies the localized attack-speed prefix and the tier name.
+		prefix := strings.TrimSpace(strings.Replace(label(5197, "Attack speed normal"), label(5276, "normal"), "", 1))
+		add(fmt.Sprintf("%s +%d", prefix, def.AttackTime), [4]float32{1, 1, 0, 1})
+	}
+	if (equipment || def.Type == 30) && def.Speed > 0 {
+		add(fmt.Sprintf("%s +%d", label(5209, "increase movement speed"), def.Speed), [4]float32{1, 1, 0, 1})
+	}
+
 	if def.Attack != 0 || def.AttackAdd != 0 {
 		add(fmt.Sprintf("%s %d - %d", label(5191, "attack-power"), def.Attack, uint32(def.Attack)+uint32(def.AttackAdd)), white)
 	}

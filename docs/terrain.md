@@ -54,3 +54,31 @@ comparison, not a claim that every player-visible discontinuity is removed.
 Real OpenGL checks cover maps 1, 2 and 19, shared borders, shadow receivers,
 streaming, water, occlusion and AA. Local logs and before/after captures are kept
 under `work/terrain-native/`.
+
+## Model and authored-volume collisions
+
+The terrain fan is distinct from world model blockers. See
+[Original world collisions](collisions.md) for original group selection,
+SMOD/DG/VANI collision data, WLD volumes, player movement and GM `/cview`.
+
+## Moving jumps and airborne presentation
+
+A moving client sends its pending validated position before the native jump
+motion request, which carries no coordinates. Both sides then start the impulse
+on the same support surface, including small steps. The client checks the shared
+support geometry before predicting another jump; the server independently
+requires support and retains ownership of vertical physics.
+
+The server continues broadcasting gravity and landing to viewers. An active
+owner no longer receives an unconditional landing correction containing X/Z
+from its previous 10-Hz sample: that stale snapshot rewound newer predicted
+movement. Invalid height/path/speed samples still receive corrections, and an
+owner that stops sending input still receives authoritative gravity/landing
+updates after the existing 300-ms idle threshold. No movement or height allowance
+was increased to suppress the rewind.
+
+Jump presentation plays original ALT action 8 once. Its animation duration is
+independent of the physical time spent airborne. Once it finishes, continued
+falling uses run or walk, for both the owner and remote users; ordinary falls
+also use airborne locomotion. Switching clips at action completion prevents a
+wrapped first jump frame from appearing during the transition.

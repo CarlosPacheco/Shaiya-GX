@@ -15,7 +15,7 @@ def package(archives, tag, notes):
         prepare(archives, None, portable, tag)
         shutil.copy2(notes, portable / 'PATCH-NOTES.md')
         with (portable / 'README.txt').open('a') as stream:
-            stream.write('\nUpdated client data download: see PATCH-NOTES.md.\n')
+            stream.write('\nBinary update: keep the client game data from the complete Drive package.\nServer maps and physics resources are included. See PATCH-NOTES.md.\n')
         (portable / 'SHA256SUMS.txt').write_text(''.join(
             digest(path) + '  ' + path.relative_to(portable).as_posix() + '\n'
             for path in sorted(portable.rglob('*'))

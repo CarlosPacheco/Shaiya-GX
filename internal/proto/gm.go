@@ -7,7 +7,7 @@ import (
 )
 
 // GXGMState is a GX-only server response: self ID:u32, GM:u8, turbo:u8,
-// message byte length:u16, UTF-8 message. Requests use ordinary chat commands.
+// message byte length:u16, UTF-8 message. Map teleport requests use GXGMMapTeleport; other requests use chat commands.
 const GXGMState Opcode = 0x7F01
 
 // GXVisibility: character ID:u32, concealed:u8. Sent only to authorized viewers.

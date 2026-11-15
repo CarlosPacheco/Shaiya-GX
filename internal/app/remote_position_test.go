@@ -92,3 +92,23 @@ func TestRemotePositionSnapsOnResetOrLargeJump(t *testing.T) {
 		t.Fatal(got)
 	}
 }
+
+func TestMobPositionUsesServerDurationThroughCorners(t *testing.T) {
+	e := &game.Entity{Kind: game.KindMob, MobHeightKnown: true}
+	var p remotePosition
+	p.update(e, 0)
+	e.X, e.MoveSerial, e.MobMoveDurationMS = 2, 1, 200
+	p.update(e, 1)
+	if got := p.update(e, 1.1); got != (render.V3{1, 0, 0}) {
+		t.Fatalf("server timing ignored: %v", got)
+	}
+	p.update(e, 1.2)
+	e.Z, e.MoveSerial, e.MobMoveDurationMS = 1, 2, 100
+	p.update(e, 1.2)
+	if got := p.update(e, 1.25); got != (render.V3{2, 0, .5}) {
+		t.Fatalf("corner interpolation cut or paused: %v", got)
+	}
+	if e.X != 2 || e.Z != 1 {
+		t.Fatal("presentation changed authoritative position")
+	}
+}

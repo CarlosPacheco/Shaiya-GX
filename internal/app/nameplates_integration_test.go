@@ -227,32 +227,14 @@ func TestNameDepthCaptureIsLazyGL(t *testing.T) {
 	if got := render.GPUBytes(); got != before {
 		t.Fatalf("empty name pass allocated GPU storage: %d -> %d", before, got)
 	}
-	// A visible item label must cause the depth copy to be allocated.
+	// Ground items have no nameplates. Without a visible model there must be
+	// no label drawing and no lazy depth allocation for an invisible text hitbox.
 	a.state.GroundItems[2] = proto.GroundItem{Type: 26, X: 0, Y: 0, Z: .5}
-	gl.ClearDepth(1)
-	gl.DepthMask(true)
-	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	a.sprites.Begin(64, 64)
 	a.drawPlayerNames(64, 64)
 	a.sprites.End()
-	if got := render.GPUBytes(); got < before+64*64*4 {
-		t.Fatal("visible label did not allocate the depth texture", before, got)
-	}
-	x, y, _, ok := projectLabel(render.V3{0, .3, .5}, render.Identity(), 64, 64)
-	if !ok {
-		t.Fatal("test item was not visible")
-	}
-	click := &platform.Input{Clicked: true, MouseX: x, MouseY: y - a.font.Height/2}
-	if id := a.pickGroundLabel(click, 64, 64); id != 2 {
-		t.Fatal("visible item label was not picked", id)
-	}
-	gl.ClearDepth(.25)
-	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	a.sprites.Begin(64, 64)
-	a.drawPlayerNames(64, 64)
-	a.sprites.End()
-	if id := a.pickGroundLabel(click, 64, 64); id != 0 {
-		t.Fatal("occluded item label was picked", id)
+	if got := render.GPUBytes(); got != before {
+		t.Fatal("ground item text allocated name depth", before, got)
 	}
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("lazy name depth GL error %#x", code)

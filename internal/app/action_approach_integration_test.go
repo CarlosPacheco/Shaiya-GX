@@ -3,18 +3,40 @@
 package app
 
 import (
-	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
 	"testing"
+	"time"
 )
 
 func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 	t.Helper()
 	v, st := a.wv, a.state
-	start := v.pos
+	frame := func() {
+		time.Sleep(time.Second / 60)
+		a.updateWorld(&platform.Input{}, 1.0/60)
+		once := false
+		pump(func() bool {
+			if once {
+				return true
+			}
+			once = true
+			return false
+		})
+	}
+	walk := func(p render.V3) {
+		t.Helper()
+		v.destination, v.travel = p, true
+		for i := 0; i < 900 && v.travel; i++ {
+			frame()
+		}
+		if v.travel {
+			t.Fatal("fixture walk could not reach destination", v.pos, p)
+		}
+	}
+
 	send := func(p []byte) {
 		t.Helper()
 		if err := a.world.Send(p); err != nil {
@@ -23,8 +45,13 @@ func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 	}
 	// Drop one unit from the isolated runner's disposable stack.
 	key := [2]uint8{1, 23}
-	if st.Inventory[key].Count != 5 {
+	count := st.Inventory[key].Count
+	if count < 1 {
 		t.Fatal("missing disposable pickup stack")
+	}
+	before := map[uint32]bool{}
+	for id := range st.GroundItems {
+		before[id] = true
 	}
 	drop := proto.NewWriter(proto.RemoveItem)
 	drop.U8(1)
@@ -34,7 +61,7 @@ func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 	var loot uint32
 	pump(func() bool {
 		for id, item := range st.GroundItems {
-			if item.Type == 25 && item.TypeID == 4 {
+			if !before[id] && item.Type == 25 && item.TypeID == 4 {
 				loot = id
 				return true
 			}
@@ -42,34 +69,22 @@ func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 		return false
 	})
 	item := st.GroundItems[loot]
-	v.place(render.V3{item.X + 15, item.Y, item.Z})
-	send(v.movePacket(0))
+	walk(render.V3{item.X + 8, item.Y, item.Z})
 	if !a.pickupNearest() || !v.travel || v.approachTarget != loot {
 		t.Fatal("pickup action did not start approach")
 	}
 	for i := 0; i < 600 && v.approachTarget != 0; i++ {
-		a.updateWorld(&platform.Input{}, 1.0/60)
+		frame()
 	}
 	if v.approachTarget != 0 {
 		t.Fatal("loot approach never reached pickup distance")
 	}
-	pump(func() bool { _, present := st.GroundItems[loot]; return !present && st.Inventory[key].Count == 5 })
+	pump(func() bool { _, present := st.GroundItems[loot]; return !present && st.Inventory[key].Count == count })
 	// Pick a real visible living mob and begin fifteen units away.
 	// First monster area in original map-one svmap: (789..809,1663..1680).
-	v.place(render.V3{799.4, 39, 1671.7})
-	send(v.movePacket(0))
-	var enemy *game.Entity
-	pump(func() bool {
-		for _, e := range st.Entities {
-			if e.Kind == game.KindMob && !e.Dead && (!e.HealthKnown || e.HP > 0) {
-				enemy = e
-				return true
-			}
-		}
-		return false
-	})
-	v.place(render.V3{enemy.X + 15, enemy.Y, enemy.Z})
-	send(v.movePacket(0))
+
+	enemy := testworld.LivingMob(t, st, send, pump)
+	walk(render.V3{enemy.X + 10, enemy.Y, enemy.Z})
 	// Exercise native selection before the attack action starts its approach.
 	st.Target = 0
 	a.updateCombat(&platform.Input{Keys: []platform.Key{platform.KeyTarget}}, 1024, 734)
@@ -90,7 +105,7 @@ func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 	}
 	target := st.Target
 	for i := 0; i < 600 && v.approachTarget != 0; i++ {
-		a.updateWorld(&platform.Input{}, 1.0/60)
+		frame()
 	}
 	if v.approachTarget != 0 {
 		t.Fatal("attack approach did not finish")
@@ -103,7 +118,7 @@ func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 	// The selected-target action (F/double click) also starts approach itself.
 	enemy = testworld.LivingMob(t, st, send, pump)
 	st.Target = enemy.ID
-	v.place(render.V3{enemy.X + 15, enemy.Y, enemy.Z})
+	walk(render.V3{enemy.X + 10, enemy.Y, enemy.Z})
 	v.facing = render.V3{0, 0, 1}
 	if !a.attackTarget() || v.approachTarget != enemy.ID || v.facing[0] > -.99 {
 		t.Fatal("selected-target attack neither turned nor approached", v.facing, v.approachTarget)
@@ -121,7 +136,7 @@ func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 		t.Fatal("bar skill did not queue approach")
 	}
 	for i := 0; i < 600 && v.approachTarget != 0; i++ {
-		a.updateWorld(&platform.Input{}, 1.0/60)
+		frame()
 	}
 	if v.approachTarget != 0 {
 		t.Fatal("targeted skill approach did not finish")
@@ -134,8 +149,6 @@ func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 		t.Fatal("confirmed skill reuse did not block another bar request")
 	}
 	t.Log("selected-target attack turned immediately; bar skill approached, was confirmed by server, and blocked repeated use during its real cooldown")
-	v.place(start)
-	send(v.movePacket(0))
-	a.updateWorld(&platform.Input{}, 1.0/60)
+	frame()
 	t.Log("action approach: nearest loot reached and picked up after ACK; nearest enemy reached and attacked after server confirmation")
 }

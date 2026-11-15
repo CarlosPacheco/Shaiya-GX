@@ -105,3 +105,6 @@ __pycache__/
 
 # Private font experiments are never included in source or release builds.
 /internal/ui/fonts/local/*
+
+# Generated server geometry belongs in distributables, not source history.
+/server/data/geometry/

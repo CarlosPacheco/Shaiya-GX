@@ -264,3 +264,8 @@ func MapCoordinates(view UV, fx, fy, mapSize float32) (x, z float32, ok bool) {
 	}
 	return (view.U0 + fx*(view.U1-view.U0)) * mapSize, (1 - view.V0 - fy*(view.V1-view.V0)) * mapSize, true
 }
+
+// CharacterCoordinates always describes the actor, never the map cursor.
+func CharacterCoordinates(x, y, z float32) string {
+	return fmt.Sprintf("X: %.0f  Y: %.2f  Z: %.0f", x, y, z)
+}

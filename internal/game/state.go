@@ -6,6 +6,7 @@ package game
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
@@ -39,6 +40,8 @@ type Entity struct {
 	IsGM                         bool
 	Concealed                    bool
 	MobSpeedKnown                bool
+	MobHeightKnown               bool
+	MobMoveDurationMS            uint32
 	MobAttackSpeed, MobMoveSpeed uint8
 	Sitting                      bool
 	Gesture                      uint8
@@ -84,6 +87,10 @@ type Event struct {
 }
 
 type State struct {
+	OJLimits               map[[2]uint8]proto.OJLimit
+	LastPlayerCorrection   proto.PlayerCorrection
+	PhysicsMapID           uint16
+	PhysicsTime            float64
 	MapQuestNPCs           []proto.QuestNPC
 	MapQuestNPCsReady      bool
 	QuestMapRevision       uint64
@@ -182,6 +189,17 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 	ev := Event{Op: op}
 	fail := func(err error) (Event, error) { return ev, fmt.Errorf("0x%04X: %w", uint16(op), err) }
 	switch op {
+	case proto.GXOJLimits:
+		limits, err := proto.DecodeOJLimits(p)
+		if err != nil {
+			return fail(err)
+		}
+		if s.OJLimits == nil {
+			s.OJLimits = make(map[[2]uint8]proto.OJLimit)
+		}
+		for _, limit := range limits {
+			s.OJLimits[[2]uint8{limit.Type, limit.TypeID}] = limit
+		}
 	case proto.GXQuestNPCs:
 		if err := s.applyQuestNPCs(p); err != nil {
 			return fail(err)
@@ -970,6 +988,26 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			s.MapID, s.Self.X, s.Self.Y, s.Self.Z = m.MapID, m.X, m.Y, m.Z
 		}
 		ev.Text = fmt.Sprintf("map %d pos=(%.1f,%.1f,%.1f)", m.MapID, m.X, m.Y, m.Z)
+	case proto.GXPlayerCorrection:
+		correction, err := proto.DecodePlayerCorrection(p)
+		if err != nil {
+			return fail(err)
+		}
+		if correction.ID == s.SelfID {
+			s.Self.X, s.Self.Y, s.Self.Z = correction.X, correction.Y, correction.Z
+			s.Self.Motion, s.Self.Dir = correction.Motion, correction.Direction
+			s.LastPlayerCorrection = correction
+		}
+	case proto.GXPhysicsClock:
+		if len(p) != 12 {
+			return fail(fmt.Errorf("invalid physics clock"))
+		}
+		clock := math.Float64frombits(binary.LittleEndian.Uint64(p[4:12]))
+		if math.IsNaN(clock) || math.IsInf(clock, 0) || clock < 0 {
+			return fail(fmt.Errorf("invalid physics time"))
+		}
+		s.PhysicsMapID = binary.LittleEndian.Uint16(p[2:4])
+		s.PhysicsTime = clock
 	case proto.GXVisibility:
 		if len(p) != 7 || p[6] > 1 {
 			return fail(fmt.Errorf("invalid GX visibility"))
@@ -1096,19 +1134,20 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		e.Motion, e.Dir, e.X, e.Y, e.Z = m.Motion, m.Dir, m.X, m.Y, m.Z
 		e.MoveSerial++
-	case proto.MobEnter:
+	case proto.MobEnter, proto.GXMobEnter:
 		m, err := proto.DecodeMobEnter(p)
 		if err != nil {
 			return fail(err)
 		}
-		s.Entities[m.ID] = &Entity{Kind: KindMob, ID: m.ID, TypeID: m.MobID, X: m.X, Z: m.Z}
-	case proto.MobMove:
+		s.Entities[m.ID] = &Entity{Kind: KindMob, ID: m.ID, TypeID: m.MobID, X: m.X, Y: m.Y, Z: m.Z, MobHeightKnown: m.HeightKnown}
+	case proto.MobMove, proto.GXMobMove:
 		m, err := proto.DecodeMobMove(p)
 		if err != nil {
 			return fail(err)
 		}
 		if e := s.Entities[m.ID]; e != nil {
-			e.Motion, e.X, e.Z = m.Motion, m.X, m.Z
+			e.Motion, e.X, e.Y, e.Z, e.MobHeightKnown = m.Motion, m.X, m.Y, m.Z, m.HeightKnown
+			e.MobMoveDurationMS = m.DurationMS
 			e.MoveSerial++
 		}
 	case proto.MapNpcEnter:

@@ -225,8 +225,18 @@ func LoadMap(a *Assets, id uint16) (*World, error) {
 	if err != nil {
 		return nil, err
 	}
+	var loaded *World
 	if len(b) >= 3 && string(b[:3]) == "DUN" {
-		return LoadDungeon(a, file)
+		loaded, err = LoadDungeon(a, file)
+	} else {
+		loaded, err = loadStreamedField(a, fmt.Sprint(id))
 	}
-	return loadStreamedField(a, fmt.Sprint(id))
+	if err != nil {
+		return nil, err
+	}
+	if err = loaded.prepareCollisions(a); err != nil {
+		loaded.Close()
+		return nil, fmt.Errorf("map %d collision data: %w", id, err)
+	}
+	return loaded, nil
 }

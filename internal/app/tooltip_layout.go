@@ -9,9 +9,10 @@ import (
 )
 
 type tooltipExtras struct {
-	maxOJ     uint16
-	forgeInfo string
-	material  *sdata.Item
+	maxOJ      uint16
+	maxOJStats uint8
+	forgeInfo  string
+	material   *sdata.Item
 }
 
 type tooltipSocket struct {
@@ -121,7 +122,7 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 		e := extras[0]
 		if e.maxOJ > 0 {
 			y += 5
-			_, n := block(fmt.Sprintf("Max OJ %d/%d", e.maxOJ, e.maxOJ*100), [4]float32{.6, 1, .6, 1}, y, false)
+			_, n := block(fmt.Sprintf("Max OJ %d/%d (%d stats)", e.maxOJ, e.maxOJ*100, e.maxOJStats), [4]float32{.6, 1, .6, 1}, y, false)
 			y += max(15, n*15)
 		}
 		if e.forgeInfo != "" {

@@ -34,15 +34,6 @@ func TestCombatAgainstSQLite(t *testing.T) {
 			int32(charID), int32(saved.MapID), saved.PosX, saved.PosY, saved.PosZ, int32(saved.CurrentHP), int32(saved.CurrentMP), int32(saved.CurrentSP))
 	}()
 
-	c := connect(t, uid)
-	seen := map[packet.Opcode]int{}
-	c.until(packet.AccountFaction, seen)
-	c.write(msg(packet.SelectCharacter, byte(charID), byte(charID>>8), byte(charID>>16), byte(charID>>24)))
-	c.until(packet.CharacterSkillBar, seen)
-	c.expanded = true
-	c.write(msg(packet.CharacterEnteredMap))
-	c.until(packet.CharacterMove, seen)
-
 	var target world.MapMob
 	for _, m := range world.EntitiesOnMap(saved.MapID).Mobs {
 		if m.CurrentHP > 0 && m.Level <= 20 && m.MaxHP <= 3000 {
@@ -53,13 +44,21 @@ func TestCombatAgainstSQLite(t *testing.T) {
 	if target.ID == 0 {
 		t.Skipf("no low-level mob on map %d", saved.MapID)
 	}
-	move := packet.New(packet.CharacterMove)
-	move.U8(1)
-	move.U16(0)
-	move.F32(target.PosX + 0.5)
-	move.F32(saved.PosY)
-	move.F32(target.PosZ)
-	c.write(move.MustFinish()[2:])
+	// Spawn this disposable character beside the target before entering the
+	// world instead of bypassing collision/speed validation with a forged move.
+	pool, _ := db.Pool(db.GameData)
+	if _, err := pool.Exec(`UPDATE PS_GameData_Chars SET PosX=?2,PosY=?3,PosZ=?4 WHERE CharID=?1`, int32(charID), target.PosX+.5, target.PosY+.1, target.PosZ); err != nil {
+		t.Fatal(err)
+	}
+	c := connect(t, uid)
+	seen := map[packet.Opcode]int{}
+	c.until(packet.AccountFaction, seen)
+	c.write(msg(packet.SelectCharacter, byte(charID), byte(charID>>8), byte(charID>>16), byte(charID>>24)))
+	c.until(packet.CharacterSkillBar, seen)
+	c.expanded = true
+	c.write(msg(packet.CharacterEnteredMap))
+	c.until(packet.CharacterMove, seen)
+
 	le := func(v uint32) []byte { return binary.LittleEndian.AppendUint32(nil, v) }
 
 	// An attack skill the character knows, on the selected mob (0x0517).

@@ -18,3 +18,7 @@ On Windows use `server/tools/build.ps1`. Portable Linux/Windows archives, includ
 Read [first run](../docs/quickstart.md), [build instructions](../docs/building.md), [operations](../docs/server.md), [storage](docs/sqlite.md), [distribution](docs/distribution.md) and [parity notes](docs/original-parity.md). Keep existing `RAPTURE_*` environment variables and `rapture.sqlite` filenames for compatibility. Source copyright/license is preserved in [LICENSE](LICENSE).
 
 GM role and the six server-authorized commands are documented in [GM controls](../docs/gm.md).
+
+Ground navigation uses generated `data/geometry/` alongside the original
+`data/maps/` files. See [mob navigation](../docs/mob-navigation.md) for the
+offline generation step, compatibility and map-content diagnostics.

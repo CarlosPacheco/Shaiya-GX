@@ -319,6 +319,17 @@ func (s *Session) handleGatekeeper(p []byte) {
 		fail("no gold or unknown map")
 		return
 	}
+	if s.movement.geometry != nil {
+		geometry, err := s.playerGeometry(g.MapID)
+		if err != nil {
+			fail("destination physics unavailable")
+			return
+		}
+		if _, ok := geometry.Spawn([3]float32{g.X, g.Y, g.Z}); !ok {
+			fail("destination has no physical floor")
+			return
+		}
+	}
 	ch.Money -= g.Money
 	s.persist()
 	s.send(buildGatekeeperResult(true, ch.Money), "0x020C gatekeeper")

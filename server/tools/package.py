@@ -26,7 +26,26 @@ def checksum(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def check_navigation(root):
+    directory = root / "data/geometry"
+    catalog = json.loads((directory / "catalog.json").read_text())
+    maps = catalog.get("maps", [])
+    if catalog.get("version") != 1 or not maps or len(set(maps)) != len(maps):
+        raise ValueError("invalid server navigation catalog")
+    for map_id in maps:
+        manifest = json.loads((directory / f"{map_id}.manifest.json").read_text())
+        if manifest.get("version") != 1 or manifest.get("map_id") != map_id:
+            raise ValueError(f"invalid navigation generation: {map_id}")
+        if manifest.get("player_physics") != 1 or manifest.get("collision_rules") != 2:
+            raise ValueError(f"player physics or collision rules need regeneration: {map_id}")
+        for extension in ("gxnav", "gxcol", "gxphysics"):
+            name = f"{map_id}.{extension}"
+            if checksum(directory / name) != manifest["files"].get(name):
+                raise ValueError(f"server navigation checksum mismatch: {name}")
+
+
 def check_seed(root):
+    check_navigation(root)
     seed = root / "data/rapture.sqlite"
     manifest = json.loads(seed.with_suffix(".manifest.json").read_text())
     if checksum(seed) != manifest["sha256"]:
@@ -184,11 +203,13 @@ def build_package(platform, output, go):
                        cwd=ROOT, env=gui_environment, check=True)
         shutil.copytree(ROOT / "data", root / "data", ignore=shutil.ignore_patterns("vssver.scc", "__pycache__", "*.sqlite-wal", "*.sqlite-shm"))
         shutil.copy2(ROOT / "LICENSE", root / "LICENSE")
+        shutil.copy2(ROOT / "THIRD_PARTY_NOTICES.md", root / "THIRD_PARTY_NOTICES.md")
+        shutil.copytree(ROOT / "licenses", root / "licenses")
         (root / "docs").mkdir()
         for document in ("sqlite.md", "distribution.md", "social.md"):
             text = (ROOT / "docs" / document).read_text().replace("../../docs/", "")
             (root / "docs" / document).write_text(text)
-        for document in ("server.md", "quickstart.md", "building.md", "gm.md"):
+        for document in ("server.md", "quickstart.md", "building.md", "gm.md", "mob-navigation.md"):
             text = (ROOT.parent / "docs" / document).read_text().replace("../server/docs/", "")
             (root / "docs" / document).write_text(text)
         (root / "tools").mkdir()

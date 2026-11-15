@@ -15,7 +15,12 @@ no separate data download, Go installation or build tools required.**
 Requires a 64-bit OS and OpenGL 4.5. The server includes development test accounts;
 preserve your existing runtime database when upgrading.
 
-[Setup and requirements](docs/client-portable.md) · [Patch notes](docs/releases/gx-v0.1.8.md) · [GitHub binary updates (without client game data)](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
+**Latest update: [gx-v0.1.9](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.9).**
+The Drive package above is the complete gx-v0.1.8 base. Apply the latest GitHub
+client/server binaries together, retaining its client game data and your runtime
+database. The update includes all server navigation and collision resources.
+
+[Setup and requirements](docs/client-portable.md) · [Latest patch notes](docs/releases/gx-v0.1.9.md) · [GitHub binary updates (without client game data)](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
 
 ---
 
@@ -33,7 +38,7 @@ GX reads loose assets from a `data/` folder beside the **Shaiya GX** executable.
 
 **SQLite is used during development because an embedded database makes setup and distribution easy. It is temporary: the database backend will change in the future. The replacement and migration format are not selected yet.**
 
-[**gx-v0.1.8 patch notes**](docs/releases/gx-v0.1.8.md) · [Complete Linux/Windows portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip) · [Separate client/server downloads](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
+[**gx-v0.1.9 patch notes**](docs/releases/gx-v0.1.9.md) · [Complete Linux/Windows portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip) · [Separate client/server downloads](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
 
 ## On-screen metrics panel
 
@@ -43,7 +48,7 @@ Values depend on the scene, hardware, resolution and frame limit; a screenshot i
 
 ## Project status
 
-Snapshot: November 13, 2026. Counts come from the [server parity table](server/docs/original-parity.md); checklist entries differ in scope and are **not an overall project completion percentage**. Full client visual/gameplay parity remains in progress.
+Snapshot: November 14, 2026. Counts come from the [server parity table](server/docs/original-parity.md); checklist entries differ in scope and are **not an overall project completion percentage**. Full client visual/gameplay parity remains in progress.
 
 | Delivered | Current result |
 |---|---|

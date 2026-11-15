@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 from snapshot_sqlite import snapshot
+from package import check_navigation
 
 
 class SnapshotTests(unittest.TestCase):
@@ -50,6 +51,29 @@ class SnapshotTests(unittest.TestCase):
             self.assertEqual(manifest.read_bytes(), b"previous manifest")
             with self.assertRaises(ValueError):
                 snapshot(source, source)
+
+
+class NavigationDistributionTests(unittest.TestCase):
+    def test_complete_generation_and_corruption(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "data/geometry"
+            directory.mkdir(parents=True)
+            (directory / "catalog.json").write_text(json.dumps({"version": 1, "maps": [3]}))
+            files = {}
+            for extension in ("gxnav", "gxcol", "gxphysics"):
+                name = f"3.{extension}"
+                payload = name.encode()
+                (directory / name).write_bytes(payload)
+                files[name] = hashlib.sha256(payload).hexdigest()
+            (directory / "3.manifest.json").write_text(json.dumps({"version": 1, "map_id": 3,"player_physics":1,"collision_rules":2, "files": files}))
+            check_navigation(root)
+            (directory / "3.gxcol").write_bytes(b"corrupt")
+            with self.assertRaisesRegex(ValueError, "checksum"):
+                check_navigation(root)
+            (directory / "3.gxcol").unlink()
+            with self.assertRaises(FileNotFoundError):
+                check_navigation(root)
 
 
 if __name__ == "__main__":

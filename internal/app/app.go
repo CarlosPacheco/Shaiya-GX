@@ -48,6 +48,9 @@ const (
 )
 
 type App struct {
+	physicsClockAt                      time.Time
+	collisionLines                      *render.DebugLines
+	collisionVertices                   []render.DebugLineVertex
 	missingInterfaces                   int
 	tooltipMuted                        bool
 	forgeQuoteSerial                    uint32

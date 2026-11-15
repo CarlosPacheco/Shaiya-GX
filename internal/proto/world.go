@@ -1,6 +1,9 @@
 package proto
 
-import "github.com/Spelunkern/Shaiya-GX/internal/textwire"
+import (
+	"encoding/binary"
+	"github.com/Spelunkern/Shaiya-GX/internal/textwire"
+)
 
 // Client -> server: FUN_00597f60 takes buffer + length.
 // Each builder cites its writer in Game.exe.
@@ -241,30 +244,51 @@ func DecodeUserMove(p []byte) (m UserMove, err error) {
 	return m, r.Err()
 }
 
+const GXPhysicsClock Opcode = 0x7F07
+
+const GXMobEnter Opcode = 0x7F05
+const GXMobMove Opcode = 0x7F06
+
 // MobSpawn is 0x0601 (Rapture buildMobEnter): mobs carry only X and Z.
 type MobSpawn struct {
-	ID    uint32
-	New   bool
-	MobID uint16
-	X, Z  float32
+	ID          uint32
+	New         bool
+	MobID       uint16
+	X, Y, Z     float32
+	HeightKnown bool
 }
 
 func DecodeMobEnter(p []byte) (m MobSpawn, err error) {
 	r := NewReader(p)
-	m.ID, m.New, m.MobID, m.X, m.Z = r.U32(), r.Bool(), r.U16(), r.F32(), r.F32()
+	m.ID, m.New, m.MobID, m.X = r.U32(), r.Bool(), r.U16(), r.F32()
+	m.HeightKnown = len(p) >= 2 && Opcode(binary.LittleEndian.Uint16(p[:2])) == GXMobEnter
+	if m.HeightKnown {
+		m.Y = r.F32()
+	}
+	m.Z = r.F32()
 	return m, r.Err()
 }
 
 // MobMotion is 0x0603.
 type MobMotion struct {
-	ID     uint32
-	Motion uint8
-	X, Z   float32
+	ID          uint32
+	Motion      uint8
+	X, Y, Z     float32
+	HeightKnown bool
+	DurationMS  uint32
 }
 
 func DecodeMobMove(p []byte) (m MobMotion, err error) {
 	r := NewReader(p)
-	m.ID, m.Motion, m.X, m.Z = r.U32(), r.U8(), r.F32(), r.F32()
+	m.ID, m.Motion, m.X = r.U32(), r.U8(), r.F32()
+	m.HeightKnown = len(p) >= 2 && Opcode(binary.LittleEndian.Uint16(p[:2])) == GXMobMove
+	if m.HeightKnown {
+		m.Y = r.F32()
+	}
+	m.Z = r.F32()
+	if m.HeightKnown {
+		m.DurationMS = r.U32()
+	}
 	return m, r.Err()
 }
 

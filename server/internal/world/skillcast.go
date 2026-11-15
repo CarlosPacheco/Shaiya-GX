@@ -228,6 +228,8 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	w.U8(k.Level)
 	s.broadcastNear(w.MustFinish(), "0x0510 skill cast started", true)
 	s.cast = &pendingCast{target, number, op, time.Now().Add(castTime), pos}
+	s.autoAttack = false
+	s.syncPlayerSpeed(false)
 	s.log.Printf("GX Server World skill cast started skill_id=%d level=%d cast_time=%s", k.SkillID, k.Level, castTime)
 }
 
@@ -237,6 +239,7 @@ func (s *Session) processPendingCast() {
 		return
 	}
 	s.cast = nil
+	s.syncPlayerSpeed(false)
 	s.resolveSkill(c.targetMobID, c.number, c.op, c.targetPos)
 }
 

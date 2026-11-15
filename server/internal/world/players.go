@@ -54,6 +54,8 @@ type ConnectedPlayer struct {
 	mapID                         uint16
 	character                     db.Character
 	items                         []db.Item
+	speedKnown                    bool
+	speeds                        playerSpeeds
 	elementKnown                  bool
 	attackElement, defenseElement uint8
 	faction                       uint8
@@ -174,11 +176,8 @@ func bucket(mapID uint16) map[uint32]*ConnectedPlayer {
 // RegisterPlayer adds a player to its map's registry.
 func RegisterPlayer(ch db.Character, items []db.Item, isAdmin bool, faction uint8, out *connWriter, log *logx.Logger) *ConnectedPlayer {
 	p := &ConnectedPlayer{CharacterID: ch.ID, CharacterName: ch.Name, IsAdmin: isAdmin, out: out, log: log,
-		mapID: ch.MapID, character: ch, items: append([]db.Item(nil), items...), faction: faction}
+		gmVisible: true, mapID: ch.MapID, character: ch, items: append([]db.Item(nil), items...), faction: faction}
 	p.alive.Store(true)
-	p.hidden.Store(isAdmin)
-	p.immune.Store(isAdmin)
-	p.noMobTarget.Store(isAdmin)
 	registryMu.Lock()
 	bucket(ch.MapID)[ch.ID] = p
 	registryMu.Unlock()

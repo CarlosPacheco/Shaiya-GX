@@ -73,6 +73,22 @@ func createInstance(mapID uint16, owner uint32) (uint16, error) {
 	instanceMaps[zone], instanceOwner[zone] = mapID, owner
 	instanceMu.Unlock()
 	RegisterMapGrid(zone, load.mapSize, load.mask)
+	nav, err := loadMobNavigation(zone)
+	if err != nil {
+		return 0, err
+	}
+	if nav != nil {
+		valid := load.entities.Mobs[:0]
+		for i := range load.entities.Mobs {
+			m := load.entities.Mobs[i]
+			if m.placeOnNavigation(nav, zone) {
+				valid = append(valid, m)
+			} else if m.group != nil {
+				m.group.alive--
+			}
+		}
+		load.entities.Mobs = valid
+	}
 	AddEntities(zone, load.entities)
 	return zone, nil
 }

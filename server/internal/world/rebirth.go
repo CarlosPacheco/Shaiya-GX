@@ -246,6 +246,13 @@ func (s *Session) halfPools() { s.setPools(true) }
 // 0x0551 goes to the user before the zone change. 0x0505 sends the pools.
 func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore bool, lost uint32) {
 	ch := s.char
+	if mapID == ch.MapID {
+		p, ok := s.groundTrustedDestination(x, y, z)
+		if !ok {
+			return
+		}
+		x, y, z = p[0], p[1], p[2]
+	}
 	if restore {
 		s.setPools(false)
 	}
@@ -259,9 +266,13 @@ func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore boo
 	resurrect := buildCharacterResurrect(ch.ID, kind, ch.Exp, x, y, z)
 	pools := buildCharacterReviveHitpoints(ch.ID, stats.CurrentHP, stats.CurrentMP, stats.CurrentSP)
 	if mapID == ch.MapID {
-		if x != ch.PosX || z != ch.PosZ {
+		if x != ch.PosX || y != ch.PosY || z != ch.PosZ {
 			s.clearView(true)
 			ch.PosX, ch.PosY, ch.PosZ = x, y, z
+			if s.movement.geometry != nil {
+				s.movement.at = time.Time{}
+				_ = s.initPlayerMovement(time.Now())
+			}
 			if s.player != nil {
 				s.player.UpdateCharacter(*ch)
 				s.player.UpdateMotion(0, 0)

@@ -81,6 +81,17 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 		}
 		mapID = zone
 	}
+	g, err := s.playerGeometry(mapID)
+	if err != nil {
+		s.log.Printf("GX Server teleport refused: %v", err)
+		return
+	}
+	destination, valid := g.Spawn([3]float32{x, y, z})
+	if !valid {
+		s.log.Printf("GX Server teleport refused: map %d has no physical floor at destination", mapID)
+		return
+	}
+	x, y, z = destination[0], destination[1], destination[2]
 	// LeaveUser / EnterUser: the old view goes (on the same map the client
 	// keeps its entities, so they get leave packets), then the new one.
 	if mapID != ch.MapID && s.player != nil {
@@ -89,6 +100,10 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 	}
 	s.clearView(mapID == ch.MapID)
 	ch.MapID, ch.PosX, ch.PosY, ch.PosZ = mapID, x, y, z
+	s.movement = playerMovement{geometry: g, mapID: mapID}
+	if err := s.initPlayerMovement(time.Now()); err != nil {
+		return
+	}
 	if s.player != nil {
 		s.player.SetMap(mapID)
 		s.player.UpdateCharacter(*ch)
@@ -114,7 +129,17 @@ func (s *Session) handleCharacterMove(p []byte) {
 	if x != ch.PosX || z != ch.PosZ {
 		s.cancelMove()
 	}
-	ch.PosX, ch.PosY, ch.PosZ = x, y, z
+	ok, reason := s.validatePlayerMovement(x, y, z, motion, direction, time.Now())
+	if !ok {
+		s.log.Printf("GX Server movement rejected: %s", reason)
+		s.correctMovement(reason)
+		return
+	}
+	x, y, z = ch.PosX, ch.PosY, ch.PosZ
+	motion = s.movement.motion
+	if reason != "" {
+		s.correctMovement(reason)
+	}
 	s.positionDirty = true
 	if s.player != nil {
 		s.player.UpdateCharacter(*ch)
@@ -165,16 +190,8 @@ func (s *Session) executeTown() {
 		s.send(buildChatNormal(ch.ID, "No town spawn area was found for this map/faction."), "0x1101 town command result")
 		return
 	}
-	s.clearView(true)
-	ch.PosX, ch.PosY, ch.PosZ = area.RandomPoint()
-	if s.player != nil {
-		s.player.UpdateCharacter(*ch)
-		s.player.UpdateMotion(0, 0)
-	}
-	s.savePosition()
-	s.send(buildCharacterMapPosition(ch), "0x020B town teleport")
-	s.send(buildCharacterMove(ch, 0, 0), "0x0501 town teleport move")
-	s.placeView()
+	x, y, z := area.RandomPoint()
+	s.applyTeleport(ch.MapID, x, y, z, "town teleport")
 	s.send(buildChatNormal(ch.ID, fmt.Sprintf("Returned to nearest town spawn (%.2f, %.2f, %.2f).", ch.PosX, ch.PosY, ch.PosZ)),
 		"0x1101 town command result")
 }

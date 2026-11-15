@@ -19,11 +19,11 @@ func TestVisibilityAuthorityAndGMDefaults(t *testing.T) {
 	dark := makePlayer(990002, false, 1)
 	gm := makePlayer(990003, true, 0)
 	otherGM := makePlayer(990004, true, 1)
-	if !gm.hidden.Load() || !gm.immune.Load() || !gm.noMobTarget.Load() {
-		t.Fatal("GM defaults are not protected")
+	if gm.hidden.Load() || gm.immune.Load() || gm.noMobTarget.Load() {
+		t.Fatal("GM protection must start disabled")
 	}
-	if light.canSee(gm) || dark.canSee(gm) || !otherGM.canSee(gm) || !gm.canSee(gm) {
-		t.Fatal("hidden GM leaked or became invisible to GMs")
+	if !light.canSee(gm) || !dark.canSee(gm) || !otherGM.canSee(gm) || !gm.canSee(gm) {
+		t.Fatal("default visible GM is missing from a viewer")
 	}
 	light.hidden.Store(true)
 	if dark.canSee(light) || !gm.canSee(light) || !light.canSee(light) {
@@ -41,52 +41,20 @@ func TestVisibilityAuthorityAndGMDefaults(t *testing.T) {
 	}
 }
 
-func TestGMProtectionCommandsAndEffectImmunity(t *testing.T) {
-	s, packets := gmWireSession(t, db.Character{ID: 990010, MapID: 60078, MaxHP: 100, CurrentHP: 100}, true)
+func TestRemovedGMProtectionCommandsCannotToggleState(t *testing.T) {
+	s, packets := gmWireSession(t, db.Character{ID: 990010, MapID: 60078, CurrentHP: 100}, true)
 	s.player = RegisterPlayer(*s.char, nil, true, 0, s.out, nil)
 	t.Cleanup(s.player.Unregister)
-	if !s.invulnerable() {
-		t.Fatal("GM is vulnerable by default")
-	}
-	// Reject damage and friendly effects even if their senders queued them before activation.
-	if s.takeUserDamage(1, 100) || s.takeUserSkillDamage(1, [3]uint32{100, 100, 100}) || s.applyIncomingMobDamage(pendingDamage{}) {
-		t.Fatal("immune GM died")
-	}
-	if _, ok := s.addEffect(&db.SkillDef{SkillID: 1, TypeEffect: typeEffectBuff}, 0); ok {
-		t.Fatal("immune GM accepted buff")
-	}
-	s.applyFriendly(pendingFriendly{Source: 1, HP: 100, IsBuff: true})
-	if s.char.CurrentHP != 100 || len(s.buffs) != 0 {
-		t.Fatal("immune GM was changed")
-	}
-	s.handleGMCommand("/attack off")
-	gmResponse(t, packets)
-	if s.invulnerable() || s.player.immune.Load() || !s.player.hidden.Load() {
-		t.Fatal("attack off changed wrong state")
-	}
-	s.handleGMCommand("/char off")
-	gmResponse(t, packets)
-	if s.player.hidden.Load() || s.invulnerable() {
-		t.Fatal("char off changed wrong state")
-	}
-	s.handleGMCommand("/attack on")
-	gmResponse(t, packets)
-	if !s.invulnerable() || s.player.hidden.Load() {
-		t.Fatal("attack on changed visibility")
-	}
-	s.handleGMCommand("/char on")
-	gmResponse(t, packets)
-	if !s.player.hidden.Load() || !s.invulnerable() {
-		t.Fatal("char on did not restore invisibility")
-	}
-	s.breakStealth()
-	if !s.player.hidden.Load() || !s.invulnerable() {
-		t.Fatal("attack must preserve both GM command modes")
-	}
-	s.handleGMCommand("/attack invalid")
-	gmResponse(t, packets)
-	if !s.invulnerable() {
-		t.Fatal("malformed command changed protection")
+	for _, command := range []string{"/char on", "/char off", "/attack on", "/attack off", "/CHAR on", "/attack invalid"} {
+		if !s.handleGMCommand(command) {
+			t.Fatal("retired command leaked to chat")
+		}
+		if reply := gmResponse(t, packets); reply.Message != "GM: command unavailable." {
+			t.Fatal(reply)
+		}
+		if s.gmConcealed || s.gmImmune || s.player.hidden.Load() || s.player.immune.Load() {
+			t.Fatal("retired command changed protection")
+		}
 	}
 }
 
@@ -138,28 +106,30 @@ func TestConcealmentRemovesAndReintroducesStationaryUsers(t *testing.T) {
 	}
 	normal := makeSession(990021, false)
 	gm := makeSession(990022, true)
+	gm.gmConcealed = true
+	gm.syncVisibility()
 	observer := makeSession(990023, true)
 	if normal.player.knows(viewUser, gm.char.ID) || !observer.player.knows(viewUser, gm.char.ID) {
 		t.Fatal("GM default view filtering")
 	}
-	gm.gmRevealed = true
+	gm.gmConcealed = false
 	gm.syncVisibility()
 	if !normal.player.knows(viewUser, gm.char.ID) {
 		t.Fatal("stationary GM did not reappear")
 	}
-	gm.gmRevealed = false
+	gm.gmConcealed = true
 	gm.syncVisibility()
 	if normal.player.knows(viewUser, gm.char.ID) || !observer.player.knows(viewUser, gm.char.ID) {
 		t.Fatal("stationary concealment did not reconcile viewers")
 	}
-	gm.gmVulnerable = true
+	gm.gmImmune = false
 	gm.buffs = []ActiveBuff{{ID: 1, Effect: typeEffectBuff, Detail: 88}}
-	gm.gmRevealed = true
+	gm.gmConcealed = false
 	gm.syncVisibility()
 	if !normal.player.knows(viewUser, gm.char.ID) {
 		t.Fatal("allied ordinary stealth ghost disappeared")
 	}
-	gm.gmRevealed = false
+	gm.gmConcealed = true
 	gm.syncVisibility()
 	if normal.player.knows(viewUser, gm.char.ID) {
 		t.Fatal("GM concealment over existing stealth leaked to ally")
@@ -191,6 +161,8 @@ func TestMobLosingHiddenTargetReturnsHomeWithoutAggroingBystander(t *testing.T) 
 
 func TestHiddenBroadcastsAndPartyCoordinates(t *testing.T) {
 	hidden := RegisterPlayer(db.Character{ID: 990030, MapID: 60081, PosX: 123, PosY: 45, PosZ: 678}, nil, true, 0, nil, nil)
+	hidden.hidden.Store(true)
+	hidden.gmVisible = false
 	viewer := RegisterPlayer(db.Character{ID: 990031, MapID: 60081}, nil, false, 0, nil, nil)
 	t.Cleanup(hidden.Unregister)
 	t.Cleanup(viewer.Unregister)
@@ -229,8 +201,10 @@ func TestProtectedGMSelfBuffKeepsConfirmationAndExternalImmunity(t *testing.T) {
 	def := &db.SkillDef{SkillID: 60010, SkillLevel: 1, TypeEffect: typeEffectBuff, KeepSeconds: 60}
 	db.SetDefsForTest(&db.Defs{Skills: map[db.SkillKey]*db.SkillDef{{SkillID: 60010, Level: 1}: def}})
 	s, packets := gmWireSession(t, db.Character{ID: 990012, MapID: 60080, MaxHP: 100, CurrentHP: 100}, true)
+	s.gmConcealed, s.gmImmune = true, true
 	s.player = RegisterPlayer(*s.char, nil, true, 0, s.out, nil)
 	t.Cleanup(s.player.Unregister)
+	s.syncVisibility()
 	if !s.teamUsable(s.player) {
 		t.Fatal("own immune character must be friendly-usable")
 	}
@@ -254,8 +228,6 @@ func TestProtectedGMSelfBuffKeepsConfirmationAndExternalImmunity(t *testing.T) {
 		t.Fatal("external buff replaced own buff")
 	}
 	s.breakStealth()
-	s.handleGMCommand("/attack on")
-	gmResponse(t, packets)
 	if len(s.buffs) != 1 || !s.player.hidden.Load() || !s.invulnerable() {
 		t.Fatal("GM commands or actions removed own buff or command protection")
 	}

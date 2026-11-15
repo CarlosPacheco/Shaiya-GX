@@ -213,17 +213,25 @@ func (s *Session) tickSkillOnce() {
 // view, the pools are full, no exp is lost.
 func (s *Session) lifeSkill(l *pendingLifeSkill) {
 	ch := s.char
+	p, ok := s.groundTrustedDestination(l.X, l.Y, l.Z)
+	if !ok {
+		return
+	}
 	s.broadcastNear(buildCharacterReviveInit(ch.ID), "0x0406 corpse leave", true)
 	s.setPools(false)
 	s.dead, s.rebirthAt, s.rebirthParty = false, time.Time{}, false
-	ch.PosX, ch.PosY, ch.PosZ = l.X, l.Y, l.Z
+	ch.PosX, ch.PosY, ch.PosZ = p[0], p[1], p[2]
+	if s.movement.geometry != nil {
+		s.movement.at = time.Time{}
+		_ = s.initPlayerMovement(time.Now())
+	}
 	if s.player != nil {
 		s.player.SetAlive(true)
 		s.player.UpdateCharacter(*ch)
 	}
 	s.persist()
 	s.placeView()
-	s.broadcastNear(buildCharacterResurrect(ch.ID, rebirthKindBind, ch.Exp, l.X, l.Y, l.Z), "0x0551 life skill", true)
+	s.broadcastNear(buildCharacterResurrect(ch.ID, rebirthKindBind, ch.Exp, ch.PosX, ch.PosY, ch.PosZ), "0x0551 life skill", true)
 	st := s.stats()
 	s.send(buildCharacterReviveHitpoints(ch.ID, st.CurrentHP, st.CurrentMP, st.CurrentSP), "0x0505 life skill pools")
 	s.log.Printf("GX Server World revived by skill character_id=%d caster=%d", ch.ID, l.CasterID)

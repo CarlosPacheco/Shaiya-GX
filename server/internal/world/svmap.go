@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/mapnav"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
@@ -109,6 +110,13 @@ func ensureMapDataDir() error {
 
 // LoadSvmaps loads every data/maps/<id>.svmap into the world.
 func LoadSvmaps(log *logx.Logger) error {
+	complete, err := mapnav.ValidateCatalog(filepath.Join(config.DataDir(), "geometry"))
+	if err != nil {
+		return fmt.Errorf("server navigation installation: %w", err)
+	}
+	if !complete {
+		log.Printf("GX Server: no complete navigation catalog; only individually generated maps use ground navigation")
+	}
 	if err := ensureMapDataDir(); err != nil {
 		return err
 	}
@@ -134,6 +142,27 @@ func LoadSvmaps(log *logx.Logger) error {
 			continue
 		}
 		RegisterMapGrid(uint16(id), load.mapSize, load.mask)
+		nav, navErr := loadMobNavigation(uint16(id))
+		if navErr != nil {
+			return navErr
+		}
+		if nav != nil {
+			valid := load.entities.Mobs[:0]
+			skipped := 0
+			for i := range load.entities.Mobs {
+				m := load.entities.Mobs[i]
+				if !m.placeOnNavigation(nav, uint16(id)) {
+					skipped++
+					if m.group != nil {
+						m.group.alive--
+					}
+					continue
+				}
+				valid = append(valid, m)
+			}
+			load.entities.Mobs = valid
+			log.Printf("GX Server navigation map=%d grounded=%d rejected=%d", id, len(valid), skipped)
+		}
 		AddEntities(uint16(id), load.entities)
 		maps++
 		npcs += len(load.entities.NPCs)
@@ -243,6 +272,9 @@ func readMonsterAreas(r *svmapReader, mapSize uint32, mask []byte, defs *db.Defs
 				a := area
 				m := NewStaticMob(def, uint16(mobID), p.x, p.z, &a, respawn)
 				m.group = g
+				m.PosY, m.homeY = p.y, p.y
+				m.spawnMinY, m.spawnMaxY = min(lower.y, upper.y), max(lower.y, upper.y)
+				m.spawnHeightKnown = true
 				mobs = append(mobs, m)
 				index++
 			}

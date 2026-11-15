@@ -204,6 +204,7 @@ func (s *Session) maxPools() [3]uint32 {
 // sendChangedPools sends 0x050B only for pools that changed; a full stat
 // resend crashes the client after item mutations.
 func (s *Session) sendChangedPools(before [3]uint32, why string) {
+	s.syncPlayerSpeed(false)
 	after := s.maxPools()
 	for t := range 3 {
 		if before[t] != after[t] {

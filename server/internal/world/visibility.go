@@ -33,14 +33,14 @@ func (p *ConnectedPlayer) visibilityPacket() []byte {
 	return w.MustFinish()
 }
 
-func (s *Session) invulnerable() bool { return s.isAdmin && !s.gmVulnerable }
+func (s *Session) invulnerable() bool { return s.isAdmin && s.gmImmune }
 
 func (s *Session) syncVisibility() {
 	p := s.player
 	if p == nil {
 		return
 	}
-	hidden, noTarget := s.isAdmin && !s.gmRevealed, false
+	hidden, noTarget := s.isAdmin && s.gmConcealed, false
 	for _, b := range s.buffs {
 		if b.Effect != typeEffectBuff {
 			continue
@@ -53,8 +53,8 @@ func (s *Session) syncVisibility() {
 		}
 	}
 	p.mu.Lock()
-	gmChanged := p.gmVisible != (!s.isAdmin || s.gmRevealed)
-	p.gmVisible = !s.isAdmin || s.gmRevealed
+	gmChanged := p.gmVisible != (!s.isAdmin || !s.gmConcealed)
+	p.gmVisible = !s.isAdmin || !s.gmConcealed
 	p.mu.Unlock()
 	changed := p.hidden.Swap(hidden) != hidden || gmChanged
 	p.noMobTarget.Store(hidden || noTarget)

@@ -216,6 +216,7 @@ func (s *Session) handleLearnSkill(p []byte) {
 	s.persist()
 	s.log.Printf("GX Server World learned skill number=%d skill_id=%d level=%d remaining_skill_point=%d", learned.Number, skillID, level, ch.SkillPoint)
 	s.send(buildLearnSkillResult(true, learned.Number, skillID, level), "0x0209 learn skill ok")
+	s.syncPlayerSpeed(false)
 }
 
 // handleSetStatPoint (0x0208): six u16 deltas str, dex, rec, int, wis, luc.

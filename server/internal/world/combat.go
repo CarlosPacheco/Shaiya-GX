@@ -4,6 +4,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -25,14 +26,10 @@ type weaponCombat struct {
 	Delay            time.Duration
 }
 
-// weaponAttackDelay maps Items.AttackTime (1-10) to the original swing
-// delay.
-func weaponAttackDelay(attackTime uint8) (time.Duration, bool) {
-	table := [11]int{0, 4000, 3000, 2750, 2500, 2250, 2000, 1750, 1500, 1250, 1000}
-	if attackTime < 1 || attackTime > 10 {
-		return 0, false
-	}
-	return time.Duration(table[attackTime]) * time.Millisecond, true
+// weaponAttackDelay takes the native zero-based attack index, not index+1.
+func weaponAttackDelay(tier uint8) (time.Duration, bool) {
+	ms, ok := attackspeed.Milliseconds(tier)
+	return time.Duration(ms) * time.Millisecond, ok
 }
 
 func equippedWeaponCombat(items []db.Item) (weaponCombat, bool) {
@@ -44,8 +41,11 @@ func equippedWeaponCombat(items []db.Item) (weaponCombat, bool) {
 	if d == nil {
 		return weaponCombat{}, false
 	}
-	at := min(d.AttackTime, 10)
-	delay, ok := weaponAttackDelay(at)
+	if d.AttackTime == 0 {
+		return weaponCombat{}, false
+	}
+	at := d.AttackTime
+	delay, ok := weaponAttackDelay(attackspeed.Tier(at, 0))
 	if !ok {
 		return weaponCombat{}, false
 	}
@@ -68,6 +68,9 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	if ch == nil {
 		return false
 	}
+	if s.cast != nil {
+		return false
+	}
 	if s.mounted {
 		s.log.Printf("GX Server World cancelled auto attack while mounted character_id=%d mob_global_id=%d", ch.ID, target)
 		return false
@@ -83,9 +86,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	stats := StatsFor(ch, s.equipment())
 	// CUser::GetAttackSpeedNow: the swing index moves with gems, passives
 	// and buffs (0..9 over g_ConstUserAttackSpeed).
-	if idx := min(max(int32(wc.AttackTime)-1+stats.AttackSpeed, 0), 9); idx != int32(wc.AttackTime)-1 {
-		wc.Delay, _ = weaponAttackDelay(uint8(idx + 1))
-	}
+	wc.Delay, _ = weaponAttackDelay(attackspeed.Tier(wc.AttackTime, stats.AttackSpeed))
 	if !s.lastAutoAttackAt.IsZero() && time.Since(s.lastAutoAttackAt) < wc.Delay {
 		return true
 	}

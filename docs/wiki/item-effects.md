@@ -49,8 +49,8 @@ field can have different meaning in a consumable, a gem and a piece of armor.
 
 Lapis use Type 30. Linked gem entries store their TypeID and resolve the matching
 Type 30 definition. Their ordinary stat bonuses contribute while the containing
-item is equipped. Range and AttackTime on a gem additionally modify reach and
-attack speed through the equipment path.
+item is equipped. Range, AttackTime and Speed on a gem additionally modify reach, attack speed
+and movement speed through the equipment path.
 
 Special 16 is the recovery-gem exception: ConstHP/SP/MP contribute to standing and
 sitting recovery rather than increasing maximum pools. Other supported passive
@@ -201,3 +201,9 @@ remote-player updates and limitations.
 
 See [Item data](item-data.md), [Building and testing](building-and-testing.md),
 and [Server operations](server-operations.md).
+
+Movement speed from equipped `Items.Speed`, Sonic lapis and ability 17 is
+server-authoritative. Equipment and active lapis `AttackTime` also contribute
+to [Attack speed](attack-speed.md); weapons supply the native base index.
+See [Movement speed](movement-speed.md) for tiers, caps,
+consumables and the original running effect.

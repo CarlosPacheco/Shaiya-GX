@@ -2,7 +2,7 @@
 package itemstack
 
 const Max = 255
-const ClientVersion uint32 = 0x11122202
+const ClientVersion uint32 = 0x11122208
 
 // Decode the retired wide-count revision for offline fixtures. New writers
 // use the original opcodes and byte quantities.

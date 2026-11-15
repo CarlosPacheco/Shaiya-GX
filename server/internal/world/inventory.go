@@ -307,6 +307,10 @@ func (s *Session) handleUseItem(p []byte) {
 	// (candies, remedies, charms) that the item casts on its user.
 	if def.Special == specialNone && def.Range != 0 && def.AttackTime != 0 {
 		if sk := db.MustDefs().Skill(uint16(def.Range), def.AttackTime); sk != nil && sk.TypeEffect == typeEffectBuff {
+			if !s.canAddEffect(sk, ch.ID) {
+				reject("stronger buff already active")
+				return
+			}
 			cd := cooldownForReqIg(def.ReqIg)
 			if last, ok := s.itemCooldowns[def.ReqIg]; ok && cd > 0 && time.Since(last) < cd {
 				reject("cooldown")
@@ -315,6 +319,7 @@ func (s *Session) handleUseItem(p []byte) {
 			res, err := s.consumeOne(i)
 			if err != nil {
 				s.log.Printf("GX Server World failed to consume item: %v", err)
+				return
 			}
 			if cd > 0 {
 				s.itemCooldowns[def.ReqIg] = time.Now()
@@ -322,7 +327,7 @@ func (s *Session) handleUseItem(p []byte) {
 			s.persist()
 			s.send(buildUseItemResult(ch.ID, &res), "0x050A use item")
 			s.send(buildRemoveItem(&res, res.Count == 0), "0x0206 remove item")
-			if _, ok := s.addEffect(sk, 0); ok {
+			if _, ok := s.addEffect(sk, 0, ch.ID); ok {
 				s.log.Printf("GX Server World item skill item=%d/%d skill_id=%d level=%d keep=%d", def.Type, def.TypeID, sk.SkillID, sk.SkillLevel, sk.KeepSeconds)
 			}
 			return

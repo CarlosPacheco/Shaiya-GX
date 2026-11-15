@@ -162,7 +162,7 @@ func TestForgeDetailsOriginalAssetsGL(t *testing.T) {
 	layout := layoutTooltip(a.tooltipFont, a.tooltip, true, a.tooltipDescription, len(a.tooltipSockets), a.tooltipExtra)
 	foundOJ := false
 	for _, run := range layout.runs {
-		if strings.Contains(run.text, "Max OJ 13/1300") {
+		if strings.Contains(run.text, fmt.Sprintf("Max OJ 13/1300 (%d stats)", a.tooltipExtra.maxOJStats)) {
 			foundOJ = true
 			if run.color != ([4]float32{.6, 1, .6, 1}) {
 				t.Fatal("OJ color incorrect")

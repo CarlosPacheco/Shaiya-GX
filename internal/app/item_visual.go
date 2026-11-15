@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/element"
 	"github.com/Spelunkern/Shaiya-GX/internal/itemtype"
 	"regexp"
@@ -90,12 +91,40 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 	display := *def
 	value, inactive := a.itemElementState(def, instance)
 	display.Attribute = value
+	// Item tooltips describe native and active socket bonuses together. Do not
+	// feed these locally derived values into the player's authoritative speeds.
+	if instance != nil && itemtype.Real(def.Type) >= 1 && itemtype.Real(def.Type) <= 25 {
+		move, attack := int(def.Speed), int(def.AttackTime)
+		for i, id := range instance.Gems {
+			if id == 0 || inactive[i] {
+				continue
+			}
+			if g := a.itemsItem(30, id); g != nil {
+				move += int(g.Speed)
+				attack += int(g.AttackTime)
+			}
+		}
+		display.Speed = uint8(min(move, 255))
+		display.AttackTime = uint8(min(attack, 255))
+	}
 	lines := itemDetailLines(&display, instance, count, price, func(id uint8) string {
 		if gem := a.itemsItem(30, id); gem != nil {
 			return gem.Name
 		}
 		return ""
 	}, a.msg)
+
+	if rt := itemtype.Real(def.Type); rt >= 1 && rt <= 15 && display.AttackTime != def.AttackTime {
+		label := a.msg.Get(5192 + int(attackspeed.Tier(display.AttackTime, 0)))
+		if label == "" {
+			label = "Attack speed"
+		}
+		for i := range lines {
+			if lines[i].text == label {
+				lines[i].color = [4]float32{1, 1, 0, 1}
+			}
+		} // Native socket-enhanced row.
+	}
 
 	// Description is its own RichText block; sockets follow it in Phoenix.
 	description := strings.ReplaceAll(def.Description, `\n`, "\n")
@@ -128,6 +157,11 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 	a.tooltipExtra = tooltipExtras{forgeInfo: itemForgeInfo(def)}
 	if rt := itemtype.Real(def.Type); rt >= 1 && rt <= 25 && def.Server > 0 && def.RequiredStats[4] > 0 {
 		a.tooltipExtra.maxOJ = min(def.RequiredStats[4], 99)
+		pool := uint8(9)
+		if rt <= 15 || rt == 22 || rt == 23 || rt == 25 {
+			pool = 6
+		}
+		a.tooltipExtra.maxOJStats = min(def.Server, pool)
 		if id := def.RequiredStats[5]; id > 0 {
 			a.tooltipExtra.material = a.itemsItem(uint8(id/1000), uint8(id%1000))
 			if a.tooltipExtra.material != nil {

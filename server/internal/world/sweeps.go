@@ -28,16 +28,17 @@ func StartSweeps(log *logx.Logger) {
 	every(5*time.Second, func() { TickGuildRanking(time.Now(), log) })
 	every(time.Second, func() { TickKillCount(time.Now(), log) })
 	every(instanceSweepTick, func() { TickInstances(time.Now(), log) })
-	every(500*time.Millisecond, func() {
+	every(mobNavigationTick, func() {
 		players := AllPlayers()
 		if len(players) == 0 {
 			return
 		}
 		snaps := make([]PlayerCombatSnapshot, 0, len(players))
 		for _, p := range players {
-			x, z := p.PositionXZ()
+			snapshot := p.Snapshot()
+			x, z := snapshot.PosX, snapshot.PosZ
 			c, _ := p.viewCell()
-			snaps = append(snaps, PlayerCombatSnapshot{p.CharacterID, p.MapID(), x, z, p.IsAlive(), p.Faction(), c, p.Snapshot().CurrentHP, p.noMobTarget.Load()})
+			snaps = append(snaps, PlayerCombatSnapshot{CharacterID: p.CharacterID, MapID: p.MapID(), PosX: x, PosY: snapshot.PosY, PosZ: z, Alive: p.IsAlive(), Faction: p.Faction(), Cell: c, HP: snapshot.CurrentHP, Invisible: p.noMobTarget.Load()})
 		}
 		tick := TickMobCombat(snaps, 256)
 		for _, a := range tick.Attacks {

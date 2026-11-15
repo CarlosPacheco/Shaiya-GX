@@ -23,6 +23,7 @@ type mapView struct {
 	u, v                   float32
 	lastX, lastY           int
 	markers                []ui.MapMarker
+	click                  mapClick
 }
 
 // Quest readiness is only a presentation hint; Rapture validates turn-in.
@@ -184,11 +185,13 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 	}
 	for _, ch := range in.Chars {
 		if ch == 'm' || ch == 'M' {
+			v.click = mapClick{}
 			v.full, v.dragging = !v.full, false
 			return true
 		}
 	}
 	if v.full && in.HasKey(platform.KeyEscape) {
+		v.click = mapClick{}
 		v.full, v.dragging = false, false
 		return true
 	}
@@ -199,10 +202,12 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 	a.minimap.WorldReturn = v.atlas.overview && v.atlas.preview < 0
 	action := a.minimap.Update(in, w, h, v.full)
 	if action.Close {
+		v.click = mapClick{}
 		v.full, v.dragging = false, false
 		return true
 	}
 	if action.World {
+		v.click = mapClick{}
 		if v.atlas.overview && v.atlas.preview >= 0 {
 			v.atlas.preview = -1
 		} else {
@@ -212,6 +217,7 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if action.Toggle {
+		v.click = mapClick{}
 		v.full = !v.full
 		return true
 	}
@@ -224,6 +230,9 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 		x, y, scale := a.minimap.FullRect(w, h)
 		mx, my, side := x+int(16*scale), y+int(43*scale), int(512*scale)
 		over := in.MouseX >= mx && in.MouseX < mx+side && in.MouseY >= my && in.MouseY < my+side
+		if v.click.update(in, over) {
+			a.gmMapTeleport(a.wv.mapID, ui.MapWindow(v.u, v.v, 1/v.zoom), float32(in.MouseX-mx)/float32(side), float32(in.MouseY-my)/float32(side))
+		}
 		if in.Pressed && over {
 			v.dragging, v.lastX, v.lastY = true, in.MouseX, in.MouseY
 		}
@@ -247,6 +256,17 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 		return v.dragging || panelPointer(in, x, y, int(544*scale), int(579*scale))
 	}
 	x, y := a.minimap.Origin(w, h)
+	if a.wv.world != nil && a.wv.world.WLD != nil && a.wv.world.WLD.MapSize > 0 {
+		fx, fy := float32(in.MouseX-x-16)/136, float32(in.MouseY-y-16)/136
+		dx, dy := fx-.5, fy-.5
+		if v.click.update(in, dx*dx+dy*dy <= .25) {
+			size := float32(a.wv.world.WLD.MapSize)
+			u, z, ok := ui.MapPosition(a.wv.pos[0], a.wv.pos[2], size)
+			if ok {
+				a.gmMapTeleport(a.wv.mapID, ui.MapWindow(u, z, v.diameter/size), fx, fy)
+			}
+		}
+	}
 	if action.Zoom != 0 || in.Wheel != 0 && panelPointer(in, x, y, ui.MinimapWidth, ui.MinimapHeight) {
 		steps := float64(action.Zoom)
 		if in.Wheel != 0 {
@@ -291,7 +311,7 @@ func (a *App) drawMinimap(w, h int, full bool) {
 		}
 		a.minimap.DrawFull(a.sprites, a.font, v.image, a.white, w, h, ui.MapWindow(v.u, v.v, 1/v.zoom), u, z, heading, a.wv.mapID, markers)
 		x, y, scale := a.minimap.FullRect(w, h)
-		position := fmt.Sprintf("X: %.0f  Z: %.0f", a.wv.pos[0], a.wv.pos[2])
+		position := ui.CharacterCoordinates(a.wv.pos[0], a.wv.pos[1], a.wv.pos[2])
 		a.font.DrawScaled(a.sprites, position, float32(x)+24*scale, float32(y)+559*scale, scale, white, 0)
 		fx := (float32(a.lastMouseX-x) - 16*scale) / (512 * scale)
 		fy := (float32(a.lastMouseY-y) - 43*scale) / (512 * scale)

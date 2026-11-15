@@ -51,6 +51,10 @@ func gmNumbers(args []string, bounds ...uint64) ([]uint64, error) {
 
 // Known commands are consumed even when refused; they never become public chat.
 func (s *Session) handleGMCommand(text string) bool {
+	if gm.Retired(text) {
+		s.gmReply("GM: command unavailable.")
+		return true
+	}
 	command, args, known := gm.Parse(text)
 	if !known {
 		return false
@@ -62,33 +66,12 @@ func (s *Session) handleGMCommand(text string) bool {
 		s.gmReply("GM: access denied.")
 		return true
 	}
-	if tradeFor(s.char.ID) != nil && command != "/char" && command != "/attack" { // Inventory must not change underneath an exchange.
+	if tradeFor(s.char.ID) != nil { // Inventory must not change underneath an exchange.
 		s.gmReply("GM: finish trading before using commands.")
 		return true
 	}
 	var err error
 	switch command {
-	case "/char", "/attack":
-		if len(args) != 1 || (args[0] != "on" && args[0] != "off") {
-			s.gmReply("Usage: " + command + " on|off")
-			break
-		}
-		enabled := args[0] == "on"
-		if command == "/char" {
-			s.gmRevealed = !enabled
-			s.syncVisibility()
-			s.gmReply("GM: invisibility " + args[0] + ".")
-		} else {
-			s.gmVulnerable = !enabled
-			if s.player != nil {
-				s.player.immune.Store(enabled)
-			}
-			if enabled {
-				s.removeEffects(func(b *ActiveBuff) bool { return b.Effect != typeEffectBuff }, "GM immunity")
-			}
-			s.syncVisibility()
-			s.gmReply("GM: invulnerability " + args[0] + ".")
-		}
 	case "/turbo":
 		if len(args) != 0 {
 			s.gmReply("Usage: /turbo")
@@ -302,6 +285,10 @@ func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error {
 		}
 	}
 	sh := shard(s.char.MapID)
+	nav, navErr := loadMobNavigation(s.char.MapID)
+	if navErr != nil {
+		return navErr
+	}
 	sh.mu.Lock()
 	positions, err := gmSpawnPositions(s.char.MapID, s.char.PosX, s.char.PosZ, count, &sh.entities)
 	if err != nil {
@@ -318,6 +305,10 @@ func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error {
 			npcs = append(npcs, n)
 		} else {
 			m := NewStaticMob(md, id, pos[0], pos[1], nil, 0)
+			m.PosY = s.char.PosY
+			if !m.placeOnNavigation(nav, s.char.MapID) {
+				continue
+			}
 			sh.entities.Mobs = append(sh.entities.Mobs, m)
 			mobs = append(mobs, m)
 		}
@@ -333,7 +324,11 @@ func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error {
 			viewEnter(p, viewMob, m.ID, buildMobEnter(&m, false), "GM mob spawn")
 		}
 	}
-	s.gmReply(fmt.Sprintf("GM: summoned %d (id %d).", count, id))
+	spawned := len(npcs) + len(mobs)
+	if spawned == 0 {
+		return fmt.Errorf("no valid navigable spawn surface for id %d", id)
+	}
+	s.gmReply(fmt.Sprintf("GM: summoned %d (id %d).", spawned, id))
 	return nil
 }
 

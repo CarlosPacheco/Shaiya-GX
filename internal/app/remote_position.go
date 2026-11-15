@@ -46,6 +46,9 @@ func (r *remotePosition) update(e *game.Entity, now float64) render.V3 {
 			r.from, r.to = r.pos, target
 			r.start = now
 			r.duration = min(max(now-r.lastArrival, .1), .5)
+			if e.Kind == game.KindMob && e.MobHeightKnown && e.MobMoveDurationMS > 0 {
+				r.duration = float64(e.MobMoveDurationMS) / 1000
+			}
 		}
 		r.moveSerial = e.MoveSerial
 		r.lastArrival = now

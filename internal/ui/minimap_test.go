@@ -54,3 +54,12 @@ func TestExpandedMapHoverCoordinatesRespectCropAndNorth(t *testing.T) {
 		t.Fatal("outside image accepted")
 	}
 }
+
+func TestCharacterCoordinatesIncludeActualElevation(t *testing.T) {
+	if got := CharacterCoordinates(578, 77.705, 1762); got != "X: 578  Y: 77.71  Z: 1762" {
+		t.Fatalf("character Y missing or rounded incorrectly: %s", got)
+	}
+	if got := CharacterCoordinates(120, -3.25, 400); got != "X: 120  Y: -3.25  Z: 400" {
+		t.Fatal(got)
+	}
+}

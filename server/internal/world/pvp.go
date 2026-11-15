@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -276,7 +277,7 @@ func userSkillHits(att, def *CharacterStats, sk *db.SkillDef) bool {
 // the auto-attack.
 func (s *Session) userAttackSwing(target uint32) bool {
 	ch := s.char
-	if ch == nil || s.mounted || s.actionBlocked() {
+	if ch == nil || s.mounted || s.cast != nil || s.actionBlocked() {
 		return false
 	}
 	wc, ok := equippedWeaponCombat(s.items)
@@ -284,9 +285,7 @@ func (s *Session) userAttackSwing(target uint32) bool {
 		return false
 	}
 	stats := StatsFor(ch, s.equipment())
-	if idx := min(max(int32(wc.AttackTime)-1+stats.AttackSpeed, 0), 9); idx != int32(wc.AttackTime)-1 {
-		wc.Delay, _ = weaponAttackDelay(uint8(idx + 1))
-	}
+	wc.Delay, _ = weaponAttackDelay(attackspeed.Tier(wc.AttackTime, stats.AttackSpeed))
 	if !s.lastAutoAttackAt.IsZero() && time.Since(s.lastAutoAttackAt) < wc.Delay {
 		return true
 	}

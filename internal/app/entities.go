@@ -58,6 +58,9 @@ func remoteLocomotion(w *scene.World, e *game.Entity) string {
 	if e.Sitting {
 		return "012_sit"
 	}
+	if !w.PlayerSupported(render.V3{e.X, e.Y, e.Z}) {
+		return "002_run"
+	}
 	if moving {
 		switch e.Motion & 0x3f {
 		case 2:
@@ -154,7 +157,11 @@ func (a *App) prepareRemotePlayers() {
 		} else {
 			c.SetClip(clip)
 		}
+		jumpAction := c.PlayingAction(8)
 		c.Update(float32(a.frameDT))
+		if jumpAction && !c.ActionActive() {
+			c.SetClip(clip)
+		}
 		angle := float64(e.Dir) / 65536 * 2 * math.Pi
 		fwd := render.V3{float32(math.Sin(angle)), 0, float32(math.Cos(angle))}
 		if c.ActionActive() && cached.facing.Len() > 0 {
@@ -446,9 +453,6 @@ func (a *App) drawPlayerNames(w, h int) {
 				}
 			}
 		}
-	}
-	for _, item := range a.state.GroundItems {
-		label(a.groundItemName(item), groundItemLabelPosition(v.world, item), white, 0)
 	}
 	a.sprites.NameDepth(-1)
 }

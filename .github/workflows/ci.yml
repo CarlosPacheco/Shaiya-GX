@@ -65,6 +65,9 @@ jobs:
             out/client/*.tar.gz
             out/client/*.zip
           if-no-files-found: error
+      - name: Fetch verified server physics (68 maps)
+        shell: bash
+        run: python tools/fetch_server_geometry.py
       - name: Server integration and storage tools
         shell: bash
         run: |

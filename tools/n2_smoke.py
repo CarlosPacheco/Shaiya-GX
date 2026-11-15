@@ -60,11 +60,24 @@ with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
     c.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,?,?,?,?,1,?,0,0,0,0,0,0,0,'',?,datetime('now'),'N2',0)",(char_id,item_id,item_uid+offset,item_id//1000,item_id%1000,slot,count))
   env.update(SHAIYA_TEST_USER=users[0][0],SHAIYA_PASSWORD=users[0][1],SHAIYA_TEST_PARTNER=users[1][0],SHAIYA_TEST_PARTNER_PASSWORD=users[1][1])
   subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestNativeControlsAgainstRapture$','-count=1','-v'],cwd=client,env=env,check=True,timeout=120)
+  # Approach runs near real mobs, with actual elapsed movement and no forged teleports.
+  with sqlite3.connect(db) as c:
+   for n,(_,_,uid) in enumerate(users):c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=?,PosY=45,PosZ=1671.7 WHERE UserUID=?',(799.4+n*2,uid))
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestNativeControlsAgainstRapture$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_APPROACH_ONLY='1'),check=True,timeout=120)
+  with sqlite3.connect(db) as c:
+   for n,(_,_,uid) in enumerate(users):c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=?,PosY=78,PosZ=1762 WHERE UserUID=?',(578+n*2,uid))
+  # Native controls may consume or merge the earlier potion fixture.
+  with sqlite3.connect(db) as c:
+   char_id=c.execute('SELECT CharID FROM PS_GameData_Chars WHERE UserUID=? AND Del=0',(users[0][2],)).fetchone()[0]
+   c.execute('DELETE FROM PS_GameData_CharItems WHERE CharID=? AND Bag=1 AND Slot=23',(char_id,))
+   item_uid=c.execute('SELECT COALESCE(MAX(ItemUID),0)+1 FROM PS_GameData_CharItems').fetchone()[0]
+   c.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,25004,?,25,4,1,23,0,0,0,0,0,0,0,'',10,datetime('now'),'N2',0)",(char_id,item_uid))
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestGroundModelPickupAgainstRapture$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_PICKUP='1'),check=True,timeout=60)
   with sqlite3.connect(db) as c:
    c.execute('UPDATE PS_GameData_Chars SET Family=0,Job=5,MP=1000,SP=500,SkillPoint=100 WHERE UserUID=?',(users[0][2],))
   subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestFrozenIceAreaAgainstRapture$','-count=1','-v'],cwd=client,env=env,check=True,timeout=60)
   with sqlite3.connect(db) as c:
-   c.execute('UPDATE PS_GameData_Chars SET MP=1000,SP=500,SkillPoint=100 WHERE UserUID=?',(users[1][2],))
+   c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=799.4,PosY=45,PosZ=1671.7,MP=1000,SP=500,SkillPoint=100 WHERE UserUID=?',(users[1][2],))
   subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestFrozenIceAreaAgainstRapture$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_USER=users[1][0],SHAIYA_PASSWORD=users[1][1],SHAIYA_TEST_FROZEN_VICTIMS='1'),check=True,timeout=60)
   with sqlite3.connect(db) as c:
    chars=[c.execute('SELECT CharID,CharName FROM PS_GameData_Chars WHERE UserUID=? AND Del=0',(u[2],)).fetchone() for u in users]
@@ -97,6 +110,48 @@ with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
    for n,(_,_,uid) in enumerate(users):
     c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=?,PosY=78,PosZ=1762,Family=0,Job=0,Level=40,Str=2000,Dex=2000,HP=?,MP=1000,SP=500,Money=50000 WHERE UserUID=?',(578+n*2,500 if n==0 else 1,uid))
   subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestDuelVictoryWagersAgainstRapture$','-count=1','-v'],cwd=client,env=env,check=True,timeout=90)
+  # Moving jumps must land without rewinding to a stale horizontal snapshot.
+  with sqlite3.connect(db) as c:
+   c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=578,PosY=78,PosZ=1762,HP=10000 WHERE UserUID=?',(users[0][2],))
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestMovingJumpAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_MOVING_JUMP='1'),check=True,timeout=60)
+  # Mob navigation uses a real dungeon and authoritative XYZ packets.
+  with sqlite3.connect(db) as c:
+   c.execute('UPDATE PS_GameData_Chars SET Map=3,PosX=230,PosY=13.24121,PosZ=60,HP=10000,MP=1000,SP=500 WHERE UserUID=?',(users[0][2],))
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestMobNavigationDungeonAgainstRapture$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_MOB_NAVIGATION='1'),check=True,timeout=60)
+  # Native on-foot speed: Sonic boots, haste, candy and a late observer.
+  with sqlite3.connect(db) as c:
+   for n,(_,_,uid) in enumerate(users):
+    c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=?,PosY=78,PosZ=1762,Family=0,Job=2,Level=40,HP=10000,MP=1000,SP=1000 WHERE UserUID=?',(578+n*2,uid))
+    char_id=c.execute('SELECT CharID FROM PS_GameData_Chars WHERE UserUID=? AND Del=0',(uid,)).fetchone()[0]
+    c.execute('DELETE FROM PS_GameData_CharApplySkills WHERE CharID=?',(char_id,))
+    c.execute('DELETE FROM PS_GameData_CharSkills WHERE CharID=?',(char_id,))
+    c.execute('DELETE FROM PS_GameData_CharItems WHERE CharID=?',(char_id,))
+    if n==0:
+     c.execute('INSERT INTO PS_GameData_CharSkills(CharID,SkillID,SkillLevel,Number,Delay,Del) VALUES(?,114,1,40,0,0)',(char_id,))
+     item_uid=c.execute('SELECT COALESCE(MAX(ItemUID),0)+1 FROM PS_GameData_CharItems').fetchone()[0]
+     for item_type,type_id,bag,slot,count,gem in ((21,138,0,4,1,106),(25,177,1,19,3,0)):
+      c.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,?,?,?,?,?,?,0,?,0,0,0,0,0,'',?,datetime('now'),'N2',0)",(char_id,item_type*1000+type_id,item_uid,item_type,type_id,bag,slot,gem,count));item_uid+=1
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestPlayerSpeedAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_PLAYER_SPEED='1'),check=True,timeout=90)
+  # Attack cadence uses opposing factions, native Flash/mastery/ring and haste.
+  with sqlite3.connect(db) as c:
+   for n,(_,_,uid) in enumerate(users):
+    c.execute('UPDATE PS_GameData_UserMaxGrow SET Country=? WHERE UserUID=?',(n,uid))
+    c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=?,PosY=78,PosZ=1762,Family=?,Job=0,Level=60,Grow=1,Str=40,Dex=1000,Rec=2000,HP=20000,MP=1000,SP=1000 WHERE UserUID=?',(578+n*2,0 if n==0 else 2,uid))
+    char_id=c.execute('SELECT CharID FROM PS_GameData_Chars WHERE UserUID=? AND Del=0',(uid,)).fetchone()[0]
+    c.execute('DELETE FROM PS_GameData_CharApplySkills WHERE CharID=?',(char_id,))
+    c.execute('DELETE FROM PS_GameData_CharSkills WHERE CharID=?',(char_id,))
+    c.execute('DELETE FROM PS_GameData_CharItems WHERE CharID=?',(char_id,))
+    if n==0:
+     for skill,number in ((15,40),(129,41)):c.execute('INSERT INTO PS_GameData_CharSkills(CharID,SkillID,SkillLevel,Number,Delay,Del) VALUES(?,?,1,?,0,0)',(char_id,skill,number))
+     item_uid=c.execute('SELECT COALESCE(MAX(ItemUID),0)+1 FROM PS_GameData_CharItems').fetchone()[0]
+     for item_type,type_id,bag,slot,gem in ((1,1,0,5,64),(22,56,1,20,0)):
+      c.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,?,?,?,?,?,?,0,?,0,0,0,0,0,'',1,datetime('now'),'N2',0)",(char_id,item_type*1000+type_id,item_uid,item_type,type_id,bag,slot,gem));item_uid+=1
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestAttackSpeedAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_ATTACK_SPEED='1'),check=True,timeout=90)
+  # Map clicks carry normalized X/Z only; the server resolves outdoor/dungeon Y.
+  with sqlite3.connect(db) as c:
+   c.execute('UPDATE PS_UserData_Users_Master SET Admin=1 WHERE UserUID=?',(users[0][2],))
+   c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=578,PosY=78,PosZ=1762,HP=10000 WHERE UserUID=?',(users[0][2],))
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestGMMapTeleportAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_GM_MAP='1'),check=True,timeout=90)
  finally:
   for process in reversed(children):
    process.terminate()

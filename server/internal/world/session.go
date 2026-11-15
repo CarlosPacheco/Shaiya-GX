@@ -26,10 +26,13 @@ const (
 // Session is one client connection. Only its own goroutine touches its
 // fields; other sessions reach it through its ConnectedPlayer.
 type Session struct {
+	speedKnown      bool
+	lastSpeeds      playerSpeeds
+	movement        playerMovement
 	questNPCCatalog questNPCCatalogState
 	gmTurbo         bool
-	gmVulnerable    bool
-	gmRevealed      bool
+	gmImmune        bool
+	gmConcealed     bool
 	elements        elementRuntime
 	socialChecked   time.Time
 	conn            net.Conn
@@ -207,6 +210,7 @@ func (s *Session) sendStatPackets() {
 	if s.char == nil {
 		return
 	}
+	s.syncPlayerSpeed(false)
 	st := s.stats()
 	for _, p := range statPackets(s.char, &st) {
 		s.send(p.Packet, p.Label)
@@ -276,6 +280,8 @@ func (s *Session) tick(idle bool) {
 	if s.char == nil {
 		return
 	}
+	s.syncPlayerSpeed(false)
+	s.tickPlayerMovement(time.Now())
 	s.recoveryTick()
 	s.syncQuestNPCCatalog(false)
 	if time.Since(s.lastQuestCheck) >= 5*time.Second {
@@ -681,6 +687,8 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 		s.handleGiftSend(p)
 	case packet.PointStoredItemGet:
 		s.handleGiftClaim(p)
+	case 0x7F09:
+		s.handleGMMapTeleport(p)
 	case packet.GXForgeQuote:
 		s.handleForgeQuote(p)
 	case packet.CashPoint:
@@ -799,18 +807,12 @@ func (s *Session) selectCharacter(id uint32) {
 			s.skillCooldowns[k.SkillID] = time.Now().Add(time.Duration(k.Delay) * time.Second)
 		}
 	}
+	s.speedKnown = false
+	s.movement = playerMovement{}
 	s.elements = elementRuntime{}
-	s.gmRevealed, s.gmVulnerable = false, false
+	s.gmConcealed, s.gmImmune = false, false
 	s.buffs = restoreBuffs(id, s.log)
-	if s.isAdmin {
-		kept := s.buffs[:0]
-		for _, b := range s.buffs {
-			if b.Effect == typeEffectBuff {
-				kept = append(kept, b)
-			}
-		}
-		s.buffs = kept
-	}
+
 	s.quickSlots, err = db.QuickSlots(id)
 	s.logErr("load quick slots", err)
 	s.stored, err = db.StoredItems(s.accountID)
@@ -822,7 +824,14 @@ func (s *Session) selectCharacter(id uint32) {
 	s.lastRegenAt, s.regenMode = time.Now(), 1 // InitEquipment
 	st := s.stats()
 	s.log.Printf("GX Server World selected character id=%d items=%d skills=%d buffs=%d hp=%d/%d", id, len(s.items), len(s.skills), len(s.buffs), st.CurrentHP, st.MaxHP)
+	if err := s.initPlayerMovement(time.Now()); err != nil {
+		s.log.Printf("GX Server collision initialization failed: %v", err)
+		s.char = nil
+		s.send(buildCharResult(packet.SelectCharacter, false, id), "collision resources unavailable")
+		return
+	}
 	s.send(buildCharResult(packet.SelectCharacter, true, id), "0x0104 select character ok")
+
 	s.sendInitialState(&st)
 	s.sendGiftBox()
 }
@@ -830,6 +839,7 @@ func (s *Session) selectCharacter(id uint32) {
 // sendInitialState is the captured character-select sequence; afterwards
 // the server->client direction switches to the expanded XOR scheme.
 func (s *Session) sendInitialState(st *CharacterStats) {
+	s.sendOJLimits()
 	s.sendSocial()
 	ch := s.char
 	for _, p := range []labeled{
@@ -885,6 +895,7 @@ func (s *Session) handleMapLoaded() {
 	s.send(buildCharacterMapPosition(ch), "0x020B set map position")
 	s.send(buildCharacterEnteredMap(ch, s.isAdmin, true), "0x0201 entered map")
 	s.gmReply("")
+	s.sendPhysicsClock()
 	s.send(buildCharacterShape(ch, s.faction, s.items, 0), "0x0303 character shape")
 	s.send(buildCharacterMove(ch, 0, 0), "0x0501 character move")
 	if s.player == nil {
@@ -897,6 +908,7 @@ func (s *Session) handleMapLoaded() {
 		s.player.UpdateItems(s.items)
 	}
 	s.equipment()
+	s.syncPlayerSpeed(true)
 	s.syncVisibility()
 	s.send(s.player.visibilityPacket(), "GX visibility")
 	// CZone::EnterUser + SendCellInfoView: the 5x5 cells around the user.
@@ -914,6 +926,9 @@ func (s *Session) handleMotion(p []byte) {
 		return
 	}
 	motion := p[2]
+	if motion == 2 && !s.startMovementJump(time.Now()) {
+		return
+	}
 	if s.player != nil {
 		switch motion {
 		case MotionSitDown:

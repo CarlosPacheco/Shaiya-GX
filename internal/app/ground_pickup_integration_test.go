@@ -16,7 +16,7 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-func TestGroundLabelPickupAgainstRapture(t *testing.T) {
+func TestGroundModelPickupAgainstRapture(t *testing.T) {
 	if os.Getenv("SHAIYA_TEST_PICKUP") != "1" {
 		t.Skip("requires disposable item and GL fixture")
 	}
@@ -63,7 +63,7 @@ func TestGroundLabelPickupAgainstRapture(t *testing.T) {
 		}
 		found := false
 		for _, line := range st.Chat {
-			found = found || line.Text == "That item is no longer available."
+			found = found || line.MessageID == 239 || line.Text == "That item is no longer available."
 		}
 		if found {
 			break
@@ -103,16 +103,24 @@ func TestGroundLabelPickupAgainstRapture(t *testing.T) {
 	gl.ClearDepth(1)
 	gl.DepthMask(true)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
+	a.scene3d.Begin()
+	a.drawGroundItems()
+	a.scene3d.End()
 	a.sprites.Begin(256, 256)
 	a.drawPlayerNames(256, 256)
 	a.sprites.End()
-	x, y, _, ok := projectLabel(pos, a.scene3d.View.Mul(a.scene3d.Proj), 256, 256)
-	if !ok {
-		t.Fatal("drop label not projected")
+	var click *platform.Input
+	for y := 0; y < 256 && click == nil; y++ {
+		for x := 0; x < 256; x++ {
+			candidate := &platform.Input{Clicked: true, MouseX: x, MouseY: y}
+			if a.pickGroundModel(candidate, 256, 256) == id {
+				click = candidate
+				break
+			}
+		}
 	}
-	click := &platform.Input{Clicked: true, MouseX: x, MouseY: y - a.font.Height/2}
-	if got := a.pickGroundLabel(click, 256, 256); got != id {
-		t.Fatalf("clicked drop %d, got %d", id, got)
+	if click == nil {
+		t.Fatal("drop model could not be clicked without a label")
 	}
 	a.updateCombat(click, 256, 256)
 	if _, ok := st.GroundItems[id]; !ok {
@@ -153,7 +161,9 @@ func TestGroundLabelPickupAgainstRapture(t *testing.T) {
 	gl.DepthMask(true)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	a.scene3d.Begin()
+	a.scene3d.Begin()
 	a.drawGroundItems()
+	a.scene3d.End()
 	a.scene3d.End()
 	a.sprites.Begin(256, 256)
 	a.drawPlayerNames(256, 256)

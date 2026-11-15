@@ -133,12 +133,27 @@ func TestRecreatableTooltipUsesNativeMaximumAndMaterial(t *testing.T) {
 	a := continuousForgeApp()
 	d := &sdata.Item{Type: 16, Server: 3, RequiredStats: [6]uint16{0, 0, 0, 0, 13, 25043}, Description: "Description"}
 	a.drawItemDetails(d, nil, 1, 0, 0, 1024, 768, "")
-	if a.tooltipExtra.maxOJ != 13 || a.tooltipExtra.material != a.itemsItem(25, 43) {
+	if a.tooltipExtra.maxOJ != 13 || a.tooltipExtra.maxOJStats != 3 || a.tooltipExtra.material != a.itemsItem(25, 43) {
 		t.Fatal("native OJ/material not exposed", a.tooltipExtra)
 	}
 	d.Server = 0
 	a.drawItemDetails(d, nil, 1, 0, 0, 1024, 768, "")
 	if a.tooltipExtra.maxOJ != 0 || a.tooltipExtra.material != nil {
 		t.Fatal("non-recreatable item advertises OJ")
+	}
+}
+
+func TestRecreationTooltipUsesServerLimitsOverStaleClientData(t *testing.T) {
+	a := continuousForgeApp()
+	a.items[sdata.ItemKey{Type: 16, TypeID: 55}] = &sdata.Item{Type: 16, TypeID: 55, Server: 9, RequiredStats: [6]uint16{0, 0, 0, 0, 20, 0}}
+	a.state.OJLimits = map[[2]uint8]proto.OJLimit{{16, 55}: {Type: 16, TypeID: 55, Stats: 3, Value: 13}}
+	a.drawItemDetails(a.itemsItem(16, 55), nil, 1, 0, 0, 1024, 768, "")
+	if a.tooltipExtra.maxOJ != 13 || a.tooltipExtra.maxOJStats != 3 {
+		t.Fatal(a.tooltipExtra)
+	}
+	a.state.OJLimits[[2]uint8{16, 55}] = proto.OJLimit{Type: 16, TypeID: 55}
+	a.drawItemDetails(a.itemsItem(16, 55), nil, 1, 0, 0, 1024, 768, "")
+	if a.tooltipExtra.maxOJ != 0 || a.tooltipExtra.maxOJStats != 0 {
+		t.Fatal("stale limit retained", a.tooltipExtra)
 	}
 }

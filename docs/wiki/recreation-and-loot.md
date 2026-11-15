@@ -121,7 +121,7 @@ personal runtime over the seed or rewrites owned item quantities.
 
 ## Tooltip limits
 
-Eligible equipment shows light-green `Max OJ X/Y` beneath its description.
+Eligible equipment shows light-green `Max OJ X/Y (N stats)` beneath its description.
 X is `min(ReqWis,99)` for ordinary stat pairs; Y is X multiplied by 100 for
 resource pairs. For example, `Max OJ 13/1300` means at most 13 STR/DEX/etc. or
 1300 HP/MP/SP for an allowed stat. It does not mean 13 distinct attributes.
@@ -138,3 +138,12 @@ requirements on the ordinary and GX runes. Existing owned items retain their
 identities and quantities; corrected definitions apply when the server/client
 reload them. Successful recreation prints only native SysMsg 111 (`Used <i>`);
 there are no before/after or generic recreated-attributes chat lines.
+
+The parenthesized count is the maximum number of distinct recreation attributes,
+limited by `Server` and the equipment pool (six for weapons/jewelry, nine otherwise).
+World drops use the same limits and preserve their initial roll through pickup and redrop.
+
+The server publishes its equipment OJ limits on character entry, overriding
+stale `Server`/`ReqWis` values in the client item catalog. This keeps tooltip
+limits consistent with drops and recreation without changing stored items.
+Offline previews fall back to the local item definition.

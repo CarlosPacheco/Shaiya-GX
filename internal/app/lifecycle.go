@@ -9,6 +9,7 @@ import (
 
 func (a *App) Close() {
 	a.saveClientSettings()
+	a.collisionLines.Delete()
 	a.tooltipFont.Delete()
 	a.performance.meter.Delete()
 	a.performance.meter = nil

@@ -51,15 +51,19 @@ func TestFrozenIceAreaAgainstRapture(t *testing.T) {
 	st.Target = 0
 	var victim uint32
 	if os.Getenv("SHAIYA_TEST_FROZEN_VICTIMS") == "1" {
-		a.wv.place(render.V3{799.4, 39, 1671.7})
-		send(a.wv.movePacket(0))
 		mob := testworld.LivingMob(t, st, send, wait)
 		victim, st.Target = mob.ID, mob.ID
-		// Mob snapshots may carry Y=0; the live controller obtains the
-		// actual ground from the map, rather than teleporting below it.
-		a.wv.place(render.V3{mob.X + 1, a.wv.world.Height(mob.X+1, mob.Z), mob.Z})
+		a.wv.destination, a.wv.travel = render.V3{mob.X + 1, mob.Y, mob.Z}, true
+		for i := 0; i < 900 && a.wv.travel; i++ {
+			time.Sleep(time.Second / 60)
+			a.pumpWorld()
+			a.updateWorld(&platform.Input{}, 1.0/60)
+		}
+		if a.wv.travel {
+			t.Fatal("could not walk to area-effect victim", a.wv.pos, mob)
+		}
 		a.wv.snapRenderedCamera()
-		send(a.wv.movePacket(0))
+
 	}
 	a.frameDT = 0
 	a.Draw(1024, 734) // Load the real actor before input, as in a live session.

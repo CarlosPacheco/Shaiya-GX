@@ -1,0 +1,165 @@
+package scene
+
+import (
+	"log"
+	"math"
+	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/collision"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
+)
+
+type movingCollider struct {
+	meshes []world.CollisionMesh
+	rotor  maniRotor
+}
+
+func collisionVec(v render.V3) collision.Vec {
+	return collision.Vec{float64(v[0]), float64(v[1]), float64(v[2])}
+}
+func renderVec(v collision.Vec) render.V3 {
+	return render.V3{float32(v[0]), float32(v[1]), float32(v[2])}
+}
+func visitCollisionMeshes(meshes []world.CollisionMesh, matrix render.M4, emit func(collision.Triangle)) {
+	for _, mesh := range meshes {
+		for _, face := range mesh.Faces {
+			if int(face[0]) >= len(mesh.Vertices) || int(face[1]) >= len(mesh.Vertices) || int(face[2]) >= len(mesh.Vertices) {
+				continue
+			}
+			var triangle collision.Triangle
+			for i, index := range face {
+				triangle[i] = collisionVec(transformPoint(render.V3(mesh.Vertices[index]), matrix))
+			}
+			if triangle.Valid() {
+				emit(triangle)
+			}
+		}
+	}
+}
+
+// prepareCollisions retains CPU-only geometry for the whole map. Rendering may
+// unload or cull any cell without opening a hole in movement collision.
+func (w *World) prepareCollisions(a *Assets) error {
+	if w.collision != nil {
+		return nil
+	}
+	started := time.Now()
+	geometry, err := mapgeometry.Load(a.Arc.ReadFile, w.WLD)
+	if err != nil {
+		return err
+	}
+	w.collision = geometry.Index
+	w.physics = geometry
+	geometry.SetDynamicClock(w.DynamicTime)
+	for _, dynamic := range geometry.Dynamic {
+		w.movingColliders = append(w.movingColliders, movingCollider{meshes: dynamic.Meshes, rotor: maniRotor{base: render.M4(dynamic.Base), axis: render.V3(dynamic.Axis), speed: dynamic.Speed}})
+	}
+	log.Printf("collision ready: %d static triangles, %d moving instances, %d resources in %s", geometry.Index.Len(), len(geometry.Dynamic), len(geometry.Sources), time.Since(started))
+	return nil
+}
+
+func (w *World) visitCollisions(bounds collision.Box, emit func(collision.Triangle)) {
+	if w == nil {
+		return
+	}
+	w.collision.Visit(bounds, emit)
+	for _, instance := range w.movingColliders {
+		visitCollisionMeshes(instance.meshes, instance.rotor.transform(w.DynamicTime()), func(t collision.Triangle) {
+			if bounds.Overlaps(t.Bounds()) {
+				emit(t)
+			}
+		})
+	}
+}
+
+// MovePlayer adapts GX's foot position to the original ellipsoid centre.
+func (w *World) MovePlayer(feet, delta render.V3) (render.V3, bool) {
+	if w == nil || w.collision == nil {
+		return feet.Add(delta), false
+	}
+	centre := collisionVec(feet)
+	centre[1] += collision.PlayerRadii[1]
+	moved, hit := collision.Move(centre, collisionVec(delta), w.visitCollisions)
+	moved[1] -= collision.PlayerRadii[1]
+	return renderVec(moved), hit
+}
+
+// CollisionTriangles visits the exact movement surfaces, used by GM /cview.
+func (w *World) CollisionTriangles(centre render.V3, radius float32, emit func(collision.Triangle)) {
+	p := collisionVec(centre)
+	r := float64(radius)
+	w.visitCollisions(collision.Box{Min: p.Sub(collision.Vec{r, r, r}), Max: p.Add(collision.Vec{r, r, r})}, emit)
+}
+
+func (w *World) HasPlayerCollision() bool { return w != nil && w.collision != nil }
+
+// Terrain remains the native height-fan surface, separate from model blockers.
+func (w *World) TerrainCollisionTriangles(centre render.V3, radius float32, emit func(collision.Triangle)) {
+	if w == nil || !w.HasTerrain() {
+		return
+	}
+	spacing := w.step
+	if w.terrainFan {
+		spacing *= 4
+	}
+	size := float32(w.WLD.MapSize)
+	x0, z0 := max(float32(0), float32(math.Floor(float64((centre[0]-radius)/spacing)))*spacing), max(float32(0), float32(math.Floor(float64((centre[2]-radius)/spacing)))*spacing)
+	vertex := func(x, z float32) collision.Vec { return collisionVec(render.V3{x, w.Height(x, z), z}) }
+	for z := z0; z < min(size, centre[2]+radius); z += spacing {
+		for x := x0; x < min(size, centre[0]+radius); x += spacing {
+			a, b, c, d := vertex(x, z), vertex(x+spacing, z), vertex(x, z+spacing), vertex(x+spacing, z+spacing)
+			if w.terrainFan {
+				m := vertex(x+spacing/2, z+spacing/2)
+				for _, t := range []collision.Triangle{{a, m, b}, {b, m, d}, {d, m, c}, {c, m, a}} {
+					emit(t)
+				}
+			} else {
+				emit(collision.Triangle{a, c, b})
+				emit(collision.Triangle{d, b, c})
+			}
+		}
+	}
+}
+
+// MobGroundPosition refines interpolation against the nearby original surface.
+// Network/entity Y stays authoritative; this only follows the same floor visually.
+func (w *World) MobGroundPosition(p render.V3) render.V3 {
+	if w == nil || w.collision == nil || w.WLD == nil {
+		return p
+	}
+	g := mapgeometry.Geometry{Index: w.collision, MapSize: w.WLD.MapSize, Heights: w.WLD.Heights}
+	if y, ok := g.Support(p[0], p[1], p[2], .5); ok {
+		p[1] = y
+	}
+	return p
+}
+
+// GroundPlayer shares server slope/step rules, independent of display meshes.
+func (w *World) GroundPlayer(p, delta render.V3, airborne bool) render.V3 {
+	if w == nil || w.physics == nil {
+		return p.Add(delta)
+	}
+	return render.V3(w.physics.GroundMove(mapgeometry.Position(p), mapgeometry.Position(delta), airborne))
+}
+
+func (w *World) StandingPosition(p render.V3) render.V3 {
+	if w == nil || w.physics == nil {
+		return p
+	}
+	return render.V3(w.physics.StandingPosition(mapgeometry.Position(p)))
+}
+
+func (w *World) SlidePlayer(p render.V3, dt float32, m *mapgeometry.SlopeMotion) render.V3 {
+	if w == nil || w.physics == nil {
+		return p
+	}
+	delta := m.Step(w.physics, mapgeometry.Position(p), dt)
+	return render.V3(w.physics.GroundMove(mapgeometry.Position(p), delta, false))
+}
+
+// PlayerSupported uses the same support contacts as the authoritative server.
+func (w *World) PlayerSupported(feet render.V3) bool {
+	return w == nil || w.physics == nil || w.physics.Supported(mapgeometry.Position(feet))
+}

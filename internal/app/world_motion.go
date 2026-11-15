@@ -2,6 +2,9 @@ package app
 
 import (
 	"math"
+	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -14,13 +17,7 @@ func movementSpeed(s *proto.CharacterSpeed) float32 {
 	if s == nil {
 		return runSpeed
 	}
-	if s.Move == 255 {
-		return 0
-	}
-	if s.Move <= 4 {
-		return runSpeed + float32(s.Move) - 2
-	}
-	return runSpeed
+	return movespeed.Units(s.Move)
 }
 
 // Native movement replaces the normal speed with the mount's speed. The base
@@ -59,6 +56,7 @@ func (v *worldView) movePacket(motion uint8) []byte {
 
 func (v *worldView) step(delta render.V3) bool {
 	pos := v.pos.Add(delta)
+	groundSolved := false
 	if v.world != nil && v.world.HasTerrain() {
 		size := float32(v.world.WLD.MapSize)
 		pos[0], pos[2] = min(max(pos[0], 0), size), min(max(pos[2], 0), size)
@@ -70,10 +68,24 @@ func (v *worldView) step(delta render.V3) bool {
 				// the player or camera directly to the swimming level.
 				pos[1] = max(v.pos[1], scene.SwimEntryY)
 			}
-		} else {
-			if !v.jumping {
-				pos[1] = v.world.Height(pos[0], pos[2])
-			}
+		} else if v.world.HasPlayerCollision() {
+			pos = v.world.GroundPlayer(v.pos, delta, v.jumping)
+			groundSolved = true
+		} else if !v.jumping {
+			pos[1] = v.world.Height(pos[0], pos[2])
+		}
+	}
+	if v.world != nil {
+		if !v.world.HasTerrain() && v.world.HasPlayerCollision() {
+			pos = v.world.GroundPlayer(v.pos, delta, v.jumping)
+			groundSolved = true
+		}
+		if !groundSolved {
+			pos, _ = v.world.MovePlayer(v.pos, pos.Sub(v.pos))
+		}
+		if v.world.HasTerrain() {
+			size := float32(v.world.WLD.MapSize)
+			pos[0], pos[2] = min(max(pos[0], 0), size), min(max(pos[2], 0), size)
 		}
 	}
 	moved := pos != v.pos
@@ -102,8 +114,15 @@ func (v *worldView) settleIntoWater(dt float32) bool {
 	if pos == v.pos {
 		return false
 	}
-	v.place(pos)
-	return true
+	pos, hit := v.world.MovePlayer(v.pos, pos.Sub(v.pos))
+	if hit {
+		v.waterFallSpeed = 0
+	}
+	changed := pos != v.pos
+	if changed {
+		v.place(pos)
+	}
+	return changed
 }
 
 // Phoenix rises gently near the surface; a deeply submerged position stays put.
@@ -116,8 +135,15 @@ func (v *worldView) floatAtSurface(dt float32) bool {
 	if pos == v.pos {
 		return false
 	}
-	v.place(pos)
-	return true
+	pos, hit := v.world.MovePlayer(v.pos, pos.Sub(v.pos))
+	if hit {
+		v.waterFallSpeed = 0
+	}
+	changed := pos != v.pos
+	if changed {
+		v.place(pos)
+	}
+	return changed
 }
 
 // Swimming forward follows camera pitch; side steps remain horizontal.
@@ -144,22 +170,54 @@ func (v *worldView) riseInWater(dt float32) bool {
 	if pos == v.pos {
 		return false
 	}
-	v.place(pos)
-	return true
+	pos, hit := v.world.MovePlayer(v.pos, pos.Sub(v.pos))
+	if hit {
+		v.waterFallSpeed = 0
+	}
+	changed := pos != v.pos
+	if changed {
+		v.place(pos)
+	}
+	return changed
 }
 
 // Only packets about this character may reconcile local prediction. A map
 // change will build a new view from State instead of moving the old camera.
 func (a *App) confirmedPosition(p []byte) {
+	if proto.Op(p) == proto.GXPhysicsClock {
+		a.physicsClockAt = time.Now()
+		if a.wv != nil && a.wv.world != nil && a.state.PhysicsMapID == a.wv.mapID {
+			a.wv.world.SyncPhysicsClock(a.state.PhysicsTime)
+		}
+		return
+	}
 	v := a.wv
 	if v == nil || v.mapID != a.state.MapID {
 		return
 	}
 	switch proto.Op(p) {
+	case proto.GXPlayerCorrection:
+		if proto.NewReader(p).U32() != a.state.SelfID {
+			return
+		}
+		correction := a.state.LastPlayerCorrection
+		if correction.ID != a.state.SelfID {
+			return
+		}
+		v.place(render.V3{correction.X, correction.Y, correction.Z})
+		v.jumping, v.jumpFall, v.groundFall = correction.Jumping, correction.JumpFall, correction.Fall
+		v.slope.Frames = correction.SlopeFrames
+		v.motion = correction.Motion
+		v.waterFallSpeed = 0
+		v.sendT = .1
+		if !v.jumping && v.self != nil && v.self.PlayingAction(8) {
+			v.self.ReleaseAction()
+		}
 	case proto.CharacterMove, proto.CharacterMapTeleport, proto.CharacterResurrect:
 		if proto.NewReader(p).U32() != a.state.SelfID {
 			return
 		}
+		v.slope.Frames = 0
 		v.place(render.V3{a.state.Self.X, a.state.Self.Y, a.state.Self.Z})
 		v.combatHeading = render.V3{}
 		v.approachTarget = 0
@@ -168,6 +226,7 @@ func (a *App) confirmedPosition(p []byte) {
 		v.waterDirty = false
 		v.waterFallSpeed = 0
 		v.jumping = false
+		v.groundFall = 0
 		v.evading = false
 		v.travel = false
 		if v.self != nil && v.self.PlayingAction(8) {
@@ -203,4 +262,35 @@ func backwardMovementSpeed(s *proto.CharacterSpeed, mounted bool) float32 {
 		return .5 + float32(s.Move)*.5
 	}
 	return 1.5
+}
+
+// Native gravity also runs after walking off model surfaces, not only jumping.
+func (v *worldView) settleOnGround(dt float32) bool {
+	if v.world == nil || !v.world.HasPlayerCollision() || dt <= 0 || v.world.SwimmingAt(v.pos[0], v.pos[1], v.pos[2]) {
+		return false
+	}
+	if _, deep := v.world.WaterFloor(v.pos[0], v.pos[2]); deep {
+		return false
+	}
+	origin := v.pos
+	v.place(v.world.SlidePlayer(v.pos, dt, &v.slope))
+	if v.groundFall == 0 {
+		v.groundFall = -2.98
+	}
+	v.groundFall = max(-20, v.groundFall*(1+2.8*dt))
+	desired := v.pos
+	desired[1] += v.groundFall * dt
+	if v.world.HasTerrain() {
+		desired[1] = max(desired[1], v.world.Height(desired[0], desired[2]))
+	}
+	pos, hit := v.world.MovePlayer(v.pos, desired.Sub(v.pos))
+	if hit || v.world.HasTerrain() && pos[1] <= v.world.Height(pos[0], pos[2])+.001 {
+		v.groundFall = -2.98
+	}
+	pos = v.world.StandingPosition(pos)
+	changed := pos.Sub(origin).Len() > 1e-5
+	if changed {
+		v.place(pos)
+	}
+	return changed
 }

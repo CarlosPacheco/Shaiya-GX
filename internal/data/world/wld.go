@@ -58,7 +58,15 @@ type NamedArea struct {
 	Mode, Unknown int32
 }
 
+// Blocker is an explicitly authored WLD movement volume (0x5388f0),
+// rotated around its first corner. It is unrelated to model display bounds.
+type Blocker struct {
+	Bounds Box
+	Yaw    float32
+}
+
 type WLD struct {
+	Blockers     []Blocker
 	NamedAreas   []NamedArea
 	SoundAssets  []string
 	Sounds       []SoundInstance
@@ -170,7 +178,9 @@ func ParseWLD(b []byte) (*WLD, error) {
 	for i, n := 0, r.count(20); i < n; i++ {
 		w.Sounds = append(w.Sounds, SoundInstance{Asset: r.i32(), Center: r.vec3(), Radius: r.f32()})
 	}
-	r.skipList(24 + 4)                        // monster-restricted zones
+	for i, n := 0, r.count(28); i < n && r.err == nil; i++ {
+		w.Blockers = append(w.Blockers, Blocker{Bounds: r.box(), Yaw: r.f32()})
+	}
 	r.skipList(24 + 4 + 512 + 1 + 2 + 1 + 12) // portals
 	r.skipList(4 + 24 + 4 + 4 + 4)            // spawns
 	for i, n := 0, r.count(24+4+512+4+4); i < n; i++ {

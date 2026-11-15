@@ -7,7 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/collision"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/crypto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -292,6 +294,16 @@ func TestGMMoveUsesRelativeSafeDestinationAndNormalTeleport(t *testing.T) {
 		{LowerX: 170, UpperX: 180, LowerY: 75, LowerZ: 170, UpperZ: 180},
 	}}}
 	s, packets := gmWireSession(t, db.Character{ID: 990030, MapID: source, PosX: 180, PosY: 8, PosZ: 180}, true)
+	g := &mapgeometry.Geometry{}
+	g.Reindex()
+	height := float64(float32(75.9) - mapgeometry.FootSkin)
+	g.Add(collision.Triangle{{0, height, 0}, {0, height, 200}, {200, height, 0}})
+	g.Add(collision.Triangle{{200, height, 200}, {200, height, 0}, {0, height, 200}})
+	lower := float64(float32(40) - mapgeometry.FootSkin)
+	g.Add(collision.Triangle{{20, lower, 40}, {20, lower, 70}, {50, lower, 40}})
+	g.Add(collision.Triangle{{50, lower, 70}, {50, lower, 40}, {20, lower, 70}})
+	s.movement = playerMovement{geometry: g, mapID: target}
+
 	if err := s.gmMove(target); err != nil {
 		t.Fatal(err)
 	}

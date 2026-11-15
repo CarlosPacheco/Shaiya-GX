@@ -58,6 +58,10 @@ func (a *App) updateWorldMap(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if atlas.preview >= 0 {
+		fx, fy := (float32(in.MouseX-x)-16*scale)/(512*scale), (float32(in.MouseY-y)-43*scale)/(512*scale)
+		if v.click.update(in, fx >= 0 && fx < 1 && fy >= 0 && fy < 1) {
+			a.gmMapTeleport(uint16(atlas.preview), ui.UV{U1: 1, V1: 1}, fx, fy)
+		}
 		return captured
 	}
 	mx, my := (float32(in.MouseX-x)-16*scale)/scale, (float32(in.MouseY-y)-43*scale)/scale
@@ -86,7 +90,7 @@ func (a *App) updateWorldMap(in *platform.Input, w, h int) bool {
 			return true
 		}
 		own, _ := a.selfSlot()
-		if !r.Available(own.Race >= 2) {
+		if !a.state.Self.IsGM && !r.Available(own.Race >= 2) {
 			atlas.warning = true
 			return true
 		}

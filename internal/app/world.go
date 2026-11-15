@@ -2,8 +2,10 @@ package app
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/gm"
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"log"
 	"math"
+	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
@@ -17,6 +19,9 @@ import (
 // third-person camera (0x444b10 reset, 0x4397d0 orbit/zoom, 0x43bfa0
 // movement; Phoenix tools/reference/ep5_camera_controls.md).
 type worldView struct {
+	slope                   mapgeometry.SlopeMotion
+	collisionView           bool
+	groundFall              float32
 	requestedSkill          *requestedSkillPresentation
 	releaseEffects          []skillRelease
 	death                   deathView
@@ -92,6 +97,8 @@ type worldView struct {
 	motion                  uint8
 	reviveAt                float64
 	effect                  *scene.Effect
+	runEffects              []runTrail
+	runEffectAt             map[uint32]float64
 	castEffects             []castEffect
 	projectiles             []skillProjectile
 	impacts                 []skillImpact
@@ -121,6 +128,9 @@ func (a *App) enterWorld() {
 		log.Printf("map %d: %v", st.MapID, err)
 	}
 	v.world = w
+	if w != nil && st.PhysicsMapID == st.MapID && !a.physicsClockAt.IsZero() {
+		w.SyncPhysicsClock(st.PhysicsTime + time.Since(a.physicsClockAt).Seconds())
+	}
 	// Facing from the 0x0105 direction (u16 angle); default +Z.
 	ang := float64(st.Self.Dir) / 65536 * 2 * math.Pi
 	v.facing = render.V3{float32(math.Sin(ang)), 0, float32(math.Cos(ang))}
@@ -401,7 +411,15 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		}
 	}
 	jumpPressed := in.HasKey(platform.KeySpace)
-	if jumpPressed && !blocked && !swimming && !v.jumping && !v.evading && speed > 0 && !a.state.Self.Dead && !a.state.Self.Mounted {
+	if jumpPressed && !blocked && !swimming && !v.jumping && !v.evading && speed > 0 && !a.state.Self.Dead && !a.state.Self.Mounted && v.world.PlayerSupported(v.pos) {
+		// MotionJump has no position. Flush unsent walking/running progress
+		// first, so the server grants the impulse at the same support surface.
+		if v.moving || dir.Len() > 0 {
+			if err := a.world.Send(v.movePacket(v.motion &^ proto.MotionFlag80)); err != nil {
+				a.backToLogin("Unable to send jump position.")
+				return
+			}
+		}
 		v.beginJump()
 		if err := a.world.Send(proto.MotionPacket(proto.MotionJump)); err != nil {
 			a.backToLogin("Unable to send jump.")
@@ -448,7 +466,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		if v.advanceJump(float32(dt)) {
 			v.waterDirty = true
 		}
-	} else if v.settleIntoWater(float32(dt)) {
+	} else if v.settleIntoWater(float32(dt)) || v.settleOnGround(float32(dt)) {
 		v.waterDirty = true
 	}
 	swimming = v.world.SwimmingAt(v.pos[0], v.pos[1], v.pos[2])
@@ -462,6 +480,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		v.self.ReleaseAction()
 	}
 	a.updateWaterPresentation(float32(dt), moving, swimming)
+	airborne := v.jumping || !v.world.PlayerSupported(v.pos)
 	if v.self != nil {
 		if moving || v.jumping {
 			v.self.CancelCast()
@@ -485,14 +504,16 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		switch {
 		case a.state.Self.Mounted:
 			v.self.SetMountedClip(moving, scene.VehicleAlternate(a.state.Self.MountShape))
-		case v.jumping:
-			v.self.SetClip("008_jump")
 		case swimming && moving:
 			v.self.SetClip("007_swim")
 		case swimming:
 			v.self.SetClip("006_swnormal")
 		case a.state.Self.Sitting:
 			v.self.SetClip("012_sit")
+		case airborne && v.walking:
+			v.self.SetClip("001_walk")
+		case airborne:
+			v.self.SetClip("002_run")
 		case moving && back:
 			v.self.SetClip("003_bstep")
 		case moving && !forward && strafe < 0:
@@ -506,7 +527,16 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		default:
 			v.self.SetClip("000_normal")
 		}
+		jumpAction := v.self.PlayingAction(8)
 		v.self.Update(float32(dt))
+		// The jump is a single ALT action, not a looping airborne clip.
+		if jumpAction && !v.self.ActionActive() && airborne {
+			clip := "002_run"
+			if v.walking {
+				clip = "001_walk"
+			}
+			v.self.SetClip(clip)
+		}
 	}
 	if v.sitAttack != 0 && !a.state.Self.Sitting && !v.sitPending && (v.self == nil || !v.self.PlayingAction(11)) {
 		target := v.sitAttack
@@ -515,8 +545,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 			return
 		}
 	}
-	// 0x0501: on start/stop, and every 0.5 s while moving (NO VERIFICADO:
-	// the original's send cadence).
+	// GX sends prediction samples at 10 Hz; the server owns collision and Y.
 	v.sendT -= dt
 	motion := uint8(0)
 	if moving {
@@ -541,7 +570,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 			a.backToLogin("Unable to send movement.")
 			return
 		}
-		v.sendT, v.moving, v.motion = 0.5, moving, motion
+		v.sendT, v.moving, v.motion = 0.1, moving, motion
 		v.waterDirty = false
 	}
 	a.state.Self.X, a.state.Self.Y, a.state.Self.Z = v.pos[0], v.pos[1], v.pos[2]
@@ -592,6 +621,7 @@ func (a *App) drawWorldView(w, h int) {
 	a.prepareRemotePlayers()
 	a.prepareMonsters()
 	a.prepareNPCs()
+	a.updateRunEffects()
 	a.updateCastEffects()
 	a.updateTravelEffect(float32(a.frameDT))
 	a.updateResolvedEffects()
@@ -664,6 +694,7 @@ func (a *App) drawWorldView(w, h int) {
 	s.WaterReflection = nil
 	s.WaterBelow = false
 	s.End()
+	a.drawCollisionView()
 }
 
 func (a *App) drawWorldContents(eye render.V3, underwater bool) {
@@ -677,6 +708,7 @@ func (a *App) drawWorldContents(eye render.V3, underwater bool) {
 	a.drawRemotePlayers()
 	a.drawMonsters()
 	a.drawNPCs()
+	a.drawRunEffects()
 	a.drawCastEffects()
 	a.drawResolvedEffects()
 	if v.travel && v.travelEffect != nil {

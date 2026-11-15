@@ -281,7 +281,7 @@ func (s *fieldStream) drawWithClipCulling(r *render.Scene3D, clipCulling bool) {
 		o := entry.object
 		center, radius, transform := entry.center, entry.radius, o.world
 		if o.rotor != nil {
-			transform = o.rotor.transform(s.world.elapsed)
+			transform = o.rotor.transform(s.world.DynamicTime())
 			center = transformPoint(entry.batch.model.center, transform)
 		}
 		if clipCulling && !render.ClipSphereVisible(r.ClipPlane, center, radius) || !frustum.SphereVisible(center, radius) || r.OccludedSphere(center, radius) {
@@ -341,6 +341,9 @@ func (w *World) Close() {
 	if w == nil {
 		return
 	}
+	w.collision = nil
+	w.physics = nil
+	w.movingColliders = nil
 	if w.water != nil {
 		w.water.Delete()
 		w.water = nil

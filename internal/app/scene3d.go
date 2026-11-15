@@ -149,7 +149,16 @@ func (a *App) itemsItem(typ, id uint8) *sdata.Item {
 			}
 		}
 	}
-	return a.items[sdata.ItemKey{Type: typ, TypeID: id}]
+	def := a.items[sdata.ItemKey{Type: typ, TypeID: id}]
+	if def != nil && a.state != nil {
+		if limit, ok := a.state.OJLimits[[2]uint8{typ, id}]; ok {
+			// These two overloaded fields are equipment OJ metadata. Socket tooltip
+			// aggregation still works on copies and cannot change these limits.
+			def.Server = limit.Stats
+			def.RequiredStats[4] = uint16(limit.Value)
+		}
+	}
+	return def
 }
 
 func (a *App) itemModel(typ, id uint8) (uint8, bool) {

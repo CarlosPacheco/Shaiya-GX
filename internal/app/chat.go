@@ -56,6 +56,10 @@ func (a *App) updateChat(in *platform.Input) bool {
 				a.chatHistory = a.chatHistory[len(a.chatHistory)-32:]
 			}
 		}
+		if a.collisionViewCommand(text) {
+			a.chatOpen = false
+			return true
+		}
 		if _, _, known := gm.Parse(text); known {
 			if err := a.world.Send(proto.ChatPacket(proto.ChannelNormal, false, text)); err != nil {
 				a.backToLogin("Unable to send GM command.")

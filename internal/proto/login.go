@@ -81,7 +81,7 @@ func DecodeServerList(p []byte) ([]Server, error) {
 	return out, r.Err()
 }
 
-// ClientVersion identifies the GX uint16 item-count wire revision.
+// ClientVersion identifies the shared GX wire revision, including authoritative mob heights.
 const ClientVersion uint32 = itemstack.ClientVersion
 
 // SelectServerPacket is 0xA202 (writer 0x599440, 7 bytes).

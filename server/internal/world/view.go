@@ -317,6 +317,12 @@ func (s *Session) refreshView() {
 // enterFrames is what CCell::SendCellInfoEnter shows of a user.
 func (p *ConnectedPlayer) enterFrames() [][]byte {
 	frames := [][]byte{p.EnteredMapPacket(), p.ShapePacket(), p.MovePacket(), p.visibilityPacket()}
+	p.mu.Lock()
+	sp, known := p.speeds, p.speedKnown
+	p.mu.Unlock()
+	if known {
+		frames = append(frames, buildCharacterSpeed(p.CharacterID, sp))
+	}
 	if shape := p.mountShape(); shape != 0 {
 		w := packet.New(packet.CharacterMountShape)
 		w.U32(p.CharacterID)

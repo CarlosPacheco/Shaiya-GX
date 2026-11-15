@@ -4,6 +4,8 @@ go 1.27
 
 require (
 	fyne.io/fyne/v2 v2.8.1
+	github.com/arl/go-detour v0.1.3
+	github.com/arl/gogeo v0.0.0-20200405111831-9d419f5f7a90
 	github.com/ebitengine/oto/v3 v3.5.1
 	github.com/go-gl/gl v0.0.0-20260331235117-4566fea9a276
 	github.com/go-gl/glfw/v3.4/glfw v0.1.0-pre.1.0.20260707082822-2a407d02d01a
@@ -19,6 +21,8 @@ require (
 	fyne.io/systray v1.12.3-0.20260810170012-af4e8e793ec4 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/anthonynsimon/bild v0.14.0 // indirect
+	github.com/arl/assertgo v0.0.0-20180702120748-a1be5afdc871 // indirect
+	github.com/arl/math32 v0.2.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect

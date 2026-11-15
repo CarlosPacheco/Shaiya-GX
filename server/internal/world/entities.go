@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/mapnav"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -55,38 +57,46 @@ func (a MobArea) contains(x, z float32) bool {
 }
 
 type MapMob struct {
-	elementRestored    bool // RemApplySkillDebuff68 restores base even with another68 active.
-	ID                 uint32
-	MobID              uint16
-	Level              uint16
-	PosX, PosZ         float32
-	homeX, homeZ       float32
-	CurrentHP, MaxHP   uint32
-	MoneyMin, MoneyMax uint32
-	Exp                uint32
-	Area               *MobArea
-	respawnDelay       time.Duration // 0: no respawn (ungrouped) / immediate (grouped)
-	group              *mobGroup     // stMobRespawn: the area entry it belongs to
-	respawnAt          time.Time
-	roamStep           uint32
-	Attack             uint32
-	AI                 uint8
-	ChaseRange         float32
-	AggroTarget        uint32 // 0: none
-	lastAttackAt       time.Time
-	nextAttackAt       time.Time        // CMob m_dwNextAttackTime
-	noTargetUntil      time.Time        // CMob::Init: no target search for 5 s
-	aggro              map[uint32]int64 // CDamage ledger: damage and skill aggro
-	slotReadyAt        [3]time.Time     // per attack slot (AttackAI)
-	returningHome      bool
-	def                *db.MobDef
-	nextMoveAt         time.Time   // idle wander
-	nextChaseAt        time.Time   // chase / return step
-	Effects            []MobEffect // applied skills (TypeEffect 3)
-	cell               cell        // view cell, with the move hysteresis
-	hasCell            bool
-	diedAt             time.Time
-	corpseGone         bool // the corpse left the view (5 s after death)
+	elementRestored      bool // RemApplySkillDebuff68 restores base even with another68 active.
+	ID                   uint32
+	MobID                uint16
+	Level                uint16
+	PosX, PosY, PosZ     float32
+	nav                  *mobNav
+	navPath              []mapnav.Point
+	navGoal              mapnav.Point
+	navRefresh           time.Time
+	moveDuration         time.Duration
+	spawnMinY, spawnMaxY float32
+	spawnHeightKnown     bool
+	homeY                float32
+	homeX, homeZ         float32
+	CurrentHP, MaxHP     uint32
+	MoneyMin, MoneyMax   uint32
+	Exp                  uint32
+	Area                 *MobArea
+	respawnDelay         time.Duration // 0: no respawn (ungrouped) / immediate (grouped)
+	group                *mobGroup     // stMobRespawn: the area entry it belongs to
+	respawnAt            time.Time
+	roamStep             uint32
+	Attack               uint32
+	AI                   uint8
+	ChaseRange           float32
+	AggroTarget          uint32 // 0: none
+	lastAttackAt         time.Time
+	nextAttackAt         time.Time        // CMob m_dwNextAttackTime
+	noTargetUntil        time.Time        // CMob::Init: no target search for 5 s
+	aggro                map[uint32]int64 // CDamage ledger: damage and skill aggro
+	slotReadyAt          [3]time.Time     // per attack slot (AttackAI)
+	returningHome        bool
+	def                  *db.MobDef
+	nextMoveAt           time.Time   // idle wander
+	nextChaseAt          time.Time   // chase / return step
+	Effects              []MobEffect // applied skills (TypeEffect 3)
+	cell                 cell        // view cell, with the move hysteresis
+	hasCell              bool
+	diedAt               time.Time
+	corpseGone           bool // the corpse left the view (5 s after death)
 }
 
 type MapPortal struct {
@@ -403,14 +413,14 @@ func DamageMob(mapID uint16, id uint32, damage uint32) (MobDamageResult, bool) {
 }
 
 type PlayerCombatSnapshot struct {
-	CharacterID uint32
-	MapID       uint16
-	PosX, PosZ  float32
-	Alive       bool
-	Faction     uint8
-	Cell        cell
-	HP          uint32
-	Invisible   bool
+	CharacterID      uint32
+	MapID            uint16
+	PosX, PosY, PosZ float32
+	Alive            bool
+	Faction          uint8
+	Cell             cell
+	HP               uint32
+	Invisible        bool
 }
 
 type MobAttackAction struct {
@@ -516,6 +526,16 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 				if x, z, ok = m.respawnSpot(mapID); !ok {
 					continue
 				}
+				if m.nav != nil {
+					copy := *m
+					copy.PosX, copy.PosZ = x, z
+					if !copy.placeRespawn(mapID) {
+						continue
+					}
+					m.PosY, m.homeY = copy.PosY, copy.homeY
+					x, z = copy.PosX, copy.PosZ
+					m.navPath = nil
+				}
 				g.alive++
 				g.respawnAt = now.Add(m.respawnDelay)
 			} else {
@@ -523,6 +543,17 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 					continue
 				}
 				x, z = m.pickRespawnPosition(mapID)
+				if m.nav != nil {
+					copy := *m
+					copy.PosX, copy.PosZ = x, z
+					copy.PosY = m.homeY
+					if !copy.placeRespawn(mapID) {
+						continue
+					}
+					m.PosY, m.homeY = copy.PosY, copy.homeY
+					x, z = copy.PosX, copy.PosZ
+					m.navPath = nil
+				}
 			}
 			m.PosX, m.PosZ, m.homeX, m.homeZ = x, z, x, z
 			m.CurrentHP = max(m.MaxHP, 1)
@@ -799,8 +830,8 @@ func TickMobCombat(players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick 
 				}
 				continue
 			}
-			d := DistanceXZ(m.PosX, m.PosZ, target.PosX, target.PosZ)
-			if d < m.attackReach() && !now.Before(m.nextAttackAt) {
+			d := m.targetDistance(target)
+			if d < m.attackReach() && !now.Before(m.nextAttackAt) && m.canReachTarget(target) {
 				slot, ok := m.pickAttackSlot(now, d, &mods)
 				// AttackAI: an Attackok 6 slot turns to the weakest
 				// attacker of another country (FindAttackUserMinHP); the
@@ -811,7 +842,11 @@ func TickMobCombat(players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick 
 				}
 				if t := m.liveTarget(mapPlayers); t != nil {
 					target = t
-					d = DistanceXZ(m.PosX, m.PosZ, target.PosX, target.PosZ)
+					d = m.targetDistance(target)
+				}
+				if !m.canReachTarget(target) {
+					m.nextAttackAt = now.Add(mobAttackIdle)
+					continue
 				}
 				if !ok {
 					// No slot ready: CMob::AttackAI waits 2.5 s.
@@ -920,6 +955,28 @@ func (m *MapMob) stepChase(now time.Time, mapID uint16, t *PlayerCombatSnapshot,
 	if now.Before(m.nextChaseAt) || !mods.canMove() || m.def == nil {
 		return false
 	}
+	if m.nav != nil {
+		step := m.chaseStep(mods)
+		if m.canReachTarget(t) {
+			step = min(step, max(0, d-(float32(m.def.Size)+float32(m.def.Attacks[0].Range)+.2)))
+			if step == 0 {
+				return false
+			}
+		}
+		if d < m.attackReach() && m.canReachTarget(t) {
+			return false
+		}
+		travelled, ok := m.navigate(mapID, mapnav.Point{t.PosX, t.PosY, t.PosZ}, step)
+		if !ok {
+			m.nextChaseAt = now.Add(time.Second)
+			m.dropTarget(true)
+			m.noTargetUntil = now.Add(mobAttackIdle)
+			return false
+		}
+		m.movementTiming(now, travelled, step, m.chaseInterval())
+		tick.Moves = append(tick.Moves, m.relocate(mapID, mobMotionRun))
+		return true
+	}
 	reach := float32(m.def.Size) + float32(m.def.Attacks[0].Range)
 	if d < reach+mobChaseReached && d < m.attackReach() {
 		return false
@@ -956,6 +1013,25 @@ func (m *MapMob) stepChase(now time.Time, mapID uint16, t *PlayerCombatSnapshot,
 func (m *MapMob) stepHome(now time.Time, mapID uint16, mods *mobMods, tick *MobCombatTick) bool {
 	if now.Before(m.nextChaseAt) {
 		return false
+	}
+	if m.nav != nil {
+		goal := mapnav.Point{m.homeX, m.homeY, m.homeZ}
+		if mapnav.Distance(m.point(), goal) < .1 {
+			m.returningHome, m.lastAttackAt, m.Effects, m.aggro = false, time.Time{}, nil, nil
+			return false
+		}
+		if !mods.canMove() {
+			return false
+		}
+		step := m.chaseStep(mods)
+		travelled, ok := m.navigate(mapID, goal, step)
+		if !ok {
+			m.nextChaseAt = now.Add(time.Second)
+			return false
+		}
+		m.movementTiming(now, travelled, step, m.chaseInterval())
+		tick.Moves = append(tick.Moves, m.relocate(mapID, mobMotionWalk))
+		return true
 	}
 	d := DistanceXZ(m.PosX, m.PosZ, m.homeX, m.homeZ)
 	if d < mobHomeDone {
@@ -1120,6 +1196,13 @@ func (m *MapMob) advanceRoam(mapID uint16) bool {
 	if DistanceXZ(nx, nz, m.homeX, m.homeZ) >= mobHomeRadius || !IsMapWalkable(mapID, nx, nz) {
 		return false
 	}
+	if m.nav != nil {
+		travelled, ok := m.navigate(mapID, mapnav.Point{nx, m.PosY, nz}, length)
+		if ok {
+			m.moveDuration = max(mobNavigationTick, time.Duration(float64(time.Duration(m.def.NormalTimeMS)*time.Millisecond)*float64(travelled/length)))
+		}
+		return ok
+	}
 	m.PosX, m.PosZ = nx, nz
 	return true
 }
@@ -1277,21 +1360,38 @@ func buildNpcMove(n *MapNpc, motion uint8) []byte {
 }
 
 func buildMobEnter(m *MapMob, isNew bool) []byte {
-	w := packet.New(packet.MobEnter)
+	op := packet.MobEnter
+	if m.nav != nil {
+		op = packet.Opcode(proto.GXMobEnter)
+	}
+	w := packet.New(op)
 	w.U32(m.ID)
 	w.Bool(isNew)
 	w.U16(m.MobID)
 	w.F32(m.PosX)
+	if m.nav != nil {
+		w.F32(m.PosY)
+	}
 	w.F32(m.PosZ)
 	return w.MustFinish()
 }
 
 func buildMobMove(m *MapMob, motion uint8) []byte {
-	w := packet.New(packet.MobMove)
+	op := packet.MobMove
+	if m.nav != nil {
+		op = packet.Opcode(proto.GXMobMove)
+	}
+	w := packet.New(op)
 	w.U32(m.ID)
 	w.U8(motion)
 	w.F32(m.PosX)
+	if m.nav != nil {
+		w.F32(m.PosY)
+	}
 	w.F32(m.PosZ)
+	if m.nav != nil {
+		w.U32(uint32(m.moveDuration / time.Millisecond))
+	}
 	return w.MustFinish()
 }
 

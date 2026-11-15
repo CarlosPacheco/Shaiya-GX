@@ -19,6 +19,12 @@ not update executable files, client assets or a running database.
 
 ## Gameplay and items
 
+- [Attack speed](attack-speed.md): native weapon indices, server swing intervals,
+  Flash equipment, mastery/buffs and confirmed Stats/tooltips.
+
+- [Movement speed](movement-speed.md): original on-foot tiers, authoritative Sonic,
+  haste and consumables, speed limits and the original running trail.
+
 - [Quests and map markers](quests-and-map.md): map-wide available missions,
   lightweight NPC metadata and event-driven eligibility caching.
 

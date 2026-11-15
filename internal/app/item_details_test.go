@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -110,6 +111,49 @@ func TestLapisTooltipTargetsFollowPlacementFlags(t *testing.T) {
 		}
 		if rows[len(rows)-1].text != def.Description {
 			t.Fatal("description must remain last for visual tooltip splitting")
+		}
+	}
+}
+
+func TestSpeedTooltipUsesNativeFieldsActiveLapisAndSysMsg(t *testing.T) {
+	a := inputApp()
+	a.msg = map[int]string{5197: "ATTACK NORM", 5276: "NORM", 5198: "ATTACK QUICK", 5209: "MOVE UP"}
+	weapon := &sdata.Item{Type: 1, TypeID: 1, Name: "Test weapon", AttackTime: 5, Speed: 1, Attribute: 1}
+	a.items = map[sdata.ItemKey]*sdata.Item{
+		{Type: 1, TypeID: 1}:  weapon,
+		{Type: 30, TypeID: 1}: {Type: 30, TypeID: 1, Name: "Active speed", AttackTime: 1, Speed: 2},
+		{Type: 30, TypeID: 2}: {Type: 30, TypeID: 2, Name: "Inactive element", Attribute: 2, AttackTime: 3, Speed: 3},
+	}
+	it := proto.InventoryItem{Type: 1, TypeID: 1, Gems: [6]uint8{1, 2}}
+	a.drawItemDetails(weapon, &it, 1, 0, 0, 1024, 768, "")
+	has := func(want string) bool {
+		for _, r := range a.tooltip {
+			if r.text == want {
+				return true
+			}
+		}
+		return false
+	}
+	if !has("ATTACK QUICK") || !has("MOVE UP +3") {
+		t.Fatal("native/socket speed missing or inactive lapis applied", a.tooltip)
+	}
+	if weapon.AttackTime != 5 || weapon.Speed != 1 {
+		t.Fatal("tooltip mutated cached definition")
+	}
+	for _, d := range []*sdata.Item{{Type: 22, AttackTime: 1}, {Type: 30, AttackTime: 2}} {
+		rows := itemDetailLines(d, nil, 1, "", nil, a.msg)
+		found := false
+		for _, r := range rows {
+			found = found || r.text == "ATTACK +"+fmt.Sprint(d.AttackTime)
+		}
+		if !found {
+			t.Fatal("native attack bonus missing", rows)
+		}
+	}
+	rows := itemDetailLines(&sdata.Item{Type: 25, AttackTime: 1, Speed: 9}, nil, 1, "", nil, a.msg)
+	for _, r := range rows {
+		if strings.HasPrefix(r.text, "ATTACK") || strings.HasPrefix(r.text, "MOVE UP") {
+			t.Fatal("consumable skill level displayed as equipment speed")
 		}
 	}
 }

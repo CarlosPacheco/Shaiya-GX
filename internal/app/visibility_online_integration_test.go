@@ -34,63 +34,26 @@ func TestVisibilityAgainstIsolatedGX(t *testing.T) {
 		c.send(proto.ChatPacket(proto.ChannelNormal, false, "/attack invalid"))
 		c.wait(func() bool { return len(c.state.Chat) > n })
 	}
-	gm, observer := clients[2], clients[3]
-	gm.wait(func() bool { return gm.state.Self.Concealed })
-	observer.wait(func() bool { e := observer.state.Entities[gm.state.SelfID]; return e != nil && e.Concealed })
-	for _, c := range clients[:2] {
+	gm := clients[2]
+	for _, c := range clients {
+		for _, other := range clients {
+			if c.state.SelfID != other.state.SelfID {
+				c.wait(func() bool { return c.state.Entities[other.state.SelfID] != nil })
+			}
+		}
 		barrier(c)
-		if c.state.Entities[gm.state.SelfID] != nil || c.state.Entities[observer.state.SelfID] != nil {
-			t.Fatal("default hidden GM leaked to normal faction")
-		}
 	}
-	command := func(text string) {
+	for _, command := range []string{"/char on", "/char off", "/attack on", "/attack off"} {
 		n := len(gm.state.Chat)
-		gm.send(proto.ChatPacket(proto.ChannelNormal, false, text))
+		gm.send(proto.ChatPacket(proto.ChannelNormal, false, command))
 		gm.wait(func() bool { return len(gm.state.Chat) > n })
-	}
-	command("/char off")
-	for _, c := range clients[:2] {
-		c.wait(func() bool { return c.state.Entities[gm.state.SelfID] != nil })
-	}
-	if gm.state.Self.Concealed {
-		t.Fatal("char off kept ghost")
-	}
-	command("/attack off")
-	if gm.state.Self.Concealed {
-		t.Fatal("attack off changed visibility")
-	}
-	command("/char on")
-	for _, c := range clients[:2] {
-		c.state.Target = gm.state.SelfID
-		c.wait(func() bool { return c.state.Entities[gm.state.SelfID] == nil })
-		if c.state.Target != 0 {
-			t.Fatal("hidden target remained selected")
+		if gm.state.Self.Concealed || gm.state.Chat[len(gm.state.Chat)-1].Text != "GM: command unavailable." {
+			t.Fatal("retired protection command worked")
 		}
-	}
-	observer.wait(func() bool { e := observer.state.Entities[gm.state.SelfID]; return e != nil && e.Concealed })
-	command("/attack on")
-	if !gm.state.Self.Concealed {
-		t.Fatal("attack on changed concealment")
 	}
 	if os.Getenv("SHAIYA_TEST_GM_SELF_BUFF") == "1" {
 		gm.send(proto.UseSkillPacket(200, gm.state.SelfID, true))
-		gm.wait(func() bool {
-			return gm.state.LastSkill.ID == 30 && gm.state.LastSkill.Source == gm.state.SelfID && len(gm.state.Buffs) > 0
-		})
-		if !gm.state.Self.Concealed {
-			t.Fatal("self buff revealed GM")
-		}
-		command("/attack on")
-		if len(gm.state.Buffs) == 0 || !gm.state.Self.Concealed {
-			t.Fatal("protection reset removed self buff or invisibility")
-		}
-		for _, c := range clients[:2] {
-			barrier(c)
-			if c.state.Entities[gm.state.SelfID] != nil {
-				t.Fatal("self buff leaked hidden GM")
-			}
-		}
-		t.Log("protected hidden GM self buff confirmed with native sound/effect result and preserved after /attack on")
+		gm.wait(func() bool { return gm.state.LastSkill.ID == 30 && len(gm.state.Buffs) > 0 })
 	}
-	t.Log("encrypted GX: both normal factions exclude hidden GMs; GMs see ghosts; stationary on/off refresh and target clear verified")
+	t.Log("both factions see GMs by default; retired protection commands cannot hide/protect them; native skill buffs remain usable")
 }

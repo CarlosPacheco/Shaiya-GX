@@ -37,6 +37,12 @@ func TestViewAgainstSQLite(t *testing.T) {
 			pool.Exec(`UPDATE PS_GameData_Chars SET PosX = ?2, PosY = ?3, PosZ = ?4 WHERE CharID = ?1`, int32(s.ID), s.PosX, s.PosY, s.PosZ)
 		}
 	}()
+	// Place disposable fixtures before login; movement packets are no longer
+	// trusted teleports into another user's view.
+	pool, _ := db.Pool(db.GameData)
+	if _, err := pool.Exec(`UPDATE PS_GameData_Chars SET PosX=?2,PosY=?3,PosZ=?4 WHERE CharID=?1`, int32(users[1].id), a.PosX+1, a.PosY, a.PosZ); err != nil {
+		t.Fatal(err)
+	}
 	seen := map[packet.Opcode]int{}
 	enter := func(u *who) {
 		u.c = connect(t, u.uid)
@@ -46,13 +52,7 @@ func TestViewAgainstSQLite(t *testing.T) {
 		u.c.expanded = true
 		u.c.write(msg(packet.CharacterEnteredMap))
 		u.c.until(packet.CharacterMove, seen)
-		m := packet.New(packet.CharacterMove)
-		m.U8(1)
-		m.U16(0)
-		m.F32(a.PosX + 1)
-		m.F32(a.PosY)
-		m.F32(a.PosZ)
-		u.c.write(m.MustFinish()[2:])
+
 	}
 	enter(&users[0])
 	enter(&users[1])

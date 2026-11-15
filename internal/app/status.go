@@ -1,6 +1,8 @@
 package app
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
+	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
@@ -23,7 +25,12 @@ func (a *App) toggleStatus() {
 
 func (a *App) statusState() ui.StatusState {
 	c, _ := a.selfSlot()
-	return ui.StatusState{Class: ui.ClassName(a.msg, a.state.Faction.Faction == 0, c.Class), Mode: a.msg.Get(470 + int(c.Mode)),
+	attack, move := "-", "-"
+	if sp := a.state.Self.Speed; sp != nil {
+		attack = a.msg.Get(attackspeed.Message(sp.Attack))
+		move = a.msg.Get(movespeed.Message(sp.Move))
+	}
+	return ui.StatusState{AttackSpeed: attack, MoveSpeed: move, Class: ui.ClassName(a.msg, a.state.Faction.Faction == 0, c.Class), Mode: a.msg.Get(470 + int(c.Mode)),
 		Base: proto.StatPoints{c.Str, c.Dex, c.Rec, c.Int, c.Wis, c.Luc}, Points: a.state.Details.StatPoint, Details: a.state.Details,
 		HP: a.state.Pools.HP, MP: a.state.Pools.MP, SP: a.state.Pools.SP, Stats: a.state.Stats, Known: a.state.StatsKnown, Busy: a.status.pending || a.state.Self.Dead}
 }

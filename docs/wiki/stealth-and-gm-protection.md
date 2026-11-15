@@ -34,43 +34,17 @@ character from players.
 NPC service actors do not implement a separate attack AI. Hostile creatures use
 the monster combat path above; patrol and service interaction remain independent.
 
-## GM defaults and commands
+## GM defaults and retired controls
 
-Each character entry on a GM account starts invisible and invulnerable. These are
-independent session states, not permanent character or account edits.
+GM characters enter visible and vulnerable. The `/char` and `/attack` commands,
+including both on/off forms, are temporarily unavailable. Reserved retired
+requests receive an unavailable response and cannot toggle protection or leak
+into public chat. Administrator role alone grants neither concealment nor
+immunity. Other GM tools are described in [GM commands](gm-commands.md).
 
-| Command | Effect |
-|---|---|
-| `/char off` | Disables GM invisibility. An ordinary active stealth buff can still conceal the character. |
-| `/char on` | Restores GM invisibility and stops an ongoing automatic attack/cast. |
-| `/attack off` | Disables GM invulnerability. It does not change invisibility. |
-| `/attack on` | Restores GM invulnerability and removes adverse skill effects; positive buffs remain. It does not change invisibility. |
-
-A hidden GM is invisible to ordinary players of **both factions**. Other GMs and
-the GM themself see the translucent character. Party and raid membership is
-retained, but hidden coordinates are redacted from roster/join records delivered
-to unauthorized viewers. Hidden GMs cannot be newly selected for trade by an
-unauthorized player.
-
-Invulnerability rejects normal attacks, offensive skills, reflected hits,
-periodic damage, sacrifice damage and external skill effects, including allied
-healing, cures and buffs. The GM's own positive buffs, healing and cures remain
-usable, with normal costs, cooldowns, server confirmations, effects and sound.
-The session checks caster identity again when processing queued effects; an
-external caster cannot bypass immunity by marking an effect friendly.
-
-Restoring invulnerability removes adverse effects and retains positive buffs.
-Positive saved buffs are restored on login; saved adverse effects are discarded
-when entering as a protected GM. Saved buffs do not retain caster provenance,
-so existing positive buffs are preserved regardless of their original caster.
-Direct and area attack selection still excludes immune targets.
-
-GM invisibility is a persistent command mode: attacking, casting and receiving
-damage do not disable `/char on`. Only `/char off` disables that mode. Ordinary
-skill-based stealth still breaks on attacks and actual damage. Both GM modes
-remain independent. Self and authorized GM observers retain normal confirmed
-combat audio and effects; hidden entities and their actor packets are withheld
-from unauthorized viewers.
+Skill-based stealth and protection remain subject to their normal spell rules,
+costs, durations and server authority. Removing the GM controls does not remove
+ordinary stealth, faction visibility, monster disengagement or ghost rendering.
 
 ## Original visual and GX transport
 

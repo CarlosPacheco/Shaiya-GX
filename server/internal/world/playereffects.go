@@ -4,6 +4,9 @@ import (
 	"math/rand/v2"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
+	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
+
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -20,16 +23,11 @@ import (
 // addEffect starts (or replaces) an applied skill and sends 0x050D. The
 // same skill at a lower level does not replace a higher one.
 func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...uint32) (ActiveBuff, bool) {
-	self := s.char != nil && len(sourceUser) == 1 && sourceUser[0] == s.char.ID && def.TypeEffect == typeEffectBuff
-	if s.invulnerable() && !self {
+	if !s.canAddEffect(def, sourceUser...) {
 		return ActiveBuff{}, false
 	}
-	// Preflight refusal before changing any existing effects.
-	for _, b := range s.buffs {
-		if b.SkillID == def.SkillID && def.SkillLevel <= 3 && def.SkillLevel < b.SkillLevel {
-			return ActiveBuff{}, false
-		}
-	}
+	before := s.speeds()
+
 	s.equipment()
 	s.replaceAttackElement(def)
 	id := uint32(0)
@@ -57,7 +55,6 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 		}
 		id++
 	}
-	before := s.speeds()
 	b := newBuff(id, def, time.Now().Add(time.Duration(def.KeepSeconds)*time.Second), s.log)
 	b.CasterMob = casterMob
 	if len(sourceUser) == 1 {
@@ -72,6 +69,21 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 		s.broadcastSpeed(after)
 	}
 	return b, true
+}
+
+// canAddEffect also guards item consumption, so a refused lower-level buff
+// cannot consume a candy or start its cooldown.
+func (s *Session) canAddEffect(def *db.SkillDef, sourceUser ...uint32) bool {
+	self := s.char != nil && len(sourceUser) == 1 && sourceUser[0] == s.char.ID && def.TypeEffect == typeEffectBuff
+	if s.invulnerable() && !self {
+		return false
+	}
+	for _, b := range s.buffs {
+		if b.SkillID == def.SkillID && def.SkillLevel <= 3 && def.SkillLevel < b.SkillLevel {
+			return false
+		}
+	}
+	return true
 }
 
 // buildBuffAdd (0x050D): instance id, skill id, level (the client reads
@@ -116,29 +128,61 @@ func (s *Session) speeds() playerSpeeds {
 	st := s.stats()
 	sp := playerSpeeds{attack: 255, move: 255}
 	if a == 0 && b == 0 {
-		at := int32(7)
+		at := uint8(0)
 		if wc, ok := equippedWeaponCombat(s.items); ok {
-			at = int32(wc.AttackTime) - 1
+			at = wc.AttackTime
 		}
-		sp.attack = uint8(min(max(at+st.AttackSpeed, 0), 9))
+		if s.cast == nil {
+			sp.attack = attackspeed.Tier(at, st.AttackSpeed)
+		}
 		if m == 0 {
-			sp.move = uint8(min(max(2+st.MoveSpeed, 0), 4))
+			sp.move = movespeed.Tier(st.MoveSpeed)
 		}
 	}
 	return sp
 }
 
-// broadcastSpeed sends 0x051C (character id, attack speed, move speed).
-func (s *Session) broadcastSpeed(sp playerSpeeds) {
-	ch := s.char
+// buildCharacterSpeed encodes 0x051C (character id, attack speed, move speed).
+func buildCharacterSpeed(id uint32, sp playerSpeeds) []byte {
 	w := packet.New(packet.CharacterDeathState)
-	w.U32(ch.ID)
+	w.U32(id)
 	w.U8(sp.attack)
 	w.U8(sp.move)
-	frame := w.MustFinish()
-	for _, p := range PlayersNear(ch.MapID, ch.PosX, ch.PosZ, BroadcastRadius) {
-		p.Send(frame, "0x051C character speed")
+	return w.MustFinish()
+}
+
+// syncPlayerSpeed publishes only server-derived state. Enter-view snapshots
+// carry the same value, including equipment and restored consumable buffs.
+func (s *Session) syncPlayerSpeed(force bool) {
+	if s.char == nil {
+		return
 	}
+	sp := s.speeds()
+	if force || !s.speedKnown || sp != s.lastSpeeds {
+		s.broadcastSpeed(sp)
+	}
+}
+
+func (s *Session) broadcastSpeed(sp playerSpeeds) {
+	if s.char == nil {
+		return
+	}
+	moveChanged := s.speedKnown && s.lastSpeeds.move != sp.move
+	s.lastSpeeds, s.speedKnown = sp, true
+	// Do not bank faster movement across a tier change. A small existing credit
+	// absorbs transport jitter; future credit is earned at the new server rate.
+	if m := &s.movement; moveChanged && m.geometry != nil {
+		m.credit = min(m.credit, .2)
+		m.budgetAt = time.Now()
+	}
+	if p := s.player; p != nil {
+		p.mu.Lock()
+		p.speeds, p.speedKnown = sp, true
+		p.mu.Unlock()
+	}
+	frame := buildCharacterSpeed(s.char.ID, sp)
+	s.send(frame, "0x051C character speed")
+	s.sendToViewers(frame, "0x051C character speed")
 }
 
 // removeEffects drops the matching applied skills with 0x050E and

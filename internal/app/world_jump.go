@@ -5,6 +5,7 @@ import "github.com/Spelunkern/Shaiya-GX/internal/scene"
 // 0x43efab, 0x44287b..0x44302e: jump adds 9 to the exponentially
 // accelerated fall speed. This is visual prediction, never damage or immunity.
 func (v *worldView) beginJump() {
+	v.slope.Frames = 0
 	v.jumping, v.jumpFall, v.jumpFloor = true, -2.98, v.pos[1]
 	if v.self != nil {
 		v.self.ReleaseAction()
@@ -20,10 +21,28 @@ func (v *worldView) advanceJump(dt float32) bool {
 	pos := v.pos
 	pos[1] += (9 + v.jumpFall) * dt
 	floor := v.jumpFloor
-	if v.world.HasTerrain() {
+	if v.world != nil && v.world.HasTerrain() {
 		floor = v.world.Height(pos[0], pos[2])
 		if _, deep := v.world.WaterFloor(pos[0], pos[2]); deep {
 			floor = scene.SwimEntryY
+		}
+	}
+	if v.world != nil && v.world.HasPlayerCollision() {
+		ascending := pos[1] > v.pos[1]
+		resolved, hit := v.world.MovePlayer(v.pos, pos.Sub(v.pos))
+		if hit {
+			if ascending {
+				v.jumpFall = min(v.jumpFall, -9)
+			} else {
+				v.jumping = false
+				if v.self != nil && v.self.PlayingAction(8) {
+					v.self.ReleaseAction()
+				}
+			}
+		}
+		pos = resolved
+		if !v.world.HasTerrain() {
+			floor = pos[1] - 1
 		}
 	}
 	if pos[1] <= floor {

@@ -24,13 +24,14 @@ type Status struct {
 }
 
 type StatusState struct {
-	Class, Mode string
-	Base        proto.StatPoints
-	Points      uint16
-	Details     proto.Details
-	HP, MP, SP  uint32
-	Stats       proto.AdditionalStats
-	Known, Busy bool
+	Class, Mode            string
+	AttackSpeed, MoveSpeed string
+	Base                   proto.StatPoints
+	Points                 uint16
+	Details                proto.Details
+	HP, MP, SP             uint32
+	Stats                  proto.AdditionalStats
+	Known, Busy            bool
 }
 
 // Display order STR/REC/INT/WIS/DEX/LUC differs from the allocation wire order.
@@ -177,6 +178,8 @@ func (v *Status) Draw(s *render.Sprites, f *Font, w, h int, state StatusState) {
 	for i, value := range derived {
 		text(value, 192, 269+i*20, 66)
 	}
+	text(state.AttackSpeed, 92+max(0, (95-f.Width(state.AttackSpeed))/2), 345, 95)
+	text(state.MoveSpeed, 92+max(0, (95-f.Width(state.MoveSpeed))/2), 365, 95)
 	for i, value := range []uint32{state.Details.Kills, state.Details.Deaths, state.Details.Wins, state.Details.Losses} {
 		text(fmt.Sprint(value), 78+i%2*114, 405+i/2*20, 66)
 	}

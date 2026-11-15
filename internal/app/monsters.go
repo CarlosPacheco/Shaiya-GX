@@ -51,7 +51,7 @@ func (a *App) prepareMonsters() {
 		}
 		newMove := cached.position.initialized && cached.position.moveSerial != e.MoveSerial
 		pos := cached.position.update(e, a.clock)
-		if newMove && cached.position.duration > 0 {
+		if newMove && cached.position.duration > 0 && !(e.MobHeightKnown && e.MobMoveDurationMS > 0) {
 			ms := cached.actor.Definition.NormalTimeMS
 			if e.Motion != 0 {
 				ms = cached.actor.Definition.ChaseTimeMS
@@ -69,7 +69,9 @@ func (a *App) prepareMonsters() {
 				cached.position.duration = min(10, max(.05, duration))
 			}
 		}
-		if v.world.HasTerrain() {
+		if e.MobHeightKnown {
+			pos = v.world.MobGroundPosition(pos)
+		} else if v.world.HasTerrain() {
 			pos[1] = v.world.Height(pos[0], pos[2])
 		}
 		fwd := pos.Sub(cached.pos)

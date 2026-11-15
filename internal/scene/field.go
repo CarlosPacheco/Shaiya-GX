@@ -2,8 +2,11 @@ package scene
 
 import (
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/collision"
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -18,34 +21,39 @@ type Instance struct {
 
 // World is a drawable map.
 type World struct {
-	dungeonInstances  []render.M4
-	occlusion         *render.TerrainOcclusion
-	occlusionRevision uint64
-	occlusionEye      render.V3
-	water             *waterSurface
-	elapsed           float64
-	stream            *fieldStream
-	WLD               *world.WLD
-	Sections          []Section
-	Objects           []Instance
-	rotors            []maniRotor
-	vanis             []*vaniAsset
-	mapFX             *mapEffects
-	frameDT           float32
-	Sky               *Sky
-	dg                []dgPart
-	dgOrder           []int
-	dungeonOccluders  []dungeonOccluder
-	dgShadow          *dungeonShadowIndex
-	dgColliders       []world.CollisionMesh
-	cameraSeen        map[int]bool
-	FogColor          render.V3
-	FogStart          float32
-	FogEnd            float32
-	heights           []float32
-	terrainFan        bool
-	side              int
-	step              float32
+	collision           *collision.Index
+	physics             *mapgeometry.Geometry
+	movingColliders     []movingCollider
+	dungeonInstances    []render.M4
+	occlusion           *render.TerrainOcclusion
+	occlusionRevision   uint64
+	occlusionEye        render.V3
+	water               *waterSurface
+	elapsed             float64
+	physicsClockAt      time.Time
+	physicsClockSeconds float64
+	stream              *fieldStream
+	WLD                 *world.WLD
+	Sections            []Section
+	Objects             []Instance
+	rotors              []maniRotor
+	vanis               []*vaniAsset
+	mapFX               *mapEffects
+	frameDT             float32
+	Sky                 *Sky
+	dg                  []dgPart
+	dgOrder             []int
+	dungeonOccluders    []dungeonOccluder
+	dgShadow            *dungeonShadowIndex
+	dgColliders         []world.CollisionMesh
+	cameraSeen          map[int]bool
+	FogColor            render.V3
+	FogStart            float32
+	FogEnd              float32
+	heights             []float32
+	terrainFan          bool
+	side                int
+	step                float32
 }
 
 type TerrainLayer struct {
@@ -241,7 +249,7 @@ func (w *World) Draw(s *render.Scene3D) {
 		}
 	}
 	for _, rotor := range w.rotors {
-		transform := rotor.transform(w.elapsed)
+		transform := rotor.transform(w.DynamicTime())
 		if !dungeonModelVisible(s, frustum, rotor.model, transform) {
 			continue
 		}
@@ -272,3 +280,14 @@ func (w *World) Update(dt float32) {
 
 // HasTerrain reports whether the world has a heightmap (fields).
 func (w *World) HasTerrain() bool { return w != nil && w.side >= 2 }
+
+func (w *World) DynamicTime() float64 {
+	if w.physicsClockAt.IsZero() {
+		return w.elapsed
+	}
+	return w.physicsClockSeconds + time.Since(w.physicsClockAt).Seconds()
+}
+func (w *World) SyncPhysicsClock(seconds float64) {
+	w.physicsClockAt = time.Now()
+	w.physicsClockSeconds = seconds
+}

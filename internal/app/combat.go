@@ -291,7 +291,10 @@ func (a *App) selectSelf() {
 
 // castBarOrigin follows 0x004c02d0 and the native FISTP rounding of screen pixels.
 func castBarOrigin(pos render.V3, view, proj render.M4, w, h int) (int, int, bool) {
-	p := pos.Add(render.V3{view[0] * .5, view[4] * .5, view[8] * .5})
+	// The native actor origin is .9 above GX feet. Native camera-right
+	// comes from the horizontal camera direction, independent of pitch.
+	right := (render.V3{view[0], 0, view[8]}).Norm()
+	p := pos.Add(render.V3{0, .9, 0}).Add(right.Scale(.5))
 	vp := view.Mul(proj)
 	cw := p[0]*vp[3] + p[1]*vp[7] + p[2]*vp[11] + vp[15]
 	z := p[0]*vp[2] + p[1]*vp[6] + p[2]*vp[10] + vp[14]

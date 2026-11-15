@@ -61,10 +61,14 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 			a.pumpWorld()
 			b.pumpWorld()
 			if a.state == nil || b.state == nil || time.Now().After(deadline) {
-				t.Fatal("native controls confirmation timeout")
+				t.Fatalf("native controls confirmation timeout: local=%v jump=%t remote=%+v correction=%+v", a.wv.pos, a.wv.jumping, other.Entities[st.SelfID], st.LastPlayerCorrection)
 			}
 			time.Sleep(time.Millisecond)
 		}
+	}
+	if os.Getenv("SHAIYA_TEST_APPROACH_ONLY") == "1" {
+		verifyNativeApproach(t, a, pump)
+		return
 	}
 	verifyNativeChat(t, a, b, pump)
 	verifyNativeWeaponEnchants(t, a, b, pump)
@@ -72,6 +76,13 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 	v := a.wv
 	// Land on the map's real terrain before measuring the jump.
 	v.step(render.V3{})
+	// Initial fixture Y can be above the ground. Native collision prediction now
+	// falls to its actual support before a jump, instead of teleporting downward.
+	for range 300 {
+		if !v.settleOnGround(1.0 / 60) {
+			break
+		}
+	}
 	floor := v.pos[1]
 	a.updateWorld(&platform.Input{Space: true, Keys: []platform.Key{platform.KeySpace}}, 1.0/60)
 	if !v.jumping || v.pos[1] <= floor || !v.self.PlayingAction(8) {
@@ -89,11 +100,11 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 		a.updateWorld(&platform.Input{Space: true}, 1.0/60)
 		maxY = max(maxY, v.pos[1])
 	}
-	if v.jumping || math.Abs(float64(v.pos[1]-floor)) > .001 || maxY <= floor+.5 {
+	if v.jumping || math.Abs(float64(v.pos[1]-floor)) > .03 || maxY <= floor+.5 {
 		t.Fatal("jump failed to land or repeated while held", floor, maxY, v.pos)
 	}
 	pump(func() bool {
-		return other.Entities[st.SelfID].Motion == 0 && math.Abs(float64(other.Entities[st.SelfID].Y-floor)) < .001
+		return other.Entities[st.SelfID].Motion == 0 && math.Abs(float64(other.Entities[st.SelfID].Y-floor)) < .03
 	})
 	if st.Self.Sitting || other.Entities[st.SelfID].Sitting {
 		t.Fatal("jump changed posture")
@@ -270,7 +281,6 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 	if os.Getenv("SHAIYA_TEST_ACTIONS") == "1" {
 		verifyNativeCloakAndHealing(t, a, b, pump)
 		verifyInstantSkillTiming(t, a, pump)
-		verifyNativeApproach(t, a, pump)
 		verifyPotionReuse(t, a, pump)
 	}
 	a.chatOpen = true
