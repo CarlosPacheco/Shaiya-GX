@@ -54,7 +54,7 @@ Right-click another character, the target frame or a party/raid member to open t
 
 ## Cloaks and combat presentation
 
-Cloaks use original archive files directly, without converted or recreated meshes. Equipment types 24/39 in slot 7 select a zero-based item Model: Model 0 is the first cloak. Chest ReqVg minus one selects the PC fit, with out-of-range fits falling back to zero. Each PC record selects its own body, shoulder and racial CTL texture. The shoulder is skinned and the cloth follows the record's bone pins. The same appearance mapping serves selection, inventory, the local character and other players.
+Cloaks use original archive files directly, without converted or recreated meshes. Equipment types 24/39 in slot 7 select a zero-based item Model: Model 0 is the first cloak. Chest ReqVg minus one selects the PC fit, with out-of-range fits falling back to zero. Each PC record selects its own body, shoulder and racial CTL texture. The shoulder is an opaque skinned part: its texture alpha is not a cutout mask. The cloth follows the record's bone pins. The same appearance mapping serves selection, inventory, the local character and other players.
 
 The CPU solver reproduces native directed springs, masses, forces, Euler integration and both cloth modes. Synthetic one-step tests compare outputs with the original executable. Real-archive GL checks load all 3,072 body/fit/model combinations and simulate/render all 16 body families. The current runtime uses the native no-contact branch; body/ground contacts, map wind and guild emblem rendering remain incomplete.
 

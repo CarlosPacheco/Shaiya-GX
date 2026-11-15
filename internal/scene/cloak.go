@@ -133,7 +133,9 @@ func (c *Character) attachCloak(a Appearance) {
 		return
 	}
 	cp := *g.shoulder
-	cp.tex, cp.cut = g.texture, true
+	// Native 0x415b88/0x5519c0 draws the shoulder as an opaque skinned
+	// part. Its texture alpha is not a cutout mask (often below 0.5).
+	cp.tex, cp.cut = g.texture, false
 	c.parts = append(c.parts, &cp)
 	rest := make([]render.V3, len(g.vertices))
 	for i, v := range g.vertices {
