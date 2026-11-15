@@ -299,8 +299,12 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 	pump(func() bool { return st.Self.Sitting && !v.sitPending })
 	a.updateWorld(&platform.Input{Chars: []rune{'c'}}, .01)
 	pump(func() bool { return !st.Self.Sitting && !v.sitPending })
-	// The preceding posture test acknowledges stand-up before its animation ends.
+	// Advance both real time and App.clock: the earlier self buff now has
+	// the same 800ms recovery as every skill. updateWorld alone does not tick
+	// App.clock as the normal App.Update loop does. Also finish standing up.
 	for range 120 {
+		time.Sleep(time.Second / 60)
+		a.clock += 1.0 / 60
 		a.updateWorld(&platform.Input{}, 1.0/60)
 	}
 	a.openGameMenu()

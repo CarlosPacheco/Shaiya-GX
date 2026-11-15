@@ -78,25 +78,28 @@ Login VANI assets now use the frame interval stored at header offset 48, rather 
 
 The login logo stays visible during server selection and disappears with the login scenery.
 
-Chat uses runtime `sysmsg-uni.txt` entries, including channel templates 353/354/355/370 and channel names 5086–5089/5377/5388. The formatter replaces native placeholders once; message bodies cannot introduce more placeholders. Normal messages use the native `name : message` format. Combat, experience, acquired gold/items, item use, learned skills, level changes, party invitations/membership, quest outcomes, trade and supported guild lifecycle notices use their original message IDs. Diagnostic commands retain explanatory fallback text where no native equivalent has been connected. Special service notices and speech bubbles are still incomplete.
+Chat uses runtime `sysmsg-uni.txt` entries, including channel templates 353/354/355/370 and channel names 5086–5089/5377/5388. The formatter replaces native placeholders once; message bodies cannot introduce more placeholders. Normal messages use the native `name : message` format. Combat, experience, acquired gold/items, item use, learned skills, level changes, party invitations/membership, quest outcomes, trade and supported guild lifecycle notices use their original message IDs. Diagnostic commands retain explanatory fallback text where no native equivalent has been connected. Special service and third-party combat notices remain incomplete; ordinary speech bubbles follow confirmed chat echoes.
 
-The chat presentation follows Phoenix `chat_hud.gd` and `ep4_chat.gd`, per the user's explicit preference. The native SysMsg formatter and gameplay message connections remain in place. Histories are 350px wide with a 4px gap, 112/144px default heights and six/eight fully visible 16px text rows. Text capacity excludes the inner margins, and glyph quads are clipped to the content rectangle so neither history spills outside its frame. Their fixed background is RGBA `(0.114, 0.122, 0.141, 0.54)`. Text uses Open Sans at 12px with a single soft black shadow; the mode label uses 11px, or 10px for Whisper. The entry row combines a 64×22 mode button with a 286×22 nine-patch input built from `chat.tga`.
+The chat retains the chosen flat Phoenix-style plates while using recovered native geometry. Histories are 350px wide with an eight-pixel gap and default heights of 112/144px. They now fit seven/nine 16px rows; the newest text uses the bottom complete font cell instead of leaving an empty row. A full cell, descenders and one-pixel shadow are clipped inside each flat frame. The background is native ARGB `9A1D1F24`; text uses the external primary font at 13px with Unicode/emoji fallbacks.
 
-Chat and its entry row stay visible by default. The User Option page offers **Auto-hide chat** in Name/Chat Setup (replacing the previously unsupported banned-words filter slot). When enabled, idle chat hides. A new line in either history shows both panes; they also stay up while typing, while the channel picker is open, while resizing or scrolling, and while the pointer is over a visible pane. After 10 seconds without activity they fade out over one second. With auto-hide enabled, the entry row is shown only while typing. Hidden panes and the hidden entry row do not capture pointer input, so world clicks pass through.
+The authored entry row sits at `height - 76`: a 64×22 selector followed by a 292×22 atlas strip, including its right-hand language icon. The combined visible width is 356px. Input text starts at X69/Y+6; the selector label uses X7/Y+6. A blinking vertical caret replaces the permanent underscore. Pointer bounds follow the corrected row.
 
-Native golden chat frames, hover-only backgrounds, Alpha/filter/help windows and the extra whisper-recipient row have been retired. Old filter/Alpha preferences no longer affect received messages. Resizing supports zero through twenty configured rows; history holds 300 messages globally and preserves independent scroll anchors. Row sizes and the selected channel persist; Whisper is not restored on startup. Enter focuses the entry row (and reveals it when auto-hide is enabled); selecting a channel focuses it. With Whisper selected, enter `name message` when there is no known recipient; `!name message` and `/w name message` also work. Raid uses the server's party-chat transport.
+Chat and its entry row stay visible by default. The User Option page offers **Auto-hide chat**. When enabled, a new line reveals both histories; typing, scrolling, resizing, the picker and hover keep them visible. After ten seconds without activity they fade over one second. The entry row is then visible only while typing. Hidden controls do not capture world input.
 
-| Channel | Phoenix RGB |
+Golden frames, Alpha/filter/help panels and the separate native whisper-recipient row remain retired under the chosen flat presentation. Histories retain a shared 300-message buffer and independent scroll anchors. Settings preserve row sizes and the selected channel; Whisper is not restored at startup. Whisper accepts the existing recipient syntax, including `!name message` and `/w name message`. Raid is outside the six-channel picker.
+
+| Channel | Native RGB |
 |---|---|
-| Normal | `FFFFFF` |
-| Party | `A5F078` |
-| Whisper | `D65B75` |
-| Guild | `EFA4D5` |
-| Trade | `D7B48D` |
-| Area | `70B9F5` |
-| Raid | `FF7F00` |
+| Normal | `D5D4D3` |
+| Party | `A8F3A0` |
+| Whisper | `F3A0A0` |
+| Guild | `EEA4ED` |
+| Trade | `F3DEA0` |
+| Area | `FF3000` |
 
-System notices retain their original SysMsg text and native palette. The channel picker remains above movable action bars and owns its pointer gestures.
+System notices retain runtime wording and the native base palette. Combat amounts are highlighted in yellow; HP damage omits its HP suffix by explicit user request. Healing and MP/SP labels remain localized. Skill-use/area announcements, additional damage and user periodic effects now have their missing chat paths connected. Native mob-periodic and reflection callbacks do not emit chat and retain their floating-number presentation. The picker remains above movable action bars and owns its pointer gestures.
+
+See the [EP5.4 chat audit](chat-parity.md) for recovered coordinates, callback/message coverage, intentional differences and remaining editing/filter/service gaps.
 
 Mob names and target captions share `0x4cb250`'s signed monster-level minus player-level table. This intentionally retains the original high-level grey range. Element tiers repeat the four original target icons using `(element - 1) % 4`.
 

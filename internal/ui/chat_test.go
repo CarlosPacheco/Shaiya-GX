@@ -22,7 +22,7 @@ func TestOriginalChatModeButtonSelectsChannel(t *testing.T) {
 		t.Fatal(err)
 	}
 	c.Typing = true
-	y := 768 - 82
+	y := 768 - 76
 	click := func(x, y int) {
 		c.Update(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, 768)
 		c.Update(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 768)
@@ -80,7 +80,7 @@ func TestChatPanesScrollIndependentlyAndKeepNewMessages(t *testing.T) {
 	in.Wheel, in.Pressed, in.MouseDown = 0, true, true
 	in.MouseX, in.MouseY = 8, 734-228+20
 	c.Update(&in, 734)
-	if c.panes[1].offset != 13 {
+	if c.panes[1].offset != 12 {
 		t.Fatal("scroll track did not reach oldest messages", c.panes[1].offset)
 	}
 	in.MouseY += 96
@@ -114,14 +114,14 @@ func TestPhoenixChatRetainsSystemMarkupAndLiteralPlayerText(t *testing.T) {
 
 func TestPhoenixChatGeometryAndZeroRows(t *testing.T) {
 	c := &ChatPanel{Rows: [2]int{5, 5}}
-	for i, want := range [][3]int{{420, 112, 6}, {540, 144, 8}} {
+	for i, want := range [][3]int{{420, 112, 7}, {540, 144, 9}} {
 		y, height, capacity := c.paneGeometry(768, i)
 		if [3]int{y, height, capacity} != want {
 			t.Fatal(i, y, height, capacity)
 		}
 	}
 	c.Rows = [2]int{0, 0}
-	for i, want := range [][3]int{{580, 32, 1}, {620, 64, 3}} {
+	for i, want := range [][3]int{{580, 32, 2}, {620, 64, 4}} {
 		y, height, capacity := c.paneGeometry(768, i)
 		if [3]int{y, height, capacity} != want {
 			t.Fatal("collapsed history", i, y, height, capacity)
@@ -141,5 +141,15 @@ func TestNativeChatScrollAnchorSurvivesHistoryLimit(t *testing.T) {
 	c.SetEntries(f, entries)
 	if c.panes[1].offset != 11 {
 		t.Fatal("new message moved historical view", c.panes[1].offset)
+	}
+}
+
+func TestChatCombatNumberColorResetsBeforeTheRestOfTheMessage(t *testing.T) {
+	c, f := &ChatPanel{Rows: [2]int{5, 5}}, chatTestFont()
+	base := RGBColor(ChatRGB(0))
+	c.SetEntries(f, []ChatEntry{{Text: "Hit {c3}73{/c} damage.", System: true, Color: base, Markup: true}})
+	runs := c.panes[0].runs[0]
+	if c.panes[0].lines[0] != "Hit 73 damage." || len(runs) != 3 || runs[0].color != base || runs[1].text != "73" || runs[1].color != RGBColor(0xffff00) || runs[2].color != base {
+		t.Fatal("numeric emphasis leaked into surrounding message", runs)
 	}
 }

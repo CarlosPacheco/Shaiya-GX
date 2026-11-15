@@ -157,7 +157,7 @@ func TestPhoenixChatPickerOwnsClicksAboveActionBars(t *testing.T) {
 	a := inputApp()
 	a.chatOpen = true
 	a.chatUI.ModeOpen = true
-	in := platform.Input{MouseX: 40, MouseY: 734 - 82 - 6*22 + 3*22 + 8, Pressed: true, MouseDown: true, Down: "W"}
+	in := platform.Input{MouseX: 40, MouseY: 734 - 76 - 6*22 + 3*22 + 8, Pressed: true, MouseDown: true, Down: "W"}
 	controls := a.worldControls(&in, 1024, 734)
 	if controls.Pressed || controls.Down != "W" {
 		t.Fatal("channel picker lost click or blocked held movement", controls)

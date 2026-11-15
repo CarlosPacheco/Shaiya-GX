@@ -3,7 +3,6 @@ package app
 import (
 	"strconv"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
@@ -129,10 +128,16 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		} else {
 			return
 		}
-		a.systemMessage(style, message, map[string]string{"t": target, "p": a.chatEntityName(r.Source), "v": number(uint32(r.HP))})
+		a.combatMessage(style, message, map[string]string{"t": target, "p": a.chatEntityName(r.Source), "v": number(uint32(r.HP))})
 	case proto.SkillUse, proto.SkillUseNoTarget, proto.SkillUserDrain, proto.SkillMobDrain, proto.SkillPartyMember, proto.SkillMobOther, proto.MobSkillUse, proto.MobSkillDrain, proto.MobSkillOther:
 		r := s.LastSkill
 		if r.Source != s.SelfID && r.Target != s.SelfID {
+			return
+		}
+		if r.Result == 4 {
+			if r.Source == s.SelfID {
+				a.systemMessage(0, 1100, map[string]string{"s": skillName(r.ID, r.Level)})
+			}
 			return
 		}
 		if r.Result > 3 {
@@ -148,8 +153,16 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		if proto.Op(p) == proto.MobSkillUse || proto.Op(p) == proto.MobSkillDrain || proto.Op(p) == proto.MobSkillOther {
 			level = 100
 		}
-		name := skillName(r.ID, level)
+		def, _ := a.skillDefinition(r.ID, level)
+		name := def.Name
 		target := a.chatEntityName(r.Target)
+		if proto.Op(p) == proto.SkillUse || proto.Op(p) == proto.SkillUseNoTarget || proto.Op(p) == proto.SkillUserDrain || proto.Op(p) == proto.SkillMobDrain || proto.Op(p) == proto.MobSkillUse || proto.Op(p) == proto.MobSkillDrain {
+			id, style := 1100, uint8(0)
+			if r.Source != s.SelfID {
+				id, style = 1300, 1
+			}
+			a.systemMessage(style, id, map[string]string{"s": name, "p": a.chatEntityName(r.Source)})
+		}
 		if r.Result == 3 {
 			if r.Source == s.SelfID {
 				a.systemMessage(0, 1108, map[string]string{"s": name, "t": target})
@@ -162,7 +175,7 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		if r.Result == 1 {
 			id = 1102
 		}
-		if a.skillDefs[sdata.SkillKey{ID: r.ID, Level: r.Level}].Effect == 2 {
+		if def.Effect == 2 {
 			id = 1104
 			if r.Target == s.SelfID {
 				id = 1103
@@ -175,7 +188,7 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 			if r.Result == 1 {
 				id = 1302
 			}
-			if a.skillDefs[sdata.SkillKey{ID: r.ID, Level: r.Level}].Effect == 2 {
+			if def.Effect == 2 {
 				id = 1303
 				style = 4
 			}
@@ -188,14 +201,15 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 			a.systemMessage(style, notice, map[string]string{"s": name, "t": target, "p": a.chatEntityName(r.Source)})
 			return
 		}
-		for _, pool := range []struct {
-			amount uint16
-			name   string
-		}{{r.HP, "HP"}, {r.MP, "MP"}, {r.SP, "SP"}} {
-			if pool.amount > 0 {
-				a.systemMessage(style, id, map[string]string{"s": name, "t": target, "p": a.chatEntityName(r.Source), "v": number(uint32(pool.amount)), "hp": pool.name})
+		for poolIndex, amount := range []uint16{r.HP, r.MP, r.SP} {
+			if amount > 0 {
+				a.combatMessage(style, id, map[string]string{"s": name, "t": target, "p": a.chatEntityName(r.Source), "v": number(uint32(amount)), "hp": a.combatPoolLabel(poolIndex, def.Effect != 2)})
 			}
 		}
+	case proto.SkillKeep:
+		a.periodicSystemChat()
+	case proto.SkillUserExtraDamage, proto.SkillExtraDamage:
+		a.extraDamageSystemChat()
 	case proto.PartyInvite, proto.PartyInviteName:
 		name := s.Party.InviteName
 		if name == "" {

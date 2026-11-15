@@ -199,6 +199,9 @@ func verifyInstantSkillTiming(t *testing.T, a *App, pump func(func() bool)) {
 	action := a.wv.self.ActionID()
 	a.wv.self.Update(.15)
 	pump(func() bool { return a.state.LastSkill.ID == 31 })
+	if a.wv.attackMoveUntil-a.clock < .799 {
+		t.Fatal("self buff omitted 800ms movement recovery", a.wv.attackMoveUntil, a.clock)
+	}
 	if a.wv.self.ActionID() != action || a.wv.self.Time < .15 {
 		t.Fatal("instant skill ACK restarted release animation")
 	}

@@ -84,8 +84,8 @@ func TestPhoenixChatAndLoginLogoGL(t *testing.T) {
 	for _, line := range []game.ChatLine{{Op: proto.ChatNormal, Sender: "Alice", Text: "Normal message"}, {Op: proto.ChatParty, Sender: "Alice", Text: "Party message"}, {Op: proto.ChatGuild, Sender: "Alice", Text: "Guild message"}, {Op: proto.ChatWhisper, Sender: "Bob", Text: "Whisper message"}, {Op: proto.ChatWorld, Sender: "Alice", Text: "Trade message"}, {Op: proto.ChatMap, Sender: "Bob", Text: "Area message"}} {
 		a.state.AddChat(line)
 	}
-	a.systemMessage(0, 1000, map[string]string{"t": "Wolf", "v": "123"})
-	a.systemMessage(1, 1001, map[string]string{"t": "Wolf", "v": "35"})
+	a.combatMessage(0, 1000, map[string]string{"t": "Wolf", "v": "123"})
+	a.combatMessage(1, 1001, map[string]string{"t": "Wolf", "v": "35"})
 	a.systemMessage(3, 50, map[string]string{"b": "240"})
 	a.systemMessage(3, 53, map[string]string{"b": "50"})
 	a.chatOpen = true

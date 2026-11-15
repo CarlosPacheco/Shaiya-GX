@@ -55,6 +55,24 @@ func TestChatTextStaysInsidePanelsGL(t *testing.T) {
 		return pixels
 	}
 	empty := draw(nil)
+	// A single line belongs to the lowest complete cell in both histories.
+	first := draw([]ui.ChatEntry{{Text: "First gjpqy", System: true, Color: [4]float32{1, 1, 1, 1}}, {Text: "First gjpqy", Color: [4]float32{1, 1, 1, 1}}})
+	for _, bounds := range [][2]int{{420, 532}, {540, 684}} {
+		changed := 0
+		for y := bounds[0]; y < bounds[1]; y++ {
+			off := ((767-y)*1024 + 25) * 4
+			if !bytes.Equal(empty[off:off+316*4], first[off:off+316*4]) {
+				if y < bounds[1]-16 {
+					t.Fatal("first chat line floats above bottom row", y, bounds)
+				}
+				changed++
+			}
+		}
+		if changed < 5 {
+			t.Fatal("first chat line missing or clipped", bounds, changed)
+		}
+	}
+
 	var entries []ui.ChatEntry
 	for i := 0; i < 20; i++ {
 		for _, system := range []bool{true, false} {

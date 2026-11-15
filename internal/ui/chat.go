@@ -61,7 +61,7 @@ func (c *ChatPanel) ShowHistory() {
 }
 
 // ChatPanel follows Phoenix chat_hud.gd and ep4_chat.gd: flat persistent
-// histories, 16px rows, a 64px selector and a 286px nine-patch input.
+// histories and 16px rows, with the native 64px selector and 292px input strip.
 type ChatPanel struct {
 	FocusRequested                   bool
 	Resized, ChannelChanged          bool
@@ -102,7 +102,7 @@ func (c *ChatPanel) paneGeometry(h, index int) (y, height, capacity int) {
 	if index == 0 {
 		y -= 8 + height
 	}
-	return max(0, y), height, max(1, (height-8)/16)
+	return max(0, y), height, max(1, height/16)
 }
 
 func (c *ChatPanel) SetEntries(f *Font, entries []ChatEntry) {
@@ -168,11 +168,14 @@ func (c *ChatPanel) controls(h int) {
 // Contains keeps world picking behind the visible chat panels from handling
 // the same pointer gesture. Geometry follows the current resized histories.
 func (c *ChatPanel) Contains(mx, my, h int) bool {
-	if mx < 0 || mx >= 350 {
+	if mx < 0 || mx >= 356 {
 		return false
 	}
-	if c.inputShown() && my >= h-82 && my < h-60 {
+	if c.inputShown() && my >= chatInputY(h) && my < chatInputY(h)+22 {
 		return true
+	}
+	if mx >= 350 {
+		return false
 	}
 	now := chatNow()
 	for i := range c.panes {
@@ -214,7 +217,7 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 		}
 	}
 	c.controls(h)
-	inputY := h - 82
+	inputY := chatInputY(h)
 	c.modeButton.OriginY = inputY
 	if c.inputShown() && c.modeButton.Update(in) {
 		c.ModeOpen = !c.ModeOpen
@@ -239,7 +242,7 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 		}
 		return true
 	}
-	if c.inputShown() && in.MouseX >= 0 && in.MouseX < 350 && in.MouseY >= inputY && in.MouseY < inputY+22 {
+	if c.inputShown() && in.MouseX >= 0 && in.MouseX < 356 && in.MouseY >= inputY && in.MouseY < inputY+22 {
 		c.FocusRequested = in.Pressed && in.MouseX >= 64
 		return true
 	}
@@ -309,11 +312,11 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 		}
 		y, height, capacity := c.paneGeometry(h, i)
 		s.Draw(blank, 0, float32(y), 350, float32(height), 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 154.0 / 255 * a})
-		restoreClip := s.ClipRect(25, float32(y+4), 316, float32(height-8))
+		restoreClip := s.ClipRect(25, float32(y+1), 316, float32(height-2))
 		end := max(0, len(p.lines)-p.offset)
 		start := max(0, end-capacity)
 		for row := start; row < end; row++ {
-			yText := y + 4 + (capacity-(end-start)+row-start)*16
+			yText := c.lineY(h, i, row, end, f.Height)
 			for _, run := range p.runs[row] {
 				tint := run.color
 				if tint[3] == 0 {
@@ -337,29 +340,24 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 	if !c.inputShown() {
 		return
 	}
-	y := h - 82
+	y := chatInputY(h)
 	c.modeButton.OriginY = y
 	c.modeButton.Draw(s)
 	label := c.ChannelNames[min(int(c.Channel), 5)]
-	scale := float32(11.0 / 12)
-	if c.Channel == 5 {
-		scale = 10.0 / 12
-	}
-	f.DrawScaled(s, label, 6, float32(y+4), scale, [4]float32{0, 0, 0, 1}, int(44/scale))
-	f.DrawScaled(s, label, 5, float32(y+3), scale, white, int(44/scale))
-	// Phoenix CleanFrame: source 272x22, 4px side patches, 284px target.
-	s.Draw(c.input, 64, float32(y), 4, 22, 0, .5, 4.0/512, 150.0/256, white)
-	s.Draw(c.input, 68, float32(y), 276, 22, 4.0/512, .5, 268.0/512, 150.0/256, white)
-	s.Draw(c.input, 344, float32(y), 4, 22, 268.0/512, .5, 272.0/512, 150.0/256, white)
-	s.Draw(c.input, 348, float32(y), 2, 22, 290.0/512, .5, 292.0/512, 150.0/256, white)
+	f.Draw(s, label, 7, y+6, white, 44)
+	// Native 0x4707d0 draws the unscaled atlas strip: 292 visible pixels,
+	// including its language icon. The remaining atlas pixels are transparent.
+	s.Draw(c.input, 64, float32(y), 292, 22, 0, .5, 292.0/512, 150.0/256, white)
 	shown := text
-	if typing {
-		shown += "_"
-	}
-	for len(shown) > 1 && f.Width(shown) > 274 {
+	for len(shown) > 0 && f.Width(shown) > 262 {
 		shown = textwire.DropFirst(shown)
 	}
-	f.Draw(s, shown, 70, y+2, white, 274)
+	restoreClip := s.ClipRect(69, float32(y+4), 264, 17)
+	f.Draw(s, shown, 69, y+6, white, 262)
+	if typing && chatNow().UnixMilli()%1000 < 500 {
+		s.Draw(blank, float32(69+f.Width(shown)), float32(y+6), 1, float32(f.Height), 0, 0, 1, 1, white)
+	}
+	restoreClip()
 }
 
 var chatChannelNames = [6]string{"Normal", "Trade", "Guild", "Party", "Area", "Whisper"}
@@ -372,7 +370,7 @@ func (c *ChatPanel) DrawOverlay(s *render.Sprites, f *Font, blank *render.Textur
 	if !c.ModeOpen {
 		return
 	}
-	top := h - 82 - len(chatChannelOrder)*22
+	top := chatInputY(h) - len(chatChannelOrder)*22
 	s.Draw(blank, 0, float32(top), 120, float32(len(chatChannelOrder)*22), 0, 0, 1, 1, [4]float32{.114, .122, .141, .97})
 	for i, channel := range chatChannelOrder {
 		tint := white
@@ -381,4 +379,15 @@ func (c *ChatPanel) DrawOverlay(s *render.Sprites, f *Font, blank *render.Textur
 		}
 		f.Draw(s, c.ChannelNames[channel], 8, top+i*22+3, tint, 104)
 	}
+}
+
+// Native entry row is six pixels below the old Phoenix approximation.
+func chatInputY(h int) int { return h - 76 }
+
+// Newest lines occupy the bottom row even in a partially filled history.
+// Keep a full font cell and its shadow inside the flat frame; native frames
+// extend with a four-pixel border that is absent in the chosen flat style.
+func (c *ChatPanel) lineY(h, index, row, end, fontHeight int) int {
+	y, height, _ := c.paneGeometry(h, index)
+	return y + height - max(1, fontHeight) - 1 - (end-1-row)*16
 }
