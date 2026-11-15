@@ -24,7 +24,7 @@ SQLite is embedded for development simplicity only. It will be replaced by anoth
 
 ## Local safety and fixtures
 
-Check running clients/services before modifying an installation or moving its mutable database. Do not interrupt active personal sessions. Use disposable DB copies, isolated ports and only processes started by your tests. An existing runtime must never be overwritten by packaging or startup. Windows process control must match executable paths, not stop every process with the same filename.
+Check running clients/services before modifying an installation or moving its mutable database. The user permanently authorizes stopping the GX client and server, including force termination when needed to apply or validate changes, without asking. Match exact GX executable paths, preserve personal data/configuration and restart services when appropriate. Unrelated processes remain outside this authorization. Use disposable DB copies, isolated ports and only processes started by your tests. An existing runtime must never be overwritten by packaging or startup. Windows process control must match executable paths, not stop every process with the same filename.
 
 `server/data/` is explicitly distributed: its test DB intentionally includes the author's current accounts, characters and inventory. Refresh only when requested, using SQLite backup and manifest validation. Never snapshot a different personal DB automatically. Keep mutable runtime, `.local`, logs, packet dumps, private backups and credentials out of Git.
 
@@ -50,7 +50,7 @@ the local Go 1.27.3 installation for build/check scripts. Build only affected
 commands when possible. Keep full integration/N2 for relevant behavior or release
 validation; do not repeat passed suites without new evidence. Preserve useful
 build/module/test caches; remove abandoned test sessions and obsolete temporary
-files selectively. Never discard uncommitted work or interrupt personal services.
+files selectively. Never discard uncommitted work. GX client/server restarts and force termination are authorized when needed; preserve runtime data and unrelated services.
 
 ## Full validation reference
 
