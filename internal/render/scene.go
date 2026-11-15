@@ -57,6 +57,7 @@ layout(binding=6) uniform sampler2D waterNormalB;
 uniform int hasTerrainLight;
 uniform int mode;
 uniform float alphaRef;
+uniform float corpseFade; // zero for all ordinary scene draws
 uniform vec3 fogColor;
 uniform float detailBias;
 uniform vec2 fogRange; // start, end; end <= start disables
@@ -75,6 +76,12 @@ in float vDepth;
 in vec4 vEffectColor;
 out vec4 frag;
 void main() {
+ if (corpseFade > 0.0) {
+  const int bayer[16]=int[16](0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5);
+  ivec2 pixel=ivec2(gl_FragCoord.xy)&3;
+  float threshold=(float(bayer[pixel.y*4+pixel.x])+0.5)/16.0;
+  if (1.0-corpseFade <= threshold) discard;
+ }
 	vec4 c;
 	if (mode == 7) {
 		float a = alphaRef < 0.0 ? 1.0 : texture(tex0, vUV, detailBias).a;

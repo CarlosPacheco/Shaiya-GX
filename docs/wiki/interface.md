@@ -68,7 +68,7 @@ The CPU solver reproduces native directed springs, masses, forces, Euler integra
 
 Attacking or using a targeted skill turns toward the current target immediately and publishes the heading before the action packet. Targets outside weapon/skill range start an approach; the stored skill is sent once when in range. Manual movement, a changed target or a new action cancels/replaces that request. This uses existing movement collision handling rather than a new pathfinding system. Results and resource changes remain server-owned.
 
-Floating numbers use `count.tga` digit cells of 26×32, the Critical region at `(260,0,156,32)` and Miss at `(416,0,96,32)`. Phoenix parameters are a one-second lifetime, 0.3-unit rise per second, 0.2-unit digit width and 1.1875 height ratio. Critical digits are 1.5 times wider; healing is RGB `2ECC71`. Numbers detach from the target's displayed position, retain world scale under camera movement and expire from a queue capped at 128 entries. Attack, skill, drain and periodic result packets supply the displayed values; ordinary HP snapshots do not invent healing events.
+Floating numbers use `count.tga` digit cells of 26×32, the Critical region at `(260,0,156,32)` and Miss at `(416,0,96,32)`. Phoenix parameters are a one-second lifetime, 0.3-unit rise per second, 0.2-unit digit width and 1.1875 height ratio. Critical digits are 1.5 times wider; healing is native RGB `00FF00` (digit renderer `004274ff`). Numbers detach from the target's displayed position, retain world scale under camera movement and expire from a queue capped at 128 entries. Attack, skill, drain and periodic result packets supply the displayed values; ordinary HP snapshots do not invent healing events.
 
 EFT `Unknown29` is the mirrored-texture flag. Billboards with this flag use four reflected quadrants, matching Phoenix, so light and spell halos meet inward. The baked UVs use clamp addressing to avoid opposite-edge sampling; ordinary billboards and authored 3DE meshes retain their addressing. Original map-one `lamp003` is covered by an opt-in GL check.
 
@@ -580,3 +580,24 @@ again; death-benefit claims are preserved.
 The kill progress strip shows kills divided by the next claim threshold;
 the death-benefit strip shows the next claim level divided by 31. Their
 native widths are 153px and 200px, using the red and violet atlas strips.
+
+
+### Monster appearance and corpse fade
+
+Fresh `0601` / GX `7F05` mob spawns (`New=true`) play the original
+`Effect/start.EFT`, sequence zero, on the monster's current ground position.
+Ordinary visibility snapshots do not replay it. This is Phoenix's `Spawn`
+recipe, with the original emitters and authored lifetime, not a custom effect.
+
+Dead monsters keep their death animation. As explicitly requested, GX adopts
+Phoenix's alternative to native sinking: hold for 3.5 seconds, then use a
+1.5-second opaque screen-door fade. A 4x4 threshold in the existing skin shader
+reduces pixel coverage while preserving material RGB/depth writes. There is no
+additional pass, transparent sorting or generated texture. Repeated death
+observations cannot extend the lifetime; respawn clears the visual clock.
+Server corpse removal, loot and respawn timers remain authoritative.
+
+Native news uses the English locale's regular 15px Arial-compatible font
+(`00544620`, actor font slot `+3A8`, drawn through `00541AA0`), shared with chat.
+The 13px tooltip font is not used for news. Centering, outline, queue, colors,
+background and lifetime follow the native news presentation.

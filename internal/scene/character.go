@@ -70,6 +70,7 @@ type skinPart struct {
 // Character is a posed, animated actor.
 type Character struct {
 	Concealed            bool
+	CorpseFade           float32 // opaque screen-door coverage, 0 visible, 1 gone
 	enchantTime          float64
 	cloak                *cloakInstance
 	attachments          []attachment
@@ -554,7 +555,7 @@ func (c *Character) preparePose() []render.M4 {
 }
 
 func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
-	if c == nil || c.clip == nil || (c.Concealed && s.Shadow) {
+	if c == nil || c.clip == nil || c.CorpseFade >= 1 || (c.Concealed && s.Shadow) {
 		return
 	}
 	finals := c.preparePose()
@@ -579,6 +580,7 @@ func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
 		ambient = s.CharacterAmbient
 	}
 	k.Begin(s, ambient)
+	k.SetCorpseFade(c.CorpseFade)
 	if c.Concealed {
 		k.SetOpacity(render.StealthOpacity)
 	}

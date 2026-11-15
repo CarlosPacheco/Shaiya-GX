@@ -29,3 +29,22 @@ func TestSkillRequestUsesLaunchRangeAndHeight(t *testing.T) {
 		t.Fatal("height ignored")
 	}
 }
+
+func TestStationaryMobUnknownWireHeightUsesRenderedGround(t *testing.T) {
+	a := inputApp()
+	a.wv.pos = render.V3{150, 39.43, 190}
+	e := &game.Entity{ID: 77, Kind: game.KindMob, X: 155, Y: 0, Z: 190}
+	a.state.Entities[77] = e
+	a.wv.mobs = map[uint32]*mobActor{77: {entity: e, pos: render.V3{155, 39.43, 190}, position: remotePosition{initialized: true}}}
+	d := sdata.Skill{AttackRange: 10, Target: 3}
+	if !a.skillRequestReach(d, 77) {
+		t.Fatal("stationary altar falsely targeted underground")
+	}
+	if p := a.skillTargetPosition(e); p != (render.V3{155, 39.43, 190}) {
+		t.Fatal(p)
+	}
+	e.MobHeightKnown = true
+	if a.skillRequestReach(d, 77) {
+		t.Fatal("authoritative different floor ignored")
+	}
+}

@@ -151,7 +151,7 @@ func TestBlessingBarUsesOriginalFooterGL(t *testing.T) {
 	a.drawScreenNotices(1024, 768)
 	a.sprites.End()
 	var newsPixel [4]byte
-	width := a.tooltipFont.Width("Destroyed altar")
+	width := a.chatTextFont.Width("Destroyed altar")
 	gl.ReadPixels(int32(512-width/2-4), 768-(384-150-4), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&newsPixel[0]))
 	if newsPixel[0] == 0 && newsPixel[1] == 0 && newsPixel[2] == 0 {
 		t.Fatal("news missing original centered panel")

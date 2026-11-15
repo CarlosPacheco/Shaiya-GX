@@ -31,6 +31,17 @@ func (a *App) confirmedEffects(p []byte) {
 		return
 	}
 	switch proto.Op(p) {
+	case proto.MobEnter, proto.GXMobEnter:
+		// Fresh spawns only: entering an existing population does not replay
+		// its appearance. Phoenix's Spawn is native start.EFT, sequence zero.
+		if m, err := proto.DecodeMobEnter(p); err == nil && m.New && len(v.impacts) < 32 {
+			if x := a.loadSkillEffect("Effect/start.EFT", 0); x != nil {
+				if matrix, ok := a.effectTargetMatrix(m.ID); ok {
+					x.SetTransform(matrix)
+				}
+				v.impacts = append(v.impacts, skillImpact{target: m.ID, instance: x, authoredLifetime: true})
+			}
+		}
 	case proto.MobSkillUse, proto.MobSkillDrain, proto.MobSkillOther:
 		a.startMobSkillEffects(a.state.LastSkill)
 	case proto.CharacterMove, proto.CharacterDeath:

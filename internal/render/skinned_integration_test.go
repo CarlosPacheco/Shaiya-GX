@@ -105,6 +105,32 @@ func TestSkinPaletteSupportsFullByteIndicesAndZeroWeightGL(t *testing.T) {
 		t.Fatal("short palette used stale actor matrices", pixel)
 	}
 
+	// A corpse fades by opaque coverage, not alpha blending. Every retained
+	// fragment keeps the original material RGB and depth-writing contract.
+	counts := []int{}
+	for _, fade := range []float32{0, .5, 1} {
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		k.Begin(s, 1)
+		k.SetPose(Identity(), short)
+		k.SetCorpseFade(fade)
+		k.Draw(mesh, tex, -1)
+		pixels := make([]byte, 64*64*4)
+		gl.ReadPixels(0, 0, 64, 64, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+		count := 0
+		for i := 0; i < len(pixels); i += 4 {
+			if pixels[i] > 0 {
+				if pixels[i] != 255 || pixels[i+1] != 0 || pixels[i+2] != 0 {
+					t.Fatal("corpse blended its material", pixels[i:i+4])
+				}
+				count++
+			}
+		}
+		counts = append(counts, count)
+	}
+	if counts[0] == 0 || counts[1] < counts[0]/2-12 || counts[1] > counts[0]/2+12 || counts[2] != 0 {
+		t.Fatal("incorrect corpse coverage", counts)
+	}
+	t.Logf("opaque corpse coverage: %v", counts)
 	// Missing materials must not sample whichever actor/water texture was last bound.
 	for _, rgba := range [][]byte{{255, 0, 0, 255}, {0, 0, 255, 255}} {
 		previous := Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: rgba}})

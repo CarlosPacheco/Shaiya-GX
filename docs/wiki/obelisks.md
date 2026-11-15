@@ -100,7 +100,8 @@ map exclusions apply (68/69 hide these markers, 105/108 hide relic markers,
 Capture text uses SysMsg 463 for the conqueror and 462 for the losing country,
 with the original monster name. Maps 0/18/30/70 receive centered style 8 notices;
 other maps use history style 7. News uses the original separate five-entry
-screen queue: ten-second lifetime, centered 17-pixel rows starting at
+screen queue: regular 15px native chat font, ten-second lifetime, centered
+17-pixel rows starting at
 `screenHeight/2 - 150`, outlined text and ARGB CD1D1F24 panels. It remains in
 chat history and plays `Sound/ui_news001.ogg`. Styles 8/24/27/28/29/30/32/33
 share this presentation; 30/32 use the native pink text. Portal IDs 1060/1061 switching to 101/102 use

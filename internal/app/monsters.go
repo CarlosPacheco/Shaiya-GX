@@ -20,6 +20,8 @@ type mobActor struct {
 	skillAt      float64
 	soundSkill   uint16
 	soundAt      float64
+	deathAt      float64
+	dead         bool
 }
 
 func (a *App) prepareMonsters() {
@@ -103,6 +105,7 @@ func (a *App) prepareMonsters() {
 		if err := cached.actor.SetAction(action); err != nil {
 			a.assets.Missing[err.Error()] = true
 		}
+		cached.actor.CorpseFade = cached.updateCorpse(e.Dead, a.clock)
 		cached.actor.Update(float32(a.frameDT))
 		cached.actor.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, !e.Dead, &effectBudget)
 	}
@@ -115,7 +118,7 @@ func (a *App) drawMonsters() {
 			continue
 		}
 		if cached := a.wv.mobs[id]; cached != nil && cached.actor != nil {
-			if cached.actor.Visible(frustum, a.scene3d.ClipPlane) {
+			if cached.actor.CorpseFade < 1 && cached.actor.Visible(frustum, a.scene3d.ClipPlane) {
 				cached.actor.Draw(a.skinner, a.scene3d)
 				if a.clientSettings().SkillEffects {
 					cached.actor.DrawEffects(a.scene3d)
@@ -123,4 +126,19 @@ func (a *App) drawMonsters() {
 			}
 		}
 	}
+}
+
+// Phoenix's deliberate alternative to native corpse sinking: hold the death
+// pose for 3.5 seconds, then discard increasing pixel coverage over 1.5s.
+func corpseFade(age float64) float32 { return float32(min(1, max(0, (age-3.5)/1.5))) }
+
+func (m *mobActor) updateCorpse(dead bool, now float64) float32 {
+	if dead && !m.dead {
+		m.deathAt = now
+	}
+	m.dead = dead
+	if !dead {
+		return 0
+	}
+	return corpseFade(now - m.deathAt)
 }

@@ -126,6 +126,7 @@ type Skinner struct {
 	uDetailBias                                        int32
 	uClipPlane                                         int32
 	uOpacity                                           int32
+	uCorpseFade                                        int32
 	opacity                                            float32
 }
 
@@ -141,7 +142,7 @@ func NewSkinner() (*Skinner, error) {
 	addGPUBytes(MaxBones * 64)
 	return &Skinner{prog: p, palette: palette, uBoneCount: u("boneCount"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"),
 		uLight: u("lightDir"), uAmb: u("ambient"), uMode: u("mode"), uRef: u("alphaRef"),
-		uDetailBias: u("detailBias"), uFogColor: u("fogColor"), uFogRange: u("fogRange"), uClipPlane: u("clipPlane"), uOpacity: u("actorOpacity")}, nil
+		uDetailBias: u("detailBias"), uFogColor: u("fogColor"), uFogRange: u("fogRange"), uClipPlane: u("clipPlane"), uOpacity: u("actorOpacity"), uCorpseFade: u("corpseFade")}, nil
 }
 
 // Begin binds the program with the scene's camera, light and fog.
@@ -156,6 +157,7 @@ func (k *Skinner) Begin(s *Scene3D, ambient float32) {
 	gl.Disable(gl.POLYGON_OFFSET_FILL)
 	gl.UseProgram(k.prog)
 	k.SetOpacity(1)
+	k.SetCorpseFade(0)
 	gl.BindBufferBase(gl.UNIFORM_BUFFER, 0, k.palette)
 	gl.Uniform4fv(k.uClipPlane, 1, &s.ClipPlane[0])
 	k.view, k.projection = s.View, s.depthProjection(s.Proj)
@@ -252,3 +254,6 @@ func (k *Skinner) SetOpacity(alpha float32) {
 		gl.Uniform1i(k.uMode, 10)
 	}
 }
+
+// SetCorpseFade keeps depth writes and opaque drawing, with no blending pass.
+func (k *Skinner) SetCorpseFade(fade float32) { gl.Uniform1f(k.uCorpseFade, min(1, max(0, fade))) }

@@ -96,7 +96,8 @@ func (a *App) drawCombatNumbers(w, h int) {
 		point := entry.Point.Add(render.V3{0, age * .3, 0})
 		tint := [4]float32{248.0 / 255, 247.0 / 255, 245.0 / 255, 1 - age}
 		if entry.Healing {
-			tint = [4]float32{46.0 / 255, 204.0 / 255, 113.0 / 255, 1 - age}
+			// Native 004274ff: floating recovery digits use RGB 00FF00.
+			tint = [4]float32{0, 1, 0, 1 - age}
 		}
 		width := float32(.2)
 		if entry.Critical {

@@ -30,7 +30,9 @@ func (a *App) drawScreenNotices(w, h int) {
 		}
 	}
 	a.screenNotices = rows
-	f := a.tooltipFont
+	// Native English locale 3 uses regular 15px Arial at actor +0x3a8,
+	// the same font as chat (00544620 / 00541aa0), not the 13px tooltip.
+	f := a.chatTextFont
 	if f == nil {
 		f = a.font
 	}

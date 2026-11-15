@@ -150,3 +150,10 @@ creates attachments with the monster; `0044f2f0` / `00432bc0` use actor/frustum
 visibility rather than a separate effect-distance cutoff. GX's former camera
 radius of 50 units (55 after creation) has been removed. The shared per-frame
 uncached emitter creation budget remains; it does not impose a view radius.
+
+
+Stationary/native mob spawns can omit Y. Client skill reach, sight and approach
+therefore resolve that unknown height from the displayed ground (or terrain
+before a model is prepared). An absent Y must not become a target at world Y=0.
+Confirmed XYZ positions retain their authoritative floor, including a different
+floor; this does not bypass line of sight or faction eligibility.
