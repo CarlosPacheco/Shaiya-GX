@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
 // Native 0x428319 selects these libraries; 0x42a145 loads catalogue IDs
@@ -48,5 +49,19 @@ func (a *Assets) itemGlow(typ uint8, selector int32) *Effect {
 		a.Missing[fmt.Sprintf("%s: emitter %d unsupported", file, index)] = true
 		return nil
 	}
+	// 0x42947b uses world-space births (0x55de50) only for fire, ID14.
+	// Other innate glows use local simulation (0x55d270), then the item's
+	// current matrix at draw time. Transforming births makes them lag behind.
+	x.localParticles = selector != 1
+	x.particleWorld = render.Identity()
 	return x
+}
+
+func (x *Effect) setItemGlowTransform(m render.M4) {
+	if x.localParticles {
+		x.particleWorld = m
+		x.Origin, x.basis = render.V3{}, render.Identity()
+	} else {
+		x.SetBoneTransform(m)
+	}
 }

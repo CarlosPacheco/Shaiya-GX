@@ -35,16 +35,18 @@ type effectEmitter struct {
 // Effect owns one live emitter group; parsed templates and its GPU quad are shared.
 // Skipped emitters are reported rather than replaced with invented geometry.
 type Effect struct {
-	emitters   []effectEmitter
-	quad       *render.Mesh
-	mirrorQuad *render.Mesh
-	Origin     render.V3
-	Time, step float32
-	Skipped    int
-	stopped    bool
-	basis      render.M4
-	batchWorld []render.M4
-	batchColor [][4]float32
+	emitters       []effectEmitter
+	quad           *render.Mesh
+	mirrorQuad     *render.Mesh
+	Origin         render.V3
+	Time, step     float32
+	Skipped        int
+	stopped        bool
+	basis          render.M4
+	localParticles bool
+	particleWorld  render.M4
+	batchWorld     []render.M4
+	batchColor     [][4]float32
 }
 
 type effectTemplate struct {
@@ -384,7 +386,11 @@ func (x *Effect) Draw(s *render.Scene3D) {
 			continue
 		}
 		texture := e.textures[e.textureFrame]
-		basis := effectBaseBasis(e.definition.BaseAxis, s.View, x.basis)
+		placement := x.basis
+		if x.localParticles {
+			placement = x.particleWorld
+		}
+		basis := effectBaseBasis(e.definition.BaseAxis, s.View, placement)
 		batched := len(e.particles) > 1
 		var meshFrame float32
 		if batched {
@@ -411,10 +417,7 @@ func (x *Effect) Draw(s *render.Scene3D) {
 				m[8+row] *= size
 			}
 			m = effectRotation(e.definition.Unk30, v.initial).Mul(effectRotation(e.definition.RotationAxis, v.angle)).Mul(m)
-			pos := v.pos
-			if e.definition.Unk06 != 0 {
-				pos = pos.Add(v.velocity)
-			}
+			pos := x.particlePosition(v, e.definition)
 			m[12], m[13], m[14] = pos[0], pos[1], pos[2]
 			var color [4]float32
 			if v.life == 0 {
@@ -453,6 +456,17 @@ func (x *Effect) Draw(s *render.Scene3D) {
 		}
 	}
 	s.End()
+}
+
+func (x *Effect) particlePosition(v effectParticle, d *effect.Emitter) render.V3 {
+	pos := v.pos
+	if d.Unk06 != 0 {
+		pos = pos.Add(v.velocity)
+	}
+	if x.localParticles {
+		pos = transformPoint(pos, x.particleWorld)
+	}
+	return pos
 }
 
 // 0x55de50/0x55d270 rotate the position offset, then add a random

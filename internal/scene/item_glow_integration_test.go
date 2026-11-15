@@ -75,6 +75,9 @@ func TestOriginalItemGlowsGL(t *testing.T) {
 		if c.attachments[0].glow.emitters[0].definition != &a.itemGlowLibraries[selector].Effects[11] {
 			t.Fatal("ITM selector chose the wrong library or family")
 		}
+		if c.attachments[0].glow.localParticles != (selector != 1) {
+			t.Fatal("fire/world and other/local particle modes were mixed")
+		}
 		for range 120 {
 			c.Update(1.0 / 60)
 		}
@@ -102,6 +105,38 @@ func TestOriginalItemGlowsGL(t *testing.T) {
 			t.Fatalf("glow%d invisible: %d pixels", selector, visible)
 		}
 		t.Logf("glow%d staff model%d: %d visible pixels", selector, model, visible)
+		center := func(p []byte) float64 {
+			var sum, count float64
+			for i := 0; i < len(p); i += 4 {
+				if p[i] > 8 || p[i+1] > 8 || p[i+2] > 8 {
+					sum += float64((i / 4) % 640)
+					count++
+				}
+			}
+			if count == 0 {
+				t.Fatal("moved glow disappeared")
+			}
+			return sum / count
+		}
+		// Move a full unit without a simulation tick: existing local particles
+		// must follow the hand immediately, while fire retains its world trail.
+		beforeX := center(pixels)
+		c.World[12] = 1
+		c.drawAttachments(s, c.preparePose())
+		gl.DepthMask(true)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		x.Draw(s)
+		gl.ReadPixels(0, 0, 640, 640, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+		shift := math.Abs(center(pixels) - beforeX)
+		if selector == 1 && shift > 1 || selector != 1 && shift < 80 {
+			t.Fatalf("glow%d moved centroid %.2fpx", selector, shift)
+		}
+		t.Logf("glow%d existing particles moved %.2fpx with hand (no tick)", selector, shift)
+		c.World = render.Identity()
+		c.drawAttachments(s, c.preparePose())
+		gl.DepthMask(true)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		x.Draw(s)
 		dir := os.Getenv("SHAIYA_TEST_ARTIFACTS")
 		if dir != "" {
 			if err := render.SavePNG(filepath.Join(dir, fmt.Sprintf("glow-%d.png", selector)), 640, 640); err != nil {

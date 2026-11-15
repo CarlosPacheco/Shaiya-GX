@@ -95,7 +95,11 @@ ITM records, but their family lies outside these original libraries and emits
 nothing. Do not manufacture a shield recipe from a weapon family.
 
 The glow attaches to the animated item binding, including both dual weapons,
-and coexists with enchantment particles. It uses the existing EFT runtime and
+and coexists with enchantment particles. Native `0x42947b` distinguishes fire
+(catalogue 14), whose births are transformed into world space by `0x55de50`,
+from the other three glows, simulated locally by `0x55d270`. Those local
+particles follow the current item matrix at draw time; transforming their
+births into world space incorrectly leaves them behind during movement. It uses the existing EFT runtime and
 shared resources, advances once across camera passes, and respects concealment,
 weapon-effects visibility and shadow exclusion. Item.SData model selection is
 sufficient for local, remote and preview characters; no new packet is needed.
