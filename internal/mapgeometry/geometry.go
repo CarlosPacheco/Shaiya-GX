@@ -95,6 +95,9 @@ func Load(readFile func(string) ([]byte, error), layout *world.WLD) (*Geometry, 
 		if m, ok := cache[file]; ok {
 			return m, nil
 		}
+		if extension := strings.ToLower(path.Ext(file)); extension == ".vani" || extension == ".mani" {
+			return nil, nil
+		}
 		data, err := read(file)
 		if err != nil {
 			return nil, err
@@ -103,8 +106,6 @@ func Load(readFile func(string) ([]byte, error), layout *world.WLD) (*Geometry, 
 		switch strings.ToLower(path.Ext(file)) {
 		case ".dg":
 			m, err = world.ParseDGCollisions(data)
-		case ".vani":
-			m, err = world.ParseVANICollisions(data)
 		default:
 			if strings.HasPrefix(file, "entity/tree/") {
 				m, err = world.ParseTreeCollisions(data)
@@ -135,7 +136,7 @@ func Load(readFile func(string) ([]byte, error), layout *world.WLD) (*Geometry, 
 	for _, entry := range []struct {
 		group world.Group
 		dir   string
-	}{{layout.Buildings, "Entity/Building"}, {layout.Shapes, "Entity/Shape"}, {layout.Trees, "Entity/Tree"}, {layout.VaniA, "Entity/VAni"}, {layout.Dungeons, "world/dungeon"}} {
+	}{{layout.Buildings, "Entity/Building"}, {layout.Shapes, "Entity/Shape"}, {layout.Trees, "Entity/Tree"}, {layout.Dungeons, "world/dungeon"}} {
 		for _, instance := range entry.group.Instances {
 			if instance.Asset < 0 || int(instance.Asset) >= len(entry.group.Assets) {
 				continue
@@ -151,29 +152,8 @@ func Load(readFile func(string) ([]byte, error), layout *world.WLD) (*Geometry, 
 			Visit(m, Basis(instance.Pos, instance.Fwd, instance.Up), g.Add)
 		}
 	}
-	for _, instance := range layout.Manis {
-		if instance.Building < 0 || int(instance.Building) >= len(layout.Buildings.Assets) {
-			continue
-		}
-		m, err := mesh("Entity/Building/" + layout.Buildings.Assets[instance.Building])
-		if err != nil {
-			return nil, err
-		}
-		base := Basis(instance.Pos, instance.Fwd, instance.Up)
-		var animation world.Mani
-		if instance.Mani >= 0 && int(instance.Mani) < len(layout.ManiAssets) {
-			if data, err := read("Entity/Mani/" + path.Base(strings.ReplaceAll(layout.ManiAssets[instance.Mani], `\`, "/"))); err == nil {
-				animation, _ = world.ParseMani(data)
-			}
-		}
-		if animation.Rotate && animation.Speed != 0 && norm(animation.Axis) != (world.Vec3{}) {
-			dynamic := Dynamic{Meshes: m, Base: base, Axis: animation.Axis, Speed: animation.Speed}
-			dynamic.prepareBounds()
-			g.Dynamic = append(g.Dynamic, dynamic)
-		} else {
-			Visit(m, base, g.Add)
-		}
-	}
+	// VANI and MANI are visual animations, never gameplay solids. Keep
+	// their display transforms out of movement, support, sight and navigation.
 	if layout.Dungeon {
 		m, err := mesh("world/dungeon/" + layout.Layout)
 		if err != nil {
@@ -181,6 +161,7 @@ func Load(readFile func(string) ([]byte, error), layout *world.WLD) (*Geometry, 
 		}
 		Visit(m, Identity(), g.Add)
 	}
+
 	for _, b := range layout.Blockers {
 		if !Point(b.Bounds.Min, Identity()).Finite() || !Point(b.Bounds.Max, Identity()).Finite() || math.IsNaN(float64(b.Yaw)) || math.IsInf(float64(b.Yaw), 0) {
 			return nil, fmt.Errorf("non-finite WLD blocker")

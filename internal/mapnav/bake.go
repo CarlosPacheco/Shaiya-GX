@@ -24,8 +24,10 @@ import (
 
 const FormatVersion = 1
 const CollisionRulesVersion = 2
+const AnimationRulesVersion = 1 // VANI/MANI placements are never baked as solids.
 
 type Manifest struct {
+	AnimationRules                                           int               `json:"animation_rules,omitempty"`
 	CollisionRules                                           int               `json:"collision_rules"`
 	PlayerPhysics                                            int               `json:"player_physics,omitempty"`
 	Version                                                  int               `json:"version"`
@@ -164,7 +166,7 @@ func Bake(g *mapgeometry.Geometry, id uint16, directory string, masks ...WalkMas
 	if closeFile != nil {
 		return closeFile
 	}
-	manifest := Manifest{TileSize: tileSize, CollisionRules: CollisionRulesVersion, Version: FormatVersion, MapID: id, Files: map[string]string{}, Sources: g.Sources, AgentHeight: 1.8, AgentRadius: .3, MaxClimb: .5, CellSize: cellSize, CellHeight: .1, Triangles: vertices / 3, Polygons: polygons}
+	manifest := Manifest{AnimationRules: AnimationRulesVersion, TileSize: tileSize, CollisionRules: CollisionRulesVersion, Version: FormatVersion, MapID: id, Files: map[string]string{}, Sources: g.Sources, AgentHeight: 1.8, AgentRadius: .3, MaxClimb: .5, CellSize: cellSize, CellHeight: .1, Triangles: vertices / 3, Polygons: polygons}
 	for _, name := range []string{navName, colName} {
 		data, err := os.ReadFile(filepath.Join(temporary, name))
 		if err != nil {

@@ -101,7 +101,7 @@ after checking its server-confirmed GM role. It consumes the command privately,
 and revoking GM status disables the view. Movement continues to collide.
 
 Gold shows blocking faces, cyan model support surfaces, blue the terrain and
-magenta the player's ellipsoid. Grass, decorative VANI and models without
+magenta the player's ellipsoid. Grass, VANI/MANI animations and models without
 collision remain traversable according to the recovered original rules.
 See [Original world collisions](../collisions.md) for geometry selection,
 native evidence and validation. The server uses versioned geometry and

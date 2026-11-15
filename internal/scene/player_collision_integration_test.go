@@ -37,8 +37,8 @@ func TestOriginalCollisionMapsGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer arc.Close()
-	for _, id := range []uint16{1, 2, 3} {
-		t.Run(string(rune('0'+id)), func(t *testing.T) {
+	for _, id := range []uint16{1, 2, 3, 15} {
+		t.Run(strconv.Itoa(int(id)), func(t *testing.T) {
 			started := time.Now()
 			w, err := LoadMap(NewAssets(arc), id)
 			if err != nil {

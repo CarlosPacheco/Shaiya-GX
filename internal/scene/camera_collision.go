@@ -78,7 +78,7 @@ func (w *World) CameraIntersection(origin, eye render.V3) (render.V3, bool) {
 			}
 			seen[id] = true
 			o := s.objects[id]
-			if o.vani {
+			if o.vani || o.mani || o.rotor != nil {
 				return
 			}
 			matrix := o.world
@@ -100,10 +100,10 @@ func (w *World) CameraIntersection(origin, eye render.V3) (render.V3, bool) {
 		}
 	} else {
 		for _, o := range w.Objects {
+			if o.Mani {
+				continue
+			}
 			project(o.Model, o.World)
-		}
-		for _, o := range w.rotors {
-			project(o.model, o.transform(w.DynamicTime()))
 		}
 	}
 	for i := range w.dgColliders {

@@ -24,6 +24,15 @@ func TestCameraUsesAuthoredColliderAndNearestHit(t *testing.T) {
 	if _, hit := w.CameraIntersection(origin, eye); hit {
 		t.Fatal("render geometry substituted for a missing collision mesh")
 	}
+	w.Objects = []Instance{{Model: m, World: render.Identity(), Mani: true}}
+	if _, hit := w.CameraIntersection(origin, eye); hit {
+		t.Fatal("static-looking MANI blocked camera")
+	}
+	w.Objects = nil
+	w.rotors = []maniRotor{{model: m, base: render.Identity()}}
+	if _, hit := w.CameraIntersection(origin, eye); hit {
+		t.Fatal("decorative MANI blocked the camera")
+	}
 	w.dgColliders = []world.CollisionMesh{mesh}
 	if _, hit := w.CameraIntersection(origin, eye); !hit {
 		t.Fatal("dungeon collider was ignored")

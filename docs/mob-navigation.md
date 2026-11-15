@@ -14,7 +14,7 @@ required. Generated files are independent of the graphics engine:
 - `data/geometry/<id>.gxnav`: tiled, layered navigation mesh.
 - `data/geometry/<id>.gxcol`: compressed original collision surfaces and terrain
   samples, used for exact support height and line-of-sight checks.
-- `data/geometry/<id>.gxphysics`: terrain and original collision geometry, including animated instances and water flags, for authoritative player sweeps.
+- `data/geometry/<id>.gxphysics`: terrain and original collision geometry, including water flags, for authoritative player sweeps.
 - `data/geometry/<id>.manifest.json`: format, agent profile, source hashes, player physics and collision-construction versions, and SHA-256 checksums for all three files.
 - `data/geometry/catalog.json`: complete map set for the installed generation.
 
@@ -29,7 +29,10 @@ Generated geometry belongs to the distributable data, not Git source history.
 Use the same loose client resources that will accompany the client. Original
 archives, meshes and textures are not copied into the server package. The
 shared `internal/mapgeometry` loader applies the original collision-group rules:
-Grass/VANI-B remain excluded. Buildings/Shapes without authored collision use the native display-triangle fallback; Trees and VANI-A use their native authored-box policies.
+Grass, VANI and MANI instances remain excluded. Buildings/Shapes without
+authored collision use the native display-triangle fallback; Trees retain
+their authored-box construction policy. Static model placements remain solid
+when an animated instance separately reuses their model.
 The offline baker also applies the original `.svmap` blocked cells before
 walkable-area erosion, allowing routes to detour around those restrictions.
 
@@ -157,3 +160,9 @@ therefore resolve that unknown height from the displayed ground (or terrain
 before a model is prepared). An absent Y must not become a target at world Y=0.
 Confirmed XYZ positions retain their authoritative floor, including a different
 floor; this does not bypass line of sight or faction eligibility.
+
+
+VANI/MANI correction requires rebaking navigation and physics from the same
+loose assets; `animation_rules: 1` identifies regenerated manifests. Keeping an
+older navigation/physics generation can retain its already baked animation
+obstacles even when client collision loading has been fixed.
