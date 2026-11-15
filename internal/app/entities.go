@@ -302,8 +302,34 @@ func guildCaption(s *game.State, guildID uint32) string {
 	if name == "" {
 		return ""
 	}
-	return "<" + name + ">"
+	return name
 }
+
+// Native 0x0044c0cf..0x0044c125: the guild caption has its own tint,
+// independent of character name/GM/faction colours. The directory identifies
+// masters by character name; own-guild role data also works before it arrives.
+func guildCaptionColor(s *game.State, guildID, characterID uint32, name string) [4]float32 {
+	leader := false
+	if s != nil && guildID != 0 {
+		if guildID == s.Guild.ID && characterID == s.SelfID && s.Guild.Rank != 0 {
+			leader = s.Guild.Rank == 1
+		} else {
+			master := s.Guild.Directory[guildID].Master
+			leader = master != "" && master == name
+			if guildID == s.Guild.ID {
+				if member, ok := s.Guild.Members[characterID]; ok && member.Rank != 0 {
+					leader = member.Rank == 1
+				}
+			}
+		}
+	}
+	if leader {
+		return ui.RGBColor(0xE0AFFA)
+	}
+	return ui.RGBColor(0xE4E4E4)
+}
+
+const guildCaptionOffset = 15 // Native 0x0044c100 subtracts float 0x006bc894.
 
 // The ground packet exposes an item stack count. For gold, Rapture sends a
 // fixed count of one and does not disclose the actual amount until pickup.
@@ -424,7 +450,7 @@ func (a *App) drawPlayerNames(w, h int) {
 	if slot, ok := a.selfSlot(); ok && v.self != nil && settings.OwnName {
 		if pos, ok := v.self.NameAnchor(); ok {
 			label(slot.Name, pos, white, 0, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills})
-			label(guildCaption(a.state, a.state.Guild.ID), pos, [4]float32{.72, .93, .72, 1}, a.font.Height-2)
+			label(guildCaption(a.state, a.state.Guild.ID), pos, guildCaptionColor(a.state, a.state.Guild.ID, a.state.SelfID, slot.Name), guildCaptionOffset)
 		}
 	}
 	for _, e := range a.state.Entities {
@@ -493,7 +519,11 @@ func (a *App) drawPlayerNames(w, h int) {
 					}
 				}
 				if e.Kind == game.KindUser {
-					label(guildCaption(a.state, e.GuildID), pos, [4]float32{.72, .93, .72, 1}, a.font.Height-2)
+					caption := guildCaption(a.state, e.GuildID)
+					if caption == "" && e.GuildID != 0 && e.Shape != nil {
+						caption = e.Shape.Guild
+					}
+					label(caption, pos, guildCaptionColor(a.state, e.GuildID, e.ID, name), guildCaptionOffset)
 				}
 			}
 		}

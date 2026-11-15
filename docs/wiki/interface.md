@@ -258,8 +258,12 @@ shadow captures and the water option in a rendered map.
 ## Local presentation adjustments after gx-v0.1.4
 
 The blue cast column grows from its bottom edge. NPC service captions sit above
-names with a compact line gap; nameplates use a subtle half-pixel stroke and black
-outline. Inventory and action-slot item counts share white text and a black
+names. Player guild captions are centred 15px above character names and use the
+raw guild name without added brackets. Members use `#E4E4E4`; the guild master's
+guild caption uses `#E0AFFA`. Character names keep their independent colours.
+The confirmed directory master or own-guild role determines leadership; remote
+shape packets supply guild text when its directory entry is unavailable.
+Nameplates use a subtle half-pixel stroke and black outline. Inventory and action-slot item counts share white text and a black
 outline, with counts remaining readable above cooldown shading. Skill levels keep
 their existing colour. The inventory actor has frontal light and full ambient
 fill; this affects only its preview, preserving the world and portrait lighting.

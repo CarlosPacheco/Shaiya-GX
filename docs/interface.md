@@ -250,8 +250,12 @@ shadow captures and the water option in a rendered map.
 ## Local presentation adjustments after gx-v0.1.4
 
 The blue cast column grows from its bottom edge. NPC service captions and
-player guild captions sit above names with a compact line gap, as in the
-original client; nameplates use a subtle half-pixel stroke and black outline.
+player guild captions are centred 15px above character names. The raw guild
+name has no added brackets: members use `#E4E4E4`, and the guild master uses
+`#E0AFFA` on the guild caption only. Character-name/GM/faction colours remain
+independent. The confirmed directory master or own-guild role determines the
+leader colour; remote shape packets supply guild text when the directory lacks
+that guild. Nameplates use a subtle half-pixel stroke and black outline.
 Inventory and action-slot item counts share white text and a black outline,
 with counts remaining readable above cooldown shading. Skill levels keep
 their existing colour. The inventory actor has frontal light and full ambient
@@ -557,3 +561,13 @@ numbers wait for arrival; health still follows the server. See the
 
 See [skill targeting and effects](skill-targeting-and-effects.md) for friendly
 self fallback, fast instant-skill chaining and native selected-target effect icons.
+
+
+Guild-caption source audit (EP5.4 client SHA-256 `8e5ef14a…bb3263`):
+`0x0044c0cf–0x0044c125` selects ARGB `FFE0AFFA` for the master flag and
+`FFE4E4E4` otherwise, independently of the character-name draw. It subtracts
+float `0x006bc894` (15.0) from the projected label Y and centres using half of
+the guild string's own measured width. The directory comparison at
+`0x0044bc9a–0x0044bd0e` identifies masters by character name. The guild text
+updates at `0x005699e0`/`0x00569c95` copy the supplied name verbatim; no angle
+brackets are inserted. These rules apply to both local and remote labels.

@@ -115,7 +115,7 @@ func TestGuildInviteAcceptAgainstRapture(t *testing.T) {
 	if a.Guild.LastReply.Result != 1 || b.Guild.Rank != 9 || b.Guild.Name != name || !a.Guild.Members[b.SelfID].Online {
 		t.Fatalf("guild membership mismatch: %+v %+v", a.Guild, b.Guild)
 	}
-	if a.Entities[b.SelfID].GuildID != guildID || guildCaption(a, a.Entities[b.SelfID].GuildID) != "<"+name+">" {
+	if a.Entities[b.SelfID].GuildID != guildID || guildCaption(a, a.Entities[b.SelfID].GuildID) != name {
 		t.Fatal("visible member did not acquire confirmed guild caption")
 	}
 	appA.guildUI, _ = ui.NewGuildPanel(inputTextures{})
