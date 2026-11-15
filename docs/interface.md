@@ -249,10 +249,11 @@ shadow captures and the water option in a rendered map.
 
 ## Local presentation adjustments after gx-v0.1.4
 
-The blue cast column grows from its bottom edge. NPC service captions sit above
-names with a compact line gap; nameplates use a subtle half-pixel stroke and black
-outline. Inventory and action-slot item counts share white text and a black
-outline, with counts remaining readable above cooldown shading. Skill levels keep
+The blue cast column grows from its bottom edge. NPC service captions and
+player guild captions sit above names with a compact line gap, as in the
+original client; nameplates use a subtle half-pixel stroke and black outline.
+Inventory and action-slot item counts share white text and a black outline,
+with counts remaining readable above cooldown shading. Skill levels keep
 their existing colour. The inventory actor has frontal light and full ambient
 fill; this affects only its preview, preserving the world and portrait lighting.
 
