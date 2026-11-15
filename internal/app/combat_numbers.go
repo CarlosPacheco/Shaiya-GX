@@ -18,6 +18,9 @@ type combatNumber struct {
 }
 
 func (a *App) showCombatNumber(target uint32, amount uint16, critical, missed, healing bool) {
+	a.showCombatNumberAmount(target, uint32(amount), critical, missed, healing)
+}
+func (a *App) showCombatNumberAmount(target, amount uint32, critical, missed, healing bool) {
 	if a.wv == nil || amount == 0 && !missed {
 		return
 	}

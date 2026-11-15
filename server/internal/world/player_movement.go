@@ -25,6 +25,8 @@ type playerMovement struct {
 	horizontalAt                   time.Time
 	motion                         uint8
 	direction                      uint16
+	fallPeak                       float32
+	fallTracking, fallReady        bool
 }
 
 func (s *Session) playerGeometry(mapID uint16) (*mapgeometry.Geometry, error) {
@@ -61,6 +63,7 @@ func (s *Session) initPlayerMovement(now time.Time) error {
 		return fmt.Errorf("map %d character has no physical spawn surface", realMap(ch.MapID))
 	}
 	s.movement = playerMovement{geometry: g, mapID: ch.MapID, pos: p, at: now, packetAt: now, budgetAt: now, credit: .2, fall: -2.98}
+	s.movement.fallPeak, s.movement.fallReady = p[1], g.Supported(p)
 	ch.PosX, ch.PosY, ch.PosZ = p[0], p[1], p[2]
 	s.syncPlayer()
 	return nil
@@ -122,10 +125,22 @@ func (s *Session) advancePlayerVertical(now time.Time) {
 		elapsed -= float64(dt)
 		if m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5 {
 			m.jumping = false
+			m.fallTracking, m.fallReady = false, false
 			m.fall = -2.98
 			break
 		}
 		old := m.pos
+		supported := m.geometry.Supported(m.pos)
+		if supported && !m.jumping && !m.fallTracking {
+			m.fallReady = true
+		}
+		if m.fallReady && (m.jumping || !supported) {
+			if !m.fallTracking {
+				m.fallPeak = m.pos[1]
+				m.fallTracking = true
+			}
+			m.fallPeak = max(m.fallPeak, m.pos[1])
+		}
 		if !m.jumping {
 			delta := m.slope.Step(m.geometry, m.pos, dt)
 			m.pos = m.geometry.GroundMove(m.pos, delta, false)
@@ -139,6 +154,11 @@ func (s *Session) advancePlayerVertical(now time.Time) {
 		} else {
 			if m.geometry.Supported(m.pos) {
 				m.pos = m.geometry.StandingPosition(m.pos)
+				if m.fallTracking {
+					drop := m.fallPeak - m.pos[1]
+					m.fallTracking = false
+					s.applyFallDamage(drop)
+				}
 				m.fall = -2.98
 				continue
 			}
@@ -165,6 +185,11 @@ func (s *Session) advancePlayerVertical(now time.Time) {
 				m.jumpFall = min(m.jumpFall, -9)
 			} else {
 				m.jumping = false
+				if m.fallTracking {
+					drop := m.fallPeak - m.pos[1]
+					m.fallTracking = false
+					s.applyFallDamage(drop)
+				}
 				m.fall = -2.98
 			}
 		}

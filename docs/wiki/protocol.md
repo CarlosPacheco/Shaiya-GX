@@ -42,3 +42,9 @@ This additive cosmetic catalog corrects stale client Item.SData without changing
 item requirements, database contents, existing packet layouts or movement rules.
 The client falls back to its local catalog when connected to an older server.
 Update and restart both client and world to apply the synchronized fit.
+
+`0x7F0C` is a server-only fall-damage notification: target ID and actual damage
+(`uint32` each; 10 bytes including opcode, 12 including the server length).
+Native `0x0521` still supplies health. The server never accepts client-reported
+fall distances/damage. SysMsg 5 reports the confirmed amount. See
+[GX fall rules](../fall-damage.md) for thresholds, exemptions and respawn policy.

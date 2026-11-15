@@ -149,6 +149,7 @@ type State struct {
 	PreviousTarget         uint32
 	Pools                  proto.Pools
 	LastAttack             proto.AttackResult
+	LastFallDamage         proto.FallDamage
 	PvPCountsKnown         [4]bool
 	Phase                  Phase
 	Faction                proto.Faction
@@ -645,6 +646,12 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		s.LastCast = cast
+	case proto.GXFallDamage:
+		result, err := proto.DecodeFallDamage(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastFallDamage = result
 	case proto.SkillKeep, proto.MobPeriodicDamage:
 		result, err := proto.DecodePeriodicEffect(p)
 		if err != nil {
@@ -876,13 +883,13 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		r := proto.NewReader(p)
 		id := r.U32()
 		deathType := r.U8()
-		r.U32()
+		killer := r.U32()
 		if err := r.Err(); err != nil {
 			return fail(err)
 		}
 		if id == s.SelfID && op == proto.CharacterDeath {
 			if !s.Self.Dead {
-				s.DeathLossFree = deathType == 1 && (s.Duel.Outcome == 2 || s.GuildDuel.deathLeavePending)
+				s.DeathLossFree = deathType == 2 && killer == 0 || deathType == 1 && (s.Duel.Outcome == 2 || s.GuildDuel.deathLeavePending)
 				s.GuildDuel.deathLeavePending = false
 			}
 			s.Self.Dead = true

@@ -39,6 +39,9 @@ func (a *App) confirmedAnimation(p []byte) {
 		return
 	}
 	switch op {
+	case proto.GXFallDamage:
+		r := a.state.LastFallDamage
+		a.showCombatNumberAmount(r.Target, r.Amount, false, false, false)
 	case proto.CharacterMotion:
 		m := a.state.LastMotion
 		if m.ID == a.state.SelfID && (m.Motion == proto.MotionSitDown || m.Motion == proto.MotionStandUp) {
