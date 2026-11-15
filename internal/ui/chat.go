@@ -345,9 +345,10 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 	c.modeButton.Draw(s)
 	label := c.ChannelNames[min(int(c.Channel), 5)]
 	f.Draw(s, label, 7, y+6, white, 44)
-	// Native 0x4707d0 draws the unscaled atlas strip: 292 visible pixels,
-	// including its language icon. The remaining atlas pixels are transparent.
-	s.Draw(c.input, 64, float32(y), 292, 22, 0, .5, 292.0/512, 150.0/256, white)
+	// Keep the measured field width while omitting the language icon by request.
+	s.Draw(c.input, 64, float32(y), 2, 22, 0, .5, 2.0/512, 150.0/256, white)
+	s.Draw(c.input, 66, float32(y), 288, 22, 2.0/512, .5, 270.0/512, 150.0/256, white)
+	s.Draw(c.input, 354, float32(y), 2, 22, 290.0/512, .5, 292.0/512, 150.0/256, white)
 	shown := text
 	for len(shown) > 0 && f.Width(shown) > 262 {
 		shown = textwire.DropFirst(shown)

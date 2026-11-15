@@ -234,6 +234,9 @@ func (a *App) updateChatPointer(in *platform.Input, _, h int) bool {
 }
 
 func (a *App) chatFont() *ui.Font {
+	if a.chatTextFont != nil {
+		return a.chatTextFont
+	}
 	if a.tooltipFont != nil {
 		return a.tooltipFont
 	}

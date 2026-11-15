@@ -130,6 +130,7 @@ type App struct {
 	font                                *ui.Font
 	tooltip                             []itemDetailLine
 	tooltipFont                         *ui.Font
+	chatTextFont                        *ui.Font
 	tooltipItem                         bool
 	tooltipDescription                  string
 	tooltipExtra                        tooltipExtras
@@ -250,6 +251,11 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		return nil, err
 	}
 	if a.tooltipFont, err = fonts.Load(13); err != nil {
+		return nil, err
+	}
+
+	// Native English locale3 uses a 15px regular chat font (0x541490).
+	if a.chatTextFont, err = fonts.Load(15); err != nil {
 		return nil, err
 	}
 

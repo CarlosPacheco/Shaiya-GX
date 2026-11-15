@@ -136,3 +136,15 @@ and capture normal/whisper/picker states. The isolated N2 suite verifies live
 chat echo, whisper/error delivery, self-cast timing and gameplay regressions
 without using the personal database. Visual captures are GX regression evidence,
 not a replacement for a matched native/live screenshot comparison.
+
+## Font measurement follow-up
+
+`0x541490` selects font creation by locale. English (locale3) creates the regular
+chat font at **15px, weight400, Arial**, and the optional large font belongs to
+other locale branches. GX was reusing its 13px tooltip font. Chat now owns a
+dedicated 15px font loaded from the existing external font pack; tooltips and
+other panels retain their sizes. The external primary face remains Tahoma, so
+matching the measured cell height does not claim identical Arial glyph raster.
+The right-hand language icon has subsequently been removed by user request,
+while preserving the measured entry width/position. This supersedes the 13px
+and icon-preserved statements in the historical audit above.
