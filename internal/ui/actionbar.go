@@ -203,7 +203,7 @@ func (b *ActionBar) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h
 			if slot.CooldownDuration > 0 {
 				ratio = float32(slot.Cooldown / slot.CooldownDuration)
 			}
-			s.DrawCooldown(blank, float32(cx), float32(cy), 32, ratio, [4]float32{1, 0, 0, 160.0 / 255})
+			s.DrawCooldown(blank, float32(cx), float32(cy), 32, ratio, [4]float32{1, 0, 0, 80.0 / 255})
 			text := fmt.Sprintf("%.0f", math.Ceil(slot.Cooldown))
 			f.Draw(s, text, cx+16-f.Width(text)/2, cy+9, [4]float32{1, 1, 0, 1}, 32)
 		}

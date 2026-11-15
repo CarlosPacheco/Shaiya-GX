@@ -273,7 +273,7 @@ func (a *App) drawSkills(w, h int) {
 					if iconDef.ResetTime > 0 {
 						ratio = float32((until - a.clock) / float64(iconDef.ResetTime))
 					}
-					a.sprites.DrawCooldown(a.white, float32(x+cx), float32(y+cy), 32, ratio, [4]float32{1, 0, 0, 160.0 / 255})
+					a.sprites.DrawCooldown(a.white, float32(x+cx), float32(y+cy), 32, ratio, [4]float32{1, 0, 0, 80.0 / 255})
 					text := fmt.Sprintf("%.0f", math.Ceil(until-a.clock))
 					a.font.Draw(a.sprites, text, x+cx+16-a.font.Width(text)/2, y+cy+9, [4]float32{1, 1, 0, 1}, 32)
 				}

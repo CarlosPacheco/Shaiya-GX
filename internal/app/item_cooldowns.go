@@ -93,7 +93,7 @@ func (a *App) confirmedItems(op proto.Opcode) {
 func (a *App) drawItemCooldown(it proto.InventoryItem, x, y, size int) {
 	if left := a.itemCooldown(it); left > 0 {
 		d := a.itemsItem(it.Type, it.TypeID)
-		a.sprites.DrawCooldown(a.white, float32(x), float32(y), float32(size), float32(left/itemReuseSeconds(d.ReqIg)), [4]float32{1, 0, 0, 160.0 / 255})
+		a.sprites.DrawCooldown(a.white, float32(x), float32(y), float32(size), float32(left/itemReuseSeconds(d.ReqIg)), [4]float32{1, 0, 0, 80.0 / 255})
 		text := fmt.Sprintf("%.0f", math.Ceil(left))
 		a.font.Draw(a.sprites, text, x+(size-a.font.Width(text))/2, y+(size-13)/2, [4]float32{1, 1, 0, 1}, size)
 	}
