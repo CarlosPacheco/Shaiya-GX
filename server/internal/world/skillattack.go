@@ -65,7 +65,7 @@ func (s *Session) skillAttack(k db.CharacterSkill, def *db.SkillDef, target uint
 			return
 		}
 		if !s.mobSkillReach(&mob, def, castPos != nil) {
-			s.sendSkillRangeFailure(k)
+			s.sendMobSkillRangeFailure(k, &mob)
 			return
 		}
 		center = &mob

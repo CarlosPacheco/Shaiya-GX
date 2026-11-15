@@ -55,3 +55,9 @@ contain guide index (uint16) and mode (uint8); replies prepend actor ID (uint32)
 Modes are detach/hold/ascend/descend (0–3). Existing native movement framing and
 flags are unchanged. See [functional ladders](../ladders.md) for controls,
 collision validation, catalog generation and synchronization.
+
+Native selected-target effects use `0x030B` snapshots and `0x030C/0x030D`
+application/removal layouts. GX requests the selected visible actor through
+`0x7F0F` (kind uint8 + target uint32). Server-only `0x7F0E` carries skill ID and
+native SysMsg ID (uint16 each) for localized reach/obstacle refusals. See
+[skill targeting and effects](../skill-targeting-and-effects.md) for exact fields.

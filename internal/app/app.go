@@ -217,6 +217,7 @@ type App struct {
 	status            statusView
 	skills            skillsView
 	buffs             buffsView
+	targetEffects     targetEffectsView
 	skillDefs         map[sdata.SkillKey]sdata.Skill
 
 	sess  *session.Login
@@ -677,6 +678,7 @@ func (a *App) backToLogin(msg string) {
 	a.loading = mapLoading{}
 	a.menuOpen, a.menuPending = false, false
 	a.buffs = buffsView{}
+	a.targetEffects = targetEffectsView{}
 	a.party = partyView{}
 	if a.partyMessage != nil {
 		a.partyMessage.Visible = false

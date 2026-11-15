@@ -62,6 +62,8 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 	}
 	skillName := func(id uint16, level uint8) string { d, _ := a.skillDefinition(id, level); return d.Name }
 	switch proto.Op(p) {
+	case proto.GXSkillFailure:
+		a.systemMessage(1, int(s.LastSkillFailure.Message), nil)
 	case proto.GXFallDamage:
 		r := s.LastFallDamage
 		if r.Target == s.SelfID {

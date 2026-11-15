@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -159,6 +160,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && !s.attackMovementAllowed(time.Now()) {
 		return
 	}
+	target = s.friendlySkillRecipient(def, target)
 	castTime := time.Duration(def.ReadyTime) * 250 * time.Millisecond
 	if castTime == 0 {
 		s.resolveSkill(target, number, op, nil)
@@ -176,8 +178,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	if def.TypeEffect == typeEffectHeal || def.TypeEffect == typeEffectBuff {
 		targets, _, ok := s.friendlyTargets(def, target)
 		if !ok {
-			s.send(buildSkillUseResult(packet.SkillUseNoTarget, skillResultNotTarget, ch.ID, 0, k.SkillID, k.Level, 0, 0, 0),
-				"0x0511 skill target refused")
+			s.sendFriendlySkillFailure(k, def, target)
 			return
 		}
 		castTarget = ch.ID
@@ -192,7 +193,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 			return
 		}
 		if !s.inUserSkillRange(p, def) {
-			s.send(buildSkillUseResult(packet.SkillUseNoTarget, 5, ch.ID, 0, k.SkillID, k.Level, 0, 0, 0), "0x0511 skill out of range")
+			s.sendUserSkillRangeFailure(k, p)
 			return
 		}
 		castTarget = p.CharacterID
@@ -206,7 +207,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 				return
 			}
 			if !s.inUserSkillRange(p, def) {
-				s.send(buildSkillUseResult(packet.SkillUseNoTarget, 5, ch.ID, 0, k.SkillID, k.Level, 0, 0, 0), "0x0511 skill out of range")
+				s.sendUserSkillRangeFailure(k, p)
 				return
 			}
 			x, z := p.PositionXZ()
@@ -218,7 +219,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 			return
 		}
 		if !s.inSkillRange(&mob, def, &stats) {
-			s.sendSkillRangeFailure(k)
+			s.sendMobSkillRangeFailure(k, &mob)
 			return
 		}
 		pos = &[2]float32{mob.PosX, mob.PosZ}
@@ -254,8 +255,13 @@ func (s *Session) processPendingCast() {
 
 func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef) {
 	s.commitAttackStop(time.Now())
-	s.skillCooldowns[k.SkillID] = time.Now().Add(time.Duration(def.ResetTimeSeconds) * time.Second)
-	k.Delay = int16(min(def.ResetTimeSeconds, 32767))
+	reuse := skilltiming.ReuseSeconds(def.ResetTimeSeconds)
+	if reuse == 0 {
+		delete(s.skillCooldowns, k.SkillID)
+	} else {
+		s.skillCooldowns[k.SkillID] = time.Now().Add(time.Duration(reuse) * time.Second)
+	}
+	k.Delay = int16(min(reuse, 32767))
 	if err := db.SaveCharacterSkill(s.char.ID, k); err != nil {
 		s.log.Printf("GX Server World failed to save skill cooldown: %v", err)
 	}
@@ -295,6 +301,7 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 }
 
 func (s *Session) sendBuffStats(why string) {
+	s.publishPlayerEffects()
 	st := s.stats()
 	s.send(buildAdditionalStats(&st), "0x0526 additional stats "+why)
 	s.send(buildMaxHPMPSP(s.char, &st), "0x051F max hp/mp/sp "+why)

@@ -19,6 +19,7 @@ import (
 // third-person camera (0x444b10 reset, 0x4397d0 orbit/zoom, 0x43bfa0
 // movement; Phoenix tools/reference/ep5_camera_controls.md).
 type worldView struct {
+	requestedSkills             []*requestedSkillPresentation
 	ladderFinishing             bool
 	ladder                      mapgeometry.LadderMotion
 	ladderSendAt, ladderRetryAt float64
@@ -224,6 +225,10 @@ func (a *App) updateWorld(in *platform.Input, dt float64) {
 func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	v := a.wv
 	if v == nil {
+		return
+	}
+	a.updateTargetEffects()
+	if a.wv != v {
 		return
 	}
 	v.sittingCamera = a.state.Self.Sitting

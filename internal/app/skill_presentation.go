@@ -50,10 +50,24 @@ func (a *App) requestedSkillPresentation(packet []byte) {
 		}
 		p.action = actor.ActionID()
 		a.wv.requestedSkill = p
+		if d.Target < 4 && d.Detail != 22 {
+			if len(a.wv.requestedSkills) >= 32 {
+				a.wv.requestedSkills = a.wv.requestedSkills[1:]
+			}
+			a.wv.requestedSkills = append(a.wv.requestedSkills, p)
+		}
 	}
 }
 
 func (a *App) updateRequestedSkillPresentation() {
+	kept := a.wv.requestedSkills[:0]
+	for _, p := range a.wv.requestedSkills {
+		if p.actor == a.wv.self && a.clock-p.started < 15 {
+			kept = append(kept, p)
+		}
+	}
+	clear(a.wv.requestedSkills[len(kept):])
+	a.wv.requestedSkills = kept
 	p := a.wv.requestedSkill
 	if p == nil {
 		return
@@ -67,4 +81,36 @@ func (a *App) updateRequestedSkillPresentation() {
 func (a *App) matchingRequestedSkill(r proto.SkillResult) bool {
 	p := a.wv.requestedSkill
 	return p != nil && r.Source == a.state.SelfID && p.key == (sdata.SkillKey{ID: r.ID, Level: r.Level}) && (p.target == r.Target || r.Result > 4) && p.actor == a.wv.self && p.actor.ActionID() == p.action && a.clock-p.started < 15
+}
+
+// Older instant acknowledgments must not rewind a newer combo animation.
+// Area/multi-hit skills retain their existing announcement path.
+func (a *App) takeInstantPrediction(r proto.SkillResult) (*requestedSkillPresentation, bool) {
+	if r.Source != a.state.SelfID {
+		return nil, false
+	}
+	for i, p := range a.wv.requestedSkills {
+		if p.key != (sdata.SkillKey{ID: r.ID, Level: r.Level}) || p.target != r.Target && r.Result <= 4 && !(r.Result == 3 && r.Target == 0) {
+			continue
+		}
+		a.wv.requestedSkills = append(a.wv.requestedSkills[:i], a.wv.requestedSkills[i+1:]...)
+		current := p == a.wv.requestedSkill && p.actor == a.wv.self && p.actor != nil && p.actor.ActionID() == p.action
+		return p, current
+	}
+	return nil, false
+}
+func (a *App) rejectInstantPrediction(id uint16) {
+	if a.wv == nil {
+		return
+	}
+	for _, p := range a.wv.requestedSkills {
+		if p.key.ID == id {
+			_, current := a.takeInstantPrediction(proto.SkillResult{Source: a.state.SelfID, ID: id, Level: p.key.Level, Result: 5})
+			if current {
+				a.wv.self.ReleaseAction()
+				a.wv.requestedSkill = nil
+			}
+			return
+		}
+	}
 }

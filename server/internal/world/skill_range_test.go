@@ -143,3 +143,48 @@ func TestPreparedFriendlySpellUsesUserReach(t *testing.T) {
 		t.Fatal("friendly cast did not honor release grace")
 	}
 }
+
+func TestFriendlyEnemyFallbackAndOneSecondReuse(t *testing.T) {
+	s, d, _ := spellCastRangeFixture(t)
+	d.TypeEffect = typeEffectHeal
+	if got := s.friendlySkillRecipient(d, 64001); got != s.char.ID {
+		t.Fatal("enemy was not replaced by self", got)
+	}
+	if got := s.friendlySkillRecipient(d, 64002); got != 64002 {
+		t.Fatal("stale ally silently replaced", got)
+	}
+	d.TypeEffect = typeEffectAttack
+	if got := s.friendlySkillRecipient(d, 64001); got != 64001 {
+		t.Fatal("attack recipient changed", got)
+	}
+	for _, seconds := range []uint16{0, 1, 2, 10} {
+		d.ResetTimeSeconds = seconds
+		s.startCooldown(s.skills[0], d)
+		if got := s.skillReady(d.SkillID); got != (seconds <= 1) {
+			t.Fatal("wrong authoritative reuse", seconds, got)
+		}
+		if time.Until(s.attackMoveUntil) < 700*time.Millisecond {
+			t.Fatal("rapid chaining removed movement stop")
+		}
+	}
+}
+
+func TestPreparedHealKeepsSelfRecipientAfterEnemyDisappears(t *testing.T) {
+	s, d, sh := spellCastRangeFixture(t)
+	s.player = RegisterPlayer(*s.char, nil, false, 0, s.out, s.logger)
+	defer s.player.Unregister()
+	d.TypeEffect, d.TypeDetail, d.HealHP = typeEffectHeal, detailHeal, 5
+	s.char.CurrentHP = 1
+	s.handleUseSkill(packet.SkillUse, proto.UseSkillPacket(1, 64001, false))
+	if s.cast == nil || s.cast.targetMobID != s.char.ID {
+		t.Fatal("prepared heal retained enemy recipient", s.cast)
+	}
+	sh.mu.Lock()
+	sh.entities.Mobs = nil
+	sh.mu.Unlock()
+	s.cast.readyAt = time.Now().Add(-time.Second)
+	s.processPendingCast()
+	if s.char.CurrentHP <= 1 {
+		t.Fatal("enemy disappearance cancelled self heal")
+	}
+}

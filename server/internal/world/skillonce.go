@@ -122,7 +122,7 @@ func (s *Session) skillOnce(k db.CharacterSkill, def *db.SkillDef, target uint32
 	ch := s.char
 	p, ok := s.userSkillTarget(def, target)
 	if !ok || !s.userSkillReach(p, def, len(completed) > 0 && completed[0]) {
-		s.send(buildSkillUseResult(packet.SkillUseNoTarget, 5, ch.ID, 0, k.SkillID, k.Level, 0, 0, 0), "0x0511 skill out of range")
+		s.sendUserSkillRangeFailure(k, p)
 		return
 	}
 	s.startCooldown(k, def)

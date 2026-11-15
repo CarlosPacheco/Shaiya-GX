@@ -28,9 +28,12 @@ func (a *App) skillRequestReach(d sdata.Skill, target uint32) bool {
 		return true
 	}
 	goal := render.V3{e.X, e.Y, e.Z}
-	if !skillrange.Within(skillrange.Position(a.wv.pos), skillrange.Position(goal), a.skillLaunchReach(d, e)) || !a.wv.world.SpellLineOfSight(a.wv.pos, goal) {
-		a.combatNotice = "Target is out of range or obstructed."
-		a.combatNoticeUntil = a.clock + 2
+	if !a.wv.world.SpellLineOfSight(a.wv.pos, goal) {
+		a.systemMessage(1, 458, nil)
+		return false
+	}
+	if !skillrange.Within(skillrange.Position(a.wv.pos), skillrange.Position(goal), a.skillLaunchReach(d, e)) {
+		a.systemMessage(1, 312, nil)
 		return false
 	}
 	return true

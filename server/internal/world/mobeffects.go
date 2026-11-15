@@ -20,8 +20,8 @@ import (
 //	68  removes the mob's element
 //	72  fixes the mob's target on the caster
 //
-// The original sends no packet for the application itself; speed changes
-// go out as 0x0609 and damage as 0x0607.
+// Selected-target presentation uses the native 0x030B/C/D layouts separately;
+// speed changes go out as 0x0609 and damage as 0x0607.
 
 const (
 	detailTimeDamage    = 61

@@ -264,6 +264,7 @@ func (a *App) drawCombat(w, h int) {
 		}
 	}
 	a.hud.Draw(a.sprites, a.font, view)
+	a.drawTargetEffects(w, h)
 	if a.wv != nil && a.wv.self != nil {
 		left, total, active := a.wv.self.CastTiming()
 		if active {

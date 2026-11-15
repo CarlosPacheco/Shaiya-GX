@@ -21,7 +21,7 @@ func TestInventoryEquipmentTypesAndNoZeroPrice(t *testing.T) {
 	if itemSellingPrice(0) != "" || itemSellingPrice(17) != "Sell: 17 gold" {
 		t.Fatal("selling price presentation")
 	}
-	if debuffFlash(.25) != .75 || debuffFlash(1.25) != .75 {
+	if debuffFlash(.25) != float32(63)/255 || debuffFlash(1.25) != float32(63)/255 {
 		t.Fatal("debuff pulse must use elapsed seconds")
 	}
 }

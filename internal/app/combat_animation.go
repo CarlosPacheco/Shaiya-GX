@@ -62,6 +62,7 @@ func (a *App) confirmedAnimation(p []byte) {
 		// instant. Its cast-start supersedes the predicted release and clock.
 		if r.Source == a.state.SelfID {
 			v.requestedSkill = nil
+			v.requestedSkills = nil
 		}
 
 		if actor := a.playerActor(r.Source); actor != nil {
@@ -75,7 +76,20 @@ func (a *App) confirmedAnimation(p []byte) {
 		if r.Source == a.state.SelfID && r.Result <= 4 && !(r.Result == 3 && r.Target == 0) {
 			a.confirmAttackStop()
 		}
+		if prediction, current := a.takeInstantPrediction(r); prediction != nil {
+			if current {
+				v.requestedSkill = nil
+				if r.Result > 4 || r.Result == 3 && r.Target == 0 {
+					v.self.ReleaseAction()
+				}
+			}
+			return
+		}
 		predicted := a.matchingRequestedSkill(r)
+		if r.Source == a.state.SelfID && v.requestedSkill != nil && !predicted {
+			// An older area/multi-hit reply cannot replace a newer predicted combo.
+			return
+		}
 		if r.Source == a.state.SelfID {
 			v.requestedSkill = nil
 		}

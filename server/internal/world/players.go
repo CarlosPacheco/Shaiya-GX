@@ -44,6 +44,7 @@ type pendingDamage struct {
 // broadcasts. Cross-session work is queued in mailboxes and applied by the
 // owning session's loop, which alone mutates its character.
 type ConnectedPlayer struct {
+	targetEffects []ActiveBuff
 	CharacterID   uint32
 	CharacterName string
 	IsAdmin       bool

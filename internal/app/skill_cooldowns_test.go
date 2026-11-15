@@ -61,3 +61,27 @@ func TestBarEditingPreservesOtherBarsAndAllowsEmptyBar(t *testing.T) {
 		t.Fatal("server empty bar replaced by fallback")
 	}
 }
+
+func TestOneSecondSkillHasNoRestoredOrConfirmedReuse(t *testing.T) {
+	a := inputApp()
+	a.clock = 10
+	a.state.SelfID = 1
+	a.state.Skills[1] = proto.LearnedSkill{ID: 90, Level: 1, Number: 1, Delay: 1}
+	a.skillDefs = map[sdata.SkillKey]sdata.Skill{{ID: 90, Level: 1}: {ResetTime: 1, Target: 2, Effect: 4}}
+	a.confirmedSkills(proto.CharacterSkills)
+	if a.skills.cooldowns[90] > a.clock {
+		t.Fatal("one-second reuse restored")
+	}
+	a.state.LastSkill = proto.SkillResult{ID: 90, Level: 1, Source: 1, Target: 1}
+	a.confirmedSkills(proto.SkillUseNoTarget)
+	if a.learnedSkillPacket(a.state.Skills[1]) == nil {
+		t.Fatal("one-second skill cannot be chained")
+	}
+	a.wv.attackMoveUntil = 10.8
+	if !a.prepareSkillMovement(proto.UseSkillPacket(1, 1, true)) {
+		t.Fatal("movement stop incorrectly blocks the next spell")
+	}
+	if a.wv.attackMoveUntil != 10.8 {
+		t.Fatal("combo removed movement pause")
+	}
+}

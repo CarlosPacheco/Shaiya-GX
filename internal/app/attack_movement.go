@@ -53,7 +53,7 @@ func (a *App) prepareSkillMovement(p []byte) bool {
 	if !a.skillRequestReach(d, r.U32()) {
 		return false
 	}
-	if (d.Effect == 1 || d.Effect == 3) && !a.attackMovementAllowed() || a.clock < a.wv.attackMoveUntil {
+	if (d.Effect == 1 || d.Effect == 3) && !a.attackMovementAllowed() {
 		return false
 	}
 	return a.stopForAttack()

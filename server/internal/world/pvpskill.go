@@ -82,7 +82,7 @@ func (s *Session) userSkillAttack(k db.CharacterSkill, def *db.SkillDef, target 
 	}
 	if center != nil {
 		if !s.userSkillReach(center, def, castPos != nil) {
-			s.sendSkillRangeFailure(k)
+			s.sendUserSkillRangeFailure(k, center)
 			return
 		}
 	}

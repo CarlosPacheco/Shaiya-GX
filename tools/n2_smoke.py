@@ -63,6 +63,7 @@ with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
   # Approach runs near real mobs, with actual elapsed movement and no forged teleports.
   with sqlite3.connect(db) as c:
    for n,(_,_,uid) in enumerate(users):c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=?,PosY=45,PosZ=1671.7 WHERE UserUID=?',(799.4+n*2,uid))
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestTargetEffectsAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=env,check=True,timeout=60)
   subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestNativeControlsAgainstRapture$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_APPROACH_ONLY='1'),check=True,timeout=120)
   with sqlite3.connect(db) as c:
    for n,(_,_,uid) in enumerate(users):c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=?,PosY=78,PosZ=1762 WHERE UserUID=?',(578+n*2,uid))

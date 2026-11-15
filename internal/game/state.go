@@ -90,6 +90,9 @@ type Event struct {
 }
 
 type State struct {
+	TargetEffects          proto.TargetEffectSnapshot
+	TargetEffectsSerial    uint64
+	LastSkillFailure       proto.SkillFailure
 	OJLimits               map[[2]uint8]proto.OJLimit
 	ChestCloakFits         map[[2]uint8]uint8
 	LastPlayerCorrection   proto.PlayerCorrection
@@ -649,6 +652,37 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		s.LastCast = cast
+	case proto.TargetEffects:
+		snapshot, err := proto.DecodeTargetEffects(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.TargetEffects = snapshot
+		s.TargetEffectsSerial++
+	case proto.TargetEffectAdd, proto.TargetEffectRemove:
+		snapshot, e, err := proto.DecodeTargetEffectChange(p)
+		if err != nil {
+			return fail(err)
+		}
+		if snapshot.ID == s.TargetEffects.ID && snapshot.Kind == s.TargetEffects.Kind {
+			kept := s.TargetEffects.Effects[:0]
+			for _, old := range s.TargetEffects.Effects {
+				if old.Skill != e.Skill || old.Level != e.Level {
+					kept = append(kept, old)
+				}
+			}
+			if proto.Op(p) == proto.TargetEffectAdd {
+				kept = append(kept, e)
+			}
+			s.TargetEffects.Effects = kept
+			s.TargetEffectsSerial++
+		}
+	case proto.GXSkillFailure:
+		result, err := proto.DecodeSkillFailure(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastSkillFailure = result
 	case proto.GXLadder:
 		result, err := proto.DecodeLadderState(p)
 		if err != nil {

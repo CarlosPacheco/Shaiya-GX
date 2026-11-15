@@ -37,8 +37,11 @@ func (a *App) validSkillTarget(d sdata.Skill, target uint32) bool {
 	return !e.Dead && !(e.HealthKnown && e.HP == 0)
 }
 
-// Resolve only a missing selection. A selected target is never silently replaced.
+// Resolve the spell recipient without changing the selected combat target.
 func (a *App) resolveSkillTarget(d sdata.Skill) uint32 {
+	if (d.Effect == 2 || d.Effect == 4) && d.Target != 3 && d.Target != 7 {
+		return a.state.SelfID
+	}
 	if d.Target == 6 {
 		return 0
 	}
@@ -47,6 +50,9 @@ func (a *App) resolveSkillTarget(d sdata.Skill) uint32 {
 		return a.state.SelfID
 	}
 	if target != 0 {
+		if (d.Effect == 2 || d.Effect == 4) && a.selectedSkillEnemy(target) {
+			return a.state.SelfID
+		}
 		return target
 	}
 	if (d.Effect == 2 || d.Effect == 4) && a.validSkillTarget(d, a.state.SelfID) {
@@ -81,4 +87,24 @@ func (a *App) resolveSkillTarget(d sdata.Skill) uint32 {
 		a.state.Target = target
 	}
 	return target
+}
+
+func (a *App) selectedSkillEnemy(target uint32) bool {
+	e := a.state.Entities[target]
+	if e == nil {
+		return false
+	}
+	if e.Kind == game.KindMob {
+		return true
+	}
+	if e.Kind != game.KindUser {
+		return false
+	}
+	if a.state.Duel.Phase == game.DuelFighting && a.state.Duel.Opponent == target {
+		return true
+	}
+	if a.state.GuildDuel.Active && e.GuildID == a.state.GuildDuel.OpponentGuild && e.GuildID != 0 {
+		return true
+	}
+	return e.Shape != nil && e.Shape.Faction <= 1 && a.state.Faction.Faction <= 1 && e.Shape.Faction != a.state.Faction.Faction
 }

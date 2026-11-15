@@ -197,6 +197,8 @@ func (a *App) confirmedPosition(p []byte) {
 		return
 	}
 	switch proto.Op(p) {
+	case proto.GXSkillFailure:
+		a.rejectInstantPrediction(a.state.LastSkillFailure.Skill)
 	case proto.GXLadder:
 		result, err := proto.DecodeLadderState(p)
 		if err == nil && result.ID == a.state.SelfID && result.Mode == mapgeometry.LadderDetach {

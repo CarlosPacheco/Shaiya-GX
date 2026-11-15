@@ -147,8 +147,8 @@ attack do not restart its animation/audio. Speed changes and target snapshots
 retain the monster's current server modifiers. Full per-monster comparison is
 still ongoing.
 
-The original debuff overlay (`0x4bff80`/`0x4c02d0`) fades white from alpha one at
-one unit per second, wrapping at one. Icon hit regions and authoritative buff
+The original debuff overlay (`0x4bff80`/`0x4c02d0`) uses a one-second triangular white pulse
+from zero to 127/255 alpha and back to zero. Icon hit regions and authoritative buff
 lifetime remain intact. Login/server selection music is `Sound/Music/bgm_title.ogg`,
 confirmed at `0x42caf0`; it replaces the previous `bgm_login001.wav` selection.
 
@@ -380,7 +380,7 @@ bounded nearby effect preparation. The existing Skill Effects option controls
 these effects too.
 
 
-With no selected target, friendly healing/buff skills default to the caster
+With no selected target or an enemy selected, friendly healing/buff skills use the caster
 (including Aura of Peace). Directed damage/debuff skills select the nearest
 known living enemy, using stable ID ordering for equal distances, and use the
 existing approach-to-range flow. NPCs, dead targets and ordinary friendly
@@ -525,3 +525,6 @@ Physical bows, crossbows and javelins now use the original arrow/thrown weapon
 models for basic attacks and offensive physical skills. Recipient effects and
 numbers wait for arrival; health still follows the server. See the
 [ranged-projectile guide](ranged-projectiles.md).
+
+See [skill targeting and effects](skill-targeting-and-effects.md) for friendly
+self fallback, fast instant-skill chaining and native selected-target effect icons.

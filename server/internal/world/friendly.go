@@ -78,6 +78,7 @@ func (s *Session) teamUsable(p *ConnectedPlayer) bool {
 // ChkTargetUser's refusal (0x0511 result 11).
 func (s *Session) friendlyTargets(def *db.SkillDef, target uint32, completed ...bool) ([]*ConnectedPlayer, bool, bool) {
 	me := s.player
+	target = s.friendlySkillRecipient(def, target)
 	switch def.TargetType {
 	case targetTypeOther, targetTypeOtherAlt:
 		if target == 0 || target == s.char.ID {
@@ -136,8 +137,7 @@ func (s *Session) friendlySkill(k db.CharacterSkill, def *db.SkillDef, target ui
 	ch := s.char
 	targets, party, ok := s.friendlyTargets(def, target, completed...)
 	if !ok {
-		s.send(buildSkillUseResult(packet.SkillUseNoTarget, skillResultNotTarget, ch.ID, 0, k.SkillID, k.Level, 0, 0, 0),
-			"0x0511 skill target refused")
+		s.sendFriendlySkillFailure(k, def, target)
 		return
 	}
 	s.startCooldown(k, def)
@@ -216,4 +216,27 @@ func (s *Session) cancelBuff(skillID uint32) {
 	s.removeEffects(func(b *ActiveBuff) bool {
 		return uint32(b.SkillID) == skillID && b.Effect == typeEffectBuff
 	}, "cancelled by the user")
+}
+
+// A selected enemy is a combat selection, not a recipient for single-target help.
+// Stale/missing allies and allies out of range remain errors.
+func (s *Session) friendlySkillRecipient(def *db.SkillDef, target uint32) uint32 {
+	if def.TypeEffect != typeEffectHeal && def.TypeEffect != typeEffectBuff || def.TargetType != targetTypeOther && def.TargetType != targetTypeOtherAlt || target == 0 || target == s.char.ID {
+		return target
+	}
+	if _, ok := MobByID(s.char.MapID, target); ok {
+		return s.char.ID
+	}
+	if p := FindPlayerByID(target); p != nil && p.MapID() == s.char.MapID && !s.teamUsable(p) {
+		return s.char.ID
+	}
+	return target
+}
+
+func (s *Session) sendFriendlySkillFailure(k db.CharacterSkill, def *db.SkillDef, target uint32) {
+	if p := FindPlayerByID(target); p != nil && p.MapID() == s.char.MapID && p.IsAlive() && s.teamUsable(p) {
+		s.sendUserSkillRangeFailure(k, p)
+		return
+	}
+	s.send(buildSkillUseResult(packet.SkillUseNoTarget, skillResultNotTarget, s.char.ID, 0, k.SkillID, k.Level, 0, 0, 0), "friendly skill target refused")
 }

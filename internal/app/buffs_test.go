@@ -71,3 +71,26 @@ func TestBuffPointerBlocksCameraAndCannotCancelDebuff(t *testing.T) {
 		t.Fatal("right drag escaped buff pointer owner")
 	}
 }
+
+func TestNativeDebuffPulseIsTriangularAndHalfOpaque(t *testing.T) {
+	for _, v := range []struct {
+		at    float64
+		alpha float32
+	}{{0, 0}, {.25, 63.0 / 255}, {.5, 127.0 / 255}, {.75, 63.0 / 255}, {1, 0}, {1.5, 127.0 / 255}} {
+		if got := debuffFlash(v.at); got != v.alpha {
+			t.Fatal("native folded alpha differs", v, got)
+		}
+	}
+}
+
+func TestNativeNegativeEffectClassification(t *testing.T) {
+	for _, tc := range []struct {
+		effect, level uint8
+		group         int
+	}{{4, 1, 0}, {2, 1, 0}, {3, 1, 1}, {4, 100, 1}} {
+		b := buffBadge{buff: proto.ActiveBuff{Level: tc.level}, def: sdata.Skill{Effect: tc.effect}}
+		if buffGroup(b) != tc.group {
+			t.Fatal("wrong native negative-effect classification", tc)
+		}
+	}
+}

@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 )
 
 // Confirmed reuse timers drive presentation and suppress duplicate requests.
@@ -10,11 +11,16 @@ import (
 func (a *App) confirmedSkills(op proto.Opcode) {
 	v := &a.skills
 	if op == proto.CharacterSkills {
+		a.loadSkills()
 		v.cooldowns = map[uint16]float64{}
 		v.assign = nil
 		v.editing = false
 		for _, k := range a.state.Skills {
-			v.cooldowns[k.ID] = a.clock + float64(max(k.Delay, 0))
+			delay := max(k.Delay, 0)
+			if d, ok := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]; ok && skilltiming.ReuseSeconds(d.ResetTime) == 0 {
+				delay = 0
+			}
+			v.cooldowns[k.ID] = a.clock + float64(delay)
 		}
 		return
 	}
@@ -34,5 +40,5 @@ func (a *App) confirmedSkills(op proto.Opcode) {
 	if v.cooldowns == nil {
 		v.cooldowns = map[uint16]float64{}
 	}
-	v.cooldowns[r.ID] = a.clock + float64(a.skillDefs[sdata.SkillKey{ID: r.ID, Level: r.Level}].ResetTime)
+	v.cooldowns[r.ID] = a.clock + float64(skilltiming.ReuseSeconds(a.skillDefs[sdata.SkillKey{ID: r.ID, Level: r.Level}].ResetTime))
 }

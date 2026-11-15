@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"net"
 	"os"
 	"strings"
@@ -27,6 +28,10 @@ const (
 // Session is one client connection. Only its own goroutine touches its
 // fields; other sessions reach it through its ConnectedPlayer.
 type Session struct {
+	effectWatchID   uint32
+	effectWatchKind uint8
+	effectWatchAt   time.Time
+	effectWatchHash [32]byte
 	speedKnown      bool
 	lastSpeeds      playerSpeeds
 	movement        playerMovement
@@ -283,6 +288,8 @@ func (s *Session) tick(idle bool) {
 		return
 	}
 	s.syncPlayerSpeed(false)
+	s.publishPlayerEffects()
+	s.tickTargetEffects(time.Now())
 	s.tickPlayerMovement(time.Now())
 	s.recoveryTick()
 	s.syncQuestNPCCatalog(false)
@@ -469,6 +476,8 @@ func (s *Session) sendCharacterSelect() {
 
 func (s *Session) dispatch(op packet.Opcode, p []byte) {
 	switch op {
+	case packet.Opcode(proto.GXTargetEffectsQuery):
+		s.handleTargetEffects(p)
 	case packet.Opcode(proto.GXLadder):
 		s.handleLadder(p)
 	case 0x2202, 0x2203, 0x2205, 0x2206, 0x2209, 0x220a, 0x220b, 0x220c:
@@ -804,8 +813,13 @@ func (s *Session) selectCharacter(id uint32) {
 	s.logErr("load items", err)
 	s.skills, err = db.CharacterSkills(id)
 	s.logErr("load skills", err)
+	s.effectWatchID = 0
 	s.skillCooldowns, s.itemCooldowns = map[uint16]time.Time{}, map[uint8]time.Time{}
-	for _, k := range s.skills {
+	for i := range s.skills {
+		k := &s.skills[i]
+		if d := db.MustDefs().Skill(k.SkillID, k.Level); d != nil && skilltiming.ReuseSeconds(d.ResetTimeSeconds) == 0 {
+			k.Delay = 0
+		}
 		if k.Delay > 0 {
 			s.skillCooldowns[k.SkillID] = time.Now().Add(time.Duration(k.Delay) * time.Second)
 		}

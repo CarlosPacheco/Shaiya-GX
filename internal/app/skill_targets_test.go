@@ -100,3 +100,28 @@ func TestSkillFallbackSelfAndNearestLivingEnemy(t *testing.T) {
 		t.Fatal("caster area auto-selected a victim")
 	}
 }
+
+func TestFriendlySpellOnEnemyUsesSelfWithoutLosingSelection(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID = 42
+	a.state.Faction.Faction = 0
+	a.state.Entities[9] = &game.Entity{ID: 9, Kind: game.KindMob}
+	a.state.Entities[10] = &game.Entity{ID: 10, Kind: game.KindUser, Shape: &proto.UserShape{Faction: 1}}
+	a.state.Entities[11] = &game.Entity{ID: 11, Kind: game.KindUser, Shape: &proto.UserShape{Faction: 0}}
+	for _, effect := range []uint8{2, 4} {
+		for _, id := range []uint32{9, 10, 11} {
+			a.state.Target = id
+			want := uint32(42)
+			if id == 11 {
+				want = 11
+			}
+			if got := a.resolveSkillTarget(sdata.Skill{Target: 3, Effect: effect}); got != want || a.state.Target != id {
+				t.Fatal("wrong recipient or combat selection lost", effect, id, got, a.state.Target)
+			}
+		}
+	}
+	a.state.Target = 9
+	if got := a.resolveSkillTarget(sdata.Skill{Target: 3, Effect: 3}); got != 9 {
+		t.Fatal("debuff redirected", got)
+	}
+}

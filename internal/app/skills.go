@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"log"
 	"math"
 	"sort"
@@ -270,8 +271,8 @@ func (a *App) drawSkills(w, h int) {
 				a.sprites.Draw(tex, float32(x+cx), float32(y+cy), 32, 32, uv.U0, uv.V0, uv.U1, uv.V1, tint)
 				if until := a.skills.cooldowns[key.ID]; until > a.clock {
 					ratio := float32(1)
-					if iconDef.ResetTime > 0 {
-						ratio = float32((until - a.clock) / float64(iconDef.ResetTime))
+					if skilltiming.ReuseSeconds(iconDef.ResetTime) > 0 {
+						ratio = float32((until - a.clock) / float64(skilltiming.ReuseSeconds(iconDef.ResetTime)))
 					}
 					a.sprites.DrawCooldown(a.white, float32(x+cx), float32(y+cy), 32, ratio, [4]float32{1, 0, 0, 80.0 / 255})
 					text := fmt.Sprintf("%.0f", math.Ceil(until-a.clock))
@@ -358,7 +359,7 @@ func (a *App) learnedSkillPacket(k proto.LearnedSkill) []byte {
 		return nil
 	}
 	target := a.resolveSkillTarget(def)
-	if def.Target == 6 {
+	if def.Target == 6 && def.Effect != 2 && def.Effect != 4 {
 		// A caster-centred area is valid with no selected victim; keep the mob
 		// opcode so its recipients are resolved by the server's area route.
 		return proto.UseSkillPacket(k.Number, 0, false)
@@ -435,7 +436,7 @@ func (a *App) drawActionBar(w, h int) {
 		d := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]
 		slot := &slots[i]
 		slot.Cooldown = max(0, a.skills.cooldowns[k.ID]-a.clock)
-		slot.CooldownDuration = float64(d.ResetTime)
+		slot.CooldownDuration = float64(skilltiming.ReuseSeconds(d.ResetTime))
 		slot.Label, slot.Level = fmt.Sprintf("%s Lv%d | MP %d SP %d", d.Name, k.Level, d.MP, d.SP), k.Level
 		if file, uv, ok := ui.SkillIcon(d.Icon); ok {
 			slot.Icon, slot.UV = a.assets.Texture("interface/"+file), uv

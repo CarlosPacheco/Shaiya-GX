@@ -2,6 +2,7 @@ package world
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/skillrange"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -34,6 +35,24 @@ func (s *Session) skillAreaContains(center, target skillrange.Position, radius f
 	return skillrange.Within(center, target, radius) && s.skillLineClear(center, target)
 }
 
-func (s *Session) sendSkillRangeFailure(k db.CharacterSkill) {
-	s.send(buildSkillUseResult(packet.SkillUseNoTarget, 5, s.char.ID, 0, k.SkillID, k.Level, 0, 0, 0), "skill out of range or obstructed")
+func (s *Session) sendSkillRangeFailure(k db.CharacterSkill, target ...skillrange.Position) {
+	message := uint16(312)
+	if len(target) > 0 && !s.skillLineClear(skillrange.Position{s.char.PosX, s.char.PosY, s.char.PosZ}, target[0]) {
+		message = 458
+	}
+	w := packet.New(packet.Opcode(proto.GXSkillFailure))
+	w.U16(k.SkillID)
+	w.U16(message)
+	s.send(w.MustFinish(), "localized skill reach failure")
+}
+func (s *Session) sendUserSkillRangeFailure(k db.CharacterSkill, p *ConnectedPlayer) {
+	if p == nil {
+		s.sendSkillRangeFailure(k)
+		return
+	}
+	c := p.Snapshot()
+	s.sendSkillRangeFailure(k, skillrange.Position{c.PosX, c.PosY, c.PosZ})
+}
+func (s *Session) sendMobSkillRangeFailure(k db.CharacterSkill, m *MapMob) {
+	s.sendSkillRangeFailure(k, skillrange.Position{m.PosX, m.PosY, m.PosZ})
 }

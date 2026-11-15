@@ -55,7 +55,7 @@ func (a *App) confirmedBuffs(op proto.Opcode) {
 }
 
 func (a *App) buffCancelPacket(index int) []byte {
-	if index < 0 || index >= len(a.buffs.rows) || a.buffs.rows[index].def.Effect != 4 {
+	if index < 0 || index >= len(a.buffs.rows) || (a.buffs.rows[index].def.Effect != 4 || a.buffs.rows[index].buff.Level == 100) {
 		return nil
 	}
 	// Rapture friendly.go cancelBuff accepts only own TypeEffect=4 and SkillID.
@@ -63,6 +63,10 @@ func (a *App) buffCancelPacket(index int) []byte {
 }
 
 func (a *App) updateBuffs(in *platform.Input, w, h int) bool {
+	if i := a.targetEffectHit(w, h, in.MouseX, in.MouseY); i >= 0 {
+		x, y := a.targetEffectSlot(w, h, i)
+		return panelPointer(in, x, y, 16, 16)
+	}
 	i := a.buffHit(w, h, in.MouseX, in.MouseY)
 	if i < 0 {
 		return false
@@ -91,12 +95,12 @@ func (a *App) drawBuffs(w, h int) {
 		} else {
 			a.sprites.Draw(a.white, float32(x), float32(y), 32, 32, 0, 0, 1, 1, gray)
 		}
-		if buffGroup(b) == 1 {
-			a.sprites.Draw(a.white, float32(x), float32(y), 32, 32, 0, 0, 1, 1, [4]float32{1, 1, 1, debuffFlash(a.clock)})
-		}
 		if b.buff.Level > 0 && b.buff.Level != 100 {
 			level := fmt.Sprint(b.buff.Level)
 			a.font.Draw(a.sprites, level, x+32-a.font.Width(level), y+18, [4]float32{1, 1, 0, 1}, 32)
+		}
+		if buffGroup(b) == 1 {
+			a.sprites.Draw(a.white, float32(x), float32(y), 32, 32, 0, 0, 1, 1, [4]float32{1, 1, 1, debuffFlash(a.clock)})
 		}
 		if b.timed && b.duration > 0 {
 			a.sprites.Draw(a.white, float32(x), float32(y+32), 32, 5, 0, 0, 1, 1, [4]float32{0, 0, 0, 1})
@@ -107,6 +111,7 @@ func (a *App) drawBuffs(w, h int) {
 }
 
 func (a *App) drawBuffTooltip(w, h int) {
+	a.drawTargetEffectTooltip(w, h)
 	i := a.buffHit(w, h, a.lastMouseX, a.lastMouseY)
 	if i < 0 {
 		return
@@ -122,16 +127,16 @@ func (a *App) drawBuffTooltip(w, h int) {
 	a.tooltipDescription = strings.ReplaceAll(b.def.Description, `\n`, "\n")
 
 	a.tooltip = append(a.tooltip, itemDetailLine{ui.BuffDuration(b.seconds(a.clock), b.timed), white})
-	if b.def.Effect == 4 {
+	if b.def.Effect == 4 && b.buff.Level != 100 {
 		a.tooltip = append(a.tooltip, itemDetailLine{"Right click: cancel", white})
 	}
 }
 
 func buffGroup(b buffBadge) int {
-	if b.def.Effect == 4 {
-		return 0
+	if b.def.Effect == 3 || b.buff.Level == 100 {
+		return 1
 	}
-	return 1
+	return 0
 }
 func (a *App) buffCounts() (counts [2]int) {
 	for _, b := range a.buffs.rows {
@@ -160,5 +165,9 @@ func (a *App) buffHit(w, h, mx, my int) int {
 	return -1
 }
 
-// Native 0x4bff80 decreases the white overlay alpha by frame time and wraps at one.
-func debuffFlash(now float64) float32 { return float32(1 - (now - math.Floor(now))) }
+// Native 0x4c0267..0x4c02c4 folds phase at .5 before multiplying by 255:
+// a quantized 0 -> 127 -> 0 white pulse, not an opaque sawtooth flash.
+func debuffFlash(now float64) float32 {
+	phase := now - math.Floor(now)
+	return float32(math.Floor((.5-math.Abs(.5-phase))*255)) / 255
+}
