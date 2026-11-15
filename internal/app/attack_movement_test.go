@@ -23,7 +23,7 @@ func TestAttackerJumpMovementAndSharedPause(t *testing.T) {
 	if !a.stopForAttack() {
 		t.Fatal("stop failed")
 	}
-	if a.wv.attackMoveUntil != 10.5 {
-		t.Fatal("pause differs from 500ms", a.wv.attackMoveUntil)
+	if a.wv.attackMoveUntil != 10.8 {
+		t.Fatal("pause differs from 800ms", a.wv.attackMoveUntil)
 	}
 }

@@ -91,7 +91,7 @@ Flash Ring and a native attack buff and flooding stop/start requests.
 
 ## Movement and jumping during attacks
 
-A successful basic attack or offensive skill commits a **500 ms horizontal
+A successful basic attack or offensive skill commits a **800 ms horizontal
 movement pause**, predicted by the client and enforced by the world server.
 The weapon's attack interval remains independent and cannot be reset by
 stop/start requests. The pause clears horizontal movement credit rather than
@@ -126,5 +126,5 @@ These are GX reach rules, not a claim of byte-for-byte native range parity.
 
 An accepted hit is committed at release; subsequently leaving range does not
 revoke queued damage or a projectile's visual flight. This does not introduce a
-new server projectile travel simulation. The 500 ms offensive movement pause
+new server projectile travel simulation. The 800 ms offensive movement pause
 and existing resource/cooldown rules remain in effect.

@@ -57,7 +57,7 @@ func TestAttackMovementAgainstIsolatedGX(t *testing.T) {
 	send(proto.MovePacket(1, 0, x+.1, y, z))
 	x += .1
 	hit()
-	// A forged displacement cannot move the attacker during the 500ms stop.
+	// A forged displacement cannot move the attacker during the 800ms stop.
 	send(proto.MovePacket(1, 0, x+1, y, z))
 	pump(100 * time.Millisecond)
 	if c := a.LastPlayerCorrection; c.ID != a.SelfID || c.X > x+.02 || c.X < x-.02 {
@@ -92,5 +92,5 @@ func TestAttackMovementAgainstIsolatedGX(t *testing.T) {
 	sendB(proto.MovePacket(4|proto.MotionFlag80, 0, b.Self.X+.1, b.Self.Y, b.Self.Z))
 	pump(50 * time.Millisecond)
 	hit()
-	t.Log("encrypted PvP: 500ms movement stop enforced, vertical-jump attack allowed, moving-jump attacker denied, moving-jump victim remains hittable")
+	t.Log("encrypted PvP: 800ms movement stop enforced, vertical-jump attack allowed, moving-jump attacker denied, moving-jump victim remains hittable")
 }
