@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/gm"
@@ -72,6 +73,8 @@ func (s *Session) handleGMCommand(text string) bool {
 	}
 	var err error
 	switch command {
+	case "/set":
+		err = s.gmSet(args)
 	case "/turbo":
 		if len(args) != 0 {
 			s.gmReply("Usage: /turbo")
@@ -400,5 +403,57 @@ func (s *Session) gmMove(mapID uint16) error {
 		return fmt.Errorf("destination unavailable")
 	}
 	s.gmReply(fmt.Sprintf("GM: map %d.", mapID))
+	return nil
+}
+
+// gmSet changes only the issuing character. Claimed rewards remain claimed.
+func (s *Session) gmSet(args []string) error {
+	if len(args) != 2 {
+		return fmt.Errorf("usage: /set money amount | /set kill count")
+	}
+	field := strings.ToLower(args[0])
+	var cap uint64
+	switch field {
+	case "money":
+		cap = db.MoneyCap
+	case "kill":
+		cap = pvpKillCap
+	default:
+		return fmt.Errorf("usage: /set money amount | /set kill count")
+	}
+	// Saturate while parsing so even an arbitrarily large decimal cannot overflow.
+	var value uint64
+	if args[1] == "" {
+		return fmt.Errorf("amount must be a non-negative integer")
+	}
+	for _, digit := range args[1] {
+		if digit < '0' || digit > '9' {
+			return fmt.Errorf("amount must be a non-negative integer")
+		}
+		value = min(value*10+uint64(digit-'0'), cap)
+	}
+	next := *s.char
+	if field == "money" {
+		next.Money = uint32(value)
+	} else {
+		next.Kills = uint32(value)
+	}
+	if err := db.SaveCharacter(&next); err != nil {
+		return err
+	}
+	*s.char = next
+	s.syncPlayer()
+	if field == "money" {
+		s.send(buildSetMoney(next.Money), "GM set money")
+	} else {
+		s.send(buildKillCountUpdate(0, next.Kills), "GM set kills")
+		w := packet.New(0x0522)
+		w.U32(next.ID)
+		w.U32(next.Kills)
+		frame := w.MustFinish()
+		s.send(frame, "GM set rank")
+		s.sendToViewers(frame, "GM set rank (view)")
+	}
+	s.gmReply(fmt.Sprintf("GM: %s set to %d.", field, value))
 	return nil
 }

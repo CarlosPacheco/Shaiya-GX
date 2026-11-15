@@ -19,6 +19,8 @@ unavailable. Skill-based stealth remains available.
 
 | Command | Result |
 |---|---|
+| `/set money amount` | Sets your own gold to 0–4,000,000,000; larger values clamp to the cap. Example: `/set money 10000000`. |
+| `/set kill count` | Sets your own kills to 0–1,000,000; larger values clamp to one million. Updates your rank/title and nearby nameplates immediately. Already claimed PvP rewards remain claimed. |
 | `/iclear` | Permanently deletes the issuing character's carried items (bags 1–5). Equipped items, mounts, other characters and account storage are preserved. |
 | `/turbo` | Toggles the issuing GM's turbo off/on for this session. |
 | `/getitem type id quantity` | Grants the complete quantity, respecting definition stack limits and free bag slots. `/getitem 25 1 200` grants 200 apples in one stack with the current 255 limit. |
@@ -32,7 +34,7 @@ rings, reject blocked/occupied positions, and enter nearby clients' visibility
 immediately. Spawned NPCs follow terrain height on clients. Spawned entities live only in memory and disappear when the world server stops or restarts.
 Maps without a known safe arrival are rejected. Commands are case-insensitive,
 validated on the server, and never broadcast as ordinary chat when handled.
-Finish an active exchange before issuing inventory, movement or spawn commands.
+Finish an active exchange before issuing GM commands. `/set` accepts only a variant and a non-negative decimal integer; it always targets the issuing GM and persists before confirming. It sets the total rather than adding to it, and does not award quest or country kill credit.
 
 The client sends commands through the normal chat request independently of the
 selected UI channel. GX server response `0x7F01` contains self character ID `u32`,

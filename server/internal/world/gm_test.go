@@ -342,3 +342,72 @@ func TestGMMoveUsesRelativeSafeDestinationAndNormalTeleport(t *testing.T) {
 		}
 	}
 }
+
+func TestGMSetPersistsAndUpdatesClientWithoutReopeningRewards(t *testing.T) {
+	account := db.Account{UserUID: 1, UserID: "admin1"}
+	id, err := db.CreateCharacter(account, db.NewCharacter{Slot: 3, Name: "GMSetProbe", HP: 100, MP: 100, SP: 100, MapID: 60070})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pool, _ := db.Pool(db.GameData)
+	t.Cleanup(func() { pool.Exec(`DELETE FROM PS_GameData_Chars WHERE CharID=?`, id) })
+	ch, err := db.CharacterByID(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ch.KillLevel, ch.DeadLevel = 20, 12
+	ch.Kills, ch.Money = 0, 0
+	s, packets := gmWireSession(t, ch, true)
+	state := game.New()
+	state.SelfID = id
+	for _, tc := range []struct {
+		command      string
+		money, kills uint32
+	}{
+		{"/set money 10000000", 10000000, 0},
+		{"/set kill 99999999999999999999999999999999999999", 10000000, 1000000},
+		{"/SET MONEY 4294967296", db.MoneyCap, 1000000},
+		{"/set kill 50", db.MoneyCap, 50},
+		{"/set money 0", 0, 50},
+		{"/set kill 0", 0, 0},
+	} {
+		if !s.handleGMCommand(tc.command) {
+			t.Fatal("command escaped to chat")
+		}
+		for {
+			select {
+			case p := <-packets:
+				if _, err := state.Apply(p); err != nil {
+					t.Fatal(err)
+				}
+				if proto.Op(p) != proto.GXGMState {
+					continue
+				}
+			case <-time.After(3 * time.Second):
+				t.Fatal("missing set confirmation")
+			}
+			break
+		}
+		saved, err := db.CharacterByID(id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if saved.Money != tc.money || saved.Kills != tc.kills || state.Details.Money != tc.money || state.Details.Kills != tc.kills || saved.KillLevel != 20 || saved.DeadLevel != 12 {
+			t.Fatalf("%s: persistence/client mismatch saved=%+v details=%+v", tc.command, saved, state.Details)
+		}
+	}
+	before := *s.char
+	for _, bad := range []string{"/set", "/set kill -1", "/set money 1.5", "/set money +1", "/set death 1", "/set kill 10 other", "/set kill 999999x"} {
+		s.handleGMCommand(bad)
+		gmResponse(t, packets)
+		if *s.char != before {
+			t.Fatalf("invalid command mutated character: %s", bad)
+		}
+	}
+	s.isAdmin = false
+	s.handleGMCommand("/set money 500")
+	gmResponse(t, packets)
+	if *s.char != before {
+		t.Fatal("non-GM changed own money")
+	}
+}
