@@ -214,3 +214,36 @@ normalized GM request; server geometry, permissions and safe-destination checks
 remain authoritative. It does not replace native CFG calibration. See the
 [server connectivity audit](map-connectivity.md) for orphan maps and the map-60
 content mismatch.
+
+## Offline creature mesh normalization
+
+GX keeps its current runtime `Parse3DC` layout. Some legacy creature resources,
+including `Mob_Rend_01_A.3DC` and `Mob_Rend_01_B.3DC`, replace the leading zero
+version word with a length-prefixed, zero-terminated texture filename. Normalize
+those resource files during data preparation:
+
+```sh
+go run ./cmd/assets -data /path/to/loose-data \
+  repair-creature-models /path/to/new-repair-output
+```
+
+This scans Monster/Npc 3DC files using the existing parser, leaves accepted
+meshes alone, and stages only recognized rejected texture-prefix variants. It
+validates the filename header, canonical mesh length and face indices, then
+writes a zero version word followed by the original bone/vertex/face payload
+without changing any payload byte. Unknown damage stops the operation before
+any output is written. Output must be new and outside the source directory.
+
+The output contains `data/` with canonical replacement files, `originals/` with
+exact backups and `report.json` with counts and before/after/payload hashes.
+Install the staged replacements with the client stopped; restart an active
+client so its archive index and model cache reload. Original archive/reference
+clients remain unchanged. The removed embedded texture name does not replace
+MON material assignments; those continue selecting each creature's texture.
+
+The current local audit covers 668 monster and 590 NPC meshes: exactly the two
+Rend files require normalization. Their 35-bone payloads retain respectively
+961 vertices/980 faces and 545 vertices/505 faces. They are reused by ten MON
+visuals and 24 monster IDs, including Cloron Ogre 2045 and Cloron Guard 2046.
+All 590 NPC meshes already parse; no NPC resources are rewritten. Repairs and
+proprietary backups remain local, outside source history and release assets.

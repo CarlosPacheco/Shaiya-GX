@@ -25,7 +25,7 @@ func main() {
 	dataDir := flag.String("data", os.Getenv("SHAIYA_DATA"), "loose data directory or legacy archive directory")
 	flag.Parse()
 	if *dataDir == "" || flag.NArg() == 0 {
-		log.Fatal("usage: assets -data DIR stats | ls [DIR] | cat FILE | png FILE OUT.png | find SUBSTR | eft FILE | 3de FILE")
+		log.Fatal("usage: assets -data DIR stats | ls [DIR] | cat FILE | png FILE OUT.png | find SUBSTR | eft FILE | 3de FILE | repair-creature-models OUTDIR")
 	}
 	a, err := archive.Open(*dataDir)
 	if err != nil {
@@ -33,6 +33,13 @@ func main() {
 	}
 	defer a.Close()
 	switch flag.Arg(0) {
+	case "repair-creature-models":
+		if flag.NArg() != 2 {
+			log.Fatal("usage: assets -data DIR repair-creature-models OUTDIR")
+		}
+		if err := repairCreatureModels(a, *dataDir, flag.Arg(1)); err != nil {
+			log.Fatal(err)
+		}
 	case "stats":
 		files, bytes := 0, int64(0)
 		ext := map[string]int{}
