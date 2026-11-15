@@ -88,6 +88,20 @@ func TestPhoenixChatAndLoginLogoGL(t *testing.T) {
 	a.combatMessage(1, 1001, map[string]string{"t": "Wolf", "v": "35"})
 	a.systemMessage(3, 50, map[string]string{"b": "240"})
 	a.systemMessage(3, 53, map[string]string{"b": "50"})
+	acquired := proto.NewWriter(proto.AddItem)
+	acquired.Raw([]byte{1, 0, 1, 1})
+	acquired.Count(1)
+	acquired.U16(0)
+	acquired.Raw(make([]byte, 6))
+	acquired.Fixed("", 21, true)
+	if _, err := a.state.Apply(acquired.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	a.confirmedSystemChat(acquired.Bytes(), a.state.Details.Money)
+	notice := a.state.Chat[len(a.state.Chat)-1]
+	if notice.MessageID != 52 || notice.ItemType != 1 || notice.ItemID != 1 {
+		t.Fatal("missing acquired item icon metadata", notice)
+	}
 	a.chatOpen = true
 	a.chatInput.Text = "Phoenix chat"
 	draw(screenWorld)
