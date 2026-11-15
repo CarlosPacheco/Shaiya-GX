@@ -42,7 +42,7 @@ import (
 //     that percent (ExpDrop). Types 26 and 27 have no reader in EP4.5.
 //
 // Below the first tier no type applies (the original reads the slot
-// before the table there). Relic capture scoring is not wired in GX yet.
+// before the table there). Relic captures credit/debit these same country counters.
 // The reference CMap::LoadObelisk writes the country amounts at 0x005471c0
 // and 0x005471c4 (0x00428557/0x00428575); CMap::ObeliskDestroy consumes them.
 // See server/docs/original-parity.md for the versioned obelisk source audit.
@@ -201,6 +201,7 @@ func AddKillCount(c uint8, n uint32, log logPrinter) {
 		kcApplyCountry(other)
 		kcAnnounce(other)
 		kcSave(light, dark, log)
+		ResetRelics(now, log)
 	}
 	log.Printf("GX Server World country %d kill count %d reached tier %d (maxed=%t)", c, w.count, w.index, maxed)
 }
@@ -339,3 +340,32 @@ func kcPercent(base uint32, v int32) uint32 {
 
 // kcWorldType is a country-wide type (24 gem chance, 25 exp loss cut).
 func kcWorldType(c uint8, typ int) int32 { return kcStatus(c)[typ] }
+
+// SubKillCount is the obelisk capture debit. Active blessing freezes both
+// countries, including subtraction; counts cannot wrap below zero.
+func SubKillCount(c uint8, n uint32, log logPrinter) {
+	if c > 1 {
+		return
+	}
+	kcMu.Lock()
+	if !kcWorld[0].resetAt.IsZero() || !kcWorld[1].resetAt.IsZero() {
+		kcMu.Unlock()
+		return
+	}
+	now := time.Now()
+	w := &kcWorld[c]
+	w.count -= min(w.count, n)
+	// Native 0x413750 only reselects after crossing below the preceding
+	// tier's threshold. Preserve that hysteresis rather than treating a debit
+	// as SetKillCount; below the first table row GX safely applies no bonuses.
+	if w.index > 0 && w.count < kcTiers[c][w.index-1].Kill {
+		w.index = kcTierFor(int(c), w.count)
+		w.next = kcTiers[c][w.index+1].Kill
+		w.broadcastAt = now.Add(kcBroadcastEvery)
+	}
+	light, dark := kcWorld[0].count, kcWorld[1].count
+	kcMu.Unlock()
+	kcApplyCountry(int(c))
+	kcAnnounce(int(c))
+	kcSave(light, dark, log)
+}

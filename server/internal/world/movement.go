@@ -99,6 +99,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 		guildDuelLeave(s.player, nil, 1)
 	}
 	s.clearView(mapID == ch.MapID)
+	changedMap := mapID != ch.MapID
 	ch.MapID, ch.PosX, ch.PosY, ch.PosZ = mapID, x, y, z
 	s.movement = playerMovement{geometry: g, mapID: mapID}
 	if err := s.initPlayerMovement(time.Now()); err != nil {
@@ -112,6 +113,9 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 	s.savePosition()
 	s.send(buildCharacterMapPosition(ch), "0x020B "+label)
 	s.send(buildCharacterMove(ch, 0, 0), "0x0501 "+label+" move")
+	if changedMap {
+		s.sendRelicList()
+	}
 	s.placeView()
 }
 

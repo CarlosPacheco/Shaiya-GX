@@ -319,6 +319,7 @@ func TickMobEffects() []MobEffectOutcome {
 			}
 			hit := func(e *MobEffect, damage [3]int32, hp uint32) bool {
 				applied := min(hp, m.CurrentHP)
+				m.recordEventDamage(e.CasterID, applied)
 				m.CurrentHP -= applied
 				killed := m.CurrentHP == 0
 				o := MobEffectOutcome{MapID: mapID, CasterID: e.CasterID, SkillID: e.Def.SkillID, SkillLevel: e.Def.SkillLevel,

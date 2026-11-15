@@ -95,7 +95,7 @@ WHERE ServerID=@serverid AND UserUID=@useruid AND Del=@del`,
 		}
 		ch.AccountID = userUID
 		ch.Name = strings.TrimRight(ch.Name, " ")
-		ch.Level, ch.MapID = max(u16(level), 1), max(u16(mapID), 1)
+		ch.Level, ch.MapID = max(u16(level), 1), u16(mapID)
 		ch.Str, ch.Dex, ch.Rec, ch.Int, ch.Luc, ch.Wis = u16(str), u16(dex), u16(rec), u16(intel), u16(luc), u16(wis)
 		ch.MaxHP, ch.MaxMP, ch.MaxSP = uint32(max(hp, 0)), uint32(max(mp, 0)), uint32(max(sp, 0))
 		ch.CurrentHP, ch.CurrentMP, ch.CurrentSP = ch.MaxHP, ch.MaxMP, ch.MaxSP
@@ -123,7 +123,7 @@ WHERE ServerID=@serverid AND UserUID=@useruid AND Del=@del`,
 		}
 		ch.AccountID = userUID
 		ch.Name = strings.TrimRight(ch.Name, " ")
-		ch.Level, ch.MapID = max(u16(level), 1), max(u16(mapID), 1)
+		ch.Level, ch.MapID = max(u16(level), 1), u16(mapID)
 		ch.Str, ch.Dex, ch.Rec, ch.Int, ch.Luc, ch.Wis = u16(str), u16(dex), u16(rec), u16(intel), u16(luc), u16(wis)
 		ch.MaxHP, ch.MaxMP, ch.MaxSP = uint32(max(hp, 0)), uint32(max(mp, 0)), uint32(max(sp, 0))
 		ch.PendingDelete, ch.RenamePending = true, renameCnt > 0
@@ -168,7 +168,7 @@ func CharacterDetail(userUID, charID uint32) (Character, error) {
 	}
 	ch.AccountID = uint32(owner)
 	ch.Name = strings.TrimRight(ch.Name, " ")
-	ch.Level, ch.MapID, ch.Dir = max(u16(level), 1), max(u16(mapID), 1), int16(dir)
+	ch.Level, ch.MapID, ch.Dir = max(u16(level), 1), u16(mapID), int16(dir)
 	ch.StatPoint, ch.SkillPoint = u16(statPoint), u16(skillPoint)
 	ch.Str, ch.Dex, ch.Rec, ch.Int, ch.Luc, ch.Wis = u16(str), u16(dex), u16(rec), u16(intel), u16(luc), u16(wis)
 	ch.MaxHP, ch.MaxMP, ch.MaxSP = uint32(max(hp, 0)), uint32(max(mp, 0)), uint32(max(sp, 0))

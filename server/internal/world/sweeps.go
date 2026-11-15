@@ -27,6 +27,7 @@ func StartSweeps(log *logx.Logger) {
 	every(time.Second, func() { runDotSweep(log) })
 	every(5*time.Second, func() { TickGuildRanking(time.Now(), log) })
 	every(time.Second, func() { TickKillCount(time.Now(), log) })
+	every(250*time.Millisecond, func() { TickRelics(time.Now(), log) })
 	every(instanceSweepTick, func() { TickInstances(time.Now(), log) })
 	every(mobNavigationTick, func() {
 		players := AllPlayers()
@@ -123,7 +124,7 @@ func runDotSweep(log *logx.Logger) {
 			continue
 		}
 		log.Printf("GX Server World skill effect kill character_id=%d mob_global_id=%d mob_id=%d", o.CasterID, m.ID, m.MobID)
-		sendNear(o.MapID, m.PosX, m.PosZ, CombatRadius, buildMobDeath(m.ID, o.CasterID), "0x0606 mob death (skill effect)")
+		sendNear(o.MapID, m.PosX, m.PosZ, CombatRadius, buildMobDeath(m.ID, mobDeathCredit(m, o.CasterID)), "0x0606 mob death (skill effect)")
 		rewardKill(FindPlayerByID(o.CasterID), o.CasterID, o.MapID, m, log)
 	}
 }

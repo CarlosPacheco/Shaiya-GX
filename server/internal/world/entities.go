@@ -57,6 +57,10 @@ func (a MobArea) contains(x, z float32) bool {
 }
 
 type MapMob struct {
+	event                *eventActor
+	eventGeneration      uint64
+	eventFresh           bool
+	eventDamage          []eventDamageEntry
 	elementRestored      bool // RemApplySkillDebuff68 restores base even with another68 active.
 	ID                   uint32
 	MobID                uint16
@@ -225,6 +229,7 @@ func shardIDs() []uint16 {
 func cloneMob(m *MapMob) MapMob {
 	c := *m
 	c.Effects = append([]MobEffect(nil), m.Effects...)
+	c.eventDamage = append([]eventDamageEntry(nil), m.eventDamage...)
 	if m.Area != nil {
 		a := *m.Area
 		c.Area = &a
@@ -386,6 +391,9 @@ type MobDamageResult struct {
 
 // DamageMob applies damage unless the mob is dead or resetting home.
 func DamageMob(mapID uint16, id uint32, damage uint32) (MobDamageResult, bool) {
+	return DamageMobFrom(mapID, id, damage, 0)
+}
+func DamageMobFrom(mapID uint16, id uint32, damage, attacker uint32) (MobDamageResult, bool) {
 	s := shard(mapID)
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -398,6 +406,7 @@ func DamageMob(mapID uint16, id uint32, damage uint32) (MobDamageResult, bool) {
 			return MobDamageResult{}, false
 		}
 		applied := min(damage, m.CurrentHP)
+		m.recordEventDamage(attacker, applied)
 		m.CurrentHP -= applied
 		r := MobDamageResult{DamageHP: uint16(min(damage, 65535)), AppliedHP: applied, Killed: m.CurrentHP == 0}
 		if r.Killed {
@@ -514,7 +523,7 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 				break
 			}
 			m := &s.entities.Mobs[i]
-			if m.CurrentHP > 0 {
+			if m.CurrentHP > 0 || m.event != nil {
 				continue
 			}
 			var x, z float32
@@ -952,7 +961,7 @@ func (m *MapMob) retargetByAggro(players []PlayerCombatSnapshot) {
 // stepChase is CMob::Chase: ChaseStep (plus the speed offset) every
 // ChaseTime toward the target, stopping just inside attack reach.
 func (m *MapMob) stepChase(now time.Time, mapID uint16, t *PlayerCombatSnapshot, d float32, mods *mobMods, tick *MobCombatTick) bool {
-	if now.Before(m.nextChaseAt) || !mods.canMove() || m.def == nil {
+	if now.Before(m.nextChaseAt) || !mods.canMove() || m.def == nil || m.stationary() {
 		return false
 	}
 	if m.nav != nil {

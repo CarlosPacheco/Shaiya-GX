@@ -19,6 +19,9 @@ not update executable files, client assets or a running database.
 
 ## Gameplay and items
 
+- [Obelisks and linked bosses](obelisks.md): capture, guards, persistent ownership,
+  goddess blessing, map icons, linked portals and boss phases.
+
 - [Attack speed](attack-speed.md): native weapon indices, server swing intervals,
   Flash equipment, mastery/buffs and confirmed Stats/tooltips.
 

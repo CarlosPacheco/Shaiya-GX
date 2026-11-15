@@ -111,7 +111,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 		return true
 	}
 	def := db.MustDefs().Mobs[mob.MobID]
-	if def == nil {
+	if def == nil || mobFriendly(def, s.faction) {
 		return false
 	}
 	mc, _ := MobCombatByID(ch.MapID, target)
@@ -138,7 +138,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	}
 	closeRanged := DistanceXZ(ch.PosX, ch.PosZ, mob.PosX, mob.PosZ) <= closeRangeDistance
 	damage, crit := playerDamage(&stats, &mc, kind, stats.AttackAttr, closeRanged)
-	result, ok := DamageMob(ch.MapID, target, uint32(damage))
+	result, ok := DamageMobFrom(ch.MapID, target, uint32(damage), ch.ID)
 	if !ok {
 		return false
 	}
@@ -171,7 +171,7 @@ func (s *Session) resolveMobDamage(r *MobDamageResult) bool {
 		s.send(buildMobTargetHP(m), "0x0305 mob target hp after attack")
 		return true
 	}
-	sendNear(ch.MapID, m.PosX, m.PosZ, CombatRadius, buildMobDeath(m.ID, ch.ID), "0x0606 mob death")
+	sendNear(ch.MapID, m.PosX, m.PosZ, CombatRadius, buildMobDeath(m.ID, mobDeathCredit(m, ch.ID)), "0x0606 mob death")
 	rewardKill(s.player, ch.ID, ch.MapID, m, s.logger)
 	return false
 }
@@ -470,6 +470,14 @@ func expBounds(ch *db.Character) (prev, next uint32) {
 // exp queued to its recipient's session. An offline DoT caster gets the
 // solo exp straight in the database.
 func rewardKill(killer *ConnectedPlayer, killerID uint32, mapID uint16, m *MapMob, log logPrinter) {
+	if m.event != nil && m.event.principal {
+		killer = eventCreditedPlayer(killer, mapID, m)
+		killerID = 0
+		if killer != nil {
+			killerID = killer.CharacterID
+		}
+	}
+	eventMobDestroyed(killer, mapID, m, log)
 	var party []*ConnectedPlayer
 	if killer != nil {
 		party = partyMembersNear(killer, mapID, m.PosX, m.PosZ)

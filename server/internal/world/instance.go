@@ -90,6 +90,7 @@ func createInstance(mapID uint16, owner uint32) (uint16, error) {
 		load.entities.Mobs = valid
 	}
 	AddEntities(zone, load.entities)
+	initializeInstanceBosses(zone, mapID)
 	return zone, nil
 }
 
@@ -98,6 +99,9 @@ func destroyInstance(zone uint16) {
 	if !isInstanceZone(zone) {
 		return
 	}
+	relics.Lock()
+	delete(relics.bosses, zone)
+	relics.Unlock()
 	instanceMu.Lock()
 	delete(instanceMaps, zone)
 	delete(instanceOwner, zone)

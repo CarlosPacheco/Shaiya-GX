@@ -177,7 +177,7 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 		return false
 	}
 	md := db.MustDefs().Mobs[mob.MobID]
-	if md == nil {
+	if md == nil || mobFriendly(md, s.faction) {
 		return false
 	}
 	s.breakStealth()
@@ -205,7 +205,7 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 	caster := [3]uint32{stats.CurrentHP, stats.CurrentSP, stats.CurrentMP}
 	close := DistanceXZ(ch.PosX, ch.PosZ, mob.PosX, mob.PosZ) <= closeRangeDistance
 	damage, crit := playerSkillDamage(&stats, &mc, def, t, caster, close)
-	r, ok := DamageMob(ch.MapID, target, uint32(max(damage[0], 0)))
+	r, ok := DamageMobFrom(ch.MapID, target, uint32(max(damage[0], 0)), ch.ID)
 	if !ok {
 		return false
 	}
@@ -230,7 +230,7 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 	}
 	alive := s.resolveMobDamage(&r)
 	if alive && !drain && (def.AddDamageHP != 0 || def.AddDamageSP != 0 || def.AddDamageMP != 0) {
-		if x, ok := DamageMob(ch.MapID, target, uint32(uint16(def.AddDamageHP))); ok {
+		if x, ok := DamageMobFrom(ch.MapID, target, uint32(uint16(def.AddDamageHP)), ch.ID); ok {
 			w := packet.New(packet.SkillExtraDamage)
 			w.U32(ch.ID)
 			w.U32(x.Mob.ID)

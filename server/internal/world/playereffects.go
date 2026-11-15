@@ -420,7 +420,7 @@ func (s *Session) reflects(kind int, md *db.MobDef) bool {
 // mob, HP/SP/MP).
 func (s *Session) reflectToMob(mobGlobalID uint32, damage [3]uint16) {
 	ch := s.char
-	r, ok := DamageMob(ch.MapID, mobGlobalID, uint32(damage[0]))
+	r, ok := DamageMobFrom(ch.MapID, mobGlobalID, uint32(damage[0]), ch.ID)
 	if !ok {
 		return
 	}

@@ -8,6 +8,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'docs/wiki'
 NAMES = {
+    'obelisks.md': 'Obelisks',
     'movement-speed.md': 'Movement-Speed', 'attack-speed.md': 'Attack-Speed',
     'README.md': 'Home', 'quests-and-map.md': 'Quests-and-Map', 'stealth-and-gm-protection.md': 'Stealth-and-GM-Protection', 'elements.md': 'Elements', 'blacksmith.md': 'Blacksmith',
     'item-effects.md': 'Item-Effects', 'gm-commands.md': 'GM-Commands',

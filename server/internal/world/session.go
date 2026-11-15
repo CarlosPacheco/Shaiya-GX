@@ -932,6 +932,7 @@ func (s *Session) handleMapLoaded() {
 	s.syncPlayerSpeed(true)
 	s.syncVisibility()
 	s.send(s.player.visibilityPacket(), "GX visibility")
+	s.sendRelicList()
 	// CZone::EnterUser + SendCellInfoView: the 5x5 cells around the user.
 	s.placeView()
 	s.syncQuestNPCCatalog(true)

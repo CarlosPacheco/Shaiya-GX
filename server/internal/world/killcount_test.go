@@ -126,3 +126,31 @@ func TestRecoveryBase(t *testing.T) {
 		t.Fatalf("sitting recovery %d, want 78", got)
 	}
 }
+
+func TestObeliskDebitPreservesNativeTierHysteresisAndNeverUnderflows(t *testing.T) {
+	withTiers(t)
+	kcMu.Lock()
+	third := kcTiers[0][1]
+	third.Kill = 6
+	kcTiers[0] = append(kcTiers[0], third)
+	setKillCountLocked(0, 3, time.Now())
+	kcMu.Unlock()
+	AddKillCount(0, 2, nopLog{}) // Five counts, tier1; six would activate blessing.
+	SubKillCount(0, 2, nopLog{})
+	if kcWorld[0].count != 3 || kcWorld[0].index != 1 {
+		t.Fatal("debit lost the original previous-tier hysteresis")
+	}
+	SubKillCount(0, 2, nopLog{})
+	if kcWorld[0].count != 1 || kcWorld[0].index != -1 {
+		t.Fatal("debit failed to reselect below previous tier")
+	}
+	SubKillCount(0, 100, nopLog{})
+	if kcWorld[0].count != 0 {
+		t.Fatal("country count underflow")
+	}
+	AddKillCount(1, 4, nopLog{})
+	SubKillCount(1, 100, nopLog{})
+	if kcWorld[1].count != 4 {
+		t.Fatal("debit modified active blessing")
+	}
+}

@@ -159,6 +159,9 @@ type State struct {
 	PvPCountsKnown         [4]bool
 	PvPRewards             proto.PvPRewards
 	LastPvPReward          proto.PvPRewardResult
+	Relics                 []proto.Relic // current map's relics (0x2101/0x2102)
+	LastRelicNotice        proto.RelicDestroyed
+	LastPortalNotice       proto.PortalOwnerNotice
 	Phase                  Phase
 	Faction                proto.Faction
 	Slots                  map[uint8]proto.CharacterSlot // non-empty slots only
@@ -303,6 +306,35 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		case 3:
 			s.Details.Losses = value.Value
 		}
+	case proto.RelicList:
+		list, err := proto.DecodeRelicList(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.Relics = list
+	case proto.RelicOwner:
+		v, err := proto.DecodeRelicOwner(p)
+		if err != nil {
+			return fail(err)
+		}
+		// Native 0x564f20 updates only an ID announced in the snapshot.
+		for i := range s.Relics {
+			if s.Relics[i].ID == v.ID {
+				s.Relics[i].Owner = v.Owner
+			}
+		}
+	case proto.PortalNotice:
+		v, err := proto.DecodePortalNotice(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastPortalNotice = v
+	case proto.RelicNotice:
+		v, err := proto.DecodeRelicNotice(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastRelicNotice = v
 	case proto.CharacterPvPKills:
 		value, err := proto.DecodeVisiblePvPKills(p)
 		if err != nil {
@@ -1037,6 +1069,9 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			s.Exchange = ExchangeState{}
 			s.Duel = DuelState{}
 			s.Guild = GuildState{}
+			s.Relics = nil
+			s.LastRelicNotice = proto.RelicDestroyed{}
+			s.LastPortalNotice = proto.PortalOwnerNotice{}
 			s.GuildDuel = GuildDuelState{}
 			s.Quests, s.FinishedQuests = nil, nil
 			s.QuestChoosing, s.QuestChoice = false, 0
@@ -1075,6 +1110,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		if m.ID == s.SelfID {
 			if s.MapID != m.MapID {
+				s.Relics = nil // a map without relics sends no 0x2101
 				s.MapQuestNPCs, s.MapQuestNPCsReady = nil, false
 				s.questNPCStaging, s.questNPCStagingActive = nil, false
 				s.Guild.RankingPointsKnown = false
@@ -1301,6 +1337,9 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 	case proto.Logout:
 		s.Party = PartyState{}
 		s.Guild = GuildState{}
+		s.Relics = nil
+		s.LastRelicNotice = proto.RelicDestroyed{}
+		s.LastPortalNotice = proto.PortalOwnerNotice{}
 		s.GuildDuel = GuildDuelState{}
 		s.Phase, s.SelfID = PhaseCharSelect, 0
 		s.Target = 0

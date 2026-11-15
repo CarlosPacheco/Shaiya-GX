@@ -112,7 +112,8 @@ gold and claim controls from confirmed packets, including re-entry and reset.
 
 ## Obelisk source audit
 
-Relic gameplay remains pending in GX. The reference executable is the local
+GX implements the relic lifecycle, persistent ownership, linked portals and
+linked boss populations described below. The reference executable is the local
 EP4.5 `ps_game.exe`, 1,323,008 bytes, SHA256
 `0fb7c9f13b5bcf186118f8bfe73ab214226b93e8aa502b8e6fded4a8312bc547`.
 The executable recorded by the read-only Ghidra project has that same hash.
@@ -155,7 +156,7 @@ Recovered reference behavior:
   count, plus one. `ObeliskDestroy` consumes these amounts through
   `CWorld::AddKillCount` / `SubKillCount`. The prior claim that these globals
   were never written was incorrect. GX's existing PvP blessing implementation
-  does not yet connect relic captures to this path.
+  now connects relic captures to this path, without a separate altar cap.
 - `CMap::UpdatePortalLink` (0x0042a000) tests configured dependency sets against
   the last-conquering country, rather than proximity to a relic. All matching
   dependencies open that faction's side; no matching dependencies close it.
@@ -166,11 +167,12 @@ contract includes explicit custom decisions: neutral startup, a 50% altar
 contribution cap, provisional PvP scoring and an XP bonus. Those choices do not
 establish original-server parity. The source also has separate `bothmob` boss
 phase/portal and random-respawn records; loading nine relics alone does not
-implement that event system. Before accepting #10, reconcile executable
-versions, persistent IDs, restart/reset timing, capture scoring and portal
-dependencies, then validate the resulting lifecycle with an isolated DB and
-encrypted client/server tests. No relic runtime or DB behavior changed in this
-audit.
+implement that event system. GX reuses the contribution’s client foundation with explicit corrections
+for the reference versions, runtime IDs, restart/reset timing, capture scoring,
+DB restoration, portals and boss chains. Unit, race, original-world boot,
+OpenGL pixel checks and encrypted disposable-DB client/server tests cover the
+implemented lifecycle. See [Obelisks](../../docs/wiki/obelisks.md) for behavior,
+protocol, persistence and content limitations.
 
 ## Element table
 

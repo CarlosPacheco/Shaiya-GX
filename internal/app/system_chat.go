@@ -69,6 +69,31 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		if r.Target == s.SelfID {
 			a.combatMessage(1, 5, map[string]string{"v": number(r.Amount)})
 		}
+	case proto.PortalNotice:
+		v := s.LastPortalNotice
+		if v.PortalID == 1060 || v.PortalID == 1061 {
+			id := 0
+			if v.NewOwner == 101 {
+				id = 5514
+			} else if v.NewOwner == 102 {
+				id = 5515
+			}
+			if id != 0 {
+				a.systemMessage(8, id, nil)
+				a.combatNotice, a.combatNoticeUntil = a.msg.Get(id), a.clock+4
+			}
+		}
+	case proto.RelicNotice:
+		v := s.LastRelicNotice
+		if id, ok := relicNoticeMessage(v.OldOwner, v.NewOwner, s.Faction.Faction); ok && a.assets != nil {
+			if d, err := a.assets.MonsterDefinition(v.MobID); err == nil {
+				style := relicNoticeStyle(s.MapID)
+				a.systemMessage(style, id, map[string]string{"p": d.Name})
+				if style == 8 {
+					a.combatNotice, a.combatNoticeUntil = a.msg.Format(id, map[string]string{"p": d.Name}), a.clock+4
+				}
+			}
+		}
 	case proto.ExpGain:
 		r := proto.NewReader(p)
 		gain := r.U32()
