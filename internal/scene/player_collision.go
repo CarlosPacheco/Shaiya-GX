@@ -6,37 +6,15 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/collision"
-	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
-
-type movingCollider struct {
-	meshes []world.CollisionMesh
-	rotor  maniRotor
-}
 
 func collisionVec(v render.V3) collision.Vec {
 	return collision.Vec{float64(v[0]), float64(v[1]), float64(v[2])}
 }
 func renderVec(v collision.Vec) render.V3 {
 	return render.V3{float32(v[0]), float32(v[1]), float32(v[2])}
-}
-func visitCollisionMeshes(meshes []world.CollisionMesh, matrix render.M4, emit func(collision.Triangle)) {
-	for _, mesh := range meshes {
-		for _, face := range mesh.Faces {
-			if int(face[0]) >= len(mesh.Vertices) || int(face[1]) >= len(mesh.Vertices) || int(face[2]) >= len(mesh.Vertices) {
-				continue
-			}
-			var triangle collision.Triangle
-			for i, index := range face {
-				triangle[i] = collisionVec(transformPoint(render.V3(mesh.Vertices[index]), matrix))
-			}
-			if triangle.Valid() {
-				emit(triangle)
-			}
-		}
-	}
 }
 
 // prepareCollisions retains CPU-only geometry for the whole map. Rendering may
@@ -57,9 +35,7 @@ func (w *World) prepareCollisions(a *Assets) error {
 	w.collision = geometry.Index
 	w.physics = geometry
 	geometry.SetDynamicClock(w.DynamicTime)
-	for _, dynamic := range geometry.Dynamic {
-		w.movingColliders = append(w.movingColliders, movingCollider{meshes: dynamic.Meshes, rotor: maniRotor{base: render.M4(dynamic.Base), axis: render.V3(dynamic.Axis), speed: dynamic.Speed}})
-	}
+	w.movingColliders = geometry.Dynamic
 	log.Printf("collision ready: %d static triangles, %d moving instances, %d resources in %s", geometry.Index.Len(), len(geometry.Dynamic), len(geometry.Sources), time.Since(started))
 	return nil
 }
@@ -70,11 +46,7 @@ func (w *World) visitCollisions(bounds collision.Box, emit func(collision.Triang
 	}
 	w.collision.Visit(bounds, emit)
 	for _, instance := range w.movingColliders {
-		visitCollisionMeshes(instance.meshes, instance.rotor.transform(w.DynamicTime()), func(t collision.Triangle) {
-			if bounds.Overlaps(t.Bounds()) {
-				emit(t)
-			}
-		})
+		instance.Visit(bounds, w.DynamicTime(), emit)
 	}
 }
 

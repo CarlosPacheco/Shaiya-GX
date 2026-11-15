@@ -14,6 +14,7 @@ import (
 
 type Matrix [16]float32
 type Dynamic struct {
+	bounds *world.Box
 	Meshes []world.CollisionMesh
 	Base   Matrix
 	Axis   world.Vec3
@@ -166,7 +167,9 @@ func Load(readFile func(string) ([]byte, error), layout *world.WLD) (*Geometry, 
 			}
 		}
 		if animation.Rotate && animation.Speed != 0 && norm(animation.Axis) != (world.Vec3{}) {
-			g.Dynamic = append(g.Dynamic, Dynamic{m, base, animation.Axis, animation.Speed})
+			dynamic := Dynamic{Meshes: m, Base: base, Axis: animation.Axis, Speed: animation.Speed}
+			dynamic.prepareBounds()
+			g.Dynamic = append(g.Dynamic, dynamic)
 		} else {
 			Visit(m, base, g.Add)
 		}

@@ -7,6 +7,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"math"
 	"os"
 	"path"
 	"runtime"
@@ -123,5 +124,47 @@ func BenchmarkPlayerCollisionMarket(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		w.MovePlayer(render.V3{995.8, 13, 797.3}, render.V3{.08, 0, .08})
+	}
+}
+
+func BenchmarkGroundPlayerHeldObstacle(b *testing.B) {
+	directory := os.Getenv("SHAIYA_DATA")
+	if directory == "" {
+		b.Skip("local assets required")
+	}
+	arc, err := archive.OpenDirectory(directory)
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer arc.Close()
+	raw, err := arc.ReadFile("world/1.wld")
+	if err != nil {
+		b.Fatal(err)
+	}
+	layout, err := world.ParseWLD(raw)
+	if err != nil {
+		b.Fatal(err)
+	}
+	w := &World{WLD: layout}
+	if err := w.prepareCollisions(NewAssets(arc)); err != nil {
+		b.Fatal(err)
+	}
+	// Start against an authored vertical face; keep pressing into that face.
+	var start, delta render.V3
+	for _, tri := range w.physics.Triangles {
+		n := tri[1].Sub(tri[0]).Cross(tri[2].Sub(tri[0])).Norm()
+		if math.Abs(n[1]) > .05 || tri[1].Sub(tri[0]).Cross(tri[2].Sub(tri[0])).Len() < 10 {
+			continue
+		}
+		p := tri[0].Add(tri[1]).Add(tri[2]).Scale(1.0 / 3).Add(n.Scale(.32))
+		p[1] -= .9
+		start, delta = renderVec(p), renderVec(n.Scale(-.08))
+		break
+	}
+	b.Logf("held obstacle start=%v delta=%v", start, delta)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		w.GroundPlayer(start, delta, false)
 	}
 }

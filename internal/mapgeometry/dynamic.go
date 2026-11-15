@@ -3,6 +3,9 @@ package mapgeometry
 import (
 	"math"
 	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/collision"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 )
 
 var physicsEpoch = time.Now()
@@ -28,4 +31,59 @@ func (d Dynamic) Transform(elapsed float64) Matrix {
 		}
 	}
 	return out
+}
+
+// prepareBounds retains immutable local bounds; queries still use the current
+// synchronized transform, so rotation can never leave a stale collision box.
+func (d *Dynamic) prepareBounds() {
+	for _, mesh := range d.Meshes {
+		for _, vertex := range mesh.Vertices {
+			if d.bounds == nil {
+				d.bounds = &world.Box{Min: vertex, Max: vertex}
+			}
+			for a := range 3 {
+				d.bounds.Min[a] = min(d.bounds.Min[a], vertex[a])
+				d.bounds.Max[a] = max(d.bounds.Max[a], vertex[a])
+			}
+		}
+	}
+}
+
+// Visit rejects distant instances before transforming any mesh faces. Bounds
+// only select candidates; the original authored triangles decide all contacts.
+func (d Dynamic) Visit(query collision.Box, elapsed float64, emit func(collision.Triangle)) {
+	matrix := d.Transform(elapsed)
+	if d.bounds != nil {
+		var bounds collision.Box
+		for corner := 0; corner < 8; corner++ {
+			p := d.bounds.Min
+			for a := range 3 {
+				if corner&(1<<a) != 0 {
+					p[a] = d.bounds.Max[a]
+				}
+			}
+			point := Point(p, matrix)
+			if corner == 0 {
+				bounds = collision.Box{Min: point, Max: point}
+			}
+			for a := range 3 {
+				bounds.Min[a] = min(bounds.Min[a], point[a])
+				bounds.Max[a] = max(bounds.Max[a], point[a])
+			}
+		}
+		// Outward padding covers float32 matrix rounding, including large maps.
+		for a := range 3 {
+			margin := .001 + max(math.Abs(bounds.Min[a]), math.Abs(bounds.Max[a]))*1e-6
+			bounds.Min[a] -= margin
+			bounds.Max[a] += margin
+		}
+		if !query.Overlaps(bounds) {
+			return
+		}
+	}
+	Visit(d.Meshes, matrix, func(t collision.Triangle) {
+		if query.Overlaps(t.Bounds()) {
+			emit(t)
+		}
+	})
 }

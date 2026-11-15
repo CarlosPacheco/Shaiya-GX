@@ -52,6 +52,17 @@ world. Camera visibility, object LOD, graphics detail and GPU eviction cannot
 remove blockers. SMOD collision readers retain display positions/faces for the original fallback; VANI and DG readers skip unused display buffers.
 Missing or malformed required collision data reports a map-loading error.
 
+Rotating MANI instances retain local mesh bounds. Each query transforms their
+bounds using the current physics clock and rejects distant instances before
+transforming faces. Bounds only select candidates: nearby authored triangles
+still resolve movement, support, camera and spell queries normally. This avoids
+repeated whole-map animated-mesh scans while holding movement into a wall,
+including the extra probes for sliding and step negotiation. No blocked-input
+cooldown or stale contact cache delays turning away or a moving obstacle.
+The original map-one held-obstacle benchmark dropped from about 410 to 28 µs
+per ground-movement attempt on the development machine; 3,240 movement frames
+matched the unculled triangle-query implementation exactly.
+
 Keyboard movement, strafing, autorun, click-to-move displacement, jumping and
 vertical water motion use the same model/blocker queries. Ground settling lets
 characters stand on authored model floors and fall after leaving them. Existing

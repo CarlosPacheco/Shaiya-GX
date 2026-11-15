@@ -23,7 +23,7 @@ type Instance struct {
 type World struct {
 	collision           *collision.Index
 	physics             *mapgeometry.Geometry
-	movingColliders     []movingCollider
+	movingColliders     []mapgeometry.Dynamic
 	dungeonInstances    []render.M4
 	occlusion           *render.TerrainOcclusion
 	occlusionRevision   uint64

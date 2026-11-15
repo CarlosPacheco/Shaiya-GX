@@ -57,11 +57,7 @@ func (g *Geometry) Visit(b collision.Box, emit func(collision.Triangle)) {
 		if g.clock != nil {
 			elapsed = g.clock()
 		}
-		Visit(dynamic.Meshes, dynamic.Transform(elapsed), func(t collision.Triangle) {
-			if t.Bounds().Overlaps(b) {
-				emit(t)
-			}
-		})
+		dynamic.Visit(b, elapsed, emit)
 	}
 }
 func (g *Geometry) MoveFeet(p, delta Position) (Position, bool) {
