@@ -280,6 +280,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.hud, err = ui.NewHUD(a); err != nil {
 		return nil, err
 	}
+	if a.hud.NumberFont, err = fonts.Load(12); err != nil {
+		return nil, err
+	}
 	if a.minimap, err = ui.NewMinimap(a); err != nil {
 		return nil, err
 	}

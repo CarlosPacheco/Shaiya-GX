@@ -11,6 +11,9 @@ func (a *App) Close() {
 	a.saveClientSettings()
 	a.collisionLines.Delete()
 	a.tooltipFont.Delete()
+	if a.hud != nil {
+		a.hud.NumberFont.Delete()
+	}
 	a.performance.meter.Delete()
 	a.performance.meter = nil
 	if a.world != nil && a.state != nil && a.state.Phase == game.PhaseInWorld &&

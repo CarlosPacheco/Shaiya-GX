@@ -10,6 +10,7 @@ import (
 // HUD uses the native status art/layout (0x509f10, 0x5097b0), target
 // art/layout (0x50a2e0, 0x50b6a0).
 type HUD struct {
+	NumberFont                                                       *Font // native Tahoma 12-cell resource labels, separate from names
 	Position, TargetPosition                                         WindowPosition
 	status, bars, circle, portraitMask, target, targetBar, elemental *render.Texture
 }
@@ -89,9 +90,16 @@ func (h *HUD) Draw(s *render.Sprites, f *Font, state HUDState) {
 	label(state.Name, x+82, y+18, 114, 16, true) // +4: middle of the dark name plate
 	label(fmt.Sprint(state.Level), x+62, y+15, 22, 20, true)
 	for i, pool := range []Resource{state.HP, state.MP, state.SP} {
-		text := fmt.Sprintf("%d/%d", pool.Current, pool.Max)
-		top := []int{41, 58, 73}[i]
-		drawStatusText(s, f, text, float32(x+135-f.Width(text)/2), float32(y+top), 1, 128)
+		text := fmt.Sprintf("%d/%d", min(pool.Current, pool.Max), pool.Max)
+		numbers := h.NumberFont
+		if numbers == nil {
+			numbers = f
+		}
+		// 0x5097b0 uses five pixels per ASCII character to center the
+		// rectangle; 0x509590 draws black then white one pixel up/left.
+		left, top := x+135-len(text)*5/2, y+[]int{41, 58, 73}[i]
+		numbers.Draw(s, text, left, top, [4]float32{0, 0, 0, 1}, 128)
+		numbers.Draw(s, text, left-1, top-1, white, 128)
 	}
 
 	if state.TargetName != "" {

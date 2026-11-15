@@ -507,3 +507,7 @@ camera or player does not rescan every quest. Distant NPCs remain metadata, not
 
 Cooldowns use a red sweep and centered yellow seconds across item/skill icons,
 without flashing when ready. Reuse timing remains server-confirmed.
+
+Portrait HP/MP/SP values use the native 12-cell resource font, white text with
+a one-pixel black shadow and the original five-pixel centering/row offsets.
+Names retain their separate warm font. Values above maximum are clamped for display.
