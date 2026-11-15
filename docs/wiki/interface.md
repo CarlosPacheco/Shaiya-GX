@@ -62,7 +62,7 @@ Right-click another character, the target frame or a party/raid member to open t
 
 ## Cloaks and combat presentation
 
-Cloaks use original archive files directly, without converted or recreated meshes. Equipment types 24/39 in slot 7 select a zero-based item Model: Model 0 is the first cloak. Chest ReqVg minus one selects the PC fit, with out-of-range fits falling back to zero. Each PC record selects its own body, shoulder and racial CTL texture. The shoulder is skinned and the cloth follows the record's bone pins. The same appearance mapping serves selection, inventory, the local character and other players.
+Cloaks use original archive files directly, without converted or recreated meshes. Equipment types 24/39 in slot 7 select a zero-based item Model: Model 0 is the first cloak. Chest ReqVg minus one selects the PC fit, with out-of-range fits falling back to zero. Each PC record selects its own body, shoulder and racial CTL texture. The shoulder is an opaque skinned part: its texture alpha is not a cutout mask. The cloth follows the record's bone pins. The same appearance mapping serves selection, inventory, the local character and other players.
 
 The CPU solver reproduces native directed springs, masses, forces, Euler integration and both cloth modes. Synthetic one-step tests compare outputs with the original executable. Real-archive GL checks load all 3,072 body/fit/model combinations and simulate/render all 16 body families. The current runtime uses the native no-contact branch; body/ground contacts, map wind and guild emblem rendering remain incomplete.
 
@@ -195,7 +195,7 @@ three seconds; membership changes follow ACKs.
 
 Skill requests check the known MP/SP budget before sending or starting predicted animation. Failures use SysMsg 214 with the original MP/SP labels. Queued approach skills recheck on arrival; the server remains authoritative. The original cost value 1 retains its consume-current-pool meaning.
 
-F2 or a left click on the local portrait selects the player as a normal friendly target; the target frame displays their name and current HP. Dropped items have no floating text. Click their models or use H to approach and pick up, stopping beside the item within 1.5 units. Pickup and removal still require server confirmation.
+F2 or a left click on the local portrait selects the player as a normal friendly target; the target frame displays their name and current HP. Dropped items have no floating text. Click their native selection area or use H to approach and pick up, stopping within one horizontal unit. Pickup and removal still require server confirmation.
 
 Friendly skill results are sent after the recipient applies the heal. Green numbers show effective HP gained rather than the requested amount; zero gain displays no number. Apply the updated GX Server build as well as the client to use the corrected healing announcements.
 
@@ -514,3 +514,7 @@ above the drop, rather than requiring a click on its tiny mesh. Scene depth
 rejects occluded loot. The nearest-item action searches within 30 units; pickup
 approaches within one horizontal unit before sending the request. Inventory
 changes and ground-item removal still wait for server confirmation.
+
+Portrait HP/MP/SP labels use the native 12-cell resource font, white text with
+a one-pixel black shadow and the original centering/row positions. Player names
+retain their separate warm font; displayed current resources are capped at maximum.
