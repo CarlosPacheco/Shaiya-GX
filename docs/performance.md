@@ -220,3 +220,34 @@ is claimed. A float-depth map 1 regression checks camera motion from eight views
 in normal and reverse depth. Separate GL tests check both sides, cutout holes,
 unpaired foliage and raster-state cleanup; field/dungeon batching comparisons
 use the same surface contract.
+
+## Dungeon cursor and stationary mob queries
+
+Cursor hover uses a three-slot, one-pixel PBO readback ring with zero-timeout
+fences. CPU reads occur only after a transfer completes; an unavailable sample
+keeps the cursor neutral. Samples match cursor coordinates, viewport and depth
+convention, and expire after three captured frames. Hover feedback can therefore
+lag briefly; actual clicks still validate the captured scene depth synchronously
+with the original tolerance. Resize, map changes and shutdown discard pending
+samples and release their buffers. Off-target fallback candidates are rejected
+before requesting depth.
+
+Each mob caches its visual grounding result while its interpolated XYZ, world,
+height-authority flag and position-reset serial remain identical. Movement,
+a changed server height, respawn/teleport or a new map recomputes the result.
+Replacing an entity also replaces its actor/cache. Network positions, original
+support queries and different-floor handling remain unchanged; animations and
+effects continue updating for stationary mobs.
+
+Local three-run median measurements on Ryzen 5700G / RTX 3050, NVIDIA 615.78.08:
+
+| Isolated operation | Before | After |
+| --- | ---: | ---: |
+| 1280×720 depth copy plus cursor hover | 1.685 ms | 0.148 ms |
+| Ground queries for 256 stationary mobs, original dungeon map 15 | 0.583 ms | 0.00102 ms |
+
+These benchmarks isolate the reported costs; they do not establish whole-scene
+FPS or eliminate the need for live dungeon validation. GPU benchmark cases each
+own a current context on their locked OS thread. Real-asset regressions cover
+hover/click occlusion, standard/reversed depth, map/resize invalidation and
+matching visual heights on dungeon floors and outdoor terrain.

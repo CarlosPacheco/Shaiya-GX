@@ -20,6 +20,7 @@ func (s *Sprites) CaptureNameDepth(w, h int) {
 	gl.UseProgram(s.prog)
 	gl.Uniform1i(gl.GetUniformLocation(s.prog, gl.Str("reversedDepth\x00")), reversed)
 	if s.depth == nil || s.depth.W != w || s.depth.H != h {
+		s.ResetHoverDepth()
 		if s.depth != nil {
 			s.depth.Delete()
 		}
@@ -35,6 +36,7 @@ func (s *Sprites) CaptureNameDepth(w, h int) {
 	gl.CopyTextureSubImage2D(s.depth.ID, 0, 0, 0, 0, 0, int32(w), int32(h))
 	gl.BindTextureUnit(2, s.depth.ID)
 	s.depthValid = true
+	s.depthFrame++
 }
 
 // InvalidateNameDepth prevents clicks from using a previous frame when no

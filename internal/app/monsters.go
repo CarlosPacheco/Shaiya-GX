@@ -10,6 +10,7 @@ import (
 )
 
 type mobActor struct {
+	ground       mobGroundCache
 	typeID       uint16
 	entity       *game.Entity
 	actor        *scene.CreatureActor
@@ -71,11 +72,7 @@ func (a *App) prepareMonsters() {
 				cached.position.duration = min(10, max(.05, duration))
 			}
 		}
-		if e.MobHeightKnown {
-			pos = v.world.MobGroundPosition(pos)
-		} else if v.world.HasTerrain() {
-			pos[1] = v.world.Height(pos[0], pos[2])
-		}
+		pos = cached.ground.resolve(v.world, pos, e.MobHeightKnown, e.PositionResetSerial)
 		fwd := pos.Sub(cached.pos)
 		if cached.actor.Attacking() {
 			if target, ok := a.effectPosition(cached.attackTarget); ok {

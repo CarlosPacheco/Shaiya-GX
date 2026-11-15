@@ -33,6 +33,8 @@ func (a *App) LoadCursors(window *platform.Window) *platform.Cursors {
 
 // Native 0x41fde0: default, attack, pickup, interaction, drag, talk, aim.
 func (a *App) CursorIndex(w, h int) int {
+	a.hoverPicking = true
+	defer func() { a.hoverPicking = false }()
 	if a.screen != screenWorld || a.wv == nil || a.state == nil {
 		return 0
 	}
@@ -82,4 +84,13 @@ func (a *App) CursorIndex(w, h int) int {
 		return 1
 	}
 	return 0
+}
+
+// Hover uses completed asynchronous depth samples; clicks validate the current
+// captured scene exactly, so cursor feedback cannot permit a click through walls.
+func (a *App) pickNameVisibleAt(x, y, w, h int, depth float32) bool {
+	if a.hoverPicking {
+		return a.sprites.NameHoverVisibleAt(x, y, w, h, depth)
+	}
+	return a.sprites.NameVisibleAt(x, y, w, h, depth)
 }

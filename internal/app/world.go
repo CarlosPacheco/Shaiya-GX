@@ -863,6 +863,7 @@ func (a *App) refreshSelf(v *worldView) {
 }
 
 func (a *App) releaseWorld() {
+	a.sprites.ResetHoverDepth()
 	a.combatNumbers = nil
 	a.appearanceEdit = nil
 	a.mall = mallView{}

@@ -25,6 +25,8 @@ type Sprites struct {
 	depthReadValid         bool
 	depthReadX, depthReadY int
 	depthReadValue         float32
+	depthFrame             uint64
+	hoverDepth             hoverDepthReadback
 	verts                  []float32
 	tex                    *Texture
 	cap                    int
