@@ -1,15 +1,11 @@
-import configparser
-from pathlib import Path
 import struct
 import unittest
-from update_mount_content import patch,RACES
+from update_mount_content import patch,load_bindings
 from update_recreation_content import string
 
 class MountMigrationTest(unittest.TestCase):
     def test_preserves_native_bytes_and_cooldown(self):
-        bindings={}
-        for race in RACES.values():
-            cfg=configparser.ConfigParser();cfg.read(Path(__file__).resolve().parents[1]/'resources/vehicle'/race/'bones.ini');bindings[race]=cfg
+        bindings=load_bindings()
         records=[]
         # Native low/high horses, level-40 variant, double-seat special, board, reindeer.
         for ident,level,grow,model in [(1,25,1,0),(5,50,2,0),(9,40,1,1),(17,50,2,2),(25,28,1,5),(29,28,1,6)]:

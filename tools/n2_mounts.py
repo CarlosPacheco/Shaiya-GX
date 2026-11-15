@@ -2,8 +2,7 @@
 """Validate mounting and passenger UI against disposable GX login/world services."""
 import os,secrets,shutil,socket,sqlite3,subprocess,tempfile,time
 from pathlib import Path
-from update_mount_content import patch,RACES
-import configparser
+from update_mount_content import patch,load_bindings
 
 root=Path(__file__).resolve().parents[1]
 children=[]
@@ -18,9 +17,7 @@ with tempfile.TemporaryDirectory(prefix='gx-mounts-n2-') as temp:
  users=[]
  with sqlite3.connect(database) as db:
   db.row_factory=sqlite3.Row
-  bindings={}
-  for race in RACES.values():
-   cfg=configparser.ConfigParser();cfg.read(root/'resources/vehicle'/race/'bones.ini');bindings[race]=cfg
+  bindings=load_bindings()
   _,mounts=patch((Path(env['SHAIYA_DATA'])/'Item/Item.SData').read_bytes(),bindings)
   db.executemany('UPDATE PS_GameDefs_Items SET Range=?,AttackTime=?,Speed=? WHERE Type=42 AND TypeID=?',[(*meta,i) for i,meta in mounts.items()])
   template=dict(db.execute('SELECT * FROM PS_GameData_Chars WHERE Del=0 LIMIT 1').fetchone())

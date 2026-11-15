@@ -10,14 +10,13 @@ import (
 
 type Bones struct{ Rider, Passenger int }
 
-var RaceFolders = [4]string{"Human", "Elf", "Vail", "DeathEater"}
+var RaceNames = [4]string{"Human", "Elf", "Vail", "DeathEater"}
 
-// ParseBones accepts [MON index] sections with rider and passenger indices.
-// An omitted passenger (or -1) means a single seat. Rider is mandatory.
-func ParseBones(raw []byte) (map[uint8]Bones, error) {
-	out := map[uint8]Bones{}
+// ParseBones reads race sections containing MON-index=rider,passenger pairs.
+// An omitted passenger (or -1) means a single seat.
+func ParseBones(raw []byte) (map[uint8]map[uint8]Bones, error) {
+	out := map[uint8]map[uint8]Bones{}
 	current := -1
-	seen := map[string]bool{}
 	scan := bufio.NewScanner(strings.NewReader(string(raw)))
 	for scan.Scan() {
 		line := strings.TrimSpace(scan.Text())
@@ -25,46 +24,57 @@ func ParseBones(raw []byte) (map[uint8]Bones, error) {
 			continue
 		}
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
-			n, e := strconv.Atoi(line[1 : len(line)-1])
-			if e != nil || n < 0 || n > 255 {
-				return nil, fmt.Errorf("invalid vehicle section %q", line)
+			name := line[1 : len(line)-1]
+			current = -1
+			for i, race := range RaceNames {
+				if name == race {
+					current = i
+					break
+				}
 			}
-			if _, exists := out[uint8(n)]; exists {
-				return nil, fmt.Errorf("duplicate vehicle %d", n)
+			if current < 0 {
+				return nil, fmt.Errorf("unknown vehicle race %q", name)
 			}
-			current = n
-			out[uint8(n)] = Bones{-1, -1}
+			if out[uint8(current)] != nil {
+				return nil, fmt.Errorf("duplicate vehicle race %q", name)
+			}
+			out[uint8(current)] = map[uint8]Bones{}
 			continue
 		}
 		pair := strings.SplitN(line, "=", 2)
 		if current < 0 || len(pair) != 2 {
 			return nil, fmt.Errorf("invalid vehicle binding %q", line)
 		}
-		key := strings.TrimSpace(pair[0])
-		n, e := strconv.Atoi(strings.TrimSpace(pair[1]))
-		tag := fmt.Sprintf("%d/%s", current, key)
-		if e != nil || n < -1 || n > 1023 || seen[tag] {
-			return nil, fmt.Errorf("invalid vehicle bone %q", line)
+		index, err := strconv.Atoi(strings.TrimSpace(pair[0]))
+		if err != nil || index < 0 || index > 255 {
+			return nil, fmt.Errorf("invalid vehicle index %q", pair[0])
 		}
-		seen[tag] = true
-		b := out[uint8(current)]
-		switch key {
-		case "rider":
-			b.Rider = n
-		case "passenger":
-			b.Passenger = n
-		default:
-			return nil, fmt.Errorf("unknown vehicle key %q", key)
+		rows := out[uint8(current)]
+		if _, ok := rows[uint8(index)]; ok {
+			return nil, fmt.Errorf("duplicate vehicle %s/%d", RaceNames[current], index)
 		}
-		out[uint8(current)] = b
+		values := strings.Split(pair[1], ",")
+		if len(values) < 1 || len(values) > 2 {
+			return nil, fmt.Errorf("invalid vehicle seats %q", line)
+		}
+		rider, err := strconv.Atoi(strings.TrimSpace(values[0]))
+		if err != nil || rider < 0 || rider > 1023 {
+			return nil, fmt.Errorf("invalid rider bone %q", line)
+		}
+		passenger := -1
+		if len(values) == 2 {
+			passenger, err = strconv.Atoi(strings.TrimSpace(values[1]))
+			if err != nil || passenger < -1 || passenger > 1023 {
+				return nil, fmt.Errorf("invalid passenger bone %q", line)
+			}
+		}
+		if rider == passenger {
+			return nil, fmt.Errorf("duplicate seat bone %q", line)
+		}
+		rows[uint8(index)] = Bones{rider, passenger}
 	}
 	if err := scan.Err(); err != nil {
 		return nil, err
-	}
-	for i, b := range out {
-		if b.Rider < 0 || b.Rider == b.Passenger {
-			return nil, fmt.Errorf("invalid seats for vehicle %d", i)
-		}
 	}
 	return out, nil
 }

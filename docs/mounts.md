@@ -25,17 +25,19 @@ Characters remain capped at movement tier 4 regardless of ordinary bonuses.
 
 ## Bones and effects
 
-Install the four source-controlled `resources/vehicle/<race>/bones.ini` files
-under `data/Vehicle/<race>/bones.ini`. Race folders are `Human`, `Elf`, `Vail`
-and `DeathEater`. Each section is a racial MON record index:
+Install `resources/vehicle/bones.ini` as `data/Vehicle/bones.ini`, beside the
+racial MON files. Sections are `Human`, `Elf`, `Vail` and `DeathEater`. Each
+entry is `MON index=primary rider bone,secondary rider bone`:
 
 ```ini
-[1]
-rider=25
-passenger=27
+[Human]
+1=25,27
+
+[Elf]
+1=32,46
 ```
 
-An omitted `passenger`, or `passenger=-1`, means no second seat. Bindings must
+An omitted secondary bone, or `-1`, means no second seat. Bindings must
 refer to valid skeleton bones. The initial tables cover all eight available
 native models per race, using Phoenix's verified seat bindings. Phoenix's
 global deduplicated vehicle indices must not be used as racial MON indices.
@@ -65,7 +67,7 @@ client and server versions.
 Stop the installation before migrating its definitions. The offline tool backs
 up the named databases, client table and existing bindings; it changes only the
 three Type 42 metadata fields and preserves accounts, characters, item instances
-and `ReqIg`. It also installs the four bone files. Original client assets are
+and `ReqIg`. It also installs the shared bone file and removes the obsolete per-race files after backing them up. Original client assets are
 not included in the repository.
 
 ```sh

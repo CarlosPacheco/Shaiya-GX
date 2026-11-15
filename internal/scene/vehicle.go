@@ -9,7 +9,7 @@ import (
 
 // Vehicle uses the native race-specific MON records and the same skinning
 // pipeline as creatures. Seat bone indices are the original mount bindings
-// recovered by Phoenix and loaded from each race's external bones.ini.
+// recovered by Phoenix and loaded from the shared Vehicle/bones.ini.
 type Vehicle struct {
 	*CreatureActor
 	seatBone      int
@@ -46,7 +46,7 @@ func (s *Assets) BuildVehicle(race, shape uint8) (*Vehicle, error) {
 	if err := actor.SetAction(8); err != nil {
 		return nil, err
 	}
-	raw, err := s.Arc.ReadFile("Vehicle/" + vehicle.RaceFolders[race] + "/bones.ini")
+	raw, err := s.Arc.ReadFile("Vehicle/bones.ini")
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (s *Assets) BuildVehicle(race, shape uint8) (*Vehicle, error) {
 	if err != nil {
 		return nil, err
 	}
-	bones, ok := bindings[shape]
+	bones, ok := bindings[race][shape]
 	if !ok {
 		return nil, fmt.Errorf("missing seat bindings for race %d MON %d", race, shape)
 	}

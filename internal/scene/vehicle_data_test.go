@@ -28,7 +28,7 @@ func TestRealVehicleSeatSkeletons(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		raw, err = os.ReadFile("../../resources/vehicle/" + vehicle.RaceFolders[race] + "/bones.ini")
+		raw, err = os.ReadFile("../../resources/vehicle/bones.ini")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -36,7 +36,7 @@ func TestRealVehicleSeatSkeletons(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for index, b := range bones {
+		for index, b := range bones[uint8(race)] {
 			row := rows[index]
 			for _, part := range row.Parts {
 				raw, err = arc.ReadFile("Vehicle/3DC/" + path.Base(part[0]))

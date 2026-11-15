@@ -16,6 +16,21 @@ from update_recreation_content import Native, string
 
 RACES = {0: 'Human', 1: 'Elf', 4: 'Vail', 3: 'DeathEater'}
 
+def load_bindings():
+    config=configparser.ConfigParser()
+    config.read(Path(__file__).resolve().parents[1]/'resources/vehicle/bones.ini')
+    bindings={}
+    for race in RACES.values():
+        bindings[race]={}
+        for index,value in config[race].items():
+            primary,separator,secondary=value.partition(',')
+            rider,passenger=int(primary),int(secondary) if separator else -1
+            if not 0<=int(index)<=255 or not 0<=rider<=1023 or not -1<=passenger<=1023 or rider==passenger:
+                raise ValueError(f'Invalid mount bones: {race}/{index}')
+            bindings[race][index]=(rider,passenger)
+    return bindings
+
+
 def definition(level, grow, legacy_range, country, bindings):
     # Native shape = 14/15 + legacy offset, then native client shape->MON.
     shape = (15 if grow > 1 else 14) + (legacy_range*2 if legacy_range < 2 else legacy_range+7)
@@ -24,7 +39,7 @@ def definition(level, grow, legacy_range, country, bindings):
         raise ValueError(f'Unsupported native mount shape {shape}, country {country}')
     index = indices[shape]
     bone = bindings[RACES[country]][str(index)]
-    return index, 2 if bone.getint('passenger', fallback=-1) >= 0 else 1, 5 if level >= 50 else 4
+    return index, 2 if bone[1] >= 0 else 1, 5 if level >= 50 else 4
 
 
 def patch(raw, bindings):
@@ -38,7 +53,7 @@ def patch(raw, bindings):
                 if body[65] in (4,5) and body[33] in (1,2):
                     # Already explicit: validate external bindings, keep idempotence.
                     bone=bindings[RACES[body[6]]][str(body[32])]
-                    expected=2 if bone.getint('passenger',fallback=-1)>=0 else 1
+                    expected=2 if bone[1]>=0 else 1
                     if body[33]!=expected: raise ValueError('Mount seat metadata disagrees with bones.ini')
                     meta=body[32],body[33],body[65]
                 else:
@@ -57,9 +72,7 @@ def main():
     ap.add_argument('--backup-dir',type=Path,required=True)
     args=ap.parse_args()
     root=Path(__file__).resolve().parents[1]
-    bindings={}
-    for race in RACES.values():
-        config=configparser.ConfigParser();config.read(root/'resources/vehicle'/race/'bones.ini');bindings[race]=config
+    bindings=load_bindings()
     item=next(p for p in args.data.rglob('*') if p.is_file() and p.name.lower()=='item.sdata')
     raw,rows=patch(item.read_bytes(),bindings)
     # Validate every DB before changing any input. Original and migrated records only.
@@ -82,10 +95,15 @@ def main():
             metadata=json.loads(manifest.read_text());shutil.copy2(manifest,args.backup_dir/(path.parent.name+'-manifest.json'))
             metadata['sha256']=hashlib.sha256(path.read_bytes()).hexdigest();manifest.write_text(json.dumps(metadata,indent=2)+'\n')
     temp=item.with_suffix('.mount.tmp');temp.write_bytes(raw);temp.replace(item)
+    dest=args.data/'Vehicle/bones.ini';dest.parent.mkdir(parents=True,exist_ok=True)
+    if dest.exists():shutil.copy2(dest,args.backup_dir/'bones.ini')
+    shutil.copy2(root/'resources/vehicle/bones.ini',dest)
     for race in RACES.values():
-        dest=args.data/'Vehicle'/race/'bones.ini';dest.parent.mkdir(parents=True,exist_ok=True)
-        if dest.exists():shutil.copy2(dest,args.backup_dir/(race+'-bones.ini'))
-        shutil.copy2(root/'resources/vehicle'/race/'bones.ini',dest)
-    print(f'Migrated {len(rows)} mount definitions and four bone bindings; ReqIg preserved.')
+        legacy=args.data/'Vehicle'/race/'bones.ini'
+        if legacy.exists():
+            shutil.copy2(legacy,args.backup_dir/(race+'-bones.ini'));legacy.unlink()
+            try:legacy.parent.rmdir()
+            except OSError:pass  # Preserve any unrelated files in the old folder.
+    print(f'Migrated {len(rows)} mount definitions and shared bone bindings; ReqIg preserved.')
 
 if __name__=='__main__':main()
