@@ -181,8 +181,9 @@ func (m *CreatureActor) AttackAction(slot uint8) int {
 
 // NumberHeight is the authored MON vertical anchor used by native 0x450a10.
 func (m *CreatureActor) NumberHeight() float32 {
-	if m.visual.Height <= -1 {
+	height := m.visual.Height + .2 // 0x431770: MON height plus native headroom.
+	if height <= -1 {
 		return 1.2
 	}
-	return m.visual.Height
+	return height
 }

@@ -517,7 +517,8 @@ Names retain their separate warm font. Values above maximum are clamped for disp
 
 Floating combat numbers now use the native anchor policy from `0x450a10`:
 players add 1.2 to their logical origin (2.1 above GX feet), while creatures use
-the authored MON height instead of a fixed 1.2 offset. Their sampled position
+the authored MON height plus native 0.2 headroom (`0x431770`) instead of a fixed
+1.2 offset. Their sampled position
 still detaches from the actor when the number is emitted.
 
 Physical bows, crossbows and javelins now use the original arrow/thrown weapon

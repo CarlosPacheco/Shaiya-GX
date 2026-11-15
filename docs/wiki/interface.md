@@ -527,5 +527,5 @@ models for basic attacks and offensive physical skills. Nocked arrows use the
 actual weapon bone; launched shots own their target independently of later
 animations and show recipient feedback at arrival. See [ranged projectile
 behavior](../ranged-projectiles.md). Floating-number anchors use native user
-logical origins and creature MON heights. WLD Ladder objects render on both
+logical origins and creature MON heights plus the native 0.2 headroom. WLD Ladder objects render on both
 sides and remain non-solid, matching Phoenix's visual object section.

@@ -92,7 +92,7 @@ func TestCombatNumbersUseNativeUserAndCreatureAnchors(t *testing.T) {
 	a.wv.mobs = map[uint32]*mobActor{}
 	a.wv.mobs[2] = &mobActor{actor: &scene.CreatureActor{}}
 	a.showCombatNumber(2, 10, false, false, false)
-	if a.combatNumbers[1].Point[1] != 3 {
+	if math.Abs(float64(a.combatNumbers[1].Point[1]-3.2)) > .0001 {
 		t.Fatal("MON zero-height anchor overwritten by generic +1.2", a.combatNumbers)
 	}
 }
