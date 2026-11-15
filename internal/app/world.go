@@ -510,9 +510,9 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 			v.self.SetClip("006_swnormal")
 		case a.state.Self.Sitting:
 			v.self.SetClip("012_sit")
-		case airborne && v.walking:
+		case airborne && moving && v.walking:
 			v.self.SetClip("001_walk")
-		case airborne:
+		case airborne && moving:
 			v.self.SetClip("002_run")
 		case moving && back:
 			v.self.SetClip("003_bstep")
@@ -531,9 +531,12 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		v.self.Update(float32(dt))
 		// The jump is a single ALT action, not a looping airborne clip.
 		if jumpAction && !v.self.ActionActive() && airborne {
-			clip := "002_run"
-			if v.walking {
-				clip = "001_walk"
+			clip := "000_normal"
+			if moving {
+				clip = "002_run"
+				if v.walking {
+					clip = "001_walk"
+				}
 			}
 			v.self.SetClip(clip)
 		}

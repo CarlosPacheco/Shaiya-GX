@@ -58,9 +58,6 @@ func remoteLocomotion(w *scene.World, e *game.Entity) string {
 	if e.Sitting {
 		return "012_sit"
 	}
-	if !w.PlayerSupported(render.V3{e.X, e.Y, e.Z}) {
-		return "002_run"
-	}
 	if moving {
 		switch e.Motion & 0x3f {
 		case 2:

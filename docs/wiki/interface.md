@@ -494,7 +494,8 @@ plus 0.5 units along horizontal camera-right, independent of camera pitch.
 The original vertical blue bar style and elapsed-fill behavior are preserved.
 
 Jump is a single original ALT action, not a looping airborne clip. Continued
-falling uses run/walk after that action finishes, including remote players.
+falling uses run/walk only with active horizontal movement after that action
+finishes; stationary falls use the standard idle pose.
 Moving jump requests first flush pending position so the server tests the same
 support surface. Active landing no longer rewinds the owner to an older X/Z
 snapshot; invalid movement and idle gravity remain server-authoritative.

@@ -77,12 +77,32 @@ func TestJumpActionFinishesOnceDuringLongFallGL(t *testing.T) {
 		v.walking = walking
 		v.moving, v.motion, v.sendT = false, 0, 1000
 		a.updateWorld(&platform.Input{}, 1.0/60)
-		want := "002_run"
-		if walking {
-			want = "001_walk"
+		if !v.self.PlayingClip("000_normal") {
+			t.Fatal("uncommanded fall must use idle", walking)
 		}
-		if !v.self.PlayingClip(want) {
-			t.Fatal("uncommanded fall retained stale jump or idle", walking)
+	}
+
+	// Releasing movement during an actual jump must return to idle, including
+	// the frame where the one-shot jump finishes.
+	for _, walking := range []bool{false, true} {
+		v.self.ReleaseAction()
+		v.place(start.Add(render.V3{0, 80, 0}))
+		v.walking = walking
+		v.beginJump()
+		for frame := 0; frame < 180; frame++ {
+			in := &platform.Input{}
+			v.moving, v.motion, v.sendT = false, 0, 1000
+			if v.jumping {
+				v.motion = 0x84
+			}
+			if frame < 5 {
+				in.Down = "W"
+				v.moving, v.motion = true, 0x84
+			}
+			a.updateWorld(in, 1.0/60)
+			if frame >= 5 && !v.self.ActionActive() && !v.self.PlayingClip("000_normal") {
+				t.Fatalf("released movement forced locomotion during fall: walk=%v frame=%d", walking, frame)
+			}
 		}
 	}
 

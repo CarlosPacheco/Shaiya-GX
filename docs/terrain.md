@@ -79,6 +79,6 @@ was increased to suppress the rewind.
 
 Jump presentation plays original ALT action 8 once. Its animation duration is
 independent of the physical time spent airborne. Once it finishes, continued
-falling uses run or walk, for both the owner and remote users; ordinary falls
-also use airborne locomotion. Switching clips at action completion prevents a
+falling uses run or walk only while horizontal movement is active. Releasing
+movement returns to the standard idle pose; uncommanded falls also use idle. Switching clips at action completion prevents a
 wrapped first jump frame from appearing during the transition.
