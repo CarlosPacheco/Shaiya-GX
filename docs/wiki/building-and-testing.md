@@ -108,3 +108,16 @@ SQLite stores the resulting text without an encoding migration.
 The Drive bundle is an older snapshot; update both client and server from the
 matching GitHub release. Tagged releases use the reviewed notes in
 `docs/releases/<tag>.md`. Local work does not trigger publication automatically.
+
+## Server physics resources for a source checkout
+
+Before running or packaging the server from a clean checkout, install the pinned
+resources with `python3 tools/fetch_server_geometry.py`. The script verifies the
+archive and every map manifest, and never replaces an existing generation.
+Native Linux/Windows CI runs the same step before server integration tests and
+portable packaging. Published server packages include the resources already.
+
+The resource release contains navigation and collision geometry for maps 0–67;
+it does not contain original client artwork. For future maps or layout changes,
+regenerate the server resources with the map builder in
+[server navigation](mob-navigation.md), then ship the new generation with the server.

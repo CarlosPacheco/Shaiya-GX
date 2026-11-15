@@ -23,8 +23,15 @@ Start `Server/build/gx_server` on Linux or `Server/build/gx_server.exe` on Windo
 then click **Start server**. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables and preserve all licenses.
 
+**Latest binary update: [gx-v0.1.9](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.9).**
+The Drive download remains the complete gx-v0.1.8 base. Close client and server,
+apply the matching client/server update together, retain `Client/data/` and
+preserve the existing server `runtime/` database. Merge the update's server
+`data/geometry/` resources as well as its binaries and fonts. The update includes
+physics/navigation for all 68 maps; no separate server resource download is needed.
+
 The [GitHub combined binary portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip)
-has the same `Client/` and `Server/` layout, with fonts and the server seed/maps,
+has the same `Client/` and `Server/` layout, with fonts and the server seed/maps/physics,
 and is intended for optional binary updates to an existing complete installation.
 For a first installation, use the all-in-one Drive download above. Original client
 resources are not included in the source repository or GitHub binary archives.
@@ -41,7 +48,7 @@ Source, build instructions and third-party font sources: https://github.com/Spel
 
 Update GX Server and the client together. Use the complete package linked
 above, containing matching client/server builds and game data; preserve existing server runtime
-databases when upgrading. See the [current patch notes](releases/gx-v0.1.8.md).
+databases when upgrading. See the [current patch notes](releases/gx-v0.1.9.md).
 
 
 ## Optional maintainer packaging
@@ -50,7 +57,7 @@ The complete Drive download above needs no assembly. Maintainers who want a
 binary-only folder from GitHub release archives can run:
 
 ```sh
-python3 tools/package_bundle.py --archives /path/to/archives --without-data --output /path/to/new-folder --tag gx-v0.1.8
+python3 tools/package_bundle.py --archives /path/to/archives --without-data --output /path/to/new-folder --tag gx-v0.1.9
 ```
 
 The resulting `Client/` and `Server/` directories contain both operating

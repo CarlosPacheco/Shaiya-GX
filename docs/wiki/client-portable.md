@@ -23,8 +23,15 @@ Start `Server/build/gx_server` on Linux or `Server/build/gx_server.exe` on Windo
 then click **Start server**. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables and preserve all licenses.
 
+**Latest binary update: [gx-v0.1.9](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.9).**
+The Drive download remains the complete gx-v0.1.8 base. Close client and server,
+apply the matching client/server update together, retain `Client/data/` and
+preserve the existing server `runtime/` database. Merge the update's server
+`data/geometry/` resources as well as its binaries and fonts. The update includes
+physics/navigation for all 68 maps; no separate server resource download is needed.
+
 The [GitHub combined binary portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip)
-has the same `Client/` and `Server/` layout, with fonts and the server seed/maps,
+has the same `Client/` and `Server/` layout, with fonts and the server seed/maps/physics,
 and is intended for optional binary updates to an existing complete installation.
 For a first installation, use the all-in-one Drive download above. Original client
 resources are not included in the source repository or GitHub binary archives.
