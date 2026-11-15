@@ -1,9 +1,11 @@
 package pvprank
 
-// RewardCount and the tables below are the EP4.5 server's g_tKillInfo
-// (0x00541d70), g_tDeathInfo (0x00541eb0), g_nMaxKillGrow (0x00541f70).
-// These are claim stages, separate from the EP5 client's 31 display ranks.
-const RewardCount = 16
+// GX uses all 31 stages from the EP5 client's verified tables by explicit
+// user request. This extends the older EP4.5 server's 16-stage limit.
+const RewardCount = 31
+
+// CounterCap is the final threshold in the client's rank table.
+const CounterCap = 1000000
 
 var statRewards = [31][3]uint16{
 	{1, 1, 1}, {2, 3, 3}, {3, 5, 5}, {5, 7, 7},
@@ -27,7 +29,7 @@ func Reward(mode, stage uint8) (count uint32, points uint16, money uint32, ok bo
 }
 
 // DisplayReward is the EP5 client preview at 0x0070b164/1e4/264/364. Its
-// 31 preview rows do not extend the reference server's 16 redeemable stages.
+// 31 rows also supply GX's authoritative reward amounts.
 func DisplayReward(mode, stage uint8) (count uint32, points uint16, money uint32, ok bool) {
 	if mode < 1 || mode > 3 || stage < 1 || stage > 31 {
 		return 0, 0, 0, false

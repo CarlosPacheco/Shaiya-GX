@@ -1017,7 +1017,7 @@ func TestUserAttack(t *testing.T) {
 	if attacker.hostileUser(enemy.char.ID) != nil {
 		t.Fatal("a dead user is attackable")
 	}
-	// Native g_tKillInfo/g_tDeathInfo[15]: counters saturate at 200000.
+	// GX uses the final client threshold: both counters saturate at 1000000.
 	attacker.char.Kills = pvpKillCap - 1
 	attacker.killPCTo()
 	attacker.killPCTo()

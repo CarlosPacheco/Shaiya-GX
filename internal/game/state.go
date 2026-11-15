@@ -271,12 +271,12 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		if value.OK {
 			if op == proto.PvPRewardKill {
 				s.Details.StatPoint += uint16(value.Value)
-				if s.PvPRewards.KillStage < 17 {
+				if s.PvPRewards.KillStage < proto.PvPRewardFinishedStage {
 					s.PvPRewards.KillStage++
 				}
 			} else {
 				s.Details.Money = uint32(min(uint64(s.Details.Money)+uint64(value.Value), uint64(^uint32(0))))
-				if s.PvPRewards.DeathStage < 17 {
+				if s.PvPRewards.DeathStage < proto.PvPRewardFinishedStage {
 					s.PvPRewards.DeathStage++
 				}
 			}

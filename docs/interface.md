@@ -275,9 +275,10 @@ portrait, coloured explanation, rank guide, scroll controls and two confirmed
 claim actions. Normal mode or higher and level 16 are required. Native
 0x0218/0x0219/0x021A carry next claim stages, awarded stat points and death-benefit
 gold. Each action redeems one earned stage; reconnects retain claimed stages.
-The reference EP4.5 server has 16 reward stages and caps kills/deaths at 200,000;
-the EP5 client contains 31 display/preview ranks. The extended artwork/table
-does not raise the server limit. A stat reset preserves the earned kill count
+GX uses all 31 client-table ranks and reward stages, with kills/deaths capped
+at 1,000,000 by explicit request. Stat points for every mode and rank and all
+death-benefit amounts come from the verified EP5 client tables; no high-rank
+placeholder values are used. A stat reset preserves the earned kill count
 and clears its claimed reward stages, allowing their points to be redeemed
 again; death-benefit claims are preserved.
 The kill progress strip shows kills divided by the next claim threshold;

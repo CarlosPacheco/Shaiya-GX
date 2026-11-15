@@ -1,11 +1,16 @@
 package proto
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/pvprank"
+)
 
 const (
-	PvPRewardStatus Opcode = 0x0218
-	PvPRewardKill   Opcode = 0x0219
-	PvPRewardDeath  Opcode = 0x021A
+	PvPRewardStatus        Opcode = 0x0218
+	PvPRewardKill          Opcode = 0x0219
+	PvPRewardDeath         Opcode = 0x021A
+	PvPRewardFinishedStage        = pvprank.RewardCount + 1
 )
 
 type PvPRewards struct {
@@ -24,7 +29,7 @@ func DecodePvPRewards(p []byte) (PvPRewards, error) {
 	if err := r.Err(); err != nil {
 		return v, err
 	}
-	if r.Remaining() != 0 || v.KillStage < 1 || v.KillStage > 17 || v.DeathStage < 1 || v.DeathStage > 17 {
+	if r.Remaining() != 0 || v.KillStage < 1 || v.KillStage > PvPRewardFinishedStage || v.DeathStage < 1 || v.DeathStage > PvPRewardFinishedStage {
 		return v, fmt.Errorf("invalid PvP reward stages")
 	}
 	return v, nil

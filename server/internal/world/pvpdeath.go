@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/pvprank"
 	"math"
 	"math/rand/v2"
 	"time"
@@ -45,14 +46,16 @@ import (
 //     on the ground; else (or nobody in range) it lies on the ground for
 //     the killer and the killer's party.
 //
+// GX extends both counters to the client's final threshold (1000000),
+// with all 31 client-table reward stages, as explicitly requested.
 // Country blessing and duel counters are handled by killcount.go, duel.go and
 // guildduel.go. Native redeemable reward stages are in pvpreward.go.
 
 const (
 	damageByUser       = 1
 	damageByMob        = 2
-	pvpKillCap         = 200000
-	pvpDeathCap        = 200000
+	pvpKillCap         = pvprank.CounterCap
+	pvpDeathCap        = pvprank.CounterCap
 	pvpExpFactor       = 1.2
 	pvpDropLevel       = 10
 	pvpNoDropAbility   = 37

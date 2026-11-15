@@ -38,23 +38,23 @@ func TestPvPRewardStagesCannotBeReplayedOrSkipped(t *testing.T) {
 				t.Fatal("death stage replay")
 			}
 		}
-		if ch.StatPoint != [4]uint16{0, 208, 262, 299}[mode] {
+		if ch.StatPoint != [4]uint16{0, 508, 637, 734}[mode] {
 			t.Fatal("redeemed stat total")
 		}
 		for range 2 {
 			resetStats(&ch)
 			base := 15 * [4]uint16{0, 5, 7, 9}[mode]
-			if ch.StatPoint != base || ch.KillLevel != 0 || ch.DeadLevel != 16 || ch.Kills != 200000 {
+			if ch.StatPoint != base || ch.KillLevel != 0 || ch.DeadLevel != pvprank.RewardCount || ch.Kills != pvprank.CounterCap {
 				t.Fatal("native reset must clear only kill claims and retain earned counters/death claims", ch)
 			}
-			for range 16 {
+			for range pvprank.RewardCount {
 				next, _, ok := claimPvPReward(ch, false)
 				if !ok {
 					t.Fatal("reset did not permit earned PvP rewards to be redeemed again")
 				}
 				ch = next
 			}
-			if ch.StatPoint != base+[4]uint16{0, 208, 262, 299}[mode] {
+			if ch.StatPoint != base+[4]uint16{0, 508, 637, 734}[mode] {
 				t.Fatal("reclaim after reset duplicated or lost points")
 			}
 		}

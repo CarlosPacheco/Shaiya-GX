@@ -75,3 +75,37 @@ func TestStatusTitleFollowsConfirmedKillUpdates(t *testing.T) {
 		}
 	}
 }
+
+func TestPvPFinalRewardStageRemainsVisibleAndCannotReplay(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID = 100
+	a.state.Slots[0] = proto.CharacterSlot{ID: 100, Mode: 2, Level: 40}
+	a.msg = map[int]string{5404: "final title", 5353: "<v>:<v2>", 5354: "level", 5355: "gold"}
+	a.state.Details.Kills, a.state.Details.Deaths = 1000000, 1000000
+	a.state.PvPRewards = proto.PvPRewards{Known: true, KillStage: 31, DeathStage: 31}
+	if state := a.pvpRewardState(); !state.CanKill || !state.CanDeath || state.Reward != "31:26" {
+		t.Fatal("rank31 must offer client-table Hard points", state)
+	}
+	for _, op := range []proto.Opcode{proto.PvPRewardKill, proto.PvPRewardDeath} {
+		w := proto.NewWriter(op)
+		w.U8(1)
+		if op == proto.PvPRewardKill {
+			w.U8(26)
+		} else {
+			w.U32(4000000)
+		}
+		if _, err := a.state.Apply(w.Bytes()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if a.state.PvPRewards.KillStage != 32 || a.state.PvPRewards.DeathStage != 32 {
+		t.Fatal("final paid stage lost completion marker", a.state.PvPRewards)
+	}
+	s := a.pvpRewardState()
+	if s.CanKill || s.CanDeath || s.Reward != "31:26" || s.Kills != "1000000 / 1000000" || s.DeathLevel != "31 level / 31 level" || s.KillProgress != 1 || s.DeathProgress != 1 {
+		t.Fatal("paid final reward must remain visible without a stage32 preview or replay", s)
+	}
+	if a.statusState().Title != "final title" {
+		t.Fatal("one million kills lost final SysMsg title")
+	}
+}

@@ -5,8 +5,8 @@ import "testing"
 func TestPvPRewardNativeLayouts(t *testing.T) {
 	w := NewWriter(PvPRewardStatus)
 	w.U8(1)
-	w.U8(17)
-	if v, err := DecodePvPRewards(w.Bytes()); err != nil || v.KillStage != 1 || v.DeathStage != 17 || !v.Known {
+	w.U8(32)
+	if v, err := DecodePvPRewards(w.Bytes()); err != nil || v.KillStage != 1 || v.DeathStage != 32 || !v.Known {
 		t.Fatal(v, err)
 	}
 	for _, death := range []bool{false, true} {
