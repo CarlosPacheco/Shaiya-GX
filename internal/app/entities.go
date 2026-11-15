@@ -403,7 +403,7 @@ func (a *App) drawPlayerNames(w, h int) {
 	if slot, ok := a.selfSlot(); ok && v.self != nil && settings.OwnName {
 		if pos, ok := v.self.NameAnchor(); ok {
 			label(slot.Name, pos, white, 0, a.state.Self.IsGM)
-			label(guildCaption(a.state, a.state.Guild.ID), pos, [4]float32{.72, .93, .72, 1}, -18)
+			label(guildCaption(a.state, a.state.Guild.ID), pos, [4]float32{.72, .93, .72, 1}, a.font.Height-2)
 		}
 	}
 	for _, e := range a.state.Entities {
@@ -468,7 +468,7 @@ func (a *App) drawPlayerNames(w, h int) {
 					}
 				}
 				if e.Kind == game.KindUser {
-					label(guildCaption(a.state, e.GuildID), pos, [4]float32{.72, .93, .72, 1}, -18)
+					label(guildCaption(a.state, e.GuildID), pos, [4]float32{.72, .93, .72, 1}, a.font.Height-2)
 				}
 			}
 		}
