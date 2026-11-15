@@ -1,14 +1,14 @@
 # Shaiya GX portable client and server
 
-## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1XU2Tk05VfO9hrtx3yIMevo9ALqFq4pW3/view?usp=sharing)
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1d4SXIYcALvBsbooLAW8tlKNUHa0x72dr/view?usp=sharing)
 
-**gx-v0.1.8 for Windows and Linux.** This Google Drive package includes both
+**gx-v0.1.9 for Windows and Linux.** This Google Drive package includes both
 executables, GX Server, client game data, fonts and the development database.
 **Everything is included; no separate data download is needed.**
 Extract the entire package into a writable folder:
 
 ```text
-Shaiya GX gx-v0.1.8 Portable/
+Shaiya GX gx-v0.1.9 Portable/
   Client/
     Shaiya GX
     Shaiya GX.exe
@@ -24,8 +24,9 @@ then click **Start server**. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables and preserve all licenses.
 
 **Latest binary update: [gx-v0.1.9](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.9).**
-The Drive download remains the complete gx-v0.1.8 base. Close client and server,
-apply the matching client/server update together, retain `Client/data/` and
+The complete Drive download already includes gx-v0.1.9; a new installation needs
+no separate binary update. For future updates, close client and server, apply
+matching client/server builds together, retain `Client/data/` and
 preserve the existing server `runtime/` database. Merge the update's server
 `data/geometry/` resources as well as its binaries and fonts. The update includes
 physics/navigation for all 68 maps; no separate server resource download is needed.

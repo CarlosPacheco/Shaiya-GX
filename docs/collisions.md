@@ -132,8 +132,9 @@ depth modes. Local content auditing covers all 68 numeric WLDs without GL.
 The Linux N2 probe uses isolated login/world processes and a disposable database
 for controls, jump/landing, remote motion, travel and persistence. Separate
 movement checks verify float32 integration, terrain traversal and submerged
-position persistence. Windows runtime parity is not established by these Linux
-checks; no Windows collision build has been produced in this local phase.
+position persistence. Published gx-v0.1.9 includes native Linux and Windows builds with CI startup
+checks. The full collision/gameplay probes described here ran on Linux; native
+Windows packaging and startup do not establish complete gameplay parity.
 
 The server uses versioned resources generated from the same authored sources,
 checks their hashes, limits horizontal travel using server time, and integrates

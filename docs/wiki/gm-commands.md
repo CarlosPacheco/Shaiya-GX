@@ -87,7 +87,7 @@ See [Server operations](server-operations.md) before changing account roles or
 selecting a database, and [Item data](item-data.md) for definition identifiers.
 
 See [Stealth and GM protection](stealth-and-gm-protection.md) for visibility,
-combat disengagement, ordinary stealth reveal rules, persistent GM command modes
+combat disengagement, ordinary stealth reveal rules, retired GM controls
 and the recovered visual.
 
 ## Collision diagnostics (local development)
@@ -101,7 +101,8 @@ Gold shows blocking faces, cyan model support surfaces, blue the terrain and
 magenta the player's ellipsoid. Grass, decorative VANI and models without
 collision remain traversable according to the recovered original rules.
 See [Original world collisions](../collisions.md) for geometry selection,
-native evidence, validation and the subsequent authoritative-server stage.
+native evidence and validation. The server uses versioned geometry and
+authoritative movement checks; see [ground navigation](../mob-navigation.md).
 
 ## Teleport from a map
 
