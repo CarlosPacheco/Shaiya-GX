@@ -69,6 +69,11 @@ func (a *App) confirmedAnimation(p []byte) {
 		}
 	case proto.SkillUse, proto.SkillUseNoTarget, proto.SkillUserDrain, proto.SkillMobDrain:
 		r := a.state.LastSkill
+		if r.Source == a.state.SelfID && r.Result <= 4 && !(r.Result == 3 && r.Target == 0) {
+			if d := a.skillDefs[sdata.SkillKey{ID: r.ID, Level: r.Level}]; d.Effect == 1 || d.Effect == 3 {
+				a.confirmAttackStop()
+			}
+		}
 		predicted := a.matchingRequestedSkill(r)
 		if r.Source == a.state.SelfID {
 			v.requestedSkill = nil
@@ -95,7 +100,10 @@ func (a *App) confirmedAnimation(p []byte) {
 			weapon := a.playerWeapon(r.Source)
 			a.faceSkillTarget(r.Source, r.Target)
 			a.attackVariant++
-			actor.PlayAction(scene.SkillAction(d.Animation, d.Attack, d.Effect, weapon, a.attackVariant), false)
+			if actor.PlayAction(scene.SkillAction(d.Animation, d.Attack, d.Effect, weapon, a.attackVariant), false) && r.Source == a.state.SelfID && (d.Effect == 1 || d.Effect == 3) {
+				v.attackPose = true
+				v.attackActionID = actor.ActionID()
+			}
 		}
 	case proto.CharacterMove:
 		if actor := a.playerActor(proto.NewReader(p).U32()); actor != nil {
@@ -109,6 +117,7 @@ func (a *App) confirmedAnimation(p []byte) {
 		if actor := a.playerActor(result.Source); actor != nil {
 			typ := a.playerWeapon(result.Source)
 			if result.Source == a.state.SelfID {
+				a.confirmAttackStop()
 				if target := a.state.Entities[result.Target]; target != nil {
 					dir := (render.V3{target.X, 0, target.Z}).Sub(render.V3{v.pos[0], 0, v.pos[2]}).Norm()
 					if dir.Len() > 0 {
@@ -118,6 +127,9 @@ func (a *App) confirmedAnimation(p []byte) {
 			}
 			a.attackVariant++
 			if actor.PlayAction(scene.AttackAction(typ, a.attackVariant), false) {
+				if result.Source == a.state.SelfID {
+					v.attackActionID = actor.ActionID()
+				}
 				a.queueAttackSounds(result, typ, actor)
 			}
 		}

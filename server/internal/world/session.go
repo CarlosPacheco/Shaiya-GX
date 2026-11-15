@@ -76,6 +76,7 @@ type Session struct {
 	duelDeathMark    bool          // the last death was a lost duel (m_nVehicleStatus -1)
 	itemAttacking    bool          // m_bItemAttack: casting gem skills
 	lastAutoAttackAt time.Time
+	attackMoveUntil  time.Time
 
 	positionDirty    bool
 	lastPositionSave time.Time
@@ -615,8 +616,7 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 			s.handleTradeConfirm(p[2] != 0)
 		}
 	case packet.CharacterMove:
-		// Any movement interrupts a cast and the auto-attack.
-		s.cast, s.autoAttack = nil, false
+		s.cast = nil // Preserve movement interruption of spell preparation.
 		s.handleCharacterMove(p)
 	case packet.CharacterMotion:
 		s.handleMotion(p)

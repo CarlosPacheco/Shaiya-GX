@@ -126,6 +126,7 @@ func (s *Session) handleCharacterMove(p []byte) {
 	y, _ := packet.F32(p[9:])
 	z, _ := packet.F32(p[13:])
 	ch := s.char
+	oldX, oldZ := ch.PosX, ch.PosZ
 	if x != ch.PosX || z != ch.PosZ {
 		s.cancelMove()
 	}
@@ -134,6 +135,9 @@ func (s *Session) handleCharacterMove(p []byte) {
 		s.log.Printf("GX Server movement rejected: %s", reason)
 		s.correctMovement(reason)
 		return
+	}
+	if ch.PosX != oldX || ch.PosZ != oldZ {
+		s.autoAttack = false
 	}
 	x, y, z = ch.PosX, ch.PosY, ch.PosZ
 	motion = s.movement.motion

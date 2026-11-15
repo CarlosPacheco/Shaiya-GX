@@ -169,7 +169,7 @@ func (a *App) updateSkills(in *platform.Input, w, h int) bool {
 		}
 	} else if action.Learn < 0 && action.Select >= 0 && v.offset+action.Select < len(keys) {
 		if k, ok := a.learnedSkill(keys[v.offset+action.Select].ID); ok && a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}].Effect != 0 && a.world != nil {
-			if packet := a.learnedSkillPacket(k); packet != nil && !a.approachSkillPacket(packet) {
+			if packet := a.learnedSkillPacket(k); packet != nil && !a.approachSkillPacket(packet) && a.prepareSkillMovement(packet) {
 				if err := a.world.Send(packet); err != nil {
 					a.backToLogin("Unable to use skill.")
 					return true
@@ -409,6 +409,9 @@ func (a *App) useAction(index int) {
 	}
 	if p := a.actionPacket(index); p != nil {
 		if a.approachSkillPacket(p) {
+			return
+		}
+		if !a.prepareSkillMovement(p) {
 			return
 		}
 		if err := a.world.Send(p); err != nil {

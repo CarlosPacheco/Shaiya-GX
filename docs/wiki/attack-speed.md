@@ -88,3 +88,22 @@ and cap behavior, cast blocking, all ten cooldowns under restart/target floods,
 confirmed-only UI, socket aggregation and original-asset OpenGL captures. Isolated
 N2 also measures encrypted PvP swing intervals of 1500/1250/1000 ms while changing
 Flash Ring and a native attack buff and flooding stop/start requests.
+
+## Movement and jumping during attacks
+
+A successful basic attack or offensive skill commits a **500 ms horizontal
+movement pause**, predicted by the client and enforced by the world server.
+The weapon's attack interval remains independent and cannot be reset by
+stop/start requests. The pause clears horizontal movement credit rather than
+banking speed for a later burst; vertical gravity continues normally.
+
+The attacker may attack during a stationary jump. An attacker who is both
+moving horizontally and airborne cannot start a hit. The server checks its
+own physics and observed movement, so a forged stationary packet cannot
+immediately hide recent travel. The victim's jumping or movement never grants
+immunity. Existing cast preparation/cancellation rules remain in effect.
+
+Moving after the pause cancels the remaining attack animation and autoattack;
+it does not allow a running swing. Healing and buffs are not given an offensive
+movement pause. Client/server builds must be updated together for matching
+prediction and enforcement.

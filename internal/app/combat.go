@@ -152,6 +152,9 @@ func (a *App) pickupNearest() bool {
 }
 
 func (a *App) attackTarget() bool {
+	if !a.attackMovementAllowed() || a.clock < a.wv.attackMoveUntil {
+		return true
+	}
 	if a.state.Self.Dead {
 		a.wv.sitAttack = 0
 		return true
@@ -179,6 +182,9 @@ func (a *App) attackTarget() bool {
 		a.wv.approachTarget, a.wv.approachLoot = e.ID, false
 		a.wv.approachSkill = nil
 		return a.updateActionApproach(&platform.Input{})
+	}
+	if !a.stopForAttack() {
+		return false
 	}
 	// Rapture decides whether a player is hostile (faction, PvP map, duel,
 	// guild duel). A client-side duel-only check would block normal PvP.

@@ -141,6 +141,9 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 		if !a.faceRequestedTarget(id) {
 			return false
 		}
+		if !a.prepareSkillMovement(packet) {
+			return true
+		}
 		if err := a.world.Send(packet); err != nil {
 			a.backToLogin("Unable to cast after approaching target.")
 			return false

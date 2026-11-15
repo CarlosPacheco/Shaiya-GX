@@ -72,6 +72,9 @@ type worldView struct {
 	cameraReady             bool
 	cameraEye, cameraTarget render.V3
 	firstDirection          render.V3
+	attackMoveUntil         float64
+	attackPose              bool
+	attackActionID          uint64
 	jumping                 bool
 	jumpFall                float32
 	jumpFloor               float32
@@ -426,6 +429,9 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 			return
 		}
 	}
+	if a.clock < v.attackMoveUntil {
+		dir = render.V3{}
+	}
 	moving := dir.Len() > 0 && speed > 0 && !a.state.Self.Dead
 	diving := false
 	if moving {
@@ -482,6 +488,13 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	a.updateWaterPresentation(float32(dt), moving, swimming)
 	airborne := v.jumping || !v.world.PlayerSupported(v.pos)
 	if v.self != nil {
+		if v.attackPose && (!v.self.ActionActive() || v.self.ActionID() != v.attackActionID) {
+			v.attackPose = false
+		}
+		if moving && v.attackPose {
+			v.self.ReleaseAction()
+			v.attackPose = false
+		}
 		if moving || v.jumping {
 			v.self.CancelCast()
 			cancelGesture(v.self)

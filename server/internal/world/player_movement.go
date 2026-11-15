@@ -22,6 +22,7 @@ type playerMovement struct {
 	credit                         float32
 	jumping                        bool
 	jumpFall, fall, waterFall      float32
+	horizontalAt                   time.Time
 	motion                         uint8
 	direction                      uint16
 }
@@ -230,18 +231,30 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		return false, "non-finite position"
 	}
 	s.advancePlayerVertical(now)
-	elapsed := max(float32(0), float32(now.Sub(m.budgetAt).Seconds()))
+	budgetAt := m.budgetAt
+	if s.attackMoveUntil.After(budgetAt) {
+		budgetAt = s.attackMoveUntil
+	}
+	elapsed := max(float32(0), float32(now.Sub(budgetAt).Seconds()))
 	m.budgetAt = now
 	speed := s.movementSpeed()
+	attackPaused := now.Before(s.attackMoveUntil)
+	if attackPaused {
+		speed = 0
+	}
 	m.credit = min(speed*.65+.2, m.credit+elapsed*speed)
 	if speed == 0 {
 		m.credit = 0
 	}
-	dx, dz := x-m.pos[0], z-m.pos[2]
+	oldX, oldZ := m.pos[0], m.pos[2]
+	dx, dz := x-oldX, z-oldZ
 	distance := float32(math.Hypot(float64(dx), float64(dz)))
 	reason := ""
+	if attackPaused && distance > .00001 {
+		reason = "movement paused by attack"
+	}
 	if distance > m.credit {
-		if distance > m.credit+.005 {
+		if distance > m.credit+.005 && !attackPaused {
 			reason = "movement exceeds server speed"
 		}
 		if distance > 0 {
@@ -270,6 +283,15 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		dy := min(max(y-m.pos[1], -limit), limit)
 		dy = min(dy, -1.5-m.pos[1])
 		m.pos, _ = m.geometry.MoveFeet(m.pos, mapgeometry.Position{0, dy, 0})
+	}
+	if (m.pos[0]-oldX)*(m.pos[0]-oldX)+(m.pos[2]-oldZ)*(m.pos[2]-oldZ) > .00000001 {
+		m.horizontalAt = now
+	}
+	if attackPaused {
+		motion = 0
+		if m.jumping {
+			motion = 4 | proto.MotionFlag80
+		}
 	}
 	m.motion, m.direction, m.packetAt = motion, direction, now
 	if !m.jumping {

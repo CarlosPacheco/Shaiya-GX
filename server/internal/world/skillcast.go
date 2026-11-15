@@ -157,6 +157,9 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		s.log.Printf("GX Server World rejected skill use: no skill in slot number=%d", number)
 		return
 	}
+	if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && !s.attackMovementAllowed(time.Now()) {
+		return
+	}
 	castTime := time.Duration(def.ReadyTime) * 250 * time.Millisecond
 	if castTime == 0 {
 		s.resolveSkill(target, number, op, nil)
@@ -244,6 +247,9 @@ func (s *Session) processPendingCast() {
 }
 
 func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef) {
+	if def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff {
+		s.commitAttackStop(time.Now())
+	}
 	s.skillCooldowns[k.SkillID] = time.Now().Add(time.Duration(def.ResetTimeSeconds) * time.Second)
 	k.Delay = int16(min(def.ResetTimeSeconds, 32767))
 	if err := db.SaveCharacterSkill(s.char.ID, k); err != nil {
@@ -258,6 +264,9 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 	}
 	k, def, ok := s.knownSkill(number)
 	if !ok || !s.skillReady(k.SkillID) {
+		return
+	}
+	if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && !s.attackMovementAllowed(time.Now()) {
 		return
 	}
 	stats := s.stats()

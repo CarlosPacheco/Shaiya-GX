@@ -308,6 +308,10 @@ func (s *Session) userAttackSwing(target uint32) bool {
 	if stats.Disabled[kind] > 0 {
 		return true
 	}
+	if !s.attackMovementAllowed(time.Now()) {
+		return false
+	}
+	s.commitAttackStop(time.Now())
 	s.breakStealth()
 	s.lastAutoAttackAt, s.lastCombatAt = time.Now(), time.Now()
 	p.QueueUserHit(pendingUserHit{AttackerID: ch.ID, Stats: stats, Kind: kind, X: ch.PosX, Z: ch.PosZ})

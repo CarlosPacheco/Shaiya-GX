@@ -147,6 +147,7 @@ with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
      for item_type,type_id,bag,slot,gem in ((1,1,0,5,64),(22,56,1,20,0)):
       c.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,?,?,?,?,?,?,0,?,0,0,0,0,0,'',1,datetime('now'),'N2',0)",(char_id,item_type*1000+type_id,item_uid,item_type,type_id,bag,slot,gem));item_uid+=1
   subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestAttackSpeedAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_ATTACK_SPEED='1'),check=True,timeout=90)
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestAttackMovementAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_ATTACK_MOVEMENT='1'),check=True,timeout=60)
   # Map clicks carry normalized X/Z only; the server resolves outdoor/dungeon Y.
   with sqlite3.connect(db) as c:
    c.execute('UPDATE PS_UserData_Users_Master SET Admin=1 WHERE UserUID=?',(users[0][2],))

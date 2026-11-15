@@ -16,6 +16,9 @@ func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 	v, st := a.wv, a.state
 	frame := func() {
 		time.Sleep(time.Second / 60)
+		// This fixture drives updateWorld directly instead of App.Update.
+		// Advance the app clock so attack recovery expires normally.
+		a.clock += 1.0 / 60
 		a.updateWorld(&platform.Input{}, 1.0/60)
 		once := false
 		pump(func() bool {

@@ -44,6 +44,10 @@ func (a *App) requestedSkillPresentation(packet []byte) {
 	a.attackVariant++
 	played := actor.PlayAction(scene.SkillAction(d.Animation, d.Attack, d.Effect, a.playerWeapon(a.state.SelfID), a.attackVariant), false)
 	if played {
+		if d.Effect == 1 || d.Effect == 3 {
+			a.wv.attackPose = true
+			a.wv.attackActionID = actor.ActionID()
+		}
 		p.action = actor.ActionID()
 		a.wv.requestedSkill = p
 	}
