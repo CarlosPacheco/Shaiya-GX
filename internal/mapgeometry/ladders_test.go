@@ -107,3 +107,22 @@ func TestLadderDescendsFromUpperLanding(t *testing.T) {
 		t.Fatal("upper landing prevented descent", m, p)
 	}
 }
+
+func TestLadderNarrowLandingAboveVisualRungs(t *testing.T) {
+	g := ladderFixture()
+	g.Triangles = g.Triangles[:2]
+	g.Reindex()
+	g.Add(collision.Triangle{{4, 5.35, 4.88}, {4, 5.35, 5.12}, {6, 5.35, 4.88}})
+	g.Add(collision.Triangle{{6, 5.35, 5.12}, {6, 5.35, 4.88}, {4, 5.35, 5.12}})
+	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0)
+	if !ok {
+		t.Fatal("cannot attach")
+	}
+	m.Mode = LadderUp
+	for range 400 {
+		p = m.Step(g, p, 1.0/120)
+	}
+	if m.Active || !g.Supported(p) || p[1] < 5.35 {
+		t.Fatal("could not board narrow raised landing", p, m)
+	}
+}

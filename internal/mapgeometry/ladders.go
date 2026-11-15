@@ -126,7 +126,7 @@ func (g *Geometry) AttachLadder(p, facing Position, index int) (LadderMotion, Po
 	for a := range 3 {
 		q[a] += l.Normal[a] * side * .55
 	}
-	q[1] = max(l.Bottom[1], min(l.Top[1]+FootSkin, p[1]))
+	q[1] = max(l.Bottom[1], min(l.Top[1]+.55, p[1]))
 	if !g.clearBody(q) {
 		return LadderMotion{}, p, false
 	}
@@ -160,7 +160,7 @@ func (m *LadderMotion) Step(g *Geometry, p Position, dt float32) Position {
 	if m.Mode == LadderDown {
 		dy = -dy
 	}
-	q := l.at(max(l.Bottom[1], min(l.Top[1]+FootSkin, p[1]+dy)))
+	q := l.at(max(l.Bottom[1], min(l.Top[1]+.55, p[1]+dy)))
 	for a := range 3 {
 		if a != 1 {
 			q[a] += l.Normal[a] * m.Side * .55
@@ -181,7 +181,7 @@ func (m *LadderMotion) Step(g *Geometry, p Position, dt float32) Position {
 func (g *Geometry) ladderExit(p Position, l Ladder, side float32) (Position, bool) {
 	// Step onto a real nearby landing; never teleport through a wall or ceiling.
 	for _, sign := range []float32{-side, side} {
-		for _, distance := range []float32{.55, .85, 1.15, 1.45} {
+		for _, distance := range []float32{0, .25, .55, .85, 1.15, 1.45} {
 			q := l.at(p[1])
 			q[0] += l.Normal[0] * sign * distance
 			q[2] += l.Normal[2] * sign * distance

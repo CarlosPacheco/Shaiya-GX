@@ -17,7 +17,10 @@ facing and a clear collision path. Vertical travel is integrated using server
 time; movement samples cannot choose height, escape the guide or gain speed by
 sending extra packets. Walls and ceilings still block movement. Nearby real
 walkable landings permit automatic dismount, including below the model's raised
-rails. Boarding from an upper landing crosses to the open side for descent.
+rails. Narrow landings centered on the guide are supported too; the guide
+permits up to 0.55 units above its visual endpoint to reach a slightly raised
+authored floor, with the same collision checks. Boarding from an upper landing
+crosses to the open side for descent.
 Where the original collision geometry provides no safe landing, the character
 holds on the guide until descending or explicitly detaching.
 
