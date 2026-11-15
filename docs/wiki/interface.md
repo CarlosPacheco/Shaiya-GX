@@ -498,3 +498,10 @@ falling uses run/walk after that action finishes, including remote players.
 Moving jump requests first flush pending position so the server tests the same
 support surface. Active landing no longer rewinds the owner to an older X/Z
 snapshot; invalid movement and idle gravity remain server-authoritative.
+
+## Cooldown presentation
+
+Item and skill cooldowns use a translucent red sweep with centered yellow
+remaining seconds. Icons return directly to their normal appearance when ready,
+without a completion flash. The same presentation applies to action bars, quick
+potions, inventory and the skill book; server-confirmed reuse rules are unchanged.

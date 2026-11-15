@@ -32,18 +32,15 @@ func DrawQuickPotions(s *render.Sprites, f *Font, frame, blank *render.Texture, 
 				tint = [4]float32{.45, .45, .45, .65}
 			}
 			s.Draw(slot.Icon, float32(cx), float32(cy), 32, 32, u.U0, u.V0, u.U1, u.V1, tint)
-			if slot.ReadyFlash > 0 {
-				s.Draw(blank, float32(cx), float32(cy), 32, 32, 0, 0, 1, 1, [4]float32{1, 1, 1, slot.ReadyFlash})
-			}
 		}
 		if slot.Cooldown > 0 {
 			ratio := float32(1)
 			if slot.CooldownDuration > 0 {
 				ratio = float32(slot.Cooldown / slot.CooldownDuration)
 			}
-			s.DrawCooldown(blank, float32(cx), float32(cy), 32, ratio, [4]float32{0, 0, 0, 160.0 / 255})
+			s.DrawCooldown(blank, float32(cx), float32(cy), 32, ratio, [4]float32{1, 0, 0, 160.0 / 255})
 			label := fmt.Sprintf("%.0f", math.Ceil(slot.Cooldown))
-			f.DrawOutlined(s, label, cx+16-f.Width(label)/2, cy+9, white)
+			f.DrawOutlined(s, label, cx+16-f.Width(label)/2, cy+9, [4]float32{1, 1, 0, 1})
 		}
 		if slot.Count > 1 {
 			f.DrawOutlined(s, fmt.Sprint(slot.Count), cx, cy-1, white)

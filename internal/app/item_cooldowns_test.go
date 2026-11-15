@@ -40,8 +40,8 @@ func TestConfirmedPotionReuseGroupsAndOriginalRestoration(t *testing.T) {
 		t.Fatal("unrelated regeneration claimed as potion")
 	}
 	a.clock = 115
-	if a.itemCooldown(proto.InventoryItem{Type: 25, TypeID: 1}) != 0 || cooldownFlash(115, 115) <= 0 || cooldownFlash(115, 116) != 0 {
-		t.Fatal("cooldown boundary/ready flash")
+	if a.itemCooldown(proto.InventoryItem{Type: 25, TypeID: 1}) != 0 {
+		t.Fatal("cooldown boundary")
 	}
 }
 

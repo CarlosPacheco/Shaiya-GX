@@ -21,7 +21,6 @@ type ActionSlot struct {
 	Count            uint16
 	Cooldown         float64
 	Pressed          bool
-	ReadyFlash       float32
 	CooldownDuration float64
 }
 
@@ -191,9 +190,6 @@ func (b *ActionBar) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h
 			u := slot.UV
 			s.Draw(slot.Icon, float32(cx), float32(cy), 32, 32, u.U0, u.V0, u.U1, u.V1, white)
 			slot.Badge.Draw(s, cx, cy, 32, white)
-			if slot.ReadyFlash > 0 {
-				s.Draw(blank, float32(cx), float32(cy), 32, 32, 0, 0, 1, 1, [4]float32{1, 1, 1, slot.ReadyFlash})
-			}
 			f.Draw(s, fmt.Sprint((i+1)%10), cx+23, cy, white, 12)
 		}
 		label := ""
@@ -207,9 +203,9 @@ func (b *ActionBar) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h
 			if slot.CooldownDuration > 0 {
 				ratio = float32(slot.Cooldown / slot.CooldownDuration)
 			}
-			s.DrawCooldown(blank, float32(cx), float32(cy), 32, ratio, [4]float32{0, 0, 0, 160.0 / 255})
+			s.DrawCooldown(blank, float32(cx), float32(cy), 32, ratio, [4]float32{1, 0, 0, 160.0 / 255})
 			text := fmt.Sprintf("%.0f", math.Ceil(slot.Cooldown))
-			f.Draw(s, text, cx+16-f.Width(text)/2, cy+9, white, 32)
+			f.Draw(s, text, cx+16-f.Width(text)/2, cy+9, [4]float32{1, 1, 0, 1}, 32)
 		}
 		if slot.Count > 1 {
 			f.DrawOutlined(s, label, cx+32-f.Width(label), cy+18, white)

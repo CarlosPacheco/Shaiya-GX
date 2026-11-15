@@ -273,8 +273,9 @@ func (a *App) drawSkills(w, h int) {
 					if iconDef.ResetTime > 0 {
 						ratio = float32((until - a.clock) / float64(iconDef.ResetTime))
 					}
-					a.sprites.DrawCooldown(a.white, float32(x+cx), float32(y+cy), 32, ratio, [4]float32{0, 0, 0, 160.0 / 255})
-					a.font.Draw(a.sprites, fmt.Sprintf("%.0f", math.Ceil(until-a.clock)), x+cx+2, y+cy+9, white, 32)
+					a.sprites.DrawCooldown(a.white, float32(x+cx), float32(y+cy), 32, ratio, [4]float32{1, 0, 0, 160.0 / 255})
+					text := fmt.Sprintf("%.0f", math.Ceil(until-a.clock))
+					a.font.Draw(a.sprites, text, x+cx+16-a.font.Width(text)/2, y+cy+9, [4]float32{1, 1, 0, 1}, 32)
 				}
 			}
 		}
@@ -432,7 +433,6 @@ func (a *App) drawActionBar(w, h int) {
 		slot := &slots[i]
 		slot.Cooldown = max(0, a.skills.cooldowns[k.ID]-a.clock)
 		slot.CooldownDuration = float64(d.ResetTime)
-		slot.ReadyFlash = cooldownFlash(a.skills.cooldowns[k.ID], a.clock)
 		slot.Label, slot.Level = fmt.Sprintf("%s Lv%d | MP %d SP %d", d.Name, k.Level, d.MP, d.SP), k.Level
 		if file, uv, ok := ui.SkillIcon(d.Icon); ok {
 			slot.Icon, slot.UV = a.assets.Texture("interface/"+file), uv
@@ -450,7 +450,6 @@ func (a *App) drawActionBar(w, h int) {
 			slot.Badge = a.itemBadge(d, &it)
 			slot.Cooldown = a.itemCooldown(it)
 			slot.CooldownDuration = itemReuseSeconds(d.ReqIg)
-			slot.ReadyFlash = cooldownFlash(a.inventory.cooldowns[d.ReqIg], a.clock)
 			if file, uv, ok := ui.ItemIcon(it.Type, d.Icon); ok {
 				slot.Icon, slot.UV = a.assets.Texture("interface/"+file), uv
 			}

@@ -100,7 +100,7 @@ func TestNativeUIFeedbackGL(t *testing.T) {
 	}
 	capture("native-ui-cooldowns.png")
 	a.clock = a.skills.cooldowns[57] + .1
-	capture("native-ui-ready-flash.png")
+	capture("native-ui-ready.png")
 	// A half sweep must reveal the right side and still shade the left side.
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
@@ -135,5 +135,5 @@ func TestNativeUIFeedbackGL(t *testing.T) {
 		t.Fatal("elapsed flight did not proceed directly to original impact")
 	}
 	t.Log("real EFT late launch at .5s resumes halfway; at .7s starts the elapsed impact without another projectile")
-	t.Logf("single-column K; original %ds skill / %.0fs potion reuse; press, ready flash, level-three buff and all seven OS cursors", skill.ResetTime, itemReuseSeconds(def.ReqIg))
+	t.Logf("single-column K; original %ds skill / %.0fs potion reuse; press, no completion flash, level-three buff and all seven OS cursors", skill.ResetTime, itemReuseSeconds(def.ReqIg))
 }

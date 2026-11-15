@@ -205,7 +205,6 @@ func (a *App) drawQuickPotions(w, h int) {
 			slots[i].Count = it.Count
 			slots[i].Cooldown = a.itemCooldown(it)
 			slots[i].CooldownDuration = itemReuseSeconds(d.ReqIg)
-			slots[i].ReadyFlash = cooldownFlash(a.inventory.cooldowns[d.ReqIg], a.clock)
 		}
 	}
 	x, y := ui.QuickPotionOrigin(a.quickPotions.Position, w, h)

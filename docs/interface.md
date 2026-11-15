@@ -504,3 +504,6 @@ NPC visibility range. Their eligibility is cached and refreshed on quest,
 character, relevant inventory, catalog or minimum-time changes; moving the
 camera or player does not rescan every quest. Distant NPCs remain metadata, not
 3D entities. Party and nearby creature-objective positions stay live overlays.
+
+Cooldowns use a red sweep and centered yellow seconds across item/skill icons,
+without flashing when ready. Reuse timing remains server-confirmed.
