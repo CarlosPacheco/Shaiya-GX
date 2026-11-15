@@ -152,9 +152,9 @@ func TestBlessingBarUsesOriginalFooterGL(t *testing.T) {
 	a.sprites.End()
 	var newsPixel [4]byte
 	width := a.chatTextFont.Width("Destroyed altar")
-	gl.ReadPixels(int32(512-width/2-4), 768-(384-150-4), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&newsPixel[0]))
+	gl.ReadPixels(int32(512-width/2+width+4), 768-(384-150+13)-1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&newsPixel[0]))
 	if newsPixel[0] == 0 && newsPixel[1] == 0 && newsPixel[2] == 0 {
-		t.Fatal("news missing original centered panel")
+		t.Fatal("news missing native bordered panel interior below the old flat rectangle")
 	}
 	if dir := os.Getenv("SHAIYA_TEST_ARTIFACTS"); dir != "" {
 		if err := render.SavePNG(filepath.Join(dir, "altar-news.png"), 1024, 768); err != nil {

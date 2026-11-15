@@ -42,7 +42,7 @@ func (a *App) drawScreenNotices(w, h int) {
 	for i, n := range rows {
 		width := f.Width(n.text)
 		x, y := w/2-width/2, h/2-150+i*17
-		a.sprites.Draw(a.white, float32(x-6), float32(y-6), float32(width/2*2+8), 12, 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 205.0 / 255})
+		a.drawNewsPanel(x-6, y-6, width/2*2+8, 12)
 		color := white
 		if n.style == 30 || n.style == 32 {
 			color = [4]float32{1, 128.0 / 255, 1, 1}
@@ -56,4 +56,28 @@ func (a *App) playNewsSound() {
 		name := a.audioPath("ui_news001.wav", false)
 		a.audioError(name, a.sound.Play(name, 1))
 	}
+}
+
+// Native 0050ff10: width/height describe the interior, with 4px atlas
+// borders. The center selects the diffuse color instead of the texture.
+func (a *App) drawNewsPanel(x, y, width, height int) {
+	if a.assets == nil {
+		return
+	}
+	frame := a.assets.Texture("interface/tipbox.png")
+	if frame == nil {
+		return
+	}
+	draw := func(px, py, w, h int, u0, v0, u1, v1 float32) {
+		a.sprites.Draw(frame, float32(px), float32(py), float32(w), float32(h), u0, v0, u1, v1, white)
+	}
+	draw(x, y, 4, 4, 0, 0, .25, .25)
+	draw(x+4, y, width, 4, .25, 0, .5, .25)
+	draw(x+width+4, y, 4, 4, .5, 0, .75, .25)
+	draw(x, y+4, 4, height+4, .25, .25, .5, .5)
+	draw(x+width+4, y+4, 4, height+4, .75, .25, 1, .5)
+	a.sprites.Draw(a.white, float32(x+4), float32(y+4), float32(width), float32(height+4), 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 205.0 / 255})
+	draw(x, y+height+8, 4, 4, 0, .25, .25, .5)
+	draw(x+4, y+height+8, width, 4, .75, 0, 1, .25)
+	draw(x+width+4, y+height+8, 4, 4, .5, .25, .75, .5)
 }

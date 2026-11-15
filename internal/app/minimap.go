@@ -316,7 +316,7 @@ func (a *App) drawMinimap(w, h int, full bool) {
 		a.minimap.DrawFull(a.sprites, a.font, v.image, a.white, w, h, ui.MapWindow(v.u, v.v, 1/v.zoom), u, z, heading, a.wv.mapID, markers)
 		x, y, scale := a.minimap.FullRect(w, h)
 		position := ui.CharacterCoordinates(a.wv.pos[0], a.wv.pos[1], a.wv.pos[2])
-		a.font.DrawScaled(a.sprites, position, float32(x)+(272-float32(a.font.Width(position))/2)*scale, float32(y)+27*scale, scale, white, 0)
+		a.font.DrawScaled(a.sprites, position, float32(x)+(272-float32(a.font.Width(position))/2)*scale, float32(y)+23*scale, scale, white, 0)
 		fx := (float32(a.lastMouseX-x) - 16*scale) / (512 * scale)
 		fy := (float32(a.lastMouseY-y) - 43*scale) / (512 * scale)
 		if px, pz, inside := ui.MapCoordinates(ui.MapWindow(v.u, v.v, 1/v.zoom), fx, fy, float32(a.wv.world.WLD.MapSize)); inside {

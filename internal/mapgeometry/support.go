@@ -134,3 +134,9 @@ func closestTrianglePoint(p collision.Vec, t collision.Triangle) collision.Vec {
 	inv := 1 / (va + vb + vc)
 	return a.Add(ab.Scale(vb * inv)).Add(ac.Scale(vc * inv))
 }
+
+// PlayerBodyClear checks the same authored ellipsoid clearance as movement.
+// Relocations use it after resolving support, before accepting a destination.
+func (g *Geometry) PlayerBodyClear(p Position) bool {
+	return cv(p).Finite() && g.clearBody(p)
+}

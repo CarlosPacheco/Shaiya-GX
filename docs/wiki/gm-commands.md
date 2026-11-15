@@ -110,11 +110,16 @@ authoritative movement checks; see [ground navigation](../mob-navigation.md).
 ## Teleport from a map
 
 GM accounts can click the circular minimap or the full local map to teleport
-to that exact X/Z point. Dragging the full map pans it without teleporting.
+to that X/Z point when it is valid. A blocked or floorless click resolves to
+a nearby safe point within 32 units instead. Dragging the full map pans it
+without teleporting.
 In World Map, select a region and click its map preview to teleport there;
 GM previews allow both factions. No `/goto` chat command is added.
-The server validates the account role and map, rejects trading or blocked
-destinations, and resolves the destination floor from its own physics resources.
+The server validates the account role and map, rejects trading, and resolves
+the destination floor and full player-body clearance from its own resources.
+It prefers the exact click, then the nearest navigable point, with a bounded
+expanding search when that point is obstructed. Blocked mask cells, map bounds
+and missing floors remain invalid; absence of any safe nearby point is reported.
 The client never supplies a height. On layered maps the nearest navigable
 floor to the current height is used locally; cross-map arrivals use the map's
 terrain height as the floor hint.

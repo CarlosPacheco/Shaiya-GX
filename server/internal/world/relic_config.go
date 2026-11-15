@@ -160,7 +160,7 @@ func parseRelicConfig(raw []byte) (relicConfig, error) {
 			active, portal = nil, nil
 			zone = -1
 		case strings.HasPrefix(lower, "[portal_"):
-			// The supplied original contains one human-readable template, with no
+			// Legacy files can contain a human-readable portal template without
 			// dependency rows. It is documentation, not a configured live portal.
 			active, boss, portal = nil, nil, nil
 			zone = -1

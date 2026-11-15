@@ -42,6 +42,20 @@ func TestGMMapTeleportAgainstIsolatedGX(t *testing.T) {
 		}
 		t.Logf("Map %d exact X/Z %.3f/%.3f; authoritative Y %.3f", tc.mapID, st.Self.X, st.Self.Z, st.Self.Y)
 	}
+	// This original dungeon click has no exact navmesh floor. A nearby
+	// supported, unobstructed arrival must replace the former error.
+	n := len(st.Chat)
+	send(proto.GMMapTeleportPacket(3, 230.0/1024, 1-35.0/1024))
+	wait(func() bool { return len(st.Chat) > n })
+	message := st.Chat[len(st.Chat)-1].Text
+	if !strings.Contains(message, "GM: map 3") || st.MapID != 3 {
+		t.Fatal("nearby valid floor was not selected", message, st.Self)
+	}
+	distance := math.Hypot(float64(st.Self.X-230), float64(st.Self.Z-35))
+	if distance < 1 || distance > 32 || st.Self.Y < 10 || st.Self.Y > 16 {
+		t.Fatal("unsafe or distant replacement", st.Self, distance)
+	}
+	t.Logf("Invalid dungeon point 230/35 resolved to %.3f/%.3f/%.3f (%.2f units)", st.Self.X, st.Self.Y, st.Self.Z, distance)
 	oldX, oldY, oldZ := st.Self.X, st.Self.Y, st.Self.Z
 	for _, p := range [][]byte{proto.GMMapTeleportPacket(1, float32(math.NaN()), 0), proto.GMMapTeleportPacket(65535, .5, .5)} {
 		n := len(st.Chat)

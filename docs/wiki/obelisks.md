@@ -3,7 +3,10 @@
 GX loads `server/data/game/Obelisk.ini` after map populations and before world
 sweeps start. The supplied file defines nine obelisks (seven on map 0, one on
 18, one on 30), 25 linked boss definitions and no active relic-to-portal links.
-Its portal section is a configuration template, not an enabled dependency.
+The live configuration is documented inline in English: every altar variant
+and boss/companion phase names its mob IDs from the client catalog. Obsolete
+text and unused examples have been removed; all 293 active statements retain
+their original values and order.
 
 See [Goddess blessing](goddess-blessing.md) for its complete tables, benefits and UI.
 
@@ -102,7 +105,9 @@ with the original monster name. Maps 0/18/30/70 receive centered style 8 notices
 other maps use history style 7. News uses the original separate five-entry
 screen queue: regular 15px native chat font, ten-second lifetime, centered
 17-pixel rows starting at
-`screenHeight/2 - 150`, outlined text and ARGB CD1D1F24 panels. It remains in
+`screenHeight/2 - 150`, outlined text and the original `TipBox.TGA` frame (`tipbox.png` externally).
+The frame uses 4px atlas borders around the native interior dimensions, with
+ARGB CD1D1F24 fill; it is not a flat rectangle. It remains in
 chat history and plays `Sound/ui_news001.ogg`. Styles 8/24/27/28/29/30/32/33
 share this presentation; 30/32 use the native pink text. Portal IDs 1060/1061 switching to 101/102 use
 SysMsg 5514/5515. No client-side periodic request or ownership calculation runs.

@@ -36,10 +36,10 @@ func (a *App) confirmedEffects(p []byte) {
 		// its appearance. Phoenix's Spawn is native start.EFT, sequence zero.
 		if m, err := proto.DecodeMobEnter(p); err == nil && m.New && len(v.impacts) < 32 {
 			if x := a.loadSkillEffect("Effect/start.EFT", 0); x != nil {
-				if matrix, ok := a.effectTargetMatrix(m.ID); ok {
+				if matrix, ok := a.impactTransform(skillImpact{target: m.ID, positionOnly: true}); ok {
 					x.SetTransform(matrix)
 				}
-				v.impacts = append(v.impacts, skillImpact{target: m.ID, instance: x, authoredLifetime: true})
+				v.impacts = append(v.impacts, skillImpact{target: m.ID, instance: x, authoredLifetime: true, positionOnly: true})
 			}
 		}
 	case proto.MobSkillUse, proto.MobSkillDrain, proto.MobSkillOther:

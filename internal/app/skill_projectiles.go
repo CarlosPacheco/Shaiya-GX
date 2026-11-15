@@ -20,6 +20,7 @@ type skillProjectile struct {
 }
 type skillImpact struct {
 	authoredLifetime bool
+	positionOnly     bool // world-aligned spawn anchor, without actor rotation
 	target           uint32
 	age              float32
 	instance         *scene.Effect
@@ -155,7 +156,7 @@ func (a *App) updateResolvedEffects() {
 			advance = 0
 		}
 		p.age += advance
-		if m, ok := a.effectTargetMatrix(p.target); ok {
+		if m, ok := a.impactTransform(p); ok {
 			p.instance.SetTransform(m)
 		} else {
 			p.instance.Stop()
@@ -205,4 +206,17 @@ func (p *skillProjectile) move(target render.V3, dt float32) render.V3 {
 		p.pos = p.pos.Add(delta.Norm().Scale(step))
 	}
 	return delta.Norm()
+}
+
+func (a *App) impactTransform(p skillImpact) (render.M4, bool) {
+	if !p.positionOnly {
+		return a.effectTargetMatrix(p.target)
+	}
+	point, ok := a.effectPosition(p.target)
+	if e := a.state.Entities[p.target]; e != nil && !e.MobHeightKnown {
+		point = a.skillTargetPosition(e)
+	}
+	matrix := render.Identity()
+	matrix[12], matrix[13], matrix[14] = point[0], point[1], point[2]
+	return matrix, ok
 }

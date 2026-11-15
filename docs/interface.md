@@ -577,6 +577,8 @@ brackets are inserted. These rules apply to both local and remote labels.
 
 Fresh `0601` / GX `7F05` mob spawns (`New=true`) play the original
 `Effect/start.EFT`, sequence zero, on the monster's current ground position.
+Its attachment follows ground position with fixed world axes, independent
+of the monster's facing and scale, as in Phoenix's separate spawn anchor.
 Ordinary visibility snapshots do not replay it. This is Phoenix's `Spawn`
 recipe, with the original emitters and authored lifetime, not a custom effect.
 
@@ -592,3 +594,9 @@ Native news uses the English locale's regular 15px Arial-compatible font
 (`00544620`, actor font slot `+3A8`, drawn through `00541AA0`), shared with chat.
 The 13px tooltip font is not used for news. Centering, outline, queue, colors,
 background and lifetime follow the native news presentation.
+
+
+News background `0050ff10` uses the original `tipbox.png` atlas: 4px border
+pieces around the interior, native UV slices, and the ARGB CD1D1F24 solid center.
+Its supplied width/height are interior dimensions, not the complete outer size.
+Full-map character coordinates sit four pixels higher above the map surface.
