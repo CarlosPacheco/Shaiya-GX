@@ -136,7 +136,8 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 
 func (a *App) pickupNearest() bool {
 	id := uint32(0)
-	best := float32(50 * 50)
+	// Native 0x43bfa0 nearest-item action searches within 30 units.
+	best := float32(30 * 30)
 	for k, it := range a.state.GroundItems {
 		dx, dz := it.X-a.wv.pos[0], it.Z-a.wv.pos[2]
 		d := dx*dx + dz*dz

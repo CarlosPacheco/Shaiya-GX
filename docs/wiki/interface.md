@@ -506,3 +506,11 @@ Item and skill cooldowns use a translucent red sweep with centered yellow
 remaining seconds. Icons return directly to their normal appearance when ready,
 without a completion flash. The same presentation applies to action bars, quick
 potions, inventory and the skill book; server-confirmed reuse rules are unchanged.
+
+## Ground item selection
+
+Dropped items use the original 0.6-by-1-unit camera-facing selection rectangle
+above the drop, rather than requiring a click on its tiny mesh. Scene depth
+rejects occluded loot. The nearest-item action searches within 30 units; pickup
+approaches within one horizontal unit before sending the request. Inventory
+changes and ground-item removal still wait for server confirmation.

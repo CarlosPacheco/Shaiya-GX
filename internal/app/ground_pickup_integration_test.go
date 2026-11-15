@@ -9,11 +9,14 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"math"
 )
 
 func TestGroundModelPickupAgainstRapture(t *testing.T) {
@@ -205,4 +208,68 @@ func TestGroundModelPickupAgainstRapture(t *testing.T) {
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("pickup GL error %#x", code)
 	}
+}
+
+// Clicking above the tiny model must work, while scene occlusion still wins.
+func TestNativeGroundPickupAreaGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires GL and original assets")
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	win, err := platform.Open(platform.Config{Width: 256, Height: 256, Hidden: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer win.Close()
+	if err = render.Init(true); err != nil {
+		t.Fatal(err)
+	}
+	arc, err := archive.Open(os.Getenv("SHAIYA_DATA"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer arc.Close()
+	a, err := New(Config{}, arc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer a.Close()
+	a.state = game.New()
+	a.state.GroundItems[42] = proto.GroundItem{ID: 42, Type: 25}
+	a.wv = &worldView{}
+	a.scene3d.View = render.LookAtLH(render.V3{0, 1.5, -5}, render.V3{0, .5, 0}, render.V3{0, 1, 0})
+	a.scene3d.Proj = render.PerspectiveFovLH(math.Pi/4, 1, .1, 50)
+	vp := a.scene3d.View.Mul(a.scene3d.Proj)
+	x, y, _, ok := projectLabel(render.V3{0, .8, 0}, vp, 256, 256)
+	if !ok {
+		t.Fatal("fixture outside viewport")
+	}
+	in := &platform.Input{Clicked: true, MouseX: x, MouseY: y}
+	// Prove this is outside the rendered mesh, rather than only its center.
+	model := a.assets.GroundModel(scene.GroundItemModel(25))
+	if model == nil {
+		t.Fatal("missing model")
+	}
+	origin := render.V3{0, 1.5, -5}
+	direction := (render.V3{0, .8, 0}).Sub(origin).Norm()
+	if _, hit := model.RayIntersection(origin, direction); hit {
+		t.Fatal("fixture unexpectedly hits model")
+	}
+	gl.Viewport(0, 0, 256, 256)
+	gl.DepthMask(true)
+	gl.DepthFunc(gl.LEQUAL)
+	gl.ClearDepth(1)
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+	a.sprites.CaptureNameDepth(256, 256)
+	if got := a.pickGroundModel(in, 256, 256); got != 42 {
+		t.Fatalf("native area did not select item: %d", got)
+	}
+	gl.ClearDepth(0)
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+	a.sprites.CaptureNameDepth(256, 256)
+	if got := a.pickGroundModel(in, 256, 256); got != 0 {
+		t.Fatal("picked item through occluder")
+	}
+	gl.ClearDepth(1)
 }

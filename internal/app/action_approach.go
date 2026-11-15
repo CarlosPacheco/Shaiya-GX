@@ -81,7 +81,8 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 			return true
 		}
 		goal = render.V3{item.X, item.Y, item.Z}
-		reach = 1.5
+		// Native 0x43bfa0 sends 0x0205 within one horizontal unit.
+		reach = 1
 	} else {
 		e := a.state.Entities[v.approachTarget]
 		if e == nil || e.Dead && (len(v.approachSkill) == 0 || e.Kind == game.KindMob) || a.state.Target != v.approachTarget {
