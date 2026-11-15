@@ -514,3 +514,8 @@ without flashing when ready. Reuse timing remains server-confirmed.
 Portrait HP/MP/SP values use the native 12-cell resource font, white text with
 a one-pixel black shadow and the original five-pixel centering/row offsets.
 Names retain their separate warm font. Values above maximum are clamped for display.
+
+Floating combat numbers now use the native anchor policy from `0x450a10`:
+players add 1.2 to their logical origin (2.1 above GX feet), while creatures use
+the authored MON height instead of a fixed 1.2 offset. Their sampled position
+still detaches from the actor when the number is emitted.

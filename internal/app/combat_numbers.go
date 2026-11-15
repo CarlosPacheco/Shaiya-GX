@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"math"
 	"strconv"
 
@@ -24,7 +25,7 @@ func (a *App) showCombatNumber(target uint32, amount uint16, critical, missed, h
 	if !ok {
 		return
 	}
-	point[1] += 1.2
+	point[1] += a.combatNumberHeight(target)
 	for _, v := range point {
 		if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {
 			return
@@ -112,4 +113,19 @@ func (a *App) drawCombatNumbers(w, h int) {
 			glyph(point.Add(render.V3{0, .4, 0}), width*2.75, width*1.1875, 260, 156, [4]float32{1, 1, 1, 1 - age})
 		}
 	}
+}
+
+// Native users pass a logical origin .9 above feet and the default +1.2.
+// Mobs instead pass their MON-authored height; a fixed +1.2 misplaces giants.
+func (a *App) combatNumberHeight(target uint32) float32 {
+	if target == a.state.SelfID {
+		return 2.1
+	}
+	if m := a.wv.mobs[target]; m != nil && m.actor != nil {
+		return m.actor.NumberHeight()
+	}
+	if e := a.state.Entities[target]; e != nil && e.Kind == game.KindUser {
+		return 2.1
+	}
+	return 1.2
 }

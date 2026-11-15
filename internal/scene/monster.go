@@ -178,3 +178,11 @@ func (m *CreatureActor) AttackAction(slot uint8) int {
 	}
 	return action + 2
 }
+
+// NumberHeight is the authored MON vertical anchor used by native 0x450a10.
+func (m *CreatureActor) NumberHeight() float32 {
+	if m.visual.Height <= -1 {
+		return 1.2
+	}
+	return m.visual.Height
+}

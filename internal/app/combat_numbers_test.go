@@ -5,6 +5,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"math"
 	"testing"
 )
@@ -76,5 +77,22 @@ func TestRequestedTargetFacingAndSkillApproachBeforeAcknowledgment(t *testing.T)
 	a.state.Entities[2].X = 1
 	if a.approachSkillPacket(packet) || a.wv.travel || a.wv.approachTarget != 0 || len(a.wv.approachSkill) != 0 {
 		t.Fatal("in-range spell retained the old pending approach")
+	}
+}
+
+func TestCombatNumbersUseNativeUserAndCreatureAnchors(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID = 1
+	a.wv.pos = render.V3{0, 10, 0}
+	a.showCombatNumber(1, 10, false, false, true)
+	if math.Abs(float64(a.combatNumbers[0].Point[1]-12.1)) > .001 {
+		t.Fatal("user number missed logical-origin offset", a.combatNumbers)
+	}
+	a.state.Entities[2] = &game.Entity{ID: 2, Kind: game.KindMob, X: 4, Y: 3}
+	a.wv.mobs = map[uint32]*mobActor{}
+	a.wv.mobs[2] = &mobActor{actor: &scene.CreatureActor{}}
+	a.showCombatNumber(2, 10, false, false, false)
+	if a.combatNumbers[1].Point[1] != 3 {
+		t.Fatal("MON zero-height anchor overwritten by generic +1.2", a.combatNumbers)
 	}
 }
