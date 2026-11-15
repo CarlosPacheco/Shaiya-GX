@@ -127,6 +127,13 @@ func TestBlessingBarUsesOriginalFooterGL(t *testing.T) {
 	a.sprites.Begin(1024, 768)
 	a.drawBlessingTooltip(1024, 768)
 	a.sprites.End()
+	// The original wide panel starts at x=624 here; the former 200px
+	// panel started at 740. Check its empty left padding on the real GPU.
+	var widePixel [4]byte
+	gl.ReadPixels(626, 768-683, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&widePixel[0]))
+	if widePixel[0] == 0 && widePixel[1] == 0 && widePixel[2] == 0 {
+		t.Fatal("blessing tooltip still uses the narrow panel")
+	}
 	if lines := a.blessingLines(); len(lines) != 4 {
 		t.Fatalf("real tooltip effects: %v", lines)
 	}
@@ -136,6 +143,25 @@ func TestBlessingBarUsesOriginalFooterGL(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	a.clock = 1
+	a.addScreenNotice(8, "Destroyed altar")
+	gl.ClearColor(0, 0, 0, 1)
+	gl.Clear(gl.COLOR_BUFFER_BIT)
+	a.sprites.Begin(1024, 768)
+	a.drawScreenNotices(1024, 768)
+	a.sprites.End()
+	var newsPixel [4]byte
+	width := a.tooltipFont.Width("Destroyed altar")
+	gl.ReadPixels(int32(512-width/2-4), 768-(384-150-4), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&newsPixel[0]))
+	if newsPixel[0] == 0 && newsPixel[1] == 0 && newsPixel[2] == 0 {
+		t.Fatal("news missing original centered panel")
+	}
+	if dir := os.Getenv("SHAIYA_TEST_ARTIFACTS"); dir != "" {
+		if err := render.SavePNG(filepath.Join(dir, "altar-news.png"), 1024, 768); err != nil {
+			t.Fatal(err)
+		}
+	}
+	a.screenNotices = nil
 	visual, err := render.NewScene3D()
 	if err != nil {
 		t.Fatal(err)

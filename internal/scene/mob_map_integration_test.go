@@ -98,7 +98,7 @@ func TestFieldDungeonAndMonsterEffectsGL(t *testing.T) {
 		for frame := 0; frame < 12; frame++ {
 			m.Update(1.0 / 60)
 			budget := 2
-			m.PrepareEffects(render.V3{1425, 75, 1710}, 1.0/60, true, true, &budget)
+			m.PrepareEffects(1.0/60, true, true, &budget)
 		}
 		attached := 0
 		for _, fx := range m.boneEffects {
@@ -112,6 +112,15 @@ func TestFieldDungeonAndMonsterEffectsGL(t *testing.T) {
 		if index == 28 && len(m.attackEffects) == 0 {
 			t.Fatalf("attack effect missing: %v", assets.Missing)
 		}
+		// Moving the camera beyond the old 55-unit cutoff must not drop
+		// otherwise visible monster attachments or restart their lifecycle.
+		budget := 2
+		m.World[12] += 100
+		m.PrepareEffects(1.0/60, true, true, &budget)
+		if index != 28 && len(m.boneEffects) == 0 {
+			t.Fatal("distant attachments disappeared")
+		}
+		m.World[12] -= 100
 		r.Begin()
 		m.DrawEffects(r)
 		r.End()

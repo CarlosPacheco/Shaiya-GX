@@ -43,6 +43,8 @@ type Entity struct {
 	Concealed                    bool
 	MobSpeedKnown                bool
 	MobHeightKnown               bool
+	MobCountry                   uint8
+	MobCountryKnown              bool
 	MobMoveDurationMS            uint32
 	MobAttackSpeed, MobMoveSpeed uint8
 	Sitting                      bool
@@ -1273,7 +1275,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		if err != nil {
 			return fail(err)
 		}
-		s.Entities[m.ID] = &Entity{Kind: KindMob, ID: m.ID, TypeID: m.MobID, X: m.X, Y: m.Y, Z: m.Z, MobHeightKnown: m.HeightKnown}
+		s.Entities[m.ID] = &Entity{Kind: KindMob, ID: m.ID, TypeID: m.MobID, X: m.X, Y: m.Y, Z: m.Z, MobHeightKnown: m.HeightKnown, MobCountry: m.Country, MobCountryKnown: m.CountryKnown}
 	case proto.MobMove, proto.GXMobMove:
 		m, err := proto.DecodeMobMove(p)
 		if err != nil {

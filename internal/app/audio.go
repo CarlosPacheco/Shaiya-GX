@@ -91,6 +91,22 @@ func (a *App) confirmedSound(p []byte) {
 		return
 	}
 	switch proto.Op(p) {
+	// Native 0056ee70: every successful visible consumable uses the same
+	// potion cue inside ten units; local bag-zero failures use UI error.
+	case proto.UseItem:
+		r := a.state.LastItemUse
+		if r.Bag != 0 {
+			if pos, ok := a.effectPosition(r.ID); ok {
+				distance := pos.Sub(a.wv.pos).Len()
+				if distance < 10 {
+					name := a.audioPath("ch_potion01.wav", false)
+					a.audioError(name, a.sound.Play(name, float64(1-distance/10)))
+				}
+			}
+		} else if r.ID == a.state.SelfID {
+			name := a.audioPath("ui_error001.wav", false)
+			a.audioError(name, a.sound.Play(name, 1))
+		}
 	case proto.SkillCastStarted:
 		r := a.state.LastCast
 		a.playSkillSound(r.Source, r.ID, r.Level, true)

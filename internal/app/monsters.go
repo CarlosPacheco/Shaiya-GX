@@ -104,7 +104,7 @@ func (a *App) prepareMonsters() {
 			a.assets.Missing[err.Error()] = true
 		}
 		cached.actor.Update(float32(a.frameDT))
-		cached.actor.PrepareEffects(a.wv.eye, float32(a.frameDT), a.clientSettings().SkillEffects, !e.Dead, &effectBudget)
+		cached.actor.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, !e.Dead, &effectBudget)
 	}
 }
 

@@ -349,6 +349,7 @@ func (a *App) drawCharacters(w, h int) {
 			a.quantityUI.Draw(a.sprites, a.font)
 		}
 		a.drawRecreationDetails(w, h)
+		a.drawScreenNotices(w, h)
 		a.drawSharedTooltip(w, h)
 		a.drawShortcutDrag()
 		a.drawLocalActionDrag()

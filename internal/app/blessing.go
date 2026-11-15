@@ -120,16 +120,21 @@ func (a *App) drawBlessingTooltip(w, h int) {
 	if !a.state.Blessing.Known || a.state.Blessing.Country > 1 || a.blessingMax[a.state.Blessing.Country] == 0 {
 		return
 	}
-	// Original panel: 200px, 15px per line plus one row of top padding,
-	// ARGB CD1D1F24, no border. Position follows the pointer above the bar.
-	height := (len(lines) + 1) * 15
-	left := max(0, min(a.lastMouseX, w-200)-10)
-	top := max(0, a.lastMouseY-height)
-	a.sprites.Draw(a.white, float32(left), float32(top), 200, float32(height), 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 205.0 / 255})
+	// Native 00484be0 has a 400px wide variant. Fit translated text too.
 	f := a.tooltipFont
 	if f == nil {
 		f = a.font
 	}
+	width := 400
+	for _, line := range lines {
+		width = max(width, f.Width(line)+20)
+	}
+	width = min(width, w)
+	height := (len(lines) + 1) * 15
+	left := max(0, min(a.lastMouseX-10, w-width))
+	top := max(0, a.lastMouseY-height)
+	a.sprites.Draw(a.white, float32(left), float32(top), float32(width), float32(height), 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 205.0 / 255})
+
 	for i, line := range lines {
 		f.Draw(a.sprites, line, left+10, top+15+i*15, white, 0)
 	}

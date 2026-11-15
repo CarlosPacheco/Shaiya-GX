@@ -871,6 +871,7 @@ func (a *App) releaseWorld() {
 	}
 	a.finishWindowDrag()
 	if a.state == nil || a.state.Phase != game.PhaseInWorld && a.state.Phase != game.PhaseLoading {
+		a.screenNotices = nil
 		a.subActionsOpen = false
 		a.playerContext = playerContext{}
 		a.questLog = questLogView{}

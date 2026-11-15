@@ -22,7 +22,7 @@ func spellCastRangeFixture(t *testing.T) (*Session, *db.SkillDef, *mapShard) {
 	d := &db.SkillDef{SkillID: 64001, SkillLevel: 1, TypeEffect: typeEffectAttack, TypeDetail: detailAttack, TargetType: 3, AttackRange: 10, ReadyTime: 4, ResetTimeSeconds: 5, SuccessType: 1, SuccessValue: 100, DamageHP: 10}
 	defs := db.MustDefs()
 	defs.Skills = map[db.SkillKey]*db.SkillDef{{SkillID: d.SkillID, Level: 1}: d}
-	defs.Mobs = map[uint16]*db.MobDef{64001: {MobID: 64001, MaxHP: 100}}
+	defs.Mobs = map[uint16]*db.MobDef{64001: {MobID: 64001, MaxHP: 100, Country: 2}}
 	s.skills = []db.CharacterSkill{{SkillID: d.SkillID, Level: 1, Number: 1}}
 	s.skillCooldowns = map[uint16]time.Time{}
 	sh := shard(s.char.MapID)
@@ -188,5 +188,37 @@ func TestPreparedHealKeepsSelfRecipientAfterEnemyDisappears(t *testing.T) {
 	s.processPendingCast()
 	if s.char.CurrentHP <= 1 {
 		t.Fatal("enemy disappearance cancelled self heal")
+	}
+}
+
+func TestFriendlyMobCastRefusedBeforeCostsAndCooldown(t *testing.T) {
+	s, d, sh := spellCastRangeFixture(t)
+	def := db.MustDefs().Mobs[64001]
+	def.Country = s.faction
+	d.MPCost, d.SPCost = 10, 10
+	s.char.CurrentMP, s.char.CurrentSP = 100, 100
+	wire, packets := gmWireSession(t, *s.char, false)
+	s.out, s.aesSend, s.expanded = wire.out, wire.aesSend, true
+	before := *s.char
+	s.handleUseSkill(packet.SkillUse, proto.UseSkillPacket(1, 64001, false))
+	if s.cast != nil || len(s.skillCooldowns) != 0 || *s.char != before {
+		t.Fatal("friendly cast mutated character or cooldown")
+	}
+	sh.mu.Lock()
+	mob := sh.entities.Mobs[0]
+	mob.def = def
+	sh.mu.Unlock()
+	spawn, err := proto.DecodeMobEnter(buildMobEnter(&mob, false)[2:])
+	if err != nil || !spawn.CountryKnown || spawn.Country != s.faction || spawn.HeightKnown {
+		t.Fatalf("friendly spawn metadata %+v: %v", spawn, err)
+	}
+	select {
+	case p := <-packets:
+		r := proto.NewReader(p)
+		if proto.Op(p) != proto.GXSkillFailure || r.U16() != d.SkillID || r.U16() != 317 {
+			t.Fatalf("wrong rejection %x", p)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("wrong-target SysMsg317 not sent")
 	}
 }

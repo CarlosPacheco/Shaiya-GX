@@ -64,6 +64,10 @@ func (s *Session) skillAttack(k db.CharacterSkill, def *db.SkillDef, target uint
 		if !ok || mob.CurrentHP == 0 {
 			return
 		}
+		if mobFriendly(db.MustDefs().Mobs[mob.MobID], s.faction) {
+			s.sendSkillMessage(k.SkillID, 317)
+			return
+		}
 		if !s.mobSkillReach(&mob, def, castPos != nil) {
 			s.sendMobSkillRangeFailure(k, &mob)
 			return

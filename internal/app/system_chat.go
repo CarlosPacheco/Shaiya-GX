@@ -13,7 +13,11 @@ func (a *App) systemMessage(style uint8, id int, values map[string]string) {
 	if a.msg.Get(id) == "" {
 		return
 	}
-	a.state.AddChat(game.ChatLine{Text: a.msg.Format(id, values), Style: style, MessageID: id})
+	text := a.msg.Format(id, values)
+	a.state.AddChat(game.ChatLine{Text: text, Style: style, MessageID: id})
+	if nativeNoticeStyle(style) {
+		a.addScreenNotice(style, text)
+	}
 }
 
 // Keep diagnostic fallbacks usable without an archive in offline tools/tests.
@@ -63,7 +67,11 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 	skillName := func(id uint16, level uint8) string { d, _ := a.skillDefinition(id, level); return d.Name }
 	switch proto.Op(p) {
 	case proto.GXSkillFailure:
-		a.systemMessage(1, int(s.LastSkillFailure.Message), nil)
+		style := uint8(1)
+		if s.LastSkillFailure.Message == 317 {
+			style = 17
+		}
+		a.systemMessage(style, int(s.LastSkillFailure.Message), nil)
 	case proto.GXFallDamage:
 		r := s.LastFallDamage
 		if r.Target == s.SelfID {
@@ -80,7 +88,7 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 			}
 			if id != 0 {
 				a.systemMessage(8, id, nil)
-				a.combatNotice, a.combatNoticeUntil = a.msg.Get(id), a.clock+4
+				a.playNewsSound()
 			}
 		}
 	case proto.RelicNotice:
@@ -90,7 +98,7 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 				style := relicNoticeStyle(s.MapID)
 				a.systemMessage(style, id, map[string]string{"p": d.Name})
 				if style == 8 {
-					a.combatNotice, a.combatNoticeUntil = a.msg.Format(id, map[string]string{"p": d.Name}), a.clock+4
+					a.playNewsSound()
 				}
 			}
 		}

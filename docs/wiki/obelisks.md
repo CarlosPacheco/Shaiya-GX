@@ -15,6 +15,11 @@ Friendly relics cannot be attacked. Destruction removes the guards immediately,
 changes ownership and schedules the owning faction's variant using the destroyed
 monster's respawn delay plus corpse time. Guards have their own replenishment
 schedule while the parent stands; a zero variant means no population.
+Mobile companions use ordinary grounded navigation and idle wandering around
+their spawn, including normal chase and home behavior. Random spawn candidates
+are retried when the original floor is blocked. Stationary principals/pillar
+guards retain their authored placement and do not patrol. Parent removal and
+managed generation/respawn rules still apply to the mobile companions.
 
 The player dealing the most actual HP damage to a managed principal receives
 credit; the first contributor wins a tie. Basic attacks, skills, additional HP
@@ -94,7 +99,11 @@ map exclusions apply (68/69 hide these markers, 105/108 hide relic markers,
 
 Capture text uses SysMsg 463 for the conqueror and 462 for the losing country,
 with the original monster name. Maps 0/18/30/70 receive centered style 8 notices;
-other maps use history style 7. Portal IDs 1060/1061 switching to 101/102 use
+other maps use history style 7. News uses the original separate five-entry
+screen queue: ten-second lifetime, centered 17-pixel rows starting at
+`screenHeight/2 - 150`, outlined text and ARGB CD1D1F24 panels. It remains in
+chat history and plays `Sound/ui_news001.ogg`. Styles 8/24/27/28/29/30/32/33
+share this presentation; 30/32 use the native pink text. Portal IDs 1060/1061 switching to 101/102 use
 SysMsg 5514/5515. No client-side periodic request or ownership calculation runs.
 
 ## Reference and validation
@@ -117,3 +126,10 @@ a disposable DB and isolated ports to capture a relic, remove guards, respawn
 the new owner, reject friendly attacks, teleport and restore ownership after a
 world restart. These checks do not replace a full manual playthrough of every
 configured boss chain or a comparison against a running original server.
+
+
+Successful consumable `050A` acknowledgments play `Sound/ch_potion01.ogg`
+within ten units of the local actor, with native linear distance attenuation.
+This covers potions and other consumables, including remote uses; local
+bag-zero failures play `ui_error001.ogg`. Native callback: `0056ee70`.
+These sounds are external assets, converted privately from the original WAVs.

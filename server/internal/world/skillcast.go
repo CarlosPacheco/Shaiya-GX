@@ -222,6 +222,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		if !ok {
 			return
 		}
+		if mobFriendly(db.MustDefs().Mobs[mob.MobID], s.faction) {
+			s.sendSkillMessage(k.SkillID, 317)
+			return
+		}
 		if !s.inSkillRange(&mob, def, &stats) {
 			s.sendMobSkillRangeFailure(k, &mob)
 			return

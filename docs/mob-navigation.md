@@ -77,7 +77,13 @@ through a wall. Height-aware distance and original-surface line of sight keep
 mobs from attacking through walls or intervening floors.
 
 GX packets `0x7F05` (mob enter) and `0x7F06` (mob movement) carry XYZ for grounded
-mobs. Movement additionally carries its server-selected duration in milliseconds
+mobs. Factioned spawns append country U8 (0 Light, 1 Fury, 2 neutral) and
+a height-known U8 flag. The optional two-byte extension is GX-specific; native
+0601 and earlier GX XYZ-only spawns remain readable. Stationary factioned actors
+can transmit country without claiming an authoritative Y. Client and server
+reject offensive actions against the actor's own country before cast/attack
+prediction; the client uses localized SysMsg 317 (Wrong target), style 17.
+Movement additionally carries its server-selected duration in milliseconds
 as a trailing uint32. A 50 ms scheduler and matching client interpolation keep
 short corner segments from becoming long stop-and-go pauses. Original `0x0601`/`0x0603` layouts remain unchanged for legacy entities.
 The shared client revision is `0x11122208`; update Linux client and server
@@ -129,3 +135,18 @@ identical archive. Server portables include all resources; players do not need
 a separate geometry download. The original client artwork is not included.
 For future or changed maps, regenerate the resources with the map builder
 described above and distribute the new generation with the server.
+
+
+## Native spell sight ray and monster effects
+
+The shared skill line-of-sight query follows native `00438010`: raise both logical
+actor origins by 0.5. GX stores feet, 0.9 below those origins, so its ray passes
+1.4 units above each endpoint. Low decorations can be shot over; tall walls,
+intervening floors, terrain and animated colliders still block skills. This is
+not a blanket exclusion of small meshes and does not change movement collision.
+
+MON bone and attack effects follow the actor's visibility. Native `00432890`
+creates attachments with the monster; `0044f2f0` / `00432bc0` use actor/frustum
+visibility rather than a separate effect-distance cutoff. GX's former camera
+radius of 50 units (55 after creation) has been removed. The shared per-frame
+uncached emitter creation budget remains; it does not impose a view radius.

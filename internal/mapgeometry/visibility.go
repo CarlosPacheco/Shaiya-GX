@@ -14,8 +14,11 @@ func (g *Geometry) LineOfSight(start, end Position) bool {
 		}
 	}
 	a, b := cv(start), cv(end)
-	a[1] += .9
-	b[1] += .9
+	// Native 00438010 adds 0.5 to logical actor origins; those are
+	// 0.9 above the feet coordinates used by GX (006bc868).
+	const rayHeight = .9 + .5
+	a[1] += rayHeight
+	b[1] += rayHeight
 	direction := b.Sub(a)
 	visible := true
 	bounds := collision.Box{}

@@ -55,16 +55,13 @@ func (m *CreatureActor) queueModelEffect(action int) {
 
 // Prepare once per frame, independently of main/reflection draw passes. Two
 // uncached emitter creations per frame bound crowded-area preparation work.
-func (m *CreatureActor) PrepareEffects(eye render.V3, dt float32, enabled, alive bool, budget *int) {
+func (m *CreatureActor) PrepareEffects(dt float32, enabled, alive bool, budget *int) {
 	if m == nil {
 		return
 	}
-	origin := render.V3{m.World[12], m.World[13], m.World[14]}
-	reach := float32(50)
-	if len(m.boneEffects) > 0 {
-		reach = 55
-	}
-	if !enabled || origin.Sub(eye).Len() > reach {
+	// Native 00432890 creates MON attachments with the actor. 0044f2f0 /
+	// 00432bc0 use actor/frustum visibility, not a separate 50/55-unit radius.
+	if !enabled {
 		m.boneEffects = nil
 		m.boneEffectsReady = false
 		m.attackEffects = nil

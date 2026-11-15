@@ -111,7 +111,11 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 		return true
 	}
 	def := db.MustDefs().Mobs[mob.MobID]
-	if def == nil || mobFriendly(def, s.faction) {
+	if def == nil {
+		return false
+	}
+	if mobFriendly(def, s.faction) {
+		s.sendSkillMessage(0, 317)
 		return false
 	}
 	mc, _ := MobCombatByID(ch.MapID, target)

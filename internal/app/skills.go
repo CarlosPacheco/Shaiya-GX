@@ -368,6 +368,9 @@ func (a *App) learnedSkillPacket(k proto.LearnedSkill) []byte {
 		return proto.UseSkillPacket(k.Number, 0, false)
 	}
 	if !a.validSkillTarget(def, target) {
+		if a.friendlyMob(a.state.Entities[target]) {
+			a.systemMessage(17, 317, nil)
+		}
 		return nil
 	}
 	userTarget := target == a.state.SelfID || a.state.Party.Member(target) != nil

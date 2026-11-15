@@ -44,3 +44,18 @@ func TestSpellLineOfSightSolidsFloorsTerrainAndDynamic(t *testing.T) {
 		t.Fatal("dynamic transform ignored")
 	}
 }
+
+func TestSpellRayClearsLowObjectsButPreservesTallSolids(t *testing.T) {
+	for _, height := range []float64{.5, 1.2, 1.39, 1.41, 3} {
+		g := &Geometry{}
+		g.Reindex()
+		for _, triangle := range collision.BlockerBox(collision.Vec{4, 0, -2}, collision.Vec{5, height, 2}, 0) {
+			g.Add(triangle)
+		}
+		for _, ends := range [][2]Position{{{0, 0, 0}, {10, 0, 0}}, {{10, 0, 0}, {0, 0, 0}}} {
+			if got := g.LineOfSight(ends[0], ends[1]); got != (height < 1.4) {
+				t.Fatalf("object height %g: visible=%v", height, got)
+			}
+		}
+	}
+}

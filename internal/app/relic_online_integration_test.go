@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
@@ -79,6 +80,16 @@ func TestObeliskAgainstIsolatedGX(t *testing.T) {
 		}
 	} else if st.LastRelicNotice != (proto.RelicDestroyed{}) {
 		t.Fatal("restart replayed a capture notice")
+	}
+	if e := st.Entities[id]; e == nil || !e.MobCountryKnown || e.MobCountry != st.Faction.Faction {
+		t.Fatal("faction metadata absent from encrypted owner replacement", e)
+	}
+	a := inputApp()
+	a.state = st
+	a.msg = text.SysMsg{317: "Wrong target"}
+	st.Target = id
+	if !a.attackTarget() || len(st.Chat) == 0 || st.Chat[len(st.Chat)-1].MessageID != 317 {
+		t.Fatal("client initiated a friendly attack")
 	}
 	st.LastAttack = proto.AttackResult{}
 	send(proto.MobAttackPacket(id)) // Own-country replacement must reject damage.

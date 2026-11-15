@@ -21,7 +21,10 @@ func initializeBossLocked(mapID uint16, b *linkedBoss, now time.Time) {
 		b.next = now.Add(bossRandomDelay(b))
 		return
 	}
-	spawnEventActor(s, b.principal, b.mobs[0], b.pos, now)
+	if !spawnEventActor(s, b.principal, b.mobs[0], b.pos, now) {
+		b.next = now.Add(time.Second)
+		return
+	}
 	for _, g := range b.guards {
 		populateEventSpawn(s, g, 0, now)
 	}

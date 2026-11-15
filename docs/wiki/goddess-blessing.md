@@ -100,7 +100,8 @@ During maximum it represents remaining milliseconds / 600,000 and pulses with
 the native additive atlas pass. Frame elapsed time advances presentation only;
 confirmed packets still own resets and counts.
 
-Hovering shows a translucent ARGB CD1D1F24 panel, 200 pixels wide, with 15-pixel
+Hovering shows a translucent ARGB CD1D1F24 panel, using the native 400-pixel wide variant (expanded for longer translations
+and clamped to the viewport), with 15-pixel
 rows and the original current cumulative type labels, SysMsg 5127–5153 in type
 order. It adds no amounts, future benefits or invented title. Below the first
 stage it is the original empty panel. Windows covering the footer and modal

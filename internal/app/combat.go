@@ -162,6 +162,12 @@ func (a *App) attackTarget() bool {
 	if e == nil || e.Dead || e.Kind != game.KindMob && (e.Kind != game.KindUser || e.ID == a.state.SelfID) {
 		return true
 	}
+	if a.friendlyMob(e) {
+		a.wv.approachTarget = 0
+		a.wv.approachSkill = nil
+		a.systemMessage(17, 317, nil)
+		return true
+	}
 	if a.state.Self.Sitting || a.wv.sitPending || a.wv.self != nil && a.wv.self.PlayingAction(11) {
 		a.wv.sitAttack = e.ID
 		if a.state.Self.Sitting && !a.wv.sitPending {

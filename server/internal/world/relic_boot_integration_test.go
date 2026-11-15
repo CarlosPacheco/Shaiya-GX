@@ -3,6 +3,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/mapnav"
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -63,6 +64,38 @@ func TestObeliskOriginalWorldBoot(t *testing.T) {
 	if total != 9 {
 		t.Fatalf("boot loaded %d relics", total)
 	}
+	mobile, stationary := 0, 0
+	for mapID, sh := range shards {
+		for i := range sh.entities.Mobs {
+			m := &sh.entities.Mobs[i]
+			if m.event == nil || m.CurrentHP == 0 {
+				continue
+			}
+			if m.stationary() {
+				stationary++
+				if m.Area != nil {
+					t.Fatal("stationary event actor can wander", m.MobID)
+				}
+				continue
+			}
+			mobile++
+			if m.Area == nil || m.nav == nil {
+				t.Fatalf("mobile event actor %d on %d lacks ordinary navigation", m.MobID, mapID)
+			}
+			nav, err := loadMobNavigation(mapID)
+			if err != nil || nav == nil {
+				t.Fatal(err)
+			}
+			p, ok := nav.Project(m.point(), .05, .05)
+			if !ok || mapnav.Distance(p, m.point()) > .06 {
+				t.Fatalf("floating actor %d: %v != %v", m.MobID, m.point(), p)
+			}
+		}
+	}
+	if mobile == 0 || stationary == 0 {
+		t.Fatal("original populations missing", mobile, stationary)
+	}
+	t.Logf("Grounded ordinary mobile event actors=%d; stationary=%d", mobile, stationary)
 	keeps, err := db.ReadKeeps()
 	if err != nil || len(keeps) < 9 {
 		t.Fatalf("persistent keeps=%d error=%v", len(keeps), err)

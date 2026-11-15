@@ -293,3 +293,28 @@ func TestRelicFairDamageCreditAndOfflineCountryFallback(t *testing.T) {
 		t.Fatal("native no-credited-user path must flip the prior Light owner to Fury")
 	}
 }
+
+func TestRelicMobileCompanionsUseOrdinaryRoamAndParentLifetime(t *testing.T) {
+	r := relicFixture(t)
+	sh := shard(r.mapID)
+	def := db.MustDefs().Mobs[77]
+	def.NormalStep, def.ChaseStep, def.NormalTimeMS = 2, 4, 1000
+	g := r.guards[0]
+	a := g.actors[0]
+	if !spawnEventActor(sh, a, 77, [3]float32{105, 40, 100}, time.Now()) {
+		t.Fatal("companion did not spawn")
+	}
+	m := &sh.entities.Mobs[a.slot]
+	if m.Area == nil || m.event != a || m.stationary() {
+		t.Fatal("ordinary mobile companion not configured")
+	}
+	m.nextMoveAt = time.Time{}
+	moves := TickMobRoam(map[uint16][][2]float32{r.mapID: {{105, 100}}}, 100)
+	if len(moves) != 1 || m.PosX == 105 && m.PosZ == 100 {
+		t.Fatal("linked mob did not wander normally")
+	}
+	killRelicFixture(t, r, 0)
+	if sh.entities.Mobs[a.slot].CurrentHP != 0 {
+		t.Fatal("wandering companion outlived parent")
+	}
+}

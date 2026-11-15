@@ -202,7 +202,13 @@ func spawnEventActor(s *mapShard, a *eventActor, id uint16, pos [3]float32, now 
 	m.eventFresh = old.MobID != 0
 	m.spawnMinY, m.spawnMaxY, m.spawnHeightKnown = pos[1], pos[1], true
 	if !m.stationary() {
-		m.nav = &mobNav{id: realMap(a.mapID)}
+		// Mobile companions are ordinary mobs: ground the randomly chosen XZ,
+		// then use the ordinary idle wander/chase path around that home point.
+		nav, err := loadMobNavigation(a.mapID)
+		if err != nil || !m.placeOnNavigation(nav, a.mapID) {
+			return false
+		}
+		m.Area = &MobArea{LowerX: m.PosX - mobHomeRadius, LowerZ: m.PosZ - mobHomeRadius, UpperX: m.PosX + mobHomeRadius, UpperZ: m.PosZ + mobHomeRadius}
 	}
 	a.generation++
 	m.eventGeneration = a.generation
@@ -244,8 +250,12 @@ func populateEventSpawn(s *mapShard, g *eventSpawn, stage int, now time.Time) {
 	}
 	g.next = time.Time{}
 	for _, a := range g.actors {
-		if pos, ok := eventSpawnPosition(a.mapID, g); ok {
-			spawnEventActor(s, a, g.mobs[stage], pos, now)
+		// Random offsets may land on a blocked edge. Try another authored
+		// spawn point before leaving this slot for the controller's retry.
+		for attempt := 0; attempt < 32; attempt++ {
+			if pos, ok := eventSpawnPosition(a.mapID, g); ok && spawnEventActor(s, a, g.mobs[stage], pos, now) {
+				break
+			}
 		}
 	}
 }

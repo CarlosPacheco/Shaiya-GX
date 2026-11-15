@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"testing"
@@ -123,5 +124,34 @@ func TestFriendlySpellOnEnemyUsesSelfWithoutLosingSelection(t *testing.T) {
 	a.state.Target = 9
 	if got := a.resolveSkillTarget(sdata.Skill{Target: 3, Effect: 3}); got != 9 {
 		t.Fatal("debuff redirected", got)
+	}
+}
+
+func TestFriendlyMobRefusedBeforeAttackPredictionAndSkillRequest(t *testing.T) {
+	a := inputApp()
+	a.msg = text.SysMsg{317: "Wrong target"}
+	a.state.SelfID, a.state.Target = 1, 9
+	a.state.Entities[9] = &game.Entity{ID: 9, Kind: game.KindMob, MobCountryKnown: true, MobCountry: 0, X: 100}
+	a.state.Faction.Faction = 0
+	a.wv.approachTarget = 9
+	if !a.attackTarget() || a.wv.approachTarget != 0 {
+		t.Fatal("friendly attack began approaching")
+	}
+	if len(a.state.Chat) != 1 || a.state.Chat[0].MessageID != 317 || a.state.Chat[0].Style != 17 {
+		t.Fatal(a.state.Chat)
+	}
+	k := proto.LearnedSkill{ID: 30, Level: 1, Number: 7}
+	a.skillDefs = map[sdata.SkillKey]sdata.Skill{{ID: 30, Level: 1}: {Target: 1, Effect: 1}}
+	if p := a.learnedSkillPacket(k); p != nil {
+		t.Fatalf("friendly skill sent %x", p)
+	}
+	if len(a.state.Chat) != 2 || a.state.Chat[1].MessageID != 317 {
+		t.Fatal(a.state.Chat)
+	}
+	for _, country := range []uint8{1, 2} {
+		a.state.Entities[9].MobCountry = country
+		if !a.validSkillTarget(a.skillDefs[sdata.SkillKey{ID: 30, Level: 1}], 9) {
+			t.Fatal("enemy/neutral mob refused", country)
+		}
 	}
 }

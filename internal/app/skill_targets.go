@@ -30,6 +30,9 @@ func (a *App) validSkillTarget(d sdata.Skill, target uint32) bool {
 	if e.Kind != game.KindUser && e.Kind != game.KindMob {
 		return false
 	}
+	if e.Kind == game.KindMob && a.friendlyMob(e) && (d.Effect == 1 || d.Effect == 3 || d.Effect == 5) {
+		return false
+	}
 	corpse := d.Effect == 6 && (d.Detail == 121 || d.Detail == 122)
 	if corpse {
 		return e.Kind == game.KindUser && e.Dead
@@ -66,8 +69,8 @@ func (a *App) resolveSkillTarget(d sdata.Skill) uint32 {
 	}
 	best := float32(math.MaxFloat32)
 	for id, e := range a.state.Entities {
-		// Mobs are enemies; players require confirmed duel hostility for auto-pick.
-		hostile := e.Kind == game.KindMob || e.Kind == game.KindUser && a.state.Duel.Phase == game.DuelFighting && a.state.Duel.Opponent == id
+		// Exclude allied mobs; players require confirmed duel hostility for auto-pick.
+		hostile := e.Kind == game.KindMob && !a.friendlyMob(e) || e.Kind == game.KindUser && a.state.Duel.Phase == game.DuelFighting && a.state.Duel.Opponent == id
 		if !hostile || !a.validSkillTarget(d, id) {
 			continue
 		}
@@ -95,7 +98,7 @@ func (a *App) selectedSkillEnemy(target uint32) bool {
 		return false
 	}
 	if e.Kind == game.KindMob {
-		return true
+		return !a.friendlyMob(e)
 	}
 	if e.Kind != game.KindUser {
 		return false
@@ -107,4 +110,8 @@ func (a *App) selectedSkillEnemy(target uint32) bool {
 		return true
 	}
 	return e.Shape != nil && e.Shape.Faction <= 1 && a.state.Faction.Faction <= 1 && e.Shape.Faction != a.state.Faction.Faction
+}
+
+func (a *App) friendlyMob(e *game.Entity) bool {
+	return e != nil && e.Kind == game.KindMob && e.MobCountryKnown && e.MobCountry < 2 && e.MobCountry == a.state.Faction.Faction
 }

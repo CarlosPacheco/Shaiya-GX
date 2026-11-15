@@ -166,6 +166,7 @@ type App struct {
 	blessingTiers                       []sdata.BlessingTier
 	blessingBannerUntil                 float64
 	blessingFeedbackActive              bool
+	screenNotices                       []screenNotice
 	blessingLoaded                      bool
 	actor                               *scene.Character
 	actorID                             uint32

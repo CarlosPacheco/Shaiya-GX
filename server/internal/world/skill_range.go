@@ -40,8 +40,12 @@ func (s *Session) sendSkillRangeFailure(k db.CharacterSkill, target ...skillrang
 	if len(target) > 0 && !s.skillLineClear(skillrange.Position{s.char.PosX, s.char.PosY, s.char.PosZ}, target[0]) {
 		message = 458
 	}
+	s.sendSkillMessage(k.SkillID, message)
+}
+
+func (s *Session) sendSkillMessage(skillID, message uint16) {
 	w := packet.New(packet.Opcode(proto.GXSkillFailure))
-	w.U16(k.SkillID)
+	w.U16(skillID)
 	w.U16(message)
 	s.send(w.MustFinish(), "localized skill reach failure")
 }

@@ -2,6 +2,7 @@ package proto
 
 import (
 	"encoding/binary"
+	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/textwire"
 )
 
@@ -249,13 +250,16 @@ const GXPhysicsClock Opcode = 0x7F07
 const GXMobEnter Opcode = 0x7F05
 const GXMobMove Opcode = 0x7F06
 
-// MobSpawn is 0x0601 (Rapture buildMobEnter): mobs carry only X and Z.
+// MobSpawn is native 0x0601 (XZ), or GX 0x7F05 (XYZ with optional
+// country/height-known metadata). The native packet layout is unchanged.
 type MobSpawn struct {
-	ID          uint32
-	New         bool
-	MobID       uint16
-	X, Y, Z     float32
-	HeightKnown bool
+	Country      uint8
+	CountryKnown bool
+	ID           uint32
+	New          bool
+	MobID        uint16
+	X, Y, Z      float32
+	HeightKnown  bool
 }
 
 func DecodeMobEnter(p []byte) (m MobSpawn, err error) {
@@ -266,6 +270,18 @@ func DecodeMobEnter(p []byte) (m MobSpawn, err error) {
 		m.Y = r.F32()
 	}
 	m.Z = r.F32()
+	if m.HeightKnown && r.Remaining() > 0 {
+		if r.Remaining() != 2 {
+			return m, fmt.Errorf("invalid GX mob metadata length")
+		}
+		m.Country = r.U8()
+		height := r.U8()
+		if m.Country > 2 || height > 1 {
+			return m, fmt.Errorf("invalid GX mob metadata")
+		}
+		m.CountryKnown = true
+		m.HeightKnown = height == 1
+	}
 	return m, r.Err()
 }
 

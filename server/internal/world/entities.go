@@ -1370,7 +1370,7 @@ func buildNpcMove(n *MapNpc, motion uint8) []byte {
 
 func buildMobEnter(m *MapMob, isNew bool) []byte {
 	op := packet.MobEnter
-	if m.nav != nil {
+	if m.nav != nil || m.def != nil && m.def.Country < 2 {
 		op = packet.Opcode(proto.GXMobEnter)
 	}
 	w := packet.New(op)
@@ -1378,10 +1378,14 @@ func buildMobEnter(m *MapMob, isNew bool) []byte {
 	w.Bool(isNew)
 	w.U16(m.MobID)
 	w.F32(m.PosX)
-	if m.nav != nil {
+	if op == packet.Opcode(proto.GXMobEnter) {
 		w.F32(m.PosY)
 	}
 	w.F32(m.PosZ)
+	if m.def != nil && m.def.Country < 2 {
+		w.U8(m.def.Country)
+		w.Bool(m.nav != nil)
+	}
 	return w.MustFinish()
 }
 
