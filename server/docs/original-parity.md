@@ -59,7 +59,7 @@ gaps; **invented** is still a GX Server rule to replace.
 | Hostile skills on users | `CUser::SkillAttack` 0x00451d90 / `SkillDebuff` 0x00452bf0 and their Select / Range / RangeSelect variants (user and mob centers), `ChkTargetUser` 0x0044e140, `AttackUser(skill)` 0x0044f4c0, `AttackSuccess` 0x00456b10, `AttackDamage` 0x00457030 | done: an attack (TypeEffect 1) or debuff (3) sent as 0x0511 targets users: TargetType 3 one hostile user (else 0x0511 result 11, out of reach 5), 6 the hostile users around the caster, 7 around the target user, each area announced with 0x0511 result 4 and followed by the mobs in ApplyRange; 0x0517 TargetType 7 around a mob also hits the hostile users there. Per user: block, SuccessType 1-3 (2 LUC, 3 WIS) or the category's chance, mirror (0x0515 back), DamageType 0-5 on the user-target weapon formula, including its magic branch (magic attack reduced by a 1..50 level term plus the target's magic guard over weapon attack + INT, 1..70%), SP/MP damage, absorption, weapon wear on a critical; 0x0511 first hit, 0x0512 drain (the caster heals the damage), 0x0513 later and area hits, result 3 on a miss; AddDamage with 0x0514; detail 22 repeats, 23 sacrifices the caster; a debuff stays on a surviving target and its damage over time counts as the caster's (death by user). Also fixed for mobs: SuccessType 2 reads LUC and 3 WIS (they were swapped). Not modeled: skill 56's move-speed change, the HP-ability shields (7/8) and state resistances in AttackSuccess |
 | Duels | `CUser::PacketPVP` 0x0047d0f0, `ExchangePvP` 0x0047caf0, `ExchangeCancleReadyPvP`, `ItemDropPvP` 0x0047c990, `PvPModeEnd`, `PvPChkLoseDeath` 0x0047b2c0, `PvPChkLeaveByTime` / `ByMove` / `ByAttack` / `ByDeath` / `ByZoneLeave`, `PvPHaveDebuff` / `PvPClearDebuff`, `IsTeam` / `IsTeamUsable` | done: request 0x2401 (free users of the same country, any country on maps 39/40; 0x2402 2 refused, 4 with a debuff; 10 s to answer, then 0x2402 3), answer 0x2402 (0 refuses; else the wager window 0x2407); wager slots 0x240A/0x240D (8, no quest items), 0x240B, gold 0x240C, every change cancels ready (0x2409 3,1); both ready (0x2409 0) take the wagers out of the inventories (0x0213/0x0206, 0x2408 0), the center is the midpoint, 5 s countdown 0x2403 then 0x2404; while fighting the two are foes (any country) and nobody in a fight is team-usable; give up 0x2406 2, leaving the 40-unit circle 0x2406 1, a third attacker, a mob hit or another death 0x2406 3, leaving the zone or logging out 0x2406 0 to the opponent, each returning the wagers at their owners' feet; the window closes with 0x2408 2/3. A death to the opponent drops both wagers for the winner, adds a victory and a defeat (0x2405 1/2), no exp/kill/drop, and the loser keeps exp, the ultimate mode and skills above 200. As the original, moving with the window open measures from the last duel center and closes it. |
 | Guild duels | `CUser::PacketPVPGuild` 0x0047da70, `CGuild::PvPUserSet` 0x00437ed0 / `PvPUserLeave` 0x00438160 / `PvPUserClear` / `SendPvP` / `SendPvPJoinUser` / `PvPReset`, `PvPGModeEnd`, the guild parts of `PvPChkLeaveByTime` / `ByMove` / `ByDeath` / `ByZoneLeave` / `ByGuildLeave` and `PvPChkLoseDeath` (type 5), `IsTeam` / `IsTeamUsable` | done: 0x2501 from a rank 1-4 member of a free guild to a rank 1-4 member of another free guild on the zone (else 0x2502 2), 10 s to answer 0x2502 (0 refuses, else 5 s countdown 0x2503 center/opposing guild, then 0x2504); the online members on the map within 40 units of the leaders' midpoint enroll; the two sides are foes and only team-usable within their side; leaving the circle, the zone or the guild (reason 1) or dying (3) takes a member out (0x2506), a side without members or whose leader leaves for reason 1 loses (0x2505 1 winners / 2 losers) and both reset; a death by the other side gives no rewards and keeps the exp; before the countdown the leaders' leaves cancel with 0x2502 3. GuildPvPWin / GuildPvPLoss (guild points) and the ranking's duel bonus have no writer in EP4.5. Not handled: a disband during a guild duel |
-| Country kill count (God's blessing) | `CGameData::LoadKCStatus` 0x004bf4a0 (data/KillStatus.SData), `CWorld::AddKillCount` 0x00413600 / `ResetKillCount` / `UpdateKillCount` / `SetKillCount` / `ApplyKillCount`, `CWorldThread::SendAllKillCount`, `CUser::SendKCStatus` 0x00481920, `UpdateKCStatus` 0x0048b780, `usp_Read_GodBless_R` / `usp_Save_GodBless_E` | done: 30 tiers per country, each keeping the earlier tiers' values; each kill counted by KillPCTo adds 1 to the killer's country unless either country holds its top tier; the top tier holds 10 minutes and resets the other country at once, then itself; 0x020F (country, count up to the top tier) to the country on each change and every 10 minutes, 0x0211 (country, count, ms left) at world entry; saved with usp_Save_GodBless_E (creating the WorldInfo row with usp_Save_WorldInfo_E when missing). Tier types on every user of the country: 1-3 percent of max HP/MP/SP, 4-9 STR/REC/INT/WIS/DEX/LUC, 10-12 percent of max HP/SP/MP to sitting and standing recovery, 13-15 to in-combat recovery, 16 critical, 17 melee accuracy, 18/19 percent of melee/ranged defense, 20/23 magic evasion, 21/22 melee/ranged evasion; country-wide 24 adds to the gem chances and 25 cuts the death exp loss (types 26/27 have no reader). Below the first tier nothing applies (the original reads the slot before its table). Obelisk kills add the per-country amount at 0x005471c0, never written (0) in EP4.5, so none. |
+| Country kill count (God's blessing) | `CGameData::LoadKCStatus` 0x004bf4a0 (data/KillStatus.SData), `CWorld::AddKillCount` 0x00413600 / `ResetKillCount` / `UpdateKillCount` / `SetKillCount` / `ApplyKillCount`, `CWorldThread::SendAllKillCount`, `CUser::SendKCStatus` 0x00481920, `UpdateKCStatus` 0x0048b780, `usp_Read_GodBless_R` / `usp_Save_GodBless_E` | done: 30 tiers per country, each keeping the earlier tiers' values; each kill counted by KillPCTo adds 1 to the killer's country unless either country holds its top tier; the top tier holds 10 minutes and resets the other country at once, then itself; 0x020F (country, count up to the top tier) to the country on each change and every 10 minutes, 0x0211 (country, count, ms left) at world entry; saved with usp_Save_GodBless_E (creating the WorldInfo row with usp_Save_WorldInfo_E when missing). Tier types on every user of the country: 1-3 percent of max HP/MP/SP, 4-9 STR/REC/INT/WIS/DEX/LUC, 10-12 percent of max HP/SP/MP to sitting and standing recovery, 13-15 to in-combat recovery, 16 critical, 17 melee accuracy, 18/19 percent of melee/ranged defense, 20/23 magic evasion, 21/22 melee/ranged evasion; country-wide 24 adds to the gem chances and 25 cuts the death exp loss (types 26/27 have no reader). Below the first tier nothing applies (the original reads the slot before its table). Obelisk integration is pending: the reference loader writes the per-country amount at 0x005471c0/0x005471c4 (0x00428557/0x00428575); see the obelisk source audit below. GX does not yet score relic captures. |
 | 5-second recovery | `CUser::UpdateRecover` 0x0048cfb0, `InitEquipment`, `GemEquipmentAdd` | done: the mode seen at the previous tick decides the amount: sitting 5% of the max + sitting abilities % + the flat sitting recovery (28 base), standing the flat standing recovery (4 base), in combat the flat combat recovery (0 base), all truncated; Special 16 gems turn their HP/SP/MP into sitting and standing recovery instead of max pools; plus the country tier |
 | World calendar | ps_dbAgent `SetWorldDay`, `CWorld::GetWorldDay` 0x0046c2f0, `usp_Read_WorldInfo_E` / `usp_Save_WorldInfo_E` | done: the base is WorldInfo.LastWorldTime (packed (year-2000)<<26 \| month<<22 \| day<<17 \| hour<<12 \| minute<<6 \| second), created from the local time on the first start; 0x0404 at character entry sends the seconds elapsed since it (it was a fixed packed date) |
 | Gem skills | `CUser::AttackItemOption` 0x0044c630 / 0x0044c720, `BeAttackedItemOption` 0x0044c970 / 0x0044cae0, `AttackItemUser` / `AttackItemMob` | done: a gem with Special 1-15 names a mob skill (Skills id = Special, level 100); after a landed hit the attacker's weapon gems cast on the target (user or mob) and, against a user or from a mob, the target's armour gems (shield, helmet, upper, gloves, lower, shoes, stopping at the first empty slot) cast on the attacker; TypeEffect 1 as a selected attack, 3 as a debuff, each with its own success roll; gem casts cast no gems (m_bItemAttack) |
@@ -70,6 +70,68 @@ gaps; **invented** is still a GX Server rule to replace.
 | Party dungeons | `CUser::PacketMaininterface` 0x020A, `CMap::IsPartyInsZoneOpenTime` 0x00429020, `CWorld::FindPartyInsZone` 0x00414430, `GetZoneByMapID` (CreateType P) | done: a portal to a P map (64-66) is refused with 0x020A (portal, result) outside its CreateTime slots (9), without a party (4), when the party's instance holds EnterMaxUser (11) or the party has fewer than CreateMinUser members (10); otherwise the party gets its own instance, created on the first entry |
 | Guild ranking battle and ranking | `CMap::IsGuildRankMapOpenTime` 0x00428d20, `GetGuildRankNotices` 0x00428eb0, `CUser::ZoneEnterUserMove`, `CMob::ItemDrop` -> `CGuild::SendRankingZone` 0x0042c6e0, `CZone::UpdateCloseGuildRanking`, `CWorldSendThread::Run`, `CGuildMgr::UpdateGuildPointRank` 0x00432b70, usp_Save_GuildInfo_E2 | done: CreateType R maps (map 50, Sunday 21:00 for 1 hour) open per CreateTime (two slots, past-midnight wrap); notices 0x0D26 (map, start hour at 30/10 minutes before, 100 open, 101/102 ten/one minute before the close); each guild enters its own instance during the battle (no guild or closed: the move fails), every entry counted; Money1 0 / Money2 > 0 mobs give Money2 points to the killer's guild instead of gold, 0x0D27 (guild points, country best and its guild) to the members inside; at the close everyone goes to the bind point and empty instances are removed; 30 minutes later each guild's value is points + min(25 x entries + duel bonus, points / 2), each country ranks its guilds with a value (equal values keep the first, as the original map insert), top 30 ranked 1-30 and the rest 31, stored with usp_Save_GuildInfo_E2 and sent per country (0x0D37). Not modelled: the duel bonus (no guild duels yet) and the house keep-etin settlement |
 | Guilds (rest) | house, NPC upgrades, etin | missing |
+
+## Obelisk source audit
+
+Relic gameplay remains pending in GX. The reference executable is the local
+EP4.5 `ps_game.exe`, 1,323,008 bytes, SHA256
+`0fb7c9f13b5bcf186118f8bfe73ab214226b93e8aa502b8e6fded4a8312bc547`.
+The executable recorded by the read-only Ghidra project has that same hash.
+PR #10 cites a different 1,581,568-byte server; its addresses and claims must
+be reconciled against this reference before integration.
+
+The supplied `Obelisk.ini` has SHA256
+`e3c72654021dddf318b6a2cdee48055ddf2e58ed5cef2b29c44d1f2b8db62164`.
+It defines nine relics: seven on map 0 and one each on maps 18 and 30.
+Its mob triplets are neutral/Light/Fury. The wire uses owners 0/1/2 in that
+order, while the reference runtime uses Light/Fury/neutral as 0/1/2.
+
+Recovered reference behavior:
+
+- `CMap::LoadObelisk` (0x00427300) keeps the configuration identity
+  `map * 65536 + entry` separately from an incrementing runtime identifier.
+  Instructions 0x0042814b-0x00428155 assign the latter. `SendObeliskList`
+  (0x0042b040) sends this runtime identifier, owner and X/Z in 13-byte records
+  under 0x2101, in batches of at most 100. The list also carries portal marker
+  states 100-103; it is not exclusively a relic list.
+- `CMap::ObeliskDestroy` (0x0042a410) removes dependent guards, changes owner,
+  emits map ownership changes (0x2102) and global destruction notices (0x2103),
+  updates last-conquering-country state and reevaluates linked portals.
+  A neutral destruction request falls back to a nonneutral configured base
+  country. A reset path can suppress the ordinary capture scoring and notice.
+- `CMap::UpdateRespawnObelisk` (0x00429da0) respawns the owner's relic variant
+  when its deadline expires. Guard population and deadlines are maintained
+  separately; guards are replenished only while the parent stands and their
+  current country variant exists. A zero variant is an absent population.
+- `CMap::ObeliskReset` (0x0042aa40) removes the standing relic, schedules a
+  600,000 ms delay, restores the configured base country and publishes the
+  resulting state to clients and the DB agent. This is not a universal rule
+  that every relic immediately returns neutral when blessing ends.
+- `CWorld::SetKeepObelisk` (0x00413bd0), `CMap::SendDBObeliskList`
+  (0x0042b370) and DB-agent opcode 0x0207 restore/publish ownership and timing.
+  The persistent record also packs last-conquering-country state. Loading INI
+  defaults and restoring saved state are distinct steps.
+- The loader writes both blessing contributions at 0x00428557/0x00428575:
+  integer division of the country's final KC threshold by the eligible relic
+  count, plus one. `ObeliskDestroy` consumes these amounts through
+  `CWorld::AddKillCount` / `SubKillCount`. The prior claim that these globals
+  were never written was incorrect. GX's existing PvP blessing implementation
+  does not yet connect relic captures to this path.
+- `CMap::UpdatePortalLink` (0x0042a000) tests configured dependency sets against
+  the last-conquering country, rather than proximity to a relic. All matching
+  dependencies open that faction's side; no matching dependencies close it.
+  Partial ownership can retain the previous open state.
+
+Phoenix's blessing implementation is useful prior work, but its documented
+contract includes explicit custom decisions: neutral startup, a 50% altar
+contribution cap, provisional PvP scoring and an XP bonus. Those choices do not
+establish original-server parity. The source also has separate `bothmob` boss
+phase/portal and random-respawn records; loading nine relics alone does not
+implement that event system. Before accepting #10, reconcile executable
+versions, persistent IDs, restart/reset timing, capture scoring and portal
+dependencies, then validate the resulting lifecycle with an isolated DB and
+encrypted client/server tests. No relic runtime or DB behavior changed in this
+audit.
 
 ## Element table
 

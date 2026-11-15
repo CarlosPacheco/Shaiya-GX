@@ -42,8 +42,10 @@ import (
 //     that percent (ExpDrop). Types 26 and 27 have no reader in EP4.5.
 //
 // Below the first tier no type applies (the original reads the slot
-// before the table there). CMap::ObeliskDestroy adds the per-country
-// amount at 0x005471c0, which nothing writes (0) in EP4.5.
+// before the table there). Relic capture scoring is not wired in GX yet.
+// The reference CMap::LoadObelisk writes the country amounts at 0x005471c0
+// and 0x005471c4 (0x00428557/0x00428575); CMap::ObeliskDestroy consumes them.
+// See server/docs/original-parity.md for the versioned obelisk source audit.
 
 const (
 	kcTypes          = 28
