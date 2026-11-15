@@ -235,7 +235,15 @@ func (s *Session) handleSetStatPoint(p []byte) {
 		s.log.Printf("GX Server World rejected stat points total=%d available=%d", total, ch.StatPoint)
 		return
 	}
-	add := func(v *uint16, n uint16) { *v = uint16(min(uint32(*v)+uint32(n), 65535)) }
+	// A stat set to the DB cap by a GM must remain persistible after a
+	// normal allocation too. Refuse the whole request before spending points.
+	for i, base := range []uint16{ch.Str, ch.Dex, ch.Rec, ch.Int, ch.Wis, ch.Luc} {
+		if d[i] > 0 && uint32(base)+uint32(d[i]) > db.BaseStatCap {
+			s.log.Printf("GX Server World rejected stat allocation beyond base-stat limit")
+			return
+		}
+	}
+	add := func(v *uint16, n uint16) { *v += n }
 	add(&ch.Str, d[0])
 	add(&ch.Dex, d[1])
 	add(&ch.Rec, d[2])

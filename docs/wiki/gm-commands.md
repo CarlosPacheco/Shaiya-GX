@@ -20,6 +20,7 @@ unavailable. Skill-based stealth remains available.
 | Command | Result |
 |---|---|
 | `/set money amount` | Sets your own gold to 0–4,000,000,000; larger values clamp to the cap. Example: `/set money 10000000`. |
+| `/set str value`, `/set dex value`, `/set rec value`, `/set int value`, `/set wis value`, `/set luc value` | Sets that base attribute on your own character to 0–32,000, clamping larger values. Example: `/set str 1000`. Refreshes stats and resource limits immediately, without spending/refunding stat points or changing PvP claims. Equipment and blessing bonuses still apply on top. |
 | `/set kill count` | Sets your own kills to 0–1,000,000; larger values clamp to one million. Updates your rank/title and nearby nameplates immediately. Already claimed PvP rewards remain claimed. |
 | `/iclear` | Permanently deletes the issuing character's carried items (bags 1–5). Equipped items, mounts, other characters and account storage are preserved. |
 | `/turbo` | Toggles the issuing GM's turbo off/on for this session. |
@@ -34,7 +35,7 @@ rings, reject blocked/occupied positions, and enter nearby clients' visibility
 immediately. Spawned NPCs follow terrain height on clients. Spawned entities live only in memory and disappear when the world server stops or restarts.
 Maps without a known safe arrival are rejected. Commands are case-insensitive,
 validated on the server, and never broadcast as ordinary chat when handled.
-Finish an active exchange before issuing GM commands. `/set` accepts only a variant and a non-negative decimal integer; it always targets the issuing GM and persists before confirming. It sets the total rather than adding to it, and does not award quest or country kill credit.
+Finish an active exchange before issuing GM commands. `/set` accepts only a variant and a non-negative decimal integer; it always targets the issuing GM and persists before confirming. The configured base-attribute cap is 32,000, below the signed 16-bit DB ceiling of 32,767; effective stats with gear/buffs may be higher. Ordinary allocation also refuses increases beyond this persistent base-stat cap without spending points. It sets the total rather than adding to it, and does not award quest or country kill credit.
 
 The client sends commands through the normal chat request independently of the
 selected UI channel. GX server response `0x7F01` contains self character ID `u32`,

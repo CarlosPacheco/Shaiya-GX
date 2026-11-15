@@ -406,10 +406,12 @@ func (s *Session) gmMove(mapID uint16) error {
 	return nil
 }
 
+const gmSetUsage = "usage: /set money|kill|str|dex|rec|int|wis|luc amount"
+
 // gmSet changes only the issuing character. Claimed rewards remain claimed.
 func (s *Session) gmSet(args []string) error {
 	if len(args) != 2 {
-		return fmt.Errorf("usage: /set money amount | /set kill count")
+		return fmt.Errorf("%s", gmSetUsage)
 	}
 	field := strings.ToLower(args[0])
 	var cap uint64
@@ -418,8 +420,10 @@ func (s *Session) gmSet(args []string) error {
 		cap = db.MoneyCap
 	case "kill":
 		cap = pvpKillCap
+	case "str", "dex", "rec", "int", "wis", "luc":
+		cap = db.BaseStatCap
 	default:
-		return fmt.Errorf("usage: /set money amount | /set kill count")
+		return fmt.Errorf("%s", gmSetUsage)
 	}
 	// Saturate while parsing so even an arbitrarily large decimal cannot overflow.
 	var value uint64
@@ -433,10 +437,27 @@ func (s *Session) gmSet(args []string) error {
 		value = min(value*10+uint64(digit-'0'), cap)
 	}
 	next := *s.char
-	if field == "money" {
+	switch field {
+	case "money":
 		next.Money = uint32(value)
-	} else {
+	case "kill":
 		next.Kills = uint32(value)
+	case "str":
+		next.Str = uint16(value)
+	case "dex":
+		next.Dex = uint16(value)
+	case "rec":
+		next.Rec = uint16(value)
+	case "int":
+		next.Int = uint16(value)
+	case "wis":
+		next.Wis = uint16(value)
+	case "luc":
+		next.Luc = uint16(value)
+	}
+	stat := field != "money" && field != "kill"
+	if stat {
+		normalize(&next)
 	}
 	if err := db.SaveCharacter(&next); err != nil {
 		return err
@@ -445,7 +466,7 @@ func (s *Session) gmSet(args []string) error {
 	s.syncPlayer()
 	if field == "money" {
 		s.send(buildSetMoney(next.Money), "GM set money")
-	} else {
+	} else if field == "kill" {
 		s.send(buildKillCountUpdate(0, next.Kills), "GM set kills")
 		w := packet.New(0x0522)
 		w.U32(next.ID)
@@ -453,6 +474,13 @@ func (s *Session) gmSet(args []string) error {
 		frame := w.MustFinish()
 		s.send(frame, "GM set rank")
 		s.sendToViewers(frame, "GM set rank (view)")
+	} else {
+		s.send(buildStatsReset(next.StatPoint, next.Str, next.Rec, next.Int, next.Wis, next.Dex, next.Luc), "GM set base stats")
+		// 0214 resets the client's displayed claim stage; restore the actual
+		// unchanged stages immediately without reopening any reward.
+		s.send(buildPvPRewardStatus(&next), "GM set unchanged PvP rewards")
+		s.sendStatPackets()
+		s.partyPools()
 	}
 	s.gmReply(fmt.Sprintf("GM: %s set to %d.", field, value))
 	return nil

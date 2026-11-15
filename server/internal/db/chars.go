@@ -52,6 +52,10 @@ const DeleteWindow = 2 * time.Hour
 // MoneyCap keeps gold within the signed Money column's bit pattern.
 const MoneyCap = 4_000_000_000
 
+// BaseStatCap is the configured character base-stat limit, within the signed
+// smallint character columns and SaveCharacter parameters.
+const BaseStatCap = 32000
+
 func u16(v int64) uint16 { return clampU16(v) }
 
 // CharactersForAccount lists live characters (usp_Read_Chars_R) plus those
