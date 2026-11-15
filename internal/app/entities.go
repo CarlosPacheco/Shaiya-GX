@@ -20,6 +20,7 @@ type remoteActor struct {
 	moveMode      uint8
 	moveX, moveZ  float32
 	walkUntil     float64
+	jumpMoving    bool
 	dead          bool
 	swimming      bool
 	shape         proto.UserShape
@@ -35,6 +36,7 @@ type remoteActor struct {
 func (r *remoteActor) observeMovement(e *game.Entity, now float64) (walking, moving bool) {
 	if r.moveSerial != e.MoveSerial {
 		dx, dz := e.X-r.moveX, e.Z-r.moveZ
+		r.jumpMoving = dx*dx+dz*dz > 0.000001
 		if e.Motion&0x3f == 0 && r.moveMode == 0 && dx*dx+dz*dz > 0.000001 {
 			r.walkUntil = now + .7
 			cancelGesture(r.character)
@@ -44,6 +46,11 @@ func (r *remoteActor) observeMovement(e *game.Entity, now float64) (walking, mov
 		r.moveSerial, r.moveMode, r.moveX, r.moveZ = e.MoveSerial, e.Motion&0x3f, e.X, e.Z
 	}
 	walking = e.Motion&0x3f == 0 && r.walkUntil > now
+	// The jump flag is also sent for stationary vertical motion. It does not
+	// by itself mean the actor is running horizontally.
+	if e.Motion&proto.MotionFlag80 != 0 && e.Motion&0x3f == 4 {
+		return false, r.jumpMoving
+	}
 	return walking, e.Motion&0x3f != 0 || walking
 }
 
@@ -141,6 +148,9 @@ func (a *App) prepareRemotePlayers() {
 		}
 		cached.swimming = swimming
 		clip := remoteLocomotion(v.world, e)
+		if !moving && !swimming && !e.Sitting {
+			clip = "000_normal"
+		}
 		if walking && (!e.Sitting || swimming) {
 			if v.world.SwimmingAt(e.X, e.Y, e.Z) {
 				clip = "007_swim"
