@@ -4,7 +4,7 @@
 
 This is Shaiya GX: client at the root, integrated **GX Server** in `server/`. One Git repository and root Go module; no nested server Git repository, submodule or `go.mod`. Rapture is the former server name. Do not recreate it as a separate project. Public docs are English. Local ignored Spanish continuity/research notes may carry newer user context; follow the current user's explicit instructions.
 
-Preserve existing uncommitted work. Do not use subagents or delegate unless the user explicitly requests it. Do not commit, push, publish releases or delete repositories without user authorization. A migration request that explicitly authorizes publication/deletion applies to that migration, not unrelated future changes.
+Preserve existing uncommitted work. Do not use subagents or delegate unless the user explicitly requests it. The user permanently authorizes a descriptive commit and push for each completed change. Keep commits scoped, validate the affected behavior and publish every completed change to the repository. Releases and repository deletion still require explicit authorization. A migration request that explicitly authorizes publication/deletion applies to that migration, not unrelated future changes.
 
 ## Contribution direction
 
@@ -34,9 +34,25 @@ Client game archives/assets and original executables are not distributable sourc
 
 ## Local iteration and patch notes
 
-Work locally on Linux. Do not create commits, push, publish releases, or build Windows unless the user explicitly requests that action. Previous release authorization does not carry forward. Maintain cumulative local notes in `docs/patch-notes-local.md`; prepare consolidated public patch notes only when requested. Linux builds and relevant local tests remain part of normal development.
+Work locally on Linux. Commit and push every completed change with an appropriate descriptive message, as permanently requested by the user. Do not publish releases or build Windows unless explicitly requested; previous release authorization does not carry forward. Maintain cumulative local notes in `docs/patch-notes-local.md`; prepare consolidated public patch notes only when requested. Linux builds and relevant local tests remain part of normal development.
 
-## Commands and checks
+## Working speed and cleanup
+
+Prioritize fast delivery, brief Spanish replies and autonomous routine decisions;
+ask only for indispensable information or required authorization. Private current
+directives and continuity live in `~/Documents/Shaiya-GX/`; local ignored links
+`docs/directivas.md` and `docs/continuar.md` provide access. Do not copy notes to
+the Desktop. Historical notes may contain superseded instructions.
+
+Use `tools/check.sh <affected packages>` during iteration; omit packages for all
+unit checks. It runs vet once and reuses Go's test cache. `tools/go-env.sh` selects
+the local Go 1.27.3 installation for build/check scripts. Build only affected
+commands when possible. Keep full integration/N2 for relevant behavior or release
+validation; do not repeat passed suites without new evidence. Preserve useful
+build/module/test caches; remove abandoned test sessions and obsolete temporary
+files selectively. Never discard uncommitted work or interrupt personal services.
+
+## Full validation reference
 
 From the GX root:
 
