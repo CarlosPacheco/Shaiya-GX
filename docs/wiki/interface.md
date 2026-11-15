@@ -18,7 +18,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 | HUD | Player portrait, resources, mob level colours, elemental target icon, selection dots, buffs/debuffs with applicable skill levels | Remaining target states and secondary indicators |
 | Action bars and skills | Two draggable/rotatable bars, shortcuts, drag and drop, original single-column skill book, confirmed reuse timers and native press feedback | Additional settings and complete state coverage |
 | Inventory | Equipment, bags, drag, left-click use, right-click equipment swaps, tooltips without zero sale prices and larger full-body preview | Remaining contexts and special dialogs |
-| Weapon enchantments | Original Weapon.Seff, ninety recipes across fifteen weapon families, equipped and remote levels, both dual bindings | Full visual comparison across animations; see [weapon enchantments](weapon-enchantments.md) |
+| Weapon enchantments | Original Weapon.Seff enchantments plus four ITM-selected innate EFT glows, equipped and remote models, both dual bindings | Full visual comparison across animations; see [weapon enchantments](weapon-enchantments.md) |
 | Cloaks | Original PC/CTL/3DC loading, equipment slot 7, all body families, native spring modes and animated attachment pins | Body/ground contact adapter, map wind and guild emblem overlay; full physical parity is not yet claimed |
 | Status | Allocation, EXP and current/max HP/MP/SP bars | Native graph and full attribute help |
 | Chat | Phoenix geometry, external Tahoma with Unicode fallbacks, channel colours, persistent grey histories, single input row, six-channel picker and original SysMsg messages | Remaining special notices and complete state comparison |

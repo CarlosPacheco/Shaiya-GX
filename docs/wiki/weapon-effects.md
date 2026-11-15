@@ -76,3 +76,37 @@ Weapon attachments now follow the corrected wield table for every character
 prefix: bow/crossbow in the ranged hand, javelin in the ordinary weapon hand,
 Human/DeathEater-only secondary reversal and Elf male mage shield bone13.
 Authored IT2 bindings retain precedence over the legacy fallback table.
+
+## Innate item glows
+
+Innate glows are independent of enchantment and elemental combat attributes.
+The third signed integer of an ITM/IT2 model record selects an original EFT
+library: `-1` disables the glow, `0` selects `item_L.EFT` (blue), `1` selects
+`item_F.EFT` (fire), `2` selects `item_E.EFT`, and `3` selects `item_W.EFT`.
+These are not Weapon.Seff recipes. The selected emitter is the normalized
+weapon family minus one; each original library contains fifteen emitters and
+no sequences. Unknown selectors are ignored, without substituting another glow.
+
+Native EP5.4 sources: `0x556fd8` reads the selector into record offset `+0x20`;
+`0x4282fb–0x4283b6` selects catalogue IDs 13/14/218/219;
+`0x42a145–0x42a19c` binds those IDs to the four EFT filenames;
+`0x40e5b0` bounds-checks the emitter index. Shields have selectors in their
+ITM records, but their family lies outside these original libraries and emits
+nothing. Do not manufacture a shield recipe from a weapon family.
+
+The glow attaches to the animated item binding, including both dual weapons,
+and coexists with enchantment particles. It uses the existing EFT runtime and
+shared resources, advances once across camera passes, and respects concealment,
+weapon-effects visibility and shadow exclusion. Item.SData model selection is
+sufficient for local, remote and preview characters; no new packet is needed.
+
+The selector formerly named Alpha was incorrectly used for mesh blending.
+The original material flag is instead the last integer in each record
+(native `+0x24`, consumed by `0x42909b`/`0x4298a7`): zero enables alpha testing,
+nonzero disables it. Glow choice no longer changes mesh transparency.
+
+Linux GPU checks load all sixty family/glow combinations, render each of the
+four real staff variants at +0, check dual innate/enchantment coexistence and
+visibility/update rules, and retain the ninety enchantment-recipe regression.
+Native particle random streams and exact frame-by-frame original-client visual
+comparison remain outside these assertions.

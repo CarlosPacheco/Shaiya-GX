@@ -46,6 +46,8 @@ type Assets struct {
 	weaponSEFFTried      bool
 	weaponRecipes        map[int32]*weaponEnchantRecipe
 	weaponQuad           *render.Mesh
+	itemGlowLibraries    [4]*effect.Library
+	itemGlowTried        [4]bool
 }
 
 func NewAssets(a *archive.Archive) *Assets {

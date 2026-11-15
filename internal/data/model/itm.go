@@ -8,16 +8,27 @@ type ItemBinding struct {
 	Rotation [4]float32
 }
 type ItemModel struct {
-	Mesh, Texture, Alpha, Unk1, Format, Unk2 int32
-	Color                                    uint32
-	Rotation, Scale                          float32
-	Unk3                                     int32
-	Bindings                                 [16][2]ItemBinding
+	// Glow selects item_L/F/E/W.EFT (0..3); -1 disables it. Native
+	// 0x556fd8 loads this into +0x20, consumed by 0x4282fb.
+	Mesh, Texture, Glow, Unk1, Format, Unk2 int32
+	Color                                   uint32
+	Rotation, Scale                         float32
+	Unk3                                    int32
+	Bindings                                [16][2]ItemBinding
 }
 type ITM struct {
 	Signature        string
 	Meshes, Textures []string
 	Records          []ItemModel
+}
+
+// AlphaTest is the material flag read into native record +0x24, not the
+// glow selector at +0x20 (0x42909b/0x4298a7). Extended rows store it last.
+func (r ItemModel) AlphaTest() bool {
+	if r.Format == 1 {
+		return r.Unk3 == 0
+	}
+	return r.Unk2 == 0
 }
 
 // ParseITM follows Parsec Itm/ItmRecord; IT2 adds two bindings per archetype.
@@ -37,7 +48,7 @@ func ParseITM(b []byte) (*ITM, error) {
 	out.Records = make([]ItemModel, n)
 	for i := range out.Records {
 		r := &out.Records[i]
-		r.Mesh, r.Texture, r.Alpha, r.Unk1, r.Format, r.Unk2 = c.i32(), c.i32(), c.i32(), c.i32(), c.i32(), c.i32()
+		r.Mesh, r.Texture, r.Glow, r.Unk1, r.Format, r.Unk2 = c.i32(), c.i32(), c.i32(), c.i32(), c.i32(), c.i32()
 		if r.Format == 1 {
 			r.Color, r.Rotation, r.Scale, r.Unk3 = c.u32(), c.f32(), c.f32(), c.i32()
 		} else if r.Format != 0 {

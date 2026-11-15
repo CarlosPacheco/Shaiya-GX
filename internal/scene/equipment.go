@@ -22,11 +22,13 @@ var itemBones = map[string][4]int{
 }
 
 type attachment struct {
-	enchant *weaponEnchant
-	part    *Part
-	bone    int
-	extra   render.M4
-	alpha   int32
+	enchant  *weaponEnchant
+	glow     *Effect
+	glowTime float64
+	part     *Part
+	bone     int
+	extra    render.M4
+	cut      bool
 }
 
 func itemBaseType(typ uint8) uint8 {
@@ -70,7 +72,7 @@ func (s *Assets) itemPart(typ, index uint8) (*Part, *model.ITM, *model.ItemModel
 	}
 	mesh := path.Base(strings.ReplaceAll(table.Meshes[rec.Mesh], `\`, "/"))
 	texture := path.Base(strings.ReplaceAll(table.Textures[rec.Texture], `\`, "/"))
-	key := fmt.Sprintf("%s:%s:%d", mesh, texture, rec.Alpha)
+	key := fmt.Sprintf("%s:%s:%t", mesh, texture, rec.AlphaTest())
 	if p := s.itemParts[key]; p != nil {
 		return p, table, rec, nil
 	}
@@ -92,7 +94,7 @@ func (s *Assets) itemPart(typ, index uint8) (*Part, *model.ITM, *model.ItemModel
 			indices = append(indices, uint32(f[0]), uint32(f[1]), uint32(f[2]))
 		}
 	}
-	p := &Part{Mesh: render.NewMesh(vertices, indices), Tex: s.modelTexture("Item/DDS/" + DDSName(texture)), Alpha: rec.Alpha == 1}
+	p := &Part{Mesh: render.NewMesh(vertices, indices), Tex: s.modelTexture("Item/DDS/" + DDSName(texture))}
 	if len(vertices) > 0 {
 		p.boundMin, p.boundMax, p.bounded = vertices[0].Pos, vertices[0].Pos, true
 		for _, vertex := range vertices[1:] {
@@ -131,7 +133,7 @@ func (c *Character) attachItem(typ, index uint8, shield bool, enchant uint8) {
 			bone = int(binding.Bone)
 			extra = render.QuatMatrix(binding.Rotation, binding.Position)
 		}
-		c.attachments = append(c.attachments, attachment{part: part, bone: bone, extra: extra, alpha: record.Alpha, enchant: c.newWeaponEnchant(typ, enchant)})
+		c.attachments = append(c.attachments, attachment{part: part, bone: bone, extra: extra, cut: record.AlphaTest(), enchant: c.newWeaponEnchant(typ, enchant), glow: c.assets.itemGlow(typ, record.Glow)})
 	}
 }
 
@@ -149,7 +151,7 @@ func (c *Character) drawAttachments(s *render.Scene3D, finals []render.M4) {
 		}
 		matrix := a.extra.Mul(finals[a.bone]).Mul(c.World)
 		ref := float32(-1)
-		if a.alpha == 0 {
+		if a.cut {
 			ref = 0.5
 		}
 		if c.Concealed {
@@ -168,6 +170,13 @@ func (c *Character) drawAttachments(s *render.Scene3D, finals []render.M4) {
 		}
 		if a.enchant != nil && a.bone >= 0 && a.bone < len(finals) {
 			c.drawWeaponEnchant(s, a, a.extra.Mul(finals[a.bone]).Mul(c.World))
+		}
+		if a.glow != nil && a.bone >= 0 && a.bone < len(finals) && !s.Shadow && !s.HideWeaponEffects {
+			a.glow.SetBoneTransform(a.extra.Mul(finals[a.bone]).Mul(c.World))
+			// Advance once per animation update, never once per camera pass.
+			a.glow.Update(float32(c.enchantTime - a.glowTime))
+			a.glowTime = c.enchantTime
+			a.glow.Draw(s)
 		}
 	}
 	gl.DepthMask(true)
