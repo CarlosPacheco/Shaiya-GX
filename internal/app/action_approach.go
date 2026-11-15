@@ -97,7 +97,7 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 				v.approachTarget, v.travel = 0, false
 				return true
 			}
-			reach = max(2, float32(a.skillDefs[sdata.SkillKey{ID: current.ID, Level: current.Level}].AttackRange))
+			reach = a.skillApproachReach(a.skillDefs[sdata.SkillKey{ID: current.ID, Level: current.Level}], e)
 		}
 	}
 	delta := goal.Sub(v.pos)
@@ -190,7 +190,7 @@ func (a *App) approachSkillPacket(packet []byte) bool {
 	}
 	def := a.skillDefs[sdata.SkillKey{ID: learned.ID, Level: learned.Level}]
 	delta := render.V3{e.X - a.wv.pos[0], 0, e.Z - a.wv.pos[2]}
-	if delta.Len() <= max(2, float32(def.AttackRange)) {
+	if delta.Len() <= a.skillApproachReach(def, e) {
 		return false
 	}
 	a.wv.autoRun = false

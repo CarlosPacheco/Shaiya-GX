@@ -163,3 +163,8 @@ func (w *World) SlidePlayer(p render.V3, dt float32, m *mapgeometry.SlopeMotion)
 func (w *World) PlayerSupported(feet render.V3) bool {
 	return w == nil || w.physics == nil || w.physics.Supported(mapgeometry.Position(feet))
 }
+
+// SpellLineOfSight shares the server's CPU geometry and actor-center ray.
+func (w *World) SpellLineOfSight(a, b render.V3) bool {
+	return w == nil || w.physics == nil || w.physics.LineOfSight(mapgeometry.Position(a), mapgeometry.Position(b))
+}

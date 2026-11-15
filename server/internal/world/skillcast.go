@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	skillResultNormal      = 0
-	skillTargetEscapeRange = 100.0
+	skillResultNormal = 0
 
 	targetTypeSelf              = 2
 	targetTypeEnemiesNearCaster = 6
@@ -42,7 +41,7 @@ type pendingCast struct {
 	number      uint8
 	op          packet.Opcode
 	readyAt     time.Time
-	targetPos   *[2]float32
+	targetPos   *[2]float32 // Non-nil marks a prepared cast; reach uses current positions.
 }
 
 type buffAbility struct {
@@ -213,9 +212,13 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 			x, z := p.PositionXZ()
 			castTarget, pos = p.CharacterID, &[2]float32{x, z}
 		}
-	} else if castTarget != ch.ID && def.TargetType != targetTypeEnemiesNearCaster {
+	} else if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && castTarget != ch.ID && def.TargetType != targetTypeEnemiesNearCaster {
 		mob, ok := MobByID(ch.MapID, target)
 		if !ok {
+			return
+		}
+		if !s.inSkillRange(&mob, def, &stats) {
+			s.sendSkillRangeFailure(k)
 			return
 		}
 		pos = &[2]float32{mob.PosX, mob.PosZ}
@@ -230,6 +233,9 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	w.U16(k.SkillID)
 	w.U8(k.Level)
 	s.broadcastNear(w.MustFinish(), "0x0510 skill cast started", true)
+	if pos == nil {
+		pos = &[2]float32{}
+	}
 	s.cast = &pendingCast{target, number, op, time.Now().Add(castTime), pos}
 	s.autoAttack = false
 	s.syncPlayerSpeed(false)
@@ -276,7 +282,7 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 	}
 	switch def.TypeEffect {
 	case typeEffectBuff, typeEffectHeal:
-		s.friendlySkill(k, def, target, stats)
+		s.friendlySkill(k, def, target, stats, castPos != nil)
 	case typeEffectAttack, typeEffectDebuff:
 		if op == opUserSkillPvP {
 			s.userSkillAttack(k, def, target, castPos, stats)
@@ -284,7 +290,7 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 			s.skillAttack(k, def, target, castPos, stats)
 		}
 	case typeEffectOnce:
-		s.skillOnce(k, def, target, stats)
+		s.skillOnce(k, def, target, stats, castPos != nil)
 	default:
 		s.log.Printf("GX Server World rejected skill use: effect %d not usable skill_id=%d", def.TypeEffect, k.SkillID)
 	}

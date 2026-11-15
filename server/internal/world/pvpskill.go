@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/skillrange"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -80,13 +81,8 @@ func (s *Session) userSkillAttack(k db.CharacterSkill, def *db.SkillDef, target 
 		return
 	}
 	if center != nil {
-		x, z := center.PositionXZ()
-		if castPos != nil {
-			if DistanceXZ(castPos[0], castPos[1], x, z) > skillTargetEscapeRange {
-				return
-			}
-		} else if !s.inUserSkillRange(center, def) {
-			s.send(buildSkillUseResult(opUserSkillPvP, 5, ch.ID, 0, k.SkillID, k.Level, 0, 0, 0), "0x0511 skill out of range")
+		if !s.userSkillReach(center, def, castPos != nil) {
+			s.sendSkillRangeFailure(k)
 			return
 		}
 	}
@@ -100,18 +96,18 @@ func (s *Session) userSkillAttack(k db.CharacterSkill, def *db.SkillDef, target 
 	s.log.Printf("GX Server World pvp skill use skill_id=%d level=%d effect=%d detail=%d target_type=%d",
 		k.SkillID, k.Level, def.TypeEffect, def.TypeDetail, def.TargetType)
 	if def.TargetType == targetTypeEnemiesNearCaster || def.TargetType == targetTypeEnemiesNearTarget {
-		x, z, announced := ch.PosX, ch.PosZ, uint32(0)
+		x, y, z, announced := ch.PosX, ch.PosY, ch.PosZ, uint32(0)
 		if center != nil {
-			x, z = center.PositionXZ()
-			announced = center.CharacterID
+			c := center.Snapshot()
+			x, y, z, announced = c.PosX, c.PosY, c.PosZ, center.CharacterID
 		}
 		sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius,
 			buildSkillUseResult(opUserSkillPvP, resultAnnounce, ch.ID, announced, k.SkillID, k.Level, 0, 0, 0), "0x0511 area skill")
 		if def.TypeDetail == detailDrain {
 			return
 		}
-		s.areaUserHits(def, k, x, z)
-		for _, id := range mobsWithin(ch.MapID, x, z, float32(def.ApplyRange)) {
+		s.areaUserHits(def, k, x, y, z)
+		for _, id := range s.skillMobsWithin(x, y, z, float32(def.ApplyRange)) {
 			s.skillStrike(id, def, k, false)
 		}
 		s.afterSkillStrikes(def)
@@ -127,14 +123,17 @@ func (s *Session) userSkillAttack(k db.CharacterSkill, def *db.SkillDef, target 
 	s.afterSkillStrikes(def)
 }
 
-// areaUserHits queues an area skill on the hostile users around (x, z).
-func (s *Session) areaUserHits(def *db.SkillDef, k db.CharacterSkill, x, z float32) {
+// areaUserHits queues visible hostile users inside the 3D area radius.
+func (s *Session) areaUserHits(def *db.SkillDef, k db.CharacterSkill, x, y, z float32) {
 	n := uint8(1)
 	if def.TypeDetail == detailMulti {
 		n = def.MultiAttack
 	}
 	for _, p := range s.hostileUsersWithin(x, z, float32(def.ApplyRange)) {
-		s.queueSkillHits(p, def, false, n)
+		c := p.Snapshot()
+		if s.skillAreaContains(skillrange.Position{x, y, z}, skillrange.Position{c.PosX, c.PosY, c.PosZ}, float32(def.ApplyRange)) {
+			s.queueSkillHits(p, def, false, n)
+		}
 	}
 }
 

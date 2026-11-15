@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/skillrange"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -63,13 +64,8 @@ func (s *Session) skillAttack(k db.CharacterSkill, def *db.SkillDef, target uint
 		if !ok || mob.CurrentHP == 0 {
 			return
 		}
-		if castPos != nil {
-			if DistanceXZ(castPos[0], castPos[1], mob.PosX, mob.PosZ) > skillTargetEscapeRange {
-				s.log.Printf("GX Server World rejected skill use: target escaped during cast skill_id=%d", k.SkillID)
-				return
-			}
-		} else if !s.inSkillRange(&mob, def, &stats) {
-			s.log.Printf("GX Server World rejected skill use: out of range skill_id=%d", k.SkillID)
+		if !s.mobSkillReach(&mob, def, castPos != nil) {
+			s.sendSkillRangeFailure(k)
 			return
 		}
 		center = &mob
@@ -85,9 +81,9 @@ func (s *Session) skillAttack(k db.CharacterSkill, def *db.SkillDef, target uint
 
 	switch def.TargetType {
 	case targetTypeEnemiesNearCaster, targetTypeEnemiesNearTarget:
-		x, z, announced := ch.PosX, ch.PosZ, uint32(0)
+		x, y, z, announced := ch.PosX, ch.PosY, ch.PosZ, uint32(0)
 		if center != nil {
-			x, z, announced = center.PosX, center.PosZ, center.ID
+			x, y, z, announced = center.PosX, center.PosY, center.PosZ, center.ID
 		}
 		sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius,
 			buildSkillUseResult(packet.SkillUseNoTarget, resultAnnounce, ch.ID, announced, k.SkillID, k.Level, 0, 0, 0), "0x0511 area skill")
@@ -99,9 +95,9 @@ func (s *Session) skillAttack(k db.CharacterSkill, def *db.SkillDef, target uint
 		// (SkillAttackRangeSelect 0x00450f70); 0x0517 around the caster
 		// reaches mobs only.
 		if def.TargetType == targetTypeEnemiesNearTarget {
-			s.areaUserHits(def, k, x, z)
+			s.areaUserHits(def, k, x, y, z)
 		}
-		for _, id := range mobsWithin(ch.MapID, x, z, float32(def.ApplyRange)) {
+		for _, id := range s.skillMobsWithin(x, y, z, float32(def.ApplyRange)) {
 			s.skillStrike(id, def, k, false)
 		}
 	default:
@@ -162,10 +158,10 @@ func (s *Session) sacrifice() {
 	s.log.Printf("GX Server World character sacrificed itself character_id=%d", ch.ID)
 }
 
-func mobsWithin(mapID uint16, x, z, r float32) []uint32 {
+func (s *Session) skillMobsWithin(x, y, z, r float32) []uint32 {
 	var out []uint32
-	for _, m := range EntitiesOnMap(mapID).Mobs {
-		if m.CurrentHP > 0 && DistanceXZ(x, z, m.PosX, m.PosZ) <= r {
+	for _, m := range EntitiesOnMap(s.char.MapID).Mobs {
+		if m.CurrentHP > 0 && s.skillAreaContains(skillrange.Position{x, y, z}, skillrange.Position{m.PosX, m.PosY, m.PosZ}, r) {
 			out = append(out, m.ID)
 		}
 	}
@@ -283,16 +279,10 @@ func buildDrainPacket(op packet.Opcode, result uint8, sender, target uint32, ski
 	return w.MustFinish()
 }
 
-// inSkillRange is CUser::EnableAttackSkillRange against a mob: the skill's
-// AttackRange plus the mob's size and the 2.3 unit tolerance (and the
-// movement allowance, at least 2).
+// inSkillRange checks launch reach, including mob size and body allowance,
+// current height and line of sight. Release grace is reserved for prepared casts.
 func (s *Session) inSkillRange(m *MapMob, def *db.SkillDef, st *CharacterStats) bool {
-	size := float32(0)
-	if md := db.MustDefs().Mobs[m.MobID]; md != nil {
-		size = float32(md.Size)
-	}
-	reach := float32(def.AttackRange) + size + 2.3 + 2
-	return DistanceXZ(s.char.PosX, s.char.PosZ, m.PosX, m.PosZ) <= reach
+	return s.mobSkillReach(m, def, false)
 }
 
 // clearBuffsOnDeath is CUser::ClearApplySkillByDeath: every active skill

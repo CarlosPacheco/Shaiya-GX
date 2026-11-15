@@ -48,6 +48,11 @@ func (a *App) prepareSkillMovement(p []byte) bool {
 		return true
 	}
 	d := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]
+	r := proto.NewReader(p)
+	r.U8()
+	if !a.skillRequestReach(d, r.U32()) {
+		return false
+	}
 	if d.Effect != 1 && d.Effect != 3 {
 		return true
 	}

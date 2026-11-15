@@ -93,14 +93,9 @@ func (s *Session) userSkillTarget(def *db.SkillDef, target uint32) (*ConnectedPl
 	return p, true
 }
 
-// inUserSkillRange is CUser::EnableAttackRange against a user: AttackRange
-// plus the 2.3 unit tolerance and the movement allowance.
+// inUserSkillRange checks launch reach and visibility without release grace.
 func (s *Session) inUserSkillRange(p *ConnectedPlayer, def *db.SkillDef) bool {
-	if p == s.player {
-		return true
-	}
-	x, z := p.PositionXZ()
-	return DistanceXZ(s.char.PosX, s.char.PosZ, x, z) <= float32(def.AttackRange)+2.3+2
+	return s.userSkillReach(p, def, false)
 }
 
 // skillOnceSucceeds is CUser::AttackSuccess 0x00456b10 for these skills:
@@ -123,10 +118,10 @@ func (s *Session) skillOnceSucceeds(def *db.SkillDef, self bool) bool {
 
 // skillOnce runs a TypeEffect 6 skill after its cast: SP/MP and the reset
 // time are spent whatever the outcome (AttackUser 0x00451d1d).
-func (s *Session) skillOnce(k db.CharacterSkill, def *db.SkillDef, target uint32, stats CharacterStats) {
+func (s *Session) skillOnce(k db.CharacterSkill, def *db.SkillDef, target uint32, stats CharacterStats, completed ...bool) {
 	ch := s.char
 	p, ok := s.userSkillTarget(def, target)
-	if !ok || !s.inUserSkillRange(p, def) {
+	if !ok || !s.userSkillReach(p, def, len(completed) > 0 && completed[0]) {
 		s.send(buildSkillUseResult(packet.SkillUseNoTarget, 5, ch.ID, 0, k.SkillID, k.Level, 0, 0, 0), "0x0511 skill out of range")
 		return
 	}

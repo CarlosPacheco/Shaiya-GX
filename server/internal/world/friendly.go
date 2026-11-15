@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/skillrange"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -75,7 +76,7 @@ func (s *Session) teamUsable(p *ConnectedPlayer) bool {
 
 // friendlyTargets resolves the users a heal or buff reaches; ok false is
 // ChkTargetUser's refusal (0x0511 result 11).
-func (s *Session) friendlyTargets(def *db.SkillDef, target uint32) ([]*ConnectedPlayer, bool, bool) {
+func (s *Session) friendlyTargets(def *db.SkillDef, target uint32, completed ...bool) ([]*ConnectedPlayer, bool, bool) {
 	me := s.player
 	switch def.TargetType {
 	case targetTypeOther, targetTypeOtherAlt:
@@ -86,8 +87,7 @@ func (s *Session) friendlyTargets(def *db.SkillDef, target uint32) ([]*Connected
 		if p == nil || p.MapID() != s.char.MapID || !p.IsAlive() || !s.teamUsable(p) {
 			return nil, false, false
 		}
-		x, z := p.PositionXZ()
-		if DistanceXZ(s.char.PosX, s.char.PosZ, x, z) > float32(def.AttackRange)+2.3+2 {
+		if !s.userSkillReach(p, def, len(completed) > 0 && completed[0]) {
 			return nil, false, false
 		}
 		return []*ConnectedPlayer{p}, false, true
@@ -120,8 +120,8 @@ func (s *Session) friendlyTargets(def *db.SkillDef, target uint32) ([]*Connected
 			if m != me && (m.MapID() != s.char.MapID || !m.IsAlive() || !s.teamUsable(m)) {
 				continue
 			}
-			x, z := m.PositionXZ()
-			if DistanceXZ(s.char.PosX, s.char.PosZ, x, z) > float32(def.ApplyRange) {
+			c := m.Snapshot()
+			if !s.skillAreaContains(skillrange.Position{s.char.PosX, s.char.PosY, s.char.PosZ}, skillrange.Position{c.PosX, c.PosY, c.PosZ}, float32(def.ApplyRange)) {
 				continue
 			}
 			out = append(out, m)
@@ -132,9 +132,9 @@ func (s *Session) friendlyTargets(def *db.SkillDef, target uint32) ([]*Connected
 }
 
 // friendlySkill casts a heal (TypeEffect 2) or buff (4) on its targets.
-func (s *Session) friendlySkill(k db.CharacterSkill, def *db.SkillDef, target uint32, stats CharacterStats) {
+func (s *Session) friendlySkill(k db.CharacterSkill, def *db.SkillDef, target uint32, stats CharacterStats, completed ...bool) {
 	ch := s.char
-	targets, party, ok := s.friendlyTargets(def, target)
+	targets, party, ok := s.friendlyTargets(def, target, completed...)
 	if !ok {
 		s.send(buildSkillUseResult(packet.SkillUseNoTarget, skillResultNotTarget, ch.ID, 0, k.SkillID, k.Level, 0, 0, 0),
 			"0x0511 skill target refused")

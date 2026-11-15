@@ -107,3 +107,24 @@ Moving after the pause cancels the remaining attack animation and autoattack;
 it does not allow a running swing. Healing and buffs are not given an offensive
 movement pause. Client/server builds must be updated together for matching
 prediction and enforcement.
+
+## Spell reach and release
+
+The server validates targeted spells both when preparation starts and when the
+spell is released, using the caster and target's current 3D positions. Launch
+reach is `AttackRange + target mob size + 2.3` units; player targets add no mob
+size. Prepared casts receive **2.5 additional units only at release**, allowing
+small target movement without the former 100-unit escape allowance. Instant
+spells use launch reach. The client uses the same launch rule for approach and
+local feedback; the server remains authoritative.
+
+Both checks require a clear line between actor centers through authored static
+solids, current dynamic geometry and terrain. Walls and intervening floors block
+targeted spells. Area effects use their own exact `ApplyRange` in 3D and check
+visibility from their center, independently of launch reach or release grace.
+These are GX reach rules, not a claim of byte-for-byte native range parity.
+
+An accepted hit is committed at release; subsequently leaving range does not
+revoke queued damage or a projectile's visual flight. This does not introduce a
+new server projectile travel simulation. The 500 ms offensive movement pause
+and existing resource/cooldown rules remain in effect.

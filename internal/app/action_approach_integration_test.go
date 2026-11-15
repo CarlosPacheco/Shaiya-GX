@@ -3,6 +3,8 @@
 package app
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -133,6 +135,22 @@ func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 	if st.LastLearn.Result != 0 {
 		t.Fatal("fighter could not learn Double Damage", st.LastLearn)
 	}
+	// The previously attacked mob can follow the retreat. Select a currently
+	// distant living mob, using actual launch reach including its body size.
+	def := a.skillDefs[sdata.SkillKey{ID: 57, Level: 1}]
+	var distant *game.Entity
+	best := float32(40)
+	for _, e := range st.Entities {
+		distance := (render.V3{e.X, e.Y, e.Z}).Sub(v.pos).Len()
+		if e.Kind == game.KindMob && !e.Dead && distance > a.skillLaunchReach(def, e)+2 && distance < best {
+			distant, best = e, distance
+		}
+	}
+	if distant == nil {
+		t.Fatal("no out-of-range living mob for skill approach")
+	}
+	enemy = distant
+	st.Target = enemy.ID
 	st.QuickSlots = []proto.QuickSlot{{Bar: 0, Slot: 0, Bag: 100, Number: uint16(st.LastLearn.Number)}}
 	a.useAction(0)
 	if v.approachTarget != enemy.ID || len(v.approachSkill) == 0 {
