@@ -280,6 +280,9 @@ the EP5 client contains 31 display/preview ranks. The extended artwork/table
 does not raise the server limit. A stat reset preserves the earned kill count
 and clears its claimed reward stages, allowing their points to be redeemed
 again; death-benefit claims are preserved.
+The kill progress strip shows kills divided by the next claim threshold;
+the death-benefit strip shows the next claim level divided by 31. Their
+native widths are 153px and 200px, using the red and violet atlas strips.
 
 Swimming and floating use the original 007_swim and 006_swnormal clips, including
 race/sex filename aliases. Entering swimming releases a previous locked pose;

@@ -81,7 +81,7 @@ func (v *PvPRewardPanel) Draw(s *render.Sprites, f *Font, w, h int, state PvPRew
 	x, y := v.Origin(w, h)
 	s.Draw(v.frame, float32(x), float32(y), 509, 414, 0, 0, 509.0/512, 414.0/512, white)
 	if state.Portrait != nil {
-		s.Draw(state.Portrait, float32(x+7), float32(y+7), 56, 56, 0, 0, 56.0/64, 56.0/64, white)
+		s.Draw(state.Portrait, float32(x+7), float32(y+7), 64, 64, 0, 0, 1, 1, white)
 	}
 	f.Draw(s, state.Name, x+65+max(0, (155-f.Width(state.Name))/2), y+35, white, 155)
 	// Native SysMsg5348 inserts grade3 at {fn0}; retain its original colours.
@@ -113,11 +113,13 @@ func (v *PvPRewardPanel) Draw(s *render.Sprites, f *Font, w, h int, state PvPRew
 	restore()
 	v.scroll.Draw(s, x, y, v.rows, 18, v.offset)
 	for _, row := range []struct {
-		value float32
-		y     int
-	}{{state.KillProgress, 114}, {state.DeathProgress, 289}} {
+		value       float32
+		x, y, width int
+		v0, v1      float32
+	}{{state.KillProgress, 335, 114, 153, .25, .5}, {state.DeathProgress, 288, 289, 200, 0, .25}} {
 		ratio := max(float32(0), min(float32(1), row.value))
-		s.Draw(v.bar, float32(x+335), float32(y+row.y), 153*ratio, 16, 0, 0, ratio, 16.0/64, [4]float32{1, 1, 1, .3})
+		// Native quad arguments are u0,u1,v0,v1: both U values are zero.
+		s.Draw(v.bar, float32(x+row.x), float32(y+row.y), float32(row.width)*ratio, 16, 0, row.v0, 0, row.v1, white)
 	}
 	center := func(value string, dx, dy, width int) {
 		f.Draw(s, value, x+dx+max(0, (width-f.Width(value))/2), y+dy, white, width)

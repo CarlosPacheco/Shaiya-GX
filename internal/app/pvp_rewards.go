@@ -83,7 +83,7 @@ func (a *App) pvpRewardState() ui.PvPRewardState {
 		return state
 	}
 	threshold, points, _, _ = pvprank.DisplayReward(c.Mode, r.KillStage)
-	deathThreshold, _, gold, _ = pvprank.DisplayReward(c.Mode, r.DeathStage)
+	_, _, gold, _ = pvprank.DisplayReward(c.Mode, r.DeathStage)
 	state.Reward = a.msg.Format(5353, map[string]string{"v": fmt.Sprint(r.KillStage), "v2": fmt.Sprint(points)})
 	state.Kills = fmt.Sprintf("%d / %d", a.state.Details.Kills, threshold)
 	state.Deaths = fmt.Sprint(a.state.Details.Deaths)
@@ -92,9 +92,8 @@ func (a *App) pvpRewardState() ui.PvPRewardState {
 	if threshold > 0 {
 		state.KillProgress = float32(a.state.Details.Kills) / float32(threshold)
 	}
-	if deathThreshold > 0 {
-		state.DeathProgress = float32(a.state.Details.Deaths) / float32(deathThreshold)
-	}
+	// Native 0x0051a09a multiplies the claim level by float32(1/31).
+	state.DeathProgress = float32(r.DeathStage) * float32(1.0/31)
 	return state
 }
 

@@ -208,6 +208,22 @@ func TestPvPRankNameplateAndStatusGL(t *testing.T) {
 		t.Fatal("PvP manager did not expose earned native stages", state)
 	}
 	rx, ry := a.pvpRewardUI.Origin(w, h)
+	if state.DeathProgress < .09677418 || state.DeathProgress > .09677421 {
+		t.Fatal("native death bar must show claim level 3/31", state.DeathProgress)
+	}
+	frame := pixels()
+	barPixel := func(px, py int) (byte, byte, byte) {
+		i := ((h-1-py)*w + px) * 4
+		return frame[i], frame[i+1], frame[i+2]
+	}
+	r, g, _ := barPixel(rx+340, ry+122)
+	if r < 100 || int(r) < 2*int(g) {
+		t.Fatal("native kill progress must use the red atlas strip", r, g)
+	}
+	r, _, b := barPixel(rx+296, ry+297)
+	if b < 100 || int(b) < int(r)+30 {
+		t.Fatal("native death progress must start at x288 and use the violet strip", r, b)
+	}
 	before := a.state.Details.StatPoint
 	a.updatePvPRewards(&platform.Input{MouseX: rx + 340, MouseY: ry + 156, Pressed: true, MouseDown: true}, w, h)
 	a.updatePvPRewards(&platform.Input{MouseX: rx + 340, MouseY: ry + 156, Clicked: true}, w, h)
