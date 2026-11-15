@@ -14,7 +14,15 @@ reuse validation/persistence, confirmed client timers and action-bar duration
 use this same rule. Mob AI reuse is unchanged.
 
 The 800ms attack/skill pause restricts **movement**, not the next skill request.
-Instant skills can therefore chain without an artificial 800ms global cooldown.
+A shared **300ms per-player cast cadence** prevents rapid packet/key floods.
+It applies across different skills, buffs and self-heals, independently of their
+reuse timers. An accepted instant release starts this interval; prepared casts
+reserve it at the start and renew it on release. Completing a prepared cast is
+never rejected by its own request cadence. Rejected requests do not extend the
+server interval. Buff cancellation and ordinary item reuse are unaffected.
+Client prediction uses the same interval; instant acknowledgments do not add
+another network round trip to it. Instant skills can still chain during the
+800ms movement pause, at roughly three to four casts per second.
 Ordered instant predictions keep older acknowledgments from restarting the next
 combo animation; area/multi-hit replies likewise preserve newer predictions.
 Real cast times, MP/SP costs, action restrictions and each longer skill cooldown

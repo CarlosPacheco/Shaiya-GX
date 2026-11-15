@@ -540,3 +540,7 @@ frame, with native 16px icons and 18px pitch. Instant skills can chain during th
 movement pause; authored one-second player reuse values are treated as zero.
 See [skill targeting and effects](../skill-targeting-and-effects.md) for native
 evidence, cooldown rules and visibility validation.
+
+Skill chaining has a lightweight global 300ms cadence, enforced by GX Server
+across different spells, buffs and self-heals. The independent movement stop
+remains 800ms; authored one-second reuse values still do not add a full cooldown.

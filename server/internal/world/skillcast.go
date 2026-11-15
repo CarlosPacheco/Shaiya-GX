@@ -147,6 +147,9 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		s.cancelBuff(id)
 		return
 	}
+	if time.Now().Before(s.nextSkillAt) {
+		return
+	}
 	target, _ := packet.U32(p[3:])
 	if s.mounted || s.cast != nil || s.actionBlocked() {
 		s.log.Printf("GX Server World rejected skill use (mounted, casting, stunned or asleep) character_id=%d", ch.ID)
@@ -237,7 +240,9 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	if pos == nil {
 		pos = &[2]float32{}
 	}
-	s.cast = &pendingCast{target, number, op, time.Now().Add(castTime), pos}
+	now := time.Now()
+	s.nextSkillAt = now.Add(skilltiming.CastInterval)
+	s.cast = &pendingCast{target, number, op, now.Add(castTime), pos}
 	s.autoAttack = false
 	s.syncPlayerSpeed(false)
 	s.log.Printf("GX Server World skill cast started skill_id=%d level=%d cast_time=%s", k.SkillID, k.Level, castTime)
@@ -254,12 +259,14 @@ func (s *Session) processPendingCast() {
 }
 
 func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef) {
-	s.commitAttackStop(time.Now())
+	now := time.Now()
+	s.nextSkillAt = now.Add(skilltiming.CastInterval)
+	s.commitAttackStop(now)
 	reuse := skilltiming.ReuseSeconds(def.ResetTimeSeconds)
 	if reuse == 0 {
 		delete(s.skillCooldowns, k.SkillID)
 	} else {
-		s.skillCooldowns[k.SkillID] = time.Now().Add(time.Duration(reuse) * time.Second)
+		s.skillCooldowns[k.SkillID] = now.Add(time.Duration(reuse) * time.Second)
 	}
 	k.Delay = int16(min(reuse, 32767))
 	if err := db.SaveCharacterSkill(s.char.ID, k); err != nil {

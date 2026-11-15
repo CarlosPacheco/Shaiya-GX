@@ -52,6 +52,8 @@ func TestSpellCastValidatesStartAndCurrentReleaseRange(t *testing.T) {
 	if len(s.skillCooldowns) != 0 {
 		t.Fatal("cast release used old 100-unit escape allowance")
 	}
+	// The fixture fast-forwards a full preparation without sleeping.
+	s.nextSkillAt = time.Time{}
 	move(10)
 	cast()
 	if s.cast == nil {

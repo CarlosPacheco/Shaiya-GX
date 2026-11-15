@@ -15,6 +15,7 @@ import (
 )
 
 type skillsView struct {
+	nextCastAt          float64
 	open, pending       bool
 	drag                shortcutDrag
 	assignMode, editing bool
@@ -351,7 +352,7 @@ func (a *App) actionPacket(index int) []byte {
 }
 
 func (a *App) learnedSkillPacket(k proto.LearnedSkill) []byte {
-	if a.skills.cooldowns[k.ID] > a.clock {
+	if a.clock < a.skills.nextCastAt || a.skills.cooldowns[k.ID] > a.clock {
 		return nil
 	}
 	def := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]

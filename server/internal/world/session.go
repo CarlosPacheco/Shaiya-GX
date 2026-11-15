@@ -28,6 +28,7 @@ const (
 // Session is one client connection. Only its own goroutine touches its
 // fields; other sessions reach it through its ConnectedPlayer.
 type Session struct {
+	nextSkillAt     time.Time
 	effectWatchID   uint32
 	effectWatchKind uint8
 	effectWatchAt   time.Time
@@ -814,6 +815,7 @@ func (s *Session) selectCharacter(id uint32) {
 	s.skills, err = db.CharacterSkills(id)
 	s.logErr("load skills", err)
 	s.effectWatchID = 0
+	s.nextSkillAt = time.Time{}
 	s.skillCooldowns, s.itemCooldowns = map[uint16]time.Time{}, map[uint8]time.Time{}
 	for i := range s.skills {
 		k := &s.skills[i]
