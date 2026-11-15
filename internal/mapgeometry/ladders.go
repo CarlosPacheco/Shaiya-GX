@@ -156,6 +156,7 @@ func (m *LadderMotion) Step(g *Geometry, p Position, dt float32) Position {
 		return p
 	}
 	l := g.Ladders[m.Index]
+	offset := max(float32(.55), min(float32(1.45), float32(cv(p).Sub(cv(l.at(p[1]))).Dot(cv(l.Normal)))*m.Side))
 	dy := LadderSpeed * max(float32(0), min(dt, .1))
 	if m.Mode == LadderDown {
 		dy = -dy
@@ -163,10 +164,21 @@ func (m *LadderMotion) Step(g *Geometry, p Position, dt float32) Position {
 	q := l.at(max(l.Bottom[1], min(l.Top[1]+.55, p[1]+dy)))
 	for a := range 3 {
 		if a != 1 {
-			q[a] += l.Normal[a] * m.Side * .55
+			q[a] += l.Normal[a] * m.Side * offset
 		}
 	}
+	wantedY := q[1]
 	q, _ = g.MoveFeet(p, pv(cv(q).Sub(cv(p))))
+	if m.Mode == LadderUp && q[1] < wantedY-.002 && offset < 1.45 {
+		// Clear a platform lip by moving out along the rung normal, never through it.
+		extra := min(LadderSpeed*dt, 1.45-offset)
+		outward := Position{l.Normal[0] * m.Side * extra, 0, l.Normal[2] * m.Side * extra}
+		shifted, _ := g.MoveFeet(q, outward)
+		gained := float32(cv(shifted).Sub(cv(q)).Dot(cv(l.Normal))) * m.Side
+		if gained > 0 {
+			q = shifted
+		}
+	}
 	if m.Mode == LadderUp && q[1] >= l.Bottom[1]+1.5 {
 		if exit, ok := g.ladderExit(q, l, m.Side); ok {
 			m.Active = false

@@ -19,7 +19,11 @@ sending extra packets. Walls and ceilings still block movement. Nearby real
 walkable landings permit automatic dismount, including below the model's raised
 rails. Narrow landings centered on the guide are supported too; the guide
 permits up to 0.55 units above its visual endpoint to reach a slightly raised
-authored floor, with the same collision checks. Boarding from an upper landing
+authored floor, with the same collision checks. A blocked ascent may move
+outward along the guide normal (up to 1.45 units, bounded by climb speed) to
+clear a platform lip, while walls and broad ceilings still block it. Position
+corrections determine this offset directly, avoiding separate unsynchronized
+client/server offset state. Boarding from an upper landing
 crosses to the open side for descent.
 Where the original collision geometry provides no safe landing, the character
 holds on the guide until descending or explicitly detaching.

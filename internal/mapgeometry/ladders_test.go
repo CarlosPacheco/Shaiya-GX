@@ -126,3 +126,25 @@ func TestLadderNarrowLandingAboveVisualRungs(t *testing.T) {
 		t.Fatal("could not board narrow raised landing", p, m)
 	}
 }
+
+func TestLadderClearsPlatformLipWithoutCrossingCeiling(t *testing.T) {
+	g := ladderFixture()
+	g.Triangles = g.Triangles[:2]
+	g.Reindex()
+	// The landing projects beyond the rung plane, above the approach side.
+	g.Add(collision.Triangle{{3, 5, 2}, {3, 5, 5.7}, {7, 5, 2}})
+	g.Add(collision.Triangle{{7, 5, 5.7}, {7, 5, 2}, {3, 5, 5.7}})
+	g.Add(collision.Triangle{{3, 5, 2}, {7, 5, 2}, {3, 5, 5.7}})
+	g.Add(collision.Triangle{{7, 5, 5.7}, {3, 5, 5.7}, {7, 5, 2}})
+	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0)
+	if !ok {
+		t.Fatal("cannot attach")
+	}
+	m.Mode = LadderUp
+	for range 500 {
+		p = m.Step(g, p, 1.0/120)
+	}
+	if m.Active || !g.Supported(p) || p[1] < 4.9 {
+		t.Fatal("could not clear platform lip", p, m)
+	}
+}
