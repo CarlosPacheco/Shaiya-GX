@@ -136,6 +136,9 @@ func TestPreparedFriendlySpellUsesUserReach(t *testing.T) {
 	p.UpdateCharacter(c)
 	s.cast.readyAt = time.Now().Add(-time.Second)
 	s.processPendingCast()
+	if time.Until(s.attackMoveUntil) < 700*time.Millisecond {
+		t.Fatal("friendly skill did not stop movement for 800ms")
+	}
 	if len(p.TakeFriendly()) != 1 {
 		t.Fatal("friendly cast did not honor release grace")
 	}

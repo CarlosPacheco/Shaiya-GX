@@ -38,7 +38,7 @@ func (a *App) confirmAttackStop() {
 	v.travel, v.autoRun = false, false
 }
 
-// Call immediately before sending an offensive skill, after any approach.
+// Call immediately before sending any skill, after any approach.
 func (a *App) prepareSkillMovement(p []byte) bool {
 	if len(p) != 7 || proto.Op(p) != proto.SkillUse && proto.Op(p) != proto.SkillUseNoTarget {
 		return true
@@ -53,10 +53,7 @@ func (a *App) prepareSkillMovement(p []byte) bool {
 	if !a.skillRequestReach(d, r.U32()) {
 		return false
 	}
-	if d.Effect != 1 && d.Effect != 3 {
-		return true
-	}
-	if !a.attackMovementAllowed() || a.clock < a.wv.attackMoveUntil {
+	if (d.Effect == 1 || d.Effect == 3) && !a.attackMovementAllowed() || a.clock < a.wv.attackMoveUntil {
 		return false
 	}
 	return a.stopForAttack()

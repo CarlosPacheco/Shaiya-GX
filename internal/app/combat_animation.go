@@ -70,9 +70,7 @@ func (a *App) confirmedAnimation(p []byte) {
 	case proto.SkillUse, proto.SkillUseNoTarget, proto.SkillUserDrain, proto.SkillMobDrain:
 		r := a.state.LastSkill
 		if r.Source == a.state.SelfID && r.Result <= 4 && !(r.Result == 3 && r.Target == 0) {
-			if d := a.skillDefs[sdata.SkillKey{ID: r.ID, Level: r.Level}]; d.Effect == 1 || d.Effect == 3 {
-				a.confirmAttackStop()
-			}
+			a.confirmAttackStop()
 		}
 		predicted := a.matchingRequestedSkill(r)
 		if r.Source == a.state.SelfID {

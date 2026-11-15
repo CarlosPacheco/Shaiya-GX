@@ -91,7 +91,7 @@ Flash Ring and a native attack buff and flooding stop/start requests.
 
 ## Movement and jumping during attacks
 
-A successful basic attack or offensive skill commits a **800 ms horizontal
+A successful basic attack or any skill (including heals, buffs and self casts) commits a **800 ms horizontal
 movement pause**, predicted by the client and enforced by the world server.
 The weapon's attack interval remains independent and cannot be reset by
 stop/start requests. The pause clears horizontal movement credit rather than
@@ -104,8 +104,7 @@ immediately hide recent travel. The victim's jumping or movement never grants
 immunity. Existing cast preparation/cancellation rules remain in effect.
 
 Moving after the pause cancels the remaining attack animation and autoattack;
-it does not allow a running swing. Healing and buffs are not given an offensive
-movement pause. Client/server builds must be updated together for matching
+it does not allow a running swing. Healing, buffs and self casts use the same movement pause. Client/server builds must be updated together for matching
 prediction and enforcement.
 
 ## Spell reach and release

@@ -253,9 +253,7 @@ func (s *Session) processPendingCast() {
 }
 
 func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef) {
-	if def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff {
-		s.commitAttackStop(time.Now())
-	}
+	s.commitAttackStop(time.Now())
 	s.skillCooldowns[k.SkillID] = time.Now().Add(time.Duration(def.ResetTimeSeconds) * time.Second)
 	k.Delay = int16(min(def.ResetTimeSeconds, 32767))
 	if err := db.SaveCharacterSkill(s.char.ID, k); err != nil {
