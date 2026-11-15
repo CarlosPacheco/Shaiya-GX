@@ -187,8 +187,12 @@ func (a *App) appearance(c *proto.CharacterSlot) scene.Appearance {
 		ap.OffhandEnchant = weaponEnchantFromCraft(a.state.Inventory[[2]uint8{0, 6}].Craft)
 	}
 	if upper := a.itemsItem(c.EquipType[1], c.EquipTypeID[1]); upper != nil {
-		fit := uint8(upper.ReqVG) - 1
-		if fit < 8 {
+		if upper.ReqVG >= 1 && upper.ReqVG <= 8 {
+			ap.CloakFit = uint8(upper.ReqVG - 1)
+		}
+	}
+	if a.state != nil {
+		if fit, ok := a.state.ChestCloakFits[[2]uint8{c.EquipType[1], c.EquipTypeID[1]}]; ok {
 			ap.CloakFit = fit
 		}
 	}

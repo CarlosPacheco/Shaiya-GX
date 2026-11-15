@@ -34,3 +34,11 @@ movement responses; diagnostics use `GXGMState`. There is no `/goto` command.
 (`uint16`), then type, type ID, maximum distinct stats and per-stat value
 (`uint8` each). Zero count/value disables recreation for that definition.
 The client uses server limits in item tooltips instead of stale catalog fields.
+
+`0x7F0B` publishes chest-dependent cloak fits at character entry: row count
+(`uint16`), then item type, type ID and zero-based fit (`uint8` each, fit 0–7).
+Rows are sent in chunks of up to 256 using the standard server length framing.
+This additive cosmetic catalog corrects stale client Item.SData without changing
+item requirements, database contents, existing packet layouts or movement rules.
+The client falls back to its local catalog when connected to an older server.
+Update and restart both client and world to apply the synchronized fit.

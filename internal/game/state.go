@@ -88,6 +88,7 @@ type Event struct {
 
 type State struct {
 	OJLimits               map[[2]uint8]proto.OJLimit
+	ChestCloakFits         map[[2]uint8]uint8
 	LastPlayerCorrection   proto.PlayerCorrection
 	PhysicsMapID           uint16
 	PhysicsTime            float64
@@ -189,6 +190,17 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 	ev := Event{Op: op}
 	fail := func(err error) (Event, error) { return ev, fmt.Errorf("0x%04X: %w", uint16(op), err) }
 	switch op {
+	case proto.GXChestCloakFits:
+		rows, err := proto.DecodeChestCloakFits(p)
+		if err != nil {
+			return fail(err)
+		}
+		if s.ChestCloakFits == nil {
+			s.ChestCloakFits = make(map[[2]uint8]uint8)
+		}
+		for _, row := range rows {
+			s.ChestCloakFits[[2]uint8{row.Type, row.TypeID}] = row.Fit
+		}
 	case proto.GXOJLimits:
 		limits, err := proto.DecodeOJLimits(p)
 		if err != nil {

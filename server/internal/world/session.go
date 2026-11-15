@@ -840,6 +840,7 @@ func (s *Session) selectCharacter(id uint32) {
 // the server->client direction switches to the expanded XOR scheme.
 func (s *Session) sendInitialState(st *CharacterStats) {
 	s.sendOJLimits()
+	s.sendChestCloakFits()
 	s.sendSocial()
 	ch := s.char
 	for _, p := range []labeled{

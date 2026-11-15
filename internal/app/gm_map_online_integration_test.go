@@ -20,6 +20,9 @@ func TestGMMapTeleportAgainstIsolatedGX(t *testing.T) {
 	if v, ok := st.OJLimits[[2]uint8{16, 55}]; !ok || v.Stats != 3 || v.Value != 13 {
 		t.Fatal("missing authoritative OJ catalog", v, ok)
 	}
+	if fit, ok := st.ChestCloakFits[[2]uint8{17, 216}]; !ok || fit != 7 {
+		t.Fatal("missing server chest cloak fit", fit, ok)
+	}
 	for _, tc := range []struct {
 		mapID      uint16
 		x, z, size float32
