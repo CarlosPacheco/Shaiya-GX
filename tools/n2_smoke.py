@@ -153,6 +153,10 @@ with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
    c.execute('UPDATE PS_UserData_Users_Master SET Admin=1 WHERE UserUID=?',(users[0][2],))
    c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=578,PosY=78,PosZ=1762,HP=10000 WHERE UserUID=?',(users[0][2],))
   subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestGMMapTeleportAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_GM_MAP='1'),check=True,timeout=90)
+  # Functional native ladder: the first map-1 ivy guide, approached from its front.
+  with sqlite3.connect(db) as c:
+   c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=1685.1454,PosY=5.1,PosZ=619.3524,HP=20000 WHERE UserUID=?',(users[0][2],))
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestLaddersAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_LADDER='1'),check=True,timeout=90)
  finally:
   for process in reversed(children):
    process.terminate()

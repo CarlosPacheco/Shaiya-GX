@@ -49,3 +49,9 @@ disabled by default; opt in with `RAPTURE_FALL_DAMAGE=true`): target ID and actu
 Native `0x0521` still supplies health. The server never accepts client-reported
 fall distances/damage. SysMsg 5 reports the confirmed amount. See
 [GX fall rules](../fall-damage.md) for thresholds, exemptions and respawn policy.
+
+`0x7F0D` carries functional ladder intent and authoritative actor state. Requests
+contain guide index (uint16) and mode (uint8); replies prepend actor ID (uint32).
+Modes are detach/hold/ascend/descend (0–3). Existing native movement framing and
+flags are unchanged. See [functional ladders](../ladders.md) for controls,
+collision validation, catalog generation and synchronization.

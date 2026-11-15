@@ -370,8 +370,8 @@ a map-change request. It shares the existing draggable full-map frame. Native
 translucency/help controls are not implemented by this revision.
 
 
-The expanded local map shows the character's current X/Z coordinates in its
-bottom border. Hovering the map image shows the pointed X/Z beside the cursor,
+The expanded local map shows the character's current X/Y/Z coordinates centered
+in its top border, below the map name. Hovering the map image shows the pointed X/Z beside the cursor,
 using the same crop, zoom and pan as the displayed map. Coordinates are hidden
 outside the image and on the World Map overview.
 
@@ -529,3 +529,8 @@ animations and show recipient feedback at arrival. See [ranged projectile
 behavior](../ranged-projectiles.md). Floating-number anchors use native user
 logical origins and creature MON heights plus the native 0.2 headroom. WLD Ladder objects render on both
 sides and remain non-solid, matching Phoenix's visual object section.
+
+Confirmed item-acquisition notices include the item icon inline before its name,
+sized to chat font height and included in wrapping/fading. Functional native
+ladders use W/S to ascend/descend and hold position when released; see
+[ladder controls and validation](../ladders.md).

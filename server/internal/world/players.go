@@ -59,6 +59,8 @@ type ConnectedPlayer struct {
 	elementKnown                  bool
 	attackElement, defenseElement uint8
 	faction                       uint8
+	ladderIndex                   uint16
+	ladderMode                    uint8
 	motion                        uint8
 	direction                     uint16
 	sitting                       bool

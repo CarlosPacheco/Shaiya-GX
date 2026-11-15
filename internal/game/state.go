@@ -36,6 +36,8 @@ const (
 
 // Entity is anything placed in view.
 type Entity struct {
+	ClimbMode                    uint8
+	ClimbIndex                   uint16
 	Summoned                     bool
 	IsGM                         bool
 	Concealed                    bool
@@ -647,6 +649,16 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		s.LastCast = cast
+	case proto.GXLadder:
+		result, err := proto.DecodeLadderState(p)
+		if err != nil {
+			return fail(err)
+		}
+		if result.ID == s.SelfID {
+			s.Self.ClimbMode, s.Self.ClimbIndex = result.Mode, result.Index
+		} else if e := s.Entities[result.ID]; e != nil {
+			e.ClimbMode, e.ClimbIndex = result.Mode, result.Index
+		}
 	case proto.GXFallDamage:
 		result, err := proto.DecodeFallDamage(p)
 		if err != nil {
@@ -846,6 +858,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		if e != nil {
 			e.Dead = false
 			e.PositionResetSerial++
+			e.ClimbMode = 0
 			e.X, e.Y, e.Z = m.X, m.Y, m.Z
 			e.Motion = 0
 		}
@@ -1074,6 +1087,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			e.X, e.Y, e.Z, e.GuildID = u.X, u.Y, u.Z, u.GuildID
 			e.IsGM = u.Marker == 2
 			e.PositionResetSerial++
+			e.ClimbMode = 0
 		}
 		ev.Text = fmt.Sprintf("user %d enters", u.ID)
 	case proto.UserLeave, proto.MobLeave, proto.MapNpcLeave:

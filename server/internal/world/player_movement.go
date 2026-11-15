@@ -14,6 +14,9 @@ import (
 )
 
 type playerMovement struct {
+	ladder                         mapgeometry.LadderMotion
+	ladderAt                       time.Time
+	ladderRetryAt                  time.Time
 	slope                          mapgeometry.SlopeMotion
 	geometry                       *mapgeometry.Geometry
 	mapID                          uint16
@@ -62,10 +65,14 @@ func (s *Session) initPlayerMovement(now time.Time) error {
 	if !ok {
 		return fmt.Errorf("map %d character has no physical spawn surface", realMap(ch.MapID))
 	}
+	wasClimbing := s.movement.ladder.Active
 	s.movement = playerMovement{geometry: g, mapID: ch.MapID, pos: p, at: now, packetAt: now, budgetAt: now, credit: .2, fall: -2.98}
 	s.movement.fallPeak, s.movement.fallReady = p[1], g.Supported(p)
 	ch.PosX, ch.PosY, ch.PosZ = p[0], p[1], p[2]
 	s.syncPlayer()
+	if wasClimbing {
+		s.notifyLadder()
+	}
 	return nil
 }
 func (s *Session) movementSpeed() float32 {
@@ -123,6 +130,10 @@ func (s *Session) advancePlayerVertical(now time.Time) {
 	for elapsed > 0 {
 		dt := float32(min(elapsed, 1.0/120))
 		elapsed -= float64(dt)
+		if m.ladder.Active {
+			s.advanceLadder(now.Add(-time.Duration(elapsed*float64(time.Second))), dt)
+			continue
+		}
 		if m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5 {
 			m.jumping = false
 			m.fallTracking, m.fallReady = false, false
@@ -256,6 +267,15 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		return false, "non-finite position"
 	}
 	s.advancePlayerVertical(now)
+	if m.ladder.Active {
+		m.packetAt, m.budgetAt = now, now
+		m.direction = direction
+		s.commitMovement()
+		if math.Abs(float64(m.pos[1]-y)) > .35 || math.Hypot(float64(m.pos[0]-x), float64(m.pos[2]-z)) > .2 {
+			return true, "ladder position differs from server"
+		}
+		return true, ""
+	}
 	budgetAt := m.budgetAt
 	if s.attackMoveUntil.After(budgetAt) {
 		budgetAt = s.attackMoveUntil

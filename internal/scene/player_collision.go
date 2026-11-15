@@ -50,6 +50,10 @@ func (w *World) prepareCollisions(a *Assets) error {
 	if err != nil {
 		return err
 	}
+	geometry.Ladders, err = mapgeometry.BuildLadders(a.Arc.ReadFile, w.WLD)
+	if err != nil {
+		return err
+	}
 	w.collision = geometry.Index
 	w.physics = geometry
 	geometry.SetDynamicClock(w.DynamicTime)
@@ -167,4 +171,21 @@ func (w *World) PlayerSupported(feet render.V3) bool {
 // SpellLineOfSight shares the server's CPU geometry and actor-center ray.
 func (w *World) SpellLineOfSight(a, b render.V3) bool {
 	return w == nil || w.physics == nil || w.physics.LineOfSight(mapgeometry.Position(a), mapgeometry.Position(b))
+}
+
+func (w *World) PlayerLadders() []mapgeometry.Ladder {
+	if w == nil || w.physics == nil {
+		return nil
+	}
+	return w.physics.Ladders
+}
+func (w *World) AttachLadder(p, f render.V3, index int) (mapgeometry.LadderMotion, render.V3, bool) {
+	if w == nil || w.physics == nil {
+		return mapgeometry.LadderMotion{}, p, false
+	}
+	m, q, ok := w.physics.AttachLadder(mapgeometry.Position(p), mapgeometry.Position(f), index)
+	return m, render.V3(q), ok
+}
+func (w *World) StepLadder(m *mapgeometry.LadderMotion, p render.V3, dt float32) render.V3 {
+	return render.V3(m.Step(w.physics, mapgeometry.Position(p), dt))
 }

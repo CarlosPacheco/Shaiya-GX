@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"math"
 	"os"
 	"path/filepath"
@@ -48,6 +49,9 @@ func loadMobNavigation(mapID uint16) (*mapnav.Map, error) {
 	nav, err := mapnav.Load(directory, id)
 	if err != nil {
 		return nil, fmt.Errorf("map %d navigation: %w", id, err)
+	}
+	if g, ok := nav.PlayerGeometry(); ok {
+		g.Ladders = mapgeometry.NativeLadders(id)
 	}
 	if len(mobNavigation.maps) >= 4 {
 		var oldest uint16

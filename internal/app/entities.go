@@ -13,6 +13,7 @@ import (
 )
 
 type remoteActor struct {
+	climbing      bool
 	entity        *game.Entity
 	position      remotePosition
 	gestureSerial uint64
@@ -158,6 +159,14 @@ func (a *App) prepareRemotePlayers() {
 				clip = "001_walk"
 			}
 		}
+		if e.ClimbMode != 0 && !e.Dead && !e.Mounted {
+			if !cached.climbing {
+				c.ReleaseAction()
+				c.CancelCast()
+			}
+			clip = "018_ladder"
+		}
+		cached.climbing = e.ClimbMode != 0
 		c.Mounted = e.Mounted
 		if e.Mounted {
 			c.SetMountedClip(moving, scene.VehicleAlternate(e.MountShape))
@@ -166,6 +175,9 @@ func (a *App) prepareRemotePlayers() {
 		}
 		jumpAction := c.PlayingAction(8)
 		c.Update(float32(a.frameDT))
+		if e.ClimbMode == 1 && !c.ActionActive() {
+			c.Time -= float32(a.frameDT)
+		}
 		if jumpAction && !c.ActionActive() {
 			c.SetClip(clip)
 		}

@@ -19,100 +19,104 @@ import (
 // third-person camera (0x444b10 reset, 0x4397d0 orbit/zoom, 0x43bfa0
 // movement; Phoenix tools/reference/ep5_camera_controls.md).
 type worldView struct {
-	slope                   mapgeometry.SlopeMotion
-	collisionView           bool
-	groundFall              float32
-	requestedSkill          *requestedSkillPresentation
-	releaseEffects          []skillRelease
-	death                   deathView
-	localActions            [ui.TotalActionSlots]uint8 // zero means empty; otherwise panel index + 1
-	localActionDrag         subActionDrag
-	shadow                  *render.ShadowMap
-	shadowAttempted         bool
-	waterReflection         *render.WaterTarget
-	waterWidth, waterHeight int
-	waterFailed             bool
-	mapView                 mapView
-	mobClick                mobClick
-	portrait                *render.Texture
-	portraitAppearance      scene.Appearance
-	portraitLoaded          bool
-	dead                    bool
-	uiLeft                  int
-	uiRight                 bool
-	npcs                    map[uint32]*npcActor
-	mapID                   uint16
-	actors                  map[uint32]*remoteActor
-	mobs                    map[uint32]*mobActor
-	world                   *scene.World
-	self                    *scene.Character
-	selfMount               *scene.Vehicle
-	selfMountShape          uint8
-	selfMountRace           uint8
-	selfMountLoaded         bool
-	pos                     render.V3
-	facing                  render.V3 // logical heading; diagonals must not feed back into this
-	visualFacing            render.V3 // rendered diagonal heading, zero means logical heading
-	combatHeading           render.V3 // heading to restore after facing an attack target
-	eye                     render.V3 // desired eye; follows the position delta
-	moving                  bool
-	walking                 bool
-	autoRun                 bool
-	travel                  bool
-	approachTarget          uint32
-	approachSkill           []byte
-	approachLearned         proto.LearnedSkill
-	approachLoot            bool
-	approachNPC             bool
-	destination             render.V3
-	travelEffect            *scene.Effect
-	firstPerson             bool
-	sittingCamera           bool
-	mouselook               bool
-	cameraReady             bool
-	cameraEye, cameraTarget render.V3
-	firstDirection          render.V3
-	attackMoveUntil         float64
-	attackPose              bool
-	attackActionID          uint64
-	jumping                 bool
-	jumpFall                float32
-	jumpFloor               float32
-	controlTime             float64
-	forwardRelease          float64
-	forwardReleased         bool
-	backRelease             float64
-	backReleased            bool
-	evading                 bool
-	evadeAction             int
-	evadeDirection          render.V3
-	evadeTime               float32
-	sideRelease             [2]float64
-	sideReleased            [2]bool
-	sitPending              bool
-	sitDeadline             float64
-	sitAttack               uint32
-	selfGestureSerial       uint64
-	waterDirty              bool
-	waterPresentation       waterPresentation
-	waterFallSpeed          float32
-	sendT                   float64
-	motion                  uint8
-	reviveAt                float64
-	effect                  *scene.Effect
-	runEffects              []runTrail
-	runEffectAt             map[uint32]float64
-	castEffects             []castEffect
-	projectiles             []skillProjectile
-	physicalProjectiles     []physicalProjectile
-	physicalSkillQueued     bool
-	impacts                 []skillImpact
-	impactCues              []skillImpactCue
-	attackSounds            []attackSound
-	effectErrors            map[string]bool
-	groundBatches           [4][]render.M4
-	groundColors            [4][][4]float32
-	groundStart             map[uint32]float64
+	ladderFinishing             bool
+	ladder                      mapgeometry.LadderMotion
+	ladderSendAt, ladderRetryAt float64
+	ladderSentMode              uint8
+	slope                       mapgeometry.SlopeMotion
+	collisionView               bool
+	groundFall                  float32
+	requestedSkill              *requestedSkillPresentation
+	releaseEffects              []skillRelease
+	death                       deathView
+	localActions                [ui.TotalActionSlots]uint8 // zero means empty; otherwise panel index + 1
+	localActionDrag             subActionDrag
+	shadow                      *render.ShadowMap
+	shadowAttempted             bool
+	waterReflection             *render.WaterTarget
+	waterWidth, waterHeight     int
+	waterFailed                 bool
+	mapView                     mapView
+	mobClick                    mobClick
+	portrait                    *render.Texture
+	portraitAppearance          scene.Appearance
+	portraitLoaded              bool
+	dead                        bool
+	uiLeft                      int
+	uiRight                     bool
+	npcs                        map[uint32]*npcActor
+	mapID                       uint16
+	actors                      map[uint32]*remoteActor
+	mobs                        map[uint32]*mobActor
+	world                       *scene.World
+	self                        *scene.Character
+	selfMount                   *scene.Vehicle
+	selfMountShape              uint8
+	selfMountRace               uint8
+	selfMountLoaded             bool
+	pos                         render.V3
+	facing                      render.V3 // logical heading; diagonals must not feed back into this
+	visualFacing                render.V3 // rendered diagonal heading, zero means logical heading
+	combatHeading               render.V3 // heading to restore after facing an attack target
+	eye                         render.V3 // desired eye; follows the position delta
+	moving                      bool
+	walking                     bool
+	autoRun                     bool
+	travel                      bool
+	approachTarget              uint32
+	approachSkill               []byte
+	approachLearned             proto.LearnedSkill
+	approachLoot                bool
+	approachNPC                 bool
+	destination                 render.V3
+	travelEffect                *scene.Effect
+	firstPerson                 bool
+	sittingCamera               bool
+	mouselook                   bool
+	cameraReady                 bool
+	cameraEye, cameraTarget     render.V3
+	firstDirection              render.V3
+	attackMoveUntil             float64
+	attackPose                  bool
+	attackActionID              uint64
+	jumping                     bool
+	jumpFall                    float32
+	jumpFloor                   float32
+	controlTime                 float64
+	forwardRelease              float64
+	forwardReleased             bool
+	backRelease                 float64
+	backReleased                bool
+	evading                     bool
+	evadeAction                 int
+	evadeDirection              render.V3
+	evadeTime                   float32
+	sideRelease                 [2]float64
+	sideReleased                [2]bool
+	sitPending                  bool
+	sitDeadline                 float64
+	sitAttack                   uint32
+	selfGestureSerial           uint64
+	waterDirty                  bool
+	waterPresentation           waterPresentation
+	waterFallSpeed              float32
+	sendT                       float64
+	motion                      uint8
+	reviveAt                    float64
+	effect                      *scene.Effect
+	runEffects                  []runTrail
+	runEffectAt                 map[uint32]float64
+	castEffects                 []castEffect
+	projectiles                 []skillProjectile
+	physicalProjectiles         []physicalProjectile
+	physicalSkillQueued         bool
+	impacts                     []skillImpact
+	impactCues                  []skillImpactCue
+	attackSounds                []attackSound
+	effectErrors                map[string]bool
+	groundBatches               [4][]render.M4
+	groundColors                [4][][4]float32
+	groundStart                 map[uint32]float64
 }
 
 const (
@@ -388,7 +392,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	if backEvade {
 		evadeMotion = proto.MotionBackstep
 	}
-	if evadeMotion != 0 && !v.evading && !blocked && !swimming && !v.jumping && speed > 0 && !a.state.Self.Dead && !a.state.Self.Mounted && v.self != nil {
+	if evadeMotion != 0 && !v.ladder.Active && !v.evading && !blocked && !swimming && !v.jumping && speed > 0 && !a.state.Self.Dead && !a.state.Self.Mounted && v.self != nil {
 		action, _ := proto.LocomotionAction(evadeMotion)
 		v.evading = v.self.PlayAction(action, false)
 		if v.evading {
@@ -415,8 +419,12 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 			strafe = 1
 		}
 	}
+	climbFrame, climbMoving := a.updateLadderMovement(in, forward, back, strafe, blocked, speed, dt)
+	if a.wv != v {
+		return
+	}
 	jumpPressed := in.HasKey(platform.KeySpace)
-	if jumpPressed && !blocked && !swimming && !v.jumping && !v.evading && speed > 0 && !a.state.Self.Dead && !a.state.Self.Mounted && v.world.PlayerSupported(v.pos) {
+	if jumpPressed && !climbFrame && !blocked && !swimming && !v.jumping && !v.evading && speed > 0 && !a.state.Self.Dead && !a.state.Self.Mounted && v.world.PlayerSupported(v.pos) {
 		// MotionJump has no position. Flush unsent walking/running progress
 		// first, so the server grants the impulse at the same support surface.
 		if v.moving || dir.Len() > 0 {
@@ -435,8 +443,11 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		dir = render.V3{}
 	}
 	moving := dir.Len() > 0 && speed > 0 && !a.state.Self.Dead
+	if climbFrame {
+		moving = climbMoving
+	}
 	diving := false
-	if moving {
+	if moving && !climbFrame {
 		horizontal := dir.Norm()
 		if forward && strafe != 0 || swimming || a.state.Self.Mounted {
 			v.visualFacing = horizontal
@@ -470,7 +481,9 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	if v.evading {
 		v.evadeTime += float32(dt)
 	}
-	if v.jumping {
+	if climbFrame {
+		// Ladder movement already integrated using the shared guide.
+	} else if v.jumping {
 		if v.advanceJump(float32(dt)) {
 			v.waterDirty = true
 		}
@@ -517,6 +530,8 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		}
 		v.self.Mounted = a.state.Self.Mounted
 		switch {
+		case climbFrame && !a.state.Self.Dead:
+			v.self.SetClip("018_ladder")
 		case a.state.Self.Mounted:
 			v.self.SetMountedClip(moving, scene.VehicleAlternate(a.state.Self.MountShape))
 		case swimming && moving:
@@ -544,6 +559,9 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		}
 		jumpAction := v.self.PlayingAction(8)
 		v.self.Update(float32(dt))
+		if climbFrame && !moving && !v.self.ActionActive() {
+			v.self.Time -= float32(dt)
+		}
 		// The jump is a single ALT action, not a looping airborne clip.
 		if jumpAction && !v.self.ActionActive() && airborne {
 			clip := "000_normal"
@@ -576,6 +594,15 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 			motion = 4
 		case !v.walking || swimming:
 			motion = 1
+		}
+	}
+	if climbFrame {
+		motion = 0
+		if climbMoving {
+			motion = 1
+			if v.ladder.Mode == mapgeometry.LadderDown {
+				motion = 2
+			}
 		}
 	}
 	if v.jumping {

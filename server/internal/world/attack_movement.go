@@ -19,6 +19,10 @@ func (s *Session) attackMovementAllowed(now time.Time) bool {
 func (s *Session) commitAttackStop(now time.Time) {
 	s.attackMoveUntil = now.Add(attackspeed.MovementPauseMilliseconds * time.Millisecond)
 	m := &s.movement
+	if m.ladder.Active {
+		m.ladder.Mode = 1
+		s.notifyLadder()
+	}
 	m.credit = 0
 	m.budgetAt = now
 	m.motion = 0

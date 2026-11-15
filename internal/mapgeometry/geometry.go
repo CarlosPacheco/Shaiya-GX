@@ -20,6 +20,7 @@ type Dynamic struct {
 	Speed  float32
 }
 type Geometry struct {
+	Ladders   []Ladder
 	clock     func() float64
 	Water     bool
 	Triangles []collision.Triangle

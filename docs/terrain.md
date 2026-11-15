@@ -92,3 +92,7 @@ movement mode or change server collision resources.
 Server-authoritative falling can apply the optional, default-disabled [GX fall-damage
 rules](fall-damage.md) on supported landings. Spawn settling, teleport resets
 and deep-water entry do not inherit an earlier drop.
+
+Native WLD Ladder/Object placements also support shared client/server climbing,
+with server-owned vertical motion and collision-checked landings. See
+[functional ladders](ladders.md) for controls and the asset-free guide catalog.

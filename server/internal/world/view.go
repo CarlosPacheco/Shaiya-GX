@@ -319,7 +319,11 @@ func (p *ConnectedPlayer) enterFrames() [][]byte {
 	frames := [][]byte{p.EnteredMapPacket(), p.ShapePacket(), p.MovePacket(), p.visibilityPacket()}
 	p.mu.Lock()
 	sp, known := p.speeds, p.speedKnown
+	ladderIndex, ladderMode := p.ladderIndex, p.ladderMode
 	p.mu.Unlock()
+	if ladderMode != 0 {
+		frames = append(frames, buildLadderState(p.CharacterID, ladderIndex, ladderMode))
+	}
 	if known {
 		frames = append(frames, buildCharacterSpeed(p.CharacterID, sp))
 	}

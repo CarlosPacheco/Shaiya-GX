@@ -107,3 +107,7 @@ Monsters do not regenerate health passively, regardless of the legacy
 `RecoverValue` definition. Returning home preserves their remaining HP. A fresh
 spawn/respawn still starts with its defined maximum health. Explicit healing
 attacks or skill effects retain their own rules; they are not passive recovery.
+
+GX fall damage is implemented and tested but **off by default**. Set
+`RAPTURE_FALL_DAMAGE=true` in the environment or `.local/runtime.env`, then
+restart the world server to opt in. See [the complete fall rules](../fall-damage.md).

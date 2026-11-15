@@ -3,6 +3,7 @@ package world
 import (
 	"errors"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"net"
 	"os"
 	"strings"
@@ -468,6 +469,8 @@ func (s *Session) sendCharacterSelect() {
 
 func (s *Session) dispatch(op packet.Opcode, p []byte) {
 	switch op {
+	case packet.Opcode(proto.GXLadder):
+		s.handleLadder(p)
 	case 0x2202, 0x2203, 0x2205, 0x2206, 0x2209, 0x220a, 0x220b, 0x220c:
 		s.handleSocial(op, p)
 	case packet.AccountFaction:

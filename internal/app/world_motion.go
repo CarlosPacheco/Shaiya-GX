@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"math"
 	"time"
 
@@ -196,6 +197,13 @@ func (a *App) confirmedPosition(p []byte) {
 		return
 	}
 	switch proto.Op(p) {
+	case proto.GXLadder:
+		result, err := proto.DecodeLadderState(p)
+		if err == nil && result.ID == a.state.SelfID && result.Mode == mapgeometry.LadderDetach {
+			v.ladder.Active = false
+			v.ladderFinishing = false
+			v.ladderRetryAt = a.clock + .35
+		}
 	case proto.GXPlayerCorrection:
 		if proto.NewReader(p).U32() != a.state.SelfID {
 			return
@@ -216,6 +224,11 @@ func (a *App) confirmedPosition(p []byte) {
 	case proto.CharacterMove, proto.CharacterMapTeleport, proto.CharacterResurrect:
 		if proto.NewReader(p).U32() != a.state.SelfID {
 			return
+		}
+		if proto.Op(p) != proto.CharacterMove {
+			v.ladder.Active = false
+			v.ladderFinishing = false
+			v.ladderRetryAt = a.clock + .35
 		}
 		v.slope.Frames = 0
 		v.place(render.V3{a.state.Self.X, a.state.Self.Y, a.state.Self.Z})
