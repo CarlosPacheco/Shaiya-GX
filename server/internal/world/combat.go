@@ -68,10 +68,11 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	if ch == nil {
 		return false
 	}
+	s.cancelVehicleCast()
 	if s.cast != nil {
 		return false
 	}
-	if s.mounted {
+	if s.ridingVehicle() {
 		s.log.Printf("GX Server World cancelled auto attack while mounted character_id=%d mob_global_id=%d", ch.ID, target)
 		return false
 	}
@@ -372,7 +373,7 @@ func (s *Session) takeMobDamage(d pendingDamage, damage uint32, stats *Character
 	ch.CurrentHP = satSub(ch.CurrentHP, cur.CurrentHP-newEffective)
 	killed := newEffective == 0
 	s.persist()
-	s.dismount()
+	s.cancelVehicleCast()
 	if !killed {
 		s.wake()
 	}

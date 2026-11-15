@@ -197,13 +197,17 @@ func isAccessoryType(t uint8) bool { return t == 22 || t == 23 || t == 40 }
 
 // addItemDef adds full item effects; legacy stored quality never reduces stats.
 func (e *EquipmentStats) addItemDef(itemType uint8, d *db.ItemDef) {
-	e.MoveSpeed += int32(d.Speed) // ItemEquipmentAdd / GemEquipmentAdd, native stItemInfo +0x48.
+	if itemType != 42 {
+		e.MoveSpeed += int32(d.Speed)
+	} // ItemEquipmentAdd / GemEquipmentAdd, native stItemInfo +0x48.
 	weapon := IsWeaponItemType(itemType)
 	if weapon || isAccessoryType(itemType) || itemType == gemItemType {
 		e.ItemAttack, e.Variance = satAdd(e.ItemAttack, pos16(d.Effect1)), satAdd(e.Variance, pos16(d.Effect2))
 	}
 	if !weapon {
-		e.AttackSpeed += int32(d.AttackTime) // accessory / linked-lapis tier bonus, never weapon base twice.
+		if itemType != 42 {
+			e.AttackSpeed += int32(d.AttackTime)
+		} // Mount AttackTime is seat count.
 		e.Defense, e.Resistance = satAdd(e.Defense, pos16(d.Effect3)), satAdd(e.Resistance, pos16(d.Effect4))
 	}
 	e.MaxHP, e.MaxSP, e.MaxMP = satAdd(e.MaxHP, pos16(d.ConstHP)), satAdd(e.MaxSP, pos16(d.ConstSP)), satAdd(e.MaxMP, pos16(d.ConstMP))

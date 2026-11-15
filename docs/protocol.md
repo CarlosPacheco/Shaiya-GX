@@ -11,3 +11,8 @@ Examples of implemented packet families include character entry/movement, target
 Automatic action approach is client movement prediction. It selects a known nearby target, follows its position and sends an attack or pickup request in reach. Item removal, damage and rewards still require server packets. Manual movement, cancellation or target disappearance cancels approach.
 
 Native addresses and counterpart behavior are cited in source comments. Unknown fields remain explicitly unknown; protocol parity is not inferred from a visually working screen. Integration tests run against isolated GX Server instances with disposable accounts and a temporary database.
+
+Mount requests retain the native 0x0216/0x0217 and 0x021C–0x021E family.
+GX mount state (0x7F10) carries explicit model, speed, seats, cast/cooldown
+timing and conductor/passenger IDs; see [mounts](mounts.md). Both endpoints
+must use matching GX builds.

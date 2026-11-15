@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"math"
 	"strings"
 	"time"
@@ -59,6 +60,7 @@ func (s *Session) syncPlayer() {
 // resurrection): moves the character, persists it, acks the client,
 // introduces it to viewers at the destination and refreshes visibility.
 func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmDirect ...bool) {
+	s.dismount()
 	// /cmove may inspect the base map without joining a party/guild instance.
 	direct := s.isAdmin && len(gmDirect) > 0 && gmDirect[0]
 	ch := s.char
@@ -124,6 +126,10 @@ func (s *Session) handleCharacterMove(p []byte) {
 	if len(p) < 17 || s.char == nil {
 		return
 	}
+	if s.player != nil && s.player.vehicleState().State == proto.VehiclePassenger {
+		s.correctMovement("passenger cannot move independently")
+		return
+	}
 	motion := p[2]
 	direction, _ := packet.U16(p[3:])
 	x, _ := packet.F32(p[5:])
@@ -133,6 +139,7 @@ func (s *Session) handleCharacterMove(p []byte) {
 	oldX, oldZ := ch.PosX, ch.PosZ
 	if x != ch.PosX || z != ch.PosZ {
 		s.cancelMove()
+		s.cancelVehicleCast()
 	}
 	ok, reason := s.validatePlayerMovement(x, y, z, motion, direction, time.Now())
 	if !ok {

@@ -105,7 +105,7 @@ func (a *App) drawBlessingTooltip(w, h int) {
 	if a.bottom == nil || !a.bottom.BlessingAt(a.lastMouseX, a.lastMouseY, w, h) || a.menuOpen || a.state == nil || a.state.Self.Dead {
 		return
 	}
-	for _, dialog := range []*ui.Message{a.accountMessage, a.partyMessage, a.guildMessage, a.guildConfirm, a.guildDuelMessage, a.duelMessage, a.gemConfirm, a.gateConfirm, a.questConfirm, a.exchangeInvite} {
+	for _, dialog := range []*ui.Message{a.accountMessage, a.partyMessage, a.vehicleMessage, a.guildMessage, a.guildConfirm, a.guildDuelMessage, a.duelMessage, a.gemConfirm, a.gateConfirm, a.questConfirm, a.exchangeInvite} {
 		if dialog != nil && dialog.Visible {
 			return
 		}

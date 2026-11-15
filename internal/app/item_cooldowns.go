@@ -5,10 +5,11 @@ import (
 	"math"
 	"strconv"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
 
-// ReqIg is a shared reuse group, not a delay in seconds. This is the native
+// For consumables, ReqIg is a shared reuse group. Mounts use seconds. This is the native
 // ItemUse table, also enforced by Rapture cooldownForReqIg.
 func itemReuseSeconds(group uint8) float64 {
 	switch group {
@@ -33,6 +34,9 @@ func itemReuseSeconds(group uint8) float64 {
 }
 
 func (a *App) itemCooldown(it proto.InventoryItem) float64 {
+	if it.Type == 42 {
+		return max(0, a.vehicle.cooldownEnd-a.clock)
+	}
 	if a.arc == nil && a.items == nil {
 		return 0
 	}
@@ -93,8 +97,18 @@ func (a *App) confirmedItems(op proto.Opcode) {
 func (a *App) drawItemCooldown(it proto.InventoryItem, x, y, size int) {
 	if left := a.itemCooldown(it); left > 0 {
 		d := a.itemsItem(it.Type, it.TypeID)
-		a.sprites.DrawCooldown(a.white, float32(x), float32(y), float32(size), float32(left/itemReuseSeconds(d.ReqIg)), [4]float32{1, 0, 0, 80.0 / 255})
+		if d == nil {
+			return
+		}
+		a.sprites.DrawCooldown(a.white, float32(x), float32(y), float32(size), float32(left/max(1, itemCooldownDuration(d))), [4]float32{1, 0, 0, 80.0 / 255})
 		text := fmt.Sprintf("%.0f", math.Ceil(left))
 		a.font.Draw(a.sprites, text, x+(size-a.font.Width(text))/2, y+(size-13)/2, [4]float32{1, 1, 0, 1}, size)
 	}
+}
+
+func itemCooldownDuration(d *sdata.Item) float64 {
+	if d.Type == 42 {
+		return float64(d.ReqIg)
+	}
+	return itemReuseSeconds(d.ReqIg)
 }

@@ -341,6 +341,9 @@ func (a *App) actionPacket(index int) []byte {
 					return proto.ItemMovePacket(q.Bag, uint8(q.Number), 0, destination)
 				}
 			}
+			if it.Type == 42 && q.Bag == 0 && q.Number == 13 {
+				return proto.UseVehiclePacket()
+			}
 			if a.itemCooldown(it) > 0 {
 				return nil
 			}
@@ -415,6 +418,10 @@ func (a *App) useAction(index int) {
 		}
 	}
 	if p := a.actionPacket(index); p != nil {
+		if proto.Op(p) == proto.UseVehicle {
+			a.requestVehicle()
+			return
+		}
 		if a.approachSkillPacket(p) {
 			return
 		}
@@ -459,7 +466,7 @@ func (a *App) drawActionBar(w, h int) {
 			slot.Label = fmt.Sprintf("%s x%d", d.Name, it.Count)
 			slot.Badge = a.itemBadge(d, &it)
 			slot.Cooldown = a.itemCooldown(it)
-			slot.CooldownDuration = itemReuseSeconds(d.ReqIg)
+			slot.CooldownDuration = itemCooldownDuration(d)
 			if file, uv, ok := ui.ItemIcon(it.Type, d.Icon); ok {
 				slot.Icon, slot.UV = a.assets.Texture("interface/"+file), uv
 			}

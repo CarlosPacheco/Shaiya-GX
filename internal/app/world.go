@@ -327,6 +327,25 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	strafe := intent.side
 	forward := intent.forward
 	speed := playerMovementSpeed(a.state.Self.Speed, a.state.Self.Mounted)
+	if a.state.Self.Vehicle.State == proto.VehicleDriver && a.state.Self.Vehicle.Speed == 5 && speed > 0 {
+		speed = 8
+	}
+	if a.state.Self.Vehicle.State == proto.VehiclePassenger {
+		forward, back, strafe = false, false, 0
+		intent.turn = 0
+		v.autoRun = false
+		v.travel = false
+		speed = 0
+		if e := a.state.Entities[a.state.Self.Vehicle.Driver]; e != nil {
+			v.pos = render.V3{e.X, e.Y, e.Z}
+		}
+		if in.HasKey(platform.KeySpace) {
+			if err := a.world.Send(proto.VehicleLeavePacket()); err != nil {
+				a.backToLogin("Unable to dismount.")
+				return
+			}
+		}
+	}
 	if a.state.Self.Dead || a.state.Self.Mounted {
 		v.sitAttack = 0
 	}
@@ -671,8 +690,10 @@ func (a *App) drawWorldView(w, h int) {
 	s.LightDir = render.V3{-1, -1, -1}
 	s.Begin()
 	v.world.Update(float32(a.frameDT))
+	a.vehicle.effectBudget = 2
 	a.prepareSelfForDraw()
 	a.prepareRemotePlayers()
+	a.attachVehiclePassengers()
 	a.prepareMonsters()
 	a.prepareNPCs()
 	a.updateRunEffects()
@@ -778,12 +799,16 @@ func (a *App) drawWorldContents(eye render.V3, underwater bool) {
 func (a *App) prepareSelfForDraw() {
 	v := a.wv
 	if v.self != nil {
+		v.self.Mounted = a.state.Self.Mounted
+		if v.self.Mounted {
+			v.self.SetMountedClip(v.moving, scene.VehicleAlternate(a.state.Self.MountShape))
+		}
 		riderPos := v.pos
 		heading := v.facing
 		if v.visualFacing.Len() > 0 {
 			heading = v.visualFacing
 		}
-		if a.state.Self.Mounted {
+		if a.state.Self.Mounted && a.state.Self.Vehicle.State != proto.VehiclePassenger {
 			if slot, ok := a.selfSlot(); ok {
 				if !v.selfMountLoaded || v.selfMountShape != a.state.Self.MountShape || v.selfMountRace != slot.Race {
 					v.selfMountShape, v.selfMountRace, v.selfMountLoaded = a.state.Self.MountShape, slot.Race, true
@@ -794,10 +819,11 @@ func (a *App) prepareSelfForDraw() {
 					}
 				}
 				if v.selfMount != nil {
-					v.selfMount.SetMoving(v.moving)
+					v.selfMount.SetLocomotion(v.moving, v.walking || v.motion&0x3f == 0)
 					v.selfMount.Update(float32(a.frameDT))
 					v.selfMount.World = render.Basis(v.pos, heading.Scale(-1), render.V3{0, 1, 0})
 					riderPos = v.selfMount.Seat()
+					v.selfMount.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, true, &a.vehicle.effectBudget)
 				}
 			}
 		} else {
@@ -818,12 +844,16 @@ func (a *App) drawSelf() {
 		v.selfMount.Concealed = a.state.Self.Concealed
 		if v.selfMount.Visible(frustum, a.scene3d.ClipPlane) {
 			v.selfMount.Draw(a.skinner, a.scene3d)
+			v.selfMount.DrawEffects(a.scene3d)
 		}
 	}
 	if v.self.Visible(frustum, a.scene3d.ClipPlane) {
 		v.self.Draw(a.skinner, a.scene3d)
 	}
 	a.drawSelfShadow()
+	if a.vehicle.castEffect != nil && a.clientSettings().SkillEffects {
+		a.vehicle.castEffect.Draw(a.scene3d)
+	}
 }
 
 var _ = game.PhaseInWorld

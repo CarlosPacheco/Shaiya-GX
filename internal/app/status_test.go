@@ -109,3 +109,21 @@ func TestPvPFinalRewardStageRemainsVisibleAndCannotReplay(t *testing.T) {
 		t.Fatal("one million kills lost final SysMsg title")
 	}
 }
+
+func TestMountedStatusShowsAbsoluteSpeed(t *testing.T) {
+	a := inputApp()
+	a.msg = map[int]string{5279: "very fast", 5280: "extremely fast", 5276: "normal"}
+	a.state.Self.Speed = &proto.CharacterSpeed{Move: 2}
+	a.state.Self.Vehicle = proto.VehicleState{State: proto.VehicleDriver, Speed: 5}
+	if got := a.statusState().MoveSpeed; got != "extremely fast" {
+		t.Fatal(got)
+	}
+	a.state.Self.Vehicle.Speed = 4
+	if got := a.statusState().MoveSpeed; got != "very fast" {
+		t.Fatal(got)
+	}
+	a.state.Self.Vehicle.State = proto.VehicleOff
+	if got := a.statusState().MoveSpeed; got != "normal" {
+		t.Fatal(got)
+	}
+}

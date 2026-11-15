@@ -316,7 +316,7 @@ func (s *Session) refreshView() {
 
 // enterFrames is what CCell::SendCellInfoEnter shows of a user.
 func (p *ConnectedPlayer) enterFrames() [][]byte {
-	frames := [][]byte{p.EnteredMapPacket(), p.ShapePacket(), p.MovePacket(), p.visibilityPacket()}
+	frames := [][]byte{p.EnteredMapPacket(), p.ShapePacket(), p.MovePacket(), p.visibilityPacket(), buildVehicleState(p.vehicleState())}
 	p.mu.Lock()
 	sp, known := p.speeds, p.speedKnown
 	ladderIndex, ladderMode := p.ladderIndex, p.ladderMode

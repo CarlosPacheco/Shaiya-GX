@@ -148,7 +148,8 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		return
 	}
 	target, _ := packet.U32(p[3:])
-	if s.mounted || s.cast != nil || s.actionBlocked() {
+	s.cancelVehicleCast()
+	if s.ridingVehicle() || s.cast != nil || s.actionBlocked() {
 		s.log.Printf("GX Server World rejected skill use (mounted, casting, stunned or asleep) character_id=%d", ch.ID)
 		return
 	}

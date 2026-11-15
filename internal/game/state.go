@@ -52,6 +52,8 @@ type Entity struct {
 	GestureSerial                uint64
 	PartyBadge                   uint8
 	MountShape                   uint8
+	Vehicle                      proto.VehicleState
+	VehicleKnown                 bool
 	Mounted                      bool
 	GuildID                      uint32
 	HP                           int32
@@ -129,6 +131,10 @@ type State struct {
 	Party                  PartyState
 	LastItemUse            proto.ItemUseResult
 	LastVehicle            proto.VehicleResult
+	VehicleInviteID        uint32
+	VehicleInviteSerial    uint64
+	VehicleReply           uint8
+	VehicleReplySerial     uint64
 	VehicleSerial          uint64
 	vehicleShapeExpected   bool
 	LastGatekeeper         proto.GatekeeperResult
@@ -357,6 +363,41 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		if value.ID == s.SelfID {
 			s.Details.Kills = value.Kills
 		}
+	case proto.GXVehicleState:
+		v, err := proto.DecodeVehicleState(p)
+		if err != nil {
+			return fail(err)
+		}
+		e := &s.Self
+		if v.ID != s.SelfID {
+			e = s.Entities[v.ID]
+			if e == nil {
+				e = &Entity{Kind: KindUser, ID: v.ID}
+				s.Entities[v.ID] = e
+			}
+		}
+		e.Vehicle = v
+		e.VehicleKnown = true
+		e.Mounted = v.State >= proto.VehicleDriver
+		e.MountShape = v.Model
+	case proto.VehicleInvite:
+		r := proto.NewReader(p)
+		s.VehicleInviteID = r.U32()
+		if err := r.Err(); err != nil {
+			return fail(err)
+		}
+		s.VehicleInviteSerial++
+	case proto.VehicleAnswer:
+		r := proto.NewReader(p)
+		s.VehicleReply = r.U8()
+		if err := r.Err(); err != nil {
+			return fail(err)
+		}
+		s.VehicleReplySerial++
+	case proto.VehicleCast:
+		// The canonical GX state follows this native announcement.
+	case proto.VehicleLeave:
+		// Passenger links are authoritative in GXVehicleState.
 	case proto.UseVehicle:
 		result, err := proto.DecodeVehicleResult(p)
 		if err != nil {
@@ -364,7 +405,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		s.LastVehicle = result
 		s.VehicleSerial++
-		if result.Result == 1 {
+		if result.Result == 1 && !s.Self.VehicleKnown {
 			s.Self.Mounted = !s.Self.Mounted
 			s.vehicleShapeExpected = true
 		}
@@ -374,6 +415,9 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		if shape.ID == s.SelfID {
+			if s.Self.VehicleKnown {
+				break
+			}
 			s.Self.MountShape = shape.Shape
 			if s.vehicleShapeExpected {
 				s.vehicleShapeExpected = false
@@ -386,7 +430,9 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 				e = &Entity{Kind: KindUser, ID: shape.ID}
 				s.Entities[shape.ID] = e
 			}
-			e.MountShape, e.Mounted = shape.Shape, shape.Shape != 0
+			if !e.VehicleKnown {
+				e.MountShape, e.Mounted = shape.Shape, shape.Shape != 0
+			}
 		}
 	case proto.Gatekeeper:
 		result, err := proto.DecodeGatekeeperResult(p)

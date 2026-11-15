@@ -16,6 +16,7 @@ Start with [first run](quickstart.md), then [building and testing](building.md).
 | [Architecture](architecture.md) | Single Go module, client/server boundaries and state ownership |
 | [Interface](interface.md) | Implemented behavior, parameters and remaining work |
 | [Protocol](protocol.md) | Wire compatibility and server authority |
+| [Mounts](mounts.md) | Mount casting, movement, two riders, MON bones/effects and content migration |
 | [Weapon enchantments](weapon-enchantments.md) | Local/remote equipment presentation and validation |
 | [Server storage](../server/docs/sqlite.md) | Embedded development DB and future replacement |
 | [Portable distribution](../server/docs/distribution.md) | Archive contents, verification and publishing |

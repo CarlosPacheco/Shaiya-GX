@@ -31,6 +31,13 @@ func (a *App) statusState() ui.StatusState {
 		attack = a.msg.Get(attackspeed.Message(sp.Attack))
 		move = a.msg.Get(movespeed.Message(sp.Move))
 	}
+	if v := a.state.Self.Vehicle; v.State >= proto.VehicleDriver && (a.state.Self.Speed == nil || a.state.Self.Speed.Move != 255) {
+		id := 5279
+		if v.Speed == 5 {
+			id = 5280
+		}
+		move = a.msg.Get(id)
+	}
 	return ui.StatusState{Title: pvprank.Title(a.state.Details.Kills, a.msg), AttackSpeed: attack, MoveSpeed: move, Class: ui.ClassName(a.msg, a.state.Faction.Faction == 0, c.Class), Mode: a.msg.Get(470 + int(c.Mode)),
 		Base: proto.StatPoints{c.Str, c.Dex, c.Rec, c.Int, c.Wis, c.Luc}, Points: a.state.Details.StatPoint, Details: a.state.Details,
 		HP: a.state.Pools.HP, MP: a.state.Pools.MP, SP: a.state.Pools.SP, Stats: a.state.Stats, Known: a.state.StatsKnown, Busy: a.status.pending || a.state.Self.Dead}

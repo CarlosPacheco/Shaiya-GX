@@ -100,6 +100,7 @@ type App struct {
 	party                               partyView
 	partyUI                             *ui.PartyPanel
 	partyMessage                        *ui.Message
+	vehicleMessage                      *ui.Message
 	windowDrag                          windowDrag
 	sound                               *audio.Engine
 	soundErrors                         map[string]bool
@@ -425,6 +426,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.partyUI, err = ui.NewPartyPanel(a); err != nil {
 		return nil, err
 	}
+	if a.vehicleMessage, err = ui.NewMessage(a); err != nil {
+		return nil, err
+	}
 	if a.partyMessage, err = ui.NewMessage(a); err != nil {
 		return nil, err
 	}
@@ -626,6 +630,7 @@ func (a *App) drawFrame(w, h int) {
 	}
 	if a.screen == screenWorld && a.partyMessage != nil {
 		a.partyMessage.Draw(a.sprites, a.font, w, h)
+		a.vehicleMessage.Draw(a.sprites, a.font, w, h)
 	}
 	if a.screen == screenWorld && a.exchangeInvite != nil {
 		a.exchangeInvite.Draw(a.sprites, a.font, w, h)
@@ -729,6 +734,9 @@ func (a *App) backToLogin(msg string) {
 	a.blacksmith = blacksmithView{}
 	a.gate = gatekeeperView{}
 	a.vehicle = vehicleView{}
+	if a.vehicleMessage != nil {
+		a.vehicleMessage.Visible = false
+	}
 	if a.gateConfirm != nil {
 		a.gateConfirm.Visible = false
 	}

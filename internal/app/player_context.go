@@ -39,6 +39,14 @@ func (a *App) contextActions(id uint32) []contextAction {
 		}
 	}
 	var out []contextAction
+	if sameFaction && id != a.state.SelfID {
+		if e := a.state.Entities[id]; e != nil {
+			own, other := a.state.Self.Vehicle, e.Vehicle
+			if own.State == proto.VehicleDriver && own.Seats == 2 && own.Passenger == 0 && other.State == proto.VehicleOff || other.State == proto.VehicleDriver && other.Seats == 2 && other.Passenger == 0 && own.State == proto.VehicleOff {
+				out = append(out, contextAction{"Go together", proto.VehicleInvitePacket(id)})
+			}
+		}
+	}
 	room := a.state.Party.Raid || len(a.state.Party.Members) < 7
 	if sameFaction && room && member == nil && id != a.state.SelfID && (len(a.state.Party.Members) == 0 || leader || a.state.Party.Raid && a.state.Party.RaidSubLeader == a.state.SelfID) {
 		if a.state.Party.Raid {
@@ -102,6 +110,8 @@ func (a *App) contextLabels(actions []contextAction) []string {
 			id = 6508
 		case "Leave party", "Leave raid":
 			id = 5005
+		case "Go together":
+			id = 5366
 		case "Trade":
 			id = 5091
 		case "Duel":
@@ -131,6 +141,9 @@ func (a *App) performContextAction(id uint32, action contextAction) {
 		a.chatInput = ui.TextField{Max: 120}
 		a.chatHistoryIndex, a.chatDraft = len(a.chatHistory), ""
 		return
+	}
+	if action.label == "Go together" {
+		a.vehicle.peerName = a.chatEntityName(id)
 	}
 	if action.label == "Trade" && a.state.Exchange.Active {
 		a.questMessage("Finish the current trade first.")

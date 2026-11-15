@@ -70,6 +70,7 @@ type Session struct {
 	buffs          []ActiveBuff
 	cast           *pendingCast
 	mounted        bool
+	mountItemUID   int64
 	dead           bool
 	deathLoss      int       // CUser::Death exp-loss percent, kept until revive
 	rebirthAt      time.Time // UpdateRebirth deadline while dead
@@ -290,6 +291,7 @@ func (s *Session) tick(idle bool) {
 	s.syncPlayerSpeed(false)
 	s.publishPlayerEffects()
 	s.tickTargetEffects(time.Now())
+	s.tickVehicle(time.Now())
 	s.tickPlayerMovement(time.Now())
 	s.recoveryTick()
 	s.syncQuestNPCCatalog(false)
@@ -660,6 +662,12 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 		s.handleReturnToTown()
 	case packet.UseVehicle:
 		s.handleUseVehicle()
+	case packet.Opcode(proto.VehicleInvite):
+		s.handleVehicleInvite(p)
+	case packet.Opcode(proto.VehicleAnswer):
+		s.handleVehicleAnswer(p)
+	case packet.Opcode(proto.VehicleLeave):
+		s.dismount()
 	case packet.CharacterMobAutoAttack:
 		s.cancelMove()
 		if len(p) >= 6 && s.char != nil {
@@ -931,6 +939,7 @@ func (s *Session) handleMapLoaded() {
 	s.syncPlayerSpeed(true)
 	s.syncVisibility()
 	s.send(s.player.visibilityPacket(), "GX visibility")
+	s.send(buildVehicleState(s.player.vehicleState()), "GX own vehicle state")
 	s.sendRelicList()
 	// CZone::EnterUser + SendCellInfoView: the 5x5 cells around the user.
 	s.placeView()
@@ -947,6 +956,14 @@ func (s *Session) handleMotion(p []byte) {
 		return
 	}
 	motion := p[2]
+	if motion == 2 && s.player != nil && s.player.vehicleState().State == proto.VehiclePassenger {
+		s.dismount()
+		return
+	}
+	if s.ridingVehicle() {
+		return
+	}
+	s.cancelVehicleCast()
 	if motion == 2 && !s.startMovementJump(time.Now()) {
 		return
 	}

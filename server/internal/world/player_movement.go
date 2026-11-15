@@ -85,7 +85,7 @@ func (s *Session) movementSpeed() float32 {
 	}
 	speed := movespeed.Units(sp.move)
 	if s.mounted {
-		speed = 7
+		speed = s.mountSpeed()
 	}
 	if m := &s.movement; m.geometry != nil && m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5 {
 		speed = 2.8
@@ -210,6 +210,9 @@ func (s *Session) advancePlayerVertical(now time.Time) {
 	}
 }
 func (s *Session) tickPlayerMovement(now time.Time) {
+	if s.player != nil && s.player.vehicleState().State == proto.VehiclePassenger {
+		return
+	}
 	if s.player == nil || s.char == nil {
 		return
 	}

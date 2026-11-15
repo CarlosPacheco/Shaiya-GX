@@ -34,3 +34,11 @@ func Message(tier uint8) int {
 	}
 	return [...]int{5273, 5274, 5276, 5278, 5279}[tier]
 }
+
+// MountedUnits adds the original extremely-fast tier, reserved for vehicles.
+func MountedUnits(tier uint8) float32 {
+	if tier == 5 {
+		return 8
+	}
+	return Units(tier)
+}

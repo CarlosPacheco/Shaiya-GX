@@ -276,8 +276,9 @@ func userSkillHits(att, def *CharacterStats, sk *db.SkillDef) bool {
 // userAttackSwing is one UpdateAttack step on a user target; false ends
 // the auto-attack.
 func (s *Session) userAttackSwing(target uint32) bool {
+	s.cancelVehicleCast()
 	ch := s.char
-	if ch == nil || s.mounted || s.cast != nil || s.actionBlocked() {
+	if ch == nil || s.ridingVehicle() || s.cast != nil || s.actionBlocked() {
 		return false
 	}
 	wc, ok := equippedWeaponCombat(s.items)
@@ -428,7 +429,7 @@ func (s *Session) takeUserDamage(attackerID, damage uint32) bool {
 	ch.CurrentHP = satSub(ch.CurrentHP, cur.CurrentHP-after)
 	killed := after == 0
 	s.persist()
-	s.dismount()
+	s.cancelVehicleCast()
 	if !killed {
 		s.wake()
 	}

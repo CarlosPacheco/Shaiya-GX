@@ -44,6 +44,8 @@ type pendingDamage struct {
 // broadcasts. Cross-session work is queued in mailboxes and applied by the
 // owning session's loop, which alone mutates its character.
 type ConnectedPlayer struct {
+	ride vehiclePresence // guarded by vehicleMu
+
 	targetEffects []ActiveBuff
 	CharacterID   uint32
 	CharacterName string
@@ -189,6 +191,8 @@ func RegisterPlayer(ch db.Character, items []db.Item, isAdmin bool, faction uint
 
 // Unregister removes the player and cancels any trade it was part of.
 func (p *ConnectedPlayer) Unregister() {
+	clearVehicle(p)
+
 	clearSocialSession(p.CharacterID)
 	p.dropFromOthers()
 	registryMu.Lock()

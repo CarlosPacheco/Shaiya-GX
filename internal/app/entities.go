@@ -19,23 +19,25 @@ type playerPlate struct {
 }
 
 type remoteActor struct {
-	climbing      bool
-	entity        *game.Entity
-	position      remotePosition
-	gestureSerial uint64
-	moveSerial    uint64
-	moveMode      uint8
-	moveX, moveZ  float32
-	walkUntil     float64
-	jumpMoving    bool
-	dead          bool
-	swimming      bool
-	shape         proto.UserShape
-	character     *scene.Character
-	mount         *scene.Vehicle
-	mountShape    uint8
-	mountLoaded   bool
-	facing        render.V3
+	climbing        bool
+	entity          *game.Entity
+	position        remotePosition
+	gestureSerial   uint64
+	moveSerial      uint64
+	moveMode        uint8
+	moveX, moveZ    float32
+	walkUntil       float64
+	jumpMoving      bool
+	dead            bool
+	swimming        bool
+	shape           proto.UserShape
+	character       *scene.Character
+	mount           *scene.Vehicle
+	mountShape      uint8
+	mountLoaded     bool
+	mountCasting    bool
+	mountCastEffect *scene.Effect
+	facing          render.V3
 }
 
 // The native 0x0501 low bits encode walk/run, not a reliable stop flag.
@@ -173,6 +175,19 @@ func (a *App) prepareRemotePlayers() {
 			clip = "018_ladder"
 		}
 		cached.climbing = e.ClimbMode != 0
+		casting := e.Vehicle.State == proto.VehicleCasting
+		if casting && !cached.mountCasting {
+			c.PlayCast(85, float32(e.Vehicle.CastMS)/1000)
+			if a.clientSettings().SkillEffects {
+				cached.mountCastEffect, _ = scene.LoadEffect(a.assets, "Effect/IN_mc_yellow.EFT", 1)
+			}
+			a.playSound("ef_in_atrbu01.wav", e.X, e.Z)
+		}
+		if !casting && cached.mountCasting {
+			c.CancelCast()
+			cached.mountCastEffect = nil
+		}
+		cached.mountCasting = casting
 		c.Mounted = e.Mounted
 		if e.Mounted {
 			c.SetMountedClip(moving, scene.VehicleAlternate(e.MountShape))
@@ -197,7 +212,7 @@ func (a *App) prepareRemotePlayers() {
 		scale := render.Identity()
 		scale[5] = (scene.Appearance{Height: sh.Height}).HeightScale()
 		pos := cached.position.update(e, a.clock)
-		if e.Mounted {
+		if e.Mounted && e.Vehicle.State != proto.VehiclePassenger {
 			if !cached.mountLoaded || cached.mountShape != e.MountShape {
 				cached.mountShape, cached.mountLoaded = e.MountShape, true
 				var err error
@@ -207,15 +222,20 @@ func (a *App) prepareRemotePlayers() {
 				}
 			}
 			if cached.mount != nil {
-				cached.mount.SetMoving(moving)
+				cached.mount.SetLocomotion(moving, walking)
 				cached.mount.Update(float32(a.frameDT))
 				cached.mount.World = render.Basis(pos, fwd.Scale(-1), render.V3{0, 1, 0})
 				pos = cached.mount.Seat()
+				cached.mount.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, true, &a.vehicle.effectBudget)
 			}
 		} else {
 			cached.mount, cached.mountLoaded = nil, false
 		}
 		c.World = scale.Mul(render.Basis(pos, fwd.Scale(-1), render.V3{0, 1, 0}))
+		if x := cached.mountCastEffect; x != nil {
+			x.SetTransform(c.World)
+			x.Update(float32(a.frameDT))
+		}
 	}
 }
 
@@ -234,10 +254,14 @@ func (a *App) drawRemotePlayers() {
 			cached.mount.Concealed = e.Concealed
 			if cached.mount.Visible(frustum, a.scene3d.ClipPlane) {
 				cached.mount.Draw(a.skinner, a.scene3d)
+				cached.mount.DrawEffects(a.scene3d)
 			}
 		}
 		if cached.character.Visible(frustum, a.scene3d.ClipPlane) {
 			cached.character.Draw(a.skinner, a.scene3d)
+			if cached.mountCastEffect != nil && a.clientSettings().SkillEffects {
+				cached.mountCastEffect.Draw(a.scene3d)
+			}
 		}
 	}
 }
