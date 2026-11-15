@@ -68,6 +68,7 @@ func TestOriginalItemGlowsGL(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		c.World = render.Identity()
 		if len(c.attachments) != 1 || c.attachments[0].glow == nil || c.attachments[0].enchant != nil {
 			t.Fatalf("staff%d: missing innate +0 glow", model)
 		}
@@ -106,6 +107,7 @@ func TestOriginalItemGlowsGL(t *testing.T) {
 			if err := render.SavePNG(filepath.Join(dir, fmt.Sprintf("glow-%d.png", selector)), 640, 640); err != nil {
 				t.Fatal(err)
 			}
+			gl.DepthMask(true)
 			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 			c.Draw(k, s)
 			if err := render.SavePNG(filepath.Join(dir, fmt.Sprintf("staff-%d.png", selector)), 640, 640); err != nil {
