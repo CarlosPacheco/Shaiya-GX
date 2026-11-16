@@ -6,6 +6,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/model"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
 // CreatureActor shares the character skinning path, with clips from MON.
@@ -15,13 +16,14 @@ type CreatureActor struct {
 	attackEffects    []*Effect
 	pendingEffects   []string
 	*Character
-	Name       string
-	Level      uint16
-	Definition sdata.Monster
-	folder     string
-	visual     model.Creature
-	action     int
-	cueTime    float32
+	Name        string
+	Level       uint16
+	Definition  sdata.Monster
+	folder      string
+	visual      model.Creature
+	action      int
+	cueTime     float32
+	visualScale float32
 }
 
 func (s *Assets) MonsterDefinition(id uint16) (sdata.Monster, error) {
@@ -63,6 +65,8 @@ func (s *Assets) BuildMonster(id uint16) (*CreatureActor, error) {
 	actor, err := s.buildCreature("Monster", visual, def.Name)
 	if actor != nil {
 		actor.Level, actor.Definition = def.Level, def
+		actor.visualScale = def.VisualScale()
+		actor.SetTransform(render.Basis(render.V3{}, render.V3{0, 0, -1}, render.V3{0, 1, 0}))
 	}
 	return actor, err
 }
@@ -186,9 +190,29 @@ func (m *CreatureActor) AttackAction(slot uint8) int {
 
 // NumberHeight is the authored MON vertical anchor used by native 0x450a10.
 func (m *CreatureActor) NumberHeight() float32 {
-	height := m.visual.Height + .2 // 0x431770: MON height plus native headroom.
+	height := m.visual.Height*m.modelScale() + .2 // 0x431770: MON height plus native headroom.
 	if height <= -1 {
 		return 1.2
 	}
 	return height
+}
+
+func (m *CreatureActor) modelScale() float32 {
+	// NPCs retain their authored model size.
+	if m.visualScale == 0 {
+		return 1
+	}
+	return m.visualScale
+}
+
+// SetTransform applies the native uniform model scale before world placement.
+// Skinning, bounds, picking, shadows and bone attachments share this matrix.
+func (m *CreatureActor) SetTransform(world render.M4) {
+	scale := m.modelScale()
+	for row := range 3 {
+		for col := range 3 {
+			world[row*4+col] *= scale
+		}
+	}
+	m.World = world
 }

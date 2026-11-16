@@ -98,11 +98,11 @@ func (a *App) prepareMonsters() {
 		}
 		fwd[1] = 0
 		if fwd.Len() > 0.001 {
-			cached.actor.World = render.Basis(pos, fwd.Scale(-1), render.V3{0, 1, 0})
+			cached.actor.SetTransform(render.Basis(pos, fwd.Scale(-1), render.V3{0, 1, 0}))
 		} else {
 			cached.actor.World[12], cached.actor.World[13], cached.actor.World[14] = pos[0], pos[1], pos[2]
 			if cached.actor.World[15] == 0 {
-				cached.actor.World = render.Basis(pos, render.V3{0, 0, -1}, render.V3{0, 1, 0})
+				cached.actor.SetTransform(render.Basis(pos, render.V3{0, 0, -1}, render.V3{0, 1, 0}))
 			}
 		}
 		cached.pos = pos
@@ -160,7 +160,7 @@ func (m *mobActor) freezeCorpse(w *scene.World, e *game.Entity, now float64) {
 	if !m.position.initialized {
 		m.pos = m.ground.resolve(w, render.V3{e.X, e.Y, e.Z}, e.MobHeightKnown, e.PositionResetSerial)
 		if m.actor != nil {
-			m.actor.World = render.Basis(m.pos, render.V3{0, 0, -1}, render.V3{0, 1, 0})
+			m.actor.SetTransform(render.Basis(m.pos, render.V3{0, 0, -1}, render.V3{0, 1, 0}))
 		}
 	}
 	m.position = remotePosition{initialized: true, pos: m.pos, from: m.pos, to: m.pos, moveSerial: e.MoveSerial, resetSerial: e.PositionResetSerial, lastArrival: now}

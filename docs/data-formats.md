@@ -247,3 +247,12 @@ Rend files require normalization. Their 35-bone payloads retain respectively
 visuals and 24 monster IDs, including Cloron Ogre 2045 and Cloron Guard 2046.
 All 590 NPC meshes already parse; no NPC resources are rewritten. Repairs and
 proprietary backups remain local, outside source history and release assets.
+
+### Monster definition fields and visual scale
+
+See [mob properties research](mob-properties-research.md) for the complete
+31-byte Monster.SData payload and the database/runtime authority split.
+The byte traditionally called `Day` is the native client visual scale selector,
+independent of combat `Size`. GX retains the full payload and applies the native
+uniform model scale and scaled number anchor. AI and quest metadata in this file
+do not replace authoritative server behavior.

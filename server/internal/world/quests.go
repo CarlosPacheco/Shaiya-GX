@@ -849,7 +849,8 @@ func questItemDrop(mob *MapMob, recipients []*ConnectedPlayer) *db.ItemDef {
 	if mob.def == nil || mob.def.QuestItemID <= 0 {
 		return nil
 	}
-	t, id := uint8(mob.def.QuestItemID/1000), uint8(mob.def.QuestItemID%1000)
+	key := db.MobQuestItem(mob.def.QuestItemID)
+	t, id := key.Type, key.TypeID
 	def := db.MustDefs().Item(t, id)
 	if def == nil {
 		return nil

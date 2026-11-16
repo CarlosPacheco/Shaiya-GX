@@ -139,7 +139,7 @@ type MobDef struct {
 	ShieldDefense      uint32 // Attacktime3, as the original reads it
 	Attrib             uint8
 	Size               uint8
-	QuestItemID        int32 // Type*1000+TypeID of the quest item it may drop
+	QuestItemID        int32 // Native quest index: 1..1000 -> type 27, then 28/29.
 	NormalTimeMS       uint32
 	NormalStep         uint16
 	ChaseTimeMS        uint32
@@ -299,7 +299,7 @@ func normalizeSkill(s *SkillDef, defenceType, fixRange uint8, keep uint32, aggro
 // MobRespawnSeconds maps Mobs.Attackspecial3 to the respawn delay.
 func MobRespawnSeconds(special uint8) uint64 {
 	// CGameData::LoadConstMob 0x004c1e81..0x004c1f62 (ms): selector 14 is
-	// 0 (immediate), anything above 15 reads 0 too.
+	// 0 (immediate); values above 15 are normalized to selector 0 (5 s).
 	table := []uint64{5, 30, 60, 3 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 3600, 4 * 3600,
 		12 * 3600, 24 * 3600, 3 * 86400, 2 * 3600, 0, 7 * 86400}
 	if int(special) < len(table) {
@@ -615,4 +615,19 @@ func (d *Defs) Item(itemType, typeID uint8) *ItemDef { return d.Items[ItemKey{it
 // Skill returns the definition for (skillID, level), or nil.
 func (d *Defs) Skill(skillID uint16, level uint8) *SkillDef {
 	return d.Skills[SkillKey{skillID, level}]
+}
+
+// MobQuestItem decodes LoadConstMob's quest-only index. This is not the
+// ordinary Type*1000+TypeID format. Native item IDs are truncated to a byte.
+func MobQuestItem(index int32) ItemKey {
+	if index <= 0 {
+		return ItemKey{}
+	}
+	if index <= 1000 {
+		return ItemKey{27, uint8(index)}
+	}
+	if index <= 2000 {
+		return ItemKey{28, uint8(index - 1000)}
+	}
+	return ItemKey{29, uint8(index - 2000)}
 }

@@ -239,3 +239,12 @@ intrinsic element wins, otherwise the first elemental lapis in six-socket order.
 Later elemental lapis stay linked/inactive (including bonuses and triggers);
 non-elemental lapis remain active. Client socket rows gray the inactive gems.
 See docs/wiki/elements.md for this requested rule and its original provenance.
+
+## Mob property audit follow-up
+
+The [field inventory and native evidence](../../docs/mob-properties-research.md)
+record outstanding special AI dispatch, stationary attack routing and loader
+normalization work. Existing mob rows above describe implemented generic paths,
+not complete parity for native FSM/Lua bosses. QuestItemID now uses the native
+quest-only type 27/28/29 mapping; it is not Type*1000+TypeID. Client visual Day
+scaling is independent of server combat Size.
