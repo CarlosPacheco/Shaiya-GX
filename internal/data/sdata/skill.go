@@ -19,7 +19,7 @@ type Skill struct {
 	Grow, Points, Show, Attack, Effect, Target uint8
 	SP, MP, ResetTime                          uint16
 	ReadyTime                                  uint8
-	AttackRange                                uint8
+	AttackRange, ApplyRange                    uint8
 	Attribute                                  uint8
 	KeepTime                                   uint16
 	FixRange                                   uint8
@@ -56,7 +56,7 @@ func ParseSkills(raw []byte) (map[SkillKey]Skill, error) {
 			s.Grow, s.Points, s.Show, s.Attack, s.Effect = p[17], p[18], p[19], p[20], p[21]
 			s.SP, s.MP = binary.LittleEndian.Uint16(p[40:]), binary.LittleEndian.Uint16(p[42:])
 			s.ReadyTime, s.ResetTime, s.Target = p[44], binary.LittleEndian.Uint16(p[45:]), p[56]
-			s.AttackRange = p[47]
+			s.AttackRange, s.ApplyRange = p[47], p[57]
 			s.Attribute = p[49]
 			s.KeepTime, s.FixRange = binary.LittleEndian.Uint16(p[59:]), p[111]
 			out[SkillKey{uint16(id + 1), s.Level}] = s

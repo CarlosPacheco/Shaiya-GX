@@ -44,7 +44,11 @@ func (a *App) confirmedEffects(p []byte) {
 		}
 	case proto.MobSkillUse, proto.MobSkillDrain, proto.MobSkillOther:
 		a.startMobSkillEffects(a.state.LastSkill)
-	case proto.CharacterMove, proto.CharacterDeath:
+	case proto.CharacterMove:
+		if move, err := proto.DecodeUserMove(p); err == nil && move.Motion&proto.MotionFlag80 == 0 {
+			a.stopCastEffects(move.ID)
+		}
+	case proto.CharacterDeath:
 		a.stopCastEffects(proto.NewReader(p).U32())
 	case proto.SkillUse, proto.SkillUseNoTarget, proto.SkillUserDrain, proto.SkillMobDrain:
 		a.stopCastEffects(a.state.LastSkill.Source)

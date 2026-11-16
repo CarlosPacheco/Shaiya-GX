@@ -19,6 +19,7 @@ type skillProjectile struct {
 	arrived    bool
 }
 type skillImpact struct {
+	fixedWorld       *render.M4 // Native area announcements capture their release location.
 	authoredLifetime bool
 	positionOnly     bool // world-aligned spawn anchor, without actor rotation
 	target           uint32
@@ -119,6 +120,7 @@ func (a *App) updateResolvedEffects() {
 	a.updateSkillImpactCues()
 	dt := float32(min(max(a.frameDT, 0), .25))
 	a.updateSkillReleaseEffects(dt)
+	a.updateSkillAreaShowers(dt)
 	a.updatePhysicalProjectiles(dt)
 	kept := v.projectiles[:0]
 	for _, p := range v.projectiles {
@@ -179,6 +181,11 @@ func (a *App) drawResolvedEffects() {
 	if !a.clientSettings().SkillEffects {
 		return
 	}
+	for _, area := range a.wv.areaShowers {
+		for _, p := range area.particles {
+			p.instance.Draw(a.scene3d)
+		}
+	}
 	for _, r := range a.wv.releaseEffects {
 		r.instance.Draw(a.scene3d)
 	}
@@ -209,6 +216,9 @@ func (p *skillProjectile) move(target render.V3, dt float32) render.V3 {
 }
 
 func (a *App) impactTransform(p skillImpact) (render.M4, bool) {
+	if p.fixedWorld != nil {
+		return *p.fixedWorld, true
+	}
 	if !p.positionOnly {
 		return a.effectTargetMatrix(p.target)
 	}

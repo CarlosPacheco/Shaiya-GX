@@ -113,6 +113,7 @@ type worldView struct {
 	physicalProjectiles         []physicalProjectile
 	physicalSkillQueued         bool
 	impacts                     []skillImpact
+	areaShowers                 []skillAreaShower
 	impactCues                  []skillImpactCue
 	attackSounds                []attackSound
 	effectErrors                map[string]bool

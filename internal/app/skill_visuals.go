@@ -15,6 +15,14 @@ func skillEffectLibraries(r proto.SkillResult, d sdata.Skill) (flight, impact st
 		return
 	}
 	if r.Result == 4 && (d.Target == 6 || d.Target == 7) {
+		if d.Target == 7 {
+			if file := effect.AreaLibrary(r.ID); file != "" {
+				if areaShowerSkill(r.ID) {
+					return "", file
+				}
+				return "", ""
+			}
+		}
 		return "", effect.ImpactLibrary(r.ID)
 	}
 	if d.Attack == 3 && (d.Effect == 1 || d.Effect == 3 || d.Effect == 5) {
@@ -44,6 +52,10 @@ func (a *App) startSkillResultEffects(r proto.SkillResult) {
 	flight, impact := skillEffectLibraries(r, d)
 	if r.Target == 0 && d.Target == 6 {
 		r.Target = r.Source
+	}
+	if r.Result == 4 && areaShowerSkill(r.ID) && d.Target == 7 && impact != "" {
+		a.startSkillAreaShower(r, d, impact)
+		return
 	}
 	if flight != "" {
 		a.startSkillProjectile(r, flight, impact)
@@ -94,6 +106,11 @@ func (a *App) startSkillSecondaryEffect(r proto.SkillResult) {
 func skillSecondaryLibrary(r proto.SkillResult, d sdata.Skill) (string, int) {
 	if r.Level == 0 || r.Level == 100 || r.Target == 0 || r.Result > 1 || d.Effect == 0 {
 		return "", 0
+	}
+	if d.Target == 7 && !areaShowerSkill(r.ID) {
+		if file := effect.AreaLibrary(r.ID); file != "" {
+			return file, int(r.Level) - 1
+		}
 	}
 	if d.Effect == 2 || d.Effect == 3 || d.Effect == 4 {
 		return effect.ImpactLibrary(r.ID), int(r.Level) - 1

@@ -155,6 +155,13 @@ func (s *Session) handleCharacterMove(p []byte) {
 		s.correctMovement(reason)
 		return
 	}
+	// PacketPC interrupts preparation only after accepting movement and only
+	// without the native non-interrupting 0x80 flag.
+	if s.cast != nil && motion&proto.MotionFlag80 == 0 {
+		s.log.Printf("GX Server World cast interrupted by accepted movement skill_number=%d", s.cast.number)
+		s.cast = nil
+		s.syncPlayerSpeed(false)
+	}
 	if ch.PosX != oldX || ch.PosZ != oldZ {
 		s.autoAttack = false
 	}

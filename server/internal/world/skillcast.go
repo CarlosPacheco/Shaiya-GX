@@ -42,7 +42,7 @@ type pendingCast struct {
 	number      uint8
 	op          packet.Opcode
 	readyAt     time.Time
-	targetPos   *[2]float32 // Non-nil marks a prepared cast; reach uses current positions.
+	targetPos   *[2]float32 // Non-nil marks an accepted prepared cast; distance is checked only at launch.
 }
 
 type buffAbility struct {

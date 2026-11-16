@@ -15,7 +15,11 @@ func (s *Session) skillLineClear(a, b skillrange.Position) bool {
 }
 func (s *Session) skillTargetReach(p skillrange.Position, base, size float32, completed bool) bool {
 	a := skillrange.Position{s.char.PosX, s.char.PosY, s.char.PosZ}
-	return skillrange.Within(a, p, skillrange.Reach(base, size, completed)) && s.skillLineClear(a, p)
+	if !skillrange.Finite(a) || !skillrange.Finite(p) {
+		return false
+	}
+	// Native UpdateAttack state 3 does not repeat EnableAttackRange.
+	return (completed || skillrange.Within(a, p, skillrange.Reach(base, size))) && s.skillLineClear(a, p)
 }
 func (s *Session) mobSkillReach(m *MapMob, def *db.SkillDef, completed bool) bool {
 	size := float32(0)

@@ -16,7 +16,7 @@ func (a *App) skillLaunchReach(d sdata.Skill, e *game.Entity) float32 {
 			size = float32(def.Size)
 		}
 	}
-	return skillrange.Reach(float32(d.AttackRange), size, false)
+	return skillrange.Reach(float32(d.AttackRange), size)
 }
 func (a *App) skillRequestReach(d sdata.Skill, target uint32) bool {
 	if a.wv == nil || target == 0 || target == a.state.SelfID || d.Target == 6 {

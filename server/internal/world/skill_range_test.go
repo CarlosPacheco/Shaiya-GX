@@ -7,6 +7,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/skillrange"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
+	"math"
 	"testing"
 	"time"
 )
@@ -32,7 +33,7 @@ func spellCastRangeFixture(t *testing.T) (*Session, *db.SkillDef, *mapShard) {
 	t.Cleanup(func() { sh.mu.Lock(); sh.entities = MapEntities{}; sh.mu.Unlock() })
 	return s, d, sh
 }
-func TestSpellCastValidatesStartAndCurrentReleaseRange(t *testing.T) {
+func TestPreparedSpellValidatesLaunchWithoutReleaseDistanceLimit(t *testing.T) {
 	s, d, sh := spellCastRangeFixture(t)
 	move := func(x float32) { sh.mu.Lock(); sh.entities.Mobs[0].PosX = x; sh.mu.Unlock() }
 	cast := func() { s.handleUseSkill(packet.SkillUse, proto.UseSkillPacket(1, 64001, false)) }
@@ -46,14 +47,15 @@ func TestSpellCastValidatesStartAndCurrentReleaseRange(t *testing.T) {
 	if s.cast == nil {
 		t.Fatal("valid cast failed")
 	}
-	move(15)
+	move(150)
 	s.cast.readyAt = time.Now().Add(-time.Second)
 	s.processPendingCast()
-	if len(s.skillCooldowns) != 0 {
-		t.Fatal("cast release used old 100-unit escape allowance")
+	if !s.skillCooldowns[d.SkillID].After(time.Now()) {
+		t.Fatal("original prepared release incorrectly rechecked range")
 	}
 	// The fixture fast-forwards a full preparation without sleeping.
 	s.lastActionAt = time.Time{}
+	s.skillCooldowns = map[uint16]time.Time{}
 	move(10)
 	cast()
 	if s.cast == nil {
@@ -63,7 +65,7 @@ func TestSpellCastValidatesStartAndCurrentReleaseRange(t *testing.T) {
 	s.cast.readyAt = time.Now().Add(-time.Second)
 	s.processPendingCast()
 	if !s.skillCooldowns[d.SkillID].After(time.Now()) {
-		t.Fatal("bounded release grace was not honored")
+		t.Fatal("prepared release was not honored")
 	}
 }
 func TestSpellReleaseAndAreaRejectWallsAndDifferentFloors(t *testing.T) {
@@ -101,13 +103,13 @@ func TestUserSpellReachUsesCurrentCasterAndTarget(t *testing.T) {
 		t.Fatal("user launch/release grace differs")
 	}
 	s.char.PosX = -1
-	if s.userSkillReach(p, d, true) {
-		t.Fatal("release ignored current caster position")
+	if !s.userSkillReach(p, d, true) {
+		t.Fatal("caster distance incorrectly invalidated prepared release")
 	}
 	s.char.PosX = 0
 	p.character.PosX, p.character.PosY = 0, 15
-	if s.userSkillReach(p, d, true) {
-		t.Fatal("user height ignored")
+	if !s.userSkillReach(p, d, true) {
+		t.Fatal("prepared release incorrectly repeated 3D reach")
 	}
 	p.character.PosY = 0
 	s.queueSkillHits(p, d, true, 1)
@@ -220,5 +222,32 @@ func TestFriendlyMobCastRefusedBeforeCostsAndCooldown(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("wrong-target SysMsg317 not sent")
+	}
+}
+
+func TestMovementOnlyInterruptsCastAfterValidationAndWithoutNativeFlag(t *testing.T) {
+	s, _ := forgeRuleSession(t)
+	physics, now := playerPhysicsFixture(t)
+	s.char.MapID, s.char.PosX, s.char.PosY, s.char.PosZ = physics.char.MapID, physics.char.PosX, physics.char.PosY, physics.char.PosZ
+	s.movement = physics.movement
+	s.lastPositionSave = now
+	s.cast = &pendingCast{number: 1, readyAt: now.Add(time.Minute)}
+	s.speedKnown = true
+	s.lastSpeeds = playerSpeeds{attack: 255, move: 2}
+	s.handleCharacterMove([]byte{1})
+	if s.cast == nil {
+		t.Fatal("malformed movement cancelled cast")
+	}
+	s.handleCharacterMove(proto.MovePacket(1, 0, float32(math.NaN()), 0, 5))
+	if s.cast == nil {
+		t.Fatal("rejected movement cancelled cast")
+	}
+	s.handleCharacterMove(proto.MovePacket(proto.MotionFlag80, 0, s.char.PosX, s.char.PosY, s.char.PosZ))
+	if s.cast == nil {
+		t.Fatal("native non-interrupting movement cancelled cast")
+	}
+	s.handleCharacterMove(proto.MovePacket(0, 0, s.char.PosX, s.char.PosY, s.char.PosZ))
+	if s.cast != nil || s.lastSpeeds.attack == 255 {
+		t.Fatal("accepted interrupt did not clear cast and restore attack speed", s.lastSpeeds)
 	}
 }

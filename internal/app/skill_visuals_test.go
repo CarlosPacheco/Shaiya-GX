@@ -103,3 +103,36 @@ func TestSecondaryAttackUsesNativeElementSequence(t *testing.T) {
 		t.Fatal("miss emitted recipient effect")
 	}
 }
+
+func TestBlizzardAndRelatedAreaAnnouncementsUseOriginalAreaSelector(t *testing.T) {
+	for _, tc := range []struct {
+		id   uint16
+		file string
+	}{{71, "blizzard"}, {53, "hailstorm"}, {68, "meteor"}} {
+		d := sdata.Skill{Attack: 3, Effect: 3, Target: 7}
+		r := proto.SkillResult{Source: 1, Target: 2, ID: tc.id, Level: 1, Result: 4}
+		flight, impact := skillEffectLibraries(r, d)
+		want := "Effect/DA_area_" + tc.file + ".EFT"
+		if flight != "" || impact != want {
+			t.Fatal("area announcement lost original library", tc.id, flight, impact)
+		}
+		r.Result = 0
+		if file, _ := skillSecondaryLibrary(r, d); file != "" {
+			t.Fatal("recipient duplicated central area cloud", tc.id, file)
+		}
+	}
+}
+
+func TestTargetCenteredAreasKeepRecipientEffectsWithoutDuplicatingAnnouncement(t *testing.T) {
+	for _, id := range []uint16{48, 50, 52, 69, 70, 72, 83, 84} {
+		d := sdata.Skill{Attack: 3, Effect: 1, Target: 7}
+		r := proto.SkillResult{ID: id, Level: 1, Source: 1, Target: 2, Result: 4}
+		if _, file := skillEffectLibraries(r, d); file != "" {
+			t.Fatal("recipient area incorrectly duplicated at center", id, file)
+		}
+		r.Result = 0
+		if file, _ := skillSecondaryLibrary(r, d); file == "" {
+			t.Fatal("missing recipient area", id)
+		}
+	}
+}

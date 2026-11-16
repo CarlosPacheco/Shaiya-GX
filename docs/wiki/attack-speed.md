@@ -127,19 +127,27 @@ prediction and enforcement.
 
 ## Spell reach and release
 
-The server validates targeted spells both when preparation starts and when the
-spell is released, using the caster and target's current 3D positions. Launch
-reach is `AttackRange + target mob size + 2.3` units; player targets add no mob
-size. Prepared casts receive **2.5 additional units only at release**, allowing
-small target movement without the former 100-unit escape allowance. Instant
-spells use launch reach. The client uses the same launch rule for approach and
-local feedback; the server remains authoritative.
+The server validates targeted spells when preparation starts. Launch reach remains
+`AttackRange + target mob size + 2.3` units in GX, with player targets adding no
+mob size. An accepted prepared cast does **not repeat the distance check at
+release**: the original server's UpdateAttack state 3 resolves the existing
+valid target directly. Moving beyond launch range, or beyond the retired GX
+2.5-unit grace, does not itself cancel that cast. Instant spells still use launch
+reach. Dead, unavailable, protected or no-longer-hostile targets remain invalid.
 
-Both checks require a clear line between actor centers through authored static
-solids, current dynamic geometry and terrain. Walls and intervening floors block
-targeted spells. Area effects use their own exact `ApplyRange` in 3D and check
-visibility from their center, independently of launch reach or release grace.
-These are GX reach rules, not a claim of byte-for-byte native range parity.
+GX retains its geometry checks: walls/floors can block a targeted spell at
+launch or release. Area recipients use exact `ApplyRange` in 3D and visibility
+from the current release center. These geometry and launch-radius rules are GX
+choices; the native launch helper uses horizontal distance and an additional
+movement-dependent allowance. No full native launch/geometry parity is claimed.
+
+Movement interrupts preparation only after the server accepts the packet and
+when its native non-interrupting 0x80 flag is clear. Malformed/rejected updates
+leave the cast intact. A real interruption restores the published attack speed,
+so the client does not remain stuck with the casting speed sentinel 255.
+
+See [prepared spells and area effects](../prepared-spells-and-area-effects.md)
+for native evidence and visual routing.
 
 An accepted hit is committed at release; subsequently leaving range does not
 revoke queued damage or a projectile's visual flight. This does not introduce a

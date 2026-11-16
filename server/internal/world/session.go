@@ -664,7 +664,6 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 			s.handleTradeConfirm(p[2] != 0)
 		}
 	case packet.CharacterMove:
-		s.cast = nil // Preserve movement interruption of spell preparation.
 		s.handleCharacterMove(p)
 	case packet.CharacterMotion:
 		s.handleMotion(p)
