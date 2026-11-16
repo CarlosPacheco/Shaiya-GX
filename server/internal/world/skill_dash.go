@@ -32,7 +32,7 @@ func (s *Session) beginStinger(def *db.SkillDef, destination [3]float32) bool {
 		return false
 	}
 	d := proto.SkillDash{Source: s.char.ID, From: [3]float32(from), To: [3]float32(end), Started: mapgeometry.PhysicsSeconds(), Contact: skilltiming.StingerContact(s.char.Race, s.char.Gender)}
-	if d.Distance() > 32 {
+	if d.Distance() > proto.MaxSkillDashDistance {
 		return false
 	}
 	s.dash = &d

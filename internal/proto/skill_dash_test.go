@@ -30,6 +30,10 @@ func TestDashTimelineAndDefensiveCodec(t *testing.T) {
 	if _, err := DecodeSkillDash(p); err == nil {
 		t.Fatal("short plan accepted")
 	}
+	d.To[0] = 34 // 22-unit Stinger + size 8 + native 2.3 reach grace can exceed 32.
+	if _, err := DecodeSkillDash(SkillDashPacket(d)); err != nil {
+		t.Fatal("valid native reach rejected", err)
+	}
 	d.To[0] = 100
 	if _, err := DecodeSkillDash(SkillDashPacket(d)); err == nil {
 		t.Fatal("unbounded dash")

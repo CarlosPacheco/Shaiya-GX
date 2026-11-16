@@ -10,6 +10,9 @@ import (
 // packets keep their layouts. Clients never submit dash destinations or speed.
 const GXSkillDash Opcode = 0x7F11
 
+// Defensive wire bound, above native range plus the largest mob radius/grace.
+const MaxSkillDashDistance = 64
+
 type SkillDash struct {
 	Stopped  bool
 	Source   uint32
@@ -60,7 +63,7 @@ func DecodeSkillDash(p []byte) (d SkillDash, err error) {
 			return SkillDash{}, fmt.Errorf("non-finite skill dash")
 		}
 	}
-	if math.IsNaN(float64(d.Contact)) || d.Distance() > 32 {
+	if math.IsNaN(float64(d.Contact)) || d.Distance() > MaxSkillDashDistance {
 		return SkillDash{}, fmt.Errorf("invalid skill dash range")
 	}
 	return d, r.Err()
