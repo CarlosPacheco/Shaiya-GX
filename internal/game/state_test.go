@@ -640,3 +640,37 @@ func TestMobHeightSnapshotsAndMovement(t *testing.T) {
 		t.Fatal("truncated packet changed entity")
 	}
 }
+
+func TestMobSpeechAppliesOnlyAcceptedPackets(t *testing.T) {
+	s := New()
+	w := proto.NewWriter(proto.MobSpeechText)
+	w.U8(1)
+	w.U32(42)
+	w.Text("Boss speech")
+	if _, err := s.Apply(w.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	if s.LastMobSpeech.MobID != 42 || s.LastMobSpeech.Text != "Boss speech" {
+		t.Fatal("lost native mob speech")
+	}
+	w = proto.NewWriter(proto.MobSpeechIndex)
+	w.U32(42)
+	w.U16(6401)
+	if _, err := s.Apply(w.Bytes()[:7]); err == nil || s.LastMobSpeech.Text != "Boss speech" {
+		t.Fatal("malformed speech changed state")
+	}
+	if _, err := s.Apply(w.Bytes()); err != nil || s.LastMobSpeech.MessageID != 6401 {
+		t.Fatal("lost indexed encounter announcement")
+	}
+}
+
+func TestAuthoritativeMobZeroHPMarksDeath(t *testing.T) {
+	s := New()
+	s.Entities[42] = &Entity{ID: 42, Kind: KindMob}
+	w := proto.NewWriter(proto.MobCurrentHitpoints)
+	w.U32(42)
+	w.U32(0)
+	if _, err := s.Apply(w.Bytes()); err != nil || !s.Entities[42].Dead {
+		t.Fatal("script-driven death did not reach client")
+	}
+}

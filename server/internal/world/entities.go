@@ -9,6 +9,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/mapnav"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/server/ai"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -57,6 +58,10 @@ func (a MobArea) contains(x, z float32) bool {
 }
 
 type MapMob struct {
+	aiMapID              uint16
+	aiSummoned           bool
+	aiAttackType         uint8
+	lua                  mobAIState
 	event                *eventActor
 	eventGeneration      uint64
 	eventFresh           bool
@@ -180,6 +185,8 @@ type MapEntities struct {
 }
 
 type mapShard struct {
+	lua         *ai.VM
+	aiCommands  []mobAICommand
 	npcRevision atomic.Uint64
 	questNPCs   questNPCCatalogCache
 	mu          sync.Mutex
@@ -228,6 +235,8 @@ func shardIDs() []uint16 {
 
 func cloneMob(m *MapMob) MapMob {
 	c := *m
+	c.lua.actor = nil
+	c.lua.rng = nil
 	c.Effects = append([]MobEffect(nil), m.Effects...)
 	c.eventDamage = append([]eventDamageEntry(nil), m.eventDamage...)
 	if m.Area != nil {
@@ -402,10 +411,24 @@ func DamageMobFrom(mapID uint16, id uint32, damage, attacker uint32) (MobDamageR
 		if m.ID != id {
 			continue
 		}
+		h := &mobAIHost{mob: m, shard: s, mapID: mapID, now: time.Now(), tick: &MobCombatTick{}}
+		if !m.ensureAI(h) {
+			return MobDamageResult{}, false
+		}
 		if m.CurrentHP == 0 || m.returningHome {
 			return MobDamageResult{}, false
 		}
+		m.lua.attacked, m.lua.recentHit = true, true
+		m.lua.attackedCount++
+		if m.lua.counting {
+			m.lua.hits++
+		}
+		h.event("attacked", attacker)
 		applied := min(damage, m.CurrentHP)
+		if m.lua.invulnerable {
+			applied = 0
+			damage = 0
+		}
 		m.recordEventDamage(attacker, applied)
 		m.CurrentHP -= applied
 		r := MobDamageResult{DamageHP: uint16(min(damage, 65535)), AppliedHP: applied, Killed: m.CurrentHP == 0}
@@ -439,6 +462,7 @@ type MobAttackAction struct {
 	TargetCharacterID uint32
 	Slot              uint8
 	MobX, MobZ        float32
+	SkillID           uint16
 }
 
 // mapPacket is a packet to broadcast near (x, z) on a map.
@@ -480,33 +504,6 @@ func (b viewerBuckets) nearAny(x, z float32, radius float32) bool {
 		}
 	}
 	return false
-}
-
-// TickMobRoam moves idle mobs near viewers within their area.
-func TickMobRoam(viewersByMap map[uint16][][2]float32, maxPerMap int) []entityMove {
-	var out []entityMove
-	for mapID, viewers := range viewersByMap {
-		s := shard(mapID)
-		s.mu.Lock()
-		buckets := bucketViewers(viewers)
-		moved := 0
-		for i := range s.entities.Mobs {
-			if moved >= maxPerMap {
-				break
-			}
-			m := &s.entities.Mobs[i]
-			if m.CurrentHP == 0 || m.Area == nil || m.AggroTarget != 0 || m.returningHome ||
-				!buckets.nearAny(m.PosX, m.PosZ, ViewportRadius) || !m.movable() {
-				continue
-			}
-			if m.advanceRoam(mapID) {
-				moved++
-				out = append(out, m.relocate(mapID, 0))
-			}
-		}
-		s.mu.Unlock()
-	}
-	return out
 }
 
 // TickMobRespawns revives due mobs at a fresh position in their area.
@@ -566,6 +563,7 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 			}
 			m.PosX, m.PosZ, m.homeX, m.homeZ = x, z, x, z
 			m.CurrentHP = max(m.MaxHP, 1)
+			m.resetAI()
 			m.respawnAt = time.Time{}
 			m.AggroTarget, m.lastAttackAt, m.nextAttackAt, m.returningHome = 0, time.Time{}, time.Time{}, false
 			respawned++
@@ -657,6 +655,10 @@ type mobGroup struct {
 // died books a death (shard lock held).
 func (m *MapMob) died(now time.Time) {
 	m.Effects, m.diedAt, m.corpseGone = nil, now, false
+	if m.lua.actor != nil {
+		h := &mobAIHost{mob: m, shard: shard(m.aiMapID), mapID: m.aiMapID, now: now, tick: &MobCombatTick{}}
+		h.event("death", m.lua.attackedCount)
+	}
 	if m.group == nil && m.respawnDelay > 0 {
 		m.respawnAt = now.Add(m.respawnDelay)
 	}
@@ -810,83 +812,39 @@ func TickMobCombat(players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick 
 				m.AggroTarget, m.returningHome, m.aggro = 0, false, nil
 				continue
 			}
-			mods := m.mods()
-			if mods.VisionFix != 0 {
-				for _, p := range mapPlayers {
-					if p.CharacterID == mods.VisionFix && p.Alive && !p.Invisible {
-						m.AggroTarget, m.returningHome = mods.VisionFix, false
-					}
-				}
-			}
-			if !mods.canAct() {
+			h := &mobAIHost{mob: m, shard: s, mapID: mapID, now: now, players: mapPlayers, tick: &tick}
+			if !m.ensureAI(h) {
 				continue
 			}
-			target := m.liveTarget(mapPlayers)
-			if m.AggroTarget != 0 && target == nil {
-				m.AggroTarget = 0
-				m.retargetByAggro(mapPlayers)
-				target = m.liveTarget(mapPlayers)
-				if target == nil {
-					m.dropTarget(true)
-				}
-			}
-			if target != nil && mods.VisionFix == 0 {
-				switch {
-				case DistanceXZ(target.PosX, target.PosZ, m.homeX, m.homeZ) > mobLeash:
-					m.dropTarget(true)
-					target = nil
-				case DistanceXZ(target.PosX, target.PosZ, m.PosX, m.PosZ) > mobLeash:
-					m.dropTarget(false)
-					target = nil
-				}
-			}
-			if target == nil && !m.returningHome {
-				target = m.findTarget(now, mapPlayers)
-			}
-			if target == nil {
-				if m.returningHome && m.stepHome(now, mapID, &mods, &tick) {
-					actions++
-				}
+			h.notifyTarget()
+			wasReturning := m.returningHome
+			before := len(tick.Attacks) + len(tick.Moves)
+			if !h.event("idle") {
 				continue
 			}
-			d := m.targetDistance(target)
-			if d < m.attackReach() && !now.Before(m.nextAttackAt) && m.canReachTarget(target) {
-				slot, ok := m.pickAttackSlot(now, d, &mods)
-				// AttackAI: an Attackok 6 slot turns to the weakest
-				// attacker of another country (FindAttackUserMinHP); the
-				// others to the top of the aggro ledger.
-				weakest := ok && m.def != nil && m.def.Attacks[slot].OK == 6 && mods.VisionFix == 0 && m.targetWeakest(mapPlayers)
-				if !weakest {
-					m.retargetByAggro(mapPlayers)
-				}
-				if t := m.liveTarget(mapPlayers); t != nil {
-					target = t
-					d = m.targetDistance(target)
-				}
-				if !m.canReachTarget(target) {
-					m.nextAttackAt = now.Add(mobAttackIdle)
-					continue
-				}
-				if !ok {
-					// No slot ready: CMob::AttackAI waits 2.5 s.
-					m.nextAttackAt = now.Add(mobAttackIdle + mods.attackDelayOffset())
-					continue
-				}
-				m.lastAttackAt = now
-				actions++
-				if heal := m.useSlot(slot, now); heal != nil {
-					tick.Restores = append(tick.Restores, mapPacket{mapID, m.PosX, m.PosZ, heal})
-					continue
-				}
-				tick.Attacks = append(tick.Attacks, MobAttackAction{m.ID, m.MobID, m.Attack, m.AggroTarget, slot, m.PosX, m.PosZ})
-				continue
+			h.notifyTarget()
+			if !wasReturning && m.returningHome {
+				h.event("return_home", m.lua.attackedCount)
 			}
-			if m.stepChase(now, mapID, target, d, &mods, &tick) {
+			if m.lua.fixed && m.lua.arrived {
+				m.lua.fixed = false
+				h.event("move_end")
+			}
+			if m.lua.needReset {
+				m.lua.needReset = false
+				m.lua.lastTarget = 0
+				m.lua.attacked = false
+				m.lua.mask = 15
+				h.event("reset")
+			}
+			h.event("combat", int(int64(m.CurrentHP)*100/int64(max(m.MaxHP, 1))), m.lua.attackedCount)
+			if len(tick.Attacks)+len(tick.Moves) > before {
 				actions++
 			}
 		}
 		s.mu.Unlock()
 	}
+	runMobAICommands(&tick)
 	return tick
 }
 
@@ -911,12 +869,16 @@ func (m *MapMob) dropTarget(home bool) {
 // findTarget is CMob::FindTarget for AI 1 and 3: the first living user of
 // another country within ChaseRange, cell by cell over the 3x3 cells
 // around the mob.
-func (m *MapMob) findTarget(now time.Time, players []PlayerCombatSnapshot) *PlayerCombatSnapshot {
-	if m.def == nil || (m.AI != 1 && m.AI != 3) || m.ChaseRange <= 0 || now.Before(m.noTargetUntil) {
+func (m *MapMob) findTarget(now time.Time, players []PlayerCombatSnapshot, extended bool) *PlayerCombatSnapshot {
+	if m.def == nil || m.ChaseRange <= 0 || now.Before(m.noTargetUntil) {
 		return nil
 	}
-	for dz := int32(-1); dz <= 1; dz++ {
-		for dx := int32(-1); dx <= 1; dx++ {
+	radius := int32(1)
+	if extended {
+		radius = 2
+	}
+	for dz := -radius; dz <= radius; dz++ {
+		for dx := -radius; dx <= radius; dx++ {
 			c := cell{m.cell.x + dx, m.cell.z + dz}
 			for k := range players {
 				p := &players[k]
@@ -1153,6 +1115,7 @@ func NewStaticMob(def *db.MobDef, mobID uint16, x, z float32, area *MobArea, res
 	// CMob::Init: the first wander comes within a minute.
 	m.nextMoveAt = time.Now().Add(time.Duration(rand.IntN(60000)) * time.Millisecond)
 	m.CurrentHP = m.MaxHP
+	m.resetAI()
 	m.cell, m.hasCell = cellFor(x, z), true
 	m.noTargetUntil = time.Now().Add(5 * time.Second)
 	if area != nil {
@@ -1202,7 +1165,7 @@ func (m *MapMob) advanceRoam(mapID uint16) bool {
 		return false
 	}
 	pause := 10*time.Second + time.Duration(rand.IntN(30000))*time.Millisecond
-	if m.def.NormalStep == 0 || m.AI == 4 {
+	if m.def.NormalStep == 0 {
 		m.nextMoveAt = now.Add(pause)
 		return false
 	}
@@ -1323,9 +1286,16 @@ func (m *MapMob) useSlot(slot uint8, now time.Time) []byte {
 	}
 	// CMob::Attack: the slot waits its own AttackTime, the mob slot 1's.
 	offset := m.mods().attackDelayOffset()
-	m.slotReadyAt[slot] = now.Add(time.Duration(a.TimeMS)*time.Millisecond + offset)
-	m.nextAttackAt = now.Add(m.attackInterval() + offset)
+	m.slotReadyAt[slot] = now.Add(time.Duration(float64(time.Duration(a.TimeMS)*time.Millisecond+offset) / float64(m.attackSpeedFactor())))
+	m.nextAttackAt = now.Add(time.Duration(float64(m.attackInterval()+offset) / float64(m.attackSpeedFactor())))
 	return nil
+}
+
+func (m *MapMob) attackSpeedFactor() float32 {
+	if m.lua.speed > 0 {
+		return m.lua.speed
+	}
+	return 1
 }
 
 // movable: not stunned, asleep or stopped.
@@ -1545,7 +1515,7 @@ func HealMob(mapID uint16, id, amount uint32) (MapMob, uint32, bool) {
 		if m.ID == id && m.CurrentHP > 0 {
 			before := m.CurrentHP
 			m.CurrentHP = min(satAdd(m.CurrentHP, amount), m.MaxHP)
-			return *m, m.CurrentHP - before, true
+			return cloneMob(m), m.CurrentHP - before, true
 		}
 	}
 	return MapMob{}, 0, false

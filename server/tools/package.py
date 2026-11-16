@@ -59,7 +59,7 @@ def check_seed(root):
                 raise ValueError("SQLite seed row-count mismatch: " + table)
     if not list((root / "data/maps").glob("*.svmap")):
         raise ValueError("server maps are missing")
-    for name in ("Map.ini", "NpcQuest.SData", "KillStatus.SData", "GuildHouse.ini", "SequenceItemCreate.ini"):
+    for name in ("Map.ini", "NpcQuest.SData", "KillStatus.SData", "GuildHouse.ini", "SequenceItemCreate.ini", "kr_string.DB"):
         if not (root / "data/game" / name).is_file():
             raise ValueError("required server data is missing: " + name)
 
@@ -202,6 +202,14 @@ def build_package(platform, output, go):
                         str(root / "build" / ("gx_server" + suffix)), "./cmd/gx_server"],
                        cwd=ROOT, env=gui_environment, check=True)
         shutil.copytree(ROOT / "data", root / "data", ignore=shutil.ignore_patterns("vssver.scc", "__pycache__", "*.sqlite-wal", "*.sqlite-shm"))
+        # Editable policies accompany the same embedded default catalog.
+        ai = root / "ai"
+        ai.mkdir()
+        for name in ("catalog.lua", "README.md", "HOST.md"):
+            shutil.copy2(ROOT / "ai" / name, ai / name)
+        for name in ("core", "definitions"):
+            shutil.copytree(ROOT / "ai" / name, ai / name,
+                            ignore=lambda directory, names: [n for n in names if not n.endswith(".lua")])
         shutil.copy2(ROOT / "LICENSE", root / "LICENSE")
         shutil.copy2(ROOT / "THIRD_PARTY_NOTICES.md", root / "THIRD_PARTY_NOTICES.md")
         shutil.copytree(ROOT / "licenses", root / "licenses")

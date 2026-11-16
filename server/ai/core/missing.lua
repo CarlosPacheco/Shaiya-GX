@@ -7,12 +7,10 @@ function M.factory(code)
     return spec
 end
 function M.lua(code)
-    return { id=code, name="missing_lua", family="lua_missing", source_available=false,
-        new=function(ctx)
-            -- Original loader disables Lua callbacks after the file error but
-            -- retains the common native stack; it does not change AI to zero.
-            ctx:disable_lua_callbacks(code)
-            return { event=function() end, tick=function() end }
-        end }
+    return require("core.scripted").define({
+        id=code, name="missing_lua", family="lua_missing", source_available=false,
+        load=function(ctx) ctx:disable_lua_callbacks(code) end,
+        callbacks=function() return {} end,
+    })
 end
 return M

@@ -1,133 +1,89 @@
 # Mob AI in modern Lua
 
-This directory is a **prepared, executable policy catalog**, not yet connected
-to the GX world server. Its tests execute Lua directly with a logging host.
-Adding or editing these files currently changes no installed mob behavior.
-Activation and the Go world bridge are a separate step.
+This is the **default, authoritative AI catalog** of GX World. All mob AI
+selection and encounter decisions run in these Lua files. The former Go-only
+generic decision loop has been removed. Go supplies world primitives: validated
+movement, combat, recovery, spawning, removal, speech and instance portals.
 
-The catalog targets [Lua 5.4](https://www.lua.org/manual/5.4/) or later and is
-validated on Lua 5.4 and 5.5. It has no LuaJIT/5.1 dependency. No Go interpreter
-library, runtime dependency, database value or executable was changed to prepare it.
+The integrated pure-Go [golua](https://github.com/arnodel/golua) v0.4.1 runtime
+supports modern Lua 5.5. No external interpreter, shared library, Python bridge
+or legacy `.ai/.alo/.afs/.ah` parser is used.
 
-## Selection and layout
+## Selection and deployment
 
-`catalog.resolve(ai_byte)` selects a definition; `catalog.new(ai_byte, ctx)`
-creates its private state. Selection always uses `Mobs.AI`, never MobID.
-Comments in each definition identify the rule, the current seed's associated
-mobs, boss names and any client-only references. Names are descriptive references;
-they do not change which database value selects the script.
+`catalog.resolve(ai_byte)` selects by **Mobs.AI**, never MobID. Each definition's
+English comments describe its rule, associated seed mobs/bosses and original
+anomalies. These names document the mapping; they do not override selection.
 
-| Location / values | Purpose |
+| Files | Behavior |
 | --- | --- |
-| `definitions/000.lua`–`009.lua` | Former code-driven rules, including the distinct help rules2/3/5 |
-| `definitions/010.lua`–`036.lua` | All27 configured original file machines, now ordinary Lua functions with named states and variables |
-| `definitions/111.lua`–`118.lua` | Eight encounter scripts rewritten with per-mob closures and explicit host operations |
-| `definitions/104.lua` | Documented missing-original-script case for mob1890; no invented boss mechanics |
-| `core/missing.lua` | Explicit handling of other unconfigured factory37–99 and missing Lua100–255 values |
-| `reference/` | Two unconfigured original examples. They have no guessed numeric AI assignment |
-| `core/` | Shared Lua mechanics: state transitions, generic phases, callback instances and native numeric boundaries |
-| `tests/` | A strict logging host and behavior regressions; no world-server side effects |
+| `definitions/000.lua`–`009.lua` | Former native rules, including distinct social help for2/3/5 |
+| `definitions/010.lua`–`036.lua` | All27 original configured machines, with named states and ordinary Lua expressions |
+| `definitions/111.lua`–`118.lua` | Eight encounters with private per-mob closures |
+| `definitions/104.lua` | Original missing-script case, retaining the common stack without invented mechanics |
+| `core/missing.lua` | Original missing-source routes for other unconfigured byte values |
+| `core/` | Shared lifecycle, ordered transitions, native numeric boundaries and Lua-family scheduling |
+| `tests/` | Policy regression fixtures, executed by Go tests with the production interpreter |
 
-There are46 explicit numeric definitions and two unassigned references. All256
-byte values resolve, including original missing-source cases; this does not mean
-that the original supplied256 distinct behaviors.
+There are46 explicit definitions. All256 byte values resolve; the original did
+not provide256 distinct behaviors. Unassigned example scripts are excluded.
 
-The old `.ai/.alo/.afs/.ah` formats and token interpreter are not runtime inputs.
-The new files contain direct Lua expressions and calls. State names retain their
-original correspondence for review, while variables use names such as `stage`,
-`secondary_clock_ms` and `target_user_id`. Calls say what they mean, for example
-`set_physical_defense_multiplier` rather than the misleading original `SetRec`.
+The executable embeds this same catalog. At startup, GX loads a sibling `ai/`
+directory beside its data directory when present; portable packages include it.
+`RAPTURE_AI_DIR` selects an explicit directory. Otherwise the embedded catalog
+runs. A broken selected catalog stops startup; it never enables old Go AI.
+Edits take effect on restart. Keep the complete catalog together.
 
-## Reading a boss script
+One VM belongs to each map shard; compiled code is reused. Each mob generation
+has its own actor/variables. Respawn creates fresh state; normal reset delivers
+a separate event (notably, original Lua116 keeps its phase flags on reset).
+Calls are serialized with authoritative state. Summons and portal/speech actions
+are deferred outside Lua execution, avoiding controller re-entry and mob-slice
+mutation during callbacks. Deferred actions cannot outlive their mob generation.
 
-In `definitions/028.lua`, Deinos uses independent clocks for skills253 and246,
-and a separate empowered-combat state for its30-second damage multiplier.
-Each transition is listed in original priority order; its predicates, timer
-updates and destination are visible in the same block. The header identifies
-mobs1704 and1804. The shared helper performs one transition scan per idle update,
-then updates the resulting state; it does not hide boss conditions in Go.
+Scripts receive only the documented context and base/math/string/table libraries.
+OS/filesystem/debug/load facilities are unavailable. Each call has CPU and memory
+limits. A runtime error logs mob/global/AI IDs and stops that actor; it does not
+silently replace a boss with generic behavior. See [HOST.md](HOST.md).
 
-In `definitions/116.lua`, Dios Exiel's splitting phase names its announcement,
-creation flag and deadline directly. The comments identify real boss2472 and
-clones2473, explain zero coordinates, and point out the deliberately empty reset.
+## Original semantics
 
-## Original semantics retained
+File-machine transitions preserve priority and enter/update/leave order. All
+predicates are evaluated, including actions in failed candidates. There is one
+transition scan per idle update; repeated Battle callbacks honor attack deadlines.
+`core/numbers.lua` preserves float32 thresholds and32-bit machine variables/clocks.
+File machines receive HP0..1; encounter callbacks receive integer HP0..100.
 
-- Each mob gets independent variables/closures. Module loading does not share
-  encounter progress between mobs. Recreating an instance and normal reset are
-  distinct operations, especially for legacy Lua cases with empty reset callbacks.
-- File-machine transition priority, named states, strict time comparisons and
-  native enter/update/leave callback order are preserved. Actions in a candidate
-  transition execute even when a later/earlier predicate fails; predicate calls
-  are evaluated without introducing Lua short-circuit behavior.
-- The state machine's native callbacks still need their native mechanics:
-  calling `battle()` during both entry and update must respect attack deadlines,
-  not cause two unconditional swings.
-- `core/numbers.lua` keeps float32 thresholds and32-bit clock/variable arithmetic
-  where the original file evaluator used them. Legacy Lua timers stay Lua-number
-  arithmetic on the host's supplied native timestamp, matching those scripts.
-- HP fraction0..1 for file machines differs from the integer percentage0..100
-  supplied to encounter combat callbacks.
-- Recruitment, recovery, defensive element and attack-type mask operations have
-  explicit meanings. In particular `SetRec` was defense, not healing, and mask5
-  clears the four attack-type flags rather than selecting attack slot5.
-- Original anomalies remain visible: shadowed phases22/24/36, Empty Battle25,
-  `IsEndBattle`'s unusable native stub, Huistaton's skipped-band behavior,
-  controller115's timestamp comparison and early return, and116's empty reset.
-  Altering any of these is a gameplay decision, not part of this translation.
-- The two unassigned examples reference original dialogue through
-  `reference_text(key)` instead of embedding proprietary localized text.
+`set_physical_defense_multiplier` is the original misleading `SetRec`, not healing.
+Attack speed divides the native interval; attack masks have four categories,
+with4 enabling all and5 disabling all. Summons retain their requested mask.
+The reference executable writes these flags but has no observed combat read of
+that field; GX does not invent incoming-damage immunity from this setter.
+Native Lua-family attacks continue alongside custom callbacks, even for missing
+scripts. Lua selects the scheduling in `core/scripted.lua`.
 
-## Host integration contract
-
-See [HOST.md](HOST.md). A future Go bridge supplies world operations and native
-mechanics while Lua selects AI behavior. It must not parse old AI files or add
-per-AI-code behavior branches behind these calls.
-
-All instances expose `event(ctx, name, ...)` and `tick(...)`. Event names are
-`idle`, `combat`, `target`, `attacked`, `move_end`, `return_home`, `death`, and
-`reset`; only applicable events perform work in a given definition. The host
-must preserve original scheduling/status guards, target acquisition side effects
-and the common native Lua stack behavior. The `tick` helpers are test conveniences,
-not permission to call every phase unconditionally at rendering cadence.
-
-The catalog is not a complete Go world adapter. Actual movement, damage, skill
-validation, summons, portal updates, packet ordering, script loading, error
-handling and instance lifetime still require integration and game-level tests.
-A missing host operation must fail explicitly; the logging test host is never a
-production implementation. Scripts do not access OS time/files directly; clock,
-randomness, announcements and world effects go through the context.
+Original anomalies remain explicit: shadowed phases22/24/36, Empty Battle25,
+`IsEndBattle`'s diagnostic stub, Huistaton's skipped bands, controller115's time
+comparison/early return, and116's empty reset. They are preserved intentionally.
 
 ## Validation
 
-From the repository root, with a Lua5.4 shared library installed:
+From the repository root:
 
 ```sh
-python3 server/tools/check_ai_lua.py
+tools/check.sh ./server/ai ./server/internal/world
 ```
 
-Or select another modern Lua shared library:
+The51 policy scenarios cover every numeric route, independent actors, all
+27/235/353 machine/state/transition totals, help, HP thresholds, clocks,
+non-short-circuit side effects, six controller pairs, splits and resets.
+`TestLuaWorld*` also exercises real target acquisition, recruitment, combat
+factors/cooldowns, invulnerability before first tick, summons, movement,
+removal, portal ownership, stale generations and native speech packet decoding.
 
-```sh
-python3 server/tools/check_ai_lua.py --library /path/to/liblua.so
-```
+A private original-token differential check previously matched all235 states
+under32 inputs each (**7,520 cases**). It requires original assets and is not
+distributed. Automated coverage establishes the tested rules, not a claim that
+every boss has received a complete interactive encounter playthrough.
 
-With a Lua CLI, from this directory:
-
-```sh
-lua tests/run.lua
-```
-
-The53 checked-in scenarios cover every numeric route, independent instances,
-original graph totals27/235/353, help policies, HP thresholds, strict clocks,
-non-short-circuit side effects, shadowed phases, all six controller115 pairs,
-phase splitting, resets and missing-source cases. All configured machines and
-both unassigned examples receive changing-input smoke checks.
-
-A separate local differential check compared all235 configured states against
-a reference evaluation of original tokens under32 inputs each: **7,520 cases**
-agree on destination, variable values and host-call trace. That check requires
-private original assets and is not redistributed. Neither that comparison nor
-the public mock tests establish integrated world-server or packet parity.
-
-Research and native evidence: [original AI inventory](../../docs/mob-ai-research.md).
+Research: [original AI inventory](../../docs/mob-ai-research.md).

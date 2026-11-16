@@ -33,6 +33,7 @@ type pendingTeleport struct {
 }
 
 type pendingDamage struct {
+	SkillID     uint16
 	MobGlobalID uint32
 	MobID       uint16
 	Attack      uint32

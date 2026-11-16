@@ -1,5 +1,6 @@
 -- Small Lua state machine, not an interpreter for .ai files or token bytecode.
 -- Each definition contains ordinary Lua functions and named state variables.
+local lifecycle = require("core.lifecycle")
 local M = {}
 
 function M.define(spec)
@@ -35,7 +36,9 @@ function M.define(spec)
         end
         function self:event(context, name)
             if name == "reset" then self:reset(context)
-            elseif name == "idle" then self:tick(context)
+            elseif name == "idle" then
+                lifecycle.idle(context)
+                if context:status() == "return_home" then context:return_home() else self:tick(context) end
             elseif name ~= "combat" and name ~= "attacked" and name ~= "target" and name ~= "death" and name ~= "move_end" and name ~= "return_home" then
                 error("unknown state-machine event: " .. tostring(name))
             end

@@ -171,6 +171,13 @@ func loadMapIni(log *logx.Logger) error {
 
 // LoadGameConfig loads the original PS_Game ini files from data/game/.
 func LoadGameConfig(log *logx.Logger) error {
+	if err := loadMobAIStrings(); err != nil {
+		return err
+	}
+	if err := loadMobAI(); err != nil {
+		return err
+	}
+	log.Printf("GX Server World loaded authoritative Lua 5.5 mob AI catalog")
 	if err := loadMapIni(log); err != nil {
 		return fmt.Errorf("Map.ini: %w", err)
 	}

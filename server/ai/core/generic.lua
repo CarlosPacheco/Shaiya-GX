@@ -1,11 +1,13 @@
 -- Shared native-code family. The Lua definition selects acquisition, stationary
 -- behavior and social recruitment; the host supplies movement/combat mechanics.
+local lifecycle = require("core.lifecycle")
 local M = {}
 function M.define(spec)
     function spec.new()
         local self = {}
         function self:event(ctx, event, target, request_help)
             if event == "idle" then
+                lifecycle.idle(ctx)
                 -- The host runs this phase at native idle-update cadence.
                 if ctx:status() == "return_home" then ctx:return_home(); return end
                 if ctx:status() ~= "idle" then return end

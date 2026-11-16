@@ -79,16 +79,17 @@ func setAttack(s *CharacterStats, e EquipmentStats) {
 
 // mobCombat is a mob's derived combat values (rebuild_mob_attack).
 type mobCombat struct {
-	Level    int32
-	Accuracy [3]int32
-	Evasion  [3]int32
-	Guard    [3]int32
-	Attack   [3]int32
-	Critical int32
-	Luck     int32
-	Wis      int32
-	Dex      int32
-	Attrib   uint8
+	DamageFactor float32
+	Level        int32
+	Accuracy     [3]int32
+	Evasion      [3]int32
+	Guard        [3]int32
+	Attack       [3]int32
+	Critical     int32
+	Luck         int32
+	Wis          int32
+	Dex          int32
+	Attrib       uint8
 }
 
 func mobCombatFor(d *db.MobDef) mobCombat {
@@ -328,6 +329,9 @@ func mobDamage(m *mobCombat, a *db.MobAttack, s *CharacterStats) (int32, bool) {
 
 // mobWeaponDamage is the shared weapon branch of CMob::AttackDamage.
 func mobWeaponDamage(m *mobCombat, kind int, attack float32, plus uint16, element, defElement uint8, s *CharacterStats, damage *[3]int32) bool {
+	if m.DamageFactor > 0 {
+		attack = float32(attack * m.DamageFactor)
+	}
 	levelRaw := store((f32(m.Level-int32(s.Level)-1)*100 + f32(m.Level)) / 100 * 10)
 	level := float64(min(max(levelRaw, 1), 95))
 	if plus > 0 {

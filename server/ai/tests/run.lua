@@ -1,4 +1,4 @@
-assert(_VERSION == "Lua 5.4" or _VERSION == "Lua 5.5", "use modern Lua 5.4 or 5.5")
+assert(_VERSION == "Lua 5.4" or _VERSION == "Lua 5.5" or _VERSION == "Golua 5.5", "use modern Lua 5.4 or 5.5")
 local catalog = require("catalog")
 local host = require("tests.host")
 local num = require("core.numbers")
@@ -172,12 +172,6 @@ for id=10,36 do
             ctx.now=10000+i*10001;ctx.hp=(i%101)/100;ctx.hits=i%7;ctx.random=i%100
             ctx.arrival=true;ctx.escape_distance=30;ai:tick(ctx)
         end
-    end)
-end
-for _,name in ipairs({"scorlp1","testshaiya"}) do
-    test("unmapped reference"..name,function()
-        local ctx=host.new(); local ai=require("reference."..name).new(ctx)
-        for i=1,30 do ctx.now=ctx.now+10001;ctx.hp=.05;ctx.attacked=true;ai:tick(ctx) end
     end)
 end
 print(("AI catalog: %d scenarios passed on %s; no world server was started."):format(passed,_VERSION))

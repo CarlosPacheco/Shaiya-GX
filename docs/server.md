@@ -46,6 +46,14 @@ Allow inbound TCP 30800/30810 on the server firewall. Connect the client with `-
 
 For persistent overrides create `.local/runtime.env` in the server directory. Explicit environment values take priority. `RAPTURE_DATA_DIR`, `RAPTURE_DB_PATH` and `RAPTURE_DB_SEED` select data/runtime/seed locations independently. Relative paths in overrides are resolved against the server folder when using the controllers. Prefer absolute paths for direct headless launches with explicit overrides.
 
+## Mob AI
+
+All mob behavior selects the [modern Lua catalog](../server/ai/README.md) by
+`Mobs.AI`. Portable installations include an editable `ai/` beside `data/`;
+`RAPTURE_AI_DIR` selects another complete catalog. The same Lua definitions are
+embedded for installations without that directory. Restart world after edits.
+Invalid selected scripts stop startup; there is no legacy Go AI fallback.
+
 ## Back up and restore
 
 For a consistent live backup, use the SQLite backup API through the optional Python tool:

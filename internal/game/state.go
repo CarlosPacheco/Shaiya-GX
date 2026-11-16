@@ -94,6 +94,7 @@ type Event struct {
 }
 
 type State struct {
+	LastMobSpeech          proto.MobSpeech
 	TargetEffects          proto.TargetEffectSnapshot
 	TargetEffectsSerial    uint64
 	LastSkillFailure       proto.SkillFailure
@@ -1029,6 +1030,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		if e := s.Entities[hp.ID]; e != nil && e.Kind == KindMob {
 			e.HP = hp.HP
 			e.HealthKnown = true
+			e.Dead = hp.HP == 0
 		}
 	case proto.CharacterMobAutoAttack, proto.CharacterUserAutoAttack, proto.MobAttackCharacter:
 		attack, err := proto.DecodeAttackResult(p)
@@ -1356,6 +1358,16 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			e.Motion, e.X, e.Y, e.Z = n.Motion, n.X, n.Y, n.Z
 			e.MoveSerial++
 		}
+	case proto.MobSpeechText, proto.MobSpeechIndex:
+		c, err := proto.DecodeMobSpeech(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastMobSpeech = c
+		if op == proto.MobSpeechText {
+			s.addChat(ChatLine{Op: op, SenderID: c.MobID, Text: c.Text, Style: 1})
+		}
+		ev.Text = fmt.Sprintf("mob speech %d: %d", c.MobID, c.MessageID)
 	case proto.ChatNormal, proto.ChatParty, proto.ChatShout, proto.ChatNormalAdmin:
 		c, err := proto.DecodeChatByID(p)
 		if err != nil {

@@ -16,7 +16,6 @@ func StartSweeps(log *logx.Logger) {
 			dispatchEntityLeave(e.MapID, viewItem, e.Item.ID, "0x0402 map item despawn")
 		}
 	})
-	every(time.Second, func() { dispatchMoves(TickMobRoam(viewersByMap(), 48)) })
 	every(time.Second, func() {
 		for _, c := range TickMobCorpses() {
 			dispatchEntityLeave(c.MapID, viewMob, c.ID, "0x0602 mob corpse removed")
@@ -32,6 +31,9 @@ func StartSweeps(log *logx.Logger) {
 	every(mobNavigationTick, func() {
 		players := AllPlayers()
 		if len(players) == 0 {
+			tick := MobCombatTick{}
+			runMobAICommands(&tick)
+			dispatchMoves(tick.Moves)
 			return
 		}
 		snaps := make([]PlayerCombatSnapshot, 0, len(players))
@@ -60,13 +62,17 @@ func queueMobAttack(a MobAttackAction) {
 	if target == nil || target.noMobTarget.Load() || target.immune.Load() {
 		return
 	}
-	first := pendingDamage{a.MobGlobalID, a.MobID, a.Attack, a.Slot, true}
+	first := pendingDamage{MobGlobalID: a.MobGlobalID, MobID: a.MobID, Attack: a.Attack, Slot: a.Slot, First: true, SkillID: a.SkillID}
 	def := db.MustDefs().Mobs[a.MobID]
-	if def == nil || def.Attacks[a.Slot].Type == 0 {
+	skillID := a.SkillID
+	if skillID == 0 && def != nil {
+		skillID = def.Attacks[a.Slot].Type
+	}
+	if def == nil || skillID == 0 {
 		target.QueueDamage(first)
 		return
 	}
-	sk := db.MustDefs().Skill(def.Attacks[a.Slot].Type, 100)
+	sk := db.MustDefs().Skill(skillID, 100)
 	if sk == nil || (sk.TargetType != targetTypeEnemiesNearCaster && sk.TargetType != targetTypeEnemiesNearTarget) {
 		target.QueueDamage(first)
 		return
@@ -77,7 +83,7 @@ func queueMobAttack(a MobAttackAction) {
 	}
 	for _, p := range PlayersNear(target.MapID(), x, z, float32(sk.ApplyRange)) {
 		if p.IsAlive() && !p.immune.Load() {
-			p.QueueDamage(pendingDamage{a.MobGlobalID, a.MobID, a.Attack, a.Slot, false})
+			p.QueueDamage(pendingDamage{MobGlobalID: a.MobGlobalID, MobID: a.MobID, Attack: a.Attack, Slot: a.Slot, First: false, SkillID: a.SkillID})
 		}
 	}
 }

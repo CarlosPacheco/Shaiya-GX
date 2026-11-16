@@ -21,6 +21,10 @@ github.com/arl/gogeo v0.0.0-20200405111831-9d419f5f7a90/go.mod h1:4OgOjfhaGWnvN/
 github.com/arl/math32 v0.2.0 h1:MWdz/6kvQcTzId/LEylyaP8eiHLY7a2+EnFTMwlVWIQ=
 github.com/arl/math32 v0.2.0/go.mod h1:KMSABA6h8FPxtx+NPnIIltLE7uxrinC9xUJd5pkk5ek=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
+github.com/arnodel/golua v0.4.1 h1:ocSuOoA+Cd+nw6Eovcgh+TxM8KjPot7ZQZvztqUBvC4=
+github.com/arnodel/golua v0.4.1/go.mod h1:dmvd+waHQr/njXSgjVreRV8KdVk9VHNhsEmjKeD5CgA=
+github.com/arnodel/strftime v0.1.6 h1:0hc0pUvk8KhEMXE+htyaOUV42zNcf/csIbjzEFCJqsw=
+github.com/arnodel/strftime v0.1.6/go.mod h1:5NbK5XqYK8QpRZpqKNt4OlxLtIB8cotkLk4KTKzJfWs=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=

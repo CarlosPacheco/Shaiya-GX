@@ -1,3 +1,11 @@
+> Runtime update: GX now executes the default [modern Lua catalog](../server/ai/README.md)
+> through the integrated Go world adapter. The investigation below records the
+> original's families; the former generic Go decision loop has been removed.
+> Further integration checks: native `MobRemove2` (0x0041e630) scans five cells,
+> removes all matching live mobs at distance<100 and leaves its count argument
+> unused. The four-byte attack mask at CMob+0x278 has setters/resetters but no
+> observed combat reader in this executable; it does not justify damage immunity.
+
 # Original EP4.5 mob AI dispatch and case inventory
 
 Research date: 2026-11-16. Scope: investigation only. No GX runtime, database,
@@ -229,10 +237,10 @@ Private evidence and a Spanish state-by-state annex live in ignored
 `work/mob-ai-research/`. No original AI files or scripts are redistributed here.
 No gameplay changes, rebuilds, installations or service restarts were performed.
 
-## Prepared modern Lua catalog
+## Integrated modern Lua catalog
 
-The follow-up [Lua catalog](../server/ai/README.md) now represents all numeric
-cases in Lua5.4-compatible modules, with explicit host operations, per-mob state,
-boss associations and documented original anomalies. It includes executable
-standalone tests. The Go world bridge is not connected and installed server
-behavior remains unchanged; script preparation is not world-level activation.
+The [Lua catalog](../server/ai/README.md) is now the default world AI, with
+explicit host operations, per-mob state, boss associations and documented
+original anomalies. The pure-Go interpreter runs policy and world-adapter tests;
+external Lua tools and unassigned example scripts have been removed. The old Go
+AI decision loop no longer runs. All numeric source families select Lua policies.

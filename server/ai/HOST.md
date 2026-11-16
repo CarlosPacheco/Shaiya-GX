@@ -1,7 +1,6 @@
 # AI context operations
 
-This is the adapter contract for the prepared Lua catalog. No production adapter
-is installed. An operation is a real world action/query, not an optional callback
+This is the contract implemented by `server/internal/world/mob_ai.go`. An operation is a real world action/query, not an optional callback
 that can silently do nothing. Only the test host logs actions without applying them.
 
 ## Scheduling and instance ownership
@@ -47,13 +46,11 @@ Calling only the custom Lua combat callback would drop the boss's normal attacks
 | `consume_recent_hit()` | Boolean; consumes the momentary attacked flag |
 | `target_user_id()` | uint32,0 when no target |
 | `highest_current_hp_attacker_id()` | Eligible attackerID with largest **current** HP; the old MaxHp name did not mean maximum pool |
-| `highest_damage_attacker_id()` | Native damage-ledger selection used by the unassigned example |
 | `hit_count()` | Native nonnegative counted-hit value while hit checking is enabled |
 | `arrived_at_selected_position()` | Boolean native selected-position arrival test |
 | `distance_from_escape_origin()` | Native distance from the saved escape point |
 | `random_0_99()` | Native integer draw0..99; preserve host RNG ownership/order |
 | `legacy_end_battle_stub()` | Nil/untyped unusable result, matching this binary's diagnostic stub; never invent `not is_in_combat()` |
-| `reference_text(key)` | Resolve private localized dialogue for unassigned examples; not embedded in this catalog |
 
 ## Native mechanisms and world actions
 
@@ -81,7 +78,7 @@ Calling only the custom Lua combat callback would drop the boss's normal attacks
 | `enable_recovery(flag)` | Integer0/1, original recovery enable |
 | `set_recovery_interval_ms(ms)` | Original recovery period |
 | `set_defensive_element(code)` | Native m_nAttrDef, including original Kirhiross1..5 sequence |
-| `select_attack_type(code)` | Four-category mask: normal index selects one;4 enables all;5 clears all |
+| `select_attack_type(code)` | Four-category native field: an index selects one;4 enables all;5 clears all. No invented damage gate (no combat reader observed in this executable) |
 | `enable_all_attack_types()` | Restore the four native attack-category flags |
 | `set_battle_type(code)` | Original PAI battle-type field; independent of skill slots |
 | `summon_legacy(mob, distance, count, mode)` | Original SetSummonMob/PAI_CreateMob argument semantics, including mode and validation |
@@ -91,7 +88,7 @@ Calling only the custom Lua combat callback would drop the boss's normal attacks
 | `announce_legacy(index, radius)` | Original PAI_Say2 mapping, kept distinct from LuaSayByIndex |
 | `announce(index, radius)` | Original LuaSayByIndex semantics |
 | `create_mobs(id, count, x, z)` | Original LuaCreateMob validation/controller ownership; x=z=0 means caller's location |
-| `remove_mobs(id, count, x, z)` | Original LuaDeleteMob selection near requested/caller position, not a global template deletion |
+| `remove_mobs(id, count, x, z)` | Original LuaDeleteMob: five-cell scan, distance<100; every matching live mob enters death without rewards. Its count argument is unused in this executable |
 | `fixed_move(mode, x, z)` | Original LuaFixedMove mode and arrival event |
 | `hold_position(boolean)` | Original LuaSetHoldPosion behavior |
 | `set_invulnerable(boolean)` | Original LuaSetUnBeatable flag |
@@ -103,5 +100,5 @@ Calling only the custom Lua combat callback would drop the boss's normal attacks
 Implement the common mechanisms against the original functions listed in the
 [research](../../docs/mob-ai-research.md). The interface names are clearer than
 the original ones; their names alone do not authorize replacing native behavior
-with an approximate implementation. The prepared scripts are not a claim that
-this bridge, its scheduling or all world side effects have already been ported.
+with an approximate implementation. The world adapter is exercised by `TestLuaWorld*`; policy traces alone do not
+establish complete in-game parity.

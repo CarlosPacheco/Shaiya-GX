@@ -309,7 +309,7 @@ func TestRelicMobileCompanionsUseOrdinaryRoamAndParentLifetime(t *testing.T) {
 		t.Fatal("ordinary mobile companion not configured")
 	}
 	m.nextMoveAt = time.Time{}
-	moves := TickMobRoam(map[uint16][][2]float32{r.mapID: {{105, 100}}}, 100)
+	moves := TickMobCombat([]PlayerCombatSnapshot{{MapID: r.mapID, PosX: 105, PosZ: 100}}, 100).Moves
 	if len(moves) != 1 || m.PosX == 105 && m.PosZ == 100 {
 		t.Fatal("linked mob did not wander normally")
 	}

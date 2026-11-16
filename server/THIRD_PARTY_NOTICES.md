@@ -9,3 +9,10 @@ The server queries generated meshes with `github.com/arl/go-detour` v0.1.3
 The GX baker integration is project code, not an upstream Recast modification.
 Recast is needed only when generating navigation files; running GX Server
 requires neither the C++ compiler nor Recast libraries.
+
+# Modern Lua runtime
+
+Mob policies run on `github.com/arnodel/golua` v0.4.1 (Apache-2.0), with
+`github.com/arnodel/strftime` v0.1.6 (MIT). Unmodified license texts are in
+`licenses/golua.txt` and `licenses/arnodel-strftime.txt`. Lua runs inside Go;
+no external Lua executable, shared library or Python AI checker is required.

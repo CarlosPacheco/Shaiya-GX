@@ -158,6 +158,14 @@ func mobCombatOf(m *MapMob) mobCombat {
 	d.Dex = uint16(max(int32(d.Dex)+o.Dex, 0))
 	d.Luc = uint16(max(int32(d.Luc)+o.Luc, 0))
 	c := mobCombatFor(&d)
+	if m.lua.initialized {
+		c.DamageFactor = m.lua.damage
+		c.Guard[0] = int32(float32(d.Defense) * m.lua.defense)
+		c.Guard[1] = c.Guard[0] + int32(d.ShieldDefense)
+		if m.lua.elementSet {
+			c.Attrib = m.lua.element
+		}
+	}
 	for k := 0; k < 3; k++ {
 		c.Accuracy[k] += o.Cat[k].Accuracy
 		c.Attack[k] += o.Cat[k].Attack
@@ -177,6 +185,8 @@ func MobCombatByID(mapID uint16, id uint32) (mobCombat, bool) {
 	defer s.mu.Unlock()
 	for i := range s.entities.Mobs {
 		if m := &s.entities.Mobs[i]; m.ID == id {
+			h := &mobAIHost{mob: m, shard: s, mapID: mapID, now: time.Now(), tick: &MobCombatTick{}}
+			m.ensureAI(h)
 			return mobCombatOf(m), true
 		}
 	}
@@ -319,6 +329,10 @@ func TickMobEffects() []MobEffectOutcome {
 			}
 			hit := func(e *MobEffect, damage [3]int32, hp uint32) bool {
 				applied := min(hp, m.CurrentHP)
+				if m.lua.invulnerable {
+					applied = 0
+					damage = [3]int32{}
+				}
 				m.recordEventDamage(e.CasterID, applied)
 				m.CurrentHP -= applied
 				killed := m.CurrentHP == 0

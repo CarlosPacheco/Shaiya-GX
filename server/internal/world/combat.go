@@ -137,6 +137,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	// CUser::AttackSuccess, then CUser::AttackDamage; 0x0503 result is
 	// 0 normal, 1 critical, 3 miss.
 	if !playerHits(&stats, &mc, kind) {
+		recordMobAIMiss(ch.MapID, mob.ID, ch.ID)
 		sendNear(ch.MapID, mob.PosX, mob.PosZ, CombatRadius,
 			buildCharacterMobAttack(ch.ID, mob.ID, attackResultMiss, 0), "0x0503 character mob auto attack (miss)")
 		return true
@@ -207,8 +208,12 @@ func (s *Session) applyIncomingMobDamage(d pendingDamage) bool {
 		mc = mobCombatFor(def)
 	}
 	slot := &def.Attacks[min(d.Slot, 2)]
-	if slot.Type != 0 {
-		if sk := db.MustDefs().Skill(slot.Type, 100); sk != nil {
+	skillID := d.SkillID
+	if skillID == 0 {
+		skillID = slot.Type
+	}
+	if skillID != 0 {
+		if sk := db.MustDefs().Skill(skillID, 100); sk != nil {
 			return s.applyMobSkill(d, def, &mc, sk, &stats)
 		}
 	}

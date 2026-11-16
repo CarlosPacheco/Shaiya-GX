@@ -6,6 +6,7 @@ require (
 	fyne.io/fyne/v2 v2.8.1
 	github.com/arl/go-detour v0.1.3
 	github.com/arl/gogeo v0.0.0-20200405111831-9d419f5f7a90
+	github.com/arnodel/golua v0.4.1
 	github.com/ebitengine/oto/v3 v3.5.1
 	github.com/go-gl/gl v0.0.0-20260331235117-4566fea9a276
 	github.com/go-gl/glfw/v3.4/glfw v0.1.0-pre.1.0.20260707082822-2a407d02d01a

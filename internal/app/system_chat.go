@@ -66,6 +66,8 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 	}
 	skillName := func(id uint16, level uint8) string { d, _ := a.skillDefinition(id, level); return d.Name }
 	switch proto.Op(p) {
+	case proto.MobSpeechIndex:
+		a.systemMessage(1, int(s.LastMobSpeech.MessageID), map[string]string{"p": a.chatEntityName(s.LastMobSpeech.MobID)})
 	case proto.GXSkillFailure:
 		style := uint8(1)
 		if s.LastSkillFailure.Message == 317 {

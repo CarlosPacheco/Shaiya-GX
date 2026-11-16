@@ -30,9 +30,7 @@ function M.new()
     function h:arrived_at_selected_position() return self.arrival end
     function h:distance_from_escape_origin() return self.escape_distance or 0 end
     function h:highest_current_hp_attacker_id() return self.target end
-    function h:highest_damage_attacker_id() return self.target end
     function h:hit_count() return self.hits end
-    function h:reference_text(key) return key end
     function h:status() return self.current_status end
     function h:acquisition_ready() return self.ready ~= false end
     function h:lua_random(maximum) assert(self.pair>=1 and self.pair<=maximum); return self.pair end
@@ -42,6 +40,13 @@ function M.new()
     function h:last(name)
         for i=#self.log,1,-1 do if self.log[i][1]==name then return self.log[i] end end
     end
+    function h:refresh_target() end
+    function h:recovery_enabled() return false end
+    function h:recover_hp() end
+    function h:advance_selected_move() return false end
+    function h:can_act() return true end
+    function h:native_attack_ready() return false end
+    function h:lua_callbacks_enabled() return true end
     return h
 end
 return M
