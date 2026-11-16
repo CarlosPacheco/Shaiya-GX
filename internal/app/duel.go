@@ -376,7 +376,7 @@ func (a *App) drawDuel(w, h int) {
 			if def := a.itemsItem(it.Type, it.TypeID); def != nil {
 				a.drawItemIcon(def, x+cx, y+cy, 32, white, &proto.InventoryItem{Type: it.Type, TypeID: it.TypeID, Gems: it.Gems})
 			}
-			if it.Count > 0 {
+			if a.itemCount(it.Type, it.TypeID, it.Count) > 0 {
 				text := fmt.Sprint(it.Count)
 				a.font.Draw(a.sprites, text, x+cx+32-a.font.Width(text), y+cy+18, white, 32)
 			}

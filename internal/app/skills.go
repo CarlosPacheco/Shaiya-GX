@@ -463,7 +463,7 @@ func (a *App) drawActionBar(w, h int) {
 		}
 		it := a.state.Inventory[[2]uint8{q.Bag, uint8(q.Number)}]
 		slot := &slots[int(q.Bar)*ui.ActionSlots+int(q.Slot)]
-		slot.Label, slot.Count = "Empty", it.Count
+		slot.Label, slot.Count = "Empty", a.itemCount(it.Type, it.TypeID, it.Count)
 		if d := a.itemsItem(it.Type, it.TypeID); d != nil {
 			slot.Label = fmt.Sprintf("%s x%d", d.Name, it.Count)
 			slot.Badge = a.itemBadge(d, &it)

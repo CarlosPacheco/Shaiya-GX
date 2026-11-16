@@ -202,7 +202,7 @@ func (a *App) drawQuickPotions(w, h int) {
 			slots[i].Icon, slots[i].UV = a.assets.Texture("interface/"+file), uv
 		}
 		if _, it, ok := a.quickPotionItem(i); ok {
-			slots[i].Count = it.Count
+			slots[i].Count = a.itemCount(it.Type, it.TypeID, it.Count)
 			slots[i].Cooldown = a.itemCooldown(it)
 			slots[i].CooldownDuration = itemReuseSeconds(d.ReqIg)
 		}

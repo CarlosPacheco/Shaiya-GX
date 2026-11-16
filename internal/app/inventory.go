@@ -148,7 +148,7 @@ func (a *App) drawInventory(w, h int) {
 			a.drawItemIcon(d, cx, cy, size, white, &it)
 			a.drawItemCooldown(it, cx, cy, size)
 		}
-		if it.Count > 0 {
+		if a.itemCount(it.Type, it.TypeID, it.Count) > 0 {
 			text := fmt.Sprint(it.Count)
 			a.font.DrawOutlined(a.sprites, text, cx+size-a.font.Width(text), cy+size-14, white)
 		}

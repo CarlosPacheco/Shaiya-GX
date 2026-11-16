@@ -289,7 +289,7 @@ func (m *Mall) UpdateGifts(in *platform.Input, w, h int, stored map[uint8]proto.
 	inside := in.MouseX >= x && in.MouseX < x+GiftBoxWidth && in.MouseY >= y && in.MouseY < y+GiftBoxHeight
 	return claim, MallNone, inside && (in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.RightDown || in.Wheel != 0)
 }
-func (m *Mall) DrawGifts(s *render.Sprites, f *Font, w, h int, stored map[uint8]proto.MallStoredItem, icon func(proto.MallStoredItem) (*render.Texture, UV, bool), badges ...func(proto.MallStoredItem) ItemBadge) {
+func (m *Mall) DrawGifts(s *render.Sprites, f *Font, w, h int, stored map[uint8]proto.MallStoredItem, icon func(proto.MallStoredItem) (*render.Texture, UV, bool), count func(proto.MallStoredItem) uint16, badges ...func(proto.MallStoredItem) ItemBadge) {
 	x, y := m.GiftOrigin(w, h)
 	s.Draw(m.giftFrame, float32(x), float32(y), GiftBoxWidth, GiftBoxHeight, 0, 0, float32(GiftBoxWidth)/512, float32(GiftBoxHeight)/512, white)
 	if m.blank != nil {
@@ -311,8 +311,8 @@ func (m *Mall) DrawGifts(s *render.Sprites, f *Font, w, h int, stored map[uint8]
 				badges[0](it).Draw(s, x+dx, y+dy, 32, white)
 			}
 		}
-		if it.Count > 0 {
-			f.Draw(s, fmt.Sprint(it.Count), x+dx+12, y+dy+19, white, 20)
+		if n := count(it); n > 0 {
+			f.Draw(s, fmt.Sprint(n), x+dx+12, y+dy+19, white, 20)
 		}
 	}
 	f.Draw(s, "Right-click to claim", x+14, y+282, [4]float32{.8, .8, .8, 1}, 240)

@@ -43,5 +43,6 @@ These are static reverse-engineering findings, not a timing measurement of a
 running original client/server.
 
 Inventory, action-bar, warehouse, trade, duel, blacksmith and mall item icons show
-all positive counts, including one. `/getitem type id` grants one by default;
+positive counts, including one, only when the item definition permits stacking
+(Count greater than one). Equipment and other non-stackable items have no count label. `/getitem type id` grants one by default;
 explicit quantity validation and transactional grants retain their existing rules.
