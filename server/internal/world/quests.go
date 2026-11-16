@@ -683,6 +683,10 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 	}
 	change.After.Money = uint32(min(uint64(change.After.Money)+uint64(res.Money), db.MoneyCap))
 	levels := applyExpGain(&change.After, exp)
+	if levels > 0 {
+		st := StatsFor(&change.After, s.equipment())
+		change.After.CurrentHP, change.After.CurrentMP, change.After.CurrentSP = st.MaxHP, st.MaxMP, st.MaxSP
+	}
 	completion := db.QuestCompletion{CharacterID: s.char.ID, QuestID: q.ID, Repeatable: q.def.TickReceive != 0}
 	if err := db.CommitGameplay([]db.CharacterChange{change}, &completion); err != nil {
 		s.log.Printf("GX Server World quest %d transaction failed: %v", q.ID, err)

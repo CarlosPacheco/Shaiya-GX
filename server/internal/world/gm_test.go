@@ -121,7 +121,12 @@ func TestGMGrantAndClearPersistOnlyOwnInventory(t *testing.T) {
 		pool.Exec(`DELETE FROM PS_GameData_CharItems WHERE CharID=? OR CharID=?`, id, id+1000000)
 		pool.Exec(`DELETE FROM PS_GameData_Chars WHERE CharID=?`, id)
 	})
-	s.handleGMCommand("/getitem 25 1 200")
+	s.handleGMCommand("/getitem 25 1")
+	gmResponse(t, packets)
+	if len(s.items) != 1 || s.items[0].Count != 1 {
+		t.Fatal("omitted quantity must grant one", s.items)
+	}
+	s.handleGMCommand("/getitem 25 1 199")
 	reply := gmResponse(t, packets)
 	if len(s.items) != 1 {
 		t.Fatalf("200 apples should occupy one stack, got %d: %+v", len(s.items), reply)

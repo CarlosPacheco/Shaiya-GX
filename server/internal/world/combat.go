@@ -551,6 +551,9 @@ func (s *Session) awardExp(gained uint32, modifiers bool) {
 		gained = s.expScale(gained) // quest rewards skip them
 	}
 	levels := applyExpGain(ch, gained)
+	if levels > 0 {
+		s.setPools(false)
+	}
 	s.persist()
 	s.log.Printf("GX Server World exp character_id=%d gained=%d level=%d exp=%d levels_gained=%d",
 		ch.ID, gained, ch.Level, ch.Exp, levels)

@@ -225,7 +225,6 @@ func (s *Session) useRebirthItem(i int) {
 // setPools sets current HP/MP/SP to the effective maxima (half when half).
 func (s *Session) setPools(half bool) {
 	ch := s.char
-	ch.CurrentHP, ch.CurrentMP, ch.CurrentSP = ch.MaxHP, ch.MaxMP, ch.MaxSP
 	full := StatsFor(ch, s.equipment())
 	target := func(m uint32) uint32 {
 		if half {
@@ -233,9 +232,7 @@ func (s *Session) setPools(half bool) {
 		}
 		return m
 	}
-	ch.CurrentHP = satSub(ch.CurrentHP, full.CurrentHP-target(full.MaxHP))
-	ch.CurrentMP = satSub(ch.CurrentMP, full.CurrentMP-target(full.MaxMP))
-	ch.CurrentSP = satSub(ch.CurrentSP, full.CurrentSP-target(full.MaxSP))
+	ch.CurrentHP, ch.CurrentMP, ch.CurrentSP = target(full.MaxHP), target(full.MaxMP), target(full.MaxSP)
 }
 
 func (s *Session) halfPools() { s.setPools(true) }

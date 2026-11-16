@@ -285,7 +285,7 @@ func (a *App) drawBlacksmith(w, h int, name string) {
 				continue
 			}
 			a.drawItemIcon(d, x+sx, y+sy, 32, white, &it)
-			if it.Count > 1 {
+			if it.Count > 0 {
 				count := fmt.Sprint(it.Count)
 				a.font.DrawOutlined(a.sprites, count, x+sx+32-a.font.Width(count), y+sy+18, white)
 			}

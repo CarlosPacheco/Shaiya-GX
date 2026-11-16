@@ -193,7 +193,7 @@ func (b *ActionBar) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h
 			f.Draw(s, fmt.Sprint((i+1)%10), cx+23, cy, white, 12)
 		}
 		label := ""
-		if slot.Count > 1 {
+		if slot.Count > 0 {
 			label = fmt.Sprint(slot.Count)
 		} else if slot.Level > 0 {
 			label = fmt.Sprint(slot.Level)
@@ -207,7 +207,7 @@ func (b *ActionBar) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h
 			text := fmt.Sprintf("%.0f", math.Ceil(slot.Cooldown))
 			f.Draw(s, text, cx+16-f.Width(text)/2, cy+9, [4]float32{1, 1, 0, 1}, 32)
 		}
-		if slot.Count > 1 {
+		if slot.Count > 0 {
 			f.DrawOutlined(s, label, cx+32-f.Width(label), cy+18, white)
 		} else {
 			f.Draw(s, label, cx+32-f.Width(label), cy+18, [4]float32{1, 1, .3, 1}, 32)

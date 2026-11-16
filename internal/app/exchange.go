@@ -193,7 +193,7 @@ func (a *App) drawExchange(w, h int) {
 			if d := a.itemsItem(it.Type, it.TypeID); d != nil {
 				a.drawItemIcon(d, px+cx, py+cy, 32, white, &proto.InventoryItem{Type: it.Type, TypeID: it.TypeID, Gems: it.Gems})
 			}
-			if it.Count > 1 {
+			if it.Count > 0 {
 				text := fmt.Sprint(it.Count)
 				a.font.Draw(a.sprites, text, px+cx+32-a.font.Width(text), py+cy+18, white, 32)
 			}

@@ -305,8 +305,16 @@ func (s *Session) handleUseItem(p []byte) {
 	}
 	// CUser::ItemUse -> UseItemSkill: Range/AttackTime name a skill
 	// (candies, remedies, charms) that the item casts on its user.
-	if def.Special == specialNone && def.Range != 0 && def.AttackTime != 0 {
-		if sk := db.MustDefs().Skill(uint16(def.Range), def.AttackTime); sk != nil && sk.TypeEffect == typeEffectBuff {
+	{
+		if sk := itemBuffSkill(def); sk != nil {
+			if def.Special == 50 && !s.canUseExpReset() {
+				reject("EXP wheel requires arena map and half-level EXP")
+				return
+			}
+			if s.dead || ch.CurrentHP == 0 || s.cast != nil || s.dash != nil || s.actionBlocked() || s.ridingVehicle() {
+				reject("cannot cast item skill in current state")
+				return
+			}
 			if !s.canAddEffect(sk, ch.ID) {
 				reject("stronger buff already active")
 				return
@@ -328,6 +336,13 @@ func (s *Session) handleUseItem(p []byte) {
 			s.send(buildUseItemResult(ch.ID, &res), "0x050A use item")
 			s.send(buildRemoveItem(&res, res.Count == 0), "0x0206 remove item")
 			if _, ok := s.addEffect(sk, 0, ch.ID); ok {
+				s.announceItemSkill(sk)
+				if def.Special == 50 {
+					s.char.Exp, _ = expBounds(s.char)
+					s.persist()
+					st := s.stats()
+					s.send(buildCharacterDetails(s.char, &st), "EXP wheel authoritative details")
+				}
 				s.log.Printf("GX Server World item skill item=%d/%d skill_id=%d level=%d keep=%d", def.Type, def.TypeID, sk.SkillID, sk.SkillLevel, sk.KeepSeconds)
 			}
 			return
@@ -362,7 +377,7 @@ func (s *Session) handleUseItem(p []byte) {
 }
 
 // healDelta raises effective HP/MP/SP by up to the given amounts, applied
-// to the base fields as deltas (see CharacterStats). Returns the actual
+// to the durable absolute fields. Returns the actual
 // amounts gained.
 func (s *Session) healDelta(hp, mp, sp uint32) (uint32, uint32, uint32) {
 	ch := s.char

@@ -63,6 +63,15 @@ func (a *App) confirmedItems(op proto.Opcode) {
 			return
 		}
 		if d := a.itemsItem(it.Type, it.TypeID); d != nil {
+			if d.Range != 0 && d.AttackTime != 0 {
+				a.loadSkills()
+				if sk, ok := a.skillDefs[sdata.SkillKey{ID: uint16(d.Range), Level: d.AttackTime}]; ok && sk.Effect == 4 {
+					a.markCombatAction()
+					if a.wv != nil {
+						a.confirmAttackStop()
+					}
+				}
+			}
 			if seconds := itemReuseSeconds(d.ReqIg); seconds > 0 {
 				if v.cooldowns == nil {
 					v.cooldowns = map[uint8]float64{}

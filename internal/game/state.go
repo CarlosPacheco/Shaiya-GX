@@ -1050,6 +1050,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 				s.GuildDuel.deathLeavePending = false
 			}
 			s.Self.Dead = true
+			s.Pools.HP = 0
 		}
 		if e := s.Entities[id]; e != nil {
 			e.Dead = true
@@ -1150,7 +1151,8 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		s.Details = d
 		s.Guild.Name = d.Guild
-		s.Self = Entity{Kind: KindUser, ID: s.SelfID, X: d.X, Y: d.Y, Z: d.Z, Dir: d.Dir}
+		s.Self.Kind, s.Self.ID = KindUser, s.SelfID
+		s.Self.X, s.Self.Y, s.Self.Z, s.Self.Dir = d.X, d.Y, d.Z, d.Dir
 		ev.Text = fmt.Sprintf("details hp=%d pos=(%.1f,%.1f,%.1f) money=%d", d.MaxHP, d.X, d.Y, d.Z, d.Money)
 	case proto.CharacterMapTeleport:
 		m, err := proto.DecodeMapPosition(p)

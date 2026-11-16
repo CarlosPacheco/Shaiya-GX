@@ -284,10 +284,8 @@ func GetEquipmentStats(items []db.Item) EquipmentStats {
 	return e
 }
 
-// CharacterStats are the effective stats. Invariant: Character.CurrentHP/
-// MP/SP are BASE values; this adds the equipment and stat-derived bonus and
-// clamps to the effective max. Changes to current HP/MP/SP must be applied
-// to the base field as deltas, never by assigning an effective value.
+// CharacterStats derives maximum pools from stats/equipment. Current pools
+// are absolute durable values; bonuses must never be re-added on every read.
 type CharacterStats struct {
 	Str, Rec, Int, Wis, Dex, Luc    uint32
 	MaxHP, MaxMP, MaxSP             uint32
@@ -342,16 +340,11 @@ func StatsFor(ch *db.Character, e EquipmentStats) CharacterStats {
 	s.MaxHP = satAdd(satAdd(baseHP, e.MaxHP), dHP)
 	s.MaxMP = satAdd(satAdd(baseMP, e.MaxMP), dMP)
 	s.MaxSP = satAdd(satAdd(baseSP, e.MaxSP), dSP)
-	s.CurrentHP = min(satAdd(satAdd(curHP, e.MaxHP), dHP), s.MaxHP)
-	s.CurrentMP = min(satAdd(satAdd(curMP, e.MaxMP), dMP), s.MaxMP)
-	s.CurrentSP = min(satAdd(satAdd(curSP, e.MaxSP), dSP), s.MaxSP)
-	// Country tier: percents of the maximum pools (types 1-3).
-	for i, p := range []*[2]*uint32{{&s.MaxHP, &s.CurrentHP}, {&s.MaxMP, &s.CurrentMP}, {&s.MaxSP, &s.CurrentSP}} {
-		if add := kcPercent(*p[0], e.KCPoolPct[i]); add > 0 {
-			*p[0] = satAdd(*p[0], add)
-			*p[1] = min(satAdd(*p[1], add), *p[0])
-		}
+	// Country bonuses change maxima, never replenish current pools.
+	for i, pool := range []*uint32{&s.MaxHP, &s.MaxMP, &s.MaxSP} {
+		*pool = satAdd(*pool, kcPercent(*pool, e.KCPoolPct[i]))
 	}
+	s.CurrentHP, s.CurrentMP, s.CurrentSP = min(curHP, s.MaxHP), min(curMP, s.MaxMP), min(curSP, s.MaxSP)
 	setAttack(&s, e)
 	// Types 18/19: a percent of the melee / ranged defense.
 	for k := 0; k < 2; k++ {

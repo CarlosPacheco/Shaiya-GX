@@ -233,7 +233,7 @@ func (a *App) drawWarehouse(w, h int, def sdata.NPC) {
 		if d := a.itemsItem(it.Type, it.TypeID); d != nil {
 			a.drawItemIcon(d, cx, cy, 32, white, &it)
 		}
-		if it.Count > 1 {
+		if it.Count > 0 {
 			text := fmt.Sprint(it.Count)
 			a.font.Draw(a.sprites, text, cx+32-a.font.Width(text), cy+18, white, 32)
 		}

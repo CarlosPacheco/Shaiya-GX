@@ -229,7 +229,13 @@ func (s *Session) equipment() EquipmentStats {
 	}
 	return e
 }
-func (s *Session) stats() CharacterStats { return StatsFor(s.char, s.equipment()) }
+func (s *Session) stats() CharacterStats {
+	st := StatsFor(s.char, s.equipment())
+	if s.char != nil {
+		s.char.CurrentHP, s.char.CurrentMP, s.char.CurrentSP = st.CurrentHP, st.CurrentMP, st.CurrentSP
+	}
+	return st
+}
 
 func (s *Session) sendStatPackets() {
 	if s.char == nil {
@@ -243,10 +249,10 @@ func (s *Session) sendStatPackets() {
 }
 
 // normalize derives the base pools from StatusDefs (Chars only stores the
-// current HP/MP/SP) and clamps the current values.
+// current HP/MP/SP). Effective clamping waits for equipment and buffs.
 func normalize(ch *db.Character) {
 	ch.MaxHP, ch.MaxMP, ch.MaxSP = basePools(ch)
-	ch.CurrentHP, ch.CurrentMP, ch.CurrentSP = min(ch.CurrentHP, ch.MaxHP), min(ch.CurrentMP, ch.MaxMP), min(ch.CurrentSP, ch.MaxSP)
+	// Equipped/buff maxima are not available yet; clamp after they are loaded.
 }
 
 // tick runs the per-iteration work: mailboxes, buffs, regen, casts and
@@ -361,7 +367,7 @@ func (s *Session) applyTradeRefresh(r *tradeRefresh) {
 // the sitting abilities' percent plus the flat sitting recovery; 1
 // standing: the flat standing recovery; 2 in combat: the flat in-combat
 // recovery), then the mode for the next tick is taken (in combat, else
-// sitting or standing). Viewers get 0x0505 (deltas) and the character
+// sitting or standing). Viewers get 0x0505 (absolute pools) and the character
 // 0x0521.
 func (s *Session) recoveryTick() {
 	if time.Since(s.lastRegenAt) < recoveryInterval {
@@ -400,7 +406,7 @@ func (s *Session) recoveryTick() {
 	s.persist()
 	after := s.stats()
 	sendNear(s.char.MapID, s.char.PosX, s.char.PosZ, BroadcastRadius,
-		buildCharacterReviveHitpoints(s.char.ID, hp, mp, sp), "0x0505 recover")
+		buildCharacterReviveHitpoints(s.char.ID, after.CurrentHP, after.CurrentMP, after.CurrentSP), "0x0505 recover pools")
 	s.send(buildCurrentHitpoints(&after), "0x0521 recover set")
 }
 

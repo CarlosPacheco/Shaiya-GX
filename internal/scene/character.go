@@ -70,6 +70,9 @@ type skinPart struct {
 
 // Character is a posed, animated actor.
 type Character struct {
+	weaponType           uint8
+	combatPoseLeft       float32
+	clipFile             string
 	Concealed            bool
 	CorpseFade           float32 // opaque screen-door coverage, 0 visible, 1 gone
 	enchantTime          float64
@@ -127,7 +130,7 @@ type Character struct {
 // SetClip switches to <prefix>_<name>.ANI (e.g. "000_normal", "002_run"),
 // restarting it; unknown clips keep the current one.
 func (c *Character) SetClip(name string) {
-	if c == nil || c.locked || c.clipName == name {
+	if c == nil || c.locked {
 		return
 	}
 	fileName := name
@@ -143,11 +146,19 @@ func (c *Character) SetClip(name string) {
 			fileName = "006_swnomal"
 		}
 	}
-	cl, err := c.assets.Clip(fmt.Sprintf("Character/%s/ANI/%s_%s.ANI", c.folder, c.prefix, fileName))
+	file := c.locomotionFile(name)
+	if file == "" {
+		file = fmt.Sprintf("Character/%s/ANI/%s_%s.ANI", c.folder, c.prefix, fileName)
+	}
+	if c.clipFile == file {
+		return
+	}
+	cl, err := c.assets.Clip(file)
 	if err != nil {
 		c.assets.Missing[err.Error()] = true
 		return
 	}
+	c.clipFile = file
 	c.clip, c.clipName, c.Time = cl, name, 0
 	c.actionID++
 }
@@ -224,6 +235,7 @@ func BuildCharacter(s *Assets, a Appearance, clip string) (*Character, error) {
 		add("hair", int(a.Hair))
 	}
 	c.attachCloak(a)
+	c.weaponType = a.WeaponType
 	c.attachItem(a.WeaponType, a.WeaponModel, false, a.WeaponEnchant)
 	c.attachItem(a.ShieldType, a.ShieldModel, true, a.OffhandEnchant)
 	c.SetClip(clip)
@@ -380,6 +392,7 @@ func sampleTrans(k []model.TransKey, f float32) [3]float32 {
 
 // Update advances the animation.
 func (c *Character) Update(dt float32) {
+	c.combatPoseLeft = max(0, c.combatPoseLeft-dt)
 	c.enchantTime += float64(max(0, dt))
 	if c.externalTime {
 		c.externalTime = false
@@ -426,17 +439,7 @@ func (c *Character) PlayAction(slot int, hold bool) bool {
 	if c == nil || c.hold && slot != 9 {
 		return false
 	}
-	if !c.actionsLoaded {
-		c.actionsLoaded = true
-		file := fmt.Sprintf("Character/%s/%s_action.alt", c.folder, c.prefix)
-		b, err := c.assets.Arc.ReadFile(file)
-		if err == nil {
-			c.actions, err = model.ParseALT(b)
-		}
-		if err != nil {
-			c.assets.Missing[err.Error()] = true
-		}
-	}
+	c.loadActions()
 	if slot < 0 || slot >= len(c.actions) || c.actions[slot].Name == "" {
 		return false
 	}
@@ -447,6 +450,10 @@ func (c *Character) PlayAction(slot int, hold bool) bool {
 		return false
 	}
 	c.spinLeft, c.externalTime = 0, false
+	c.clipFile = file
+	if slot >= 23 && slot <= 110 {
+		c.combatPoseLeft = 10
+	}
 	c.clip, c.clipName, c.Time = cl, file, 0
 	c.actionID++
 	c.actionSlot = slot

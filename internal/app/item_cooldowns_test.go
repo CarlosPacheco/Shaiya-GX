@@ -55,3 +55,23 @@ func TestItemTooltipDoesNotInventConsumableStatsOrStackMetadata(t *testing.T) {
 		t.Fatal("native title colour")
 	}
 }
+
+func TestBuffItemOnlyReservesActionAfterConfirmation(t *testing.T) {
+	a := &App{clock: 100, state: game.New(), items: map[sdata.ItemKey]*sdata.Item{{Type: 25, TypeID: 175}: {Range: 211, AttackTime: 1}}, skillDefs: map[sdata.SkillKey]sdata.Skill{{ID: 211, Level: 1}: {Effect: 4}}}
+	a.state.SelfID = 42
+	it := proto.InventoryItem{Type: 25, TypeID: 175}
+	a.itemCooldown(it)
+	if a.skills.actionKnown {
+		t.Fatal("rendering an item icon reserved combat")
+	}
+	a.state.LastItemUse.ID = 42
+	a.confirmedItems(proto.UseItem)
+	if a.skills.actionKnown {
+		t.Fatal("rejected item reserved combat")
+	}
+	a.state.LastItemUse.Type, a.state.LastItemUse.TypeID = 25, 175
+	a.confirmedItems(proto.UseItem)
+	if !a.skills.actionKnown || a.skills.lastActionAt != 100 {
+		t.Fatal("confirmed item did not reserve combat")
+	}
+}

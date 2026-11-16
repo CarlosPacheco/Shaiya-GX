@@ -93,9 +93,12 @@ func (s *Session) handleGMCommand(text string) bool {
 		}
 		err = s.gmClearInventory()
 	case "/getitem":
+		if len(args) == 2 {
+			args = append(args, "1")
+		}
 		n, e := gmNumbers(args, 255, 255, 5*24*255)
 		if e != nil {
-			s.gmReply("Usage: /getitem type id quantity")
+			s.gmReply("Usage: /getitem type id [quantity=1]")
 			break
 		}
 		err = s.gmGiveItem(uint8(n[0]), uint8(n[1]), int(n[2]))

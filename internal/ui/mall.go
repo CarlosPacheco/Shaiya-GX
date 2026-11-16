@@ -311,7 +311,7 @@ func (m *Mall) DrawGifts(s *render.Sprites, f *Font, w, h int, stored map[uint8]
 				badges[0](it).Draw(s, x+dx, y+dy, 32, white)
 			}
 		}
-		if it.Count > 1 {
+		if it.Count > 0 {
 			f.Draw(s, fmt.Sprint(it.Count), x+dx+12, y+dy+19, white, 20)
 		}
 	}
