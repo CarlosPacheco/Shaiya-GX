@@ -112,3 +112,8 @@ workloads, not a maximum-player benchmark, long soak, disk-full recovery,
 checks does not certify every other gameplay subsystem as crash-safe.
 For deployment and consistent backups, see [SQLite](sqlite.md) and
 [server operations](../../docs/server.md).
+
+For the opt-in earned early-game sequence with two new characters, a real world
+restart and dungeon party resurrection, see the [progression journey](party-progression.md).
+Its explicit position-only portal checkpoint does not validate the complete
+overland route.
