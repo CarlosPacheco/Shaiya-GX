@@ -141,6 +141,11 @@ func (m *CreatureActor) Update(dt float32) {
 
 // PlayOnce presents a confirmed attack/hit; locomotion resumes afterward.
 func (m *CreatureActor) PlayOnce(action int) {
+	// Late attack, reaction or repeated death packets cannot restart a corpse.
+	// A real respawn switches back to a live action through SetAction.
+	if m.action == 5 {
+		return
+	}
 	// A damage reaction must not restart or replace a confirmed attack.
 	if action == 7 && m.Attacking() {
 		return

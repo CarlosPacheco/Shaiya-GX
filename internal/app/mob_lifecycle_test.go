@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"testing"
@@ -28,22 +29,25 @@ func TestRepeatedDeathDoesNotRestartFadeAndRespawnClearsIt(t *testing.T) {
 	}
 }
 
-func TestSpawnAnchorTracksPositionWithoutActorRotation(t *testing.T) {
+func TestSpawnAnchorFreezesPacketCoordinatesDespiteMobMovementOrRemoval(t *testing.T) {
 	a := inputApp()
-	e := &game.Entity{ID: 9, Kind: game.KindMob, X: 10, Y: 20, Z: 30, MobHeightKnown: true}
+	e := &game.Entity{ID: 9, Kind: game.KindMob, X: 100, Y: 20, Z: 30, MobHeightKnown: true}
 	a.state.Entities[9] = e
-	actor := &scene.CreatureActor{Character: &scene.Character{World: render.Basis(render.V3{10, 20, 30}, render.V3{1, 0, 0}, render.V3{0, 1, 0})}}
-	a.wv.mobs = map[uint32]*mobActor{9: {entity: e, actor: actor, position: remotePosition{initialized: true}}}
-	impact := skillImpact{target: 9, positionOnly: true}
-	for _, position := range []render.V3{{10, 20, 30}, {12, 21, 33}} {
-		e.X, e.Y, e.Z = position[0], position[1], position[2]
-		a.wv.mobs[9].pos = position
-		actor.World = render.Basis(position, render.V3{1, 0, 1}, render.V3{0, 1, 0})
-		m, ok := a.impactTransform(impact)
-		expected := render.Identity()
-		expected[12], expected[13], expected[14] = position[0], position[1], position[2]
-		if !ok || m != expected {
-			t.Fatal("spawn inherited orientation or lost position", m)
+	actor := &scene.CreatureActor{Character: &scene.Character{World: render.Basis(render.V3{99, 20, 30}, render.V3{1, 0, 0}, render.V3{0, 1, 0})}}
+	a.wv.mobs = map[uint32]*mobActor{9: {entity: e, actor: actor, position: remotePosition{initialized: true}, pos: render.V3{99, 20, 30}}}
+	matrix := a.mobSpawnTransform(proto.MobSpawn{ID: 9, X: 10, Y: 20, Z: 30, HeightKnown: true})
+	impact := skillImpact{fixedWorld: &matrix}
+	expected := render.Identity()
+	expected[12], expected[13], expected[14] = 10, 20, 30
+	for _, remove := range []bool{false, true} {
+		e.X, e.Z = 500, 600
+		actor.World[12] = 400
+		a.wv.mobs[9].pos = render.V3{400, 20, 30}
+		if remove {
+			delete(a.state.Entities, 9)
+		}
+		if got, ok := a.impactTransform(impact); !ok || got != expected {
+			t.Fatal("spawn followed live monster", got, ok)
 		}
 	}
 }

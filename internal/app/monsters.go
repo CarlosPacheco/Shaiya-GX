@@ -52,6 +52,23 @@ func (a *App) prepareMonsters() {
 		if cached.actor == nil {
 			continue
 		}
+
+		if e.Dead {
+			if !cached.dead {
+				cached.freezeCorpse(v.world, e, a.clock)
+			}
+			if err := cached.actor.SetAction(5); err != nil {
+				a.assets.Missing[err.Error()] = true
+			}
+			cached.actor.CorpseFade = cached.updateCorpse(true, a.clock)
+			cached.actor.Update(float32(a.frameDT))
+			cached.actor.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, false, &effectBudget)
+			continue
+		}
+		if cached.dead {
+			cached.position = remotePosition{}
+			cached.ground = mobGroundCache{}
+		}
 		newMove := cached.position.initialized && cached.position.moveSerial != e.MoveSerial
 		pos := cached.position.update(e, a.clock)
 		if newMove && cached.position.duration > 0 && !(e.MobHeightKnown && e.MobMoveDurationMS > 0) {
@@ -96,13 +113,10 @@ func (a *App) prepareMonsters() {
 				action = 1
 			}
 		}
-		if e.Dead {
-			action = 5
-		}
 		if err := cached.actor.SetAction(action); err != nil {
 			a.assets.Missing[err.Error()] = true
 		}
-		cached.actor.CorpseFade = cached.updateCorpse(e.Dead, a.clock)
+		cached.actor.CorpseFade = cached.updateCorpse(false, a.clock)
 		cached.actor.Update(float32(a.frameDT))
 		cached.actor.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, !e.Dead, &effectBudget)
 	}
@@ -138,4 +152,17 @@ func (m *mobActor) updateCorpse(dead bool, now float64) float32 {
 		return 0
 	}
 	return corpseFade(now - m.deathAt)
+}
+
+// Freeze the last rendered location and orientation at death. Pending movement
+// and later network/ground corrections must not drag a corpse toward a target.
+func (m *mobActor) freezeCorpse(w *scene.World, e *game.Entity, now float64) {
+	if !m.position.initialized {
+		m.pos = m.ground.resolve(w, render.V3{e.X, e.Y, e.Z}, e.MobHeightKnown, e.PositionResetSerial)
+		if m.actor != nil {
+			m.actor.World = render.Basis(m.pos, render.V3{0, 0, -1}, render.V3{0, 1, 0})
+		}
+	}
+	m.position = remotePosition{initialized: true, pos: m.pos, from: m.pos, to: m.pos, moveSerial: e.MoveSerial, resetSerial: e.PositionResetSerial, lastArrival: now}
+	m.attackTarget = 0
 }

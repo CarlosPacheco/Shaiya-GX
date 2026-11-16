@@ -86,12 +86,18 @@ func (a *App) updateSkillAreaShowers(dt float32) {
 		alive := shower.particles[:0]
 		for _, p := range shower.particles {
 			if !p.grounded {
+				previous := p.pos
 				p.pos = p.pos.Add(p.velocity.Scale(dt))
-				floor := shower.center[1]
-				if a.wv.world != nil && a.wv.world.HasTerrain() {
-					floor = a.wv.world.Height(p.pos[0], p.pos[2])
+				ground := func(point render.V3) float32 {
+					if a.wv.world != nil && a.wv.world.HasTerrain() {
+						return a.wv.world.Height(point[0], point[2])
+					}
+					return shower.center[1]
 				}
-				if p.pos[1] < floor {
+				if p.pos[1] <= ground(p.pos) {
+					p.pos = meteorContact(previous, p.pos, ground)
+					floor := ground(p.pos)
+					p.instance.FinishMeteor()
 					p.grounded = true
 					if len(a.wv.impacts) < 32 {
 						if x := a.loadSkillEffect(shower.file, shower.profile.ImpactSequence); x != nil {
@@ -105,7 +111,7 @@ func (a *App) updateSkillAreaShowers(dt float32) {
 			} else {
 				p.groundAge += dt
 			}
-			if p.groundAge > shower.profile.Drain {
+			if p.groundAge > shower.profile.Drain || p.grounded && p.instance.Done() {
 				continue
 			}
 			m := render.Basis(p.pos, shower.forward, render.V3{0, 1, 0})
@@ -121,4 +127,23 @@ func (a *App) updateSkillAreaShowers(dt float32) {
 	}
 	clear(a.wv.areaShowers[len(rows):])
 	a.wv.areaShowers = rows
+}
+
+// Resolve the segment's first terrain crossing, so a long frame cannot carry
+// a projectile beyond its diagonal landing point (Phoenix rain controller).
+func meteorContact(from, to render.V3, ground func(render.V3) float32) render.V3 {
+	low, high := float32(0), float32(1)
+	delta := to.Sub(from)
+	for range 10 {
+		f := (low + high) * .5
+		p := from.Add(delta.Scale(f))
+		if p[1] > ground(p) {
+			low = f
+		} else {
+			high = f
+		}
+	}
+	p := from.Add(delta.Scale(high))
+	p[1] = ground(p)
+	return p
 }

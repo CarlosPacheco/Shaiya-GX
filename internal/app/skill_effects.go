@@ -4,6 +4,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
@@ -36,10 +37,9 @@ func (a *App) confirmedEffects(p []byte) {
 		// its appearance. Phoenix's Spawn is native start.EFT, sequence zero.
 		if m, err := proto.DecodeMobEnter(p); err == nil && m.New && len(v.impacts) < 32 {
 			if x := a.loadSkillEffect("Effect/start.EFT", 0); x != nil {
-				if matrix, ok := a.impactTransform(skillImpact{target: m.ID, positionOnly: true}); ok {
-					x.SetTransform(matrix)
-				}
-				v.impacts = append(v.impacts, skillImpact{target: m.ID, instance: x, authoredLifetime: true, positionOnly: true})
+				matrix := a.mobSpawnTransform(m)
+				x.SetTransform(matrix)
+				v.impacts = append(v.impacts, skillImpact{instance: x, authoredLifetime: true, fixedWorld: &matrix})
 			}
 		}
 	case proto.MobSkillUse, proto.MobSkillDrain, proto.MobSkillOther:
@@ -110,4 +110,14 @@ func (a *App) drawCastEffects() {
 	for _, e := range a.wv.castEffects {
 		e.instance.Draw(a.scene3d)
 	}
+}
+
+// A spawn placement is a world event, not an attachment to the live monster.
+func (a *App) mobSpawnTransform(m proto.MobSpawn) render.M4 {
+	p := render.V3{m.X, m.Y, m.Z}
+	var floor mobGroundCache
+	p = floor.resolve(a.wv.world, p, m.HeightKnown, 0)
+	matrix := render.Identity()
+	matrix[12], matrix[13], matrix[14] = p[0], p[1], p[2]
+	return matrix
 }

@@ -535,7 +535,20 @@ func (x *Effect) SetTransform(m render.M4) {
 // world-space births. This changes matrices only, not geometry or draw passes.
 func (x *Effect) SetMeteorTransform(m render.M4) {
 	x.SetTransform(m)
-	x.meteor, x.meteorWorld = true, m
+	x.meteor, x.meteorWorld = true, x.basis
+	x.meteorWorld[12], x.meteorWorld[13], x.meteorWorld[14] = x.Origin[0], x.Origin[1], x.Origin[2]
+}
+
+// FinishMeteor hides the falling mesh immediately at terrain contact and
+// stops new births; existing world-space trail particles drain normally.
+func (x *Effect) FinishMeteor() {
+	x.Stop()
+	for i := range x.emitters {
+		if x.emitters[i].geometry != nil {
+			clear(x.emitters[i].particles)
+			x.emitters[i].particles = x.emitters[i].particles[:0]
+		}
+	}
 }
 func (x *Effect) Stop() { x.stopped = true }
 func (x *Effect) Done() bool {

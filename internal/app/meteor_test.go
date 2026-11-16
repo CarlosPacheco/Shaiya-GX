@@ -6,6 +6,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"math"
 	"testing"
 )
 
@@ -28,6 +29,18 @@ func TestMeteorTrajectoryMatchesOriginalX86Oracle(t *testing.T) {
 		velocity := row.side.Scale(row.profile.Lateral).Add(render.V3{0, -row.profile.Height, 0})
 		if pos.Sub(tc.position).Len() > .00001 || velocity.Sub(tc.velocity).Len() > .00001 || row.forward.Add(tc.direction).Len() > .00001 {
 			t.Fatal("original trajectory mismatch", pos, velocity, row.forward, tc)
+		}
+	}
+}
+
+func TestMeteorContactIsFrameIndependentAndOnTerrain(t *testing.T) {
+	from := render.V3{0, 2, 0}
+	v := render.V3{0, -15, 7.5}
+	for _, ground := range []func(render.V3) float32{func(render.V3) float32 { return 0 }, func(p render.V3) float32 { return p[2] * .2 }} {
+		a := meteorContact(from, from.Add(v.Scale(.25)), ground)
+		b := meteorContact(from, from.Add(v.Scale(.5)), ground)
+		if a.Sub(b).Len() > .005 || math.Abs(float64(a[1]-ground(a))) > .001 {
+			t.Fatal("terrain contact overshot diagonal", a, b)
 		}
 	}
 }

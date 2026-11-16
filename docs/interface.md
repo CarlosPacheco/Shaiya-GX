@@ -576,9 +576,11 @@ brackets are inserted. These rules apply to both local and remote labels.
 ### Monster appearance and corpse fade
 
 Fresh `0601` / GX `7F05` mob spawns (`New=true`) play the original
-`Effect/start.EFT`, sequence zero, on the monster's current ground position.
-Its attachment follows ground position with fixed world axes, independent
-of the monster's facing and scale, as in Phoenix's separate spawn anchor.
+`Effect/start.EFT`, sequence zero, at the spawn packet's ground position.
+Its world transform is captured once: it never follows later movement, an old
+interpolated actor position, or the entity's removal.
+Its fixed world axes are independent of the monster's facing and scale, as in
+Phoenix's separate spawn anchor.
 Ordinary visibility snapshots do not replay it. This is Phoenix's `Spawn`
 recipe, with the original emitters and authored lifetime, not a custom effect.
 
@@ -588,6 +590,10 @@ Phoenix's alternative to native sinking: hold for 3.5 seconds, then use a
 reduces pixel coverage while preserving material RGB/depth writes. There is no
 additional pass, transparent sorting or generated texture. Repeated death
 observations cannot extend the lifetime; respawn clears the visual clock.
+At death, the last rendered location and orientation are frozen; pending movement,
+height corrections and late attack/reaction/death cues cannot move or restart the
+corpse. The death animation finishes and holds its last pose. A real respawn clears
+the frozen interpolation state and resumes live presentation.
 Server corpse removal, loot and respawn timers remain authoritative.
 
 Native news uses the English locale's regular 15px Arial-compatible font

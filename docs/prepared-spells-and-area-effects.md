@@ -56,15 +56,20 @@ Native placement uses a fixed release center C and horizontal cast direction D:
 - Side vector S = D cross (0,1,0).
 - Initial position = C + signed integer X/Z offsets + (0,H,0) - S * L.
 - Velocity = S * L + (0,-H,0); facing = -D, independent of velocity.
-- A ground crossing triggers sequence 1 at terrain height + 1. The falling body
-  remains at the sampled crossing position during its one-second drain, rather
-  than snapping up to the ground. The +1 value was read from the original float
-  constant at 0x6bc4dc; Phoenix's later +0.1 tuning is not copied.
+- A ground crossing terminates the falling mesh immediately and stops new
+  emissions. Existing world-space trails drain for at most one second; that
+  lifetime does not keep a landed fragment visible. Sequence 1 plays at terrain
+  height + 1 (original float 0x6bc4dc). Like Phoenix, GX resolves the segment's
+  terrain crossing so a long frame cannot overshoot the diagonal landing point.
 
 The original 0x4307f0/0x430590 paths distinguish the moving mesh body from
 world-space particle trails. Mesh simulation stays local to the controller;
 previously emitted billboard particles remain in world space. GX carries this
-placement through `SetMeteorTransform` in the existing renderer. The native
+placement through `SetMeteorTransform` in the existing renderer. The mesh
+placement must use the native EFT basis (0x5426e0), including its reflected X/Z
+axes, rather than the ordinary object basis. Omitting that conversion mirrored
+the authored inclination relative to the falling velocity. Regressions compare
+the body's actual long axis with its trajectory, not just its rotation stability. The native
 mesh draw order is `spin * (initial tilt * placement)` (0x55b1f0), so the spin
 rolls the body around its own axis while preserving the authored diagonal.
 Reversing tilt and spin makes that axis precess, producing the former wobble.
