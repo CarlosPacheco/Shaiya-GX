@@ -3,7 +3,7 @@ Shaiya GX gx-v0.1.10
 Changes since gx-v0.1.9:
 
 • Complete mounts: two-second cast, original hand/appearance effects and sounds, jumping, backward walking, full lateral speed, one/two seats, invitations and passenger jump departure. Server rechecks boarding range; bones.ini groups every race.
-• Restore the four original innate ITM weapon glows alongside enchantment effects, following the animated weapon correctly.
+• Restore the four original innate ITM weapon glows alongside enchantment effects, following the animated weapon correctly; fix weapon attachments and cloak shoulders.
 • Complete native ladders, dungeon floor click movement, original dungeon minimaps and safer collision/landing checks. Repair rejected creature mesh headers offline; reduce cursor, collider and stationary-mob overhead.
 • Complete goddess blessing UI and persistent obelisk/guard/boss/portal lifecycle. Restore spawn, recovery, combat and altar feedback; improve companion movement and stationary targeting.
 • Add physical ranged projectiles; correct skill combos, reach/visibility checks, friendly self fallback, shared attack-speed recovery and movement pauses.
