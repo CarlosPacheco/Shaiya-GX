@@ -295,6 +295,7 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 		return
 	}
 	if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && !s.attackMovementAllowed(time.Now()) {
+		s.log.Printf("GX Server World skill release refused: airborne horizontal travel skill_id=%d prepared=%t", k.SkillID, castPos != nil)
 		return
 	}
 	stats := s.stats()

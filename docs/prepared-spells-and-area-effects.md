@@ -56,8 +56,20 @@ process-wide random sequence is not reproduced.
 
 Prepared casts survive a fleeing target without an arbitrary release-distance
 cap. GX still checks target validity and visibility, and still rejects an
-out-of-range initial request. Movement failure does not cancel an existing cast;
-accepted interrupting movement clears it and restores attack speed.
+out-of-range initial request. GX sends motion-zero position/height refreshes even while idle. These do not
+cancel a cast: they carry no locomotion intent. During preparation, motion-zero
+packets cannot translate the caster horizontally, so disguising walking as an
+idle refresh cannot bypass interruption. Accepted locomotion with bit 0x80 clear
+still interrupts and restores attack speed. The client publishes its stop state
+before the skill request and uses the same distinction for remote cast animation
+and hand effects. This GX synchronization adaptation supersedes the earlier rule
+that treated every accepted packet with bit 0x80 clear as an interruption.
+
+A regression reproduced the reported loss on the first idle packet before the
+fix. Afterward, twenty consecutive casts using the real Blizzard level-three
+definition survive repeated idle/height updates, spend MP and resolve against a stationary
+mob (normal hit/miss rolls still apply). Forged motion-zero displacement is rejected, real walking still interrupts,
+and an original-assets GL test keeps the cast animation through idle updates.
 
 Validation includes mob release well beyond launch range, player range helpers,
 obstructed releases, malformed/non-finite/rejected/non-interrupting movement,

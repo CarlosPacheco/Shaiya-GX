@@ -13,16 +13,17 @@ func (a *App) attackMovementAllowed() bool {
 }
 func (a *App) stopForAttack() bool {
 	v := a.wv
-	if v.moving {
-		motion := uint8(0)
-		if v.jumping {
-			motion = 4 | proto.MotionFlag80
-		}
+	motion := uint8(0)
+	if v.jumping {
+		motion = 4 | proto.MotionFlag80
+	}
+	if v.moving || v.motion != motion {
 		if err := a.world.Send(v.movePacket(motion)); err != nil {
 			a.backToLogin("Unable to stop for attack.")
 			return false
 		}
 	}
+	v.motion, v.sendT = motion, .1
 	v.moving, v.travel, v.autoRun = false, false, false
 	v.attackMoveUntil = a.clock + float64(attackspeed.MovementPauseMilliseconds)/1000
 	return true

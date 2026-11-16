@@ -247,7 +247,79 @@ func TestMovementOnlyInterruptsCastAfterValidationAndWithoutNativeFlag(t *testin
 		t.Fatal("native non-interrupting movement cancelled cast")
 	}
 	s.handleCharacterMove(proto.MovePacket(0, 0, s.char.PosX, s.char.PosY, s.char.PosZ))
+	if s.cast == nil {
+		t.Fatal("idle refresh interrupted preparation")
+	}
+	s.handleCharacterMove(proto.MovePacket(1, 0, s.char.PosX, s.char.PosY, s.char.PosZ))
 	if s.cast != nil || s.lastSpeeds.attack == 255 {
 		t.Fatal("accepted interrupt did not clear cast and restore attack speed", s.lastSpeeds)
+	}
+}
+
+func TestIdlePositionUpdatesDoNotLosePreparedSpell(t *testing.T) {
+	s, d, sh := spellCastRangeFixture(t)
+	// Use the real Blizzard definition and costs, not an instant or zero-cost skill.
+	mobDef := db.MustDefs().Mobs[64001]
+	defs, err := db.ReloadDefsForTest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defs.Mobs[64001] = mobDef
+	d = defs.Skill(71, 3)
+	if d == nil || d.ReadyTime != 8 {
+		t.Fatal("missing original Blizzard preparation")
+	}
+	s.skills = []db.CharacterSkill{{SkillID: 71, Level: 3, Number: 1}}
+	s.char.Wis = 60000
+	s.setPools(false)
+
+	for _, tri := range collision.BlockerBox(collision.Vec{-100, -2, -100}, collision.Vec{100, 0, 100}, 0) {
+		s.movement.geometry.Add(tri)
+	}
+	for attempt := 0; attempt < 20; attempt++ {
+		s.lastActionAt = time.Time{}
+		s.skillCooldowns = map[uint16]time.Time{}
+		sh.mu.Lock()
+		sh.entities.Mobs[0].CurrentHP = 100
+		sh.mu.Unlock()
+		s.handleUseSkill(packet.SkillUse, proto.UseSkillPacket(1, 64001, false))
+		if s.cast == nil {
+			t.Fatal("valid cast did not start", attempt)
+		}
+		for update := 0; update < 5; update++ {
+			// GX sends these while standing: stop/state refresh and vertical settling.
+			s.handleCharacterMove(proto.MovePacket(0, uint16(update*100), s.char.PosX, s.char.PosY+.01, s.char.PosZ))
+			if s.cast == nil {
+				t.Fatalf("idle update %d lost stationary cast %d", update, attempt)
+			}
+		}
+		beforeMP := s.char.CurrentMP
+		s.cast.readyAt = time.Now().Add(-time.Second)
+		s.processPendingCast()
+		// Misses are valid outcomes of the original hit roll. MP and the
+		// release marker distinguish execution from a discarded preparation.
+		if s.char.CurrentMP >= beforeMP || s.lastSkillID != 71 || s.cast != nil {
+			t.Fatal("stationary Blizzard did not release", attempt, beforeMP, s.char.CurrentMP, s.lastSkillID)
+		}
+	}
+}
+
+func TestIdleCastUpdatesCannotHideHorizontalWalking(t *testing.T) {
+	s, _ := forgeRuleSession(t)
+	physics, now := playerPhysicsFixture(t)
+	s.char.MapID, s.char.PosX, s.char.PosY, s.char.PosZ = physics.char.MapID, physics.char.PosX, physics.char.PosY, physics.char.PosZ
+	s.movement = physics.movement
+	s.lastPositionSave = now
+	s.movement.budgetAt = now.Add(-time.Second)
+	s.cast = &pendingCast{number: 1, readyAt: now.Add(time.Minute)}
+	x, z := s.char.PosX, s.char.PosZ
+	s.handleCharacterMove(proto.MovePacket(0, 0, x+1, s.char.PosY, z))
+	if s.cast == nil || s.char.PosX != x || s.char.PosZ != z {
+		t.Fatal("idle packet moved caster or lost cast", s.char.PosX, s.char.PosZ)
+	}
+	s.movement.budgetAt = now.Add(-time.Second)
+	s.handleCharacterMove(proto.MovePacket(1, 0, x+.1, s.char.PosY, z))
+	if s.cast != nil {
+		t.Fatal("real walking did not interrupt preparation")
 	}
 }

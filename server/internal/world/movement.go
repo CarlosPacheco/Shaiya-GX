@@ -155,10 +155,10 @@ func (s *Session) handleCharacterMove(p []byte) {
 		s.correctMovement(reason)
 		return
 	}
-	// PacketPC interrupts preparation only after accepting movement and only
-	// without the native non-interrupting 0x80 flag.
-	if s.cast != nil && motion&proto.MotionFlag80 == 0 {
-		s.log.Printf("GX Server World cast interrupted by accepted movement skill_number=%d", s.cast.number)
+	// GX also sends motion-zero idle/height snapshots. Only accepted locomotion
+	// intent interrupts preparation; a synchronization packet is not a walk.
+	if s.cast != nil && proto.CastInterruptingMotion(motion) {
+		s.log.Printf("GX Server World cast interrupted by locomotion skill_number=%d motion=0x%02X from=(%.3f,%.3f) to=(%.3f,%.3f)", s.cast.number, motion, oldX, oldZ, ch.PosX, ch.PosZ)
 		s.cast = nil
 		s.syncPlayerSpeed(false)
 	}

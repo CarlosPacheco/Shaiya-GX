@@ -380,3 +380,9 @@ func DecodeMapPosition(p []byte) (m MapPosition, err error) {
 	m.ID, m.MapID, m.X, m.Y, m.Z = r.U32(), r.U16(), r.F32(), r.F32(), r.F32()
 	return m, r.Err()
 }
+
+// CastInterruptingMotion distinguishes locomotion intent from GX idle position
+// and height synchronization. The native 0x80 flag remains non-interrupting.
+func CastInterruptingMotion(motion uint8) bool {
+	return motion&0x3f != 0 && motion&MotionFlag80 == 0
+}

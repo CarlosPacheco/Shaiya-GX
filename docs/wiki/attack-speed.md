@@ -141,9 +141,10 @@ from the current release center. These geometry and launch-radius rules are GX
 choices; the native launch helper uses horizontal distance and an additional
 movement-dependent allowance. No full native launch/geometry parity is claimed.
 
-Movement interrupts preparation only after the server accepts the packet and
-when its native non-interrupting 0x80 flag is clear. Malformed/rejected updates
-leave the cast intact. A real interruption restores the published attack speed,
+Movement interrupts preparation only after the server accepts a locomotion
+packet with its native non-interrupting 0x80 flag clear. Motion-zero idle/height
+refreshes and malformed/rejected updates leave the cast intact. Idle packets
+cannot translate the caster horizontally during preparation. A real interruption restores the published attack speed,
 so the client does not remain stuck with the casting speed sentinel 255.
 
 See [prepared spells and area effects](../prepared-spells-and-area-effects.md)

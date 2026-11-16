@@ -125,7 +125,7 @@ func (a *App) confirmedAnimation(p []byte) {
 		}
 	case proto.CharacterMove:
 		if actor := a.playerActor(proto.NewReader(p).U32()); actor != nil {
-			if move, err := proto.DecodeUserMove(p); err == nil && move.Motion&proto.MotionFlag80 == 0 {
+			if move, err := proto.DecodeUserMove(p); err == nil && proto.CastInterruptingMotion(move.Motion) {
 				actor.CancelCast()
 			}
 			if move, err := proto.DecodeUserMove(p); err == nil && move.Motion&0x3f != 0 {

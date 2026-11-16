@@ -302,6 +302,11 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	}
 	oldX, oldZ := m.pos[0], m.pos[2]
 	dx, dz := x-oldX, z-oldZ
+	// An idle refresh during preparation cannot translate the caster. Keep
+	// authoritative gravity/height, but reject hidden walking under motion zero.
+	if s.cast != nil && motion&0x3f == 0 {
+		dx, dz = 0, 0
+	}
 	distance := float32(math.Hypot(float64(dx), float64(dz)))
 	reason := ""
 	if attackPaused && distance > .00001 {
