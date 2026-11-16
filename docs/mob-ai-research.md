@@ -228,3 +228,11 @@ native runtime, this report does not claim dynamic parity.
 Private evidence and a Spanish state-by-state annex live in ignored
 `work/mob-ai-research/`. No original AI files or scripts are redistributed here.
 No gameplay changes, rebuilds, installations or service restarts were performed.
+
+## Prepared modern Lua catalog
+
+The follow-up [Lua catalog](../server/ai/README.md) now represents all numeric
+cases in Lua5.4-compatible modules, with explicit host operations, per-mob state,
+boss associations and documented original anomalies. It includes executable
+standalone tests. The Go world bridge is not connected and installed server
+behavior remains unchanged; script preparation is not world-level activation.
