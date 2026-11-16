@@ -10,7 +10,8 @@ import (
 )
 
 func areaShowerSkill(id uint16) bool {
-	return id == 53 || id == 68 || id == 71 || id == 162 || id == 163
+	_, ok := effect.SkillMeteor(id)
+	return ok
 }
 
 type skillAreaParticle struct {
@@ -20,10 +21,10 @@ type skillAreaParticle struct {
 	groundAge     float32
 }
 type skillAreaShower struct {
-	center, side          render.V3
+	center, side, forward render.V3
 	radius                int
 	remaining, credit     float32
-	rate, height, lateral float32
+	profile               effect.Meteor
 	file                  string
 	particles             []skillAreaParticle
 }
@@ -32,7 +33,8 @@ type skillAreaShower struct {
 // emits five falling sequence-zero instances per second for five seconds,
 // at signed integer offsets within ApplyRange, then sequence one on terrain.
 func (a *App) startSkillAreaShower(r proto.SkillResult, d sdata.Skill, file string) {
-	if len(a.wv.areaShowers) >= 16 {
+	profile, enabled := effect.SkillMeteor(r.ID)
+	if !enabled || len(a.wv.areaShowers) >= 16 {
 		return
 	}
 	m, ok := a.impactTransform(skillImpact{target: r.Target, positionOnly: true})
@@ -49,12 +51,15 @@ func (a *App) startSkillAreaShower(r proto.SkillResult, d sdata.Skill, file stri
 	dir = dir.Norm()
 	if dir.Len() == 0 {
 		dir = render.V3{0, 0, 1}
+		if actor := a.playerActor(r.Source); actor != nil {
+			dir = render.V3{actor.World[8], 0, actor.World[10]}.Norm()
+		}
+		if dir.Len() == 0 {
+			dir = render.V3{0, 0, 1}
+		}
 	}
 	side := render.V3{-dir[2], 0, dir[0]}
-	shower := skillAreaShower{center: center, side: side, radius: max(1, int(d.ApplyRange)), remaining: 5, rate: 5, height: 15, lateral: 7.5, file: file}
-	if r.ID == 53 {
-		shower.remaining, shower.rate, shower.height, shower.lateral = 2, 10, 20, 10
-	}
+	shower := skillAreaShower{center: center, side: side, forward: dir.Scale(-1), radius: max(1, int(d.ApplyRange)), remaining: profile.Duration, profile: profile, file: file}
 	a.wv.areaShowers = append(a.wv.areaShowers, shower)
 	a.playSound(effect.ImpactSound(file), center[0], center[2])
 }
@@ -63,8 +68,8 @@ func (a *App) updateSkillAreaShowers(dt float32) {
 	for _, shower := range a.wv.areaShowers {
 		emitDT := min(dt, max(0, shower.remaining))
 		shower.remaining -= dt
-		shower.credit += emitDT * shower.rate
-		for shower.credit >= 1 && len(shower.particles) < 50 {
+		shower.credit += emitDT * shower.profile.Rate
+		for shower.credit >= 1 && len(shower.particles) < shower.profile.MaxLive {
 			shower.credit--
 			offset := func() float32 {
 				v := float32(rand.IntN(shower.radius))
@@ -73,9 +78,9 @@ func (a *App) updateSkillAreaShowers(dt float32) {
 				}
 				return v
 			}
-			pos := shower.center.Add(render.V3{offset(), shower.height, offset()}).Sub(shower.side.Scale(shower.lateral))
-			if x := a.loadSkillEffect(shower.file, 0); x != nil {
-				shower.particles = append(shower.particles, skillAreaParticle{pos: pos, velocity: shower.side.Scale(shower.lateral).Add(render.V3{0, -shower.height, 0}), instance: x})
+			pos := shower.center.Add(render.V3{offset(), shower.profile.Height, offset()}).Sub(shower.side.Scale(shower.profile.Lateral))
+			if x := a.loadSkillEffect(shower.file, shower.profile.FallingSequence); x != nil {
+				shower.particles = append(shower.particles, skillAreaParticle{pos: pos, velocity: shower.side.Scale(shower.profile.Lateral).Add(render.V3{0, -shower.profile.Height, 0}), instance: x})
 			}
 		}
 		alive := shower.particles[:0]
@@ -88,11 +93,10 @@ func (a *App) updateSkillAreaShowers(dt float32) {
 				}
 				if p.pos[1] < floor {
 					p.grounded = true
-					p.pos[1] = floor
 					if len(a.wv.impacts) < 32 {
-						if x := a.loadSkillEffect(shower.file, 1); x != nil {
+						if x := a.loadSkillEffect(shower.file, shower.profile.ImpactSequence); x != nil {
 							m := render.Identity()
-							m[12], m[13], m[14] = p.pos[0], p.pos[1]+1, p.pos[2]
+							m[12], m[13], m[14] = p.pos[0], floor+shower.profile.ImpactHeight, p.pos[2]
 							x.SetTransform(m)
 							a.wv.impacts = append(a.wv.impacts, skillImpact{instance: x, fixedWorld: &m})
 						}
@@ -101,12 +105,11 @@ func (a *App) updateSkillAreaShowers(dt float32) {
 			} else {
 				p.groundAge += dt
 			}
-			if p.groundAge > 1 {
+			if p.groundAge > shower.profile.Drain {
 				continue
 			}
-			m := render.Identity()
-			m[12], m[13], m[14] = p.pos[0], p.pos[1], p.pos[2]
-			p.instance.SetTransform(m)
+			m := render.Basis(p.pos, shower.forward, render.V3{0, 1, 0})
+			p.instance.SetMeteorTransform(m)
 			p.instance.Update(dt)
 			alive = append(alive, p)
 		}

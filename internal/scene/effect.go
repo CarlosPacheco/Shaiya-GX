@@ -44,6 +44,8 @@ type Effect struct {
 	stopped        bool
 	basis          render.M4
 	localParticles bool
+	meteor         bool
+	meteorWorld    render.M4
 	particleWorld  render.M4
 	batchWorld     []render.M4
 	batchColor     [][4]float32
@@ -287,7 +289,9 @@ func (x *Effect) Update(dt float32) {
 					v.pos[axis] += between(-p.PositionSpread[axis], p.PositionSpread[axis])
 					v.velocity[axis] = between(p.VelocityMin[axis], p.VelocityMax[axis])
 				}
-				v.pos = effectPoint(v.pos, x.basis).Add(x.Origin)
+				if !(x.meteor && e.geometry != nil) {
+					v.pos = effectPoint(v.pos, x.basis).Add(x.Origin)
+				}
 				e.particles = append(e.particles, v)
 			}
 		}
@@ -390,6 +394,9 @@ func (x *Effect) Draw(s *render.Scene3D) {
 		if x.localParticles {
 			placement = x.particleWorld
 		}
+		if x.meteor && e.geometry != nil {
+			placement = x.meteorWorld
+		}
 		basis := effectBaseBasis(e.definition.BaseAxis, s.View, placement)
 		batched := len(e.particles) > 1
 		var meshFrame float32
@@ -465,6 +472,8 @@ func (x *Effect) particlePosition(v effectParticle, d *effect.Emitter) render.V3
 	}
 	if x.localParticles {
 		pos = transformPoint(pos, x.particleWorld)
+	} else if x.meteor && d.UsesMesh() {
+		pos = transformPoint(pos, x.meteorWorld)
 	}
 	return pos
 }
@@ -519,6 +528,14 @@ func (x *Effect) SetTransform(m render.M4) {
 	x.Origin = render.V3{m[12], m[13], m[14]}
 	m[12], m[13], m[14] = 0, 0, 0
 	x.basis = nativeEffectBasis(m)
+}
+
+// SetMeteorTransform carries the CMeteor placement into the existing EFT.
+// Mesh bodies simulate locally and follow the drop; billboard trails retain
+// world-space births. This changes matrices only, not geometry or draw passes.
+func (x *Effect) SetMeteorTransform(m render.M4) {
+	x.SetTransform(m)
+	x.meteor, x.meteorWorld = true, m
 }
 func (x *Effect) Stop() { x.stopped = true }
 func (x *Effect) Done() bool {

@@ -43,6 +43,44 @@ Client:
   for a second. Hailstorm uses its separate native branch: two seconds at ten particles/second,
   height/downward speed 20 and sideways speed/offset 10.
 
+## CMeteor placement metadata
+
+`effect.SkillMeteor` identifies the five original world-shower routes (53, 68,
+71, 162 and 163) and supplies their existing duration, rate, height, lateral
+speed, sequences, contact offset and drain time. This is controller metadata;
+it is not an extra EFT layer, shader, particle emitter or render pass. Radius
+continues to come from the skill's original ApplyRange.
+
+Native placement uses a fixed release center C and horizontal cast direction D:
+
+- Side vector S = D cross (0,1,0).
+- Initial position = C + signed integer X/Z offsets + (0,H,0) - S * L.
+- Velocity = S * L + (0,-H,0); facing = -D, independent of velocity.
+- A ground crossing triggers sequence 1 at terrain height + 1. The falling body
+  remains at the sampled crossing position during its one-second drain, rather
+  than snapping up to the ground. The +1 value was read from the original float
+  constant at 0x6bc4dc; Phoenix's later +0.1 tuning is not copied.
+
+The original 0x4307f0/0x430590 paths distinguish the moving mesh body from
+world-space particle trails. Mesh simulation stays local to the controller;
+previously emitted billboard particles remain in world space. GX carries this
+placement through `SetMeteorTransform` in the existing renderer. Before this
+correction, the wrapper moved but mesh particles could stay at their birth
+coordinates, and the cast-facing direction was not supplied.
+
+Phoenix's older CMeteor explanation and its current rain controller were used as
+reference; native code remains authoritative. Ten isolated executions of the
+original x86 block 0x430c73–0x430d52 cover cardinal/diagonal directions and both
+height/speed profiles. They match GX's placement/velocity rules. This executes
+only the audited calculation block, not the original game's graphics or network.
+
+A real-assets GL comparison covers falling and contact sequences of all five
+families. Changing the CMeteor placement metadata preserves emitter/template
+counts and draw calls in every case: 1→1 / 2→2 (53), 2→2 / 4→4 (68),
+1→1 / 2→2 (71), 2→2 / 4→4 (162), 3→3 / 3→3 (163). It adds no textures,
+meshes, shaders or passes. These are draw-work checks, not a claim of identical
+GPU elapsed time for differently positioned pixels.
+
 ## Result and limits
 
 Blizzard now renders falling ice across the original data-defined area and ground
