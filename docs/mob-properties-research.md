@@ -92,11 +92,14 @@ seed contains 271 definitions with a positive quest index.
 
 ## Outstanding discrepancies and next investigations
 
-1. **Special AI dispatch:** the local seed has 84 definitions with AI 10..99
+1. **Special AI dispatch:** the follow-up [case inventory](mob-ai-research.md)
+   now maps all configured EP4.5 FSM/Lua cases and their native hooks.
+   Runtime support remains unimplemented. The local seed has 84 definitions with AI 10..99
    and nine with AI >=100. Native initialization selects an FSM or Lua route;
    GX currently runs generic mob behavior instead. Examples include mob 2464
-   (AI 111). Exact states, transitions, inputs and script assets must be recovered
-   before implementing these bosses; changing aggression alone is insufficient.
+   (AI 111). The follow-up records their states, transitions and original assets; implementing
+   their evaluator, callbacks and native side effects remains a separate decision.
+   Changing aggression alone is insufficient.
 2. **Stationary attack routing:** native `CMob::AttackAI` `0x004a1ab0` treats
    AI=4, ChaseStep=0 or an obelisk as stationary. GX's shared `stationary()` checks
    both movement steps for zero and also serves event population placement.
