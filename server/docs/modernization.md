@@ -79,8 +79,8 @@ lasts five years. Copy only the generated client/network.json and gx-ca.pem to
 client data/. The config supports tls, ca_file and server_name. Relative CA paths
 resolve beside the configuration file. GX_NETWORK_CONFIG selects another file;
 GX_TLS, GX_TLS_CA and GX_TLS_SERVER_NAME override its fields. System trust works
-with GX_TLS=1. Invalid certificates never fall back to plaintext. GX_TLS=0 is an
-explicit development override. Existing loopback installations need no changes.
+with GX_TLS=1. Invalid certificates never fall back to plaintext. GX_TLS=0 selects development plaintext only when no CA or server name is
+configured; configured trust always requires TLS. Existing loopback installations need no changes.
 
 ## Verification and operating boundaries
 
