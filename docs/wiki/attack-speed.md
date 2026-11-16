@@ -27,7 +27,7 @@ The weapon field is the index itself: subtracting one selects the wrong delay.
 PvE basics, PvP basics, player skills and combos use this table and **one shared
 server-side action timestamp**. Instant skills reserve it on release; prepared
 casts reserve it on start and complete without charging the interval twice.
-Extremely Fast is the fastest tier for all of them: **1000ms**. There is no
+Extremely Fast has a **1000ms** ordinary recovery. There is no
 independent 300ms spell rate. The client buffers only the latest spell intent
 during recovery and stops basic auto-repeat so the queued spell gets its turn.
 Restart requests, target switches, stop/start floods and client speed packets do
@@ -36,6 +36,14 @@ swing according to the new derived interval. Stun, sleep, mounting and active
 cast preparation prohibit normal attacks. Beginning preparation stops an existing
 autoattack; attack speed is published as blocked until preparation ends or is
 cancelled. Spell cooldowns and preparation times retain their own skill rules.
+
+Wind Spin → a distinct spin or instant hostile caster-centred area has an
+explicit exception: after the native first contact (4/30 s), the new skill can
+replace the two-second looping spin and execute early. Own cooldowns and costs
+remain intact; same-spin repetition, buffs, basics and prepared spells retain
+the ordinary rules. The server keeps at most the latest early eligible intent.
+Stinger movement is server-authored and replicated by 0x7F11; ordinary movement
+cannot override it. See [skill timing and effects](../skill-targeting-and-effects.md).
 
 ## Native item and skill fields
 

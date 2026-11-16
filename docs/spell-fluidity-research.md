@@ -1,5 +1,22 @@
 # Original spell timing, Stinger and the two Wind Spins
 
+## Implementation following the investigation
+
+The user subsequently authorized both special states and explicitly required
+fast spin → distinct spin / stationary-area combinations. GX now loops the two
+spins for two seconds and allows that follow-up after the recovered frame-4
+first contact. The server retains the latest early eligible request, preserves
+own reuse/costs and invalidates the intent on movement/another committed action.
+This cancellation boundary is an implementation choice grounded in contact
+metadata; the static EP4.5 audit below did not establish it as native server law.
+Stinger now uses its windup/frozen travel/contact phases with a server-authored,
+collision-swept trajectory and synchronized client presentation (GX 0x7F11).
+Launch through walls is refused before cost/reuse, client movement cannot alter
+the dash and terminal notifications stop remote prediction too. Matching GX
+builds are required. Other audited differences below remain research findings.
+
+## Original investigation record
+
 Static investigation, 2026-11-16. This records original behavior and current GX
 differences; it does not change gameplay or claim a native runtime comparison.
 The two skills requested are **Wind Spin** and **Reinforced Wind Spin**. The
@@ -144,7 +161,7 @@ This is movement-distance credit, not speed reduction, teleport or an exemption
 for every stun. The CUser PDB label misleadingly calls the accessed member
 fMaxSpeed; raw offsets resolve it. Both hit and failure-result branches subtract.
 
-GX has no equivalent ID-56 dash state or dedicated movement allowance. Playing
+Before this implementation, GX had no equivalent ID-56 dash state or dedicated movement allowance. Playing
 action 101 and applying stun does not implement Stinger. A future port must
 reconcile dash movement with GX authority, geometry and replication rather than
 copy an old client-trusted allowance blindly.

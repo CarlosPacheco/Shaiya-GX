@@ -278,7 +278,7 @@ func userSkillHits(att, def *CharacterStats, sk *db.SkillDef) bool {
 func (s *Session) userAttackSwing(target uint32) bool {
 	s.cancelVehicleCast()
 	ch := s.char
-	if ch == nil || s.ridingVehicle() || s.cast != nil || s.actionBlocked() {
+	if ch == nil || s.ridingVehicle() || s.cast != nil || s.dash != nil || s.actionBlocked() {
 		return false
 	}
 	wc, ok := equippedWeaponCombat(s.items)

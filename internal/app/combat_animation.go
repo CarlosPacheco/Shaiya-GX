@@ -112,10 +112,13 @@ func (a *App) confirmedAnimation(p []byte) {
 			if !ok {
 				return
 			}
+			if r.ID == 56 && v.dashes[r.Source].Source != 0 {
+				return
+			}
 			weapon := a.playerWeapon(r.Source)
 			a.faceSkillTarget(r.Source, r.Target)
 			a.attackVariant++
-			if actor.PlayAction(scene.SkillAction(d.Animation, d.Attack, d.Effect, weapon, a.attackVariant), false) && r.Source == a.state.SelfID && (d.Effect == 1 || d.Effect == 3) {
+			if actor.PlaySkillAction(r.ID, scene.SkillAction(d.Animation, d.Attack, d.Effect, weapon, a.attackVariant)) && r.Source == a.state.SelfID && (d.Effect == 1 || d.Effect == 3) {
 				v.attackPose = true
 				v.attackActionID = actor.ActionID()
 			}

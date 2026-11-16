@@ -22,13 +22,35 @@ Basic attacks, skills and combos now use **one shared attack-speed action clock*
 The live server index selects the native interval: 4000ms unarmed, 2000ms Normal,
 1500ms Fast, 1250ms Very Fast and **1000ms Extremely Fast**. The full 0–9 table is
 in [Attack speed](wiki/attack-speed.md). Equipment, mastery, haste and slows affect
-this same recovery immediately; alternation and stop/start requests cannot bypass
-it. The temporary fixed 300ms spell interval has been removed.
+this same recovery immediately. Ordinary alternation and stop/start requests
+cannot bypass it; the spin follow-up exception below is intentional. The temporary fixed 300ms spell interval has been removed.
 
 An accepted instant skill reserves the action clock at release. A prepared skill
 reserves it at the start; its release completes without charging a second full
 attack interval. Authored preparation times and longer per-skill cooldowns still
 apply. The separate 800ms movement stop is unchanged.
+
+Wind Spin and Reinforced Wind Spin repeat their native action-102 cycle for
+up to two seconds. After the first contact (ALT frame 4 at 30 fps), another
+**distinct** spin or an instant hostile area centred on the caster can replace
+the spin and execute before ordinary recovery ends. Both endpoints enforce the
+same eligibility and contact boundary; each skill keeps its own cooldown,
+costs, targeting and obstruction checks. Recasting the same spin, ordinary
+attacks, buffs and prepared spells cannot use this exception. The server retains
+one early eligible follow-up until contact, replacing rather than accumulating
+requests. Movement or another committed action invalidates that pending intent.
+This implements the user's observed combo behavior; the exact cancellation
+boundary is based on recovered first-contact metadata, not a measured native
+server combo interval.
+
+Stinger (ID 56) has its native action-101 windup, 100 units/s dash and
+race/gender contact frames. The server captures a validated destination, sweeps
+collision, simulates travel and publishes a trajectory/terminal notification
+through GX 0x7F11. Self and remote clients present the same frozen travel pose.
+Client move packets do not move the actor during the dash; no free movement
+credit remains afterwards. Walls reject launch before costs and reuse; a dynamic
+obstruction or disabling effect can stop travel. Matching client/server builds
+are required. See [the recovered state machines](spell-fluidity-research.md).
 
 The client retains only the latest spell pressed during recovery. It stops basic
 auto-repeat without clearing the shared clock, then revalidates and sends that

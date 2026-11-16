@@ -51,3 +51,22 @@ func TestDeathHoldsLastFrame(t *testing.T) {
 		t.Fatal("resurrection did not release death pose")
 	}
 }
+
+func TestSpinRepeatsThenExpiresAndCanBeReplaced(t *testing.T) {
+	c := &Character{locked: true, spinLeft: 2, clip: &Clip{ani: &model.ANI{Start: 0, End: 6}}}
+	for range 90 {
+		c.Update(1.0 / 60)
+		if !c.ActionActive() || c.Time >= .2 {
+			t.Fatal("spin stopped instead of looping", c.Time, c.spinLeft)
+		}
+	}
+	c.ReleaseAction()
+	if c.ActionActive() || c.spinLeft != 0 {
+		t.Fatal("spin resisted replacement")
+	}
+	c.locked, c.spinLeft = true, 2
+	c.Update(2.01)
+	if c.ActionActive() {
+		t.Fatal("spin did not expire")
+	}
+}

@@ -83,6 +83,10 @@ type Session struct {
 	damageLedger     []damageEntry // CDamage: HP damage taken per attacker since the last death
 	duelDeathMark    bool          // the last death was a lost duel (m_nVehicleStatus -1)
 	itemAttacking    bool          // m_bItemAttack: casting gem skills
+	lastSkillID      uint16
+	lastSkillAt      time.Time
+	pendingCombo     *pendingSpinCombo
+	dash             *proto.SkillDash
 	lastActionAt     time.Time
 	attackMoveUntil  time.Time
 
@@ -284,6 +288,9 @@ func (s *Session) tick(idle bool) {
 			if s.applyIncomingMobDamage(d) {
 				s.dead, s.autoAttack, s.cast = true, false, nil
 				s.lastActionAt = time.Time{}
+				s.dash = nil
+				s.pendingCombo = nil
+				s.lastSkillID = 0
 				s.clearBuffsOnDeath()
 			}
 		}
@@ -318,6 +325,7 @@ func (s *Session) tick(idle bool) {
 		s.questTimers()
 		s.syncQuestIDs()
 	}
+	s.processSpinCombo()
 	s.processPendingCast()
 	if idle && s.autoAttack {
 		swing := s.autoAttackSwing
@@ -843,6 +851,9 @@ func (s *Session) selectCharacter(id uint32) {
 	s.logErr("load skills", err)
 	s.effectWatchID = 0
 	s.lastActionAt = time.Time{}
+	s.dash = nil
+	s.pendingCombo = nil
+	s.lastSkillID = 0
 	s.skillCooldowns, s.itemCooldowns = map[uint16]time.Time{}, map[uint8]time.Time{}
 	for i := range s.skills {
 		k := &s.skills[i]

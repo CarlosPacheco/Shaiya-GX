@@ -61,6 +61,8 @@ func (s *Session) syncPlayer() {
 // introduces it to viewers at the destination and refreshes visibility.
 func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmDirect ...bool) {
 	s.dismount()
+	s.dash = nil
+	s.pendingCombo = nil
 	// /cmove may inspect the base map without joining a party/guild instance.
 	direct := s.isAdmin && len(gmDirect) > 0 && gmDirect[0]
 	ch := s.char
@@ -123,6 +125,9 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 
 // handleCharacterMove (0x0501): motion:u8, direction:u16, x, y, z:f32.
 func (s *Session) handleCharacterMove(p []byte) {
+	if s.dash != nil {
+		return
+	}
 	if len(p) < 17 || s.char == nil {
 		return
 	}
@@ -137,6 +142,9 @@ func (s *Session) handleCharacterMove(p []byte) {
 	z, _ := packet.F32(p[13:])
 	ch := s.char
 	oldX, oldZ := ch.PosX, ch.PosZ
+	if x != oldX || z != oldZ {
+		s.pendingCombo = nil
+	}
 	if x != ch.PosX || z != ch.PosZ {
 		s.cancelMove()
 		s.cancelVehicleCast()

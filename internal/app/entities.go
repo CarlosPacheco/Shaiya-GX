@@ -210,6 +210,14 @@ func (a *App) prepareRemotePlayers() {
 		scale := render.Identity()
 		scale[5] = (scene.Appearance{Height: sh.Height}).HeightScale()
 		pos := cached.position.update(e, a.clock)
+		if d, ok := v.dashes[id]; ok {
+			pos = render.V3(d.Position(a.skillPhysicsTime() - d.Started))
+			cached.position.pos, cached.position.from, cached.position.to = pos, pos, pos
+			cached.position.duration = 0
+			fwd = render.V3(d.To).Sub(render.V3(d.From))
+			fwd[1] = 0
+			fwd = fwd.Norm()
+		}
 		if e.Mounted && e.Vehicle.State != proto.VehiclePassenger {
 			if !cached.mountLoaded || cached.mountShape != e.MountShape {
 				cached.mountShape, cached.mountLoaded = e.MountShape, true

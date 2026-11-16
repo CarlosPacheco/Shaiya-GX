@@ -99,6 +99,7 @@ type State struct {
 	LastSkillFailure       proto.SkillFailure
 	OJLimits               map[[2]uint8]proto.OJLimit
 	ChestCloakFits         map[[2]uint8]uint8
+	LastSkillDash          proto.SkillDash
 	LastPlayerCorrection   proto.PlayerCorrection
 	PhysicsMapID           uint16
 	PhysicsTime            float64
@@ -1169,6 +1170,12 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			s.MapID, s.Self.X, s.Self.Y, s.Self.Z = m.MapID, m.X, m.Y, m.Z
 		}
 		ev.Text = fmt.Sprintf("map %d pos=(%.1f,%.1f,%.1f)", m.MapID, m.X, m.Y, m.Z)
+	case proto.GXSkillDash:
+		d, err := proto.DecodeSkillDash(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastSkillDash = d
 	case proto.GXPlayerCorrection:
 		correction, err := proto.DecodePlayerCorrection(p)
 		if err != nil {

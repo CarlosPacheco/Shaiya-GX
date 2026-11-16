@@ -29,7 +29,7 @@ import (
 //     a target that survived. Area hits skip drains; detail 22 repeats
 //     MultiAttack times; detail 23 then sacrifices the caster.
 //
-// Not modeled: skill 56's move-speed change, the HP-ability shields
+// Not modeled: the HP-ability shields
 // (abilities 7/8) and state resistances in AttackSuccess, the clone of
 // skill 100.
 
@@ -83,6 +83,12 @@ func (s *Session) userSkillAttack(k db.CharacterSkill, def *db.SkillDef, target 
 	if center != nil {
 		if !s.userSkillReach(center, def, castPos != nil) {
 			s.sendUserSkillRangeFailure(k, center)
+			return
+		}
+	}
+	if center != nil {
+		c := center.Snapshot()
+		if !s.beginStinger(def, [3]float32{c.PosX, c.PosY, c.PosZ}) {
 			return
 		}
 	}

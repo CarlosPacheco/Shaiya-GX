@@ -71,6 +71,20 @@ gaps; **invented** is still a GX Server rule to replace.
 | Guild ranking battle and ranking | `CMap::IsGuildRankMapOpenTime` 0x00428d20, `GetGuildRankNotices` 0x00428eb0, `CUser::ZoneEnterUserMove`, `CMob::ItemDrop` -> `CGuild::SendRankingZone` 0x0042c6e0, `CZone::UpdateCloseGuildRanking`, `CWorldSendThread::Run`, `CGuildMgr::UpdateGuildPointRank` 0x00432b70, usp_Save_GuildInfo_E2 | done: CreateType R maps (map 50, Sunday 21:00 for 1 hour) open per CreateTime (two slots, past-midnight wrap); notices 0x0D26 (map, start hour at 30/10 minutes before, 100 open, 101/102 ten/one minute before the close); each guild enters its own instance during the battle (no guild or closed: the move fails), every entry counted; Money1 0 / Money2 > 0 mobs give Money2 points to the killer's guild instead of gold, 0x0D27 (guild points, country best and its guild) to the members inside; at the close everyone goes to the bind point and empty instances are removed; 30 minutes later each guild's value is points + min(25 x entries + duel bonus, points / 2), each country ranks its guilds with a value (equal values keep the first, as the original map insert), top 30 ranked 1-30 and the rest 31, stored with usp_Save_GuildInfo_E2 and sent per country (0x0D37). Not modelled: the duel bonus (no guild duels yet) and the house keep-etin settlement |
 | Guilds (rest) | house, NPC upgrades, etin | missing |
 
+## Spin combinations and Stinger
+
+Wind Spin (38) and Reinforced Wind Spin (156) use their recovered looping
+client state. By explicit user requirement, a distinct spin or instant hostile
+caster-centred area may replace a spin after its first contact (4/30 seconds),
+without waiting the ordinary attack-speed interval. Own reuse, MP/SP, reach and
+obstructions remain enforced; early requests retain only the latest eligible
+follow-up. This boundary is not claimed as a measured EP4.5 server interval.
+
+Stinger (56) uses server-authored swept movement and 0x7F11 replication rather
+than the original client-trusted distance credit. Native windup/speed/contact
+frames are preserved. Client destinations, speed floods and movement cannot
+steer a dash. See [evidence and limitations](../../docs/spell-fluidity-research.md).
+
 ## PvP rank titles and rewards
 
 The client reference is EP5.4 SHA256

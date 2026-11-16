@@ -159,7 +159,8 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		return
 	}
 	s.autoAttack = false
-	if !s.combatActionReady(time.Now()) {
+	if !s.skillActionReady(def, time.Now()) {
+		s.queueSpinCombo(def, op, p)
 		return
 	}
 	if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && !s.attackMovementAllowed(time.Now()) {
@@ -269,6 +270,8 @@ func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef, prepared 
 	if len(prepared) == 0 || !prepared[0] {
 		s.lastActionAt = now
 	}
+	s.pendingCombo = nil
+	s.lastSkillID, s.lastSkillAt = k.SkillID, s.lastActionAt
 	s.commitAttackStop(now)
 	reuse := skilltiming.ReuseSeconds(def.ResetTimeSeconds)
 	if reuse == 0 {

@@ -14,6 +14,9 @@ func skillReleaseLibrary(r proto.SkillResult, d sdata.Skill, weapon uint8) (stri
 	if r.Source == 0 || r.Level == 0 || r.Level == 100 || d.Effect == 0 || r.Result > 4 || r.Result == 3 && r.Target == 0 {
 		return "", 0
 	}
+	if r.ID == 56 {
+		return "Effect/IN_sa_stinger.EFT", 0
+	}
 	if (d.Effect == 1 || d.Effect == 3 || d.Effect == 5) && (d.Attack == 1 || d.Attack == 2) {
 		// 0x4c9110: bow, javelin and crossbow families use the generic
 		// release; melee weapons select their skill-specific activation.

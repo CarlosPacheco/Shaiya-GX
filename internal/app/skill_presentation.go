@@ -37,12 +37,12 @@ func (a *App) requestedSkillPresentation(packet []byte) {
 	}
 	// Timed casts start on the server's cast-start packet. Instant skills
 	// can begin their release animation as soon as the request is sent.
-	if d.ReadyTime > 0 {
+	if d.ReadyTime > 0 || k.ID == 56 {
 		return
 	}
 	p := &requestedSkillPresentation{key: key, target: target, actor: actor, started: a.clock}
 	a.attackVariant++
-	played := actor.PlayAction(scene.SkillAction(d.Animation, d.Attack, d.Effect, a.playerWeapon(a.state.SelfID), a.attackVariant), false)
+	played := actor.PlaySkillAction(k.ID, scene.SkillAction(d.Animation, d.Attack, d.Effect, a.playerWeapon(a.state.SelfID), a.attackVariant))
 	if played {
 		if d.Effect == 1 || d.Effect == 3 {
 			a.wv.attackPose = true

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/model"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 )
 
 // Appearance selects a character's parts (FUN_00417220): race, gender,
@@ -76,6 +77,8 @@ type Character struct {
 	attachments          []attachment
 	actions              []model.Action
 	actionsLoaded        bool
+	spinLeft             float32
+	externalTime         bool
 	locked, hold         bool
 	actionID             uint64
 	actionSlot           int
@@ -378,7 +381,20 @@ func sampleTrans(k []model.TransKey, f float32) [3]float32 {
 // Update advances the animation.
 func (c *Character) Update(dt float32) {
 	c.enchantTime += float64(max(0, dt))
-	c.Time += dt
+	if c.externalTime {
+		c.externalTime = false
+	} else {
+		c.Time += dt
+	}
+	if c.spinLeft > 0 {
+		c.spinLeft = max(0, c.spinLeft-dt)
+		if c.spinLeft == 0 {
+			c.ReleaseAction()
+		} else if c.clip != nil && c.clip.Duration() > 0 {
+			c.Time = float32(math.Mod(float64(c.Time), float64(c.clip.Duration())))
+			return
+		}
+	}
 	if c.cloak != nil {
 		c.cloak.elapsed += max(0, dt)
 	}
@@ -430,6 +446,7 @@ func (c *Character) PlayAction(slot int, hold bool) bool {
 		c.assets.Missing[err.Error()] = true
 		return false
 	}
+	c.spinLeft, c.externalTime = 0, false
 	c.clip, c.clipName, c.Time = cl, file, 0
 	c.actionID++
 	c.actionSlot = slot
@@ -440,6 +457,7 @@ func (c *Character) PlayAction(slot int, hold bool) bool {
 
 func (c *Character) ReleaseAction() {
 	if c != nil {
+		c.spinLeft, c.externalTime = 0, false
 		c.actionID++
 		c.locked, c.hold = false, false
 		c.castLeft = 0
@@ -653,4 +671,22 @@ func (c *Character) CastTiming() (remaining, total float32, active bool) {
 		return 0, 0, false
 	}
 	return c.castLeft, c.castTotal, true
+}
+
+// PlaySkillAction preserves the native two-second, repeating spin state.
+// Any new action replaces it immediately; it is not an uninterruptible hold.
+func (c *Character) PlaySkillAction(id uint16, slot int) bool {
+	if !c.PlayAction(slot, false) {
+		return false
+	}
+	if id == 38 || id == 156 {
+		c.spinLeft = float32(skilltiming.SpinDuration.Seconds())
+	}
+	return true
+}
+func (c *Character) SetActionFrame(frame float32) {
+	if c != nil && c.locked {
+		c.Time = frame / 30
+		c.externalTime = true
+	}
 }

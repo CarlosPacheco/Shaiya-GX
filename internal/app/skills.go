@@ -15,6 +15,8 @@ import (
 )
 
 type skillsView struct {
+	lastSkillID         uint16
+	lastSkillAt         float64
 	lastActionAt        float64
 	actionKnown         bool
 	queuedSkill         *queuedSkill

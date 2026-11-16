@@ -213,6 +213,9 @@ func (s *Session) advancePlayerVertical(now time.Time) {
 	}
 }
 func (s *Session) tickPlayerMovement(now time.Time) {
+	if s.tickStinger() {
+		return
+	}
 	if s.player != nil && s.player.vehicleState().State == proto.VehiclePassenger {
 		return
 	}

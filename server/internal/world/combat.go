@@ -69,7 +69,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 		return false
 	}
 	s.cancelVehicleCast()
-	if s.cast != nil {
+	if s.cast != nil || s.dash != nil {
 		return false
 	}
 	if s.ridingVehicle() {

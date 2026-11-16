@@ -74,6 +74,9 @@ func (s *Session) skillAttack(k db.CharacterSkill, def *db.SkillDef, target uint
 		}
 		center = &mob
 	}
+	if center != nil && !s.beginStinger(def, [3]float32{center.PosX, center.PosY, center.PosZ}) {
+		return
+	}
 	sp, mp := s.skillCosts(def, &stats)
 	s.breakStealth()
 	s.startCooldown(k, def, castPos != nil)

@@ -19,6 +19,7 @@ import (
 // third-person camera (0x444b10 reset, 0x4397d0 orbit/zoom, 0x43bfa0
 // movement; Phoenix tools/reference/ep5_camera_controls.md).
 type worldView struct {
+	dashes                      map[uint32]proto.SkillDash
 	requestedSkills             []*requestedSkillPresentation
 	ladderFinishing             bool
 	ladder                      mapgeometry.LadderMotion
@@ -227,6 +228,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	if v == nil {
 		return
 	}
+	dashing := a.updateSkillDashes()
 	a.updateQueuedSkill(in)
 	if a.wv != v {
 		return
@@ -378,7 +380,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 			}
 		}
 	}
-	blocked := a.state.Self.Sitting || v.sitPending || v.self != nil && v.self.PlayingAction(11)
+	blocked := dashing || a.state.Self.Sitting || v.sitPending || v.self != nil && v.self.PlayingAction(11)
 	if blocked {
 		dir = render.V3{}
 	} else {
@@ -509,7 +511,9 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	if v.evading {
 		v.evadeTime += float32(dt)
 	}
-	if climbFrame {
+	if dashing {
+		// Server-authored dash already placed the actor.
+	} else if climbFrame {
 		// Ladder movement already integrated using the shared guide.
 	} else if v.jumping {
 		if v.advanceJump(float32(dt)) {

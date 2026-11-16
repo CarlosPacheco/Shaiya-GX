@@ -1,6 +1,9 @@
 package app
 
-import "github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
+import (
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
+)
 
 func (a *App) combatActionReady() bool {
 	sp := a.state.Self.Speed
@@ -11,5 +14,16 @@ func (a *App) combatActionReady() bool {
 	return ok && (!a.skills.actionKnown || a.clock-a.skills.lastActionAt >= interval.Seconds())
 }
 func (a *App) markCombatAction() {
+	a.skills.lastSkillID = 0
 	a.skills.lastActionAt, a.skills.actionKnown = a.clock, true
+}
+
+func (a *App) skillActionReady(id uint16, d sdata.Skill) bool {
+	if a.wv != nil && a.wv.dashes[a.state.SelfID].Source != 0 {
+		return false
+	}
+	if a.combatActionReady() {
+		return true
+	}
+	return a.state.Self.Speed != nil && a.state.Self.Speed.Attack != 255 && a.skills.lastSkillAt == a.skills.lastActionAt && a.clock-a.skills.lastSkillAt >= skilltiming.SpinContact.Seconds() && a.clock-a.skills.lastSkillAt < skilltiming.SpinDuration.Seconds() && skilltiming.AreaCombo(a.skills.lastSkillID, id, d.Target, d.Effect, d.ReadyTime)
 }

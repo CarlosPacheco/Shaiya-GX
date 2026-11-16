@@ -162,7 +162,11 @@ func (a *App) playSkillSound(source uint32, id uint16, level uint8, preparing bo
 		}
 	}
 	a.skillSoundEvents[key] = a.clock
-	a.playSound(scene.SkillActionSound(action), pos[0], pos[2])
+	name := scene.SkillActionSound(action)
+	if !preparing && (id == 38 || id == 156) {
+		name = "ef_in_spin01.ogg"
+	}
+	a.playSound(name, pos[0], pos[2])
 }
 
 func (a *App) playUI() {

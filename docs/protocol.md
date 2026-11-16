@@ -16,3 +16,10 @@ Mount requests retain the native 0x0216/0x0217 and 0x021C–0x021E family.
 GX mount state (0x7F10) carries explicit model, speed, seats, cast/cooldown
 timing and conductor/passenger IDs; see [mounts](mounts.md). Both endpoints
 must use matching GX builds.
+
+Stinger uses server-only `GXSkillDash` (`0x7F11`): source uint32, start XYZ and
+destination XYZ (six float32), start physics time float64, contact frame float32,
+and stopped uint8 (0/1). The body excluding opcode is 41 bytes. The synchronized
+map physics clock drives prediction; stopped updates terminate both self and
+remote presentation at the server position. Destinations, speed and movement
+credit are never accepted from a client. Native skill/move layouts are unchanged.

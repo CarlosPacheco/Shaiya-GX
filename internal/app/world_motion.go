@@ -206,10 +206,16 @@ func (a *App) confirmedPosition(p []byte) {
 			v.ladderFinishing = false
 			v.ladderRetryAt = a.clock + .35
 		}
+	case proto.GXSkillDash:
+		a.receiveSkillDash(a.state.LastSkillDash)
 	case proto.GXPlayerCorrection:
 		if proto.NewReader(p).U32() != a.state.SelfID {
 			return
 		}
+		if _, active := v.dashes[a.state.SelfID]; active && v.self != nil && v.self.PlayingAction(101) {
+			v.self.ReleaseAction()
+		}
+		delete(v.dashes, a.state.SelfID)
 		correction := a.state.LastPlayerCorrection
 		if correction.ID != a.state.SelfID {
 			return
@@ -228,6 +234,7 @@ func (a *App) confirmedPosition(p []byte) {
 			return
 		}
 		if proto.Op(p) != proto.CharacterMove {
+			delete(v.dashes, a.state.SelfID)
 			v.ladder.Active = false
 			v.ladderFinishing = false
 			v.ladderRetryAt = a.clock + .35

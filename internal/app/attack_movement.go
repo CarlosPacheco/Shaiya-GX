@@ -43,15 +43,16 @@ func (a *App) prepareSkillMovement(p []byte) bool {
 	if len(p) != 7 || proto.Op(p) != proto.SkillUse && proto.Op(p) != proto.SkillUseNoTarget {
 		return true
 	}
-	if !a.combatActionReady() {
-		a.queueSkill(p)
-		return false
-	}
 	k, ok := a.state.Skills[proto.NewReader(p).U8()]
 	if !ok {
 		return true
 	}
 	d := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]
+	if !a.skillActionReady(k.ID, d) {
+		a.queueSkill(p)
+		return false
+	}
+
 	r := proto.NewReader(p)
 	r.U8()
 	if !a.skillRequestReach(d, r.U32()) {
@@ -65,5 +66,6 @@ func (a *App) prepareSkillMovement(p []byte) bool {
 	}
 	a.skills.queuedSkill = nil
 	a.markCombatAction()
+	a.skills.lastSkillID, a.skills.lastSkillAt = k.ID, a.clock
 	return true
 }
