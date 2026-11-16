@@ -1,5 +1,10 @@
 # Skill targeting, reuse and target effects
 
+The timing rules below describe current GX behavior. The
+[original spell-timing investigation](spell-fluidity-research.md) records
+confirmed differences in scheduling, prepared-cast recovery, one-second reuse,
+the two Wind Spins and Stinger. Full native timing parity is not established.
+
 Single-target heals and buffs use the caster when an enemy is selected. The
 combat selection remains on the enemy, so an offensive skill can follow without
 reselecting it. Valid friendly players keep their selected recipient; stale,

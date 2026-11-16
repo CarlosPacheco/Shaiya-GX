@@ -1,5 +1,10 @@
 # Attack speed
 
+The shared-clock rules below describe GX. The
+[original timing investigation](../spell-fluidity-research.md) distinguishes
+native execution deadlines, per-skill reuse and animation replacement, and
+records remaining parity gaps. It does not establish faster combo damage.
+
 GX Server derives attack speed from the weapon's native `Items.AttackTime`,
 equipped item bonuses, active lapis, learned weapon masteries and applied ability
 **16**. The final index is clamped to 0–9 after adding all signed modifiers.
