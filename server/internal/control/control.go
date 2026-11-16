@@ -97,14 +97,13 @@ func AnyRunning() bool {
 	return false
 }
 
-// Stop kills every running instance of the named server.
+// Stop requests graceful shutdown before falling back to force termination.
 func Stop(name string) {
 	for _, pid := range pids(name) {
 		if runtime.GOOS == "windows" {
 			exec.Command("taskkill", "/PID", strconv.Itoa(pid), "/F").Run()
 		} else if process, err := os.FindProcess(pid); err == nil {
-			process.Kill()
-			process.Wait()
+			gracefulStop(process)
 		}
 	}
 }

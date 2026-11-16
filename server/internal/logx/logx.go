@@ -9,9 +9,10 @@ import (
 )
 
 type Logger struct {
-	mu   sync.Mutex
-	file *os.File
-	name string
+	mu    sync.Mutex
+	file  *os.File
+	name  string
+	debug bool
 }
 
 // New opens logs/<name>.log (relative to the working directory).
@@ -23,7 +24,7 @@ func New(name string) (*Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Logger{file: file, name: name}, nil
+	return &Logger{file: file, name: name, debug: os.Getenv("RAPTURE_DEBUG") == "1"}, nil
 }
 
 func (l *Logger) write(line string) {
@@ -68,4 +69,11 @@ func (t *Tag) Printf(format string, args ...any) {
 		line = "[" + t.tag + "] " + line
 	}
 	t.logger.write(line)
+}
+
+// Debugf keeps per-packet diagnostics out of the normal simulation hot path.
+func (t *Tag) Debugf(format string, args ...any) {
+	if t.logger.debug {
+		t.Printf(format, args...)
+	}
 }

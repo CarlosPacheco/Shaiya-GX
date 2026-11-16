@@ -122,13 +122,23 @@ func makeType(it *Item) string {
 
 // AddCharacterItem runs usp_Save_Char_Item_Add_E; a zero UID gets a new one.
 func AddCharacterItem(charID uint32, it *Item) error {
+	pool, err := Pool(GameData)
+	if err != nil {
+		return err
+	}
+	c, cancel := ctx()
+	defer cancel()
+	return insertCharacterItem(c, pool, charID, it)
+}
+
+func insertCharacterItem(c context.Context, executor sqlExecutor, charID uint32, it *Item) error {
 	if it.UID == 0 {
 		it.UID = NewItemUID()
 	}
 	if it.MakeTime.IsZero() {
 		it.MakeTime = time.Now()
 	}
-	return execSQL(GameData, `INSERT INTO PS_GameData_CharItems
+	_, err := executor.ExecContext(c, `INSERT INTO PS_GameData_CharItems
 (CharID, bag, slot, ItemID, Type, TypeID, ItemUID, quality, gem1, gem2, gem3, gem4,
 gem5, gem6, craftname, [count], maketime, maketype)
 VALUES(@charid, @bag, @slot, @itemid, @type, @typeid, @itemuid, @quality, @gem1, @gem2, @gem3, @gem4,
@@ -139,6 +149,7 @@ VALUES(@charid, @bag, @slot, @itemid, @type, @typeid, @itemuid, @quality, @gem1,
 		sql.Named("gem3", it.Gems[2]), sql.Named("gem4", it.Gems[3]), sql.Named("gem5", it.Gems[4]),
 		sql.Named("gem6", it.Gems[5]), sql.Named("craftname", it.CraftName), sql.Named("count", it.Count),
 		sql.Named("maketime", makeTime(it)), sql.Named("maketype", makeType(it)))
+	return err
 }
 
 // SaveCharacterItem writes bag, slot, quality, gems, count and craft name

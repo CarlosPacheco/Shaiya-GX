@@ -3,6 +3,7 @@ package netx
 import (
 	"bufio"
 	"encoding/binary"
+	"github.com/Spelunkern/Shaiya-GX/internal/transport"
 	"net"
 	"sync"
 	"time"
@@ -31,7 +32,7 @@ type Conn struct {
 }
 
 func Dial(addr string, timeout time.Duration) (*Conn, error) {
-	nc, err := net.DialTimeout("tcp", addr, timeout)
+	nc, err := transport.Dial(addr, timeout)
 	if err != nil {
 		return nil, err
 	}

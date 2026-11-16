@@ -28,6 +28,8 @@ const (
 // Session is one client connection. Its loop owns its fields under stateMu.
 // A paired trade may also update them while holding both sessions' state locks.
 type Session struct {
+	inputFrames     *netx.RateLimiter
+	inputBytes      *netx.RateLimiter
 	stateMu         sync.Mutex
 	effectWatchID   uint32
 	effectWatchKind uint8
@@ -126,15 +128,20 @@ func releaseAccount(uid uint32) {
 
 // Serve runs one client connection until it closes.
 func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error {
-	s := &Session{conn: conn, out: &connWriter{conn: conn}, log: log, logger: logger,
+	s := &Session{inputFrames: netx.NewRateLimiter(1, 512, time.Second), inputBytes: netx.NewRateLimiter(1, 1<<20, time.Second), conn: conn, out: &connWriter{conn: conn, queued: netx.NewWriter(conn, 256, 1<<20)}, log: log, logger: logger,
 		faction: FactionNone, maxMode: MaxModeUltimate,
 		itemCooldowns: map[uint8]time.Time{}, skillCooldowns: map[uint16]time.Time{},
 		lastPositionSave: time.Now(), lastRegenAt: time.Now()}
+	defer s.out.queued.Close()
 	defer s.close()
 	log.Printf("GX Server World client connected")
+	handshakeDeadline := time.Now().Add(30 * time.Second)
 	var frames netx.Frames
 	buf := make([]byte, 4096)
 	for {
+		if s.aesRecv == nil && time.Now().After(handshakeDeadline) {
+			return fmt.Errorf("world handshake timed out")
+		}
 		conn.SetReadDeadline(time.Now().Add(loopTick))
 		n, err := conn.Read(buf)
 		var nerr net.Error
@@ -157,8 +164,14 @@ func (s *Session) processInput(n int, buf []byte, frames *netx.Frames) error {
 	if n == 0 {
 		return nil
 	}
+	if s.inputBytes != nil && !s.inputBytes.AllowN("", n) {
+		return fmt.Errorf("world input byte budget exceeded")
+	}
 	list, ok := frames.Push(buf[:n])
 	for _, frame := range list {
+		if s.inputFrames != nil && !s.inputFrames.Allow("") {
+			return fmt.Errorf("world input packet budget exceeded")
+		}
 		if err := s.frame(frame); err != nil {
 			return err
 		}
@@ -441,7 +454,7 @@ func (s *Session) frame(f []byte) error {
 	o, _ := packet.U16(p)
 	op := packet.BaseOpcode(o)
 	if op != packet.CharacterMove {
-		s.log.Printf("GX Server World opcode=0x%04X", o)
+		s.log.Debugf("GX Server World opcode=0x%04X", o)
 	}
 	if s.dead && deadGated(op) {
 		return nil
@@ -473,7 +486,7 @@ func (s *Session) handshake(f []byte) error {
 		}
 		s.log.SetTag(s.log.Tag() + "/" + a.UserID)
 	} else {
-		s.log.Printf("GX Server World account user_uid=%d not readable: %v", uid, err)
+		return fmt.Errorf("world account unavailable: %w", err)
 	}
 	var key, loginIV [16]byte
 	copy(key[:], h.AESMaterial[:16])
@@ -798,17 +811,13 @@ func (s *Session) handleCreateCharacter(p []byte) {
 	nc.MapID, nc.PosX, nc.PosY, nc.PosZ = start.MapID, start.X, start.Y, start.Z
 	nc.Str, nc.Dex, nc.Rec, nc.Int, nc.Wis, nc.Luc = startingStats(nc.Race, nc.Class)
 	nc.HP, nc.MP, nc.SP = newCharacterPools(nc.Race, nc.Class, nc.Mode, nc.Rec, nc.Dex, nc.Wis)
-	id, err := db.CreateCharacter(s.account, nc)
+	id, err := db.CreateCharacterWithItems(s.account, nc, starterItems(nc.Race, nc.Class))
 	if err != nil {
 		s.log.Printf("GX Server World create character failed: %v", err)
 		reject("database")
 		return
 	}
-	for _, it := range starterItems(nc.Race, nc.Class) {
-		if err := db.AddCharacterItem(id, &it); err != nil {
-			s.log.Printf("GX Server World starter item %d/%d failed: %v", it.Type, it.TypeID, err)
-		}
-	}
+
 	s.log.Printf("GX Server World created character id=%d name=%q map=%d", id, nc.Name, nc.MapID)
 	s.send(buildCreateCharacterResult(true), "0x0102 create character ok")
 	s.sendCharacterSelect()

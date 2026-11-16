@@ -5,8 +5,10 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/filelock"
 	"io"
 	_ "modernc.org/sqlite"
 	"os"
@@ -40,20 +42,15 @@ func Initialize() error {
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return err
 	}
-	lock := path + ".init"
-	deadline := time.Now().Add(Timeout)
-	for {
-		if err := os.Mkdir(lock, 0700); err == nil {
-			break
-		} else if !os.IsExist(err) {
-			return err
-		}
-		if time.Now().After(deadline) {
-			return fmt.Errorf("database initialization lock timed out: %s", lock)
-		}
-		time.Sleep(25 * time.Millisecond)
+
+	c, cancel := ctx()
+	defer cancel()
+	release, err := filelock.Acquire(c, path+".init.lock")
+	if err != nil {
+		return fmt.Errorf("database initialization lock: %w", err)
 	}
-	defer os.Remove(lock)
+	defer release()
+
 	if _, err := os.Stat(path); err == nil {
 		return nil
 	}
@@ -111,6 +108,17 @@ func Pool(database string) (*sql.DB, error) {
 		p.Close()
 		return nil, err
 	}
+	if _, err = p.ExecContext(c, `CREATE TABLE IF NOT EXISTS GX_SessionHandoff (
+ UserUID INTEGER PRIMARY KEY, Identity BLOB NOT NULL, AESMaterial BLOB NOT NULL,
+ SessionID INTEGER NOT NULL, ExpiresAt INTEGER NOT NULL
+)`); err != nil {
+		p.Close()
+		return nil, fmt.Errorf("initialize session storage: %w", err)
+	}
+	if _, err = p.ExecContext(c, `CREATE INDEX IF NOT EXISTS GX_Users_UserID ON PS_UserData_Users_Master(UserID)`); err != nil {
+		p.Close()
+		return nil, fmt.Errorf("initialize login index: %w", err)
+	}
 	pools["sqlite"] = p
 	return p, nil
 }
@@ -127,4 +135,20 @@ func ctx() (context.Context, context.CancelFunc) {
 }
 func longCtx() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 2*time.Minute)
+}
+
+// Close runs bounded planner maintenance and closes process-owned connections.
+// Call only after network handlers have drained.
+func Close() error {
+	mu.Lock()
+	defer mu.Unlock()
+	var result error
+	for key, p := range pools {
+		c, cancel := ctx()
+		_, err := p.ExecContext(c, "PRAGMA optimize")
+		cancel()
+		result = errors.Join(result, err, p.Close())
+		delete(pools, key)
+	}
+	return result
 }

@@ -2,6 +2,7 @@
 """Initialize/query the portable development database or create a local account."""
 import argparse,getpass,os,shutil,sqlite3
 from pathlib import Path
+from runtime_lock import runtime_lock
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -15,12 +16,12 @@ def main():
  args=p.parse_args();path=args.path.expanduser().resolve()
  path.parent.mkdir(parents=True,exist_ok=True)
  if not path.exists():
-  lock=Path(str(path)+'.init');lock.mkdir()
-  try:
-   temp=path.with_name('.'+path.name+'.next')
-   shutil.copyfile(ROOT/'data/rapture.sqlite',temp)
-   temp.replace(path)
-  finally:lock.rmdir()
+  with runtime_lock(path):
+   if not path.exists():
+    temp=path.with_name('.'+path.name+'.next')
+    shutil.copyfile(ROOT/'data/rapture.sqlite',temp)
+    temp.chmod(0o600)
+    temp.replace(path)
  with sqlite3.connect(path) as c:
   c.execute('PRAGMA busy_timeout=10000')
   if c.execute('PRAGMA user_version').fetchone()[0]!=1:raise RuntimeError('unsupported schema')

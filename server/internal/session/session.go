@@ -1,20 +1,18 @@
 // Package session hands an authenticated login over to the world server.
-// Login writes runtime/sessions/<userUID>.bin; the client then connects to
+// Login writes an atomic SQLite ticket; the client then connects to
 // world and presents the same identity token in its 0xA301 handshake.
 package session
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/subtle"
+	"database/sql"
 	"encoding/binary"
 	"errors"
-	"fmt"
-	"os"
-	"path/filepath"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"time"
 )
-
-const dir = "runtime/sessions"
 
 // MaxAge bounds how long a handoff stays valid after login.
 const MaxAge = 10 * time.Minute
@@ -44,47 +42,59 @@ func NewSessionID() int64 {
 	return int64(binary.LittleEndian.Uint64(b[:]) & 0x7FFF_FFFF_FFFF_FFFF)
 }
 
-func path(userUID uint32) string { return filepath.Join(dir, fmt.Sprintf("%d.bin", userUID)) }
-
-// Save writes the handoff atomically (owner-only permissions).
-func Save(h Handoff) error {
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return err
-	}
-	buf := make([]byte, 0, 16+32+4+8)
-	buf = append(buf, h.Identity[:]...)
-	buf = append(buf, h.AESMaterial[:]...)
-	buf = binary.LittleEndian.AppendUint32(buf, h.UserUID)
-	buf = binary.LittleEndian.AppendUint64(buf, uint64(h.SessionID))
-	tmp := path(h.UserUID) + ".tmp"
-	if err := os.WriteFile(tmp, buf, 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path(h.UserUID))
-}
-
 var ErrInvalid = errors.New("no valid login handoff")
 
-// Consume loads and deletes the handoff for userUID if identity matches and
-// it is younger than MaxAge.
+// Save replaces the previous login ticket in the configured runtime database.
+func Save(h Handoff) error {
+	pool, err := db.Pool(db.UserData)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	defer cancel()
+	_, err = pool.ExecContext(ctx, `INSERT INTO GX_SessionHandoff
+ (UserUID,Identity,AESMaterial,SessionID,ExpiresAt) VALUES(?,?,?,?,?)
+ ON CONFLICT(UserUID) DO UPDATE SET Identity=excluded.Identity,
+ AESMaterial=excluded.AESMaterial,SessionID=excluded.SessionID,ExpiresAt=excluded.ExpiresAt`,
+		h.UserUID, h.Identity[:], h.AESMaterial[:], h.SessionID, time.Now().Add(MaxAge).Unix())
+	return err
+}
+
+// Consume validates and deletes a ticket in one write transaction, including
+// concurrent callers in different processes. Invalid identities cannot burn it.
 func Consume(userUID uint32, identity [16]byte) (Handoff, error) {
-	p := path(userUID)
-	info, err := os.Stat(p)
-	if err != nil || time.Since(info.ModTime()) > MaxAge {
+	pool, err := db.Pool(db.UserData)
+	if err != nil {
+		return Handoff{}, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	defer cancel()
+	tx, err := pool.BeginTx(ctx, nil)
+	if err != nil {
+		return Handoff{}, err
+	}
+	defer tx.Rollback()
+	var stored, material []byte
+	var expires int64
+	h := Handoff{UserUID: userUID}
+	err = tx.QueryRowContext(ctx, `SELECT Identity,AESMaterial,SessionID,ExpiresAt
+ FROM GX_SessionHandoff WHERE UserUID=?`, userUID).Scan(&stored, &material, &h.SessionID, &expires)
+	if errors.Is(err, sql.ErrNoRows) {
 		return Handoff{}, ErrInvalid
 	}
-	buf, err := os.ReadFile(p)
-	if err != nil || len(buf) != 16+32+4+8 {
+	if err != nil {
+		return Handoff{}, err
+	}
+	if len(stored) != 16 || len(material) != 32 || expires <= time.Now().Unix() || subtle.ConstantTimeCompare(stored, identity[:]) != 1 {
 		return Handoff{}, ErrInvalid
 	}
-	var h Handoff
-	copy(h.Identity[:], buf[0:16])
-	copy(h.AESMaterial[:], buf[16:48])
-	h.UserUID = binary.LittleEndian.Uint32(buf[48:52])
-	h.SessionID = int64(binary.LittleEndian.Uint64(buf[52:60]))
-	if h.UserUID != userUID || subtle.ConstantTimeCompare(h.Identity[:], identity[:]) != 1 {
-		return Handoff{}, ErrInvalid
+	copy(h.Identity[:], stored)
+	copy(h.AESMaterial[:], material)
+	if _, err = tx.ExecContext(ctx, `DELETE FROM GX_SessionHandoff WHERE UserUID=?`, userUID); err != nil {
+		return Handoff{}, err
 	}
-	os.Remove(p)
+	if err = tx.Commit(); err != nil {
+		return Handoff{}, err
+	}
 	return h, nil
 }

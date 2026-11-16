@@ -12,7 +12,7 @@ import (
 )
 
 func TestGMSetSixBaseStatsPersistsAndRefreshesClient(t *testing.T) {
-	id, err := db.CreateCharacter(db.Account{UserUID: 1, UserID: "admin1"}, db.NewCharacter{Slot: 4, Name: "GMStatsProbe", HP: 100, MP: 100, SP: 100, MapID: 60070})
+	id, err := db.CreateCharacter(testAccount(t), db.NewCharacter{Slot: 4, Name: "GMStatsProbe", HP: 100, MP: 100, SP: 100, MapID: 60070})
 	if err != nil {
 		t.Fatal(err)
 	}

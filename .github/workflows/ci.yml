@@ -8,6 +8,20 @@ on:
 permissions:
   contents: read
 jobs:
+  security:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+          cache: true
+      - name: Reachable server and transport vulnerabilities
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./server/internal/... ./server/cmd/gx_login ./server/cmd/gx_world ./internal/transport ./internal/netx ./internal/session
+      - name: Infrastructure concurrency
+        run: go test -race ./server/internal/filelock ./server/internal/netx ./server/internal/session ./server/internal/password ./server/internal/db ./internal/transport
+      - name: Frame parser fuzz smoke
+        run: go test ./server/internal/netx -run '^$' -fuzz FuzzFrames -fuzztime 10s
   native:
     strategy:
       fail-fast: false

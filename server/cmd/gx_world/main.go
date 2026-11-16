@@ -4,10 +4,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/transport"
 	"net"
 	"os"
+	"os/signal"
 	"sync/atomic"
+	"syscall"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -61,37 +65,28 @@ func main() {
 	}
 	world.StartSweeps(logger)
 
-	listener, err := net.Listen("tcp", config.WorldListen())
+	listener, err := transport.Listen(config.WorldListen())
 	if err != nil {
 		logger.Printf("GX Server World failed to bind %s: %v", config.WorldListen(), err)
 		os.Exit(1)
 	}
 	logger.Printf("GX Server World listening on %s", config.WorldListen())
-	limiter := netx.NewLimiter(maxConnections)
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			logger.Printf("GX Server World accept error: %v", err)
-			continue
-		}
-		if !limiter.Acquire() {
-			logger.Printf("GX Server World rejected connection: at capacity (%d)", maxConnections)
-			conn.Close()
-			continue
-		}
-		netx.Tune(conn)
-		go func() {
-			defer limiter.Release()
-			defer conn.Close()
-			log := logger.Tagged(fmt.Sprintf("conn%d", nextConnection.Add(1)))
-			defer func() {
-				if r := recover(); r != nil {
-					log.Printf("GX Server World session panic: %v", r)
-				}
-			}()
-			if err := world.Serve(conn, logger, log); err != nil {
-				log.Printf("GX Server World client error: %v", err)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	defer logger.Close()
+	defer db.Close()
+	if err := netx.Serve(ctx, listener, maxConnections, 32, func(conn net.Conn) {
+		log := logger.Tagged(fmt.Sprintf("conn%d", nextConnection.Add(1)))
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("world session panic: %v", r)
 			}
 		}()
+		if err := world.Serve(conn, logger, log); err != nil {
+			log.Printf("world client error: %v", err)
+		}
+	}); err != nil {
+		logger.Printf("server accept error: %v", err)
 	}
+
 }

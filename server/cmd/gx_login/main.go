@@ -5,11 +5,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/itemstack"
+	"github.com/Spelunkern/Shaiya-GX/internal/transport"
 	"net"
 	"os"
+	"os/signal"
+	"strings"
 	"sync/atomic"
+	"syscall"
+	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/crypto"
@@ -23,6 +29,8 @@ import (
 const maxConnections = 200
 
 var nextConnection atomic.Int64
+var loginByIP = netx.NewRateLimiter(4096, 30, time.Minute)
+var loginByAccount = netx.NewRateLimiter(8192, 10, time.Minute)
 
 func main() {
 	if err := config.LoadRuntimeEnv(); err != nil {
@@ -39,34 +47,30 @@ func main() {
 		logger.Printf("GX Server Login database error: %v", err)
 		os.Exit(1)
 	}
-	listener, err := net.Listen("tcp", config.LoginListen())
+	listener, err := transport.Listen(config.LoginListen())
 	if err != nil {
 		logger.Printf("GX Server Login failed to bind %s: %v", config.LoginListen(), err)
 		os.Exit(1)
 	}
 	logger.Printf("GX Server Login listening on %s", config.LoginListen())
-	limiter := netx.NewLimiter(maxConnections)
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			logger.Printf("GX Server Login accept error: %v", err)
-			continue
-		}
-		if !limiter.Acquire() {
-			logger.Printf("GX Server Login rejected connection: at capacity (%d)", maxConnections)
-			conn.Close()
-			continue
-		}
-		netx.Tune(conn)
-		go func() {
-			defer limiter.Release()
-			defer conn.Close()
-			log := logger.Tagged(fmt.Sprintf("conn%d", nextConnection.Add(1)))
-			if err := handle(conn, log); err != nil {
-				log.Printf("GX Server Login client error: %v", err)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	defer logger.Close()
+	defer db.Close()
+	if err := netx.Serve(ctx, listener, maxConnections, 32, func(conn net.Conn) {
+		log := logger.Tagged(fmt.Sprintf("conn%d", nextConnection.Add(1)))
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("login session panic: %v", r)
 			}
 		}()
+		if err := handle(conn, log); err != nil {
+			log.Printf("login client error: %v", err)
+		}
+	}); err != nil {
+		logger.Printf("server accept error: %v", err)
 	}
+
 }
 
 func handshake() []byte {
@@ -124,6 +128,9 @@ type client struct {
 }
 
 func (c *client) write(frame []byte, label string) error {
+	if err := c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		return err
+	}
 	out := frame
 	if c.send != nil && len(frame) > 2 {
 		out = append(append([]byte{}, frame[:2]...), c.send.Transform(frame[2:])...)
@@ -134,6 +141,9 @@ func (c *client) write(frame []byte, label string) error {
 }
 
 func handle(conn net.Conn, log *logx.Tag) error {
+	if err := conn.SetReadDeadline(time.Now().Add(30 * time.Second)); err != nil {
+		return err
+	}
 	c := &client{conn: conn, log: log}
 	remote, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 	log.Printf("GX Server Login client connected from %s", remote)
@@ -191,6 +201,9 @@ func (c *client) frame(frame []byte, remote string) error {
 			return nil
 		}
 		username := packet.FixedText(payload[2:21])
+		if !loginByIP.Allow(remote) || !loginByAccount.Allow(strings.ToLower(username)) {
+			return fmt.Errorf("login rate exceeded")
+		}
 		password := packet.FixedText(payload[34:50]) // never logged
 		c.log.Printf("GX Server Login request username=%q", username)
 		c.sessionID = session.NewSessionID()
@@ -200,6 +213,9 @@ func (c *client) frame(frame []byte, remote string) error {
 			return c.write(loginReply(1, 0, 11, [16]byte{}), "0xA102 login failed")
 		}
 		result, permission := db.LoginDecision(login)
+		if login.Status == -1 {
+			result = 1
+		} // same public failure as an unknown account
 		if result != 0 {
 			c.log.Printf("GX Server Login rejected username=%q status=%d result=%d", username, login.Status, result)
 			return c.write(loginReply(result, 0, permission, [16]byte{}), "0xA102 login failed")

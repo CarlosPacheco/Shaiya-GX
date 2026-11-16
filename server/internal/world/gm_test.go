@@ -105,7 +105,7 @@ func TestGMCommandsRequireRoleAndToggleAuthoritativeState(t *testing.T) {
 }
 
 func TestGMGrantAndClearPersistOnlyOwnInventory(t *testing.T) {
-	account := db.Account{UserUID: 1, UserID: "admin1"}
+	account := testAccount(t)
 	id, err := db.CreateCharacter(account, db.NewCharacter{Slot: 4, Name: "GMCommandProbe", HP: 100, MP: 100, SP: 100, MapID: 60070})
 	if err != nil {
 		t.Fatal(err)
@@ -349,7 +349,7 @@ func TestGMMoveUsesRelativeSafeDestinationAndNormalTeleport(t *testing.T) {
 }
 
 func TestGMSetPersistsAndUpdatesClientWithoutReopeningRewards(t *testing.T) {
-	account := db.Account{UserUID: 1, UserID: "admin1"}
+	account := testAccount(t)
 	id, err := db.CreateCharacter(account, db.NewCharacter{Slot: 3, Name: "GMSetProbe", HP: 100, MP: 100, SP: 100, MapID: 60070})
 	if err != nil {
 		t.Fatal(err)

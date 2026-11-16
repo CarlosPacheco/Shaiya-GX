@@ -13,7 +13,7 @@ func TestAnorEquipmentIgnoresCharacterMode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	id, err := db.CreateCharacter(db.Account{UserUID: 1, UserID: "admin1"}, db.NewCharacter{Slot: 4, Name: "EquipModeProbe", HP: 100})
+	id, err := db.CreateCharacter(testAccount(t), db.NewCharacter{Slot: 4, Name: "EquipModeProbe", HP: 100})
 	if err != nil {
 		t.Fatal(err)
 	}

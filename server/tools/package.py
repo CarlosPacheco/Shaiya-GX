@@ -221,7 +221,7 @@ def build_package(platform, output, go):
             text = (ROOT.parent / "docs" / document).read_text().replace("../server/docs/", "")
             (root / "docs" / document).write_text(text)
         (root / "tools").mkdir()
-        for tool in ("sqlite.py", "snapshot_sqlite.py", "enable_test_gms.sql"):
+        for tool in ("sqlite.py", "runtime_lock.py", "snapshot_sqlite.py", "enable_test_gms.sql"):
             shutil.copy2(ROOT / "tools" / tool, root / "tools" / tool)
         for tool in ("update_mount_content.py", "update_recreation_content.py"):
             shutil.copy2(ROOT.parent / "tools" / tool, root / "tools" / tool)

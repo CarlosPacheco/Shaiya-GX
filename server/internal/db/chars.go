@@ -230,6 +230,12 @@ func NameTaken(name string) (bool, error) {
 // The parameters mirror the original CUser::ProcessCharacterCreate: level
 // 1, no stat or skill points, Vg 200.
 func CreateCharacter(account Account, nc NewCharacter) (uint32, error) {
+	return CreateCharacterWithItems(account, nc, nil)
+}
+
+// CreateCharacterWithItems commits the character and initial inventory together.
+// Slot/name validation is repeated under the writer lock, not trusted to callers.
+func CreateCharacterWithItems(account Account, nc NewCharacter, items []Item) (uint32, error) {
 	pool, err := Pool(GameData)
 	if err != nil {
 		return 0, err
@@ -239,6 +245,12 @@ func CreateCharacter(account Account, nc NewCharacter) (uint32, error) {
 	var id int64
 	err = withTx(c, pool, func(tx *sql.Tx) error {
 		var count int
+		if e := tx.QueryRowContext(c, `SELECT COUNT(*) FROM PS_GameData_Chars WHERE ServerID=? AND UserUID=? AND Slot=? AND Del=0`, config.ServerID, account.UserUID, nc.Slot).Scan(&count); e != nil {
+			return e
+		}
+		if count != 0 {
+			return fmt.Errorf("character slot is occupied")
+		}
 		if e := tx.QueryRowContext(c, `SELECT COUNT(*) FROM PS_GameData_Chars WHERE CharName=?1 AND (Del=0 OR (Del=1 AND Level>10 AND datetime(DeleteDate)>datetime('now','-7 days')))`, strings.TrimSpace(nc.Name)).Scan(&count); e != nil {
 			return e
 		}
@@ -262,9 +274,20 @@ func CreateCharacter(account Account, nc NewCharacter) (uint32, error) {
 			return e
 		}
 		id, e = res.LastInsertId()
-		return e
+		if e != nil {
+			return e
+		}
+		for _, it := range items {
+			if e := insertCharacterItem(c, tx, uint32(id), &it); e != nil {
+				return e
+			}
+		}
+		return nil
 	})
-	return uint32(id), err
+	if err != nil {
+		return 0, err
+	}
+	return uint32(id), nil
 }
 
 // DeleteCharacter runs usp_Delete_Char_E for a live character owned by
@@ -309,7 +332,11 @@ func RestoreCharacter(userUID, charID uint32) (bool, error) {
 	c, cancel := ctx()
 	defer cancel()
 	res, err := pool.ExecContext(c, `UPDATE PS_GameData_Chars SET Del = 0, DeleteDate = NULL
-		WHERE CharID = ?1 AND UserUID = ?2 AND Del = 1 AND DeleteDate >= datetime('now','-2 hours')`,
+		WHERE CharID = ?1 AND UserUID = ?2 AND Del = 1 AND DeleteDate >= datetime('now','-2 hours')
+        AND NOT EXISTS (SELECT 1 FROM PS_GameData_Chars AS occupied
+        WHERE occupied.UserUID=PS_GameData_Chars.UserUID
+        AND occupied.ServerID=PS_GameData_Chars.ServerID
+        AND occupied.Slot=PS_GameData_Chars.Slot AND occupied.Del=0)`,
 		int32(charID), int32(userUID))
 	if err != nil {
 		return false, err

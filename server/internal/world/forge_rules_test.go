@@ -24,7 +24,7 @@ func forgeRuleSession(t *testing.T) (*Session, func(db.Item) db.Item) {
 		{Type: 100, TypeID: 171}: {Type: 100, TypeID: 171, Count: 255, Special: specialRecreationRune},
 	}, MobDrops: map[uint16][]db.MobDrop{}}
 	db.SetDefsForTest(defs)
-	id, err := db.CreateCharacter(db.Account{UserUID: 1, UserID: "admin1"}, db.NewCharacter{Slot: 4, Name: "ForgeRuleProbe", HP: 100})
+	id, err := db.CreateCharacter(testAccount(t), db.NewCharacter{Slot: 4, Name: "ForgeRuleProbe", HP: 100})
 	if err != nil {
 		t.Fatal(err)
 	}

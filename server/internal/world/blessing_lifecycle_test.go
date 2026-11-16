@@ -17,7 +17,7 @@ func TestBlessingPvPRelicDatabaseAndResetLifecycle(t *testing.T) {
 	}
 	t.Cleanup(func() { db.SaveGodBless(oldLight, oldDark) })
 	kcStore = func(l, d uint32) error { return db.SaveGodBless(l, d) }
-	account := db.Account{UserUID: 1, UserID: "admin1"}
+	account := testAccount(t)
 	id, err := db.CreateCharacter(account, db.NewCharacter{Slot: 4, Name: "BlessLifecycle", HP: 100, MapID: r.mapID})
 	if err != nil {
 		t.Fatal(err)

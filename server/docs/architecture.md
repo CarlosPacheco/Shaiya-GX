@@ -36,3 +36,9 @@ and world. Runtime copies are separate from the versioned development snapshot.
 No remote SQL credentials or container lifecycle are needed in the runtime.
 
 SQLite is the primary production database, using embedded storage without a separate database service. The distributed seed intentionally includes shared test accounts and gameplay state. See [storage](sqlite.md) and [operations](../../docs/server.md).
+
+## Modernization
+
+Current infrastructure changes and the remaining architecture migration are
+tracked in [modernization](modernization.md). Session handoffs now use the
+mutable SQLite runtime rather than shared session files.

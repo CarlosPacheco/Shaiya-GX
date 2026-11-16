@@ -13,7 +13,7 @@ import (
 func auditTradePair(t *testing.T) (*Session, *Session) {
 	t.Helper()
 	a, _ := forgeRuleSession(t)
-	id, err := db.CreateCharacter(db.Account{UserUID: 1, UserID: "admin1"}, db.NewCharacter{Slot: 3, Name: "AuditReceiver", HP: 100})
+	id, err := db.CreateCharacter(testAccount(t), db.NewCharacter{Slot: 3, Name: "AuditReceiver", HP: 100})
 	if err != nil {
 		t.Fatal(err)
 	}

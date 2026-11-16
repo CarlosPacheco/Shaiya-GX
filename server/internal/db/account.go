@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"errors"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/password"
 )
 
 // LoginResult is what PS_UserData.dbo.usp_Try_GameLogin_Taiwan selects.
@@ -13,20 +14,37 @@ type LoginResult struct {
 
 // TryGameLogin translates the original procedure into one SQLite transaction,
 // including account status, the login log and UserLoginStatus.
-func TryGameLogin(userID, password string, sessionID int64, userIP string) (LoginResult, error) {
+func TryGameLogin(userID, passwordValue string, sessionID int64, userIP string) (LoginResult, error) {
 	p, err := Pool(UserData)
 	if err != nil {
 		return LoginResult{}, err
 	}
 	c, cancel := ctx()
 	defer cancel()
+	// Expensive password work runs outside SQLite's single-writer transaction.
+	var stored string
+	err = p.QueryRowContext(c, `SELECT Pw FROM PS_UserData_Users_Master WHERE UserID=?`, userID).Scan(&stored)
+	if errors.Is(err, sql.ErrNoRows) {
+		return LoginResult{Status: -3}, nil
+	}
+	if err != nil {
+		return LoginResult{}, err
+	}
+	valid, legacy := password.Verify(stored, passwordValue)
+	var upgraded string
+	if valid && legacy {
+		upgraded, err = password.Hash(passwordValue)
+		if err != nil {
+			return LoginResult{}, err
+		}
+	}
 	result := LoginResult{Status: -3}
 	err = withTx(c, p, func(tx *sql.Tx) error {
 		var uid int32
 		var status int32
 		var leave int
 		var matches bool
-		e := tx.QueryRowContext(c, `SELECT UserUID,Status,Leave,Pw=?2 FROM PS_UserData_Users_Master WHERE UserID=?1`, userID, password).Scan(&uid, &status, &leave, &matches)
+		e := tx.QueryRowContext(c, `SELECT UserUID,Status,Leave,Pw=?2 FROM PS_UserData_Users_Master WHERE UserID=?1`, userID, stored).Scan(&uid, &status, &leave, &matches)
 		if errors.Is(e, sql.ErrNoRows) {
 			return nil
 		}
@@ -38,7 +56,7 @@ func TryGameLogin(userID, password string, sessionID int64, userIP string) (Logi
 			result.Status = -3
 			return nil
 		}
-		if !matches {
+		if !matches || !valid {
 			result.Status = -1
 			return nil
 		}
@@ -57,6 +75,11 @@ func TryGameLogin(userID, password string, sessionID int64, userIP string) (Logi
 		}
 		if result.Status != 0 && result.Status != 16 && result.Status != 32 && result.Status != 48 && result.Status != 64 && result.Status != 80 {
 			return nil
+		}
+		if upgraded != "" {
+			if _, e = tx.ExecContext(c, `UPDATE PS_UserData_Users_Master SET Pw=? WHERE UserUID=?`, upgraded, uid); e != nil {
+				return e
+			}
 		}
 		_, e = tx.ExecContext(c, `INSERT INTO PS_UserData_UserLoginStatus(UserUID,UserID,LoginStatus,LoginTime,LogoutTime,LoginSession,LastPlayTime)
    VALUES(?1,?2,1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?3,0)
@@ -88,6 +111,14 @@ func TryGameLogout(userUID int32, sessionID int64) error {
 		}
 		if e != nil {
 			return e
+		}
+		// A delayed disconnect must never alter a newer login or credit twice.
+		var online int
+		if e = tx.QueryRowContext(c, `SELECT LoginStatus FROM PS_UserData_UserLoginStatus WHERE UserUID=?`, userUID).Scan(&online); e != nil {
+			return e
+		}
+		if sessionID != loginSession || online == 0 {
+			return nil
 		}
 		if sessionID == loginSession {
 			if _, e = tx.ExecContext(c, `INSERT INTO PS_UserData_UserOnlineTimeLog(UserUID,OldPoint,AddPoint,LoginTime,LogoutTime,SessionID)

@@ -2,6 +2,7 @@
 package netx
 
 import (
+	"crypto/tls"
 	"net"
 	"sync/atomic"
 	"time"
@@ -11,6 +12,9 @@ import (
 // are) and disables Nagle so small packets such as skill acks go out
 // immediately.
 func Tune(conn net.Conn) {
+	if secure, ok := conn.(*tls.Conn); ok {
+		conn = secure.NetConn()
+	}
 	tcp, ok := conn.(*net.TCPConn)
 	if !ok {
 		return

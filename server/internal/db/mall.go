@@ -314,8 +314,8 @@ func withTx(c context.Context, pool *sql.DB, fn func(*sql.Tx) error) error {
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback() // also releases the writer lock if the operation panics
 	if err := fn(tx); err != nil {
-		tx.Rollback()
 		return err
 	}
 	return tx.Commit()

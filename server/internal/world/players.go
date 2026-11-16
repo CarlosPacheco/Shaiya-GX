@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/server/internal/netx"
 	"net"
 	"strings"
 	"sync"
@@ -15,11 +16,15 @@ import (
 // connWriter serializes every write to one client socket: the owning
 // session and broadcasts from other sessions share it.
 type connWriter struct {
-	mu   sync.Mutex
-	conn net.Conn
+	mu     sync.Mutex
+	conn   net.Conn
+	queued *netx.Writer
 }
 
 func (w *connWriter) write(b []byte) error {
+	if w.queued != nil {
+		return w.queued.Write(b)
+	}
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))

@@ -27,7 +27,10 @@ func TestKeepsPersistPackedOwnerAndCalendarWithoutOverwritingOtherKeeps(t *testi
 
 func TestCharacterMapZeroSurvivesPersistenceAndSelection(t *testing.T) {
 	p := sqliteFixture(t)
-	account := Account{UserUID: 1, UserID: "admin1"}
+	if _, err := p.Exec(`INSERT INTO PS_UserData_Users_Master(UserUID,UserID,Pw,Admin,AdminLevel,UseQueue,Status,Leave,UserType,Point) VALUES(990993,'map_zero','local',0,0,0,0,0,'N',0)`); err != nil {
+		t.Fatal(err)
+	}
+	account := Account{UserUID: 990993, UserID: "map_zero"}
 	id, err := CreateCharacter(account, NewCharacter{Slot: 3, Name: "MapZeroProbe", MapID: 1, HP: 100, MP: 100, SP: 100})
 	if err != nil {
 		t.Fatal(err)
@@ -39,7 +42,7 @@ func TestCharacterMapZeroSurvivesPersistenceAndSelection(t *testing.T) {
 	if err != nil || ch.MapID != 0 {
 		t.Fatalf("world selection map=%d error=%v", ch.MapID, err)
 	}
-	rows, err := CharactersForAccount(1)
+	rows, err := CharactersForAccount(uint32(account.UserUID))
 	if err != nil {
 		t.Fatal(err)
 	}

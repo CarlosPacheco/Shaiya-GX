@@ -9,7 +9,6 @@ import (
 	"io"
 	"math/big"
 	"net"
-	"os"
 	"path/filepath"
 	"slices"
 	"testing"
@@ -19,6 +18,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/session"
 )
 
 func readFrame(t *testing.T, conn net.Conn) []byte {
@@ -57,7 +57,7 @@ func TestLoginAgainstSQLite(t *testing.T) {
 	t.Cleanup(func() {
 		pool.Exec(`DELETE FROM PS_UserData_UserLoginStatus WHERE UserUID=990010`)
 		pool.Exec(`DELETE FROM PS_UserData_Users_Master WHERE UserUID=990010`)
-		os.Remove("runtime/sessions/990010.bin")
+		pool.Exec(`DELETE FROM GX_SessionHandoff WHERE UserUID=990010`)
 	})
 	logger, err := logx.New("gx_login_test")
 	if err != nil {
@@ -132,7 +132,9 @@ func TestLoginAgainstSQLite(t *testing.T) {
 	if op, _ := packet.U16(list); packet.Opcode(op) != packet.ServerList {
 		t.Fatalf("expected server list, got 0x%04x", op)
 	}
-	if _, err := os.Stat("runtime/sessions/990010.bin"); err != nil {
+	var identity [16]byte
+	copy(identity[:], body[8:24])
+	if _, err := session.Consume(uid, identity); err != nil {
 		t.Fatalf("handoff missing: %v", err)
 	}
 }
