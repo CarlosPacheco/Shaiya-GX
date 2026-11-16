@@ -18,7 +18,9 @@ func DatabaseRunning() bool {
 	return err == nil
 }
 func EnsureDatabase() error {
-	config.LoadRuntimeEnvFrom(RepoRoot())
+	if err := config.LoadRuntimeEnvFrom(RepoRoot()); err != nil {
+		return err
+	}
 	return db.Open(db.UserData, db.GameData, db.GameDefs)
 }
 

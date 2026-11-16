@@ -1,6 +1,6 @@
 # Building, testing and packaging GX
 
-Run commands from the repository root unless noted. Client and server share the root `go.mod` / `go.sum`; `server/` has no separate Go module or Git repository. Go 1.27.3 is the tested toolchain. Use an amd64 toolchain and `go version` to confirm it.
+Run commands from the repository root unless noted. Client and server share the root `go.mod` / `go.sum`; `server/` has no separate Go module or Git repository. Go 1.27.4 is the tested toolchain. Use an amd64 toolchain and `go version` to confirm it.
 
 ## Linux
 
@@ -23,7 +23,7 @@ Windows archives use the system graphics/runtime DLLs; no Go toolchain or C comp
 
 ## Windows (native)
 
-Install the Go 1.27.3 amd64 toolchain and a 64-bit MinGW-w64 GCC (for example MSYS2 UCRT64's `mingw-w64-ucrt-x86_64-gcc`). Add Go and that GCC's `bin` directory to your PowerShell PATH, then confirm:
+Install the Go 1.27.4 amd64 toolchain and a 64-bit MinGW-w64 GCC (for example MSYS2 UCRT64's `mingw-w64-ucrt-x86_64-gcc`). Add Go and that GCC's `bin` directory to your PowerShell PATH, then confirm:
 
 ```powershell
 go version

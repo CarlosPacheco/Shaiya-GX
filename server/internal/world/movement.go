@@ -44,7 +44,8 @@ func (s *Session) savePosition() {
 		return
 	}
 	if err := db.SaveCharacter(s.char); err != nil {
-		s.log.Printf("GX Server World failed to save character_id=%d: %v", s.char.ID, err)
+		s.logErr("save character position", err)
+		return
 	}
 	s.positionDirty = false
 	s.lastPositionSave = time.Now()
@@ -118,6 +119,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 	s.send(buildCharacterMapPosition(ch), "0x020B "+label)
 	s.send(buildCharacterMove(ch, 0, 0), "0x0501 "+label+" move")
 	if changedMap {
+		s.awaitingMapLoad = true
 		s.sendRelicList()
 	}
 	s.placeView()

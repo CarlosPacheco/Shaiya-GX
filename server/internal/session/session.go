@@ -18,10 +18,11 @@ import (
 const MaxAge = 10 * time.Minute
 
 type Handoff struct {
-	Identity    [16]byte
-	AESMaterial [32]byte // login AES key (16) + IV (16)
-	UserUID     uint32
-	SessionID   int64
+	Identity          [16]byte
+	AESMaterial       [32]byte // login AES key (16) + IV (16)
+	UserUID           uint32
+	SessionID         int64
+	CredentialVersion int64
 }
 
 // NewIdentity returns a fresh random token for one login.
@@ -52,11 +53,23 @@ func Save(h Handoff) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
 	defer cancel()
-	_, err = pool.ExecContext(ctx, `INSERT INTO GX_SessionHandoff
- (UserUID,Identity,AESMaterial,SessionID,ExpiresAt) VALUES(?,?,?,?,?)
- ON CONFLICT(UserUID) DO UPDATE SET Identity=excluded.Identity,
- AESMaterial=excluded.AESMaterial,SessionID=excluded.SessionID,ExpiresAt=excluded.ExpiresAt`,
-		h.UserUID, h.Identity[:], h.AESMaterial[:], h.SessionID, time.Now().Add(MaxAge).Unix())
+	tx, err := pool.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	var version int64
+	if err = tx.QueryRowContext(ctx, `SELECT COALESCE((SELECT Version FROM GX_AccountSecurity WHERE UserUID=?),1)`, h.UserUID).Scan(&version); err != nil {
+		return err
+	}
+	if h.CredentialVersion != 0 && h.CredentialVersion != version {
+		return ErrInvalid
+	}
+	_, err = tx.ExecContext(ctx, `INSERT INTO GX_SessionHandoff(UserUID,Identity,AESMaterial,SessionID,ExpiresAt,CredentialVersion) VALUES(?,?,?,?,?,?) ON CONFLICT(UserUID) DO UPDATE SET Identity=excluded.Identity,AESMaterial=excluded.AESMaterial,SessionID=excluded.SessionID,ExpiresAt=excluded.ExpiresAt,CredentialVersion=excluded.CredentialVersion`, h.UserUID, h.Identity[:], h.AESMaterial[:], h.SessionID, time.Now().Add(MaxAge).Unix(), version)
+	if err == nil {
+		err = tx.Commit()
+	}
+
 	return err
 }
 
@@ -75,17 +88,17 @@ func Consume(userUID uint32, identity [16]byte) (Handoff, error) {
 	}
 	defer tx.Rollback()
 	var stored, material []byte
-	var expires int64
+	var expires, version int64
 	h := Handoff{UserUID: userUID}
-	err = tx.QueryRowContext(ctx, `SELECT Identity,AESMaterial,SessionID,ExpiresAt
- FROM GX_SessionHandoff WHERE UserUID=?`, userUID).Scan(&stored, &material, &h.SessionID, &expires)
+	err = tx.QueryRowContext(ctx, `SELECT Identity,AESMaterial,SessionID,ExpiresAt,CredentialVersion,COALESCE((SELECT Version FROM GX_AccountSecurity WHERE UserUID=GX_SessionHandoff.UserUID),1)
+ FROM GX_SessionHandoff WHERE UserUID=?`, userUID).Scan(&stored, &material, &h.SessionID, &expires, &h.CredentialVersion, &version)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Handoff{}, ErrInvalid
 	}
 	if err != nil {
 		return Handoff{}, err
 	}
-	if len(stored) != 16 || len(material) != 32 || expires <= time.Now().Unix() || subtle.ConstantTimeCompare(stored, identity[:]) != 1 {
+	if version != h.CredentialVersion || len(stored) != 16 || len(material) != 32 || expires <= time.Now().Unix() || subtle.ConstantTimeCompare(stored, identity[:]) != 1 {
 		return Handoff{}, ErrInvalid
 	}
 	copy(h.Identity[:], stored)

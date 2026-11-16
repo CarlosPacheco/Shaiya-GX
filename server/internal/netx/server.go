@@ -4,14 +4,23 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/telemetry"
 	"net"
 	"sync"
 	"time"
 )
 
+var admitted = telemetry.NumberMetric("gx_connections_accepted_total")
+var rejected = telemetry.NumberMetric("gx_connections_rejected_total")
+var connections = telemetry.NumberMetric("gx_connections_active")
+
 // Serve bounds connections globally and by source. Cancellation closes sockets
 // and waits for handlers to finish persisting before the caller closes storage.
-func Serve(ctx context.Context, listener net.Listener, capacity, perIP int, handle func(net.Conn)) error {
+func Serve(ctx context.Context, listener net.Listener, capacity, perIP int, handle func(net.Conn), admission ...*RateLimiter) error {
+	starts := NewRateLimiter(4096, 120, time.Minute)
+	if len(admission) > 0 && admission[0] != nil {
+		starts = admission[0]
+	}
 	var mu sync.Mutex
 	active := map[net.Conn]string{}
 	sources := map[string]int{}
@@ -24,7 +33,7 @@ func Serve(ctx context.Context, listener net.Listener, capacity, perIP int, hand
 			listener.Close()
 			mu.Lock()
 			for conn := range active {
-				conn.Close()
+				Abort(conn)
 			}
 			mu.Unlock()
 		case <-done:
@@ -34,7 +43,7 @@ func Serve(ctx context.Context, listener net.Listener, capacity, perIP int, hand
 		listener.Close()
 		mu.Lock()
 		for conn := range active {
-			conn.Close()
+			Abort(conn)
 		}
 		mu.Unlock()
 		workers.Wait()
@@ -49,23 +58,33 @@ func Serve(ctx context.Context, listener net.Listener, capacity, perIP int, hand
 		}
 		source, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 		if err != nil {
-			conn.Close()
+			Abort(conn)
+			continue
+		}
+		if !starts.Allow(source) {
+			rejected.Add(1)
+			Abort(conn)
 			continue
 		}
 		mu.Lock()
 		if ctx.Err() != nil || len(active) >= capacity || sources[source] >= perIP {
+			rejected.Add(1)
 			mu.Unlock()
-			conn.Close()
+			Abort(conn)
 			continue
 		}
+		admitted.Add(1)
+		connections.Add(1)
 		active[conn] = source
 		sources[source]++
 		mu.Unlock()
 		workers.Go(func() {
 			defer func() {
-				conn.Close()
+				_ = conn.SetWriteDeadline(time.Now().Add(time.Second))
+				_ = conn.Close()
 				mu.Lock()
 				delete(active, conn)
+				connections.Add(-1)
 				sources[source]--
 				if sources[source] == 0 {
 					delete(sources, source)

@@ -49,7 +49,7 @@ def main():
             for slot,(typ,identity,count) in enumerate(fixtures):
                 db.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,?,?,?,?,1,?,500,0,0,0,0,0,0,'00000000000000000000',?,datetime('now'),'N2',0)",(cid,typ*1000+identity,secrets.randbits(62),typ,identity,slot,count))
         env=dict(os.environ,RAPTURE_DB_PATH=str(dbpath),RAPTURE_DATA_DIR=str(ROOT/'server/data'),RAPTURE_LOGIN_LISTEN='127.0.0.1:41800',RAPTURE_WORLD_LISTEN='127.0.0.1:41810',RAPTURE_PUBLIC_IP='127.0.0.1',SHAIYA_TEST_LOGIN_ADDR='127.0.0.1:41800',SHAIYA_TEST_WORLD_PORT='41810',SHAIYA_TEST_DISPOSABLE='1',SHAIYA_TEST_FORGE_CONTINUOUS='1',SHAIYA_DATA=str(args.data),SHAIYA_TEST_ITEM_FILE=str(args.item_data.resolve()),SHAIYA_TEST_USER=user,SHAIYA_PASSWORD=password,GOTOOLCHAIN='local')
-        env['PATH']=str(Path.home()/'.local/opt/go-1.27.3/bin')+':'+env['PATH']
+        env['PATH']=str(Path.home()/'.local/opt/go-1.27.4/bin')+':'+env['PATH']
         try:
             for executable,port in [(ROOT/'server/build/gx_login',41800),(args.world.resolve(),41810)]:
                 log=(logs/(executable.name+'.log')).open('w')

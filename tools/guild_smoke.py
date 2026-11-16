@@ -39,7 +39,7 @@ env = dict(os.environ, XDG_CONFIG_HOME=cfg.name, SHAIYA_TEST_DISPOSABLE="1",
            RAPTURE_PUBLIC_IP="127.0.0.1", RAPTURE_DB_HOST="127.0.0.1", RAPTURE_DB_PORT="14346",
            SHAIYA_DATA=os.environ.get('SHAIYA_DATA', str(Path.home() / "Desktop/Go project/data")), GOTOOLCHAIN="local",
            GOPATH=str(Path.home() / ".local/share/go"))
-env["PATH"] = str(Path.home() / ".local/opt/go-1.27.3/bin") + ":" + env["PATH"]
+env["PATH"] = str(Path.home() / ".local/opt/go-1.27.4/bin") + ":" + env["PATH"]
 
 
 def query(statement, database="PS_GameData"):

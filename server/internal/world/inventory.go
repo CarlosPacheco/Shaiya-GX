@@ -189,53 +189,43 @@ func wouldFit(items []db.Item, tpl *db.Item, count, maxStack uint16) bool {
 // giveItem stacks onto existing items, then fills free slots, persisting
 // each change. Returns the 0x0205 packets and what did not fit.
 func (s *Session) giveItem(tpl *db.Item, count, maxStack uint16) ([][]byte, uint16, error) {
+	if s.operation != nil {
+		packets, left := planGiveItem(&s.items, tpl, count, maxStack)
+		return packets, left, nil
+	}
 	return giveItemTo(s.char.ID, &s.items, tpl, count, maxStack)
 }
 
 func giveItemTo(charID uint32, items *[]db.Item, tpl *db.Item, count, maxStack uint16) ([][]byte, uint16, error) {
-	var packets [][]byte
-	for count > 0 {
-		if i := findStackable(*items, tpl, maxStack); i >= 0 {
-			it := &(*items)[i]
-			moved := min(count, maxStack-it.Count)
-			it.Count += moved
-			if err := db.SaveCharacterItem(charID, it); err != nil {
-				return packets, count, err
-			}
-			packets = append(packets, buildAddItem(it))
-			count -= moved
-			continue
-		}
-		free := freeInventorySlots(*items)
-		if len(free) == 0 {
-			break
-		}
-		n := min(count, maxStack)
-		it := db.Item{Bag: free[0][0], Slot: free[0][1], Type: tpl.Type, TypeID: tpl.TypeID, Quality: tpl.Quality,
-			Gems: tpl.Gems, Count: n, CraftName: tpl.CraftName, MakeType: tpl.MakeType}
-		if err := db.AddCharacterItem(charID, &it); err != nil {
-			return packets, count, err
-		}
-		*items = append(*items, it)
-		packets = append(packets, buildAddItem(&it))
-		count -= n
+	if maxStack == 0 {
+		return nil, count, fmt.Errorf("invalid stack limit")
 	}
-	return packets, count, nil
+	before := *items
+	after := append([]db.Item(nil), before...)
+	packets, left := planGiveItem(&after, tpl, count, maxStack)
+	if err := db.CommitItems(charID, before, after); err != nil {
+		return nil, count, err
+	}
+	*items = after
+	return packets, left, nil
 }
 
 // consumeOne decrements the item at index i by one, persisting it.
 func (s *Session) consumeOne(i int) (db.Item, error) {
+	if i < 0 || i >= len(s.items) || s.items[i].Count == 0 {
+		return db.Item{}, fmt.Errorf("invalid consumption")
+	}
 	it := s.items[i]
 	it.Count--
-	var err error
+	if err := s.saveInventoryItem(&it); err != nil {
+		return it, err
+	}
 	if it.Count == 0 {
-		err = db.DeleteCharacterItems(s.char.ID, it.UID)
 		s.items = append(s.items[:i], s.items[i+1:]...)
 	} else {
-		err = db.SaveCharacterItem(s.char.ID, &it)
-		s.items[i].Count = it.Count
+		s.items[i] = it
 	}
-	return it, err
+	return it, nil
 }
 
 func cooldownForReqIg(reqIg uint8) time.Duration {
@@ -483,18 +473,18 @@ func (s *Session) handleDropItem(p []byte) {
 	mi := MapItem{ID: nextMapItemID(), Item: dropped, OwnerID: ch.ID, NoParty: true, DroppedAt: time.Now(), PosX: x, PosY: ch.PosY, PosZ: z}
 	res := it
 	res.Count = it.Count - n
-	var err error
+	after := append([]db.Item(nil), s.items...)
 	if res.Count == 0 {
-		err = db.DeleteCharacterItems(ch.ID, it.UID)
-		s.items = append(s.items[:i], s.items[i+1:]...)
+		after = append(after[:i], after[i+1:]...)
 	} else {
-		err = db.SaveCharacterItem(ch.ID, &res)
-		s.items[i].Count = res.Count
+		after[i] = res
 	}
-	if err != nil {
-		s.log.Printf("GX Server World failed to drop item: %v", err)
+	if err := db.CommitItems(ch.ID, s.items, after); err != nil {
+		s.logErr("drop transaction", err)
 		return
 	}
+	s.items = after
+
 	addMapItem(ch.MapID, mi)
 	s.log.Printf("GX Server World dropped item uid=%d map_item_id=%d type=%d/%d count=%d remaining=%d", it.UID, mi.ID, it.Type, it.TypeID, n, res.Count)
 	s.send(buildRemoveItem(&res, res.Count == 0), "0x0206 drop remove item")
@@ -558,11 +548,12 @@ func (s *Session) handlePickupItem(p []byte) {
 	// CZone::GetPickItem: 3 missing, 0 reserved (CItem::PickEnable: the
 	// owner, or its party for mob loot, for the first 30 s), 4 farther than
 	// 10 units, 2 a quest item no active quest needs.
-	mi, ok := findMapItem(ch.MapID, id)
+	mi, claim, ok := claimMapItem(ch.MapID, id)
 	if !ok {
 		s.send(buildAddItemError(3), "0x0205 pickup error")
 		return
 	}
+	defer claim.Abort()
 	if mi.OwnerID != 0 && mi.OwnerID != ch.ID && time.Since(mi.DroppedAt) < mapItemOwnerWindow &&
 		(mi.NoParty || !samePartyIDs(mi.OwnerID, ch.ID)) {
 		s.send(buildAddItemError(0), "0x0205 pickup reserved")
@@ -577,13 +568,21 @@ func (s *Session) handlePickupItem(p []byte) {
 		return
 	}
 	if mi.Money > 0 {
-		removeMapItem(ch.MapID, mi.ID)
 		amount := mi.Money
 		if mi.FromMob {
 			amount = s.mobGoldBonus(amount)
 		}
-		ch.Money = min(uint32(min(uint64(ch.Money)+uint64(amount), db.MoneyCap)), db.MoneyCap)
-		s.persist()
+		after := *ch
+		after.Money = uint32(min(uint64(ch.Money)+uint64(amount), db.MoneyCap))
+		change := db.CharacterChange{Before: *ch, After: after, ItemsBefore: s.items, ItemsAfter: s.items}
+		if err := db.CommitGameplay([]db.CharacterChange{change}, nil); err != nil {
+			s.logErr("money pickup transaction", err)
+			return
+		}
+		*ch = after
+		claim.Finish(0)
+		s.syncPlayer()
+
 		gold := db.Item{Bag: 1, Type: moneyItemType, Quality: uint16(min(mi.Money, 65535)), Count: 1}
 		s.log.Printf("GX Server World picked up money amount=%d new_money=%d", mi.Money, ch.Money)
 		s.send(buildAddItem(&gold), "0x0205 pickup money")
@@ -594,6 +593,7 @@ func (s *Session) handlePickupItem(p []byte) {
 	adds, left, err := s.giveItem(&mi.Item, mi.Item.Count, maxStackOf(mi.Item.Type, mi.Item.TypeID))
 	if err != nil {
 		s.log.Printf("GX Server World pickup failed: %v", err)
+		return
 	}
 	if len(adds) == 0 {
 		s.send(buildAddItemError(1), "0x0205 pickup inventory full")
@@ -602,19 +602,24 @@ func (s *Session) handlePickupItem(p []byte) {
 	for _, a := range adds {
 		s.send(a, "0x0205 pickup add item")
 	}
+	updated := claim.Finish(left)
 	dispatchEntityLeave(ch.MapID, viewItem, mi.ID, "0x0402 pickup map remove item")
-	if left == 0 {
-		removeMapItem(ch.MapID, mi.ID)
-	} else if upd, ok := setMapItemCount(ch.MapID, mi.ID, left); ok {
-		dispatchItemEnter(ch.MapID, &upd, "0x0401 pickup map add remaining item")
+	if left > 0 {
+		dispatchItemEnter(ch.MapID, &updated, "0x0401 pickup map add remaining item")
 	}
+
 	s.log.Printf("GX Server World picked up map_item_id=%d type=%d/%d remaining=%d", mi.ID, mi.Item.Type, mi.Item.TypeID, left)
 	s.questPickup(mi.Item.Type, mi.Item.TypeID)
 }
 
 // moveItem performs an inventory move/swap/merge and returns the 0x0204.
-func (s *Session) moveItem(srcBag, srcSlot, destBag, destSlot uint8) ([]byte, bool) {
-	ch := s.char
+func (s *Session) moveItem(srcBag, srcSlot, destBag, destSlot uint8) (frame []byte, ok bool) {
+	if !s.inventoryOperation(func() { frame, ok = s.planMoveItem(srcBag, srcSlot, destBag, destSlot) }) {
+		return nil, false
+	}
+	return
+}
+func (s *Session) planMoveItem(srcBag, srcSlot, destBag, destSlot uint8) ([]byte, bool) {
 	if !isValidItemPosition(srcBag, srcSlot) || !isValidItemPosition(destBag, destSlot) {
 		return nil, false
 	}
@@ -637,9 +642,9 @@ func (s *Session) moveItem(srcBag, srcSlot, destBag, destSlot uint8) ([]byte, bo
 			if ms := maxStackOf(src.Type, src.TypeID); ms > 1 && dest.Count < ms {
 				moved := min(src.Count, ms-dest.Count)
 				s.items[di].Count += moved
-				db.SaveCharacterItem(ch.ID, &s.items[di])
+				s.saveInventoryItem(&s.items[di])
 				s.items[si].Count -= moved
-				db.SaveCharacterItem(ch.ID, &s.items[si])
+				s.saveInventoryItem(&s.items[si])
 				destUID := dest.UID
 				var srcAfter *db.Item
 				if s.items[si].Count == 0 {
@@ -655,13 +660,13 @@ func (s *Session) moveItem(srcBag, srcSlot, destBag, destSlot uint8) ([]byte, bo
 		}
 		s.items[si].Bag, s.items[si].Slot = destBag, destSlot
 		s.items[di].Bag, s.items[di].Slot = srcBag, srcSlot
-		db.SaveCharacterItem(ch.ID, &s.items[si])
-		db.SaveCharacterItem(ch.ID, &s.items[di])
+		s.saveInventoryItem(&s.items[si])
+		s.saveInventoryItem(&s.items[di])
 		s.log.Printf("GX Server World swapped items uid=%d <-> uid=%d", src.UID, dest.UID)
 		return buildBagToBag(srcBag, srcSlot, &s.items[di], destBag, destSlot, &s.items[si]), true
 	}
 	s.items[si].Bag, s.items[si].Slot = destBag, destSlot
-	if err := db.SaveCharacterItem(ch.ID, &s.items[si]); err != nil {
+	if err := s.saveInventoryItem(&s.items[si]); err != nil {
 		s.log.Printf("GX Server World failed to move item: %v", err)
 	}
 	return buildBagToBag(srcBag, srcSlot, nil, destBag, destSlot, &s.items[si]), true

@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/crypto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
@@ -28,36 +29,44 @@ const (
 // Session is one client connection. Its loop owns its fields under stateMu.
 // A paired trade may also update them while holding both sessions' state locks.
 type Session struct {
-	inputFrames     *netx.RateLimiter
-	inputBytes      *netx.RateLimiter
-	stateMu         sync.Mutex
-	effectWatchID   uint32
-	effectWatchKind uint8
-	effectWatchAt   time.Time
-	effectWatchHash [32]byte
-	speedKnown      bool
-	lastSpeeds      playerSpeeds
-	movement        playerMovement
-	questNPCCatalog questNPCCatalogState
-	gmTurbo         bool
-	gmImmune        bool
-	gmConcealed     bool
-	elements        elementRuntime
-	socialChecked   time.Time
-	conn            net.Conn
-	out             *connWriter
-	log             *logx.Tag
-	logger          *logx.Logger
+	economy           *netx.RateLimiter
+	awaitingMapLoad   bool
+	inputReads        *netx.RateLimiter
+	lastInputTick     time.Time
+	persistenceFailed bool
+	operation         *inventoryOperation
+	inputFrames       *netx.RateLimiter
+	inputBytes        *netx.RateLimiter
+	stateMu           sync.Mutex
+	effectWatchID     uint32
+	effectWatchKind   uint8
+	effectWatchAt     time.Time
+	effectWatchHash   [32]byte
+	speedKnown        bool
+	lastSpeeds        playerSpeeds
+	movement          playerMovement
+	questNPCCatalog   questNPCCatalogState
+	gmTurbo           bool
+	gmImmune          bool
+	gmConcealed       bool
+	elements          elementRuntime
+	socialChecked     time.Time
+	conn              net.Conn
+	out               *connWriter
+	log               *logx.Tag
+	logger            *logx.Logger
 
 	aesRecv, aesSend *crypto.AESCTR
 	expanded         bool
 
-	accountID uint32
-	sessionID int64
-	account   db.Account
-	faction   uint8
-	maxMode   uint8
-	isAdmin   bool
+	accountID         uint32
+	sessionID         int64
+	credentialVersion int64
+	authorizationAt   time.Time
+	account           db.Account
+	faction           uint8
+	maxMode           uint8
+	isAdmin           bool
 
 	characters []db.Character
 	char       *db.Character
@@ -105,30 +114,41 @@ type Session struct {
 	returnAt         time.Time // 0x0556 pending move (CUser +0x581c, type 0)
 }
 
-var (
-	activeAccountsMu sync.Mutex
-	activeAccounts   = map[uint32]bool{}
-)
-
-func acquireAccount(uid uint32) bool {
-	activeAccountsMu.Lock()
-	defer activeAccountsMu.Unlock()
-	if activeAccounts[uid] {
+func acquireAccount(uid uint32, id int64) bool {
+	realm.activeAccountsMu.Lock()
+	if realm.activeAccounts[uid] {
+		realm.activeAccountsMu.Unlock()
 		return false
 	}
-	activeAccounts[uid] = true
+	realm.activeAccounts[uid] = true
+	realm.activeAccountsMu.Unlock()
+	ok, err := db.AcquireAccount(uid, id)
+	if err != nil || !ok {
+		realm.activeAccountsMu.Lock()
+		delete(realm.activeAccounts, uid)
+		realm.activeAccountsMu.Unlock()
+		storageFailure(err)
+		return false
+	}
 	return true
 }
-
-func releaseAccount(uid uint32) {
-	activeAccountsMu.Lock()
-	delete(activeAccounts, uid)
-	activeAccountsMu.Unlock()
+func releaseAccount(uid uint32, id int64) {
+	if err := db.ReleaseAccount(uid, id); err != nil {
+		storageFailure(err)
+		db.RetryAccountRelease(uid, id)
+	}
+	realm.activeAccountsMu.Lock()
+	delete(realm.activeAccounts, uid)
+	realm.activeAccountsMu.Unlock()
 }
 
 // Serve runs one client connection until it closes.
 func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error {
-	s := &Session{inputFrames: netx.NewRateLimiter(1, 512, time.Second), inputBytes: netx.NewRateLimiter(1, 1<<20, time.Second), conn: conn, out: &connWriter{conn: conn, queued: netx.NewWriter(conn, 256, 1<<20)}, log: log, logger: logger,
+	policy, err := config.Network("world")
+	if err != nil {
+		return err
+	}
+	s := &Session{economy: netx.NewRateLimiter(1, policy.Economy, time.Second), inputReads: netx.NewRateLimiter(1, policy.InputFrames*4, time.Second), inputFrames: netx.NewRateLimiter(1, policy.InputFrames, time.Second), inputBytes: netx.NewRateLimiter(1, policy.InputBytes, time.Second), conn: conn, out: &connWriter{conn: conn, queued: netx.NewWriter(conn, policy.OutputPackets, policy.OutputBytes)}, log: log, logger: logger,
 		faction: FactionNone, maxMode: MaxModeUltimate,
 		itemCooldowns: map[uint8]time.Time{}, skillCooldowns: map[uint16]time.Time{},
 		lastPositionSave: time.Now(), lastRegenAt: time.Now()}
@@ -160,25 +180,43 @@ func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error {
 func (s *Session) processInput(n int, buf []byte, frames *netx.Frames) error {
 	s.stateMu.Lock()
 	defer s.stateMu.Unlock()
-	s.tick(n == 0)
+	if s.accountID != 0 && time.Now().After(s.authorizationAt) {
+		a, err := db.AccountByUID(int32(s.accountID))
+		if err != nil || !db.CanPlay(int32(a.Status)) || a.Admin != s.isAdmin || a.CredentialVersion != s.credentialVersion {
+			return fmt.Errorf("session authorization revoked")
+		}
+		s.authorizationAt = time.Now().Add(30 * time.Second)
+	}
 	if n == 0 {
+		s.tick(true)
+		s.lastInputTick = time.Now()
 		return nil
+	}
+	if s.inputReads != nil && !s.inputReads.Allow("") {
+		return fmt.Errorf("world fragmented input budget exceeded")
 	}
 	if s.inputBytes != nil && !s.inputBytes.AllowN("", n) {
 		return fmt.Errorf("world input byte budget exceeded")
 	}
 	list, ok := frames.Push(buf[:n])
+	if !ok {
+		return fmt.Errorf("malformed world frame")
+	}
+	if len(list) > 0 && s.inputFrames != nil && !s.inputFrames.AllowN("", len(list)) {
+		return fmt.Errorf("world input packet budget exceeded")
+	}
+	// Complete commands remain responsive; partial TCP frames cannot trigger
+	// expensive simulation work on every byte or starve the idle timeline.
+	if len(list) > 0 || time.Since(s.lastInputTick) >= loopTick {
+		s.tick(false)
+		s.lastInputTick = time.Now()
+	}
 	for _, frame := range list {
-		if s.inputFrames != nil && !s.inputFrames.Allow("") {
-			return fmt.Errorf("world input packet budget exceeded")
-		}
 		if err := s.frame(frame); err != nil {
 			return err
 		}
 	}
-	if !ok {
-		return fmt.Errorf("malformed world frame")
-	}
+
 	return nil
 }
 
@@ -191,7 +229,7 @@ func (s *Session) close() {
 		if err := db.TryGameLogout(int32(s.accountID), s.sessionID); err != nil {
 			s.log.Printf("GX Server World logout procedure failed: %v", err)
 		}
-		releaseAccount(s.accountID)
+		releaseAccount(s.accountID, s.sessionID)
 	}
 }
 
@@ -199,6 +237,11 @@ func (s *Session) close() {
 func (s *Session) leaveWorld() {
 	if s.char == nil {
 		return
+	}
+	if s.player != nil {
+		s.drainRewards(s.player)
+		s.tickPvP()
+		s.applyDuelWins()
 	}
 	s.savePosition()
 	s.persistBuffs()
@@ -216,6 +259,13 @@ func (s *Session) leaveWorld() {
 // send writes a frame to this client: AES-CTR until the initial character
 // state, the stateless expanded XOR afterwards.
 func (s *Session) send(frame []byte, label string) {
+	if s.persistenceFailed {
+		return
+	}
+	if s.operation != nil {
+		s.operation.packet(frame, label, false)
+		return
+	}
 	if s.aesSend == nil || len(frame) <= 2 {
 		return
 	}
@@ -261,6 +311,43 @@ func (s *Session) sendStatPackets() {
 	}
 }
 
+// drainRewards applies bounded, coalesced rewards before normal simulation or
+// logout. Aggregation keeps individual scaling/rounding and caps unchanged.
+func (s *Session) drainRewards(p *ConnectedPlayer) {
+	for mob, count := range p.pendingQuestKills() {
+		if s.questKillCount(mob, count) {
+			p.ackQuestKills(mob, count)
+		}
+	}
+	snapshot, exp, gold := p.peekRewardTotals(s.experienceMode())
+	if exp == 0 && gold == 0 {
+		return
+	}
+	before := *s.char
+	after := before
+	levels := applyExpGain(&after, exp)
+	if levels > 0 {
+		full := StatsFor(&after, s.equipment())
+		after.CurrentHP, after.CurrentMP, after.CurrentSP = full.MaxHP, full.MaxMP, full.MaxSP
+	}
+	after.Money = uint32(min(uint64(after.Money)+uint64(gold), db.MoneyCap))
+	change := db.CharacterChange{Before: before, After: after, ItemsBefore: s.items, ItemsAfter: s.items}
+	if err := db.CommitGameplay([]db.CharacterChange{change}, nil); err != nil {
+		s.logErr("reward transaction", err)
+		return
+	}
+	*s.char = after
+	p.ackRewardTotals(snapshot, gold)
+	s.syncPlayer()
+	s.partyPools()
+	if exp > 0 {
+		s.notifyExpGain(exp, levels)
+	}
+	if gold > 0 {
+		s.send(buildSetMoney(s.char.Money), "0x0213 party gold share")
+	}
+}
+
 // normalize derives the base pools from StatusDefs (Chars only stores the
 // current HP/MP/SP). Effective clamping waits for equipment and buffs.
 func normalize(ch *db.Character) {
@@ -286,20 +373,8 @@ func (s *Session) tick(idle bool) {
 				s.finalizeTrade(trade, other)
 			}
 		}
-		for _, mob := range p.TakeQuestKills() {
-			s.questKill(mob)
-		}
-		exp, gold := p.TakeRewards()
-		for _, e := range exp {
-			s.awardExp(e, true)
-		}
-		if len(gold) > 0 {
-			for _, g := range gold {
-				s.char.Money = uint32(min(uint64(s.char.Money)+uint64(g), db.MoneyCap))
-			}
-			s.persist()
-			s.send(buildSetMoney(s.char.Money), "0x0213 party gold share")
-		}
+
+		s.drainRewards(p)
 		for _, d := range p.TakeDamage() {
 			if s.dead {
 				break
@@ -327,7 +402,7 @@ func (s *Session) tick(idle bool) {
 	s.tickGuildDuel()
 	s.applyDuelWins()
 	s.tickReturnToTown()
-	s.takeGuildFee()
+	s.completePendingGuild()
 	s.tickRebirth(time.Now())
 	if s.char == nil {
 		return
@@ -445,7 +520,7 @@ func (s *Session) frame(f []byte) error {
 		if packet.Opcode(op) == packet.GameHandshake && len(f) >= 24 {
 			return s.handshake(f)
 		}
-		return nil
+		return fmt.Errorf("world handshake required")
 	}
 	p := s.aesRecv.Transform(f[2:])
 	if len(p) < 2 {
@@ -470,14 +545,19 @@ func (s *Session) handshake(f []byte) error {
 	h, err := session.Consume(uid, identity)
 	if err != nil {
 		s.log.Printf("GX Server World rejected handshake for user_uid=%d: %v", uid, err)
-		return nil
+		return fmt.Errorf("invalid world login handoff")
 	}
-	if !acquireAccount(uid) {
+	if !acquireAccount(uid, h.SessionID) {
 		s.log.Printf("GX Server World rejected user_uid=%d: already connected", uid)
-		return nil
+		return fmt.Errorf("account already connected")
 	}
 	s.accountID, s.sessionID = uid, h.SessionID
+	s.credentialVersion = h.CredentialVersion
+	s.authorizationAt = time.Now().Add(30 * time.Second)
 	if a, err := db.AccountByUID(int32(uid)); err == nil {
+		if !db.CanPlay(int32(a.Status)) || a.CredentialVersion != h.CredentialVersion {
+			return fmt.Errorf("account authorization changed")
+		}
 		s.account = a
 		s.gmTurbo = false
 		s.faction, s.maxMode, s.isAdmin = a.Country, a.MaxGrow, a.Admin
@@ -521,254 +601,10 @@ func (s *Session) sendCharacterSelect() {
 	s.send(buildAccountFaction(s.faction, s.maxMode), "0x0109 account faction")
 }
 
-func (s *Session) dispatch(op packet.Opcode, p []byte) {
-	switch op {
-	case packet.Opcode(proto.GXTargetEffectsQuery):
-		s.handleTargetEffects(p)
-	case packet.Opcode(proto.GXLadder):
-		s.handleLadder(p)
-	case 0x2202, 0x2203, 0x2205, 0x2206, 0x2209, 0x220a, 0x220b, 0x220c:
-		s.handleSocial(op, p)
-	case packet.AccountFaction:
-		if len(p) >= 3 && isValidFaction(p[2]) {
-			s.faction = p[2]
-			if err := db.SaveCountry(int32(s.accountID), s.faction); err != nil {
-				s.log.Printf("GX Server World failed to save faction: %v", err)
-			}
-			s.send(buildAccountFaction(s.faction, s.maxMode), "0x0109 account faction selected")
-		}
-	case packet.CreateCharacter:
-		s.handleCreateCharacter(p)
-	case packet.DeleteCharacter:
-		if len(p) >= 6 {
-			id, _ := packet.U32(p[2:])
-			ok, err := db.DeleteCharacter(s.accountID, id)
-			s.logErr("delete character", err)
-			s.send(buildCharResult(packet.DeleteCharacter, ok, id), "0x0103 delete character")
-		}
-	case packet.RestoreCharacter:
-		if len(p) >= 6 {
-			id, _ := packet.U32(p[2:])
-			ok, err := db.RestoreCharacter(s.accountID, id)
-			s.logErr("restore character", err)
-			s.send(buildCharResult(packet.RestoreCharacter, ok, id), "0x010F restore character")
-		}
-	case packet.RenameCharacter:
-		s.handleRename(p)
-	case packet.SelectCharacter:
-		if len(p) >= 6 {
-			id, _ := packet.U32(p[2:])
-			s.selectCharacter(id)
-		}
-	case packet.ChatNormal, packet.ChatWorld, packet.ChatMap, packet.ChatNormalAdmin, packet.ChatWorldAdmin,
-		packet.ChatShout, packet.ChatWorldShout:
-		s.handleChat(op, p)
-	case packet.ChatWhisper:
-		s.handleWhisper(p)
-	case packet.UseItem:
-		s.handleUseItem(p)
-	case packet.ChangeAppearance:
-		s.handleChangeAppearance(p)
-	case packet.EnchantAdd:
-		s.handleEnchantAdd(p)
-	case packet.GemAdd:
-		s.handleGemAdd(p)
-	case packet.GemRemove:
-		s.handleGemRemove(p)
-	case packet.ItemCompose:
-		s.handleItemCompose(p)
-	case packet.RemoveItem:
-		s.handleDropItem(p)
-	case packet.AddItem:
-		s.handlePickupItem(p)
-	case packet.ItemBagToBag:
-		s.handleItemBagToBag(p)
-	case packet.ShopSell:
-		s.handleShopSell(p)
-	case packet.ShopBuy:
-		s.handleShopBuy(p)
-	case packet.QuestStart, packet.QuestStartAlt:
-		s.handleQuestStart(p)
-	case packet.QuestEnd:
-		s.handleQuestEnd(p)
-	case packet.QuestChoose:
-		s.handleQuestChoose(p)
-	case packet.QuestAbandon:
-		s.handleQuestAbandon(p)
-	case packet.NpcTalk:
-		if len(p) >= 6 {
-			id, _ := packet.U32(p[2:])
-			s.useNpc(id)
-		}
-	case packet.Opcode(proto.PvPRewardStatus), packet.Opcode(proto.PvPRewardKill), packet.Opcode(proto.PvPRewardDeath):
-		s.handlePvPReward(op, p)
-	case packet.PartyInvite, packet.PartyInviteName:
-		s.handlePartyInvite(op, p)
-	case packet.PartyAnswer:
-		s.handlePartyAnswer(p)
-	case packet.PartyLeft, packet.PartyLeaveAlt:
-		s.handlePartyLeave()
-	case packet.PartyExpelled:
-		s.handlePartyExpel(p)
-	case packet.PartyLeader:
-		s.handlePartyLeader(p)
-	case packet.RaidConvert, packet.RaidDivision, packet.RaidAutoJoin, packet.RaidDisband:
-		s.handleRaidSettings(op, p)
-	case packet.RaidInvite, packet.RaidInviteName:
-		s.handleRaidInvite(op, p)
-	case packet.RaidAnswer:
-		s.handleRaidAnswer(p)
-	case packet.RaidAutoJoinName:
-		s.handleRaidAutoJoin(p)
-	case packet.RaidSwap, packet.RaidSubLeader, packet.RaidLeader:
-		s.handleRaidRoles(op, p)
-	case packet.RaidExpel:
-		s.handleRaidExpel(p)
-	case packet.ChatParty:
-		if s.char != nil {
-			if msg, err := readChatMessage(p); err == nil {
-				s.partyChat(msg)
-			}
-		}
-	case packet.ChatGuild:
-		if s.char != nil && s.player != nil && len(p) >= 3 && p[2] > 1 && p[2] <= 0x80 {
-			if msg, err := readChatMessage(p); err == nil {
-				s.guildChat(msg)
-			}
-		}
-	case packet.GuildCreate, packet.GuildCreateAgree, packet.GuildDisband, packet.GuildDisbandAgree,
-		packet.GuildInvite, packet.GuildInviteAnswer, packet.GuildApply, packet.GuildJoinResult,
-		packet.GuildLeave, packet.GuildExpel, packet.GuildStatus, packet.GuildRemark, packet.GuildEtin:
-		s.handleGuild(op, p)
-	case packet.Gatekeeper:
-		s.handleGatekeeper(p)
-	case packet.ExchangeRequest:
-		if len(p) >= 6 {
-			id, _ := packet.U32(p[2:])
-			s.handleTradeRequest(id)
-		}
-	case packet.ExchangeAnswer:
-		if len(p) >= 3 {
-			s.handleTradeAnswer(p[2] == 0)
-		}
-	case packet.ExchangeReady:
-		if len(p) >= 3 {
-			s.handleTradeReady(p[2])
-		}
-	case packet.ExchangeAdd:
-		if len(p) >= 6 {
-			r := packet.NewReader(p)
-			bag, slot, count, dest := r.U8(), r.U8(), r.Count(), r.U8()
-			if r.Err() == nil {
-				s.handleTradeAdd(bag, slot, count, dest)
-			}
-		}
-	case packet.ExchangeRemove:
-		if len(p) >= 3 {
-			s.handleTradeRemove(p[2])
-		}
-	case packet.ExchangeAddMoney:
-		if len(p) >= 6 {
-			v, _ := packet.U32(p[2:])
-			s.handleTradeMoney(v)
-		}
-	case packet.ExchangeConfirm:
-		if len(p) >= 3 {
-			s.handleTradeConfirm(p[2] != 0)
-		}
-	case packet.CharacterMove:
-		s.handleCharacterMove(p)
-	case packet.CharacterMotion:
-		s.handleMotion(p)
-	case packet.CharacterEnteredPortal:
-		if len(p) >= 3 {
-			s.handleEnteredPortal(p[2])
-		}
-	case packet.CharacterEnteredMap:
-		s.handleMapLoaded()
-	case packet.LearnNewSkill:
-		s.handleLearnSkill(p)
-	case packet.SetStatPoint:
-		s.handleSetStatPoint(p)
-	case packet.CharacterSkillBar:
-		s.handleSkillBar(p)
-	case packet.AutoAttackStop, packet.TargetClear:
-		s.autoAttack = false
-	case 0x2401, 0x2402, 0x2406, 0x2409, 0x240A, 0x240B, 0x240C:
-		s.handleDuel(op, p)
-	case 0x2501, 0x2502:
-		s.handleGuildDuel(op, p)
-	case packet.ResurrectRequest:
-		s.handleResurrect(p)
-	case packet.ItemRepair:
-		// Legacy repair requests are ignored; GX has no item durability.
-	case packet.ReturnToTown:
-		s.handleReturnToTown()
-	case packet.UseVehicle:
-		s.handleUseVehicle()
-	case packet.Opcode(proto.VehicleInvite):
-		s.handleVehicleInvite(p)
-	case packet.Opcode(proto.VehicleAnswer):
-		s.handleVehicleAnswer(p)
-	case packet.Opcode(proto.VehicleLeave):
-		s.dismount()
-	case packet.CharacterMobAutoAttack:
-		s.cancelMove()
-		if len(p) >= 6 && s.char != nil {
-			id, _ := packet.U32(p[2:])
-			s.autoAttack, s.autoAttackTarget, s.autoAttackUser = true, id, false
-			if !s.autoAttackSwing(id) {
-				s.autoAttack = false
-			}
-		}
-	case packet.CharacterUserAutoAttack:
-		// PacketPC 0x0502: only a hostile user starts the attack.
-		s.cancelMove()
-		if len(p) >= 6 && s.char != nil {
-			id, _ := packet.U32(p[2:])
-			if s.hostileUser(id) != nil {
-				s.autoAttack, s.autoAttackTarget, s.autoAttackUser = true, id, true
-				if !s.userAttackSwing(id) {
-					s.autoAttack = false
-				}
-			}
-		}
-	case packet.SkillUse, packet.SkillUseNoTarget:
-		s.handleUseSkill(op, p)
-	case packet.TargetMobHpUpdate, packet.TargetMobGetState:
-		if len(p) >= 6 && s.char != nil {
-			id, _ := packet.U32(p[2:])
-			if m, ok := MobByID(s.char.MapID, id); ok {
-				if op == packet.TargetMobHpUpdate {
-					s.send(buildMobTargetHP(&m), "0x0305 mob target hp")
-				} else {
-					s.send(buildMobMove(&m, 0), "0x0603 mob target position")
-					s.send(buildMobState(&m), "0x0304 mob state")
-				}
-			}
-		}
-	case packet.PointBuy:
-		s.handlePointBuy(p)
-	case packet.PointGiftSend:
-		s.handleGiftSend(p)
-	case packet.PointStoredItemGet:
-		s.handleGiftClaim(p)
-	case 0x7F09:
-		s.handleGMMapTeleport(p)
-	case packet.GXForgeQuote:
-		s.handleForgeQuote(p)
-	case packet.CashPoint:
-		s.send(buildCashPoints(s.points), "0x2605 cash points")
-	case packet.Ping:
-		s.send(buildPing(), "0xA303 ping")
-	case packet.Logout:
-		s.handleLogout()
-	}
-}
-
 func (s *Session) logErr(what string, err error) {
 	if err != nil {
-		s.log.Printf("GX Server World %s failed: %v", what, err)
+		s.log.Errorf("GX Server World %s failed: %v", what, err)
+		storageFailure(err)
 	}
 }
 
@@ -778,6 +614,10 @@ func (s *Session) handleCreateCharacter(p []byte) {
 	}
 	nc := db.NewCharacter{Slot: p[2], Race: p[3], Mode: p[4], Hair: p[5], Face: p[6], Height: p[7], Class: p[8],
 		Gender: p[9], Name: packet.FixedText(p[10:])}
+	s.createCharacter(nc)
+}
+
+func (s *Session) createCharacter(nc db.NewCharacter) {
 	reject := func(why string) {
 		s.log.Printf("GX Server World rejected create character name=%q slot=%d: %s", nc.Name, nc.Slot, why)
 		s.send(buildCreateCharacterResult(false), "0x0102 create character rejected")
@@ -845,6 +685,14 @@ func (s *Session) handleRename(p []byte) {
 }
 
 func (s *Session) selectCharacter(id uint32) {
+	if s.char != nil {
+		return
+	}
+	failed := func(what string, err error) {
+		s.logErr(what, err)
+		s.char = nil
+		s.send(buildCharResult(packet.SelectCharacter, false, id), "character data unavailable")
+	}
 	ch, err := db.CharacterDetail(s.accountID, id)
 	if err != nil {
 		s.log.Printf("GX Server World select character id=%d failed: %v", id, err)
@@ -860,9 +708,15 @@ func (s *Session) selectCharacter(id uint32) {
 	s.char = &ch
 	s.log.SetTag(strings.SplitN(s.log.Tag(), "/", 3)[0] + "/" + s.account.UserID + "/" + ch.Name)
 	s.items, err = db.CharacterItems(id)
-	s.logErr("load items", err)
+	if err != nil {
+		failed("load items", err)
+		return
+	}
 	s.skills, err = db.CharacterSkills(id)
-	s.logErr("load skills", err)
+	if err != nil {
+		failed("load skills", err)
+		return
+	}
 	s.effectWatchID = 0
 	s.lastActionAt = time.Time{}
 	s.dash = nil
@@ -882,15 +736,31 @@ func (s *Session) selectCharacter(id uint32) {
 	s.movement = playerMovement{}
 	s.elements = elementRuntime{}
 	s.gmConcealed, s.gmImmune = false, false
-	s.buffs = restoreBuffs(id, s.log)
+	s.buffs, err = restoreBuffs(id, s.log)
+	if err != nil {
+		failed("load buffs", err)
+		return
+	}
 
 	s.quickSlots, err = db.QuickSlots(id)
-	s.logErr("load quick slots", err)
+	if err != nil {
+		failed("load quick slots", err)
+		return
+	}
 	s.stored, err = db.StoredItems(s.accountID)
-	s.logErr("load warehouse", err)
+	if err != nil {
+		failed("load warehouse", err)
+		return
+	}
 	s.points, err = db.Points(s.accountID)
-	s.logErr("load points", err)
-	s.loadQuests()
+	if err != nil {
+		failed("load points", err)
+		return
+	}
+	if err := s.loadQuests(); err != nil {
+		failed("load quests", err)
+		return
+	}
 	s.mounted, s.dead, s.cast, s.autoAttack = false, false, nil, false
 	s.lastRegenAt, s.regenMode = time.Now(), 1 // InitEquipment
 	st := s.stats()
@@ -901,6 +771,7 @@ func (s *Session) selectCharacter(id uint32) {
 		s.send(buildCharResult(packet.SelectCharacter, false, id), "collision resources unavailable")
 		return
 	}
+	s.awaitingMapLoad = true
 	s.send(buildCharResult(packet.SelectCharacter, true, id), "0x0104 select character ok")
 
 	s.sendInitialState(&st)
@@ -959,6 +830,10 @@ func (s *Session) sendInitialState(st *CharacterStats) {
 // handleMapLoaded (0x0201 from the client): send the map state, register
 // the player and exchange visibility with nearby players.
 func (s *Session) handleMapLoaded() {
+	if !s.awaitingMapLoad {
+		return
+	}
+	s.awaitingMapLoad = false
 	ch := s.char
 	if ch == nil {
 		return
@@ -1029,6 +904,7 @@ func (s *Session) handleLogout() {
 		id = s.char.ID
 	}
 	s.leaveWorld()
+	s.awaitingMapLoad = false
 	s.buffs, s.cast, s.mounted, s.dead, s.autoAttack = nil, nil, false, false, false
 	s.items, s.skills, s.quickSlots, s.stored, s.points = nil, nil, nil, nil, 0
 	s.send(buildLeaveWorldAck(id), "0x0107 leave world ack")

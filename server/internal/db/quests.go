@@ -97,3 +97,34 @@ func DeleteCharacterQuest(charID uint32, questID uint16) error {
 	return execSQL(GameData, `DELETE FROM PS_GameData_CharQuests WHERE CharID=@charid AND QuestID=@questid`, sql.Named("charid", int32(charID)),
 		sql.Named("questid", int16(questID)))
 }
+
+// SaveCharacterQuests atomically snapshots active counters. A stale/finished
+// quest cannot be updated after another operation completed it.
+func SaveCharacterQuests(charID uint32, quests []CharQuest) error {
+	if len(quests) == 0 {
+		return nil
+	}
+	pool, err := Pool(GameData)
+	if err != nil {
+		return err
+	}
+	c, cancel := ctx()
+	defer cancel()
+	return withTx(c, pool, func(tx *sql.Tx) error {
+		stmt, err := tx.PrepareContext(c, `UPDATE PS_GameData_CharQuests SET Delay=?,Count1=?,Count2=?,Count3=? WHERE CharID=? AND QuestID=? AND Finish=0 AND Del=0`)
+		if err != nil {
+			return err
+		}
+		defer stmt.Close()
+		for _, q := range quests {
+			result, err := stmt.ExecContext(c, q.Delay, q.Counts[0], q.Counts[1], q.Counts[2], charID, q.QuestID)
+			if err != nil {
+				return err
+			}
+			if err = requireOne(result); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}

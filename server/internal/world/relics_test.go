@@ -44,12 +44,12 @@ func relicFixture(t *testing.T) *relic {
 		p.Exec(`DELETE FROM PS_GameData_Keeps WHERE KeepID=?`, r.key)
 		relics.loaded, relics.config, relics.byMap, relics.bosses, relics.portals, relics.score = oldLoaded, oldConfig, oldMaps, oldBosses, oldPortals, oldScore
 		relics.resetPending = oldReset
-		shardsMu.Lock()
-		delete(shards, mapID)
-		shardsMu.Unlock()
-		gridsMu.Lock()
-		delete(grids, mapID)
-		gridsMu.Unlock()
+		realm.shardsMu.Lock()
+		delete(realm.shards, mapID)
+		realm.shardsMu.Unlock()
+		realm.gridsMu.Lock()
+		delete(realm.grids, mapID)
+		realm.gridsMu.Unlock()
 	})
 	return r
 }

@@ -1,7 +1,7 @@
 package world
 
 import (
-	"math"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/netx"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
@@ -410,11 +410,19 @@ func (s *Session) afterMobDamage(d pendingDamage, killed bool) {
 // persist saves the active character (usp_Save_Char_Info_E) and refreshes
 // the shared snapshot.
 func (s *Session) persist() {
+	if s.operation != nil {
+		return
+	}
 	if s.char == nil {
 		return
 	}
 	if err := db.SaveCharacter(s.char); err != nil {
-		s.log.Printf("GX Server World failed to save character_id=%d: %v", s.char.ID, err)
+		s.persistenceFailed = true
+		s.logErr("save character", err)
+		if s.conn != nil {
+			netx.Abort(s.conn)
+		}
+		return
 	}
 	s.syncPlayer()
 	s.partyPools()
@@ -526,7 +534,7 @@ func rewardKill(killer *ConnectedPlayer, killerID uint32, mapID uint16, m *MapMo
 
 // expScale is award_experience's modifiers: x1.5 with exp doubling
 // (ability 35), +0.2 with any charm (abilities 40-42).
-func (s *Session) expScale(gained uint32) uint32 {
+func (s *Session) experienceMode() int {
 	double, charm := false, false
 	for _, b := range s.buffs {
 		for _, a := range b.Abilities {
@@ -536,15 +544,16 @@ func (s *Session) expScale(gained uint32) uint32 {
 			}
 		}
 	}
-	scale := 1.0
+	mode := 0
 	if double {
-		scale = 1.5
+		mode = 1
 	}
 	if charm {
-		scale += 0.2
+		mode += 2
 	}
-	return uint32(math.Trunc(float64(gained) * scale))
+	return mode
 }
+func (s *Session) expScale(gained uint32) uint32 { return experienceScaled(gained, s.experienceMode()) }
 
 // awardExp applies an exp reward to the session's character.
 func (s *Session) awardExp(gained uint32, modifiers bool) {

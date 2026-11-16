@@ -1,135 +1,123 @@
 # Server modernization
 
-The modernization preserves original game behavior and packet layouts while
-replacing infrastructure and unsafe implementation patterns. Go and SQLite
-remain the implementation and production storage. Shared test accounts and the
-published development seed are intentional development fixtures.
+The server modernization replaces unsafe infrastructure and persistence paths
+while preserving original game rules and binary gameplay packets. Go and SQLite
+remain the production architecture. Shared development accounts and the shipped
+seed are intentional fixtures. The implementation is a modular monolith, with
+explicit state ownership rather than extra services or a parallel framework.
 
-## Delivered foundation
+## Delivered changes
 
-- Login/world share admission and lifecycle management: 200/500 total sockets,
-  32 per source IP, bounded TLS handshake, SIGINT/SIGTERM cancellation, socket
-  closure and handler drain before SQLite closes. Linux controllers request
-  graceful termination, with a 30-second force-stop fallback. Detached Windows
-  controllers still force-stop: do not claim graceful Windows shutdown.
-- Login has a 30-second total protocol deadline, 5-second write deadlines and
-  bounded token buckets: 30 attempts/IP/minute and 10/account/minute. The buckets
-  refill continuously, cap memory and reclaim idle entries. Limits currently
-  live in source; shared NATs may need tuning after measurement.
-- Passwords upgrade from the legacy plaintext field to salted Argon2id on a
-  successful login. Parameters are versioned (19 MiB, two iterations, one lane),
-  with at most two simultaneous hashes per process. Hashing precedes the write
-  transaction; the transaction verifies that the stored credential has not
-  changed. The seed is not rewritten. Dormant accounts remain legacy until
-  login. Account creation tools still create legacy development accounts that
-  upgrade at first login. Do not downgrade to a server that only compares Pw.
-- Handoffs use GX_SessionHandoff in the configured mutable runtime database.
-  Validation and consumption share an IMMEDIATE transaction, so a token can
-  succeed once across concurrent processes. Invalid attempts cannot consume it.
-  Old runtime/sessions/*.bin files are no longer trusted. Upgrading requires a
-  fresh login; mixed old/new login and world binaries are unsupported.
-- Logout is session-scoped and idempotent: an old disconnect cannot overwrite
-  a new login, and duplicate logout cannot credit online points twice.
-- World input has per-connection budgets of 512 frames and 1 MiB per second
-  (token buckets). Oversized traffic disconnects before dispatching more work.
-- World output is ordered and asynchronous, with 256 queued packets / 1 MiB per
-  connection including in-flight output. A slow receiver is disconnected on
-  overflow; authoritative packets are never silently dropped. Writes and final
-  queue drain have deadlines. This bounds network output, not gameplay mailboxes.
-- Runtime initialization uses OS process locks shared with the Python SQLite
-  tool; process exit releases the lock without leaving a stale lock directory.
-- Character creation, starter inventory and slot/name guards share one write
-  transaction. Item insertion failure rolls back the character and earlier items.
-  Restoring a deleted character cannot overwrite an occupied slot.
-- Login queries use a runtime UserID index; EXPLAIN QUERY PLAN verifies an indexed
-  search rather than the previous full account-table scan.
-- SQL transaction helpers roll back on panic. WAL, synchronous=FULL, foreign
-  keys and IMMEDIATE transactions are retained. One connection per process is
-  deliberate; increasing writers blindly would add contention. Graceful close
-  runs PRAGMA optimize before closing the connection.
-- Per-packet opcode logs require RAPTURE_DEBUG=1.
+- Realm/map ownership, cancellable serial world scheduling, deterministic
+  scheduler tests and measured job duration/delay replace detached sweep loops.
+- Phase-aware input dispatch rejects commands outside character selection,
+  loading and active play. Partial-frame traffic cannot repeatedly drive ticks.
+- Atomic application operations cover inventory moves, grants/drops, shops,
+  crafting, warehouse, guild bank, skill learning and guild creation. Trade and
+  quest reward guards remain. State and packets publish after durable commit;
+  stale snapshots, concurrent pickups and SQL failures have regression tests.
+- Ground-item claims prevent double credit. Reward accumulators acknowledge
+  after commit; item grants, combat mailboxes and AI commands have explicit bounds
+  and overload behavior. Quest/quickbar/buff snapshots use atomic batches.
+- SQLite has checksummed additive migrations, account and warehouse indexes,
+  world ownership leases, crash-released startup locks, WAL/FULL synchronization,
+  guarded transactions and fail-stop handling of unusable storage. A single
+  connection per process bounds contention; no speculative writer pool is added.
+- Passwords use salted, versioned Argon2id (19 MiB, two iterations, one lane),
+  with two hashing workers per process and dummy work for failed authentication.
+  Legacy passwords upgrade on successful login without rewriting the seed.
+  New account/password commands write hashes directly. Credential changes revoke
+  handoffs and active sessions. Role/status changes are rechecked during play.
+- Single-use handoffs and active account ownership are transactional SQLite data.
+  Logout is idempotent and scoped to the exact session.
+- TLS 1.3 is the default remote transport. Certificate provisioning and portable
+  client trust configuration are supplied. Local plaintext remains available for
+  development; remote plaintext requires explicit RAPTURE_ALLOW_INSECURE=1.
+- Structured JSON logs rotate with three backups (16 MiB by default;
+  RAPTURE_LOG_MAX_MB changes this). Debug opcode logs require RAPTURE_DEBUG=1.
+- Loopback-only health and Prometheus metrics expose scheduler latency, storage
+  waits/transactions/WAL, admissions and queue pressure without user/IP labels.
+  Authenticated shutdown supports both platforms; optional profiling requires
+  RAPTURE_PPROF=1 and authentication. Runtime descriptors are private files in
+  runtime/control, scoped to PID and executable. There is no public admin API.
 
-## TLS configuration
+## Limits
 
-Both services can wrap existing game packets in TLS 1.3, using Go's standard
-TLS implementation. The legacy inner encryption remains for packet compatibility.
-Configure both login and world with:
+All policy values are validated at startup. Defaults are 200 login connections,
+500 world connections, 32 concurrent connections/IP, 120 new connections/IP/minute,
+30 login attempts/IP/minute and 10/account/minute. World input allows 512 frames
+and 1 MiB/second; ordered output allows 256 packets and 1 MiB including in-flight
+bytes. Economy commands allow 20/second. Slow clients disconnect on overflow.
+
+Overrides: RAPTURE_LOGIN_MAX_CONNECTIONS, RAPTURE_WORLD_MAX_CONNECTIONS,
+RAPTURE_CONNECTIONS_PER_IP, RAPTURE_CONNECTIONS_PER_IP_PER_MINUTE,
+RAPTURE_LOGIN_ATTEMPTS_PER_IP, RAPTURE_LOGIN_ATTEMPTS_PER_ACCOUNT,
+RAPTURE_INPUT_FRAMES_PER_SECOND, RAPTURE_INPUT_BYTES_PER_SECOND,
+RAPTURE_OUTPUT_PACKETS, RAPTURE_OUTPUT_BYTES and
+RAPTURE_ECONOMY_ACTIONS_PER_SECOND. Adjust shared-NAT limits using measurements.
+These are resource limits, not a measured maximum player capacity.
+
+## Accounts and TLS
+
+From the server directory, use `build/gx_console account create NAME [--admin]`
+or `build/gx_console account password NAME`. Passwords are read without terminal
+echo; automation can supply RAPTURE_ACCOUNT_PASSWORD or stdin. Do not place them
+in command arguments. Names accept 1–18 UTF-8 bytes, passwords 1–128. Existing
+short-password login packets remain compatible; GX adds a bounded authentication
+opcode for longer passwords, implemented in both client and server.
+
+Generate certificates with:
 
 ```
-RAPTURE_TLS_CERT=/private/gx-server-cert.pem
-RAPTURE_TLS_KEY=/private/gx-server-key.pem
+build/gx_console tls-init -out /private/gx-tls -dns gx.example -ip 127.0.0.1
 ```
 
-The certificate must cover the identity clients validate. On the client use
-GX_TLS=1 for system trust, or GX_TLS_CA=/private/gx-ca.pem for a private CA.
-GX_TLS_SERVER_NAME specifies the certificate DNS identity when the world address
-is an IP or differs from that identity. These settings apply to both connections.
-There is no verification bypass or fallback after TLS failure. Never distribute
-the server private key. Plain TCP is still the default for local development;
-TLS is implemented but not silently enabled on existing installations.
+The destination must not exist. Keep CA/server private keys private. Configure
+RAPTURE_TLS_CERT and RAPTURE_TLS_KEY using the generated server.env paths in both
+services. Certificates expire after 90 days; rotate them before expiry. The CA
+lasts five years. Copy only the generated client/network.json and gx-ca.pem to
+client data/. The config supports tls, ca_file and server_name. Relative CA paths
+resolve beside the configuration file. GX_NETWORK_CONFIG selects another file;
+GX_TLS, GX_TLS_CA and GX_TLS_SERVER_NAME override its fields. System trust works
+with GX_TLS=1. Invalid certificates never fall back to plaintext. GX_TLS=0 is an
+explicit development override. Existing loopback installations need no changes.
 
-## Remaining architecture work
+## Verification and operating boundaries
 
-This foundation is not a completed rewrite or full security certification.
+Run `tools/check.sh`, the server integration suite, targeted race checks and
+frame/credential fuzzing. Integration fixtures use disposable databases and
+isolated ports. Tests cover concurrent transactions, replay, injected constraint
+and disk-full failures, process crash recovery, backup/restore, TLS client login,
+revocation, scheduler cancellation, queue limits and authenticated control.
+See [persistence audit](persistence-audit.md) for storage drills.
 
-1. Make world/map instances explicit owners of simulation state. Registry maps,
-   session state, actor AI and cross-session trade locks currently coexist.
-   Inventory the ownership and lock order before moving each subsystem.
-2. Separate protocol decoding from application actions, domain validation and
-   storage. Start with character lifecycle and inventory, then commerce/quests,
-   combat and social systems. Preserve existing real-wire regression tests.
-3. Audit every economy operation for atomicity, optimistic preconditions and
-   publish-after-commit. Trade and quest rewards already have these safeguards;
-   do not replace their tested behavior with independent writes.
-4. Bound gameplay mailboxes with explicit overload semantics. Reward/damage
-   queues cannot simply drop entries or disconnect after silently losing rewards.
-5. Replace global background sweeps with cancellable instance runtimes and
-   deterministic clocks. Add tick budgets and latency measurements before
-   changing simulation scheduling.
-6. Add structured logs with rotation, metrics and loopback-only diagnostics;
-   measure tick delay, writer backlog, database wait/transaction latency, WAL
-   growth, admission failures and save failures. Avoid account/IP metric labels.
-7. Version schema migrations explicitly, add backup/restore drills and failure
-   injection for disk-full, interrupted startup and shutdown. Consider separate
-   bounded read connections only when measured contention justifies them.
-8. Finish platform lifecycle support, certificate provisioning and client-facing
-   configuration before making secure transport the standard remote mode.
-9. Add authentication timing normalization and password management tooling that
-   creates hashes directly; replace the legacy password-length constraint only
-   with coordinated client changes.
+Native Linux startup and shutdown must be checked against built binaries.
+Windows source and CI builds preserve platform support; Linux validation does
+not establish native Windows execution. A bounded multi-client probe does not
+establish large-scale capacity or complete parity with every historical game
+feature. Ground loot and pending in-memory simulation events remain ephemeral
+across a crash; durable committed economy changes survive recovery. Backups,
+certificate rotation, resource monitoring and game-rule regression testing remain
+ongoing operations, not a reason to replace SQLite or add speculative services.
 
-For each subsystem, require behavior tests, concurrent/failure tests, measured
-resource use and removal of its obsolete path. Avoid a parallel unused framework.
-No blanket maximum-player or latency claims follow from bounded fixture tests.
+## Linux validation (2026-11-16)
 
-## Validation
+Full vet/unit and server integration checks pass, with race checks on storage,
+authentication, bounded networking, diagnostics, scheduling and inventory/loot
+ownership. Credential fuzzing exercised over 650,000 inputs; frame fuzzing and
+four Python storage-tool tests pass. A 32-client encrypted protocol probe completed
+160 durable purchases (p50 4.5 ms, p95 16.3 ms in this local fixture), followed by
+disconnect/relogin and durable-state verification. These numbers describe this
+fixture and machine, not a production capacity guarantee.
 
-Run tools/check.sh on affected packages; integration tests use private runtime
-copies and isolated ports. Race tests cover credentials, admission, output and
-session consumption. Fuzz Frames with Go fuzzing. Run govulncheck against headless
-server packages and client transport. Existing engine crash-recovery and backup
-checks remain in the integration suite (see persistence-audit.md).
+The toolchain and CI use Go 1.27.4, which fixes the standard-library
+[HTTP advisory GO-2026-6859](https://pkg.go.dev/vuln/GO-2026-6859).
+The private local installation retains loopback development transport; secure
+remote defaults and provisioned client/server TLS are covered by integration.
 
-References: [Argon2 implementation](https://pkg.go.dev/golang.org/x/crypto/argon2),
-[SQLite planner maintenance](https://sqlite.org/pragma.html#pragma_optimize),
-[Go vulnerability checking](https://go.dev/doc/security/vuln/).
-
-## Initial Linux validation (2026-11-16)
-
-Affected vet/unit checks and the complete server integration suite pass. The
-headless world protocol suite completed in 71.4 seconds and world integration
-in 22.2 seconds. Race checks cover the infrastructure and database, plus real
-concurrent purchases, trades and quest rewards (137 seconds for that workload).
-Frame fuzzing exercised approximately 196,000 inputs without failure. Four
-Python storage-tool tests pass. Headless/transport govulncheck reported no
-reachable vulnerabilities; one advisory belongs to a required module without
-an affected imported package in this scan. This is not a client-wide scan.
-
-Native Linux binaries started with isolated ports and a disposable database,
-terminated cleanly on SIGTERM, retained database integrity and left the seed
-unchanged. The login query plan uses the new index. Client/login/world/console/GUI
-Linux binaries were built; existing Desktop executables were updated with eight
-protected data/configuration hashes unchanged. TLS verification and hostname
-rejection are tested with disposable certificates; TLS was not activated in the
-user's local configuration. No Windows execution or maximum-player benchmark
-was performed. The other terminal's profiling files are excluded from the change.
+Native Linux binaries pass SIGTERM and authenticated control shutdown with
+SQLite integrity and seed preservation. Client and all four server binaries
+were installed in the existing Desktop folders; eight protected database/seed/
+configuration hashes remain unchanged. The final headless/transport vulnerability
+scan on Go 1.27.4 reports no vulnerabilities. Native Windows execution and a
+maximum-player benchmark were not performed.

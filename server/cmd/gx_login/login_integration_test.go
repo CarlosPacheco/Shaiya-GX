@@ -6,11 +6,18 @@ package main
 
 import (
 	"crypto/rand"
+	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/authwire"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	gxsession "github.com/Spelunkern/Shaiya-GX/internal/session"
+	"github.com/Spelunkern/Shaiya-GX/internal/transport"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/admin"
 	"io"
 	"math/big"
 	"net"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -39,6 +46,12 @@ func readFrame(t *testing.T, conn net.Conn) []byte {
 func le(b []byte) *big.Int { r := slices.Clone(b); slices.Reverse(r); return new(big.Int).SetBytes(r) }
 
 func TestLoginAgainstSQLite(t *testing.T) {
+	for _, extended := range []bool{false, true} {
+		t.Run(fmt.Sprint(extended), func(t *testing.T) { testLoginSQLite(t, extended, false) })
+	}
+	t.Run("tls_long_real_client", func(t *testing.T) { testLoginSQLite(t, true, true) })
+}
+func testLoginSQLite(t *testing.T, extended, secure bool) {
 	root, err := filepath.Abs("../..")
 	if err != nil {
 		t.Fatal(err)
@@ -50,7 +63,7 @@ func TestLoginAgainstSQLite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { pool.Close() })
+	t.Cleanup(func() { db.Close() })
 	if _, err = pool.Exec(`INSERT INTO PS_UserData_Users_Master(UserUID,UserID,Pw,Admin,AdminLevel,UseQueue,Status,Leave,UserType,Point) VALUES(990010,'sqlite_login','localtest',0,0,0,0,0,'N',0)`); err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +77,23 @@ func TestLoginAgainstSQLite(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { logger.Close() })
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	password := "localtest"
+	if extended {
+		password = strings.Repeat("long-passphrase-", 7)
+		if err := db.SetAccountPassword("sqlite_login", password); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if secure {
+		certs := filepath.Join(t.TempDir(), "certificates")
+		if err := admin.Run([]string{"tls-init", "-out", certs}); err != nil {
+			t.Fatal(err)
+		}
+		t.Setenv("RAPTURE_TLS_CERT", filepath.Join(certs, "server-cert.pem"))
+		t.Setenv("RAPTURE_TLS_KEY", filepath.Join(certs, "server-key.pem"))
+		t.Setenv("GX_NETWORK_CONFIG", filepath.Join(certs, "client", "network.json"))
+	}
+	listener, err := transport.Listen("127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,6 +107,25 @@ func TestLoginAgainstSQLite(t *testing.T) {
 			conn.Close()
 		}
 	}()
+	if secure {
+		client, err := gxsession.Dial(listener.Addr().String(), "sqlite_login", password)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer client.Close()
+		if _, err := client.SelectServer(client.Servers[0].ID, proto.ClientVersion); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := session.Consume(client.Result.UserUID, client.Result.Token); err != nil {
+			t.Fatal(err)
+		}
+		select {
+		case <-finished:
+		case <-time.After(5 * time.Second):
+			t.Fatal("TLS handler did not finish")
+		}
+		return
+	}
 	conn, err := net.Dial("tcp", listener.Addr().String())
 	if err != nil {
 		t.Fatal(err)
@@ -114,7 +162,14 @@ func TestLoginAgainstSQLite(t *testing.T) {
 	login := make([]byte, 50)
 	copy(login[0:], []byte{0x02, 0xA1})
 	copy(login[2:], "sqlite_login")
-	copy(login[34:], "localtest")
+	copy(login[34:], password)
+	if extended {
+		var err error
+		login, err = authwire.Encode("sqlite_login", password)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 	frame := append([]byte{byte(len(login) + 2), 0}, send.Transform(login)...)
 	conn.Write(frame)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Initialize/query the portable development database or create a local account."""
-import argparse,getpass,os,shutil,sqlite3
+import argparse,os,shutil,sqlite3,subprocess
 from pathlib import Path
 from runtime_lock import runtime_lock
 
@@ -14,6 +14,14 @@ def main():
  q=sub.add_parser('query');q.add_argument('--file',type=Path,required=True)
  a=sub.add_parser('account');a.add_argument('name');a.add_argument('--admin',action='store_true')
  args=p.parse_args();path=args.path.expanduser().resolve()
+ if args.action=='account':
+  executable=ROOT/'build'/('gx_console.exe' if os.name=='nt' else 'gx_console')
+  if not executable.is_file():raise RuntimeError('build gx_console first; account creation uses the shared Argon2id implementation')
+  environment=dict(os.environ,RAPTURE_DB_PATH=str(path),RAPTURE_DB_SEED=str(ROOT/'data/rapture.sqlite'))
+  command=[str(executable),'account','create',args.name]
+  if args.admin:command.append('--admin')
+  subprocess.run(command,env=environment,check=True)
+  return
  path.parent.mkdir(parents=True,exist_ok=True)
  if not path.exists():
   with runtime_lock(path):
@@ -39,14 +47,5 @@ def main():
     result=c.execute(statement)
     if result.description:
      for row in result:print('\t'.join('NULL' if x is None else str(x) for x in row))
-
-  else:
-   password=os.environ.get('RAPTURE_ACCOUNT_PASSWORD') or getpass.getpass('Password: ')
-   if not 1<=len(args.name.encode("utf-8"))<=18 or not 1<=len(password.encode("utf-8"))<=16:raise ValueError('account/password exceeds UTF-8 byte limits (18/16)')
-   c.execute('BEGIN IMMEDIATE')
-   if c.execute('SELECT 1 FROM PS_UserData_Users_Master WHERE UserID=?',(args.name,)).fetchone():raise ValueError('account already exists')
-   uid=c.execute('SELECT COALESCE(MAX(UserUID),0)+1 FROM PS_UserData_Users_Master').fetchone()[0]
-   c.execute("INSERT INTO PS_UserData_Users_Master(UserUID,UserID,Pw,Admin,AdminLevel,UseQueue,Status,Leave,UserType,Point) VALUES(?,?,?,?,?,0,0,0,'N',0)",(uid,args.name,password,int(args.admin),255 if args.admin else 0))
-   print('Account created:',args.name,'UID',uid)
 
 if __name__=='__main__':main()

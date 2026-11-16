@@ -204,12 +204,12 @@ func TestGMSpawnsAreSeparatedAndVisibleImmediately(t *testing.T) {
 	const mapID = 60071
 	RegisterMapGrid(mapID, 200, nil)
 	t.Cleanup(func() {
-		shardsMu.Lock()
-		delete(shards, mapID)
-		shardsMu.Unlock()
-		gridsMu.Lock()
-		delete(grids, mapID)
-		gridsMu.Unlock()
+		realm.shardsMu.Lock()
+		delete(realm.shards, mapID)
+		realm.shardsMu.Unlock()
+		realm.gridsMu.Lock()
+		delete(realm.grids, mapID)
+		realm.gridsMu.Unlock()
 	})
 	defs, err := db.ReloadDefsForTest()
 	if err != nil {
@@ -276,12 +276,12 @@ func TestGMMoveUsesRelativeSafeDestinationAndNormalTeleport(t *testing.T) {
 	for _, id := range []uint16{source, target} {
 		RegisterMapGrid(id, 200, nil)
 		t.Cleanup(func() {
-			shardsMu.Lock()
-			delete(shards, id)
-			shardsMu.Unlock()
-			gridsMu.Lock()
-			delete(grids, id)
-			gridsMu.Unlock()
+			realm.shardsMu.Lock()
+			delete(realm.shards, id)
+			realm.shardsMu.Unlock()
+			realm.gridsMu.Lock()
+			delete(realm.grids, id)
+			realm.gridsMu.Unlock()
 		})
 	}
 	oldZone, hadZone := mapConfig.Zones[target]

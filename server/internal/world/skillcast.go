@@ -395,6 +395,7 @@ func (s *Session) persistSkillDelays() {
 	if s.char == nil {
 		return
 	}
+	var changed []db.CharacterSkill
 	for _, k := range s.skills {
 		left := int16(0)
 		if at, ok := s.skillCooldowns[k.SkillID]; ok {
@@ -402,16 +403,16 @@ func (s *Session) persistSkillDelays() {
 		}
 		if left != k.Delay {
 			k.Delay = left
-			db.SaveCharacterSkill(s.char.ID, k)
+			changed = append(changed, k)
 		}
 	}
+	s.logErr("save skill delays", db.SaveSkillDelays(s.char.ID, changed))
 }
 
-func restoreBuffs(charID uint32, log logPrinter) []ActiveBuff {
+func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error) {
 	rows, err := db.AppliedBuffs(charID)
 	if err != nil {
-		log.Printf("GX Server World failed to read buffs: %v", err)
-		return nil
+		return nil, err
 	}
 	var out []ActiveBuff
 	for _, r := range rows {
@@ -421,5 +422,5 @@ func restoreBuffs(charID uint32, log logPrinter) []ActiveBuff {
 		}
 		out = append(out, newBuff(uint32(len(out)+1), def, time.Now().Add(time.Duration(r.LeftSeconds)*time.Second), log))
 	}
-	return out
+	return out, nil
 }

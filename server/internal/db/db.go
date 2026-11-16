@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/filelock"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/telemetry"
 	"io"
 	_ "modernc.org/sqlite"
 	"os"
@@ -108,17 +109,11 @@ func Pool(database string) (*sql.DB, error) {
 		p.Close()
 		return nil, err
 	}
-	if _, err = p.ExecContext(c, `CREATE TABLE IF NOT EXISTS GX_SessionHandoff (
- UserUID INTEGER PRIMARY KEY, Identity BLOB NOT NULL, AESMaterial BLOB NOT NULL,
- SessionID INTEGER NOT NULL, ExpiresAt INTEGER NOT NULL
-)`); err != nil {
+	if err = migrate(c, p, migrations); err != nil {
 		p.Close()
-		return nil, fmt.Errorf("initialize session storage: %w", err)
+		return nil, err
 	}
-	if _, err = p.ExecContext(c, `CREATE INDEX IF NOT EXISTS GX_Users_UserID ON PS_UserData_Users_Master(UserID)`); err != nil {
-		p.Close()
-		return nil, fmt.Errorf("initialize login index: %w", err)
-	}
+
 	pools["sqlite"] = p
 	return p, nil
 }
@@ -152,3 +147,28 @@ func Close() error {
 	}
 	return result
 }
+
+// Observe reports bounded database contention and WAL size without acquiring the
+// writer connection for checkpointing. Maintenance never truncates a live WAL.
+func Observe() {
+	mu.Lock()
+	p := pools["sqlite"]
+	mu.Unlock()
+	if p == nil {
+		return
+	}
+	stats := p.Stats()
+	dbWaits.Set(stats.WaitCount)
+	dbWaitNanos.Set(stats.WaitDuration.Nanoseconds())
+	dbOpen.Set(int64(stats.OpenConnections))
+	if info, err := os.Stat(config.DatabasePath() + "-wal"); err == nil {
+		dbWAL.Set(info.Size())
+	} else if os.IsNotExist(err) {
+		dbWAL.Set(0)
+	}
+}
+
+var dbWaits = telemetry.NumberMetric("gx_db_connection_wait_total")
+var dbWaitNanos = telemetry.NumberMetric("gx_db_connection_wait_nanoseconds_total")
+var dbOpen = telemetry.NumberMetric("gx_db_connections_open")
+var dbWAL = telemetry.NumberMetric("gx_db_wal_bytes")

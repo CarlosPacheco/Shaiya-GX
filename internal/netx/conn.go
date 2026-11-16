@@ -46,8 +46,8 @@ func (c *Conn) Close() error { return c.nc.Close() }
 
 // CloseWrite delivers EOF after queued requests, leaving the read side open.
 func (c *Conn) CloseWrite() error {
-	if tcp, ok := c.nc.(*net.TCPConn); ok {
-		return tcp.CloseWrite()
+	if writer, ok := c.nc.(interface{ CloseWrite() error }); ok {
+		return writer.CloseWrite()
 	}
 	return c.nc.Close()
 }
@@ -84,6 +84,9 @@ func (c *Conn) Write(payload []byte) error {
 	}
 	frame, err := AppendFrame(nil, body)
 	if err != nil {
+		return err
+	}
+	if err = c.nc.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
 		return err
 	}
 	_, err = c.nc.Write(frame)

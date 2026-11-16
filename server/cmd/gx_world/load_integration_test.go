@@ -5,7 +5,9 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
+	"os"
 	"sort"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -26,7 +28,14 @@ func TestConcurrentClientsPurchaseLogoutAndRelog(t *testing.T) {
 	product := &db.Product{Code: "LOAD_PROBE", BuyCost: 10, Items: []db.ProductItem{{Type: 100, TypeID: 251, Count: 1}}}
 	db.MustDefs().Products[product.Code] = product
 	t.Cleanup(func() { delete(db.MustDefs().Products, product.Code) })
-	const count = 16
+	count := 16
+	if value := os.Getenv("GX_SERVER_LOAD_CLIENTS"); value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err != nil || parsed < 2 || parsed > 64 {
+			t.Fatal("GX_SERVER_LOAD_CLIENTS must be 2..64")
+		}
+		count = parsed
+	}
 	const purchases = 5
 	type player struct {
 		uid, id uint32

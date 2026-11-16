@@ -5,6 +5,7 @@ package control
 
 import (
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/controlplane"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -100,6 +101,31 @@ func AnyRunning() bool {
 // Stop requests graceful shutdown before falling back to force termination.
 func Stop(name string) {
 	for _, pid := range pids(name) {
+		if controlplane.RequestStop(RepoRoot(), name, pid, binPath(name)) == nil {
+			deadline := time.Now().Add(30 * time.Second)
+			for time.Now().Before(deadline) {
+				found := false
+				for _, active := range pids(name) {
+					if active == pid {
+						found = true
+						break
+					}
+				}
+				if !found {
+					break
+				}
+				time.Sleep(50 * time.Millisecond)
+			}
+			stillRunning := false
+			for _, active := range pids(name) {
+				if active == pid {
+					stillRunning = true
+				}
+			}
+			if !stillRunning {
+				continue
+			}
+		}
 		if runtime.GOOS == "windows" {
 			exec.Command("taskkill", "/PID", strconv.Itoa(pid), "/F").Run()
 		} else if process, err := os.FindProcess(pid); err == nil {

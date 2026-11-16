@@ -382,6 +382,13 @@ func (p *ConnectedPlayer) dropFromOthers() {
 // sendToViewers is CZone::SendView for the user's own updates: the users
 // that currently show it.
 func (s *Session) sendToViewers(frame []byte, label string) {
+	if s.persistenceFailed {
+		return
+	}
+	if s.operation != nil {
+		s.operation.packet(frame, label, true)
+		return
+	}
 	p := s.player
 	if p == nil {
 		return

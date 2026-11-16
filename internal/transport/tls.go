@@ -4,9 +4,11 @@ package transport
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -15,6 +17,13 @@ import (
 func Listen(addr string) (net.Listener, error) {
 	cert, key := os.Getenv("RAPTURE_TLS_CERT"), os.Getenv("RAPTURE_TLS_KEY")
 	if cert == "" && key == "" {
+		host, _, err := net.SplitHostPort(addr)
+		if err != nil {
+			return nil, err
+		}
+		if !localHost(host) && os.Getenv("RAPTURE_ALLOW_INSECURE") != "1" {
+			return nil, fmt.Errorf("remote listeners require TLS; RAPTURE_ALLOW_INSECURE=1 explicitly permits development TCP")
+		}
 		return net.Listen("tcp", addr)
 	}
 	if cert == "" || key == "" {
@@ -30,8 +39,23 @@ func Listen(addr string) (net.Listener, error) {
 // Dial uses system trust or an explicit PEM CA. Verification is never disabled;
 // a configured TLS connection never falls back to plaintext on failure.
 func Dial(addr string, timeout time.Duration) (net.Conn, error) {
-	ca, name := os.Getenv("GX_TLS_CA"), os.Getenv("GX_TLS_SERVER_NAME")
-	if os.Getenv("GX_TLS") != "1" && ca == "" && name == "" {
+	options, err := clientOptions()
+	if err != nil {
+		return nil, err
+	}
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return nil, err
+	}
+	secure := !localHost(host)
+	if options.TLS != nil {
+		secure = *options.TLS
+	}
+	ca, name := options.CA, options.ServerName
+	if ca != "" || name != "" {
+		secure = true
+	}
+	if !secure {
 		return net.DialTimeout("tcp", addr, timeout)
 	}
 	cfg := &tls.Config{MinVersion: tls.VersionTLS13, ServerName: name}
@@ -47,4 +71,58 @@ func Dial(addr string, timeout time.Duration) (net.Conn, error) {
 		cfg.RootCAs = roots
 	}
 	return tls.DialWithDialer(&net.Dialer{Timeout: timeout}, "tcp", addr, cfg)
+}
+
+func localHost(host string) bool {
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+type clientSettings struct {
+	TLS        *bool  `json:"tls"`
+	CA         string `json:"ca_file"`
+	ServerName string `json:"server_name"`
+}
+
+func clientOptions() (clientSettings, error) {
+	var settings clientSettings
+	path, explicit := os.LookupEnv("GX_NETWORK_CONFIG")
+	if !explicit {
+		exe, err := os.Executable()
+		if err != nil {
+			return settings, err
+		}
+		path = filepath.Join(filepath.Dir(exe), "data", "network.json")
+	}
+	data, err := os.ReadFile(path)
+	if err == nil {
+		if len(data) > 16384 {
+			return settings, fmt.Errorf("network configuration is too large")
+		}
+		if err = json.Unmarshal(data, &settings); err != nil {
+			return settings, fmt.Errorf("network configuration: %w", err)
+		}
+		if settings.CA != "" && !filepath.IsAbs(settings.CA) {
+			settings.CA = filepath.Join(filepath.Dir(path), settings.CA)
+		}
+	} else if explicit || !os.IsNotExist(err) {
+		return settings, err
+	}
+	if value, ok := os.LookupEnv("GX_TLS"); ok {
+		if value != "0" && value != "1" {
+			return settings, fmt.Errorf("GX_TLS must be 0 or 1")
+		}
+		enabled := value == "1"
+		settings.TLS = &enabled
+	}
+	if value, ok := os.LookupEnv("GX_TLS_CA"); ok {
+		settings.CA = value
+	}
+	if value, ok := os.LookupEnv("GX_TLS_SERVER_NAME"); ok {
+		settings.ServerName = value
+	}
+	return settings, nil
 }

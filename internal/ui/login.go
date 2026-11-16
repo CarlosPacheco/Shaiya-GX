@@ -34,7 +34,7 @@ const (
 )
 
 func NewLogin(t Textures) (*Login, error) {
-	l := &Login{ID: TextField{Max: 18}, Password: TextField{Max: 16, Masked: true}}
+	l := &Login{ID: TextField{Max: 18}, Password: TextField{Max: 128, Masked: true}}
 	var err error
 	if l.panel, err = t.Interface("login.png"); err != nil {
 		return nil, err

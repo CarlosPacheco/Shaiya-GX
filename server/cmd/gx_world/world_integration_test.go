@@ -7,6 +7,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 	"io"
@@ -21,12 +22,14 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/crypto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/netx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/session"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/world"
 )
 
 var testRunRoot string
+var shutdownWorld func()
 
 // Integration tests always run on a private database/filesystem snapshot.
 func TestMain(m *testing.M) {
@@ -42,6 +45,10 @@ func TestMain(m *testing.M) {
 	os.Setenv("RAPTURE_DB_SEED", filepath.Join(root, "data", "rapture.sqlite"))
 	os.Setenv("RAPTURE_DATA_DIR", filepath.Join(root, "data"))
 	code := m.Run()
+	if shutdownWorld != nil {
+		shutdownWorld()
+	}
+	db.Close()
 	os.RemoveAll(testRunRoot)
 	os.Exit(code)
 }
@@ -132,20 +139,22 @@ func setupWorld(t *testing.T) string {
 		if err := world.LoadSvmaps(logger); err != nil {
 			panic(err)
 		}
-		world.StartSweeps(logger)
+		ctx, cancel := context.WithCancel(context.Background())
+		engine := world.StartSweeps(ctx, logger, cancel)
 		listener, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
 			panic(err)
 		}
+		done := make(chan struct{})
+		policy, err := config.Network("world")
+		if err != nil {
+			panic(err)
+		}
 		go func() {
-			for {
-				conn, err := listener.Accept()
-				if err != nil {
-					return
-				}
-				go func() { world.Serve(conn, logger, logger.Tagged("test")); conn.Close() }()
-			}
+			defer close(done)
+			netx.Serve(ctx, listener, policy.Connections, policy.PerIP, func(conn net.Conn) { world.Serve(conn, logger, logger.Tagged("test")) })
 		}()
+		shutdownWorld = func() { cancel(); <-done; engine.Close(); logger.Close() }
 
 		worldAddr = listener.Addr().String()
 	})

@@ -5,6 +5,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/admin"
 	"os"
 	"strings"
 
@@ -24,6 +25,13 @@ func status() {
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		if err := admin.Run(os.Args[1:]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	fmt.Println("GX Server Console")
 	status()
 	fmt.Println(`Commands: "start server" | "shutdown server"`)

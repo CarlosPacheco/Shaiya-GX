@@ -152,9 +152,30 @@ type mobAIHost struct {
 	tick    *MobCombatTick
 }
 
-func (h *mobAIHost) queue(kind string, id uint16, count int, x, z float32, mode int) {
+func (h *mobAIHost) queue(kind string, id uint16, count int, x, z float32, mode int) error {
+	cost := 1
+	if kind == "spawn" {
+		cost += count
+		live := 0
+		for _, mob := range h.shard.entities.Mobs {
+			if mob.aiSummoned && !mob.corpseGone {
+				live++
+			}
+		}
+		if live+h.shard.aiPendingSummons+count > 4096 {
+			return fmt.Errorf("summoned mob budget exceeded")
+		}
+	}
+	if len(h.shard.aiCommands) >= 1024 || h.shard.aiCommandCost+cost > 2048 {
+		return fmt.Errorf("AI command budget exceeded")
+	}
+	h.shard.aiCommandCost += cost
+	if kind == "spawn" {
+		h.shard.aiPendingSummons += count
+	}
 	m := h.mob
 	h.shard.aiCommands = append(h.shard.aiCommands, mobAICommand{kind: kind, mapID: h.mapID, owner: m.ID, actor: m.lua.actor, id: id, count: count, x: x, z: z, y: m.PosY, mode: mode})
+	return nil
 }
 func aiNumber(args []any, i int) float64 {
 	if i >= len(args) {
@@ -409,7 +430,9 @@ func (h *mobAIHost) Call(name string, args []any) (any, error) {
 		if name == "announce" {
 			kind = "say_index"
 		}
-		h.queue(kind, uint16(index), 1, m.PosX, m.PosZ, int(radius))
+		if err := h.queue(kind, uint16(index), 1, m.PosX, m.PosZ, int(radius)); err != nil {
+			return nil, err
+		}
 	case "create_mobs", "remove_mobs", "summon_legacy":
 		id := uint16(n(0))
 		count := int(n(1))
@@ -438,11 +461,15 @@ func (h *mobAIHost) Call(name string, args []any) (any, error) {
 		if db.MustDefs().Mobs[id] == nil {
 			return nil, fmt.Errorf("unknown mob template %d", id)
 		}
-		h.queue(kind, id, count, x, z, mode)
+		if err := h.queue(kind, id, count, x, z, mode); err != nil {
+			return nil, err
+		}
 		h.shard.aiCommands[len(h.shard.aiCommands)-1].spread = spread
 		h.shard.aiCommands[len(h.shard.aiCommands)-1].legacy = name == "summon_legacy"
 	case "update_instance_portal":
-		h.queue("portal", uint16(n(0)), 1, 0, 0, int(n(1)))
+		if err := h.queue("portal", uint16(n(0)), 1, 0, 0, int(n(1))); err != nil {
+			return nil, err
+		}
 	case "record_escape_origin":
 		o.escapeX, o.escapeY, o.escapeZ = m.PosX, m.PosY, m.PosZ
 	case "distance_from_escape_origin":
@@ -703,6 +730,8 @@ func runMobAICommands(tick *MobCombatTick) {
 		s.mu.Lock()
 		commands := s.aiCommands
 		s.aiCommands = nil
+		s.aiCommandCost = 0
+		s.aiPendingSummons = 0
 		s.mu.Unlock()
 		for _, cmd := range commands {
 			s.mu.Lock()
@@ -720,8 +749,14 @@ func runMobAICommands(tick *MobCombatTick) {
 			}
 			switch cmd.kind {
 			case "spawn":
+				live := 0
+				for _, mob := range s.entities.Mobs {
+					if mob.aiSummoned && !mob.corpseGone {
+						live++
+					}
+				}
 				def := db.MustDefs().Mobs[cmd.id]
-				for range cmd.count {
+				for range min(cmd.count, max(4096-live, 0)) {
 					x, z, found := cmd.x, cmd.z, false
 					for range 10 {
 						span := max(int(cmd.spread*2), 1)

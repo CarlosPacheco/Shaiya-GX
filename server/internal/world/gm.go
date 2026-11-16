@@ -305,7 +305,7 @@ func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error {
 	var mobs []MapMob
 	for _, pos := range positions {
 		if npcType != 0 {
-			n := MapNpc{ID: nextNpcID.Add(1) - 1, Type: nd.Type, TypeID: nd.TypeID, PosX: pos[0], PosY: s.char.PosY, PosZ: pos[1], Summoned: true, cell: cellFor(pos[0], pos[1]), hasCell: true}
+			n := MapNpc{ID: realm.nextNpcID.Add(1) - 1, Type: nd.Type, TypeID: nd.TypeID, PosX: pos[0], PosY: s.char.PosY, PosZ: pos[1], Summoned: true, cell: cellFor(pos[0], pos[1]), hasCell: true}
 			sh.entities.NPCs = append(sh.entities.NPCs, n)
 			sh.npcRevision.Add(1)
 			npcs = append(npcs, n)

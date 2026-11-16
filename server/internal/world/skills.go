@@ -191,29 +191,39 @@ func (s *Session) handleLearnSkill(p []byte) {
 		return
 	}
 	var learned db.CharacterSkill
-	var err error
+	var previous *db.CharacterSkill
 	if existing >= 0 {
-		learned = s.skills[existing]
+		copy := s.skills[existing]
+		previous = &copy
+		learned = copy
 		learned.Level, learned.Delay = level, 0
-		err = db.SaveCharacterSkill(ch.ID, learned)
-		s.skills[existing] = learned
 	} else {
-		number := uint8(0)
+		var number uint8
 		for _, k := range s.skills {
 			number = max(number, k.Number)
 		}
+		if number == 255 {
+			reject(3, "skill slots exhausted")
+			return
+		}
 		learned = db.CharacterSkill{SkillID: skillID, Level: level, Number: number + 1}
-		err = db.AddCharacterSkill(ch.ID, learned)
-		s.skills = append(s.skills, learned)
-		sort.Slice(s.skills, func(i, j int) bool { return s.skills[i].Number < s.skills[j].Number })
 	}
-	if err != nil {
-		s.log.Printf("GX Server World failed to save learned skill: %v", err)
+	after := *ch
+	after.SkillPoint -= cost
+	if err := db.CommitLearnSkill(*ch, after, previous, learned); err != nil {
+		s.logErr("learned skill transaction", err)
 		reject(3, "database error")
 		return
 	}
-	ch.SkillPoint -= cost
-	s.persist()
+	ch.SkillPoint = after.SkillPoint
+	if existing >= 0 {
+		s.skills[existing] = learned
+	} else {
+		s.skills = append(s.skills, learned)
+		sort.Slice(s.skills, func(i, j int) bool { return s.skills[i].Number < s.skills[j].Number })
+	}
+	s.syncPlayer()
+
 	s.log.Printf("GX Server World learned skill number=%d skill_id=%d level=%d remaining_skill_point=%d", learned.Number, skillID, level, ch.SkillPoint)
 	s.send(buildLearnSkillResult(true, learned.Number, skillID, level), "0x0209 learn skill ok")
 	s.syncPlayerSpeed(false)

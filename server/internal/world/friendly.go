@@ -39,6 +39,11 @@ type pendingFriendly struct {
 
 func (p *ConnectedPlayer) QueueFriendly(f pendingFriendly) {
 	p.mailMu.Lock()
+	if len(p.friendly) >= maxPendingCombat {
+		p.mailMu.Unlock()
+		p.mailboxOverflow()
+		return
+	}
 	p.friendly = append(p.friendly, f)
 	p.mailMu.Unlock()
 }

@@ -77,7 +77,8 @@ func lapisiaFits(lap *db.ItemDef, rt uint8) bool {
 // the compiled cap, ReqIg selects the gold cost and the compiled rate
 // determines success independently of material quantity. Either way
 // the lapisia and the material count are used up; equipment is preserved.
-func (s *Session) handleEnchantAdd(p []byte) {
+func (s *Session) handleEnchantAdd(p []byte) { s.inventoryOperation(func() { s.planEnchantAdd(p) }) }
+func (s *Session) planEnchantAdd(p []byte) {
 	if len(p) < 9 || s.char == nil {
 		return
 	}
@@ -158,7 +159,7 @@ func (s *Session) handleEnchantAdd(p []byte) {
 	name := craftString(pairs)
 	if i := findItemByUID(s.items, uidI); i >= 0 {
 		s.items[i].CraftName = name
-		db.SaveCharacterItem(ch.ID, &s.items[i])
+		s.saveInventoryItem(&s.items[i])
 	}
 	s.persist()
 	s.log.Printf("GX Server World enchant success item=%d/%d new_step=%d craftname=%s money=%d", item.Type, item.TypeID, step+1, name, ch.Money)
@@ -175,7 +176,7 @@ func (s *Session) adjustCount(uid int64, count uint16) {
 		return
 	}
 	s.items[i].Count = count
-	if err := db.SaveCharacterItem(s.char.ID, &s.items[i]); err != nil {
+	if err := s.saveInventoryItem(&s.items[i]); err != nil {
 		s.log.Printf("GX Server World failed to update item count: %v", err)
 	}
 	if count == 0 {
@@ -261,7 +262,8 @@ const (
 // plus blessing (at least 1), plus hammer ReqVg percentage points, up to 100%.
 // The gem is always used up. GX preserves the equipment on every failure;
 // legacy ReqVg destruction flags and Lucky Charms do not affect linking.
-func (s *Session) handleGemAdd(p []byte) {
+func (s *Session) handleGemAdd(p []byte) { s.inventoryOperation(func() { s.planGemAdd(p) }) }
+func (s *Session) planGemAdd(p []byte) {
 	if len(p) < 6 || s.char == nil {
 		return
 	}
@@ -344,7 +346,7 @@ func (s *Session) handleGemAdd(p []byte) {
 	}
 	if i := findItemByUID(s.items, uidI); i >= 0 {
 		s.items[i].Gems[pos] = gem.TypeID
-		db.SaveCharacterItem(ch.ID, &s.items[i])
+		s.saveInventoryItem(&s.items[i])
 	}
 	s.persist()
 	s.log.Printf("GX Server World gem add gem=%d item=%d/%d position=%d chance=%d", gem.TypeID, item.Type, item.TypeID, pos, chance)
@@ -359,7 +361,8 @@ func (s *Session) handleGemAdd(p []byte) {
 
 // handleGemRemove extracts one selected socket with an extraction hammer.
 // Obsolete requests without a hammer are rejected without consuming anything.
-func (s *Session) handleGemRemove(p []byte) {
+func (s *Session) handleGemRemove(p []byte) { s.inventoryOperation(func() { s.planGemRemove(p) }) }
+func (s *Session) planGemRemove(p []byte) {
 	if len(p) < 4 || s.char == nil {
 		return
 	}
@@ -440,7 +443,7 @@ func (s *Session) handleGemRemove(p []byte) {
 		if rand.IntN(100) < chance {
 			free := freeInventorySlots(s.items)
 			g := db.Item{Bag: free[0][0], Slot: free[0][1], Type: gemItemType, TypeID: id, Count: 1}
-			if err := db.AddCharacterItem(ch.ID, &g); err != nil {
+			if err := s.addInventoryItem(&g); err != nil {
 				s.log.Printf("gem extraction insert: %v", err)
 				continue
 			}
@@ -453,7 +456,7 @@ func (s *Session) handleGemRemove(p []byte) {
 		s.items[i].Gems[pos] = 0
 	}
 	i := findItemByUID(s.items, item.UID)
-	db.SaveCharacterItem(ch.ID, &s.items[i])
+	s.saveInventoryItem(&s.items[i])
 	s.persist()
 	result(extracted)
 	if iBag == 0 {
@@ -501,7 +504,8 @@ func buildComposeResult(result, bag, slot uint8, craft string) []byte {
 
 // handleItemCompose: rune bag/slot, item bag/slot. Items.ReqWis is the max
 // roll and Items.Server the number of rolled stats.
-func (s *Session) handleItemCompose(p []byte) {
+func (s *Session) handleItemCompose(p []byte) { s.inventoryOperation(func() { s.planItemCompose(p) }) }
+func (s *Session) planItemCompose(p []byte) {
 	if len(p) < 6 || s.char == nil {
 		return
 	}
@@ -540,7 +544,7 @@ func (s *Session) handleItemCompose(p []byte) {
 	}
 	before := s.maxPools()
 	s.items[ii].CraftName = name
-	db.SaveCharacterItem(ch.ID, &s.items[ii])
+	s.saveInventoryItem(&s.items[ii])
 	s.adjustCount(rune.UID, rune.Count-1)
 	consumed := rune
 	consumed.Count--

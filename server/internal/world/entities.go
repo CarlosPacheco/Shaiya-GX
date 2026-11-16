@@ -185,12 +185,15 @@ type MapEntities struct {
 }
 
 type mapShard struct {
-	lua         *ai.VM
-	aiCommands  []mobAICommand
-	npcRevision atomic.Uint64
-	questNPCs   questNPCCatalogCache
-	mu          sync.Mutex
-	entities    MapEntities
+	items            map[uint32]*mapItemEntry
+	lua              *ai.VM
+	aiCommands       []mobAICommand
+	aiCommandCost    int
+	aiPendingSummons int
+	npcRevision      atomic.Uint64
+	questNPCs        questNPCCatalogCache
+	mu               sync.Mutex
+	entities         MapEntities
 }
 
 type mapGrid struct {
@@ -198,36 +201,22 @@ type mapGrid struct {
 	mask []byte
 }
 
-var (
-	shardsMu  sync.Mutex
-	shards    = map[uint16]*mapShard{}
-	gridsMu   sync.RWMutex
-	grids     = map[uint16]mapGrid{}
-	nextNpcID atomic.Uint32
-	nextMobID atomic.Uint32
-)
-
-func init() {
-	nextNpcID.Store(0x7000_0000)
-	nextMobID.Store(0x7100_0000)
-}
-
 func shard(mapID uint16) *mapShard {
-	shardsMu.Lock()
-	defer shardsMu.Unlock()
-	s, ok := shards[mapID]
+	realm.shardsMu.Lock()
+	defer realm.shardsMu.Unlock()
+	s, ok := realm.shards[mapID]
 	if !ok {
 		s = &mapShard{}
-		shards[mapID] = s
+		realm.shards[mapID] = s
 	}
 	return s
 }
 
 func shardIDs() []uint16 {
-	shardsMu.Lock()
-	defer shardsMu.Unlock()
-	ids := make([]uint16, 0, len(shards))
-	for id := range shards {
+	realm.shardsMu.Lock()
+	defer realm.shardsMu.Unlock()
+	ids := make([]uint16, 0, len(realm.shards))
+	for id := range realm.shards {
 		ids = append(ids, id)
 	}
 	return ids
@@ -261,23 +250,23 @@ func EntitiesOnMap(mapID uint16) MapEntities {
 }
 
 func RegisterMapGrid(mapID uint16, size uint32, mask []byte) {
-	gridsMu.Lock()
-	grids[mapID] = mapGrid{size, mask}
-	gridsMu.Unlock()
+	realm.gridsMu.Lock()
+	realm.grids[mapID] = mapGrid{size, mask}
+	realm.gridsMu.Unlock()
 }
 
 // mapSize is the svmap's side length.
 func mapSize(mapID uint16) (float32, bool) {
-	gridsMu.RLock()
-	defer gridsMu.RUnlock()
-	g, ok := grids[mapID]
+	realm.gridsMu.RLock()
+	defer realm.gridsMu.RUnlock()
+	g, ok := realm.grids[mapID]
 	return float32(g.size), ok
 }
 
 func hasGrid(mapID uint16) bool {
-	gridsMu.RLock()
-	defer gridsMu.RUnlock()
-	_, ok := grids[mapID]
+	realm.gridsMu.RLock()
+	defer realm.gridsMu.RUnlock()
+	_, ok := realm.grids[mapID]
 	return ok
 }
 
@@ -349,9 +338,9 @@ func EntitiesInView(mapID uint16, viewer cell) MapEntities {
 }
 
 func IsMapWalkable(mapID uint16, x, z float32) bool {
-	gridsMu.RLock()
-	g, ok := grids[mapID]
-	gridsMu.RUnlock()
+	realm.gridsMu.RLock()
+	g, ok := realm.grids[mapID]
+	realm.gridsMu.RUnlock()
 	if !ok {
 		return true
 	}
@@ -1098,14 +1087,14 @@ func NewPatrolNpc(npcType uint8, typeID uint16, points []NpcPatrolPoint) (MapNpc
 		return MapNpc{}, false
 	}
 	p := points[0]
-	return MapNpc{ID: nextNpcID.Add(1) - 1, Type: npcType, TypeID: typeID, PosX: p.X, PosY: p.Y, PosZ: p.Z,
+	return MapNpc{ID: realm.nextNpcID.Add(1) - 1, Type: npcType, TypeID: typeID, PosX: p.X, PosY: p.Y, PosZ: p.Z,
 		Angle: p.Angle, patrol: points, cell: cellFor(p.X, p.Z), hasCell: true, patrolIndex: min(1, len(points)-1),
 		nextMoveAt: time.Now().Add(time.Duration(10000+rand.IntN(10000)) * time.Millisecond)}, true
 }
 
 // NewStaticMob builds a mob from its definition; respawn 0 never respawns.
 func NewStaticMob(def *db.MobDef, mobID uint16, x, z float32, area *MobArea, respawnSeconds uint64) MapMob {
-	m := MapMob{ID: nextMobID.Add(1) - 1, MobID: mobID, Level: 1, PosX: x, PosZ: z, homeX: x, homeZ: z,
+	m := MapMob{ID: realm.nextMobID.Add(1) - 1, MobID: mobID, Level: 1, PosX: x, PosZ: z, homeX: x, homeZ: z,
 		MaxHP: 100, respawnDelay: time.Duration(respawnSeconds) * time.Second}
 	if def != nil {
 		m.Level, m.MaxHP, m.MoneyMin, m.MoneyMax = def.Level, max(def.MaxHP, 1), def.MoneyMin, def.MoneyMax

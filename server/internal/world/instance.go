@@ -3,7 +3,6 @@ package world
 import (
 	"fmt"
 	"path/filepath"
-	"sync"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
@@ -17,21 +16,14 @@ import (
 
 const instanceZoneBase = 1000
 
-var (
-	instanceMu    sync.Mutex
-	instanceMaps  = map[uint16]uint16{} // zone -> real map
-	nextInstance  = uint16(instanceZoneBase)
-	instanceOwner = map[uint16]uint32{} // zone -> CZone m_dwCreateOwnerID
-)
-
 // realMap is the map a zone shows (itself for real maps).
 func realMap(zone uint16) uint16 {
 	if zone < instanceZoneBase {
 		return zone
 	}
-	instanceMu.Lock()
-	defer instanceMu.Unlock()
-	if m, ok := instanceMaps[zone]; ok {
+	realm.instanceMu.Lock()
+	defer realm.instanceMu.Unlock()
+	if m, ok := realm.instanceMaps[zone]; ok {
 		return m
 	}
 	return zone
@@ -55,10 +47,10 @@ func createInstance(mapID uint16, owner uint32) (uint16, error) {
 	if err != nil {
 		return 0, err
 	}
-	instanceMu.Lock()
-	zone := nextInstance
+	realm.instanceMu.Lock()
+	zone := realm.nextInstance
 	for {
-		if _, used := instanceMaps[zone]; !used {
+		if _, used := realm.instanceMaps[zone]; !used {
 			break
 		}
 		zone++
@@ -66,12 +58,12 @@ func createInstance(mapID uint16, owner uint32) (uint16, error) {
 			zone = instanceZoneBase
 		}
 	}
-	nextInstance = zone + 1
-	if nextInstance < instanceZoneBase {
-		nextInstance = instanceZoneBase
+	realm.nextInstance = zone + 1
+	if realm.nextInstance < instanceZoneBase {
+		realm.nextInstance = instanceZoneBase
 	}
-	instanceMaps[zone], instanceOwner[zone] = mapID, owner
-	instanceMu.Unlock()
+	realm.instanceMaps[zone], realm.instanceOwner[zone] = mapID, owner
+	realm.instanceMu.Unlock()
 	RegisterMapGrid(zone, load.mapSize, load.mask)
 	nav, err := loadMobNavigation(zone)
 	if err != nil {
@@ -102,25 +94,25 @@ func destroyInstance(zone uint16) {
 	relics.Lock()
 	delete(relics.bosses, zone)
 	relics.Unlock()
-	instanceMu.Lock()
-	delete(instanceMaps, zone)
-	delete(instanceOwner, zone)
-	instanceMu.Unlock()
-	shardsMu.Lock()
-	delete(shards, zone)
-	shardsMu.Unlock()
-	gridsMu.Lock()
-	delete(grids, zone)
-	gridsMu.Unlock()
+	realm.instanceMu.Lock()
+	delete(realm.instanceMaps, zone)
+	delete(realm.instanceOwner, zone)
+	realm.instanceMu.Unlock()
+	realm.shardsMu.Lock()
+	delete(realm.shards, zone)
+	realm.shardsMu.Unlock()
+	realm.gridsMu.Lock()
+	delete(realm.grids, zone)
+	realm.gridsMu.Unlock()
 	clearMapItems(zone)
 }
 
 // instanceZones lists the live instances of mapID.
 func instanceZones(mapID uint16) []uint16 {
-	instanceMu.Lock()
-	defer instanceMu.Unlock()
+	realm.instanceMu.Lock()
+	defer realm.instanceMu.Unlock()
 	var out []uint16
-	for z, m := range instanceMaps {
+	for z, m := range realm.instanceMaps {
 		if m == mapID {
 			out = append(out, z)
 		}

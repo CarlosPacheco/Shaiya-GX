@@ -38,10 +38,10 @@ func partyOpen(z ZoneConfig, now time.Time) bool {
 
 // findInstance is the zone of mapID owned by owner.
 func findInstance(mapID uint16, owner uint32) (uint16, bool) {
-	instanceMu.Lock()
-	defer instanceMu.Unlock()
-	for zone, m := range instanceMaps {
-		if m == mapID && instanceOwner[zone] == owner {
+	realm.instanceMu.Lock()
+	defer realm.instanceMu.Unlock()
+	for zone, m := range realm.instanceMaps {
+		if m == mapID && realm.instanceOwner[zone] == owner {
 			return zone, true
 		}
 	}
@@ -113,12 +113,12 @@ var (
 
 // TickInstances is CWorldThread::Update's instance expiry.
 func TickInstances(now time.Time, log logPrinter) {
-	instanceMu.Lock()
-	zones := make(map[uint16]uint16, len(instanceMaps))
-	for z, m := range instanceMaps {
+	realm.instanceMu.Lock()
+	zones := make(map[uint16]uint16, len(realm.instanceMaps))
+	for z, m := range realm.instanceMaps {
 		zones[z] = m
 	}
-	instanceMu.Unlock()
+	realm.instanceMu.Unlock()
 	instanceExpiryMu.Lock()
 	defer instanceExpiryMu.Unlock()
 	for z := range instanceExpiry {

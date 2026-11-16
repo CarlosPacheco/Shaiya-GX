@@ -38,28 +38,55 @@ func LoadRuntimeEnv() error {
 			}
 		}
 	}
-	LoadRuntimeEnvFrom(".")
-	return nil
+	return LoadRuntimeEnvFrom(".")
 }
 
 // LoadRuntimeEnvFrom is LoadRuntimeEnv for the checkout at root.
-func LoadRuntimeEnvFrom(root string) {
-	defer resolvePaths(root)
+func LoadRuntimeEnvFrom(root string) error {
 	file, err := os.Open(filepath.Join(root, ".local", "runtime.env"))
+	if os.IsNotExist(err) {
+		resolvePaths(root)
+		return nil
+	}
 	if err != nil {
-		return
+		return err
 	}
 	defer file.Close()
+	assignments := map[string]string{}
 	scanner := bufio.NewScanner(file)
+	line := 0
 	for scanner.Scan() {
-		key, value, ok := strings.Cut(strings.TrimSpace(scanner.Text()), "=")
-		if !ok || key == "" || strings.HasPrefix(key, "#") {
+		line++
+		text := strings.TrimSpace(scanner.Text())
+		if text == "" || strings.HasPrefix(text, "#") {
 			continue
 		}
+		key, value, ok := strings.Cut(text, "=")
+		key = strings.TrimSpace(key)
+		value = strings.TrimSpace(value)
+		valid := ok && key != ""
+		for i, c := range key {
+			if !(c == '_' || c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || i > 0 && c >= '0' && c <= '9') {
+				valid = false
+			}
+		}
+		if !valid {
+			return fmt.Errorf("invalid runtime.env assignment at line %d", line)
+		}
+		assignments[key] = value
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	for key, value := range assignments {
 		if _, set := os.LookupEnv(key); !set {
-			os.Setenv(key, value)
+			if err := os.Setenv(key, value); err != nil {
+				return err
+			}
 		}
 	}
+	resolvePaths(root)
+	return nil
 }
 
 func env(key, fallback string) string {

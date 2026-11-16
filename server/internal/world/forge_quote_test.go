@@ -48,7 +48,8 @@ func TestForgeQuoteMatchesExecutionAndDoesNotMutate(t *testing.T) {
 	if !reflect.DeepEqual(before, s.items) || s.char.Money != 9000000 {
 		t.Fatal("preview mutated character")
 	}
-	s.handleGemAdd(proto.GemAddHammerPacket(1, 1, 1, 0, 1, 2))
+	s.operation = &inventoryOperation{}
+	s.planGemAdd(proto.GemAddHammerPacket(1, 1, 1, 0, 1, 2))
 	if s.char.Money != 9000000-q.Gold {
 		t.Fatal("quote and charged cost diverge")
 	}
@@ -62,7 +63,7 @@ func TestForgeQuoteMatchesExecutionAndDoesNotMutate(t *testing.T) {
 		t.Fatal("extraction quote", q)
 	}
 	money := s.char.Money
-	s.handleGemRemove(proto.GemRemoveHammerPacket([2]uint8{1, 0}, [2]uint8{1, 4}, 0))
+	s.planGemRemove(proto.GemRemoveHammerPacket([2]uint8{1, 0}, [2]uint8{1, 4}, 0))
 	if s.char.Money != money-q.Gold {
 		t.Fatal("extraction charged a different cost")
 	}

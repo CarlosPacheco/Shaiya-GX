@@ -34,9 +34,9 @@ func luaWorldFixture(t testing.TB, code uint8) (*mapShard, *mobAIHost) {
 		if sh.lua != nil {
 			sh.lua.Close()
 		}
-		shardsMu.Lock()
-		delete(shards, zone)
-		shardsMu.Unlock()
+		realm.shardsMu.Lock()
+		delete(realm.shards, zone)
+		realm.shardsMu.Unlock()
 		db.SetDefsForTest(old)
 	})
 	return sh, h

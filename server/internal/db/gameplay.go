@@ -32,11 +32,11 @@ func CommitGameplay(changes []CharacterChange, quest *QuestCompletion) error {
 	}
 	c, cancel := ctx()
 	defer cancel()
-	tx, err := pool.BeginTx(c, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+	return withTx(c, pool, func(tx *sql.Tx) error { return commitGameplayTx(c, tx, changes, quest) })
+}
+
+func commitGameplayTx(c context.Context, tx *sql.Tx, changes []CharacterChange, quest *QuestCompletion) error {
+
 	seen := map[uint32]bool{}
 	for _, change := range changes {
 		id := change.Before.ID
@@ -87,7 +87,7 @@ func CommitGameplay(changes []CharacterChange, quest *QuestCompletion) error {
 			return err
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 func requireOne(result sql.Result) error {
@@ -179,4 +179,25 @@ func writeInventoryChange(c context.Context, tx *sql.Tx, change CharacterChange)
 		}
 	}
 	return nil
+}
+
+// CommitItems applies an inventory-only plan without overwriting character
+// money/stats. Used by item grants whose character state is owned elsewhere.
+func CommitItems(charID uint32, before, after []Item) error {
+	pool, err := Pool(GameData)
+	if err != nil {
+		return err
+	}
+	c, cancel := ctx()
+	defer cancel()
+	return withTx(c, pool, func(tx *sql.Tx) error {
+		actual, err := characterItems(c, tx, charID)
+		if err != nil {
+			return err
+		}
+		if !sameInventory(actual, before) {
+			return fmt.Errorf("grant inventory changed")
+		}
+		return writeInventoryChange(c, tx, CharacterChange{Before: Character{ID: charID}, After: Character{ID: charID}, ItemsBefore: before, ItemsAfter: after})
+	})
 }

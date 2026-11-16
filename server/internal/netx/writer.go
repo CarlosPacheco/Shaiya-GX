@@ -2,12 +2,15 @@ package netx
 
 import (
 	"errors"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/telemetry"
 	"io"
 	"net"
 	"sync"
 	"time"
 )
 
+var writerBytes = telemetry.NumberMetric("gx_network_output_bytes_pending")
+var writerOverflows = telemetry.NumberMetric("gx_network_output_overflows_total")
 var ErrBackpressure = errors.New("outbound connection budget exceeded")
 
 // Writer preserves packet order without blocking simulation on a slow client.
@@ -45,6 +48,7 @@ func (w *Writer) Write(packet []byte) error {
 	select {
 	case w.queue <- append([]byte(nil), packet...):
 		w.bytes += len(packet)
+		writerBytes.Add(int64(len(packet)))
 		return nil
 	default:
 		w.failLocked(ErrBackpressure)
@@ -53,9 +57,12 @@ func (w *Writer) Write(packet []byte) error {
 }
 func (w *Writer) failLocked(err error) {
 	if w.err == nil {
+		if errors.Is(err, ErrBackpressure) {
+			writerOverflows.Add(1)
+		}
 		w.err = err
 	}
-	w.conn.Close()
+	Abort(w.conn)
 	if !w.closed {
 		w.closed = true
 		close(w.queue)
@@ -63,6 +70,7 @@ func (w *Writer) failLocked(err error) {
 }
 func (w *Writer) run() {
 	defer close(w.done)
+	defer func() { w.mu.Lock(); writerBytes.Add(-int64(w.bytes)); w.bytes = 0; w.mu.Unlock() }()
 	for packet := range w.queue {
 		err := w.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		if err == nil {
@@ -74,6 +82,7 @@ func (w *Writer) run() {
 		}
 		w.mu.Lock()
 		w.bytes -= len(packet)
+		writerBytes.Add(-int64(len(packet)))
 		if err != nil {
 			w.failLocked(err)
 			w.mu.Unlock()
@@ -91,7 +100,7 @@ func (w *Writer) Close() error {
 		close(w.queue)
 	}
 	w.mu.Unlock()
-	deadline := time.AfterFunc(5*time.Second, func() { w.conn.Close() })
+	deadline := time.AfterFunc(5*time.Second, func() { Abort(w.conn) })
 	<-w.done
 	deadline.Stop()
 	w.mu.Lock()

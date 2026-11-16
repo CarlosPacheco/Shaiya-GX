@@ -109,3 +109,6 @@ free-cost environment override. Enchant rates, cap (default20) and bonuses are
 compiled in `server/internal/world/enchant_rules.go`; ItemEnchant.ini is no
 longer read or required. See the [feature wiki](wiki/README.md) for exact rules,
 item content fields, extraction, recreation and drop persistence.
+
+Operational architecture, resource limits, secure remote transport and local
+account management are described in [server modernization](../server/docs/modernization.md).

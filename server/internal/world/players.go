@@ -2,6 +2,8 @@ package world
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/netx"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/telemetry"
+	"math"
 	"net"
 	"strings"
 	"sync"
@@ -85,7 +87,7 @@ type ConnectedPlayer struct {
 	lifeSkill    *pendingLifeSkill
 	friendly     []pendingFriendly
 	userHits     []pendingUserHit
-	pvpKills     []pvpKill
+	pvpKillCount uint32
 	duelEnds     []pendingDuelEnd
 	duelWins     int
 	itemGrants   []db.Item
@@ -108,9 +110,9 @@ type ConnectedPlayer struct {
 	inviteDeadline time.Time
 
 	rewardMu   sync.Mutex
-	expRewards []uint32
-	goldShares []uint32
-	questKills []uint16
+	experience [4]uint32
+	gold       uint32
+	questKills map[uint16]uint8
 
 	questMu  sync.Mutex
 	questIDs map[uint16]bool // active quests, for loot eligibility
@@ -121,17 +123,43 @@ type ConnectedPlayer struct {
 // QueueQuestKill credits a kill to the player's quests (party members get
 // it too, as mob_death does).
 func (p *ConnectedPlayer) QueueQuestKill(mobID uint16) {
-	p.rewardMu.Lock()
-	p.questKills = append(p.questKills, mobID)
-	p.rewardMu.Unlock()
-}
-
-func (p *ConnectedPlayer) TakeQuestKills() []uint16 {
+	// Only active quests can consume a kill; each has two uint8 counters.
+	relevant := false
+	for _, id := range mobQuestLinks[mobID] {
+		if p.hasQuest(id) {
+			relevant = true
+			break
+		}
+	}
+	if !relevant {
+		return
+	}
 	p.rewardMu.Lock()
 	defer p.rewardMu.Unlock()
-	k := p.questKills
-	p.questKills = nil
-	return k
+	if p.questKills == nil {
+		p.questKills = map[uint16]uint8{}
+	}
+	if p.questKills[mobID] < 255 {
+		p.questKills[mobID]++
+	}
+}
+func (p *ConnectedPlayer) pendingQuestKills() map[uint16]uint8 {
+	p.rewardMu.Lock()
+	defer p.rewardMu.Unlock()
+	result := make(map[uint16]uint8, len(p.questKills))
+	for id, count := range p.questKills {
+		result[id] = count
+	}
+	return result
+}
+func (p *ConnectedPlayer) ackQuestKills(id uint16, count uint8) {
+	p.rewardMu.Lock()
+	defer p.rewardMu.Unlock()
+	if p.questKills[id] <= count {
+		delete(p.questKills, id)
+	} else {
+		p.questKills[id] -= count
+	}
 }
 
 func (p *ConnectedPlayer) setQuests(ids []uint16) {
@@ -152,41 +180,80 @@ func (p *ConnectedPlayer) hasQuest(id uint16) bool {
 
 // QueueExp / QueueGold carry a party member's share of a kill to its own
 // session, the only one that mutates its character.
+func experienceScaled(amount uint32, mode int) uint32 {
+	factors := [4]float64{1, 1.5, 1.2, 1.7}
+	return uint32(math.Trunc(float64(amount) * factors[mode]))
+}
 func (p *ConnectedPlayer) QueueExp(amount uint32) {
 	p.rewardMu.Lock()
-	p.expRewards = append(p.expRewards, amount)
-	p.rewardMu.Unlock()
+	defer p.rewardMu.Unlock()
+	// Precompute every possible modifier per event before coalescing, retaining
+	// per-reward rounding. The receiving session chooses its live buff mode.
+	for mode := range p.experience {
+		p.experience[mode] = satAdd(p.experience[mode], experienceScaled(amount, mode))
+	}
 }
-
 func (p *ConnectedPlayer) QueueGold(amount uint32) {
 	p.rewardMu.Lock()
-	p.goldShares = append(p.goldShares, amount)
-	p.rewardMu.Unlock()
+	defer p.rewardMu.Unlock()
+	p.gold = satAdd(p.gold, amount)
 }
-
-func (p *ConnectedPlayer) TakeRewards() (exp, gold []uint32) {
+func (p *ConnectedPlayer) takeRewardTotals(mode int) (uint32, uint32) {
 	p.rewardMu.Lock()
 	defer p.rewardMu.Unlock()
-	exp, gold = p.expRewards, p.goldShares
-	p.expRewards, p.goldShares = nil, nil
+	exp, gold := p.experience[mode], p.gold
+	p.experience = [4]uint32{}
+	p.gold = 0
+	return exp, gold
+}
+func (p *ConnectedPlayer) peekRewardTotals(mode int) (snapshot [4]uint32, exp, gold uint32) {
+	p.rewardMu.Lock()
+	defer p.rewardMu.Unlock()
+	return p.experience, p.experience[mode], p.gold
+}
+func (p *ConnectedPlayer) ackRewardTotals(snapshot [4]uint32, gold uint32) {
+	p.rewardMu.Lock()
+	defer p.rewardMu.Unlock()
+	for mode, value := range snapshot {
+		p.experience[mode] = satSub(p.experience[mode], value)
+	}
+	p.gold = satSub(p.gold, gold)
+}
+func (p *ConnectedPlayer) TakeRewards() (exp, gold []uint32) {
+	e, g := p.takeRewardTotals(0)
+	if e > 0 {
+		exp = []uint32{e}
+	}
+	if g > 0 {
+		gold = []uint32{g}
+	}
 	return
 }
 
-var (
-	registryMu sync.Mutex
-	registry   = map[uint16]map[uint32]*ConnectedPlayer{}
-)
+const maxPendingCombat = 4096
+const maxPendingItemGrants = 256
+
+var mailboxOverflows = telemetry.NumberMetric("gx_player_mailbox_overflows_total")
+
+func (p *ConnectedPlayer) mailboxOverflow() {
+	mailboxOverflows.Add(1)
+	// Bound combat backlog by terminating an unresponsive connection. Rewards
+	// use fixed accumulators and are flushed separately on session termination.
+	if p.out != nil && p.out.conn != nil {
+		netx.Abort(p.out.conn)
+	}
+}
 
 func bucket(mapID uint16) map[uint32]*ConnectedPlayer {
-	b, ok := registry[mapID]
+	b, ok := realm.registry[mapID]
 	if !ok {
 		b = map[uint32]*ConnectedPlayer{}
-		registry[mapID] = b
+		realm.registry[mapID] = b
 	}
 	return b
 }
 
-// RegisterPlayer adds a player to its map's registry.
+// RegisterPlayer adds a player to its map's realm.registry.
 func RegisterPlayer(ch db.Character, items []db.Item, isAdmin bool, faction uint8, out *connWriter, log *logx.Logger, owner ...*Session) *ConnectedPlayer {
 	p := &ConnectedPlayer{CharacterID: ch.ID, CharacterName: ch.Name, IsAdmin: isAdmin, out: out, log: log,
 		gmVisible: true, mapID: ch.MapID, character: ch, items: append([]db.Item(nil), items...), faction: faction}
@@ -194,9 +261,9 @@ func RegisterPlayer(ch db.Character, items []db.Item, isAdmin bool, faction uint
 		p.owner = owner[0]
 	}
 	p.alive.Store(true)
-	registryMu.Lock()
+	realm.registryMu.Lock()
 	bucket(ch.MapID)[ch.ID] = p
-	registryMu.Unlock()
+	realm.registryMu.Unlock()
 	return p
 }
 
@@ -206,9 +273,9 @@ func (p *ConnectedPlayer) Unregister() {
 
 	clearSocialSession(p.CharacterID)
 	p.dropFromOthers()
-	registryMu.Lock()
+	realm.registryMu.Lock()
 	delete(bucket(p.MapID()), p.CharacterID)
-	registryMu.Unlock()
+	realm.registryMu.Unlock()
 	tradeCancelForDisconnect(p.CharacterID, p.log)
 	duelLeave(p, 0, false) // PvPChkLeaveByZoneLeave
 	guildDuelLeave(p, nil, 1)
@@ -223,12 +290,12 @@ func (p *ConnectedPlayer) SetMap(mapID uint16) {
 	if old == mapID {
 		return
 	}
-	registryMu.Lock()
+	realm.registryMu.Lock()
 	if cur, ok := bucket(old)[p.CharacterID]; ok {
 		delete(bucket(old), p.CharacterID)
 		bucket(mapID)[p.CharacterID] = cur
 	}
-	registryMu.Unlock()
+	realm.registryMu.Unlock()
 }
 
 func (p *ConnectedPlayer) MapID() uint16 {
@@ -332,6 +399,11 @@ func (p *ConnectedPlayer) TakeTradeRefresh() *tradeRefresh {
 
 func (p *ConnectedPlayer) QueueDamage(d pendingDamage) {
 	p.mailMu.Lock()
+	if len(p.damage) >= maxPendingCombat {
+		p.mailMu.Unlock()
+		p.mailboxOverflow()
+		return
+	}
 	p.damage = append(p.damage, d)
 	p.mailMu.Unlock()
 }
@@ -391,12 +463,12 @@ func (p *ConnectedPlayer) Send(frame []byte, label string) error {
 }
 
 func playersWhere(mapID uint16, keep func(*ConnectedPlayer) bool) []*ConnectedPlayer {
-	registryMu.Lock()
-	candidates := make([]*ConnectedPlayer, 0, len(registry[mapID]))
-	for _, p := range registry[mapID] {
+	realm.registryMu.Lock()
+	candidates := make([]*ConnectedPlayer, 0, len(realm.registry[mapID]))
+	for _, p := range realm.registry[mapID] {
 		candidates = append(candidates, p)
 	}
-	registryMu.Unlock()
+	realm.registryMu.Unlock()
 	out := candidates[:0]
 	for _, p := range candidates {
 		if keep(p) {
@@ -428,10 +500,10 @@ func PlayersNearExcluding(mapID uint16, characterID uint32, x, z, radius float32
 }
 
 func AllPlayers() []*ConnectedPlayer {
-	registryMu.Lock()
-	defer registryMu.Unlock()
+	realm.registryMu.Lock()
+	defer realm.registryMu.Unlock()
 	var out []*ConnectedPlayer
-	for _, b := range registry {
+	for _, b := range realm.registry {
 		for _, p := range b {
 			out = append(out, p)
 		}

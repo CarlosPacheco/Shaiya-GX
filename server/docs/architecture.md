@@ -1,44 +1,53 @@
 # Architecture
 
-GX Server is integrated into the parent GX repository and root Go module.
-Headless cores share control code with a terminal console and the GX Server
-one-button micro app (`gx_server`). No separate server repository is needed.
+GX Server is a modular Go application in the GX root module. SQLite is the
+primary production database. There is no separate database service or server
+repository. The GUI (`gx_server`) and console control `gx_login` and `gx_world`.
 
-## Processes
+## Ownership and lifecycle
 
-- `gx_console`: terminal operator console ("GX Server Console") --
-  `start server` / `shutdown server`.
-- `gx_login`: login/authentication TCP server.
-- `gx_world`: game/world TCP server.
+One world process owns one realm and holds an OS-backed lease on its database.
+The realm owns map shards, registries and instance identifiers. Each shard owns
+its actors, Lua execution and ground items; a session owns its character and
+serial command processing. Social operations retain explicit domain locks.
+Cross-session trade uses ordered locking. SQLite work does not run while the
+account registry lock or ground-item claim lock is held.
 
-(`.exe` on Windows, no extension on Linux -- otherwise identical binaries,
-built from `cmd/` with Go into `build/`. Storage uses embedded SQLite as the primary production database, with the original EP4.5
-tables/columns retained and procedures translated into parameterized SQL.)
+A cancellable world runtime owns one deterministic scheduler for periodic
+simulation and maintenance. Jobs run serially, skip overdue catch-up bursts and
+record duration and delay. Socket handlers remain concurrent. This keeps the
+existing game timings without adding a goroutine per timer or an actor framework.
+Shutdown closes admission, interrupts sockets, drains handlers and persistence,
+stops the runtime, then optimizes and closes SQLite.
 
-The console owns process lifecycle. The server cores own protocol, state,
-database access, and gameplay.
+## Commands and persistence
 
-## First Milestone
+Framing and phase validation precede command dispatch. Inventory application
+operations stage private state, validate the expected persisted state, commit a
+single transaction and then publish packets and live state. Trade, rewards,
+shops, crafting, warehouses, guild banks, skills and guild creation use atomic
+storage operations. Conflicting/replayed requests cannot reuse the same funds
+or item. Ground loot has an exclusive claim with rollback on failed persistence.
 
-1. Accept a TCP connection from `Game.exe` on `127.0.0.1:30800`.
-2. Send/validate the login handshake.
-3. Decode `0xA102` login request using Aries layouts.
-4. Return login success and server list.
-5. Observe the client connecting to world on `127.0.0.1:30810`.
+Storage is confined to `internal/db`. WAL, FULL synchronization, IMMEDIATE write
+transactions and one bounded connection per process deliberately serialize
+writers. Checksummed additive migrations preserve the distributed seed and old
+EP4.5 tables. Runtime copies, credentials, certificates and logs stay outside Git.
+Unusable storage cancels the world rather than continuing unsaved simulation.
 
-## Embedded development storage
+Network queues and gameplay mailboxes are bounded. Economic rewards accumulate
+with acknowledgement after commit; bounded item delivery falls back to ground
+loot. Unresponsive combat recipients disconnect on mailbox overflow. AI commands
+have explicit capacity and actor limits.
 
-`internal/db` retains the gameplay-facing API. All former logical databases are
-in a single SQLite file with explicit table prefixes. Transactions can therefore
-span accounts, characters, guild mirrors and the item-mall log atomically.
-Each process owns a bounded connection; WAL and a busy timeout coordinate login
-and world. Runtime copies are separate from the versioned development snapshot.
-No remote SQL credentials or container lifecycle are needed in the runtime.
+## Operations
 
-SQLite is the primary production database, using embedded storage without a separate database service. The distributed seed intentionally includes shared test accounts and gameplay state. See [storage](sqlite.md) and [operations](../../docs/server.md).
+Authentication uses versioned Argon2id hashes, bounded hashing workers, atomic
+single-use handoffs and credential revocation. TLS 1.3 is required for remote
+listeners unless the operator explicitly opts into insecure development mode.
+Loopback diagnostics provide health and bounded-cardinality Prometheus metrics;
+shutdown and optional profiling require a private bearer token. Controllers use
+this same authenticated shutdown on Linux and Windows before force-stop fallback.
 
-## Modernization
-
-Current infrastructure changes and the remaining architecture migration are
-tracked in [modernization](modernization.md). Session handoffs now use the
-mutable SQLite runtime rather than shared session files.
+See [modernization](modernization.md), [SQLite operations](sqlite.md) and
+[server operations](../../docs/server.md) for configuration and recovery.

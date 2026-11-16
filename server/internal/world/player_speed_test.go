@@ -181,7 +181,10 @@ func TestSeedSonicHasteCandyCooldownExpiryAndRelog(t *testing.T) {
 	}
 	s.persistBuffs()
 	t.Cleanup(func() { db.SaveAppliedBuffs(s.char.ID, nil) })
-	s.buffs = restoreBuffs(s.char.ID, s.log)
+	s.buffs, err = restoreBuffs(s.char.ID, s.log)
+	if err != nil {
+		t.Fatal(err)
+	}
 	check(3)
 	s.gmImmune = false
 	if _, ok := s.addEffect(haste, 0, s.char.ID); !ok {

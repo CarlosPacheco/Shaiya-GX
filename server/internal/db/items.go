@@ -194,7 +194,10 @@ func StoredItems(userUID uint32) ([]Item, error) {
 	}
 	c, cancel := ctx()
 	defer cancel()
-	rows, err := pool.QueryContext(c, `SELECT ItemID, Type, TypeID, ItemUID, Slot, Quality,
+	return storedItems(c, pool, userUID)
+}
+func storedItems(c context.Context, query itemQuerier, userUID uint32) ([]Item, error) {
+	rows, err := query.QueryContext(c, `SELECT ItemID, Type, TypeID, ItemUID, Slot, Quality,
 Gem1, Gem2, Gem3, Gem4, Gem5, Gem6, Craftname, [Count], Maketype,
 CAST(strftime('%Y',MakeTime) AS INTEGER) AS MakeTime_YYYY,
 CAST(strftime('%m',MakeTime) AS INTEGER) AS MakeTime_MM,
@@ -266,7 +269,10 @@ func GuildStoredItems(guildID uint32) ([]Item, error) {
 	}
 	c, cancel := ctx()
 	defer cancel()
-	rows, err := pool.QueryContext(c, `SELECT ItemID, Type, TypeID, ItemUID, Slot, Quality,
+	return guildStoredItems(c, pool, guildID)
+}
+func guildStoredItems(c context.Context, query itemQuerier, guildID uint32) ([]Item, error) {
+	rows, err := query.QueryContext(c, `SELECT ItemID, Type, TypeID, ItemUID, Slot, Quality,
 Gem1, Gem2, Gem3, Gem4, Gem5, Gem6, Craftname, [Count], Maketype,
 CAST(strftime('%Y',MakeTime) AS INTEGER) AS MakeTime_YYYY,
 CAST(strftime('%m',MakeTime) AS INTEGER) AS MakeTime_MM,
@@ -288,10 +294,19 @@ ORDER BY MakeTime DESC`, sql.Named("guildid", int32(guildID)))
 
 // AddGuildStoredItem runs usp_Save_Guild_StoredItem_Add_E.
 func AddGuildStoredItem(guildID uint32, it *Item) error {
+	pool, err := Pool(GameData)
+	if err != nil {
+		return err
+	}
+	c, cancel := ctx()
+	defer cancel()
+	return insertGuildStoredItem(c, pool, guildID, it)
+}
+func insertGuildStoredItem(c context.Context, executor sqlExecutor, guildID uint32, it *Item) error {
 	if it.UID == 0 {
 		it.UID = NewItemUID()
 	}
-	return execSQL(GameData, `INSERT INTO PS_GameData_GuildStoredItems
+	_, err := executor.ExecContext(c, `INSERT INTO PS_GameData_GuildStoredItems
 (GuildID, Slot, ItemID, Type, TypeID, ItemUID, quality, gem1, gem2, gem3, gem4,
 gem5, gem6, craftname, [count], maketime, maketype)
 VALUES(@guildid, @slot, @itemid, @type, @typeid, @itemuid, @quality, @gem1, @gem2, @gem3, @gem4,
@@ -302,6 +317,7 @@ VALUES(@guildid, @slot, @itemid, @type, @typeid, @itemuid, @quality, @gem1, @gem
 		sql.Named("gem4", it.Gems[3]), sql.Named("gem5", it.Gems[4]), sql.Named("gem6", it.Gems[5]),
 		sql.Named("craftname", it.CraftName), sql.Named("count", it.Count), sql.Named("maketime", makeTime(it)),
 		sql.Named("maketype", makeType(it)))
+	return err
 }
 
 // SaveGuildStoredItem runs usp_Save_Guild_StoredItem_Mod_E.

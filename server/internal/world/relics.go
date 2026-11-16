@@ -231,9 +231,9 @@ func eventSpawnPosition(mapID uint16, g *eventSpawn) ([3]float32, bool) {
 	span := max(int(g.radius)*2, 1)
 	p[0] += float32(rand.IntN(span)) - g.radius
 	p[2] += float32(rand.IntN(span)) - g.radius
-	gridsMu.RLock()
-	grid, ok := grids[mapID]
-	gridsMu.RUnlock()
+	realm.gridsMu.RLock()
+	grid, ok := realm.grids[mapID]
+	realm.gridsMu.RUnlock()
 	x, z := int(p[0]), int(p[2])
 	if !ok || x < 0 || z < 0 || x >= int(grid.size) || z >= int(grid.size) {
 		return p, false

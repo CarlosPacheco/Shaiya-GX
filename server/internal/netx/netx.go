@@ -73,3 +73,7 @@ func (f *Frames) Push(data []byte) ([][]byte, bool) {
 	}
 	return frames, true
 }
+
+// Abort interrupts pending TLS/TCP IO before closing, so error handling cannot
+// block simulation while attempting a graceful TLS close notification.
+func Abort(conn net.Conn) { conn.SetDeadline(time.Now()); conn.Close() }

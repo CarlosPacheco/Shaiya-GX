@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/telemetry"
 	"time"
 )
 
@@ -309,7 +310,18 @@ func ClaimGift(userUID, charID uint32, giftSlot uint8, it *Item) (bool, error) {
 
 var errRollback = errors.New("rollback")
 
-func withTx(c context.Context, pool *sql.DB, fn func(*sql.Tx) error) error {
+var transactionTime = telemetry.DurationMetric("gx_db_transaction_seconds")
+var transactionFailures = telemetry.NumberMetric("gx_db_transaction_failures_total")
+
+func withTx(c context.Context, pool *sql.DB, fn func(*sql.Tx) error) (err error) {
+	start := time.Now()
+	defer func() {
+		transactionTime.Observe(time.Since(start))
+		if err != nil {
+			transactionFailures.Add(1)
+			reportStorageFailure(err)
+		}
+	}()
 	tx, err := pool.BeginTx(c, nil)
 	if err != nil {
 		return err

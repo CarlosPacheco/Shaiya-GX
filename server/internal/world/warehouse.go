@@ -61,28 +61,47 @@ func (s *Session) handleWarehouseMove(srcBag, srcSlot, destBag, destSlot uint8) 
 	if (srcBag == WarehouseBag && srcSlot >= WarehouseSlots) || (destBag == WarehouseBag && destSlot >= WarehouseSlots) {
 		return
 	}
+	if s.char == nil {
+		return
+	}
+	before := *s.char
+	after := before
+	plan := warehousePlan{char: &after, items: append([]db.Item(nil), s.items...), stored: append([]db.Item(nil), s.stored...)}
 	var frame []byte
 	switch {
 	case srcBag == WarehouseBag && destBag == WarehouseBag:
-		frame = s.warehouseRearrange(srcSlot, destSlot)
+		frame = plan.warehouseRearrange(srcSlot, destSlot)
 	case srcBag == WarehouseBag:
 		if !isValidItemPosition(destBag, destSlot) || destBag == 0 {
 			return
 		}
-		frame = withMoney(s.warehouseWithdraw(srcSlot, destBag, destSlot), s.char.Money)
+		frame = withMoney(plan.warehouseWithdraw(srcSlot, destBag, destSlot), plan.char.Money)
 	default:
 		if !isValidItemPosition(srcBag, srcSlot) || srcBag == 0 {
 			return
 		}
-		frame = s.warehouseDeposit(srcBag, srcSlot, destSlot)
+		frame = plan.warehouseDeposit(srcBag, srcSlot, destSlot)
 	}
 	if frame != nil {
+		change := db.CharacterChange{Before: before, After: after, ItemsBefore: s.items, ItemsAfter: plan.items}
+		if err := db.CommitWarehouse(s.accountID, change, s.stored, plan.stored); err != nil {
+			s.logErr("warehouse transaction", err)
+			return
+		}
+		*s.char = after
+		s.items, s.stored = plan.items, plan.stored
+		s.syncPlayer()
 		s.send(frame, "0x0204 warehouse item move")
 	}
 }
 
-func (s *Session) warehouseRearrange(src, dest uint8) []byte {
-	uid := s.accountID
+// warehousePlan owns private copies; planning cannot write storage or sockets.
+type warehousePlan struct {
+	char          *db.Character
+	items, stored []db.Item
+}
+
+func (s *warehousePlan) warehouseRearrange(src, dest uint8) []byte {
 	si, di := findStored(s.stored, src), findStored(s.stored, dest)
 	if si < 0 {
 		var d *db.Item
@@ -100,30 +119,26 @@ func (s *Session) warehouseRearrange(src, dest uint8) []byte {
 			moved := min(a.Count, ms-b.Count)
 			b.Count += moved
 			a.Count -= moved
-			db.SaveStoredItem(uid, b)
+
 			bCopy := *b
 			var aAfter *db.Item
 			if a.Count == 0 {
-				db.DeleteStoredItems(uid, a.UID)
 				s.stored = append(s.stored[:si], s.stored[si+1:]...)
 			} else {
-				db.SaveStoredItem(uid, a)
 				aAfter = copyPtr(a)
 			}
 			return buildBagToBag(WarehouseBag, src, aAfter, WarehouseBag, dest, &bCopy)
 		}
 		a.Slot, b.Slot = dest, src
-		db.SaveStoredItem(uid, a)
-		db.SaveStoredItem(uid, b)
+
 		return buildBagToBag(WarehouseBag, src, b, WarehouseBag, dest, a)
 	}
 	s.stored[si].Slot = dest
-	db.SaveStoredItem(uid, &s.stored[si])
+
 	return buildBagToBag(WarehouseBag, src, nil, WarehouseBag, dest, &s.stored[si])
 }
 
-func (s *Session) warehouseDeposit(srcBag, srcSlot, dest uint8) []byte {
-	ch := s.char
+func (s *warehousePlan) warehouseDeposit(srcBag, srcSlot, dest uint8) []byte {
 	si, di := findItem(s.items, srcBag, srcSlot), findStored(s.stored, dest)
 	if si < 0 {
 		var d *db.Item
@@ -146,9 +161,9 @@ func (s *Session) warehouseDeposit(srcBag, srcSlot, dest uint8) []byte {
 		if ms := maxStackOf(src.Type, src.TypeID); itemsMatch(&src, b) && ms > 1 && b.Count < ms {
 			moved := min(src.Count, ms-b.Count)
 			b.Count += moved
-			db.SaveStoredItem(s.accountID, b)
+
 			s.items[si].Count -= moved
-			db.SaveCharacterItem(ch.ID, &s.items[si])
+
 			var after *db.Item
 			if s.items[si].Count == 0 {
 				s.items = append(s.items[:si], s.items[si+1:]...)
@@ -160,21 +175,15 @@ func (s *Session) warehouseDeposit(srcBag, srcSlot, dest uint8) []byte {
 		return buildBagToBag(srcBag, srcSlot, &src, WarehouseBag, dest, b)
 	}
 	stored := src
-	stored.UID, stored.Bag, stored.Slot = 0, 0, dest
-	if err := db.AddStoredItem(s.accountID, &stored); err != nil {
-		s.log.Printf("GX Server World warehouse deposit failed: %v", err)
-		return buildBagToBag(srcBag, srcSlot, &src, WarehouseBag, dest, nil)
-	}
-	if err := db.DeleteCharacterItems(ch.ID, src.UID); err != nil {
-		s.log.Printf("GX Server World warehouse deposit cleanup failed: %v", err)
-	}
+	stored.UID, stored.Bag, stored.Slot = db.NewItemUID(), 0, dest
+
 	s.items = append(s.items[:si], s.items[si+1:]...)
 	s.stored = append(s.stored, stored)
-	s.log.Printf("GX Server World deposited item %d/%d into warehouse slot=%d", src.Type, src.TypeID, dest)
+
 	return buildBagToBag(srcBag, srcSlot, nil, WarehouseBag, dest, &stored)
 }
 
-func (s *Session) warehouseWithdraw(src, destBag, destSlot uint8) []byte {
+func (s *warehousePlan) warehouseWithdraw(src, destBag, destSlot uint8) []byte {
 	ch := s.char
 	si, di := findStored(s.stored, src), findItem(s.items, destBag, destSlot)
 	if si < 0 {
@@ -201,7 +210,6 @@ func (s *Session) warehouseWithdraw(src, destBag, destSlot uint8) []byte {
 	pay := func() {
 		if fee > 0 {
 			ch.Money -= fee
-			s.persist()
 		}
 	}
 	if di >= 0 {
@@ -210,15 +218,13 @@ func (s *Session) warehouseWithdraw(src, destBag, destSlot uint8) []byte {
 			moved := min(a.Count, ms-b.Count)
 			pay()
 			b.Count += moved
-			db.SaveCharacterItem(ch.ID, b)
+
 			bCopy := *b
 			s.stored[si].Count -= moved
 			var after *db.Item
 			if s.stored[si].Count == 0 {
-				db.DeleteStoredItems(s.accountID, a.UID)
 				s.stored = append(s.stored[:si], s.stored[si+1:]...)
 			} else {
-				db.SaveStoredItem(s.accountID, &s.stored[si])
 				after = copyPtr(&s.stored[si])
 			}
 			return buildBagToBag(WarehouseBag, src, after, destBag, destSlot, &bCopy)
@@ -226,18 +232,12 @@ func (s *Session) warehouseWithdraw(src, destBag, destSlot uint8) []byte {
 		return buildBagToBag(WarehouseBag, src, &a, destBag, destSlot, b)
 	}
 	it := a
-	it.UID, it.Bag, it.Slot = 0, destBag, destSlot
-	if err := db.AddCharacterItem(ch.ID, &it); err != nil {
-		s.log.Printf("GX Server World warehouse withdraw failed: %v", err)
-		return buildBagToBag(WarehouseBag, src, &a, destBag, destSlot, nil)
-	}
-	if err := db.DeleteStoredItems(s.accountID, a.UID); err != nil {
-		s.log.Printf("GX Server World warehouse withdraw cleanup failed: %v", err)
-	}
+	it.UID, it.Bag, it.Slot = db.NewItemUID(), destBag, destSlot
+
 	s.stored = append(s.stored[:si], s.stored[si+1:]...)
 	s.items = append(s.items, it)
 	pay()
-	s.log.Printf("GX Server World withdrew item %d/%d from warehouse slot=%d to (%d,%d)", a.Type, a.TypeID, src, destBag, destSlot)
+
 	return buildBagToBag(WarehouseBag, src, nil, destBag, destSlot, &it)
 }
 
@@ -259,7 +259,10 @@ func (s *Session) handleShopSell(p []byte) {
 	// npc_shop sell (CUser::PacketShop 0x0703): not from the equipment (bag
 	// 0), count 1..stack, else ignored; real type 27 pays nothing and a
 	// partial sale of it keeps the stack; overflowing gold is ignored.
-	ch := s.char
+	before := *s.char
+	after := before
+	ch := &after
+	items := append([]db.Item(nil), s.items...)
 	r := packet.NewReader(p)
 	bag, slot, count := r.U8(), r.U8(), r.Count()
 	if r.Err() != nil {
@@ -268,11 +271,11 @@ func (s *Session) handleShopSell(p []byte) {
 	if bag == 0 || !isValidItemPosition(bag, slot) {
 		return
 	}
-	i := findItem(s.items, bag, slot)
-	if i < 0 || count == 0 || count > s.items[i].Count {
+	i := findItem(items, bag, slot)
+	if i < 0 || count == 0 || count > items[i].Count {
 		return
 	}
-	it := s.items[i]
+	it := items[i]
 	def := db.MustDefs().Item(it.Type, it.TypeID)
 	if def == nil {
 		return
@@ -285,26 +288,25 @@ func (s *Session) handleShopSell(p []byte) {
 	}
 	remaining := uint16(0)
 	if whole {
-		if err := db.DeleteCharacterItems(ch.ID, it.UID); err != nil {
-			s.log.Printf("GX Server World shop sell failed: %v", err)
-			return
-		}
-		s.items = append(s.items[:i], s.items[i+1:]...)
+
+		items = append(items[:i], items[i+1:]...)
 	} else if !quest {
-		s.items[i].Count -= count
-		if err := db.SaveCharacterItem(ch.ID, &s.items[i]); err != nil {
-			s.log.Printf("GX Server World shop sell failed: %v", err)
-			s.items[i].Count = it.Count
-			return
-		}
-		remaining = s.items[i].Count
+		items[i].Count -= count
+
+		remaining = items[i].Count
 	} else {
 		remaining = it.Count
 	}
 	if !quest {
 		ch.Money = uint32(min(uint64(ch.Money)+proceeds, db.MoneyCap))
 	}
-	s.persist()
+	if err := db.CommitGameplay([]db.CharacterChange{{Before: before, After: after, ItemsBefore: s.items, ItemsAfter: items}}, nil); err != nil {
+		s.logErr("shop sale transaction", err)
+		return
+	}
+	*s.char = after
+	s.items = items
+	s.syncPlayer()
 	s.log.Printf("GX Server World sold item %d/%d count=%d proceeds=%d", it.Type, it.TypeID, count, proceeds)
 	s.send(buildShopSellResult(0, bag, slot, it.Type, it.TypeID, remaining, ch.Money), "0x0703 shop sell")
 }

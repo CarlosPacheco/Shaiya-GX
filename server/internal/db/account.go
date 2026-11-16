@@ -8,8 +8,9 @@ import (
 
 // LoginResult is what PS_UserData.dbo.usp_Try_GameLogin_Taiwan selects.
 type LoginResult struct {
-	Status  int32
-	UserUID int32
+	Status            int32
+	UserUID           int32
+	CredentialVersion int64
 }
 
 // TryGameLogin translates the original procedure into one SQLite transaction,
@@ -25,15 +26,18 @@ func TryGameLogin(userID, passwordValue string, sessionID int64, userIP string) 
 	var stored string
 	err = p.QueryRowContext(c, `SELECT Pw FROM PS_UserData_Users_Master WHERE UserID=?`, userID).Scan(&stored)
 	if errors.Is(err, sql.ErrNoRows) {
-		return LoginResult{Status: -3}, nil
+		return LoginResult{Status: -3}, password.Dummy(c, passwordValue)
 	}
 	if err != nil {
 		return LoginResult{}, err
 	}
-	valid, legacy := password.Verify(stored, passwordValue)
+	valid, legacy, err := password.VerifyContext(c, stored, passwordValue)
+	if err != nil {
+		return LoginResult{}, err
+	}
 	var upgraded string
 	if valid && legacy {
-		upgraded, err = password.Hash(passwordValue)
+		upgraded, err = password.HashContext(c, passwordValue)
 		if err != nil {
 			return LoginResult{}, err
 		}
@@ -44,14 +48,15 @@ func TryGameLogin(userID, passwordValue string, sessionID int64, userIP string) 
 		var status int32
 		var leave int
 		var matches bool
-		e := tx.QueryRowContext(c, `SELECT UserUID,Status,Leave,Pw=?2 FROM PS_UserData_Users_Master WHERE UserID=?1`, userID, stored).Scan(&uid, &status, &leave, &matches)
+		var version int64
+		e := tx.QueryRowContext(c, `SELECT UserUID,Status,Leave,Pw=?2,COALESCE((SELECT Version FROM GX_AccountSecurity WHERE UserUID=PS_UserData_Users_Master.UserUID),1) FROM PS_UserData_Users_Master WHERE UserID=?1`, userID, stored).Scan(&uid, &status, &leave, &matches, &version)
 		if errors.Is(e, sql.ErrNoRows) {
 			return nil
 		}
 		if e != nil {
 			return e
 		}
-		result = LoginResult{Status: status, UserUID: uid}
+		result = LoginResult{Status: status, UserUID: uid, CredentialVersion: version}
 		if leave != 0 {
 			result.Status = -3
 			return nil
@@ -73,7 +78,15 @@ func TryGameLogin(userID, passwordValue string, sessionID int64, userIP string) 
 				}
 			}
 		}
-		if result.Status != 0 && result.Status != 16 && result.Status != 32 && result.Status != 48 && result.Status != 64 && result.Status != 80 {
+		if !CanPlay(result.Status) {
+			return nil
+		}
+		var active int
+		if e = tx.QueryRowContext(c, `SELECT COUNT(*) FROM GX_ActiveSessions WHERE UserUID=?`, uid).Scan(&active); e != nil {
+			return e
+		}
+		if active != 0 {
+			result.Status = 1
 			return nil
 		}
 		if upgraded != "" {
@@ -176,6 +189,9 @@ func LoginDecision(login LoginResult) (result uint8, permission uint8) {
 	case 0x200:
 		result = 8
 	default:
+		if !CanPlay(login.Status) {
+			return 1, permission
+		}
 		switch {
 		case login.Status&2 != 0:
 			result = 10
@@ -194,15 +210,22 @@ func LoginDecision(login LoginResult) (result uint8, permission uint8) {
 }
 
 // Account is the account state the world server needs.
+// CanPlay rejects unrecognized authorization states rather than granting
+// permissions from arbitrary legacy status bits.
+func CanPlay(status int32) bool {
+	return status == 0 || status == 16 || status == 32 || status == 48 || status == 64 || status == 80
+}
+
 type Account struct {
-	UserUID    int32
-	UserID     string
-	Status     int16
-	Admin      bool
-	AdminLevel uint8
-	Point      int32
-	Country    uint8 // 0 light, 1 dark, 2 none chosen yet
-	MaxGrow    uint8
+	UserUID           int32
+	CredentialVersion int64
+	UserID            string
+	Status            int16
+	Admin             bool
+	AdminLevel        uint8
+	Point             int32
+	Country           uint8 // 0 light, 1 dark, 2 none chosen yet
+	MaxGrow           uint8
 }
 
 var ErrNotFound = errors.New("not found")
@@ -217,9 +240,9 @@ func AccountByUID(userUID int32) (Account, error) {
 	c, cancel := ctx()
 	defer cancel()
 	var a Account
-	err = pool.QueryRowContext(c, `SELECT UserUID, UserID, Status, Admin, AdminLevel, Point
+	err = pool.QueryRowContext(c, `SELECT UserUID, UserID, Status, Admin, AdminLevel, Point,COALESCE((SELECT Version FROM GX_AccountSecurity WHERE UserUID=PS_UserData_Users_Master.UserUID),1)
 		FROM PS_UserData_Users_Master WHERE UserUID = ?1 AND Leave = 0`, userUID).
-		Scan(&a.UserUID, &a.UserID, &a.Status, &a.Admin, &a.AdminLevel, &a.Point)
+		Scan(&a.UserUID, &a.UserID, &a.Status, &a.Admin, &a.AdminLevel, &a.Point, &a.CredentialVersion)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Account{}, ErrNotFound
 	}

@@ -1,8 +1,8 @@
 package world
 
 import (
+	"sort"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -29,59 +29,80 @@ type MapItem struct {
 	PosX, PosY, PosZ float32
 }
 
-var (
-	mapItemsMu  sync.Mutex
-	mapItems    = map[uint16][]MapItem{}
-	nextMapItem atomic.Uint32
-)
-
-func nextMapItemID() uint32 { return max(nextMapItem.Add(1), 1) }
-
-func addMapItem(mapID uint16, it MapItem) {
-	mapItemsMu.Lock()
-	mapItems[mapID] = append(mapItems[mapID], it)
-	mapItemsMu.Unlock()
+type mapItemEntry struct {
+	item    MapItem
+	claimed bool
+}
+type itemClaim struct {
+	shard *mapShard
+	entry *mapItemEntry
+	once  sync.Once
 }
 
+func nextMapItemID() uint32 { return max(realm.nextMapItem.Add(1), 1) }
+func addMapItem(mapID uint16, it MapItem) {
+	s := shard(mapID)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.items == nil {
+		s.items = map[uint32]*mapItemEntry{}
+	}
+	s.items[it.ID] = &mapItemEntry{item: it}
+}
 func findMapItem(mapID uint16, id uint32) (MapItem, bool) {
-	mapItemsMu.Lock()
-	defer mapItemsMu.Unlock()
-	for _, it := range mapItems[mapID] {
-		if it.ID == id {
-			return it, true
-		}
+	s := shard(mapID)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if entry := s.items[id]; entry != nil {
+		return entry.item, true
 	}
 	return MapItem{}, false
 }
 
-func removeMapItem(mapID uint16, id uint32) {
-	mapItemsMu.Lock()
-	defer mapItemsMu.Unlock()
-	items := mapItems[mapID]
-	for i, it := range items {
-		if it.ID == id {
-			mapItems[mapID] = append(items[:i], items[i+1:]...)
+// Claim reserves one ground object across concurrent players without holding a
+// map mutex during SQLite IO. Failed persistence releases the unchanged object.
+func claimMapItem(mapID uint16, id uint32) (MapItem, *itemClaim, bool) {
+	s := shard(mapID)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	entry := s.items[id]
+	if entry == nil || entry.claimed {
+		return MapItem{}, nil, false
+	}
+	entry.claimed = true
+	return entry.item, &itemClaim{shard: s, entry: entry}, true
+}
+func (c *itemClaim) Abort() {
+	c.once.Do(func() { c.shard.mu.Lock(); c.entry.claimed = false; c.shard.mu.Unlock() })
+}
+func (c *itemClaim) Finish(left uint16) (updated MapItem) {
+	c.once.Do(func() {
+		s := c.shard
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if s.items[c.entry.item.ID] != c.entry {
 			return
 		}
-	}
-}
-
-func setMapItemCount(mapID uint16, id uint32, count uint16) (MapItem, bool) {
-	mapItemsMu.Lock()
-	defer mapItemsMu.Unlock()
-	for i := range mapItems[mapID] {
-		if mapItems[mapID][i].ID == id {
-			mapItems[mapID][i].Item.Count = count
-			return mapItems[mapID][i], true
+		if left == 0 {
+			delete(s.items, c.entry.item.ID)
+		} else {
+			c.entry.item.Item.Count = left
+			c.entry.claimed = false
+			updated = c.entry.item
 		}
-	}
-	return MapItem{}, false
+	})
+	return
 }
-
 func itemsOnMap(mapID uint16) []MapItem {
-	mapItemsMu.Lock()
-	defer mapItemsMu.Unlock()
-	return append([]MapItem(nil), mapItems[mapID]...)
+	s := shard(mapID)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	result := make([]MapItem, 0, len(s.items))
+	for _, entry := range s.items {
+		result = append(result, entry.item)
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].ID < result[j].ID })
+	return result
 }
 
 type expiredItem struct {
@@ -90,21 +111,19 @@ type expiredItem struct {
 }
 
 func sweepExpiredMapItems() []expiredItem {
-	mapItemsMu.Lock()
-	defer mapItemsMu.Unlock()
-	var out []expiredItem
-	for mapID, items := range mapItems {
-		kept := items[:0]
-		for _, it := range items {
-			if time.Since(it.DroppedAt) >= mapItemDespawnAge {
-				out = append(out, expiredItem{mapID, it})
-			} else {
-				kept = append(kept, it)
+	var result []expiredItem
+	for _, id := range shardIDs() {
+		s := shard(id)
+		s.mu.Lock()
+		for key, entry := range s.items {
+			if !entry.claimed && time.Since(entry.item.DroppedAt) >= mapItemDespawnAge {
+				result = append(result, expiredItem{id, entry.item})
+				delete(s.items, key)
 			}
 		}
-		mapItems[mapID] = kept
+		s.mu.Unlock()
 	}
-	return out
+	return result
 }
 
 func buildMapAddItem(m *MapItem) []byte {
@@ -132,7 +151,13 @@ func buildMapRemoveItem(id uint32) []byte {
 
 // clearMapItems drops every item of a zone (instance teardown).
 func clearMapItems(zone uint16) {
-	mapItemsMu.Lock()
-	delete(mapItems, zone)
-	mapItemsMu.Unlock()
+	realm.shardsMu.Lock()
+	s := realm.shards[zone]
+	realm.shardsMu.Unlock()
+	if s == nil {
+		return
+	}
+	s.mu.Lock()
+	s.items = nil
+	s.mu.Unlock()
 }

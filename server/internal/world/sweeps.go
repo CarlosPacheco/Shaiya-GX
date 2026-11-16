@@ -1,6 +1,9 @@
 package world
 
 import (
+	"context"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/scheduler"
+	"sync"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -9,26 +12,62 @@ import (
 
 // StartSweeps launches the background world ticks: map item despawn, mob
 // roam/respawn/combat, NPC patrol and mob DoTs.
-func StartSweeps(log *logx.Logger) {
-	every(2*time.Second, func() {
+type Runtime struct {
+	state  *realmState
+	fatal  context.CancelFunc
+	cancel context.CancelFunc
+	done   chan struct{}
+	once   sync.Once
+}
+
+// Close stops producers before storage closes and waits for the current job.
+func (r *Runtime) Close() {
+	r.once.Do(r.cancel)
+	<-r.done
+	r.state.runtimeMu.Lock()
+	if r.state.runtime == r {
+		r.state.runtime = nil
+	}
+	r.state.runtimeMu.Unlock()
+}
+
+func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.CancelFunc) *Runtime {
+	ctx, cancel := context.WithCancel(ctx)
+	r := &Runtime{state: realm, cancel: cancel, done: make(chan struct{})}
+	if len(onFatal) > 0 {
+		r.fatal = onFatal[0]
+	}
+	realm.runtimeMu.Lock()
+	if realm.runtime != nil {
+		realm.runtimeMu.Unlock()
+		cancel()
+		panic("world runtime already running")
+	}
+	realm.runtime = r
+	realm.runtimeMu.Unlock()
+	jobs := []scheduler.Job{{Name: "storage", Interval: 5 * time.Second, Run: func(time.Time) { db.Observe(); db.RetryAccountReleases() }}}
+	add := func(name string, d time.Duration, fn func(time.Time)) {
+		jobs = append(jobs, scheduler.Job{Name: name, Interval: d, Run: fn})
+	}
+	add("items", 2*time.Second, func(now time.Time) {
 		for _, e := range sweepExpiredMapItems() {
 			log.Printf("GX Server World despawned map_item_id=%d on map=%d", e.Item.ID, e.MapID)
 			dispatchEntityLeave(e.MapID, viewItem, e.Item.ID, "0x0402 map item despawn")
 		}
 	})
-	every(time.Second, func() {
+	add("respawns", time.Second, func(now time.Time) {
 		for _, c := range TickMobCorpses() {
 			dispatchEntityLeave(c.MapID, viewMob, c.ID, "0x0602 mob corpse removed")
 		}
 		dispatchMoves(TickMobRespawns(viewersByMap(), 128))
 	})
-	every(250*time.Millisecond, func() { dispatchMoves(TickNpcPatrol(viewersByMap(), 64)) })
-	every(time.Second, func() { runDotSweep(log) })
-	every(5*time.Second, func() { TickGuildRanking(time.Now(), log) })
-	every(time.Second, func() { TickKillCount(time.Now(), log) })
-	every(250*time.Millisecond, func() { TickRelics(time.Now(), log) })
-	every(instanceSweepTick, func() { TickInstances(time.Now(), log) })
-	every(mobNavigationTick, func() {
+	add("patrol", 250*time.Millisecond, func(now time.Time) { dispatchMoves(TickNpcPatrol(viewersByMap(), 64)) })
+	add("effects", time.Second, func(now time.Time) { runDotSweep(log) })
+	add("guilds", 5*time.Second, func(now time.Time) { TickGuildRanking(now, log) })
+	add("killcount", time.Second, func(now time.Time) { TickKillCount(now, log) })
+	add("relics", 250*time.Millisecond, func(now time.Time) { TickRelics(now, log) })
+	add("instances", instanceSweepTick, func(now time.Time) { TickInstances(now, log) })
+	add("combat", mobNavigationTick, func(now time.Time) {
 		players := AllPlayers()
 		if len(players) == 0 {
 			tick := MobCombatTick{}
@@ -52,6 +91,9 @@ func StartSweeps(log *logx.Logger) {
 			sendView(r.MapID, r.X, r.Z, r.Packet, "0x0610 mob hp restore")
 		}
 	})
+	engine := scheduler.New(time.Now(), jobs)
+	go func() { defer close(r.done); engine.Run(ctx) }()
+	return r
 }
 
 // queueMobAttack hands a mob's attack to its target, or for an area mob
@@ -88,16 +130,6 @@ func queueMobAttack(a MobAttackAction) {
 	}
 }
 
-func every(d time.Duration, fn func()) {
-	go func() {
-		t := time.NewTicker(d)
-		defer t.Stop()
-		for range t.C {
-			fn()
-		}
-	}()
-}
-
 func viewersByMap() map[uint16][][2]float32 {
 	out := map[uint16][][2]float32{}
 	for _, p := range AllPlayers() {
@@ -132,5 +164,21 @@ func runDotSweep(log *logx.Logger) {
 		log.Printf("GX Server World skill effect kill character_id=%d mob_global_id=%d mob_id=%d", o.CasterID, m.ID, m.MobID)
 		sendNear(o.MapID, m.PosX, m.PosZ, CombatRadius, buildMobDeath(m.ID, mobDeathCredit(m, o.CasterID)), "0x0606 mob death (skill effect)")
 		rewardKill(FindPlayerByID(o.CasterID), o.CasterID, o.MapID, m, log)
+	}
+}
+
+func storageFailure(err error) {
+	if !db.StorageUnavailable(err) {
+		return
+	}
+	realm.runtimeMu.Lock()
+	r := realm.runtime
+	realm.runtimeMu.Unlock()
+	if r != nil {
+		if r.fatal != nil {
+			r.fatal()
+		} else {
+			r.cancel()
+		}
 	}
 }

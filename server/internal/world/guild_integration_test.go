@@ -18,7 +18,7 @@ import (
 // TestGuildLifecycle runs the CUser::PacketGuild flows with seven
 // synthetic users: creation by a party of 7 (all accept, 1000 gold from the
 // master), invitation, application and acceptance, rank change, remark,
-// expel, leave and disband by vote, checking the registry and the
+// expel, leave and disband by vote, checking the realm.registry and the
 // GuildChars rows. Its rows are removed afterwards.
 func TestGuildLifecycle(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
@@ -39,14 +39,40 @@ func TestGuildLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 	const mapID = 60030
-	session := func(id uint32, name string) *Session {
+	session := func(_ uint32, name string) *Session {
 		a, b := net.Pipe()
 		go io.Copy(io.Discard, b)
-		ch := &db.Character{ID: id, Name: name, Level: 40, Mode: growNormal, Class: 1, Money: 5000, MapID: mapID, PosX: 100, PosZ: 100}
+		account := testAccount(t)
+		id, err := db.CreateCharacter(account, db.NewCharacter{Slot: 0, Name: name, HP: 100, MP: 100, SP: 100})
+		if err != nil {
+			t.Fatal(err)
+		}
+		row, err := db.CharacterByID(id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ch := &row
+		ch.Level = 40
+		ch.Mode = growNormal
+		ch.Class = 1
+		ch.Money = 5000
+		ch.MapID = mapID
+		ch.PosX = 100
+		ch.PosZ = 100
+		if err := db.SaveCharacter(ch); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			pool, _ := db.Pool(db.GameData)
+			pool.Exec(`DELETE FROM PS_GameData_CharItems WHERE CharID=?`, id)
+			pool.Exec(`DELETE FROM PS_GameData_GuildChars WHERE CharID=?`, id)
+			pool.Exec(`DELETE FROM PS_GameData_Chars WHERE CharID=?`, id)
+		})
 		s := &Session{char: ch, log: logger.Tagged(name), logger: logger, faction: FactionLight,
 			skillCooldowns: map[uint16]time.Time{}, out: &connWriter{conn: a}}
-		s.account.UserID = "guildtest"
-		s.player = RegisterPlayer(*ch, nil, false, FactionLight, s.out, logger)
+		s.account = account
+		s.accountID = uint32(account.UserUID)
+		s.player = RegisterPlayer(*ch, nil, false, FactionLight, s.out, logger, s)
 		t.Cleanup(s.player.Unregister)
 		return s
 	}
@@ -104,7 +130,7 @@ func TestGuildLifecycle(t *testing.T) {
 		t.Fatalf("guild not created: %+v", g)
 	}
 	created = g.ID
-	ss[0].takeGuildFee()
+	ss[0].completePendingGuild()
 	if ss[0].char.Money != 4000 {
 		t.Fatalf("master money %d, want 4000", ss[0].char.Money)
 	}
@@ -125,7 +151,11 @@ func TestGuildLifecycle(t *testing.T) {
 		t.Fatal("no storable item definition")
 	}
 	give := func(s *Session) {
-		s.items = append(s.items, db.Item{UID: db.NewItemUID(), Bag: 1, Slot: 0, Type: item.Type, TypeID: item.TypeID, Quality: item.Quality, Count: 1})
+		it := db.Item{Bag: 1, Slot: 0, Type: item.Type, TypeID: item.TypeID, Quality: item.Quality, Count: 1}
+		if err := db.AddCharacterItem(s.char.ID, &it); err != nil {
+			t.Fatal(err)
+		}
+		s.items = append(s.items, it)
 	}
 	bankRows := func() (n int) {
 		pool, _ := db.Pool(db.GameData)

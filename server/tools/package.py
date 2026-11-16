@@ -214,7 +214,7 @@ def build_package(platform, output, go):
         shutil.copy2(ROOT / "THIRD_PARTY_NOTICES.md", root / "THIRD_PARTY_NOTICES.md")
         shutil.copytree(ROOT / "licenses", root / "licenses")
         (root / "docs").mkdir()
-        for document in ("sqlite.md", "distribution.md", "social.md"):
+        for document in ("sqlite.md", "distribution.md", "social.md", "architecture.md", "modernization.md", "persistence-audit.md"):
             text = (ROOT / "docs" / document).read_text().replace("../../docs/", "")
             (root / "docs" / document).write_text(text)
         for document in ("server.md", "quickstart.md", "building.md", "gm.md", "mob-navigation.md", "mounts.md", "fall-damage.md"):

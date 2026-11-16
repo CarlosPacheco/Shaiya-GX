@@ -364,3 +364,26 @@ func SubKillCount(c uint8, n uint32, log logPrinter) {
 	kcAnnounce(int(c))
 	kcSave(light, dark, log)
 }
+
+// Keep threshold/hold semantics identical to individual kill credits while
+// reducing a burst to at most one update per country tier.
+func addKillCountBatch(country uint8, count uint32, log logPrinter) {
+	if country > 1 {
+		return
+	}
+	for count > 0 {
+		kcMu.Lock()
+		if !kcWorld[0].resetAt.IsZero() || !kcWorld[1].resetAt.IsZero() {
+			kcMu.Unlock()
+			return
+		}
+		w := kcWorld[country]
+		chunk := count
+		if w.next > w.count {
+			chunk = min(chunk, w.next-w.count)
+		}
+		kcMu.Unlock()
+		AddKillCount(country, chunk, log)
+		count -= chunk
+	}
+}

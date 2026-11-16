@@ -210,7 +210,8 @@ func buildShopBuyResult(result, bag, slot, itemType, typeID uint8, count uint16,
 // handleShopBuy (0x0702): npc id, item index, count; CUser::PacketShop
 // (0x0046af10). Result 0 bought, 1 not enough gold, 2 no room. A stack
 // must take the whole purchase; otherwise the first free slot is used.
-func (s *Session) handleShopBuy(p []byte) {
+func (s *Session) handleShopBuy(p []byte) { s.inventoryOperation(func() { s.planShopBuy(p) }) }
+func (s *Session) planShopBuy(p []byte) {
 	if len(p) < 8 || s.char == nil {
 		return
 	}
@@ -245,7 +246,7 @@ func (s *Session) handleShopBuy(p []byte) {
 			if it.Bag >= 1 && it.Bag <= InventoryLastBag && it.Type == item.Type && it.TypeID == item.TypeID &&
 				uint16(it.Count)+uint16(count) <= uint16(item.MaxStack()) {
 				it.Count += count
-				if err := db.SaveCharacterItem(ch.ID, it); err != nil {
+				if err := s.saveInventoryItem(it); err != nil {
 					s.log.Printf("GX Server World shop stack failed: %v", err)
 					return
 				}
@@ -266,7 +267,7 @@ func (s *Session) handleShopBuy(p []byte) {
 		}
 		it := db.Item{Bag: free[0][0], Slot: free[0][1], Type: item.Type, TypeID: item.TypeID, Quality: item.Quality,
 			Count: n, MakeType: "B"}
-		if err := db.AddCharacterItem(ch.ID, &it); err != nil {
+		if err := s.addInventoryItem(&it); err != nil {
 			s.log.Printf("GX Server World shop item failed: %v", err)
 			return
 		}

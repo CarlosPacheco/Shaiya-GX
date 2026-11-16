@@ -21,7 +21,7 @@ def main():
     if not data.is_dir(): p.error(f'missing loose data directory: {data}')
     if not args.update and (source == output/'data' or output.is_relative_to(source)): p.error('source and output overlap')
     output.mkdir(parents=True, exist_ok=True)
-    env = dict(os.environ, PATH=str(Path.home()/'.local/opt/go-1.27.3/bin')+os.pathsep+os.environ.get('PATH',''), GOTOOLCHAIN='local', GOPATH=os.environ.get('GOPATH',str(Path.home()/'.local/share/go')))
+    env = dict(os.environ, PATH=str(Path.home()/'.local/opt/go-1.27.4/bin')+os.pathsep+os.environ.get('PATH',''), GOTOOLCHAIN='local', GOPATH=os.environ.get('GOPATH',str(Path.home()/'.local/share/go')))
     staged = output/'.Shaiya GX.next'
     subprocess.run(['go','build','-o',str(staged),'./cmd/shaiya'],cwd=ROOT,env=env,check=True)
     if not args.update: shutil.copytree(source,output/'data')

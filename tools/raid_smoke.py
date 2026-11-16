@@ -31,7 +31,7 @@ def query(statement, database):
 with tempfile.TemporaryDirectory(prefix="shaiya-raid-") as config:
     env = dict(os.environ, XDG_CONFIG_HOME=config, SHAIYA_TEST_DISPOSABLE="1",
                GOTOOLCHAIN="local", GOPATH=str(Path.home() / ".local/share/go"))
-    env["PATH"] = str(Path.home() / ".local/opt/go-1.27.3/bin") + ":" + env["PATH"]
+    env["PATH"] = str(Path.home() / ".local/opt/go-1.27.4/bin") + ":" + env["PATH"]
     try:
         for _ in range(7):
             account = {"User": "gor" + secrets.token_hex(5), "Password": secrets.token_hex(6),

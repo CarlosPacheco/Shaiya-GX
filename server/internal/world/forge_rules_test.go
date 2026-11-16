@@ -34,6 +34,9 @@ func forgeRuleSession(t *testing.T) (*Session, func(db.Item) db.Item) {
 		pool.Exec("DELETE FROM PS_GameData_Chars WHERE CharID=?", id)
 	})
 	s, _ := gmWireSession(t, db.Character{ID: id, Level: 1, Money: 20000000, MapID: 60091, CurrentHP: 100}, false)
+	if err := db.SaveCharacter(s.char); err != nil {
+		t.Fatal(err)
+	}
 	add := func(it db.Item) db.Item {
 		t.Helper()
 		if err := db.AddCharacterItem(id, &it); err != nil {

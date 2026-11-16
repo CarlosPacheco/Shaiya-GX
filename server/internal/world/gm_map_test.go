@@ -40,17 +40,17 @@ func TestMapTeleportSelectsNearbySafeFloorInsteadOfRejectingWall(t *testing.T) {
 			mask[at/8] |= 1 << uint(at%8)
 		}
 	}
-	gridsMu.Lock()
-	old, hadGrid := grids[s.char.MapID]
-	gridsMu.Unlock()
+	realm.gridsMu.Lock()
+	old, hadGrid := realm.grids[s.char.MapID]
+	realm.gridsMu.Unlock()
 	RegisterMapGrid(s.char.MapID, 32, mask)
 	t.Cleanup(func() {
-		gridsMu.Lock()
-		defer gridsMu.Unlock()
+		realm.gridsMu.Lock()
+		defer realm.gridsMu.Unlock()
 		if hadGrid {
-			grids[s.char.MapID] = old
+			realm.grids[s.char.MapID] = old
 		} else {
-			delete(grids, s.char.MapID)
+			delete(realm.grids, s.char.MapID)
 		}
 	})
 

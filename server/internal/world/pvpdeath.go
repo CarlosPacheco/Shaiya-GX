@@ -111,23 +111,27 @@ type pvpKill struct{ VictimID uint32 }
 
 func (p *ConnectedPlayer) QueuePvPKill(k pvpKill) {
 	p.mailMu.Lock()
-	p.pvpKills = append(p.pvpKills, k)
+	p.pvpKillCount = min(satAdd(p.pvpKillCount, 1), pvpKillCap)
 	p.mailMu.Unlock()
 }
-
-func (p *ConnectedPlayer) TakePvPKills() []pvpKill {
+func (p *ConnectedPlayer) takePvPKillCount() uint32 {
 	p.mailMu.Lock()
 	defer p.mailMu.Unlock()
-	k := p.pvpKills
-	p.pvpKills = nil
-	return k
+	n := p.pvpKillCount
+	p.pvpKillCount = 0
+	return n
 }
 
 // QueueItemGrant hands an item straight to a user (ItemGet).
-func (p *ConnectedPlayer) QueueItemGrant(it db.Item) {
+func (p *ConnectedPlayer) QueueItemGrant(it db.Item) bool {
 	p.mailMu.Lock()
+	if len(p.itemGrants) >= maxPendingItemGrants {
+		p.mailMu.Unlock()
+		return false
+	}
 	p.itemGrants = append(p.itemGrants, it)
 	p.mailMu.Unlock()
+	return true
 }
 
 func (p *ConnectedPlayer) TakeItemGrants() []db.Item {
@@ -143,9 +147,7 @@ func (s *Session) tickPvP() {
 	if s.player == nil || s.char == nil {
 		return
 	}
-	for range s.player.TakePvPKills() {
-		s.killPCTo()
-	}
+	s.killPCToCount(s.player.takePvPKillCount())
 	for _, it := range s.player.TakeItemGrants() {
 		adds, left, err := s.giveItem(&it, it.Count, maxStackOf(it.Type, it.TypeID))
 		if err != nil {
@@ -166,15 +168,22 @@ func (s *Session) tickPvP() {
 }
 
 // killPCTo is CUser::KillPCTo on this (the killing) user.
-func (s *Session) killPCTo() {
+func (s *Session) killPCTo() { s.killPCToCount(1) }
+func (s *Session) killPCToCount(count uint32) {
+	if count == 0 {
+		return
+	}
 	ch := s.char
-	s.questKillPC()
+	for range min(count, uint32(255*len(s.quests))) {
+		s.questKillPC()
+	}
 	if ch.Kills >= pvpKillCap {
 		return
 	}
-	ch.Kills++
+	added := min(count, pvpKillCap-ch.Kills)
+	ch.Kills += added
 	s.persist()
-	AddKillCount(s.faction, 1, s.log) // CWorld::AddKillCount for the killer's country
+	addKillCountBatch(s.faction, added, s.log) // CWorld::AddKillCount for the killer's country
 	s.send(buildKillCountUpdate(0, ch.Kills), "0x020E kills")
 	w := packet.New(0x0522)
 	w.U32(ch.ID)
@@ -437,7 +446,9 @@ func (s *Session) itemDropByUserDeath(it db.Item, killer *ConnectedPlayer) {
 	case pick != nil && division == 3:
 		s.placeGroundItem(dropped, pick.CharacterID, true)
 	case pick != nil:
-		pick.QueueItemGrant(dropped)
+		if !pick.QueueItemGrant(dropped) {
+			s.placeGroundItem(dropped, pick.CharacterID, true)
+		}
 	default:
 		s.placeGroundItem(dropped, killer.CharacterID, false)
 	}

@@ -97,12 +97,11 @@ type playerGuildState struct {
 }
 
 var (
-	guildMu       sync.Mutex
-	guildsByID    = map[uint32]*guild{}
-	guildOfChar   = map[uint32]*guild{} // members and applicants
-	nextGuildID   uint32
-	guildsLoaded  bool
-	guildFeeQueue = map[*ConnectedPlayer]uint32{}
+	guildMu      sync.Mutex
+	guildsByID   = map[uint32]*guild{}
+	guildOfChar  = map[uint32]*guild{} // members and applicants
+	nextGuildID  uint32
+	guildsLoaded bool
 )
 
 // LoadGuilds is CGuildMgr::InitAddGuild / InitAddUser from the database.
@@ -654,34 +653,59 @@ func (s *Session) guildCreateAnswer(accept bool) {
 	}
 	delete(c.pending, s.char.ID)
 	if c.accepted++; c.accepted >= guildCreateParty {
-		c.complete(s.logger)
-		c.reset()
+		if c.complete(s.logger, s) {
+			c.reset()
+		}
 	}
 }
 
 // complete is CGuildMgr::CreateGuild 0x004321e0.
-func (c *guildCreate) complete(log *logx.Logger) {
+func (c *guildCreate) complete(log *logx.Logger, caller *Session) bool {
 	for _, g := range guildsByID {
 		if strings.EqualFold(g.Name, c.name) {
 			c.sendAll(buildGuildCreateFailed(6, c.name), "0x0D01 guild create failed")
-			return
+			return true
 		}
 	}
-	master := c.master.Snapshot()
+	owner := c.master.owner
+	if owner == nil {
+		c.sendAll(buildGuildCreateFailed(6, c.name), "guild master unavailable")
+		return true
+	}
+	if owner != caller {
+		if !owner.stateMu.TryLock() {
+			return false
+		}
+		defer owner.stateMu.Unlock()
+	}
+	if owner.char == nil || owner.player != c.master {
+		return true
+	}
+	master := *owner.char
 	if master.Money < guildCreateFee {
 		c.sendAll(buildGuildCreateFailed(2, c.name), "0x0D01 guild create failed")
-		return
+		return true
 	}
 	g := &guild{ID: nextGuildID, Name: c.name, Master: master.Name, Remark: c.remark, Country: c.master.Faction(),
 		Rank: 31, members: map[uint32]*guildMember{}, applicants: map[uint32]*guildMember{}}
-	if err := db.CreateGuild(g.ID, g.Name, c.master.guild.userID, master.ID, g.Master, g.Country, g.Remark); err != nil {
+	founders := make([]db.GuildCharRow, 0, len(c.players))
+	for _, p := range c.players {
+		rank := uint8(guildRankMember)
+		if p == c.master {
+			rank = guildRankMaster
+		}
+		founders = append(founders, db.GuildCharRow{CharID: p.CharacterID, Rank: rank})
+	}
+	if err := db.CreateGuildGroup(g.ID, g.Name, c.master.guild.userID, g.Remark, g.Country, master, guildCreateFee, founders); err != nil {
 		log.Printf("GX Server World guild create failed: %v", err)
 		c.sendAll(buildGuildCreateFailed(6, c.name), "0x0D01 guild create failed")
-		return
+		return true
 	}
 	nextGuildID++
 	guildsByID[g.ID] = g
-	guildFeeQueue[c.master] += guildCreateFee
+	owner.char.Money -= guildCreateFee
+	owner.syncPlayer()
+	owner.send(buildSetMoney(owner.char.Money), "0x0213 guild fee")
 	for _, p := range c.players {
 		snap := p.Snapshot()
 		rank := uint8(guildRankMember)
@@ -692,9 +716,6 @@ func (c *guildCreate) complete(log *logx.Logger) {
 			Rank: rank, player: p}
 		guildOfChar[p.CharacterID] = g
 		p.guild.guild, p.guild.applied = g, nil
-		if err := db.AddGuildChar(g.ID, p.CharacterID, rank); err != nil {
-			log.Printf("GX Server World guild member insert failed: %v", err)
-		}
 	}
 	for _, p := range c.players {
 		p.Send(buildGuildCreateResult(1, g.ID, g.members[p.CharacterID].Rank, g.Name, g.Remark), "0x0D21 guild created")
@@ -706,20 +727,23 @@ func (c *guildCreate) complete(log *logx.Logger) {
 	writeGuildInfo(w, g)
 	guildSendCountry(g.Country, w.MustFinish(), "0x0D30 new guild")
 	log.Printf("GX Server World guild created id=%d name=%q master=%q", g.ID, g.Name, g.Master)
+	return true
 }
 
-// takeGuildFee applies a queued creation fee (CreateGuild's 0x0213).
-func (s *Session) takeGuildFee() {
-	guildMu.Lock()
-	fee := guildFeeQueue[s.player]
-	delete(guildFeeQueue, s.player)
-	guildMu.Unlock()
-	if fee == 0 {
+// completePendingGuild retries a fully accepted group on the master's own
+// session loop when its state lock was busy during another member's reply.
+func (s *Session) completePendingGuild() {
+	if s.player == nil {
 		return
 	}
-	s.char.Money = satSub(s.char.Money, fee)
-	s.persist()
-	s.send(buildSetMoney(s.char.Money), "0x0213 guild fee")
+	guildMu.Lock()
+	defer guildMu.Unlock()
+	c := s.player.guild.create
+	if c != nil && !c.disband && c.master == s.player && c.accepted >= guildCreateParty {
+		if c.complete(s.logger, s) {
+			c.reset()
+		}
+	}
 }
 
 // guildDisbandRequest (0x0D03): a master with at most 2 members disbands
@@ -792,7 +816,14 @@ func (s *Session) guildDisbandAnswer(accept bool) {
 }
 
 // fire is CGuildMgr::FireGuild / CGuild::Fire.
-func (g *guild) fire(log *logx.Logger) {
+func (g *guild) fire(log *logx.Logger, alreadyDeleted ...bool) {
+	if len(alreadyDeleted) == 0 || !alreadyDeleted[0] {
+		if err := db.DeleteGuild(g.ID); err != nil {
+			log.Errorf("GX Server World guild delete failed: %v", err)
+			return
+		}
+	}
+
 	g.send(guildStatus(guildStatusDisband, 0), "0x0D0C guild disbanded", nil)
 	for id, m := range g.members {
 		if m.player != nil {
@@ -807,9 +838,7 @@ func (g *guild) fire(log *logx.Logger) {
 		delete(guildOfChar, id)
 	}
 	delete(guildsByID, g.ID)
-	if err := db.DeleteGuild(g.ID); err != nil {
-		log.Printf("GX Server World guild delete failed: %v", err)
-	}
+
 	guildSendCountry(g.Country, guildID32(packet.GuildDisbanded, g.ID), "0x0D11 guild disbanded")
 	log.Printf("GX Server World guild disbanded id=%d name=%q", g.ID, g.Name)
 }
@@ -863,21 +892,24 @@ func (s *Session) guildInviteAnswer(accept bool) {
 	if g == nil || g.members[inviterID] == nil || g.members[inviterID].Rank > guildRankAdmin || me.guild.guild != nil {
 		return
 	}
-	g.joinUser(me, s.logger)
+	if !g.joinUser(me, s.logger) {
+		return
+	}
 	inviter.Send(guildResultID(packet.GuildInviteAnswer, 1, inviterID), "0x0D06 guild invite accepted")
 }
 
 // joinUser is CGuild::JoinUser: an online user joins at rank 9.
-func (g *guild) joinUser(p *ConnectedPlayer, log *logx.Logger) {
+func (g *guild) joinUser(p *ConnectedPlayer, log *logx.Logger) bool {
 	snap := p.Snapshot()
 	m := &guildMember{CharID: p.CharacterID, Name: snap.Name, Job: snap.Class, Level: snap.Level, Rank: guildRankMember, player: p}
+	if err := db.AddGuildChar(g.ID, m.CharID, m.Rank); err != nil {
+		log.Errorf("GX Server World guild join insert failed: %v", err)
+		return false
+	}
 	g.members[m.CharID] = m
 	guildOfChar[m.CharID] = g
 	p.guild.guild = g
 	p.guild.rejoinUntil = time.Now().Add(guildRejoinTime)
-	if err := db.AddGuildChar(g.ID, m.CharID, m.Rank); err != nil {
-		log.Printf("GX Server World guild join insert failed: %v", err)
-	}
 	p.Send(buildGuildJoined(1, g, m.Rank), "0x0D08 guild joined")
 	g.send(buildGuildMemberAdded(m), "0x0D14 guild member added", nil)
 	for _, f := range g.memberListPackets() {
@@ -886,6 +918,7 @@ func (g *guild) joinUser(p *ConnectedPlayer, log *logx.Logger) {
 	for _, f := range g.bankListPackets() {
 		p.Send(f, "0x0D29 guild bank")
 	}
+	return true
 }
 
 // buildGuildMemberAdded (0x0D14): online byte and the 29-byte member.
@@ -920,12 +953,13 @@ func (s *Session) guildApply(guildID uint32) {
 		old.cancelApplication(me)
 	}
 	m := &guildMember{CharID: ch.ID, Name: ch.Name, Job: ch.Class, Level: ch.Level}
+	if err := db.AddGuildChar(g.ID, ch.ID, 0); err != nil {
+		s.log.Errorf("GX Server World guild application insert failed: %v", err)
+		return
+	}
 	g.applicants[ch.ID] = m
 	guildOfChar[ch.ID] = g
 	me.guild.applied = g
-	if err := db.AddGuildChar(g.ID, ch.ID, 0); err != nil {
-		s.log.Printf("GX Server World guild application insert failed: %v", err)
-	}
 	w := packet.New(packet.GuildApplicant)
 	writeGuildApplicant(w, m)
 	g.sendAdmin(w.MustFinish(), "0x0D17 guild applicant")
@@ -937,10 +971,13 @@ func (g *guild) cancelApplication(p *ConnectedPlayer) {
 	if g.applicants[p.CharacterID] == nil {
 		return
 	}
+	if err := db.DeleteGuildChar(g.ID, p.CharacterID); err != nil {
+		storageFailure(err)
+		return
+	}
 	delete(g.applicants, p.CharacterID)
 	delete(guildOfChar, p.CharacterID)
 	p.guild.applied = nil
-	_ = db.DeleteGuildChar(g.ID, p.CharacterID)
 	g.sendAdmin(guildID32(packet.GuildApplicantRemoved, p.CharacterID), "0x0D18 guild applicant removed")
 }
 
@@ -956,11 +993,14 @@ func (s *Session) guildAnswerApplicant(accept bool, charID uint32) {
 	if a == nil {
 		return
 	}
-	delete(g.applicants, charID)
 	p := FindPlayerByID(charID)
 	if !accept {
+		if err := db.DeleteGuildChar(g.ID, charID); err != nil {
+			s.logErr("guild decline", err)
+			return
+		}
+		delete(g.applicants, charID)
 		delete(guildOfChar, charID)
-		_ = db.DeleteGuildChar(g.ID, charID)
 		if p != nil {
 			p.guild.applied = nil
 			p.Send(buildGuildJoined(0, g, guildRankMember), "0x0D08 guild application declined")
@@ -968,11 +1008,14 @@ func (s *Session) guildAnswerApplicant(accept bool, charID uint32) {
 		g.sendAdmin(guildID32(packet.GuildApplicantRemoved, charID), "0x0D18 guild applicant removed")
 		return
 	}
+	if err := db.SaveGuildCharRank(charID, guildRankMember); err != nil {
+		s.logErr("guild accept", err)
+		return
+	}
+	delete(g.applicants, charID)
 	a.Rank, a.player = guildRankMember, p
 	g.members[charID] = a
-	if err := db.SaveGuildCharRank(charID, a.Rank); err != nil {
-		s.log.Printf("GX Server World guild accept failed: %v", err)
-	}
+
 	g.sendAdmin(guildID32(packet.GuildApplicantRemoved, charID), "0x0D18 guild applicant removed")
 	g.send(buildGuildMemberAdded(a), "0x0D14 guild member added", nil)
 	if p != nil {
@@ -1005,15 +1048,25 @@ func (s *Session) guildLeave() {
 		s.send(guildResult(packet.GuildLeave, 0), "0x0D09 guild leave refused")
 		return
 	}
+	var err error
+	if len(g.members) == 1 {
+		err = db.DeleteLastGuildChar(g.ID, s.char.ID)
+	} else {
+		err = db.DeleteGuildChar(g.ID, s.char.ID)
+	}
+	if err != nil {
+		s.logErr("guild leave", err)
+		return
+	}
+
 	delete(g.members, s.char.ID)
 	delete(guildOfChar, s.char.ID)
 	me.guild.guild = nil
 	left = g
-	_ = db.DeleteGuildChar(g.ID, s.char.ID)
 	s.send(guildResult(packet.GuildLeave, 1), "0x0D09 guild left")
 	g.send(guildStatus(guildStatusLeft, s.char.ID), "0x0D0C guild member left", nil)
 	if len(g.members) == 0 {
-		g.fire(s.logger)
+		g.fire(s.logger, true)
 	}
 }
 
@@ -1041,9 +1094,12 @@ func (s *Session) guildExpel(charID uint32) {
 		s.send(guildResultID(packet.GuildExpel, 0, charID), "0x0D0A guild expel refused")
 		return
 	}
+	if err := db.DeleteGuildChar(g.ID, charID); err != nil {
+		s.logErr("guild expulsion", err)
+		return
+	}
 	delete(g.members, charID)
 	delete(guildOfChar, charID)
-	_ = db.DeleteGuildChar(g.ID, charID)
 	if t.player != nil {
 		t.player.Send(guildResultID(packet.GuildExpel, 1, charID), "0x0D0A guild expelled")
 		t.player.guild.guild = nil
@@ -1082,10 +1138,11 @@ func (s *Session) guildChangeRank(direction uint8, charID uint32) {
 	if me.Rank == guildRankAdmin && next == guildRankAdmin {
 		return
 	}
-	t.Rank = uint8(next)
-	if err := db.SaveGuildCharRank(charID, t.Rank); err != nil {
-		s.log.Printf("GX Server World guild rank save failed: %v", err)
+	if err := db.SaveGuildCharRank(charID, uint8(next)); err != nil {
+		s.logErr("guild rank", err)
+		return
 	}
+	t.Rank = uint8(next)
 	g.send(guildStatus(guildStatusRank+t.Rank, charID), "0x0D0C guild rank", nil)
 }
 
@@ -1108,12 +1165,15 @@ func (s *Session) guildRemark(p []byte) {
 		reply(0)
 		return
 	}
+	if err := db.SaveGuildRemark(g.ID, remark); err != nil {
+		s.logErr("guild remark", err)
+		reply(0)
+		return
+	}
 	g.Remark = remark
 	w := packet.New(packet.GuildRemark)
 	w.U8(1)
 	w.FixedString(remark, 65)
 	g.send(w.MustFinish(), "0x0D20 guild remark", nil)
-	if err := db.SaveGuildRemark(g.ID, remark); err != nil {
-		s.log.Printf("GX Server World guild remark save failed: %v", err)
-	}
+
 }

@@ -10,7 +10,7 @@ with tempfile.TemporaryDirectory(prefix='gx-mounts-n2-') as temp:
  temp=Path(temp);database=temp/'rapture.sqlite'
  with sqlite3.connect(root/'server/data/rapture.sqlite') as src,sqlite3.connect(database) as dst:src.backup(dst)
  env=dict(os.environ,RAPTURE_DB_PATH=str(database),RAPTURE_DATA_DIR=str(root/'server/data'),RAPTURE_LOGIN_LISTEN='127.0.0.1:40820',RAPTURE_WORLD_LISTEN='127.0.0.1:40830',RAPTURE_PUBLIC_IP='127.0.0.1',SHAIYA_TEST_LOGIN_ADDR='127.0.0.1:40820',SHAIYA_TEST_WORLD_PORT='40830',SHAIYA_TEST_DISPOSABLE='1',SHAIYA_TEST_RENDER='1',SHAIYA_TEST_VEHICLE='1',SHAIYA_TEST_ARTIFACTS=str(root/'work/mount-system'),SHAIYA_DATA=os.environ.get('SHAIYA_DATA',str(Path.home()/'Desktop/Shaiya GX/data')),GOTOOLCHAIN='local')
- env['PATH']=str(Path.home()/'.local/opt/go-1.27.3/bin')+':'+env['PATH']
+ env['PATH']=str(Path.home()/'.local/opt/go-1.27.4/bin')+':'+env['PATH']
  for port in (40820,40830):
   with socket.socket() as check:
    if check.connect_ex(('127.0.0.1',port))==0:raise RuntimeError(f'Test port {port} already in use')

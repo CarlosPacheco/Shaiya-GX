@@ -58,6 +58,11 @@ type pendingUserHit struct {
 
 func (p *ConnectedPlayer) QueueUserHit(h pendingUserHit) {
 	p.mailMu.Lock()
+	if len(p.userHits) >= maxPendingCombat {
+		p.mailMu.Unlock()
+		p.mailboxOverflow()
+		return
+	}
 	p.userHits = append(p.userHits, h)
 	p.mailMu.Unlock()
 }

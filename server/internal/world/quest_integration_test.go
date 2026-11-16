@@ -28,7 +28,20 @@ func TestQuestKillProgress(t *testing.T) {
 		t.Fatal(err)
 	}
 	def := findQuestDef(1)
-	s := &Session{log: l.Tagged("test"), logger: l, char: &db.Character{ID: 0}}
+	t.Cleanup(func() { l.Close() })
+	id, err := db.CreateCharacter(testAccount(t), db.NewCharacter{Slot: 0, Name: "QuestProgress", HP: 100})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		p, _ := db.Pool(db.GameData)
+		p.Exec(`DELETE FROM PS_GameData_CharQuests WHERE CharID=?`, id)
+		p.Exec(`DELETE FROM PS_GameData_Chars WHERE CharID=?`, id)
+	})
+	if err := db.AddCharacterQuest(id, db.CharQuest{QuestID: 1}); err != nil {
+		t.Fatal(err)
+	}
+	s := &Session{log: l.Tagged("test"), logger: l, char: &db.Character{ID: id}}
 	s.quests = []*activeQuest{{ID: 1, def: def, startAt: time.Now()}}
 	for range 7 {
 		s.questKill(2008)

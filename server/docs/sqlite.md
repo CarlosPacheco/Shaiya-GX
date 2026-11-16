@@ -50,3 +50,8 @@ Stop both services before restoring/replacing a runtime. Use the backup API for 
 `tools/export_sqlite.py` and `tools/sqlserver.py` remain migration/reference utilities. Ordinary play needs no SQL Server. Existing external SQL Server volumes are not altered by GX integration. Production backups and restores must preserve a consistent SQLite database, including committed WAL state.
 
 Storage tests and server integration tests use disposable runtime copies. Snapshot tests verify WAL inclusion, 64-bit IDs, Unicode/blob preservation and preservation of previous output on validation failure. Portables validate both hash and row counts. The gameplay/server rules do not change as part of naming and repository integration.
+
+Account creation and password changes now write Argon2id directly through the
+built gx_console command. See [modernization](modernization.md) for commands,
+credential revocation and TLS provisioning. Existing legacy credentials upgrade
+on successful authentication; do not downgrade to plaintext-only binaries.

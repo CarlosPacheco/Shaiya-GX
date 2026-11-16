@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -20,21 +21,13 @@ import (
 // PS_UserData.dbo.CreatedGuilds holds a copy of the Guilds row for server 1.
 // The EP4.5 CreatedGuilds also has a NOT NULL UpdateDate the triggers never
 // set; it gets the time of the change.
-func mirrorGuild(guildID uint32) error {
-	p, e := Pool(GameData)
-	if e != nil {
+func mirrorGuildTx(c context.Context, tx *sql.Tx, guildID uint32) error {
+	if _, e := tx.ExecContext(c, `DELETE FROM PS_UserData_CreatedGuilds WHERE ServerID=1 AND GuildID=?1`, int32(guildID)); e != nil {
 		return e
 	}
-	c, cancel := ctx()
-	defer cancel()
-	return withTx(c, p, func(tx *sql.Tx) error {
-		if _, e := tx.ExecContext(c, `DELETE FROM PS_UserData_CreatedGuilds WHERE ServerID=1 AND GuildID=?1`, int32(guildID)); e != nil {
-			return e
-		}
-		_, e := tx.ExecContext(c, `INSERT INTO PS_UserData_CreatedGuilds(ServerID,GuildID,GuildName,MasterUserID,MasterCharID,MasterName,Country,TotalCount,GuildPoint,Del,CreateDate,UpdateDate,DeleteDate)
+	_, e := tx.ExecContext(c, `INSERT INTO PS_UserData_CreatedGuilds(ServerID,GuildID,GuildName,MasterUserID,MasterCharID,MasterName,Country,TotalCount,GuildPoint,Del,CreateDate,UpdateDate,DeleteDate)
    SELECT 1,GuildID,GuildName,MasterUserID,MasterCharID,MasterName,Country,TotalCount,GuildPoint,Del,CreateDate,CURRENT_TIMESTAMP,DeleteDate FROM PS_GameData_Guilds WHERE GuildID=?1`, int32(guildID))
-		return e
-	})
+	return e
 }
 
 // guildOfMember is the live guild of a character, for the mirror after
@@ -174,12 +167,12 @@ func CreateGuild(id uint32, name, masterUserID string, masterCharID uint32, mast
 			return e
 		}
 		_, e := tx.ExecContext(c, `INSERT INTO PS_GameData_GuildDetails(GuildID,Remark) VALUES(?1,?2)`, int32(id), strings.TrimSpace(remark))
-		return e
+		if e != nil {
+			return e
+		}
+		return mirrorGuildTx(c, tx, id)
 	})
-	if e != nil {
-		return e
-	}
-	return mirrorGuild(id)
+	return e
 }
 
 // AddGuildChar is usp_Create_GuildChar_E (rank 0 for an applicant).
@@ -202,17 +195,20 @@ func AddGuildChar(guildID, charID uint32, rank uint8) error {
 			return e
 		}
 		_, e := tx.ExecContext(c, `UPDATE PS_GameData_Guilds SET TotalCount=TotalCount+1 WHERE GuildID=?1`, int32(guildID))
-		return e
+		if e != nil {
+			return e
+		}
+		return mirrorGuildTx(c, tx, guildID)
 	})
-	if e != nil {
-		return e
-	}
-	return mirrorGuild(guildID)
+	return e
 }
 
 // SaveGuildCharRank is usp_Save_GuildChar_E (rank 1 also moves the master).
 func SaveGuildCharRank(charID uint32, rank uint8) error {
 	guildID := guildOfMember(charID)
+	if guildID == 0 {
+		return ErrNotFound
+	}
 	p, e := Pool(GameData)
 	if e != nil {
 		return e
@@ -226,16 +222,18 @@ func SaveGuildCharRank(charID uint32, rank uint8) error {
 			}
 		}
 		_, e := tx.ExecContext(c, `UPDATE PS_GameData_GuildChars SET GuildLevel=?2 WHERE CharID=?1 AND Del=0`, int32(charID), rank)
-		return e
+		if e != nil {
+			return e
+		}
+		return mirrorGuildTx(c, tx, guildID)
 	})
-	if e != nil {
-		return e
-	}
-	return mirrorGuild(guildID)
+	return e
 }
 
 // DeleteGuildChar is usp_Delete_GuildChar_E.
-func DeleteGuildChar(guildID, charID uint32) error {
+func DeleteGuildChar(guildID, charID uint32) error     { return deleteGuildChar(guildID, charID, false) }
+func DeleteLastGuildChar(guildID, charID uint32) error { return deleteGuildChar(guildID, charID, true) }
+func deleteGuildChar(guildID, charID uint32, disband bool) error {
 	p, e := Pool(GameData)
 	if e != nil {
 		return e
@@ -252,12 +250,22 @@ func DeleteGuildChar(guildID, charID uint32) error {
 			return e
 		}
 		_, e = tx.ExecContext(c, `UPDATE PS_GameData_Guilds SET TotalCount=MAX(0,TotalCount-?2) WHERE GuildID=?1`, int32(guildID), n)
-		return e
+		if e != nil {
+			return e
+		}
+		if disband {
+			if n != 1 {
+				return fmt.Errorf("guild membership changed")
+			}
+			for _, statement := range []string{`UPDATE PS_GameData_Guilds SET Del=1,DeleteDate=CURRENT_TIMESTAMP,TotalCount=0 WHERE GuildID=?`, `UPDATE PS_GameData_GuildChars SET Del=1,LeaveDate=CURRENT_TIMESTAMP WHERE GuildID=? AND Del=0`} {
+				if _, e = tx.ExecContext(c, statement, guildID); e != nil {
+					return e
+				}
+			}
+		}
+		return mirrorGuildTx(c, tx, guildID)
 	})
-	if e != nil {
-		return e
-	}
-	return mirrorGuild(guildID)
+	return e
 }
 
 // DeleteGuild is usp_Delete_Guild_E.
@@ -274,12 +282,9 @@ func DeleteGuild(guildID uint32) error {
 				return e
 			}
 		}
-		return nil
+		return mirrorGuildTx(c, tx, guildID)
 	})
-	if e != nil {
-		return e
-	}
-	return mirrorGuild(guildID)
+	return e
 }
 
 // SaveGuildRemark stores the notice in GuildDetails (usp_Save_GuildRemark_E's
@@ -320,12 +325,12 @@ func SaveGuildRanking(g GuildRow) error {
 		}
 		_, e := tx.ExecContext(c, `INSERT INTO PS_GameData_GuildDetails(GuildID,UseHouse,BuyHouse,Rank,Etin,EtinReturnCnt,KeepEtin,Remark) VALUES(?1,?2,?3,?4,?5,?6,?7,?8)
    ON CONFLICT(GuildID) DO UPDATE SET UseHouse=excluded.UseHouse,BuyHouse=excluded.BuyHouse,Rank=excluded.Rank,Etin=excluded.Etin,EtinReturnCnt=excluded.EtinReturnCnt,KeepEtin=excluded.KeepEtin,Remark=excluded.Remark`, int32(g.ID), g.UseHouse, g.BuyHouse, g.Rank, int32(g.Etin), int32(g.EtinReturn), int32(g.KeepEtin), strings.TrimSpace(g.Remark))
-		return e
+		if e != nil {
+			return e
+		}
+		return mirrorGuildTx(c, tx, g.ID)
 	})
-	if e != nil {
-		return e
-	}
-	return mirrorGuild(g.ID)
+	return e
 }
 
 // ReadGodBless is usp_Read_GodBless_R (ps_dbAgent CWorld::DBKillCountLoad):

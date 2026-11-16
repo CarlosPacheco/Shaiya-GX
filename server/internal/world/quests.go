@@ -192,10 +192,12 @@ func (q *activeQuest) row() db.CharQuest {
 }
 
 // loadQuests restores the character's quests as PacketUserDBSetInfo does.
-func (s *Session) loadQuests() {
+func (s *Session) loadQuests() error {
 	s.quests, s.finishedQuests = nil, nil
 	rows, err := db.CharacterQuests(s.char.ID)
-	s.logErr("load quests", err)
+	if err != nil {
+		return err
+	}
 	now := time.Now()
 	for _, r := range rows {
 		def := findQuestDef(r.QuestID)
@@ -216,8 +218,11 @@ func (s *Session) loadQuests() {
 		s.quests = append(s.quests, q)
 	}
 	fin, err := db.FinishedQuests(s.char.ID)
-	s.logErr("load finished quests", err)
+	if err != nil {
+		return err
+	}
 	s.finishedQuests = fin
+	return nil
 }
 
 // questListPackets are 0x0901 (id, minutes left, counters) and 0x0906
@@ -254,9 +259,14 @@ func (s *Session) questListPackets() [][]byte {
 
 // saveQuests writes every active quest's delay and counters.
 func (s *Session) saveQuests() {
-	for _, q := range s.quests {
-		s.logErr("save quest", db.SaveCharacterQuest(s.char.ID, q.row()))
+	if s.char == nil {
+		return
 	}
+	rows := make([]db.CharQuest, 0, len(s.quests))
+	for _, q := range s.quests {
+		rows = append(rows, q.row())
+	}
+	s.logErr("save quests", db.SaveCharacterQuests(s.char.ID, rows))
 }
 
 func (s *Session) findQuest(id uint16) *activeQuest {
@@ -758,7 +768,11 @@ func (s *Session) bumpQuestCounter(q *activeQuest, slot int) {
 		return
 	}
 	q.counters[slot]++
-	s.logErr("save quest counter", db.SaveCharacterQuest(s.char.ID, q.row()))
+	if err := db.SaveCharacterQuest(s.char.ID, q.row()); err != nil {
+		q.counters[slot]--
+		s.logErr("save quest counter", err)
+		return
+	}
 	w := packet.New(packet.QuestCounter)
 	w.U16(q.ID)
 	w.U8(uint8(slot))
@@ -767,27 +781,64 @@ func (s *Session) bumpQuestCounter(q *activeQuest, slot int) {
 }
 
 // questKill is update_mob_kill_quests for one kill of mobID.
-func (s *Session) questKill(mobID uint16) {
+func (s *Session) questKill(mobID uint16) { s.questKillCount(mobID, 1) }
+func (s *Session) questKillCount(mobID uint16, count uint8) bool {
 	if s.char == nil {
-		return
+		return true
 	}
+	type update struct {
+		quest    *activeQuest
+		counters [3]uint8
+	}
+	var changes []update
+	var rows []db.CharQuest
+	var packets [][]byte
 	now := time.Now()
 	for _, id := range mobQuestLinks[mobID] {
 		q := s.findQuest(id)
 		if q == nil || q.def.EndType != 2 || (q.def.MinMinutes != 0 && now.After(q.successAt)) {
 			continue
 		}
+		planned := *q
+		changed := false
 		for slot := 0; slot < 2; slot++ {
 			if q.def.MobIDs[slot] != mobID {
 				continue
 			}
-			s.bumpQuestCounter(q, slot)
-			if q.def.EndNpcType == 0 && q.counters[0] >= q.def.MobCounts[0] && q.counters[1] >= q.def.MobCounts[1] {
-				s.completeQuest(q, 0, true)
-				break
+			value := uint8(min(uint16(planned.counters[slot])+uint16(count), 255))
+			if value == planned.counters[slot] {
+				continue
 			}
+			planned.counters[slot] = value
+			changed = true
+			w := packet.New(packet.QuestCounter)
+			w.U16(q.ID)
+			w.U8(uint8(slot))
+			w.U8(value)
+			packets = append(packets, w.MustFinish())
+		}
+		if changed {
+			rows = append(rows, planned.row())
+			changes = append(changes, update{q, planned.counters})
 		}
 	}
+	if err := db.SaveCharacterQuests(s.char.ID, rows); err != nil {
+		s.logErr("quest kill transaction", err)
+		return false
+	}
+	for _, change := range changes {
+		change.quest.counters = change.counters
+	}
+	for _, frame := range packets {
+		s.send(frame, "0x0905 committed quest counter")
+	}
+	for _, change := range changes {
+		q := change.quest
+		if s.findQuest(q.ID) == q && q.def.EndNpcType == 0 && q.counters[0] >= q.def.MobCounts[0] && q.counters[1] >= q.def.MobCounts[1] {
+			s.completeQuest(q, 0, true)
+		}
+	}
+	return true
 }
 
 // questNeeds: an item that starts a quest, or one an active quest ends with.
@@ -838,6 +889,8 @@ func (s *Session) questTimers() {
 	for _, q := range append([]*activeQuest(nil), s.quests...) {
 		if q.def.MaxMinutes != 0 && !now.Before(q.endAt) {
 			s.completeQuest(q, 0, false)
+		} else if q.success == 0 && q.def.EndNpcType == 0 && q.def.EndType == 2 && q.counters[0] >= q.def.MobCounts[0] && q.counters[1] >= q.def.MobCounts[1] {
+			s.completeQuest(q, 0, true)
 		}
 	}
 }

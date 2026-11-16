@@ -152,21 +152,44 @@ func (s *Session) handleGuildBankMove(srcBag, srcSlot, destBag, destSlot uint8) 
 	if g == nil || g.members[s.char.ID] == nil {
 		return
 	}
-	rank := g.members[s.char.ID].Rank
-	switch {
-	case srcBag == guildBankBag && destBag == guildBankBag:
-		if srcSlot < guildBankSlots && destSlot < guildBankSlots {
-			s.guildBankRearrange(g, rank, srcSlot, destSlot)
-		}
-	case destBag == guildBankBag:
-		if destSlot < guildBankSlots {
-			s.guildBankDeposit(g, rank, srcBag, srcSlot, destSlot)
-		}
-	default:
-		if srcSlot < guildBankSlots {
-			s.guildBankWithdraw(g, rank, srcSlot, destBag, destSlot)
+	planned := *g
+	var before []db.Item
+	for i, item := range g.bank {
+		if item != nil {
+			copy := *item
+			planned.bank[i] = &copy
+			before = append(before, copy)
 		}
 	}
+	committed := s.inventoryOperationWithCommit(func() {
+		rank := g.members[s.char.ID].Rank
+		switch {
+		case srcBag == guildBankBag && destBag == guildBankBag:
+			if srcSlot < guildBankSlots && destSlot < guildBankSlots {
+				s.guildBankRearrange(&planned, rank, srcSlot, destSlot)
+			}
+		case destBag == guildBankBag:
+			if destSlot < guildBankSlots {
+				s.guildBankDeposit(&planned, rank, srcBag, srcSlot, destSlot)
+			}
+		default:
+			if srcSlot < guildBankSlots {
+				s.guildBankWithdraw(&planned, rank, srcSlot, destBag, destSlot)
+			}
+		}
+	}, func(change db.CharacterChange) error {
+		var after []db.Item
+		for _, item := range planned.bank {
+			if item != nil {
+				after = append(after, *item)
+			}
+		}
+		return db.CommitGuildBank(g.ID, change, before, after)
+	})
+	if committed {
+		g.bank = planned.bank
+	}
+
 }
 
 // guildBankDeposit is ItemBagToGuildBank: not from the equipment, no quest
@@ -194,32 +217,20 @@ func (s *Session) guildBankDeposit(g *guild, rank, bag, slot, dest uint8) {
 	}
 	stored := s.items[i]
 	s.items = append(s.items[:i], s.items[i+1:]...)
-	if err := db.DeleteCharacterItems(ch.ID, stored.UID); err != nil {
-		s.log.Printf("GX Server World guild bank deposit delete failed: %v", err)
-	}
 	stored.Bag, stored.Slot = guildBankBag, dest
 	var back *db.Item
 	if old != nil {
-		if err := db.DeleteGuildStoredItems(g.ID, old.UID); err != nil {
-			s.log.Printf("GX Server World guild bank swap delete failed: %v", err)
-		}
 		b := *old
 		b.Bag, b.Slot = bag, slot
-		if err := db.AddCharacterItem(ch.ID, &b); err != nil {
-			s.log.Printf("GX Server World guild bank swap insert failed: %v", err)
-		}
 		s.items = append(s.items, b)
 		back = &b
-	}
-	if err := db.AddGuildStoredItem(g.ID, &stored); err != nil {
-		s.log.Printf("GX Server World guild bank deposit insert failed: %v", err)
 	}
 	g.bank[dest] = &stored
 	s.send(buildBagToBag(bag, slot, back, guildBankBag, dest, &stored), "0x0204 guild bank deposit")
 	if old != nil {
-		g.send(buildGuildBankSlot(packet.GuildBankTaken, dest, old, ch.ID), "0x0D32 guild bank taken", s.player)
+		s.guildPublication(g, buildGuildBankSlot(packet.GuildBankTaken, dest, old, ch.ID), "0x0D32 guild bank taken", s.operationPlayer())
 	}
-	g.send(buildGuildBankSlot(packet.GuildBankPlaced, dest, &stored, ch.ID), "0x0D31 guild bank placed", s.player)
+	s.guildPublication(g, buildGuildBankSlot(packet.GuildBankPlaced, dest, &stored, ch.ID), "0x0D31 guild bank placed", s.operationPlayer())
 }
 
 // guildBankWithdraw is ItemGuildBankToBag: admins only, 5% of Sell x
@@ -241,35 +252,23 @@ func (s *Session) guildBankWithdraw(g *guild, rank, src, bag, slot uint8) {
 		return
 	}
 	taken := *it
-	if err := db.DeleteGuildStoredItems(g.ID, taken.UID); err != nil {
-		s.log.Printf("GX Server World guild bank withdraw delete failed: %v", err)
-	}
 	g.bank[src] = nil
 	var into *db.Item
 	if j := findItem(s.items, bag, slot); j >= 0 {
 		in := s.items[j]
 		s.items = append(s.items[:j], s.items[j+1:]...)
-		if err := db.DeleteCharacterItems(ch.ID, in.UID); err != nil {
-			s.log.Printf("GX Server World guild bank swap delete failed: %v", err)
-		}
 		in.Bag, in.Slot = guildBankBag, src
-		if err := db.AddGuildStoredItem(g.ID, &in); err != nil {
-			s.log.Printf("GX Server World guild bank swap insert failed: %v", err)
-		}
 		g.bank[src] = &in
 		into = &in
 	}
 	taken.Bag, taken.Slot = bag, slot
-	if err := db.AddCharacterItem(ch.ID, &taken); err != nil {
-		s.log.Printf("GX Server World guild bank withdraw insert failed: %v", err)
-	}
 	s.items = append(s.items, taken)
 	ch.Money -= fee
 	s.persist()
 	s.send(withMoney(buildBagToBag(guildBankBag, src, into, bag, slot, &taken), ch.Money), "0x0204 guild bank withdraw")
-	g.send(buildGuildBankSlot(packet.GuildBankTaken, src, &taken, ch.ID), "0x0D32 guild bank taken", s.player)
+	s.guildPublication(g, buildGuildBankSlot(packet.GuildBankTaken, src, &taken, ch.ID), "0x0D32 guild bank taken", s.operationPlayer())
 	if into != nil {
-		g.send(buildGuildBankSlot(packet.GuildBankPlaced, src, into, ch.ID), "0x0D31 guild bank placed", s.player)
+		s.guildPublication(g, buildGuildBankSlot(packet.GuildBankPlaced, src, into, ch.ID), "0x0D31 guild bank placed", s.operationPlayer())
 	}
 }
 
@@ -285,33 +284,29 @@ func (s *Session) guildBankRearrange(g *guild, rank, src, dest uint8) {
 		return
 	}
 	b := g.bank[dest]
-	save := func(it *db.Item) {
-		if err := db.SaveGuildStoredItem(g.ID, it); err != nil {
-			s.log.Printf("GX Server World guild bank save failed: %v", err)
-		}
-	}
+
 	if b != nil && itemsMatch(a, b) {
 		if ms := maxStackOf(a.Type, a.TypeID); ms > 1 && b.Count < ms {
 			moved := min(a.Count, ms-b.Count)
 			b.Count += moved
 			a.Count -= moved
-			save(b)
+
 			if a.Count == 0 {
-				_ = db.DeleteGuildStoredItems(g.ID, a.UID)
+
 				g.bank[src] = nil
 			} else {
-				save(a)
+
 			}
-			g.send(buildBagToBag(guildBankBag, src, g.bank[src], guildBankBag, dest, b), "0x0204 guild bank merge", nil)
+			s.guildPublication(g, buildBagToBag(guildBankBag, src, g.bank[src], guildBankBag, dest, b), "0x0204 guild bank merge", nil)
 			return
 		}
 	}
 	g.bank[src], g.bank[dest] = b, a
 	a.Slot = dest
-	save(a)
+
 	if b != nil {
 		b.Slot = src
-		save(b)
+
 	}
-	g.send(buildBagToBag(guildBankBag, src, b, guildBankBag, dest, a), "0x0204 guild bank move", nil)
+	s.guildPublication(g, buildBagToBag(guildBankBag, src, b, guildBankBag, dest, a), "0x0204 guild bank move", nil)
 }

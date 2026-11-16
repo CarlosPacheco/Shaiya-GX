@@ -12,7 +12,7 @@ children=[]
 with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
  temp=Path(temp);db=temp/'rapture.sqlite';shutil.copyfile(server/'data/rapture.sqlite',db)
  env=dict(os.environ,RAPTURE_DB_PATH=str(db),RAPTURE_DATA_DIR=str(server/'data'),RAPTURE_LOGIN_LISTEN='127.0.0.1:40800',RAPTURE_WORLD_LISTEN='127.0.0.1:40810',RAPTURE_PUBLIC_IP='127.0.0.1',SHAIYA_TEST_LOGIN_ADDR='127.0.0.1:40800',SHAIYA_TEST_WORLD_PORT='40810',SHAIYA_TEST_DISPOSABLE='1',SHAIYA_TEST_RENDER='1',SHAIYA_TEST_NATIVE_CONTROLS='1',SHAIYA_TEST_ACTIONS='1',SHAIYA_TEST_ARTIFACTS=str(client/'work'),SHAIYA_DATA=os.environ.get('SHAIYA_DATA',str(Path.home()/'Desktop/Shaiya GX/data')),GOTOOLCHAIN='local')
- env['PATH']=str(Path.home()/'.local/opt/go-1.27.3/bin')+':'+env['PATH']
+ env['PATH']=str(Path.home()/'.local/opt/go-1.27.4/bin')+':'+env['PATH']
  for port in (40800,40810):
   with socket.socket() as check:
    if check.connect_ex(('127.0.0.1',port))==0:raise RuntimeError('test port is already in use: '+str(port))

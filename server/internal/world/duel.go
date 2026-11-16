@@ -109,6 +109,11 @@ type pendingDuelEnd struct{ ledger, debuffs, stopAttack bool }
 
 func (p *ConnectedPlayer) queueDuelEnd(e pendingDuelEnd) {
 	p.mailMu.Lock()
+	if len(p.duelEnds) >= maxPendingCombat {
+		p.mailMu.Unlock()
+		p.mailboxOverflow()
+		return
+	}
 	p.duelEnds = append(p.duelEnds, e)
 	p.mailMu.Unlock()
 }
@@ -662,7 +667,7 @@ func (s *Session) duelDeath(winner *ConnectedPlayer) bool {
 
 func (p *ConnectedPlayer) queueDuelWin() {
 	p.mailMu.Lock()
-	p.duelWins++
+	p.duelWins = min(p.duelWins+1, duelCountCap)
 	p.mailMu.Unlock()
 }
 
@@ -683,11 +688,8 @@ func (s *Session) applyDuelWins() {
 	if n == 0 {
 		return
 	}
-	for ; n > 0; n-- {
-		if s.char.Victories < duelCountCap {
-			s.char.Victories++
-		}
-	}
+
+	s.char.Victories = min(satAdd(s.char.Victories, uint32(n)), duelCountCap)
 	s.persist()
 	s.send(buildKillCountUpdate(2, s.char.Victories), "0x020E duel victories")
 }

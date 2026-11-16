@@ -21,9 +21,9 @@ func TestObeliskOriginalWorldBoot(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer logger.Close()
-	oldShards, oldGrids := shards, grids
-	shards = map[uint16]*mapShard{}
-	grids = map[uint16]mapGrid{}
+	oldShards, oldGrids := realm.shards, realm.grids
+	realm.shards = map[uint16]*mapShard{}
+	realm.grids = map[uint16]mapGrid{}
 	oldTiers, oldWorld := kcTiers, kcWorld
 	oldLoaded, oldConfig, oldMaps, oldBosses, oldPortals, oldScore, oldReset := relics.loaded, relics.config, relics.byMap, relics.bosses, relics.portals, relics.score, relics.resetPending
 	relics.loaded = false
@@ -31,7 +31,7 @@ func TestObeliskOriginalWorldBoot(t *testing.T) {
 	relics.bosses = map[uint16][]*linkedBoss{}
 	relics.portals = nil
 	t.Cleanup(func() {
-		shards, grids = oldShards, oldGrids
+		realm.shards, realm.grids = oldShards, oldGrids
 		kcTiers, kcWorld = oldTiers, oldWorld
 		relics.loaded, relics.config, relics.byMap, relics.bosses, relics.portals, relics.score, relics.resetPending = oldLoaded, oldConfig, oldMaps, oldBosses, oldPortals, oldScore, oldReset
 	})
@@ -65,7 +65,7 @@ func TestObeliskOriginalWorldBoot(t *testing.T) {
 		t.Fatalf("boot loaded %d relics", total)
 	}
 	mobile, stationary := 0, 0
-	for mapID, sh := range shards {
+	for mapID, sh := range realm.shards {
 		for i := range sh.entities.Mobs {
 			m := &sh.entities.Mobs[i]
 			if m.event == nil || m.CurrentHP == 0 {

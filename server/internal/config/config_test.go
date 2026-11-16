@@ -2,6 +2,7 @@ package config
 
 import (
 	"net/url"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -47,5 +48,35 @@ func TestFallDamageDefaultsEnabledAndAllowsExplicitOptOut(t *testing.T) {
 		if got := FallDamageEnabled(); got != tc.want {
 			t.Fatal(tc.value, got)
 		}
+	}
+}
+
+func TestNetworkLimitsCannotBeDisabledAccidentally(t *testing.T) {
+	for _, value := range []string{"0", "-1", "unlimited", "999999999999"} {
+		t.Setenv("RAPTURE_CONNECTIONS_PER_IP", value)
+		if _, err := Network("world"); err == nil {
+			t.Fatal("unsafe policy accepted", value)
+		}
+	}
+	t.Setenv("RAPTURE_CONNECTIONS_PER_IP", "64")
+	policy, err := Network("world")
+	if err != nil || policy.PerIP != 64 {
+		t.Fatal(policy, err)
+	}
+}
+func TestMalformedEnvDoesNotPartiallyApply(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, ".local"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	const key = "GX_TEST_CONFIG_VALIDATION_UNIQUE"
+	if err := os.WriteFile(filepath.Join(root, ".local/runtime.env"), []byte(key+"=unexpected\ninvalid assignment\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := LoadRuntimeEnvFrom(root); err == nil {
+		t.Fatal("malformed configuration accepted")
+	}
+	if _, ok := os.LookupEnv(key); ok {
+		t.Fatal("partially applied configuration")
 	}
 }

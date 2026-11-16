@@ -6,6 +6,7 @@ package session
 import (
 	"errors"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/authwire"
 	"io"
 	"net"
 	"strconv"
@@ -47,6 +48,9 @@ func readOp(c *netx.Conn, want proto.Opcode, timeout time.Duration) ([]byte, err
 
 // Dial connects to the login server and authenticates.
 func Dial(addr, user, password string) (*Login, error) {
+	if err := authwire.Validate(user, password); err != nil {
+		return nil, err
+	}
 	c, err := netx.Dial(addr, DialTimeout)
 	if err != nil {
 		return nil, err
@@ -81,7 +85,15 @@ func (l *Login) authenticate(user, password string) error {
 	}
 	l.material = m
 	l.conn.EnableAES(m.Key(), m.Nonce())
-	if err := l.conn.Write(proto.LoginRequestPacket(user, password)); err != nil {
+	request := proto.LoginRequestPacket(user, password)
+	if len(password) > 16 {
+		var err error
+		request, err = authwire.Encode(user, password)
+		if err != nil {
+			return err
+		}
+	}
+	if err := l.conn.Write(request); err != nil {
 		return err
 	}
 	p, err = readOp(l.conn, proto.LoginRequest, DialTimeout)
@@ -101,6 +113,9 @@ func (l *Login) authenticate(user, password string) error {
 	l.Servers, err = proto.DecodeServerList(p)
 	return err
 }
+
+// Close cancels a login or server selection and releases its socket.
+func (l *Login) Close() error { return l.conn.Close() }
 
 // SelectServer asks for a world's address and closes the login connection.
 func (l *Login) SelectServer(id uint8, version uint32) (net.IP, error) {

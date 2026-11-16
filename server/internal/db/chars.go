@@ -408,6 +408,7 @@ func SaveCharacter(ch *Character) error {
 	c, cancel := ctx()
 	defer cancel()
 	_, err = writeCharacter(c, pool, ch)
+	reportStorageFailure(err)
 	return err
 }
 
@@ -486,6 +487,7 @@ func execSQL(database, name string, args ...any) error {
 	c, cancel := ctx()
 	defer cancel()
 	if _, err := pool.ExecContext(c, name, args...); err != nil {
+		reportStorageFailure(err)
 		return fmt.Errorf("%s: %w", name, err)
 	}
 	return nil
