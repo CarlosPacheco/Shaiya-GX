@@ -34,11 +34,13 @@ type pendingSpinCombo struct {
 	due, previous time.Time
 }
 
-func (s *Session) queueSpinCombo(def *db.SkillDef, op packet.Opcode, payload []byte) {
+func (s *Session) queueSpinCombo(def *db.SkillDef, op packet.Opcode, payload []byte) bool {
 	now := time.Now()
 	if s.lastSkillAt.Equal(s.lastActionAt) && now.Before(s.lastSkillAt.Add(skilltiming.SpinContact)) && skilltiming.AreaCombo(s.lastSkillID, def.SkillID, def.TargetType, def.TypeEffect, def.ReadyTime) && s.skillReady(def.SkillID) {
 		s.pendingCombo = &pendingSpinCombo{append([]byte(nil), payload...), op, s.lastSkillAt.Add(skilltiming.SpinContact), s.lastActionAt}
+		return true
 	}
+	return false
 }
 func (s *Session) processSpinCombo() {
 	q := s.pendingCombo

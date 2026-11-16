@@ -202,6 +202,7 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 	s.lastCombatAt = time.Now()
 	if !playerSkillHits(&stats, &mc, md, def) {
 		recordMobAIMiss(ch.MapID, mob.ID, ch.ID)
+		s.log.Printf("GX Server World skill miss skill_id=%d level=%d mob_global_id=%d mob_id=%d", k.SkillID, k.Level, mob.ID, mob.MobID)
 		frame := buildSkillUseResult(op, attackResultMiss, ch.ID, mob.ID, k.SkillID, k.Level, 0, 0, 0)
 		if drain {
 			frame = buildSkillDrainResult(attackResultMiss, ch.ID, mob.ID, k.SkillID, k.Level, [3]uint16{}, [3]uint16{})

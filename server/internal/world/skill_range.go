@@ -51,7 +51,7 @@ func (s *Session) sendSkillMessage(skillID, message uint16) {
 	w := packet.New(packet.Opcode(proto.GXSkillFailure))
 	w.U16(skillID)
 	w.U16(message)
-	s.send(w.MustFinish(), "localized skill reach failure")
+	s.send(w.MustFinish(), "localized skill failure")
 }
 func (s *Session) sendUserSkillRangeFailure(k db.CharacterSkill, p *ConnectedPlayer) {
 	if p == nil {

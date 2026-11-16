@@ -160,7 +160,9 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	s.autoAttack = false
 	if !s.skillActionReady(def, time.Now()) {
-		s.queueSpinCombo(def, op, p)
+		if !s.queueSpinCombo(def, op, p) {
+			s.sendSkillMessage(k.SkillID, 215)
+		}
 		return
 	}
 	if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && !s.attackMovementAllowed(time.Now()) {
@@ -173,6 +175,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		return
 	}
 	if !s.skillReady(k.SkillID) {
+		s.sendSkillMessage(k.SkillID, 215)
 		return
 	}
 	stats := s.stats()
@@ -291,7 +294,11 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 		return
 	}
 	k, def, ok := s.knownSkill(number)
-	if !ok || !s.skillReady(k.SkillID) {
+	if !ok {
+		return
+	}
+	if !s.skillReady(k.SkillID) {
+		s.sendSkillMessage(k.SkillID, 215)
 		return
 	}
 	if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && !s.attackMovementAllowed(time.Now()) {

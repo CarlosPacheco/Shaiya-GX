@@ -360,6 +360,7 @@ func (a *App) actionPacket(index int) []byte {
 
 func (a *App) learnedSkillPacket(k proto.LearnedSkill) []byte {
 	if a.skills.cooldowns[k.ID] > a.clock {
+		a.systemMessage(1, 215, nil)
 		return nil
 	}
 	def := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]

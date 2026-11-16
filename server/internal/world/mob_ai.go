@@ -815,7 +815,21 @@ func recordMobAIMiss(mapID uint16, id, user uint32) {
 			continue
 		}
 		h := &mobAIHost{mob: m, shard: s, mapID: mapID, now: time.Now(), tick: &MobCombatTick{}}
-		if m.ensureAI(h) && m.lua.battleType == 0 {
+		if !m.ensureAI(h) {
+			return
+		}
+		// A resolved miss is still an attack attempt. Acquire the attacker
+		// even when this entry point was not preceded by SetMobAggro.
+		if user != 0 && m.AggroTarget == 0 {
+			m.AggroTarget, m.returningHome = user, false
+			if m.aggro == nil {
+				m.aggro = map[uint32]int64{}
+			}
+			if _, ok := m.aggro[user]; !ok {
+				m.aggro[user] = 0
+			}
+		}
+		if m.lua.battleType == 0 {
 			m.lua.attacked = true
 			m.lua.recentHit = true
 			h.event("attacked", user)
