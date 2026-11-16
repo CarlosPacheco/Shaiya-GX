@@ -198,8 +198,8 @@ func (c *cloakInstance) draw(s *render.Scene3D, world render.M4, concealed bool)
 	s.Begin()
 	c.geometry.mesh.UpdateVertices(c.vertices)
 	if concealed {
-		s.DrawModelFaded(c.geometry.mesh, c.geometry.texture, world, .5, render.StealthOpacity)
+		s.DrawCloth(c.geometry.mesh, c.geometry.texture, world, .5, render.StealthOpacity)
 	} else {
-		s.DrawModel(c.geometry.mesh, c.geometry.texture, world, .5, false)
+		s.DrawCloth(c.geometry.mesh, c.geometry.texture, world, .5, 1)
 	}
 }

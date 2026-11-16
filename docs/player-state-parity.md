@@ -9,7 +9,9 @@ and online level gains restore the effective maxima (or half for half revivals).
 
 Weapon locomotion follows the original client selectors 0x4cb9a0 (run) and
 0x4cb8c0 (ready), resolving the character's action ALT. Spear uses slots 54/48.
-The ready stance lasts ten seconds after combat actions. Ordinary idle, walking,
+The ready stance lasts ten seconds after basic attacks only. Spells, buffs and
+preparation do not start or refresh it, even when they share a basic-attack ALT
+slot. An existing basic-attack stance expires on its own timer. Ordinary idle, walking,
 sideways movement, swimming and mounts retain their existing animation routes;
 invalid class/weapon placeholders fall back to ordinary locomotion.
 
@@ -46,3 +48,10 @@ Inventory, action-bar, warehouse, trade, duel, blacksmith and mall item icons sh
 positive counts, including one, only when the item definition permits stacking
 (Count greater than one). Equipment and other non-stackable items have no count label. `/getitem type id` grants one by default;
 explicit quantity validation and transactional grants retain their existing rules.
+
+
+Cloak cloth uses a constant diffuse term, matching its unlit shoulder material,
+instead of responding to the scene's changing light direction or ambient value.
+Only the material lighting changes: cloth vertices, simulation, cutout, concealment
+and shadow paths retain their previous behavior. Original-assets GL checks compare
+identical cloth frames under opposite lighting settings, including concealment.

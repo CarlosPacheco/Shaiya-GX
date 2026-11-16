@@ -433,6 +433,16 @@ func (c *Character) Update(dt float32) {
 	}
 }
 
+// PlayBasicAttack alone refreshes the native weapon-ready posture. Spells
+// can share an attack ALT slot without changing this basic-attack timer.
+func (c *Character) PlayBasicAttack(weapon, variant uint8) bool {
+	if !c.PlayAction(AttackAction(weapon, variant), false) {
+		return false
+	}
+	c.combatPoseLeft = 10
+	return true
+}
+
 // PlayAction uses the original ALT index. Death holds the final frame;
 // other confirmed one-shots return to locomotion after their duration.
 func (c *Character) PlayAction(slot int, hold bool) bool {
@@ -451,9 +461,6 @@ func (c *Character) PlayAction(slot int, hold bool) bool {
 	}
 	c.spinLeft, c.externalTime = 0, false
 	c.clipFile = file
-	if slot >= 23 && slot <= 110 {
-		c.combatPoseLeft = 10
-	}
 	c.clip, c.clipName, c.Time = cl, file, 0
 	c.actionID++
 	c.actionSlot = slot

@@ -423,7 +423,7 @@ func (x *Effect) Draw(s *render.Scene3D) {
 				m[4+row] *= size
 				m[8+row] *= size
 			}
-			m = effectRotation(e.definition.Unk30, v.initial).Mul(effectRotation(e.definition.RotationAxis, v.angle)).Mul(m)
+			m = particleRotation(e.definition, v.initial, v.angle, m, e.geometry != nil)
 			pos := x.particlePosition(v, e.definition)
 			m[12], m[13], m[14] = pos[0], pos[1], pos[2]
 			var color [4]float32
@@ -568,4 +568,15 @@ func (x *Effect) SetBoneTransform(m render.M4) {
 	x.Origin = render.V3{m[12], m[13], m[14]}
 	m[12], m[13], m[14] = 0, 0, 0
 	x.basis = m
+}
+
+// The original mesh path (0x55b1f0) first builds tilt * placement, then
+// prepends axial spin. Reversing them makes a tilted projectile precess.
+func particleRotation(d *effect.Emitter, initial, angle float32, base render.M4, mesh bool) render.M4 {
+	tilt := effectRotation(d.Unk30, initial)
+	spin := effectRotation(d.RotationAxis, angle)
+	if mesh {
+		return spin.Mul(tilt).Mul(base)
+	}
+	return tilt.Mul(spin).Mul(base)
 }

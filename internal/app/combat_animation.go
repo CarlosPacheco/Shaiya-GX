@@ -150,7 +150,7 @@ func (a *App) confirmedAnimation(p []byte) {
 				}
 			}
 			a.attackVariant++
-			if actor.PlayAction(scene.AttackAction(typ, a.attackVariant), false) {
+			if actor.PlayBasicAttack(typ, a.attackVariant) {
 				if result.Source == a.state.SelfID {
 					v.attackActionID = actor.ActionID()
 				}

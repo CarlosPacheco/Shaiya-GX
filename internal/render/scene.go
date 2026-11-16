@@ -301,6 +301,9 @@ func (s *Scene3D) DrawWater(m *Mesh, t *Texture, tileSize float32, tint [4]float
 
 // DrawModel draws a mesh with texture * clamped Gouraud diffuse.
 func (s *Scene3D) DrawModel(m *Mesh, t *Texture, world M4, alphaRef float32, blend bool) {
+	s.drawModel(m, t, world, alphaRef, blend, true)
+}
+func (s *Scene3D) drawModel(m *Mesh, t *Texture, world M4, alphaRef float32, blend, lit bool) {
 	if s.meshOccluded(m, world) {
 		return
 	}
@@ -310,7 +313,11 @@ func (s *Scene3D) DrawModel(m *Mesh, t *Texture, world M4, alphaRef float32, ble
 		gl.Uniform1i(s.uMode, 7)
 		blend = false
 	}
-	gl.Uniform1i(s.uLit, 1)
+	lighting := int32(0)
+	if lit {
+		lighting = 1
+	}
+	gl.Uniform1i(s.uLit, lighting)
 	gl.Uniform1f(s.uRef, alphaRef)
 	s.blend(blend)
 	bindDiffuse(t)
@@ -519,12 +526,19 @@ func (s *Scene3D) SetReverseDepth(enabled bool) {
 // DrawModelFaded keeps cutout testing on the source texture and applies
 // concealment afterward, matching the character skin alpha.
 func (s *Scene3D) DrawModelFaded(m *Mesh, t *Texture, world M4, alphaRef, opacity float32) {
+	s.drawModelFaded(m, t, world, alphaRef, opacity, true)
+}
+func (s *Scene3D) drawModelFaded(m *Mesh, t *Texture, world M4, alphaRef, opacity float32, lit bool) {
 	if s.Shadow || s.meshOccluded(m, world) {
 		return
 	}
 	s.setWorld(world)
 	gl.Uniform1i(s.uMode, 9)
-	gl.Uniform1i(s.uLit, 1)
+	lighting := int32(0)
+	if lit {
+		lighting = 1
+	}
+	gl.Uniform1i(s.uLit, lighting)
 	gl.Uniform1f(s.uRef, alphaRef)
 	gl.Uniform4f(s.uTint, 1, 1, 1, opacity)
 	s.blend(true)
@@ -537,4 +551,14 @@ func (s *Scene3D) DrawModelFaded(m *Mesh, t *Texture, world M4, alphaRef, opacit
 	gl.Disable(gl.CULL_FACE)
 	gl.FrontFace(gl.CCW)
 	gl.Disable(gl.BLEND)
+}
+
+// DrawCloth uses a constant diffuse term, like the unlit cloak shoulder pass.
+// Cutout, concealment and shadow behavior are shared with ordinary models.
+func (s *Scene3D) DrawCloth(m *Mesh, t *Texture, world M4, alphaRef, opacity float32) {
+	if opacity < 1 {
+		s.drawModelFaded(m, t, world, alphaRef, opacity, false)
+	} else {
+		s.drawModel(m, t, world, alphaRef, false, false)
+	}
 }

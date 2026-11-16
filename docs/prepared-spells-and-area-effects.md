@@ -64,7 +64,11 @@ Native placement uses a fixed release center C and horizontal cast direction D:
 The original 0x4307f0/0x430590 paths distinguish the moving mesh body from
 world-space particle trails. Mesh simulation stays local to the controller;
 previously emitted billboard particles remain in world space. GX carries this
-placement through `SetMeteorTransform` in the existing renderer. Before this
+placement through `SetMeteorTransform` in the existing renderer. The native
+mesh draw order is `spin * (initial tilt * placement)` (0x55b1f0), so the spin
+rolls the body around its own axis while preserving the authored diagonal.
+Reversing tilt and spin makes that axis precess, producing the former wobble.
+Before this
 correction, the wrapper moved but mesh particles could stay at their birth
 coordinates, and the cast-facing direction was not supplied.
 
