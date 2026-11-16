@@ -26,6 +26,7 @@ type Status struct {
 type StatusState struct {
 	Title                  string
 	Class, Mode            string
+	Element                string
 	AttackSpeed, MoveSpeed string
 	Base                   proto.StatPoints
 	Points                 uint16
@@ -163,6 +164,9 @@ func (v *Status) Draw(s *render.Sprites, f *Font, w, h int, state StatusState) {
 	text := func(value string, dx, dy, width int) { f.Draw(s, value, mainX+dx, y+dy, white, width) }
 	text(state.Class, 75, 80, 66)
 	text(state.Mode, 190, 80, 68)
+	// Keep the original Stat field; fit long localized neutral-element names.
+	elementScale := min(float32(1), 66/float32(max(1, f.Width(state.Element))))
+	f.DrawScaled(s, state.Element, float32(mainX+78), float32(y+326)+float32(f.Height)*(1-elementScale)/2, elementScale, white, 0)
 	// Native 0x0050436a-0x005043e0: title centred in the 182px field
 	// at (73, 99+2), relative to the main sheet even when expanded.
 	text(state.Title, 73+max(0, (182-f.Width(state.Title))/2), 101, 182)

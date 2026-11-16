@@ -7,13 +7,13 @@ import (
 	"math"
 )
 
-// GX rule: six safe units, quadratic max-HP damage, lethal at thirty units.
+// GX rule: six safe units; half the previous quadratic damage, capped at max HP.
 func fallDamage(drop float32, maxHP uint32) uint32 {
 	if drop <= 6 || math.IsNaN(float64(drop)) || math.IsInf(float64(drop), 0) {
 		return 0
 	}
-	fraction := min(float64((drop-6)/24), 1)
-	return uint32(math.Ceil(float64(maxHP) * fraction * fraction))
+	fraction := float64(drop-6) / 24
+	return uint32(math.Ceil(float64(maxHP) * min(.5*fraction*fraction, 1)))
 }
 func (s *Session) applyFallDamage(drop float32) {
 	if !config.FallDamageEnabled() || s.char == nil || s.dead || s.invulnerable() {

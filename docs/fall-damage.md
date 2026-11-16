@@ -1,18 +1,19 @@
 # GX fall damage
 
-The feature is implemented and tested, but **disabled by default**. Enable it
-explicitly with `RAPTURE_FALL_DAMAGE=true` in the server environment (or
-`.local/runtime.env`) and restart the world server. Missing, false or invalid
-values keep it inactive; disabled landings never change HP or emit damage notices.
+The feature is **enabled by default**. Set `RAPTURE_FALL_DAMAGE=false` in the
+server environment (or `.local/runtime.env`) to disable it, then restart the
+world server. Invalid explicit values disable it as well; disabled landings
+never change HP or emit damage notices.
 
 Fall damage is a GX rule, chosen independently of native EP5 damage formulas.
 The world server tracks the highest point of an airborne interval and evaluates
 its vertical drop once a solid supported landing is reached.
 
 - Drops up to six world units cause no damage; normal jumps remain harmless.
-- Above six units, damage is `ceil(maxHP * min((drop - 6) / 24, 1)^2)`.
-- A 12-unit drop takes about 6.25% of maximum HP; 18 takes 25%; 24 takes 56.25%.
-- At thirty units the calculated damage reaches maximum HP and can kill.
+- Above six units, damage is `ceil(maxHP * min(0.5 * ((drop - 6) / 24)^2, 1))`.
+- A 12-unit drop takes about 3.125% of maximum HP; 18 takes 12.5%; 24 takes 28.125%.
+- At thirty units damage is 50% of maximum HP; around forty units it reaches
+  maximum HP and can kill. This halves the previous uncapped damage curve.
 - Damage is capped to current HP. Actual damage uses current server stats,
   ends stealth and cancels preparation. Existing GM immunity remains effective.
 

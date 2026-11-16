@@ -37,3 +37,15 @@ func TestSQLiteDSNRetainsPathsAndConnectionSettings(t *testing.T) {
 		t.Fatal("connection settings changed", value)
 	}
 }
+
+func TestFallDamageDefaultsEnabledAndAllowsExplicitOptOut(t *testing.T) {
+	for _, tc := range []struct {
+		value string
+		want  bool
+	}{{"", true}, {"true", true}, {"false", false}, {"invalid", false}} {
+		t.Setenv("RAPTURE_FALL_DAMAGE", tc.value)
+		if got := FallDamageEnabled(); got != tc.want {
+			t.Fatal(tc.value, got)
+		}
+	}
+}

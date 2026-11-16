@@ -13,7 +13,7 @@ func TestFallDamageCurve(t *testing.T) {
 	for _, tc := range []struct {
 		drop float32
 		want uint32
-	}{{0, 0}, {6, 0}, {12, 100}, {18, 400}, {24, 900}, {30, 1600}, {80, 1600}, {float32(math.NaN()), 0}, {float32(math.Inf(1)), 0}} {
+	}{{0, 0}, {6, 0}, {12, 50}, {18, 200}, {24, 450}, {30, 800}, {42, 1600}, {80, 1600}, {float32(math.NaN()), 0}, {float32(math.Inf(1)), 0}} {
 		if got := fallDamage(tc.drop, 1600); got != tc.want {
 			t.Fatal(tc, got)
 		}
@@ -51,7 +51,7 @@ func finishTestFall(s *Session, now time.Time) {
 	}
 }
 func TestAuthoritativeLandingDamagesOnceAndCanKill(t *testing.T) {
-	for _, height := range []float32{4, 12, 32} {
+	for _, height := range []float32{4, 12, 42} {
 		t.Run(string(rune('A'+int(height))), func(t *testing.T) {
 			s, now := fallSession(t, height)
 			before := s.char.CurrentHP
@@ -66,7 +66,7 @@ func TestAuthoritativeLandingDamagesOnceAndCanKill(t *testing.T) {
 			if s.char.CurrentHP != remaining {
 				t.Fatal("landing applied twice")
 			}
-			if height >= 30 && (!s.dead || s.deathLoss != -1 || len(s.damageLedger) != 0) {
+			if height >= 40 && (!s.dead || s.deathLoss != -1 || len(s.damageLedger) != 0) {
 				t.Fatal("environmental lethal fall not handled safely")
 			}
 		})
@@ -145,9 +145,9 @@ func TestFallLandingSendsFramedDamageThenAuthoritativePools(t *testing.T) {
 	}
 }
 
-func TestFallDamageDisabledByDefault(t *testing.T) {
+func TestFallDamageExplicitlyDisabled(t *testing.T) {
 	s, now := fallSession(t, 32)
-	t.Setenv("RAPTURE_FALL_DAMAGE", "")
+	t.Setenv("RAPTURE_FALL_DAMAGE", "false")
 	before := s.char.CurrentHP
 	finishTestFall(s, now)
 	if s.char.CurrentHP != before || s.dead {

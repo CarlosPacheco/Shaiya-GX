@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
@@ -125,5 +126,36 @@ func TestMountedStatusShowsAbsoluteSpeed(t *testing.T) {
 	a.state.Self.Vehicle.State = proto.VehicleOff
 	if got := a.statusState().MoveSpeed; got != "normal" {
 		t.Fatal(got)
+	}
+}
+
+func TestStatusHidesModeAndUsesUpperArmorElement(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID = 100
+	a.state.Slots[0] = proto.CharacterSlot{ID: 100, Mode: 3}
+	a.msg = map[int]string{473: "ULTIMATE", 5270: "Sin elemento", 5204: "Fuego", 5205: "Agua"}
+	if value := a.statusState(); value.Mode != "" || value.Element != "Sin elemento" {
+		t.Fatal(value)
+	}
+	a.items = map[sdata.ItemKey]*sdata.Item{
+		{Type: 17, TypeID: 1}: {Type: 17, TypeID: 1, Attribute: 0},
+		{Type: 16, TypeID: 1}: {Type: 16, TypeID: 1, Attribute: 1},
+		{Type: 30, TypeID: 1}: {Type: 30, TypeID: 1, Attribute: 6},
+	}
+	a.state.Inventory[[2]uint8{0, 0}] = proto.InventoryItem{Type: 16, TypeID: 1}
+	if a.statusState().Element != "Sin elemento" {
+		t.Fatal("helmet supplied armor element")
+	}
+	a.state.Inventory[[2]uint8{0, 1}] = proto.InventoryItem{Type: 17, TypeID: 1, Gems: [6]uint8{1}}
+	if a.statusState().Element != "Agua II" {
+		t.Fatal(a.statusState().Element)
+	}
+	a.items[sdata.ItemKey{Type: 17, TypeID: 1}].Attribute = 1
+	if a.statusState().Element != "Fuego I" {
+		t.Fatal("intrinsic priority lost")
+	}
+	delete(a.state.Inventory, [2]uint8{0, 1})
+	if a.statusState().Element != "Sin elemento" {
+		t.Fatal("removed armor left stale element")
 	}
 }

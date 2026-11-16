@@ -25,6 +25,8 @@ func DrawQuickPotions(s *render.Sprites, f *Font, frame, blank *render.Texture, 
 	}
 	for i, slot := range slots {
 		cx, cy := x+11+i*40, y+13
+		// Native 0x4ddc30 draws shortcuts before item icons (filled cells cover them).
+		f.DrawOutlined(s, []string{"Z", "X"}[i], x+30+i*40, y+32, white)
 		if slot.Icon != nil {
 			u := slot.UV
 			tint := white
@@ -42,9 +44,9 @@ func DrawQuickPotions(s *render.Sprites, f *Font, frame, blank *render.Texture, 
 			label := fmt.Sprintf("%.0f", math.Ceil(slot.Cooldown))
 			f.DrawOutlined(s, label, cx+16-f.Width(label)/2, cy+9, [4]float32{1, 1, 0, 1})
 		}
-		if slot.Count > 1 {
-			f.DrawOutlined(s, fmt.Sprint(slot.Count), cx, cy-1, white)
+		if slot.Count > 0 {
+			// Native 0x4a3400 item-count anchor, called by the potion bar.
+			f.DrawOutlined(s, fmt.Sprint(slot.Count), cx+12, cy+16, white)
 		}
-		f.DrawOutlined(s, []string{"Z", "X"}[i], cx+18, cy+17, white)
 	}
 }

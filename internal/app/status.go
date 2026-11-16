@@ -38,7 +38,7 @@ func (a *App) statusState() ui.StatusState {
 		}
 		move = a.msg.Get(id)
 	}
-	return ui.StatusState{Title: pvprank.Title(a.state.Details.Kills, a.msg), AttackSpeed: attack, MoveSpeed: move, Class: ui.ClassName(a.msg, a.state.Faction.Faction == 0, c.Class), Mode: a.msg.Get(470 + int(c.Mode)),
+	return ui.StatusState{Title: pvprank.Title(a.state.Details.Kills, a.msg), AttackSpeed: attack, MoveSpeed: move, Class: ui.ClassName(a.msg, a.state.Faction.Faction == 0, c.Class), Element: a.statusArmorElement(),
 		Base: proto.StatPoints{c.Str, c.Dex, c.Rec, c.Int, c.Wis, c.Luc}, Points: a.state.Details.StatPoint, Details: a.state.Details,
 		HP: a.state.Pools.HP, MP: a.state.Pools.MP, SP: a.state.Pools.SP, Stats: a.state.Stats, Known: a.state.StatsKnown, Busy: a.status.pending || a.state.Self.Dead}
 }
@@ -88,4 +88,13 @@ func (a *App) drawStatus(w, h int) {
 		a.clearTooltipUnderPanel(x, y, width, ui.StatusHeight)
 		a.statusUI.Draw(a.sprites, a.font, w, h, a.statusState())
 	}
+}
+
+// The native Stat field describes the equipped upper armor, including its active lapis.
+func (a *App) statusArmorElement() string {
+	var value uint8
+	if it, ok := a.state.Inventory[[2]uint8{0, 1}]; ok {
+		value = a.effectiveItemElement(a.itemsItem(it.Type, it.TypeID), &it)
+	}
+	return elementName(value, a.msg)
 }

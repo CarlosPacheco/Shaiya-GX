@@ -600,3 +600,15 @@ News background `0050ff10` uses the original `tipbox.png` atlas: 4px border
 pieces around the interior, native UV slices, and the ARGB CD1D1F24 solid center.
 Its supplied width/height are interior dimensions, not the complete outer size.
 Full-map character coordinates sit four pixels higher above the map surface.
+
+## Status fields and potion quantities
+
+The Status (T) Mode value remains empty; the original frame and its labels are
+retained. Stat shows the equipped upper armor's effective intrinsic/active-lapis
+element, using the original SysMsg names and tier, or SysMsg 5270 for neutral.
+Long localized element names fit inside the existing field.
+
+The Z/X potion bar uses the native item-count anchor `(iconX + 12, iconY + 16)`
+from Game.exe 0x4a3400, called by 0x4ddc30. Shortcut captions are drawn before
+item icons, matching the original layer order; quantities remain legible on
+filled cells, including three-digit stacks.
