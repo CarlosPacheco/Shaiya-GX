@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"encoding/binary"
@@ -78,7 +79,15 @@ func CharacterItems(charID uint32) ([]Item, error) {
 	}
 	c, cancel := ctx()
 	defer cancel()
-	rows, err := pool.QueryContext(c, `SELECT ItemID, Type, TypeID, ItemUID, Bag, Slot, Quality,
+	return characterItems(c, pool, charID)
+}
+
+type itemQuerier interface {
+	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+}
+
+func characterItems(c context.Context, query itemQuerier, charID uint32) ([]Item, error) {
+	rows, err := query.QueryContext(c, `SELECT ItemID, Type, TypeID, ItemUID, Bag, Slot, Quality,
 Gem1, Gem2, Gem3, Gem4, Gem5, Gem6, Craftname, [Count],  Maketype ,
 CAST(strftime('%Y',MakeTime) AS INTEGER) AS MakeTime_YYYY,
 CAST(strftime('%m',MakeTime) AS INTEGER) AS MakeTime_MM,

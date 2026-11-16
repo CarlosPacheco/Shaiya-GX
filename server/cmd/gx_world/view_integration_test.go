@@ -19,17 +19,15 @@ func TestViewAgainstSQLite(t *testing.T) {
 		c       *client
 	}
 	var users []who
-	for _, name := range []string{"Valiant", "Arcanist"} {
-		id, uid, found, _ := db.CharacterByName(name)
-		if !found {
-			t.Skipf("%s not found", name)
-		}
+	for _, class := range []uint8{0, 4} {
+		id, uid := newProtocolCharacter(t, class)
 		users = append(users, who{id: id, uid: uid})
 	}
+
 	a, _ := db.CharacterDetail(users[0].uid, users[0].id)
 	b, _ := db.CharacterDetail(users[1].uid, users[1].id)
 	if a.MapID != b.MapID {
-		t.Skipf("Valiant and Arcanist are on maps %d and %d", a.MapID, b.MapID)
+		t.Fatalf("protocol fixtures on different maps %d and %d", a.MapID, b.MapID)
 	}
 	defer func() {
 		pool, _ := db.Pool(db.GameData)

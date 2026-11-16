@@ -1,124 +1,114 @@
-# Persistence and concurrency audit — 2026-11-15
+# Persistence and concurrency audit
 
-SQLite remains GX's primary production database. This audit separates engine
-recovery from the gameplay operations that must commit together. The tested
-baseline is gx-v0.1.10 / source 95234a8, on Linux with local game data.
-This change adds tests and records existing behavior; it does not fix the
-transaction boundaries described below or certify the server for production.
+SQLite is GX's primary production database. The original Linux audit of
+95234a8 / gx-v0.1.10 reproduced three gameplay persistence defects. All three
+are now corrected in source, with ordinary integration regression tests.
+The gx-v0.1.10 release archives predate these fixes; updating this document does
+not replace an existing executable or publish a new release.
 
-## Results
+## Corrections
 
-| Probe | Result | Scope |
-| --- | --- | --- |
-| Server integration suite | Passed | Disposable SQLite fixture; package suite passed, but five legacy protocol tests were skipped (see coverage limits) |
-| Two-client N2 | Passed | Real local assets/OpenGL, creation, native controls, loot, skills, guild, paid portals, duel, movement, attack cadence and ladders |
-| Concurrent protocol clients | Passed | 16 encrypted world connections, including a two-player party; 80 acknowledged purchases plus eight in-flight purchase disconnects; charges/items agree after clean logout, abrupt socket close and relog |
-| World concurrency race detector | Passed | The same 16-client party/purchase/disconnect/relog workload completed with `-race`, with no race reports |
-| SQLite process contention | Passed | Four independent Go/modernc processes; 800 atomic two-row transfers, conserved balances and no busy failures |
-| SQLite process termination | Passed | Killing a writer before commit rolls back both rows; killing it after commit retains both |
-| Live backup and restoration | Passed | A private full-seed copy, 96 tables, concurrent WAL transfers, backup API, manifest/row counts and integrity check; restored balances conserved |
-| Trade write failure | **Failed** | A rejected source deletion still grants the receiver an item |
-| Trade durable gold | **Failed** | A successful exchange saves only one gold balance before the partner mailbox runs |
-| Quest completion failure | **Failed** | Gold can commit while the active quest remains unfinished |
+### Atomic player exchanges
 
-The private fixtures and approved distributed seed are distinct. These probes do
-not change a personal runtime, account inventory, installation or seed snapshot.
-The packaged development/test accounts remain fixtures, independently of SQLite's
-role as the production database.
+Previously, a failed source-item deletion could still grant the recipient a
+copy. Gold was also saved for only one participant before the recipient's
+mailbox applied its credit. Both defects came from separate gameplay writes.
 
-## Coverage limits found during the audit
+A trade now plans both inventories and balances on private copies and commits
+them in one SQLite transaction through `server/internal/db`. Expected inventory
+and money are checked under the transaction's write lock. Failed deletions,
+recipient inserts or character updates roll back the complete exchange.
+Unchanged inventory rows and their original metadata are preserved.
 
-Five legacy protocol tests skip because the current approved seed has no
-`Interloper`, `Valiant` or `Arcanist`: `TestCombatAgainstSQLite`,
-`TestItemMallAgainstSQLite`, `TestPartyAgainstSQLite`, `TestRaidAgainstSQLite`
-and `TestViewAgainstSQLite`. Their package returning success does not establish
-those scenarios. Migrate those tests to explicit disposable fixtures before
-claiming their coverage. The new client-load probe creates its own 16 accounts,
-characters and priced product and independently verifies party formation,
-purchases and reconnect persistence. The distributed mall is intentionally free;
-the priced fixture exists only in test memory and does not change its prices.
+The two sessions' state locks protect planning, commit and publication. The
+lower character ID coordinates the commit and retries on a later tick when the
+partner is busy, without waiting for the partner lock while holding its own.
+Both owners receive their committed state before success is sent. Logout or a
+later position save therefore cannot overwrite the credit with stale money.
+The active trade is claimed once, so captured duplicate confirmations cannot
+replay even a money-only trade. Disconnect invalidates pending requests.
+Overflow beyond the existing gold cap cancels the exchange rather than silently
+losing currency.
 
-## Reproducible failures
+### Atomic quest rewards
 
-Run the opt-in fault-injection suite from the repository root:
+Previously, gold could commit while the quest completion update failed,
+leaving the reward paid and the quest active in storage.
+
+Required-item consumption, reward placement, gold, experience, level/stat/skill
+points, HP/MP/SP and quest completion now share one transaction. Item checks and
+reward-choice prompts do not consume hand-in items. Live state, reward packets
+and completion success are published only after commit. A write failure retains
+the original quest and items; a full bag permits a later retry without losing
+the reward. Existing stacking, reward quantities and experience formulas apply.
+
+A guarded completion update requires an active unfinished quest row. Repeatable
+quests use a guarded deletion in that same transaction. A stale session object
+cannot replay either kind of reward; a newly accepted repeatable quest can still
+be completed normally.
+
+## Regression checks
+
+The original three diagnostic tests are now part of the normal `integration`
+suite; the extra `persistenceaudit` build tag is no longer required.
 
 ```sh
 . tools/go-env.sh
-go test -tags integration,persistenceaudit ./server/internal/world -run '^TestAudit' -count=1 -v
+go test -tags integration ./server/internal/world -run '^(TestAudit|TestTrade|TestQuestRollback|TestQuestFullBag|TestRepeatableQuest)' -count=1 -v
+go test -tags integration ./server/cmd/gx_world -run '^(TestTradeDurableBeforeAckAndDisconnectAgainstSQLite|TestQuestWriteFailureRetryAndDurableAckAgainstSQLite)$' -count=1 -timeout=120s -v
+go test -tags integration ./server/... -count=1
 ```
 
-**This command currently fails three tests.** The additional tag explicitly
-separates the known failing diagnostic probes from the regular regression suite.
-Their assertions require the correct invariants; they do not pass by expecting
-corruption. Promote each probe to the ordinary integration suite when its defect
-is fixed. All SQL triggers below exist only in disposable fixtures.
+Coverage includes:
 
-### Trade: item conservation
+- Source deletion, receiver insertion and second-character save failures with
+  unchanged live and stored inventories and gold on both sides.
+- Partial stacks, full inventories, gold cap overflow, duplicate confirmations,
+  a busy partner and cancellation after disconnect.
+- Quest completion, required-item deletion, reward insertion and character save
+  failures, with retry, level-up, full bags, durable replay guards and repeatables.
+- Real encrypted trade requests and simultaneous confirmations; both balances
+  and item counts are durable on acknowledgement, before reading recipient
+  updates. Immediate logout, relog and a pending-trade disconnect preserve them.
+- Real quest hand-in with a rejected character save: no completion is sent, the
+  original quest remains active, retry commits all rewards before acknowledgement,
+  and duplicate hand-in/relog preserves the exact result.
 
-`TestAuditTradeWriteFailureConservesItems` injects an SQLite `RAISE(ABORT)` trigger
-on the offered item's source deletion. The source keeps the original, but
-[`transferOffer`](../internal/world/trade.go) ignores that failure and continues
-the receiver grant: the combined quantity changes from **1 to 2**.
+## Previously skipped protocol coverage
 
-Required correction: plan both inventory changes without mutating live state,
-persist all debits/credits in one transaction with guarded ownership/quantity
-checks, and publish the inventory/packets only after commit. A receiver insert
-failure must also roll back the source debit. Include partial stacks and full
-inventories in regression coverage.
+Five old protocol tests depended on `Interloper`, `Valiant` or `Arcanist` being
+present in the development seed. Combat, item mall, party, raid and visibility
+now create their own disposable accounts, faction and characters. Combat uses a
+real mob definition in a private test entity if no eligible seed spawn exists.
+These five tests now execute instead of silently skipping when seed names change.
 
-### Trade: acknowledged gold must already be durable
+## Engine and bounded load checks
 
-`TestAuditTradeMoneyDurableBeforePartnerMailbox` offers 100 gold between two
-characters holding 1,000 each. Immediately after `finalizeTrade` reports success,
-the stored balances are **900 and 1,000**, rather than 900 and 1,100. The other
-balance is deferred through `QueueTradeRefresh` / `applyTradeRefresh`.
+The audit also verified four independent Go/modernc processes completing 800
+atomic two-row transfers with conserved balances and no busy failures. Killing
+a writer before commit rolls both rows back; killing it after commit retains
+both. A live backup of a disposable full-seed copy restored all 96 tables with
+matching row counts, valid integrity and conserved balances during concurrent
+WAL transfers. The live fixture remained writable afterward.
 
-The test inspects this deterministic crash boundary; it does not claim to kill
-an actual world process at that exact instruction. An exit there has no durable
-recipient credit to recover. The separate process-termination test verifies that
-SQLite preserves committed transactions and rolls back uncommitted ones.
-
-Required correction: include **both** money balances with the inventory transfer
-transaction. Coordinate session ownership, disconnects, duplicate confirmation
-and pending refreshes so a later session save cannot overwrite committed money.
-A delayed mailbox may refresh presentation, but must not be responsible for the
-first durable credit.
-
-### Quests: reward and completion must be inseparable
-
-`TestAuditQuestFinishFailureCannotRepeatReward` uses a synthetic 100-gold reward
-on a disposable quest-1 row and rejects its completion update with a trigger.
-[`awardQuest`](../internal/world/quests.go) leaves **1,100 gold with Finish=0**:
-the reward is durable while the quest remains active in storage. This is a
-replay risk on reload, rather than a demonstrated full network replay exploit.
-
-Required correction: persist required-item consumption, selected reward,
-experience/level/stat changes and quest completion together. On any failure,
-retain the original live state and do not send completion success. Test duplicate
-hand-in, reward selection, full bags, disconnect and failed writes as well as
-ordinary completion.
-
-## Repeatable passing checks
+The 16-client protocol workload creates a two-player party, completes 80
+acknowledged priced purchases, then cuts eight additional purchases in flight.
+Charges, inventory quantities and point-log counts agree after clean logout,
+abrupt socket close and encrypted relog. The priced product exists only in test
+memory; the distributed mall remains unchanged.
 
 ```sh
 . tools/go-env.sh
-go test -tags integration ./server/... -count=1
 go test -tags integration ./server/internal/db -run '^TestSQLiteConcurrentProcessesAndCrashRecovery$' -count=1 -v
-go test -tags integration ./server/cmd/gx_world -run '^TestConcurrentClientsPurchaseLogoutAndRelog$' -count=1 -timeout=120s -v
-go test -race -tags integration ./server/cmd/gx_world -run '^TestConcurrentClientsPurchaseLogoutAndRelog$' -count=1 -timeout=300s -v
+go test -race -tags integration ./server/cmd/gx_world -run '^(TestConcurrentClientsPurchaseLogoutAndRelog|TestTradeDurableBeforeAckAndDisconnectAgainstSQLite)$' -count=1 -timeout=300s -v
 python3 -m unittest discover -s server/tools -p 'test_*.py'
 python3 tools/n2_smoke.py
-python3 tools/n2_mounts.py
 ```
 
-The process/transaction and client-load probes print measured timings. They are
-bounded smoke workloads, not maximum player capacity, a long soak, disk-full
-recovery or a representative combat/world simulation. The 16-client workload
-uses real protocol handlers with an in-process world and test map; it does not
-measure 16 rendered clients, real network latency or multi-map combat. Host and
-filesystem effects matter; do not turn these measurements into a player limit.
-Ordinary N2 coverage is not a complete level-1-to-60 progression playthrough.
-
-For actual operations and consistent backups, see [SQLite](sqlite.md) and
-[server operations](../../docs/server.md). Fix the transaction-boundary failures
-before treating normal-path test results as crash-safe gameplay persistence.
+All fixtures use disposable databases and isolated services. No personal runtime
+or distributed seed is refreshed by these checks. They are bounded regression
+workloads, not a maximum-player benchmark, long soak, disk-full recovery,
+16 rendered clients or a level-1-to-60 playthrough. Passing SQLite recovery
+checks does not certify every other gameplay subsystem as crash-safe.
+For deployment and consistent backups, see [SQLite](sqlite.md) and
+[server operations](../../docs/server.md).

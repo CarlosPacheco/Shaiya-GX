@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -373,8 +374,19 @@ var MapForSave = func(zone uint16) uint16 { return zone }
 // SaveCharacter persists level, points, stats, HP/MP/SP, position, exp,
 // money and kill counters with usp_Save_Char_Info_E.
 func SaveCharacter(ch *Character) error {
+	pool, err := Pool(GameData)
+	if err != nil {
+		return err
+	}
+	c, cancel := ctx()
+	defer cancel()
+	_, err = writeCharacter(c, pool, ch)
+	return err
+}
+
+func writeCharacter(c context.Context, executor sqlExecutor, ch *Character) (sql.Result, error) {
 	clamp16 := func(v uint32) int16 { return int16(min(v, 32767)) }
-	return execSQL(GameData, `UPDATE PS_GameData_Chars
+	return executor.ExecContext(c, `UPDATE PS_GameData_Chars
 SET [Level] = @level, StatPoint = @statpoint, SkillPoint = @skillpoint,
 [Str] = @str, dex = @dex, Rec = @rec, [int] = @int, Wis = @wis, Luc = @luc,
 HP = @hp, Mp = @mp, Sp = @sp,

@@ -42,9 +42,11 @@ type pendingDamage struct {
 
 // ConnectedPlayer is a player in the world, reachable from any session for
 // broadcasts. Cross-session work is queued in mailboxes and applied by the
-// owning session's loop, which alone mutates its character.
+// owning session's loop. Paired trades hold both owners' state locks.
 type ConnectedPlayer struct {
-	ride vehiclePresence // guarded by vehicleMu
+	owner       *Session        // immutable; stateMu guards paired trade access
+	tradeCommit *tradeSession   // guarded by mailMu
+	ride        vehiclePresence // guarded by vehicleMu
 
 	targetEffects []ActiveBuff
 	CharacterID   uint32
@@ -179,9 +181,12 @@ func bucket(mapID uint16) map[uint32]*ConnectedPlayer {
 }
 
 // RegisterPlayer adds a player to its map's registry.
-func RegisterPlayer(ch db.Character, items []db.Item, isAdmin bool, faction uint8, out *connWriter, log *logx.Logger) *ConnectedPlayer {
+func RegisterPlayer(ch db.Character, items []db.Item, isAdmin bool, faction uint8, out *connWriter, log *logx.Logger, owner ...*Session) *ConnectedPlayer {
 	p := &ConnectedPlayer{CharacterID: ch.ID, CharacterName: ch.Name, IsAdmin: isAdmin, out: out, log: log,
 		gmVisible: true, mapID: ch.MapID, character: ch, items: append([]db.Item(nil), items...), faction: faction}
+	if len(owner) > 0 {
+		p.owner = owner[0]
+	}
 	p.alive.Store(true)
 	registryMu.Lock()
 	bucket(ch.MapID)[ch.ID] = p
@@ -467,4 +472,17 @@ func (p *ConnectedPlayer) UpdateElements(attack, defense uint8) {
 	defer p.mu.Unlock()
 	p.elementKnown = true
 	p.attackElement, p.defenseElement = attack, defense
+}
+
+func (p *ConnectedPlayer) QueueTradeCommit(trade *tradeSession) {
+	p.mailMu.Lock()
+	p.tradeCommit = trade
+	p.mailMu.Unlock()
+}
+func (p *ConnectedPlayer) takeTradeCommit() *tradeSession {
+	p.mailMu.Lock()
+	defer p.mailMu.Unlock()
+	trade := p.tradeCommit
+	p.tradeCommit = nil
+	return trade
 }

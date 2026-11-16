@@ -554,6 +554,11 @@ func (s *Session) awardExp(gained uint32, modifiers bool) {
 	s.persist()
 	s.log.Printf("GX Server World exp character_id=%d gained=%d level=%d exp=%d levels_gained=%d",
 		ch.ID, gained, ch.Level, ch.Exp, levels)
+	s.notifyExpGain(gained, levels)
+}
+
+func (s *Session) notifyExpGain(gained uint32, levels uint16) {
+	ch := s.char
 	if gained > 0 {
 		s.send(buildExpGain(gained), "0x0207 exp gained")
 	}

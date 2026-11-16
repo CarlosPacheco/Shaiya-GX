@@ -11,19 +11,16 @@ import (
 )
 
 // TestItemMallAgainstSQLite buys a product of the client's Cash.SData
-// catalog (AP_1: 10 points, item 100/251) as Valiant and checks the 0x0205
+// catalog (AP_1: current catalog price, item 100/251) and checks the 0x0205
 // grant, the 0x2602 result and the balance, then undoes the purchase.
 func TestItemMallAgainstSQLite(t *testing.T) {
 	setupWorld(t)
 	const code = "AP_1"
 	prod := db.MustDefs().Products[code]
 	if prod == nil {
-		t.Skip("AP_1 not in ProductList (load the client catalog first)")
+		t.Fatal("AP_1 fixture missing from ProductList")
 	}
-	charID, uid, found, err := db.CharacterByName("Valiant")
-	if err != nil || !found {
-		t.Skip("Valiant not found")
-	}
+	charID, uid := newProtocolCharacter(t, 0)
 	before, err := db.Points(uid)
 	if err != nil {
 		t.Fatal(err)

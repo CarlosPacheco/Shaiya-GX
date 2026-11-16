@@ -10,14 +10,12 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
 
-// enterWorld selects a migrated test character and loads its map.
-func enterWorld(t *testing.T, account uint32, name string) (*client, uint32) {
+// enterWorld creates a disposable character and loads its map.
+func enterWorld(t *testing.T, class uint8) (*client, uint32) {
 	t.Helper()
+	id, account := newProtocolCharacter(t, class)
 	seen := map[packet.Opcode]int{}
-	id, _, found, err := db.CharacterByName(name)
-	if err != nil || !found {
-		t.Skipf("test character %s not found", name)
-	}
+
 	// Current development snapshots need not put these fixture players on the
 	// same map. Place only this private test copy before sending the invitation.
 	ch, err := db.CharacterDetail(account, id)
@@ -43,8 +41,8 @@ func enterWorld(t *testing.T, account uint32, name string) (*client, uint32) {
 
 func TestPartyAgainstSQLite(t *testing.T) {
 	setupWorld(t)
-	leader, leaderID := enterWorld(t, 1, "Interloper")
-	member, memberID := enterWorld(t, 3, "Arcanist")
+	leader, leaderID := enterWorld(t, 0)
+	member, memberID := enterWorld(t, 4)
 	seen := map[packet.Opcode]int{}
 
 	leader.write(msg(packet.PartyInvite, byte(memberID), byte(memberID>>8), byte(memberID>>16), byte(memberID>>24)))
@@ -93,8 +91,8 @@ func TestRaidAgainstSQLite(t *testing.T) {
 	setupWorld(t)
 	// Let the server release accounts from a previous test's sessions.
 	time.Sleep(time.Second)
-	leader, leaderID := enterWorld(t, 1, "Interloper")
-	member, memberID := enterWorld(t, 3, "Arcanist")
+	leader, leaderID := enterWorld(t, 0)
+	member, memberID := enterWorld(t, 4)
 	seen := map[packet.Opcode]int{}
 	le := func(v uint32) []byte { return []byte{byte(v), byte(v >> 8), byte(v >> 16), byte(v >> 24)} }
 

@@ -730,3 +730,29 @@ func (s *Session) equipmentMoveFailure(srcBag, srcSlot, destBag, destSlot uint8)
 	}
 	return check(srcBag, srcSlot, findItem(s.items, destBag, destSlot))
 }
+
+// planGiveItem uses the native placement/stacking rules on a private copy.
+// It allocates identifiers but performs no writes or network operations.
+func planGiveItem(items *[]db.Item, tpl *db.Item, count, maxStack uint16) (packets [][]byte, left uint16) {
+	for count > 0 {
+		if i := findStackable(*items, tpl, maxStack); i >= 0 {
+			moved := min(count, maxStack-(*items)[i].Count)
+			(*items)[i].Count += moved
+			count -= moved
+			packets = append(packets, buildAddItem(&(*items)[i]))
+			continue
+		}
+		free := freeInventorySlots(*items)
+		if len(free) == 0 {
+			break
+		}
+		it := *tpl
+		it.UID = db.NewItemUID()
+		it.MakeTime = time.Now()
+		it.Bag, it.Slot, it.Count = free[0][0], free[0][1], min(count, maxStack)
+		*items = append(*items, it)
+		count -= it.Count
+		packets = append(packets, buildAddItem(&it))
+	}
+	return packets, count
+}

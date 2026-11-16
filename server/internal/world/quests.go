@@ -443,10 +443,16 @@ func (s *Session) giveQuestItem(t, id, count uint8) *db.Item {
 // questFindItems is QuestFindItem (0x0047f8e0): the farm items must all be
 // held; counters take the held totals; consuming removes what the chosen
 // reward variant needs (whole stacks for quest-type items).
-func (s *Session) questFindItems(q *activeQuest, consume bool) bool {
+func (s *Session) questFindItems(q *activeQuest) bool {
+	_, _, ok := planQuestItems(q, s.items, false)
+	return ok
+}
+
+func planQuestItems(q *activeQuest, original []db.Item, consume bool) (items []db.Item, packets [][]byte, ok bool) {
+	items = append([]db.Item(nil), original...)
 	d := q.def
 	var totals [3]int
-	for _, it := range s.items {
+	for _, it := range items {
 		if it.Bag < InventoryFirstBag || it.Bag > InventoryLastBag {
 			continue
 		}
@@ -460,7 +466,7 @@ func (s *Session) questFindItems(q *activeQuest, consume bool) bool {
 	var remaining [3]int
 	for i, f := range d.FarmItems {
 		if totals[i] < int(f.Count) {
-			return false
+			return nil, nil, false
 		}
 		if totals[i] > int(q.counters[i]) {
 			q.counters[i] = f.Count
@@ -468,9 +474,6 @@ func (s *Session) questFindItems(q *activeQuest, consume bool) bool {
 			q.counters[i] = uint8(min(totals[i], 255))
 		}
 		remaining[i] = int(f.Count)
-	}
-	if !consume {
-		return true
 	}
 	if d.ResultType != 1 && d.UserSelect == 0 {
 		for v := 2; v >= 0; v-- {
@@ -484,8 +487,11 @@ func (s *Session) questFindItems(q *activeQuest, consume bool) bool {
 			}
 		}
 	}
-	for i := len(s.items) - 1; i >= 0; i-- {
-		it := s.items[i]
+	if !consume {
+		return items, nil, true
+	}
+	for i := len(items) - 1; i >= 0; i-- {
+		it := items[i]
 		if it.Bag < InventoryFirstBag || it.Bag > InventoryLastBag {
 			continue
 		}
@@ -504,16 +510,15 @@ func (s *Session) questFindItems(q *activeQuest, consume bool) bool {
 			remaining[k] -= take
 			res := it
 			res.Count -= uint16(take)
-			s.items[i].Count = res.Count
-			s.logErr("consume quest item", db.SaveCharacterItem(s.char.ID, &s.items[i]))
-			s.send(buildRemoveItem(&res, res.Count == 0), "0x0206 quest item handed in")
+			items[i].Count = res.Count
+			packets = append(packets, buildRemoveItem(&res, res.Count == 0))
 			if res.Count == 0 {
-				s.items = append(s.items[:i], s.items[i+1:]...)
+				items = append(items[:i], items[i+1:]...)
 			}
 			break
 		}
 	}
-	return true
+	return items, packets, true
 }
 
 // handleQuestEnd (0x0903): npc id, quest id (quest_end_request).
@@ -538,7 +543,7 @@ func (s *Session) handleQuestEnd(p []byte) {
 	}
 	switch d.EndType {
 	case 1:
-		if !s.questFindItems(q, d.UserSelect == 0 || d.EndNpcType == 0) {
+		if !s.questFindItems(q) {
 			return
 		}
 	case 2:
@@ -616,7 +621,7 @@ func (s *Session) handleQuestChoose(p []byte) {
 	if q == nil || q.success == 0 || choice >= q.def.UserSelect || choice >= 3 {
 		return
 	}
-	if q.def.EndNpcType != 0 && !s.questFindItems(q, true) {
+	if q.def.EndNpcType != 0 && !s.questFindItems(q) {
 		return
 	}
 	s.awardQuest(q, choice, 0)
@@ -636,16 +641,68 @@ func (s *Session) handleQuestAbandon(p []byte) {
 // awardQuest is award_quest_reward: exp (doubled unless the quest is
 // ultimate-only), gold and an item; 0x0903 reports them.
 func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
+	if s.char == nil || q == nil || s.findQuest(q.ID) != q || variant >= 3 {
+		return
+	}
 	res := q.def.Results[variant]
 	exp := res.Exp
 	if q.def.Mode <= 2 {
 		exp += exp
 	}
-	ch := s.char
+	change := db.CharacterChange{Before: *s.char, After: *s.char, ItemsBefore: s.items, ItemsAfter: append([]db.Item(nil), s.items...)}
+	var packets [][]byte
+	if q.def.EndType == 1 {
+		plannedQuest := *q
+		var ok bool
+		change.ItemsAfter, packets, ok = planQuestItems(&plannedQuest, s.items, true)
+		if !ok {
+			return
+		}
+	}
+	var reward *db.Item
+	if res.ItemType != 0 {
+		def := db.MustDefs().Item(res.ItemType, res.ItemTypeID)
+		if def == nil {
+			s.log.Printf("GX Server World quest %d has invalid reward definition", q.ID)
+			return
+		}
+		tpl := db.Item{Type: res.ItemType, TypeID: res.ItemTypeID, Quality: def.Quality, MakeType: "Q"}
+		adds, left := planGiveItem(&change.ItemsAfter, &tpl, 1, def.MaxStack())
+		if left != 0 {
+			s.send(buildAddItemError(1), "quest reward inventory full")
+			return
+		}
+		packets = append(packets, adds...)
+		for i := len(change.ItemsAfter) - 1; i >= 0; i-- {
+			it := &change.ItemsAfter[i]
+			if it.Type == tpl.Type && it.TypeID == tpl.TypeID {
+				reward = it
+				break
+			}
+		}
+	}
+	change.After.Money = uint32(min(uint64(change.After.Money)+uint64(res.Money), db.MoneyCap))
+	levels := applyExpGain(&change.After, exp)
+	completion := db.QuestCompletion{CharacterID: s.char.ID, QuestID: q.ID, Repeatable: q.def.TickReceive != 0}
+	if err := db.CommitGameplay([]db.CharacterChange{change}, &completion); err != nil {
+		s.log.Printf("GX Server World quest %d transaction failed: %v", q.ID, err)
+		return
+	}
+	// Publishing is deliberately after commit: failures retain the active quest,
+	// required items, character stats, gold and reward-choice state unchanged.
+	*s.char = change.After
+	s.items = change.ItemsAfter
+	s.removeQuestFromMemory(q, 1)
+	s.syncPlayer()
+	s.partyPools()
+	if s.player != nil {
+		s.player.UpdateItems(s.items)
+	}
+	for _, p := range packets {
+		s.send(p, "quest committed item")
+	}
 	if res.Money != 0 {
-		ch.Money = uint32(min(uint64(ch.Money)+uint64(res.Money), db.MoneyCap))
-		s.persist()
-		s.send(buildSetMoney(ch.Money), "0x0213 quest gold")
+		s.send(buildSetMoney(s.char.Money), "0x0213 quest gold")
 	}
 	w := packet.New(packet.QuestEnd)
 	w.U32(ctx)
@@ -654,39 +711,42 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 	w.U8(variant)
 	w.U32(exp)
 	w.U32(res.Money)
-	var it *db.Item
-	if res.ItemType != 0 {
-		it = s.giveQuestItem(res.ItemType, res.ItemTypeID, 1)
-	}
-	if it != nil {
-		w.Bytes([]byte{it.Bag, it.Slot, it.Type, it.TypeID})
+	if reward != nil {
+		w.Bytes([]byte{reward.Bag, reward.Slot, reward.Type, reward.TypeID})
 	} else {
 		w.Bytes(make([]byte, 4))
 	}
 	s.send(w.MustFinish(), "0x0903 quest completed")
-	if exp > 0 {
-		s.awardExp(exp, false)
-		s.send(buildExpGain(exp), "0x0207 quest exp")
-	}
-	s.removeQuest(q, 1)
-	s.log.Printf("GX Server World quest %d completed variant %d exp %d money %d", q.ID, variant, exp, res.Money)
+	s.notifyExpGain(exp, levels)
+	s.log.Printf("GX Server World quest %d committed variant %d exp %d money %d", q.ID, variant, exp, res.Money)
 }
 
 // removeQuest is QuestRuntime::remove: repeatable quests (TickReceive)
 // are deleted, others finish with their success flag.
 func (s *Session) removeQuest(q *activeQuest, success uint8) {
-	for i, a := range s.quests {
-		if a == q {
+	var err error
+	if q.def.TickReceive != 0 {
+		err = db.DeleteCharacterQuest(s.char.ID, q.ID)
+	} else {
+		err = db.FinishCharacterQuest(s.char.ID, q.ID, success)
+	}
+	if err != nil {
+		s.logErr("finish quest", err)
+		return
+	}
+	s.removeQuestFromMemory(q, success)
+}
+
+func (s *Session) removeQuestFromMemory(q *activeQuest, success uint8) {
+	for i, active := range s.quests {
+		if active == q {
 			s.quests = append(s.quests[:i], s.quests[i+1:]...)
 			break
 		}
 	}
-	if q.def.TickReceive != 0 {
-		s.logErr("delete quest", db.DeleteCharacterQuest(s.char.ID, q.ID))
-		return
+	if q.def.TickReceive == 0 {
+		s.finishedQuests = append(s.finishedQuests, db.FinishedQuest{QuestID: q.ID, Success: success})
 	}
-	s.logErr("finish quest", db.FinishCharacterQuest(s.char.ID, q.ID, success))
-	s.finishedQuests = append(s.finishedQuests, db.FinishedQuest{QuestID: q.ID, Success: success})
 }
 
 func (s *Session) bumpQuestCounter(q *activeQuest, slot int) {
@@ -760,7 +820,7 @@ func (s *Session) questPickup(t, id uint8) {
 				continue
 			}
 			s.bumpQuestCounter(q, slot)
-			if q.def.EndNpcType == 0 && s.questFindItems(q, true) {
+			if q.def.EndNpcType == 0 && s.questFindItems(q) {
 				s.completeQuest(q, 0, true)
 			}
 			break

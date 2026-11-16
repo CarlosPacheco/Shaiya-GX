@@ -25,9 +25,10 @@ const (
 	characterListSize = MaxCharacterSlots
 )
 
-// Session is one client connection. Only its own goroutine touches its
-// fields; other sessions reach it through its ConnectedPlayer.
+// Session is one client connection. Its loop owns its fields under stateMu.
+// A paired trade may also update them while holding both sessions' state locks.
 type Session struct {
+	stateMu         sync.Mutex
 	effectWatchID   uint32
 	effectWatchKind uint8
 	effectWatchAt   time.Time
@@ -138,24 +139,36 @@ func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error {
 			log.Printf("GX Server World client disconnected")
 			return nil
 		}
-		s.tick(n == 0)
-		if n == 0 {
-			continue
-		}
-		list, ok := frames.Push(buf[:n])
-		for _, f := range list {
-			if err := s.frame(f); err != nil {
-				return err
-			}
-		}
-		if !ok {
-			return fmt.Errorf("malformed world frame")
+		if err := s.processInput(n, buf, &frames); err != nil {
+			return err
 		}
 	}
 }
 
+// processInput never holds the session lock while waiting for socket input.
+func (s *Session) processInput(n int, buf []byte, frames *netx.Frames) error {
+	s.stateMu.Lock()
+	defer s.stateMu.Unlock()
+	s.tick(n == 0)
+	if n == 0 {
+		return nil
+	}
+	list, ok := frames.Push(buf[:n])
+	for _, frame := range list {
+		if err := s.frame(frame); err != nil {
+			return err
+		}
+	}
+	if !ok {
+		return fmt.Errorf("malformed world frame")
+	}
+	return nil
+}
+
 // close persists the active character and releases the account.
 func (s *Session) close() {
+	s.stateMu.Lock()
+	defer s.stateMu.Unlock()
 	s.leaveWorld()
 	if s.accountID != 0 {
 		if err := db.TryGameLogout(int32(s.accountID), s.sessionID); err != nil {
@@ -244,6 +257,11 @@ func (s *Session) tick(idle bool) {
 		}
 		if r := p.TakeTradeRefresh(); r != nil {
 			s.applyTradeRefresh(r)
+		}
+		if trade := p.takeTradeCommit(); trade != nil {
+			if other := FindPlayerByID(trade.partner(p.CharacterID)); other != nil {
+				s.finalizeTrade(trade, other)
+			}
 		}
 		for _, mob := range p.TakeQuestKills() {
 			s.questKill(mob)
@@ -927,7 +945,7 @@ func (s *Session) handleMapLoaded() {
 	s.send(buildCharacterShape(ch, s.faction, s.items, 0), "0x0303 character shape")
 	s.send(buildCharacterMove(ch, 0, 0), "0x0501 character move")
 	if s.player == nil {
-		s.player = RegisterPlayer(*ch, s.items, s.isAdmin, s.faction, s.out, s.logger)
+		s.player = RegisterPlayer(*ch, s.items, s.isAdmin, s.faction, s.out, s.logger, s)
 		s.guildConnect()
 	} else {
 		s.clearView(false)

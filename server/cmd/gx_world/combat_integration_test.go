@@ -13,16 +13,13 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/world"
 )
 
-// TestCombatAgainstSQLite plays the armed test character Valiant: it
+// TestCombatAgainstSQLite plays a disposable armed fighter: it
 // walks onto a low-level mob, uses an attack skill, auto-attacks it to
 // death and checks the death, the 0x0503 results and that every drop
 // (0x0401) carries Y 0 as CMob::GetDropPosRand sends it.
 func TestCombatAgainstSQLite(t *testing.T) {
 	setupWorld(t)
-	charID, uid, found, err := db.CharacterByName("Valiant")
-	if err != nil || !found {
-		t.Skip("Valiant not found")
-	}
+	charID, uid := newProtocolCharacter(t, 0)
 	keepItemQuality(t, charID)
 	saved, err := db.CharacterDetail(uid, charID)
 	if err != nil {
@@ -42,7 +39,15 @@ func TestCombatAgainstSQLite(t *testing.T) {
 		}
 	}
 	if target.ID == 0 {
-		t.Skipf("no low-level mob on map %d", saved.MapID)
+		// Use a real definition with a private map entity if this seed has no
+		// eligible low-level spawn; gameplay still uses the normal combat path.
+		def := db.MustDefs().Mobs[2008]
+		if def == nil {
+			t.Fatal("combat mob definition 2008 missing")
+		}
+		target = world.NewStaticMob(def, 2008, 799.4, 1671.7, nil, 0)
+		target.PosY = 45
+		world.AddEntities(saved.MapID, world.MapEntities{Mobs: []world.MapMob{target}})
 	}
 	// Spawn this disposable character beside the target before entering the
 	// world instead of bypassing collision/speed validation with a forged move.

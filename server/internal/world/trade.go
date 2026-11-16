@@ -1,6 +1,7 @@
 package world
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -9,8 +10,7 @@ import (
 )
 
 // Player-to-player trade (0x0A01-0x0A0A). The session that completes the
-// trade moves the items in the database; the partner's session reloads
-// through its trade-refresh mailbox.
+// trade commits both inventories and balances under both session state locks.
 
 const tradeSlots = 8
 
@@ -363,7 +363,7 @@ func (s *Session) handleTradeReady(v uint8) {
 		partner.Send(buildTradeReady(2, v == 1), "0x0A05 exchange ready (partner)")
 	}
 	if done && partner != nil {
-		s.finalizeTrade(t, partner)
+		queueTradeCommit(t)
 	}
 }
 
@@ -387,7 +387,7 @@ func (s *Session) handleTradeConfirm(confirmed bool) {
 		partner.Send(buildTradeConfirm(2, confirmed), "0x0A0A exchange confirm (partner)")
 	}
 	if done && partner != nil {
-		s.finalizeTrade(t, partner)
+		queueTradeCommit(t)
 	}
 }
 
@@ -441,69 +441,131 @@ func offerFits(receiver []db.Item, o *tradeOffer) bool {
 	return true
 }
 
-// transferOffer moves an offer from one inventory to another, returning
-// the packets for each side.
-func transferOffer(fromID, toID uint32, o *tradeOffer, from, to *[]db.Item) (fromPk, toPk [][]byte) {
-	for _, it := range o.items {
-		if it == nil {
+// planTransferOffer updates private inventories and builds their result packets.
+func planTransferOffer(o *tradeOffer, from, to *[]db.Item) (fromPk, toPk [][]byte, err error) {
+	for _, offered := range o.items {
+		if offered == nil {
 			continue
 		}
-		i := findItemByUID(*from, it.Item.UID)
-		if i < 0 {
-			continue
+		i := findItemByUID(*from, offered.Item.UID)
+		if i < 0 || offered.Count == 0 || (*from)[i].Count < offered.Count {
+			return nil, nil, fmt.Errorf("trade source changed")
 		}
-		grant := min(it.Count, (*from)[i].Count)
-		(*from)[i].Count -= grant
-		db.SaveCharacterItem(fromID, &(*from)[i])
+		tpl := (*from)[i]
+		(*from)[i].Count -= offered.Count
 		fromPk = append(fromPk, buildRemoveItem(&(*from)[i], (*from)[i].Count == 0))
 		if (*from)[i].Count == 0 {
 			*from = append((*from)[:i], (*from)[i+1:]...)
 		}
-		if grant == 0 {
-			continue
+		added, left := planGiveItem(to, &tpl, offered.Count, maxStackOf(tpl.Type, tpl.TypeID))
+		if left != 0 {
+			return nil, nil, fmt.Errorf("trade inventory full")
 		}
-		tpl := it.Item
-		tpl.UID = 0
-		ms := maxStackOf(tpl.Type, tpl.TypeID)
-		adds, left, _ := giveItemTo(toID, to, &tpl, grant, ms)
-		toPk = append(toPk, adds...)
-		if left > 0 {
-			back, _, _ := giveItemTo(fromID, from, &tpl, left, ms)
-			fromPk = append(fromPk, back...)
-		}
+		toPk = append(toPk, added...)
 	}
-	return fromPk, toPk
+	return fromPk, toPk, nil
 }
 
-func (s *Session) finalizeTrade(t *tradeSession, partner *ConnectedPlayer) {
-	me := s.player
-	endTrade(me.CharacterID, partner.CharacterID)
-	t.mu.Lock()
-	mine, theirs := *t.offer(me.CharacterID), *t.offer(partner.CharacterID)
-	t.mu.Unlock()
-	partnerItems, err := db.CharacterItems(partner.CharacterID)
-	partnerMoney := partner.Snapshot().Money
-	if err != nil || !offerValid(s.items, &mine, s.char.Money) || !offerValid(partnerItems, &theirs, partnerMoney) ||
-		!offerFits(partnerItems, &mine) || !offerFits(s.items, &theirs) {
-		s.log.Printf("GX Server World trade failed validation with character_id=%d", partner.CharacterID)
-		sendTradeCancel(me)
-		sendTradeCancel(partner)
+// One coordinator retries on its next tick if its partner is busy. Neither
+// actor waits for the other's state lock while holding its own.
+func queueTradeCommit(trade *tradeSession) {
+	tradeMu.Lock()
+	defer tradeMu.Unlock()
+	if tradeSessions[trade.a] != trade || tradeSessions[trade.b] != trade {
 		return
 	}
-	myOut, theirIn := transferOffer(me.CharacterID, partner.CharacterID, &mine, &s.items, &partnerItems)
-	theirOut, myIn := transferOffer(partner.CharacterID, me.CharacterID, &theirs, &partnerItems, &s.items)
+	if coordinator := FindPlayerByID(min(trade.a, trade.b)); coordinator != nil {
+		coordinator.QueueTradeCommit(trade)
+	}
+}
+
+func (s *Session) finalizeTrade(trade *tradeSession, partner *ConnectedPlayer) {
+	me := s.player
+	if me == nil || partner == nil || partner.owner == nil || partner.owner == s {
+		return
+	}
+	other := partner.owner
+	if !other.stateMu.TryLock() {
+		queueTradeCommit(trade)
+		return
+	}
+	defer other.stateMu.Unlock()
+	if other.player != partner || other.char == nil {
+		return
+	}
+	// Consume the active trade once. A duplicate confirmation or queued retry
+	// cannot apply the same transfer twice, including money-only exchanges.
+	tradeMu.Lock()
+	if tradeSessions[me.CharacterID] != trade || tradeSessions[partner.CharacterID] != trade {
+		tradeMu.Unlock()
+		return
+	}
+	trade.mu.Lock()
+	mine, theirs := *trade.offer(me.CharacterID), *trade.offer(partner.CharacterID)
+	ready := mine.ready && theirs.ready && mine.confirmed && theirs.confirmed
+	trade.mu.Unlock()
+	if !ready {
+		tradeMu.Unlock()
+		return
+	}
+	delete(tradeSessions, me.CharacterID)
+	delete(tradeSessions, partner.CharacterID)
+	tradeMu.Unlock()
+	cancel := func(err error) {
+		s.log.Printf("GX Server World trade canceled character_id=%d: %v", partner.CharacterID, err)
+		sendTradeCancel(me)
+		sendTradeCancel(partner)
+	}
+	// Legacy duel refreshes must be applied before planning with either actor.
+	if refresh := me.TakeTradeRefresh(); refresh != nil {
+		s.applyTradeRefresh(refresh)
+	}
+	if refresh := partner.TakeTradeRefresh(); refresh != nil {
+		other.applyTradeRefresh(refresh)
+	}
+	if !offerValid(s.items, &mine, s.char.Money) || !offerValid(other.items, &theirs, other.char.Money) || !offerFits(other.items, &mine) || !offerFits(s.items, &theirs) {
+		cancel(fmt.Errorf("offer no longer valid"))
+		return
+	}
+	a, b := db.CharacterChange{Before: *s.char, After: *s.char, ItemsBefore: s.items}, db.CharacterChange{Before: *other.char, After: *other.char, ItemsBefore: other.items}
+	a.ItemsAfter = append([]db.Item(nil), s.items...)
+	b.ItemsAfter = append([]db.Item(nil), other.items...)
 	delta := int64(theirs.money) - int64(mine.money)
-	s.char.Money = uint32(min(max(int64(s.char.Money)+delta, 0), db.MoneyCap))
-	s.persist()
+	myMoney, otherMoney := int64(s.char.Money)+delta, int64(other.char.Money)-delta
+	if myMoney < 0 || otherMoney < 0 || myMoney > db.MoneyCap || otherMoney > db.MoneyCap {
+		cancel(fmt.Errorf("trade exceeds money limit"))
+		return
+	}
+	a.After.Money, b.After.Money = uint32(myMoney), uint32(otherMoney)
+	myOut, theirIn, err := planTransferOffer(&mine, &a.ItemsAfter, &b.ItemsAfter)
+	if err != nil {
+		cancel(err)
+		return
+	}
+	theirOut, myIn, err := planTransferOffer(&theirs, &b.ItemsAfter, &a.ItemsAfter)
+	if err != nil {
+		cancel(err)
+		return
+	}
+	if err = db.CommitGameplay([]db.CharacterChange{a, b}, nil); err != nil {
+		cancel(err)
+		return
+	}
+	*s.char, *other.char = a.After, b.After
+	s.items, other.items = a.ItemsAfter, b.ItemsAfter
+	for _, owner := range []*Session{s, other} {
+		owner.syncPlayer()
+		owner.player.UpdateItems(owner.items)
+	}
 	me.Send(tradePacket(packet.ExchangeEnd, 0), "0x0A04 exchange end (self)")
 	partner.Send(tradePacket(packet.ExchangeEnd, 0), "0x0A04 exchange end (partner)")
-	partner.QueueTradeRefresh(append(theirOut, theirIn...), -delta)
 	for _, p := range append(myOut, myIn...) {
-		s.send(p, "0x0206/0x0205 trade result item")
+		s.send(p, "trade committed item")
 	}
-	s.send(buildSetMoney(s.char.Money), "0x0213 trade result money")
-	if s.player != nil {
-		s.player.UpdateItems(s.items)
+	for _, p := range append(theirOut, theirIn...) {
+		other.send(p, "trade committed item")
 	}
-	s.log.Printf("GX Server World trade completed with character_id=%d money_delta=%d", partner.CharacterID, delta)
+	s.send(buildSetMoney(s.char.Money), "trade committed money")
+	other.send(buildSetMoney(other.char.Money), "trade committed money")
+	s.log.Printf("GX Server World trade committed character_id=%d money_delta=%d", partner.CharacterID, delta)
 }
