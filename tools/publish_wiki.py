@@ -8,6 +8,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'docs/wiki'
 NAMES = {
+    'mounts.md': 'Mounts', 'fall-damage.md': 'Fall-Damage',
     'goddess-blessing.md': 'Goddess-Blessing',
     'obelisks.md': 'Obelisks',
     'movement-speed.md': 'Movement-Speed', 'attack-speed.md': 'Attack-Speed',

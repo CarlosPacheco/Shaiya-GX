@@ -60,6 +60,8 @@ class BinaryOnlyBundleTests(unittest.TestCase):
                     (source/('Shaiya GX.exe' if windows else 'Shaiya GX')).write_bytes(b'native executable')
                     fonts=source/'data/fonts';fonts.mkdir(parents=True)
                     (fonts/'LICENSE.txt').write_text('packaged licensed fonts')
+                    bindings=source/'data/Vehicle';bindings.mkdir()
+                    (bindings/'bones.ini').write_text('[Human]\n0=25,-1\n')
                 else:
                     (source/'build').mkdir();(source/'data').mkdir()
                     (source/'build'/('gx_world.exe' if windows else 'gx_world')).write_bytes(b'native server')
@@ -80,8 +82,17 @@ class BinaryOnlyBundleTests(unittest.TestCase):
                 self.assertEqual(validate.call_args.args[0].parts[-2:],('data','fonts'))
             self.assertTrue((output/'Client/Shaiya GX').is_file())
             self.assertTrue((output/'Client/Shaiya GX.exe').is_file())
-            self.assertEqual([p.name for p in (output/'Client/data').iterdir()],['fonts'])
+            self.assertEqual({p.name for p in (output/'Client/data').iterdir()},{'fonts','Vehicle'})
             self.assertFalse((output/'Client/data/Cash.SData').exists())
             self.assertTrue((output/'Server/data/rapture.sqlite').is_file())
             self.assertIn('Add your updated loose game data',(output/'README.txt').read_text())
             self.assertIn('Client/Shaiya GX.exe',(output/'SHA256SUMS.txt').read_text())
+
+            data=root/'local-data';(data/'fonts').mkdir(parents=True)
+            (data/'fonts/LICENSE.txt').write_text('local licensed font data')
+            (data/'Cash.SData').write_bytes(b'local original catalog')
+            with patch('package_bundle.validate'):
+                prepare(archives,data,root/'with-data','gx-v-test')
+            for source in data.rglob('*'):
+                if source.is_file():
+                    self.assertEqual(source.read_bytes(),(root/'with-data/Client/data'/source.relative_to(data)).read_bytes())

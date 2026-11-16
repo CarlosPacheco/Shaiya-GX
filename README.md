@@ -2,7 +2,7 @@
 
 ## Download and play
 
-### [Download Shaiya GX gx-v0.1.9 — Client + Server + Data](https://drive.google.com/file/d/1d4SXIYcALvBsbooLAW8tlKNUHa0x72dr/view?usp=sharing)
+### [Download the complete gx-v0.1.9 base — Client + Server + Data](https://drive.google.com/file/d/1d4SXIYcALvBsbooLAW8tlKNUHa0x72dr/view?usp=sharing)
 
 **One Google Drive download for Windows and Linux. Includes the client, GX Server,
 game data, external fonts and the development database. Everything is included:
@@ -15,12 +15,13 @@ no separate data download, Go installation or build tools required.**
 Requires a 64-bit OS and OpenGL 4.5. The server includes development test accounts;
 preserve your existing runtime database when upgrading.
 
-**Latest update: [gx-v0.1.9](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.9).**
-The Drive package above includes this version, matching client/server builds and
-all server navigation and collision resources. No separate binary update is
-needed for a new installation. Preserve your runtime database when upgrading.
+**Latest release: [gx-v0.1.10](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.10).**
+The Drive link above is the gx-v0.1.9 base. Apply matching gx-v0.1.10 client/server
+binaries and refreshed game data for the complete update. Existing runtimes need
+the mount-definition migration; preserve your personal database and read the
+[upgrade guide](docs/releases/gx-v0.1.10-upgrade.md).
 
-[Setup and requirements](docs/client-portable.md) · [Latest patch notes](docs/releases/gx-v0.1.9.md) · [GitHub binary updates (without client game data)](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
+[Setup and requirements](docs/client-portable.md) · [Latest patch notes](docs/releases/gx-v0.1.10.md) · [GitHub binary updates (without client game data)](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
 
 ---
 
@@ -38,7 +39,7 @@ GX reads loose assets from a `data/` folder beside the **Shaiya GX** executable.
 
 **SQLite is used during development because an embedded database makes setup and distribution easy. It is temporary: the database backend will change in the future. The replacement and migration format are not selected yet.**
 
-[**gx-v0.1.9 patch notes**](docs/releases/gx-v0.1.9.md) · [Complete Linux/Windows portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip) · [Separate client/server downloads](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
+[**gx-v0.1.10 patch notes**](docs/releases/gx-v0.1.10.md) · [Complete Linux/Windows portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip) · [Separate client/server downloads](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
 
 ## On-screen metrics panel
 

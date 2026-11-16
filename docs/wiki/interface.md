@@ -1,15 +1,5 @@
 # Interface status
 
-This page includes chronological implementation and research notes. For current
-forge behavior, use [Blacksmith](blacksmith.md), [Item effects](item-effects.md)
-and [Recreation](recreation-and-loot.md); those pages supersede historical
-service notes below. Assets and visual coverage require local runtime validation.
-
-
-Inventory, Stats, Skills and Actions can remain open together. New windows use available space beside existing windows; manually positioned windows keep their positions. Input and Escape follow the visible window order.
-
-World rendering uses clockwise back-face culling for skinned models and proven paired static surfaces. This removes dark inward armor surfaces and camera-dependent flicker on overlapping wood panels while preserving ordinary two-sided cutouts and vegetation.
-
 The interface is being reconstructed incrementally from original EP5 artwork and recovered parameters. Phoenix is an auxiliary reference. Data and original artwork are not stored in this repository.
 
 | Area | Current implementation | Remaining work |
@@ -51,6 +41,8 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 - Portals: `0x494730`/`0x494490`; 512×366 artwork, default merchant anchor, three destination rows and original Move buttons at `(434,80 + 101*i)`. Welcome text is at `(26,92)` with a 193px width, ten visible lines and its own scrollbar. Portraits use the NPC definition's Model, matching the native portrait setter, instead of the previous fixed face 55.
 
 Click an NPC to approach its displayed position and talk within two units. `N` chooses a nearby NPC within 50 units. Manual movement cancels the approach; moving NPCs also retain the server interaction-range check. Choose a populated destination, press Move and confirm. The client sends the NPC ID and destination index; GX Server validates availability, faction, distance and money, then supplies the balance and teleport position. Empty destinations remain inactive, including correct support for valid map-zero destinations with nonzero coordinates. Paid cross-map tests also verify scene replacement and persistence after reconnecting.
+
+Inventory (I), Status (T), Skills (K) and Actions (B) open independently through either hotkeys or the bottom bar. Opening one keeps the others visible. New frames use free horizontal space when possible; manually positioned frames keep their layout. Overlapping personal panels route clicks, title dragging and Escape in their drawing order: Status, Actions, Skills, Inventory. Escape closes one panel at a time.
 
 Options remains nonmodal: opening it preserves keyboard movement and automatic travel. Pointer gestures belong to the window where they started. Logout confirmations remain modal and await the server response.
 
@@ -257,16 +249,45 @@ shadow captures and the water option in a rendered map.
 
 ## Local presentation adjustments after gx-v0.1.4
 
-The blue cast column grows from its bottom edge. NPC service captions sit above
-names. Player guild captions are centred 15px above character names and use the
-raw guild name without added brackets. Members use `#E4E4E4`; the guild master's
-guild caption uses `#E0AFFA`. Character names keep their independent colours.
-The confirmed directory master or own-guild role determines leadership; remote
-shape packets supply guild text when its directory entry is unavailable.
-Nameplates use a subtle half-pixel stroke and black outline. Inventory and action-slot item counts share white text and a black
-outline, with counts remaining readable above cooldown shading. Skill levels keep
+The blue cast column grows from its bottom edge. NPC service captions and
+player guild captions are centred 15px above character names. The raw guild
+name has no added brackets: members use `#E4E4E4`, and the guild master uses
+`#E0AFFA` on the guild caption only. Character-name/GM/faction colours remain
+independent. The confirmed directory master or own-guild role determines the
+leader colour; remote shape packets supply guild text when the directory lacks
+that guild. Nameplates use a subtle half-pixel stroke and black outline.
+Inventory and action-slot item counts share white text and a black outline,
+with counts remaining readable above cooldown shading. Skill levels keep
 their existing colour. The inventory actor has frontal light and full ambient
 fill; this affects only its preview, preserving the world and portrait lighting.
+
+Player names with PvP kills show the original kill rank icon from `grade2.tga`
+(31 ranks, from 1 to 1,000,000 kills; ranks 1-16 in the left column, 17-31 in
+the right) 1px to the right of the name and 3px above it. The name stays centred;
+the native temporary -6px offset is compensated before its final draw.
+Own kills come from 0x020E/0x0105 and other players' from 0x0522; a character
+without kills shows no icon.
+
+Status (T) shows server-confirmed kills, deaths, duel victories and defeats.
+Its Title field uses the same rank table as the world icon: ranks 1-15 combine
+SysMsg 5450 with 5389-5403, ranks 16-30 use 5451 with those names, and rank 31
+uses 5404 alone. Zero kills leaves Title blank. Names are read from the external
+SysMsg table; they are not translated or hardcoded in the client.
+
+The PvP Manager (NPC type 4) opens the original Warrior Reward panel, with its
+portrait, coloured explanation, rank guide, scroll controls and two confirmed
+claim actions. Normal mode or higher and level 16 are required. Native
+0x0218/0x0219/0x021A carry next claim stages, awarded stat points and death-benefit
+gold. Each action redeems one earned stage; reconnects retain claimed stages.
+GX uses all 31 client-table ranks and reward stages, with kills/deaths capped
+at 1,000,000 by explicit request. Stat points for every mode and rank and all
+death-benefit amounts come from the verified EP5 client tables; no high-rank
+placeholder values are used. A stat reset preserves the earned kill count
+and clears its claimed reward stages, allowing their points to be redeemed
+again; death-benefit claims are preserved.
+The kill progress strip shows kills divided by the next claim threshold;
+the death-benefit strip shows the next claim level divided by 31. Their
+native widths are 153px and 200px, using the red and violet atlas strips.
 
 Swimming and floating use the original 007_swim and 006_swnormal clips, including
 race/sex filename aliases. Entering swimming releases a previous locked pose;
@@ -374,8 +395,8 @@ a map-change request. It shares the existing draggable full-map frame. Native
 translucency/help controls are not implemented by this revision.
 
 
-The expanded local map shows the character's current X/Y/Z coordinates centered
-in its top border, below the map name. Hovering the map image shows the pointed X/Z beside the cursor,
+The expanded local map shows the character's current X/Z coordinates in its
+bottom border. Hovering the map image shows the pointed X/Z beside the cursor,
 using the same crop, zoom and pan as the displayed map. Coordinates are hidden
 outside the image and on the World Map overview.
 
@@ -457,6 +478,34 @@ stack counts and click-to-remove references. Incompatible lapis drops are
 rejected with native SysMsg 62/63/64. Percent/gold information appears only in
 operation confirmations. Recreation runs immediately without confirmation.
 
+
+## Continuous forge operations and inventory bag dragging
+
+Dragging a held inventory item over another native bag tab selects that bag
+without releasing its source, allowing authoritative cross-bag moves and swaps.
+Enchant now consumes exactly one material and lapisia per click, without quantity
+or confirmation dialogs; the server chance is displayed above its button.
+Native success/failure sounds and a 500ms additive Lensflare flash accompany
+confirmed forge outcomes. Recreatable equipment shows light-green Max OJ beneath
+the description and a text-sized icon before its enhancement material name.
+Targeted random/perfect recreation runes preserve all other stats and obey the
+original attribute pool/count/max restrictions; see the local wiki source.
+
+
+Elemental weapons/armor now carry a small original monster-element badge on
+their item icons across inventory/equipment, both action-bar orientations,
+forge, personal/guild storage, trade/duel offers, drags and merchandise/mall.
+The badge shares the tooltip's confirmed intrinsic/lapis calculation; neutral
+results have no badge; intrinsic or first elemental lapis sets the badge. See `docs/wiki/elements.md`.
+
+
+Elemental socket priority is intrinsic equipment first, otherwise the first
+valid elemental lapis among six sockets. Subsequent elemental lapis remain
+linked but gray/inactive in tooltip and blacksmith socket rows. Gray is actual
+shader desaturation and does not affect later unrelated sprites. Extracting the
+active lapis promotes the next; an intrinsic element keeps every elemental
+lapis inactive. The server uses the same selection for affinity and gem bonuses.
+
 ## Confirmed equipment switching and HUD geometry
 
 Using a carried equipment item from either action bar submits the same native
@@ -492,94 +541,36 @@ character, relevant inventory, catalog or minimum-time changes; moving the
 camera or player does not rescan every quest. Distant NPCs remain metadata, not
 3D entities. Party and nearby creature-objective positions stay live overlays.
 
+Cooldowns use a red sweep and centered yellow seconds across item/skill icons,
+without flashing when ready. Reuse timing remains server-confirmed.
 
-Stats now displays confirmed attack and movement speeds in its original fields,
-using native SysMsg descriptions. See [Attack speed](attack-speed.md) and
-[Movement speed](movement-speed.md) for equipment bonuses, limits and timing.
-The cast indicator projects the native logical actor origin (GX feet +0.9)
-plus 0.5 units along horizontal camera-right, independent of camera pitch.
-The original vertical blue bar style and elapsed-fill behavior are preserved.
+Portrait HP/MP/SP values use the native 12-cell resource font, white text with
+a one-pixel black shadow and the original five-pixel centering/row offsets.
+Names retain their separate warm font. Values above maximum are clamped for display.
 
-Jump is a single original ALT action, not a looping airborne clip. Continued
-falling uses run/walk only with active horizontal movement after that action
-finishes; stationary falls use the standard idle pose.
-Moving jump requests first flush pending position so the server tests the same
-support surface. Active landing no longer rewinds the owner to an older X/Z
-snapshot; invalid movement and idle gravity remain server-authoritative.
+Floating combat numbers now use the native anchor policy from `0x450a10`:
+players add 1.2 to their logical origin (2.1 above GX feet), while creatures use
+the authored MON height plus native 0.2 headroom (`0x431770`) instead of a fixed
+1.2 offset. Their sampled position
+still detaches from the actor when the number is emitted.
 
-## Cooldown presentation
+Physical bows, crossbows and javelins now use the original arrow/thrown weapon
+models for basic attacks and offensive physical skills. Recipient effects and
+numbers wait for arrival; health still follows the server. See the
+[ranged-projectile guide](ranged-projectiles.md).
 
-Item and skill cooldowns use a translucent red sweep with centered yellow
-remaining seconds. Icons return directly to their normal appearance when ready,
-without a completion flash. The same presentation applies to action bars, quick
-potions, inventory and the skill book; server-confirmed reuse rules are unchanged.
-
-## Ground item selection
-
-Dropped items use the original 0.6-by-1-unit camera-facing selection rectangle
-above the drop, rather than requiring a click on its tiny mesh. Scene depth
-rejects occluded loot. The nearest-item action searches within 30 units; pickup
-approaches within one horizontal unit before sending the request. Inventory
-changes and ground-item removal still wait for server confirmation.
-
-Portrait HP/MP/SP labels use the native 12-cell resource font, white text with
-a one-pixel black shadow and the original centering/row positions. Player names
-retain their separate warm font; displayed current resources are capped at maximum.
-
-Physical bows, crossbows and javelins now have their original arrow/thrown-weapon
-models for basic attacks and offensive physical skills. Nocked arrows use the
-actual weapon bone; launched shots own their target independently of later
-animations and show recipient feedback at arrival. See [ranged projectile
-behavior](../ranged-projectiles.md). Floating-number anchors use native user
-logical origins and creature MON heights plus the native 0.2 headroom. WLD Ladder objects render on both
-sides and remain non-solid, matching Phoenix's visual object section.
-
-Confirmed item-acquisition notices include the item icon inline before its name,
-sized to chat font height and included in wrapping/fading. Functional native
-ladders use W/S to ascend/descend and hold position when released; see
-[ladder controls and validation](../ladders.md).
-
-Selected mobs and players show confirmed buffs/debuffs below their target HP
-frame, with native 16px icons and 18px pitch. Skills and basics share the native
-attack-speed recovery; authored one-second reuse values add no separate cooldown.
-See [skill targeting and effects](../skill-targeting-and-effects.md) for native
-evidence, cooldown rules and visibility validation.
-
-Basics, spells, buffs and self-heals share the native attack-speed action clock,
-capped at Extremely Fast (1000ms). One pending spell can wait for recovery,
-without allowing a queued burst. The independent movement stop remains 800ms;
-authored one-second reuse values add no separate cooldown.
+See [skill targeting and effects](skill-targeting-and-effects.md) for friendly
+self fallback, fast instant-skill chaining and native selected-target effect icons.
 
 
-## PvP ranks and Warrior Reward
-
-Player names with PvP kills show the original kill rank icon from `grade2.tga`
-(31 ranks, from 1 to 1,000,000 kills; ranks 1-16 in the left column, 17-31 in
-the right) 1px to the right of the name and 3px above it. The name stays centred;
-the native temporary -6px offset is compensated before its final draw.
-Own kills come from 0x020E/0x0105 and other players' from 0x0522; a character
-without kills shows no icon.
-
-Status (T) shows server-confirmed kills, deaths, duel victories and defeats.
-Its Title field uses the same rank table as the world icon: ranks 1-15 combine
-SysMsg 5450 with 5389-5403, ranks 16-30 use 5451 with those names, and rank 31
-uses 5404 alone. Zero kills leaves Title blank. Names are read from the external
-SysMsg table; they are not translated or hardcoded in the client.
-
-The PvP Manager (NPC type 4) opens the original Warrior Reward panel, with its
-portrait, coloured explanation, rank guide, scroll controls and two confirmed
-claim actions. Normal mode or higher and level 16 are required. Native
-0x0218/0x0219/0x021A carry next claim stages, awarded stat points and death-benefit
-gold. Each action redeems one earned stage; reconnects retain claimed stages.
-GX uses all 31 client-table ranks and reward stages, with kills/deaths capped
-at 1,000,000 by explicit request. Stat points for every mode and rank and all
-death-benefit amounts come from the verified EP5 client tables; no high-rank
-placeholder values are used. A stat reset preserves the earned kill count
-and clears its claimed reward stages, allowing their points to be redeemed
-again; death-benefit claims are preserved.
-The kill progress strip shows kills divided by the next claim threshold;
-the death-benefit strip shows the next claim level divided by 31. Their
-native widths are 153px and 200px, using the red and violet atlas strips.
+Guild-caption source audit (EP5.4 client SHA-256 `8e5ef14a…bb3263`):
+`0x0044c0cf–0x0044c125` selects ARGB `FFE0AFFA` for the master flag and
+`FFE4E4E4` otherwise, independently of the character-name draw. It subtracts
+float `0x006bc894` (15.0) from the projected label Y and centres using half of
+the guild string's own measured width. The directory comparison at
+`0x0044bc9a–0x0044bd0e` identifies masters by character name. The guild text
+updates at `0x005699e0`/`0x00569c95` copy the supplied name verbatim; no angle
+brackets are inserted. These rules apply to both local and remote labels.
 
 
 ### Monster appearance and corpse fade
@@ -609,3 +600,15 @@ News background `0050ff10` uses the original `tipbox.png` atlas: 4px border
 pieces around the interior, native UV slices, and the ARGB CD1D1F24 solid center.
 Its supplied width/height are interior dimensions, not the complete outer size.
 Full-map character coordinates sit four pixels higher above the map surface.
+
+## Status fields and potion quantities
+
+The Status (T) Mode value remains empty; the original frame and its labels are
+retained. Stat shows the equipped upper armor's effective intrinsic/active-lapis
+element, using the original SysMsg names and tier, or SysMsg 5270 for neutral.
+Long localized element names fit inside the existing field.
+
+The Z/X potion bar uses the native item-count anchor `(iconX + 12, iconY + 16)`
+from Game.exe 0x4a3400, called by 0x4ddc30. Shortcut captions are drawn before
+item icons, matching the original layer order; quantities remain legible on
+filled cells, including three-digit stacks.

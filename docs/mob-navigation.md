@@ -89,7 +89,7 @@ prediction; the client uses localized SysMsg 317 (Wrong target), style 17.
 Movement additionally carries its server-selected duration in milliseconds
 as a trailing uint32. A 50 ms scheduler and matching client interpolation keep
 short corner segments from becoming long stop-and-go pauses. Original `0x0601`/`0x0603` layouts remain unchanged for legacy entities.
-The shared client revision is `0x11122208`; update Linux client and server
+The shared client revision is `0x11122209`; update Linux client and server
 together. The client retains server Y and only refines interpolation against a
 nearby original surface. It no longer replaces dungeon or bridge height with
 zero or terrain height. The decoded map cache is bounded to four maps; mobs

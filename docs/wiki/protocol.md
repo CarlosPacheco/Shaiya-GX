@@ -61,3 +61,8 @@ application/removal layouts. GX requests the selected visible actor through
 `0x7F0F` (kind uint8 + target uint32). Server-only `0x7F0E` carries skill ID and
 native SysMsg ID (uint16 each) for localized reach/obstacle refusals. See
 [skill targeting and effects](../skill-targeting-and-effects.md) for exact fields.
+
+Revision `0x11122209` is required by gx-v0.1.10, including the authoritative
+mount state. GX `0x7F10` separates MON index zero, race, speed, seat count,
+cast/cooldown timers and driver/passenger links; native mount requests use
+0x0216/0x0217 and 0x021C–0x021E. See [mounts](mounts.md).

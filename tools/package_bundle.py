@@ -93,8 +93,7 @@ def prepare(archives, data, output, tag):
         merge(extracted / 'gx-client-windows-amd64', client)
         if data is not None:
             print('Copying local loose game data...', flush=True)
-            shutil.copytree(data, client / 'data', dirs_exist_ok=True,
-                            ignore=lambda directory, names: ['fonts'] if Path(directory) == data else [])
+            shutil.copytree(data, client / 'data', dirs_exist_ok=True)
         validate(client / 'data/fonts')
         for platform in ('linux-amd64', 'windows-amd64'):
             source = extracted / ('gx-server-' + platform)

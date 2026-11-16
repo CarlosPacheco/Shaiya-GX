@@ -209,12 +209,15 @@ def build_package(platform, output, go):
         for document in ("sqlite.md", "distribution.md", "social.md"):
             text = (ROOT / "docs" / document).read_text().replace("../../docs/", "")
             (root / "docs" / document).write_text(text)
-        for document in ("server.md", "quickstart.md", "building.md", "gm.md", "mob-navigation.md"):
+        for document in ("server.md", "quickstart.md", "building.md", "gm.md", "mob-navigation.md", "mounts.md", "fall-damage.md"):
             text = (ROOT.parent / "docs" / document).read_text().replace("../server/docs/", "")
             (root / "docs" / document).write_text(text)
         (root / "tools").mkdir()
         for tool in ("sqlite.py", "snapshot_sqlite.py", "enable_test_gms.sql"):
             shutil.copy2(ROOT / "tools" / tool, root / "tools" / tool)
+        for tool in ("update_mount_content.py", "update_recreation_content.py"):
+            shutil.copy2(ROOT.parent / "tools" / tool, root / "tools" / tool)
+        shutil.copytree(ROOT.parent / "resources/vehicle", root / "resources/vehicle")
         if system == "windows":
             (root / "Start GX Server.bat").write_bytes(b'@echo off\r\ncd /d "%~dp0"\r\n"%~dp0build\\gx_console.exe"\r\n')
         else:

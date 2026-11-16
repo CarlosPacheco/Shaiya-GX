@@ -12,12 +12,22 @@ The reference for current GX gameplay features, item data, administration and
 operation. GX is a Go client with an integrated authoritative world/login
 server, using original EP5 interface resources and protocol foundations.
 
-**Version scope:** updated for [gx-v0.1.9](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.9). These pages describe current development behavior. A released
+**Version scope:** updated for [gx-v0.1.10](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.10). These pages describe current development behavior. A released
 binary may predate a documented change. Use matching client/server builds and
 consult release notes when reproducing behavior. Publishing documentation does
 not update executable files, client assets or a running database.
 
+The linked Drive download is still the gx-v0.1.9 base; see the
+[gx-v0.1.10 upgrade guide](../releases/gx-v0.1.10-upgrade.md) for refreshed data
+and existing-runtime mount migration.
+
 ## Gameplay and items
+
+- [Mounts](mounts.md): single/two-seat riding, native effects/audio, jumping,
+  invitations, server boarding range and shared racial bones.ini.
+- [Fall damage](fall-damage.md): enabled by default, reduced curve, safe jumps,
+  server-owned landings and loss-free environmental death.
+
 
 - [Goddess blessing](goddess-blessing.md): faction counters, original tier effects,
   PvP/altar contributions, database restoration, footer UI and tooltips.

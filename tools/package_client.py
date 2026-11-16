@@ -21,6 +21,7 @@ stage.mkdir(parents=True)
 exe = 'Shaiya GX.exe' if a.platform.startswith('windows') else 'Shaiya GX'
 shutil.copy2(ROOT/'build'/exe, stage/exe)
 shutil.copytree(FONT_PACK, stage/'data/fonts')
+shutil.copytree(ROOT/'resources/vehicle', stage/'data/Vehicle')
 for file in ['LICENSE', 'NOTICE']:
     shutil.copy2(ROOT/file, stage/file)
 licenses = stage/'licenses'

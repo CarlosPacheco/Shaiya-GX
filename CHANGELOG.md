@@ -2,6 +2,22 @@
 
 This log records delivered changes and data-package updates. Client data is hosted separately on Drive; changing it does not automatically produce a new executable release.
 
+## gx-v0.1.10 — 2026-11-15
+
+[Brief patch notes](docs/releases/gx-v0.1.10.md) · [Upgrade and data requirements](docs/releases/gx-v0.1.10-upgrade.md).
+
+- Complete authoritative single/two-seat mounts, native casting/appearance audio and effects, jumping, reverse walking and external racial bone bindings.
+- Restore four innate ITM glows, physical ranged projectiles, skill recovery/combos and original combat feedback.
+- Complete ladders, dungeon click movement/minimaps, persistent obelisks and goddess blessing; extend all 31 PvP ranks and Warrior Rewards.
+- Correct chat, guild captions, item icons, portraits, pickups, cooldowns, Stat armor affinity and Z/X quantities; reduce cursor/collision/mob overhead.
+- Restore half-strength fall damage by default and publish matching protocol 0x11122209 native Linux/Windows portables. Preserve existing runtimes and migrate mount definitions explicitly.
+
+## gx-v0.1.9 — 2026-11-14
+
+[Patch notes](docs/releases/gx-v0.1.9.md). Authoritative terrain/dungeon movement,
+collision/navigation, jumping and speed rules; GM map teleport and OJ limit
+synchronization, with native client/server portables and 68-map physics resources.
+
 ## gx-v0.1.8 — 2026-11-14
 
 Resilient startup with interface placeholders, persistent diagnostics and visible
