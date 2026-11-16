@@ -244,3 +244,17 @@ func TestPlayerAuthoritativeStairsAndSmallAssetLanding(t *testing.T) {
 		})
 	}
 }
+
+func TestMountedDriverJumpKeepsPhysicsAndRejectsAirJump(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	s.mounted = true
+	if !s.startMovementJump(now) {
+		t.Fatal("mounted driver jump rejected")
+	}
+	if !s.mounted || s.movement.motion&0x80 == 0 {
+		t.Fatal("jump dismounted driver or omitted jump flag")
+	}
+	if s.startMovementJump(now.Add(time.Millisecond)) {
+		t.Fatal("mounted air jump accepted")
+	}
+}

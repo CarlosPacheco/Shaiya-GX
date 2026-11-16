@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/audio"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -49,6 +50,20 @@ func TestVehicleAgainstRapture(t *testing.T) {
 	defer a.Close()
 	a.state, a.world, a.screen = st, world, screenWorld
 	a.enterWorld()
+	artifactDir := os.Getenv("SHAIYA_TEST_ARTIFACTS")
+	if artifactDir == "" {
+		artifactDir = t.TempDir()
+	}
+	for deadline := time.Now().Add(25 * time.Second); time.Now().Before(deadline); {
+		a.Update(&platform.Input{}, 1024, 734, 1.0/60)
+		gl.Viewport(0, 0, 1024, 734)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		a.Draw(1024, 734)
+		if a.SceneReady() {
+			break
+		}
+		time.Sleep(time.Millisecond)
+	}
 	item := st.Inventory[[2]uint8{0, 13}]
 	if item.Type != 42 || item.Count != 1 || st.Self.Mounted {
 		t.Fatal("invalid mount fixture")
@@ -68,15 +83,32 @@ func TestVehicleAgainstRapture(t *testing.T) {
 		a.pumpWorld()
 		if a.state != nil && a.state.Self.Vehicle.State == proto.VehicleCasting && !sawCast {
 			_, total, active := a.wv.self.CastTiming()
-			if !active || total != 2 || a.vehicle.castEffect == nil {
+			if !active || total < 1.9 || total > 2 || len(a.wv.castEffects) != 2 {
 				t.Fatal("mount did not use two-second cast bar and Town Portal effect", total, active)
 			}
 			sawCast = true
+			a.inventory.open = false
+			a.questLog.open = false
+			a.Update(&platform.Input{}, 1024, 734, .5)
+			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+			a.Draw(1024, 734)
+			if err := render.SavePNG(filepath.Join(artifactDir, "vehicle-cast-hands.png"), 1024, 734); err != nil {
+				t.Fatal(err)
+			}
 		}
 		if a.state == nil || time.Now().After(deadline) {
 			t.Fatal("mount confirmation timed out")
 		}
 		time.Sleep(time.Millisecond)
+	}
+	if len(a.wv.impacts) == 0 {
+		t.Fatal("mount appearance transformation missing")
+	}
+	a.Update(&platform.Input{}, 1024, 734, .2)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	a.Draw(1024, 734)
+	if err := render.SavePNG(filepath.Join(artifactDir, "vehicle-transformation.png"), 1024, 734); err != nil {
+		t.Fatal(err)
 	}
 	if !sawCast {
 		t.Fatal("server skipped mount preparation")
@@ -120,6 +152,32 @@ func TestVehicleAgainstRapture(t *testing.T) {
 		t.Fatal("mounted character could not move")
 	}
 	a.Draw(1024, 734)
+	beforeBack := a.wv.pos
+	a.Update(&platform.Input{Down: "S"}, 1024, 734, .1)
+	a.Draw(1024, 734)
+	if a.wv.pos == beforeBack || a.wv.visualFacing.Len() > 0 {
+		t.Fatal("backing up rotated the mount")
+	}
+	beforeSide := a.wv.pos
+	a.Update(&platform.Input{Down: "E"}, 1024, 734, .1)
+	sideDelta := a.wv.pos.Sub(beforeSide)
+	sideDelta[1] = 0
+	if sideDelta.Len() < .7 {
+		t.Fatal("mounted lateral movement was slowed", sideDelta.Len())
+	}
+	a.Update(&platform.Input{}, 1024, 734, .01)
+	a.Update(&platform.Input{Keys: []platform.Key{platform.KeySpace}}, 1024, 734, 1.0/120)
+	if !a.wv.jumping || !st.Self.Mounted {
+		t.Fatal("driver could not jump while mounted")
+	}
+	for frame := 0; frame < 180 && a.wv.jumping; frame++ {
+		time.Sleep(time.Second / 120)
+		a.Update(&platform.Input{}, 1024, 734, 1.0/120)
+		a.Draw(1024, 734)
+	}
+	if a.wv.jumping || !st.Self.Mounted {
+		t.Fatal("mounted jump did not land")
+	}
 	a.Update(&platform.Input{}, 1024, 734, .01)
 	observer, err := New(Config{}, arc)
 	if err != nil {
@@ -239,6 +297,16 @@ func TestVehicleModelsRealGL(t *testing.T) {
 			if code := gl.GetError(); code != gl.NO_ERROR {
 				t.Fatalf("race %d MON %d GL error %#x", race, index, code)
 			}
+		}
+	}
+	for _, name := range []string{"ef_in_atrbu01", "ef_dmg_transf01", "run_horse-roar01", "run_pumav-roar01", "run_baslk-roar01"} {
+		raw, err := arc.ReadFile("Sound/" + name + ".ogg")
+		if err != nil {
+			t.Fatal(err)
+		}
+		pcm, err := audio.DecodeOGG(raw)
+		if err != nil || len(pcm) == 0 {
+			t.Fatal("invalid mount audio", name, err)
 		}
 	}
 	if len(assets.Missing) != 0 {

@@ -2,7 +2,7 @@
 
 Click the equipped mount in equipment slot 13, or use a quick slot pointing to
 that equipped item. Mounting takes two seconds and uses the ordinary cast bar
-and the native Town Portal preparation effect. `U` has no mount binding.
+and the native Town Portal preparation effect attached to both casting hands. `U` has no mount binding.
 Movement, damage and other actions cancel preparation. Ordinary damage does
 not dismount an established rider; death, hard crowd control, map changes and
 removing the equipped mount do. The object's `ReqIg` cooldown, in seconds,
@@ -53,7 +53,8 @@ gets the native confirmation prompt. A two-seat driver must have a free seat;
 the passenger must be on foot. Invitations expire after 30 seconds. The server
 checks the same map, faction, life state and a 3-unit three-dimensional range
 both when requesting and accepting. Acceptance cannot move a distant passenger
-to the mount. Jump detaches the passenger. Driver departure detaches both.
+to the mount. Driver departure detaches both.
+Jump makes the driver and mount jump together; it still detaches the passenger.
 The server owns their relationship and gameplay position; only the driver
 controls movement.
 
@@ -85,3 +86,31 @@ Validation: `tools/check.sh`; `python3 -m unittest discover -s tools -p
 assets and a working Linux graphics session. The latter creates disposable
 accounts and a database copy, checks two-client invitation/secondary-seat/jump
 behavior, and loads all 32 race/model combinations with real OpenGL.
+
+## Native presentation and audio
+
+Vehicle MON animation slots 0/1/2 are walk/run/jump, 6 is breathing and 8 is
+an occasional idle gesture. Breathing is the resting loop; the gesture has an
+11-second wait and a 3-second window and never loops within that window.
+Backward movement keeps the mount facing forward and plays walk backwards.
+Mounted lateral movement uses the same speed as forward movement. Ground
+support, vertical motion and repeated-jump rejection remain server-authoritative.
+
+Native client 0x417cc0 plays `ef_dmg_transf01` and transformation EFT catalog
+124, sequence 0, on mount completion. It selects the appearance roar by race:
+Human `run_horse-roar01`, Elf/Vail `run_pumav-roar01`, DeathEater
+`run_baslk-roar01`. Standing boards omit the animal roar. These cues are
+hardcoded in the original, rather than defined in the MON sound slots.
+Preparation uses `ef_in_atrbu01` (0x57ace0). Existing mounted players entering
+view do not replay their appearance effect or roar.
+
+If these cues are absent from an older loose data installation, import the
+five originals from a local original client, converting them to Ogg Vorbis:
+
+```sh
+python3 tools/import_mount_audio.py --source /path/to/original-client \
+  --data /path/to/data --backup-dir /path/to/new-audio-backup
+```
+
+The importer requires ffmpeg and `build/assets` (or Go). Original audio is
+external game data and is not distributed in the source repository.

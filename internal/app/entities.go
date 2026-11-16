@@ -36,7 +36,7 @@ type remoteActor struct {
 	mountShape      uint8
 	mountLoaded     bool
 	mountCasting    bool
-	mountCastEffect *scene.Effect
+	travelDirection render.V3
 	facing          render.V3
 }
 
@@ -46,6 +46,9 @@ func (r *remoteActor) observeMovement(e *game.Entity, now float64) (walking, mov
 	if r.moveSerial != e.MoveSerial {
 		dx, dz := e.X-r.moveX, e.Z-r.moveZ
 		r.jumpMoving = dx*dx+dz*dz > 0.000001
+		if r.jumpMoving {
+			r.travelDirection = render.V3{dx, 0, dz}.Norm()
+		}
 		if e.Motion&0x3f == 0 && r.moveMode == 0 && dx*dx+dz*dz > 0.000001 {
 			r.walkUntil = now + .7
 			cancelGesture(r.character)
@@ -178,14 +181,9 @@ func (a *App) prepareRemotePlayers() {
 		casting := e.Vehicle.State == proto.VehicleCasting
 		if casting && !cached.mountCasting {
 			c.PlayCast(85, float32(e.Vehicle.CastMS)/1000)
-			if a.clientSettings().SkillEffects {
-				cached.mountCastEffect, _ = scene.LoadEffect(a.assets, "Effect/IN_mc_yellow.EFT", 1)
-			}
-			a.playSound("ef_in_atrbu01.wav", e.X, e.Z)
 		}
 		if !casting && cached.mountCasting {
 			c.CancelCast()
-			cached.mountCastEffect = nil
 		}
 		cached.mountCasting = casting
 		c.Mounted = e.Mounted
@@ -222,7 +220,14 @@ func (a *App) prepareRemotePlayers() {
 				}
 			}
 			if cached.mount != nil {
-				cached.mount.SetLocomotion(moving, walking)
+				reverse := e.Motion&0x3f == 2
+				if moving && cached.travelDirection.Len() > 0 {
+					reverse = reverse || cached.travelDirection.Dot(fwd) < -.5
+					if !reverse {
+						fwd = cached.travelDirection
+					}
+				}
+				cached.mount.SetMotion(moving, walking, reverse, e.Motion&proto.MotionFlag80 != 0)
 				cached.mount.Update(float32(a.frameDT))
 				cached.mount.World = render.Basis(pos, fwd.Scale(-1), render.V3{0, 1, 0})
 				pos = cached.mount.Seat()
@@ -232,10 +237,6 @@ func (a *App) prepareRemotePlayers() {
 			cached.mount, cached.mountLoaded = nil, false
 		}
 		c.World = scale.Mul(render.Basis(pos, fwd.Scale(-1), render.V3{0, 1, 0}))
-		if x := cached.mountCastEffect; x != nil {
-			x.SetTransform(c.World)
-			x.Update(float32(a.frameDT))
-		}
 	}
 }
 
@@ -259,9 +260,6 @@ func (a *App) drawRemotePlayers() {
 		}
 		if cached.character.Visible(frustum, a.scene3d.ClipPlane) {
 			cached.character.Draw(a.skinner, a.scene3d)
-			if cached.mountCastEffect != nil && a.clientSettings().SkillEffects {
-				cached.mountCastEffect.Draw(a.scene3d)
-			}
 		}
 	}
 }

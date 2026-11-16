@@ -105,10 +105,13 @@ func (s *Session) startMovementJump(now time.Time) bool {
 	}
 	s.advancePlayerVertical(now)
 	s.commitMovement()
-	if m.jumping || s.mounted || s.movementSpeed() == 0 || !m.geometry.Supported(m.pos) || now.Sub(m.jumpAt) < 450*time.Millisecond {
+	if m.jumping || s.player != nil && s.player.vehicleState().State == proto.VehiclePassenger || s.movementSpeed() == 0 || !m.geometry.Supported(m.pos) || now.Sub(m.jumpAt) < 450*time.Millisecond {
 		return false
 	}
 	m.jumping, m.jumpFall, m.jumpAt = true, -2.98, now
+	if s.mounted {
+		m.motion = 4 | proto.MotionFlag80
+	}
 	m.slope.Frames = 0
 	m.packetAt = now
 	return true

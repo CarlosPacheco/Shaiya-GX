@@ -452,7 +452,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		return
 	}
 	jumpPressed := in.HasKey(platform.KeySpace)
-	if jumpPressed && !climbFrame && !blocked && !swimming && !v.jumping && !v.evading && speed > 0 && !a.state.Self.Dead && !a.state.Self.Mounted && v.world.PlayerSupported(v.pos) {
+	if jumpPressed && !climbFrame && !blocked && !swimming && !v.jumping && !v.evading && speed > 0 && !a.state.Self.Dead && a.state.Self.Vehicle.State != proto.VehiclePassenger && v.world.PlayerSupported(v.pos) {
 		// MotionJump has no position. Flush unsent walking/running progress
 		// first, so the server grants the impulse at the same support surface.
 		if v.moving || dir.Len() > 0 {
@@ -477,7 +477,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	diving := false
 	if moving && !climbFrame {
 		horizontal := dir.Norm()
-		if forward && strafe != 0 || swimming || a.state.Self.Mounted {
+		if forward && strafe != 0 || swimming || a.state.Self.Mounted && !back {
 			v.visualFacing = horizontal
 		}
 		dir = horizontal
@@ -490,7 +490,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 			if v.evadeTime >= .5 {
 				speed = 0
 			}
-		} else if !forward && strafe != 0 && !swimming {
+		} else if !forward && strafe != 0 && !swimming && !a.state.Self.Mounted {
 			speed = backwardMovementSpeed(a.state.Self.Speed, a.state.Self.Mounted)
 		} else if back && !swimming {
 			if v.evading {
@@ -819,7 +819,7 @@ func (a *App) prepareSelfForDraw() {
 					}
 				}
 				if v.selfMount != nil {
-					v.selfMount.SetLocomotion(v.moving, v.walking || v.motion&0x3f == 0)
+					v.selfMount.SetMotion(v.moving, v.walking || v.motion&0x3f == 0, v.motion&0x3f == 2, v.jumping)
 					v.selfMount.Update(float32(a.frameDT))
 					v.selfMount.World = render.Basis(v.pos, heading.Scale(-1), render.V3{0, 1, 0})
 					riderPos = v.selfMount.Seat()
@@ -851,9 +851,6 @@ func (a *App) drawSelf() {
 		v.self.Draw(a.skinner, a.scene3d)
 	}
 	a.drawSelfShadow()
-	if a.vehicle.castEffect != nil && a.clientSettings().SkillEffects {
-		a.vehicle.castEffect.Draw(a.scene3d)
-	}
 }
 
 var _ = game.PhaseInWorld

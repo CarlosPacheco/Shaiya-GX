@@ -16,7 +16,7 @@ type vehicleView struct {
 	expires, cooldownEnd      float64
 	castState                 uint8
 	peerName                  string
-	castEffect                *scene.Effect
+	states                    map[uint32]uint8
 	pending                   bool
 	deadline                  float64
 }
@@ -49,31 +49,54 @@ func (a *App) vehicleCommand(text string) bool {
 	return true
 }
 func (a *App) confirmedVehicle(p []byte) {
+	if proto.Op(p) == proto.UserLeave {
+		if len(p) >= 6 {
+			delete(a.vehicle.states, proto.NewReader(p).U32())
+		}
+		return
+	}
 	if proto.Op(p) == proto.GXVehicleState {
 		v, err := proto.DecodeVehicleState(p)
-		if err != nil || v.ID != a.state.SelfID {
+		if err != nil {
+			return
+		}
+		if a.vehicle.states == nil {
+			a.vehicle.states = map[uint32]uint8{}
+		}
+		previous := a.vehicle.states[v.ID]
+		a.vehicle.states[v.ID] = v.State
+		if a.wv != nil {
+			if v.State == proto.VehicleCasting && previous != v.State {
+				if actor := a.playerActor(v.ID); actor != nil {
+					actor.PlayCast(85, float32(v.CastMS)/1000)
+				}
+				a.startMountCastEffects(v.ID, float64(v.CastMS)/1000)
+				if pos, ok := a.effectPosition(v.ID); ok {
+					a.playSound("ef_in_atrbu01.wav", pos[0], pos[2])
+				}
+			}
+			if previous == proto.VehicleCasting && v.State != previous {
+				a.stopCastEffects(v.ID)
+				if actor := a.playerActor(v.ID); actor != nil {
+					actor.CancelCast()
+				}
+				if v.State == proto.VehicleDriver {
+					a.startMountAppearance(v)
+				}
+			}
+		}
+		if v.ID != a.state.SelfID {
 			return
 		}
 		a.vehicle.cooldownEnd = a.clock + float64(v.CooldownMS)/1000
 		if v.State != proto.VehicleCasting {
 			a.vehicle.pending = false
 		}
-		if v.State == proto.VehicleCasting && a.vehicle.castState != v.State && a.wv != nil && a.wv.self != nil {
-			a.wv.self.PlayCast(85, 2)
-			a.playSound("ef_in_atrbu01.wav", a.wv.pos[0], a.wv.pos[2])
-			if a.clientSettings().SkillEffects {
-				a.vehicle.castEffect, _ = scene.LoadEffect(a.assets, "Effect/IN_mc_yellow.EFT", 1)
-			}
-		}
-		if v.State != proto.VehicleCasting && a.vehicle.castState == proto.VehicleCasting && a.wv != nil && a.wv.self != nil {
-			a.wv.self.CancelCast()
-			a.vehicle.castEffect = nil
-		}
 		if v.State >= proto.VehicleDriver && a.vehicle.castState < proto.VehicleDriver {
-			a.questMessage(a.chatEntityName(a.state.SelfID) + " " + a.msg.Get(5243))
+			a.questMessage(a.chatEntityName(v.ID) + " " + a.msg.Get(5243))
 		}
 		if v.State == proto.VehicleOff && a.vehicle.castState >= proto.VehicleDriver {
-			a.questMessage(a.chatEntityName(a.state.SelfID) + " " + a.msg.Get(5244))
+			a.questMessage(a.chatEntityName(v.ID) + " " + a.msg.Get(5244))
 		}
 		a.vehicle.castState = v.State
 		return
@@ -88,6 +111,52 @@ func (a *App) confirmedVehicle(p []byte) {
 	a.vehicle.pending = false
 	if r.Result == 0 {
 		a.questMessage(a.chatEntityName(a.state.SelfID) + " " + a.msg.Get(5245))
+	}
+}
+
+// Native 0x4178a0 creates sequence 1 twice, following the casting hands.
+func (a *App) startMountCastEffects(id uint32, seconds float64) {
+	a.stopCastEffects(id)
+	for hand := 0; hand < 2; hand++ {
+		if x := a.loadSkillEffect("Effect/IN_mc_yellow.EFT", 1); x != nil {
+			if len(a.wv.castEffects) >= 16 {
+				a.wv.castEffects = a.wv.castEffects[1:]
+			}
+			a.wv.castEffects = append(a.wv.castEffects, castEffect{id, hand, a.clock + seconds, x})
+		}
+	}
+}
+
+// Native 0x417cc0: appearance sound is selected by race, not MON Sounds.
+func mountAppearanceSound(race, model uint8) string {
+	if scene.VehicleAlternate(model) {
+		return ""
+	}
+	switch race {
+	case 0:
+		return "run_horse-roar01.wav"
+	case 1, 2:
+		return "run_pumav-roar01.wav"
+	case 3:
+		return "run_baslk-roar01.wav"
+	}
+	return ""
+}
+func (a *App) startMountAppearance(v proto.VehicleState) {
+	pos, ok := a.effectPosition(v.ID)
+	if !ok {
+		return
+	}
+	a.playSound(mountAppearanceSound(v.Race, v.Model), pos[0], pos[2])
+	a.playSound("ef_dmg_transf01.wav", pos[0], pos[2])
+	if len(a.wv.impacts) >= 32 {
+		return
+	}
+	if x := a.loadSkillEffect("Effect/DA_target_transformation.EFT", 0); x != nil {
+		matrix := render.Identity()
+		matrix[12], matrix[13], matrix[14] = pos[0], pos[1], pos[2]
+		x.SetTransform(matrix)
+		a.wv.impacts = append(a.wv.impacts, skillImpact{target: v.ID, instance: x, authoredLifetime: true, positionOnly: true})
 	}
 }
 
@@ -160,9 +229,5 @@ func (a *App) attachVehiclePassengers() {
 		if c := a.wv.actors[id]; c != nil {
 			attach(e.Vehicle, c.character)
 		}
-	}
-	if x := a.vehicle.castEffect; x != nil {
-		x.SetTransform(render.Basis(a.wv.pos, a.wv.facing.Scale(-1), render.V3{0, 1, 0}))
-		x.Update(float32(a.frameDT))
 	}
 }

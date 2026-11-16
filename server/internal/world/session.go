@@ -960,7 +960,7 @@ func (s *Session) handleMotion(p []byte) {
 		s.dismount()
 		return
 	}
-	if s.ridingVehicle() {
+	if s.ridingVehicle() && motion != proto.MotionJump {
 		return
 	}
 	s.cancelVehicleCast()

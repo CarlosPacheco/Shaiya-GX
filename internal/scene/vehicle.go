@@ -5,6 +5,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/model"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/vehicle"
+	"math"
 )
 
 // Vehicle uses the native race-specific MON records and the same skinning
@@ -12,9 +13,11 @@ import (
 // recovered by Phoenix and loaded from the shared Vehicle/bones.ini.
 type Vehicle struct {
 	*CreatureActor
-	seatBone      int
-	passengerBone int
-	board         bool
+	seatBone                          int
+	passengerBone                     int
+	board                             bool
+	moving, walking, reverse, jumping bool
+	idleTime                          float32
 }
 
 // These native MON records are the standing board variants.
@@ -43,7 +46,7 @@ func (s *Assets) BuildVehicle(race, shape uint8) (*Vehicle, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := actor.SetAction(8); err != nil {
+	if err := actor.SetAction(6); err != nil {
 		return nil, err
 	}
 	raw, err := s.Arc.ReadFile("Vehicle/bones.ini")
@@ -65,20 +68,54 @@ func (s *Assets) BuildVehicle(race, shape uint8) (*Vehicle, error) {
 	return &Vehicle{CreatureActor: actor, seatBone: bones.Rider, passengerBone: bones.Passenger, board: VehicleAlternate(shape)}, nil
 }
 
-func (v *Vehicle) SetMoving(moving bool) { v.SetLocomotion(moving, false) }
-func (v *Vehicle) SetLocomotion(moving, walking bool) {
+func (v *Vehicle) SetMoving(moving bool)              { v.SetLocomotion(moving, false) }
+func (v *Vehicle) SetLocomotion(moving, walking bool) { v.SetMotion(moving, walking, false, false) }
+func (v *Vehicle) SetMotion(moving, walking, reverse, jumping bool) {
+	if v != nil {
+		v.moving, v.walking, v.reverse, v.jumping = moving, walking, reverse, jumping
+	}
+}
+
+// MON 6 is breathing; 8 is the occasional gesture, not the resting loop.
+// Phoenix's native vehicle audit uses an 11-second wait and 3-second window.
+func (v *Vehicle) Update(dt float32) {
 	if v == nil {
 		return
 	}
-	action := 8
-	if moving {
+	action := 6
+	if v.jumping {
+		action = 2
+		v.idleTime = 0
+	} else if v.moving {
 		action = 1
-		if walking {
+		if v.walking || v.reverse {
 			action = 0
+		}
+		v.idleTime = 0
+	} else {
+		v.idleTime += max(0, dt)
+		if v.idleTime >= 14 {
+			v.idleTime = 0
+		} else if v.idleTime >= 11 {
+			action = 8
 		}
 	}
 	if err := v.SetAction(action); err != nil {
 		v.assets.Missing[err.Error()] = true
+		return
+	}
+	v.CreatureActor.Update(dt)
+	if v.clip != nil {
+		if duration := v.clip.Duration(); duration > 0 {
+			if v.reverse && action == 0 {
+				v.Time = float32(math.Mod(float64(v.Time-2*dt), float64(duration)))
+				if v.Time < 0 {
+					v.Time += duration
+				}
+			} else if action == 2 || action == 8 {
+				v.Time = min(v.Time, max(0, duration-.001))
+			}
+		}
 	}
 }
 

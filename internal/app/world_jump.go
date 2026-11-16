@@ -7,7 +7,7 @@ import "github.com/Spelunkern/Shaiya-GX/internal/scene"
 func (v *worldView) beginJump() {
 	v.slope.Frames = 0
 	v.jumping, v.jumpFall, v.jumpFloor = true, -2.98, v.pos[1]
-	if v.self != nil {
+	if v.self != nil && !v.self.Mounted {
 		v.self.ReleaseAction()
 		v.self.PlayAction(8, false)
 	}

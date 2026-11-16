@@ -29,3 +29,15 @@ func TestVehicleCooldownUsesSecondsIndependentlyOfPotions(t *testing.T) {
 		t.Fatal("mount ReqIg was treated as potion group")
 	}
 }
+
+func TestMountAppearanceSoundUsesNativeRaceAndBoardRules(t *testing.T) {
+	want := []string{"run_horse-roar01.wav", "run_pumav-roar01.wav", "run_pumav-roar01.wav", "run_baslk-roar01.wav"}
+	for race, name := range want {
+		if got := mountAppearanceSound(uint8(race), 1); got != name {
+			t.Fatal(race, got)
+		}
+		if mountAppearanceSound(uint8(race), 6) != "" {
+			t.Fatal("board played animal roar")
+		}
+	}
+}
