@@ -18,10 +18,10 @@ func StartSweeps(log *logx.Logger) {
 	})
 	every(time.Second, func() { dispatchMoves(TickMobRoam(viewersByMap(), 48)) })
 	every(time.Second, func() {
-		dispatchMoves(TickMobRespawns(viewersByMap(), 128))
 		for _, c := range TickMobCorpses() {
 			dispatchEntityLeave(c.MapID, viewMob, c.ID, "0x0602 mob corpse removed")
 		}
+		dispatchMoves(TickMobRespawns(viewersByMap(), 128))
 	})
 	every(250*time.Millisecond, func() { dispatchMoves(TickNpcPatrol(viewersByMap(), 64)) })
 	every(time.Second, func() { runDotSweep(log) })

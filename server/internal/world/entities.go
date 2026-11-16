@@ -645,7 +645,7 @@ func (n *MapNpc) stepPatrol(now time.Time) bool {
 }
 
 // mobGroup is stMobRespawn: an svmap area entry of Count mobs. The first
-// death of a full group starts its timer (RespawnTime, +-60 min for
+// corpse removal from a full group starts its timer (RespawnTime, +-60 min for
 // Attackspecial3 >= 9, CZone::UpdateMobDeath); CZone::UpdateMobRespawn then
 // brings back one mob each time the timer runs out, at a random spot of
 // the area, restarting the timer.
@@ -657,11 +657,21 @@ type mobGroup struct {
 // died books a death (shard lock held).
 func (m *MapMob) died(now time.Time) {
 	m.Effects, m.diedAt, m.corpseGone = nil, now, false
+	if m.group == nil && m.respawnDelay > 0 {
+		m.respawnAt = now.Add(m.respawnDelay)
+	}
+}
+
+// removeCorpse books the native UpdateMobDeath removal (shard lock held).
+// Group counts include corpses until this point; later deaths cannot start
+// another timer while the group is still being replenished.
+func (m *MapMob) removeCorpse(now time.Time) {
+	if m.corpseGone {
+		return
+	}
+	m.corpseGone = true
 	g := m.group
-	if g == nil {
-		if m.respawnDelay > 0 {
-			m.respawnAt = now.Add(m.respawnDelay)
-		}
+	if g == nil || m.event != nil {
 		return
 	}
 	if g.alive == g.count {
@@ -725,7 +735,7 @@ func TickMobCorpses() []entityMove {
 		for i := range s.entities.Mobs {
 			m := &s.entities.Mobs[i]
 			if m.CurrentHP == 0 && !m.diedAt.IsZero() && !m.corpseGone && now.Sub(m.diedAt) >= mobCorpseDelay {
-				m.corpseGone = true
+				m.removeCorpse(now)
 				out = append(out, entityMove{MapID: mapID, Kind: viewMob, ID: m.ID})
 			}
 		}

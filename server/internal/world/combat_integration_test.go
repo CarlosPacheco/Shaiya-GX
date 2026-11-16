@@ -514,13 +514,13 @@ func TestGroupRespawn(t *testing.T) {
 			t.Fatal("kill failed")
 		}
 	}
-	if g.alive != 0 {
-		t.Fatalf("alive %d", g.alive)
+	if g.alive != 2 {
+		t.Fatalf("corpses must still count before removal: %d", g.alive)
 	}
 	s := shard(mapID)
 	s.mu.Lock()
 	for i := range s.entities.Mobs {
-		s.entities.Mobs[i].corpseGone = true
+		s.entities.Mobs[i].removeCorpse(time.Now())
 	}
 	g.respawnAt = time.Now().Add(-time.Second)
 	s.mu.Unlock()
