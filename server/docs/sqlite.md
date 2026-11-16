@@ -2,6 +2,10 @@
 
 **SQLite is the primary production database. Its embedded operation simplifies setup, deployment and portable distribution without a separate database service.** Keep gameplay/storage boundaries explicit behind `server/internal/db`.
 
+Current validation and known transaction-boundary failures are recorded in the
+[persistence and concurrency audit](persistence-audit.md). Passing engine recovery
+checks does not imply every gameplay operation is atomic.
+
 ## Files and first launch
 
 - `data/rapture.sqlite`: the explicitly requested shared test snapshot, including current development accounts, characters, inventory, guild/social state and game definitions.

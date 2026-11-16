@@ -18,7 +18,7 @@ The controller checks executable paths, including on Windows, so stopping one in
 - Local overrides: `.local/runtime.env` (KEY=VALUE, not committed).
 - Logs: `logs/gx_login.log`, `logs/gx_world.log`.
 
-The distributed database intentionally retains the current development accounts, characters and inventory requested by the author. Treat it as a shared test fixture. **SQLite is the primary production database, chosen for its embedded operation and straightforward deployment.** The gameplay-facing database API remains isolated in `server/internal/db`.
+The distributed database intentionally retains the current development accounts, characters and inventory requested by the author. Treat it as a shared test fixture. **SQLite is the primary production database, chosen for its embedded operation and straightforward deployment.** The gameplay-facing database API remains isolated in `server/internal/db`. See the [persistence audit](../server/docs/persistence-audit.md) for reproducible transaction-boundary failures and the scope of passing concurrency/recovery checks.
 
 Existing `RAPTURE_*` configuration names and SQLite filenames are retained for compatibility. They do not imply an external Rapture installation is required.
 

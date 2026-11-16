@@ -4,6 +4,8 @@ This log records delivered changes and data-package updates. Client data is host
 
 ## Unreleased
 
+- Add isolated SQLite process/crash and 16-client purchase/reconnect probes. Document three reproducible persistence failures and skipped legacy test coverage; gameplay fixes are pending.
+
 - Update the complete gx-v0.1.10 Drive download and repository description.
 - Designate SQLite as the primary production database; align contributor, deployment, wiki and packaging guidance.
 
