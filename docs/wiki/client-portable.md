@@ -1,14 +1,14 @@
 # Shaiya GX portable client and server
 
-## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1d4SXIYcALvBsbooLAW8tlKNUHa0x72dr/view?usp=sharing)
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1EF83MEmACo9xPYenPP59OBzPivRH9bMl/view?usp=sharing)
 
-**gx-v0.1.9 for Windows and Linux.** This Google Drive package includes both
+**gx-v0.1.10 for Windows and Linux.** This Google Drive package includes both
 executables, GX Server, client game data, fonts and the development database.
 **Everything is included; no separate data download is needed.**
 Extract the entire package into a writable folder:
 
 ```text
-Shaiya GX gx-v0.1.9 Portable/
+Shaiya GX gx-v0.1.10 Portable/
   Client/
     Shaiya GX
     Shaiya GX.exe
@@ -24,9 +24,9 @@ then click **Start server**. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables and preserve all licenses.
 
 **Latest binary update: [gx-v0.1.10](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.10).**
-The Drive download remains the gx-v0.1.9 base until its maintainer replaces it.
-Apply matching client/server builds together and use refreshed data for the new
-mount sounds, dungeon minimaps and creature repairs. Preserve an existing
+The Drive download includes gx-v0.1.10 client/server builds and refreshed data
+for mount sounds, dungeon minimaps and creature repairs. Update client and server
+together. Preserve an existing
 server `runtime/` and follow the [mount migration and upgrade guide](releases/gx-v0.1.10-upgrade.md).
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
 Server packages include all 68 physics/navigation maps, the approved development

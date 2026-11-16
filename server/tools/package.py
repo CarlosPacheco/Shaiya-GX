@@ -230,8 +230,8 @@ Open build/gx_server (Linux) or build/gx_server.exe (Windows) for the
 one-button GX Server app. Start/Stop works as before. Closing the app
 leaves servers running. The console launcher below is also included.
 
-SQLite is embedded for development convenience. A future database backend
-will replace it; SQLite is not the final production storage design.
+SQLite is the primary production database. Its embedded operation requires
+no separate database service.
 
 Run Start GX Server.sh (Linux) or Start GX Server.bat (Windows).
 Type: start server

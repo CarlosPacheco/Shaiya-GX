@@ -29,9 +29,8 @@ the new packaged seed requires no runtime migration. See [mounts](../mounts.md).
 The newly prepared complete portable includes refreshed client data: calibrated
 original dungeon minimaps, normalized rejected creature mesh headers and five
 native mount OGG cues. GitHub binary archives include fonts and authored bone
-bindings, but do not upload original client artwork/audio/maps. The currently
-linked Drive base is gx-v0.1.9 until its maintainer replaces that download;
-use refreshed data with this release for the complete presentation fixes.
+bindings, but do not upload original client artwork/audio/maps. The [complete Drive package](https://drive.google.com/file/d/1EF83MEmACo9xPYenPP59OBzPivRH9bMl/view?usp=sharing)
+includes gx-v0.1.10 and refreshed data for the complete presentation fixes.
 Maintainer import/repair procedures are documented in [data formats](../data-formats.md)
 and [mounts](../mounts.md). Never overwrite an existing personal runtime with
 the seed or copy logs, credentials or mutable databases into a distribution.

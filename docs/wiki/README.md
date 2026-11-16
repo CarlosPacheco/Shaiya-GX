@@ -1,8 +1,8 @@
 # Shaiya GX Wiki
 
-## [Download Shaiya GX — Client + Server + Data](https://drive.google.com/file/d/1d4SXIYcALvBsbooLAW8tlKNUHa0x72dr/view?usp=sharing)
+## [Download Shaiya GX — Client + Server + Data](https://drive.google.com/file/d/1EF83MEmACo9xPYenPP59OBzPivRH9bMl/view?usp=sharing)
 
-**Complete gx-v0.1.9 portable for Windows and Linux:** client, GX Server, game data,
+**Complete gx-v0.1.10 portable for Windows and Linux:** client, GX Server, game data,
 fonts and development database in one download. **No separate data download is
 needed.** Extract the package, start
 `Server/build/gx_server` (or `.exe`), then open the executable in `Client/`.
@@ -17,9 +17,9 @@ binary may predate a documented change. Use matching client/server builds and
 consult release notes when reproducing behavior. Publishing documentation does
 not update executable files, client assets or a running database.
 
-The linked Drive download is still the gx-v0.1.9 base; see the
-[gx-v0.1.10 upgrade guide](../releases/gx-v0.1.10-upgrade.md) for refreshed data
-and existing-runtime mount migration.
+The linked Drive download includes gx-v0.1.10 and refreshed game data. See the
+[gx-v0.1.10 upgrade guide](../releases/gx-v0.1.10-upgrade.md) for existing-runtime
+mount migration and preserving your personal database.
 
 ## Gameplay and items
 

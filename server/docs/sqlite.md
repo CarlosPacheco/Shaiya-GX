@@ -1,6 +1,6 @@
-# Embedded development database
+# SQLite production database
 
-**SQLite is a development choice because its embedded operation simplifies setup, testing and portable distribution. GX plans to replace it with a different database backend in the future. The final engine, migration format and timing are not selected.** Keep gameplay/storage boundaries explicit; do not assume SQLite is the permanent production architecture.
+**SQLite is the primary production database. Its embedded operation simplifies setup, deployment and portable distribution without a separate database service.** Keep gameplay/storage boundaries explicit behind `server/internal/db`.
 
 ## Files and first launch
 
@@ -43,6 +43,6 @@ Stop both services before restoring/replacing a runtime. Use the backup API for 
 
 ## Legacy migration and tests
 
-`tools/export_sqlite.py` and `tools/sqlserver.py` remain migration/reference utilities. Ordinary play needs no SQL Server. Existing external SQL Server volumes are not altered by GX integration. A future engine migration must include an explicit validated conversion, rather than pretending the SQLite file can simply be reused by another engine.
+`tools/export_sqlite.py` and `tools/sqlserver.py` remain migration/reference utilities. Ordinary play needs no SQL Server. Existing external SQL Server volumes are not altered by GX integration. Production backups and restores must preserve a consistent SQLite database, including committed WAL state.
 
 Storage tests and server integration tests use disposable runtime copies. Snapshot tests verify WAL inclusion, 64-bit IDs, Unicode/blob preservation and preservation of previous output on validation failure. Portables validate both hash and row counts. The gameplay/server rules do not change as part of naming and repository integration.

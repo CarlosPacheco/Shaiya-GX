@@ -12,7 +12,7 @@ one-button micro app (`gx_server`). No separate server repository is needed.
 - `gx_world`: game/world TCP server.
 
 (`.exe` on Windows, no extension on Linux -- otherwise identical binaries,
-built from `cmd/` with Go into `build/`. Storage is embedded SQLite during development, with the original EP4.5
+built from `cmd/` with Go into `build/`. Storage uses embedded SQLite as the primary production database, with the original EP4.5
 tables/columns retained and procedures translated into parameterized SQL.)
 
 The console owns process lifecycle. The server cores own protocol, state,
@@ -35,4 +35,4 @@ Each process owns a bounded connection; WAL and a busy timeout coordinate login
 and world. Runtime copies are separate from the versioned development snapshot.
 No remote SQL credentials or container lifecycle are needed in the runtime.
 
-SQLite is embedded for development convenience and will be replaced by another backend in the future. The distributed seed intentionally includes shared test accounts and gameplay state. See [storage](sqlite.md) and [operations](../../docs/server.md).
+SQLite is the primary production database, using embedded storage without a separate database service. The distributed seed intentionally includes shared test accounts and gameplay state. See [storage](sqlite.md) and [operations](../../docs/server.md).

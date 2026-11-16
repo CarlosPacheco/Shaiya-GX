@@ -2,7 +2,7 @@
 
 Download portable Linux/Windows builds from [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest). Both include login, world, console, the **GX Server** micro app, server maps/configuration and the requested development database with current test accounts, characters and inventory.
 
-SQLite is embedded for development convenience. It is a temporary backend and will be replaced in the future. Packages do not imply a final production storage choice.
+SQLite is the primary production database. Packages include the embedded database engine and require no separate database service.
 
 ## Build from the GX checkout
 

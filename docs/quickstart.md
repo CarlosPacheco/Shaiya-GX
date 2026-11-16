@@ -43,7 +43,7 @@ Closing either control window leaves the detached processes running. Stop explic
 
 The first start copies `data/rapture.sqlite` to `runtime/rapture.sqlite`. Future starts reuse the runtime file. The shipped seed contains the author's requested current **test** accounts, characters and inventory. A fresh extraction starts from that snapshot; an existing runtime is never silently overwritten.
 
-**SQLite is an embedded development convenience. The project will change database engines in the future; no replacement engine or migration schedule is promised yet.**
+**SQLite is the primary production database. No separate database server is required; preserve the runtime database and use consistent backups when upgrading.**
 
 ## Accounts
 
@@ -65,7 +65,7 @@ The tool prompts for a password; avoid putting passwords in shell commands. It i
 
 ## Run the client
 
-Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1d4SXIYcALvBsbooLAW8tlKNUHa0x72dr/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_server` (Linux) or `Server/build/gx_server.exe` (Windows), then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. Everything is included; no separate data download is required. The game discovers its data automatically; no build tools or data conversion are needed.
+Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1EF83MEmACo9xPYenPP59OBzPivRH9bMl/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_server` (Linux) or `Server/build/gx_server.exe` (Windows), then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. Everything is included; no separate data download is required. The game discovers its data automatically; no build tools or data conversion are needed.
 
 See [portable client requirements and updates](client-portable.md). GitHub releases provide executable updates without data. Developers can instead [build from source](building.md) and [import their compatible archives](data-formats.md); keep game data outside Git. Do not use the original `Game.exe` to run GX.
 

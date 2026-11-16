@@ -2,6 +2,11 @@
 
 This log records delivered changes and data-package updates. Client data is hosted separately on Drive; changing it does not automatically produce a new executable release.
 
+## Unreleased
+
+- Update the complete gx-v0.1.10 Drive download and repository description.
+- Designate SQLite as the primary production database; align contributor, deployment, wiki and packaging guidance.
+
 ## gx-v0.1.10 — 2026-11-15
 
 [Brief patch notes](docs/releases/gx-v0.1.10.md) · [Upgrade and data requirements](docs/releases/gx-v0.1.10-upgrade.md).

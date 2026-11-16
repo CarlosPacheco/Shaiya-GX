@@ -34,7 +34,7 @@ For parity work, explain the original behavior, GX's current behavior and the ev
 
 Keep modules small, readable and focused. The server is authoritative for combat, inventory and persistence. Client prediction is presentation/movement only. Preserve packet bytes and original asset interpretation; document deliberate visual adaptations and known differences. Gameplay corrections must be grounded in original behavior and supported by evidence/tests. Personal rule changes and unrelated visual redesigns do not belong in the shared foundation.
 
-SQLite is a temporary embedded development backend for easy setup. A different database backend is planned. Keep storage inside `server/internal/db` and avoid spreading SQL/backend-specific assumptions through gameplay or UI code.
+SQLite is the primary production database, with embedded operation for straightforward deployment. Keep storage inside `server/internal/db` and avoid spreading SQL/backend-specific assumptions through gameplay or UI code.
 
 ## Tests and evidence
 

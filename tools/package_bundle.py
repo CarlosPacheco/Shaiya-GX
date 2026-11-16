@@ -124,7 +124,7 @@ Default local endpoints: 127.0.0.1:30800 and 127.0.0.1:30810.
 GM role and commands: Server/docs/gm.md. Example: /nmake 1 1 creates merchant 1.
 The supplied development seed has GM test accounts. Server startup creates a new
 independent runtime database; the seed includes the requested development snapshot.
-SQLite is embedded development storage and will be replaced in the future.
+SQLite is the primary production database.
 
 Original game resources retain their respective ownership. Font and software
 licenses are included in Client/ and Server/. SHA256SUMS.txt verifies this folder.

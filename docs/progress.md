@@ -55,7 +55,7 @@ Chat, party/raid, quests, trade/duels, social windows and the mall are also impl
 | Interface | Quest tracker/markers, speech bubbles, remaining target indicators and service windows |
 | Options | Shortcut editing and remaining controls; resolution selection is implemented |
 | Server rules | Remaining partial workflows in the [parity table](../server/docs/original-parity.md) |
-| Persistence | Replace SQLite in the future; replacement engine and migration schedule are not selected |
+| Persistence | SQLite is the primary production database; maintain consistent backups and validated restores |
 
 ## Validation boundaries
 

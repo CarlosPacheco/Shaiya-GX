@@ -20,7 +20,7 @@ The playable client is `Shaiya GX` (`Shaiya GX.exe` on Windows), with loose `dat
 
 The micro app is **GX Server**, command `server/cmd/gx_server`; headless commands are `gx_login`, `gx_world`, `gx_console`. Keep `RAPTURE_*` environment keys, `rapture.sqlite` and `Rapture_LoginLog` compatible unless explicitly migrating them with tests and documentation.
 
-SQLite is embedded for development simplicity only. It will be replaced by another backend in the future. Keep storage behind `server/internal/db`; do not present SQLite as the final production design or invent a chosen replacement.
+SQLite is the primary production database. Keep storage behind `server/internal/db` and document SQLite operations, backups and deployment accurately. Do not describe it as a temporary backend or promise a replacement.
 
 ## Local safety and fixtures
 

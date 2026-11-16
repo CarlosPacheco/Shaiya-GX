@@ -8,4 +8,4 @@ GX Server is now part of the parent Shaiya GX repository. Follow the maintained 
 - [Portable archives](distribution.md): package layout and reproduction.
 - [Development database](sqlite.md): snapshots and the future database change.
 
-The micro app says **GX Server**; its functionality is unchanged. The server ships the requested development database, not an empty production database. SQLite's embedded setup is used for development convenience and will be replaced by another backend later.
+The micro app says **GX Server**; its functionality is unchanged. The server ships the requested development database, not an empty production database. SQLite is the primary production database; its embedded operation requires no separate database service.
