@@ -38,7 +38,9 @@ func TestQuestWriteFailureRetryAndDurableAckAgainstSQLite(t *testing.T) {
 		t.Fatal(err)
 	}
 	pool, _ := db.Pool(db.GameData)
-	if _, err = pool.Exec(fmt.Sprintf("CREATE TRIGGER network_quest_failure BEFORE UPDATE OF Money ON PS_GameData_Chars WHEN OLD.CharID=%d BEGIN SELECT RAISE(ABORT,'injected character reward failure'); END", id)); err != nil {
+	// Reject the reward mutation, while allowing ordinary entry/autosave writes
+	// that include an unchanged Money column in their character snapshot.
+	if _, err = pool.Exec(fmt.Sprintf("CREATE TRIGGER network_quest_failure BEFORE UPDATE OF Money ON PS_GameData_Chars WHEN OLD.CharID=%d AND NEW.Money<>OLD.Money BEGIN SELECT RAISE(ABORT,'injected character reward failure'); END", id)); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { pool.Exec("DROP TRIGGER IF EXISTS network_quest_failure") })

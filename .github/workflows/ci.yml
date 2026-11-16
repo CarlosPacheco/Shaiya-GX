@@ -22,6 +22,8 @@ jobs:
         run: go test -race ./server/internal/filelock ./server/internal/netx ./server/internal/session ./server/internal/password ./server/internal/db ./server/internal/scheduler ./server/internal/controlplane ./server/internal/logx ./server/internal/admin ./internal/authwire ./internal/transport
       - name: Transaction and loot concurrency
         run: go test -race -tags integration ./server/internal/world -run 'TestAudit|TestTrade|TestQuestRollback|TestGuildLifecycle|TestConcurrentGoldPickup|TestInventoryOperationRollback' -count=1 -timeout=180s
+      - name: Durable trade and quest protocol concurrency
+        run: go test -race -tags integration ./server/cmd/gx_world -run '^(TestTradeDurableBeforeAckAndDisconnectAgainstSQLite|TestQuestWriteFailureRetryAndDurableAckAgainstSQLite)$' -count=1 -timeout=300s
       - name: Credential parser fuzz smoke
         run: go test ./internal/authwire -run '^$' -fuzz FuzzCredentialDecode -fuzztime 10s
       - name: Frame parser fuzz smoke
