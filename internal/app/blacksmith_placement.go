@@ -22,8 +22,6 @@ func lapFitsItem(lap *sdata.Item, t uint8) bool {
 		return false
 	}
 	switch rt := itemtype.Real(t); {
-	case rt == 24:
-		return lap.Type == 95 // Capes are an enchantment target only.
 	case rt >= 1 && rt <= 15:
 		return lap.MinLevel != 0
 	case rt == 16:

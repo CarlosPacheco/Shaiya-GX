@@ -550,7 +550,7 @@ func TestCraftRules(t *testing.T) {
 	if weaponLap == nil || armorLap == nil {
 		t.Skip("no lapisia")
 	}
-	if !lapisiaFits(weaponLap, 1) || lapisiaFits(weaponLap, 16) {
+	if !lapisiaFits(weaponLap, 1) || lapisiaFits(weaponLap, 16) || lapisiaFits(weaponLap, 24) {
 		t.Error("weapon lapisia targets")
 	}
 	if lapisiaFits(armorLap, 1) || !lapisiaFits(armorLap, 16) || !lapisiaFits(armorLap, 17) {

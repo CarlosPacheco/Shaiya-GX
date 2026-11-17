@@ -110,7 +110,7 @@ func TestLapisTooltipTargetsFollowPlacementFlags(t *testing.T) {
 				t.Fatalf("type %d advertises unsupported %s", typ, absent)
 			}
 		}
-		if hasCoat := strings.Contains(joined, "|Coat"); hasCoat != (typ == 95) {
+		if strings.Contains(joined, "|Coat") {
 			t.Fatalf("type %d has incorrect cape target: %s", typ, joined)
 		}
 		if rows[len(rows)-1].text != def.Description {

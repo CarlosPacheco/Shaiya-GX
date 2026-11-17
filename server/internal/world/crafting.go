@@ -49,14 +49,11 @@ func buildEnchantResult(result, lBag, lSlot uint8, lCount uint16, mBag, mSlot ui
 // lapisiaMoney is GetGemMoneyByGrade (0x0045f6e0) by the lapisia's ReqIg.
 func lapisiaMoney(reqIg uint8) uint32 { return forgecost.Gold(reqIg) }
 
-// lapisiaFits is CUser::EnableLapisianAdd's target check: real type 24
-// always; otherwise the lapisia's own fields name what it enchants
+// lapisiaFits checks the target families selected by the lapisia fields
 // (ReqLevel weapons, Country type 16, the six job flags types 17-22, Grow
 // 23, ReqStr 25).
 func lapisiaFits(lap *db.ItemDef, rt uint8) bool {
 	switch {
-	case rt == 24:
-		return true
 	case rt >= 1 && rt <= 15:
 		return lap.ReqLevel != 0
 	case rt == 16:

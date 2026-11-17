@@ -240,7 +240,7 @@ Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L208), [pro
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L76)
 
-**S→C serializers:** [buildGemAddResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L189)
+**S→C serializers:** [buildGemAddResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L186)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L528)
 
@@ -250,7 +250,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGemAddResult — server/internal/world/crafting.go</summary>
 
-[Source definition](../../server/internal/world/crafting.go#L189)
+[Source definition](../../server/internal/world/crafting.go#L186)
 
 ```go
 func buildGemAddResult(result, gBag, gSlot uint8, gCount uint16, iBag, iSlot, pos, gemID uint8, money uint32) []byte {
@@ -333,7 +333,7 @@ Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L209), [
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L78)
 
-**S→C serializers:** [planGemRemove (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L365)
+**S→C serializers:** [planGemRemove (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L362)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L504)
 
@@ -343,7 +343,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>planGemRemove — server/internal/world/crafting.go</summary>
 
-[Source definition](../../server/internal/world/crafting.go#L365)
+[Source definition](../../server/internal/world/crafting.go#L362)
 
 ```go
 func (s *Session) planGemRemove(p []byte) {
@@ -625,7 +625,7 @@ Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L207),
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L80)
 
-**S→C serializers:** [buildComposeResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L498)
+**S→C serializers:** [buildComposeResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L495)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L455)
 
@@ -635,7 +635,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildComposeResult — server/internal/world/crafting.go</summary>
 
-[Source definition](../../server/internal/world/crafting.go#L498)
+[Source definition](../../server/internal/world/crafting.go#L495)
 
 ```go
 func buildComposeResult(result, bag, slot uint8, craft string) []byte {

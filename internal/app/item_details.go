@@ -196,7 +196,7 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 			{17, 5184, "Upper armor"}, {18, 5185, "Lower armor"},
 			{21, 5186, "Shields"}, {19, 5187, "Gauntlet"},
 			{20, 5188, "Shoes"}, {22, 5189, "Rings"},
-			{23, 5190, "Necklaces"}, {24, 7026, "Coat"},
+			{23, 5190, "Necklaces"},
 			{40, 5381, "Bracelets"},
 		} {
 			if lapFitsItem(def, target.typ) {
