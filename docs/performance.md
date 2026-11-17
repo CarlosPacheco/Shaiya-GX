@@ -259,3 +259,29 @@ scenes, verified visible water, dungeons, 200/400-actor stress and synthetic pac
 pumping. It separates update/draw submission, explicit GPU queue wait and distinct
 GPU timestamp samples, with p50/p95/p99, captures and isolated profiles. Hidden
 throughput is not presented FPS; shared-GPU runs are explicitly classified.
+
+## Client baseline without a competing game (2026-11-16)
+
+A separate quiet-desktop run of the [measurement harness](client-measurement.md)
+used Linux, Ryzen 7 5700G, RTX 3050, NVIDIA 615.78.08 and Go 1.27.4 at 1280×720.
+WoW was closed and absent from the recorded GPU process snapshots. Eleven scenes
+ran three times with 900 frames each (29,700 unprofiled frames); two additional
+3,000-frame CPU profiles were kept separate. These are hidden-window submission
+timings with bounded GPU queue depth, not presented FPS or a player-capacity claim.
+
+| Scene | CPU submission p50 ms | p95 ms | p99 ms |
+|---|---:|---:|---:|
+| world-stream | 0.831 | 0.966 | 1.070 |
+| water-visible | 5.328 | 6.586 | 7.597 |
+| crowd-200 | 6.519 | 7.481 | 8.438 |
+| crowd-400 | 13.018 | 14.659 | 16.305 |
+| crowd-effects | 7.866 | 8.519 | 9.745 |
+| crowd-network | 6.693 | 7.610 | 8.744 |
+| dungeon | 13.529 | 14.960 | 16.015 |
+
+The follow-up priorities are actor pose/bounds preparation for crowds, and
+effect submission/buffer streaming for the visible map-15 dungeon. Preserve
+visible animation, shadow/reflection participation and transparent draw order;
+validate each change independently before introducing general parallelism or
+changing glow. No renderer optimization was included in this measurement update.
+Machine contention, camera/workload and timing mode must match for comparisons.
