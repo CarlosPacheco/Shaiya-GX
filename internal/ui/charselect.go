@@ -210,13 +210,7 @@ func (c *CharSelect) Draw(s *render.Sprites, f *Font, w, h int) {
 		x := px + 0x1f
 		f.Draw(s, fmt.Sprintf("%s : %d", c.msg.Get(0x13c9), ch.Level), x, py+0x49, white, 0)
 		f.Draw(s, fmt.Sprintf("%s : %s", c.msg.Get(0x13ca), c.className(ch.Class)), x, py+0x5b, white, 0)
-		modes := []int{0x1d6, 0x1d7, 0x1d8, 0x1d9}
-		mode := ""
-		if int(ch.Mode) < len(modes) {
-			mode = c.msg.Get(modes[ch.Mode])
-		}
-		f.Draw(s, fmt.Sprintf("%s : %s", c.msg.Get(0x13cb), mode), x, py+0x6d, white, 0)
-		f.Draw(s, fmt.Sprintf("%s : %s", c.msg.Get(0x13d3), c.mapName(ch.MapID)), x, py+0x7f, white, 0)
+		f.Draw(s, fmt.Sprintf("%s : %s", c.msg.Get(0x13d3), c.mapName(ch.MapID)), x, py+0x6d, white, 0)
 	}
 	for i, b := range c.Slots {
 		b.Draw(s)
