@@ -9,7 +9,7 @@ Open [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest). Dow
 - Windows: `gx-server-windows-amd64.zip` (Explorer → Extract All).
 - Linux: `gx-server-linux-amd64.tar.gz` (`tar -xzf gx-server-linux-amd64.tar.gz`).
 
-Choose a writable folder in your user directory, not Program Files or a protected system directory. Keep `build`, `data`, `docs` and the launchers together. No Go, Python, Docker or database server is needed for ordinary server use. Linux's prebuilt GUI needs glibc 2.38+ and system graphics libraries; see [runtime requirements](building.md#portable-runtime-requirements). The headless binaries and console are alternatives.
+Choose a writable folder in your user directory, not Program Files or a protected system directory. Keep `build`, `data`, `docs` and the launchers together. No Go, Python, Docker or database server is needed for ordinary server use. The terminal-only server is built without CGO and needs no desktop graphics libraries; see [runtime requirements](building.md#portable-runtime-requirements).
 
 ### Verify a download
 
@@ -30,16 +30,14 @@ Each extracted package also contains `package.manifest.json` with per-file hashe
 
 ## Start and stop
 
-Windows: double-click `build\gx_server.exe`. Linux: run `./build/gx_server`. The **GX Server** window has the same one-button start/stop behavior as the former Rapture app. Click **Start server** and wait until login/world show ON. DB READY means a runtime file exists; it is not a full integrity diagnostic.
-
-For a terminal instead, run `Start GX Server.bat` or `./Start\ GX\ Server.sh`. Enter:
+GX Server is terminal-only. Run `Start GX Server.bat` or `./Start\ GX\ Server.sh`. Enter:
 
 ```text
 start server
 shutdown server
 ```
 
-Closing either control window leaves the detached processes running. Stop explicitly before moving the folder, replacing binaries or resetting the database. Logs are in `logs/gx_login.log` and `logs/gx_world.log` inside the server folder.
+Closing the console leaves the detached processes running. Stop explicitly before moving the folder, replacing binaries or resetting the database. Logs are in `logs/gx_login.log` and `logs/gx_world.log` inside the server folder.
 
 The first start copies `data/rapture.sqlite` to `runtime/rapture.sqlite`. Future starts reuse the runtime file. The shipped seed contains the author's requested current **test** accounts, characters and inventory. A fresh extraction starts from that snapshot; an existing runtime is never silently overwritten.
 
@@ -65,7 +63,7 @@ The tool prompts for a password; avoid putting passwords in shell commands. It i
 
 ## Run the client
 
-Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1EF83MEmACo9xPYenPP59OBzPivRH9bMl/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_server` (Linux) or `Server/build/gx_server.exe` (Windows), then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. Everything is included; no separate data download is required. The game discovers its data automatically; no build tools or data conversion are needed.
+Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1EF83MEmACo9xPYenPP59OBzPivRH9bMl/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. Everything is included; no separate data download is required. The game discovers its data automatically; no build tools or data conversion are needed.
 
 See [portable client requirements and updates](client-portable.md). GitHub releases provide executable updates without data. Developers can instead [build from source](building.md) and [import their compatible archives](data-formats.md); keep game data outside Git. Do not use the original `Game.exe` to run GX.
 

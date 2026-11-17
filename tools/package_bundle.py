@@ -113,7 +113,7 @@ def prepare(archives, data, output, tag):
         data_instruction = ('Add your updated loose game data to Client/data/ before starting the client.\nKeep the supplied data/fonts/ directory and its licenses. No local game resources were copied.\n\n' if data is None else '')
         (stage / 'README.txt').write_text(f'''Shaiya GX {tag} — Windows and Linux
 
-{data_instruction}1. Open Server/build/gx_server (Linux) or gx_server.exe (Windows) and start the server.
+{data_instruction}1. Open Server/build/gx_console (Linux terminal) or gx_console.exe (Windows), then type start server.
    Console launchers Start GX Server.sh and Start GX Server.bat are also included.
 2. Open Client/Shaiya GX (Linux) or Client/Shaiya GX.exe (Windows).
 

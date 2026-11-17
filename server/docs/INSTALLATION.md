@@ -4,8 +4,8 @@ GX Server is now part of the parent Shaiya GX repository. Follow the maintained 
 
 - [First run on Windows and Linux](../../docs/quickstart.md): downloads, hashes, account creation and local play.
 - [Building and testing](../../docs/building.md): native Windows/Linux toolchains and cross-compilation.
-- [Operation](../../docs/server.md): micro app, console, LAN, logs, persistence, backup and updates.
+- [Operation](../../docs/server.md): terminal console, LAN, logs, persistence, backup and updates.
 - [Portable archives](distribution.md): package layout and reproduction.
 - [Development database](sqlite.md): snapshots and the future database change.
 
-The micro app says **GX Server**; its functionality is unchanged. The server ships the requested development database, not an empty production database. SQLite is the primary production database; its embedded operation requires no separate database service.
+**GX Server** operates through the terminal console. The server ships the requested development database, not an empty production database. SQLite is the primary production database; its embedded operation requires no separate database service.

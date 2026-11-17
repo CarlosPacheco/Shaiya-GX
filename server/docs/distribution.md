@@ -1,18 +1,18 @@
 # GX Server portable distribution
 
-Download portable Linux/Windows builds from [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest). Both include login, world, console, the **GX Server** micro app, server maps/configuration and the requested development database with current test accounts, characters and inventory.
+Download portable Linux/Windows builds from [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest). Both include login, world, the **GX Server** terminal console, server maps/configuration and the requested development database with current test accounts, characters and inventory.
 
 SQLite is the primary production database. Packages include the embedded database engine and require no separate database service.
 
 ## Build from the GX checkout
 
-From the GX root, with Go 1.27.3, Python 3 and GUI compiler/libraries installed:
+From the GX root, with Go 1.27.4 and Python 3 installed:
 
 ```sh
 python3 server/tools/package.py --output out/portable
 ```
 
-From `server/`, the equivalent is `python3 tools/package.py`. Use `--platform linux-amd64` or `--platform windows-amd64` for one target. Linux-to-Windows GUI builds need MinGW; native Windows uses its local x64 GCC. See the source [build guide](../../docs/building.md) for prerequisites.
+From `server/`, the equivalent is `python3 tools/package.py`. Use `--platform linux-amd64` or `--platform windows-amd64` for one target. All server programs use CGO=0; no C compiler or graphics libraries are required. See the source [build guide](../../docs/building.md) for prerequisites.
 
 Output:
 
@@ -24,9 +24,9 @@ Binaries are attached to GX releases, rather than committed into source history.
 
 ## Run a package
 
-Keep the directory structure intact in a writable folder. Open `build/gx_server[.exe]` for the one-button app or the `Start GX Server` launcher for console commands `start server` / `shutdown server`. Closing either controller leaves servers running. First start copies the seed to `runtime/rapture.sqlite`; existing runtimes are preserved.
+Keep the directory structure intact in a writable folder. Open `build/gx_console[.exe]` in a terminal or use the `Start GX Server` launcher. Enter `start server` / `shutdown server`. Closing the console leaves servers running. First start copies the seed to `runtime/rapture.sqlite`; existing runtimes are preserved.
 
-The headless server and console need no Go, Python, Docker, SQL Server or separate SQLite library. The graphical controller additionally needs desktop graphics/drivers and Linux system GUI libraries. Python 3 is optional for administration tools in `tools/`.
+The headless server and console need no Go, Python, Docker, SQL Server or separate SQLite library. Python 3 is optional for administration tools in `tools/`.
 
 Default endpoints are 127.0.0.1:30800 and :30810. Use `RAPTURE_LOGIN_LISTEN`, `RAPTURE_WORLD_LISTEN` and `RAPTURE_PUBLIC_IP` for other addresses. Compatibility variable names and SQLite filenames remain unchanged after the integration. Source operation instructions are in `../../docs/server.md`; download users can also read README.txt in the archive.
 

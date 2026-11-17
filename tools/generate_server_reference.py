@@ -35,7 +35,7 @@ PURPOSES = {
  'ai': 'Embedded/default Lua catalog, actor state machines, host API contract, bounded script execution and optional editable catalog loading.',
  'admin': 'Local account creation/password reset and private TLS provisioning; never a public admin endpoint.',
  'config': 'Validated environment policy, optional atomic runtime.env parsing, paths and SQLite DSN.',
- 'control': 'GUI/console process lifecycle, executable-scoped status/stop, detached launch and safe database initialization.',
+ 'control': 'Terminal process lifecycle, executable-scoped status/stop, detached launch and safe database initialization.',
  'controlplane': 'Loopback health/metrics, authenticated shutdown, optional protected profiling and private PID/executable descriptors.',
  'crypto': 'Legacy login RSA/HMAC, AES-CTR and expanded world XOR compatibility; authenticated remote protection belongs to TLS.',
  'db': 'All authoritative SQLite access, definitions, migrations, guarded economy transactions and crash/session ownership.',
@@ -51,7 +51,6 @@ PURPOSES = {
  'gx_console': 'Terminal start/shutdown controls plus local account and TLS administration commands.',
  'gx_login': 'Login handshake, bounded credential verification, handoff creation, server selection and diagnostics.',
  'gx_world': 'World bootstrap/lease, definition/map loading, owned scheduler, bounded sessions and graceful storage shutdown.',
- 'gx_server': 'Fyne GUI sharing the same lifecycle control as the console; window closure leaves detached cores running.',
  'gx_mapbuild': 'Offline collision/navigation generation from locally owned loose assets; not a runtime network service.',
 }
 

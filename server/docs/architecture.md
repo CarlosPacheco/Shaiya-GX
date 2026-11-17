@@ -2,7 +2,7 @@
 
 GX Server is a modular Go application in the GX root module. SQLite is the
 primary production database. There is no separate database service or server
-repository. The GUI (`gx_server`) and console control `gx_login` and `gx_world`.
+repository. The terminal console (`gx_console`) controls `gx_login` and `gx_world`.
 
 ## Ownership and lifecycle
 

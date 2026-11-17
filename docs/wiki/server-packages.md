@@ -14,8 +14,7 @@ how the contracts fit together.
 |---|---|---|
 | `server/cmd/gx_login` | `run`, `handle`, `client.frame`; config, crypto, password/db, session, netx, controlplane | 30 s login lifetime, 5 s writes, single-use ticket after successful credentials; no world simulation |
 | `server/cmd/gx_world` | `run`; db, world, config, netx, controlplane | Acquire one-world lease, load required state before accepting, drain sessions before storage close; startup failures return nonzero |
-| `server/cmd/gx_console` | Interactive console or `admin.Run(args)` | Same control path as GUI; account create/password and `tls-init` are local operator actions |
-| `server/cmd/gx_server` | Fyne app using `control` | UI owns controls/status; detached core lifetime is independent of the window |
+| `server/cmd/gx_console` | Interactive console or `admin.Run(args)` | Terminal lifecycle control; account create/password and `tls-init` are local operator actions |
 | `server/cmd/gx_mapbuild` | Offline generator using archive/world/mapnav/mapgeometry | Reads local client resources, writes server navigation/collision products; `-maps`, `-data`, `-output`, `-server-maps`, `-physics-only` select work |
 
 ## Infrastructure packages

@@ -9,7 +9,7 @@ game data, external fonts and the development database. Everything is included:
 no separate data download, Go installation or build tools required.**
 
 1. Extract the entire package to a writable folder. Keep `Client/` and `Server/` intact.
-2. Start `Server/build/gx_server.exe` (Windows) or `Server/build/gx_server` (Linux), then click **Start server**.
+2. Open `Server/build/gx_console.exe` (Windows) or `Server/build/gx_console` in a terminal (Linux), then enter `start server`.
 3. Open `Client/Shaiya GX.exe` (Windows) or `Client/Shaiya GX` (Linux).
 
 Requires a 64-bit OS and OpenGL 4.5. The server includes development test accounts;
@@ -55,7 +55,7 @@ Snapshot: November 14, 2026. Counts come from the [server parity table](server/d
 |---|---|
 | Portable clients | Native Linux and Windows builds; shared adjacent `data/`, including external fonts |
 | Media migration | OGG audio, PNG interface and seven PNG cursors |
-| Integrated server | GX Server GUI/console, login/world and embedded development DB |
+| Integrated server | Terminal-only GX Server, login/world and embedded development DB |
 | Functional flows | Account entry, movement/combat, inventory/services and gatekeeper travel; scope and evidence in the progress guide |
 
 | Data role | Accepted format |
@@ -77,9 +77,9 @@ For separate OS-specific client/server packages and binary-only updates, use
 [Verify downloads](docs/quickstart.md#verify-a-download) and review the
 [portable guide](docs/client-portable.md) before upgrading an existing installation.
 
-The portable server includes login, world, console, the one-button micro app, seed database, maps and configuration. Running its console or headless servers needs no Go, Docker, SQL Server, Python or external SQLite installation. The micro app also needs working desktop graphics libraries/drivers. Linux runtime packages and Windows build prerequisites are documented in [building](docs/building.md).
+The portable server includes login, world, a terminal console, seed database, maps and configuration. Running the server needs no graphics libraries, Go, Docker, SQL Server, Python or external SQLite installation. Linux runtime packages and Windows build prerequisites are documented in [building](docs/building.md).
 
-Closing the micro app or console leaves login/world running. Use **Stop server** or `shutdown server` before moving an installation or its database. [Operating and updating](docs/server.md) covers persistence, LAN connections, logs and backups.
+Closing the console leaves login/world running. Use `shutdown server` before moving an installation or its database. [Operating and updating](docs/server.md) covers persistence, LAN connections, logs and backups.
 
 ## Status
 
@@ -87,7 +87,7 @@ This is a development project. Linux and Windows amd64 are supported build targe
 
 The client implements login, character creation/selection, world rendering, movement, combat, skills, inventory/equipment, NPC shops, loot, chat, party/raid, quests, trade, guilds, storage, blacksmith services, portals and social interfaces. Graphics include fog, water, actor shadows, effects and original UI artwork read from the data directory. Remaining limitations include visual/service variants, collision/navigation and some options. See [interface status](docs/interface.md).
 
-GX Server retains Rapture's gameplay and protocol behavior. Its process names are now `gx_login`, `gx_world`, `gx_console` and `gx_server`; the advertised server name and micro app title are **GX Server**. Existing `RAPTURE_*` environment keys and `rapture.sqlite` filenames remain compatible to avoid changing operation or storage semantics.
+GX Server retains Rapture's gameplay and protocol behavior. Its programs are `gx_login`, `gx_world` and `gx_console`; the advertised server name is **GX Server**. Existing `RAPTURE_*` environment keys and `rapture.sqlite` filenames remain compatible to avoid changing operation or storage semantics.
 
 ## Guides
 

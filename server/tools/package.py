@@ -194,21 +194,14 @@ def build_package(platform, output, go):
         for program in PROGRAMS:
             subprocess.run([go, "build", "-trimpath", "-ldflags=-s -w", "-o", str(root / "build" / (program + suffix)),
                             "./cmd/" + program], cwd=ROOT, env=environment, check=True)
-        gui_environment = dict(environment, CGO_ENABLED="1")
-        if system == "windows" and sys.platform != "win32":
-            gui_environment["CC"] = os.environ.get("GX_WINDOWS_CC", "x86_64-w64-mingw32-gcc")
-        flags = "-s -w -H windowsgui" if system == "windows" else "-s -w"
-        subprocess.run([go, "build", "-trimpath", "-ldflags=" + flags, "-o",
-                        str(root / "build" / ("gx_server" + suffix)), "./cmd/gx_server"],
-                       cwd=ROOT, env=gui_environment, check=True)
         shutil.copytree(ROOT / "data", root / "data", ignore=shutil.ignore_patterns("vssver.scc", "__pycache__", "*.sqlite-wal", "*.sqlite-shm"))
         # Editable policies accompany the same embedded default catalog.
         ai = root / "ai"
         ai.mkdir()
-        for name in ("catalog.lua", "README.md", "HOST.md"):
-            shutil.copy2(ROOT / "ai" / name, ai / name)
-        for name in ("core", "definitions"):
-            shutil.copytree(ROOT / "ai" / name, ai / name,
+        for asset_name in ("catalog.lua", "README.md", "HOST.md"):
+            shutil.copy2(ROOT / "ai" / asset_name, ai / asset_name)
+        for asset_name in ("core", "definitions"):
+            shutil.copytree(ROOT / "ai" / asset_name, ai / asset_name,
                             ignore=lambda directory, names: [n for n in names if not n.endswith(".lua")])
         shutil.copy2(ROOT / "LICENSE", root / "LICENSE")
         shutil.copy2(ROOT / "THIRD_PARTY_NOTICES.md", root / "THIRD_PARTY_NOTICES.md")
@@ -234,9 +227,8 @@ def build_package(platform, output, go):
             launcher.chmod(0o755)
         (root / "README.txt").write_text("""GX Server — the integrated Shaiya GX server
 
-Open build/gx_server (Linux) or build/gx_server.exe (Windows) for the
-one-button GX Server app. Start/Stop works as before. Closing the app
-leaves servers running. The console launcher below is also included.
+GX Server is terminal-only. Run the console launcher below, or open
+build/gx_console (Linux) or build/gx_console.exe (Windows).
 
 SQLite is the primary production database. Its embedded operation requires
 no separate database service.

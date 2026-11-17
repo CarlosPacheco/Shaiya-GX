@@ -24,7 +24,7 @@ from matching builds; there is no supported mixed-version rolling upgrade.
 
 ```mermaid
 flowchart TD
-    Operator[GUI gx_server or terminal gx_console] --> Control[control: exact executable lifecycle]
+    Operator[Terminal gx_console] --> Control[control: exact executable lifecycle]
     Control --> Login[gx_login]
     Control --> World[gx_world]
     Client[GX client] -->|TLS remote / local development TCP| Login
@@ -38,7 +38,6 @@ flowchart TD
 
 | Path | Role and persistence boundary |
 |---|---|
-| `server/cmd/gx_server` | Fyne one-button GUI; shares lifecycle implementation with console |
 | `server/cmd/gx_console` | Terminal start/stop plus account/password and certificate commands |
 | `server/cmd/gx_login` | Credential authentication, server list and login-to-world handoff |
 | `server/cmd/gx_world` | Authoritative simulation and gameplay sessions |
@@ -76,8 +75,8 @@ wait up to 30 seconds before platform fallback. Matching includes executable
 identity, not merely a process name. Native Windows execution was not part of the
 local Linux modernization validation.
 
-Closing the GUI leaves detached login/world running. Use Stop server or the
-console shutdown command to stop those cores. Unexpected process termination does
+Closing the console leaves detached login/world running. Use the
+`shutdown server` command to stop those cores. Unexpected process termination does
 not run cleanup; OS locks release and SQLite WAL recovery handles committed work.
 
 ## State ownership and concurrency

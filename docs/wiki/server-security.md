@@ -153,7 +153,7 @@ a public listener.
 Health here is service-lifecycle health, not a gameplay round-trip or backup
 verification. The controller consumes descriptors internally, checks PID and
 canonical executable, and bypasses HTTP proxies. Normal operator shutdown should
-use the GUI/console rather than expose tokens in shell history. HTTP header/read/
+use the console rather than expose tokens in shell history. HTTP header/read/
 idle/write timeouts and header-size limits apply. No public account-admin web
 service is introduced.
 

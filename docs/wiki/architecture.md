@@ -34,7 +34,7 @@ Original EP5 behavior and recovered constants define appearance and protocol. Ph
 
 The root Go module owns `server/cmd`, `server/internal`, `server/data` and server tools. This is a direct source integration, not a submodule, external repository or remote module dependency. Server `internal` boundaries remain private to the server subtree.
 
-`gx_login` handles authentication/session handoff; `gx_world` owns maps, entities, combat and persistence. `gx_console` and the Fyne `gx_server` micro app share process control. Build outputs are under `server/build`; runtime, data and logs stay relative to that server installation. Compatibility environment names and database filenames are preserved. The advertised name and micro app title are GX Server.
+`gx_login` handles authentication/session handoff; `gx_world` owns maps, entities, combat and persistence. `gx_console` provides terminal process control. Build outputs are under `server/build`; runtime, data and logs stay relative to that server installation. Compatibility environment names and database filenames are preserved. The advertised name is GX Server.
 
 SQLite is the primary production database, using embedded storage without a separate database service. Storage remains behind `server/internal/db`. The included seed deliberately contains the author's shared test accounts and gameplay state; a mutable copy is created only when absent. Portables attach to GX releases. See [server operations](server.md) and [storage](../server/docs/sqlite.md).
 

@@ -169,26 +169,6 @@ Direct GX dependencies: `internal/data/archive`, `internal/data/world`, `interna
 |---|---|
 | [`main`](../../server/cmd/gx_mapbuild/main.go#L23)<br>`func main()` | See the source definition and the subsystem ownership contract. |
 
-## server/cmd/gx_server
-
-Fyne GUI sharing the same lifecycle control as the console; window closure leaves detached cores running.
-
-### main.go
-
-[server/cmd/gx_server/main.go](../../server/cmd/gx_server/main.go#L1)
-
-Command gx_server is a one-button window that starts or stops
-gx_login and gx_world. The servers run detached: closing the
-window leaves them as they are.
-
-Direct GX dependencies: `server/internal/control`.
-
-| Declaration | Responsibility / source comment |
-|---|---|
-| [`iconPNG`](../../server/cmd/gx_server/main.go#L20)<br>`var iconPNG []byte` | See the source definition and the subsystem ownership contract. |
-| [`pollInterval`](../../server/cmd/gx_server/main.go#L22)<br>`const pollInterval = 2 * time.Second` | See the source definition and the subsystem ownership contract. |
-| [`main`](../../server/cmd/gx_server/main.go#L24)<br>`func main()` | See the source definition and the subsystem ownership contract. |
-
 ## server/cmd/gx_world
 
 World bootstrap/lease, definition/map loading, owned scheduler, bounded sessions and graceful storage shutdown.
@@ -290,7 +270,7 @@ type NetworkPolicy struct {
 
 ## server/internal/control
 
-GUI/console process lifecycle, executable-scoped status/stop, detached launch and safe database initialization.
+Terminal process lifecycle, executable-scoped status/stop, detached launch and safe database initialization.
 
 Tests: [stop_unix_test.go](../../server/internal/control/stop_unix_test.go).
 

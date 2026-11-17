@@ -19,8 +19,8 @@ Shaiya GX gx-v0.1.10 Portable/
     data/
 ```
 
-Start `Server/build/gx_server` on Linux or `Server/build/gx_server.exe` on Windows,
-then click **Start server**. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
+Start `Server/build/gx_console` on Linux or `Server/build/gx_console.exe` on Windows,
+then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables and preserve all licenses.
 
 **Latest binary update: [gx-v0.1.10](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.10).**

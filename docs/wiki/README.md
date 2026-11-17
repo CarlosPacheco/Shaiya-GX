@@ -5,7 +5,7 @@
 **Complete gx-v0.1.10 portable for Windows and Linux:** client, GX Server, game data,
 fonts and development database in one download. **No separate data download is
 needed.** Extract the package, start
-`Server/build/gx_server` (or `.exe`), then open the executable in `Client/`.
+`Server/build/gx_console` (or `.exe`) in a terminal, enter `start server`, then open the executable in `Client/`.
 [Setup, requirements and updates](client-portable.md).
 
 The reference for current GX gameplay features, item data, administration and
@@ -74,7 +74,7 @@ mount migration and preserving your personal database.
   limits, transactional inventory changes, temporary spawns and protocol details.
 - [Item data and compiled rules](item-data.md): where each setting lives, what
   requires rebuilding, native target flags, safe content migrations and tests.
-- [Server operations](server-operations.md): GUI/console, LAN setup, seed versus
+- [Server operations](server-operations.md): Terminal operation, LAN setup, seed versus
   mutable database, persistence, updates, backup and recovery.
 - [Data formats](data-formats.md): loose resources, native tables, PNG/Ogg,
   external fonts and importing legally obtained original assets.

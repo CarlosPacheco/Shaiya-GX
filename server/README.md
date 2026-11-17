@@ -2,7 +2,7 @@
 
 The integrated server component of [Shaiya GX](../README.md), formerly Rapture. This directory is part of the parent GX repository and Go module; it is not a separate project or submodule.
 
-The micro app is **GX Server** (`build/gx_server[.exe]`). It keeps the same one-button Start/Stop behavior. The terminal console uses `start server` / `shutdown server`. Closing either controller leaves login/world running.
+**GX Server** is terminal-only. Run `build/gx_console[.exe]` and enter `start server` / `shutdown server`. Closing the console leaves login/world running.
 
 From the GX root:
 
@@ -11,7 +11,7 @@ From the GX root:
 python3 server/tools/package.py --output out/portable
 ```
 
-On Windows use `server/tools/build.ps1`. Portable Linux/Windows archives, including micro app and console, are published in [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest).
+On Windows use `server/tools/build.ps1`. Portable Linux/Windows archives, including the terminal console and login/world services, are published in [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest).
 
 **SQLite is the primary production database, with embedded operation for straightforward deployment and distribution.** The distributed seed retains the author's current test accounts, characters, items and definitions. First startup copies it into an independent mutable runtime; updates preserve existing runtime state.
 

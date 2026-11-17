@@ -31,11 +31,13 @@ def git(*args):
     return subprocess.check_output(['git', *args])
 
 
-def forbidden(path):
+def forbidden(path, historical=False):
     p = PurePosixPath(path)
-    # Explicitly distributed server fixtures and authored app icon. This does
+    # Explicitly distributed server fixtures and historical authored artwork. This does
     # not permit personal runtime copies, client archives or build artifacts.
-    if path in GALLERY_IMAGES or path in {'server/cmd/gx_server/icon.png', 'internal/audio/testdata/tone.ogg'}:
+    if historical and path == 'server/cmd/gx_server/icon.png':
+        return False  # Former authored icon is allowed only in existing history.
+    if path in GALLERY_IMAGES or path == 'internal/audio/testdata/tone.ogg':
         return False
     if p.parts[:2] == ('server', 'data'):
         return (p.suffix.lower() in {'.sah', '.saf', '.exe', '.dll', '.pem', '.key', '.env'}
@@ -81,7 +83,7 @@ def main():
             oid, _, path = line.partition(b' ')
             if path:
                 path = path.decode()
-                if forbidden(path):
+                if forbidden(path, historical=True):
                     errors.append(f'forbidden history path: {path}')
                 blobs.setdefault(oid.decode(), path)
     reader = subprocess.Popen(['git', 'cat-file', '--batch'], stdin=subprocess.PIPE,

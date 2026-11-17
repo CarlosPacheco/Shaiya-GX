@@ -2,13 +2,13 @@
 
 GX Server is part of GX under `server/`. In a source checkout, server paths in this guide are relative to `server/`; in a portable archive they are relative to the extracted top-level folder. The former standalone Rapture repository is retired after migration.
 
-## Micro app and console
+## Terminal console
 
-`build/gx_server[.exe]` opens **GX Server**. Click Start server or Stop server. Login/world remain detached when you close the window. `Start GX Server.sh` / `.bat` opens the terminal console; commands are `start server` and `shutdown server`. The same embedded database and game services back both controls. Use one controller per installation at a time.
+Run `build/gx_console[.exe]` in a terminal, or use `Start GX Server.sh` / `.bat`. Enter `start server` or `shutdown server`. Closing the console leaves login/world detached. Use one console per installation at a time.
 
 Alternatively run `build/gx_login[.exe]` and `build/gx_world[.exe]` directly and manage those process lifetimes yourself. Each binary finds `data/` relative to its executable when no data/database overrides are provided, so launching from another working directory works. Do not mix binaries from different versions.
 
-The controller checks executable paths, including on Windows, so stopping one installation does not stop a separate copy merely because its process names match. An app status refresh may take several seconds, especially Windows process enumeration.
+The controller checks executable paths, including on Windows, so stopping one installation does not stop a separate copy merely because its process names match. Status checks may take several seconds, especially Windows process enumeration.
 
 ## Database and persistence
 
@@ -32,14 +32,14 @@ Windows PowerShell (replace the example IP with your server's reachable IPv4 add
 $env:RAPTURE_LOGIN_LISTEN = '0.0.0.0:30800'
 $env:RAPTURE_WORLD_LISTEN = '0.0.0.0:30810'
 $env:RAPTURE_PUBLIC_IP = '192.168.1.20'
-.\build\gx_server.exe
+.\build\gx_console.exe
 ```
 
 Linux:
 
 ```sh
 RAPTURE_LOGIN_LISTEN=0.0.0.0:30800 RAPTURE_WORLD_LISTEN=0.0.0.0:30810 \
-RAPTURE_PUBLIC_IP=192.168.1.20 ./build/gx_server
+RAPTURE_PUBLIC_IP=192.168.1.20 ./build/gx_console
 ```
 
 Allow inbound TCP 30800/30810 on the server firewall. Connect the client with `-login 192.168.1.20:30800`. If using another world port, also pass `-world-port PORT` to the GX client. `RAPTURE_PUBLIC_IP` is the address advertised to the client for world, so it must be reachable from the client's computer; `0.0.0.0` is a listen wildcard, not an advertised address.

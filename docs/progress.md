@@ -33,7 +33,7 @@ project completion percentage.
 | Gatekeeper travel | NPC approach, destination selection, confirmation, fees, same-map/cross-map travel and saved position | [Gatekeeper tests](../internal/app/gatekeeper_integration_test.go) |
 | Guild workflows | Creation, roster/ranks, notices, Etin and guild storage | [Guild creation](../internal/app/guild_create_integration_test.go), [bank tests](../internal/app/guild_bank_integration_test.go) |
 | Portable client | Linux and Windows executables share adjacent data; external fonts and built-in Vorbis decoder | [Portable guide](client-portable.md), [build workflow](../.github/workflows/ci.yml) |
-| Portable GX Server | GUI and console control login/world; development seed creates a separate mutable runtime | [Distribution guide](../server/docs/distribution.md), [native package verification](../server/tools/package.py) |
+| Portable GX Server | Terminal console controls login/world; development seed creates a separate mutable runtime | [Distribution guide](../server/docs/distribution.md), [native package verification](../server/tools/package.py) |
 
 Chat, party/raid, quests, trade/duels, social windows and the mall are also implemented; their remaining states and presentation gaps are detailed in [interface status](interface.md). A delivered workflow does not mark every feature variant complete.
 
