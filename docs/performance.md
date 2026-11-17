@@ -251,3 +251,11 @@ FPS or eliminate the need for live dungeon validation. GPU benchmark cases each
 own a current context on their locked OS thread. Real-asset regressions cover
 hover/click occlusion, standard/reversed depth, map/resize invalidation and
 matching visual heights on dungeon floors and outdoor terrain.
+
+## Reproducible CPU/render baseline
+
+Use the [client measurement harness](client-measurement.md) for repeated real-asset
+scenes, verified visible water, dungeons, 200/400-actor stress and synthetic packet
+pumping. It separates update/draw submission, explicit GPU queue wait and distinct
+GPU timestamp samples, with p50/p95/p99, captures and isolated profiles. Hidden
+throughput is not presented FPS; shared-GPU runs are explicitly classified.

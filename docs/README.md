@@ -4,6 +4,7 @@ Start with [first run](quickstart.md), then [building and testing](building.md).
 
 | Guide | Contents |
 |---|---|
+| [CPU/render measurements](client-measurement.md) | Reproducible scenes, crowd/packet stress, percentiles, GPU waits and CPU profiles |
 | [Performance metrics](performance.md) | On-screen FPS, frame/CPU/GPU timings, RAM, estimated VRAM and draw calls |
 | [Streaming and LOD](streaming-lod.md) | Sector visibility, CPU loading workers, conservative object LOD and measurements |
 | [Progress](progress.md) | Delivered workflows, evidence and remaining work |
