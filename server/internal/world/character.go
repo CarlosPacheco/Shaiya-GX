@@ -2,7 +2,6 @@ package world
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/element"
-	"github.com/Spelunkern/Shaiya-GX/internal/enchant"
 	"github.com/Spelunkern/Shaiya-GX/internal/itemtype"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -80,9 +79,8 @@ type EquipmentStats struct {
 	ItemAttack, Variance uint32
 	Defense, Resistance  uint32
 	Absorption           uint32
-	HealingBonus         uint32 // GX: equipped weapon enchantment adds direct HP spell healing.
-	AttackAttr           uint8  // the weapon's (or its gem's) element
-	DefenseAttr          uint8  // the armour's (slot 1) element, CUser::SetAttrDef
+	AttackAttr           uint8 // the weapon's (or its gem's) element
+	DefenseAttr          uint8 // the armour's (slot 1) element, CUser::SetAttrDef
 	RangedWeapon         bool
 	// CUser::SetSkillAbility / AddSkillPassive / gems: per-category
 	// (melee, ranged, magic) additions and other modifiers.
@@ -278,11 +276,7 @@ func GetEquipmentStats(items []db.Item) EquipmentStats {
 			case step > 50 && step-50 <= enchantMaxLevel:
 				e.Absorption = satAdd(e.Absorption, armorEnchantAbsorption[step-50])
 			case step > 0 && step <= enchantMaxLevel:
-				bonus := enchant.WeaponAttack[step]
-				e.ItemAttack = satAdd(e.ItemAttack, bonus)
-				if IsWeaponItemType(it.Type) {
-					e.HealingBonus = satAdd(e.HealingBonus, bonus)
-				}
+				e.ItemAttack = satAdd(e.ItemAttack, weaponEnchantAttackBonus[step])
 			}
 		}
 	}
@@ -299,7 +293,6 @@ type CharacterStats struct {
 	MinAttack, MaxAttack            uint32
 	MinMagic, MaxMagic              uint32
 	Defense, Resistance, Absorption uint32
-	HealingBonus                    uint32
 	// CUser::SetAttack per category (melee, ranged, magic).
 	Level        uint16
 	Attack       [3]int32
@@ -360,7 +353,6 @@ func StatsFor(ch *db.Character, e EquipmentStats) CharacterStats {
 	}
 	s.Defense = uint32(max(s.Guard[attackMelee], 0))
 	s.Absorption = e.Absorption
-	s.HealingBonus = e.HealingBonus
 	pools := [3]uint32{s.MaxHP, s.MaxSP, s.MaxMP}
 	for i := 0; i < 3; i++ {
 		kc := kcPercent(pools[i], e.KCRecoverPct[i])

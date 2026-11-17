@@ -158,8 +158,7 @@ func (s *Session) friendlySkill(k db.CharacterSkill, def *db.SkillDef, target ui
 		default:
 			// HealUser: a non-zero HealHP adds twice the caster's WIS.
 			if def.HealHP > 0 {
-				// GX: the caster's weapon enchantment boosts direct HP healing only.
-				heal.HP = satAdd(satAdd(uint32(def.HealHP), satMul(stats.Wis, 2)), stats.HealingBonus)
+				heal.HP = satAdd(uint32(def.HealHP), satMul(stats.Wis, 2))
 			}
 			heal.MP, heal.SP = uint32(max(def.HealMP, 0)), uint32(max(def.HealSP, 0))
 		}

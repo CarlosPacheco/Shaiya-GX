@@ -20,7 +20,7 @@ var enchantConfig = struct {
 }
 
 // Bonuses are indexed by the resulting enchantment level, starting at zero.
-// Weapon attack/direct-healing bonuses live in internal/enchant for client parity.
+var weaponEnchantAttackBonus = [enchantMaxLevel + 1]uint32{0, 7, 14, 21, 31, 41, 51, 64, 77, 90, 106, 122, 138, 157, 176, 195, 217, 239, 261, 286, 311}
 var armorEnchantAbsorption = [enchantMaxLevel + 1]uint32{0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100}
 
 func validateEnchantRules() error {

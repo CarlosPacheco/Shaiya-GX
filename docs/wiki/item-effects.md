@@ -52,10 +52,6 @@ Recreation adds its separately stored values. Weapon enchantment adds its total
 attack bonus for the current level; armor enchantment adds flat absorption.
 Those bonuses are compiled tables, not sums of preceding levels.
 
-GX additionally grants equipped weapon enchantments an equal flat bonus to
-direct HP healing spells. The associated weapon tooltip shows `Healing +N`
-in light green. Periodic heals do not scale; see [blacksmith](blacksmith.md).
-
 The effective combat totals are calculated on the server. Tooltip descriptions
 are not a substitute for confirmed stat packets. In particular, a numeric native
 field can have different meaning in a consumable, a gem and a piece of armor.

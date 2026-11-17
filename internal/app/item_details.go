@@ -7,7 +7,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
-	"github.com/Spelunkern/Shaiya-GX/internal/enchant"
 	"github.com/Spelunkern/Shaiya-GX/internal/itemtype"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
@@ -147,14 +146,6 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 	if equipment || def.Type == 30 {
 		if absorption := itemAbsorption(def, instance); absorption > 0 {
 			add(fmt.Sprintf("%s %d", label(485, "Absorption"), absorption), white)
-		}
-	}
-	if rt >= 1 && rt <= 15 && instance != nil && def.Server != 0 && def.RequiredStats[4] > 0 && def.RequiredStats[4] < 100 {
-		raw := strings.TrimRight(instance.Craft, " ")
-		if craft.enchant > 0 && len(raw) == 20 && raw[18] < '5' {
-			if bonus := enchant.WeaponAttack[craft.enchant]; bonus > 0 {
-				add(fmt.Sprintf("Healing +%d", bonus), [4]float32{.6, 1, .6, 1})
-			}
 		}
 	}
 	if def.Attribute >= 1 && def.Attribute <= 8 {

@@ -135,18 +135,8 @@ There is no ItemEnchant.ini runtime dependency. Default cap: **+20**.
 
 Rates are stored per million: 900000 means 90%. Index N describes N -> N+1;
 bonus arrays instead index the resulting level. Bonuses are totals at that
-level, not a sum of all preceding rows. Weapon bonuses add equipment attack.
-As a GX gameplay extension, an equipped enchanted weapon also adds the same
-flat amount to the caster's direct HP healing spells: +1 grants +7 healing,
-and +20 grants +311. The bonus is applied once per healed recipient, on top
-of the spell's base HP healing and WIS scaling, and capped by the target's
-maximum HP. It does not scale periodic healing, HP drain, potions, passive
-recovery, MP/SP restoration or cures. The weapon tooltip shows `Healing +N`
-in light green. Unequipping the weapon removes the bonus. Client and server
-share the weapon bonus table in
-[`internal/enchant/bonus.go`](../../internal/enchant/bonus.go).
-
-Armor absorption subtracts a flat amount from incoming damage, with the
+level, not a sum of all preceding rows. Weapon bonuses add equipment attack;
+armor absorption subtracts a flat amount from incoming damage, with the
 existing minimum-damage rule. Changing MaxLevel, rates or
 bonuses requires rebuilding and restarting gx_world. Raising the cap requires
 editing the corresponding table entries as well. Zero rates mean zero success.
