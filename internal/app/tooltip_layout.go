@@ -9,11 +9,12 @@ import (
 )
 
 type tooltipExtras struct {
-	maxOJ      uint16
-	maxOJStats uint8
-	forgeInfo  string
-	material   *sdata.Item
-	effects    []sdata.Skill
+	maxOJ        uint16
+	maxOJStats   uint8
+	forgeInfo    string
+	material     *sdata.Item
+	effects      []sdata.Skill
+	effectChance bool
 }
 
 type tooltipSocket struct {
@@ -126,6 +127,9 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 			y += 5
 			block("Effects", [4]float32{.75, .75, .75, 1}, y+3, false)
 			layout.effectsX, layout.effectsY = 16+f.Width("Effects"), y
+			if skill := e.effects[0]; e.effectChance && skill.Effect == 3 && skill.SuccessType >= 1 && skill.SuccessType <= 3 {
+				layout.runs = append(layout.runs, tooltipRun{fmt.Sprintf("%d%%", skill.SuccessValue), white, layout.effectsX + 22, y + 3, false})
+			}
 			y += 22 * ((len(e.effects) + 5) / 6)
 		}
 		if e.maxOJ > 0 {

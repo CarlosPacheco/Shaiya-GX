@@ -2,6 +2,7 @@ package world
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"net"
 	"testing"
@@ -244,12 +245,16 @@ func TestGMSpawnsAreSeparatedAndVisibleImmediately(t *testing.T) {
 		t.Fatal(err)
 	}
 	gmResponse(t, packets)
+	if !s.handleGMCommand(fmt.Sprintf("/mmake %d", id)) {
+		t.Fatal("mob command not handled")
+	}
+	gmResponse(t, packets)
 	if !s.handleGMCommand("/nmake 1 1") {
 		t.Fatal("NPC command not handled")
 	}
 	gmResponse(t, packets)
 	entities := EntitiesOnMap(mapID)
-	if len(entities.Mobs) != 24 || len(entities.NPCs) != 1 {
+	if len(entities.Mobs) != 25 || len(entities.NPCs) != 1 {
 		t.Fatal("spawn count")
 	}
 	for i, m := range entities.Mobs {

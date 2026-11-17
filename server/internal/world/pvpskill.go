@@ -183,10 +183,13 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 		}
 		sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius, frame, label)
 	}
+	lapisDebuff := h.ItemCast && sk.TypeEffect == typeEffectDebuff
 	s.cancelMove()
 	kind := min(int(sk.Kind), 2)
 	if s.blocksAttack(kind) || !userSkillHits(&h.Stats, &stats, sk) {
-		send(attackResultMiss, [3]uint16{}, [3]uint16{}, "pvp skill (miss)")
+		if !lapisDebuff {
+			send(attackResultMiss, [3]uint16{}, [3]uint16{}, "pvp skill (miss)")
+		}
 		return false
 	}
 	duelHitBy(s.player, h.AttackerID) // PvPChkLeaveByAttack
@@ -225,7 +228,9 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 	if drain && !mirrored {
 		healed = dealt
 	}
-	send(code, shown, healed, "pvp skill")
+	if !lapisDebuff {
+		send(code, shown, healed, "pvp skill")
+	}
 	if !drain && !killed && (sk.AddDamageHP != 0 || sk.AddDamageSP != 0 || sk.AddDamageMP != 0) {
 		add := [3]uint32{uint32(uint16(sk.AddDamageHP)), uint32(uint16(sk.AddDamageSP)), uint32(uint16(sk.AddDamageMP))}
 		killed = s.takeUserSkillDamage(h.AttackerID, add)
@@ -239,6 +244,9 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 	if !killed && sk.TypeEffect == typeEffectDebuff {
 		if _, ok := s.addEffect(sk, 0); ok {
 			s.buffs[len(s.buffs)-1].CasterUser = h.AttackerID
+			if lapisDebuff {
+				send(code, shown, healed, "pvp skill")
+			}
 		}
 	}
 	s.log.Printf("GX Server World pvp skill hit attacker_id=%d target_id=%d skill_id=%d damage=%v crit=%t mirrored=%t killed=%t",

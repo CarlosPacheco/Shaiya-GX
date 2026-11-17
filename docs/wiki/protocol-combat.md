@@ -834,7 +834,7 @@ Declarations: [packet.BuffRemove](../../server/internal/packet/packet.go#L117), 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [removeEffects (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L197), [clearBuffsOnDeath (server/internal/world/skillattack.go)](../../server/internal/world/skillattack.go#L299)
+**S→C serializers:** [removeEffects (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L197), [clearBuffsOnDeath (server/internal/world/skillattack.go)](../../server/internal/world/skillattack.go#L310)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L654)
 
@@ -880,7 +880,7 @@ func (s *Session) removeEffects(match func(*ActiveBuff) bool, why string) {
 
 <details><summary>clearBuffsOnDeath — server/internal/world/skillattack.go</summary>
 
-[Source definition](../../server/internal/world/skillattack.go#L299)
+[Source definition](../../server/internal/world/skillattack.go#L310)
 
 ```go
 func (s *Session) clearBuffsOnDeath() {
@@ -1473,7 +1473,7 @@ Declarations: [proto.SkillUserExtraDamage](../../internal/proto/opcodes.go#L127)
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildUserSkillExtra (server/internal/world/pvpskill.go)](../../server/internal/world/pvpskill.go#L284)
+**S→C serializers:** [buildUserSkillExtra (server/internal/world/pvpskill.go)](../../server/internal/world/pvpskill.go#L292)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L839)
 
@@ -1483,7 +1483,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildUserSkillExtra — server/internal/world/pvpskill.go</summary>
 
-[Source definition](../../server/internal/world/pvpskill.go#L284)
+[Source definition](../../server/internal/world/pvpskill.go#L292)
 
 ```go
 func buildUserSkillExtra(caster, target uint32, skillID uint16, level uint8, add [3]uint32) []byte {
@@ -1747,7 +1747,7 @@ Declarations: [proto.SkillMobDrain](../../internal/proto/opcodes.go#L129).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildDrainPacket (server/internal/world/skillattack.go)](../../server/internal/world/skillattack.go#L275)
+**S→C serializers:** [buildDrainPacket (server/internal/world/skillattack.go)](../../server/internal/world/skillattack.go#L286)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L833)
 
@@ -1757,7 +1757,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildDrainPacket — server/internal/world/skillattack.go</summary>
 
-[Source definition](../../server/internal/world/skillattack.go#L275)
+[Source definition](../../server/internal/world/skillattack.go#L286)
 
 ```go
 func buildDrainPacket(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, damage, healed [3]uint16) []byte {
@@ -1919,10 +1919,14 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 	case first:
 		op = packet.SkillUse
 	}
+	lapisDebuff := s.itemAttacking && def.TypeEffect == typeEffectDebuff
 	SetMobAggro(ch.MapID, target, ch.ID)
 	s.lastCombatAt = time.Now()
 	if !playerSkillHits(&stats, &mc, md, def) {
 		recordMobAIMiss(ch.MapID, mob.ID, ch.ID)
+		if lapisDebuff {
+			return true
+		}
 		s.log.Printf("GX Server World skill miss skill_id=%d level=%d mob_global_id=%d mob_id=%d", k.SkillID, k.Level, mob.ID, mob.MobID)
 		frame := buildSkillUseResult(op, attackResultMiss, ch.ID, mob.ID, k.SkillID, k.Level, 0, 0, 0)
 		if drain {
@@ -1953,7 +1957,9 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 			[3]uint16{uint16(min(hp, 65535)), uint16(min(sp, 65535)), uint16(min(mp, 65535))})
 		s.persist()
 	}
-	sendNear(ch.MapID, r.Mob.PosX, r.Mob.PosZ, CombatRadius, frame, "skill use")
+	if !lapisDebuff {
+		sendNear(ch.MapID, r.Mob.PosX, r.Mob.PosZ, CombatRadius, frame, "skill use")
+	}
 	if drain {
 		st := s.stats()
 		s.send(buildCurrentHitpoints(&st), "0x0521 current hp after drain")
@@ -1975,8 +1981,13 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 	}
 	// TypeEffect 3 leaves the skill on the mob (CMob::AddApplySkill).
 	if alive && def.TypeEffect == typeEffectDebuff {
-		if speed, ok := ApplyMobEffect(ch.MapID, target, ch.ID, def); ok && speed != nil {
-			sendNear(ch.MapID, r.Mob.PosX, r.Mob.PosZ, BroadcastRadius, speed, "0x0609 mob speed")
+		if speed, ok := ApplyMobEffect(ch.MapID, target, ch.ID, def); ok {
+			if lapisDebuff {
+				sendNear(ch.MapID, r.Mob.PosX, r.Mob.PosZ, CombatRadius, frame, "skill use")
+			}
+			if speed != nil {
+				sendNear(ch.MapID, r.Mob.PosX, r.Mob.PosZ, BroadcastRadius, speed, "0x0609 mob speed")
+			}
 		}
 	}
 	if alive {
@@ -2478,7 +2489,7 @@ Declarations: [proto.CharacterPvPKills](../../internal/proto/opcodes.go#L105).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [gmSet (server/internal/world/gm.go)](../../server/internal/world/gm.go#L415), [killPCToCount (server/internal/world/pvpdeath.go)](../../server/internal/world/pvpdeath.go#L172)
+**S→C serializers:** [gmSet (server/internal/world/gm.go)](../../server/internal/world/gm.go#L418), [killPCToCount (server/internal/world/pvpdeath.go)](../../server/internal/world/pvpdeath.go#L172)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L356)
 
@@ -2488,7 +2499,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>gmSet — server/internal/world/gm.go</summary>
 
-[Source definition](../../server/internal/world/gm.go#L415)
+[Source definition](../../server/internal/world/gm.go#L418)
 
 ```go
 func (s *Session) gmSet(args []string) error {

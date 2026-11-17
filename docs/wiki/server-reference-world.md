@@ -1130,14 +1130,14 @@ Direct GX dependencies: `internal/gm`, `server/internal/db`, `server/internal/pa
 | [`gmReply`](../../server/internal/world/gm.go#L18)<br>`func (s *Session) gmReply(message string)` | See the source definition and the subsystem ownership contract. |
 | [`gmNumbers`](../../server/internal/world/gm.go#L38)<br>`func gmNumbers(args []string, bounds ...uint64) ([]uint64, error)` | See the source definition and the subsystem ownership contract. |
 | [`handleGMCommand`](../../server/internal/world/gm.go#L54)<br>`func (s *Session) handleGMCommand(text string) bool` | Known commands are consumed even when refused; they never become public chat. |
-| [`gmClearInventory`](../../server/internal/world/gm.go#L141)<br>`func (s *Session) gmClearInventory() error` | Clear carried inventory only. Equipped items and warehouse contents survive. |
-| [`planGMGrant`](../../server/internal/world/gm.go#L167)<br>`func planGMGrant(items []db.Item, def *db.ItemDef, quantity int) ([]db.Item, []db.Item, []db.Item, error)` | planGMGrant keeps the entire request atomic, including quantities above 255. |
-| [`gmGiveItem`](../../server/internal/world/gm.go#L199)<br>`func (s *Session) gmGiveItem(itemType, id uint8, quantity int) error` | See the source definition and the subsystem ownership contract. |
-| [`gmSpawnPositions`](../../server/internal/world/gm.go#L224)<br>`func gmSpawnPositions(mapID uint16, x, z float32, count int, entities *MapEntities) ([][2]float32, error)` | Spawn positions form expanding rings; occupied points and blocked cells are rejected, including entities created by earlier commands. |
-| [`gmSpawn`](../../server/internal/world/gm.go#L273)<br>`func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error` | See the source definition and the subsystem ownership contract. |
-| [`gmMove`](../../server/internal/world/gm.go#L341)<br>`func (s *Session) gmMove(mapID uint16) error` | See the source definition and the subsystem ownership contract. |
-| [`gmSetUsage`](../../server/internal/world/gm.go#L412)<br>`const gmSetUsage = "usage: /set money&#124;kill&#124;str&#124;dex&#124;rec&#124;int&#124;wis&#124;luc amount"` | See the source definition and the subsystem ownership contract. |
-| [`gmSet`](../../server/internal/world/gm.go#L415)<br>`func (s *Session) gmSet(args []string) error` | gmSet changes only the issuing character. Claimed rewards remain claimed. |
+| [`gmClearInventory`](../../server/internal/world/gm.go#L144)<br>`func (s *Session) gmClearInventory() error` | Clear carried inventory only. Equipped items and warehouse contents survive. |
+| [`planGMGrant`](../../server/internal/world/gm.go#L170)<br>`func planGMGrant(items []db.Item, def *db.ItemDef, quantity int) ([]db.Item, []db.Item, []db.Item, error)` | planGMGrant keeps the entire request atomic, including quantities above 255. |
+| [`gmGiveItem`](../../server/internal/world/gm.go#L202)<br>`func (s *Session) gmGiveItem(itemType, id uint8, quantity int) error` | See the source definition and the subsystem ownership contract. |
+| [`gmSpawnPositions`](../../server/internal/world/gm.go#L227)<br>`func gmSpawnPositions(mapID uint16, x, z float32, count int, entities *MapEntities) ([][2]float32, error)` | Spawn positions form expanding rings; occupied points and blocked cells are rejected, including entities created by earlier commands. |
+| [`gmSpawn`](../../server/internal/world/gm.go#L276)<br>`func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error` | See the source definition and the subsystem ownership contract. |
+| [`gmMove`](../../server/internal/world/gm.go#L344)<br>`func (s *Session) gmMove(mapID uint16) error` | See the source definition and the subsystem ownership contract. |
+| [`gmSetUsage`](../../server/internal/world/gm.go#L415)<br>`const gmSetUsage = "usage: /set money&#124;kill&#124;str&#124;dex&#124;rec&#124;int&#124;wis&#124;luc amount"` | See the source definition and the subsystem ownership contract. |
+| [`gmSet`](../../server/internal/world/gm.go#L418)<br>`func (s *Session) gmSet(args []string) error` | gmSet changes only the issuing character. Claimed rewards remain claimed. |
 
 ### gm_map.go
 
@@ -2585,9 +2585,9 @@ Direct GX dependencies: `internal/skillrange`, `server/internal/db`, `server/int
 | [`afterSkillStrikes`](../../server/internal/world/pvpskill.go#L147)<br>`func (s *Session) afterSkillStrikes(def *db.SkillDef)` | afterSkillStrikes is detail 23's sacrifice of the caster after the hits. |
 | [`queueSkillHits`](../../server/internal/world/pvpskill.go#L153)<br>`func (s *Session) queueSkillHits(p *ConnectedPlayer, def *db.SkillDef, first bool, n uint8)` | See the source definition and the subsystem ownership contract. |
 | [`applyUserSkillHit`](../../server/internal/world/pvpskill.go#L165)<br>`func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool` | applyUserSkillHit is the target side of CUser::AttackUser(skill); true when this character died. |
-| [`takeUserSkillDamage`](../../server/internal/world/pvpskill.go#L254)<br>`func (s *Session) takeUserSkillDamage(attackerID uint32, d [3]uint32) bool` | takeUserSkillDamage is CUser::Damage with SP and MP damage too. |
-| [`applyDrainHeal`](../../server/internal/world/pvpskill.go#L272)<br>`func (s *Session) applyDrainHeal(h pendingUserHit)` | applyDrainHeal is CUser::Heal on the drain's caster. |
-| [`buildUserSkillExtra`](../../server/internal/world/pvpskill.go#L284)<br>`func buildUserSkillExtra(caster, target uint32, skillID uint16, level uint8, add [3]uint32) []byte` | buildUserSkillExtra (0x0514): caster, target, skill, level, the AddDamage HP/SP/MP. |
+| [`takeUserSkillDamage`](../../server/internal/world/pvpskill.go#L262)<br>`func (s *Session) takeUserSkillDamage(attackerID uint32, d [3]uint32) bool` | takeUserSkillDamage is CUser::Damage with SP and MP damage too. |
+| [`applyDrainHeal`](../../server/internal/world/pvpskill.go#L280)<br>`func (s *Session) applyDrainHeal(h pendingUserHit)` | applyDrainHeal is CUser::Heal on the drain's caster. |
+| [`buildUserSkillExtra`](../../server/internal/world/pvpskill.go#L292)<br>`func buildUserSkillExtra(caster, target uint32, skillID uint16, level uint8, add [3]uint32) []byte` | buildUserSkillExtra (0x0514): caster, target, skill, level, the AddDamage HP/SP/MP. |
 
 ### quest_map.go
 
@@ -3275,10 +3275,10 @@ Direct GX dependencies: `internal/skillrange`, `server/internal/db`, `server/int
 | [`sacrifice`](../../server/internal/world/skillattack.go#L138)<br>`func (s *Session) sacrifice()` | sacrifice is detail 23's CUser::Damage of the caster's whole HP. |
 | [`skillMobsWithin`](../../server/internal/world/skillattack.go#L168)<br>`func (s *Session) skillMobsWithin(x, y, z, r float32) []uint32` | See the source definition and the subsystem ownership contract. |
 | [`skillHit`](../../server/internal/world/skillattack.go#L180)<br>`func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill, first bool) bool` | skillHit is CUser::AttackMob with a skill. It returns whether the mob is still alive. |
-| [`buildSkillDrainResult`](../../server/internal/world/skillattack.go#L269)<br>`func buildSkillDrainResult(result uint8, sender, target uint32, skillID uint16, level uint8, damage, healed [3]uint16) []byte` | buildSkillDrainResult (0x0518): the 0x0517 layout plus the healed HP/SP/MP. |
-| [`buildDrainPacket`](../../server/internal/world/skillattack.go#L275)<br>`func buildDrainPacket(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, damage, healed [3]uint16) []byte` | buildDrainPacket is the drain layout shared by 0x0518 (on a mob) and 0x0512 (on a user). |
-| [`inSkillRange`](../../server/internal/world/skillattack.go#L293)<br>`func (s *Session) inSkillRange(m *MapMob, def *db.SkillDef, st *CharacterStats) bool` | inSkillRange checks launch reach, including mob size and body allowance, current height and line of sight. Release grace is reserved for prepared casts. |
-| [`clearBuffsOnDeath`](../../server/internal/world/skillattack.go#L299)<br>`func (s *Session) clearBuffsOnDeath()` | clearBuffsOnDeath is CUser::ClearApplySkillByDeath: every active skill ends except those with FixRange set. |
+| [`buildSkillDrainResult`](../../server/internal/world/skillattack.go#L280)<br>`func buildSkillDrainResult(result uint8, sender, target uint32, skillID uint16, level uint8, damage, healed [3]uint16) []byte` | buildSkillDrainResult (0x0518): the 0x0517 layout plus the healed HP/SP/MP. |
+| [`buildDrainPacket`](../../server/internal/world/skillattack.go#L286)<br>`func buildDrainPacket(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, damage, healed [3]uint16) []byte` | buildDrainPacket is the drain layout shared by 0x0518 (on a mob) and 0x0512 (on a user). |
+| [`inSkillRange`](../../server/internal/world/skillattack.go#L304)<br>`func (s *Session) inSkillRange(m *MapMob, def *db.SkillDef, st *CharacterStats) bool` | inSkillRange checks launch reach, including mob size and body allowance, current height and line of sight. Release grace is reserved for prepared casts. |
+| [`clearBuffsOnDeath`](../../server/internal/world/skillattack.go#L310)<br>`func (s *Session) clearBuffsOnDeath()` | clearBuffsOnDeath is CUser::ClearApplySkillByDeath: every active skill ends except those with FixRange set. |
 
 ### skillcast.go
 

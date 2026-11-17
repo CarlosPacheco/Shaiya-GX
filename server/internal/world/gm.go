@@ -103,9 +103,12 @@ func (s *Session) handleGMCommand(text string) bool {
 		}
 		err = s.gmGiveItem(uint8(n[0]), uint8(n[1]), int(n[2]))
 	case "/mmake":
+		if len(args) == 1 {
+			args = append(args, "1")
+		}
 		n, e := gmNumbers(args, 65535, gmMaxSpawn)
 		if e != nil {
-			s.gmReply("Usage: /mmake mobid quantity (1-100)")
+			s.gmReply("Usage: /mmake mobid [quantity=1] (1-100)")
 			break
 		}
 		err = s.gmSpawn(uint16(n[0]), int(n[1]), 0)

@@ -198,10 +198,14 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 	case first:
 		op = packet.SkillUse
 	}
+	lapisDebuff := s.itemAttacking && def.TypeEffect == typeEffectDebuff
 	SetMobAggro(ch.MapID, target, ch.ID)
 	s.lastCombatAt = time.Now()
 	if !playerSkillHits(&stats, &mc, md, def) {
 		recordMobAIMiss(ch.MapID, mob.ID, ch.ID)
+		if lapisDebuff {
+			return true
+		}
 		s.log.Printf("GX Server World skill miss skill_id=%d level=%d mob_global_id=%d mob_id=%d", k.SkillID, k.Level, mob.ID, mob.MobID)
 		frame := buildSkillUseResult(op, attackResultMiss, ch.ID, mob.ID, k.SkillID, k.Level, 0, 0, 0)
 		if drain {
@@ -232,7 +236,9 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 			[3]uint16{uint16(min(hp, 65535)), uint16(min(sp, 65535)), uint16(min(mp, 65535))})
 		s.persist()
 	}
-	sendNear(ch.MapID, r.Mob.PosX, r.Mob.PosZ, CombatRadius, frame, "skill use")
+	if !lapisDebuff {
+		sendNear(ch.MapID, r.Mob.PosX, r.Mob.PosZ, CombatRadius, frame, "skill use")
+	}
 	if drain {
 		st := s.stats()
 		s.send(buildCurrentHitpoints(&st), "0x0521 current hp after drain")
@@ -254,8 +260,13 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 	}
 	// TypeEffect 3 leaves the skill on the mob (CMob::AddApplySkill).
 	if alive && def.TypeEffect == typeEffectDebuff {
-		if speed, ok := ApplyMobEffect(ch.MapID, target, ch.ID, def); ok && speed != nil {
-			sendNear(ch.MapID, r.Mob.PosX, r.Mob.PosZ, BroadcastRadius, speed, "0x0609 mob speed")
+		if speed, ok := ApplyMobEffect(ch.MapID, target, ch.ID, def); ok {
+			if lapisDebuff {
+				sendNear(ch.MapID, r.Mob.PosX, r.Mob.PosZ, CombatRadius, frame, "skill use")
+			}
+			if speed != nil {
+				sendNear(ch.MapID, r.Mob.PosX, r.Mob.PosZ, BroadcastRadius, speed, "0x0609 mob speed")
+			}
 		}
 	}
 	if alive {
