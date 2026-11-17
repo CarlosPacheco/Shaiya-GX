@@ -23,3 +23,14 @@ and stopped uint8 (0/1). The body excluding opcode is 41 bytes. The synchronized
 map physics clock drives prediction; stopped updates terminate both self and
 remote presentation at the server position. Destinations, speed and movement
 credit are never accepted from a client. Native skill/move layouts are unchanged.
+
+## Map-load acknowledgements
+
+Initial character entry sends `0x0201` after the initial `0x010B` skill-bar
+snapshot. Every subsequent self `0x020B` placement that changes the map also
+requires one `0x0201`, whether the source is a GM command, portal or another
+teleport. The server admits normal gameplay again after this acknowledgement.
+Same-map teleports, other actors and the server's same-map placement echo must
+not generate another acknowledgement. The shared reducer reports this boundary
+through `Event.MapLoadAck`; the graphical client, CLI and protocol fixtures use
+that event without changing gameplay packet layouts.

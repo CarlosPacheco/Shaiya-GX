@@ -558,10 +558,11 @@ func (j *partyJourney) pump() {
 					j.t.Fatal("world connection", p.uid, next.err)
 				}
 				p.seen[proto.Op(next.payload)]++
-				if _, err := p.state.Apply(next.payload); err != nil {
+				ev, err := p.state.Apply(next.payload)
+				if err != nil {
 					j.t.Fatalf("client packet 0x%x: %v", proto.Op(next.payload), err)
 				}
-				if proto.Op(next.payload) == proto.CharacterSkillBar && p.state.Phase == game.PhaseLoading {
+				if ev.MapLoadAck {
 					p.send(proto.MapLoadedPacket())
 				}
 			default:

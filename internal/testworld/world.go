@@ -98,10 +98,11 @@ func ConnectAs(t *testing.T, user, password string) (*game.State, *session.World
 				if !ok {
 					t.Fatal("world disconnected")
 				}
-				if _, err := st.Apply(p); err != nil {
+				ev, err := st.Apply(p)
+				if err != nil {
 					t.Fatalf("packet 0x%04x: %v", proto.Op(p), err)
 				}
-				if proto.Op(p) == proto.CharacterSkillBar && st.Phase == game.PhaseLoading {
+				if ev.MapLoadAck {
 					send(proto.MapLoadedPacket())
 				}
 			case <-tick.C:

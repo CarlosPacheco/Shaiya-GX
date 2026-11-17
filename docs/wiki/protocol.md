@@ -76,3 +76,14 @@ adapters and client reducer links. The [codec appendix](server-codecs.md) includ
 all shared helpers and row definitions. `0x7F12` adds bounded UTF-8 credentials for
 passwords up to 128 bytes; replies keep the legacy `0xA102` layout. Remote TLS
 wraps existing game frames; see [security](server-security.md).
+
+## Map-load acknowledgements
+
+Initial character entry sends `0x0201` after the initial `0x010B` skill-bar
+snapshot. Every subsequent self `0x020B` placement that changes the map also
+requires one `0x0201`, whether the source is a GM command, portal or another
+teleport. The server admits normal gameplay again after this acknowledgement.
+Same-map teleports, other actors and the server's same-map placement echo must
+not generate another acknowledgement. The shared reducer reports this boundary
+through `Event.MapLoadAck`; the graphical client, CLI and protocol fixtures use
+that event without changing gameplay packet layouts.

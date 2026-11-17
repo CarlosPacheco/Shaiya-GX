@@ -1011,8 +1011,8 @@ func (a *App) pumpWorld() {
 			if proto.Op(p) == proto.CharacterSkillBar && a.screen == screenWorld {
 				a.reconcileLocalActions()
 			}
-			if proto.Op(p) == proto.CharacterSkillBar && a.state.Phase == game.PhaseLoading {
-				a.world.Send(proto.MapLoadedPacket()) // map "loaded"
+			if ev.MapLoadAck {
+				a.world.Send(proto.MapLoadedPacket()) // acknowledge initial entry and every map transfer
 			}
 		default:
 			return

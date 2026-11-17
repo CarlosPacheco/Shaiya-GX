@@ -83,6 +83,11 @@ func run(addr string, port int, user, password string, serverID, slot, faction i
 					}
 					log.Printf("<- 0x%04X %s", uint16(ev.Op), ev.Text)
 				}
+				if err == nil && ev.MapLoadAck {
+					if err := w.Send(proto.MapLoadedPacket()); err != nil {
+						return err
+					}
+				}
 			case <-deadline:
 				return fmt.Errorf("timed out waiting for %s (phase %s)", what, st.Phase)
 			}
@@ -130,8 +135,6 @@ func run(addr string, port int, user, password string, serverID, slot, faction i
 	if err := next("initial state", 15*time.Second, func() bool { return st.SkillBarReady }); err != nil {
 		return err
 	}
-	log.Printf("-> map loaded")
-	w.Send(proto.MapLoadedPacket())
 	if err := next("placement", 10*time.Second, func() bool { return st.Phase == game.PhaseInWorld }); err != nil {
 		return err
 	}

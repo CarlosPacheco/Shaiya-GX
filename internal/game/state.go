@@ -89,8 +89,9 @@ type ChatLine struct {
 
 // Event tells the caller what a payload changed; Text is for logs.
 type Event struct {
-	Op   proto.Opcode
-	Text string
+	MapLoadAck bool // Send 0x0201 after initial state or a self cross-map placement.
+	Op         proto.Opcode
+	Text       string
 }
 
 type State struct {
@@ -747,6 +748,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		s.QuickSlots = slots
 		s.SkillBarReady = true
+		ev.MapLoadAck = s.Phase == PhaseLoading
 	case proto.LearnNewSkill:
 		result, err := proto.DecodeLearnResult(p)
 		if err != nil {
@@ -1163,6 +1165,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		if m.ID == s.SelfID {
 			if s.MapID != m.MapID {
+				ev.MapLoadAck = s.Phase == PhaseInWorld
 				s.Relics = nil // a map without relics sends no 0x2101
 				s.MapQuestNPCs, s.MapQuestNPCsReady = nil, false
 				s.questNPCStaging, s.questNPCStagingActive = nil, false
