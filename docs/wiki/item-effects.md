@@ -37,6 +37,13 @@ loss or reduce equipment stats because of old quality values.
 
 Negative values in the signed stat fields do not subtract stats through the
 current equipment accumulation path: it uses nonnegative contributions.
+`Exp` is an unsigned byte (0–255 per definition). Equipped items add their
+values together and stack with armor enchantment absorption. Moving an item
+back into a bag removes its contribution. The client reads the same byte from
+`Item.SData` and shows nonzero native absorption on equipment tooltips using
+SysMsg 485. Keep server `Items.Exp` and client `Item.SData` synchronized when
+editing definitions; this is a flat amount, not a percentage or life steal.
+
 Recreation adds its separately stored values. Weapon enchantment adds its total
 attack bonus for the current level; armor enchantment adds flat absorption.
 Those bonuses are compiled tables, not sums of preceding levels.

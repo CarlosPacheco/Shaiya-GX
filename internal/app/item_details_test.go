@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
 
@@ -154,6 +155,26 @@ func TestSpeedTooltipUsesNativeFieldsActiveLapisAndSysMsg(t *testing.T) {
 	for _, r := range rows {
 		if strings.HasPrefix(r.text, "ATTACK") || strings.HasPrefix(r.text, "MOVE UP") {
 			t.Fatal("consumable skill level displayed as equipment speed")
+		}
+	}
+}
+
+func TestEquipmentAbsorptionTooltip(t *testing.T) {
+	for _, tt := range []struct {
+		typ, absorb uint8
+		want        bool
+	}{
+		{17, 30, true}, {1, 255, true}, {40, 10, true}, {17, 0, false},
+		{25, 30, false}, {30, 30, false}, {100, 30, false},
+	} {
+		def := &sdata.Item{Type: tt.typ, ExpAbsorb: tt.absorb}
+		rows := itemDetailLines(def, nil, 1, "", nil, text.SysMsg{485: "ABSORB"})
+		found := false
+		for _, row := range rows {
+			found = found || row.text == fmt.Sprintf("ABSORB +%d", tt.absorb)
+		}
+		if found != tt.want {
+			t.Fatalf("type=%d Exp=%d: absorption shown=%v, want %v", tt.typ, tt.absorb, found, tt.want)
 		}
 	}
 }

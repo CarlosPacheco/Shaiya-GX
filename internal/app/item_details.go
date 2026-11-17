@@ -143,6 +143,9 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 	if def.Resist > 0 {
 		add(fmt.Sprintf("%s %d", label(5203, "resistence"), def.Resist), white)
 	}
+	if equipment && def.ExpAbsorb > 0 {
+		add(fmt.Sprintf("%s +%d", label(485, "Absorption"), def.ExpAbsorb), white)
+	}
 	if def.Attribute >= 1 && def.Attribute <= 8 {
 		add(elementName(def.Attribute, messages...), [4]float32{1, 1, 0, 1})
 	}

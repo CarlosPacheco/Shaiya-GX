@@ -25,6 +25,7 @@ type Item struct {
 	RequiredStats, Stats               [6]uint16
 	Range, AttackTime, Attribute       uint8
 	Speed                              uint8
+	ExpAbsorb                          uint8 // Exp: flat damage absorption while equipped.
 	ReqOG, ReqIg                       uint8
 	ReqVG                              uint16
 	Slot                               uint8
@@ -115,7 +116,7 @@ func ParseItems(raw []byte) (map[ItemKey]*Item, error) {
 				it.Stats[i] = c.u16()
 			}
 			it.Speed = c.u8()
-			c.take(1) // Exp
+			it.ExpAbsorb = c.u8()
 			it.BuyPrice, it.SellPrice = c.u32(), c.u32()
 			c.take(4) // Grade, Drop
 			it.Server = c.u8()
