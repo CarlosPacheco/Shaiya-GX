@@ -258,3 +258,37 @@ func TestAbsorptionTooltipArmor20AndLapis60(t *testing.T) {
 		}
 	}
 }
+
+func TestWeaponEnchantHealingTooltip(t *testing.T) {
+	for _, tt := range []struct {
+		typ    uint8
+		craft  string
+		server uint8
+		req    uint16
+		want   string
+	}{
+		{1, "00000000000000000001", 1, 1, "Healing +7"},
+		{65, "00000000000000000020", 1, 1, "Healing +311"},
+		{1, "00000000000000000000", 1, 1, ""},
+		{1, "00000000000000000070", 1, 1, ""},
+		{17, "00000000000000000020", 1, 1, ""},
+		{1, "invalid", 1, 1, ""},
+		{1, "00000000000000000020", 0, 1, ""},
+		{1, "00000000000000000020", 1, 100, ""},
+	} {
+		def := &sdata.Item{Type: tt.typ, Server: tt.server, RequiredStats: [6]uint16{0, 0, 0, 0, tt.req}}
+		rows := itemDetailLines(def, &proto.InventoryItem{Craft: tt.craft}, 1, "", nil)
+		found := ""
+		for _, row := range rows {
+			if strings.HasPrefix(row.text, "Healing +") {
+				found = row.text
+				if row.color != ([4]float32{.6, 1, .6, 1}) {
+					t.Fatal("healing tooltip is not light green", row)
+				}
+			}
+		}
+		if found != tt.want {
+			t.Fatalf("type=%d craft=%s got %q want %q", tt.typ, tt.craft, found, tt.want)
+		}
+	}
+}

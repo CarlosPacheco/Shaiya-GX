@@ -154,6 +154,16 @@ func TestHUDPresentationGL(t *testing.T) {
 	if err := render.SavePNG(filepath.Join(dir, "hud-item-tooltip.png"), 1024, 768); err != nil {
 		t.Fatal(err)
 	}
+	// GX weapon-enchant healing uses the same bonus as attack, in light green.
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	a.sprites.Begin(1024, 768)
+	weapon := &sdata.Item{Type: 1, Name: "Healing weapon", Server: 1, RequiredStats: [6]uint16{0, 0, 0, 0, 1}, Attack: 50}
+	a.drawItemDetails(weapon, &proto.InventoryItem{Craft: "00000000000000000020"}, 1, 0, 0, 1024, 768, "")
+	a.drawSharedTooltip(1024, 768)
+	a.sprites.End()
+	if err := render.SavePNG(filepath.Join(dir, "hud-weapon-healing-tooltip.png"), 1024, 768); err != nil {
+		t.Fatal(err)
+	}
 	// Fixed documents under the current external font pack. The historical
 	// Phoenix reference used a taller font; retain strict current-font goldens.
 	a.lastMouseX, a.lastMouseY = 400, 100
