@@ -19,6 +19,12 @@ var migrations = []migration{
 	{3, "credential_revocation", `CREATE TABLE GX_AccountSecurity(UserUID INTEGER PRIMARY KEY,Version INTEGER NOT NULL DEFAULT 1); ALTER TABLE GX_SessionHandoff ADD COLUMN CredentialVersion INTEGER NOT NULL DEFAULT 1`},
 	{4, "warehouse_lookup", `CREATE INDEX GX_Warehouse_User ON PS_GameData_UserStoredItems(ServerID,UserUID,ItemUID)`},
 	{5, "active_account_ownership", `CREATE TABLE GX_ActiveSessions(UserUID INTEGER PRIMARY KEY,SessionID INTEGER NOT NULL)`},
+	{6, "character_teleport_points", `CREATE TABLE GX_TeleportPoints(
+		CharID INTEGER NOT NULL REFERENCES PS_GameData_Chars(CharID) ON DELETE CASCADE,
+		Slot INTEGER NOT NULL CHECK(Slot BETWEEN 0 AND 3),
+		Map INTEGER NOT NULL CHECK(Map BETWEEN 0 AND 65535),
+		X REAL NOT NULL, Y REAL NOT NULL, Z REAL NOT NULL,
+		PRIMARY KEY(CharID, Slot))`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

@@ -4023,6 +4023,51 @@ func DecodeTargetEffectChange(p []byte) (v TargetEffectSnapshot, e TargetEffect,
 
 </details>
 
+## teleport stone
+
+[internal/proto/teleport_stone.go](../../internal/proto/teleport_stone.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type TeleportPoint struct {
+	Saved bool
+	Map   uint16
+	X, Z  float32
+}
+```
+
+```go
+type TeleportStoneResult struct {
+	Action  uint8
+	OK      bool
+	Message string
+	Points  [TeleportPointCount]TeleportPoint
+}
+```
+
+```go
+func TeleportStonePacket(action, slot uint8) []byte {
+	w := NewWriter(GXTeleportStone)
+	w.U8(action)
+	w.U8(slot)
+	return w.Bytes()
+}
+```
+
+```go
+func DecodeTeleportStone(p []byte) (out TeleportStoneResult, err error) {
+	r := NewReader(p)
+	out.Action, out.OK, out.Message = r.U8(), r.U8() != 0, r.Text()
+	for i := range out.Points {
+		out.Points[i] = TeleportPoint{Saved: r.U8() != 0, Map: r.U16(), X: r.F32(), Z: r.F32()}
+	}
+	return out, r.Err()
+}
+```
+
+</details>
+
 ## vehicle
 
 [internal/proto/vehicle.go](../../internal/proto/vehicle.go#L1)

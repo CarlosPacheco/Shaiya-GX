@@ -96,6 +96,7 @@ type App struct {
 	blacksmithUI                        *ui.Blacksmith
 	gateUI                              *ui.Gatekeeper
 	gateConfirm                         *ui.Message
+	teleportStone                       teleportStoneView
 	gemConfirm                          *ui.Message
 	party                               partyView
 	partyUI                             *ui.PartyPanel
@@ -727,6 +728,7 @@ func (a *App) backToLogin(msg string) {
 		a.factionUI.Reset()
 	}
 	a.inventory = inventoryView{}
+	a.teleportStone = teleportStoneView{}
 	a.skills = skillsView{}
 	a.status = statusView{}
 	if a.statusUI != nil {
@@ -908,6 +910,9 @@ func (a *App) pumpWorld() {
 			a.confirmedVehicle(p)
 			if a.state == nil {
 				return
+			}
+			if ev.Op == proto.GXTeleportStone {
+				a.confirmedTeleportStone(p)
 			}
 			a.confirmedItems(ev.Op)
 			a.confirmedSystemChat(p, previousMoney)

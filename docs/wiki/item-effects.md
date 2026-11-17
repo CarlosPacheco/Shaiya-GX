@@ -257,3 +257,13 @@ server-authoritative. Equipment and active lapis `AttackTime` also contribute
 to [Attack speed](attack-speed.md); weapons supply the native base index.
 See [Movement speed](movement-speed.md) for tiers, caps,
 consumables and the original running effect.
+
+
+## Teleportation Stone
+
+Using a Special 39 stone opens Recorded Points. Every character has four slots.
+Select one and save your current position, or select a saved point and travel
+there. Saving and replacing points costs nothing. Successful travel consumes
+one stone. Dungeons and instanced zones are excluded, and portal-gated fields
+must have an eligible entrance. Points survive logout and are local to the
+character.

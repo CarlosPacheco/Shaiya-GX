@@ -12,7 +12,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 Declarations: [packet.ExchangeRequest](../../server/internal/packet/packet.go#L212), [proto.ExchangeRequest](../../internal/proto/opcodes.go#L200).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L151)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L153)
 
 **S→C serializers:** [handleTradeRequest (server/internal/world/trade.go)](../../server/internal/world/trade.go#L157)
 
@@ -89,7 +89,7 @@ func DecodeExchangeID(p []byte) (uint32, error) { r := NewReader(p); id := r.U32
 
 Declarations: [packet.ExchangeAnswer](../../server/internal/packet/packet.go#L213), [proto.ExchangeAnswer](../../internal/proto/opcodes.go#L201).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
@@ -233,7 +233,7 @@ func DecodeExchangeByte(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(
 
 Declarations: [packet.ExchangeReady](../../server/internal/packet/packet.go#L216), [proto.ExchangeReady](../../internal/proto/opcodes.go#L204).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L160)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
@@ -310,7 +310,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [packet.ExchangeAdd](../../server/internal/packet/packet.go#L217), [proto.ExchangeAdd](../../internal/proto/opcodes.go#L205).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L164)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L166)
 
 **S→C serializers:** [handleTradeAdd (server/internal/world/trade.go)](../../server/internal/world/trade.go#L261)
 
@@ -414,7 +414,7 @@ type ExchangeOwnItem struct {
 
 Declarations: [packet.ExchangeRemove](../../server/internal/packet/packet.go#L218), [proto.ExchangeRemove](../../internal/proto/opcodes.go#L206).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L174)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -444,7 +444,7 @@ func ExchangeRemovePacket(slot uint8) []byte {
 
 Declarations: [packet.ExchangeAddMoney](../../server/internal/packet/packet.go#L219), [proto.ExchangeAddMoney](../../internal/proto/opcodes.go#L207).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L176)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L178)
 
 **S→C serializers:** [buildTradeMoney (server/internal/world/trade.go)](../../server/internal/world/trade.go#L315)
 
@@ -574,7 +574,7 @@ type ExchangeItem struct {
 
 Declarations: [packet.ExchangeConfirm](../../server/internal/packet/packet.go#L221), [proto.ExchangeConfirm](../../internal/proto/opcodes.go#L209).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L181)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L183)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 

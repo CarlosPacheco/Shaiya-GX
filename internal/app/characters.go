@@ -118,6 +118,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			a.enterWorld()
 		}
 		if a.state.Self.Dead {
+			a.teleportStone = teleportStoneView{}
 			a.appearanceEdit = nil
 			a.updateDeath(in, w, h)
 			if a.state != nil && a.wv != nil && a.world != nil {
@@ -134,6 +135,13 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			return
 		}
 		if !a.checkPendingActions() {
+			return
+		}
+		if a.teleportStone.open {
+			a.updateTeleportStone(in, w, h)
+			if a.state != nil && a.wv != nil && a.world != nil {
+				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
+			}
 			return
 		}
 		if a.appearanceEdit != nil {
@@ -324,6 +332,7 @@ func (a *App) drawCharacters(w, h int) {
 		a.drawMall(w, h)
 		a.drawPlayerContext(w, h)
 		a.chatUI.DrawOverlay(a.sprites, a.chatFont(), a.white, h)
+		a.drawTeleportStone(w, h)
 		if a.gateConfirm != nil {
 			a.gateConfirm.Draw(a.sprites, a.font, w, h)
 		}

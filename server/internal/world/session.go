@@ -110,6 +110,7 @@ type Session struct {
 	finishedQuests   []db.FinishedQuest
 	regenMode        int // CUser +0x1274: 0 sitting, 1 standing, 2 in combat (next tick's recovery)
 	lastCombatAt     time.Time
+	teleportStone    db.Item
 	shoutReadyAt     time.Time // 0x1107 cooldown (CUser +0x5848)
 	returnAt         time.Time // 0x0556 pending move (CUser +0x581c, type 0)
 }
@@ -693,6 +694,7 @@ func (s *Session) selectCharacter(id uint32) {
 		s.char = nil
 		s.send(buildCharResult(packet.SelectCharacter, false, id), "character data unavailable")
 	}
+	s.teleportStone = db.Item{}
 	ch, err := db.CharacterDetail(s.accountID, id)
 	if err != nil {
 		s.log.Printf("GX Server World select character id=%d failed: %v", id, err)

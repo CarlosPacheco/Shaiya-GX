@@ -720,7 +720,7 @@ type GiftEntry struct {
 |---|---|
 | [`migration`](../../server/internal/db/migrations.go#L11)<br>`type migration` | See the source definition and the subsystem ownership contract. |
 | [`migrations`](../../server/internal/db/migrations.go#L16)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L26)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
+| [`migrate`](../../server/internal/db/migrations.go#L32)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -852,6 +852,30 @@ type SocialContact struct {
 	ID         uint32
 	Name, Memo string
 	Class      uint8
+}
+```
+
+</details>
+
+### teleport_points.go
+
+[server/internal/db/teleport_points.go](../../server/internal/db/teleport_points.go#L1)
+
+Direct GX dependencies: `internal/proto`.
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`TeleportPoint`](../../server/internal/db/teleport_points.go#L5)<br>`type TeleportPoint` | See the source definition and the subsystem ownership contract. |
+| [`TeleportPoints`](../../server/internal/db/teleport_points.go#L11)<br>`func TeleportPoints(charID uint32) (points [proto.TeleportPointCount]TeleportPoint, err error)` | See the source definition and the subsystem ownership contract. |
+| [`SaveTeleportPoint`](../../server/internal/db/teleport_points.go#L37)<br>`func SaveTeleportPoint(charID uint32, slot uint8, p TeleportPoint) error` | See the source definition and the subsystem ownership contract. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type TeleportPoint struct {
+	Saved   bool
+	Map     uint16
+	X, Y, Z float32
 }
 ```
 

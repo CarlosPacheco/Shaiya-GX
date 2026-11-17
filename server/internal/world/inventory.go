@@ -263,6 +263,9 @@ func (s *Session) handleUseItem(p []byte) {
 		return
 	}
 	switch def.Special {
+	case specialTeleportStone:
+		s.openTeleportStone(it)
+		return
 	case specialChangeName:
 		if err := db.EnableRename(ch.ID); err != nil {
 			s.log.Printf("GX Server World failed to enable rename: %v", err)

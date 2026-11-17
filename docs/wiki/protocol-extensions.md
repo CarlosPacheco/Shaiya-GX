@@ -124,7 +124,7 @@ Declarations: [packet.GXForgeQuote](../../server/internal/packet/packet.go#L325)
 
 Source notes: GXForgeQuote is a read-only preview; execution still validates live inventory.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L264)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L266)
 
 **S→C serializers:** [handleForgeQuote (server/internal/world/forge_quote.go)](../../server/internal/world/forge_quote.go#L103)
 
@@ -474,7 +474,7 @@ Declarations: [proto.GXGMMapTeleport](../../internal/proto/gm_map.go#L10).
 
 Source notes: GXGMMapTeleport requests an exact map-image coordinate. The server owns Y.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L262)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L264)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1254,6 +1254,59 @@ func Decode(payload []byte) (string, string, error) {
 	}
 	user, password := string(payload[4:4+u]), string(payload[4+u:])
 	return user, password, Validate(user, password)
+}
+```
+
+</details>
+
+## Opcode 7f13
+
+**`0x7F13` — GXTeleportStone**
+
+Declarations: [proto.GXTeleportStone](../../internal/proto/teleport_stone.go#L4).
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L70)
+
+**S→C serializers:** [sendTeleportStone (server/internal/world/teleport_stone.go)](../../server/internal/world/teleport_stone.go#L13)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>sendTeleportStone — server/internal/world/teleport_stone.go</summary>
+
+[Source definition](../../server/internal/world/teleport_stone.go#L13)
+
+```go
+func (s *Session) sendTeleportStone(action uint8, ok bool, message string, points [proto.TeleportPointCount]db.TeleportPoint) {
+	w := packet.New(packet.Opcode(proto.GXTeleportStone))
+	w.U8(action)
+	w.Bool(ok)
+	writeChatText(w, message)
+	for _, p := range points {
+		w.Bool(p.Saved)
+		w.U16(p.Map)
+		w.F32(p.X)
+		w.F32(p.Z)
+	}
+	s.send(w.MustFinish(), "recorded points")
+}
+```
+
+</details>
+
+<details><summary>TeleportStonePacket — internal/proto/teleport_stone.go</summary>
+
+[Source definition](../../internal/proto/teleport_stone.go#L24)
+
+```go
+func TeleportStonePacket(action, slot uint8) []byte {
+	w := NewWriter(GXTeleportStone)
+	w.U8(action)
+	w.U8(slot)
+	return w.Bytes()
 }
 ```
 

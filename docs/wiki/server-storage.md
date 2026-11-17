@@ -74,6 +74,7 @@ published migration; append a new version.
 | 3 | `credential_revocation` | Adds account credential-version table and handoff CredentialVersion |
 | 4 | `warehouse_lookup` | Adds `GX_Warehouse_User` on UserStoredItems(ServerID,UserUID,ItemUID) |
 | 5 | `active_account_ownership` | Adds exact-session active account ownership |
+| 6 | `character_teleport_points` | Stores four recorded teleport points per character in `GX_TeleportPoints` |
 
 The migration ledger is separate from legacy user_version. The shipped seed is
 not rewritten during an upgrade; migrations apply to the runtime. Back up before

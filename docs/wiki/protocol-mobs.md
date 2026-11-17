@@ -994,7 +994,7 @@ type NpcMotion struct {
 
 Declarations: [packet.NpcTalk](../../server/internal/packet/packet.go#L131), [proto.NpcTalk](../../internal/proto/opcodes.go#L116).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L100)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L102)
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 

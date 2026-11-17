@@ -67,6 +67,8 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 		s.handleChat(op, p)
 	case packet.ChatWhisper:
 		s.handleWhisper(p)
+	case packet.Opcode(proto.GXTeleportStone):
+		s.handleTeleportStone(p)
 	case packet.UseItem:
 		s.handleUseItem(p)
 	case packet.ChangeAppearance:
@@ -294,7 +296,7 @@ func (s *Session) phaseAllows(op packet.Opcode) bool {
 func economicOpcode(op packet.Opcode) bool {
 	switch op {
 	case packet.AccountFaction, packet.CreateCharacter, packet.DeleteCharacter, packet.RestoreCharacter, packet.RenameCharacter, packet.SelectCharacter,
-		packet.UseItem, packet.ChangeAppearance, packet.EnchantAdd, packet.GemAdd, packet.GemRemove, packet.ItemCompose, packet.RemoveItem, packet.AddItem, packet.ItemBagToBag, packet.ShopSell, packet.ShopBuy,
+		packet.Opcode(proto.GXTeleportStone), packet.UseItem, packet.ChangeAppearance, packet.EnchantAdd, packet.GemAdd, packet.GemRemove, packet.ItemCompose, packet.RemoveItem, packet.AddItem, packet.ItemBagToBag, packet.ShopSell, packet.ShopBuy,
 		packet.QuestStart, packet.QuestStartAlt, packet.QuestEnd, packet.QuestChoose, packet.QuestAbandon, packet.LearnNewSkill, packet.SetStatPoint, packet.PointBuy, packet.PointGiftSend, packet.PointStoredItemGet:
 		return true
 	}
