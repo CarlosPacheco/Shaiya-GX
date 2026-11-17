@@ -171,7 +171,7 @@ func TestEquipmentAbsorptionTooltip(t *testing.T) {
 		rows := itemDetailLines(def, nil, 1, "", nil, text.SysMsg{485: "ABSORB"})
 		found := false
 		for _, row := range rows {
-			found = found || row.text == fmt.Sprintf("ABSORB +%d", tt.absorb)
+			found = found || row.text == fmt.Sprintf("ABSORB %d", tt.absorb)
 		}
 		if found != tt.want {
 			t.Fatalf("type=%d Exp=%d: absorption shown=%v, want %v", tt.typ, tt.absorb, found, tt.want)
@@ -179,7 +179,7 @@ func TestEquipmentAbsorptionTooltip(t *testing.T) {
 	}
 }
 
-func TestAbsorptionTooltipSeparatesNativeLapisAndEnchant(t *testing.T) {
+func TestAbsorptionTooltipTotalsNativeLapisAndEnchant(t *testing.T) {
 	a := inputApp()
 	a.msg = text.SysMsg{485: "ABSORB"}
 	def := &sdata.Item{Type: 17, TypeID: 1, ExpAbsorb: 30, Attribute: 1, Server: 1, RequiredStats: [6]uint16{0, 0, 0, 0, 1}, Description: "native description"}
@@ -193,7 +193,7 @@ func TestAbsorptionTooltipSeparatesNativeLapisAndEnchant(t *testing.T) {
 	for _, row := range a.tooltip {
 		rows[row.text] = true
 	}
-	for _, want := range []string{"ABSORB +30", "ABSORB +510 (Lapis)", "ABSORB +15 (Enchant)"} {
+	for _, want := range []string{"ABSORB 555"} {
 		if !rows[want] {
 			t.Fatalf("missing %q: %v", want, a.tooltip)
 		}
@@ -205,7 +205,7 @@ func TestAbsorptionTooltipSeparatesNativeLapisAndEnchant(t *testing.T) {
 	for _, craft := range []string{"00000000000000000003", "00000000000000000071", "invalid"} {
 		it.Craft = craft
 		for _, row := range itemDetailLines(def, &it, 1, "", nil) {
-			if strings.Contains(row.text, "(Enchant)") {
+			if row.text == "Absorption 45" {
 				t.Fatalf("invalid armor craft %q displayed absorption", craft)
 			}
 		}
@@ -213,8 +213,48 @@ func TestAbsorptionTooltipSeparatesNativeLapisAndEnchant(t *testing.T) {
 	it.Craft = "00000000000000000053"
 	def.RequiredStats[4] = 100
 	for _, row := range itemDetailLines(def, &it, 1, "", nil) {
-		if strings.Contains(row.text, "(Enchant)") {
+		if row.text == "Absorption 45" {
 			t.Fatal("ineligible craft displayed absorption")
+		}
+	}
+}
+
+func TestAbsorptionTooltipArmor20AndLapis60(t *testing.T) {
+	a := inputApp()
+	a.msg = text.SysMsg{485: "Absorption"}
+	a.items = map[sdata.ItemKey]*sdata.Item{{Type: 30, TypeID: 1}: {Type: 30, ExpAbsorb: 60}}
+	def := &sdata.Item{Type: 17, Name: "Armor", Server: 1, RequiredStats: [6]uint16{0, 0, 0, 0, 1}}
+	it := proto.InventoryItem{Type: 17, Craft: "00000000000000000070", Gems: [6]uint8{1}}
+	for _, tt := range []struct {
+		native uint8
+		craft  string
+		gems   [6]uint8
+		want   string
+	}{
+		{0, it.Craft, it.Gems, "Absorption 160"},
+		{30, it.Craft, it.Gems, "Absorption 190"},
+		{0, "", it.Gems, "Absorption 60"},
+		{0, it.Craft, [6]uint8{}, "Absorption 100"},
+	} {
+		def.ExpAbsorb, it.Craft, it.Gems = tt.native, tt.craft, tt.gems
+		a.drawItemDetails(def, &it, 1, 0, 0, 1024, 768, "")
+		count := 0
+		for _, row := range a.tooltip {
+			if strings.HasPrefix(row.text, "Absorption") {
+				count++
+				if row.text != tt.want {
+					t.Fatalf("got %q want %q", row.text, tt.want)
+				}
+			}
+			if strings.Contains(row.text, "(Lapis)") || strings.Contains(row.text, "(Enchant)") {
+				t.Fatal("split absorption row", row)
+			}
+		}
+		if count != 1 {
+			t.Fatalf("absorption rows=%d", count)
+		}
+		if tt.craft != "" && a.tooltip[0].text != "Armor [20]" {
+			t.Fatal("enchant level missing from name", a.tooltip[0])
 		}
 	}
 }

@@ -143,15 +143,9 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 	if def.Resist > 0 {
 		add(fmt.Sprintf("%s %d", label(5203, "resistence"), def.Resist), white)
 	}
-	if (equipment || def.Type == 30) && def.ExpAbsorb > 0 {
-		add(fmt.Sprintf("%s +%d", label(485, "Absorption"), def.ExpAbsorb), white)
-	}
-	// Match the server's armor craft encoding and eligibility, keeping the
-	// native Exp contribution separate from enchantment absorption.
-	if equipment && instance != nil && def.Server != 0 && def.RequiredStats[4] > 0 && def.RequiredStats[4] < 100 && craft.enchant > 0 {
-		raw := strings.TrimRight(instance.Craft, " ")
-		if len(raw) == 20 && raw[18] >= '5' {
-			add(fmt.Sprintf("%s +%d (Enchant)", label(485, "Absorption"), uint32(craft.enchant)*5), [4]float32{1, 135.0 / 255, 0, 1})
+	if equipment || def.Type == 30 {
+		if absorption := itemAbsorption(def, instance); absorption > 0 {
+			add(fmt.Sprintf("%s %d", label(485, "Absorption"), absorption), white)
 		}
 	}
 	if def.Attribute >= 1 && def.Attribute <= 8 {
@@ -258,4 +252,23 @@ func itemHasRestoration(typ uint8) bool {
 		return true
 	}
 	return false
+}
+
+// itemAbsorption combines native Exp and eligible armor enchantment. Linked
+// lapis are added by drawItemDetails; the craft level remains in the item name.
+func itemAbsorption(def *sdata.Item, instance *proto.InventoryItem) uint32 {
+	total := uint32(def.ExpAbsorb)
+	rt := itemtype.Real(def.Type)
+	if rt < 1 || rt > 25 || itemHasRestoration(def.Type) || instance == nil || def.Server == 0 || def.RequiredStats[4] == 0 || def.RequiredStats[4] >= 100 {
+		return total
+	}
+	craft, ok := parseCraftValues(instance.Craft)
+	if !ok || craft.enchant == 0 {
+		return total
+	}
+	raw := strings.TrimRight(instance.Craft, " ")
+	if raw[18] >= '5' {
+		total += uint32(craft.enchant) * 5
+	}
+	return total
 }

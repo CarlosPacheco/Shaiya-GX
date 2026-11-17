@@ -41,9 +41,11 @@ current equipment accumulation path: it uses nonnegative contributions.
 values together and stack with armor enchantment absorption. Moving an item
 back into a bag removes its contribution. The client reads the same byte from
 `Item.SData` and shows nonzero native absorption on equipment and lapis
-tooltips using SysMsg 485. An equipment tooltip keeps its native absorption
-separate from active linked lapis (`Lapis`) and armor enchantment (`Enchant`)
-contributions. Lapis totals are not limited to 255. Keep server `Items.Exp` and client `Item.SData` synchronized when
+tooltips using SysMsg 485. An equipment tooltip shows one total absorption value: native `Exp` plus
+active linked lapis plus eligible armor enchantment. The enchantment level
+appears separately in the item name. For example, armor enchanted to [20]
+(100 absorption) with a 60-absorption lapis shows `Absorption 160`.
+Totals are not limited to 255. Keep server `Items.Exp` and client `Item.SData` synchronized when
 editing definitions; this is a flat amount, not a percentage or life steal.
 
 Recreation adds its separately stored values. Weapon enchantment adds its total

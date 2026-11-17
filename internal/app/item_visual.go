@@ -123,16 +123,18 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 		if label == "" {
 			label = "Absorption"
 		}
-		index := 1
-		if def.ExpAbsorb > 0 {
-			for i, row := range lines {
-				if row.text == fmt.Sprintf("%s +%d", label, def.ExpAbsorb) {
-					index = i + 1
+		base := itemAbsorption(def, instance)
+		row := itemDetailLine{fmt.Sprintf("%s %d", label, base+lapisAbsorption), white}
+		if base > 0 {
+			for i := range lines {
+				if lines[i].text == fmt.Sprintf("%s %d", label, base) {
+					lines[i] = row
 					break
 				}
 			}
+		} else {
+			lines = slices.Insert(lines, 1, row)
 		}
-		lines = slices.Insert(lines, index, itemDetailLine{fmt.Sprintf("%s +%d (Lapis)", label, lapisAbsorption), [4]float32{1, 1, 0, 1}})
 	}
 
 	if rt := itemtype.Real(def.Type); rt >= 1 && rt <= 15 && display.AttackTime != def.AttackTime {
