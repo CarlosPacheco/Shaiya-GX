@@ -55,32 +55,23 @@ func (a *App) drawSocketLapis(d *sdata.Item, x, y, size int, inactive bool) {
 		}
 	}
 }
-func itemHasElementBadge(d *sdata.Item) bool {
-	if d == nil {
-		return false
+func (a *App) itemTone(d *sdata.Item, instance *proto.InventoryItem) ui.ItemTone {
+	if d != nil {
+		if rt := itemtype.Real(d.Type); rt >= 1 && rt <= 21 {
+			return ui.ItemTone(a.effectiveItemElement(d, instance))
+		}
 	}
-	rt := itemtype.Real(d.Type)
-	return rt >= 1 && rt <= 21 || rt == 24 // Weapons, armor/shields and capes; no gems/consumables/jewelry.
+	return 0
 }
-func (a *App) itemBadge(d *sdata.Item, instance *proto.InventoryItem) ui.ItemBadge {
-	if !itemHasElementBadge(d) || a.assets == nil {
-		return ui.ItemBadge{}
-	}
-	uv, ok := ui.ElementUV(a.effectiveItemElement(d, instance))
-	if !ok {
-		return ui.ItemBadge{}
-	}
-	return ui.ItemBadge{Tex: a.assets.Texture("interface/enemy_elemental.png"), UV: uv}
-}
+
 func (a *App) drawItemIcon(d *sdata.Item, x, y, size int, tint [4]float32, instances ...*proto.InventoryItem) {
 	if file, uv, ok := ui.ItemIcon(d.Type, d.Icon); ok {
 		if tex := a.assets.Texture("interface/" + file); tex != nil {
-			a.sprites.Draw(tex, float32(x), float32(y), float32(size), float32(size), uv.U0, uv.V0, uv.U1, uv.V1, tint)
 			var instance *proto.InventoryItem
 			if len(instances) > 0 {
 				instance = instances[0]
 			}
-			a.itemBadge(d, instance).Draw(a.sprites, x, y, size, tint)
+			a.itemTone(d, instance).Draw(a.sprites, tex, uv, x, y, size, tint)
 		}
 	}
 }

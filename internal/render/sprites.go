@@ -85,7 +85,7 @@ void main() {
 	}
  if (grayscale != 0) {
   float gray = dot(frag.rgb, vec3(0.299,0.587,0.114));
-  frag.rgb = vec3(gray);
+  frag.rgb = mix(frag.rgb, vec3(gray), grayscale == 1 ? 1.0 : 0.35);
  }
  if (circle.z > 0.0) {
 		float radius = length(vec2(gl_FragCoord.x, screen.y - gl_FragCoord.y) - circle.xy);
@@ -201,8 +201,17 @@ func (s *Sprites) End() { s.Flush() }
 
 // DrawGrayscale scopes desaturation to this quad and restores color batching.
 func (s *Sprites) DrawGrayscale(t *Texture, x, y, w, h, u0, v0, u1, v1 float32, rgba [4]float32) {
+	s.drawDesaturated(t, x, y, w, h, u0, v0, u1, v1, rgba, 1)
+}
+
+// DrawMutedColor blends a light gray tone into one sprite.
+func (s *Sprites) DrawMutedColor(t *Texture, x, y, w, h, u0, v0, u1, v1 float32, rgba [4]float32) {
+	s.drawDesaturated(t, x, y, w, h, u0, v0, u1, v1, rgba, 2)
+}
+
+func (s *Sprites) drawDesaturated(t *Texture, x, y, w, h, u0, v0, u1, v1 float32, rgba [4]float32, mode int32) {
 	s.Flush()
-	gl.ProgramUniform1i(s.prog, s.uGrayscale, 1)
+	gl.ProgramUniform1i(s.prog, s.uGrayscale, mode)
 	s.Draw(t, x, y, w, h, u0, v0, u1, v1, rgba)
 	s.Flush()
 	gl.ProgramUniform1i(s.prog, s.uGrayscale, 0)
