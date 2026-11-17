@@ -100,7 +100,7 @@ func TestLapisTooltipTargetsFollowPlacementFlags(t *testing.T) {
 		for _, row := range rows {
 			joined += "|" + row.text
 		}
-		for _, want := range []string{"Item possible to equip", "Weapons", "Helmets", "Upper armor", "Gauntlet", "Shields", "Necklaces", "Coat", "Bracelets"} {
+		for _, want := range []string{"Item possible to equip", "Weapons", "Helmets", "Upper armor", "Gauntlet", "Shields", "Necklaces", "Bracelets"} {
 			if !strings.Contains(joined, "|"+want) {
 				t.Fatalf("type %d missing %s: %s", typ, want, joined)
 			}
@@ -109,6 +109,9 @@ func TestLapisTooltipTargetsFollowPlacementFlags(t *testing.T) {
 			if strings.Contains(joined, "|"+absent) {
 				t.Fatalf("type %d advertises unsupported %s", typ, absent)
 			}
+		}
+		if hasCoat := strings.Contains(joined, "|Coat"); hasCoat != (typ == 95) {
+			t.Fatalf("type %d has incorrect cape target: %s", typ, joined)
 		}
 		if rows[len(rows)-1].text != def.Description {
 			t.Fatal("description must remain last for visual tooltip splitting")
