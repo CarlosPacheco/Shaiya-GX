@@ -105,7 +105,10 @@ maintainer import step requiring fontTools, not a runtime/build dependency.
 The gx-v0.1.4 client/server changes use UTF-8, retaining legacy ANSI decoding
 for older resources. Update both GX endpoints together. Original packet sizes
 remain fixed: character creation names have 18 bytes, UI account names 18 bytes,
-passwords 16 bytes and chat payloads at most 127 bytes. These are byte budgets,
+the legacy short-password field 16 bytes and chat payloads at most 127 bytes.
+The coordinated GX authentication extension supports passwords up to 128 UTF-8
+bytes; account administration and both endpoints must be updated together.
+These are byte budgets,
 not character counts. Truncation and backspace preserve whole grapheme clusters.
 SQLite stores the resulting text without an encoding migration.
 

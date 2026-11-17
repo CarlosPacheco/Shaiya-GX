@@ -45,25 +45,26 @@ The first start copies `data/rapture.sqlite` to `runtime/rapture.sqlite`. Future
 
 ## Accounts
 
-Use a known test account from the distributed snapshot, or create your own. Python 3 is only required for this optional administration tool. Run from the extracted server directory:
-
-Windows:
-
-```powershell
-py -3 tools/sqlite.py account player
-```
-
-Linux:
+Use a known development account from the included seed, or create an account
+with the terminal console. From the server folder run:
 
 ```sh
-python3 tools/sqlite.py account player
+./build/gx_console account create player
 ```
 
-The tool prompts for a password; avoid putting passwords in shell commands. It initializes the runtime from the seed if needed. Account names must fit 1–18 characters and passwords 1–32 characters in the protocol's encoding. An account already present is not overwritten. In a source checkout, use `python3 server/tools/sqlite.py account player` from the GX root.
+On Windows use `build\gx_console.exe account create player`. The console prompts
+for the password without terminal echo. Account names accept 1–18 UTF-8 bytes;
+passwords accept 1–128 UTF-8 bytes. The account is not overwritten if it exists.
+Use `gx_console account password player` to change an existing password; this
+revokes its active sessions. Python 3 is optional for the accompanying database
+administration tools, not required for ordinary account creation.
 
 ## Run the client
 
-Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1EF83MEmACo9xPYenPP59OBzPivRH9bMl/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. Everything is included; no separate data download is required. The game discovers its data automatically; no build tools or data conversion are needed.
+Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1EF83MEmACo9xPYenPP59OBzPivRH9bMl/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. The Drive folder is the v0.1.10 complete-data snapshot. Apply the current
+[v0.1.11 client/server update](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.11)
+using the [upgrade guide](releases/gx-v0.1.11-upgrade.md); no separate game-data
+download is needed. The game discovers its data automatically; no build tools or data conversion are needed.
 
 See [portable client requirements and updates](client-portable.md). GitHub releases provide executable updates without data. Developers can instead [build from source](building.md) and [import their compatible archives](data-formats.md); keep game data outside Git. Do not use the original `Game.exe` to run GX.
 
