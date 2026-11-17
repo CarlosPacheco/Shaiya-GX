@@ -62,7 +62,7 @@ func TestRejectedLapisDragUsesNativeReasonAndDoesNotPlace(t *testing.T) {
 		t.Fatal("capacity not enforced")
 	}
 }
-func TestResultRetainsEquipmentAndRemainingConsumableStacks(t *testing.T) {
+func TestLinkResultClearsLapisSelectionOnlyOnSuccess(t *testing.T) {
 	for _, success := range []bool{false, true} {
 		a := continuousForgeApp()
 		a.blacksmith.keys = [4][2]uint8{{1, 0}, {1, 1}, {1, 2}, {1, 3}}
@@ -78,9 +78,13 @@ func TestResultRetainsEquipmentAndRemainingConsumableStacks(t *testing.T) {
 		it := a.state.Inventory[[2]uint8{1, 1}]
 		it.Count = 2
 		a.state.Inventory[[2]uint8{1, 1}] = it
+		a.gemLink.gem = a.blacksmith.keys[1]
 		a.finishGemLink(success)
-		if a.blacksmith.selected != [4]bool{true, true, true, true} || a.blacksmith.items[1].Count != 2 {
-			t.Fatal("result cleared selection or remaining stack")
+		if a.blacksmith.selected != [4]bool{true, !success, true, true} {
+			t.Fatalf("unexpected selections after link success=%v: %v", success, a.blacksmith.selected)
+		}
+		if a.state.Inventory[a.gemLink.gem].Count != 2 || !success && a.blacksmith.items[1].Count != 2 {
+			t.Fatal("remaining lapis stack has the wrong count")
 		}
 		delete(a.state.Inventory, [2]uint8{1, 1})
 		a.syncBlacksmithItems()

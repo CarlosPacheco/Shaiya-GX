@@ -106,6 +106,10 @@ func (a *App) confirmedGemLink(p []byte) {
 func (a *App) finishGemLink(success bool) {
 	a.forgeResult(success)
 	a.gemLink.pending = false
+	if success && a.blacksmith.keys[1] == a.gemLink.gem {
+		a.blacksmith.selected[1] = false
+		a.blacksmith.quote = forgeQuoteView{}
+	}
 	a.syncBlacksmithItems()
 	a.shop.pending = false
 	if a.gemLink.noGold {
