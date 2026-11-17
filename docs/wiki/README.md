@@ -1,26 +1,26 @@
 # Shaiya GX Wiki
 
-## [Download Shaiya GX — Client + Server + Data](https://drive.google.com/file/d/1REexfF9DhPcxPuixloiaWeQgAFVvpkvh/view?usp=sharing)
+## [Download Shaiya GX — Client + Server + Data](https://drive.google.com/file/d/1YoUifTj5D-nn378cyFmyT7H4Dw4Vyegp/view?usp=sharing)
 
-**Complete gx-v0.1.11 portable for Windows and Linux:** client, GX Server, game data,
+**Complete gx-v0.1.12 portable for Windows and Linux:** client, GX Server, game data,
 fonts and development database in one download. **No separate data download is
 needed.** Extract the package, start
 `Server/build/gx_console` (or `.exe`) in a terminal, enter `start server`, then open the executable in `Client/`.
 [Setup, requirements and updates](client-portable.md).
-Current binary release: [gx-v0.1.12](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.12), with the teleport hotfix. The complete Drive download above remains v0.1.11; retain its data and apply the matching binary update.
+Current binary release: [gx-v0.1.12](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.12), with the teleport hotfix. The complete Drive download above includes v0.1.12 and its matching data.
 
 The reference for current GX gameplay features, item data, administration and
 operation. GX is a Go client with an integrated authoritative world/login
 server, using original EP5 interface resources and protocol foundations.
 
-**Version scope:** updated for [gx-v0.1.10](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.10). These pages describe current development behavior. A released
+**Version scope:** updated for [gx-v0.1.12](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.12). These pages describe current development behavior. A released
 binary may predate a documented change. Use matching client/server builds and
 consult release notes when reproducing behavior. Publishing documentation does
 not update executable files, client assets or a running database.
 
-The linked Drive download includes gx-v0.1.10 and refreshed game data. See the
-[gx-v0.1.10 upgrade guide](../releases/gx-v0.1.10-upgrade.md) for existing-runtime
-mount migration and preserving your personal database.
+The linked Drive download includes gx-v0.1.12 and complete game data. See the
+[gx-v0.1.12 upgrade guide](../releases/gx-v0.1.12-upgrade.md) for updates and
+preserving your personal database.
 
 ## Gameplay and items
 

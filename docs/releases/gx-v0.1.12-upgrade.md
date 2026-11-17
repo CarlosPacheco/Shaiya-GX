@@ -19,7 +19,7 @@ The complete maintainer-prepared v0.1.12 folder includes both operating systems,
 client data, fonts/licenses, server seed DB, maps/physics, Lua AI, resources,
 tools and docs. First startup creates an independent runtime from its seed.
 GitHub binary packages omit original client game resources; retain those from
-the v0.1.11 complete Drive download when using binary updates.
+the [complete v0.1.12 Drive download](https://drive.google.com/file/d/1YoUifTj5D-nn378cyFmyT7H4Dw4Vyegp/view?usp=sharing) when using binary updates.
 
 If upgrading from before v0.1.11, also follow the
 [v0.1.11 upgrade guide](gx-v0.1.11-upgrade.md), including coordinated authentication,

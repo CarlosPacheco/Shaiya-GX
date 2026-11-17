@@ -41,7 +41,7 @@ Changes since **gx-v0.1.10**. Update the client and server together.
 
 GitHub releases contain native client/server binaries, fonts, server maps/physics,
 AI policies, documentation and the intentional development seed. They do not
-include original client game artwork/audio/maps. The [complete Client + Server + Data portable](https://drive.google.com/file/d/1REexfF9DhPcxPuixloiaWeQgAFVvpkvh/view?usp=sharing)
+include original client game artwork/audio/maps. The [complete Client + Server + Data portable](https://drive.google.com/file/d/1YoUifTj5D-nn378cyFmyT7H4Dw4Vyegp/view?usp=sharing)
 includes both operating systems, the client `data/` directory, the server seed,
 maps/physics, Lua policies and all required packaged resources.
 

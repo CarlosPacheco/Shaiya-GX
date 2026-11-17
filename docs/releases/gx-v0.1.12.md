@@ -13,8 +13,8 @@ Lua AI policies, resources and tools. Existing v0.1.11 installations need no new
 data or database migration for this hotfix. Keep your runtime and configuration.
 
 GitHub binary packages omit original client game artwork/audio/maps. The complete
-[Drive package](https://drive.google.com/file/d/1REexfF9DhPcxPuixloiaWeQgAFVvpkvh/view?usp=sharing)
-remains **v0.1.11**: apply the v0.1.12 client/server binaries for this fix, retaining
-its compatible game data. The maintainer's new complete v0.1.12 folder includes data.
+[Drive package](https://drive.google.com/file/d/1YoUifTj5D-nn378cyFmyT7H4Dw4Vyegp/view?usp=sharing)
+now includes **v0.1.12** for Windows and Linux, with the teleport fix, complete
+client data and all server resources.
 
 [Upgrade guide](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/releases/gx-v0.1.12-upgrade.md).

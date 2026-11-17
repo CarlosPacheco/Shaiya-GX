@@ -61,9 +61,9 @@ administration tools, not required for ordinary account creation.
 
 ## Run the client
 
-Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1REexfF9DhPcxPuixloiaWeQgAFVvpkvh/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. The Drive folder includes the matching gx-v0.1.11 client/server builds and
-complete game data. Apply the v0.1.12 binary hotfix from GitHub for repeated
-teleports; no separate game-data download is needed. Follow the
+Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1YoUifTj5D-nn378cyFmyT7H4Dw4Vyegp/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. The Drive folder includes the matching gx-v0.1.12 client/server builds and
+complete game data, including the repeated-teleport fix; no separate game-data
+download is needed. Follow the
 [upgrade guide](releases/gx-v0.1.12-upgrade.md).
 The game discovers its data automatically; no build tools or data conversion are needed.
 

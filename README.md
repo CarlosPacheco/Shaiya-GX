@@ -2,7 +2,7 @@
 
 ## Download and play
 
-### [Download the complete gx-v0.1.11 portable — Client + Server + Data](https://drive.google.com/file/d/1REexfF9DhPcxPuixloiaWeQgAFVvpkvh/view?usp=sharing)
+### [Download the complete gx-v0.1.12 portable — Client + Server + Data](https://drive.google.com/file/d/1YoUifTj5D-nn378cyFmyT7H4Dw4Vyegp/view?usp=sharing)
 
 **One Google Drive download for Windows and Linux. Includes the client, GX Server,
 game data, external fonts and the development database. Everything is included:
@@ -16,9 +16,8 @@ Requires a 64-bit OS and OpenGL 4.5. The server includes development test accoun
 preserve your existing runtime database when upgrading.
 
 **Latest release: [gx-v0.1.12](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.12).**
-The Drive package includes **gx-v0.1.11 client/server binaries and complete data**
-for Windows and Linux. Apply the **gx-v0.1.12 teleport hotfix** from GitHub using
-that compatible data. Preserve your personal runtime and configuration; read the
+The Drive package includes **gx-v0.1.12 client/server binaries and complete data**
+for Windows and Linux, including the teleport hotfix. Preserve your personal runtime and configuration; read the
 [v0.1.12 upgrade guide](docs/releases/gx-v0.1.12-upgrade.md).
 
 [Setup and requirements](docs/client-portable.md) · [Latest patch notes](docs/releases/gx-v0.1.12.md) · [GitHub binary updates (without client game data)](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
@@ -125,4 +124,4 @@ Inventory: left-click uses an item, right-click equips/replaces it, drag moves i
 
 Source is [BSD 3-Clause](LICENSE). The original server copyright and terms are retained in [server/LICENSE](server/LICENSE). Third-party notices are in [NOTICE](NOTICE). Original Shaiya game content and trademarks retain their respective ownership; the source license does not grant rights to game assets.
 
-The complete [Client + Server + Data portable](https://drive.google.com/file/d/1REexfF9DhPcxPuixloiaWeQgAFVvpkvh/view?usp=sharing) is hosted on Drive. Updated client builds with external fonts are available in [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest); those archives do not include game data. Both executables may share one adjacent `data/` directory; see [portable client instructions](docs/client-portable.md).
+The complete [Client + Server + Data portable](https://drive.google.com/file/d/1YoUifTj5D-nn378cyFmyT7H4Dw4Vyegp/view?usp=sharing) is hosted on Drive. Updated client builds with external fonts are available in [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest); those archives do not include game data. Both executables may share one adjacent `data/` directory; see [portable client instructions](docs/client-portable.md).

@@ -1,14 +1,14 @@
 # Shaiya GX portable client and server
 
-## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1REexfF9DhPcxPuixloiaWeQgAFVvpkvh/view?usp=sharing)
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1YoUifTj5D-nn378cyFmyT7H4Dw4Vyegp/view?usp=sharing)
 
-**gx-v0.1.11 for Windows and Linux.** This Google Drive package includes both
+**gx-v0.1.12 for Windows and Linux.** This Google Drive package includes both
 executables, GX Server, client game data, fonts and the development database.
 **Everything is included; no separate data download is needed.**
 Extract the entire package into a writable folder:
 
 ```text
-Shaiya GX gx-v0.1.11 Portable/
+Shaiya GX gx-v0.1.12 Portable/
   Client/
     Shaiya GX
     Shaiya GX.exe
@@ -24,9 +24,9 @@ then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Sha
 Keep `Client/data/` beside the client executables and preserve all licenses.
 
 **Latest binary update: [gx-v0.1.12](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.12).**
-The Drive download includes the matching gx-v0.1.11 client/server builds and
+The Drive download includes the matching gx-v0.1.12 client/server builds and
 complete client data, plus the server seed, maps/physics, Lua AI and resources.
-Apply the v0.1.12 binary update for the repeated-teleport fix; data remains compatible.
+The repeated-teleport fix is included; no additional binary update is required.
 Preserve your server `runtime/` when upgrading and follow the
 [upgrade guide](releases/gx-v0.1.12-upgrade.md).
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
