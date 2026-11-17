@@ -23,11 +23,12 @@ Start `Server/build/gx_console` on Linux or `Server/build/gx_console.exe` on Win
 then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables and preserve all licenses.
 
-**Latest binary update: [gx-v0.1.10](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.10).**
+**Latest binary update: [gx-v0.1.11](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.11).**
 The Drive download includes gx-v0.1.10 client/server builds and refreshed data
-for mount sounds, dungeon minimaps and creature repairs. Update client and server
-together. Preserve an existing
-server `runtime/` and follow the [mount migration and upgrade guide](releases/gx-v0.1.10-upgrade.md).
+for mount sounds, dungeon minimaps and creature repairs. It remains the v0.1.10
+complete-data snapshot: apply the matching v0.1.11 client/server binary update
+from GitHub for current code. Preserve your server `runtime/` and follow the
+[upgrade guide](releases/gx-v0.1.11-upgrade.md).
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
 Server packages include all 68 physics/navigation maps, the approved development
 seed and the optional offline mount-definition migration tool.

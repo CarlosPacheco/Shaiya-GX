@@ -2,13 +2,19 @@
 
 This log records delivered changes and data-package updates. Client data is hosted separately on Drive; changing it does not automatically produce a new executable release.
 
-## Unreleased
+## gx-v0.1.11 — 2026-11-16
 
-- Make player exchanges and quest rewards atomic across inventory, gold, progression and completion; publish success only after commit and protect session state against stale saves and duplicate requests.
-- Add isolated SQLite process/crash, fault-injection and real protocol regressions; replace five seed-name-dependent skipped tests with disposable fixtures.
+[Patch notes](docs/releases/gx-v0.1.11.md) · [Discord summary](docs/releases/gx-v0.1.11-discord.md) · [Upgrade guide](docs/releases/gx-v0.1.11-upgrade.md).
 
-- Update the complete gx-v0.1.10 Drive download and repository description.
-- Designate SQLite as the primary production database; align contributor, deployment, wiki and packaging guidance.
+- Correct Wind Spin, Stinger, prepared casts, Blizzard, pools and original skill/item presentation.
+- Correct meteor/contact/spawn/corpse placement, combat stance, monster scale, quest drops and classic group-respawn timing.
+- Activate the documented modern Lua monster-AI catalog and restore recharge/miss feedback.
+- Make trade, quest and economy/inventory persistence atomic; modernize world scheduling, bounded networking, SQLite migrations and recovery.
+- Add Argon2id/revocation, long-password support, remote TLS, rotating logs, diagnostics and authenticated shutdown.
+- Remove the server GUI/icon/Fyne; ship the terminal console and CGO-free login/world services.
+- Reduce animation/bounds/effect CPU work without changing visible sampling or shadow/reflection scope; add reproducible measurements.
+- Expand the common server/protocol Wiki, update Go 1.27.4 and validate native Linux/Windows CI.
+- Retain SQLite as the primary embedded production database and preserve existing mutable runtimes.
 
 ## gx-v0.1.10 — 2026-11-15
 

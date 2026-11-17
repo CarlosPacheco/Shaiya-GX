@@ -1,6 +1,6 @@
 # Progress and delivered features
 
-Updated November 15, 2026 for gx-v0.1.10. This is a development snapshot, not a claim of complete original-game parity. **Delivered** means the named workflow is implemented and verified within its stated scope; remaining variants are tracked separately.
+Updated November 16, 2026 for gx-v0.1.11. This is a development snapshot, not a claim of complete original-game parity. **Delivered** means the named workflow is implemented and verified within its stated scope; remaining variants are tracked separately.
 
 ## Server parity checklist
 
@@ -36,6 +36,17 @@ project completion percentage.
 | Portable GX Server | Terminal console controls login/world; development seed creates a separate mutable runtime | [Distribution guide](../server/docs/distribution.md), [native package verification](../server/tools/package.py) |
 
 Chat, party/raid, quests, trade/duels, social windows and the mall are also implemented; their remaining states and presentation gaps are detailed in [interface status](interface.md). A delivered workflow does not mark every feature variant complete.
+
+## gx-v0.1.11 additions
+
+- Corrected original combat/effect timing, monster scale/drop rules and group respawns.
+- Default modern Lua monster AI, documented policies and real host primitives.
+- Atomic economy/trade/quest persistence and modernized ownership, scheduling and bounded networking.
+- Argon2id/revocation, remote TLS, versioned SQLite migrations, diagnostics and authenticated shutdown.
+- Terminal-only GX Server without GUI dependencies; measured animation/bounds/effect optimizations.
+- Native Linux/Windows CI and the expanded common server/protocol Wiki.
+
+See the [release notes](releases/gx-v0.1.11.md) and [upgrade guide](releases/gx-v0.1.11-upgrade.md).
 
 ## gx-v0.1.10 additions
 

@@ -15,13 +15,13 @@ no separate data download, Go installation or build tools required.**
 Requires a 64-bit OS and OpenGL 4.5. The server includes development test accounts;
 preserve your existing runtime database when upgrading.
 
-**Latest release: [gx-v0.1.10](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.10).**
-The Drive link above includes gx-v0.1.10 client/server binaries and refreshed
-game data. Existing runtimes need
-the mount-definition migration; preserve your personal database and read the
-[upgrade guide](docs/releases/gx-v0.1.10-upgrade.md).
+**Latest release: [gx-v0.1.11](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.11).**
+The Drive link above remains the **gx-v0.1.10 complete-data snapshot**. For the
+current gx-v0.1.11 binaries, use the release below and retain that compatible
+client data. Update both endpoints together and preserve your personal runtime;
+read the [v0.1.11 upgrade guide](docs/releases/gx-v0.1.11-upgrade.md).
 
-[Setup and requirements](docs/client-portable.md) · [Latest patch notes](docs/releases/gx-v0.1.10.md) · [GitHub binary updates (without client game data)](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
+[Setup and requirements](docs/client-portable.md) · [Latest patch notes](docs/releases/gx-v0.1.11.md) · [GitHub binary updates (without client game data)](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
 
 ---
 
@@ -39,7 +39,7 @@ GX reads loose assets from a `data/` folder beside the **Shaiya GX** executable.
 
 **SQLite is the primary production database. Its embedded operation simplifies deployment and distribution without a separate database service.**
 
-[**gx-v0.1.10 patch notes**](docs/releases/gx-v0.1.10.md) · [Complete Linux/Windows portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip) · [Separate client/server downloads](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
+[**gx-v0.1.11 patch notes**](docs/releases/gx-v0.1.11.md) · [Complete Linux/Windows portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip) · [Separate client/server downloads](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
 
 ## On-screen metrics panel
 
@@ -49,7 +49,7 @@ Values depend on the scene, hardware, resolution and frame limit; a screenshot i
 
 ## Project status
 
-Snapshot: November 14, 2026. Counts come from the [server parity table](server/docs/original-parity.md); checklist entries differ in scope and are **not an overall project completion percentage**. Full client visual/gameplay parity remains in progress.
+Snapshot: November 16, 2026 (gx-v0.1.11). Counts come from the [server parity table](server/docs/original-parity.md); checklist entries differ in scope and are **not an overall project completion percentage**. Full client visual/gameplay parity remains in progress.
 
 | Delivered | Current result |
 |---|---|
