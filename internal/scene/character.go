@@ -106,6 +106,7 @@ type Character struct {
 	poseReady            bool
 	poseParts            []*skinPart
 	poseSources          []int
+	envelope             characterEnvelope
 	boundClip            *Clip
 	boundTime            float32
 	boundWorld           render.M4
@@ -306,6 +307,7 @@ type Clip struct {
 	restLocal       []render.M4
 	restRotation    [][4]float32
 	restTranslation [][3]float32
+	reach           []boneReach
 }
 
 func (s *Assets) Clip(file string) (*Clip, error) {
@@ -333,6 +335,7 @@ func (s *Assets) Clip(file string) (*Clip, error) {
 		c.restRotation = append(c.restRotation, q)
 		c.restTranslation = append(c.restTranslation, t)
 	}
+	c.reach = c.makeReach()
 	s.clips[key] = c
 	return c, nil
 }

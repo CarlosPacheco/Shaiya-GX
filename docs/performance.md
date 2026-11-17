@@ -321,7 +321,7 @@ The harness captures themselves differ between processes because of animated
 scene content; no whole-scene pixel equality is claimed for those captures.
 Private measurements and captures: `work/client-measure/pose-before/` and
 `work/client-measure/pose-after/`. Conservative pre-pose rejection and dungeon
-effect/streaming improvements remain separate future changes.
+effect improvements are documented in the follow-up sections below.
 
 ## Consecutive map effects share scene setup (2026-11-16)
 
@@ -346,3 +346,56 @@ arrays were identical, while still orphaning/updating vertex storage. It was
 medians and no consistent improvement; the crowd-effects case was slower.
 Private experiment output is `work/client-measure/stream-after/`; the retained
 comparison is `effects-after/`. Existing streaming/orphaning remains in place.
+
+## Conservative actor rejection before pose sampling (2026-11-16)
+
+`Character.Visible` first tests an enclosing box that needs no current pose. It
+falls through to the unchanged exact `WorldBounds` test whenever that box is
+visible or unavailable. Each clip stores a per-bone bound on global rotation
+stretch and translation reach, built in the sampler's parent order. Translation
+interpolation stays inside its endpoint hull; normalized interior quaternion
+interpolation preserves length. Raw endpoint norm error, float32 arithmetic and
+outward box rounding receive conservative margins. Equipment and inverse-bind
+boxes contribute to the actor envelope. Affine world transforms account for
+nonuniform scale, shear and reflection.
+
+The actor cache tracks clip, part identities, equipment transforms and mounted
+state; asset geometry/bind data remain immutable. Cloth, unknown geometry,
+non-affine/nonfinite or overflow-risk matrices, uncertain quaternion/key data and unsupported
+large keyframe indices retain exact culling. A rejection is evaluated separately
+for each camera/clip plane; it never suppresses shadow fitting. Name anchors
+sample their crown binds on demand when the body palette is stale, preserving
+labels without preparing every skin part.
+
+Focused Linux/OpenGL comparison: three 300-frame repetitions per scene and
+binary, 18 runs / 5,400 measured frames. All GPU samples were valid and no assets
+were missing. CPU submission wall times (not presented FPS):
+
+| Scene | Before p50 / p99 ms | After p50 / p99 ms |
+|---|---:|---:|
+| 200 actors | 5.052 / 6.866 | 4.681 / 6.474 |
+| 400 actors | 9.918 / 11.839 | 9.920 / 12.179 |
+| Visible water | 4.596 / 6.082 | 4.655 / 6.689 |
+
+The 200-actor median fell 7.3%; per-run medians were 5.014–5.089 before and
+4.644–4.761 after. The 400-actor median was unchanged. Water and tail timings
+fluctuated; no improvement is claimed for them. These are short sequential
+before/after batches on a normal desktop, not exclusive hardware measurements.
+A subsequent final-binary check showed desktop drift, so an additional adjacent
+old/new pair was run: 200 actors 4.684 → 4.509 ms (3.7% observed), and 400 actors
+9.335 → 9.333 ms (unchanged). The initial 7.3% is therefore not a guaranteed gain.
+These checks add six runs / 1,800 frames (7,200 frames overall); private outputs
+are `precull-final-check/` and `precull-paired-{before,after}/`. Reused binaries
+are identified by their hashes; the paired old binary is the same original
+`effects-after.test`, despite the runner also recording current checkout source.
+Benefit depends on how many actors can be rejected by the coarse envelope;
+visible actors still use exact poses and bounds.
+
+Validation includes 500 random affine-world/time comparisons against exact
+animated/equipment boxes, camera switching, clip planes, mount/outfit/clip
+invalidation, uncertain-data fallback and current crown sampling after skipped
+body poses. Original player, monster and vehicle bounds are also checked. Twelve
+main/reflected views and 144 shadow placements preserve pixels; original NPC
+nameplate, picking and lazy name-depth tests pass. Unit/vet, integration vet,
+scene race tests and native Linux build pass. Private artifacts:
+`work/client-measure/precull-before/`, `precull-after/`, `precull-install/`.

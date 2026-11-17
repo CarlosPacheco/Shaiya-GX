@@ -60,11 +60,13 @@ func TestAnimatedActorCullingPreservesPixelsGL(t *testing.T) {
 	// Check original asset poses against independent per-part evaluation, including
 	// rest decomposition on every sample as in the pre-optimization sampler.
 	for _, actor := range actors {
+		actor.World = render.Identity()
 		reference := *actor.clip
 		reference.restRotation, reference.restTranslation = nil, nil
 		for _, sample := range []float32{0, .13, .57, 1.2} {
 			actor.Time = sample
 			actor.preparePose()
+			assertEnvelopeContainsExact(t, actor)
 			finals := reference.Finals(sample)
 			for _, part := range actor.parts {
 				for i, bind := range part.bones {
@@ -102,9 +104,21 @@ func TestAnimatedActorCullingPreservesPixelsGL(t *testing.T) {
 		eye := render.V3{0, 2, -5}
 		angle := float64(frame) * math.Pi / 3
 		s.View = render.LookAtLH(eye, eye.Add(render.V3{float32(math.Sin(angle)), -.05, float32(math.Cos(angle))}), render.V3{0, 1, 0})
+		baseView := s.View
 		for _, clip := range [][4]float32{{}, {0, 1, 0, 0}} {
+			s.View = baseView
+			if clip != [4]float32{} {
+				mirror := render.Identity()
+				mirror[5] = -1
+				s.View = mirror.Mul(baseView)
+			}
 			s.ClipPlane = clip
 			draw := func(cull bool) ([]byte, int, time.Duration) {
+				for _, a := range actors {
+					a.poseReady = false
+					a.boundReady = false
+					a.lastFinalsClip = nil
+				}
 				gl.Viewport(0, 0, 320, 320)
 				gl.DepthMask(true)
 				gl.ClearColor(.08, .1, .13, 1)
@@ -146,7 +160,7 @@ func TestAnimatedActorCullingPreservesPixelsGL(t *testing.T) {
 			afterCPU += at
 		}
 	}
-	t.Logf("12 mixed actor views: draws %d -> %d, CPU submission %s -> %s, identical pixels", totalBefore, totalAfter, beforeCPU, afterCPU)
+	t.Logf("12 main/reflected actor views: draws %d -> %d, CPU submission %s -> %s, identical pixels", totalBefore, totalAfter, beforeCPU, afterCPU)
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("GL error %#x", code)
 	}
