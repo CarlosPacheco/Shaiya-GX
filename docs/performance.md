@@ -339,3 +339,10 @@ per-run medians of 12.858–13.319 and 12.262–12.890 ms. Crowd-effects was
 6.707 → 6.340 ms (5.5% observed), with overlapping per-run ranges.
 Do not attribute all timing variation to this small state-call reduction: desktop
 noise and wide ranges remain. No streaming/storage strategy changed in this step.
+
+A subsequent experiment retained streamed mesh indices when consecutive topology
+arrays were identical, while still orphaning/updating vertex storage. It was
+**not retained**: three 300-frame repetitions produced overlapping dungeon
+medians and no consistent improvement; the crowd-effects case was slower.
+Private experiment output is `work/client-measure/stream-after/`; the retained
+comparison is `effects-after/`. Existing streaming/orphaning remains in place.
