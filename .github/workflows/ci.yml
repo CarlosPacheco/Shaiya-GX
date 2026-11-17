@@ -22,6 +22,8 @@ jobs:
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./server/internal/... ./server/cmd/gx_login ./server/cmd/gx_world ./internal/transport ./internal/netx ./internal/session
       - name: Infrastructure concurrency
         run: go test -race ./server/internal/filelock ./server/internal/netx ./server/internal/session ./server/internal/password ./server/internal/db ./server/internal/scheduler ./server/internal/controlplane ./server/internal/logx ./server/internal/admin ./internal/authwire ./internal/transport
+      - name: Fetch verified server physics (68 maps)
+        run: python3 tools/fetch_server_geometry.py
       - name: Transaction and loot concurrency
         run: go test -race -tags integration ./server/internal/world -run 'TestAudit|TestTrade|TestQuestRollback|TestGuildLifecycle|TestConcurrentGoldPickup|TestInventoryOperationRollback' -count=1 -timeout=180s
       - name: Durable trade and quest protocol concurrency

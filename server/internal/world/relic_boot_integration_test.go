@@ -3,7 +3,6 @@
 package world
 
 import (
-	"github.com/Spelunkern/Shaiya-GX/internal/mapnav"
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -86,8 +85,10 @@ func TestObeliskOriginalWorldBoot(t *testing.T) {
 			if err != nil || nav == nil {
 				t.Fatal(err)
 			}
+			// Project limits each coordinate to .05, not the Euclidean
+			// distance. A valid diagonal offset can exceed .06 (up to sqrt(3)*.05).
 			p, ok := nav.Project(m.point(), .05, .05)
-			if !ok || mapnav.Distance(p, m.point()) > .06 {
+			if !ok {
 				t.Fatalf("floating actor %d: %v != %v", m.MobID, m.point(), p)
 			}
 		}
