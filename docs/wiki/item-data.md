@@ -25,6 +25,40 @@ The server quote is read-only. It uses the same functions as execution; the
 client checks request serials and inventory snapshots before accepting a reply.
 Selecting a gray material hint never grants an item or authorizes an operation.
 
+## Synchronizing the installed item catalog
+
+The installed customized EP5 `Item.SData` is the authoring source for item
+definitions. SQL remains authoritative during gameplay. Run
+`tools/sync_item_definitions.py` offline to copy its shared native fields to
+`PS_GameDefs_Items`, adding missing IDs without removing server-only rows.
+It preserves the explicit GX recreation-rune and forge-object exceptions
+from the selected SQL baseline, reconciles their client numeric fields, and
+keeps client names, descriptions, models and icons. Matching consumable skill
+references above 255 retain their full SQL IDs: Item.SData stores only the low
+byte of Range. Mount metadata already
+present in the installed client is retained.
+
+The current catalog contains **22,101 definitions**, including 56 recreation
+runes/aliases and 28 protected forge objects. The synchronization does not
+change skills, accounts, characters, inventories, owned item quantities or mall
+products. It does not implement currently missing lapis effects.
+
+```sh
+python3 tools/sync_item_definitions.py \
+  --item-sdata '/path/to/client/data/Item/Item.SData' \
+  --database server/data/rapture.sqlite \
+  --database '/path/to/server/data/rapture.sqlite' \
+  --database '/path/to/server/runtime/rapture.sqlite' \
+  --report work/item-sync/plan.json
+```
+
+This is read-only unless `--apply --backup-dir work/item-sync/NEW-BACKUP`
+is added. Stop the affected GX installations first. The tool validates all
+inputs before applying, creates SQLite backups, checks that every other SQL
+table stays identical, and refreshes existing seed manifests and stack exports.
+Client files are replaced atomically to avoid modifying hardlinked portable
+copies. Keep backups private; never publish runtime databases or client SData.
+
 ## Overloaded native fields
 
 - **ReqIg:** selects the native gold table for lapis and lapisias. For lapis it

@@ -1442,9 +1442,11 @@ func TestGemSkills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	poison, slow := db.MustDefs().Item(gemItemType, 126), db.MustDefs().Item(gemItemType, 120)
-	if poison == nil || slow == nil || poison.Special != 9 || slow.Special != 6 {
-		t.Skip("gems 30126/30120 missing")
+	// EP5 ID 30110 retains a native low-Special proc. IDs 30126/30120
+	// are now stat lapis, rather than the old EP4.5 poison/slow definitions.
+	sleep := db.MustDefs().Item(gemItemType, 110)
+	if sleep == nil || sleep.Special != 1 {
+		t.Fatal("EP5 Sleep Lapis 30110 missing")
 	}
 	const mapID = 60055
 	session := func(id uint32, faction uint8, x float32) *Session {
@@ -1463,12 +1465,12 @@ func TestGemSkills(t *testing.T) {
 	}
 	a := session(900601, FactionLight, 500)
 	b := session(900602, FactionDark, 501)
-	a.items = []db.Item{{Bag: 0, Slot: weaponSlot, Type: 1, TypeID: 1, Count: 1, Gems: [6]uint8{126}}}
-	b.items = []db.Item{{Bag: 0, Slot: 6, Type: 1, TypeID: 1, Count: 1, Gems: [6]uint8{120}}}
-	if got := weaponGemSkills(a.items); len(got) != 1 || got[0].SkillID != 9 {
+	a.items = []db.Item{{Bag: 0, Slot: weaponSlot, Type: 1, TypeID: 1, Count: 1, Gems: [6]uint8{110}}}
+	b.items = []db.Item{{Bag: 0, Slot: 6, Type: 1, TypeID: 1, Count: 1, Gems: [6]uint8{110}}}
+	if got := weaponGemSkills(a.items); len(got) != 1 || got[0].SkillID != 1 {
 		t.Fatalf("weapon gem skills %v", got)
 	}
-	if got := armourGemSkills(b.items); len(got) != 1 || got[0].SkillID != 6 {
+	if got := armourGemSkills(b.items); len(got) != 1 || got[0].SkillID != 1 {
 		t.Fatalf("armour gem skills %v", got)
 	}
 	stats := a.stats()
@@ -1481,14 +1483,14 @@ func TestGemSkills(t *testing.T) {
 	var gemReq, armourCast bool
 	for _, h := range hits {
 		gemReq = gemReq || h.GemAttack
-		armourCast = armourCast || (h.ItemCast && h.Skill != nil && h.Skill.SkillID == 6)
+		armourCast = armourCast || (h.ItemCast && h.Skill != nil && h.Skill.SkillID == 1)
 	}
 	if !gemReq || !armourCast {
 		t.Fatalf("after a landed hit: gem request %v armour cast %v (%d queued)", gemReq, armourCast, len(hits))
 	}
 	a.applyGemAttack(b.char.ID)
 	casts := b.player.TakeUserHits()
-	if len(casts) != 1 || !casts[0].ItemCast || casts[0].Skill.SkillID != 9 {
+	if len(casts) != 1 || !casts[0].ItemCast || casts[0].Skill.SkillID != 1 {
 		t.Fatalf("weapon gem cast %+v", casts)
 	}
 	// A gem cast that lands casts no gems back.
