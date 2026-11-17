@@ -104,7 +104,7 @@ func (a *App) prepareMall() error {
 				}
 			}
 			if entries == 1 {
-				product.Tone = a.itemTone(definition, nil)
+				product.Badge = a.itemBadge(definition, nil)
 			}
 		}
 		a.mall.products[category] = append(a.mall.products[category], product)
@@ -220,7 +220,7 @@ func (a *App) drawMall(w, h int) {
 				return nil, ui.UV{}, false
 			}
 			return a.assets.Texture("interface/" + file), uv, true
-		}, func(it proto.MallStoredItem) uint16 { return a.itemCount(it.Type, it.TypeID, it.Count) }, func(it proto.MallStoredItem) ui.ItemTone { return a.itemTone(a.itemsItem(it.Type, it.TypeID), nil) })
+		}, func(it proto.MallStoredItem) uint16 { return a.itemCount(it.Type, it.TypeID, it.Count) }, func(it proto.MallStoredItem) ui.ItemBadge { return a.itemBadge(a.itemsItem(it.Type, it.TypeID), nil) })
 	} else {
 		products := a.mall.products[a.mallUI.Category]
 		if index := a.mallUI.ProductAt(w, h, a.lastMouseX, a.lastMouseY, len(products)); index >= 0 {

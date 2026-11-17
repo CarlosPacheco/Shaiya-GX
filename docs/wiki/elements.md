@@ -100,16 +100,25 @@ and blacksmith socket rows; hovering an inactive socket also shows a muted
 lapis tooltip. A carried, unlinked lapis retains its original color. Gray status
 is recalculated from the current instance, so extraction updates it immediately.
 
-## Elemental tones on equipment icons
+## Element badges on item icons
 
-Weapons, armor and shields blend the Shaiya Core palette at 80/255 opacity.
-Fire uses `#FF0000`, Water `#00FFFF`, Earth `#00FF00` and Wind `#FFFFFF`. Both tiers share the family's tone
-and the tooltip names the exact tier. The tone follows the intrinsic element
-or the first elemental lapis in socket order.
+Weapons, armor, shields and capes with a nonzero effective item element display
+a small symbol from the original monster target atlas (`enemy_elemental.png`).
+It occupies the upper-left corner and scales with the item icon, up to 14px.
+Shortcut numbers and lower-right stack quantities retain their own space.
+Tier I and II share their family's symbol; the tooltip names the exact tier.
 
-The same tone appears in inventory, equipment slots, action bars, chat links,
-drag previews, blacksmith slots, storage, offers and merchandise. Previews
-without an item instance use the definition's intrinsic element.
+The badge uses the same intrinsic-plus-lapis calculation as the tooltip. It
+refreshes from confirmed instance gems, including linking/extraction and item
+moves. The badge follows intrinsic/first-socket priority. Temporary
+character buffs do not rewrite an item's own property or badge.
+
+This applies to inventory and equipped cells, horizontal/vertical action bars,
+held-item drags, blacksmith slots, personal/guild storage, trade and duel offers,
+NPC merchandise and single-item mall/gift previews. Definition-only previews use
+the intrinsic element because no instance gems exist yet. A mixed mall bundle
+has no single gear affinity. Consumables, lapis/lapisias and jewelry do not gain
+an equipment badge merely because their native fields contain an element.
 
 ## Player and monster attacks
 

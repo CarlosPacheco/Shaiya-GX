@@ -13,7 +13,7 @@ const ActionBars = 2
 const TotalActionSlots = ActionSlots * ActionBars
 
 type ActionSlot struct {
-	Tone             ItemTone
+	Badge            ItemBadge
 	Icon             *render.Texture
 	UV               UV
 	Label            string
@@ -188,7 +188,8 @@ func (b *ActionBar) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h
 		cx, cy := b.SlotOrigin(i, w, h)
 		if slot.Icon != nil {
 			u := slot.UV
-			slot.Tone.Draw(s, slot.Icon, u, cx, cy, 32, white)
+			s.Draw(slot.Icon, float32(cx), float32(cy), 32, 32, u.U0, u.V0, u.U1, u.V1, white)
+			slot.Badge.Draw(s, cx, cy, 32, white)
 			f.Draw(s, fmt.Sprint((i+1)%10), cx+23, cy, white, 12)
 		}
 		label := ""

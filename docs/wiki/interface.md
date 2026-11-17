@@ -499,9 +499,12 @@ Targeted random/perfect recreation runes preserve all other stats and obey the
 original attribute pool/count/max restrictions; see the local wiki source.
 
 
-Weapons and armor use a subtle tint for their effective element. The tint
-follows the same intrinsic and socket priority as the tooltip.
-See `docs/wiki/elements.md` for the color mapping.
+Elemental weapons/armor now carry a small original monster-element badge on
+their item icons across inventory/equipment, both action-bar orientations,
+forge, personal/guild storage, trade/duel offers, drags and merchandise/mall.
+The badge shares the tooltip's confirmed intrinsic/lapis calculation; neutral
+results have no badge; intrinsic or first elemental lapis sets the badge. See `docs/wiki/elements.md`.
+
 
 Elemental socket priority is intrinsic equipment first, otherwise the first
 valid elemental lapis among six sockets. Subsequent elemental lapis remain

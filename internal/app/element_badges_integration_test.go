@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-func TestElementTonesAcrossInventoryAndBarsGL(t *testing.T) {
+func TestElementBadgesAcrossInventoryAndBarsGL(t *testing.T) {
 	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
 		t.Skip("requires GL and original assets")
 	}
@@ -60,7 +60,7 @@ func TestElementTonesAcrossInventoryAndBarsGL(t *testing.T) {
 	a.inventory.open, a.inventory.bag = true, 1
 	ix, iy := a.inventoryUI.Origin(1024, 768)
 	var regions []image.Rectangle
-	addRegion := func(x, y int) { regions = append(regions, image.Rect(x, y, x+32, y+32)) }
+	addRegion := func(x, y int) { n := ui.ItemBadgeSize(32); regions = append(regions, image.Rect(x, y, x+n, y+n)) }
 	for i, g := range gems {
 		a.state.Inventory[[2]uint8{1, uint8(i)}] = proto.InventoryItem{Bag: 1, Slot: uint8(i), Type: 1, TypeID: 2, Count: 1, Gems: [6]uint8{g}}
 		x, y, _, _ := ui.InventoryCell(1, uint8(i))
@@ -114,7 +114,7 @@ func TestElementTonesAcrossInventoryAndBarsGL(t *testing.T) {
 		return im
 	}
 	draw := func() { a.drawInventory(1024, 768); a.drawActionBar(1024, 768) }
-	tinted := capture("inventory-equipment-and-bars", draw)
+	badged := capture("inventory-equipment-and-bars", draw)
 	saved := map[*sdata.Item]uint8{}
 	for _, d := range a.items {
 		saved[d] = d.Attribute
@@ -127,7 +127,7 @@ func TestElementTonesAcrossInventoryAndBarsGL(t *testing.T) {
 	counts := make([]int, len(regions))
 	for y := 0; y < 768; y++ {
 		for x := 0; x < 1024; x++ {
-			if tinted.At(x, y) == control.At(x, y) {
+			if badged.At(x, y) == control.At(x, y) {
 				continue
 			}
 			inside := false
@@ -138,13 +138,13 @@ func TestElementTonesAcrossInventoryAndBarsGL(t *testing.T) {
 				}
 			}
 			if !inside {
-				t.Fatalf("tone changed pixels outside its icon at %d,%d", x, y)
+				t.Fatalf("badge changed pixels outside its icon corner at %d,%d", x, y)
 			}
 		}
 	}
 	for i, n := range counts {
 		if n < 12 {
-			t.Fatalf("missing tone at icon%d: changed pixels%d", i, n)
+			t.Fatalf("missing badge at icon%d: changed pixels%d", i, n)
 		}
 	}
 	// Desaturation must be real grayscale, scoped to one sprite; normal
@@ -174,7 +174,7 @@ func TestElementTonesAcrossInventoryAndBarsGL(t *testing.T) {
 	if colored < 12 {
 		t.Fatal("active gem lost its color")
 	}
-	// The exact same instance must retain its tone in storage and offers.
+	// The exact same instance must retain its badge in storage and offers.
 	it := a.state.Inventory[[2]uint8{1, 0}]
 	a.state.Warehouse = map[uint8]proto.InventoryItem{0: it}
 	a.state.Exchange.Active = true

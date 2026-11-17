@@ -17,7 +17,6 @@ type Sprites struct {
 	uScreen, uMasked       int32
 	uCircle                int32
 	uGrayscale             int32
-	uOverlay               int32
 	uNameDepth             int32
 	nameDepth              float32
 	depth                  *Texture
@@ -52,7 +51,6 @@ layout(binding=1) uniform sampler2D mask;
 layout(binding=2) uniform sampler2D worldDepth;
 uniform int masked;
 uniform int grayscale;
-uniform vec4 overlay;
 uniform float nameDepth;
 uniform int reversedDepth;
 uniform vec2 screen;
@@ -89,7 +87,6 @@ void main() {
   float gray = dot(frag.rgb, vec3(0.299,0.587,0.114));
   frag.rgb = vec3(gray);
  }
- frag.rgb = mix(frag.rgb, overlay.rgb * vColor.rgb, overlay.a);
  if (circle.z > 0.0) {
 		float radius = length(vec2(gl_FragCoord.x, screen.y - gl_FragCoord.y) - circle.xy);
 		frag.a *= 1.0 - smoothstep(circle.z - 1.0, circle.z, radius);
@@ -107,7 +104,6 @@ func NewSprites(maxQuads int) (*Sprites, error) {
 	s.uMasked = gl.GetUniformLocation(p, gl.Str("masked\x00"))
 	s.uCircle = gl.GetUniformLocation(p, gl.Str("circle\x00"))
 	s.uGrayscale = gl.GetUniformLocation(p, gl.Str("grayscale\x00"))
-	s.uOverlay = gl.GetUniformLocation(p, gl.Str("overlay\x00"))
 	s.uNameDepth = gl.GetUniformLocation(p, gl.Str("nameDepth\x00"))
 	gl.ProgramUniform1f(p, s.uNameDepth, -1)
 	gl.CreateBuffers(1, &s.vbo)
@@ -210,13 +206,4 @@ func (s *Sprites) DrawGrayscale(t *Texture, x, y, w, h, u0, v0, u1, v1 float32, 
 	s.Draw(t, x, y, w, h, u0, v0, u1, v1, rgba)
 	s.Flush()
 	gl.ProgramUniform1i(s.prog, s.uGrayscale, 0)
-}
-
-// DrawColorOverlay blends RGB into one sprite while preserving its alpha.
-func (s *Sprites) DrawColorOverlay(t *Texture, x, y, w, h, u0, v0, u1, v1 float32, rgba, overlay [4]float32) {
-	s.Flush()
-	gl.ProgramUniform4f(s.prog, s.uOverlay, overlay[0], overlay[1], overlay[2], overlay[3])
-	s.Draw(t, x, y, w, h, u0, v0, u1, v1, rgba)
-	s.Flush()
-	gl.ProgramUniform4f(s.prog, s.uOverlay, 0, 0, 0, 0)
 }

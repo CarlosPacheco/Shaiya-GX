@@ -467,7 +467,7 @@ func (a *App) drawActionBar(w, h int) {
 		slot.Label, slot.Count = "Empty", a.itemCount(it.Type, it.TypeID, it.Count)
 		if d := a.itemsItem(it.Type, it.TypeID); d != nil {
 			slot.Label = fmt.Sprintf("%s x%d", d.Name, it.Count)
-			slot.Tone = a.itemTone(d, &it)
+			slot.Badge = a.itemBadge(d, &it)
 			slot.Cooldown = a.itemCooldown(it)
 			slot.CooldownDuration = itemCooldownDuration(d)
 			if file, uv, ok := ui.ItemIcon(it.Type, d.Icon); ok {
