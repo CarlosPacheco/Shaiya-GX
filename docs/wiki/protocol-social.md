@@ -397,7 +397,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.FriendInvite](../../internal/proto/social.go#L7).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L27), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L103)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L32), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L103)
 
 **S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L80)
 
@@ -587,7 +587,7 @@ type Reader struct {
 
 Declarations: [proto.FriendAnswer](../../internal/proto/social.go#L8).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L27), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L125)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L32), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L125)
 
 **S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L80)
 
@@ -854,7 +854,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.FriendDelete](../../internal/proto/social.go#L10).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L27), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L160)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L32), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L160)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -913,7 +913,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.FriendMemo](../../internal/proto/social.go#L11).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L27), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L190)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L32), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L190)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1093,7 +1093,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.BlockAdd](../../internal/proto/social.go#L14).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L27), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L173)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L32), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L173)
 
 **S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L80)
 
@@ -1298,7 +1298,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.BlockDelete](../../internal/proto/social.go#L15).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L27), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L160)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L32), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L160)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1357,7 +1357,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.BlockMemo](../../internal/proto/social.go#L16).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L27), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L190)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L32), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L190)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1416,7 +1416,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.PartySearchRequest](../../internal/proto/social.go#L17).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L27), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L209)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L32), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L209)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1592,7 +1592,7 @@ type Reader struct {
 
 Declarations: [proto.DuelRequest](../../internal/proto/duel.go#L4).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L205), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L258)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L210), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L258)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -1656,7 +1656,7 @@ type DuelChallenge struct{ Requester, Target uint32 }
 
 Declarations: [proto.DuelAnswer](../../internal/proto/duel.go#L5).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L205), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L263)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L210), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L263)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1840,7 +1840,7 @@ func DecodeExchangeByte(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(
 
 Declarations: [proto.DuelEnd](../../internal/proto/duel.go#L9).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L205), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L267)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L210), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L267)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1975,7 +1975,7 @@ func DecodeExchangeByte(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(
 
 Declarations: [proto.DuelReady](../../internal/proto/duel.go#L12).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L205), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L269)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L210), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L269)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
@@ -2035,7 +2035,7 @@ type ExchangeUpdate struct{ Kind, Value uint8 }
 
 Declarations: [proto.DuelAdd](../../internal/proto/duel.go#L13).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L205), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L273)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L210), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L273)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
@@ -2107,7 +2107,7 @@ type ExchangeOwnItem struct {
 
 Declarations: [proto.DuelRemove](../../internal/proto/duel.go#L14).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L205), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L281)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L210), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L281)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
@@ -2167,7 +2167,7 @@ type ExchangeUpdate struct{ Kind, Value uint8 }
 
 Declarations: [proto.DuelMoney](../../internal/proto/duel.go#L15).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L205), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L285)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L210), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L285)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
@@ -2295,7 +2295,7 @@ type ExchangeItem struct {
 
 Declarations: [proto.GuildDuelRequest](../../internal/proto/guild_duel.go#L4).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L207), [handleGuildDuel (server/internal/world/guildduel.go)](../../server/internal/world/guildduel.go#L125)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L212), [handleGuildDuel (server/internal/world/guildduel.go)](../../server/internal/world/guildduel.go#L125)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -2359,7 +2359,7 @@ type DuelChallenge struct{ Requester, Target uint32 }
 
 Declarations: [proto.GuildDuelAnswer](../../internal/proto/guild_duel.go#L5).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L207), [handleGuildDuel (server/internal/world/guildduel.go)](../../server/internal/world/guildduel.go#L130)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L212), [handleGuildDuel (server/internal/world/guildduel.go)](../../server/internal/world/guildduel.go#L130)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 

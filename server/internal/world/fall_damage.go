@@ -24,6 +24,7 @@ func (s *Session) applyFallDamage(drop float32) {
 	if damage == 0 {
 		return
 	}
+	s.cancelTeleportStone()
 	s.commitMovement()
 	s.cancelMove()
 	s.breakStealth()

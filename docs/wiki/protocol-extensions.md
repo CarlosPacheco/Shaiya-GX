@@ -124,7 +124,7 @@ Declarations: [packet.GXForgeQuote](../../server/internal/packet/packet.go#L325)
 
 Source notes: GXForgeQuote is a read-only preview; execution still validates live inventory.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L266)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L271)
 
 **S→C serializers:** [handleForgeQuote (server/internal/world/forge_quote.go)](../../server/internal/world/forge_quote.go#L103)
 
@@ -474,7 +474,7 @@ Declarations: [proto.GXGMMapTeleport](../../internal/proto/gm_map.go#L10).
 
 Source notes: GXGMMapTeleport requests an exact map-image coordinate. The server owns Y.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L264)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L269)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -701,6 +701,7 @@ func (s *Session) applyFallDamage(drop float32) {
 	if damage == 0 {
 		return
 	}
+	s.cancelTeleportStone()
 	s.commitMovement()
 	s.cancelMove()
 	s.breakStealth()
@@ -767,7 +768,7 @@ Declarations: [proto.GXLadder](../../internal/proto/ladder.go#L7).
 
 Source notes: GXLadder is additive. Requests contain guide index + mode; notifications also identify the actor. Native movement positions and flags retain their layouts.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L25)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L30)
 
 **S→C serializers:** [buildLadderState (server/internal/world/ladders.go)](../../server/internal/world/ladders.go#L11)
 
@@ -900,7 +901,7 @@ Declarations: [proto.GXTargetEffectsQuery](../../internal/proto/target_effects.g
 
 Source notes: GX requests a selected target's native snapshot; no native request is claimed.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L28)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1265,9 +1266,9 @@ func Decode(payload []byte) (string, string, error) {
 
 Declarations: [proto.GXTeleportStone](../../internal/proto/teleport_stone.go#L4).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L70)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L75)
 
-**S→C serializers:** [sendTeleportStone (server/internal/world/teleport_stone.go)](../../server/internal/world/teleport_stone.go#L13)
+**S→C serializers:** [sendTeleportStone (server/internal/world/teleport_stone.go)](../../server/internal/world/teleport_stone.go#L44)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1277,7 +1278,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendTeleportStone — server/internal/world/teleport_stone.go</summary>
 
-[Source definition](../../server/internal/world/teleport_stone.go#L13)
+[Source definition](../../server/internal/world/teleport_stone.go#L44)
 
 ```go
 func (s *Session) sendTeleportStone(action uint8, ok bool, message string, points [proto.TeleportPointCount]db.TeleportPoint) {
@@ -1291,6 +1292,9 @@ func (s *Session) sendTeleportStone(action uint8, ok bool, message string, point
 		w.F32(p.X)
 		w.F32(p.Z)
 	}
+	if action == proto.TeleportCasting {
+		w.U16(uint16(teleportStoneCastDuration / time.Millisecond))
+	}
 	s.send(w.MustFinish(), "recorded points")
 }
 ```
@@ -1299,7 +1303,7 @@ func (s *Session) sendTeleportStone(action uint8, ok bool, message string, point
 
 <details><summary>TeleportStonePacket — internal/proto/teleport_stone.go</summary>
 
-[Source definition](../../internal/proto/teleport_stone.go#L24)
+[Source definition](../../internal/proto/teleport_stone.go#L27)
 
 ```go
 func TeleportStonePacket(action, slot uint8) []byte {

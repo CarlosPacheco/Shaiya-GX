@@ -25,10 +25,11 @@ func TestTeleportStoneAgainstServer(t *testing.T) {
 	a.state, a.world = st, world
 	a.items = map[sdata.ItemKey]*sdata.Item{}
 	receivedTeleport := false
+	trackArrival := false
 
 	await := func(action uint8, wantOK bool) {
 		t.Helper()
-		timer := time.NewTimer(5 * time.Second)
+		timer := time.NewTimer(15 * time.Second)
 		defer timer.Stop()
 		for {
 			select {
@@ -43,7 +44,7 @@ func TestTeleportStoneAgainstServer(t *testing.T) {
 				if ev.MapLoadAck {
 					send(proto.MapLoadedPacket())
 				}
-				if ev.Op == proto.CharacterMapTeleport {
+				if trackArrival && ev.Op == proto.CharacterMapTeleport {
 					receivedTeleport = true
 				}
 				if ev.Op != proto.GXTeleportStone {
@@ -52,6 +53,9 @@ func TestTeleportStoneAgainstServer(t *testing.T) {
 				r, err := proto.DecodeTeleportStone(p)
 				if err != nil || r.Action != action || r.OK != wantOK {
 					t.Fatalf("recorded point result: %+v, %v", r, err)
+				}
+				if r.Action == proto.TeleportCasting && r.CastMS != 5000 {
+					t.Fatalf("wrong cast duration: %dms", r.CastMS)
 				}
 				a.confirmedTeleportStone(p)
 				return
@@ -93,13 +97,36 @@ func TestTeleportStoneAgainstServer(t *testing.T) {
 		}
 	}
 	savedMap := a.teleportStone.points[3].Map
-	if st.Self.IsGM && savedMap != 18 {
-		send(proto.ChatPacket(proto.ChannelNormal, false, "/cmove 18"))
-		wait(func() bool { return st.MapID == 18 })
+	if st.Self.IsGM && savedMap != 2 {
+		send(proto.ChatPacket(proto.ChannelNormal, false, "/cmove 2"))
+		wait(func() bool { return st.MapID == 2 })
 	}
-	receivedTeleport = false
-	click(40, 50+3*32)
-	click(220, 224)
+	originMap := st.MapID
+	start := func() {
+		t.Helper()
+		click(40, 50+3*32)
+		click(220, 224)
+		await(proto.TeleportCasting, true)
+		if !a.teleportStone.casting || st.Inventory[key].Count != item.Count || st.MapID != originMap {
+			t.Fatalf("cast start: casting=%v count=%d map=%d", a.teleportStone.casting, st.Inventory[key].Count, st.MapID)
+		}
+	}
+	for _, interrupt := range [][]byte{
+		proto.TeleportStonePacket(proto.TeleportCancel, 0),
+		proto.MovePacket(1, 0, st.Self.X, st.Self.Y, st.Self.Z),
+		proto.UseItemPacket(1, 22), // An item action cancels the cast even when the slot is empty.
+	} {
+		start()
+		send(interrupt)
+		await(proto.TeleportTravel, false)
+		if a.teleportStone.casting || st.Inventory[key].Count != item.Count || st.MapID != originMap {
+			t.Fatal("interrupted cast traveled or charged a stone")
+		}
+		a.useInventoryItem(key)
+		await(proto.TeleportOpen, true)
+	}
+	start()
+	trackArrival = true
 	await(proto.TeleportTravel, true)
 	if !receivedTeleport || st.MapID != savedMap || a.teleportStone.open || st.Inventory[key].Count != item.Count-1 {
 		t.Fatal("successful travel did not close the UI and consume exactly one stone")

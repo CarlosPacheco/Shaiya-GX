@@ -4040,6 +4040,7 @@ type TeleportPoint struct {
 ```go
 type TeleportStoneResult struct {
 	Action  uint8
+	CastMS  uint16
 	OK      bool
 	Message string
 	Points  [TeleportPointCount]TeleportPoint
@@ -4061,6 +4062,9 @@ func DecodeTeleportStone(p []byte) (out TeleportStoneResult, err error) {
 	out.Action, out.OK, out.Message = r.U8(), r.U8() != 0, r.Text()
 	for i := range out.Points {
 		out.Points[i] = TeleportPoint{Saved: r.U8() != 0, Map: r.U16(), X: r.F32(), Z: r.F32()}
+	}
+	if out.Action == TeleportCasting {
+		out.CastMS = r.U16()
 	}
 	return out, r.Err()
 }

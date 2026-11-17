@@ -2,6 +2,7 @@ package world
 
 import (
 	"slices"
+	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -9,6 +10,36 @@ import (
 )
 
 const specialTeleportStone = 39
+
+// Special 39 branches to 0x466097 in EP4.5 ps_game.exe. At 0x4661f3
+// it adds 0x1388 milliseconds before scheduling a type-2 move.
+const teleportStoneCastDuration = 5 * time.Second
+
+type teleportStoneCast struct {
+	slot   uint8
+	ends   time.Time
+	points [proto.TeleportPointCount]db.TeleportPoint
+}
+
+func (s *Session) cancelTeleportStone() {
+	cast := s.teleportCast
+	if cast == nil {
+		return
+	}
+	s.teleportCast = nil
+	s.sendTeleportStone(proto.TeleportTravel, false, "Teleportation interrupted.", cast.points)
+}
+
+func (s *Session) tickTeleportStone(now time.Time) {
+	if cast := s.teleportCast; cast != nil {
+		if s.char == nil || s.dead || s.char.CurrentHP == 0 || s.actionBlocked() || s.cast != nil || s.inCombat() {
+			s.cancelTeleportStone()
+		} else if !now.Before(cast.ends) {
+			s.teleportCast = nil
+			s.resolveTeleportStone(proto.TeleportTravel, cast.slot, true)
+		}
+	}
+}
 
 func (s *Session) sendTeleportStone(action uint8, ok bool, message string, points [proto.TeleportPointCount]db.TeleportPoint) {
 	w := packet.New(packet.Opcode(proto.GXTeleportStone))
@@ -20,6 +51,9 @@ func (s *Session) sendTeleportStone(action uint8, ok bool, message string, point
 		w.U16(p.Map)
 		w.F32(p.X)
 		w.F32(p.Z)
+	}
+	if action == proto.TeleportCasting {
+		w.U16(uint16(teleportStoneCastDuration / time.Millisecond))
 	}
 	s.send(w.MustFinish(), "recorded points")
 }
@@ -78,9 +112,17 @@ func (s *Session) handleTeleportStone(p []byte) {
 		return
 	}
 	action, slot := p[2], p[3]
-	if (action != proto.TeleportSave && action != proto.TeleportTravel) || slot >= proto.TeleportPointCount {
+	if action == proto.TeleportCancel {
+		s.cancelTeleportStone()
 		return
 	}
+	if s.teleportCast != nil || (action != proto.TeleportSave && action != proto.TeleportTravel) || slot >= proto.TeleportPointCount {
+		return
+	}
+	s.resolveTeleportStone(action, slot, false)
+}
+
+func (s *Session) resolveTeleportStone(action, slot uint8, complete bool) {
 	ch := s.char
 	points, err := db.TeleportPoints(ch.ID)
 	reply := func(ok bool, message string) { s.sendTeleportStone(action, ok, message, points) }
@@ -130,6 +172,12 @@ func (s *Session) handleTeleportStone(p []byte) {
 	dest, valid := g.Spawn([3]float32{point.X, point.Y, point.Z})
 	if !valid {
 		reply(false, "This destination has no stable ground.")
+		return
+	}
+	if !complete {
+		s.cancelMove()
+		s.teleportCast = &teleportStoneCast{slot: slot, ends: time.Now().Add(teleportStoneCastDuration), points: points}
+		s.sendTeleportStone(proto.TeleportCasting, true, "", points)
 		return
 	}
 	after := *ch

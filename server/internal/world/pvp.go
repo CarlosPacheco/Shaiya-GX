@@ -429,6 +429,7 @@ func (s *Session) takeUserDamage(attackerID, damage uint32) bool {
 		return false
 	}
 	s.breakStealth()
+	s.cancelTeleportStone()
 	s.addDamage(damageByUser, attackerID, damage) // CDamage::Add in CUser::Damage
 	after := satSub(cur.CurrentHP, damage)
 	ch.CurrentHP = satSub(ch.CurrentHP, cur.CurrentHP-after)

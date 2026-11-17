@@ -119,7 +119,7 @@ type UserShape struct {
 
 Declarations: [packet.TargetMobGetState](../../server/internal/packet/packet.go#L75), [proto.TargetMobGetState](../../internal/proto/opcodes.go#L59).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L246)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L251)
 
 **S→C serializers:** [buildMobState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1402), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -195,7 +195,7 @@ type Reader struct {
 
 Declarations: [packet.TargetMobHpUpdate](../../server/internal/packet/packet.go#L76), [proto.TargetMobHpUpdate](../../internal/proto/opcodes.go#L60).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L246)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L251)
 
 **S→C serializers:** [buildMobTargetHP (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1394)
 
@@ -247,7 +247,7 @@ type MobHealth struct {
 
 Declarations: [packet.TargetClear](../../server/internal/packet/packet.go#L77), [proto.TargetClear](../../internal/proto/opcodes.go#L61).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L203)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L208)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 

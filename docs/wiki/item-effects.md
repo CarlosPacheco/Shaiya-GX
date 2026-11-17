@@ -264,6 +264,8 @@ consumables and the original running effect.
 Using a Special 39 stone opens Recorded Points. Every character has four slots.
 Select one and save your current position, or select a saved point and travel
 there. Saving and replacing points costs nothing. Successful travel consumes
-one stone. Dungeons and instanced zones are excluded, and portal-gated fields
+one stone. Travel has the original five-second cast. Movement, damage,
+other character actions and Escape interrupt the cast before the stone is spent.
+Dungeons and instanced zones are excluded, and portal-gated fields
 must have an eligible entrance. Points survive logout and are local to the
 character.

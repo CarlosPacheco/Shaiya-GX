@@ -9,11 +9,11 @@ import (
 )
 
 type teleportStoneView struct {
-	open, pending bool
-	deadline      float64
-	selected      uint8
-	message       string
-	points        [proto.TeleportPointCount]proto.TeleportPoint
+	open, pending, casting bool
+	deadline               float64
+	selected               uint8
+	message                string
+	points                 [proto.TeleportPointCount]proto.TeleportPoint
 }
 
 const teleportWidth, teleportHeight = 352, 258
@@ -36,13 +36,57 @@ func (a *App) confirmedTeleportStone(p []byte) {
 		}
 		return
 	}
-	if !v.open || !v.pending {
+	if r.Action == proto.TeleportCasting && r.OK && v.pending {
+		v.open, v.casting = false, true
+		v.deadline = a.clock + float64(r.CastMS)/1000 + 5
+		if actor := a.playerActor(a.state.SelfID); actor != nil {
+			actor.PlayCast(85, float32(r.CastMS)/1000)
+			a.startMountCastEffects(a.state.SelfID, float64(r.CastMS)/1000)
+			a.playSound("ef_in_atrbu01.wav", a.state.Self.X, a.state.Self.Z)
+		}
 		return
 	}
-	v.pending, v.points, v.message = false, r.Points, r.Message
-	if r.Action == proto.TeleportTravel && r.OK {
-		*v = teleportStoneView{}
+	if v.casting && r.Action == proto.TeleportTravel {
+		a.stopTeleportCast()
+		if !r.OK {
+			a.questMessage(r.Message)
+		}
+		return
 	}
+	if v.open && v.pending {
+		v.pending, v.points, v.message = false, r.Points, r.Message
+	}
+}
+
+func (a *App) stopTeleportCast() {
+	if a.teleportStone.casting {
+		if actor := a.playerActor(a.state.SelfID); actor != nil {
+			actor.CancelCast()
+		}
+		if a.wv != nil {
+			a.stopCastEffects(a.state.SelfID)
+		}
+	}
+	a.teleportStone = teleportStoneView{}
+}
+
+func (a *App) updateTeleportCast(in *platform.Input) bool {
+	v := &a.teleportStone
+	if !v.casting {
+		return false
+	}
+	if a.clock >= v.deadline {
+		a.stopTeleportCast()
+		a.questMessage("No teleportation response.")
+		return false
+	}
+	if in.HasKey(platform.KeyEscape) {
+		if err := a.world.Send(proto.TeleportStonePacket(proto.TeleportCancel, 0)); err != nil {
+			a.backToLogin("Unable to cancel the teleportation.")
+		}
+		return true
+	}
+	return false
 }
 
 func (a *App) updateTeleportStone(in *platform.Input, w, h int) {
@@ -102,17 +146,25 @@ func (a *App) drawTeleportStone(w, h int) {
 	label := func(text string, dx, dy, width int, color [4]float32) {
 		a.font.Draw(a.sprites, text, x+dx, y+dy, color, width)
 	}
-	accent := [4]float32{.57, .77, .82, 1}
+	accent := [4]float32{.88, .73, .45, 1}
 	muted := [4]float32{.67, .69, .70, 1}
-	rect(0, 0, teleportWidth, teleportHeight, [4]float32{.10, .13, .15, .98})
-	rect(0, 0, teleportWidth, 2, accent)
-	label("Recorded Points", 14, 13, 275, white)
+	if frame := a.assets.Texture("interface/talk1_bg.png"); frame != nil {
+		a.sprites.Draw(frame, float32(x), float32(y), teleportWidth, 44, 0, 0, 1, 80.0/512, white)
+		a.sprites.Draw(frame, float32(x), float32(y+44), teleportWidth, 177, 0, 80.0/512, 1, 309.0/512, white)
+		a.sprites.Draw(frame, float32(x), float32(y+221), teleportWidth, 37, 0, 309.0/512, 1, 386.0/512, white)
+	} else {
+		rect(0, 0, teleportWidth, teleportHeight, [4]float32{.12, .10, .08, .98})
+	}
+	if stone := a.itemsItem(100, 65); stone != nil {
+		a.drawItemIcon(stone, x+35, y+8, 23, white)
+	}
+	label("Recorded Points", 95, 13, 210, white)
 	label("×", 322, 12, 14, white)
 	for i, p := range v.points {
 		rowY := 46 + i*32
-		color := [4]float32{.15, .19, .22, 1}
+		color := [4]float32{.17, .14, .11, .92}
 		if uint8(i) == v.selected {
-			color = [4]float32{.21, .34, .39, 1}
+			color = [4]float32{.34, .27, .16, .92}
 		}
 		rect(14, rowY, 324, 29, color)
 		label(fmt.Sprint(i+1), 24, rowY+7, 16, accent)
@@ -131,10 +183,10 @@ func (a *App) drawTeleportStone(w, h int) {
 	}
 	label(status, 14, 182, 324, muted)
 	button := func(text string, dx int, enabled bool) {
-		color := [4]float32{.20, .31, .35, 1}
+		color := [4]float32{.33, .26, .16, 1}
 		ink := white
 		if !enabled {
-			color, ink = [4]float32{.15, .19, .22, 1}, muted
+			color, ink = [4]float32{.17, .14, .11, .92}, muted
 		}
 		rect(dx, 211, 156, 32, color)
 		label(text, dx+(156-a.font.Width(text))/2, 219, 152, ink)

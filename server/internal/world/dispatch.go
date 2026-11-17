@@ -20,6 +20,11 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 		return
 	}
 	switch op {
+	case packet.CharacterMobAutoAttack, packet.CharacterUserAutoAttack, packet.SkillUse, packet.SkillUseNoTarget,
+		packet.UseItem, packet.UseVehicle, packet.CharacterMotion, packet.ReturnToTown:
+		s.cancelTeleportStone()
+	}
+	switch op {
 	case packet.Opcode(proto.GXTargetEffectsQuery):
 		s.handleTargetEffects(p)
 	case packet.Opcode(proto.GXLadder):

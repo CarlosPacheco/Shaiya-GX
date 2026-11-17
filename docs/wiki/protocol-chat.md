@@ -12,7 +12,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 Declarations: [packet.ChatNormal](../../server/internal/packet/packet.go#L133), [proto.ChatNormal](../../internal/proto/opcodes.go#L118).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L71), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L65)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L71), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L70)
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
@@ -68,7 +68,7 @@ type Chat struct {
 
 Declarations: [packet.ChatWhisper](../../server/internal/packet/packet.go#L179), [proto.ChatWhisper](../../internal/proto/opcodes.go#L167).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L68)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L73)
 
 **S→C serializers:** [buildWhisper (server/internal/world/chat.go)](../../server/internal/world/chat.go#L136)
 
@@ -143,7 +143,7 @@ type Chat struct {
 
 Declarations: [packet.ChatWorld](../../server/internal/packet/packet.go#L134), [proto.ChatWorld](../../internal/proto/opcodes.go#L119).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L65)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L70)
 
 **S→C serializers:** [buildChatByName (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L155)
 
@@ -203,7 +203,7 @@ type Chat struct {
 
 Declarations: [packet.ChatGuild](../../server/internal/packet/packet.go#L178), [proto.ChatGuild](../../internal/proto/opcodes.go#L166).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L139)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L144)
 
 **S→C serializers:** [guildChat (server/internal/world/guild.go)](../../server/internal/world/guild.go#L452)
 
@@ -265,7 +265,7 @@ type Chat struct {
 
 Declarations: [packet.ChatParty](../../server/internal/packet/packet.go#L70), [proto.ChatParty](../../internal/proto/opcodes.go#L54).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L131)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L136)
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
@@ -379,7 +379,7 @@ type Reader struct {
 
 Declarations: [packet.ChatShout](../../server/internal/packet/packet.go#L180), [proto.ChatShout](../../internal/proto/opcodes.go#L168).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L77), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L65)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L77), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L70)
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
@@ -435,7 +435,7 @@ type Chat struct {
 
 Declarations: [packet.ChatWorldShout](../../server/internal/packet/packet.go#L181), [proto.ChatWorldShout](../../internal/proto/opcodes.go#L169).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L84), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L65)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L84), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L70)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -646,7 +646,7 @@ type MobSpeech struct {
 
 Declarations: [packet.ChatMap](../../server/internal/packet/packet.go#L136), [proto.ChatMap](../../internal/proto/opcodes.go#L121).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L65)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L70)
 
 **S→C serializers:** [buildChatByName (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L155)
 
@@ -706,7 +706,7 @@ type Chat struct {
 
 Declarations: [packet.ChatNormalAdmin](../../server/internal/packet/packet.go#L202), [proto.ChatNormalAdmin](../../internal/proto/opcodes.go#L190).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L71), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L65)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L71), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L70)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -747,7 +747,7 @@ type Chat struct {
 
 Declarations: [packet.ChatWorldAdmin](../../server/internal/packet/packet.go#L203), [proto.ChatWorldAdmin](../../internal/proto/opcodes.go#L191).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L65)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L70)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 

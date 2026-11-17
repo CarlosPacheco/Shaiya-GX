@@ -264,6 +264,7 @@ func (s *Session) takeUserSkillDamage(attackerID uint32, d [3]uint32) bool {
 		return false
 	}
 	if d[0] > 0 || d[1] > 0 || d[2] > 0 {
+		s.cancelTeleportStone()
 		s.breakStealth()
 	}
 	if d[1] > 0 || d[2] > 0 {

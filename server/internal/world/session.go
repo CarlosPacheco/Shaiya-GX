@@ -111,6 +111,7 @@ type Session struct {
 	regenMode        int // CUser +0x1274: 0 sitting, 1 standing, 2 in combat (next tick's recovery)
 	lastCombatAt     time.Time
 	teleportStone    db.Item
+	teleportCast     *teleportStoneCast
 	shoutReadyAt     time.Time // 0x1107 cooldown (CUser +0x5848)
 	returnAt         time.Time // 0x0556 pending move (CUser +0x581c, type 0)
 }
@@ -403,6 +404,7 @@ func (s *Session) tick(idle bool) {
 	s.tickGuildDuel()
 	s.applyDuelWins()
 	s.tickReturnToTown()
+	s.tickTeleportStone(time.Now())
 	s.completePendingGuild()
 	s.tickRebirth(time.Now())
 	if s.char == nil {
@@ -695,6 +697,7 @@ func (s *Session) selectCharacter(id uint32) {
 		s.send(buildCharResult(packet.SelectCharacter, false, id), "character data unavailable")
 	}
 	s.teleportStone = db.Item{}
+	s.teleportCast = nil
 	ch, err := db.CharacterDetail(s.accountID, id)
 	if err != nil {
 		s.log.Printf("GX Server World select character id=%d failed: %v", id, err)

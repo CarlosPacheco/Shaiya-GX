@@ -382,6 +382,7 @@ func (s *Session) takeMobDamage(d pendingDamage, damage uint32, stats *Character
 	}
 	s.cancelMove() // CMob::Attack -> StatusCastingStop -> CancleMove
 	s.breakStealth()
+	s.cancelTeleportStone()
 	s.addDamage(damageByMob, d.MobGlobalID, damage)
 	newEffective := satSub(cur.CurrentHP, damage)
 	ch.CurrentHP = satSub(ch.CurrentHP, cur.CurrentHP-newEffective)
