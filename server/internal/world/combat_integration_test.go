@@ -939,7 +939,7 @@ func TestUserAttack(t *testing.T) {
 		t.Fatalf("enemy not killed: dead=%v hp=%d", enemy.dead, enemy.char.CurrentHP)
 	}
 	t.Logf("hits=%d", hits)
-	// CUser::Death: GetExp x 1.2 to the killer, KillPCFrom, ItemDropByUser.
+	// CUser::Death: GetExp x 1.2 to the killer and KillPCFrom.
 	exp, _ := attacker.player.TakeRewards()
 	if want := uint32(float64(pvpExp(40, 40)) * pvpExpFactor); len(exp) != 1 || exp[0] != want {
 		t.Fatalf("killer exp %v, want [%d]", exp, want)
@@ -952,22 +952,11 @@ func TestUserAttack(t *testing.T) {
 	if attacker.char.Kills != kills+1 {
 		t.Fatalf("killer kills %d, want %d", attacker.char.Kills, kills+1)
 	}
-	if len(enemy.items) != 0 {
-		t.Fatalf("enemy kept %d items", len(enemy.items))
+	if len(enemy.items) != 1 || enemy.items[0] != loot || len(itemsOnMap(mapID)) != 0 {
+		t.Fatal("PvP death must preserve inventory without dropping it")
 	}
-	found := false
-	for _, mi := range itemsOnMap(mapID) {
-		if mi.Item.Type == loot.Type && mi.Item.TypeID == loot.TypeID && mi.OwnerID == attacker.char.ID {
-			found = true
-		}
-	}
-	if !found {
-		t.Fatal("dropped item not on the ground for the killer")
-	}
-	clearMapItems(mapID)
 
-	// In a party with division 3: every member near the dead user gets
-	// party exp and a kill; the item is owned by the next member in turn.
+	// Party kills also preserve inventory while awarding exp and kill credit.
 	pt := &party{id: 990901, itemDivision: 3, maxLevel: 40, members: []*ConnectedPlayer{attacker.player, ally.player}}
 	partyMu.Lock()
 	attacker.player.party, ally.player.party = pt, pt
@@ -1002,19 +991,9 @@ func TestUserAttack(t *testing.T) {
 	if enemy.char.Deaths != 2 {
 		t.Fatalf("enemy deaths %d, want 2", enemy.char.Deaths)
 	}
-	owned := uint32(0)
-	for _, mi := range itemsOnMap(mapID) {
-		if mi.Item.Type == loot.Type && mi.Item.TypeID == loot.TypeID {
-			owned = mi.OwnerID
-			if !mi.NoParty {
-				t.Fatal("division 3 item is party-shared")
-			}
-		}
+	if len(enemy.items) != 1 || enemy.items[0] != loot || len(itemsOnMap(mapID)) != 0 || pt.itemDivSeq != 0 {
+		t.Fatal("party PvP death must preserve inventory without distributing it")
 	}
-	if owned != attacker.char.ID || pt.itemDivSeq != 1 {
-		t.Fatalf("division 3 owner %d seq %d, want %d and 1", owned, pt.itemDivSeq, attacker.char.ID)
-	}
-	clearMapItems(mapID)
 	if attacker.hostileUser(enemy.char.ID) != nil {
 		t.Fatal("a dead user is attackable")
 	}

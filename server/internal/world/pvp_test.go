@@ -89,14 +89,6 @@ func TestPvPExp(t *testing.T) {
 	}
 }
 
-func TestPvPDropChance(t *testing.T) {
-	for vg, want := range map[int16]int{0: 100, 10: 100, 11: 95, -51: 90, 200: 65, -191: 65, 171: 70, 141: 80, 101: 85} {
-		if got := pvpDropChance(vg); got != want {
-			t.Fatalf("Vg %d: %d%%, want %d%%", vg, got, want)
-		}
-	}
-}
-
 // CDamage::GetMax keeps the first entry on a tie.
 func TestDamageLedgerTop(t *testing.T) {
 	s := &Session{}

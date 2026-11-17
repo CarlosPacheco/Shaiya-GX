@@ -31,7 +31,7 @@ type tooltipLayout struct {
 	runs                 []tooltipRun
 	height, socketY      int
 	materialX, materialY int
-	effectsX, effectsY   int
+	effectIcons          [][2]int
 }
 
 func wrapTooltip(f *ui.Font, text string, color [4]float32) [][]tooltipGlyph {
@@ -126,11 +126,25 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 		if len(e.effects) > 0 {
 			y += 5
 			block("Effects", [4]float32{.75, .75, .75, 1}, y+3, false)
-			layout.effectsX, layout.effectsY = 16+f.Width("Effects"), y
-			if skill := e.effects[0]; e.effectChance && skill.Effect == 3 && skill.SuccessType >= 1 && skill.SuccessType <= 3 {
-				layout.runs = append(layout.runs, tooltipRun{fmt.Sprintf("%d%%", skill.SuccessValue), white, layout.effectsX + 22, y + 3, false})
+			x := 16 + f.Width("Effects")
+			for _, skill := range e.effects {
+				chance := ""
+				width := 18
+				if e.effectChance && skill.Effect == 3 && skill.SuccessType >= 1 && skill.SuccessType <= 3 {
+					chance = fmt.Sprintf("(%d%%)", skill.SuccessValue)
+					width = 22 + f.Width(chance)
+				}
+				if x+width > 198 {
+					x = 10
+					y += 22
+				}
+				layout.effectIcons = append(layout.effectIcons, [2]int{x, y})
+				if chance != "" {
+					layout.runs = append(layout.runs, tooltipRun{chance, white, x + 22, y + 3, false})
+				}
+				x += width + 6
 			}
-			y += 22 * ((len(e.effects) + 5) / 6)
+			y += 22
 		}
 		if e.maxOJ > 0 {
 			y += 5

@@ -17,11 +17,11 @@ import (
 //     goes to the attacker with the most damage (the first one on a tie),
 //     not to the last hit. A mob or the user itself at the top gives
 //     nothing. With no entry at all, a type-1 death still runs
-//     ItemDropByUser for the reported killer.
+//     the gold penalty for the reported killer.
 //   - Normal PvP (PvPGetDeathType 3; duel deaths 4 and 5 are handled
 //     separately): a killer without a party gets CUser::GetExp 0x004581b0 x 1.2
 //     through AddExpFromUser (exp charms apply), KillPCFrom, then
-//     ItemDropByUser. In a party, every member within 100 units gets
+//     the gold penalty. In a party, every member within 100 units gets
 //     GetExp(own level) x m_PartyExp[size] (m_RaidPartyExp for a raid) x
 //     GetPartyExpByLevel, the first of them KillPCFrom and the others
 //     KillPCTo.
@@ -30,37 +30,23 @@ import (
 //     KillPCTo 0x0045aed0: QuestUpdateKillPC, kills + 1 (up to
 //     g_tKillInfo[15] 200000; the NEW_SERVER doubling is off in the EP4.5
 //     ps_game.ini), 0x020E index 0, 0x0522 (id, kills) to the view.
-//   - ItemDropByUser 0x0045a180, above level 10 and without ability 37
-//     (SetSkillAbility index 36, m_bSkillNDItemEQ): a regular account
-//     drops one item at a chance set by its Vg (|Vg| > 190: 65%, > 170: 70,
-//     > 140: 80, > 100: 85, > 50: 90, > 10: 95, else 100) among the first
-//     10 inventory items with RealType 1-25, ReqOg 0 and Type not 94; a GM
-//     account (permission 1-10) drops 1-3 items among the first 25 with
-//     Type not 94. Then, 30% of the time, gold: 1..level x 5 (up to all of
-//     it), split among the killer's party within 100 units or dropped for
-//     the killer.
-//   - ItemDropByUserDeath 0x0045a5f0 places the item by the killer party's
-//     item division: 2 a random member gets it directly when in range
-//     (otherwise it is lost, as in the original), 1 the next member in
-//     range in turn gets it directly, 3 the next member in range owns it
-//     on the ground; else (or nobody in range) it lies on the ground for
-//     the killer and the killer's party.
+//   - PvP deaths preserve inventory. The native gold penalty still applies
+//     above level 10, unless ability 37 is active.
 //
-// GX extends both counters to the client's final threshold (1000000),
+//// GX extends both counters to the client's final threshold (1000000),
 // with all 31 client-table reward stages, as explicitly requested.
 // Country blessing and duel counters are handled by killcount.go, duel.go and
 // guildduel.go. Native redeemable reward stages are in pvpreward.go.
 
 const (
-	damageByUser       = 1
-	damageByMob        = 2
-	pvpKillCap         = pvprank.CounterCap
-	pvpDeathCap        = pvprank.CounterCap
-	pvpExpFactor       = 1.2
-	pvpDropLevel       = 10
-	pvpNoDropAbility   = 37
-	pvpUndroppableType = 94
-	pvpGoldChance      = 30
+	damageByUser     = 1
+	damageByMob      = 2
+	pvpKillCap       = pvprank.CounterCap
+	pvpDeathCap      = pvprank.CounterCap
+	pvpExpFactor     = 1.2
+	pvpDropLevel     = 10
+	pvpNoDropAbility = 37
+	pvpGoldChance    = 30
 )
 
 // damageEntry is one CDamage node.
@@ -218,7 +204,7 @@ func (s *Session) deathByUser(reported uint32) {
 	top, ok := s.topDamage()
 	if !ok {
 		if reported != ch.ID {
-			s.itemDropByUser(FindPlayerByID(reported))
+			s.dropPvPDeathGold(FindPlayerByID(reported))
 		}
 		return
 	}
@@ -247,7 +233,7 @@ func (s *Session) deathByUser(reported uint32) {
 			killer.QueueExp(exp)
 		}
 		s.killPCFrom(killer)
-		s.itemDropByUser(killer)
+		s.dropPvPDeathGold(killer)
 		return
 	}
 	factor := partyExpFactor[min(len(members), len(partyExpFactor)-1)]
@@ -275,7 +261,7 @@ func (s *Session) deathByUser(reported uint32) {
 			m.QueuePvPKill(pvpKill{VictimID: ch.ID})
 		}
 	}
-	s.itemDropByUser(killer)
+	s.dropPvPDeathGold(killer)
 }
 
 // killPCFrom is CUser::KillPCFrom: the killer's KillPCTo, then this
@@ -291,42 +277,11 @@ func (s *Session) killPCFrom(killer *ConnectedPlayer) {
 	s.send(buildKillCountUpdate(1, ch.Deaths), "0x020E deaths")
 }
 
-// itemDropByUser is CUser::ItemDropByUser on this (the dead) user.
-func (s *Session) itemDropByUser(killer *ConnectedPlayer) {
+// dropPvPDeathGold applies the gold penalty on this (the dead) user.
+func (s *Session) dropPvPDeathGold(killer *ConnectedPlayer) {
 	ch := s.char
 	if ch.Level <= pvpDropLevel || s.hasBenefit(pvpNoDropAbility) {
 		return
-	}
-	defs := db.MustDefs()
-	candidates := func(limit int, ok func(*db.ItemDef) bool) []db.Item {
-		var out []db.Item
-		for bag := uint8(InventoryFirstBag); bag <= InventoryLastBag && len(out) < limit; bag++ {
-			for slot := uint8(0); slot < InventorySlotCount && len(out) < limit; slot++ {
-				i := findItem(s.items, bag, slot)
-				if i < 0 {
-					continue
-				}
-				if d := defs.Item(s.items[i].Type, s.items[i].TypeID); d != nil && d.Type != pvpUndroppableType && ok(d) {
-					out = append(out, s.items[i])
-				}
-			}
-		}
-		return out
-	}
-	if s.isAdmin {
-		for n := rand.IntN(3) + 1; n > 0; n-- {
-			if c := candidates(25, func(*db.ItemDef) bool { return true }); len(c) > 0 {
-				s.itemDropByUserDeath(c[rand.IntN(len(c))], killer)
-			}
-		}
-	} else if rand.IntN(100) < pvpDropChance(ch.Vg) {
-		c := candidates(10, func(d *db.ItemDef) bool {
-			rt := realType(d.Type)
-			return rt >= 1 && rt <= 25 && d.ReqOg == 0
-		})
-		if len(c) > 0 {
-			s.itemDropByUserDeath(c[rand.IntN(len(c))], killer)
-		}
 	}
 	if ch.Money == 0 || rand.IntN(100) >= pvpGoldChance {
 		return
@@ -362,96 +317,6 @@ func (s *Session) itemDropByUser(killer *ConnectedPlayer) {
 	addMapItem(ch.MapID, mi)
 	dispatchItemEnter(ch.MapID, &mi, "0x0401 pvp gold drop")
 	s.log.Printf("GX Server World pvp gold drop character_id=%d amount=%d owner=%d", ch.ID, amount, owner)
-}
-
-// pvpDropChance is ItemDropByUser's Vg table.
-func pvpDropChance(vg int16) int {
-	v := int32(vg)
-	switch {
-	case v < -190 || v > 190:
-		return 65
-	case v < -170 || v > 170:
-		return 70
-	case v < -140 || v > 140:
-		return 80
-	case v < -100 || v > 100:
-		return 85
-	case v < -50 || v > 50:
-		return 90
-	case v < -10 || v > 10:
-		return 95
-	}
-	return 100
-}
-
-// itemDropByUserDeath is CUser::ItemDropByUserDeath for one inventory item.
-func (s *Session) itemDropByUserDeath(it db.Item, killer *ConnectedPlayer) {
-	ch := s.char
-	if err := db.DeleteCharacterItems(ch.ID, it.UID); err != nil {
-		s.log.Printf("GX Server World pvp item drop failed: %v", err)
-		return
-	}
-	if i := findItem(s.items, it.Bag, it.Slot); i >= 0 {
-		s.items = append(s.items[:i], s.items[i+1:]...)
-	}
-	if s.player != nil {
-		s.player.UpdateItems(s.items)
-	}
-	s.send(buildRemoveItem(&it, true), "0x0206 pvp item lost")
-	s.log.Printf("GX Server World pvp item drop character_id=%d item=%d/%d bag=%d slot=%d",
-		ch.ID, it.Type, it.TypeID, it.Bag, it.Slot)
-	dropped := it
-	dropped.UID, dropped.Bag, dropped.Slot = 0, 0, 0
-	if killer == nil {
-		s.placeGroundItem(dropped, 0, false)
-		return
-	}
-	inRange := func(m *ConnectedPlayer) bool {
-		mx, mz := m.PositionXZ()
-		return m.MapID() == ch.MapID && DistanceXZ(mx, mz, ch.PosX, ch.PosZ) <= partyRewardRange
-	}
-	partyMu.Lock()
-	pt := partyOf(killer)
-	var members []*ConnectedPlayer
-	division := int32(0)
-	if pt != nil {
-		members, division = append(members, pt.members...), pt.itemDivision
-	}
-	var pick *ConnectedPlayer
-	switch {
-	case pt == nil:
-	case division == 2:
-		if m := members[rand.IntN(len(members))]; inRange(m) {
-			pick = m
-		} else {
-			partyMu.Unlock()
-			s.log.Printf("GX Server World pvp item lost (random member out of range) item=%d/%d", it.Type, it.TypeID)
-			return
-		}
-	case division == 1 || division == 3:
-		for range members {
-			if pt.itemDivSeq >= len(members) {
-				pt.itemDivSeq = 0
-			}
-			m := members[pt.itemDivSeq]
-			pt.itemDivSeq++
-			if inRange(m) {
-				pick = m
-				break
-			}
-		}
-	}
-	partyMu.Unlock()
-	switch {
-	case pick != nil && division == 3:
-		s.placeGroundItem(dropped, pick.CharacterID, true)
-	case pick != nil:
-		if !pick.QueueItemGrant(dropped) {
-			s.placeGroundItem(dropped, pick.CharacterID, true)
-		}
-	default:
-		s.placeGroundItem(dropped, killer.CharacterID, false)
-	}
 }
 
 // placeGroundItem drops an item at this user's feet (drop type 3).

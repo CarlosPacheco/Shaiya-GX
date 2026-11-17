@@ -179,7 +179,7 @@ func (a *App) drawSharedTooltipAt(w, h int, position *[2]int) {
 		for i, skill := range a.tooltipExtra.effects {
 			if file, uv, ok := ui.SkillIcon(skill.Icon); ok {
 				if tex := a.assets.Texture("interface/" + file); tex != nil {
-					x, y := layout.effectsX+(i%6)*20, layout.effectsY+(i/6)*22
+					x, y := layout.effectIcons[i][0], layout.effectIcons[i][1]
 					a.sprites.Draw(tex, float32(left)+float32(x)*scale, float32(top)+float32(y)*scale, 18*scale, 18*scale, uv.U0, uv.V0, uv.U1, uv.V1, white)
 				}
 			}

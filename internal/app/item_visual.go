@@ -185,7 +185,8 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 	a.tooltip = rows
 	a.tooltipItem = true
 	a.tooltipDescription = description
-	a.tooltipExtra = tooltipExtras{forgeInfo: itemForgeInfo(def), effects: a.itemEffects(def, instance), effectChance: def.Type == 30}
+	rt := itemtype.Real(def.Type)
+	a.tooltipExtra = tooltipExtras{forgeInfo: itemForgeInfo(def), effects: a.itemEffects(def, instance), effectChance: def.Type == 30 || rt >= 1 && rt <= 15}
 	if rt := itemtype.Real(def.Type); rt >= 1 && rt <= 25 && def.Server > 0 && def.RequiredStats[4] > 0 {
 		a.tooltipExtra.maxOJ = min(def.RequiredStats[4], 99)
 		pool := uint8(9)
