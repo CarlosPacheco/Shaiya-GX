@@ -41,15 +41,38 @@ func TestChatAgainstRapture(t *testing.T) {
 	key := [2]uint8{1, 23}
 	item, ok := st.Inventory[key]
 	if ok {
-		a.inventory.open, a.inventory.bag = true, key[0]
+		a.screen = screenWorld
+		a.wv.mapID = st.MapID
+		update := func(in platform.Input) { a.Update(&in, 1024, 768, 0) }
+		update(platform.Input{Keys: []platform.Key{platform.KeyEnter}})
+		if !a.chatOpen {
+			t.Fatal("chat did not open")
+		}
+		update(platform.Input{Pressed: true, MouseDown: true, MouseX: 720, MouseY: 720})
+		update(platform.Input{Clicked: true, MouseX: 720, MouseY: 720})
+		if !a.inventory.open || !a.chatOpen {
+			t.Fatal("could not open inventory while composing")
+		}
 		x, y := a.inventoryUI.Origin(1024, 768)
+		for _, bag := range []uint8{5, 1} {
+			tx, ty := x+20+int(bag-1)*47, y+263
+			update(platform.Input{Pressed: true, MouseDown: true, MouseX: tx, MouseY: ty})
+			update(platform.Input{Clicked: true, MouseX: tx, MouseY: ty})
+			if a.inventory.bag != bag || !a.chatOpen {
+				t.Fatal("could not switch bags while composing")
+			}
+		}
 		cx, cy, _, _ := ui.InventoryCell(key[0], key[1])
-		a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyEnter}})
-		if !a.updateChatItemDrag(&platform.Input{Pressed: true, MouseX: x + cx + 1, MouseY: y + cy + 1}, 1024, 768) ||
-			!a.updateChatItemDrag(&platform.Input{Clicked: true, MouseX: 100, MouseY: 696}, 1024, 768) {
+		update(platform.Input{Pressed: true, MouseDown: true, MouseX: x + cx + 1, MouseY: y + cy + 1})
+		update(platform.Input{MouseDown: true, MouseX: 100, MouseY: 696})
+		if !a.inventory.dragging {
+			t.Fatal("chat blocked the inventory drag")
+		}
+		update(platform.Input{Clicked: true, MouseX: 100, MouseY: 696})
+		if len(a.chatItems) != 1 || !a.chatOpen {
 			t.Fatal("item drag did not reach the chat composer")
 		}
-		a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyEnter}})
+		update(platform.Input{Keys: []platform.Key{platform.KeyEnter}})
 		wait(func() bool {
 			for _, line := range st.Chat {
 				got := line.Items[0]

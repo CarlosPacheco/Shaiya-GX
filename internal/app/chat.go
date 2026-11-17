@@ -311,10 +311,10 @@ type chatItemDraft struct {
 
 func (a *App) updateChatItemDrag(in *platform.Input, w, h int) bool {
 	v := &a.inventory
-	if a.chatUI == nil || a.inventoryUI == nil || !v.open || v.pending || a.shop.pending || a.state.Self.Dead {
+	if a.chatUI == nil || a.inventoryUI == nil || v.pending || a.shop.pending || a.state.Self.Dead {
 		return false
 	}
-	if in.Clicked && v.dragging && v.selected && (ui.ChatInputHit(in.MouseX, in.MouseY, h) || a.chatUI.Contains(in.MouseX, in.MouseY, h)) {
+	if v.open && in.Clicked && v.dragging && v.selected && (ui.ChatInputHit(in.MouseX, in.MouseY, h) || a.chatUI.Contains(in.MouseX, in.MouseY, h)) {
 		v.dragging, v.selected = false, false
 		it, ok := a.state.Inventory[v.source]
 		if !ok {
@@ -336,17 +336,33 @@ func (a *App) updateChatItemDrag(in *platform.Input, w, h int) bool {
 	if !a.chatOpen {
 		return false
 	}
-	if in.Pressed {
-		x, y := a.inventoryUI.Origin(w, h)
-		if key, hit := ui.InventoryHit(in.MouseX-x, in.MouseY-y, v.bag); hit {
-			if _, ok := a.state.Inventory[key]; ok {
-				v.source, v.selected, v.dragging = key, true, true
-				return true
+	if v.open {
+		if v.bag < 1 || v.bag > 5 {
+			v.bag = 1
+		}
+		var closed bool
+		v.bag, closed = a.inventoryUI.Update(in, w, h, v.bag)
+		if closed {
+			v.open, v.dragging, v.selected = false, false, false
+			return true
+		}
+		if in.Pressed && !in.Clicked {
+			x, y := a.inventoryUI.Origin(w, h)
+			if key, hit := ui.InventoryHit(in.MouseX-x, in.MouseY-y, v.bag); hit {
+				if _, ok := a.state.Inventory[key]; ok {
+					v.source, v.selected, v.dragging = key, true, true
+					return true
+				}
 			}
 		}
+		if v.dragging && (in.Clicked || !in.MouseDown) {
+			v.dragging, v.selected = false, false
+			return true
+		}
 	}
-	if in.Clicked && v.dragging {
-		v.dragging, v.selected = false, false
+	if a.bottom != nil && a.bottom.UpdateInventoryButton(in, w, h, v.open) {
+		a.toggleInventory()
+		a.playUI()
 		return true
 	}
 	return false

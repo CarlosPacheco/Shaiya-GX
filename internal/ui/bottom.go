@@ -85,6 +85,12 @@ func (b *BottomBar) controls(w, h int, inventory, skills, status, subActions boo
 	}
 }
 
+// UpdateInventoryButton lets the chat composer keep inventory accessible.
+func (b *BottomBar) UpdateInventoryButton(in *platform.Input, w, h int, open bool) bool {
+	b.controls(w, h, open, false, false, false)
+	return b.buttons[2].Update(in)
+}
+
 func (b *BottomBar) Update(in *platform.Input, w, h int, inventory, skills, status, subActions bool) (BottomAction, bool) {
 	b.controls(w, h, inventory, skills, status, subActions)
 	b.hover = -1

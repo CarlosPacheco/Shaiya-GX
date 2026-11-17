@@ -238,6 +238,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			return
 		}
 		if a.shop.quantity == nil && a.updateChatItemDrag(in, w, h) {
+			a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
 			return
 		}
 		if a.chatOpen && a.shop.quantity == nil {
