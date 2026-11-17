@@ -76,6 +76,7 @@ type Entity struct {
 
 // ChatLine is one received message.
 type ChatLine struct {
+	Items            proto.ChatItems
 	ItemType, ItemID uint8
 	Raid             bool
 	MessageID        int
@@ -1383,21 +1384,21 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		if err != nil {
 			return fail(err)
 		}
-		s.addChat(ChatLine{Op: op, SenderID: c.SenderID, Text: c.Text, Raid: op == proto.ChatParty && s.Party.Raid})
+		s.addChat(ChatLine{Op: op, SenderID: c.SenderID, Text: c.Text, Items: c.Items, Raid: op == proto.ChatParty && s.Party.Raid})
 		ev.Text = fmt.Sprintf("chat %d: %s", c.SenderID, c.Text)
 	case proto.ChatWorld, proto.ChatGuild, proto.ChatMap, proto.ChatWorldShout, proto.ChatWorldAdmin:
 		c, err := proto.DecodeChatByName(p)
 		if err != nil {
 			return fail(err)
 		}
-		s.addChat(ChatLine{Op: op, Sender: c.Sender, Text: c.Text})
+		s.addChat(ChatLine{Op: op, Sender: c.Sender, Text: c.Text, Items: c.Items})
 		ev.Text = fmt.Sprintf("chat %s: %s", c.Sender, c.Text)
 	case proto.ChatWhisper:
 		c, err := proto.DecodeWhisper(p)
 		if err != nil {
 			return fail(err)
 		}
-		s.addChat(ChatLine{Op: op, Sender: c.Sender, Text: c.Text, Direction: c.Direction})
+		s.addChat(ChatLine{Op: op, Sender: c.Sender, Text: c.Text, Items: c.Items, Direction: c.Direction})
 	case proto.ChatError:
 		r := proto.NewReader(p)
 		code := r.U8()

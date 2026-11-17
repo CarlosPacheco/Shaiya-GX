@@ -196,6 +196,7 @@ type App struct {
 	chatHistory      []string
 	chatHistoryIndex int
 	chatDraft        string
+	chatItems        []chatItemDraft
 
 	npcDefs           map[sdata.NPCKey]sdata.NPC
 	questDefs         []sdata.Quest
@@ -721,6 +722,7 @@ func (a *App) backToLogin(msg string) {
 		a.accountMessage.Visible = false
 	}
 	a.chatOpen = false
+	a.chatItems = nil
 	if a.factionUI != nil {
 		a.factionUI.Reset()
 	}

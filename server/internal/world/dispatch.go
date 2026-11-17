@@ -129,13 +129,17 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 	case packet.ChatParty:
 		if s.char != nil {
 			if msg, err := readChatMessage(p); err == nil {
-				s.partyChat(msg)
+				if items, ok := s.chatItemSnapshots(p, 2); ok {
+					s.partyChat(msg, items)
+				}
 			}
 		}
 	case packet.ChatGuild:
 		if s.char != nil && s.player != nil && len(p) >= 3 && p[2] > 1 && p[2] <= 0x80 {
 			if msg, err := readChatMessage(p); err == nil {
-				s.guildChat(msg)
+				if items, ok := s.chatItemSnapshots(p, 2); ok {
+					s.guildChat(msg, items)
+				}
 			}
 		}
 	case packet.GuildCreate, packet.GuildCreateAgree, packet.GuildDisband, packet.GuildDisbandAgree,

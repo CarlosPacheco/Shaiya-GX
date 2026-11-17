@@ -237,6 +237,9 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			}
 			return
 		}
+		if a.shop.quantity == nil && a.updateChatItemDrag(in, w, h) {
+			return
+		}
 		if a.chatOpen && a.shop.quantity == nil {
 			a.updateChatPointer(in, w, h)
 		}

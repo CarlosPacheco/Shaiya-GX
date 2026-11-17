@@ -13,6 +13,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -86,6 +87,26 @@ func TestChatTextStaysInsidePanelsGL(t *testing.T) {
 			if !bytes.Equal(empty[offset:offset+316*4], full[offset:offset+316*4]) {
 				t.Fatal("chat glyphs escaped panel at y", y)
 			}
+		}
+	}
+	a.state = game.New()
+	a.state.AddChat(game.ChatLine{Op: proto.ChatNormal, Sender: "Priest", Text: "Gear", Items: proto.ChatItems{
+		{Type: 12, TypeID: 108, Count: 1, Gems: [6]uint8{164, 243}, Craft: "01020304050607080920"},
+		{Type: 25, TypeID: 4, Count: 5},
+	}})
+	a.lastMouseX = 26 + a.chatFont().Width("Priest : Gear ")
+	a.lastMouseY = 683 - a.chatFont().Height + 2
+	gl.Clear(gl.COLOR_BUFFER_BIT)
+	a.sprites.Begin(1024, 768)
+	a.drawChat(1024, 768)
+	if len(a.tooltip) == 0 || len(a.tooltipExtra.effects) != 1 {
+		t.Fatalf("linked equipment hover lost its shared tooltip: %+v", a.tooltip)
+	}
+	a.drawSharedTooltip(1024, 768)
+	a.sprites.End()
+	if dir := os.Getenv("SHAIYA_TEST_ARTIFACTS"); dir != "" {
+		if e = render.SavePNG(filepath.Join(dir, "chat-item-tooltip.png"), 1024, 768); e != nil {
+			t.Fatal(e)
 		}
 	}
 	if e = a.Preview("world-stream"); e != nil {

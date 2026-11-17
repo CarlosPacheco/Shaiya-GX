@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"strings"
 	"sync"
 	"time"
@@ -448,7 +449,7 @@ func (s *Session) guildLevelChanged() {
 }
 
 // guildChat (0x1104) is CGuild::SendAllGuildChat: sender name, text.
-func (s *Session) guildChat(message string) {
+func (s *Session) guildChat(message string, items proto.ChatItems) {
 	guildMu.Lock()
 	defer guildMu.Unlock()
 	g := s.player.guild.guild
@@ -458,7 +459,7 @@ func (s *Session) guildChat(message string) {
 	w := packet.New(packet.ChatGuild)
 	w.FixedString(s.char.Name, 21)
 	writeChatText(w, message)
-	g.send(w.MustFinish(), "0x1104 guild chat", nil)
+	g.send(chatWithItems(w.MustFinish(), items), "0x1104 guild chat", nil)
 }
 
 // handleGuild dispatches the 0x0Dxx requests of CUser::PacketGuild.

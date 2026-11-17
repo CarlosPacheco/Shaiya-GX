@@ -83,6 +83,116 @@ func CancelBuffPacket(skill uint16) []byte { return UseSkillPacket(0xff, uint32(
 
 </details>
 
+## chat items
+
+[internal/proto/chat_items.go](../../internal/proto/chat_items.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type ChatItems [MaxChatItems]InventoryItem
+```
+
+```go
+func (items ChatItems) Len() int {
+	for i, item := range items {
+		if item.Type == 0 {
+			return i
+		}
+	}
+	return len(items)
+}
+```
+
+```go
+func WithChatItemSlots(p []byte, slots [][2]uint8) []byte {
+	if len(p) == 0 || len(slots) == 0 || len(slots) > MaxChatItems {
+		return p
+	}
+	p = append(p, chatItemsTag, byte(len(slots)))
+	for _, slot := range slots {
+		p = append(p, slot[:]...)
+	}
+	return p
+}
+```
+
+```go
+func ChatItemSlots(p []byte, textOffset int) ([][2]uint8, bool) {
+	if len(p) <= textOffset {
+		return nil, false
+	}
+	end := textOffset + 1 + int(p[textOffset])
+	if end > len(p) {
+		return nil, false
+	}
+	tail := p[end:]
+	if len(tail) == 0 {
+		return nil, true
+	}
+	if len(tail) < 2 || tail[0] != chatItemsTag {
+		return nil, false
+	}
+	n := int(tail[1])
+	if n < 1 || n > MaxChatItems || len(tail) != 2+n*2 {
+		return nil, false
+	}
+	slots := make([][2]uint8, n)
+	for i := range slots {
+		copy(slots[i][:], tail[2+i*2:4+i*2])
+	}
+	return slots, true
+}
+```
+
+```go
+func WithChatItems(p []byte, items ChatItems) []byte {
+	count := items.Len()
+	if count == 0 {
+		return p
+	}
+	w := NewWriter(0)
+	for _, it := range items[:count] {
+		w.U8(it.Type)
+		w.U8(it.TypeID)
+		w.U16(it.Quality)
+		w.Count(it.Count)
+		for _, gem := range it.Gems {
+			w.U8(gem)
+		}
+		w.Fixed(it.Craft, 21, false)
+	}
+	p = append(p, chatItemsTag, byte(count))
+	return append(p, w.Bytes()[2:]...)
+}
+```
+
+```go
+func readChatItems(r *Reader) (items ChatItems) {
+	if r.Remaining() < 2 || r.U8() != chatItemsTag {
+		return items
+	}
+	n := int(r.U8())
+	if n < 1 || n > MaxChatItems || r.Remaining() != n*32 {
+		return items
+	}
+	for i := 0; i < n; i++ {
+		it := &items[i]
+		it.Type, it.TypeID, it.Quality, it.Count = r.U8(), r.U8(), r.U16(), r.Count()
+		for j := range it.Gems {
+			it.Gems[j] = r.U8()
+		}
+		it.Craft = r.Fixed(21)
+		if it.Type == 0 {
+			return ChatItems{}
+		}
+	}
+	return items
+}
+```
+
+</details>
+
 ## cloak fits
 
 [internal/proto/cloak_fits.go](../../internal/proto/cloak_fits.go#L1)
@@ -4395,6 +4505,7 @@ type Chat struct {
 	Sender    string
 	Text      string
 	Direction uint8
+	Items     ChatItems
 }
 ```
 
@@ -4402,6 +4513,7 @@ type Chat struct {
 func DecodeChatByID(p []byte) (m Chat, err error) {
 	r := NewReader(p)
 	m.SenderID, m.Text = r.U32(), r.Text()
+	m.Items = readChatItems(r)
 	return m, r.Err()
 }
 ```
@@ -4410,6 +4522,7 @@ func DecodeChatByID(p []byte) (m Chat, err error) {
 func DecodeChatByName(p []byte) (m Chat, err error) {
 	r := NewReader(p)
 	m.Sender, m.Text = r.Fixed(21), r.Text()
+	m.Items = readChatItems(r)
 	return m, r.Err()
 }
 ```
@@ -4418,6 +4531,7 @@ func DecodeChatByName(p []byte) (m Chat, err error) {
 func DecodeWhisper(p []byte) (m Chat, err error) {
 	r := NewReader(p)
 	m.Direction, m.Sender, m.Text = r.U8(), r.Fixed(21), r.Text()
+	m.Items = readChatItems(r)
 	return m, r.Err()
 }
 ```

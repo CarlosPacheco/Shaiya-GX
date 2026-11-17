@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/textwire"
 	"slices"
 	"time"
@@ -10,6 +11,7 @@ import (
 )
 
 type ChatEntry struct {
+	Items            proto.ChatItems
 	ItemType, ItemID uint8
 	Text             string
 	System           bool
@@ -64,6 +66,8 @@ func (c *ChatPanel) ShowHistory() {
 // ChatPanel follows Phoenix chat_hud.gd and ep4_chat.gd: flat persistent
 // histories and 16px rows, with the native 64px selector and 292px input strip.
 type ChatPanel struct {
+	DrawLinkedItem                   func(item proto.InventoryItem, x, y, size int, alpha float32)
+	DraftItems                       proto.ChatItems
 	DrawItem                         func(typ, id uint8, x, y, size int, alpha float32)
 	FocusRequested                   bool
 	Resized, ChannelChanged          bool
@@ -131,14 +135,21 @@ func (c *ChatPanel) SetEntries(f *Font, entries []ChatEntry) {
 		if entry.System {
 			pane = &c.panes[0]
 		}
-		runs, rows := wrapChatMarkup(f, entry.Text, entry.Color, entry.Markup, entry.ItemType != 0)
+		links := entry.Items.Len()
+		runs, rows := wrapChatContent(f, entry.Text, entry.Color, entry.Markup, 316, entry.ItemType != 0, links)
+		link := 0
 		if entryIndex >= overlap {
 			added[index] += len(rows)
 		}
 		for row := range runs {
 			for n := range runs[row] {
 				if runs[row][n].icon {
-					runs[row][n].itemType, runs[row][n].itemID = entry.ItemType, entry.ItemID
+					if links > 0 && link < links {
+						runs[row][n].item = entry.Items[link]
+						link++
+					} else {
+						runs[row][n].itemType, runs[row][n].itemID = entry.ItemType, entry.ItemID
+					}
 				}
 			}
 		}
@@ -328,7 +339,9 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 			yText := c.lineY(h, i, row, end, f.Height)
 			for _, run := range p.runs[row] {
 				if run.icon {
-					if c.DrawItem != nil {
+					if run.item.Type != 0 && c.DrawLinkedItem != nil && yText >= y+1 && yText+f.Height <= y+height-1 {
+						c.DrawLinkedItem(run.item, 25+run.x, yText, f.Height, a)
+					} else if c.DrawItem != nil && run.itemType != 0 {
 						c.DrawItem(run.itemType, run.itemID, 25+run.x, yText, f.Height, a)
 					}
 					continue
@@ -368,11 +381,22 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 	s.Draw(c.input, 66, float32(y), 288, 22, 2.0/512, .5, 270.0/512, 150.0/256, white)
 	s.Draw(c.input, 354, float32(y), 2, 22, 290.0/512, .5, 292.0/512, 150.0/256, white)
 	shown := text
-	for len(shown) > 0 && f.Width(shown) > 262 {
+	count := c.DraftItems.Len()
+	firstIconX := 331 - count*(f.Height+4)
+	available := 262
+	if count > 0 {
+		available = firstIconX - 73
+	}
+	for i, item := range c.DraftItems[:count] {
+		if c.DrawLinkedItem != nil {
+			c.DrawLinkedItem(item, firstIconX+i*(f.Height+4), textY, f.Height, 1)
+		}
+	}
+	for len(shown) > 0 && f.Width(shown) > available {
 		shown = textwire.DropFirst(shown)
 	}
 	restoreClip := s.ClipRect(69, float32(y+2), 264, 19)
-	f.Draw(s, shown, 69, textY, white, 262)
+	f.Draw(s, shown, 69, textY, white, available)
 	if typing && chatNow().UnixMilli()%1000 < 500 {
 		s.Draw(blank, float32(69+f.Width(shown)), float32(textY), 1, float32(f.Height), 0, 0, 1, 1, white)
 	}
@@ -407,6 +431,10 @@ func (c *ChatPanel) DrawOverlay(s *render.Sprites, f *Font, blank *render.Textur
 
 // Native entry row is six pixels below the old Phoenix approximation.
 func chatInputY(h int) int { return h - 76 }
+
+func ChatInputHit(x, y, height int) bool {
+	return x >= 66 && x < 356 && y >= chatInputY(height) && y < chatInputY(height)+22
+}
 
 // Newest lines occupy the bottom row even in a partially filled history.
 // Keep a full font cell and its shadow inside the flat frame; native frames

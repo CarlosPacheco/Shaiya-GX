@@ -43,11 +43,11 @@ func buildAccountPoints(points uint32) []byte {
 
 Declarations: [packet.PointBuy](../../server/internal/packet/packet.go#L190), [proto.PointBuy](../../internal/proto/opcodes.go#L178).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L252)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L256)
 
 **S→C serializers:** [buildPointBuyResult (server/internal/world/itemmall.go)](../../server/internal/world/itemmall.go#L28)
 
-**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L31), [Apply (internal/game/state.go)](../../internal/game/state.go#L630)
+**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L31), [Apply (internal/game/state.go)](../../internal/game/state.go#L631)
 
 ### Wire layouts and validation
 
@@ -147,11 +147,11 @@ type MallPurchase struct {
 
 Declarations: [packet.PointGiftSend](../../server/internal/packet/packet.go#L191), [proto.PointGiftSend](../../internal/proto/opcodes.go#L179).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L254)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L258)
 
 **S→C serializers:** [buildGiftSendResult (server/internal/world/itemmall.go)](../../server/internal/world/itemmall.go#L43)
 
-**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L41), [Apply (internal/game/state.go)](../../internal/game/state.go#L630)
+**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L41), [Apply (internal/game/state.go)](../../internal/game/state.go#L631)
 
 ### Wire layouts and validation
 
@@ -233,11 +233,11 @@ type MallGiftResult struct {
 
 Declarations: [packet.CashPoint](../../server/internal/packet/packet.go#L194), [proto.CashPoint](../../internal/proto/opcodes.go#L182).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L262)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L266)
 
 **S→C serializers:** [buildCashPoints (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L95)
 
-**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L25), [Apply (internal/game/state.go)](../../internal/game/state.go#L630)
+**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L25), [Apply (internal/game/state.go)](../../internal/game/state.go#L631)
 
 ### Wire layouts and validation
 
@@ -287,7 +287,7 @@ Declarations: [packet.PointStoredItemList](../../server/internal/packet/packet.g
 
 **S→C serializers:** [buildGiftBoxList (server/internal/world/itemmall.go)](../../server/internal/world/itemmall.go#L55)
 
-**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L51), [Apply (internal/game/state.go)](../../internal/game/state.go#L630)
+**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L51), [Apply (internal/game/state.go)](../../internal/game/state.go#L631)
 
 ### Wire layouts and validation
 
@@ -358,11 +358,11 @@ type MallStoredItem struct {
 
 Declarations: [packet.PointStoredItemGet](../../server/internal/packet/packet.go#L193), [proto.PointStoredItemGet](../../internal/proto/opcodes.go#L181).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L256)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L260)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
-**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L61), [Apply (internal/game/state.go)](../../internal/game/state.go#L630)
+**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L61), [Apply (internal/game/state.go)](../../internal/game/state.go#L631)
 
 ### Wire layouts and validation
 

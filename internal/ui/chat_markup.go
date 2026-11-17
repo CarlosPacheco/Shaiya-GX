@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/textwire"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ type chatGlyph struct {
 	color [4]float32
 }
 type chatRun struct {
+	item             proto.InventoryItem
 	text             string
 	icon             bool
 	itemType, itemID uint8
@@ -26,6 +28,10 @@ func wrapChatMarkup(f *Font, text string, base [4]float32, markup bool, itemIcon
 }
 
 func wrapMarkupWidth(f *Font, text string, base [4]float32, markup bool, width int, itemIcon ...bool) ([][]chatRun, []string) {
+	return wrapChatContent(f, text, base, markup, width, len(itemIcon) > 0 && itemIcon[0], 0)
+}
+
+func wrapChatContent(f *Font, text string, base [4]float32, markup bool, width int, nativeIcon bool, links int) ([][]chatRun, []string) {
 	var glyphs []chatGlyph
 	color := base
 	for len(text) > 0 {
@@ -56,8 +62,11 @@ func wrapMarkupWidth(f *Font, text string, base [4]float32, markup bool, width i
 			}
 		}
 		r, size := utf8.DecodeRuneInString(text)
-		glyphs = append(glyphs, chatGlyph{char: r, color: color, icon: markup && len(itemIcon) > 0 && itemIcon[0] && r == '\uFFFC'})
+		glyphs = append(glyphs, chatGlyph{char: r, color: color, icon: markup && nativeIcon && r == '\uFFFC'})
 		text = text[size:]
+	}
+	for range links {
+		glyphs = append(glyphs, chatGlyph{char: ' ', color: base}, chatGlyph{char: '\uFFFC', icon: true, color: base})
 	}
 	var rows [][]chatRun
 	var lines []string
@@ -68,11 +77,15 @@ func wrapMarkupWidth(f *Font, text string, base [4]float32, markup bool, width i
 			if g.char == '\n' {
 				break
 			}
-			remaining.WriteRune(g.char)
+			if g.char == '\uFFFC' && !g.icon && (nativeIcon || links > 0) {
+				remaining.WriteRune('\uFFFD')
+			} else {
+				remaining.WriteRune(g.char)
+			}
 		}
 		candidate := ""
 		for _, cluster := range textwire.Graphemes(remaining.String()) {
-			if cut > 0 && chatMarkupWidth(f, candidate+cluster, markup && len(itemIcon) > 0 && itemIcon[0]) > width {
+			if cut > 0 && chatMarkupWidth(f, candidate+cluster, nativeIcon || links > 0) > width {
 				break
 			}
 			if cluster == " " {

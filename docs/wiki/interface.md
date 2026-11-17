@@ -76,6 +76,13 @@ Login VANI assets now use the frame interval stored at header offset 48, rather 
 
 ## Phoenix chat and native targets
 
+Drag an inventory or equipped item onto chat to attach it to the current
+message. Up to four attachments appear in the input. Send with Enter, or press
+Backspace with an empty text field to remove the last attachment. Hover over a
+sent icon to open the standard tooltip with the item's lapis, recreation and
+enchantment as they were when sent. Stackable items show the sent quantity.
+
+
 The login logo stays visible during server selection and disappears with the login scenery.
 
 Chat uses runtime `sysmsg-uni.txt` entries, including channel templates 353/354/355/370 and channel names 5086–5089/5377/5388. The formatter replaces native placeholders once; message bodies cannot introduce more placeholders. Normal messages use the native `name : message` format. Combat, experience, acquired gold/items, item use, learned skills, level changes, party invitations/membership, quest outcomes, trade and supported guild lifecycle notices use their original message IDs. Diagnostic commands retain explanatory fallback text where no native equivalent has been connected. Special service and third-party combat notices remain incomplete; ordinary speech bubbles follow confirmed chat echoes.

@@ -348,23 +348,27 @@ type Chat struct {
 	Sender    string
 	Text      string
 	Direction uint8
+	Items     ChatItems
 }
 
 func DecodeChatByID(p []byte) (m Chat, err error) {
 	r := NewReader(p)
 	m.SenderID, m.Text = r.U32(), r.Text()
+	m.Items = readChatItems(r)
 	return m, r.Err()
 }
 
 func DecodeChatByName(p []byte) (m Chat, err error) {
 	r := NewReader(p)
 	m.Sender, m.Text = r.Fixed(21), r.Text()
+	m.Items = readChatItems(r)
 	return m, r.Err()
 }
 
 func DecodeWhisper(p []byte) (m Chat, err error) {
 	r := NewReader(p)
 	m.Direction, m.Sender, m.Text = r.U8(), r.Fixed(21), r.Text()
+	m.Items = readChatItems(r)
 	return m, r.Err()
 }
 

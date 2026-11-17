@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"strings"
 	"sync"
 	"time"
@@ -411,7 +412,7 @@ func (s *Session) partyLevel() {
 }
 
 // partyChat (0x1105) relays a message to the party.
-func (s *Session) partyChat(message string) {
+func (s *Session) partyChat(message string, items proto.ChatItems) {
 	partyMu.Lock()
 	pt := partyOf(s.player)
 	var members []*ConnectedPlayer
@@ -422,7 +423,7 @@ func (s *Session) partyChat(message string) {
 	if len(members) == 0 {
 		return
 	}
-	broadcast(members, buildChatByID(packet.ChatParty, s.char.ID, message), "0x1105 party chat", s.logger)
+	broadcast(members, chatWithItems(buildChatByID(packet.ChatParty, s.char.ID, message), items), "0x1105 party chat", s.logger)
 }
 
 // partyExpLevelShare is the level gap factor against the party's highest

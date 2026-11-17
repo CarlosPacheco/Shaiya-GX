@@ -24,14 +24,19 @@ func (a *App) updateChat(in *platform.Input) bool {
 		if a.wv != nil {
 			a.wv.mobClick = mobClick{}
 		}
+		a.chatItems = nil
 		a.chatInput = ui.TextField{Max: 120}
 		a.chatHistoryIndex = len(a.chatHistory)
 		a.chatDraft = ""
 		return true
 	}
 	if in.HasKey(platform.KeyEscape) {
+		a.chatItems = nil
 		a.chatOpen = false
 		return true
+	}
+	if len(a.chatItems) > 0 && a.chatInput.Text == "" && in.HasKey(platform.KeyBackspace) {
+		a.chatItems = a.chatItems[:len(a.chatItems)-1]
 	}
 	a.chatInput.Edit(in)
 	if in.HasKey(platform.KeyUp) || in.HasKey(platform.KeyDown) {
@@ -50,6 +55,21 @@ func (a *App) updateChat(in *platform.Input) bool {
 	}
 	if in.HasKey(platform.KeyEnter) {
 		text := strings.TrimSpace(a.chatInput.Text)
+		var slots [][2]uint8
+		for _, draft := range a.chatItems {
+			if it, ok := a.state.Inventory[draft.slot]; ok && it == draft.item {
+				slots = append(slots, draft.slot)
+			} else {
+				a.chatItems = nil
+				a.questMessage("An attached item changed. Drag it into chat again.")
+				return true
+			}
+		}
+		defer func() {
+			if !a.chatOpen {
+				a.chatItems = nil
+			}
+		}()
 		if text != "" {
 			a.chatHistory = append(a.chatHistory, text)
 			if len(a.chatHistory) > 32 {
@@ -75,16 +95,16 @@ func (a *App) updateChat(in *platform.Input) bool {
 			a.chatOpen = false
 			return true
 		}
-		if packet, handled := whisperCommand(text); handled && !channelCommand {
+		if packet, handled := whisperCommand(text, len(slots) > 0); handled && !channelCommand {
 			if packet == nil {
 				a.questMessage("Use /w name message.")
-			} else if err := a.world.Send(packet); err != nil {
+			} else if err := a.world.Send(proto.WithChatItemSlots(packet, slots)); err != nil {
 				a.backToLogin("Unable to send whisper.")
 			}
 			a.chatOpen = false
 			return true
 		}
-		if text != "" {
+		if text != "" || len(slots) > 0 {
 			channel := proto.ChannelNormal
 			if a.chatUI != nil {
 				channel = a.chatUI.Channel
@@ -92,41 +112,37 @@ func (a *App) updateChat(in *platform.Input) bool {
 			if channelCommand {
 				channel = selectedChannel
 			}
-			if text != "" {
-				if !channelCommand {
-					switch text[0] {
-					case '@':
-						channel = proto.ChannelParty
-						text = strings.TrimSpace(text[1:])
-					case '#':
-						channel = proto.ChannelGuild
-						text = strings.TrimSpace(text[1:])
-					case '$':
-						channel = proto.ChannelTrade
-						text = strings.TrimSpace(text[1:])
-					}
+			if !channelCommand && text != "" {
+				switch text[0] {
+				case '@':
+					channel = proto.ChannelParty
+					text = strings.TrimSpace(text[1:])
+				case '#':
+					channel = proto.ChannelGuild
+					text = strings.TrimSpace(text[1:])
+				case '$':
+					channel = proto.ChannelTrade
+					text = strings.TrimSpace(text[1:])
 				}
-				if text == "" {
-					a.chatOpen = false
+			}
+			if text == "" && len(slots) == 0 {
+				a.chatOpen = false
+				return true
+			}
+			packet := proto.ChatPacket(channel, false, chatBody(text, len(slots) > 0))
+			if channel == 5 {
+				recipient := strings.TrimSpace(a.chatUI.Recipient)
+				if recipient == "" {
+					recipient, text, _ = strings.Cut(text, " ")
+				}
+				packet = proto.WhisperPacket(recipient, chatBody(text, len(slots) > 0))
+				if packet == nil {
+					a.localizedNotice(1, 232, nil, "Use !name message.")
 					return true
 				}
-				wireChannel := channel
-
-				packet := proto.ChatPacket(wireChannel, false, text)
-				if channel == 5 {
-					recipient := strings.TrimSpace(a.chatUI.Recipient)
-					if recipient == "" {
-						recipient, text, _ = strings.Cut(text, " ")
-					}
-					packet = proto.WhisperPacket(recipient, strings.TrimSpace(text))
-					if packet == nil {
-						a.localizedNotice(1, 232, nil, "Use !name message.")
-						return true
-					}
-				}
-				if err := a.world.Send(packet); err != nil {
-					a.backToLogin("Unable to send chat message.")
-				}
+			}
+			if err := a.world.Send(proto.WithChatItemSlots(packet, slots)); err != nil {
+				a.backToLogin("Unable to send chat message.")
 			}
 		}
 		a.chatOpen = false
@@ -134,17 +150,26 @@ func (a *App) updateChat(in *platform.Input) bool {
 	return true
 }
 
-func whisperCommand(text string) ([]byte, bool) {
+func chatBody(text string, linked bool) string {
+	text = strings.TrimSpace(text)
+	if text == "" && linked {
+		return " "
+	}
+	return text
+}
+
+func whisperCommand(text string, linked ...bool) ([]byte, bool) {
+	hasItems := len(linked) > 0 && linked[0]
 	if strings.HasPrefix(text, "!") {
 		name, message, _ := strings.Cut(strings.TrimSpace(text[1:]), " ")
-		return proto.WhisperPacket(name, strings.TrimSpace(message)), true
+		return proto.WhisperPacket(name, chatBody(message, hasItems)), true
 	}
 	command, rest, _ := strings.Cut(strings.TrimSpace(text), " ")
 	if !strings.EqualFold(command, "/w") && !strings.EqualFold(command, "/whisper") && !strings.EqualFold(command, "/t") && !strings.EqualFold(command, "/tell") {
 		return nil, false
 	}
 	name, message, _ := strings.Cut(strings.TrimSpace(rest), " ")
-	return proto.WhisperPacket(name, strings.TrimSpace(message)), true
+	return proto.WhisperPacket(name, chatBody(message, hasItems)), true
 }
 
 func (a *App) drawChat(w, h int) {
@@ -155,6 +180,24 @@ func (a *App) drawChat(w, h int) {
 		}
 	}
 	a.chatUI.DrawItem = a.drawChatItem
+	a.chatUI.DrawLinkedItem = func(it proto.InventoryItem, x, y, size int, alpha float32) {
+		if def := a.itemsItem(it.Type, it.TypeID); def != nil {
+			a.drawItemIcon(def, x, y, size, [4]float32{1, 1, 1, alpha}, &it)
+			if a.itemCount(it.Type, it.TypeID, it.Count) > 0 {
+				count := fmt.Sprint(it.Count)
+				f.DrawOutlined(a.sprites, count, x+size-f.Width(count), y, [4]float32{1, 1, 1, alpha})
+			}
+			if a.lastMouseX >= x && a.lastMouseX < x+size && a.lastMouseY >= y && a.lastMouseY < y+size {
+				a.drawItemDetails(def, &it, it.Count, x, y, w, h, "")
+			}
+		}
+	}
+	a.chatUI.DraftItems = proto.ChatItems{}
+	if a.chatOpen {
+		for i, draft := range a.chatItems {
+			a.chatUI.DraftItems[i] = draft.item
+		}
+	}
 	a.chatUI.SetEntries(f, a.formattedChat())
 	shown := ""
 	if a.chatOpen {
@@ -214,7 +257,7 @@ func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
 	}
 	rgb := ui.ChatRGB(style)
 
-	return ui.ChatEntry{ItemType: c.ItemType, ItemID: c.ItemID, Text: body, System: game.ChatSystemPane(style), Color: ui.RGBColor(rgb), Style: style, Markup: c.Op == 0}
+	return ui.ChatEntry{Items: c.Items, ItemType: c.ItemType, ItemID: c.ItemID, Text: body, System: game.ChatSystemPane(style), Color: ui.RGBColor(rgb), Style: style, Markup: c.Op == 0}
 }
 
 func (a *App) updateChatPointer(in *platform.Input, _, h int) bool {
@@ -259,4 +302,52 @@ func (a *App) drawChatItem(typ, id uint8, x, y, size int, alpha float32) {
 	if d := a.itemsItem(typ, id); d != nil {
 		a.drawItemIcon(d, x, y, size, [4]float32{1, 1, 1, alpha})
 	}
+}
+
+type chatItemDraft struct {
+	slot [2]uint8
+	item proto.InventoryItem
+}
+
+func (a *App) updateChatItemDrag(in *platform.Input, w, h int) bool {
+	v := &a.inventory
+	if a.chatUI == nil || a.inventoryUI == nil || !v.open || v.pending || a.shop.pending || a.state.Self.Dead {
+		return false
+	}
+	if in.Clicked && v.dragging && v.selected && (ui.ChatInputHit(in.MouseX, in.MouseY, h) || a.chatUI.Contains(in.MouseX, in.MouseY, h)) {
+		v.dragging, v.selected = false, false
+		it, ok := a.state.Inventory[v.source]
+		if !ok {
+			return true
+		}
+		if !a.chatOpen {
+			a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyEnter}})
+		}
+		for _, draft := range a.chatItems {
+			if draft.slot == v.source {
+				return true
+			}
+		}
+		if len(a.chatItems) < proto.MaxChatItems {
+			a.chatItems = append(a.chatItems, chatItemDraft{v.source, it})
+		}
+		return true
+	}
+	if !a.chatOpen {
+		return false
+	}
+	if in.Pressed {
+		x, y := a.inventoryUI.Origin(w, h)
+		if key, hit := ui.InventoryHit(in.MouseX-x, in.MouseY-y, v.bag); hit {
+			if _, ok := a.state.Inventory[key]; ok {
+				v.source, v.selected, v.dragging = key, true, true
+				return true
+			}
+		}
+	}
+	if in.Clicked && v.dragging {
+		v.dragging, v.selected = false, false
+		return true
+	}
+	return false
 }

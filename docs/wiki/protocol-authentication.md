@@ -263,7 +263,7 @@ func WorldHelloPacket(userUID uint32, token [16]byte) []byte {
 
 Declarations: [packet.Ping](../../server/internal/packet/packet.go#L201), [proto.Ping](../../internal/proto/opcodes.go#L189).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L264)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L268)
 
 **S→C serializers:** [buildPing (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L101)
 

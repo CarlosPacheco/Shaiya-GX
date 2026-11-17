@@ -1,8 +1,11 @@
 package world
 
 import (
-	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
+	"encoding/binary"
 	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -49,11 +52,14 @@ func (s *Session) handleChat(op packet.Opcode, p []byte) {
 		s.executeTown()
 		return
 	}
-	s.handlePublicChat(op, msg)
+	items, ok := s.chatItemSnapshots(p, 2)
+	if ok {
+		s.handlePublicChat(op, msg, items)
+	}
 }
 
 // handlePublicChat delivers the normal, trade, shout and area channels.
-func (s *Session) handlePublicChat(op packet.Opcode, message string) {
+func (s *Session) handlePublicChat(op packet.Opcode, message string, items proto.ChatItems) {
 	if (op == packet.ChatNormalAdmin || op == packet.ChatWorldAdmin) && !s.isAdmin {
 		s.log.Printf("GX Server World rejected admin chat from non-admin account_id=%d", s.accountID)
 		return
@@ -88,7 +94,7 @@ func (s *Session) handlePublicChat(op packet.Opcode, message string) {
 		}
 		frame = buildChatByName(packet.ChatMap, ch.Name, message)
 	}
-	broadcast(to, frame, "chat", s.logger)
+	broadcast(to, chatWithItems(frame, items), "chat", s.logger)
 }
 
 func playersOfCountry(country uint8) []*ConnectedPlayer {
@@ -119,8 +125,12 @@ func (s *Session) handleWhisper(p []byte) {
 		s.send(buildChatError(1), "0x1106 whisper target not found")
 		return
 	}
-	t.Send(buildWhisper(0, s.char.Name, msg), "0x1102 whisper in")
-	s.send(buildWhisper(1, t.CharacterName, msg), "0x1102 whisper out")
+	items, ok := s.chatItemSnapshots(p, 0x17)
+	if !ok {
+		return
+	}
+	t.Send(chatWithItems(buildWhisper(0, s.char.Name, msg), items), "0x1102 whisper in")
+	s.send(chatWithItems(buildWhisper(1, t.CharacterName, msg), items), "0x1102 whisper out")
 }
 
 func buildWhisper(direction uint8, name, message string) []byte {
@@ -129,4 +139,33 @@ func buildWhisper(direction uint8, name, message string) []byte {
 	w.FixedString(name, 21)
 	writeChatText(w, message)
 	return w.MustFinish()
+}
+
+// Build display data from server-owned inventory, never from chat text.
+func (s *Session) chatItemSnapshots(p []byte, textOffset int) (items proto.ChatItems, ok bool) {
+	slots, ok := proto.ChatItemSlots(p, textOffset)
+	if !ok {
+		return items, false
+	}
+	for n, slot := range slots {
+		if !isValidItemPosition(slot[0], slot[1]) {
+			return proto.ChatItems{}, false
+		}
+		i := findItem(s.items, slot[0], slot[1])
+		if i < 0 || s.items[i].Count == 0 {
+			return proto.ChatItems{}, false
+		}
+		it := s.items[i]
+		items[n] = proto.InventoryItem{Type: it.Type, TypeID: it.TypeID, Quality: it.Quality, Count: it.Count, Gems: it.Gems, Craft: it.CraftName}
+	}
+	return items, true
+}
+
+func chatWithItems(frame []byte, items proto.ChatItems) []byte {
+	if items[0].Type == 0 {
+		return frame
+	}
+	frame = proto.WithChatItems(frame, items)
+	binary.LittleEndian.PutUint16(frame, uint16(len(frame)))
+	return frame
 }
