@@ -380,6 +380,13 @@ func staticParticleSize(e *effect.Emitter, elapsed, initialSeed, targetSeed floa
 
 func (x *Effect) Draw(s *render.Scene3D) {
 	s.Begin()
+	x.drawInPass(s)
+	s.End()
+}
+
+// drawInPass keeps placement/emitter/particle order within an existing scene
+// pass. It changes no camera, framebuffer or shared lighting uniforms.
+func (x *Effect) drawInPass(s *render.Scene3D) {
 	for _, e := range x.emitters {
 		quad := x.quad
 		if e.definition.Unk29 != 0 {
@@ -462,7 +469,6 @@ func (x *Effect) Draw(s *render.Scene3D) {
 			}
 		}
 	}
-	s.End()
 }
 
 func (x *Effect) particlePosition(v effectParticle, d *effect.Emitter) render.V3 {

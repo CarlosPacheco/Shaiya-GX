@@ -322,3 +322,20 @@ scene content; no whole-scene pixel equality is claimed for those captures.
 Private measurements and captures: `work/client-measure/pose-before/` and
 `work/client-measure/pose-after/`. Conservative pre-pose rejection and dungeon
 effect/streaming improvements remain separate future changes.
+
+## Consecutive map effects share scene setup (2026-11-16)
+
+Map effects now enter and leave the scene shader pass once per camera, retaining
+placement/emitter/particle order and independent draws. Standalone effect callers
+keep their existing setup/restore behavior. No textures, blending, particle counts
+or camera visibility rules changed. Real-map traversal and synthetic mixed
+single/instanced 3DE effects preserve pixels, including clipping and a following
+ordinary mesh draw. Original mirrored lamps and zero-life emitters also pass.
+
+Focused short measurements use the same three repetitions of 300 frames per case
+and binary. See private `work/client-measure/effects-before/` and `effects-after/`.
+Dungeon median CPU submission was 13.069 → 12.607 ms (3.5% observed), with
+per-run medians of 12.858–13.319 and 12.262–12.890 ms. Crowd-effects was
+6.707 → 6.340 ms (5.5% observed), with overlapping per-run ranges.
+Do not attribute all timing variation to this small state-call reduction: desktop
+noise and wide ranges remain. No streaming/storage strategy changed in this step.

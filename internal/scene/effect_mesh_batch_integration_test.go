@@ -85,6 +85,43 @@ func TestMeshEffectBatchPreservesFramesAndOrderGL(t *testing.T) {
 	if n != 5 || m != 3 {
 		t.Fatalf("calls = %d -> %d, expected 5 -> 3", n, m)
 	}
+	// Mixing instanced and single-particle effects in one pass must preserve
+	// transparency order, clip state and the transition back to a normal draw.
+	following := render.NewMesh([]render.Vertex{{Pos: render.V3{-.1, -.1, .1}}, {Pos: render.V3{.1, -.1, .1}}, {Pos: render.V3{0, .1, .1}}}, []uint32{0, 1, 2})
+	defer following.Delete()
+	single := *x
+	single.emitters = append([]effectEmitter(nil), x.emitters...)
+	single.emitters[0].particles = particles[:1]
+	drawPass := func(grouped bool) []byte {
+		gl.DepthMask(true)
+		gl.ClearColor(.1, .1, .1, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		if grouped {
+			s.Begin()
+		}
+		for _, fx := range []*Effect{x, &single, x} {
+			if grouped {
+				fx.drawInPass(s)
+			} else {
+				fx.Draw(s)
+			}
+		}
+		if grouped {
+			s.End()
+		}
+		s.Begin()
+		s.DrawSolid(following, [4]float32{1, 1, 1, 1})
+		s.End()
+		pixels := make([]byte, 64*64*4)
+		gl.ReadPixels(0, 0, 64, 64, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+		return pixels
+	}
+	for _, plane := range [][4]float32{{}, {0, 1, 0, 0}} {
+		s.ClipPlane = plane
+		if !bytes.Equal(drawPass(false), drawPass(true)) {
+			t.Fatalf("shared effect pass changed pixels: clip=%v", plane)
+		}
+	}
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("GL error %#x", code)
 	}
