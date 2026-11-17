@@ -185,7 +185,7 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 	a.tooltip = rows
 	a.tooltipItem = true
 	a.tooltipDescription = description
-	a.tooltipExtra = tooltipExtras{forgeInfo: itemForgeInfo(def)}
+	a.tooltipExtra = tooltipExtras{forgeInfo: itemForgeInfo(def), effects: a.itemEffects(def, instance)}
 	if rt := itemtype.Real(def.Type); rt >= 1 && rt <= 25 && def.Server > 0 && def.RequiredStats[4] > 0 {
 		a.tooltipExtra.maxOJ = min(def.RequiredStats[4], 99)
 		pool := uint8(9)
@@ -223,3 +223,35 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 }
 
 var nativeEnhancementDescription = regexp.MustCompile(`(?i)(?:\{c[0-9]+\})?\[Enhancement:[^\]]*\](?:\{/c\})?`)
+
+// itemEffects resolves only integrated attack/debuff lapis in the NPC namespace.
+func (a *App) itemEffects(def *sdata.Item, instance *proto.InventoryItem) []sdata.Skill {
+	if def == nil {
+		return nil
+	}
+	var out []sdata.Skill
+	seen := map[uint16]bool{}
+	add := func(gem *sdata.Item, defensive bool) {
+		if gem == nil || gem.Special == 0 || gem.Special == 16 || defensive && gem.Special <= 15 {
+			return
+		}
+		id := uint16(gem.Special)
+		if sk, ok := a.skillDefinition(id, 100); ok && (sk.Effect == 1 || sk.Effect == 3) && !seen[id] {
+			out = append(out, sk)
+			seen[id] = true
+		}
+	}
+	rt := itemtype.Real(def.Type)
+	if def.Type == 30 {
+		add(def, false)
+	}
+	if instance != nil && rt >= 1 && rt <= 25 {
+		_, inactive := a.itemElementState(def, instance)
+		for i, id := range instance.Gems {
+			if id != 0 && !inactive[i] {
+				add(a.itemsItem(30, id), rt > 15)
+			}
+		}
+	}
+	return out
+}

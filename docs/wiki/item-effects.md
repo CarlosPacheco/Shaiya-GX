@@ -22,6 +22,14 @@ bonuses. Stacks are limited to 255 and the definition may impose a smaller limit
 Stored quality is retained for compatibility; GX does not implement durability
 loss or reduce equipment stats because of old quality values.
 
+## Effect icons in item tooltips
+
+Supported attack/debuff lapis show an **Effects** row in silver with the called
+NpcSkill icon. Equipment shows the distinct skills from its active linked lapis;
+duplicate skills share one icon. Icons resolve the independent NPC definitions,
+never a same-numbered player skill. Recovery and unsupported resistance lapis
+do not add an effect icon.
+
 ## Permanent equipment bonuses
 
 | SQL field | Current use |

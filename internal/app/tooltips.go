@@ -175,6 +175,16 @@ func (a *App) drawSharedTooltipAt(w, h int, position *[2]int) {
 		}
 		f.DrawScaled(a.sprites, run.text, float32(left)+float32(run.x)*scale, float32(top)+float32(run.y)*scale, scale, run.color, 185)
 	}
+	if a.tooltipItem {
+		for i, skill := range a.tooltipExtra.effects {
+			if file, uv, ok := ui.SkillIcon(skill.Icon); ok {
+				if tex := a.assets.Texture("interface/" + file); tex != nil {
+					x, y := layout.effectsX+(i%6)*20, layout.effectsY+(i/6)*22
+					a.sprites.Draw(tex, float32(left)+float32(x)*scale, float32(top)+float32(y)*scale, 18*scale, 18*scale, uv.U0, uv.V0, uv.U1, uv.V1, white)
+				}
+			}
+		}
+	}
 	if a.tooltipItem && a.tooltipExtra.material != nil {
 		d := a.tooltipExtra.material
 		if file, uv, ok := ui.ItemIcon(d.Type, d.Icon); ok {

@@ -13,6 +13,7 @@ type tooltipExtras struct {
 	maxOJStats uint8
 	forgeInfo  string
 	material   *sdata.Item
+	effects    []sdata.Skill
 }
 
 type tooltipSocket struct {
@@ -29,6 +30,7 @@ type tooltipLayout struct {
 	runs                 []tooltipRun
 	height, socketY      int
 	materialX, materialY int
+	effectsX, effectsY   int
 }
 
 func wrapTooltip(f *ui.Font, text string, color [4]float32) [][]tooltipGlyph {
@@ -120,6 +122,12 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 	}
 	if item && len(extras) > 0 {
 		e := extras[0]
+		if len(e.effects) > 0 {
+			y += 5
+			block("Effects", [4]float32{.75, .75, .75, 1}, y+3, false)
+			layout.effectsX, layout.effectsY = 16+f.Width("Effects"), y
+			y += 22 * ((len(e.effects) + 5) / 6)
+		}
 		if e.maxOJ > 0 {
 			y += 5
 			_, n := block(fmt.Sprintf("Max OJ %d/%d (%d stats)", e.maxOJ, e.maxOJ*100, e.maxOJStats), [4]float32{.6, 1, .6, 1}, y, false)

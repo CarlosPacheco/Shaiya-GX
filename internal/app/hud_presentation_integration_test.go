@@ -154,6 +154,20 @@ func TestHUDPresentationGL(t *testing.T) {
 	if err := render.SavePNG(filepath.Join(dir, "hud-item-tooltip.png"), 1024, 768); err != nil {
 		t.Fatal(err)
 	}
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	a.sprites.Begin(1024, 768)
+	a.items[sdata.ItemKey{Type: 30, TypeID: 164}] = &sdata.Item{Type: 30, TypeID: 164, Name: "Pain Lapis Lv7", Special: 206}
+	instance.Gems[1] = 164 // Pain Lv7 resolves NpcSkill 206, not player skill 206.
+	a.drawItemDetails(item, instance, 2, 0, 0, 1024, 768, "Sell: 100 gold")
+	if len(a.tooltipExtra.effects) != 1 {
+		t.Fatalf("missing NPC effect icon: %+v", a.tooltipExtra.effects)
+	}
+	a.drawSharedTooltip(1024, 768)
+	a.sprites.End()
+	if err := render.SavePNG(filepath.Join(dir, "hud-item-effects-tooltip.png"), 1024, 768); err != nil {
+		t.Fatal(err)
+	}
+	a.tooltipExtra = tooltipExtras{}
 	// Fixed documents under the current external font pack. The historical
 	// Phoenix reference used a taller font; retain strict current-font goldens.
 	a.lastMouseX, a.lastMouseY = 400, 100
