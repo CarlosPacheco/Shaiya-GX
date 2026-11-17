@@ -11,6 +11,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
+	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 func TestTeleportStoneAgainstServer(t *testing.T) {
@@ -64,8 +65,9 @@ func TestTeleportStoneAgainstServer(t *testing.T) {
 			}
 		}
 	}
-	x, y := teleportOrigin(1024, 768)
+	x, y := ui.RecordedPointsOrigin(1024, 768)
 	click := func(dx, dy int) {
+		a.updateTeleportStone(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + dx, MouseY: y + dy}, 1024, 768)
 		a.updateTeleportStone(&platform.Input{Clicked: true, MouseX: x + dx, MouseY: y + dy}, 1024, 768)
 	}
 	send(proto.TeleportStonePacket(proto.TeleportTravel, 0))
@@ -73,8 +75,7 @@ func TestTeleportStoneAgainstServer(t *testing.T) {
 	a.useInventoryItem(key)
 	await(proto.TeleportOpen, true)
 	for i := range proto.TeleportPointCount {
-		click(40, 50+i*32)
-		click(40, 224)
+		click(125, 54+i*92)
 		await(proto.TeleportSave, true)
 		if !a.teleportStone.points[i].Saved {
 			t.Fatalf("point %d did not save", i+1)
@@ -104,8 +105,7 @@ func TestTeleportStoneAgainstServer(t *testing.T) {
 	originMap := st.MapID
 	start := func() {
 		t.Helper()
-		click(40, 50+3*32)
-		click(220, 224)
+		click(184, 83+3*92)
 		await(proto.TeleportCasting, true)
 		if !a.teleportStone.casting || st.Inventory[key].Count != item.Count || st.MapID != originMap {
 			t.Fatalf("cast start: casting=%v count=%d map=%d", a.teleportStone.casting, st.Inventory[key].Count, st.MapID)

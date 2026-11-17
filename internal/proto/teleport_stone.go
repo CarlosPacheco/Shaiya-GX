@@ -11,9 +11,9 @@ const (
 )
 
 type TeleportPoint struct {
-	Saved bool
-	Map   uint16
-	X, Z  float32
+	Saved   bool
+	Map     uint16
+	X, Y, Z float32
 }
 
 type TeleportStoneResult struct {
@@ -35,7 +35,7 @@ func DecodeTeleportStone(p []byte) (out TeleportStoneResult, err error) {
 	r := NewReader(p)
 	out.Action, out.OK, out.Message = r.U8(), r.U8() != 0, r.Text()
 	for i := range out.Points {
-		out.Points[i] = TeleportPoint{Saved: r.U8() != 0, Map: r.U16(), X: r.F32(), Z: r.F32()}
+		out.Points[i] = TeleportPoint{Saved: r.U8() != 0, Map: r.U16(), X: r.F32(), Y: r.F32(), Z: r.F32()}
 	}
 	if out.Action == TeleportCasting {
 		out.CastMS = r.U16()

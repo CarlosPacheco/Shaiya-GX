@@ -3559,12 +3559,12 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`cancelTeleportStone`](../../server/internal/world/teleport_stone.go#L24)<br>`func (s *Session) cancelTeleportStone()` | See the source definition and the subsystem ownership contract. |
 | [`tickTeleportStone`](../../server/internal/world/teleport_stone.go#L33)<br>`func (s *Session) tickTeleportStone(now time.Time)` | See the source definition and the subsystem ownership contract. |
 | [`sendTeleportStone`](../../server/internal/world/teleport_stone.go#L44)<br>`func (s *Session) sendTeleportStone(action uint8, ok bool, message string, points [proto.TeleportPointCount]db.TeleportPoint)` | See the source definition and the subsystem ownership contract. |
-| [`openTeleportStone`](../../server/internal/world/teleport_stone.go#L61)<br>`func (s *Session) openTeleportStone(it db.Item)` | See the source definition and the subsystem ownership contract. |
-| [`teleportStoneField`](../../server/internal/world/teleport_stone.go#L77)<br>`func teleportStoneField(mapID uint16) bool` | See the source definition and the subsystem ownership contract. |
-| [`teleportStoneMapAllowed`](../../server/internal/world/teleport_stone.go#L82)<br>`func (s *Session) teleportStoneMapAllowed(target uint16) bool` | See the source definition and the subsystem ownership contract. |
-| [`handleTeleportStone`](../../server/internal/world/teleport_stone.go#L110)<br>`func (s *Session) handleTeleportStone(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`resolveTeleportStone`](../../server/internal/world/teleport_stone.go#L125)<br>`func (s *Session) resolveTeleportStone(action, slot uint8, complete bool)` | See the source definition and the subsystem ownership contract. |
-| [`teleportStoneDueling`](../../server/internal/world/teleport_stone.go#L209)<br>`func (s *Session) teleportStoneDueling() bool` | A recorded point cannot be used to leave a wager or an active match. |
+| [`openTeleportStone`](../../server/internal/world/teleport_stone.go#L62)<br>`func (s *Session) openTeleportStone(it db.Item)` | See the source definition and the subsystem ownership contract. |
+| [`teleportStoneField`](../../server/internal/world/teleport_stone.go#L78)<br>`func teleportStoneField(mapID uint16) bool` | See the source definition and the subsystem ownership contract. |
+| [`teleportStoneMapAllowed`](../../server/internal/world/teleport_stone.go#L83)<br>`func (s *Session) teleportStoneMapAllowed(target uint16) bool` | See the source definition and the subsystem ownership contract. |
+| [`handleTeleportStone`](../../server/internal/world/teleport_stone.go#L111)<br>`func (s *Session) handleTeleportStone(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`resolveTeleportStone`](../../server/internal/world/teleport_stone.go#L126)<br>`func (s *Session) resolveTeleportStone(action, slot uint8, complete bool)` | See the source definition and the subsystem ownership contract. |
+| [`teleportStoneDueling`](../../server/internal/world/teleport_stone.go#L210)<br>`func (s *Session) teleportStoneDueling() bool` | A recorded point cannot be used to leave a wager or an active match. |
 
 <details><summary>Type definitions and owned fields</summary>
 

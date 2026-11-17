@@ -261,9 +261,11 @@ consumables and the original running effect.
 
 ## Teleportation Stone
 
-Using a Special 39 stone opens Recorded Points. Every character has four slots.
-Select one and save your current position, or select a saved point and travel
-there. Saving and replacing points costs nothing. Successful travel consumes
+Using a Special 39 stone opens the classic Recorded Point window. Every
+character has four slots, with foreground buttons on each row. Use **Store
+the Mark** to save the current location and **Move** on a recorded row to
+travel. The window uses the external `waypoint.png`, `way_button.png`,
+`talk1_close_button.png` and `gatekeeper_button.png` interface textures. Saving and replacing points costs nothing. Successful travel consumes
 one stone. Travel has the original five-second cast. Movement, damage,
 other character actions and Escape interrupt the cast before the stone is spent.
 Dungeons and instanced zones are excluded, and portal-gated fields

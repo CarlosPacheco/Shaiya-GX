@@ -1290,6 +1290,7 @@ func (s *Session) sendTeleportStone(action uint8, ok bool, message string, point
 		w.Bool(p.Saved)
 		w.U16(p.Map)
 		w.F32(p.X)
+		w.F32(p.Y)
 		w.F32(p.Z)
 	}
 	if action == proto.TeleportCasting {

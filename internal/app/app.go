@@ -97,6 +97,7 @@ type App struct {
 	gateUI                              *ui.Gatekeeper
 	gateConfirm                         *ui.Message
 	teleportStone                       teleportStoneView
+	recordedPoints                      *ui.RecordedPoints
 	gemConfirm                          *ui.Message
 	party                               partyView
 	partyUI                             *ui.PartyPanel
