@@ -66,3 +66,13 @@ Revision `0x11122209` is required by gx-v0.1.10, including the authoritative
 mount state. GX `0x7F10` separates MON index zero, race, speed, seat count,
 cast/cooldown timers and driver/passenger links; native mount requests use
 0x0216/0x0217 and 0x021C–0x021E. See [mounts](mounts.md).
+
+## Complete implementation reference
+
+The [server wire guide](server-protocol.md) explains framing, field widths,
+transport transitions and phase admission. The [complete opcode catalog](server-opcodes.md)
+covers 275 current source opcodes in fifteen families with exact codecs, server
+adapters and client reducer links. The [codec appendix](server-codecs.md) includes
+all shared helpers and row definitions. `0x7F12` adds bounded UTF-8 credentials for
+passwords up to 128 bytes; replies keep the legacy `0xA102` layout. Remote TLS
+wraps existing game frames; see [security](server-security.md).

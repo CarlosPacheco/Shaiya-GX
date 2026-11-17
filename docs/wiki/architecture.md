@@ -37,3 +37,12 @@ The root Go module owns `server/cmd`, `server/internal`, `server/data` and serve
 `gx_login` handles authentication/session handoff; `gx_world` owns maps, entities, combat and persistence. `gx_console` and the Fyne `gx_server` micro app share process control. Build outputs are under `server/build`; runtime, data and logs stay relative to that server installation. Compatibility environment names and database filenames are preserved. The advertised name and micro app title are GX Server.
 
 SQLite is the primary production database, using embedded storage without a separate database service. Storage remains behind `server/internal/db`. The included seed deliberately contains the author's shared test accounts and gameplay state; a mutable copy is created only when absent. Portables attach to GX releases. See [server operations](server.md) and [storage](../server/docs/sqlite.md).
+
+## Detailed server reference
+
+The server now has explicit realm/map/session ownership, one cancellable serial
+background scheduler, bounded network/gameplay queues, guarded atomic economy,
+checksummed SQLite migrations, versioned credentials, remote TLS and authenticated
+local diagnostics/shutdown. Read [server architecture](server-architecture.md),
+[all package contracts](server-packages.md), [storage](server-storage.md) and
+[all opcodes](server-opcodes.md) for implementation-level documentation.

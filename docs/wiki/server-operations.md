@@ -14,7 +14,7 @@ The controller checks executable paths, including on Windows, so stopping one in
 
 - Distributed seed: `data/rapture.sqlite`; accompanying hash/table counts: `data/rapture.manifest.json`.
 - Mutable state: `runtime/rapture.sqlite`. Created from the seed only when absent.
-- Login/world handoff keys: `runtime/sessions/`.
+- Login/world handoffs and active ownership: `GX_SessionHandoff` / `GX_ActiveSessions` in the runtime SQLite database. Old session files are not trusted.
 - Local overrides: `.local/runtime.env` (KEY=VALUE, not committed).
 - Logs: `logs/gx_login.log`, `logs/gx_world.log`.
 
@@ -26,12 +26,16 @@ Existing `RAPTURE_*` configuration names and SQLite filenames are retained for c
 
 Defaults listen on `127.0.0.1:30800` (login) and `127.0.0.1:30810` (world). To accept another computer, set the following before starting the controller.
 
+First [provision TLS certificates and client trust](server-security.md#tls-and-portable-client-trust); remote listeners refuse unconfigured plaintext by default. Keep private keys outside the client bundle. The examples assume the generated certificate covers the configured server identity.
+
 Windows PowerShell (replace the example IP with your server's reachable IPv4 address):
 
 ```powershell
 $env:RAPTURE_LOGIN_LISTEN = '0.0.0.0:30800'
 $env:RAPTURE_WORLD_LISTEN = '0.0.0.0:30810'
 $env:RAPTURE_PUBLIC_IP = '192.168.1.20'
+$env:RAPTURE_TLS_CERT = 'C:\GXPrivate\tls\server-cert.pem'
+$env:RAPTURE_TLS_KEY = 'C:\GXPrivate\tls\server-key.pem'
 .\build\gx_server.exe
 ```
 
@@ -39,7 +43,8 @@ Linux:
 
 ```sh
 RAPTURE_LOGIN_LISTEN=0.0.0.0:30800 RAPTURE_WORLD_LISTEN=0.0.0.0:30810 \
-RAPTURE_PUBLIC_IP=192.168.1.20 ./build/gx_server
+RAPTURE_PUBLIC_IP=192.168.1.20 RAPTURE_TLS_CERT=/private/gx-tls/server-cert.pem \
+RAPTURE_TLS_KEY=/private/gx-tls/server-key.pem ./build/gx_server
 ```
 
 Allow inbound TCP 30800/30810 on the server firewall. Connect the client with `-login 192.168.1.20:30800`. If using another world port, also pass `-world-port PORT` to the GX client. `RAPTURE_PUBLIC_IP` is the address advertised to the client for world, so it must be reachable from the client's computer; `0.0.0.0` is a listen wildcard, not an advertised address.
@@ -65,7 +70,7 @@ To restore, stop both services, verify they are stopped, replace the runtime dat
 3. Extract the new release to a new folder and copy your stopped runtime into its `runtime/` directory. Preserve your override settings. Do not replace the new seed with your runtime unless deliberately preparing a shared test fixture.
 4. Start the new version and verify login, character selection and expected progress. Keep the previous folder until verified.
 
-Starting a newly extracted package without copying a runtime creates a new world from the included test snapshot. Replacing the seed alone never resets an existing runtime. Future database-engine migrations will need explicit migration instructions; no automatic cross-engine conversion exists today.
+Starting a newly extracted package without copying a runtime creates a new world from the included test snapshot. Replacing the seed alone never resets an existing runtime. Runtime schema updates use additive checksummed migrations; keep a validated backup and matching binaries. SQLite remains the primary production engine.
 
 ## Renaming and migration
 
@@ -111,3 +116,16 @@ attacks or skill effects retain their own rules; they are not passive recovery.
 GX fall damage is **enabled by default**, with half the previous damage curve.
 Set `RAPTURE_FALL_DAMAGE=false` in the environment or `.local/runtime.env`, then
 restart the world server to opt out. See [the complete fall rules](../fall-damage.md).
+
+## Modernized runtime and administration
+
+Both controllers use authenticated loopback shutdown before platform fallback.
+The world owns a cancellable scheduler and a database ownership lease. JSON logs
+rotate; loopback metrics expose storage/queue/tick pressure. Configure local
+accounts and passwords using `build/gx_console account create NAME [--admin]`
+and `build/gx_console account password NAME`; these write Argon2id directly.
+
+Read [server architecture](server-architecture.md),
+[SQLite internals/recovery](server-storage.md) and
+[security, limits and diagnostics](server-security.md) before tuning a deployment.
+Do not downgrade to plaintext-only password handling or mix login/world versions.

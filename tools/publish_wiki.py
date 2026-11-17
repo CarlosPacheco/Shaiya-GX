@@ -20,6 +20,31 @@ NAMES = {
     'data-formats.md': 'Data-Formats', 'protocol.md': 'Protocol',
     'interface.md': 'Interface', 'weapon-effects.md': 'Weapon-Effects',
     'client-portable.md': 'Client-Portable', 'troubleshooting.md': 'Troubleshooting',
+    'server-architecture.md': 'Server-Architecture',
+    'server-packages.md': 'Server-Packages',
+    'server-storage.md': 'Server-Storage',
+    'server-security.md': 'Server-Security',
+    'server-protocol.md': 'Server-Protocol',
+    'server-opcodes.md': 'Server-Opcodes',
+    'server-codecs.md': 'Server-Codecs',
+    'server-reference-infrastructure.md': 'Server-Reference-Infrastructure',
+    'server-reference-storage.md': 'Server-Reference-Storage',
+    'server-reference-world.md': 'Server-Reference-World',
+    'protocol-characters.md': 'Protocol-Characters',
+    'protocol-actions.md': 'Protocol-Actions',
+    'protocol-targets.md': 'Protocol-Targets',
+    'protocol-combat.md': 'Protocol-Combat',
+    'protocol-mobs.md': 'Protocol-Mobs',
+    'protocol-services.md': 'Protocol-Services',
+    'protocol-quests.md': 'Protocol-Quests',
+    'protocol-trade.md': 'Protocol-Trade',
+    'protocol-groups.md': 'Protocol-Groups',
+    'protocol-guilds.md': 'Protocol-Guilds',
+    'protocol-chat.md': 'Protocol-Chat',
+    'protocol-social.md': 'Protocol-Social',
+    'protocol-mall.md': 'Protocol-Mall',
+    'protocol-extensions.md': 'Protocol-Extensions',
+    'protocol-authentication.md': 'Protocol-Authentication',
 }
 # References inherited from repository guides now point to their Wiki pages.
 ALIASES = {'server.md': 'server-operations.md', 'gm.md': 'gm-commands.md',
@@ -57,7 +82,11 @@ def export(destination):
         content = LINK.sub(replace, source.read_text())
         (destination / (title+'.md')).write_text(content)
     sidebar = ['## Shaiya GX', '', '[Home](Home)', '']
-    sidebar.extend(f'- [{title.replace("-", " ")}]({title})' for title in NAMES.values() if title != 'Home')
+    regular = [title for name, title in NAMES.items() if title != 'Home' and (not name.startswith(('server-', 'protocol-')) or name == 'server-operations.md')]
+    server = [title for name, title in NAMES.items() if name.startswith(('server-', 'protocol-')) and name != 'server-operations.md']
+    sidebar.extend(f'- [{title.replace("-", " ")}]({title})' for title in regular)
+    sidebar.extend(['', '### Server development reference', ''])
+    sidebar.extend(f'- [{title.replace("-", " ")}]({title})' for title in server)
     (destination/'_Sidebar.md').write_text('\n'.join(sidebar)+'\n')
     (destination/'_Footer.md').write_text('Current GX development behavior. Released binaries may lag behind this reference. [Repository](https://github.com/Spelunkern/Shaiya-GX) · [Home](Home)\n')
     print(f'Exported {len(NAMES)} pages, sidebar and footer to {destination}')
@@ -77,7 +106,7 @@ def main():
         subprocess.run(['git', '-C', str(args.checkout), 'add', '--', '*.md'], check=True)
         changed = subprocess.run(['git', '-C', str(args.checkout), 'diff', '--cached', '--quiet']).returncode
         if changed == 1:
-            subprocess.run(['git', '-C', str(args.checkout), 'commit', '-m', 'Document GX gameplay, items, administration and operations'], check=True)
+            subprocess.run(['git', '-C', str(args.checkout), 'commit', '-m', 'Document GX server architecture, packages and complete protocol reference'], check=True)
             subprocess.run(['git', '-C', str(args.checkout), 'push', 'origin', 'HEAD'], check=True)
         elif changed != 0:
             raise RuntimeError('Cannot inspect staged wiki changes')

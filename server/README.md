@@ -22,3 +22,8 @@ GM role and the six server-authorized commands are documented in [GM controls](.
 Ground navigation uses generated `data/geometry/` alongside the original
 `data/maps/` files. See [mob navigation](../docs/mob-navigation.md) for the
 offline generation step, compatibility and map-content diagnostics.
+
+The [common GX Wiki server reference](https://github.com/Spelunkern/Shaiya-GX/wiki/Server-Architecture)
+documents the complete server structure, every package, SQLite transactions,
+security/operations and the opcode/codec catalog. Editable sources live in the
+parent repository under docs/wiki/ and publish to that same common Wiki.

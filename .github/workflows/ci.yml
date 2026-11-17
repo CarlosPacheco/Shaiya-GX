@@ -16,6 +16,8 @@ jobs:
         with:
           go-version: '1.27.4'
           cache: true
+      - name: Server Wiki source reference freshness
+        run: python3 tools/generate_server_reference.py --check
       - name: Reachable server and transport vulnerabilities
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./server/internal/... ./server/cmd/gx_login ./server/cmd/gx_world ./internal/transport ./internal/netx ./internal/session
       - name: Infrastructure concurrency

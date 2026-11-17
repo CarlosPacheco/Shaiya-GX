@@ -79,6 +79,29 @@ mount migration and preserving your personal database.
 - [Data formats](data-formats.md): loose resources, native tables, PNG/Ogg,
   external fonts and importing legally obtained original assets.
 
+## Server architecture and complete package reference
+
+The integrated server reference belongs to this same Wiki. It documents current
+source after the server modernization; the gx-v0.1.10 download can predate it.
+
+- [Server architecture and lifecycle](server-architecture.md): processes, ownership,
+  concurrency, simulation timeline, transaction flow and failure semantics.
+- [All server packages](server-packages.md): every command, runtime package, Lua AI,
+  shared dependency and gameplay subsystem, with implementation contracts.
+- [Infrastructure API](server-reference-infrastructure.md),
+  [SQLite API](server-reference-storage.md) and [world API](server-reference-world.md):
+  complete production file/symbol inventories, private helpers, dependencies and tests.
+- [SQLite schema, transactions and recovery](server-storage.md): migration ledger,
+  table ownership, atomic operation matrix, WAL, backups and failure injection.
+- [Security, TLS, limits and observability](server-security.md): credentials,
+  certificate/trust setup, configuration, queue bounds, diagnostics and metrics.
+- [Wire protocol and session phases](server-protocol.md): framing, primitive widths,
+  handshake sequence, authority and packet examples.
+- [Complete opcode catalog](server-opcodes.md): 275 current opcodes organized into
+  fifteen families, linked to serializers, decoders, handlers and client reducers.
+- [Shared codec appendix](server-codecs.md): exact row types and helper codecs,
+  including layouts that cannot be associated precisely by static dispatch.
+
 ## Development and distribution
 
 - [Architecture](architecture.md): ownership boundaries, rendering, network
@@ -99,7 +122,8 @@ item or authorize a mutation.
 
 Editable Markdown sources live under `docs/wiki/` in the development checkout.
 The GitHub Wiki is a separate Git repository, `Shaiya-GX.wiki.git`; changing a
-local Markdown file alone does not publish it. `tools/publish_wiki.py` validates
+local Markdown file alone does not publish it. `tools/generate_server_reference.py` regenerates the server API/opcode/codec
+inventories; `--check` detects stale generated pages. `tools/publish_wiki.py` validates
 page links and exports native Wiki page filenames before an explicit push.
 Keep rules and examples aligned with executable handlers, not only legacy item
 descriptions. Do not publish private runtime files, credentials or original

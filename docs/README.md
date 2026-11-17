@@ -13,13 +13,14 @@ Start with [first run](quickstart.md), then [building and testing](building.md).
 | [First run](quickstart.md) | Windows/Linux downloads, verification, accounts and local play |
 | [Build and test](building.md) | Toolchains, native/cross builds, CI, integration and packaging |
 | [Server operations](server.md) | Micro app, console, LAN, logs, backup and upgrades |
+| [Server Wiki reference](wiki/server-architecture.md) | Complete server structure, packages, storage, security and protocol catalog |
 | [Architecture](architecture.md) | Single Go module, client/server boundaries and state ownership |
 | [Interface](interface.md) | Implemented behavior, parameters and remaining work |
 | [Protocol](protocol.md) | Wire compatibility and server authority |
 | [Original spell timing](spell-fluidity-research.md) | Reuse, execution scheduling, the two Wind Spins and Stinger dash evidence |
 | [Mounts](mounts.md) | Mount casting, movement, two riders, MON bones/effects and content migration |
 | [Weapon enchantments](weapon-enchantments.md) | Local/remote equipment presentation and validation |
-| [Server storage](../server/docs/sqlite.md) | Embedded development DB and future replacement |
+| [Server storage](../server/docs/sqlite.md) | Primary production SQLite, WAL, backups and recovery |
 | [Portable distribution](../server/docs/distribution.md) | Archive contents, verification and publishing |
 | [Server parity](../server/docs/original-parity.md) | Recovered rules and known differences |
 | [Social service](../server/docs/social.md) | Friends, blocks and party search |
