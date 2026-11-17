@@ -213,6 +213,8 @@ func (e *EquipmentStats) addItemDef(itemType uint8, d *db.ItemDef) {
 	e.MaxHP, e.MaxSP, e.MaxMP = satAdd(e.MaxHP, pos16(d.ConstHP)), satAdd(e.MaxSP, pos16(d.ConstSP)), satAdd(e.MaxMP, pos16(d.ConstMP))
 	e.Str, e.Dex, e.Rec = satAdd(e.Str, pos16(d.ConstStr)), satAdd(e.Dex, pos16(d.ConstDex)), satAdd(e.Rec, pos16(d.ConstRec))
 	e.Int, e.Wis, e.Luc = satAdd(e.Int, pos16(d.ConstInt)), satAdd(e.Wis, pos16(d.ConstWis)), satAdd(e.Luc, pos16(d.ConstLuc))
+	// ItemEquipmentAdd and GemEquipmentAdd both add Items.Exp.
+	e.Absorption = satAdd(e.Absorption, uint32(d.ExpAbsorb))
 }
 
 // realType is GetItemRType (0x004bdad0): item types grouped by family.
@@ -266,9 +268,6 @@ func GetEquipmentStats(items []db.Item) EquipmentStats {
 		// counts only on items with Server set and ReqWis 1-99
 		// (CItem::CopyCraftExpassion). Its enchant pair is the weapon step
 		// (attack) up to 50, the armour step + 50 above (absorption).
-		if d != nil {
-			e.Absorption = satAdd(e.Absorption, uint32(d.ExpAbsorb))
-		}
 		if c, ok := ParseCraftName(it.CraftName); ok && d != nil && d.Server != 0 && d.ReqWis > 0 && d.ReqWis < 100 {
 			e.Str, e.Dex, e.Rec = satAdd(e.Str, c.Str), satAdd(e.Dex, c.Dex), satAdd(e.Rec, c.Rec)
 			e.Int, e.Wis, e.Luc = satAdd(e.Int, c.Int), satAdd(e.Wis, c.Wis), satAdd(e.Luc, c.Luc)

@@ -14,7 +14,7 @@ Declarations: [packet.CharacterShape](../../server/internal/packet/packet.go#L88
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterShapeGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L606)
+**S→C serializers:** [buildCharacterShapeGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L605)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1303)
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterShapeGuild — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L606)
+[Source definition](../../server/internal/world/character.go#L605)
 
 ```go
 func buildCharacterShapeGuild(ch *db.Character, faction uint8, items []db.Item, motion uint8, guildName string) []byte {

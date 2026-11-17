@@ -40,8 +40,10 @@ current equipment accumulation path: it uses nonnegative contributions.
 `Exp` is an unsigned byte (0–255 per definition). Equipped items add their
 values together and stack with armor enchantment absorption. Moving an item
 back into a bag removes its contribution. The client reads the same byte from
-`Item.SData` and shows nonzero native absorption on equipment tooltips using
-SysMsg 485. Keep server `Items.Exp` and client `Item.SData` synchronized when
+`Item.SData` and shows nonzero native absorption on equipment and lapis
+tooltips using SysMsg 485. An equipment tooltip keeps its native absorption
+separate from active linked lapis (`Lapis`) and armor enchantment (`Enchant`)
+contributions. Lapis totals are not limited to 255. Keep server `Items.Exp` and client `Item.SData` synchronized when
 editing definitions; this is a flat amount, not a percentage or life steal.
 
 Recreation adds its separately stored values. Weapon enchantment adds its total
@@ -61,7 +63,13 @@ and movement speed through the equipment path.
 
 Special 16 is the recovery-gem exception: ConstHP/SP/MP contribute to standing and
 sitting recovery rather than increasing maximum pools. Other supported passive
-stats on that gem continue to apply.
+stats on that gem continue to apply, including `Exp` absorption.
+
+An active linked lapis adds its `Items.Exp` to equipment absorption, just as
+`CUser::GemEquipmentAdd` (`0x004560c0`) did in the original. Multiple active
+lapis stack with native equipment absorption and armor enchantment. Extraction
+or unequipping removes their contribution; an inactive elemental lapis adds
+no absorption.
 
 Special 1–15 selects the skill with that ID at **skill level 100**. Only an attack
 or debuff skill is accepted by this trigger path. Each resulting skill uses its

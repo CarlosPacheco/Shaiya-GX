@@ -144,8 +144,9 @@ func TestHUDPresentationGL(t *testing.T) {
 	a.tooltip = nil
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	a.sprites.Begin(1024, 768)
-	item := &sdata.Item{Name: "Equipment", Description: "{c3}A coloured description{/c}\nA complete second line which wraps inside the shared Phoenix tooltip.", Attack: 50, AttackAdd: 12, MinLevel: 20}
-	instance := &proto.InventoryItem{Count: 2, Quality: 35, Craft: "01020304050607080953", Gems: [6]uint8{1}}
+	item := &sdata.Item{Type: 17, ExpAbsorb: 30, Server: 1, RequiredStats: [6]uint16{0, 0, 0, 0, 1}, Name: "Equipment", Description: "{c3}A coloured description{/c}\nA complete second line which wraps inside the shared Phoenix tooltip.", Attack: 50, AttackAdd: 12, MinLevel: 20}
+	a.items[sdata.ItemKey{Type: 30, TypeID: 251}] = &sdata.Item{Type: 30, TypeID: 251, Name: "Absorption Lapis", ExpAbsorb: 40}
+	instance := &proto.InventoryItem{Count: 2, Quality: 35, Craft: "01020304050607080953", Gems: [6]uint8{251}}
 	a.lastMouseX, a.lastMouseY = 10, 740
 	a.drawItemDetails(item, instance, 2, 0, 0, 1024, 768, "Sell: 100 gold")
 	a.drawSharedTooltip(1024, 768)

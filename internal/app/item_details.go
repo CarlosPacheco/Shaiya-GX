@@ -143,8 +143,16 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 	if def.Resist > 0 {
 		add(fmt.Sprintf("%s %d", label(5203, "resistence"), def.Resist), white)
 	}
-	if equipment && def.ExpAbsorb > 0 {
+	if (equipment || def.Type == 30) && def.ExpAbsorb > 0 {
 		add(fmt.Sprintf("%s +%d", label(485, "Absorption"), def.ExpAbsorb), white)
+	}
+	// Match the server's armor craft encoding and eligibility, keeping the
+	// native Exp contribution separate from enchantment absorption.
+	if equipment && instance != nil && def.Server != 0 && def.RequiredStats[4] > 0 && def.RequiredStats[4] < 100 && craft.enchant > 0 {
+		raw := strings.TrimRight(instance.Craft, " ")
+		if len(raw) == 20 && raw[18] >= '5' {
+			add(fmt.Sprintf("%s +%d (Enchant)", label(485, "Absorption"), uint32(craft.enchant)*5), [4]float32{1, 135.0 / 255, 0, 1})
+		}
 	}
 	if def.Attribute >= 1 && def.Attribute <= 8 {
 		add(elementName(def.Attribute, messages...), [4]float32{1, 1, 0, 1})

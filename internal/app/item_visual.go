@@ -1,10 +1,12 @@
 package app
 
 import (
+	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/element"
 	"github.com/Spelunkern/Shaiya-GX/internal/itemtype"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
@@ -93,6 +95,7 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 	display.Attribute = value
 	// Item tooltips describe native and active socket bonuses together. Do not
 	// feed these locally derived values into the player's authoritative speeds.
+	var lapisAbsorption uint32
 	if instance != nil && itemtype.Real(def.Type) >= 1 && itemtype.Real(def.Type) <= 25 {
 		move, attack := int(def.Speed), int(def.AttackTime)
 		for i, id := range instance.Gems {
@@ -100,6 +103,7 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 				continue
 			}
 			if g := a.itemsItem(30, id); g != nil {
+				lapisAbsorption += uint32(g.ExpAbsorb)
 				move += int(g.Speed)
 				attack += int(g.AttackTime)
 			}
@@ -113,6 +117,23 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 		}
 		return ""
 	}, a.msg)
+
+	if lapisAbsorption > 0 {
+		label := a.msg.Get(485)
+		if label == "" {
+			label = "Absorption"
+		}
+		index := 1
+		if def.ExpAbsorb > 0 {
+			for i, row := range lines {
+				if row.text == fmt.Sprintf("%s +%d", label, def.ExpAbsorb) {
+					index = i + 1
+					break
+				}
+			}
+		}
+		lines = slices.Insert(lines, index, itemDetailLine{fmt.Sprintf("%s +%d (Lapis)", label, lapisAbsorption), [4]float32{1, 1, 0, 1}})
+	}
 
 	if rt := itemtype.Real(def.Type); rt >= 1 && rt <= 15 && display.AttackTime != def.AttackTime {
 		label := a.msg.Get(5192 + int(attackspeed.Tier(display.AttackTime, 0)))

@@ -14,7 +14,7 @@ Declarations: [packet.CharacterList](../../server/internal/packet/packet.go#L21)
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildEmptyCharacterListSlot (server/internal/world/character.go)](../../server/internal/world/character.go#L650), [buildCharacterListSlot (server/internal/world/character.go)](../../server/internal/world/character.go#L657)
+**S→C serializers:** [buildEmptyCharacterListSlot (server/internal/world/character.go)](../../server/internal/world/character.go#L649), [buildCharacterListSlot (server/internal/world/character.go)](../../server/internal/world/character.go#L656)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1079)
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildEmptyCharacterListSlot — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L650)
+[Source definition](../../server/internal/world/character.go#L649)
 
 ```go
 func buildEmptyCharacterListSlot(slot uint8) []byte {
@@ -39,7 +39,7 @@ func buildEmptyCharacterListSlot(slot uint8) []byte {
 
 <details><summary>buildCharacterListSlot — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L657)
+[Source definition](../../server/internal/world/character.go#L656)
 
 ```go
 func buildCharacterListSlot(ch *db.Character, items []db.Item) []byte {
@@ -336,7 +336,7 @@ Declarations: [packet.CharacterDetails](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterDetails (server/internal/world/character.go)](../../server/internal/world/character.go#L407)
+**S→C serializers:** [buildCharacterDetails (server/internal/world/character.go)](../../server/internal/world/character.go#L406)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1151)
 
@@ -346,7 +346,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterDetails — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L407)
+[Source definition](../../server/internal/world/character.go#L406)
 
 ```go
 func buildCharacterDetails(ch *db.Character, s *CharacterStats) []byte {
@@ -536,7 +536,7 @@ Declarations: [packet.Logout](../../server/internal/packet/packet.go#L33), [prot
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L266)
 
-**S→C serializers:** [buildLeaveWorldAck (server/internal/world/character.go)](../../server/internal/world/character.go#L550)
+**S→C serializers:** [buildLeaveWorldAck (server/internal/world/character.go)](../../server/internal/world/character.go#L549)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1409)
 
@@ -546,7 +546,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildLeaveWorldAck — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L550)
+[Source definition](../../server/internal/world/character.go#L549)
 
 ```go
 func buildLeaveWorldAck(characterID uint32) []byte {

@@ -165,7 +165,7 @@ func TestEquipmentAbsorptionTooltip(t *testing.T) {
 		want        bool
 	}{
 		{17, 30, true}, {1, 255, true}, {40, 10, true}, {17, 0, false},
-		{25, 30, false}, {30, 30, false}, {100, 30, false},
+		{25, 30, false}, {30, 30, true}, {100, 30, false},
 	} {
 		def := &sdata.Item{Type: tt.typ, ExpAbsorb: tt.absorb}
 		rows := itemDetailLines(def, nil, 1, "", nil, text.SysMsg{485: "ABSORB"})
@@ -175,6 +175,46 @@ func TestEquipmentAbsorptionTooltip(t *testing.T) {
 		}
 		if found != tt.want {
 			t.Fatalf("type=%d Exp=%d: absorption shown=%v, want %v", tt.typ, tt.absorb, found, tt.want)
+		}
+	}
+}
+
+func TestAbsorptionTooltipSeparatesNativeLapisAndEnchant(t *testing.T) {
+	a := inputApp()
+	a.msg = text.SysMsg{485: "ABSORB"}
+	def := &sdata.Item{Type: 17, TypeID: 1, ExpAbsorb: 30, Attribute: 1, Server: 1, RequiredStats: [6]uint16{0, 0, 0, 0, 1}, Description: "native description"}
+	a.items = map[sdata.ItemKey]*sdata.Item{
+		{Type: 30, TypeID: 1}: {Type: 30, ExpAbsorb: 255},
+		{Type: 30, TypeID: 2}: {Type: 30, ExpAbsorb: 99, Attribute: 2},
+	}
+	it := proto.InventoryItem{Type: 17, TypeID: 1, Craft: "00000000000000000053", Gems: [6]uint8{1, 1, 2, 99}}
+	a.drawItemDetails(def, &it, 1, 0, 0, 1024, 768, "")
+	rows := map[string]bool{}
+	for _, row := range a.tooltip {
+		rows[row.text] = true
+	}
+	for _, want := range []string{"ABSORB +30", "ABSORB +510 (Lapis)", "ABSORB +15 (Enchant)"} {
+		if !rows[want] {
+			t.Fatalf("missing %q: %v", want, a.tooltip)
+		}
+	}
+	if def.ExpAbsorb != 30 || a.tooltipDescription != "native description" {
+		t.Fatal("cached definition or description changed")
+	}
+	// Neither weapon enchant encoding nor ineligible crafts grant armor absorption.
+	for _, craft := range []string{"00000000000000000003", "00000000000000000071", "invalid"} {
+		it.Craft = craft
+		for _, row := range itemDetailLines(def, &it, 1, "", nil) {
+			if strings.Contains(row.text, "(Enchant)") {
+				t.Fatalf("invalid armor craft %q displayed absorption", craft)
+			}
+		}
+	}
+	it.Craft = "00000000000000000053"
+	def.RequiredStats[4] = 100
+	for _, row := range itemDetailLines(def, &it, 1, "", nil) {
+		if strings.Contains(row.text, "(Enchant)") {
+			t.Fatal("ineligible craft displayed absorption")
 		}
 	}
 }
