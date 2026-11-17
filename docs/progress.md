@@ -1,6 +1,6 @@
 # Progress and delivered features
 
-Updated November 16, 2026 for gx-v0.1.11. This is a development snapshot, not a claim of complete original-game parity. **Delivered** means the named workflow is implemented and verified within its stated scope; remaining variants are tracked separately.
+Updated November 17, 2026 for gx-v0.1.12. This is a development snapshot, not a claim of complete original-game parity. **Delivered** means the named workflow is implemented and verified within its stated scope; remaining variants are tracked separately.
 
 ## Server parity checklist
 
@@ -36,6 +36,12 @@ project completion percentage.
 | Portable GX Server | Terminal console controls login/world; development seed creates a separate mutable runtime | [Distribution guide](../server/docs/distribution.md), [native package verification](../server/tools/package.py) |
 
 Chat, party/raid, quests, trade/duels, social windows and the mall are also implemented; their remaining states and presentation gaps are detailed in [interface status](interface.md). A delivered workflow does not mark every feature variant complete.
+
+## gx-v0.1.12 hotfix
+
+- Correct the map-load handshake after cross-map placements; repeated teleports stay responsive.
+- Preserve existing v0.1.11 game data and database schema.
+- [Release notes](releases/gx-v0.1.12.md) and [upgrade guide](releases/gx-v0.1.12-upgrade.md).
 
 ## gx-v0.1.11 additions
 

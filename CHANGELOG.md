@@ -2,6 +2,15 @@
 
 This log records delivered changes and data-package updates. Client data is hosted separately on Drive; changing it does not automatically produce a new executable release.
 
+## gx-v0.1.12 — 2026-11-17
+
+[Patch notes](docs/releases/gx-v0.1.12.md) · [Discord summary](docs/releases/gx-v0.1.12-discord.md) · [Upgrade guide](docs/releases/gx-v0.1.12-upgrade.md).
+
+- Acknowledge every self cross-map placement so repeated teleports do not leave the server waiting for map load.
+- Share the initial-entry/transfer acknowledgement between graphical, CLI and protocol-fixture clients, with duplicate/foreign/malformed-packet coverage.
+- Verify seven consecutive GM map commands with gameplay barriers and logout; refresh protocol documentation.
+- Preserve existing v0.1.11 data, SQLite runtime and configuration; no new migration is required for this hotfix.
+
 ## gx-v0.1.11 — 2026-11-16
 
 [Patch notes](docs/releases/gx-v0.1.11.md) · [Discord summary](docs/releases/gx-v0.1.11-discord.md) · [Upgrade guide](docs/releases/gx-v0.1.11-upgrade.md).

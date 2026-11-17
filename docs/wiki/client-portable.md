@@ -23,11 +23,12 @@ Start `Server/build/gx_console` on Linux or `Server/build/gx_console.exe` on Win
 then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables and preserve all licenses.
 
-**Latest binary update: [gx-v0.1.11](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.11).**
+**Latest binary update: [gx-v0.1.12](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.12).**
 The Drive download includes the matching gx-v0.1.11 client/server builds and
 complete client data, plus the server seed, maps/physics, Lua AI and resources.
+Apply the v0.1.12 binary update for the repeated-teleport fix; data remains compatible.
 Preserve your server `runtime/` when upgrading and follow the
-[upgrade guide](releases/gx-v0.1.11-upgrade.md).
+[upgrade guide](releases/gx-v0.1.12-upgrade.md).
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
 Server packages include all 68 physics/navigation maps, the approved development
 seed and the optional offline mount-definition migration tool.
