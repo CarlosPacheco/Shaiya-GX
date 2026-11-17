@@ -1,13 +1,13 @@
 # Shaiya GX Wiki
 
-## [Download Shaiya GX — Client + Server + Data](https://drive.google.com/file/d/1EF83MEmACo9xPYenPP59OBzPivRH9bMl/view?usp=sharing)
+## [Download Shaiya GX — Client + Server + Data](https://drive.google.com/file/d/1REexfF9DhPcxPuixloiaWeQgAFVvpkvh/view?usp=sharing)
 
-**Complete gx-v0.1.10 portable for Windows and Linux:** client, GX Server, game data,
+**Complete gx-v0.1.11 portable for Windows and Linux:** client, GX Server, game data,
 fonts and development database in one download. **No separate data download is
 needed.** Extract the package, start
 `Server/build/gx_console` (or `.exe`) in a terminal, enter `start server`, then open the executable in `Client/`.
 [Setup, requirements and updates](client-portable.md).
-Current binary release: [gx-v0.1.11](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.11); the complete Drive snapshot above remains v0.1.10.
+Current binary release: [gx-v0.1.11](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.11); the complete Drive download above includes the same version and game data.
 
 The reference for current GX gameplay features, item data, administration and
 operation. GX is a Go client with an integrated authoritative world/login

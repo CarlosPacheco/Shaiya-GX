@@ -112,7 +112,8 @@ These are byte budgets,
 not character counts. Truncation and backspace preserve whole grapheme clusters.
 SQLite stores the resulting text without an encoding migration.
 
-The Drive bundle is an older snapshot; update both client and server from the
+The current Drive bundle includes gx-v0.1.11 client/server binaries and complete
+client data. For later binary-only updates, update both endpoints from the
 matching GitHub release. Tagged releases use the reviewed notes in
 `docs/releases/<tag>.md`. Local work does not trigger publication automatically.
 

@@ -61,10 +61,10 @@ administration tools, not required for ordinary account creation.
 
 ## Run the client
 
-Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1EF83MEmACo9xPYenPP59OBzPivRH9bMl/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. The Drive folder is the v0.1.10 complete-data snapshot. Apply the current
-[v0.1.11 client/server update](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.11)
-using the [upgrade guide](releases/gx-v0.1.11-upgrade.md); no separate game-data
-download is needed. The game discovers its data automatically; no build tools or data conversion are needed.
+Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1REexfF9DhPcxPuixloiaWeQgAFVvpkvh/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. The Drive folder includes the matching gx-v0.1.11 client/server builds and
+complete game data; no separate data download or binary update is needed.
+For an existing installation, follow the [upgrade guide](releases/gx-v0.1.11-upgrade.md).
+The game discovers its data automatically; no build tools or data conversion are needed.
 
 See [portable client requirements and updates](client-portable.md). GitHub releases provide executable updates without data. Developers can instead [build from source](building.md) and [import their compatible archives](data-formats.md); keep game data outside Git. Do not use the original `Game.exe` to run GX.
 
