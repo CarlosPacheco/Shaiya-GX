@@ -106,9 +106,32 @@ positive material count also consume only one. The server supplies the chance
 for the placed equipment before consumables are selected; this preview does
 not authorize execution.
 
-All probabilities, the maximum level and resulting stat bonuses are **compiled
-Go rules**, in [`enchant_rules.go`](../../server/internal/world/enchant_rules.go).
-There is no ItemEnchant.ini runtime dependency. Default cap: **+20**.
+All probabilities, the maximum level and resulting stat bonuses are read from
+[`data/game/ItemEnchant.ini`](../../server/data/game/ItemEnchant.ini) at world
+startup. Edit the active server copy and restart gx_world; no rebuild is needed.
+The following table lists the shipped defaults, with cap **+20**.
+
+```ini
+[Enchant]
+MaxLevel=20
+
+[LapisianEnchantPercentRate]
+; Step00 is the chance of +0 -> +1, per million.
+WeaponStep00=900000
+DefenseStep00=990000
+
+[LapisianEnchantAddValue]
+; Step20 is the total bonus at +20.
+WeaponStep20=311
+DefenseStep20=100
+```
+
+This is an excerpt; retain every `WeaponStepNN` and `DefenseStepNN` entry
+through MaxLevel in both original sections. The cap supports 0–49. Legacy
+INIs without `[Enchant] MaxLevel` use 20. The file itself is required.
+Rates must be 0–1,000,000; bonuses 0–2,147,483,647. Invalid or missing required
+entries stop startup without partially applying the file. Optional entries
+above the cap remain active bonuses for existing higher-level equipment.
 
 | Resulting level | Weapon chance | Armor chance | Weapon attack bonus | Armor absorption |
 |---:|---:|---:|---:|---:|
@@ -138,12 +161,14 @@ bonus arrays instead index the resulting level. Bonuses are totals at that
 level, not a sum of all preceding rows. Weapon bonuses add equipment attack;
 armor absorption subtracts a flat amount from incoming damage, with the
 existing minimum-damage rule. Changing MaxLevel, rates or
-bonuses requires rebuilding and restarting gx_world. Raising the cap requires
+bonuses requires restarting gx_world. Raising the cap requires
 editing the corresponding table entries as well. Zero rates mean zero success.
 The original two-digit Craftname encoding supports a shared cap of 0–49;
 0 disables new enhancement attempts. Existing stored levels are not lowered
 when the cap changes. Values outside the encoding or rates above 100% are rejected
-at startup.
+at startup. The server publishes its bonus tables with GX 0x7F12 during
+character selection; absorption tooltips use those values plus native Exp and
+active lapis, rather than assuming five absorption per armor enchant level.
 
 Lapisia variants do not add a chance bonus. No lapisia can break equipment:
 failure preserves its quality, existing enchantment and recreated stats.

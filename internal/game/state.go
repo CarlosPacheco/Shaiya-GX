@@ -100,6 +100,7 @@ type State struct {
 	TargetEffectsSerial    uint64
 	LastSkillFailure       proto.SkillFailure
 	OJLimits               map[[2]uint8]proto.OJLimit
+	EnchantRules           *proto.EnchantRules
 	ChestCloakFits         map[[2]uint8]uint8
 	LastSkillDash          proto.SkillDash
 	LastPlayerCorrection   proto.PlayerCorrection
@@ -224,6 +225,12 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		for _, row := range rows {
 			s.ChestCloakFits[[2]uint8{row.Type, row.TypeID}] = row.Fit
 		}
+	case proto.GXEnchantRules:
+		rules, err := proto.DecodeEnchantRules(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.EnchantRules = &rules
 	case proto.GXOJLimits:
 		limits, err := proto.DecodeOJLimits(p)
 		if err != nil {

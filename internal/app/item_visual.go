@@ -118,21 +118,29 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 		return ""
 	}, a.msg)
 
-	if lapisAbsorption > 0 {
+	if lapisAbsorption > 0 || a.state != nil && a.state.EnchantRules != nil {
 		label := a.msg.Get(485)
 		if label == "" {
 			label = "Absorption"
 		}
 		base := itemAbsorption(def, instance)
-		row := itemDetailLine{fmt.Sprintf("%s %d", label, base+lapisAbsorption), white}
+		total := base + lapisAbsorption
+		if a.state != nil && a.state.EnchantRules != nil {
+			total = itemAbsorption(def, instance, a.state.EnchantRules) + lapisAbsorption
+		}
+		row := itemDetailLine{fmt.Sprintf("%s %d", label, total), white}
 		if base > 0 {
 			for i := range lines {
 				if lines[i].text == fmt.Sprintf("%s %d", label, base) {
-					lines[i] = row
+					if total > 0 {
+						lines[i] = row
+					} else {
+						lines = slices.Delete(lines, i, i+1)
+					}
 					break
 				}
 			}
-		} else {
+		} else if total > 0 {
 			lines = slices.Insert(lines, 1, row)
 		}
 	}

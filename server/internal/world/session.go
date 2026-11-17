@@ -781,6 +781,7 @@ func (s *Session) selectCharacter(id uint32) {
 // sendInitialState is the captured character-select sequence; afterwards
 // the server->client direction switches to the expanded XOR scheme.
 func (s *Session) sendInitialState(st *CharacterStats) {
+	s.sendEnchantRules()
 	s.sendOJLimits()
 	s.sendChestCloakFits()
 	s.sendSocial()

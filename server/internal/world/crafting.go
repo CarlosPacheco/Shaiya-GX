@@ -74,7 +74,7 @@ func lapisiaFits(lap *db.ItemDef, rt uint8) bool {
 // handleEnchantAdd (0x0805) is CUser::ItemLapisianAdd (0x0045fb20):
 // lapisia bag/slot, material bag/slot, material count, item bag/slot.
 // The item (count 1, Server set) needs its ReqLuc as material; below
-// the compiled cap, ReqIg selects the gold cost and the compiled rate
+// the configured cap, ReqIg selects the gold cost and the configured rate
 // determines success independently of material quantity. Either way
 // the lapisia and the material count are used up; equipment is preserved.
 func (s *Session) handleEnchantAdd(p []byte) { s.inventoryOperation(func() { s.planEnchantAdd(p) }) }

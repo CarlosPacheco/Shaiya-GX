@@ -258,3 +258,45 @@ func TestAbsorptionTooltipArmor20AndLapis60(t *testing.T) {
 		}
 	}
 }
+
+func TestAbsorptionTooltipUsesServerIniBonuses(t *testing.T) {
+	a := inputApp()
+	a.msg = text.SysMsg{485: "Absorption"}
+	def := &sdata.Item{Type: 17, Name: "Armor", Server: 1, RequiredStats: [6]uint16{0, 0, 0, 0, 1}, ExpAbsorb: 30}
+	a.items = map[sdata.ItemKey]*sdata.Item{{Type: 30, TypeID: 1}: {Type: 30, ExpAbsorb: 60}}
+	rules := proto.EnchantRules{MaxLevel: 49}
+	rules.ArmorBonus[20] = 777
+	rules.ArmorBonus[49] = 888
+	if _, err := a.state.Apply(proto.EnchantRulesPacket(rules)); err != nil {
+		t.Fatal(err)
+	}
+	it := proto.InventoryItem{Type: 17, Craft: "00000000000000000070", Gems: [6]uint8{1}}
+	for _, tt := range []struct{ craft, want string }{{"00000000000000000070", "Absorption 867"}, {"00000000000000000099", "Absorption 978"}} {
+		it.Craft = tt.craft
+		a.drawItemDetails(def, &it, 1, 0, 0, 1024, 768, "")
+		found := 0
+		for _, row := range a.tooltip {
+			if strings.HasPrefix(row.text, "Absorption ") {
+				found++
+				if row.text != tt.want {
+					t.Fatal(row.text, tt.want)
+				}
+			}
+		}
+		if found != 1 {
+			t.Fatal("total absorption row missing/duplicated", a.tooltip)
+		}
+	}
+	// A configured zero replaces the old hardcoded +100, including removing
+	// the row entirely when there is no native or lapis contribution.
+	def.ExpAbsorb = 0
+	it.Gems = [6]uint8{}
+	it.Craft = "00000000000000000070"
+	a.state.EnchantRules.ArmorBonus[20] = 0
+	a.drawItemDetails(def, &it, 1, 0, 0, 1024, 768, "")
+	for _, row := range a.tooltip {
+		if strings.HasPrefix(row.text, "Absorption ") {
+			t.Fatal("zero configured bonus displayed", row)
+		}
+	}
+}

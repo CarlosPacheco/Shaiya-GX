@@ -220,7 +220,7 @@ func TestNewDropRecreationSurvivesPickupAndRedrop(t *testing.T) {
 		}
 	}
 }
-func TestCompiledEnchantCapAndRates(t *testing.T) {
+func TestConfiguredEnchantCapAndRates(t *testing.T) {
 	_, _ = forgeRuleSession(t)
 	if enchantConfig.MaxLevel != 20 {
 		t.Fatal("default cap must be 20")

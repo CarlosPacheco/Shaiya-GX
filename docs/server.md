@@ -106,8 +106,9 @@ immediately; their success percentage is displayed above the action button.
 
 Forge costs use the native ReqIg table without Vg/level discounts or the old
 free-cost environment override. Enchant rates, cap (default20) and bonuses are
-compiled in `server/internal/world/enchant_rules.go`; ItemEnchant.ini is no
-longer read or required. See the [feature wiki](wiki/README.md) for exact rules,
+loaded from `data/game/ItemEnchant.ini`. Set `[Enchant] MaxLevel=20` (0–49)
+and edit the original rate/bonus sections, then restart gx_world; no rebuild
+is needed. The client receives the server bonus tables for its tooltips. See the [feature wiki](wiki/README.md) for exact rules,
 item content fields, extraction, recreation and drop persistence.
 
 Operational architecture, resource limits, secure remote transport and local

@@ -37,9 +37,9 @@ func parseCraftValues(name string) (craftValues, bool) {
 		out.stats[n] *= 100
 	}
 	switch level := values[9]; {
-	case level <= 20:
+	case level <= 49:
 		out.enchant = uint8(level)
-	case level > 50 && level <= 70:
+	case level > 50 && level <= 99:
 		out.enchant = uint8(level - 50)
 	}
 	return out, true
@@ -256,7 +256,7 @@ func itemHasRestoration(typ uint8) bool {
 
 // itemAbsorption combines native Exp and eligible armor enchantment. Linked
 // lapis are added by drawItemDetails; the craft level remains in the item name.
-func itemAbsorption(def *sdata.Item, instance *proto.InventoryItem) uint32 {
+func itemAbsorption(def *sdata.Item, instance *proto.InventoryItem, rules ...*proto.EnchantRules) uint32 {
 	total := uint32(def.ExpAbsorb)
 	rt := itemtype.Real(def.Type)
 	if rt < 1 || rt > 25 || itemHasRestoration(def.Type) || instance == nil || def.Server == 0 || def.RequiredStats[4] == 0 || def.RequiredStats[4] >= 100 {
@@ -268,7 +268,11 @@ func itemAbsorption(def *sdata.Item, instance *proto.InventoryItem) uint32 {
 	}
 	raw := strings.TrimRight(instance.Craft, " ")
 	if raw[18] >= '5' {
-		total += uint32(craft.enchant) * 5
+		if len(rules) > 0 && rules[0] != nil {
+			total += rules[0].ArmorBonus[craft.enchant]
+		} else if craft.enchant <= 20 {
+			total += uint32(craft.enchant) * 5
+		}
 	}
 	return total
 }

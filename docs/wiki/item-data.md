@@ -1,10 +1,10 @@
-# Item data and compiled rules
+# Item data and configuration
 
 ## Sources of authority
 
 | Data | Authoritative source | Applying a change |
 |---|---|---|
-| Enchant cap, weapon/armor rates and stat bonuses | `server/internal/world/enchant_rules.go` | Rebuild and restart world |
+| Enchant cap, weapon/armor rates and stat bonuses | `data/game/ItemEnchant.ini` | Edit INI and restart world |
 | Native forge gold table | `lapisiaMoney` in `server/internal/world/crafting.go` | Rebuild and restart world |
 | Linking/extraction formulas | `server/internal/world/forge_quote.go` | Rebuild and restart world |
 | Item requirements, hammer ReqVg, stack limits | SQL `PS_GameDefs_Items` in the selected server DB | Restart world |
@@ -12,10 +12,14 @@
 | Client stackability matching SQL | `data/item-stack-limits.csv` | Restart client |
 | Mall display / actual products | Client Cash.SData / SQL ProductList | Restart affected component |
 
-The retired `ItemEnchant.ini` is not read or required. A historical copy lives
-under `server/docs/reference/ItemEnchant.legacy.ini`; changing it has no gameplay
-effect. There is no text or environment override for the compiled enchant rules.
-The old free-cost environment setting is also ignored.
+`ItemEnchant.ini` is required at startup under the server data directory.
+`[Enchant] MaxLevel` sets the shared cap (0–49, default20 for legacy INIs).
+`[LapisianEnchantPercentRate]` and `[LapisianEnchantAddValue]` retain their
+original `WeaponStepNN` / `DefenseStepNN` keys. Invalid or missing required
+values stop startup; there is no environment override. See
+[Blacksmith](blacksmith.md) for units and examples. The historical copy under
+`server/docs/reference/` is reference material, not the active file.
+The old free-cost environment setting remains ignored.
 
 The server quote is read-only. It uses the same functions as execution; the
 client checks request serials and inventory snapshots before accepting a reply.
@@ -72,7 +76,7 @@ go test -tags integration ./server/... -count=1
 ```
 
 The forge regressions cover exact costs, level/Vg independence, additive hammers,
-compiled cap/rates, safe enchant failures, selective extraction, repeated
+INI cap/rates, safe enchant failures, selective extraction, repeated
 consumption, original SysMsg refusals and valid drop rolls surviving pickup and
 redrop. `tools/forge_smoke.py` additionally runs the continuous client workflow
 against isolated processes and a disposable DB. It creates temporary fixture

@@ -67,12 +67,15 @@ confirmed state. Remaining consumable stacks support continuous operations.
 Click a placed slot to deselect it without consuming it. Only the exhausted
 selection disappears; it does not eject the equipment.
 
-## Why does changing ItemEnchant.ini do nothing?
+## How do I change enchant rates, bonuses or the cap?
 
-It is retired. Edit `server/internal/world/enchant_rules.go`, validate the cap,
-rates and bonus tables, rebuild `gx_world`, then restart the affected world
-service. The historical INI under `server/docs/reference/` is research material.
-See [Blacksmith](blacksmith.md) for the complete tables and encoding limits.
+Edit the active server `data/game/ItemEnchant.ini`, then restart gx_world.
+Set `[Enchant] MaxLevel` to 0–49; 0 disables new attempts. The original
+rate and bonus sections are active again. A file under `server/docs/reference/`
+is only a historical copy. Ensure you edited the data directory selected by
+`RAPTURE_DATA_DIR`. Startup rejects invalid/missing values, and the client
+receives bonus tables on character selection so absorption tooltips match.
+See [Blacksmith](blacksmith.md) for the exact keys and units.
 
 ## Why does the client disagree with the server about an item?
 

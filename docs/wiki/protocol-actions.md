@@ -16,7 +16,7 @@ Declarations: [packet.CharacterEnteredMap](../../server/internal/packet/packet.g
 
 **S→C serializers:** [buildCharacterEnteredMapGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L495)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1227)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1234)
 
 ### Wire layouts and validation
 
@@ -99,7 +99,7 @@ Source notes: Opcodes not named in Rapture's catalog. client handler 0x0059cf70 
 
 **S→C serializers:** [buildUserLeave (server/internal/world/view.go)](../../server/internal/world/view.go#L229)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1255)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1262)
 
 ### Wire layouts and validation
 
@@ -139,7 +139,7 @@ Declarations: [packet.ItemBagToBag](../../server/internal/packet/packet.go#L79),
 
 **S→C serializers:** [buildBagToBag (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L78)
 
-**Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L46), [Apply (internal/game/state.go)](../../internal/game/state.go#L915)
+**Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L46), [Apply (internal/game/state.go)](../../internal/game/state.go#L922)
 
 ### Wire layouts and validation
 
@@ -209,7 +209,7 @@ Declarations: [packet.AddItem](../../server/internal/packet/packet.go#L80), [pro
 
 **S→C serializers:** [buildAddItem (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L85), [buildAddItemError (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L97), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L46), [Apply (internal/game/state.go)](../../internal/game/state.go#L936)
+**Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L46), [Apply (internal/game/state.go)](../../internal/game/state.go#L943)
 
 ### Wire layouts and validation
 
@@ -292,7 +292,7 @@ Declarations: [packet.RemoveItem](../../server/internal/packet/packet.go#L81), [
 
 **S→C serializers:** [buildRemoveItem (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L117)
 
-**Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L46), [Apply (internal/game/state.go)](../../internal/game/state.go#L950)
+**Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L46), [Apply (internal/game/state.go)](../../internal/game/state.go#L957)
 
 ### Wire layouts and validation
 
@@ -358,7 +358,7 @@ Declarations: [packet.ExpGain](../../server/internal/packet/packet.go#L41), [pro
 
 **S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L598)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L852)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L859)
 
 ### Wire layouts and validation
 
@@ -417,7 +417,7 @@ Declarations: [packet.SetStatPoint](../../server/internal/packet/packet.go#L82),
 
 **S→C serializers:** [handleSetStatPoint (server/internal/world/skills.go)](../../server/internal/world/skills.go#L233)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L654)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L661)
 
 ### Wire layouts and validation
 
@@ -527,7 +527,7 @@ Declarations: [packet.LearnNewSkill](../../server/internal/packet/packet.go#L84)
 
 **S→C serializers:** [buildLearnSkillError (server/internal/world/skills.go)](../../server/internal/world/skills.go#L91), [buildLearnSkillResult (server/internal/world/skills.go)](../../server/internal/world/skills.go#L134)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L752)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L759)
 
 ### Wire layouts and validation
 
@@ -645,7 +645,7 @@ Declarations: [packet.CharacterMapTeleport](../../server/internal/packet/packet.
 
 **S→C serializers:** [buildCharacterMapPosition (server/internal/world/character.go)](../../server/internal/world/character.go#L515)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1161)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1168)
 
 ### Wire layouts and validation
 
@@ -706,7 +706,7 @@ Declarations: [packet.Gatekeeper](../../server/internal/packet/packet.go#L71), [
 
 **S→C serializers:** [buildGatekeeperResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L283)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L440)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L447)
 
 ### Wire layouts and validation
 
@@ -779,7 +779,7 @@ Declarations: [packet.UserKillCountUpdate](../../server/internal/packet/packet.g
 
 **S→C serializers:** [buildKillCountUpdate (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L67)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L298)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L305)
 
 ### Wire layouts and validation
 
@@ -837,7 +837,7 @@ Declarations: [proto.CountryKillCount](../../internal/proto/opcodes.go#L72).
 
 **S→C serializers:** [kcAnnounce (server/internal/world/killcount.go)](../../server/internal/world/killcount.go#L258)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L267)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L274)
 
 ### Wire layouts and validation
 
@@ -906,7 +906,7 @@ Declarations: [packet.BlessInit](../../server/internal/packet/packet.go#L123), [
 
 **S→C serializers:** [buildKCStatus (server/internal/world/killcount.go)](../../server/internal/world/killcount.go#L283), [buildBlessInit (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L80)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L267)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L274)
 
 ### Wire layouts and validation
 
@@ -1195,7 +1195,7 @@ Declarations: [packet.SetMoney](../../server/internal/packet/packet.go#L40), [pr
 
 **S→C serializers:** [buildSetMoney (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L91)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L960)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L967)
 
 ### Wire layouts and validation
 
@@ -1235,7 +1235,7 @@ Declarations: [packet.StatsReset](../../server/internal/packet/packet.go#L83), [
 
 **S→C serializers:** [buildStatsReset (server/internal/world/character.go)](../../server/internal/world/character.go#L455)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L660)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L667)
 
 ### Wire layouts and validation
 
@@ -1294,7 +1294,7 @@ Declarations: [packet.UseVehicle](../../server/internal/packet/packet.go#L78), [
 
 **S→C serializers:** [vehicleResult (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L108)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L404)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L411)
 
 ### Wire layouts and validation
 
@@ -1361,7 +1361,7 @@ Source notes: Native requests and invitation messages. 0x021C is also the server
 
 **S→C serializers:** [handleUseVehicle (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L114)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L400)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L407)
 
 ### Wire layouts and validation
 
@@ -1419,7 +1419,7 @@ Declarations: [proto.PvPRewardStatus](../../internal/proto/pvp_reward.go#L10).
 
 **S→C serializers:** [buildPvPRewardStatus (server/internal/world/pvpreward.go)](../../server/internal/world/pvpreward.go#L46)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L273)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -1477,7 +1477,7 @@ Declarations: [proto.PvPRewardKill](../../internal/proto/pvp_reward.go#L11).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L279)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L286)
 
 ### Wire layouts and validation
 
@@ -1526,7 +1526,7 @@ Declarations: [proto.PvPRewardDeath](../../internal/proto/pvp_reward.go#L12).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L279)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L286)
 
 ### Wire layouts and validation
 
@@ -1577,7 +1577,7 @@ Source notes: Native requests and invitation messages. 0x021C is also the server
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L402)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L409)
 
 ### Wire layouts and validation
 
@@ -1605,7 +1605,7 @@ Source notes: Native requests and invitation messages. 0x021C is also the server
 
 **S→C serializers:** [handleVehicleInvite (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L259)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L386)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L393)
 
 ### Wire layouts and validation
 
@@ -1712,7 +1712,7 @@ Source notes: Native requests and invitation messages. 0x021C is also the server
 
 **S→C serializers:** [vehicleReply (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L252)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L393)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L400)
 
 ### Wire layouts and validation
 
@@ -1822,7 +1822,7 @@ Source notes: Request bag,slot,hair,face,height,sex:u8; reply charId:u32,hair,fa
 
 **S→C serializers:** [buildChangeAppearance (server/internal/world/character.go)](../../server/internal/world/character.go#L593)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1264)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1271)
 
 ### Wire layouts and validation
 
