@@ -285,3 +285,40 @@ visible animation, shadow/reflection participation and transparent draw order;
 validate each change independently before introducing general parallelism or
 changing glow. No renderer optimization was included in this measurement update.
 Machine contention, camera/workload and timing mode must match for comparisons.
+
+## Pose sampling and identical inverse-bind palettes (2026-11-16)
+
+The client now reuses actor-owned final-matrix storage, decomposes immutable ANI
+rest transforms once when loading the shared clip, and evaluates one palette for
+parts whose complete inverse-bind arrays match exactly. Different bind arrays
+retain independent palettes. Animation sampling times, matrix multiplication
+order, bounds, reflection and shadow visibility remain unchanged.
+
+A focused Linux/OpenGL comparison used the original baseline binary and the new
+binary, four scenes, three shuffled repetitions per binary and 300 frames per run
+(7,200 measured frames). These are short before/after batches, not an alternating
+binary experiment; normal desktop noise remains. All GPU samples were valid and
+all expected assets/actors loaded. Median CPU submission wall times:
+
+| Scene | Before ms | After ms | Reduction |
+|---|---:|---:|---:|
+| 200 actors | 6.319 | 5.161 | 18.3% |
+| 400 actors | 12.915 | 10.099 | 21.8% |
+| Field | 0.729 | 0.729 | unchanged |
+| Visible water | 5.068 | 4.708 | 7.1% observed |
+
+The water change is not attributed to this pose optimization: scene/driver noise
+can affect it. Do not extrapolate presented FPS or universal performance gains.
+Allocated Go bytes per frame fell from about 631 KB to 12 KB for 200 actors and
+1,259 KB to 22 KB for 400 actors; allocation counts fell by one per actor/frame.
+
+Unit tests cover storage reuse, actor isolation, different inverse binds, outfit
+replacement, clip growth/shrinkage, identity fallback and exact bounds. The native
+GL test also compares original player/monster/vehicle part matrices against
+independent per-part evaluation with uncached rest decomposition. Existing twelve
+mixed camera/clip-plane views and 144 shadow placements preserve culling pixels.
+The harness captures themselves differ between processes because of animated
+scene content; no whole-scene pixel equality is claimed for those captures.
+Private measurements and captures: `work/client-measure/pose-before/` and
+`work/client-measure/pose-after/`. Conservative pre-pose rejection and dungeon
+effect/streaming improvements remain separate future changes.

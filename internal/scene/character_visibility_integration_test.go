@@ -57,6 +57,30 @@ func TestAnimatedActorCullingPreservesPixelsGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	actors := []*Character{player, other, mob.Character, vehicle.Character}
+	// Check original asset poses against independent per-part evaluation, including
+	// rest decomposition on every sample as in the pre-optimization sampler.
+	for _, actor := range actors {
+		reference := *actor.clip
+		reference.restRotation, reference.restTranslation = nil, nil
+		for _, sample := range []float32{0, .13, .57, 1.2} {
+			actor.Time = sample
+			actor.preparePose()
+			finals := reference.Finals(sample)
+			for _, part := range actor.parts {
+				for i, bind := range part.bones {
+					final := render.Identity()
+					if i < len(finals) {
+						final = finals[i]
+					}
+					if part.pose[i] != bind.Mul(final) {
+						t.Fatalf("original asset pose changed at t=%v bone=%d", sample, i)
+					}
+				}
+			}
+		}
+		actor.Time = 0
+	}
+
 	s, err := render.NewScene3D()
 	if err != nil {
 		t.Fatal(err)

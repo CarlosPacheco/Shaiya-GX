@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/model"
@@ -103,6 +104,8 @@ type Character struct {
 	poseClip             *Clip
 	poseTime             float32
 	poseReady            bool
+	poseParts            []*skinPart
+	poseSources          []int
 	boundClip            *Clip
 	boundTime            float32
 	boundWorld           render.M4
@@ -299,8 +302,10 @@ func (s *Assets) skinFile(file string) (*skinPart, error) {
 
 // Clip is an ANI prepared for sampling.
 type Clip struct {
-	ani       *model.ANI
-	restLocal []render.M4
+	ani             *model.ANI
+	restLocal       []render.M4
+	restRotation    [][4]float32
+	restTranslation [][3]float32
 }
 
 func (s *Assets) Clip(file string) (*Clip, error) {
@@ -324,6 +329,9 @@ func (s *Assets) Clip(file string) (*Clip, error) {
 			l = l.Mul(render.M4(a.Bones[p].Rest).Inverse())
 		}
 		c.restLocal = append(c.restLocal, l)
+		q, t := render.MatrixQuat(l)
+		c.restRotation = append(c.restRotation, q)
+		c.restTranslation = append(c.restTranslation, t)
 	}
 	s.clips[key] = c
 	return c, nil
@@ -336,6 +344,11 @@ func (c *Clip) Duration() float32 {
 
 // Finals returns each bone's animated global matrix at time t (looping).
 func (c *Clip) Finals(t float32) []render.M4 {
+	return c.finalsInto(t, nil)
+}
+
+// finalsInto writes into actor-owned storage; shared clips retain no mutable pose.
+func (c *Clip) finalsInto(t float32, out []render.M4) []render.M4 {
 	a := c.ani
 	frame := float32(a.Start)
 	if d := c.Duration(); d > 0 {
@@ -344,9 +357,19 @@ func (c *Clip) Finals(t float32) []render.M4 {
 		}
 		frame += t * 30
 	}
-	out := make([]render.M4, len(a.Bones))
+	if cap(out) < len(a.Bones) {
+		out = make([]render.M4, len(a.Bones))
+	} else {
+		out = out[:len(a.Bones)]
+	}
 	for i, bone := range a.Bones {
-		rq, rt := render.MatrixQuat(c.restLocal[i])
+		var rq [4]float32
+		var rt [3]float32
+		if len(c.restRotation) == len(a.Bones) && len(c.restTranslation) == len(a.Bones) {
+			rq, rt = c.restRotation[i], c.restTranslation[i]
+		} else {
+			rq, rt = render.MatrixQuat(c.restLocal[i])
+		}
 		if len(bone.Rot) > 0 {
 			rq = sampleRot(bone.Rot, frame)
 		}
@@ -556,7 +579,7 @@ func (c *Character) finals() []render.M4 {
 		return nil
 	}
 	if c.lastFinalsClip != c.clip || c.lastFinalsTime != c.Time || c.lastFinals == nil {
-		c.lastFinals = c.clip.Finals(c.Time)
+		c.lastFinals = c.clip.finalsInto(c.Time, c.lastFinals)
 		c.lastFinalsClip, c.lastFinalsTime = c.clip, c.Time
 	}
 	return c.lastFinals
@@ -567,8 +590,28 @@ func (c *Character) preparePose() []render.M4 {
 		return nil
 	}
 	finals := c.finals()
+	// Parts have immutable inverse binds. Reuse a palette only when every bind
+	// matrix matches exactly; different equipment/skeletons keep their own pose.
+	if !slices.Equal(c.poseParts, c.parts) {
+		c.poseParts = append(c.poseParts[:0], c.parts...)
+		c.poseSources = make([]int, len(c.parts))
+		for i, p := range c.parts {
+			c.poseSources[i] = i
+			for j := 0; j < i; j++ {
+				if slices.Equal(p.bones, c.parts[j].bones) {
+					c.poseSources[i] = c.poseSources[j]
+					break
+				}
+			}
+		}
+		c.poseReady = false
+	}
 	if !c.poseReady || c.poseClip != c.clip || c.poseTime != c.Time {
-		for _, p := range c.parts {
+		for partIndex, p := range c.parts {
+			if source := c.poseSources[partIndex]; source != partIndex {
+				p.pose = c.parts[source].pose
+				continue
+			}
 			if cap(p.pose) < len(p.bones) {
 				p.pose = make([]render.M4, len(p.bones))
 			}
