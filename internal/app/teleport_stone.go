@@ -99,29 +99,34 @@ func (a *App) updateTeleportCast(in *platform.Input) bool {
 	return false
 }
 
-func (a *App) updateTeleportStone(in *platform.Input, w, h int) {
+func (a *App) updateTeleportStone(in *platform.Input, w, h int) bool {
 	v := &a.teleportStone
+	if !v.open {
+		return false
+	}
 	if v.pending && a.clock >= v.deadline {
 		v.pending = false
 		a.questMessage("No response. Use the stone again to refresh.")
 	}
 	if !a.loadRecordedPoints() {
 		*v = teleportStoneView{}
-		return
+		return true
 	}
 	action, slot, closed := a.recordedPoints.Update(in, w, h, v.pending, v.points)
 	if closed {
 		*v = teleportStoneView{}
-		return
+		return true
 	}
 	if action == 0 {
-		return
+		x, y := a.recordedPoints.Origin(w, h)
+		return panelPointer(in, x, y, ui.RecordedPointsWidth, ui.RecordedPointsHeight)
 	}
 	if err := a.world.Send(proto.TeleportStonePacket(action, slot)); err != nil {
 		a.backToLogin("Unable to use a recorded point.")
-		return
+		return true
 	}
 	v.pending, v.deadline = true, a.clock+10
+	return true
 }
 
 func (a *App) drawTeleportStone(w, h int) {
@@ -129,7 +134,7 @@ func (a *App) drawTeleportStone(w, h int) {
 	if !v.open || !a.loadRecordedPoints() {
 		return
 	}
-	x, y := ui.RecordedPointsOrigin(w, h)
-	a.clearTooltipUnderPanel(x, y, 256, 420)
+	x, y := a.recordedPoints.Origin(w, h)
+	a.clearTooltipUnderPanel(x, y, ui.RecordedPointsWidth, ui.RecordedPointsHeight)
 	a.recordedPoints.Draw(a.sprites, a.font, a.msg, w, h, v.pending, v.points)
 }

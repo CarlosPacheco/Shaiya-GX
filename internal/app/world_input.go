@@ -116,7 +116,26 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		in = &pointer
 	}
 	captured := false
-	if a.chatUI != nil && a.chatUI.ModeOpen {
+	if a.teleportStone.open && a.recordedPoints != nil {
+		const recordedPointOwner = -4
+		panel := a.recordedPoints
+		x, y := panel.Origin(w, h)
+		over := pointInside(in, x, y, ui.RecordedPointsWidth, ui.RecordedPointsHeight)
+		if a.windowDrag.position == &panel.Position || a.windowDrag.position == nil && over && in.Pressed {
+			captured = a.updateWindowDrag(in, w, h)
+		}
+		if !captured && a.windowDrag.position == nil {
+			input := *in
+			if in.Clicked && !in.Pressed && v.uiLeft != recordedPointOwner {
+				input.Clicked = false
+			}
+			captured = a.updateTeleportStone(&input, w, h)
+			if captured && in.Pressed {
+				v.uiLeft = recordedPointOwner
+			}
+		}
+	}
+	if !captured && a.chatUI != nil && a.chatUI.ModeOpen {
 		captured = a.updateChatPointer(in, w, h)
 		if captured && in.Pressed {
 			v.uiLeft = -3

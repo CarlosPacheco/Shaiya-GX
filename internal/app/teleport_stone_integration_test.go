@@ -11,7 +11,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
-	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 func TestTeleportStoneAgainstServer(t *testing.T) {
@@ -65,8 +64,8 @@ func TestTeleportStoneAgainstServer(t *testing.T) {
 			}
 		}
 	}
-	x, y := ui.RecordedPointsOrigin(1024, 768)
 	click := func(dx, dy int) {
+		x, y := a.recordedPoints.Origin(1024, 768)
 		a.updateTeleportStone(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + dx, MouseY: y + dy}, 1024, 768)
 		a.updateTeleportStone(&platform.Input{Clicked: true, MouseX: x + dx, MouseY: y + dy}, 1024, 768)
 	}

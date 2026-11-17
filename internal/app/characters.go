@@ -140,13 +140,6 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 		if a.updateTeleportCast(in) {
 			return
 		}
-		if a.teleportStone.open {
-			a.updateTeleportStone(in, w, h)
-			if a.state != nil && a.wv != nil && a.world != nil {
-				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
-			}
-			return
-		}
 		if a.appearanceEdit != nil {
 			a.updateAppearanceEditor(in, w, h)
 			if a.state != nil && a.wv != nil && a.world != nil {

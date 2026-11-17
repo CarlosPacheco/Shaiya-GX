@@ -11,7 +11,10 @@ import (
 
 // RecordedPoints uses the original waypoint panel at 0x5dca21, its two
 // controls per location, and the text positions from 0x5dcf36.
+const RecordedPointsWidth, RecordedPointsHeight = 256, 420
+
 type RecordedPoints struct {
+	Position     WindowPosition
 	frame        *render.Texture
 	close        Button
 	save, travel [proto.TeleportPointCount]Button
@@ -38,10 +41,12 @@ func NewRecordedPoints(t Textures) (*RecordedPoints, error) {
 	return v, err
 }
 
-func RecordedPointsOrigin(w, h int) (int, int) { return w/2 - 127, h/2 - 180 }
+func (v *RecordedPoints) Origin(w, h int) (int, int) {
+	return v.Position.Origin(w, h, RecordedPointsWidth, RecordedPointsHeight, w/2-127, h/2-180)
+}
 
 func (v *RecordedPoints) controls(w, h int, busy bool, points [proto.TeleportPointCount]proto.TeleportPoint) {
-	x, y := RecordedPointsOrigin(w, h)
+	x, y := v.Origin(w, h)
 	v.close.OriginX, v.close.OriginY, v.close.Disabled = x, y, busy
 	for i := range v.save {
 		v.save[i].OriginX, v.save[i].OriginY, v.save[i].Disabled = x, y, busy
@@ -63,7 +68,7 @@ func (v *RecordedPoints) Update(in *platform.Input, w, h int, busy bool, points 
 }
 
 func (v *RecordedPoints) Draw(s *render.Sprites, f *Font, messages text.SysMsg, w, h int, busy bool, points [proto.TeleportPointCount]proto.TeleportPoint) {
-	x, y := RecordedPointsOrigin(w, h)
+	x, y := v.Origin(w, h)
 	v.controls(w, h, busy, points)
 	s.DrawImage(v.frame, float32(x), float32(y))
 	v.close.Draw(s)

@@ -119,3 +119,34 @@ func TestUILayoutPersistsAcrossAppAndPreservesCaptureDefaults(t *testing.T) {
 		t.Fatal("invalid saved layout accepted")
 	}
 }
+
+func TestRecordedPointWindowIsMovableAndNonModal(t *testing.T) {
+	a := inputApp()
+	if !a.loadRecordedPoints() {
+		t.Fatal("failed to create recorded point controls")
+	}
+	a.teleportStone.open = true
+	const w, h = 1024, 768
+	x, y := a.recordedPoints.Origin(w, h)
+	a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + 80, MouseY: y + 14}, w, h)
+	if a.windowDrag.position != &a.recordedPoints.Position {
+		t.Fatal("recorded point title did not start a drag")
+	}
+	a.worldControls(&platform.Input{MouseDown: true, MouseX: x + 210, MouseY: y + 54}, w, h)
+	release := a.worldControls(&platform.Input{Clicked: true, MouseX: x + 210, MouseY: y + 54}, w, h)
+	nx, ny := a.recordedPoints.Origin(w, h)
+	if nx != x+130 || ny != y+40 || release.Clicked || a.windowDrag.position != nil {
+		t.Fatalf("drag did not move the window or leaked its release: %d %d", nx, ny)
+	}
+
+	a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: nx + 30, MouseY: ny + 80}, w, h)
+	release = a.worldControls(&platform.Input{Clicked: true, MouseX: nx - 20, MouseY: ny + 80}, w, h)
+	if release.Clicked {
+		t.Fatal("click outside leaked from a press inside the panel")
+	}
+
+	outside := a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: 470, MouseY: 110, Down: "W"}, w, h)
+	if !outside.Pressed || !outside.Held('W') || outside.SuppressAutoRun || !a.teleportStone.open {
+		t.Fatal("open recorded point window blocked gameplay outside it")
+	}
+}

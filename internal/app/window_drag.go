@@ -51,6 +51,15 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 		x, y, scale := a.minimap.FullRect(w, h)
 		return start(&a.minimap.FullPosition, x, y, int(544*scale), int(579*scale), 8, int(450*scale))
 	}
+	if a.teleportStone.open && a.recordedPoints != nil {
+		x, y := a.recordedPoints.Origin(w, h)
+		if start(&a.recordedPoints.Position, x, y, ui.RecordedPointsWidth, ui.RecordedPointsHeight, 10, 212) {
+			return true
+		}
+		if pointInside(in, x, y, ui.RecordedPointsWidth, ui.RecordedPointsHeight) {
+			return false
+		}
+	}
 	// Match drawing order: the quest journal is above the other panels.
 	if a.mall.open && a.mallUI != nil {
 		if a.mallUI.GiftOpen {
