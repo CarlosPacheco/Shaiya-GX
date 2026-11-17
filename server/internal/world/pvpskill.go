@@ -204,6 +204,7 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 	hp := uint32(dealt[0])
 	if stats.Absorption > 0 && hp > 0 {
 		hp = max(satSub(hp, stats.Absorption), 1)
+		dealt[0] = uint16(hp) // Damage display, drain and reflection use the absorbed hit.
 	}
 	code := uint8(attackSuccessNormal)
 	if crit {

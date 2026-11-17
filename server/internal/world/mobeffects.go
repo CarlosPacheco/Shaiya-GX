@@ -62,7 +62,11 @@ func (m *MapMob) mods() mobMods {
 		switch d.TypeDetail {
 		case detailAbilityDown, detailAbilityDown2:
 			for i, t := range d.AbilityType {
-				o.addAbility(t, -int32(d.AbilityValue[i]))
+				value := -int32(d.AbilityValue[i])
+				if t >= 32 && t <= 34 {
+					value = int32(d.AbilityValue[i])
+				}
+				o.addAbility(t, value)
 			}
 		case detailStun:
 			o.Stun++
@@ -215,7 +219,7 @@ func ApplyMobEffect(mapID uint16, id, casterID uint32, def *db.SkillDef) (speed 
 		before := m.mods()
 		for j := range m.Effects {
 			e := &m.Effects[j]
-			if e.Def.SkillID != def.SkillID {
+			if e.Def.SkillID != def.SkillID || (e.Def.SkillLevel == gemSkillLevel) != (def.SkillLevel == gemSkillLevel) {
 				continue
 			}
 			if e.Def.SkillLevel == def.SkillLevel {
@@ -316,8 +320,9 @@ type MobEffectOutcome struct {
 
 // TickMobEffects is ChkKeepSkill (detail 61, every 3 s) and ChkEndTimeSkill
 // (expiry, with the last partial tick of 61 and the whole-HP hit of 63).
-func TickMobEffects() []MobEffectOutcome {
-	now := time.Now()
+func TickMobEffects() []MobEffectOutcome { return tickMobEffects(time.Now()) }
+
+func tickMobEffects(now time.Time) []MobEffectOutcome {
 	var out []MobEffectOutcome
 	for _, mapID := range shardIDs() {
 		s := shard(mapID)
@@ -334,6 +339,8 @@ func TickMobEffects() []MobEffectOutcome {
 					damage = [3]int32{}
 				}
 				m.recordEventDamage(e.CasterID, applied)
+				m.CurrentSP = satSub(m.CurrentSP, uint32(max(damage[1], 0)))
+				m.CurrentMP = satSub(m.CurrentMP, uint32(max(damage[2], 0)))
 				m.CurrentHP -= applied
 				killed := m.CurrentHP == 0
 				o := MobEffectOutcome{MapID: mapID, CasterID: e.CasterID, SkillID: e.Def.SkillID, SkillLevel: e.Def.SkillLevel,
@@ -353,7 +360,7 @@ func TickMobEffects() []MobEffectOutcome {
 				if m.def != nil {
 					maxSP, maxMP = m.def.MaxSP, m.def.MaxMP
 				}
-				return [3]uint32{m.CurrentHP, maxSP, maxMP}, [3]uint32{m.MaxHP, maxSP, maxMP}
+				return [3]uint32{m.CurrentHP, m.CurrentSP, m.CurrentMP}, [3]uint32{m.MaxHP, maxSP, maxMP}
 			}
 			for j := 0; j < len(m.Effects); {
 				e := m.Effects[j]

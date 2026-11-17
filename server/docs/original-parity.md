@@ -248,3 +248,15 @@ normalization work. Existing mob rows above describe implemented generic paths,
 not complete parity for native FSM/Lua bosses. QuestItemID now uses the native
 quest-only type 27/28/29 mapping; it is not Type*1000+TypeID. Client visual Day
 scaling is independent of server combat Size.
+
+## Lapis NPC effects and incoming absorption
+
+Lapis Special selects the NpcSkill namespace (SQL level 100, client
+Monster/NpcSkill.SData), never the same ID in player Skills. High-Special
+Lv6/Lv7 debuffs now use their NPC-defined success, duration and effect values.
+Restrictions expire, sleep wakes on real HP damage, and HP/SP/MP periodic
+loss changes the appropriate resources. NPC and player effect identities stay
+separate. Defensive state-resistance lapis and Endure durability are excluded.
+Direct mob skills apply flat absorption before their result packet and drain
+healing; periodic damage is not absorbed. PvP skill result/drain values also
+reflect absorption already applied to the defender.

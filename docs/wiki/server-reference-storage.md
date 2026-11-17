@@ -206,7 +206,8 @@ Direct GX dependencies: `internal/element`, `internal/itemstack`.
 | [`loadDefs`](../../server/internal/db/defs.go#L311)<br>`func loadDefs() (*Defs, error)` | See the source definition and the subsystem ownership contract. |
 | [`Item`](../../server/internal/db/defs.go#L613)<br>`func (d *Defs) Item(itemType, typeID uint8) *ItemDef` | Item returns the definition for (type, typeID), or nil. |
 | [`Skill`](../../server/internal/db/defs.go#L616)<br>`func (d *Defs) Skill(skillID uint16, level uint8) *SkillDef` | Skill returns the definition for (skillID, level), or nil. |
-| [`MobQuestItem`](../../server/internal/db/defs.go#L622)<br>`func MobQuestItem(index int32) ItemKey` | MobQuestItem decodes LoadConstMob's quest-only index. This is not the ordinary Type*1000+TypeID format. Native item IDs are truncated to a byte. |
+| [`NPCSkill`](../../server/internal/db/defs.go#L622)<br>`func (d *Defs) NPCSkill(skillID uint16) *SkillDef` | NPCSkill selects the independent NpcSkill namespace. The shared SQL schema stores NpcSkill rank one as level 100; player ranks are never a fallback. |
+| [`MobQuestItem`](../../server/internal/db/defs.go#L628)<br>`func MobQuestItem(index int32) ItemKey` | MobQuestItem decodes LoadConstMob's quest-only index. This is not the ordinary Type*1000+TypeID format. Native item IDs are truncated to a byte. |
 
 <details><summary>Type definitions and owned fields</summary>
 

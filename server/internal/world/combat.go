@@ -287,6 +287,15 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 			s.breakStealth()
 		}
 		hp := uint32(max(damage[0], 0))
+		if hp > 0 && stats.Absorption > 0 {
+			hp = max(satSub(hp, stats.Absorption), 1)
+		}
+		if damage[1] > 0 || damage[2] > 0 {
+			s.spendDelta(uint32(max(damage[2], 0)), uint32(max(damage[1], 0)))
+			if hp == 0 {
+				s.persist()
+			}
+		}
 		killed = s.takeMobDamage(d, hp, stats)
 		words := [3]uint16{uint16(min(hp, 65535)), uint16(min(max(damage[1], 0), 65535)), uint16(min(max(damage[2], 0), 65535))}
 		var frame []byte

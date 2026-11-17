@@ -356,7 +356,7 @@ Declarations: [packet.ExpGain](../../server/internal/packet/packet.go#L41), [pro
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L598)
+**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L607)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L859)
 
@@ -366,7 +366,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildExpGain — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L598)
+[Source definition](../../server/internal/world/combat.go#L607)
 
 ```go
 func buildExpGain(amount uint32) []byte {
@@ -1049,6 +1049,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		return
 	}
 	stats := s.stats()
+	if s.actionBlocked() || stats.Disabled[min(int(def.Kind), 2)] > 0 {
+		s.log.Printf("GX Server World rejected skill use: category disabled skill_id=%d", k.SkillID)
+		return
+	}
 	if sp, mp := s.skillCosts(def, &stats); stats.CurrentMP < mp || stats.CurrentSP < sp {
 		s.log.Printf("GX Server World rejected skill use: not enough MP/SP skill_id=%d", k.SkillID)
 		return

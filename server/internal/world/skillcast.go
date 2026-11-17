@@ -57,7 +57,7 @@ func addBuffs(e EquipmentStats, buffs []ActiveBuff) EquipmentStats {
 		debuff := b.Effect == typeEffectDebuff
 		for i, a := range b.Abilities {
 			v := a.Value
-			if (b.Detail == 91 && i == 0) || debuff {
+			if (b.Detail == 91 && i == 0) || debuff && (a.Type < 32 || a.Type > 34) {
 				v = -v
 			}
 			applyAbility(&e, b.Effect, a.Type, v)
@@ -179,6 +179,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		return
 	}
 	stats := s.stats()
+	if s.actionBlocked() || stats.Disabled[min(int(def.Kind), 2)] > 0 {
+		s.log.Printf("GX Server World rejected skill use: category disabled skill_id=%d", k.SkillID)
+		return
+	}
 	if sp, mp := s.skillCosts(def, &stats); stats.CurrentMP < mp || stats.CurrentSP < sp {
 		s.log.Printf("GX Server World rejected skill use: not enough MP/SP skill_id=%d", k.SkillID)
 		return
@@ -306,6 +310,10 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 		return
 	}
 	stats := s.stats()
+	if s.actionBlocked() || stats.Disabled[min(int(def.Kind), 2)] > 0 {
+		s.log.Printf("GX Server World rejected skill use: category disabled skill_id=%d", k.SkillID)
+		return
+	}
 	if sp, mp := s.skillCosts(def, &stats); stats.CurrentMP < mp || stats.CurrentSP < sp {
 		s.log.Printf("GX Server World rejected skill use: not enough MP/SP skill_id=%d", k.SkillID)
 		return

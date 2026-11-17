@@ -6,8 +6,9 @@ import (
 
 // Gem skills follow CUser::AttackItemOption 0x0044c630 / 0x0044c720 and
 // BeAttackedItemOption 0x0044c970 / 0x0044cae0: a gem whose Special is
-// 1-15 (16 is the recovery gem) names a mob skill (the Skills row with
-// that id at level 100). After a landed hit:
+// nonzero (except recovery 16) names an NpcSkill, wire level 100.
+// Its own SuccessType/SuccessValue controls the proc; player skills never
+// supply a fallback. After a landed hit:
 //
 //   - user on user (normal or skill): the attacker's weapon gems cast on
 //     the target and the target's armour gems on the attacker;
@@ -21,8 +22,7 @@ import (
 // both sides must be alive.
 
 const (
-	gemSkillLevel  = 100
-	maxGemSkillSpc = 15
+	gemSkillLevel = 100
 )
 
 var gemArmourOrder = [6]uint8{6, 0, 1, 3, 2, 4}
@@ -31,10 +31,15 @@ func gemSkillsOf(it *db.Item) []*db.SkillDef {
 	defs := db.MustDefs()
 	var out []*db.SkillDef
 	for _, d := range activeLapis(it, defs.Item(it.Type, it.TypeID)) {
-		if d == nil || d.Special == 0 || d.Special > maxGemSkillSpc {
+		if d == nil || d.Special == 0 || d.Special == specialRecoverGem {
 			continue
 		}
-		if sk := defs.Skill(uint16(d.Special), gemSkillLevel); sk != nil &&
+		// Low-Special armor lapis are defensive state-resistance stones,
+		// not reactive attack procs. That mechanic remains unsupported.
+		if it.Slot != weaponSlot && d.Special <= 15 {
+			continue
+		}
+		if sk := defs.NPCSkill(uint16(d.Special)); sk != nil &&
 			(sk.TypeEffect == typeEffectAttack || sk.TypeEffect == typeEffectDebuff) {
 			out = append(out, sk)
 		}

@@ -81,6 +81,7 @@ type MapMob struct {
 	homeY                float32
 	homeX, homeZ         float32
 	CurrentHP, MaxHP     uint32
+	CurrentSP, CurrentMP uint32
 	MoneyMin, MoneyMax   uint32
 	Exp                  uint32
 	Area                 *MobArea
@@ -424,7 +425,7 @@ func DamageMobFrom(mapID uint16, id uint32, damage, attacker uint32) (MobDamageR
 		if r.Killed {
 			m.died(time.Now())
 			r.RespawnSeconds = uint64(m.respawnDelay / time.Second)
-		} else {
+		} else if applied > 0 {
 			r.Speed = m.removeSleep()
 		}
 		r.Mob = cloneMob(m)
@@ -552,6 +553,9 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 			}
 			m.PosX, m.PosZ, m.homeX, m.homeZ = x, z, x, z
 			m.CurrentHP = max(m.MaxHP, 1)
+			if m.def != nil {
+				m.CurrentSP, m.CurrentMP = m.def.MaxSP, m.def.MaxMP
+			}
 			m.resetAI()
 			m.respawnAt = time.Time{}
 			m.AggroTarget, m.lastAttackAt, m.nextAttackAt, m.returningHome = 0, time.Time{}, time.Time{}, false
@@ -1104,6 +1108,9 @@ func NewStaticMob(def *db.MobDef, mobID uint16, x, z float32, area *MobArea, res
 	// CMob::Init: the first wander comes within a minute.
 	m.nextMoveAt = time.Now().Add(time.Duration(rand.IntN(60000)) * time.Millisecond)
 	m.CurrentHP = m.MaxHP
+	if m.def != nil {
+		m.CurrentSP, m.CurrentMP = m.def.MaxSP, m.def.MaxMP
+	}
 	m.resetAI()
 	m.cell, m.hasCell = cellFor(x, z), true
 	m.noTargetUntil = time.Now().Add(5 * time.Second)

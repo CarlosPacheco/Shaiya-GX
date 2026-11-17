@@ -34,7 +34,7 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 	kept := s.buffs[:0]
 	refused := false
 	for _, b := range s.buffs {
-		if b.SkillID == def.SkillID {
+		if b.SkillID == def.SkillID && (b.SkillLevel == gemSkillLevel) == (def.SkillLevel == gemSkillLevel) {
 			if def.SkillLevel <= 3 && def.SkillLevel < b.SkillLevel {
 				refused = true
 				kept = append(kept, b)
@@ -61,6 +61,13 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 		b.CasterUser = sourceUser[0]
 	}
 	s.buffs = append(s.buffs, b)
+	if c := s.cast; c != nil {
+		_, pending, known := s.knownSkill(c.number)
+		if s.actionBlocked() || known && s.stats().Disabled[min(int(pending.Kind), 2)] > 0 {
+			s.cast = nil
+			s.log.Printf("GX Server World prepared cast interrupted by applied skill skill_id=%d", def.SkillID)
+		}
+	}
 	s.syncVisibility()
 	s.applyElement(b)
 	s.send(buildBuffAdd(id, def.SkillID, def.SkillLevel), "0x050D skill applied")
@@ -79,7 +86,7 @@ func (s *Session) canAddEffect(def *db.SkillDef, sourceUser ...uint32) bool {
 		return false
 	}
 	for _, b := range s.buffs {
-		if b.SkillID == def.SkillID && def.SkillLevel <= 3 && def.SkillLevel < b.SkillLevel {
+		if b.SkillID == def.SkillID && (b.SkillLevel == gemSkillLevel) == (def.SkillLevel == gemSkillLevel) && def.SkillLevel <= 3 && def.SkillLevel < b.SkillLevel {
 			return false
 		}
 	}
@@ -278,6 +285,13 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 			s.breakStealth()
 		}
 		hp := uint32(max(damage[0], 0))
+		sp, mp := uint32(max(damage[1], 0)), uint32(max(damage[2], 0))
+		if sp > 0 || mp > 0 {
+			s.spendDelta(mp, sp)
+			if hp == 0 {
+				s.persist()
+			}
+		}
 		var killed bool
 		if b.CasterUser != 0 {
 			killed = s.takeUserDamage(b.CasterUser, hp)

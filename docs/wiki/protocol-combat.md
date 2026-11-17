@@ -170,7 +170,7 @@ Declarations: [packet.CharacterMobAutoAttack](../../server/internal/packet/packe
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L217)
 
-**S→C serializers:** [buildCharacterMobAttack (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1405), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [buildCharacterMobAttack (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1412), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1044)
 
@@ -180,7 +180,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterMobAttack — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1405)
+[Source definition](../../server/internal/world/entities.go#L1412)
 
 ```go
 func buildCharacterMobAttack(characterID, mobID uint32, result uint8, damage uint16) []byte {
@@ -243,7 +243,7 @@ Declarations: [packet.CharacterDeath](../../server/internal/packet/packet.go#L96
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterDeath (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1427)
+**S→C serializers:** [buildCharacterDeath (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1434)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1050)
 
@@ -253,7 +253,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterDeath — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1427)
+[Source definition](../../server/internal/world/entities.go#L1434)
 
 ```go
 func buildCharacterDeath(characterID uint32, deathType uint8, killerID uint32) []byte {
@@ -303,7 +303,7 @@ Declarations: [packet.CharacterReviveHitpoints](../../server/internal/packet/pac
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterReviveHitpoints (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1462)
+**S→C serializers:** [buildCharacterReviveHitpoints (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1469)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1018)
 
@@ -313,7 +313,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterReviveHitpoints — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1462)
+[Source definition](../../server/internal/world/entities.go#L1469)
 
 ```go
 func buildCharacterReviveHitpoints(characterID, hp, mp, sp uint32) []byte {
@@ -526,7 +526,7 @@ Declarations: [packet.LevelUpSelf](../../server/internal/packet/packet.go#L73), 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildLevelUp (server/internal/world/combat.go)](../../server/internal/world/combat.go#L607)
+**S→C serializers:** [buildLevelUp (server/internal/world/combat.go)](../../server/internal/world/combat.go#L616)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L867)
 
@@ -536,7 +536,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildLevelUp — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L607)
+[Source definition](../../server/internal/world/combat.go#L616)
 
 ```go
 func buildLevelUp(op packet.Opcode, ch *db.Character) []byte {
@@ -778,7 +778,7 @@ Declarations: [packet.BuffAdd](../../server/internal/packet/packet.go#L116), [pr
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildBuffAdd (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L91)
+**S→C serializers:** [buildBuffAdd (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L98)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L645)
 
@@ -788,7 +788,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildBuffAdd — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L91)
+[Source definition](../../server/internal/world/playereffects.go#L98)
 
 ```go
 func buildBuffAdd(id uint32, skillID uint16, level uint8) []byte {
@@ -834,7 +834,7 @@ Declarations: [packet.BuffRemove](../../server/internal/packet/packet.go#L117), 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [removeEffects (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L190), [clearBuffsOnDeath (server/internal/world/skillattack.go)](../../server/internal/world/skillattack.go#L299)
+**S→C serializers:** [removeEffects (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L197), [clearBuffsOnDeath (server/internal/world/skillattack.go)](../../server/internal/world/skillattack.go#L299)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L654)
 
@@ -844,7 +844,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>removeEffects — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L190)
+[Source definition](../../server/internal/world/playereffects.go#L197)
 
 ```go
 func (s *Session) removeEffects(match func(*ActiveBuff) bool, why string) {
@@ -938,7 +938,7 @@ Declarations: [packet.SkillKeep](../../server/internal/packet/packet.go#L118), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L244), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L339)
+**S→C serializers:** [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L251), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L347)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L821)
 
@@ -948,7 +948,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>tickDebuffs — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L244)
+[Source definition](../../server/internal/world/playereffects.go#L251)
 
 ```go
 func (s *Session) tickDebuffs(now time.Time) bool {
@@ -988,6 +988,13 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 			s.breakStealth()
 		}
 		hp := uint32(max(damage[0], 0))
+		sp, mp := uint32(max(damage[1], 0)), uint32(max(damage[2], 0))
+		if sp > 0 || mp > 0 {
+			s.spendDelta(mp, sp)
+			if hp == 0 {
+				s.persist()
+			}
+		}
 		var killed bool
 		if b.CasterUser != 0 {
 			killed = s.takeUserDamage(b.CasterUser, hp)
@@ -1023,7 +1030,7 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 
 <details><summary>processBuffs — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L339)
+[Source definition](../../server/internal/world/skillcast.go#L347)
 
 ```go
 func (s *Session) processBuffs() {
@@ -1158,6 +1165,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		return
 	}
 	stats := s.stats()
+	if s.actionBlocked() || stats.Disabled[min(int(def.Kind), 2)] > 0 {
+		s.log.Printf("GX Server World rejected skill use: category disabled skill_id=%d", k.SkillID)
+		return
+	}
 	if sp, mp := s.skillCosts(def, &stats); stats.CurrentMP < mp || stats.CurrentSP < sp {
 		s.log.Printf("GX Server World rejected skill use: not enough MP/SP skill_id=%d", k.SkillID)
 		return
@@ -1462,7 +1473,7 @@ Declarations: [proto.SkillUserExtraDamage](../../internal/proto/opcodes.go#L127)
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildUserSkillExtra (server/internal/world/pvpskill.go)](../../server/internal/world/pvpskill.go#L283)
+**S→C serializers:** [buildUserSkillExtra (server/internal/world/pvpskill.go)](../../server/internal/world/pvpskill.go#L284)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L839)
 
@@ -1472,7 +1483,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildUserSkillExtra — server/internal/world/pvpskill.go</summary>
 
-[Source definition](../../server/internal/world/pvpskill.go#L283)
+[Source definition](../../server/internal/world/pvpskill.go#L284)
 
 ```go
 func buildUserSkillExtra(caster, target uint32, skillID uint16, level uint8, add [3]uint32) []byte {
@@ -2018,7 +2029,7 @@ Declarations: [proto.SkillMobReflectedDamage](../../internal/proto/opcodes.go#L1
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [reflectToMob (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L421)
+**S→C serializers:** [reflectToMob (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L435)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L845)
 
@@ -2028,7 +2039,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>reflectToMob — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L421)
+[Source definition](../../server/internal/world/playereffects.go#L435)
 
 ```go
 func (s *Session) reflectToMob(mobGlobalID uint32, damage [3]uint16) {
@@ -2086,7 +2097,7 @@ Declarations: [packet.CharacterDeathState](../../server/internal/packet/packet.g
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterDeathState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1435), [buildCharacterSpeed (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L146)
+**S→C serializers:** [buildCharacterDeathState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1442), [buildCharacterSpeed (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L153)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L703)
 
@@ -2096,7 +2107,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterDeathState — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1435)
+[Source definition](../../server/internal/world/entities.go#L1442)
 
 ```go
 func buildCharacterDeathState(characterID uint32) []byte {
@@ -2112,7 +2123,7 @@ func buildCharacterDeathState(characterID uint32) []byte {
 
 <details><summary>buildCharacterSpeed — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L146)
+[Source definition](../../server/internal/world/playereffects.go#L153)
 
 ```go
 func buildCharacterSpeed(id uint32, sp playerSpeeds) []byte {
@@ -2224,7 +2235,7 @@ Declarations: [packet.LevelUpOther](../../server/internal/packet/packet.go#L74),
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildLevelUp (server/internal/world/combat.go)](../../server/internal/world/combat.go#L607)
+**S→C serializers:** [buildLevelUp (server/internal/world/combat.go)](../../server/internal/world/combat.go#L616)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L867)
 
@@ -2234,7 +2245,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildLevelUp — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L607)
+[Source definition](../../server/internal/world/combat.go#L616)
 
 ```go
 func buildLevelUp(op packet.Opcode, ch *db.Character) []byte {
@@ -2682,7 +2693,7 @@ Source notes: charId:u32, 5-byte blob 04 46 AF 37 01 (verbatim), x,y,z:f32.
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterResurrect (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1451)
+**S→C serializers:** [buildCharacterResurrect (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1458)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L997)
 
@@ -2692,7 +2703,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterResurrect — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1451)
+[Source definition](../../server/internal/world/entities.go#L1458)
 
 ```go
 func buildCharacterResurrect(characterID uint32, kind uint8, exp uint32, x, y, z float32) []byte {

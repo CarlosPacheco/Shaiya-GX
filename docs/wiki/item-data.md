@@ -41,7 +41,10 @@ present in the installed client is retained.
 The current catalog contains **22,101 definitions**, including 56 recreation
 runes/aliases and 28 protected forge objects. The synchronization does not
 change skills, accounts, characters, inventories, owned item quantities or mall
-products. It does not implement currently missing lapis effects.
+products. Item synchronization itself does not implement effects. The subsequent lapis
+combat implementation supports the 26 Lv6/Lv7 debuff lapis. Their referenced
+NpcSkill definitions (SQL level 100) are aligned with the installed
+`Monster/NpcSkill.SData`; player skill rows remain unchanged.
 
 ```sh
 python3 tools/sync_item_definitions.py \

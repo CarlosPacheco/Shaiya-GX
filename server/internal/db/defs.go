@@ -617,6 +617,12 @@ func (d *Defs) Skill(skillID uint16, level uint8) *SkillDef {
 	return d.Skills[SkillKey{skillID, level}]
 }
 
+// NPCSkill selects the independent NpcSkill namespace. The shared SQL schema
+// stores NpcSkill rank one as level 100; player ranks are never a fallback.
+func (d *Defs) NPCSkill(skillID uint16) *SkillDef {
+	return d.Skills[SkillKey{skillID, 100}]
+}
+
 // MobQuestItem decodes LoadConstMob's quest-only index. This is not the
 // ordinary Type*1000+TypeID format. Native item IDs are truncated to a byte.
 func MobQuestItem(index int32) ItemKey {

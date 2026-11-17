@@ -73,9 +73,27 @@ lapis stack with native equipment absorption and armor enchantment. Extraction
 or unequipping removes their contribution; an inactive elemental lapis adds
 no absorption.
 
-Special 1–15 selects the skill with that ID at **skill level 100**. Only an attack
-or debuff skill is accepted by this trigger path. Each resulting skill uses its
-own success rules; Special is a skill lookup key, not a percentage.
+A nonzero `Special` selects the **NpcSkill** with that ID, except Special 16
+(the recovery case). NpcSkills have their own namespace: the shared SQL table
+stores rank one as **skill level 100**, and the client renders it from
+`Monster/NpcSkill.SData`. A same-numbered player Skill is never a fallback.
+Only attack/debuff effects enter this trigger path. SuccessType/SuccessValue
+of the called NpcSkill determine success; there is no additional lapis roll.
+The current Lv6 effects use 8%, and Lv7 use 13% except Slumber Lv7 at 15%.
+Changing a definition changes the chance after restarting world.
+
+All 26 Lv6/Lv7 debuff lapis are supported: stun, movement stop, blindness,
+silence, movement/attack-speed reduction, defense/attack reduction, HP/SP/MP
+damage over time, accuracy reduction and sleep. Duration, affected categories
+and numeric values come from the called NpcSkill, rather than item-description
+text. Silence also blocks healing/buff spells of the disabled category and
+interrupts matching prepared casts. Expiry removes the restriction; only actual
+HP damage wakes sleep. NPC and player effects with the same ID can coexist.
+Periodic damage debits the relevant pools on players and mobs.
+
+Endure's durability bonus remains unused because GX has no durability loss.
+Anti-Darkness and the old low-Special armor state-resistance lapis remain
+unsupported and do not counter-cast offensive skills.
 
 After a landed hit, current trigger routing is:
 
@@ -91,7 +109,14 @@ helmet, upper armor, gloves, lower armor, shoes, and stops at the first empty
 slot. This last detail is implementation behavior, not a recommendation to
 leave equipment slots empty.
 
-Source: `server/internal/world/itemoption.go` and `character.go`.
+Direct incoming mob skills now apply the same flat absorption as normal mob
+attacks, with a minimum of one HP damage for a positive hit. Pure resource loss
+and misses do not create HP damage. Periodic damage remains exempt. Skill
+result packets and drain healing use the post-absorption HP amount, including
+PvP skill drains.
+
+Source: `server/internal/world/itemoption.go`, `character.go`, `combat.go`,
+`pvpskill.go` and `playereffects.go`.
 
 ## Elements
 

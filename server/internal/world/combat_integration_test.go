@@ -1466,11 +1466,11 @@ func TestGemSkills(t *testing.T) {
 	a := session(900601, FactionLight, 500)
 	b := session(900602, FactionDark, 501)
 	a.items = []db.Item{{Bag: 0, Slot: weaponSlot, Type: 1, TypeID: 1, Count: 1, Gems: [6]uint8{110}}}
-	b.items = []db.Item{{Bag: 0, Slot: 6, Type: 1, TypeID: 1, Count: 1, Gems: [6]uint8{110}}}
+	b.items = []db.Item{{Bag: 0, Slot: 6, Type: 1, TypeID: 1, Count: 1, Gems: [6]uint8{151}}}
 	if got := weaponGemSkills(a.items); len(got) != 1 || got[0].SkillID != 1 {
 		t.Fatalf("weapon gem skills %v", got)
 	}
-	if got := armourGemSkills(b.items); len(got) != 1 || got[0].SkillID != 1 {
+	if got := armourGemSkills(b.items); len(got) != 1 || got[0].SkillID != 205 {
 		t.Fatalf("armour gem skills %v", got)
 	}
 	stats := a.stats()
@@ -1483,7 +1483,7 @@ func TestGemSkills(t *testing.T) {
 	var gemReq, armourCast bool
 	for _, h := range hits {
 		gemReq = gemReq || h.GemAttack
-		armourCast = armourCast || (h.ItemCast && h.Skill != nil && h.Skill.SkillID == 1)
+		armourCast = armourCast || (h.ItemCast && h.Skill != nil && h.Skill.SkillID == 205)
 	}
 	if !gemReq || !armourCast {
 		t.Fatalf("after a landed hit: gem request %v armour cast %v (%d queued)", gemReq, armourCast, len(hits))
