@@ -9,12 +9,15 @@ import (
 )
 
 type chatGlyph struct {
-	char  rune
-	icon  bool
-	color [4]float32
+	item   proto.InventoryItem
+	suffix string
+	char   rune
+	icon   bool
+	color  [4]float32
 }
 type chatRun struct {
 	item             proto.InventoryItem
+	suffix           string
 	text             string
 	icon             bool
 	itemType, itemID uint8
@@ -28,10 +31,10 @@ func wrapChatMarkup(f *Font, text string, base [4]float32, markup bool, itemIcon
 }
 
 func wrapMarkupWidth(f *Font, text string, base [4]float32, markup bool, width int, itemIcon ...bool) ([][]chatRun, []string) {
-	return wrapChatContent(f, text, base, markup, width, len(itemIcon) > 0 && itemIcon[0], 0)
+	return wrapChatContent(f, text, base, markup, width, len(itemIcon) > 0 && itemIcon[0], nil, nil)
 }
 
-func wrapChatContent(f *Font, text string, base [4]float32, markup bool, width int, nativeIcon bool, links int) ([][]chatRun, []string) {
+func wrapChatContent(f *Font, text string, base [4]float32, markup bool, width int, nativeIcon bool, links []proto.InventoryItem, count func(proto.InventoryItem) string) ([][]chatRun, []string) {
 	var glyphs []chatGlyph
 	color := base
 	for len(text) > 0 {
@@ -65,8 +68,8 @@ func wrapChatContent(f *Font, text string, base [4]float32, markup bool, width i
 		glyphs = append(glyphs, chatGlyph{char: r, color: color, icon: markup && nativeIcon && r == '\uFFFC'})
 		text = text[size:]
 	}
-	for range links {
-		glyphs = append(glyphs, chatGlyph{char: ' ', color: base}, chatGlyph{char: '\uFFFC', icon: true, color: base})
+	for _, item := range links {
+		glyphs = append(glyphs, chatGlyph{char: ' ', color: base}, chatGlyph{char: '\uFFFC', icon: true, color: base, item: item, suffix: count(item)})
 	}
 	var rows [][]chatRun
 	var lines []string
@@ -77,15 +80,17 @@ func wrapChatContent(f *Font, text string, base [4]float32, markup bool, width i
 			if g.char == '\n' {
 				break
 			}
-			if g.char == '\uFFFC' && !g.icon && (nativeIcon || links > 0) {
+			if g.char == '\uFFFC' && !g.icon && (nativeIcon || len(links) > 0) {
 				remaining.WriteRune('\uFFFD')
 			} else {
 				remaining.WriteRune(g.char)
 			}
 		}
 		candidate := ""
+		extraWidth := 0
 		for _, cluster := range textwire.Graphemes(remaining.String()) {
-			if cut > 0 && chatMarkupWidth(f, candidate+cluster, nativeIcon || links > 0) > width {
+			extraWidth += f.Width(glyphs[cut].suffix)
+			if cut > 0 && chatMarkupWidth(f, candidate+cluster, nativeIcon || len(links) > 0)+extraWidth > width {
 				break
 			}
 			if cluster == " " {
@@ -104,8 +109,10 @@ func wrapChatContent(f *Font, text string, base [4]float32, markup bool, width i
 		for start := 0; start < len(row); {
 			end := start + 1
 			if row[start].icon {
-				runs = append(runs, chatRun{icon: true, x: x, color: row[start].color})
-				x += f.Height
+				g := row[start]
+				runs = append(runs, chatRun{icon: true, x: x, color: g.color, item: g.item, suffix: g.suffix})
+				plain.WriteString(g.suffix)
+				x += f.Height + f.Width(g.suffix)
 				start++
 				continue
 			}

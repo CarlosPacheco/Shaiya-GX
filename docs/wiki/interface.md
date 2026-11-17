@@ -80,7 +80,7 @@ Drag an inventory or equipped item onto chat to attach it to the current
 message. Up to four attachments appear in the input. Send with Enter, or press
 Backspace with an empty text field to remove the last attachment. Hover over a
 sent icon to open the standard tooltip with the item's lapis, recreation and
-enchantment as they were when sent. Stackable items show the sent quantity.
+enchantment as they were when sent. Stackable items show the sent quantity in parentheses beside their icon.
 
 
 The login logo stays visible during server selection and disappears with the login scenery.

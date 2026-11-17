@@ -180,13 +180,12 @@ func (a *App) drawChat(w, h int) {
 		}
 	}
 	a.chatUI.DrawItem = a.drawChatItem
+	a.chatUI.LinkedItemCount = func(it proto.InventoryItem) uint16 {
+		return a.itemCount(it.Type, it.TypeID, it.Count)
+	}
 	a.chatUI.DrawLinkedItem = func(it proto.InventoryItem, x, y, size int, alpha float32) {
 		if def := a.itemsItem(it.Type, it.TypeID); def != nil {
 			a.drawItemIcon(def, x, y, size, [4]float32{1, 1, 1, alpha}, &it)
-			if a.itemCount(it.Type, it.TypeID, it.Count) > 0 {
-				count := fmt.Sprint(it.Count)
-				f.DrawOutlined(a.sprites, count, x+size-f.Width(count), y, [4]float32{1, 1, 1, alpha})
-			}
 			if a.lastMouseX >= x && a.lastMouseX < x+size && a.lastMouseY >= y && a.lastMouseY < y+size {
 				a.drawItemDetails(def, &it, it.Count, x, y, w, h, "")
 			}

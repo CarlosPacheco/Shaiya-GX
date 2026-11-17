@@ -4,6 +4,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/textwire"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
@@ -66,6 +67,7 @@ func (c *ChatPanel) ShowHistory() {
 // ChatPanel follows Phoenix chat_hud.gd and ep4_chat.gd: flat persistent
 // histories and 16px rows, with the native 64px selector and 292px input strip.
 type ChatPanel struct {
+	LinkedItemCount                  func(proto.InventoryItem) uint16
 	DrawLinkedItem                   func(item proto.InventoryItem, x, y, size int, alpha float32)
 	DraftItems                       proto.ChatItems
 	DrawItem                         func(typ, id uint8, x, y, size int, alpha float32)
@@ -136,20 +138,14 @@ func (c *ChatPanel) SetEntries(f *Font, entries []ChatEntry) {
 			pane = &c.panes[0]
 		}
 		links := entry.Items.Len()
-		runs, rows := wrapChatContent(f, entry.Text, entry.Color, entry.Markup, 316, entry.ItemType != 0, links)
-		link := 0
+		runs, rows := wrapChatContent(f, entry.Text, entry.Color, entry.Markup, 316, entry.ItemType != 0, entry.Items[:links], c.linkedItemSuffix)
 		if entryIndex >= overlap {
 			added[index] += len(rows)
 		}
 		for row := range runs {
 			for n := range runs[row] {
-				if runs[row][n].icon {
-					if links > 0 && link < links {
-						runs[row][n].item = entry.Items[link]
-						link++
-					} else {
-						runs[row][n].itemType, runs[row][n].itemID = entry.ItemType, entry.ItemID
-					}
+				if runs[row][n].icon && runs[row][n].item.Type == 0 {
+					runs[row][n].itemType, runs[row][n].itemID = entry.ItemType, entry.ItemID
 				}
 			}
 		}
@@ -340,7 +336,7 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 			for _, run := range p.runs[row] {
 				if run.icon {
 					if run.item.Type != 0 && c.DrawLinkedItem != nil && yText >= y+1 && yText+f.Height <= y+height-1 {
-						c.DrawLinkedItem(run.item, 25+run.x, yText, f.Height, a)
+						c.drawLinkedItem(s, f, run.item, run.suffix, 25+run.x, yText, a)
 					} else if c.DrawItem != nil && run.itemType != 0 {
 						c.DrawItem(run.itemType, run.itemID, 25+run.x, yText, f.Height, a)
 					}
@@ -382,15 +378,20 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 	s.Draw(c.input, 354, float32(y), 2, 22, 290.0/512, .5, 292.0/512, 150.0/256, white)
 	shown := text
 	count := c.DraftItems.Len()
-	firstIconX := 331 - count*(f.Height+4)
+	var suffixes [proto.MaxChatItems]string
+	firstIconX := 331
+	for i, item := range c.DraftItems[:count] {
+		suffixes[i] = c.linkedItemSuffix(item)
+		firstIconX -= f.Height + f.Width(suffixes[i]) + 4
+	}
 	available := 262
 	if count > 0 {
-		available = firstIconX - 73
+		available = max(1, firstIconX-73)
 	}
+	x := firstIconX
 	for i, item := range c.DraftItems[:count] {
-		if c.DrawLinkedItem != nil {
-			c.DrawLinkedItem(item, firstIconX+i*(f.Height+4), textY, f.Height, 1)
-		}
+		c.drawLinkedItem(s, f, item, suffixes[i], x, textY, 1)
+		x += f.Height + f.Width(suffixes[i]) + 4
 	}
 	for len(shown) > 0 && f.Width(shown) > available {
 		shown = textwire.DropFirst(shown)
@@ -401,6 +402,24 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 		s.Draw(blank, float32(69+f.Width(shown)), float32(textY), 1, float32(f.Height), 0, 0, 1, 1, white)
 	}
 	restoreClip()
+}
+
+func (c *ChatPanel) linkedItemSuffix(item proto.InventoryItem) string {
+	if c.LinkedItemCount != nil {
+		if count := c.LinkedItemCount(item); count > 0 {
+			return " (" + strconv.Itoa(int(count)) + ")"
+		}
+	}
+	return ""
+}
+
+func (c *ChatPanel) drawLinkedItem(s *render.Sprites, f *Font, item proto.InventoryItem, suffix string, x, y int, alpha float32) {
+	if c.DrawLinkedItem != nil {
+		c.DrawLinkedItem(item, x, y, f.Height, alpha)
+	}
+	if suffix != "" {
+		f.DrawOutlined(s, suffix, x+f.Height, y, [4]float32{1, 1, 1, alpha})
+	}
 }
 
 // chatEntryTextY centres a font cell in the 22px entry row.
