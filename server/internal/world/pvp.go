@@ -448,7 +448,7 @@ func (s *Session) afterUserDamage(killerID uint32, killed bool) {
 	if !killed {
 		return
 	}
-	s.deathByUser(killerID)
+	s.deathByUser()
 	defer duelLeave(s.player, 3, true)     // PvPChkLeaveByDeath
 	defer guildDuelLeave(s.player, nil, 3) // its guild part
 	state, death := buildCharacterDeathState(ch.ID), buildCharacterDeath(ch.ID, deathTypeUser, killerID)

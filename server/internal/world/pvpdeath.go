@@ -3,7 +3,6 @@ package world
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/pvprank"
 	"math"
-	"math/rand/v2"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -16,12 +15,11 @@ import (
 //     at every death) keeps the HP damage taken per attacker; the reward
 //     goes to the attacker with the most damage (the first one on a tie),
 //     not to the last hit. A mob or the user itself at the top gives
-//     nothing. With no entry at all, a type-1 death still runs
-//     the gold penalty for the reported killer.
+//     nothing.
 //   - Normal PvP (PvPGetDeathType 3; duel deaths 4 and 5 are handled
 //     separately): a killer without a party gets CUser::GetExp 0x004581b0 x 1.2
-//     through AddExpFromUser (exp charms apply), KillPCFrom, then
-//     the gold penalty. In a party, every member within 100 units gets
+//     through AddExpFromUser (exp charms apply), then KillPCFrom.
+//     In a party, every member within 100 units gets
 //     GetExp(own level) x m_PartyExp[size] (m_RaidPartyExp for a raid) x
 //     GetPartyExpByLevel, the first of them KillPCFrom and the others
 //     KillPCTo.
@@ -30,8 +28,7 @@ import (
 //     KillPCTo 0x0045aed0: QuestUpdateKillPC, kills + 1 (up to
 //     g_tKillInfo[15] 200000; the NEW_SERVER doubling is off in the EP4.5
 //     ps_game.ini), 0x020E index 0, 0x0522 (id, kills) to the view.
-//   - PvP deaths preserve inventory. The native gold penalty still applies
-//     above level 10, unless ability 37 is active.
+//   - PvP deaths preserve inventory and gold.
 //
 //// GX extends both counters to the client's final threshold (1000000),
 // with all 31 client-table reward stages, as explicitly requested.
@@ -39,14 +36,11 @@ import (
 // guildduel.go. Native redeemable reward stages are in pvpreward.go.
 
 const (
-	damageByUser     = 1
-	damageByMob      = 2
-	pvpKillCap       = pvprank.CounterCap
-	pvpDeathCap      = pvprank.CounterCap
-	pvpExpFactor     = 1.2
-	pvpDropLevel     = 10
-	pvpNoDropAbility = 37
-	pvpGoldChance    = 30
+	damageByUser = 1
+	damageByMob  = 2
+	pvpKillCap   = pvprank.CounterCap
+	pvpDeathCap  = pvprank.CounterCap
+	pvpExpFactor = 1.2
 )
 
 // damageEntry is one CDamage node.
@@ -198,17 +192,11 @@ func (s *Session) questKillPC() {
 }
 
 // deathByUser runs CUser::Death's reward part on this (the dead) user.
-func (s *Session) deathByUser(reported uint32) {
+func (s *Session) deathByUser() {
 	ch := s.char
 	defer func() { s.damageLedger = nil }() // CDamage::Reset
 	top, ok := s.topDamage()
-	if !ok {
-		if reported != ch.ID {
-			s.dropPvPDeathGold(FindPlayerByID(reported))
-		}
-		return
-	}
-	if top.Type != damageByUser || top.ID == ch.ID {
+	if !ok || top.Type != damageByUser || top.ID == ch.ID {
 		return
 	}
 	killer := FindPlayerByID(top.ID)
@@ -233,7 +221,6 @@ func (s *Session) deathByUser(reported uint32) {
 			killer.QueueExp(exp)
 		}
 		s.killPCFrom(killer)
-		s.dropPvPDeathGold(killer)
 		return
 	}
 	factor := partyExpFactor[min(len(members), len(partyExpFactor)-1)]
@@ -261,7 +248,6 @@ func (s *Session) deathByUser(reported uint32) {
 			m.QueuePvPKill(pvpKill{VictimID: ch.ID})
 		}
 	}
-	s.dropPvPDeathGold(killer)
 }
 
 // killPCFrom is CUser::KillPCFrom: the killer's KillPCTo, then this
@@ -275,48 +261,6 @@ func (s *Session) killPCFrom(killer *ConnectedPlayer) {
 	ch.Deaths++
 	s.persist()
 	s.send(buildKillCountUpdate(1, ch.Deaths), "0x020E deaths")
-}
-
-// dropPvPDeathGold applies the gold penalty on this (the dead) user.
-func (s *Session) dropPvPDeathGold(killer *ConnectedPlayer) {
-	ch := s.char
-	if ch.Level <= pvpDropLevel || s.hasBenefit(pvpNoDropAbility) {
-		return
-	}
-	if ch.Money == 0 || rand.IntN(100) >= pvpGoldChance {
-		return
-	}
-	amount := min(rand.Uint32N(uint32(ch.Level)*5)+1, ch.Money)
-	ch.Money -= amount
-	s.persist()
-	s.send(buildSetMoney(ch.Money), "0x0213 pvp gold lost")
-	owner := uint32(0)
-	if killer != nil {
-		partyMu.Lock()
-		pt := partyOf(killer)
-		var members []*ConnectedPlayer
-		if pt != nil {
-			members = append(members, pt.members...)
-		}
-		partyMu.Unlock()
-		if len(members) > 0 {
-			share := max(uint32(float32(amount)/float32(len(members))), 1)
-			for _, m := range members {
-				mx, mz := m.PositionXZ()
-				if m.MapID() == ch.MapID && DistanceXZ(mx, mz, ch.PosX, ch.PosZ) <= partyRewardRange {
-					m.QueueGold(share)
-				}
-			}
-			return
-		}
-		owner = killer.CharacterID
-	}
-	x, z := dropPosition(ch.PosX, ch.PosZ)
-	mi := MapItem{ID: nextMapItemID(), OwnerID: owner, NoParty: true, DroppedAt: time.Now(), PosX: x, PosZ: z,
-		Item: db.Item{Type: moneyItemType, Count: 1}, Money: amount}
-	addMapItem(ch.MapID, mi)
-	dispatchItemEnter(ch.MapID, &mi, "0x0401 pvp gold drop")
-	s.log.Printf("GX Server World pvp gold drop character_id=%d amount=%d owner=%d", ch.ID, amount, owner)
 }
 
 // placeGroundItem drops an item at this user's feet (drop type 3).

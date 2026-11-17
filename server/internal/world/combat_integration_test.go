@@ -913,11 +913,12 @@ func TestUserAttack(t *testing.T) {
 	}
 	enemy.player.TakeUserHits()
 
-	// The enemy carries a droppable item (regular account, Vg 0: 100%).
+	// The enemy carries equipment and gold into both fights.
 	loot := *weapon
 	loot.Bag, loot.Slot = 1, 0
 	enemy.items = []db.Item{loot}
-	enemy.char.Vg = 0
+	const carriedGold = 1000
+	enemy.char.Money = carriedGold
 	// Some mob damage first: the reward still goes to the top damager.
 	enemy.addDamage(damageByMob, 4242, 5)
 
@@ -952,8 +953,8 @@ func TestUserAttack(t *testing.T) {
 	if attacker.char.Kills != kills+1 {
 		t.Fatalf("killer kills %d, want %d", attacker.char.Kills, kills+1)
 	}
-	if len(enemy.items) != 1 || enemy.items[0] != loot || len(itemsOnMap(mapID)) != 0 {
-		t.Fatal("PvP death must preserve inventory without dropping it")
+	if len(enemy.items) != 1 || enemy.items[0] != loot || enemy.char.Money != carriedGold || len(itemsOnMap(mapID)) != 0 {
+		t.Fatal("PvP death must preserve inventory and gold without dropping it")
 	}
 
 	// Party kills also preserve inventory while awarding exp and kill credit.
@@ -991,8 +992,8 @@ func TestUserAttack(t *testing.T) {
 	if enemy.char.Deaths != 2 {
 		t.Fatalf("enemy deaths %d, want 2", enemy.char.Deaths)
 	}
-	if len(enemy.items) != 1 || enemy.items[0] != loot || len(itemsOnMap(mapID)) != 0 || pt.itemDivSeq != 0 {
-		t.Fatal("party PvP death must preserve inventory without distributing it")
+	if len(enemy.items) != 1 || enemy.items[0] != loot || enemy.char.Money != carriedGold || len(itemsOnMap(mapID)) != 0 || pt.itemDivSeq != 0 {
+		t.Fatal("party PvP death must preserve inventory and gold without distributing it")
 	}
 	if attacker.hostileUser(enemy.char.ID) != nil {
 		t.Fatal("a dead user is attackable")

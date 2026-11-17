@@ -2489,7 +2489,7 @@ Declarations: [proto.CharacterPvPKills](../../internal/proto/opcodes.go#L105).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [gmSet (server/internal/world/gm.go)](../../server/internal/world/gm.go#L418), [killPCToCount (server/internal/world/pvpdeath.go)](../../server/internal/world/pvpdeath.go#L158)
+**S→C serializers:** [gmSet (server/internal/world/gm.go)](../../server/internal/world/gm.go#L418), [killPCToCount (server/internal/world/pvpdeath.go)](../../server/internal/world/pvpdeath.go#L152)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L356)
 
@@ -2584,7 +2584,7 @@ func (s *Session) gmSet(args []string) error {
 
 <details><summary>killPCToCount — server/internal/world/pvpdeath.go</summary>
 
-[Source definition](../../server/internal/world/pvpdeath.go#L158)
+[Source definition](../../server/internal/world/pvpdeath.go#L152)
 
 ```go
 func (s *Session) killPCToCount(count uint32) {
