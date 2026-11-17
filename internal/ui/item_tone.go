@@ -25,17 +25,17 @@ func (e ItemTone) Draw(s *render.Sprites, tex *render.Texture, uv UV, x, y, size
 	fx, fy, n := float32(x), float32(y), float32(size)
 	switch element.Family(uint8(e)) {
 	case 1: // Light red.
-		tint[1] *= .83
-		tint[2] *= .83
+		tint[1] *= .63
+		tint[2] *= .63
 	case 2: // Sky blue.
-		tint[0] *= .76
-		tint[1] *= .94
+		tint[0] *= .52
+		tint[1] *= .88
 	case 3: // Green.
-		tint[0] *= .79
-		tint[2] *= .80
+		tint[0] *= .57
+		tint[2] *= .63
 	case 4: // Soft gray.
 		for i := range 3 {
-			tint[i] *= .92
+			tint[i] *= .82
 		}
 		s.DrawMutedColor(tex, fx, fy, n, n, uv.U0, uv.V0, uv.U1, uv.V1, tint)
 		return

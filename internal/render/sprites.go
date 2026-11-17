@@ -85,7 +85,7 @@ void main() {
 	}
  if (grayscale != 0) {
   float gray = dot(frag.rgb, vec3(0.299,0.587,0.114));
-  frag.rgb = mix(frag.rgb, vec3(gray), grayscale == 1 ? 1.0 : 0.35);
+  frag.rgb = mix(frag.rgb, vec3(gray), grayscale == 1 ? 1.0 : 0.65);
  }
  if (circle.z > 0.0) {
 		float radius = length(vec2(gl_FragCoord.x, screen.y - gl_FragCoord.y) - circle.xy);
