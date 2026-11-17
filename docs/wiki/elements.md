@@ -102,8 +102,8 @@ is recalculated from the current instance, so extraction updates it immediately.
 
 ## Elemental tones on equipment icons
 
-Weapons, armor and shields use a light red tint for Fire, sky blue for Water,
-green for Earth and soft gray for Wind. Both tiers share the family's tone
+Weapons, armor and shields blend the Shaiya Core palette at 80/255 opacity.
+Fire uses `#FF0000`, Water `#00FFFF`, Earth `#00FF00` and Wind `#FFFFFF`. Both tiers share the family's tone
 and the tooltip names the exact tier. The tone follows the intrinsic element
 or the first elemental lapis in socket order.
 

@@ -23,22 +23,15 @@ func (e ItemTone) Draw(s *render.Sprites, tex *render.Texture, uv UV, x, y, size
 		return
 	}
 	fx, fy, n := float32(x), float32(y), float32(size)
-	switch element.Family(uint8(e)) {
-	case 1: // Light red.
-		tint[1] *= .63
-		tint[2] *= .63
-	case 2: // Sky blue.
-		tint[0] *= .52
-		tint[1] *= .88
-	case 3: // Green.
-		tint[0] *= .57
-		tint[2] *= .63
-	case 4: // Soft gray.
-		for i := range 3 {
-			tint[i] *= .82
-		}
-		s.DrawMutedColor(tex, fx, fy, n, n, uv.U0, uv.V0, uv.U1, uv.V1, tint)
+	family := element.Family(uint8(e))
+	if family != 0 {
+		overlay := RGBColor(coreElementRGB[family-1])
+		overlay[3] = 0x50 / 255.0
+		s.DrawColorOverlay(tex, fx, fy, n, n, uv.U0, uv.V0, uv.U1, uv.V1, tint, overlay)
 		return
 	}
 	s.Draw(tex, fx, fy, n, n, uv.U0, uv.V0, uv.U1, uv.V1, tint)
 }
+
+// Shaiya Core item_icon.cpp at 7964273, in Fire/Water/Earth/Wind order.
+var coreElementRGB = [...]uint32{0xFF0000, 0x00FFFF, 0x00FF00, 0xFFFFFF}
