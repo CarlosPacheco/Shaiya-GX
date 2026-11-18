@@ -482,9 +482,24 @@ func (a *App) drawPlayerNames(w, h int) {
 		}
 		return
 	}
-	if slot, ok := a.selfSlot(); ok && v.self != nil && settings.OwnName {
+	// Beside the whole plate: past a GM prefix and a rank badge.
+	selectionMarks := func(pos render.V3, left, right int) {
+		if _, y, depth, ok := projectLabel(pos, vp, w, h); ok {
+			a.sprites.NameDepth(depth)
+			if dot := a.assets.Texture("interface/name_select.png"); dot != nil {
+				for _, edge := range []int{left - 10, right + 10} {
+					a.sprites.DrawImage(dot, float32(edge-dot.W/2), float32(y-a.font.Height+(a.font.Height-dot.H)/2))
+				}
+			}
+		}
+	}
+	selfTargeted := a.state.SelfID != 0 && a.state.Target == a.state.SelfID
+	if slot, ok := a.selfSlot(); ok && v.self != nil && (settings.OwnName || selfTargeted) {
 		if pos, ok := v.self.NameAnchor(); ok {
-			label(slot.Name, pos, white, 0, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills})
+			left, right, drawn := label(slot.Name, pos, white, 0, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills})
+			if drawn && selfTargeted {
+				selectionMarks(pos, left, right) // targeting yourself shows the same marks as any target
+			}
 			label(guildCaption(a.state, a.state.Guild.ID), pos, guildCaptionColor(a.state, a.state.Guild.ID, a.state.SelfID, slot.Name), guildCaptionOffset)
 		}
 	}
@@ -543,15 +558,7 @@ func (a *App) drawPlayerNames(w, h int) {
 				}
 				left, right, drawn := label(name, pos, tint, 0, plate)
 				if drawn && (e.Kind == game.KindMob || e.Kind == game.KindUser) && a.state.Target == e.ID {
-					if _, y, depth, ok := projectLabel(pos, vp, w, h); ok {
-						a.sprites.NameDepth(depth)
-						if dot := a.assets.Texture("interface/name_select.png"); dot != nil {
-							// Beside the whole plate: past a GM prefix and a rank badge.
-							for _, edge := range []int{left - 10, right + 10} {
-								a.sprites.DrawImage(dot, float32(edge-dot.W/2), float32(y-a.font.Height+(a.font.Height-dot.H)/2))
-							}
-						}
-					}
+					selectionMarks(pos, left, right)
 				}
 				if e.Kind == game.KindUser {
 					caption := guildCaption(a.state, e.GuildID)
