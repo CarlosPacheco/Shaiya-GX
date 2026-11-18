@@ -15,6 +15,8 @@ const (
 	// stand and still burn: the height counts, but leniently (slopes and steps
 	// must not narrow the ground reach).
 	pulseHeightReach = 4
+	// fireThornReachBonus widens the thorns a little beyond the skill's ApplyRange.
+	fireThornReachBonus = 1
 )
 
 func isFireThorn(b *ActiveBuff) bool {
@@ -50,16 +52,16 @@ func (s *Session) tickFireThorn(now time.Time) {
 
 func (s *Session) fireThornPulse(def *db.SkillDef) {
 	ch := s.char
-	s.fixedDamagePulse(def, ch.PosX, ch.PosY, ch.PosZ)
+	s.fixedDamagePulse(def, ch.PosX, ch.PosY, ch.PosZ, fireThornReachBonus)
 }
 
 // fixedDamagePulse hurts every hostile mob and user within ApplyRange of a
 // point with the skill's DamageHP as fixed damage (Fire Thorn around the
 // caster, Fire Bush around its curtain of fire). The client plays DA_self_fire
 // on each target.
-func (s *Session) fixedDamagePulse(def *db.SkillDef, x, y, z float32) {
+func (s *Session) fixedDamagePulse(def *db.SkillDef, x, y, z, extra float32) {
 	ch := s.char
-	radius := float32(def.ApplyRange)
+	radius := float32(def.ApplyRange) + extra
 	damage := uint32(def.DamageHP)
 	stats := s.stats()
 	for _, id := range s.mobsNear(x, z, radius, y, pulseHeightReach) {

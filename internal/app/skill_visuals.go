@@ -116,17 +116,7 @@ func skillSecondaryLibrary(r proto.SkillResult, d sdata.Skill) (string, int) {
 		return effect.ImpactLibrary(r.ID), int(r.Level) - 1
 	}
 	// Native 0x577b40 maps AttribType to the five Adamage sequences.
-	sequence := 4
-	switch d.Attribute {
-	case 1:
-		sequence = 2
-	case 2:
-		sequence = 0
-	case 3:
-		sequence = 3
-	case 4:
-		sequence = 1
-	}
+	sequence := effect.AttributeDamageSequence(d.Attribute)
 	return "Effect/DA_target_Adamage.EFT", sequence
 }
 
@@ -158,7 +148,7 @@ func (a *App) startSkillImpact(target uint32, file string, sequence int) {
 	a.startSkillImpactAt(target, file, sequence, 0)
 }
 
-func (a *App) startSkillImpactAt(target uint32, file string, sequence int, elapsed float32, parts ...int) {
+func (a *App) startSkillImpactAt(target uint32, file string, sequence int, elapsed float32) {
 	if len(a.wv.impacts) >= 32 {
 		return
 	}
@@ -168,9 +158,6 @@ func (a *App) startSkillImpactAt(target uint32, file string, sequence int, elaps
 	}
 	a.playSound(effect.ImpactSound(file), pos[0], pos[2])
 	if x := a.loadSkillEffect(file, sequence); x != nil {
-		if len(parts) > 0 {
-			x.OnlyParts(parts...)
-		}
 		// Position before catching up; otherwise births use the world origin.
 		if m, ok := a.effectTargetMatrix(target); ok {
 			x.SetTransform(m)

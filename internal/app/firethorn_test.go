@@ -10,13 +10,13 @@ import (
 )
 
 // Fire Thorn is a buff that hurts: its periodic damage reads as damage, and its
-// native selector 0x576f50 gives it DA_self_fire.
+// hits show the damage effect of its element (fire is sequence 2).
 func TestFireThornPeriodicDamageIsDamageNotHealing(t *testing.T) {
-	if got := effect.PeriodicLibrary(47); got != "Effect/DA_self_fire.EFT" {
-		t.Fatalf("library %q", got)
+	if !effect.PeriodicHit(47) || !effect.PeriodicHit(48) || effect.PeriodicHit(46) {
+		t.Fatal("only Fire Thorn and Fire Bush hurt periodically")
 	}
-	if effect.PeriodicLibrary(46) != "" {
-		t.Fatal("only repeating skills have a periodic library")
+	if effect.AttributeDamageSequence(1) != 2 || effect.AttributeDamageSequence(0) != 4 {
+		t.Fatal("the fire damage sequence is 2")
 	}
 	a := inputApp()
 	a.msg = text.SysMsg{1310: "damage taken <v>", 1103: "healed <v>"}

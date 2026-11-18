@@ -121,7 +121,6 @@ func (a *App) updateResolvedEffects() {
 	dt := float32(min(max(a.frameDT, 0), .25))
 	a.updateSkillReleaseEffects(dt)
 	a.updateSkillAreaShowers(dt)
-	a.updateFields(dt)
 	a.updatePhysicalProjectiles(dt)
 	kept := v.projectiles[:0]
 	for _, p := range v.projectiles {

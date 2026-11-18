@@ -57,8 +57,10 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 		target, value = r.Target, r.HP
 		// A repeating skill plays its own effect on every target it reaches,
 		// selected or not.
-		if file := effect.PeriodicLibrary(r.Skill); file != "" && a.wv != nil {
-			a.startSkillImpactAt(r.Target, file, int(r.Level)-1, 0, effect.PeriodicParts(r.Skill)...)
+		if effect.PeriodicHit(r.Skill) && a.wv != nil {
+			if d, ok := a.skillDefinition(r.Skill, r.Level); ok {
+				a.startSkillImpact(r.Target, effect.AttributeDamageLibrary, effect.AttributeDamageSequence(d.Attribute))
+			}
 		}
 		if target != a.state.SelfID && target != a.state.Target {
 			return

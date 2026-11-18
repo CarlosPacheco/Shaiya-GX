@@ -103,7 +103,7 @@ func (s *Session) tickTraps(now time.Time) {
 		if t.def.TypeDetail == detailFireBush {
 			// The curtain of fire stays for its whole time and burns every half second.
 			if !now.Before(t.nextHit) {
-				s.fixedDamagePulse(t.def, t.x, t.y, t.z)
+				s.fixedDamagePulse(t.def, t.x, t.y, t.z, 0)
 				t.nextHit = t.nextHit.Add(fireBushTick)
 				if t.nextHit.Before(now) {
 					t.nextHit = now.Add(fireBushTick)

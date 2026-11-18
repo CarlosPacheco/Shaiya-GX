@@ -104,7 +104,7 @@ func TestFireThornReachChecksHeightLeniently(t *testing.T) {
 	pulse := func(dy float32, dx float32) uint32 {
 		s.char.PosX, s.char.PosY, s.char.PosZ = m.PosX+dx, m.PosY+dy, m.PosZ
 		before, _ := MobByID(s.char.MapID, id)
-		s.fixedDamagePulse(def, s.char.PosX, s.char.PosY, s.char.PosZ)
+		s.fixedDamagePulse(def, s.char.PosX, s.char.PosY, s.char.PosZ, fireThornReachBonus)
 		after, _ := MobByID(s.char.MapID, id)
 		return before.CurrentHP - after.CurrentHP
 	}
@@ -117,7 +117,10 @@ func TestFireThornReachChecksHeightLeniently(t *testing.T) {
 	if got := pulse(-6, 1.5); got != 0 {
 		t.Fatalf("a mob 6 above was hurt (%d)", got)
 	}
-	if got := pulse(0, 2.5); got != 0 {
+	if got := pulse(0, 2.9); got != 65 {
+		t.Fatalf("a mob 2.9 away lost %d: the thorns reach a little beyond ApplyRange", got)
+	}
+	if got := pulse(0, 3.5); got != 0 {
 		t.Fatalf("a mob out of the ground range was hurt (%d)", got)
 	}
 }
