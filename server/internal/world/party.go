@@ -249,8 +249,9 @@ func (s *Session) handlePartyInvite(op packet.Opcode, p []byte) {
 
 // handlePartyInviteGlobal is the GX /party <name> request (0x7F15): the same
 // invitation as 0x0B09 without the same-map requirement. Offline players,
-// other factions and GMs all answer with the generic "unavailable" reply, so a
-// hidden GM cannot be told apart from an offline character.
+// other factions and, unless the inviter is a GM too, GMs all answer with the
+// generic "unavailable" reply, so a hidden GM cannot be told apart from an
+// offline character.
 func (s *Session) handlePartyInviteGlobal(p []byte) {
 	me := s.player
 	if me == nil || len(p) < 23 {
@@ -258,7 +259,7 @@ func (s *Session) handlePartyInviteGlobal(p []byte) {
 	}
 	var target *ConnectedPlayer
 	var targetID uint32
-	if t := FindPlayerByName(strings.TrimRight(packet.FixedText(p[2:23]), " ")); t != nil && t != me && !t.IsAdmin {
+	if t := FindPlayerByName(strings.TrimRight(packet.FixedText(p[2:23]), " ")); t != nil && t != me && (!t.IsAdmin || me.IsAdmin) {
 		target, targetID = t, t.CharacterID
 	}
 	s.partyInviteTarget(me, target, targetID, packet.PartyInviteName, true)

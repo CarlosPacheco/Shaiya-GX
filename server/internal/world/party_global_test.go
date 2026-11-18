@@ -28,6 +28,8 @@ func TestGlobalPartyInvite(t *testing.T) {
 	leader, ls := player(992001, "PartyLeadr", 1, FactionLight, false)
 	far, fs := player(992002, "PartyFarOne", 40, FactionLight, false)
 	gm, _ := player(992003, "PartyGMUser", 1, FactionLight, true)
+	gmFar, _ := player(992005, "PartyGMFar", 40, FactionLight, true)
+	gmFoe, _ := player(992006, "PartyGMFoe", 40, FactionDark, true)
 	foe, _ := player(992004, "PartyFoeOne", 1, FactionDark, false)
 
 	request := func(op packet.Opcode, name string) []byte {
@@ -65,5 +67,17 @@ func TestGlobalPartyInvite(t *testing.T) {
 	partyMu.Unlock()
 	if !joined {
 		t.Fatal("the invited player on another map could not join")
+	}
+
+	// A GM may invite another GM (same faction, any map); a GM still cannot
+	// invite the other faction.
+	_, gms := player(992007, "PartyGMBoss", 1, FactionLight, true)
+	gms.handlePartyInviteGlobal(request(packet.GXPartyInviteName, "PartyGMFar"))
+	gms.handlePartyInviteGlobal(request(packet.GXPartyInviteName, "PartyGMFoe"))
+	if id, anyMap := invited(gmFar); id != 992007 || !anyMap {
+		t.Fatalf("GM could not invite another GM: %d %v", id, anyMap)
+	}
+	if id, _ := invited(gmFoe); id != 0 {
+		t.Fatal("a GM invited the other faction")
 	}
 }

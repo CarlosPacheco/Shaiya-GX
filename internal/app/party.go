@@ -15,6 +15,26 @@ type partyView struct {
 	raidErrorSerial           uint64
 	raidHidden                bool
 	expires                   float64
+	inviteName                string // last name typed in an invite command, for refusals of players on other maps
+}
+
+// Native SysMsg ids for party and raid refusals, indexed by the server's
+// result code. They go to the chat log like every other notification.
+var partyReplyMessages = [...]int{206, 304, 345, 346, 347, 348}
+var raidErrorMessages = map[uint32]int{0: 206, 1: 304, 2: 6540, 3: 346, 4: 347, 5: 348, 12: 6535, 13: 6536, 14: 6538}
+
+// partyNotice writes a native SysMsg line to the chat (never a screen overlay).
+func (a *App) partyNotice(id int, name string) {
+	a.systemMessage(3, id, map[string]string{"p": name})
+}
+
+// partyTargetName is the refused player's name: nearby players are known by
+// id, global invitations by the name just typed.
+func (a *App) partyTargetName(id uint32) string {
+	if e := a.state.Entities[id]; e != nil && e.Shape != nil && e.Shape.Name != "" {
+		return e.Shape.Name
+	}
+	return a.party.inviteName
 }
 
 func (a *App) updatePartyInvite(in *platform.Input, w, h int) bool {
@@ -41,21 +61,19 @@ func (a *App) updatePartyInvite(in *platform.Input, w, h int) bool {
 	}
 	if p.RaidErrorSerial != a.party.raidErrorSerial {
 		a.party.raidErrorSerial = p.RaidErrorSerial
-		messages := map[uint32]string{0: "Raid invitation declined.", 1: "Player is busy.", 2: "Only the raid leader or assistant can invite.", 3: "Player is already in a party.", 4: "Player is unavailable.", 5: "Player is already in this raid.", 12: "Raid not found.", 13: "Raid does not allow auto-join.", 14: "Raid is full."}
-		text := messages[p.RaidError]
-		if text == "" {
-			text = "Raid request refused."
+		id, ok := raidErrorMessages[p.RaidError]
+		if !ok {
+			id = 304
 		}
-		a.combatNotice, a.combatNoticeUntil = text, a.clock+4
+		a.partyNotice(id, a.party.inviteName)
 	}
 	if p.ReplySerial != a.party.replySerial {
 		a.party.replySerial = p.ReplySerial
-		messages := [...]string{"Party invitation declined.", "Player is busy.", "Only the party leader can invite.", "Player is already in a party.", "Player is unavailable.", "Player is already in this party."}
-		text := "Party request refused."
-		if int(p.Reply.Result) < len(messages) {
-			text = messages[p.Reply.Result]
+		id := 304
+		if int(p.Reply.Result) < len(partyReplyMessages) {
+			id = partyReplyMessages[p.Reply.Result]
 		}
-		a.combatNotice, a.combatNoticeUntil = text, a.clock+4
+		a.partyNotice(id, a.partyTargetName(p.Reply.ID))
 	}
 	if !a.partyMessage.Visible {
 		return false
@@ -157,8 +175,12 @@ func (a *App) partyGlobalInvite(fields []string) bool {
 	if len(fields) != 2 {
 		return false
 	}
+	a.party.inviteName = fields[1]
 	if a.state.Party.Raid {
-		a.combatNotice, a.combatNoticeUntil = "Use /raid to invite while in a raid.", a.clock+4
+		// Inside a raid it is the plain raid invitation, as /invite.
+		if err := a.world.Send(proto.RaidNamePacket(proto.RaidInviteName, fields[1])); err != nil {
+			a.backToLogin("Unable to send raid invitation.")
+		}
 		return true
 	}
 	if err := a.world.Send(proto.PartyGlobalInvitePacket(fields[1])); err != nil {
@@ -189,6 +211,9 @@ func (a *App) partyCommand(text string) bool {
 		name = strings.Join(fields[1:], " ")
 	}
 	var packet []byte
+	if command == "/invite" && name != "" {
+		a.party.inviteName = name
+	}
 	switch command {
 	case "/invite":
 		if a.state.Party.Raid && name != "" {
@@ -214,7 +239,11 @@ func (a *App) partyCommand(text string) bool {
 			}
 		}
 		if a.state.Party.Leader != a.state.SelfID || id == 0 || id == a.state.SelfID || a.state.Party.Member(id) == nil {
-			a.combatNotice, a.combatNoticeUntil = "Select a party member; only the leader can do this.", a.clock+4
+			id := 345 // only the leader may do this
+			if a.state.Party.Leader == a.state.SelfID {
+				id = 347 // no such party member
+			}
+			a.partyNotice(id, name)
 			return true
 		}
 		if a.state.Party.Raid && command == "/kick" {
@@ -228,7 +257,7 @@ func (a *App) partyCommand(text string) bool {
 		}
 	}
 	if packet == nil {
-		a.combatNotice, a.combatNoticeUntil = "Use /invite character name, or select a player.", a.clock+4
+		a.partyNotice(347, name)
 		return true
 	}
 	if err := a.world.Send(packet); err != nil {
@@ -301,7 +330,7 @@ func (a *App) raidCommand(fields []string) bool {
 		return false
 	}
 	if packet == nil {
-		a.combatNotice, a.combatNoticeUntil = "Raid command unavailable or invalid.", a.clock+4
+		a.partyNotice(6540, "")
 		return true
 	}
 	if err := a.world.Send(packet); err != nil {
