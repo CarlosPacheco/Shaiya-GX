@@ -4137,6 +4137,32 @@ func DecodeTargetEffectChange(p []byte) (v TargetEffectSnapshot, e TargetEffect,
 
 </details>
 
+## target health
+
+[internal/proto/target_health.go](../../internal/proto/target_health.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type TargetHealth struct {
+	User    uint32
+	HP, Max uint32
+}
+```
+
+```go
+func DecodeTargetHealth(p []byte) (v TargetHealth, err error) {
+	if len(p) != 14 {
+		return v, fmt.Errorf("invalid GX target health length")
+	}
+	r := NewReader(p)
+	v.User, v.HP, v.Max = r.U32(), r.U32(), r.U32()
+	return v, r.Err()
+}
+```
+
+</details>
+
 ## teleport stone
 
 [internal/proto/teleport_stone.go](../../internal/proto/teleport_stone.go#L1)

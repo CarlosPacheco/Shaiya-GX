@@ -38,6 +38,9 @@ func (a *App) contextActions(id uint32) []contextAction {
 			sameFaction = own.Race/2 == e.Shape.Race/2
 		}
 	}
+	if !sameFaction && id != a.state.SelfID {
+		return nil // the user menu is not offered on a player of the other faction
+	}
 	var out []contextAction
 	if sameFaction && id != a.state.SelfID {
 		if e := a.state.Entities[id]; e != nil {

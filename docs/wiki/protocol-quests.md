@@ -16,7 +16,7 @@ Declarations: [packet.QuestList](../../server/internal/packet/packet.go#L124), [
 
 **S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L230)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L571)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L572)
 
 ### Wire layouts and validation
 
@@ -103,7 +103,7 @@ Declarations: [packet.QuestStart](../../server/internal/packet/packet.go#L125), 
 
 **S→C serializers:** [startQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L406)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L593)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L594)
 
 ### Wire layouts and validation
 
@@ -183,7 +183,7 @@ Declarations: [packet.QuestEnd](../../server/internal/packet/packet.go#L126), [p
 
 **S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L576), [awardQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L653)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L620)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L621)
 
 ### Wire layouts and validation
 
@@ -408,7 +408,7 @@ Declarations: [packet.QuestCounter](../../server/internal/packet/packet.go#L128)
 
 **S→C serializers:** [bumpQuestCounter (server/internal/world/quests.go)](../../server/internal/world/quests.go#L766), [questKillCount (server/internal/world/quests.go)](../../server/internal/world/quests.go#L785)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L602)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
 
 ### Wire layouts and validation
 
@@ -532,7 +532,7 @@ Declarations: [packet.QuestFinishedList](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L230)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L583)
 
 ### Wire layouts and validation
 
@@ -614,7 +614,7 @@ Declarations: [packet.QuestChoose](../../server/internal/packet/packet.go#L129),
 
 **S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L576)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L614)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L615)
 
 ### Wire layouts and validation
 

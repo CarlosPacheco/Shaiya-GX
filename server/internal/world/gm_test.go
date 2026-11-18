@@ -447,3 +447,52 @@ func TestGMCureRestoresPoolsAndCooldowns(t *testing.T) {
 		t.Fatal("/cure must not revive")
 	}
 }
+
+// /amove goes to another character and /asummon brings one to the GM at once,
+// with no item, cast or confirmation. Both are GM only.
+func TestGMAmoveAndAsummonMoveAtOnce(t *testing.T) {
+	gm, _ := potentialSession(t)
+	gm.isAdmin = true
+	floor := func() *mapgeometry.Geometry {
+		g := &mapgeometry.Geometry{}
+		g.Reindex()
+		h := float64(float32(10) - mapgeometry.FootSkin)
+		g.Add(collision.Triangle{{0, h, 0}, {0, h, 1000}, {1000, h, 0}})
+		g.Add(collision.Triangle{{1000, h, 1000}, {1000, h, 0}, {0, h, 1000}})
+		return g
+	}
+	mapID := gm.char.MapID
+	gm.char.PosX, gm.char.PosY, gm.char.PosZ = 100, 10, 100
+	gm.movement = playerMovement{geometry: floor(), mapID: mapID}
+	other, _ := gmWireSession(t, *gm.char, false)
+	other.char.ID, other.char.Name = gm.char.ID+700, "AmoveTarget"
+	other.char.PosX, other.char.PosY, other.char.PosZ = 520, 10, 380
+	other.movement = playerMovement{geometry: floor(), mapID: mapID}
+	other.skillCooldowns, other.itemCooldowns = map[uint16]time.Time{}, map[uint8]time.Time{}
+	other.player = RegisterPlayer(*other.char, nil, false, other.faction, other.out, other.logger)
+	t.Cleanup(other.player.Unregister)
+
+	if !gm.handleGMCommand("/amove AmoveTarget") {
+		t.Fatal("/amove escaped to public chat")
+	}
+	if gm.char.PosX < 519 || gm.char.PosX > 521 || gm.char.PosZ < 379 || gm.char.PosZ > 381 {
+		t.Fatalf("/amove left the GM at %v,%v, want about 520,380", gm.char.PosX, gm.char.PosZ)
+	}
+
+	gm.char.PosX, gm.char.PosZ = 800, 700
+	gm.player.UpdateCharacter(*gm.char)
+	gm.handleGMCommand("/asummon AmoveTarget")
+	other.tickForcedTeleport()
+	if other.char.PosX < 799 || other.char.PosX > 801 || other.char.PosZ < 699 || other.char.PosZ > 701 {
+		t.Fatalf("/asummon left the character at %v,%v, want about 800,700", other.char.PosX, other.char.PosZ)
+	}
+
+	// A player cannot use them.
+	gm.isAdmin = false
+	x := gm.char.PosX
+	gm.char.PosX += 50
+	gm.handleGMCommand("/amove AmoveTarget")
+	if gm.char.PosX != x+50 {
+		t.Fatal("a non-GM moved with /amove")
+	}
+}

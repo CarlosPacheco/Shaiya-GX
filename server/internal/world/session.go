@@ -29,7 +29,9 @@ const (
 // Session is one client connection. Its loop owns its fields under stateMu.
 // A paired trade may also update them while holding both sessions' state locks.
 type Session struct {
+	gmForced          bool      // a GM's /asummon is moving this user: no party or guild instance redirection
 	assisted          [3]uint32 // HP, SP, MP of the last hit after Health Assistant
+	targetHealthSent  [3]uint32 // user, HP and maximum last told for the selected user
 	traps             []placedTrap
 	nextTrapAt        time.Time
 	economy           *netx.RateLimiter
@@ -416,6 +418,7 @@ func (s *Session) tick(idle bool) {
 	s.tickReturnToTown()
 	s.tickTeleportStone(time.Now())
 	s.tickPartySummon(time.Now())
+	s.tickForcedTeleport()
 	s.completePendingGuild()
 	s.tickRebirth(time.Now())
 	if s.char == nil {

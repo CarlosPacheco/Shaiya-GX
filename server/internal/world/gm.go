@@ -86,6 +86,16 @@ func (s *Session) handleGMCommand(text string) bool {
 			state = "enabled"
 		}
 		s.gmReply("GM: turbo " + state + ".")
+	case "/amove", "/asummon":
+		if len(args) != 1 {
+			s.gmReply("Usage: " + command + " charname")
+			break
+		}
+		if command == "/amove" {
+			err = s.gmGoTo(args[0])
+		} else {
+			err = s.gmBring(args[0])
+		}
 	case "/cure":
 		if len(args) != 0 {
 			s.gmReply("Usage: /cure")

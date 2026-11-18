@@ -253,6 +253,10 @@ func (a *App) drawCombat(w, h int) {
 			view.TargetHP = ui.Resource{Current: member.HP, Max: member.MaxHP}
 			view.TargetKnown = true
 		}
+		if h, ok := s.UserHealth[e.ID]; ok && !view.TargetKnown {
+			view.TargetHP = ui.Resource{Current: h.HP, Max: h.Max}
+			view.TargetKnown = true
+		}
 	}
 	a.hud.Draw(a.sprites, a.font, view)
 	a.drawTargetEffects(w, h)

@@ -66,7 +66,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 	s.dash = nil
 	s.pendingCombo = nil
 	// /cmove may inspect the base map without joining a party/guild instance.
-	direct := s.isAdmin && len(gmDirect) > 0 && gmDirect[0]
+	direct := (s.isAdmin || s.gmForced) && len(gmDirect) > 0 && gmDirect[0]
 	ch := s.char
 	// CWorld::GetZoneByMapID: a guild ranking map resolves to the guild's
 	// instance while the battle is open; without one the move fails.

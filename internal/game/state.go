@@ -119,7 +119,8 @@ type State struct {
 	LastDetectInfo         proto.DetectInfo
 	LastPeriodicEffect     proto.PeriodicEffect
 	LastField              proto.Field
-	Transforms             map[uint32]uint16 // character -> monster it looks like
+	Transforms             map[uint32]uint16             // character -> monster it looks like
+	UserHealth             map[uint32]proto.TargetHealth // HP of the selected user
 	DeathLossFree          bool
 	LastMotion             proto.CharacterMotionResult
 	Blessing               BlessingState
@@ -806,6 +807,12 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		s.LastSkillCooldown = result
+	case proto.GXTargetHealth:
+		result, err := proto.DecodeTargetHealth(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.UserHealth = map[uint32]proto.TargetHealth{result.User: result} // only the selected user is kept
 	case proto.GXTransform:
 		result, err := proto.DecodeTransform(p)
 		if err != nil {

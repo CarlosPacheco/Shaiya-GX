@@ -83,6 +83,7 @@ type ConnectedPlayer struct {
 	mailMu       sync.Mutex
 	teleport     *pendingTeleport
 	summonOffer  *partySummonOffer
+	forced       *forcedTeleport // a GM's /asummon waiting for this user's session
 	tradeRefresh *tradeRefresh
 	damage       []pendingDamage
 	lifeSkill    *pendingLifeSkill

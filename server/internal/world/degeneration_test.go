@@ -63,6 +63,7 @@ func TestDegenerationBlocksSkillUse(t *testing.T) {
 func TestDegenerationAnnouncesTheMonsterLook(t *testing.T) {
 	s, wire := potentialSession(t)
 	last := func() (proto.Transform, bool) {
+		time.Sleep(50 * time.Millisecond) // the pipe is read by another goroutine
 		var out proto.Transform
 		found := false
 		for len(wire) > 0 {
@@ -94,5 +95,43 @@ func TestDegenerationAnnouncesTheMonsterLook(t *testing.T) {
 	s.tickTransform()
 	if v, ok := last(); !ok || v.Mob != 0 {
 		t.Fatalf("end announcement %+v %v", v, ok)
+	}
+}
+
+// A selected user's HP reaches the client, once and again when it changes.
+func TestSelectedUserHealthIsSentWhenItChanges(t *testing.T) {
+	s, wire := potentialSession(t)
+	s.effectWatchKind, s.effectWatchID = proto.TargetEffectUser, s.char.ID
+	s.char.CurrentHP = 1000
+	s.player.UpdateCharacter(*s.char)
+	healths := func() []proto.TargetHealth {
+		time.Sleep(50 * time.Millisecond) // the pipe is read by another goroutine
+		var out []proto.TargetHealth
+		for len(wire) > 0 {
+			if p := <-wire; proto.Op(p) == proto.GXTargetHealth {
+				v, err := proto.DecodeTargetHealth(p)
+				if err != nil {
+					t.Fatal(err)
+				}
+				out = append(out, v)
+			}
+		}
+		return out
+	}
+	now := time.Now()
+	s.tickTargetEffects(now)
+	first := healths()
+	if len(first) != 1 || first[0].User != s.char.ID || first[0].Max == 0 || first[0].HP != 1000 {
+		t.Fatalf("first report %+v", first)
+	}
+	s.tickTargetEffects(now.Add(time.Second))
+	if got := healths(); len(got) != 0 {
+		t.Fatalf("an unchanged HP was repeated: %+v", got)
+	}
+	s.char.CurrentHP = 400
+	s.player.UpdateCharacter(*s.char)
+	s.tickTargetEffects(now.Add(2 * time.Second))
+	if got := healths(); len(got) != 1 || got[0].HP != 400 {
+		t.Fatalf("a changed HP was not reported: %+v", got)
 	}
 }

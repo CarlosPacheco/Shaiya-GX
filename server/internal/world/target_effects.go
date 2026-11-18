@@ -26,6 +26,7 @@ func (s *Session) handleTargetEffects(p []byte) {
 		return
 	}
 	s.effectWatchKind, s.effectWatchID = kind, id
+	s.targetHealthSent = [3]uint32{}
 	s.effectWatchAt = time.Time{}
 	s.effectWatchHash = [32]byte{}
 	s.tickTargetEffects(time.Now())
@@ -54,6 +55,7 @@ func (s *Session) tickTargetEffects(now time.Time) {
 		p := FindPlayerByID(s.effectWatchID)
 		if p != nil && p.MapID() == s.char.MapID && p.IsAlive() && s.player.canSee(p) && (p == s.player || s.player.knows(viewUser, p.CharacterID)) {
 			valid = true
+			s.sendTargetHealth(p)
 			p.mu.Lock()
 			for _, b := range p.targetEffects {
 				if n := left(b.EndsAt); n > 0 {
@@ -82,4 +84,22 @@ func (s *Session) tickTargetEffects(now time.Time) {
 	if !valid {
 		s.effectWatchID = 0
 	}
+}
+
+// sendTargetHealth gives the selected user's HP, once and again whenever it changes.
+func (s *Session) sendTargetHealth(p *ConnectedPlayer) {
+	ch := p.Snapshot()
+	p.mu.Lock()
+	st := StatsFor(&ch, GetEquipmentStats(p.items))
+	p.mu.Unlock()
+	now := [3]uint32{ch.ID, st.CurrentHP, st.MaxHP}
+	if now == s.targetHealthSent {
+		return
+	}
+	s.targetHealthSent = now
+	w := packet.New(packet.Opcode(proto.GXTargetHealth))
+	w.U32(now[0])
+	w.U32(now[1])
+	w.U32(now[2])
+	s.send(w.MustFinish(), "GX selected user HP")
 }
