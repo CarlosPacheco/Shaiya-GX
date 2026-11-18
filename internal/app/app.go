@@ -98,6 +98,8 @@ type App struct {
 	gateConfirm                         *ui.Message
 	teleportStone                       teleportStoneView
 	recordedPoints                      *ui.RecordedPoints
+	summonRune                          summonRuneView
+	summonMessage                       *ui.Message
 	gemConfirm                          *ui.Message
 	party                               partyView
 	partyUI                             *ui.PartyPanel
@@ -391,6 +393,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		return nil, err
 	}
 	if a.gateConfirm, err = ui.NewMessage(a); err != nil {
+		return nil, err
+	}
+	if a.summonMessage, err = ui.NewMessage(a); err != nil {
 		return nil, err
 	}
 	if a.blacksmithUI, err = ui.NewBlacksmith(a); err != nil {
@@ -730,6 +735,10 @@ func (a *App) backToLogin(msg string) {
 	}
 	a.inventory = inventoryView{}
 	a.teleportStone = teleportStoneView{}
+	a.summonRune = summonRuneView{}
+	if a.summonMessage != nil {
+		a.summonMessage.Visible = false
+	}
 	a.skills = skillsView{}
 	a.status = statusView{}
 	if a.statusUI != nil {
@@ -914,6 +923,9 @@ func (a *App) pumpWorld() {
 			}
 			if ev.Op == proto.GXTeleportStone {
 				a.confirmedTeleportStone(p)
+			}
+			if ev.Op == proto.GXSummonRune || ev.Op == proto.UserLeave {
+				a.confirmedSummonRune(p)
 			}
 			a.confirmedItems(ev.Op)
 			a.confirmedSystemChat(p, previousMoney)

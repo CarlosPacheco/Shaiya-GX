@@ -3958,6 +3958,58 @@ func DecodeMaxEnergy(p []byte) (s MaxEnergy, err error) {
 
 </details>
 
+## summon rune
+
+[internal/proto/summon_rune.go](../../internal/proto/summon_rune.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type SummonRuneEvent struct {
+	Action           uint8
+	Caster, Offer    uint32
+	Map, RemainingMS uint16
+	Name, Message    string
+}
+```
+
+```go
+func DecodeSummonRune(p []byte) (v SummonRuneEvent, err error) {
+	r := NewReader(p)
+	v.Action = r.U8()
+	switch v.Action {
+	case SummonCast, SummonCastEnd:
+		v.Caster, v.RemainingMS = r.U32(), r.U16()
+	case SummonOffer:
+		v.Offer, v.Caster, v.Map, v.RemainingMS = r.U32(), r.U32(), r.U16(), r.U16()
+		v.Name = r.Fixed(21)
+	case SummonResult:
+		v.Message = r.Text()
+	}
+	return v, r.Err()
+}
+```
+
+```go
+func SummonAnswerPacket(id uint32, accept bool) []byte {
+	w := NewWriter(GXSummonRune)
+	w.U8(SummonAnswer)
+	w.U32(id)
+	w.Bool(accept)
+	return w.Bytes()
+}
+```
+
+```go
+func SummonCancelPacket() []byte {
+	w := NewWriter(GXSummonRune)
+	w.U8(SummonCancel)
+	return w.Bytes()
+}
+```
+
+</details>
+
 ## target effects
 
 [internal/proto/target_effects.go](../../internal/proto/target_effects.go#L1)

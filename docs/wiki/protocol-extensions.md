@@ -124,7 +124,7 @@ Declarations: [packet.GXForgeQuote](../../server/internal/packet/packet.go#L325)
 
 Source notes: GXForgeQuote is a read-only preview; execution still validates live inventory.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L271)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L273)
 
 **S→C serializers:** [handleForgeQuote (server/internal/world/forge_quote.go)](../../server/internal/world/forge_quote.go#L103)
 
@@ -474,7 +474,7 @@ Declarations: [proto.GXGMMapTeleport](../../internal/proto/gm_map.go#L10).
 
 Source notes: GXGMMapTeleport requests an exact map-image coordinate. The server owns Y.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L269)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L271)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -701,7 +701,7 @@ func (s *Session) applyFallDamage(drop float32) {
 	if damage == 0 {
 		return
 	}
-	s.cancelTeleportStone()
+	s.cancelTravelCast()
 	s.commitMovement()
 	s.cancelMove()
 	s.breakStealth()
@@ -1266,9 +1266,9 @@ func Decode(payload []byte) (string, string, error) {
 
 Declarations: [proto.GXTeleportStone](../../internal/proto/teleport_stone.go#L4).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L75)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L77)
 
-**S→C serializers:** [sendTeleportStone (server/internal/world/teleport_stone.go)](../../server/internal/world/teleport_stone.go#L44)
+**S→C serializers:** [sendTeleportStone (server/internal/world/teleport_stone.go)](../../server/internal/world/teleport_stone.go#L49)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1278,7 +1278,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendTeleportStone — server/internal/world/teleport_stone.go</summary>
 
-[Source definition](../../server/internal/world/teleport_stone.go#L44)
+[Source definition](../../server/internal/world/teleport_stone.go#L49)
 
 ```go
 func (s *Session) sendTeleportStone(action uint8, ok bool, message string, points [proto.TeleportPointCount]db.TeleportPoint) {
@@ -1311,6 +1311,143 @@ func TeleportStonePacket(action, slot uint8) []byte {
 	w := NewWriter(GXTeleportStone)
 	w.U8(action)
 	w.U8(slot)
+	return w.Bytes()
+}
+```
+
+</details>
+
+## Opcode 7f14
+
+**`0x7F14` — GXSummonRune**
+
+Declarations: [proto.GXSummonRune](../../internal/proto/summon_rune.go#L4).
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L75)
+
+**S→C serializers:** [summonResult (server/internal/world/summon_rune.go)](../../server/internal/world/summon_rune.go#L58), [publishSummonCast (server/internal/world/summon_rune.go)](../../server/internal/world/summon_rune.go#L65), [tickPartySummon (server/internal/world/summon_rune.go)](../../server/internal/world/summon_rune.go#L134)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>summonResult — server/internal/world/summon_rune.go</summary>
+
+[Source definition](../../server/internal/world/summon_rune.go#L58)
+
+```go
+func (s *Session) summonResult(message string) {
+	w := packet.New(packet.Opcode(proto.GXSummonRune))
+	w.U8(proto.SummonResult)
+	writeChatText(w, message)
+	s.send(w.MustFinish(), "party summon result")
+}
+```
+
+</details>
+
+<details><summary>publishSummonCast — server/internal/world/summon_rune.go</summary>
+
+[Source definition](../../server/internal/world/summon_rune.go#L65)
+
+```go
+func (s *Session) publishSummonCast(active bool) {
+	w := packet.New(packet.Opcode(proto.GXSummonRune))
+	if active {
+		w.U8(proto.SummonCast)
+	} else {
+		w.U8(proto.SummonCastEnd)
+	}
+	w.U32(s.char.ID)
+	ms := uint16(0)
+	if active {
+		ms = uint16(summonCastTime / time.Millisecond)
+	}
+	w.U16(ms)
+	s.broadcastNear(w.MustFinish(), "party summon cast", true)
+}
+```
+
+</details>
+
+<details><summary>tickPartySummon — server/internal/world/summon_rune.go</summary>
+
+[Source definition](../../server/internal/world/summon_rune.go#L134)
+
+```go
+func (s *Session) tickPartySummon(now time.Time) {
+	if s.summonCastEnd.IsZero() {
+		return
+	}
+	if s.char == nil || s.player == nil || s.dead || s.char.CurrentHP == 0 || s.actionBlocked() || s.inCombat() {
+		s.cancelPartySummon()
+		return
+	}
+	if now.Before(s.summonCastEnd) {
+		return
+	}
+	s.summonCastEnd = time.Time{}
+	s.publishSummonCast(false)
+	group, targets := partySummonTargets(s.player)
+	if len(targets) == 0 || !teleportStoneField(s.char.MapID) {
+		s.summonResult("There are no party members to summon.")
+		return
+	}
+
+	offer := partySummonOffer{summonOfferSerial.Add(1), s.player, group, now.Add(summonOfferTime)}
+	w := packet.New(packet.Opcode(proto.GXSummonRune))
+	w.U8(proto.SummonOffer)
+	w.U32(offer.id)
+	w.U32(s.char.ID)
+	w.U16(realMap(s.char.MapID))
+	w.U16(uint16(summonOfferTime / time.Millisecond))
+	w.FixedString(s.char.Name, 21)
+	frame := w.MustFinish()
+	sent := false
+	for _, p := range targets {
+		if !p.IsAlive() || p.Faction() != s.faction {
+			continue
+		}
+		p.mailMu.Lock()
+		p.summonOffer = &offer
+		p.mailMu.Unlock()
+		_ = p.Send(frame, "party summon offer")
+		sent = true
+	}
+	if !sent {
+		s.summonResult("There are no party members to summon.")
+	}
+}
+```
+
+</details>
+
+<details><summary>SummonAnswerPacket — internal/proto/summon_rune.go</summary>
+
+[Source definition](../../internal/proto/summon_rune.go#L35)
+
+```go
+func SummonAnswerPacket(id uint32, accept bool) []byte {
+	w := NewWriter(GXSummonRune)
+	w.U8(SummonAnswer)
+	w.U32(id)
+	w.Bool(accept)
+	return w.Bytes()
+}
+```
+
+</details>
+
+<details><summary>SummonCancelPacket — internal/proto/summon_rune.go</summary>
+
+[Source definition](../../internal/proto/summon_rune.go#L43)
+
+```go
+func SummonCancelPacket() []byte {
+	w := NewWriter(GXSummonRune)
+	w.U8(SummonCancel)
 	return w.Bytes()
 }
 ```

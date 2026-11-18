@@ -263,6 +263,9 @@ func (s *Session) handleUseItem(p []byte) {
 		return
 	}
 	switch def.Special {
+	case specialPartySummon:
+		s.beginPartySummon(i, def)
+		return
 	case specialTeleportStone:
 		s.openTeleportStone(it)
 		return

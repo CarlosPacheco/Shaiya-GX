@@ -282,7 +282,7 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 			continue
 		}
 		if damage[0] > 0 || damage[1] > 0 || damage[2] > 0 {
-			s.cancelTeleportStone()
+			s.cancelTravelCast()
 			s.breakStealth()
 		}
 		hp := uint32(max(damage[0], 0))

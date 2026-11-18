@@ -12,7 +12,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 Declarations: [packet.ShopBuy](../../server/internal/packet/packet.go#L72), [proto.ShopBuy](../../internal/proto/opcodes.go#L56).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L97)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L99)
 
 **S→C serializers:** [buildShopBuyResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L202)
 
@@ -83,7 +83,7 @@ type ShopResult struct {
 
 Declarations: [packet.ShopSell](../../server/internal/packet/packet.go#L138), [proto.ShopSell](../../internal/proto/opcodes.go#L123).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L95)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L97)
 
 **S→C serializers:** [buildShopSellResult (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L246)
 
@@ -238,7 +238,7 @@ type WarehouseList struct {
 
 Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L208), [proto.GemAdd](../../internal/proto/opcodes.go#L196).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L83)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L85)
 
 **S→C serializers:** [buildGemAddResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L186)
 
@@ -331,7 +331,7 @@ type GemAddResult struct {
 
 Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L209), [proto.GemRemove](../../internal/proto/opcodes.go#L197).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L85)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L87)
 
 **S→C serializers:** [planGemRemove (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L362)
 
@@ -534,7 +534,7 @@ type GemRemoveResult struct {
 
 Declarations: [packet.EnchantAdd](../../server/internal/packet/packet.go#L206), [proto.EnchantAdd](../../internal/proto/opcodes.go#L194).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L81)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L83)
 
 **S→C serializers:** [buildEnchantResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L37)
 
@@ -623,7 +623,7 @@ type EnchantResult struct {
 
 Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L207), [proto.ItemCompose](../../internal/proto/opcodes.go#L195).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L87)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L89)
 
 **S→C serializers:** [buildComposeResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L495)
 

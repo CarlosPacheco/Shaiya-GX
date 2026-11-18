@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -55,4 +56,27 @@ func TestTeleportStonePanelGL(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+
+	a.state = game.New()
+	request := proto.NewWriter(proto.GXSummonRune)
+	request.U8(proto.SummonOffer)
+	request.U32(101)
+	request.U32(2)
+	request.U16(1)
+	request.U16(60000)
+	request.Fixed("Priest", 21, true)
+	a.confirmedSummonRune(request.Bytes())
+	if !a.summonMessage.Visible || a.summonRune.expires != a.clock+60 {
+		t.Fatal("summon confirmation did not open for 60 seconds")
+	}
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	a.sprites.Begin(1024, 768)
+	a.summonMessage.Draw(a.sprites, a.font, 1024, 768)
+	a.sprites.End()
+	if dir := os.Getenv("SHAIYA_TEST_ARTIFACTS"); dir != "" {
+		if err := render.SavePNG(filepath.Join(dir, "summon-confirmation.png"), 1024, 768); err != nil {
+			t.Fatal(err)
+		}
+	}
+
 }

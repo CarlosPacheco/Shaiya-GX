@@ -61,7 +61,7 @@ func (s *Session) syncPlayer() {
 // resurrection): moves the character, persists it, acks the client,
 // introduces it to viewers at the destination and refreshes visibility.
 func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmDirect ...bool) {
-	s.cancelTeleportStone()
+	s.cancelTravelCast()
 	s.dismount()
 	s.dash = nil
 	s.pendingCombo = nil
@@ -161,7 +161,7 @@ func (s *Session) handleCharacterMove(p []byte) {
 	// GX also sends motion-zero idle/height snapshots. Only accepted locomotion
 	// intent interrupts preparation; a synchronization packet is not a walk.
 	if proto.CastInterruptingMotion(motion) || ch.PosX != oldX || ch.PosZ != oldZ {
-		s.cancelTeleportStone()
+		s.cancelTravelCast()
 	}
 	if s.cast != nil && proto.CastInterruptingMotion(motion) {
 		s.log.Printf("GX Server World cast interrupted by locomotion skill_number=%d motion=0x%02X from=(%.3f,%.3f) to=(%.3f,%.3f)", s.cast.number, motion, oldX, oldZ, ch.PosX, ch.PosZ)

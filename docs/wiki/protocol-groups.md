@@ -108,7 +108,7 @@ type PartyList struct {
 
 Declarations: [packet.PartyInvite](../../server/internal/packet/packet.go#L43), [proto.PartyInvite](../../internal/proto/opcodes.go#L27).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L114)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L116)
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -148,7 +148,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.PartyAnswer](../../server/internal/packet/packet.go#L44), [proto.PartyAnswer](../../internal/proto/opcodes.go#L28).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L116)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L118)
 
 **S→C serializers:** [partyError (server/internal/world/party.go)](../../server/internal/world/party.go#L114)
 
@@ -296,7 +296,7 @@ type PartyMember struct {
 
 Declarations: [packet.PartyLeft](../../server/internal/packet/packet.go#L46), [proto.PartyLeft](../../internal/proto/opcodes.go#L30).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L118)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L120)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -332,7 +332,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.PartyExpelled](../../server/internal/packet/packet.go#L47), [proto.PartyExpelled](../../internal/proto/opcodes.go#L31).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L120)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L122)
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -372,7 +372,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.PartyLeader](../../server/internal/packet/packet.go#L48), [proto.PartyLeader](../../internal/proto/opcodes.go#L32).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L122)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L124)
 
 **S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L108), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -426,7 +426,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.PartyInviteName](../../server/internal/packet/packet.go#L49), [proto.PartyInviteName](../../internal/proto/opcodes.go#L33).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L114)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L116)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -630,7 +630,7 @@ type RaidMember struct {
 
 Declarations: [packet.PartyLeaveAlt](../../server/internal/packet/packet.go#L50), [proto.PartyLeaveAlt](../../internal/proto/opcodes.go#L34).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L118)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L120)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -656,7 +656,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.RaidConvert](../../server/internal/packet/packet.go#L54), [proto.RaidConvert](../../internal/proto/opcodes.go#L38).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L124), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L179)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L126), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L179)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -720,7 +720,7 @@ type Reader struct {
 
 Declarations: [packet.RaidDivision](../../server/internal/packet/packet.go#L55), [proto.RaidDivision](../../internal/proto/opcodes.go#L39).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L124), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L211)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L126), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L211)
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -778,7 +778,7 @@ type Reader struct {
 
 Declarations: [packet.RaidAutoJoin](../../server/internal/packet/packet.go#L56), [proto.RaidAutoJoin](../../internal/proto/opcodes.go#L40).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L124), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L219)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L126), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L219)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -840,7 +840,7 @@ type Reader struct {
 
 Declarations: [packet.RaidAutoJoinName](../../server/internal/packet/packet.go#L57), [proto.RaidAutoJoinName](../../internal/proto/opcodes.go#L41).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L130)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L132)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -854,7 +854,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 Declarations: [packet.RaidSwap](../../server/internal/packet/packet.go#L58), [proto.RaidSwap](../../internal/proto/opcodes.go#L42).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L132), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L407)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L134), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L407)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -913,7 +913,7 @@ type Reader struct {
 
 Declarations: [packet.RaidSubLeader](../../server/internal/packet/packet.go#L59), [proto.RaidSubLeader](../../internal/proto/opcodes.go#L43).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L132), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L379)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L134), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L379)
 
 **S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L108), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -967,7 +967,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.RaidInvite](../../server/internal/packet/packet.go#L60), [proto.RaidInvite](../../internal/proto/opcodes.go#L44).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L126)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L128)
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -1021,7 +1021,7 @@ func DecodePartyInviteName(p []byte) (string, error) {
 
 Declarations: [packet.RaidAnswer](../../server/internal/packet/packet.go#L61), [proto.RaidAnswer](../../internal/proto/opcodes.go#L45).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L128)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L130)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1077,7 +1077,7 @@ type PartyReply struct {
 
 Declarations: [packet.RaidDisband](../../server/internal/packet/packet.go#L62), [proto.RaidDisband](../../internal/proto/opcodes.go#L46).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L124), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L226)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L126), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L226)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1103,7 +1103,7 @@ func RaidDisbandPacket() []byte            { return NewWriter(RaidDisband).Bytes
 
 Declarations: [packet.RaidLeader](../../server/internal/packet/packet.go#L63), [proto.RaidLeader](../../internal/proto/opcodes.go#L47).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L132), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L386)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L134), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L386)
 
 **S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L108), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -1157,7 +1157,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.RaidInviteName](../../server/internal/packet/packet.go#L64), [proto.RaidInviteName](../../internal/proto/opcodes.go#L48).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L126)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L128)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1256,7 +1256,7 @@ type Reader struct {
 
 Declarations: [packet.RaidExpel](../../server/internal/packet/packet.go#L66), [proto.RaidExpel](../../internal/proto/opcodes.go#L50).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L134)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L136)
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 

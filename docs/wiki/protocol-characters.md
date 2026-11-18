@@ -534,7 +534,7 @@ type InventoryItem struct {
 
 Declarations: [packet.Logout](../../server/internal/packet/packet.go#L33), [proto.Logout](../../internal/proto/opcodes.go#L17).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L277)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L279)
 
 **S→C serializers:** [buildLeaveWorldAck (server/internal/world/character.go)](../../server/internal/world/character.go#L549)
 
@@ -771,7 +771,7 @@ type ActiveBuff struct {
 
 Declarations: [packet.CharacterSkillBar](../../server/internal/packet/packet.go#L37), [proto.CharacterSkillBar](../../internal/proto/opcodes.go#L21).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L206)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L208)
 
 **S→C serializers:** [buildCharacterSkillBar (server/internal/world/skills.go)](../../server/internal/world/skills.go#L39)
 

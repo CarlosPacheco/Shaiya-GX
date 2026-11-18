@@ -112,6 +112,7 @@ type Session struct {
 	lastCombatAt     time.Time
 	teleportStone    db.Item
 	teleportCast     *teleportStoneCast
+	summonCastEnd    time.Time
 	shoutReadyAt     time.Time // 0x1107 cooldown (CUser +0x5848)
 	returnAt         time.Time // 0x0556 pending move (CUser +0x581c, type 0)
 }
@@ -405,6 +406,7 @@ func (s *Session) tick(idle bool) {
 	s.applyDuelWins()
 	s.tickReturnToTown()
 	s.tickTeleportStone(time.Now())
+	s.tickPartySummon(time.Now())
 	s.completePendingGuild()
 	s.tickRebirth(time.Now())
 	if s.char == nil {
@@ -698,6 +700,7 @@ func (s *Session) selectCharacter(id uint32) {
 	}
 	s.teleportStone = db.Item{}
 	s.teleportCast = nil
+	s.summonCastEnd = time.Time{}
 	ch, err := db.CharacterDetail(s.accountID, id)
 	if err != nil {
 		s.log.Printf("GX Server World select character id=%d failed: %v", id, err)

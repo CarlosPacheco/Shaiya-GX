@@ -11,6 +11,8 @@ const MessageNone, MessageOK, MessageCancel = 0, 1, 2
 // The caller owns modality and any action associated with confirmation.
 type Message struct {
 	extra            int
+	detail           string
+	detailColor      [4]float32
 	frame            *render.Texture
 	ok, cancel       Button
 	Text             string
@@ -28,6 +30,7 @@ func NewMessage(t Textures) (*Message, error) {
 func (m *Message) Open(text string, confirm bool) {
 	m.Text, m.Confirm, m.Visible = text, confirm, true
 	m.extra = 0
+	m.detail = ""
 	for _, b := range []*Button{&m.ok, &m.cancel} {
 		b.held, b.state = false, StateNormal
 	}
@@ -73,8 +76,14 @@ func (m *Message) Draw(s *render.Sprites, f *Font, w, h int) {
 		s.Draw(m.frame, float32(x), float32(y+111+m.extra), 256, 145, 0, 111.0/256, 1, 1, white)
 	}
 	lines := wrapLines(f, m.Text, 216)
-	for i, line := range lines[:min(4+m.extra/14, len(lines))] {
+	lines = lines[:min(4+m.extra/14, len(lines))]
+	for i, line := range lines {
 		f.Draw(s, line, x+25, y+53+i*14, white, 216)
+	}
+	if m.detail != "" {
+		for i, line := range wrapLines(f, m.detail, 216) {
+			f.Draw(s, line, x+25, y+53+(len(lines)+i)*14, m.detailColor, 216)
+		}
 	}
 	m.ok.Draw(s)
 	if m.Confirm {
@@ -87,5 +96,15 @@ func (m *Message) OpenFull(text string, confirm bool, f *Font) {
 	m.Open(text, confirm)
 	if f != nil {
 		m.extra = max(0, len(wrapLines(f, text, 216))-4) * 14
+	}
+}
+
+// OpenWithDetail appends a colored line to the classic confirmation dialog.
+func (m *Message) OpenWithDetail(text, detail string, color [4]float32, f *Font) {
+	m.Open(text, true)
+	m.detail, m.detailColor = detail, color
+	if f != nil {
+		n := len(wrapLines(f, text, 216)) + len(wrapLines(f, detail, 216))
+		m.extra = max(0, n-4) * 14
 	}
 }

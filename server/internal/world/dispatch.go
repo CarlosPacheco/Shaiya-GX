@@ -22,7 +22,7 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 	switch op {
 	case packet.CharacterMobAutoAttack, packet.CharacterUserAutoAttack, packet.SkillUse, packet.SkillUseNoTarget,
 		packet.UseItem, packet.UseVehicle, packet.CharacterMotion, packet.ReturnToTown:
-		s.cancelTeleportStone()
+		s.cancelTravelCast()
 	}
 	switch op {
 	case packet.Opcode(proto.GXTargetEffectsQuery):
@@ -72,6 +72,8 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 		s.handleChat(op, p)
 	case packet.ChatWhisper:
 		s.handleWhisper(p)
+	case packet.Opcode(proto.GXSummonRune):
+		s.handleSummonRune(p)
 	case packet.Opcode(proto.GXTeleportStone):
 		s.handleTeleportStone(p)
 	case packet.UseItem:

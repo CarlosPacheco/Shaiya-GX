@@ -216,7 +216,7 @@ func SelectServerPacket(serverID uint8, version uint32) []byte {
 
 Declarations: [packet.GameHandshake](../../server/internal/packet/packet.go#L200), [proto.GameHandshake](../../internal/proto/opcodes.go#L188).
 
-**C→S receive adapters:** [frame (server/internal/world/session.go)](../../server/internal/world/session.go#L520)
+**C→S receive adapters:** [frame (server/internal/world/session.go)](../../server/internal/world/session.go#L522)
 
 **S→C serializers:** [buildWorldHandshake (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L16)
 
@@ -263,7 +263,7 @@ func WorldHelloPacket(userUID uint32, token [16]byte) []byte {
 
 Declarations: [packet.Ping](../../server/internal/packet/packet.go#L201), [proto.Ping](../../internal/proto/opcodes.go#L189).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L275)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L277)
 
 **S→C serializers:** [buildPing (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L101)
 

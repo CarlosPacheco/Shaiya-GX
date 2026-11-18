@@ -271,3 +271,14 @@ other character actions and Escape interrupt the cast before the stone is spent.
 Dungeons and instanced zones are excluded, and portal-gated fields
 must have an eligible entrance. Points survive logout and are local to the
 character.
+
+
+## Party Member Summon Rune
+
+A Special 31 rune is consumed when its five-second cast starts. Damage,
+movement, or another character action can interrupt it. A completed cast
+offers a 60-second summon to party members. In raids, members summon their own
+group, and the raid leader can summon the entire raid.
+The classic confirmation names the summoner and shows the origin map in yellow.
+Accepting moves the recipient immediately to the summoner's current position,
+subject to map access and the party membership still being valid.

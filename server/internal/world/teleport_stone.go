@@ -21,7 +21,12 @@ type teleportStoneCast struct {
 	points [proto.TeleportPointCount]db.TeleportPoint
 }
 
-func (s *Session) cancelTeleportStone() {
+func (s *Session) cancelTravelCast() {
+	s.cancelPartySummon()
+	s.cancelRecordedPointCast()
+}
+
+func (s *Session) cancelRecordedPointCast() {
 	cast := s.teleportCast
 	if cast == nil {
 		return
@@ -33,7 +38,7 @@ func (s *Session) cancelTeleportStone() {
 func (s *Session) tickTeleportStone(now time.Time) {
 	if cast := s.teleportCast; cast != nil {
 		if s.char == nil || s.dead || s.char.CurrentHP == 0 || s.actionBlocked() || s.cast != nil || s.inCombat() {
-			s.cancelTeleportStone()
+			s.cancelTravelCast()
 		} else if !now.Before(cast.ends) {
 			s.teleportCast = nil
 			s.resolveTeleportStone(proto.TeleportTravel, cast.slot, true)
@@ -114,7 +119,7 @@ func (s *Session) handleTeleportStone(p []byte) {
 	}
 	action, slot := p[2], p[3]
 	if action == proto.TeleportCancel {
-		s.cancelTeleportStone()
+		s.cancelRecordedPointCast()
 		return
 	}
 	if s.teleportCast != nil || (action != proto.TeleportSave && action != proto.TeleportTravel) || slot >= proto.TeleportPointCount {
@@ -176,6 +181,7 @@ func (s *Session) resolveTeleportStone(action, slot uint8, complete bool) {
 		return
 	}
 	if !complete {
+		s.cancelPartySummon()
 		s.cancelMove()
 		s.teleportCast = &teleportStoneCast{slot: slot, ends: time.Now().Add(teleportStoneCastDuration), points: points}
 		s.sendTeleportStone(proto.TeleportCasting, true, "", points)
