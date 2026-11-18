@@ -189,7 +189,7 @@ failed extraction whose socket state cannot be inferred from the result alone.
 Linking, extraction, enhancement and recreation play the original
 `ui_rapis001.ogg` success sound or `ui_rapis002.ogg` failure sound once their
 server result has been resolved. Successful operations flash the original
-`Lensflare/flare0.jpg` over the placed equipment for 500 ms, using additive
+`Lensflare/flare0.png` over the placed equipment for 500 ms, using additive
 blending. A failure clears a previous success flash. Native WAV sources are
 imported as Ogg resources; original game assets remain external to Git.
 

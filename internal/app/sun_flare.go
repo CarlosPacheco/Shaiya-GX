@@ -23,13 +23,13 @@ var sunFlareLayers = [...]struct {
 	along, size float32
 	color       [3]float32
 }{
-	{"Lensflare/flare4.jpg", 0, .6, [3]float32{.7, .4, .4}},
-	{"Lensflare/flare0.jpg", 0, .25, [3]float32{1, 1, 1}},
-	{"Lensflare/flare1.jpg", 0, .2, [3]float32{.3, .1, 0}},
-	{"Lensflare/flare5.jpg", .4, .2, [3]float32{.07, .07, .1}},
-	{"Lensflare/flare5.jpg", .32, .05, [3]float32{.07, .07, .1}},
-	{"Lensflare/flare5.jpg", .46, .1, [3]float32{.07, .07, .1}},
-	{"Lensflare/flare5.jpg", .8, .06, [3]float32{.3, .2, .13}},
+	{"flare4", 0, .6, [3]float32{.7, .4, .4}},
+	{"flare0", 0, .25, [3]float32{1, 1, 1}},
+	{"flare1", 0, .2, [3]float32{.3, .1, 0}},
+	{"flare5", .4, .2, [3]float32{.07, .07, .1}},
+	{"flare5", .32, .05, [3]float32{.07, .07, .1}},
+	{"flare5", .46, .1, [3]float32{.07, .07, .1}},
+	{"flare5", .8, .06, [3]float32{.3, .2, .13}},
 }
 
 func projectSun(view, projection render.M4) (x, y float32, inView bool) {
@@ -75,7 +75,7 @@ func (a *App) drawSunFlare(width, height int) {
 	verticalScale := (math.Pi / 2) / projectionAspect(width, height)
 	gl.BlendFunc(gl.ONE, gl.ONE)
 	for _, layer := range sunFlareLayers {
-		tex := a.assets.Texture(layer.texture)
+		tex := a.lensFlareTexture(layer.texture)
 		if tex == nil {
 			continue
 		}
@@ -88,4 +88,13 @@ func (a *App) drawSunFlare(width, height int) {
 	}
 	a.sprites.Flush()
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+}
+
+// Prefer PNG while allowing existing loose asset packs to retain their JPEGs.
+func (a *App) lensFlareTexture(name string) *render.Texture {
+	base := "Lensflare/" + name
+	if _, ok := a.assets.Arc.Lookup(base + ".png"); ok {
+		return a.assets.Texture(base + ".png")
+	}
+	return a.assets.Texture(base + ".jpg")
 }

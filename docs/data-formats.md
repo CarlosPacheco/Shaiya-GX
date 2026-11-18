@@ -267,8 +267,9 @@ panels load texture 0 separately.
 
 GX projects the original sun position and applies the original edge
 attenuation and visibility fade. The occlusion ray checks map geometry
-within the rendered world. Place the original JPEGs in the loose
-`data/Lensflare/` directory beside the client executable.
+within the rendered world. Place opaque, losslessly converted PNGs in the loose
+`data/Lensflare/` directory beside the client executable. GX also accepts
+the original JPEGs when the corresponding PNGs are absent.
 
 ### Skill catalog cleanup
 

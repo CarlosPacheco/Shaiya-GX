@@ -6,7 +6,7 @@ import (
 )
 
 // EP5 0x56bc40/0x56be20 use ui_rapis001 for success, 002 for failure.
-// Its service panels flash Lensflare/flare0.jpg additively over the target
+// Its service panels flash flare0 additively over the target
 // for 500ms (0x4a8f26). Trigger once from a confirmed operation, never a click.
 func (a *App) forgeResult(success bool) {
 	name := "Sound/ui_rapis002.ogg"
@@ -25,7 +25,7 @@ func (a *App) drawForgeShine(x, y int) {
 	if remaining <= 0 || remaining > .5 || a.assets == nil {
 		return
 	}
-	tex := a.assets.Texture("Lensflare/flare0.jpg")
+	tex := a.lensFlareTexture("flare0")
 	if tex == nil {
 		return
 	}
