@@ -938,7 +938,7 @@ Declarations: [packet.SkillKeep](../../server/internal/packet/packet.go#L118), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applyFixedHit (server/internal/world/firethorn.go)](../../server/internal/world/firethorn.go#L81), [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L252), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L359)
+**S→C serializers:** [applyFixedHit (server/internal/world/firethorn.go)](../../server/internal/world/firethorn.go#L81), [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L252), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L376)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L829)
 
@@ -1054,7 +1054,7 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 
 <details><summary>processBuffs — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L359)
+[Source definition](../../server/internal/world/skillcast.go#L376)
 
 ```go
 func (s *Session) processBuffs() {
@@ -1132,7 +1132,7 @@ Declarations: [packet.SkillCastStarted](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L141)
+**S→C serializers:** [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L150)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L770)
 
@@ -1142,7 +1142,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleUseSkill — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L141)
+[Source definition](../../server/internal/world/skillcast.go#L150)
 
 ```go
 func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
@@ -1186,6 +1186,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	if !s.skillReady(k.SkillID) {
 		s.sendSkillMessage(k.SkillID, 215)
+		return
+	}
+	if !s.previousSkillCooling(def) {
+		s.sendSkillMessage(k.SkillID, msgPreviousSkillRequired)
 		return
 	}
 	stats := s.stats()

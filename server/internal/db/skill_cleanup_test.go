@@ -23,8 +23,8 @@ func TestSkillCatalogCleanup(t *testing.T) {
 			t.Fatalf("working level %v was removed", level)
 		}
 	}
-	if n := count(`SELECT COUNT(*) FROM PS_GameDefs_Skills WHERE SkillID IN (61,64,79,94,104,135,145,150,161,302,311,312,313) AND SkillLevel<100 AND PrevSkillID<>0`); n != 0 {
-		t.Fatalf("%d chain levels still name a previous skill", n)
+	if n := count(`SELECT COUNT(*) FROM PS_GameDefs_Skills WHERE SkillID IN (61,64,79,94,104,135,145,150,161,302,311,312,313) AND SkillLevel<100 AND PrevSkillID=0`); n != 0 {
+		t.Fatalf("%d levels lost the skill that must be cooling down (migration 9)", n)
 	}
 	if n := count(`SELECT COUNT(*) FROM PS_GameDefs_Skills WHERE SkillID IN (309,310) AND SkillLevel<100 AND PrevSkillID=63`); n == 0 {
 		t.Fatal("the Stealth requirement of Shadow Attack/Sleep must stay")

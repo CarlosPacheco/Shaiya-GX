@@ -118,7 +118,7 @@ func TestNormalizeSkillCatalog(t *testing.T) {
 	if len(plainOut) != len(out) {
 		t.Fatal("output is not plain")
 	}
-	if rep.ChainTexts != 4 || len(rep.PrevCleared) != 2 || len(rep.DeadLevels) != 1 || len(rep.TimeDamage) != 1 || len(rep.DetailMoved) != 2 || rep.ManaStaminaText != 1 || len(rep.FullyDeadSkills) != 1 || rep.FullyDeadSkills[0] != 4 {
+	if rep.ChainTexts != 4 || len(rep.PrevRestored) != 1 || len(rep.DeadLevels) != 1 || len(rep.TimeDamage) != 1 || len(rep.DetailMoved) != 2 || rep.ManaStaminaText != 1 || len(rep.FullyDeadSkills) != 1 || rep.FullyDeadSkills[0] != 4 {
 		t.Fatalf("report %s", rep)
 	}
 	// Idempotent: a second pass changes nothing.
@@ -147,5 +147,18 @@ func TestApplyTextFixes(t *testing.T) {
 	}
 	if _, _, err := normalizeSkillCatalog(plain, []byte("1,1,Some other text.,New text.\n")); err == nil {
 		t.Fatal("an unexpected description was overwritten")
+	}
+}
+
+// The previous-skill field is kept: the description names the skill that has
+// to be cooling down, once.
+func TestRequireCooldown(t *testing.T) {
+	got := requireCooldown("Deals 37 damage and stuns for 4 seconds", "Halt Kick")
+	want := "Deals 37 damage and stuns for 4 seconds. Can only be used while Halt Kick is cooling down."
+	if got != want || requireCooldown(got, "Halt Kick") != got || requireCooldown("Deals damage.", "") != "Deals damage." {
+		t.Fatalf("got %q", got)
+	}
+	if levelSuffix.ReplaceAllString("Stun Crash Lv1", "") != "Stun Crash" {
+		t.Fatal("level suffix kept")
 	}
 }

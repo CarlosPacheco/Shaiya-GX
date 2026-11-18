@@ -349,10 +349,10 @@
 308,1,Taunts nearby monsters wihtin 2 meters with a 80 percent chance and forces them to attack taunter for 2 seconds. This skill also can be used to another provoked target.,Taunts nearby monsters within 2 meters with an 80 percent chance and forces them to attack the taunter for 2 seconds. This skill also can be used to another provoked target.
 308,2,Taunts nearby monsters wihtin 3 meters with a 80 percent chance and forces them to attack taunter for 3 seconds. This skill also can be used to another provoked target.,Taunts nearby monsters within 3 meters with an 80 percent chance and forces them to attack the taunter for 3 seconds. This skill also can be used to another provoked target.
 308,3,Taunts nearby monsters wihtin 4 meters with a 80 percent chance and forces them to attack taunter for 4 seconds. This skill also can be used to another provoked target.,Taunts nearby monsters within 4 meters with an 80 percent chance and forces them to attack the taunter for 4 seconds. This skill also can be used to another provoked target.
-309,1,Deals damage as much as multiplying your Attack Power by <BG only in Stealth mode with a 50 percent chance.,"Deals damage as much as multiplying your Attack Power by 3, only in Stealth mode, with a 50 percent chance."
-309,2,Deals damage as much as multiplying your Attack Power by <BG only in Stealth mode with a 50 percent chance.,"Deals damage as much as multiplying your Attack Power by 5, only in Stealth mode, with a 50 percent chance."
-310,1,Mesmerizes the target for 5 seconds only in Stealth Mode untill the target suffers damage.,Mesmerizes the target for 5 seconds only in Stealth Mode until the target suffers damage.
-310,2,Mesmerizes the target for 10 seconds only in Stealth Mode untill the target suffers damage.,Mesmerizes the target for 10 seconds only in Stealth Mode until the target suffers damage.
+309,1,Deals damage as much as multiplying your Attack Power by <BG only in Stealth mode with a 50 percent chance.,"Deals damage as much as multiplying your Attack Power by 3, with a 50 percent chance."
+309,2,Deals damage as much as multiplying your Attack Power by <BG only in Stealth mode with a 50 percent chance.,"Deals damage as much as multiplying your Attack Power by 5, with a 50 percent chance."
+310,1,Mesmerizes the target for 5 seconds only in Stealth Mode untill the target suffers damage.,Mesmerizes the target for 5 seconds until the target suffers damage.
+310,2,Mesmerizes the target for 10 seconds only in Stealth Mode untill the target suffers damage.,Mesmerizes the target for 10 seconds until the target suffers damage.
 314,1,Deals addtional 243 damage on SP with initial damage.,Deals additional 243 damage on SP with initial damage.
 314,2,Deals addtional 438 damage on SP with initial damage.,Deals additional 438 damage on SP with initial damage.
 314,3,Deals addtional 987 damage on SP with initial damage.,Deals additional 987 damage on SP with initial damage.

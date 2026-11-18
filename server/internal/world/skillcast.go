@@ -136,6 +136,15 @@ func (s *Session) skillReady(id uint16) bool {
 	return !ok || !at.After(time.Now())
 }
 
+// previousSkillCooling: PrevSkillID names the skill that must be cooling down
+// for this one to be usable. SysMsg 315 is the client's "A previous skill is
+// required".
+func (s *Session) previousSkillCooling(def *db.SkillDef) bool {
+	return def.PrevSkillID == 0 || !s.skillReady(def.PrevSkillID)
+}
+
+const msgPreviousSkillRequired = 315
+
 // handleUseSkill (0x0517 / 0x0511): bar number, target id. The ack echoes
 // the request opcode.
 func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
@@ -179,6 +188,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	if !s.skillReady(k.SkillID) {
 		s.sendSkillMessage(k.SkillID, 215)
+		return
+	}
+	if !s.previousSkillCooling(def) {
+		s.sendSkillMessage(k.SkillID, msgPreviousSkillRequired)
 		return
 	}
 	stats := s.stats()
@@ -315,6 +328,10 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 	}
 	if !s.skillReady(k.SkillID) {
 		s.sendSkillMessage(k.SkillID, 215)
+		return
+	}
+	if !s.previousSkillCooling(def) {
+		s.sendSkillMessage(k.SkillID, msgPreviousSkillRequired)
 		return
 	}
 	if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && !s.attackMovementAllowed(time.Now()) {

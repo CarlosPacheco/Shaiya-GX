@@ -720,7 +720,7 @@ type GiftEntry struct {
 |---|---|
 | [`migration`](../../server/internal/db/migrations.go#L11)<br>`type migration` | See the source definition and the subsystem ownership contract. |
 | [`migrations`](../../server/internal/db/migrations.go#L16)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L62)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
+| [`migrate`](../../server/internal/db/migrations.go#L68)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 

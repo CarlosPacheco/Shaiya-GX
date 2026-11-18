@@ -55,6 +55,12 @@ var migrations = []migration{
 		(15,3),(17,3),(19,3),(20,3),(21,3),(22,3),(100,2),(100,3),(109,3),(125,2),
 		(125,3),(173,2),(173,3),(175,3),(176,3),(177,3),(178,3),(179,3),(180,3),(181,3),
 		(182,3),(183,3),(184,3),(185,3),(316,3),(317,3),(318,3),(319,3))`},
+	{9, "skill_previous_requirement", `-- PrevSkillID is back: the skill it names must be cooling down for this one to be usable.
+		UPDATE PS_GameDefs_Skills SET PrevSkillID=CASE SkillID
+			WHEN 61 THEN 104 WHEN 64 THEN 150 WHEN 79 THEN 135 WHEN 94 THEN 79 WHEN 104 THEN 134
+			WHEN 135 THEN 134 WHEN 145 THEN 134 WHEN 150 THEN 145 WHEN 161 THEN 61 WHEN 302 THEN 39
+			WHEN 311 THEN 150 WHEN 312 THEN 61 WHEN 313 THEN 79 END
+		WHERE SkillLevel<100 AND SkillID IN (61,64,79,94,104,135,145,150,161,302,311,312,313)`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

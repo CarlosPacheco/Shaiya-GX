@@ -17,8 +17,9 @@ import (
 //   - dead skill levels (a placeholder such as "Hell LordED" / "Not Available.")
 //     of skills that have working levels become the same empty slot as the
 //     unused levels; skills with no working level at all are left alone;
-//   - the chain mechanic is not used: chain wording is removed from the
-//     descriptions and the previous-skill field of chain skills is cleared;
+//   - the previous-skill field means "that skill must be cooling down for this
+//     one to be usable": the original values are restored and the description
+//     says so instead of using chain wording;
 //   - Mana Shot and Stamina Shot are ordinary spells: their "enemy players
 //     only" sentence is dropped;
 //   - Aggravation loses its time damage;
@@ -41,6 +42,26 @@ const (
 var retainedLevels = map[SkillKey]bool{{ID: 250, Level: 2}: true, {ID: 274, Level: 3}: true, {ID: 275, Level: 3}: true,
 	{ID: 280, Level: 3}: true, {ID: 281, Level: 3}: true, {ID: 282, Level: 3}: true, {ID: 283, Level: 3}: true, {ID: 284, Level: 3}: true, {ID: 285, Level: 3}: true}
 
+// previousSkills is the original PrevSkillID of the skills that have one: that
+// skill must be cooling down for the skill to be usable.
+var previousSkills = map[int]uint16{61: 104, 64: 150, 79: 135, 94: 79, 104: 134, 135: 134, 145: 134, 150: 145,
+	161: 61, 302: 39, 309: 63, 310: 63, 311: 150, 312: 61, 313: 79}
+
+var levelSuffix = regexp.MustCompile(`(?i)\s*Lv\.?\s*\d+$`)
+
+// requireCooldown says which skill has to be cooling down (once).
+func requireCooldown(desc, prev string) string {
+	const marker = " is cooling down."
+	if prev == "" || strings.Contains(desc, marker) {
+		return desc
+	}
+	desc = strings.TrimSpace(desc)
+	if !strings.HasSuffix(desc, ".") {
+		desc += "."
+	}
+	return desc + " Can only be used while " + prev + marker
+}
+
 //go:embed skill_text_fixes.csv
 var skillTextFixesCSV []byte
 
@@ -55,7 +76,7 @@ var (
 type SkillCatalogReport struct {
 	DeadLevels      []SkillKey // blanked
 	ChainTexts      int
-	PrevCleared     []SkillKey
+	PrevRestored    []SkillKey
 	ManaStaminaText int
 	TimeDamage      []SkillKey
 	TextFixes       int
@@ -64,8 +85,8 @@ type SkillCatalogReport struct {
 }
 
 func (r SkillCatalogReport) String() string {
-	return fmt.Sprintf("dead levels removed: %d; chain descriptions rewritten: %d; previous skill cleared: %d; Mana/Stamina Shot texts: %d; Aggravation time damage cleared: %d; detail 25 -> 21: %d; descriptions corrected: %d; skills with no working level left alone: %v",
-		len(r.DeadLevels), r.ChainTexts, len(r.PrevCleared), r.ManaStaminaText, len(r.TimeDamage), len(r.DetailMoved), r.TextFixes, r.FullyDeadSkills)
+	return fmt.Sprintf("dead levels removed: %d; chain descriptions rewritten: %d; previous skill restored: %d; Mana/Stamina Shot texts: %d; Aggravation time damage cleared: %d; detail 25 -> 21: %d; descriptions corrected: %d; skills with no working level left alone: %v",
+		len(r.DeadLevels), r.ChainTexts, len(r.PrevRestored), r.ManaStaminaText, len(r.TimeDamage), len(r.DetailMoved), r.TextFixes, r.FullyDeadSkills)
 }
 
 type skillSlot struct {
@@ -176,9 +197,12 @@ func normalizeSkillCatalog(raw, textFixes []byte) ([]byte, SkillCatalogReport, e
 			}
 			s.desc, s.changed = text, true
 			rep.ChainTexts++
-			if binary.LittleEndian.Uint16(s.rec[skillPrevOffset:]) != 0 {
-				rep.PrevCleared = append(rep.PrevCleared, s.key())
-				binary.LittleEndian.PutUint16(s.rec[skillPrevOffset:], 0)
+		}
+		if prev, ok := previousSkills[s.id]; ok {
+			if binary.LittleEndian.Uint16(s.rec[skillPrevOffset:]) != prev {
+				binary.LittleEndian.PutUint16(s.rec[skillPrevOffset:], prev)
+				rep.PrevRestored = append(rep.PrevRestored, s.key())
+				s.changed = true
 			}
 		}
 		if s.id == 115 || s.id == 314 {
@@ -201,6 +225,20 @@ func normalizeSkillCatalog(raw, textFixes []byte) ([]byte, SkillCatalogReport, e
 
 	if err := applyTextFixes(slots, textFixes, &rep); err != nil {
 		return nil, rep, err
+	}
+	// After the rewrites, which match the text without this sentence.
+	skillNames := map[int]string{}
+	for _, s := range slots {
+		if _, ok := skillNames[s.id]; !ok && !s.blank() {
+			skillNames[s.id] = levelSuffix.ReplaceAllString(strings.Join(strings.Fields(s.name), " "), "")
+		}
+	}
+	for _, s := range slots {
+		if prev, ok := previousSkills[s.id]; ok && !s.blank() {
+			if text := requireCooldown(s.desc, skillNames[int(prev)]); text != s.desc {
+				s.desc, s.changed = text, true
+			}
+		}
 	}
 
 	out := binary.LittleEndian.AppendUint32(nil, uint32(groups))
@@ -243,7 +281,7 @@ func applyTextFixes(slots []*skillSlot, fixes []byte, rep *SkillCatalogReport) e
 		switch {
 		case s == nil:
 			return fmt.Errorf("skill_text_fixes.csv: missing skill %d level %d", id, level)
-		case s.desc == row[3]:
+		case s.desc == row[3], strings.HasPrefix(s.desc, strings.TrimSuffix(row[3], ".")) && strings.Contains(s.desc, " is cooling down."):
 		case s.desc == row[2]:
 			s.desc, s.changed = row[3], true
 			rep.TextFixes++
