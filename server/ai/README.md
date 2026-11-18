@@ -32,7 +32,7 @@ The executable embeds this same catalog. At startup, GX loads a sibling `ai/`
 directory beside its data directory when present; portable packages include it.
 `RAPTURE_AI_DIR` selects an explicit directory. Otherwise the embedded catalog
 runs. A broken selected catalog stops startup; it never enables old Go AI.
-Edits take effect on restart. Keep the complete catalog together.
+The sources are read and compiled once, at startup, and never again: edits take effect only on restart. Keep the complete catalog together.
 
 One VM belongs to each map shard; compiled code is reused. Each mob generation
 has its own actor/variables. Respawn creates fresh state; normal reset delivers

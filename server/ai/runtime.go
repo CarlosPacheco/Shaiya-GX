@@ -197,7 +197,16 @@ func (v *VM) module(name string) (rt.Value, error) {
 	return result, nil
 }
 func (v *VM) call(fn rt.Value, args ...rt.Value) (result rt.Value, err error) {
-	_, err = v.r.MainThread().CallContext(rt.RuntimeContextDef{HardLimits: rt.RuntimeResources{Cpu: 500000, Memory: 8 << 20}}, func() error { var e error; result, e = rt.Call1(v.r.MainThread(), fn, args...); return e })
+	_, err = v.r.MainThread().CallContext(rt.RuntimeContextDef{HardLimits: rt.RuntimeResources{Cpu: 500000, Memory: 8 << 20}}, func() error {
+		// rt.Call1 chains its termination to Thread.CurrentCont, which still is the
+		// last continuation of the previous call: nothing completed would ever be freed.
+		term := rt.NewTerminationWith(nil, 1, false)
+		if e := rt.Call(v.r.MainThread(), fn, args, term); e != nil {
+			return e
+		}
+		result = term.Get(0)
+		return nil
+	})
 	return
 }
 func luaValue(value any) (rt.Value, error) {

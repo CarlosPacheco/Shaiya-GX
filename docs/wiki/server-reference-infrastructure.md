@@ -41,11 +41,11 @@ Package ai executes the authoritative mob policies in modern, pure-Go Lua.
 | [`Close`](../../server/ai/runtime.go#L170)<br>`func (v *VM) Close()` | See the source definition and the subsystem ownership contract. |
 | [`module`](../../server/ai/runtime.go#L171)<br>`func (v *VM) module(name string) (rt.Value, error)` | See the source definition and the subsystem ownership contract. |
 | [`call`](../../server/ai/runtime.go#L199)<br>`func (v *VM) call(fn rt.Value, args ...rt.Value) (result rt.Value, err error)` | See the source definition and the subsystem ownership contract. |
-| [`luaValue`](../../server/ai/runtime.go#L203)<br>`func luaValue(value any) (rt.Value, error)` | See the source definition and the subsystem ownership contract. |
-| [`Actor`](../../server/ai/runtime.go#L226)<br>`type Actor` | See the source definition and the subsystem ownership contract. |
-| [`NewActor`](../../server/ai/runtime.go#L231)<br>`func (v *VM) NewActor(id uint8, host Host) (*Actor, error)` | See the source definition and the subsystem ownership contract. |
-| [`Event`](../../server/ai/runtime.go#L247)<br>`func (a *Actor) Event(host Host, event string, args ...any) error` | See the source definition and the subsystem ownership contract. |
-| [`AcquiresProximity`](../../server/ai/runtime.go#L265)<br>`func (p *Program) AcquiresProximity(id uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`luaValue`](../../server/ai/runtime.go#L212)<br>`func luaValue(value any) (rt.Value, error)` | See the source definition and the subsystem ownership contract. |
+| [`Actor`](../../server/ai/runtime.go#L235)<br>`type Actor` | See the source definition and the subsystem ownership contract. |
+| [`NewActor`](../../server/ai/runtime.go#L240)<br>`func (v *VM) NewActor(id uint8, host Host) (*Actor, error)` | See the source definition and the subsystem ownership contract. |
+| [`Event`](../../server/ai/runtime.go#L256)<br>`func (a *Actor) Event(host Host, event string, args ...any) error` | See the source definition and the subsystem ownership contract. |
+| [`AcquiresProximity`](../../server/ai/runtime.go#L274)<br>`func (p *Program) AcquiresProximity(id uint8) bool` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
