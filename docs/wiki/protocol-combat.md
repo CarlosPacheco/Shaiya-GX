@@ -834,7 +834,7 @@ Declarations: [packet.BuffRemove](../../server/internal/packet/packet.go#L117), 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [removeEffects (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L198), [clearBuffsOnDeath (server/internal/world/skillattack.go)](../../server/internal/world/skillattack.go#L310)
+**S→C serializers:** [removeEffects (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L201), [clearBuffsOnDeath (server/internal/world/skillattack.go)](../../server/internal/world/skillattack.go#L310)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L657)
 
@@ -844,7 +844,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>removeEffects — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L198)
+[Source definition](../../server/internal/world/playereffects.go#L201)
 
 ```go
 func (s *Session) removeEffects(match func(*ActiveBuff) bool, why string) {
@@ -938,7 +938,7 @@ Declarations: [packet.SkillKeep](../../server/internal/packet/packet.go#L118), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applyFixedHit (server/internal/world/firethorn.go)](../../server/internal/world/firethorn.go#L99), [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L252), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L381)
+**S→C serializers:** [applyFixedHit (server/internal/world/firethorn.go)](../../server/internal/world/firethorn.go#L99), [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L258), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L387)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L836)
 
@@ -975,7 +975,7 @@ func (s *Session) applyFixedHit(h pendingUserHit) bool {
 
 <details><summary>tickDebuffs — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L252)
+[Source definition](../../server/internal/world/playereffects.go#L258)
 
 ```go
 func (s *Session) tickDebuffs(now time.Time) bool {
@@ -1062,7 +1062,7 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 
 <details><summary>processBuffs — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L381)
+[Source definition](../../server/internal/world/skillcast.go#L387)
 
 ```go
 func (s *Session) processBuffs() {
@@ -1167,7 +1167,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	target, _ := packet.U32(p[3:])
 	s.cancelVehicleCast()
-	if s.ridingVehicle() || s.cast != nil || s.actionBlocked() {
+	if s.ridingVehicle() || s.cast != nil || s.cannotAct() {
 		s.log.Printf("GX Server World rejected skill use (mounted, casting, stunned or asleep) character_id=%d", ch.ID)
 		return
 	}
@@ -1201,7 +1201,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		return
 	}
 	stats := s.stats()
-	if s.actionBlocked() || stats.Disabled[min(int(def.Kind), 2)] > 0 {
+	if s.cannotAct() || stats.Disabled[min(int(def.Kind), 2)] > 0 {
 		s.log.Printf("GX Server World rejected skill use: category disabled skill_id=%d", k.SkillID)
 		return
 	}
@@ -1249,6 +1249,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 			castTarget, pos = p.CharacterID, &[2]float32{x, z}
 		}
 	} else if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && castTarget != ch.ID && def.TargetType != targetTypeEnemiesNearCaster {
+		if def.TypeEffect == typeEffectDebuff && def.TypeDetail == detailDegeneration {
+			s.sendSkillMessage(k.SkillID, 317) // it cannot be cast upon a monster
+			return
+		}
 		mob, ok := MobByID(ch.MapID, target)
 		if !ok {
 			return
@@ -2125,7 +2129,7 @@ Declarations: [proto.SkillMobReflectedDamage](../../internal/proto/opcodes.go#L1
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [reflectToMob (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L441)
+**S→C serializers:** [reflectToMob (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L447)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L860)
 
@@ -2135,7 +2139,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>reflectToMob — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L441)
+[Source definition](../../server/internal/world/playereffects.go#L447)
 
 ```go
 func (s *Session) reflectToMob(mobGlobalID uint32, damage [3]uint16) {
@@ -2193,7 +2197,7 @@ Declarations: [packet.CharacterDeathState](../../server/internal/packet/packet.g
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterDeathState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1456), [buildCharacterSpeed (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L154)
+**S→C serializers:** [buildCharacterDeathState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1456), [buildCharacterSpeed (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L157)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L706)
 
@@ -2219,7 +2223,7 @@ func buildCharacterDeathState(characterID uint32) []byte {
 
 <details><summary>buildCharacterSpeed — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L154)
+[Source definition](../../server/internal/world/playereffects.go#L157)
 
 ```go
 func buildCharacterSpeed(id uint32, sp playerSpeeds) []byte {

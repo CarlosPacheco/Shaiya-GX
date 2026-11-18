@@ -63,7 +63,7 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 	s.buffs = append(s.buffs, b)
 	if c := s.cast; c != nil {
 		_, pending, known := s.knownSkill(c.number)
-		if s.actionBlocked() || known && s.stats().Disabled[min(int(pending.Kind), 2)] > 0 {
+		if s.cannotAct() || known && s.stats().Disabled[min(int(pending.Kind), 2)] > 0 {
 			s.cast = nil
 			s.log.Printf("GX Server World prepared cast interrupted by applied skill skill_id=%d", def.SkillID)
 		}
@@ -135,12 +135,15 @@ func (s *Session) speeds() playerSpeeds {
 	a, m, b := s.blocks()
 	st := s.stats()
 	sp := playerSpeeds{attack: 255, move: 255}
+	if s.degenerated() {
+		st.MoveSpeed -= degenerationSlow // a creature crawls: the slowest tier
+	}
 	if a == 0 && b == 0 {
 		at := uint8(0)
 		if wc, ok := equippedWeaponCombat(s.items); ok {
 			at = wc.AttackTime
 		}
-		if s.cast == nil {
+		if s.cast == nil && !s.degenerated() { // a transformed user cannot attack
 			sp.attack = attackspeed.Tier(at, st.AttackSpeed)
 		}
 		if m == 0 {
@@ -223,9 +226,12 @@ func (s *Session) removeEffects(match func(*ActiveBuff) bool, why string) {
 	}
 }
 
-// wake is CUser::RemApplySkillSleep: damage ends every sleep (detail 66).
+// wake is CUser::RemApplySkillSleep: damage ends every sleep (detail 66) and
+// every transformation (Degeneration, detail 90).
 func (s *Session) wake() {
-	s.removeEffects(func(b *ActiveBuff) bool { return b.Effect == typeEffectDebuff && b.Detail == detailSleep }, "(woke)")
+	s.removeEffects(func(b *ActiveBuff) bool {
+		return b.Effect == typeEffectDebuff && (b.Detail == detailSleep || b.Detail == detailDegeneration)
+	}, "(woke)")
 }
 
 // applyMobDebuff leaves a mob skill (TypeEffect 3) on the player.

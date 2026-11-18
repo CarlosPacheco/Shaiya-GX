@@ -69,7 +69,7 @@ func (s *Session) tickStinger() bool {
 		s.duelCheckMove()
 		s.sendToViewers(buildCharacterMove(s.char, 0, s.movement.direction), "Stinger movement")
 	}
-	if s.actionBlocked() || hit && math.Hypot(float64(next[0]-want[0]), float64(next[2]-want[2])) > .05 || elapsed >= d.Duration() {
+	if s.cannotAct() || hit && math.Hypot(float64(next[0]-want[0]), float64(next[2]-want[2])) > .05 || elapsed >= d.Duration() {
 		s.dash = nil
 		stopped := proto.SkillDash{Source: s.char.ID, From: [3]float32(next), To: [3]float32(next), Started: mapgeometry.PhysicsSeconds(), Contact: 10, Stopped: true}
 		s.broadcastNear(buildSkillDash(stopped), "Stinger stopped", true)

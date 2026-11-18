@@ -164,7 +164,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	target, _ := packet.U32(p[3:])
 	s.cancelVehicleCast()
-	if s.ridingVehicle() || s.cast != nil || s.actionBlocked() {
+	if s.ridingVehicle() || s.cast != nil || s.cannotAct() {
 		s.log.Printf("GX Server World rejected skill use (mounted, casting, stunned or asleep) character_id=%d", ch.ID)
 		return
 	}
@@ -198,7 +198,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		return
 	}
 	stats := s.stats()
-	if s.actionBlocked() || stats.Disabled[min(int(def.Kind), 2)] > 0 {
+	if s.cannotAct() || stats.Disabled[min(int(def.Kind), 2)] > 0 {
 		s.log.Printf("GX Server World rejected skill use: category disabled skill_id=%d", k.SkillID)
 		return
 	}
@@ -246,6 +246,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 			castTarget, pos = p.CharacterID, &[2]float32{x, z}
 		}
 	} else if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && castTarget != ch.ID && def.TargetType != targetTypeEnemiesNearCaster {
+		if def.TypeEffect == typeEffectDebuff && def.TypeDetail == detailDegeneration {
+			s.sendSkillMessage(k.SkillID, 317) // it cannot be cast upon a monster
+			return
+		}
 		mob, ok := MobByID(ch.MapID, target)
 		if !ok {
 			return
@@ -342,7 +346,7 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 		return
 	}
 	stats := s.stats()
-	if s.actionBlocked() || stats.Disabled[min(int(def.Kind), 2)] > 0 {
+	if s.cannotAct() || stats.Disabled[min(int(def.Kind), 2)] > 0 {
 		s.log.Printf("GX Server World rejected skill use: category disabled skill_id=%d", k.SkillID)
 		return
 	}
@@ -356,6 +360,8 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 	case typeEffectAttack, typeEffectDebuff:
 		if op == opUserSkillPvP {
 			s.userSkillAttack(k, def, target, castPos, stats)
+		} else if def.TypeEffect == typeEffectDebuff && def.TypeDetail == detailDegeneration {
+			s.sendSkillMessage(k.SkillID, 317) // it cannot be cast upon a monster
 		} else {
 			s.skillAttack(k, def, target, castPos, stats)
 		}

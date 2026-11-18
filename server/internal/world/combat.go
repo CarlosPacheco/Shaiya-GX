@@ -76,7 +76,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 		s.log.Printf("GX Server World cancelled auto attack while mounted character_id=%d mob_global_id=%d", ch.ID, target)
 		return false
 	}
-	if s.actionBlocked() {
+	if s.cannotAct() {
 		return false // CUser::GetAttackSpeed is 255 while stunned or asleep
 	}
 	wc, ok := equippedWeaponCombat(s.items)
