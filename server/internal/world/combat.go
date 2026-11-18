@@ -242,6 +242,7 @@ func (s *Session) applyIncomingMobDamage(d pendingDamage) bool {
 		shown = 0
 	} else {
 		killed = s.takeMobDamage(d, damage, &stats)
+		shown = s.assisted[0] // Health Assistant moves part of it to SP / MP
 	}
 	sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius,
 		buildMobAttackCharacter(result, d.MobGlobalID, ch.ID, uint16(min(shown, 65535))), "0x0605 mob attack character")
@@ -297,6 +298,10 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 			}
 		}
 		killed = s.takeMobDamage(d, hp, stats)
+		if hp > 0 {
+			hp = s.assisted[0]
+			damage[1], damage[2] = damage[1]+int32(s.assisted[1]), damage[2]+int32(s.assisted[2])
+		}
 		words := [3]uint16{uint16(min(hp, 65535)), uint16(min(max(damage[1], 0), 65535)), uint16(min(max(damage[2], 0), 65535))}
 		var frame []byte
 		switch {
@@ -372,6 +377,7 @@ func buildMobSkillPacket(op packet.Opcode, result uint8, mobID, target uint32, s
 
 // takeMobDamage lowers the character's HP; true when it died.
 func (s *Session) takeMobDamage(d pendingDamage, damage uint32, stats *CharacterStats) bool {
+	s.assisted = [3]uint32{damage}
 	if s.invulnerable() {
 		return false
 	}
@@ -383,7 +389,10 @@ func (s *Session) takeMobDamage(d pendingDamage, damage uint32, stats *Character
 	s.cancelMove() // CMob::Attack -> StatusCastingStop -> CancleMove
 	s.breakStealth()
 	s.cancelTravelCast()
-	s.addDamage(damageByMob, d.MobGlobalID, damage)
+	damage = s.absorbHealthAssist(damage)
+	if damage > 0 {
+		s.addDamage(damageByMob, d.MobGlobalID, damage)
+	}
 	newEffective := satSub(cur.CurrentHP, damage)
 	ch.CurrentHP = satSub(ch.CurrentHP, cur.CurrentHP-newEffective)
 	killed := newEffective == 0

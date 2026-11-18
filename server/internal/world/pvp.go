@@ -407,6 +407,7 @@ func (s *Session) applyUserHit(h pendingUserHit) bool {
 		shown = 0
 	} else {
 		killed = s.takeUserDamage(h.AttackerID, damage)
+		shown = s.assisted[0]
 	}
 	sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius,
 		buildCharacterUserAttack(h.AttackerID, ch.ID, code, uint16(min(shown, 65535))), "0x0502 user attack")
@@ -424,6 +425,7 @@ func (s *Session) applyUserHit(h pendingUserHit) bool {
 
 // takeUserDamage is CUser::Damage's HP part; true when it killed.
 func (s *Session) takeUserDamage(attackerID, damage uint32) bool {
+	s.assisted = [3]uint32{damage}
 	if s.invulnerable() {
 		return false
 	}
@@ -434,7 +436,10 @@ func (s *Session) takeUserDamage(attackerID, damage uint32) bool {
 	}
 	s.breakStealth()
 	s.cancelTravelCast()
-	s.addDamage(damageByUser, attackerID, damage) // CDamage::Add in CUser::Damage
+	damage = s.absorbHealthAssist(damage)
+	if damage > 0 {
+		s.addDamage(damageByUser, attackerID, damage) // CDamage::Add in CUser::Damage
+	}
 	after := satSub(cur.CurrentHP, damage)
 	ch.CurrentHP = satSub(ch.CurrentHP, cur.CurrentHP-after)
 	killed := after == 0

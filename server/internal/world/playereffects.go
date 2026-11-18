@@ -300,6 +300,10 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 		} else {
 			killed = s.takeMobDamage(pendingDamage{MobGlobalID: b.CasterMob}, hp, nil)
 		}
+		if hp > 0 { // Health Assistant moved part of it to SP / MP
+			hp = s.assisted[0]
+			damage[1], damage[2] = damage[1]+int32(s.assisted[1]), damage[2]+int32(s.assisted[2])
+		}
 		w := packet.New(packet.SkillKeep)
 		w.U32(ch.ID)
 		w.U16(b.SkillID)

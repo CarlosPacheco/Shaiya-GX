@@ -82,11 +82,15 @@ func (s *Session) fireThornPulse(def *db.SkillDef) {
 func (s *Session) applyFixedHit(h pendingUserHit) bool {
 	ch := s.char
 	killed := s.takeUserSkillDamage(h.AttackerID, h.Damage)
+	shown := h.Damage
+	if shown[0] > 0 { // Health Assistant moved part of it to SP / MP
+		shown = [3]uint32{s.assisted[0], shown[1] + s.assisted[1], shown[2] + s.assisted[2]}
+	}
 	w := packet.New(packet.SkillKeep)
 	w.U32(ch.ID)
 	w.U16(h.Skill.SkillID)
 	w.U8(h.Skill.SkillLevel)
-	for _, v := range h.Damage {
+	for _, v := range shown {
 		w.U16(uint16(min(v, 65535)))
 	}
 	sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius, w.MustFinish(), "0x050F fire thorn damage")

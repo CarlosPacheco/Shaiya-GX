@@ -223,6 +223,10 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 	shown := dealt
 	if mirrored {
 		shown = [3]uint16{}
+	} else if hp > 0 { // Health Assistant moved part of the HP damage to SP / MP
+		shown[0] = uint16(min(s.assisted[0], 65535))
+		shown[1] = uint16(min(uint32(shown[1])+s.assisted[1], 65535))
+		shown[2] = uint16(min(uint32(shown[2])+s.assisted[2], 65535))
 	}
 	healed := [3]uint16{}
 	if drain && !mirrored {

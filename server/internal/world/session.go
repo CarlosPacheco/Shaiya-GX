@@ -29,6 +29,7 @@ const (
 // Session is one client connection. Its loop owns its fields under stateMu.
 // A paired trade may also update them while holding both sessions' state locks.
 type Session struct {
+	assisted          [3]uint32 // HP, SP, MP of the last hit after Health Assistant
 	economy           *netx.RateLimiter
 	awaitingMapLoad   bool
 	inputReads        *netx.RateLimiter

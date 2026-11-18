@@ -91,6 +91,9 @@
 73,1,Evades Ranged Attack with a 100 percent of chances to success for 9 seconds.,Evades ranged attacks with a 100 percent chance for 9 seconds.
 73,2,Evades Ranged Attack with a 100 percent of chances to success for 12 seconds.,Evades ranged attacks with a 100 percent chance for 12 seconds.
 73,3,Evades Ranged Attack with a 100 percent of chances to success for 15 seconds.,Evades ranged attacks with a 100 percent chance for 15 seconds.
+74,1,Consumes SP first against any hits then uses HP for 60 seconds.,"Consumes SP instead of HP against any hit for 60 seconds. When the SP runs out, HP takes the damage."
+74,2,Consumes SP first against any hits then uses HP for 60 seconds.,"Consumes MP instead of HP against any hit for 60 seconds. When the MP runs out, HP takes the damage."
+74,3,Consumes MP and SP in order against any hits then uses HP for 60 seconds.,"Consumes SP and then MP instead of HP against any hit for 60 seconds. When both run out, HP takes the damage."
 76,2,"Blinds enemies within 6 meters of the target, preventing any melee and ranged attack for 9 seconds and dealing damage as much as your Attack Power with a 75 percent chance.","Blinds enemies within 3 meters of the target, preventing any melee and ranged attack for 9 seconds and dealing damage as much as your Attack Power with a 75 percent chance."
 76,3,"Blinds enemies within 16 meters of the target, preventing any melee and ranged attack for 12 seconds and dealing damage as much as your Attack Power with a 75 percent chance.","Blinds enemies within 8 meters of the target, preventing any melee and ranged attack for 12 seconds and dealing damage as much as your Attack Power with a 75 percent chance."
 77,1,Shape shifts into certain monster lower than caster's level for 1 minitue and will be released once engaging battle.,Shape shifts into certain monster lower than caster's level for 1 minute and will be released once engaging battle.
