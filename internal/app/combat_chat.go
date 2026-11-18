@@ -31,7 +31,7 @@ func (a *App) periodicSystemChat() {
 	if !own && a.state.Party.Member(r.Target) == nil {
 		return
 	}
-	damage := def.Effect != 4
+	damage := def.Effect != 4 || def.Detail == 84 // Fire Thorn is a buff that hurts
 	id, style := 1310, uint8(1)
 	if !own {
 		id, style = 1211, 0

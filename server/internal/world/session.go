@@ -394,6 +394,7 @@ func (s *Session) tick(idle bool) {
 	}
 	s.processBuffs()
 	s.tickPotentials(time.Now())
+	s.tickFireThorn(time.Now())
 	s.tickSkillOnce()
 	s.tickFriendly()
 	s.tickSocial()

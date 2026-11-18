@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
 
@@ -54,6 +55,11 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 	case proto.MobPeriodicDamage, proto.SkillKeep:
 		r := a.state.LastPeriodicEffect
 		target, value = r.Target, r.HP
+		// A repeating skill plays its own effect on every target it reaches,
+		// selected or not.
+		if file := effect.PeriodicLibrary(r.Skill); file != "" && a.wv != nil {
+			a.startSkillImpact(r.Target, file, int(r.Level)-1)
+		}
 		if target != a.state.SelfID && target != a.state.Target {
 			return
 		}
@@ -63,7 +69,12 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 				return
 			}
 			switch d.Effect {
-			case 2, 4:
+			case 4:
+				label = "Healing"
+				if d.Detail == 84 { // Fire Thorn is a buff that hurts
+					label = "Damage"
+				}
+			case 2:
 				label = "Healing"
 			case 1, 3:
 				label = "Damage"

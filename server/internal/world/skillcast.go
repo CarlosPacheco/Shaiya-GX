@@ -74,6 +74,9 @@ func newBuff(id uint32, def *db.SkillDef, ends time.Time, log logPrinter) Active
 		b.nextTickAt = time.Now().Add(periodicHealTick)
 	}
 	b.DefenceType, b.BlockLeft, b.prevTick = def.DefenceType, uint32(def.DefenceValue), time.Now()
+	if def.TypeEffect == typeEffectBuff && def.TypeDetail == detailFireThorn {
+		b.nextTickAt = time.Now().Add(fireThornTick)
+	}
 	if def.TypeDetail == 82 || def.TypeDetail == 91 || def.TypeDetail == detailAbilityDown || def.TypeDetail == detailAbilityDown2 || isPotential(def) {
 		for i, t := range def.AbilityType {
 			b.Abilities[i] = buffAbility{t, int32(def.AbilityValue[i])}
