@@ -1268,7 +1268,7 @@ Declarations: [proto.GXTeleportStone](../../internal/proto/teleport_stone.go#L4)
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L77)
 
-**S→C serializers:** [sendTeleportStone (server/internal/world/teleport_stone.go)](../../server/internal/world/teleport_stone.go#L49)
+**S→C serializers:** [sendTeleportStone (server/internal/world/teleport_stone.go)](../../server/internal/world/teleport_stone.go#L50)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1278,7 +1278,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendTeleportStone — server/internal/world/teleport_stone.go</summary>
 
-[Source definition](../../server/internal/world/teleport_stone.go#L49)
+[Source definition](../../server/internal/world/teleport_stone.go#L50)
 
 ```go
 func (s *Session) sendTeleportStone(action uint8, ok bool, message string, points [proto.TeleportPointCount]db.TeleportPoint) {

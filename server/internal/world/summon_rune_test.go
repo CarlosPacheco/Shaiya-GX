@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/collision"
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
@@ -70,5 +72,57 @@ func TestPartySummonInterruptsOnDamage(t *testing.T) {
 	s.tickPartySummon(time.Now().Add(summonCastTime))
 	if i := findItem(s.items, left.Bag, left.Slot); i < 0 || s.items[i].Count != 1 {
 		t.Fatal("interrupting the cast changed the already charged inventory")
+	}
+}
+
+// The Movement Rune takes the user to a party member after its cast, dead or
+// alive; a character outside the party is refused.
+func TestMovementRuneGoesToAPartyMemberDeadOrAlive(t *testing.T) {
+	user, _ := potentialSession(t)
+	const mapID = uint16(1) // a field map: instance maps cannot be recorded or moved to
+	user.char.MapID = mapID
+	user.player.SetMap(mapID)
+	old, had := mapConfig.Zones[mapID]
+	mapConfig.Zones[mapID] = ZoneConfig{}
+	t.Cleanup(func() {
+		if had {
+			mapConfig.Zones[mapID] = old
+		} else {
+			delete(mapConfig.Zones, mapID)
+		}
+	})
+	floor := func() *mapgeometry.Geometry {
+		g := &mapgeometry.Geometry{}
+		g.Reindex()
+		h := float64(float32(10) - mapgeometry.FootSkin)
+		g.Add(collision.Triangle{{0, h, 0}, {0, h, 1000}, {1000, h, 0}})
+		g.Add(collision.Triangle{{1000, h, 1000}, {1000, h, 0}, {0, h, 1000}})
+		return g
+	}
+	user.char.PosX, user.char.PosY, user.char.PosZ = 100, 10, 100
+	user.movement = playerMovement{geometry: floor(), mapID: mapID}
+	friend, _ := gmWireSession(t, *user.char, false)
+	friend.char.ID, friend.char.Name = user.char.ID+800, "RuneFriend"
+	friend.char.PosX, friend.char.PosY, friend.char.PosZ = 600, 10, 450
+	friend.player = RegisterPlayer(*friend.char, nil, false, friend.faction, friend.out, friend.logger)
+	t.Cleanup(friend.player.Unregister)
+	stranger, _ := gmWireSession(t, *user.char, false)
+	stranger.char.ID, stranger.char.Name = user.char.ID+801, "RuneStranger"
+	stranger.player = RegisterPlayer(*stranger.char, nil, false, stranger.faction, stranger.out, stranger.logger)
+	t.Cleanup(stranger.player.Unregister)
+	pt := &party{members: []*ConnectedPlayer{user.player, friend.player}}
+	user.player.party, friend.player.party = pt, pt
+
+	if p, _ := user.movementRuneTarget(stranger.char.ID); p != nil {
+		t.Fatal("the rune accepted a character outside the party")
+	}
+	friend.player.SetAlive(false) // a dead member is still a destination
+	if p, why := user.movementRuneTarget(friend.char.ID); p == nil {
+		t.Fatalf("the party member was refused: %s", why)
+	}
+	user.moveRune = &movementRuneCast{target: friend.char.ID, ends: time.Now().Add(-time.Second)}
+	user.tickMovementRune(time.Now())
+	if user.moveRune != nil || user.char.PosX < 599 || user.char.PosX > 601 || user.char.PosZ < 449 || user.char.PosZ > 451 {
+		t.Fatalf("the rune left the user at %v,%v, want about 600,450", user.char.PosX, user.char.PosZ)
 	}
 }

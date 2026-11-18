@@ -48,24 +48,24 @@ func (s *Session) tickForcedTeleport() {
 }
 
 // gmTarget finds the character a GM command names.
-func (s *Session) gmTarget(name string) (*ConnectedPlayer, error) {
+func (s *Session) gmTarget(name string, mustBeAlive bool) (*ConnectedPlayer, error) {
 	p := FindPlayerByName(name)
 	if p == nil || p == s.player {
 		return nil, fmt.Errorf("%s is not online", name)
 	}
-	if !p.IsAlive() {
+	if mustBeAlive && !p.IsAlive() {
 		return nil, fmt.Errorf("%s is dead", p.CharacterName)
 	}
 	return p, nil
 }
 
 // gmGoTo is /amove: the movement rune without the item or the cast, to where
-// another character is, on any map.
+// another character is (dead or alive), on any map.
 func (s *Session) gmGoTo(name string) error {
 	if s.dead || s.char.CurrentHP == 0 {
 		return fmt.Errorf("you are dead")
 	}
-	p, err := s.gmTarget(name)
+	p, err := s.gmTarget(name, false) // a dead character can be moved to
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (s *Session) gmGoTo(name string) error {
 // gmBring is /asummon: the summon rune without the item, the cast or the
 // confirmation; the character is taken to the GM at once.
 func (s *Session) gmBring(name string) error {
-	p, err := s.gmTarget(name)
+	p, err := s.gmTarget(name, true)
 	if err != nil {
 		return err
 	}

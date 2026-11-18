@@ -23,6 +23,7 @@ type teleportStoneCast struct {
 
 func (s *Session) cancelTravelCast() {
 	s.cancelPartySummon()
+	s.cancelMovementRune()
 	s.cancelRecordedPointCast()
 }
 
