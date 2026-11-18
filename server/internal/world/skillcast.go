@@ -361,6 +361,8 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 		}
 	case typeEffectOnce:
 		s.skillOnce(k, def, target, stats, castPos != nil)
+	case typeEffectField:
+		s.skillField(k, def, stats, castPos != nil)
 	default:
 		s.log.Printf("GX Server World rejected skill use: effect %d not usable skill_id=%d", def.TypeEffect, k.SkillID)
 	}

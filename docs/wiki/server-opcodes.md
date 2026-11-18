@@ -78,12 +78,12 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x0510` | [SkillCastStarted](protocol-combat.md#opcode-0510) | — | yes | yes |
 | `0x0511` | [SkillUseNoTarget](protocol-combat.md#opcode-0511) | yes | yes | yes |
 | `0x0512` | [SkillUserDrain](protocol-combat.md#opcode-0512) | — | — | yes |
-| `0x0513` | [SkillPartyMember](protocol-combat.md#opcode-0513) | — | — | yes |
+| `0x0513` | [SkillPartyMember](protocol-combat.md#opcode-0513) | — | yes | yes |
 | `0x0514` | [SkillUserExtraDamage](protocol-combat.md#opcode-0514) | — | yes | yes |
 | `0x0515` | [SkillUserReflectedDamage](protocol-combat.md#opcode-0515) | — | yes | yes |
 | `0x0517` | [SkillUse](protocol-combat.md#opcode-0517) | yes | yes | yes |
 | `0x0518` | [SkillMobDrain](protocol-combat.md#opcode-0518) | — | yes | yes |
-| `0x0519` | [SkillMobOther](protocol-combat.md#opcode-0519) | — | — | yes |
+| `0x0519` | [SkillMobOther](protocol-combat.md#opcode-0519) | — | yes | yes |
 | `0x051A` | [SkillExtraDamage](protocol-combat.md#opcode-051a) | — | yes | yes |
 | `0x051B` | [SkillMobReflectedDamage](protocol-combat.md#opcode-051b) | — | yes | yes |
 | `0x051C` | [CharacterDeathState](protocol-combat.md#opcode-051c) | — | yes | yes |

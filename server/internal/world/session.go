@@ -30,6 +30,8 @@ const (
 // A paired trade may also update them while holding both sessions' state locks.
 type Session struct {
 	assisted          [3]uint32 // HP, SP, MP of the last hit after Health Assistant
+	traps             []placedTrap
+	nextTrapAt        time.Time
 	economy           *netx.RateLimiter
 	awaitingMapLoad   bool
 	inputReads        *netx.RateLimiter
@@ -397,6 +399,7 @@ func (s *Session) tick(idle bool) {
 	s.tickPotentials(time.Now())
 	s.tickFireThorn(time.Now())
 	s.tickDetection(time.Now())
+	s.tickTraps(time.Now())
 	s.tickReveal()
 	s.tickSkillOnce()
 	s.tickFriendly()

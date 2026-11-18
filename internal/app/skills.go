@@ -386,6 +386,10 @@ func (a *App) learnedSkillPacket(k proto.LearnedSkill) []byte {
 	if !a.skillResourcesAvailable(def) {
 		return nil
 	}
+	if def.Effect == 5 {
+		// A trap is left on the ground where the caster stands: no victim is needed.
+		return proto.UseSkillPacket(k.Number, 0, false)
+	}
 	target := a.resolveSkillTarget(def)
 	if def.Target == 6 && def.Effect != 2 && def.Effect != 4 {
 		// A caster-centred area is valid with no selected victim; keep the mob

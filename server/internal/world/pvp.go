@@ -47,6 +47,7 @@ type pendingUserHit struct {
 	X, Z       float32 // the attacker's position
 	Reflected  bool    // a mirrored hit: Damage is final
 	Fixed      bool    // fixed skill damage (Fire Thorn): Damage is final, Skill names it
+	Trap       bool    // a trap sprang on this user: the damage is worked out here (TrabDamage), Skill names it
 	Damage     [3]uint32
 	Skill      *db.SkillDef // a hostile skill (pvpskill.go), nil for a normal attack
 	First      bool         // the skill's selected target (0x0511/0x0512), else 0x0513
@@ -364,6 +365,9 @@ func (s *Session) applyUserHit(h pendingUserHit) bool {
 	if h.GemAttack {
 		s.applyGemAttack(h.AttackerID)
 		return false
+	}
+	if h.Trap && h.Skill != nil {
+		return s.applyTrapHit(h)
 	}
 	if h.Fixed && h.Skill != nil {
 		return s.applyFixedHit(h)

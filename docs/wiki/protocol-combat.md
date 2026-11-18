@@ -97,7 +97,7 @@ Declarations: [packet.CharacterUserAutoAttack](../../server/internal/packet/pack
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L241)
 
-**S→C serializers:** [buildCharacterUserAttack (server/internal/world/pvp.go)](../../server/internal/world/pvp.go#L475), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [buildCharacterUserAttack (server/internal/world/pvp.go)](../../server/internal/world/pvp.go#L479), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1052)
 
@@ -107,7 +107,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterUserAttack — server/internal/world/pvp.go</summary>
 
-[Source definition](../../server/internal/world/pvp.go#L475)
+[Source definition](../../server/internal/world/pvp.go#L479)
 
 ```go
 func buildCharacterUserAttack(attackerID, targetID uint32, result uint8, damage uint16) []byte {
@@ -938,7 +938,7 @@ Declarations: [packet.SkillKeep](../../server/internal/packet/packet.go#L118), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applyFixedHit (server/internal/world/firethorn.go)](../../server/internal/world/firethorn.go#L82), [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L252), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L379)
+**S→C serializers:** [applyFixedHit (server/internal/world/firethorn.go)](../../server/internal/world/firethorn.go#L82), [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L252), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L381)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L829)
 
@@ -1062,7 +1062,7 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 
 <details><summary>processBuffs — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L379)
+[Source definition](../../server/internal/world/skillcast.go#L381)
 
 ```go
 func (s *Session) processBuffs() {
@@ -1452,13 +1452,34 @@ Declarations: [packet.SkillPartyMember](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
+**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L107)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L841)
 
 ### Wire layouts and validation
 
 These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>buildSkillUseResult — server/internal/world/skillcast.go</summary>
+
+[Source definition](../../server/internal/world/skillcast.go#L107)
+
+```go
+func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte {
+	w := packet.New(op)
+	w.U8(result)
+	w.U32(sender)
+	w.U32(target)
+	w.U16(skillID)
+	w.U8(level)
+	w.U16(hp)
+	w.U16(sp)
+	w.U16(mp)
+	return w.MustFinish()
+}
+```
+
+</details>
 
 <details><summary>DecodeSkillResult — internal/proto/skills.go</summary>
 
@@ -1578,7 +1599,7 @@ Declarations: [proto.SkillUserReflectedDamage](../../internal/proto/opcodes.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applyUserHit (server/internal/world/pvp.go)](../../server/internal/world/pvp.go#L347)
+**S→C serializers:** [applyUserHit (server/internal/world/pvp.go)](../../server/internal/world/pvp.go#L348)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L853)
 
@@ -1588,7 +1609,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>applyUserHit — server/internal/world/pvp.go</summary>
 
-[Source definition](../../server/internal/world/pvp.go#L347)
+[Source definition](../../server/internal/world/pvp.go#L348)
 
 ```go
 func (s *Session) applyUserHit(h pendingUserHit) bool {
@@ -1611,6 +1632,9 @@ func (s *Session) applyUserHit(h pendingUserHit) bool {
 	if h.GemAttack {
 		s.applyGemAttack(h.AttackerID)
 		return false
+	}
+	if h.Trap && h.Skill != nil {
+		return s.applyTrapHit(h)
 	}
 	if h.Fixed && h.Skill != nil {
 		return s.applyFixedHit(h)
@@ -1868,13 +1892,34 @@ Declarations: [proto.SkillMobOther](../../internal/proto/opcodes.go#L130).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
+**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L107)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L841)
 
 ### Wire layouts and validation
 
 These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>buildSkillUseResult — server/internal/world/skillcast.go</summary>
+
+[Source definition](../../server/internal/world/skillcast.go#L107)
+
+```go
+func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte {
+	w := packet.New(op)
+	w.U8(result)
+	w.U32(sender)
+	w.U32(target)
+	w.U16(skillID)
+	w.U8(level)
+	w.U16(hp)
+	w.U16(sp)
+	w.U16(mp)
+	return w.MustFinish()
+}
+```
+
+</details>
 
 <details><summary>DecodeSkillResult — internal/proto/skills.go</summary>
 
