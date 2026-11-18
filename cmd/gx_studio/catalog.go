@@ -18,7 +18,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/studio"
 )
 
-var categories = []string{"Hidden", "Popular", "Essentials", "Buffs", "Packages"}
+var categories = []string{"Hidden (legacy)", "Popular", "Essentials", "Buffs", "Packages"}
 var blankIcon = image.NewNRGBA(image.Rect(0, 0, 1, 1))
 
 func small(text string) *canvas.Text {
@@ -57,33 +57,33 @@ func (e *editor) dirty() bool { return !slices.Equal(e.draft, e.project.Products
 
 func (e *editor) catalog() {
 	e.status = wrapped(e.assets.warning)
-	info := wrapped("Select a product to see its details.")
+	e.cashFormDirty = nil
+	inspector := container.NewStack(wrapped("Select a product to edit its fields."))
+	formPending := func() bool { return e.cashFormDirty != nil && e.cashFormDirty() }
+	requireApplied := func() bool {
+		if formPending() {
+			e.status.SetText("Apply the product changes to the draft first.")
+			return false
+		}
+		return true
+	}
 	paths := wrapped(e.project.CashPath + "\n" + e.project.DBPath + "  ·  " + studio.ProductTable)
 	search := widget.NewEntry()
 	search.SetPlaceHolder("Search products by name or code")
 	search.SetText(e.cashQuery)
 	sections := []catalogSection{{name: "All products", count: len(e.draft)}}
-	for _, name := range categories {
+	for _, name := range categories[1:] {
 		sections = append(sections, catalogSection{name: name})
 	}
 	for _, product := range e.draft {
-		if product.Bag < uint32(len(categories)) {
-			sections[product.Bag+1].count++
+		if product.Bag > 0 && product.Bag < uint32(len(categories)) {
+			sections[product.Bag].count++
 		}
 	}
-	icon := newIcon(48)
 	selected := -1
 	var visible []int
 	var list *widget.List
-	edit := widget.NewButtonWithIcon("Edit product", theme.DocumentCreateIcon(), func() {
-		if selected >= 0 && !e.busy {
-			e.editProduct(e.draft[selected], func(p cash.Product) {
-				e.draft[selected] = p
-				e.cashCode = p.Code
-				e.catalog()
-			})
-		}
-	})
+
 	remove := widget.NewButton("Remove", func() {
 		if selected < 0 || e.busy {
 			return
@@ -97,7 +97,7 @@ func (e *editor) catalog() {
 		}, e.window)
 	})
 	add := widget.NewButtonWithIcon("New product", theme.ContentAddIcon(), func() {
-		if !e.busy {
+		if !e.busy && requireApplied() {
 			e.editProduct(cash.Product{Index: e.nextIndex(), Bag: 1}, func(p cash.Product) {
 				e.draft = append(e.draft, p)
 				e.cashQuery, e.cashCode, e.cashSection = "", p.Code, 0
@@ -107,7 +107,7 @@ func (e *editor) catalog() {
 	})
 	move := func(delta int) {
 		target := selected + delta
-		if e.busy || selected < 0 || target < 0 || target >= len(e.draft) {
+		if e.busy || selected < 0 || target < 0 || target >= len(e.draft) || !requireApplied() {
 			return
 		}
 		e.draft[selected], e.draft[target] = e.draft[target], e.draft[selected]
@@ -115,18 +115,17 @@ func (e *editor) catalog() {
 	}
 	up := widget.NewButtonWithIcon("Move up", theme.MoveUpIcon(), func() { move(-1) })
 	down := widget.NewButtonWithIcon("Move down", theme.MoveDownIcon(), func() { move(1) })
-	edit.Disable()
 	remove.Disable()
 	up.Disable()
 	down.Disable()
 	changes := studio.Differences(e.draft, e.project.Server)
 	review := widget.NewButton(fmt.Sprintf("SQLite differences (%d)", len(changes)), func() {
-		if !e.busy {
+		if !e.busy && requireApplied() {
 			e.review(changes, false)
 		}
 	})
 	save := widget.NewButtonWithIcon("Save both", theme.DocumentSaveIcon(), func() {
-		if !e.busy {
+		if !e.busy && requireApplied() {
 			e.review(changes, true)
 		}
 	})
@@ -160,17 +159,21 @@ func (e *editor) catalog() {
 		columns[0].(*fyne.Container).Objects[0].(*widget.Label).SetText(product.Code)
 		columns[1].(*fyne.Container).Objects[0].(*widget.Label).SetText(fmt.Sprint(product.Cost))
 	})
-	list.OnSelected = func(id widget.ListItemID) {
-		selected = visible[id]
-		p := e.draft[selected]
+	showProduct := func(index int) {
+		selected = index
+		p := e.draft[index]
 		e.cashCode = p.Code
-		showIcon(icon, e.assets.productIcon(p))
-		info.SetText(e.summary(p))
-		edit.SetText("Edit product")
-		if e.project.Encrypted {
-			edit.SetText("View fields")
-		}
-		edit.Enable()
+		form, pending := e.productForm(p, func(p cash.Product) {
+			e.draft[index] = p
+			e.cashCode = p.Code
+			if e.cashSection != 0 && p.Bag != uint32(e.cashSection) {
+				e.cashSection = int(p.Bag)
+			}
+			e.catalog()
+		})
+		e.cashFormDirty = pending
+		inspector.Objects = []fyne.CanvasObject{form}
+		inspector.Refresh()
 		if !e.project.Encrypted {
 			remove.Enable()
 			if selected > 0 {
@@ -185,21 +188,46 @@ func (e *editor) catalog() {
 			}
 		}
 	}
+	restoring := false
+	list.OnSelected = func(id widget.ListItemID) {
+		next := visible[id]
+		if restoring || next == selected {
+			return
+		}
+		if formPending() {
+			dialog.ShowConfirm("Discard unapplied changes?", "Apply to draft to keep the current product edits.", func(ok bool) {
+				if ok {
+					showProduct(next)
+					return
+				}
+				restoring = true
+				list.UnselectAll()
+				if row := slices.Index(visible, selected); row >= 0 {
+					list.Select(row)
+				}
+				restoring = false
+			}, e.window)
+			return
+		}
+		showProduct(next)
+	}
 	refresh := func() {
 		list.UnselectAll()
-		selected = -1
-		edit.Disable()
-		remove.Disable()
-		up.Disable()
-		down.Disable()
-		info.SetText("Select a product to see its details.")
-		showIcon(icon, nil)
+		if !formPending() {
+			selected = -1
+			e.cashFormDirty = nil
+			remove.Disable()
+			up.Disable()
+			down.Disable()
+			inspector.Objects = []fyne.CanvasObject{wrapped("Select a product to edit its fields.")}
+			inspector.Refresh()
+		}
 		query := strings.ToLower(strings.TrimSpace(search.Text))
 		section := e.cashSection
 		e.cashQuery = search.Text
 		visible = visible[:0]
 		for i, product := range e.draft {
-			if (section <= 0 || product.Bag == uint32(section-1)) &&
+			if (section <= 0 || product.Bag == uint32(section)) &&
 				(includes(product.Name, query) || includes(product.Code, query)) {
 				visible = append(visible, i)
 			}
@@ -214,27 +242,16 @@ func (e *editor) catalog() {
 	}
 	search.OnChanged = func(string) { refresh() }
 	refresh()
-	details := container.NewBorder(container.NewVBox(container.NewHBox(icon, edit, remove), container.NewHBox(up, down)), nil, nil, nil, container.NewVScroll(info))
+	details := container.NewBorder(container.NewHBox(remove, up, down), nil, nil, nil, inspector)
 	header := rowLayout("Product", "Code", "Points", newIcon(24))
 	left := container.NewBorder(container.NewVBox(search, header, widget.NewSeparator()), nil, nil, nil, list)
 	split := container.NewHSplit(left, details)
-	split.SetOffset(.65)
+	split.SetOffset(.51)
 	toolbar := container.NewHBox(close, e.switcher(studio.Cash), add, review, save)
 	e.window.SetContent(container.NewPadded(container.NewBorder(container.NewVBox(toolbar, paths), e.status, nil, nil, sectionBrowser("Sections", "Cash.Bag", sections, e.cashSection, func(section int) {
 		e.cashSection = section
 		refresh()
 	}, split))))
-}
-
-func (e *editor) summary(p cash.Product) string {
-	var lines []string
-	lines = append(lines, p.Name, p.Code, category(p.Bag), fmt.Sprintf("Price %d points", p.Cost), p.Description)
-	for i, item := range p.Items {
-		if item.ItemID != 0 {
-			lines = append(lines, fmt.Sprintf("Slot %d  ·  %s  × %d", i+1, e.assets.itemTitle(item.ItemID), item.Count))
-		}
-	}
-	return strings.Join(lines, "\n")
 }
 
 func (e *editor) nextIndex() uint32 {

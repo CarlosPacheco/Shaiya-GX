@@ -34,6 +34,7 @@ type editor struct {
 	definitionDraft     studio.DefinitionEdits
 	cashQuery, cashCode string
 	cashSection         int
+	cashFormDirty       func() bool
 	project             *studio.Project
 	draft               []cash.Product
 	assets              *assets
@@ -65,7 +66,7 @@ func (e *editor) leave(next func()) {
 	if e.busy {
 		return
 	}
-	if !e.pending && ((e.project != nil && e.dirty()) || len(e.definitionDraft) > 0) {
+	if !e.pending && ((e.project != nil && (e.dirty() || e.cashFormDirty != nil && e.cashFormDirty())) || len(e.definitionDraft) > 0) {
 		dialog.ShowConfirm("Discard draft?", "Your unapplied catalog edits will be discarded.", func(ok bool) {
 			if ok {
 				next()

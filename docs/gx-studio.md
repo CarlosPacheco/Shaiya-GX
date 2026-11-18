@@ -42,9 +42,10 @@ Keep the executable in a writable folder for the local backups and recovery jour
    before opening. Studio remembers the last successfully opened paths in
    `gx-studio.ini` beside the executable. A distributed seed can have a separate manifest
    that becomes stale after editing.
-2. Choose a catalog. Item Mall shows Popular, Essentials, Buffs, Packages and
-   Hidden, with product icon previews, a store icon picker and a searchable item
-   picker for all 24 bundle slots. The differences view shows how the draft
+2. Choose a catalog. Item Mall shows Popular, Essentials, Buffs and Packages in the sidebar.
+   Select a product to edit its fields in the right pane. Click the icon to open
+   its picker, and use the searchable item picker for all 24 bundle slots.
+   Apply edits to the draft before saving both catalogs. The differences view shows how the draft
    compares with SQLite and can import a selected SQLite product's fields. A
    product code edit removes the old SQLite key and adds the new one.
 3. The left pane groups Items by the native `Type` and skills by `TypeEffect`.

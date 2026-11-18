@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"strconv"
 	"strings"
 
@@ -33,13 +34,36 @@ type productSlot struct {
 }
 
 func (e *editor) editProduct(original cash.Product, apply func(cash.Product)) {
+	var d *dialog.CustomDialog
+	form, _ := e.productForm(original, func(p cash.Product) {
+		d.Hide()
+		apply(p)
+	})
+	d = dialog.NewCustom("New product", "Cancel", form, e.window)
+	d.Resize(fyne.NewSize(600, 680))
+	d.Show()
+}
+
+func propertyBox(title, source string, input fyne.CanvasObject) fyne.CanvasObject {
+	background := canvas.NewRectangle(color.NRGBA{R: 245, G: 247, B: 250, A: 255})
+	background.StrokeColor = color.NRGBA{R: 207, G: 215, B: 225, A: 255}
+	background.StrokeWidth = 1
+	return container.NewStack(background, container.NewPadded(container.NewVBox(widget.NewLabel(title), small(source), input)))
+}
+
+func (e *editor) productForm(original cash.Product, apply func(cash.Product)) (fyne.CanvasObject, func() bool) {
 	readOnly := e.project.Encrypted
 	name, code := editText(original.Name, false), editText(original.Code, false)
 	description := editText(original.Description, true)
 	index, cost, icon := number(uint64(original.Index)), number(uint64(original.Cost)), number(uint64(original.Icon))
-	section := widget.NewSelect(categories, nil)
+	options := categories[1:]
+	firstBag := 1
+	if original.Bag == 0 {
+		options, firstBag = categories, 0
+	}
+	section := widget.NewSelect(options, nil)
 	if original.Bag < uint32(len(categories)) {
-		section.SetSelectedIndex(int(original.Bag))
+		section.SetSelectedIndex(int(original.Bag) - firstBag)
 	}
 	preview := newIcon(48)
 	var slots [cash.Slots]productSlot
@@ -55,18 +79,23 @@ func (e *editor) editProduct(original cash.Product, apply func(cash.Product)) {
 		}
 		showIcon(preview, e.assets.productIcon(p))
 	}
-	pickIcon := widget.NewButton("Browse icons…", func() {
+	pickIcon := widget.NewButton("", func() {
 		e.iconPicker(func(id uint32) { icon.SetText(strconv.FormatUint(uint64(id), 10)) })
 	})
 	icon.OnChanged = func(string) { readIcon() }
+	iconButton := container.NewStack(pickIcon, preview)
+	iconPreview := container.NewBorder(nil, nil, iconButton, nil, widget.NewLabel("Click the icon to choose"))
+	if readOnly {
+		iconPreview = container.NewBorder(nil, nil, preview, nil, widget.NewLabel("Store icon"))
+	}
 	properties := container.NewVBox(
-		field("Name", "Cash.Name  ·  ProductName", name),
-		field("Product code", "Cash.Code  ·  ProductCode", code),
-		field("Description", "Cash.Description", description),
-		field("Section", "Cash.Bag  ·  0 hidden, 1–4 visible", section),
-		field("Record index", "Cash.Index", index),
-		field("Price in points", "Cash.Cost  ·  BuyCost", cost),
-		field("Store icon", "Cash.Icon  ·  0 uses first item", container.NewBorder(nil, nil, preview, pickIcon, icon)),
+		propertyBox("Name", "Cash.Name  ·  ProductName", name),
+		propertyBox("Product code", "Cash.Code  ·  ProductCode", code),
+		propertyBox("Description", "Cash.Description", description),
+		propertyBox("Section", "Cash.Bag  ·  0 hidden, 1–4 visible", section),
+		propertyBox("Record index", "Cash.Index", index),
+		propertyBox("Price in points", "Cash.Cost  ·  BuyCost", cost),
+		propertyBox("Icon ID", "Cash.Icon  ·  0 uses first item", icon),
 	)
 	tabs := container.NewAppTabs(container.NewTabItem("Product", container.NewVScroll(properties)))
 	for start := 0; start < cash.Slots; start += 8 {
@@ -108,8 +137,8 @@ func (e *editor) editProduct(original cash.Product, apply func(cash.Product)) {
 				slot.id.Disable()
 				slot.count.Disable()
 			}
-			idField := field("Item ID", fmt.Sprintf("Cash.Items[%d].ItemID  ·  ItemID%d", i, i+1), slot.id)
-			countField := field("Quantity", fmt.Sprintf("Cash.Items[%d].Count  ·  ItemCount%d", i, i+1), slot.count)
+			idField := propertyBox("Item ID", fmt.Sprintf("Cash.Items[%d].ItemID  ·  ItemID%d", i, i+1), slot.id)
+			countField := propertyBox("Quantity", fmt.Sprintf("Cash.Items[%d].Count  ·  ItemCount%d", i, i+1), slot.count)
 			group.Add(widget.NewSeparator())
 			group.Add(container.NewBorder(nil, nil, itemImage, pick, name))
 			group.Add(container.NewGridWithColumns(2, idField, countField))
@@ -124,12 +153,9 @@ func (e *editor) editProduct(original cash.Product, apply func(cash.Product)) {
 		pickIcon.Disable()
 	}
 	readIcon()
-	var d *dialog.CustomDialog
 	errorText := wrapped("")
-	cancel := widget.NewButton("Close", func() { d.Hide() })
-	actions := container.NewHBox(cancel)
+	actions := container.NewHBox()
 	if !readOnly {
-		cancel.SetText("Cancel")
 		button := widget.NewButton("Apply to draft", func() {
 			p := original
 			p.Name, p.Code, p.Description = name.Text, code.Text, description.Text
@@ -148,7 +174,7 @@ func (e *editor) editProduct(original cash.Product, apply func(cash.Product)) {
 				errorText.SetText("Select a section.")
 				return
 			}
-			p.Bag = uint32(section.SelectedIndex())
+			p.Bag = uint32(section.SelectedIndex() + firstBag)
 			p.Index, p.Cost, p.Icon = uint32(read(index, "Index", 32)), uint32(read(cost, "Price", 32)), uint32(read(icon, "Icon", 32))
 			for i, slot := range slots {
 				p.Items[i] = cash.Item{ItemID: uint32(read(slot.id, fmt.Sprintf("Slot %d item ID", i+1), 32)), Count: uint16(read(slot.count, fmt.Sprintf("Slot %d quantity", i+1), 8))}
@@ -160,15 +186,31 @@ func (e *editor) editProduct(original cash.Product, apply func(cash.Product)) {
 				errorText.SetText(err.Error())
 				return
 			}
-			d.Hide()
 			apply(p)
 		})
 		button.Importance = widget.HighImportance
 		actions.Add(button)
 	}
-	d = dialog.NewCustomWithoutButtons("Product fields", container.NewBorder(nil, container.NewVBox(errorText, actions), nil, nil, tabs), e.window)
-	d.Resize(fyne.NewSize(840, 655))
-	d.Show()
+	hasPending := func() bool {
+		if readOnly {
+			return false
+		}
+		if name.Text != original.Name || code.Text != original.Code || description.Text != original.Description ||
+			section.SelectedIndex()+firstBag != int(original.Bag) ||
+			index.Text != strconv.FormatUint(uint64(original.Index), 10) ||
+			cost.Text != strconv.FormatUint(uint64(original.Cost), 10) ||
+			icon.Text != strconv.FormatUint(uint64(original.Icon), 10) {
+			return true
+		}
+		for i, slot := range slots {
+			if slot.id.Text != strconv.FormatUint(uint64(original.Items[i].ItemID), 10) ||
+				slot.count.Text != strconv.FormatUint(uint64(original.Items[i].Count), 10) {
+				return true
+			}
+		}
+		return false
+	}
+	return container.NewBorder(iconPreview, container.NewVBox(errorText, actions), nil, nil, tabs), hasPending
 }
 
 func (e *editor) iconPicker(apply func(uint32)) {

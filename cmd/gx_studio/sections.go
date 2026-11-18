@@ -22,19 +22,20 @@ func sectionBrowser(title, source string, sections []catalogSection, selected in
 	list := widget.NewList(func() int { return len(sections) }, func() fyne.CanvasObject {
 		name := widget.NewLabel("")
 		name.Truncation = fyne.TextTruncateEllipsis
-		return container.NewBorder(nil, nil, nil, widget.NewLabel(""), name)
+		count := widget.NewLabelWithStyle("", fyne.TextAlignTrailing, fyne.TextStyle{})
+		return container.NewBorder(nil, nil, nil, container.NewGridWrap(fyne.NewSize(42, 28), count), name)
 	}, func(id widget.ListItemID, object fyne.CanvasObject) {
 		section := sections[id]
 		children := object.(*fyne.Container).Objects
 		children[0].(*widget.Label).SetText(section.name)
-		children[1].(*widget.Label).SetText(strconv.Itoa(section.count))
+		children[1].(*fyne.Container).Objects[0].(*widget.Label).SetText(strconv.Itoa(section.count))
 	})
 	list.Select(selected)
 	list.OnSelected = onSelected
 	heading := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	sidebar := container.NewBorder(container.NewVBox(heading, small(source), widget.NewSeparator()), nil, nil, nil, list)
 	split := container.NewHSplit(sidebar, content)
-	split.SetOffset(.19)
+	split.SetOffset(.135)
 	return split
 }
 
