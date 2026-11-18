@@ -38,6 +38,29 @@ func buildCatalog(groups [][]fakeSlot) []byte {
 	return out
 }
 
+// Dead levels can still carry stale effect fields; only their text marks them.
+func TestDeadLevelsAreRecognisedByTheirText(t *testing.T) {
+	groups := [][]fakeSlot{{
+		{"Strength Remedy Lv1", "Increases STR by 15 for 1 hour.", 1, 0, 4, 82, 0, 0},
+		{"Strength Remedy Lv2", "Increases STR by 35 for 1 hour.", 2, 0, 4, 82, 0, 0},
+		{"Strength Remedy Lv3", "Not Available.", 3, 0, 4, 82, 0, 0},
+	}}
+	groups = append(groups, []fakeSlot{{"Blessing", "Blessing of the Goddess", 1, 0, 4, 90, 0, 0}, {"Blessing", "Noble Blessing", 2, 0, 4, 90, 0, 0}, {"Blessing", "Non-existant skill", 3, 0, 4, 90, 0, 0}})
+	out, rep, err := normalizeSkillCatalog(buildCatalog(groups), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defs, _ := ParseSkills(out)
+	for _, key := range []SkillKey{{1, 3}, {2, 3}} {
+		if _, ok := defs[key]; ok {
+			t.Fatalf("dead level %v survived", key)
+		}
+	}
+	if _, ok := defs[SkillKey{ID: 1, Level: 2}]; !ok || len(rep.DeadLevels) != 2 {
+		t.Fatalf("working levels must stay: %s", rep)
+	}
+}
+
 func TestNormalizeSkillCatalog(t *testing.T) {
 	// Groups are numbered from one; pad with empty groups up to ids 115 and 150.
 	var groups [][]fakeSlot
@@ -61,7 +84,7 @@ func TestNormalizeSkillCatalog(t *testing.T) {
 		{"Aggravation Lv1", "Chain skill that requires Tetanus; Deals damage but the following chain skill must be used in 3 seconds.", 1, 3, 1, 25, 2, 6}})
 	plain := buildCatalog(groups)
 
-	out, rep, err := NormalizeSkillCatalog(plain)
+	out, rep, err := normalizeSkillCatalog(plain, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,8 +122,30 @@ func TestNormalizeSkillCatalog(t *testing.T) {
 		t.Fatalf("report %s", rep)
 	}
 	// Idempotent: a second pass changes nothing.
-	again, rep2, err := NormalizeSkillCatalog(out)
+	again, rep2, err := normalizeSkillCatalog(out, nil)
 	if err != nil || string(again) != string(out) || rep2.ChainTexts != 0 || len(rep2.DeadLevels) != 0 {
 		t.Fatalf("second pass changed the catalog: %v %s", err, rep2)
+	}
+}
+
+// The text fixes apply once, are skipped when already done, and refuse a
+// catalog whose text is not the expected one.
+func TestApplyTextFixes(t *testing.T) {
+	plain := buildCatalog([][]fakeSlot{{{"A Lv1", "Increases Attack Speed by 3 level.", 1, 1, 0, 8, 0, 0}}})
+	fixes := []byte("1,1,Increases Attack Speed by 3 level.,Increases Attack Speed by 2 levels.\n")
+	out, rep, err := normalizeSkillCatalog(plain, fixes)
+	if err != nil || rep.TextFixes != 1 {
+		t.Fatal(err, rep)
+	}
+	defs, _ := ParseSkills(out)
+	if d := defs[SkillKey{ID: 1, Level: 1}].Description; d != "Increases Attack Speed by 2 levels." {
+		t.Fatalf("text %q", d)
+	}
+	again, rep2, err := normalizeSkillCatalog(out, fixes)
+	if err != nil || rep2.TextFixes != 0 || string(again) != string(out) {
+		t.Fatal("a second pass changed the catalog", err)
+	}
+	if _, _, err := normalizeSkillCatalog(plain, []byte("1,1,Some other text.,New text.\n")); err == nil {
+		t.Fatal("an unexpected description was overwritten")
 	}
 }

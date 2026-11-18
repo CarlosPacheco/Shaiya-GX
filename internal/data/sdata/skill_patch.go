@@ -1,10 +1,14 @@
 package sdata
 
 import (
+	"bytes"
+	_ "embed"
 	"encoding/binary"
+	"encoding/csv"
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -20,7 +24,9 @@ import (
 //   - Aggravation loses its time damage;
 //   - detail 25 (an attack with extra HP/MP/SP damage) becomes detail 21, the
 //     standard attack; AddDamage is read from its own fields, so the effects
-//     are identical.
+//     are identical;
+//   - descriptions follow the real spell values: skill_text_fixes.csv holds each
+//     rewrite as id, level, current text, new text.
 const (
 	skillRecordSize   = 116
 	skillSlotsPerID   = 9
@@ -28,15 +34,21 @@ const (
 	skillTimeDamageHP = 75 // int32
 )
 
-// retainedLevels look like placeholders in the client but carry real data in
-// the server definitions (Mini Sun EXP Stone level 2), so they stay.
-var retainedLevels = map[SkillKey]bool{{ID: 250, Level: 2}: true}
+// retainedLevels look like placeholders but consumables use them (an item's
+// Range and AttackTime name a skill and level): the Strength to Wisdom Remedy
+// level 3 items, the Mini Sun EXP Stone level 2 and the Little Elkid Clone
+// items. Their descriptions are corrected instead.
+var retainedLevels = map[SkillKey]bool{{ID: 250, Level: 2}: true, {ID: 274, Level: 3}: true, {ID: 275, Level: 3}: true,
+	{ID: 280, Level: 3}: true, {ID: 281, Level: 3}: true, {ID: 282, Level: 3}: true, {ID: 283, Level: 3}: true, {ID: 284, Level: 3}: true, {ID: 285, Level: 3}: true}
+
+//go:embed skill_text_fixes.csv
+var skillTextFixesCSV []byte
 
 var (
 	chainPrefix  = regexp.MustCompile(`^Chain skill (?:that requires|used after) [^;]+; `)
 	chainSuffix  = regexp.MustCompile(` but the following chain skill must be used in \d+ seconds\.$`)
 	enemyOnly    = regexp.MustCompile(` ?Only usable on (?:players from enemy realm|enemy players not monsters)\.`)
-	notAvailable = regexp.MustCompile(`(?i)^(?:not available\.?|skill not available currently)$`)
+	notAvailable = regexp.MustCompile(`(?i)not available|non-existen|non-existan`)
 )
 
 // SkillCatalogReport counts what NormalizeSkillCatalog changed.
@@ -46,13 +58,14 @@ type SkillCatalogReport struct {
 	PrevCleared     []SkillKey
 	ManaStaminaText int
 	TimeDamage      []SkillKey
+	TextFixes       int
 	DetailMoved     []SkillKey
 	FullyDeadSkills []uint16 // left untouched
 }
 
 func (r SkillCatalogReport) String() string {
-	return fmt.Sprintf("dead levels removed: %d; chain descriptions rewritten: %d; previous skill cleared: %d; Mana/Stamina Shot texts: %d; Aggravation time damage cleared: %d; detail 25 -> 21: %d; skills with no working level left alone: %v",
-		len(r.DeadLevels), r.ChainTexts, len(r.PrevCleared), r.ManaStaminaText, len(r.TimeDamage), len(r.DetailMoved), r.FullyDeadSkills)
+	return fmt.Sprintf("dead levels removed: %d; chain descriptions rewritten: %d; previous skill cleared: %d; Mana/Stamina Shot texts: %d; Aggravation time damage cleared: %d; detail 25 -> 21: %d; descriptions corrected: %d; skills with no working level left alone: %v",
+		len(r.DeadLevels), r.ChainTexts, len(r.PrevCleared), r.ManaStaminaText, len(r.TimeDamage), len(r.DetailMoved), r.TextFixes, r.FullyDeadSkills)
 }
 
 type skillSlot struct {
@@ -68,8 +81,7 @@ func (s *skillSlot) key() SkillKey {
 	return SkillKey{ID: uint16(s.id), Level: s.rec[0]}
 }
 func (s *skillSlot) dead() bool {
-	return s.rec[0] > 0 && s.rec[19] == 0 && s.rec[21] == 0 && binary.LittleEndian.Uint16(s.rec[22:]) == 0 &&
-		binary.LittleEndian.Uint16(s.rec[8:]) == 0 && notAvailable.MatchString(s.desc)
+	return s.rec[0] > 0 && notAvailable.MatchString(s.desc) && !retainedLevels[s.key()]
 }
 func anyByte(b []byte) bool {
 	for _, v := range b {
@@ -96,6 +108,10 @@ func unchain(d string) (string, bool) {
 }
 
 func NormalizeSkillCatalog(raw []byte) ([]byte, SkillCatalogReport, error) {
+	return normalizeSkillCatalog(raw, skillTextFixesCSV)
+}
+
+func normalizeSkillCatalog(raw, textFixes []byte) ([]byte, SkillCatalogReport, error) {
 	var rep SkillCatalogReport
 	plain, err := Decrypt(raw)
 	if err != nil {
@@ -147,7 +163,7 @@ func NormalizeSkillCatalog(raw []byte) ([]byte, SkillCatalogReport, error) {
 
 	for _, s := range slots {
 		switch {
-		case s.dead() && working[s.id] && !retainedLevels[s.key()]:
+		case s.dead() && working[s.id]:
 			rep.DeadLevels = append(rep.DeadLevels, s.key())
 			s.name, s.desc, s.rec, s.changed = "", "", make([]byte, skillRecordSize), true
 			continue
@@ -183,6 +199,10 @@ func NormalizeSkillCatalog(raw []byte) ([]byte, SkillCatalogReport, error) {
 		}
 	}
 
+	if err := applyTextFixes(slots, textFixes, &rep); err != nil {
+		return nil, rep, err
+	}
+
 	out := binary.LittleEndian.AppendUint32(nil, uint32(groups))
 	for _, s := range slots {
 		if s.changed {
@@ -194,4 +214,42 @@ func NormalizeSkillCatalog(raw []byte) ([]byte, SkillCatalogReport, error) {
 		return nil, rep, err
 	}
 	return out, rep, nil
+}
+
+// applyTextFixes rewrites the descriptions listed in skill_text_fixes.csv. A
+// row applies when the slot still has its old text and is skipped when it has
+// the new one; anything else means the catalog is not the expected one.
+func applyTextFixes(slots []*skillSlot, fixes []byte, rep *SkillCatalogReport) error {
+	rows, err := csv.NewReader(bytes.NewReader(fixes)).ReadAll()
+	if err != nil {
+		return err
+	}
+	byKey := map[SkillKey]*skillSlot{}
+	for _, s := range slots {
+		if !s.blank() {
+			byKey[s.key()] = s
+		}
+	}
+	for _, row := range rows {
+		if len(row) != 4 {
+			return fmt.Errorf("skill_text_fixes.csv: malformed row %q", row)
+		}
+		id, err1 := strconv.Atoi(row[0])
+		level, err2 := strconv.Atoi(row[1])
+		if err1 != nil || err2 != nil {
+			return fmt.Errorf("skill_text_fixes.csv: bad skill %q/%q", row[0], row[1])
+		}
+		s := byKey[SkillKey{ID: uint16(id), Level: uint8(level)}]
+		switch {
+		case s == nil:
+			return fmt.Errorf("skill_text_fixes.csv: missing skill %d level %d", id, level)
+		case s.desc == row[3]:
+		case s.desc == row[2]:
+			s.desc, s.changed = row[3], true
+			rep.TextFixes++
+		default:
+			return fmt.Errorf("skill %d level %d: description is %q, expected %q", id, level, s.desc, row[2])
+		}
+	}
+	return nil
 }

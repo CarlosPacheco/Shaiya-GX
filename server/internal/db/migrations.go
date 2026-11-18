@@ -48,6 +48,13 @@ var migrations = []migration{
 		-- Detail 25 was a common attack with extra HP/MP/SP damage; AddDamage is read from its own
 		-- fields, so the standard attack detail 21 behaves identically.
 		UPDATE PS_GameDefs_Skills SET TypeDetail=21 WHERE TypeDetail=25 AND TypeEffect=1 AND SkillLevel<100`},
+	{8, "skill_catalog_dead_levels", `-- More dead levels, recognised by their description ("Not Available.", "Skill not available
+		-- currently"): placeholders that still carry copied effect fields. Levels that consumables
+		-- reference (Remedy Lv3, Mini Sun EXP Stone 2, Little Elkid Clone) are working and stay.
+		DELETE FROM PS_GameDefs_Skills WHERE SkillLevel BETWEEN 1 AND 9 AND (SkillID,SkillLevel) IN (VALUES
+		(15,3),(17,3),(19,3),(20,3),(21,3),(22,3),(100,2),(100,3),(109,3),(125,2),
+		(125,3),(173,2),(173,3),(175,3),(176,3),(177,3),(178,3),(179,3),(180,3),(181,3),
+		(182,3),(183,3),(184,3),(185,3),(316,3),(317,3),(318,3),(319,3))`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

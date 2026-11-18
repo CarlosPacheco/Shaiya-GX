@@ -13,12 +13,12 @@ func TestSkillCatalogCleanup(t *testing.T) {
 		}
 		return n
 	}
-	for _, level := range [][2]int{{174, 3}, {302, 3}, {309, 3}, {320, 2}, {320, 3}, {201, 2}, {201, 3}, {268, 3}} {
+	for _, level := range [][2]int{{174, 3}, {302, 3}, {309, 3}, {320, 2}, {320, 3}, {201, 2}, {201, 3}, {268, 3}, {15, 3}, {176, 3}, {319, 3}, {125, 2}, {180, 3}} {
 		if count(`SELECT COUNT(*) FROM PS_GameDefs_Skills WHERE SkillID=? AND SkillLevel=?`, level[0], level[1]) != 0 {
 			t.Fatalf("dead level %v survived", level)
 		}
 	}
-	for _, level := range [][2]int{{174, 1}, {174, 2}, {302, 1}, {302, 2}, {201, 1}, {268, 2}, {320, 1}, {150, 3}, {57, 3}, {250, 2}} {
+	for _, level := range [][2]int{{174, 1}, {174, 2}, {302, 1}, {302, 2}, {201, 1}, {268, 2}, {320, 1}, {150, 3}, {57, 3}, {176, 1}, {15, 2}, {125, 1}, {250, 2}, {274, 3}, {275, 3}, {280, 3}, {285, 3}} { // the last five are item-only levels
 		if count(`SELECT COUNT(*) FROM PS_GameDefs_Skills WHERE SkillID=? AND SkillLevel=?`, level[0], level[1]) != 1 {
 			t.Fatalf("working level %v was removed", level)
 		}
