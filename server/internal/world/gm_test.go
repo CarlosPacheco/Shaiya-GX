@@ -68,7 +68,7 @@ func gmResponse(t *testing.T, packets <-chan []byte) proto.GMState {
 
 func TestGMCommandsRequireRoleAndToggleAuthoritativeState(t *testing.T) {
 	s, packets := gmWireSession(t, db.Character{ID: 990020}, false)
-	for _, command := range []string{"/turbo", "/iclear", "/getitem 25 1 200", "/mmake 1 3", "/nmake 1 1", "/cmove 1"} {
+	for _, command := range []string{"/turbo", "/iclear", "/getitem 25 1 200", "/mmake 1 3", "/nmake 1 1", "/cmove 1", "/cure"} {
 		if !s.handleGMCommand(command) {
 			t.Fatal("GM command escaped to public chat")
 		}
@@ -419,5 +419,31 @@ func TestGMSetPersistsAndUpdatesClientWithoutReopeningRewards(t *testing.T) {
 	gmResponse(t, packets)
 	if *s.char != before {
 		t.Fatal("non-GM changed own money")
+	}
+}
+
+// /cure restores HP, MP and SP and clears every spell and item cooldown.
+func TestGMCureRestoresPoolsAndCooldowns(t *testing.T) {
+	s, _ := potentialSession(t)
+	s.isAdmin = true
+	st := s.stats()
+	s.char.CurrentHP, s.char.CurrentMP, s.char.CurrentSP = 1, 1, 1
+	s.skillCooldowns = map[uint16]time.Time{30: time.Now().Add(time.Minute), 31: time.Now().Add(time.Hour)}
+	s.itemCooldowns = map[uint8]time.Time{1: time.Now().Add(time.Minute)}
+	if !s.handleGMCommand("/cure") {
+		t.Fatal("/cure escaped to public chat")
+	}
+	after := s.stats()
+	if after.CurrentHP != st.MaxHP || after.CurrentMP != st.MaxMP || after.CurrentSP != st.MaxSP {
+		t.Fatalf("pools %d/%d/%d, want %d/%d/%d", after.CurrentHP, after.CurrentMP, after.CurrentSP, st.MaxHP, st.MaxMP, st.MaxSP)
+	}
+	if len(s.skillCooldowns) != 0 || len(s.itemCooldowns) != 0 {
+		t.Fatal("a cooldown survived")
+	}
+	s.dead = true
+	s.char.CurrentHP = 0
+	s.handleGMCommand("/cure")
+	if s.char.CurrentHP != 0 {
+		t.Fatal("/cure must not revive")
 	}
 }

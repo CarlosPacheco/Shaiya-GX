@@ -86,6 +86,12 @@ func (s *Session) handleGMCommand(text string) bool {
 			state = "enabled"
 		}
 		s.gmReply("GM: turbo " + state + ".")
+	case "/cure":
+		if len(args) != 0 {
+			s.gmReply("Usage: /cure")
+			break
+		}
+		err = s.gmCure()
 	case "/iclear":
 		if len(args) != 0 {
 			s.gmReply("Usage: /iclear")
@@ -489,5 +495,25 @@ func (s *Session) gmSet(args []string) error {
 		s.partyPools()
 	}
 	s.gmReply(fmt.Sprintf("GM: %s set to %d.", field, value))
+	return nil
+}
+
+// gmCure restores HP, MP and SP and clears every spell and item cooldown at
+// once; the client is told which spell timers ended.
+func (s *Session) gmCure() error {
+	if s.dead {
+		return fmt.Errorf("you are dead")
+	}
+	s.setPools(false)
+	s.persist()
+	st := s.stats()
+	s.send(buildCurrentHitpoints(&st), "0x0521 GM cure")
+	for id := range s.skillCooldowns {
+		s.sendSkillCooldown(id, 0, 0)
+	}
+	clear(s.skillCooldowns)
+	clear(s.itemCooldowns)
+	s.persistSkillDelays()
+	s.gmReply("GM: restored HP, MP, SP and every cooldown.")
 	return nil
 }
