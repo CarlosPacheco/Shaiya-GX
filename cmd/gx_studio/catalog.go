@@ -1,0 +1,327 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"image"
+	"slices"
+	"strings"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
+	"github.com/Spelunkern/Shaiya-GX/internal/studio"
+)
+
+var categories = []string{"Hidden", "Popular", "Essentials", "Buffs", "Packages"}
+var blankIcon = image.NewNRGBA(image.Rect(0, 0, 1, 1))
+
+func small(text string) *canvas.Text {
+	label := canvas.NewText(text, theme.Color(theme.ColorNameDisabled))
+	label.TextSize = theme.TextSize() * .8
+	return label
+}
+
+func field(title, source string, input fyne.CanvasObject) fyne.CanvasObject {
+	return container.NewVBox(container.NewHBox(widget.NewLabel(title), small(source)), input)
+}
+
+func newIcon(size float32) *canvas.Image {
+	icon := canvas.NewImageFromImage(blankIcon)
+	icon.FillMode = canvas.ImageFillContain
+	icon.SetMinSize(fyne.NewSize(size, size))
+	return icon
+}
+
+func showIcon(icon *canvas.Image, target image.Image) {
+	if target == nil {
+		target = blankIcon
+	}
+	icon.Image = target
+	icon.Refresh()
+}
+
+func category(n uint32) string {
+	if n >= uint32(len(categories)) {
+		return fmt.Sprintf("Unknown (%d)", n)
+	}
+	return categories[n]
+}
+
+func (e *editor) dirty() bool { return !slices.Equal(e.draft, e.project.Products) }
+
+func (e *editor) catalog() {
+	e.status = wrapped(e.assets.warning)
+	info := wrapped("Select a product to see its details.")
+	paths := wrapped(e.project.CashPath + "\n" + e.project.DBPath + "  ·  " + studio.ProductTable)
+	search := widget.NewEntry()
+	search.SetPlaceHolder("Search products by name or code")
+	search.SetText(e.cashQuery)
+	filter := widget.NewSelect(append([]string{"All sections"}, categories...), nil)
+	filter.SetSelectedIndex(e.cashSection)
+	icon := newIcon(48)
+	selected := -1
+	var visible []int
+	var list *widget.List
+	edit := widget.NewButtonWithIcon("Edit product", theme.DocumentCreateIcon(), func() {
+		if selected >= 0 && !e.busy {
+			e.editProduct(e.draft[selected], func(p cash.Product) {
+				e.draft[selected] = p
+				e.cashCode = p.Code
+				e.catalog()
+			})
+		}
+	})
+	remove := widget.NewButton("Remove", func() {
+		if selected < 0 || e.busy {
+			return
+		}
+		index := selected
+		dialog.ShowConfirm("Remove product?", "Remove "+e.draft[index].Code+" from the draft catalog?", func(ok bool) {
+			if ok {
+				e.draft = slices.Delete(e.draft, index, index+1)
+				e.catalog()
+			}
+		}, e.window)
+	})
+	add := widget.NewButtonWithIcon("New product", theme.ContentAddIcon(), func() {
+		if !e.busy {
+			e.editProduct(cash.Product{Index: e.nextIndex(), Bag: 1}, func(p cash.Product) {
+				e.draft = append(e.draft, p)
+				e.cashQuery, e.cashCode, e.cashSection = "", p.Code, 0
+				e.catalog()
+			})
+		}
+	})
+	move := func(delta int) {
+		target := selected + delta
+		if e.busy || selected < 0 || target < 0 || target >= len(e.draft) {
+			return
+		}
+		e.draft[selected], e.draft[target] = e.draft[target], e.draft[selected]
+		e.catalog()
+	}
+	up := widget.NewButtonWithIcon("Move up", theme.MoveUpIcon(), func() { move(-1) })
+	down := widget.NewButtonWithIcon("Move down", theme.MoveDownIcon(), func() { move(1) })
+	edit.Disable()
+	remove.Disable()
+	up.Disable()
+	down.Disable()
+	changes := studio.Differences(e.draft, e.project.Server)
+	review := widget.NewButton(fmt.Sprintf("SQLite differences (%d)", len(changes)), func() {
+		if !e.busy {
+			e.review(changes, false)
+		}
+	})
+	save := widget.NewButtonWithIcon("Save both", theme.DocumentSaveIcon(), func() {
+		if !e.busy {
+			e.review(changes, true)
+		}
+	})
+	save.Importance = widget.HighImportance
+	if e.project.Encrypted {
+		add.Disable()
+		save.Disable()
+		e.status.SetText("Encrypted Cash.SData • read-only. " + e.assets.warning)
+	} else if !e.dirty() && len(changes) == 0 {
+		save.Disable()
+	}
+	close := widget.NewButton("Open another installation", func() { e.leave(e.start) })
+
+	list = widget.NewList(func() int { return len(visible) }, func() fyne.CanvasObject {
+		name := widget.NewLabel("")
+		name.Truncation = fyne.TextTruncateEllipsis
+		return container.NewBorder(nil, nil, newIcon(32), widget.NewLabel(""), name)
+	}, func(row widget.ListItemID, object fyne.CanvasObject) {
+		product := e.draft[visible[row]]
+		children := object.(*fyne.Container).Objects
+		children[0].(*widget.Label).SetText(product.Name + "  ·  " + product.Code)
+		showIcon(children[1].(*canvas.Image), e.assets.productIcon(product))
+		children[2].(*widget.Label).SetText(fmt.Sprintf("%s  ·  %d", category(product.Bag), product.Cost))
+	})
+	list.OnSelected = func(id widget.ListItemID) {
+		selected = visible[id]
+		p := e.draft[selected]
+		e.cashCode = p.Code
+		showIcon(icon, e.assets.productIcon(p))
+		info.SetText(e.summary(p))
+		edit.SetText("Edit product")
+		if e.project.Encrypted {
+			edit.SetText("View fields")
+		}
+		edit.Enable()
+		if !e.project.Encrypted {
+			remove.Enable()
+			if selected > 0 {
+				up.Enable()
+			} else {
+				up.Disable()
+			}
+			if selected < len(e.draft)-1 {
+				down.Enable()
+			} else {
+				down.Disable()
+			}
+		}
+	}
+	refresh := func() {
+		list.UnselectAll()
+		selected = -1
+		edit.Disable()
+		remove.Disable()
+		up.Disable()
+		down.Disable()
+		info.SetText("Select a product to see its details.")
+		showIcon(icon, nil)
+		query := strings.ToLower(strings.TrimSpace(search.Text))
+		section := filter.SelectedIndex()
+		e.cashQuery, e.cashSection = search.Text, max(section, 0)
+		visible = visible[:0]
+		for i, product := range e.draft {
+			if (section <= 0 || product.Bag == uint32(section-1)) &&
+				(includes(product.Name, query) || includes(product.Code, query)) {
+				visible = append(visible, i)
+			}
+		}
+		list.Refresh()
+		for row, index := range visible {
+			if e.draft[index].Code == e.cashCode {
+				list.Select(row)
+				break
+			}
+		}
+	}
+	search.OnChanged = func(string) { refresh() }
+	filter.OnChanged = func(string) { refresh() }
+	refresh()
+	details := container.NewBorder(container.NewVBox(container.NewHBox(icon, edit, remove), container.NewHBox(up, down)), nil, nil, nil, container.NewVScroll(info))
+	left := container.NewBorder(container.NewBorder(nil, nil, nil, filter, search), nil, nil, nil, list)
+	split := container.NewHSplit(left, details)
+	split.SetOffset(.58)
+	toolbar := container.NewHBox(close, e.switcher(studio.Cash), add, review, save)
+	e.window.SetContent(container.NewPadded(container.NewBorder(container.NewVBox(toolbar, paths), e.status, nil, nil, split)))
+}
+
+func (e *editor) summary(p cash.Product) string {
+	var lines []string
+	lines = append(lines, p.Name, p.Code, category(p.Bag), fmt.Sprintf("Price %d points", p.Cost), p.Description)
+	for i, item := range p.Items {
+		if item.ItemID != 0 {
+			lines = append(lines, fmt.Sprintf("Slot %d  ·  %s  × %d", i+1, e.assets.itemTitle(item.ItemID), item.Count))
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (e *editor) nextIndex() uint32 {
+	used := make(map[uint32]bool, len(e.draft))
+	for _, p := range e.draft {
+		used[p.Index] = true
+	}
+	index := uint32(1)
+	for used[index] {
+		index++
+	}
+	return index
+}
+
+func (e *editor) review(changes []studio.Change, saving bool) {
+	var d *dialog.CustomDialog
+	lines := wrapped("Both catalogs already agree on the shared fields.")
+	if saving && len(changes) == 0 {
+		lines.SetText("The shared fields agree. This save updates the client-only fields and creates backups of both catalogs.")
+	}
+	list := widget.NewList(func() int { return len(changes) }, func() fyne.CanvasObject {
+		return widget.NewLabel("")
+	}, func(i widget.ListItemID, o fyne.CanvasObject) {
+		o.(*widget.Label).SetText(changes[i].Code)
+	})
+	useDB := widget.NewButton("Use SQLite fields in draft", nil)
+	useDB.Disable()
+	list.OnSelected = func(i widget.ListItemID) {
+		change := changes[i]
+		lines.SetText(change.Code + "\n\n" + change.Summary)
+		server, exists := e.project.Server[change.Code]
+		if exists && !e.project.Encrypted {
+			useDB.Enable()
+			useDB.OnTapped = func() {
+				index := slices.IndexFunc(e.draft, func(p cash.Product) bool { return p.Code == change.Code })
+				if index < 0 {
+					e.draft = append(e.draft, server.Apply(cash.Product{Index: e.nextIndex()}))
+				} else {
+					e.draft[index] = server.Apply(e.draft[index])
+				}
+				d.Hide()
+				e.catalog()
+			}
+		} else {
+			useDB.Disable()
+		}
+	}
+	split := container.NewHSplit(list, container.NewVScroll(lines))
+	split.SetOffset(.33)
+	cancel := widget.NewButton("Close", func() { d.Hide() })
+	actions := container.NewHBox(cancel, useDB)
+	header := wrapped("SQLite → proposed value. Select a product to inspect the changes.")
+	title := "SQLite differences"
+	if saving {
+		title = "Review coordinated save"
+		if len(changes) > 0 {
+			header.SetText("Saving applies the draft to both catalogs, including all listed SQLite additions, changes and removals.")
+		} else {
+			header.SetText("Review the catalog before saving.")
+		}
+		offline := widget.NewCheck("The affected GX client and server are stopped", nil)
+		save := widget.NewButton("Apply to both catalogs", func() {
+			if offline.Checked && !e.busy {
+				d.Hide()
+				e.save()
+			}
+		})
+		save.Importance = widget.HighImportance
+		save.Disable()
+		offline.OnChanged = func(ok bool) {
+			if ok {
+				save.Enable()
+			} else {
+				save.Disable()
+			}
+		}
+		actions = container.NewHBox(cancel, useDB, offline, save)
+	}
+	d = dialog.NewCustomWithoutButtons(title, container.NewBorder(header, actions, nil, nil, split), e.window)
+	d.Resize(fyne.NewSize(900, 490))
+	d.Show()
+}
+
+func (e *editor) save() {
+	project, draft := e.project, slices.Clone(e.draft)
+	e.run("Validating and backing up both catalogs…", func() func() {
+		backup, err := studio.Save(context.Background(), e.root, project, draft)
+		var updated *studio.Project
+		saved := err == nil
+		if saved {
+			updated, err = studio.Open(context.Background(), project.DataDir, project.DBPath)
+		}
+		return func() {
+			if err != nil {
+				pending, _ := studio.Pending(e.root)
+				if pending {
+					e.pending = true
+					e.showRecovery()
+				} else if saved {
+					e.start()
+				}
+				e.showError(err)
+				return
+			}
+			e.project, e.draft = updated, slices.Clone(updated.Products)
+			e.catalog()
+			e.status.SetText("Saved and verified both catalogs. Backups • " + backup)
+		}
+	})
+}

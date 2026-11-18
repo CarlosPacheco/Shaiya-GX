@@ -90,6 +90,7 @@ GX Server retains Rapture's gameplay and protocol behavior. Its programs are `gx
 
 ## Guides
 
+- [GX Studio desktop data editor](docs/gx-studio.md)
 - [GitHub Wiki: features, item effects, GM commands and configuration](https://github.com/Spelunkern/Shaiya-GX/wiki)
 - [Complete server reference: architecture, all packages and packet layouts](https://github.com/Spelunkern/Shaiya-GX/wiki/Server-Architecture)
 

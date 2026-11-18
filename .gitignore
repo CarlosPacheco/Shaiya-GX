@@ -108,3 +108,8 @@ __pycache__/
 
 # Generated server geometry belongs in distributables, not source history.
 /server/data/geometry/
+
+# GX Studio portable backups and interrupted-save state stay private.
+backups/
+.gxstudio.lock
+pending-save.json

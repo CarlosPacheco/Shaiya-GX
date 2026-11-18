@@ -22,6 +22,15 @@ The playable client is `Shaiya GX` (`Shaiya GX.exe` on Windows), with loose `dat
 
 SQLite is the primary production database. Keep storage behind `server/internal/db` and document SQLite operations, backups and deployment accurately. Do not describe it as a temporary backend or promise a replacement.
 
+## GX Studio
+
+GX Studio is a standalone desktop command in `cmd/gx_studio` with editing and
+recovery logic under `internal/studio`. Every editable property must show its
+readable name and the exact native field and/or SQLite column it changes.
+Preserve unmapped data, and route catalog writes through coordinated backups,
+verification and recovery. Keep the Studio GUI dependency out of GX Server
+commands. Use disposable file and database copies for verification.
+
 ## Local safety and fixtures
 
 Check running clients/services before modifying an installation or moving its mutable database. The user permanently authorizes stopping the GX client and server, including force termination when needed to apply or validate changes, without asking. Match exact GX executable paths, preserve personal data/configuration and restart services when appropriate. Unrelated processes remain outside this authorization. Use disposable DB copies, isolated ports and only processes started by your tests. An existing runtime must never be overwritten by packaging or startup. Windows process control must match executable paths, not stop every process with the same filename.
