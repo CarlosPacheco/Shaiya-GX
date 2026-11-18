@@ -30,6 +30,11 @@ type effectEmitter struct {
 	textureClock            float32
 	starts, time, remainder float32
 	particles               []effectParticle
+	// path is the .3DE of an emitter that does not draw it but moves its births
+	// along it (Unk10, "motion path"): a particle is born where the mesh's last
+	// vertex is at that moment, so a ring that unrolls over a second makes a
+	// ring of flames.
+	path *effectGeometry
 }
 
 // Effect owns one live emitter group; parsed templates and its GPU quad are shared.
@@ -116,7 +121,15 @@ func loadEffectLibrary(a *Assets, file string, sequence int, l *effect.Library) 
 			x.Skipped++
 			continue
 		}
-		var geometry *effectGeometry
+		var geometry, route *effectGeometry
+		if e.Mesh >= 0 && !e.UsesMesh() && int(e.Mesh) < len(l.Meshes) {
+			name := path.Base(strings.ReplaceAll(l.Meshes[e.Mesh], `\`, "/"))
+			if raw, err := a.Arc.ReadFile("Effect/3DE/" + name); err == nil {
+				if m, err := effect.Parse3DE(raw); err == nil && len(m.Vertices) > 0 {
+					route = newEffectGeometry(m)
+				}
+			}
+		}
 		if e.UsesMesh() {
 			if int(e.Mesh) >= len(l.Meshes) {
 				return nil, fmt.Errorf("EFT: mesh %d out of range", e.Mesh)
@@ -144,7 +157,7 @@ func loadEffectLibrary(a *Assets, file string, sequence int, l *effect.Library) 
 			}
 			textures = append(textures, t)
 		}
-		x.emitters = append(x.emitters, effectEmitter{definition: e, geometry: geometry, textures: textures, starts: r.Time})
+		x.emitters = append(x.emitters, effectEmitter{definition: e, geometry: geometry, textures: textures, starts: r.Time, path: route})
 	}
 	if len(x.emitters) == 0 {
 		return nil, fmt.Errorf("EFT: no supported linear emitters (%d skipped)", x.Skipped)
@@ -168,6 +181,14 @@ func loadEffectLibrary(a *Assets, file string, sequence int, l *effect.Library) 
 	a.effectOrder = append(a.effectOrder, key)
 	a.effectTemplates[key] = &effectTemplate{emitters: append([]effectEmitter(nil), x.emitters...), skipped: x.Skipped}
 	return x, nil
+}
+
+// motionPathOffset is where an emitter's births are placed at a given time of
+// the emitter: the last vertex of its path mesh, sampled at 30 keys a second
+// and wrapping at the mesh's last key.
+func (g *effectGeometry) motionPathOffset(seconds float32) render.V3 {
+	vertices := g.verticesAt(float32(math.Mod(float64(seconds)*30, float64(g.source.MaxKeyframe)+1)))
+	return vertices[len(vertices)-1].Pos
 }
 
 func between(a, b float32) float32 {
@@ -288,6 +309,9 @@ func (x *Effect) Update(dt float32) {
 				for axis := range v.pos {
 					v.pos[axis] += between(-p.PositionSpread[axis], p.PositionSpread[axis])
 					v.velocity[axis] = between(p.VelocityMin[axis], p.VelocityMax[axis])
+				}
+				if e.path != nil {
+					v.pos = v.pos.Add(e.path.motionPathOffset(e.time))
 				}
 				if !(x.meteor && e.geometry != nil) {
 					v.pos = effectPoint(v.pos, x.basis).Add(x.Origin)
