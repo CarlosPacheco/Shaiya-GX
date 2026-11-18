@@ -7,6 +7,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
@@ -148,5 +149,36 @@ func TestRecordedPointWindowIsMovableAndNonModal(t *testing.T) {
 	outside := a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: 470, MouseY: 110, Down: "W"}, w, h)
 	if !outside.Pressed || !outside.Held('W') || outside.SuppressAutoRun || !a.teleportStone.open {
 		t.Fatal("open recorded point window blocked gameplay outside it")
+	}
+}
+
+func TestPartyListIsMovableSelectsOnPlainClickAndPersists(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	a := inputApp()
+	a.cfg.RememberLayout = true
+	a.partyUI, _ = ui.NewPartyPanel(inputTextures{})
+	a.state.Party.Members = []proto.PartyMember{{ID: 7}, {ID: 8}, {ID: 9}}
+	const w, h = 1024, 768
+	x, y := a.partyUI.Origin(w, h, 3)
+	// A press that never moves still selects the member under it.
+	a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + 20, MouseY: y + ui.PartyRowHeight + 5}, w, h)
+	a.worldControls(&platform.Input{Clicked: true, MouseX: x + 20, MouseY: y + ui.PartyRowHeight + 5}, w, h)
+	if a.state.Target != 8 || a.partyUI.Position.Moved {
+		t.Fatalf("plain click: target %d moved %v", a.state.Target, a.partyUI.Position.Moved)
+	}
+	// Moving past the threshold drags the list and does not change the target.
+	a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + 20, MouseY: y + 5}, w, h)
+	a.worldControls(&platform.Input{MouseDown: true, MouseX: x + 220, MouseY: y + 105}, w, h)
+	a.worldControls(&platform.Input{Clicked: true, MouseX: x + 220, MouseY: y + 105}, w, h)
+	nx, ny := a.partyUI.Origin(w, h, 3)
+	if nx != x+200 || ny != y+100 || a.state.Target != 8 {
+		t.Fatalf("drag: origin %d,%d target %d", nx, ny, a.state.Target)
+	}
+	b := inputApp()
+	b.cfg.RememberLayout = true
+	b.partyUI, _ = ui.NewPartyPanel(inputTextures{})
+	b.loadUILayout()
+	if b.partyUI.Position != a.partyUI.Position {
+		t.Fatal("party position did not persist")
 	}
 }

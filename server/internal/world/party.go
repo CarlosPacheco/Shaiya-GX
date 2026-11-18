@@ -244,6 +244,29 @@ func (s *Session) handlePartyInvite(op packet.Opcode, p []byte) {
 			target, targetID = t, t.CharacterID
 		}
 	}
+	s.partyInviteTarget(me, target, targetID, op, false)
+}
+
+// handlePartyInviteGlobal is the GX /party <name> request (0x7F15): the same
+// invitation as 0x0B09 without the same-map requirement. Offline players,
+// other factions and GMs all answer with the generic "unavailable" reply, so a
+// hidden GM cannot be told apart from an offline character.
+func (s *Session) handlePartyInviteGlobal(p []byte) {
+	me := s.player
+	if me == nil || len(p) < 23 {
+		return
+	}
+	var target *ConnectedPlayer
+	var targetID uint32
+	if t := FindPlayerByName(strings.TrimRight(packet.FixedText(p[2:23]), " ")); t != nil && t != me && !t.IsAdmin {
+		target, targetID = t, t.CharacterID
+	}
+	s.partyInviteTarget(me, target, targetID, packet.PartyInviteName, true)
+}
+
+// partyInviteTarget validates and delivers an invitation. anyMap lets the
+// target answer from another map (the invitation was global).
+func (s *Session) partyInviteTarget(me, target *ConnectedPlayer, targetID uint32, op packet.Opcode, anyMap bool) {
 	partyMu.Lock()
 	defer partyMu.Unlock()
 	if pt := partyOf(me); pt != nil && (pt.leaderPlayer() != me || len(pt.members) >= partyMax) {
@@ -271,6 +294,7 @@ func (s *Session) handlePartyInvite(op packet.Opcode, p []byte) {
 	}
 	s.log.Printf("GX Server World party invite %d -> %d", me.CharacterID, targetID)
 	target.inviterID, target.inviteDeadline = me.CharacterID, time.Now().Add(partyInviteWindow)
+	target.inviteAnyMap = anyMap
 	w := packet.New(op)
 	if op == packet.PartyInvite {
 		w.U32(me.CharacterID)
@@ -289,13 +313,13 @@ func (s *Session) handlePartyAnswer(p []byte) {
 	}
 	partyMu.Lock()
 	defer partyMu.Unlock()
-	inviterID := me.inviterID
-	me.inviterID = 0
+	inviterID, anyMap := me.inviterID, me.inviteAnyMap
+	me.inviterID, me.inviteAnyMap = 0, false
 	if inviterID == 0 || partyOf(me) != nil {
 		return
 	}
 	inviter := FindPlayerByID(inviterID)
-	if inviter == nil || inviter.MapID() != me.MapID() {
+	if inviter == nil || (!anyMap && inviter.MapID() != me.MapID()) {
 		return
 	}
 	if p[2] != 0 {

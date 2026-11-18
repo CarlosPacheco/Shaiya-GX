@@ -398,6 +398,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.summonMessage, err = ui.NewMessage(a); err != nil {
 		return nil, err
 	}
+	a.summonMessage.Movable = true
 	if a.blacksmithUI, err = ui.NewBlacksmith(a); err != nil {
 		return nil, err
 	}

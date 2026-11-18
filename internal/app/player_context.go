@@ -233,7 +233,7 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 		} else if a.state.Party.Raid {
 			id = a.partyUI.RaidCompactMemberAt(w, h, in.MouseX, in.MouseY, a.state.SelfID, a.state.Party.RaidSlots)
 		} else if !a.state.Party.Raid {
-			x, y := ui.PartyOrigin(w, h, len(a.state.Party.Members))
+			x, y := a.partyUI.Origin(w, h, len(a.state.Party.Members))
 			if in.MouseX >= x && in.MouseX < x+ui.PartyWidth && in.MouseY >= y && in.MouseY < y+len(a.state.Party.Members)*ui.PartyRowHeight {
 				id = a.state.Party.Members[(in.MouseY-y)/ui.PartyRowHeight].ID
 			}

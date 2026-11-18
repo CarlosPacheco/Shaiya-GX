@@ -43,7 +43,7 @@ func buildAccountPoints(points uint32) []byte {
 
 Declarations: [packet.PointBuy](../../server/internal/packet/packet.go#L190), [proto.PointBuy](../../internal/proto/opcodes.go#L178).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L265)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L267)
 
 **S→C serializers:** [buildPointBuyResult (server/internal/world/itemmall.go)](../../server/internal/world/itemmall.go#L28)
 
@@ -147,7 +147,7 @@ type MallPurchase struct {
 
 Declarations: [packet.PointGiftSend](../../server/internal/packet/packet.go#L191), [proto.PointGiftSend](../../internal/proto/opcodes.go#L179).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L267)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L269)
 
 **S→C serializers:** [buildGiftSendResult (server/internal/world/itemmall.go)](../../server/internal/world/itemmall.go#L43)
 
@@ -233,7 +233,7 @@ type MallGiftResult struct {
 
 Declarations: [packet.CashPoint](../../server/internal/packet/packet.go#L194), [proto.CashPoint](../../internal/proto/opcodes.go#L182).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L275)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L277)
 
 **S→C serializers:** [buildCashPoints (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L95)
 
@@ -358,7 +358,7 @@ type MallStoredItem struct {
 
 Declarations: [packet.PointStoredItemGet](../../server/internal/packet/packet.go#L193), [proto.PointStoredItemGet](../../internal/proto/opcodes.go#L181).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L269)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L271)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 

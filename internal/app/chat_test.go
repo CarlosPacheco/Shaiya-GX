@@ -185,6 +185,15 @@ func TestPhoenixChatClickFocusAndChannelAliases(t *testing.T) {
 			t.Fatal(tc, channel, body, ok)
 		}
 	}
+	// /party <name> is an invitation; other forms stay party chat.
+	if _, _, ok := phoenixChannelCommand("/party Alice"); ok {
+		t.Fatal("/party <name> must not be party chat")
+	}
+	for _, value := range []string{"/party", "/party hello team", "/PARTY  see you soon"} {
+		if channel, _, ok := phoenixChannelCommand(value); !ok || channel != 3 {
+			t.Fatal(value, channel, ok)
+		}
+	}
 }
 
 func TestPhoenixChannelColoursKeepSysMsgText(t *testing.T) {

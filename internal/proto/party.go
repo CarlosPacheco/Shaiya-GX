@@ -100,3 +100,14 @@ func PartyInviteNamePacket(name string) []byte {
 	w.Fixed(name, 21, true)
 	return w.Bytes()
 }
+
+// GXPartyInviteName is the GX /party <name> request: the party invitation of
+// 0x0B09 without the proximity or same-map requirement. The target still
+// receives the native 0x0B09 prompt.
+const GXPartyInviteName Opcode = 0x7F15
+
+func PartyGlobalInvitePacket(name string) []byte {
+	w := NewWriter(GXPartyInviteName)
+	w.Fixed(name, 21, true)
+	return w.Bytes()
+}

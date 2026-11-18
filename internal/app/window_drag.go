@@ -15,6 +15,7 @@ import (
 type windowDrag struct {
 	portrait, moved                 bool
 	pressX, pressY                  int
+	click                           func() // pressed without moving; defaults to selecting self for the portrait
 	position                        *ui.WindowPosition
 	offsetX, offsetY, width, height int
 }
@@ -30,7 +31,11 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 		}
 		if in.Clicked || !in.MouseDown {
 			if d.portrait && !d.moved && in.Clicked {
-				a.selectSelf()
+				if d.click != nil {
+					d.click()
+				} else {
+					a.selectSelf()
+				}
 			}
 			a.finishWindowDrag()
 		}
@@ -273,6 +278,18 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
+	if members := a.state.Party.Members; a.partyUI != nil && !a.state.Party.Raid && len(members) > 0 {
+		// Rows stay clickable: a press that never moves selects the member,
+		// moving more than a few pixels drags the whole list.
+		x, y := a.partyUI.Origin(w, h, len(members))
+		if pointInside(in, x, y, ui.PartyWidth, len(members)*ui.PartyRowHeight) {
+			id := members[(in.MouseY-y)/ui.PartyRowHeight].ID
+			a.windowDrag = windowDrag{position: &a.partyUI.Position, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: ui.PartyWidth, height: ui.PartyRowHeight, portrait: true, pressX: in.MouseX, pressY: in.MouseY,
+				click: func() { a.state.Target = id }}
+			a.wv.uiLeft = -2
+			return true
+		}
+	}
 	if a.partyUI != nil && a.state.Party.Raid && !a.party.raidHidden {
 		x, y := a.partyUI.RaidOrigin(w, h)
 		if start(&a.partyUI.RaidPosition, x, y, ui.RaidWidth, ui.RaidHeight, 20, 520) {
@@ -311,6 +328,7 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 		out["sub_actions"] = &a.subActionsUI.Position
 	}
 	if a.partyUI != nil {
+		out["party"] = &a.partyUI.Position
 		out["raid"] = &a.partyUI.RaidPosition
 	}
 	if a.mallUI != nil {

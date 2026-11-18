@@ -203,7 +203,7 @@ type Chat struct {
 
 Declarations: [packet.ChatGuild](../../server/internal/packet/packet.go#L178), [proto.ChatGuild](../../internal/proto/opcodes.go#L166).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L146)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L148)
 
 **S→C serializers:** [guildChat (server/internal/world/guild.go)](../../server/internal/world/guild.go#L452)
 
@@ -265,7 +265,7 @@ type Chat struct {
 
 Declarations: [packet.ChatParty](../../server/internal/packet/packet.go#L70), [proto.ChatParty](../../internal/proto/opcodes.go#L54).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L138)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L140)
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 

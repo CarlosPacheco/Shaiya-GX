@@ -124,7 +124,7 @@ Declarations: [packet.GXForgeQuote](../../server/internal/packet/packet.go#L325)
 
 Source notes: GXForgeQuote is a read-only preview; execution still validates live inventory.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L273)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L275)
 
 **S→C serializers:** [handleForgeQuote (server/internal/world/forge_quote.go)](../../server/internal/world/forge_quote.go#L103)
 
@@ -474,7 +474,7 @@ Declarations: [proto.GXGMMapTeleport](../../internal/proto/gm_map.go#L10).
 
 Source notes: GXGMMapTeleport requests an exact map-image coordinate. The server owns Y.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L271)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L273)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1448,6 +1448,38 @@ func SummonAnswerPacket(id uint32, accept bool) []byte {
 func SummonCancelPacket() []byte {
 	w := NewWriter(GXSummonRune)
 	w.U8(SummonCancel)
+	return w.Bytes()
+}
+```
+
+</details>
+
+## Opcode 7f15
+
+**`0x7F15` — GXPartyInviteName**
+
+Declarations: [packet.GXPartyInviteName](../../server/internal/packet/packet.go#L328), [proto.GXPartyInviteName](../../internal/proto/party.go#L107).
+
+Source notes: GXPartyInviteName is the global /party <name> invitation request. GXPartyInviteName is the GX /party <name> request: the party invitation of 0x0B09 without the proximity or same-map requirement. The target still receives the native 0x0B09 prompt.
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L118)
+
+**S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>PartyGlobalInvitePacket — internal/proto/party.go</summary>
+
+[Source definition](../../internal/proto/party.go#L109)
+
+```go
+func PartyGlobalInvitePacket(name string) []byte {
+	w := NewWriter(GXPartyInviteName)
+	w.Fixed(name, 21, true)
 	return w.Bytes()
 }
 ```

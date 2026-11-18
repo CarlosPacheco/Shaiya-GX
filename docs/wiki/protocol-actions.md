@@ -12,7 +12,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 Declarations: [packet.CharacterEnteredMap](../../server/internal/packet/packet.go#L38), [proto.CharacterEnteredMap](../../internal/proto/opcodes.go#L22).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L202)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L204)
 
 **S→C serializers:** [buildCharacterEnteredMapGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L495)
 
@@ -413,7 +413,7 @@ type Reader struct {
 
 Declarations: [packet.SetStatPoint](../../server/internal/packet/packet.go#L82), [proto.SetStatPoint](../../internal/proto/opcodes.go#L66).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L206)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L208)
 
 **S→C serializers:** [handleSetStatPoint (server/internal/world/skills.go)](../../server/internal/world/skills.go#L233)
 
@@ -523,7 +523,7 @@ func DecodeStatPoints(p []byte) (d StatPoints, err error) {
 
 Declarations: [packet.LearnNewSkill](../../server/internal/packet/packet.go#L84), [proto.LearnNewSkill](../../internal/proto/opcodes.go#L68).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L204)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L206)
 
 **S→C serializers:** [buildLearnSkillError (server/internal/world/skills.go)](../../server/internal/world/skills.go#L91), [buildLearnSkillResult (server/internal/world/skills.go)](../../server/internal/world/skills.go#L134)
 
@@ -610,7 +610,7 @@ type LearnResult struct {
 
 Declarations: [packet.CharacterEnteredPortal](../../server/internal/packet/packet.go#L85), [proto.CharacterEnteredPortal](../../internal/proto/opcodes.go#L69).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L198)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L200)
 
 **S→C serializers:** [buildPortalResult (server/internal/world/partyzone.go)](../../server/internal/world/partyzone.go#L84)
 
@@ -702,7 +702,7 @@ type MapPosition struct {
 
 Declarations: [packet.Gatekeeper](../../server/internal/packet/packet.go#L71), [proto.Gatekeeper](../../internal/proto/opcodes.go#L55).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L160)
 
 **S→C serializers:** [buildGatekeeperResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L283)
 
@@ -990,7 +990,7 @@ type BlessingUpdate struct {
 
 Declarations: [packet.AutoAttackStop](../../server/internal/packet/packet.go#L39), [proto.AutoAttackStop](../../internal/proto/opcodes.go#L23).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L210)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L212)
 
 **S→C serializers:** [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L138), [syncVisibility (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L38)
 
@@ -1294,7 +1294,7 @@ type StatReset struct {
 
 Declarations: [packet.UseVehicle](../../server/internal/packet/packet.go#L78), [proto.UseVehicle](../../internal/proto/opcodes.go#L62).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L222)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224)
 
 **S→C serializers:** [vehicleResult (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L108)
 
@@ -1577,7 +1577,7 @@ Declarations: [proto.VehicleLeave](../../internal/proto/mount_state.go#L9).
 
 Source notes: Native requests and invitation messages. 0x021C is also the server's passenger attachment notification; direction determines its layout.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L228)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L230)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1605,7 +1605,7 @@ Declarations: [proto.VehicleInvite](../../internal/proto/mount_state.go#L10).
 
 Source notes: Native requests and invitation messages. 0x021C is also the server's passenger attachment notification; direction determines its layout.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L226)
 
 **S→C serializers:** [handleVehicleInvite (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L259)
 
@@ -1712,7 +1712,7 @@ Declarations: [proto.VehicleAnswer](../../internal/proto/mount_state.go#L11).
 
 Source notes: Native requests and invitation messages. 0x021C is also the server's passenger attachment notification; direction determines its layout.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L226)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L228)
 
 **S→C serializers:** [vehicleReply (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L252)
 

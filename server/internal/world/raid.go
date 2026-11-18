@@ -283,6 +283,7 @@ func (s *Session) handleRaidInvite(op packet.Opcode, p []byte) {
 		return
 	}
 	target.inviterID, target.inviteDeadline = me.CharacterID, time.Now().Add(partyInviteWindow)
+	target.inviteAnyMap = false
 	w := packet.New(op)
 	if op == packet.RaidInvite {
 		w.U32(me.CharacterID)

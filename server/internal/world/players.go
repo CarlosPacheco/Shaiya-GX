@@ -109,6 +109,7 @@ type ConnectedPlayer struct {
 	party          *party
 	inviterID      uint32
 	inviteDeadline time.Time
+	inviteAnyMap   bool // the pending party invitation was global (/party name)
 
 	rewardMu   sync.Mutex
 	experience [4]uint32

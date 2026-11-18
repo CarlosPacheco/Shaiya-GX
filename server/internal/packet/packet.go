@@ -323,3 +323,6 @@ func NewReader(p []byte) *proto.Reader { return proto.NewReader(p) }
 func BaseOpcode(v uint16) Opcode       { return Opcode(itemstack.Base(v)) }
 
 const GXForgeQuote Opcode = 0x7F03
+
+// GXPartyInviteName is the global /party <name> invitation request.
+const GXPartyInviteName Opcode = 0x7F15

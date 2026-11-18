@@ -2482,6 +2482,14 @@ func PartyInviteNamePacket(name string) []byte {
 }
 ```
 
+```go
+func PartyGlobalInvitePacket(name string) []byte {
+	w := NewWriter(GXPartyInviteName)
+	w.Fixed(name, 21, true)
+	return w.Bytes()
+}
+```
+
 </details>
 
 ## periodic

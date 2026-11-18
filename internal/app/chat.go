@@ -290,8 +290,18 @@ func (a *App) chatFont() *ui.Font {
 func phoenixChannelCommand(value string) (uint8, string, bool) {
 	command, body, _ := strings.Cut(value, " ")
 	channels := map[string]uint8{"/s": 0, "/say": 0, "/p": 3, "/party": 3, "/g": 2, "/guild": 2, "/1": 4, "/area": 4, "/shout": 4, "/2": 1, "/trade": 1}
+	if strings.EqualFold(command, "/party") && isPartyInviteName(body) {
+		return 0, "", false // /party <name> invites; /party with text is still party chat
+	}
 	channel, ok := channels[strings.ToLower(command)]
 	return channel, strings.TrimSpace(body), ok
+}
+
+// isPartyInviteName reports whether the text after /party is a lone character
+// name. Names have no spaces, so several words remain party chat.
+func isPartyInviteName(body string) bool {
+	fields := strings.Fields(body)
+	return len(fields) == 1
 }
 
 func (a *App) drawChatItem(typ, id uint8, x, y, size int, alpha float32) {

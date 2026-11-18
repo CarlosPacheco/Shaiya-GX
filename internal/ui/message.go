@@ -17,6 +17,43 @@ type Message struct {
 	ok, cancel       Button
 	Text             string
 	Visible, Confirm bool
+	// Movable lets the header drag the dialog. The position lasts for the
+	// session and survives reopening; the native dialog is centred.
+	Movable      bool
+	Position     WindowPosition
+	dragging     bool
+	grabX, grabY int
+}
+
+const messageWidth, messageHeaderHeight = 256, 53
+
+// Origin is the dialog's top-left corner.
+func (m *Message) Origin(w, h int) (int, int) {
+	x, y := w/2-128, h/2-128-m.extra/2
+	if !m.Movable || !m.Position.Moved {
+		return x, y
+	}
+	return m.Position.Origin(w, h, messageWidth, 256+m.extra, x, y)
+}
+
+// drag handles the header drag; it reports whether the pointer is owned by it.
+func (m *Message) drag(in *platform.Input, w, h int) bool {
+	if !m.Movable {
+		return false
+	}
+	x, y := m.Origin(w, h)
+	if m.dragging {
+		m.Position.Move(in.MouseX-m.grabX, in.MouseY-m.grabY, w, h, messageWidth, 256+m.extra)
+		if in.Clicked || !in.MouseDown {
+			m.dragging = false
+		}
+		return true
+	}
+	if in.Pressed && in.MouseX >= x && in.MouseX < x+messageWidth && in.MouseY >= y && in.MouseY < y+messageHeaderHeight {
+		m.dragging, m.grabX, m.grabY = true, in.MouseX-x, in.MouseY-y
+		return true
+	}
+	return false
 }
 
 func NewMessage(t Textures) (*Message, error) {
@@ -29,6 +66,7 @@ func NewMessage(t Textures) (*Message, error) {
 
 func (m *Message) Open(text string, confirm bool) {
 	m.Text, m.Confirm, m.Visible = text, confirm, true
+	m.dragging = false
 	m.extra = 0
 	m.detail = ""
 	for _, b := range []*Button{&m.ok, &m.cancel} {
@@ -37,7 +75,7 @@ func (m *Message) Open(text string, confirm bool) {
 }
 
 func (m *Message) controls(w, h int) {
-	x, y := w/2-128, h/2-128-m.extra/2
+	x, y := m.Origin(w, h)
 	m.ok.OriginX, m.ok.OriginY, m.ok.OffX, m.ok.OffY = x, y, 95, 114+m.extra
 	if m.Confirm {
 		m.ok.OffX = 48
@@ -47,6 +85,9 @@ func (m *Message) controls(w, h int) {
 
 func (m *Message) Update(in *platform.Input, w, h int) int {
 	if !m.Visible {
+		return MessageNone
+	}
+	if m.drag(in, w, h) {
 		return MessageNone
 	}
 	m.controls(w, h)
@@ -67,7 +108,7 @@ func (m *Message) Draw(s *render.Sprites, f *Font, w, h int) {
 		return
 	}
 	m.controls(w, h)
-	x, y := w/2-128, h/2-128-m.extra/2
+	x, y := m.Origin(w, h)
 	if m.extra == 0 {
 		s.DrawImage(m.frame, float32(x), float32(y))
 	} else {

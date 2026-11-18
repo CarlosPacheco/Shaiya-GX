@@ -74,6 +74,10 @@ func TestPartyWritersMatchNativeBytes(t *testing.T) {
 	if len(p) != 23 || !bytes.Equal(p[:9], []byte{9, 11, 'M', 'e', 'm', 'b', 'e', 'r', 0}) {
 		t.Fatal(p)
 	}
+	p = PartyGlobalInvitePacket("Member")
+	if len(p) != 23 || !bytes.Equal(p[:9], []byte{0x15, 0x7f, 'M', 'e', 'm', 'b', 'e', 'r', 0}) {
+		t.Fatal(p)
+	}
 }
 func FuzzPartyList(f *testing.F) {
 	w := NewWriter(PartyRoster)

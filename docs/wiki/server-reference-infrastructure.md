@@ -875,6 +875,7 @@ Direct GX dependencies: `internal/itemstack`, `internal/proto`, `internal/textwi
 | [`NewReader`](../../server/internal/packet/packet.go#L322)<br>`func NewReader(p []byte) *proto.Reader` | See the source definition and the subsystem ownership contract. |
 | [`BaseOpcode`](../../server/internal/packet/packet.go#L323)<br>`func BaseOpcode(v uint16) Opcode` | See the source definition and the subsystem ownership contract. |
 | [`GXForgeQuote`](../../server/internal/packet/packet.go#L325)<br>`const GXForgeQuote = 0x7F03` | See the source definition and the subsystem ownership contract. |
+| [`GXPartyInviteName`](../../server/internal/packet/packet.go#L328)<br>`const GXPartyInviteName = 0x7F15` | GXPartyInviteName is the global /party <name> invitation request. |
 
 <details><summary>Type definitions and owned fields</summary>
 

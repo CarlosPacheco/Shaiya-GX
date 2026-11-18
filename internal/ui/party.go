@@ -17,6 +17,7 @@ type PartyPanel struct {
 	raidFrame, raidRows, raidCheck    *render.Texture
 	raidSelector, raidSlider          *render.Texture
 	raidClose, raidOK, raidCancel     Button
+	Position                          WindowPosition // movable party list; persisted by the app
 	RaidPosition                      WindowPosition
 	RaidCompactPosition               WindowPosition
 	raidHeld                          int
@@ -46,8 +47,20 @@ func NewPartyPanel(t Textures) (*PartyPanel, error) {
 func PartyOrigin(w, h, count int) (int, int) {
 	return max(0, min(100, w-PartyWidth)), max(0, min(100, h-count*PartyRowHeight))
 }
+
+// Origin is the top-left of the party list. A moved list is anchored by its
+// first row, so members joining or leaving never shift its top edge; rows are
+// only pushed up when they would leave the screen.
+func (p *PartyPanel) Origin(w, h, count int) (int, int) {
+	x, y := PartyOrigin(w, h, count)
+	if !p.Position.Moved {
+		return x, y
+	}
+	x, y = p.Position.Origin(w, h, PartyWidth, PartyRowHeight, x, y)
+	return x, max(0, min(y, h-count*PartyRowHeight))
+}
 func (p *PartyPanel) Update(in *platform.Input, w, h int, members []proto.PartyMember) (uint32, bool) {
-	x, y := PartyOrigin(w, h, len(members))
+	x, y := p.Origin(w, h, len(members))
 	inside := in.MouseX >= x && in.MouseX < x+PartyWidth && in.MouseY >= y && in.MouseY < y+len(members)*PartyRowHeight
 	id := uint32(0)
 	if inside {
@@ -66,7 +79,7 @@ func (p *PartyPanel) Update(in *platform.Input, w, h int, members []proto.PartyM
 	return selected, inside && (in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.RightDown || in.Wheel != 0)
 }
 func (p *PartyPanel) Draw(s *render.Sprites, f *Font, w, h int, members []proto.PartyMember, leader, target uint32) {
-	x, y := PartyOrigin(w, h, len(members))
+	x, y := p.Origin(w, h, len(members))
 	for i, m := range members {
 		p.drawMember(s, f, x, y+i*PartyRowHeight, m, leader, target)
 	}

@@ -151,6 +151,22 @@ func (a *App) drawParty(w, h int) {
 	}
 }
 
+// partyGlobalInvite is /party <name>: the click invitation without range or
+// map limits. The server refuses offline players, GMs and the other faction.
+func (a *App) partyGlobalInvite(fields []string) bool {
+	if len(fields) != 2 {
+		return false
+	}
+	if a.state.Party.Raid {
+		a.combatNotice, a.combatNoticeUntil = "Use /raid to invite while in a raid.", a.clock+4
+		return true
+	}
+	if err := a.world.Send(proto.PartyGlobalInvitePacket(fields[1])); err != nil {
+		a.backToLogin("Unable to send party invitation.")
+	}
+	return true
+}
+
 // Slash commands share the same native requests as the player-context menu.
 // They never add/remove members before server confirmation.
 func (a *App) partyCommand(text string) bool {
@@ -161,6 +177,9 @@ func (a *App) partyCommand(text string) bool {
 	command := strings.ToLower(fields[0])
 	if strings.HasPrefix(command, "/raid") {
 		return a.raidCommand(fields)
+	}
+	if command == "/party" {
+		return a.partyGlobalInvite(fields)
 	}
 	if command != "/invite" && command != "/leave" && command != "/kick" && command != "/leader" {
 		return false

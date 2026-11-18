@@ -115,6 +115,8 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 		s.handlePvPReward(op, p)
 	case packet.PartyInvite, packet.PartyInviteName:
 		s.handlePartyInvite(op, p)
+	case packet.GXPartyInviteName:
+		s.handlePartyInviteGlobal(p)
 	case packet.PartyAnswer:
 		s.handlePartyAnswer(p)
 	case packet.PartyLeft, packet.PartyLeaveAlt:
