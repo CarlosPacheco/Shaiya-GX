@@ -1342,7 +1342,7 @@ Declarations: [packet.PartyLevel](../../server/internal/packet/packet.go#L69), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [partyLevel (server/internal/world/party.go)](../../server/internal/world/party.go#L426)
+**S→C serializers:** [partyLevel (server/internal/world/party.go)](../../server/internal/world/party.go#L427)
 
 **Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L166), [Apply (internal/game/state.go)](../../internal/game/state.go#L627)
 
@@ -1352,7 +1352,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>partyLevel — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L426)
+[Source definition](../../server/internal/world/party.go#L427)
 
 ```go
 func (s *Session) partyLevel() {

@@ -51,7 +51,7 @@ Right-click an allied player and select the native **go together** action.
 Either the driver or the prospective passenger can request it. The recipient
 gets the native confirmation prompt. A two-seat driver must have a free seat;
 the passenger must be on foot. Invitations expire after 30 seconds. The server
-checks the same map, faction, life state and a 3-unit three-dimensional range
+checks the same map, faction, life state and a 10-unit three-dimensional range
 both when requesting and accepting. Acceptance cannot move a distant passenger
 to the mount. Driver departure detaches both.
 Jump makes the driver and mount jump together; it still detaches the passenger.

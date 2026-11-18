@@ -130,3 +130,12 @@ func TestVehicleWireStateUsesServerFrame(t *testing.T) {
 		t.Fatal("missing vehicle state frame")
 	}
 }
+
+func TestVehicleRangeIsTenUnits(t *testing.T) {
+	a := vehicleFixture(t, 990084, 0)
+	near := vehicleFixture(t, 990085, 9.5)
+	far := vehicleFixture(t, 990086, 10.5)
+	if !vehicleNear(a.player, near.player) || vehicleNear(a.player, far.player) {
+		t.Fatal("go-together and boarding range is 10 units")
+	}
+}

@@ -160,12 +160,7 @@ func (a *App) drawSharedTooltipAt(w, h int, position *[2]int) {
 	rect := func(x, y, width, height int, color [4]float32) {
 		a.sprites.Draw(a.white, float32(left)+float32(x)*scale, float32(top)+float32(y)*scale, float32(width)*scale, float32(height)*scale, 0, 0, 1, 1, color)
 	}
-	rect(0, 0, 208, layout.height, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 205.0 / 255})
-	border := [4]float32{143.0 / 255, 136.0 / 255, 115.0 / 255, 1}
-	rect(1, 1, 206, 1, border)
-	rect(1, layout.height-2, 206, 1, border)
-	rect(1, 1, 1, layout.height-2, border)
-	rect(206, 1, 1, layout.height-2, border)
+	ui.DrawTipFrame(a.sprites, a.white, float32(left), float32(top), 208, float32(layout.height), scale, ui.TipFill, ui.TipBorder)
 	for _, run := range layout.runs {
 		if a.tooltipMuted {
 			run.color = [4]float32{.6, .6, .6, 1}

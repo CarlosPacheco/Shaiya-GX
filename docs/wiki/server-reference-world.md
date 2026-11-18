@@ -2088,19 +2088,19 @@ Direct GX dependencies: `internal/proto`, `server/internal/packet`.
 | [`leaveParty`](../../server/internal/world/party.go#L169)<br>`func leaveParty(pt *party, p *ConnectedPlayer, expelled bool)` | leaveParty is leave_normal_party (partyMu held). expelled sends 0x0B06 instead of 0x0B05. A party left with one member dissolves. |
 | [`partyLeaveOnDisconnect`](../../server/internal/world/party.go#L210)<br>`func partyLeaveOnDisconnect(p *ConnectedPlayer)` | partyLeaveOnDisconnect drops a leaving player from its party and from any pending invitation. |
 | [`handlePartyInvite`](../../server/internal/world/party.go#L220)<br>`func (s *Session) handlePartyInvite(op packet.Opcode, p []byte)` | handlePartyInvite (0x0B02 id / 0x0B09 name). |
-| [`handlePartyInviteGlobal`](../../server/internal/world/party.go#L254)<br>`func (s *Session) handlePartyInviteGlobal(p []byte)` | handlePartyInviteGlobal is the GX /party <name> request (0x7F15): the same invitation as 0x0B09 without the same-map requirement. Offline players, other factions and GMs all answer with the generic "unavailable" reply, so a hidden GM cannot be told apart from an offline character. |
-| [`partyInviteTarget`](../../server/internal/world/party.go#L269)<br>`func (s *Session) partyInviteTarget(me, target *ConnectedPlayer, targetID uint32, op packet.Opcode, anyMap bool)` | partyInviteTarget validates and delivers an invitation. anyMap lets the target answer from another map (the invitation was global). |
-| [`handlePartyAnswer`](../../server/internal/world/party.go#L309)<br>`func (s *Session) handlePartyAnswer(p []byte)` | handlePartyAnswer (0x0B03): 0 accepts. The inviter's party is created on the first acceptance. |
-| [`handlePartyLeave`](../../server/internal/world/party.go#L343)<br>`func (s *Session) handlePartyLeave()` | See the source definition and the subsystem ownership contract. |
-| [`handlePartyExpel`](../../server/internal/world/party.go#L355)<br>`func (s *Session) handlePartyExpel(p []byte)` | handlePartyExpel (0x0B06) and handlePartyLeader (0x0B07): leader only. |
-| [`handlePartyLeader`](../../server/internal/world/party.go#L374)<br>`func (s *Session) handlePartyLeader(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`partyPools`](../../server/internal/world/party.go#L398)<br>`func (s *Session) partyPools()` | partyPools (0x0C03) shares the character's HP/SP/MP with its party. |
-| [`partyLevel`](../../server/internal/world/party.go#L426)<br>`func (s *Session) partyLevel()` | partyLevel (0x0C09) tells the party about a level-up. |
-| [`partyChat`](../../server/internal/world/party.go#L439)<br>`func (s *Session) partyChat(message string, items proto.ChatItems)` | partyChat (0x1105) relays a message to the party. |
-| [`partyExpLevelShare`](../../server/internal/world/party.go#L455)<br>`func partyExpLevelShare(maxLevel, level uint16) float64` | partyExpLevelShare is the level gap factor against the party's highest level. |
-| [`killRewards`](../../server/internal/world/party.go#L472)<br>`func killRewards(killer *ConnectedPlayer, mapID uint16, x, z float32, mobLevel, mobExp uint16) map[*ConnectedPlayer]uint32` | killRewards splits a kill's exp per mob_death: solo kills get 1.2x; party members within 100 units on the map get the count factor and the level share. Returns each recipient and amount. |
-| [`partyMembersNear`](../../server/internal/world/party.go#L506)<br>`func partyMembersNear(killer *ConnectedPlayer, mapID uint16, x, z float32) []*ConnectedPlayer` | partyMembersNear lists the killer's party members on the map within the reward range (nil without a party). |
-| [`samePartyIDs`](../../server/internal/world/party.go#L525)<br>`func samePartyIDs(a, b uint32) bool` | samePartyIDs reports whether two characters share a party. |
+| [`handlePartyInviteGlobal`](../../server/internal/world/party.go#L255)<br>`func (s *Session) handlePartyInviteGlobal(p []byte)` | handlePartyInviteGlobal is the GX /party <name> request (0x7F15): the same invitation as 0x0B09 without the same-map requirement. Offline players, other factions and, unless the inviter is a GM too, GMs all answer with the generic "unavailable" reply, so a hidden GM cannot be told apart from an offline character. |
+| [`partyInviteTarget`](../../server/internal/world/party.go#L270)<br>`func (s *Session) partyInviteTarget(me, target *ConnectedPlayer, targetID uint32, op packet.Opcode, anyMap bool)` | partyInviteTarget validates and delivers an invitation. anyMap lets the target answer from another map (the invitation was global). |
+| [`handlePartyAnswer`](../../server/internal/world/party.go#L310)<br>`func (s *Session) handlePartyAnswer(p []byte)` | handlePartyAnswer (0x0B03): 0 accepts. The inviter's party is created on the first acceptance. |
+| [`handlePartyLeave`](../../server/internal/world/party.go#L344)<br>`func (s *Session) handlePartyLeave()` | See the source definition and the subsystem ownership contract. |
+| [`handlePartyExpel`](../../server/internal/world/party.go#L356)<br>`func (s *Session) handlePartyExpel(p []byte)` | handlePartyExpel (0x0B06) and handlePartyLeader (0x0B07): leader only. |
+| [`handlePartyLeader`](../../server/internal/world/party.go#L375)<br>`func (s *Session) handlePartyLeader(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`partyPools`](../../server/internal/world/party.go#L399)<br>`func (s *Session) partyPools()` | partyPools (0x0C03) shares the character's HP/SP/MP with its party. |
+| [`partyLevel`](../../server/internal/world/party.go#L427)<br>`func (s *Session) partyLevel()` | partyLevel (0x0C09) tells the party about a level-up. |
+| [`partyChat`](../../server/internal/world/party.go#L440)<br>`func (s *Session) partyChat(message string, items proto.ChatItems)` | partyChat (0x1105) relays a message to the party. |
+| [`partyExpLevelShare`](../../server/internal/world/party.go#L456)<br>`func partyExpLevelShare(maxLevel, level uint16) float64` | partyExpLevelShare is the level gap factor against the party's highest level. |
+| [`killRewards`](../../server/internal/world/party.go#L473)<br>`func killRewards(killer *ConnectedPlayer, mapID uint16, x, z float32, mobLevel, mobExp uint16) map[*ConnectedPlayer]uint32` | killRewards splits a kill's exp per mob_death: solo kills get 1.2x; party members within 100 units on the map get the count factor and the level share. Returns each recipient and amount. |
+| [`partyMembersNear`](../../server/internal/world/party.go#L507)<br>`func partyMembersNear(killer *ConnectedPlayer, mapID uint16, x, z float32) []*ConnectedPlayer` | partyMembersNear lists the killer's party members on the map within the reward range (nil without a party). |
+| [`samePartyIDs`](../../server/internal/world/party.go#L526)<br>`func samePartyIDs(a, b uint32) bool` | samePartyIDs reports whether two characters share a party. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3701,7 +3701,7 @@ Direct GX dependencies: `internal/movespeed`, `internal/proto`, `server/internal
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`vehicleBoardRange`](../../server/internal/world/vehicle.go#L13)<br>`const vehicleBoardRange = 3` | See the source definition and the subsystem ownership contract. |
+| [`vehicleBoardRange`](../../server/internal/world/vehicle.go#L13)<br>`const vehicleBoardRange = 10` | See the source definition and the subsystem ownership contract. |
 | [`vehicleCastDuration`](../../server/internal/world/vehicle.go#L14)<br>`const vehicleCastDuration = 2 * time.Second` | See the source definition and the subsystem ownership contract. |
 | [`vehicleMu`](../../server/internal/world/vehicle.go#L16)<br>`var vehicleMu sync.Mutex` | See the source definition and the subsystem ownership contract. |
 | [`vehicleCooldowns`](../../server/internal/world/vehicle.go#L17)<br>`var vehicleCooldowns` | See the source definition and the subsystem ownership contract. |

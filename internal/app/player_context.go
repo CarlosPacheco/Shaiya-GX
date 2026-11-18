@@ -150,6 +150,10 @@ func (a *App) performContextAction(id uint32, action contextAction) {
 	} else if a.world != nil && action.packet != nil {
 		if err := a.world.Send(action.packet); err != nil {
 			a.backToLogin("Unable to send player action.")
+			return
+		}
+		if action.label == "Invite to party" || action.label == "Invite to raid" {
+			a.invitedNotice(a.chatEntityName(id))
 		}
 	}
 }

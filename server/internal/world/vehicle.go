@@ -10,7 +10,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
 
-const vehicleBoardRange float32 = 3
+const vehicleBoardRange float32 = 10
 const vehicleCastDuration = 2 * time.Second
 
 var vehicleMu sync.Mutex

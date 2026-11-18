@@ -35,19 +35,7 @@ func PlayerMenuRowAt(mx, my, x, y, width, count int) int {
 // from this archive; the original falls back to the TipBox atlas.
 func (p *PlayerMenu) Draw(s *render.Sprites, f *Font, solid *render.Texture, x, y, width int, labels []string, hover int) {
 	_, height := PlayerMenuSize(f, labels)
-	contentW, contentH := width-8, height-12
-	s.Draw(solid, float32(x+4), float32(y+4), float32(contentW), float32(contentH+4), 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 205.0 / 255})
-	draw := func(dx, dy, w, h int, u0, v0, u1, v1 float32) {
-		s.Draw(p.frame, float32(x+dx), float32(y+dy), float32(w), float32(h), u0, v0, u1, v1, white)
-	}
-	draw(0, 0, 4, 4, 0, 0, .25, .25)
-	draw(4, 0, contentW, 4, .25, 0, .5, .25)
-	draw(width-4, 0, 4, 4, .5, 0, .75, .25)
-	draw(0, 4, 4, contentH+4, .25, .25, .5, .5)
-	draw(width-4, 4, 4, contentH+4, .75, .25, 1, .5)
-	draw(0, height-4, 4, 4, 0, .25, .25, .5)
-	draw(4, height-4, contentW, 4, .75, 0, 1, .25)
-	draw(width-4, height-4, 4, 4, .5, .25, .75, .5)
+	DrawTipFrame(s, solid, float32(x), float32(y), float32(width), float32(height), 1, TipFill, TipBorder)
 	for i, label := range labels {
 		tint := white
 		if i == hover {

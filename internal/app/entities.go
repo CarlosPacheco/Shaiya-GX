@@ -537,7 +537,7 @@ func (a *App) drawPlayerNames(w, h int) {
 					plate.kills = e.PvPKills
 				}
 				label(name, pos, tint, 0, plate)
-				if e.Kind == game.KindMob && a.state.Target == e.ID && pos.Sub(v.pos).Len() <= 50 {
+				if (e.Kind == game.KindMob || e.Kind == game.KindUser) && a.state.Target == e.ID && pos.Sub(v.pos).Len() <= 50 {
 					if x, y, depth, ok := projectLabel(pos, vp, w, h); ok {
 						a.sprites.NameDepth(depth)
 						if dot := a.assets.Texture("interface/name_select.png"); dot != nil {

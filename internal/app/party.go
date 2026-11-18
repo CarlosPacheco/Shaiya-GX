@@ -28,6 +28,13 @@ func (a *App) partyNotice(id int, name string) {
 	a.systemMessage(3, id, map[string]string{"p": name})
 }
 
+// invitedNotice tells the inviter whom the request went to (native SysMsg 203).
+func (a *App) invitedNotice(name string) {
+	if name != "" {
+		a.systemMessage(17, 203, map[string]string{"p": name})
+	}
+}
+
 // partyTargetName is the refused player's name: nearby players are known by
 // id, global invitations by the name just typed.
 func (a *App) partyTargetName(id uint32) string {
@@ -150,6 +157,7 @@ func (a *App) drawParty(w, h int) {
 	if a.partyUI == nil {
 		return
 	}
+	a.partyUI.Solid = a.white
 	// Self resources are delivered separately from remote party pool updates.
 	members := append([]proto.PartyMember(nil), a.state.Party.Members...)
 	for i := range members {
@@ -180,12 +188,16 @@ func (a *App) partyGlobalInvite(fields []string) bool {
 		// Inside a raid it is the plain raid invitation, as /invite.
 		if err := a.world.Send(proto.RaidNamePacket(proto.RaidInviteName, fields[1])); err != nil {
 			a.backToLogin("Unable to send raid invitation.")
+			return true
 		}
+		a.invitedNotice(fields[1])
 		return true
 	}
 	if err := a.world.Send(proto.PartyGlobalInvitePacket(fields[1])); err != nil {
 		a.backToLogin("Unable to send party invitation.")
+		return true
 	}
+	a.invitedNotice(fields[1])
 	return true
 }
 
@@ -262,6 +274,13 @@ func (a *App) partyCommand(text string) bool {
 	}
 	if err := a.world.Send(packet); err != nil {
 		a.backToLogin("Unable to send party request.")
+		return true
+	}
+	if command == "/invite" {
+		if name == "" {
+			name = a.chatEntityName(a.state.Target)
+		}
+		a.invitedNotice(name)
 	}
 	return true
 }

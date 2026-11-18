@@ -43,3 +43,14 @@ func TestPartyRefusalsGoToChatAsSysMsg(t *testing.T) {
 		}
 	}
 }
+
+// The inviter sees native SysMsg 203 in the chat, not a screen overlay.
+func TestInvitedNoticeUsesSysMsg(t *testing.T) {
+	a := inputApp()
+	a.msg = text.SysMsg{203: "Invited <p>"}
+	a.invitedNotice("Alice")
+	a.invitedNotice("")
+	if n := len(a.state.Chat); n != 1 || a.state.Chat[0].Text != "Invited Alice" || a.state.Chat[0].MessageID != 203 || a.combatNotice != "" {
+		t.Fatalf("chat %+v overlay %q", a.state.Chat, a.combatNotice)
+	}
+}

@@ -34,6 +34,7 @@ type PartyPanel struct {
 	raidGroupInitialized              bool
 	raidDraftReady, raidDraftDirty    bool
 	held                              uint32
+	Solid                             *render.Texture // set by the app; enables the tooltip-style frame
 }
 
 func NewPartyPanel(t Textures) (*PartyPanel, error) {
@@ -267,7 +268,20 @@ func (p *PartyPanel) drawMemberOpacity(s *render.Sprites, f *Font, x, rowY int, 
 	if m.ID == target {
 		v = .5
 	}
-	s.Draw(p.frame, float32(x), float32(rowY), 256, 64, 0, v, 1, v+.5, tint)
+	if p.Solid != nil {
+		// Same fill and border as the item tooltip: a name plate over the bars.
+		border := TipBorder
+		if m.ID == target {
+			border = TipBorderActive
+		}
+		fill := TipFill
+		fill[3] *= opacity
+		border[3] *= opacity
+		DrawTipFrame(s, p.Solid, float32(x+19), float32(rowY+4), 125, 21, 1, fill, border)
+		DrawTipFrame(s, p.Solid, float32(x+19), float32(rowY+25), 125, 28, 1, fill, border)
+	} else {
+		s.Draw(p.frame, float32(x), float32(rowY), 256, 64, 0, v, 1, v+.5, tint)
+	}
 	col := 0
 	if m.Class < 6 {
 		col = [...]int{2, 5, 1, 0, 3, 4}[m.Class]
@@ -278,7 +292,9 @@ func (p *PartyPanel) drawMemberOpacity(s *render.Sprites, f *Font, x, rowY int, 
 		color = [4]float32{.96, .84, .74, opacity}
 	}
 	f.Draw(s, fmt.Sprint(m.Level), x+28, rowY+10, color, 24)
-	f.Draw(s, m.Name, x+50, rowY+10, color, 91)
+	// Centred on the plate to the right of the level, never over it.
+	nameX := max(x+50, x+94-min(f.Width(m.Name), 91)/2)
+	f.Draw(s, m.Name, nameX, rowY+10, color, 91)
 	for j, pool := range [][2]uint32{{m.HP, m.MaxHP}, {m.MP, m.MaxMP}, {m.SP, m.MaxSP}} {
 		if pool[1] == 0 {
 			continue
