@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
 
@@ -55,5 +56,43 @@ func TestDegenerationBlocksSkillUse(t *testing.T) {
 	s.resolveSkill(0, 1, 0x0517, nil)
 	if s.stats().CurrentMP != before || len(s.skillCooldowns) != 0 {
 		t.Fatal("a transformed user cast a spell")
+	}
+}
+
+// The monster look is announced when the transformation starts and ends.
+func TestDegenerationAnnouncesTheMonsterLook(t *testing.T) {
+	s, wire := potentialSession(t)
+	last := func() (proto.Transform, bool) {
+		var out proto.Transform
+		found := false
+		for len(wire) > 0 {
+			if p := <-wire; proto.Op(p) == proto.GXTransform {
+				v, err := proto.DecodeTransform(p)
+				if err != nil {
+					t.Fatal(err)
+				}
+				out, found = v, true
+			}
+		}
+		return out, found
+	}
+	s.tickTransform()
+	if _, ok := last(); ok {
+		t.Fatal("a look was announced without a transformation")
+	}
+	if _, ok := s.addEffect(db.MustDefs().Skill(97, 2), 0, s.char.ID+1); !ok {
+		t.Fatal("not applied")
+	}
+	s.tickTransform()
+	if v, ok := last(); !ok || v.User != s.char.ID || v.Mob != 60 {
+		t.Fatalf("announcement %+v %v, want monster 60", v, ok)
+	}
+	if s.player.transformMob.Load() != 60 {
+		t.Fatal("the new viewers' state was not kept")
+	}
+	s.wake()
+	s.tickTransform()
+	if v, ok := last(); !ok || v.Mob != 0 {
+		t.Fatalf("end announcement %+v %v", v, ok)
 	}
 }

@@ -59,14 +59,16 @@ type SkillKey struct {
 // Chars.Job: Attackfighter, Defensefighter, Patrolrogue, Shootrogue,
 // Attackmage, Defensemage. EP4.5 has three AbilityType/Value pairs.
 type SkillDef struct {
-	SkillID                                  uint16
-	SkillLevel                               uint8
-	Name                                     string
-	Country                                  uint8
-	ReqLevel                                 uint16
-	Grow                                     uint8
-	SkillPointCost                           uint8
-	PrevSkillID                              uint16
+	SkillID        uint16
+	SkillLevel     uint8
+	Name           string
+	Country        uint8
+	ReqLevel       uint16
+	Grow           uint8
+	SkillPointCost uint8
+	PrevSkillID    uint16
+	// ChangeType 101 and ChangeLevel: a transformation into the monster of that id (Degeneration).
+	ChangeType, ChangeLevel                  uint16
 	ClassEligible                            [6]bool
 	MPCost, SPCost                           uint16
 	ResetTimeSeconds                         uint16
@@ -369,7 +371,7 @@ func loadDefs() (*Defs, error) {
 		AttrType, StateType, SuccessType, SuccessValue, Weapon1, Weapon2, Weaponvalue, DefenceType, DefenceValue,
 		Arrow, LimitHP, FixRange, NeedWeapon1, NeedWeapon2, NeedWeapon3, NeedWeapon4, NeedWeapon5, NeedWeapon6,
 		NeedWeapon7, NeedWeapon8, NeedWeapon9, NeedWeapon10, NeedWeapon11, NeedWeapon12, NeedWeapon13, NeedWeapon14,
-		NeedWeapon15, Shield, TimeDamageType, TypeShow FROM PS_GameDefs_Skills`)
+		NeedWeapon15, Shield, TimeDamageType, TypeShow, ChangeType, ChangeLevel FROM PS_GameDefs_Skills`)
 	if err != nil {
 		return nil, fmt.Errorf("load Skills: %w", err)
 	}
@@ -385,7 +387,7 @@ func loadDefs() (*Defs, error) {
 		for i := range need {
 			extra = append(extra, &need[i])
 		}
-		extra = append(extra, &shield, &s.TimeDamageType, &s.TypeShow)
+		extra = append(extra, &shield, &s.TimeDamageType, &s.TypeShow, &s.ChangeType, &s.ChangeLevel)
 		if err := rows.Scan(append([]any{&skillID, &s.SkillLevel, &s.Name, &s.Country, &reqLevel, &s.Grow, &s.SkillPointCost,
 			&prev, &classes[0], &classes[1], &classes[2], &classes[3], &classes[4], &classes[5], &sp, &mp,
 			&reset, &s.ReadyTime, &s.DamageHP, &s.AddDamageHP, &s.HealHP, &s.HealSP, &s.HealMP, &typeDetail,

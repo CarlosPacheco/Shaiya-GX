@@ -97,12 +97,14 @@ type ConnectedPlayer struct {
 	soulKill bool
 	reveal   bool // an enemy's Detection found this user: stealth ends
 
-	hidden      atomic.Bool
-	immune      atomic.Bool
-	noMobTarget atomic.Bool
-	alive       atomic.Bool
-	debuffed    atomic.Bool // an active debuff (PvPHaveDebuff), refreshed by its session
-	kcRefresh   atomic.Bool // the country tier changed (ApplyKillCount)
+	hidden atomic.Bool
+
+	transformMob atomic.Uint32 // monster the user looks like (Degeneration), 0 none
+	immune       atomic.Bool
+	noMobTarget  atomic.Bool
+	alive        atomic.Bool
+	debuffed     atomic.Bool // an active debuff (PvPHaveDebuff), refreshed by its session
+	kcRefresh    atomic.Bool // the country tier changed (ApplyKillCount)
 
 	duel duelState // guarded by duelMu
 

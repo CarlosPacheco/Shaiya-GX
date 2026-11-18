@@ -84,7 +84,7 @@ func (c *Character) fitShadow() characterShadowFit {
 // DrawShadow follows the native eye offset (0,50,20), fits the posed silhouette,
 // then projects it onto nearby terrain or dungeon geometry.
 func (c *Character) DrawShadow(target *render.ShadowMap, k *render.Skinner, s *render.Scene3D, w *World) {
-	if c == nil || w == nil || !w.HasShadowReceivers() {
+	if c == nil || c.Hidden || w == nil || !w.HasShadowReceivers() {
 		return
 	}
 	fit := c.fitShadow()

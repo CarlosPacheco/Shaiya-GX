@@ -50,6 +50,7 @@ type worldView struct {
 	mapID                       uint16
 	actors                      map[uint32]*remoteActor
 	mobs                        map[uint32]*mobActor
+	transforms                  map[uint32]*transformActor
 	world                       *scene.World
 	self                        *scene.Character
 	selfMount                   *scene.Vehicle
@@ -700,6 +701,7 @@ func (a *App) drawWorldView(w, h int) {
 	a.prepareRemotePlayers()
 	a.attachVehiclePassengers()
 	a.prepareMonsters()
+	a.prepareTransforms()
 	a.prepareNPCs()
 	a.updateRunEffects()
 	a.updateCastEffects()
@@ -787,6 +789,7 @@ func (a *App) drawWorldContents(eye render.V3, underwater bool) {
 	a.drawSelf()
 	a.drawRemotePlayers()
 	a.drawMonsters()
+	a.drawTransforms()
 	a.drawNPCs()
 	a.drawRunEffects()
 	a.drawCastEffects()

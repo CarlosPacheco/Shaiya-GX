@@ -4186,6 +4186,32 @@ func DecodeTeleportStone(p []byte) (out TeleportStoneResult, err error) {
 
 </details>
 
+## transform
+
+[internal/proto/transform.go](../../internal/proto/transform.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type Transform struct {
+	User uint32
+	Mob  uint16
+}
+```
+
+```go
+func DecodeTransform(p []byte) (v Transform, err error) {
+	if len(p) != 8 {
+		return v, fmt.Errorf("invalid GX transform length")
+	}
+	r := NewReader(p)
+	v.User, v.Mob = r.U32(), r.U16()
+	return v, r.Err()
+}
+```
+
+</details>
+
 ## vehicle
 
 [internal/proto/vehicle.go](../../internal/proto/vehicle.go#L1)

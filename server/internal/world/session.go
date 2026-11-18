@@ -399,6 +399,7 @@ func (s *Session) tick(idle bool) {
 	s.tickPotentials(time.Now())
 	s.tickFireThorn(time.Now())
 	s.tickDetection(time.Now())
+	s.tickTransform()
 	s.tickTraps(time.Now())
 	s.tickReveal()
 	s.tickSkillOnce()

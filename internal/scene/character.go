@@ -75,6 +75,7 @@ type Character struct {
 	combatPoseLeft       float32
 	clipFile             string
 	Concealed            bool
+	Hidden               bool    // shown as another creature instead (Degeneration)
 	CorpseFade           float32 // opaque screen-door coverage, 0 visible, 1 gone
 	enchantTime          float64
 	cloak                *cloakInstance
@@ -633,7 +634,7 @@ func (c *Character) preparePose() []render.M4 {
 }
 
 func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
-	if c == nil || c.clip == nil || c.CorpseFade >= 1 || (c.Concealed && s.Shadow) {
+	if c == nil || c.clip == nil || c.Hidden || c.CorpseFade >= 1 || (c.Concealed && s.Shadow) {
 		return
 	}
 	finals := c.preparePose()
