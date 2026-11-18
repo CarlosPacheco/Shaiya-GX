@@ -8,7 +8,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
 
-// Fire Thorn (TypeEffect 4, TypeDetail 84): every three seconds hostile mobs
+// Fire Thorn (TypeEffect 4, TypeDetail 84): every two seconds hostile mobs
 // and users within ApplyRange take the skill's DamageHP as fixed damage.
 func TestFireThornPulsesFixedDamageOnMobsEveryThreeSeconds(t *testing.T) {
 	s, defs := lapisSession(t)
@@ -30,16 +30,16 @@ func TestFireThornPulsesFixedDamageOnMobsEveryThreeSeconds(t *testing.T) {
 
 	s.tickFireThorn(now.Add(time.Second))
 	if mid, _ := MobByID(s.char.MapID, id); mid.CurrentHP != before.CurrentHP {
-		t.Fatal("a pulse fired before three seconds")
+		t.Fatal("a pulse fired before two seconds")
 	}
 	s.tickFireThorn(now.Add(fireThornTick + time.Second))
 	first, _ := MobByID(s.char.MapID, id)
 	if before.CurrentHP-first.CurrentHP != 65 {
 		t.Fatalf("pulse damage %d, want the skill's fixed 65", before.CurrentHP-first.CurrentHP)
 	}
-	s.tickFireThorn(now.Add(fireThornTick + 2*time.Second))
+	s.tickFireThorn(now.Add(fireThornTick + 1500*time.Millisecond))
 	if again, _ := MobByID(s.char.MapID, id); again.CurrentHP != first.CurrentHP {
-		t.Fatal("pulses must be three seconds apart")
+		t.Fatal("pulses must be two seconds apart")
 	}
 	s.tickFireThorn(now.Add(2*fireThornTick + 2*time.Second))
 	if next, _ := MobByID(s.char.MapID, id); first.CurrentHP-next.CurrentHP != 65 {
@@ -91,5 +91,27 @@ func TestFireThornHurtsHostileUsersIgnoringStats(t *testing.T) {
 	}
 	if !seen {
 		t.Fatal("nearby users did not get the periodic damage packet")
+	}
+}
+
+// The reach is measured on the ground plane, like the original area loops: a
+// mob standing higher than the caster is hit as long as it is within range.
+func TestFireThornReachIgnoresHeightDifference(t *testing.T) {
+	s, defs := lapisSession(t)
+	id, _ := lapisMob(t, s, defs)
+	m, _ := MobByID(s.char.MapID, id)
+	s.char.PosX, s.char.PosY, s.char.PosZ = m.PosX+1.5, m.PosY-3, m.PosZ // 1.5 away on the ground, 3 below
+	def := defs.Skill(47, 3)
+	before, _ := MobByID(s.char.MapID, id)
+	s.fixedDamagePulse(def, s.char.PosX, s.char.PosY, s.char.PosZ)
+	after, _ := MobByID(s.char.MapID, id)
+	if before.CurrentHP-after.CurrentHP != 65 {
+		t.Fatalf("the mob lost %d, want the fixed 65", before.CurrentHP-after.CurrentHP)
+	}
+	s.char.PosX = m.PosX + 2.5 // out of the 2 m range
+	again, _ := MobByID(s.char.MapID, id)
+	s.fixedDamagePulse(def, s.char.PosX, s.char.PosY, s.char.PosZ)
+	if far, _ := MobByID(s.char.MapID, id); far.CurrentHP != again.CurrentHP {
+		t.Fatal("a mob out of range was hurt")
 	}
 }

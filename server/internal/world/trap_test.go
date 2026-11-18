@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
 
@@ -190,5 +191,27 @@ func TestFireBushBurnsEveryHalfSecondForItsWholeTime(t *testing.T) {
 	s.tickTraps(now.Add(13 * time.Second))
 	if len(s.traps) != 0 {
 		t.Fatal("the curtain outlived its time")
+	}
+}
+
+// Fire Bush shows itself: the view gets GXField with where it is and how long it lasts.
+func TestFireBushIsAnnouncedToTheView(t *testing.T) {
+	s, wire := potentialSession(t)
+	s.skillCooldowns = map[uint16]time.Time{}
+	def := db.MustDefs().Skill(48, 2)
+	st := s.stats()
+	s.char.CurrentSP, s.char.CurrentMP = st.MaxSP, st.MaxMP
+	s.skillField(db.CharacterSkill{SkillID: 48, Level: 2, Number: 1}, def, s.stats())
+	var field proto.Field
+	for len(wire) > 0 {
+		if p := <-wire; proto.Op(p) == proto.GXField {
+			var err error
+			if field, err = proto.DecodeField(p); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	if field.Owner != s.char.ID || field.Skill != 48 || field.Level != 2 || field.Seconds != 12 || field.X != s.char.PosX || field.Z != s.char.PosZ {
+		t.Fatalf("announcement %+v", field)
 	}
 }

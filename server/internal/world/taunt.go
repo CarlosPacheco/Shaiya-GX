@@ -24,7 +24,7 @@ func (s *Session) tauntMobs(def *db.SkillDef, stats *CharacterStats) {
 	ch := s.char
 	amount := hitAggro(stats, def.Aggro)
 	taunted := false
-	for _, id := range s.skillMobsWithin(ch.PosX, ch.PosY, ch.PosZ, float32(def.ApplyRange)) {
+	for _, id := range s.mobsNear(ch.PosX, ch.PosZ, float32(def.ApplyRange)) {
 		mob, ok := MobByID(ch.MapID, id)
 		md := db.MustDefs().Mobs[mob.MobID]
 		if !ok || mob.CurrentHP == 0 || md == nil || mobFriendly(md, s.faction) {

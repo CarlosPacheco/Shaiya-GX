@@ -158,7 +158,7 @@ func (a *App) startSkillImpact(target uint32, file string, sequence int) {
 	a.startSkillImpactAt(target, file, sequence, 0)
 }
 
-func (a *App) startSkillImpactAt(target uint32, file string, sequence int, elapsed float32) {
+func (a *App) startSkillImpactAt(target uint32, file string, sequence int, elapsed float32, parts ...int) {
 	if len(a.wv.impacts) >= 32 {
 		return
 	}
@@ -168,6 +168,9 @@ func (a *App) startSkillImpactAt(target uint32, file string, sequence int, elaps
 	}
 	a.playSound(effect.ImpactSound(file), pos[0], pos[2])
 	if x := a.loadSkillEffect(file, sequence); x != nil {
+		if len(parts) > 0 {
+			x.OnlyParts(parts...)
+		}
 		// Position before catching up; otherwise births use the world origin.
 		if m, ok := a.effectTargetMatrix(target); ok {
 			x.SetTransform(m)

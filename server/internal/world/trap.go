@@ -3,6 +3,7 @@ package world
 import (
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -46,6 +47,16 @@ func (s *Session) skillField(k db.CharacterSkill, def *db.SkillDef, stats Charac
 		endsAt: time.Now().Add(time.Duration(def.KeepSeconds) * time.Second)}
 	if def.TypeDetail == detailFireBush {
 		t.nextHit = time.Now()
+		// Everybody around sees the curtain of fire; a trap is invisible and is not announced.
+		w := packet.New(packet.Opcode(proto.GXField))
+		w.U32(ch.ID)
+		w.U16(k.SkillID)
+		w.U8(k.Level)
+		w.F32(ch.PosX)
+		w.F32(ch.PosY)
+		w.F32(ch.PosZ)
+		w.U16(uint16(min(def.KeepSeconds, 65535)))
+		sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius, w.MustFinish(), "GX field placed")
 	}
 	s.traps = append(s.traps, t)
 	s.log.Printf("GX Server World trap placed skill_id=%d level=%d radius=%d seconds=%d", k.SkillID, k.Level, def.ApplyRange, def.KeepSeconds)
@@ -121,7 +132,7 @@ func (s *Session) springTrap(t placedTrap) bool {
 			best, foe, mobID = d, p, 0
 		}
 	}
-	for _, id := range s.skillMobsWithin(t.x, t.y, t.z, radius) {
+	for _, id := range s.mobsNear(t.x, t.z, radius) {
 		mob, ok := MobByID(ch.MapID, id)
 		md := db.MustDefs().Mobs[mob.MobID]
 		if !ok || md == nil || mobFriendly(md, s.faction) {
@@ -189,4 +200,18 @@ func (s *Session) applyTrapHit(h pendingUserHit) bool {
 			uint16(min(shown[0], 65535)), uint16(min(shown[1], 65535)), uint16(min(shown[2], 65535))), "0x0513 trap damage")
 	s.afterUserDamage(h.AttackerID, killed)
 	return killed
+}
+
+// mobsNear lists the living mobs whose centre is within r of a point, measured
+// on the ground plane. The original area loops (UpdateTrab, TauntMob) use the
+// distance in X and Z only, so a slope, a mob's height or a wall between them
+// never narrows a fire's or a trap's reach.
+func (s *Session) mobsNear(x, z, r float32) []uint32 {
+	var out []uint32
+	for _, m := range EntitiesOnMap(s.char.MapID).Mobs {
+		if m.CurrentHP > 0 && DistanceXZ(x, z, m.PosX, m.PosZ) <= r {
+			out = append(out, m.ID)
+		}
+	}
+	return out
 }

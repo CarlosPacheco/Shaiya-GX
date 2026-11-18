@@ -29,6 +29,7 @@ type effectEmitter struct {
 	textureFrame            int
 	textureClock            float32
 	starts, time, remainder float32
+	part                    int // index of the library effect this emitter came from
 	particles               []effectParticle
 }
 
@@ -144,7 +145,7 @@ func loadEffectLibrary(a *Assets, file string, sequence int, l *effect.Library) 
 			}
 			textures = append(textures, t)
 		}
-		x.emitters = append(x.emitters, effectEmitter{definition: e, geometry: geometry, textures: textures, starts: r.Time})
+		x.emitters = append(x.emitters, effectEmitter{definition: e, geometry: geometry, textures: textures, starts: r.Time, part: int(r.Effect)})
 	}
 	if len(x.emitters) == 0 {
 		return nil, fmt.Errorf("EFT: no supported linear emitters (%d skipped)", x.Skipped)
@@ -168,6 +169,22 @@ func loadEffectLibrary(a *Assets, file string, sequence int, l *effect.Library) 
 	a.effectOrder = append(a.effectOrder, key)
 	a.effectTemplates[key] = &effectTemplate{emitters: append([]effectEmitter(nil), x.emitters...), skipped: x.Skipped}
 	return x, nil
+}
+
+// OnlyParts keeps just the library effects (emitters) with the given indices:
+// a skill that plays one component of a composite library.
+func (x *Effect) OnlyParts(parts ...int) *Effect {
+	keep := x.emitters[:0:0]
+	for _, e := range x.emitters {
+		for _, p := range parts {
+			if e.part == p {
+				keep = append(keep, e)
+				break
+			}
+		}
+	}
+	x.emitters = keep
+	return x
 }
 
 func between(a, b float32) float32 {

@@ -53,6 +53,8 @@ func (a *App) confirmedEffects(p []byte) {
 	case proto.SkillUse, proto.SkillUseNoTarget, proto.SkillUserDrain, proto.SkillMobDrain:
 		a.stopCastEffects(a.state.LastSkill.Source)
 		a.startSkillResultEffects(a.state.LastSkill)
+	case proto.GXField:
+		a.placeField(a.state.LastField)
 	case proto.SkillPartyMember, proto.SkillMobOther:
 		a.startSkillSecondaryEffect(a.state.LastSkill)
 	case proto.SkillCastStarted:

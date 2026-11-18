@@ -3,14 +3,13 @@ package world
 import (
 	"time"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/skillrange"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
 
 const (
 	detailFireThorn = 84              // buff: thorns around the caster
-	fireThornTick   = 3 * time.Second // the pulse interval
+	fireThornTick   = 2 * time.Second // the pulse interval
 )
 
 func isFireThorn(b *ActiveBuff) bool {
@@ -18,7 +17,7 @@ func isFireThorn(b *ActiveBuff) bool {
 }
 
 // tickFireThorn runs Fire Thorn (TypeEffect 4, TypeDetail 84). While the buff
-// lasts, every three seconds each hostile mob and user within ApplyRange of
+// lasts, every two seconds each hostile mob and user within ApplyRange of
 // the caster takes the skill's DamageHP as fixed damage: no hit roll, no stat
 // formula, no defense, no absorption. Mobs also gain aggro on the caster.
 func (s *Session) tickFireThorn(now time.Time) {
@@ -58,8 +57,7 @@ func (s *Session) fixedDamagePulse(def *db.SkillDef, x, y, z float32) {
 	radius := float32(def.ApplyRange)
 	damage := uint32(def.DamageHP)
 	stats := s.stats()
-	center := skillrange.Position{x, y, z}
-	for _, id := range s.skillMobsWithin(x, y, z, radius) {
+	for _, id := range s.mobsNear(x, z, radius) {
 		mob, ok := MobByID(ch.MapID, id)
 		md := db.MustDefs().Mobs[mob.MobID]
 		if !ok || md == nil || mobFriendly(md, s.faction) {
@@ -77,11 +75,8 @@ func (s *Session) fixedDamagePulse(def *db.SkillDef, x, y, z float32) {
 		s.resolveMobDamage(&r)
 	}
 	for _, p := range s.hostileUsersWithin(x, z, radius) {
-		c := p.Snapshot()
-		if s.skillAreaContains(center, skillrange.Position{c.PosX, c.PosY, c.PosZ}, radius) {
-			s.lastCombatAt = time.Now()
-			p.QueueUserHit(pendingUserHit{AttackerID: ch.ID, Fixed: true, Damage: [3]uint32{damage}, Skill: def})
-		}
+		s.lastCombatAt = time.Now()
+		p.QueueUserHit(pendingUserHit{AttackerID: ch.ID, Fixed: true, Damage: [3]uint32{damage}, Skill: def})
 	}
 }
 

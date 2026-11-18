@@ -866,6 +866,37 @@ func DecodeFallDamage(p []byte) (v FallDamage, err error) {
 
 </details>
 
+## field
+
+[internal/proto/field.go](../../internal/proto/field.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type Field struct {
+	Owner   uint32
+	Skill   uint16
+	Level   uint8
+	X, Y, Z float32
+	Seconds uint16
+}
+```
+
+```go
+func DecodeField(p []byte) (v Field, err error) {
+	if len(p) != 23 {
+		return v, fmt.Errorf("invalid GX field length")
+	}
+	r := NewReader(p)
+	v.Owner, v.Skill, v.Level = r.U32(), r.U16(), r.U8()
+	v.X, v.Y, v.Z = r.F32(), r.F32(), r.F32()
+	v.Seconds = r.U16()
+	return v, r.Err()
+}
+```
+
+</details>
+
 ## forge quote
 
 [internal/proto/forge_quote.go](../../internal/proto/forge_quote.go#L1)

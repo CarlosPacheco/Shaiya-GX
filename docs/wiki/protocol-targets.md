@@ -16,7 +16,7 @@ Declarations: [packet.CharacterShape](../../server/internal/packet/packet.go#L88
 
 **S→C serializers:** [buildCharacterShapeGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L608)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1318)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1325)
 
 ### Wire layouts and validation
 
@@ -123,7 +123,7 @@ Declarations: [packet.TargetMobGetState](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildMobState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1416), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L991)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L998)
 
 ### Wire layouts and validation
 
@@ -199,7 +199,7 @@ Declarations: [packet.TargetMobHpUpdate](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildMobTargetHP (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1408)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1042)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1049)
 
 ### Wire layouts and validation
 
@@ -267,7 +267,7 @@ Source notes: Native target-effect readers: 0x5667a0, rendered by 0x50b6a0.
 
 **S→C serializers:** [tickTargetEffects (server/internal/world/target_effects.go)](../../server/internal/world/target_effects.go#L33)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L776)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L777)
 
 ### Wire layouts and validation
 
@@ -386,7 +386,7 @@ Source notes: Native target-effect readers: 0x5667a0, rendered by 0x50b6a0.
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L783)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L784)
 
 ### Wire layouts and validation
 
@@ -457,7 +457,7 @@ Source notes: Native target-effect readers: 0x5667a0, rendered by 0x50b6a0.
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L783)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L784)
 
 ### Wire layouts and validation
 
@@ -526,7 +526,7 @@ Declarations: [packet.MapAddItem](../../server/internal/packet/packet.go#L99), [
 
 **S→C serializers:** [buildMapAddItem (server/internal/world/mapitems.go)](../../server/internal/world/mapitems.go#L129)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L909)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L916)
 
 ### Wire layouts and validation
 
@@ -592,7 +592,7 @@ Declarations: [packet.MapRemoveItem](../../server/internal/packet/packet.go#L100
 
 **S→C serializers:** [buildMapRemoveItem (server/internal/world/mapitems.go)](../../server/internal/world/mapitems.go#L146)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L915)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L922)
 
 ### Wire layouts and validation
 

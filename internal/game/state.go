@@ -118,6 +118,7 @@ type State struct {
 	Social                 SocialState
 	LastDetectInfo         proto.DetectInfo
 	LastPeriodicEffect     proto.PeriodicEffect
+	LastField              proto.Field
 	DeathLossFree          bool
 	LastMotion             proto.CharacterMotionResult
 	Blessing               BlessingState
@@ -804,6 +805,12 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		s.LastSkillCooldown = result
+	case proto.GXField:
+		result, err := proto.DecodeField(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastField = result
 	case proto.GXSkillFailure:
 		result, err := proto.DecodeSkillFailure(p)
 		if err != nil {
