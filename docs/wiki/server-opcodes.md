@@ -276,6 +276,7 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x7F13` | [GXTeleportStone](protocol-extensions.md#opcode-7f13) | yes | yes | — |
 | `0x7F14` | [GXSummonRune](protocol-extensions.md#opcode-7f14) | yes | yes | — |
 | `0x7F15` | [GXPartyInviteName](protocol-extensions.md#opcode-7f15) | yes | — | — |
+| `0x7F16` | [GXSkillCooldown](protocol-extensions.md#opcode-7f16) | — | yes | yes |
 | `0xA101` | [LoginHandshake](protocol-authentication.md#opcode-a101) | yes | yes | — |
 | `0xA102` | [LoginRequest](protocol-authentication.md#opcode-a102) | yes | yes | — |
 | `0xA106` | [LoginRequestEx](protocol-authentication.md#opcode-a106) | — | — | — |
@@ -289,6 +290,6 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0xF501` | [GmCommandError](protocol-chat.md#opcode-f501) | — | — | — |
 | `0xF702` | [GmCommandGetItem](protocol-chat.md#opcode-f702) | — | — | — |
 
-Inventory: **278 numeric opcodes**, **473 typed declarations**, **15 families**.
+Inventory: **279 numeric opcodes**, **474 typed declarations**, **15 families**.
 
 Regenerate with `python3 tools/generate_server_reference.py`; verify freshness with `--check`. The generator parses source for both operating systems and tests are excluded from implementation evidence. Source links track main; use Git history when comparing older binaries.

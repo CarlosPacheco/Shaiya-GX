@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/element"
 	"github.com/Spelunkern/Shaiya-GX/internal/itemstack"
+	"github.com/Spelunkern/Shaiya-GX/internal/potential"
 	"strings"
 	"sync"
 )
@@ -288,6 +289,10 @@ func normalizeSkill(s *SkillDef, defenceType, fixRange uint8, keep uint32, aggro
 	s.KeepSeconds, s.KeepOnDeath = keep, fixRange != 0
 	if fixRange == 1 {
 		s.KeepSeconds = keep * 3600
+	}
+	if potential.Is(s.TypeEffect, s.TypeDetail) && !s.MobSkill {
+		// The data leaves both at zero: the original kept them in server code.
+		s.KeepSeconds, s.ResetTimeSeconds = potential.KeepSeconds, potential.ReuseSeconds
 	}
 	s.Aggro = aggro
 	for i, v := range need {

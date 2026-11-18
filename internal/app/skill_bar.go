@@ -22,7 +22,7 @@ func (a *App) visibleSkills() []sdata.SkillKey {
 	}
 	for _, k := range a.state.Skills {
 		key := sdata.SkillKey{ID: k.ID, Level: k.Level}
-		if d, ok := a.skillDefs[key]; ok && !present[key.ID] && (!a.skills.assignMode || d.Effect != 0) {
+		if d, ok := a.skillDefs[key]; ok && !present[key.ID] && (!a.skills.assignMode || skillDraggable(d)) {
 			keys = append(keys, key)
 			present[key.ID] = true
 		}

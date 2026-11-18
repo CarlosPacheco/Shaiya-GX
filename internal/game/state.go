@@ -100,6 +100,7 @@ type State struct {
 	TargetEffects          proto.TargetEffectSnapshot
 	TargetEffectsSerial    uint64
 	LastSkillFailure       proto.SkillFailure
+	LastSkillCooldown      proto.SkillCooldown
 	OJLimits               map[[2]uint8]proto.OJLimit
 	EnchantRules           *proto.EnchantRules
 	ChestCloakFits         map[[2]uint8]uint8
@@ -797,6 +798,12 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			s.TargetEffects.Effects = kept
 			s.TargetEffectsSerial++
 		}
+	case proto.GXSkillCooldown:
+		result, err := proto.DecodeSkillCooldown(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastSkillCooldown = result
 	case proto.GXSkillFailure:
 		result, err := proto.DecodeSkillFailure(p)
 		if err != nil {

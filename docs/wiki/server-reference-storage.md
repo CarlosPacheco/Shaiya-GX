@@ -172,42 +172,42 @@ Direct GX dependencies: `server/internal/config`, `server/internal/filelock`, `s
 
 [server/internal/db/defs.go](../../server/internal/db/defs.go#L1)
 
-Direct GX dependencies: `internal/element`, `internal/itemstack`.
+Direct GX dependencies: `internal/element`, `internal/itemstack`, `internal/potential`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`ItemKey`](../../server/internal/db/defs.go#L14)<br>`type ItemKey` | See the source definition and the subsystem ownership contract. |
-| [`ItemDef`](../../server/internal/db/defs.go#L17)<br>`type ItemDef` | ItemDef is one PS_GameDefs.dbo.Items row. |
-| [`MaxStack`](../../server/internal/db/defs.go#L50)<br>`func (d *ItemDef) MaxStack() uint16` | MaxStack is the stack size (Items.Count, at least 1). |
-| [`SkillKey`](../../server/internal/db/defs.go#L52)<br>`type SkillKey` | See the source definition and the subsystem ownership contract. |
-| [`SkillDef`](../../server/internal/db/defs.go#L60)<br>`type SkillDef` | SkillDef is one PS_GameDefs.dbo.Skills row. ClassEligible is indexed by Chars.Job: Attackfighter, Defensefighter, Patrolrogue, Shootrogue, Attackmage, Defensemage. EP4.5 has three AbilityType/Value pairs. |
-| [`MobAttack`](../../server/internal/db/defs.go#L114)<br>`type MobAttack` | MobAttack is one of a mob's three attack slots (AttackTypeN..AttackokN). |
-| [`MobDef`](../../server/internal/db/defs.go#L125)<br>`type MobDef` | MobDef is the subset of PS_GameDefs.dbo.Mobs the world uses. |
-| [`MobDrop`](../../server/internal/db/defs.go#L158)<br>`type MobDrop` | See the source definition and the subsystem ownership contract. |
-| [`ProductItem`](../../server/internal/db/defs.go#L165)<br>`type ProductItem` | See the source definition and the subsystem ownership contract. |
-| [`Product`](../../server/internal/db/defs.go#L170)<br>`type Product` | See the source definition and the subsystem ownership contract. |
-| [`ExpKey`](../../server/internal/db/defs.go#L177)<br>`type ExpKey` | See the source definition and the subsystem ownership contract. |
-| [`StatusKey`](../../server/internal/db/defs.go#L183)<br>`type StatusKey` | StatusKey indexes StatusDefs by level and job (Chars.Job). |
-| [`Status`](../../server/internal/db/defs.go#L189)<br>`type Status` | Status is a StatusDefs row: base max HP/SP/MP for a level and job. |
-| [`BaseItem`](../../server/internal/db/defs.go#L193)<br>`type BaseItem` | BaseItem is a BaseItemsDefs row: an item a new character of that family and job starts with, in inventory bag 1 at Slot. |
-| [`BaseItemKey`](../../server/internal/db/defs.go#L200)<br>`type BaseItemKey` | BaseItemKey indexes BaseItemsDefs by family (race) and job. |
-| [`Defs`](../../server/internal/db/defs.go#L203)<br>`type Defs` | Defs holds every PS_GameDefs table the world needs. |
-| [`defsOnce`](../../server/internal/db/defs.go#L216)<br>`var defsOnce sync.Once` | See the source definition and the subsystem ownership contract. |
-| [`defs`](../../server/internal/db/defs.go#L217)<br>`var defs *Defs` | See the source definition and the subsystem ownership contract. |
-| [`defsErr`](../../server/internal/db/defs.go#L218)<br>`var defsErr error` | See the source definition and the subsystem ownership contract. |
-| [`SetDefsForTest`](../../server/internal/db/defs.go#L222)<br>`func SetDefsForTest(d *Defs)` | SetDefsForTest installs definitions without a database (unit tests). |
-| [`ReloadDefsForTest`](../../server/internal/db/defs.go#L228)<br>`func ReloadDefsForTest() (*Defs, error)` | ReloadDefsForTest replaces test definitions with the database's again. |
-| [`Definitions`](../../server/internal/db/defs.go#L235)<br>`func Definitions() (*Defs, error)` | Definitions returns the cached definitions, loading them on first use. |
-| [`MustDefs`](../../server/internal/db/defs.go#L241)<br>`func MustDefs() *Defs` | MustDefs is for code paths that run only after a successful startup load. |
-| [`clampU8`](../../server/internal/db/defs.go#L249)<br>`func clampU8(v int64) uint8` | See the source definition and the subsystem ownership contract. |
-| [`clampU16`](../../server/internal/db/defs.go#L253)<br>`func clampU16(v int64) uint16` | See the source definition and the subsystem ownership contract. |
-| [`normalizeSkill`](../../server/internal/db/defs.go#L258)<br>`func normalizeSkill(s *SkillDef, defenceType, fixRange uint8, keep uint32, aggro uint16, need [15]uint8, shield uint8)` | normalizeSkill applies CGameData::LoadConstSkill's load-time rules. |
-| [`MobRespawnSeconds`](../../server/internal/db/defs.go#L300)<br>`func MobRespawnSeconds(special uint8) uint64` | MobRespawnSeconds maps Mobs.Attackspecial3 to the respawn delay. |
-| [`loadDefs`](../../server/internal/db/defs.go#L311)<br>`func loadDefs() (*Defs, error)` | See the source definition and the subsystem ownership contract. |
-| [`Item`](../../server/internal/db/defs.go#L613)<br>`func (d *Defs) Item(itemType, typeID uint8) *ItemDef` | Item returns the definition for (type, typeID), or nil. |
-| [`Skill`](../../server/internal/db/defs.go#L616)<br>`func (d *Defs) Skill(skillID uint16, level uint8) *SkillDef` | Skill returns the definition for (skillID, level), or nil. |
-| [`NPCSkill`](../../server/internal/db/defs.go#L622)<br>`func (d *Defs) NPCSkill(skillID uint16) *SkillDef` | NPCSkill selects the independent NpcSkill namespace. The shared SQL schema stores NpcSkill rank one as level 100; player ranks are never a fallback. |
-| [`MobQuestItem`](../../server/internal/db/defs.go#L628)<br>`func MobQuestItem(index int32) ItemKey` | MobQuestItem decodes LoadConstMob's quest-only index. This is not the ordinary Type*1000+TypeID format. Native item IDs are truncated to a byte. |
+| [`ItemKey`](../../server/internal/db/defs.go#L15)<br>`type ItemKey` | See the source definition and the subsystem ownership contract. |
+| [`ItemDef`](../../server/internal/db/defs.go#L18)<br>`type ItemDef` | ItemDef is one PS_GameDefs.dbo.Items row. |
+| [`MaxStack`](../../server/internal/db/defs.go#L51)<br>`func (d *ItemDef) MaxStack() uint16` | MaxStack is the stack size (Items.Count, at least 1). |
+| [`SkillKey`](../../server/internal/db/defs.go#L53)<br>`type SkillKey` | See the source definition and the subsystem ownership contract. |
+| [`SkillDef`](../../server/internal/db/defs.go#L61)<br>`type SkillDef` | SkillDef is one PS_GameDefs.dbo.Skills row. ClassEligible is indexed by Chars.Job: Attackfighter, Defensefighter, Patrolrogue, Shootrogue, Attackmage, Defensemage. EP4.5 has three AbilityType/Value pairs. |
+| [`MobAttack`](../../server/internal/db/defs.go#L115)<br>`type MobAttack` | MobAttack is one of a mob's three attack slots (AttackTypeN..AttackokN). |
+| [`MobDef`](../../server/internal/db/defs.go#L126)<br>`type MobDef` | MobDef is the subset of PS_GameDefs.dbo.Mobs the world uses. |
+| [`MobDrop`](../../server/internal/db/defs.go#L159)<br>`type MobDrop` | See the source definition and the subsystem ownership contract. |
+| [`ProductItem`](../../server/internal/db/defs.go#L166)<br>`type ProductItem` | See the source definition and the subsystem ownership contract. |
+| [`Product`](../../server/internal/db/defs.go#L171)<br>`type Product` | See the source definition and the subsystem ownership contract. |
+| [`ExpKey`](../../server/internal/db/defs.go#L178)<br>`type ExpKey` | See the source definition and the subsystem ownership contract. |
+| [`StatusKey`](../../server/internal/db/defs.go#L184)<br>`type StatusKey` | StatusKey indexes StatusDefs by level and job (Chars.Job). |
+| [`Status`](../../server/internal/db/defs.go#L190)<br>`type Status` | Status is a StatusDefs row: base max HP/SP/MP for a level and job. |
+| [`BaseItem`](../../server/internal/db/defs.go#L194)<br>`type BaseItem` | BaseItem is a BaseItemsDefs row: an item a new character of that family and job starts with, in inventory bag 1 at Slot. |
+| [`BaseItemKey`](../../server/internal/db/defs.go#L201)<br>`type BaseItemKey` | BaseItemKey indexes BaseItemsDefs by family (race) and job. |
+| [`Defs`](../../server/internal/db/defs.go#L204)<br>`type Defs` | Defs holds every PS_GameDefs table the world needs. |
+| [`defsOnce`](../../server/internal/db/defs.go#L217)<br>`var defsOnce sync.Once` | See the source definition and the subsystem ownership contract. |
+| [`defs`](../../server/internal/db/defs.go#L218)<br>`var defs *Defs` | See the source definition and the subsystem ownership contract. |
+| [`defsErr`](../../server/internal/db/defs.go#L219)<br>`var defsErr error` | See the source definition and the subsystem ownership contract. |
+| [`SetDefsForTest`](../../server/internal/db/defs.go#L223)<br>`func SetDefsForTest(d *Defs)` | SetDefsForTest installs definitions without a database (unit tests). |
+| [`ReloadDefsForTest`](../../server/internal/db/defs.go#L229)<br>`func ReloadDefsForTest() (*Defs, error)` | ReloadDefsForTest replaces test definitions with the database's again. |
+| [`Definitions`](../../server/internal/db/defs.go#L236)<br>`func Definitions() (*Defs, error)` | Definitions returns the cached definitions, loading them on first use. |
+| [`MustDefs`](../../server/internal/db/defs.go#L242)<br>`func MustDefs() *Defs` | MustDefs is for code paths that run only after a successful startup load. |
+| [`clampU8`](../../server/internal/db/defs.go#L250)<br>`func clampU8(v int64) uint8` | See the source definition and the subsystem ownership contract. |
+| [`clampU16`](../../server/internal/db/defs.go#L254)<br>`func clampU16(v int64) uint16` | See the source definition and the subsystem ownership contract. |
+| [`normalizeSkill`](../../server/internal/db/defs.go#L259)<br>`func normalizeSkill(s *SkillDef, defenceType, fixRange uint8, keep uint32, aggro uint16, need [15]uint8, shield uint8)` | normalizeSkill applies CGameData::LoadConstSkill's load-time rules. |
+| [`MobRespawnSeconds`](../../server/internal/db/defs.go#L305)<br>`func MobRespawnSeconds(special uint8) uint64` | MobRespawnSeconds maps Mobs.Attackspecial3 to the respawn delay. |
+| [`loadDefs`](../../server/internal/db/defs.go#L316)<br>`func loadDefs() (*Defs, error)` | See the source definition and the subsystem ownership contract. |
+| [`Item`](../../server/internal/db/defs.go#L618)<br>`func (d *Defs) Item(itemType, typeID uint8) *ItemDef` | Item returns the definition for (type, typeID), or nil. |
+| [`Skill`](../../server/internal/db/defs.go#L621)<br>`func (d *Defs) Skill(skillID uint16, level uint8) *SkillDef` | Skill returns the definition for (skillID, level), or nil. |
+| [`NPCSkill`](../../server/internal/db/defs.go#L627)<br>`func (d *Defs) NPCSkill(skillID uint16) *SkillDef` | NPCSkill selects the independent NpcSkill namespace. The shared SQL schema stores NpcSkill rank one as level 100; player ranks are never a fallback. |
+| [`MobQuestItem`](../../server/internal/db/defs.go#L633)<br>`func MobQuestItem(index int32) ItemKey` | MobQuestItem decodes LoadConstMob's quest-only index. This is not the ordinary Type*1000+TypeID format. Native item IDs are truncated to a byte. |
 
 <details><summary>Type definitions and owned fields</summary>
 

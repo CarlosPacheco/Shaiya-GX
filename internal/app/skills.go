@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/potential"
 	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"log"
 	"math"
@@ -42,6 +43,7 @@ func (a *App) loadSkills() {
 		var defs map[sdata.SkillKey]sdata.Skill
 		defs, err = sdata.ParseSkills(b)
 		if err == nil {
+			normalizePotentials(defs)
 			a.skillDefs = defs
 		}
 	}
@@ -49,6 +51,19 @@ func (a *App) loadSkills() {
 		log.Printf("Skill.SData: %v", err)
 	}
 }
+
+// normalizePotentials fills in the duration and reuse the data leaves at zero.
+func normalizePotentials(defs map[sdata.SkillKey]sdata.Skill) {
+	for key, d := range defs {
+		if potential.Is(d.Effect, d.Detail) {
+			d.KeepTime, d.ResetTime = potential.KeepSeconds, potential.ReuseSeconds
+			defs[key] = d
+		}
+	}
+}
+
+// skillDraggable: active skills and Potentials may be dropped on an action bar.
+func skillDraggable(d sdata.Skill) bool { return d.Effect != 0 || potential.Is(d.Effect, d.Detail) }
 
 func (a *App) availableSkills() []sdata.SkillKey {
 	a.loadSkills()
@@ -143,7 +158,7 @@ func (a *App) updateSkills(in *platform.Input, w, h int) bool {
 	keys := a.visibleSkills()
 	if in.Pressed {
 		if row, ok := ui.SkillBookHit(in.MouseX-x, in.MouseY-y); ok && v.offset+row < len(keys) {
-			if k, ok := a.learnedSkill(keys[v.offset+row].ID); ok && a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}].Effect != 0 {
+			if k, ok := a.learnedSkill(keys[v.offset+row].ID); ok && skillDraggable(a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]) {
 				v.drag = shortcutDrag{tracking: true, x: in.MouseX, y: in.MouseY, from: -1, reference: proto.QuickSlot{Bag: 100, Number: uint16(k.Number)}, skill: k}
 			}
 		}
@@ -359,11 +374,14 @@ func (a *App) actionPacket(index int) []byte {
 }
 
 func (a *App) learnedSkillPacket(k proto.LearnedSkill) []byte {
+	def := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]
+	if potential.Is(def.Effect, def.Detail) {
+		return nil // triggers by itself; a bar slot only shows it and its reuse
+	}
 	if a.skills.cooldowns[k.ID] > a.clock {
 		a.systemMessage(1, 215, nil)
 		return nil
 	}
-	def := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]
 	if !a.skillResourcesAvailable(def) {
 		return nil
 	}

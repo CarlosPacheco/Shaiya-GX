@@ -3402,6 +3402,29 @@ func DecodeShopResult(p []byte) (m ShopResult, err error) {
 
 </details>
 
+## skill cooldown
+
+[internal/proto/skill_cooldown.go](../../internal/proto/skill_cooldown.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type SkillCooldown struct{ Skill, Seconds uint16 }
+```
+
+```go
+func DecodeSkillCooldown(p []byte) (v SkillCooldown, err error) {
+	if len(p) != 6 {
+		return v, fmt.Errorf("invalid GX skill cooldown length")
+	}
+	r := NewReader(p)
+	v.Skill, v.Seconds = r.U16(), r.U16()
+	return v, r.Err()
+}
+```
+
+</details>
+
 ## skill dash
 
 [internal/proto/skill_dash.go](../../internal/proto/skill_dash.go#L1)

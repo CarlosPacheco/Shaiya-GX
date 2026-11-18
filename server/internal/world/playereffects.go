@@ -81,7 +81,7 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 // canAddEffect also guards item consumption, so a refused lower-level buff
 // cannot consume a candy or start its cooldown.
 func (s *Session) canAddEffect(def *db.SkillDef, sourceUser ...uint32) bool {
-	self := s.char != nil && len(sourceUser) == 1 && sourceUser[0] == s.char.ID && def.TypeEffect == typeEffectBuff
+	self := s.char != nil && len(sourceUser) == 1 && sourceUser[0] == s.char.ID && (def.TypeEffect == typeEffectBuff || isPotential(def))
 	if s.invulnerable() && !self {
 		return false
 	}

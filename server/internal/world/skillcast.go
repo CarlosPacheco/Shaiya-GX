@@ -74,7 +74,7 @@ func newBuff(id uint32, def *db.SkillDef, ends time.Time, log logPrinter) Active
 		b.nextTickAt = time.Now().Add(periodicHealTick)
 	}
 	b.DefenceType, b.BlockLeft, b.prevTick = def.DefenceType, uint32(def.DefenceValue), time.Now()
-	if def.TypeDetail == 82 || def.TypeDetail == 91 || def.TypeDetail == detailAbilityDown || def.TypeDetail == detailAbilityDown2 {
+	if def.TypeDetail == 82 || def.TypeDetail == 91 || def.TypeDetail == detailAbilityDown || def.TypeDetail == detailAbilityDown2 || isPotential(def) {
 		for i, t := range def.AbilityType {
 			b.Abilities[i] = buffAbility{t, int32(def.AbilityValue[i])}
 			if !applyAbility(&EquipmentStats{}, def.TypeEffect, t, 0) {
@@ -301,6 +301,9 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 	if !ok {
 		return
 	}
+	if isPotential(def) {
+		return // triggers by itself (tickPotentials); it cannot be cast
+	}
 	if !s.skillReady(k.SkillID) {
 		s.sendSkillMessage(k.SkillID, 215)
 		return
@@ -425,7 +428,7 @@ func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error) {
 	var out []ActiveBuff
 	for _, r := range rows {
 		def := db.MustDefs().Skill(r.SkillID, r.Level)
-		if def == nil || def.TypeEffect != typeEffectBuff {
+		if def == nil || def.TypeEffect != typeEffectBuff && !isPotential(def) {
 			continue
 		}
 		out = append(out, newBuff(uint32(len(out)+1), def, time.Now().Add(time.Duration(r.LeftSeconds)*time.Second), log))

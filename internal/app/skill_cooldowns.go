@@ -25,6 +25,15 @@ func (a *App) confirmedSkills(op proto.Opcode) {
 		}
 		return
 	}
+	if op == proto.GXSkillCooldown {
+		// A skill that started its own reuse (a Potential triggering).
+		c := a.state.LastSkillCooldown
+		if v.cooldowns == nil {
+			v.cooldowns = map[uint16]float64{}
+		}
+		v.cooldowns[c.Skill] = a.clock + float64(c.Seconds)
+		return
+	}
 	if op != proto.SkillUse && op != proto.SkillUseNoTarget && op != proto.SkillUserDrain && op != proto.SkillMobDrain {
 		return
 	}
