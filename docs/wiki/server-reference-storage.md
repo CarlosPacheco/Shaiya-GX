@@ -718,11 +718,13 @@ type GiftEntry struct {
 
 [server/internal/db/migrations.go](../../server/internal/db/migrations.go#L1)
 
+Direct GX dependencies: `internal/enchantrules`.
+
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`migration`](../../server/internal/db/migrations.go#L11)<br>`type migration` | See the source definition and the subsystem ownership contract. |
-| [`migrations`](../../server/internal/db/migrations.go#L16)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L68)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
+| [`migration`](../../server/internal/db/migrations.go#L13)<br>`type migration` | See the source definition and the subsystem ownership contract. |
+| [`migrations`](../../server/internal/db/migrations.go#L18)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
+| [`migrate`](../../server/internal/db/migrations.go#L71)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 

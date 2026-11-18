@@ -106,32 +106,18 @@ positive material count also consume only one. The server supplies the chance
 for the placed equipment before consumables are selected; this preview does
 not authorize execution.
 
-All probabilities, the maximum level and resulting stat bonuses are read from
-[`data/game/ItemEnchant.ini`](../../server/data/game/ItemEnchant.ini) at world
-startup. Edit the active server copy and restart gx_world; no rebuild is needed.
-The following table lists the shipped defaults, with cap **+20**.
+GX World loads `PS_GameDefs_EnchantAttack` for weapons and
+`PS_GameDefs_EnchantDefense` for armor. Each table contains consecutive
+`Level` rows starting at +0. The last row sets that table's cap, up to +49.
+The shipped cap is **+20** in both tables. With only +0, forging cannot
+increase that equipment type's enchant level.
 
-```ini
-[Enchant]
-MaxLevel=20
-
-[LapisianEnchantPercentRate]
-; Step00 is the chance of +0 -> +1, per million.
-WeaponStep00=900000
-DefenseStep00=990000
-
-[LapisianEnchantAddValue]
-; Step20 is the total bonus at +20.
-WeaponStep20=311
-DefenseStep20=100
-```
-
-This is an excerpt; retain every `WeaponStepNN` and `DefenseStepNN` entry
-through MaxLevel in both original sections. The cap supports 0–49. Legacy
-INIs without `[Enchant] MaxLevel` use 20. The file itself is required.
-Rates must be 0–1,000,000; bonuses 0–2,147,483,647. Invalid or missing required
-entries stop startup without partially applying the file. Optional entries
-above the cap remain active bonuses for existing higher-level equipment.
+`SuccessChance` is the rate per million of increasing the listed level by
+one (0–1,000,000). `AttackBonus` and `AbsorptionBonus` are the total bonus
+at the listed level (0–2,147,483,647). Removing levels also removes those
+levels' bonuses for existing gear. A legacy upgrade imports the INI through
+its configured cap when both tables are empty. Edit rules in GX Studio and
+restart gx_world after saving.
 
 | Resulting level | Weapon chance | Armor chance | Weapon attack bonus | Armor absorption |
 |---:|---:|---:|---:|---:|

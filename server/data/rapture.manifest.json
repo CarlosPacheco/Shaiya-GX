@@ -71,6 +71,8 @@
     "PS_GameData__GuildsBack": 0,
     "PS_GameData_dtproperties": 0,
     "PS_GameDefs_BaseItemsDefs": 24,
+    "PS_GameDefs_EnchantAttack": 21,
+    "PS_GameDefs_EnchantDefense": 21,
     "PS_GameDefs_ExpDefs": 240,
     "PS_GameDefs_Items": 22101,
     "PS_GameDefs_MobItems": 24723,
@@ -97,5 +99,5 @@
     "PS_UserData_dtproperties": 0,
     "Rapture_LoginLog": 136
   },
-  "sha256": "f79cb5c03df3e594b93141db1452b5dc163989dd52eb86ac596cb3b14468c53f"
+  "sha256": "4b069221712669eae07ce9b0109bd8a1b1d9efc6e8d479e5bd3fc524fe45bb29"
 }

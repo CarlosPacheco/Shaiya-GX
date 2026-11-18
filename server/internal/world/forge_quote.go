@@ -26,14 +26,16 @@ func enchantRate(item db.Item, _ uint16) (uint32, bool) {
 	if step > 50 {
 		step -= 50
 	}
-	if step >= enchantConfig.MaxLevel {
+	if rt := realType(item.Type); rt >= 1 && rt <= 15 {
+		if step >= enchantConfig.WeaponCap {
+			return 0, false
+		}
+		return min(enchantConfig.WeaponRate[step], 1000000), true
+	}
+	if step >= enchantConfig.ArmorCap {
 		return 0, false
 	}
-	rate := enchantConfig.DefenseRate[step]
-	if rt := realType(item.Type); rt >= 1 && rt <= 15 {
-		rate = enchantConfig.WeaponRate[step]
-	}
-	return min(rate, 1000000), true
+	return min(enchantConfig.DefenseRate[step], 1000000), true
 }
 func (s *Session) forgeQuote(q proto.ForgeQuoteRequest) proto.ForgeQuote {
 	out := proto.ForgeQuote{Serial: q.Serial, Kind: q.Kind}

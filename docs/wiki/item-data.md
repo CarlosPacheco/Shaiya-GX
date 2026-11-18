@@ -4,7 +4,7 @@
 
 | Data | Authoritative source | Applying a change |
 |---|---|---|
-| Enchant cap, weapon/armor rates and stat bonuses | `data/game/ItemEnchant.ini` | Edit INI and restart world |
+| Enchant cap, weapon/armor rates and stat bonuses | SQLite `PS_GameDefs_EnchantAttack` and `PS_GameDefs_EnchantDefense` | Edit with GX Studio and restart world |
 | Native forge gold table | `lapisiaMoney` in `server/internal/world/crafting.go` | Rebuild and restart world |
 | Linking/extraction formulas | `server/internal/world/forge_quote.go` | Rebuild and restart world |
 | Item requirements, hammer ReqVg, stack limits | SQL `PS_GameDefs_Items` in the selected server DB | Restart world |
@@ -12,13 +12,9 @@
 | Client stackability matching SQL | `data/item-stack-limits.csv` | Restart client |
 | Mall display / actual products | Client Cash.SData / SQL ProductList | Restart affected component |
 
-`ItemEnchant.ini` is required at startup under the server data directory.
-`[Enchant] MaxLevel` sets the shared cap (0–49, default20 for legacy INIs).
-`[LapisianEnchantPercentRate]` and `[LapisianEnchantAddValue]` retain their
-original `WeaponStepNN` / `DefenseStepNN` keys. Invalid or missing required
-values stop startup; there is no environment override. See
-[Blacksmith](blacksmith.md) for units and examples. The historical copy under
-`server/docs/reference/` is reference material, not the active file.
+The last consecutive level in each SQLite table sets its cap. The shipped
+tables cover +0 through +20. See [Blacksmith](blacksmith.md) for the limits,
+field units and effects of removing levels.
 The old free-cost environment setting remains ignored.
 
 The server quote is read-only. It uses the same functions as execution; the

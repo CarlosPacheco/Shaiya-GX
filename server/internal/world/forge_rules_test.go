@@ -222,10 +222,10 @@ func TestNewDropRecreationSurvivesPickupAndRedrop(t *testing.T) {
 }
 func TestConfiguredEnchantCapAndRates(t *testing.T) {
 	_, _ = forgeRuleSession(t)
-	if enchantConfig.MaxLevel != 20 {
+	if enchantConfig.WeaponCap != 20 {
 		t.Fatal("default cap must be 20")
 	}
-	enchantConfig.MaxLevel = 21
+	enchantConfig.WeaponCap = 21
 	enchantConfig.WeaponRate[20] = 1000000
 	it := db.Item{Type: 1, CraftName: "00000000000000000020"}
 	if _, ok := enchantRate(it, 1); !ok {
@@ -238,11 +238,11 @@ func TestConfiguredEnchantCapAndRates(t *testing.T) {
 	if err := validateEnchantRules(); err != nil {
 		t.Fatal(err)
 	}
-	enchantConfig.MaxLevel = 50
+	enchantConfig.WeaponCap = 50
 	if err := validateEnchantRules(); err == nil {
 		t.Fatal("unrepresentable cap accepted")
 	}
-	enchantConfig.MaxLevel = 20
+	enchantConfig.WeaponCap = 20
 	enchantConfig.WeaponRate[0] = 1000001
 	if err := validateEnchantRules(); err == nil {
 		t.Fatal("rate over 100% accepted")

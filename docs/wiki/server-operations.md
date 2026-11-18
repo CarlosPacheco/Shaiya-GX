@@ -101,10 +101,11 @@ the same rate/cost functions. The client discards stale quotes and requests a
 fresh quote before opening a link/extract/enchant confirmation.
 
 Forge costs use the native ReqIg table without Vg/level discounts or the old
-free-cost environment override. Enchant rates, cap (default20) and bonuses are
-loaded from `data/game/ItemEnchant.ini`. Set `[Enchant] MaxLevel=20` (0–49)
-and edit the original rate/bonus sections, then restart gx_world; no rebuild
-is needed. The client receives the server bonus tables for its tooltips. See the [feature wiki](wiki/README.md) for exact rules,
+free-cost environment override. Enchant rules are stored in SQLite `PS_GameDefs_EnchantAttack` and
+`PS_GameDefs_EnchantDefense`. Each table has its own cap, set by its highest
+consecutive level starting at +0, with a maximum of +49. Shipped caps are
++20 for both. Edit the Enchant catalog in GX Studio, then restart gx_world.
+The client receives the server bonus tables for its tooltips. See the [feature wiki](wiki/README.md) for exact rules,
 item content fields, extraction, recreation and drop persistence.
 
 ## Monster health

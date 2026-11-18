@@ -17,6 +17,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
+	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/studio"
 )
 
@@ -31,6 +32,8 @@ type editor struct {
 	cashSection            int
 	cashFormDirty          func() bool
 	itemFormDirty          func() bool
+	enchant                *studio.EnchantCatalog
+	enchantDirty           func() bool
 	itemSection, itemFocus int
 	itemQuery              string
 	project                *studio.Project
@@ -63,7 +66,7 @@ func (e *editor) leave(next func()) {
 	if e.busy {
 		return
 	}
-	if !e.pending && ((e.project != nil && (e.dirty() || e.cashFormDirty != nil && e.cashFormDirty())) || len(e.definitionDraft) > 0 || e.itemFormDirty != nil && e.itemFormDirty()) {
+	if !e.pending && ((e.project != nil && (e.dirty() || e.cashFormDirty != nil && e.cashFormDirty())) || len(e.definitionDraft) > 0 || e.itemFormDirty != nil && e.itemFormDirty() || e.enchantDirty != nil && e.enchantDirty()) {
 		dialog.ShowConfirm("Discard draft?", "Your unapplied catalog edits will be discarded.", func(ok bool) {
 			if ok {
 				next()
@@ -76,6 +79,7 @@ func (e *editor) leave(next func()) {
 
 func (e *editor) start() {
 	e.project, e.draft, e.assets = nil, nil, nil
+	e.enchant, e.enchantDirty = nil, nil
 	e.definitions, e.definitionDraft = nil, nil
 	e.itemFormDirty, e.itemSection, e.itemFocus, e.itemQuery = nil, 0, -1, ""
 	e.cashQuery, e.cashCode, e.cashSection = "", "", 0
@@ -135,20 +139,28 @@ func (e *editor) start() {
 			return
 		}
 		dataDir, dbPath := data.Text, db.Text
-		if strings.TrimSpace(dataDir) == "" || strings.TrimSpace(dbPath) == "" {
-			e.showError(fmt.Errorf("select the client data folder and the server SQLite database"))
+		kind := studio.Kind(mode.SelectedIndex())
+		if strings.TrimSpace(dbPath) == "" || (kind != studio.Enchant && strings.TrimSpace(dataDir) == "") {
+			if kind == studio.Enchant {
+				e.showError(fmt.Errorf("select the server SQLite database"))
+			} else {
+				e.showError(fmt.Errorf("select the client data folder and the server SQLite database"))
+			}
 			return
 		}
-		dataDir, err := filepath.Abs(dataDir)
-		if e.showError(err) {
-			return
+		var err error
+		if strings.TrimSpace(dataDir) != "" {
+			dataDir, err = filepath.Abs(dataDir)
+			if e.showError(err) {
+				return
+			}
 		}
 		dbPath, err = filepath.Abs(dbPath)
 		if e.showError(err) {
 			return
 		}
 		e.dataDir, e.dbPath = dataDir, dbPath
-		e.openKind(studio.Kind(mode.SelectedIndex()))
+		e.openKind(kind)
 	}
 	e.status = wrapped("")
 	if preferencesErr != nil {
@@ -156,12 +168,23 @@ func (e *editor) start() {
 	}
 	render := func() {
 		title := widget.NewLabelWithStyle("Open an installation", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-		fields := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewHBox(widget.NewLabel("Theme"), appearance), title),
-			field("Client data folder", "Cash.SData", container.NewBorder(nil, nil, nil, selectFolder, data)),
-			field("Server database", studio.ProductTable, container.NewBorder(nil, nil, nil, container.NewHBox(detect, selectDB), db)),
-			container.NewHBox(mode, open), e.status)
+		fields := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewHBox(widget.NewLabel("Theme"), appearance), title))
+		dbSource := studio.ProductTable
+		var dbActions fyne.CanvasObject = container.NewHBox(detect, selectDB)
+		if studio.Kind(mode.SelectedIndex()) == studio.Enchant {
+			dbSource = enchantrules.AttackTable + " · " + enchantrules.DefenseTable
+			if data.Text == "" {
+				dbActions = selectDB
+			}
+		} else {
+			fields.Add(field("Client data folder", "Cash.SData", container.NewBorder(nil, nil, nil, selectFolder, data)))
+		}
+		fields.Add(field("Server database", dbSource, container.NewBorder(nil, nil, nil, dbActions, db)))
+		fields.Add(container.NewHBox(mode, open))
+		fields.Add(e.status)
 		e.window.SetContent(container.NewPadded(container.NewBorder(nil, nil, nil, nil, container.NewVBox(fields))))
 	}
+	mode.OnChanged = func(string) { render() }
 	appearance.OnChanged = func(label string) {
 		index := slices.Index(themeOptions, label)
 		if index < 0 || e.preferences.Theme == themeIDs[index] {
@@ -181,7 +204,7 @@ func (e *editor) start() {
 	render()
 }
 
-var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills"}
+var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills", "Enchant"}
 
 func (e *editor) switcher(current studio.Kind) *widget.Select {
 	control := widget.NewSelect(catalogNames, nil)
@@ -201,22 +224,35 @@ func (e *editor) openKind(kind studio.Kind) {
 	if e.busy {
 		return
 	}
+	if kind != studio.Enchant && strings.TrimSpace(e.dataDir) == "" {
+		e.showError(fmt.Errorf("open an installation with a client data folder to edit that catalog"))
+		return
+	}
 	dataDir, dbPath, existingAssets := e.dataDir, e.dbPath, e.assets
 	preferences := studio.Preferences{DataDir: dataDir, Database: dbPath, Theme: e.preferences.Theme}
-	e.run("Reading "+kind.RelativePath()+" and SQLite…", func() func() {
+	message := "Reading " + kind.RelativePath() + " and SQLite…"
+	if kind == studio.Enchant {
+		message = "Reading enchant rules from SQLite…"
+	}
+	e.run(message, func() func() {
 		ctx := context.Background()
 		var project *studio.Project
 		var definitions *studio.Definitions
+		var enchant *studio.EnchantCatalog
 		var err error
 		if kind == studio.Cash {
 			project, err = studio.Open(ctx, dataDir, dbPath)
+		} else if kind == studio.Enchant {
+			enchant, err = studio.OpenEnchant(ctx, dbPath)
 		} else {
 			definitions, err = studio.OpenDefinitions(ctx, dataDir, dbPath, kind)
 		}
 		images := existingAssets
 		var preferencesErr error
-		if err == nil && images == nil {
-			images = loadAssets(dataDir)
+		if err == nil {
+			if images == nil && kind != studio.Enchant {
+				images = loadAssets(dataDir)
+			}
 			preferencesErr = studio.SavePreferences(e.root, preferences)
 		}
 		return func() {
@@ -226,10 +262,13 @@ func (e *editor) openKind(kind studio.Kind) {
 			e.preferences = preferences
 			e.itemFormDirty = nil
 			e.project, e.definitions, e.assets = project, definitions, images
+			e.enchant, e.enchantDirty = enchant, nil
 			e.draft, e.definitionDraft = nil, make(studio.DefinitionEdits)
 			if kind == studio.Cash {
 				e.draft = append([]cash.Product(nil), project.Products...)
 				e.catalog()
+			} else if kind == studio.Enchant {
+				e.enchantCatalog()
 			} else {
 				e.definitionCatalog()
 			}

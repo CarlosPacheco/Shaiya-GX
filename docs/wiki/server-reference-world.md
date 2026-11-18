@@ -666,25 +666,27 @@ type elementRuntime struct {
 
 [server/internal/world/enchant_rules.go](../../server/internal/world/enchant_rules.go#L1)
 
-Direct GX dependencies: `internal/proto`, `server/internal/logx`, `server/internal/packet`.
+Direct GX dependencies: `internal/enchantrules`, `internal/proto`, `server/internal/db`, `server/internal/logx`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`defaultEnchantMaxLevel`](../../server/internal/world/enchant_rules.go#L13)<br>`const defaultEnchantMaxLevel = 20` | See the source definition and the subsystem ownership contract. |
-| [`enchantMaxLevel`](../../server/internal/world/enchant_rules.go#L14)<br>`const enchantMaxLevel = 49` | armor encodes 50+level in the two-digit Craftname pair |
-| [`enchantRulesConfig`](../../server/internal/world/enchant_rules.go#L20)<br>`type enchantRulesConfig` | Runtime enchant configuration is loaded atomically from data/game/ItemEnchant.ini. These initial values retain the historical defaults before startup loading. Step N is the probability of N -> N+1, in successes per million. |
-| [`enchantConfig`](../../server/internal/world/enchant_rules.go#L25)<br>`var enchantConfig` | See the source definition and the subsystem ownership contract. |
-| [`weaponEnchantAttackBonus`](../../server/internal/world/enchant_rules.go#L32)<br>`var weaponEnchantAttackBonus` | Bonuses are indexed by the resulting enchantment level, starting at zero. |
-| [`armorEnchantAbsorption`](../../server/internal/world/enchant_rules.go#L33)<br>`var armorEnchantAbsorption` | See the source definition and the subsystem ownership contract. |
-| [`validateEnchantRules`](../../server/internal/world/enchant_rules.go#L35)<br>`func validateEnchantRules() error` | See the source definition and the subsystem ownership contract. |
-| [`loadItemEnchantIni`](../../server/internal/world/enchant_rules.go#L50)<br>`func loadItemEnchantIni(log *logx.Logger) error` | loadItemEnchantIni restores the original sections, adding [Enchant] MaxLevel. Missing MaxLevel supports original INIs at +20. Invalid input never replaces the last valid rules; production startup treats an absent file as an error. |
-| [`sendEnchantRules`](../../server/internal/world/enchant_rules.go#L97)<br>`func (s *Session) sendEnchantRules()` | See the source definition and the subsystem ownership contract. |
+| [`defaultEnchantMaxLevel`](../../server/internal/world/enchant_rules.go#L18)<br>`const defaultEnchantMaxLevel = 20` | See the source definition and the subsystem ownership contract. |
+| [`enchantMaxLevel`](../../server/internal/world/enchant_rules.go#L19)<br>`const enchantMaxLevel = enchantrules.MaxLevel` | armor encodes 50+level in the two-digit Craftname pair |
+| [`enchantRulesConfig`](../../server/internal/world/enchant_rules.go#L25)<br>`type enchantRulesConfig` | Runtime enchant configuration is loaded atomically from SQLite. These initial values retain the historical defaults before startup loading. Step N is the probability of N -> N+1, in successes per million. |
+| [`enchantConfig`](../../server/internal/world/enchant_rules.go#L30)<br>`var enchantConfig` | See the source definition and the subsystem ownership contract. |
+| [`weaponEnchantAttackBonus`](../../server/internal/world/enchant_rules.go#L37)<br>`var weaponEnchantAttackBonus` | Bonuses are indexed by the resulting enchantment level, starting at zero. |
+| [`armorEnchantAbsorption`](../../server/internal/world/enchant_rules.go#L38)<br>`var armorEnchantAbsorption` | See the source definition and the subsystem ownership contract. |
+| [`validateEnchantRules`](../../server/internal/world/enchant_rules.go#L40)<br>`func validateEnchantRules() error` | See the source definition and the subsystem ownership contract. |
+| [`readLegacyEnchant`](../../server/internal/world/enchant_rules.go#L53)<br>`func readLegacyEnchant(path string) (enchantrules.Catalog, error)` | readLegacyEnchant is used only to initialize a pre-migration installation. |
+| [`applyEnchantRules`](../../server/internal/world/enchant_rules.go#L102)<br>`func applyEnchantRules(rows enchantrules.Catalog) error` | See the source definition and the subsystem ownership contract. |
+| [`loadEnchantRules`](../../server/internal/world/enchant_rules.go#L119)<br>`func loadEnchantRules(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
+| [`sendEnchantRules`](../../server/internal/world/enchant_rules.go#L164)<br>`func (s *Session) sendEnchantRules()` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
 ```go
 type enchantRulesConfig struct {
-	MaxLevel                uint8
+	WeaponCap, ArmorCap     uint8
 	WeaponRate, DefenseRate [enchantMaxLevel + 1]uint32
 }
 ```
@@ -1074,8 +1076,8 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`extractionChance`](../../server/internal/world/forge_quote.go#L21)<br>`func extractionChance(d *db.ItemDef) int` | See the source definition and the subsystem ownership contract. |
 | [`gemCost`](../../server/internal/world/forge_quote.go#L22)<br>`func gemCost(_ *db.Character, gem *db.ItemDef) uint32` | See the source definition and the subsystem ownership contract. |
 | [`enchantRate`](../../server/internal/world/forge_quote.go#L23)<br>`func enchantRate(item db.Item, _ uint16) (uint32, bool)` | See the source definition and the subsystem ownership contract. |
-| [`forgeQuote`](../../server/internal/world/forge_quote.go#L38)<br>`func (s *Session) forgeQuote(q proto.ForgeQuoteRequest) proto.ForgeQuote` | See the source definition and the subsystem ownership contract. |
-| [`handleForgeQuote`](../../server/internal/world/forge_quote.go#L103)<br>`func (s *Session) handleForgeQuote(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`forgeQuote`](../../server/internal/world/forge_quote.go#L40)<br>`func (s *Session) forgeQuote(q proto.ForgeQuoteRequest) proto.ForgeQuote` | See the source definition and the subsystem ownership contract. |
+| [`handleForgeQuote`](../../server/internal/world/forge_quote.go#L105)<br>`func (s *Session) handleForgeQuote(p []byte)` | See the source definition and the subsystem ownership contract. |
 
 ### friendly.go
 

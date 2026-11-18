@@ -126,7 +126,7 @@ Source notes: GXForgeQuote is a read-only preview; execution still validates liv
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L275)
 
-**S→C serializers:** [handleForgeQuote (server/internal/world/forge_quote.go)](../../server/internal/world/forge_quote.go#L103)
+**S→C serializers:** [handleForgeQuote (server/internal/world/forge_quote.go)](../../server/internal/world/forge_quote.go#L105)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -136,7 +136,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleForgeQuote — server/internal/world/forge_quote.go</summary>
 
-[Source definition](../../server/internal/world/forge_quote.go#L103)
+[Source definition](../../server/internal/world/forge_quote.go#L105)
 
 ```go
 func (s *Session) handleForgeQuote(p []byte) {
@@ -1125,11 +1125,11 @@ func DecodeSkillDash(p []byte) (d SkillDash, err error) {
 
 Declarations: [proto.GXEnchantRules](../../internal/proto/enchant_rules.go#L9), [authwire.Opcode](../../internal/authwire/credentials.go#L12).
 
-Source notes: GXEnchantRules publishes server INI bonuses for authoritative tooltips.
+Source notes: GXEnchantRules publishes server enchant bonuses for authoritative tooltips.
 
 **C→S receive adapters:** [frame (server/cmd/gx_login/main.go)](../../server/cmd/gx_login/main.go#L224)
 
-**S→C serializers:** [sendEnchantRules (server/internal/world/enchant_rules.go)](../../server/internal/world/enchant_rules.go#L97)
+**S→C serializers:** [sendEnchantRules (server/internal/world/enchant_rules.go)](../../server/internal/world/enchant_rules.go#L164)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L234)
 
@@ -1139,11 +1139,13 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendEnchantRules — server/internal/world/enchant_rules.go</summary>
 
-[Source definition](../../server/internal/world/enchant_rules.go#L97)
+[Source definition](../../server/internal/world/enchant_rules.go#L164)
 
 ```go
 func (s *Session) sendEnchantRules() {
-	payload := proto.EnchantRulesPacket(proto.EnchantRules{MaxLevel: enchantConfig.MaxLevel, WeaponBonus: weaponEnchantAttackBonus, ArmorBonus: armorEnchantAbsorption})
+	// The legacy packet has one display bound. Quotes and attempts use
+	// their equipment-specific cap on the server.
+	payload := proto.EnchantRulesPacket(proto.EnchantRules{MaxLevel: max(enchantConfig.WeaponCap, enchantConfig.ArmorCap), WeaponBonus: weaponEnchantAttackBonus, ArmorBonus: armorEnchantAbsorption})
 	w := packet.New(packet.Opcode(proto.GXEnchantRules))
 	w.Bytes(payload[2:])
 	s.send(w.MustFinish(), "GX enchant rules")

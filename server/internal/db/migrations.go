@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
 )
 
 type migration struct {
@@ -61,6 +63,7 @@ var migrations = []migration{
 			WHEN 135 THEN 134 WHEN 145 THEN 134 WHEN 150 THEN 145 WHEN 161 THEN 61 WHEN 302 THEN 39
 			WHEN 311 THEN 150 WHEN 312 THEN 61 WHEN 313 THEN 79 END
 		WHERE SkillLevel<100 AND SkillID IN (61,64,79,94,104,135,145,150,161,302,311,312,313)`},
+	{10, "item_enchant_rules", enchantrules.CreateSQL},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

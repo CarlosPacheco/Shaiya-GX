@@ -15,7 +15,7 @@ import (
 
 // The original PS_Game configuration (data/game/, copied from the EP4.5
 // server's PS_Game/Data): Map.ini (start positions, map types, rebirth
-// points) and ItemEnchant.ini (enchant cap, rates and bonuses).
+// points). Enchantment rules come from SQLite.
 
 func gameDataDir() string { return filepath.Join(config.DataDir(), "game") }
 
@@ -181,8 +181,8 @@ func LoadGameConfig(log *logx.Logger) error {
 	if err := loadMapIni(log); err != nil {
 		return fmt.Errorf("Map.ini: %w", err)
 	}
-	if err := loadItemEnchantIni(log); err != nil {
-		return fmt.Errorf("ItemEnchant.ini: %w", err)
+	if err := loadEnchantRules(log); err != nil {
+		return fmt.Errorf("enchant rules: %w", err)
 	}
 	if err := loadSequenceItems(log); err != nil {
 		return fmt.Errorf("SequenceItemCreate.ini: %w", err)

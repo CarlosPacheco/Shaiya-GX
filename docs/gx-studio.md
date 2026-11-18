@@ -10,6 +10,7 @@ the exact SData field and SQLite column under each readable field name.
 | Items | `Item/Item.SData` | `PS_GameDefs_Items` |
 | Player skills | `Character/Skill.SData` | `PS_GameDefs_Skills`, matching level |
 | NPC skills | `Monster/NpcSkill.SData` | `PS_GameDefs_Skills`, level 100 for SData rank 1 |
+| Enchant |  | `PS_GameDefs_EnchantAttack` / `PS_GameDefs_EnchantDefense` |
 
 ## Build
 
@@ -65,6 +66,15 @@ Keep the executable in a writable folder for the local backups and recovery jour
 4. Stop the affected GX client and server and keep them stopped through the
    save. Review the proposed changes and choose **Save both**. Restart those
    programs after Studio reports that both destinations were verified.
+
+## Enchant
+
+Choose Enchant with the server SQLite database. The Attack and Defense
+tabs let you edit the chances and bonuses directly. The last level in each
+tab sets that equipment type’s cap. Add the next level or remove the highest
+level to change it, within +0 to +49. Removing levels also removes their
+bonuses for existing gear. **Save database** takes a full SQLite backup and
+applies both tables in one transaction. Restart GX World to load the new rules.
 
 ## Backups and recovery
 

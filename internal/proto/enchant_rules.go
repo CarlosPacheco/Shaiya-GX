@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// GXEnchantRules publishes server INI bonuses for authoritative tooltips.
+// GXEnchantRules publishes server enchant bonuses for authoritative tooltips.
 const GXEnchantRules Opcode = 0x7F12
 
 type EnchantRules struct {

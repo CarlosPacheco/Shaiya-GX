@@ -12,7 +12,7 @@ import (
 )
 
 func TestItemEnchantIniRatesBonusesCapAndWire(t *testing.T) {
-	raw, err := os.ReadFile(filepath.Join(gameDataDir(), "ItemEnchant.ini"))
+	raw, err := os.ReadFile(filepath.Join("testdata", "enchant-legacy.ini"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,6 +30,13 @@ func TestItemEnchantIniRatesBonusesCapAndWire(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	load := func() error {
+		rows, err := readLegacyEnchant(path)
+		if err != nil {
+			return err
+		}
+		return applyEnchantRules(rows)
+	}
 	// Custom cap, chance and armor absorption must reach execution and client.
 	text := strings.Replace(string(raw), "MaxLevel=20", "MaxLevel=21", 1)
 	text = strings.Replace(text, "WeaponStep00\t=900000", "WeaponStep00=123456", 1)
@@ -37,10 +44,10 @@ func TestItemEnchantIniRatesBonusesCapAndWire(t *testing.T) {
 	text = strings.Replace(text, "[LapisianEnchantAddValue]", "WeaponStep21=0\nDefenseStep21=0\n[LapisianEnchantAddValue]", 1)
 	text += "\nWeaponStep21=400\nDefenseStep21=888\n"
 	write(text)
-	if err := loadItemEnchantIni(nil); err != nil {
+	if err := load(); err != nil {
 		t.Fatal(err)
 	}
-	if enchantConfig.MaxLevel != 21 || enchantConfig.WeaponRate[0] != 123456 || armorEnchantAbsorption[20] != 777 || weaponEnchantAttackBonus[21] != 400 {
+	if enchantConfig.WeaponCap != 21 || enchantConfig.WeaponRate[0] != 123456 || armorEnchantAbsorption[20] != 777 || weaponEnchantAttackBonus[21] != 400 {
 		t.Fatal("INI not authoritative")
 	}
 	if rate, ok := enchantRate(db.Item{Type: 1}, 1); !ok || rate != 123456 {
@@ -86,7 +93,7 @@ func TestItemEnchantIniRatesBonusesCapAndWire(t *testing.T) {
 		strings.Replace(text, "WeaponStep21=400", "", 1),
 	} {
 		write(bad)
-		if loadItemEnchantIni(nil) == nil {
+		if load() == nil {
 			t.Fatal("invalid INI accepted")
 		}
 		if enchantConfig != good || weaponEnchantAttackBonus != w || armorEnchantAbsorption != a {
@@ -102,28 +109,83 @@ func TestItemEnchantIniRatesBonusesCapAndWire(t *testing.T) {
 		}
 	}
 	write(full.String())
-	if err := loadItemEnchantIni(nil); err != nil || enchantConfig.MaxLevel != 49 {
+	if err := load(); err != nil || enchantConfig.WeaponCap != 49 {
 		t.Fatal("cap49 rejected", err)
 	}
 	write(strings.Replace(string(raw), "MaxLevel=20", "MaxLevel=0", 1))
-	if err := loadItemEnchantIni(nil); err != nil {
+	if err := load(); err != nil {
 		t.Fatal(err)
 	}
 	if _, ok := enchantRate(db.Item{Type: 1}, 1); ok {
 		t.Fatal("cap0 still allows enhancement")
 	}
-	if armorEnchantAbsorption[20] != 100 {
-		t.Fatal("lowering cap removed existing stored-level bonus")
+	if armorEnchantAbsorption[20] != 0 {
+		t.Fatal("removed levels must have no bonus")
 	}
 	// Original file without the new section remains compatible, cap20.
 	write(strings.Replace(string(raw), "[Enchant]\nMaxLevel=20\n", "", 1))
-	if err := loadItemEnchantIni(nil); err != nil || enchantConfig.MaxLevel != 20 {
+	if err := load(); err != nil || enchantConfig.WeaponCap != 20 {
 		t.Fatal("legacy INI rejected", err)
 	}
 	if err := os.Remove(path); err != nil {
 		t.Fatal(err)
 	}
-	if loadItemEnchantIni(nil) == nil {
+	if load() == nil {
 		t.Fatal("missing required INI silently accepted")
+	}
+}
+
+func TestEnchantCatalogImportsLegacyOnce(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("RAPTURE_DATA_DIR", dir)
+	t.Setenv("RAPTURE_DB_PATH", filepath.Join(dir, "rapture.sqlite"))
+	seed, err := filepath.Abs("../../data/rapture.sqlite")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("RAPTURE_DB_SEED", seed)
+	old, weapon, armor := enchantConfig, weaponEnchantAttackBonus, armorEnchantAbsorption
+	t.Cleanup(func() { enchantConfig, weaponEnchantAttackBonus, armorEnchantAbsorption = old, weapon, armor })
+	db.Close()
+	t.Cleanup(func() { _ = db.Close() })
+	pool, err := db.Pool(db.GameDefs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec("DELETE FROM PS_GameDefs_EnchantAttack; DELETE FROM PS_GameDefs_EnchantDefense"); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(filepath.Join("testdata", "enchant-legacy.ini"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(gameDataDir(), 0700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(gameDataDir(), "ItemEnchant.ini")
+	raw = []byte(strings.ReplaceAll(string(raw), "MaxLevel=20", "MaxLevel=0"))
+	if err := os.WriteFile(path, raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := loadEnchantRules(nil); err != nil {
+		t.Fatal(err)
+	}
+	if enchantConfig.WeaponCap != 0 || enchantConfig.ArmorCap != 0 {
+		t.Fatal("legacy import changed cap")
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec("INSERT INTO PS_GameDefs_EnchantAttack VALUES(1, 0, 7)"); err != nil {
+		t.Fatal(err)
+	}
+	if err := loadEnchantRules(nil); err != nil || enchantConfig.WeaponCap != 1 || enchantConfig.ArmorCap != 0 {
+		t.Fatalf("SQLite-only reload failed: %v", err)
+	}
+	if _, ok := enchantRate(db.Item{Type: 1}, 1); !ok {
+		t.Fatal("attack cap did not allow weapon enchant")
+	}
+	if _, ok := enchantRate(db.Item{Type: 17}, 1); ok {
+		t.Fatal("defense cap allowed armor enchant")
 	}
 }

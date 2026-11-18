@@ -28,6 +28,7 @@ const (
 	Items
 	Skills
 	NPCSkills
+	Enchant
 )
 
 func (k Kind) valid() bool { return k <= NPCSkills }

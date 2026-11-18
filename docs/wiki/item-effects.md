@@ -58,7 +58,7 @@ editing definitions; this is a flat amount, not a percentage or life steal.
 
 Recreation adds its separately stored values. Weapon enchantment adds its total
 attack bonus for the current level; armor enchantment adds flat absorption.
-Those bonuses come from ItemEnchant.ini and are totals, not sums of preceding levels.
+The attack and defense enchant tables in `PS_GameDefs` store the total bonus at each level.
 
 The effective combat totals are calculated on the server. Tooltip descriptions
 are not a substitute for confirmed stat packets. In particular, a numeric native

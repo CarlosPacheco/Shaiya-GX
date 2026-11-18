@@ -125,7 +125,8 @@ func (s *Session) planEnchantAdd(p []byte) {
 	if step > 50 {
 		step -= 50
 	}
-	if step >= enchantConfig.MaxLevel {
+	rate, allowed := enchantRate(item, count)
+	if !allowed {
 		fail("already at max level")
 		return
 	}
@@ -139,7 +140,6 @@ func (s *Session) planEnchantAdd(p []byte) {
 	uidI := item.UID
 	s.adjustCount(lap.UID, lapLeft)
 	s.adjustCount(mat.UID, matLeft)
-	rate, _ := enchantRate(item, count)
 	if rand.Uint32N(1_000_000) >= rate {
 		name := item.CraftName
 		s.persist()

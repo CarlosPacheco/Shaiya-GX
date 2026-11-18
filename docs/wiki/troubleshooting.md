@@ -69,13 +69,9 @@ selection disappears; it does not eject the equipment.
 
 ## How do I change enchant rates, bonuses or the cap?
 
-Edit the active server `data/game/ItemEnchant.ini`, then restart gx_world.
-Set `[Enchant] MaxLevel` to 0–49; 0 disables new attempts. The original
-rate and bonus sections are active again. A file under `server/docs/reference/`
-is only a historical copy. Ensure you edited the data directory selected by
-`RAPTURE_DATA_DIR`. Startup rejects invalid/missing values, and the client
-receives bonus tables on character selection so absorption tooltips match.
-See [Blacksmith](blacksmith.md) for the exact keys and units.
+Open Enchant in GX Studio with the active server SQLite database and save the
+rules, then restart gx_world. Each table’s highest consecutive level sets its own cap. The client receives the bonus tables on character selection. See
+[Blacksmith](blacksmith.md) for field units and limits.
 
 ## Why does the client disagree with the server about an item?
 
