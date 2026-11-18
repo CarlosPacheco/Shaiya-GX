@@ -157,7 +157,6 @@ func (a *App) drawParty(w, h int) {
 	if a.partyUI == nil {
 		return
 	}
-	a.partyUI.Solid = a.white
 	// Self resources are delivered separately from remote party pool updates.
 	members := append([]proto.PartyMember(nil), a.state.Party.Members...)
 	for i := range members {

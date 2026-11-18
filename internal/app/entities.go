@@ -436,7 +436,9 @@ func (a *App) drawPlayerNames(w, h int) {
 			}
 		}
 	}
-	label := func(name string, pos render.V3, tint [4]float32, offset int, extra ...playerPlate) {
+	// label draws a nameplate and reports the horizontal extent it covers,
+	// including a GM prefix and the rank badge, so markers can sit beside it.
+	label := func(name string, pos render.V3, tint [4]float32, offset int, extra ...playerPlate) (l, r int, drawn bool) {
 		if name == "" || pos.Sub(v.pos).Len() > 50 {
 			return
 		}
@@ -465,17 +467,20 @@ func (a *App) drawPlayerNames(w, h int) {
 				a.font.DrawName(a.sprites, "(GM)", left, top, ui.RGBColor(0x66CCFF))
 			}
 			a.font.DrawName(a.sprites, name, left+prefixWidth, top, tint)
+			l, r, drawn = left, left+labelWidth, true
 			if ranked {
 				grade := a.assets.Texture("interface/grade2.png")
 				if grade == nil {
 					return
 				}
+				r = left + labelWidth + 1 + 32
 				// Native 0x0044be5c/0x00443f90: 32x32 cell of grade2 right of the
 				// name, 1px right and 3px up; ranks 1-16 in the left column, 17-31 right.
 				u0, v0 := float32(rank/16)*.5, float32(rank%16)/16
 				a.sprites.Draw(grade, float32(left+labelWidth+1), float32(top-3), 32, 32, u0, v0, u0+.5, v0+1./16, white)
 			}
 		}
+		return
 	}
 	if slot, ok := a.selfSlot(); ok && v.self != nil && settings.OwnName {
 		if pos, ok := v.self.NameAnchor(); ok {
@@ -536,14 +541,14 @@ func (a *App) drawPlayerNames(w, h int) {
 				if e.Kind == game.KindUser {
 					plate.kills = e.PvPKills
 				}
-				label(name, pos, tint, 0, plate)
-				if (e.Kind == game.KindMob || e.Kind == game.KindUser) && a.state.Target == e.ID && pos.Sub(v.pos).Len() <= 50 {
-					if x, y, depth, ok := projectLabel(pos, vp, w, h); ok {
+				left, right, drawn := label(name, pos, tint, 0, plate)
+				if drawn && (e.Kind == game.KindMob || e.Kind == game.KindUser) && a.state.Target == e.ID {
+					if _, y, depth, ok := projectLabel(pos, vp, w, h); ok {
 						a.sprites.NameDepth(depth)
 						if dot := a.assets.Texture("interface/name_select.png"); dot != nil {
-							half := a.font.Width(name)/2 + 10
-							for _, side := range []int{-1, 1} {
-								a.sprites.DrawImage(dot, float32(x+side*half-dot.W/2), float32(y-a.font.Height+(a.font.Height-dot.H)/2))
+							// Beside the whole plate: past a GM prefix and a rank badge.
+							for _, edge := range []int{left - 10, right + 10} {
+								a.sprites.DrawImage(dot, float32(edge-dot.W/2), float32(y-a.font.Height+(a.font.Height-dot.H)/2))
 							}
 						}
 					}
