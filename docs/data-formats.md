@@ -257,6 +257,19 @@ independent of combat `Size`. GX retains the full payload and applies the native
 uniform model scale and scaled number anchor. AI and quest metadata in this file
 do not replace authoritative server behavior.
 
+### Lens flare
+
+The PS107 client loads `Lensflare/flare0.jpg` through `flare6.jpg` at
+`0x538cc0`. The outdoor sun pass at `0x539020` draws seven additive
+layers using textures 4, 0, 1, and 5. Textures 2, 3, and 6 are loaded
+by the original and have no draw call in that pass. The blacksmith
+panels load texture 0 separately.
+
+GX projects the original sun position and applies the original edge
+attenuation and visibility fade. The occlusion ray checks map geometry
+within the rendered world. Place the original JPEGs in the loose
+`data/Lensflare/` directory beside the client executable.
+
 ### Skill catalog cleanup
 
 `cmd/skillpatch` (`sdata.NormalizeSkillCatalog`) rewrites `Character/Skill.SData` without reserializing untouched bytes and server migration 7 applies the same decisions to the skill definitions. Dead levels (placeholders such as "Hell LordED" / "Not Available.") of skills that have working levels become empty slots; the chain mechanic is not used, so chain wording leaves the descriptions and the previous-skill word (record offset 52) of chain skills is cleared; Mana Shot and Stamina Shot lose their "enemy players only" sentence; Aggravation loses its time damage (int32 at offset 75); detail 25 becomes detail 21. The output is plain EP5, which the loader accepts. Back up the original catalog before installing the result.

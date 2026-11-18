@@ -59,3 +59,15 @@ func TestSpellRayClearsLowObjectsButPreservesTallSolids(t *testing.T) {
 		}
 	}
 }
+
+func TestSegmentVisibleUsesCameraHeight(t *testing.T) {
+	g := &Geometry{}
+	g.Reindex()
+	for _, triangle := range collision.BlockerBox(collision.Vec{4, 0, -2}, collision.Vec{5, 1, 2}, 0) {
+		g.Add(triangle)
+	}
+	start, end := Position{0, .5, 0}, Position{10, .5, 0}
+	if g.SegmentVisible(start, end) || !g.LineOfSight(start, end) {
+		t.Fatal("camera ray should hit the obstacle below the raised spell ray")
+	}
+}

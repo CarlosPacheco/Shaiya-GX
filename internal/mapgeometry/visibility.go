@@ -8,17 +8,23 @@ import (
 // LineOfSight tests actor centers through authored solids, dynamic geometry and
 // native terrain fans. It is independent of rendering, LOD and navmesh floors.
 func (g *Geometry) LineOfSight(start, end Position) bool {
-	for i := range start {
-		if math.IsNaN(float64(start[i])) || math.IsInf(float64(start[i]), 0) || math.IsNaN(float64(end[i])) || math.IsInf(float64(end[i]), 0) {
-			return false
-		}
-	}
-	a, b := cv(start), cv(end)
-	// Native 00438010 adds 0.5 to logical actor origins; those are
-	// 0.9 above the feet coordinates used by GX (006bc868).
+	// Native 00438010 adds 0.5 to the actor origin, 0.9 above GX feet.
 	const rayHeight = .9 + .5
+	a, b := cv(start), cv(end)
 	a[1] += rayHeight
 	b[1] += rayHeight
+	return g.segmentVisible(a, b)
+}
+
+// SegmentVisible checks exact world coordinates against map solids and terrain.
+func (g *Geometry) SegmentVisible(start, end Position) bool {
+	return g.segmentVisible(cv(start), cv(end))
+}
+
+func (g *Geometry) segmentVisible(a, b collision.Vec) bool {
+	if !a.Finite() || !b.Finite() {
+		return false
+	}
 	direction := b.Sub(a)
 	visible := true
 	bounds := collision.Box{}

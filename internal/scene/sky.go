@@ -4,8 +4,18 @@ import (
 	"strings"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
+
+// SkyVisible checks the portion of the sky ray within the rendered world.
+func (w *World) SkyVisible(eye, target render.V3, distance float32) bool {
+	ray := target.Sub(eye)
+	if length := ray.Len(); length > distance {
+		target = eye.Add(ray.Scale(distance / length))
+	}
+	return w.physics == nil || w.physics.SegmentVisible(mapgeometry.Position(eye), mapgeometry.Position(target))
+}
 
 // Sky is the field sky (0x54c8a0 / 0x54c9b0 / 0x54dd00): the data/sky/sky.3do
 // dome with the map's gradient texture and two cloud planes.

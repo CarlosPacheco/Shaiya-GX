@@ -38,6 +38,7 @@ type worldView struct {
 	waterReflection             *render.WaterTarget
 	waterWidth, waterHeight     int
 	waterFailed                 bool
+	sunFlare                    sunFlare
 	mapView                     mapView
 	mobClick                    mobClick
 	portrait                    *render.Texture
@@ -776,6 +777,7 @@ func (a *App) drawWorldView(w, h int) {
 	s.WaterReflection = nil
 	s.WaterBelow = false
 	s.End()
+	v.sunFlare.update(v.world, eye, s.View, s.SkyProj, far, float32(a.frameDT))
 	a.drawCollisionView()
 }
 

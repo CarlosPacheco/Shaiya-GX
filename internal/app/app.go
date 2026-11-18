@@ -625,6 +625,9 @@ func (a *App) drawFrame(w, h int) {
 		}
 	}
 	a.sprites.Begin(w, h)
+	if a.screen == screenWorld {
+		a.drawSunFlare(w, h)
+	}
 	switch a.screen {
 	case screenLogin:
 		a.login.Draw(a.sprites, a.font, w, h)
