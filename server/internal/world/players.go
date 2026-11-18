@@ -95,6 +95,7 @@ type ConnectedPlayer struct {
 
 	guild    playerGuildState // guarded by guildMu
 	soulKill bool
+	reveal   bool // an enemy's Detection found this user: stealth ends
 
 	hidden      atomic.Bool
 	immune      atomic.Bool

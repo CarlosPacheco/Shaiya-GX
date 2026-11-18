@@ -705,7 +705,7 @@ Declarations: [packet.CharacterActiveBuffs](../../server/internal/packet/packet.
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterActiveBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L91)
+**S→C serializers:** [buildCharacterActiveBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L94)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L636)
 
@@ -715,7 +715,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterActiveBuffs — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L91)
+[Source definition](../../server/internal/world/skillcast.go#L94)
 
 ```go
 func buildCharacterActiveBuffs(buffs []ActiveBuff) []byte {
