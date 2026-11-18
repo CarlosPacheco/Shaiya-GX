@@ -58,7 +58,7 @@ def main():
         if limits is not None and current!=limits:raise ValueError('target item definitions differ')
         limits=current
     output=io.StringIO(newline='');w=csv.writer(output,lineterminator='\n');w.writerow(['item_id','max_stack']);w.writerows(limits)
-    for target in (args.database[0].parent/'item-stack-limits.csv',args.client_data/'item-stack-limits.csv'):target.write_text(output.getvalue())
+    (args.client_data/'item-stack-limits.csv').write_text(output.getvalue())
     print(f'Updated {len(patches)} forge definitions in {len(args.database)} databases; no character rows edited')
 
 if __name__=='__main__':main()

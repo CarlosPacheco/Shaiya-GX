@@ -311,9 +311,6 @@ def synchronize(source, databases, backup_dir=None, apply=False, reference=None)
         manifest = path.with_suffix('.manifest.json')
         if manifest.exists():
             (backup_dir / f'database-{n}.manifest.json').write_bytes(manifest.read_bytes())
-        stack = path.parent / 'item-stack-limits.csv'
-        if stack.exists():
-            (backup_dir / f'database-{n}.item-stack-limits.csv').write_bytes(stack.read_bytes())
     for n, path in enumerate(databases):
         with closing(sqlite3.connect(path)) as db:
             db.execute('BEGIN IMMEDIATE')
@@ -331,15 +328,7 @@ def synchronize(source, databases, backup_dir=None, apply=False, reference=None)
             report['databases'][n]['other_tables_unchanged'] = True
             report['databases'][n]['other_tables'] = before
             report['databases'][n]['remaining_changes'] = plan(db, rows)['updated'] + plan(db, rows)['added']
-            limits = db.execute(f'SELECT ItemID,CASE WHEN Count>1 THEN 255 ELSE 1 END FROM {TABLE} ORDER BY ItemID').fetchall()
         update_manifest(path)
-        output = io.StringIO(newline='')
-        writer = csv.writer(output, lineterminator='\n')
-        writer.writerow(['item_id', 'max_stack'])
-        writer.writerows(limits)
-        # Seed-side exports only; a runtime directory has no client CSV.
-        if (path.parent / 'item-stack-limits.csv').exists():
-            atomic_write(path.parent / 'item-stack-limits.csv', output.getvalue().encode())
     if source.read_bytes() != raw:
         raise ValueError('Client definitions changed during synchronization')
     if patched != raw:

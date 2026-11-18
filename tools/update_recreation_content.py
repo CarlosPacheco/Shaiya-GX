@@ -228,7 +228,7 @@ def main():
     for target,content in ((item,patched_items),(cash,patched_cash)):
         staged=target.with_suffix('.gx-new');staged.write_bytes(content);os.replace(staged,target)
     output=io.StringIO();writer=csv.writer(output,lineterminator='\n');writer.writerow(['item_id','max_stack']);writer.writerows(limits)
-    for target in [args.client_data/'item-stack-limits.csv']+[path.parent/'item-stack-limits.csv' for path in args.database]:target.write_text(output.getvalue())
+    (args.client_data/'item-stack-limits.csv').write_text(output.getvalue())
     print(json.dumps({'runes':runes(),'products':len(products),'databases':[str(p) for p in args.database]},indent=2))
 
 if __name__=='__main__':main()

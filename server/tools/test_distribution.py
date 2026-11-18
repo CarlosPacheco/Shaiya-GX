@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 from snapshot_sqlite import snapshot
-from package import check_navigation
+from package import GAME_DATA, check_navigation, copy_runtime_data
 
 
 class SnapshotTests(unittest.TestCase):
@@ -74,6 +74,25 @@ class NavigationDistributionTests(unittest.TestCase):
             (directory / "3.gxcol").unlink()
             with self.assertRaises(FileNotFoundError):
                 check_navigation(root)
+
+
+class PackageDataTests(unittest.TestCase):
+    def test_stages_only_runtime_data(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "data"
+            target = Path(temporary) / "staged"
+            expected = {"rapture.sqlite", "rapture.manifest.json", "maps/1.svmap",
+                        "geometry/catalog.json", "geometry/1.gxnav", "geometry/1.gxcol",
+                        "geometry/1.gxphysics", "geometry/1.manifest.json", "game/README.txt"}
+            expected.update("game/" + name for name in GAME_DATA)
+            residues = {"game/Map/1.svmap", "game/MapWar.ini", "item-stack-limits.csv",
+                        "rapture.sqlite-wal", "maps/old.svmap", "geometry/9.gxnav"}
+            for name in expected | residues:
+                path = source / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('{"maps":[1]}' if name == "geometry/catalog.json" else name)
+            copy_runtime_data(source, target)
+            self.assertEqual({p.relative_to(target).as_posix() for p in target.rglob("*") if p.is_file()}, expected)
 
 
 if __name__ == "__main__":

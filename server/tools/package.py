@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import platform as host_platform
+import re
 import sys
 from pathlib import Path
 import shutil
@@ -19,6 +20,9 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PROGRAMS = ("gx_login", "gx_world", "gx_console")
+GAME_DATA = ("Map.ini", "NpcQuest.SData", "KillStatus.SData", "GuildHouse.ini",
+             "SequenceItemCreate.ini", "kr_string.DB", "Obelisk.ini")
+GEOMETRY_EXTENSIONS = ("gxnav", "gxcol", "gxphysics", "manifest.json")
 
 
 def checksum(path):
@@ -59,7 +63,7 @@ def check_seed(root):
                 raise ValueError("SQLite seed row-count mismatch: " + table)
     if not list((root / "data/maps").glob("*.svmap")):
         raise ValueError("server maps are missing")
-    for name in ("Map.ini", "NpcQuest.SData", "KillStatus.SData", "GuildHouse.ini", "SequenceItemCreate.ini", "kr_string.DB"):
+    for name in GAME_DATA:
         if not (root / "data/game" / name).is_file():
             raise ValueError("required server data is missing: " + name)
 
@@ -183,6 +187,31 @@ def verify_controller(package, temporary, environment, ports):
             other.wait(timeout=10)
 
 
+def copy_runtime_data(source, target):
+    """Stage server inputs explicitly, keeping workstation exports out of archives."""
+    target.mkdir()
+    for name in ("rapture.sqlite", "rapture.manifest.json"):
+        shutil.copy2(source / name, target / name)
+    (target / "game").mkdir()
+    for name in (*GAME_DATA, "README.txt"):
+        shutil.copy2(source / "game" / name, target / "game" / name)
+    (target / "maps").mkdir()
+    for path in (source / "maps").iterdir():
+        if path.is_file() and (path.name == "README.txt" or
+                               re.fullmatch(r"[0-9]+\.svmap", path.name, re.IGNORECASE)):
+            shutil.copy2(path, target / "maps" / path.name)
+    geometry = source / "geometry"
+    (target / "geometry").mkdir()
+    catalog = json.loads((geometry / "catalog.json").read_text())
+    shutil.copy2(geometry / "catalog.json", target / "geometry" / "catalog.json")
+    for map_id in catalog["maps"]:
+        if type(map_id) is not int or not 0 <= map_id <= 65535:
+            raise ValueError("invalid map ID in server navigation catalog")
+        for extension in GEOMETRY_EXTENSIONS:
+            name = f"{map_id}.{extension}"
+            shutil.copy2(geometry / name, target / "geometry" / name)
+
+
 def build_package(platform, output, go):
     system, architecture = platform.split("-", 1)
     suffix = ".exe" if system == "windows" else ""
@@ -194,7 +223,7 @@ def build_package(platform, output, go):
         for program in PROGRAMS:
             subprocess.run([go, "build", "-trimpath", "-ldflags=-s -w", "-o", str(root / "build" / (program + suffix)),
                             "./cmd/" + program], cwd=ROOT, env=environment, check=True)
-        shutil.copytree(ROOT / "data", root / "data", ignore=shutil.ignore_patterns("vssver.scc", "__pycache__", "*.sqlite-wal", "*.sqlite-shm"))
+        copy_runtime_data(ROOT / "data", root / "data")
         # Editable policies accompany the same embedded default catalog.
         ai = root / "ai"
         ai.mkdir()

@@ -189,7 +189,6 @@ def main():
     writer.writerow(['item_id','max_stack'])
     writer.writerows((i, max(n,1)) for i,n in sorted(limits.items()))
     targets = [(item_path, patched_items), (cash_path, patched_cash), (args.client_data/'item-stack-limits.csv', out.getvalue().encode())]
-    targets += [(path.parent/'item-stack-limits.csv', out.getvalue().encode()) for path in args.database]
     for path, raw in targets:
         staged = path.with_suffix(path.suffix+'.gx-new')
         staged.write_bytes(raw); os.replace(staged, path)

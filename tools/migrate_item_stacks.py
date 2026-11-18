@@ -42,7 +42,6 @@ def migrate(databases, catalog, client_data):
     writer.writerow(['item_id','max_stack'])
     writer.writerows(sorted(limits.items()))
     data=output.getvalue()
-    catalog.with_name('item-stack-limits.csv').write_text(data)
     (client_data/'item-stack-limits.csv').write_text(data)
     with catalog.open(newline='') as f:
         rows=list(csv.reader(f))

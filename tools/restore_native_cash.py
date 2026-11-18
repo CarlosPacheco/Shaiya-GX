@@ -116,8 +116,7 @@ def main():
     temporary.write_bytes(raw); temporary.replace(target)
     out=io.StringIO(newline='')
     writer=csv.writer(out,lineterminator='\n');writer.writerow(['item_id','max_stack']);writer.writerows(limits)
-    for target in [args.client_data/'item-stack-limits.csv',args.database[0].parent/'item-stack-limits.csv']:
-        target.write_text(out.getvalue())
+    (args.client_data/'item-stack-limits.csv').write_text(out.getvalue())
     report['cash_sha256']=hashlib.sha256(raw).hexdigest()
     args.report.write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report))

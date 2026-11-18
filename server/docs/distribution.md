@@ -22,6 +22,11 @@ Output:
 
 Binaries are attached to GX releases, rather than committed into source history. Tagged release automation reproduces the packages on native runners. Archive manifests list every included file's SHA-256. Packaging validates seed integrity, manifest and table counts; it does not silently refresh the seed from personal runtime state.
 
+The package stages the SQLite seed and its manifest, the server game inputs,
+numbered maps in `data/maps/`, and geometry listed in its catalog. Server
+item definitions and stack limits come from SQLite. The stack-limit CSV is
+generated for the client data folder.
+
 ## Run a package
 
 Keep the directory structure intact in a writable folder. Open `build/gx_console[.exe]` in a terminal or use the `Start GX Server` launcher. Enter `start server` / `shutdown server`. Closing the console leaves servers running. First start copies the seed to `runtime/rapture.sqlite`; existing runtimes are preserved.

@@ -14,7 +14,7 @@ The controller checks executable paths, including on Windows, so stopping one in
 
 - Distributed seed: `data/rapture.sqlite`; accompanying hash/table counts: `data/rapture.manifest.json`.
 - Mutable state: `runtime/rapture.sqlite`. Created from the seed only when absent.
-- Login/world handoff keys: `runtime/sessions/`.
+- Login/world handoff keys: the SQLite `GX_SessionHandoff` table.
 - Local overrides: `.local/runtime.env` (KEY=VALUE, not committed).
 - Logs: `logs/gx_login.log`, `logs/gx_world.log`.
 

@@ -30,4 +30,6 @@ class StackMigrationTests(unittest.TestCase):
                 row=list(csv.reader(f))[1]
             self.assertEqual((row[8],row[10]),('255','1'))
             self.assertEqual(catalog.read_bytes(),(client/'cash.csv').read_bytes())
-            self.assertEqual((root/'item-stack-limits.csv').read_bytes(),(client/'item-stack-limits.csv').read_bytes())
+            self.assertFalse((root/'item-stack-limits.csv').exists())
+            self.assertEqual((client/'item-stack-limits.csv').read_text(),
+                             'item_id,max_stack\n1001,1\n25001,255\n')
