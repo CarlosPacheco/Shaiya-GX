@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"image/draw"
@@ -16,11 +17,12 @@ import (
 )
 
 type assets struct {
-	root    string
-	items   map[sdata.ItemKey]*sdata.Item
-	ids     []uint32
-	atlases map[string]image.Image
-	warning string
+	storeIcons map[uint32]image.Image
+	root       string
+	items      map[sdata.ItemKey]*sdata.Item
+	ids        []uint32
+	atlases    map[string]image.Image
+	warning    string
 }
 
 func loadAssets(root string) *assets {
@@ -70,6 +72,45 @@ func (a *assets) productIcon(p cash.Product) image.Image {
 		return a.crop(file, uv)
 	}
 	return nil
+}
+
+func (a *assets) usableStoreIcon(id uint32) image.Image {
+	if a.storeIcons == nil {
+		a.storeIcons = make(map[uint32]image.Image)
+		for _, base := range []uint32{1, 1001} {
+			tiles := make([]*image.NRGBA, 256)
+			for i := range tiles {
+				tiles[i], _ = a.productIcon(cash.Product{Icon: base + uint32(i)}).(*image.NRGBA)
+			}
+			last := tiles[len(tiles)-1]
+			end := len(tiles)
+			// The stock atlas pads unused trailing cells with the same
+			// opaque empty-slot artwork. Keep isolated duplicate icons.
+			if last != nil {
+				for end > 0 && tiles[end-1] != nil && bytes.Equal(tiles[end-1].Pix, last.Pix) {
+					end--
+				}
+				if len(tiles)-end < 8 {
+					end = len(tiles)
+				}
+			}
+			for i, tile := range tiles[:end] {
+				if tile != nil && hasVisiblePixels(tile) {
+					a.storeIcons[base+uint32(i)] = tile
+				}
+			}
+		}
+	}
+	return a.storeIcons[id]
+}
+
+func hasVisiblePixels(tile *image.NRGBA) bool {
+	for i := 3; i < len(tile.Pix); i += 4 {
+		if tile.Pix[i] != 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *assets) itemIcon(id uint32) image.Image {

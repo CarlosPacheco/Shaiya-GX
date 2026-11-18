@@ -71,13 +71,16 @@ func (e *editor) catalog() {
 	search := widget.NewEntry()
 	search.SetPlaceHolder("Search products by name or code")
 	search.SetText(e.cashQuery)
-	sections := []catalogSection{{name: "All products", count: len(e.draft)}}
+	if e.cashSection < 1 || e.cashSection >= len(categories) {
+		e.cashSection = 1
+	}
+	sections := make([]catalogSection, 0, len(categories)-1)
 	for _, name := range categories[1:] {
 		sections = append(sections, catalogSection{name: name})
 	}
 	for _, product := range e.draft {
 		if product.Bag > 0 && product.Bag < uint32(len(categories)) {
-			sections[product.Bag].count++
+			sections[product.Bag-1].count++
 		}
 	}
 	selected := -1
@@ -98,20 +101,29 @@ func (e *editor) catalog() {
 	})
 	add := widget.NewButtonWithIcon("New product", theme.ContentAddIcon(), func() {
 		if !e.busy && requireApplied() {
-			e.editProduct(cash.Product{Index: e.nextIndex(), Bag: 1}, func(p cash.Product) {
+			e.editProduct(cash.Product{Index: e.nextIndex(), Bag: uint32(e.cashSection)}, func(p cash.Product) {
 				e.draft = append(e.draft, p)
-				e.cashQuery, e.cashCode, e.cashSection = "", p.Code, 0
+				e.cashQuery, e.cashCode, e.cashSection = "", p.Code, int(p.Bag)
 				e.catalog()
 			})
 		}
 	})
+	neighbor := func(index, delta int) int {
+		for candidate := index + delta; candidate >= 0 && candidate < len(e.draft); candidate += delta {
+			if e.draft[candidate].Bag == e.draft[index].Bag {
+				return candidate
+			}
+		}
+		return -1
+	}
 	move := func(delta int) {
-		target := selected + delta
-		if e.busy || selected < 0 || target < 0 || target >= len(e.draft) || !requireApplied() {
+		if e.busy || selected < 0 || !requireApplied() {
 			return
 		}
-		e.draft[selected], e.draft[target] = e.draft[target], e.draft[selected]
-		e.catalog()
+		if target := neighbor(selected, delta); target >= 0 {
+			e.draft[selected], e.draft[target] = e.draft[target], e.draft[selected]
+			e.catalog()
+		}
 	}
 	up := widget.NewButtonWithIcon("Move up", theme.MoveUpIcon(), func() { move(-1) })
 	down := widget.NewButtonWithIcon("Move down", theme.MoveDownIcon(), func() { move(1) })
@@ -166,7 +178,7 @@ func (e *editor) catalog() {
 		form, pending := e.productForm(p, func(p cash.Product) {
 			e.draft[index] = p
 			e.cashCode = p.Code
-			if e.cashSection != 0 && p.Bag != uint32(e.cashSection) {
+			if p.Bag != uint32(e.cashSection) {
 				e.cashSection = int(p.Bag)
 			}
 			e.catalog()
@@ -176,12 +188,12 @@ func (e *editor) catalog() {
 		inspector.Refresh()
 		if !e.project.Encrypted {
 			remove.Enable()
-			if selected > 0 {
+			if neighbor(selected, -1) >= 0 {
 				up.Enable()
 			} else {
 				up.Disable()
 			}
-			if selected < len(e.draft)-1 {
+			if neighbor(selected, 1) >= 0 {
 				down.Enable()
 			} else {
 				down.Disable()
@@ -227,7 +239,7 @@ func (e *editor) catalog() {
 		e.cashQuery = search.Text
 		visible = visible[:0]
 		for i, product := range e.draft {
-			if (section <= 0 || product.Bag == uint32(section)) &&
+			if product.Bag == uint32(section) &&
 				(includes(product.Name, query) || includes(product.Code, query)) {
 				visible = append(visible, i)
 			}
@@ -248,8 +260,8 @@ func (e *editor) catalog() {
 	split := container.NewHSplit(left, details)
 	split.SetOffset(.51)
 	toolbar := container.NewHBox(close, e.switcher(studio.Cash), add, review, save)
-	e.window.SetContent(container.NewPadded(container.NewBorder(container.NewVBox(toolbar, paths), e.status, nil, nil, sectionBrowser("Sections", "Cash.Bag", sections, e.cashSection, func(section int) {
-		e.cashSection = section
+	e.window.SetContent(container.NewPadded(container.NewBorder(container.NewVBox(toolbar, paths), e.status, nil, nil, sectionBrowser("Sections", "Cash.Bag", sections, e.cashSection-1, func(section int) {
+		e.cashSection = section + 1
 		refresh()
 	}, split))))
 }

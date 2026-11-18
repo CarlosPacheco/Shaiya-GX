@@ -44,7 +44,8 @@ Keep the executable in a writable folder for the local backups and recovery jour
    that becomes stale after editing.
 2. Choose a catalog. Item Mall shows Popular, Essentials, Buffs and Packages in the sidebar.
    Select a product to edit its fields in the right pane. Click the icon to open
-   its picker, and use the searchable item picker for all 24 bundle slots.
+   its picker of populated client atlas tiles. The Slots tab lists all 24 slots
+   in order for direct ID and quantity edits and includes a searchable item picker.
    Apply edits to the draft before saving both catalogs. The differences view shows how the draft
    compares with SQLite and can import a selected SQLite product's fields. A
    product code edit removes the old SQLite key and adds the new one.
