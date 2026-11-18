@@ -46,7 +46,8 @@ Keep the executable in a writable folder for the local backups and recovery jour
    picker for all 24 bundle slots. The differences view shows how the draft
    compares with SQLite and can import a selected SQLite product's fields. A
    product code edit removes the old SQLite key and adds the new one.
-3. Items and skills edit existing definitions. IDs, item families and skill
+3. The left pane groups Items by the native `Type` and skills by `TypeEffect`.
+   Items and skills edit existing definitions. IDs, item families and skill
    ranks are fixed. Shared fields are enabled only for records with a unique
    SQLite counterpart. Appearance and description can be edited on the client
    side independently. Each definition save updates only the explicitly edited

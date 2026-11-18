@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"image"
+	"image/color"
 	"slices"
 	"strings"
 
@@ -21,7 +22,7 @@ var categories = []string{"Hidden", "Popular", "Essentials", "Buffs", "Packages"
 var blankIcon = image.NewNRGBA(image.Rect(0, 0, 1, 1))
 
 func small(text string) *canvas.Text {
-	label := canvas.NewText(text, theme.Color(theme.ColorNameDisabled))
+	label := canvas.NewText(text, color.NRGBA{R: 83, G: 96, B: 111, A: 255})
 	label.TextSize = theme.TextSize() * .8
 	return label
 }
@@ -61,8 +62,15 @@ func (e *editor) catalog() {
 	search := widget.NewEntry()
 	search.SetPlaceHolder("Search products by name or code")
 	search.SetText(e.cashQuery)
-	filter := widget.NewSelect(append([]string{"All sections"}, categories...), nil)
-	filter.SetSelectedIndex(e.cashSection)
+	sections := []catalogSection{{name: "All products", count: len(e.draft)}}
+	for _, name := range categories {
+		sections = append(sections, catalogSection{name: name})
+	}
+	for _, product := range e.draft {
+		if product.Bag < uint32(len(categories)) {
+			sections[product.Bag+1].count++
+		}
+	}
 	icon := newIcon(48)
 	selected := -1
 	var visible []int
@@ -132,16 +140,25 @@ func (e *editor) catalog() {
 	}
 	close := widget.NewButton("Open another installation", func() { e.leave(e.start) })
 
-	list = widget.NewList(func() int { return len(visible) }, func() fyne.CanvasObject {
-		name := widget.NewLabel("")
+	rowLayout := func(title, code, points string, thumbnail fyne.CanvasObject) fyne.CanvasObject {
+		name := widget.NewLabel(title)
 		name.Truncation = fyne.TextTruncateEllipsis
-		return container.NewBorder(nil, nil, newIcon(32), widget.NewLabel(""), name)
+		columns := container.NewHBox(
+			container.NewGridWrap(fyne.NewSize(125, 28), widget.NewLabel(code)),
+			container.NewGridWrap(fyne.NewSize(70, 28), widget.NewLabelWithStyle(points, fyne.TextAlignTrailing, fyne.TextStyle{})),
+		)
+		return container.NewBorder(nil, nil, thumbnail, columns, name)
+	}
+	list = widget.NewList(func() int { return len(visible) }, func() fyne.CanvasObject {
+		return rowLayout("", "", "", newIcon(24))
 	}, func(row widget.ListItemID, object fyne.CanvasObject) {
 		product := e.draft[visible[row]]
 		children := object.(*fyne.Container).Objects
-		children[0].(*widget.Label).SetText(product.Name + "  ·  " + product.Code)
+		children[0].(*widget.Label).SetText(product.Name)
 		showIcon(children[1].(*canvas.Image), e.assets.productIcon(product))
-		children[2].(*widget.Label).SetText(fmt.Sprintf("%s  ·  %d", category(product.Bag), product.Cost))
+		columns := children[2].(*fyne.Container).Objects
+		columns[0].(*fyne.Container).Objects[0].(*widget.Label).SetText(product.Code)
+		columns[1].(*fyne.Container).Objects[0].(*widget.Label).SetText(fmt.Sprint(product.Cost))
 	})
 	list.OnSelected = func(id widget.ListItemID) {
 		selected = visible[id]
@@ -178,8 +195,8 @@ func (e *editor) catalog() {
 		info.SetText("Select a product to see its details.")
 		showIcon(icon, nil)
 		query := strings.ToLower(strings.TrimSpace(search.Text))
-		section := filter.SelectedIndex()
-		e.cashQuery, e.cashSection = search.Text, max(section, 0)
+		section := e.cashSection
+		e.cashQuery = search.Text
 		visible = visible[:0]
 		for i, product := range e.draft {
 			if (section <= 0 || product.Bag == uint32(section-1)) &&
@@ -196,14 +213,17 @@ func (e *editor) catalog() {
 		}
 	}
 	search.OnChanged = func(string) { refresh() }
-	filter.OnChanged = func(string) { refresh() }
 	refresh()
 	details := container.NewBorder(container.NewVBox(container.NewHBox(icon, edit, remove), container.NewHBox(up, down)), nil, nil, nil, container.NewVScroll(info))
-	left := container.NewBorder(container.NewBorder(nil, nil, nil, filter, search), nil, nil, nil, list)
+	header := rowLayout("Product", "Code", "Points", newIcon(24))
+	left := container.NewBorder(container.NewVBox(search, header, widget.NewSeparator()), nil, nil, nil, list)
 	split := container.NewHSplit(left, details)
-	split.SetOffset(.58)
+	split.SetOffset(.65)
 	toolbar := container.NewHBox(close, e.switcher(studio.Cash), add, review, save)
-	e.window.SetContent(container.NewPadded(container.NewBorder(container.NewVBox(toolbar, paths), e.status, nil, nil, split)))
+	e.window.SetContent(container.NewPadded(container.NewBorder(container.NewVBox(toolbar, paths), e.status, nil, nil, sectionBrowser("Sections", "Cash.Bag", sections, e.cashSection, func(section int) {
+		e.cashSection = section
+		refresh()
+	}, split))))
 }
 
 func (e *editor) summary(p cash.Product) string {

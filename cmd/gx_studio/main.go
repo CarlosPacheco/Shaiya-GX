@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"image/color"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,6 +19,12 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 	"github.com/Spelunkern/Shaiya-GX/internal/studio"
 )
+
+type studioTheme struct{ fyne.Theme }
+
+func (t studioTheme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) color.Color {
+	return t.Theme.Color(name, theme.VariantLight)
+}
 
 type editor struct {
 	window              fyne.Window
@@ -45,6 +52,7 @@ func main() {
 		log.Fatal(err)
 	}
 	instance := app.NewWithID("com.shaiyagx.studio")
+	instance.Settings().SetTheme(studioTheme{Theme: theme.DefaultTheme()})
 	window := instance.NewWindow("GX Studio")
 	e := &editor{window: window, root: filepath.Dir(executable)}
 	window.Resize(fyne.NewSize(1120, 760))

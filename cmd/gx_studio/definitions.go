@@ -18,11 +18,28 @@ import (
 )
 
 func (e *editor) definitionCatalog() {
+	e.showDefinitionSection(-1, "", false, -1)
+}
+
+func (e *editor) showDefinitionSection(sectionKey int, queryText string, linkedOnly bool, focus int) {
 	catalog := e.definitions
 	e.status = wrapped("")
 	search := widget.NewEntry()
 	search.SetPlaceHolder("Search by name or ID")
+	search.SetText(queryText)
 	paired := widget.NewCheck("Linked SQLite rows only", nil)
+	paired.SetChecked(linkedOnly)
+	sections, sectionRows, group := definitionSections(catalog, e.definitionDraft)
+	if sectionKey != -1 {
+		if _, exists := sectionRows[sectionKey]; !exists {
+			sectionKey = -1
+		}
+	}
+	keys := make([]int, len(sections))
+	keys[0] = -1
+	for key, row := range sectionRows {
+		keys[row] = key
+	}
 	var visible []int
 	selected := -1
 	details := wrapped("Select a definition to inspect its fields.")
@@ -113,9 +130,7 @@ func (e *editor) definitionCatalog() {
 			} else {
 				e.definitionDraft[index] = values
 			}
-			updateDraft()
-			list.Refresh()
-			showDetails(index)
+			e.showDefinitionSection(sectionKey, search.Text, paired.Checked, index)
 		})
 	}
 	filter := func() {
@@ -127,7 +142,7 @@ func (e *editor) definitionCatalog() {
 		query := strings.ToLower(strings.TrimSpace(search.Text))
 		visible = visible[:0]
 		for index, r := range catalog.Records {
-			if (!paired.Checked || r.DatabaseRow) && includes(label(index), query) {
+			if (sectionKey == -1 || group[index] == sectionKey) && (!paired.Checked || r.DatabaseRow) && includes(label(index), query) {
 				visible = append(visible, index)
 			}
 		}
@@ -136,12 +151,18 @@ func (e *editor) definitionCatalog() {
 	search.OnChanged = func(string) { filter() }
 	paired.OnChanged = func(bool) { filter() }
 	filter()
+	for row, index := range visible {
+		if index == focus {
+			list.Select(row)
+			break
+		}
+	}
 	updateDraft()
 
 	left := container.NewBorder(container.NewBorder(nil, nil, nil, paired, search), nil, nil, nil, list)
 	right := container.NewBorder(container.NewHBox(preview, edit), nil, nil, nil, container.NewVScroll(details))
 	split := container.NewHSplit(left, right)
-	split.SetOffset(.61)
+	split.SetOffset(.66)
 	top := container.NewVBox(container.NewHBox(
 		widget.NewButton("Open another installation", func() { e.leave(e.start) }),
 		e.switcher(catalog.Kind), save, draft),
@@ -149,7 +170,15 @@ func (e *editor) definitionCatalog() {
 	if catalog.Encrypted {
 		top.Add(small("SEED encrypted  ·  Encoding preserved on save"))
 	}
-	e.window.SetContent(container.NewPadded(container.NewBorder(top, e.status, nil, nil, split)))
+	title, source := "Effect types", "SData.TypeEffect"
+	if catalog.Kind == studio.Items {
+		title, source = "Item types", "SData.Type"
+	}
+	e.window.SetContent(container.NewPadded(container.NewBorder(top, e.status, nil, nil,
+		sectionBrowser(title, source, sections, sectionRows[sectionKey], func(row int) {
+			sectionKey = keys[row]
+			filter()
+		}, split))))
 }
 
 func (e *editor) definitionIcon(kind studio.Kind, id, icon uint32) image.Image {
