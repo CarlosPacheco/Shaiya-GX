@@ -938,7 +938,7 @@ Declarations: [packet.SkillKeep](../../server/internal/packet/packet.go#L118), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applyFixedHit (server/internal/world/firethorn.go)](../../server/internal/world/firethorn.go#L86), [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L252), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L381)
+**S→C serializers:** [applyFixedHit (server/internal/world/firethorn.go)](../../server/internal/world/firethorn.go#L94), [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L252), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L381)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L836)
 
@@ -948,7 +948,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>applyFixedHit — server/internal/world/firethorn.go</summary>
 
-[Source definition](../../server/internal/world/firethorn.go#L86)
+[Source definition](../../server/internal/world/firethorn.go#L94)
 
 ```go
 func (s *Session) applyFixedHit(h pendingUserHit) bool {

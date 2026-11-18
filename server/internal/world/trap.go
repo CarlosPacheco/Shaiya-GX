@@ -1,6 +1,7 @@
 package world
 
 import (
+	"math"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -206,9 +207,15 @@ func (s *Session) applyTrapHit(h pendingUserHit) bool {
 // on the ground plane. The original area loops (UpdateTrab, TauntMob) use the
 // distance in X and Z only, so a slope, a mob's height or a wall between them
 // never narrows a fire's or a trap's reach.
-func (s *Session) mobsNear(x, z, r float32) []uint32 {
+//
+// An optional height (y, reach) also keeps only the mobs within reach of it
+// vertically.
+func (s *Session) mobsNear(x, z, r float32, height ...float32) []uint32 {
 	var out []uint32
 	for _, m := range EntitiesOnMap(s.char.MapID).Mobs {
+		if len(height) == 2 && float32(math.Abs(float64(m.PosY-height[0]))) > height[1] {
+			continue
+		}
 		if m.CurrentHP > 0 && DistanceXZ(x, z, m.PosX, m.PosZ) <= r {
 			out = append(out, m.ID)
 		}

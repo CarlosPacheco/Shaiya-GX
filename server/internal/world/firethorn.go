@@ -1,6 +1,7 @@
 package world
 
 import (
+	"math"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -10,6 +11,10 @@ import (
 const (
 	detailFireThorn = 84              // buff: thorns around the caster
 	fireThornTick   = 2 * time.Second // the pulse interval
+	// pulseHeightReach is how far above or below the pulse's centre a target may
+	// stand and still burn: the height counts, but leniently (slopes and steps
+	// must not narrow the ground reach).
+	pulseHeightReach = 4
 )
 
 func isFireThorn(b *ActiveBuff) bool {
@@ -57,7 +62,7 @@ func (s *Session) fixedDamagePulse(def *db.SkillDef, x, y, z float32) {
 	radius := float32(def.ApplyRange)
 	damage := uint32(def.DamageHP)
 	stats := s.stats()
-	for _, id := range s.mobsNear(x, z, radius) {
+	for _, id := range s.mobsNear(x, z, radius, y, pulseHeightReach) {
 		mob, ok := MobByID(ch.MapID, id)
 		md := db.MustDefs().Mobs[mob.MobID]
 		if !ok || md == nil || mobFriendly(md, s.faction) {
@@ -75,6 +80,9 @@ func (s *Session) fixedDamagePulse(def *db.SkillDef, x, y, z float32) {
 		s.resolveMobDamage(&r)
 	}
 	for _, p := range s.hostileUsersWithin(x, z, radius) {
+		if c := p.Snapshot(); math.Abs(float64(c.PosY-y)) > pulseHeightReach {
+			continue
+		}
 		s.lastCombatAt = time.Now()
 		p.QueueUserHit(pendingUserHit{AttackerID: ch.ID, Fixed: true, Damage: [3]uint32{damage}, Skill: def})
 	}

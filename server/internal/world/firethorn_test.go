@@ -94,24 +94,30 @@ func TestFireThornHurtsHostileUsersIgnoringStats(t *testing.T) {
 	}
 }
 
-// The reach is measured on the ground plane, like the original area loops: a
-// mob standing higher than the caster is hit as long as it is within range.
-func TestFireThornReachIgnoresHeightDifference(t *testing.T) {
+// The reach is measured on the ground plane and the height counts leniently:
+// a mob on a slope or a step is hit, one far above or below is not.
+func TestFireThornReachChecksHeightLeniently(t *testing.T) {
 	s, defs := lapisSession(t)
 	id, _ := lapisMob(t, s, defs)
 	m, _ := MobByID(s.char.MapID, id)
-	s.char.PosX, s.char.PosY, s.char.PosZ = m.PosX+1.5, m.PosY-3, m.PosZ // 1.5 away on the ground, 3 below
 	def := defs.Skill(47, 3)
-	before, _ := MobByID(s.char.MapID, id)
-	s.fixedDamagePulse(def, s.char.PosX, s.char.PosY, s.char.PosZ)
-	after, _ := MobByID(s.char.MapID, id)
-	if before.CurrentHP-after.CurrentHP != 65 {
-		t.Fatalf("the mob lost %d, want the fixed 65", before.CurrentHP-after.CurrentHP)
+	pulse := func(dy float32, dx float32) uint32 {
+		s.char.PosX, s.char.PosY, s.char.PosZ = m.PosX+dx, m.PosY+dy, m.PosZ
+		before, _ := MobByID(s.char.MapID, id)
+		s.fixedDamagePulse(def, s.char.PosX, s.char.PosY, s.char.PosZ)
+		after, _ := MobByID(s.char.MapID, id)
+		return before.CurrentHP - after.CurrentHP
 	}
-	s.char.PosX = m.PosX + 2.5 // out of the 2 m range
-	again, _ := MobByID(s.char.MapID, id)
-	s.fixedDamagePulse(def, s.char.PosX, s.char.PosY, s.char.PosZ)
-	if far, _ := MobByID(s.char.MapID, id); far.CurrentHP != again.CurrentHP {
-		t.Fatal("a mob out of range was hurt")
+	if got := pulse(-3, 1.5); got != 65 {
+		t.Fatalf("a mob 3 above lost %d, want the fixed 65", got)
+	}
+	if got := pulse(-3.9, 1.5); got != 65 {
+		t.Fatalf("a mob 3.9 above lost %d", got)
+	}
+	if got := pulse(-6, 1.5); got != 0 {
+		t.Fatalf("a mob 6 above was hurt (%d)", got)
+	}
+	if got := pulse(0, 2.5); got != 0 {
+		t.Fatalf("a mob out of the ground range was hurt (%d)", got)
 	}
 }

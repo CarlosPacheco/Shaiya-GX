@@ -1551,7 +1551,7 @@ Source notes: GXField announces a field left on the ground (Fire Bush's curtain 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [skillField (server/internal/world/trap.go)](../../server/internal/world/trap.go#L34)
+**S→C serializers:** [skillField (server/internal/world/trap.go)](../../server/internal/world/trap.go#L35)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L808)
 
@@ -1561,7 +1561,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>skillField — server/internal/world/trap.go</summary>
 
-[Source definition](../../server/internal/world/trap.go#L34)
+[Source definition](../../server/internal/world/trap.go#L35)
 
 ```go
 func (s *Session) skillField(k db.CharacterSkill, def *db.SkillDef, stats CharacterStats, completed ...bool) {
