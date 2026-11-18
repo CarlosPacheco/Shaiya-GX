@@ -47,6 +47,8 @@ var retainedLevels = map[SkillKey]bool{{ID: 250, Level: 2}: true, {ID: 274, Leve
 var previousSkills = map[int]uint16{61: 104, 64: 150, 79: 135, 94: 79, 104: 134, 135: 134, 145: 134, 150: 145,
 	161: 61, 302: 39, 309: 63, 310: 63, 311: 150, 312: 61, 313: 79}
 
+var cooldownSentence = regexp.MustCompile(` Can only be used while .+ is cooling down\.$`)
+
 var levelSuffix = regexp.MustCompile(`(?i)\s*Lv\.?\s*\d+$`)
 
 // requireCooldown says which skill has to be cooling down (once).
@@ -278,16 +280,20 @@ func applyTextFixes(slots []*skillSlot, fixes []byte, rep *SkillCatalogReport) e
 			return fmt.Errorf("skill_text_fixes.csv: bad skill %q/%q", row[0], row[1])
 		}
 		s := byKey[SkillKey{ID: uint16(id), Level: uint8(level)}]
-		switch {
-		case s == nil:
-			return fmt.Errorf("skill_text_fixes.csv: missing skill %d level %d", id, level)
-		case s.desc == row[3], strings.HasPrefix(s.desc, strings.TrimSuffix(row[3], ".")) && strings.Contains(s.desc, " is cooling down."):
-		case s.desc == row[2]:
-			s.desc, s.changed = row[3], true
-			rep.TextFixes++
-		default:
+		if s != nil {
+			// The "can only be used while ..." sentence is added after the rewrites.
+			plain := cooldownSentence.ReplaceAllString(s.desc, "")
+			switch plain {
+			case row[3]:
+				continue
+			case row[2]:
+				s.desc, s.changed = row[3], true
+				rep.TextFixes++
+				continue
+			}
 			return fmt.Errorf("skill %d level %d: description is %q, expected %q", id, level, s.desc, row[2])
 		}
+		return fmt.Errorf("skill_text_fixes.csv: missing skill %d level %d", id, level)
 	}
 	return nil
 }
