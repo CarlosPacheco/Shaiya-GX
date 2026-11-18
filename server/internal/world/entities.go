@@ -739,10 +739,11 @@ func TickMobCorpses() []entityMove {
 	return out
 }
 
-// SetMobAggro is CMob::Damage's ledger and CMob::SetTarget for a player's
-// hit: the attacker's aggro grows by the damage plus ten times the skill's
-// aggro, and an idle mob takes the attacker as its target. CMob::AttackAI
-// later turns to the top of the ledger (ReTargetByAggro).
+// SetMobAggro is CMob::SetTarget for a player's hit: an idle mob takes the
+// attacker as its target. The ledger grows through AddMobAggro, with the
+// original amount (hitAggro): the attacker's REC times ten plus the skill's
+// Arrow, whatever the damage. CMob::AttackAI later turns to the top of the
+// ledger (ReTargetByAggro).
 func SetMobAggro(mapID uint16, id, characterID uint32) { AddMobAggro(mapID, id, characterID, 0) }
 
 func AddMobAggro(mapID uint16, id, characterID uint32, amount int64) {
@@ -758,6 +759,19 @@ func AddMobAggro(mapID uint16, id, characterID uint32, amount int64) {
 			if m.AggroTarget == 0 {
 				m.AggroTarget, m.returningHome = characterID, false
 			}
+		}
+	}
+}
+
+// ForceMobTarget is CMob::SetTarget(user, true): the mob turns to the user at
+// once; the next ReTargetByAggro may still pick whoever has more aggro.
+func ForceMobTarget(mapID uint16, id, characterID uint32) {
+	s := shard(mapID)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i := range s.entities.Mobs {
+		if m := &s.entities.Mobs[i]; m.ID == id && m.CurrentHP > 0 {
+			m.AggroTarget, m.returningHome = characterID, false
 		}
 	}
 }

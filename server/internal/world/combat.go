@@ -148,7 +148,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	if !ok {
 		return false
 	}
-	AddMobAggro(ch.MapID, target, ch.ID, int64(result.AppliedHP))
+	AddMobAggro(ch.MapID, target, ch.ID, hitAggro(&stats, 0))
 	code := uint8(attackSuccessNormal)
 	if crit {
 		code = attackResultCritical

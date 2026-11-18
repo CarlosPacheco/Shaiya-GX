@@ -192,6 +192,9 @@ func (s *Session) friendlySkill(k db.CharacterSkill, def *db.SkillDef, target ui
 			p.QueueFriendly(heal)
 		}
 	}
+	if def.TypeEffect == typeEffectBuff && def.TypeDetail == detailTaunt {
+		s.tauntMobs(def, &stats)
+	}
 	s.log.Printf("GX Server World friendly skill skill_id=%d level=%d targets=%d party=%v", k.SkillID, k.Level, len(targets), party)
 }
 
