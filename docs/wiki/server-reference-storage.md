@@ -10,7 +10,7 @@ Every production Go file is listed, including OS-specific alternatives. Signatur
 
 All authoritative SQLite access, definitions, migrations, guarded economy transactions and crash/session ownership.
 
-Tests: [account_session_test.go](../../server/internal/db/account_session_test.go), [cash_test.go](../../server/internal/db/cash_test.go), [character_creation_test.go](../../server/internal/db/character_creation_test.go), [chars_integration_test.go](../../server/internal/db/chars_integration_test.go), [defs_integration_test.go](../../server/internal/db/defs_integration_test.go), [economy_atomic_test.go](../../server/internal/db/economy_atomic_test.go), [gm_test.go](../../server/internal/db/gm_test.go), [isolation_test.go](../../server/internal/db/isolation_test.go), [keeps_test.go](../../server/internal/db/keeps_test.go), [mall_transaction_test.go](../../server/internal/db/mall_transaction_test.go), [migrations_test.go](../../server/internal/db/migrations_test.go), [mob_quest_test.go](../../server/internal/db/mob_quest_test.go), [production_integration_test.go](../../server/internal/db/production_integration_test.go), [snapshot_atomic_test.go](../../server/internal/db/snapshot_atomic_test.go), [social_test.go](../../server/internal/db/social_test.go), [sqlite_test.go](../../server/internal/db/sqlite_test.go).
+Tests: [account_session_test.go](../../server/internal/db/account_session_test.go), [cash_test.go](../../server/internal/db/cash_test.go), [character_creation_test.go](../../server/internal/db/character_creation_test.go), [chars_integration_test.go](../../server/internal/db/chars_integration_test.go), [defs_integration_test.go](../../server/internal/db/defs_integration_test.go), [economy_atomic_test.go](../../server/internal/db/economy_atomic_test.go), [gm_test.go](../../server/internal/db/gm_test.go), [isolation_test.go](../../server/internal/db/isolation_test.go), [keeps_test.go](../../server/internal/db/keeps_test.go), [mall_transaction_test.go](../../server/internal/db/mall_transaction_test.go), [migrations_test.go](../../server/internal/db/migrations_test.go), [mob_quest_test.go](../../server/internal/db/mob_quest_test.go), [production_integration_test.go](../../server/internal/db/production_integration_test.go), [skill_cleanup_test.go](../../server/internal/db/skill_cleanup_test.go), [snapshot_atomic_test.go](../../server/internal/db/snapshot_atomic_test.go), [social_test.go](../../server/internal/db/social_test.go), [sqlite_test.go](../../server/internal/db/sqlite_test.go).
 
 ### account.go
 
@@ -720,7 +720,7 @@ type GiftEntry struct {
 |---|---|
 | [`migration`](../../server/internal/db/migrations.go#L11)<br>`type migration` | See the source definition and the subsystem ownership contract. |
 | [`migrations`](../../server/internal/db/migrations.go#L16)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L32)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
+| [`migrate`](../../server/internal/db/migrations.go#L55)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 

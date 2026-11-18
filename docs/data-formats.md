@@ -256,3 +256,8 @@ The byte traditionally called `Day` is the native client visual scale selector,
 independent of combat `Size`. GX retains the full payload and applies the native
 uniform model scale and scaled number anchor. AI and quest metadata in this file
 do not replace authoritative server behavior.
+
+### Skill catalog cleanup
+
+`cmd/skillpatch` (`sdata.NormalizeSkillCatalog`) rewrites `Character/Skill.SData` without reserializing untouched bytes and server migration 7 applies the same decisions to the skill definitions. Dead levels (placeholders such as "Hell LordED" / "Not Available.") of skills that have working levels become empty slots; the chain mechanic is not used, so chain wording leaves the descriptions and the previous-skill word (record offset 52) of chain skills is cleared; Mana Shot and Stamina Shot lose their "enemy players only" sentence; Aggravation loses its time damage (int32 at offset 75); detail 25 becomes detail 21. The output is plain EP5, which the loader accepts. Back up the original catalog before installing the result.
+
