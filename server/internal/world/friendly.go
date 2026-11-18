@@ -22,9 +22,10 @@ const (
 	targetTypeNParty   = 5
 	targetTypeOtherAlt = 7
 
-	detailHeal     = 41
-	detailCure     = 42
-	skillResultPty = 4
+	detailHeal          = 41
+	detailCure          = 42
+	detailSacrificeHeal = 43 // Sacrifice: transfers the caster's maximum pool to the target
+	skillResultPty      = 4
 )
 
 // pendingFriendly is a heal, cure or buff to apply in a target's session.
@@ -155,6 +156,18 @@ func (s *Session) friendlySkill(k db.CharacterSkill, def *db.SkillDef, target ui
 		switch def.TypeDetail {
 		case detailCure:
 			heal.Cure = true
+		case detailSacrificeHeal:
+			// Sacrifice: the caster pays its whole SP (and MP) pool as the cost and
+			// the target recovers the caster's maximum SP (level 1), SP and MP
+			// (level 2) or HP (level 3). The data has no heal values for it.
+			switch def.SkillLevel {
+			case 1:
+				heal.SP = stats.MaxSP
+			case 2:
+				heal.SP, heal.MP = stats.MaxSP, stats.MaxMP
+			default:
+				heal.HP = stats.MaxHP
+			}
 		default:
 			// HealUser: a non-zero HealHP adds twice the caster's WIS.
 			if def.HealHP > 0 {

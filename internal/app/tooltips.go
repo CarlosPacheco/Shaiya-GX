@@ -25,10 +25,10 @@ func (a *App) queueSkillTooltip(key sdata.SkillKey) {
 	rows := []itemDetailLine{{title, [4]float32{1, 1, 0, 1}}}
 	if d.Effect != 0 {
 		if d.SP > 0 {
-			rows = append(rows, itemDetailLine{fmt.Sprintf("SP: %d", d.SP), white})
+			rows = append(rows, itemDetailLine{"SP: " + a.skillCostValue(d.SP), white})
 		}
 		if d.MP > 0 {
-			rows = append(rows, itemDetailLine{fmt.Sprintf("MP: %d", d.MP), white})
+			rows = append(rows, itemDetailLine{"MP: " + a.skillCostValue(d.MP), white})
 		}
 		if d.ReadyTime > 0 {
 			rows = append(rows, itemDetailLine{fmt.Sprintf("Cast time: %g seconds", float64(d.ReadyTime)*.25), white})

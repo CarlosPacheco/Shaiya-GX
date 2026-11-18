@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"sort"
+	"strings"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
@@ -471,7 +472,7 @@ func (a *App) drawActionBar(w, h int) {
 		slot := &slots[i]
 		slot.Cooldown = max(0, a.skills.cooldowns[k.ID]-a.clock)
 		slot.CooldownDuration = a.skillCooldownTotal(k.ID, d)
-		slot.Label, slot.Level = fmt.Sprintf("%s Lv%d | MP %d SP %d", d.Name, k.Level, d.MP, d.SP), k.Level
+		slot.Label, slot.Level = fmt.Sprintf("%s Lv%d | MP %s SP %s", d.Name, k.Level, a.skillCostValue(d.MP), a.skillCostValue(d.SP)), k.Level
 		if file, uv, ok := ui.SkillIcon(d.Icon); ok {
 			slot.Icon, slot.UV = a.assets.Texture("interface/"+file), uv
 		}
@@ -504,6 +505,17 @@ func (a *App) drawActionBar(w, h int) {
 	}
 	a.actionBar.Draw(a.sprites, a.font, a.white, w, h, slots, false)
 	a.queueActionTooltip(w, h)
+}
+
+// skillCostValue is how a skill cost reads: a cost of 1 spends the whole pool,
+// which the client's own SysMsg 5322 says instead of the number.
+func (a *App) skillCostValue(cost uint16) string {
+	if cost == 1 {
+		if all := strings.TrimSpace(a.msg.Get(5322)); all != "" {
+			return all
+		}
+	}
+	return fmt.Sprint(cost)
 }
 
 // Resource failures never start predicted animation, sound or an approach.
