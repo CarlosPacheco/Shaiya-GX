@@ -113,3 +113,4 @@ __pycache__/
 backups/
 .gxstudio.lock
 pending-save.json
+gx-studio.ini

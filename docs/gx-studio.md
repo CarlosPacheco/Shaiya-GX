@@ -39,7 +39,8 @@ Keep the executable in a writable folder for the local backups and recovery jour
 1. Choose the client's loose `data/` directory. Studio checks known portable
    runtime locations and the `RAPTURE_DB_PATH` environment override. The database
    picker also accepts an explicit existing SQLite file. Verify the displayed path
-   before opening. A distributed seed chosen manually can have a separate manifest
+   before opening. Studio remembers the last successfully opened paths in
+   `gx-studio.ini` beside the executable. A distributed seed can have a separate manifest
    that becomes stale after editing.
 2. Choose a catalog. Item Mall shows Popular, Essentials, Buffs, Packages and
    Hidden, with product icon previews, a store icon picker and a searchable item

@@ -95,6 +95,9 @@ func (e *editor) start() {
 	data.SetPlaceHolder("Client data folder")
 	db := widget.NewEntry()
 	db.SetPlaceHolder("SQLite database")
+	paths, preferencesErr := studio.LoadInstallationPaths(e.root)
+	data.SetText(paths.DataDir)
+	db.SetText(paths.Database)
 	detect := widget.NewButtonWithIcon("Detect SQLite", theme.SearchIcon(), func() { e.detect(data, db) })
 	selectFolder := widget.NewButton("Browse…", func() {
 		dialog.ShowFolderOpen(func(dir fyne.ListableURI, err error) {
@@ -130,10 +133,21 @@ func (e *editor) start() {
 			e.showError(fmt.Errorf("select the client data folder and the server SQLite database"))
 			return
 		}
+		dataDir, err := filepath.Abs(dataDir)
+		if e.showError(err) {
+			return
+		}
+		dbPath, err = filepath.Abs(dbPath)
+		if e.showError(err) {
+			return
+		}
 		e.dataDir, e.dbPath = dataDir, dbPath
 		e.openKind(studio.Kind(mode.SelectedIndex()))
 	}
 	e.status = wrapped("")
+	if preferencesErr != nil {
+		e.status.SetText("Could not read gx-studio.ini: " + preferencesErr.Error())
+	}
 	title := widget.NewLabelWithStyle("Open an installation", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	fields := container.NewVBox(title,
 		field("Client data folder", "Cash.SData", container.NewBorder(nil, nil, nil, selectFolder, data)),
@@ -174,8 +188,10 @@ func (e *editor) openKind(kind studio.Kind) {
 			definitions, err = studio.OpenDefinitions(ctx, dataDir, dbPath, kind)
 		}
 		images := existingAssets
+		var preferencesErr error
 		if err == nil && images == nil {
 			images = loadAssets(dataDir)
+			preferencesErr = studio.SaveInstallationPaths(e.root, studio.InstallationPaths{DataDir: dataDir, Database: dbPath})
 		}
 		return func() {
 			if e.showError(err) {
@@ -188,6 +204,10 @@ func (e *editor) openKind(kind studio.Kind) {
 				e.catalog()
 			} else {
 				e.definitionCatalog()
+			}
+			if preferencesErr != nil {
+				warning := "Could not save gx-studio.ini: " + preferencesErr.Error()
+				e.status.SetText(strings.TrimSpace(e.status.Text + "\n" + warning))
 			}
 		}
 	})
