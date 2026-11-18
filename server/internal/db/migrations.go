@@ -63,7 +63,8 @@ var migrations = []migration{
 			WHEN 135 THEN 134 WHEN 145 THEN 134 WHEN 150 THEN 145 WHEN 161 THEN 61 WHEN 302 THEN 39
 			WHEN 311 THEN 150 WHEN 312 THEN 61 WHEN 313 THEN 79 END
 		WHERE SkillLevel<100 AND SkillID IN (61,64,79,94,104,135,145,150,161,302,311,312,313)`},
-	{10, "item_enchant_rules", enchantrules.CreateSQL},
+	{10, "item_enchant_rules", enchantrules.LegacyCreateSQL},
+	{11, "enchant_target_levels", enchantrules.UpgradeSQL},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.
@@ -105,6 +106,11 @@ func migrate(ctx context.Context, pool *sql.DB, steps []migration) error {
 		}
 		if _, err = tx.ExecContext(ctx, step.SQL); err != nil {
 			return fmt.Errorf("migration %d: %w", step.Version, err)
+		}
+		if step.Version == 11 {
+			if err := initializeEnchant11(ctx, tx); err != nil {
+				return fmt.Errorf("migration %d: %w", step.Version, err)
+			}
 		}
 		if _, err = tx.ExecContext(ctx, `INSERT INTO GX_SchemaMigrations VALUES(?,?,?,?)`, step.Version, step.Name, checksum, time.Now().UTC().Format(time.RFC3339)); err != nil {
 			return err

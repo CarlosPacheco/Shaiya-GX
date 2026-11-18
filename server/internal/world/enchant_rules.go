@@ -2,7 +2,6 @@ package world
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
@@ -10,8 +9,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
-	"path/filepath"
-	"strconv"
 )
 
 const (
@@ -49,56 +46,6 @@ func validateEnchantRules() error {
 	return nil
 }
 
-// readLegacyEnchant is used only to initialize a pre-migration installation.
-func readLegacyEnchant(path string) (enchantrules.Catalog, error) {
-	ini, err := readIni(path)
-	if err != nil {
-		return enchantrules.Catalog{}, err
-	}
-	cap := defaultEnchantMaxLevel
-	var next enchantRulesConfig
-	if raw, ok := ini["ENCHANT"]["MAXLEVEL"]; ok {
-		n, err := strconv.ParseUint(raw, 10, 8)
-		if err != nil || n > enchantMaxLevel {
-			return enchantrules.Catalog{}, fmt.Errorf("MaxLevel must be 0..%d", enchantMaxLevel)
-		}
-		cap = int(n)
-	}
-	var weapon, armor [enchantMaxLevel + 1]uint32
-	for _, table := range []struct {
-		section, prefix string
-		dst             *[enchantMaxLevel + 1]uint32
-		limit           uint64
-	}{
-		{"LAPISIANENCHANTPERCENTRATE", "WEAPON", &next.WeaponRate, 1000000},
-		{"LAPISIANENCHANTPERCENTRATE", "DEFENSE", &next.DefenseRate, 1000000},
-		{"LAPISIANENCHANTADDVALUE", "WEAPON", &weapon, 2147483647},
-		{"LAPISIANENCHANTADDVALUE", "DEFENSE", &armor, 2147483647},
-	} {
-		for step := 0; step <= enchantMaxLevel; step++ {
-			key := fmt.Sprintf("%sSTEP%02d", table.prefix, step)
-			raw, ok := ini[table.section][key]
-			if !ok {
-				if step <= cap {
-					return enchantrules.Catalog{}, fmt.Errorf("[%s] missing %s", table.section, key)
-				}
-				continue
-			}
-			n, err := strconv.ParseUint(raw, 10, 32)
-			if err != nil || n > table.limit {
-				return enchantrules.Catalog{}, fmt.Errorf("[%s] %s must be 0..%d", table.section, key, table.limit)
-			}
-			table.dst[step] = uint32(n)
-		}
-	}
-	var rows enchantrules.Catalog
-	for level := 0; level <= cap; level++ {
-		rows.Attack = append(rows.Attack, enchantrules.Level{Number: uint8(level), SuccessChance: next.WeaponRate[level], Bonus: weapon[level]})
-		rows.Defense = append(rows.Defense, enchantrules.Level{Number: uint8(level), SuccessChance: next.DefenseRate[level], Bonus: armor[level]})
-	}
-	return rows, nil
-}
-
 func applyEnchantRules(rows enchantrules.Catalog) error {
 	weaponCap, armorCap, err := rows.Caps()
 	if err != nil {
@@ -107,10 +54,10 @@ func applyEnchantRules(rows enchantrules.Catalog) error {
 	next := enchantRulesConfig{WeaponCap: weaponCap, ArmorCap: armorCap}
 	var weapon, armor [enchantMaxLevel + 1]uint32
 	for _, row := range rows.Attack {
-		next.WeaponRate[row.Number], weapon[row.Number] = row.SuccessChance, row.Bonus
+		next.WeaponRate[row.Number-1], weapon[row.Number] = row.SuccessChance, row.Bonus
 	}
 	for _, row := range rows.Defense {
-		next.DefenseRate[row.Number], armor[row.Number] = row.SuccessChance, row.Bonus
+		next.DefenseRate[row.Number-1], armor[row.Number] = row.SuccessChance, row.Bonus
 	}
 	enchantConfig, weaponEnchantAttackBonus, armorEnchantAbsorption = next, weapon, armor
 	return nil
@@ -124,32 +71,7 @@ func loadEnchantRules(log *logx.Logger) error {
 		return err
 	}
 	rows, err := enchantrules.Read(ctx, pool)
-	if errors.Is(err, enchantrules.ErrEmpty) {
-		tx, err := pool.BeginTx(ctx, nil)
-		if err != nil {
-			return err
-		}
-		defer tx.Rollback()
-		rows, err = enchantrules.Read(ctx, tx)
-		if errors.Is(err, enchantrules.ErrEmpty) {
-			rows, err = readLegacyEnchant(filepath.Join(gameDataDir(), "ItemEnchant.ini"))
-			if err != nil {
-				return fmt.Errorf("initialize empty enchant tables from legacy ItemEnchant.ini: %w", err)
-			}
-			if err := enchantrules.Replace(ctx, tx, rows); err != nil {
-				return err
-			}
-			stored, err := enchantrules.Read(ctx, tx)
-			if err != nil || !stored.Equal(rows) {
-				return errors.Join(errors.New("legacy enchant import verification failed"), err)
-			}
-		} else if err != nil {
-			return err
-		}
-		if err := tx.Commit(); err != nil {
-			return err
-		}
-	} else if err != nil {
+	if err != nil {
 		return err
 	}
 	if err := applyEnchantRules(rows); err != nil {

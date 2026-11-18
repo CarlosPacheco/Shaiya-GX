@@ -108,12 +108,12 @@ not authorize execution.
 
 GX World loads `PS_GameDefs_EnchantAttack` for weapons and
 `PS_GameDefs_EnchantDefense` for armor. Each table contains consecutive
-`Level` rows starting at +0. The last row sets that table's cap, up to +49.
-The shipped cap is **+20** in both tables. With only +0, forging cannot
+`Level` rows starting at +1. The last row sets that table's cap, up to +49.
+The shipped cap is **+20** in both tables. With an empty table, forging cannot
 increase that equipment type's enchant level.
 
-`SuccessChance` is the rate per million of increasing the listed level by
-one (0–1,000,000). `AttackBonus` and `AbsorptionBonus` are the total bonus
+`SuccessChance` is the rate per million of reaching the listed level
+from the previous one (0–1,000,000). `AttackBonus` and `AbsorptionBonus` are the total bonus
 at the listed level (0–2,147,483,647). Removing levels also removes those
 levels' bonuses for existing gear. A legacy upgrade imports the INI through
 its configured cap when both tables are empty. Edit rules in GX Studio and
@@ -142,7 +142,7 @@ restart gx_world after saving.
 | +19 | 0.02% | 0.02% | +286 | 95 |
 | +20 | 0.02% | 0.02% | +311 | 100 |
 
-Rates are stored per million: 900000 means 90%. Index N describes N -> N+1;
+Rates are stored per million: 900000 means 90%. Row N describes N−1 → N;
 bonus arrays instead index the resulting level. Bonuses are totals at that
 level, not a sum of all preceding rows. Weapon bonuses add equipment attack;
 armor absorption subtracts a flat amount from incoming damage, with the

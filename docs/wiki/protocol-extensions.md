@@ -1129,7 +1129,7 @@ Source notes: GXEnchantRules publishes server enchant bonuses for authoritative 
 
 **C→S receive adapters:** [frame (server/cmd/gx_login/main.go)](../../server/cmd/gx_login/main.go#L224)
 
-**S→C serializers:** [sendEnchantRules (server/internal/world/enchant_rules.go)](../../server/internal/world/enchant_rules.go#L164)
+**S→C serializers:** [sendEnchantRules (server/internal/world/enchant_rules.go)](../../server/internal/world/enchant_rules.go#L86)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L234)
 
@@ -1139,7 +1139,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendEnchantRules — server/internal/world/enchant_rules.go</summary>
 
-[Source definition](../../server/internal/world/enchant_rules.go#L164)
+[Source definition](../../server/internal/world/enchant_rules.go#L86)
 
 ```go
 func (s *Session) sendEnchantRules() {

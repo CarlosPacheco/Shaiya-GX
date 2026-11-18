@@ -72,7 +72,7 @@ Keep the executable in a writable folder for the local backups and recovery jour
 Choose Enchant with the server SQLite database. The Attack and Defense
 tabs let you edit the chances and bonuses directly. The last level in each
 tab sets that equipment type’s cap. Add the next level or remove the highest
-level to change it, within +0 to +49. Removing levels also removes their
+level to change it, up to +49. An empty table disables enchanting for that equipment type. Removing levels also removes their
 bonuses for existing gear. **Save database** takes a full SQLite backup and
 applies both tables in one transaction. Restart GX World to load the new rules.
 

@@ -1,6 +1,7 @@
 package world
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -31,7 +32,7 @@ func TestItemEnchantIniRatesBonusesCapAndWire(t *testing.T) {
 		}
 	}
 	load := func() error {
-		rows, err := readLegacyEnchant(path)
+		rows, err := db.ReadLegacyEnchant(path)
 		if err != nil {
 			return err
 		}
@@ -146,15 +147,26 @@ func TestEnchantCatalogImportsLegacyOnce(t *testing.T) {
 	t.Setenv("RAPTURE_DB_SEED", seed)
 	old, weapon, armor := enchantConfig, weaponEnchantAttackBonus, armorEnchantAbsorption
 	t.Cleanup(func() { enchantConfig, weaponEnchantAttackBonus, armorEnchantAbsorption = old, weapon, armor })
-	db.Close()
-	t.Cleanup(func() { _ = db.Close() })
-	pool, err := db.Pool(db.GameDefs)
+	// Remove the enchant tables to simulate a database from before their migration.
+	seedBytes, err := os.ReadFile(seed)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := pool.Exec("DELETE FROM PS_GameDefs_EnchantAttack; DELETE FROM PS_GameDefs_EnchantDefense"); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "rapture.sqlite"), seedBytes, 0600); err != nil {
 		t.Fatal(err)
 	}
+	legacyDB, err := sql.Open("sqlite", filepath.Join(dir, "rapture.sqlite"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := legacyDB.Exec("DROP TABLE PS_GameDefs_EnchantAttack; DROP TABLE PS_GameDefs_EnchantDefense"); err != nil {
+		t.Fatal(err)
+	}
+	if err := legacyDB.Close(); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	t.Cleanup(func() { _ = db.Close() })
 	raw, err := os.ReadFile(filepath.Join("testdata", "enchant-legacy.ini"))
 	if err != nil {
 		t.Fatal(err)
@@ -173,7 +185,14 @@ func TestEnchantCatalogImportsLegacyOnce(t *testing.T) {
 	if enchantConfig.WeaponCap != 0 || enchantConfig.ArmorCap != 0 {
 		t.Fatal("legacy import changed cap")
 	}
-	if err := os.Remove(path); err != nil {
+	if err := os.WriteFile(path, []byte(strings.ReplaceAll(string(raw), "MaxLevel=0", "MaxLevel=20")), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := loadEnchantRules(nil); err != nil || enchantConfig.WeaponCap != 0 || enchantConfig.ArmorCap != 0 {
+		t.Fatalf("the legacy INI was imported more than once: %v", err)
+	}
+	pool, err := db.Pool(db.GameDefs)
+	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := pool.Exec("INSERT INTO PS_GameDefs_EnchantAttack VALUES(1, 0, 7)"); err != nil {

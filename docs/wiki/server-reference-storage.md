@@ -431,6 +431,17 @@ type Defs struct {
 
 </details>
 
+### enchant_legacy.go
+
+[server/internal/db/enchant_legacy.go](../../server/internal/db/enchant_legacy.go#L1)
+
+Direct GX dependencies: `internal/enchantrules`, `server/internal/config`.
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`ReadLegacyEnchant`](../../server/internal/db/enchant_legacy.go#L17)<br>`func ReadLegacyEnchant(path string) (enchantrules.Catalog, error)` | ReadLegacyEnchant is used only to initialize a pre-migration installation. |
+| [`initializeEnchant11`](../../server/internal/db/enchant_legacy.go#L68)<br>`func initializeEnchant11(ctx context.Context, tx *sql.Tx) error` | initializeEnchant11 runs inside migration 11 and never imports an INI again after that migration is recorded, including when both caps are later zero. |
+
 ### errors.go
 
 [server/internal/db/errors.go](../../server/internal/db/errors.go#L1)
@@ -724,7 +735,7 @@ Direct GX dependencies: `internal/enchantrules`.
 |---|---|
 | [`migration`](../../server/internal/db/migrations.go#L13)<br>`type migration` | See the source definition and the subsystem ownership contract. |
 | [`migrations`](../../server/internal/db/migrations.go#L18)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L71)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
+| [`migrate`](../../server/internal/db/migrations.go#L72)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 

@@ -13,7 +13,7 @@
 | Mall display / actual products | Client Cash.SData / SQL ProductList | Restart affected component |
 
 The last consecutive level in each SQLite table sets its cap. The shipped
-tables cover +0 through +20. See [Blacksmith](blacksmith.md) for the limits,
+tables cover +1 through +20. See [Blacksmith](blacksmith.md) for the limits,
 field units and effects of removing levels.
 The old free-cost environment setting remains ignored.
 

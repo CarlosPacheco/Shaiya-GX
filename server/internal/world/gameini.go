@@ -2,7 +2,6 @@ package world
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -19,44 +18,9 @@ import (
 
 func gameDataDir() string { return filepath.Join(config.DataDir(), "game") }
 
-type iniFile map[string]map[string]string
+type iniFile = config.GameINI
 
-var blockComment = regexp.MustCompile(`(?s)/\*.*?\*/`)
-
-// readIni parses the original server's ini dialect: [SECTION], key = value,
-// with ;, // and /* */ comments. Section and key names are upper-cased.
-func readIni(path string) (iniFile, error) {
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	text := blockComment.ReplaceAllString(string(raw), "")
-	out := iniFile{}
-	section := ""
-	for _, line := range strings.Split(text, "\n") {
-		if i := strings.Index(line, "//"); i >= 0 {
-			line = line[:i]
-		}
-		if i := strings.Index(line, ";"); i >= 0 {
-			line = line[:i]
-		}
-		line = strings.TrimSpace(line)
-		switch {
-		case line == "":
-		case strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]"):
-			section = strings.ToUpper(strings.TrimSpace(line[1 : len(line)-1]))
-			if out[section] == nil {
-				out[section] = map[string]string{}
-			}
-		default:
-			k, v, ok := strings.Cut(line, "=")
-			if ok && section != "" {
-				out[section][strings.ToUpper(strings.TrimSpace(k))] = strings.TrimSpace(v)
-			}
-		}
-	}
-	return out, nil
-}
+func readIni(path string) (iniFile, error) { return config.ReadGameINI(path) }
 
 // numbers extracts every number in s ("(1, 577.98, 78.56, 1762.12)").
 var numberRE = regexp.MustCompile(`-?\d+(\.\d+)?`)

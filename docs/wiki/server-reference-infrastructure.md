@@ -248,6 +248,24 @@ back to .local/runtime.env for local overrides. SQLite needs no credentials.
 | [`sqliteURIPath`](../../server/internal/config/config.go#L142)<br>`func sqliteURIPath(path string) string` | A Windows drive is part of the URI path, never its authority. Without the leading slash net/url emits file://C:/..., which SQLite rejects. |
 | [`FallDamageEnabled`](../../server/internal/config/config.go#L150)<br>`func FallDamageEnabled() bool` | FallDamageEnabled defaults to the GX landing rule; an explicit false opts out. |
 
+### gameini.go
+
+[server/internal/config/gameini.go](../../server/internal/config/gameini.go#L1)
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`GameINI`](../../server/internal/config/gameini.go#L9)<br>`type GameINI` | See the source definition and the subsystem ownership contract. |
+| [`blockComment`](../../server/internal/config/gameini.go#L11)<br>`var blockComment` | See the source definition and the subsystem ownership contract. |
+| [`ReadGameINI`](../../server/internal/config/gameini.go#L15)<br>`func ReadGameINI(path string) (GameINI, error)` | ReadGameINI parses the original server's ini dialect: [SECTION], key = value, with ;, // and /* */ comments. Section and key names are upper-cased. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type GameINI map[string]map[string]string
+```
+
+</details>
+
 ### policy.go
 
 [server/internal/config/policy.go](../../server/internal/config/policy.go#L1)

@@ -96,7 +96,7 @@ func (e *editor) enchantCatalog() {
 		container.NewHBox(widget.NewButton("Open another installation", func() { e.leave(e.start) }),
 			e.switcher(studio.Enchant), save),
 		wrapped(catalog.DBPath), capLabel,
-		wrapped("Chances are per million for the next level. Bonuses are totals at the listed level."),
+		wrapped("Chances are per million to reach the listed level. Bonuses are totals at the listed level."),
 	)
 	e.window.SetContent(container.NewPadded(container.NewBorder(top, e.status, nil, nil, tabs)))
 }
@@ -133,16 +133,16 @@ func enchantTable(rows *[]enchantRow, table, bonusTitle, bonusField string, upda
 		body.Refresh()
 		add.Enable()
 		remove.Enable()
-		if len(*rows) == enchantrules.MaxLevel+1 {
+		if len(*rows) == enchantrules.MaxLevel {
 			add.Disable()
 		}
-		if len(*rows) == 1 {
+		if len(*rows) == 0 {
 			remove.Disable()
 		}
 		update()
 	}
 	add.OnTapped = func() {
-		*rows = append(*rows, enchantInputs(enchantrules.Level{Number: uint8(len(*rows))}))
+		*rows = append(*rows, enchantInputs(enchantrules.Level{Number: uint8(len(*rows) + 1)}))
 		render()
 	}
 	remove.OnTapped = func() {

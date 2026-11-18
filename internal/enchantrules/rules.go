@@ -4,7 +4,6 @@ package enchantrules
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"slices"
 )
@@ -12,7 +11,9 @@ import (
 const MaxLevel = 49
 const AttackTable = "PS_GameDefs_EnchantAttack"
 const DefenseTable = "PS_GameDefs_EnchantDefense"
-const CreateSQL = `CREATE TABLE IF NOT EXISTS PS_GameDefs_EnchantAttack (
+
+// LegacyCreateSQL is frozen for migration 10 and its checksum.
+const LegacyCreateSQL = `CREATE TABLE IF NOT EXISTS PS_GameDefs_EnchantAttack (
 	Level INTEGER PRIMARY KEY CHECK(Level BETWEEN 0 AND 49),
 	SuccessChance INTEGER NOT NULL CHECK(SuccessChance BETWEEN 0 AND 1000000),
 	AttackBonus INTEGER NOT NULL CHECK(AttackBonus BETWEEN 0 AND 2147483647)
@@ -22,6 +23,39 @@ CREATE TABLE IF NOT EXISTS PS_GameDefs_EnchantDefense (
 	SuccessChance INTEGER NOT NULL CHECK(SuccessChance BETWEEN 0 AND 1000000),
 	AbsorptionBonus INTEGER NOT NULL CHECK(AbsorptionBonus BETWEEN 0 AND 2147483647)
 ) STRICT`
+
+const CreateSQL = `CREATE TABLE IF NOT EXISTS PS_GameDefs_EnchantAttack (
+	Level INTEGER PRIMARY KEY CHECK(Level BETWEEN 1 AND 49),
+	SuccessChance INTEGER NOT NULL CHECK(SuccessChance BETWEEN 0 AND 1000000),
+	AttackBonus INTEGER NOT NULL CHECK(AttackBonus BETWEEN 0 AND 2147483647)
+) STRICT;
+CREATE TABLE IF NOT EXISTS PS_GameDefs_EnchantDefense (
+	Level INTEGER PRIMARY KEY CHECK(Level BETWEEN 1 AND 49),
+	SuccessChance INTEGER NOT NULL CHECK(SuccessChance BETWEEN 0 AND 1000000),
+	AbsorptionBonus INTEGER NOT NULL CHECK(AbsorptionBonus BETWEEN 0 AND 2147483647)
+) STRICT`
+
+// UpgradeSQL rekeys chances by the level reached. A staged seed may already
+// use the new layout; it can pass through migration 11 without shifting again.
+const UpgradeSQL = `ALTER TABLE PS_GameDefs_EnchantAttack RENAME TO GX_EnchantAttackBefore11;
+ALTER TABLE PS_GameDefs_EnchantDefense RENAME TO GX_EnchantDefenseBefore11;
+` + CreateSQL + `;
+INSERT INTO PS_GameDefs_EnchantAttack
+SELECT current.Level,
+       CASE WHEN EXISTS (SELECT 1 FROM GX_EnchantAttackBefore11 WHERE Level=0)
+            THEN previous.SuccessChance ELSE current.SuccessChance END, current.AttackBonus
+FROM GX_EnchantAttackBefore11 AS current
+LEFT JOIN GX_EnchantAttackBefore11 AS previous ON previous.Level = current.Level-1
+WHERE current.Level > 0;
+INSERT INTO PS_GameDefs_EnchantDefense
+SELECT current.Level,
+       CASE WHEN EXISTS (SELECT 1 FROM GX_EnchantDefenseBefore11 WHERE Level=0)
+            THEN previous.SuccessChance ELSE current.SuccessChance END, current.AbsorptionBonus
+FROM GX_EnchantDefenseBefore11 AS current
+LEFT JOIN GX_EnchantDefenseBefore11 AS previous ON previous.Level = current.Level-1
+WHERE current.Level > 0;
+DROP TABLE GX_EnchantAttackBefore11;
+DROP TABLE GX_EnchantDefenseBefore11`
 
 type Level struct {
 	Number        uint8
@@ -37,22 +71,17 @@ func (c Catalog) Equal(other Catalog) bool {
 	return slices.Equal(c.Attack, other.Attack) && slices.Equal(c.Defense, other.Defense)
 }
 
-var ErrEmpty = errors.New("enchant tables have no definitions")
-
-// Cap expects consecutive rows ordered from +0.
+// Cap expects consecutive target levels starting at +1. Empty disables forging.
 func Cap(levels []Level) (uint8, error) {
-	if len(levels) == 0 {
-		return 0, errors.New("level +0 is required")
-	}
 	for i, row := range levels {
-		if i > MaxLevel || int(row.Number) != i {
-			return 0, fmt.Errorf("expected enchant level +%d (maximum +%d), got +%d", i, MaxLevel, row.Number)
+		if i >= MaxLevel || int(row.Number) != i+1 {
+			return 0, fmt.Errorf("expected enchant level +%d (maximum +%d), got +%d", i+1, MaxLevel, row.Number)
 		}
 		if row.SuccessChance > 1000000 || row.Bonus > 2147483647 {
 			return 0, fmt.Errorf("invalid chance or bonus at level +%d", row.Number)
 		}
 	}
-	return uint8(len(levels) - 1), nil
+	return uint8(len(levels)), nil
 }
 
 func (c Catalog) Caps() (attack, defense uint8, err error) {
@@ -92,9 +121,6 @@ func Read(ctx context.Context, db Queryer) (Catalog, error) {
 	}
 	if err := rows.Err(); err != nil {
 		return catalog, err
-	}
-	if len(catalog.Attack) == 0 && len(catalog.Defense) == 0 {
-		return catalog, ErrEmpty
 	}
 	_, _, err = catalog.Caps()
 	return catalog, err

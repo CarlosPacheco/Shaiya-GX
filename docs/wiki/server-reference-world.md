@@ -670,17 +670,16 @@ Direct GX dependencies: `internal/enchantrules`, `internal/proto`, `server/inter
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`defaultEnchantMaxLevel`](../../server/internal/world/enchant_rules.go#L18)<br>`const defaultEnchantMaxLevel = 20` | See the source definition and the subsystem ownership contract. |
-| [`enchantMaxLevel`](../../server/internal/world/enchant_rules.go#L19)<br>`const enchantMaxLevel = enchantrules.MaxLevel` | armor encodes 50+level in the two-digit Craftname pair |
-| [`enchantRulesConfig`](../../server/internal/world/enchant_rules.go#L25)<br>`type enchantRulesConfig` | Runtime enchant configuration is loaded atomically from SQLite. These initial values retain the historical defaults before startup loading. Step N is the probability of N -> N+1, in successes per million. |
-| [`enchantConfig`](../../server/internal/world/enchant_rules.go#L30)<br>`var enchantConfig` | See the source definition and the subsystem ownership contract. |
-| [`weaponEnchantAttackBonus`](../../server/internal/world/enchant_rules.go#L37)<br>`var weaponEnchantAttackBonus` | Bonuses are indexed by the resulting enchantment level, starting at zero. |
-| [`armorEnchantAbsorption`](../../server/internal/world/enchant_rules.go#L38)<br>`var armorEnchantAbsorption` | See the source definition and the subsystem ownership contract. |
-| [`validateEnchantRules`](../../server/internal/world/enchant_rules.go#L40)<br>`func validateEnchantRules() error` | See the source definition and the subsystem ownership contract. |
-| [`readLegacyEnchant`](../../server/internal/world/enchant_rules.go#L53)<br>`func readLegacyEnchant(path string) (enchantrules.Catalog, error)` | readLegacyEnchant is used only to initialize a pre-migration installation. |
-| [`applyEnchantRules`](../../server/internal/world/enchant_rules.go#L102)<br>`func applyEnchantRules(rows enchantrules.Catalog) error` | See the source definition and the subsystem ownership contract. |
-| [`loadEnchantRules`](../../server/internal/world/enchant_rules.go#L119)<br>`func loadEnchantRules(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
-| [`sendEnchantRules`](../../server/internal/world/enchant_rules.go#L164)<br>`func (s *Session) sendEnchantRules()` | See the source definition and the subsystem ownership contract. |
+| [`defaultEnchantMaxLevel`](../../server/internal/world/enchant_rules.go#L15)<br>`const defaultEnchantMaxLevel = 20` | See the source definition and the subsystem ownership contract. |
+| [`enchantMaxLevel`](../../server/internal/world/enchant_rules.go#L16)<br>`const enchantMaxLevel = enchantrules.MaxLevel` | armor encodes 50+level in the two-digit Craftname pair |
+| [`enchantRulesConfig`](../../server/internal/world/enchant_rules.go#L22)<br>`type enchantRulesConfig` | Runtime enchant configuration is loaded atomically from SQLite. These initial values retain the historical defaults before startup loading. Step N is the probability of N -> N+1, in successes per million. |
+| [`enchantConfig`](../../server/internal/world/enchant_rules.go#L27)<br>`var enchantConfig` | See the source definition and the subsystem ownership contract. |
+| [`weaponEnchantAttackBonus`](../../server/internal/world/enchant_rules.go#L34)<br>`var weaponEnchantAttackBonus` | Bonuses are indexed by the resulting enchantment level, starting at zero. |
+| [`armorEnchantAbsorption`](../../server/internal/world/enchant_rules.go#L35)<br>`var armorEnchantAbsorption` | See the source definition and the subsystem ownership contract. |
+| [`validateEnchantRules`](../../server/internal/world/enchant_rules.go#L37)<br>`func validateEnchantRules() error` | See the source definition and the subsystem ownership contract. |
+| [`applyEnchantRules`](../../server/internal/world/enchant_rules.go#L49)<br>`func applyEnchantRules(rows enchantrules.Catalog) error` | See the source definition and the subsystem ownership contract. |
+| [`loadEnchantRules`](../../server/internal/world/enchant_rules.go#L66)<br>`func loadEnchantRules(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
+| [`sendEnchantRules`](../../server/internal/world/enchant_rules.go#L86)<br>`func (s *Session) sendEnchantRules()` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -1130,27 +1129,26 @@ Direct GX dependencies: `server/internal/config`, `server/internal/logx`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`gameDataDir`](../../server/internal/world/gameini.go#L20)<br>`func gameDataDir() string` | See the source definition and the subsystem ownership contract. |
-| [`iniFile`](../../server/internal/world/gameini.go#L22)<br>`type iniFile` | See the source definition and the subsystem ownership contract. |
-| [`blockComment`](../../server/internal/world/gameini.go#L24)<br>`var blockComment` | See the source definition and the subsystem ownership contract. |
-| [`readIni`](../../server/internal/world/gameini.go#L28)<br>`func readIni(path string) (iniFile, error)` | readIni parses the original server's ini dialect: [SECTION], key = value, with ;, // and /* */ comments. Section and key names are upper-cased. |
-| [`numberRE`](../../server/internal/world/gameini.go#L62)<br>`var numberRE` | numbers extracts every number in s ("(1, 577.98, 78.56, 1762.12)"). |
-| [`numbers`](../../server/internal/world/gameini.go#L64)<br>`func numbers(s string) []float64` | See the source definition and the subsystem ownership contract. |
-| [`MapPos`](../../server/internal/world/gameini.go#L75)<br>`type MapPos` | MapPos is a map and position from the original configs. |
-| [`parseMapPos`](../../server/internal/world/gameini.go#L82)<br>`func parseMapPos(s string) (MapPos, bool)` | parseMapPos reads "map, x, y, z"; map -1 or all-zero coordinates mean "not set", as the original Map.ini documents. |
-| [`ZoneConfig`](../../server/internal/world/gameini.go#L91)<br>`type ZoneConfig` | ZoneConfig is one Map.ini [SET_ZONE_n] entry. |
-| [`MapConfig`](../../server/internal/world/gameini.go#L109)<br>`type MapConfig` | MapConfig is the parsed Map.ini. |
-| [`mapConfig`](../../server/internal/world/gameini.go#L116)<br>`var mapConfig` | See the source definition and the subsystem ownership contract. |
-| [`loadMapIni`](../../server/internal/world/gameini.go#L122)<br>`func loadMapIni(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
-| [`LoadGameConfig`](../../server/internal/world/gameini.go#L173)<br>`func LoadGameConfig(log *logx.Logger) error` | LoadGameConfig loads the original PS_Game ini files from data/game/. |
-| [`rebirthPosition`](../../server/internal/world/gameini.go#L204)<br>`func rebirthPosition(mapID uint16, faction uint8) (MapPos, bool)` | rebirthPosition is where a character of faction revives on mapID, per CMap::LoadConfig: RebirthMapPos for every faction when the zone sets it, otherwise RebirthMapPos1 (light) / RebirthMapPos2 (fury); ok is false where the map defines none (map -1). |
-| [`bindPosition`](../../server/internal/world/gameini.go#L224)<br>`func bindPosition(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32)` | bindPosition is CMap::GetBindPos 0x004295a0: the Map.ini rebirth point when its map exists and the point lies inside it (0.9 above), else a random point of the nearest svmap rebirth group of this map, else the current position (zeroed if outside the map). |
-| [`bindPositionFound`](../../server/internal/world/gameini.go#L231)<br>`func bindPositionFound(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32, bool)` | bindPositionFound is bindPosition with GetBindPos's result: false when neither a Map.ini point nor a rebirth group applies. |
+| [`gameDataDir`](../../server/internal/world/gameini.go#L19)<br>`func gameDataDir() string` | See the source definition and the subsystem ownership contract. |
+| [`iniFile`](../../server/internal/world/gameini.go#L21)<br>`type iniFile` | See the source definition and the subsystem ownership contract. |
+| [`readIni`](../../server/internal/world/gameini.go#L23)<br>`func readIni(path string) (iniFile, error)` | See the source definition and the subsystem ownership contract. |
+| [`numberRE`](../../server/internal/world/gameini.go#L26)<br>`var numberRE` | numbers extracts every number in s ("(1, 577.98, 78.56, 1762.12)"). |
+| [`numbers`](../../server/internal/world/gameini.go#L28)<br>`func numbers(s string) []float64` | See the source definition and the subsystem ownership contract. |
+| [`MapPos`](../../server/internal/world/gameini.go#L39)<br>`type MapPos` | MapPos is a map and position from the original configs. |
+| [`parseMapPos`](../../server/internal/world/gameini.go#L46)<br>`func parseMapPos(s string) (MapPos, bool)` | parseMapPos reads "map, x, y, z"; map -1 or all-zero coordinates mean "not set", as the original Map.ini documents. |
+| [`ZoneConfig`](../../server/internal/world/gameini.go#L55)<br>`type ZoneConfig` | ZoneConfig is one Map.ini [SET_ZONE_n] entry. |
+| [`MapConfig`](../../server/internal/world/gameini.go#L73)<br>`type MapConfig` | MapConfig is the parsed Map.ini. |
+| [`mapConfig`](../../server/internal/world/gameini.go#L80)<br>`var mapConfig` | See the source definition and the subsystem ownership contract. |
+| [`loadMapIni`](../../server/internal/world/gameini.go#L86)<br>`func loadMapIni(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
+| [`LoadGameConfig`](../../server/internal/world/gameini.go#L137)<br>`func LoadGameConfig(log *logx.Logger) error` | LoadGameConfig loads the original PS_Game ini files from data/game/. |
+| [`rebirthPosition`](../../server/internal/world/gameini.go#L168)<br>`func rebirthPosition(mapID uint16, faction uint8) (MapPos, bool)` | rebirthPosition is where a character of faction revives on mapID, per CMap::LoadConfig: RebirthMapPos for every faction when the zone sets it, otherwise RebirthMapPos1 (light) / RebirthMapPos2 (fury); ok is false where the map defines none (map -1). |
+| [`bindPosition`](../../server/internal/world/gameini.go#L188)<br>`func bindPosition(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32)` | bindPosition is CMap::GetBindPos 0x004295a0: the Map.ini rebirth point when its map exists and the point lies inside it (0.9 above), else a random point of the nearest svmap rebirth group of this map, else the current position (zeroed if outside the map). |
+| [`bindPositionFound`](../../server/internal/world/gameini.go#L195)<br>`func bindPositionFound(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32, bool)` | bindPositionFound is bindPosition with GetBindPos's result: false when neither a Map.ini point nor a rebirth group applies. |
 
 <details><summary>Type definitions and owned fields</summary>
 
 ```go
-type iniFile map[string]map[string]string
+type iniFile = config.GameINI
 ```
 
 ```go
