@@ -1804,6 +1804,25 @@ func DecodeItemUse(p []byte) (m ItemUseResult, err error) {
 
 </details>
 
+## kill notice
+
+[internal/proto/kill_notice.go](../../internal/proto/kill_notice.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+func DecodeKillNotice(p []byte) (string, error) {
+	if len(p) != 23 {
+		return "", fmt.Errorf("invalid GX kill notice length")
+	}
+	r := NewReader(p)
+	name := r.Fixed(21)
+	return name, r.Err()
+}
+```
+
+</details>
+
 ## ladder
 
 [internal/proto/ladder.go](../../internal/proto/ladder.go#L1)

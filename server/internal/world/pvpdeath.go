@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/pvprank"
 	"math"
 	"time"
@@ -209,35 +210,21 @@ func (s *Session) deathByUser() {
 	partyMu.Lock()
 	pt := partyOf(killer)
 	var members []*ConnectedPlayer
-	var maxLevel uint16
-	raid := false
 	if pt != nil {
-		members, maxLevel, raid = append(members, pt.members...), pt.maxLevel, pt.isRaid()
+		members = append(members, pt.members...)
 	}
 	partyMu.Unlock()
+	// Killing a player gives no experience: only the kill itself is credited.
 	if len(members) == 0 {
-		exp := uint32(math.Trunc(float64(pvpExp(ch.Level, killer.Snapshot().Level)) * pvpExpFactor))
-		if exp > 0 {
-			killer.QueueExp(exp)
-		}
 		s.killPCFrom(killer)
+		s.notifyKill(killer)
 		return
-	}
-	factor := partyExpFactor[min(len(members), len(partyExpFactor)-1)]
-	if raid {
-		factor = raidExpFactor[min(len(members), len(raidExpFactor)-1)]
 	}
 	var near []*ConnectedPlayer
 	for _, m := range members {
 		mx, mz := m.PositionXZ()
 		if m.MapID() != ch.MapID || DistanceXZ(mx, mz, ch.PosX, ch.PosZ) > partyRewardRange {
 			continue
-		}
-		lvl := m.Snapshot().Level
-		exp := int64(math.Trunc(float64(pvpExp(ch.Level, lvl)) * factor))
-		exp = int64(math.Trunc(partyExpLevelShare(maxLevel, lvl) * float64(exp)))
-		if exp > 0 {
-			m.QueueExp(uint32(exp))
 		}
 		near = append(near, m)
 	}
@@ -247,7 +234,16 @@ func (s *Session) deathByUser() {
 		} else {
 			m.QueuePvPKill(pvpKill{VictimID: ch.ID})
 		}
+		s.notifyKill(m)
 	}
+}
+
+// notifyKill tells a user who gets the credit for this user's death which player
+// it killed; the client shows it in red (SysMsg 8).
+func (s *Session) notifyKill(killer *ConnectedPlayer) {
+	w := packet.New(packet.Opcode(proto.GXKillNotice))
+	w.FixedString(s.char.Name, 21)
+	killer.Send(w.MustFinish(), "GX kill notice")
 }
 
 // killPCFrom is CUser::KillPCFrom: the killer's KillPCTo, then this

@@ -135,3 +135,58 @@ func TestSelectedUserHealthIsSentWhenItChanges(t *testing.T) {
 		t.Fatalf("a changed HP was not reported: %+v", got)
 	}
 }
+
+// A selected Game Master's HP is reported and follows the damage it takes.
+func TestSelectedGameMasterHealthFollowsDamage(t *testing.T) {
+	viewer, wire := potentialSession(t)
+	gm, _ := gmWireSession(t, *viewer.char, true)
+	gm.char.ID, gm.char.Name = viewer.char.ID+900, "SelectedGM"
+	gm.skillCooldowns, gm.itemCooldowns = map[uint16]time.Time{}, map[uint8]time.Time{}
+	gm.player = RegisterPlayer(*gm.char, nil, true, gm.faction, gm.out, gm.logger)
+	t.Cleanup(gm.player.Unregister)
+	gm.char.CurrentHP = 1000
+	gm.syncPlayer()
+	viewer.player.know(viewUser, gm.char.ID)
+	viewer.effectWatchKind, viewer.effectWatchID = proto.TargetEffectUser, gm.char.ID
+	read := func() []proto.TargetHealth {
+		time.Sleep(50 * time.Millisecond)
+		var out []proto.TargetHealth
+		for len(wire) > 0 {
+			if p := <-wire; proto.Op(p) == proto.GXTargetHealth {
+				v, _ := proto.DecodeTargetHealth(p)
+				out = append(out, v)
+			}
+		}
+		return out
+	}
+	now := time.Now()
+	viewer.tickTargetEffects(now)
+	if got := read(); len(got) != 1 || got[0].User != gm.char.ID || got[0].HP != 1000 {
+		t.Fatalf("the GM's HP was not reported: %+v", got)
+	}
+	gm.takeUserDamage(viewer.char.ID, 300)
+	viewer.tickTargetEffects(now.Add(time.Second))
+	if got := read(); len(got) != 1 || got[0].HP != 700 {
+		t.Fatalf("the damage did not reach the bar: %+v (GM HP %d)", got, gm.char.CurrentHP)
+	}
+}
+
+// The killer is told whom it killed, and a kill gives no experience.
+func TestKillNoticeNamesTheVictim(t *testing.T) {
+	killer, wire := potentialSession(t)
+	victim, _ := gmWireSession(t, *killer.char, false)
+	victim.char.ID, victim.char.Name = killer.char.ID+950, "KilledOne"
+	victim.player = RegisterPlayer(*victim.char, nil, false, victim.faction, victim.out, victim.logger)
+	t.Cleanup(victim.player.Unregister)
+	victim.notifyKill(killer.player)
+	time.Sleep(50 * time.Millisecond)
+	found := ""
+	for len(wire) > 0 {
+		if p := <-wire; proto.Op(p) == proto.GXKillNotice {
+			found, _ = proto.DecodeKillNotice(p)
+		}
+	}
+	if found != "KilledOne" {
+		t.Fatalf("kill notice %q", found)
+	}
+}

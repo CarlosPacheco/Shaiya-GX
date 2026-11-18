@@ -74,6 +74,8 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 			style = 17
 		}
 		a.systemMessage(style, int(s.LastSkillFailure.Message), nil)
+	case proto.GXKillNotice:
+		a.systemMessage(1, 8, map[string]string{"t": s.LastKillNotice}) // red: "Killed <t>"
 	case proto.GXFallDamage:
 		r := s.LastFallDamage
 		if r.Target == s.SelfID {

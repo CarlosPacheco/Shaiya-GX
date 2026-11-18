@@ -940,10 +940,10 @@ func TestUserAttack(t *testing.T) {
 		t.Fatalf("enemy not killed: dead=%v hp=%d", enemy.dead, enemy.char.CurrentHP)
 	}
 	t.Logf("hits=%d", hits)
-	// CUser::Death: GetExp x 1.2 to the killer and KillPCFrom.
+	// Killing a player gives no experience (KillPCFrom still credits the kill).
 	exp, _ := attacker.player.TakeRewards()
-	if want := uint32(float64(pvpExp(40, 40)) * pvpExpFactor); len(exp) != 1 || exp[0] != want {
-		t.Fatalf("killer exp %v, want [%d]", exp, want)
+	if len(exp) != 0 {
+		t.Fatalf("killer exp %v, want none", exp)
 	}
 	if enemy.char.Deaths != 1 || len(enemy.damageLedger) != 0 {
 		t.Fatalf("enemy deaths %d ledger %v", enemy.char.Deaths, enemy.damageLedger)
@@ -977,11 +977,10 @@ func TestUserAttack(t *testing.T) {
 	if !enemy.dead {
 		t.Fatal("second kill did not happen")
 	}
-	want := uint32(float64(uint32(float64(pvpExp(40, 40))*partyExpFactor[2])) * partyExpLevelShare(40, 40))
 	for _, m := range []*Session{attacker, ally} {
 		exp, _ := m.player.TakeRewards()
-		if len(exp) != 1 || exp[0] != want {
-			t.Fatalf("member %d exp %v, want [%d]", m.char.ID, exp, want)
+		if len(exp) != 0 {
+			t.Fatalf("member %d exp %v, want none", m.char.ID, exp)
 		}
 		before := m.char.Kills
 		m.tickPvP()

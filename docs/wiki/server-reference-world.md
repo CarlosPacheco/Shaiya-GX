@@ -2661,31 +2661,32 @@ type pendingUserHit struct {
 
 [server/internal/world/pvpdeath.go](../../server/internal/world/pvpdeath.go#L1)
 
-Direct GX dependencies: `internal/pvprank`, `server/internal/db`, `server/internal/packet`.
+Direct GX dependencies: `internal/proto`, `internal/pvprank`, `server/internal/db`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`damageByUser`](../../server/internal/world/pvpdeath.go#L39)<br>`const damageByUser = 1` | See the source definition and the subsystem ownership contract. |
-| [`damageByMob`](../../server/internal/world/pvpdeath.go#L40)<br>`const damageByMob = 2` | See the source definition and the subsystem ownership contract. |
-| [`pvpKillCap`](../../server/internal/world/pvpdeath.go#L41)<br>`const pvpKillCap = pvprank.CounterCap` | See the source definition and the subsystem ownership contract. |
-| [`pvpDeathCap`](../../server/internal/world/pvpdeath.go#L42)<br>`const pvpDeathCap = pvprank.CounterCap` | See the source definition and the subsystem ownership contract. |
-| [`pvpExpFactor`](../../server/internal/world/pvpdeath.go#L43)<br>`const pvpExpFactor = 1.2` | See the source definition and the subsystem ownership contract. |
-| [`damageEntry`](../../server/internal/world/pvpdeath.go#L47)<br>`type damageEntry` | damageEntry is one CDamage node. |
-| [`addDamage`](../../server/internal/world/pvpdeath.go#L54)<br>`func (s *Session) addDamage(kind uint8, id, amount uint32)` | addDamage is CDamage::Add. |
-| [`topDamage`](../../server/internal/world/pvpdeath.go#L65)<br>`func (s *Session) topDamage() (damageEntry, bool)` | topDamage is CDamage::GetMax: the first entry with the highest damage. |
-| [`pvpExp`](../../server/internal/world/pvpdeath.go#L80)<br>`func pvpExp(deadLevel, killerLevel uint16) uint32` | pvpExp is CUser::GetExp: the dead user's level x 50 x ((dead - killer + 1) x 0.2 + 1), at least 1, and 0 when the dead user is 10+ levels above. |
-| [`pvpKill`](../../server/internal/world/pvpdeath.go#L90)<br>`type pvpKill` | pvpKill is a kill credited to a user's session (KillPCTo). |
-| [`QueuePvPKill`](../../server/internal/world/pvpdeath.go#L92)<br>`func (p *ConnectedPlayer) QueuePvPKill(k pvpKill)` | See the source definition and the subsystem ownership contract. |
-| [`takePvPKillCount`](../../server/internal/world/pvpdeath.go#L97)<br>`func (p *ConnectedPlayer) takePvPKillCount() uint32` | See the source definition and the subsystem ownership contract. |
-| [`QueueItemGrant`](../../server/internal/world/pvpdeath.go#L106)<br>`func (p *ConnectedPlayer) QueueItemGrant(it db.Item) bool` | QueueItemGrant hands an item straight to a user (ItemGet). |
-| [`TakeItemGrants`](../../server/internal/world/pvpdeath.go#L117)<br>`func (p *ConnectedPlayer) TakeItemGrants() []db.Item` | See the source definition and the subsystem ownership contract. |
-| [`tickPvP`](../../server/internal/world/pvpdeath.go#L126)<br>`func (s *Session) tickPvP()` | tickPvP applies the kills and items other sessions credited to this one. |
-| [`killPCTo`](../../server/internal/world/pvpdeath.go#L151)<br>`func (s *Session) killPCTo()` | killPCTo is CUser::KillPCTo on this (the killing) user. |
-| [`killPCToCount`](../../server/internal/world/pvpdeath.go#L152)<br>`func (s *Session) killPCToCount(count uint32)` | See the source definition and the subsystem ownership contract. |
-| [`questKillPC`](../../server/internal/world/pvpdeath.go#L178)<br>`func (s *Session) questKillPC()` | questKillPC is CUser::QuestUpdateKillPC: the first active quest that ends on player kills counts one. |
-| [`deathByUser`](../../server/internal/world/pvpdeath.go#L195)<br>`func (s *Session) deathByUser()` | deathByUser runs CUser::Death's reward part on this (the dead) user. |
-| [`killPCFrom`](../../server/internal/world/pvpdeath.go#L255)<br>`func (s *Session) killPCFrom(killer *ConnectedPlayer)` | killPCFrom is CUser::KillPCFrom: the killer's KillPCTo, then this user's death count. |
-| [`placeGroundItem`](../../server/internal/world/pvpdeath.go#L267)<br>`func (s *Session) placeGroundItem(it db.Item, owner uint32, noParty bool)` | placeGroundItem drops an item at this user's feet (drop type 3). |
+| [`damageByUser`](../../server/internal/world/pvpdeath.go#L40)<br>`const damageByUser = 1` | See the source definition and the subsystem ownership contract. |
+| [`damageByMob`](../../server/internal/world/pvpdeath.go#L41)<br>`const damageByMob = 2` | See the source definition and the subsystem ownership contract. |
+| [`pvpKillCap`](../../server/internal/world/pvpdeath.go#L42)<br>`const pvpKillCap = pvprank.CounterCap` | See the source definition and the subsystem ownership contract. |
+| [`pvpDeathCap`](../../server/internal/world/pvpdeath.go#L43)<br>`const pvpDeathCap = pvprank.CounterCap` | See the source definition and the subsystem ownership contract. |
+| [`pvpExpFactor`](../../server/internal/world/pvpdeath.go#L44)<br>`const pvpExpFactor = 1.2` | See the source definition and the subsystem ownership contract. |
+| [`damageEntry`](../../server/internal/world/pvpdeath.go#L48)<br>`type damageEntry` | damageEntry is one CDamage node. |
+| [`addDamage`](../../server/internal/world/pvpdeath.go#L55)<br>`func (s *Session) addDamage(kind uint8, id, amount uint32)` | addDamage is CDamage::Add. |
+| [`topDamage`](../../server/internal/world/pvpdeath.go#L66)<br>`func (s *Session) topDamage() (damageEntry, bool)` | topDamage is CDamage::GetMax: the first entry with the highest damage. |
+| [`pvpExp`](../../server/internal/world/pvpdeath.go#L81)<br>`func pvpExp(deadLevel, killerLevel uint16) uint32` | pvpExp is CUser::GetExp: the dead user's level x 50 x ((dead - killer + 1) x 0.2 + 1), at least 1, and 0 when the dead user is 10+ levels above. |
+| [`pvpKill`](../../server/internal/world/pvpdeath.go#L91)<br>`type pvpKill` | pvpKill is a kill credited to a user's session (KillPCTo). |
+| [`QueuePvPKill`](../../server/internal/world/pvpdeath.go#L93)<br>`func (p *ConnectedPlayer) QueuePvPKill(k pvpKill)` | See the source definition and the subsystem ownership contract. |
+| [`takePvPKillCount`](../../server/internal/world/pvpdeath.go#L98)<br>`func (p *ConnectedPlayer) takePvPKillCount() uint32` | See the source definition and the subsystem ownership contract. |
+| [`QueueItemGrant`](../../server/internal/world/pvpdeath.go#L107)<br>`func (p *ConnectedPlayer) QueueItemGrant(it db.Item) bool` | QueueItemGrant hands an item straight to a user (ItemGet). |
+| [`TakeItemGrants`](../../server/internal/world/pvpdeath.go#L118)<br>`func (p *ConnectedPlayer) TakeItemGrants() []db.Item` | See the source definition and the subsystem ownership contract. |
+| [`tickPvP`](../../server/internal/world/pvpdeath.go#L127)<br>`func (s *Session) tickPvP()` | tickPvP applies the kills and items other sessions credited to this one. |
+| [`killPCTo`](../../server/internal/world/pvpdeath.go#L152)<br>`func (s *Session) killPCTo()` | killPCTo is CUser::KillPCTo on this (the killing) user. |
+| [`killPCToCount`](../../server/internal/world/pvpdeath.go#L153)<br>`func (s *Session) killPCToCount(count uint32)` | See the source definition and the subsystem ownership contract. |
+| [`questKillPC`](../../server/internal/world/pvpdeath.go#L179)<br>`func (s *Session) questKillPC()` | questKillPC is CUser::QuestUpdateKillPC: the first active quest that ends on player kills counts one. |
+| [`deathByUser`](../../server/internal/world/pvpdeath.go#L196)<br>`func (s *Session) deathByUser()` | deathByUser runs CUser::Death's reward part on this (the dead) user. |
+| [`notifyKill`](../../server/internal/world/pvpdeath.go#L243)<br>`func (s *Session) notifyKill(killer *ConnectedPlayer)` | notifyKill tells a user who gets the credit for this user's death which player it killed; the client shows it in red (SysMsg 8). |
+| [`killPCFrom`](../../server/internal/world/pvpdeath.go#L251)<br>`func (s *Session) killPCFrom(killer *ConnectedPlayer)` | killPCFrom is CUser::KillPCFrom: the killer's KillPCTo, then this user's death count. |
+| [`placeGroundItem`](../../server/internal/world/pvpdeath.go#L263)<br>`func (s *Session) placeGroundItem(it db.Item, owner uint32, noParty bool)` | placeGroundItem drops an item at this user's feet (drop type 3). |
 
 <details><summary>Type definitions and owned fields</summary>
 
