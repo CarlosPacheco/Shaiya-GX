@@ -101,6 +101,7 @@ type EquipmentStats struct {
 	KCGuardPct   [2]int32 // types 18-19: melee/ranged defense
 	SPCostCut    int32    // ability 13 / 14: percent off skill costs
 	MPCostCut    int32
+	CooldownCut  int32    // ability 19: seconds off every spell's reuse while active
 	Disabled     [3]int32 // abilities 32-34: no attacks of that category
 	WeaponType   uint8    // real type of the equipped weapon (0 none)
 	ShieldType   uint8    // real type of the equipped shield (0 none)
@@ -317,6 +318,8 @@ type CharacterStats struct {
 	Recover   [3][3]uint32
 	SPCostCut int32
 	MPCostCut int32
+	// CooldownCut is ability 19: seconds taken off every spell's reuse.
+	CooldownCut int32
 }
 
 func StatsFor(ch *db.Character, e EquipmentStats) CharacterStats {

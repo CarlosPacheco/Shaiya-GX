@@ -70,6 +70,7 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 	}
 	s.syncVisibility()
 	s.applyElement(b)
+	s.reduceCooldowns(time.Now(), effectCooldownCut(&b))
 	s.send(buildBuffAdd(id, def.SkillID, def.SkillLevel), "0x050D skill applied")
 	s.sendBuffStats("after applied skill")
 	if after := s.speeds(); after != before {

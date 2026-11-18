@@ -3,7 +3,6 @@ package app
 import (
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/potential"
-	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"log"
 	"math"
 	"sort"
@@ -26,6 +25,7 @@ type skillsView struct {
 	assignMode, editing bool
 	assign              *proto.QuickSlot
 	cooldowns           map[uint16]float64
+	cooldownTotal       map[uint16]float64 // full-bar seconds the server set for a running timer
 	pressedUntil        [ui.TotalActionSlots]float64
 	heldActions         uint32
 	offset              int
@@ -291,8 +291,8 @@ func (a *App) drawSkills(w, h int) {
 				a.sprites.Draw(tex, float32(x+cx), float32(y+cy), 32, 32, uv.U0, uv.V0, uv.U1, uv.V1, tint)
 				if until := a.skills.cooldowns[key.ID]; until > a.clock {
 					ratio := float32(1)
-					if skilltiming.ReuseSeconds(iconDef.ResetTime) > 0 {
-						ratio = float32((until - a.clock) / float64(skilltiming.ReuseSeconds(iconDef.ResetTime)))
+					if total := a.skillCooldownTotal(key.ID, iconDef); total > 0 {
+						ratio = float32(min(1, (until-a.clock)/total))
 					}
 					a.sprites.DrawCooldown(a.white, float32(x+cx), float32(y+cy), 32, ratio, [4]float32{1, 0, 0, 80.0 / 255})
 					text := fmt.Sprintf("%.0f", math.Ceil(until-a.clock))
@@ -470,7 +470,7 @@ func (a *App) drawActionBar(w, h int) {
 		d := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]
 		slot := &slots[i]
 		slot.Cooldown = max(0, a.skills.cooldowns[k.ID]-a.clock)
-		slot.CooldownDuration = float64(skilltiming.ReuseSeconds(d.ResetTime))
+		slot.CooldownDuration = a.skillCooldownTotal(k.ID, d)
 		slot.Label, slot.Level = fmt.Sprintf("%s Lv%d | MP %d SP %d", d.Name, k.Level, d.MP, d.SP), k.Level
 		if file, uv, ok := ui.SkillIcon(d.Icon); ok {
 			slot.Icon, slot.UV = a.assets.Texture("interface/"+file), uv

@@ -1490,13 +1490,13 @@ func PartyGlobalInvitePacket(name string) []byte {
 
 **`0x7F16` — GXSkillCooldown**
 
-Declarations: [proto.GXSkillCooldown](../../internal/proto/skill_cooldown.go#L8).
+Declarations: [proto.GXSkillCooldown](../../internal/proto/skill_cooldown.go#L10).
 
-Source notes: GXSkillCooldown tells the client that a skill's reuse timer has started without an action of the player: skill uint16, remaining seconds uint16. Potential skills use it when they trigger by themselves.
+Source notes: GXSkillCooldown tells the client that a skill's reuse timer has started by itself: skill uint16, remaining seconds uint16, total seconds uint16. Total is what a full timer bar represents; 0 keeps the current one. A Potential triggering, a cooldown shortened by a cooldown reduction and a reduction applied to a timer that is already running all use it.
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [tickPotentials (server/internal/world/potential.go)](../../server/internal/world/potential.go#L23)
+**S→C serializers:** [sendSkillCooldown (server/internal/world/cooldown_reduction.go)](../../server/internal/world/cooldown_reduction.go#L33)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L801)
 
@@ -1504,44 +1504,17 @@ Source notes: GXSkillCooldown tells the client that a skill's reuse timer has st
 
 These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
 
-<details><summary>tickPotentials — server/internal/world/potential.go</summary>
+<details><summary>sendSkillCooldown — server/internal/world/cooldown_reduction.go</summary>
 
-[Source definition](../../server/internal/world/potential.go#L23)
+[Source definition](../../server/internal/world/cooldown_reduction.go#L33)
 
 ```go
-func (s *Session) tickPotentials(now time.Time) {
-	if s.char == nil || s.dead || len(s.skills) == 0 {
-		return
-	}
-	var st CharacterStats
-	haveStats := false
-	for _, k := range s.skills {
-		def := db.MustDefs().Skill(k.SkillID, k.Level)
-		if !isPotential(def) || def.LimitHP == 0 || !s.skillReady(k.SkillID) || s.hasBuff(k.SkillID) {
-			continue
-		}
-		if !haveStats {
-			st, haveStats = s.stats(), true
-		}
-		// Strictly below the margin: HP / MaxHP < LimitHP percent.
-		if st.MaxHP == 0 || st.CurrentHP == 0 || uint64(st.CurrentHP)*100 >= uint64(def.LimitHP)*uint64(st.MaxHP) {
-			continue
-		}
-		if _, ok := s.addEffect(def, 0, s.char.ID); !ok {
-			continue // refused: no reuse is spent
-		}
-		reuse := skilltiming.ReuseSeconds(def.ResetTimeSeconds)
-		s.skillCooldowns[k.SkillID] = now.Add(time.Duration(reuse) * time.Second)
-		k.Delay = int16(min(reuse, 32767))
-		if err := db.SaveCharacterSkill(s.char.ID, k); err != nil {
-			s.log.Printf("GX Server World failed to save potential cooldown: %v", err)
-		}
-		w := packet.New(packet.Opcode(proto.GXSkillCooldown))
-		w.U16(k.SkillID)
-		w.U16(uint16(min(reuse, 65535)))
-		s.send(w.MustFinish(), "GX potential reuse started")
-		s.log.Printf("GX Server World potential triggered skill_id=%d level=%d hp=%d/%d", k.SkillID, k.Level, st.CurrentHP, st.MaxHP)
-	}
+func (s *Session) sendSkillCooldown(skillID, remaining, total uint16) {
+	w := packet.New(packet.Opcode(proto.GXSkillCooldown))
+	w.U16(skillID)
+	w.U16(remaining)
+	w.U16(total)
+	s.send(w.MustFinish(), "GX skill reuse")
 }
 ```
 
@@ -1549,21 +1522,21 @@ func (s *Session) tickPotentials(now time.Time) {
 
 <details><summary>DecodeSkillCooldown — internal/proto/skill_cooldown.go</summary>
 
-[Source definition](../../internal/proto/skill_cooldown.go#L12)
+[Source definition](../../internal/proto/skill_cooldown.go#L14)
 
 ```go
 func DecodeSkillCooldown(p []byte) (v SkillCooldown, err error) {
-	if len(p) != 6 {
+	if len(p) != 8 {
 		return v, fmt.Errorf("invalid GX skill cooldown length")
 	}
 	r := NewReader(p)
-	v.Skill, v.Seconds = r.U16(), r.U16()
+	v.Skill, v.Seconds, v.Total = r.U16(), r.U16(), r.U16()
 	return v, r.Err()
 }
 ```
 
 ```go
-type SkillCooldown struct{ Skill, Seconds uint16 }
+type SkillCooldown struct{ Skill, Seconds, Total uint16 }
 ```
 
 </details>

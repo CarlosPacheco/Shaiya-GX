@@ -14,7 +14,7 @@ Declarations: [packet.CharacterEnteredMap](../../server/internal/packet/packet.g
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L204)
 
-**S→C serializers:** [buildCharacterEnteredMapGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L495)
+**S→C serializers:** [buildCharacterEnteredMapGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L498)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1242)
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterEnteredMapGuild — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L495)
+[Source definition](../../server/internal/world/character.go#L498)
 
 ```go
 func buildCharacterEnteredMapGuild(ch *db.Character, isAdmin, firstLoad bool, guildID uint32) []byte {
@@ -643,7 +643,7 @@ Declarations: [packet.CharacterMapTeleport](../../server/internal/packet/packet.
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterMapPosition (server/internal/world/character.go)](../../server/internal/world/character.go#L515)
+**S→C serializers:** [buildCharacterMapPosition (server/internal/world/character.go)](../../server/internal/world/character.go#L518)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1176)
 
@@ -653,7 +653,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterMapPosition — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L515)
+[Source definition](../../server/internal/world/character.go#L518)
 
 ```go
 func buildCharacterMapPosition(ch *db.Character) []byte {
@@ -1237,7 +1237,7 @@ Declarations: [packet.StatsReset](../../server/internal/packet/packet.go#L83), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildStatsReset (server/internal/world/character.go)](../../server/internal/world/character.go#L455)
+**S→C serializers:** [buildStatsReset (server/internal/world/character.go)](../../server/internal/world/character.go#L458)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L669)
 
@@ -1247,7 +1247,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildStatsReset — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L455)
+[Source definition](../../server/internal/world/character.go#L458)
 
 ```go
 func buildStatsReset(statPoint, str, rec, intel, wis, dex, luc uint16) []byte {
@@ -1824,7 +1824,7 @@ Source notes: Request bag,slot,hair,face,height,sex:u8; reply charId:u32,hair,fa
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L81)
 
-**S→C serializers:** [buildChangeAppearance (server/internal/world/character.go)](../../server/internal/world/character.go#L593)
+**S→C serializers:** [buildChangeAppearance (server/internal/world/character.go)](../../server/internal/world/character.go#L596)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1279)
 
@@ -1834,7 +1834,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildChangeAppearance — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L593)
+[Source definition](../../server/internal/world/character.go#L596)
 
 ```go
 func buildChangeAppearance(characterID uint32, hair, face, height, sex uint8) []byte {

@@ -67,7 +67,7 @@ func TestPotentialTriggersBelowItsMarginOncePerReuse(t *testing.T) {
 	for len(wire) > 0 {
 		if p := <-wire; proto.Op(p) == proto.GXSkillCooldown {
 			c, err := proto.DecodeSkillCooldown(p)
-			notified = err == nil && c.Skill == 24 && c.Seconds == 180
+			notified = err == nil && c.Skill == 24 && c.Seconds == 180 && c.Total == 180
 		}
 	}
 	if !notified {
@@ -86,7 +86,7 @@ func TestPotentialTriggersBelowItsMarginOncePerReuse(t *testing.T) {
 		t.Fatal("did not trigger after its reuse ended")
 	}
 
-	// Below 10 percent Motive triggers too, with its ability 19 left unmodeled.
+	// Below 10 percent Motive triggers too (its cooldown reduction is tested apart).
 	s.char.CurrentHP = before.MaxHP * 9 / 100
 	s.tickPotentials(now)
 	if !s.hasBuff(28) {

@@ -281,6 +281,12 @@ func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef, prepared 
 	s.lastSkillID, s.lastSkillAt = k.SkillID, s.lastActionAt
 	s.commitAttackStop(now)
 	reuse := skilltiming.ReuseSeconds(def.ResetTimeSeconds)
+	if reuse > 0 && !isPotential(def) {
+		if cut := s.cooldownCut(); cut > 0 {
+			reuse = reuse - min(reuse, cut)
+			s.sendSkillCooldown(k.SkillID, reuse, reuse) // a shortened timer starts with a full bar
+		}
+	}
 	if reuse == 0 {
 		delete(s.skillCooldowns, k.SkillID)
 	} else {

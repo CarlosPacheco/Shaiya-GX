@@ -52,6 +52,8 @@ func applyAbility(e *EquipmentStats, effect, kind uint8, value int32) bool {
 		e.MoveSpeed += value
 	case 18:
 		e.Critical += value
+	case 19:
+		e.CooldownCut += value
 	case 20, 21, 22:
 		e.Mods[kind-20].Accuracy += value
 	case 23, 24, 25:

@@ -63,6 +63,7 @@ func setAttack(s *CharacterStats, e EquipmentStats) {
 	s.Variance, s.AttackAttr, s.RangedWeapon, s.ItemAttack = e.Variance, e.AttackAttr, e.RangedWeapon, e.ItemAttack
 	s.DefenseAttr, s.CrossRoad, s.Range, s.AttackSpeed = e.DefenseAttr, e.CrossRoad, e.Range, e.AttackSpeed
 	s.SPCostCut, s.MPCostCut, s.MoveSpeed, s.Disabled = e.SPCostCut, e.MPCostCut, e.MoveSpeed, e.Disabled
+	s.CooldownCut = e.CooldownCut
 	s.SitRecover = e.SitRecoverPct
 
 	physical := attackMelee

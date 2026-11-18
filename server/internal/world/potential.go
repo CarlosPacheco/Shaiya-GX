@@ -4,10 +4,8 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/potential"
-	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
-	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
 
 func isPotential(def *db.SkillDef) bool {
@@ -18,8 +16,9 @@ func isPotential(def *db.SkillDef) bool {
 // learned Potential whose LimitHP percent is above the character's current HP
 // percent applies itself as an ordinary buff for its KeepTime and starts its
 // reuse timer. It cannot be cast, so the reuse only ever starts here. Its
-// abilities are the ones in the definition; Potential Motive's ability 19
-// (skip the preparation of short-reuse spells) is intentionally not modeled.
+// abilities are the ones in the definition (Potential Motive's ability 19 is a
+// cooldown reduction, see cooldown_reduction.go). The effect is applied before
+// the Potential's own reuse starts, and a reduction never shortens it.
 func (s *Session) tickPotentials(now time.Time) {
 	if s.char == nil || s.dead || len(s.skills) == 0 {
 		return
@@ -47,10 +46,7 @@ func (s *Session) tickPotentials(now time.Time) {
 		if err := db.SaveCharacterSkill(s.char.ID, k); err != nil {
 			s.log.Printf("GX Server World failed to save potential cooldown: %v", err)
 		}
-		w := packet.New(packet.Opcode(proto.GXSkillCooldown))
-		w.U16(k.SkillID)
-		w.U16(uint16(min(reuse, 65535)))
-		s.send(w.MustFinish(), "GX potential reuse started")
+		s.sendSkillCooldown(k.SkillID, reuse, reuse)
 		s.log.Printf("GX Server World potential triggered skill_id=%d level=%d hp=%d/%d", k.SkillID, k.Level, st.CurrentHP, st.MaxHP)
 	}
 }
