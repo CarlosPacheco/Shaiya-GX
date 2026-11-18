@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"image"
-	"image/color"
 	"strconv"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 )
@@ -56,8 +56,8 @@ func cashEntry(value string) *widget.Entry {
 }
 
 func propertyBox(title, source string, input fyne.CanvasObject) fyne.CanvasObject {
-	background := canvas.NewRectangle(color.NRGBA{R: 245, G: 247, B: 250, A: 255})
-	background.StrokeColor = color.NRGBA{R: 207, G: 215, B: 225, A: 255}
+	background := canvas.NewRectangle(theme.Color(propertyFill))
+	background.StrokeColor = theme.Color(propertyEdge)
 	background.StrokeWidth = 1
 	return container.NewStack(background, container.NewPadded(container.NewVBox(small(title+" · "+source), input)))
 }

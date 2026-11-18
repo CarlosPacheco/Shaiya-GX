@@ -4,10 +4,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"image/color"
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -20,15 +20,10 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/studio"
 )
 
-type studioTheme struct{ fyne.Theme }
-
-func (t studioTheme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) color.Color {
-	return t.Theme.Color(name, theme.VariantLight)
-}
-
 type editor struct {
 	window              fyne.Window
 	root                string
+	preferences         studio.Preferences
 	dataDir, dbPath     string
 	definitions         *studio.Definitions
 	definitionDraft     studio.DefinitionEdits
@@ -53,7 +48,6 @@ func main() {
 		log.Fatal(err)
 	}
 	instance := app.NewWithID("com.shaiyagx.studio")
-	instance.Settings().SetTheme(studioTheme{Theme: theme.DefaultTheme()})
 	window := instance.NewWindow("GX Studio")
 	e := &editor{window: window, root: filepath.Dir(executable)}
 	window.Resize(fyne.NewSize(1120, 760))
@@ -81,6 +75,11 @@ func (e *editor) start() {
 	e.project, e.draft, e.assets = nil, nil, nil
 	e.definitions, e.definitionDraft = nil, nil
 	e.cashQuery, e.cashCode, e.cashSection = "", "", 0
+	preferences, preferencesErr := studio.LoadPreferences(e.root)
+	themeIndex := max(slices.Index(themeIDs, preferences.Theme), 0)
+	preferences.Theme = themeIDs[themeIndex]
+	e.preferences = preferences
+	fyne.CurrentApp().Settings().SetTheme(studioTheme{Theme: theme.DefaultTheme(), id: preferences.Theme})
 	pending, err := studio.Pending(e.root)
 	e.pending = pending
 	if err != nil {
@@ -96,9 +95,11 @@ func (e *editor) start() {
 	data.SetPlaceHolder("Client data folder")
 	db := widget.NewEntry()
 	db.SetPlaceHolder("SQLite database")
-	paths, preferencesErr := studio.LoadInstallationPaths(e.root)
-	data.SetText(paths.DataDir)
-	db.SetText(paths.Database)
+	data.SetText(preferences.DataDir)
+	db.SetText(preferences.Database)
+	appearance := widget.NewSelect(themeOptions, nil)
+	appearance.SetSelectedIndex(themeIndex)
+
 	detect := widget.NewButtonWithIcon("Detect SQLite", theme.SearchIcon(), func() { e.detect(data, db) })
 	selectFolder := widget.NewButton("Browse…", func() {
 		dialog.ShowFolderOpen(func(dir fyne.ListableURI, err error) {
@@ -149,12 +150,31 @@ func (e *editor) start() {
 	if preferencesErr != nil {
 		e.status.SetText("Could not read gx-studio.ini: " + preferencesErr.Error())
 	}
-	title := widget.NewLabelWithStyle("Open an installation", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	fields := container.NewVBox(title,
-		field("Client data folder", "Cash.SData", container.NewBorder(nil, nil, nil, selectFolder, data)),
-		field("Server database", studio.ProductTable, container.NewBorder(nil, nil, nil, container.NewHBox(detect, selectDB), db)),
-		container.NewHBox(mode, open), e.status)
-	e.window.SetContent(container.NewPadded(container.NewBorder(nil, nil, nil, nil, container.NewVBox(fields))))
+	render := func() {
+		title := widget.NewLabelWithStyle("Open an installation", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		fields := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewHBox(widget.NewLabel("Theme"), appearance), title),
+			field("Client data folder", "Cash.SData", container.NewBorder(nil, nil, nil, selectFolder, data)),
+			field("Server database", studio.ProductTable, container.NewBorder(nil, nil, nil, container.NewHBox(detect, selectDB), db)),
+			container.NewHBox(mode, open), e.status)
+		e.window.SetContent(container.NewPadded(container.NewBorder(nil, nil, nil, nil, container.NewVBox(fields))))
+	}
+	appearance.OnChanged = func(label string) {
+		index := slices.Index(themeOptions, label)
+		if index < 0 || e.preferences.Theme == themeIDs[index] {
+			return
+		}
+		if e.busy {
+			appearance.SetSelectedIndex(slices.Index(themeIDs, e.preferences.Theme))
+			return
+		}
+		e.preferences.Theme = themeIDs[index]
+		fyne.CurrentApp().Settings().SetTheme(studioTheme{Theme: theme.DefaultTheme(), id: e.preferences.Theme})
+		render()
+		if err := studio.SavePreferences(e.root, e.preferences); err != nil {
+			e.status.SetText("Could not save gx-studio.ini: " + err.Error())
+		}
+	}
+	render()
 }
 
 var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills"}
@@ -178,6 +198,7 @@ func (e *editor) openKind(kind studio.Kind) {
 		return
 	}
 	dataDir, dbPath, existingAssets := e.dataDir, e.dbPath, e.assets
+	preferences := studio.Preferences{DataDir: dataDir, Database: dbPath, Theme: e.preferences.Theme}
 	e.run("Reading "+kind.RelativePath()+" and SQLite…", func() func() {
 		ctx := context.Background()
 		var project *studio.Project
@@ -192,12 +213,13 @@ func (e *editor) openKind(kind studio.Kind) {
 		var preferencesErr error
 		if err == nil && images == nil {
 			images = loadAssets(dataDir)
-			preferencesErr = studio.SaveInstallationPaths(e.root, studio.InstallationPaths{DataDir: dataDir, Database: dbPath})
+			preferencesErr = studio.SavePreferences(e.root, preferences)
 		}
 		return func() {
 			if e.showError(err) {
 				return
 			}
+			e.preferences = preferences
 			e.project, e.definitions, e.assets = project, definitions, images
 			e.draft, e.definitionDraft = nil, make(studio.DefinitionEdits)
 			if kind == studio.Cash {

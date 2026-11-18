@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"image"
-	"image/color"
 	"slices"
 	"strings"
 
@@ -22,7 +21,7 @@ var categories = []string{"Hidden (legacy)", "Popular", "Essentials", "Buffs", "
 var blankIcon = image.NewNRGBA(image.Rect(0, 0, 1, 1))
 
 func small(text string) *canvas.Text {
-	label := canvas.NewText(text, color.NRGBA{R: 83, G: 96, B: 111, A: 255})
+	label := canvas.NewText(text, theme.Color(mutedText))
 	label.TextSize = theme.TextSize() * .8
 	return label
 }

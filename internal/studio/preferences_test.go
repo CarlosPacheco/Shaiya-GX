@@ -2,20 +2,20 @@ package studio
 
 import "testing"
 
-func TestInstallationPathsRoundTrip(t *testing.T) {
+func TestPreferencesRoundTrip(t *testing.T) {
 	root := t.TempDir()
-	got, err := LoadInstallationPaths(root)
-	if err != nil || got != (InstallationPaths{}) {
+	got, err := LoadPreferences(root)
+	if err != nil || got != (Preferences{}) {
 		t.Fatalf("first launch: %+v, %v", got, err)
 	}
-	for _, want := range []InstallationPaths{
-		{DataDir: `C:\GX Studio\Client Data`, Database: `D:\GX Server\runtime\rapture.sqlite`},
+	for _, want := range []Preferences{
+		{DataDir: `C:\GX Studio\Client Data`, Database: `D:\GX Server\runtime\rapture.sqlite`, Theme: "dark-blue"},
 		{DataDir: `/home/test/Client "GX" /data`, Database: "/home/test/#archivo=1.sqlite"},
 	} {
-		if err := SaveInstallationPaths(root, want); err != nil {
+		if err := SavePreferences(root, want); err != nil {
 			t.Fatal(err)
 		}
-		got, err = LoadInstallationPaths(root)
+		got, err = LoadPreferences(root)
 		if err != nil || got != want {
 			t.Fatalf("got %+v, %v; want %+v", got, err, want)
 		}

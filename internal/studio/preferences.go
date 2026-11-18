@@ -12,13 +12,14 @@ import (
 
 const preferencesFile = "gx-studio.ini"
 
-type InstallationPaths struct {
+type Preferences struct {
 	DataDir  string
 	Database string
+	Theme    string
 }
 
-func LoadInstallationPaths(root string) (InstallationPaths, error) {
-	var paths InstallationPaths
+func LoadPreferences(root string) (Preferences, error) {
+	var paths Preferences
 	file, err := os.Open(filepath.Join(root, preferencesFile))
 	if errors.Is(err, os.ErrNotExist) {
 		return paths, nil
@@ -28,31 +29,33 @@ func LoadInstallationPaths(root string) (InstallationPaths, error) {
 	}
 	defer file.Close()
 
-	inInstallation := false
+	section := ""
 	lines := bufio.NewScanner(file)
 	for lines.Scan() {
 		line := strings.TrimSpace(lines.Text())
 		if strings.HasPrefix(line, "[") {
-			inInstallation = line == "[Installation]"
+			section = line
 			continue
 		}
 		key, value, found := strings.Cut(line, "=")
-		if !inInstallation || !found {
+		if !found {
 			continue
 		}
 		var target *string
-		switch strings.TrimSpace(key) {
-		case "ClientData":
+		switch section + strings.TrimSpace(key) {
+		case "[Installation]ClientData":
 			target = &paths.DataDir
-		case "Database":
+		case "[Installation]Database":
 			target = &paths.Database
+		case "[Appearance]Theme":
+			target = &paths.Theme
 		default:
 			continue
 		}
 		value = strings.TrimSpace(value)
 		if strings.HasPrefix(value, `"`) {
 			if value, err = strconv.Unquote(value); err != nil {
-				return paths, fmt.Errorf("%s: invalid %s path: %w", preferencesFile, key, err)
+				return paths, fmt.Errorf("%s: invalid %s value: %w", preferencesFile, key, err)
 			}
 		}
 		*target = value
@@ -60,7 +63,10 @@ func LoadInstallationPaths(root string) (InstallationPaths, error) {
 	return paths, lines.Err()
 }
 
-func SaveInstallationPaths(root string, paths InstallationPaths) error {
+func SavePreferences(root string, paths Preferences) error {
 	data := fmt.Appendf(nil, "[Installation]\nClientData=%q\nDatabase=%q\n", paths.DataDir, paths.Database)
+	if paths.Theme != "" {
+		data = fmt.Appendf(data, "\n[Appearance]\nTheme=%s\n", paths.Theme)
+	}
 	return writeAtomic(filepath.Join(root, preferencesFile), data, 0600)
 }

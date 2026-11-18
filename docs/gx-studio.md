@@ -36,7 +36,9 @@ Keep the executable in a writable folder for the local backups and recovery jour
 
 ## Open and edit
 
-1. Choose the client's loose `data/` directory. Studio checks known portable
+1. Choose Light, Dark or Dark blue on the opening screen. Studio remembers the
+   theme in `gx-studio.ini` even before an installation is opened. Light is the default.
+   Choose the client's loose `data/` directory. Studio checks known portable
    runtime locations and the `RAPTURE_DB_PATH` environment override. The database
    picker also accepts an explicit existing SQLite file. Verify the displayed path
    before opening. Studio remembers the last successfully opened paths in
