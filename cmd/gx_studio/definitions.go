@@ -18,6 +18,10 @@ import (
 )
 
 func (e *editor) definitionCatalog() {
+	if e.definitions.Kind == studio.Items {
+		e.itemCatalog()
+		return
+	}
 	e.showDefinitionSection(-1, "", false, -1)
 }
 
@@ -71,9 +75,6 @@ func (e *editor) showDefinitionSection(sectionKey int, queryText string, linkedO
 	}
 	label := func(index int) string {
 		r := catalog.Records[index]
-		if catalog.Kind == studio.Items {
-			return fmt.Sprintf("%d · %s", r.ID, name(index))
-		}
 		return fmt.Sprintf("%d / %d · %s", r.ID, r.Level, name(index))
 	}
 
@@ -94,8 +95,6 @@ func (e *editor) showDefinitionSection(sectionKey int, queryText string, linkedO
 		text := label(index)
 		if r.DatabaseRow {
 			switch catalog.Kind {
-			case studio.Items:
-				text += fmt.Sprintf("\n\nItemID %d  ·  Type %d  ·  TypeID %d", r.ID, r.ID/1000, r.ID%1000)
 			case studio.NPCSkills:
 				text += fmt.Sprintf("\n\nSkillID %d  ·  SkillLevel 100 in SQLite", r.ID)
 			default:
@@ -170,12 +169,8 @@ func (e *editor) showDefinitionSection(sectionKey int, queryText string, linkedO
 	if catalog.Encrypted {
 		top.Add(small("SEED encrypted  ·  Encoding preserved on save"))
 	}
-	title, source := "Effect types", "SData.TypeEffect"
-	if catalog.Kind == studio.Items {
-		title, source = "Item types", "SData.Type"
-	}
 	e.window.SetContent(container.NewPadded(container.NewBorder(top, e.status, nil, nil,
-		sectionBrowser(title, source, sections, sectionRows[sectionKey], func(row int) {
+		sectionBrowser("Effect types", "SData.TypeEffect", sections, sectionRows[sectionKey], func(row int) {
 			sectionKey = keys[row]
 			filter()
 		}, split))))
@@ -203,15 +198,32 @@ func (e *editor) definitionIcon(kind studio.Kind, id, icon uint32) image.Image {
 }
 
 func (e *editor) editDefinition(index int, apply func(map[string]string)) {
+	var d *dialog.CustomDialog
+	body, _ := e.definitionForm(index, false, func(values map[string]string) {
+		d.Hide()
+		apply(values)
+	})
+	if body == nil {
+		return
+	}
+	d = dialog.NewCustom(e.definitions.Records[index].Name, "Cancel", body, e.window)
+	d.Resize(fyne.NewSize(860, 655))
+	d.Show()
+}
+
+func (e *editor) definitionForm(index int, inline bool, apply func(map[string]string)) (fyne.CanvasObject, func() bool) {
 	catalog := e.definitions
 	record := catalog.Records[index]
 	server, err := catalog.SQLValues(context.Background(), index)
 	if e.showError(err) {
-		return
+		return nil, nil
 	}
 	tabs := container.NewAppTabs()
 	sections := make(map[string]*fyne.Container)
 	inputs := make(map[string]*widget.Entry)
+	initial := make(map[string]string)
+	iconPreview := newIcon(48)
+	var iconControl *fyne.Container
 	for _, f := range catalog.Kind.Fields() {
 		section := sections[f.Section]
 		if section == nil {
@@ -225,20 +237,34 @@ func (e *editor) editDefinition(index int, apply func(map[string]string)) {
 			value = original
 		}
 		input := editText(value, f.Source == "Description")
-		inputs[f.Source] = input
-		source := catalog.Kind.RelativePath() + " · " + f.Source
+		if inline && f.Source != "Description" {
+			input = inspectorEntry(value)
+		}
+		inputs[f.Source], initial[f.Source] = input, value
+		source := "SData." + f.Source
+		if !inline {
+			source = catalog.Kind.RelativePath() + " · " + f.Source
+		}
 		if f.Column != "" {
 			source += "  ·  " + f.Column
 		}
 		var fieldInput fyne.CanvasObject = input
 		if f.Source == "Icon" {
-			preview := newIcon(48)
 			input.OnChanged = func(text string) {
 				id, _ := strconv.ParseUint(strings.TrimSpace(text), 10, 16)
-				showIcon(preview, e.definitionIcon(catalog.Kind, record.ID, uint32(id)))
+				showIcon(iconPreview, e.definitionIcon(catalog.Kind, record.ID, uint32(id)))
 			}
 			input.OnChanged(input.Text)
-			fieldInput = container.NewBorder(nil, nil, preview, nil, input)
+			if inline {
+				pick := widget.NewButton("", func() {
+					e.pickItemIcon(uint8(record.ID/1000), func(id uint8) {
+						input.SetText(strconv.Itoa(int(id)))
+					})
+				})
+				iconControl = container.NewBorder(nil, nil, container.NewStack(pick, iconPreview), nil, wrapped("Click icon to choose"))
+			} else {
+				fieldInput = container.NewBorder(nil, nil, iconPreview, nil, input)
+			}
 		}
 		disabled := f.Column != "" && !record.DatabaseRow
 		if options := readableValues(f.Source); len(options) != 0 {
@@ -268,14 +294,34 @@ func (e *editor) editDefinition(index int, apply func(map[string]string)) {
 		if disabled {
 			input.Disable()
 		}
-		section.Add(field(f.Label, source, fieldInput))
+		if inline {
+			if f.Source == "Description" {
+				preview := widget.NewLabel(input.Text)
+				preview.Truncation = fyne.TextTruncateEllipsis
+				button := widget.NewButton("Edit…", func() {
+					text := editText(input.Text, true)
+					d := dialog.NewCustomConfirm("Description · SData.Description", "Apply", "Cancel", text, func(ok bool) {
+						if ok {
+							input.SetText(text.Text)
+							preview.SetText(text.Text)
+						}
+					}, e.window)
+					d.Resize(fyne.NewSize(540, 260))
+					d.Show()
+				})
+				fieldInput = container.NewBorder(nil, nil, nil, button, preview)
+			}
+			section.Add(propertyBox(f.Label, source, fieldInput))
+		} else {
+			section.Add(field(f.Label, source, fieldInput))
+		}
 		if dbValue, exists := server[f.Column]; exists && dbValue != original {
 			section.Add(wrapped("Current SQLite value · " + dbValue))
 		}
 
 	}
-	var d *dialog.CustomDialog
 	errorText := wrapped("")
+	errorText.Hide()
 	confirm := widget.NewButton("Apply to draft", func() {
 		changes := make(map[string]string)
 		for _, f := range catalog.Kind.Fields() {
@@ -290,15 +336,21 @@ func (e *editor) editDefinition(index int, apply func(map[string]string)) {
 				changes[f.Source] = value
 			}
 		}
+		if raw, changed := changes["Icon"]; inline && changed {
+			if id, err := strconv.ParseUint(raw, 10, 8); err != nil || id != 0 && e.assets.itemIconOptions(uint8(record.ID / 1000))[uint8(id)] == nil {
+				errorText.SetText("That icon is unavailable in this item's client atlas.")
+				errorText.Show()
+				return
+			}
+		}
 		if err := catalog.ValidateEdit(index, changes); err != nil {
 			errorText.SetText(err.Error())
+			errorText.Show()
 			return
 		}
-		d.Hide()
 		apply(changes)
 	})
 	confirm.Importance = widget.HighImportance
-	cancel := widget.NewButton("Cancel", func() { d.Hide() })
 	identity := fmt.Sprintf("Skill ID %d · SkillLevel %d", record.ID, record.Level)
 	switch catalog.Kind {
 	case studio.Items:
@@ -308,10 +360,23 @@ func (e *editor) editDefinition(index int, apply func(map[string]string)) {
 			identity = fmt.Sprintf("Skill ID %d · SData level 1 → SQLite SkillLevel 100", record.ID)
 		}
 	}
-	d = dialog.NewCustomWithoutButtons(record.Name, container.NewBorder(
-		small(identity), container.NewVBox(errorText, container.NewHBox(cancel, confirm)), nil, nil, tabs), e.window)
-	d.Resize(fyne.NewSize(860, 655))
-	d.Show()
+	header := container.NewVBox(small(identity))
+	if inline {
+		if iconControl != nil {
+			header.Add(iconControl)
+		}
+		if !record.DatabaseRow {
+			header.Add(wrapped("Client-only editing · no matching SQLite row"))
+		}
+	}
+	return container.NewBorder(header, container.NewVBox(errorText, container.NewHBox(confirm)), nil, nil, tabs), func() bool {
+		for field, input := range inputs {
+			if input.Text != initial[field] {
+				return true
+			}
+		}
+		return false
+	}
 }
 
 func (e *editor) reviewDefinitions() {

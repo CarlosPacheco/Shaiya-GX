@@ -51,7 +51,10 @@ Keep the executable in a writable folder for the local backups and recovery jour
    Apply edits to the draft before saving both catalogs. The differences view shows how the draft
    compares with SQLite and can import a selected SQLite product's fields. A
    product code edit removes the old SQLite key and adds the new one.
-3. The left pane groups Items by the native `Type` and skills by `TypeEffect`.
+3. Items opens by family. The compact list shows type, type ID, name, level, model and
+   icon. Select a row to edit it in the right pane and click the preview to pick
+   an inventory icon from that item's client atlas. Skill catalogs are grouped
+   by `TypeEffect`.
    Items and skills edit existing definitions. IDs, item families and skill
    ranks are fixed. Shared fields are enabled only for records with a unique
    SQLite counterpart. Appearance and description can be edited on the client

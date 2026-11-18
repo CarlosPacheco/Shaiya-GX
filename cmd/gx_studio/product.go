@@ -45,9 +45,9 @@ func (e *editor) editProduct(original cash.Product, apply func(cash.Product)) {
 	d.Show()
 }
 
-// Cash fields sit inside the inspector scroll. Disable the Entry's own
+// Fields sit inside the inspector scroll. Disable the Entry's own
 // scroller so hovering a value never consumes the inspector's wheel events.
-func cashEntry(value string) *widget.Entry {
+func inspectorEntry(value string) *widget.Entry {
 	entry := widget.NewEntry()
 	entry.Wrapping = fyne.TextWrapOff
 	entry.Scroll = container.ScrollNone
@@ -64,11 +64,11 @@ func propertyBox(title, source string, input fyne.CanvasObject) fyne.CanvasObjec
 
 func (e *editor) productForm(original cash.Product, apply func(cash.Product)) (fyne.CanvasObject, func() bool) {
 	readOnly := e.project.Encrypted
-	name, code := cashEntry(original.Name), cashEntry(original.Code)
+	name, code := inspectorEntry(original.Name), inspectorEntry(original.Code)
 	description := original.Description
-	index := cashEntry(strconv.FormatUint(uint64(original.Index), 10))
-	cost := cashEntry(strconv.FormatUint(uint64(original.Cost), 10))
-	icon := cashEntry(strconv.FormatUint(uint64(original.Icon), 10))
+	index := inspectorEntry(strconv.FormatUint(uint64(original.Index), 10))
+	cost := inspectorEntry(strconv.FormatUint(uint64(original.Cost), 10))
+	icon := inspectorEntry(strconv.FormatUint(uint64(original.Icon), 10))
 	options := categories[1:]
 	firstBag := 1
 	if original.Bag == 0 {
@@ -143,8 +143,8 @@ func (e *editor) productForm(original cash.Product, apply func(cash.Product)) (f
 	group := container.NewVBox()
 	for i, item := range original.Items {
 		slot := productSlot{
-			id:    cashEntry(strconv.FormatUint(uint64(item.ItemID), 10)),
-			count: cashEntry(strconv.FormatUint(uint64(item.Count), 10)),
+			id:    inspectorEntry(strconv.FormatUint(uint64(item.ItemID), 10)),
+			count: inspectorEntry(strconv.FormatUint(uint64(item.Count), 10)),
 		}
 		slots[i] = slot
 		itemImage := newIcon(22)

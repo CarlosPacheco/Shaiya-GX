@@ -18,7 +18,7 @@ type catalogSection struct {
 }
 
 // sectionBrowser keeps filters visible beside the catalog and its inspector.
-func sectionBrowser(title, source string, sections []catalogSection, selected int, onSelected func(int), content fyne.CanvasObject) fyne.CanvasObject {
+func sectionBrowser(title, source string, sections []catalogSection, selected int, onSelected func(int), content fyne.CanvasObject) *container.Split {
 	list := widget.NewList(func() int { return len(sections) }, func() fyne.CanvasObject {
 		name := widget.NewLabel("")
 		name.Truncation = fyne.TextTruncateEllipsis
@@ -43,23 +43,18 @@ func definitionSections(catalog *studio.Definitions, drafts studio.DefinitionEdi
 	values := make([]int, len(catalog.Records))
 	counts := make(map[int]int)
 	var effect studio.Field
-	if catalog.Kind != studio.Items {
-		for _, field := range catalog.Kind.Fields() {
-			if field.Source == "TypeEffect" {
-				effect = field
-				break
-			}
+	for _, field := range catalog.Kind.Fields() {
+		if field.Source == "TypeEffect" {
+			effect = field
+			break
 		}
 	}
-	for i, record := range catalog.Records {
-		key := int(record.ID / 1000)
-		if catalog.Kind != studio.Items {
-			raw := catalog.Value(i, effect)
-			if value, ok := drafts[i][effect.Source]; ok {
-				raw = value
-			}
-			key, _ = strconv.Atoi(raw)
+	for i := range catalog.Records {
+		raw := catalog.Value(i, effect)
+		if value, ok := drafts[i][effect.Source]; ok {
+			raw = value
 		}
+		key, _ := strconv.Atoi(raw)
 		values[i] = key
 		counts[key]++
 	}
@@ -71,29 +66,16 @@ func definitionSections(catalog *studio.Definitions, drafts studio.DefinitionEdi
 	sections := []catalogSection{{name: "All records", count: len(catalog.Records)}}
 	rows := make(map[int]int, len(counts))
 	for _, key := range keys {
-		name := fmt.Sprintf("Type %d", key)
-		if catalog.Kind == studio.Items {
-			if friendly, ok := namedItemTypes[key]; ok {
-				name += " · " + friendly
-			}
-		} else {
-			name = fmt.Sprintf("Effect %d", key)
-			for _, option := range readableValues("TypeEffect") {
-				code, _, _ := strings.Cut(option, " · ")
-				if code == strconv.Itoa(key) {
-					name = option
-					break
-				}
+		name := fmt.Sprintf("Effect %d", key)
+		for _, option := range readableValues("TypeEffect") {
+			code, _, _ := strings.Cut(option, " · ")
+			if code == strconv.Itoa(key) {
+				name = option
+				break
 			}
 		}
 		rows[key] = len(sections)
 		sections = append(sections, catalogSection{name: name, count: counts[key]})
 	}
 	return sections, rows, values
-}
-
-var namedItemTypes = map[int]string{
-	25: "Goods", 27: "Quest items", 28: "Quest items", 29: "Quest items",
-	30: "Lapis", 38: "Goods", 44: "Goods", 78: "Goods", 79: "Goods", 80: "Goods",
-	99: "Quest items", 100: "Goods", 101: "Goods", 102: "Goods", 103: "Goods",
 }

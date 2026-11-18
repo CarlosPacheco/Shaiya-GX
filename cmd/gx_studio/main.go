@@ -21,21 +21,24 @@ import (
 )
 
 type editor struct {
-	window              fyne.Window
-	root                string
-	preferences         studio.Preferences
-	dataDir, dbPath     string
-	definitions         *studio.Definitions
-	definitionDraft     studio.DefinitionEdits
-	cashQuery, cashCode string
-	cashSection         int
-	cashFormDirty       func() bool
-	project             *studio.Project
-	draft               []cash.Product
-	assets              *assets
-	status              *widget.Label
-	pending             bool
-	busy                bool
+	window                 fyne.Window
+	root                   string
+	preferences            studio.Preferences
+	dataDir, dbPath        string
+	definitions            *studio.Definitions
+	definitionDraft        studio.DefinitionEdits
+	cashQuery, cashCode    string
+	cashSection            int
+	cashFormDirty          func() bool
+	itemFormDirty          func() bool
+	itemSection, itemFocus int
+	itemQuery              string
+	project                *studio.Project
+	draft                  []cash.Product
+	assets                 *assets
+	status                 *widget.Label
+	pending                bool
+	busy                   bool
 }
 
 func main() {
@@ -60,7 +63,7 @@ func (e *editor) leave(next func()) {
 	if e.busy {
 		return
 	}
-	if !e.pending && ((e.project != nil && (e.dirty() || e.cashFormDirty != nil && e.cashFormDirty())) || len(e.definitionDraft) > 0) {
+	if !e.pending && ((e.project != nil && (e.dirty() || e.cashFormDirty != nil && e.cashFormDirty())) || len(e.definitionDraft) > 0 || e.itemFormDirty != nil && e.itemFormDirty()) {
 		dialog.ShowConfirm("Discard draft?", "Your unapplied catalog edits will be discarded.", func(ok bool) {
 			if ok {
 				next()
@@ -74,6 +77,7 @@ func (e *editor) leave(next func()) {
 func (e *editor) start() {
 	e.project, e.draft, e.assets = nil, nil, nil
 	e.definitions, e.definitionDraft = nil, nil
+	e.itemFormDirty, e.itemSection, e.itemFocus, e.itemQuery = nil, 0, -1, ""
 	e.cashQuery, e.cashCode, e.cashSection = "", "", 0
 	preferences, preferencesErr := studio.LoadPreferences(e.root)
 	themeIndex := max(slices.Index(themeIDs, preferences.Theme), 0)
@@ -220,6 +224,7 @@ func (e *editor) openKind(kind studio.Kind) {
 				return
 			}
 			e.preferences = preferences
+			e.itemFormDirty = nil
 			e.project, e.definitions, e.assets = project, definitions, images
 			e.draft, e.definitionDraft = nil, make(studio.DefinitionEdits)
 			if kind == studio.Cash {
