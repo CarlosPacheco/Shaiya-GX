@@ -187,23 +187,6 @@ func rayBox(origin, direction, lo, hi render.V3) (float32, bool) {
 	return near, true
 }
 
-// selfClicked reports whether the pointer is over the player's own model.
-func (a *App) selfClicked(in *platform.Input, w, h int) bool {
-	if a.wv == nil || a.wv.self == nil || a.scene3d == nil || a.state.SelfID == 0 || a.state.Self.Dead {
-		return false
-	}
-	origin, direction, ok := clickRay(in.MouseX, in.MouseY, w, h, a.scene3d.View.Mul(a.scene3d.Proj))
-	if !ok {
-		return false
-	}
-	lo, hi, valid := a.wv.self.WorldBounds()
-	if !valid {
-		return false
-	}
-	_, hit := rayBox(origin, direction, lo, hi)
-	return hit
-}
-
 // Grave accent cycles monsters in increasing distance, wrapping to the nearest; pointer selection also supports players.
 // Pointer selection uses the camera from the last rendered frame.
 func (a *App) pickMob(in *platform.Input, w, h int) uint32 {

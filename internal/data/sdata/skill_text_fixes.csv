@@ -41,9 +41,9 @@
 47,1,"Thors sprout from caster, dealing 8 damage periodically to anyone who approches within 4 meters and increasing aggro to caster.","Thorns sprout from caster, dealing 8 damage periodically to anyone who approaches within 2 meters and increasing aggro to caster."
 47,2,"Thors sprout from caster, dealing 25 damage periodically to anyone who approches within 4 meters and increasing more aggro to caster.","Thorns sprout from caster, dealing 25 damage periodically to anyone who approaches within 2 meters and increasing more aggro to caster."
 47,3,"Thors sprout from caster, dealing 65 damage to periodically anyone who approches within 4 meters and increasing much more aggro to caster.","Thorns sprout from caster, dealing 65 damage to periodically anyone who approaches within 2 meters and increasing much more aggro to caster."
-48,1,Area of Effect that deals 32 damage periodically to anyone who touches within 6 meters for 12 seconds.,Area of Effect that deals 32 damage periodically to anyone who touches within 3 meters for 12 seconds.
-48,2,Area of Effect that deals 50 damage periodically to anyone who touches within 8 meters for 12 seconds.,Area of Effect that deals 50 damage periodically to anyone who touches within 4 meters for 12 seconds.
-48,3,Area of Effect that deals 80 damage periodically to anyone who touches within 10 meters for 12 seconds.,Area of Effect that deals 80 damage periodically to anyone who touches within 5 meters for 12 seconds.
+48,1,Area of Effect that deals 32 damage periodically to anyone who touches within 6 meters for 12 seconds.,Places a curtain of fire on the ground that deals 32 fixed damage every half second to every enemy within 3 meters of it for 12 seconds.
+48,2,Area of Effect that deals 50 damage periodically to anyone who touches within 8 meters for 12 seconds.,Places a curtain of fire on the ground that deals 50 fixed damage every half second to every enemy within 4 meters of it for 12 seconds.
+48,3,Area of Effect that deals 80 damage periodically to anyone who touches within 10 meters for 12 seconds.,Places a curtain of fire on the ground that deals 80 fixed damage every half second to every enemy within 5 meters of it for 12 seconds.
 49,1,Converts all SP into 715 of MP.,Spends all your SP to recover 715 MP.
 49,2,Converts all SP into 1619 of MP.,Spends all your SP to recover 1619 MP.
 49,3,Converts all SP into 2582 of MP.,Spends all your SP to recover 2582 MP.

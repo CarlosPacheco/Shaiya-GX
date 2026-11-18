@@ -46,11 +46,20 @@ func (s *Session) tickFireThorn(now time.Time) {
 
 func (s *Session) fireThornPulse(def *db.SkillDef) {
 	ch := s.char
+	s.fixedDamagePulse(def, ch.PosX, ch.PosY, ch.PosZ)
+}
+
+// fixedDamagePulse hurts every hostile mob and user within ApplyRange of a
+// point with the skill's DamageHP as fixed damage (Fire Thorn around the
+// caster, Fire Bush around its curtain of fire). The client plays DA_self_fire
+// on each target.
+func (s *Session) fixedDamagePulse(def *db.SkillDef, x, y, z float32) {
+	ch := s.char
 	radius := float32(def.ApplyRange)
 	damage := uint32(def.DamageHP)
 	stats := s.stats()
-	center := skillrange.Position{ch.PosX, ch.PosY, ch.PosZ}
-	for _, id := range s.skillMobsWithin(ch.PosX, ch.PosY, ch.PosZ, radius) {
+	center := skillrange.Position{x, y, z}
+	for _, id := range s.skillMobsWithin(x, y, z, radius) {
 		mob, ok := MobByID(ch.MapID, id)
 		md := db.MustDefs().Mobs[mob.MobID]
 		if !ok || md == nil || mobFriendly(md, s.faction) {
@@ -67,7 +76,7 @@ func (s *Session) fireThornPulse(def *db.SkillDef) {
 			buildMobPeriodicDamage(r.Mob.ID, def.SkillID, def.SkillLevel, uint16(min(r.DamageHP, 65535)), 0, 0), "0x0607 fire thorn damage")
 		s.resolveMobDamage(&r)
 	}
-	for _, p := range s.hostileUsersWithin(ch.PosX, ch.PosZ, radius) {
+	for _, p := range s.hostileUsersWithin(x, z, radius) {
 		c := p.Snapshot()
 		if s.skillAreaContains(center, skillrange.Position{c.PosX, c.PosY, c.PosZ}, radius) {
 			s.lastCombatAt = time.Now()

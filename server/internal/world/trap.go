@@ -10,6 +10,8 @@ import (
 const (
 	typeEffectField = 5   // CUser::SkillField: a trap or field on the ground
 	detailTrap      = 101 // springs once on the first enemy, then it is gone
+	detailFireBush  = 102 // a curtain of fire: fixed damage to every enemy in it, every half second
+	fireBushTick    = 500 * time.Millisecond
 	trapSweep       = 250 * time.Millisecond
 	trapDamageMax   = 30000
 )
@@ -21,6 +23,7 @@ type placedTrap struct {
 	x, y, z float32
 	def     *db.SkillDef
 	endsAt  time.Time
+	nextHit time.Time // Fire Bush: the next pulse; zero for a trap
 }
 
 // skillField is CUser::SkillField (AttackUser, TypeEffect 5): the trap is left
@@ -28,7 +31,7 @@ type placedTrap struct {
 // announced like any cast (0x0511, result 0, no target). There is no limit of
 // traps: the skill's own reuse time is the only one.
 func (s *Session) skillField(k db.CharacterSkill, def *db.SkillDef, stats CharacterStats, completed ...bool) {
-	if def.TypeDetail != detailTrap {
+	if def.TypeDetail != detailTrap && def.TypeDetail != detailFireBush {
 		s.log.Printf("GX Server World rejected skill use: field detail %d not modeled skill_id=%d", def.TypeDetail, k.SkillID)
 		return
 	}
@@ -39,8 +42,12 @@ func (s *Session) skillField(k db.CharacterSkill, def *db.SkillDef, stats Charac
 	s.persist()
 	s.send(buildSkillUsedSpMp(sp, mp), "0x050C skill used sp/mp")
 	s.broadcastNear(buildSkillUseResult(packet.SkillUseNoTarget, 0, ch.ID, 0, k.SkillID, k.Level, 0, 0, 0), "0x0511 trap placed", true)
-	s.traps = append(s.traps, placedTrap{mapID: ch.MapID, x: ch.PosX, y: ch.PosY, z: ch.PosZ, def: def,
-		endsAt: time.Now().Add(time.Duration(def.KeepSeconds) * time.Second)})
+	t := placedTrap{mapID: ch.MapID, x: ch.PosX, y: ch.PosY, z: ch.PosZ, def: def,
+		endsAt: time.Now().Add(time.Duration(def.KeepSeconds) * time.Second)}
+	if def.TypeDetail == detailFireBush {
+		t.nextHit = time.Now()
+	}
+	s.traps = append(s.traps, t)
 	s.log.Printf("GX Server World trap placed skill_id=%d level=%d radius=%d seconds=%d", k.SkillID, k.Level, def.ApplyRange, def.KeepSeconds)
 }
 
@@ -75,10 +82,22 @@ func (s *Session) tickTraps(now time.Time) {
 	if len(s.traps) == 0 || s.char == nil || now.Before(s.nextTrapAt) {
 		return
 	}
-	s.nextTrapAt = now.Add(trapSweep)
+	s.nextTrapAt = now.Add(trapSweep) // finer than the half second of Fire Bush
 	kept := s.traps[:0]
 	for _, t := range s.traps {
-		if !now.Before(t.endsAt) || t.mapID != s.char.MapID || s.springTrap(t) {
+		if !now.Before(t.endsAt) || t.mapID != s.char.MapID {
+			continue
+		}
+		if t.def.TypeDetail == detailFireBush {
+			// The curtain of fire stays for its whole time and burns every half second.
+			if !now.Before(t.nextHit) {
+				s.fixedDamagePulse(t.def, t.x, t.y, t.z)
+				t.nextHit = t.nextHit.Add(fireBushTick)
+				if t.nextHit.Before(now) {
+					t.nextHit = now.Add(fireBushTick)
+				}
+			}
+		} else if s.springTrap(t) {
 			continue
 		}
 		kept = append(kept, t)

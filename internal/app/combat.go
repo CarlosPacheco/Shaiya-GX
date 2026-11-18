@@ -77,13 +77,6 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 	}
 	if in.Clicked || in.HasKey(platform.KeyTarget) || in.HasKey(platform.KeyPreviousTarget) {
 		target := a.pickMob(in, w, h)
-		if in.Clicked && target == 0 && a.selfClicked(in, w, h) {
-			a.selectSelf() // clicking your own character selects it, with the target window
-			a.wv.travel = false
-			a.wv.mobClick = mobClick{}
-			in.Clicked = false
-			return
-		}
 		if in.HasKey(platform.KeyPreviousTarget) {
 			target = a.state.PreviousTarget
 			if e := a.state.Entities[target]; target != a.state.SelfID && (e == nil || e.Dead) {

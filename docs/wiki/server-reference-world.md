@@ -1039,7 +1039,8 @@ Direct GX dependencies: `internal/skillrange`, `server/internal/db`, `server/int
 | [`isFireThorn`](../../server/internal/world/firethorn.go#L16)<br>`func isFireThorn(b *ActiveBuff) bool` | See the source definition and the subsystem ownership contract. |
 | [`tickFireThorn`](../../server/internal/world/firethorn.go#L24)<br>`func (s *Session) tickFireThorn(now time.Time)` | tickFireThorn runs Fire Thorn (TypeEffect 4, TypeDetail 84). While the buff lasts, every three seconds each hostile mob and user within ApplyRange of the caster takes the skill's DamageHP as fixed damage: no hit roll, no stat formula, no defense, no absorption. Mobs also gain aggro on the caster. |
 | [`fireThornPulse`](../../server/internal/world/firethorn.go#L47)<br>`func (s *Session) fireThornPulse(def *db.SkillDef)` | See the source definition and the subsystem ownership contract. |
-| [`applyFixedHit`](../../server/internal/world/firethorn.go#L82)<br>`func (s *Session) applyFixedHit(h pendingUserHit) bool` | applyFixedHit is the target side of a fixed-damage skill hit (Fire Thorn): the damage is final, so no accuracy, defense or absorption applies. Nearby users get the periodic damage packet 0x050F; true when this character died. |
+| [`fixedDamagePulse`](../../server/internal/world/firethorn.go#L56)<br>`func (s *Session) fixedDamagePulse(def *db.SkillDef, x, y, z float32)` | fixedDamagePulse hurts every hostile mob and user within ApplyRange of a point with the skill's DamageHP as fixed damage (Fire Thorn around the caster, Fire Bush around its curtain of fire). The client plays DA_self_fire on each target. |
+| [`applyFixedHit`](../../server/internal/world/firethorn.go#L91)<br>`func (s *Session) applyFixedHit(h pendingUserHit) bool` | applyFixedHit is the target side of a fixed-damage skill hit (Fire Thorn): the damage is final, so no accuracy, defense or absorption applies. Nearby users get the periodic damage packet 0x050F; true when this character died. |
 
 ### forge_quote.go
 
@@ -3796,15 +3797,17 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 |---|---|
 | [`typeEffectField`](../../server/internal/world/trap.go#L11)<br>`const typeEffectField = 5` | CUser::SkillField: a trap or field on the ground |
 | [`detailTrap`](../../server/internal/world/trap.go#L12)<br>`const detailTrap = 101` | springs once on the first enemy, then it is gone |
-| [`trapSweep`](../../server/internal/world/trap.go#L13)<br>`const trapSweep = 250 * time.Millisecond` | See the source definition and the subsystem ownership contract. |
-| [`trapDamageMax`](../../server/internal/world/trap.go#L14)<br>`const trapDamageMax = 30000` | See the source definition and the subsystem ownership contract. |
-| [`placedTrap`](../../server/internal/world/trap.go#L19)<br>`type placedTrap` | placedTrap is a CTrab: owner, position, skill and the time it ends. It is invisible to everybody; only its cast and its hit are announced. |
-| [`skillField`](../../server/internal/world/trap.go#L30)<br>`func (s *Session) skillField(k db.CharacterSkill, def *db.SkillDef, stats CharacterStats, completed ...bool)` | skillField is CUser::SkillField (AttackUser, TypeEffect 5): the trap is left on the ground where the caster stands, lasts the skill's KeepTime and is announced like any cast (0x0511, result 0, no target). There is no limit of traps: the skill's own reuse time is the only one. |
-| [`trapDamage`](../../server/internal/world/trap.go#L50)<br>`func trapDamage(def *db.SkillDef, current, maximum [3]uint32) [3]uint32` | trapDamage is TrabDamage 0x00422480. DamageType 4 takes the value as a percentage of the target's maximum pool and 5 of its current pool; any other type is the value itself. Each non-zero part is at least 1 and at most 30000. |
-| [`tickTraps`](../../server/internal/world/trap.go#L74)<br>`func (s *Session) tickTraps(now time.Time)` | tickTraps is CZone::UpdateTrab for this user's traps: an expired trap goes away, and the first enemy (user or mob) within ApplyRange of a trap springs it. A trap left in another map is dropped. |
-| [`springTrap`](../../server/internal/world/trap.go#L90)<br>`func (s *Session) springTrap(t placedTrap) bool` | springTrap hits the nearest enemy in reach and reports whether it did. |
-| [`trapHitsMob`](../../server/internal/world/trap.go#L134)<br>`func (s *Session) trapHitsMob(id uint32, def *db.SkillDef)` | trapHitsMob is the mob branch of UpdateTrab: TrabDamage on the mob's pools, CMob::Damage with the skill's Arrow as aggro, 0x0519 to the view, and the mob turns to the owner when it survives. |
-| [`applyTrapHit`](../../server/internal/world/trap.go#L158)<br>`func (s *Session) applyTrapHit(h pendingUserHit) bool` | applyTrapHit is the victim side of a sprung trap: its stealth ends (RemApplySkillHide), TrabDamage on its pools, CUser::Damage (HP, SP and MP), 0x0513 to the view; true when this character died. |
+| [`detailFireBush`](../../server/internal/world/trap.go#L13)<br>`const detailFireBush = 102` | a curtain of fire: fixed damage to every enemy in it, every half second |
+| [`fireBushTick`](../../server/internal/world/trap.go#L14)<br>`const fireBushTick = 500 * time.Millisecond` | See the source definition and the subsystem ownership contract. |
+| [`trapSweep`](../../server/internal/world/trap.go#L15)<br>`const trapSweep = 250 * time.Millisecond` | See the source definition and the subsystem ownership contract. |
+| [`trapDamageMax`](../../server/internal/world/trap.go#L16)<br>`const trapDamageMax = 30000` | See the source definition and the subsystem ownership contract. |
+| [`placedTrap`](../../server/internal/world/trap.go#L21)<br>`type placedTrap` | placedTrap is a CTrab: owner, position, skill and the time it ends. It is invisible to everybody; only its cast and its hit are announced. |
+| [`skillField`](../../server/internal/world/trap.go#L33)<br>`func (s *Session) skillField(k db.CharacterSkill, def *db.SkillDef, stats CharacterStats, completed ...bool)` | skillField is CUser::SkillField (AttackUser, TypeEffect 5): the trap is left on the ground where the caster stands, lasts the skill's KeepTime and is announced like any cast (0x0511, result 0, no target). There is no limit of traps: the skill's own reuse time is the only one. |
+| [`trapDamage`](../../server/internal/world/trap.go#L57)<br>`func trapDamage(def *db.SkillDef, current, maximum [3]uint32) [3]uint32` | trapDamage is TrabDamage 0x00422480. DamageType 4 takes the value as a percentage of the target's maximum pool and 5 of its current pool; any other type is the value itself. Each non-zero part is at least 1 and at most 30000. |
+| [`tickTraps`](../../server/internal/world/trap.go#L81)<br>`func (s *Session) tickTraps(now time.Time)` | tickTraps is CZone::UpdateTrab for this user's traps: an expired trap goes away, and the first enemy (user or mob) within ApplyRange of a trap springs it. A trap left in another map is dropped. |
+| [`springTrap`](../../server/internal/world/trap.go#L109)<br>`func (s *Session) springTrap(t placedTrap) bool` | springTrap hits the nearest enemy in reach and reports whether it did. |
+| [`trapHitsMob`](../../server/internal/world/trap.go#L153)<br>`func (s *Session) trapHitsMob(id uint32, def *db.SkillDef)` | trapHitsMob is the mob branch of UpdateTrab: TrabDamage on the mob's pools, CMob::Damage with the skill's Arrow as aggro, 0x0519 to the view, and the mob turns to the owner when it survives. |
+| [`applyTrapHit`](../../server/internal/world/trap.go#L177)<br>`func (s *Session) applyTrapHit(h pendingUserHit) bool` | applyTrapHit is the victim side of a sprung trap: its stealth ends (RemApplySkillHide), TrabDamage on its pools, CUser::Damage (HP, SP and MP), 0x0513 to the view; true when this character died. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3814,6 +3817,7 @@ type placedTrap struct {
 	x, y, z float32
 	def     *db.SkillDef
 	endsAt  time.Time
+	nextHit time.Time // Fire Bush: the next pulse; zero for a trap
 }
 ```
 

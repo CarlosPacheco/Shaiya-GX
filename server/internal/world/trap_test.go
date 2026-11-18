@@ -143,3 +143,52 @@ func TestTrapHurtsAnEnemyUserAndRevealsIt(t *testing.T) {
 		t.Fatal("an ally was hurt by the trap")
 	}
 }
+
+// Fire Bush (5/102): a curtain of fire that stays for its whole time and hurts
+// every enemy in reach with the skill's fixed damage every half second.
+func TestFireBushBurnsEveryHalfSecondForItsWholeTime(t *testing.T) {
+	s, _, defs := trapSession(t)
+	id, _ := lapisMob(t, s, defs)
+	m, _ := MobByID(s.char.MapID, id)
+	s.char.PosX, s.char.PosY, s.char.PosZ = m.PosX, m.PosY, m.PosZ
+	def := defs.Skill(48, 1)
+	if def == nil || def.TypeEffect != typeEffectField || def.TypeDetail != detailFireBush || def.DamageHP != 32 || def.ApplyRange != 3 || def.KeepSeconds != 12 {
+		t.Fatalf("Fire Bush 1 definition: %+v", def)
+	}
+	k := db.CharacterSkill{SkillID: 48, Level: 1, Number: 1}
+	st := s.stats()
+	s.char.CurrentSP, s.char.CurrentMP = st.MaxSP, st.MaxMP
+	s.skillField(k, def, s.stats())
+	if len(s.traps) != 1 {
+		t.Fatal("the curtain of fire was not placed")
+	}
+	now := time.Now()
+	hp := func() uint32 { v, _ := MobByID(s.char.MapID, id); return v.CurrentHP }
+	start := hp()
+	s.tickTraps(now)
+	if start-hp() != 32 {
+		t.Fatalf("first pulse %d, want the fixed 32", start-hp())
+	}
+	s.tickTraps(now.Add(300 * time.Millisecond))
+	if start-hp() != 32 {
+		t.Fatal("a pulse fired before half a second")
+	}
+	s.tickTraps(now.Add(600 * time.Millisecond))
+	if start-hp() != 64 {
+		t.Fatalf("second pulse: lost %d, want 64", start-hp())
+	}
+	if len(s.traps) != 1 {
+		t.Fatal("the curtain disappeared after burning")
+	}
+	// A mob out of reach is untouched, and the curtain ends with its time.
+	s.traps[0].x += 40
+	before := hp()
+	s.tickTraps(now.Add(2 * time.Second))
+	if hp() != before {
+		t.Fatal("a mob outside the curtain was burnt")
+	}
+	s.tickTraps(now.Add(13 * time.Second))
+	if len(s.traps) != 0 {
+		t.Fatal("the curtain outlived its time")
+	}
+}
