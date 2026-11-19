@@ -12,4 +12,4 @@ Changes since **gx-v0.1.12**.
 
 [Upgrade guide](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/releases/gx-v0.1.13-upgrade.md) · [Wiki](https://github.com/Spelunkern/Shaiya-GX/wiki)
 
-GitHub packages include matching binaries, fonts, and server resources. The complete offline folder prepared by the maintainer also carries matching loose client game data. The included development seed retains test characters and inventory with the previously published test credentials. The existing v0.1.12 Drive link remains the earlier package.
+GitHub packages include matching binaries, fonts, and server resources. The [complete gx-v0.1.13 portable on Drive](https://drive.google.com/file/d/1E6IkTncfp3Yal4OshmTGu6kWsxs1aCqs/view?usp=sharing) includes the matching loose client game data. The included development seed retains test characters and inventory with the previously published test credentials.

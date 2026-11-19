@@ -1,14 +1,14 @@
 # Shaiya GX portable client and server
 
-## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1YoUifTj5D-nn378cyFmyT7H4Dw4Vyegp/view?usp=sharing)
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1E6IkTncfp3Yal4OshmTGu6kWsxs1aCqs/view?usp=sharing)
 
-**gx-v0.1.12 for Windows and Linux.** This Google Drive package includes both
-executables, GX Server, client game data, fonts and the development database.
+**gx-v0.1.13 for Windows and Linux.** This Google Drive package includes both
+executables, GX Server, GX Studio, client game data, fonts and the development database.
 **Everything is included; no separate data download is needed.**
 Extract the entire package into a writable folder:
 
 ```text
-Shaiya GX gx-v0.1.12 Portable/
+Shaiya GX gx-v0.1.13 Portable/
   Client/
     Shaiya GX
     Shaiya GX.exe
@@ -23,20 +23,18 @@ Start `Server/build/gx_console` on Linux or `Server/build/gx_console.exe` on Win
 then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables and preserve all licenses.
 
-**Latest binary update: [gx-v0.1.12](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.12).**
-The Drive download includes the matching gx-v0.1.12 client/server builds and
-complete client data, plus the server seed, maps/physics, Lua AI and resources.
-The repeated-teleport fix is included; no additional binary update is required.
-Preserve your server `runtime/` when upgrading and follow the
-[upgrade guide](releases/gx-v0.1.12-upgrade.md).
+**Latest binary update: [gx-v0.1.13](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.13).**
+The Drive download above includes v0.1.13 and its matching loose client data. Preserve your server
+runtime and follow the [upgrade guide](releases/gx-v0.1.13-upgrade.md).
+In the new combined package, GX Studio is in Client/Studio/.
+
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
 Server packages include all 68 physics/navigation maps, the approved development
 seed and the optional offline mount-definition migration tool.
 
 The [GitHub combined binary portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip)
 has the same `Client/` and `Server/` layout, with fonts and the server seed/maps/physics,
-and is intended for optional binary updates to an existing complete installation.
-For a first installation, use the all-in-one Drive download above. Original client
+and includes GX Studio under Client/Studio/. Supply loose client data matching the binary release. Original client
 resources are not included in the source repository or GitHub binary archives.
 
 [GitHub releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest) provide updated packages with external fonts for each OS, with `SHA256SUMS.txt`. To update, close the client, extract the appropriate package and replace that OS's executable and merge the included `data/fonts/` into your existing `data/`. Retain the accompanying notices and licenses. The GitHub client packages include fonts, authored mount bindings and licenses, but no original game artwork/audio/maps or server database; GX Server is already included in the complete Drive package. A future release may require a matching data update, so check its release notes.
@@ -49,9 +47,8 @@ The executable discovers adjacent data independently of the working directory. F
 
 Source, build instructions and third-party font sources: https://github.com/Spelunkern/Shaiya-GX
 
-Update GX Server and the client together. Use the complete package linked
-above, containing matching client/server builds and game data; preserve existing server runtime
-databases when upgrading. See the [current patch notes](releases/gx-v0.1.10.md).
+Update GX Server and the client together. Use a complete package containing matching client/server builds and game data; preserve existing server runtime
+databases when upgrading. See the [current patch notes](releases/gx-v0.1.13.md).
 
 
 ## Optional maintainer packaging

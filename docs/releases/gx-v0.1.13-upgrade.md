@@ -15,7 +15,6 @@ runtime and install the new version in a separate folder if you need rollback.
    catalogs against your intended configuration.
 
 GitHub's combined binary package includes fonts, Studio, and the server seed and
-resources. Use the matching loose game data from the full maintainer bundle for
-a complete gx-v0.1.13 installation. The existing Drive link contains v0.1.12.
+resources. The [complete gx-v0.1.13 portable on Drive](https://drive.google.com/file/d/1E6IkTncfp3Yal4OshmTGu6kWsxs1aCqs/view?usp=sharing) includes the matching loose client data.
 
 [Release notes](gx-v0.1.13.md).

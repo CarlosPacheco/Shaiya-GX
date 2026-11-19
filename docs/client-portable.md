@@ -1,14 +1,14 @@
 # Shaiya GX portable client and server
 
-## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1YoUifTj5D-nn378cyFmyT7H4Dw4Vyegp/view?usp=sharing)
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1E6IkTncfp3Yal4OshmTGu6kWsxs1aCqs/view?usp=sharing)
 
-**gx-v0.1.12 for Windows and Linux.** This Google Drive package includes both
-executables, GX Server, client game data, fonts and the development database.
+**gx-v0.1.13 for Windows and Linux.** This Google Drive package includes both
+executables, GX Server, GX Studio, client game data, fonts and the development database.
 **Everything is included; no separate data download is needed.**
 Extract the entire package into a writable folder:
 
 ```text
-Shaiya GX gx-v0.1.12 Portable/
+Shaiya GX gx-v0.1.13 Portable/
   Client/
     Shaiya GX
     Shaiya GX.exe
@@ -24,8 +24,7 @@ then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Sha
 Keep `Client/data/` beside the client executables and preserve all licenses.
 
 **Latest binary update: [gx-v0.1.13](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.13).**
-The Drive download above contains the earlier v0.1.12 build. For v0.1.13, use
-matching loose data from the complete maintainer bundle. Preserve your server
+The Drive download above includes v0.1.13 and its matching loose client data. Preserve your server
 runtime and follow the [upgrade guide](releases/gx-v0.1.13-upgrade.md).
 In the new combined package, GX Studio is in Client/Studio/.
 
