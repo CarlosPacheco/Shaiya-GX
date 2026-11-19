@@ -565,3 +565,37 @@ Native OpenGL tests compare serial and instanced cloak pixels in two cameras,
 test moving unchanged meshes and one changed range, and verify label depth
 across mixed depths and solid quads. The maximum bot count also exercises
 buffer release.
+
+## Parallel crowd visibility and cheaper skin poses
+
+Remote players and local PvP bots prepare frustum and clip visibility with
+up to four workers. Each worker owns its actor's pose, so submission follows
+the original order and the GL thread still does all drawing. The same
+animated bounds, terrain occlusion and mount ordering apply.
+
+Skin palette preparation computes only the bones weighted by the pieces
+that share an inverse-bind palette. Crowd uploads omit trailing unused
+matrices while retaining the authored bone indices. Unknown weights use
+the full palette. Attachment and cloth pin joints still use the complete
+skeleton. Cloth reuses a spring force when the native graph repeats the
+same spring in reverse. Both contributions retain their original order,
+and each cloth keeps its own position and velocity.
+
+Three interleaved 240-frame runs per variant used the seeded 600-bot scene
+with skill effects disabled, at 1280×720 on a shared desktop. These are
+medians of the individual run statistics.
+
+| Variant | Whole loop ms/frame | Submission p50 / p99 ms | Full-frame draws |
+|---|---:|---:|---:|
+| Previous build | 21.307 | 21.117 / 24.797 | 576 |
+| Parallel visibility and sparse palettes | 12.286 | 12.194 / 14.469 | 576 |
+| Also reuse reverse spring forces | 11.991 | 11.713 / 14.657 | 576 |
+
+At this camera the final frame submitted 5.80 MB of skinning matrices in
+300 skinned batches. The timings are from a hidden window without presentation.
+Separate 900-frame profiles collected 25.49 s, 22.24 s and 20.34 s of CPU
+samples for the three variants. In the final profile, posed bounds and cloth
+preparation took 7.43 s and 6.75 s respectively. The bounds count includes
+pose preparation. Two paired 300-bot runs measured 13.170 → 8.010 ms for
+the whole loop. Two paired scenes with 200 remote players, 120 monsters and
+80 NPCs measured 9.021 → 6.973 ms.

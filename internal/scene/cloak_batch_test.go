@@ -98,3 +98,35 @@ func TestCrowdClothQualityUsesProjectedSize(t *testing.T) {
 		t.Fatal("very small cape did not use the far refresh tier")
 	}
 }
+
+func TestCullCrowdCharactersMatchesSerialVisibility(t *testing.T) {
+	actors := make([]*Character, 48)
+	for i := range actors {
+		if i%7 == 0 {
+			continue
+		}
+		c := envelopeFixture()
+		c.Time = float32(i) / 60
+		c.World[12], c.World[14] = float32(i-24), 16
+		actors[i] = c
+	}
+	for _, clip := range [][4]float32{{}, {-1, 0, 0, 0}} {
+		frustum := render.ViewFrustum(render.Identity(), render.PerspectiveFovLH(.8, 1, .1, 120))
+		want := slices.Clone(actors)
+		for i, actor := range want {
+			if actor != nil && !actor.Visible(frustum, clip) {
+				want[i] = nil
+			}
+		}
+		for _, actor := range actors {
+			if actor != nil {
+				actor.invalidatePose()
+			}
+		}
+		got := slices.Clone(actors)
+		CullCrowdCharacters(got, frustum, clip)
+		if !slices.Equal(got, want) {
+			t.Fatal("parallel culling changed visible actors or their order")
+		}
+	}
+}

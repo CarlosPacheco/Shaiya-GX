@@ -3,16 +3,19 @@ package scene
 import "github.com/Spelunkern/Shaiya-GX/internal/render"
 
 type clothLink struct {
-	a, b int
-	rest float32
+	a, b  int
+	rest  float32
+	cache int // positive writes a spring force; negative reuses its reverse
 }
 type clothPhysics struct {
 	mode                        int
 	positions, velocity, forces []render.V3
 	rest                        []render.V3
+	verticalLimit               []float32
 	mass                        []float32
 	pins                        []bool
 	links                       []clothLink
+	springForces                []render.V3
 	columns, rows               int
 }
 
@@ -24,10 +27,31 @@ func newClothPhysics(rest []render.V3, columns, rows int, mode int) *clothPhysic
 	c.forces = make([]render.V3, len(rest))
 	c.mass = make([]float32, len(rest))
 	c.pins = make([]bool, len(rest))
-	link := func(a, b int) { c.links = append(c.links, clothLink{a, b, rest[a].Sub(rest[b]).Len()}) }
+	c.verticalLimit = make([]float32, len(rest))
+	limitScale := float32(1.5)
+	if mode == 1 {
+		limitScale = 50
+	}
+	edges := make(map[[2]int]int, len(rest)*4)
+	link := func(a, b int) {
+		if reverse, ok := edges[[2]int{b, a}]; ok {
+			original := &c.links[reverse]
+			c.springForces = append(c.springForces, render.V3{})
+			original.cache = len(c.springForces)
+			// Same force with endpoints reversed. Preserve the native
+			// accumulation order, including both directed contributions.
+			c.links = append(c.links, clothLink{a: b, b: a, cache: -original.cache})
+			return
+		}
+		edges[[2]int{a, b}] = len(c.links)
+		c.links = append(c.links, clothLink{a: a, b: b, rest: rest[a].Sub(rest[b]).Len()})
+	}
 	for r := range rows {
 		for col := range columns {
 			i := r*columns + col
+			if r > 0 {
+				c.verticalLimit[i] = rest[i-columns].Sub(rest[i]).Len() * limitScale
+			}
 			factor := float32(6)
 			if r == 0 || r == rows-1 {
 				factor = 3
@@ -83,13 +107,22 @@ func (c *clothPhysics) force(wind render.V3) {
 		stiffness, damping = 500, 1
 	}
 	for _, link := range c.links {
-		delta := c.positions[link.a].Sub(c.positions[link.b])
-		distance := delta.Len()
-		if distance < .000001 {
+		if c.pins[link.a] && c.pins[link.b] {
 			continue
 		}
-		normal := delta.Scale(1 / distance)
-		force := normal.Scale(-((distance-link.rest)*stiffness + c.velocity[link.a].Sub(c.velocity[link.b]).Dot(normal)*damping))
+		var force render.V3
+		if link.cache < 0 {
+			force = c.springForces[-link.cache-1]
+		} else {
+			delta := c.positions[link.a].Sub(c.positions[link.b])
+			if distance := delta.Len(); distance >= .000001 {
+				normal := delta.Scale(1 / distance)
+				force = normal.Scale(-((distance-link.rest)*stiffness + c.velocity[link.a].Sub(c.velocity[link.b]).Dot(normal)*damping))
+			}
+			if link.cache > 0 {
+				c.springForces[link.cache-1] = force
+			}
+		}
 		if !c.pins[link.a] {
 			c.forces[link.a] = c.forces[link.a].Add(force)
 		}
@@ -107,8 +140,7 @@ func (c *clothPhysics) stepWithWind(dt float32, wind render.V3) {
 				continue
 			}
 			delta := c.positions[i-c.columns].Sub(c.positions[i])
-			limit := c.rest[i-c.columns].Sub(c.rest[i]).Len() * 50
-			if delta.Len() <= limit {
+			if delta.Len() <= c.verticalLimit[i] {
 				c.forces[i] = c.forces[i].Add(delta.Scale(.2))
 			} else {
 				c.forces[i] = render.V3{}
@@ -131,7 +163,7 @@ func (c *clothPhysics) stepWithWind(dt float32, wind render.V3) {
 				continue
 			}
 			d := c.positions[i-c.columns].Sub(c.positions[i])
-			limit := c.rest[i-c.columns].Sub(c.rest[i]).Len() * 1.5
+			limit := c.verticalLimit[i]
 			if length := d.Len(); length > limit {
 				c.positions[i] = c.positions[i].Add(d.Scale((length - limit) / length))
 			}

@@ -1,6 +1,8 @@
 package bots
 
 import (
+	"slices"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
@@ -69,12 +71,13 @@ func (a *Arena) Draw(s *render.Scene3D, skinner *render.Skinner, effects bool) {
 	frustum := render.ViewFrustum(s.View, s.VisibilityProjection())
 	a.visible, a.visibleCloth = a.visible[:0], a.visibleCloth[:0]
 	for i := range a.actors {
-		f := &a.actors[i]
-		if f.avatar != nil && f.avatar.CorpseFade < 1 && f.avatar.Visible(frustum, s.ClipPlane) {
-			a.visible = append(a.visible, f.avatar)
-			if f.avatar.HasCloak() {
-				a.visibleCloth = append(a.visibleCloth, f.avatar)
-			}
+		a.visible = append(a.visible, a.actors[i].avatar)
+	}
+	scene.CullCrowdCharacters(a.visible, frustum, s.ClipPlane)
+	a.visible = slices.DeleteFunc(a.visible, func(c *scene.Character) bool { return c == nil })
+	for _, character := range a.visible {
+		if character.HasCloak() {
+			a.visibleCloth = append(a.visibleCloth, character)
 		}
 	}
 	scene.PrepareCrowdCloth(a.visibleCloth, s)

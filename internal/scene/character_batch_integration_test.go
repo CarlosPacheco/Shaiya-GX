@@ -74,7 +74,13 @@ func TestCharacterBatchIndependentPalettesGL(t *testing.T) {
 			batch.Draw(k, s, actors)
 		} else {
 			for _, c := range actors {
+				// Compare the compact crowd palette with the complete serial one.
+				c.preparePose()
+				clear(c.poseBones)
+				c.poseReady = false
 				c.Draw(k, s)
+				c.findUsedPoseBones()
+				c.poseReady = false
 			}
 		}
 		pixels := make([]byte, size*size*4)

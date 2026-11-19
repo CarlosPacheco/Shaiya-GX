@@ -70,6 +70,9 @@ are included in the draw submission time.
 The final main-camera count reports skinned batches, rigid attachments,
 cloth and serial fallback separately. The full-frame counter also includes
 the map, HUD and any secondary passes.
+`final_main_camera_bot_draws.skin_palette_bytes` records the bytes of skin
+matrices submitted for the last main-camera bot pass. It excludes instance
+transforms and any serial fallback draws.
 The bot cases also report main-camera cloth position upload bytes and operations
 averaged over the measured frames. Position bytes include dirty-range headers
 and exclude instance transforms. The final frame's world breakdown records

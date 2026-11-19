@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"runtime"
+	"slices"
 	"testing"
 	"time"
 
@@ -68,8 +69,12 @@ func TestAnimatedActorCullingPreservesPixelsGL(t *testing.T) {
 			actor.preparePose()
 			assertEnvelopeContainsExact(t, actor)
 			finals := fullMatrixFinals(&reference, sample)
-			for _, part := range actor.parts {
+			for group, part := range actor.parts {
+				weighted := actor.poseBones[actor.poseSources[group]]
 				for i, bind := range part.bones {
+					if len(weighted) != 0 && !slices.Contains(weighted, i) {
+						continue
+					}
 					final := render.Identity()
 					if i < len(finals) {
 						final = finals[i]

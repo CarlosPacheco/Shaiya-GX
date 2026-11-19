@@ -110,6 +110,7 @@ type Character struct {
 	poseReady            bool
 	poseParts            []*skinPart
 	poseSources          []int
+	poseBones            [][]int
 	boundPalettes        []boundPalette
 	envelope             characterEnvelope
 	boundClip            *Clip
@@ -639,6 +640,7 @@ func (c *Character) preparePose() []render.M4 {
 	if !slices.Equal(c.poseParts, c.parts) {
 		c.poseParts = append(c.poseParts[:0], c.parts...)
 		c.poseSources = make([]int, len(c.parts))
+		c.poseBones = make([][]int, len(c.parts))
 		c.boundPalettes = make([]boundPalette, len(c.parts))
 		for i, p := range c.parts {
 			c.poseSources[i] = i
@@ -650,6 +652,7 @@ func (c *Character) preparePose() []render.M4 {
 				}
 			}
 		}
+		c.findUsedPoseBones()
 		c.poseReady = false
 	}
 	if !c.poseReady || c.poseClip != c.clip || c.poseTime != c.Time {
@@ -662,6 +665,16 @@ func (c *Character) preparePose() []render.M4 {
 				p.pose = make([]render.M4, len(p.bones))
 			}
 			p.pose = p.pose[:len(p.bones)]
+			if used := c.poseBones[partIndex]; len(used) != 0 {
+				for _, i := range used {
+					f := render.Identity()
+					if i < len(finals) {
+						f = finals[i]
+					}
+					p.pose[i] = p.bones[i].MulAffine(f)
+				}
+				continue
+			}
 			for i, b := range p.bones {
 				f := render.Identity()
 				if i < len(finals) {
@@ -673,6 +686,41 @@ func (c *Character) preparePose() []render.M4 {
 		c.poseClip, c.poseTime, c.poseReady = c.clip, c.Time, true
 	}
 	return finals
+}
+
+// A palette can serve several pieces with identical inverse binds. Keep the
+// union of their weighted bones and fall back if any piece has unknown bounds.
+// The skeleton still computes every animated joint for hierarchy and equipment.
+func (c *Character) findUsedPoseBones() {
+	type paletteUsage struct {
+		used    [render.MaxBones]bool
+		unknown bool
+	}
+	usage := make([]paletteUsage, len(c.parts))
+	for i, part := range c.parts {
+		palette := &usage[c.poseSources[i]]
+		if !part.bounded || len(part.vertices) == 0 {
+			palette.unknown = true
+			continue
+		}
+		for bone, box := range part.bounds {
+			palette.used[bone] = palette.used[bone] || box.used
+		}
+	}
+	for i, part := range c.parts {
+		palette := &usage[i]
+		if i != c.poseSources[i] || palette.unknown {
+			continue
+		}
+		for bone := range min(len(part.bones), render.MaxBones) {
+			if palette.used[bone] {
+				c.poseBones[i] = append(c.poseBones[i], bone)
+			}
+		}
+		if len(c.poseBones[i]) == len(part.bones) {
+			c.poseBones[i] = nil
+		}
+	}
 }
 
 func (c *Character) prepareDraw(s *render.Scene3D) ([]render.M4, bool) {

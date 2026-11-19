@@ -132,6 +132,38 @@ func TestClipCachedRestMatchesSampling(t *testing.T) {
 	}
 }
 
+func TestSparsePoseIncludesEachPieceSharingThePalette(t *testing.T) {
+	clip := poseTestClip(5)
+	binds := make([]render.M4, 5)
+	for i := range binds {
+		binds[i] = render.Identity()
+	}
+	makePart := func(bone float32) *skinPart {
+		vertices := []render.SkinVertex{{Weight: 1, Bone0: bone}}
+		bounds, ok := makeBoneBounds(vertices, len(binds))
+		return &skinPart{bones: binds, vertices: vertices, bounds: bounds, bounded: ok}
+	}
+	a, b := makePart(1), makePart(3)
+	actor := &Character{clip: clip, parts: []*skinPart{a, b}, World: render.Identity(), Time: .5}
+	actor.preparePose()
+	if !slices.Equal(actor.poseBones[0], []int{1, 3}) || &a.pose[0] != &b.pose[0] {
+		t.Fatal("shared palette omitted a weighted joint")
+	}
+	want := fullMatrixFinals(clip, actor.Time)
+	for _, bone := range actor.poseBones[0] {
+		if a.pose[bone] != want[bone] {
+			t.Fatalf("bone %d changed pose", bone)
+		}
+	}
+	unknown := makePart(0)
+	unknown.bounded = false
+	actor.parts = append(actor.parts, unknown)
+	actor.preparePose()
+	if len(actor.poseBones[0]) != 0 || !slices.Equal(a.pose, want) {
+		t.Fatal("unknown geometry did not restore the complete palette")
+	}
+}
+
 func BenchmarkCharacterPreparePose(b *testing.B) {
 	clip := poseTestClip(64)
 	binds := make([]render.M4, 64)

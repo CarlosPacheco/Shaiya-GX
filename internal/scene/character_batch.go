@@ -22,6 +22,7 @@ type rigidGroup struct {
 
 type CrowdDrawStats struct {
 	Skin         int `json:"skin"`
+	PaletteBytes int `json:"skin_palette_bytes"`
 	Rigid        int `json:"weapons_shields"`
 	Cloth        int `json:"cloth"`
 	Fallback     int `json:"serial"`
@@ -99,6 +100,9 @@ func (b *CharacterBatch) add(s *render.Scene3D, c *Character, finals []render.M4
 		source := c.poseSources[i]
 		if source == i {
 			count := min(len(part.pose), render.MaxBones)
+			if used := c.poseBones[source]; len(used) > 0 {
+				count = used[len(used)-1] + 1
+			}
 			b.offsets = append(b.offsets, [4]int32{int32(len(b.palettes)), int32(count)})
 			b.palettes = append(b.palettes, part.pose[:count]...)
 		} else {
@@ -171,6 +175,9 @@ func (b *CharacterBatch) flush(k *render.Skinner, s *render.Scene3D) {
 	before := render.DrawCalls()
 	k.DrawCrowd(s, b.groups, b.instances, b.palettes, ambient)
 	b.Stats.Skin += render.DrawCalls() - before
+	if len(b.groups) != 0 {
+		b.Stats.PaletteBytes += len(b.palettes) * 64
+	}
 	before = render.DrawCalls()
 	if len(b.cloaks) != 0 || len(b.rigidKeys) != 0 {
 		s.Begin()

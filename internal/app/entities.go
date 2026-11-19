@@ -248,15 +248,11 @@ func (a *App) prepareRemotePlayers() {
 	}
 }
 
-type remotePlayerDraw struct {
-	character *scene.Character
-	mount     *scene.Vehicle
-}
-
 func (a *App) drawRemotePlayers() {
 	frustum := render.ViewFrustum(a.scene3d.View, a.scene3d.VisibilityProjection())
 	v := a.wv
 	v.visiblePlayers, v.visiblePlayerCloth = v.visiblePlayers[:0], v.visiblePlayerCloth[:0]
+	v.visiblePlayerMounts = v.visiblePlayerMounts[:0]
 	for id, e := range a.state.Entities {
 		if e.Kind != game.KindUser || e.Shape == nil {
 			continue
@@ -265,22 +261,21 @@ func (a *App) drawRemotePlayers() {
 		if cached == nil || cached.character == nil {
 			continue
 		}
-		draw := remotePlayerDraw{}
+		var mount *scene.Vehicle
 		cached.character.Concealed = e.Concealed
 		if e.Mounted && cached.mount != nil {
 			cached.mount.Concealed = e.Concealed
 			if cached.mount.Visible(frustum, a.scene3d.ClipPlane) {
-				draw.mount = cached.mount
+				mount = cached.mount
 			}
 		}
-		if cached.character.Visible(frustum, a.scene3d.ClipPlane) {
-			draw.character = cached.character
-			if draw.character.HasCloak() {
-				v.visiblePlayerCloth = append(v.visiblePlayerCloth, draw.character)
-			}
-		}
-		if draw.mount != nil || draw.character != nil {
-			v.visiblePlayers = append(v.visiblePlayers, draw)
+		v.visiblePlayers = append(v.visiblePlayers, cached.character)
+		v.visiblePlayerMounts = append(v.visiblePlayerMounts, mount)
+	}
+	scene.CullCrowdCharacters(v.visiblePlayers, frustum, a.scene3d.ClipPlane)
+	for _, character := range v.visiblePlayers {
+		if character.HasCloak() {
+			v.visiblePlayerCloth = append(v.visiblePlayerCloth, character)
 		}
 	}
 	scene.PrepareCrowdCloth(v.visiblePlayerCloth, a.scene3d)
@@ -289,18 +284,19 @@ func (a *App) drawRemotePlayers() {
 		clear(v.crowdCharacters)
 		v.crowdCharacters = v.crowdCharacters[:0]
 	}
-	for _, draw := range v.visiblePlayers {
-		if draw.mount != nil {
+	for i, character := range v.visiblePlayers {
+		if mount := v.visiblePlayerMounts[i]; mount != nil {
 			flush()
-			draw.mount.Draw(a.skinner, a.scene3d)
-			draw.mount.DrawEffects(a.scene3d)
+			mount.Draw(a.skinner, a.scene3d)
+			mount.DrawEffects(a.scene3d)
 		}
-		if draw.character != nil {
-			v.crowdCharacters = append(v.crowdCharacters, draw.character)
+		if character != nil {
+			v.crowdCharacters = append(v.crowdCharacters, character)
 		}
 	}
 	flush()
 	clear(v.visiblePlayers)
+	clear(v.visiblePlayerMounts)
 	clear(v.visiblePlayerCloth)
 }
 
