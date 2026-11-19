@@ -24,7 +24,7 @@ gold, party and schedule checks can restrict the remaining routes further.
 | 108 | Battle Zone | 0 | 104 | None |
 
 Counts are parsed initial regular spawns, before dynamic events or navigation
-rejections. Names are the existing client `sysmsg-uni.txt`/native map-ID lookup,
+rejections. Names in this snapshot come from the legacy client `sysmsg-uni.txt`/native map-ID lookup,
 including its spelling; they do not prove that local geometry matches the name.
 Maps 100–108 have server data but no matching numeric WLD in the installed
 0–67 client resource set.

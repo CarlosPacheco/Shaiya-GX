@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
@@ -188,13 +187,6 @@ func ClassName(msg text.SysMsg, lightSide bool, class uint8) string {
 	return ""
 }
 
-func (c *CharSelect) mapName(id uint16) string {
-	if m, ok := mapNameMsg[id]; ok {
-		return c.msg.Get(m)
-	}
-	return strconv.Itoa(int(id))
-}
-
 func (c *CharSelect) Draw(s *render.Sprites, f *Font, w, h int) {
 	c.controls(w, h)
 	px, py := charPanelOrigin(w, h)
@@ -210,7 +202,7 @@ func (c *CharSelect) Draw(s *render.Sprites, f *Font, w, h int) {
 		x := px + 0x1f
 		f.Draw(s, fmt.Sprintf("%s : %d", c.msg.Get(0x13c9), ch.Level), x, py+0x49, white, 0)
 		f.Draw(s, fmt.Sprintf("%s : %s", c.msg.Get(0x13ca), c.className(ch.Class)), x, py+0x5b, white, 0)
-		f.Draw(s, fmt.Sprintf("%s : %s", c.msg.Get(0x13d3), c.mapName(ch.MapID)), x, py+0x6d, white, 0)
+		f.Draw(s, fmt.Sprintf("%s : %s", c.msg.Get(0x13d3), MapName(c.msg, ch.MapID)), x, py+0x6d, white, 0)
 	}
 	for i, b := range c.Slots {
 		b.Draw(s)

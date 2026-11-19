@@ -190,3 +190,22 @@ references. Weather uses `Sky/sky_001.png`, with the legacy BMP as a fallback,
 and the native rain and normal snow textures in `Effect/DDS/`. Rain audio is
 `Sound/Music/Rain.ogg`. Sun flare textures prefer PNG, and water bump textures
 are stored under `Entity/Water/`.
+
+## Map names in SysMsg
+
+The minimap, world-map previews, character selection, recorded points and
+summon prompts read map names from `sysmsg-uni.txt`. The message index is
+`11001 + MapID` for map IDs 0–199. For example, map 0 uses `11001`, map 99
+uses `11100`, and map 199 uses `11200`. Missing names display as `Map N`.
+
+The initial block covers IDs 0–99. To add it to older loose client data,
+run the migration tool from the source checkout with the client closed:
+
+```sh
+python3 tools/migrate_map_names.py '/path/to/data/sysmsg-uni.txt' \
+  --backup '/path/to/backups/sysmsg-before-map-names.txt'
+```
+
+The tool copies known names for installed numeric WLD maps and adds `Map N`
+for unused slots. Existing rows are preserved. To name a future map, edit
+or add its message in the same UTF-16LE format, then restart the client.

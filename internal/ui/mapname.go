@@ -1,15 +1,22 @@
 package ui
 
 import (
-	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
 	"strconv"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
 )
 
+const (
+	firstMapNameMessage = 11001
+	mapNameCount        = 200
+)
+
+// MapName reads the loose SysMsg row for a map, including map zero.
 func MapName(messages text.SysMsg, id uint16) string {
-	if message, ok := mapNameMsg[id]; ok {
-		if name := messages.Get(message); name != "" {
+	if id < mapNameCount {
+		if name := messages.Get(firstMapNameMessage + int(id)); name != "" {
 			return name
 		}
 	}
-	return strconv.Itoa(int(id))
+	return "Map " + strconv.Itoa(int(id))
 }
