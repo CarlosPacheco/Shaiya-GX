@@ -151,9 +151,8 @@ func LoadRelics(log *logx.Logger) error {
 	}
 	if total > 0 {
 		kcMu.Lock()
-		for c := range 2 {
-			relics.score[c] = kcMaxKill(c)/uint32(total) + 1
-		}
+		score := kcMaxKill()/uint32(total) + 1
+		relics.score = [2]uint32{score, score}
 		kcMu.Unlock()
 	}
 	for mapID, list := range relics.byMap {

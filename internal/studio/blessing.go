@@ -25,22 +25,18 @@ func OpenBlessing(ctx context.Context, path string) (*BlessingCatalog, error) {
 		return nil, err
 	}
 	defer db.Close()
-	rules, err := blessingrules.ReadDB(ctx, db)
+	rules, err := blessingrules.Read(ctx, db)
 	if err != nil {
 		return nil, err
 	}
 	return &BlessingCatalog{DBPath: path, Rules: rules}, nil
 }
 
-func EqualBlessing(a, b blessingrules.Catalog) bool {
-	return slices.Equal(a[0], b[0]) && slices.Equal(a[1], b[1])
-}
-
 func SaveBlessing(ctx context.Context, root string, catalog *BlessingCatalog, rules blessingrules.Catalog) (string, error) {
 	if err := rules.Validate(); err != nil {
 		return "", err
 	}
-	if len(rules[0]) != len(catalog.Rules[0]) {
+	if len(rules) != len(catalog.Rules) {
 		return "", errors.New("keep the existing blessing tiers")
 	}
 	lock, err := lockRoot(root)
@@ -68,17 +64,15 @@ func SaveBlessing(ctx context.Context, root string, catalog *BlessingCatalog, ru
 	if err != nil {
 		return "", err
 	}
-	if !EqualBlessing(current, catalog.Rules) {
+	if !slices.Equal(current, catalog.Rules) {
 		return "", errors.New("blessing tiers changed on disk; reopen the catalog before saving")
 	}
-	for _, table := range blessingrules.Tables {
-		if err := safeTable(ctx, tx, table, false); err != nil {
-			return "", err
-		}
+	if err := safeTable(ctx, tx, blessingrules.Table, false); err != nil {
+		return "", err
 	}
 	backup, err := backupDatabaseCatalog(ctx, root, catalog.DBPath, "blessing", func(snapshot *sql.DB) error {
-		old, err := blessingrules.ReadDB(ctx, snapshot)
-		if err != nil || !EqualBlessing(old, current) {
+		old, err := blessingrules.Read(ctx, snapshot)
+		if err != nil || !slices.Equal(old, current) {
 			return errors.Join(errors.New("blessing backup failed verification"), err)
 		}
 		return nil
@@ -90,23 +84,21 @@ func SaveBlessing(ctx context.Context, root string, catalog *BlessingCatalog, ru
 	for _, effect := range blessingrules.Effects {
 		columns = append(columns, effect.Column+"=?")
 	}
-	for side, table := range blessingrules.Tables {
-		for i, tier := range rules[side] {
-			if tier == current[side][i] {
-				continue
-			}
-			args := []any{tier.RequiredKills}
-			for _, value := range tier.Bonuses {
-				args = append(args, value)
-			}
-			args = append(args, tier.Number)
-			if _, err := tx.ExecContext(ctx, "UPDATE "+table+" SET "+strings.Join(columns, ",")+" WHERE Tier=?", args...); err != nil {
-				return backup, err
-			}
+	for i, tier := range rules {
+		if tier == current[i] {
+			continue
+		}
+		args := []any{tier.RequiredKills}
+		for _, value := range tier.Bonuses {
+			args = append(args, value)
+		}
+		args = append(args, tier.Number)
+		if _, err := tx.ExecContext(ctx, "UPDATE "+blessingrules.Table+" SET "+strings.Join(columns, ",")+" WHERE Tier=?", args...); err != nil {
+			return backup, err
 		}
 	}
 	written, err := blessingrules.Read(ctx, tx)
-	if err != nil || !EqualBlessing(written, rules) {
+	if err != nil || !slices.Equal(written, rules) {
 		return backup, errors.Join(errors.New("saved blessing tiers failed verification"), err)
 	}
 	return backup, tx.Commit()

@@ -180,7 +180,7 @@ func (e *editor) start() {
 			if kind == studio.MobAIMessages {
 				dbSource = mobaimessages.Table
 			} else if kind == studio.Blessing {
-				dbSource = strings.Join(blessingrules.Tables[:], " · ")
+				dbSource = blessingrules.Table
 			} else {
 				dbSource = enchantrules.AttackTable + " · " + enchantrules.DefenseTable
 			}

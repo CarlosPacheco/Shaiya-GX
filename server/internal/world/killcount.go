@@ -69,7 +69,7 @@ type kcCountry struct {
 var (
 	kcMu     sync.Mutex
 	kcSendMu sync.Mutex
-	kcTiers  [2][]kcTier
+	kcTiers  []kcTier
 	kcWorld  = [2]kcCountry{{index: -1}, {index: -1}}
 )
 
@@ -81,30 +81,27 @@ func loadKillStatus(log *logx.Logger) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
 	defer cancel()
-	catalog, err := blessingrules.ReadDB(ctx, pool)
+	catalog, err := blessingrules.Read(ctx, pool)
 	if err != nil {
 		return err
 	}
-	var tiers [2][]kcTier
-	for side, rows := range catalog {
-		for i, row := range rows {
-			tier := kcTier{Kill: row.RequiredKills}
-			for bonus, value := range catalog.Effective(side, i) {
-				tier.Status[bonus+1] = int32(value)
-			}
-			tiers[side] = append(tiers[side], tier)
+	tiers := make([]kcTier, len(catalog))
+	for i, row := range catalog {
+		tiers[i].Kill = row.RequiredKills
+		for bonus, value := range catalog.Effective(i) {
+			tiers[i].Status[bonus+1] = int32(value)
 		}
 	}
 	kcMu.Lock()
 	kcTiers = tiers
 	kcMu.Unlock()
-	log.Printf("GX Server World loaded SQLite blessing tiers light=%d dark=%d", len(tiers[0]), len(tiers[1]))
+	log.Printf("GX Server World loaded shared SQLite blessing tiers=%d", len(tiers))
 	return nil
 }
 
 // kcTierFor is CGameData::GetKCStatusByCount (-1 below the first tier).
-func kcTierFor(c int, count uint32) int {
-	t := kcTiers[c]
+func kcTierFor(count uint32) int {
+	t := kcTiers
 	for i := len(t) - 1; i >= 0; i-- {
 		if t[i].Kill <= count {
 			return i
@@ -113,8 +110,8 @@ func kcTierFor(c int, count uint32) int {
 	return -1
 }
 
-func kcMaxKill(c int) uint32 {
-	if t := kcTiers[c]; len(t) > 0 {
+func kcMaxKill() uint32 {
+	if t := kcTiers; len(t) > 0 {
 		return t[len(t)-1].Kill
 	}
 	return 0
@@ -124,12 +121,12 @@ func kcMaxKill(c int) uint32 {
 func setKillCountLocked(c int, count uint32, now time.Time) {
 	w := &kcWorld[c]
 	w.count = count
-	w.index = kcTierFor(c, count)
+	w.index = kcTierFor(count)
 	w.next, w.resetAt = 0, time.Time{}
 	switch {
-	case w.index+1 < len(kcTiers[c]):
-		w.next = kcTiers[c][w.index+1].Kill
-	case len(kcTiers[c]) > 0:
+	case w.index+1 < len(kcTiers):
+		w.next = kcTiers[w.index+1].Kill
+	case len(kcTiers) > 0:
 		w.resetAt = now.Add(kcHoldTime)
 	}
 	w.broadcastAt = now.Add(kcBroadcastEvery)
@@ -166,12 +163,12 @@ func AddKillCount(c uint8, n uint32, log logPrinter) {
 		kcMu.Unlock()
 		return
 	}
-	w.index = kcTierFor(int(c), w.count)
-	maxed := w.index >= len(kcTiers[c])-1
+	w.index = kcTierFor(w.count)
+	maxed := w.index >= len(kcTiers)-1
 	if maxed {
 		w.resetAt = now.Add(kcHoldTime)
 	} else {
-		w.next = kcTiers[c][w.index+1].Kill
+		w.next = kcTiers[w.index+1].Kill
 	}
 	w.broadcastAt = now.Add(kcBroadcastEvery)
 	other := 1 - int(c)
@@ -251,7 +248,7 @@ func kcBroadcast(c int, snapshot bool) {
 	kcSendMu.Lock()
 	defer kcSendMu.Unlock()
 	kcMu.Lock()
-	count := min(kcWorld[c].count, kcMaxKill(c))
+	count := min(kcWorld[c].count, kcMaxKill())
 	var details []byte
 	if snapshot {
 		details = blessingSnapshotLocked(uint8(c), false)
@@ -310,7 +307,7 @@ func blessingSnapshotLocked(c uint8, entry bool) []byte {
 		return nil
 	}
 	world := kcWorld[c]
-	maximum := kcMaxKill(int(c))
+	maximum := kcMaxKill()
 	count := min(world.count, maximum)
 	var remaining uint32
 	if !world.resetAt.IsZero() {
@@ -327,11 +324,11 @@ func blessingSnapshotLocked(c uint8, entry bool) []byte {
 	w.U32(maximum)
 	w.U32(remaining)
 	// The native tooltip selects by count. Actual stats keep debit hysteresis.
-	index := kcTierFor(int(c), count)
+	index := kcTierFor(count)
 	for typ := 1; typ < kcTypes; typ++ {
 		var value uint16
 		if index >= 0 {
-			value = uint16(kcTiers[c][index].Status[typ])
+			value = uint16(kcTiers[index].Status[typ])
 		}
 		w.U16(value)
 	}
@@ -342,10 +339,10 @@ func blessingSnapshotLocked(c uint8, entry bool) []byte {
 func kcStatus(c uint8) [kcTypes]int32 {
 	kcMu.Lock()
 	defer kcMu.Unlock()
-	if c > 1 || kcWorld[c].index < 0 || kcWorld[c].index >= len(kcTiers[c]) {
+	if c > 1 || kcWorld[c].index < 0 || kcWorld[c].index >= len(kcTiers) {
 		return [kcTypes]int32{}
 	}
-	return kcTiers[c][kcWorld[c].index].Status
+	return kcTiers[kcWorld[c].index].Status
 }
 
 // kcAbility maps the flat KC types onto SetSkillAbility kinds (same field).
@@ -394,9 +391,9 @@ func SubKillCount(c uint8, n uint32, log logPrinter) {
 	// Native 0x413750 only reselects after crossing below the preceding
 	// tier's threshold. Preserve that hysteresis rather than treating a debit
 	// as SetKillCount; below the first table row GX safely applies no bonuses.
-	if w.index > 0 && w.count < kcTiers[c][w.index-1].Kill {
-		w.index = kcTierFor(int(c), w.count)
-		w.next = kcTiers[c][w.index+1].Kill
+	if w.index > 0 && w.count < kcTiers[w.index-1].Kill {
+		w.index = kcTierFor(w.count)
+		w.next = kcTiers[w.index+1].Kill
 		w.broadcastAt = now.Add(kcBroadcastEvery)
 	}
 	light, dark := kcWorld[0].count, kcWorld[1].count

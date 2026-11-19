@@ -6,13 +6,13 @@ counter. GX World sends the progress, timer and tooltip bonuses to the client.
 
 ## Data and persistence
 
-GX World loads `PS_GameDefs_BlessingLight` and `PS_GameDefs_BlessingFury` from
-SQLite. Migration 13 imports all 30 stages per faction from the original
-`KillStatus.SData`. It takes the higher value of each bonus at each matching
-stage and writes it to both sides, preserving the thresholds. GX World requires
-consecutive tier numbers, increasing thresholds and matching bonuses at every
-tier. GX Studio edits both tables together and shows the effective inherited
-bonus next to the value stored in each tier. Restart GX World after saving.
+GX World loads the shared `PS_GameDefs_GoddessBlessing` table from SQLite.
+The original 30 stages per faction were imported from `KillStatus.SData`
+using the higher value of each bonus at each matching stage. Migration 14
+consolidates the identical faction tables and preserves their thresholds and
+bonuses. GX World requires consecutive tier numbers and increasing
+thresholds. GX Studio shows the effective inherited bonus next to the value
+stored in each tier. Restart GX World after saving.
 
 The thresholds for both countries are:
 

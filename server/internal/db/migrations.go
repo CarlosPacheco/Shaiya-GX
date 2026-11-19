@@ -69,6 +69,7 @@ var migrations = []migration{
 	{11, "enchant_target_levels", enchantrules.UpgradeSQL},
 	{12, "mob_ai_messages", mobaimessages.MigrationSQL},
 	{13, "goddess_blessing", blessingrules.MigrationSQL},
+	{14, "universal_goddess_blessing", blessingrules.MergeSQL},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

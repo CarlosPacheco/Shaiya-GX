@@ -1,7 +1,6 @@
 package world
 
 import (
-	"slices"
 	"testing"
 	"time"
 
@@ -23,7 +22,7 @@ func withTiers(t *testing.T) {
 	a.Kill, b.Kill = 2, 4
 	a.Status[1], a.Status[4] = 10, 5                   // +10% HP, +5 STR
 	b.Status[1], b.Status[4], b.Status[10] = 10, 5, 20 // tiers keep the earlier values
-	kcTiers = [2][]kcTier{{a, b}, {a, b}}
+	kcTiers = []kcTier{a, b}
 	kcMu.Unlock()
 	now := time.Now()
 	kcMu.Lock()
@@ -81,10 +80,10 @@ func TestLoadKillStatus(t *testing.T) {
 	if err := loadKillStatus(log); err != nil {
 		t.Fatal(err)
 	}
-	if len(kcTiers[0]) != 30 || !slices.Equal(kcTiers[0], kcTiers[1]) || kcTiers[0][0].Kill != 150 || kcMaxKill(0) != 12288 {
-		t.Fatalf("unexpected migrated tiers: %d/%d", len(kcTiers[0]), len(kcTiers[1]))
+	if len(kcTiers) != 30 || kcTiers[0].Kill != 150 || kcMaxKill() != 12288 {
+		t.Fatalf("unexpected migrated tiers: %d", len(kcTiers))
 	}
-	last := kcTiers[0][29].Status
+	last := kcTiers[29].Status
 	if last[11] != 10 || last[10] != 10 || last[25] != 100 || last[24] != 5 || last[1] != 9 {
 		t.Fatalf("top tier status %v", last)
 	}
@@ -122,9 +121,9 @@ func TestRecoveryBase(t *testing.T) {
 func TestObeliskDebitPreservesNativeTierHysteresisAndNeverUnderflows(t *testing.T) {
 	withTiers(t)
 	kcMu.Lock()
-	third := kcTiers[0][1]
+	third := kcTiers[1]
 	third.Kill = 6
-	kcTiers[0] = append(kcTiers[0], third)
+	kcTiers = append(kcTiers, third)
 	setKillCountLocked(0, 3, time.Now())
 	kcMu.Unlock()
 	AddKillCount(0, 2, nopLog{}) // Five counts, tier1; six would activate blessing.
@@ -140,9 +139,9 @@ func TestObeliskDebitPreservesNativeTierHysteresisAndNeverUnderflows(t *testing.
 	if kcWorld[0].count != 0 {
 		t.Fatal("country count underflow")
 	}
-	AddKillCount(1, 4, nopLog{})
+	AddKillCount(1, 6, nopLog{})
 	SubKillCount(1, 100, nopLog{})
-	if kcWorld[1].count != 4 {
+	if kcWorld[1].count != 6 {
 		t.Fatal("debit modified active blessing")
 	}
 }

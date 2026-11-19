@@ -17,12 +17,12 @@ import (
 
 func (e *editor) blessingCatalog() {
 	catalog := e.blessing
-	draft := blessingrules.Catalog{slices.Clone(catalog.Rules[0]), slices.Clone(catalog.Rules[1])}
+	draft := slices.Clone(catalog.Rules)
 	e.status = wrapped("")
 	type inputKey struct{ tier, field int }
 	invalid := make(map[inputKey]string)
 	e.databaseDraftDirty = func() bool {
-		return len(invalid) != 0 || !studio.EqualBlessing(draft, catalog.Rules)
+		return len(invalid) != 0 || !slices.Equal(draft, catalog.Rules)
 	}
 	var active int
 	var render func()
@@ -31,7 +31,7 @@ func (e *editor) blessingCatalog() {
 		if e.busy {
 			return
 		}
-		pending := blessingrules.Catalog{slices.Clone(draft[0]), slices.Clone(draft[1])}
+		pending := slices.Clone(draft)
 		details.Hide()
 		e.run("Backing up and saving blessing tiers…", func() func() {
 			backup, err := studio.SaveBlessing(context.Background(), e.root, catalog, pending)
@@ -42,7 +42,7 @@ func (e *editor) blessingCatalog() {
 				}
 				e.blessing = &studio.BlessingCatalog{DBPath: catalog.DBPath, Rules: pending}
 				e.blessingCatalog()
-				e.status.SetText("Saved both factions. Restart GX World to apply. Backup · " + backup)
+				e.status.SetText("Saved. Restart GX World to apply. Backup · " + backup)
 			}
 		})
 	})
@@ -62,16 +62,16 @@ func (e *editor) blessingCatalog() {
 		}
 		save.Disable()
 	}
-	list := widget.NewList(func() int { return len(draft[0]) },
+	list := widget.NewList(func() int { return len(draft) },
 		func() fyne.CanvasObject { return widget.NewLabel("") },
 		func(i widget.ListItemID, item fyne.CanvasObject) {
-			item.(*widget.Label).SetText(fmt.Sprintf("%2d    %d  /  %d", i+1, draft[0][i].RequiredKills, draft[1][i].RequiredKills))
+			item.(*widget.Label).SetText(fmt.Sprintf("%2d    %d", i+1, draft[i].RequiredKills))
 		})
 	render = func() {
 		index := active
 		values := make([]*widget.Label, len(blessingrules.Effects))
 		refreshPreview := func() {
-			effective := draft.Effective(0, index)
+			effective := draft.Effective(index)
 			for i, out := range values {
 				if out != nil {
 					out.SetText(strconv.Itoa(int(effective[i])) + " " + blessingrules.Effects[i].Unit)
@@ -98,18 +98,14 @@ func (e *editor) blessingCatalog() {
 			}
 			return w
 		}
-		thresholds := container.NewGridWithColumns(2)
-		for side, name := range []string{"Light", "Fury"} {
-			control := entry(side-2, uint64(draft[side][index].RequiredKills), 32, func(n uint64) {
-				draft[side][index].RequiredKills = uint32(n)
-				list.RefreshItem(index)
-			})
-			thresholds.Add(container.NewVBox(fieldHeading(name+" kills required", blessingrules.Tables[side]+".RequiredKills"), control))
-		}
+		threshold := entry(-1, uint64(draft[index].RequiredKills), 32, func(n uint64) {
+			draft[index].RequiredKills = uint32(n)
+			list.RefreshItem(index)
+		})
 		rows := container.NewVBox(
 			fieldHeading(fmt.Sprintf("Tier %d", index+1), "Tier"),
-			thresholds,
-			wrapped("Both factions share the defined bonuses. The effective value includes the highest value from earlier tiers."),
+			fieldHeading("Kills required", "RequiredKills"), threshold,
+			wrapped("The same rules apply to Light and Fury. Effective bonuses include the highest value from earlier tiers."),
 		)
 		group := ""
 		for i, effect := range blessingrules.Effects {
@@ -119,8 +115,8 @@ func (e *editor) blessingCatalog() {
 				rows.Add(widget.NewLabelWithStyle(group, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}))
 				rows.Add(container.NewGridWithColumns(3, widget.NewLabel("Bonus"), widget.NewLabel("Defined in this tier"), widget.NewLabel("Effective total")))
 			}
-			current := entry(i, uint64(draft[0][index].Bonuses[i]), 16, func(n uint64) {
-				draft[0][index].Bonuses[i], draft[1][index].Bonuses[i] = uint16(n), uint16(n)
+			current := entry(i, uint64(draft[index].Bonuses[i]), 16, func(n uint64) {
+				draft[index].Bonuses[i] = uint16(n)
 			})
 			values[i] = widget.NewLabel("")
 			rows.Add(container.NewGridWithColumns(3, fieldHeading(effect.Label, fmt.Sprintf("%s · Type %d", effect.Column, i+1)), current, values[i]))
@@ -135,11 +131,11 @@ func (e *editor) blessingCatalog() {
 			render()
 		}
 	}
-	left := container.NewBorder(widget.NewLabel("Tier   Light / Fury kills"), nil, nil, nil, list)
+	left := container.NewBorder(widget.NewLabel("Tier   Required kills"), nil, nil, nil, list)
 	top := container.NewVBox(
 		container.NewHBox(widget.NewButton("Open another installation", func() { e.leave(e.start) }), e.switcher(studio.Blessing), save),
 		wrapped(catalog.DBPath),
-		wrapped(strings.Join(blessingrules.Tables[:], " · ")),
+		wrapped(blessingrules.Table),
 	)
 	split := container.NewHSplit(left, details)
 	split.SetOffset(0.22)
