@@ -25,11 +25,12 @@ func (w *World) SkyVisible(eye, target render.V3, distance float32) bool {
 // UV 0..4 (0x70bac0/0x70bac4), vertex colour 0x50ffffff, scrolling 0.01 and
 // 0.005 UV/s (0x70ba98/0x70ba9c). NO VERIFICADO: pass order and states.
 type Sky struct {
-	Dome    *render.Mesh
-	DomeTex *render.Texture
-	Clouds  [2]*render.Texture
-	cloudUV [2]float32
-	quad    *render.Mesh
+	Dome     *render.Mesh
+	DomeTex  *render.Texture
+	Overcast *render.Texture
+	Clouds   [2]*render.Texture
+	cloudUV  [2]float32
+	quad     *render.Mesh
 }
 
 func LoadSky(a *Assets, w *world.WLD) *Sky {
@@ -60,6 +61,7 @@ func LoadSky(a *Assets, w *world.WLD) *Sky {
 		return a.Texture(original)
 	}
 	s.DomeTex = tex(w.Sky)
+	s.Overcast = tex("sky_001.bmp")
 	s.Clouds[0], s.Clouds[1] = tex(w.CloudA), tex(w.CloudB)
 	for _, c := range s.Clouds {
 		if c != nil {
@@ -90,26 +92,31 @@ func (s *Sky) Update(dt float32) {
 // Draw renders behind everything, centred on the eye, with its own
 // (10, 100000) projection like the original sky pass.
 func (s *Sky) Draw(r *render.Scene3D, eye render.V3) {
-	s.DrawTinted(r, eye, render.V3{1, 1, 1}, 0x50/255.0)
+	s.DrawWeather(r, eye, 0)
 }
 
-func (s *Sky) DrawTinted(r *render.Scene3D, eye, tint render.V3, cloudOpacity float32) {
+// DrawWeather crossfades the field dome and its cloud layers into PS107's
+// storm dome (0x539dd8). The cloud UV phase continues behind the storm.
+func (s *Sky) DrawWeather(r *render.Scene3D, eye render.V3, overcast float32) {
 	if s == nil {
 		return
 	}
 	r.BeginSky()
+	dome := render.Identity()
+	dome[12], dome[13], dome[14] = eye[0], eye[1], eye[2]
 	if s.Dome != nil && s.DomeTex != nil {
-		w := render.Identity()
-		w[12], w[13], w[14] = eye[0], eye[1], eye[2]
-		r.DrawUnlitTint(s.Dome, s.DomeTex, w, [4]float32{tint[0], tint[1], tint[2], 1}, [2]float32{})
+		r.DrawUnlit(s.Dome, s.DomeTex, dome, 1, [2]float32{})
 	}
-	for i, h := range [2]float32{1000, 1100} {
+	for i, height := range [2]float32{1000, 1100} {
 		if s.Clouds[i] == nil {
 			continue
 		}
-		w := render.Identity()
-		w[12], w[13], w[14] = eye[0], eye[1]+h, eye[2]
-		r.DrawUnlitTint(s.quad, s.Clouds[i], w, [4]float32{tint[0], tint[1], tint[2], cloudOpacity}, [2]float32{s.cloudUV[i], s.cloudUV[i]})
+		cloud := dome
+		cloud[13] += height
+		r.DrawUnlit(s.quad, s.Clouds[i], cloud, 0x50/255.0, [2]float32{s.cloudUV[i], s.cloudUV[i]})
+	}
+	if s.Dome != nil && s.Overcast != nil && overcast > 0 {
+		r.DrawUnlit(s.Dome, s.Overcast, dome, overcast, [2]float32{})
 	}
 	r.EndSky()
 }

@@ -688,7 +688,12 @@ func (a *App) drawWorldView(w, h int) {
 	s.Proj = render.PerspectiveFovLH(nativeWorldFOV, aspect, 0.1, far)
 	s.SkyProj = render.PerspectiveFovLH(nativeWorldFOV, aspect, 10, 100000)
 	v.world.PrepareTerrainOcclusion(s, eye)
-	v.weather.update(a.weatherForView(), float32(a.frameDT))
+	forward := target.Sub(eye)
+	forward[1] = 0
+	if forward.Len() > 0 {
+		forward = forward.Scale(20 / forward.Len())
+	}
+	v.weather.update(a.weatherForView(), float32(a.frameDT), eye.Add(forward).Add(render.V3{0, 15, 0}))
 	weatherColor, weatherNear, weatherFar := v.weather.fog(v.world.FogColor, v.world.FogStart*distanceScale, v.world.FogEnd*distanceScale)
 	s.FogColor, s.FogStart, s.FogEnd = weatherColor, weatherNear, weatherFar
 	if v.weather.blend > 0 {
@@ -793,12 +798,7 @@ func (a *App) drawWorldView(w, h int) {
 func (a *App) drawWorldContents(eye render.V3, underwater bool) {
 	v, s := a.wv, a.scene3d
 	if !underwater && v.world.Sky != nil {
-		if v.weather.blend > 0 {
-			tint, opacity := v.weather.sky()
-			v.world.Sky.DrawTinted(s, eye, tint, opacity)
-		} else {
-			v.world.Sky.Draw(s, eye)
-		}
+		v.world.Sky.DrawWeather(s, eye, v.weather.blend)
 	}
 	v.world.Draw(s)
 	a.drawGroundItems()
