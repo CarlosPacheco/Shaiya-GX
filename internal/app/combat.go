@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -70,8 +71,12 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 		return
 	}
 	if id := a.pickNPC(in, w, h); id != 0 {
-		a.wv.mobClick = mobClick{}
-		a.openNPC(id)
+		// A click targets the NPC; a double click walks to it and talks.
+		if a.wv.mobClick.double(id, in.MouseX, in.MouseY, a.clock) {
+			a.openNPC(id)
+		} else {
+			a.selectNPC(id)
+		}
 		in.Clicked = false
 		return
 	}
@@ -246,6 +251,10 @@ func (a *App) drawCombat(w, h int) {
 		}
 		view.TargetHP.Current = uint32(max(e.HP, 0))
 		view.TargetKnown = e.HealthKnown
+	} else if e != nil && e.Kind == game.KindNpc {
+		a.loadNPCs()
+		view.TargetName = a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}].Name
+		view.TargetColor = [4]float32{1, .96, .3, 1}
 	} else if e != nil && e.Kind == game.KindUser && e.Shape != nil {
 		view.TargetName = e.Shape.Name
 		if member := s.Party.Member(e.ID); member != nil {
@@ -273,6 +282,23 @@ func (a *App) drawCombat(w, h int) {
 	a.bottom.Draw(a.sprites, a.font, a.white, w, h, view, a.inventory.open, a.skills.open, a.status.open, a.subActionsOpen)
 	a.drawBlessingTooltip(w, h)
 	a.drawBlessingBanner(w, h)
+}
+
+// selectNPC makes an NPC the current target (the NPC target frame shows its name).
+func (a *App) selectNPC(id uint32) {
+	if a.state.Target != id {
+		if old := a.state.Entities[a.state.Target]; old != nil && old.Kind == game.KindMob && a.world != nil {
+			if err := a.world.Send(proto.StopAttackPacket()); err != nil {
+				a.backToLogin("Unable to stop attack.")
+				return
+			}
+		}
+		a.state.PreviousTarget = a.state.Target
+	}
+	a.state.Target = id
+	if a.wv != nil {
+		a.wv.approachSkill = nil
+	}
 }
 
 func (a *App) selectSelf() {

@@ -24,7 +24,7 @@ type blacksmithView struct {
 
 func (a *App) blacksmithOpen() bool {
 	e := a.state.Entities[a.shop.npcID]
-	return a.blacksmithUI != nil && e != nil && e.NpcType == 3 && !a.shop.questMode && !a.state.Self.Dead
+	return a.blacksmithUI != nil && e != nil && e.NpcType == 3 && !a.shop.overlay() && !a.state.Self.Dead
 }
 
 func (a *App) blacksmithReady() bool {

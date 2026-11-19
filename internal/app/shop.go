@@ -18,6 +18,7 @@ type shopView struct {
 	deadline  float64
 	dragging  bool
 	questMode bool
+	talk      bool // the NPC conversation window precedes the service
 	dragIndex uint8
 }
 
@@ -61,6 +62,12 @@ func (a *App) updateShop(in *platform.Input, w, h int) bool {
 	if a.auctionBoard(v.npcID) {
 		return a.updateAuction(in, w, h)
 	}
+	if v.talk && a.npcTalkUI != nil {
+		return a.updateNPCTalk(in, w, h, e)
+	}
+	if v.questMode && a.npcQuestUI != nil {
+		return a.updateNPCQuest(in, w, h, e)
+	}
 	if kind, ok := a.houseKind(e); ok {
 		return a.updateHouse(in, w, h, e, kind)
 	}
@@ -69,24 +76,6 @@ func (a *App) updateShop(in *platform.Input, w, h int) bool {
 	}
 	if e.NpcType == 11 && a.guildDirectoryUI != nil {
 		return a.updateGuildDirectory(in, w, h, e)
-	}
-	if (e.NpcType == 1 || e.NpcType == 2 || e.NpcType == 3 || e.NpcType == 6) && a.npcQuestUI != nil {
-		if v.questMode {
-			return a.updateNPCQuest(in, w, h, e)
-		}
-		def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
-		if len(def.StartQuests)+len(def.EndQuests) > 0 && !v.pending && !a.inventory.pending {
-			x, y := a.serviceQuestOrigin(w, h, e)
-			if a.npcQuestUI.ServiceButton(in, x, y, false) {
-				if err := a.loadQuests(); err != nil {
-					a.questMessage("Quest data unavailable.")
-				} else {
-					v.questMode = true
-					a.npcQuest = npcQuestView{npc: e.ID}
-				}
-				return true
-			}
-		}
 	}
 	if e.NpcType == 2 && a.gateUI != nil {
 		return a.updateGatekeeper(in, w, h, e)
@@ -171,18 +160,18 @@ func (a *App) openNPC(id uint32) {
 		a.backToLogin("Unable to talk to NPC.")
 		return
 	}
-	a.shop.npcID, a.shop.page, a.shop.questMode = id, 0, false
+	a.shop.npcID, a.shop.page, a.shop.questMode, a.shop.talk = id, 0, false, false
 	if a.auctionBoard(id) {
 		a.beginAuction(id)
 		return
 	}
 	a.auction = auctionView{}
-	if e.NpcType == 4 {
-		a.openPvPRewards()
+	if a.npcTalkUI != nil {
+		a.shop.talk = true
+		a.npcTalkUI.Reset()
+		return
 	}
-	if e.NpcType == 2 && a.gateUI != nil {
-		a.gateUI.ResetWelcomeScroll()
-	}
+	a.enterNPCService(e)
 }
 
 func (a *App) drawShop(w, h int) {
@@ -193,6 +182,14 @@ func (a *App) drawShop(w, h int) {
 	}
 	if a.auctionBoard(v.npcID) {
 		a.drawAuction(w, h)
+		return
+	}
+	if v.talk && a.npcTalkUI != nil {
+		a.drawNPCTalk(w, h, e)
+		return
+	}
+	if v.questMode && a.npcQuestUI != nil {
+		a.drawNPCQuest(w, h, e)
 		return
 	}
 	if kind, ok := a.houseKind(e); ok {
@@ -208,23 +205,16 @@ func (a *App) drawShop(w, h int) {
 		return
 	}
 	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
-	if v.questMode && a.npcQuestUI != nil {
-		a.drawNPCQuest(w, h, e)
-		return
-	}
 	if e.NpcType == 2 && a.gateUI != nil {
 		a.drawGatekeeper(w, h, e, def)
-		a.drawServiceQuestButton(w, h, e, def)
 		return
 	}
 	if e.NpcType == 3 && a.blacksmithUI != nil {
 		a.drawBlacksmith(w, h, def.Name, questText(def.Welcome))
-		a.drawServiceQuestButton(w, h, e, def)
 		return
 	}
 	if e.NpcType == 6 && a.bankUI != nil {
 		a.drawWarehouse(w, h, def)
-		a.drawServiceQuestButton(w, h, e, def)
 		return
 	}
 	if e.NpcType != 1 && e.NpcType != 6 && a.npcQuestUI != nil {
@@ -233,7 +223,6 @@ func (a *App) drawShop(w, h int) {
 	}
 	if e.NpcType == 1 {
 		a.drawMarket(w, h, def)
-		a.drawServiceQuestButton(w, h, e, def)
 		return
 	}
 	a.sprites.Draw(a.white, 32, 82, 400, 460, 0, 0, 1, 1, [4]float32{0.05, 0.05, 0.05, 0.95})
@@ -288,3 +277,6 @@ func (a *App) sellItem(source [2]uint8, count uint16) {
 	}
 	a.inventory.pending, a.inventory.deadline, a.inventory.selected = true, a.clock+10, false
 }
+
+// overlay reports a conversation or quest window covering the NPC's service.
+func (v *shopView) overlay() bool { return v.questMode || v.talk }

@@ -92,7 +92,7 @@ func (a *App) guildBankAllowed(source, destination [2]uint8) bool {
 
 func (a *App) warehouseOpen() bool {
 	e := a.state.Entities[a.shop.npcID]
-	return a.bankUI != nil && e != nil && e.NpcType == 6 && !a.shop.questMode && !a.state.Self.Dead
+	return a.bankUI != nil && e != nil && e.NpcType == 6 && !a.shop.overlay() && !a.state.Self.Dead
 }
 func (a *App) closeWarehouse() {
 	a.bank.selected, a.bank.dragging = false, false

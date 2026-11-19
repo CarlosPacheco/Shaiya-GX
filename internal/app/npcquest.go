@@ -196,17 +196,6 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 		}
 	}
 	entries := a.npcQuestEntries(e)
-	if a.shop.questMode {
-		footer := 336
-		if v.selected != 0 {
-			footer = 466
-		}
-		x, y := a.npcQuestUI.Origin(w, h)
-		if a.npcQuestUI.ServiceButton(in, x+145, y+footer, true) {
-			a.shop.questMode = false
-			return true
-		}
-	}
 	if v.selected != 0 && v.result == nil {
 		found := false
 		for _, entry := range entries {
@@ -216,14 +205,20 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 			}
 		}
 		if !found {
-			v.selected = 0
+			// The request was accepted (or no longer applies): the conversation ends.
+			a.closeNPC()
+			return true
 		}
+	}
+	if v.selected == 0 {
+		a.closeNPC()
+		return true
 	}
 	choices := 0
 	if v.result == nil && v.selected != 0 && a.state.QuestChoosing && a.state.QuestChoice == v.selected && int(v.selected) <= len(a.questDefs) {
 		choices = min(int(a.questDefs[v.selected-1].UserSelect), 3)
 	}
-	a.npcQuestUI.HasService = a.shop.questMode
+	a.npcQuestUI.HasService = false
 	a.npcQuestUI.ActionDisabled = v.ending && v.result == nil && v.selected > 0 && int(v.selected) <= len(a.questDefs) && !questMapReady(a.questDefs[v.selected-1], a.state.Quests[v.selected], a.state)
 	action := a.npcQuestUI.Update(in, w, h, len(entries), v.offset, v.selected != 0, v.ending, choices)
 	v.offset = action.Offset
@@ -247,8 +242,7 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 		a.npcQuestUI.ResetDescriptionScroll()
 	}
 	if action.Accept && v.result != nil {
-		v.selected, v.result = 0, nil
-		a.npcQuestUI.ResetDescriptionScroll()
+		a.closeNPC()
 		return true
 	}
 	if action.Accept && v.selected != 0 {
@@ -312,16 +306,4 @@ func (a *App) drawNPCQuest(w, h int, e *game.Entity) {
 		}
 	}
 	a.npcQuestUI.Draw(a.sprites, a.font, w, h, def.Name, questText(def.Welcome), a.npcPortrait(def), names, v.offset, v.selected != 0, v.ending, title, description, choices)
-	if a.shop.questMode {
-		footer := 336
-		if v.selected != 0 {
-			footer = 466
-		}
-		x, y := a.npcQuestUI.Origin(w, h)
-		label := "Shop"
-		if e.NpcType == 6 {
-			label = "Bank"
-		}
-		a.npcQuestUI.DrawServiceButton(a.sprites, a.font, x+145, y+footer, true, label)
-	}
 }

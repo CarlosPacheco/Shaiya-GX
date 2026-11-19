@@ -86,6 +86,7 @@ type App struct {
 	guildUI                             *ui.GuildPanel
 	guildDirectoryUI                    *ui.GuildDirectory
 	guildHouseUI                        *ui.GuildHouseWindow
+	npcTalkUI                           *ui.NPCTalk
 	guildPointUI                        *ui.GuildPointWindow
 	house                               houseView
 	guild                               guildView
@@ -384,6 +385,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	}
 
 	if a.guildDirectoryUI, err = ui.NewGuildDirectory(a); err != nil {
+		return nil, err
+	}
+	if a.npcTalkUI, err = ui.NewNPCTalk(a); err != nil {
 		return nil, err
 	}
 	if a.guildHouseUI, err = ui.NewGuildHouseWindow(a); err != nil {

@@ -174,7 +174,16 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 	}
-	if e := a.state.Entities[a.shop.npcID]; e != nil && a.npcQuestUI != nil && (a.shop.questMode || e.NpcType != 1 && e.NpcType != 2 && e.NpcType != 3 && (e.NpcType != 4 || a.pvpRewardUI == nil) && e.NpcType != 6 && e.NpcType != 11) {
+	if e := a.state.Entities[a.shop.npcID]; e != nil && a.shop.talk && a.npcTalkUI != nil {
+		x, y := a.npcTalkUI.Origin(w, h)
+		if start(&a.npcTalkUI.Position, x, y, ui.NPCTalkWidth, ui.NPCTalkHeight, 75, 145) {
+			return true
+		}
+		if pointInside(in, x, y, ui.NPCTalkWidth, ui.NPCTalkHeight) {
+			return false
+		}
+	}
+	if e := a.state.Entities[a.shop.npcID]; e != nil && a.npcQuestUI != nil && !a.shop.talk && (a.shop.questMode || e.NpcType != 1 && e.NpcType != 2 && e.NpcType != 3 && (e.NpcType != 4 || a.pvpRewardUI == nil) && e.NpcType != 6 && e.NpcType != 11) {
 		a.npcQuestUI.Detail = a.npcQuest.selected != 0
 		x, y := a.npcQuestUI.Origin(w, h)
 		height := 391
@@ -188,7 +197,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 	}
-	if e := a.state.Entities[a.shop.npcID]; e != nil && e.NpcType == 2 && !a.shop.questMode && a.gateUI != nil {
+	if e := a.state.Entities[a.shop.npcID]; e != nil && e.NpcType == 2 && !a.shop.overlay() && a.gateUI != nil {
 		x, y := a.gateUI.Origin(w, h)
 		if start(&a.gateUI.Position, x, y, ui.GatekeeperWidth, ui.GatekeeperHeight, 265, 190) {
 			return true
@@ -221,7 +230,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 	}
-	if e := a.state.Entities[a.shop.npcID]; e != nil && e.NpcType == 1 && !a.auctionBoard(a.shop.npcID) && !a.shop.questMode && a.marketUI != nil {
+	if e := a.state.Entities[a.shop.npcID]; e != nil && e.NpcType == 1 && !a.auctionBoard(a.shop.npcID) && !a.shop.overlay() && a.marketUI != nil {
 		x, y := a.marketUI.Origin(w, h)
 		if start(&a.marketUI.Position, x, y, ui.MarketWidth, ui.MarketHeight, 8, 212) {
 			return true
