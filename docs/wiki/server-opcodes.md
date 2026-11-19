@@ -292,7 +292,7 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0xA303` | [Ping](protocol-authentication.md#opcode-a303) | yes | yes | — |
 | `0xB101` | [BankItemList](protocol-services.md#opcode-b101) | — | yes | — |
 | `0xF101` | [ChatNormalAdmin](protocol-chat.md#opcode-f101) | yes | — | yes |
-| `0xF103` | [ChatWorldAdmin](protocol-chat.md#opcode-f103) | yes | — | yes |
+| `0xF103` | [ChatWorldAdmin](protocol-chat.md#opcode-f103) | yes | yes | yes |
 | `0xF501` | [GmCommandError](protocol-chat.md#opcode-f501) | — | — | — |
 | `0xF702` | [GmCommandGetItem](protocol-chat.md#opcode-f702) | — | — | — |
 

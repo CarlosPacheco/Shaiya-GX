@@ -56,7 +56,7 @@ For persistent overrides create `.local/runtime.env` in the server directory. Ex
 Run matching GX client and server builds. Pending SQLite migrations are
 applied on startup to the runtime, with versions recorded in
 `GX_SchemaMigrations`. The current source applies migrations through version
-20. This includes catalogs for enchant, mob AI messages, blessing, world
+21. This includes catalogs for enchant, mob AI messages, blessing, world
 drops, item boxes, NPCs and quests, map rules and experience.
 
 Use [GX Studio](gx-studio.md) for supported catalogs and verify the chosen
@@ -144,3 +144,22 @@ Read [server architecture](server-architecture.md),
 [SQLite internals/recovery](server-storage.md) and
 [security, limits and diagnostics](server-security.md) before tuning a deployment.
 Do not downgrade to plaintext-only password handling or mix login/world versions.
+
+## Global server notices
+
+`PS_GameDefs_ServerNotices` in SQLite stores `Index`, `Message`,
+`Frequency` and `FixedHour1` through `FixedHour5`. GX World reads them at
+startup. All connected players receive a notice in global GM chat.
+
+- `Frequency` is an interval in minutes measured from world startup. The
+  first send occurs after one interval. Zero leaves the row available for
+  manual use.
+- Fixed times use `day/hour/minute` in the server's local time zone, with
+  Sunday = 0 through Saturday = 6. For example, `1/20/30` is Monday at 20:30.
+  Leave unused slots empty or NULL. One valid slot switches the row to fixed
+  times. Duplicate slots send once, and invalid slots are ignored.
+- `/notice message` sends text immediately. `/notice index1` sends the
+  configured message with index 1. Manual sends leave the schedule intact.
+
+The starter row sends `GX Automatic Notice - Test` every 60 minutes. Edit
+the runtime database and restart GX World to apply catalog changes.

@@ -87,6 +87,14 @@ var migrations = []migration{
 	{18, "map_properties", maprules.MigrationSQL},
 	{19, "unified_experience", experienceMigration},
 	{20, "separate_npc_skills", npcSkillsMigration},
+	{21, "server_notices", `CREATE TABLE PS_GameDefs_ServerNotices (
+		"Index" INTEGER PRIMARY KEY CHECK ("Index" BETWEEN 1 AND 4294967295),
+		Message TEXT NOT NULL CHECK (length(trim(Message)) > 0 AND length(CAST(Message AS BLOB)) <= 127),
+		Frequency INTEGER NOT NULL DEFAULT 0 CHECK (Frequency BETWEEN 0 AND 5256000),
+		FixedHour1 TEXT, FixedHour2 TEXT, FixedHour3 TEXT, FixedHour4 TEXT, FixedHour5 TEXT
+	) STRICT;
+	INSERT INTO PS_GameDefs_ServerNotices ("Index", Message, Frequency)
+	VALUES (1, 'GX Automatic Notice - Test', 60);`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

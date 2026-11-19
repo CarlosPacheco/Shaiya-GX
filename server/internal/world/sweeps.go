@@ -91,7 +91,18 @@ func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.Cance
 			sendView(r.MapID, r.X, r.Z, r.Packet, "0x0610 mob hp restore")
 		}
 	})
-	engine := scheduler.New(time.Now(), jobs)
+	started := time.Now()
+	notices := scheduleNotices(noticeCatalog, started)
+	if len(notices) > 0 {
+		add("notices", time.Second, func(now time.Time) {
+			for i := range notices {
+				if notices[i].due(now) {
+					broadcastNotice(notices[i].message)
+				}
+			}
+		})
+	}
+	engine := scheduler.New(started, jobs)
 	go func() { defer close(r.done); engine.Run(ctx) }()
 	return r
 }

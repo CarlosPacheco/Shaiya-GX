@@ -749,13 +749,32 @@ Declarations: [packet.ChatWorldAdmin](../../server/internal/packet/packet.go#L20
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L70)
 
-**S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
+**S→C serializers:** [buildChatByName (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L155)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1446)
 
 ### Wire layouts and validation
 
 These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>buildChatByName — server/internal/world/protocol.go</summary>
+
+[Source definition](../../server/internal/world/protocol.go#L155)
+
+```go
+func buildChatByName(op packet.Opcode, sender, message string) []byte {
+	w := packet.New(op)
+	name := sender
+	if len(name) > 21 {
+		name = textwire.Prefix(name, 21)
+	}
+	w.FixedString(name, 21)
+	writeChatText(w, message)
+	return w.MustFinish()
+}
+```
+
+</details>
 
 <details><summary>DecodeChatByName — internal/proto/world.go</summary>
 

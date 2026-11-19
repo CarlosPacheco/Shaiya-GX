@@ -20,6 +20,7 @@ unavailable. Skill-based stealth remains available.
 | Command | Result |
 |---|---|
 | `/set money amount` | Sets your own gold to 0–4,000,000,000; larger values clamp to the cap. Example: `/set money 10000000`. |
+| `/notice message` or `/notice indexX` | Sends custom text or the configured notice with index X to all connected players. |
 | `/weather 1` or `/weather 2` | Previews rain or snow for ten minutes in your own client. Use `/weather 0` to restore scheduled weather. |
 | `/set str value`, `/set dex value`, `/set rec value`, `/set int value`, `/set wis value`, `/set luc value` | Sets that base attribute on your own character to 0–32,000, clamping larger values. Example: `/set str 1000`. Refreshes stats and resource limits immediately, without spending/refunding stat points or changing PvP claims. Equipment and blessing bonuses still apply on top. |
 | `/set kill count` | Sets your own kills to 0–1,000,000; larger values clamp to one million. Updates your rank/title and nearby nameplates immediately. Already claimed PvP rewards remain claimed. |

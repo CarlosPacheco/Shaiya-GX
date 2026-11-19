@@ -734,7 +734,7 @@ Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `inte
 | [`experienceMigration`](../../server/internal/db/migrations.go#L26)<br>`var experienceMigration string` | See the source definition and the subsystem ownership contract. |
 | [`npcSkillsMigration`](../../server/internal/db/migrations.go#L29)<br>`var npcSkillsMigration string` | See the source definition and the subsystem ownership contract. |
 | [`migrations`](../../server/internal/db/migrations.go#L31)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L94)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
+| [`migrate`](../../server/internal/db/migrations.go#L102)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -742,6 +742,28 @@ Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `inte
 type migration struct {
 	Version   int
 	Name, SQL string
+}
+```
+
+</details>
+
+### notices.go
+
+[server/internal/db/notices.go](../../server/internal/db/notices.go#L1)
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`ServerNotice`](../../server/internal/db/notices.go#L4)<br>`type ServerNotice` | ServerNotice is a configured global announcement. |
+| [`ServerNotices`](../../server/internal/db/notices.go#L11)<br>`func ServerNotices() ([]ServerNotice, error)` | See the source definition and the subsystem ownership contract. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type ServerNotice struct {
+	Index     uint32
+	Message   string
+	Frequency uint32
+	Fixed     [5]string
 }
 ```
 

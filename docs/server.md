@@ -121,3 +121,22 @@ GX World loads `PS_GameDefs_ExpDefs` from SQLite at startup. Each consecutive
 `Level` has one cumulative `Exp` threshold for reaching the following level.
 The highest configured level is the cap. Experience stops at the threshold
 used to reach that level. Restart GX World after editing the table.
+
+## Global server notices
+
+`PS_GameDefs_ServerNotices` in SQLite stores `Index`, `Message`,
+`Frequency` and `FixedHour1` through `FixedHour5`. GX World reads them at
+startup. All connected players receive a notice in global GM chat.
+
+- `Frequency` is an interval in minutes measured from world startup. The
+  first send occurs after one interval. Zero leaves the row available for
+  manual use.
+- Fixed times use `day/hour/minute` in the server's local time zone, with
+  Sunday = 0 through Saturday = 6. For example, `1/20/30` is Monday at 20:30.
+  Leave unused slots empty or NULL. One valid slot switches the row to fixed
+  times. Duplicate slots send once, and invalid slots are ignored.
+- `/notice message` sends text immediately. `/notice index1` sends the
+  configured message with index 1. Manual sends leave the schedule intact.
+
+The starter row sends `GX Automatic Notice - Test` every 60 minutes. Edit
+the runtime database and restart GX World to apply catalog changes.
