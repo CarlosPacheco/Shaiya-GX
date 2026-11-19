@@ -10,12 +10,17 @@ import (
 
 const GuildWidth, GuildHeight, GuildRows = 337, 512, 15
 
+// GuildGradeInfoX and GuildGradeInfoWidth place the rank permissions panel
+// (guild_manager_grede_info) beside the roster, as 0x4f38a0 hit-tests it.
+const GuildGradeInfoX, GuildGradeInfoWidth = 0x14a, 0x2f0 - 0x14a
+
 // GuildPanel follows 0x4f2960/0x4ef9d0, using the original single roster sheet.
 type GuildPanel struct {
 	Page, navHeld           int
 	Position                WindowPosition
 	frame                   *render.Texture
 	waitFrame               *render.Texture
+	gradeInfo               *render.Texture
 	headers                 [5]*render.Texture
 	waitHeaders             [3]*render.Texture
 	close                   Button
@@ -37,6 +42,7 @@ func NewGuildPanel(t Textures) (*GuildPanel, error) {
 	ld := &loader{t: t}
 	p := &GuildPanel{frame: ld.get("guild.png"), held: -1, navHeld: -1, hoverRow: -1, SortColumn: 3}
 	p.waitFrame = ld.get("guild_wait.png")
+	p.gradeInfo = ld.get("guild_manager_grede_info.png")
 	p.nav = ld.get("friend_left_nav.png")
 	p.scroll = newPanelScroll(ld.get("scrollbar.png"), 303, 99, 356)
 	for i, name := range []string{"guild_sort_lv.png", "guild_sort_name.png", "guild_sort_job.png", "guild_sort_grade.png", "guild_sort_on.png"} {
@@ -153,6 +159,10 @@ func (p *GuildPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, 
 		frame = p.waitFrame
 	}
 	s.Draw(frame, float32(x), float32(y), 337, 512, 0, 0, 337.0/512, 1, white)
+	if !waiting && p.gradeInfo != nil {
+		// Rank permissions table attached to the roster page (0x4ef9d0: x+0x14a).
+		s.Draw(p.gradeInfo, float32(x+GuildGradeInfoX), float32(y), 512, 512, 0, 0, 1, 1, white)
+	}
 	p.DrawNavigation(s, x, y)
 
 	if waiting {

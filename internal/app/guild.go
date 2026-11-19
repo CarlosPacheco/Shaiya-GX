@@ -40,6 +40,7 @@ type guildView struct {
 	directoryOffset                               int
 	etinRequestedFor                              uint32
 	remarkPending                                 bool
+	pointsHidden                                  bool
 	remarkDeadline                                float64
 }
 
@@ -325,7 +326,8 @@ func (a *App) updateGuild(in *platform.Input, w, h int) bool {
 	}
 	a.refreshGuildRoster()
 	x, y := a.guildUI.Origin(w, h)
-	captured := panelPointer(in, x, y, ui.GuildWidth, ui.GuildHeight)
+	captured := panelPointer(in, x, y, ui.GuildWidth, ui.GuildHeight) ||
+		!a.guild.waiting && panelPointer(in, x+ui.GuildGradeInfoX, y, ui.GuildGradeInfoWidth, ui.GuildHeight)
 	canToggle := a.state.Guild.ID != 0 && a.state.Guild.Rank > 0 && a.state.Guild.Rank <= 2
 	if a.guild.waiting && !canToggle {
 		a.guild.waiting, a.guild.rosterDirty, a.guild.selected = false, true, 0

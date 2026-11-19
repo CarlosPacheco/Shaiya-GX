@@ -134,6 +134,9 @@ func (a *App) skillBar() [ui.TotalActionSlots]*proto.LearnedSkill {
 
 func (a *App) updateSkills(in *platform.Input, w, h int) bool {
 	v := &a.skills
+	if a.updateGuildPoints(in) {
+		return true
+	}
 	for _, r := range in.Chars {
 		if r == 'k' || r == 'K' {
 			a.toggleSkills(in.Shift)

@@ -45,7 +45,10 @@ func TestGuildRankingOverlayGL(t *testing.T) {
 	a.state.Guild.Directory = map[uint32]proto.GuildInfo{7: {ID: 7, Name: "Guardians"}}
 	a.state.Guild.RankingPoints = proto.GuildRankingPointsInfo{Points: 500, Maximum: 900, Leader: 7}
 	draw := func(visible bool) []byte {
-		a.state.Guild.RankingPointsKnown = visible
+		a.state.MapID = 1
+		if visible {
+			a.state.MapID = 50
+		}
 		gl.Viewport(0, 0, 1024, 768)
 		gl.ClearColor(0, 0, 0, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
