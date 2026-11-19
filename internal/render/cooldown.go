@@ -11,10 +11,7 @@ func (s *Sprites) DrawCooldown(t *Texture, x, y, size, remaining float32, rgba [
 	progress := (1 - remaining) * 8
 	first := int(progress)
 	for i := first; i < 8; i++ {
-		if s.tex != t || len(s.verts)+3*floatsPerVertex > s.cap*6*floatsPerVertex {
-			s.Flush()
-			s.tex = t
-		}
+		s.reserve(t, 3)
 		a, b := boundary[i], boundary[i+1]
 		if i == first {
 			f := progress - float32(first)
@@ -22,7 +19,7 @@ func (s *Sprites) DrawCooldown(t *Texture, x, y, size, remaining float32, rgba [
 			a[1] += (b[1] - a[1]) * f
 		}
 		for _, v := range [3][2]float32{{.5, .5}, a, b} {
-			s.verts = append(s.verts, x+v[0]*size, y+v[1]*size, .5, .5, rgba[0], rgba[1], rgba[2], rgba[3])
+			s.verts = append(s.verts, spriteVertex{x + v[0]*size, y + v[1]*size, .5, .5, rgba, s.nameDepth, 0})
 		}
 	}
 }

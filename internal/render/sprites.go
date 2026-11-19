@@ -26,9 +26,15 @@ type Sprites struct {
 	depthReadValue         float32
 	depthFrame             uint64
 	hoverDepth             hoverDepthReadback
-	verts                  []float32
+	verts                  []spriteVertex
 	tex                    *Texture
 	cap                    int
+}
+
+type spriteVertex struct {
+	x, y, u, v  float32
+	color       [4]float32
+	depth, flat float32
 }
 
 const spriteVS = `#version 450 core
@@ -97,7 +103,7 @@ void main() {
 	}
 }`
 
-const floatsPerVertex = 10
+const spriteVertexBytes = int(unsafe.Sizeof(spriteVertex{}))
 
 func NewSprites(maxQuads int) (*Sprites, error) {
 	p, err := Program(spriteVS, spriteFS)
@@ -109,14 +115,15 @@ func NewSprites(maxQuads int) (*Sprites, error) {
 	s.uCircle = gl.GetUniformLocation(p, gl.Str("circle\x00"))
 	s.uGrayscale = gl.GetUniformLocation(p, gl.Str("grayscale\x00"))
 	gl.CreateBuffers(1, &s.vbo)
-	gl.NamedBufferStorage(s.vbo, maxQuads*6*floatsPerVertex*4, nil, gl.DYNAMIC_STORAGE_BIT)
-	addGPUBytes(uint64(maxQuads * 6 * floatsPerVertex * 4))
+	gl.NamedBufferStorage(s.vbo, maxQuads*6*spriteVertexBytes, nil, gl.DYNAMIC_STORAGE_BIT)
+	addGPUBytes(uint64(maxQuads * 6 * spriteVertexBytes))
 	gl.CreateVertexArrays(1, &s.vao)
-	gl.VertexArrayVertexBuffer(s.vao, 0, s.vbo, 0, floatsPerVertex*4)
+	gl.VertexArrayVertexBuffer(s.vao, 0, s.vbo, 0, int32(spriteVertexBytes))
+	var vertex spriteVertex
+	offsets := [4]uintptr{unsafe.Offsetof(vertex.x), unsafe.Offsetof(vertex.u), unsafe.Offsetof(vertex.color), unsafe.Offsetof(vertex.depth)}
 	for i, n := range []int32{2, 2, 4, 2} {
-		off := []uint32{0, 2, 4, 8}[i]
 		gl.EnableVertexArrayAttrib(s.vao, uint32(i))
-		gl.VertexArrayAttribFormat(s.vao, uint32(i), n, gl.FLOAT, false, off*4)
+		gl.VertexArrayAttribFormat(s.vao, uint32(i), n, gl.FLOAT, false, uint32(offsets[i]))
 		gl.VertexArrayAttribBinding(s.vao, uint32(i), 0)
 	}
 	return s, nil
@@ -159,12 +166,9 @@ func (s *Sprites) draw(t *Texture, x, y, w, h, u0, v0, u1, v1 float32, rgba [4]f
 		v0, v1 = v0+dv*(top-y)/h, v0+dv*(bottom-y)/h
 		x, y, w, h = left, top, right-left, bottom-top
 	}
-	if s.tex != t || len(s.verts) >= s.cap*6*floatsPerVertex {
-		s.Flush()
-		s.tex = t
-	}
+	s.reserve(t, 6)
 	v := func(px, py, u, vv float32) {
-		s.verts = append(s.verts, px, py, u, vv, rgba[0], rgba[1], rgba[2], rgba[3], s.nameDepth, flat)
+		s.verts = append(s.verts, spriteVertex{px, py, u, vv, rgba, s.nameDepth, flat})
 	}
 	v(x, y, u0, v0)
 	v(x+w, y, u1, v0)
@@ -172,6 +176,13 @@ func (s *Sprites) draw(t *Texture, x, y, w, h, u0, v0, u1, v1 float32, rgba [4]f
 	v(x, y, u0, v0)
 	v(x+w, y+h, u1, v1)
 	v(x, y+h, u0, v1)
+}
+
+func (s *Sprites) reserve(t *Texture, vertices int) {
+	if s.tex != t || len(s.verts)+vertices > s.cap*6 {
+		s.Flush()
+		s.tex = t
+	}
 }
 
 // DrawImage draws a whole texture at its pixel size.
@@ -204,9 +215,9 @@ func (s *Sprites) Flush() {
 		s.verts = s.verts[:0]
 		return
 	}
-	gl.NamedBufferSubData(s.vbo, 0, len(s.verts)*4, unsafe.Pointer(&s.verts[0]))
+	gl.NamedBufferSubData(s.vbo, 0, len(s.verts)*spriteVertexBytes, unsafe.Pointer(&s.verts[0]))
 	gl.BindTextureUnit(0, s.tex.ID)
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(s.verts)/floatsPerVertex))
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(s.verts)))
 	drawCalls++
 	s.verts = s.verts[:0]
 }

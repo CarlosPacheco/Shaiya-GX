@@ -70,7 +70,26 @@ func TestNativeUIFeedbackGL(t *testing.T) {
 	a.skills.cooldowns = map[uint16]float64{57: 100 + float64(skill.ResetTime)/2}
 	potion := a.state.Inventory[[2]uint8{1, 1}]
 	def := a.itemsItem(potion.Type, potion.TypeID)
-	a.inventory.cooldowns = map[uint8]float64{def.ReqIg: 100 + itemReuseSeconds(def.ReqIg)/2}
+	if def == nil || potion.Count < 2 || itemReuseSeconds(def.ReqIg) == 0 {
+		t.Fatal("missing preview potion with a reuse timer", potion)
+	}
+	halfReuse := itemReuseSeconds(def.ReqIg) / 2
+	ack := proto.NewWriter(proto.UseItem)
+	ack.U32(a.state.SelfID)
+	ack.U8(1)
+	ack.U8(1)
+	ack.U8(potion.Type)
+	ack.U8(potion.TypeID)
+	ack.Count(potion.Count - 1)
+	a.clock -= halfReuse
+	if _, err := a.state.Apply(ack.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	a.confirmedItems(proto.UseItem)
+	a.clock += halfReuse
+	if a.itemCooldown(potion) != halfReuse {
+		t.Fatal("confirmed potion use did not start half-visible cooldown")
+	}
 	a.skills.pressedUntil[0] = 100.15
 	if a.skillDefs[sdata.SkillKey{ID: 31, Level: 3}].Name == "" {
 		t.Fatal("missing original buff level")
@@ -112,6 +131,32 @@ func TestNativeUIFeedbackGL(t *testing.T) {
 	sample := func(x, y int) byte { return pixels[((767-y)*1024+x)*4] }
 	if sample(105, 110) > 5 || sample(126, 110) < 250 {
 		t.Fatal("native cooldown sweep did not uncover clockwise", sample(105, 110), sample(126, 110))
+	}
+	const probeSize = 128
+	clock := a.clock
+	a.clock = 100
+	gl.Viewport(0, 0, probeSize, probeSize)
+	gl.ClearColor(.25, .25, .25, 1)
+	gl.Clear(gl.COLOR_BUFFER_BIT)
+	a.sprites.Begin(probeSize, probeSize)
+	a.drawItemCooldown(potion, 40, 40, 32)
+	a.sprites.End()
+	a.clock = clock
+	gl.ReadPixels(0, 0, probeSize, probeSize, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+	pixel := func(x, y int) [3]byte {
+		i := ((probeSize-1-y)*probeSize + x) * 4
+		return [3]byte{pixels[i], pixels[i+1], pixels[i+2]}
+	}
+	background := pixel(0, 0)
+	if red := pixel(45, 50); red[0] <= background[0]+20 || red[1] >= background[1] || pixel(66, 50) != background {
+		t.Fatalf("confirmed potion did not render the red half-sweep: %v, %v", red, pixel(66, 50))
+	}
+	for y := range probeSize {
+		for x := range probeSize {
+			if (x < 40 || x >= 72 || y < 40 || y >= 72) && pixel(x, y) != background {
+				t.Fatalf("potion cooldown drew outside its icon at %d,%d", x, y)
+			}
+		}
 	}
 
 	a.wv.self = a.inventory.preview

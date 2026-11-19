@@ -91,6 +91,18 @@ func TestNameDepthOccludesLabelsAndPreservesHUD(t *testing.T) {
 			t.Fatal("wrong depth occlusion or state leaked into HUD", sample, r, g, b)
 		}
 	}
+	// A cooldown triangle can leave room for another triangle in the batch
+	// while the following quad would overflow the vertex buffer.
+	render.ResetDrawCalls()
+	for range 15 {
+		s.Draw(glyph, 0, 0, 4, 4, 0, 0, 1, 1, [4]float32{1, 1, 1, 1})
+	}
+	s.DrawCooldown(glyph, 8, 24, 16, .125, [4]float32{1, 1, 1, 1})
+	s.Draw(glyph, 40, 24, 16, 16, 0, 0, 1, 1, [4]float32{1, 1, 1, 1})
+	s.End()
+	if calls := render.DrawCalls(); calls != 2 {
+		t.Fatalf("mixed triangle/quad capacity used %d draw calls, want two", calls)
+	}
 	if err := gl.GetError(); err != gl.NO_ERROR {
 		t.Fatalf("name depth GL error %#x", err)
 	}

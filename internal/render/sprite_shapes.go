@@ -22,8 +22,9 @@ func (s *Sprites) DrawRotated(t *Texture, cx, cy, w, h, angle, u0, v0, u1, v1 fl
 	s.Draw(t, cx-w/2, cy-h/2, w, h, u0, v0, u1, v1, tint)
 	sine, cosine := math.Sincos(float64(angle))
 	sn, cs := float32(sine), float32(cosine)
-	for i := len(s.verts) - 6*floatsPerVertex; i < len(s.verts); i += floatsPerVertex {
-		x, y := s.verts[i]-cx, s.verts[i+1]-cy
-		s.verts[i], s.verts[i+1] = cx+x*cs-y*sn, cy+x*sn+y*cs
+	for i := len(s.verts) - 6; i < len(s.verts); i++ {
+		v := &s.verts[i]
+		x, y := v.x-cx, v.y-cy
+		v.x, v.y = cx+x*cs-y*sn, cy+x*sn+y*cs
 	}
 }
