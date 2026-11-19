@@ -17,13 +17,30 @@ type panelScroll struct {
 func newPanelScroll(texture *render.Texture, x, y, height int) panelScroll {
 	p := panelScroll{texture: texture, x: x, y: y, height: height}
 	for i := range p.arrows {
-		p.arrows[i] = Button{Tex: texture, OffX: x, OffY: y + i*(height-19), DrawW: 16, DrawH: 32, HitW: 13, HitH: 19}
-		for state, col := range []int{0, 1, 1, 1, 2} {
-			p.arrows[i].UV[state] = UV{float32(col) / 8, float32(i) / 2, float32(col+1) / 8, float32(i+1) / 2}
-		}
+		p.arrows[i] = scrollbarArrow(texture, i)
+		p.arrows[i].OffX, p.arrows[i].OffY = x, y+i*(height-scrollbarArrowHitH)
 	}
 	return p
 }
+
+const (
+	scrollbarHitW      = 13
+	scrollbarArrowHitH = 19
+	scrollbarThumbH    = 8
+)
+
+func scrollbarArrow(texture *render.Texture, direction int) Button {
+	b := Button{Tex: texture, DrawW: 16, DrawH: 32, HitW: scrollbarHitW, HitH: scrollbarArrowHitH}
+	for state, col := range [...]int{0, 1, 1, 1, 2} {
+		b.UV[state] = UV{float32(col) / 8, float32(direction) / 2, float32(col+1) / 8, float32(direction+1) / 2}
+	}
+	return b
+}
+
+func drawScrollbarThumb(s *render.Sprites, texture *render.Texture, x, y int, tint [4]float32) {
+	s.Draw(texture, float32(x), float32(y), scrollbarHitW, scrollbarThumbH, .5, 0, .5+13.0/128, 8.0/64, tint)
+}
+
 func (p *panelScroll) Update(in *platform.Input, x, y, count, visible, offset int) int {
 	last := max(0, count-visible)
 	offset = max(0, min(last, offset))
@@ -66,5 +83,5 @@ func (p *panelScroll) Draw(s *render.Sprites, x, y, count, visible, offset int) 
 		return
 	}
 	thumb := p.y + 19 + max(0, min(count-visible, offset))*max(1, p.height-46)/(count-visible)
-	s.Draw(p.texture, float32(x+p.x), float32(y+thumb), 13, 8, .5, 0, .5+13.0/128, 8.0/64, white)
+	drawScrollbarThumb(s, p.texture, x+p.x, y+thumb, white)
 }

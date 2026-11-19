@@ -93,7 +93,7 @@ type ChatPanel struct {
 	mouseX, mouseY                          int
 	option                                  int
 	optionPress                             int
-	help, filter, icons                     *render.Texture
+	help, filter, icons, check              *render.Texture
 	scroll, input                           *render.Texture
 	ChannelNames                            [6]string
 	Recipient                               string
@@ -116,6 +116,7 @@ func NewChatPanel(t Textures) (*ChatPanel, error) {
 		c.help = optional.OptionalInterface("chat_config1.png")
 		c.filter = optional.OptionalInterface("chat_config2.png")
 		c.icons = optional.OptionalInterface("chat_icon.png")
+		c.check = optional.OptionalInterface("chat_check.png")
 	}
 	c.modeButton = Button{Tex: c.input, DrawW: 64, DrawH: 22, HitW: 64, HitH: 22}
 	for state, row := range []int{0, 32, 64, 64, 96} {
@@ -221,15 +222,14 @@ func (c *ChatPanel) controls(h int) {
 		p := &c.panes[i]
 		y, height, capacity := c.paneGeometry(h, i)
 		limit := max(0, len(p.lines)-capacity)
-		for arrow := range p.arrows {
-			b := &p.arrows[arrow]
-			arrowHeight := c.scrollArrowHeight(i, height)
-			b.Tex, b.OriginX, b.OriginY = c.scroll, 4, y+4+arrow*(c.scrollHeight(i, height)-8-arrowHeight)
-			b.DrawW, b.DrawH, b.HitW, b.HitH = 16, arrowHeight, 16, arrowHeight
-			b.Disabled = limit == 0
-			for state, col := range []int{0, 1, 1, 1, 2} {
-				b.UV[state] = UV{float32(col) / 8, float32(arrow) / 2, float32(col+1) / 8, float32(arrow)/2 + 23.0/64}
+		for iArrow := range p.arrows {
+			b := &p.arrows[iArrow]
+			if b.DrawW == 0 {
+				*b = scrollbarArrow(c.scroll, iArrow)
 			}
+			span := c.scrollSpan(i, height)
+			b.OriginX, b.OriginY = chatScrollX, y+4+iArrow*(span-scrollbarArrowHitH)
+			b.Disabled = limit == 0 || span < 2*scrollbarArrowHitH
 		}
 	}
 }
@@ -382,8 +382,8 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 			}
 		}
 		top, travel, thumb := c.scrollGeometry(i, y, height, limit, p.offset)
-		thumbHeight := c.scrollThumbHeight(i, height)
-		if limit > 0 && in.Pressed && in.MouseX >= 4 && in.MouseX < 20 && in.MouseY >= top && in.MouseY < top+travel+thumbHeight {
+		thumbHeight := scrollbarThumbH
+		if limit > 0 && travel > 0 && in.Pressed && in.MouseX >= chatScrollX && in.MouseX < chatScrollX+scrollbarHitW && in.MouseY >= top && in.MouseY < top+travel+thumbHeight {
 			if in.MouseY >= thumb && in.MouseY < thumb+thumbHeight {
 				p.grab, p.dragging = in.MouseY-thumb, true
 			} else if in.MouseY < thumb {
@@ -392,7 +392,7 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 				p.offset -= capacity
 			}
 		}
-		if p.dragging && (in.MouseDown || in.Clicked) {
+		if p.dragging && travel > 0 && (in.MouseDown || in.Clicked) {
 			p.offset = limit - (limit*max(0, min(travel, in.MouseY-top-p.grab))+travel/2)/travel
 			captured = true
 		}

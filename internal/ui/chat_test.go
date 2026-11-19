@@ -244,3 +244,26 @@ func TestChatComposerAndIndependentSidebarButtons(t *testing.T) {
 		t.Fatal("help button did not replace filters")
 	}
 }
+
+func TestChatSidebarUsesUnscaledNativeTiles(t *testing.T) {
+	c := &ChatPanel{Rows: [2]int{5, 5}}
+	c.controls(768)
+	for _, p := range c.panes {
+		for i, b := range p.arrows {
+			if b.DrawW != 16 || b.DrawH != 32 || b.HitW != 13 || b.HitH != 19 || b.X() != 4 {
+				t.Fatalf("arrow %d resized native tile or hitbox: %+v", i, b)
+			}
+			if uv := b.UV[StateNormal]; uv != (UV{0, float32(i) / 2, .125, float32(i+1) / 2}) {
+				t.Fatalf("arrow %d uses wrong atlas cell: %+v", i, uv)
+			}
+		}
+	}
+	y, height, _ := c.paneGeometry(768, 1)
+	top, travel, thumb := c.scrollGeometry(1, y, height, 40, 0)
+	if thumb != top+travel || thumb+scrollbarThumbH != c.panes[1].arrows[1].Y() {
+		t.Fatal("thumb track did not end at the lower arrow")
+	}
+	c.Rows = [2]int{}
+	c.controls(768)
+	c.Update(&platform.Input{MouseX: 8, MouseY: 600, MouseDown: true}, 768)
+}

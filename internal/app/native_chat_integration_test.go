@@ -4,6 +4,7 @@ package app
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -125,6 +126,7 @@ func TestNativeChatAndLoginLogoGL(t *testing.T) {
 	}
 	draw(screenWorld)
 	save("native-chat-filters")
+	a.chatOpen = false
 	clickChat(8, 768-89)
 	draw(screenWorld)
 	save("native-chat-help")
@@ -133,6 +135,13 @@ func TestNativeChatAndLoginLogoGL(t *testing.T) {
 	a.chatUI.Channel = 0
 	draw(screenWorld)
 	save("phoenix-chat-idle")
+	for i := 0; i < 20; i++ {
+		a.state.AddChat(game.ChatLine{Style: 0, Text: fmt.Sprintf("System history %02d", i)})
+		a.state.AddChat(game.ChatLine{Op: proto.ChatNormal, Sender: "Alice", Text: fmt.Sprintf("Conversation history %02d", i)})
+	}
+	draw(screenWorld)
+	save("native-chat-scrollbars")
+
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("GL error %#x", code)
 	}

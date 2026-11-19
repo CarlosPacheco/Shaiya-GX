@@ -57,19 +57,22 @@ func (c *ChatPanel) optionHit(x, y, h int) bool {
 	return x >= ox && x < ox+w && y >= oy && y < oy+ht
 }
 
-const chatOptionSize = 19
+const chatOptionSize = 22
 
 var chatOptionOrder = [...]int{chatFilters, chatHelp}
 
 func (c *ChatPanel) optionButtonsShown() bool {
 	return c.paneAlpha(1, chatNow()) > 0
 }
-func chatOptionY(h, i int) int { return h - 116 + i*(chatOptionSize+1) }
+func chatOptionY(h, i int) int { return h - 118 + i*22 }
 func (c *ChatPanel) optionButton(x, y, h int) int {
 	if !c.optionButtonsShown() || x < 0 || x >= chatOptionSize {
 		return 0
 	}
 	for i := range 2 {
+		if c.Typing && chatOptionOrder[i] == chatHelp {
+			continue
+		}
 		top := chatOptionY(h, i)
 		if y >= top && y < top+chatOptionSize {
 			return chatOptionOrder[i]
@@ -157,15 +160,18 @@ func (c *ChatPanel) updateOptions(in *platform.Input, h int) bool {
 
 func (c *ChatPanel) drawOptionButtons(s *render.Sprites, f *Font, blank *render.Texture, h int) {
 	for i := range 2 {
+		if c.Typing && chatOptionOrder[i] == chatHelp {
+			continue
+		}
 		y := float32(chatOptionY(h, i))
 		if c.icons != nil {
-			u := float32(i*32+2) / 128
-			v := float32(3) / 64
+			u := float32(i*32) / 128
+			v := float32(1) / 64
 			button := chatOptionOrder[i]
 			if c.optionPress == 8+button && c.optionButton(c.mouseX, c.mouseY, h) == button {
 				v += .5
 			}
-			s.Draw(c.icons, 0, y, chatOptionSize, chatOptionSize, u, v, u+20.0/128, v+19.0/64, white)
+			s.Draw(c.icons, 0, y, chatOptionSize, chatOptionSize, u, v, u+22.0/128, v+22.0/64, white)
 		} else {
 			DrawTipFrame(s, blank, 0, y, chatOptionSize, chatOptionSize, 1, TipFill, TipBorder)
 			f.Draw(s, []string{"F", "?"}[i], 4, int(y)+2, white, 12)
@@ -216,8 +222,8 @@ func (c *ChatPanel) drawOptions(s *render.Sprites, f *Font, blank *render.Textur
 			f.Draw(s, labels[i], bx+20, by, white, 78)
 		}
 		if checked {
-			if c.icons != nil {
-				s.Draw(c.icons, float32(bx), float32(by), 16, 16, 0, 0, .125, .25, white)
+			if c.check != nil {
+				s.Draw(c.check, float32(bx), float32(by), 16, 16, 0, 0, 1, 1, white)
 			} else {
 				f.Draw(s, "✓", bx+2, by, white, 14)
 			}
@@ -225,22 +231,20 @@ func (c *ChatPanel) drawOptions(s *render.Sprites, f *Font, blank *render.Textur
 	}
 }
 
-func (c *ChatPanel) scrollHeight(i, h int) int {
+const chatScrollX = 4
+
+// Both native controls have a four-pixel inset. The lower control's
+// constructor subtracts two rows from its span to leave room for the icons.
+func (c *ChatPanel) scrollSpan(i, h int) int {
 	if i == 1 {
-		return h - 32
+		h -= 32
 	}
-	return h
+	return h - 8
 }
-func (c *ChatPanel) scrollArrowHeight(i, h int) int {
-	return min(16, c.scrollHeight(i, h)/4)
-}
-func (c *ChatPanel) scrollThumbHeight(i, h int) int {
-	return min(19, max(4, c.scrollHeight(i, h)-12-2*c.scrollArrowHeight(i, h)))
-}
+
 func (c *ChatPanel) scrollGeometry(i, y, h, limit, offset int) (top, travel, thumb int) {
-	arrow, grab := c.scrollArrowHeight(i, h), c.scrollThumbHeight(i, h)
-	top = y + 4 + arrow
-	travel = max(1, c.scrollHeight(i, h)-8-2*arrow-grab)
+	top = y + 4 + scrollbarArrowHitH
+	travel = max(0, c.scrollSpan(i, h)-2*scrollbarArrowHitH-scrollbarThumbH)
 	thumb = top + travel
 	if limit > 0 {
 		thumb -= (travel*offset + limit/2) / limit
@@ -249,12 +253,13 @@ func (c *ChatPanel) scrollGeometry(i, y, h, limit, offset int) (top, travel, thu
 }
 func (c *ChatPanel) drawScroll(s *render.Sprites, i, y, h, limit int, alpha float32) {
 	p := &c.panes[i]
-	_, _, thumb := c.scrollGeometry(i, y, h, limit, p.offset)
-	grab := c.scrollThumbHeight(i, h)
+	_, travel, thumb := c.scrollGeometry(i, y, h, limit, p.offset)
 	tint := [4]float32{1, 1, 1, alpha}
 	for j := range p.arrows {
 		b := &p.arrows[j]
-		if b.Tex != nil {
+		// At the minimum row settings the fixed native arrow hit boxes
+		// cannot both fit. Keep wheel scrolling available in that case.
+		if b.Tex != nil && c.scrollSpan(i, h) >= 2*scrollbarArrowHitH {
 			uv := b.UV[b.state]
 			if b.Disabled {
 				uv = b.UV[StateDisabled]
@@ -262,11 +267,8 @@ func (c *ChatPanel) drawScroll(s *render.Sprites, i, y, h, limit int, alpha floa
 			s.Draw(b.Tex, float32(b.X()), float32(b.Y()), float32(b.DrawW), float32(b.DrawH), uv.U0, uv.V0, uv.U1, uv.V1, tint)
 		}
 	}
-	// The native atlas contains the thumb's brown center and bevel separately
-	// from the arrow tiles. The open space between them has no opaque rail.
-	if c.scroll != nil {
-		s.Draw(c.scroll, 5, float32(thumb), 13, float32(grab), 48.0/128, 0, 63.0/128, 4.0/64, tint)
-		s.Draw(c.scroll, 5, float32(thumb+grab-2), 13, 2, 64.0/128, 5.0/64, 79.0/128, 7.0/64, tint)
+	if c.scroll != nil && travel > 0 && limit > 0 {
+		drawScrollbarThumb(s, c.scroll, chatScrollX, thumb, tint)
 	}
 }
 
