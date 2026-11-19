@@ -271,6 +271,13 @@ within the rendered world. Place opaque, losslessly converted PNGs in the loose
 `data/Lensflare/` directory beside the client executable. GX also accepts
 the original JPEGs when the corresponding PNGs are absent.
 
+### Sky textures
+
+Field skies prefer a PNG with the same basename as each texture named in the
+WLD and fall back to the original filename. The compressed `login_sky.dds`
+and `mt.dds` can stay in DDS to preserve GPU compression. The dome geometry
+remains in `Sky/sky.3DO`.
+
 ### Skill catalog cleanup
 
 `cmd/skillpatch` (`sdata.NormalizeSkillCatalog`) rewrites `Character/Skill.SData` without reserializing untouched bytes and server migration 7 applies the same decisions to the skill definitions. Dead levels (placeholders such as "Hell LordED" / "Not Available.") of skills that have working levels become empty slots; the chain mechanic is not used, so chain wording leaves the descriptions and the previous-skill word (record offset 52) of chain skills is cleared; Mana Shot and Stamina Shot lose their "enemy players only" sentence; Aggravation loses its time damage (int32 at offset 75); detail 25 becomes detail 21. The output is plain EP5, which the loader accepts. Back up the original catalog before installing the result.

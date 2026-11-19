@@ -1,6 +1,7 @@
 package scene
 
 import (
+	"path"
 	"strings"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
@@ -47,10 +48,16 @@ func LoadSky(a *Assets, w *world.WLD) *Sky {
 		}
 	}
 	tex := func(name string) *render.Texture {
-		if strings.TrimSpace(name) == "" {
+		name = strings.TrimSpace(name)
+		if name == "" {
 			return nil
 		}
-		return a.Texture("Sky/" + name)
+		original := "Sky/" + name
+		png := strings.TrimSuffix(original, path.Ext(original)) + ".png"
+		if _, ok := a.Arc.Lookup(png); ok {
+			return a.Texture(png)
+		}
+		return a.Texture(original)
 	}
 	s.DomeTex = tex(w.Sky)
 	s.Clouds[0], s.Clouds[1] = tex(w.CloudA), tex(w.CloudB)
