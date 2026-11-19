@@ -10,7 +10,7 @@ Every production Go file is listed, including OS-specific alternatives. Signatur
 
 Authoritative realm, sessions, maps, actors, game rules, protocol adapters and commit-before-publication application actions.
 
-Tests: [absorption_skill_test.go](../../server/internal/world/absorption_skill_test.go), [absorption_test.go](../../server/internal/world/absorption_test.go), [attack_movement_test.go](../../server/internal/world/attack_movement_test.go), [attack_speed_test.go](../../server/internal/world/attack_speed_test.go), [auction_test.go](../../server/internal/world/auction_test.go), [blessing_lifecycle_test.go](../../server/internal/world/blessing_lifecycle_test.go), [character_enchant_test.go](../../server/internal/world/character_enchant_test.go), [chat_items_test.go](../../server/internal/world/chat_items_test.go), [chat_test.go](../../server/internal/world/chat_test.go), [cloak_fits_test.go](../../server/internal/world/cloak_fits_test.go), [combat_integration_test.go](../../server/internal/world/combat_integration_test.go), [cooldown_reduction_test.go](../../server/internal/world/cooldown_reduction_test.go), [degeneration_test.go](../../server/internal/world/degeneration_test.go), [detection_test.go](../../server/internal/world/detection_test.go), [drop_oj_limits_integration_test.go](../../server/internal/world/drop_oj_limits_integration_test.go), [drop_oj_limits_test.go](../../server/internal/world/drop_oj_limits_test.go), [durability_test.go](../../server/internal/world/durability_test.go), [elements_test.go](../../server/internal/world/elements_test.go), [enchant_ini_test.go](../../server/internal/world/enchant_ini_test.go), [equipment_rejection_test.go](../../server/internal/world/equipment_rejection_test.go), [experience_test.go](../../server/internal/world/experience_test.go), [fall_damage_test.go](../../server/internal/world/fall_damage_test.go), [firethorn_test.go](../../server/internal/world/firethorn_test.go), [forge_quote_test.go](../../server/internal/world/forge_quote_test.go), [forge_rules_test.go](../../server/internal/world/forge_rules_test.go), [free_mall_test.go](../../server/internal/world/free_mall_test.go), [gem_safety_test.go](../../server/internal/world/gem_safety_test.go), [gm_map_test.go](../../server/internal/world/gm_map_test.go), [gm_set_stats_test.go](../../server/internal/world/gm_set_stats_test.go), [gm_test.go](../../server/internal/world/gm_test.go), [grb_integration_test.go](../../server/internal/world/grb_integration_test.go), [guild_integration_test.go](../../server/internal/world/guild_integration_test.go), [healing_delta_test.go](../../server/internal/world/healing_delta_test.go), [healthassist_test.go](../../server/internal/world/healthassist_test.go), [inventory_operation_test.go](../../server/internal/world/inventory_operation_test.go), [isolation_test.go](../../server/internal/world/isolation_test.go), [itemboxes_test.go](../../server/internal/world/itemboxes_test.go), [jump_motion_regression_test.go](../../server/internal/world/jump_motion_regression_test.go), [killcount_test.go](../../server/internal/world/killcount_test.go), [ladders_test.go](../../server/internal/world/ladders_test.go), [lapis_debuff_test.go](../../server/internal/world/lapis_debuff_test.go), [lapis_mob_test.go](../../server/internal/world/lapis_mob_test.go), [mailbox_test.go](../../server/internal/world/mailbox_test.go), [map_rules_test.go](../../server/internal/world/map_rules_test.go), [mapitems_test.go](../../server/internal/world/mapitems_test.go), [miss_feedback_test.go](../../server/internal/world/miss_feedback_test.go), [mob_ai_leak_test.go](../../server/internal/world/mob_ai_leak_test.go), [mob_ai_test.go](../../server/internal/world/mob_ai_test.go), [mob_navigation_test.go](../../server/internal/world/mob_navigation_test.go), [mob_quest_drop_test.go](../../server/internal/world/mob_quest_drop_test.go), [mob_respawn_test.go](../../server/internal/world/mob_respawn_test.go), [notices_test.go](../../server/internal/world/notices_test.go), [npc_guard_test.go](../../server/internal/world/npc_guard_test.go), [npc_probe_test.go](../../server/internal/world/npc_probe_test.go), [oj_limits_test.go](../../server/internal/world/oj_limits_test.go), [party_global_test.go](../../server/internal/world/party_global_test.go), [persistence_audit_test.go](../../server/internal/world/persistence_audit_test.go), [phase_test.go](../../server/internal/world/phase_test.go), [player_movement_test.go](../../server/internal/world/player_movement_test.go), [player_speed_test.go](../../server/internal/world/player_speed_test.go), [player_state_fixes_test.go](../../server/internal/world/player_state_fixes_test.go), [potential_test.go](../../server/internal/world/potential_test.go), [previous_skill_test.go](../../server/internal/world/previous_skill_test.go), [protocol_layout_test.go](../../server/internal/world/protocol_layout_test.go), [pvp_test.go](../../server/internal/world/pvp_test.go), [pvpreward_test.go](../../server/internal/world/pvpreward_test.go), [quest_integration_test.go](../../server/internal/world/quest_integration_test.go), [quest_map_test.go](../../server/internal/world/quest_map_test.go), [recreation_runes_test.go](../../server/internal/world/recreation_runes_test.go), [relic_boot_integration_test.go](../../server/internal/world/relic_boot_integration_test.go), [relic_config_test.go](../../server/internal/world/relic_config_test.go), [relics_test.go](../../server/internal/world/relics_test.go), [rules_test.go](../../server/internal/world/rules_test.go), [runtime_test.go](../../server/internal/world/runtime_test.go), [sacrifice_test.go](../../server/internal/world/sacrifice_test.go), [skill_cadence_test.go](../../server/internal/world/skill_cadence_test.go), [skill_dash_test.go](../../server/internal/world/skill_dash_test.go), [skill_failure_test.go](../../server/internal/world/skill_failure_test.go), [skill_range_test.go](../../server/internal/world/skill_range_test.go), [spin_combo_test.go](../../server/internal/world/spin_combo_test.go), [stack_counts_test.go](../../server/internal/world/stack_counts_test.go), [summon_rune_test.go](../../server/internal/world/summon_rune_test.go), [target_effects_test.go](../../server/internal/world/target_effects_test.go), [taunt_test.go](../../server/internal/world/taunt_test.go), [teleport_rune_integration_test.go](../../server/internal/world/teleport_rune_integration_test.go), [teleport_stone_test.go](../../server/internal/world/teleport_stone_test.go), [trap_test.go](../../server/internal/world/trap_test.go), [vehicle_test.go](../../server/internal/world/vehicle_test.go), [visibility_test.go](../../server/internal/world/visibility_test.go), [worldcal_test.go](../../server/internal/world/worldcal_test.go), [worlddrops_test.go](../../server/internal/world/worlddrops_test.go).
+Tests: [absorption_skill_test.go](../../server/internal/world/absorption_skill_test.go), [absorption_test.go](../../server/internal/world/absorption_test.go), [attack_movement_test.go](../../server/internal/world/attack_movement_test.go), [attack_speed_test.go](../../server/internal/world/attack_speed_test.go), [auction_test.go](../../server/internal/world/auction_test.go), [blessing_lifecycle_test.go](../../server/internal/world/blessing_lifecycle_test.go), [character_enchant_test.go](../../server/internal/world/character_enchant_test.go), [chat_items_test.go](../../server/internal/world/chat_items_test.go), [chat_test.go](../../server/internal/world/chat_test.go), [cloak_fits_test.go](../../server/internal/world/cloak_fits_test.go), [combat_integration_test.go](../../server/internal/world/combat_integration_test.go), [cooldown_reduction_test.go](../../server/internal/world/cooldown_reduction_test.go), [degeneration_test.go](../../server/internal/world/degeneration_test.go), [detection_test.go](../../server/internal/world/detection_test.go), [drop_oj_limits_integration_test.go](../../server/internal/world/drop_oj_limits_integration_test.go), [drop_oj_limits_test.go](../../server/internal/world/drop_oj_limits_test.go), [durability_test.go](../../server/internal/world/durability_test.go), [elements_test.go](../../server/internal/world/elements_test.go), [enchant_ini_test.go](../../server/internal/world/enchant_ini_test.go), [equipment_rejection_test.go](../../server/internal/world/equipment_rejection_test.go), [experience_test.go](../../server/internal/world/experience_test.go), [fall_damage_test.go](../../server/internal/world/fall_damage_test.go), [firethorn_test.go](../../server/internal/world/firethorn_test.go), [forge_quote_test.go](../../server/internal/world/forge_quote_test.go), [forge_rules_test.go](../../server/internal/world/forge_rules_test.go), [free_mall_test.go](../../server/internal/world/free_mall_test.go), [gem_safety_test.go](../../server/internal/world/gem_safety_test.go), [gm_map_test.go](../../server/internal/world/gm_map_test.go), [gm_set_stats_test.go](../../server/internal/world/gm_set_stats_test.go), [gm_test.go](../../server/internal/world/gm_test.go), [grb_integration_test.go](../../server/internal/world/grb_integration_test.go), [guild_integration_test.go](../../server/internal/world/guild_integration_test.go), [guildhouse_test.go](../../server/internal/world/guildhouse_test.go), [healing_delta_test.go](../../server/internal/world/healing_delta_test.go), [healthassist_test.go](../../server/internal/world/healthassist_test.go), [inventory_operation_test.go](../../server/internal/world/inventory_operation_test.go), [isolation_test.go](../../server/internal/world/isolation_test.go), [itemboxes_test.go](../../server/internal/world/itemboxes_test.go), [jump_motion_regression_test.go](../../server/internal/world/jump_motion_regression_test.go), [killcount_test.go](../../server/internal/world/killcount_test.go), [ladders_test.go](../../server/internal/world/ladders_test.go), [lapis_debuff_test.go](../../server/internal/world/lapis_debuff_test.go), [lapis_mob_test.go](../../server/internal/world/lapis_mob_test.go), [mailbox_test.go](../../server/internal/world/mailbox_test.go), [map_rules_test.go](../../server/internal/world/map_rules_test.go), [mapitems_test.go](../../server/internal/world/mapitems_test.go), [miss_feedback_test.go](../../server/internal/world/miss_feedback_test.go), [mob_ai_leak_test.go](../../server/internal/world/mob_ai_leak_test.go), [mob_ai_test.go](../../server/internal/world/mob_ai_test.go), [mob_navigation_test.go](../../server/internal/world/mob_navigation_test.go), [mob_quest_drop_test.go](../../server/internal/world/mob_quest_drop_test.go), [mob_respawn_test.go](../../server/internal/world/mob_respawn_test.go), [notices_test.go](../../server/internal/world/notices_test.go), [npc_guard_test.go](../../server/internal/world/npc_guard_test.go), [npc_probe_test.go](../../server/internal/world/npc_probe_test.go), [oj_limits_test.go](../../server/internal/world/oj_limits_test.go), [party_global_test.go](../../server/internal/world/party_global_test.go), [persistence_audit_test.go](../../server/internal/world/persistence_audit_test.go), [phase_test.go](../../server/internal/world/phase_test.go), [player_movement_test.go](../../server/internal/world/player_movement_test.go), [player_speed_test.go](../../server/internal/world/player_speed_test.go), [player_state_fixes_test.go](../../server/internal/world/player_state_fixes_test.go), [potential_test.go](../../server/internal/world/potential_test.go), [previous_skill_test.go](../../server/internal/world/previous_skill_test.go), [protocol_layout_test.go](../../server/internal/world/protocol_layout_test.go), [pvp_test.go](../../server/internal/world/pvp_test.go), [pvpreward_test.go](../../server/internal/world/pvpreward_test.go), [quest_integration_test.go](../../server/internal/world/quest_integration_test.go), [quest_map_test.go](../../server/internal/world/quest_map_test.go), [recreation_runes_test.go](../../server/internal/world/recreation_runes_test.go), [relic_boot_integration_test.go](../../server/internal/world/relic_boot_integration_test.go), [relic_config_test.go](../../server/internal/world/relic_config_test.go), [relics_test.go](../../server/internal/world/relics_test.go), [rules_test.go](../../server/internal/world/rules_test.go), [runtime_test.go](../../server/internal/world/runtime_test.go), [sacrifice_test.go](../../server/internal/world/sacrifice_test.go), [skill_cadence_test.go](../../server/internal/world/skill_cadence_test.go), [skill_dash_test.go](../../server/internal/world/skill_dash_test.go), [skill_failure_test.go](../../server/internal/world/skill_failure_test.go), [skill_range_test.go](../../server/internal/world/skill_range_test.go), [spin_combo_test.go](../../server/internal/world/spin_combo_test.go), [stack_counts_test.go](../../server/internal/world/stack_counts_test.go), [summon_rune_test.go](../../server/internal/world/summon_rune_test.go), [target_effects_test.go](../../server/internal/world/target_effects_test.go), [taunt_test.go](../../server/internal/world/taunt_test.go), [teleport_rune_integration_test.go](../../server/internal/world/teleport_rune_integration_test.go), [teleport_stone_test.go](../../server/internal/world/teleport_stone_test.go), [trap_test.go](../../server/internal/world/trap_test.go), [vehicle_test.go](../../server/internal/world/vehicle_test.go), [visibility_test.go](../../server/internal/world/visibility_test.go), [worldcal_test.go](../../server/internal/world/worldcal_test.go), [worlddrops_test.go](../../server/internal/world/worlddrops_test.go).
 
 ### abilities.go
 
@@ -1327,60 +1327,60 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`guildStatusRank`](../../server/internal/world/guild.go#L42)<br>`const guildStatusRank = 200` | See the source definition and the subsystem ownership contract. |
 | [`guildMember`](../../server/internal/world/guild.go#L45)<br>`type guildMember` | See the source definition and the subsystem ownership contract. |
 | [`guild`](../../server/internal/world/guild.go#L54)<br>`type guild` | See the source definition and the subsystem ownership contract. |
-| [`guildCreate`](../../server/internal/world/guild.go#L77)<br>`type guildCreate` | guildCreate is CGuildCreate: a creation (disband false) or disband vote. |
-| [`playerGuildState`](../../server/internal/world/guild.go#L90)<br>`type playerGuildState` | Per-player guild state, guarded by guildMu. |
-| [`guildMu`](../../server/internal/world/guild.go#L101)<br>`var guildMu sync.Mutex` | See the source definition and the subsystem ownership contract. |
-| [`guildsByID`](../../server/internal/world/guild.go#L102)<br>`var guildsByID` | See the source definition and the subsystem ownership contract. |
-| [`guildOfChar`](../../server/internal/world/guild.go#L103)<br>`var guildOfChar` | members and applicants |
-| [`nextGuildID`](../../server/internal/world/guild.go#L104)<br>`var nextGuildID uint32` | See the source definition and the subsystem ownership contract. |
-| [`guildsLoaded`](../../server/internal/world/guild.go#L105)<br>`var guildsLoaded bool` | See the source definition and the subsystem ownership contract. |
-| [`LoadGuilds`](../../server/internal/world/guild.go#L109)<br>`func LoadGuilds(log *logx.Logger) error` | LoadGuilds is CGuildMgr::InitAddGuild / InitAddUser from the database. |
-| [`admins`](../../server/internal/world/guild.go#L155)<br>`func (g *guild) admins() int` | See the source definition and the subsystem ownership contract. |
-| [`send`](../../server/internal/world/guild.go#L166)<br>`func (g *guild) send(frame []byte, label string, except *ConnectedPlayer)` | send is CGuild::Send: every online member. |
-| [`sendAdmin`](../../server/internal/world/guild.go#L175)<br>`func (g *guild) sendAdmin(frame []byte, label string)` | sendAdmin is CGuild::SendAdmin: the online master and sub-masters. |
-| [`guildStatus`](../../server/internal/world/guild.go#L183)<br>`func guildStatus(mode uint8, charID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`writeGuildMember`](../../server/internal/world/guild.go#L190)<br>`func writeGuildMember(w *packet.Writer, m *guildMember)` | See the source definition and the subsystem ownership contract. |
-| [`memberListPackets`](../../server/internal/world/guild.go#L200)<br>`func (g *guild) memberListPackets() [][]byte` | buildGuildMemberLists is SendGuildUserList: 0x0D12 online and 0x0D13 offline members, 29 bytes each, 40 per packet, none sent when empty. |
-| [`writeGuildApplicant`](../../server/internal/world/guild.go#L233)<br>`func writeGuildApplicant(w *packet.Writer, m *guildMember)` | See the source definition and the subsystem ownership contract. |
-| [`applicantListPackets`](../../server/internal/world/guild.go#L241)<br>`func (g *guild) applicantListPackets() [][]byte` | applicantListPackets is SendGuildJoinList (0x0D16, 28 bytes each). |
-| [`writeGuildInfo`](../../server/internal/world/guild.go#L267)<br>`func writeGuildInfo(w *packet.Writer, g *guild)` | writeGuildInfo is the 120-byte guild record of 0x0D2F and 0x0D30. |
-| [`guildSendCountry`](../../server/internal/world/guild.go#L277)<br>`func guildSendCountry(country uint8, frame []byte, label string)` | sendWorld is CWorld::SendAll restricted to a country. |
-| [`buildGuildCreateFailed`](../../server/internal/world/guild.go#L285)<br>`func buildGuildCreateFailed(result uint8, name string) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildGuildCreateResult`](../../server/internal/world/guild.go#L295)<br>`func buildGuildCreateResult(result uint8, id uint32, rank uint8, name, remark string) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildGuildJoined`](../../server/internal/world/guild.go#L305)<br>`func buildGuildJoined(result uint8, g *guild, rank uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`guildResult`](../../server/internal/world/guild.go#L314)<br>`func guildResult(op packet.Opcode, result uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`guildResultID`](../../server/internal/world/guild.go#L320)<br>`func guildResultID(op packet.Opcode, result uint8, id uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`guildID32`](../../server/internal/world/guild.go#L327)<br>`func guildID32(op packet.Opcode, id uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`guildNameFor`](../../server/internal/world/guild.go#L335)<br>`func guildNameFor(charID uint32) string` | guildNameFor / guildIDFor feed the character packets (0x0105, 0x0201, 0x0303). They must not be called with a player's mu held. |
-| [`guildIDFor`](../../server/internal/world/guild.go#L344)<br>`func guildIDFor(charID uint32) uint32` | See the source definition and the subsystem ownership contract. |
-| [`guildConnect`](../../server/internal/world/guild.go#L355)<br>`func (s *Session) guildConnect()` | guildConnect is CUser::InitGuild + CGuildMgr::ConnectUser + SendCharacterGuild at world entry, then CGuildMgr::SendGuildList. |
-| [`guildListPackets`](../../server/internal/world/guild.go#L391)<br>`func guildListPackets(country uint8) [][]byte` | guildListPackets is CGuildMgr::SendGuildList: 0x0D0D, the country's guilds in 0x0D2F batches of 14, 0x0D0E. |
-| [`guildDisconnect`](../../server/internal/world/guild.go#L420)<br>`func (s *Session) guildDisconnect()` | guildDisconnect is CUser::ReleaseGuild / CGuild::DisconnectUser at world exit; a pending creation or disband vote fails as a refusal. |
-| [`guildLevelChanged`](../../server/internal/world/guild.go#L440)<br>`func (s *Session) guildLevelChanged()` | guildLevelChanged is CGuild::ChangeUserLevel on a level-up. |
-| [`guildChat`](../../server/internal/world/guild.go#L452)<br>`func (s *Session) guildChat(message string, items proto.ChatItems)` | guildChat (0x1104) is CGuild::SendAllGuildChat: sender name, text. |
-| [`handleGuild`](../../server/internal/world/guild.go#L466)<br>`func (s *Session) handleGuild(op packet.Opcode, p []byte)` | handleGuild dispatches the 0x0Dxx requests of CUser::PacketGuild. |
-| [`fixedText`](../../server/internal/world/guild.go#L530)<br>`func fixedText(p []byte, at, n int) string` | See the source definition and the subsystem ownership contract. |
-| [`guildCreateRequest`](../../server/internal/world/guild.go#L545)<br>`func (s *Session) guildCreateRequest(p []byte)` | guildCreateRequest (0x0D21): name[25], remark[65] (64 characters). |
-| [`sendAll`](../../server/internal/world/guild.go#L615)<br>`func (c *guildCreate) sendAll(frame []byte, label string)` | See the source definition and the subsystem ownership contract. |
-| [`fail`](../../server/internal/world/guild.go#L622)<br>`func (c *guildCreate) fail(result uint8)` | fail is SendGuildCreateFailed / SendGuildFireFailed then ResetCreate. |
-| [`reset`](../../server/internal/world/guild.go#L631)<br>`func (c *guildCreate) reset()` | See the source definition and the subsystem ownership contract. |
-| [`guildCreateAnswer`](../../server/internal/world/guild.go#L640)<br>`func (s *Session) guildCreateAnswer(accept bool)` | guildCreateAnswer (0x0D22): accept byte; 7 acceptances create it. |
-| [`complete`](../../server/internal/world/guild.go#L664)<br>`func (c *guildCreate) complete(log *logx.Logger, caller *Session) bool` | complete is CGuildMgr::CreateGuild 0x004321e0. |
-| [`completePendingGuild`](../../server/internal/world/guild.go#L736)<br>`func (s *Session) completePendingGuild()` | completePendingGuild retries a fully accepted group on the master's own session loop when its state lock was busy during another member's reply. |
-| [`guildDisbandRequest`](../../server/internal/world/guild.go#L752)<br>`func (s *Session) guildDisbandRequest()` | guildDisbandRequest (0x0D03): a master with at most 2 members disbands at once; otherwise two more party admins of the guild must agree. |
-| [`guildDisbandAnswer`](../../server/internal/world/guild.go#L798)<br>`func (s *Session) guildDisbandAnswer(accept bool)` | guildDisbandAnswer (0x0D04): more than 2 acceptances disband it. |
-| [`fire`](../../server/internal/world/guild.go#L820)<br>`func (g *guild) fire(log *logx.Logger, alreadyDeleted ...bool)` | fire is CGuildMgr::FireGuild / CGuild::Fire. |
-| [`guildInvite`](../../server/internal/world/guild.go#L848)<br>`func (s *Session) guildInvite(targetID uint32)` | guildInvite (0x0D05): an admin invites a user of its map and country. |
-| [`guildInviteAnswer`](../../server/internal/world/guild.go#L874)<br>`func (s *Session) guildInviteAnswer(accept bool)` | guildInviteAnswer (0x0D06): accept byte, answered to the inviter. |
-| [`joinUser`](../../server/internal/world/guild.go#L903)<br>`func (g *guild) joinUser(p *ConnectedPlayer, log *logx.Logger) bool` | joinUser is CGuild::JoinUser: an online user joins at rank 9. |
-| [`buildGuildMemberAdded`](../../server/internal/world/guild.go#L926)<br>`func buildGuildMemberAdded(m *guildMember) []byte` | buildGuildMemberAdded (0x0D14): online byte and the 29-byte member. |
-| [`guildApply`](../../server/internal/world/guild.go#L938)<br>`func (s *Session) guildApply(guildID uint32)` | guildApply (0x0D07): guild id; CGuild::JoinRequest. |
-| [`cancelApplication`](../../server/internal/world/guild.go#L971)<br>`func (g *guild) cancelApplication(p *ConnectedPlayer)` | cancelApplication is CGuild::JoinRequestCancle. |
-| [`guildAnswerApplicant`](../../server/internal/world/guild.go#L986)<br>`func (s *Session) guildAnswerApplicant(accept bool, charID uint32)` | guildAnswerApplicant (0x0D08): accept byte, char id; JoinOK / JoinNO. |
-| [`guildLeave`](../../server/internal/world/guild.go#L1037)<br>`func (s *Session) guildLeave()` | guildLeave (0x0D09): CGuild::JoinLeave; the master leaves only alone, and an emptied guild is disbanded. |
-| [`guildExpel`](../../server/internal/world/guild.go#L1075)<br>`func (s *Session) guildExpel(charID uint32)` | guildExpel (0x0D0A): CGuild::JoinExpel, only lower ranks. |
-| [`guildChangeRank`](../../server/internal/world/guild.go#L1115)<br>`func (s *Session) guildChangeRank(direction uint8, charID uint32)` | guildChangeRank (0x0D0C): direction (0 promote, 1 demote), char id; CGuild::ChangeGuildUserLevel. |
-| [`guildRemark`](../../server/internal/world/guild.go#L1151)<br>`func (s *Session) guildRemark(p []byte)` | guildRemark (0x0D20): remark[65]; master only, no quote characters. |
+| [`guildCreate`](../../server/internal/world/guild.go#L78)<br>`type guildCreate` | guildCreate is CGuildCreate: a creation (disband false) or disband vote. |
+| [`playerGuildState`](../../server/internal/world/guild.go#L91)<br>`type playerGuildState` | Per-player guild state, guarded by guildMu. |
+| [`guildMu`](../../server/internal/world/guild.go#L102)<br>`var guildMu sync.Mutex` | See the source definition and the subsystem ownership contract. |
+| [`guildsByID`](../../server/internal/world/guild.go#L103)<br>`var guildsByID` | See the source definition and the subsystem ownership contract. |
+| [`guildOfChar`](../../server/internal/world/guild.go#L104)<br>`var guildOfChar` | members and applicants |
+| [`nextGuildID`](../../server/internal/world/guild.go#L105)<br>`var nextGuildID uint32` | See the source definition and the subsystem ownership contract. |
+| [`guildsLoaded`](../../server/internal/world/guild.go#L106)<br>`var guildsLoaded bool` | See the source definition and the subsystem ownership contract. |
+| [`LoadGuilds`](../../server/internal/world/guild.go#L110)<br>`func LoadGuilds(log *logx.Logger) error` | LoadGuilds is CGuildMgr::InitAddGuild / InitAddUser from the database. |
+| [`admins`](../../server/internal/world/guild.go#L166)<br>`func (g *guild) admins() int` | See the source definition and the subsystem ownership contract. |
+| [`send`](../../server/internal/world/guild.go#L177)<br>`func (g *guild) send(frame []byte, label string, except *ConnectedPlayer)` | send is CGuild::Send: every online member. |
+| [`sendAdmin`](../../server/internal/world/guild.go#L186)<br>`func (g *guild) sendAdmin(frame []byte, label string)` | sendAdmin is CGuild::SendAdmin: the online master and sub-masters. |
+| [`guildStatus`](../../server/internal/world/guild.go#L194)<br>`func guildStatus(mode uint8, charID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`writeGuildMember`](../../server/internal/world/guild.go#L201)<br>`func writeGuildMember(w *packet.Writer, m *guildMember)` | See the source definition and the subsystem ownership contract. |
+| [`memberListPackets`](../../server/internal/world/guild.go#L211)<br>`func (g *guild) memberListPackets() [][]byte` | buildGuildMemberLists is SendGuildUserList: 0x0D12 online and 0x0D13 offline members, 29 bytes each, 40 per packet, none sent when empty. |
+| [`writeGuildApplicant`](../../server/internal/world/guild.go#L244)<br>`func writeGuildApplicant(w *packet.Writer, m *guildMember)` | See the source definition and the subsystem ownership contract. |
+| [`applicantListPackets`](../../server/internal/world/guild.go#L252)<br>`func (g *guild) applicantListPackets() [][]byte` | applicantListPackets is SendGuildJoinList (0x0D16, 28 bytes each). |
+| [`writeGuildInfo`](../../server/internal/world/guild.go#L278)<br>`func writeGuildInfo(w *packet.Writer, g *guild)` | writeGuildInfo is the 120-byte guild record of 0x0D2F and 0x0D30. |
+| [`guildSendCountry`](../../server/internal/world/guild.go#L288)<br>`func guildSendCountry(country uint8, frame []byte, label string)` | sendWorld is CWorld::SendAll restricted to a country. |
+| [`buildGuildCreateFailed`](../../server/internal/world/guild.go#L296)<br>`func buildGuildCreateFailed(result uint8, name string) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildGuildCreateResult`](../../server/internal/world/guild.go#L306)<br>`func buildGuildCreateResult(result uint8, id uint32, rank uint8, name, remark string) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildGuildJoined`](../../server/internal/world/guild.go#L316)<br>`func buildGuildJoined(result uint8, g *guild, rank uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`guildResult`](../../server/internal/world/guild.go#L325)<br>`func guildResult(op packet.Opcode, result uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`guildResultID`](../../server/internal/world/guild.go#L331)<br>`func guildResultID(op packet.Opcode, result uint8, id uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`guildID32`](../../server/internal/world/guild.go#L338)<br>`func guildID32(op packet.Opcode, id uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`guildNameFor`](../../server/internal/world/guild.go#L346)<br>`func guildNameFor(charID uint32) string` | guildNameFor / guildIDFor feed the character packets (0x0105, 0x0201, 0x0303). They must not be called with a player's mu held. |
+| [`guildIDFor`](../../server/internal/world/guild.go#L355)<br>`func guildIDFor(charID uint32) uint32` | See the source definition and the subsystem ownership contract. |
+| [`guildConnect`](../../server/internal/world/guild.go#L366)<br>`func (s *Session) guildConnect()` | guildConnect is CUser::InitGuild + CGuildMgr::ConnectUser + SendCharacterGuild at world entry, then CGuildMgr::SendGuildList. |
+| [`guildListPackets`](../../server/internal/world/guild.go#L405)<br>`func guildListPackets(country uint8) [][]byte` | guildListPackets is CGuildMgr::SendGuildList: 0x0D0D, the country's guilds in 0x0D2F batches of 14, 0x0D0E. |
+| [`guildDisconnect`](../../server/internal/world/guild.go#L434)<br>`func (s *Session) guildDisconnect()` | guildDisconnect is CUser::ReleaseGuild / CGuild::DisconnectUser at world exit; a pending creation or disband vote fails as a refusal. |
+| [`guildLevelChanged`](../../server/internal/world/guild.go#L454)<br>`func (s *Session) guildLevelChanged()` | guildLevelChanged is CGuild::ChangeUserLevel on a level-up. |
+| [`guildChat`](../../server/internal/world/guild.go#L466)<br>`func (s *Session) guildChat(message string, items proto.ChatItems)` | guildChat (0x1104) is CGuild::SendAllGuildChat: sender name, text. |
+| [`handleGuild`](../../server/internal/world/guild.go#L480)<br>`func (s *Session) handleGuild(op packet.Opcode, p []byte)` | handleGuild dispatches the 0x0Dxx requests of CUser::PacketGuild. |
+| [`fixedText`](../../server/internal/world/guild.go#L570)<br>`func fixedText(p []byte, at, n int) string` | See the source definition and the subsystem ownership contract. |
+| [`guildCreateRequest`](../../server/internal/world/guild.go#L585)<br>`func (s *Session) guildCreateRequest(p []byte)` | guildCreateRequest (0x0D21): name[25], remark[65] (64 characters). |
+| [`sendAll`](../../server/internal/world/guild.go#L655)<br>`func (c *guildCreate) sendAll(frame []byte, label string)` | See the source definition and the subsystem ownership contract. |
+| [`fail`](../../server/internal/world/guild.go#L662)<br>`func (c *guildCreate) fail(result uint8)` | fail is SendGuildCreateFailed / SendGuildFireFailed then ResetCreate. |
+| [`reset`](../../server/internal/world/guild.go#L671)<br>`func (c *guildCreate) reset()` | See the source definition and the subsystem ownership contract. |
+| [`guildCreateAnswer`](../../server/internal/world/guild.go#L680)<br>`func (s *Session) guildCreateAnswer(accept bool)` | guildCreateAnswer (0x0D22): accept byte; 7 acceptances create it. |
+| [`complete`](../../server/internal/world/guild.go#L704)<br>`func (c *guildCreate) complete(log *logx.Logger, caller *Session) bool` | complete is CGuildMgr::CreateGuild 0x004321e0. |
+| [`completePendingGuild`](../../server/internal/world/guild.go#L776)<br>`func (s *Session) completePendingGuild()` | completePendingGuild retries a fully accepted group on the master's own session loop when its state lock was busy during another member's reply. |
+| [`guildDisbandRequest`](../../server/internal/world/guild.go#L792)<br>`func (s *Session) guildDisbandRequest()` | guildDisbandRequest (0x0D03): a master with at most 2 members disbands at once; otherwise two more party admins of the guild must agree. |
+| [`guildDisbandAnswer`](../../server/internal/world/guild.go#L838)<br>`func (s *Session) guildDisbandAnswer(accept bool)` | guildDisbandAnswer (0x0D04): more than 2 acceptances disband it. |
+| [`fire`](../../server/internal/world/guild.go#L860)<br>`func (g *guild) fire(log *logx.Logger, alreadyDeleted ...bool)` | fire is CGuildMgr::FireGuild / CGuild::Fire. |
+| [`guildInvite`](../../server/internal/world/guild.go#L888)<br>`func (s *Session) guildInvite(targetID uint32)` | guildInvite (0x0D05): an admin invites a user of its map and country. |
+| [`guildInviteAnswer`](../../server/internal/world/guild.go#L914)<br>`func (s *Session) guildInviteAnswer(accept bool)` | guildInviteAnswer (0x0D06): accept byte, answered to the inviter. |
+| [`joinUser`](../../server/internal/world/guild.go#L943)<br>`func (g *guild) joinUser(p *ConnectedPlayer, log *logx.Logger) bool` | joinUser is CGuild::JoinUser: an online user joins at rank 9. |
+| [`buildGuildMemberAdded`](../../server/internal/world/guild.go#L969)<br>`func buildGuildMemberAdded(m *guildMember) []byte` | buildGuildMemberAdded (0x0D14): online byte and the 29-byte member. |
+| [`guildApply`](../../server/internal/world/guild.go#L981)<br>`func (s *Session) guildApply(guildID uint32)` | guildApply (0x0D07): guild id; CGuild::JoinRequest. |
+| [`cancelApplication`](../../server/internal/world/guild.go#L1014)<br>`func (g *guild) cancelApplication(p *ConnectedPlayer)` | cancelApplication is CGuild::JoinRequestCancle. |
+| [`guildAnswerApplicant`](../../server/internal/world/guild.go#L1029)<br>`func (s *Session) guildAnswerApplicant(accept bool, charID uint32)` | guildAnswerApplicant (0x0D08): accept byte, char id; JoinOK / JoinNO. |
+| [`guildLeave`](../../server/internal/world/guild.go#L1083)<br>`func (s *Session) guildLeave()` | guildLeave (0x0D09): CGuild::JoinLeave; the master leaves only alone, and an emptied guild is disbanded. |
+| [`guildExpel`](../../server/internal/world/guild.go#L1121)<br>`func (s *Session) guildExpel(charID uint32)` | guildExpel (0x0D0A): CGuild::JoinExpel, only lower ranks. |
+| [`guildChangeRank`](../../server/internal/world/guild.go#L1161)<br>`func (s *Session) guildChangeRank(direction uint8, charID uint32)` | guildChangeRank (0x0D0C): direction (0 promote, 1 demote), char id; CGuild::ChangeGuildUserLevel. |
+| [`guildRemark`](../../server/internal/world/guild.go#L1197)<br>`func (s *Session) guildRemark(p []byte)` | guildRemark (0x0D20): remark[65]; master only, no quote characters. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -1416,6 +1416,7 @@ type guild struct {
 	members                          map[uint32]*guildMember
 	applicants                       map[uint32]*guildMember
 	bank                             [guildBankSlots]*db.Item
+	npcs                             [guildNpcSlots]guildNpcSlot // CGuild +0x47c, guarded by guildMu
 }
 ```
 
@@ -1455,25 +1456,22 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`guildBankBag`](../../server/internal/world/guildbank.go#L18)<br>`const guildBankBag = 0xff` | See the source definition and the subsystem ownership contract. |
-| [`guildBankSlots`](../../server/internal/world/guildbank.go#L19)<br>`const guildBankSlots = 240` | See the source definition and the subsystem ownership contract. |
-| [`guildBankRanked`](../../server/internal/world/guildbank.go#L20)<br>`const guildBankRanked = 30` | CGuild +0x48 must be at most this |
-| [`guildBankBatch`](../../server/internal/world/guildbank.go#L21)<br>`const guildBankBatch = 50` | 0x0D29 entries per packet |
-| [`guildBankRefused`](../../server/internal/world/guildbank.go#L22)<br>`const guildBankRefused = 1` | 0x0D28 result: guild not ranked |
-| [`guildBankNoRight`](../../server/internal/world/guildbank.go#L23)<br>`const guildBankNoRight = 2` | not an admin / slot beyond the permitted pages |
-| [`guildBankMember9`](../../server/internal/world/guildbank.go#L24)<br>`const guildBankMember9 = 4` | rank 9 may not deposit |
-| [`guildBankPermitSlot`](../../server/internal/world/guildbank.go#L28)<br>`var guildBankPermitSlot` | guildBankPermitSlot is GuildHouse.ini [Bank] PermitSlot. |
-| [`loadGuildHouseIni`](../../server/internal/world/guildbank.go#L30)<br>`func loadGuildHouseIni()` | See the source definition and the subsystem ownership contract. |
-| [`bankSlots`](../../server/internal/world/guildbank.go#L48)<br>`func (g *guild) bankSlots() int` | bankSlots is GetGuildHouseBankAllowSlotCount; no guild house exists yet, so the bank NPC level is 0. |
-| [`loadGuildBank`](../../server/internal/world/guildbank.go#L50)<br>`func loadGuildBank(g *guild) error` | See the source definition and the subsystem ownership contract. |
-| [`bankListPackets`](../../server/internal/world/guildbank.go#L66)<br>`func (g *guild) bankListPackets() [][]byte` | bankListPackets is SendBankItemList: 0x0D29, 33-byte entries, 50 each. |
-| [`buildGuildBankSlot`](../../server/internal/world/guildbank.go#L100)<br>`func buildGuildBankSlot(op packet.Opcode, slot uint8, it *db.Item, charID uint32) []byte` | buildGuildBankSlot (0x0D31 placed / 0x0D32 taken): slot, item, char id. |
-| [`buildGuildBankResult`](../../server/internal/world/guildbank.go#L119)<br>`func buildGuildBankResult(result, arg uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`guildBankCheck`](../../server/internal/world/guildbank.go#L128)<br>`func (s *Session) guildBankCheck(g *guild, rank uint8, slot uint8, adminOnly bool) bool` | guildBankCheck is the shared gate: ranked guild, the rank rule and the permitted slot; it sends the 0x0D28 refusal itself. |
-| [`handleGuildBankMove`](../../server/internal/world/guildbank.go#L145)<br>`func (s *Session) handleGuildBankMove(srcBag, srcSlot, destBag, destSlot uint8)` | handleGuildBankMove is the 0x0204 with bag 0xFF on either side. |
-| [`guildBankDeposit`](../../server/internal/world/guildbank.go#L197)<br>`func (s *Session) guildBankDeposit(g *guild, rank, bag, slot, dest uint8)` | guildBankDeposit is ItemBagToGuildBank: not from the equipment, no quest items (real type 27) nor ReqOg items; a taken slot only for admins (swap). |
-| [`guildBankWithdraw`](../../server/internal/world/guildbank.go#L238)<br>`func (s *Session) guildBankWithdraw(g *guild, rank, src, bag, slot uint8)` | guildBankWithdraw is ItemGuildBankToBag: admins only, 5% of Sell x count (truncated; type 94 free), a taken bag slot swaps into the bank. |
-| [`guildBankRearrange`](../../server/internal/world/guildbank.go#L278)<br>`func (s *Session) guildBankRearrange(g *guild, rank, src, dest uint8)` | guildBankRearrange is ItemGuildBankToGuildBank: admins only; equal items merge up to the stack, otherwise the slots swap; every member sees the 0x0204. |
+| [`guildBankBag`](../../server/internal/world/guildbank.go#L16)<br>`const guildBankBag = 0xff` | See the source definition and the subsystem ownership contract. |
+| [`guildBankSlots`](../../server/internal/world/guildbank.go#L17)<br>`const guildBankSlots = 240` | See the source definition and the subsystem ownership contract. |
+| [`guildBankRanked`](../../server/internal/world/guildbank.go#L18)<br>`const guildBankRanked = 30` | CGuild +0x48 must be at most this |
+| [`guildBankBatch`](../../server/internal/world/guildbank.go#L19)<br>`const guildBankBatch = 50` | 0x0D29 entries per packet |
+| [`guildBankRefused`](../../server/internal/world/guildbank.go#L20)<br>`const guildBankRefused = 1` | 0x0D28 result: guild not ranked |
+| [`guildBankNoRight`](../../server/internal/world/guildbank.go#L21)<br>`const guildBankNoRight = 2` | not an admin / slot beyond the permitted pages |
+| [`guildBankMember9`](../../server/internal/world/guildbank.go#L22)<br>`const guildBankMember9 = 4` | rank 9 may not deposit |
+| [`loadGuildBank`](../../server/internal/world/guildbank.go#L25)<br>`func loadGuildBank(g *guild) error` | See the source definition and the subsystem ownership contract. |
+| [`bankListPackets`](../../server/internal/world/guildbank.go#L41)<br>`func (g *guild) bankListPackets() [][]byte` | bankListPackets is SendBankItemList: 0x0D29, 33-byte entries, 50 each. |
+| [`buildGuildBankSlot`](../../server/internal/world/guildbank.go#L75)<br>`func buildGuildBankSlot(op packet.Opcode, slot uint8, it *db.Item, charID uint32) []byte` | buildGuildBankSlot (0x0D31 placed / 0x0D32 taken): slot, item, char id. |
+| [`buildGuildBankResult`](../../server/internal/world/guildbank.go#L94)<br>`func buildGuildBankResult(result, arg uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`guildBankCheck`](../../server/internal/world/guildbank.go#L103)<br>`func (s *Session) guildBankCheck(g *guild, rank uint8, slot uint8, adminOnly bool) bool` | guildBankCheck is the shared gate: ranked guild, the rank rule and the permitted slot; it sends the 0x0D28 refusal itself. |
+| [`handleGuildBankMove`](../../server/internal/world/guildbank.go#L120)<br>`func (s *Session) handleGuildBankMove(srcBag, srcSlot, destBag, destSlot uint8)` | handleGuildBankMove is the 0x0204 with bag 0xFF on either side. |
+| [`guildBankDeposit`](../../server/internal/world/guildbank.go#L172)<br>`func (s *Session) guildBankDeposit(g *guild, rank, bag, slot, dest uint8)` | guildBankDeposit is ItemBagToGuildBank: not from the equipment, no quest items (real type 27) nor ReqOg items; a taken slot only for admins (swap). |
+| [`guildBankWithdraw`](../../server/internal/world/guildbank.go#L213)<br>`func (s *Session) guildBankWithdraw(g *guild, rank, src, bag, slot uint8)` | guildBankWithdraw is ItemGuildBankToBag: admins only, 5% of Sell x count (truncated; type 94 free), a taken bag slot swaps into the bank. |
+| [`guildBankRearrange`](../../server/internal/world/guildbank.go#L253)<br>`func (s *Session) guildBankRearrange(g *guild, rank, src, dest uint8)` | guildBankRearrange is ItemGuildBankToGuildBank: admins only; equal items merge up to the stack, otherwise the slots swap; every member sees the 0x0204. |
 
 ### guildduel.go
 
@@ -1517,6 +1515,93 @@ type guildDuel struct {
 	mapID     uint16
 	count     int
 	deadline  time.Time
+}
+```
+
+</details>
+
+### guildhouse.go
+
+[server/internal/world/guildhouse.go](../../server/internal/world/guildhouse.go#L1)
+
+Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`guildNpcGate`](../../server/internal/world/guildhouse.go#L19)<br>`const guildNpcGate = 0x002` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcWeapon`](../../server/internal/world/guildhouse.go#L20)<br>`const guildNpcWeapon = 0x101` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcDefense`](../../server/internal/world/guildhouse.go#L21)<br>`const guildNpcDefense = 0x201` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcGeneral`](../../server/internal/world/guildhouse.go#L22)<br>`const guildNpcGeneral = 0x301` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcSmith`](../../server/internal/world/guildhouse.go#L23)<br>`const guildNpcSmith = 0x003` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcPotion`](../../server/internal/world/guildhouse.go#L24)<br>`const guildNpcPotion = 0x401` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcBank`](../../server/internal/world/guildhouse.go#L25)<br>`const guildNpcBank = 0x006` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcSlots`](../../server/internal/world/guildhouse.go#L27)<br>`const guildNpcSlots = 8` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcServices`](../../server/internal/world/guildhouse.go#L28)<br>`const guildNpcServices = 7` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildEtinSpecial`](../../server/internal/world/guildhouse.go#L29)<br>`const guildEtinSpecial = 52` | Guild NPC types as stored in the eight CGuild NPC slots. Special of the Type 43 etin items: 52..55 are x1, x10, x100, x1000 |
+| [`guildEtinType`](../../server/internal/world/guildhouse.go#L30)<br>`const guildEtinType = 43` | Guild NPC types as stored in the eight CGuild NPC slots. '+', the item type CUser::PacketGuild 0x0D35 accepts |
+| [`guildNpcOK`](../../server/internal/world/guildhouse.go#L35)<br>`const guildNpcOK = 0` | Results of 0x0D25 (CGuild::NpcUpgrade). |
+| [`guildNpcNoEtin`](../../server/internal/world/guildhouse.go#L36)<br>`const guildNpcNoEtin = 1` | Results of 0x0D25 (CGuild::NpcUpgrade). |
+| [`guildNpcBadLevel`](../../server/internal/world/guildhouse.go#L37)<br>`const guildNpcBadLevel = 2` | Results of 0x0D25 (CGuild::NpcUpgrade). |
+| [`guildNpcRefused`](../../server/internal/world/guildhouse.go#L38)<br>`const guildNpcRefused = 3` | Results of 0x0D25 (CGuild::NpcUpgrade). |
+| [`guildNpcRankLimit`](../../server/internal/world/guildhouse.go#L39)<br>`const guildNpcRankLimit = 4` | Results of 0x0D25 (CGuild::NpcUpgrade). |
+| [`guildHouseBought`](../../server/internal/world/guildhouse.go#L44)<br>`const guildHouseBought = 0` | Results of 0x0D34. |
+| [`guildHouseOwned`](../../server/internal/world/guildhouse.go#L45)<br>`const guildHouseOwned = 1` | Results of 0x0D34. |
+| [`guildHouseNoMoney`](../../server/internal/world/guildhouse.go#L46)<br>`const guildHouseNoMoney = 2` | Results of 0x0D34. |
+| [`guildHouseNoRight`](../../server/internal/world/guildhouse.go#L47)<br>`const guildHouseNoRight = 3` | Results of 0x0D34. |
+| [`guildNpcSlot`](../../server/internal/world/guildhouse.go#L51)<br>`type guildNpcSlot` | guildNpcSlot is a CGuild NPC slot (+0x47c, type and level words). |
+| [`guildServiceTable`](../../server/internal/world/guildhouse.go#L55)<br>`type guildServiceTable` | guildServiceTable is one g_GuildNpcUpgradeEtin / g_GuildNpcKeepEtin row: index is the NPC level (1-5). |
+| [`guildHouseSettings`](../../server/internal/world/guildhouse.go#L63)<br>`type guildHouseSettings` | guildHouseSettings is everything InitGuildHouseIniFile loads, starting from the executable's own defaults. |
+| [`defaultGuildHouse`](../../server/internal/world/guildhouse.go#L77)<br>`func defaultGuildHouse() guildHouseSettings` | See the source definition and the subsystem ownership contract. |
+| [`guildHouse`](../../server/internal/world/guildhouse.go#L103)<br>`var guildHouse` | guildHouse is the active configuration. |
+| [`iniTokens`](../../server/internal/world/guildhouse.go#L107)<br>`func iniTokens(value string) []string` | iniTokens splits a value like ParseString1/ParseString2: the first 254 characters on " ,=()[]{}" and white space. |
+| [`iniInt`](../../server/internal/world/guildhouse.go#L115)<br>`func iniInt(token string) int64` | iniUint is the atoi the original parser applies: a decimal prefix. |
+| [`fillU16`](../../server/internal/world/guildhouse.go#L129)<br>`func fillU16(dst []uint16, value string)` | fillU16 stores up to len(dst) tokens from the start of dst; missing tokens keep their value. |
+| [`fillF64`](../../server/internal/world/guildhouse.go#L138)<br>`func fillF64(dst []float64, value string)` | See the source definition and the subsystem ownership contract. |
+| [`fillI32`](../../server/internal/world/guildhouse.go#L151)<br>`func fillI32(dst []int32, value string)` | See the source definition and the subsystem ownership contract. |
+| [`parseGuildHouse`](../../server/internal/world/guildhouse.go#L163)<br>`func parseGuildHouse(ini iniFile) guildHouseSettings` | parseGuildHouse applies GuildHouse.ini over the executable defaults. The original runs GetPrivateProfileString for each key and keeps the default when it is absent. |
+| [`loadGuildHouseIni`](../../server/internal/world/guildhouse.go#L222)<br>`func loadGuildHouseIni()` | See the source definition and the subsystem ownership contract. |
+| [`service`](../../server/internal/world/guildhouse.go#L232)<br>`func (h *guildHouseSettings) service(npcType uint16) *guildServiceTable` | service is the upgrade table of an NPC type (nil for an unknown type). |
+| [`npcLevel`](../../server/internal/world/guildhouse.go#L242)<br>`func (g *guild) npcLevel(npcType uint16) uint16` | npcLevel is the level of the guild's NPC of that type, 0 without it. |
+| [`houseEnabled`](../../server/internal/world/guildhouse.go#L252)<br>`func (g *guild) houseEnabled() bool` | houseEnabled is CGuild::EnableGuildHouse: ranked, active and bought. |
+| [`calculateKeepEtin`](../../server/internal/world/guildhouse.go#L258)<br>`func (g *guild) calculateKeepEtin()` | calculateKeepEtin is CGuild::CalculateKeepEtin: the default plus the upkeep of every NPC at its level. |
+| [`bankSlots`](../../server/internal/world/guildhouse.go#L273)<br>`func (g *guild) bankSlots() int` | bankSlots is GetGuildHouseBankAllowSlotCount: PermitSlot at the bank NPC level (the first entry without it). |
+| [`row`](../../server/internal/world/guildhouse.go#L281)<br>`func (g *guild) row() db.GuildRow` | See the source definition and the subsystem ownership contract. |
+| [`npcListPacket`](../../server/internal/world/guildhouse.go#L287)<br>`func (g *guild) npcListPacket() []byte` | npcListPacket is CGuild::SendNpcLvList (0x0D24); nil without NPCs. |
+| [`buildGuildNpcResult`](../../server/internal/world/guildhouse.go#L308)<br>`func buildGuildNpcResult(result uint8, npcType uint16, level, slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`guildNpcUpgrade`](../../server/internal/world/guildhouse.go#L319)<br>`func (s *Session) guildNpcUpgrade(g *guild, npcType uint16, level uint8)` | guildNpcUpgrade is 0x0D25 (CGuild::NpcUpgrade), reached for guild ranks 1 and 2 only. Called with guildMu held. |
+| [`buildGuildHouseBuy`](../../server/internal/world/guildhouse.go#L407)<br>`func buildGuildHouseBuy(result uint8, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`guildHouseBuy`](../../server/internal/world/guildhouse.go#L416)<br>`func (s *Session) guildHouseBuy(g *guild, rank uint8)` | guildHouseBuy is the 0x0D34 branch of CUser::PacketGuild. Called with guildMu held. |
+| [`guildEtinValue`](../../server/internal/world/guildhouse.go#L444)<br>`func guildEtinValue(it *db.Item) (value uint32, ok bool)` | guildEtinValue is the etin an item donates: Type 43 with Special 52..55. |
+| [`guildDonate`](../../server/internal/world/guildhouse.go#L468)<br>`func (s *Session) guildDonate(g *guild)` | guildDonate is the 0x0D35 branch: every etin item in the bags is consumed, its value added to the guild's etin and the return count incremented. Called with guildMu held. |
+| [`settleGuildHouse`](../../server/internal/world/guildhouse.go#L511)<br>`func (g *guild) settleGuildHouse()` | settleGuildHouse is the house part of CGuildMgr::UpdateGuildPointRank for a ranked guild: below the upkeep the house is suspended (UseHouse 2), otherwise the upkeep is paid from the etin. Called with guildMu held. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type guildNpcSlot struct{ Type, Level uint16 }
+```
+
+```go
+type guildServiceTable struct {
+	Type uint16
+	Cost [7]uint16
+	Keep [6]uint16
+}
+```
+
+```go
+type guildHouseSettings struct {
+	BuyMoney, DefaultKeep uint32
+	Services              [guildNpcServices]guildServiceTable // gate, weapon, defense, general, smith, potion, bank
+	ShopRate, PotionRate  [4]float64                          // g_GuildNpcShopDecreRate, g_GuildNpcPotionShopDecreRate
+	GateRate              [6]float64                          // g_GuildNpcGateKeeperDecreRate (MoveDecreRate)
+	RepairRate            [6]float64                          // g_GuildNpcSmithRepairDecreRate
+	MixRate               [6]float64                          // g_GuildNpcSmithRapiceMixDecreRate
+	MixPercent            [6]int32                            // g_GuildNpcSmithRapiceMixPercentRate
+	BankSlots             [6]uint16                           // g_GuildNpcBankMaxSlot (PermitSlot)
+	// NpcIDs is g_GuildNpcIdShopOnLevel: [country][gate, weapon, defense,
+	// general][level 0-3][3 NPC type ids].
+	NpcIDs [2][4][4][3]uint16
 }
 ```
 

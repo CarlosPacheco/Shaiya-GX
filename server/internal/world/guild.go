@@ -71,6 +71,7 @@ type guild struct {
 	members                          map[uint32]*guildMember
 	applicants                       map[uint32]*guildMember
 	bank                             [guildBankSlots]*db.Item
+	npcs                             [guildNpcSlots]guildNpcSlot // CGuild +0x47c, guarded by guildMu
 }
 
 // guildCreate is CGuildCreate: a creation (disband false) or disband vote.
@@ -142,6 +143,16 @@ func LoadGuilds(log *logx.Logger) error {
 		guildOfChar[e.CharID] = g
 	}
 	loadGuildHouseIni()
+	npcRows, err := db.LoadGuildNpcLevels()
+	if err != nil {
+		return err
+	}
+	for _, r := range npcRows {
+		// DBGuild::LoadNpcLvList: a valid slot overwrites only its row.
+		if g := guildsByID[r.GuildID]; g != nil && int(r.Slot) < guildNpcSlots {
+			g.npcs[r.Slot] = guildNpcSlot{Type: r.Type, Level: uint16(r.Level)}
+		}
+	}
 	for _, g := range guildsByID {
 		if err := loadGuildBank(g); err != nil {
 			log.Printf("GX Server World failed to load guild bank %d: %v", g.ID, err)
@@ -372,6 +383,9 @@ func (s *Session) guildConnect() {
 			g.send(guildStatus(guildStatusOnline, ch.ID), "0x0D0C guild member online", p)
 			lists = append(lists, g.memberListPackets()...)
 			lists = append(lists, g.bankListPackets()...)
+			if f := g.npcListPacket(); f != nil {
+				lists = append(lists, f)
+			}
 			if m.Rank <= guildRankAdmin {
 				lists = append(lists, g.applicantListPackets()...)
 			}
@@ -523,6 +537,32 @@ func (s *Session) handleGuild(op packet.Opcode, p []byte) {
 		guildMu.Unlock()
 		if g != nil {
 			s.send(guildID32(packet.GuildEtin, etin), "0x0D23 guild etin")
+		}
+	case packet.GuildNpcUpgrade:
+		if len(p) < 5 {
+			return
+		}
+		guildMu.Lock()
+		defer guildMu.Unlock()
+		if g := s.player.guild.guild; g != nil && g.members[s.char.ID] != nil && g.members[s.char.ID].Rank <= guildRankAdmin {
+			s.guildNpcUpgrade(g, uint16(p[2])|uint16(p[3])<<8, p[4])
+		}
+	case packet.GuildHouseBuy:
+		guildMu.Lock()
+		defer guildMu.Unlock()
+		g := s.player.guild.guild
+		rank := uint8(0)
+		if g != nil && g.members[s.char.ID] != nil {
+			rank = g.members[s.char.ID].Rank
+		} else {
+			g = nil
+		}
+		s.guildHouseBuy(g, rank)
+	case packet.GuildDonate:
+		guildMu.Lock()
+		defer guildMu.Unlock()
+		if g := s.player.guild.guild; g != nil && g.members[s.char.ID] != nil {
+			s.guildDonate(g)
 		}
 	}
 }
@@ -919,6 +959,9 @@ func (g *guild) joinUser(p *ConnectedPlayer, log *logx.Logger) bool {
 	for _, f := range g.bankListPackets() {
 		p.Send(f, "0x0D29 guild bank")
 	}
+	if f := g.npcListPacket(); f != nil {
+		p.Send(f, "0x0D24 guild NPC levels")
+	}
 	return true
 }
 
@@ -1028,6 +1071,9 @@ func (s *Session) guildAnswerApplicant(accept bool, charID uint32) {
 		}
 		for _, f := range g.bankListPackets() {
 			p.Send(f, "0x0D29 guild bank")
+		}
+		if f := g.npcListPacket(); f != nil {
+			p.Send(f, "0x0D24 guild NPC levels")
 		}
 	}
 }

@@ -94,7 +94,7 @@ func TestGuildLifecycle(t *testing.T) {
 	defer func() {
 		pool, _ := db.Pool(db.GameData)
 		if created != 0 {
-			pool.Exec(`DELETE FROM PS_GameData_GuildStoredItems WHERE GuildID = ?1; DELETE FROM PS_GameData_GuildChars WHERE GuildID = ?1; DELETE FROM PS_GameData_GuildDetails WHERE GuildID = ?1;
+			pool.Exec(`DELETE FROM PS_GameData_GuildStoredItems WHERE GuildID = ?1; DELETE FROM PS_GameData_GuildNpcLv WHERE GuildID = ?1; DELETE FROM PS_GameData_GuildChars WHERE GuildID = ?1; DELETE FROM PS_GameData_GuildDetails WHERE GuildID = ?1;
 				DELETE FROM PS_GameData_Guilds WHERE GuildID = ?1;
 				DELETE FROM PS_UserData_CreatedGuilds WHERE ServerID = 1 AND GuildID = ?1`, int32(created))
 		}
@@ -193,6 +193,97 @@ func TestGuildLifecycle(t *testing.T) {
 	fee := uint32(float32(uint32(item.Sell)) * float32(0.05))
 	if g.bank[7] != nil || findItem(ss[0].items, 2, 5) < 0 || ss[0].char.Money != money-fee || bankRows() != 0 {
 		t.Fatalf("withdraw: bank %v money %d want %d rows %d", g.bank[7], ss[0].char.Money, money-fee, bankRows())
+	}
+
+	// Guild house (0x0D34, 0x0D25, 0x0D35, settlement): only the master buys,
+	// upgrades need an active house and etin above the upkeep, donations
+	// consume the etin items of the bags.
+	houseRow := func() (buy, use, etin, keep, ret int) {
+		pool, _ := db.Pool(db.GameData)
+		pool.QueryRow(`SELECT BuyHouse,UseHouse,Etin,KeepEtin,EtinReturnCnt FROM PS_GameData_GuildDetails WHERE GuildID=?1`, int32(g.ID)).Scan(&buy, &use, &etin, &keep, &ret)
+		return
+	}
+	ss[5].handleGuild(packet.GuildHouseBuy, []byte{0x34, 0x0d, 0, 0, 0, 0})
+	ss[0].handleGuild(packet.GuildHouseBuy, []byte{0x34, 0x0d, 0, 0, 0, 0}) // 4000 gold only
+	if g.BuyHouse != 0 {
+		t.Fatal("house bought without the right or the money")
+	}
+	ss[0].char.Money = guildHouse.BuyMoney + 10
+	if err := db.SaveCharacter(ss[0].char); err != nil {
+		t.Fatal(err)
+	}
+	ss[0].handleGuild(packet.GuildHouseBuy, []byte{0x34, 0x0d, 0, 0, 0, 0})
+	if buy, _, _, keep, _ := houseRow(); g.BuyHouse != 1 || ss[0].char.Money != 10 || buy != 1 || keep != int(guildHouse.DefaultKeep) {
+		t.Fatalf("house purchase: guild %d money %d row buy %d keep %d", g.BuyHouse, ss[0].char.Money, buy, keep)
+	}
+	upgrade := func(s *Session, npcType uint16, level uint8) {
+		s.handleGuild(packet.GuildNpcUpgrade, []byte{0x25, 0x0d, byte(npcType), byte(npcType >> 8), level})
+	}
+	upgrade(ss[0], guildNpcGate, 1) // UseHouse is still 0
+	if g.npcLevel(guildNpcGate) != 0 {
+		t.Fatal("NPC upgraded in an inactive house")
+	}
+	guildMu.Lock()
+	g.UseHouse, g.Etin = 1, 100
+	guildMu.Unlock()
+	upgrade(ss[0], guildNpcGate, 1) // etin below the upkeep
+	if g.npcLevel(guildNpcGate) != 0 {
+		t.Fatal("NPC upgraded without etin")
+	}
+	guildMu.Lock()
+	g.Etin = 5000
+	guildMu.Unlock()
+	upgrade(ss[5], guildNpcGate, 1) // rank 9
+	upgrade(ss[0], guildNpcGate, 2) // a new NPC starts at level 1
+	if g.npcLevel(guildNpcGate) != 0 {
+		t.Fatal("NPC upgrade accepted from a member or at level 2")
+	}
+	upgrade(ss[0], guildNpcGate, 1)
+	if g.npcs[0] != (guildNpcSlot{Type: guildNpcGate, Level: 1}) || g.Etin != 4000 || g.KeepEtin != guildHouse.DefaultKeep+uint32(guildHouse.Services[0].Keep[1]) {
+		t.Fatalf("gate upgrade: slots %v etin %d keep %d", g.npcs, g.Etin, g.KeepEtin)
+	}
+	upgrade(ss[0], guildNpcGate, 1) // repeated
+	upgrade(ss[0], guildNpcBank, 1)
+	if g.npcLevel(guildNpcGate) != 1 || g.npcs[1] != (guildNpcSlot{Type: guildNpcBank, Level: 1}) || g.bankSlots() != int(guildHouse.BankSlots[1]) {
+		t.Fatalf("NPC slots %v bank slots %d", g.npcs, g.bankSlots())
+	}
+	if list := g.npcListPacket(); len(list) != 4+1+8 || list[4] != 2 {
+		t.Fatalf("NPC list %v", list)
+	}
+	npcPool, _ := db.Pool(db.GameData)
+	var rowsNpc int
+	npcPool.QueryRow(`SELECT COUNT(*) FROM PS_GameData_GuildNpcLv WHERE GuildID=?1`, int32(g.ID)).Scan(&rowsNpc)
+	if rowsNpc != 2 {
+		t.Fatalf("GuildNpcLv rows %d, want 2", rowsNpc)
+	}
+	etinItem := func(typeID uint8, count uint16, slot uint8) {
+		it := db.Item{Bag: 1, Slot: slot, Type: guildEtinType, TypeID: typeID, Count: count}
+		if err := db.AddCharacterItem(ss[0].char.ID, &it); err != nil {
+			t.Fatal(err)
+		}
+		ss[0].items = append(ss[0].items, it)
+	}
+	etinItem(3, 2, 10) // [100]Etin x2
+	etinItem(1, 7, 11) // [1]Etin x7
+	etinBefore := g.Etin
+	ss[0].handleGuild(packet.GuildDonate, []byte{0x35, 0x0d, 0, 0, 0, 0})
+	if g.Etin != etinBefore+207 || g.EtinReturn != 1 || findItem(ss[0].items, 1, 10) >= 0 || findItem(ss[0].items, 1, 11) >= 0 {
+		t.Fatalf("donation: etin %d (want %d) returns %d", g.Etin, etinBefore+207, g.EtinReturn)
+	}
+	if _, _, etin, _, ret := houseRow(); etin != int(g.Etin) || ret != 1 {
+		t.Fatalf("donation row: etin %d returns %d", etin, ret)
+	}
+	guildMu.Lock()
+	keep, etin := g.KeepEtin, g.Etin
+	g.settleGuildHouse()
+	paid := g.Etin == etin-keep && g.UseHouse == 1
+	g.Etin = keep - 1
+	g.settleGuildHouse()
+	suspended := g.UseHouse == 2
+	g.Etin, g.UseHouse = etin, 1
+	guildMu.Unlock()
+	if !paid || !suspended {
+		t.Fatalf("settlement: paid %v suspended %v", paid, suspended)
 	}
 
 	// Invitation by the master, accepted.

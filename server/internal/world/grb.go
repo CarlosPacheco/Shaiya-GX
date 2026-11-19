@@ -306,6 +306,7 @@ func updateGuildRanking(log *logx.Logger) {
 		for i, e := range ranked[c] {
 			if i < grbRankedGuilds {
 				e.g.Rank = uint8(i + 1)
+				e.g.settleGuildHouse()
 				count++
 			} else {
 				e.g.Rank, e.g.UseHouse = grbUnranked, 0

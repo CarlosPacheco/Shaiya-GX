@@ -175,6 +175,11 @@ const (
 	GuildCreate           Opcode = 0x0D21
 	GuildCreateAgree      Opcode = 0x0D22
 	GuildEtin             Opcode = 0x0D23
+	GuildNpcList          Opcode = 0x0D24 // count, (type u16, level u8, slot u8)
+	GuildNpcUpgrade       Opcode = 0x0D25 // C->S type u16, level u8; S->C result, type, level, slot
+	GuildHouseKeepEtin    Opcode = 0x0D33 // keep etin u32
+	GuildHouseBuy         Opcode = 0x0D34 // result u8, money u32
+	GuildDonate           Opcode = 0x0D35 // count, (bag, slot) of the etin items consumed
 	GuildList             Opcode = 0x0D2F
 	GuildNew              Opcode = 0x0D30
 	ChatGuild             Opcode = 0x1104

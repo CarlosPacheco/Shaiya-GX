@@ -1,8 +1,6 @@
 package world
 
 import (
-	"path/filepath"
-
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -23,29 +21,6 @@ const (
 	guildBankNoRight = 2  // not an admin / slot beyond the permitted pages
 	guildBankMember9 = 4  // rank 9 may not deposit
 )
-
-// guildBankPermitSlot is GuildHouse.ini [Bank] PermitSlot.
-var guildBankPermitSlot = []int{40, 80, 120, 160, 200, 240}
-
-func loadGuildHouseIni() {
-	ini, err := readIni(filepath.Join(gameDataDir(), "GuildHouse.ini"))
-	if err != nil {
-		return
-	}
-	if v := ini["BANK"]["PERMITSLOT"]; v != "" {
-		var slots []int
-		for _, n := range numbers(v) {
-			slots = append(slots, int(n))
-		}
-		if len(slots) > 0 {
-			guildBankPermitSlot = slots
-		}
-	}
-}
-
-// bankSlots is GetGuildHouseBankAllowSlotCount; no guild house exists yet,
-// so the bank NPC level is 0.
-func (g *guild) bankSlots() int { return guildBankPermitSlot[0] }
 
 func loadGuildBank(g *guild) error {
 	items, err := db.GuildStoredItems(g.ID)

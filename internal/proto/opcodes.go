@@ -163,6 +163,11 @@ const (
 	GuildCreate               Opcode = 0x0D21
 	GuildCreateAgree          Opcode = 0x0D22
 	GuildEtin                 Opcode = 0x0D23
+	GuildNpcList              Opcode = 0x0D24
+	GuildNpcUpgrade           Opcode = 0x0D25
+	GuildHouseKeepEtin        Opcode = 0x0D33
+	GuildHouseBuy             Opcode = 0x0D34
+	GuildDonate               Opcode = 0x0D35
 	GuildList                 Opcode = 0x0D2F
 	GuildNew                  Opcode = 0x0D30
 	ChatGuild                 Opcode = 0x1104

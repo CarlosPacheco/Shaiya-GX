@@ -590,6 +590,30 @@ type QuestCompletion struct {
 | [`CommitGuildBank`](../../server/internal/db/guildbank.go#L9)<br>`func CommitGuildBank(guildID uint32, change CharacterChange, before, after []Item) error` | See the source definition and the subsystem ownership contract. |
 | [`writeGuildBankChange`](../../server/internal/db/guildbank.go#L33)<br>`func writeGuildBankChange(c context.Context, tx *sql.Tx, guildID uint32, before, after []Item) error` | See the source definition and the subsystem ownership contract. |
 
+### guildhouse.go
+
+[server/internal/db/guildhouse.go](../../server/internal/db/guildhouse.go#L1)
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`GuildNpcRow`](../../server/internal/db/guildhouse.go#L10)<br>`type GuildNpcRow` | GuildNpcRow is one usp_Read_GuildNpcLv_R row: a guild house NPC and its level in the guild's slot (Number). |
+| [`LoadGuildNpcLevels`](../../server/internal/db/guildhouse.go#L18)<br>`func LoadGuildNpcLevels() ([]GuildNpcRow, error)` | LoadGuildNpcLevels reads every live guild NPC level (usp_Read_GuildNpcLv_R). |
+| [`CommitGuildHouse`](../../server/internal/db/guildhouse.go#L47)<br>`func CommitGuildHouse(g GuildRow, npc *GuildNpcRow, change *CharacterChange) error` | CommitGuildHouse stores a guild house change atomically: GuildDetails' house fields (the DB agent's 0x0B0F/0x0B10/0x0B12 writes), optionally the NPC level row (usp_Save_GuildNpcLv_Add_E / _Mod_E: the row of that type takes the level and slot) and the character's own change (money or the consumed etin items). |
+| [`saveGuildHouseTx`](../../server/internal/db/guildhouse.go#L74)<br>`func saveGuildHouseTx(c context.Context, tx *sql.Tx, g GuildRow) error` | See the source definition and the subsystem ownership contract. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type GuildNpcRow struct {
+	GuildID uint32
+	Type    uint16
+	Level   uint8
+	Slot    uint8
+}
+```
+
+</details>
+
 ### guilds.go
 
 [server/internal/db/guilds.go](../../server/internal/db/guilds.go#L1)

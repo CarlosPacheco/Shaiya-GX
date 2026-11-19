@@ -16,7 +16,7 @@ Source notes: Guilds (CUser::PacketGuild and the CGuild senders).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildGuildCreateFailed (server/internal/world/guild.go)](../../server/internal/world/guild.go#L285)
+**S→C serializers:** [buildGuildCreateFailed (server/internal/world/guild.go)](../../server/internal/world/guild.go#L296)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L347), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -26,7 +26,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGuildCreateFailed — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L285)
+[Source definition](../../server/internal/world/guild.go#L296)
 
 ```go
 func buildGuildCreateFailed(result uint8, name string) []byte {
@@ -63,9 +63,9 @@ func DecodeGuildCreateFailure(p []byte) (uint8, error) {
 
 Declarations: [packet.GuildDisband](../../server/internal/packet/packet.go#L149), [proto.GuildDisband](../../internal/proto/opcodes.go#L137).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L477)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L491)
 
-**S→C serializers:** [guildResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L314)
+**S→C serializers:** [guildResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L325)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L368), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -75,7 +75,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildResult — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L314)
+[Source definition](../../server/internal/world/guild.go#L325)
 
 ```go
 func guildResult(op packet.Opcode, result uint8) []byte {
@@ -113,9 +113,9 @@ func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return 
 
 Declarations: [packet.GuildDisbandAgree](../../server/internal/packet/packet.go#L150), [proto.GuildDisbandAgree](../../internal/proto/opcodes.go#L138).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L479)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L493)
 
-**S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L327)
+**S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L338)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L375), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -125,7 +125,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildID32 — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L327)
+[Source definition](../../server/internal/world/guild.go#L338)
 
 ```go
 func guildID32(op packet.Opcode, id uint32) []byte {
@@ -171,9 +171,9 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.GuildInvite](../../server/internal/packet/packet.go#L151), [proto.GuildInvite](../../internal/proto/opcodes.go#L139).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L483)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L497)
 
-**S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L327), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L338), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L293), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -183,7 +183,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildID32 — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L327)
+[Source definition](../../server/internal/world/guild.go#L338)
 
 ```go
 func guildID32(op packet.Opcode, id uint32) []byte {
@@ -225,9 +225,9 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.GuildInviteAnswer](../../server/internal/packet/packet.go#L152), [proto.GuildInviteAnswer](../../internal/proto/opcodes.go#L140).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L488)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L502)
 
-**S→C serializers:** [guildResultID (server/internal/world/guild.go)](../../server/internal/world/guild.go#L320)
+**S→C serializers:** [guildResultID (server/internal/world/guild.go)](../../server/internal/world/guild.go#L331)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L300), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -237,7 +237,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildResultID — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L320)
+[Source definition](../../server/internal/world/guild.go#L331)
 
 ```go
 func guildResultID(op packet.Opcode, result uint8, id uint32) []byte {
@@ -295,9 +295,9 @@ type PartyReply struct {
 
 Declarations: [packet.GuildApply](../../server/internal/packet/packet.go#L153), [proto.GuildApply](../../internal/proto/opcodes.go#L141).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L492)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L506)
 
-**S→C serializers:** [guildResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L314), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [guildResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L325), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L244), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -307,7 +307,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildResult — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L314)
+[Source definition](../../server/internal/world/guild.go#L325)
 
 ```go
 func guildResult(op packet.Opcode, result uint8) []byte {
@@ -349,9 +349,9 @@ func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return 
 
 Declarations: [packet.GuildJoinResult](../../server/internal/packet/packet.go#L154), [proto.GuildJoinResult](../../internal/proto/opcodes.go#L142).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L497)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L511)
 
-**S→C serializers:** [buildGuildJoined (server/internal/world/guild.go)](../../server/internal/world/guild.go#L305)
+**S→C serializers:** [buildGuildJoined (server/internal/world/guild.go)](../../server/internal/world/guild.go#L316)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L307), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -361,7 +361,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGuildJoined — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L305)
+[Source definition](../../server/internal/world/guild.go#L316)
 
 ```go
 func buildGuildJoined(result uint8, g *guild, rank uint8) []byte {
@@ -424,9 +424,9 @@ type GuildJoin struct {
 
 Declarations: [packet.GuildLeave](../../server/internal/packet/packet.go#L155), [proto.GuildLeave](../../internal/proto/opcodes.go#L143).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L502)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L516)
 
-**S→C serializers:** [guildResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L314)
+**S→C serializers:** [guildResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L325)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L354), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -436,7 +436,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildResult — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L314)
+[Source definition](../../server/internal/world/guild.go#L325)
 
 ```go
 func guildResult(op packet.Opcode, result uint8) []byte {
@@ -474,9 +474,9 @@ func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return 
 
 Declarations: [packet.GuildExpel](../../server/internal/packet/packet.go#L156), [proto.GuildExpel](../../internal/proto/opcodes.go#L144).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L504)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L518)
 
-**S→C serializers:** [guildResultID (server/internal/world/guild.go)](../../server/internal/world/guild.go#L320), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [guildResultID (server/internal/world/guild.go)](../../server/internal/world/guild.go#L331), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L382), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -486,7 +486,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildResultID — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L320)
+[Source definition](../../server/internal/world/guild.go#L331)
 
 ```go
 func guildResultID(op packet.Opcode, result uint8, id uint32) []byte {
@@ -540,9 +540,9 @@ type PartyReply struct {
 
 Declarations: [packet.GuildStatus](../../server/internal/packet/packet.go#L157), [proto.GuildStatus](../../internal/proto/opcodes.go#L145).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L509)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L523)
 
-**S→C serializers:** [guildStatus (server/internal/world/guild.go)](../../server/internal/world/guild.go#L183)
+**S→C serializers:** [guildStatus (server/internal/world/guild.go)](../../server/internal/world/guild.go#L194)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L251), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -552,7 +552,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildStatus — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L183)
+[Source definition](../../server/internal/world/guild.go#L194)
 
 ```go
 func guildStatus(mode uint8, charID uint32) []byte {
@@ -620,7 +620,7 @@ Declarations: [packet.GuildListBegin](../../server/internal/packet/packet.go#L15
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [guildListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L391)
+**S→C serializers:** [guildListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L405)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L152), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -630,7 +630,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildListPackets — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L391)
+[Source definition](../../server/internal/world/guild.go#L405)
 
 ```go
 func guildListPackets(country uint8) [][]byte {
@@ -671,7 +671,7 @@ Declarations: [packet.GuildListEnd](../../server/internal/packet/packet.go#L159)
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [guildListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L391)
+**S→C serializers:** [guildListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L405)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L155), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -681,7 +681,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildListPackets — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L391)
+[Source definition](../../server/internal/world/guild.go#L405)
 
 ```go
 func guildListPackets(country uint8) [][]byte {
@@ -722,7 +722,7 @@ Declarations: [packet.GuildDisbanded](../../server/internal/packet/packet.go#L16
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L327)
+**S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L338)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L183), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -732,7 +732,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildID32 — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L327)
+[Source definition](../../server/internal/world/guild.go#L338)
 
 ```go
 func guildID32(op packet.Opcode, id uint32) []byte {
@@ -888,7 +888,7 @@ Declarations: [packet.GuildMemberAdded](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildGuildMemberAdded (server/internal/world/guild.go)](../../server/internal/world/guild.go#L926)
+**S→C serializers:** [buildGuildMemberAdded (server/internal/world/guild.go)](../../server/internal/world/guild.go#L969)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L205), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -898,7 +898,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGuildMemberAdded — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L926)
+[Source definition](../../server/internal/world/guild.go#L969)
 
 ```go
 func buildGuildMemberAdded(m *guildMember) []byte {
@@ -949,7 +949,7 @@ Declarations: [packet.GuildApplicantList](../../server/internal/packet/packet.go
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applicantListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L241)
+**S→C serializers:** [applicantListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L252)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L218), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -959,7 +959,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>applicantListPackets — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L241)
+[Source definition](../../server/internal/world/guild.go#L252)
 
 ```go
 func (g *guild) applicantListPackets() [][]byte {
@@ -1028,7 +1028,7 @@ Declarations: [packet.GuildApplicant](../../server/internal/packet/packet.go#L16
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [guildApply (server/internal/world/guild.go)](../../server/internal/world/guild.go#L938)
+**S→C serializers:** [guildApply (server/internal/world/guild.go)](../../server/internal/world/guild.go#L981)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L229), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -1038,7 +1038,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildApply — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L938)
+[Source definition](../../server/internal/world/guild.go#L981)
 
 ```go
 func (s *Session) guildApply(guildID uint32) {
@@ -1107,7 +1107,7 @@ Declarations: [packet.GuildApplicantRemoved](../../server/internal/packet/packet
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L327)
+**S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L338)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L238), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -1117,7 +1117,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildID32 — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L327)
+[Source definition](../../server/internal/world/guild.go#L338)
 
 ```go
 func guildID32(op packet.Opcode, id uint32) []byte {
@@ -1145,9 +1145,9 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.GuildRemark](../../server/internal/packet/packet.go#L167), [proto.GuildRemark](../../internal/proto/opcodes.go#L155).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L514)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L528)
 
-**S→C serializers:** [guildRemark (server/internal/world/guild.go)](../../server/internal/world/guild.go#L1151)
+**S→C serializers:** [guildRemark (server/internal/world/guild.go)](../../server/internal/world/guild.go#L1197)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L81), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -1157,7 +1157,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildRemark — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L1151)
+[Source definition](../../server/internal/world/guild.go#L1197)
 
 ```go
 func (s *Session) guildRemark(p []byte) {
@@ -1241,9 +1241,9 @@ type GuildRemarkResult struct {
 
 Declarations: [packet.GuildCreate](../../server/internal/packet/packet.go#L175), [proto.GuildCreate](../../internal/proto/opcodes.go#L163).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L471)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L485)
 
-**S→C serializers:** [buildGuildCreateResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L295)
+**S→C serializers:** [buildGuildCreateResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L306)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L325), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -1253,7 +1253,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGuildCreateResult — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L295)
+[Source definition](../../server/internal/world/guild.go#L306)
 
 ```go
 func buildGuildCreateResult(result uint8, id uint32, rank uint8, name, remark string) []byte {
@@ -1314,9 +1314,9 @@ type GuildJoin struct {
 
 Declarations: [packet.GuildCreateAgree](../../server/internal/packet/packet.go#L176), [proto.GuildCreateAgree](../../internal/proto/opcodes.go#L164).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L473)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L487)
 
-**S→C serializers:** [guildCreateRequest (server/internal/world/guild.go)](../../server/internal/world/guild.go#L545)
+**S→C serializers:** [guildCreateRequest (server/internal/world/guild.go)](../../server/internal/world/guild.go#L585)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L340), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -1326,7 +1326,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildCreateRequest — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L545)
+[Source definition](../../server/internal/world/guild.go#L585)
 
 ```go
 func (s *Session) guildCreateRequest(p []byte) {
@@ -1447,9 +1447,9 @@ type GuildCreateVote struct {
 
 Declarations: [packet.GuildEtin](../../server/internal/packet/packet.go#L177), [proto.GuildEtin](../../internal/proto/opcodes.go#L165).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L516)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L530)
 
-**S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L327)
+**S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L338)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L75), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -1459,7 +1459,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildID32 — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L327)
+[Source definition](../../server/internal/world/guild.go#L338)
 
 ```go
 func guildID32(op packet.Opcode, id uint32) []byte {
@@ -1487,6 +1487,84 @@ func GuildEtinPacket() []byte { return NewWriter(GuildEtin).Bytes() }
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
+```
+
+</details>
+
+## Opcode 0d24
+
+**`0x0D24` — GuildNpcList**
+
+Declarations: [packet.GuildNpcList](../../server/internal/packet/packet.go#L178), [proto.GuildNpcList](../../internal/proto/opcodes.go#L166).
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** [npcListPacket (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L287)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>npcListPacket — server/internal/world/guildhouse.go</summary>
+
+[Source definition](../../server/internal/world/guildhouse.go#L287)
+
+```go
+func (g *guild) npcListPacket() []byte {
+	var entries []guildNpcSlot
+	var slots []uint8
+	for i, sl := range g.npcs {
+		if sl.Type != 0 {
+			entries, slots = append(entries, sl), append(slots, uint8(i))
+		}
+	}
+	if len(entries) == 0 {
+		return nil
+	}
+	w := packet.New(packet.GuildNpcList)
+	w.U8(uint8(len(entries)))
+	for i, sl := range entries {
+		w.U16(sl.Type)
+		w.U8(uint8(sl.Level))
+		w.U8(slots[i])
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+## Opcode 0d25
+
+**`0x0D25` — GuildNpcUpgrade**
+
+Declarations: [packet.GuildNpcUpgrade](../../server/internal/packet/packet.go#L179), [proto.GuildNpcUpgrade](../../internal/proto/opcodes.go#L167).
+
+**C→S receive adapters:** [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L541)
+
+**S→C serializers:** [buildGuildNpcResult (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L308)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>buildGuildNpcResult — server/internal/world/guildhouse.go</summary>
+
+[Source definition](../../server/internal/world/guildhouse.go#L308)
+
+```go
+func buildGuildNpcResult(result uint8, npcType uint16, level, slot uint8) []byte {
+	w := packet.New(packet.GuildNpcUpgrade)
+	w.U8(result)
+	w.U16(npcType)
+	w.U8(level)
+	w.U8(slot)
+	return w.MustFinish()
+}
 ```
 
 </details>
@@ -1672,7 +1750,7 @@ Declarations: [packet.GuildBankResult](../../server/internal/packet/packet.go#L1
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildGuildBankResult (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L119)
+**S→C serializers:** [buildGuildBankResult (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L94)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L145), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -1682,7 +1760,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGuildBankResult — server/internal/world/guildbank.go</summary>
 
-[Source definition](../../server/internal/world/guildbank.go#L119)
+[Source definition](../../server/internal/world/guildbank.go#L94)
 
 ```go
 func buildGuildBankResult(result, arg uint8) []byte {
@@ -1721,7 +1799,7 @@ Declarations: [packet.GuildBankList](../../server/internal/packet/packet.go#L172
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [bankListPackets (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L66)
+**S→C serializers:** [bankListPackets (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L41)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L121), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -1731,7 +1809,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>bankListPackets — server/internal/world/guildbank.go</summary>
 
-[Source definition](../../server/internal/world/guildbank.go#L66)
+[Source definition](../../server/internal/world/guildbank.go#L41)
 
 ```go
 func (g *guild) bankListPackets() [][]byte {
@@ -1800,11 +1878,11 @@ func DecodeGuildBankList(p []byte) ([]InventoryItem, error) {
 
 **`0x0D2F` — GuildList**
 
-Declarations: [packet.GuildList](../../server/internal/packet/packet.go#L178), [proto.GuildList](../../internal/proto/opcodes.go#L166).
+Declarations: [packet.GuildList](../../server/internal/packet/packet.go#L183), [proto.GuildList](../../internal/proto/opcodes.go#L171).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [guildListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L391)
+**S→C serializers:** [guildListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L405)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L157), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -1814,7 +1892,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildListPackets — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L391)
+[Source definition](../../server/internal/world/guild.go#L405)
 
 ```go
 func guildListPackets(country uint8) [][]byte {
@@ -1881,11 +1959,11 @@ type GuildInfo struct {
 
 **`0x0D30` — GuildNew**
 
-Declarations: [packet.GuildNew](../../server/internal/packet/packet.go#L179), [proto.GuildNew](../../internal/proto/opcodes.go#L167).
+Declarations: [packet.GuildNew](../../server/internal/packet/packet.go#L184), [proto.GuildNew](../../internal/proto/opcodes.go#L172).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [complete (server/internal/world/guild.go)](../../server/internal/world/guild.go#L664)
+**S→C serializers:** [complete (server/internal/world/guild.go)](../../server/internal/world/guild.go#L704)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L171), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -1895,7 +1973,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>complete — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L664)
+[Source definition](../../server/internal/world/guild.go#L704)
 
 ```go
 func (c *guildCreate) complete(log *logx.Logger, caller *Session) bool {
@@ -2002,7 +2080,7 @@ Declarations: [packet.GuildBankPlaced](../../server/internal/packet/packet.go#L1
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildGuildBankSlot (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L100)
+**S→C serializers:** [buildGuildBankSlot (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L75)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L132), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -2012,7 +2090,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGuildBankSlot — server/internal/world/guildbank.go</summary>
 
-[Source definition](../../server/internal/world/guildbank.go#L100)
+[Source definition](../../server/internal/world/guildbank.go#L75)
 
 ```go
 func buildGuildBankSlot(op packet.Opcode, slot uint8, it *db.Item, charID uint32) []byte {
@@ -2087,7 +2165,7 @@ Declarations: [packet.GuildBankTaken](../../server/internal/packet/packet.go#L17
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildGuildBankSlot (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L100)
+**S→C serializers:** [buildGuildBankSlot (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L75)
 
 **Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L132), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
@@ -2097,7 +2175,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGuildBankSlot — server/internal/world/guildbank.go</summary>
 
-[Source definition](../../server/internal/world/guildbank.go#L100)
+[Source definition](../../server/internal/world/guildbank.go#L75)
 
 ```go
 func buildGuildBankSlot(op packet.Opcode, slot uint8, it *db.Item, charID uint32) []byte {
@@ -2164,6 +2242,115 @@ func Op(payload []byte) Opcode {
 
 </details>
 
+## Opcode 0d33
+
+**`0x0D33` — GuildHouseKeepEtin**
+
+Declarations: [packet.GuildHouseKeepEtin](../../server/internal/packet/packet.go#L180), [proto.GuildHouseKeepEtin](../../internal/proto/opcodes.go#L168).
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+The shape is decoded inline, delegated, or only declared. Use the linked adapter/reducer and the codec appendix below; there is no inferred fixed layout here.
+
+## Opcode 0d34
+
+**`0x0D34` — GuildHouseBuy**
+
+Declarations: [packet.GuildHouseBuy](../../server/internal/packet/packet.go#L181), [proto.GuildHouseBuy](../../internal/proto/opcodes.go#L169).
+
+**C→S receive adapters:** [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L550)
+
+**S→C serializers:** [buildGuildHouseBuy (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L407)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>buildGuildHouseBuy — server/internal/world/guildhouse.go</summary>
+
+[Source definition](../../server/internal/world/guildhouse.go#L407)
+
+```go
+func buildGuildHouseBuy(result uint8, money uint32) []byte {
+	w := packet.New(packet.GuildHouseBuy)
+	w.U8(result)
+	w.U32(money)
+	return w.MustFinish()
+}
+```
+
+</details>
+
+## Opcode 0d35
+
+**`0x0D35` — GuildDonate**
+
+Declarations: [packet.GuildDonate](../../server/internal/packet/packet.go#L182), [proto.GuildDonate](../../internal/proto/opcodes.go#L170).
+
+**C→S receive adapters:** [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L561)
+
+**S→C serializers:** [guildDonate (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L468)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>guildDonate — server/internal/world/guildhouse.go</summary>
+
+[Source definition](../../server/internal/world/guildhouse.go#L468)
+
+```go
+func (s *Session) guildDonate(g *guild) {
+	next := *g
+	var total uint32
+	committed := s.inventoryOperationWithCommit(func() {
+		var taken [][2]uint8
+		for bag := uint8(1); bag <= 5; bag++ {
+			for slot := uint8(0); slot < 24; slot++ {
+				i := findItem(s.items, bag, slot)
+				if i < 0 {
+					continue
+				}
+				value, ok := guildEtinValue(&s.items[i])
+				if !ok {
+					continue
+				}
+				total += value
+				s.items = append(s.items[:i], s.items[i+1:]...)
+				taken = append(taken, [2]uint8{bag, slot})
+			}
+		}
+		w := packet.New(packet.GuildDonate)
+		w.U8(uint8(len(taken)))
+		for _, t := range taken {
+			w.U8(t[0])
+			w.U8(t[1])
+		}
+		s.send(w.MustFinish(), "0x0D35 guild etin donated")
+	}, func(change db.CharacterChange) error {
+		if total > 0 {
+			next.Etin += total
+			next.EtinReturn++
+		}
+		return db.CommitGuildHouse(next.row(), nil, &change)
+	})
+	if committed && total > 0 {
+		g.Etin, g.EtinReturn = next.Etin, next.EtinReturn
+		g.send(guildID32(packet.GuildEtin, g.Etin), "0x0D23 guild etin", nil)
+	}
+}
+```
+
+</details>
+
 ## Opcode 0d37
 
 **`0x0D37` — GuildRankingList**
@@ -2224,6 +2411,7 @@ func updateGuildRanking(log *logx.Logger) {
 		for i, e := range ranked[c] {
 			if i < grbRankedGuilds {
 				e.g.Rank = uint8(i + 1)
+				e.g.settleGuildHouse()
 				count++
 			} else {
 				e.g.Rank, e.g.UseHouse = grbUnranked, 0
