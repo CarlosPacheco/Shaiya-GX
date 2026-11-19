@@ -487,6 +487,7 @@ func (a *App) drawAuction(w, h int) {
 	x, y, width := a.auctionPanel(w, h)
 	a.clearTooltipUnderPanel(x, y, width, 418)
 	a.auctionBox(x, y, width, 418, auctionPanelColor)
+	a.auctionFrame(x, y, width)
 	text := func(label string, rx, ry, maxWidth int) {
 		a.font.Draw(a.sprites, label, x+rx, y+ry, auctionTextColor, maxWidth)
 	}
@@ -539,7 +540,18 @@ func (a *App) drawAuction(w, h int) {
 		if v.modal == "details" {
 			label = "Back"
 		}
-		button(label, 15, 300, 118, false)
+		file, col, cell, artW, artH := "", 0, 128, 88, 30
+		switch v.modal {
+		case "setup":
+			file = "auction_commission_button"
+		case "bid":
+			file, cell, artW, artH = "auction_tender_enter_button", 64, 47, 19
+		case "details":
+			file, col = "auction_commission_button", 1
+		}
+		if file == "" || !a.auctionSpriteButton(file, col, a.auctionButtonState(x+15, y+300, 118, true), cell, 32, artW, artH, x+15, y+300, 118) {
+			button(label, 15, 300, 118, false)
+		}
 		text(v.message, 15, 385, width-30)
 		return
 	}
@@ -555,7 +567,14 @@ func (a *App) drawAuction(w, h int) {
 	}
 	for i, label := range tabs {
 		tx := 14 + i*(width-28)/4
-		button(label, tx, 48, (width-28)/4-4, selected == i)
+		tw := (width-28)/4 - 4
+		state := a.auctionButtonState(x+tx, y+48, tw, true)
+		if selected == i {
+			state = 1
+		}
+		if !a.auctionSpriteButton("auction_top_manual_button", i, state, 128, 64, 126, 32, x+tx, y+48, tw) {
+			button(label, tx, 48, tw, selected == i)
+		}
 	}
 	if v.view == proto.AuctionBrowse {
 		button(proto.AuctionCategories[v.category], 14, 83, 116, false)
@@ -569,7 +588,9 @@ func (a *App) drawAuction(w, h int) {
 		button(query, 136, 83, width-370, v.focus == 0)
 		button("Min "+v.minLevel, width-228, 83, 64, v.focus == 1)
 		button("Max "+v.maxLevel, width-158, 83, 64, v.focus == 2)
-		button("Search", width-88, 83, 74, false)
+		if !a.auctionSpriteButton("auction_buy_search_botton", 0, a.auctionButtonState(x+width-88, y+83, 74, true), 64, 32, 47, 19, x+width-88, y+83, 74) {
+			button("Search", width-88, 83, 74, false)
+		}
 	} else if selected == 1 || selected == 2 {
 		name := map[int]string{proto.AuctionSelling: "Selling", proto.AuctionBidding: "Bidding", proto.AuctionItems: "Item Claims", proto.AuctionGold: "Gold Claims"}[v.view]
 		button(name+"  /  Switch", 14, 83, 240, true)
@@ -614,7 +635,12 @@ func (a *App) drawAuction(w, h int) {
 		if b.x+b.w > width-12 {
 			continue
 		}
-		if v.actionAvailable(b.action) {
+		enabled := v.actionAvailable(b.action)
+		if file, col := v.auctionActionArt(b.action); file != "" &&
+			a.auctionSpriteButton(file, col, a.auctionButtonState(x+b.x, y+b.y, b.w, enabled), 128, 32, 88, 30, x+b.x, y+b.y, b.w) {
+			continue
+		}
+		if enabled {
 			button(b.label, b.x, b.y, b.w, false)
 		} else {
 			a.auctionBox(x+b.x, y+b.y, b.w, 26, auctionFieldColor)
@@ -633,7 +659,14 @@ func (a *App) drawAuction(w, h int) {
 	button("Next", width-62, 382, 48, false)
 	if v.categoryOpen {
 		for i, name := range proto.AuctionCategories {
-			button(name, 14, 111+i*25, 142, i == v.category)
+			rowY := 111 + i*25
+			state := a.auctionButtonState(x+14, y+rowY, 142, true)
+			if i == v.category {
+				state = 1
+			}
+			if i == 0 || !a.auctionSpriteButton("auction_completion", i-1, state, 128, 32, 127, 28, x+14, y+rowY, 142) {
+				button(name, 14, rowY, 142, i == v.category)
+			}
 		}
 	}
 }

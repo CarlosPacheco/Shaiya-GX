@@ -11,6 +11,8 @@ Talk to an auction board to access the realm-wide gold market. Boards of subtype
 
 The market requires a live character near the board they last interacted with. Item data and prices in the window update from the server. The app shows a confirmation before posting, bidding, buying or canceling. The world server rejects a bid, buy or cancel against a stale listing version. Reopen the listing to review its new price or status.
 
+The client reads the auction PNG atlases from `data/interface` when available. The local import uses the sixteen distinct `auction_*.tga` resources as loose PNGs, preserving the original filename stems, including `auction_completio` and `auction_buy_search_botton`. GX uses the extracted frames and control states within its existing panel layout. Missing atlases fall back to GX-rendered controls.
+
 ## Listing and settlement
 
 Listings require a buyout higher than the starting price. The starting price is 500–3,800,000,000 gold and the buyout is at most 4,000,000,000. The duration choices are 7, 24, 72 and 168 hours. The listing deposit is five gold per duration hour per started 500,000 gold of starting price.
