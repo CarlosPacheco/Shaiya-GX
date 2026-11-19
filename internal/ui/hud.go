@@ -31,6 +31,7 @@ type HUDState struct {
 	TargetName            string
 	TargetHP              Resource
 	TargetKnown           bool
+	TargetNoValue         bool // NPC targets: a full bar without numbers
 	TargetColor           [4]float32
 	TargetElement         uint8
 	Portrait              *render.Texture
@@ -123,7 +124,9 @@ func (h *HUD) Draw(s *render.Sprites, f *Font, state HUDState) {
 				text = fmt.Sprintf("HP %d", state.TargetHP.Current)
 			}
 			// Centered on the 140px bar drawn at tx+41.
-			f.Draw(s, text, tx+111-f.Width(text)/2, ty+43, white, 140)
+			if !state.TargetNoValue {
+				f.Draw(s, text, tx+111-f.Width(text)/2, ty+43, white, 140)
+			}
 		}
 	}
 }

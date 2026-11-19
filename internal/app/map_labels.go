@@ -86,7 +86,14 @@ func (a *App) drawMapLabels(w, h int) {
 		}
 	}
 	if text != "" {
-		x, y := min(a.lastMouseX+18, max(0, w-a.font.Width(text)-12)), min(a.lastMouseY+18, h-a.font.Height-8)
-		a.font.DrawOutlined(a.sprites, text, x, y, white)
+		a.drawHoverLabel(a.lastMouseX, a.lastMouseY, text)
 	}
+}
+
+// drawHoverLabel is the native hover label (Game.exe 0x447ef0 and others): the
+// TipBox panel 0x50ff10 at (x, y-0x12), text width + 3 by 13, diffuse
+// 0xcd1d1f24, with the text at (x+5, y-0xb).
+func (a *App) drawHoverLabel(x, y int, text string) {
+	a.drawNewsPanel(x, y-0x12, a.font.Width(text)+3, 0xd)
+	a.font.Draw(a.sprites, text, x+5, y-0xb, white, 0)
 }

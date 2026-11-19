@@ -255,6 +255,7 @@ func (a *App) drawCombat(w, h int) {
 		a.loadNPCs()
 		view.TargetName = a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}].Name
 		view.TargetColor = [4]float32{1, .96, .3, 1}
+		view.TargetHP, view.TargetKnown, view.TargetNoValue = ui.Resource{Current: 1, Max: 1}, true, true
 	} else if e != nil && e.Kind == game.KindUser && e.Shape != nil {
 		view.TargetName = e.Shape.Name
 		if member := s.Party.Member(e.ID); member != nil {
