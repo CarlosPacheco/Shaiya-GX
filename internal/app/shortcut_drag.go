@@ -205,6 +205,14 @@ func (a *App) updateShortcutDrag(in *platform.Input, w, h int) bool {
 	}
 	if in.Clicked || !in.MouseDown {
 		if in.Clicked {
+			slot := revolverSlot{Skill: d.skill.ID, Action: d.local}
+			if d.reference.Bag == 100 && d.reference.Number < 256 {
+				slot.Skill = a.state.Skills[uint8(d.reference.Number)].ID
+			}
+			if a.revolverDrop(in, w, h, slot) {
+				*d = shortcutDrag{}
+				return true
+			}
 			if index := a.actionBar.SlotAt(in.MouseX, in.MouseY, w, h); index >= 0 {
 				if a.barCovered(in, w, h) {
 					*d = shortcutDrag{}

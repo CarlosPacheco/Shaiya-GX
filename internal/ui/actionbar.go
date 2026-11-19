@@ -17,7 +17,6 @@ type ActionSlot struct {
 	Icon             *render.Texture
 	UV               UV
 	Label            string
-	Level            uint8
 	Count            uint16
 	Cooldown         float64
 	Pressed          bool
@@ -292,8 +291,6 @@ func (b *ActionBar) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h
 			slot.Badge.Draw(s, cx, cy, 32, white)
 			if slot.Count > 0 {
 				f.DrawOutlined(s, fmt.Sprint(slot.Count), cx+12, cy+15, white)
-			} else if slot.Level > 0 {
-				f.Draw(s, fmt.Sprint(slot.Level), cx+12, cy+15, [4]float32{1, 1, 0, 1}, 20)
 			}
 			if slot.Cooldown > 0 {
 				ratio := float32(1)

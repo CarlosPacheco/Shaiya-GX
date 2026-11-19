@@ -57,6 +57,7 @@ type App struct {
 	npcSkillDefs                        map[sdata.SkillKey]sdata.Skill
 	chatBubbles                         []chatBubble
 	quickPotions                        quickPotionView
+	revolver                            revolverView
 	mapLabels                           mapLabelView
 	skillSoundEvents                    map[skillSoundKey]float64
 	loading                             mapLoading

@@ -11,6 +11,7 @@ import (
 func (a *App) confirmedSkills(op proto.Opcode) {
 	v := &a.skills
 	if op == proto.CharacterSkills {
+		a.revolver.cast = revolverCast{}
 		a.loadSkills()
 		v.queuedSkill = nil
 		v.cooldowns = map[uint16]float64{}
@@ -48,6 +49,7 @@ func (a *App) confirmedSkills(op proto.Opcode) {
 		return
 	}
 	r := a.state.LastSkill
+	a.confirmRevolver(r)
 	// 0..3 are hit/critical/miss, 4 announces an area/multi-hit cast.
 	// A failed targetless once-skill can also return 3, without starting reuse.
 	if r.Source != a.state.SelfID || r.Result > 4 || r.Result == 3 && r.Target == 0 {

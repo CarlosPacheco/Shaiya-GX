@@ -29,6 +29,12 @@ const (
 	KeySpace
 	KeyTarget         // Native English client: DirectInput 0x29 (grave accent).
 	KeyPreviousTarget // Press edge only; Backspace still repeats inside text fields.
+	KeyRevolver
+	KeyRevolverReset
+	KeyRevolverPage1
+	KeyRevolverPage2
+	KeyRevolverPage3
+	KeyRevolverPage4
 )
 
 // Input is one frame of input: the state plus the events since last frame.
@@ -85,7 +91,7 @@ func thirdBarModifier(mods glfw.ModifierKey) bool {
 func (w *Window) InstallInput() *InputQueue {
 	q := &InputQueue{}
 	w.SetCharCallback(func(_ *glfw.Window, r rune) {
-		if q.thirdBarChar {
+		if q.suppressChordChar {
 			return
 		}
 		if q.keypadChar && r >= '0' && r <= '9' {
@@ -97,9 +103,28 @@ func (w *Window) InstallInput() *InputQueue {
 	w.SetKeyCallback(func(_ *glfw.Window, k glfw.Key, _ int, a glfw.Action, mods glfw.ModifierKey) {
 		q.cur.Shift = mods&glfw.ModShift != 0
 		q.keypadChar = false
-		q.thirdBarChar = false
+		q.suppressChordChar = false
+		if mods&(glfw.ModAlt|glfw.ModControl|glfw.ModSuper) == glfw.ModAlt {
+			var key Key
+			switch {
+			case k == glfw.KeyR:
+				key = KeyRevolverReset
+			case k >= glfw.Key1 && k <= glfw.Key4:
+				key = KeyRevolverPage1 + Key(k-glfw.Key1)
+			}
+			if key != KeyNone {
+				q.suppressChordChar = a != glfw.Release
+				if a == glfw.Press {
+					q.cur.Keys = append(q.cur.Keys, key)
+				}
+				return
+			}
+		}
+		if k == glfw.KeyR && mods&(glfw.ModAlt|glfw.ModControl|glfw.ModSuper) == 0 && a == glfw.Press {
+			q.cur.Keys = append(q.cur.Keys, KeyRevolver)
+		}
 		if k >= glfw.Key0 && k <= glfw.Key9 && thirdBarModifier(mods) {
-			q.thirdBarChar = a != glfw.Release
+			q.suppressChordChar = a != glfw.Release
 			if a == glfw.Press {
 				digit := int(k - glfw.Key0)
 				q.cur.Actions = append(q.cur.Actions, 20+(digit+9)%10)
@@ -160,13 +185,13 @@ func (w *Window) InstallInput() *InputQueue {
 }
 
 type InputQueue struct {
-	win              *Window
-	cur              Input
-	mouselook        bool
-	keypadChar       bool
-	thirdBarChar     bool
-	anchorX, anchorY float64
-	lookX, lookY     float64
+	win               *Window
+	cur               Input
+	mouselook         bool
+	keypadChar        bool
+	suppressChordChar bool
+	anchorX, anchorY  float64
+	lookX, lookY      float64
 }
 
 // Frame returns this frame's input and starts collecting the next one.

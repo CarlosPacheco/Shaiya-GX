@@ -167,6 +167,10 @@ func (a *App) updateLocalActionDrag(in *platform.Input, w, h int) bool {
 	}
 	if in.Clicked || !in.MouseDown {
 		if in.Clicked {
+			if a.revolverDrop(in, w, h, revolverSlot{Action: uint8(d.source + 1)}) {
+				*d = subActionDrag{}
+				return true
+			}
 			if index := a.actionBar.SlotAt(in.MouseX, in.MouseY, w, h); index >= 0 && a.world != nil && a.state.SkillBarReady {
 				slots := replaceAction(a.state.QuickSlots, uint8(index), nil)
 				p, err := proto.SkillBarPacket(slots)

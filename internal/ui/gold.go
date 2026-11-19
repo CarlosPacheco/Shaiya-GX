@@ -18,12 +18,13 @@ func GoldText(value uint32) string {
 	return string(grouped[end:])
 }
 
-// GoldRGB reproduces 0x4cb4a0's ARGB table after native grouping. Its string
+// GoldRGB follows 0x4cb4a0's ARGB table after native grouping. Its string
 // lengths 5/6/7/9/10/11/13 correspond to the following numeric boundaries.
+// GX lightens the top violet tier for readability.
 func GoldRGB(value uint32) [3]uint8 {
 	switch {
 	case value >= 1_000_000_000:
-		return [3]uint8{128, 0, 255}
+		return [3]uint8{182, 115, 255}
 	case value >= 100_000_000:
 		return [3]uint8{255, 0, 255}
 	case value >= 10_000_000:

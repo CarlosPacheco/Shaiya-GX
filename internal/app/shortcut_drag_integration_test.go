@@ -76,6 +76,21 @@ func TestShortcutDragAgainstRapture(t *testing.T) {
 	if q == nil || q.Bag != 100 || q.Number != uint16(skill.Number) {
 		t.Fatal("K drop did not bind learned number", q)
 	}
+	a.revolver.Expanded = true
+	// Place the editor clear of the skill book while assigning.
+	a.revolver.Position.Move(16, 280, 1024, 768, 160, 111)
+	rx := a.revolverLayout(1024, 768).Cell(0, true)
+	drag(sx+cx+2, sy+cy+2, rx.X+2, rx.Y+2)
+	if slot := a.revolver.Slots[0][0]; slot.Skill != skill.ID {
+		t.Fatalf("K drop did not bind skill ID into the revolver: %+v", slot)
+	}
+	a.revolver.Expanded = false
+	a.revolver.Slots[0][0] = revolverSlot{Action: 2}
+	wasWalking := a.wv.walking
+	a.worldControls(&platform.Input{Keys: []platform.Key{platform.KeyRevolver}}, 1024, 768)
+	if a.wv.walking == wasWalking || a.revolver.selected != 1 {
+		t.Fatal("R did not activate and advance the bound basic action")
+	}
 	// Both bars remain usable after moving and rotating the destination bar.
 	a.skills.open = false
 	a.actionBar.Position[1].Vertical = true

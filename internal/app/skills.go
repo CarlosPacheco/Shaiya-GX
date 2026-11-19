@@ -444,25 +444,7 @@ func (a *App) useAction(index int) {
 		}
 	}
 	if p := a.actionPacket(index); p != nil {
-		if proto.Op(p) == proto.UseVehicle {
-			a.requestVehicle()
-			return
-		}
-		if a.approachSkillPacket(p) {
-			return
-		}
-		if !a.prepareSkillMovement(p) {
-			return
-		}
-		if err := a.world.Send(p); err != nil {
-			a.backToLogin("Unable to use action.")
-		} else {
-			a.requestedSkillPresentation(p)
-			if proto.Op(p) == proto.UseItem || proto.Op(p) == proto.ItemBagToBag {
-				a.inventory.pending = true
-				a.inventory.deadline = a.clock + 10
-			}
-		}
+		a.dispatchShortcut(p)
 	}
 }
 
@@ -476,7 +458,7 @@ func (a *App) drawActionBar(w, h int) {
 		slot := &slots[i]
 		slot.Cooldown = max(0, a.skills.cooldowns[k.ID]-a.clock)
 		slot.CooldownDuration = a.skillCooldownTotal(k.ID, d)
-		slot.Label, slot.Level = fmt.Sprintf("%s Lv%d | MP %s SP %s", d.Name, k.Level, a.skillCostValue(d.MP), a.skillCostValue(d.SP)), k.Level
+		slot.Label = fmt.Sprintf("%s Lv%d | MP %s SP %s", d.Name, k.Level, a.skillCostValue(d.MP), a.skillCostValue(d.SP))
 		if file, uv, ok := ui.SkillIcon(d.Icon); ok {
 			slot.Icon, slot.UV = a.assets.Texture("interface/"+file), uv
 		}

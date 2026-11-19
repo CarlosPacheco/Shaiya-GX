@@ -190,7 +190,7 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		}
 	}
 
-	for index, update := range []func(*platform.Input, int, int) bool{a.updateMall, a.updateGuild, a.updateQuickPotions, a.updateBarEditing, a.updateQuestLog, a.updateStatus, a.updateSubActions, a.updateSkills, a.updateInventory, a.updateDuel, a.updateExchange, a.updateShop, a.updateBottom, a.updateHUDPointer, a.updateChatPointer, a.updateBuffs, a.updateMinimap, a.updatePartyPointer} {
+	for index, update := range []func(*platform.Input, int, int) bool{a.updateMall, a.updateGuild, a.updateQuickPotions, a.updateRevolver, a.updateBarEditing, a.updateQuestLog, a.updateStatus, a.updateSubActions, a.updateSkills, a.updateInventory, a.updateDuel, a.updateExchange, a.updateShop, a.updateBottom, a.updateHUDPointer, a.updateChatPointer, a.updateBuffs, a.updateMinimap, a.updatePartyPointer} {
 		if captured {
 			break
 		}

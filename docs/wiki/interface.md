@@ -33,7 +33,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 - Duration bars: `0x4a2fa0`; a 32×5 black background below the icon contains a 30×3 yellow fill.
 - Status: EXP at `(73,132)`, 183×15; resources at `(73,265 + 20*i)`, 68×15. Values are centered in the original field insets in both layouts. Long values scale to fit their cells, including allocation values on the expanded sheet.
 - Inventory preview: 136×217 opening at `(54,33)`, 34-degree FOV and height-based framing. Bind-pose arm span no longer shrinks the idle actor. This framing is calibrated against the reference composition; the complete native camera matrix has not been recovered.
-- Inventory gold: native comma grouping (`0x4ce790`/`0x4cb420`) and the `0x4cb4a0` colour table. Boundaries are 1,000 (`80FFFF`), 10,000 (`0080FF`), 100,000 (`00FF40`), 1,000,000 (`FFFF00`), 10,000,000 (`FF8000`), 100,000,000 (`FF00FF`) and 1,000,000,000 (`8000FF`); smaller balances are white. The requested coloured presentation is always enabled.
+- Inventory gold: native comma grouping (`0x4ce790`/`0x4cb420`) and the `0x4cb4a0` colour table. Boundaries are 1,000 (`80FFFF`), 10,000 (`0080FF`), 100,000 (`00FF40`), 1,000,000 (`FFFF00`), 10,000,000 (`FF8000`), 100,000,000 (`FF00FF`) and 1,000,000,000 (`B673FF`); smaller balances are white. GX lightens the top violet tier.
 - Minimap: native frame, button angles −45/−27/40 degrees and a 150×40 information plate at `(9,157)`. Full-map close uses the shared 22px control. The compact view uses the original normalized zoom factor, 1 by default and bounded to 0.5–1.5. The default GX circle shows 136/512 of each calibrated map axis (EP5.4 initialization at `0x4c6b08` and UV scale at `0x4c7860`).
 - Bottom bar: atlas slot 5 opens Quest (U); slot 6 opens Guild (G). Both reflect their window's open state. Mouse and keyboard share the same toggle path.
 - Guild: `0x4f2960` selects `guild.tga`, not a cropped `guild_master.tga` directory. Column origins are 36/62/184/247/276, with 25/121/61/27/37px hit widths. `0x4ef9d0` draws rows from Y=112 in 23px steps; management controls are at Y=466. The notice uses `guild_message_input.tga` and its original 256×156 visible area.
@@ -130,7 +130,7 @@ Item properties use original SysMsg labels, yellow titles/base bonuses, orange r
 
 K has nine rows in one column: icons at `(46,78+43*i)`, names at `(88,81+43*i)`, requirements at y=97+43*i, and 32px learn buttons at `(278,84+43*i)` with 22px hit regions. Original SysMsg labels and red unmet requirements replace the compact two-column labels. Learning, scrolling, drag/drop, tooltips and skill use share those rows.
 
-GX Server already validates skill reuse by SkillID and consumables by ReqIg. The client now suppresses requests during confirmed reuse, restores skill delays from the login snapshot and shares consumable timers across inventory/shortcut instances. ReqIg groups 1/2/3/4/5/6/10/11 mean 15/20/25/30/60/120/600/2 seconds. Timers start on accepted results. Inventory, K and action bars show the native eight-triangle sweep (`0x4a27d0`). Inventory and K display remaining seconds. The action bars draw skill rank or item stack quantity and use the native dark cooldown sweep without a number over it. Action icons use the original white `0x50FFFFFF` press overlay (`0x4e0160`), including held number/keypad keys; completed timers flash briefly. Flash timing is a presentation setting, not a recovered native constant. Consumable reconnect persistence follows the current GX Server session behavior; the protocol supplies no consumable timer snapshot.
+GX Server already validates skill reuse by SkillID and consumables by ReqIg. The client now suppresses requests during confirmed reuse, restores skill delays from the login snapshot and shares consumable timers across inventory/shortcut instances. ReqIg groups 1/2/3/4/5/6/10/11 mean 15/20/25/30/60/120/600/2 seconds. Timers start on accepted results. Inventory, K and action bars show the native eight-triangle sweep (`0x4a27d0`). Inventory and K display remaining seconds. The action bars show item stack quantities and use the native dark cooldown sweep. Skill levels appear in tooltips. Action icons use the original white `0x50FFFFFF` press overlay (`0x4e0160`), including held number/keypad keys; completed timers flash briefly. Flash timing is a presentation setting, not a recovered native constant. Consumable reconnect persistence follows the current GX Server session behavior; the protocol supplies no consumable timer snapshot.
 
 Accepted healing potions followed by the authoritative resource snapshot emit green SysMsg 100 for each restored pool, using the actual clamped gain. Ordinary regeneration does not create potion notices. Buff badges display their transmitted level except absent/special level 100.
 
@@ -459,6 +459,11 @@ hidden and opens on page three. The number row controls the primary bar, the
 keypad controls the visible secondary bar, and **Ctrl + 1–0** controls the
 visible third bar. The native icon overlay placement comes from EP5.4
 `0x4df520`, `0x4e0160`, and `0x4a1810`.
+
+The Revolver bar displays the previous, current and next actions in a sequence.
+Press R to use the current action, Alt + R to reset the sequence or Alt + 1–4
+to select a page. Open its editor to arrange learned skills and basic actions.
+Each page has three to six cells. The regular Z/X potion shortcuts are separate.
 
 Action-bar bindings also require an explicit drag outside the bar to remove.
 Left clicks activate and right clicks preserve assignments. Inventory, bars and

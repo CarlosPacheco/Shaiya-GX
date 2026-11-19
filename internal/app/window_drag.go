@@ -308,7 +308,7 @@ func (a *App) finishWindowDrag() {
 	}
 }
 func (a *App) layoutPositions() map[string]*ui.WindowPosition {
-	out := map[string]*ui.WindowPosition{"quick_potions": &a.quickPotions.Position, "buffs": &a.buffLayout.Position[0], "debuffs": &a.buffLayout.Position[1]}
+	out := map[string]*ui.WindowPosition{"quick_potions": &a.quickPotions.Position, "revolver": &a.revolver.Position, "buffs": &a.buffLayout.Position[0], "debuffs": &a.buffLayout.Position[1]}
 	if a.hud != nil {
 		out["portrait_hud"] = &a.hud.Position
 		out["target_hud"] = &a.hud.TargetPosition
