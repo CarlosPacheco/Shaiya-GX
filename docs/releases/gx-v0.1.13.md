@@ -8,7 +8,7 @@ Changes since **gx-v0.1.12**.
 - **Travel and administration.** Add recorded points, interruptible party and raid summons, faction-specific teleport runes, and account-targeted GM travel and summons. The GM cure command restores resources and resets item and mount cooldowns.
 - **Combat and items.** Update Fire Thorn, Fire Bush, traps, Detection, Health Assistant, Taunt, Sacrifice, Potential, Degeneration, cooldown prerequisites and modifiers, and NPC lapis effects. Correct skill tooltips and item absorption, remove experience and inventory/gold loss from PvP deaths, and fix a Lua monster AI memory leak.
 - **Client presentation.** Restore chat filters, help, scrollbars, whisper entry and item links. Add the third shortcut bar and Revolver, improve minimap zoom and status labels, blend animation changes, and keep an inventory icon stationary until dragging starts. Update outdoor lens flare, sky and water resources.
-- **Server and packaging.** Ship the refreshed development seed, synchronized mall stack limits, SQLite catalogs and migrations, 68 maps of server geometry, Lua AI, native client, GX Studio, and terminal server packages. Refresh the Wiki and correct the Windows Studio path test and server fixture isolation.
+- **Server and packaging.** Ship the refreshed development seed, synchronized mall stack limits, SQLite catalogs and migrations, 68 maps of server geometry, Lua AI, native client, GX Studio, and terminal server packages. Refresh the Wiki and support LF and CRLF migration histories on both platforms, and fix cross-platform fixtures.
 
 [Upgrade guide](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/releases/gx-v0.1.13-upgrade.md) · [Wiki](https://github.com/Spelunkern/Shaiya-GX/wiki)
 

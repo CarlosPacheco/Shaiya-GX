@@ -2,7 +2,9 @@ package db
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -98,5 +100,36 @@ func TestEnchantMigrationImportsLegacyOnlyOnce(t *testing.T) {
 	}
 	if err := pool.QueryRow("SELECT COUNT(*) FROM PS_GameDefs_EnchantAttack").Scan(&imported); err != nil || imported != 0 {
 		t.Fatalf("legacy levels returned: %d (%v)", imported, err)
+	}
+}
+
+func TestMigrationChecksumsAcrossLineEndings(t *testing.T) {
+	pool, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	steps := []migration{{1, "example", "CREATE TABLE Example(Value INTEGER);\r\nINSERT INTO Example VALUES(1);"}}
+	if err := migrate(t.Context(), pool, steps); err != nil {
+		t.Fatal(err)
+	}
+	legacy := fmt.Sprintf("%x", sha256.Sum256([]byte(steps[0].SQL)))
+	steps[0].SQL = "CREATE TABLE Example(Value INTEGER);\nINSERT INTO Example VALUES(1);"
+	var stored string
+	if err := pool.QueryRow("SELECT Checksum FROM GX_SchemaMigrations").Scan(&stored); err != nil {
+		t.Fatal(err)
+	}
+	if want := fmt.Sprintf("%x", sha256.Sum256([]byte(steps[0].SQL))); stored != want {
+		t.Fatalf("stored checksum %s, want canonical %s", stored, want)
+	}
+	if _, err := pool.Exec("UPDATE GX_SchemaMigrations SET Checksum=?", legacy); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrate(t.Context(), pool, steps); err != nil {
+		t.Fatal(err)
+	}
+	steps[0].SQL += " "
+	if err := migrate(t.Context(), pool, steps); err == nil {
+		t.Fatal("accepted a changed statement")
 	}
 }

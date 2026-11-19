@@ -782,12 +782,12 @@ Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `inte
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`migration`](../../server/internal/db/migrations.go#L21)<br>`type migration` | See the source definition and the subsystem ownership contract. |
-| [`experienceMigration`](../../server/internal/db/migrations.go#L27)<br>`var experienceMigration string` | See the source definition and the subsystem ownership contract. |
-| [`npcSkillsMigration`](../../server/internal/db/migrations.go#L30)<br>`var npcSkillsMigration string` | See the source definition and the subsystem ownership contract. |
-| [`auctionMigration`](../../server/internal/db/migrations.go#L33)<br>`var auctionMigration string` | See the source definition and the subsystem ownership contract. |
-| [`migrations`](../../server/internal/db/migrations.go#L35)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L108)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
+| [`migration`](../../server/internal/db/migrations.go#L22)<br>`type migration` | See the source definition and the subsystem ownership contract. |
+| [`experienceMigration`](../../server/internal/db/migrations.go#L28)<br>`var experienceMigration string` | See the source definition and the subsystem ownership contract. |
+| [`npcSkillsMigration`](../../server/internal/db/migrations.go#L31)<br>`var npcSkillsMigration string` | See the source definition and the subsystem ownership contract. |
+| [`auctionMigration`](../../server/internal/db/migrations.go#L34)<br>`var auctionMigration string` | See the source definition and the subsystem ownership contract. |
+| [`migrations`](../../server/internal/db/migrations.go#L36)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
+| [`migrate`](../../server/internal/db/migrations.go#L109)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 

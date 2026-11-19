@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/blessingrules"
@@ -125,12 +126,21 @@ func migrate(ctx context.Context, pool *sql.DB, steps []migration) error {
 		if step.Version != i+1 {
 			return fmt.Errorf("non-contiguous migration version")
 		}
-		checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(step.SQL)))
+		// Embedded SQL may have been checked out with CRLF on Windows.
+		// Only line endings are canonicalized; every other byte is checked.
+		sqlText := strings.ReplaceAll(step.SQL, "\r\n", "\n")
+		checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(sqlText)))
 		var oldName, oldChecksum string
 		err = tx.QueryRowContext(ctx, `SELECT Name,Checksum FROM GX_SchemaMigrations WHERE Version=?`, step.Version).Scan(&oldName, &oldChecksum)
 		if err == nil {
-			if oldName != step.Name || oldChecksum != checksum {
+			if oldName != step.Name {
 				return fmt.Errorf("migration %d checksum mismatch", step.Version)
+			}
+			if oldChecksum != checksum {
+				legacy := strings.ReplaceAll(sqlText, "\n", "\r\n")
+				if oldChecksum != fmt.Sprintf("%x", sha256.Sum256([]byte(legacy))) {
+					return fmt.Errorf("migration %d checksum mismatch", step.Version)
+				}
 			}
 			continue
 		}
@@ -140,7 +150,7 @@ func migrate(ctx context.Context, pool *sql.DB, steps []migration) error {
 		if step.Version <= highest {
 			return fmt.Errorf("migration history contains gaps")
 		}
-		if _, err = tx.ExecContext(ctx, step.SQL); err != nil {
+		if _, err = tx.ExecContext(ctx, sqlText); err != nil {
 			return fmt.Errorf("migration %d: %w", step.Version, err)
 		}
 		if step.Version == 11 {

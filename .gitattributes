@@ -1,5 +1,8 @@
 # Font pack hashes and licenses must be byte-identical on both native OSes.
 /resources/fonts/** -text
 
+# Keep embedded SQLite migrations stable across checkouts.
+*.sql text eol=lf
+
 # Keep the publication audit checksum stable across checkouts.
 /internal/npcquest/seed.sql -text
