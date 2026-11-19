@@ -5,19 +5,39 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
-const BlacksmithWidth, BlacksmithHeight = 512, 446
+// The blacksmith is the repair window of Game.exe (0x4e4d30, 255x417) turned
+// into the forge menu, with the Link/Extract (0x494d00), Enchant (0x4e0910)
+// and Recreation (0x4ad1d0) pages of 512x446 behind it. Repair itself is
+// not offered: its first button opens the recreation page.
+const (
+	BlacksmithWidth, BlacksmithHeight = 512, 446
+	ForgeMenuWidth, ForgeMenuHeight   = 255, 417
+)
 const (
 	ForgeLapis = iota
 	ForgeEnchant
 	ForgeRemake
+	ForgeMenu
 )
 
 type Blacksmith struct {
 	Position                               WindowPosition
 	Mode, GemSlot                          int
-	frame, lapis, enchantFrame             *render.Texture
+	frame, lapis, enchantFrame, menuFrame  *render.Texture
 	close, link, extract, enchant, compose Button
-	tabs                                   [3]Button
+	menu                                   [4]Button // recreation, cancel, link/extract, enchant
+	back, menuClose                        Button    // cancel: return to the menu; menu close
+	welcome                                panelScroll
+	menuWelcome                            panelScroll
+	textOffset, textLines                  int
+}
+
+// Size is the window size of the current page.
+func (v *Blacksmith) Size() (int, int) {
+	if v.Mode == ForgeMenu {
+		return ForgeMenuWidth, ForgeMenuHeight
+	}
+	return BlacksmithWidth, BlacksmithHeight
 }
 
 // Native NPC sheets store disabled before pressed, unlike generic menu sheets.
@@ -31,7 +51,9 @@ func npcHorizontalUV(row int) (uv [5]UV) {
 }
 func NewBlacksmith(t Textures) (*Blacksmith, error) {
 	ld := &loader{t: t}
-	v := &Blacksmith{frame: ld.get("Remake3.png"), lapis: ld.get("rapis.png"), enchantFrame: ld.get("rapisian.png")}
+	v := &Blacksmith{Mode: ForgeMenu, frame: ld.get("Remake3.png"), lapis: ld.get("rapis.png"), enchantFrame: ld.get("rapisian.png"), menuFrame: ld.get("repair.png")}
+	v.welcome = newPanelScroll(ld.get("scrollbar.png"), 228, 82, 167)
+	v.menuWelcome = newPanelScroll(ld.get("scrollbar.png"), 228, 112, 167)
 	v.close = nativeClose(ld.get("talk1_close_button.png"), 483, 3)
 	sheet := ld.get("rapis_button2.png")
 	v.link = Button{Tex: sheet, OffX: 292, OffY: 374, DrawW: 128, DrawH: 32, HitW: 124, HitH: 27}
@@ -40,22 +62,37 @@ func NewBlacksmith(t Textures) (*Blacksmith, error) {
 		v.link.UV[i] = UV{0, float32(row) / 4, .5, float32(row+1) / 4}
 		v.extract.UV[i] = UV{.5, float32(row) / 4, .75, float32(row+1) / 4}
 	}
-	v.enchant = Button{Tex: ld.get("repair_button4.png"), OffX: 348, OffY: 374, DrawW: 128, DrawH: 32, HitW: 65, HitH: 27, UV: npcVerticalUV}
-	v.compose = Button{Tex: ld.get("Btn_Remodeling.png"), OffX: 348, OffY: 374, DrawW: 128, DrawH: 32, HitW: 65, HitH: 26, UV: npcVerticalUV}
-	for i, tex := range []*render.Texture{ld.get("repair_button3.png"), ld.get("repair_button4.png"), ld.get("Btn_Remodeling.png")} {
-		width := 65
-		if i == 0 {
-			width = 96
+	enchantSheet := ld.get("repair_button4.png")
+	v.enchant = Button{Tex: enchantSheet, OffX: 348, OffY: 374, DrawW: 128, DrawH: 32, HitW: 65, HitH: 27, UV: npcVerticalUV}
+	remodel := ld.get("Btn_Remodeling.png")
+	v.compose = Button{Tex: remodel, OffX: 351, OffY: 390, DrawW: 128, DrawH: 32, HitW: 65, HitH: 27, UV: npcVerticalUV}
+	// repair_button1 holds Repair All and Cancel side by side; only Cancel is used.
+	cancel := ld.get("repair_button1.png")
+	cancelButton := func(x, y int) Button {
+		b := Button{Tex: cancel, OffX: x, OffY: y, DrawW: 128, DrawH: 32, HitW: 66, HitH: 26}
+		for i, row := range []int{0, 1, 3, 3, 2} {
+			b.UV[i] = UV{.5, float32(row) / 4, 1, float32(row+1) / 4}
 		}
-		v.tabs[i] = Button{Tex: tex, OffX: 78, OffY: 270 + i*30, DrawW: 128, DrawH: 32, HitW: width, HitH: 26, UV: npcVerticalUV}
+		return b
 	}
+	v.back = cancelButton(97, 302)
+	v.menu[0] = Button{Tex: remodel, OffX: 32, OffY: 295, DrawW: 128, DrawH: 32, HitW: 96, HitH: 26, UV: npcVerticalUV}
+	v.menu[1] = cancelButton(148, 295)
+	v.menu[1].HitW = 66
+	v.menu[2] = Button{Tex: ld.get("repair_button3.png"), OffX: 31, OffY: 357, DrawW: 128, DrawH: 32, HitW: 96, HitH: 27, UV: npcVerticalUV}
+	v.menu[3] = Button{Tex: enchantSheet, OffX: 147, OffY: 357, DrawW: 128, DrawH: 32, HitW: 65, HitH: 27, UV: npcVerticalUV}
+	v.menuClose = nativeClose(ld.get("talk1_close_button.png"), 228, 5)
 	return v, ld.err
 }
 func (v *Blacksmith) Origin(w, h int) (int, int) {
-	return v.Position.Origin(w, h, BlacksmithWidth, BlacksmithHeight, min(32, max(0, w-BlacksmithWidth)), min(82, max(0, h-BlacksmithHeight)))
+	width, height := v.Size()
+	return v.Position.Origin(w, h, width, height, min(32, max(0, w-width)), min(82, max(0, h-height)))
 }
 func BlacksmithSlot(slot int) (int, int) { return (&Blacksmith{}).Slot(slot) }
 func (v *Blacksmith) Slot(slot int) (int, int) {
+	if v.Mode == ForgeMenu {
+		return -100, -100
+	}
 	if v.Mode == ForgeLapis {
 		switch slot {
 		case 0:
@@ -98,52 +135,102 @@ func (v *Blacksmith) Hit(x, y int) int {
 	return -1
 }
 func (v *Blacksmith) place(x, y int, busy, ready, extractReady, enchantReady, composeReady bool) {
-	for i := range v.tabs {
-		b := &v.tabs[i]
-		b.OriginX, b.OriginY, b.Disabled = x, y, busy || v.Mode == i
-	}
-	for _, b := range []*Button{&v.close, &v.link, &v.extract, &v.enchant, &v.compose} {
+	for _, b := range []*Button{&v.close, &v.link, &v.extract, &v.enchant, &v.compose, &v.back, &v.menuClose} {
 		b.OriginX, b.OriginY = x, y
+	}
+	for i := range v.menu {
+		v.menu[i].OriginX, v.menu[i].OriginY, v.menu[i].Disabled = x, y, busy && i != 1
 	}
 	v.link.Disabled = busy || !ready
 	v.extract.Disabled = busy || !extractReady
 	v.enchant.Disabled = busy || !enchantReady
 	v.compose.Disabled = busy || !composeReady
+	v.back.Disabled = busy
 }
+
+// Update returns the close, link, extract, enchant and recreate actions.
+// Menu buttons and Cancel switch pages by themselves.
 func (v *Blacksmith) Update(in *platform.Input, w, h int, busy, ready, extractReady, enchantReady, composeReady bool) (bool, bool, bool, bool, bool) {
 	x, y := v.Origin(w, h)
 	v.place(x, y, busy, ready, extractReady, enchantReady, composeReady)
-	for i := range v.tabs {
-		if v.tabs[i].Update(in) {
-			v.Mode = i
+	if v.Mode == ForgeMenu {
+		for i := range v.menu {
+			if !v.menu[i].Update(in) {
+				continue
+			}
+			switch i {
+			case 0:
+				v.Mode = ForgeRemake
+			case 1:
+				return true, false, false, false, false
+			case 2:
+				v.Mode = ForgeLapis
+			case 3:
+				v.Mode = ForgeEnchant
+			}
+			v.textOffset = 0
 			return false, false, false, false, false
 		}
+		v.textOffset = v.menuWelcome.Update(in, x, y, v.textLines, 11, v.textOffset)
+		return v.menuClose.Update(in), false, false, false, false
 	}
+	if v.back.Update(in) {
+		v.Mode, v.textOffset = ForgeMenu, 0
+		return false, false, false, false, false
+	}
+	v.textOffset = v.welcome.Update(in, x, y, v.textLines, 10, v.textOffset)
 	return v.close.Update(in), v.Mode == ForgeLapis && v.link.Update(in), v.Mode == ForgeLapis && v.extract.Update(in), v.Mode == ForgeEnchant && v.enchant.Update(in), v.Mode == ForgeRemake && v.compose.Update(in)
 }
-func (v *Blacksmith) Draw(s *render.Sprites, f *Font, w, h int, name string, busy, ready, extractReady, enchantReady, composeReady bool) {
+
+func (v *Blacksmith) Draw(s *render.Sprites, f *Font, w, h int, name, welcome string, busy, ready, extractReady, enchantReady, composeReady bool) {
 	x, y := v.Origin(w, h)
-	frame := v.frame
-	if v.Mode == ForgeLapis {
-		frame = v.lapis
-	} else if v.Mode == ForgeEnchant {
-		frame = v.enchantFrame
+	v.place(x, y, busy, ready, extractReady, enchantReady, composeReady)
+	if v.Mode == ForgeMenu {
+		s.Draw(v.menuFrame, float32(x), float32(y), ForgeMenuWidth, ForgeMenuHeight, 0, 0, ForgeMenuWidth/256.0, ForgeMenuHeight/512.0, white)
+		f.Draw(s, name, x+0x41+(0xff-0x41-f.Width(name))/2, y+0x16, white, 0)
+		// The texture's baked "Repair Items" title is covered with the plain
+		// band beside it and replaced by the forge title.
+		for px := 76; px < 184; px += 32 {
+			w := float32(min(32, 184-px))
+			s.Draw(v.menuFrame, float32(x+px), float32(y+78), w, 20, 22.0/256, 78.0/512, (22+w)/256, 98.0/512, white)
+		}
+		title := "Blacksmith"
+		f.DrawOutlined(s, title, x+128-f.Width(title)/2, y+82, white)
+		lines := wrapLines(f, welcome, 205)
+		v.textLines = len(lines)
+		v.textOffset = min(v.textOffset, max(0, len(lines)-11))
+		for i, line := range lines[v.textOffset:min(len(lines), v.textOffset+11)] {
+			f.Draw(s, line, x+20, y+118+i*15, white, 205)
+		}
+		v.menuWelcome.Draw(s, x, y, len(lines), 11, v.textOffset)
+		for i := range v.menu {
+			v.menu[i].Draw(s)
+		}
+		if busy {
+			f.Draw(s, "Waiting for server...", x+20, y+270, white, 208)
+		}
+		v.menuClose.Draw(s)
+		return
 	}
-	s.Draw(frame, float32(x), float32(y), 512, 446, 0, 0, 1, 446.0/512, white)
-	text := "Place equipment and lapis to link. For extraction, place an extraction hammer and click the lapis to recover."
-	if v.Mode == ForgeEnchant {
+	frame := v.frame
+	text := "Place equipment and a recreation rune to recreate its attributes."
+	switch v.Mode {
+	case ForgeLapis:
+		frame = v.lapis
+		text = "Place equipment and lapis to link. For extraction, place an extraction hammer and click the lapis to recover."
+	case ForgeEnchant:
+		frame = v.enchantFrame
 		text = "Place equipment, lapisia and enhancement material. Enhancement can fail."
 	}
-	if v.Mode == ForgeRemake {
-		text = "Place equipment and a recreation rune to recreate its attributes."
+	s.Draw(frame, float32(x), float32(y), 512, 446, 0, 0, 1, 446.0/512, white)
+	lines := wrapLines(f, text, 193)
+	v.textLines = len(lines)
+	v.textOffset = min(v.textOffset, max(0, len(lines)-10))
+	for i, line := range lines[v.textOffset:min(len(lines), v.textOffset+10)] {
+		f.Draw(s, line, x+26, y+92+i*15, RGBColor(0xc8c8c8), 193)
 	}
-	for i, line := range wrapLines(f, text, 202) {
-		f.Draw(s, line, x+26, y+94+i*17, RGBColor(0xc8c8c8), 202)
-	}
-	v.place(x, y, busy, ready, extractReady, enchantReady, composeReady)
-	for i := range v.tabs {
-		v.tabs[i].Draw(s)
-	}
+	v.welcome.Draw(s, x, y, len(lines), 10, v.textOffset)
+	v.back.Draw(s)
 	switch v.Mode {
 	case ForgeLapis:
 		v.link.Draw(s)

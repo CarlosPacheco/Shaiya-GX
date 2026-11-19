@@ -199,10 +199,11 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.blacksmithOpen() {
 		x, y := a.blacksmithUI.Origin(w, h)
-		if start(&a.blacksmithUI.Position, x, y, ui.BlacksmithWidth, ui.BlacksmithHeight, 270, 190) {
+		bw, bh := a.blacksmithUI.Size()
+		if start(&a.blacksmithUI.Position, x, y, bw, bh, 270, 190) {
 			return true
 		}
-		if pointInside(in, x, y, ui.BlacksmithWidth, ui.BlacksmithHeight) {
+		if pointInside(in, x, y, bw, bh) {
 			return false
 		}
 	}

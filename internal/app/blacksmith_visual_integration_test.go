@@ -14,6 +14,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
@@ -49,6 +50,22 @@ func TestBlacksmithVisual(t *testing.T) {
 	for i, key := range a.blacksmith.keys {
 		a.blacksmith.items[i] = a.state.Inventory[key]
 	}
+	for mode, name := range map[int]string{ui.ForgeMenu: "menu", ui.ForgeLapis: "lapis", ui.ForgeEnchant: "enchant", ui.ForgeRemake: "recreation"} {
+		a.blacksmithUI.Mode = mode
+		gl.Viewport(0, 0, 1024, 734)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		a.sprites.Begin(1024, 734)
+		a.drawBlacksmith(1024, 734, "Dulce Manches")
+		a.sprites.End()
+		dir := os.Getenv("SHAIYA_TEST_ARTIFACTS")
+		if dir == "" {
+			dir = t.TempDir()
+		}
+		if err := render.SavePNG(filepath.Join(dir, "blacksmith-"+name+".png"), 1024, 734); err != nil {
+			t.Fatal(err)
+		}
+	}
+	a.blacksmithUI.Mode = ui.ForgeLapis
 	gl.Viewport(0, 0, 1024, 734)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	a.sprites.Begin(1024, 734)

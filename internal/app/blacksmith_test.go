@@ -22,6 +22,7 @@ func TestBlacksmithDragAndConfirmation(t *testing.T) {
 	a.shop.npcID = 42
 	a.state.Entities[42] = &game.Entity{Kind: game.KindNpc, NpcType: 3, ID: 42}
 	a.updateBlacksmith(&platform.Input{}, 1024, 768)
+	a.blacksmithUI.Mode = ui.ForgeLapis
 	if !a.inventory.open {
 		t.Fatal("blacksmith did not open inventory")
 	}
@@ -71,6 +72,7 @@ func TestBlacksmithOptionalHammerCanBeRemoved(t *testing.T) {
 	a.shop.npcID = 42
 	a.state.Entities[42] = &game.Entity{Kind: game.KindNpc, NpcType: 3, ID: 42}
 	a.updateBlacksmith(&platform.Input{}, 1024, 768)
+	a.blacksmithUI.Mode = ui.ForgeLapis
 	key := [2]uint8{1, 19}
 	a.state.Inventory[key] = proto.InventoryItem{Bag: 1, Slot: 19, Type: 100, TypeID: 1, Count: 1}
 	ix, iy := a.inventoryUI.Origin(1024, 768)
@@ -101,14 +103,29 @@ func TestForgeModeSwitchClearsSelectionsWithoutInventoryMutation(t *testing.T) {
 	a.state.Entities[42] = &game.Entity{ID: 42, Kind: game.KindNpc, NpcType: 3}
 	a.updateBlacksmith(&platform.Input{}, 1024, 768)
 	x, y := a.blacksmithUI.Origin(1024, 768)
-	for mode := 1; mode <= 2; mode++ {
-		a.blacksmith.selected[0] = true
-		in := platform.Input{MouseX: x + 82, MouseY: y + 275 + mode*30, Pressed: true, MouseDown: true}
+	if a.blacksmithUI.Mode != ui.ForgeMenu {
+		t.Fatal("the blacksmith must open on its menu")
+	}
+	click := func(px, py int) {
+		in := platform.Input{MouseX: x + px, MouseY: y + py, Pressed: true, MouseDown: true}
 		a.updateBlacksmith(&in, 1024, 768)
 		in.Pressed, in.MouseDown, in.Clicked = false, false, true
 		a.updateBlacksmith(&in, 1024, 768)
-		if a.blacksmithUI.Mode != mode || a.blacksmith.selected != [4]bool{} || a.shop.pending {
-			t.Fatal("mode switch retained stale selection or issued request", a.blacksmith)
+	}
+	// Menu buttons: recreation (32,295), link/extract (31,357), enchant (147,357).
+	for _, step := range []struct{ x, y, mode int }{{40, 300, ui.ForgeRemake}, {40, 362, ui.ForgeLapis}, {150, 362, ui.ForgeEnchant}} {
+		a.blacksmithUI.Mode = ui.ForgeMenu
+		x, y = a.blacksmithUI.Origin(1024, 768)
+		a.blacksmith.selected[0] = true
+		click(step.x, step.y)
+		if a.blacksmithUI.Mode != step.mode || a.blacksmith.selected != [4]bool{} || a.shop.pending {
+			t.Fatal("menu switch retained stale selection or issued request", a.blacksmith, a.blacksmithUI.Mode)
+		}
+		// Cancel returns to the menu from every page.
+		x, y = a.blacksmithUI.Origin(1024, 768)
+		click(100, 306)
+		if a.blacksmithUI.Mode != ui.ForgeMenu {
+			t.Fatalf("cancel left page %d", step.mode)
 		}
 	}
 }

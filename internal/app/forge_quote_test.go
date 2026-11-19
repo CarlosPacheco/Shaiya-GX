@@ -34,6 +34,7 @@ func TestForgeNativeConfirmationUsesActualCostAndRate(t *testing.T) {
 func TestForgeHoverIncludesInstancesSocketsHammerAndHints(t *testing.T) {
 	a := inputApp()
 	a.blacksmithUI, _ = ui.NewBlacksmith(inputTextures{})
+	a.blacksmithUI.Mode = ui.ForgeLapis
 	a.blacksmith.keys = [4][2]uint8{{1, 0}, {1, 1}, {1, 2}, {1, 3}}
 	for i, key := range a.blacksmith.keys {
 		it := proto.InventoryItem{Bag: 1, Slot: uint8(i), Type: uint8(i + 1), TypeID: 1, Count: 1}
@@ -78,6 +79,7 @@ func TestForgeRejectsStaleQuoteAndKeepsRecreatedItem(t *testing.T) {
 	a.shop.npcID = 42
 	a.state.Entities[42] = &game.Entity{ID: 42, Kind: game.KindNpc, NpcType: 3}
 	a.blacksmithUI, _ = ui.NewBlacksmith(inputTextures{})
+	a.blacksmithUI.Mode = ui.ForgeLapis
 	a.gemConfirm, _ = ui.NewMessage(inputTextures{})
 	a.blacksmith.selected[0] = true
 	a.blacksmith.keys[0] = [2]uint8{1, 0}

@@ -13,6 +13,7 @@ import (
 func continuousForgeApp() *App {
 	a := inputApp()
 	a.blacksmithUI, _ = ui.NewBlacksmith(inputTextures{})
+	a.blacksmithUI.Mode = ui.ForgeLapis
 	a.gemConfirm, _ = ui.NewMessage(inputTextures{})
 	a.shop.npcID = 42
 	a.blacksmith.npcID = 42

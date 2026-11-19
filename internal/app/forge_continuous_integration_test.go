@@ -129,7 +129,8 @@ func TestForgeContinuousAgainstServer(t *testing.T) {
 	if !a.blacksmith.selected[0] || a.blacksmith.selected[1] {
 		t.Fatal("depletion did not clear only the lapis slot")
 	}
-	click(bx+82, by+305)
+	click(bx+100, by+306)
+	click(bx+150, by+362)
 	if a.blacksmithUI.Mode != ui.ForgeEnchant {
 		t.Fatal("enchant tab failed")
 	}
@@ -149,14 +150,15 @@ func TestForgeContinuousAgainstServer(t *testing.T) {
 	if st.Inventory[[2]uint8{1, 1}].Count != 1 || st.Inventory[[2]uint8{1, 2}].Count != 1 {
 		t.Fatal("wrong enchant consumption")
 	}
-	click(bx+82, by+335)
+	click(bx+100, by+306)
+	click(bx+40, by+300)
 	if a.blacksmithUI.Mode != ui.ForgeRemake {
 		t.Fatal("recreate tab failed")
 	}
 	drag(target, 0)
 	drag([2]uint8{1, 3}, 2)
 	for range 2 {
-		click(bx+350, by+380)
+		click(bx+355, by+395)
 		if a.gemConfirm.Visible || !a.shop.pending {
 			t.Fatal("recreation was not immediate")
 		}
@@ -175,7 +177,7 @@ func TestForgeContinuousAgainstServer(t *testing.T) {
 	}{{7, true}, {8, false}} {
 		before, _ := parseCraftValues(st.Inventory[target].Craft)
 		drag([2]uint8{1, fixture.slot}, 2)
-		click(bx+350, by+380)
+		click(bx+355, by+395)
 		pump(func() bool { return !a.shop.pending })
 		after, _ := parseCraftValues(st.Inventory[target].Craft)
 		maxOJ := a.itemsItem(1, 2).RequiredStats[4]

@@ -62,6 +62,9 @@ func (a *App) placeBlacksmithItem(slot int, key [2]uint8, it proto.InventoryItem
 	v := &a.blacksmith
 	accepted := false
 	mode := a.blacksmithUI.Mode
+	if mode == ui.ForgeMenu {
+		return false
+	}
 	switch slot {
 	case 0:
 		rt := itemtype.Real(it.Type)

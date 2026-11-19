@@ -103,8 +103,8 @@ func TestAllRecreationVariantsAgainstIsolatedGX(t *testing.T) {
 		bx, by := a.blacksmithUI.Origin(1024, 768)
 		serial := st.ComposeSerial
 		chat := len(st.Chat)
-		a.updateBlacksmith(&platform.Input{MouseX: bx + 350, MouseY: by + 380, Pressed: true, MouseDown: true}, 1024, 768)
-		a.updateBlacksmith(&platform.Input{MouseX: bx + 350, MouseY: by + 380, Clicked: true}, 1024, 768)
+		a.updateBlacksmith(&platform.Input{MouseX: bx + 355, MouseY: by + 395, Pressed: true, MouseDown: true}, 1024, 768)
+		a.updateBlacksmith(&platform.Input{MouseX: bx + 355, MouseY: by + 395, Clicked: true}, 1024, 768)
 		wait(func() bool { return st.ComposeSerial > serial && !a.shop.pending && st.Inventory[key].Count == 254 })
 		if st.LastCompose.Result != 0 {
 			t.Fatal("variant refused", rune, definition.ReqVG)

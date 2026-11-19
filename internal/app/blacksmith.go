@@ -22,6 +22,9 @@ type blacksmithView struct {
 	shineUntil    float64
 }
 
+// blacksmithMenuText replaces the repair greeting of the original menu.
+const blacksmithMenuText = "Recreate equipment attributes, link or extract lapis, or enchant equipment."
+
 func (a *App) blacksmithOpen() bool {
 	e := a.state.Entities[a.shop.npcID]
 	return a.blacksmithUI != nil && e != nil && e.NpcType == 3 && !a.shop.questMode && !a.state.Self.Dead
@@ -56,6 +59,7 @@ func (a *App) updateBlacksmith(in *platform.Input, w, h int) bool {
 	v := &a.blacksmith
 	if v.npcID != a.shop.npcID {
 		*v = blacksmithView{npcID: a.shop.npcID}
+		a.blacksmithUI.Mode = ui.ForgeMenu
 		if !a.inventory.open {
 			a.toggleInventory()
 		}
@@ -65,7 +69,8 @@ func (a *App) updateBlacksmith(in *platform.Input, w, h int) bool {
 		a.updateForgeQuote()
 	}
 	x, y := a.blacksmithUI.Origin(w, h)
-	captured := panelPointer(in, x, y, ui.BlacksmithWidth, ui.BlacksmithHeight)
+	bw, bh := a.blacksmithUI.Size()
+	captured := panelPointer(in, x, y, bw, bh)
 	busy := a.shop.pending || a.inventory.pending
 	previousMode := a.blacksmithUI.Mode
 	closed, link, extract, enchant, compose := a.blacksmithUI.Update(in, w, h, busy, a.blacksmithReady(), a.blacksmithExtractReady(), a.blacksmithEnchantReady(), a.blacksmithComposeReady())
@@ -236,9 +241,10 @@ func (a *App) drawBlacksmith(w, h int, name string) {
 			}
 		}
 	}
-	a.blacksmithUI.Draw(a.sprites, a.font, w, h, name, a.shop.pending || a.inventory.pending, a.blacksmithReady(), a.blacksmithExtractReady(), a.blacksmithEnchantReady(), a.blacksmithComposeReady())
+	a.blacksmithUI.Draw(a.sprites, a.font, w, h, name, blacksmithMenuText, a.shop.pending || a.inventory.pending, a.blacksmithReady(), a.blacksmithExtractReady(), a.blacksmithEnchantReady(), a.blacksmithComposeReady())
 	x, y := a.blacksmithUI.Origin(w, h)
-	a.clearTooltipUnderPanel(x, y, ui.BlacksmithWidth, ui.BlacksmithHeight)
+	bw, bh := a.blacksmithUI.Size()
+	a.clearTooltipUnderPanel(x, y, bw, bh)
 	if e := a.state.Entities[a.shop.npcID]; e != nil {
 		def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 		if portrait := a.npcPortrait(def); portrait != nil {

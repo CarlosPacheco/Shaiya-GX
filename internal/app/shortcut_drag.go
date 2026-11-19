@@ -97,7 +97,8 @@ func (a *App) barCovered(in *platform.Input, w, h int) bool {
 	}
 	if a.blacksmithOpen() && a.blacksmithUI != nil {
 		x, y := a.blacksmithUI.Origin(w, h)
-		if pointInside(in, x, y, ui.BlacksmithWidth, ui.BlacksmithHeight) {
+		bw, bh := a.blacksmithUI.Size()
+		if pointInside(in, x, y, bw, bh) {
 			return true
 		}
 	}

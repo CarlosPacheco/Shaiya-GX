@@ -57,6 +57,7 @@ func TestForgeDetailsOriginalAssetsGL(t *testing.T) {
 	a.shop.npcID = 42
 	a.state.Entities[42] = &game.Entity{ID: 42, Kind: game.KindNpc, NpcType: 3}
 	a.blacksmith.npcID = 42
+	a.blacksmithUI.Mode = ui.ForgeLapis
 	a.blacksmith.keys = [4][2]uint8{{1, 0}, {1, 1}, {1, 2}, {1, 3}}
 	items := []proto.InventoryItem{{Bag: 1, Slot: 0, Type: 16, TypeID: 216, Count: 1, Craft: "01020300000001000003", Gems: [6]uint8{1, 2}}, {Bag: 1, Slot: 1, Type: 30, TypeID: 3, Count: 1}, {Bag: 1, Slot: 2, Type: 25, TypeID: 153, Count: 255}, {Bag: 1, Slot: 3, Type: 100, TypeID: 49, Count: 255}}
 	for i, it := range items {

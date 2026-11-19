@@ -81,8 +81,8 @@ func TestRemovalRunesMallAndBlacksmithAgainstIsolatedGX(t *testing.T) {
 		}
 		click := func() {
 			x, y := a.blacksmithUI.Origin(1024, 768)
-			a.updateBlacksmith(&platform.Input{MouseX: x + 350, MouseY: y + 380, Pressed: true, MouseDown: true}, 1024, 768)
-			a.updateBlacksmith(&platform.Input{MouseX: x + 350, MouseY: y + 380, Clicked: true}, 1024, 768)
+			a.updateBlacksmith(&platform.Input{MouseX: x + 355, MouseY: y + 395, Pressed: true, MouseDown: true}, 1024, 768)
+			a.updateBlacksmith(&platform.Input{MouseX: x + 355, MouseY: y + 395, Clicked: true}, 1024, 768)
 		}
 		compose := st.ComposeSerial
 		click()

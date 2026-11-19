@@ -63,7 +63,7 @@ func TestComposeAgainstRapture(t *testing.T) {
 		beforeItem, beforeRune := st.Inventory[itemKey], st.Inventory[source]
 		drag(itemKey, 0)
 		drag(source, 2)
-		click(bx+350, by+380)
+		click(bx+355, by+395)
 		if !a.gemConfirm.Visible {
 			t.Fatal("missing recreation confirmation")
 		}
