@@ -230,7 +230,7 @@ func (c *ChatPanel) drawOptions(s *render.Sprites, f *Font, blank *render.Textur
 
 const (
 	chatScrollX     = 4
-	chatThumbHeight = 12
+	chatThumbHeight = 13
 )
 
 // Leave room for both auxiliary buttons inside the lower history.
@@ -267,15 +267,12 @@ func (c *ChatPanel) drawScroll(s *render.Sprites, i, y, h, limit int, alpha floa
 		}
 	}
 	if c.scroll != nil && travel > 0 {
-		// The thumb is assembled with the atlas's four-pixel caps and
-		// center. Each part occupies its original pixel dimensions.
-		const capU = 64.0 / 128
-		const midU = 48.0 / 128
-		const w = float32(scrollbarHitW)
-		x, y := float32(chatScrollX), float32(thumb)
-		s.Draw(c.scroll, x, y, w, 4, capU, 0, capU+w/128, 4.0/64, tint)
-		s.Draw(c.scroll, x, y+4, w, 4, midU, 0, midU+w/128, 4.0/64, tint)
-		s.Draw(c.scroll, x, y+8, w, 4, capU, 4.0/64, capU+w/128, 8.0/64, tint)
+		// Extend the flat body above the atlas bevel. There is one
+		// bottom edge, so it reads as a single handle, even at rest.
+		const body = chatThumbHeight - scrollbarThumbH
+		const u = 48.0 / 128
+		s.Draw(c.scroll, chatScrollX, float32(thumb), scrollbarHitW, body, u, 0, u+scrollbarHitW/128.0, 1.0/64, tint)
+		drawScrollbarThumb(s, c.scroll, chatScrollX, thumb+body, tint)
 	}
 }
 

@@ -210,7 +210,7 @@ The sidebar uses separate tracks with no opaque rail, a 4px left inset, and
 the existing mouse wheel, arrow repeat and track paging. The `0x52c430`
 constructor calls at `0x47045a` and `0x4705a5` use the original 128×64
 `scrollbar.tga`: arrows use the full 16×32 cells with 13×19 hitboxes and
-the chat thumb uses the atlas’s 4px caps and center at 1:1 scale (13×12).
+the chat thumb joins the atlas body to a single bottom bevel in a 13×13 footprint.
 It rests at the bottom with no overflow. The arrows keep their normal artwork
 when there is nothing to scroll. The lower scrollbar reserves room for both
 buttons inside the lower history. The two auxiliary icons come from `chat_icon`
