@@ -110,7 +110,11 @@ func TestAuctionTradingAcrossMapsAndFactions(t *testing.T) {
 	if len(list.Rows) != 1 || len(seller.items) != 1 || seller.items[0].Count != 3 || seller.char.Money != 2965 {
 		t.Fatal(list, seller.items, seller.char.Money)
 	}
-	browse := request(buyer, buyerFrames, proto.AuctionRequest{Query: "test stack"})
+	filtered := request(buyer, buyerFrames, proto.AuctionRequest{Category: 5, Subcategory: 2})
+	if len(filtered.Rows) != 0 {
+		t.Fatal("consumable appeared under Mounts", filtered)
+	}
+	browse := request(buyer, buyerFrames, proto.AuctionRequest{Query: "test stack", Category: 5, Subcategory: 1})
 	if len(browse.Rows) != 1 || browse.Rows[0].ID != list.Rows[0].ID {
 		t.Fatal(browse)
 	}

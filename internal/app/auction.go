@@ -38,6 +38,7 @@ type auctionView struct {
 	more, pending                  bool
 	keypad                         bool
 	nextRefresh                    float64
+	subcategory, categoryScroll    int
 	other                          auctionList
 	requestView                    int
 }
@@ -61,7 +62,7 @@ func (a *App) sendAuction(req proto.AuctionRequest, view, page int) {
 	v.sequence = a.auctionSequence
 	req.Sequence, req.Sort = v.sequence, v.sort
 	if v.view == proto.AuctionBrowse {
-		req.Category, req.Query = v.category, v.query
+		req.Category, req.Subcategory, req.Query = v.category, v.subcategory, v.query
 		minLevel, _ := strconv.Atoi(v.minLevel)
 		maxLevel, _ := strconv.Atoi(v.maxLevel)
 		if minLevel > 65535 || maxLevel > 65535 || maxLevel > 0 && minLevel > maxLevel {
@@ -281,6 +282,7 @@ func (a *App) auctionAction(action string) {
 		}
 		v.exactType, v.exactID, v.page, v.category = r.Type, r.TypeID, 0, 0
 		v.query, v.minLevel, v.maxLevel = "", "", ""
+		v.subcategory, v.categoryScroll = 0, 0
 		a.requestAuction(proto.AuctionRequest{})
 	case "details", "bid", "buy", "cancel":
 		v.modal, v.focus, v.keypad = action, -1, false
@@ -451,6 +453,12 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 		a.updateAuctionPanes(rx, ry, width, height, in.Wheel)
 		return true
 	}
+	if v.view == proto.AuctionBrowse && hit(14, 138, auctionListX(v.view, width)-21, rowPitch*proto.AuctionPageSize) &&
+		(in.Wheel != 0 || in.Pressed) {
+		v.focus = -1
+		a.updateAuctionCategories(ry, height, in.Wheel)
+		return true
+	}
 	if in.Wheel != 0 && rx >= auctionListX(v.view, width) && ry >= 138 && ry < 138+proto.AuctionPageSize*rowPitch {
 		page := v.page
 		if in.Wheel > 0 {
@@ -501,10 +509,7 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 			}
 			break
 		}
-	case v.view == proto.AuctionBrowse && hit(14, 138, listX-21, len(proto.AuctionCategories)*26):
-		v.category = (ry - 138) / 26
-		v.page, v.selected, v.exactType = 0, -1, 0
-		a.requestAuction(proto.AuctionRequest{})
+
 	case hit(listX, 113, width-listX-14, 23):
 		sort := 1
 		for i, column := range auctionColumns(listX, width) {
@@ -610,7 +615,7 @@ func (a *App) drawAuction(w, h int) {
 			}
 			button(labels[i], field.x, 83, field.width, field.id >= 0 && v.focus == field.id)
 		}
-		a.drawAuctionCategories(x, y, width)
+		a.drawAuctionCategories(x, y, width, height)
 	}
 	if auctionPair(v.view) >= 0 {
 		a.drawAuctionPanes(x, y, width, height, text)
@@ -700,22 +705,6 @@ func auctionListX(view, width int) int {
 		return 14 + min(136, width/4) + 7
 	}
 	return 14
-}
-
-func (a *App) drawAuctionCategories(x, y, width int) {
-	railWidth := auctionListX(proto.AuctionBrowse, width) - 21
-	a.font.Draw(a.sprites, "Categories", x+14, y+116, auctionLabelText, railWidth)
-	for i, name := range proto.AuctionCategories {
-		rowY := 138 + i*26
-		selected := i == a.auction.category
-		state := a.auctionButtonState(x+14, y+rowY, railWidth, true)
-		if selected {
-			a.auctionBox(x+14, y+rowY, railWidth, 26, auctionSelectedColor)
-		}
-		if i == 0 || !a.auctionSpriteButton("auction_completion", i-1, state, 128, 32, 127, 28, x+14, y+rowY, railWidth) {
-			a.drawAuctionControl(name, x+14, y+rowY, railWidth, selected, true)
-		}
-	}
 }
 
 type auctionBrowseControl struct {

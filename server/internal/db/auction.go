@@ -276,9 +276,19 @@ func ListAuctions(owner uint32, req proto.AuctionRequest) (proto.AuctionReply, e
 	args := []any{now}
 	switch req.View {
 	case proto.AuctionBrowse:
+		if !req.ValidCategory() {
+			return reply, ErrAuctionInvalid
+		}
 		if req.Category > 0 {
 			q += " AND a.Category=?"
 			args = append(args, req.Category)
+		}
+		if req.Subcategory > 0 {
+			types := proto.AuctionSubcategories[req.Category][req.Subcategory-1].Types
+			q += " AND a.ItemType IN (" + strings.TrimSuffix(strings.Repeat("?,", len(types)), ",") + ")"
+			for _, itemType := range types {
+				args = append(args, itemType)
+			}
 		}
 		if req.ItemType != 0 {
 			q += " AND a.ItemType=? AND a.TypeID=?"

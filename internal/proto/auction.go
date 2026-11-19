@@ -41,6 +41,7 @@ type AuctionRequest struct {
 	View, Page                   int
 	Query                        string
 	Category, MinLevel, MaxLevel int
+	Subcategory                  int `json:",omitempty"`
 	ItemType, ItemID             uint8
 	Duration                     uint8
 	Count                        uint16
@@ -100,4 +101,51 @@ func AuctionCategory(realType, itemType uint8) int {
 	default:
 		return 5
 	}
+}
+
+// AuctionSubcategories follows the GX catalog's native item families.
+var AuctionSubcategories = [...][]struct {
+	Name  string
+	Types []uint8
+}{
+	nil,
+	{
+		{"One-handed", []uint8{1, 3, 45, 47}},
+		{"Two-handed", []uint8{2, 4, 46, 48}},
+		{"Dual weapons", []uint8{5, 49, 50}},
+		{"Spears", []uint8{6, 51, 52}},
+		{"Heavy weapons", []uint8{7, 8, 53, 54, 55, 56}},
+		{"Knuckles", []uint8{9, 15, 57, 65}},
+		{"Daggers", []uint8{10, 58}},
+		{"Staves", []uint8{12, 60, 61}},
+		{"Bows", []uint8{13, 62, 63}},
+		{"Projectiles", []uint8{11, 14, 59, 64}},
+	},
+	{
+		{"Headgear", []uint8{16, 31, 66, 72, 81, 87}},
+		{"Upper armor", []uint8{17, 32, 67, 73, 82, 88}},
+		{"Lower armor", []uint8{18, 33, 68, 74, 83, 89}},
+		{"Shields", []uint8{19, 34, 69, 75, 84, 90}},
+		{"Gloves", []uint8{20, 35, 70, 76, 85, 91}},
+		{"Boots", []uint8{21, 36, 71, 77, 86, 92}},
+		{"Cloaks", []uint8{24, 39}},
+	},
+	{
+		{"Rings", []uint8{22, 37}},
+		{"Necklaces", []uint8{23, 38}},
+		{"Bracelets", []uint8{40, 41}},
+	},
+	{
+		{"Lapis", []uint8{30}},
+		{"Lapisians", []uint8{95}},
+	},
+	{
+		{"Consumables", []uint8{25, 44, 100}},
+		{"Mounts", []uint8{42}},
+	},
+}
+
+func (r AuctionRequest) ValidCategory() bool {
+	return r.Category >= 0 && r.Category < len(AuctionSubcategories) &&
+		r.Subcategory >= 0 && r.Subcategory <= len(AuctionSubcategories[r.Category])
 }

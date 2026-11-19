@@ -174,3 +174,14 @@ selection and wheel paging. The category rail uses the supplied category
 atlas. Search and setup reuse their supplied state atlases. The panel grows
 vertically when the viewport permits. The detailed hierarchy, faction and
 quality selector semantics still need to be verified before adding filters.
+
+## Item family filtering in GX
+
+The GX category rail expands the selected group into its supported native
+item families. Each child maps to catalog item types, including variant type
+IDs, and is applied before search pagination. The optional GX request field
+does not require a SQLite migration. The labels and family list are GX choices
+based on the current catalog. They do not establish the complete EP5.4 menu.
+The original screenshot establishes the presence of faction and quality
+selectors. The exact grade and faction filters remain open because they
+cannot be inferred from the catalog fields or default labels alone.

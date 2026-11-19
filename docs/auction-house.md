@@ -30,3 +30,8 @@ Migration 23 creates `GX_Auctions`, `GX_AuctionClaims` and `GX_AuctionWatch` ins
 Posting and collection change the character's wallet or inventory and the market in a single transaction. Pending item ownership is recorded by its unique item UID. Bidding/buyout validates the persisted listing version in the transaction. A unique posting nonce prevents duplicate posting, while settlement state and claim ownership prevent duplicate awards. The expiry worker makes an initial pass at startup and then processes overdue listings in bounded batches.
 
 GX client and server exchange bounded requests and paginated replies under opcode `0x7F1F`. Use matching client and server builds. See the [original market research](auction-house-research.md) for the legacy UI, packets and recovered rules.
+
+
+The Search Items category rail expands to show item families. Scroll over
+the rail to see additional choices and over the results to page the listing
+results. The expanded selections filter by catalog item type before paging.

@@ -182,3 +182,21 @@ func TestAuctionCategoryRailAndResultRowsHaveSeparateHitAreas(t *testing.T) {
 		}
 	}
 }
+
+func TestAuctionExpandedCategoryScrollAndSubcategorySelection(t *testing.T) {
+	a := inputApp()
+	a.auction = auctionView{selected: -1}
+	a.updateAuctionCategories(auctionCategoryY+auctionCategoryPitch+5, auctionMinHeight, 0)
+	if a.auction.category != 1 || a.auction.subcategory != 0 {
+		t.Fatal("weapons group did not expand")
+	}
+	a.updateAuctionCategories(auctionCategoryY+2*auctionCategoryPitch+5, auctionMinHeight, 0)
+	if a.auction.subcategory != 1 {
+		t.Fatal("first weapon filter did not select")
+	}
+	a.auction.page = 2
+	a.updateAuctionCategories(auctionCategoryY, auctionMinHeight, -120)
+	if a.auction.categoryScroll != 1 || a.auction.page != 2 {
+		t.Fatal("category scroll changed result paging")
+	}
+}
