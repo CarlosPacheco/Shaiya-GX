@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -74,58 +75,55 @@ var (
 	mobQuestLinks  = map[uint16][]uint16{}
 )
 
-func readQuestItem(r *sdataReader) questItem {
-	return questItem{r.u8(), r.u8(), r.u8()}
-}
-
-func readQuest(r *sdataReader, q *questDef) {
-	q.ID = r.u16()
-	q.Name = r.str()
-	r.str() // summary
-	q.MinLevel, q.MaxLevel = r.u16(), r.u16()
-	q.Faction, q.Mode = r.u8(), r.u8()
-	q.Male, q.Female = r.u8() != 0, r.u8() != 0
+// sqliteQuest follows the native field order declared by QuestDetails.
+func sqliteQuest(row npcquest.Row) questDef {
+	i := 0
+	next := func() any { v := row[i]; i++; return v }
+	word := func() uint16 { return uint16(next().(int64)) }
+	byteValue := func() uint8 { return uint8(next().(int64)) }
+	dword := func() uint32 { return uint32(next().(int64)) }
+	item := func() questItem { return questItem{byteValue(), byteValue(), byteValue()} }
+	word() // the original one-based row is the lookup key
+	q := questDef{ID: word(), Name: next().(string)}
+	q.MinLevel, q.MaxLevel = word(), word()
+	q.Faction, q.Mode = byteValue(), byteValue()
+	q.Male, q.Female = byteValue() != 0, byteValue() != 0
 	for i := range q.Jobs {
-		q.Jobs[i] = r.u8()
+		q.Jobs[i] = byteValue()
 	}
-	q.HG, q.VG = r.u16(), int16(r.u16())
-	q.CG, q.OG, q.IG = r.u8(), r.u8(), r.u8()
-	q.PrevQuest = r.u16()
-	q.RequireParty = r.u8() != 0
+	q.HG, q.VG = word(), int16(word())
+	q.CG, q.OG, q.IG = byteValue(), byteValue(), byteValue()
+	q.PrevQuest = word()
+	q.RequireParty = byteValue() != 0
 	for i := range q.PartyJobs {
-		q.PartyJobs[i] = r.u8()
+		q.PartyJobs[i] = byteValue()
 	}
-	q.MinMinutes, q.MaxMinutes = r.u32(), r.u32()
-	q.TickStart, q.TickKeep, q.TickReceive = r.u32(), r.u32(), r.u32()
-	q.StartType, q.StartNpcType, q.StartNpcID = r.u8(), r.u8(), r.u16()
-	q.StartItemType, q.StartItemID = r.u8(), r.u8()
+	q.MinMinutes, q.MaxMinutes = dword(), dword()
+	q.TickStart, q.TickKeep, q.TickReceive = dword(), dword(), dword()
+	q.StartType, q.StartNpcType, q.StartNpcID = byteValue(), byteValue(), word()
+	q.StartItemType, q.StartItemID = byteValue(), byteValue()
 	for i := range q.StartItems {
-		q.StartItems[i] = readQuestItem(r)
+		q.StartItems[i] = item()
 	}
-	q.EndType, q.EndNpcType, q.EndNpcID = r.u8(), r.u8(), r.u16()
+	q.EndType, q.EndNpcType, q.EndNpcID = byteValue(), byteValue(), word()
 	for i := range q.FarmItems {
-		q.FarmItems[i] = readQuestItem(r)
+		q.FarmItems[i] = item()
 	}
-	q.PvpKills = r.u8()
-	q.MobIDs[0], q.MobCounts[0] = r.u16(), r.u8()
-	q.MobIDs[1], q.MobCounts[1] = r.u16(), r.u8()
-	q.ResultType, q.UserSelect = r.u8(), r.u8()
+	q.PvpKills = byteValue()
+	for i := range q.MobIDs {
+		q.MobIDs[i], q.MobCounts[i] = word(), byteValue()
+	}
+	q.ResultType, q.UserSelect = byteValue(), byteValue()
 	for i := range q.Results {
-		res := &q.Results[i]
-		res.NeedMobID, res.NeedMobCount = r.u16(), r.u8()
-		res.NeedItemID, res.NeedItemCount = r.u8(), r.u8()
-		res.NeedTime = r.u32()
-		res.NeedHG, res.NeedVG, res.NeedOG = r.u16(), int16(r.u16()), r.u8()
-		res.Exp, res.Money = r.u32(), r.u32()
-		res.ItemType, res.ItemTypeID = r.u8(), r.u8()
-		res.NextQuest = r.u16()
+		r := &q.Results[i]
+		r.NeedMobID, r.NeedMobCount = word(), byteValue()
+		r.NeedItemID, r.NeedItemCount = byteValue(), byteValue()
+		r.NeedTime = dword()
+		r.NeedHG, r.NeedVG, r.NeedOG = word(), int16(word()), byteValue()
+		r.Exp, r.Money = dword(), dword()
+		r.ItemType, r.ItemTypeID, r.NextQuest = byteValue(), byteValue(), word()
 	}
-	for range 4 { // descriptions
-		r.str()
-	}
-	for range 3 { // completion messages
-		r.str()
-	}
+	return q
 }
 
 // findQuestDef is GetQuest: by row (1-based), not the embedded id.

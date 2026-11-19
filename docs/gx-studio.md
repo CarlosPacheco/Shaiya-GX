@@ -15,6 +15,7 @@ the exact SData field and SQLite column under each readable field name.
 | Goddess Blessing | | `PS_GameDefs_GoddessBlessing` |
 | World Drops | | `PS_GameDefs_WorldDrops` |
 | Item Boxes | | `PS_GameDefs_ItemBoxes` / `PS_GameDefs_ItemBoxRewards` |
+| NPCs and Quests | `Npc/NpcQuest.SData` | NPC and quest tables in `PS_GameDefs` |
 
 ## Build
 
@@ -119,6 +120,20 @@ boxes roll against each reward's literal percentage and can award any subset.
 SQLite stores independent chances in units of 0.00000001 percentage points.
 A zero chance disables that row in either mode. Saving backs up SQLite and
 updates the box and reward tables together. Restart GX World to apply edits.
+
+## NPCs and Quests
+
+Select a matching client data folder and server SQLite database. The NPC
+browser groups rows by service and shows shop products, gate destinations
+and ordered quest links. The quest browser groups the original fields into
+requirements, starting items, objectives and reward choices. Item quest
+links can be edited by item type and ID.
+
+The same save updates gameplay fields in SQLite and the native client file
+and preserves the client's encryption. Dialogues, descriptions, journal text
+and destination labels are stored only in the client file. NPC and quest
+lookup rows remain fixed. A save takes both backups before replacing either
+catalog. Stop GX World and the client while editing and restart both after saving.
 
 ## Backups and recovery
 

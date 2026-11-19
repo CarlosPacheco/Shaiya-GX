@@ -299,7 +299,7 @@ func Recover(ctx context.Context, root string) (string, error) {
 	if err := json.Unmarshal(payload, &record); err != nil {
 		return "", err
 	}
-	if !record.Kind.valid() || !filepath.IsAbs(record.CashPath) || !filepath.IsAbs(record.DBPath) ||
+	if (!record.Kind.valid() && record.Kind != NPCQuest) || !filepath.IsAbs(record.CashPath) || !filepath.IsAbs(record.DBPath) ||
 		record.Backup == "" || record.Backup == "." || record.Backup == ".." || record.Backup != filepath.Base(record.Backup) ||
 		len(record.CashBefore) != 64 || len(record.CashAfter) != 64 || len(record.SQLBefore) != 64 || len(record.SQLAfter) != 64 {
 		return "", errors.New("invalid recovery journal")

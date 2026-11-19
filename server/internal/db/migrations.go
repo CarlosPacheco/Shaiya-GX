@@ -11,6 +11,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/itemboxes"
 	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
+	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
 	"github.com/Spelunkern/Shaiya-GX/internal/worlddrops"
 )
 
@@ -74,6 +75,7 @@ var migrations = []migration{
 	{14, "universal_goddess_blessing", blessingrules.MergeSQL},
 	{15, "world_drops", worlddrops.MigrationSQL},
 	{16, "item_boxes", itemboxes.MigrationSQL},
+	{17, "npc_quest", npcquest.MigrationSQL},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.
@@ -118,6 +120,11 @@ func migrate(ctx context.Context, pool *sql.DB, steps []migration) error {
 		}
 		if step.Version == 11 {
 			if err := initializeEnchant11(ctx, tx); err != nil {
+				return fmt.Errorf("migration %d: %w", step.Version, err)
+			}
+		}
+		if step.Version == 17 {
+			if err := initializeNPCQuest(ctx, tx); err != nil {
 				return fmt.Errorf("migration %d: %w", step.Version, err)
 			}
 		}

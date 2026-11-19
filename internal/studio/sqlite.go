@@ -222,10 +222,6 @@ func integrity(ctx context.Context, db queryer) error {
 }
 
 func safeTable(ctx context.Context, tx *sql.Tx, table string, definitions bool, allowedChild ...string) error {
-	child := ""
-	if len(allowedChild) > 0 {
-		child = allowedChild[0]
-	}
 	triggers, err := tx.QueryContext(ctx, "SELECT sql FROM sqlite_schema WHERE type = 'trigger' AND tbl_name = ? COLLATE NOCASE", table)
 	if err != nil {
 		return err
@@ -249,7 +245,13 @@ func safeTable(ctx context.Context, tx *sql.Tx, table string, definitions bool, 
 	}
 	// Defer deletion checks only through SQLite's normal foreign-key enforcement.
 	// GX has no child tables for ProductList. Refuse custom cascading schemas.
-	rows, err := tx.QueryContext(ctx, "SELECT m.name FROM sqlite_schema m, pragma_foreign_key_list(m.name) f WHERE m.type = 'table' AND f.[table] = ? COLLATE NOCASE AND m.name <> ? COLLATE NOCASE LIMIT 1", table, child)
+	query := "SELECT m.name FROM sqlite_schema m, pragma_foreign_key_list(m.name) f WHERE m.type = 'table' AND f.[table] = ? COLLATE NOCASE"
+	args := []any{table}
+	for _, child := range allowedChild {
+		query += " AND m.name <> ? COLLATE NOCASE"
+		args = append(args, child)
+	}
+	rows, err := tx.QueryContext(ctx, query+" LIMIT 1", args...)
 	if err != nil {
 		return err
 	}

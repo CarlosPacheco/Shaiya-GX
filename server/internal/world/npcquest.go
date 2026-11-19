@@ -1,13 +1,11 @@
 package world
 
 import (
-	"encoding/binary"
-	"errors"
-	"math"
-	"os"
-	"path/filepath"
+	"context"
+	"database/sql"
 	"sync"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -28,7 +26,6 @@ const (
 type npcGate struct {
 	MapID   uint16
 	X, Y, Z float32
-	Name    string
 	Money   uint32
 }
 
@@ -47,139 +44,83 @@ type npcDef struct {
 
 var npcDefs [npcTypeCount][]npcDef
 
-type sdataReader struct {
-	b   []byte
-	pos int
-}
-
-var errShortSData = errors.New("truncated NpcQuest.SData")
-
-func (r *sdataReader) take(n int) []byte {
-	if n < 0 || r.pos+n > len(r.b) {
-		panic(errShortSData)
-	}
-	out := r.b[r.pos : r.pos+n]
-	r.pos += n
-	return out
-}
-
-func (r *sdataReader) u32() uint32 { return binary.LittleEndian.Uint32(r.take(4)) }
-func (r *sdataReader) u16() uint16 { return binary.LittleEndian.Uint16(r.take(2)) }
-func (r *sdataReader) u8() uint8   { return r.take(1)[0] }
-func (r *sdataReader) f32() float32 {
-	return math.Float32frombits(r.u32())
-}
-func (r *sdataReader) str() string {
-	b := r.take(int(r.u32()))
-	for i, c := range b {
-		if c == 0 {
-			b = b[:i]
-			break
-		}
-	}
-	return string(b)
-}
-func (r *sdataReader) words() {
-	n := r.u32()
-	r.take(int(n) * 2)
-}
-
-func loadNpcQuest(log *logx.Logger) (err error) {
-	raw, err := os.ReadFile(filepath.Join(gameDataDir(), "NpcQuest.SData"))
+func loadNpcQuest(log *logx.Logger) error {
+	pool, err := db.Pool(db.GameDefs)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if p := recover(); p != nil {
-			err = errShortSData
-		}
-	}()
-	r := &sdataReader{b: raw}
-	shops, gates := 0, 0
-	for group := 0; group < npcTypeCount; group++ {
-		count := r.u32()
-		if count > 65536 {
-			return errors.New("invalid NPC list count in NpcQuest.SData")
-		}
-		list := make([]npcDef, count)
-		for i := range list {
-			n := &list[i]
-			n.Type = r.u8()
-			n.TypeID = r.u16()
-			if group == 0 {
-				n.ShopType = r.u8()
-			}
-			r.take(4) // model
-			n.MoveDistance, n.MoveSpeed = int32(r.u32()), int32(r.u32())
-			switch r.u32() {
-			case 1:
-				n.Country = 0
-			case 2:
-				n.Country = 1
-			default:
-				n.Country = 2
-			}
-			n.Name = r.str()
-			r.str() // description
-			switch group {
-			case 0:
-				items := r.u32()
-				n.ShopItems = make([][2]uint8, items)
-				for k := range n.ShopItems {
-					n.ShopItems[k] = [2]uint8{r.u8(), r.u8()}
-				}
-				shops++
-			case 1:
-				for k := range n.Gates {
-					g := &n.Gates[k]
-					g.MapID = r.u16()
-					g.X = r.f32()
-					g.Y = float32(float64(r.f32()) + float64(float32(0.9)))
-					g.Z = r.f32()
-					g.Name = r.str()
-					g.Money = r.u32()
-				}
-				gates++
-			}
-			n.StartQuests = r.wordList()
-			n.EndQuests = r.wordList()
-		}
-		npcDefs[group] = list
+	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	defer cancel()
+	tx, err := pool.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return err
 	}
-	// 256x256 item links: the quests each item starts and ends.
-	for t := 0; t < 256; t++ {
-		for id := 0; id < 256; id++ {
-			starts, ends := r.wordList(), r.wordList()
-			if len(starts) > 0 || len(ends) > 0 {
-				questItemLinks[[2]uint8{uint8(t), uint8(id)}] = questItemLink{Start: starts, End: ends}
-			}
-		}
+	defer tx.Rollback()
+	catalog, err := npcquest.Read(ctx, tx)
+	if err != nil {
+		return err
 	}
-	count := r.u32()
-	if count > 65535 {
-		return errors.New("quest count exceeds WORD identifiers in NpcQuest.SData")
+	if _, err := npcquest.Encode(catalog, nil, nil); err != nil {
+		return err
 	}
-	quests := make([]questDef, count)
-	for i := range quests {
-		readQuest(r, &quests[i])
-	}
-	questDefs = quests
+	npcs, quests, itemLinks := buildNPCQuest(catalog)
+	npcDefs, questDefs, questItemLinks = npcs, quests, itemLinks
 	buildMobQuestLinks()
-	log.Printf("GX Server World loaded NpcQuest.SData shops=%d gatekeepers=%d item_links=%d quests=%d trailing=%d",
-		shops, gates, len(questItemLinks), len(quests), len(raw)-r.pos)
+	log.Printf("GX Server World loaded SQLite NpcQuest npcs=%d shops=%d gatekeepers=%d item_links=%d quests=%d",
+		len(catalog[npcquest.NPCs]), len(npcs[0]), len(npcs[1]), len(itemLinks), len(quests))
 	return nil
 }
 
-func (r *sdataReader) wordList() []uint16 {
-	n := r.u32()
-	if n > 65536 {
-		panic(errShortSData)
+func buildNPCQuest(c npcquest.Catalog) ([npcTypeCount][]npcDef, []questDef, map[[2]uint8]questItemLink) {
+	var npcs [npcTypeCount][]npcDef
+	for _, row := range c[npcquest.NPCs] {
+		group := row[0].(int64) - 1
+		n := npcDef{Type: uint8(row[2].(int64)), TypeID: uint16(row[3].(int64)),
+			MoveDistance: int32(row[5].(int64)), MoveSpeed: int32(row[6].(int64)),
+			Name: row[8].(string), ShopType: uint8(row[9].(int64)), Country: 2}
+		if country := row[7].(int64); country == 1 || country == 2 {
+			n.Country = uint8(country - 1)
+		}
+		npcs[group] = append(npcs[group], n)
 	}
-	out := make([]uint16, n)
-	for i := range out {
-		out[i] = r.u16()
+	for _, row := range c[npcquest.Products] {
+		n := &npcs[row[0].(int64)-1][row[1].(int64)-1]
+		n.ShopItems = append(n.ShopItems, [2]uint8{uint8(row[3].(int64)), uint8(row[4].(int64))})
 	}
-	return out
+	for _, row := range c[npcquest.Gates] {
+		n := &npcs[row[0].(int64)-1][row[1].(int64)-1]
+		n.Gates[row[2].(int64)-1] = npcGate{
+			MapID: uint16(row[3].(int64)), X: float32(row[4].(float64)),
+			Y: float32(row[5].(float64) + float64(float32(0.9))), Z: float32(row[6].(float64)),
+			Money: uint32(row[7].(int64)),
+		}
+	}
+	for _, row := range c[npcquest.NPCLinks] {
+		n := &npcs[row[0].(int64)-1][row[1].(int64)-1]
+		quest := uint16(row[4].(int64))
+		if row[2].(int64) == 0 {
+			n.StartQuests = append(n.StartQuests, quest)
+		} else {
+			n.EndQuests = append(n.EndQuests, quest)
+		}
+	}
+	itemLinks := make(map[[2]uint8]questItemLink)
+	for _, row := range c[npcquest.ItemLinks] {
+		key := [2]uint8{uint8(row[0].(int64)), uint8(row[1].(int64))}
+		links := itemLinks[key]
+		quest := uint16(row[4].(int64))
+		if row[2].(int64) == 0 {
+			links.Start = append(links.Start, quest)
+		} else {
+			links.End = append(links.End, quest)
+		}
+		itemLinks[key] = links
+	}
+	quests := make([]questDef, len(c[npcquest.Quests]))
+	for i, row := range c[npcquest.Quests] {
+		quests[i] = sqliteQuest(row)
+	}
+	return npcs, quests, itemLinks
 }
 
 // findNpcDef is GetNpc (0x0041d640): by type and row.
@@ -334,7 +275,7 @@ func (s *Session) handleGatekeeper(p []byte) {
 	ch.Money -= g.Money
 	s.persist()
 	s.send(buildGatekeeperResult(true, ch.Money), "0x020C gatekeeper")
-	s.log.Printf("GX Server World gatekeeper to %q map %d for %d", g.Name, g.MapID, g.Money)
+	s.log.Printf("GX Server World gatekeeper to map %d for %d", g.MapID, g.Money)
 	s.applyTeleport(g.MapID, g.X, g.Y, g.Z, "gatekeeper")
 }
 

@@ -18,6 +18,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
 	"github.com/Spelunkern/Shaiya-GX/internal/textwire"
 )
 
@@ -33,6 +34,7 @@ const (
 	Blessing
 	WorldDrops
 	ItemBoxes
+	NPCQuest
 )
 
 func (k Kind) DatabaseOnly() bool {
@@ -49,6 +51,8 @@ func (k Kind) RelativePath() string {
 		return "Character/Skill.SData"
 	case NPCSkills:
 		return "Monster/NpcSkill.SData"
+	case NPCQuest:
+		return "Npc/NpcQuest.SData"
 	default:
 		return cash.SDataPath
 	}
@@ -351,6 +355,14 @@ func (d *Definitions) SQLValues(ctx context.Context, record int) (map[string]str
 }
 
 func stateHash(ctx context.Context, db queryer, kind Kind) (string, error) {
+	if kind == NPCQuest {
+		catalog, err := npcquest.Read(ctx, db)
+		if err != nil {
+			return "", err
+		}
+		encoded, err := json.Marshal(catalog)
+		return hash(encoded), err
+	}
 	if kind == Cash {
 		rows, err := readRows(ctx, db)
 		return rowsHash(rows), err

@@ -156,7 +156,7 @@ func LoadGameConfig(log *logx.Logger) error {
 		return fmt.Errorf("item boxes: %w", err)
 	}
 	if err := loadNpcQuest(log); err != nil {
-		return fmt.Errorf("NpcQuest.SData: %w", err)
+		return fmt.Errorf("NPC and quest definitions: %w", err)
 	}
 	if err := loadKillStatus(log); err != nil {
 		return fmt.Errorf("goddess blessing: %w", err)
