@@ -20,11 +20,29 @@ type inventoryView struct {
 	cooldowns               map[uint8]float64
 	restoration             *potionRestoration
 	message                 string
-	dragging                bool
+	pressedItem, dragging   bool
 	pressX, pressY          int
 	preview                 *scene.Character
 	previewAppearance       scene.Appearance
 	previewLoaded           bool
+}
+
+func (v *inventoryView) pressItem(key [2]uint8, in *platform.Input) {
+	v.source, v.pressedItem = key, true
+	v.dragging, v.selected = false, false
+	v.pressX, v.pressY = in.MouseX, in.MouseY
+}
+
+func (v *inventoryView) advanceItemDrag(in *platform.Input) {
+	if v.pressedItem && !in.Pressed && (in.MouseDown || in.Clicked) &&
+		(in.MouseX-v.pressX >= 4 || v.pressX-in.MouseX >= 4 ||
+			in.MouseY-v.pressY >= 4 || v.pressY-in.MouseY >= 4) {
+		v.pressedItem, v.dragging, v.selected = false, true, true
+	}
+}
+
+func (v *inventoryView) cancelItemPointer() {
+	v.pressedItem, v.dragging, v.selected = false, false, false
 }
 
 func (a *App) updateInventory(in *platform.Input, w, h int) bool {
@@ -43,8 +61,10 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 	}
 	if in.HasKey(platform.KeyEscape) {
 		v.open = false
+		v.cancelItemPointer()
 		return true
 	}
+	v.advanceItemDrag(in)
 	x, y := a.inventoryUI.Origin(w, h)
 	captured := panelPointer(in, x, y, ui.InventoryWidth, ui.InventoryHeight)
 	var closed bool
@@ -60,6 +80,7 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 	}
 	if closed {
 		v.open = false
+		v.cancelItemPointer()
 		return true
 	}
 	if v.pending || a.shop.pending {
@@ -91,31 +112,26 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 	}
 	if in.Pressed && v.hovered && !a.state.Self.Dead {
 		if _, ok := a.state.Inventory[v.hover]; ok {
-			v.source, v.selected, v.dragging = v.hover, true, true
-			v.pressX, v.pressY = in.MouseX, in.MouseY
+			v.pressItem(v.hover, in)
 		}
 	}
 	if in.Clicked {
-		wasDrag := v.dragging
-		v.dragging = false
-		if !v.hovered {
-			if wasDrag {
-				v.selected = false
-			}
-		} else if v.selected {
+		pressedItem, dragged := v.pressedItem, v.dragging
+		v.cancelItemPointer()
+		if v.hovered {
 			key := v.hover
-			if key != v.source {
-				v.selected = false
+			switch {
+			case dragged && key != v.source:
+				if a.world == nil {
+					return captured
+				}
 				if err := a.world.Send(proto.ItemMovePacket(v.source[0], v.source[1], key[0], key[1])); err != nil {
 					a.backToLogin("Unable to move inventory item.")
 					return true
 				}
 				v.pending, v.deadline = true, a.clock+10
-			} else {
-				v.selected = false
-				if wasDrag && in.MouseX-v.pressX > -4 && in.MouseX-v.pressX < 4 && in.MouseY-v.pressY > -4 && in.MouseY-v.pressY < 4 {
-					a.useInventoryItem(key)
-				}
+			case pressedItem && key == v.source:
+				a.useInventoryItem(key)
 			}
 		}
 	}

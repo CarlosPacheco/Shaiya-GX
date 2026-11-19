@@ -155,3 +155,49 @@ before its name. The inline square follows chat font height, participates in the
 316px line wrap and history fade, and uses the same icon and elemental badge
 renderer as inventory items. Only confirmed item-add packets attach structured
 item metadata; player text cannot inject icons or trusted color markup.
+
+## EP5.4 controls and restoration scope
+
+The follow-up used the same executable hash as this audit and the matching
+`data.sah` / `data.saf`. Both original UI panels were extracted and inspected
+locally. The matching EP4 PS0107 archive also contains the named atlases.
+
+| Control | Original evidence | GX status |
+| --- | --- | --- |
+| Help / Chat Mode | `chat_config1.tga`, opened at `0x477d07`. The panel is anchored at X380, Y=H−296. It shows Common, Whisper, Party, Guild and Trade, plus a separate Alpha checkbox. Its printed help demonstrates `! name message`, `@ message` and `$ message`. | GX handles these prefixes and offers an Area channel through its own dropdown. It has no native help panel. |
+| Filter Option | `chat_config2.tga`, opened at `0x477c7a`. Eight independent checkboxes, drawn by `0x47088d` onward. Message filters are Damage, Acquire, Death and Notice. Conversation filters are Common, Party, Guild and Trade. | GX has no category filter control. |
+| Filters and scrolling | `0x470b0c` consults `0x41cf40` while drawing stored messages. A filtered line is skipped during drawing. The filter lookup always permits styles such as 11 (whisper), 14 (area) and 15/16 (admin-related). | Scroll positions are independent in GX. Category filtering should operate on the rendered view and leave stored messages available when re-enabled. |
+| Alpha | The sixth checkbox at `0x47837e` sets the setting persisted as `CHAT_BOX_VIEW` via `0x46e630` / `0x46e720`. Enabled keeps the frame visible. Disabled lets the background and its frame appear under the pointer (`0x4779ef`–`0x477a60`). Text rendering continues separately. | GX's optional ten-second auto-hide fades the history itself, including text. |
+| Histories | `0x41f120` routes entries to separate histories, each capped at 100. The resize path clamps the pane setting to 0–20 (`0x477bdf`–`0x477c15`), with the first configured value read from `CHAT_SIZE0` and the second from `CHAT_SIZE1`. | GX restores both row counts and supports resizing. Its shared 300-entry buffer allows combat to evict conversation. |
+| Position and frame | The INI routines read/write `CHAT_POS_X/Y`. The examined desktop draw and pointer paths (`0x47080a` and `0x4779fe`) explicitly anchor X to 0 and recompute Y from the viewport and row counts. The translucent plate and frame are drawn separately. | GX uses flat plates at the fixed left edge. The INI entries alone do not establish free dragging in this build. |
+| Whisper composition | A separate recipient input and message input. The key handler at `0x478cf7` uses left Shift and DirectInput key `0x2c` (Z) to enter whisper mode. In that mode, Tab walks the stored recipient list cyclically via `0x470750`. The recipient popup at `0x47138d` is 131px wide with 15px rows. | GX can prefill a recipient through player context or social panels, and supports `!` / `/w`. It does not expose the recipient as a separate input or provide the native recipient shortcut/history. |
+| Direct channel shortcuts | `0x478bf6`–`0x478cf0` selects Party with left Ctrl+Enter, Guild with left Alt+Enter, Trade with left Shift+Enter and Area with right Shift+Enter. The labels come from the native switch at `0x46e270`. | GX supports typed aliases and Enter. Existing bindings should be checked before assigning both sides of Shift. |
+| Composer editing | GX currently delegates to the append/backspace-only `TextField`. The recovered native recipient/history controls establish separate editing state. | Caret navigation, selection, clipboard and IME need individual verification before claiming native behavior for each. |
+
+### Filter lookup for implementation
+
+The four message groups and four conversation groups below follow the recovered
+switch at `0x41cf40` and checkbox ordering at `0x4708ba` and `0x4782be`.
+The appended GX notices should retain their assigned styles when filtering.
+
+| Checkbox | Styles routed through it |
+| --- | --- |
+| Damage | 0, 1, 5 |
+| Acquire | 3, 4, 6, 7, 17 |
+| Death | 2 |
+| Notice | 8, 24–29, 33 |
+| Common | 9, 30 |
+| Party | 10 |
+| Guild | 12 |
+| Trade | 13, 31 |
+
+Styles 25 and 26 pass through the Notice filter but still use the conversation
+pane under the original routing, so filter groups and pane selection must
+remain independent.
+
+The first restoration worth doing is the two panels, with independent history
+retention and Alpha wired to background visibility. The second is the separate
+whisper recipient, recent-recipient cycling and channel shortcuts. The
+existing Area channel, server moderation, trusted system formatting and
+GX item attachments can coexist with those controls. Native channel cooldown
+and level gates need wire and server tracing before changing any delivery rule.

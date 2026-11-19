@@ -46,6 +46,12 @@ func (a *App) checkPendingActions() bool {
 // Independent panels can stay open together. Captured events never reach a
 // world target or logout; held movement keys remain available.
 func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
+	vInventory := &a.inventory
+	defer func() {
+		if !in.MouseDown || in.Clicked || !vInventory.open {
+			vInventory.cancelItemPointer()
+		}
+	}()
 	opened := a.personalPanelMask()
 	defer func() { a.placeNewPersonalPanels(opened, w, h) }()
 	controls := *in
@@ -115,6 +121,7 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		pointer.Wheel = 0
 		in = &pointer
 	}
+	vInventory.advanceItemDrag(in)
 	captured := false
 	if a.teleportStone.open && a.recordedPoints != nil {
 		const recordedPointOwner = -4
@@ -240,10 +247,7 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		controls.Wheel = 0
 		controls.MiddlePressed = false
 	}
-	if a.inventory.dragging && (!in.MouseDown || !a.inventory.open) {
-		// The release can be captured by another panel before inventory runs.
-		a.inventory.dragging, a.inventory.selected = false, false
-	}
+
 	if cameraDrag {
 		controls.RightDown = true
 	}

@@ -323,8 +323,9 @@ func (a *App) updateChatItemDrag(in *platform.Input, w, h int) bool {
 	if a.chatUI == nil || a.inventoryUI == nil || v.pending || a.shop.pending || a.state.Self.Dead {
 		return false
 	}
+	v.advanceItemDrag(in)
 	if v.open && in.Clicked && v.dragging && v.selected && (ui.ChatInputHit(in.MouseX, in.MouseY, h) || a.chatUI.Contains(in.MouseX, in.MouseY, h)) {
-		v.dragging, v.selected = false, false
+		v.cancelItemPointer()
 		it, ok := a.state.Inventory[v.source]
 		if !ok {
 			return true
@@ -352,20 +353,21 @@ func (a *App) updateChatItemDrag(in *platform.Input, w, h int) bool {
 		var closed bool
 		v.bag, closed = a.inventoryUI.Update(in, w, h, v.bag)
 		if closed {
-			v.open, v.dragging, v.selected = false, false, false
+			v.open = false
+			v.cancelItemPointer()
 			return true
 		}
 		if in.Pressed && !in.Clicked {
 			x, y := a.inventoryUI.Origin(w, h)
 			if key, hit := ui.InventoryHit(in.MouseX-x, in.MouseY-y, v.bag); hit {
 				if _, ok := a.state.Inventory[key]; ok {
-					v.source, v.selected, v.dragging = key, true, true
+					v.pressItem(key, in)
 					return true
 				}
 			}
 		}
-		if v.dragging && (in.Clicked || !in.MouseDown) {
-			v.dragging, v.selected = false, false
+		if (v.pressedItem || v.dragging) && (in.Clicked || !in.MouseDown) {
+			v.cancelItemPointer()
 			return true
 		}
 	}

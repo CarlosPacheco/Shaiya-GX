@@ -9,6 +9,8 @@ func (a *App) toggleInventory() {
 	a.inventory.open = !a.inventory.open
 	if a.inventory.open {
 		a.skills.assign = nil
+	} else {
+		a.inventory.cancelItemPointer()
 	}
 }
 

@@ -174,8 +174,12 @@ func TestPanelsAgainstRapture(t *testing.T) {
 	dest := [2]uint8{item.Bag, destination}
 	before := st.Inventory[source]
 	a.worldControls(&platform.Input{MouseX: x + cx + 1, MouseY: y + cy + 1, Pressed: true, MouseDown: true}, 1024, 768)
+	if a.inventory.dragging || !a.inventory.pressedItem {
+		t.Fatal("pressing a slot must not lift its icon")
+	}
+	a.worldControls(&platform.Input{MouseX: x + dx + 1, MouseY: y + dy + 1, MouseDown: true}, 1024, 768)
 	if !a.inventory.dragging {
-		t.Fatal("item did not begin dragging")
+		t.Fatal("moving the pointer did not start the drag")
 	}
 	a.worldControls(&platform.Input{MouseX: x + dx + 1, MouseY: y + dy + 1, Clicked: true}, 1024, 768)
 	if !a.inventory.pending || a.inventory.dragging || a.inventory.selected || st.Inventory[source] != before {
@@ -196,30 +200,20 @@ func TestPanelsAgainstRapture(t *testing.T) {
 		t.Fatal("inventory shortcut drop moved or lost the item", q)
 	}
 
+	bx1, by1 := a.actionBar.SlotOrigin(0, 1024, 768)
+	a.worldControls(&platform.Input{MouseX: x + cx + 1, MouseY: y + cy + 1, Pressed: true, MouseDown: true}, 1024, 768)
+	a.worldControls(&platform.Input{MouseX: bx1 + 1, MouseY: by1 + 1, MouseDown: true}, 1024, 768)
+	a.worldControls(&platform.Input{MouseX: bx1 + 1, MouseY: by1 + 1, Clicked: true}, 1024, 768)
+	if q, _ := a.shortcutAt(0); q == nil || q.Bag != item.Bag || q.Number != uint16(item.Slot) {
+		t.Fatal("inventory drag did not bind the primary action bar", q)
+	}
 	click(x+cx+1, y+cy+1, false)
-	if !a.inventory.selected {
-		t.Fatal("purchased item could not be selected")
-	}
-	ax, ay := ui.ActionBarOrigin(1024, 768)
-	click(ax+31, ay+11, true)
-	assigned := false
-	for _, q := range st.QuickSlots {
-		if q.Bar == 0 && q.Slot == 0 && q.Bag == item.Bag && q.Number == uint16(item.Slot) {
-			assigned = true
-		}
-	}
-	if !assigned {
-		t.Fatal("item could not be assigned with inventory open")
-	}
-	a.worldControls(&platform.Input{Chars: []rune{'1'}}, 1024, 768)
 	ack(func() bool { return st.LastItemUse.ID == st.SelfID })
-	if !a.inventory.open || st.LastItemUse.Type != item.Type || st.LastItemUse.Count != item.Count-1 {
-		t.Fatal("bar item use was not confirmed", st.LastItemUse)
+	if !a.inventory.open || a.inventory.dragging || a.inventory.selected ||
+		st.LastItemUse.Type != item.Type || st.LastItemUse.Count != item.Count-1 {
+		t.Fatal("inventory click did not use the item in place", st.LastItemUse)
 	}
-	if item.Count == 1 && a.inventory.selected {
-		t.Fatal("consumed item stayed selected")
-	}
-	t.Logf("UI click purchase, quantity purchase/sale, bag move, bar assignment/use confirmed with inventory open; %d/%d", item.Type, item.TypeID)
+	t.Logf("purchase, sale, bag move, both bar drops and in-place inventory use confirmed: %d/%d", item.Type, item.TypeID)
 	// Learn through the category tab and native plus button.
 	a.loadSkills()
 	var learn sdata.SkillKey
