@@ -427,3 +427,37 @@ It produced no consistent improvement over the shared upload and was
 discarded. The experiment recorded 12,960 valid GPU timestamp samples
 with no missing assets. Existing OpenGL comparisons cover blend modes,
 animated 3DE frames, clip planes, water and subsequent draws.
+
+## Affine pose products and shared world transforms
+
+Skeletal composition, inverse-bind palettes and skinned bounds use the affine
+matrix product where applicable. Projective or nonfinite inputs retain the
+full matrix product. During each bounds calculation, parts with identical
+inverse-bind palettes share bone-to-world transforms for the bones they use.
+Each mesh keeps its own bounds, and animation sampling and draw order are
+unchanged.
+
+The same Linux/OpenGL fixture at 1280×720 ran three interleaved repetitions
+of 360 frames per scene and binary. Values are medians of the per-run
+submission p50 or p99 and whole-loop averages, in milliseconds per frame.
+
+| Scene | Submission p50 before → after | Submission p99 before → after | Whole loop before → after |
+|---|---:|---:|---:|
+| 200 actors | 5.156 → 4.475 | 6.887 → 6.227 | 5.293 → 4.576 |
+| 400 actors | 10.649 → 8.985 | 12.768 → 10.896 | 10.812 → 9.095 |
+| Field | 0.770 → 0.738 | 1.117 → 0.922 | 0.891 → 0.856 |
+| Visible water | 5.231 → 5.188 | 6.683 → 6.454 | 5.299 → 5.198 |
+
+Each crowd pairing improved at p50. Tail times varied; one optimized
+400-actor run had a higher p99 than its baseline. Field and water differences
+were small. The isolated 64-bone pose benchmark fell from 11.30 µs to 8.34 µs
+per operation, with zero steady-state allocations in both versions.
+Submission includes driver work, and the fixture runs without presentation.
+In separate 3,000-frame profiles of the 400-actor case, direct matrix
+product samples fell from 8.65 s to 3.97 s, counting the affine and full
+products together in the optimized profile.
+
+Tests compare the affine product with the full product, including fallback
+inputs, and compare real character, monster and vehicle palettes with an
+independent full-product reference. OpenGL checks cover main and reflected
+views, shadows, cloth and nameplates.
