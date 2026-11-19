@@ -64,7 +64,7 @@ func tickNpcs(now time.Time, players []PlayerCombatSnapshot, limit int) npcTick 
 				continue
 			}
 			before := len(out.moves) + len(out.strikes)
-			if n.Type == npcTypeGuard && !n.Summoned && len(n.patrol) > 0 && n.updateGuard(now, mapID, s, viewers, &out) {
+			if n.Type == npcTypeGuard && len(n.patrol) > 0 && n.updateGuard(now, mapID, s, viewers, &out) {
 				budget -= len(out.moves) + len(out.strikes) - before
 				continue
 			}

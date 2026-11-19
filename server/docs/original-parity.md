@@ -95,7 +95,9 @@ on contact, including when the victim is stealthed or protected, and never
 awards player kill credit. Route steps respect the map walkability mask and
 interpolate height toward authored patrol points. Pursuit and return use the
 GX map navigation geometry where available. GX revalidates contact in the
-player session before applying a queued strike.
+player session before applying a queued strike. A guard spawned with
+`/nmake 8 <row>` stands at its spawn between pursuits. The spawn anchors
+its range and return even though it has no patrol route.
 
 ## Spin combinations and Stinger
 

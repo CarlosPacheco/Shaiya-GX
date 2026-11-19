@@ -329,6 +329,15 @@ func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error {
 	for _, pos := range positions {
 		if npcType != 0 {
 			n := MapNpc{ID: realm.nextNpcID.Add(1) - 1, Type: nd.Type, TypeID: nd.TypeID, PosX: pos[0], PosY: s.char.PosY, PosZ: pos[1], Summoned: true, cell: cellFor(pos[0], pos[1]), hasCell: true}
+			if n.Type == npcTypeGuard {
+				if nav != nil {
+					if ground, ok := nav.Project(n.point(), .6, 5); ok {
+						n.PosY = ground[1]
+					}
+				}
+				// One point anchors pursuit and return without starting a patrol.
+				n.patrol = []NpcPatrolPoint{{X: n.PosX, Y: n.PosY, Z: n.PosZ, Angle: n.Angle}}
+			}
 			sh.entities.NPCs = append(sh.entities.NPCs, n)
 			sh.npcRevision.Add(1)
 			npcs = append(npcs, n)

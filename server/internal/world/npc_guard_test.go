@@ -101,3 +101,47 @@ func TestNpcPatrolReversesAndInterpolatesWaypointHeight(t *testing.T) {
 		t.Fatalf("wrong NPC patrol return %+v", n)
 	}
 }
+
+func TestSummonedGuardWaitsAtSpawnThenAttacks(t *testing.T) {
+	const mapID = 65485
+	RegisterMapGrid(mapID, 200, nil)
+	old := npcDefs[npcTypeGuard-1]
+	t.Cleanup(func() { npcDefs[npcTypeGuard-1] = old })
+	npcDefs[npcTypeGuard-1] = []npcDef{{Type: npcTypeGuard, TypeID: 1, Country: FactionLight}}
+	s, packets := gmWireSession(t, db.Character{ID: 990025, MapID: mapID, PosX: 100, PosY: 10, PosZ: 100}, true)
+	if !s.handleGMCommand("/nmake 8 1") {
+		t.Fatal("guard command was not handled")
+	}
+	gmResponse(t, packets)
+	sh := shard(mapID)
+	t.Cleanup(func() {
+		sh.mu.Lock()
+		sh.entities, sh.guardClaims = MapEntities{}, nil
+		sh.mu.Unlock()
+	})
+	npcs := EntitiesOnMap(mapID).NPCs
+	if len(npcs) != 1 || !npcs[0].Summoned || len(npcs[0].patrol) != 1 {
+		t.Fatal("summoned guard needs a single anchor")
+	}
+	n := npcs[0]
+	p := PlayerCombatSnapshot{CharacterID: 88, MapID: mapID, PosX: n.PosX + 2, PosY: n.PosY, PosZ: n.PosZ, Alive: true, Faction: FactionLight}
+	now := time.Unix(100, 0)
+	if r := tickNpcs(now, []PlayerCombatSnapshot{p}, 64); len(r.moves) != 0 || len(r.strikes) != 0 {
+		t.Fatal("guard should stand still around allies")
+	}
+	p.Faction = FactionDark
+	p.PosX += 6
+	r := tickNpcs(now, []PlayerCombatSnapshot{p}, 64)
+	if len(r.moves) != 1 || len(r.strikes) != 0 {
+		t.Fatal("stationary summoned guard did not pursue an enemy")
+	}
+	r = tickNpcs(sh.entities.NPCs[0].guardReady, []PlayerCombatSnapshot{p}, 64)
+	if len(r.strikes) != 1 || r.strikes[0].target.id != p.CharacterID {
+		t.Fatal("summoned guard did not attack after reaching its target")
+	}
+	p.Alive = false
+	r = tickNpcs(sh.entities.NPCs[0].guardReady, []PlayerCombatSnapshot{p}, 64)
+	if len(r.moves) != 1 || sh.entities.NPCs[0].point() != n.point() {
+		t.Fatal("summoned guard did not return to its spawn")
+	}
+}
