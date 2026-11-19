@@ -199,14 +199,17 @@ remain independent.
 
 GX uses the original help and filter atlases when they are installed. Older
 data packs get live text-and-checkbox panels in the same positions. The two
-panel buttons retain their 16px spacing at the left edge. Both popups share
-the native X380 and H−296 anchor, clamped on smaller viewports. The histories
-keep an 8px gap between them and before the composer. When vertical space
-shrinks, visible rows contract without overwriting the saved row settings.
+panel buttons use separate 19px hit boxes at the left edge. Both popups
+share the native X380 and H−296 anchor, clamped on smaller viewports. The
+borderless histories leave a 2px visible seam. The composer opens on demand,
+shares both horizontal edges with the lower history and sits 2px below it.
+When vertical space shrinks, visible rows contract without overwriting the
+saved row settings.
 
 The sidebar uses independent tracks and draggable 13px thumbs, with grab
-offset, arrow repeat, track paging and the existing mouse wheel. The rail
-and frame colors use GX's current draw primitives. The recipient row starts
+offset, arrow repeat, track paging and the existing mouse wheel. The
+arrows and thumb use the scrollbar atlas and leave the track background
+transparent. The recipient row starts
 at X25 to clear both side controls while whispering. Its 131px popup uses
 15px rows. The composer includes caret navigation, keyboard selection and
 clipboard operations with UTF-8 limits. GLFW receives committed Unicode

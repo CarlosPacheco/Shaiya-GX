@@ -56,15 +56,24 @@ func (c *ChatPanel) optionHit(x, y, h int) bool {
 	ox, oy, w, ht := c.optionBounds(h)
 	return x >= ox && x < ox+w && y >= oy && y < oy+ht
 }
+
+const chatOptionSize = 19
+
+var chatOptionOrder = [...]int{chatFilters, chatHelp}
+
+func (c *ChatPanel) optionButtonsShown() bool {
+	return c.paneAlpha(1, chatNow()) > 0
+}
+func chatOptionY(h, i int) int { return h - 116 + i*(chatOptionSize+1) }
 func (c *ChatPanel) optionButton(x, y, h int) int {
-	if !c.inputShown() || x < 0 || x >= 22 {
+	if !c.optionButtonsShown() || x < 0 || x >= chatOptionSize {
 		return 0
 	}
-	switch {
-	case y >= h-112 && y < h-96:
-		return chatFilters
-	case y >= h-96 && y < h-80:
-		return chatHelp
+	for i := range 2 {
+		top := chatOptionY(h, i)
+		if y >= top && y < top+chatOptionSize {
+			return chatOptionOrder[i]
+		}
 	}
 	return 0
 }
@@ -106,6 +115,9 @@ func (c *ChatPanel) updateOptions(in *platform.Input, h int) bool {
 		return in.Pressed || in.Clicked || in.MouseDown || in.Wheel != 0
 	}
 	if !c.OptionsOpen() {
+		if in.Clicked {
+			c.optionPress = -1
+		}
 		return false
 	}
 	if !c.optionHit(in.MouseX, in.MouseY, h) {
@@ -145,17 +157,18 @@ func (c *ChatPanel) updateOptions(in *platform.Input, h int) bool {
 
 func (c *ChatPanel) drawOptionButtons(s *render.Sprites, f *Font, blank *render.Texture, h int) {
 	for i := range 2 {
-		y := float32(h - 112 + i*16)
+		y := float32(chatOptionY(h, i))
 		if c.icons != nil {
-			u := float32(i) * .25
-			v := float32(0)
-			if c.option == i+1 || c.optionButton(c.mouseX, c.mouseY, h) == i+1 {
-				v = .5
+			u := float32(i*32+2) / 128
+			v := float32(3) / 64
+			button := chatOptionOrder[i]
+			if c.optionPress == 8+button && c.optionButton(c.mouseX, c.mouseY, h) == button {
+				v += .5
 			}
-			s.Draw(c.icons, 0, y, 32, 32, u, v, u+.25, v+.5, white)
+			s.Draw(c.icons, 0, y, chatOptionSize, chatOptionSize, u, v, u+20.0/128, v+19.0/64, white)
 		} else {
-			DrawTipFrame(s, blank, 0, y, 16, 16, 1, TipFill, TipBorder)
-			f.Draw(s, []string{"F", "?"}[i], 4, int(y), white, 12)
+			DrawTipFrame(s, blank, 0, y, chatOptionSize, chatOptionSize, 1, TipFill, TipBorder)
+			f.Draw(s, []string{"F", "?"}[i], 4, int(y)+2, white, 12)
 		}
 	}
 }
@@ -234,23 +247,26 @@ func (c *ChatPanel) scrollGeometry(i, y, h, limit, offset int) (top, travel, thu
 	}
 	return
 }
-func (c *ChatPanel) drawScroll(s *render.Sprites, blank *render.Texture, i, y, h, limit int, alpha float32) {
+func (c *ChatPanel) drawScroll(s *render.Sprites, i, y, h, limit int, alpha float32) {
 	p := &c.panes[i]
-	top, travel, thumb := c.scrollGeometry(i, y, h, limit, p.offset)
+	_, _, thumb := c.scrollGeometry(i, y, h, limit, p.offset)
 	grab := c.scrollThumbHeight(i, h)
-	s.Draw(blank, 9, float32(top), 5, float32(travel+grab), 0, 0, 1, 1, [4]float32{.12, .10, .08, alpha})
-	if limit > 0 {
-		fill := [4]float32{.29, .23, .14, alpha}
-		border := [4]float32{.65, .55, .35, alpha}
-		if p.dragging {
-			border = [4]float32{.87, .72, .42, alpha}
+	tint := [4]float32{1, 1, 1, alpha}
+	for j := range p.arrows {
+		b := &p.arrows[j]
+		if b.Tex != nil {
+			uv := b.UV[b.state]
+			if b.Disabled {
+				uv = b.UV[StateDisabled]
+			}
+			s.Draw(b.Tex, float32(b.X()), float32(b.Y()), float32(b.DrawW), float32(b.DrawH), uv.U0, uv.V0, uv.U1, uv.V1, tint)
 		}
-		DrawTipFrame(s, blank, 5, float32(thumb), 13, float32(grab), 1, fill, border)
 	}
-	if alpha == 1 {
-		for j := range p.arrows {
-			p.arrows[j].Draw(s)
-		}
+	// The native atlas contains the thumb's brown center and bevel separately
+	// from the arrow tiles. The open space between them has no opaque rail.
+	if c.scroll != nil {
+		s.Draw(c.scroll, 5, float32(thumb), 13, float32(grab), 48.0/128, 0, 63.0/128, 4.0/64, tint)
+		s.Draw(c.scroll, 5, float32(thumb+grab-2), 13, 2, 64.0/128, 5.0/64, 79.0/128, 7.0/64, tint)
 	}
 }
 

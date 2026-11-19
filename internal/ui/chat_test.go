@@ -22,7 +22,7 @@ func TestOriginalChatModeButtonSelectsChannel(t *testing.T) {
 		t.Fatal(err)
 	}
 	c.Typing = true
-	y := 768 - 76
+	y := chatInputY(768)
 	click := func(x, y int) {
 		c.Update(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, 768)
 		c.Update(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 768)
@@ -122,14 +122,14 @@ func TestPhoenixChatRetainsSystemMarkupAndLiteralPlayerText(t *testing.T) {
 
 func TestPhoenixChatGeometryAndZeroRows(t *testing.T) {
 	c := &ChatPanel{Rows: [2]int{5, 5}}
-	for i, want := range [][3]int{{420, 112, 7}, {540, 144, 9}} {
+	for i, want := range [][3]int{{426, 112, 7}, {540, 144, 9}} {
 		y, height, capacity := c.paneGeometry(768, i)
 		if [3]int{y, height, capacity} != want {
 			t.Fatal(i, y, height, capacity)
 		}
 	}
 	c.Rows = [2]int{0, 0}
-	for i, want := range [][3]int{{580, 32, 2}, {620, 64, 4}} {
+	for i, want := range [][3]int{{586, 32, 2}, {620, 64, 4}} {
 		y, height, capacity := c.paneGeometry(768, i)
 		if [3]int{y, height, capacity} != want {
 			t.Fatal("collapsed history", i, y, height, capacity)
@@ -171,7 +171,7 @@ func TestChatNativeFiltersAndResponsiveLayout(t *testing.T) {
 	const h = 420
 	y, paneHeight, _ := c.paneGeometry(h, 0)
 	lower, lowerHeight, _ := c.paneGeometry(h, 1)
-	if y < 0 || lower-y-paneHeight != 8 || chatInputY(h)-lower-lowerHeight != 8 {
+	if y < 0 || lower-y-paneHeight != 2 || chatInputY(h)-lower-lowerHeight != 2 {
 		t.Fatal("resized histories lost their gaps")
 	}
 	click := func(x, y int) {
@@ -204,5 +204,43 @@ func TestChatNativeFiltersAndResponsiveLayout(t *testing.T) {
 	click(x+130, y+229)
 	if !c.Transparent || c.backgroundHovered(h) || c.paneAlpha(0, chatNow()) != 1 {
 		t.Fatal("Alpha should affect the background only")
+	}
+}
+
+func TestChatComposerAndIndependentSidebarButtons(t *testing.T) {
+	c, err := NewChatPanel(marketTextures{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const h = 768
+	y := chatInputY(h) + 4
+	if c.Contains(100, y, h) {
+		t.Fatal("idle composer captured world input")
+	}
+	c.Typing = true
+	if !c.Contains(chatWidth-1, y, h) || c.Contains(chatWidth, y, h) {
+		t.Fatal("composer and history do not share the same right edge")
+	}
+	c.Typing = false
+	press := func(i int) {
+		c.Update(&platform.Input{MouseX: 8, MouseY: chatOptionY(h, i) + 8, Pressed: true, MouseDown: true}, h)
+	}
+	release := func(i int) {
+		c.Update(&platform.Input{MouseX: 8, MouseY: chatOptionY(h, i) + 8, Clicked: true}, h)
+	}
+	press(0)
+	release(1)
+	if c.OptionsOpen() {
+		t.Fatal("dragging across buttons opened a panel")
+	}
+	press(0)
+	release(0)
+	if c.option != chatFilters || c.inputShown() {
+		t.Fatal("filter button did not open filters alone")
+	}
+	press(1)
+	release(1)
+	if c.option != chatHelp || c.inputShown() {
+		t.Fatal("help button did not replace filters")
 	}
 }

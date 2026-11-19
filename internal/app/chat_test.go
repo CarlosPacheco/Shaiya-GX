@@ -157,7 +157,7 @@ func TestPhoenixChatPickerOwnsClicksAboveActionBars(t *testing.T) {
 	a := inputApp()
 	a.chatOpen = true
 	a.chatUI.ModeOpen = true
-	in := platform.Input{MouseX: 40, MouseY: 734 - 76 - 6*15 + 15 + 8, Pressed: true, MouseDown: true, Down: "W"}
+	in := platform.Input{MouseX: 40, MouseY: 734 - 82 - 6*15 + 15 + 8, Pressed: true, MouseDown: true, Down: "W"}
 	controls := a.worldControls(&in, 1024, 734)
 	if controls.Pressed || controls.Down != "W" {
 		t.Fatal("channel picker lost click or blocked held movement", controls)
@@ -170,9 +170,8 @@ func TestPhoenixChatPickerOwnsClicksAboveActionBars(t *testing.T) {
 
 func TestPhoenixChatClickFocusAndChannelAliases(t *testing.T) {
 	a := inputApp()
-	a.chatUI.AutoHide = true
-	// With auto-hide enabled, the idle input row belongs to the world.
-	if a.updateChatPointer(&platform.Input{MouseX: 100, MouseY: 734 - 75, Pressed: true, MouseDown: true}, 1024, 734) || a.chatOpen {
+	// With the composer closed, the idle input row belongs to the world.
+	if a.updateChatPointer(&platform.Input{MouseX: 100, MouseY: 734 - 81, Pressed: true, MouseDown: true}, 1024, 734) || a.chatOpen {
 		t.Fatal("hidden message input captured a click")
 	}
 	for _, tc := range []struct {

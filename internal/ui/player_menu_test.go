@@ -24,7 +24,7 @@ func TestPopupPickingRespectsChatPanelsAndTheirGaps(t *testing.T) {
 	for _, tc := range []struct {
 		y      int
 		inside bool
-	}{{430, true}, {537, false}, {550, true}, {690, false}, {696, true}, {716, false}} {
+	}{{430, true}, {539, false}, {550, true}, {685, false}, {696, true}, {708, false}} {
 		if c.Contains(100, tc.y, 768) != tc.inside {
 			t.Fatal("chat pointer bounds", tc)
 		}

@@ -404,7 +404,7 @@ func (a *App) updateChatItemDrag(in *platform.Input, w, h int) bool {
 		return false
 	}
 	v.advanceItemDrag(in)
-	if v.open && in.Clicked && v.dragging && v.selected && (ui.ChatInputHit(in.MouseX, in.MouseY, h) || a.chatUI.Contains(in.MouseX, in.MouseY, h)) {
+	if v.open && in.Clicked && v.dragging && v.selected && a.chatUI.Contains(in.MouseX, in.MouseY, h) {
 		v.cancelItemPointer()
 		it, ok := a.state.Inventory[v.source]
 		if !ok {

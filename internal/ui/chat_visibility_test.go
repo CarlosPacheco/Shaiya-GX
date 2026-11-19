@@ -14,7 +14,7 @@ func TestChatAutoHideIsOptionalAndDoesNotCaptureHiddenInput(t *testing.T) {
 	chatNow = func() time.Time { return now }
 	t.Cleanup(func() { chatNow = previous })
 	c := &ChatPanel{Rows: [2]int{5, 5}}
-	if c.paneAlpha(0, now) != 1 || !c.Contains(100, 696, 768) {
+	if c.paneAlpha(0, now) != 1 || !c.Contains(100, 450, 768) || c.Contains(100, 696, 768) {
 		t.Fatal("default chat must remain visible and clickable")
 	}
 	c.AutoHide = true

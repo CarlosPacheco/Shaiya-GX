@@ -56,9 +56,19 @@ func TestChatTextStaysInsidePanelsGL(t *testing.T) {
 		return pixels
 	}
 	empty := draw(nil)
+	pixel := func(x, y int) []byte {
+		i := ((767-y)*1024 + x) * 4
+		return empty[i : i+4]
+	}
+	if !bytes.Equal(pixel(348, 450), pixel(349, 450)) ||
+		!bytes.Equal(pixel(348, 426), pixel(348, 450)) ||
+		bytes.Equal(pixel(349, 450), pixel(350, 450)) {
+		t.Fatal("history fill has a synthetic border or wrong width")
+	}
+
 	// A single line belongs to the lowest complete cell in both histories.
 	first := draw([]ui.ChatEntry{{Text: "First gjpqy", System: true, Color: [4]float32{1, 1, 1, 1}}, {Text: "First gjpqy", Color: [4]float32{1, 1, 1, 1}}})
-	for _, bounds := range [][2]int{{420, 532}, {540, 684}} {
+	for _, bounds := range [][2]int{{426, 538}, {540, 684}} {
 		changed := 0
 		for y := bounds[0]; y < bounds[1]; y++ {
 			off := ((767-y)*1024 + 25) * 4
@@ -81,7 +91,7 @@ func TestChatTextStaysInsidePanelsGL(t *testing.T) {
 		}
 	}
 	full := draw(entries)
-	for _, band := range [][2]int{{418, 420}, {532, 534}, {538, 540}, {684, 686}} {
+	for _, band := range [][2]int{{424, 426}, {538, 540}, {684, 686}} {
 		for y := band[0]; y < band[1]; y++ {
 			offset := ((767-y)*1024 + 25) * 4
 			if !bytes.Equal(empty[offset:offset+316*4], full[offset:offset+316*4]) {

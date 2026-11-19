@@ -36,8 +36,12 @@ type chatPane struct {
 // new line or interaction, then fades over chatFade. Persistent chat remains
 // the default.
 const (
-	chatHold = 10 * time.Second
-	chatFade = time.Second
+	chatWidth       = 350
+	chatPaneGap     = 2
+	chatComposerGap = 2
+	chatBottom      = 84
+	chatHold        = 10 * time.Second
+	chatFade        = time.Second
 )
 
 var chatNow = time.Now
@@ -57,7 +61,7 @@ func (c *ChatPanel) paneAlpha(i int, now time.Time) float32 {
 }
 
 func (c *ChatPanel) inputShown() bool {
-	return !c.AutoHide || c.Typing || c.ModeOpen || c.OptionsOpen()
+	return c.Typing
 }
 
 // ShowHistory reveals both history panes and restarts their hide timer.
@@ -124,7 +128,7 @@ func ChatOrigin(h int) int { return max(0, h-348) }
 
 func (c *ChatPanel) paneGeometry(h, index int) (y, height, capacity int) {
 	upper, lower := min(20, max(0, c.Rows[0])), min(20, max(0, c.Rows[1]))
-	budget := max(0, (h-92)/16-6)
+	budget := max(0, (h-chatBottom-chatPaneGap)/16-6)
 	if excess := max(0, upper+lower-budget); excess > 0 {
 		cut := min(upper, (excess+1)/2)
 		upper -= cut
@@ -133,9 +137,9 @@ func (c *ChatPanel) paneGeometry(h, index int) (y, height, capacity int) {
 	}
 	lowerHeight := (lower + 4) * 16
 	upperHeight := (upper + 2) * 16
-	y = max(0, h-84-lowerHeight)
+	y = max(0, h-chatBottom-lowerHeight)
 	if index == 0 {
-		return max(0, y-8-upperHeight), upperHeight, upper + 2
+		return max(0, y-chatPaneGap-upperHeight), upperHeight, upper + 2
 	}
 	return y, lowerHeight, lower + 4
 }
@@ -239,14 +243,11 @@ func (c *ChatPanel) Contains(mx, my, h int) bool {
 	if c.optionHit(mx, my, h) || c.optionButton(mx, my, h) != 0 || c.recipientHit(mx, my, h) {
 		return true
 	}
-	if mx < 0 || mx >= 356 {
+	if mx < 0 || mx >= chatWidth {
 		return false
 	}
 	if c.inputShown() && my >= chatInputY(h) && my < chatInputY(h)+22 {
 		return true
-	}
-	if mx >= 350 {
-		return false
 	}
 	now := chatNow()
 	for i := range c.panes {
@@ -283,7 +284,7 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 		return true
 	}
 	now := chatNow()
-	if in.Pressed && in.MouseX >= 25 && in.MouseX < 350 {
+	if in.Pressed && in.MouseX >= 25 && in.MouseX < chatWidth {
 		for pane := range c.panes {
 			if c.paneAlpha(pane, now) == 0 {
 				continue
@@ -299,6 +300,9 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 	c.controls(h)
 	inputY := chatInputY(h)
 	c.modeButton.OriginY = inputY
+	if !c.inputShown() {
+		c.ModeOpen, c.modeButton.held = false, false
+	}
 	if c.inputShown() && c.modeButton.Update(in) {
 		c.ModeOpen = !c.ModeOpen
 	}
@@ -326,7 +330,7 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 		}
 		return true
 	}
-	if c.inputShown() && in.MouseX >= 0 && in.MouseX < 356 && in.MouseY >= inputY && in.MouseY < inputY+22 {
+	if c.inputShown() && in.MouseX >= 0 && in.MouseX < chatWidth && in.MouseY >= inputY && in.MouseY < inputY+22 {
 		c.FocusRequested = in.Pressed && in.MouseX >= 64
 		if c.FocusRequested {
 			c.RecipientFocus = false
@@ -344,7 +348,7 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 			p.offset = max(0, min(p.offset, limit))
 			continue
 		}
-		over := in.MouseX >= 0 && in.MouseX < 350 && in.MouseY >= y && in.MouseY < y+height
+		over := in.MouseX >= 0 && in.MouseX < chatWidth && in.MouseY >= y && in.MouseY < y+height
 		if over {
 			p.active = now // keep a visible pane up while the pointer is on it
 		}
@@ -416,7 +420,7 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 		}
 		y, height, capacity := c.paneGeometry(h, i)
 		if !c.Transparent || c.backgroundHovered(h) {
-			DrawTipFrame(s, blank, 0, float32(y), 350, float32(height), 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 154.0 / 255 * a}, [4]float32{.56, .53, .45, a})
+			s.Draw(blank, 0, float32(y), chatWidth, float32(height), 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 154.0 / 255 * a})
 		}
 		restoreClip := s.ClipRect(25, float32(y+1), 316, float32(height-2))
 		p.offset = min(p.offset, max(0, len(p.lines)-capacity))
@@ -443,12 +447,14 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 			}
 		}
 		restoreClip()
-		c.drawScroll(s, blank, i, y, height, max(0, len(p.lines)-capacity), a)
+		c.drawScroll(s, i, y, height, max(0, len(p.lines)-capacity), a)
+	}
+	if c.optionButtonsShown() {
+		c.drawOptionButtons(s, f, blank, h)
 	}
 	if !c.inputShown() {
 		return
 	}
-	c.drawOptionButtons(s, f, blank, h)
 	c.drawRecipient(s, f, blank, h)
 	y := chatInputY(h)
 	c.modeButton.OriginY = y
@@ -458,10 +464,10 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 	// font touching the bottom border.
 	textY := chatEntryTextY(y, f.Height)
 	f.Draw(s, label, 7, textY, white, 44)
-	// Keep the measured field width while omitting the language icon by request.
+	// Align the composed strip to the history width and omit the language icon.
 	s.Draw(c.input, 64, float32(y), 2, 22, 0, .5, 2.0/512, 150.0/256, white)
-	s.Draw(c.input, 66, float32(y), 288, 22, 2.0/512, .5, 270.0/512, 150.0/256, white)
-	s.Draw(c.input, 354, float32(y), 2, 22, 290.0/512, .5, 292.0/512, 150.0/256, white)
+	s.Draw(c.input, 66, float32(y), chatWidth-68, 22, 2.0/512, .5, 270.0/512, 150.0/256, white)
+	s.Draw(c.input, chatWidth-2, float32(y), 2, 22, 290.0/512, .5, 292.0/512, 150.0/256, white)
 	shown := text
 	count := c.DraftItems.Len()
 	var suffixes [proto.MaxChatItems]string
@@ -535,7 +541,7 @@ func (c *ChatPanel) capacity(index int) int { _, _, n := c.paneGeometry(768, ind
 func (c *ChatPanel) DrawOverlay(s *render.Sprites, f *Font, blank *render.Texture, h int) {
 	c.drawOptions(s, f, blank, h)
 	c.drawRecentRecipients(s, f, blank, h)
-	if !c.ModeOpen {
+	if !c.Typing || !c.ModeOpen {
 		return
 	}
 	top := chatInputY(h) - len(chatChannelOrder)*chatModePitch
@@ -549,12 +555,9 @@ func (c *ChatPanel) DrawOverlay(s *render.Sprites, f *Font, blank *render.Textur
 	}
 }
 
-// Native entry row is six pixels below the old Phoenix approximation.
-func chatInputY(h int) int { return h - 76 }
-
-func ChatInputHit(x, y, height int) bool {
-	return x >= 66 && x < 356 && y >= chatInputY(height) && y < chatInputY(height)+22
-}
+// The closed composer has no hit area. On opening it lines up with both
+// edges of the lower history and leaves a two-pixel seam.
+func chatInputY(h int) int { return h - chatBottom + chatComposerGap }
 
 // Newest lines occupy the bottom row even in a partially filled history.
 // Keep a full font cell and its shadow inside the flat frame; native frames
