@@ -64,16 +64,16 @@ var chatOptionOrder = [...]int{chatFilters, chatHelp}
 func (c *ChatPanel) optionButtonsShown() bool {
 	return c.paneAlpha(1, chatNow()) > 0
 }
-func chatOptionY(h, i int) int { return h - 118 + i*22 }
+func (c *ChatPanel) optionY(h, i int) int {
+	y, height, _ := c.paneGeometry(h, 1)
+	return y + height - (len(chatOptionOrder)-i)*chatOptionSize
+}
 func (c *ChatPanel) optionButton(x, y, h int) int {
 	if !c.optionButtonsShown() || x < 0 || x >= chatOptionSize {
 		return 0
 	}
 	for i := range 2 {
-		if c.Typing && chatOptionOrder[i] == chatHelp {
-			continue
-		}
-		top := chatOptionY(h, i)
+		top := c.optionY(h, i)
 		if y >= top && y < top+chatOptionSize {
 			return chatOptionOrder[i]
 		}
@@ -160,10 +160,7 @@ func (c *ChatPanel) updateOptions(in *platform.Input, h int) bool {
 
 func (c *ChatPanel) drawOptionButtons(s *render.Sprites, f *Font, blank *render.Texture, h int) {
 	for i := range 2 {
-		if c.Typing && chatOptionOrder[i] == chatHelp {
-			continue
-		}
-		y := float32(chatOptionY(h, i))
+		y := float32(c.optionY(h, i))
 		if c.icons != nil {
 			u := float32(i*32) / 128
 			v := float32(1) / 64
@@ -231,20 +228,22 @@ func (c *ChatPanel) drawOptions(s *render.Sprites, f *Font, blank *render.Textur
 	}
 }
 
-const chatScrollX = 4
+const (
+	chatScrollX   = 4
+	chatThumbSize = scrollbarHitW
+)
 
-// Both native controls have a four-pixel inset. The lower control's
-// constructor subtracts two rows from its span to leave room for the icons.
+// Leave room for both auxiliary buttons inside the lower history.
 func (c *ChatPanel) scrollSpan(i, h int) int {
 	if i == 1 {
-		h -= 32
+		h -= len(chatOptionOrder) * chatOptionSize
 	}
 	return h - 8
 }
 
 func (c *ChatPanel) scrollGeometry(i, y, h, limit, offset int) (top, travel, thumb int) {
 	top = y + 4 + scrollbarArrowHitH
-	travel = max(0, c.scrollSpan(i, h)-2*scrollbarArrowHitH-scrollbarThumbH)
+	travel = max(0, c.scrollSpan(i, h)-2*scrollbarArrowHitH-chatThumbSize)
 	thumb = top + travel
 	if limit > 0 {
 		thumb -= (travel*offset + limit/2) / limit
@@ -262,13 +261,18 @@ func (c *ChatPanel) drawScroll(s *render.Sprites, i, y, h, limit int, alpha floa
 		if b.Tex != nil && c.scrollSpan(i, h) >= 2*scrollbarArrowHitH {
 			uv := b.UV[b.state]
 			if b.Disabled {
-				uv = b.UV[StateDisabled]
+				uv = b.UV[StateNormal]
 			}
 			s.Draw(b.Tex, float32(b.X()), float32(b.Y()), float32(b.DrawW), float32(b.DrawH), uv.U0, uv.V0, uv.U1, uv.V1, tint)
 		}
 	}
-	if c.scroll != nil && travel > 0 && limit > 0 {
-		drawScrollbarThumb(s, c.scroll, chatScrollX, thumb, tint)
+	if c.scroll != nil && travel > 0 {
+		// Keep the atlas bevel at its original height around the taller chat thumb.
+		const u0, u1 = .5, .5 + 13.0/128
+		x, y := float32(chatScrollX), float32(thumb)
+		s.Draw(c.scroll, x, y, chatThumbSize, 2, u0, 0, u1, 2.0/64, tint)
+		s.Draw(c.scroll, x, y+2, chatThumbSize, chatThumbSize-4, u0, 2.0/64, u1, 6.0/64, tint)
+		s.Draw(c.scroll, x, y+chatThumbSize-2, chatThumbSize, 2, u0, 6.0/64, u1, 8.0/64, tint)
 	}
 }
 

@@ -382,7 +382,7 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 			}
 		}
 		top, travel, thumb := c.scrollGeometry(i, y, height, limit, p.offset)
-		thumbHeight := scrollbarThumbH
+		thumbHeight := chatThumbSize
 		if limit > 0 && travel > 0 && in.Pressed && in.MouseX >= chatScrollX && in.MouseX < chatScrollX+scrollbarHitW && in.MouseY >= top && in.MouseY < top+travel+thumbHeight {
 			if in.MouseY >= thumb && in.MouseY < thumb+thumbHeight {
 				p.grab, p.dragging = in.MouseY-thumb, true

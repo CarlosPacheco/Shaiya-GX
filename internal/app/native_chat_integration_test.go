@@ -120,14 +120,14 @@ func TestNativeChatAndLoginLogoGL(t *testing.T) {
 		a.updateChatPointer(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, 1024, 768)
 		a.updateChatPointer(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 1024, 768)
 	}
-	clickChat(8, 768-105)
+	clickChat(8, 768-120)
 	if !a.chatUI.OptionsOpen() {
 		t.Fatal("native filter panel did not open")
 	}
 	draw(screenWorld)
 	save("native-chat-filters")
 	a.chatOpen = false
-	clickChat(8, 768-89)
+	clickChat(8, 768-98)
 	draw(screenWorld)
 	save("native-chat-help")
 	a.updateChatPointer(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, 1024, 768)

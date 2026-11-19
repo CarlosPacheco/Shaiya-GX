@@ -210,11 +210,13 @@ The sidebar uses separate tracks with no opaque rail, a 4px left inset, and
 the existing mouse wheel, arrow repeat and track paging. The `0x52c430`
 constructor calls at `0x47045a` and `0x4705a5` use the original 128×64
 `scrollbar.tga`: arrows use the full 16×32 cells with 13×19 hitboxes and
-the thumb uses the 13×8 cell beginning at atlas X64/Y0. The lower scrollbar
-has a two-row-shorter span. The two auxiliary icons come from `chat_icon`
+the chat thumb renders as a 13×13 square using the 13×8 cell at atlas X64/Y0.
+It rests at the bottom with no overflow. The arrows keep their normal artwork
+when there is nothing to scroll. The lower scrollbar reserves room for both
+buttons inside the lower history. The two auxiliary icons come from `chat_icon`
 and the popup checkmarks from the separate 16×16 `chat_check`. The installed
 PNG pixel data for all three matched both local EP4 PS0107 and EP5.4 archives.
-Help remains available in the idle layout, leaving the open composer clear. The recipient row starts
+Both buttons end above the composer and remain independently clickable. The recipient row starts
 at X25 to clear both side controls while whispering. Its 131px popup uses
 15px rows. The composer includes caret navigation, keyboard selection and
 clipboard operations with UTF-8 limits. GLFW receives committed Unicode

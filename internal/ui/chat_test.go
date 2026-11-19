@@ -178,7 +178,7 @@ func TestChatNativeFiltersAndResponsiveLayout(t *testing.T) {
 		c.Update(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, h)
 		c.Update(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, h)
 	}
-	click(8, h-105)
+	click(8, c.optionY(h, 0)+8)
 	x, y, width, _ := c.optionBounds(h)
 	if c.option != chatFilters || x+width > c.ViewportWidth || y != h-296 {
 		t.Fatal("filter panel did not fit the viewport")
@@ -199,7 +199,7 @@ func TestChatNativeFiltersAndResponsiveLayout(t *testing.T) {
 	if len(c.panes[0].lines) != 2 {
 		t.Fatal("re-enabling damage lost stored entries")
 	}
-	click(8, h-89)
+	click(8, c.optionY(h, 1)+8)
 	x, y, _, _ = c.optionBounds(h)
 	click(x+130, y+229)
 	if !c.Transparent || c.backgroundHovered(h) || c.paneAlpha(0, chatNow()) != 1 {
@@ -222,11 +222,18 @@ func TestChatComposerAndIndependentSidebarButtons(t *testing.T) {
 		t.Fatal("composer and history do not share the same right edge")
 	}
 	c.Typing = false
+	for _, rows := range []int{0, 5, 20} {
+		c.Rows[1] = rows
+		lower, height, _ := c.paneGeometry(h, 1)
+		if c.optionY(h, 0) < lower || c.optionY(h, 1)+chatOptionSize != lower+height {
+			t.Fatal("sidebar buttons escaped the lower history", rows)
+		}
+	}
 	press := func(i int) {
-		c.Update(&platform.Input{MouseX: 8, MouseY: chatOptionY(h, i) + 8, Pressed: true, MouseDown: true}, h)
+		c.Update(&platform.Input{MouseX: 8, MouseY: c.optionY(h, i) + 8, Pressed: true, MouseDown: true}, h)
 	}
 	release := func(i int) {
-		c.Update(&platform.Input{MouseX: 8, MouseY: chatOptionY(h, i) + 8, Clicked: true}, h)
+		c.Update(&platform.Input{MouseX: 8, MouseY: c.optionY(h, i) + 8, Clicked: true}, h)
 	}
 	press(0)
 	release(1)
@@ -260,7 +267,7 @@ func TestChatSidebarUsesUnscaledNativeTiles(t *testing.T) {
 	}
 	y, height, _ := c.paneGeometry(768, 1)
 	top, travel, thumb := c.scrollGeometry(1, y, height, 40, 0)
-	if thumb != top+travel || thumb+scrollbarThumbH != c.panes[1].arrows[1].Y() {
+	if thumb != top+travel || thumb+chatThumbSize != c.panes[1].arrows[1].Y() {
 		t.Fatal("thumb track did not end at the lower arrow")
 	}
 	c.Rows = [2]int{}
