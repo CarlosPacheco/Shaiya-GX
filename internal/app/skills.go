@@ -101,7 +101,7 @@ func (a *App) skillBar() [ui.TotalActionSlots]*proto.LearnedSkill {
 	a.loadSkills()
 	var bar [ui.TotalActionSlots]*proto.LearnedSkill
 	for _, q := range a.state.QuickSlots {
-		if q.Bar < ui.ActionBars && q.Slot < ui.ActionSlots && q.Bag == 100 {
+		if q.Bar < ui.ActionPages && q.Slot < ui.ActionSlots && q.Bag == 100 {
 			if k, ok := a.state.Skills[uint8(q.Number)]; ok && q.Number < 256 {
 				cp := k
 				bar[int(q.Bar)*ui.ActionSlots+int(q.Slot)] = &cp
@@ -229,8 +229,8 @@ func (a *App) updateActions(in *platform.Input, w, h int) bool {
 	click, captured := a.actionBar.Update(&pointer, w, h)
 	handled := captured
 	for _, index := range in.Actions {
-		if index >= ui.ActionSlots && index < ui.TotalActionSlots {
-			a.useAction(index)
+		if index >= ui.ActionSlots && a.actionBar.VisibleIndex(index) >= 0 {
+			a.useAction(a.actionBar.VisibleIndex(index))
 			handled = true
 			if a.state == nil {
 				return true
@@ -253,7 +253,7 @@ func (a *App) updateActions(in *platform.Input, w, h int) bool {
 		}
 		if index >= 0 && index < ui.ActionSlots {
 			handled = true
-			a.useAction(index)
+			a.useAction(a.actionBar.VisibleIndex(index))
 			if a.state == nil {
 				return true
 			}
@@ -482,7 +482,7 @@ func (a *App) drawActionBar(w, h int) {
 		}
 	}
 	for _, q := range a.state.QuickSlots {
-		if q.Bar >= ui.ActionBars || q.Slot >= ui.ActionSlots || q.Bag > 5 || q.Number >= 24 {
+		if q.Bar >= ui.ActionPages || q.Slot >= ui.ActionSlots || q.Bag > 5 || q.Number >= 24 {
 			continue
 		}
 		it := a.state.Inventory[[2]uint8{q.Bag, uint8(q.Number)}]
@@ -505,9 +505,9 @@ func (a *App) drawActionBar(w, h int) {
 		}
 	}
 	for i := range slots {
-		slots[i].Pressed = a.skills.pressedUntil[i] > a.clock || a.skills.heldActions&(1<<i) != 0
+		slots[i].Pressed = a.skills.pressedUntil[i] > a.clock
 	}
-	a.actionBar.Draw(a.sprites, a.font, a.white, w, h, slots, false)
+	a.actionBar.Draw(a.sprites, a.font, a.white, w, h, slots, a.skills.heldActions)
 	a.queueActionTooltip(w, h)
 }
 

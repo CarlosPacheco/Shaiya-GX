@@ -111,10 +111,20 @@ func TestShortcutDragAgainstRapture(t *testing.T) {
 	if q, _ := a.shortcutAt(13); q != nil {
 		t.Fatal("drag outside did not delete source")
 	}
+	a.skills.open = true
 	drag(sx+cx+2, sy+cy+2, bx+2, by+2)
+	a.skills.open = false
 	// The same slot can be invoked through the keypad edge without bar-0 fallback.
 	if p := a.actionPacket(13); len(p) == 0 || p[2] != skill.Number {
 		t.Fatal("second bar cast lost learned index", p)
+	}
+	// A fifth-page assignment uses the existing logical page field on the wire.
+	const fifthSlot = 49
+	if !a.saveShortcut(fifthSlot, &proto.QuickSlot{Bag: 100, Number: uint16(skill.Number)}, 0, -1) {
+		t.Fatal("could not save a shortcut on page five")
+	}
+	if p := a.actionPacket(fifthSlot); len(p) == 0 || p[2] != skill.Number {
+		t.Fatal("page five lookup lost learned index", p)
 	}
 	send(proto.LogoutPacket())
 	wait(func() bool { return st.Phase == game.PhaseCharSelect })
@@ -130,7 +140,11 @@ func TestShortcutDragAgainstRapture(t *testing.T) {
 	if !found {
 		t.Fatal("second bar assignment was not restored by Rapture", persisted.QuickSlots)
 	}
-	a.state, a.world = persisted, reconnected
+	a.state = persisted
+	if q, _ := a.shortcutAt(fifthSlot); q == nil || q.Bag != 100 || q.Number != uint16(skill.Number) {
+		t.Fatal("page five assignment was not restored", q)
+	}
+	a.world = reconnected
 	a.worldControls(&platform.Input{MouseX: bx + 2, MouseY: by + 2, RightPressed: true, RightDown: true}, 1024, 768)
 	if q, _ := a.shortcutAt(13); q == nil {
 		t.Fatal("right click cleared shortcut")

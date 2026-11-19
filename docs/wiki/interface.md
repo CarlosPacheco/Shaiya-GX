@@ -6,7 +6,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 |---|---|---|
 | Account | Login, server list, faction, character selection/creation and account dialogs | Complete visual comparison and remaining variants |
 | HUD | Player portrait, resources, mob level colours, elemental target icon, selection dots, buffs/debuffs with applicable skill levels | Remaining target states and secondary indicators |
-| Action bars and skills | Two draggable/rotatable bars, shortcuts, drag and drop, original single-column skill book, confirmed reuse timers and native press feedback | Additional settings and complete state coverage |
+| Action bars and skills | Two draggable/rotatable bars with five shared shortcut pages, drag and drop, original single-column skill book, confirmed reuse timers and native press feedback | Additional settings and complete state coverage |
 | Inventory | Equipment, bags, drag, left-click use, right-click equipment swaps, tooltips without zero sale prices and larger full-body preview | Remaining contexts and special dialogs |
 | Weapon enchantments | Original Weapon.Seff enchantments plus four ITM-selected innate EFT glows, equipped and remote models, both dual bindings | Full visual comparison across animations; see [weapon enchantments](weapon-enchantments.md) |
 | Cloaks | Original PC/CTL/3DC loading, equipment slot 7, all body families, native spring modes and animated attachment pins | Body/ground contact adapter, map wind and guild emblem overlay; full physical parity is not yet claimed |
@@ -34,7 +34,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 - Status: EXP at `(73,132)`, 183×15; resources at `(73,265 + 20*i)`, 68×15, following Phoenix's restored layout.
 - Inventory preview: 136×217 opening at `(54,33)`, 34-degree FOV and height-based framing. Bind-pose arm span no longer shrinks the idle actor. This framing is calibrated against the reference composition; the complete native camera matrix has not been recovered.
 - Inventory gold: native comma grouping (`0x4ce790`/`0x4cb420`) and the `0x4cb4a0` colour table. Boundaries are 1,000 (`80FFFF`), 10,000 (`0080FF`), 100,000 (`00FF40`), 1,000,000 (`FFFF00`), 10,000,000 (`FF8000`), 100,000,000 (`FF00FF`) and 1,000,000,000 (`8000FF`); smaller balances are white. The requested coloured presentation is always enabled.
-- Minimap: native frame, button angles −45/−27/40 degrees and a 150×40 information plate at `(9,157)`. Full-map close uses the shared 22px control.
+- Minimap: native frame, button angles −45/−27/40 degrees and a 150×40 information plate at `(9,157)`. Full-map close uses the shared 22px control. The compact view uses the original normalized zoom factor, 1 by default and bounded to 0.5–1.5. The default GX circle shows 136/512 of each calibrated map axis (EP5.4 initialization at `0x4c6b08` and UV scale at `0x4c7860`).
 - Bottom bar: atlas slot 5 opens Quest (U); slot 6 opens Guild (G). Both reflect their window's open state. Mouse and keyboard share the same toggle path.
 - Guild: `0x4f2960` selects `guild.tga`, not a cropped `guild_master.tga` directory. Column origins are 36/62/184/247/276, with 25/121/61/27/37px hit widths. `0x4ef9d0` draws rows from Y=112 in 23px steps; management controls are at Y=466. The notice uses `guild_message_input.tga` and its original 256×156 visible area.
 - Quest journal: `0x4fedc0` and `0x4ff2c0`; seven rows at a 31px pitch, alarm icons `(26,63)`, names `(46,65)`, and original separators. Abandon is at `(402,453)`, drawn 128×32 with an 80×26 hit area. Native scrollbars cover the list `(227,52,13,237)`, objective `(227,320,13,130)` and description `(488,52,13,397)`.
@@ -130,7 +130,7 @@ Item properties use original SysMsg labels, yellow titles/base bonuses, orange r
 
 K has nine rows in one column: icons at `(46,78+43*i)`, names at `(88,81+43*i)`, requirements at y=97+43*i, and 32px learn buttons at `(278,84+43*i)` with 22px hit regions. Original SysMsg labels and red unmet requirements replace the compact two-column labels. Learning, scrolling, drag/drop, tooltips and skill use share those rows.
 
-GX Server already validates skill reuse by SkillID and consumables by ReqIg. The client now suppresses requests during confirmed reuse, restores skill delays from the login snapshot and shares consumable timers across inventory/shortcut instances. ReqIg groups 1/2/3/4/5/6/10/11 mean 15/20/25/30/60/120/600/2 seconds. Timers start on accepted results. Inventory, K and action bars show the native eight-triangle sweep (`0x4a27d0`) and remaining seconds. Action icons use the original white `0x50FFFFFF` press overlay (`0x4e0160`), including held number/keypad keys; completed timers flash briefly. Flash timing is a presentation setting, not a recovered native constant. Consumable reconnect persistence follows the current GX Server session behavior; the protocol supplies no consumable timer snapshot.
+GX Server already validates skill reuse by SkillID and consumables by ReqIg. The client now suppresses requests during confirmed reuse, restores skill delays from the login snapshot and shares consumable timers across inventory/shortcut instances. ReqIg groups 1/2/3/4/5/6/10/11 mean 15/20/25/30/60/120/600/2 seconds. Timers start on accepted results. Inventory, K and action bars show the native eight-triangle sweep (`0x4a27d0`). Inventory and K display remaining seconds. The action bars draw skill rank or item stack quantity and use the native dark cooldown sweep without a number over it. Action icons use the original white `0x50FFFFFF` press overlay (`0x4e0160`), including held number/keypad keys; completed timers flash briefly. Flash timing is a presentation setting, not a recovered native constant. Consumable reconnect persistence follows the current GX Server session behavior; the protocol supplies no consumable timer snapshot.
 
 Accepted healing potions followed by the authoritative resource snapshot emit green SysMsg 100 for each restored pool, using the actual clamped gain. Ordinary regeneration does not create potion notices. Buff badges display their transmitted level except absent/special level 100.
 
@@ -451,6 +451,13 @@ information are removed.
 Item Mall reads native `Cash.SData`; the server uses SQL ProductList. Purchases,
 gifts and claims use the original workflow without a catalog hash handshake.
 See [catalog format](cash-catalog.md).
+
+Both action bars can display any of the five shared shortcut pages. Use the
+arrows at the numbered end of each bar to change its page. The +/− button at
+the other end of the primary bar shows or hides the secondary bar. The number
+row controls the primary bar and the keypad controls the visible secondary
+bar. The native controls and icon overlay placement come from EP5.4
+`0x4df520`, `0x4e0160`, and `0x4a1810`.
 
 Action-bar bindings also require an explicit drag outside the bar to remove.
 Left clicks activate and right clicks preserve assignments. Inventory, bars and

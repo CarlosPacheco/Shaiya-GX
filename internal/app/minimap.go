@@ -19,7 +19,7 @@ type mapView struct {
 	atlas                  worldMapView
 	image                  *render.Texture
 	loaded, full, dragging bool
-	diameter, zoom         float32
+	smallZoom, zoom        float32
 	u, v                   float32
 	lastX, lastY           int
 	markers                []ui.MapMarker
@@ -147,8 +147,8 @@ func (a *App) mapState() *mapView {
 		return nil
 	}
 	v := &a.wv.mapView
-	if v.diameter == 0 {
-		v.diameter, v.zoom, v.u, v.v = 900, 1, .5, .5
+	if v.smallZoom == 0 {
+		v.smallZoom, v.zoom, v.u, v.v = 1, 1, .5, .5
 	}
 	return v
 }
@@ -261,12 +261,12 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 	}
 	if action.Zoom == 0 && a.wv.world != nil && a.wv.world.WLD != nil {
 		projection := a.mapProjection(v)
-		fx, fy := float32(in.MouseX-x-16)/136, float32(in.MouseY-y-16)/136
+		fx, fy := float32(in.MouseX-x-16)/ui.MinimapImageSize, float32(in.MouseY-y-16)/ui.MinimapImageSize
 		dx, dy := fx-.5, fy-.5
 		if v.click.update(in, dx*dx+dy*dy <= .25) {
 			_, _, ok := projection.Position(a.wv.pos[0], a.wv.pos[2])
 			if ok {
-				a.gmMapTeleport(a.wv.mapID, projection.Window(a.wv.pos[0], a.wv.pos[2], v.diameter), fx, fy)
+				a.gmMapTeleport(a.wv.mapID, projection.MinimapWindow(a.wv.pos[0], a.wv.pos[2], v.smallZoom), fx, fy)
 			}
 		}
 	}
@@ -275,7 +275,7 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 		if in.Wheel != 0 {
 			steps += in.Wheel / 120
 		}
-		v.diameter = min(2000, max(100, v.diameter*float32(math.Pow(1.2, -steps))))
+		v.smallZoom = min(1.5, max(.5, v.smallZoom-.1*float32(steps)))
 	}
 	return panelPointer(in, x, y, ui.MinimapWidth, ui.MinimapHeight)
 }
@@ -331,7 +331,7 @@ func (a *App) drawMinimap(w, h int, full bool) {
 		}
 		return
 	}
-	view := projection.Window(a.wv.pos[0], a.wv.pos[2], v.diameter)
+	view := projection.MinimapWindow(a.wv.pos[0], a.wv.pos[2], v.smallZoom)
 	a.minimap.Caption = time.Now().Format("02/01/2006 15:04:05")
 	a.minimap.Draw(a.sprites, a.font, v.image, a.white, w, h, view, u, z, heading, a.wv.mapID, a.wv.pos[0], a.wv.pos[2], markers)
 }

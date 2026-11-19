@@ -386,6 +386,12 @@ func uiLayoutPath() (string, error) {
 	}
 	return filepath.Join(dir, "shaiya-go", "ui-layout.json"), nil
 }
+
+type savedWindowLayout struct {
+	ui.WindowPosition
+	Hidden bool `json:",omitempty"`
+}
+
 func (a *App) loadUILayout() {
 	if !a.cfg.RememberLayout {
 		return
@@ -398,7 +404,7 @@ func (a *App) loadUILayout() {
 	if errors.Is(err, os.ErrNotExist) {
 		return
 	}
-	values := map[string]ui.WindowPosition{}
+	values := map[string]savedWindowLayout{}
 	if err == nil {
 		err = json.Unmarshal(data, &values)
 	}
@@ -408,8 +414,11 @@ func (a *App) loadUILayout() {
 	}
 	for key, position := range a.layoutPositions() {
 		if saved, ok := values[key]; ok && saved.Valid() {
-			*position = saved
+			*position = saved.WindowPosition
 		}
+	}
+	if a.actionBar != nil {
+		a.actionBar.HideSecond = values["action_bar_1"].Hidden
 	}
 }
 func (a *App) saveUILayout() {
@@ -422,7 +431,12 @@ func (a *App) saveUILayout() {
 	}
 	if err == nil {
 		var data []byte
-		data, err = json.Marshal(a.layoutPositions())
+		positions := a.layoutPositions()
+		values := make(map[string]savedWindowLayout, len(positions))
+		for key, position := range positions {
+			values[key] = savedWindowLayout{WindowPosition: *position, Hidden: key == "action_bar_1" && a.actionBar.HideSecond}
+		}
+		data, err = json.Marshal(values)
 		if err == nil {
 			var file *os.File
 			file, err = os.CreateTemp(filepath.Dir(path), ".ui-layout-*")

@@ -328,7 +328,11 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.playerMenuUI, err = ui.NewPlayerMenu(a); err != nil {
 		return nil, err
 	}
-	if a.actionBar, err = ui.NewActionBar(a); err != nil {
+	var actionBarPlus *render.Texture
+	if _, ok := a.arc.Lookup("interface/main_slot_plus.png"); ok {
+		actionBarPlus, _ = a.Interface("main_slot_plus.png")
+	}
+	if a.actionBar, err = ui.NewActionBar(a, actionBarPlus); err != nil {
 		return nil, err
 	}
 	if a.inventoryUI, err = ui.NewInventory(a); err != nil {

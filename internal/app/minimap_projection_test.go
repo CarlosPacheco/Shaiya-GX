@@ -57,3 +57,17 @@ func TestNonSquareMarkersKeepLongAxisAndCachedSource(t *testing.T) {
 		t.Fatal("long-axis marker lost or cached marker mutated", marks, cached)
 	}
 }
+
+func TestNativeMinimapZoomScalesWithMap(t *testing.T) {
+	for _, p := range []ui.MapProjection{{Width: 1024, Height: 1024}, {Width: 4096, Height: 2048}} {
+		x, z := p.Width/2, p.Height/2
+		view := p.MinimapWindow(x, z, 1)
+		if view.U1-view.U0 != 136.0/512 || view.V1-view.V0 != 136.0/512 {
+			t.Fatalf("unexpected default coverage for %+v: %+v", p, view)
+		}
+		gotX, gotZ, ok := p.Coordinates(view, .5, .5)
+		if !ok || gotX != x || gotZ != z {
+			t.Fatal("minimap click and image projection disagreed", gotX, gotZ, ok)
+		}
+	}
+}

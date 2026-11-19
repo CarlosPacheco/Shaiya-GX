@@ -43,7 +43,7 @@ func TestMapZoomPanAndReleaseDoNotReachWorld(t *testing.T) {
 	}
 	mx, my = ui.MinimapOrigin(1024)
 	controls = a.worldControls(&platform.Input{MouseX: mx + 80, MouseY: my + 80, Wheel: 120}, 1024, 768)
-	if controls.Wheel != 0 || a.wv.mapView.diameter >= 900 {
+	if controls.Wheel != 0 || a.wv.mapView.smallZoom != .9 {
 		t.Fatal("small map wheel zoomed camera instead of imagery")
 	}
 }

@@ -82,7 +82,7 @@ func (a *App) reconcileLocalActions() {
 	}
 	changed := false
 	for _, q := range a.state.QuickSlots {
-		if q.Bar < ui.ActionBars && q.Slot < ui.ActionSlots && a.wv.localActions[int(q.Bar)*ui.ActionSlots+int(q.Slot)] != 0 {
+		if q.Bar < ui.ActionPages && q.Slot < ui.ActionSlots && a.wv.localActions[int(q.Bar)*ui.ActionSlots+int(q.Slot)] != 0 {
 			a.wv.localActions[int(q.Bar)*ui.ActionSlots+int(q.Slot)] = 0
 			changed = true
 		}

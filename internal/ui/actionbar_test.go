@@ -93,3 +93,37 @@ func TestOverlappingBarsUseTheVisibleTopSlot(t *testing.T) {
 		t.Fatal("click passed through the top bar", index)
 	}
 }
+
+func TestActionBarPagingAndSecondBarToggle(t *testing.T) {
+	b := &ActionBar{held: -1, Hover: -1}
+	const w, h = 1024, 768
+	x, y := b.Origin(0, w, h)
+	click := func(x, y int) {
+		t.Helper()
+		if captured, _ := b.Layout(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, w, h); !captured {
+			t.Fatal("button did not capture its press")
+		}
+		if captured, _ := b.Layout(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, w, h); !captured {
+			t.Fatal("button did not capture its release")
+		}
+	}
+	for range 6 {
+		click(x+7, y+33)
+	}
+	if slot := b.SlotAt(x+31, y+11, w, h); slot != 40 || b.VisibleIndex(9) != 49 {
+		t.Fatal("mouse and keyboard should address page five", slot, b.VisibleIndex(9))
+	}
+	click(x+7, y+5)
+	if b.VisibleIndex(0) != 30 || b.VisibleIndex(10) != 10 {
+		t.Fatal("paging the main bar should leave the second bar on its own page")
+	}
+	sx, sy := b.SlotOrigin(10, w, h)
+	click(x+427, y+9)
+	if b.VisibleIndex(10) != -1 || b.Contains(sx, sy, w, h) || b.SlotAt(sx, sy, w, h) != -1 {
+		t.Fatal("hidden bar should ignore pointer and keypad inputs")
+	}
+	click(x+427, y+9)
+	if b.SlotAt(sx, sy, w, h) != 10 {
+		t.Fatal("showing the second bar should restore its previous page")
+	}
+}

@@ -9,6 +9,7 @@ import (
 )
 
 const MinimapWidth, MinimapHeight = 196, 197
+const MinimapImageSize = 136
 
 // Projection follows Phoenix tools/minimap_data.py: raw X grows right, raw
 // Z grows north (up). Image and map sizes supply their actual calibration.
@@ -197,13 +198,13 @@ func (m *Minimap) Draw(s *render.Sprites, f *Font, image, solid *render.Texture,
 	if tex == nil {
 		tex, tint = solid, [4]float32{.03, .04, .05, 1}
 	}
-	s.DrawCircle(tex, float32(x+16), float32(y+16), 136, view.U0, view.V0, view.U1, view.V1, tint)
+	s.DrawCircle(tex, float32(x+16), float32(y+16), MinimapImageSize, view.U0, view.V0, view.U1, view.V1, tint)
 	if image != nil {
-		m.drawMarkers(s, markers, view, float32(x+16), float32(y+16), 136, 12, true)
+		m.drawMarkers(s, markers, view, float32(x+16), float32(y+16), MinimapImageSize, 12, true)
 		px, py, ok := MapPoint(u, v, view)
 		dx, dy := px-.5, py-.5
 		if ok && dx*dx+dy*dy < .24 {
-			s.DrawRotated(m.arrow, float32(x+16)+px*136, float32(y+16)+py*136, 16, 16, heading, 0, 0, 1, 1, white)
+			s.DrawRotated(m.arrow, float32(x+16)+px*MinimapImageSize, float32(y+16)+py*MinimapImageSize, 16, 16, heading, 0, 0, 1, 1, white)
 		}
 	}
 	s.DrawImage(m.frame, float32(x+4), float32(y+4))

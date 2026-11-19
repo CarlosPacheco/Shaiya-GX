@@ -77,6 +77,7 @@ func TestElementBadgesAcrossInventoryAndBarsGL(t *testing.T) {
 	}
 	a.state.QuickSlots = []proto.QuickSlot{{Bar: 0, Slot: 0, Bag: 1, Number: 0}, {Bar: 0, Slot: 1, Bag: 1, Number: 1}, {Bar: 1, Slot: 0, Bag: 0, Number: 5}}
 	a.actionBar.Position[1].Vertical = true
+	a.actionBar.Position[1].Move(50, 100, 1024, 768, 56, 449)
 	for _, index := range []int{0, 1, 10} {
 		x, y := a.actionBar.SlotOrigin(index, 1024, 768)
 		addRegion(x, y)
