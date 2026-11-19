@@ -42,15 +42,20 @@ func TestAuctionPanelsGL(t *testing.T) {
 	defer a.Close()
 	a.state = game.New()
 	a.auction = auctionView{npc: 1, selected: 0, focus: -1, rows: []proto.AuctionRow{{ID: 1, Name: "Healing Potion", Seller: "Merchant", Type: 25, TypeID: 1, Count: 4, Price: 550, Buyout: 1200, Ends: time.Now().Add(time.Hour).Unix(), Active: true}}}
+	a.auction.other = auctionList{selected: 0, rows: []proto.AuctionRow{
+		{ID: 2, Name: "Gold settlement", Gold: 15380, Reason: "sold", Ends: time.Now().Add(24 * time.Hour).Unix()},
+	}}
 	for view := proto.AuctionBrowse; view <= proto.AuctionWatch; view++ {
 		a.auction.view = view
 		for _, modal := range []string{"", "setup", "bid", "buy", "cancel", "details"} {
 			a.auction.modal = modal
-			a.sprites.Begin(1024, 768)
-			a.drawAuction(1024, 768)
-			a.sprites.End()
-			if code := gl.GetError(); code != gl.NO_ERROR {
-				t.Fatalf("view %d modal %q GL error %#x", view, modal, code)
+			for _, width := range []int{404, 1024} {
+				a.sprites.Begin(width, 768)
+				a.drawAuction(width, 768)
+				a.sprites.End()
+				if code := gl.GetError(); code != gl.NO_ERROR {
+					t.Fatalf("width %d view %d modal %q GL error %#x", width, view, modal, code)
+				}
 			}
 		}
 	}

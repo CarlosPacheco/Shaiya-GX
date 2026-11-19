@@ -14,6 +14,12 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
+type auctionList struct {
+	page, selected int
+	rows           []proto.AuctionRow
+	more           bool
+}
+
 type auctionView struct {
 	position                       ui.WindowPosition
 	npc                            uint32
@@ -31,7 +37,10 @@ type auctionView struct {
 	rows                           []proto.AuctionRow
 	more, pending                  bool
 	categoryOpen                   bool
+	keypad                         bool
 	nextRefresh                    float64
+	other                          auctionList
+	requestView                    int
 }
 
 func (a *App) auctionBoard(npc uint32) bool {
@@ -40,11 +49,15 @@ func (a *App) auctionBoard(npc uint32) bool {
 }
 
 func (a *App) requestAuction(req proto.AuctionRequest) {
+	a.sendAuction(req, a.auction.view, a.auction.page)
+}
+
+func (a *App) sendAuction(req proto.AuctionRequest, view, page int) {
 	v := &a.auction
 	if a.world == nil || v.pending || v.npc == 0 {
 		return
 	}
-	req.NPC, req.View, req.Page = v.npc, v.view, v.page
+	req.NPC, req.View, req.Page = v.npc, view, page
 	a.auctionSequence++
 	v.sequence = a.auctionSequence
 	req.Sequence, req.Sort = v.sequence, v.sort
@@ -67,6 +80,7 @@ func (a *App) requestAuction(req proto.AuctionRequest) {
 			return
 		}
 		v.pending = true
+		v.requestView = view
 		v.nextRefresh = a.clock + 10
 	}
 }
@@ -84,26 +98,66 @@ func (a *App) applyAuction(p []byte) {
 		v.nextRefresh = a.clock + 30
 		return
 	}
-	if r.NPC != v.npc || r.View != v.view {
+	if r.NPC != v.npc || r.View != v.requestView {
 		return
 	}
-	var selected int64
-	if row := v.row(); row != nil {
-		selected = row.ID
-	}
-	v.page, v.more, v.rows = r.Page, r.More, r.Rows
-	v.selected = -1
-	for i, row := range v.rows {
-		if row.ID == selected {
-			v.selected = i
-			break
+	if r.View != v.view {
+		v.other.replace(r)
+		if r.Error != "" {
+			v.message = r.Error
 		}
+		return
 	}
+	list := v.list()
+	list.replace(r)
+	v.setList(list)
 	v.message = r.Message
 	if r.Error != "" {
 		v.message = r.Error
+		return
 	}
+	if other := v.otherView(); other >= 0 {
+		a.sendAuction(proto.AuctionRequest{}, other, v.other.page)
+	}
+}
 
+func (l *auctionList) replace(r proto.AuctionReply) {
+	var id int64
+	if l.selected >= 0 && l.selected < len(l.rows) {
+		id = l.rows[l.selected].ID
+	}
+	l.page, l.more, l.rows, l.selected = r.Page, r.More, r.Rows, -1
+	for i, row := range l.rows {
+		if id != 0 && row.ID == id {
+			l.selected = i
+			break
+		}
+	}
+}
+
+func (v *auctionView) list() auctionList {
+	return auctionList{page: v.page, selected: v.selected, rows: v.rows, more: v.more}
+}
+
+func (v *auctionView) setList(l auctionList) {
+	v.page, v.selected, v.rows, v.more = l.page, l.selected, l.rows, l.more
+}
+
+func (v *auctionView) otherView() int {
+	first := auctionPair(v.view)
+	if first < 0 {
+		return -1
+	}
+	return first + (first + 1 - v.view)
+}
+
+func (v *auctionView) selectPane(view int) {
+	if view != v.view {
+		list := v.list()
+		v.view = view
+		v.setList(v.other)
+		v.other = list
+	}
 }
 
 func (a *App) beginAuction(npc uint32) {
@@ -140,7 +194,20 @@ type auctionButton struct {
 	action  string
 }
 
-func (v *auctionView) actions() []auctionButton {
+func (v *auctionView) actions(width int) []auctionButton {
+	buttons := v.actionList()
+	end := buttons[len(buttons)-1]
+	if edge := end.x + end.w - 14; edge > width-28 {
+		for i := range buttons {
+			b := &buttons[i]
+			b.x = 14 + (b.x-14)*(width-28)/edge
+			b.w = b.w * (width - 28) / edge
+		}
+	}
+	return buttons
+}
+
+func (v *auctionView) actionList() []auctionButton {
 	switch v.view {
 	case proto.AuctionBrowse:
 		return []auctionButton{{"Bid", 14, 351, 62, "bid"}, {"Buy Now", 82, 351, 82, "buy"}, {"Watch", 170, 351, 70, "watch"}, {"Item Search", 246, 351, 102, "exact"}, {"Details", 354, 351, 70, "details"}}
@@ -188,6 +255,7 @@ func (a *App) auctionAction(action string) {
 	r := v.row()
 	switch action {
 	case "setup":
+		v.keypad = false
 		v.modal, v.focus = "setup", -1
 		v.fields = [3]string{"", "500", "1000"}
 		v.message = ""
@@ -206,7 +274,7 @@ func (a *App) auctionAction(action string) {
 		v.query, v.minLevel, v.maxLevel = "", "", ""
 		a.requestAuction(proto.AuctionRequest{})
 	case "details", "bid", "buy", "cancel":
-		v.modal, v.focus = action, -1
+		v.modal, v.focus, v.keypad = action, -1, false
 		if action == "bid" {
 			v.fields[0] = strconv.FormatUint(uint64(r.Price)*110/100, 10)
 			v.focus = 0
@@ -275,6 +343,9 @@ func (a *App) auctionSource() bool {
 }
 
 func editAuctionField(text *string, in *platform.Input, numeric bool) {
+	if in.HasKey(platform.KeyDelete) {
+		*text = ""
+	}
 	if in.HasKey(platform.KeyBackspace) && len(*text) > 0 {
 		_, n := utf8.DecodeLastRuneInString(*text)
 		*text = (*text)[:len(*text)-n]
@@ -316,11 +387,15 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 	}
 	x, y, width := a.auctionPanel(w, h)
 	rx, ry := in.MouseX-x, in.MouseY-y
-	if v.focus >= 0 {
+	if v.focus >= 0 && !v.pending {
 		if v.modal == "setup" || v.modal == "bid" {
 			editAuctionField(&v.fields[v.focus], in, true)
 			if in.HasKey(platform.KeyEnter) {
-				a.confirmAuction()
+				if v.keypad {
+					v.keypad = false
+				} else {
+					a.confirmAuction()
+				}
 			}
 		} else {
 			switch v.focus {
@@ -339,7 +414,11 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 		}
 	}
 	if in.HasKey(platform.KeyEscape) && v.modal != "" {
-		v.modal, v.focus = "", -1
+		if v.keypad {
+			v.keypad = false
+		} else {
+			v.modal, v.focus = "", -1
+		}
 		return true
 	}
 	inside := rx >= 0 && ry >= 0 && rx < width && ry < 418
@@ -352,6 +431,11 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if v.pending {
+		return true
+	}
+	if v.modal == "" && auctionPair(v.view) >= 0 && ry >= 81 &&
+		(in.Pressed || in.Wheel != 0) {
+		a.updateAuctionPanes(rx, ry, width, in.Wheel)
 		return true
 	}
 	if in.Wheel != 0 && v.modal == "" && ry >= 136 && ry < 342 {
@@ -372,8 +456,8 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 	}
 	if v.categoryOpen {
 		v.categoryOpen = false
-		if hit(14, 111, 142, len(proto.AuctionCategories)*25) {
-			v.category = (ry - 111) / 25
+		if hit(14, 111, 142, len(proto.AuctionCategories)*26) {
+			v.category = (ry - 111) / 26
 			v.page, v.selected = 0, -1
 			v.exactType = 0
 			a.requestAuction(proto.AuctionRequest{})
@@ -381,17 +465,23 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if v.modal != "" {
+		if v.keypad {
+			a.updateAuctionKeypad(rx, ry, width)
+			return true
+		}
 		switch {
 		case hit(width-52, 10, 38, 26):
 			v.modal, v.focus = "", -1
 		case hit(15, 300, 118, 28):
 			a.confirmAuction()
-		case v.modal == "setup" && hit(15, 140, width-30, 105):
-			v.focus = min(2, (ry-140)/35)
-		case v.modal == "setup" && hit(15, 247, 210, 28):
-			v.duration = (v.duration + 1) % 4
-		case v.modal == "bid" && hit(15, 150, width-30, 28):
+		case v.modal == "setup" && hit(15, 140, width-30, 96) && (ry-140)%35 < 26:
+			v.focus = (ry - 140) / 35
+			v.keypad = rx >= width-77
+		case v.modal == "setup" && hit(15, 247, 244, 26):
+			v.duration = uint8((rx - 15) / 61)
+		case v.modal == "bid" && hit(15, 150, width-30, 26):
 			v.focus = 0
+			v.keypad = rx >= width-77
 		}
 		return true
 	}
@@ -405,42 +495,36 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 		}
 	case hit(14, 48, width-28, 28):
 		idx := min(3, (rx-14)*4/(width-28))
-		v.view = []int{proto.AuctionBrowse, proto.AuctionSelling, proto.AuctionItems, proto.AuctionWatch}[idx]
-		v.page, v.selected = 0, -1
-		a.requestAuction(proto.AuctionRequest{})
-	case v.view == proto.AuctionBrowse && hit(14, 83, 116, 26):
-		v.categoryOpen = true
-	case v.view == proto.AuctionBrowse && hit(136, 83, width-370, 26):
-		v.focus = 0
-	case v.view == proto.AuctionBrowse && hit(width-228, 83, 64, 26):
-		v.focus = 1
-	case v.view == proto.AuctionBrowse && hit(width-158, 83, 64, 26):
-		v.focus = 2
-	case v.view == proto.AuctionBrowse && hit(width-88, 83, 74, 26):
-		v.page, v.selected = 0, -1
-		v.exactType = 0
-		a.requestAuction(proto.AuctionRequest{})
-	case (v.view == proto.AuctionSelling || v.view == proto.AuctionBidding || v.view == proto.AuctionItems || v.view == proto.AuctionGold) && hit(14, 83, 240, 26):
-		switch v.view {
-		case proto.AuctionSelling:
-			v.view = proto.AuctionBidding
-		case proto.AuctionBidding:
-			v.view = proto.AuctionSelling
-		case proto.AuctionItems:
-			v.view = proto.AuctionGold
-		case proto.AuctionGold:
-			v.view = proto.AuctionItems
+		next := [...]int{proto.AuctionBrowse, proto.AuctionSelling, proto.AuctionItems, proto.AuctionWatch}[idx]
+		if next == v.view || next == auctionPair(v.view) {
+			return true
 		}
-		v.page, v.selected = 0, -1
+		v.view, v.other = next, auctionList{selected: -1}
+		v.setList(auctionList{selected: -1})
+		v.sort = 0
 		a.requestAuction(proto.AuctionRequest{})
+	case v.view == proto.AuctionBrowse && ry >= 83 && ry < 109:
+		for _, field := range auctionBrowseControls(width) {
+			if !hit(field.x, 83, field.width, 26) {
+				continue
+			}
+			switch field.id {
+			case -2:
+				v.categoryOpen = true
+			case -1:
+				v.page, v.selected, v.exactType = 0, -1, 0
+				a.requestAuction(proto.AuctionRequest{})
+			default:
+				v.focus = field.id
+			}
+			break
+		}
 	case v.view != proto.AuctionItems && v.view != proto.AuctionGold && hit(14, 113, width-28, 23):
 		sort := 1
-		if rx >= width/2+150 {
-			sort = 4
-		} else if rx >= width/2+52 {
-			sort = 3
-		} else if rx >= width/2 {
-			sort = 2
+		for i, column := range auctionColumns(width) {
+			if rx >= column.x {
+				sort = i + 1
+			}
 		}
 		if v.sort == sort {
 			sort = -sort
@@ -461,7 +545,7 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 		v.selected = -1
 		a.requestAuction(proto.AuctionRequest{})
 	default:
-		for _, b := range v.actions() {
+		for _, b := range v.actions(width) {
 			if hit(b.x, b.y, b.w, 26) {
 				a.auctionAction(b.action)
 				break
@@ -514,24 +598,36 @@ func (a *App) drawAuction(w, h int) {
 			}
 			names := []string{"Quantity", "Starting Price", "Buyout Price"}
 			for i, name := range names {
-				button(name+": "+v.fields[i], 15, 140+i*35, width-30, v.focus == i)
+				fy := 140 + i*35
+				button(name+": "+v.fields[i], 15, fy, width-99, v.focus == i)
+				a.drawAuctionInputButton(x, y, width, fy, button)
 			}
-			button(fmt.Sprintf("Duration: %d hours", proto.AuctionHours(v.duration)), 15, 247, 210, false)
+			for i := range 4 {
+				button(fmt.Sprintf("%dh", proto.AuctionHours(uint8(i))), 15+61*i, 247, 57, int(v.duration) == i)
+			}
 			start, _ := strconv.ParseUint(v.fields[1], 10, 32)
-			text(fmt.Sprintf("Deposit: %d gold", proto.AuctionDeposit(uint32(start), v.duration)), 240, 251, width-254)
+			text(fmt.Sprintf("Deposit: %d gold", proto.AuctionDeposit(uint32(start), v.duration)), 265, 251, width-279)
 		} else if r := v.row(); r != nil {
 			text(fmt.Sprintf("%s ×%d", r.Name, r.Count), 15, 96, width-30)
 			text(fmt.Sprintf("Current: %d gold    Buyout: %d gold", r.Price, r.Buyout), 15, 123, width-30)
 			if v.modal == "bid" {
 				text(fmt.Sprintf("Minimum bid: %d gold", uint64(r.Price)*110/100), 15, 187, width-30)
-				button("Bid: "+v.fields[0], 15, 150, width-30, true)
+				button("Bid: "+v.fields[0], 15, 150, width-99, true)
+				a.drawAuctionInputButton(x, y, width, 150, button)
 			}
 			if v.modal == "cancel" {
 				text("The item will move to Ended Auctions.", 15, 158, width-30)
 			}
 			if v.modal == "details" {
 				text("Seller: "+r.Seller, 15, 156, width-30)
-				if d := a.itemsItem(r.Type, r.TypeID); d != nil {
+				if r.Reason != "" {
+					text("Result: "+r.Reason, 15, 178, width-30)
+					text("Claim deadline: "+time.Unix(r.Ends, 0).Format(time.DateTime), 15, 200, width-30)
+				}
+				if r.Gold > 0 {
+					text(fmt.Sprintf("Gold to collect: %d", r.Gold), 15, 222, width-30)
+				}
+				if d := a.itemsItem(r.Type, r.TypeID); r.Gold == 0 && d != nil {
 					a.drawItemDetails(d, &proto.InventoryItem{Type: r.Type, TypeID: r.TypeID, Count: r.Count, Quality: r.Quality, Gems: r.Gems, Craft: r.Craft}, r.Count, x+150, y+143, w, h, "")
 				}
 			}
@@ -544,8 +640,6 @@ func (a *App) drawAuction(w, h int) {
 		switch v.modal {
 		case "setup":
 			file = "auction_commission_button"
-		case "bid":
-			file, cell, artW, artH = "auction_tender_enter_button", 64, 47, 19
 		case "details":
 			file, col = "auction_commission_button", 1
 		}
@@ -553,6 +647,9 @@ func (a *App) drawAuction(w, h int) {
 			button(label, 15, 300, 118, false)
 		}
 		text(v.message, 15, 385, width-30)
+		if v.keypad {
+			a.drawAuctionKeypad(x, y, width, button)
+		}
 		return
 	}
 	tabs := []string{"Search Items", "Auction Progress", "Ended Auctions", "Interest List"}
@@ -577,7 +674,6 @@ func (a *App) drawAuction(w, h int) {
 		}
 	}
 	if v.view == proto.AuctionBrowse {
-		button(proto.AuctionCategories[v.category], 14, 83, 116, false)
 		query := v.query
 		if query == "" && v.focus != 0 {
 			query = "Item or seller"
@@ -585,24 +681,25 @@ func (a *App) drawAuction(w, h int) {
 				query = "Exact item"
 			}
 		}
-		button(query, 136, 83, width-370, v.focus == 0)
-		button("Min "+v.minLevel, width-228, 83, 64, v.focus == 1)
-		button("Max "+v.maxLevel, width-158, 83, 64, v.focus == 2)
-		if !a.auctionSpriteButton("auction_buy_search_botton", 0, a.auctionButtonState(x+width-88, y+83, 74, true), 64, 32, 47, 19, x+width-88, y+83, 74) {
-			button("Search", width-88, 83, 74, false)
+		labels := [...]string{proto.AuctionCategories[v.category], query, "Min " + v.minLevel, "Max " + v.maxLevel, "Search"}
+		for i, field := range auctionBrowseControls(width) {
+			button(labels[i], field.x, 83, field.width, field.id >= 0 && v.focus == field.id)
 		}
-	} else if selected == 1 || selected == 2 {
-		name := map[int]string{proto.AuctionSelling: "Selling", proto.AuctionBidding: "Bidding", proto.AuctionItems: "Item Claims", proto.AuctionGold: "Gold Claims"}[v.view]
-		button(name+"  /  Switch", 14, 83, 240, true)
 	}
-	text("Item", 16, 116, width/3)
-	text("Level", width/2, 116, 46)
-	heading := "Time left"
-	if v.view == proto.AuctionItems || v.view == proto.AuctionGold {
-		heading = "Claim by"
+	if auctionPair(v.view) >= 0 {
+		a.drawAuctionPanes(x, y, width, text)
+		return
 	}
-	text(heading, width/2+52, 116, 90)
-	text("Gold / Result", width/2+150, 116, width/2-165)
+	columns := auctionColumns(width)
+	for i, column := range columns {
+		label := column.label
+		if v.sort == i+1 {
+			label += " ↑"
+		} else if v.sort == -(i + 1) {
+			label += " ↓"
+		}
+		text(label, column.x, 116, column.width)
+	}
 	for i, r := range v.rows {
 		ry := 138 + i*26
 		color := auctionFieldColor
@@ -613,25 +710,21 @@ func (a *App) drawAuction(w, h int) {
 		if d := a.itemsItem(r.Type, r.TypeID); d != nil {
 			a.drawItemIcon(d, x+16, y+ry+1, 22, auctionTextColor)
 		}
-		text(fmt.Sprintf("%s ×%d", r.Name, r.Count), 44, ry+4, width/2-49)
-		text(strconv.Itoa(int(r.Level)), width/2, ry+4, 46)
-		remaining := auctionRemaining(r.Ends)
-		if heading == "Claim by" && remaining == "Ended" {
-			remaining = "Overdue"
-		}
-		text(remaining, width/2+52, ry+4, 90)
+		text(fmt.Sprintf("%s ×%d", r.Name, r.Count), 44, ry+4, columns[0].width-28)
+		text(strconv.Itoa(int(r.Level)), columns[1].x, ry+4, columns[1].width)
+		text(auctionRemaining(r.Ends), columns[2].x, ry+4, columns[2].width)
 		value := strconv.FormatUint(uint64(r.Price), 10)
 		if r.Gold > 0 {
 			value = fmt.Sprintf("%d · %s", r.Gold, r.Reason)
 		} else if r.Reason != "" {
 			value = r.Reason
 		}
-		text(value, width/2+150, ry+4, width/2-165)
+		text(value, columns[3].x, ry+4, columns[3].width)
 	}
 	if len(v.rows) == 0 {
 		text("No listings or results in this view.", 16, 155, width-32)
 	}
-	for _, b := range v.actions() {
+	for _, b := range v.actions(width) {
 		if b.x+b.w > width-12 {
 			continue
 		}
@@ -659,7 +752,7 @@ func (a *App) drawAuction(w, h int) {
 	button("Next", width-62, 382, 48, false)
 	if v.categoryOpen {
 		for i, name := range proto.AuctionCategories {
-			rowY := 111 + i*25
+			rowY := 111 + i*26
 			state := a.auctionButtonState(x+14, y+rowY, 142, true)
 			if i == v.category {
 				state = 1
@@ -668,5 +761,95 @@ func (a *App) drawAuction(w, h int) {
 				button(name, 14, rowY, 142, i == v.category)
 			}
 		}
+	}
+}
+
+type auctionBrowseControl struct {
+	id, x, width int
+}
+
+func auctionBrowseControls(width int) [5]auctionBrowseControl {
+	category := min(124, width/4)
+	level := min(64, width/8)
+	search := 64
+	query := width - 28 - category - 2*level - search - 24
+	return [5]auctionBrowseControl{
+		{-2, 14, category},
+		{0, 20 + category, query},
+		{1, width - 90 - 2*level, level},
+		{2, width - 84 - level, level},
+		{-1, width - 78, search},
+	}
+}
+
+type auctionColumn struct {
+	label    string
+	x, width int
+}
+
+func auctionColumns(width int) [4]auctionColumn {
+	levelX := width / 2
+	endsX := levelX + 54
+	priceX := endsX + 72
+	return [4]auctionColumn{
+		{"Item", 16, levelX - 22},
+		{"Level", levelX, 50},
+		{"Time left", endsX, 68},
+		{"Gold", priceX, width - priceX - 16},
+	}
+}
+
+func auctionPair(view int) int {
+	switch view {
+	case proto.AuctionSelling, proto.AuctionBidding:
+		return proto.AuctionSelling
+	case proto.AuctionItems, proto.AuctionGold:
+		return proto.AuctionItems
+	default:
+		return -1
+	}
+}
+
+var auctionKeys = [...]string{"7", "8", "9", "4", "5", "6", "1", "2", "3", "Clear", "0", "⌫"}
+
+func (a *App) updateAuctionKeypad(rx, ry, width int) {
+	v := &a.auction
+	kx, ky := width-242, 98
+	if rx < kx || rx >= kx+216 || ry < ky || ry >= ky+178 {
+		v.keypad = false
+		return
+	}
+	i := (ry-ky)/36*3 + (rx-kx)/72
+	field := &v.fields[v.focus]
+	switch {
+	case i >= len(auctionKeys):
+		v.keypad = false
+	case i == 9:
+		*field = ""
+	case i == 11:
+		if len(*field) > 0 {
+			*field = (*field)[:len(*field)-1]
+		}
+	default:
+		if len(*field) < 10 {
+			*field += auctionKeys[i]
+		}
+	}
+}
+
+func (a *App) drawAuctionKeypad(x, y, width int, button func(string, int, int, int, bool)) {
+	kx, ky := width-242, 98
+	a.auctionBox(x+kx-4, y+ky-32, 224, 210, auctionPanelColor)
+	button(a.auction.fields[a.auction.focus], kx, ky-28, 216, true)
+	for i, key := range auctionKeys {
+		button(key, kx+(i%3)*72, ky+(i/3)*36, 68, false)
+	}
+	button("Done", kx, ky+144, 216, false)
+}
+
+func (a *App) drawAuctionInputButton(x, y, width, row int, button func(string, int, int, int, bool)) {
+	rx := width - 77
+	if !a.auctionSpriteButton("auction_tender_enter_button", 0, a.auctionButtonState(x+rx, y+row, 62, true), 64, 32, 47, 19, x+rx, y+row, 62) {
+		button("Input", rx, row, 62, false)
 	}
 }

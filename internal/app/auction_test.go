@@ -58,3 +58,76 @@ func TestAuctionAcceptsExplicitInventoryDrag(t *testing.T) {
 		t.Fatal("auction did not accept inventory drop", a.auction.source)
 	}
 }
+
+func TestAuctionActionsFitAndKeypadEditsOnlyItsField(t *testing.T) {
+	v := auctionView{}
+	for view := proto.AuctionBrowse; view <= proto.AuctionWatch; view++ {
+		v.view = view
+		for _, width := range []int{380, 504, 710} {
+			right := 0
+			for _, button := range v.actions(width) {
+				if button.x < right || button.x+button.w > width-14 {
+					t.Fatalf("view %d width %d has overlapping or clipped action %s", view, width, button.action)
+				}
+				right = button.x + button.w
+			}
+		}
+	}
+	a := inputApp()
+	a.auction = auctionView{focus: 1, keypad: true, fields: [3]string{"2", "500", "900"}}
+	const width = 504
+	x := width - 242
+	a.updateAuctionKeypad(x+4, 98+108, width)  // Clear
+	a.updateAuctionKeypad(x+4, 98+36, width)   // 4
+	a.updateAuctionKeypad(x+76, 98+108, width) // 0
+	a.updateAuctionKeypad(x+4, 98+144, width)  // Done
+	if a.auction.keypad || a.auction.fields != [3]string{"2", "40", "900"} {
+		t.Fatal(a.auction.fields, a.auction.keypad)
+	}
+}
+
+func TestAuctionPairedListsKeepIndependentSelectionAndPage(t *testing.T) {
+	a := inputApp()
+	a.auction = auctionView{
+		npc: 42, view: proto.AuctionItems, selected: 0, page: 1,
+		rows:        []proto.AuctionRow{{ID: 101}, {ID: 102}},
+		other:       auctionList{selected: -1},
+		pending:     true,
+		sequence:    4,
+		requestView: proto.AuctionGold,
+	}
+	a.applyAuction(proto.AuctionPacket(proto.AuctionReply{
+		Sequence: 4, NPC: 42, View: proto.AuctionGold, More: true,
+		Rows: []proto.AuctionRow{{ID: 201}, {ID: 202}},
+	}))
+	v := &a.auction
+	if v.view != proto.AuctionItems || v.row().ID != 101 || v.page != 1 {
+		t.Fatal("gold reply changed the selected item claim or its page")
+	}
+	panes := auctionPanes(proto.AuctionItems, 380)
+	left, right := panes[0], panes[1]
+	a.updateAuctionPanes(right.x+2, auctionPaneRowY+auctionPaneRowHeight, 380, 0)
+	if v.view != proto.AuctionGold || v.row().ID != 202 || !v.more {
+		t.Fatal("click did not select the gold claim")
+	}
+	a.updateAuctionPanes(right.x+right.width-2, 365, 380, 0)
+	if v.page != 1 || v.row() != nil {
+		t.Fatal("next page did not clear the gold selection")
+	}
+	a.updateAuctionPanes(left.x+2, auctionPaneRowY, 380, 0)
+	if v.view != proto.AuctionItems || v.page != 1 || v.row().ID != 101 {
+		t.Fatal("gold pagination changed the item claims")
+	}
+}
+
+func TestAuctionBrowseControlsFitNarrowPanel(t *testing.T) {
+	for _, width := range []int{380, 504, 710} {
+		right := 14
+		for _, field := range auctionBrowseControls(width) {
+			if field.x < right || field.width < 40 || field.x+field.width > width-14 {
+				t.Fatalf("width %d has clipped or overlapping control %+v", width, field)
+			}
+			right = field.x + field.width
+		}
+	}
+}

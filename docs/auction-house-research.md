@@ -110,3 +110,36 @@ Index active state/deadline, seller, current bidder, category and exact item key
 5. Test no bid, many bids, a returning bidder, buyout with an active bid, timed settlement, cancel after bid, expired/current boundary, full bags, wallet cap, partial bulk claim, retry after disconnect, bound items, modified item attributes and stack splitting. Run a large populated market and verify indexed query plans, expiry batch bounds and restart recovery.
 
 The statically recovered behaviors are sufficient to design the market and UI. The unverified result codes, purge behavior, category/filter mapping and live layout details should be tracked as specific parity checks. Preserve GX economic guarantees across those choices.
+
+## Client control follow-up
+
+The EP5.4 executable loads Search at `0x458935` with a 1024 × 1024 atlas,
+Bid at `0x45BFBC` with 256 × 256, Setup at `0x45CA2E` with 256 × 256,
+and Details at `0x45CFD6` with 256 × 512. These dimensions describe
+textures or native window bounds at the load sites. The art uses separate
+button state rows and transparent padding. The Input control has its own
+texture, used from both Bid (`0x45C352`) and Setup (`0x45CB6A`,
+`0x45CC6F`).
+
+GX separates numeric entry from submission, offers the four durations
+directly and uses separate visible selectors for the paired market lists.
+Action controls share their fitted rectangles between drawing and input,
+including at widths where the inventory reduces the available space.
+Native list state, geometry and split-pane behavior still require further
+comparison. The GX layout is visually distinct.
+
+## EP5.4 market screens and GX list behavior
+
+The original executable references the Progress, Ended and Interest atlases
+at `0x4589CA`, `0x458A92` and `0x458B5E`. Progress has separate action
+references at `0x453184` and `0x45329B`. Ended has four at `0x4536E4`,
+`0x4537FF`, `0x453891` and `0x453945`, consistent with the two independent
+claim queues and the individual and bulk actions. Cross-checking the extracted
+EP5.4 manifest confirms separate backgrounds and state atlases for each screen.
+
+GX displays Selling and Bidding together, and Item Claims and Gold Claims
+together. Each list keeps its own selection and page. Requests still use the
+existing view and sequence fields; selecting or paging one side does not
+change the other side. Search keeps the GX category, name or seller query,
+and level-range filters visible at narrow widths. Fine-grained legacy
+category selectors and live screen measurements remain unverified.
