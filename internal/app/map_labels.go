@@ -94,6 +94,6 @@ func (a *App) drawMapLabels(w, h int) {
 // TipBox panel 0x50ff10 at (x, y-0x12), text width + 3 by 13, diffuse
 // 0xcd1d1f24, with the text at (x+5, y-0xb).
 func (a *App) drawHoverLabel(x, y int, text string) {
-	a.drawNewsPanel(x, y-0x12, a.font.Width(text)+3, 0xd)
+	a.drawNewsPanel(x-2, y-0x14, a.font.Width(text)+7, 0x11)
 	a.font.Draw(a.sprites, text, x+5, y-0xb, white, 0)
 }

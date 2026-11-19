@@ -87,6 +87,7 @@ type App struct {
 	guildDirectoryUI                    *ui.GuildDirectory
 	guildHouseUI                        *ui.GuildHouseWindow
 	npcTalkUI                           *ui.NPCTalk
+	tipTexture                          *render.Texture
 	guildPointUI                        *ui.GuildPointWindow
 	house                               houseView
 	guild                               guildView

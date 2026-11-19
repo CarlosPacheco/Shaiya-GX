@@ -101,7 +101,11 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 			}
 		}
 	case proto.GXServerNotice:
-		a.addSystemText(8, 0, s.LastServerNotice)
+		if a.msg.Get(356) != "" {
+			a.systemMessage(8, 356, map[string]string{"b": s.LastServerNotice}) // "[Notice] <b>"
+		} else {
+			a.addSystemText(8, 0, s.LastServerNotice)
+		}
 	case proto.RelicNotice:
 		v := s.LastRelicNotice
 		if id, ok := relicNoticeMessage(v.OldOwner, v.NewOwner, s.Faction.Faction); ok && a.assets != nil {

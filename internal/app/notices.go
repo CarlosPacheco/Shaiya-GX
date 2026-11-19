@@ -1,5 +1,10 @@
 package app
 
+import (
+	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
+)
+
 type screenNotice struct {
 	text  string
 	style uint8
@@ -42,7 +47,9 @@ func (a *App) drawScreenNotices(w, h int) {
 	for i, n := range rows {
 		width := f.Width(n.text)
 		x, y := w/2-width/2, h/2-150+i*17
-		a.drawNewsPanel(x-6, y-6, width/2*2+8, 12)
+		// The native box (x-6, y-6, width+8, 12) is two pixels larger here so the
+		// 15px text sits inside it.
+		a.drawNewsPanel(x-8, y-8, width/2*2+12, 16)
 		color := white
 		if n.style == 30 || n.style == 32 {
 			color = [4]float32{1, 128.0 / 255, 1, 1}
@@ -64,7 +71,7 @@ func (a *App) drawNewsPanel(x, y, width, height int) {
 	if a.assets == nil {
 		return
 	}
-	frame := a.assets.Texture("interface/tipbox.png")
+	frame := a.tipFrame()
 	if frame == nil {
 		return
 	}
@@ -80,4 +87,29 @@ func (a *App) drawNewsPanel(x, y, width, height int) {
 	draw(x, y+height+8, 4, 4, 0, .25, .25, .5)
 	draw(x+4, y+height+8, width, 4, .75, 0, 1, .25)
 	draw(x+width+4, y+height+8, 4, 4, .5, .25, .75, .5)
+}
+
+// tipFrame is TipBox.TGA with the colour of its transparent texels set to the
+// border colour: the art stores white there, which bilinear sampling would blend
+// into the panel edges as a white fringe.
+func (a *App) tipFrame() *render.Texture {
+	if a.tipTexture != nil || a.arc == nil {
+		return a.tipTexture
+	}
+	b, err := a.arc.ReadFile("interface/tipbox.png")
+	if err != nil {
+		return nil
+	}
+	t, err := img.DecodeResource("interface/tipbox.png", b)
+	if err != nil || t.RGBA == nil {
+		return nil
+	}
+	pix := t.RGBA.Pix
+	for i := 0; i+3 < len(pix); i += 4 {
+		if pix[i+3] == 0 {
+			pix[i], pix[i+1], pix[i+2] = 26, 26, 26
+		}
+	}
+	a.tipTexture = render.Upload(t)
+	return a.tipTexture
 }
