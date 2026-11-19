@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"strconv"
 	"strings"
 
@@ -36,7 +37,7 @@ func (a *App) botsCommand(text string) bool {
 				return true
 			}
 			a.wv.clearBots()
-			a.wv.bots = bots.New(a.arc, a.wv.world, a.wv.pos, a.wv.facing, count)
+			a.wv.bots = bots.New(a.arc, a.wv.world, a.wv.pos, a.wv.facing, count, rand.Uint64())
 			a.questMessage(fmt.Sprintf("Loading %d local PvP bots.", count))
 			return true
 		}

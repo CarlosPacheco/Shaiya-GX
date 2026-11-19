@@ -461,3 +461,32 @@ Tests compare the affine product with the full product, including fallback
 inputs, and compare real character, monster and vehicle palettes with an
 independent full-product reference. OpenGL checks cover main and reflected
 views, shadows, cloth and nameplates.
+
+## Player crowd rendering with native cloth
+
+Character rendering sends the world and camera matrices once per actor and
+reuses a palette across consecutive parts with identical inverse binds.
+Visible player and bot capes are prepared on up to four CPU threads in large
+crowds. This uses the same per-actor solver and substeps. OpenGL mesh uploads
+and ordered draws remain on the render thread.
+
+The seeded 300-bot fixture used map 1 at 1280×720, with weapons and cloth
+equipped and skill effects disabled. Three alternating runs of 240 frames
+per version returned the following medians of per-run statistics.
+
+| Version | Submission p50 | Submission p99 | Whole loop | Draws/frame |
+|---|---:|---:|---:|---:|
+| Baseline | 34.566 ms | 37.272 ms | 34.738 ms | 3,293 |
+| Shared world matrices and palette uploads | 34.055 ms | 41.785 ms | 34.509 ms | 3,293 |
+| Shared uploads and parallel cloth | 20.322 ms | 22.983 ms | 20.529 ms | 3,293 |
+
+In the separate baseline CPU profile, cloth preparation accounted for 51.1%
+of samples and the local bot simulation accounted for 1.2%. The parallel
+pass improves frame submission time. It retains the cloth simulation work.
+Precomputing additional cloth coefficients did not consistently improve
+submission in a follow-up comparison and was discarded.
+
+Phoenix groups bot instances by preset and shared pose and batches the
+mesh draws. GX retains each actor's animation clock and cloth state.
+The remaining draw count makes instancing with independent palette offsets
+a separate candidate. See [Phoenix's bot renderer](https://github.com/Spelunkern/Phoenix-Engine/blob/f1ba55122de7def1e3c49f69eaaccf6922f89a1a/src/character/bot_manager.h#L849-L893).

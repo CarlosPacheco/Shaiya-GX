@@ -248,8 +248,15 @@ func (a *App) prepareRemotePlayers() {
 	}
 }
 
+type remotePlayerDraw struct {
+	character *scene.Character
+	mount     *scene.Vehicle
+}
+
 func (a *App) drawRemotePlayers() {
 	frustum := render.ViewFrustum(a.scene3d.View, a.scene3d.VisibilityProjection())
+	v := a.wv
+	v.visiblePlayers, v.visiblePlayerCloth = v.visiblePlayers[:0], v.visiblePlayerCloth[:0]
 	for id, e := range a.state.Entities {
 		if e.Kind != game.KindUser || e.Shape == nil {
 			continue
@@ -258,18 +265,36 @@ func (a *App) drawRemotePlayers() {
 		if cached == nil || cached.character == nil {
 			continue
 		}
+		draw := remotePlayerDraw{}
 		cached.character.Concealed = e.Concealed
 		if e.Mounted && cached.mount != nil {
 			cached.mount.Concealed = e.Concealed
 			if cached.mount.Visible(frustum, a.scene3d.ClipPlane) {
-				cached.mount.Draw(a.skinner, a.scene3d)
-				cached.mount.DrawEffects(a.scene3d)
+				draw.mount = cached.mount
 			}
 		}
 		if cached.character.Visible(frustum, a.scene3d.ClipPlane) {
-			cached.character.Draw(a.skinner, a.scene3d)
+			draw.character = cached.character
+			if draw.character.HasCloak() {
+				v.visiblePlayerCloth = append(v.visiblePlayerCloth, draw.character)
+			}
+		}
+		if draw.mount != nil || draw.character != nil {
+			v.visiblePlayers = append(v.visiblePlayers, draw)
 		}
 	}
+	scene.PrepareCharacterCloth(v.visiblePlayerCloth)
+	for _, draw := range v.visiblePlayers {
+		if draw.mount != nil {
+			draw.mount.Draw(a.skinner, a.scene3d)
+			draw.mount.DrawEffects(a.scene3d)
+		}
+		if draw.character != nil {
+			draw.character.Draw(a.skinner, a.scene3d)
+		}
+	}
+	clear(v.visiblePlayers)
+	clear(v.visiblePlayerCloth)
 }
 
 // projectName maps a world point to the UI's top-left pixel coordinates.

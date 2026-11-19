@@ -467,6 +467,7 @@ func (c *Character) Update(dt float32) {
 		}
 	}
 	if c.cloak != nil {
+		c.cloak.prepared = false
 		c.cloak.elapsed += max(0, dt)
 	}
 	if c.castLeft > 0 {
@@ -680,7 +681,10 @@ func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
 	}
 	finals := c.preparePose()
 	if c.cloak != nil {
-		c.cloak.update(c.World, finals)
+		if !c.cloak.prepared {
+			c.cloak.update(c.World, finals)
+		}
+		c.cloak.prepared = false
 	}
 	if lo, hi, valid := c.WorldBounds(); valid {
 		if c.cloak != nil {
@@ -700,12 +704,19 @@ func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
 		ambient = s.CharacterAmbient
 	}
 	k.Begin(s, ambient)
-	k.SetCorpseFade(c.CorpseFade)
+	k.SetWorld(c.World)
+	if c.CorpseFade != 0 {
+		k.SetCorpseFade(c.CorpseFade)
+	}
 	if c.Concealed {
 		k.SetOpacity(render.StealthOpacity)
 	}
-	for _, p := range c.parts {
-		k.SetPose(c.World, p.pose)
+	paletteSource := -1
+	for i, p := range c.parts {
+		if source := c.poseSources[i]; source != paletteSource {
+			k.SetPalette(p.pose)
+			paletteSource = source
+		}
 		ref := float32(-1)
 		if p.cut {
 			ref = 0.5

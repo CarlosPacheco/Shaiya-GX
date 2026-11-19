@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/bots"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
@@ -120,11 +121,18 @@ func TestClientPerformanceBaseline(t *testing.T) {
 	}
 	base := sceneName
 	switch sceneName {
-	case "crowd-200", "crowd-400", "crowd-network", "crowd-effects", "water-visible", "dungeon":
+	case "crowd-200", "crowd-400", "crowd-network", "crowd-effects", "water-visible", "dungeon", "bots-300":
 		base = "world-stream"
 	}
 	if err = a.Preview(base); err != nil {
 		t.Fatal(err)
+	}
+	if sceneName == "bots-300" {
+		a.gameMenu.Settings.SkillEffects = false
+		a.state.Self.IsGM = true
+		v := a.wv
+		v.bots = bots.New(arc, v.world, v.pos, render.V3{0, 0, 1}, 300, 300)
+		v.eye = v.pos.Add(render.V3{0, 16, -22})
 	}
 	if sceneName == "dungeon" {
 		a.releaseWorld()
@@ -204,6 +212,9 @@ func TestClientPerformanceBaseline(t *testing.T) {
 	if len(ids) > 0 {
 		target = a.wv.pos.Add(render.V3{0, 2, 12})
 	}
+	if sceneName == "bots-300" {
+		target = a.wv.pos.Add(render.V3{0, 2, 26})
+	}
 	camera := func() { a.wv.eye = eye; a.wv.cameraReady = true; a.wv.cameraEye = eye; a.wv.cameraTarget = target }
 	effectTick := 0
 	effects := func() {
@@ -254,6 +265,12 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		t.Fatal("water fixture did not execute visible reflection")
 	}
 	loaded := 0
+	if sceneName == "bots-300" {
+		loaded = a.wv.bots.Count()
+		if loaded != 300 {
+			t.Fatalf("loaded %d/300 PvP bots", loaded)
+		}
+	}
 	for _, v := range a.wv.actors {
 		if v.character != nil && v.character.PlayingClip("000_normal") {
 			loaded++

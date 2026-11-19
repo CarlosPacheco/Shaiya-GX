@@ -28,6 +28,8 @@ type Arena struct {
 	rng                    *rand.Rand
 	origin, forward, right render.V3
 	actors                 []fighter
+	visible                []*scene.Character
+	visibleCloth           []*scene.Character
 	count                  int
 	outfits                [2][]loadout
 	effects                []visualEffect
@@ -67,7 +69,7 @@ const (
 	attackFlight
 )
 
-func New(arc *archive.Archive, world *scene.World, origin, forward render.V3, count int) *Arena {
+func New(arc *archive.Archive, world *scene.World, origin, forward render.V3, count int, seed uint64) *Arena {
 	forward[1] = 0
 	if forward.Len() == 0 {
 		forward = render.V3{0, 0, 1}
@@ -76,14 +78,14 @@ func New(arc *archive.Archive, world *scene.World, origin, forward render.V3, co
 	assets := scene.NewAssets(arc)
 	return &Arena{
 		assets: assets, world: world, catalog: loadCatalog(assets),
-		rng:    rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64())),
+		rng:    rand.New(rand.NewPCG(seed, 0)),
 		origin: origin, forward: forward, right: up.Cross(forward),
 		count: count, actors: make([]fighter, 0, count), failedEffects: make(map[string]bool),
 	}
 }
 
 func (a *Arena) Close() {
-	a.actors, a.effects = nil, nil
+	a.actors, a.effects, a.visible, a.visibleCloth = nil, nil, nil, nil
 	a.assets.CloseCharacterResources()
 }
 

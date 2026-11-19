@@ -54,12 +54,18 @@ fail the fixture rather than silently producing an easier scene.
 | `crowd-400` | 200 users, 120 monsters and 80 NPCs |
 | `crowd-effects` | 200 actors plus repeated real EFT impacts, using the normal 32-impact cap |
 | `crowd-network` | 200 actors plus predecoded movement batches through the real packet pump |
+| `bots-300` (opt-in) | 300 local PvP bots with seeded native outfits and capes, active combat and skill effects disabled |
 
 Crowd users vary race, sex, valid class/body variants and sword equipment.
 Monsters use four original definitions; NPCs use a known original model. The
 fixture validates that every expected actor loads. Positions are fixed, some
 intentionally beyond the near camera view. These synthetic scenes are not a
 specific live town, player-count capacity test or server load test.
+
+Select `--cases bots-300 --profile bots-300` to measure the local GM bot
+simulation. The fixture fixes the seed and camera and waits for all 300
+avatars before recording samples. Both bot simulation and rendering cost
+are included in the draw submission time.
 
 `crowd-network` injects 200 payloads every six simulated frames: 2,000 payloads
 per simulated second. Payload construction is outside the pump timer; decoding,

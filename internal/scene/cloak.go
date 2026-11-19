@@ -23,6 +23,7 @@ type cloakInstance struct {
 	physics     *clothPhysics
 	vertices    []render.Vertex
 	initialized bool
+	prepared    bool
 	world       render.M4
 	elapsed     float32
 }

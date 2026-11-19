@@ -67,11 +67,19 @@ func (a *Arena) updateEffects(dt float32, enabled bool) {
 
 func (a *Arena) Draw(s *render.Scene3D, skinner *render.Skinner, effects bool) {
 	frustum := render.ViewFrustum(s.View, s.VisibilityProjection())
+	a.visible, a.visibleCloth = a.visible[:0], a.visibleCloth[:0]
 	for i := range a.actors {
 		f := &a.actors[i]
 		if f.avatar != nil && f.avatar.CorpseFade < 1 && f.avatar.Visible(frustum, s.ClipPlane) {
-			f.avatar.Draw(skinner, s)
+			a.visible = append(a.visible, f.avatar)
+			if f.avatar.HasCloak() {
+				a.visibleCloth = append(a.visibleCloth, f.avatar)
+			}
 		}
+	}
+	scene.PrepareCharacterCloth(a.visibleCloth)
+	for _, avatar := range a.visible {
+		avatar.Draw(skinner, s)
 	}
 	if !effects {
 		return

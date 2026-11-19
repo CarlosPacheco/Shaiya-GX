@@ -178,12 +178,22 @@ func (k *Skinner) Begin(s *Scene3D, ambient float32) {
 
 // SetPose uploads the per-bone skin matrices (B*F, row-vector).
 func (k *Skinner) SetPose(world M4, bones []M4) {
+	k.SetWorld(world)
+	k.SetPalette(bones)
+}
+
+// SetWorld sets the transforms shared by all parts of an actor.
+func (k *Skinner) SetWorld(world M4) {
 	mv := k.camera.modelView(world)
 	mvp := mv.Mul(k.projection)
 	k.uniformWorld, k.uniformView, k.uniformVP = world, mv, mvp
 	gl.UniformMatrix4fv(k.uWorld, 1, false, &k.uniformWorld[0])
 	gl.UniformMatrix4fv(k.uView, 1, false, &k.uniformView[0])
 	gl.UniformMatrix4fv(k.uViewProj, 1, false, &k.uniformVP[0])
+}
+
+// SetPalette selects the inverse-bind palette for subsequent parts.
+func (k *Skinner) SetPalette(bones []M4) {
 	n := min(len(bones), MaxBones)
 	gl.Uniform1i(k.uBoneCount, int32(n))
 	if n > 0 {

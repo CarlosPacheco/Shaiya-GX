@@ -53,7 +53,7 @@ func TestLocalBotsRealAssetsGL(t *testing.T) {
 	origin := render.V3{996.458, 0, 787.152}
 	origin[1] = world.Height(origin[0], origin[2])
 	forward := render.V3{0, 0, 1}
-	a := New(arc, world, origin, forward, 24)
+	a := New(arc, world, origin, forward, 24, 23)
 	a.rng = rand.New(rand.NewPCG(23, 67))
 	defer a.Close()
 	s.SetCameraView(origin.Add(render.V3{0, 6, -16}), origin.Add(render.V3{0, 1, 12}), up)
@@ -95,7 +95,7 @@ func TestLocalBotsRealAssetsGL(t *testing.T) {
 	}
 	a.Close()
 	before := render.GPUBytes()
-	a = New(arc, world, origin, forward, MaxCount)
+	a = New(arc, world, origin, forward, MaxCount, 41)
 	defer a.Close()
 	a.rng = rand.New(rand.NewPCG(41, 3))
 	for range 120 {
