@@ -85,3 +85,29 @@ func TestRevolverAdvancesOnlyOnceOnMatchingResult(t *testing.T) {
 		t.Fatal("expected one advance after the matching result", v.selected)
 	}
 }
+
+func TestRevolverCompactDropsPersistAcrossReload(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", dir)
+	t.Setenv("APPDATA", dir)
+	a := inputApp()
+	a.state.SelfID = 42
+	v := a.revolverState()
+	v.Page, v.Counts[1] = 1, 6
+	const w, h = 1024, 768
+	for i := range 3 {
+		v.Position.Vertical = i == 2
+		cell := a.revolverLayout(w, h).Cell(i, false)
+		slot := revolverSlot{Skill: uint16(57 + i)}
+		if !a.revolverDrop(&platform.Input{MouseX: cell.X + 16, MouseY: cell.Y + 16}, w, h, slot) {
+			t.Fatalf("compact cell %d rejected its drop", i)
+		}
+	}
+	b := inputApp()
+	b.state.SelfID = 42
+	saved := b.revolverState()
+	if saved.Expanded || saved.Page != 1 || saved.Slots[1][5].Skill != 57 ||
+		saved.Slots[1][0].Skill != 58 || saved.Slots[1][1].Skill != 59 {
+		t.Fatalf("compact assignments did not survive reload: %+v", saved.revolverConfig)
+	}
+}

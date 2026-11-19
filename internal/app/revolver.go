@@ -149,22 +149,40 @@ func (a *App) revolverLayout(w, h int) ui.RevolverLayout {
 }
 
 func (a *App) revolverDrop(in *platform.Input, w, h int, slot revolverSlot) bool {
-	v := a.revolverState()
-	if !v.Expanded || a.barCovered(in, w, h) || a.actionBar.Contains(in.MouseX, in.MouseY, w, h) {
+	if a.barCovered(in, w, h) || a.actionBar.Contains(in.MouseX, in.MouseY, w, h) {
 		return false
 	}
+	v := a.revolverState()
 	layout := a.revolverLayout(w, h)
-	for i := range v.count() {
-		if layout.Cell(i, true).Contains(in.MouseX, in.MouseY) {
-			if slot.Skill != 0 || slot.Action != 0 {
-				v.Slots[v.Page][i] = slot
-				a.saveRevolver()
-				a.playUI()
+	index := -1
+	if v.Expanded {
+		for i := range v.count() {
+			if layout.Cell(i, true).Contains(in.MouseX, in.MouseY) {
+				index = i
+				break
 			}
-			return true
 		}
 	}
-	return false
+	if index < 0 {
+		for i := range 3 {
+			if layout.Cell(i, false).Contains(in.MouseX, in.MouseY) {
+				index = ui.RevolverCompactSlot(i, v.selected, v.count())
+				break
+			}
+		}
+	}
+	if index < 0 {
+		return false
+	}
+	if slot.Skill != 0 || slot.Action != 0 {
+		v.Slots[v.Page][index] = slot
+		if index == v.selected {
+			v.cast = revolverCast{}
+		}
+		a.saveRevolver()
+		a.playUI()
+	}
+	return true
 }
 
 func (a *App) useRevolver() {
@@ -370,7 +388,7 @@ func (a *App) drawRevolver(w, h int) {
 	}
 	for i := range 3 {
 		if layout.Cell(i, false).Contains(in.MouseX, in.MouseY) {
-			index := (v.selected + i + v.count() - 1) % v.count()
+			index := ui.RevolverCompactSlot(i, v.selected, v.count())
 			if k, ok := a.learnedSkill(v.Slots[v.Page][index].Skill); ok {
 				a.queueSkillTooltip(sdata.SkillKey{ID: k.ID, Level: k.Level})
 			}

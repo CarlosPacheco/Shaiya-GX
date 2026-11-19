@@ -16,8 +16,8 @@ configurable cells. The Z/X potion shortcuts are a separate control.
 | + and − in the editor | Change the number of visible cells |
 | Orientation button | Switch between horizontal and vertical |
 
-Drag a learned skill from K or a basic action from B to an editor cell. A
-shortcut on an action bar can also be copied to the editor. Drag between editor
+Drag a learned skill from K or a basic action from B to any of the three compact
+cells or to an editor cell. You can also copy a shortcut from a regular action bar. Drag between editor
 cells to swap their contents, or drag outside the Revolver panel to remove a
 shortcut. Click an editor cell to select it. Drag the frame to move it.
 

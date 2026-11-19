@@ -67,6 +67,12 @@ func (l RevolverLayout) Cell(i int, editor bool) RevolverBox {
 	return RevolverBox{l.Main.X + 22 + 40*i, l.Main.Y + 18, 32, 32}
 }
 
+// RevolverCompactSlot maps a visible cell to the previous, current or next
+// entry of the current page.
+func RevolverCompactSlot(cell, selected, count int) int {
+	return (selected + cell + count - 1) % count
+}
+
 // Controls are ordered rotate, reset, editor, advance, go back,
 // add cell, remove cell, and next page.
 func (l RevolverLayout) Controls() [8]RevolverBox {
@@ -132,7 +138,7 @@ func (l RevolverLayout) Draw(s *render.Sprites, f *Font, art [9]*render.Texture,
 		if i != 1 {
 			tint = [4]float32{.4, .4, .4, 1}
 		}
-		icon(slots[(selected+i+count-1)%count], l.Cell(i, false), tint)
+		icon(slots[RevolverCompactSlot(i, selected, count)], l.Cell(i, false), tint)
 	}
 	if l.Editor.W == 0 {
 		return
