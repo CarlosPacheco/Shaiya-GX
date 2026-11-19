@@ -3,7 +3,6 @@
 package db
 
 import (
-	"os"
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
@@ -12,7 +11,7 @@ import (
 // Exercises the character, item and skill procedures on account normal5
 // and removes everything it created.
 func TestCharacterLifecycle(t *testing.T) {
-	os.Chdir("../..")
+	t.Chdir("../..")
 	config.LoadRuntimeEnv()
 	account, err := AccountByUID(10)
 	if err != nil {

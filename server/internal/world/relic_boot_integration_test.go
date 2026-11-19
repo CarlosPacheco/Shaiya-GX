@@ -85,11 +85,11 @@ func TestObeliskOriginalWorldBoot(t *testing.T) {
 			if err != nil || nav == nil {
 				t.Fatal(err)
 			}
-			// Project limits each coordinate to .05, not the Euclidean
-			// distance. A valid diagonal offset can exceed .06 (up to sqrt(3)*.05).
-			p, ok := nav.Project(m.point(), .05, .05)
-			if !ok {
-				t.Fatalf("floating actor %d: %v != %v", m.MobID, m.point(), p)
+			// Verify physical support at the spawn point. A second navmesh
+			// projection can select a different polygon at a shared edge.
+			geometry, _ := nav.PlayerGeometry()
+			if _, supported := geometry.Support(m.PosX, m.PosY, m.PosZ, .05); !supported {
+				t.Fatalf("floating actor %d on %d at %v", m.MobID, mapID, m.point())
 			}
 		}
 	}

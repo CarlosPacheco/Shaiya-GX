@@ -77,12 +77,13 @@ func TestFrozenIceAreaAgainstRapture(t *testing.T) {
 	}
 	deadline := time.Now().Add(5 * time.Second)
 	lastFrame := time.Now()
-	for st.LastSkill.ID != 85 {
+	released := func() bool { return st.LastSkill.ID == 85 && st.LastSkill.Source == st.SelfID }
+	for !released() {
 		a.pumpWorld()
 		if a.state == nil || time.Now().After(deadline) {
 			t.Fatal("area announcement missing")
 		}
-		if st.LastSkill.ID == 85 {
+		if released() {
 			break
 		}
 		now := time.Now()
@@ -95,6 +96,14 @@ func TestFrozenIceAreaAgainstRapture(t *testing.T) {
 	// declares it instant. Preparation time must not age the release effects.
 	if st.LastCast.ID == 85 && (a.wv.self.ActionID() == predictedAction || a.wv.self.Time > .1) {
 		t.Fatal("server cast reused the stale predicted release clock", a.wv.self.Time)
+	}
+	// A mob may create other impacts during the cast. The final self-anchored
+	// impact in the release batch is the Frozen Ice center.
+	for i := len(a.wv.impacts) - 1; i >= 0; i-- {
+		if a.wv.impacts[i].target == st.SelfID {
+			a.wv.impacts = a.wv.impacts[i:]
+			break
+		}
 	}
 	if len(a.wv.impacts) > 0 && a.wv.impacts[0].instance.Time > .1 {
 		t.Fatal("cast duration consumed the ice effect before its first frame", a.wv.impacts[0].instance.Time)

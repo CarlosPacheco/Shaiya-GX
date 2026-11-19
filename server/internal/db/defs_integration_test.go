@@ -3,14 +3,13 @@
 package db
 
 import (
-	"os"
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
 )
 
 func TestLoadDefinitions(t *testing.T) {
-	os.Chdir("../..")
+	t.Chdir("../..")
 	config.LoadRuntimeEnv()
 	d, err := Definitions()
 	if err != nil {
