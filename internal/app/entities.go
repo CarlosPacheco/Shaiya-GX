@@ -582,14 +582,16 @@ func (a *App) drawPlayerNames(w, h int) {
 		if valid {
 			if kind := npcTypeLabel(e.NpcType); e.Kind == game.KindNpc && kind != "" {
 				label(kind, pos, [4]float32{.35, .9, 1, 1}, a.font.Height-2)
-				label(name, pos, tint, 0)
+				if left, right, drawn := label(name, pos, tint, 0); drawn && a.state.Target == e.ID {
+					selectionMarks(pos, left, right)
+				}
 			} else {
 				plate := playerPlate{gm: e.Kind == game.KindUser && e.IsGM}
 				if e.Kind == game.KindUser {
 					plate.kills = e.PvPKills
 				}
 				left, right, drawn := label(name, pos, tint, 0, plate)
-				if drawn && (e.Kind == game.KindMob || e.Kind == game.KindUser) && a.state.Target == e.ID {
+				if drawn && (e.Kind == game.KindMob || e.Kind == game.KindUser || e.Kind == game.KindNpc) && a.state.Target == e.ID {
 					selectionMarks(pos, left, right)
 				}
 				if e.Kind == game.KindUser {
