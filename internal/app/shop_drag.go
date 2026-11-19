@@ -12,7 +12,7 @@ import (
 func (a *App) updateCommerceDrag(in *platform.Input, w, h int) bool {
 	v := &a.shop
 	e := a.state.Entities[v.npcID]
-	merchant := e != nil && e.NpcType == 1 && !v.questMode && !a.state.Self.Dead
+	merchant := e != nil && e.NpcType == 1 && !a.auctionBoard(v.npcID) && !v.questMode && !a.state.Self.Dead
 	busy := v.pending || a.inventory.pending
 	mx, my := a.marketUI.Origin(w, h)
 	if v.dragging {

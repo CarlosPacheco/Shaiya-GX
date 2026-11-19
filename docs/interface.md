@@ -19,6 +19,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 | Player context | Original classic TipBox frame, SysMsg rows, hover, character/target/party picking, whisper focus and supported party/trade/duel/guild actions | Inspect, follow, personal shops and remaining social windows/services |
 | Quests | Original U button, journal artwork, state icons, seven 31px rows, three scrollbars, selection and confirmed abandonment; NPC dialogs/rewards/progress | Native tracker and remaining markers |
 | Trade/duels | Wager/item/money interfaces and confirmation flows | Complete comparison across all states |
+| Auction House | Realm-wide NPC market with four tabs, posting, bidding, buyout, claims and watched listings | Legacy visual and protocol details tracked in [Auction House research](auction-house-research.md) |
 | Guild | Original G button, single roster sheet, native columns/rows, sorting, applicants, rank actions and notice editor; directory/creation/ranking flows; Buddy, Block and Search Party with native transport | Complete comparison of rare social states and remaining presentation |
 | NPC services | Merchant, storage, blacksmith, gems/enchant and original portal window; portal approach, confirmation, same-map and cross-map travel | Remaining service types and special states |
 | Mall | Catalog, correct Cash icon atlas, gifts and confirmations | Remaining pages/states and full comparison |

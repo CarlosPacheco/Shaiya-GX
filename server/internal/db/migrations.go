@@ -29,6 +29,9 @@ var experienceMigration string
 //go:embed npcskills.sql
 var npcSkillsMigration string
 
+//go:embed auction.sql
+var auctionMigration string
+
 var migrations = []migration{
 	{1, "atomic_session_handoff", `CREATE TABLE IF NOT EXISTS GX_SessionHandoff(UserUID INTEGER PRIMARY KEY,Identity BLOB NOT NULL,AESMaterial BLOB NOT NULL,SessionID INTEGER NOT NULL,ExpiresAt INTEGER NOT NULL)`},
 	{2, "indexed_account_lookup", `CREATE INDEX IF NOT EXISTS GX_Users_UserID ON PS_UserData_Users_Master(UserID)`},
@@ -97,6 +100,7 @@ var migrations = []migration{
 	INSERT INTO PS_GameDefs_ServerNotices ("Index", Message, Frequency)
 	VALUES (1, 'GX Automatic Notice - Test', 60);`},
 	{22, "teleport_runes", teleportrunes.MigrationSQL},
+	{23, "auction_house", auctionMigration},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

@@ -107,6 +107,9 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 		duelLeave(s.player, 0, false) // PvPChkLeaveByZoneLeave
 		guildDuelLeave(s.player, nil, 1)
 	}
+	if s.auctionContact {
+		s.useNpc(0)
+	}
 	s.clearView(mapID == ch.MapID)
 	changedMap := mapID != ch.MapID
 	ch.MapID, ch.PosX, ch.PosY, ch.PosZ = mapID, x, y, z

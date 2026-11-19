@@ -1,5 +1,7 @@
 # Auction House research and implementation design
 
+For the live GX implementation and operating rules, see [Auction House](auction-house.md).
+
 GX can open one realm-wide, cross-faction market from any configured auction NPC. The client data already identifies the Notice Board. The original interface separates browsing, active business, settlement and watched listings. Gold and items can stay in the market after a listing closes, until their owner claims them.
 
 ## Evidence and versions
@@ -48,7 +50,7 @@ Group by native item category and equip requirements, rather than deriving categ
 | Listing | Selects a bag, slot and nonzero count. The handler has whole-stack and split-stack paths. It checks durability/type and trade restriction fields before removing inventory. Starting price is at least 500 gold and at most 3,800,000,000. Buyout is required by this handler, greater than starting price and at most 4,000,000,000. |
 | Duration and deposit | Duration slots 0–3 resolve to **7, 24, 72, 168 hours** at `0x56E5D4`. Deposit is `hours × 5 × ceil(starting price / 500000)`. A 600,000 starting price for 24 hours costs 240 gold. |
 | Bid | Rejects the seller and the current high bidder. Checks wallet and debits the full new bid. The current amount starts at the listing's starting price. The minimum equals truncated **110% of the current amount** at `0x4437F8`–`0x443834`; even the first bid goes through this check. Bid must stay below buyout. Previous high bidder gets a gold result. |
-| Buy Now | Charges buyout and closes the listing. Buyer receives an item result. Seller receives a gold result. The direct-buy path computes `sale price + deposit − floor(sale price × 2%)` at `0x443128`–`0x443182`. The prior bid also has a refund path. Same-bidder buyout accounting and the timed-sale branch should each get a parity fixture before applying one shared settlement formula. |
+| Buy Now | Charges buyout and closes the listing. Buyer receives an item result. Seller receives a gold result. The direct-buy path computes `sale price + deposit − floor(sale price × 2%)` at `0x443128`–`0x443182`. The prior bid also has a refund path. The buyout function checks the full wallet debit and refunds any prior bidder. The timed-sale branch at `0x44033A` also applies the 2% commission and returns the deposit. |
 | Cancellation | Seller-owned path at `0x442B20` creates a return-item result for the seller. It explicitly handles an already-bid listing, returning the bidder's held gold as a gold result. A ban on canceling listings with bids would change this behavior. |
 | Closing by time | Legacy periodic housekeeping checks listing deadlines. No-bid expiry creates a return-item result. A timed winner gets a claimable item, with a gold result for the seller. |
 | Claiming | Items and money have independent queues. The shared results timestamp helper at `0x43FBD0` adds 1,209,600 seconds (**14 days**). Verify the later purge branches and each result's deposit handling before enabling irrecoverable expiry in GX. |

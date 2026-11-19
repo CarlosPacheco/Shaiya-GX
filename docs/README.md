@@ -19,6 +19,7 @@ Start with [first run](quickstart.md), then [building and testing](building.md).
 | [Server Wiki reference](wiki/server-architecture.md) | Complete server structure, packages, storage, security and protocol catalog |
 | [Architecture](architecture.md) | Single Go module, client/server boundaries and state ownership |
 | [Interface](interface.md) | Implemented behavior, parameters and remaining work |
+| [Auction House](auction-house.md) | Realm-wide NPC market, auctions, claims and SQLite operations |
 | [Auction House research](auction-house-research.md) | NPC routing, original market UI and rules, SQLite escrow and validation design |
 | [Protocol](protocol.md) | Wire compatibility and server authority |
 | [Original spell timing](spell-fluidity-research.md) | Reuse, execution scheduling, the two Wind Spins and Stinger dash evidence |

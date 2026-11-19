@@ -92,6 +92,7 @@ func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.Cance
 		}
 	})
 	started := time.Now()
+
 	notices := scheduleNotices(noticeCatalog, started)
 	if len(notices) > 0 {
 		add("notices", time.Second, func(now time.Time) {
@@ -103,7 +104,26 @@ func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.Cance
 		})
 	}
 	engine := scheduler.New(started, jobs)
-	go func() { defer close(r.done); engine.Run(ctx) }()
+	go func() {
+		defer close(r.done)
+		var workers sync.WaitGroup
+		workers.Go(func() {
+			ticker := time.NewTicker(10 * time.Second)
+			defer ticker.Stop()
+			for ctx.Err() == nil {
+				if err := db.ExpireAuctions(); err != nil {
+					log.Printf("auction expiry: %v", err)
+				}
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+				}
+			}
+		})
+		engine.Run(ctx)
+		workers.Wait()
+	}()
 	return r
 }
 

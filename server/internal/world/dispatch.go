@@ -27,6 +27,8 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 	switch op {
 	case packet.Opcode(proto.GXTargetEffectsQuery):
 		s.handleTargetEffects(p)
+	case packet.Opcode(proto.GXAuction):
+		s.handleAuction(p)
 	case packet.Opcode(proto.GXLadder):
 		s.handleLadder(p)
 	case 0x2202, 0x2203, 0x2205, 0x2206, 0x2209, 0x220a, 0x220b, 0x220c:
@@ -305,7 +307,7 @@ func (s *Session) phaseAllows(op packet.Opcode) bool {
 func economicOpcode(op packet.Opcode) bool {
 	switch op {
 	case packet.AccountFaction, packet.CreateCharacter, packet.DeleteCharacter, packet.RestoreCharacter, packet.RenameCharacter, packet.SelectCharacter,
-		packet.Opcode(proto.GXTeleportStone), packet.UseItem, packet.ChangeAppearance, packet.EnchantAdd, packet.GemAdd, packet.GemRemove, packet.ItemCompose, packet.RemoveItem, packet.AddItem, packet.ItemBagToBag, packet.ShopSell, packet.ShopBuy,
+		packet.Opcode(proto.GXAuction), packet.Opcode(proto.GXTeleportStone), packet.UseItem, packet.ChangeAppearance, packet.EnchantAdd, packet.GemAdd, packet.GemRemove, packet.ItemCompose, packet.RemoveItem, packet.AddItem, packet.ItemBagToBag, packet.ShopSell, packet.ShopBuy,
 		packet.QuestStart, packet.QuestStartAlt, packet.QuestEnd, packet.QuestChoose, packet.QuestAbandon, packet.LearnNewSkill, packet.SetStatPoint, packet.PointBuy, packet.PointGiftSend, packet.PointStoredItemGet:
 		return true
 	}

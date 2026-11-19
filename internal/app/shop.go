@@ -58,6 +58,9 @@ func (a *App) updateShop(in *platform.Input, w, h int) bool {
 		return false
 	}
 	e := a.state.Entities[v.npcID]
+	if a.auctionBoard(v.npcID) {
+		return a.updateAuction(in, w, h)
+	}
 	if e.NpcType == 4 && a.pvpRewardUI != nil {
 		return a.updatePvPRewards(in, w, h)
 	}
@@ -166,6 +169,11 @@ func (a *App) openNPC(id uint32) {
 		return
 	}
 	a.shop.npcID, a.shop.page, a.shop.questMode = id, 0, false
+	if a.auctionBoard(id) {
+		a.beginAuction(id)
+		return
+	}
+	a.auction = auctionView{}
 	if e.NpcType == 4 {
 		a.openPvPRewards()
 	}
@@ -178,6 +186,10 @@ func (a *App) drawShop(w, h int) {
 	v := &a.shop
 	e := a.state.Entities[v.npcID]
 	if e == nil {
+		return
+	}
+	if a.auctionBoard(v.npcID) {
+		a.drawAuction(w, h)
 		return
 	}
 	if e.NpcType == 4 && a.pvpRewardUI != nil {

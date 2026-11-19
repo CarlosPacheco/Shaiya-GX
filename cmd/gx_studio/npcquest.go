@@ -125,6 +125,8 @@ func (q *npcQuestEditor) form(title string, fields []npcQuestInput, apply func([
 // Label native field names without changing their exact source identifier.
 func npcQuestLabel(name string) string {
 	switch name {
+	case "MerchantType":
+		return "Merchant type (117 Auction Board)"
 	case "NpcName":
 		return "NPC name"
 	case "QuestName":

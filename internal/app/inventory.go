@@ -96,7 +96,7 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 	}
 
 	merchant := a.state.Entities[a.shop.npcID]
-	if v.selected && v.source[0] != 0 && merchant != nil && merchant.NpcType == 1 && !a.shop.questMode {
+	if v.selected && v.source[0] != 0 && merchant != nil && merchant.NpcType == 1 && !a.auctionBoard(a.shop.npcID) && !a.shop.questMode {
 		for _, r := range in.Chars {
 			if r == 'v' || r == 'V' {
 				a.sellItem(v.source, 1)

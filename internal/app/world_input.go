@@ -122,6 +122,17 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		in = &pointer
 	}
 	vInventory.advanceItemDrag(in)
+	if a.auction.npc != 0 && a.auction.modal == "setup" && in.Clicked && vInventory.dragging {
+		x, y, width := a.auctionPanel(w, h)
+		if in.MouseX >= x+15 && in.MouseX < x+width-15 && in.MouseY >= y+97 && in.MouseY < y+133 && a.auctionSource() {
+			v.uiLeft = 0
+			return platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}
+		}
+	}
+	if a.auction.npc != 0 && a.auction.focus >= 0 && !in.Pressed && (len(in.Chars) > 0 || len(in.Keys) > 0) && a.updateAuction(in, w, h) {
+		return platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}
+	}
+
 	captured := false
 	if a.teleportStone.open && a.recordedPoints != nil {
 		const recordedPointOwner = -4

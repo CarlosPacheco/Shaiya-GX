@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -167,7 +168,7 @@ func (s *Session) planShopBuy(p []byte) {
 		return
 	}
 	def := findNpcDef(npc.Type, npc.TypeID)
-	if def == nil || int(index) >= len(def.ShopItems) {
+	if def == nil || def.ShopType == proto.AuctionBoard || int(index) >= len(def.ShopItems) {
 		return
 	}
 	entry := def.ShopItems[index]
@@ -293,6 +294,7 @@ func (s *Session) useNpc(id uint32) {
 		}
 	}
 	if id == s.usingNpc {
+		s.auctionContact = s.auctionNPC(id)
 		return
 	}
 	npcUseMu.Lock()
@@ -306,6 +308,7 @@ func (s *Session) useNpc(id uint32) {
 	}
 	npcUseMu.Unlock()
 	s.usingNpc = id
+	s.auctionContact = s.auctionNPC(id)
 }
 
 func npcInUse(id uint32) bool {

@@ -117,6 +117,8 @@ type App struct {
 	inventoryUI                         *ui.Inventory
 	statusUI                            *ui.Status
 	marketUI                            *ui.Market
+	auction                             auctionView
+	auctionSequence                     uint64
 	pvpRewardUI                         *ui.PvPRewardPanel
 	pvpRewardMessage                    *ui.Message
 	pvpReward                           pvpRewardView
@@ -762,6 +764,7 @@ func (a *App) backToLogin(msg string) {
 		a.statusUI.Clear()
 	}
 	a.shop = shopView{}
+	a.auction = auctionView{}
 	a.blacksmith = blacksmithView{}
 	a.gate = gatekeeperView{}
 	a.vehicle = vehicleView{}
@@ -852,6 +855,10 @@ func (a *App) pumpWorld() {
 			if !ok {
 				a.backToLogin("Disconnected from the server.")
 				return
+			}
+			if proto.Op(p) == proto.GXAuction {
+				a.applyAuction(p)
+				continue
 			}
 			if proto.Op(p) == proto.GXForgeQuote {
 				a.confirmedForgeQuote(p)

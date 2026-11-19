@@ -253,7 +253,7 @@ func buildShopSellResult(result, bag, slot, itemType, typeID uint8, remaining ui
 
 // handleShopSell (0x0703): bag, slot, count. Items.Sell is per unit.
 func (s *Session) handleShopSell(p []byte) {
-	if len(p) < 5 || s.char == nil || s.autoAttack {
+	if len(p) < 5 || s.char == nil || s.autoAttack || s.auctionContact {
 		return
 	}
 	// npc_shop sell (CUser::PacketShop 0x0703): not from the equipment (bag

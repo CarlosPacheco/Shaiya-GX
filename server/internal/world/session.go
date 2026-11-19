@@ -117,6 +117,7 @@ type Session struct {
 	weatherOverrideUntil time.Time
 	weatherCheck         time.Time
 	usingNpc             uint32
+	auctionContact       bool
 	quests               []*activeQuest
 	finishedQuests       []db.FinishedQuest
 	regenMode            int // CUser +0x1274: 0 sitting, 1 standing, 2 in combat (next tick's recovery)
@@ -389,6 +390,9 @@ func normalize(ch *db.Character) {
 func (s *Session) tick(idle bool) {
 	if s.char == nil {
 		return
+	}
+	if s.auctionContact && !s.auctionNPC(s.usingNpc) {
+		s.useNpc(0)
 	}
 	if p := s.player; p != nil {
 		if t := p.TakeTeleport(); t != nil {

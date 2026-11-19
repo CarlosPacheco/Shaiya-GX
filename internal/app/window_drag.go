@@ -206,7 +206,16 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 	}
-	if e := a.state.Entities[a.shop.npcID]; e != nil && e.NpcType == 1 && !a.shop.questMode && a.marketUI != nil {
+	if a.auctionBoard(a.shop.npcID) {
+		x, y, width := a.auctionPanel(w, h)
+		if start(&a.auction.position, x, y, width, 418, 8, width-64) {
+			return true
+		}
+		if pointInside(in, x, y, width, 418) {
+			return false
+		}
+	}
+	if e := a.state.Entities[a.shop.npcID]; e != nil && e.NpcType == 1 && !a.auctionBoard(a.shop.npcID) && !a.shop.questMode && a.marketUI != nil {
 		x, y := a.marketUI.Origin(w, h)
 		if start(&a.marketUI.Position, x, y, ui.MarketWidth, ui.MarketHeight, 8, 212) {
 			return true
