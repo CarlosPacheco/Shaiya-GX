@@ -112,7 +112,7 @@ func (a *App) barCovered(in *platform.Input, w, h int) bool {
 		switch {
 		case a.auctionBoard(a.shop.npcID):
 			x, y, width = a.auctionPanel(w, h)
-			height = 418
+			height = auctionHeight(h)
 		case a.shop.questMode || e.NpcType != 1 && e.NpcType != 2 && e.NpcType != 3 && e.NpcType != 6 && e.NpcType != 11:
 			if a.npcQuestUI != nil {
 				x, y = a.npcQuestUI.Origin(w, h)

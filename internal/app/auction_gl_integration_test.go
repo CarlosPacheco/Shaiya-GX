@@ -49,12 +49,13 @@ func TestAuctionPanelsGL(t *testing.T) {
 		a.auction.view = view
 		for _, modal := range []string{"", "setup", "bid", "buy", "cancel", "details"} {
 			a.auction.modal = modal
-			for _, width := range []int{404, 1024} {
-				a.sprites.Begin(width, 768)
-				a.drawAuction(width, 768)
+			for _, viewport := range [][2]int{{404, 480}, {1024, 768}} {
+				width, height := viewport[0], viewport[1]
+				a.sprites.Begin(width, height)
+				a.drawAuction(width, height)
 				a.sprites.End()
 				if code := gl.GetError(); code != gl.NO_ERROR {
-					t.Fatalf("width %d view %d modal %q GL error %#x", width, view, modal, code)
+					t.Fatalf("%dx%d view %d modal %q GL error %#x", width, height, view, modal, code)
 				}
 			}
 		}

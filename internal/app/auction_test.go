@@ -53,7 +53,7 @@ func TestAuctionAcceptsExplicitInventoryDrag(t *testing.T) {
 		t.Fatal("inventory click picked a listing source")
 	}
 	x, y, width := a.auctionPanel(1024, 768)
-	slot := auctionDialogBounds(x, y, width, "setup").source()
+	slot := auctionDialogBounds(x, y, width, auctionHeight(768), "setup").source()
 	a.worldControls(&platform.Input{MouseX: slot.x + 4, MouseY: slot.y + 4, Clicked: true}, 1024, 768)
 	if a.auction.source != a.state.Inventory[key] || a.auction.fields[0] != "9" || a.auction.token == "" {
 		t.Fatal("auction did not accept inventory drop", a.auction.source)
@@ -107,15 +107,15 @@ func TestAuctionPairedListsKeepIndependentSelectionAndPage(t *testing.T) {
 	}
 	panes := auctionPanes(proto.AuctionItems, 380)
 	left, right := panes[0], panes[1]
-	a.updateAuctionPanes(right.x+2, auctionPaneRowY+auctionPaneRowHeight, 380, 0)
+	a.updateAuctionPanes(right.x+2, auctionPaneRowY+26, 380, auctionMinHeight, 0)
 	if v.view != proto.AuctionGold || v.row().ID != 202 || !v.more {
 		t.Fatal("click did not select the gold claim")
 	}
-	a.updateAuctionPanes(right.x+right.width-2, 365, 380, 0)
+	a.updateAuctionPanes(right.x+right.width-2, 365, 380, auctionMinHeight, 0)
 	if v.page != 1 || v.row() != nil {
 		t.Fatal("next page did not clear the gold selection")
 	}
-	a.updateAuctionPanes(left.x+2, auctionPaneRowY, 380, 0)
+	a.updateAuctionPanes(left.x+2, auctionPaneRowY, 380, auctionMinHeight, 0)
 	if v.view != proto.AuctionItems || v.page != 1 || v.row().ID != 101 {
 		t.Fatal("gold pagination changed the item claims")
 	}
@@ -137,9 +137,9 @@ func TestAuctionDialogControlsUseVisibleBounds(t *testing.T) {
 	a := inputApp()
 	a.auction = auctionView{modal: "setup", focus: -1}
 	const x, y, width = 8, 20, 380
-	b := auctionDialogBounds(x, y, width, "setup")
+	b := auctionDialogBounds(x, y, width, auctionMinHeight, "setup")
 	click := func(rx, ry int) {
-		a.updateAuctionDialog(&platform.Input{MouseX: b.x + rx, MouseY: b.y + ry, Pressed: true}, x, y, width)
+		a.updateAuctionDialog(&platform.Input{MouseX: b.x + rx, MouseY: b.y + ry, Pressed: true}, x, y, width, auctionMinHeight)
 	}
 	click(14+3*((b.width-28)/4)+4, auctionDurationY+4)
 	if a.auction.duration != 3 {
@@ -156,5 +156,29 @@ func TestAuctionDialogControlsUseVisibleBounds(t *testing.T) {
 	click(b.width-110, b.height-28)
 	if a.auction.modal != "" || a.auction.focus != -1 {
 		t.Fatal("the visible Cancel button did not close the dialog")
+	}
+}
+
+func TestAuctionCategoryRailAndResultRowsHaveSeparateHitAreas(t *testing.T) {
+	a := inputApp()
+	const npc = 42
+	a.state.Entities[npc] = &game.Entity{ID: npc}
+	a.shop.npcID = npc
+	a.auction = auctionView{npc: npc, selected: -1, focus: -1, page: 2, exactType: 18}
+	for _, viewport := range [][2]int{{404, 480}, {1024, 768}} {
+		w, h := viewport[0], viewport[1]
+		x, y, width := a.auctionPanel(w, h)
+		click := func(rx, ry int) {
+			a.updateAuction(&platform.Input{MouseX: x + rx, MouseY: y + ry, Pressed: true}, w, h)
+		}
+		a.auction.rows = []proto.AuctionRow{{ID: 1}, {ID: 2}}
+		click(18, 138+2*26+5)
+		if a.auction.category != 2 || a.auction.page != 0 || a.auction.exactType != 0 || a.auction.selected >= 0 {
+			t.Fatal("category click did not reset the results")
+		}
+		click(auctionListX(proto.AuctionBrowse, width)+4, 138+auctionRowPitch(auctionHeight(h))+4)
+		if a.auction.category != 2 || a.auction.selected != 1 {
+			t.Fatal("list click did not select the second row independently of the category")
+		}
 	}
 }

@@ -5,8 +5,8 @@ Talk to an auction board to access the realm-wide gold market. Boards of subtype
 | Tab | Actions |
 |---|---|
 | Search Items | Search by item or seller name, filter by category and level, sort active listings, look up the exact item from a selected result, bid, buy or watch |
-| Auction Progress | Switch between current sales and bids. Open Setup Auction, drag an inventory stack onto the item field and enter quantity, prices and duration. Cancel your own listing here. |
-| Ended Auctions | Switch between item and gold claims. Collect a selected result or collect all of that kind. Claims that do not fit in the inventory or wallet remain available. |
+| Auction Progress | View current sales and bids in separate lists. Open Setup Auction, drag an inventory stack onto the item field and enter quantity, prices and duration. Cancel your own listing here. |
+| Ended Auctions | View item and gold claims in separate lists. Collect a selected result or collect all of that kind. Claims that do not fit in the inventory or wallet remain available. |
 | Interest List | Review up to ten watched listings per character. Refresh, inspect, remove one or clear the list. |
 
 The market requires a live character near the board they last interacted with. Item data and prices in the window update from the server. The app shows a confirmation before posting, bidding, buying or canceling. The world server rejects a bid, buy or cancel against a stale listing version. Reopen the listing to review its new price or status.

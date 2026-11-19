@@ -22,7 +22,7 @@ func (b auctionBounds) source() auctionBounds {
 	return auctionBounds{b.x + 14, b.y + 43, b.width - 28, 33}
 }
 
-func auctionDialogBounds(x, y, width int, modal string) auctionBounds {
+func auctionDialogBounds(x, y, width, panelHeight int, modal string) auctionBounds {
 	height := 260
 	switch modal {
 	case "setup", "details":
@@ -31,7 +31,7 @@ func auctionDialogBounds(x, y, width int, modal string) auctionBounds {
 		height = 204
 	}
 	dialogWidth := min(width-24, 322)
-	return auctionBounds{x + (width-dialogWidth)/2, y + (418-height)/2, dialogWidth, height}
+	return auctionBounds{x + (width-dialogWidth)/2, y + (panelHeight-height)/2, dialogWidth, height}
 }
 
 const auctionDurationY = 223
@@ -43,12 +43,12 @@ func auctionDialogFieldRow(modal string, i int) int {
 	return 88 + i*38
 }
 
-func (a *App) updateAuctionDialog(in *platform.Input, x, y, width int) {
+func (a *App) updateAuctionDialog(in *platform.Input, x, y, width, height int) {
 	v := &a.auction
 	if v.pending || !in.Pressed {
 		return
 	}
-	b := auctionDialogBounds(x, y, width, v.modal)
+	b := auctionDialogBounds(x, y, width, height, v.modal)
 	rx, ry := in.MouseX-b.x, in.MouseY-b.y
 	hit := func(x, y, w, h int) bool {
 		return (auctionBounds{x, y, w, h}).contains(rx, ry)
@@ -101,14 +101,14 @@ func (a *App) drawAuctionControl(label string, x, y, width int, selected, enable
 	a.font.DrawScaled(a.sprites, label, tx, float32(y+5), scale, ink, 0)
 }
 
-func (a *App) drawAuctionDialog(x, y, width, w, h int) {
+func (a *App) drawAuctionDialog(x, y, width, height, w, h int) {
 	v := &a.auction
-	b := auctionDialogBounds(x, y, width, v.modal)
-	a.auctionBox(x, y, width, 418, [4]float32{0, 0, 0, .48})
+	b := auctionDialogBounds(x, y, width, height, v.modal)
+	a.auctionBox(x, y, width, height, [4]float32{0, 0, 0, .48})
 	a.auctionBox(b.x, b.y, b.width, b.height, auctionPanelColor)
 	a.auctionBox(b.x, b.y, b.width, 36, [4]float32{.18, .15, .10, 1})
 	art := map[string]string{"setup": "auction_commission", "bid": "auction_tender", "details": "auction_detailview"}[v.modal]
-	hasTitleArt := art != "" && a.auctionArt(art, image.Rect(1, 1, 255, 37), b.x, b.y, b.width, 36, 1)
+	hasTitleArt := art != "" && a.auctionArt(art, image.Rect(1, 1, 255, 37), b.x+(b.width-254)/2, b.y, 254, 36, 1)
 	a.auctionBox(b.x, b.y+b.height-2, b.width, 2, [4]float32{.35, .29, .16, 1})
 	text := func(label string, rx, ry int, color [4]float32) {
 		a.font.Draw(a.sprites, label, b.x+rx, b.y+ry, color, b.width-rx-14)
@@ -175,14 +175,22 @@ func (a *App) drawAuctionDialog(x, y, width, w, h int) {
 		}
 	}
 	confirm := map[string]string{"setup": "List item", "bid": "Place bid", "buy": "Buy now", "cancel": "Cancel auction"}
-	if v.modal != "details" {
-		control(confirm[v.modal], 14, b.height-39, 110, true)
+	footerY := b.height - 39
+	setupButton := func(column, rx, bw int) bool {
+		return v.modal == "setup" && a.auctionSpriteButton("auction_commission_button", column,
+			a.auctionButtonState(b.x+rx, b.y+footerY, bw, !v.pending), 128, 32, 86, 30,
+			b.x+rx, b.y+footerY, bw)
+	}
+	if v.modal != "details" && !setupButton(0, 14, 110) {
+		control(confirm[v.modal], 14, footerY, 110, true)
 	}
 	closeLabel := "Back"
 	if v.modal == "setup" || v.modal == "bid" {
 		closeLabel = "Cancel"
 	}
-	control(closeLabel, b.width-118, b.height-39, 104, false)
+	if !setupButton(1, b.width-118, 104) {
+		control(closeLabel, b.width-118, footerY, 104, false)
+	}
 	if v.message != "" {
 		text(v.message, 14, b.height-61, auctionWarningText)
 	}

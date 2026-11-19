@@ -159,3 +159,18 @@ cancellation and details. Its forms size to their content and share the
 same rectangles for rendering, numeric input and inventory drops. Gold
 values, secondary labels and warnings have distinct colors. The form
 colors and coordinates are GX choices.
+
+## Search screenshot comparison
+
+The original reference shows the category rail and listing grid as independent
+regions, separate faction and quality selectors, and a player gold display.
+The original search background also has baked row rules. Scaling a narrow,
+off-center sample of that image across the whole GX panel visibly stretched
+those rules and the illustration behind them.
+
+GX now preserves frame corners at source size, keeps the same scale on both
+axes for button art, and draws the list rules in the same geometry used for
+selection and wheel paging. The category rail uses the supplied category
+atlas. Search and setup reuse their supplied state atlases. The panel grows
+vertically when the viewport permits. The detailed hierarchy, faction and
+quality selector semantics still need to be verified before adding filters.

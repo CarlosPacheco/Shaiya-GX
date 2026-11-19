@@ -20,7 +20,7 @@ func (a *App) auctionArt(file string, src image.Rectangle, x, y, w, h int, alpha
 	return true
 }
 
-func (a *App) auctionFrame(x, y, width int) {
+func (a *App) auctionFrame(x, y, width, height int) {
 	file := "auction_objectsearch"
 	switch a.auction.view {
 	case proto.AuctionSelling, proto.AuctionBidding:
@@ -30,17 +30,25 @@ func (a *App) auctionFrame(x, y, width int) {
 	case proto.AuctionWatch:
 		file = "auction_interest_list"
 	}
-	a.auctionArt(file, image.Rect(580, 185, 727, 551), x+8, y+42, width-16, 366, .83)
-	a.auctionArt(file, image.Rect(2, 2, 737, 48), x, y, width, 43, 1)
-	a.auctionArt(file, image.Rect(2, 594, 737, 605), x, y+407, width, 11, 1)
+	a.drawAuctionFrameStrip(file, x, y, width, 2, 48)
+	a.drawAuctionFrameStrip(file, x, y+height-11, width, 594, 605)
+}
 
+func (a *App) drawAuctionFrameStrip(file string, x, y, width, top, bottom int) {
+	const sourceLeft, sourceRight, capWidth = 2, 737, 78
+	height := bottom - top
+	a.auctionArt(file, image.Rect(sourceLeft, top, sourceLeft+capWidth, bottom), x, y, capWidth, height, 1)
+	a.auctionArt(file, image.Rect(sourceLeft+capWidth, top, sourceRight-capWidth, bottom),
+		x+capWidth, y, width-2*capWidth, height, 1)
+	a.auctionArt(file, image.Rect(sourceRight-capWidth, top, sourceRight, bottom),
+		x+width-capWidth, y, capWidth, height, 1)
 }
 
 // The cells contain their own labels. Fit them inside the GX control bounds.
 func (a *App) auctionSpriteButton(file string, col, state, cellW, cellH, artW, artH, x, y, width int) bool {
 	b := image.Rect(col*cellW, state*cellH, col*cellW+artW, state*cellH+artH)
-	drawW := min(width, artW)
-	drawH := min(26, artH)
+	drawW := min(width, min(artW, artW*26/artH))
+	drawH := max(1, artH*drawW/artW)
 	return a.auctionArt(file, b, x+(width-drawW)/2, y+(26-drawH)/2, drawW, drawH, 1)
 }
 
