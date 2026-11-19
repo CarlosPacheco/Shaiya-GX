@@ -188,8 +188,8 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x0D21` | [GuildCreate](protocol-guilds.md#opcode-0d21) | yes | yes | yes |
 | `0x0D22` | [GuildCreateAgree](protocol-guilds.md#opcode-0d22) | yes | yes | yes |
 | `0x0D23` | [GuildEtin](protocol-guilds.md#opcode-0d23) | yes | yes | yes |
-| `0x0D24` | [GuildNpcList](protocol-guilds.md#opcode-0d24) | — | yes | — |
-| `0x0D25` | [GuildNpcUpgrade](protocol-guilds.md#opcode-0d25) | yes | yes | — |
+| `0x0D24` | [GuildNpcList](protocol-guilds.md#opcode-0d24) | — | yes | yes |
+| `0x0D25` | [GuildNpcUpgrade](protocol-guilds.md#opcode-0d25) | yes | yes | yes |
 | `0x0D26` | [GuildRankingNotice](protocol-guilds.md#opcode-0d26) | — | yes | yes |
 | `0x0D27` | [GuildRankingPoints](protocol-guilds.md#opcode-0d27) | — | yes | yes |
 | `0x0D28` | [GuildBankResult](protocol-guilds.md#opcode-0d28) | — | yes | yes |
@@ -199,8 +199,8 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x0D31` | [GuildBankPlaced](protocol-guilds.md#opcode-0d31) | — | yes | yes |
 | `0x0D32` | [GuildBankTaken](protocol-guilds.md#opcode-0d32) | — | yes | yes |
 | `0x0D33` | [GuildHouseKeepEtin](protocol-guilds.md#opcode-0d33) | — | — | — |
-| `0x0D34` | [GuildHouseBuy](protocol-guilds.md#opcode-0d34) | yes | yes | — |
-| `0x0D35` | [GuildDonate](protocol-guilds.md#opcode-0d35) | yes | yes | — |
+| `0x0D34` | [GuildHouseBuy](protocol-guilds.md#opcode-0d34) | yes | yes | yes |
+| `0x0D35` | [GuildDonate](protocol-guilds.md#opcode-0d35) | yes | yes | yes |
 | `0x0D37` | [GuildRankingList](protocol-guilds.md#opcode-0d37) | — | yes | yes |
 | `0x0E01` | [MapNpcEnter](protocol-mobs.md#opcode-0e01) | — | yes | yes |
 | `0x0E02` | [MapNpcLeave](protocol-mobs.md#opcode-0e02) | — | yes | yes |

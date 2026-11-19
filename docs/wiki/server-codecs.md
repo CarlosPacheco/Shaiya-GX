@@ -1693,6 +1693,100 @@ func GuildDuelAnswerPacket(accept bool) []byte {
 
 </details>
 
+## guild house
+
+[internal/proto/guild_house.go](../../internal/proto/guild_house.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type GuildNpc struct {
+	Type  uint16
+	Level uint8
+	Slot  uint8
+}
+```
+
+```go
+type GuildNpcUpgradeResult struct {
+	Result uint8
+	Npc    GuildNpc
+}
+```
+
+```go
+type GuildHouseBuyResult struct {
+	Result uint8
+	Money  uint32
+}
+```
+
+```go
+func DecodeGuildNpcList(p []byte) ([]GuildNpc, error) {
+	r := NewReader(p)
+	n := int(r.U8())
+	if n > r.Remaining()/4 {
+		return nil, ErrShort
+	}
+	out := make([]GuildNpc, n)
+	for i := range out {
+		out[i] = GuildNpc{Type: r.U16(), Level: r.U8(), Slot: r.U8()}
+	}
+	return out, r.Err()
+}
+```
+
+```go
+func DecodeGuildNpcUpgrade(p []byte) (GuildNpcUpgradeResult, error) {
+	r := NewReader(p)
+	v := GuildNpcUpgradeResult{Result: r.U8()}
+	v.Npc = GuildNpc{Type: r.U16(), Level: r.U8(), Slot: r.U8()}
+	return v, r.Err()
+}
+```
+
+```go
+func DecodeGuildHouseBuy(p []byte) (GuildHouseBuyResult, error) {
+	r := NewReader(p)
+	v := GuildHouseBuyResult{Result: r.U8(), Money: r.U32()}
+	return v, r.Err()
+}
+```
+
+```go
+func DecodeGuildDonation(p []byte) ([][2]uint8, error) {
+	r := NewReader(p)
+	n := int(r.U8())
+	if n > r.Remaining()/2 {
+		return nil, ErrShort
+	}
+	out := make([][2]uint8, n)
+	for i := range out {
+		out[i] = [2]uint8{r.U8(), r.U8()}
+	}
+	return out, r.Err()
+}
+```
+
+```go
+func GuildNpcUpgradePacket(npcType uint16, level uint8) []byte {
+	w := NewWriter(GuildNpcUpgrade)
+	w.U16(npcType)
+	w.U8(level)
+	return w.Bytes()
+}
+```
+
+```go
+func GuildHouseBuyPacket() []byte { w := NewWriter(GuildHouseBuy); w.U32(0); return w.Bytes() }
+```
+
+```go
+func GuildDonatePacket() []byte   { w := NewWriter(GuildDonate); w.U32(0); return w.Bytes() }
+```
+
+</details>
+
 ## guild notice
 
 [internal/proto/guild_notice.go](../../internal/proto/guild_notice.go#L1)
