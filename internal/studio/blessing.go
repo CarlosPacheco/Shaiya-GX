@@ -1,0 +1,113 @@
+package studio
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"slices"
+	"strings"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/blessingrules"
+)
+
+type BlessingCatalog struct {
+	DBPath string
+	Rules  blessingrules.Catalog
+}
+
+func OpenBlessing(ctx context.Context, path string) (*BlessingCatalog, error) {
+	path, err := canonicalFile(path)
+	if err != nil {
+		return nil, err
+	}
+	db, err := openDB(ctx, path, "ro")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	rules, err := blessingrules.ReadDB(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+	return &BlessingCatalog{DBPath: path, Rules: rules}, nil
+}
+
+func EqualBlessing(a, b blessingrules.Catalog) bool {
+	return slices.Equal(a[0], b[0]) && slices.Equal(a[1], b[1])
+}
+
+func SaveBlessing(ctx context.Context, root string, catalog *BlessingCatalog, rules blessingrules.Catalog) (string, error) {
+	if err := rules.Validate(); err != nil {
+		return "", err
+	}
+	if len(rules[0]) != len(catalog.Rules[0]) {
+		return "", errors.New("keep the existing blessing tiers")
+	}
+	lock, err := lockRoot(root)
+	if err != nil {
+		return "", err
+	}
+	defer lock.Close()
+	if pending, err := Pending(root); err != nil {
+		return "", err
+	} else if pending {
+		return "", errors.New("recover the previous save before editing")
+	}
+
+	db, err := openDB(ctx, catalog.DBPath, "rw")
+	if err != nil {
+		return "", err
+	}
+	defer db.Close()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return "", err
+	}
+	defer tx.Rollback()
+	current, err := blessingrules.Read(ctx, tx)
+	if err != nil {
+		return "", err
+	}
+	if !EqualBlessing(current, catalog.Rules) {
+		return "", errors.New("blessing tiers changed on disk; reopen the catalog before saving")
+	}
+	for _, table := range blessingrules.Tables {
+		if err := safeTable(ctx, tx, table, false); err != nil {
+			return "", err
+		}
+	}
+	backup, err := backupDatabaseCatalog(ctx, root, catalog.DBPath, "blessing", func(snapshot *sql.DB) error {
+		old, err := blessingrules.ReadDB(ctx, snapshot)
+		if err != nil || !EqualBlessing(old, current) {
+			return errors.Join(errors.New("blessing backup failed verification"), err)
+		}
+		return nil
+	})
+	if err != nil {
+		return backup, err
+	}
+	columns := []string{"RequiredKills=?"}
+	for _, effect := range blessingrules.Effects {
+		columns = append(columns, effect.Column+"=?")
+	}
+	for side, table := range blessingrules.Tables {
+		for i, tier := range rules[side] {
+			if tier == current[side][i] {
+				continue
+			}
+			args := []any{tier.RequiredKills}
+			for _, value := range tier.Bonuses {
+				args = append(args, value)
+			}
+			args = append(args, tier.Number)
+			if _, err := tx.ExecContext(ctx, "UPDATE "+table+" SET "+strings.Join(columns, ",")+" WHERE Tier=?", args...); err != nil {
+				return backup, err
+			}
+		}
+	}
+	written, err := blessingrules.Read(ctx, tx)
+	if err != nil || !EqualBlessing(written, rules) {
+		return backup, errors.Join(errors.New("saved blessing tiers failed verification"), err)
+	}
+	return backup, tx.Commit()
+}

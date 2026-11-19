@@ -70,7 +70,7 @@ chance = min(100, base + linkingHammerBonus)
 ```
 
 The character's level and Vg do not participate. Blessing remains a faction-wide
-modifier from the loaded KillStatus tiers. With no hammer, its bonus is zero.
+modifier from the loaded SQLite Goddess Blessing tiers. With no hammer, its bonus is zero.
 A recognized linking hammer has real item family 26 and `Special=36`;
 `max(ReqVg, 0)` adds percentage points, not a multiplier.
 

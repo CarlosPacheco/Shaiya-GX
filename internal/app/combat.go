@@ -222,9 +222,8 @@ func (a *App) drawCombat(w, h int) {
 		SP:       ui.Resource{Current: s.Pools.SP, Max: s.Details.MaxSP},
 		Exp:      s.Details.Exp, PrevExp: s.Details.PrevExp, NextExp: s.Details.NextExp,
 	}
-	if s.Blessing.Known && s.Blessing.Country < 2 {
-		a.loadBlessing()
-		view.BlessCount, view.BlessMax, view.BlessKnown = s.Blessing.Count, a.blessingMax[s.Blessing.Country], true
+	if s.Blessing.Known && s.Blessing.Country < 2 && s.Blessing.Maximum > 0 {
+		view.BlessCount, view.BlessMax, view.BlessKnown = s.Blessing.Count, s.Blessing.Maximum, true
 		view.BlessRemainingMS, view.BlessCountry, view.Clock = s.Blessing.RemainingMS, s.Blessing.Country, a.clock
 	}
 	for _, slot := range s.Slots {

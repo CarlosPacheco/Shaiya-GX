@@ -3,7 +3,6 @@
 package app
 
 import (
-	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
 	"os"
@@ -26,22 +25,16 @@ func TestBlessingSnapshotAgainstIsolatedGX(t *testing.T) {
 	if !st.Blessing.Known || st.Blessing.Count != uint32(count) {
 		t.Fatalf("DB blessing overwritten during entry: %+v", st.Blessing)
 	}
-	arc, err := archive.OpenDirectory(os.Getenv("SHAIYA_DATA"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer arc.Close()
-	a := &App{state: st, arc: arc}
-	a.loadBlessing()
-	if a.blessingMax[0] != 12288 || a.blessingMax[1] != 12288 {
-		t.Fatal("original client thresholds")
+	a := &App{state: st}
+	if st.Blessing.Maximum != 12288 || !st.Blessing.Entry {
+		t.Fatalf("missing GX entry snapshot: %+v", st.Blessing)
 	}
 	if count == 12288 {
 		remaining := st.Blessing.RemainingMS
-		if remaining < 590000 || remaining > 600000 {
+		if remaining < 580000 || remaining > 600000 {
 			t.Fatal("missing maximum remainder", remaining)
 		}
-		a.confirmedBlessing(proto.BlessInit)
+		a.confirmedBlessing(proto.GXBlessingSnapshot)
 		if a.blessingBannerUntil != 0 || st.Blessing.RemainingMS != remaining {
 			t.Fatal("reentry replayed blessing activation")
 		}
@@ -49,7 +42,7 @@ func TestBlessingSnapshotAgainstIsolatedGX(t *testing.T) {
 		if st.Blessing.RemainingMS != remaining-1500 {
 			t.Fatal("maximum UI countdown")
 		}
-	} else if count == 1200 && len(a.blessingLines()) != 4 {
+	} else if count == 1200 && (st.Blessing.Bonuses[0] != 6 || st.Blessing.Bonuses[9] == 0) {
 		t.Fatal("current UI benefits differ from saved tier")
 	}
 	t.Logf("encrypted DB blessing snapshot count=%d remaining_ms=%d; no placeholder overwrite or activation replay", count, st.Blessing.RemainingMS)

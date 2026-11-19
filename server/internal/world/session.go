@@ -868,7 +868,14 @@ func (s *Session) handleMapLoaded() {
 	s.send(buildCharacterShape(ch, s.faction, s.items, 0), "0x0303 character shape")
 	s.send(buildCharacterMove(ch, 0, 0), "0x0501 character move")
 	if s.player == nil {
+		// Register and send the entry snapshot before live blessing broadcasts
+		// can reach this character. This also closes the map-load interval.
+		kcSendMu.Lock()
 		s.player = RegisterPlayer(*ch, s.items, s.isAdmin, s.faction, s.out, s.logger, s)
+		if snapshot := buildBlessingSnapshot(s.faction); snapshot != nil {
+			s.send(snapshot, "GX blessing snapshot")
+		}
+		kcSendMu.Unlock()
 		s.guildConnect()
 	} else {
 		s.clearView(false)

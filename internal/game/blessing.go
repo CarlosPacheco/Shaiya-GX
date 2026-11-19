@@ -6,6 +6,9 @@ type BlessingState struct {
 	Country            uint8
 	Count, RemainingMS uint32
 	Known              bool
+	Maximum            uint32
+	Bonuses            [27]uint16
+	Entry              bool
 	fractionalMS       float64
 }
 
@@ -20,6 +23,12 @@ func (b *BlessingState) apply(op proto.Opcode, value proto.BlessingUpdate) {
 		b.fractionalMS = 0
 	}
 	b.Country, b.Count, b.Known = value.Country, value.Count, true
+}
+
+func (b *BlessingState) applySnapshot(value proto.BlessingSnapshot) {
+	b.Country, b.Count, b.Known = value.Country, value.Count, true
+	b.Maximum, b.Bonuses, b.Entry = value.Maximum, value.Bonuses, value.Entry
+	b.RemainingMS, b.fractionalMS = value.RemainingMS, 0
 }
 
 // Advance only animates the native countdown; ownership/count resets remain

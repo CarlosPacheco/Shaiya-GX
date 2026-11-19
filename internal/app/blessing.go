@@ -1,50 +1,26 @@
 package app
 
 import (
-	"log"
-
-	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
-func (a *App) loadBlessing() {
-	if a.blessingLoaded || a.arc == nil {
-		return
-	}
-	a.blessingLoaded = true
-	raw, err := a.arc.ReadFile("Character/KillStatus.SData")
-	if err == nil {
-		a.blessingTiers, err = sdata.ParseBlessing(raw)
-	}
-	if err != nil {
-		log.Printf("blessing data: %v", err)
-		return
-	}
-	for c := range a.blessingMax {
-		a.blessingMax[c] = sdata.BlessingMaximum(a.blessingTiers, uint8(c))
-	}
-}
-
-// Original 0055fc90 starts ten minutes only on a maximum 020F broadcast.
-// The 0211 entry snapshot restores a remaining time without activation feedback.
 func (a *App) confirmedBlessing(op proto.Opcode) {
 	if op == proto.Logout {
 		a.blessingBannerUntil = 0
 		a.blessingFeedbackActive = false
 		return
 	}
-	if op != proto.CountryKillCount && op != proto.BlessInit || a.state == nil {
+	if op != proto.GXBlessingSnapshot || a.state == nil {
 		return
 	}
-	a.loadBlessing()
 	b := &a.state.Blessing
-	if b.Country > 1 || b.Country != a.state.Faction.Faction || a.blessingMax[b.Country] == 0 {
+	if b.Country > 1 || b.Country != a.state.Faction.Faction || b.Maximum == 0 {
 		return
 	}
-	maximum := b.Count >= a.blessingMax[b.Country]
-	if op == proto.BlessInit {
+	maximum := b.Count == b.Maximum && b.RemainingMS > 0
+	if b.Entry {
 		a.blessingFeedbackActive = maximum
 		return
 	}
@@ -53,12 +29,11 @@ func (a *App) confirmedBlessing(op proto.Opcode) {
 		return
 	}
 	// TCP normally delivers one activation. A repeated maximum notification
-	// must not replay the burst or extend the countdown, including after reentry.
+	// must not replay the burst, including after reentry.
 	if a.blessingFeedbackActive {
 		return
 	}
 	a.blessingFeedbackActive = true
-	b.RemainingMS = 600000
 	a.blessingBannerUntil = a.clock + 5
 	if a.sound != nil {
 		name := a.audioPath("ui_etainbless01.wav", false)
@@ -89,13 +64,10 @@ func (a *App) blessingLines() []string {
 	if a.state == nil || !a.state.Blessing.Known {
 		return nil
 	}
-	a.loadBlessing()
-	b := a.state.Blessing
-	values := sdata.BlessingBonuses(a.blessingTiers, b.Country, b.Count)
 	var lines []string
-	for typ := 1; typ < len(values); typ++ {
-		if values[typ] != 0 {
-			lines = append(lines, a.msg.Get(5126+typ))
+	for i, value := range a.state.Blessing.Bonuses {
+		if value != 0 {
+			lines = append(lines, a.msg.Get(5127+i))
 		}
 	}
 	return lines
@@ -117,7 +89,7 @@ func (a *App) drawBlessingTooltip(w, h int) {
 		return
 	}
 	lines := a.blessingLines()
-	if !a.state.Blessing.Known || a.state.Blessing.Country > 1 || a.blessingMax[a.state.Blessing.Country] == 0 {
+	if !a.state.Blessing.Known || a.state.Blessing.Country > 1 || a.state.Blessing.Maximum == 0 {
 		return
 	}
 	// Native 00484be0 has a 400px wide variant. Fit translated text too.

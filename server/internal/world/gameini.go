@@ -156,7 +156,7 @@ func LoadGameConfig(log *logx.Logger) error {
 		return fmt.Errorf("NpcQuest.SData: %w", err)
 	}
 	if err := loadKillStatus(log); err != nil {
-		return fmt.Errorf("KillStatus.SData: %w", err)
+		return fmt.Errorf("goddess blessing: %w", err)
 	}
 	return nil
 }

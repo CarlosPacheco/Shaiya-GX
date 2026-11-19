@@ -23,3 +23,31 @@ func DecodeBlessing(p []byte) (BlessingUpdate, error) {
 	}
 	return b, nil
 }
+
+// GXBlessingSnapshot carries the server's presentation data independently of
+// the native count packets. Entry snapshots restore the timer without a burst.
+const GXBlessingSnapshot Opcode = 0x7F1B
+
+type BlessingSnapshot struct {
+	Country                     uint8
+	Entry                       bool
+	Count, Maximum, RemainingMS uint32
+	Bonuses                     [27]uint16
+}
+
+func DecodeBlessingSnapshot(p []byte) (BlessingSnapshot, error) {
+	r := NewReader(p)
+	country, flags := r.U8(), r.U8()
+	b := BlessingSnapshot{Country: country, Entry: flags == 1, Count: r.U32(), Maximum: r.U32(), RemainingMS: r.U32()}
+	for i := range b.Bonuses {
+		b.Bonuses[i] = r.U16()
+	}
+	if err := r.Err(); err != nil {
+		return b, err
+	}
+	if country > 1 || flags > 1 || b.Maximum == 0 || b.Count > b.Maximum || b.RemainingMS > 600000 ||
+		b.RemainingMS != 0 && b.Count != b.Maximum || r.Remaining() != 0 {
+		return b, fmt.Errorf("invalid blessing snapshot")
+	}
+	return b, nil
+}

@@ -12,6 +12,7 @@ the exact SData field and SQLite column under each readable field name.
 | NPC skills | `Monster/NpcSkill.SData` | `PS_GameDefs_Skills`, level 100 for SData rank 1 |
 | Enchant |  | `PS_GameDefs_EnchantAttack` / `PS_GameDefs_EnchantDefense` |
 | Mob AI messages | | `PS_GameDefs_MobAIMessages` |
+| Goddess Blessing | | `PS_GameDefs_BlessingLight` / `PS_GameDefs_BlessingFury` |
 
 ## Build
 
@@ -85,6 +86,15 @@ Open the server SQLite database in **Mob AI messages**. Edit **Message**
 Restart GX World to load the changes. To display Korean with no client
 folder selected, place the GX CJK font and its license in `fonts/` beside
 the Studio executable.
+
+## Goddess Blessing
+
+Open **Goddess Blessing** with the server SQLite database. Select a tier
+to edit each faction’s kill threshold and their shared bonuses. Each bonus
+shows its unit, SQLite column, original type ID and effective total after
+inheritance from earlier tiers. **Save database** takes a verified SQLite
+backup and updates both faction tables in one transaction. Restart GX World
+to apply the changes.
 
 ## Backups and recovery
 

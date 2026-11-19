@@ -2,18 +2,17 @@
 
 Blessing belongs to a country, independently of an individual character's PvP
 rank. Both player kills and captured altars feed the same authoritative world
-counter. The client displays its country from server packets and uses its own
-matching tier file to present the original benefits.
+counter. GX World sends the progress, timer and tooltip bonuses to the client.
 
 ## Data and persistence
 
-The world reads `server/data/game/KillStatus.SData`; the client reads
-`data/Character/KillStatus.SData`. The supplied copies match exactly (SHA256
-`ae82bd49a7e8293e8f40e66430ed0e48287b532384b631c8ba097355e19d04c7`).
-They contain 30 stages per country. Each 25-byte record has country U8,
-threshold U32, level U16 and six type-U8/value-U16 pairs, following a U32 record
-count. The shared reader also accepts the existing SEED wrapper and rejects
-truncated, trailing, invalid-country and unordered-threshold data.
+GX World loads `PS_GameDefs_BlessingLight` and `PS_GameDefs_BlessingFury` from
+SQLite. Migration 13 imports all 30 stages per faction from the original
+`KillStatus.SData`. It takes the higher value of each bonus at each matching
+stage and writes it to both sides, preserving the thresholds. GX World requires
+consecutive tier numbers, increasing thresholds and matching bonuses at every
+tier. GX Studio edits both tables together and shows the effective inherited
+bonus next to the value stored in each tier. Restart GX World after saving.
 
 The thresholds for both countries are:
 
@@ -24,10 +23,8 @@ The thresholds for both countries are:
 ```
 
 Every later stage retains the maximum earlier value for each effect type.
-Values differ between countries; they are not derived from a generic percent.
-For example, at 450 Light retains 5% HP/SP/MP resting recovery, while Fury also
-has 6% maximum pools and 6% SP/MP resting recovery. A later row with no effect
-does not remove earlier benefits. Below 150 the benefit set is empty.
+For example, at 450 kills both factions have 6% maximum pools and 5% HP /
+6% SP and MP resting recovery. Below 150 the benefit set is empty.
 
 `PS_GameData_WorldInfo.GodBless_Light` and `GodBless_Dark` store the country
 counts through the existing `ReadGodBless`/`SaveGodBless` storage API
@@ -95,7 +92,7 @@ from the right using the original atlas crop, seven pixels high: 336 pixels at
 the footer's top. The original percentage text belongs to EXP; no extra
 blessing percentage label is added.
 
-Normally the bar represents count / the country's final table threshold.
+Normally the bar represents count / the country's final threshold sent by GX World.
 During maximum it represents remaining milliseconds / 600,000 and pulses with
 the native additive atlas pass. Frame elapsed time advances presentation only;
 confirmed packets still own resets and counts.
@@ -107,12 +104,11 @@ order. It adds no amounts, future benefits or invented title. Below the first
 stage it is the original empty panel. Windows covering the footer and modal
 controls suppress its tooltip.
 
-A maximum `020F` broadcast starts the ten-minute presentation, plays the local
+A live maximum GX snapshot starts the ten-minute presentation, plays the local
 country sequence of `Effect/bless.EFT` on the local character only, plays `ui_etainbless01.ogg` and displays
 `interface/worldname/event.png` for five seconds with the original fade and
-placement. Assets remain external. An entry `0211` restores the count and
-remaining time without replaying activation effects. GX sends one real entry
-snapshot; the former second zero placeholder and client exception were removed.
+placement. Assets remain external. An entry GX snapshot restores the count and
+remaining time without replaying activation effects. The native count packets remain available.
 Each winning-faction client plays the burst on its own character, never remote
 rigs or the opposing faction. Repeated maximum notifications do not replay the
 burst or extend the countdown. Both sequences have 13 original emitters and run
@@ -122,7 +118,8 @@ five-second skill-impact cutoff and a busy 32-impact budget do not suppress it.
 | Packet | Payload |
 | --- | --- |
 | `020F` | Country U8, count U32, sent on tier transition/debit and periodically |
-| `0211` | Country U8, count U32, remaining milliseconds U32 at entry |
+| `0211` | Country U8, count U32, remaining milliseconds U32 at character selection |
+| `7F1B` | Country U8, entry flag U8, count U32, maximum U32, remaining milliseconds U32, 27 cumulative U16 bonuses in original type order. Sent on map entry and blessing changes. |
 
 ## Evidence and checks
 
@@ -136,7 +133,7 @@ loader 004bf4a0, AddKillCount 00413600, SubKillCount 00413750 and KillPCTo
 0045aed0. Research was read-only; proprietary executables/assets are not added
 to the source repository.
 
-Tests cover real tables and faction inheritance, malformed input, authoritative
+Tests cover migrated tiers and inheritance, malformed input, authoritative
 zero snapshots, elapsed-time countdown, localized tooltip ordering, activation
 versus reconnect, and a PvP/altar/DB/maximum/expiry lifecycle. Graphics checks
 compare the footer against independent native draw constants at partial/full

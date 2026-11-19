@@ -118,10 +118,11 @@ func TestBlessingBarUsesOriginalFooterGL(t *testing.T) {
 	}
 	// Real localized tooltip: current cumulative benefits, hover-only.
 	a.state = game.New()
-	a.loadBlessing()
 	a.state.Blessing.Known = true
 	a.state.Blessing.Country = 0
 	a.state.Blessing.Count = 1200
+	a.state.Blessing.Maximum = 12288
+	a.state.Blessing.Bonuses = [27]uint16{0: 6, 1: 6, 2: 6, 9: 5, 10: 6, 11: 6, 23: 1}
 	a.lastMouseX, a.lastMouseY = 750, 755
 	draw(1024, true, 1200, 0, false, 0)
 	a.sprites.Begin(1024, 768)
@@ -134,7 +135,7 @@ func TestBlessingBarUsesOriginalFooterGL(t *testing.T) {
 	if widePixel[0] == 0 && widePixel[1] == 0 && widePixel[2] == 0 {
 		t.Fatal("blessing tooltip still uses the narrow panel")
 	}
-	if lines := a.blessingLines(); len(lines) != 4 {
+	if lines := a.blessingLines(); len(lines) != 7 {
 		t.Fatalf("real tooltip effects: %v", lines)
 	}
 
@@ -175,8 +176,8 @@ func TestBlessingBarUsesOriginalFooterGL(t *testing.T) {
 		a.state.SelfID = 1
 		a.state.Faction.Faction = country
 		a.blessingFeedbackActive = false
-		a.state.Blessing = game.BlessingState{Known: true, Country: country, Count: 12288}
-		a.confirmedBlessing(proto.CountryKillCount)
+		a.state.Blessing = game.BlessingState{Known: true, Country: country, Count: 12288, Maximum: 12288, RemainingMS: 600000}
+		a.confirmedBlessing(proto.GXBlessingSnapshot)
 		if len(a.wv.impacts) != 1 || a.wv.impacts[0].instance.Skipped != 0 {
 			t.Fatalf("original blessing FX country=%d: %+v", country, a.wv.impacts)
 		}

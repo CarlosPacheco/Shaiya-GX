@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/blessingrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
 )
@@ -67,6 +68,7 @@ var migrations = []migration{
 	{10, "item_enchant_rules", enchantrules.LegacyCreateSQL},
 	{11, "enchant_target_levels", enchantrules.UpgradeSQL},
 	{12, "mob_ai_messages", mobaimessages.MigrationSQL},
+	{13, "goddess_blessing", blessingrules.MigrationSQL},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

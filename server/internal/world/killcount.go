@@ -1,15 +1,15 @@
 package world
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"math"
-	"os"
-	"path/filepath"
+	"slices"
 	"sync"
 	"time"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/blessingrules"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -67,46 +67,38 @@ type kcCountry struct {
 }
 
 var (
-	kcMu    sync.Mutex
-	kcTiers [2][]kcTier
-	kcWorld = [2]kcCountry{{index: -1}, {index: -1}}
+	kcMu     sync.Mutex
+	kcSendMu sync.Mutex
+	kcTiers  [2][]kcTier
+	kcWorld  = [2]kcCountry{{index: -1}, {index: -1}}
 )
 
 // loadKillStatus is CGameData::LoadKCStatus.
 func loadKillStatus(log *logx.Logger) error {
-	b, err := os.ReadFile(filepath.Join(gameDataDir(), "KillStatus.SData"))
+	pool, err := db.Pool(db.GameDefs)
 	if err != nil {
 		return err
 	}
-	rows, err := sdata.ParseBlessing(b)
+	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	defer cancel()
+	catalog, err := blessingrules.ReadDB(ctx, pool)
 	if err != nil {
 		return err
 	}
 	var tiers [2][]kcTier
-	for _, row := range rows {
-		t := kcTier{Kill: row.Kills}
-		for _, e := range row.Effects {
-			if e.Type > 0 && e.Type < kcTypes {
-				t.Status[e.Type] = int32(e.Value)
+	for side, rows := range catalog {
+		for i, row := range rows {
+			tier := kcTier{Kill: row.RequiredKills}
+			for bonus, value := range catalog.Effective(side, i) {
+				tier.Status[bonus+1] = int32(value)
 			}
-		}
-		tiers[row.Country] = append(tiers[row.Country], t)
-	}
-	if len(tiers[0]) == 0 || len(tiers[1]) == 0 {
-		return fmt.Errorf("blessing: both countries need tiers")
-	}
-
-	for c := range tiers {
-		for i := 1; i < len(tiers[c]); i++ {
-			for k := range tiers[c][i].Status {
-				tiers[c][i].Status[k] = max(tiers[c][i].Status[k], tiers[c][i-1].Status[k])
-			}
+			tiers[side] = append(tiers[side], tier)
 		}
 	}
 	kcMu.Lock()
 	kcTiers = tiers
 	kcMu.Unlock()
-	log.Printf("GX Server World loaded KillStatus.SData tiers light=%d dark=%d", len(tiers[0]), len(tiers[1]))
+	log.Printf("GX Server World loaded SQLite blessing tiers light=%d dark=%d", len(tiers[0]), len(tiers[1]))
 	return nil
 }
 
@@ -169,7 +161,7 @@ func AddKillCount(c uint8, n uint32, log logPrinter) {
 	}
 	now := time.Now()
 	w := &kcWorld[c]
-	w.count += n
+	w.count = satAdd(w.count, n)
 	if w.next == 0 || w.count < w.next {
 		kcMu.Unlock()
 		return
@@ -191,10 +183,10 @@ func AddKillCount(c uint8, n uint32, log logPrinter) {
 	count, index := w.count, w.index
 	kcMu.Unlock()
 	kcApplyCountry(int(c))
-	kcAnnounce(int(c))
+	kcBroadcast(int(c), true)
 	if maxed {
 		kcApplyCountry(other)
-		kcAnnounce(other)
+		kcBroadcast(other, true)
 		kcSave(light, dark, log)
 		ResetRelics(now, log)
 	}
@@ -228,7 +220,7 @@ func TickKillCount(now time.Time, log logPrinter) {
 		kcApplyCountry(c)
 	}
 	for _, c := range announce {
-		kcAnnounce(c)
+		kcBroadcast(c, slices.Contains(apply, c))
 	}
 	if dirty {
 		kcSave(light, dark, log)
@@ -254,10 +246,16 @@ var kcStore = func(light, dark uint32) error {
 	return err
 }
 
-// kcAnnounce is CWorldThread::SendAllKillCount: 0x020F to the country.
-func kcAnnounce(c int) {
+// kcBroadcast sends the native country count and, on state changes, the GX snapshot.
+func kcBroadcast(c int, snapshot bool) {
+	kcSendMu.Lock()
+	defer kcSendMu.Unlock()
 	kcMu.Lock()
 	count := min(kcWorld[c].count, kcMaxKill(c))
+	var details []byte
+	if snapshot {
+		details = blessingSnapshotLocked(uint8(c), false)
+	}
 	kcMu.Unlock()
 	w := packet.New(0x020F)
 	w.U8(uint8(c))
@@ -266,6 +264,9 @@ func kcAnnounce(c int) {
 	for _, p := range AllPlayers() {
 		if int(p.Faction()) == c {
 			p.Send(frame, "0x020F country kill count")
+			if details != nil {
+				p.Send(details, "GX blessing snapshot")
+			}
 		}
 	}
 }
@@ -295,6 +296,45 @@ func buildKCStatus(c uint8) []byte {
 	w.U8(c)
 	w.U32(count)
 	w.U32(uint32(left))
+	return w.MustFinish()
+}
+
+func buildBlessingSnapshot(c uint8) []byte {
+	kcMu.Lock()
+	defer kcMu.Unlock()
+	return blessingSnapshotLocked(c, true)
+}
+
+func blessingSnapshotLocked(c uint8, entry bool) []byte {
+	if c >= uint8(len(kcWorld)) {
+		return nil
+	}
+	world := kcWorld[c]
+	maximum := kcMaxKill(int(c))
+	count := min(world.count, maximum)
+	var remaining uint32
+	if !world.resetAt.IsZero() {
+		remaining = uint32(max(time.Until(world.resetAt).Milliseconds(), 0))
+	}
+	w := packet.New(packet.Opcode(proto.GXBlessingSnapshot))
+	w.U8(c)
+	var flags uint8
+	if entry {
+		flags = 1
+	}
+	w.U8(flags)
+	w.U32(count)
+	w.U32(maximum)
+	w.U32(remaining)
+	// The native tooltip selects by count. Actual stats keep debit hysteresis.
+	index := kcTierFor(int(c), count)
+	for typ := 1; typ < kcTypes; typ++ {
+		var value uint16
+		if index >= 0 {
+			value = uint16(kcTiers[c][index].Status[typ])
+		}
+		w.U16(value)
+	}
 	return w.MustFinish()
 }
 
@@ -330,7 +370,8 @@ func kcPercent(base uint32, v int32) uint32 {
 	if v == 0 {
 		return 0
 	}
-	return uint32(max(math.Trunc(float64(float32(int32(base)*v))*float64(float32(0.01))), 0))
+	scaled := math.Trunc(float64(float32(int64(base)*int64(v))) * float64(float32(0.01)))
+	return uint32(min(max(scaled, 0), math.MaxUint32))
 }
 
 // kcWorldType is a country-wide type (24 gem chance, 25 exp loss cut).
@@ -361,7 +402,7 @@ func SubKillCount(c uint8, n uint32, log logPrinter) {
 	light, dark := kcWorld[0].count, kcWorld[1].count
 	kcMu.Unlock()
 	kcApplyCountry(int(c))
-	kcAnnounce(int(c))
+	kcBroadcast(int(c), true)
 	kcSave(light, dark, log)
 }
 

@@ -8,29 +8,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 )
 
-func TestRealBlessingTiers(t *testing.T) {
-	dir := os.Getenv("SHAIYA_DATA")
-	if dir == "" {
-		t.Skip("SHAIYA_DATA not set")
-	}
-	a, err := archive.Open(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer a.Close()
-	b, err := a.ReadFile("Character/KillStatus.SData")
-	if err != nil {
-		t.Fatal(err)
-	}
-	tiers, err := ParseBlessing(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(tiers) != 60 || BlessingMaximum(tiers, 0) != 12288 || BlessingMaximum(tiers, 1) != 12288 {
-		t.Fatalf("unexpected blessing tiers: %d", len(tiers))
-	}
-}
-
 // N1: Item.SData decrypts and parses to its last byte.
 func TestRealItems(t *testing.T) {
 	dir := os.Getenv("SHAIYA_DATA")

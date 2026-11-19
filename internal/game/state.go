@@ -277,6 +277,12 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		} else if _, ok := proto.GestureAction(m.Motion); ok || m.Motion == proto.MotionJump || m.Motion == proto.MotionBackstep || m.Motion == proto.MotionEvadeLeft || m.Motion == proto.MotionEvadeRight {
 			e.Gesture, e.GestureSerial = m.Motion, e.GestureSerial+1
 		}
+	case proto.GXBlessingSnapshot:
+		value, err := proto.DecodeBlessingSnapshot(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.Blessing.applySnapshot(value)
 	case proto.BlessInit, proto.CountryKillCount:
 		value, err := proto.DecodeBlessing(p)
 		if err != nil {

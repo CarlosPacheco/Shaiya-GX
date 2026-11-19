@@ -167,12 +167,9 @@ type App struct {
 	skinner                             *render.Skinner
 	items                               map[sdata.ItemKey]*sdata.Item
 	mallCatalog                         []cash.Product
-	blessingMax                         [2]uint32
-	blessingTiers                       []sdata.BlessingTier
 	blessingBannerUntil                 float64
 	blessingFeedbackActive              bool
 	screenNotices                       []screenNotice
-	blessingLoaded                      bool
 	actor                               *scene.Character
 	actorID                             uint32
 	actorAppearance                     scene.Appearance

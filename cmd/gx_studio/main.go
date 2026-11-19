@@ -16,6 +16,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/Spelunkern/Shaiya-GX/internal/blessingrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
@@ -35,6 +36,7 @@ type editor struct {
 	itemFormDirty          func() bool
 	enchant                *studio.EnchantCatalog
 	mobAIMessages          *studio.MobAIMessageCatalog
+	blessing               *studio.BlessingCatalog
 	databaseDraftDirty     func() bool
 	itemSection, itemFocus int
 	itemQuery              string
@@ -81,7 +83,7 @@ func (e *editor) leave(next func()) {
 
 func (e *editor) start() {
 	e.project, e.draft, e.assets = nil, nil, nil
-	e.enchant, e.mobAIMessages, e.databaseDraftDirty = nil, nil, nil
+	e.enchant, e.mobAIMessages, e.blessing, e.databaseDraftDirty = nil, nil, nil, nil
 	e.definitions, e.definitionDraft = nil, nil
 	e.itemFormDirty, e.itemSection, e.itemFocus, e.itemQuery = nil, 0, -1, ""
 	e.cashQuery, e.cashCode, e.cashSection = "", "", 0
@@ -177,6 +179,8 @@ func (e *editor) start() {
 		if kind.DatabaseOnly() {
 			if kind == studio.MobAIMessages {
 				dbSource = mobaimessages.Table
+			} else if kind == studio.Blessing {
+				dbSource = strings.Join(blessingrules.Tables[:], " · ")
 			} else {
 				dbSource = enchantrules.AttackTable + " · " + enchantrules.DefenseTable
 			}
@@ -211,7 +215,7 @@ func (e *editor) start() {
 	render()
 }
 
-var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills", "Enchant", "Mob AI messages"}
+var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills", "Enchant", "Mob AI messages", "Goddess Blessing"}
 
 func (e *editor) switcher(current studio.Kind) *widget.Select {
 	control := widget.NewSelect(catalogNames, nil)
@@ -242,6 +246,8 @@ func (e *editor) openKind(kind studio.Kind) {
 		message = "Reading enchant rules from SQLite…"
 	} else if kind == studio.MobAIMessages {
 		message = "Reading mob AI messages from SQLite…"
+	} else if kind == studio.Blessing {
+		message = "Reading Goddess Blessing tiers from SQLite…"
 	}
 	e.run(message, func() func() {
 		ctx := context.Background()
@@ -249,6 +255,7 @@ func (e *editor) openKind(kind studio.Kind) {
 		var definitions *studio.Definitions
 		var enchant *studio.EnchantCatalog
 		var messages *studio.MobAIMessageCatalog
+		var blessing *studio.BlessingCatalog
 		var err error
 		if kind == studio.Cash {
 			project, err = studio.Open(ctx, dataDir, dbPath)
@@ -256,6 +263,8 @@ func (e *editor) openKind(kind studio.Kind) {
 			enchant, err = studio.OpenEnchant(ctx, dbPath)
 		} else if kind == studio.MobAIMessages {
 			messages, err = studio.OpenMobAIMessages(ctx, dbPath)
+		} else if kind == studio.Blessing {
+			blessing, err = studio.OpenBlessing(ctx, dbPath)
 		} else {
 			definitions, err = studio.OpenDefinitions(ctx, dataDir, dbPath, kind)
 		}
@@ -274,7 +283,7 @@ func (e *editor) openKind(kind studio.Kind) {
 			e.preferences = preferences
 			e.itemFormDirty = nil
 			e.project, e.definitions, e.assets = project, definitions, images
-			e.enchant, e.mobAIMessages, e.databaseDraftDirty = enchant, messages, nil
+			e.enchant, e.mobAIMessages, e.blessing, e.databaseDraftDirty = enchant, messages, blessing, nil
 			e.draft, e.definitionDraft = nil, make(studio.DefinitionEdits)
 			if kind == studio.Cash {
 				e.draft = append([]cash.Product(nil), project.Products...)
@@ -283,6 +292,8 @@ func (e *editor) openKind(kind studio.Kind) {
 				e.enchantCatalog()
 			} else if kind == studio.MobAIMessages {
 				e.mobAIMessageCatalog()
+			} else if kind == studio.Blessing {
+				e.blessingCatalog()
 			} else {
 				e.definitionCatalog()
 			}

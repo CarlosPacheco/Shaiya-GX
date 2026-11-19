@@ -1,11 +1,11 @@
 package world
 
 import (
-	"os"
-	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 )
 
@@ -68,18 +68,12 @@ func TestKillCountTiers(t *testing.T) {
 	}
 }
 
-// KillStatus.SData: 30 tiers per country, each keeping the earlier
-// tiers' values.
 func TestLoadKillStatus(t *testing.T) {
-	dir := filepath.Join("..", "..", "data", "game")
-	if _, err := os.Stat(filepath.Join(dir, "KillStatus.SData")); err != nil {
-		t.Skip("no game data")
-	}
-	t.Chdir(filepath.Join("..", ".."))
 	log, err := logx.New("gx_world_test")
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer log.Close()
 	kcMu.Lock()
 	old := kcTiers
 	kcMu.Unlock()
@@ -87,13 +81,11 @@ func TestLoadKillStatus(t *testing.T) {
 	if err := loadKillStatus(log); err != nil {
 		t.Fatal(err)
 	}
-	if len(kcTiers[0]) != 30 || len(kcTiers[1]) != 30 || kcTiers[0][0].Kill != 150 {
-		t.Fatalf("tiers %d/%d first %d", len(kcTiers[0]), len(kcTiers[1]), kcTiers[0][0].Kill)
+	if len(kcTiers[0]) != 30 || !slices.Equal(kcTiers[0], kcTiers[1]) || kcTiers[0][0].Kill != 150 || kcMaxKill(0) != 12288 {
+		t.Fatalf("unexpected migrated tiers: %d/%d", len(kcTiers[0]), len(kcTiers[1]))
 	}
-	// Tier 0 has 11/12 = 5; tier 10 (1650) raises them to 10 and tier 2
-	// adds 10 = 5, kept by every later tier.
 	last := kcTiers[0][29].Status
-	if last[11] != 10 || last[10] != 10 || last[25] != 100 || last[24] != 5 {
+	if last[11] != 10 || last[10] != 10 || last[25] != 100 || last[24] != 5 || last[1] != 9 {
 		t.Fatalf("top tier status %v", last)
 	}
 }
@@ -152,5 +144,28 @@ func TestObeliskDebitPreservesNativeTierHysteresisAndNeverUnderflows(t *testing.
 	SubKillCount(1, 100, nopLog{})
 	if kcWorld[1].count != 4 {
 		t.Fatal("debit modified active blessing")
+	}
+}
+
+func TestBlessingSnapshotUsesServerThresholdTimerAndBonuses(t *testing.T) {
+	withTiers(t)
+	AddKillCount(0, 1, nopLog{})
+	snapshot, err := proto.DecodeBlessingSnapshot(buildBlessingSnapshot(0)[2:])
+	if err != nil || !snapshot.Entry || snapshot.Count != 1 || snapshot.Maximum != 4 || snapshot.Bonuses != [27]uint16{} {
+		t.Fatalf("entry before first tier: %+v, %v", snapshot, err)
+	}
+	AddKillCount(0, 3, nopLog{})
+	kcMu.Lock()
+	live := blessingSnapshotLocked(0, false)
+	kcMu.Unlock()
+	snapshot, err = proto.DecodeBlessingSnapshot(live[2:])
+	if err != nil || snapshot.Entry || snapshot.Count != 4 || snapshot.RemainingMS < 590000 ||
+		snapshot.Bonuses[0] != 10 || snapshot.Bonuses[3] != 5 || snapshot.Bonuses[9] != 20 {
+		t.Fatalf("maximum transition: %+v, %v", snapshot, err)
+	}
+	TickKillCount(kcWorld[0].resetAt.Add(time.Second), nopLog{})
+	snapshot, err = proto.DecodeBlessingSnapshot(buildBlessingSnapshot(0)[2:])
+	if err != nil || snapshot.Count != 0 || snapshot.RemainingMS != 0 || snapshot.Bonuses != [27]uint16{} {
+		t.Fatalf("expired blessing: %+v, %v", snapshot, err)
 	}
 }
