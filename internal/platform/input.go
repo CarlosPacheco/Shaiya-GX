@@ -35,7 +35,7 @@ const (
 type Input struct {
 	KeypadChars      string // character events that belong to keypad action edges
 	ActionHeld       uint32 // held number-row/keypad slots, independent of repeat events
-	Actions          []int  // second-bar keypad press edges, flattened slot indices
+	Actions          []int  // secondary/third-bar press edges, flattened slot indices
 	MouseX, MouseY   int
 	MouseLook        bool    // captured pointer; UI coordinates stay at the drag anchor
 	MouseDX, MouseDY float64 // framebuffer displacement during captured look
@@ -77,10 +77,17 @@ var keyMap = map[glfw.Key]Key{
 	glfw.KeyDown: KeyDown, glfw.KeyLeft: KeyLeft, glfw.KeyRight: KeyRight, glfw.KeyDelete: KeyDelete,
 }
 
+func thirdBarModifier(mods glfw.ModifierKey) bool {
+	return mods&(glfw.ModControl|glfw.ModAlt|glfw.ModShift|glfw.ModSuper) == glfw.ModControl
+}
+
 // InstallInput registers callbacks; call Frame once per frame.
 func (w *Window) InstallInput() *InputQueue {
 	q := &InputQueue{}
 	w.SetCharCallback(func(_ *glfw.Window, r rune) {
+		if q.thirdBarChar {
+			return
+		}
 		if q.keypadChar && r >= '0' && r <= '9' {
 			q.keypadChar = false
 			q.cur.KeypadChars += string(r)
@@ -90,6 +97,15 @@ func (w *Window) InstallInput() *InputQueue {
 	w.SetKeyCallback(func(_ *glfw.Window, k glfw.Key, _ int, a glfw.Action, mods glfw.ModifierKey) {
 		q.cur.Shift = mods&glfw.ModShift != 0
 		q.keypadChar = false
+		q.thirdBarChar = false
+		if k >= glfw.Key0 && k <= glfw.Key9 && thirdBarModifier(mods) {
+			q.thirdBarChar = a != glfw.Release
+			if a == glfw.Press {
+				digit := int(k - glfw.Key0)
+				q.cur.Actions = append(q.cur.Actions, 20+(digit+9)%10)
+			}
+			return
+		}
 		if k >= glfw.KeyKP0 && k <= glfw.KeyKP9 {
 			if a == glfw.Press {
 				digit := int(k - glfw.KeyKP0)
@@ -148,6 +164,7 @@ type InputQueue struct {
 	cur              Input
 	mouselook        bool
 	keypadChar       bool
+	thirdBarChar     bool
 	anchorX, anchorY float64
 	lookX, lookY     float64
 }
@@ -190,10 +207,28 @@ func (q *InputQueue) Frame() Input {
 	}
 	in.Down = string(down[:n])
 	in.Space = q.win.GetKey(glfw.KeySpace) == glfw.Press
+	var mods glfw.ModifierKey
+	for _, modifier := range []struct {
+		left, right glfw.Key
+		flag        glfw.ModifierKey
+	}{
+		{glfw.KeyLeftControl, glfw.KeyRightControl, glfw.ModControl},
+		{glfw.KeyLeftShift, glfw.KeyRightShift, glfw.ModShift},
+		{glfw.KeyLeftAlt, glfw.KeyRightAlt, glfw.ModAlt},
+		{glfw.KeyLeftSuper, glfw.KeyRightSuper, glfw.ModSuper},
+	} {
+		if q.win.GetKey(modifier.left) == glfw.Press || q.win.GetKey(modifier.right) == glfw.Press {
+			mods |= modifier.flag
+		}
+	}
+	numberRowOffset := 0
+	if thirdBarModifier(mods) {
+		numberRowOffset = 20
+	}
 	for digit := 0; digit < 10; digit++ {
 		slot := (digit + 9) % 10
 		if q.win.GetKey(glfw.Key0+glfw.Key(digit)) == glfw.Press {
-			in.ActionHeld |= 1 << slot
+			in.ActionHeld |= 1 << (numberRowOffset + slot)
 		}
 		if q.win.GetKey(glfw.KeyKP0+glfw.Key(digit)) == glfw.Press {
 			in.ActionHeld |= 1 << (10 + slot)

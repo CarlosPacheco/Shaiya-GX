@@ -74,10 +74,16 @@ func TestUILayoutPersistsAcrossAppAndPreservesCaptureDefaults(t *testing.T) {
 	a.cfg.RememberLayout = true
 	a.inventoryUI.Position.Move(200, 100, 1024, 768, ui.InventoryWidth, ui.InventoryHeight)
 	a.subActionsUI.Position.Move(500, 80, 1024, 768, ui.SubActionWidth, ui.SubActionHeight)
+	a.actionBar.ShowThird = true
+	a.actionBar.Position[2].Vertical = true
+	a.actionBar.Position[2].Move(100, 120, 1024, 768, 56, 449)
 	a.saveUILayout()
 	b := inputApp()
 	b.cfg.RememberLayout = true
 	b.loadUILayout()
+	if !b.actionBar.ShowThird || b.actionBar.Position[2] != a.actionBar.Position[2] {
+		t.Fatal("third bar layout did not survive restart")
+	}
 	if b.inventoryUI.Position != a.inventoryUI.Position {
 		t.Fatal("layout did not survive restart")
 	}
@@ -116,8 +122,8 @@ func TestUILayoutPersistsAcrossAppAndPreservesCaptureDefaults(t *testing.T) {
 	b = inputApp()
 	b.cfg.RememberLayout = true
 	b.loadUILayout()
-	if b.inventoryUI.Position.Moved {
-		t.Fatal("invalid saved layout accepted")
+	if b.inventoryUI.Position.Moved || b.actionBar.ShowThird {
+		t.Fatal("invalid layout or missing third-bar setting accepted")
 	}
 }
 

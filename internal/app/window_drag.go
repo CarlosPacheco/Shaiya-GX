@@ -323,6 +323,7 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 	if a.actionBar != nil {
 		out["action_bar_0"] = &a.actionBar.Position[0]
 		out["action_bar_1"] = &a.actionBar.Position[1]
+		out["action_bar_2"] = &a.actionBar.Position[2]
 	}
 	if a.subActionsUI != nil {
 		out["sub_actions"] = &a.subActionsUI.Position
@@ -419,6 +420,9 @@ func (a *App) loadUILayout() {
 	}
 	if a.actionBar != nil {
 		a.actionBar.HideSecond = values["action_bar_1"].Hidden
+		if third, ok := values["action_bar_2"]; ok {
+			a.actionBar.ShowThird = !third.Hidden && !a.actionBar.HideSecond
+		}
 	}
 }
 func (a *App) saveUILayout() {
@@ -434,7 +438,7 @@ func (a *App) saveUILayout() {
 		positions := a.layoutPositions()
 		values := make(map[string]savedWindowLayout, len(positions))
 		for key, position := range positions {
-			values[key] = savedWindowLayout{WindowPosition: *position, Hidden: key == "action_bar_1" && a.actionBar.HideSecond}
+			values[key] = savedWindowLayout{WindowPosition: *position, Hidden: key == "action_bar_1" && a.actionBar.HideSecond || key == "action_bar_2" && !a.actionBar.ShowThird}
 		}
 		data, err = json.Marshal(values)
 		if err == nil {

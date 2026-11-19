@@ -229,8 +229,8 @@ func (a *App) updateActions(in *platform.Input, w, h int) bool {
 	click, captured := a.actionBar.Update(&pointer, w, h)
 	handled := captured
 	for _, index := range in.Actions {
-		if index >= ui.ActionSlots && a.actionBar.VisibleIndex(index) >= 0 {
-			a.useAction(a.actionBar.VisibleIndex(index))
+		if slot := a.actionBar.VisibleIndex(index); index >= ui.ActionSlots && slot >= 0 {
+			a.useAction(slot)
 			handled = true
 			if a.state == nil {
 				return true

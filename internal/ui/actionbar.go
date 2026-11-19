@@ -8,7 +8,7 @@ import (
 )
 
 const ActionSlots = 10
-const ActionBars = 2
+const ActionBars = 3
 const ActionPages = 5
 const TotalActionSlots = ActionSlots * ActionPages
 
@@ -30,7 +30,7 @@ type ActionBar struct {
 	frames                [2]*render.Texture
 	change, plus          *render.Texture
 	pages                 [ActionBars]int // offset from each bar’s initial page
-	HideSecond            bool
+	HideSecond, ShowThird bool
 	Position              [ActionBars]WindowPosition
 	Hover, held           int
 	dragging, controlHeld int
@@ -51,7 +51,11 @@ func (b *ActionBar) Size(bar int) (int, int) {
 func ActionBarOrigin(w, h int) (int, int) { return max(0, (w-448)/2), max(0, h-64-8-54*2-6) }
 func (b *ActionBar) Origin(bar, w, h int) (int, int) {
 	x, y := ActionBarOrigin(w, h)
-	y += bar * 60
+	if bar == 2 {
+		y -= 60
+	} else {
+		y += bar * 60
+	}
 	width, height := b.Size(bar)
 	return b.Position[bar].Origin(w, h, width, height, x, y)
 }
@@ -62,7 +66,7 @@ func (b *ActionBar) VisibleIndex(index int) int {
 		return -1
 	}
 	bar, cell := index/ActionSlots, index%ActionSlots
-	if bar == 1 && b.HideSecond {
+	if (bar > 0 && b.HideSecond) || (bar == 2 && !b.ShowThird) {
 		return -1
 	}
 	return (bar+b.pages[bar])*ActionSlots + cell
@@ -125,7 +129,7 @@ func (b *ActionBar) controlAt(bar, mx, my, w, h int) int {
 		return barPrevious
 	case mx >= nextX && mx < nextX+12 && my >= nextY && my < nextY+12:
 		return barNext
-	case bar == 0 && mx >= toggleX && mx < toggleX+16 && my >= toggleY && my < toggleY+16:
+	case bar < ActionBars-1 && mx >= toggleX && mx < toggleX+16 && my >= toggleY && my < toggleY+16:
 		return barToggle
 	case mx >= rotateX && mx < rotateX+22 && my >= rotateY && my < rotateY+24:
 		return barRotate
@@ -175,7 +179,14 @@ func (b *ActionBar) Layout(in *platform.Input, w, h int) (captured, changed bool
 				case barNext:
 					b.pages[bar] = min(ActionPages-1, bar+b.pages[bar]+1) - bar
 				case barToggle:
-					b.HideSecond = !b.HideSecond
+					if bar == 0 {
+						b.HideSecond = !b.HideSecond
+						if b.HideSecond {
+							b.ShowThird = false
+						}
+					} else {
+						b.ShowThird = !b.ShowThird
+					}
 					changed = true
 				case barRotate:
 					x, y := b.Origin(bar, w, h)
@@ -253,16 +264,17 @@ func (b *ActionBar) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h
 			v := float32(1-orientation) * .5
 			s.Draw(b.change, float32(cx), float32(cy), 16, 16, 0, v, 16.0/float32(b.change.W), v+16.0/float32(b.change.H), white)
 		}
-		if bar == 0 {
+		if bar < ActionBars-1 {
+			showingNext := b.VisibleIndex((bar+1)*ActionSlots) >= 0
 			if b.plus != nil {
 				v := float32(0)
-				if !b.HideSecond {
+				if showingNext {
 					v = .5
 				}
 				s.Draw(b.plus, float32(tx), float32(ty), 32, 32, 0, v, 1, v+.5, white)
 			} else {
 				label := "+"
-				if !b.HideSecond {
+				if showingNext {
 					label = "−"
 				}
 				f.DrawOutlined(s, label, tx+2, ty, white)

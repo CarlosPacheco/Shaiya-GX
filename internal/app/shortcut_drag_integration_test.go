@@ -118,6 +118,25 @@ func TestShortcutDragAgainstRapture(t *testing.T) {
 	if p := a.actionPacket(13); len(p) == 0 || p[2] != skill.Number {
 		t.Fatal("second bar cast lost learned index", p)
 	}
+	// Open the third bar from the second bar's vertical + button.
+	tx, ty := a.actionBar.Origin(1, 1024, 768)
+	a.worldControls(&platform.Input{MouseX: tx + 33, MouseY: ty + 427, Pressed: true, MouseDown: true}, 1024, 768)
+	a.worldControls(&platform.Input{MouseX: tx + 33, MouseY: ty + 427, Clicked: true}, 1024, 768)
+	const thirdSlot = 23
+	if a.actionBar.VisibleIndex(thirdSlot) != thirdSlot {
+		t.Fatal("second bar did not open the third")
+	}
+	thirdX, thirdY := a.actionBar.SlotOrigin(thirdSlot, 1024, 768)
+	drag(bx+2, by+2, thirdX+2, thirdY+2)
+	if q, _ := a.shortcutAt(thirdSlot); q == nil || q.Bag != 100 || q.Number != uint16(skill.Number) {
+		t.Fatal("third bar rejected a skill dropped from the second", q)
+	}
+	drag(thirdX+2, thirdY+2, bx+2, by+2)
+	a.actionBar.ShowThird = false
+	if a.updateActions(&platform.Input{MouseX: -1, MouseY: -1, Actions: []int{thirdSlot}}, 1024, 768) {
+		t.Fatal("hidden third bar accepted its keyboard shortcut")
+	}
+
 	// A fifth-page assignment uses the existing logical page field on the wire.
 	const fifthSlot = 49
 	if !a.saveShortcut(fifthSlot, &proto.QuickSlot{Bag: 100, Number: uint16(skill.Number)}, 0, -1) {

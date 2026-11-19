@@ -127,3 +127,37 @@ func TestActionBarPagingAndSecondBarToggle(t *testing.T) {
 		t.Fatal("showing the second bar should restore its previous page")
 	}
 }
+
+func TestSecondActionBarTogglesThird(t *testing.T) {
+	b := &ActionBar{held: -1, Hover: -1}
+	const w, h = 1024, 768
+	toggle := func(bar int) {
+		t.Helper()
+		x, y := b.Origin(bar, w, h)
+		x, y = x+427, y+9
+		if captured, _ := b.Layout(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, w, h); !captured {
+			t.Fatal("toggle press was not captured")
+		}
+		if captured, changed := b.Layout(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, w, h); !captured || !changed {
+			t.Fatal("toggle release did not change layout")
+		}
+	}
+	if b.VisibleIndex(20) != -1 {
+		t.Fatal("third bar should start hidden")
+	}
+	toggle(1)
+	x, y := b.SlotOrigin(20, w, h)
+	if b.VisibleIndex(20) != 20 || b.SlotAt(x+1, y+1, w, h) != 20 {
+		t.Fatal("third bar should start on page three")
+	}
+	toggle(1)
+	if b.VisibleIndex(20) != -1 || b.Contains(x, y, w, h) {
+		t.Fatal("third bar continued to accept input when hidden")
+	}
+	toggle(1)
+	toggle(0)
+	toggle(0)
+	if b.VisibleIndex(10) != 10 || b.VisibleIndex(20) != -1 {
+		t.Fatal("closing the second bar should close the third")
+	}
+}
