@@ -166,16 +166,15 @@ func (a *App) beginAuction(npc uint32) {
 }
 
 func (a *App) auctionPanel(w, h int) (int, int, int) {
-	width := max(380, min(710, w-24))
-	x := max(8, (w-width)/4)
+	available := w
 	if a.inventory.open && a.inventoryUI != nil {
 		left, _ := a.inventoryUI.Origin(w, h)
-		if left >= 520 {
-			x = 8
-			width = min(width, left-16)
+		if left >= 396 {
+			available = left
 		}
 	}
-	x, y := a.auction.position.Origin(w, h, width, 418, x, max(8, (h-418)/4))
+	width := max(380, min(710, available-16))
+	x, y := a.auction.position.Origin(w, h, width, 418, (available-width)/2, (h-418)/2)
 	return x, y, width
 }
 
@@ -275,6 +274,7 @@ func (a *App) auctionAction(action string) {
 		a.requestAuction(proto.AuctionRequest{})
 	case "details", "bid", "buy", "cancel":
 		v.modal, v.focus, v.keypad = action, -1, false
+		v.message = ""
 		if action == "bid" {
 			v.fields[0] = strconv.FormatUint(uint64(r.Price)*110/100, 10)
 			v.focus = 0
@@ -426,8 +426,8 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 		return v.focus >= 0 && !in.Pressed && !in.Clicked && (len(in.Chars) > 0 || len(in.Keys) > 0)
 	}
 	hit := func(bx, by, bw, bh int) bool { return rx >= bx && rx < bx+bw && ry >= by && ry < by+bh }
-	if v.modal == "setup" && hit(15, 97, width-30, 36) && in.Clicked && a.inventory.dragging {
-		a.auctionSource()
+	if v.modal != "" {
+		a.updateAuctionDialog(in, x, y, width)
 		return true
 	}
 	if v.pending {
@@ -461,27 +461,6 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 			v.page, v.selected = 0, -1
 			v.exactType = 0
 			a.requestAuction(proto.AuctionRequest{})
-		}
-		return true
-	}
-	if v.modal != "" {
-		if v.keypad {
-			a.updateAuctionKeypad(rx, ry, width)
-			return true
-		}
-		switch {
-		case hit(width-52, 10, 38, 26):
-			v.modal, v.focus = "", -1
-		case hit(15, 300, 118, 28):
-			a.confirmAuction()
-		case v.modal == "setup" && hit(15, 140, width-30, 96) && (ry-140)%35 < 26:
-			v.focus = (ry - 140) / 35
-			v.keypad = rx >= width-77
-		case v.modal == "setup" && hit(15, 247, 244, 26):
-			v.duration = uint8((rx - 15) / 61)
-		case v.modal == "bid" && hit(15, 150, width-30, 26):
-			v.focus = 0
-			v.keypad = rx >= width-77
 		}
 		return true
 	}
@@ -576,81 +555,12 @@ func (a *App) drawAuction(w, h int) {
 		a.font.Draw(a.sprites, label, x+rx, y+ry, auctionTextColor, maxWidth)
 	}
 	button := func(label string, rx, ry, bw int, selected bool) {
-		color := auctionFieldColor
-		if selected {
-			color = auctionSelectedColor
-		}
-		a.auctionBox(x+rx, y+ry, bw, 26, color)
-		text(label, rx+6, ry+5, bw-9)
+		a.drawAuctionControl(label, x+rx, y+ry, bw, selected, true)
 	}
-	text("Auction House", 14, 17, width-100)
+	a.font.Draw(a.sprites, "Auction House", x+14, y+17, auctionGoldText, width-100)
 	button("×", width-52, 10, 38, false)
 	if v.modal != "" {
-		titles := map[string]string{"setup": "Setup Auction", "bid": "Place Bid", "buy": "Buy Now", "cancel": "Cancel Auction", "details": "Item Details"}
-		text(titles[v.modal], 14, 57, width-28)
-		if v.modal == "setup" {
-			label := "Drag an inventory item here"
-			button(label, 15, 97, width-30, false)
-			if def := a.itemsItem(v.source.Type, v.source.TypeID); def != nil {
-				a.auctionBox(x+15, y+97, width-30, 26, auctionFieldColor)
-				a.drawItemIcon(def, x+17, y+99, 22, auctionTextColor, &v.source)
-				text(def.Name, 45, 102, width-60)
-			}
-			names := []string{"Quantity", "Starting Price", "Buyout Price"}
-			for i, name := range names {
-				fy := 140 + i*35
-				button(name+": "+v.fields[i], 15, fy, width-99, v.focus == i)
-				a.drawAuctionInputButton(x, y, width, fy, button)
-			}
-			for i := range 4 {
-				button(fmt.Sprintf("%dh", proto.AuctionHours(uint8(i))), 15+61*i, 247, 57, int(v.duration) == i)
-			}
-			start, _ := strconv.ParseUint(v.fields[1], 10, 32)
-			text(fmt.Sprintf("Deposit: %d gold", proto.AuctionDeposit(uint32(start), v.duration)), 265, 251, width-279)
-		} else if r := v.row(); r != nil {
-			text(fmt.Sprintf("%s ×%d", r.Name, r.Count), 15, 96, width-30)
-			text(fmt.Sprintf("Current: %d gold    Buyout: %d gold", r.Price, r.Buyout), 15, 123, width-30)
-			if v.modal == "bid" {
-				text(fmt.Sprintf("Minimum bid: %d gold", uint64(r.Price)*110/100), 15, 187, width-30)
-				button("Bid: "+v.fields[0], 15, 150, width-99, true)
-				a.drawAuctionInputButton(x, y, width, 150, button)
-			}
-			if v.modal == "cancel" {
-				text("The item will move to Ended Auctions.", 15, 158, width-30)
-			}
-			if v.modal == "details" {
-				text("Seller: "+r.Seller, 15, 156, width-30)
-				if r.Reason != "" {
-					text("Result: "+r.Reason, 15, 178, width-30)
-					text("Claim deadline: "+time.Unix(r.Ends, 0).Format(time.DateTime), 15, 200, width-30)
-				}
-				if r.Gold > 0 {
-					text(fmt.Sprintf("Gold to collect: %d", r.Gold), 15, 222, width-30)
-				}
-				if d := a.itemsItem(r.Type, r.TypeID); r.Gold == 0 && d != nil {
-					a.drawItemDetails(d, &proto.InventoryItem{Type: r.Type, TypeID: r.TypeID, Count: r.Count, Quality: r.Quality, Gems: r.Gems, Craft: r.Craft}, r.Count, x+150, y+143, w, h, "")
-				}
-			}
-		}
-		label := "Confirm"
-		if v.modal == "details" {
-			label = "Back"
-		}
-		file, col, cell, artW, artH := "", 0, 128, 88, 30
-		switch v.modal {
-		case "setup":
-			file = "auction_commission_button"
-		case "details":
-			file, col = "auction_commission_button", 1
-		}
-		if file == "" || !a.auctionSpriteButton(file, col, a.auctionButtonState(x+15, y+300, 118, true), cell, 32, artW, artH, x+15, y+300, 118) {
-			button(label, 15, 300, 118, false)
-		}
-		text(v.message, 15, 385, width-30)
-		if v.keypad {
-			a.drawAuctionKeypad(x, y, width, button)
-		}
-		return
+		defer a.drawAuctionDialog(x, y, width, w, h)
 	}
 	tabs := []string{"Search Items", "Auction Progress", "Ended Auctions", "Interest List"}
 	selected := 0
@@ -698,7 +608,7 @@ func (a *App) drawAuction(w, h int) {
 		} else if v.sort == -(i + 1) {
 			label += " ↓"
 		}
-		text(label, column.x, 116, column.width)
+		a.font.Draw(a.sprites, label, x+column.x, y+116, auctionLabelText, column.width)
 	}
 	for i, r := range v.rows {
 		ry := 138 + i*26
@@ -719,7 +629,7 @@ func (a *App) drawAuction(w, h int) {
 		} else if r.Reason != "" {
 			value = r.Reason
 		}
-		text(value, columns[3].x, ry+4, columns[3].width)
+		a.font.Draw(a.sprites, value, x+columns[3].x, y+ry+4, auctionGoldText, columns[3].width)
 	}
 	if len(v.rows) == 0 {
 		text("No listings or results in this view.", 16, 155, width-32)
@@ -748,8 +658,8 @@ func (a *App) drawAuction(w, h int) {
 		message = fmt.Sprintf("Page %d", v.page+1)
 	}
 	text(message, 14, 387, width-135)
-	button("Prev", width-112, 382, 42, false)
-	button("Next", width-62, 382, 48, false)
+	a.drawAuctionControl("Prev", x+width-112, y+382, 42, false, !v.pending && v.page > 0)
+	a.drawAuctionControl("Next", x+width-62, y+382, 48, false, !v.pending && v.more)
 	if v.categoryOpen {
 		for i, name := range proto.AuctionCategories {
 			rowY := 111 + i*26

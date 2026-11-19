@@ -143,3 +143,19 @@ existing view and sequence fields; selecting or paging one side does not
 change the other side. Search keeps the GX category, name or seller query,
 and level-range filters visible at narrow widths. Fine-grained legacy
 category selectors and live screen measurements remain unverified.
+
+## Dialog placement and presentation
+
+The original Bid initializer stores 256 in both window size fields and
+subtracts 128 from each viewport midpoint (`0x45BFAF–0x45BFE5`). Details
+stores 256 × 512 and uses corresponding half-size offsets
+(`0x45CFCB–0x45D000`). The Setup atlas is loaded as 256 × 256 at
+`0x45CA2E`, while the adjoining code derives an X coordinate from a related
+panel's X plus 256 and copies its Y. Texture dimensions alone therefore
+cannot establish every dialog's position.
+
+GX keeps the market visible behind separate forms for setup, bid, buyout,
+cancellation and details. Its forms size to their content and share the
+same rectangles for rendering, numeric input and inventory drops. Gold
+values, secondary labels and warnings have distinct colors. The form
+colors and coordinates are GX choices.

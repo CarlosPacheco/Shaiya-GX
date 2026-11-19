@@ -52,8 +52,9 @@ func TestAuctionAcceptsExplicitInventoryDrag(t *testing.T) {
 	if a.auction.source.Type != 0 {
 		t.Fatal("inventory click picked a listing source")
 	}
-	x, y, _ := a.auctionPanel(1024, 768)
-	a.worldControls(&platform.Input{MouseX: x + 50, MouseY: y + 110, Clicked: true}, 1024, 768)
+	x, y, width := a.auctionPanel(1024, 768)
+	slot := auctionDialogBounds(x, y, width, "setup").source()
+	a.worldControls(&platform.Input{MouseX: slot.x + 4, MouseY: slot.y + 4, Clicked: true}, 1024, 768)
 	if a.auction.source != a.state.Inventory[key] || a.auction.fields[0] != "9" || a.auction.token == "" {
 		t.Fatal("auction did not accept inventory drop", a.auction.source)
 	}
@@ -129,5 +130,31 @@ func TestAuctionBrowseControlsFitNarrowPanel(t *testing.T) {
 			}
 			right = field.x + field.width
 		}
+	}
+}
+
+func TestAuctionDialogControlsUseVisibleBounds(t *testing.T) {
+	a := inputApp()
+	a.auction = auctionView{modal: "setup", focus: -1}
+	const x, y, width = 8, 20, 380
+	b := auctionDialogBounds(x, y, width, "setup")
+	click := func(rx, ry int) {
+		a.updateAuctionDialog(&platform.Input{MouseX: b.x + rx, MouseY: b.y + ry, Pressed: true}, x, y, width)
+	}
+	click(14+3*((b.width-28)/4)+4, auctionDurationY+4)
+	if a.auction.duration != 3 {
+		t.Fatal("duration button did not select the fourth duration")
+	}
+	click(b.width-75, auctionDialogFieldRow("setup", 1)+4)
+	if !a.auction.keypad || a.auction.focus != 1 {
+		t.Fatal("price Input button did not open the keypad")
+	}
+	click(b.width-110, b.height-28)
+	if a.auction.keypad || a.auction.modal != "setup" {
+		t.Fatal("outside click should dismiss only the keypad")
+	}
+	click(b.width-110, b.height-28)
+	if a.auction.modal != "" || a.auction.focus != -1 {
+		t.Fatal("the visible Cancel button did not close the dialog")
 	}
 }

@@ -34,11 +34,6 @@ func (a *App) auctionFrame(x, y, width int) {
 	a.auctionArt(file, image.Rect(2, 2, 737, 48), x, y, width, 43, 1)
 	a.auctionArt(file, image.Rect(2, 594, 737, 605), x, y+407, width, 11, 1)
 
-	modal := map[string]string{"setup": "auction_commission", "bid": "auction_tender", "details": "auction_detailview"}[a.auction.modal]
-	if modal != "" {
-		a.auctionArt(modal, image.Rect(0, 1, 46, 50), x, y+42, 46, 50, 1)
-		a.auctionArt(modal, image.Rect(210, 1, 256, 50), x+width-46, y+42, 46, 50, 1)
-	}
 }
 
 // The cells contain their own labels. Fit them inside the GX control bounds.

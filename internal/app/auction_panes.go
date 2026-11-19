@@ -89,7 +89,7 @@ func (a *App) drawAuctionPanes(x, y, width int, text func(string, int, int, int)
 	for _, pane := range auctionPanes(auctionPair(v.view), width) {
 		v.selectPane(pane.view)
 		a.auctionBox(x+pane.x, y+82, pane.width, 30, auctionFieldColor)
-		text(pane.title, pane.x+7, 89, pane.width-14)
+		a.font.Draw(a.sprites, pane.title, x+pane.x+7, y+89, auctionGoldText, pane.width-14)
 		if len(v.rows) == 0 {
 			text("No entries", pane.x+7, 125, pane.width-14)
 		}
@@ -127,24 +127,17 @@ func (a *App) drawAuctionPanes(x, y, width int, text func(string, int, int, int)
 				text(label, left, ry+4, space)
 			}
 		}
-		control := func(label string, bx, by, bw int, enabled bool) {
-			fill, ink := auctionFieldColor, auctionTextColor
-			if !enabled {
-				ink = [4]float32{.52, .56, .55, 1}
-			} else if a.auctionButtonState(x+bx, y+by, bw, true) == 1 {
-				fill = auctionSelectedColor
-			}
-			a.auctionBox(x+bx, y+by, bw, 26, fill)
-			labelWidth := a.font.Width(label)
-			scale := min(1, float32(bw-8)/float32(max(1, labelWidth)))
-			tx := float32(x+bx) + (float32(bw)-float32(labelWidth)*scale)/2
-			a.font.DrawScaled(a.sprites, label, tx, float32(y+by+5), scale, ink, 0)
-		}
 		for _, b := range pane.actions {
-			control(b.label, b.x, b.y, b.w, !v.pending && v.actionAvailable(b.action))
+			enabled := !v.pending && v.actionAvailable(b.action)
+			file, col := v.auctionActionArt(b.action)
+			if b.action != "details" && file != "" &&
+				a.auctionSpriteButton(file, col, a.auctionButtonState(x+b.x, y+b.y, b.w, enabled), 128, 32, 88, 30, x+b.x, y+b.y, b.w) {
+				continue
+			}
+			a.drawAuctionControl(b.label, x+b.x, y+b.y, b.w, false, enabled)
 		}
-		control("‹", pane.x, 362, 28, !v.pending && v.page > 0)
-		control("›", pane.x+pane.width-28, 362, 28, !v.pending && v.more)
+		a.drawAuctionControl("‹", x+pane.x, y+362, 28, false, !v.pending && v.page > 0)
+		a.drawAuctionControl("›", x+pane.x+pane.width-28, y+362, 28, false, !v.pending && v.more)
 		text(fmt.Sprintf("Page %d", v.page+1), pane.x+36, 366, pane.width-72)
 	}
 	message := v.message
