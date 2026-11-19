@@ -2,6 +2,7 @@ package studio
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"os"
 	"path/filepath"
@@ -69,7 +70,13 @@ func SaveEnchant(ctx context.Context, root string, catalog *EnchantCatalog, leve
 			return "", err
 		}
 	}
-	backup, err := backupEnchant(ctx, root, catalog)
+	backup, err := backupDatabaseCatalog(ctx, root, catalog.DBPath, "enchant", func(snapshot *sql.DB) error {
+		levels, err := enchantrules.Read(ctx, snapshot)
+		if err != nil || !levels.Equal(catalog.Rules) {
+			return errors.Join(errors.New("enchant backup failed verification"), err)
+		}
+		return nil
+	})
 	if err != nil {
 		return backup, err
 	}
@@ -83,7 +90,7 @@ func SaveEnchant(ctx context.Context, root string, catalog *EnchantCatalog, leve
 	return backup, tx.Commit()
 }
 
-func backupEnchant(ctx context.Context, root string, catalog *EnchantCatalog) (string, error) {
+func backupDatabaseCatalog(ctx context.Context, root, database, label string, verify func(*sql.DB) error) (string, error) {
 	parent := filepath.Join(root, "backups")
 	if err := os.MkdirAll(parent, 0700); err != nil {
 		return "", err
@@ -91,14 +98,14 @@ func backupEnchant(ctx context.Context, root string, catalog *EnchantCatalog) (s
 	if err := syncDirectory(root); err != nil {
 		return "", err
 	}
-	dir, err := os.MkdirTemp(parent, time.Now().UTC().Format("20060102T150405Z")+"-enchant-")
+	dir, err := os.MkdirTemp(parent, time.Now().UTC().Format("20060102T150405Z")+"-"+label+"-")
 	if err != nil {
 		return "", err
 	}
 	if err := syncDirectory(parent); err != nil {
 		return dir, err
 	}
-	source, err := openDB(ctx, catalog.DBPath, "ro")
+	source, err := openDB(ctx, database, "ro")
 	if err != nil {
 		return dir, err
 	}
@@ -122,9 +129,8 @@ func backupEnchant(ctx context.Context, root string, catalog *EnchantCatalog) (s
 	if err := integrity(ctx, snapshot); err != nil {
 		return dir, err
 	}
-	levels, err := enchantrules.Read(ctx, snapshot)
-	if err != nil || !levels.Equal(catalog.Rules) {
-		return dir, errors.Join(errors.New("enchant backup failed verification"), err)
+	if err := verify(snapshot); err != nil {
+		return dir, err
 	}
 	if err := syncFile(path); err != nil {
 		return dir, err

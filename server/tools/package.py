@@ -21,7 +21,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 PROGRAMS = ("gx_login", "gx_world", "gx_console")
 GAME_DATA = ("Map.ini", "NpcQuest.SData", "KillStatus.SData", "GuildHouse.ini",
-             "SequenceItemCreate.ini", "kr_string.DB", "Obelisk.ini")
+             "SequenceItemCreate.ini", "Obelisk.ini")
 GEOMETRY_EXTENSIONS = ("gxnav", "gxcol", "gxphysics", "manifest.json")
 
 

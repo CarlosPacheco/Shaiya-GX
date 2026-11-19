@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
+	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
 )
 
 type migration struct {
@@ -65,6 +66,7 @@ var migrations = []migration{
 		WHERE SkillLevel<100 AND SkillID IN (61,64,79,94,104,135,145,150,161,302,311,312,313)`},
 	{10, "item_enchant_rules", enchantrules.LegacyCreateSQL},
 	{11, "enchant_target_levels", enchantrules.UpgradeSQL},
+	{12, "mob_ai_messages", mobaimessages.MigrationSQL},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

@@ -29,7 +29,12 @@ const (
 	Skills
 	NPCSkills
 	Enchant
+	MobAIMessages
 )
+
+func (k Kind) DatabaseOnly() bool {
+	return k == Enchant || k == MobAIMessages
+}
 
 func (k Kind) valid() bool { return k <= NPCSkills }
 

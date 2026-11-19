@@ -11,6 +11,7 @@ the exact SData field and SQLite column under each readable field name.
 | Player skills | `Character/Skill.SData` | `PS_GameDefs_Skills`, matching level |
 | NPC skills | `Monster/NpcSkill.SData` | `PS_GameDefs_Skills`, level 100 for SData rank 1 |
 | Enchant |  | `PS_GameDefs_EnchantAttack` / `PS_GameDefs_EnchantDefense` |
+| Mob AI messages | | `PS_GameDefs_MobAIMessages` |
 
 ## Build
 
@@ -75,6 +76,15 @@ tab sets that equipment type’s cap. Add the next level or remove the highest
 level to change it, up to +49. An empty table disables enchanting for that equipment type. Removing levels also removes their
 bonuses for existing gear. **Save database** takes a full SQLite backup and
 applies both tables in one transaction. Restart GX World to load the new rules.
+
+## Mob AI messages
+
+Open the server SQLite database in **Mob AI messages**. Edit **Message**
+(`Text`) beside its fixed **Message ID** (`Index`), which the AI scripts use.
+**Save database** creates a verified SQLite backup before saving the text.
+Restart GX World to load the changes. To display Korean with no client
+folder selected, place the GX CJK font and its license in `fonts/` beside
+the Studio executable.
 
 ## Backups and recovery
 

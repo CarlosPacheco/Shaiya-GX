@@ -43,7 +43,7 @@ func (e *editor) enchantCatalog() {
 		attack, defense, err := rules.Caps()
 		return rules, attack, defense, err
 	}
-	e.enchantDirty = func() bool {
+	e.databaseDraftDirty = func() bool {
 		rules, _, _, err := read()
 		return err != nil || !rules.Equal(catalog.Rules)
 	}
@@ -78,7 +78,7 @@ func (e *editor) enchantCatalog() {
 		} else {
 			capLabel.SetText(fmt.Sprintf("Attack cap +%d  ·  Defense cap +%d  ·  Maximum +%d", attack, defense, enchantrules.MaxLevel))
 		}
-		if err == nil && e.enchantDirty() && !e.busy {
+		if err == nil && e.databaseDraftDirty() && !e.busy {
 			save.Enable()
 		} else {
 			save.Disable()

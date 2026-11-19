@@ -18,6 +18,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
+	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
 	"github.com/Spelunkern/Shaiya-GX/internal/studio"
 )
 
@@ -33,7 +34,8 @@ type editor struct {
 	cashFormDirty          func() bool
 	itemFormDirty          func() bool
 	enchant                *studio.EnchantCatalog
-	enchantDirty           func() bool
+	mobAIMessages          *studio.MobAIMessageCatalog
+	databaseDraftDirty     func() bool
 	itemSection, itemFocus int
 	itemQuery              string
 	project                *studio.Project
@@ -66,7 +68,7 @@ func (e *editor) leave(next func()) {
 	if e.busy {
 		return
 	}
-	if !e.pending && ((e.project != nil && (e.dirty() || e.cashFormDirty != nil && e.cashFormDirty())) || len(e.definitionDraft) > 0 || e.itemFormDirty != nil && e.itemFormDirty() || e.enchantDirty != nil && e.enchantDirty()) {
+	if !e.pending && ((e.project != nil && (e.dirty() || e.cashFormDirty != nil && e.cashFormDirty())) || len(e.definitionDraft) > 0 || e.itemFormDirty != nil && e.itemFormDirty() || e.databaseDraftDirty != nil && e.databaseDraftDirty()) {
 		dialog.ShowConfirm("Discard draft?", "Your unapplied catalog edits will be discarded.", func(ok bool) {
 			if ok {
 				next()
@@ -79,7 +81,7 @@ func (e *editor) leave(next func()) {
 
 func (e *editor) start() {
 	e.project, e.draft, e.assets = nil, nil, nil
-	e.enchant, e.enchantDirty = nil, nil
+	e.enchant, e.mobAIMessages, e.databaseDraftDirty = nil, nil, nil
 	e.definitions, e.definitionDraft = nil, nil
 	e.itemFormDirty, e.itemSection, e.itemFocus, e.itemQuery = nil, 0, -1, ""
 	e.cashQuery, e.cashCode, e.cashSection = "", "", 0
@@ -140,8 +142,8 @@ func (e *editor) start() {
 		}
 		dataDir, dbPath := data.Text, db.Text
 		kind := studio.Kind(mode.SelectedIndex())
-		if strings.TrimSpace(dbPath) == "" || (kind != studio.Enchant && strings.TrimSpace(dataDir) == "") {
-			if kind == studio.Enchant {
+		if strings.TrimSpace(dbPath) == "" || (!kind.DatabaseOnly() && strings.TrimSpace(dataDir) == "") {
+			if kind.DatabaseOnly() {
 				e.showError(fmt.Errorf("select the server SQLite database"))
 			} else {
 				e.showError(fmt.Errorf("select the client data folder and the server SQLite database"))
@@ -171,8 +173,13 @@ func (e *editor) start() {
 		fields := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewHBox(widget.NewLabel("Theme"), appearance), title))
 		dbSource := studio.ProductTable
 		var dbActions fyne.CanvasObject = container.NewHBox(detect, selectDB)
-		if studio.Kind(mode.SelectedIndex()) == studio.Enchant {
-			dbSource = enchantrules.AttackTable + " · " + enchantrules.DefenseTable
+		kind := studio.Kind(mode.SelectedIndex())
+		if kind.DatabaseOnly() {
+			if kind == studio.MobAIMessages {
+				dbSource = mobaimessages.Table
+			} else {
+				dbSource = enchantrules.AttackTable + " · " + enchantrules.DefenseTable
+			}
 			if data.Text == "" {
 				dbActions = selectDB
 			}
@@ -204,7 +211,7 @@ func (e *editor) start() {
 	render()
 }
 
-var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills", "Enchant"}
+var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills", "Enchant", "Mob AI messages"}
 
 func (e *editor) switcher(current studio.Kind) *widget.Select {
 	control := widget.NewSelect(catalogNames, nil)
@@ -224,7 +231,7 @@ func (e *editor) openKind(kind studio.Kind) {
 	if e.busy {
 		return
 	}
-	if kind != studio.Enchant && strings.TrimSpace(e.dataDir) == "" {
+	if !kind.DatabaseOnly() && strings.TrimSpace(e.dataDir) == "" {
 		e.showError(fmt.Errorf("open an installation with a client data folder to edit that catalog"))
 		return
 	}
@@ -233,24 +240,29 @@ func (e *editor) openKind(kind studio.Kind) {
 	message := "Reading " + kind.RelativePath() + " and SQLite…"
 	if kind == studio.Enchant {
 		message = "Reading enchant rules from SQLite…"
+	} else if kind == studio.MobAIMessages {
+		message = "Reading mob AI messages from SQLite…"
 	}
 	e.run(message, func() func() {
 		ctx := context.Background()
 		var project *studio.Project
 		var definitions *studio.Definitions
 		var enchant *studio.EnchantCatalog
+		var messages *studio.MobAIMessageCatalog
 		var err error
 		if kind == studio.Cash {
 			project, err = studio.Open(ctx, dataDir, dbPath)
 		} else if kind == studio.Enchant {
 			enchant, err = studio.OpenEnchant(ctx, dbPath)
+		} else if kind == studio.MobAIMessages {
+			messages, err = studio.OpenMobAIMessages(ctx, dbPath)
 		} else {
 			definitions, err = studio.OpenDefinitions(ctx, dataDir, dbPath, kind)
 		}
 		images := existingAssets
 		var preferencesErr error
 		if err == nil {
-			if images == nil && kind != studio.Enchant {
+			if images == nil && !kind.DatabaseOnly() {
 				images = loadAssets(dataDir)
 			}
 			preferencesErr = studio.SavePreferences(e.root, preferences)
@@ -262,13 +274,15 @@ func (e *editor) openKind(kind studio.Kind) {
 			e.preferences = preferences
 			e.itemFormDirty = nil
 			e.project, e.definitions, e.assets = project, definitions, images
-			e.enchant, e.enchantDirty = enchant, nil
+			e.enchant, e.mobAIMessages, e.databaseDraftDirty = enchant, messages, nil
 			e.draft, e.definitionDraft = nil, make(studio.DefinitionEdits)
 			if kind == studio.Cash {
 				e.draft = append([]cash.Product(nil), project.Products...)
 				e.catalog()
 			} else if kind == studio.Enchant {
 				e.enchantCatalog()
+			} else if kind == studio.MobAIMessages {
+				e.mobAIMessageCatalog()
 			} else {
 				e.definitionCatalog()
 			}

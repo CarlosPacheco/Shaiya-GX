@@ -1,51 +1,35 @@
 package world
 
 import (
-	"bufio"
-	"bytes"
+	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
-	"golang.org/x/text/encoding/korean"
 )
 
 var mobAIStrings = map[uint16]string{}
 
 func loadMobAIStrings() error {
-	raw, err := os.ReadFile(filepath.Join(gameDataDir(), "kr_string.DB"))
+	pool, err := db.Pool(db.GameDefs)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	defer cancel()
+	messages, err := mobaimessages.Read(ctx, pool)
 	if err != nil {
 		return fmt.Errorf("AI dialogue: %w", err)
 	}
-	decoded, err := korean.EUCKR.NewDecoder().Bytes(raw)
-	if err != nil {
-		return err
+	lines := make(map[uint16]string, len(messages))
+	for _, message := range messages {
+		lines[message.Index] = message.Text
 	}
-	scanner := bufio.NewScanner(bytes.NewReader(decoded))
-	rows := map[uint16]string{}
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		id, e := strconv.ParseUint(line, 10, 16)
-		if e != nil {
-			return fmt.Errorf("AI dialogue index %q: %w", line, e)
-		}
-		if !scanner.Scan() {
-			return fmt.Errorf("AI dialogue %d lacks text", id)
-		}
-		rows[uint16(id)] = strings.TrimSpace(scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-	mobAIStrings = rows
+	mobAIStrings = lines
 	return nil
 }
+
 func buildMobAIMessage(owner uint32, index uint16, text string, indexed bool) []byte {
 	if indexed {
 		w := packet.New(0x110a)
