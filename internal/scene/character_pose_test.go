@@ -25,7 +25,10 @@ func TestPoseReusePreservesMatricesAndBounds(t *testing.T) {
 	different := slices.Clone(binds)
 	different[1][12] = 2
 	a := &skinPart{bones: binds, bounded: true, bounds: []boneBounds{{used: true, min: render.V3{-1, -1, -1}, max: render.V3{1, 1, 1}}}}
-	b := &skinPart{bones: slices.Clone(binds), bounded: true, bounds: a.bounds}
+	b := &skinPart{bones: slices.Clone(binds), bounded: true, bounds: []boneBounds{
+		{used: true, min: render.V3{-2, -1, -3}, max: render.V3{1, 3, 2}},
+		{used: true, min: render.V3{-2, -1, -1}, max: render.V3{3, 1, 4}},
+	}}
 	d := &skinPart{bones: different, bounded: true, bounds: a.bounds}
 	actor := &Character{clip: clip, parts: []*skinPart{a, b, d}, World: render.Identity()}
 	other := &Character{clip: clip, parts: []*skinPart{{bones: binds}}}
@@ -43,7 +46,7 @@ func TestPoseReusePreservesMatricesAndBounds(t *testing.T) {
 		if &a.pose[0] == &d.pose[0] {
 			t.Fatal("different binds shared palette")
 		}
-		expected := clip.Finals(time)
+		expected := fullMatrixFinals(clip, time)
 		for _, part := range actor.parts {
 			for i, bind := range part.bones {
 				if part.pose[i] != bind.Mul(expected[i]) {
@@ -52,6 +55,7 @@ func TestPoseReusePreservesMatricesAndBounds(t *testing.T) {
 			}
 		}
 		// Compare bounds with independently posed parts and the original box math.
+		actor.World[0], actor.World[4], actor.World[12] = -1.5, .25, 4*time
 		lo, hi := render.V3{}, render.V3{}
 		has := false
 		for _, part := range actor.parts {
@@ -90,6 +94,19 @@ func TestPoseReusePreservesMatricesAndBounds(t *testing.T) {
 	if len(actor.preparePose()) != 1 || b.pose[3] != binds[3] {
 		t.Fatal("short clip did not preserve identity fallback")
 	}
+}
+
+func fullMatrixFinals(clip *Clip, time float32) []render.M4 {
+	frame := clip.frame(time, false)
+	finals := make([]render.M4, len(clip.ani.Bones))
+	for i, bone := range clip.ani.Bones {
+		pose := clip.localPose(i, frame)
+		finals[i] = render.QuatMatrix(pose.rotation, pose.position)
+		if bone.Parent >= 0 && int(bone.Parent) < i {
+			finals[i] = finals[i].Mul(finals[bone.Parent])
+		}
+	}
+	return finals
 }
 
 func TestClipCachedRestMatchesSampling(t *testing.T) {

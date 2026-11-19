@@ -67,7 +67,7 @@ func TestAnimatedActorCullingPreservesPixelsGL(t *testing.T) {
 			actor.Time = sample
 			actor.preparePose()
 			assertEnvelopeContainsExact(t, actor)
-			finals := reference.Finals(sample)
+			finals := fullMatrixFinals(&reference, sample)
 			for _, part := range actor.parts {
 				for i, bind := range part.bones {
 					final := render.Identity()

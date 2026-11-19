@@ -16,6 +16,14 @@ type GuildState struct {
 	RankingPoints      proto.GuildRankingPointsInfo
 	RankingPointsKnown bool
 	Etin               uint32
+	Npcs               map[uint8]proto.GuildNpc // house NPC slots (0x0D24, 0x0D25)
+	NpcResult          proto.GuildNpcUpgradeResult
+	NpcSerial          uint64
+	HouseResult        uint8 // 0x0D34
+	HouseBought        bool
+	HouseSerial        uint64
+	Donated            int // items consumed by the last 0x0D35
+	DonateSerial       uint64
 	EtinKnown          bool
 	Remark             string
 	RemarkKnown        bool
@@ -78,6 +86,51 @@ func (s *State) applyGuild(p []byte) error {
 			return err
 		}
 		g.Etin, g.EtinKnown = v, true
+	case proto.GuildNpcList:
+		v, err := proto.DecodeGuildNpcList(p)
+		if err != nil {
+			return err
+		}
+		if g.Npcs == nil {
+			g.Npcs = map[uint8]proto.GuildNpc{}
+		}
+		for _, n := range v {
+			if n.Slot < 8 {
+				g.Npcs[n.Slot] = n
+			}
+		}
+	case proto.GuildNpcUpgrade:
+		v, err := proto.DecodeGuildNpcUpgrade(p)
+		if err != nil {
+			return err
+		}
+		g.NpcResult = v
+		g.NpcSerial++
+		if v.Result == 0 && v.Npc.Slot < 8 {
+			if g.Npcs == nil {
+				g.Npcs = map[uint8]proto.GuildNpc{}
+			}
+			g.Npcs[v.Npc.Slot] = v.Npc
+		}
+	case proto.GuildHouseBuy:
+		v, err := proto.DecodeGuildHouseBuy(p)
+		if err != nil {
+			return err
+		}
+		s.Details.Money = v.Money
+		g.HouseResult = v.Result
+		g.HouseBought = g.HouseBought || v.Result == 0 || v.Result == 1
+		g.HouseSerial++
+	case proto.GuildDonate:
+		v, err := proto.DecodeGuildDonation(p)
+		if err != nil {
+			return err
+		}
+		for _, pos := range v {
+			delete(s.Inventory, pos)
+		}
+		g.Donated = len(v)
+		g.DonateSerial++
 	case proto.GuildRemark:
 		v, err := proto.DecodeGuildRemark(p)
 		if err != nil {
@@ -259,7 +312,7 @@ func (s *State) applyGuild(p []byte) error {
 			s.clearVisibleGuild(g.ID)
 			g.ID, g.Name, g.Rank, g.Members = 0, "", 0, nil
 			g.Bank = nil
-			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown = 0, false, "", false
+			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought = 0, false, "", false, nil, false
 			g.Applicants = nil
 			s.Details.Guild = ""
 			return nil
@@ -313,7 +366,7 @@ func (s *State) applyGuild(p []byte) error {
 		g.JoinSerial++
 		if v.Result == 1 {
 			g.ID, g.Name, g.Rank, g.Members = v.ID, v.Name, v.Rank, nil
-			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown = 0, false, "", false
+			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought = 0, false, "", false, nil, false
 			if info, ok := g.Directory[v.ID]; ok {
 				g.Remark, g.RemarkKnown = info.Remark, true
 			}
@@ -360,7 +413,7 @@ func (s *State) applyGuild(p []byte) error {
 		g.LeaveSerial++
 		if v == 1 {
 			g.ID, g.Name, g.Rank, g.Members = 0, "", 0, nil
-			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown = 0, false, "", false
+			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought = 0, false, "", false, nil, false
 			g.Bank = nil
 			g.Applicants = nil
 			s.Details.Guild = ""
@@ -386,7 +439,7 @@ func (s *State) applyGuild(p []byte) error {
 		}
 		if reply.Result == 1 && reply.ID == s.SelfID {
 			g.ID, g.Name, g.Rank, g.Members = 0, "", 0, nil
-			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown = 0, false, "", false
+			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought = 0, false, "", false, nil, false
 			g.Bank = nil
 			g.Applicants = nil
 			s.Details.Guild = ""

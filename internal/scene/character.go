@@ -110,6 +110,7 @@ type Character struct {
 	poseReady            bool
 	poseParts            []*skinPart
 	poseSources          []int
+	boundPalettes        []boundPalette
 	envelope             characterEnvelope
 	boundClip            *Clip
 	boundTime            float32
@@ -403,7 +404,7 @@ func poseBuffer(out []render.M4, count int) []render.M4 {
 func composeBone(out []render.M4, i int, parent int32, pose bonePose) {
 	transform := render.QuatMatrix(pose.rotation, pose.position)
 	if parent >= 0 && int(parent) < i {
-		transform = transform.Mul(out[parent])
+		transform = transform.MulAffine(out[parent])
 	}
 	out[i] = transform
 }
@@ -637,11 +638,13 @@ func (c *Character) preparePose() []render.M4 {
 	if !slices.Equal(c.poseParts, c.parts) {
 		c.poseParts = append(c.poseParts[:0], c.parts...)
 		c.poseSources = make([]int, len(c.parts))
+		c.boundPalettes = make([]boundPalette, len(c.parts))
 		for i, p := range c.parts {
 			c.poseSources[i] = i
 			for j := 0; j < i; j++ {
 				if slices.Equal(p.bones, c.parts[j].bones) {
 					c.poseSources[i] = c.poseSources[j]
+					c.boundPalettes[c.poseSources[i]].shared = true
 					break
 				}
 			}
@@ -663,7 +666,7 @@ func (c *Character) preparePose() []render.M4 {
 				if i < len(finals) {
 					f = finals[i]
 				}
-				p.pose[i] = b.Mul(f)
+				p.pose[i] = b.MulAffine(f)
 			}
 		}
 		c.poseClip, c.poseTime, c.poseReady = c.clip, c.Time, true

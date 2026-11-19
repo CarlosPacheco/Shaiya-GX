@@ -14,6 +14,26 @@ type boneBounds struct {
 	used     bool
 }
 
+// Shared palettes reuse bone-to-world matrices for the duration of one
+// bounds calculation. Only bones with influencing vertices are transformed.
+type boundPalette struct {
+	world  []render.M4
+	ready  [(render.MaxBones + 63) / 64]uint64
+	shared bool
+}
+
+func (p *boundPalette) transform(bone int, pose, world render.M4) render.M4 {
+	if !p.shared || bone >= len(p.world) {
+		return pose.MulAffine(world)
+	}
+	bit := uint64(1) << (bone % 64)
+	if p.ready[bone/64]&bit == 0 {
+		p.world[bone] = pose.MulAffine(world)
+		p.ready[bone/64] |= bit
+	}
+	return p.world[bone]
+}
+
 func makeBoneBounds(vertices []render.SkinVertex, bones int) ([]boneBounds, bool) {
 	count := min(bones, render.MaxBones)
 	if count == 0 {
@@ -84,10 +104,16 @@ func (c *Character) WorldBounds() (render.V3, render.V3, bool) {
 		finals := c.preparePose()
 		lo, hi := render.V3{}, render.V3{}
 		has, valid := false, true
-		for _, p := range c.parts {
+		for partIndex, p := range c.parts {
 			if !p.bounded {
 				valid = false
 				break
+			}
+			source := c.poseSources[partIndex]
+			palette := &c.boundPalettes[source]
+			if source == partIndex && palette.shared {
+				palette.world = poseBuffer(palette.world, min(len(p.pose), render.MaxBones))
+				clear(palette.ready[:])
 			}
 			for i, box := range p.bounds {
 				if !box.used {
@@ -99,7 +125,7 @@ func (c *Character) WorldBounds() (render.V3, render.V3, bool) {
 						valid = false
 						break
 					}
-					m = p.pose[i].Mul(c.World)
+					m = palette.transform(i, p.pose[i], c.World)
 				}
 				if !unionTransformedBox(&lo, &hi, &has, box.min, box.max, m) {
 					valid = false
@@ -119,7 +145,7 @@ func (c *Character) WorldBounds() (render.V3, render.V3, bool) {
 					valid = false
 					break
 				}
-				m := a.extra.Mul(finals[a.bone]).Mul(c.World)
+				m := a.extra.MulAffine(finals[a.bone]).MulAffine(c.World)
 				if !unionTransformedBox(&lo, &hi, &has, a.part.boundMin, a.part.boundMax, m) {
 					valid = false
 					break

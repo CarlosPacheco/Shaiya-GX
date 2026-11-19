@@ -43,6 +43,33 @@ func (a M4) Mul(b M4) M4 {
 	return r
 }
 
+// MulAffine omits the known last column of a row-vector affine product.
+// Projective transforms and overflow or nonfinite data keep the full product.
+func (a M4) MulAffine(b M4) M4 {
+	if a[3] != 0 || a[7] != 0 || a[11] != 0 || a[15] != 1 ||
+		b[3] != 0 || b[7] != 0 || b[11] != 0 || b[15] != 1 {
+		return a.Mul(b)
+	}
+	var r M4
+	for i := 0; i < 16; i += 4 {
+		x, y, z := a[i], a[i+1], a[i+2]
+		r[i] = float32(x*b[0]) + float32(y*b[4]) + float32(z*b[8])
+		r[i+1] = float32(x*b[1]) + float32(y*b[5]) + float32(z*b[9])
+		r[i+2] = float32(x*b[2]) + float32(y*b[6]) + float32(z*b[10])
+	}
+	r[12] += b[12]
+	r[13] += b[13]
+	r[14] += b[14]
+	r[15] = 1
+	// A nonfinite element also makes the sum nonfinite. Falling back when
+	// the sum itself overflows keeps the same behavior for extreme inputs.
+	sum := r[0] + r[1] + r[2] + r[4] + r[5] + r[6] + r[8] + r[9] + r[10] + r[12] + r[13] + r[14]
+	if math.Float32bits(sum)&0x7f800000 == 0x7f800000 {
+		return a.Mul(b)
+	}
+	return r
+}
+
 // LookAtLH is D3DXMatrixLookAtLH.
 func LookAtLH(eye, at, up V3) M4 {
 	z := at.Sub(eye).Norm()
