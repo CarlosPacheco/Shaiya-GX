@@ -124,6 +124,9 @@ func (a *App) barCovered(in *platform.Input, w, h int) bool {
 		case e.NpcType == 2 && a.gateUI != nil:
 			x, y = a.gateUI.Origin(w, h)
 			width, height = ui.GatekeeperWidth, ui.GatekeeperHeight
+		case a.houseWindowOpen(e):
+			x, y = a.guildHouseUI.Origin(w, h)
+			width, height = ui.GuildHouseWidth, ui.GuildHouseHeight
 		case e.NpcType == 11 && a.guildDirectoryUI != nil:
 			x, y = a.guildDirectoryUI.Origin(w, h)
 			width, height = ui.GuildDirectoryWidth, ui.GuildDirectoryHeight

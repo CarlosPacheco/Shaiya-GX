@@ -61,6 +61,9 @@ func (a *App) updateShop(in *platform.Input, w, h int) bool {
 	if a.auctionBoard(v.npcID) {
 		return a.updateAuction(in, w, h)
 	}
+	if kind, ok := a.houseKind(e); ok {
+		return a.updateHouse(in, w, h, e, kind)
+	}
 	if e.NpcType == 4 && a.pvpRewardUI != nil {
 		return a.updatePvPRewards(in, w, h)
 	}
@@ -190,6 +193,10 @@ func (a *App) drawShop(w, h int) {
 	}
 	if a.auctionBoard(v.npcID) {
 		a.drawAuction(w, h)
+		return
+	}
+	if kind, ok := a.houseKind(e); ok {
+		a.drawHouse(w, h, e, kind)
 		return
 	}
 	if e.NpcType == 4 && a.pvpRewardUI != nil {

@@ -85,6 +85,8 @@ type App struct {
 	guildCreateUI                       *ui.GuildCreateDialog
 	guildUI                             *ui.GuildPanel
 	guildDirectoryUI                    *ui.GuildDirectory
+	guildHouseUI                        *ui.GuildHouseWindow
+	house                               houseView
 	guild                               guildView
 	playerContext                       playerContext
 	playerMenuUI                        *ui.PlayerMenu
@@ -381,6 +383,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	}
 
 	if a.guildDirectoryUI, err = ui.NewGuildDirectory(a); err != nil {
+		return nil, err
+	}
+	if a.guildHouseUI, err = ui.NewGuildHouseWindow(a); err != nil {
 		return nil, err
 	}
 	if a.exchangeUI, err = ui.NewExchangePanel(a); err != nil {
@@ -1049,6 +1054,7 @@ func (a *App) pumpWorld() {
 					a.refreshSelf(a.wv)
 				}
 			}
+			a.houseEvents()
 			if ev.Op == proto.GuildBankResult && a.bank.guildPending {
 				a.bank.guildPending = false
 				a.inventory.pending = false
