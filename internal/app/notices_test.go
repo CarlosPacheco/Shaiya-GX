@@ -3,6 +3,8 @@ package app
 import (
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
+	"github.com/Spelunkern/Shaiya-GX/internal/game"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"testing"
 )
 
@@ -35,5 +37,19 @@ func TestScreenNewsPreservesChatCapsQueueAndExpires(t *testing.T) {
 	a.systemMessage(7, 463, map[string]string{"t": "local"})
 	if len(a.screenNotices) != 0 || len(a.state.Chat) != 8 {
 		t.Fatal("local altar notice became news")
+	}
+}
+
+func TestServerNoticeUsesAltarNewsPresentation(t *testing.T) {
+	a := inputApp()
+	w := proto.NewWriter(proto.GXServerNotice)
+	w.Text("GX Automatic Notice - Test")
+	if _, err := a.state.Apply(w.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	a.confirmedSystemChat(w.Bytes(), 0)
+	if len(a.state.Chat) != 1 || a.state.Chat[0].Style != 8 || !game.ChatSystemPane(a.state.Chat[0].Style) ||
+		len(a.screenNotices) != 1 || a.screenNotices[0].text != a.state.Chat[0].Text {
+		t.Fatalf("announcement missing altar presentation: chat=%v screen=%v", a.state.Chat, a.screenNotices)
 	}
 }

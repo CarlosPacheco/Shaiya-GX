@@ -149,7 +149,8 @@ Do not downgrade to plaintext-only password handling or mix login/world versions
 
 `PS_GameDefs_ServerNotices` in SQLite stores `Index`, `Message`,
 `Frequency` and `FixedHour1` through `FixedHour5`. GX World reads them at
-startup. All connected players receive a notice in global GM chat.
+startup. All connected players receive each announcement in the system chat
+and the on-screen news panel, with the same sound as an altar notice.
 
 - `Frequency` is an interval in minutes measured from world startup. The
   first send occurs after one interval. Zero leaves the row available for

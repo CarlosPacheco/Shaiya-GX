@@ -2167,20 +2167,20 @@ type movementRuneCast struct {
 
 [server/internal/world/notices.go](../../server/internal/world/notices.go#L1)
 
-Direct GX dependencies: `server/internal/db`, `server/internal/logx`, `server/internal/packet`.
+Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal/logx`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`noticeCatalog`](../../server/internal/world/notices.go#L14)<br>`var noticeCatalog []db.ServerNotice` | See the source definition and the subsystem ownership contract. |
-| [`loadServerNotices`](../../server/internal/world/notices.go#L16)<br>`func loadServerNotices(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
-| [`noticeHour`](../../server/internal/world/notices.go#L35)<br>`type noticeHour` | See the source definition and the subsystem ownership contract. |
-| [`parseNoticeHour`](../../server/internal/world/notices.go#L37)<br>`func parseNoticeHour(text string) (noticeHour, bool)` | See the source definition and the subsystem ownership contract. |
-| [`scheduledNotice`](../../server/internal/world/notices.go#L49)<br>`type scheduledNotice` | See the source definition and the subsystem ownership contract. |
-| [`scheduleNotices`](../../server/internal/world/notices.go#L56)<br>`func scheduleNotices(rows []db.ServerNotice, start time.Time) []scheduledNotice` | See the source definition and the subsystem ownership contract. |
-| [`due`](../../server/internal/world/notices.go#L79)<br>`func (n *scheduledNotice) due(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
-| [`validNoticeMessage`](../../server/internal/world/notices.go#L100)<br>`func validNoticeMessage(message string) bool` | See the source definition and the subsystem ownership contract. |
-| [`broadcastNotice`](../../server/internal/world/notices.go#L105)<br>`func broadcastNotice(message string)` | See the source definition and the subsystem ownership contract. |
-| [`gmNotice`](../../server/internal/world/notices.go#L112)<br>`func (s *Session) gmNotice(message string) error` | See the source definition and the subsystem ownership contract. |
+| [`noticeCatalog`](../../server/internal/world/notices.go#L15)<br>`var noticeCatalog []db.ServerNotice` | See the source definition and the subsystem ownership contract. |
+| [`loadServerNotices`](../../server/internal/world/notices.go#L17)<br>`func loadServerNotices(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
+| [`noticeHour`](../../server/internal/world/notices.go#L36)<br>`type noticeHour` | See the source definition and the subsystem ownership contract. |
+| [`parseNoticeHour`](../../server/internal/world/notices.go#L38)<br>`func parseNoticeHour(text string) (noticeHour, bool)` | See the source definition and the subsystem ownership contract. |
+| [`scheduledNotice`](../../server/internal/world/notices.go#L50)<br>`type scheduledNotice` | See the source definition and the subsystem ownership contract. |
+| [`scheduleNotices`](../../server/internal/world/notices.go#L57)<br>`func scheduleNotices(rows []db.ServerNotice, start time.Time) []scheduledNotice` | See the source definition and the subsystem ownership contract. |
+| [`due`](../../server/internal/world/notices.go#L80)<br>`func (n *scheduledNotice) due(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
+| [`validNoticeMessage`](../../server/internal/world/notices.go#L101)<br>`func validNoticeMessage(message string) bool` | See the source definition and the subsystem ownership contract. |
+| [`broadcastNotice`](../../server/internal/world/notices.go#L106)<br>`func broadcastNotice(message string)` | See the source definition and the subsystem ownership contract. |
+| [`gmNotice`](../../server/internal/world/notices.go#L115)<br>`func (s *Session) gmNotice(message string) error` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 

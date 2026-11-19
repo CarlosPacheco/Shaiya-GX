@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -103,7 +104,9 @@ func validNoticeMessage(message string) bool {
 }
 
 func broadcastNotice(message string) {
-	frame := buildChatByName(packet.ChatWorldAdmin, "Notice", message)
+	w := packet.New(packet.Opcode(proto.GXServerNotice))
+	writeChatText(w, message)
+	frame := w.MustFinish()
 	for _, p := range AllPlayers() {
 		p.Send(frame, "global server notice")
 	}

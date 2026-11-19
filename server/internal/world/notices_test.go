@@ -64,8 +64,8 @@ func TestNoticeCommandReachesBothFactions(t *testing.T) {
 		}
 		for _, wire := range []<-chan []byte{gmWire, playerWire} {
 			data := read(wire)
-			msg, err := proto.DecodeChatByName(data)
-			if err != nil || proto.Op(data) != proto.ChatWorldAdmin || msg.Sender != "Notice" || msg.Text != c.message {
+			msg, err := proto.DecodeServerNotice(data)
+			if err != nil || msg != c.message {
 				t.Fatalf("incorrect notice: %+v (%v)", msg, err)
 			}
 		}

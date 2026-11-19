@@ -180,6 +180,7 @@ type State struct {
 	LastPvPReward          proto.PvPRewardResult
 	Relics                 []proto.Relic // current map's relics (0x2101/0x2102)
 	LastRelicNotice        proto.RelicDestroyed
+	LastServerNotice       string
 	LastPortalNotice       proto.PortalOwnerNotice
 	Phase                  Phase
 	Faction                proto.Faction
@@ -366,6 +367,13 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		s.LastPortalNotice = v
+	case proto.GXServerNotice:
+		text, err := proto.DecodeServerNotice(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastServerNotice = text
+		ev.Text = text
 	case proto.RelicNotice:
 		v, err := proto.DecodeRelicNotice(p)
 		if err != nil {

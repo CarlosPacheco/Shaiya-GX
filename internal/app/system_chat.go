@@ -13,10 +13,16 @@ func (a *App) systemMessage(style uint8, id int, values map[string]string) {
 	if a.msg.Get(id) == "" {
 		return
 	}
-	text := a.msg.Format(id, values)
+	a.addSystemText(style, id, a.msg.Format(id, values))
+}
+
+func (a *App) addSystemText(style uint8, id int, text string) {
 	a.state.AddChat(game.ChatLine{Text: text, Style: style, MessageID: id})
 	if nativeNoticeStyle(style) {
 		a.addScreenNotice(style, text)
+	}
+	if style == 8 {
+		a.playNewsSound()
 	}
 }
 
@@ -92,18 +98,16 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 			}
 			if id != 0 {
 				a.systemMessage(8, id, nil)
-				a.playNewsSound()
 			}
 		}
+	case proto.GXServerNotice:
+		a.addSystemText(8, 0, s.LastServerNotice)
 	case proto.RelicNotice:
 		v := s.LastRelicNotice
 		if id, ok := relicNoticeMessage(v.OldOwner, v.NewOwner, s.Faction.Faction); ok && a.assets != nil {
 			if d, err := a.assets.MonsterDefinition(v.MobID); err == nil {
 				style := relicNoticeStyle(s.MapID)
 				a.systemMessage(style, id, map[string]string{"p": d.Name})
-				if style == 8 {
-					a.playNewsSound()
-				}
 			}
 		}
 	case proto.ExpGain:

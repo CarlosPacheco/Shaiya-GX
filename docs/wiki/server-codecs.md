@@ -3436,6 +3436,31 @@ func Op(payload []byte) Opcode {
 
 </details>
 
+## server notice
+
+[internal/proto/server_notice.go](../../internal/proto/server_notice.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+func DecodeServerNotice(payload []byte) (string, error) {
+	if Op(payload) != GXServerNotice || len(payload) < 5 || len(payload) > 131 || payload[len(payload)-1] != 0 {
+		return "", fmt.Errorf("invalid server notice")
+	}
+	r := NewReader(payload)
+	text := r.Text()
+	if err := r.Err(); err != nil {
+		return "", err
+	}
+	if r.Remaining() != 0 || strings.TrimSpace(text) == "" {
+		return "", fmt.Errorf("invalid server notice text")
+	}
+	return text, nil
+}
+```
+
+</details>
+
 ## shop
 
 [internal/proto/shop.go](../../internal/proto/shop.go#L1)

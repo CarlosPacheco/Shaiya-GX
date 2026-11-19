@@ -16,7 +16,7 @@ Declarations: [packet.ChatNormal](../../server/internal/packet/packet.go#L133), 
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1439)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1447)
 
 ### Wire layouts and validation
 
@@ -72,7 +72,7 @@ Declarations: [packet.ChatWhisper](../../server/internal/packet/packet.go#L179),
 
 **S→C serializers:** [buildWhisper (server/internal/world/chat.go)](../../server/internal/world/chat.go#L136)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1453)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1461)
 
 ### Wire layouts and validation
 
@@ -147,7 +147,7 @@ Declarations: [packet.ChatWorld](../../server/internal/packet/packet.go#L134), [
 
 **S→C serializers:** [buildChatByName (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L155)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1446)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1454)
 
 ### Wire layouts and validation
 
@@ -207,7 +207,7 @@ Declarations: [packet.ChatGuild](../../server/internal/packet/packet.go#L178), [
 
 **S→C serializers:** [guildChat (server/internal/world/guild.go)](../../server/internal/world/guild.go#L452)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1446)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1454)
 
 ### Wire layouts and validation
 
@@ -269,7 +269,7 @@ Declarations: [packet.ChatParty](../../server/internal/packet/packet.go#L70), [p
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1439)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1447)
 
 ### Wire layouts and validation
 
@@ -325,7 +325,7 @@ Declarations: [packet.ChatError](../../server/internal/packet/packet.go#L135), [
 
 **S→C serializers:** [buildChatError (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L166)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1459)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1467)
 
 ### Wire layouts and validation
 
@@ -383,7 +383,7 @@ Declarations: [packet.ChatShout](../../server/internal/packet/packet.go#L180), [
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1439)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1447)
 
 ### Wire layouts and validation
 
@@ -439,7 +439,7 @@ Declarations: [packet.ChatWorldShout](../../server/internal/packet/packet.go#L18
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1446)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1454)
 
 ### Wire layouts and validation
 
@@ -480,7 +480,7 @@ Declarations: [proto.MobSpeechText](../../internal/proto/mob_speech.go#L6).
 
 **S→C serializers:** [buildMobAIMessage (server/internal/world/mob_ai_speech.go)](../../server/internal/world/mob_ai_speech.go#L33)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1429)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1437)
 
 ### Wire layouts and validation
 
@@ -565,7 +565,7 @@ Declarations: [proto.MobSpeechIndex](../../internal/proto/mob_speech.go#L7).
 
 **S→C serializers:** [buildMobAIMessage (server/internal/world/mob_ai_speech.go)](../../server/internal/world/mob_ai_speech.go#L33)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1429)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1437)
 
 ### Wire layouts and validation
 
@@ -650,7 +650,7 @@ Declarations: [packet.ChatMap](../../server/internal/packet/packet.go#L136), [pr
 
 **S→C serializers:** [buildChatByName (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L155)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1446)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1454)
 
 ### Wire layouts and validation
 
@@ -710,7 +710,7 @@ Declarations: [packet.ChatNormalAdmin](../../server/internal/packet/packet.go#L2
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1439)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1447)
 
 ### Wire layouts and validation
 
@@ -749,32 +749,13 @@ Declarations: [packet.ChatWorldAdmin](../../server/internal/packet/packet.go#L20
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L70)
 
-**S→C serializers:** [buildChatByName (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L155)
+**S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1446)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1454)
 
 ### Wire layouts and validation
 
 These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
-
-<details><summary>buildChatByName — server/internal/world/protocol.go</summary>
-
-[Source definition](../../server/internal/world/protocol.go#L155)
-
-```go
-func buildChatByName(op packet.Opcode, sender, message string) []byte {
-	w := packet.New(op)
-	name := sender
-	if len(name) > 21 {
-		name = textwire.Prefix(name, 21)
-	}
-	w.FixedString(name, 21)
-	writeChatText(w, message)
-	return w.MustFinish()
-}
-```
-
-</details>
 
 <details><summary>DecodeChatByName — internal/proto/world.go</summary>
 

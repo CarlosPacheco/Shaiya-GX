@@ -57,7 +57,12 @@ func TestNativeConsumableAndNewsSoundDispatch(t *testing.T) {
 	}
 	a.state.LastItemUse = proto.ItemUseResult{ID: 1, Bag: 0}
 	a.confirmedSound(proto.NewWriter(proto.UseItem).Bytes())
-	a.playNewsSound()
+	w := proto.NewWriter(proto.GXServerNotice)
+	w.Text("GX Automatic Notice - Test")
+	if _, err := a.state.Apply(w.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	a.confirmedSystemChat(w.Bytes(), 0)
 	for _, name := range []string{"ch_potion01.ogg", "ui_error001.ogg", "ui_news001.ogg"} {
 		if requested["sound/"+name] != 1 {
 			t.Fatal("missing or duplicate native sound", name, requested)

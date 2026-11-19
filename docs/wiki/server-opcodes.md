@@ -283,6 +283,7 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x7F1A` | [GXKillNotice](protocol-extensions.md#opcode-7f1a) | — | yes | yes |
 | `0x7F1B` | [GXBlessingSnapshot](protocol-extensions.md#opcode-7f1b) | — | yes | yes |
 | `0x7F1C` | [GXWeather](protocol-extensions.md#opcode-7f1c) | — | yes | yes |
+| `0x7F1D` | [GXServerNotice](protocol-extensions.md#opcode-7f1d) | — | yes | yes |
 | `0xA101` | [LoginHandshake](protocol-authentication.md#opcode-a101) | yes | yes | — |
 | `0xA102` | [LoginRequest](protocol-authentication.md#opcode-a102) | yes | yes | — |
 | `0xA106` | [LoginRequestEx](protocol-authentication.md#opcode-a106) | — | — | — |
@@ -292,10 +293,10 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0xA303` | [Ping](protocol-authentication.md#opcode-a303) | yes | yes | — |
 | `0xB101` | [BankItemList](protocol-services.md#opcode-b101) | — | yes | — |
 | `0xF101` | [ChatNormalAdmin](protocol-chat.md#opcode-f101) | yes | — | yes |
-| `0xF103` | [ChatWorldAdmin](protocol-chat.md#opcode-f103) | yes | yes | yes |
+| `0xF103` | [ChatWorldAdmin](protocol-chat.md#opcode-f103) | yes | — | yes |
 | `0xF501` | [GmCommandError](protocol-chat.md#opcode-f501) | — | — | — |
 | `0xF702` | [GmCommandGetItem](protocol-chat.md#opcode-f702) | — | — | — |
 
-Inventory: **285 numeric opcodes**, **480 typed declarations**, **15 families**.
+Inventory: **286 numeric opcodes**, **481 typed declarations**, **15 families**.
 
 Regenerate with `python3 tools/generate_server_reference.py`; verify freshness with `--check`. The generator parses source for both operating systems and tests are excluded from implementation evidence. Source links track main; use Git history when comparing older binaries.
