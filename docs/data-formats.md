@@ -320,5 +320,6 @@ python3 tools/migrate_map_names.py '/path/to/data/sysmsg-uni.txt' \
 ```
 
 The tool copies known names for installed numeric WLD maps and adds `Map N`
-for unused slots. Existing rows are preserved. To name a future map, edit
+for unused slots. It removes the old map-name rows and preserves other entries,
+including previously configured names in the new range. To name a future map, edit
 or add its message in the same UTF-16LE format, then restart the client.

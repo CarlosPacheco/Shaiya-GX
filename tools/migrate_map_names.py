@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add editable map name rows to a loose GX client's UTF-16LE SysMsg file."""
+"""Move map name rows in a loose GX client's UTF-16LE SysMsg file."""
 import argparse
 import os
 from pathlib import Path
@@ -18,7 +18,8 @@ LEGACY_MESSAGES = {
     48: 5405, 49: 5405, 50: 5406, 51: 5407, 52: 5407, 53: 5408, 54: 5408, 55: 5409,
     56: 5409, 57: 5410, 58: 5411, 59: 5412, 60: 5413, 61: 5414, 62: 5415, 63: 5416,
     64: 5432, 65: 5433, 66: 5433, 67: 5434, 68: 5425, 69: 5426, 70: 5427, 71: 5435,
-    72: 5436, 73: 5427,
+    72: 5436, 73: 5427, 100: 5437, 101: 5437, 102: 5417, 103: 5417,
+    104: 5417, 105: 5417, 106: 5417, 107: 5417, 108: 5417,
 }
 
 FIRST_MAP_MESSAGE = 11001
@@ -34,7 +35,8 @@ def map_name_rows(source, map_ids):
             messages[int(row[1])] = row[2]
 
     rows = []
-    for map_id in range(INITIAL_MAP_COUNT):
+    extra_maps = sorted(i for i in LEGACY_MESSAGES if i >= INITIAL_MAP_COUNT and i in map_ids)
+    for map_id in (*range(INITIAL_MAP_COUNT), *extra_maps):
         message_id = FIRST_MAP_MESSAGE + map_id
         if message_id in messages:
             continue
@@ -63,24 +65,35 @@ def migrate(path, backup_path):
         raise ValueError('No numeric map files found in the World directory')
 
     rows = map_name_rows(source, map_ids)
-    if not rows:
-        return 0
-    ending = '\r\n' if '\r\n' in source else '\n'
-    separator = '' if not source or source.endswith('\n') else ending
-    append = (separator + ending.join(rows) + ending).encode('utf-16le')
+    legacy_ids = set(LEGACY_MESSAGES.values())
+    kept = []
+    removed = 0
+    for line in source.splitlines(keepends=True):
+        match = ROW.fullmatch(line.rstrip('\r\n'))
+        if match and int(match[1]) in legacy_ids:
+            removed += 1
+        else:
+            kept.append(line)
+    if not rows and not removed:
+        return 0, 0
+    result = ''.join(kept)
+    if rows:
+        ending = '\r\n' if '\r\n' in source else '\n'
+        separator = '' if not result or result.endswith('\n') else ending
+        result += separator + ending.join(rows) + ending
     backup_path.parent.mkdir(parents=True, exist_ok=True)
     with backup_path.open('xb') as backup:
         backup.write(raw)
     with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as temporary:
         temp = Path(temporary.name)
         try:
-            temporary.write(raw + append)
+            temporary.write(prefix + result.encode('utf-16le'))
             temporary.close()
             shutil.copymode(path, temp)
             os.replace(temp, path)
         finally:
             temp.unlink(missing_ok=True)
-    return len(rows)
+    return len(rows), removed
 
 
 def main():
@@ -88,7 +101,8 @@ def main():
     parser.add_argument('sysmsg', type=Path)
     parser.add_argument('--backup', type=Path, required=True)
     args = parser.parse_args()
-    print(f'Added {migrate(args.sysmsg, args.backup)} map name rows.')
+    added, removed = migrate(args.sysmsg, args.backup)
+    print(f'Added {added} map name rows and removed {removed} legacy rows.')
 
 
 if __name__ == '__main__':
