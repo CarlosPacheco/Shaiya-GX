@@ -59,9 +59,23 @@ func TestStatusAndPotionNativeFieldsGL(t *testing.T) {
 	if out == "" {
 		out = t.TempDir()
 	}
-	for index, value := range []uint8{0, 6} {
+	for index, value := range []uint8{0, 6, 6} {
 		view := a.statusState()
 		view.Element = elementName(value, a.msg)
+		if index == 2 {
+			a.statusUI.Expanded = true
+			a.statusUI.Draft = proto.StatPoints{12345, 2, 3, 4, 5, 6}
+			view.Title, view.Class = "Liberator of the Alliance", "Battle Priest"
+			view.AttackSpeed, view.MoveSpeed = "Extremely Fast", "Very Fast"
+			view.Points = 65535
+			view.Base = proto.StatPoints{65535, 9, 100, 4, 19, 235}
+			view.Details = proto.Details{Exp: 2800000000, NextExp: 3100000000}
+			view.Details.MaxHP, view.Details.MaxMP, view.Details.MaxSP = 4294967295, 25000, 15000
+			view.HP, view.MP, view.SP = 2147483648, 18000, 9500
+			view.Details.Kills, view.Details.Deaths, view.Details.Wins, view.Details.Losses = 600000, 5000, 250, 100
+			view.Stats = proto.AdditionalStats{MinAttack: 12345, MaxAttack: 987654, MinMagic: 500, MaxMagic: 1000, Defense: 15500, Resistance: 29000}
+			view.Known = true
+		}
 		if view.Mode != "" {
 			t.Fatal("mode must remain empty")
 		}
@@ -75,7 +89,7 @@ func TestStatusAndPotionNativeFieldsGL(t *testing.T) {
 		if code := gl.GetError(); code != gl.NO_ERROR {
 			t.Fatal(code)
 		}
-		if err := render.SavePNG(filepath.Join(out, []string{"status-neutral-potions.png", "status-element-potions.png"}[index]), 800, 600); err != nil {
+		if err := render.SavePNG(filepath.Join(out, []string{"status-neutral-potions.png", "status-element-potions.png", "status-expanded-values.png"}[index]), 800, 600); err != nil {
 			t.Fatal(err)
 		}
 	}

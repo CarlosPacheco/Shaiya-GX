@@ -146,6 +146,20 @@ func (v *Status) buttons() []*Button {
 	return b
 }
 
+// The original field insets are 15 pixels tall on both status frames.
+func drawStatusValue(s *render.Sprites, f *Font, value string, x, y, width int) {
+	if value == "" {
+		return
+	}
+	const height = 15
+	textWidth := float32(f.Width(value))
+	textHeight := float32(f.Height)
+	scale := min(float32(1), float32(width-4)/max(1, textWidth), height/max(1, textHeight))
+	left := x + int((float32(width)-textWidth*scale)/2)
+	top := y + int((height-textHeight*scale)/2)
+	f.DrawScaled(s, value, float32(left), float32(top), scale, white, 0)
+}
+
 func (v *Status) Draw(s *render.Sprites, f *Font, w, h int, state StatusState) {
 	v.controls(w, h, state)
 	x, y := v.Origin(w, h)
@@ -161,42 +175,42 @@ func (v *Status) Draw(s *render.Sprites, f *Font, w, h int, state StatusState) {
 		ratio := progress(pool.Current, 0, pool.Max)
 		s.Draw(v.resourceBars, float32(mainX+73), float32(y+265+20*i), 68*ratio, 15, 0, float32(i)/4, ratio, float32(i)/4+12.0/64, white)
 	}
-	text := func(value string, dx, dy, width int) { f.Draw(s, value, mainX+dx, y+dy, white, width) }
-	text(state.Class, 75, 80, 66)
-	text(state.Mode, 190, 80, 68)
-	// Keep the original Stat field; fit long localized neutral-element names.
-	elementScale := min(float32(1), 66/float32(max(1, f.Width(state.Element))))
-	f.DrawScaled(s, state.Element, float32(mainX+78), float32(y+326)+float32(f.Height)*(1-elementScale)/2, elementScale, white, 0)
-	// Native 0x0050436a-0x005043e0: title centred in the 182px field
-	// at (73, 99+2), relative to the main sheet even when expanded.
-	text(state.Title, 73+max(0, (182-f.Width(state.Title))/2), 101, 182)
-	text(fmt.Sprintf("%d / %d", state.Details.Exp, state.Details.NextExp), 78, 132, 180)
+	// stats_off/stats_on use the same cells, offset 132px in the expanded frame.
+	const left, right, columnWidth = 73, 188, 68
+	text := func(value string, dx, dy, width int) {
+		drawStatusValue(s, f, value, mainX+dx, y+dy, width)
+	}
+	text(state.Class, left, 79, columnWidth)
+	text(state.Mode, right, 79, columnWidth)
+	text(state.Title, left, 99, 183)
+	text(fmt.Sprintf("%d / %d", state.Details.Exp, state.Details.NextExp), left, 132, 183)
 	for i, index := range statOrder {
-		text(fmt.Sprint(state.Base[index]), 78+i/3*114, 174+i%3*20, 67)
+		text(fmt.Sprint(state.Base[index]), left+i/3*(right-left), 172+i%3*20, columnWidth)
 	}
-	text(fmt.Sprint(state.Points), 192, 234, 66)
+	text(fmt.Sprint(state.Points), right, 232, columnWidth)
 	for i, pool := range []Resource{{state.HP, state.Details.MaxHP}, {state.MP, state.Details.MaxMP}, {state.SP, state.Details.MaxSP}} {
-		text(fmt.Sprintf("%d/%d", pool.Current, pool.Max), 74, 266+i*20, 66)
+		text(fmt.Sprintf("%d/%d", pool.Current, pool.Max), left, 265+i*20, columnWidth)
 	}
+	text(state.Element, left, 325, columnWidth)
 	derived := []string{"-", "-", "-", "-"}
 	if state.Known {
 		d := state.Stats
 		derived = []string{fmt.Sprintf("%d-%d", d.MinAttack, d.MaxAttack), fmt.Sprintf("%d-%d", d.MinMagic, d.MaxMagic), fmt.Sprint(d.Defense), fmt.Sprint(d.Resistance)}
 	}
 	for i, value := range derived {
-		text(value, 192, 269+i*20, 66)
+		text(value, right, 265+i*20, columnWidth)
 	}
-	text(state.AttackSpeed, 92+max(0, (95-f.Width(state.AttackSpeed))/2), 345, 95)
-	text(state.MoveSpeed, 92+max(0, (95-f.Width(state.MoveSpeed))/2), 365, 95)
+	text(state.AttackSpeed, 92, 345, 96)
+	text(state.MoveSpeed, 92, 365, 96)
 	for i, value := range []uint32{state.Details.Kills, state.Details.Deaths, state.Details.Wins, state.Details.Losses} {
-		text(fmt.Sprint(value), 78+i%2*114, 405+i/2*20, 66)
+		text(fmt.Sprint(value), left+i%2*(right-left), 405+i/2*20, columnWidth)
 	}
 	v.close.Draw(s)
 	v.expand.Draw(s)
 	if v.Expanded {
-		f.Draw(s, fmt.Sprint(uint32(state.Points)-min(uint32(state.Points), v.Draft.Total())), x+82, y+102, white, 58)
+		drawStatusValue(s, f, fmt.Sprint(uint32(state.Points)-min(uint32(state.Points), v.Draft.Total())), x+78, y+102, 68)
 		for i, index := range statOrder {
-			f.Draw(s, fmt.Sprint(v.Draft[index]), x+52, y+132+i*20, white, 28)
+			drawStatusValue(s, f, fmt.Sprint(v.Draft[index]), x+51, y+131+i*20, 30)
 		}
 		for i := range v.steps {
 			v.steps[i].Draw(s)
