@@ -82,7 +82,8 @@ func combatGlyphRect(point render.V3, width, height float32, view, projection re
 
 func (a *App) drawCombatNumbers(w, h int) {
 	a.expireCombatNumbers()
-	if len(a.combatNumbers) == 0 || a.scene3d == nil {
+	localBots := a.wv != nil && a.wv.bots != nil
+	if len(a.combatNumbers) == 0 && !localBots || a.scene3d == nil {
 		return
 	}
 	atlas, err := a.Interface("count.png")
@@ -91,8 +92,7 @@ func (a *App) drawCombatNumbers(w, h int) {
 	}
 	view, projection := a.scene3d.View, a.scene3d.Proj
 	right := render.V3{view[0], view[4], view[8]}
-	for _, entry := range a.combatNumbers {
-		age := max(0, float32(a.clock-entry.Started))
+	draw := func(entry combatNumber, age float32) {
 		point := entry.Point.Add(render.V3{0, age * .3, 0})
 		tint := [4]float32{248.0 / 255, 247.0 / 255, 245.0 / 255, 1 - age}
 		if entry.Healing {
@@ -112,7 +112,7 @@ func (a *App) drawCombatNumbers(w, h int) {
 		}
 		if entry.Missed {
 			glyph(point, width*4, width*1.1875, 416, 96, [4]float32{1, 1, 1, 1 - age})
-			continue
+			return
 		}
 		digits := strconv.FormatUint(uint64(entry.Amount), 10)
 		for index, digit := range digits {
@@ -122,6 +122,14 @@ func (a *App) drawCombatNumbers(w, h int) {
 		if entry.Critical {
 			glyph(point.Add(render.V3{0, .4, 0}), width*2.75, width*1.1875, 260, 156, [4]float32{1, 1, 1, 1 - age})
 		}
+	}
+	for _, entry := range a.combatNumbers {
+		draw(entry, max(0, float32(a.clock-entry.Started)))
+	}
+	if localBots {
+		a.wv.bots.DamageNumbers(a.wv.pos, func(point render.V3, age float32, amount uint32, critical, missed bool) {
+			draw(combatNumber{Point: point, Amount: amount, Critical: critical, Missed: missed}, age)
+		})
 	}
 }
 

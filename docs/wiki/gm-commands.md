@@ -51,6 +51,19 @@ client and world server; the original client does not implement turbo state.
 All command responses, usage hints and validation messages are in English and
 use green system-chat style 4 (`#33FF33`), including refusals.
 
+## Local PvP bots
+
+`/bots 1` through `/bots 1000` starts a new simulation in front of the GM.
+The client loads the requested actors in batches. In a group, Light and Fury
+bots fight one another with randomized native outfits, weapons, cloth capes,
+movement, casts, projectiles and impacts. A single bot shadow-spars.
+
+`/bots off` removes the actors and releases their assets. Leaving the map
+or losing GM status also clears the simulation. The chat composer handles
+these commands locally. Bots are visible only to the issuing GM, and their
+combat has no network packets, server entities, player damage or rewards.
+Use open terrain for large groups.
+
 ## Practical examples
 
 Use `/turbo` once to enable fast movement and again to restore ordinary speed.

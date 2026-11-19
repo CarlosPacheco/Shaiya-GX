@@ -402,7 +402,7 @@ func (a *App) drawPlayerNames(w, h int) {
 	if v == nil {
 		return
 	}
-	if len(a.state.Entities) == 0 && len(a.state.GroundItems) == 0 && v.self == nil {
+	if len(a.state.Entities) == 0 && len(a.state.GroundItems) == 0 && v.self == nil && v.bots == nil {
 		return
 	}
 	vp := a.scene3d.View.Mul(a.scene3d.Proj)
@@ -569,6 +569,9 @@ func (a *App) drawPlayerNames(w, h int) {
 				}
 			}
 		}
+	}
+	if v.bots != nil && settings.PlayerNames {
+		a.drawBotNameplates(vp, w, h, label)
 	}
 	a.sprites.NameDepth(-1)
 }

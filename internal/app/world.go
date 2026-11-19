@@ -7,6 +7,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/bots"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -19,6 +20,7 @@ import (
 // third-person camera (0x444b10 reset, 0x4397d0 orbit/zoom, 0x43bfa0
 // movement; Phoenix tools/reference/ep5_camera_controls.md).
 type worldView struct {
+	bots                        *bots.Arena
 	dashes                      map[uint32]proto.SkillDash
 	requestedSkills             []*requestedSkillPresentation
 	ladderFinishing             bool
@@ -709,6 +711,7 @@ func (a *App) drawWorldView(w, h int) {
 	s.LightDir = render.V3{-1, -1, -1}
 	s.Begin()
 	v.world.Update(float32(a.frameDT))
+	a.updateBots()
 	a.vehicle.effectBudget = 2
 	a.prepareSelfForDraw()
 	a.prepareRemotePlayers()
@@ -808,6 +811,9 @@ func (a *App) drawWorldContents(eye render.V3, underwater bool) {
 	a.drawMonsters()
 	a.drawTransforms()
 	a.drawNPCs()
+	if v.bots != nil {
+		v.bots.Draw(s, a.skinner, a.clientSettings().SkillEffects)
+	}
 	a.drawRunEffects()
 	a.drawCastEffects()
 	a.drawResolvedEffects()
@@ -968,6 +974,7 @@ func (a *App) releaseWorld() {
 		}
 	}
 	if a.wv != nil {
+		a.wv.clearBots()
 		a.wv.shadow.Delete()
 		a.wv.waterReflection.Delete()
 		a.scene3d.ReleaseWaterBackground()
