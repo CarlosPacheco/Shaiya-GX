@@ -120,6 +120,8 @@ type worldView struct {
 	runEffects                  []runTrail
 	runEffectAt                 map[uint32]float64
 	castEffects                 []castEffect
+	effectUpdates               []scene.EffectUpdate
+	visibleEffects              []*scene.Effect
 	projectiles                 []skillProjectile
 	physicalProjectiles         []physicalProjectile
 	physicalSkillQueued         bool

@@ -35,7 +35,7 @@ func TestMeshEffectBatchPreservesFramesAndOrderGL(t *testing.T) {
 	}
 	defer s.Delete()
 	s.View, s.Proj = render.Identity(), render.Identity()
-	texture := render.Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{255, 255, 255, 255}}})
+	texture := render.Upload(img.Texture{RGBA: &img.RGBA{W: 2, H: 1, Pix: []byte{255, 255, 255, 255, 96, 224, 128, 200}}})
 	defer texture.Delete()
 	points := [][3]float32{{-1, -1, 0}, {1, -1, 0}, {0, 1, 0}}
 	mesh := &effect.Mesh3DE{MaxKeyframe: 10, Indices: []uint16{0, 1, 2}}
@@ -46,7 +46,7 @@ func TestMeshEffectBatchPreservesFramesAndOrderGL(t *testing.T) {
 		frame := effect.MeshFrame{Key: key}
 		for _, p := range points {
 			p[0] += float32(key) / 20
-			frame.Vertices = append(frame.Vertices, effect.FrameVertex{Position: p})
+			frame.Vertices = append(frame.Vertices, effect.FrameVertex{Position: p, UV: [2]float32{(p[0] + 1) / 2, .25}})
 		}
 		mesh.Frames = append(mesh.Frames, frame)
 	}
@@ -89,36 +89,50 @@ func TestMeshEffectBatchPreservesFramesAndOrderGL(t *testing.T) {
 	// transparency order, clip state and the transition back to a normal draw.
 	following := render.NewMesh([]render.Vertex{{Pos: render.V3{-.1, -.1, .1}}, {Pos: render.V3{.1, -.1, .1}}, {Pos: render.V3{0, .1, .1}}}, []uint32{0, 1, 2})
 	defer following.Delete()
-	single := *x
-	single.emitters = append([]effectEmitter(nil), x.emitters...)
-	single.emitters[0].particles = particles[:1]
-	drawPass := func(grouped bool) []byte {
+	var frames render.EffectGeometryCache
+	defer frames.Delete()
+	mixed := *definition
+	mixed.SrcBlend = 1
+	mixed.Colors = []effect.ColorFrame{{RGBA: [4]float32{.2, .6, 1, .3}}}
+	effects := make([]*Effect, 24)
+	for i := range effects {
+		e := x.emitters[0]
+		if i%2 != 0 {
+			e.definition, e.particles = &mixed, particles[:1]
+		}
+		effects[i] = &Effect{emitters: []effectEmitter{e}, basis: render.Identity()}
+	}
+	drawPass := func(grouped bool) ([]byte, int) {
 		gl.DepthMask(true)
 		gl.ClearColor(.1, .1, .1, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-		if grouped {
-			s.Begin()
-		}
-		for _, fx := range []*Effect{x, &single, x} {
+		render.ResetDrawCalls()
+		for _, fx := range effects {
+			fx.geometryCache = nil
 			if grouped {
-				fx.drawInPass(s)
-			} else {
-				fx.Draw(s)
+				fx.geometryCache = &frames
 			}
 		}
 		if grouped {
-			s.End()
+			DrawEffects(s, effects)
+		} else {
+			for _, fx := range effects {
+				fx.Draw(s)
+			}
 		}
+		calls := render.DrawCalls()
 		s.Begin()
 		s.DrawSolid(following, [4]float32{1, 1, 1, 1})
 		s.End()
 		pixels := make([]byte, 64*64*4)
 		gl.ReadPixels(0, 0, 64, 64, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
-		return pixels
+		return pixels, calls
 	}
 	for _, plane := range [][4]float32{{}, {0, 1, 0, 0}} {
 		s.ClipPlane = plane
-		if !bytes.Equal(drawPass(false), drawPass(true)) {
+		before, n := drawPass(false)
+		after, m := drawPass(true)
+		if m >= n || !bytes.Equal(before, after) {
 			t.Fatalf("shared effect pass changed pixels: clip=%v", plane)
 		}
 	}

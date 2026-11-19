@@ -30,6 +30,7 @@ func (a *App) Close() {
 	for _, w := range a.worlds {
 		w.Close()
 	}
+	a.assets.ReleaseEffectGeometry()
 	a.skinner.Delete()
 	if a.frameTarget != nil {
 		a.frameTarget.Delete()

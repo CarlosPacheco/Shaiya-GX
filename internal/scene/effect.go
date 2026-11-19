@@ -54,6 +54,10 @@ type Effect struct {
 	particleWorld  render.M4
 	batchWorld     []render.M4
 	batchColor     [][4]float32
+	batchFrames    []float32
+	batchPoses     []render.EffectPose
+	draws          []effectDraw
+	geometryCache  *render.EffectGeometryCache
 }
 
 type effectTemplate struct {
@@ -82,7 +86,7 @@ func (e *effectEmitter) advanceTexture(dt float32) {
 func LoadEffect(a *Assets, file string, sequence int) (*Effect, error) {
 	key := fmt.Sprintf("%s:%d", strings.ToLower(file), sequence)
 	if t := a.effectTemplates[key]; t != nil {
-		return &Effect{emitters: append([]effectEmitter(nil), t.emitters...), quad: a.effectQuad, mirrorQuad: a.effectMirrorQuad, Skipped: t.skipped, basis: render.Identity()}, nil
+		return newEffect(a, t), nil
 	}
 	b, err := a.Arc.ReadFile(file)
 	if err != nil {
@@ -100,7 +104,7 @@ func LoadEffect(a *Assets, file string, sequence int) (*Effect, error) {
 func loadEffectLibrary(a *Assets, file string, sequence int, l *effect.Library) (*Effect, error) {
 	key := fmt.Sprintf("%s:%d", strings.ToLower(file), sequence)
 	if t := a.effectTemplates[key]; t != nil {
-		return &Effect{emitters: append([]effectEmitter(nil), t.emitters...), quad: a.effectQuad, mirrorQuad: a.effectMirrorQuad, Skipped: t.skipped, basis: render.Identity()}, nil
+		return newEffect(a, t), nil
 	}
 	if l.Format != "EFT" {
 		return nil, fmt.Errorf("EFT: runtime for %s not verified", l.Format)
@@ -111,7 +115,7 @@ func loadEffectLibrary(a *Assets, file string, sequence int, l *effect.Library) 
 	if sequence < 0 {
 		return nil, fmt.Errorf("EFT: sequence %d out of range", sequence)
 	}
-	x := &Effect{basis: render.Identity()}
+	x := &Effect{basis: render.Identity(), geometryCache: &a.gpuEffects}
 	for _, r := range l.Sequences[sequence].Records {
 		if r.Effect < 0 || int(r.Effect) >= len(l.Effects) {
 			return nil, fmt.Errorf("EFT: effect %d out of range", r.Effect)
@@ -123,27 +127,19 @@ func loadEffectLibrary(a *Assets, file string, sequence int, l *effect.Library) 
 		}
 		var geometry, route *effectGeometry
 		if e.Mesh >= 0 && !e.UsesMesh() && int(e.Mesh) < len(l.Meshes) {
-			name := path.Base(strings.ReplaceAll(l.Meshes[e.Mesh], `\`, "/"))
-			if raw, err := a.Arc.ReadFile("Effect/3DE/" + name); err == nil {
-				if m, err := effect.Parse3DE(raw); err == nil && len(m.Vertices) > 0 {
-					route = newEffectGeometry(m)
-				}
+			if mesh, err := a.loadEffectGeometry(l.Meshes[e.Mesh]); err == nil && len(mesh.source.Vertices) > 0 {
+				route = mesh
 			}
 		}
 		if e.UsesMesh() {
 			if int(e.Mesh) >= len(l.Meshes) {
 				return nil, fmt.Errorf("EFT: mesh %d out of range", e.Mesh)
 			}
-			name := path.Base(strings.ReplaceAll(l.Meshes[e.Mesh], `\`, "/"))
-			raw, err := a.Arc.ReadFile("Effect/3DE/" + name)
+			var err error
+			geometry, err = a.loadEffectGeometry(l.Meshes[e.Mesh])
 			if err != nil {
 				return nil, err
 			}
-			m, err := effect.Parse3DE(raw)
-			if err != nil {
-				return nil, fmt.Errorf("EFT mesh %s: %w", name, err)
-			}
-			geometry = newEffectGeometry(m)
 		}
 		textures := make([]*render.Texture, 0, len(e.Textures))
 		for _, id := range e.Textures {
@@ -183,12 +179,44 @@ func loadEffectLibrary(a *Assets, file string, sequence int, l *effect.Library) 
 	return x, nil
 }
 
+func (a *Assets) loadEffectGeometry(filename string) (*effectGeometry, error) {
+	name := path.Base(strings.ReplaceAll(filename, `\`, "/"))
+	key := strings.ToLower(name)
+	if g := a.effectMeshes[key]; g != nil {
+		return g, nil
+	}
+	raw, err := a.Arc.ReadFile("Effect/3DE/" + name)
+	if err != nil {
+		return nil, err
+	}
+	mesh, err := effect.Parse3DE(raw)
+	if err != nil {
+		return nil, fmt.Errorf("EFT mesh %s: %w", name, err)
+	}
+	g := newEffectGeometry(mesh)
+	if len(a.effectMeshes) < 128 {
+		if a.effectMeshes == nil {
+			a.effectMeshes = make(map[string]*effectGeometry)
+		}
+		a.effectMeshes[key] = g
+	}
+	return g, nil
+}
+
+func newEffect(a *Assets, t *effectTemplate) *Effect {
+	return &Effect{emitters: append([]effectEmitter(nil), t.emitters...), quad: a.effectQuad, mirrorQuad: a.effectMirrorQuad, Skipped: t.skipped, basis: render.Identity(), geometryCache: &a.gpuEffects}
+}
+
 // motionPathOffset is where an emitter's births are placed at a given time of
 // the emitter: the last vertex of its path mesh, sampled at 30 keys a second
 // and wrapping at the mesh's last key.
 func (g *effectGeometry) motionPathOffset(seconds float32) render.V3 {
-	vertices := g.verticesAt(float32(math.Mod(float64(seconds)*30, float64(g.source.MaxKeyframe)+1)))
-	return vertices[len(vertices)-1].Pos
+	last := len(g.source.Vertices) - 1
+	if len(g.source.Frames) == 0 {
+		return render.V3(g.source.Vertices[last].Position)
+	}
+	a, b, t := g.framesAt(float32(math.Mod(float64(seconds)*30, float64(g.source.MaxKeyframe)+1)))
+	return interpolate3DEPosition(g.source.Frames[a].Vertices[last].Position, g.source.Frames[b].Vertices[last].Position, t)
 }
 
 func between(a, b float32) float32 {
@@ -408,19 +436,36 @@ func (x *Effect) Draw(s *render.Scene3D) {
 	s.End()
 }
 
-// drawInPass keeps placement/emitter/particle order within an existing scene
-// pass. It changes no camera, framebuffer or shared lighting uniforms.
+// A prepared draw refers to actor-owned placement/color arrays and immutable
+// material and frame references. Shared 3DE scratch is sampled at submission.
+type effectDraw struct {
+	mesh                *render.Mesh
+	geometry            *effectGeometry
+	texture             *render.Texture
+	start, end, poses   int
+	source, destination int32
+	clamp               bool
+}
+
 func (x *Effect) drawInPass(s *render.Scene3D) {
+	x.prepareDraw(s.View)
+	x.submitDraw(s)
+}
+
+func (x *Effect) prepareDraw(view render.M4) {
+	x.batchWorld, x.batchColor = x.batchWorld[:0], x.batchColor[:0]
+	x.batchFrames, x.batchPoses = x.batchFrames[:0], x.batchPoses[:0]
+	clear(x.draws)
+	x.draws = x.draws[:0]
 	for _, e := range x.emitters {
-		quad := x.quad
-		if e.definition.Unk29 != 0 {
-			quad = x.mirrorQuad
-		}
-		p := e.definition.Parameters()
 		if len(e.textures) == 0 || len(e.particles) == 0 {
 			continue
 		}
-		texture := e.textures[e.textureFrame]
+		p := e.definition.Parameters()
+		draw := effectDraw{mesh: x.quad, geometry: e.geometry, texture: e.textures[e.textureFrame], start: len(x.batchWorld), poses: len(x.batchPoses), source: p.SourceBlend, destination: p.DestinationBlend, clamp: e.definition.Unk29 != 0}
+		if draw.clamp {
+			draw.mesh = x.mirrorQuad
+		}
 		placement := x.basis
 		if x.localParticles {
 			placement = x.particleWorld
@@ -428,28 +473,32 @@ func (x *Effect) drawInPass(s *render.Scene3D) {
 		if x.meteor && e.geometry != nil {
 			placement = x.meteorWorld
 		}
-		basis := effectBaseBasis(e.definition.BaseAxis, s.View, placement)
-		batched := len(e.particles) > 1
-		var meshFrame float32
-		if batched {
-			x.batchWorld, x.batchColor = x.batchWorld[:0], x.batchColor[:0]
-		}
-		flushMesh := func() {
-			if len(x.batchWorld) == 0 {
-				return
-			}
-			s.DrawEffectMeshBatch(e.geometry.verticesAt(meshFrame), e.geometry.indices, texture, x.batchWorld, x.batchColor, p.SourceBlend, p.DestinationBlend)
-			x.batchWorld, x.batchColor = x.batchWorld[:0], x.batchColor[:0]
-		}
+		basis := effectBaseBasis(e.definition.BaseAxis, view, placement)
 		for _, v := range e.particles {
+			if g := e.geometry; g != nil {
+				frame := v.frame
+				if len(g.source.Frames) <= 1 {
+					frame = 0
+				}
+				var pose render.EffectPose
+				if len(g.source.Frames) != 0 {
+					a, b, t := g.framesAt(frame)
+					pose = render.EffectPose{float32(a * len(g.vertices)), float32(b * len(g.vertices)), t}
+				}
+				x.batchFrames = append(x.batchFrames, frame)
+				x.batchPoses = append(x.batchPoses, pose)
+			}
 			var size float32
+			var color [4]float32
 			if v.life == 0 {
 				size = staticParticleSize(e.definition, v.staticTime, v.sizeSeed, v.staticSizeSeed)
+				color = staticParticleColor(e.definition, v.staticTime)
 			} else {
 				size = particleSize(e.definition, v.age, v.sizeSeed)
+				color = particleColor(e.definition, v.age, v.life)
 			}
 			m := basis
-			for row := 0; row < 3; row++ {
+			for row := range 3 {
 				m[row] *= size
 				m[4+row] *= size
 				m[8+row] *= size
@@ -457,40 +506,41 @@ func (x *Effect) drawInPass(s *render.Scene3D) {
 			m = particleRotation(e.definition, v.initial, v.angle, m, e.geometry != nil)
 			pos := x.particlePosition(v, e.definition)
 			m[12], m[13], m[14] = pos[0], pos[1], pos[2]
-			var color [4]float32
-			if v.life == 0 {
-				color = staticParticleColor(e.definition, v.staticTime)
-			} else {
-				color = particleColor(e.definition, v.age, v.life)
-			}
 			for i, c := range color {
 				color[i] = float32(int(min(max(c, 0), 1)*255)) / 255
 			}
-			if e.geometry != nil && !batched {
-				s.DrawEffectMesh(e.geometry.verticesAt(v.frame), e.geometry.indices, texture, m, color, p.SourceBlend, p.DestinationBlend)
-			} else if batched {
-				if e.geometry != nil {
-					frame := v.frame
-					if len(e.geometry.source.Frames) <= 1 {
-						frame = 0
-					}
-					if len(x.batchWorld) > 0 && frame != meshFrame {
-						flushMesh()
-					}
-					meshFrame = frame
-				}
-				x.batchWorld = append(x.batchWorld, m)
-				x.batchColor = append(x.batchColor, color)
-			} else {
-				s.DrawEffect(quad, texture, m, color, p.SourceBlend, p.DestinationBlend, e.definition.Unk29 != 0)
-			}
+			x.batchWorld = append(x.batchWorld, m)
+			x.batchColor = append(x.batchColor, color)
 		}
-		if batched {
-			if e.geometry != nil {
-				flushMesh()
+		draw.end = len(x.batchWorld)
+		x.draws = append(x.draws, draw)
+	}
+}
+
+func (x *Effect) submitDraw(s *render.Scene3D) {
+	for _, draw := range x.draws {
+		worlds, colors := x.batchWorld[draw.start:draw.end], x.batchColor[draw.start:draw.end]
+		if g := draw.geometry; g != nil {
+			if cached := x.geometryCache.Geometry(g.id, g.vertices, g.indices, len(g.vertices)*len(g.source.Frames), g.keyVertexData); cached != nil {
+				poses := x.batchPoses[draw.poses : draw.poses+len(worlds)]
+				s.DrawEffectGeometry(cached, draw.texture, worlds, colors, poses, draw.source, draw.destination)
 			} else {
-				s.DrawEffectBatch(quad, texture, x.batchWorld, x.batchColor, p.SourceBlend, p.DestinationBlend, e.definition.Unk29 != 0)
+				frames := x.batchFrames[draw.poses : draw.poses+len(worlds)]
+				for start := 0; start < len(frames); {
+					end := start + 1
+					for end < len(frames) && frames[start] == frames[end] {
+						end++
+					}
+					s.DrawEffectMeshBatch(g.verticesAt(frames[start]), g.indices, draw.texture, worlds[start:end], colors[start:end], draw.source, draw.destination)
+					start = end
+				}
 			}
+			continue
+		}
+		if len(worlds) == 1 {
+			s.DrawEffect(draw.mesh, draw.texture, worlds[0], colors[0], draw.source, draw.destination, draw.clamp)
+		} else {
+			s.DrawEffectBatch(draw.mesh, draw.texture, worlds, colors, draw.source, draw.destination, draw.clamp)
 		}
 	}
 }
@@ -616,10 +666,19 @@ func (x *Effect) SetBoneTransform(m render.M4) {
 // The original mesh path (0x55b1f0) first builds tilt * placement, then
 // prepends axial spin. Reversing them makes a tilted projectile precess.
 func particleRotation(d *effect.Emitter, initial, angle float32, base render.M4, mesh bool) render.M4 {
+	if initial == 0 {
+		if angle == 0 {
+			return base
+		}
+		return effectRotation(d.RotationAxis, angle).MulAffine(base)
+	}
 	tilt := effectRotation(d.Unk30, initial)
+	if angle == 0 {
+		return tilt.MulAffine(base)
+	}
 	spin := effectRotation(d.RotationAxis, angle)
 	if mesh {
-		return spin.Mul(tilt).Mul(base)
+		return spin.MulAffine(tilt).MulAffine(base)
 	}
-	return tilt.Mul(spin).Mul(base)
+	return tilt.MulAffine(spin).MulAffine(base)
 }

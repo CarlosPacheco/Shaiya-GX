@@ -51,6 +51,8 @@ type mapEffects struct {
 	library   *effect.Library
 	instances []mapEffect
 	active    []int
+	updates   []EffectUpdate
+	visible   []*Effect
 	failed    map[int]bool
 }
 
@@ -141,9 +143,12 @@ func (w *World) PrepareMapEffects(s *render.Scene3D, eye render.V3, additional .
 		if placed.instance == nil {
 			continue
 		}
-		placed.instance.Update(w.frameDT)
+		f.updates = append(f.updates, EffectUpdate{placed.instance, w.frameDT})
 		f.active = append(f.active, i)
 	}
+	UpdateEffects(f.updates)
+	clear(f.updates)
+	f.updates = f.updates[:0]
 	if changed {
 		f.trimTextures()
 	}
@@ -156,20 +161,16 @@ func (w *World) RenderMapEffects(s *render.Scene3D) {
 		return
 	}
 	frustum := render.ViewFrustum(s.View, s.VisibilityProjection())
-	begun := false
-	for _, i := range w.mapFX.active {
-		placed := &w.mapFX.instances[i]
+	f := w.mapFX
+	for _, i := range f.active {
+		placed := &f.instances[i]
 		if placed.instance != nil && render.ClipSphereVisible(s.ClipPlane, placed.position, placed.radius) && frustum.SphereVisible(placed.position, placed.radius) && !s.OccludedSphere(placed.position, placed.radius) {
-			if !begun {
-				s.Begin()
-				begun = true
-			}
-			placed.instance.drawInPass(s)
+			f.visible = append(f.visible, placed.instance)
 		}
 	}
-	if begun {
-		s.End()
-	}
+	DrawEffects(s, f.visible)
+	clear(f.visible)
+	f.visible = f.visible[:0]
 }
 
 // DrawMapEffects is the single-camera convenience path used by menu scenes.
@@ -211,6 +212,7 @@ func (f *mapEffects) trimTextures() {
 }
 
 func (f *mapEffects) close() {
+	f.assets.ReleaseEffectGeometry()
 	if f.assets.effectMirrorQuad != nil {
 		f.assets.effectMirrorQuad.Delete()
 	}

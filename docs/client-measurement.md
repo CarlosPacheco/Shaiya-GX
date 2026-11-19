@@ -67,6 +67,9 @@ Select `--cases bots-300 --profile bots-300` to measure the local GM bot
 simulation. The fixture fixes the seed and camera and waits for all 300
 avatars before recording samples. Both bot simulation and rendering cost
 are included in the draw submission time.
+Use `bots-300:effects` or `bots-600:effects` for the same seeded fight with
+skill effects, weapon glows and enchantments enabled. The unsuffixed bot
+cases retain the effects-off baseline.
 The final main-camera count reports skinned batches, rigid attachments,
 cloth and serial fallback separately. The full-frame counter also includes
 the map, HUD and any secondary passes.
@@ -129,7 +132,7 @@ python3 tools/measure_client.py --data '/path/to/data' \
   --cases 'world-stream,world-stream:no-glow,world-stream:no-shadow,water-visible,water-visible:no-water,crowd-200,crowd-200:no-glow'
 ```
 
-Variants are `default`, `no-effects`, `no-glow`, `no-shadow` and `no-water`.
+Variants are `default`, `effects`, `no-effects`, `no-glow`, `no-shadow` and `no-water`.
 Use `crowd-400:no-effects` to measure remote player batching. Disabling a feature
 is a diagnostic ablation, not an implemented optimization or a permissible visual
 change. Effects overlap and savings must not be added together.

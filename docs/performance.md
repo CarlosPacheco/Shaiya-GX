@@ -671,3 +671,45 @@ fell from 9.89 to 5.74 seconds of CPU samples and total CPU samples went from
 23.18 to 20.07 seconds. Two 300-bot pairs measured 5.603 → 5.336 ms for the
 whole loop. An exact animation-phase diagnostic found a potential duplicate
 for about 6% of visible actors, so this change adds no pose cache.
+
+## PvP effects with ordered parallel preparation
+
+Crowd character geometry stays batched with skill effects enabled. Weapon
+transparency follows opaque geometry and uses its completed depth buffer.
+Within each transparent pass, actor, emitter, particle and blend order are
+preserved. Workers advance independent effect instances and prepare their
+placements, materials and animation samples. Effects following a 3DE path
+read the birth vertex directly from immutable keys. The GL thread performs
+resource creation, uploads, blend changes and submission.
+
+Original 3DE topology and authored position/UV keys stay in bounded GPU
+storage. Each particle supplies its original key pair and interpolation
+factor. Particles at different animation phases can share an instanced draw.
+The transparent pass shares one instance upload per bounded range and joins
+consecutive draws with identical geometry, texture, wrap and blend state.
+Geometry that exceeds the resident budget uses CPU sampling. Draw calls for
+opaque crowds use the existing instancing path. Shadow and ordinary UI passes
+retain their original path. Particle counts, lifetime, cadence and material
+definitions are kept.
+
+The seeded 600-bot case at 1280×720 with skill effects enabled measured the
+following on Linux and RTX 3050 in a hidden shared-desktop window. Each row
+is the median of three 180-frame runs. The two rows use the same fixture in
+separate interleaved stage comparisons.
+
+| Version | Whole loop ms/frame | Submission p99 ms | GL calls/frame |
+|---|---:|---:|---:|
+| Before the effects work | 52.248 | 58.677 | 9,860 |
+| Complete effects path | 17.700 | 20.063 | 2,167 |
+
+GPU key sampling, with opaque batching and parallel preparation, reached
+28.865 ms before the shared upload and adjacent draw merges. At the final
+revision one trial each with `GOMAXPROCS=4` and `=8` measured 20.866 and
+18.788 ms. The 16-thread trial set above measured 17.700 ms. Real-asset GL
+comparisons cover glows, enchantments, reflections, map effects and cooldowns.
+The animated 3DE fixture checks sampled UVs and colors pixel-for-pixel against
+CPU sampling with mixed blend modes and a clip plane.
+
+Separate 900-frame profiles collected 61.28 → 32.98 CPU seconds. One 300-bot
+effects-on comparison measured 31.578 → 12.529 ms. The map-15 dungeon control
+measured 11.792 → 8.236 ms. The measurements exclude display presentation.

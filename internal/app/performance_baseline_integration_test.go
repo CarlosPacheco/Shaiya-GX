@@ -110,6 +110,8 @@ func TestClientPerformanceBaseline(t *testing.T) {
 	a.gameMenu.Settings = ui.DefaultClientSettings()
 	switch variant {
 	case "default":
+	case "effects":
+		a.gameMenu.Settings.SkillEffects = true
 	case "no-effects":
 		a.gameMenu.Settings.SkillEffects = false
 	case "no-glow":
@@ -138,7 +140,7 @@ func TestClientPerformanceBaseline(t *testing.T) {
 	}
 	botCameraScale := float32(math.Sqrt(float64(botCount) / 300))
 	if botCount != 0 {
-		a.gameMenu.Settings.SkillEffects = false
+		a.gameMenu.Settings.SkillEffects = variant == "effects"
 		a.state.Self.IsGM = true
 		v := a.wv
 		v.bots = bots.New(arc, v.world, v.pos, render.V3{0, 0, 1}, botCount, 300)

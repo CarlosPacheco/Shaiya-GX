@@ -83,7 +83,6 @@ func (a *App) confirmedEffects(p []byte) {
 func (a *App) updateCastEffects() {
 	v := a.wv
 	a.updateRequestedSkillPresentation()
-	alive := v.castEffects[:0]
 	for _, e := range v.castEffects {
 		if e.until > 0 && a.clock >= e.until {
 			e.instance.Stop()
@@ -95,7 +94,11 @@ func (a *App) updateCastEffects() {
 		} else {
 			e.instance.Stop()
 		}
-		e.instance.Update(float32(a.frameDT))
+		v.effectUpdates = append(v.effectUpdates, scene.EffectUpdate{Instance: e.instance, Delta: float32(a.frameDT)})
+	}
+	v.updateQueuedEffects()
+	alive := v.castEffects[:0]
+	for _, e := range v.castEffects {
 		if e.instance.Done() {
 			continue
 		}
@@ -110,8 +113,21 @@ func (a *App) drawCastEffects() {
 		return
 	}
 	for _, e := range a.wv.castEffects {
-		e.instance.Draw(a.scene3d)
+		a.wv.visibleEffects = append(a.wv.visibleEffects, e.instance)
 	}
+	a.wv.drawQueuedEffects(a.scene3d)
+}
+
+func (v *worldView) updateQueuedEffects() {
+	scene.UpdateEffects(v.effectUpdates)
+	clear(v.effectUpdates)
+	v.effectUpdates = v.effectUpdates[:0]
+}
+
+func (v *worldView) drawQueuedEffects(s *render.Scene3D) {
+	scene.DrawEffects(s, v.visibleEffects)
+	clear(v.visibleEffects)
+	v.visibleEffects = v.visibleEffects[:0]
 }
 
 // A spawn placement is a world event, not an attachment to the live monster.

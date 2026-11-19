@@ -59,12 +59,15 @@ func (a *Arena) updateEffects(dt float32, enabled bool) {
 	live := a.effects[:0]
 	for _, fx := range a.effects {
 		if a.time < fx.expires && !fx.instance.Done() {
-			fx.instance.Update(dt)
+			a.effectUpdates = append(a.effectUpdates, scene.EffectUpdate{Instance: fx.instance, Delta: dt})
 			live = append(live, fx)
 		}
 	}
 	clear(a.effects[len(live):])
 	a.effects = live
+	scene.UpdateEffects(a.effectUpdates)
+	clear(a.effectUpdates)
+	a.effectUpdates = a.effectUpdates[:0]
 }
 
 func (a *Arena) Draw(s *render.Scene3D, skinner *render.Skinner, effects bool) {
@@ -88,14 +91,17 @@ func (a *Arena) Draw(s *render.Scene3D, skinner *render.Skinner, effects bool) {
 	for i := range a.actors {
 		hit := &a.actors[i].attack
 		if hit.flight != nil && effectVisible(s, frustum, hit.flight.Origin) {
-			hit.flight.Draw(s)
+			a.visibleEffects = append(a.visibleEffects, hit.flight)
 		}
 	}
 	for _, fx := range a.effects {
 		if effectVisible(s, frustum, fx.point) {
-			fx.instance.Draw(s)
+			a.visibleEffects = append(a.visibleEffects, fx.instance)
 		}
 	}
+	scene.DrawEffects(s, a.visibleEffects)
+	clear(a.visibleEffects)
+	a.visibleEffects = a.visibleEffects[:0]
 }
 
 // DrawStats returns the counts from the most recent camera pass.

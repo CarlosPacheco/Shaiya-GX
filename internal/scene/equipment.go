@@ -172,15 +172,19 @@ func (c *Character) drawAttachments(s *render.Scene3D, finals []render.M4) {
 			c.drawWeaponEnchant(s, a, a.extra.Mul(finals[a.bone]).Mul(c.World))
 		}
 		if a.glow != nil && a.bone >= 0 && a.bone < len(finals) && !s.Shadow && !s.HideWeaponEffects {
-			a.glow.setItemGlowTransform(a.extra.Mul(finals[a.bone]).Mul(c.World))
-			// Advance once per animation update, never once per camera pass.
-			a.glow.Update(float32(c.enchantTime - a.glowTime))
-			a.glowTime = c.enchantTime
+			c.updateWeaponGlow(a, a.extra.Mul(finals[a.bone]).Mul(c.World))
 			a.glow.Draw(s)
 		}
 	}
 	gl.DepthMask(true)
 	gl.Disable(gl.BLEND)
+}
+
+func (c *Character) updateWeaponGlow(a *attachment, matrix render.M4) {
+	a.glow.setItemGlowTransform(matrix)
+	// Advance once per animation update, never once per camera pass.
+	a.glow.Update(float32(c.enchantTime - a.glowTime))
+	a.glowTime = c.enchantTime
 }
 
 // Phoenix's wield profiles, checked against native rigid attachment columns.

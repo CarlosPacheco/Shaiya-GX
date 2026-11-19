@@ -34,6 +34,8 @@ type Arena struct {
 	count                  int
 	outfits                [2][]loadout
 	effects                []visualEffect
+	effectUpdates          []scene.EffectUpdate
+	visibleEffects         []*scene.Effect
 	failedEffects          map[string]bool
 	time                   float32
 }
@@ -87,6 +89,7 @@ func New(arc *archive.Archive, world *scene.World, origin, forward render.V3, co
 
 func (a *Arena) Close() {
 	a.actors, a.effects, a.visible, a.visibleCloth = nil, nil, nil, nil
+	a.effectUpdates, a.visibleEffects = nil, nil
 	a.characterBatch.Delete()
 	a.assets.CloseCharacterResources()
 }
@@ -339,7 +342,7 @@ func (a *Arena) advanceAttack(f *fighter, pos render.V3, dt float32, effects boo
 		dir := to.Sub(hit.start)
 		point := hit.start.Add(dir.Scale(progress))
 		hit.flight.SetTransform(render.Basis(point, dir.Norm(), up))
-		hit.flight.Update(dt)
+		a.effectUpdates = append(a.effectUpdates, scene.EffectUpdate{Instance: hit.flight, Delta: dt})
 	}
 	atContact := hit.stage == attackContact && hit.contact > 0 &&
 		f.avatar.ActionID() == hit.actionID && f.avatar.Time >= hit.contact

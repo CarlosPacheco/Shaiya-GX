@@ -37,7 +37,7 @@ func prepareCharacterCloth(characters []*Character, s *render.Scene3D) {
 // CullCrowdCharacters clears rejected entries in place. Distinct actors own
 // their pose caches, and workers neither touch GL nor change submission order.
 func CullCrowdCharacters(characters []*Character, frustum render.Frustum, s *render.Scene3D) {
-	batch := len(characters) >= MinCrowdActors && s.HideWeaponEffects && !s.Shadow
+	batch := len(characters) >= MinCrowdActors && !s.Shadow
 	forEachCrowdCharacter(characters, func(i int, c *Character) {
 		if c.Hidden || c.CorpseFade >= 1 {
 			characters[i] = nil

@@ -36,6 +36,10 @@ func (s *Scene3D) SetInstances(worlds []M4) {
 }
 
 func (s *Scene3D) uploadInstances(worlds []M4, colors [][4]float32) {
+	s.uploadInstanceData(worlds, colors, nil)
+}
+
+func (s *Scene3D) uploadInstanceData(worlds []M4, colors [][4]float32, poses []EffectPose) int32 {
 	s.instanceData = s.instanceData[:0]
 	for _, world := range worlds {
 		mv := s.modelView(world)
@@ -46,7 +50,7 @@ func (s *Scene3D) uploadInstances(worlds []M4, colors [][4]float32) {
 	}
 	s.instanceCount = len(worlds)
 	if s.instanceCount == 0 {
-		return
+		return 0
 	}
 	if s.instanceBuffer == 0 {
 		gl.CreateBuffers(1, &s.instanceBuffer)
@@ -57,6 +61,10 @@ func (s *Scene3D) uploadInstances(worlds []M4, colors [][4]float32) {
 	for _, color := range colors {
 		s.instanceData = append(s.instanceData, color[:]...)
 	}
+	poseOffset := int32(len(s.instanceData) / 4)
+	for _, pose := range poses {
+		s.instanceData = append(s.instanceData, pose[:]...)
+	}
 	bytes := uint64(len(s.instanceData) * 4)
 	gl.NamedBufferData(s.instanceBuffer, int(bytes), unsafe.Pointer(&s.instanceData[0]), gl.STREAM_DRAW)
 	removeGPUBytes(s.instanceBytes)
@@ -66,6 +74,7 @@ func (s *Scene3D) uploadInstances(worlds []M4, colors [][4]float32) {
 		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, s.instanceBuffer)
 		gl.Uniform1i(s.uInstanceColorOffset, int32(colorOffset))
 	}
+	return poseOffset
 }
 func (s *Scene3D) DrawInstanced(m *Mesh, t *Texture, alphaRef float32) {
 	if s.instanceCount == 0 || m == nil || m.Count == 0 {
@@ -81,6 +90,12 @@ func (s *Scene3D) DrawInstanced(m *Mesh, t *Texture, alphaRef float32) {
 }
 
 func (s *Scene3D) drawInstances(m *Mesh) {
+	s.bindInstances(m)
+	gl.DrawElementsInstanced(gl.TRIANGLES, m.Count, m.indexType, nil, int32(s.instanceCount))
+	drawCalls++
+}
+
+func (s *Scene3D) bindInstances(m *Mesh) {
 	if m.instanceBuffer != s.instanceBuffer {
 		gl.VertexArrayVertexBuffer(m.vao, 1, s.instanceBuffer, 0, 3*64)
 		for i := uint32(0); i < 12; i++ {
@@ -93,6 +108,4 @@ func (s *Scene3D) drawInstances(m *Mesh) {
 		m.instanceBuffer = s.instanceBuffer
 	}
 	gl.BindVertexArray(m.vao)
-	gl.DrawElementsInstanced(gl.TRIANGLES, m.Count, m.indexType, nil, int32(s.instanceCount))
-	drawCalls++
 }

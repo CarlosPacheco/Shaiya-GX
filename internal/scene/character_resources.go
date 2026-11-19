@@ -43,6 +43,7 @@ func (s *Assets) PrepareCharacterCloak(a Appearance) bool {
 // CloseCharacterResources releases an Assets cache dedicated to characters and
 // their effects. Call on the GL thread after dropping its characters and effects.
 func (s *Assets) CloseCharacterResources() {
+	s.ReleaseEffectGeometry()
 	for _, part := range s.parts {
 		part.mesh.Delete()
 	}
@@ -63,4 +64,11 @@ func (s *Assets) CloseCharacterResources() {
 		}
 	}
 	*s = Assets{}
+}
+
+// ReleaseEffectGeometry frees resident 3DE keys on the GL owner thread.
+func (s *Assets) ReleaseEffectGeometry() {
+	if s != nil {
+		s.gpuEffects.Delete()
+	}
 }

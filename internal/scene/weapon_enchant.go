@@ -15,14 +15,15 @@ import (
 type weaponEnchantLayer struct {
 	definition effect.SEFFEmitter
 	texture    *render.Texture
-	worlds     []render.M4
-	colors     [][4]float32
 }
 type weaponEnchantRecipe struct{ layers []weaponEnchantLayer }
 type weaponEnchant struct {
 	recipe *weaponEnchantRecipe
 	seed   uint32
 	record int32
+	worlds []render.M4
+	colors [][4]float32
+	ends   []int
 }
 
 func (a *Assets) weaponEnchantRecipe(record int32) *weaponEnchantRecipe {
@@ -153,42 +154,57 @@ func (c *Character) drawWeaponEnchant(s *render.Scene3D, a *attachment, matrix r
 	if a.enchant == nil || s.Shadow || s.HideWeaponEffects {
 		return
 	}
-	viewPosition := matrix.Mul(s.View)
+	c.prepareWeaponEnchant(s.View, a.enchant, matrix)
+	c.submitWeaponEnchant(s, a.enchant)
+}
+
+func (c *Character) prepareWeaponEnchant(view render.M4, enchant *weaponEnchant, matrix render.M4) {
+	enchant.worlds, enchant.colors, enchant.ends = enchant.worlds[:0], enchant.colors[:0], enchant.ends[:0]
+	viewPosition := matrix.MulAffine(view)
 	if viewPosition[12]*viewPosition[12]+viewPosition[13]*viewPosition[13]+viewPosition[14]*viewPosition[14] > 50*50 {
 		return
 	}
+	basis := effectBaseBasis(0, view, render.Identity())
 	// One instanced draw per authored layer, never one draw per particle.
-	for i := range a.enchant.recipe.layers {
-		layer := &a.enchant.recipe.layers[i]
+	for i, layer := range enchant.recipe.layers {
 		d := layer.definition
 		interval := float64(1000/d.Rate) / 1000
 		hold := float64(d.LifetimeMS) / 1000
 		life := hold + min(1, float64(d.Alpha)+hold*3)/2
 		last := int64(math.Floor(c.enchantTime / interval))
 		first := max(int64(1), last-min(int64(math.Ceil(life/interval)), 1999))
-		layer.worlds, layer.colors = layer.worlds[:0], layer.colors[:0]
+		color := [4]float32{float32(d.Color[0]) / 255, float32(d.Color[1]) / 255, float32(d.Color[2]) / 255}
 		for birth := first; birth <= last; birth++ {
 			born := float64(birth) * interval
 			age := c.enchantTime - born
-			seed := enchantRandom(a.enchant.seed + uint32(i)*977 + uint32(birth)*6151)
+			seed := enchantRandom(enchant.seed + uint32(i)*977 + uint32(birth)*6151)
 			pos, size, alpha := weaponParticle(d, age, born, seed)
 			if alpha <= 0 {
 				continue
 			}
 			pos = transformPoint(pos, matrix)
-			m := effectBaseBasis(0, s.View, render.Identity())
+			m := basis
 			for axis := range 3 {
 				m[axis] *= size
 				m[4+axis] *= size
 				m[8+axis] *= size
 			}
 			m[12], m[13], m[14] = pos[0], pos[1], pos[2]
-			layer.worlds = append(layer.worlds, m)
-			layer.colors = append(layer.colors, [4]float32{float32(d.Color[0]) / 255, float32(d.Color[1]) / 255, float32(d.Color[2]) / 255, alpha})
+			color[3] = alpha
+			enchant.worlds = append(enchant.worlds, m)
+			enchant.colors = append(enchant.colors, color)
 		}
-		if len(layer.worlds) > 0 {
-			s.DrawEffectBatch(c.assets.weaponQuad, layer.texture, layer.worlds, layer.colors, 4, 1, true)
+		enchant.ends = append(enchant.ends, len(enchant.worlds))
+	}
+}
+
+func (c *Character) submitWeaponEnchant(s *render.Scene3D, enchant *weaponEnchant) {
+	start := 0
+	for i, end := range enchant.ends {
+		if end > start {
+			s.DrawEffectBatch(c.assets.weaponQuad, enchant.recipe.layers[i].texture, enchant.worlds[start:end], enchant.colors[start:end], 4, 1, true)
 		}
+		start = end
 	}
 }
 

@@ -26,6 +26,12 @@ type crowdActorDraw struct {
 	serial, visible, occluded bool
 }
 
+type crowdWeaponEffect struct {
+	actor      *Character
+	attachment *attachment
+	world      render.M4
+}
+
 type CrowdDrawStats struct {
 	Skin         int `json:"skin"`
 	SkinGroups   int `json:"skin_groups"`
@@ -35,6 +41,7 @@ type CrowdDrawStats struct {
 	Fallback     int `json:"serial"`
 	ClothBytes   int `json:"cloth_position_bytes"`
 	ClothUploads int `json:"cloth_position_uploads"`
+	WeaponFX     int `json:"weapon_effects"`
 }
 
 // CharacterBatch gathers already visible crowd actors for one camera pass.
@@ -51,12 +58,13 @@ type CharacterBatch struct {
 	cloaks      []*Character
 	cloth       render.ClothCrowd
 	skin        render.SkinCrowd
+	weaponFX    []crowdWeaponEffect
 	Stats       CrowdDrawStats
 }
 
 func (b *CharacterBatch) Draw(k *render.Skinner, s *render.Scene3D, actors []*Character) {
 	b.Stats = CrowdDrawStats{}
-	if len(actors) < MinCrowdActors || !s.HideWeaponEffects || s.Shadow {
+	if len(actors) < MinCrowdActors || s.Shadow {
 		before := render.DrawCalls()
 		for _, c := range actors {
 			c.Draw(k, s)
@@ -173,11 +181,15 @@ func (b *CharacterBatch) add(s *render.Scene3D, c *Character, instance render.Sk
 	if c.Mounted {
 		return
 	}
-	for i, a := range c.attachments {
+	for i := range c.attachments {
+		a := &c.attachments[i]
 		if a.bone < 0 || a.bone >= len(finals) || i == 0 && c.hiddenWeaponAction != 0 && c.hiddenWeaponAction == c.ActionID() {
 			continue
 		}
 		world := a.extra.Mul(finals[a.bone]).Mul(c.World)
+		if !s.HideWeaponEffects && (a.enchant != nil || a.glow != nil) {
+			b.weaponFX = append(b.weaponFX, crowdWeaponEffect{c, a, world})
+		}
 		if !s.RigidInstanceVisible(a.part.Mesh, world) {
 			continue
 		}
@@ -200,6 +212,17 @@ func (b *CharacterBatch) add(s *render.Scene3D, c *Character, instance render.Sk
 }
 
 func (b *CharacterBatch) flush(k *render.Skinner, s *render.Scene3D) {
+	view := s.View
+	parallelEffects(len(b.weaponFX), func(i int) {
+		job := b.weaponFX[i]
+		if enchant := job.attachment.enchant; enchant != nil {
+			job.actor.prepareWeaponEnchant(view, enchant, job.world)
+		}
+		if glow := job.attachment.glow; glow != nil {
+			job.actor.updateWeaponGlow(job.attachment, job.world)
+			glow.prepareDraw(view)
+		}
+	})
 	for i := range b.groups {
 		instances := b.buckets[i]
 		b.groups[i].First, b.groups[i].Count = len(b.instances), len(instances)
@@ -245,6 +268,24 @@ func (b *CharacterBatch) flush(k *render.Skinner, s *render.Scene3D) {
 		}
 	}
 	b.Stats.Rigid += render.DrawCalls() - before
+	if len(b.weaponFX) > 0 {
+		// Opaque depths are complete. Keep the original actor/attachment/layer
+		// order among effects, with depth writes disabled throughout their pass.
+		before = render.DrawCalls()
+		s.BeginEffects()
+		for _, job := range b.weaponFX {
+			if enchant := job.attachment.enchant; enchant != nil {
+				job.actor.submitWeaponEnchant(s, enchant)
+			}
+			if glow := job.attachment.glow; glow != nil {
+				glow.submitDraw(s)
+			}
+		}
+		s.EndEffects()
+		b.Stats.WeaponFX += render.DrawCalls() - before
+		clear(b.weaponFX)
+		b.weaponFX = b.weaponFX[:0]
+	}
 	clear(b.keys)
 	clear(b.rigidKeys)
 	clear(b.groups)

@@ -2,11 +2,42 @@ package scene
 
 import (
 	"math"
+	"runtime"
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
+
+func TestParallelEffectsShareMotionPathWithoutChangingDrawScratch(t *testing.T) {
+	workers := runtime.GOMAXPROCS(4)
+	defer runtime.GOMAXPROCS(workers)
+	path := newEffectGeometry(&effect.Mesh3DE{
+		MaxKeyframe: 20,
+		Vertices:    []effect.MeshVertex{{Position: [3]float32{3, 0, 0}}},
+		Frames: []effect.MeshFrame{
+			{Key: 0, Vertices: []effect.FrameVertex{{Position: [3]float32{3, 0, 0}}}},
+			{Key: 20, Vertices: []effect.FrameVertex{{Position: [3]float32{23, 0, 0}}}},
+		},
+	})
+	before := path.verticesAt(0)[0]
+	d := &effect.Emitter{Loop: 1, InitialDelay: 1, Unk13: 1, Unk12: 60, Unk14: 60}
+	updates := make([]EffectUpdate, 48)
+	for i := range updates {
+		x := &Effect{emitters: []effectEmitter{{definition: d, path: path}}, basis: render.Identity(), Origin: render.V3{float32(i), 0, 0}}
+		updates[i] = EffectUpdate{x, 1.0 / 60}
+	}
+	UpdateEffects(updates)
+	if path.vertices[0] != before {
+		t.Fatal("motion-path simulation overwrote the shared draw scratch")
+	}
+	for i, job := range updates {
+		particles := job.Instance.emitters[0].particles
+		if len(particles) != 1 || particles[0].pos[0] != float32(i)+3.5 {
+			t.Fatalf("effect %d spawned at the wrong independent anchor: %+v", i, particles)
+		}
+	}
+}
 
 func TestEffectTextureClockLoopsOrClamps(t *testing.T) {
 	d := &effect.Emitter{FrameDelay: .1}

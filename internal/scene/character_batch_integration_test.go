@@ -73,6 +73,9 @@ func TestCharacterBatchIndependentPalettesGL(t *testing.T) {
 		if instanced {
 			batch.Draw(k, s, actors)
 		} else {
+			// Reference depths are complete before translucent weapon effects.
+			showEffects := !s.HideWeaponEffects
+			s.HideWeaponEffects = true
 			for _, c := range actors {
 				// Compare the compact crowd palette with the complete serial one.
 				c.preparePose()
@@ -81,6 +84,22 @@ func TestCharacterBatchIndependentPalettesGL(t *testing.T) {
 				c.Draw(k, s)
 				c.findUsedPoseBones()
 				c.poseReady = false
+			}
+			s.HideWeaponEffects = !showEffects
+			if showEffects {
+				s.BeginEffects()
+				for _, c := range actors {
+					for i := range c.attachments {
+						a := &c.attachments[i]
+						world := a.extra.Mul(c.lastFinals[a.bone]).Mul(c.World)
+						c.drawWeaponEnchant(s, a, world)
+						if a.glow != nil {
+							c.updateWeaponGlow(a, world)
+							a.glow.drawInPass(s)
+						}
+					}
+				}
+				s.EndEffects()
 			}
 		}
 		pixels := make([]byte, size*size*4)
@@ -125,6 +144,25 @@ func TestCharacterBatchIndependentPalettesGL(t *testing.T) {
 	capture(true)
 	if want := (len(changed.vertices) + 1) * 16; batch.Stats.ClothUploads != 1 || batch.Stats.ClothBytes != want {
 		t.Fatalf("one updated cloth submitted %+v, want %d bytes", batch.Stats, want)
+	}
+	for i, actor := range actors {
+		actor.enchantTime = 1.0 + float64(i)*.01
+		actor.attachments[0].enchant = actor.newWeaponEnchant(1, 10)
+		actor.attachments[0].glow = assets.itemGlow(1, int32(i%4))
+	}
+	s.HideWeaponEffects = false
+	for _, eye := range []render.V3{{0, 14, -19}, {1, -14, -19}} {
+		s.SetCameraView(eye, render.V3{0, 0, 4}, render.V3{0, 1, 0})
+		s.ClipPlane = [4]float32{}
+		if eye[1] < 0 {
+			s.ClipPlane = [4]float32{0, 1, 0, -.18}
+		}
+		before, n := capture(false)
+		after, m := capture(true)
+		if batch.Stats.WeaponFX == 0 || m >= n || !bytes.Equal(before, after) {
+			t.Fatalf("weapon effects differ in camera %v, calls %d → %d, batch %+v", eye, n, m, batch.Stats)
+		}
+		t.Logf("weapon glows/enchantments and opaque depth, eye %v, %d -> %d draws", eye, n, m)
 	}
 	if err := gl.GetError(); err != gl.NO_ERROR {
 		t.Fatalf("OpenGL error %#x", err)

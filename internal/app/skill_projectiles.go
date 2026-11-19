@@ -151,14 +151,14 @@ func (a *App) updateResolvedEffects() {
 	}
 	clear(v.projectiles[len(kept):])
 	v.projectiles = kept
-	alive := v.impacts[:0]
-	for i, p := range v.impacts {
+	for i := range v.impacts {
+		p := &v.impacts[i]
 		advance := dt
 		if i >= initialImpacts {
 			advance = 0
 		}
 		p.age += advance
-		if m, ok := a.impactTransform(p); ok {
+		if m, ok := a.impactTransform(*p); ok {
 			p.instance.SetTransform(m)
 		} else {
 			p.instance.Stop()
@@ -166,7 +166,11 @@ func (a *App) updateResolvedEffects() {
 		if !p.authoredLifetime && p.age >= 5 {
 			p.instance.Stop()
 		} // Bound lingering authored loops in this first delivery.
-		p.instance.Update(advance)
+		v.effectUpdates = append(v.effectUpdates, scene.EffectUpdate{Instance: p.instance, Delta: advance})
+	}
+	v.updateQueuedEffects()
+	alive := v.impacts[:0]
+	for _, p := range v.impacts {
 		if p.instance.Done() {
 			continue
 		}
@@ -181,22 +185,24 @@ func (a *App) drawResolvedEffects() {
 	if !a.clientSettings().SkillEffects {
 		return
 	}
-	for _, area := range a.wv.areaShowers {
+	v := a.wv
+	for _, area := range v.areaShowers {
 		for _, p := range area.particles {
-			p.instance.Draw(a.scene3d)
+			v.visibleEffects = append(v.visibleEffects, p.instance)
 		}
 	}
-	for _, r := range a.wv.releaseEffects {
-		r.instance.Draw(a.scene3d)
+	for _, r := range v.releaseEffects {
+		v.visibleEffects = append(v.visibleEffects, r.instance)
 	}
-	for _, p := range a.wv.projectiles {
+	for _, p := range v.projectiles {
 		if p.age >= p.delay || p.arrived {
-			p.instance.Draw(a.scene3d)
+			v.visibleEffects = append(v.visibleEffects, p.instance)
 		}
 	}
-	for _, p := range a.wv.impacts {
-		p.instance.Draw(a.scene3d)
+	for _, p := range v.impacts {
+		v.visibleEffects = append(v.visibleEffects, p.instance)
 	}
+	v.drawQueuedEffects(a.scene3d)
 }
 
 func (p *skillProjectile) move(target render.V3, dt float32) render.V3 {

@@ -39,7 +39,9 @@ type Assets struct {
 	groundModels         [4]*GroundModel
 	groundAttempted      [4]bool
 	effectTemplates      map[string]*effectTemplate
+	effectMeshes         map[string]*effectGeometry
 	effectOrder          []string
+	gpuEffects           render.EffectGeometryCache
 	effectQuad           *render.Mesh
 	effectMirrorQuad     *render.Mesh
 	weaponSEFF           *effect.SEFF
