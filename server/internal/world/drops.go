@@ -1,14 +1,13 @@
 package world
 
 import (
-	"fmt"
+	"context"
 	"math/rand/v2"
-	"path/filepath"
 	"sort"
-	"strconv"
 	"sync"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/worlddrops"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 )
@@ -16,8 +15,8 @@ import (
 // Mob loot as the original server rolls it (CMob loot path, recovered by
 // Eternity's mob_drops): MobItems orders 1-6 use a per-cent rate and 7-9 a
 // per-million rate (order 0 is unused); each hit picks a random item of
-// that grade, subject to the item's Drop time limit; mobs with gold also
-// try the SequenceItemCreate.ini table; gold drops 30% of the time as
+// that grade, subject to the item's Drop time limit. World drops use a
+// separate roll per eligible rule. Gold drops 30% of the time as
 // Money1 + rand(Money2).
 
 func chanceSucceeds(percent uint32) bool {
@@ -42,15 +41,10 @@ type gradeEntry struct {
 	nextAt           time.Time
 }
 
-type sequenceGroup struct {
-	divisor uint32
-	grades  [10]uint16 // by mob level / 10
-}
-
 var dropCatalog struct {
-	mu        sync.Mutex
-	grades    map[uint16][]*gradeEntry
-	sequences []sequenceGroup
+	mu         sync.Mutex
+	grades     map[uint16][]*gradeEntry
+	worldRules []worlddrops.Rule
 }
 
 func isQuestItemType(t uint8) bool { return t == 27 || t == 28 || t == 29 }
@@ -92,28 +86,21 @@ func buildDropCatalog() {
 	dropCatalog.mu.Unlock()
 }
 
-// loadSequenceItems reads SequenceItemCreate.ini.
-func loadSequenceItems(log *logx.Logger) error {
-	ini, err := readIni(filepath.Join(gameDataDir(), "SequenceItemCreate.ini"))
+func loadWorldDrops(log *logx.Logger) error {
+	pool, err := db.Pool(db.GameDefs)
 	if err != nil {
 		return err
 	}
-	count, _ := strconv.Atoi(ini["SEQUENCE_GROUP_COUNT"]["COUNT"])
-	var groups []sequenceGroup
-	for i := 1; i <= count; i++ {
-		sec := ini[fmt.Sprintf("SEQUENCE_GROUP_%d", i)]
-		div, _ := strconv.ParseUint(sec["SEQUENCE"], 10, 32)
-		g := sequenceGroup{divisor: uint32(div)}
-		for l := range g.grades {
-			v, _ := strconv.Atoi(sec[fmt.Sprintf("GRADE_%d", l)])
-			g.grades[l] = uint16(max(v, 0))
-		}
-		groups = append(groups, g)
+	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	defer cancel()
+	rules, err := worlddrops.Read(ctx, pool)
+	if err != nil {
+		return err
 	}
 	dropCatalog.mu.Lock()
-	dropCatalog.sequences = groups
+	dropCatalog.worldRules = rules
 	dropCatalog.mu.Unlock()
-	log.Printf("GX Server World loaded SequenceItemCreate.ini groups=%d", len(groups))
+	log.Printf("GX Server World loaded world drop rules=%d", len(rules))
 	return nil
 }
 
@@ -141,25 +128,16 @@ func pickGradeItem(grade uint16) *db.ItemDef {
 	return e.def
 }
 
-// sequenceItem is MobDropCatalog::sequence: a kill whose object id is a
-// multiple of a group's SEQUENCE drops from that group's grade for the
-// mob's level band.
-func sequenceItem(level uint16, objectID uint32) *db.ItemDef {
-	if level == 0 || level >= 100 || objectID == 0 {
-		return nil
-	}
+func rollWorldDrops(level uint16, roll func(uint64) uint64, drop func(worlddrops.Rule)) {
 	dropCatalog.mu.Lock()
-	groups := dropCatalog.sequences
+	rules := dropCatalog.worldRules
 	dropCatalog.mu.Unlock()
-	for _, g := range groups {
-		if g.divisor != 0 && objectID%g.divisor == 0 {
-			if grade := g.grades[level/10]; grade != 0 {
-				return pickGradeItem(grade)
-			}
-			return nil
+	for _, rule := range rules {
+		if level >= rule.MinLevel && level <= rule.MaxLevel && rule.DropChance > 0 &&
+			roll(worlddrops.RollRange) < rule.DropChance {
+			drop(rule)
 		}
 	}
-	return nil
 }
 
 // dropPosition is CMob::GetDropPosRand: within half a unit of the mob, with
@@ -205,12 +183,12 @@ func rollMobDrops(mapID uint16, mob *MapMob, ownerID uint32, party []*ConnectedP
 			log.Printf("GX Server World mob drop mob_id=%d order=%d grade=%d item=%d/%d", mob.MobID, d.ItemOrder, d.Grade, def.Type, def.TypeID)
 		}
 	}
-	if mob.MoneyMin > 0 {
-		if def := sequenceItem(mob.Level, mob.ID); def != nil {
+	rollWorldDrops(mob.Level, rand.Uint64N, func(rule worlddrops.Rule) {
+		if def := pickGradeItem(rule.Grade); def != nil {
 			place(def, 0)
-			log.Printf("GX Server World sequence drop mob_id=%d item=%d/%d", mob.MobID, def.Type, def.TypeID)
+			log.Printf("GX Server World world drop mob_id=%d rule=%d grade=%d item=%d/%d", mob.MobID, rule.Index, rule.Grade, def.Type, def.TypeID)
 		}
-	}
+	})
 	if grbKill(mapID, mob, ownerID) {
 		return packets
 	}

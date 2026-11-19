@@ -48,7 +48,7 @@ the last pair. Code and validation:
 
 ## New world loot
 
-A newly generated eligible mob or sequence drop receives its recreation roll
+A newly generated eligible mob or world drop receives its recreation roll
 once, when its ground item is created. The rules are the same Server/ReqWis and
 attribute-pool rules as recreation; its initial enchantment is zero. Ineligible
 items receive no recreation roll. Existing drop membership, probabilities,
@@ -147,3 +147,16 @@ The server publishes its equipment OJ limits on character entry, overriding
 stale `Server`/`ReqWis` values in the client item catalog. This keeps tooltip
 limits consistent with drops and recreation without changing stored items.
 Offline previews fall back to the local item definition.
+
+
+## World drops
+
+GX World loads `PS_GameDefs_WorldDrops` at startup. Each rule rolls
+independently per loot-bearing kill within its inclusive `MinLevel`–
+`MaxLevel` range. A successful roll picks an item from `Grade` using
+the regular item selection and per-item drop limits. A world drop can occur
+alongside a normal drop. `Description` is an internal label.
+
+`DropChance` is an integer in units of 0.00000001 percentage points.
+The 12 migrated rules start at `10000` (0.0001%, one in a million for each
+eligible rule). GX Studio displays the percentage directly.

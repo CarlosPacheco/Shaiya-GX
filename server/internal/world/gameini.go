@@ -148,8 +148,8 @@ func LoadGameConfig(log *logx.Logger) error {
 	if err := loadEnchantRules(log); err != nil {
 		return fmt.Errorf("enchant rules: %w", err)
 	}
-	if err := loadSequenceItems(log); err != nil {
-		return fmt.Errorf("SequenceItemCreate.ini: %w", err)
+	if err := loadWorldDrops(log); err != nil {
+		return fmt.Errorf("world drops: %w", err)
 	}
 	buildDropCatalog()
 	if err := loadNpcQuest(log); err != nil {

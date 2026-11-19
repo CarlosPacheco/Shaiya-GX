@@ -13,6 +13,7 @@ the exact SData field and SQLite column under each readable field name.
 | Enchant |  | `PS_GameDefs_EnchantAttack` / `PS_GameDefs_EnchantDefense` |
 | Mob AI messages | | `PS_GameDefs_MobAIMessages` |
 | Goddess Blessing | | `PS_GameDefs_GoddessBlessing` |
+| World Drops | | `PS_GameDefs_WorldDrops` |
 
 ## Build
 
@@ -95,6 +96,15 @@ shows its unit, SQLite column, original type ID and effective total after
 inheritance from earlier tiers. **Save database** takes a verified SQLite
 backup and updates the shared table in one transaction. Restart GX World
 to apply the changes.
+
+## World Drops
+
+Open **World Drops** with the server SQLite database. Add, edit or remove
+rules by grade and inclusive mob level range. Enter **Drop chance (%)**
+with up to eight decimal places. `0` disables the rule. SQLite stores
+`DropChance` in units of 0.00000001 percentage points, so `0.0001%`
+is stored as `10000`. Saving creates a verified SQLite backup. Restart
+GX World to apply the changes.
 
 ## Backups and recovery
 

@@ -21,6 +21,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
 	"github.com/Spelunkern/Shaiya-GX/internal/studio"
+	"github.com/Spelunkern/Shaiya-GX/internal/worlddrops"
 )
 
 type editor struct {
@@ -37,6 +38,7 @@ type editor struct {
 	enchant                *studio.EnchantCatalog
 	mobAIMessages          *studio.MobAIMessageCatalog
 	blessing               *studio.BlessingCatalog
+	worldDrops             *studio.WorldDropCatalog
 	databaseDraftDirty     func() bool
 	itemSection, itemFocus int
 	itemQuery              string
@@ -83,7 +85,7 @@ func (e *editor) leave(next func()) {
 
 func (e *editor) start() {
 	e.project, e.draft, e.assets = nil, nil, nil
-	e.enchant, e.mobAIMessages, e.blessing, e.databaseDraftDirty = nil, nil, nil, nil
+	e.enchant, e.mobAIMessages, e.blessing, e.worldDrops, e.databaseDraftDirty = nil, nil, nil, nil, nil
 	e.definitions, e.definitionDraft = nil, nil
 	e.itemFormDirty, e.itemSection, e.itemFocus, e.itemQuery = nil, 0, -1, ""
 	e.cashQuery, e.cashCode, e.cashSection = "", "", 0
@@ -181,6 +183,8 @@ func (e *editor) start() {
 				dbSource = mobaimessages.Table
 			} else if kind == studio.Blessing {
 				dbSource = blessingrules.Table
+			} else if kind == studio.WorldDrops {
+				dbSource = worlddrops.Table
 			} else {
 				dbSource = enchantrules.AttackTable + " · " + enchantrules.DefenseTable
 			}
@@ -215,7 +219,7 @@ func (e *editor) start() {
 	render()
 }
 
-var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills", "Enchant", "Mob AI messages", "Goddess Blessing"}
+var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills", "Enchant", "Mob AI messages", "Goddess Blessing", "World Drops"}
 
 func (e *editor) switcher(current studio.Kind) *widget.Select {
 	control := widget.NewSelect(catalogNames, nil)
@@ -248,6 +252,8 @@ func (e *editor) openKind(kind studio.Kind) {
 		message = "Reading mob AI messages from SQLite…"
 	} else if kind == studio.Blessing {
 		message = "Reading Goddess Blessing tiers from SQLite…"
+	} else if kind == studio.WorldDrops {
+		message = "Reading World Drops from SQLite…"
 	}
 	e.run(message, func() func() {
 		ctx := context.Background()
@@ -256,6 +262,7 @@ func (e *editor) openKind(kind studio.Kind) {
 		var enchant *studio.EnchantCatalog
 		var messages *studio.MobAIMessageCatalog
 		var blessing *studio.BlessingCatalog
+		var worldRules *studio.WorldDropCatalog
 		var err error
 		if kind == studio.Cash {
 			project, err = studio.Open(ctx, dataDir, dbPath)
@@ -265,6 +272,8 @@ func (e *editor) openKind(kind studio.Kind) {
 			messages, err = studio.OpenMobAIMessages(ctx, dbPath)
 		} else if kind == studio.Blessing {
 			blessing, err = studio.OpenBlessing(ctx, dbPath)
+		} else if kind == studio.WorldDrops {
+			worldRules, err = studio.OpenWorldDrops(ctx, dbPath)
 		} else {
 			definitions, err = studio.OpenDefinitions(ctx, dataDir, dbPath, kind)
 		}
@@ -283,7 +292,7 @@ func (e *editor) openKind(kind studio.Kind) {
 			e.preferences = preferences
 			e.itemFormDirty = nil
 			e.project, e.definitions, e.assets = project, definitions, images
-			e.enchant, e.mobAIMessages, e.blessing, e.databaseDraftDirty = enchant, messages, blessing, nil
+			e.enchant, e.mobAIMessages, e.blessing, e.worldDrops, e.databaseDraftDirty = enchant, messages, blessing, worldRules, nil
 			e.draft, e.definitionDraft = nil, make(studio.DefinitionEdits)
 			if kind == studio.Cash {
 				e.draft = append([]cash.Product(nil), project.Products...)
@@ -294,6 +303,8 @@ func (e *editor) openKind(kind studio.Kind) {
 				e.mobAIMessageCatalog()
 			} else if kind == studio.Blessing {
 				e.blessingCatalog()
+			} else if kind == studio.WorldDrops {
+				e.worldDropCatalog()
 			} else {
 				e.definitionCatalog()
 			}
