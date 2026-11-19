@@ -1,10 +1,6 @@
 package render
 
-import (
-	"unsafe"
-
-	"github.com/go-gl/gl/v4.5-core/gl"
-)
+import "github.com/go-gl/gl/v4.5-core/gl"
 
 // DrawEffectBatch preserves particle order within one emitter while sharing
 // geometry, material and draw call; each instance has its own tint.
@@ -17,10 +13,8 @@ func (s *Scene3D) DrawEffectBatch(m *Mesh, t *Texture, worlds []M4, colors [][4]
 	if len(worlds) == 0 {
 		return
 	}
-	s.SetInstances(worlds)
-	s.setInstanceColors(colors)
+	s.uploadInstances(worlds, colors)
 	gl.Uniform1i(s.uInstanced, 1)
-	gl.Uniform1i(s.uEffectColors, 1)
 	gl.Uniform1i(s.uMode, 3)
 	gl.Uniform1i(s.uLit, 0)
 	gl.Uniform2f(s.uUVOff, 0, 0)
@@ -32,19 +26,7 @@ func (s *Scene3D) DrawEffectBatch(m *Mesh, t *Texture, worlds []M4, colors [][4]
 	gl.BindTextureUnit(0, t.ID)
 	s.drawInstances(m)
 	t.SetWrap(false)
-	gl.Uniform1i(s.uEffectColors, 0)
-}
-
-func (s *Scene3D) setInstanceColors(colors [][4]float32) {
-	if s.effectColorBuffer == 0 {
-		gl.CreateBuffers(1, &s.effectColorBuffer)
-	}
-	bytes := uint64(len(colors) * 16)
-	gl.NamedBufferData(s.effectColorBuffer, int(bytes), unsafe.Pointer(&colors[0][0]), gl.STREAM_DRAW)
-	removeGPUBytes(s.effectColorBytes)
-	s.effectColorBytes = bytes
-	addGPUBytes(bytes)
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, s.effectColorBuffer)
+	gl.Uniform1i(s.uInstanceColorOffset, 0)
 }
 
 // DrawGroundItems uses the native unlit texture-factor colour while retaining
@@ -57,10 +39,8 @@ func (s *Scene3D) DrawGroundItems(m *Mesh, t *Texture, worlds []M4, colors [][4]
 	if len(worlds) == 0 {
 		return
 	}
-	s.SetInstances(worlds)
-	s.setInstanceColors(colors)
+	s.uploadInstances(worlds, colors)
 	gl.Uniform1i(s.uInstanced, 1)
-	gl.Uniform1i(s.uEffectColors, 1)
 	gl.Uniform1i(s.uMode, 8)
 	gl.Uniform1i(s.uLit, 0)
 	gl.Uniform1f(s.uRef, .5)
@@ -68,7 +48,7 @@ func (s *Scene3D) DrawGroundItems(m *Mesh, t *Texture, worlds []M4, colors [][4]
 	gl.DepthMask(true)
 	bindDiffuse(t)
 	s.drawInstances(m)
-	gl.Uniform1i(s.uEffectColors, 0)
+	gl.Uniform1i(s.uInstanceColorOffset, 0)
 }
 
 // DrawEffectMesh shares one GPU stream across every 3DE particle and cast.

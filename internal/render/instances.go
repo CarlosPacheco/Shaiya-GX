@@ -16,11 +16,6 @@ func (s *Scene3D) Delete() {
 		removeGPUBytes(s.instanceBytes)
 		s.instanceBuffer, s.instanceBytes = 0, 0
 	}
-	if s.effectColorBuffer != 0 {
-		gl.DeleteBuffers(1, &s.effectColorBuffer)
-		removeGPUBytes(s.effectColorBytes)
-		s.effectColorBuffer, s.effectColorBytes = 0, 0
-	}
 	if s.effectStream != nil {
 		s.effectStream.Delete()
 	}
@@ -37,10 +32,17 @@ func (s *Scene3D) Delete() {
 // reuse them. Camera products are computed before local vertices, preserving
 // the precision fix for animated and static models.
 func (s *Scene3D) SetInstances(worlds []M4) {
+	s.uploadInstances(worlds, nil)
+}
+
+func (s *Scene3D) uploadInstances(worlds []M4, colors [][4]float32) {
 	s.instanceData = s.instanceData[:0]
 	for _, world := range worlds {
 		mv := s.modelView(world)
-		s.instanceData = append(s.instanceData, world, mv, mv.Mul(s.projection))
+		mvp := mv.Mul(s.projection)
+		s.instanceData = append(s.instanceData, world[:]...)
+		s.instanceData = append(s.instanceData, mv[:]...)
+		s.instanceData = append(s.instanceData, mvp[:]...)
 	}
 	s.instanceCount = len(worlds)
 	if s.instanceCount == 0 {
@@ -49,11 +51,21 @@ func (s *Scene3D) SetInstances(worlds []M4) {
 	if s.instanceBuffer == 0 {
 		gl.CreateBuffers(1, &s.instanceBuffer)
 	}
-	bytes := uint64(len(s.instanceData) * 64)
-	gl.NamedBufferData(s.instanceBuffer, int(bytes), unsafe.Pointer(&s.instanceData[0][0]), gl.STREAM_DRAW)
+	// The VAO reads the matrix prefix. The shader reads the optional vec4
+	// colors at the end of the same upload through its storage binding.
+	colorOffset := len(s.instanceData) / 4
+	for _, color := range colors {
+		s.instanceData = append(s.instanceData, color[:]...)
+	}
+	bytes := uint64(len(s.instanceData) * 4)
+	gl.NamedBufferData(s.instanceBuffer, int(bytes), unsafe.Pointer(&s.instanceData[0]), gl.STREAM_DRAW)
 	removeGPUBytes(s.instanceBytes)
 	s.instanceBytes = bytes
 	addGPUBytes(bytes)
+	if len(colors) != 0 {
+		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, s.instanceBuffer)
+		gl.Uniform1i(s.uInstanceColorOffset, int32(colorOffset))
+	}
 }
 func (s *Scene3D) DrawInstanced(m *Mesh, t *Texture, alphaRef float32) {
 	if s.instanceCount == 0 || m == nil || m.Count == 0 {

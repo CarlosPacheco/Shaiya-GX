@@ -399,3 +399,31 @@ main/reflected views and 144 shadow placements preserve pixels; original NPC
 nameplate, picking and lazy name-depth tests pass. Unit/vet, integration vet,
 scene race tests and native Linux build pass. Private artifacts:
 `work/client-measure/precull-before/`, `precull-after/`, `precull-install/`.
+
+## Shared instance upload for effects
+
+The renderer packs instance matrices and tint colors into one OpenGL buffer
+upload. The VAO reads the matrix prefix and the shader reads the colors at
+the end of the buffer. This removes one buffer upload per colored batch
+while retaining the particle order, blending and draw count. Ground item
+batches use the same path.
+
+An interleaved Linux/OpenGL comparison on the RTX 3050 at 1280×720 used three
+repetitions of 360 frames per scene and binary. The table reports the median
+of the three per-run submission medians. Submission wall time includes the
+driver, and the hidden window does not present frames.
+
+| Scene | Separate uploads | Shared upload |
+|---|---:|---:|
+| Map 15 dungeon | 12.671 ms | 12.096 ms |
+| 200 actors and combat effects | 6.406 ms | 6.413 ms |
+| Visible water | 5.080 ms | 5.077 ms |
+| Field | 0.747 ms | 0.735 ms |
+
+All three dungeon pairings improved. Whole-loop time fell from 12.715 to
+12.219 ms per frame in that scene. The other scenes did not show a material
+submission change. A third binary also grouped adjacent compatible quads.
+It produced no consistent improvement over the shared upload and was
+discarded. The experiment recorded 12,960 valid GPU timestamp samples
+with no missing assets. Existing OpenGL comparisons cover blend modes,
+animated 3DE frames, clip planes, water and subsequent draws.

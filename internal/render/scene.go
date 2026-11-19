@@ -16,7 +16,7 @@ layout(location=8) in mat4 instanceWorldView;
 layout(location=12) in mat4 instanceWorldViewProj;
 layout(std430, binding=3) readonly buffer EffectColors { vec4 colors[]; };
 uniform int instanced;
-uniform int effectColorsEnabled;
+uniform int instanceColorOffset;
 uniform mat4 world;
 uniform mat4 worldViewProj;
 uniform mat4 worldView;
@@ -38,7 +38,7 @@ void main() {
 	gl_ClipDistance[0] = dot(wm * local, clipPlane);
 	vDepth = (mv * local).z;
 	vUV = uv; vUV2 = uv2;
-	vEffectColor = effectColorsEnabled != 0 ? colors[gl_InstanceID] : vec4(1.0);
+	vEffectColor = instanceColorOffset != 0 ? colors[instanceColorOffset + gl_InstanceID] : vec4(1.0);
 	vec3 n = normalize((wm * vec4(nrm, 0.0)).xyz);
 	vDiffuse = lit == 1 ? clamp(ambient + max(0.0, dot(n, -normalize(lightDir))), 0.0, 1.0) : 1.0;
 }`
@@ -165,13 +165,11 @@ type Scene3D struct {
 	cameraEye                                                 V3
 	cameraValid                                               bool
 	instanceBuffer                                            uint32
-	effectColorBuffer                                         uint32
-	effectColorBytes                                          uint64
 	instanceBytes                                             uint64
 	instanceCount                                             int
-	instanceData                                              []M4
+	instanceData                                              []float32
 	uInstanced                                                int32
-	uEffectColors                                             int32
+	uInstanceColorOffset                                      int32
 	projection                                                M4 // current main/sky projection, combined before vertex transformation
 	uTerrainLight                                             int32
 	Shadow                                                    bool // native black silhouette capture, preserving texture alpha
@@ -207,7 +205,7 @@ func NewScene3D() (*Scene3D, error) {
 		return nil, err
 	}
 	u := func(n string) int32 { return gl.GetUniformLocation(p, gl.Str(n+"\x00")) }
-	return &Scene3D{prog: p, uInstanced: u("instanced"), uEffectColors: u("effectColorsEnabled"), uTerrainLight: u("hasTerrainLight"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"), uLight: u("lightDir"),
+	return &Scene3D{prog: p, uInstanced: u("instanced"), uInstanceColorOffset: u("instanceColorOffset"), uTerrainLight: u("hasTerrainLight"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"), uLight: u("lightDir"),
 		uDetailBias: u("detailBias"), uAmb: u("ambient"), uLit: u("lit"), uMode: u("mode"), uRef: u("alphaRef"), uFogColor: u("fogColor"), uFogRange: u("fogRange"), uTile: u("tileSize"), uTint: u("tint"), uUVOff: u("uvOffset"), uClipPlane: u("clipPlane"), uWaterReflection: u("hasWaterReflection"), uWaterViewport: u("waterViewport"), uWaterNormals: u("hasWaterNormals"), uWaterTime: u("waterTime"), uWaterBelow: u("waterBelow"),
 		LightDir: V3{-1, -1, -1}, Ambient: 128.0 / 255}, nil
 }
