@@ -94,6 +94,9 @@ type Character struct {
 	head                 *skinPart
 	clip                 *Clip
 	clipName             string
+	blendFrom            []bonePose
+	blendLeft            float32
+	oneShot              bool
 	folder               string
 	prefix               string
 	assets               *Assets
@@ -155,7 +158,7 @@ func (c *Character) SetClip(name string) {
 	if file == "" {
 		file = fmt.Sprintf("Character/%s/ANI/%s_%s.ANI", c.folder, c.prefix, fileName)
 	}
-	if c.clipFile == file {
+	if c.clipFile == file && !c.oneShot {
 		return
 	}
 	cl, err := c.assets.Clip(file)
@@ -164,7 +167,8 @@ func (c *Character) SetClip(name string) {
 		return
 	}
 	c.clipFile = file
-	c.clip, c.clipName, c.Time = cl, name, 0
+	c.startClip(cl, false)
+	c.clipName = name
 	c.actionID++
 }
 
@@ -351,40 +355,65 @@ func (c *Clip) Finals(t float32) []render.M4 {
 	return c.finalsInto(t, nil)
 }
 
-// finalsInto writes into actor-owned storage; shared clips retain no mutable pose.
-func (c *Clip) finalsInto(t float32, out []render.M4) []render.M4 {
+type bonePose struct {
+	rotation [4]float32
+	position [3]float32
+}
+
+func (c *Clip) frame(t float32, oneShot bool) float32 {
 	a := c.ani
-	frame := float32(a.Start)
 	if d := c.Duration(); d > 0 {
+		if oneShot && t >= d {
+			return float32(a.End)
+		}
 		for t >= d {
 			t -= d
 		}
-		frame += t * 30
 	}
-	if cap(out) < len(a.Bones) {
-		out = make([]render.M4, len(a.Bones))
-	} else {
-		out = out[:len(a.Bones)]
+	return float32(a.Start) + t*30
+}
+
+func (c *Clip) restPose(i int) bonePose {
+	if len(c.restRotation) == len(c.ani.Bones) && len(c.restTranslation) == len(c.ani.Bones) {
+		return bonePose{c.restRotation[i], c.restTranslation[i]}
 	}
-	for i, bone := range a.Bones {
-		var rq [4]float32
-		var rt [3]float32
-		if len(c.restRotation) == len(a.Bones) && len(c.restTranslation) == len(a.Bones) {
-			rq, rt = c.restRotation[i], c.restTranslation[i]
-		} else {
-			rq, rt = render.MatrixQuat(c.restLocal[i])
-		}
-		if len(bone.Rot) > 0 {
-			rq = sampleRot(bone.Rot, frame)
-		}
-		if len(bone.Trans) > 0 {
-			rt = sampleTrans(bone.Trans, frame)
-		}
-		l := render.QuatMatrix(rq, rt)
-		if p := bone.Parent; p >= 0 && int(p) < i {
-			l = l.Mul(out[p])
-		}
-		out[i] = l
+	q, t := render.MatrixQuat(c.restLocal[i])
+	return bonePose{q, t}
+}
+
+func (c *Clip) localPose(i int, frame float32) bonePose {
+	pose := c.restPose(i)
+	bone := c.ani.Bones[i]
+	if len(bone.Rot) > 0 {
+		pose.rotation = sampleRot(bone.Rot, frame)
+	}
+	if len(bone.Trans) > 0 {
+		pose.position = sampleTrans(bone.Trans, frame)
+	}
+	return pose
+}
+
+func poseBuffer(out []render.M4, count int) []render.M4 {
+	if cap(out) < count {
+		return make([]render.M4, count)
+	}
+	return out[:count]
+}
+
+func composeBone(out []render.M4, i int, parent int32, pose bonePose) {
+	transform := render.QuatMatrix(pose.rotation, pose.position)
+	if parent >= 0 && int(parent) < i {
+		transform = transform.Mul(out[parent])
+	}
+	out[i] = transform
+}
+
+// finalsInto writes into actor-owned storage; shared clips retain no mutable pose.
+func (c *Clip) finalsInto(t float32, out []render.M4) []render.M4 {
+	frame := c.frame(t, false)
+	out = poseBuffer(out, len(c.ani.Bones))
+	for i, bone := range c.ani.Bones {
+		composeBone(out, i, bone.Parent, c.localPose(i, frame))
 	}
 	return out
 }
@@ -421,10 +450,11 @@ func sampleTrans(k []model.TransKey, f float32) [3]float32 {
 func (c *Character) Update(dt float32) {
 	c.combatPoseLeft = max(0, c.combatPoseLeft-dt)
 	c.enchantTime += float64(max(0, dt))
+	playback := c.advanceBlend(dt)
 	if c.externalTime {
 		c.externalTime = false
 	} else {
-		c.Time += dt
+		c.Time += playback
 	}
 	if c.spinLeft > 0 {
 		c.spinLeft = max(0, c.spinLeft-dt)
@@ -451,9 +481,8 @@ func (c *Character) Update(dt float32) {
 	}
 	if c.locked && c.clip != nil {
 		if d := c.clip.Duration(); d > 0 && c.Time >= d {
-			if c.hold {
-				c.Time = max(0, d-0.001)
-			} else {
+			c.Time = d
+			if !c.hold {
 				c.locked = false
 			}
 		}
@@ -488,7 +517,8 @@ func (c *Character) PlayAction(slot int, hold bool) bool {
 	}
 	c.spinLeft, c.externalTime = 0, false
 	c.clipFile = file
-	c.clip, c.clipName, c.Time = cl, file, 0
+	c.startClip(cl, true)
+	c.clipName = file
 	c.actionID++
 	c.actionSlot = slot
 	c.castLeft = 0
@@ -583,7 +613,15 @@ func (c *Character) finals() []render.M4 {
 		return nil
 	}
 	if c.lastFinalsClip != c.clip || c.lastFinalsTime != c.Time || c.lastFinals == nil {
-		c.lastFinals = c.clip.finalsInto(c.Time, c.lastFinals)
+		if c.blendLeft > 0 || c.oneShot {
+			frame := c.clip.frame(c.Time, c.oneShot)
+			c.lastFinals = poseBuffer(c.lastFinals, len(c.clip.ani.Bones))
+			for i, bone := range c.clip.ani.Bones {
+				composeBone(c.lastFinals, i, bone.Parent, c.localPose(i, frame))
+			}
+		} else {
+			c.lastFinals = c.clip.finalsInto(c.Time, c.lastFinals)
+		}
 		c.lastFinalsClip, c.lastFinalsTime = c.clip, c.Time
 	}
 	return c.lastFinals

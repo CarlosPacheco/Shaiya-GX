@@ -594,9 +594,10 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 			v.self.SetClip("000_normal")
 		}
 		jumpAction := v.self.PlayingAction(8)
+		previousPoseTime := v.self.Time
 		v.self.Update(float32(dt))
 		if climbFrame && !moving && !v.self.ActionActive() {
-			v.self.Time -= float32(dt)
+			v.self.Time = previousPoseTime
 		}
 		// The jump is a single ALT action, not a looping airborne clip.
 		if jumpAction && !v.self.ActionActive() && airborne {

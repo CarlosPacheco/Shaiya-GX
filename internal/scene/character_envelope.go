@@ -194,6 +194,10 @@ func (c *Character) envelopeRadius() (float64, bool) {
 // affine world matrix gives per-axis extents r*length(column), including scale,
 // reflection and shear. An uncertain bound always uses the exact existing path.
 func (c *Character) coarseWorldBounds() (render.V3, render.V3, bool) {
+	// The incoming clip's bounds do not cover the outgoing blend pose.
+	if c == nil || c.blendLeft > 0 {
+		return render.V3{}, render.V3{}, false
+	}
 	radius, valid := c.envelopeRadius()
 	if !valid || !finiteBound(float64(c.Time)) || !affineEnvelope(c.World) {
 		return render.V3{}, render.V3{}, false

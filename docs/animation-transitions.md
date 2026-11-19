@@ -40,25 +40,18 @@ installed human fighter data, the gesture in slot 116 leads to idle (0), the
 attack in slot 38 leads to the weapon-ready action (34), and sitting down in
 slot 10 leads to the seated loop (12). Mode comparisons use the low byte.
 
-## What GX currently does
+## GX implementation
 
-- `Character.SetClip` and `Character.PlayAction` swap the clip and reset its
-  playback time. `Clip.finalsInto` interpolates keys within a single clip.
-- When a player one-shot expires, the update unlocks it. The sampler wraps
-  at the duration, so a render between unlocking and the next locomotion
-  selection can briefly sample the opening pose of the outgoing clip.
-- Creature action changes reset their clip immediately. Their one-shot
-  handling clamps past the end, which already avoids the player wrap case.
+GX blends character and creature clips with matching bone counts and parent
+indices. It freezes the visible local pose and blends into the incoming ANI
+reference pose over five frames at 30 Hz. If another request interrupts the
+blend, it starts from the visible intermediate pose. The resulting skeletal
+palette also drives attachments, shadows, and skinned bounds.
 
-A GX implementation can keep the outgoing local pose, blend into the next
-clip's reference pose over five animation frames, then start the new clip.
-The same resulting palette should drive rendering, attachments and pose-bound
-effects. Keep visual interpolation independent from gameplay authority,
-damage execution and cooldowns. First validate ordinary movement, one-shot
-exit, cast interruption and death handling for self and remote actors. A
-mid-blend interruption deserves a separate check because the normal EP5.4
-action-request helper guards against replacing a pending transition while
-several special action paths write the pending state directly.
+One-shot actions retain their final keyed pose until the controller selects
+the next action. The local playback cursor waits for the blend. Externally
+driven action frames, cast countdowns, and the spin lifetime keep their own
+clocks. The existing controllers still choose successor actions.
 
 ## Verification
 

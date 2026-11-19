@@ -41,9 +41,9 @@ func TestCastCanBeInterruptedWithoutReleasingDeath(t *testing.T) {
 }
 
 func TestDeathHoldsLastFrame(t *testing.T) {
-	c := &Character{locked: true, hold: true, clip: &Clip{ani: &model.ANI{Start: 0, End: 30}}}
+	c := &Character{locked: true, hold: true, oneShot: true, clip: &Clip{ani: &model.ANI{Start: 0, End: 30}}}
 	c.Update(10)
-	if c.Time >= 1 || c.Time < 0.99 {
+	if c.Time != 1 || c.clip.frame(c.Time, c.oneShot) != 30 {
 		t.Fatal("death looped instead of holding its final frame")
 	}
 	c.ReleaseAction()

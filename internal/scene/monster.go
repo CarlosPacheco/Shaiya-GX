@@ -108,13 +108,17 @@ func (s *Assets) buildCreature(folder string, visual model.Creature, name string
 }
 
 func (m *CreatureActor) SetAction(action int) error {
+	return m.setAction(action, false)
+}
+
+func (m *CreatureActor) setAction(action int, oneShot bool) error {
 	if action == 5 {
 		m.cueTime = 0
 	}
 	if m.cueTime > 0 {
 		return nil
 	}
-	if m.action == action {
+	if m.action == action && !oneShot {
 		return nil
 	}
 	if action < 0 || action >= len(m.visual.Animations) {
@@ -124,7 +128,8 @@ func (m *CreatureActor) SetAction(action int) error {
 	if err != nil {
 		return err
 	}
-	m.clip, m.Time, m.action = clip, 0, action
+	m.startClip(clip, oneShot || action == 5)
+	m.action = action
 	if action == 5 {
 		m.queueModelEffect(action)
 	}
@@ -138,7 +143,7 @@ func (m *CreatureActor) Update(dt float32) {
 	m.Character.Update(dt)
 	if (m.action == 5 || oneShot) && m.clip != nil {
 		if end := m.clip.Duration(); end > 0 {
-			m.Time = min(m.Time, max(0, end-0.001))
+			m.Time = min(m.Time, end)
 		}
 	}
 }
@@ -155,16 +160,15 @@ func (m *CreatureActor) PlayOnce(action int) {
 		return
 	}
 	m.cueTime = 0
-	if err := m.SetAction(action); err != nil {
+	if err := m.setAction(action, true); err != nil {
 		m.assets.Missing[err.Error()] = true
 		return
 	}
-	m.Time = 0
 	if action != 5 {
 		m.queueModelEffect(action)
 	}
 	if m.clip != nil {
-		m.cueTime = m.clip.Duration()
+		m.cueTime = m.clip.Duration() + m.blendLeft
 	}
 }
 

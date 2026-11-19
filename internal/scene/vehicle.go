@@ -104,11 +104,12 @@ func (v *Vehicle) Update(dt float32) {
 		v.assets.Missing[err.Error()] = true
 		return
 	}
+	previous := v.Time
 	v.CreatureActor.Update(dt)
 	if v.clip != nil {
 		if duration := v.clip.Duration(); duration > 0 {
 			if v.reverse && action == 0 {
-				v.Time = float32(math.Mod(float64(v.Time-2*dt), float64(duration)))
+				v.Time = float32(math.Mod(float64(2*previous-v.Time), float64(duration)))
 				if v.Time < 0 {
 					v.Time += duration
 				}
