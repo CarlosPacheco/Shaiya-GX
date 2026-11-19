@@ -18,6 +18,8 @@ with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
    if check.connect_ex(('127.0.0.1',port))==0:raise RuntimeError('test port is already in use: '+str(port))
  users=[]
  with sqlite3.connect(db) as c:
+  # Keep presentation checks deterministic while exercising the real forge ACK.
+  c.execute('UPDATE PS_GameDefs_EnchantAttack SET SuccessChance=1000000 WHERE Level=6')
   for _ in range(2):
    name='測'+secrets.token_hex(5);password='密'+secrets.token_hex(5);uid=c.execute('SELECT MAX(UserUID)+1 FROM PS_UserData_Users_Master').fetchone()[0]
    c.execute("INSERT INTO PS_UserData_Users_Master(UserUID,UserID,Pw,Admin,AdminLevel,UseQueue,Status,Leave,UserType,Point) VALUES(?,?,?,0,0,0,0,0,'N',0)",(uid,name,password));users.append((name,password,uid))

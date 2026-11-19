@@ -60,7 +60,16 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 		for !condition() {
 			a.pumpWorld()
 			b.pumpWorld()
-			if a.state == nil || b.state == nil || time.Now().After(deadline) {
+			if a.state == nil || b.state == nil {
+				t.Fatal("client disconnected while waiting for native controls")
+			}
+			if a.wv == nil && !a.menuPending {
+				if condition() {
+					return
+				}
+				t.Fatal("world closed before the expected native controls state")
+			}
+			if time.Now().After(deadline) {
 				t.Fatalf("native controls confirmation timeout: local=%v jump=%t remote=%+v correction=%+v", a.wv.pos, a.wv.jumping, other.Entities[st.SelfID], st.LastPlayerCorrection)
 			}
 			time.Sleep(time.Millisecond)
