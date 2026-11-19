@@ -14,6 +14,7 @@ the exact SData field and SQLite column under each readable field name.
 | Mob AI messages | | `PS_GameDefs_MobAIMessages` |
 | Goddess Blessing | | `PS_GameDefs_GoddessBlessing` |
 | World Drops | | `PS_GameDefs_WorldDrops` |
+| Item Boxes | | `PS_GameDefs_ItemBoxes` / `PS_GameDefs_ItemBoxRewards` |
 
 ## Build
 
@@ -105,6 +106,19 @@ with up to eight decimal places. `0` disables the rule. SQLite stores
 `DropChance` in units of 0.00000001 percentage points, so `0.0001%`
 is stored as `10000`. Saving creates a verified SQLite backup. Restart
 GX World to apply the changes.
+
+## Item Boxes
+
+Open **Item Boxes** with the server SQLite database. A bag with
+`Special = 42` uses its `ReqVg` as the box `Index`. Choose **Grade** or
+**Item ID** and add the linked rewards.
+
+Normal boxes award exactly one reward using relative weights from 0 to 1000.
+Studio shows the normalized probability next to each weight. Independent
+boxes roll against each reward's literal percentage and can award any subset.
+SQLite stores independent chances in units of 0.00000001 percentage points.
+A zero chance disables that row in either mode. Saving backs up SQLite and
+updates the box and reward tables together. Restart GX World to apply edits.
 
 ## Backups and recovery
 

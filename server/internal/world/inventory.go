@@ -263,6 +263,11 @@ func (s *Session) handleUseItem(p []byte) {
 		return
 	}
 	switch def.Special {
+	case specialItemBox:
+		if !s.openItemBox(i, def.ReqVg) {
+			reject("item box unavailable or insufficient inventory space")
+		}
+		return
 	case specialPartySummon:
 		s.beginPartySummon(i, def)
 		return

@@ -160,3 +160,21 @@ alongside a normal drop. `Description` is an internal label.
 `DropChance` is an integer in units of 0.00000001 percentage points.
 The 12 migrated rules start at `10000` (0.0001%, one in a million for each
 eligible rule). GX Studio displays the percentage directly.
+
+
+## Item boxes
+
+Consumables with `Special = 42` use `ReqVg` to look up a box in
+`PS_GameDefs_ItemBoxes`. Its reward list is stored in `PS_GameDefs_ItemBoxRewards`.
+Normal boxes choose one row by relative weight (0–1000); independent boxes
+evaluate each reward against its own chance (0–100%). Each winning row grants
+one item, selected uniformly from the referenced grade or looked up by its
+exact `ItemID`. Reward grades use the item catalog without the world-drop
+cooldowns.
+
+GX World checks inventory capacity before rolling. Consumption and all awards
+commit together. A missing box or unresolved positive-chance target leaves
+the consumable intact. A valid independent roll with no winners still
+consumes it. Migration 16 imports original groups whose positive-weight
+grades all exist and that have a corresponding box item in the database.
+Where necessary the original weights are reduced or rounded to fit 0–1000.

@@ -32,10 +32,11 @@ const (
 	MobAIMessages
 	Blessing
 	WorldDrops
+	ItemBoxes
 )
 
 func (k Kind) DatabaseOnly() bool {
-	return k == Enchant || k == MobAIMessages || k == Blessing || k == WorldDrops
+	return k == Enchant || k == MobAIMessages || k == Blessing || k == WorldDrops || k == ItemBoxes
 }
 
 func (k Kind) valid() bool { return k <= NPCSkills }

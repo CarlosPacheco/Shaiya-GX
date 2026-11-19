@@ -152,6 +152,9 @@ func LoadGameConfig(log *logx.Logger) error {
 		return fmt.Errorf("world drops: %w", err)
 	}
 	buildDropCatalog()
+	if err := loadItemBoxes(log); err != nil {
+		return fmt.Errorf("item boxes: %w", err)
+	}
 	if err := loadNpcQuest(log); err != nil {
 		return fmt.Errorf("NpcQuest.SData: %w", err)
 	}
