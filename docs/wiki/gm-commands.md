@@ -57,12 +57,20 @@ use green system-chat style 4 (`#33FF33`), including refusals.
 The client loads the requested actors in batches. In a group, Light and Fury
 bots fight one another with randomized native outfits, weapons, cloth capes,
 movement, casts, projectiles and impacts. A single bot shadow-spars.
+Bots reappear at their starting positions after defeat.
 
 `/bots off` removes the actors and releases their assets. Leaving the map
 or losing GM status also clears the simulation. The chat composer handles
 these commands locally. Bots are visible only to the issuing GM, and their
 combat has no network packets, server entities, player damage or rewards.
 Use open terrain for large groups.
+
+## Extended camera zoom
+
+`/camlimit` lets a GM zoom out to 100 world units using the mouse wheel or the
+normal zoom keys. Run it again to restore the 13-unit limit. The command applies
+only to the current map in the GM's client and resets if GM status is revoked.
+Camera collision still applies.
 
 ## Practical examples
 

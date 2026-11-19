@@ -94,6 +94,18 @@ func TestLocalBotsRealAssetsGL(t *testing.T) {
 		t.Fatalf("only %d distinct outfits", len(looks))
 	}
 	a.Close()
+	a = New(arc, world, origin, forward, 1, 23)
+	defer a.Close()
+	a.Update(0, true)
+	f := &a.actors[0]
+	f.hp, f.respawn = 0, a.time
+	f.avatar.CorpseFade = 1
+	a.Update(1.0/30, true)
+	if f.hp != maxHP || f.position(a.time) != f.spawn || f.avatar.CorpseFade != 0 || len(a.effects) != 0 {
+		t.Fatalf("bot revival at %v: hp=%d fade=%v effects=%d", f.position(a.time), f.hp, f.avatar.CorpseFade, len(a.effects))
+	}
+	a.Close()
+
 	before := render.GPUBytes()
 	a = New(arc, world, origin, forward, MaxCount, 41)
 	defer a.Close()

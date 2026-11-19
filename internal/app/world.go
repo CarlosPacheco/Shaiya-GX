@@ -84,6 +84,7 @@ type worldView struct {
 	destination                 render.V3
 	travelEffect                *scene.Effect
 	firstPerson                 bool
+	extendedCameraZoom          bool
 	sittingCamera               bool
 	mouselook                   bool
 	cameraReady                 bool
@@ -248,6 +249,9 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	v := a.wv
 	if v == nil {
 		return
+	}
+	if v.extendedCameraZoom && !a.state.Self.IsGM {
+		v.restoreCameraZoomLimit()
 	}
 	dashing := a.updateSkillDashes()
 	a.updateQueuedSkill(in)

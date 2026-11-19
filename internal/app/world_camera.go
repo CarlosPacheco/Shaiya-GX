@@ -1,9 +1,11 @@
 package app
 
 import (
+	"math"
+	"strings"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"math"
 )
 
 // Game.exe 0x7085b4: fixed vertical FOV; zoom changes camera position only.
@@ -12,6 +14,58 @@ const nativeWorldFOV = 0.785398006439209
 // Native character+0x14 is feet+0.9 (0x42f9c3). Drawing temporarily
 // subtracts 0.9 at 0x449bac and restores it at 0x449c2e. Go stores feet.
 const nativeCharacterOriginHeight float32 = .9
+
+const gmZoomMax = 100
+
+func (a *App) cameraLimitCommand(text string) bool {
+	fields := strings.Fields(text)
+	if len(fields) == 0 || !strings.EqualFold(fields[0], "/camlimit") {
+		return false
+	}
+	if a.state == nil {
+		return true
+	}
+	if !a.state.Self.IsGM {
+		a.questMessage("GM: access denied.")
+		return true
+	}
+	if len(fields) != 1 {
+		a.questMessage("Usage: /camlimit")
+		return true
+	}
+	v := a.wv
+	if v == nil || v.world == nil {
+		a.questMessage("Enter a map to change the camera limit.")
+		return true
+	}
+	if v.extendedCameraZoom {
+		v.restoreCameraZoomLimit()
+		a.questMessage("Camera zoom limit restored to 13.")
+	} else {
+		v.extendedCameraZoom = true
+		a.questMessage("Camera zoom limit extended to 100.")
+	}
+	return true
+}
+
+func (v *worldView) restoreCameraZoomLimit() {
+	v.extendedCameraZoom = false
+	if !v.firstPerson {
+		v.eye = v.limitCameraDistance(v.eye, zoomMax)
+		if v.cameraReady {
+			v.cameraEye = v.limitCameraDistance(v.cameraEye, zoomMax)
+		}
+	}
+}
+
+func (v *worldView) limitCameraDistance(eye render.V3, limit float32) render.V3 {
+	origin := v.cameraOrigin()
+	offset := eye.Sub(origin)
+	if distance := offset.Len(); distance > limit {
+		return origin.Add(offset.Scale(limit / distance))
+	}
+	return eye
+}
 
 func (v *worldView) cameraOrigin() render.V3 {
 	return v.pos.Add(render.V3{0, nativeCharacterOriginHeight, 0})
@@ -55,7 +109,11 @@ func (v *worldView) cameraInput(in *platform.Input, dt float64, lastX, lastY int
 			distance := origin.Sub(v.eye).Len()
 			if distance > 0 {
 				step := float32(math.Max(-1.5, math.Min(1.5, wheel*.005)))
-				v.eye = origin.Sub(dir.Scale(min(max(distance-step, zoomMin), zoomMax)))
+				limit := float32(zoomMax)
+				if v.extendedCameraZoom {
+					limit = gmZoomMax
+				}
+				v.eye = origin.Sub(dir.Scale(min(max(distance-step, zoomMin), limit)))
 			}
 		}
 		if in.MiddlePressed || in.HasKey(platform.KeyHome) {
@@ -120,6 +178,9 @@ func (v *worldView) constrainCamera() {
 	if v.world.HasTerrain() {
 		v.eye[1] = max(v.eye[1], v.world.Height(v.eye[0], v.eye[2])+.5)
 	}
+	if v.extendedCameraZoom {
+		v.eye = v.limitCameraDistance(v.eye, gmZoomMax)
+	}
 }
 
 // MouseLookActive is evaluated after UI ownership has filtered pointer input.
@@ -154,6 +215,9 @@ func (v *worldView) updateRenderedCamera(dt float32) {
 		v.cameraEye = eye
 	} else {
 		v.cameraEye = cameraApproach(v.cameraEye, v.eye, dt)
+	}
+	if v.extendedCameraZoom && !v.firstPerson {
+		v.cameraEye = v.limitCameraDistance(v.cameraEye, gmZoomMax)
 	}
 	v.cameraTarget = cameraApproach(v.cameraTarget, v.target(), dt)
 	if !v.firstPerson && v.cameraEye.Sub(origin).Len() < .3 {

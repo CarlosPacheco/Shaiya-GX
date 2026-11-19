@@ -195,7 +195,7 @@ func (a *Arena) Update(dt float32, effects bool) bool {
 		if f.hp == 0 {
 			f.avatar.CorpseFade = min(1, max(0, (a.time-f.died-1.3)/1.2))
 			if a.time >= f.respawn {
-				a.revive(f, effects)
+				a.revive(f)
 			}
 			continue
 		}
@@ -412,7 +412,7 @@ func (a *Arena) damage(other *fighter, pos render.V3, skill *ability, effects bo
 	}
 }
 
-func (a *Arena) revive(f *fighter, effects bool) {
+func (a *Arena) revive(f *fighter) {
 	f.hp = maxHP
 	f.from, f.to = f.spawn, f.spawn
 	f.avatar.CorpseFade = 0
@@ -420,7 +420,4 @@ func (a *Arena) revive(f *fighter, effects bool) {
 	f.avatar.SetClip("000_normal")
 	f.transform(f.spawn)
 	f.nextAttack = a.time + a.random(.4, 1.5)
-	if effects {
-		a.impact("Effect/start.EFT", f.spawn, 0, 2)
-	}
 }
