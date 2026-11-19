@@ -1499,7 +1499,7 @@ Declarations: [packet.GuildNpcList](../../server/internal/packet/packet.go#L178)
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [npcListPacket (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L287)
+**S→C serializers:** [npcListPacket (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L288)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1509,7 +1509,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>npcListPacket — server/internal/world/guildhouse.go</summary>
 
-[Source definition](../../server/internal/world/guildhouse.go#L287)
+[Source definition](../../server/internal/world/guildhouse.go#L288)
 
 ```go
 func (g *guild) npcListPacket() []byte {
@@ -1544,7 +1544,7 @@ Declarations: [packet.GuildNpcUpgrade](../../server/internal/packet/packet.go#L1
 
 **C→S receive adapters:** [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L541)
 
-**S→C serializers:** [buildGuildNpcResult (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L308)
+**S→C serializers:** [buildGuildNpcResult (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L309)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1554,7 +1554,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGuildNpcResult — server/internal/world/guildhouse.go</summary>
 
-[Source definition](../../server/internal/world/guildhouse.go#L308)
+[Source definition](../../server/internal/world/guildhouse.go#L309)
 
 ```go
 func buildGuildNpcResult(result uint8, npcType uint16, level, slot uint8) []byte {
@@ -2264,7 +2264,7 @@ Declarations: [packet.GuildHouseBuy](../../server/internal/packet/packet.go#L181
 
 **C→S receive adapters:** [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L550)
 
-**S→C serializers:** [buildGuildHouseBuy (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L407)
+**S→C serializers:** [buildGuildHouseBuy (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L408)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2274,7 +2274,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGuildHouseBuy — server/internal/world/guildhouse.go</summary>
 
-[Source definition](../../server/internal/world/guildhouse.go#L407)
+[Source definition](../../server/internal/world/guildhouse.go#L408)
 
 ```go
 func buildGuildHouseBuy(result uint8, money uint32) []byte {
@@ -2295,7 +2295,7 @@ Declarations: [packet.GuildDonate](../../server/internal/packet/packet.go#L182),
 
 **C→S receive adapters:** [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L561)
 
-**S→C serializers:** [guildDonate (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L468)
+**S→C serializers:** [guildDonate (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L469)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2305,7 +2305,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildDonate — server/internal/world/guildhouse.go</summary>
 
-[Source definition](../../server/internal/world/guildhouse.go#L468)
+[Source definition](../../server/internal/world/guildhouse.go#L469)
 
 ```go
 func (s *Session) guildDonate(g *guild) {

@@ -333,7 +333,7 @@ Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L216), [
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L89)
 
-**S→C serializers:** [planGemRemove (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L362)
+**S→C serializers:** [planGemRemove (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L363)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L538)
 
@@ -343,7 +343,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>planGemRemove — server/internal/world/crafting.go</summary>
 
-[Source definition](../../server/internal/world/crafting.go#L362)
+[Source definition](../../server/internal/world/crafting.go#L363)
 
 ```go
 func (s *Session) planGemRemove(p []byte) {
@@ -406,6 +406,8 @@ func (s *Session) planGemRemove(p []byte) {
 		}
 		cost += gemCost(ch, d)
 	}
+	mixRate, _ := s.houseMix()
+	cost = houseRound(float64(cost) * mixRate)
 	if len(positions) == 0 || item.Count != 1 || realType(item.Type) == 24 || ch.Money < cost || len(freeInventorySlots(s.items)) < len(positions) {
 		result(false)
 		return
@@ -625,7 +627,7 @@ Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L214),
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L91)
 
-**S→C serializers:** [buildComposeResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L495)
+**S→C serializers:** [buildComposeResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L498)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L489)
 
@@ -635,7 +637,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildComposeResult — server/internal/world/crafting.go</summary>
 
-[Source definition](../../server/internal/world/crafting.go#L495)
+[Source definition](../../server/internal/world/crafting.go#L498)
 
 ```go
 func buildComposeResult(result, bag, slot uint8, craft string) []byte {

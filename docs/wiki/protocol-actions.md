@@ -704,7 +704,7 @@ Declarations: [packet.Gatekeeper](../../server/internal/packet/packet.go#L71), [
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162)
 
-**S→C serializers:** [buildGatekeeperResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L225)
+**S→C serializers:** [buildGatekeeperResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L242)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L481)
 
@@ -714,7 +714,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGatekeeperResult — server/internal/world/npcquest.go</summary>
 
-[Source definition](../../server/internal/world/npcquest.go#L225)
+[Source definition](../../server/internal/world/npcquest.go#L242)
 
 ```go
 func buildGatekeeperResult(ok bool, money uint32) []byte {

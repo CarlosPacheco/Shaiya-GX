@@ -447,14 +447,14 @@ Direct GX dependencies: `internal/forgecost`, `server/internal/db`, `server/inte
 | [`specialGemProtect`](../../server/internal/world/crafting.go#L252)<br>`const specialGemProtect = 57` | legacy Lucky Charm ID; no longer needed/consumed |
 | [`handleGemAdd`](../../server/internal/world/crafting.go#L262)<br>`func (s *Session) handleGemAdd(p []byte)` | handleGemAdd (0x0801) is CUser::ItemGemAdd (0x00461310): gem bag/slot, item bag/slot, optional hammer bag/slot. The item (count 1) must take the gem (the lapisia-style target fields and EnableGem's capacity); the gem's GetGemMoneyByGrade is paid; base chance is 289 - 8 x ReqIg plus blessing (at least 1), plus hammer ReqVg percentage points, up to 100%. The gem is always used up. GX preserves the equipment on every failure; legacy ReqVg destruction flags and Lucky Charms do not affect linking. |
 | [`planGemAdd`](../../server/internal/world/crafting.go#L263)<br>`func (s *Session) planGemAdd(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`handleGemRemove`](../../server/internal/world/crafting.go#L361)<br>`func (s *Session) handleGemRemove(p []byte)` | handleGemRemove extracts one selected socket with an extraction hammer. Obsolete requests without a hammer are rejected without consuming anything. |
-| [`planGemRemove`](../../server/internal/world/crafting.go#L362)<br>`func (s *Session) planGemRemove(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`jewelryItemTypes`](../../server/internal/world/crafting.go#L469)<br>`var jewelryItemTypes` | See the source definition and the subsystem ownership contract. |
-| [`rollsStatsOnly`](../../server/internal/world/crafting.go#L473)<br>`func rollsStatsOnly(t uint8) bool` | rollsStatsOnly is CItem::ReGenerationCraftExpansion's split: weapons (real types 1-15) and real types 22, 23 and 25 roll the six stats only. |
-| [`rollCraftName`](../../server/internal/world/crafting.go#L480)<br>`func rollCraftName(count, maxValue uint8, statsOnly bool, previous string) string` | rollCraftName picks `count` distinct stats (6 for weapons/jewelry, 9 otherwise) at 1..maxValue each, keeping the enchant level. |
-| [`buildComposeResult`](../../server/internal/world/crafting.go#L495)<br>`func buildComposeResult(result, bag, slot uint8, craft string) []byte` | See the source definition and the subsystem ownership contract. |
-| [`handleItemCompose`](../../server/internal/world/crafting.go#L504)<br>`func (s *Session) handleItemCompose(p []byte)` | handleItemCompose: rune bag/slot, item bag/slot. Items.ReqWis is the max roll and Items.Server the number of rolled stats. |
-| [`planItemCompose`](../../server/internal/world/crafting.go#L505)<br>`func (s *Session) planItemCompose(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`handleGemRemove`](../../server/internal/world/crafting.go#L362)<br>`func (s *Session) handleGemRemove(p []byte)` | handleGemRemove extracts one selected socket with an extraction hammer. Obsolete requests without a hammer are rejected without consuming anything. |
+| [`planGemRemove`](../../server/internal/world/crafting.go#L363)<br>`func (s *Session) planGemRemove(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`jewelryItemTypes`](../../server/internal/world/crafting.go#L472)<br>`var jewelryItemTypes` | See the source definition and the subsystem ownership contract. |
+| [`rollsStatsOnly`](../../server/internal/world/crafting.go#L476)<br>`func rollsStatsOnly(t uint8) bool` | rollsStatsOnly is CItem::ReGenerationCraftExpansion's split: weapons (real types 1-15) and real types 22, 23 and 25 roll the six stats only. |
+| [`rollCraftName`](../../server/internal/world/crafting.go#L483)<br>`func rollCraftName(count, maxValue uint8, statsOnly bool, previous string) string` | rollCraftName picks `count` distinct stats (6 for weapons/jewelry, 9 otherwise) at 1..maxValue each, keeping the enchant level. |
+| [`buildComposeResult`](../../server/internal/world/crafting.go#L498)<br>`func buildComposeResult(result, bag, slot uint8, craft string) []byte` | See the source definition and the subsystem ownership contract. |
+| [`handleItemCompose`](../../server/internal/world/crafting.go#L507)<br>`func (s *Session) handleItemCompose(p []byte)` | handleItemCompose: rune bag/slot, item bag/slot. Items.ReqWis is the max roll and Items.Server the number of rolled stats. |
+| [`planItemCompose`](../../server/internal/world/crafting.go#L508)<br>`func (s *Session) planItemCompose(p []byte)` | See the source definition and the subsystem ownership contract. |
 
 ### degeneration.go
 
@@ -1528,52 +1528,60 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`guildNpcGate`](../../server/internal/world/guildhouse.go#L19)<br>`const guildNpcGate = 0x002` | Guild NPC types as stored in the eight CGuild NPC slots. |
-| [`guildNpcWeapon`](../../server/internal/world/guildhouse.go#L20)<br>`const guildNpcWeapon = 0x101` | Guild NPC types as stored in the eight CGuild NPC slots. |
-| [`guildNpcDefense`](../../server/internal/world/guildhouse.go#L21)<br>`const guildNpcDefense = 0x201` | Guild NPC types as stored in the eight CGuild NPC slots. |
-| [`guildNpcGeneral`](../../server/internal/world/guildhouse.go#L22)<br>`const guildNpcGeneral = 0x301` | Guild NPC types as stored in the eight CGuild NPC slots. |
-| [`guildNpcSmith`](../../server/internal/world/guildhouse.go#L23)<br>`const guildNpcSmith = 0x003` | Guild NPC types as stored in the eight CGuild NPC slots. |
-| [`guildNpcPotion`](../../server/internal/world/guildhouse.go#L24)<br>`const guildNpcPotion = 0x401` | Guild NPC types as stored in the eight CGuild NPC slots. |
-| [`guildNpcBank`](../../server/internal/world/guildhouse.go#L25)<br>`const guildNpcBank = 0x006` | Guild NPC types as stored in the eight CGuild NPC slots. |
-| [`guildNpcSlots`](../../server/internal/world/guildhouse.go#L27)<br>`const guildNpcSlots = 8` | Guild NPC types as stored in the eight CGuild NPC slots. |
-| [`guildNpcServices`](../../server/internal/world/guildhouse.go#L28)<br>`const guildNpcServices = 7` | Guild NPC types as stored in the eight CGuild NPC slots. |
-| [`guildEtinSpecial`](../../server/internal/world/guildhouse.go#L29)<br>`const guildEtinSpecial = 52` | Guild NPC types as stored in the eight CGuild NPC slots. Special of the Type 43 etin items: 52..55 are x1, x10, x100, x1000 |
-| [`guildEtinType`](../../server/internal/world/guildhouse.go#L30)<br>`const guildEtinType = 43` | Guild NPC types as stored in the eight CGuild NPC slots. '+', the item type CUser::PacketGuild 0x0D35 accepts |
-| [`guildNpcOK`](../../server/internal/world/guildhouse.go#L35)<br>`const guildNpcOK = 0` | Results of 0x0D25 (CGuild::NpcUpgrade). |
-| [`guildNpcNoEtin`](../../server/internal/world/guildhouse.go#L36)<br>`const guildNpcNoEtin = 1` | Results of 0x0D25 (CGuild::NpcUpgrade). |
-| [`guildNpcBadLevel`](../../server/internal/world/guildhouse.go#L37)<br>`const guildNpcBadLevel = 2` | Results of 0x0D25 (CGuild::NpcUpgrade). |
-| [`guildNpcRefused`](../../server/internal/world/guildhouse.go#L38)<br>`const guildNpcRefused = 3` | Results of 0x0D25 (CGuild::NpcUpgrade). |
-| [`guildNpcRankLimit`](../../server/internal/world/guildhouse.go#L39)<br>`const guildNpcRankLimit = 4` | Results of 0x0D25 (CGuild::NpcUpgrade). |
-| [`guildHouseBought`](../../server/internal/world/guildhouse.go#L44)<br>`const guildHouseBought = 0` | Results of 0x0D34. |
-| [`guildHouseOwned`](../../server/internal/world/guildhouse.go#L45)<br>`const guildHouseOwned = 1` | Results of 0x0D34. |
-| [`guildHouseNoMoney`](../../server/internal/world/guildhouse.go#L46)<br>`const guildHouseNoMoney = 2` | Results of 0x0D34. |
-| [`guildHouseNoRight`](../../server/internal/world/guildhouse.go#L47)<br>`const guildHouseNoRight = 3` | Results of 0x0D34. |
-| [`guildNpcSlot`](../../server/internal/world/guildhouse.go#L51)<br>`type guildNpcSlot` | guildNpcSlot is a CGuild NPC slot (+0x47c, type and level words). |
-| [`guildServiceTable`](../../server/internal/world/guildhouse.go#L55)<br>`type guildServiceTable` | guildServiceTable is one g_GuildNpcUpgradeEtin / g_GuildNpcKeepEtin row: index is the NPC level (1-5). |
-| [`guildHouseSettings`](../../server/internal/world/guildhouse.go#L63)<br>`type guildHouseSettings` | guildHouseSettings is everything InitGuildHouseIniFile loads, starting from the executable's own defaults. |
-| [`defaultGuildHouse`](../../server/internal/world/guildhouse.go#L77)<br>`func defaultGuildHouse() guildHouseSettings` | See the source definition and the subsystem ownership contract. |
-| [`guildHouse`](../../server/internal/world/guildhouse.go#L103)<br>`var guildHouse` | guildHouse is the active configuration. |
-| [`iniTokens`](../../server/internal/world/guildhouse.go#L107)<br>`func iniTokens(value string) []string` | iniTokens splits a value like ParseString1/ParseString2: the first 254 characters on " ,=()[]{}" and white space. |
-| [`iniInt`](../../server/internal/world/guildhouse.go#L115)<br>`func iniInt(token string) int64` | iniUint is the atoi the original parser applies: a decimal prefix. |
-| [`fillU16`](../../server/internal/world/guildhouse.go#L129)<br>`func fillU16(dst []uint16, value string)` | fillU16 stores up to len(dst) tokens from the start of dst; missing tokens keep their value. |
-| [`fillF64`](../../server/internal/world/guildhouse.go#L138)<br>`func fillF64(dst []float64, value string)` | See the source definition and the subsystem ownership contract. |
-| [`fillI32`](../../server/internal/world/guildhouse.go#L151)<br>`func fillI32(dst []int32, value string)` | See the source definition and the subsystem ownership contract. |
-| [`parseGuildHouse`](../../server/internal/world/guildhouse.go#L163)<br>`func parseGuildHouse(ini iniFile) guildHouseSettings` | parseGuildHouse applies GuildHouse.ini over the executable defaults. The original runs GetPrivateProfileString for each key and keeps the default when it is absent. |
-| [`loadGuildHouseIni`](../../server/internal/world/guildhouse.go#L222)<br>`func loadGuildHouseIni()` | See the source definition and the subsystem ownership contract. |
-| [`service`](../../server/internal/world/guildhouse.go#L232)<br>`func (h *guildHouseSettings) service(npcType uint16) *guildServiceTable` | service is the upgrade table of an NPC type (nil for an unknown type). |
-| [`npcLevel`](../../server/internal/world/guildhouse.go#L242)<br>`func (g *guild) npcLevel(npcType uint16) uint16` | npcLevel is the level of the guild's NPC of that type, 0 without it. |
-| [`houseEnabled`](../../server/internal/world/guildhouse.go#L252)<br>`func (g *guild) houseEnabled() bool` | houseEnabled is CGuild::EnableGuildHouse: ranked, active and bought. |
-| [`calculateKeepEtin`](../../server/internal/world/guildhouse.go#L258)<br>`func (g *guild) calculateKeepEtin()` | calculateKeepEtin is CGuild::CalculateKeepEtin: the default plus the upkeep of every NPC at its level. |
-| [`bankSlots`](../../server/internal/world/guildhouse.go#L273)<br>`func (g *guild) bankSlots() int` | bankSlots is GetGuildHouseBankAllowSlotCount: PermitSlot at the bank NPC level (the first entry without it). |
-| [`row`](../../server/internal/world/guildhouse.go#L281)<br>`func (g *guild) row() db.GuildRow` | See the source definition and the subsystem ownership contract. |
-| [`npcListPacket`](../../server/internal/world/guildhouse.go#L287)<br>`func (g *guild) npcListPacket() []byte` | npcListPacket is CGuild::SendNpcLvList (0x0D24); nil without NPCs. |
-| [`buildGuildNpcResult`](../../server/internal/world/guildhouse.go#L308)<br>`func buildGuildNpcResult(result uint8, npcType uint16, level, slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`guildNpcUpgrade`](../../server/internal/world/guildhouse.go#L319)<br>`func (s *Session) guildNpcUpgrade(g *guild, npcType uint16, level uint8)` | guildNpcUpgrade is 0x0D25 (CGuild::NpcUpgrade), reached for guild ranks 1 and 2 only. Called with guildMu held. |
-| [`buildGuildHouseBuy`](../../server/internal/world/guildhouse.go#L407)<br>`func buildGuildHouseBuy(result uint8, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`guildHouseBuy`](../../server/internal/world/guildhouse.go#L416)<br>`func (s *Session) guildHouseBuy(g *guild, rank uint8)` | guildHouseBuy is the 0x0D34 branch of CUser::PacketGuild. Called with guildMu held. |
-| [`guildEtinValue`](../../server/internal/world/guildhouse.go#L444)<br>`func guildEtinValue(it *db.Item) (value uint32, ok bool)` | guildEtinValue is the etin an item donates: Type 43 with Special 52..55. |
-| [`guildDonate`](../../server/internal/world/guildhouse.go#L468)<br>`func (s *Session) guildDonate(g *guild)` | guildDonate is the 0x0D35 branch: every etin item in the bags is consumed, its value added to the guild's etin and the return count incremented. Called with guildMu held. |
-| [`settleGuildHouse`](../../server/internal/world/guildhouse.go#L511)<br>`func (g *guild) settleGuildHouse()` | settleGuildHouse is the house part of CGuildMgr::UpdateGuildPointRank for a ranked guild: below the upkeep the house is suspended (UseHouse 2), otherwise the upkeep is paid from the etin. Called with guildMu held. |
+| [`guildNpcGate`](../../server/internal/world/guildhouse.go#L20)<br>`const guildNpcGate = 0x002` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcWeapon`](../../server/internal/world/guildhouse.go#L21)<br>`const guildNpcWeapon = 0x101` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcDefense`](../../server/internal/world/guildhouse.go#L22)<br>`const guildNpcDefense = 0x201` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcGeneral`](../../server/internal/world/guildhouse.go#L23)<br>`const guildNpcGeneral = 0x301` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcSmith`](../../server/internal/world/guildhouse.go#L24)<br>`const guildNpcSmith = 0x003` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcPotion`](../../server/internal/world/guildhouse.go#L25)<br>`const guildNpcPotion = 0x401` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcBank`](../../server/internal/world/guildhouse.go#L26)<br>`const guildNpcBank = 0x006` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcSlots`](../../server/internal/world/guildhouse.go#L28)<br>`const guildNpcSlots = 8` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildNpcServices`](../../server/internal/world/guildhouse.go#L29)<br>`const guildNpcServices = 7` | Guild NPC types as stored in the eight CGuild NPC slots. |
+| [`guildEtinSpecial`](../../server/internal/world/guildhouse.go#L30)<br>`const guildEtinSpecial = 52` | Guild NPC types as stored in the eight CGuild NPC slots. Special of the Type 43 etin items: 52..55 are x1, x10, x100, x1000 |
+| [`guildEtinType`](../../server/internal/world/guildhouse.go#L31)<br>`const guildEtinType = 43` | Guild NPC types as stored in the eight CGuild NPC slots. '+', the item type CUser::PacketGuild 0x0D35 accepts |
+| [`guildNpcOK`](../../server/internal/world/guildhouse.go#L36)<br>`const guildNpcOK = 0` | Results of 0x0D25 (CGuild::NpcUpgrade). |
+| [`guildNpcNoEtin`](../../server/internal/world/guildhouse.go#L37)<br>`const guildNpcNoEtin = 1` | Results of 0x0D25 (CGuild::NpcUpgrade). |
+| [`guildNpcBadLevel`](../../server/internal/world/guildhouse.go#L38)<br>`const guildNpcBadLevel = 2` | Results of 0x0D25 (CGuild::NpcUpgrade). |
+| [`guildNpcRefused`](../../server/internal/world/guildhouse.go#L39)<br>`const guildNpcRefused = 3` | Results of 0x0D25 (CGuild::NpcUpgrade). |
+| [`guildNpcRankLimit`](../../server/internal/world/guildhouse.go#L40)<br>`const guildNpcRankLimit = 4` | Results of 0x0D25 (CGuild::NpcUpgrade). |
+| [`guildHouseBought`](../../server/internal/world/guildhouse.go#L45)<br>`const guildHouseBought = 0` | Results of 0x0D34. |
+| [`guildHouseOwned`](../../server/internal/world/guildhouse.go#L46)<br>`const guildHouseOwned = 1` | Results of 0x0D34. |
+| [`guildHouseNoMoney`](../../server/internal/world/guildhouse.go#L47)<br>`const guildHouseNoMoney = 2` | Results of 0x0D34. |
+| [`guildHouseNoRight`](../../server/internal/world/guildhouse.go#L48)<br>`const guildHouseNoRight = 3` | Results of 0x0D34. |
+| [`guildNpcSlot`](../../server/internal/world/guildhouse.go#L52)<br>`type guildNpcSlot` | guildNpcSlot is a CGuild NPC slot (+0x47c, type and level words). |
+| [`guildServiceTable`](../../server/internal/world/guildhouse.go#L56)<br>`type guildServiceTable` | guildServiceTable is one g_GuildNpcUpgradeEtin / g_GuildNpcKeepEtin row: index is the NPC level (1-5). |
+| [`guildHouseSettings`](../../server/internal/world/guildhouse.go#L64)<br>`type guildHouseSettings` | guildHouseSettings is everything InitGuildHouseIniFile loads, starting from the executable's own defaults. |
+| [`defaultGuildHouse`](../../server/internal/world/guildhouse.go#L78)<br>`func defaultGuildHouse() guildHouseSettings` | See the source definition and the subsystem ownership contract. |
+| [`guildHouse`](../../server/internal/world/guildhouse.go#L104)<br>`var guildHouse` | guildHouse is the active configuration. |
+| [`iniTokens`](../../server/internal/world/guildhouse.go#L108)<br>`func iniTokens(value string) []string` | iniTokens splits a value like ParseString1/ParseString2: the first 254 characters on " ,=()[]{}" and white space. |
+| [`iniInt`](../../server/internal/world/guildhouse.go#L116)<br>`func iniInt(token string) int64` | iniUint is the atoi the original parser applies: a decimal prefix. |
+| [`fillU16`](../../server/internal/world/guildhouse.go#L130)<br>`func fillU16(dst []uint16, value string)` | fillU16 stores up to len(dst) tokens from the start of dst; missing tokens keep their value. |
+| [`fillF64`](../../server/internal/world/guildhouse.go#L139)<br>`func fillF64(dst []float64, value string)` | See the source definition and the subsystem ownership contract. |
+| [`fillI32`](../../server/internal/world/guildhouse.go#L152)<br>`func fillI32(dst []int32, value string)` | See the source definition and the subsystem ownership contract. |
+| [`parseGuildHouse`](../../server/internal/world/guildhouse.go#L164)<br>`func parseGuildHouse(ini iniFile) guildHouseSettings` | parseGuildHouse applies GuildHouse.ini over the executable defaults. The original runs GetPrivateProfileString for each key and keeps the default when it is absent. |
+| [`loadGuildHouseIni`](../../server/internal/world/guildhouse.go#L223)<br>`func loadGuildHouseIni()` | See the source definition and the subsystem ownership contract. |
+| [`service`](../../server/internal/world/guildhouse.go#L233)<br>`func (h *guildHouseSettings) service(npcType uint16) *guildServiceTable` | service is the upgrade table of an NPC type (nil for an unknown type). |
+| [`npcLevel`](../../server/internal/world/guildhouse.go#L243)<br>`func (g *guild) npcLevel(npcType uint16) uint16` | npcLevel is the level of the guild's NPC of that type, 0 without it. |
+| [`houseEnabled`](../../server/internal/world/guildhouse.go#L253)<br>`func (g *guild) houseEnabled() bool` | houseEnabled is CGuild::EnableGuildHouse: ranked, active and bought. |
+| [`calculateKeepEtin`](../../server/internal/world/guildhouse.go#L259)<br>`func (g *guild) calculateKeepEtin()` | calculateKeepEtin is CGuild::CalculateKeepEtin: the default plus the upkeep of every NPC at its level. |
+| [`bankSlots`](../../server/internal/world/guildhouse.go#L274)<br>`func (g *guild) bankSlots() int` | bankSlots is GetGuildHouseBankAllowSlotCount: PermitSlot at the bank NPC level (the first entry without it). |
+| [`row`](../../server/internal/world/guildhouse.go#L282)<br>`func (g *guild) row() db.GuildRow` | See the source definition and the subsystem ownership contract. |
+| [`npcListPacket`](../../server/internal/world/guildhouse.go#L288)<br>`func (g *guild) npcListPacket() []byte` | npcListPacket is CGuild::SendNpcLvList (0x0D24); nil without NPCs. |
+| [`buildGuildNpcResult`](../../server/internal/world/guildhouse.go#L309)<br>`func buildGuildNpcResult(result uint8, npcType uint16, level, slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`guildNpcUpgrade`](../../server/internal/world/guildhouse.go#L320)<br>`func (s *Session) guildNpcUpgrade(g *guild, npcType uint16, level uint8)` | guildNpcUpgrade is 0x0D25 (CGuild::NpcUpgrade), reached for guild ranks 1 and 2 only. Called with guildMu held. |
+| [`buildGuildHouseBuy`](../../server/internal/world/guildhouse.go#L408)<br>`func buildGuildHouseBuy(result uint8, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`guildHouseBuy`](../../server/internal/world/guildhouse.go#L417)<br>`func (s *Session) guildHouseBuy(g *guild, rank uint8)` | guildHouseBuy is the 0x0D34 branch of CUser::PacketGuild. Called with guildMu held. |
+| [`guildEtinValue`](../../server/internal/world/guildhouse.go#L445)<br>`func guildEtinValue(it *db.Item) (value uint32, ok bool)` | guildEtinValue is the etin an item donates: Type 43 with Special 52..55. |
+| [`guildDonate`](../../server/internal/world/guildhouse.go#L469)<br>`func (s *Session) guildDonate(g *guild)` | guildDonate is the 0x0D35 branch: every etin item in the bags is consumed, its value added to the guild's etin and the return count incremented. Called with guildMu held. |
+| [`settleGuildHouse`](../../server/internal/world/guildhouse.go#L512)<br>`func (g *guild) settleGuildHouse()` | settleGuildHouse is the house part of CGuildMgr::UpdateGuildPointRank for a ranked guild: below the upkeep the house is suspended (UseHouse 2), otherwise the upkeep is paid from the etin. Called with guildMu held. |
+| [`inGuildHouseZone`](../../server/internal/world/guildhouse.go#L526)<br>`func (s *Session) inGuildHouseZone() bool` | inGuildHouseZone is CMap::IsGuildHouseMap for the character's zone. |
+| [`houseNpcRefusal`](../../server/internal/world/guildhouse.go#L532)<br>`func (s *Session) houseNpcRefusal(result, detail uint8)` | houseNpcRefusal answers a guild house service the guild cannot use with 0x0D28 {result, detail}, as PacketShop and PacketMaininterface do. |
+| [`houseNpcAbove`](../../server/internal/world/guildhouse.go#L538)<br>`func houseNpcAbove(country int32, kind int, from int, npcTypeID uint16) (level uint8, found bool)` | houseNpcColumn finds a NPC type id in the shop table of its kind and returns the level that unlocks it (0 when not listed above from). |
+| [`shopBuyRate`](../../server/internal/world/guildhouse.go#L555)<br>`func (g *guild) shopBuyRate(npcTypeID uint16, shopType uint8) (rate float64, result, detail uint8)` | shopBuyRate is CGuild::GetGuildHouseShopBuyRate: the price factor for a shop of the given type (1 weapon, 2 defense, 3 general, 4 potion), or the refusal result and detail (1 rank limit, 2 NPC level above the guild's). |
+| [`gateRate`](../../server/internal/world/guildhouse.go#L589)<br>`func (g *guild) gateRate(npcTypeID uint16) (rate float64, needLevel uint8, ok bool)` | gateRate is CGuild::GetGuildHouseUseGateRate: the fee factor, or the level the gatekeeper NPC needs when it is above the guild's. |
+| [`houseRound`](../../server/internal/world/guildhouse.go#L605)<br>`func houseRound(v float64) uint32` | roundHalfAway is the x87 ROUND of the original price products. |
+| [`smithIndex`](../../server/internal/world/guildhouse.go#L608)<br>`func (g *guild) smithIndex() int` | smithIndex is the blacksmith NPC level clamped to the six-entry tables. |
+| [`houseMix`](../../server/internal/world/guildhouse.go#L613)<br>`func (s *Session) houseMix() (rate float64, bonus int)` | houseMix returns the gem-linking cost factor (RapiceMixDecreRate) and the success bonus (RapiceMixPercentRate, active house only) for the guild smith inside a house map; (1, 0) elsewhere. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -2382,12 +2390,12 @@ Direct GX dependencies: `internal/npcquest`, `internal/proto`, `server/internal/
 | [`buildShopBuyResult`](../../server/internal/world/npcquest.go#L144)<br>`func buildShopBuyResult(result, bag, slot, itemType, typeID uint8, count uint16, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
 | [`handleShopBuy`](../../server/internal/world/npcquest.go#L155)<br>`func (s *Session) handleShopBuy(p []byte)` | handleShopBuy (0x0702): npc id, item index, count; CUser::PacketShop (0x0046af10). Result 0 bought, 1 not enough gold, 2 no room. A stack must take the whole purchase; otherwise the first free slot is used. |
 | [`planShopBuy`](../../server/internal/world/npcquest.go#L156)<br>`func (s *Session) planShopBuy(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`buildGatekeeperResult`](../../server/internal/world/npcquest.go#L225)<br>`func buildGatekeeperResult(ok bool, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`handleGatekeeper`](../../server/internal/world/npcquest.go#L235)<br>`func (s *Session) handleGatekeeper(p []byte)` | handleGatekeeper (0x020C): npc id, destination 0-2. A gatekeeper of the character's faction (or neutral) within 30 units moves it for the destination's fee. |
-| [`npcUseMu`](../../server/internal/world/npcquest.go#L286)<br>`var npcUseMu sync.Mutex` | NPC usage (CUser::PacketNpc 0x00467510): 0x0E04 records the NPC a player is talking to; an NPC in use stops patrolling. |
-| [`npcUsers`](../../server/internal/world/npcquest.go#L287)<br>`var npcUsers` | NPC usage (CUser::PacketNpc 0x00467510): 0x0E04 records the NPC a player is talking to; an NPC in use stops patrolling. |
-| [`useNpc`](../../server/internal/world/npcquest.go#L290)<br>`func (s *Session) useNpc(id uint32)` | See the source definition and the subsystem ownership contract. |
-| [`npcInUse`](../../server/internal/world/npcquest.go#L314)<br>`func npcInUse(id uint32) bool` | See the source definition and the subsystem ownership contract. |
+| [`buildGatekeeperResult`](../../server/internal/world/npcquest.go#L242)<br>`func buildGatekeeperResult(ok bool, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`handleGatekeeper`](../../server/internal/world/npcquest.go#L252)<br>`func (s *Session) handleGatekeeper(p []byte)` | handleGatekeeper (0x020C): npc id, destination 0-2. A gatekeeper of the character's faction (or neutral) within 30 units moves it for the destination's fee. |
+| [`npcUseMu`](../../server/internal/world/npcquest.go#L324)<br>`var npcUseMu sync.Mutex` | NPC usage (CUser::PacketNpc 0x00467510): 0x0E04 records the NPC a player is talking to; an NPC in use stops patrolling. |
+| [`npcUsers`](../../server/internal/world/npcquest.go#L325)<br>`var npcUsers` | NPC usage (CUser::PacketNpc 0x00467510): 0x0E04 records the NPC a player is talking to; an NPC in use stops patrolling. |
+| [`useNpc`](../../server/internal/world/npcquest.go#L328)<br>`func (s *Session) useNpc(id uint32)` | See the source definition and the subsystem ownership contract. |
+| [`npcInUse`](../../server/internal/world/npcquest.go#L352)<br>`func npcInUse(id uint32) bool` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
