@@ -72,3 +72,27 @@ func TestGuildHouseKeepEtinAndList(t *testing.T) {
 		t.Fatalf("bank slots %d", g.bankSlots())
 	}
 }
+
+func TestGuildHouseRates(t *testing.T) {
+	old := guildHouse
+	guildHouse = defaultGuildHouse()
+	defer func() { guildHouse = old }()
+	g := &guild{Rank: 5, Country: 0}
+	g.npcs[0] = guildNpcSlot{Type: guildNpcWeapon, Level: 1}
+	if r, res, _ := g.shopBuyRate(196, 1); res != 0 || r != 0.98 {
+		t.Fatalf("level-1 weapon shop: %v %d", r, res)
+	}
+	if _, res, detail := g.shopBuyRate(197, 1); res != 2 || detail != 2 {
+		t.Fatalf("level-2 weapon shop NPC: %d %d", res, detail)
+	}
+	if _, res, detail := (&guild{Rank: 7}).shopBuyRate(1, 4); res != 1 || detail != 6 {
+		t.Fatalf("potion rank limit: %d %d", res, detail)
+	}
+	if _, need, ok := g.gateRate(38); ok || need != 2 {
+		t.Fatalf("level-2 gatekeeper: %d %v", need, ok)
+	}
+	g.npcs[1] = guildNpcSlot{Type: guildNpcGate, Level: 3}
+	if r, _, ok := g.gateRate(39); !ok || r != 0 {
+		t.Fatalf("level-3 gatekeeper: %v %v", r, ok)
+	}
+}

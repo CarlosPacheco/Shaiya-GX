@@ -177,6 +177,23 @@ func (s *Session) planShopBuy(p []byte) {
 		return
 	}
 	price := uint64(count) * uint64(max(item.Buy, 0))
+	if s.inGuildHouseZone() {
+		// CUser::PacketShop: inside a house map the guild's NPC levels set the price.
+		guildMu.Lock()
+		g := s.player.guild.guild
+		if g == nil {
+			guildMu.Unlock()
+			s.houseNpcRefusal(guildBankRefused, guildBankRanked)
+			return
+		}
+		rate, result, detail := g.shopBuyRate(npc.TypeID, def.ShopType)
+		guildMu.Unlock()
+		if result != 0 {
+			s.houseNpcRefusal(result, detail)
+			return
+		}
+		price = uint64(houseRound(float64(max(item.Buy, 0))*rate)) * uint64(count)
+	}
 	if uint64(ch.Money) < price {
 		s.send(buildShopBuyResult(1, 0, 0, item.Type, item.TypeID, count, 0), "0x0702 shop buy (no gold)")
 		return
@@ -258,7 +275,7 @@ func (s *Session) handleGatekeeper(p []byte) {
 		fail("empty destination")
 		return
 	}
-	if !s.canEnterMap(g.MapID, ch.Level) || ch.Money < g.Money || !hasGrid(g.MapID) {
+	if !s.canEnterMap(g.MapID, ch.Level) || !hasGrid(g.MapID) {
 		fail("no gold or unknown map")
 		return
 	}
@@ -273,7 +290,28 @@ func (s *Session) handleGatekeeper(p []byte) {
 			return
 		}
 	}
-	ch.Money -= g.Money
+	fee := g.Money
+	if s.inGuildHouseZone() {
+		guildMu.Lock()
+		guildOf := s.player.guild.guild
+		if guildOf == nil {
+			guildMu.Unlock()
+			s.houseNpcRefusal(guildBankRefused, guildBankRanked)
+			return
+		}
+		rate, need, ok := guildOf.gateRate(npc.TypeID)
+		guildMu.Unlock()
+		if !ok {
+			s.houseNpcRefusal(guildBankNoRight, need)
+			return
+		}
+		fee = houseRound(float64(fee) * rate)
+	}
+	if ch.Money < fee {
+		fail("no gold")
+		return
+	}
+	ch.Money -= fee
 	s.persist()
 	s.send(buildGatekeeperResult(true, ch.Money), "0x020C gatekeeper")
 	s.log.Printf("GX Server World gatekeeper to map %d for %d", g.MapID, g.Money)

@@ -318,12 +318,13 @@ func (s *Session) planGemAdd(p []byte) {
 		}
 		hammerUID = s.items[hi].UID
 	}
-	cost := gemCost(ch, gemDef)
+	mixRate, mixBonus := s.houseMix()
+	cost := houseRound(float64(gemCost(ch, gemDef)) * mixRate)
 	if ch.Money < cost {
 		fail("not enough gold")
 		return
 	}
-	chance := gemChance(ch, s.faction, gemDef, hammer)
+	chance := min(gemChance(ch, s.faction, gemDef, hammer)+mixBonus, 100)
 	ch.Money -= cost
 	if hammerUID != 0 {
 		hi := findItemByUID(s.items, hammerUID)
@@ -419,6 +420,8 @@ func (s *Session) planGemRemove(p []byte) {
 		}
 		cost += gemCost(ch, d)
 	}
+	mixRate, _ := s.houseMix()
+	cost = houseRound(float64(cost) * mixRate)
 	if len(positions) == 0 || item.Count != 1 || realType(item.Type) == 24 || ch.Money < cost || len(freeInventorySlots(s.items)) < len(positions) {
 		result(false)
 		return

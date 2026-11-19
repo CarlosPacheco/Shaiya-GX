@@ -1,6 +1,7 @@
 package world
 
 import (
+	"math"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -519,4 +520,110 @@ func (g *guild) settleGuildHouse() {
 	g.Etin -= g.KeepEtin
 	g.UseHouse = 1
 	g.send(guildID32(packet.GuildEtin, g.Etin), "0x0D23 guild etin", nil)
+}
+
+// inGuildHouseZone is CMap::IsGuildHouseMap for the character's zone.
+func (s *Session) inGuildHouseZone() bool {
+	return s.char != nil && mapCreateType(s.char.MapID) == guildHouseCreateType
+}
+
+// houseNpcRefusal answers a guild house service the guild cannot use with
+// 0x0D28 {result, detail}, as PacketShop and PacketMaininterface do.
+func (s *Session) houseNpcRefusal(result, detail uint8) {
+	s.send(buildGuildBankResult(result, detail), "0x0D28 guild house service refused")
+}
+
+// houseNpcColumn finds a NPC type id in the shop table of its kind and
+// returns the level that unlocks it (0 when not listed above from).
+func houseNpcAbove(country int32, kind int, from int, npcTypeID uint16) (level uint8, found bool) {
+	if country > 1 {
+		country = 1
+	}
+	for next := from; next <= 3; next++ {
+		for _, id := range guildHouse.NpcIDs[country][kind][next] {
+			if id == npcTypeID {
+				return uint8(next), true
+			}
+		}
+	}
+	return 0, false
+}
+
+// shopBuyRate is CGuild::GetGuildHouseShopBuyRate: the price factor for a
+// shop of the given type (1 weapon, 2 defense, 3 general, 4 potion), or the
+// refusal result and detail (1 rank limit, 2 NPC level above the guild's).
+func (g *guild) shopBuyRate(npcTypeID uint16, shopType uint8) (rate float64, result, detail uint8) {
+	level := g.npcLevel(uint16(shopType)<<8 | 1)
+	if level > 3 {
+		level = 3
+	}
+	rate = guildHouse.ShopRate[level]
+	if shopType == 4 {
+		rate = guildHouse.PotionRate[level]
+	}
+	switch shopType {
+	case 4:
+		if g.Rank > 6 {
+			return rate, 1, 6
+		}
+		return rate, 0, 0
+	case 3:
+		if g.Rank > 30 {
+			return rate, 1, 30
+		}
+	case 1, 2:
+	default:
+		return rate, 0, 0
+	}
+	if level == 3 {
+		return rate, 0, 0
+	}
+	if next, ok := houseNpcAbove(int32(g.Country), int(shopType), int(level)+1, npcTypeID); ok {
+		return rate, 2, next
+	}
+	return rate, 0, 0
+}
+
+// gateRate is CGuild::GetGuildHouseUseGateRate: the fee factor, or the
+// level the gatekeeper NPC needs when it is above the guild's.
+func (g *guild) gateRate(npcTypeID uint16) (rate float64, needLevel uint8, ok bool) {
+	level := g.npcLevel(guildNpcGate)
+	if level > 3 {
+		level = 3
+	}
+	rate = guildHouse.GateRate[level]
+	if level == 3 {
+		return rate, 0, true
+	}
+	if next, found := houseNpcAbove(int32(g.Country), 0, int(level)+1, npcTypeID); found {
+		return rate, next, false
+	}
+	return rate, 0, true
+}
+
+// roundHalfAway is the x87 ROUND of the original price products.
+func houseRound(v float64) uint32 { return uint32(math.Floor(v + 0.5)) }
+
+// smithIndex is the blacksmith NPC level clamped to the six-entry tables.
+func (g *guild) smithIndex() int { return int(min(g.npcLevel(guildNpcSmith), 5)) }
+
+// houseMix returns the gem-linking cost factor (RapiceMixDecreRate) and the
+// success bonus (RapiceMixPercentRate, active house only) for the guild
+// smith inside a house map; (1, 0) elsewhere.
+func (s *Session) houseMix() (rate float64, bonus int) {
+	if !s.inGuildHouseZone() || s.player == nil {
+		return 1, 0
+	}
+	guildMu.Lock()
+	defer guildMu.Unlock()
+	g := s.player.guild.guild
+	if g == nil {
+		return 1, 0
+	}
+	i := g.smithIndex()
+	rate = guildHouse.MixRate[i]
+	if g.houseEnabled() {
+		bonus = int(guildHouse.MixPercent[i])
+	}
+	return rate, bonus
 }
