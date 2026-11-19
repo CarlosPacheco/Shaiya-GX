@@ -18,7 +18,7 @@ import (
 // mobs with the original formulas and logs hit rates and damage.
 func TestCombatNumbers(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -61,7 +61,7 @@ func TestCombatNumbers(t *testing.T) {
 
 func TestNewCharacterCombat(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -101,7 +101,7 @@ func TestNewCharacterCombat(t *testing.T) {
 
 func TestEquipRules(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -150,7 +150,7 @@ func TestEquipRules(t *testing.T) {
 // mob and character, checking the results stay in the original limits.
 func TestSkillCombat(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -213,7 +213,7 @@ func TestSkillCombat(t *testing.T) {
 // takes the mob's whole HP when it ends, and damage wakes a sleeping mob.
 func TestMobEffects(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -303,7 +303,7 @@ func TestMobEffects(t *testing.T) {
 // on an offline session (sends are no-ops without a connection).
 func TestPlayerEffects(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -401,7 +401,7 @@ func TestPlayerEffects(t *testing.T) {
 // returning home without a refill or passive regeneration.
 func TestMobAI(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -489,7 +489,7 @@ func TestMobAI(t *testing.T) {
 // timer (CZone::UpdateMobRespawn), the timer started by the first death.
 func TestGroupRespawn(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -536,7 +536,7 @@ func TestGroupRespawn(t *testing.T) {
 // TestCraftRules checks the lapisia/gem rules against the EP4.5 data.
 func TestCraftRules(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -595,7 +595,7 @@ func TestCraftRules(t *testing.T) {
 // ends.
 func TestRebirth(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -680,7 +680,7 @@ func TestRebirth(t *testing.T) {
 // move to the caster's bind point.
 func TestSkillOnce(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -756,7 +756,7 @@ func TestSkillOnce(t *testing.T) {
 // 0x0511 0xFF cancels an own buff.
 func TestFriendlySkills(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -852,7 +852,7 @@ func TestFriendlySkills(t *testing.T) {
 // resolved in the target's session, and a kill is a type-1 death.
 func TestUserAttack(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -1018,7 +1018,7 @@ func TestUserAttack(t *testing.T) {
 // caster reaches hostile users, and a debuff stays on the target.
 func TestUserSkills(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -1131,7 +1131,7 @@ func TestUserSkills(t *testing.T) {
 // death pays both wagers to the winner with no exp or kill.
 func TestDuel(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -1270,7 +1270,7 @@ func TestDuel(t *testing.T) {
 // the two sides are foes, and a guild left without participants loses.
 func TestGuildDuel(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -1381,7 +1381,7 @@ func TestGuildDuel(t *testing.T) {
 // usp_Save_GodBless_E / usp_Read_GodBless_R and leaves them at 0.
 func TestGodBlessStorage(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -1409,7 +1409,7 @@ func (l testLog) Printf(format string, args ...any) { l.t.Logf(format, args...) 
 // target's armour gem skill on the attacker, and gem casts cast no gems.
 func TestGemSkills(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -1489,7 +1489,7 @@ func TestGemSkills(t *testing.T) {
 // GetZoneByMapID's party instance, then the empty-instance expiry.
 func TestPartyDungeon(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {

@@ -14,9 +14,7 @@ import (
 
 func TestWorldDropsRespectCatalogOJLimits(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		if err = os.Chdir("../.."); err != nil {
-			t.Fatal(err)
-		}
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
@@ -56,9 +54,7 @@ func TestClientAndServerRecreationLimitsMatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat("data/game"); err != nil {
-		if err = os.Chdir("../.."); err != nil {
-			t.Fatal(err)
-		}
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {

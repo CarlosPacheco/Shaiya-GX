@@ -22,7 +22,7 @@ import (
 // GuildChars rows. Its rows are removed afterwards.
 func TestGuildLifecycle(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {

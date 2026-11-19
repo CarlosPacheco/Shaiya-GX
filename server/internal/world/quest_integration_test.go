@@ -16,7 +16,7 @@ import (
 // at an NPC) without a client: counters advance and stop at the hand-in.
 func TestQuestKillProgress(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {

@@ -21,7 +21,7 @@ import (
 // entries, points / 2), which opens the guild bank.
 func TestGuildRankingBattle(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
-		os.Chdir("../..")
+		t.Chdir("../..")
 	}
 	config.LoadRuntimeEnv()
 	if err := db.Open(db.UserData, db.GameData, db.GameDefs); err != nil {
