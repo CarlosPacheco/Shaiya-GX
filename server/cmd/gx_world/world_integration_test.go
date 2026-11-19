@@ -93,8 +93,9 @@ func op(p []byte) packet.Opcode { v, _ := packet.U16(p); return packet.BaseOpcod
 // until reads payloads until one has the wanted opcode.
 func (c *client) until(want packet.Opcode, seen map[packet.Opcode]int) []byte {
 	c.t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
 	for {
-		p := c.read(10 * time.Second)
+		p := c.read(time.Until(deadline))
 		if p == nil {
 			c.t.Fatalf("timed out waiting for 0x%04X (seen %v)", uint16(want), seen)
 		}

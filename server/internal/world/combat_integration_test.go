@@ -636,12 +636,12 @@ func TestRebirth(t *testing.T) {
 		t.Fatalf("bind revive: dead %v pos (%v, %v) hp %d/%d exp %d", s.dead, ch.PosX, ch.PosZ, s.stats().CurrentHP, full().MaxHP, ch.Exp)
 	}
 
-	// Both EP5 runes have ReqVg=0; the first bag/slot wins for either destination.
+	// The release catalog has separate here and bind runes. Prefer the matching rune even when its slot is later.
 	s.items = []db.Item{{Bag: 1, Slot: 3, Type: 100, TypeID: 44, Count: 2}, {Bag: 1, Slot: 1, Type: 100, TypeID: 81, Count: 1}}
 	exp := ch.Exp
 	die()
 	s.handleResurrect([]byte{0x53, 0x05, reviveRuneHere})
-	if s.dead || ch.PosX != 900 || ch.Exp != exp || s.stats().CurrentHP != full().MaxHP/2 || len(s.items) != 1 || s.items[0].Count != 2 {
+	if s.dead || ch.PosX != 900 || ch.Exp != exp || s.stats().CurrentHP != full().MaxHP/2 || len(s.items) != 2 || s.items[0].TypeID != 44 || s.items[0].Count != 1 || s.items[1].TypeID != 81 {
 		t.Fatalf("rune here: dead %v pos %v exp %d hp %d items %+v", s.dead, ch.PosX, ch.Exp, s.stats().CurrentHP, s.items)
 	}
 	die()

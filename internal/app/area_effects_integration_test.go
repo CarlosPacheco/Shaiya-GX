@@ -67,6 +67,8 @@ func TestFrozenIceAreaAgainstRapture(t *testing.T) {
 	}
 	a.frameDT = 0
 	a.Draw(1024, 734) // Load the real actor before input, as in a live session.
+	// The walk to a live mob can leave an unrelated impact active.
+	a.wv.impacts, a.wv.releaseEffects = nil, nil
 	st.QuickSlots = []proto.QuickSlot{{Bar: 0, Slot: 0, Bag: 100, Number: uint16(st.LastLearn.Number)}}
 	a.useAction(0)
 	predictedAction := a.wv.self.ActionID()

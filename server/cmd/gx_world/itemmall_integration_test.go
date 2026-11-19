@@ -5,6 +5,7 @@ package main
 import (
 	"encoding/binary"
 	"testing"
+	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -47,14 +48,26 @@ func TestItemMallAgainstSQLite(t *testing.T) {
 	buy := make([]byte, 21)
 	copy(buy, code)
 	c.write(msg(packet.PointBuy, buy...))
-	add := c.until(packet.AddItem, seen)
+	var add, res []byte
+	deadline := time.Now().Add(10 * time.Second)
+	for res == nil {
+		frame := c.read(time.Until(deadline))
+		if frame == nil {
+			t.Fatal("mall purchase did not respond")
+		}
+		switch op(frame) {
+		case packet.AddItem:
+			add = frame
+		case packet.PointBuy:
+			res = frame
+		}
+	}
+	if res[2] != 0 || add == nil {
+		t.Fatalf("point buy result %d, item grant received: %t", res[2], add != nil)
+	}
 	bag, slot = add[2], add[3]
 	if add[4] != prod.Items[0].Type || add[5] != prod.Items[0].TypeID {
 		t.Fatalf("granted %d/%d, want %d/%d", add[4], add[5], prod.Items[0].Type, prod.Items[0].TypeID)
-	}
-	res := c.until(packet.PointBuy, seen)
-	if res[2] != 0 {
-		t.Fatalf("point buy result %d", res[2])
 	}
 	if got := binary.LittleEndian.Uint32(res[3:]); got != before-prod.BuyCost {
 		t.Fatalf("points %d, want %d", got, before-prod.BuyCost)
