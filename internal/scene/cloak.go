@@ -5,6 +5,7 @@ import (
 	"math"
 	"path"
 	"strings"
+	"sync/atomic"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/model"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -13,12 +14,12 @@ import (
 type cloakGeometry struct {
 	record   model.CloakRecord
 	vertices []render.Vertex
-	indices  []uint32
 	mesh     *render.Mesh
 	shoulder *skinPart
 	texture  *render.Texture
 }
 type cloakInstance struct {
+	id, version uint64
 	geometry    *cloakGeometry
 	physics     *clothPhysics
 	vertices    []render.Vertex
@@ -31,6 +32,8 @@ type cloakInstance struct {
 	lodInterval float64
 	lodAt       float64
 }
+
+var cloakIDs atomic.Uint64
 
 // HasCloak reports successfully loaded native cloth, including Model zero.
 func (c *Character) HasCloak() bool { return c != nil && c.cloak != nil }
@@ -110,8 +113,9 @@ func (s *Assets) cloakGeometry(a Appearance) (*cloakGeometry, error) {
 	for i, v := range mesh.Vertices {
 		g.vertices[i] = render.Vertex{Pos: render.V3(v.Pos), Normal: render.V3(v.Normal), UV: v.UV}
 	}
+	indices := make([]uint32, 0, len(mesh.Faces)*3)
 	for _, f := range mesh.Faces {
-		g.indices = append(g.indices, uint32(f[0]), uint32(f[1]), uint32(f[2]))
+		indices = append(indices, uint32(f[0]), uint32(f[1]), uint32(f[2]))
 	}
 	g.shoulder, err = s.skinFile(fmt.Sprintf("cloak/Character/%s/3DC/Static/%s", folder, path.Base(table.Shoulders[record.Shoulder])))
 	if err != nil {
@@ -121,7 +125,8 @@ func (s *Assets) cloakGeometry(a Appearance) (*cloakGeometry, error) {
 	if g.texture == nil {
 		return nil, fmt.Errorf("cloak: missing texture")
 	}
-	g.mesh = render.NewAnimatedMesh(len(g.vertices), g.indices)
+	g.mesh = render.NewAnimatedMesh(len(g.vertices), indices)
+	g.mesh.UpdateVertices(g.vertices)
 	if s.cloaks == nil {
 		s.cloaks = map[string]*cloakGeometry{}
 	}
@@ -153,7 +158,7 @@ func (c *Character) attachCloak(a Appearance) {
 	for _, pin := range g.record.Pins {
 		p.pins[pin.Vertex] = true
 	}
-	c.cloak = &cloakInstance{geometry: g, physics: p, vertices: append([]render.Vertex(nil), g.vertices...)}
+	c.cloak = &cloakInstance{id: cloakIDs.Add(1), geometry: g, physics: p, vertices: append([]render.Vertex(nil), g.vertices...)}
 }
 func (c *cloakInstance) update(world render.M4, finals []render.M4) {
 	c.updateWithBudget(world, finals, 50)
@@ -161,6 +166,7 @@ func (c *cloakInstance) update(world render.M4, finals []render.M4) {
 
 func (c *cloakInstance) updateWithBudget(world render.M4, finals []render.M4, budget int) {
 	c.reused = false
+	c.version++
 	p := c.physics
 	if !c.initialized || (render.V3{world[12] - c.world[12], world[13] - c.world[13], world[14] - c.world[14]}).Len() > 20 {
 		for i, v := range p.rest {
@@ -185,29 +191,17 @@ func (c *cloakInstance) updateWithBudget(world render.M4, finals []render.M4, bu
 	for range steps {
 		p.step(.0005)
 	}
+	// Cloth is unlit in every pass. Keep authored normals and update the
+	// positions and bounds used for depth, clipping and the silhouette.
 	inverse := world.Inverse()
 	for i, v := range p.positions {
 		c.vertices[i].Pos = transformPoint(v, inverse)
-		c.vertices[i].Normal = render.V3{}
 		if i == 0 {
 			c.min, c.max = c.vertices[i].Pos, c.vertices[i].Pos
 		}
 		for axis, value := range c.vertices[i].Pos {
 			c.min[axis], c.max[axis] = min(c.min[axis], value), max(c.max[axis], value)
 		}
-	}
-	for i := 0; i < len(c.geometry.indices); i += 3 {
-		a, b, d := c.geometry.indices[i], c.geometry.indices[i+1], c.geometry.indices[i+2]
-		n := c.vertices[b].Pos.Sub(c.vertices[a].Pos).Cross(c.vertices[d].Pos.Sub(c.vertices[a].Pos))
-		if n.Dot(c.geometry.vertices[a].Normal) < 0 {
-			n = n.Scale(-1)
-		}
-		for _, index := range []uint32{a, b, d} {
-			c.vertices[index].Normal = c.vertices[index].Normal.Add(n)
-		}
-	}
-	for i := range c.vertices {
-		c.vertices[i].Normal = c.vertices[i].Normal.Norm()
 	}
 }
 func (c *cloakInstance) draw(s *render.Scene3D, world render.M4, concealed bool) {

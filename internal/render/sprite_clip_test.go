@@ -7,10 +7,10 @@ func TestClipRectKeepsGlyphVerticesAndUVsInsidePanel(t *testing.T) {
 	s := &Sprites{tex: tex, cap: 16}
 	restore := s.ClipRect(10, 20, 30, 40)
 	s.Draw(tex, 5, 15, 20, 20, 0, 0, 1, 1, [4]float32{1, 1, 1, 1})
-	if len(s.verts) != 48 {
+	if len(s.verts) != 6*floatsPerVertex {
 		t.Fatal("missing clipped quad", len(s.verts))
 	}
-	for i := 0; i < len(s.verts); i += 8 {
+	for i := 0; i < len(s.verts); i += floatsPerVertex {
 		x, y := s.verts[i], s.verts[i+1]
 		if x < 10 || x > 40 || y < 20 || y > 60 {
 			t.Fatal("glyph escaped panel", x, y)

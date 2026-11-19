@@ -17,7 +17,6 @@ type Sprites struct {
 	uScreen, uMasked       int32
 	uCircle                int32
 	uGrayscale             int32
-	uNameDepth             int32
 	nameDepth              float32
 	depth                  *Texture
 	depthValid             bool
@@ -36,12 +35,15 @@ const spriteVS = `#version 450 core
 layout(location=0) in vec2 pos;
 layout(location=1) in vec2 uv;
 layout(location=2) in vec4 color;
+layout(location=3) in vec2 labelState;
 uniform vec2 screen;
 out vec2 vUV;
 out vec4 vColor;
+flat out vec2 vLabelState;
 void main() {
 	vUV = uv;
 	vColor = color;
+	vLabelState = labelState;
 	gl_Position = vec4(pos.x / screen.x * 2.0 - 1.0, 1.0 - pos.y / screen.y * 2.0, 0.0, 1.0);
 }`
 
@@ -51,22 +53,24 @@ layout(binding=1) uniform sampler2D mask;
 layout(binding=2) uniform sampler2D worldDepth;
 uniform int masked;
 uniform int grayscale;
-uniform float nameDepth;
 uniform int reversedDepth;
 uniform vec2 screen;
 uniform vec3 circle; // screen centre and radius; zero radius disables clipping
 in vec2 vUV;
 in vec4 vColor;
+flat in vec2 vLabelState;
 out vec4 frag;
 void main() {
 	// Phoenix classic_overlay.gdshader, adapted from reverse Z to GL ZERO_TO_ONE.
-	if (nameDepth >= 0.0) {
+	if (vLabelState.x >= 0.0) {
  float sampledDepth = texelFetch(worldDepth, ivec2(gl_FragCoord.xy), 0).r;
  if (reversedDepth != 0) sampledDepth = 1.0 - sampledDepth;
- if (sampledDepth + 0.000001 < nameDepth) discard;
+ if (sampledDepth + 0.000001 < vLabelState.x) discard;
  }
 	vec2 uv = masked != 0 ? vec2(vUV.x, 1.0 - vUV.y) : vUV;
-	if (masked != 0) {
+	if (vLabelState.y != 0.0) {
+		frag = vColor;
+	} else if (masked != 0) {
 		// Phoenix shaders/retail_portrait.gdshader: integrate the pixel
 		// footprint when reducing the 384px snapshot to the HUD rectangle.
 		vec2 dx = dFdx(uv), dy = dFdy(uv);
@@ -93,7 +97,7 @@ void main() {
 	}
 }`
 
-const floatsPerVertex = 8
+const floatsPerVertex = 10
 
 func NewSprites(maxQuads int) (*Sprites, error) {
 	p, err := Program(spriteVS, spriteFS)
@@ -104,15 +108,13 @@ func NewSprites(maxQuads int) (*Sprites, error) {
 	s.uMasked = gl.GetUniformLocation(p, gl.Str("masked\x00"))
 	s.uCircle = gl.GetUniformLocation(p, gl.Str("circle\x00"))
 	s.uGrayscale = gl.GetUniformLocation(p, gl.Str("grayscale\x00"))
-	s.uNameDepth = gl.GetUniformLocation(p, gl.Str("nameDepth\x00"))
-	gl.ProgramUniform1f(p, s.uNameDepth, -1)
 	gl.CreateBuffers(1, &s.vbo)
 	gl.NamedBufferStorage(s.vbo, maxQuads*6*floatsPerVertex*4, nil, gl.DYNAMIC_STORAGE_BIT)
 	addGPUBytes(uint64(maxQuads * 6 * floatsPerVertex * 4))
 	gl.CreateVertexArrays(1, &s.vao)
 	gl.VertexArrayVertexBuffer(s.vao, 0, s.vbo, 0, floatsPerVertex*4)
-	for i, n := range []int32{2, 2, 4} {
-		off := []uint32{0, 2, 4}[i]
+	for i, n := range []int32{2, 2, 4, 2} {
+		off := []uint32{0, 2, 4, 8}[i]
 		gl.EnableVertexArrayAttrib(s.vao, uint32(i))
 		gl.VertexArrayAttribFormat(s.vao, uint32(i), n, gl.FLOAT, false, off*4)
 		gl.VertexArrayAttribBinding(s.vao, uint32(i), 0)
@@ -133,6 +135,19 @@ func (s *Sprites) Begin(w, h int) {
 
 // Draw queues a quad at (x,y) of size (w,h) with texture rect (u0,v0)-(u1,v1).
 func (s *Sprites) Draw(t *Texture, x, y, w, h, u0, v0, u1, v1 float32, rgba [4]float32) {
+	s.draw(t, x, y, w, h, u0, v0, u1, v1, rgba, 0)
+}
+
+// DrawFlat draws a solid quad without interrupting the active texture batch.
+func (s *Sprites) DrawFlat(fallback *Texture, x, y, w, h float32, rgba [4]float32) {
+	t := s.tex
+	if t == nil {
+		t = fallback
+	}
+	s.draw(t, x, y, w, h, 0, 0, 1, 1, rgba, 1)
+}
+
+func (s *Sprites) draw(t *Texture, x, y, w, h, u0, v0, u1, v1 float32, rgba [4]float32, flat float32) {
 	if s.clipped {
 		left, top := max(x, s.clipRect[0]), max(y, s.clipRect[1])
 		right, bottom := min(x+w, s.clipRect[2]), min(y+h, s.clipRect[3])
@@ -149,7 +164,7 @@ func (s *Sprites) Draw(t *Texture, x, y, w, h, u0, v0, u1, v1 float32, rgba [4]f
 		s.tex = t
 	}
 	v := func(px, py, u, vv float32) {
-		s.verts = append(s.verts, px, py, u, vv, rgba[0], rgba[1], rgba[2], rgba[3])
+		s.verts = append(s.verts, px, py, u, vv, rgba[0], rgba[1], rgba[2], rgba[3], s.nameDepth, flat)
 	}
 	v(x, y, u0, v0)
 	v(x+w, y, u1, v0)

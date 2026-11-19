@@ -20,6 +20,7 @@ import (
 // third-person camera (0x444b10 reset, 0x4397d0 orbit/zoom, 0x43bfa0
 // movement; Phoenix tools/reference/ep5_camera_controls.md).
 type worldView struct {
+	draws                       worldDrawBreakdown
 	bots                        *bots.Arena
 	dashes                      map[uint32]proto.SkillDash
 	requestedSkills             []*requestedSkillPresentation
@@ -129,6 +130,13 @@ type worldView struct {
 	groundBatches               [4][]render.M4
 	groundColors                [4][][4]float32
 	groundStart                 map[uint32]float64
+}
+
+type worldDrawBreakdown struct {
+	WorldGeometry int `json:"main_map_geometry"`
+	Reflected     int `json:"reflection_pass"`
+	WorldScene    int `json:"total_world_scene"`
+	UI            int `json:"ui"`
 }
 
 const (
@@ -669,6 +677,8 @@ func (a *App) drawWorldView(w, h int) {
 	if v == nil || v.world == nil || w <= 0 || h <= 0 {
 		return
 	}
+	v.draws = worldDrawBreakdown{}
+	drawStart := render.DrawCalls()
 	eye, target := v.eye, v.target()
 	if v.cameraReady {
 		eye, target = v.cameraEye, v.cameraTarget
@@ -749,6 +759,7 @@ func (a *App) drawWorldView(w, h int) {
 			}
 		}
 	}
+	beforeReflection := render.DrawCalls()
 	if v.waterReflection != nil && waterVisible && !underwater {
 		view := s.View
 		mirror := render.Identity()
@@ -783,6 +794,7 @@ func (a *App) drawWorldView(w, h int) {
 	} else {
 		v.world.PrepareMapEffects(s, eye)
 	}
+	v.draws.Reflected = render.DrawCalls() - beforeReflection
 	a.drawWorldContents(eye, underwater)
 	if s.WaterReflection != nil && !s.WaterBelow && v.world.HasWaterNormals() {
 		s.CaptureWaterBackground()
@@ -801,6 +813,7 @@ func (a *App) drawWorldView(w, h int) {
 	s.End()
 	v.sunFlare.update(v.world, eye, s.View, s.SkyProj, far, float32(a.frameDT))
 	a.drawCollisionView()
+	v.draws.WorldScene = render.DrawCalls() - drawStart
 }
 
 func (a *App) drawWorldContents(eye render.V3, underwater bool) {
@@ -808,7 +821,11 @@ func (a *App) drawWorldContents(eye render.V3, underwater bool) {
 	if !underwater && v.world.Sky != nil {
 		v.world.Sky.DrawWeather(s, eye, v.weather.blend)
 	}
+	beforeMap := render.DrawCalls()
 	v.world.Draw(s)
+	if s.ClipPlane == [4]float32{} {
+		v.draws.WorldGeometry = render.DrawCalls() - beforeMap
+	}
 	a.drawGroundItems()
 	a.drawSelf()
 	a.drawRemotePlayers()
@@ -979,6 +996,7 @@ func (a *App) releaseWorld() {
 	}
 	if a.wv != nil {
 		a.wv.clearBots()
+		a.wv.crowdBatch.Delete()
 		a.wv.shadow.Delete()
 		a.wv.waterReflection.Delete()
 		a.scene3d.ReleaseWaterBackground()

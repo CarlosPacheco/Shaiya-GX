@@ -525,3 +525,43 @@ fading corpse and original equipment produced identical pixels in two
 camera passes while reducing draws from 216 to 32. Tests also cover nearby
 full cloth, reduced distant cadence, fallback in clipped passes, and
 rejection before preparing poses for cloaked actors.
+
+## Instanced cloth and depth-tested nameplates
+
+Opaque capes share draws by mesh and material. Each instance reads its own
+deformed positions from a resident storage buffer. A changed pose uploads
+one packed list of position ranges and a compute pass copies it to the
+resident slots. A fully unchanged pose sends only the current instance
+transform. A growing or heavily changed buffer uses a full position upload.
+Cloth uses the authored UVs and its existing unlit shader. The CPU no longer
+reconstructs normals for that unlit surface.
+
+Nameplates carry depth per quad, and solid health bars share the active glyph
+batch. This preserves their draw order and per-label depth test with fewer
+sprite submissions. Capes below roughly 24 projected actor pixels use a
+12 Hz refresh with a smaller solver budget. Larger capes retain the previous
+quality tiers, and near, clipped and shadow passes retain the full solver.
+
+Three interleaved Linux runs of 240 frames per variant used the seeded
+600-bot scene at 1280×720 with skill effects disabled.
+
+| Variant | Whole loop ms/frame | Full-frame draws |
+|---|---:|---:|
+| Before | 24.295 | 1,703 |
+| Instanced capes, dirty uploads and no normal rebuild | 22.701 | 1,166 |
+| Also batch nameplates | 22.484 | 576 |
+
+In three additional 180-frame paired tests, the far tier reduced whole-loop
+time from 22.260 to 20.921 ms. This is an isolated comparison with the prior
+tier. In the 600-bot scene, cloak draws fell from 585 to 47 and UI draws fell
+from 624 to 38. The position stream averaged 580 kB per frame when the
+instanced path uploaded the entire buffer. Dirty-range uploads averaged
+203 kB, or 162 kB with the far tier. The total excludes instance transforms.
+In matched 900-frame profiles, CPU samples fell from 30.94 s to 25.19 s.
+Cloth preparation and bounds still account for about 37% each in the final
+profile, with pose work included in the bounds count.
+
+Native OpenGL tests compare serial and instanced cloak pixels in two cameras,
+test moving unchanged meshes and one changed range, and verify label depth
+across mixed depths and solid quads. The maximum bot count also exercises
+buffer release.

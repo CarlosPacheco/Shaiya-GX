@@ -167,12 +167,20 @@ func (s *Scene3D) meshOccluded(m *Mesh, world M4) bool {
 	if s.Occlusion == nil || m == nil || !m.boundsValid {
 		return false
 	}
+	return s.ModelBoundsOccluded(m.minimum, m.maximum, world)
+}
+
+// ModelBoundsOccluded tests local-space bounds using the regular mesh path.
+func (s *Scene3D) ModelBoundsOccluded(minimum, maximum V3, world M4) bool {
+	if s.Occlusion == nil {
+		return false
+	}
 	lo, hi := V3{math.MaxFloat32, math.MaxFloat32, math.MaxFloat32}, V3{-math.MaxFloat32, -math.MaxFloat32, -math.MaxFloat32}
 	for i := 0; i < 8; i++ {
-		p := m.minimum
+		p := minimum
 		for axis := 0; axis < 3; axis++ {
 			if i&(1<<axis) != 0 {
-				p[axis] = m.maximum[axis]
+				p[axis] = maximum[axis]
 			}
 		}
 		for axis := 0; axis < 3; axis++ {

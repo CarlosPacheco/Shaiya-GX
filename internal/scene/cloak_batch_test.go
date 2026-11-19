@@ -18,7 +18,6 @@ func TestCharacterClothBatchMatchesSerial(t *testing.T) {
 	geometry := &cloakGeometry{
 		record:   model.CloakRecord{Columns: 2, Rows: 2},
 		vertices: make([]render.Vertex, len(rest)),
-		indices:  []uint32{0, 2, 1, 1, 2, 3},
 	}
 	for i, p := range rest {
 		geometry.vertices[i] = render.Vertex{Pos: p, Normal: render.V3{0, 0, 1}}
@@ -90,5 +89,12 @@ func TestCrowdClothQualityUsesProjectedSize(t *testing.T) {
 	c.prepareCrowdCloak(s)
 	if c.cloak.reused || c.cloak.elapsed != 0 {
 		t.Fatal("large projected cape did not update every frame")
+	}
+	c.World[14] = 100
+	c.prepareCrowdCloak(s)
+	c.Update(1.0 / 60)
+	c.prepareCrowdCloak(s)
+	if c.cloak.lodInterval != 1.0/12 {
+		t.Fatal("very small cape did not use the far refresh tier")
 	}
 }

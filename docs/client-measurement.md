@@ -70,6 +70,10 @@ are included in the draw submission time.
 The final main-camera count reports skinned batches, rigid attachments,
 cloth and serial fallback separately. The full-frame counter also includes
 the map, HUD and any secondary passes.
+The bot cases also report main-camera cloth position upload bytes and operations
+averaged over the measured frames. Position bytes include dirty-range headers
+and exclude instance transforms. The final frame's world breakdown records
+map geometry, the reflection pass, the total world scene and UI separately.
 
 `crowd-network` injects 200 payloads every six simulated frames: 2,000 payloads
 per simulated second. Payload construction is outside the pump timer; decoding,

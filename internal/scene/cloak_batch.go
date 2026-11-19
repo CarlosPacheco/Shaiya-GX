@@ -60,8 +60,12 @@ func (c *Character) prepareCrowdCloak(s *render.Scene3D) {
 		return
 	}
 	interval := 1.0 / 30
+	budget := 5
 	if height < 38 {
 		interval = 1.0 / 20
+	}
+	if height < 24 {
+		interval, budget = 1.0/12, 3
 	}
 	if cloak.lodInterval != interval {
 		// Spread refreshes over successive frames in a dense formation.
@@ -78,5 +82,5 @@ func (c *Character) prepareCrowdCloak(s *render.Scene3D) {
 	if cloak.lodAt <= c.enchantTime {
 		cloak.lodAt = c.enchantTime + interval
 	}
-	cloak.updateWithBudget(c.World, c.finals(), 5)
+	cloak.updateWithBudget(c.World, c.finals(), budget)
 }

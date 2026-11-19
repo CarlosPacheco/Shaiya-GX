@@ -83,9 +83,14 @@ func Program(vs, fs string) (uint32, error) {
 		return 0, err
 	}
 	defer gl.DeleteShader(f)
+	return link(v, f)
+}
+
+func link(shaders ...uint32) (uint32, error) {
 	p := gl.CreateProgram()
-	gl.AttachShader(p, v)
-	gl.AttachShader(p, f)
+	for _, shader := range shaders {
+		gl.AttachShader(p, shader)
+	}
 	gl.LinkProgram(p)
 	var ok int32
 	gl.GetProgramiv(p, gl.LINK_STATUS, &ok)

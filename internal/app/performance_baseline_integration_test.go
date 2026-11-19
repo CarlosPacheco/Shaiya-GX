@@ -380,6 +380,7 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		}
 	}
 	update, draw, pump, wait, wall, calls := make([]float64, frames), make([]float64, frames), make([]float64, frames), make([]float64, frames), make([]float64, frames), make([]float64, frames)
+	var clothBytes, clothUploads float64
 	profilePath := os.Getenv("GX_MEASURE_CPU_PROFILE")
 	stopProfile := func() {}
 	if profilePath != "" {
@@ -455,6 +456,11 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		fences[slot] = gl.FenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0)
 		gl.Flush()
 		calls[frame] = float64(render.DrawCalls())
+		if botCount != 0 {
+			stats := a.wv.bots.DrawStats()
+			clothBytes += float64(stats.ClothBytes)
+			clothUploads += float64(stats.ClothUploads)
+		}
 		wall[frame] = float64(time.Since(frameStart)) / 1e6
 	}
 	gl.Finish()
@@ -522,6 +528,9 @@ func TestClientPerformanceBaseline(t *testing.T) {
 	}
 	if botCount != 0 {
 		result["final_main_camera_bot_draws"] = a.wv.bots.DrawStats()
+		result["final_world_draw_breakdown"] = a.wv.draws
+		result["main_cloth_position_bytes_mean"] = clothBytes / float64(frames)
+		result["main_cloth_position_uploads_mean"] = clothUploads / float64(frames)
 	}
 	data, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {

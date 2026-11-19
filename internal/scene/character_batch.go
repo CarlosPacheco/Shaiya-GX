@@ -21,10 +21,12 @@ type rigidGroup struct {
 }
 
 type CrowdDrawStats struct {
-	Skin     int `json:"skin"`
-	Rigid    int `json:"weapons_shields"`
-	Cloth    int `json:"cloth"`
-	Fallback int `json:"serial"`
+	Skin         int `json:"skin"`
+	Rigid        int `json:"weapons_shields"`
+	Cloth        int `json:"cloth"`
+	Fallback     int `json:"serial"`
+	ClothBytes   int `json:"cloth_position_bytes"`
+	ClothUploads int `json:"cloth_position_uploads"`
 }
 
 // CharacterBatch gathers already visible crowd actors for one camera pass.
@@ -38,6 +40,7 @@ type CharacterBatch struct {
 	rigidKeys   map[rigidMaterial]int
 	rigidGroups []rigidGroup
 	cloaks      []*Character
+	cloth       render.ClothCrowd
 	Stats       CrowdDrawStats
 }
 
@@ -55,6 +58,7 @@ func (b *CharacterBatch) Draw(k *render.Skinner, s *render.Scene3D, actors []*Ch
 		b.keys = make(map[render.SkinGroup]int)
 		b.rigidKeys = make(map[rigidMaterial]int)
 	}
+	b.cloth.Begin(len(actors))
 	for _, c := range actors {
 		if c.Concealed || c.hasBlendedAttachment() {
 			b.flush(k, s)
@@ -72,7 +76,10 @@ func (b *CharacterBatch) Draw(k *render.Skinner, s *render.Scene3D, actors []*Ch
 		}
 	}
 	b.flush(k, s)
+	b.Stats.ClothBytes, b.Stats.ClothUploads = b.cloth.Uploaded, b.cloth.UploadOps
 }
+
+func (b *CharacterBatch) Delete() { b.cloth.Delete() }
 
 func (c *Character) hasBlendedAttachment() bool {
 	if !c.Mounted {
@@ -169,8 +176,14 @@ func (b *CharacterBatch) flush(k *render.Skinner, s *render.Scene3D) {
 		s.Begin()
 	}
 	for _, c := range b.cloaks {
-		c.cloak.drawInPass(s, c.World, false)
+		cloak := c.cloak
+		if !s.ModelBoundsOccluded(cloak.min, cloak.max, c.World) {
+			if !b.cloth.Queue(s, cloak.geometry.mesh, cloak.geometry.texture, cloak.id, cloak.version, cloak.vertices, c.World) {
+				cloak.drawInPass(s, c.World, false)
+			}
+		}
 	}
+	b.cloth.Draw(s)
 	b.Stats.Cloth += render.DrawCalls() - before
 	before = render.DrawCalls()
 	if len(b.rigidKeys) != 0 {

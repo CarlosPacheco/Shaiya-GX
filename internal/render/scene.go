@@ -15,6 +15,10 @@ layout(location=4) in mat4 instanceWorld;
 layout(location=8) in mat4 instanceWorldView;
 layout(location=12) in mat4 instanceWorldViewProj;
 layout(std430, binding=3) readonly buffer EffectColors { vec4 colors[]; };
+struct ClothPlacement { mat4 world; mat4 view; mat4 projection; ivec4 offsets; };
+layout(std430, binding=6) readonly buffer ClothPositions { vec4 clothPositions[]; };
+layout(std430, binding=7) readonly buffer ClothPlacements { ClothPlacement clothPlacements[]; };
+uniform int clothBase;
 uniform int instanced;
 uniform int instanceColorOffset;
 uniform mat4 world;
@@ -34,6 +38,13 @@ void main() {
 	mat4 wm = instanced != 0 ? instanceWorld : world;
 	mat4 mv = instanced != 0 ? instanceWorldView : worldView;
 	mat4 mvp = instanced != 0 ? instanceWorldViewProj : worldViewProj;
+	if (clothBase != 0) {
+		ClothPlacement cloth = clothPlacements[clothBase-1+gl_InstanceID];
+		local = vec4(clothPositions[cloth.offsets.x+gl_VertexID].xyz, 1.0);
+		wm = cloth.world;
+		mv = cloth.view;
+		mvp = cloth.projection;
+	}
 	gl_Position = mvp * local;
 	gl_ClipDistance[0] = dot(wm * local, clipPlane);
 	vDepth = (mv * local).z;
@@ -170,6 +181,7 @@ type Scene3D struct {
 	instanceCount                                             int
 	instanceData                                              []float32
 	uInstanced                                                int32
+	uClothBase                                                int32
 	uInstanceColorOffset                                      int32
 	projection                                                M4 // current main/sky projection, combined before vertex transformation
 	uTerrainLight                                             int32
@@ -206,7 +218,7 @@ func NewScene3D() (*Scene3D, error) {
 		return nil, err
 	}
 	u := func(n string) int32 { return gl.GetUniformLocation(p, gl.Str(n+"\x00")) }
-	return &Scene3D{prog: p, uInstanced: u("instanced"), uInstanceColorOffset: u("instanceColorOffset"), uTerrainLight: u("hasTerrainLight"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"), uLight: u("lightDir"),
+	return &Scene3D{prog: p, uClothBase: u("clothBase"), uInstanced: u("instanced"), uInstanceColorOffset: u("instanceColorOffset"), uTerrainLight: u("hasTerrainLight"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"), uLight: u("lightDir"),
 		uDetailBias: u("detailBias"), uAmb: u("ambient"), uLit: u("lit"), uMode: u("mode"), uRef: u("alphaRef"), uFogColor: u("fogColor"), uFogRange: u("fogRange"), uTile: u("tileSize"), uTint: u("tint"), uUVOff: u("uvOffset"), uClipPlane: u("clipPlane"), uWaterReflection: u("hasWaterReflection"), uWaterViewport: u("waterViewport"), uWaterNormals: u("hasWaterNormals"), uWaterTime: u("waterTime"), uWaterBelow: u("waterBelow"),
 		LightDir: V3{-1, -1, -1}, Ambient: 128.0 / 255}, nil
 }

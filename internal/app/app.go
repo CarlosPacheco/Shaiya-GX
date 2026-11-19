@@ -658,6 +658,7 @@ func (a *App) drawFrame(w, h int) {
 			}
 		}
 	}
+	uiBefore := render.DrawCalls()
 	a.sprites.Begin(w, h)
 	if a.screen == screenWorld {
 		a.drawSunFlare(w, h)
@@ -713,6 +714,9 @@ func (a *App) drawFrame(w, h int) {
 	}
 	a.drawPerformance(w)
 	a.sprites.End()
+	if a.screen == screenWorld && a.wv != nil {
+		a.wv.draws.UI = render.DrawCalls() - uiBefore
+	}
 }
 
 func (a *App) submitLogin() {

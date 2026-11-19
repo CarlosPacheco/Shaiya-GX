@@ -112,16 +112,28 @@ func TestLocalBotsRealAssetsGL(t *testing.T) {
 		}
 	}
 	a.Update(1.0/30, true)
-	beforeDraw := int64(render.GPUBytes())
-	s.SetCameraView(origin.Add(render.V3{0, 34, -25}), origin.Add(render.V3{0, 1, 45}), up)
-	render.ResetDrawCalls()
-	a.Draw(s, skin, true)
-	if calls := render.DrawCalls(); calls < MaxCount {
-		t.Fatalf("expected a populated render at maximum count, got %d draw calls", calls)
+	maxScene, err := render.NewScene3D()
+	if err != nil {
+		t.Fatal(err)
 	}
-	rendererDelta := int64(render.GPUBytes()) - beforeDraw
+	defer maxScene.Delete()
+	maxSkin, err := render.NewSkinner()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer maxSkin.Delete()
+	maxScene.Proj = s.Proj
+	maxScene.HideWeaponEffects = true
+	maxScene.SetCameraView(origin.Add(render.V3{0, 34, -25}), origin.Add(render.V3{0, 1, 45}), up)
+	render.ResetDrawCalls()
+	a.Draw(maxScene, maxSkin, false)
+	if stats := a.DrawStats(); stats.Skin == 0 || stats.Cloth == 0 || stats.ClothBytes == 0 {
+		t.Fatalf("expected a populated clustered render at maximum count: %+v", stats)
+	}
+	maxSkin.Delete()
+	maxScene.Delete()
 	a.Close()
-	if got := int64(render.GPUBytes()) - rendererDelta; got != int64(before) {
+	if got := render.GPUBytes(); got != before {
 		t.Fatalf("bot resources: %d bytes before arena, %d after", before, got)
 	}
 	if code := gl.GetError(); code != gl.NO_ERROR {

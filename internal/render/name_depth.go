@@ -49,11 +49,6 @@ func (s *Sprites) InvalidateNameDepth() {
 
 // NameDepth scopes depth-tested text; all ordinary HUD sprites stay in 2D.
 func (s *Sprites) NameDepth(depth float32) {
-	if s.nameDepth == depth {
-		return
-	}
-	s.Flush()
-	gl.Uniform1f(s.uNameDepth, depth)
 	s.nameDepth = depth
 }
 

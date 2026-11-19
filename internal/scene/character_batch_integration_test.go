@@ -61,6 +61,7 @@ func TestCharacterBatchIndependentPalettesGL(t *testing.T) {
 	}
 	actors[3].CorpseFade = .42
 	var batch CharacterBatch
+	defer batch.Delete()
 	capture := func(instanced bool) ([]byte, int) {
 		gl.Viewport(0, 0, size, size)
 		gl.DepthMask(true)
@@ -100,6 +101,24 @@ func TestCharacterBatchIndependentPalettesGL(t *testing.T) {
 			t.Fatalf("expected substantial draw reduction, got %d -> %d", n, m)
 		}
 		t.Logf("independent palettes and equipment, eye %v, %d -> %d draws", eye, n, m)
+	}
+	for _, actor := range actors {
+		actor.cloak.prepared = true
+		actor.World[12] += .1
+	}
+	capture(true)
+	if batch.Stats.ClothUploads != 0 || batch.Stats.ClothBytes != 0 {
+		t.Fatalf("moving unchanged cloth uploaded positions again: %+v", batch.Stats)
+	}
+	for _, actor := range actors {
+		actor.cloak.prepared = true
+	}
+	changed := actors[2].cloak
+	changed.vertices[0].Pos[0] += .2
+	changed.version++
+	capture(true)
+	if want := (len(changed.vertices) + 1) * 16; batch.Stats.ClothUploads != 1 || batch.Stats.ClothBytes != want {
+		t.Fatalf("one updated cloth submitted %+v, want %d bytes", batch.Stats, want)
 	}
 	if err := gl.GetError(); err != gl.NO_ERROR {
 		t.Fatalf("OpenGL error %#x", err)

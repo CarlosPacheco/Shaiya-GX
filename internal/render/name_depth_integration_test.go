@@ -33,8 +33,8 @@ func TestNameDepthOccludesLabelsAndPreservesHUD(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	white := render.Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{255, 255, 255, 255}}})
-	defer white.Delete()
+	glyph := render.Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{255, 0, 0, 255}}})
+	defer glyph.Delete()
 	gl.Viewport(0, 0, 64, 64)
 	gl.ClearColor(0, 0, 1, 1)
 	gl.ClearDepth(.25)
@@ -58,19 +58,17 @@ func TestNameDepthOccludesLabelsAndPreservesHUD(t *testing.T) {
 	gl.ClearDepth(.25)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	s.CaptureNameDepth(64, 64)
-	s.NameDepth(.75)
-	s.Draw(white, 8, 8, 16, 16, 0, 0, 1, 1, [4]float32{1, 0, 0, 1})
-	s.NameDepth(.125)
 	render.ResetDrawCalls()
-	s.Draw(white, 40, 8, 16, 16, 0, 0, 1, 1, [4]float32{1, 0, 0, 1})
+	s.NameDepth(.75)
+	s.Draw(glyph, 8, 8, 16, 16, 0, 0, 1, 1, [4]float32{1, 1, 1, 1})
 	s.NameDepth(.125)
-	s.Draw(white, 40, 8, 16, 16, 0, 0, 1, 1, [4]float32{1, 0, 0, 1})
+	s.Draw(glyph, 40, 8, 16, 16, 0, 0, 1, 1, [4]float32{1, 1, 1, 1})
 	s.NameDepth(-1)
-	if calls := render.DrawCalls(); calls != 1 {
-		t.Fatalf("same-depth labels used %d draw calls, want one", calls)
-	}
-	s.Draw(white, 8, 40, 16, 16, 0, 0, 1, 1, [4]float32{0, 1, 0, 1})
+	s.DrawFlat(glyph, 8, 40, 16, 16, [4]float32{0, 1, 0, 1})
 	s.End()
+	if calls := render.DrawCalls(); calls != 1 {
+		t.Fatalf("labels and solid quad used %d draw calls, want one", calls)
+	}
 	path := filepath.Join(t.TempDir(), "name-depth.png")
 	if err := render.SavePNG(path, 64, 64); err != nil {
 		t.Fatal(err)

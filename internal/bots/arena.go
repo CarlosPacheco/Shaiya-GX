@@ -87,6 +87,7 @@ func New(arc *archive.Archive, world *scene.World, origin, forward render.V3, co
 
 func (a *Arena) Close() {
 	a.actors, a.effects, a.visible, a.visibleCloth = nil, nil, nil, nil
+	a.characterBatch.Delete()
 	a.assets.CloseCharacterResources()
 }
 

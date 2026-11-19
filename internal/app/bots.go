@@ -76,8 +76,8 @@ func (a *App) drawBotNameplates(vp render.M4, w, h int, label func(string, rende
 		if left, right, drawn := label(name, pos, color, 0); drawn && a.white != nil {
 			_, y, _, _ := projectLabel(pos, vp, w, h)
 			x, width := float32(left), float32(right-left)
-			a.sprites.Draw(a.white, x, float32(y), width, 3, 0, 0, 1, 1, [4]float32{0, 0, 0, .8})
-			a.sprites.Draw(a.white, x, float32(y), width*health, 2, 0, 0, 1, 1, color)
+			a.sprites.DrawFlat(a.white, x, float32(y), width, 3, [4]float32{0, 0, 0, .8})
+			a.sprites.DrawFlat(a.white, x, float32(y), width*health, 2, color)
 		}
 	})
 }
