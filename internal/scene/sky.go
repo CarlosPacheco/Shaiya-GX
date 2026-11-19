@@ -95,8 +95,8 @@ func (s *Sky) Draw(r *render.Scene3D, eye render.V3) {
 	s.DrawWeather(r, eye, 0)
 }
 
-// DrawWeather crossfades the field dome and its cloud layers into PS107's
-// storm dome (0x539dd8). The cloud UV phase continues behind the storm.
+// DrawWeather crossfades the field dome into PS107's storm dome (0x539dd8)
+// and keeps the map's scrolling cloud layers visible.
 func (s *Sky) DrawWeather(r *render.Scene3D, eye render.V3, overcast float32) {
 	if s == nil {
 		return
@@ -107,16 +107,17 @@ func (s *Sky) DrawWeather(r *render.Scene3D, eye render.V3, overcast float32) {
 	if s.Dome != nil && s.DomeTex != nil {
 		r.DrawUnlit(s.Dome, s.DomeTex, dome, 1, [2]float32{})
 	}
+	if s.Dome != nil && s.Overcast != nil && overcast > 0 {
+		r.DrawUnlit(s.Dome, s.Overcast, dome, overcast, [2]float32{})
+	}
+	cloudOpacity := float32(0x50/255.0) + .14*overcast
 	for i, height := range [2]float32{1000, 1100} {
 		if s.Clouds[i] == nil {
 			continue
 		}
 		cloud := dome
 		cloud[13] += height
-		r.DrawUnlit(s.quad, s.Clouds[i], cloud, 0x50/255.0, [2]float32{s.cloudUV[i], s.cloudUV[i]})
-	}
-	if s.Dome != nil && s.Overcast != nil && overcast > 0 {
-		r.DrawUnlit(s.Dome, s.Overcast, dome, overcast, [2]float32{})
+		r.DrawUnlit(s.quad, s.Clouds[i], cloud, cloudOpacity, [2]float32{s.cloudUV[i], s.cloudUV[i]})
 	}
 	r.EndSky()
 }

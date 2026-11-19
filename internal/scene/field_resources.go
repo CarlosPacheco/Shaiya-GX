@@ -91,6 +91,7 @@ func (s *fieldStream) trim() {
 	}
 	if sky := s.world.Sky; sky != nil {
 		keep(sky.DomeTex)
+		keep(sky.Overcast)
 		for _, t := range sky.Clouds {
 			keep(t)
 		}

@@ -22,23 +22,23 @@ type weatherDrop struct {
 }
 
 type precipitation struct {
-	texture               string
-	interval              float64
-	life, extent          float32
-	fall, halfSize, shade float32
-	destination           int32
+	texture                            string
+	interval                           float64
+	life, extent                       float32
+	fall, halfWidth, halfHeight, shade float32
+	destination                        int32
 }
 
-// PS107's middle weather variants (0x444738 and 0x444792).
+// Timing and motion come from PS107's middle weather variants (0x444738 and 0x444792).
 // The emitter uses integer millisecond intervals and saves world-space birth
 // positions. The 0x449e24 pass places its origin ahead of the camera.
 var normalRain = precipitation{
 	texture: "Effect/DDS/rain.tga", interval: (1000 / 240) / 1000.0, life: 1.5,
-	extent: 250, fall: -50, halfSize: 200.0 / 127, shade: 128.0 / 255, destination: 5,
+	extent: 250, fall: -50, halfWidth: 1.25, halfHeight: .70, shade: 175.0 / 255, destination: 5,
 }
 var normalSnow = precipitation{
 	texture: "Effect/DDS/snow2008_2.bmp", interval: (1000 / 80) / 1000.0, life: 7,
-	extent: 400, fall: -2.5, halfSize: 200.0 / 127, shade: 1, destination: 1,
+	extent: 400, fall: -2.5, halfWidth: 200.0 / 127, halfHeight: 200.0 / 127, shade: 1, destination: 1,
 }
 
 func (v *weatherView) precipitation() precipitation {
@@ -117,13 +117,17 @@ func (v *weatherView) draw(s *render.Scene3D, assets *scene.Assets, eye render.V
 	}
 	right := render.V3{s.View[0], s.View[4], s.View[8]}
 	up := render.V3{s.View[1], s.View[5], s.View[9]}
-	dx, dy := right.Scale(p.halfSize), up.Scale(p.halfSize)
+	dx, dy := right.Scale(p.halfWidth), up.Scale(p.halfHeight)
 	v.vertices = v.vertices[:0]
 	v.indices = v.indices[:0]
+	minDistance := float32(1)
+	if v.kind == proto.WeatherRain {
+		minDistance = 2.5 // Keep elongated drops away from the near plane.
+	}
 	for _, drop := range v.drops {
 		position := drop.position.Add(drop.velocity.Scale(drop.age))
 		delta := position.Sub(eye)
-		if delta.Dot(delta) < 1 {
+		if delta.Dot(delta) < minDistance*minDistance {
 			continue
 		}
 		base := uint32(len(v.vertices))
