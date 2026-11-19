@@ -57,7 +57,10 @@ func (c *ChatPanel) optionHit(x, y, h int) bool {
 	return x >= ox && x < ox+w && y >= oy && y < oy+ht
 }
 
-const chatOptionSize = 22
+const (
+	chatOptionWidth  = 22
+	chatOptionHeight = 19
+)
 
 var chatOptionOrder = [...]int{chatFilters, chatHelp}
 
@@ -66,15 +69,15 @@ func (c *ChatPanel) optionButtonsShown() bool {
 }
 func (c *ChatPanel) optionY(h, i int) int {
 	y, height, _ := c.paneGeometry(h, 1)
-	return y + height - (len(chatOptionOrder)-i)*chatOptionSize
+	return y + height - (len(chatOptionOrder)-i)*chatOptionHeight
 }
 func (c *ChatPanel) optionButton(x, y, h int) int {
-	if !c.optionButtonsShown() || x < 0 || x >= chatOptionSize {
+	if !c.optionButtonsShown() || x < 0 || x >= chatOptionWidth {
 		return 0
 	}
 	for i := range 2 {
 		top := c.optionY(h, i)
-		if y >= top && y < top+chatOptionSize {
+		if y >= top && y < top+chatOptionHeight {
 			return chatOptionOrder[i]
 		}
 	}
@@ -163,14 +166,11 @@ func (c *ChatPanel) drawOptionButtons(s *render.Sprites, f *Font, blank *render.
 		y := float32(c.optionY(h, i))
 		if c.icons != nil {
 			u := float32(i*32) / 128
-			v := float32(1) / 64
-			button := chatOptionOrder[i]
-			if c.optionPress == 8+button && c.optionButton(c.mouseX, c.mouseY, h) == button {
-				v += .5
-			}
-			s.Draw(c.icons, 0, y, chatOptionSize, chatOptionSize, u, v, u+22.0/128, v+22.0/64, white)
+			// The lower atlas row contains the language icons. Both mouse
+			// states use the authored menu icons from the upper row.
+			s.Draw(c.icons, 0, y, chatOptionWidth, chatOptionHeight, u, 3.0/64, u+22.0/128, 22.0/64, white)
 		} else {
-			DrawTipFrame(s, blank, 0, y, chatOptionSize, chatOptionSize, 1, TipFill, TipBorder)
+			DrawTipFrame(s, blank, 0, y, chatOptionWidth, chatOptionHeight, 1, TipFill, TipBorder)
 			f.Draw(s, []string{"F", "?"}[i], 4, int(y)+2, white, 12)
 		}
 	}
@@ -229,21 +229,21 @@ func (c *ChatPanel) drawOptions(s *render.Sprites, f *Font, blank *render.Textur
 }
 
 const (
-	chatScrollX   = 4
-	chatThumbSize = scrollbarHitW
+	chatScrollX     = 4
+	chatThumbHeight = 12
 )
 
 // Leave room for both auxiliary buttons inside the lower history.
 func (c *ChatPanel) scrollSpan(i, h int) int {
 	if i == 1 {
-		h -= len(chatOptionOrder) * chatOptionSize
+		h -= len(chatOptionOrder) * chatOptionHeight
 	}
 	return h - 8
 }
 
 func (c *ChatPanel) scrollGeometry(i, y, h, limit, offset int) (top, travel, thumb int) {
 	top = y + 4 + scrollbarArrowHitH
-	travel = max(0, c.scrollSpan(i, h)-2*scrollbarArrowHitH-chatThumbSize)
+	travel = max(0, c.scrollSpan(i, h)-2*scrollbarArrowHitH-chatThumbHeight)
 	thumb = top + travel
 	if limit > 0 {
 		thumb -= (travel*offset + limit/2) / limit
@@ -267,12 +267,15 @@ func (c *ChatPanel) drawScroll(s *render.Sprites, i, y, h, limit int, alpha floa
 		}
 	}
 	if c.scroll != nil && travel > 0 {
-		// Keep the atlas bevel at its original height around the taller chat thumb.
-		const u0, u1 = .5, .5 + 13.0/128
+		// The thumb is assembled with the atlas's four-pixel caps and
+		// center. Each part occupies its original pixel dimensions.
+		const capU = 64.0 / 128
+		const midU = 48.0 / 128
+		const w = float32(scrollbarHitW)
 		x, y := float32(chatScrollX), float32(thumb)
-		s.Draw(c.scroll, x, y, chatThumbSize, 2, u0, 0, u1, 2.0/64, tint)
-		s.Draw(c.scroll, x, y+2, chatThumbSize, chatThumbSize-4, u0, 2.0/64, u1, 6.0/64, tint)
-		s.Draw(c.scroll, x, y+chatThumbSize-2, chatThumbSize, 2, u0, 6.0/64, u1, 8.0/64, tint)
+		s.Draw(c.scroll, x, y, w, 4, capU, 0, capU+w/128, 4.0/64, tint)
+		s.Draw(c.scroll, x, y+4, w, 4, midU, 0, midU+w/128, 4.0/64, tint)
+		s.Draw(c.scroll, x, y+8, w, 4, capU, 4.0/64, capU+w/128, 8.0/64, tint)
 	}
 }
 

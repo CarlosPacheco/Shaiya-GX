@@ -225,7 +225,7 @@ func TestChatComposerAndIndependentSidebarButtons(t *testing.T) {
 	for _, rows := range []int{0, 5, 20} {
 		c.Rows[1] = rows
 		lower, height, _ := c.paneGeometry(h, 1)
-		if c.optionY(h, 0) < lower || c.optionY(h, 1)+chatOptionSize != lower+height {
+		if c.optionY(h, 0) < lower || c.optionY(h, 1)+chatOptionHeight != lower+height {
 			t.Fatal("sidebar buttons escaped the lower history", rows)
 		}
 	}
@@ -267,7 +267,7 @@ func TestChatSidebarUsesUnscaledNativeTiles(t *testing.T) {
 	}
 	y, height, _ := c.paneGeometry(768, 1)
 	top, travel, thumb := c.scrollGeometry(1, y, height, 40, 0)
-	if thumb != top+travel || thumb+chatThumbSize != c.panes[1].arrows[1].Y() {
+	if thumb != top+travel || thumb+chatThumbHeight != c.panes[1].arrows[1].Y() {
 		t.Fatal("thumb track did not end at the lower arrow")
 	}
 	c.Rows = [2]int{}

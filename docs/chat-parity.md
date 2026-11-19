@@ -199,7 +199,7 @@ remain independent.
 
 GX uses the original help and filter atlases when they are installed. Older
 data packs get live text-and-checkbox panels in the same positions. The two
-panel buttons use separate 22px hit boxes and unscaled crops from `chat_icon.png` at the left edge. Both popups
+panel buttons use separate 22×19px hit boxes and unscaled crops from `chat_icon.png` at the left edge. Both popups
 share the native X380 and H−296 anchor, clamped on smaller viewports. The
 borderless histories leave a 2px visible seam. The composer opens on demand,
 shares both horizontal edges with the lower history and sits 2px below it.
@@ -210,13 +210,13 @@ The sidebar uses separate tracks with no opaque rail, a 4px left inset, and
 the existing mouse wheel, arrow repeat and track paging. The `0x52c430`
 constructor calls at `0x47045a` and `0x4705a5` use the original 128×64
 `scrollbar.tga`: arrows use the full 16×32 cells with 13×19 hitboxes and
-the chat thumb renders as a 13×13 square using the 13×8 cell at atlas X64/Y0.
+the chat thumb uses the atlas’s 4px caps and center at 1:1 scale (13×12).
 It rests at the bottom with no overflow. The arrows keep their normal artwork
 when there is nothing to scroll. The lower scrollbar reserves room for both
 buttons inside the lower history. The two auxiliary icons come from `chat_icon`
 and the popup checkmarks from the separate 16×16 `chat_check`. The installed
 PNG pixel data for all three matched both local EP4 PS0107 and EP5.4 archives.
-Both buttons end above the composer and remain independently clickable. The recipient row starts
+Both buttons end above the composer and remain independently clickable. Their pressed state retains the same menu icon. The recipient row starts
 at X25 to clear both side controls while whispering. Its 131px popup uses
 15px rows. The composer includes caret navigation, keyboard selection and
 clipboard operations with UTF-8 limits. GLFW receives committed Unicode

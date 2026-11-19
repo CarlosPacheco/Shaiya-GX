@@ -120,14 +120,25 @@ func TestNativeChatAndLoginLogoGL(t *testing.T) {
 		a.updateChatPointer(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, 1024, 768)
 		a.updateChatPointer(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 1024, 768)
 	}
-	clickChat(8, 768-120)
+	buttonPixels := func() []byte {
+		draw(screenWorld)
+		pixels := make([]byte, 22*38*4)
+		gl.ReadPixels(0, 84, 22, 38, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+		return pixels
+	}
+	beforePress := buttonPixels()
+	a.updateChatPointer(&platform.Input{MouseX: 8, MouseY: 768 - 114, Pressed: true, MouseDown: true}, 1024, 768)
+	if !bytes.Equal(beforePress, buttonPixels()) {
+		t.Fatal("press changed the menu icon atlas row")
+	}
+	a.updateChatPointer(&platform.Input{MouseX: 8, MouseY: 768 - 114, Clicked: true}, 1024, 768)
 	if !a.chatUI.OptionsOpen() {
 		t.Fatal("native filter panel did not open")
 	}
 	draw(screenWorld)
 	save("native-chat-filters")
 	a.chatOpen = false
-	clickChat(8, 768-98)
+	clickChat(8, 768-95)
 	draw(screenWorld)
 	save("native-chat-help")
 	a.updateChatPointer(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, 1024, 768)
