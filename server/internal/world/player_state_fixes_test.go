@@ -53,7 +53,7 @@ func TestBuffConsumableAnnouncesSkillAndStopsCombo(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.itemCooldowns = map[uint8]time.Time{}
-	// Audit the synchronized EP5 seed, including preserved wide SQL skill IDs.
+	// Audit the synchronized release seed, including preserved wide SQL skill IDs.
 	count := 0
 	for _, d := range defs.Items {
 		if !isConsumableType(d.Type) || d.Range == 0 || d.AttackTime == 0 {
@@ -68,9 +68,9 @@ func TestBuffConsumableAnnouncesSkillAndStopsCombo(t *testing.T) {
 			t.Fatal("non-buff accepted")
 		}
 	}
-	const wantBuffReferences = 184
+	const wantBuffReferences = 182
 	if count != wantBuffReferences {
-		t.Fatalf("EP5 consumable audit: got %d valid buff references, want %d", count, wantBuffReferences)
+		t.Fatalf("release consumable audit: got %d valid buff references, want %d", count, wantBuffReferences)
 	}
 	d := defs.Item(100, 54) // Special 35 also follows UseItemSkill, not just Special 0.
 	if itemBuffSkill(d) == nil {

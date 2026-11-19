@@ -11,6 +11,8 @@ import (
 // packet against the body size the client's reader consumes, taken from
 // the shaiya-client-decomp dispatcher (fun_0059cf70) and its consumers.
 func TestPacketLayoutsMatchClient(t *testing.T) {
+	defs := db.MustDefs()
+	t.Cleanup(func() { db.SetDefsForTest(defs) })
 	db.SetDefsForTest(&db.Defs{Exp: map[uint16]uint32{}})
 	ch := &db.Character{ID: 1, Name: "A", Level: 1}
 	st := &CharacterStats{}

@@ -8,6 +8,8 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'docs/wiki'
 NAMES = {
+    'chat-parity.md': 'Chat-Controls', 'revolver.md': 'Revolver',
+    'auction-house.md': 'Auction-House', 'teleport-runes.md': 'Teleport-Runes',
     'map-rules.md': 'Map-Rules', 'gx-studio.md': 'GX-Studio',
     'mounts.md': 'Mounts', 'fall-damage.md': 'Fall-Damage',
     'goddess-blessing.md': 'Goddess-Blessing',

@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0D01` — GuildCreateFailed**
 
-Declarations: [packet.GuildCreateFailed](../../server/internal/packet/packet.go#L146), [proto.GuildCreateFailed](../../internal/proto/opcodes.go#L134).
+Declarations: [packet.GuildCreateFailed](../../server/internal/packet/packet.go#L148), [proto.GuildCreateFailed](../../internal/proto/opcodes.go#L136).
 
 Source notes: Guilds (CUser::PacketGuild and the CGuild senders).
 
@@ -18,7 +18,7 @@ Source notes: Guilds (CUser::PacketGuild and the CGuild senders).
 
 **S→C serializers:** [buildGuildCreateFailed (server/internal/world/guild.go)](../../server/internal/world/guild.go#L285)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L347), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L347), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -61,13 +61,13 @@ func DecodeGuildCreateFailure(p []byte) (uint8, error) {
 
 **`0x0D03` — GuildDisband**
 
-Declarations: [packet.GuildDisband](../../server/internal/packet/packet.go#L147), [proto.GuildDisband](../../internal/proto/opcodes.go#L135).
+Declarations: [packet.GuildDisband](../../server/internal/packet/packet.go#L149), [proto.GuildDisband](../../internal/proto/opcodes.go#L137).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L477)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L477)
 
 **S→C serializers:** [guildResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L314)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L368), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L368), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -111,13 +111,13 @@ func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return 
 
 **`0x0D04` — GuildDisbandAgree**
 
-Declarations: [packet.GuildDisbandAgree](../../server/internal/packet/packet.go#L148), [proto.GuildDisbandAgree](../../internal/proto/opcodes.go#L136).
+Declarations: [packet.GuildDisbandAgree](../../server/internal/packet/packet.go#L150), [proto.GuildDisbandAgree](../../internal/proto/opcodes.go#L138).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L479)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L479)
 
 **S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L327)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L375), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L375), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -169,13 +169,13 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0D05` — GuildInvite**
 
-Declarations: [packet.GuildInvite](../../server/internal/packet/packet.go#L149), [proto.GuildInvite](../../internal/proto/opcodes.go#L137).
+Declarations: [packet.GuildInvite](../../server/internal/packet/packet.go#L151), [proto.GuildInvite](../../internal/proto/opcodes.go#L139).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L483)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L483)
 
 **S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L327), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L293), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L293), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -223,13 +223,13 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0D06` — GuildInviteAnswer**
 
-Declarations: [packet.GuildInviteAnswer](../../server/internal/packet/packet.go#L150), [proto.GuildInviteAnswer](../../internal/proto/opcodes.go#L138).
+Declarations: [packet.GuildInviteAnswer](../../server/internal/packet/packet.go#L152), [proto.GuildInviteAnswer](../../internal/proto/opcodes.go#L140).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L488)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L488)
 
 **S→C serializers:** [guildResultID (server/internal/world/guild.go)](../../server/internal/world/guild.go#L320)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L300), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L300), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -293,13 +293,13 @@ type PartyReply struct {
 
 **`0x0D07` — GuildApply**
 
-Declarations: [packet.GuildApply](../../server/internal/packet/packet.go#L151), [proto.GuildApply](../../internal/proto/opcodes.go#L139).
+Declarations: [packet.GuildApply](../../server/internal/packet/packet.go#L153), [proto.GuildApply](../../internal/proto/opcodes.go#L141).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L492)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L492)
 
 **S→C serializers:** [guildResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L314), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L244), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L244), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -347,13 +347,13 @@ func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return 
 
 **`0x0D08` — GuildJoinResult**
 
-Declarations: [packet.GuildJoinResult](../../server/internal/packet/packet.go#L152), [proto.GuildJoinResult](../../internal/proto/opcodes.go#L140).
+Declarations: [packet.GuildJoinResult](../../server/internal/packet/packet.go#L154), [proto.GuildJoinResult](../../internal/proto/opcodes.go#L142).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L497)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L497)
 
 **S→C serializers:** [buildGuildJoined (server/internal/world/guild.go)](../../server/internal/world/guild.go#L305)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L307), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L307), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -422,13 +422,13 @@ type GuildJoin struct {
 
 **`0x0D09` — GuildLeave**
 
-Declarations: [packet.GuildLeave](../../server/internal/packet/packet.go#L153), [proto.GuildLeave](../../internal/proto/opcodes.go#L141).
+Declarations: [packet.GuildLeave](../../server/internal/packet/packet.go#L155), [proto.GuildLeave](../../internal/proto/opcodes.go#L143).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L502)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L502)
 
 **S→C serializers:** [guildResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L314)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L354), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L354), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -472,13 +472,13 @@ func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return 
 
 **`0x0D0A` — GuildExpel**
 
-Declarations: [packet.GuildExpel](../../server/internal/packet/packet.go#L154), [proto.GuildExpel](../../internal/proto/opcodes.go#L142).
+Declarations: [packet.GuildExpel](../../server/internal/packet/packet.go#L156), [proto.GuildExpel](../../internal/proto/opcodes.go#L144).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L504)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L504)
 
 **S→C serializers:** [guildResultID (server/internal/world/guild.go)](../../server/internal/world/guild.go#L320), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L382), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L382), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -538,13 +538,13 @@ type PartyReply struct {
 
 **`0x0D0C` — GuildStatus**
 
-Declarations: [packet.GuildStatus](../../server/internal/packet/packet.go#L155), [proto.GuildStatus](../../internal/proto/opcodes.go#L143).
+Declarations: [packet.GuildStatus](../../server/internal/packet/packet.go#L157), [proto.GuildStatus](../../internal/proto/opcodes.go#L145).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L509)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L509)
 
 **S→C serializers:** [guildStatus (server/internal/world/guild.go)](../../server/internal/world/guild.go#L183)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L251), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L251), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -616,13 +616,13 @@ type Reader struct {
 
 **`0x0D0D` — GuildListBegin**
 
-Declarations: [packet.GuildListBegin](../../server/internal/packet/packet.go#L156), [proto.GuildListBegin](../../internal/proto/opcodes.go#L144).
+Declarations: [packet.GuildListBegin](../../server/internal/packet/packet.go#L158), [proto.GuildListBegin](../../internal/proto/opcodes.go#L146).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [guildListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L391)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L152), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L152), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -667,13 +667,13 @@ func guildListPackets(country uint8) [][]byte {
 
 **`0x0D0E` — GuildListEnd**
 
-Declarations: [packet.GuildListEnd](../../server/internal/packet/packet.go#L157), [proto.GuildListEnd](../../internal/proto/opcodes.go#L145).
+Declarations: [packet.GuildListEnd](../../server/internal/packet/packet.go#L159), [proto.GuildListEnd](../../internal/proto/opcodes.go#L147).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [guildListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L391)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L155), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L155), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -718,13 +718,13 @@ func guildListPackets(country uint8) [][]byte {
 
 **`0x0D11` — GuildDisbanded**
 
-Declarations: [packet.GuildDisbanded](../../server/internal/packet/packet.go#L158), [proto.GuildDisbanded](../../internal/proto/opcodes.go#L146).
+Declarations: [packet.GuildDisbanded](../../server/internal/packet/packet.go#L160), [proto.GuildDisbanded](../../internal/proto/opcodes.go#L148).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L327)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L183), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L183), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -758,13 +758,13 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0D12` — GuildOnlineList**
 
-Declarations: [packet.GuildOnlineList](../../server/internal/packet/packet.go#L159), [proto.GuildOnlineList](../../internal/proto/opcodes.go#L147).
+Declarations: [packet.GuildOnlineList](../../server/internal/packet/packet.go#L161), [proto.GuildOnlineList](../../internal/proto/opcodes.go#L149).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L190), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L190), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -821,13 +821,13 @@ func Op(payload []byte) Opcode {
 
 **`0x0D13` — GuildOfflineList**
 
-Declarations: [packet.GuildOfflineList](../../server/internal/packet/packet.go#L160), [proto.GuildOfflineList](../../internal/proto/opcodes.go#L148).
+Declarations: [packet.GuildOfflineList](../../server/internal/packet/packet.go#L162), [proto.GuildOfflineList](../../internal/proto/opcodes.go#L150).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L190), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L190), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -884,13 +884,13 @@ func Op(payload []byte) Opcode {
 
 **`0x0D14` — GuildMemberAdded**
 
-Declarations: [packet.GuildMemberAdded](../../server/internal/packet/packet.go#L161), [proto.GuildMemberAdded](../../internal/proto/opcodes.go#L149).
+Declarations: [packet.GuildMemberAdded](../../server/internal/packet/packet.go#L163), [proto.GuildMemberAdded](../../internal/proto/opcodes.go#L151).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [buildGuildMemberAdded (server/internal/world/guild.go)](../../server/internal/world/guild.go#L926)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L205), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L205), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -945,13 +945,13 @@ type GuildMember struct {
 
 **`0x0D16` — GuildApplicantList**
 
-Declarations: [packet.GuildApplicantList](../../server/internal/packet/packet.go#L162), [proto.GuildApplicantList](../../internal/proto/opcodes.go#L150).
+Declarations: [packet.GuildApplicantList](../../server/internal/packet/packet.go#L164), [proto.GuildApplicantList](../../internal/proto/opcodes.go#L152).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [applicantListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L241)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L218), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L218), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1024,13 +1024,13 @@ type GuildCandidate struct {
 
 **`0x0D17` — GuildApplicant**
 
-Declarations: [packet.GuildApplicant](../../server/internal/packet/packet.go#L163), [proto.GuildApplicant](../../internal/proto/opcodes.go#L151).
+Declarations: [packet.GuildApplicant](../../server/internal/packet/packet.go#L165), [proto.GuildApplicant](../../internal/proto/opcodes.go#L153).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [guildApply (server/internal/world/guild.go)](../../server/internal/world/guild.go#L938)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L229), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L229), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1103,13 +1103,13 @@ type GuildCandidate struct {
 
 **`0x0D18` — GuildApplicantRemoved**
 
-Declarations: [packet.GuildApplicantRemoved](../../server/internal/packet/packet.go#L164), [proto.GuildApplicantRemoved](../../internal/proto/opcodes.go#L152).
+Declarations: [packet.GuildApplicantRemoved](../../server/internal/packet/packet.go#L166), [proto.GuildApplicantRemoved](../../internal/proto/opcodes.go#L154).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L327)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L238), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L238), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1143,13 +1143,13 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0D20` — GuildRemark**
 
-Declarations: [packet.GuildRemark](../../server/internal/packet/packet.go#L165), [proto.GuildRemark](../../internal/proto/opcodes.go#L153).
+Declarations: [packet.GuildRemark](../../server/internal/packet/packet.go#L167), [proto.GuildRemark](../../internal/proto/opcodes.go#L155).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L514)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L514)
 
 **S→C serializers:** [guildRemark (server/internal/world/guild.go)](../../server/internal/world/guild.go#L1151)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L81), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L81), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1239,13 +1239,13 @@ type GuildRemarkResult struct {
 
 **`0x0D21` — GuildCreate**
 
-Declarations: [packet.GuildCreate](../../server/internal/packet/packet.go#L173), [proto.GuildCreate](../../internal/proto/opcodes.go#L161).
+Declarations: [packet.GuildCreate](../../server/internal/packet/packet.go#L175), [proto.GuildCreate](../../internal/proto/opcodes.go#L163).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L471)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L471)
 
 **S→C serializers:** [buildGuildCreateResult (server/internal/world/guild.go)](../../server/internal/world/guild.go#L295)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L325), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L325), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1312,13 +1312,13 @@ type GuildJoin struct {
 
 **`0x0D22` — GuildCreateAgree**
 
-Declarations: [packet.GuildCreateAgree](../../server/internal/packet/packet.go#L174), [proto.GuildCreateAgree](../../internal/proto/opcodes.go#L162).
+Declarations: [packet.GuildCreateAgree](../../server/internal/packet/packet.go#L176), [proto.GuildCreateAgree](../../internal/proto/opcodes.go#L164).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L473)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L473)
 
 **S→C serializers:** [guildCreateRequest (server/internal/world/guild.go)](../../server/internal/world/guild.go#L545)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L340), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L340), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1445,13 +1445,13 @@ type GuildCreateVote struct {
 
 **`0x0D23` — GuildEtin**
 
-Declarations: [packet.GuildEtin](../../server/internal/packet/packet.go#L175), [proto.GuildEtin](../../internal/proto/opcodes.go#L163).
+Declarations: [packet.GuildEtin](../../server/internal/packet/packet.go#L177), [proto.GuildEtin](../../internal/proto/opcodes.go#L165).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L516)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L158), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L516)
 
 **S→C serializers:** [guildID32 (server/internal/world/guild.go)](../../server/internal/world/guild.go#L327)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L75), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L75), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1495,13 +1495,13 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0D26` — GuildRankingNotice**
 
-Declarations: [packet.GuildRankingNotice](../../server/internal/packet/packet.go#L166), [proto.GuildRankingNotice](../../internal/proto/opcodes.go#L154).
+Declarations: [packet.GuildRankingNotice](../../server/internal/packet/packet.go#L168), [proto.GuildRankingNotice](../../internal/proto/opcodes.go#L156).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [TickGuildRanking (server/internal/world/grb.go)](../../server/internal/world/grb.go#L201)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L95), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L95), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1585,13 +1585,13 @@ type GuildRankingNoticeInfo struct {
 
 **`0x0D27` — GuildRankingPoints**
 
-Declarations: [packet.GuildRankingPoints](../../server/internal/packet/packet.go#L167), [proto.GuildRankingPoints](../../internal/proto/opcodes.go#L155).
+Declarations: [packet.GuildRankingPoints](../../server/internal/packet/packet.go#L169), [proto.GuildRankingPoints](../../internal/proto/opcodes.go#L157).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [grbKill (server/internal/world/grb.go)](../../server/internal/world/grb.go#L164)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L101), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L101), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1668,13 +1668,13 @@ type GuildRankingPointsInfo struct{ Points, Maximum, Leader uint32 }
 
 **`0x0D28` — GuildBankResult**
 
-Declarations: [packet.GuildBankResult](../../server/internal/packet/packet.go#L169), [proto.GuildBankResult](../../internal/proto/opcodes.go#L157).
+Declarations: [packet.GuildBankResult](../../server/internal/packet/packet.go#L171), [proto.GuildBankResult](../../internal/proto/opcodes.go#L159).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [buildGuildBankResult (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L119)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L145), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L145), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1717,13 +1717,13 @@ type GuildBankResultInfo struct{ Result, Arg uint8 }
 
 **`0x0D29` — GuildBankList**
 
-Declarations: [packet.GuildBankList](../../server/internal/packet/packet.go#L170), [proto.GuildBankList](../../internal/proto/opcodes.go#L158).
+Declarations: [packet.GuildBankList](../../server/internal/packet/packet.go#L172), [proto.GuildBankList](../../internal/proto/opcodes.go#L160).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [bankListPackets (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L66)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L121), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L121), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1800,13 +1800,13 @@ func DecodeGuildBankList(p []byte) ([]InventoryItem, error) {
 
 **`0x0D2F` — GuildList**
 
-Declarations: [packet.GuildList](../../server/internal/packet/packet.go#L176), [proto.GuildList](../../internal/proto/opcodes.go#L164).
+Declarations: [packet.GuildList](../../server/internal/packet/packet.go#L178), [proto.GuildList](../../internal/proto/opcodes.go#L166).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [guildListPackets (server/internal/world/guild.go)](../../server/internal/world/guild.go#L391)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L157), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L157), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1881,13 +1881,13 @@ type GuildInfo struct {
 
 **`0x0D30` — GuildNew**
 
-Declarations: [packet.GuildNew](../../server/internal/packet/packet.go#L177), [proto.GuildNew](../../internal/proto/opcodes.go#L165).
+Declarations: [packet.GuildNew](../../server/internal/packet/packet.go#L179), [proto.GuildNew](../../internal/proto/opcodes.go#L167).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [complete (server/internal/world/guild.go)](../../server/internal/world/guild.go#L664)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L171), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L171), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -1998,13 +1998,13 @@ type GuildInfo struct {
 
 **`0x0D31` — GuildBankPlaced**
 
-Declarations: [packet.GuildBankPlaced](../../server/internal/packet/packet.go#L171), [proto.GuildBankPlaced](../../internal/proto/opcodes.go#L159).
+Declarations: [packet.GuildBankPlaced](../../server/internal/packet/packet.go#L173), [proto.GuildBankPlaced](../../internal/proto/opcodes.go#L161).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [buildGuildBankSlot (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L100)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L132), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L132), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -2083,13 +2083,13 @@ func Op(payload []byte) Opcode {
 
 **`0x0D32` — GuildBankTaken**
 
-Declarations: [packet.GuildBankTaken](../../server/internal/packet/packet.go#L172), [proto.GuildBankTaken](../../internal/proto/opcodes.go#L160).
+Declarations: [packet.GuildBankTaken](../../server/internal/packet/packet.go#L174), [proto.GuildBankTaken](../../internal/proto/opcodes.go#L162).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [buildGuildBankSlot (server/internal/world/guildbank.go)](../../server/internal/world/guildbank.go#L100)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L132), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L132), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 
@@ -2168,13 +2168,13 @@ func Op(payload []byte) Opcode {
 
 **`0x0D37` — GuildRankingList**
 
-Declarations: [packet.GuildRankingList](../../server/internal/packet/packet.go#L168), [proto.GuildRankingList](../../internal/proto/opcodes.go#L156).
+Declarations: [packet.GuildRankingList](../../server/internal/packet/packet.go#L170), [proto.GuildRankingList](../../internal/proto/opcodes.go#L158).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [updateGuildRanking (server/internal/world/grb.go)](../../server/internal/world/grb.go#L270)
 
-**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L107), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L107), [Apply (internal/game/state.go)](../../internal/game/state.go#L589)
 
 ### Wire layouts and validation
 

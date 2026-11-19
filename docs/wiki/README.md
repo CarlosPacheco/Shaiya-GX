@@ -7,7 +7,7 @@ fonts and development database in one download. **No separate data download is
 needed.** Extract the package, start
 `Server/build/gx_console` (or `.exe`) in a terminal, enter `start server`, then open the executable in `Client/`.
 [Setup, requirements and updates](client-portable.md).
-Current binary release: [gx-v0.1.12](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.12), with the teleport hotfix. The complete Drive download above includes v0.1.12 and its matching data.
+Current binary release: [gx-v0.1.13](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.13). The Drive download above contains the earlier v0.1.12 build.
 
 The reference for current GX gameplay features, item data, administration and
 operation. GX is a Go client with an integrated authoritative world/login
@@ -17,10 +17,18 @@ server, using original EP5 interface resources and protocol foundations.
 release notes for the features and data shipped in a specific binary release.
 
 The linked Drive download includes gx-v0.1.12 and complete game data. See the
-[gx-v0.1.12 upgrade guide](../releases/gx-v0.1.12-upgrade.md) for updates and
+[gx-v0.1.13 upgrade guide](../releases/gx-v0.1.13-upgrade.md) for updates and
 preserving your personal database.
 
 ## Gameplay and items
+
+- [Chat controls and item links](chat-parity.md) and [Revolver](revolver.md).
+- [Auction House](auction-house.md): listings, bids, buyout, favorites,
+  item-family searches, escrow and claims.
+- [Teleport Runes](teleport-runes.md): faction destinations, channeling, guild
+  house eligibility and SQLite configuration.
+- [Combat, world and interface changes in v0.1.13](../releases/gx-v0.1.13.md).
+
 
 - [Map rules, weather and progression](map-rules.md): map access and respawn,
   synchronized storms, permanent map curses and the shared level cap.

@@ -2,6 +2,16 @@
 
 This log records delivered changes and data-package updates. Client data is hosted separately on Drive; changing it does not automatically produce a new executable release.
 
+## gx-v0.1.13 — 2026-11-19
+
+[Patch notes](docs/releases/gx-v0.1.13.md) · [Discord summary](docs/releases/gx-v0.1.13-discord.md) · [Upgrade guide](docs/releases/gx-v0.1.13-upgrade.md).
+
+- Add the realm-wide Auction House with transactional escrow, item-family filters, favorites, and claims.
+- Ship GX Studio with recoverable SData and SQLite catalog editing.
+- Extend travel, guards, weather, dungeon ambience, notices, progression, loot, and combat behavior.
+- Restore chat controls, item links, extra shortcut bars and Revolver, and improve minimap zoom and skeletal animation.
+- Refresh the distributed development seed, dual-platform packages and Wiki.
+
 ## gx-v0.1.12 — 2026-11-17
 
 [Patch notes](docs/releases/gx-v0.1.12.md) · [Discord summary](docs/releases/gx-v0.1.12-discord.md) · [Upgrade guide](docs/releases/gx-v0.1.12-upgrade.md).

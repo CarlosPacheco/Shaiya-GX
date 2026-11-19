@@ -10,13 +10,13 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0901` — QuestList**
 
-Declarations: [packet.QuestList](../../server/internal/packet/packet.go#L124), [proto.QuestList](../../internal/proto/opcodes.go#L109).
+Declarations: [packet.QuestList](../../server/internal/packet/packet.go#L126), [proto.QuestList](../../internal/proto/opcodes.go#L111).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L228)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L594)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L601)
 
 ### Wire layouts and validation
 
@@ -97,13 +97,13 @@ type ActiveQuest struct {
 
 **`0x0902` — QuestStart**
 
-Declarations: [packet.QuestStart](../../server/internal/packet/packet.go#L125), [proto.QuestStart](../../internal/proto/opcodes.go#L110).
+Declarations: [packet.QuestStart](../../server/internal/packet/packet.go#L127), [proto.QuestStart](../../internal/proto/opcodes.go#L112).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L101)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
 
 **S→C serializers:** [startQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L404)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L616)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L623)
 
 ### Wire layouts and validation
 
@@ -177,13 +177,13 @@ func DecodeQuestStart(p []byte) (npc uint32, id uint16, err error) {
 
 **`0x0903` — QuestEnd**
 
-Declarations: [packet.QuestEnd](../../server/internal/packet/packet.go#L126), [proto.QuestEnd](../../internal/proto/opcodes.go#L111).
+Declarations: [packet.QuestEnd](../../server/internal/packet/packet.go#L128), [proto.QuestEnd](../../internal/proto/opcodes.go#L113).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L105)
 
 **S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L574), [awardQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L651)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L643)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L650)
 
 ### Wire layouts and validation
 
@@ -388,9 +388,9 @@ type QuestEndResult struct {
 
 **`0x0904` — QuestStartAlt**
 
-Declarations: [packet.QuestStartAlt](../../server/internal/packet/packet.go#L127), [proto.QuestStartAlt](../../internal/proto/opcodes.go#L112).
+Declarations: [packet.QuestStartAlt](../../server/internal/packet/packet.go#L129), [proto.QuestStartAlt](../../internal/proto/opcodes.go#L114).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L101)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -402,13 +402,13 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0x0905` — QuestCounter**
 
-Declarations: [packet.QuestCounter](../../server/internal/packet/packet.go#L128), [proto.QuestCounter](../../internal/proto/opcodes.go#L113).
+Declarations: [packet.QuestCounter](../../server/internal/packet/packet.go#L130), [proto.QuestCounter](../../internal/proto/opcodes.go#L115).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [bumpQuestCounter (server/internal/world/quests.go)](../../server/internal/world/quests.go#L764), [questKillCount (server/internal/world/quests.go)](../../server/internal/world/quests.go#L783)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L625)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L632)
 
 ### Wire layouts and validation
 
@@ -526,13 +526,13 @@ func DecodeQuestCounter(p []byte) (id uint16, slot, value uint8, err error) {
 
 **`0x0906` — QuestFinishedList**
 
-Declarations: [packet.QuestFinishedList](../../server/internal/packet/packet.go#L132), [proto.QuestFinishedList](../../internal/proto/opcodes.go#L117).
+Declarations: [packet.QuestFinishedList](../../server/internal/packet/packet.go#L134), [proto.QuestFinishedList](../../internal/proto/opcodes.go#L119).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L228)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L605)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L612)
 
 ### Wire layouts and validation
 
@@ -608,13 +608,13 @@ type FinishedQuest struct {
 
 **`0x0907` — QuestChoose**
 
-Declarations: [packet.QuestChoose](../../server/internal/packet/packet.go#L129), [proto.QuestChoose](../../internal/proto/opcodes.go#L114).
+Declarations: [packet.QuestChoose](../../server/internal/packet/packet.go#L131), [proto.QuestChoose](../../internal/proto/opcodes.go#L116).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L105)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L107)
 
 **S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L574)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L637)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L644)
 
 ### Wire layouts and validation
 
@@ -708,9 +708,9 @@ func DecodeQuestChoice(p []byte) (uint16, error) {
 
 **`0x0908` — QuestAbandon**
 
-Declarations: [packet.QuestAbandon](../../server/internal/packet/packet.go#L130), [proto.QuestAbandon](../../internal/proto/opcodes.go#L115).
+Declarations: [packet.QuestAbandon](../../server/internal/packet/packet.go#L132), [proto.QuestAbandon](../../internal/proto/opcodes.go#L117).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L107)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L109)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 

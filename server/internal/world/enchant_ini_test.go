@@ -136,7 +136,7 @@ func TestItemEnchantIniRatesBonusesCapAndWire(t *testing.T) {
 	}
 }
 
-func TestEnchantCatalogImportsLegacyOnce(t *testing.T) {
+func TestEnchantCatalogUsesSQLiteAfterLegacyMigration(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("RAPTURE_DATA_DIR", dir)
 	t.Setenv("RAPTURE_DB_PATH", filepath.Join(dir, "rapture.sqlite"))
@@ -147,7 +147,7 @@ func TestEnchantCatalogImportsLegacyOnce(t *testing.T) {
 	t.Setenv("RAPTURE_DB_SEED", seed)
 	old, weapon, armor := enchantConfig, weaponEnchantAttackBonus, armorEnchantAbsorption
 	t.Cleanup(func() { enchantConfig, weaponEnchantAttackBonus, armorEnchantAbsorption = old, weapon, armor })
-	// Remove the enchant tables to simulate a database from before their migration.
+	// A migrated runtime with no rows has both caps disabled.
 	seedBytes, err := os.ReadFile(seed)
 	if err != nil {
 		t.Fatal(err)
@@ -159,7 +159,7 @@ func TestEnchantCatalogImportsLegacyOnce(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := legacyDB.Exec("DROP TABLE PS_GameDefs_EnchantAttack; DROP TABLE PS_GameDefs_EnchantDefense"); err != nil {
+	if _, err := legacyDB.Exec("DELETE FROM PS_GameDefs_EnchantAttack; DELETE FROM PS_GameDefs_EnchantDefense"); err != nil {
 		t.Fatal(err)
 	}
 	if err := legacyDB.Close(); err != nil {
@@ -175,7 +175,6 @@ func TestEnchantCatalogImportsLegacyOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := filepath.Join(gameDataDir(), "ItemEnchant.ini")
-	raw = []byte(strings.ReplaceAll(string(raw), "MaxLevel=20", "MaxLevel=0"))
 	if err := os.WriteFile(path, raw, 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -183,13 +182,7 @@ func TestEnchantCatalogImportsLegacyOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	if enchantConfig.WeaponCap != 0 || enchantConfig.ArmorCap != 0 {
-		t.Fatal("legacy import changed cap")
-	}
-	if err := os.WriteFile(path, []byte(strings.ReplaceAll(string(raw), "MaxLevel=0", "MaxLevel=20")), 0600); err != nil {
-		t.Fatal(err)
-	}
-	if err := loadEnchantRules(nil); err != nil || enchantConfig.WeaponCap != 0 || enchantConfig.ArmorCap != 0 {
-		t.Fatalf("the legacy INI was imported more than once: %v", err)
+		t.Fatal("a legacy INI overrides an empty migrated catalog")
 	}
 	pool, err := db.Pool(db.GameDefs)
 	if err != nil {

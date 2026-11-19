@@ -3,6 +3,8 @@ package db
 import (
 	"context"
 	"database/sql"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -55,5 +57,46 @@ func TestExperienceMigrationPreservesProgress(t *testing.T) {
 	var cap, threshold int
 	if err := p.QueryRow("SELECT Level, Exp FROM PS_GameDefs_ExpDefs ORDER BY Level DESC LIMIT 1").Scan(&cap, &threshold); err != nil || cap != 3 || threshold != 124000 {
 		t.Fatalf("cap=%d exp=%d (%v)", cap, threshold, err)
+	}
+}
+
+func TestEnchantMigrationImportsLegacyOnlyOnce(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("RAPTURE_DATA_DIR", dir)
+	game := filepath.Join(dir, "game")
+	if err := os.Mkdir(game, 0700); err != nil {
+		t.Fatal(err)
+	}
+	ini, err := os.ReadFile(filepath.Join("..", "world", "testdata", "enchant-legacy.ini"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(game, "ItemEnchant.ini"), ini, 0600); err != nil {
+		t.Fatal(err)
+	}
+	pool, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	steps := append([]migration(nil), migrations[:11]...)
+	for i := range steps[:9] {
+		steps[i].SQL = "SELECT 1"
+	}
+	if err := migrate(t.Context(), pool, steps); err != nil {
+		t.Fatal(err)
+	}
+	var imported int
+	if err := pool.QueryRow("SELECT COUNT(*) FROM PS_GameDefs_EnchantAttack").Scan(&imported); err != nil || imported != 20 {
+		t.Fatalf("legacy levels imported: %d (%v)", imported, err)
+	}
+	if _, err := pool.Exec("DELETE FROM PS_GameDefs_EnchantAttack; DELETE FROM PS_GameDefs_EnchantDefense"); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrate(t.Context(), pool, steps); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow("SELECT COUNT(*) FROM PS_GameDefs_EnchantAttack").Scan(&imported); err != nil || imported != 0 {
+		t.Fatalf("legacy levels returned: %d (%v)", imported, err)
 	}
 }

@@ -70,15 +70,21 @@ func TestOpenPrefersItemCashCatalogAndAcceptsLegacy(t *testing.T) {
 	writeFixture(t, legacy, []byte("invalid legacy catalog"))
 	project, err := Open(t.Context(), f.data, f.db)
 	must(t, err)
-	if project.CashPath != f.cash {
-		t.Fatalf("loaded %q instead of %q", project.CashPath, f.cash)
+	assertSameFile := func(actual, expected string) {
+		t.Helper()
+		got, err := os.Stat(actual)
+		must(t, err)
+		want, err := os.Stat(expected)
+		must(t, err)
+		if !os.SameFile(got, want) {
+			t.Fatalf("loaded %q instead of %q", actual, expected)
+		}
 	}
+	assertSameFile(project.CashPath, f.cash)
 	must(t, os.Rename(f.cash, legacy))
 	project, err = Open(t.Context(), f.data, f.db)
 	must(t, err)
-	if project.CashPath != legacy {
-		t.Fatalf("loaded %q instead of %q", project.CashPath, legacy)
-	}
+	assertSameFile(project.CashPath, legacy)
 }
 
 func must(t *testing.T, err error) {

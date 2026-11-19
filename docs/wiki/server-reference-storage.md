@@ -10,7 +10,7 @@ Every production Go file is listed, including OS-specific alternatives. Signatur
 
 All authoritative SQLite access, definitions, migrations, guarded economy transactions and crash/session ownership.
 
-Tests: [account_session_test.go](../../server/internal/db/account_session_test.go), [cash_test.go](../../server/internal/db/cash_test.go), [character_creation_test.go](../../server/internal/db/character_creation_test.go), [chars_integration_test.go](../../server/internal/db/chars_integration_test.go), [defs_integration_test.go](../../server/internal/db/defs_integration_test.go), [economy_atomic_test.go](../../server/internal/db/economy_atomic_test.go), [gm_test.go](../../server/internal/db/gm_test.go), [isolation_test.go](../../server/internal/db/isolation_test.go), [keeps_test.go](../../server/internal/db/keeps_test.go), [mall_transaction_test.go](../../server/internal/db/mall_transaction_test.go), [migrations_test.go](../../server/internal/db/migrations_test.go), [mob_quest_test.go](../../server/internal/db/mob_quest_test.go), [production_integration_test.go](../../server/internal/db/production_integration_test.go), [skill_cleanup_test.go](../../server/internal/db/skill_cleanup_test.go), [snapshot_atomic_test.go](../../server/internal/db/snapshot_atomic_test.go), [social_test.go](../../server/internal/db/social_test.go), [sqlite_test.go](../../server/internal/db/sqlite_test.go).
+Tests: [account_session_test.go](../../server/internal/db/account_session_test.go), [auction_test.go](../../server/internal/db/auction_test.go), [cash_test.go](../../server/internal/db/cash_test.go), [character_creation_test.go](../../server/internal/db/character_creation_test.go), [chars_integration_test.go](../../server/internal/db/chars_integration_test.go), [defs_integration_test.go](../../server/internal/db/defs_integration_test.go), [economy_atomic_test.go](../../server/internal/db/economy_atomic_test.go), [gm_test.go](../../server/internal/db/gm_test.go), [isolation_test.go](../../server/internal/db/isolation_test.go), [keeps_test.go](../../server/internal/db/keeps_test.go), [mall_transaction_test.go](../../server/internal/db/mall_transaction_test.go), [migrations_test.go](../../server/internal/db/migrations_test.go), [mob_quest_test.go](../../server/internal/db/mob_quest_test.go), [production_integration_test.go](../../server/internal/db/production_integration_test.go), [skill_cleanup_test.go](../../server/internal/db/skill_cleanup_test.go), [snapshot_atomic_test.go](../../server/internal/db/snapshot_atomic_test.go), [social_test.go](../../server/internal/db/social_test.go), [sqlite_test.go](../../server/internal/db/sqlite_test.go).
 
 ### account.go
 
@@ -65,6 +65,58 @@ Direct GX dependencies: `internal/authwire`, `server/internal/password`.
 |---|---|
 | [`CreateAccount`](../../server/internal/db/accounts_admin.go#L11)<br>`func CreateAccount(name, secret string, admin bool) (int32, error)` | CreateAccount never stores plaintext and never replaces an existing account. |
 | [`SetAccountPassword`](../../server/internal/db/accounts_admin.go#L50)<br>`func SetAccountPassword(name, secret string) error` | SetAccountPassword revokes pending tickets and active sessions through a monotonically increasing credential version. World checks it every 30 seconds. |
+
+### auction.go
+
+[server/internal/db/auction.go](../../server/internal/db/auction.go#L1)
+
+Direct GX dependencies: `internal/proto`.
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`ErrAuctionChanged`](../../server/internal/db/auction.go#L15)<br>`var ErrAuctionChanged` | See the source definition and the subsystem ownership contract. |
+| [`ErrAuctionInvalid`](../../server/internal/db/auction.go#L16)<br>`var ErrAuctionInvalid` | See the source definition and the subsystem ownership contract. |
+| [`ErrAuctionFunds`](../../server/internal/db/auction.go#L17)<br>`var ErrAuctionFunds` | See the source definition and the subsystem ownership contract. |
+| [`ErrAuctionItem`](../../server/internal/db/auction.go#L18)<br>`var ErrAuctionItem` | See the source definition and the subsystem ownership contract. |
+| [`ErrAuctionWatchFull`](../../server/internal/db/auction.go#L19)<br>`var ErrAuctionWatchFull` | See the source definition and the subsystem ownership contract. |
+| [`AuctionListing`](../../server/internal/db/auction.go#L22)<br>`type AuctionListing` | See the source definition and the subsystem ownership contract. |
+| [`AuctionClaim`](../../server/internal/db/auction.go#L32)<br>`type AuctionClaim` | See the source definition and the subsystem ownership contract. |
+| [`auctionTx`](../../server/internal/db/auction.go#L38)<br>`func auctionTx(run func(context.Context, *sql.Tx) error) error` | See the source definition and the subsystem ownership contract. |
+| [`auctionClaim`](../../server/internal/db/auction.go#L48)<br>`func auctionClaim(c context.Context, tx *sql.Tx, id int64, owner uint32, gold int64, reason string, now int64) error` | See the source definition and the subsystem ownership contract. |
+| [`settleAuction`](../../server/internal/db/auction.go#L53)<br>`func settleAuction(c context.Context, tx *sql.Tx, a AuctionListing, buyer uint32, price uint32, state string, now int64) error` | See the source definition and the subsystem ownership contract. |
+| [`auctionRefund`](../../server/internal/db/auction.go#L74)<br>`func auctionRefund(c context.Context, tx *sql.Tx, a AuctionListing, now int64) error` | See the source definition and the subsystem ownership contract. |
+| [`auctionFields`](../../server/internal/db/auction.go#L81)<br>`const auctionFields = "ID,Seller,Bidder,Price,Buyout,Deposit,Ends,State,Version"` | See the source definition and the subsystem ownership contract. |
+| [`scanAuction`](../../server/internal/db/auction.go#L83)<br>`func scanAuction(scan func(...any) error, a *AuctionListing) error` | See the source definition and the subsystem ownership contract. |
+| [`ExpireAuctions`](../../server/internal/db/auction.go#L87)<br>`func ExpireAuctions() error` | See the source definition and the subsystem ownership contract. |
+| [`PostAuction`](../../server/internal/db/auction.go#L123)<br>`func PostAuction(a AuctionListing, change CharacterChange) error` | See the source definition and the subsystem ownership contract. |
+| [`ChangeAuction`](../../server/internal/db/auction.go#L138)<br>`func ChangeAuction(owner uint32, req proto.AuctionRequest, change *CharacterChange) error` | See the source definition and the subsystem ownership contract. |
+| [`AuctionClaims`](../../server/internal/db/auction.go#L212)<br>`func AuctionClaims(owner uint32, view int, id int64) ([]AuctionClaim, error)` | See the source definition and the subsystem ownership contract. |
+| [`CollectAuction`](../../server/internal/db/auction.go#L244)<br>`func CollectAuction(claim AuctionClaim, change CharacterChange) error` | See the source definition and the subsystem ownership contract. |
+| [`ListAuctions`](../../server/internal/db/auction.go#L266)<br>`func ListAuctions(owner uint32, req proto.AuctionRequest) (proto.AuctionReply, error)` | See the source definition and the subsystem ownership contract. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type AuctionListing struct {
+	Seller, Bidder                   uint32
+	SellerName, Name, State, Request string
+	Category                         int
+	Level                            uint16
+	Item                             Item
+	ID, Version, Ends                int64
+	Price, Buyout, Deposit           uint32
+}
+```
+
+```go
+type AuctionClaim struct {
+	ID   int64
+	Item Item
+	Gold uint32
+}
+```
+
+</details>
 
 ### chars.go
 
@@ -726,15 +778,16 @@ type GiftEntry struct {
 
 [server/internal/db/migrations.go](../../server/internal/db/migrations.go#L1)
 
-Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `internal/itemboxes`, `internal/maprules`, `internal/mobaimessages`, `internal/npcquest`, `internal/worlddrops`.
+Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `internal/itemboxes`, `internal/maprules`, `internal/mobaimessages`, `internal/npcquest`, `internal/teleportrunes`, `internal/worlddrops`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`migration`](../../server/internal/db/migrations.go#L20)<br>`type migration` | See the source definition and the subsystem ownership contract. |
-| [`experienceMigration`](../../server/internal/db/migrations.go#L26)<br>`var experienceMigration string` | See the source definition and the subsystem ownership contract. |
-| [`npcSkillsMigration`](../../server/internal/db/migrations.go#L29)<br>`var npcSkillsMigration string` | See the source definition and the subsystem ownership contract. |
-| [`migrations`](../../server/internal/db/migrations.go#L31)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L102)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
+| [`migration`](../../server/internal/db/migrations.go#L21)<br>`type migration` | See the source definition and the subsystem ownership contract. |
+| [`experienceMigration`](../../server/internal/db/migrations.go#L27)<br>`var experienceMigration string` | See the source definition and the subsystem ownership contract. |
+| [`npcSkillsMigration`](../../server/internal/db/migrations.go#L30)<br>`var npcSkillsMigration string` | See the source definition and the subsystem ownership contract. |
+| [`auctionMigration`](../../server/internal/db/migrations.go#L33)<br>`var auctionMigration string` | See the source definition and the subsystem ownership contract. |
+| [`migrations`](../../server/internal/db/migrations.go#L35)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
+| [`migrate`](../../server/internal/db/migrations.go#L108)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -921,6 +974,28 @@ Direct GX dependencies: `internal/proto`.
 type TeleportPoint struct {
 	Saved   bool
 	Map     uint16
+	X, Y, Z float32
+}
+```
+
+</details>
+
+### teleport_runes.go
+
+[server/internal/db/teleport_runes.go](../../server/internal/db/teleport_runes.go#L1)
+
+Direct GX dependencies: `internal/teleportrunes`.
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`TeleportRuneDestination`](../../server/internal/db/teleport_runes.go#L5)<br>`type TeleportRuneDestination` | See the source definition and the subsystem ownership contract. |
+| [`TeleportRunes`](../../server/internal/db/teleport_runes.go#L10)<br>`func TeleportRunes() (map[int16][2]TeleportRuneDestination, error)` | See the source definition and the subsystem ownership contract. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type TeleportRuneDestination struct {
+	MapID   uint16
 	X, Y, Z float32
 }
 ```

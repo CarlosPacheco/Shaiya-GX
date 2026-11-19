@@ -12,11 +12,11 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 Declarations: [packet.ShopBuy](../../server/internal/packet/packet.go#L72), [proto.ShopBuy](../../internal/proto/opcodes.go#L56).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L99)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L101)
 
-**S→C serializers:** [buildShopBuyResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L143)
+**S→C serializers:** [buildShopBuyResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L144)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L757)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L764)
 
 ### Wire layouts and validation
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildShopBuyResult — server/internal/world/npcquest.go</summary>
 
-[Source definition](../../server/internal/world/npcquest.go#L143)
+[Source definition](../../server/internal/world/npcquest.go#L144)
 
 ```go
 func buildShopBuyResult(result, bag, slot, itemType, typeID uint8, count uint16, money uint32) []byte {
@@ -81,13 +81,13 @@ type ShopResult struct {
 
 **`0x0703` — ShopSell**
 
-Declarations: [packet.ShopSell](../../server/internal/packet/packet.go#L138), [proto.ShopSell](../../internal/proto/opcodes.go#L123).
+Declarations: [packet.ShopSell](../../server/internal/packet/packet.go#L140), [proto.ShopSell](../../internal/proto/opcodes.go#L125).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L97)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L99)
 
 **S→C serializers:** [buildShopSellResult (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L246)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L757)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L764)
 
 ### Wire layouts and validation
 
@@ -151,13 +151,13 @@ type ShopResult struct {
 
 **`0x0711` — WarehouseItemList**
 
-Declarations: [packet.WarehouseItemList](../../server/internal/packet/packet.go#L137), [proto.WarehouseItemList](../../internal/proto/opcodes.go#L122).
+Declarations: [packet.WarehouseItemList](../../server/internal/packet/packet.go#L139), [proto.WarehouseItemList](../../internal/proto/opcodes.go#L124).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [buildWarehouseItemList (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L27)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L997)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1004)
 
 ### Wire layouts and validation
 
@@ -236,13 +236,13 @@ type WarehouseList struct {
 
 **`0x0801` — GemAdd**
 
-Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L208), [proto.GemAdd](../../internal/proto/opcodes.go#L196).
+Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L210), [proto.GemAdd](../../internal/proto/opcodes.go#L198).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L85)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L87)
 
 **S→C serializers:** [buildGemAddResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L186)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L555)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L562)
 
 ### Wire layouts and validation
 
@@ -329,13 +329,13 @@ type GemAddResult struct {
 
 **`0x0802` — GemRemove**
 
-Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L209), [proto.GemRemove](../../internal/proto/opcodes.go#L197).
+Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L211), [proto.GemRemove](../../internal/proto/opcodes.go#L199).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L87)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L89)
 
 **S→C serializers:** [planGemRemove (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L362)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L531)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L538)
 
 ### Wire layouts and validation
 
@@ -532,13 +532,13 @@ type GemRemoveResult struct {
 
 **`0x0805` — EnchantAdd**
 
-Declarations: [packet.EnchantAdd](../../server/internal/packet/packet.go#L206), [proto.EnchantAdd](../../internal/proto/opcodes.go#L194).
+Declarations: [packet.EnchantAdd](../../server/internal/packet/packet.go#L208), [proto.EnchantAdd](../../internal/proto/opcodes.go#L196).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L83)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L85)
 
 **S→C serializers:** [buildEnchantResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L37)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L501)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L508)
 
 ### Wire layouts and validation
 
@@ -621,13 +621,13 @@ type EnchantResult struct {
 
 **`0x0806` — ItemCompose**
 
-Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L207), [proto.ItemCompose](../../internal/proto/opcodes.go#L195).
+Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L209), [proto.ItemCompose](../../internal/proto/opcodes.go#L197).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L89)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L91)
 
 **S→C serializers:** [buildComposeResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L495)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L482)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L489)
 
 ### Wire layouts and validation
 
@@ -693,7 +693,7 @@ type ComposeResult struct {
 
 **`0x0809` — GemAddPossibility**
 
-Declarations: [packet.GemAddPossibility](../../server/internal/packet/packet.go#L210), [proto.GemAddPossibility](../../internal/proto/opcodes.go#L198).
+Declarations: [packet.GemAddPossibility](../../server/internal/packet/packet.go#L212), [proto.GemAddPossibility](../../internal/proto/opcodes.go#L200).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -707,7 +707,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0x080A` — GemRemovePossibility**
 
-Declarations: [packet.GemRemovePossibility](../../server/internal/packet/packet.go#L211), [proto.GemRemovePossibility](../../internal/proto/opcodes.go#L199).
+Declarations: [packet.GemRemovePossibility](../../server/internal/packet/packet.go#L213), [proto.GemRemovePossibility](../../internal/proto/opcodes.go#L201).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -721,7 +721,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0xB101` — BankItemList**
 
-Declarations: [packet.BankItemList](../../server/internal/packet/packet.go#L195), [proto.BankItemList](../../internal/proto/opcodes.go#L183).
+Declarations: [packet.BankItemList](../../server/internal/packet/packet.go#L197), [proto.BankItemList](../../internal/proto/opcodes.go#L185).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

@@ -20,6 +20,10 @@ if stage.exists(): shutil.rmtree(stage)
 stage.mkdir(parents=True)
 exe = 'Shaiya GX.exe' if a.platform.startswith('windows') else 'Shaiya GX'
 shutil.copy2(ROOT/'build'/exe, stage/exe)
+studio = 'GX Studio.exe' if a.platform.startswith('windows') else 'GX Studio'
+(stage/'Studio').mkdir()
+shutil.copy2(ROOT/'build'/'GX Studio'/studio, stage/'Studio'/studio)
+shutil.copy2(ROOT/'docs/gx-studio.md', stage/'Studio'/'README.md')
 shutil.copytree(FONT_PACK, stage/'data/fonts')
 shutil.copytree(ROOT/'resources/vehicle', stage/'data/Vehicle')
 for file in ['LICENSE', 'NOTICE']:

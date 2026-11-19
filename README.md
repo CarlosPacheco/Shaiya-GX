@@ -15,12 +15,12 @@ no separate data download, Go installation or build tools required.**
 Requires a 64-bit OS and OpenGL 4.5. The server includes development test accounts;
 preserve your existing runtime database when upgrading.
 
-**Latest release: [gx-v0.1.12](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.12).**
+**Latest binary release: [gx-v0.1.13](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.13).**
 The Drive package includes **gx-v0.1.12 client/server binaries and complete data**
 for Windows and Linux, including the teleport hotfix. Preserve your personal runtime and configuration; read the
-[v0.1.12 upgrade guide](docs/releases/gx-v0.1.12-upgrade.md).
+[v0.1.13 upgrade guide](docs/releases/gx-v0.1.13-upgrade.md).
 
-[Setup and requirements](docs/client-portable.md) · [Latest patch notes](docs/releases/gx-v0.1.12.md) · [GitHub binary updates (without client game data)](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
+[Setup and requirements](docs/client-portable.md) · [Latest patch notes](docs/releases/gx-v0.1.13.md) · [GitHub binary updates (without client game data)](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
 
 ---
 
@@ -38,7 +38,7 @@ GX reads loose assets from a `data/` folder beside the **Shaiya GX** executable.
 
 **SQLite is the primary production database. Its embedded operation simplifies deployment and distribution without a separate database service.**
 
-[**gx-v0.1.12 patch notes**](docs/releases/gx-v0.1.12.md) · [Complete Linux/Windows portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip) · [Separate client/server downloads](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
+[**gx-v0.1.13 patch notes**](docs/releases/gx-v0.1.13.md) · [Linux/Windows binary portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip) · [Separate client/server downloads](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
 
 ## On-screen metrics panel
 

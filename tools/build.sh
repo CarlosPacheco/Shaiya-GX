@@ -9,5 +9,7 @@ for c in shaiya shaiyacli assets; do
   if [ "$c" = shaiya ]; then target="Shaiya GX"; else target="$c"; fi
   go build -o "build/$target" "./cmd/$c"
 done
+mkdir -p "build/GX Studio"
+go build -trimpath -o "build/GX Studio/GX Studio" ./cmd/gx_studio
 ./server/tools/build.sh
 go test -vet=off ./...
