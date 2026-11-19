@@ -213,7 +213,7 @@ func (s *Session) applyIncomingMobDamage(d pendingDamage) bool {
 		skillID = slot.Type
 	}
 	if skillID != 0 {
-		if sk := db.MustDefs().Skill(skillID, 100); sk != nil {
+		if sk := db.MustDefs().NPCSkill(skillID); sk != nil {
 			return s.applyMobSkill(d, def, &mc, sk, &stats)
 		}
 	}

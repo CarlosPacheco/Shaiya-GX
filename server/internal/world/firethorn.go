@@ -41,7 +41,7 @@ func (s *Session) tickFireThorn(now time.Time) {
 		if b.nextTickAt.Before(now) {
 			b.nextTickAt = now.Add(fireThornTick)
 		}
-		if def := db.MustDefs().Skill(b.SkillID, b.SkillLevel); def != nil && def.DamageHP > 0 {
+		if def := db.MustDefs().EffectSkill(b.SkillID, b.SkillLevel); def != nil && def.DamageHP > 0 {
 			pulses = append(pulses, def)
 		}
 	}

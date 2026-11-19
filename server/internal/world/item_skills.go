@@ -12,7 +12,7 @@ func itemBuffSkill(d *db.ItemDef) *db.SkillDef {
 	if d.Range == 0 || d.AttackTime == 0 {
 		return nil
 	}
-	sk := db.MustDefs().Skill(uint16(d.Range), d.AttackTime)
+	sk := db.MustDefs().EffectSkill(uint16(d.Range), d.AttackTime)
 	if sk == nil || sk.TypeEffect != typeEffectBuff {
 		return nil
 	}

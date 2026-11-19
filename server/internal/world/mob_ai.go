@@ -667,7 +667,7 @@ func (h *mobAIHost) attack(stationary bool) {
 			m.lastAttackAt = h.now
 			if heal := m.useSlot(slot, h.now); heal != nil {
 				h.tick.Restores = append(h.tick.Restores, mapPacket{h.mapID, m.PosX, m.PosZ, heal})
-				if sk := db.MustDefs().Skill(m.def.Attacks[slot].Type, 100); sk != nil {
+				if sk := db.MustDefs().NPCSkill(m.def.Attacks[slot].Type); sk != nil {
 					h.tick.Restores = append(h.tick.Restores, mapPacket{h.mapID, m.PosX, m.PosZ, buildMobSkillPacket(0x060D, 0, m.ID, m.ID, sk, [3]uint16{}, nil)})
 				}
 				return
@@ -686,7 +686,7 @@ func (h *mobAIHost) attack(stationary bool) {
 }
 func (h *mobAIHost) skill(id uint16) {
 	m := h.mob
-	sk := db.MustDefs().Skill(id, 100)
+	sk := db.MustDefs().NPCSkill(id)
 	if sk == nil || m.def == nil || !m.mods().canAct() {
 		return
 	}

@@ -292,9 +292,9 @@ func TestInactiveElementalLapisGiveNoOtherBonusOrTriggeredSkill(t *testing.T) {
 	first.Attrib, first.ConstStr, first.Range, first.Special = 2, 7, 5, 1
 	ordinary.Attrib, ordinary.ConstStr, ordinary.Range = 0, 3, 2
 	defs.Items[db.ItemKey{Type: 30, TypeID: 3}] = &db.ItemDef{Type: 30, TypeID: 3, Attrib: 3, ConstStr: 11, Range: 9, Special: 2}
-	defs.Skills = map[db.SkillKey]*db.SkillDef{
-		{SkillID: 1, Level: 100}: {SkillID: 1, SkillLevel: 100, TypeEffect: typeEffectAttack},
-		{SkillID: 2, Level: 100}: {SkillID: 2, SkillLevel: 100, TypeEffect: typeEffectAttack},
+	defs.NPCSkills = map[db.SkillKey]*db.SkillDef{
+		{SkillID: 1, Level: 1}: {SkillID: 1, SkillLevel: 100, TypeEffect: typeEffectAttack},
+		{SkillID: 2, Level: 1}: {SkillID: 2, SkillLevel: 100, TypeEffect: typeEffectAttack},
 	}
 	it := db.Item{Bag: 0, Slot: 5, Type: 1, TypeID: 1, Count: 1, Gems: [6]uint8{1, 2, 3}}
 	defs.Item(1, 1).Attrib = 1

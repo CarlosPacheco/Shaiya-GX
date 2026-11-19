@@ -21,6 +21,7 @@ func lapisSession(t *testing.T) (*Session, *db.Defs) {
 	defs := *loaded
 	defs.Items = maps.Clone(loaded.Items)
 	defs.Skills = maps.Clone(loaded.Skills)
+	defs.NPCSkills = maps.Clone(loaded.NPCSkills)
 	defs.Mobs = maps.Clone(loaded.Mobs)
 	db.SetDefsForTest(&defs)
 	defs.Items[db.ItemKey{Type: 1, TypeID: 1}] = &db.ItemDef{Type: 1, TypeID: 1, Server: 1, ReqWis: 1, AttackTime: 5, Effect1: 1000, ConstHP: 20000, ConstSP: 20000, ConstMP: 20000}
@@ -54,7 +55,7 @@ func TestAllCatalogLapisSelectNPCNamespaceAndDefinedChance(t *testing.T) {
 		}
 	}
 	// A same-numbered player buff never supplies an NPC effect.
-	delete(defs.Skills, db.SkillKey{SkillID: 205, Level: 100})
+	delete(defs.NPCSkills, db.SkillKey{SkillID: 205, Level: 1})
 	if defs.Skill(205, 1) == nil {
 		t.Fatal("missing collision fixture")
 	}
@@ -98,7 +99,7 @@ func TestLapisDebuffFamiliesApplyExpireAndDrainPools(t *testing.T) {
 			defs.Items[db.ItemKey{Type: 1, TypeID: 1}].ExpAbsorb = 255
 			sk := *defs.NPCSkill(id)
 			sk.SuccessValue = 100
-			defs.Skills[db.SkillKey{SkillID: id, Level: 100}] = &sk
+			defs.NPCSkills[db.SkillKey{SkillID: id, Level: 1}] = &sk
 			before := s.stats()
 			speed := s.speeds()
 			if s.applyUserSkillHit(pendingUserHit{AttackerID: 990001, Skill: &sk, First: true, ItemCast: true}, before) {

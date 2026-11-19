@@ -22,7 +22,7 @@ import (
 // both sides must be alive.
 
 const (
-	gemSkillLevel = 100
+	gemSkillLevel = db.NPCSkillWireLevel
 )
 
 var gemArmourOrder = [6]uint8{6, 0, 1, 3, 2, 4}

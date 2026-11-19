@@ -22,10 +22,16 @@ func TestNPCSkillUpdatesOnlyItsOwnNamespace(t *testing.T) {
 		declarations[i] += " INTEGER DEFAULT 0"
 	}
 	declarations[0] = quote("SkillName") + " TEXT"
-	_, err = db.ExecContext(ctx, "CREATE TABLE "+NPCSkills.Table()+" (SkillID INTEGER, SkillLevel INTEGER, "+strings.Join(declarations, ",")+")")
-	must(t, err)
-	_, err = db.ExecContext(ctx, "INSERT INTO "+NPCSkills.Table()+" (SkillID,SkillLevel,SkillName,SuccessValue) VALUES (1,1,'Player',70),(1,100,'NPC',15)")
-	must(t, err)
+	for _, table := range []struct {
+		kind       Kind
+		rank, name string
+		chance     int
+	}{{Skills, "SkillLevel", "Player", 70}, {NPCSkills, "Rank", "NPC", 15}} {
+		_, err = db.ExecContext(ctx, "CREATE TABLE "+table.kind.Table()+" (SkillID INTEGER, "+table.rank+" INTEGER, "+strings.Join(declarations, ",")+")")
+		must(t, err)
+		_, err = db.ExecContext(ctx, "INSERT INTO "+table.kind.Table()+" (SkillID,"+table.rank+",SkillName,SuccessValue) VALUES (1,1,?,?)", table.name, table.chance)
+		must(t, err)
+	}
 
 	body := make([]byte, 116)
 	body[0], body[50], body[51], body[55] = 1, 0xf1, 0xff, 15
@@ -40,7 +46,7 @@ func TestNPCSkillUpdatesOnlyItsOwnNamespace(t *testing.T) {
 	project, err := OpenDefinitions(ctx, root, path, NPCSkills)
 	must(t, err)
 	if len(project.Records) != 1 || !project.Records[0].DatabaseRow {
-		t.Fatal("NPC rank 1 should link to SQL level 100")
+		t.Fatal("NPC rank 1 should link to the NPC catalog")
 	}
 	backup, err := SaveDefinitions(ctx, root, project, DefinitionEdits{0: {"SuccessValue": "19"}})
 	must(t, err)
@@ -53,8 +59,8 @@ func TestNPCSkillUpdatesOnlyItsOwnNamespace(t *testing.T) {
 	}
 
 	var player, npc int
-	must(t, db.QueryRowContext(ctx, "SELECT SuccessValue FROM "+NPCSkills.Table()+" WHERE SkillLevel=1").Scan(&player))
-	must(t, db.QueryRowContext(ctx, "SELECT SuccessValue FROM "+NPCSkills.Table()+" WHERE SkillLevel=100").Scan(&npc))
+	must(t, db.QueryRowContext(ctx, "SELECT SuccessValue FROM "+Skills.Table()+" WHERE SkillLevel=1").Scan(&player))
+	must(t, db.QueryRowContext(ctx, "SELECT SuccessValue FROM "+NPCSkills.Table()+" WHERE Rank=1").Scan(&npc))
 	if player != 70 || npc != 19 {
 		t.Fatalf("wrong namespace edited: player=%d, NPC=%d", player, npc)
 	}

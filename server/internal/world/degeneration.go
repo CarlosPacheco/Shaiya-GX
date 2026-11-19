@@ -32,7 +32,7 @@ func (s *Session) cannotAct() bool { return s.actionBlocked() || s.degenerated()
 func (s *Session) transformedMob() uint16 {
 	for _, b := range s.buffs {
 		if b.Effect == typeEffectDebuff && b.Detail == detailDegeneration {
-			if def := db.MustDefs().Skill(b.SkillID, b.SkillLevel); def != nil && def.ChangeType == 101 {
+			if def := db.MustDefs().EffectSkill(b.SkillID, b.SkillLevel); def != nil && def.ChangeType == 101 {
 				return def.ChangeLevel
 			}
 		}

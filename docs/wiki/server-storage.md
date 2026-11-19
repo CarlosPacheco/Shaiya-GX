@@ -84,6 +84,7 @@ published migration; append a new version.
 | 17 | `npc_quest` | Adds six tables for NPCs, shops, destinations, quest details and links |
 | 18 | `map_properties` | Adds map rules and racial birth positions |
 | 19 | `unified_experience` | Replaces mode-specific EXP rows with one threshold per level and migrates character progress |
+| 20 | `separate_npc_skills` | Moves former level-100 NPC definitions to an independent `SkillID, Rank` catalog |
 
 The migration ledger is separate from legacy user_version. The shipped seed is
 not rewritten during an upgrade; migrations apply to the runtime. Back up before

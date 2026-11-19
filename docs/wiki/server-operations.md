@@ -56,7 +56,7 @@ For persistent overrides create `.local/runtime.env` in the server directory. Ex
 Run matching GX client and server builds. Pending SQLite migrations are
 applied on startup to the runtime, with versions recorded in
 `GX_SchemaMigrations`. The current source applies migrations through version
-19. This includes catalogs for enchant, mob AI messages, blessing, world
+20. This includes catalogs for enchant, mob AI messages, blessing, world
 drops, item boxes, NPCs and quests, map rules and experience.
 
 Use [GX Studio](gx-studio.md) for supported catalogs and verify the chosen

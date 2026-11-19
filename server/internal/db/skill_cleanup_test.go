@@ -45,3 +45,28 @@ func TestSkillCatalogCleanup(t *testing.T) {
 		t.Fatal("Double Damage lost its extra damage")
 	}
 }
+
+func TestNPCSkillsLoadInSeparateNamespace(t *testing.T) {
+	p := sqliteFixture(t)
+	var npcRows, legacyRows int
+	if err := p.QueryRow("SELECT COUNT(*) FROM PS_GameDefs_NpcSkills WHERE Rank=1").Scan(&npcRows); err != nil || npcRows == 0 {
+		t.Fatalf("missing migrated NPC skills: %d (%v)", npcRows, err)
+	}
+	if err := p.QueryRow("SELECT COUNT(*) FROM PS_GameDefs_Skills WHERE SkillLevel=100").Scan(&legacyRows); err != nil || legacyRows != 0 {
+		t.Fatalf("legacy NPC rows remain in player catalog: %d (%v)", legacyRows, err)
+	}
+	player, err := loadSkillCatalog(t.Context(), p, "PS_GameDefs_Skills", "SkillLevel")
+	if err != nil {
+		t.Fatal(err)
+	}
+	npc, err := loadSkillCatalog(t.Context(), p, "PS_GameDefs_NpcSkills", "Rank")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defs := Defs{Skills: player, NPCSkills: npc}
+	pSkill, nSkill := defs.Skill(205, 1), defs.NPCSkill(205)
+	if pSkill == nil || nSkill == nil || pSkill == nSkill || defs.Skill(205, NPCSkillWireLevel) != nil ||
+		defs.EffectSkill(205, NPCSkillWireLevel) != nSkill || nSkill.SkillLevel != NPCSkillWireLevel {
+		t.Fatal("shared ID failed to resolve in independent catalogs")
+	}
+}

@@ -25,6 +25,9 @@ type migration struct {
 //go:embed experience.sql
 var experienceMigration string
 
+//go:embed npcskills.sql
+var npcSkillsMigration string
+
 var migrations = []migration{
 	{1, "atomic_session_handoff", `CREATE TABLE IF NOT EXISTS GX_SessionHandoff(UserUID INTEGER PRIMARY KEY,Identity BLOB NOT NULL,AESMaterial BLOB NOT NULL,SessionID INTEGER NOT NULL,ExpiresAt INTEGER NOT NULL)`},
 	{2, "indexed_account_lookup", `CREATE INDEX IF NOT EXISTS GX_Users_UserID ON PS_UserData_Users_Master(UserID)`},
@@ -83,6 +86,7 @@ var migrations = []migration{
 	{17, "npc_quest", npcquest.MigrationSQL},
 	{18, "map_properties", maprules.MigrationSQL},
 	{19, "unified_experience", experienceMigration},
+	{20, "separate_npc_skills", npcSkillsMigration},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

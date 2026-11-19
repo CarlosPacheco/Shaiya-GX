@@ -1261,7 +1261,7 @@ func (m *MapMob) pickAttackSlot(now time.Time, distance float32, mods *mobMods) 
 			continue // CMob::Attack: m_pAttack[0].nDisable
 		}
 		if a.Type != 0 {
-			if sk := db.MustDefs().Skill(a.Type, 100); sk != nil {
+			if sk := db.MustDefs().NPCSkill(a.Type); sk != nil {
 				if mods.Disabled[sk.Kind] > 0 {
 					continue
 				}
@@ -1284,7 +1284,7 @@ func (m *MapMob) pickAttackSlot(now time.Time, distance float32, mods *mobMods) 
 func (m *MapMob) useSlot(slot uint8, now time.Time) []byte {
 	a := &m.def.Attacks[slot]
 	if a.Type != 0 {
-		if sk := db.MustDefs().Skill(a.Type, 100); sk != nil {
+		if sk := db.MustDefs().NPCSkill(a.Type); sk != nil {
 			m.slotReadyAt[slot] = now.Add(time.Duration(sk.ResetTimeSeconds) * time.Second)
 			m.nextAttackAt = now.Add(mobAttackIdle + m.mods().attackDelayOffset())
 			if sk.TypeEffect == 2 {

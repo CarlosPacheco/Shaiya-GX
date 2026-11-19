@@ -1,6 +1,8 @@
 package db
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/element"
 	"github.com/Spelunkern/Shaiya-GX/internal/itemstack"
@@ -202,6 +204,7 @@ type Defs struct {
 	Items        map[ItemKey]*ItemDef
 	ItemsByGrade map[uint16][]*ItemDef
 	Skills       map[SkillKey]*SkillDef
+	NPCSkills    map[SkillKey]*SkillDef
 	Mobs         map[uint16]*MobDef
 	MobDrops     map[uint16][]MobDrop
 	Exp          map[uint16]uint32
@@ -317,7 +320,7 @@ func loadDefs() (*Defs, error) {
 		return nil, err
 	}
 	d := &Defs{Items: map[ItemKey]*ItemDef{}, ItemsByGrade: map[uint16][]*ItemDef{},
-		Skills: map[SkillKey]*SkillDef{}, Mobs: map[uint16]*MobDef{}, MobDrops: map[uint16][]MobDrop{},
+		Mobs: map[uint16]*MobDef{}, MobDrops: map[uint16][]MobDrop{},
 		Exp: map[uint16]uint32{}, Products: map[string]*Product{}, Status: map[StatusKey]Status{},
 		BaseItems: map[BaseItemKey][]BaseItem{}}
 	c, cancel := longCtx()
@@ -358,55 +361,14 @@ func loadDefs() (*Defs, error) {
 	}
 	rows.Close()
 
-	rows, err = pool.QueryContext(c, `SELECT SkillID, SkillLevel, COALESCE(SkillName,''), Country, ReqLevel, Grow,
-		SkillPoint, PrevSkillID, Attackfighter, Defensefighter, Patrolrogue, Shootrogue, Attackmage, Defensemage,
-		SP, MP, ResetTime, ReadyTime, DamageHP, AddDamageHP, HealHP, HealSP, HealMP, TypeDetail, KeepTime,
-		TimeHealHP, TimeHealSP, TimeHealMP, AbilityType1, AbilityValue1, AbilityType2, AbilityValue2,
-		AbilityType3, AbilityValue3, TimeDamageHP, TimeDamageSP, TimeDamageMP, AttackRange, TypeAttack,
-		TargetType, ApplyRange, MultiAttack, TypeEffect, DamageType, DamageSP, DamageMP, AddDamageSP, AddDamageMP,
-		AttrType, StateType, SuccessType, SuccessValue, Weapon1, Weapon2, Weaponvalue, DefenceType, DefenceValue,
-		Arrow, LimitHP, FixRange, NeedWeapon1, NeedWeapon2, NeedWeapon3, NeedWeapon4, NeedWeapon5, NeedWeapon6,
-		NeedWeapon7, NeedWeapon8, NeedWeapon9, NeedWeapon10, NeedWeapon11, NeedWeapon12, NeedWeapon13, NeedWeapon14,
-		NeedWeapon15, Shield, TimeDamageType, TypeShow, ChangeType, ChangeLevel FROM PS_GameDefs_Skills`)
+	d.Skills, err = loadSkillCatalog(c, pool, "PS_GameDefs_Skills", "SkillLevel")
 	if err != nil {
-		return nil, fmt.Errorf("load Skills: %w", err)
+		return nil, err
 	}
-	for rows.Next() {
-		var s SkillDef
-		var skillID, reqLevel, prev, sp, mp, reset, typeDetail, keep, aggro int64
-		var classes [6]uint8
-		var defenceType, fixRange, shield uint8
-		var need [15]uint8
-		extra := []any{&s.TypeEffect, &s.DamageType, &s.DamageSP, &s.DamageMP, &s.AddDamageSP, &s.AddDamageMP,
-			&s.AttrType, &s.StateType, &s.SuccessType, &s.SuccessValue, &s.Weapon1, &s.Weapon2, &s.WeaponValue,
-			&defenceType, &s.DefenceValue, &aggro, &s.LimitHP, &fixRange}
-		for i := range need {
-			extra = append(extra, &need[i])
-		}
-		extra = append(extra, &shield, &s.TimeDamageType, &s.TypeShow, &s.ChangeType, &s.ChangeLevel)
-		if err := rows.Scan(append([]any{&skillID, &s.SkillLevel, &s.Name, &s.Country, &reqLevel, &s.Grow, &s.SkillPointCost,
-			&prev, &classes[0], &classes[1], &classes[2], &classes[3], &classes[4], &classes[5], &sp, &mp,
-			&reset, &s.ReadyTime, &s.DamageHP, &s.AddDamageHP, &s.HealHP, &s.HealSP, &s.HealMP, &typeDetail,
-			&keep, &s.TimeHealHP, &s.TimeHealSP, &s.TimeHealMP, &s.AbilityType[0], &s.AbilityValue[0],
-			&s.AbilityType[1], &s.AbilityValue[1], &s.AbilityType[2], &s.AbilityValue[2], &s.TimeDamageHP,
-			&s.TimeDamageSP, &s.TimeDamageMP, &s.AttackRange, &s.TypeAttack, &s.TargetType, &s.ApplyRange,
-			&s.MultiAttack}, extra...)...); err != nil {
-			rows.Close()
-			return nil, fmt.Errorf("scan Skills: %w", err)
-		}
-		s.SkillID, s.ReqLevel, s.PrevSkillID = clampU16(skillID), clampU16(reqLevel), clampU16(prev)
-		s.SPCost, s.MPCost, s.ResetTimeSeconds = clampU16(sp), clampU16(mp), clampU16(reset)
-		// KeepTime is a smallint holding an unsigned word (43200 reads -22336).
-		keep = int64(uint16(keep))
-		s.TypeDetail, s.KeepTime = clampU16(typeDetail), clampU16(keep)
-		for i, v := range classes {
-			s.ClassEligible[i] = v != 0
-		}
-		normalizeSkill(&s, defenceType, fixRange, uint32(max(keep, 0)), clampU16(aggro), need, shield)
-		skill := s
-		d.Skills[SkillKey{s.SkillID, s.SkillLevel}] = &skill
+	d.NPCSkills, err = loadSkillCatalog(c, pool, "PS_GameDefs_NpcSkills", "Rank")
+	if err != nil {
+		return nil, err
 	}
-	rows.Close()
 
 	rows, err = pool.QueryContext(c, `SELECT MobID, COALESCE(MobName,''), Level, HP, Money1, Money2, Attackspecial3,
 		Exp, Attack1, AI, ChaseRange, Dex, Wis, Luc, Defense, Magic, Attacktime3, Attrib, COALESCE(Size,0), COALESCE(QuestItemID,0), NormalTime, NormalStep,
@@ -624,6 +586,63 @@ func loadDefs() (*Defs, error) {
 	return d, nil
 }
 
+func loadSkillCatalog(ctx context.Context, pool *sql.DB, table, levelColumn string) (map[SkillKey]*SkillDef, error) {
+	rows, err := pool.QueryContext(ctx, fmt.Sprintf(`SELECT SkillID, %s, COALESCE(SkillName,''), Country, ReqLevel, Grow,
+		SkillPoint, PrevSkillID, Attackfighter, Defensefighter, Patrolrogue, Shootrogue, Attackmage, Defensemage,
+		SP, MP, ResetTime, ReadyTime, DamageHP, AddDamageHP, HealHP, HealSP, HealMP, TypeDetail, KeepTime,
+		TimeHealHP, TimeHealSP, TimeHealMP, AbilityType1, AbilityValue1, AbilityType2, AbilityValue2,
+		AbilityType3, AbilityValue3, TimeDamageHP, TimeDamageSP, TimeDamageMP, AttackRange, TypeAttack,
+		TargetType, ApplyRange, MultiAttack, TypeEffect, DamageType, DamageSP, DamageMP, AddDamageSP, AddDamageMP,
+		AttrType, StateType, SuccessType, SuccessValue, Weapon1, Weapon2, Weaponvalue, DefenceType, DefenceValue,
+		Arrow, LimitHP, FixRange, NeedWeapon1, NeedWeapon2, NeedWeapon3, NeedWeapon4, NeedWeapon5, NeedWeapon6,
+		NeedWeapon7, NeedWeapon8, NeedWeapon9, NeedWeapon10, NeedWeapon11, NeedWeapon12, NeedWeapon13, NeedWeapon14,
+		NeedWeapon15, Shield, TimeDamageType, TypeShow, ChangeType, ChangeLevel FROM %s`, levelColumn, table))
+	if err != nil {
+		return nil, fmt.Errorf("load %s: %w", table, err)
+	}
+	defer rows.Close()
+	skills := map[SkillKey]*SkillDef{}
+	for rows.Next() {
+		var s SkillDef
+		var level uint8
+		var skillID, reqLevel, prev, sp, mp, reset, typeDetail, keep, aggro int64
+		var classes [6]uint8
+		var defenceType, fixRange, shield uint8
+		var need [15]uint8
+		extra := []any{&s.TypeEffect, &s.DamageType, &s.DamageSP, &s.DamageMP, &s.AddDamageSP, &s.AddDamageMP,
+			&s.AttrType, &s.StateType, &s.SuccessType, &s.SuccessValue, &s.Weapon1, &s.Weapon2, &s.WeaponValue,
+			&defenceType, &s.DefenceValue, &aggro, &s.LimitHP, &fixRange}
+		for i := range need {
+			extra = append(extra, &need[i])
+		}
+		extra = append(extra, &shield, &s.TimeDamageType, &s.TypeShow, &s.ChangeType, &s.ChangeLevel)
+		if err := rows.Scan(append([]any{&skillID, &level, &s.Name, &s.Country, &reqLevel, &s.Grow, &s.SkillPointCost,
+			&prev, &classes[0], &classes[1], &classes[2], &classes[3], &classes[4], &classes[5], &sp, &mp,
+			&reset, &s.ReadyTime, &s.DamageHP, &s.AddDamageHP, &s.HealHP, &s.HealSP, &s.HealMP, &typeDetail,
+			&keep, &s.TimeHealHP, &s.TimeHealSP, &s.TimeHealMP, &s.AbilityType[0], &s.AbilityValue[0],
+			&s.AbilityType[1], &s.AbilityValue[1], &s.AbilityType[2], &s.AbilityValue[2], &s.TimeDamageHP,
+			&s.TimeDamageSP, &s.TimeDamageMP, &s.AttackRange, &s.TypeAttack, &s.TargetType, &s.ApplyRange,
+			&s.MultiAttack}, extra...)...); err != nil {
+			return nil, fmt.Errorf("scan %s: %w", table, err)
+		}
+		s.SkillID, s.ReqLevel, s.PrevSkillID = clampU16(skillID), clampU16(reqLevel), clampU16(prev)
+		s.SPCost, s.MPCost, s.ResetTimeSeconds = clampU16(sp), clampU16(mp), clampU16(reset)
+		// KeepTime is a smallint holding an unsigned word (43200 reads -22336).
+		keep = int64(uint16(keep))
+		s.TypeDetail, s.KeepTime = clampU16(typeDetail), clampU16(keep)
+		for i, v := range classes {
+			s.ClassEligible[i] = v != 0
+		}
+		s.SkillLevel = level
+		if levelColumn == "Rank" {
+			s.SkillLevel = NPCSkillWireLevel
+		}
+		normalizeSkill(&s, defenceType, fixRange, uint32(max(keep, 0)), clampU16(aggro), need, shield)
+		skills[SkillKey{s.SkillID, level}] = &s
+	}
+	return skills, rows.Err()
+}
+
 // Item returns the definition for (type, typeID), or nil.
 func (d *Defs) Item(itemType, typeID uint8) *ItemDef { return d.Items[ItemKey{itemType, typeID}] }
 
@@ -632,10 +651,20 @@ func (d *Defs) Skill(skillID uint16, level uint8) *SkillDef {
 	return d.Skills[SkillKey{skillID, level}]
 }
 
-// NPCSkill selects the independent NpcSkill namespace. The shared SQL schema
-// stores NpcSkill rank one as level 100; player ranks are never a fallback.
+// NPCSkillWireLevel distinguishes NPC effects from player effects on the wire.
+const NPCSkillWireLevel = 100
+
+// NPCSkill selects rank one from the independent NPC catalog.
 func (d *Defs) NPCSkill(skillID uint16) *SkillDef {
-	return d.Skills[SkillKey{skillID, 100}]
+	return d.NPCSkills[SkillKey{skillID, 1}]
+}
+
+// EffectSkill resolves a stored or transmitted effect's level discriminator.
+func (d *Defs) EffectSkill(skillID uint16, wireLevel uint8) *SkillDef {
+	if wireLevel == NPCSkillWireLevel {
+		return d.NPCSkill(skillID)
+	}
+	return d.Skill(skillID, wireLevel)
 }
 
 // MobQuestItem decodes LoadConstMob's quest-only index. This is not the

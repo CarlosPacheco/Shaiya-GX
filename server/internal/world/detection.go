@@ -51,7 +51,7 @@ func (s *Session) tickDetection(now time.Time) {
 			continue
 		}
 		b.nextTickAt = now.Add(detectionTick)
-		if def := db.MustDefs().Skill(b.SkillID, b.SkillLevel); def != nil {
+		if def := db.MustDefs().EffectSkill(b.SkillID, b.SkillLevel); def != nil {
 			radius = max(radius, float32(def.ApplyRange))
 		}
 	}

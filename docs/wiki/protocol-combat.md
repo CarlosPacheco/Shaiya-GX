@@ -895,11 +895,11 @@ func (s *Session) clearBuffsOnDeath() {
 	kept := s.buffs[:0]
 	var removed []uint32
 	for _, b := range s.buffs {
-		if b.MapCurse || (duelDeath && b.SkillID > 200 && b.SkillLevel != 100) {
+		if b.MapCurse || (duelDeath && b.SkillID > 200 && b.SkillLevel != db.NPCSkillWireLevel) {
 			kept = append(kept, b)
 			continue
 		}
-		if d := db.MustDefs().Skill(b.SkillID, b.SkillLevel); d != nil && d.KeepOnDeath {
+		if d := db.MustDefs().EffectSkill(b.SkillID, b.SkillLevel); d != nil && d.KeepOnDeath {
 			kept = append(kept, b)
 			continue
 		}
@@ -989,7 +989,7 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 		if b.Effect != typeEffectDebuff || (b.Detail != detailTimeDamage && b.Detail != detailDeathSentence) {
 			continue
 		}
-		def := db.MustDefs().Skill(b.SkillID, b.SkillLevel)
+		def := db.MustDefs().EffectSkill(b.SkillID, b.SkillLevel)
 		if def == nil {
 			continue
 		}

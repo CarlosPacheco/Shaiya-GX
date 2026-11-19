@@ -1708,7 +1708,7 @@ Direct GX dependencies: `server/internal/db`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`gemSkillLevel`](../../server/internal/world/itemoption.go#L25)<br>`const gemSkillLevel = 100` | See the source definition and the subsystem ownership contract. |
+| [`gemSkillLevel`](../../server/internal/world/itemoption.go#L25)<br>`const gemSkillLevel = db.NPCSkillWireLevel` | See the source definition and the subsystem ownership contract. |
 | [`gemArmourOrder`](../../server/internal/world/itemoption.go#L28)<br>`var gemArmourOrder` | See the source definition and the subsystem ownership contract. |
 | [`gemSkillsOf`](../../server/internal/world/itemoption.go#L30)<br>`func gemSkillsOf(it *db.Item) []*db.SkillDef` | See the source definition and the subsystem ownership contract. |
 | [`weaponGemSkills`](../../server/internal/world/itemoption.go#L51)<br>`func weaponGemSkills(items []db.Item) []*db.SkillDef` | weaponGemSkills is AttackItemOption's weapon scan. |

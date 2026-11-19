@@ -270,7 +270,7 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 		if b.Effect != typeEffectDebuff || (b.Detail != detailTimeDamage && b.Detail != detailDeathSentence) {
 			continue
 		}
-		def := db.MustDefs().Skill(b.SkillID, b.SkillLevel)
+		def := db.MustDefs().EffectSkill(b.SkillID, b.SkillLevel)
 		if def == nil {
 			continue
 		}
@@ -408,7 +408,7 @@ func (s *Session) reflects(kind int, md *db.MobDef) bool {
 		if b.Effect != typeEffectBuff || b.Detail != 83 {
 			continue
 		}
-		d := db.MustDefs().Skill(b.SkillID, b.SkillLevel)
+		d := db.MustDefs().EffectSkill(b.SkillID, b.SkillLevel)
 		if d == nil {
 			continue
 		}

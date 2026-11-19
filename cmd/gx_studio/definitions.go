@@ -96,7 +96,7 @@ func (e *editor) showDefinitionSection(sectionKey int, queryText string, linkedO
 		if r.DatabaseRow {
 			switch catalog.Kind {
 			case studio.NPCSkills:
-				text += fmt.Sprintf("\n\nSkillID %d  ·  SkillLevel 100 in SQLite", r.ID)
+				text += fmt.Sprintf("\n\nSkillID %d  ·  Rank %d in SQLite", r.ID, r.Level)
 			default:
 				text += fmt.Sprintf("\n\nSkillID %d  ·  SkillLevel %d in SQLite", r.ID, r.Level)
 			}
@@ -356,9 +356,7 @@ func (e *editor) definitionForm(index int, inline bool, apply func(map[string]st
 	case studio.Items:
 		identity = fmt.Sprintf("ItemID %d · Type %d · TypeID %d", record.ID, record.ID/1000, record.ID%1000)
 	case studio.NPCSkills:
-		if record.Level == 1 {
-			identity = fmt.Sprintf("Skill ID %d · SData level 1 → SQLite SkillLevel 100", record.ID)
-		}
+		identity = fmt.Sprintf("Skill ID %d · SData level %d → SQLite Rank %d", record.ID, record.Level, record.Level)
 	}
 	header := container.NewVBox(small(identity))
 	if inline {

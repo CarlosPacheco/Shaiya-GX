@@ -39,8 +39,9 @@ runes/aliases and 28 protected forge objects. The synchronization does not
 change skills, accounts, characters, inventories, owned item quantities or mall
 products. Item synchronization itself does not implement effects. The subsequent lapis
 combat implementation supports the 26 Lv6/Lv7 debuff lapis. Their referenced
-NpcSkill definitions (SQL level 100) are aligned with the installed
-`Monster/NpcSkill.SData`; player skill rows remain unchanged.
+NPC definitions in `PS_GameDefs_NpcSkills` are aligned with the installed
+`Monster/NpcSkill.SData`; player skills use `PS_GameDefs_Skills`. The server uses NPC rank 1 for
+monster and lapis effects and keeps the native level 100 in effect packets.
 
 ```sh
 python3 tools/sync_item_definitions.py \

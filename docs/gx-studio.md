@@ -9,7 +9,7 @@ the exact SData field and SQLite column under each readable field name.
 | Item Mall | `Item/Cash.SData` | `PS_GameDefs_ProductList` |
 | Items | `Item/Item.SData` | `PS_GameDefs_Items` |
 | Player skills | `Character/Skill.SData` | `PS_GameDefs_Skills`, matching level |
-| NPC skills | `Monster/NpcSkill.SData` | `PS_GameDefs_Skills`, level 100 for SData rank 1 |
+| NPC skills | `Monster/NpcSkill.SData` | `PS_GameDefs_NpcSkills`, matching SData rank |
 | Enchant |  | `PS_GameDefs_EnchantAttack` / `PS_GameDefs_EnchantDefense` |
 | Mob AI messages | | `PS_GameDefs_MobAIMessages` |
 | Goddess Blessing | | `PS_GameDefs_GoddessBlessing` |

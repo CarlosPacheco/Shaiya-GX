@@ -114,7 +114,7 @@ func queueMobAttack(a MobAttackAction) {
 		target.QueueDamage(first)
 		return
 	}
-	sk := db.MustDefs().Skill(skillID, 100)
+	sk := db.MustDefs().NPCSkill(skillID)
 	if sk == nil || (sk.TargetType != targetTypeEnemiesNearCaster && sk.TargetType != targetTypeEnemiesNearTarget) {
 		target.QueueDamage(first)
 		return

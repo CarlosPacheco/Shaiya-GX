@@ -26,7 +26,7 @@ func TestGemNPCProcAppliesToMobHonorsChanceAndPreventsRecursion(t *testing.T) {
 	id, md := lapisMob(t, s, defs)
 	npc := *defs.NPCSkill(205)
 	npc.SuccessValue = 0
-	defs.Skills[db.SkillKey{SkillID: 205, Level: 100}] = &npc
+	defs.NPCSkills[db.SkillKey{SkillID: 205, Level: 1}] = &npc
 	s.items[0].Gems[0] = 151
 	s.gemCastsOnMob(id, weaponGemSkills(s.items))
 	m, _ := MobByID(s.char.MapID, id)
@@ -55,7 +55,7 @@ func TestLapisPeriodicSPMPDrainAndMobSleepWake(t *testing.T) {
 		d := defs.Item(30, gem)
 		sk := *defs.NPCSkill(uint16(d.Special))
 		sk.SuccessValue = 100
-		defs.Skills[db.SkillKey{SkillID: sk.SkillID, Level: 100}] = &sk
+		defs.NPCSkills[db.SkillKey{SkillID: sk.SkillID, Level: 1}] = &sk
 		s.items[0].Gems[0] = gem
 		s.gemCastsOnMob(id, weaponGemSkills(s.items))
 	}

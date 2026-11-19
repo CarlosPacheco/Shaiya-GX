@@ -65,8 +65,10 @@ func (k Kind) Table() string {
 	switch k {
 	case Items:
 		return "PS_GameDefs_Items"
-	case Skills, NPCSkills:
+	case Skills:
 		return "PS_GameDefs_Skills"
+	case NPCSkills:
+		return "PS_GameDefs_NpcSkills"
 	default:
 		return ProductTable
 	}
@@ -97,9 +99,9 @@ func (r Record) sqlKey(kind Kind) (string, []any, bool) {
 	case Items:
 		return "ItemID = ? AND Type = ? AND TypeID = ?", []any{r.ID, r.ID / 1000, r.ID % 1000}, true
 	case Skills:
-		return "SkillID = ? AND SkillLevel = ?", []any{r.ID, r.Level}, r.Level < 100
+		return "SkillID = ? AND SkillLevel = ?", []any{r.ID, r.Level}, r.Level > 0
 	case NPCSkills:
-		return "SkillID = ? AND SkillLevel = 100", []any{r.ID}, r.Level == 1
+		return "SkillID = ? AND Rank = ?", []any{r.ID, r.Level}, r.Level > 0
 	default:
 		return "", nil, false
 	}
@@ -161,12 +163,7 @@ func OpenDefinitions(ctx context.Context, dataDir, database string, kind Kind) (
 		switch kind {
 		case Items:
 			key = [2]uint32{r.ID, 0}
-		case NPCSkills:
-			if r.Level != 1 {
-				continue
-			}
-			key = [2]uint32{r.ID, 100}
-		case Skills:
+		case Skills, NPCSkills:
 			key = [2]uint32{r.ID, r.Level}
 		}
 		r.DatabaseRow = keys[key] == 1
@@ -180,9 +177,7 @@ func definitionDBKeys(ctx context.Context, db queryer, kind Kind) (map[[2]uint32
 	if kind == Items {
 		query = "SELECT ItemID, 0 FROM " + kind.Table() + " WHERE ItemID = Type * 1000 + TypeID"
 	} else if kind == NPCSkills {
-		query += " WHERE SkillLevel = 100"
-	} else {
-		query += " WHERE SkillLevel < 100"
+		query = "SELECT SkillID, Rank FROM " + kind.Table()
 	}
 	// Validate the complete mapping before presenting an editable form.
 	columnRows, err := db.QueryContext(ctx, "SELECT d."+strings.Join(mappedColumns(kind), ",d.")+" FROM "+kind.Table()+" AS d LIMIT 0")

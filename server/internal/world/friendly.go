@@ -206,7 +206,7 @@ func (s *Session) applyFriendly(f pendingFriendly) {
 	var hp, mp, sp uint32
 	switch {
 	case f.IsBuff:
-		if def := db.MustDefs().Skill(f.SkillID, f.Level); def != nil {
+		if def := db.MustDefs().EffectSkill(f.SkillID, f.Level); def != nil {
 			s.addEffect(def, 0, f.Source)
 		}
 	case f.Cure:
