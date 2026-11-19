@@ -224,6 +224,10 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 	ev := Event{Op: op}
 	fail := func(err error) (Event, error) { return ev, fmt.Errorf("0x%04X: %w", uint16(op), err) }
 	switch op {
+	case proto.GXItemCooldownReset:
+		if len(p) != 2 {
+			return fail(fmt.Errorf("invalid cooldown reset length %d", len(p)))
+		}
 	case proto.GXChestCloakFits:
 		rows, err := proto.DecodeChestCloakFits(p)
 		if err != nil {

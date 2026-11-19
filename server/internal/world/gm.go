@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/gm"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -522,7 +523,7 @@ func (s *Session) gmSet(args []string) error {
 }
 
 // gmCure restores HP, MP and SP and clears every spell and item cooldown at
-// once; the client is told which spell timers ended.
+// once and synchronizes the client’s timers.
 func (s *Session) gmCure() error {
 	if s.dead {
 		return fmt.Errorf("you are dead")
@@ -536,6 +537,10 @@ func (s *Session) gmCure() error {
 	}
 	clear(s.skillCooldowns)
 	clear(s.itemCooldowns)
+	vehicleMu.Lock()
+	delete(vehicleCooldowns, s.char.ID)
+	vehicleMu.Unlock()
+	s.send(packet.New(packet.Opcode(proto.GXItemCooldownReset)).MustFinish(), "GM item cooldown reset")
 	s.persistSkillDelays()
 	s.gmReply("GM: restored HP, MP, SP and every cooldown.")
 	return nil

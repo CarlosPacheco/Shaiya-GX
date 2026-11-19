@@ -37,3 +37,6 @@ type,type_id,req_vg,special
 100,138,4,47
 100,169,5,47
 ```
+
+Use [GX Studio's Teleport Runes catalog](gx-studio.md#teleport-runes) to edit
+destinations or add custom rows with a verified SQLite backup.

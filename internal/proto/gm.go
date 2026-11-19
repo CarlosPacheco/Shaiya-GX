@@ -29,3 +29,6 @@ func DecodeGMState(p []byte) (GMState, error) {
 	}
 	return GMState{ID: binary.LittleEndian.Uint32(p[2:6]), GM: p[6] == 1, Turbo: p[7] == 1, Message: string(p[10:])}, nil
 }
+
+// GXItemCooldownReset clears the recipient’s item and mount cooldowns.
+const GXItemCooldownReset Opcode = 0x7F1E

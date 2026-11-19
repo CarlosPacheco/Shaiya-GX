@@ -1,9 +1,6 @@
 package db
 
-import (
-	"fmt"
-	"math"
-)
+import "github.com/Spelunkern/Shaiya-GX/internal/teleportrunes"
 
 type TeleportRuneDestination struct {
 	MapID   uint16
@@ -17,29 +14,18 @@ func TeleportRunes() (map[int16][2]TeleportRuneDestination, error) {
 	}
 	ctx, cancel := longCtx()
 	defer cancel()
-	rows, err := pool.QueryContext(ctx, `SELECT "Index",
-		LightMapID, LightX, LightY, LightZ, FuryMapID, FuryX, FuryY, FuryZ
-		FROM PS_GameDefs_TeleportRunes`)
+	rules, err := teleportrunes.Read(ctx, pool)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	runes := make(map[int16][2]TeleportRuneDestination)
-	for rows.Next() {
-		var index int16
-		var dest [2]TeleportRuneDestination
-		if err := rows.Scan(&index, &dest[0].MapID, &dest[0].X, &dest[0].Y, &dest[0].Z,
-			&dest[1].MapID, &dest[1].X, &dest[1].Y, &dest[1].Z); err != nil {
-			return nil, err
+	runes := make(map[int16][2]TeleportRuneDestination, len(rules))
+	for _, r := range rules {
+		a := r.Light
+		b := r.Fury
+		runes[r.Index] = [2]TeleportRuneDestination{
+			{a.MapID, float32(a.X), float32(a.Y), float32(a.Z)},
+			{b.MapID, float32(b.X), float32(b.Y), float32(b.Z)},
 		}
-		for _, d := range dest {
-			for _, v := range [...]float32{d.X, d.Y, d.Z} {
-				if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {
-					return nil, fmt.Errorf("teleport rune %d has a non-finite coordinate", index)
-				}
-			}
-		}
-		runes[index] = dest
 	}
-	return runes, rows.Err()
+	return runes, nil
 }

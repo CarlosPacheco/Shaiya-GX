@@ -9,3 +9,5 @@ The editable documentation source is [docs/wiki/gm-commands.md](wiki/gm-commands
 A GM can preview rain with `/weather 1` or snow with `/weather 2`. The preview lasts ten minutes and applies only to their session. `/weather 0` cancels the preview and restores the map’s scheduled weather.
 
 `/notice message` broadcasts custom text. `/notice index1` broadcasts notice 1 from the SQLite catalog.
+
+`/cure` restores HP, MP and SP and resets skill, consumable and mount cooldowns.

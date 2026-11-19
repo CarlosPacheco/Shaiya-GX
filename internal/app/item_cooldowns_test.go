@@ -75,3 +75,19 @@ func TestBuffItemOnlyReservesActionAfterConfirmation(t *testing.T) {
 		t.Fatal("confirmed item did not reserve combat")
 	}
 }
+
+func TestItemCooldownResetClearsConsumableAndMountTimers(t *testing.T) {
+	a := &App{clock: 100, state: game.New(), items: map[sdata.ItemKey]*sdata.Item{
+		{Type: 25, TypeID: 1}: {ReqIg: 1},
+	}}
+	a.inventory.cooldowns = map[uint8]float64{1: 115, 11: 102}
+	a.vehicle.cooldownEnd = 160
+	ev, err := a.state.Apply(proto.NewWriter(proto.GXItemCooldownReset).Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	a.confirmedItems(ev.Op)
+	if len(a.inventory.cooldowns) != 0 || a.itemCooldown(proto.InventoryItem{Type: 42}) != 0 {
+		t.Fatal("item or mount cooldown survived reset")
+	}
+}

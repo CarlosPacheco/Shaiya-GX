@@ -424,12 +424,20 @@ func TestGMSetPersistsAndUpdatesClientWithoutReopeningRewards(t *testing.T) {
 
 // /cure restores HP, MP and SP and clears every spell and item cooldown.
 func TestGMCureRestoresPoolsAndCooldowns(t *testing.T) {
-	s, _ := potentialSession(t)
+	s, packets := potentialSession(t)
 	s.isAdmin = true
 	st := s.stats()
 	s.char.CurrentHP, s.char.CurrentMP, s.char.CurrentSP = 1, 1, 1
 	s.skillCooldowns = map[uint16]time.Time{30: time.Now().Add(time.Minute), 31: time.Now().Add(time.Hour)}
 	s.itemCooldowns = map[uint8]time.Time{1: time.Now().Add(time.Minute)}
+	vehicleMu.Lock()
+	vehicleCooldowns[s.char.ID] = time.Now().Add(time.Minute)
+	vehicleMu.Unlock()
+	t.Cleanup(func() {
+		vehicleMu.Lock()
+		delete(vehicleCooldowns, s.char.ID)
+		vehicleMu.Unlock()
+	})
 	if !s.handleGMCommand("/cure") {
 		t.Fatal("/cure escaped to public chat")
 	}
@@ -439,6 +447,31 @@ func TestGMCureRestoresPoolsAndCooldowns(t *testing.T) {
 	}
 	if len(s.skillCooldowns) != 0 || len(s.itemCooldowns) != 0 {
 		t.Fatal("a cooldown survived")
+	}
+	if cooldown := s.player.vehicleState().CooldownMS; cooldown != 0 {
+		t.Fatalf("mount cooldown survived: %d ms", cooldown)
+	}
+	reset := false
+	gmReply := false
+	for !gmReply {
+		select {
+		case p := <-packets:
+			switch proto.Op(p) {
+			case proto.GXItemCooldownReset:
+				_, err := game.New().Apply(p)
+				if err != nil {
+					t.Fatal(err)
+				}
+				reset = true
+			case proto.GXGMState:
+				gmReply = true
+			}
+		case <-time.After(3 * time.Second):
+			t.Fatal("missing cure response")
+		}
+	}
+	if !reset {
+		t.Fatal("missing item cooldown reset")
 	}
 	s.dead = true
 	s.char.CurrentHP = 0

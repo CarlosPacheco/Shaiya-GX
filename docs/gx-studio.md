@@ -17,6 +17,7 @@ the exact SData field and SQLite column under each readable field name.
 | Item Boxes | | `PS_GameDefs_ItemBoxes` / `PS_GameDefs_ItemBoxRewards` |
 | NPCs and Quests | `Npc/NpcQuest.SData` | NPC and quest tables in `PS_GameDefs` |
 | Map Rules | | `PS_GameDefs_MapProperties` / `PS_GameDefs_CharacterStartPositions` |
+| Teleport Runes | | `PS_GameDefs_TeleportRunes` |
 
 ## Build
 
@@ -168,3 +169,15 @@ checks the on-disk SQL state and restores or completes the corresponding SData
 replacement. Unexpected external changes leave the journal and backups
 available for review. Keep the executable folder and its backups together
 until recovery is complete.
+
+## Teleport Runes
+
+Open **Teleport Runes** with the server SQLite database. Select a rune to edit
+the Light and Fury map IDs and XYZ coordinates independently, or add a row
+with an unused index from 1 to 32767. Items with Special 47 reference that index
+through their Variant (`ReqVg`). Removing the row leaves those items without a
+destination until their Variant is reassigned or the row is restored.
+
+Saving creates and verifies a SQLite backup in the editor's backup directory.
+Restart GX World to apply the changes. See [Teleport runes](teleport-runes.md)
+for the original destinations and item setup.

@@ -57,6 +57,11 @@ type potionRestoration struct {
 // shortcut/inventory icon in the same group, regardless of bag or item ID.
 func (a *App) confirmedItems(op proto.Opcode) {
 	v := &a.inventory
+	if op == proto.GXItemCooldownReset {
+		clear(v.cooldowns)
+		a.vehicle.cooldownEnd = 0
+		return
+	}
 	if op == proto.UseItem {
 		it := a.state.LastItemUse
 		if it.ID != a.state.SelfID || it.Type == 0 {

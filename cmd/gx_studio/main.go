@@ -24,6 +24,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
 	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
 	"github.com/Spelunkern/Shaiya-GX/internal/studio"
+	"github.com/Spelunkern/Shaiya-GX/internal/teleportrunes"
 	"github.com/Spelunkern/Shaiya-GX/internal/worlddrops"
 )
 
@@ -45,6 +46,7 @@ type editor struct {
 	itemBoxes              *studio.ItemBoxCatalog
 	npcQuests              *studio.NPCQuestCatalog
 	mapRules               *studio.MapRulesCatalog
+	teleportRunes          *studio.TeleportRuneCatalog
 	databaseDraftDirty     func() bool
 	itemSection, itemFocus int
 	itemQuery              string
@@ -91,7 +93,7 @@ func (e *editor) leave(next func()) {
 
 func (e *editor) start() {
 	e.project, e.draft, e.assets = nil, nil, nil
-	e.enchant, e.mobAIMessages, e.blessing, e.worldDrops, e.itemBoxes, e.npcQuests, e.mapRules, e.databaseDraftDirty = nil, nil, nil, nil, nil, nil, nil, nil
+	e.enchant, e.mobAIMessages, e.blessing, e.worldDrops, e.itemBoxes, e.npcQuests, e.mapRules, e.teleportRunes, e.databaseDraftDirty = nil, nil, nil, nil, nil, nil, nil, nil, nil
 	e.definitions, e.definitionDraft = nil, nil
 	e.itemFormDirty, e.itemSection, e.itemFocus, e.itemQuery = nil, 0, -1, ""
 	e.cashQuery, e.cashCode, e.cashSection = "", "", 0
@@ -195,6 +197,8 @@ func (e *editor) start() {
 				dbSource = itemboxes.Table + " · " + itemboxes.RewardsTable
 			} else if kind == studio.MapRules {
 				dbSource = maprules.Properties + " · " + maprules.Starts
+			} else if kind == studio.TeleportRunes {
+				dbSource = teleportrunes.Table
 			} else {
 				dbSource = enchantrules.AttackTable + " · " + enchantrules.DefenseTable
 			}
@@ -232,7 +236,7 @@ func (e *editor) start() {
 	render()
 }
 
-var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills", "Enchant", "Mob AI messages", "Goddess Blessing", "World Drops", "Item Boxes", "NPCs and Quests", "Map Rules"}
+var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills", "Enchant", "Mob AI messages", "Goddess Blessing", "World Drops", "Item Boxes", "NPCs and Quests", "Map Rules", "Teleport Runes"}
 
 func (e *editor) switcher(current studio.Kind) *widget.Select {
 	control := widget.NewSelect(catalogNames, nil)
@@ -271,6 +275,8 @@ func (e *editor) openKind(kind studio.Kind) {
 		message = "Reading Item Boxes from SQLite…"
 	} else if kind == studio.MapRules {
 		message = "Reading map rules from SQLite…"
+	} else if kind == studio.TeleportRunes {
+		message = "Reading teleport runes from SQLite…"
 	}
 	e.run(message, func() func() {
 		ctx := context.Background()
@@ -283,6 +289,7 @@ func (e *editor) openKind(kind studio.Kind) {
 		var boxes *studio.ItemBoxCatalog
 		var npcQuests *studio.NPCQuestCatalog
 		var mapRules *studio.MapRulesCatalog
+		var teleportRunes *studio.TeleportRuneCatalog
 		var err error
 		if kind == studio.Cash {
 			project, err = studio.Open(ctx, dataDir, dbPath)
@@ -300,6 +307,8 @@ func (e *editor) openKind(kind studio.Kind) {
 			npcQuests, err = studio.OpenNPCQuest(ctx, dataDir, dbPath)
 		} else if kind == studio.MapRules {
 			mapRules, err = studio.OpenMapRules(ctx, dbPath)
+		} else if kind == studio.TeleportRunes {
+			teleportRunes, err = studio.OpenTeleportRunes(ctx, dbPath)
 		} else {
 			definitions, err = studio.OpenDefinitions(ctx, dataDir, dbPath, kind)
 		}
@@ -318,7 +327,7 @@ func (e *editor) openKind(kind studio.Kind) {
 			e.preferences = preferences
 			e.itemFormDirty = nil
 			e.project, e.definitions, e.assets = project, definitions, images
-			e.enchant, e.mobAIMessages, e.blessing, e.worldDrops, e.itemBoxes, e.npcQuests, e.mapRules, e.databaseDraftDirty = enchant, messages, blessing, worldRules, boxes, npcQuests, mapRules, nil
+			e.enchant, e.mobAIMessages, e.blessing, e.worldDrops, e.itemBoxes, e.npcQuests, e.mapRules, e.teleportRunes, e.databaseDraftDirty = enchant, messages, blessing, worldRules, boxes, npcQuests, mapRules, teleportRunes, nil
 			e.draft, e.definitionDraft = nil, make(studio.DefinitionEdits)
 			if kind == studio.Cash {
 				e.draft = append([]cash.Product(nil), project.Products...)
@@ -337,6 +346,8 @@ func (e *editor) openKind(kind studio.Kind) {
 				e.npcQuestCatalog()
 			} else if kind == studio.MapRules {
 				e.mapRulesCatalog()
+			} else if kind == studio.TeleportRunes {
+				e.teleportRuneCatalog()
 			} else {
 				e.definitionCatalog()
 			}

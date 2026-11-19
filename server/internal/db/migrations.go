@@ -14,6 +14,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/maprules"
 	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
 	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
+	"github.com/Spelunkern/Shaiya-GX/internal/teleportrunes"
 	"github.com/Spelunkern/Shaiya-GX/internal/worlddrops"
 )
 
@@ -27,9 +28,6 @@ var experienceMigration string
 
 //go:embed npcskills.sql
 var npcSkillsMigration string
-
-//go:embed teleport_runes.sql
-var teleportRunesMigration string
 
 var migrations = []migration{
 	{1, "atomic_session_handoff", `CREATE TABLE IF NOT EXISTS GX_SessionHandoff(UserUID INTEGER PRIMARY KEY,Identity BLOB NOT NULL,AESMaterial BLOB NOT NULL,SessionID INTEGER NOT NULL,ExpiresAt INTEGER NOT NULL)`},
@@ -98,7 +96,7 @@ var migrations = []migration{
 	) STRICT;
 	INSERT INTO PS_GameDefs_ServerNotices ("Index", Message, Frequency)
 	VALUES (1, 'GX Automatic Notice - Test', 60);`},
-	{22, "teleport_runes", teleportRunesMigration},
+	{22, "teleport_runes", teleportrunes.MigrationSQL},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.
