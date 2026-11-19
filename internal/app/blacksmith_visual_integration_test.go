@@ -55,7 +55,7 @@ func TestBlacksmithVisual(t *testing.T) {
 		gl.Viewport(0, 0, 1024, 734)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		a.sprites.Begin(1024, 734)
-		a.drawBlacksmith(1024, 734, "Dulce Manches")
+		a.drawBlacksmith(1024, 734, "Dulce Manches", "Greetings. Let me see the items you want repaired.")
 		a.sprites.End()
 		dir := os.Getenv("SHAIYA_TEST_ARTIFACTS")
 		if dir == "" {
@@ -69,7 +69,7 @@ func TestBlacksmithVisual(t *testing.T) {
 	gl.Viewport(0, 0, 1024, 734)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	a.sprites.Begin(1024, 734)
-	a.drawBlacksmith(1024, 734, "Blacksmith")
+	a.drawBlacksmith(1024, 734, "Blacksmith", "")
 	item := a.state.Inventory[[2]uint8{1, 1}]
 	if def := a.itemsItem(item.Type, item.TypeID); def != nil {
 		a.drawItemDetails(def, &item, item.Count, 650, 80, 1024, 734, "Sell: 10 gold")

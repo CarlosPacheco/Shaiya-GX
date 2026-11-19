@@ -218,7 +218,7 @@ func (a *App) drawShop(w, h int) {
 		return
 	}
 	if e.NpcType == 3 && a.blacksmithUI != nil {
-		a.drawBlacksmith(w, h, def.Name)
+		a.drawBlacksmith(w, h, def.Name, questText(def.Welcome))
 		a.drawServiceQuestButton(w, h, e, def)
 		return
 	}

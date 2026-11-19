@@ -200,7 +200,11 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	if a.blacksmithOpen() {
 		x, y := a.blacksmithUI.Origin(w, h)
 		bw, bh := a.blacksmithUI.Size()
-		if start(&a.blacksmithUI.Position, x, y, bw, bh, 270, 190) {
+		handleX, handleW := 270, 190
+		if a.blacksmithUI.Mode == ui.ForgeMenu {
+			handleX, handleW = 75, 145 // title band right of the portrait, clear of the close button
+		}
+		if start(&a.blacksmithUI.Position, x, y, bw, bh, handleX, handleW) {
 			return true
 		}
 		if pointInside(in, x, y, bw, bh) {

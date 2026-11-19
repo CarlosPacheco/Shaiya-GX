@@ -146,7 +146,7 @@ func TestQuestIndicatorsAndNativeForgeModesGL(t *testing.T) {
 		a.blacksmithUI.Mode = mode
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		a.sprites.Begin(1024, 768)
-		a.drawBlacksmith(1024, 768, "Blacksmith")
+		a.drawBlacksmith(1024, 768, "Blacksmith", "")
 		a.sprites.End()
 		if err = render.SavePNG(filepath.Join(out, "forge-"+name+".png"), 1024, 768); err != nil {
 			t.Fatal(err)

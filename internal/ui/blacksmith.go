@@ -188,14 +188,6 @@ func (v *Blacksmith) Draw(s *render.Sprites, f *Font, w, h int, name, welcome st
 	if v.Mode == ForgeMenu {
 		s.Draw(v.menuFrame, float32(x), float32(y), ForgeMenuWidth, ForgeMenuHeight, 0, 0, ForgeMenuWidth/256.0, ForgeMenuHeight/512.0, white)
 		f.Draw(s, name, x+0x41+(0xff-0x41-f.Width(name))/2, y+0x16, white, 0)
-		// The texture's baked "Repair Items" title is covered with the plain
-		// band beside it and replaced by the forge title.
-		for px := 76; px < 184; px += 32 {
-			w := float32(min(32, 184-px))
-			s.Draw(v.menuFrame, float32(x+px), float32(y+78), w, 20, 22.0/256, 78.0/512, (22+w)/256, 98.0/512, white)
-		}
-		title := "Blacksmith"
-		f.DrawOutlined(s, title, x+128-f.Width(title)/2, y+82, white)
 		lines := wrapLines(f, welcome, 205)
 		v.textLines = len(lines)
 		v.textOffset = min(v.textOffset, max(0, len(lines)-11))

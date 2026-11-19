@@ -22,9 +22,6 @@ type blacksmithView struct {
 	shineUntil    float64
 }
 
-// blacksmithMenuText replaces the repair greeting of the original menu.
-const blacksmithMenuText = "Recreate equipment attributes, link or extract lapis, or enchant equipment."
-
 func (a *App) blacksmithOpen() bool {
 	e := a.state.Entities[a.shop.npcID]
 	return a.blacksmithUI != nil && e != nil && e.NpcType == 3 && !a.shop.questMode && !a.state.Self.Dead
@@ -228,7 +225,7 @@ func (a *App) updateGemConfirm(in *platform.Input, w, h int) {
 	}
 }
 
-func (a *App) drawBlacksmith(w, h int, name string) {
+func (a *App) drawBlacksmith(w, h int, name, welcome string) {
 	a.blacksmithUI.GemSlot = 0
 	if a.blacksmithUI.Mode == ui.ForgeLapis && a.blacksmith.selected[0] {
 		it := a.state.Inventory[a.blacksmith.keys[0]]
@@ -241,7 +238,7 @@ func (a *App) drawBlacksmith(w, h int, name string) {
 			}
 		}
 	}
-	a.blacksmithUI.Draw(a.sprites, a.font, w, h, name, blacksmithMenuText, a.shop.pending || a.inventory.pending, a.blacksmithReady(), a.blacksmithExtractReady(), a.blacksmithEnchantReady(), a.blacksmithComposeReady())
+	a.blacksmithUI.Draw(a.sprites, a.font, w, h, name, welcome, a.shop.pending || a.inventory.pending, a.blacksmithReady(), a.blacksmithExtractReady(), a.blacksmithEnchantReady(), a.blacksmithComposeReady())
 	x, y := a.blacksmithUI.Origin(w, h)
 	bw, bh := a.blacksmithUI.Size()
 	a.clearTooltipUnderPanel(x, y, bw, bh)
