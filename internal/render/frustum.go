@@ -51,6 +51,30 @@ func (f Frustum) BoxVisible(minimum, maximum V3) bool {
 	return true
 }
 
+// ClassifyBox distinguishes a fully contained box from one touching a plane.
+func (f Frustum) ClassifyBox(lo, hi V3, clip [4]float32) (visible, inside bool) {
+	inside = true
+	for i := range 7 {
+		p := clip
+		if i < len(f) {
+			p = f[i]
+		} else if p == [4]float32{} {
+			break
+		}
+		a, b := lo, hi
+		for axis := range 3 {
+			if p[axis] < 0 {
+				a[axis], b[axis] = b[axis], a[axis]
+			}
+		}
+		if b[0]*p[0]+b[1]*p[1]+b[2]*p[2]+p[3] < 0 {
+			return false, false
+		}
+		inside = inside && a[0]*p[0]+a[1]*p[1]+a[2]*p[2]+p[3] >= 0
+	}
+	return true, inside
+}
+
 // ClipBoxVisible rejects a box only if it is wholly behind a world clip plane.
 // A zero plane means clipping is disabled.
 func ClipBoxVisible(plane [4]float32, minimum, maximum V3) bool {

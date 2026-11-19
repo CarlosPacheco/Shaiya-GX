@@ -724,7 +724,18 @@ func (c *Character) findUsedPoseBones() {
 }
 
 func (c *Character) prepareDraw(s *render.Scene3D) ([]render.M4, bool) {
-	if c == nil || c.clip == nil || c.Hidden || c.CorpseFade >= 1 || (c.Concealed && s.Shadow) {
+	finals, visible := c.prepareDrawPose(s.Shadow)
+	if !visible {
+		return nil, false
+	}
+	if lo, hi, valid := c.drawOcclusionBounds(); valid && s.OccludedBox(lo, hi) {
+		return nil, false
+	}
+	return finals, true
+}
+
+func (c *Character) prepareDrawPose(shadow bool) ([]render.M4, bool) {
+	if c == nil || c.clip == nil || c.Hidden || c.CorpseFade >= 1 || (c.Concealed && shadow) {
 		return nil, false
 	}
 	finals := c.preparePose()
@@ -734,7 +745,12 @@ func (c *Character) prepareDraw(s *render.Scene3D) ([]render.M4, bool) {
 		}
 		c.cloak.prepared = false
 	}
-	if lo, hi, valid := c.WorldBounds(); valid {
+	return finals, true
+}
+
+func (c *Character) drawOcclusionBounds() (render.V3, render.V3, bool) {
+	lo, hi, valid := c.WorldBounds()
+	if valid {
 		if c.cloak != nil && c.cloak.reused {
 			unionTransformedBox(&lo, &hi, &valid, c.cloak.min, c.cloak.max, c.World)
 		} else if c.cloak != nil {
@@ -745,11 +761,8 @@ func (c *Character) prepareDraw(s *render.Scene3D) ([]render.M4, bool) {
 				}
 			}
 		}
-		if s.OccludedBox(lo, hi) {
-			return nil, false
-		}
 	}
-	return finals, true
+	return lo, hi, valid
 }
 
 func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {

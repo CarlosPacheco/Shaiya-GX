@@ -29,6 +29,21 @@ func TestTerrainOcclusionRequiresWholeBounds(t *testing.T) {
 		t.Fatal("stale visibility survived reset")
 	}
 }
+
+func TestTerrainOcclusionWitnessKeepsVisibleBoxes(t *testing.T) {
+	o := NewTerrainOcclusion(160, 90)
+	o.Reset(Identity(), PerspectiveFovLH(math.Pi/2, 16.0/9, .1, 100))
+	o.PlanarQuad(V3{-20, -20, 5}, V3{20, -20, 5}, V3{20, 20, 5}, V3{-20, 20, 5})
+	if !o.PointMayBeHidden(V3{0, 0, 8}) || !o.BoxHidden(V3{-.1, -.1, 7}, V3{.1, .1, 9}) || o.Culled != 0 {
+		t.Fatal("hidden point did not require refinement or worker query updated stats")
+	}
+	if o.PointMayBeHidden(V3{0, 0, 4}) || o.BoxHidden(V3{-.1, -.1, 4}, V3{.1, .1, 9}) {
+		t.Fatal("visible witness failed to rule out a hidden box")
+	}
+	if o.PointMayBeHidden(V3{100, 0, 8}) || !o.PointMayBeHidden(V3{0, 0, .05}) {
+		t.Fatal("offscreen or unprojectable witness mishandled")
+	}
+}
 func TestSteppedTerrainHidesBelowHillTop(t *testing.T) {
 	o := NewTerrainOcclusion(160, 90)
 	view := LookAtLH(V3{32, 5, -20}, V3{32, 4, 60}, V3{0, 1, 0})

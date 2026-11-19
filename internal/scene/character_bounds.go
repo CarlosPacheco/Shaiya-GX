@@ -172,3 +172,36 @@ func (c *Character) Visible(frustum render.Frustum, clip [4]float32) bool {
 	lo, hi, valid := c.WorldBounds()
 	return !valid || render.ClipBoxVisible(clip, lo, hi) && frustum.BoxVisible(lo, hi)
 }
+
+func (c *Character) crowdVisible(frustum render.Frustum, clip [4]float32) bool {
+	if lo, hi, valid := c.coarseBodyBounds(); valid {
+		visible, inside := frustum.ClassifyBox(lo, hi, clip)
+		if !visible || inside {
+			return visible
+		}
+	}
+	lo, hi, valid := c.WorldBounds()
+	return !valid || render.ClipBoxVisible(clip, lo, hi) && frustum.BoxVisible(lo, hi)
+}
+
+// The crown vertex contributes to a known bone's bounds. Its position under
+// that bone alone is inside the union, even for a vertex with mixed weights.
+func (c *Character) occlusionWitness() (render.V3, bool) {
+	p := c.head
+	if p == nil || !p.bounded || len(p.vertices) == 0 || len(p.bounds) == 0 {
+		return render.V3{}, false
+	}
+	m := c.World
+	if len(p.pose) != 0 {
+		bone := int(p.top.Bone0)
+		if p.top.Weight == 0 {
+			bone = int(p.top.Bone1)
+		}
+		bone = min(max(0, bone), len(p.bounds)-1)
+		if bone >= len(p.pose) || !p.bounds[bone].used {
+			return render.V3{}, false
+		}
+		m = p.pose[bone].MulAffine(m)
+	}
+	return transformPoint(p.top.Pos, m), true
+}

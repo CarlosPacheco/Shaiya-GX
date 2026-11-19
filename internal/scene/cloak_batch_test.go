@@ -124,9 +124,21 @@ func TestCullCrowdCharactersMatchesSerialVisibility(t *testing.T) {
 			}
 		}
 		got := slices.Clone(actors)
-		CullCrowdCharacters(got, frustum, clip)
+		CullCrowdCharacters(got, frustum, &render.Scene3D{ClipPlane: clip, HideWeaponEffects: true})
 		if !slices.Equal(got, want) {
 			t.Fatal("parallel culling changed visible actors or their order")
 		}
+	}
+}
+
+func TestCrowdVisibilitySkipsPoseForContainedEnvelope(t *testing.T) {
+	c := envelopeFixture()
+	c.World[14] = 48
+	view := render.ViewFrustum(render.Identity(), render.PerspectiveFovLH(1.2, 1, .1, 120))
+	if !c.crowdVisible(view, [4]float32{}) || c.poseReady {
+		t.Fatal("actor inside the view forced exact animated bounds")
+	}
+	if !c.crowdVisible(view, [4]float32{0, 1, 0, 0}) || !c.poseReady {
+		t.Fatal("clip-plane intersection did not refine visibility")
 	}
 }

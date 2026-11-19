@@ -38,6 +38,13 @@ func (k *Skinner) uploadCrowdBuffer(i int, size int, data unsafe.Pointer) {
 	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, uint32(4+i), k.crowdBuffers[i])
 }
 
+func (k *Skinner) uploadCrowdInstances(instances []SkinInstance, palettes []M4) {
+	k.uploadCrowdBuffer(0, len(instances)*int(unsafe.Sizeof(instances[0])), unsafe.Pointer(&instances[0]))
+	if len(palettes) != 0 {
+		k.uploadCrowdBuffer(1, len(palettes)*64, unsafe.Pointer(&palettes[0]))
+	}
+}
+
 // DrawCrowd preserves independent skeletal palettes while sharing material and
 // draw state. Callers queue only opaque or alpha-tested world characters.
 func (k *Skinner) DrawCrowd(s *Scene3D, groups []SkinGroup, instances []SkinInstance, palettes []M4, ambient float32) {
@@ -45,10 +52,7 @@ func (k *Skinner) DrawCrowd(s *Scene3D, groups []SkinGroup, instances []SkinInst
 		return
 	}
 	k.Begin(s, ambient)
-	k.uploadCrowdBuffer(0, len(instances)*int(unsafe.Sizeof(instances[0])), unsafe.Pointer(&instances[0]))
-	if len(palettes) != 0 {
-		k.uploadCrowdBuffer(1, len(palettes)*64, unsafe.Pointer(&palettes[0]))
-	}
+	k.uploadCrowdInstances(instances, palettes)
 	gl.FrontFace(gl.CW)
 	gl.CullFace(gl.BACK)
 	for _, group := range groups {

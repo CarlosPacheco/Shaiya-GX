@@ -12,6 +12,8 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
+var skinIndirectSupported bool
+
 // Init loads GL entry points; debug installs a KHR_debug logger.
 func Init(debug bool) error {
 	if err := gl.Init(); err != nil {
@@ -26,18 +28,24 @@ func Init(debug bool) error {
 	log.Printf("OpenGL %s, %s", gl.GoStr(gl.GetString(gl.VERSION)), gl.GoStr(gl.GetString(gl.RENDERER)))
 	gpuBytes, drawCalls = 0, 0
 	gpuCapacity = 0
+	bindless, drawParameters := false, false
 	var extensionCount int32
 	gl.GetIntegerv(gl.NUM_EXTENSIONS, &extensionCount)
 	for i := int32(0); i < extensionCount; i++ {
-		if gl.GoStr(gl.GetStringi(gl.EXTENSIONS, uint32(i))) == "GL_NVX_gpu_memory_info" {
+		switch gl.GoStr(gl.GetStringi(gl.EXTENSIONS, uint32(i))) {
+		case "GL_ARB_bindless_texture":
+			bindless = true
+		case "GL_ARB_shader_draw_parameters":
+			drawParameters = true
+		case "GL_NVX_gpu_memory_info":
 			var kib int32
 			gl.GetIntegerv(0x9047, &kib) // GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
 			if kib > 0 {
 				gpuCapacity = uint64(kib) * 1024
 			}
-			break
 		}
 	}
+	skinIndirectSupported = bindless && drawParameters
 	fallbackDiffuse = nil
 	if debug {
 		gl.Enable(gl.DEBUG_OUTPUT)

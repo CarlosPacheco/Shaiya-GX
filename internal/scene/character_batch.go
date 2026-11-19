@@ -2,6 +2,7 @@ package scene
 
 import (
 	"math"
+	"slices"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
@@ -20,8 +21,14 @@ type rigidGroup struct {
 	worlds   []render.M4
 }
 
+type crowdActorDraw struct {
+	instance                  render.SkinInstance
+	serial, visible, occluded bool
+}
+
 type CrowdDrawStats struct {
 	Skin         int `json:"skin"`
+	SkinGroups   int `json:"skin_groups"`
 	PaletteBytes int `json:"skin_palette_bytes"`
 	Rigid        int `json:"weapons_shields"`
 	Cloth        int `json:"cloth"`
@@ -33,6 +40,7 @@ type CrowdDrawStats struct {
 // CharacterBatch gathers already visible crowd actors for one camera pass.
 type CharacterBatch struct {
 	keys        map[render.SkinGroup]int
+	prepared    []crowdActorDraw
 	groups      []render.SkinGroup
 	buckets     [][]render.SkinInstance
 	instances   []render.SkinInstance
@@ -42,6 +50,7 @@ type CharacterBatch struct {
 	rigidGroups []rigidGroup
 	cloaks      []*Character
 	cloth       render.ClothCrowd
+	skin        render.SkinCrowd
 	Stats       CrowdDrawStats
 }
 
@@ -60,27 +69,57 @@ func (b *CharacterBatch) Draw(k *render.Skinner, s *render.Scene3D, actors []*Ch
 		b.rigidKeys = make(map[rigidMaterial]int)
 	}
 	b.cloth.Begin(len(actors))
-	for _, c := range actors {
-		if c.Concealed || c.hasBlendedAttachment() {
+	b.prepared = slices.Grow(b.prepared[:0], len(actors))[:len(actors)]
+	occlusion := s.ActiveOcclusion()
+	forEachCrowdCharacter(actors, func(i int, c *Character) {
+		draw := &b.prepared[i]
+		*draw = crowdActorDraw{serial: c.Concealed || c.hasBlendedAttachment()}
+		if draw.serial {
+			return
+		}
+		_, draw.visible = c.prepareDrawPose(false)
+		if !draw.visible {
+			return
+		}
+		if occlusion != nil {
+			if point, valid := c.occlusionWitness(); !valid || occlusion.PointMayBeHidden(point) {
+				lo, hi, valid := c.drawOcclusionBounds()
+				draw.occluded = valid && occlusion.BoxHidden(lo, hi)
+			}
+		}
+		if !draw.occluded {
+			draw.instance = s.CrowdSkinInstance(c.World)
+		}
+	})
+	for i, c := range actors {
+		if c == nil {
+			continue
+		}
+		draw := &b.prepared[i]
+		if draw.serial {
 			b.flush(k, s)
 			before := render.DrawCalls()
 			c.Draw(k, s)
 			b.Stats.Fallback += render.DrawCalls() - before
 			continue
 		}
-		finals, visible := c.prepareDraw(s)
-		if visible {
+		if draw.occluded {
+			occlusion.Culled++
+		} else if draw.visible {
 			if len(b.palettes)+len(c.parts)*render.MaxBones > maxCrowdPaletteMatrices {
 				b.flush(k, s)
 			}
-			b.add(s, c, finals)
+			b.add(s, c, draw.instance, c.lastFinals)
 		}
 	}
 	b.flush(k, s)
 	b.Stats.ClothBytes, b.Stats.ClothUploads = b.cloth.Uploaded, b.cloth.UploadOps
 }
 
-func (b *CharacterBatch) Delete() { b.cloth.Delete() }
+func (b *CharacterBatch) Delete() {
+	b.cloth.Delete()
+	b.skin.Delete()
+}
 
 func (c *Character) hasBlendedAttachment() bool {
 	if !c.Mounted {
@@ -93,8 +132,7 @@ func (c *Character) hasBlendedAttachment() bool {
 	return false
 }
 
-func (b *CharacterBatch) add(s *render.Scene3D, c *Character, finals []render.M4) {
-	instance := s.CrowdSkinInstance(c.World)
+func (b *CharacterBatch) add(s *render.Scene3D, c *Character, instance render.SkinInstance, finals []render.M4) {
 	b.offsets = b.offsets[:0]
 	for i, part := range c.parts {
 		source := c.poseSources[i]
@@ -173,8 +211,11 @@ func (b *CharacterBatch) flush(k *render.Skinner, s *render.Scene3D) {
 		ambient = .8
 	}
 	before := render.DrawCalls()
-	k.DrawCrowd(s, b.groups, b.instances, b.palettes, ambient)
+	if !k.DrawCrowdIndirect(s, &b.skin, b.groups, b.instances, b.palettes, ambient) {
+		k.DrawCrowd(s, b.groups, b.instances, b.palettes, ambient)
+	}
 	b.Stats.Skin += render.DrawCalls() - before
+	b.Stats.SkinGroups += len(b.groups)
 	if len(b.groups) != 0 {
 		b.Stats.PaletteBytes += len(b.palettes) * 64
 	}

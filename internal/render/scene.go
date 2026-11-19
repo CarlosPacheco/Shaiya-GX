@@ -85,6 +85,10 @@ in vec2 vUV2;
 in float vDiffuse;
 in float vDepth;
 in vec4 vEffectColor;
+#ifdef SKIN_INDIRECT
+flat in uvec2 vSkinTexture;
+flat in float vSkinAlphaRef;
+#endif
 out vec4 frag;
 void main() {
  float fade = mode == 10 ? max(corpseFade, vEffectColor.r) : corpseFade;
@@ -144,10 +148,18 @@ void main() {
 		frag = vec4(texture(tex0, vUV, detailBias).rgb, 1.0);
 		return;
 	} else {
+		#ifdef SKIN_INDIRECT
+		c = texture(sampler2D(vSkinTexture), vUV, detailBias);
+		#else
 		c = texture(tex0, vUV, detailBias);
+		#endif
 		c.rgb *= vDiffuse;
 	}
+	#ifdef SKIN_INDIRECT
+	if (c.a <= vSkinAlphaRef) discard;
+	#else
 	if (c.a <= alphaRef) discard;
+	#endif
  if (mode == 0) c *= vEffectColor;
  if (mode == 9 || mode == 10) {
   c.a = mode == 9 ? tint.a : vEffectColor.a;
@@ -386,6 +398,7 @@ func (s *Scene3D) blend(on bool) {
 
 // SetWrap sets a texture's addressing (terrain tiles repeat).
 func (t *Texture) SetWrap(repeat bool) {
+	t.repeat = repeat
 	mode := int32(gl.CLAMP_TO_EDGE)
 	if repeat {
 		mode = gl.REPEAT

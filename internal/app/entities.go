@@ -272,7 +272,7 @@ func (a *App) drawRemotePlayers() {
 		v.visiblePlayers = append(v.visiblePlayers, cached.character)
 		v.visiblePlayerMounts = append(v.visiblePlayerMounts, mount)
 	}
-	scene.CullCrowdCharacters(v.visiblePlayers, frustum, a.scene3d.ClipPlane)
+	scene.CullCrowdCharacters(v.visiblePlayers, frustum, a.scene3d)
 	for _, character := range v.visiblePlayers {
 		if character.HasCloak() {
 			v.visiblePlayerCloth = append(v.visiblePlayerCloth, character)

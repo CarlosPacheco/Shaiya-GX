@@ -3,6 +3,7 @@
 package render
 
 import (
+	"bytes"
 	"math"
 	"os"
 	"runtime"
@@ -12,6 +13,93 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
+
+func TestSkinIndirectKeepsIndexWidthAndMaterialOrderGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires local GL context")
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	const size = 80
+	win, err := platform.Open(platform.Config{Title: "skinned multi-draw", Width: size, Height: size, Hidden: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer win.Close()
+	if err = Init(true); err != nil {
+		t.Fatal(err)
+	}
+	if !skinIndirectSupported {
+		t.Skip("driver uses ordinary instancing")
+	}
+	s, err := NewScene3D()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Delete()
+	s.View, s.Proj, s.LightDir = Identity(), Identity(), V3{0, 0, -1}
+	k, err := NewSkinner()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer k.Delete()
+	vertices := []SkinVertex{
+		{Pos: V3{-.15, -.11, .5}, Normal: V3{0, 0, 1}, UV: [2]float32{1.25, .5}, Weight: 1},
+		{Pos: V3{0, .21, .5}, Normal: V3{0, 0, 1}, UV: [2]float32{1.25, .5}, Weight: 1},
+		{Pos: V3{.15, -.11, .5}, Normal: V3{0, 0, 1}, UV: [2]float32{1.25, .5}, Weight: 1},
+	}
+	narrow := NewSkinMesh(vertices, []uint32{0, 1, 2})
+	defer narrow.Delete()
+	expanded := make([]SkinVertex, 65539)
+	copy(expanded[65536:], vertices)
+	wide := NewSkinMesh(expanded, []uint32{65536, 65537, 65538})
+	defer wide.Delete()
+	tex := Upload(img.Texture{RGBA: &img.RGBA{W: 2, H: 1, Pix: []byte{249, 50, 5, 255, 40, 15, 255, 180}}})
+	defer tex.Delete()
+	var cache SkinCrowd
+	defer cache.Delete()
+	groups := []SkinGroup{
+		{Mesh: narrow, Texture: tex, Count: 1, AlphaRef: .5},
+		{Mesh: wide, Texture: nil, First: 1, Count: 1, TwoSided: true},
+		{Mesh: narrow, Texture: tex, First: 2, Count: 1, Unlit: true},
+		{Mesh: narrow, Texture: nil, First: 3, Count: 1},
+	}
+	var instances []SkinInstance
+	for i := range groups {
+		world := Identity()
+		world[12] = -.66 + float32(i)*.44
+		instance := s.CrowdSkinInstance(world)
+		instance.Palette[1] = 1
+		instances = append(instances, instance)
+	}
+	palettes := []M4{Identity()}
+	draw := func(indirect bool) []byte {
+		gl.Viewport(0, 0, size, size)
+		gl.ClearDepth(1)
+		gl.ClearColor(0, 0, 0, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		ResetDrawCalls()
+		if indirect {
+			if !k.DrawCrowdIndirect(s, &cache, groups, instances, palettes, .7) || DrawCalls() != 3 {
+				t.Fatal("four groups did not use the three ordered raster runs")
+			}
+		} else {
+			k.DrawCrowd(s, groups, instances, palettes, .7)
+		}
+		pixels := make([]byte, size*size*4)
+		gl.ReadPixels(0, 0, size, size, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+		return pixels
+	}
+	for _, repeat := range []bool{true, false, true} {
+		tex.SetWrap(repeat)
+		if direct, indirect := draw(false), draw(true); !bytes.Equal(direct, indirect) || !bytes.Contains(direct, []byte{255, 255, 255, 255}) {
+			t.Fatalf("indirect draw changed color or geometry with repeat=%v", repeat)
+		}
+	}
+	if code := gl.GetError(); code != gl.NO_ERROR {
+		t.Fatalf("skinned multi-draw GL error %#x", code)
+	}
+}
 
 func TestSkinPaletteSupportsFullByteIndicesAndZeroWeightGL(t *testing.T) {
 	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {

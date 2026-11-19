@@ -599,3 +599,50 @@ preparation took 7.43 s and 6.75 s respectively. The bounds count includes
 pose preparation. Two paired 300-bot runs measured 13.170 → 8.010 ms for
 the whole loop. Two paired scenes with 200 remote players, 120 monsters and
 80 NPCs measured 9.021 → 6.973 ms.
+
+## Crowd preparation scaling and skinned multi-draw
+
+The crowd distributes camera visibility, cloth preparation and per-actor draw
+preparation across scheduler threads. The worker count grows with both
+`GOMAXPROCS` and the number of characters in the pass, keeping at least 24
+candidate actors per worker on average. Workers read the finished terrain
+mask. The render thread owns OpenGL, submission order and occlusion counters.
+
+If the clip envelope sits entirely inside the camera, the crowd accepts it
+without posed bounds. A bound intersecting a plane is refined with the posed
+geometry. A point known to lie inside the body bounds can also rule out
+terrain occlusion before visiting each posed part. Uncertain cases use the
+full animated bounds and terrain test.
+
+Skinned geometry is packed into bounded GPU buffers per crowd. A multi-draw
+combines consecutive groups that share the same index width and back-face
+culling state. Every command keeps its texture, alpha cutoff, lighting and
+palette offsets. Texture views reuse the authored mip storage and preserve
+wrapping. This path uses `GL_ARB_bindless_texture` and
+`GL_ARB_shader_draw_parameters`. When either extension is unavailable, the
+renderer uses ordinary instancing. [Khronos bindless texture extension](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_bindless_texture.txt),
+[Khronos shader draw parameters extension](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_shader_draw_parameters.txt).
+
+Three interleaved 240-frame runs per variant used the seeded 600-bot scene
+with skill effects disabled at 1280×720. These medians measure a hidden
+window on a shared Ryzen 7 5700G and RTX 3050 desktop.
+
+| Variant | Whole loop ms/frame | Submission p50 / p99 ms | Full-frame GL calls |
+|---|---:|---:|---:|
+| Previous build | 11.335 | 11.205 / 13.821 | 576 |
+| Scaled workers and conservative visibility | 9.055 | 8.696 / 10.650 | 576 |
+| Also submit skinned groups with multi-draw | 8.176 | 8.059 / 9.807 | 370 |
+
+The 300 skin groups occupied 94 GL submissions. The packed skin cache
+added about 9.45 MB of renderer-owned storage in this scene. A separate
+three-run comparison of the final binary at `GOMAXPROCS` 4, 8 and 16 measured
+10.404, 8.617 and 8.141 ms for the whole loop. These timings exclude display
+presentation.
+
+In matched 900-frame profiles at `GOMAXPROCS=16`, posed bounds fell from
+7.55 to 3.82 seconds of CPU samples. Across all threads the profile increased
+from 20.99 to 23.31 CPU seconds. A trial capping only cloth at eight workers
+increased the whole loop from 7.864 to 8.275 ms in two paired runs. The
+automatic worker count keeps the lower frame time. A smaller 300-bot case
+measured 7.840 → 5.731 ms. Two paired 400-actor scenes with skill effects off
+measured 5.419 → 5.118 ms and 606 → 511 GL submissions.

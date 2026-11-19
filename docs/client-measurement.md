@@ -70,9 +70,10 @@ are included in the draw submission time.
 The final main-camera count reports skinned batches, rigid attachments,
 cloth and serial fallback separately. The full-frame counter also includes
 the map, HUD and any secondary passes.
-`final_main_camera_bot_draws.skin_palette_bytes` records the bytes of skin
-matrices submitted for the last main-camera bot pass. It excludes instance
-transforms and any serial fallback draws.
+`final_main_camera_bot_draws.skin` counts OpenGL submissions. With indirect
+draws, `skin_groups` counts the individual mesh/material groups inside them.
+`skin_palette_bytes` records the skin matrices submitted for that camera pass.
+It excludes instance transforms and any serial fallback draws.
 The bot cases also report main-camera cloth position upload bytes and operations
 averaged over the measured frames. Position bytes include dirty-range headers
 and exclude instance transforms. The final frame's world breakdown records
@@ -128,7 +129,8 @@ python3 tools/measure_client.py --data '/path/to/data' \
   --cases 'world-stream,world-stream:no-glow,world-stream:no-shadow,water-visible,water-visible:no-water,crowd-200,crowd-200:no-glow'
 ```
 
-Variants are `default`, `no-glow`, `no-shadow` and `no-water`. Disabling a feature
+Variants are `default`, `no-effects`, `no-glow`, `no-shadow` and `no-water`.
+Use `crowd-400:no-effects` to measure remote player batching. Disabling a feature
 is a diagnostic ablation, not an implemented optimization or a permissible visual
 change. Effects overlap and savings must not be added together.
 

@@ -1,6 +1,8 @@
 package render
 
 import (
+	"log"
+	"strings"
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -22,6 +24,7 @@ type SkinVertex struct {
 const StealthOpacity float32 = .65
 
 const MaxBones = 256 // EP5 bone indices occupy one byte.
+const skinVertexStride = int(unsafe.Sizeof(SkinVertex{}))
 
 const skinVS = `#version 450 core
 layout(location=0) in vec3 pos;
@@ -33,10 +36,19 @@ uniform int boneCount;
 struct CrowdInstance { mat4 model; mat4 modelView; mat4 modelViewProj; ivec4 palette; };
 layout(std430, binding=4) readonly buffer CrowdInstances { CrowdInstance instances[]; };
 layout(std430, binding=5) readonly buffer CrowdPalettes { mat4 crowdBones[]; };
+#ifdef SKIN_INDIRECT
+struct SkinMaterial { uvec2 handle; float alphaRef; float ambient; };
+layout(std430, binding=6) readonly buffer CrowdMaterials { SkinMaterial materials[]; };
+uniform int drawOffset;
+flat out uvec2 vSkinTexture;
+flat out float vSkinAlphaRef;
+mat4 skinBone(int i, int base) { return crowdBones[base+i]; }
+#else
 uniform int crowdBase;
 mat4 skinBone(int i, int base) {
 	return crowdBase == 0 ? bones[i] : crowdBones[base+i];
 }
+#endif
 uniform mat4 world;
 uniform mat4 worldViewProj;
 uniform mat4 worldView;
@@ -55,9 +67,19 @@ void main() {
 	int count = boneCount;
 	int base = 0;
 	float instanceFade = 0.0;
+	float materialAmbient = ambient;
 	mat4 model = world, mv = worldView, mvp = worldViewProj;
+	#ifdef SKIN_INDIRECT
+	SkinMaterial material = materials[drawOffset+gl_DrawIDARB];
+	vSkinTexture = material.handle;
+	vSkinAlphaRef = material.alphaRef;
+	materialAmbient = material.ambient;
+	{
+		CrowdInstance instance = instances[gl_BaseInstanceARB+gl_InstanceID];
+	#else
 	if (crowdBase != 0) {
 		CrowdInstance instance = instances[crowdBase-1+gl_InstanceID];
+	#endif
 		count = instance.palette.y;
 		base = instance.palette.x;
 		instanceFade = intBitsToFloat(instance.palette.z);
@@ -85,42 +107,46 @@ void main() {
 	vDepth = (mv * local).z;
 	vUV = uv; vUV2 = vec2(0.0);
 	n = normalize((model * vec4(n, 0.0)).xyz);
-	vDiffuse = clamp(ambient + max(0.0, dot(n, -normalize(lightDir))), 0.0, 1.0);
+	vDiffuse = clamp(materialAmbient + max(0.0, dot(n, -normalize(lightDir))), 0.0, 1.0);
 }`
 
 // SkinMesh is a skinned triangle list.
 type SkinMesh struct {
 	vao, vbo, ebo uint32
 	Count         int32
+	vertexCount   int
 	indexType     uint32
 	bytes         uint64
 }
 
 func NewSkinMesh(v []SkinVertex, idx []uint32) *SkinMesh {
-	m := &SkinMesh{Count: int32(len(idx))}
+	m := &SkinMesh{Count: int32(len(idx)), vertexCount: len(v)}
 	if len(v) == 0 || len(idx) == 0 {
 		return m
 	}
-	size := int(unsafe.Sizeof(SkinVertex{}))
 	gl.CreateBuffers(1, &m.vbo)
-	gl.NamedBufferStorage(m.vbo, len(v)*size, unsafe.Pointer(&v[0]), 0)
+	gl.NamedBufferStorage(m.vbo, len(v)*skinVertexStride, unsafe.Pointer(&v[0]), 0)
 	gl.CreateBuffers(1, &m.ebo)
 	var indexBytes uintptr
 	m.indexType, indexBytes = uploadMeshIndices(m.ebo, idx)
-	m.bytes = uint64(len(v)*size + len(idx)*int(indexBytes))
+	m.bytes = uint64(len(v)*skinVertexStride + len(idx)*int(indexBytes))
 	addGPUBytes(m.bytes)
 	gl.CreateVertexArrays(1, &m.vao)
-	gl.VertexArrayVertexBuffer(m.vao, 0, m.vbo, 0, int32(size))
-	gl.VertexArrayElementBuffer(m.vao, m.ebo)
+	bindSkinMeshLayout(m.vao, m.vbo, m.ebo)
+	return m
+}
+
+func bindSkinMeshLayout(vao, vbo, ebo uint32) {
+	gl.VertexArrayVertexBuffer(vao, 0, vbo, 0, int32(skinVertexStride))
+	gl.VertexArrayElementBuffer(vao, ebo)
 	for i, a := range []struct {
 		n   int32
 		off uint32
 	}{{3, 0}, {3, 12}, {2, 24}, {3, 32}} {
-		gl.EnableVertexArrayAttrib(m.vao, uint32(i))
-		gl.VertexArrayAttribFormat(m.vao, uint32(i), a.n, gl.FLOAT, false, a.off)
-		gl.VertexArrayAttribBinding(m.vao, uint32(i), 0)
+		gl.EnableVertexArrayAttrib(vao, uint32(i))
+		gl.VertexArrayAttribFormat(vao, uint32(i), a.n, gl.FLOAT, false, a.off)
+		gl.VertexArrayAttribBinding(vao, uint32(i), 0)
 	}
-	return m
 }
 
 func (m *SkinMesh) Delete() {
@@ -149,8 +175,10 @@ type Skinner struct {
 	uCorpseFade                                        int32
 	opacity                                            float32
 	uCrowdBase                                         int32
-	crowdBuffers                                       [2]uint32
-	crowdBytes                                         [2]uint64
+	crowdBuffers                                       [3]uint32
+	crowdBytes                                         [3]uint64
+	indirect                                           *Skinner
+	uCrowdDrawOffset                                   int32
 }
 
 func NewSkinner() (*Skinner, error) {
@@ -158,14 +186,29 @@ func NewSkinner() (*Skinner, error) {
 	if err != nil {
 		return nil, err
 	}
-	u := func(n string) int32 { return gl.GetUniformLocation(p, gl.Str(n+"\x00")) }
 	var palette uint32
 	gl.CreateBuffers(1, &palette)
 	gl.NamedBufferStorage(palette, MaxBones*64, nil, gl.DYNAMIC_STORAGE_BIT)
 	addGPUBytes(MaxBones * 64)
-	return &Skinner{prog: p, uCrowdBase: u("crowdBase"), palette: palette, uBoneCount: u("boneCount"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"),
+	k := skinProgram(p, palette)
+	if skinIndirectSupported {
+		vertex := strings.Replace(skinVS, "#version 450 core\n", "#version 450 core\n#extension GL_ARB_shader_draw_parameters : require\n#define SKIN_INDIRECT\n", 1)
+		fragment := strings.Replace(sceneFS, "#version 450 core\n", "#version 450 core\n#extension GL_ARB_bindless_texture : require\n#define SKIN_INDIRECT\n", 1)
+		indirect, err := Program(vertex, fragment)
+		if err != nil {
+			log.Printf("skinned multi-draw unavailable: %v", err)
+		} else {
+			k.indirect = skinProgram(indirect, palette)
+		}
+	}
+	return k, nil
+}
+
+func skinProgram(p, palette uint32) *Skinner {
+	u := func(n string) int32 { return gl.GetUniformLocation(p, gl.Str(n+"\x00")) }
+	return &Skinner{prog: p, uCrowdBase: u("crowdBase"), uCrowdDrawOffset: u("drawOffset"), palette: palette, uBoneCount: u("boneCount"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"),
 		uLight: u("lightDir"), uAmb: u("ambient"), uMode: u("mode"), uRef: u("alphaRef"),
-		uDetailBias: u("detailBias"), uFogColor: u("fogColor"), uFogRange: u("fogRange"), uClipPlane: u("clipPlane"), uOpacity: u("actorOpacity"), uCorpseFade: u("corpseFade")}, nil
+		uDetailBias: u("detailBias"), uFogColor: u("fogColor"), uFogRange: u("fogRange"), uClipPlane: u("clipPlane"), uOpacity: u("actorOpacity"), uCorpseFade: u("corpseFade")}
 }
 
 // Begin binds the program with the scene's camera, light and fog.
@@ -230,6 +273,10 @@ func (k *Skinner) Delete() {
 	}
 	gl.DeleteBuffers(1, &k.palette)
 	gl.DeleteProgram(k.prog)
+	if k.indirect != nil {
+		gl.DeleteProgram(k.indirect.prog)
+		k.indirect = nil
+	}
 	for i, buffer := range k.crowdBuffers {
 		if buffer != 0 {
 			gl.DeleteBuffers(1, &k.crowdBuffers[i])

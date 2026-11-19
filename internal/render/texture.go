@@ -9,10 +9,17 @@ import (
 )
 
 type Texture struct {
-	Opaque bool // proven full alpha coverage at every authored mip
-	bytes  uint64
-	ID     uint32
-	W, H   int
+	Opaque    bool // proven full alpha coverage at every authored mip
+	bytes     uint64
+	ID        uint32
+	W, H      int
+	repeat    bool
+	skinViews [2]skinTextureView
+}
+
+type skinTextureView struct {
+	id     uint32
+	handle uint64
 }
 
 var fallbackDiffuse *Texture
@@ -20,13 +27,58 @@ var fallbackDiffuse *Texture
 // A missing/untextured material must never inherit the preceding draw's
 // sampler. D3D's untextured diffuse stage corresponds to multiplying by white.
 func bindDiffuse(t *Texture) {
+	gl.BindTextureUnit(0, diffuseTexture(t).ID)
+}
+
+func diffuseTexture(t *Texture) *Texture {
 	if t == nil {
 		if fallbackDiffuse == nil {
 			fallbackDiffuse = Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{255, 255, 255, 255}}})
 		}
 		t = fallbackDiffuse
 	}
-	gl.BindTextureUnit(0, t.ID)
+	return t
+}
+
+// Only the view enters the immutable bindless state. The original can still
+// change wrapping for ordinary draws and both views share its texel storage.
+func (t *Texture) skinHandle() uint64 {
+	index := 0
+	if t.repeat {
+		index = 1
+	}
+	v := &t.skinViews[index]
+	if v.handle != 0 {
+		return v.handle
+	}
+	if t.ID == 0 {
+		return 0
+	}
+	var levels, format int32
+	gl.GetTextureParameteriv(t.ID, gl.TEXTURE_IMMUTABLE_LEVELS, &levels)
+	if levels < 1 {
+		return 0
+	}
+	gl.GetTextureLevelParameteriv(t.ID, 0, gl.TEXTURE_INTERNAL_FORMAT, &format)
+	gl.GenTextures(1, &v.id)
+	gl.TextureView(v.id, gl.TEXTURE_2D, t.ID, uint32(format), 0, uint32(levels), 0, 1)
+	for _, parameter := range [...]uint32{gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER, gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T, gl.TEXTURE_MAX_LEVEL} {
+		var value int32
+		gl.GetTextureParameteriv(t.ID, parameter, &value)
+		gl.TextureParameteri(v.id, parameter, value)
+	}
+	v.handle = gl.GetTextureHandleARB(v.id)
+	if v.handle != 0 {
+		gl.MakeTextureHandleResidentARB(v.handle)
+		if gl.IsTextureHandleResidentARB(v.handle) {
+			return v.handle
+		}
+	}
+	if v.id != 0 {
+		gl.DeleteTextures(1, &v.id)
+	}
+	*v = skinTextureView{}
+	return 0
 }
 
 // Upload creates an immutable texture (DSA). DXT data is uploaded as-is.
@@ -133,6 +185,14 @@ func dxtFormat(f img.Format) uint32 {
 func (t *Texture) Delete() {
 	if t == nil {
 		return
+	}
+	for i := range t.skinViews {
+		v := &t.skinViews[i]
+		if v.handle != 0 {
+			gl.MakeTextureHandleNonResidentARB(v.handle)
+			gl.DeleteTextures(1, &v.id)
+			*v = skinTextureView{}
+		}
 	}
 	gl.DeleteTextures(1, &t.ID)
 	removeGPUBytes(t.bytes)

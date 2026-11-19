@@ -108,6 +108,16 @@ func (o *TerrainOcclusion) polygon(vertices []V3) {
 	}
 }
 func (o *TerrainOcclusion) Box(lo, hi V3) bool {
+	if o.BoxHidden(lo, hi) {
+		o.Culled++
+		return true
+	}
+	return false
+}
+
+// BoxHidden does not update statistics. Workers may read the finished mask
+// while the render thread waits for their results.
+func (o *TerrainOcclusion) BoxHidden(lo, hi V3) bool {
 	if o == nil || !o.covered {
 		return false
 	}
@@ -130,9 +140,17 @@ func (o *TerrainOcclusion) Box(lo, hi V3) bool {
 		maxY = max(maxY, q.y)
 		near = max(near, q.z)
 	}
-	return o.rectangle(minX, minY, maxX, maxY, near)
+	return o.rectangleHidden(minX, minY, maxX, maxY, near)
 }
 func (o *TerrainOcclusion) rectangle(minX, minY, maxX, maxY, near float32) bool {
+	if o.rectangleHidden(minX, minY, maxX, maxY, near) {
+		o.Culled++
+		return true
+	}
+	return false
+}
+
+func (o *TerrainOcclusion) rectangleHidden(minX, minY, maxX, maxY, near float32) bool {
 	// A one-cell guard includes projection/animation and rasterization margins.
 	x0, y0 := int(math.Floor(float64(minX)))-1, int(math.Floor(float64(minY)))-1
 	x1, y1 := int(math.Ceil(float64(maxX)))+1, int(math.Ceil(float64(maxY)))+1
@@ -146,15 +164,34 @@ func (o *TerrainOcclusion) rectangle(minX, minY, maxX, maxY, near float32) bool 
 			}
 		}
 	}
-	o.Culled++
 	return true
 }
-func (s *Scene3D) OccludedBox(lo, hi V3) bool {
+
+// ActiveOcclusion returns the mask only for the camera which built it.
+func (s *Scene3D) ActiveOcclusion() *TerrainOcclusion {
 	o := s.Occlusion
-	if o == nil || s.Shadow || s.ClipPlane != [4]float32{} || s.View != o.view || s.VisibilityProjection() != o.projection {
+	if o == nil || !o.covered || s.Shadow || s.ClipPlane != [4]float32{} || s.View != o.view || s.VisibilityProjection() != o.projection {
+		return nil
+	}
+	return o
+}
+
+func (s *Scene3D) OccludedBox(lo, hi V3) bool {
+	return s.ActiveOcclusion().Box(lo, hi)
+}
+
+// PointMayBeHidden supplies an early visibility witness for a containing box.
+// If this cell cannot hide a point inside the box, the box test cannot pass.
+func (o *TerrainOcclusion) PointMayBeHidden(point V3) bool {
+	p, ok := o.project(point)
+	if !ok {
+		return true
+	}
+	if p.x < 0 || p.y < 0 || p.x >= float32(o.Width) || p.y >= float32(o.Height) {
 		return false
 	}
-	return o.Box(lo, hi)
+	// Leave slack in reciprocal depth for projection rounding.
+	return o.depth[int(p.y)*o.Width+int(p.x)] > p.z*.9999
 }
 func (s *Scene3D) OccludedSphere(c V3, r float32) bool {
 	if math.IsNaN(float64(r)) || math.IsInf(float64(r), 0) || r < 0 {

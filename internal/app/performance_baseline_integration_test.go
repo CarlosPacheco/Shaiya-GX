@@ -110,6 +110,8 @@ func TestClientPerformanceBaseline(t *testing.T) {
 	a.gameMenu.Settings = ui.DefaultClientSettings()
 	switch variant {
 	case "default":
+	case "no-effects":
+		a.gameMenu.Settings.SkillEffects = false
 	case "no-glow":
 		a.gameMenu.Settings.Glow = 0
 	case "no-shadow":

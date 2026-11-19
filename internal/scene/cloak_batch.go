@@ -36,16 +36,27 @@ func prepareCharacterCloth(characters []*Character, s *render.Scene3D) {
 
 // CullCrowdCharacters clears rejected entries in place. Distinct actors own
 // their pose caches, and workers neither touch GL nor change submission order.
-func CullCrowdCharacters(characters []*Character, frustum render.Frustum, clip [4]float32) {
+func CullCrowdCharacters(characters []*Character, frustum render.Frustum, s *render.Scene3D) {
+	batch := len(characters) >= MinCrowdActors && s.HideWeaponEffects && !s.Shadow
 	forEachCrowdCharacter(characters, func(i int, c *Character) {
-		if c.Hidden || c.CorpseFade >= 1 || !c.Visible(frustum, clip) {
+		if c.Hidden || c.CorpseFade >= 1 {
+			characters[i] = nil
+			return
+		}
+		var visible bool
+		if batch && !c.Mounted && !c.Concealed && !c.hasBlendedAttachment() {
+			visible = c.crowdVisible(frustum, s.ClipPlane)
+		} else {
+			visible = c.Visible(frustum, s.ClipPlane)
+		}
+		if !visible {
 			characters[i] = nil
 		}
 	})
 }
 
 func forEachCrowdCharacter(characters []*Character, visit func(int, *Character)) {
-	workers := max(1, min(4, runtime.GOMAXPROCS(0), len(characters)/12))
+	workers := max(1, min(runtime.GOMAXPROCS(0), len(characters)/24))
 	prepare := func(offset int) {
 		for i := offset; i < len(characters); i += workers {
 			if c := characters[i]; c != nil {

@@ -73,7 +73,7 @@ func (a *Arena) Draw(s *render.Scene3D, skinner *render.Skinner, effects bool) {
 	for i := range a.actors {
 		a.visible = append(a.visible, a.actors[i].avatar)
 	}
-	scene.CullCrowdCharacters(a.visible, frustum, s.ClipPlane)
+	scene.CullCrowdCharacters(a.visible, frustum, s)
 	a.visible = slices.DeleteFunc(a.visible, func(c *scene.Character) bool { return c == nil })
 	for _, character := range a.visible {
 		if character.HasCloak() {
