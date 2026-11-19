@@ -14,9 +14,9 @@ Declarations: [packet.QuestList](../../server/internal/packet/packet.go#L124), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L230)
+**S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L228)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L573)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L586)
 
 ### Wire layouts and validation
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>questListPackets — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L230)
+[Source definition](../../server/internal/world/quests.go#L228)
 
 ```go
 func (s *Session) questListPackets() [][]byte {
@@ -101,9 +101,9 @@ Declarations: [packet.QuestStart](../../server/internal/packet/packet.go#L125), 
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L101)
 
-**S→C serializers:** [startQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L406)
+**S→C serializers:** [startQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L404)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L595)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L608)
 
 ### Wire layouts and validation
 
@@ -111,7 +111,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>startQuest — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L406)
+[Source definition](../../server/internal/world/quests.go#L404)
 
 ```go
 func (s *Session) startQuest(q *questDef, id uint16, npcID uint32) {
@@ -181,9 +181,9 @@ Declarations: [packet.QuestEnd](../../server/internal/packet/packet.go#L126), [p
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
 
-**S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L576), [awardQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L653)
+**S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L574), [awardQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L651)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L622)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L635)
 
 ### Wire layouts and validation
 
@@ -191,7 +191,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>completeQuest — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L576)
+[Source definition](../../server/internal/world/quests.go#L574)
 
 ```go
 func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool) {
@@ -246,7 +246,7 @@ func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool) {
 
 <details><summary>awardQuest — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L653)
+[Source definition](../../server/internal/world/quests.go#L651)
 
 ```go
 func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
@@ -291,7 +291,7 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 		}
 	}
 	change.After.Money = uint32(min(uint64(change.After.Money)+uint64(res.Money), db.MoneyCap))
-	levels := applyExpGain(&change.After, exp)
+	levels, exp := applyExpGain(&change.After, exp)
 	if levels > 0 {
 		st := StatsFor(&change.After, s.equipment())
 		change.After.CurrentHP, change.After.CurrentMP, change.After.CurrentSP = st.MaxHP, st.MaxMP, st.MaxSP
@@ -406,9 +406,9 @@ Declarations: [packet.QuestCounter](../../server/internal/packet/packet.go#L128)
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [bumpQuestCounter (server/internal/world/quests.go)](../../server/internal/world/quests.go#L766), [questKillCount (server/internal/world/quests.go)](../../server/internal/world/quests.go#L785)
+**S→C serializers:** [bumpQuestCounter (server/internal/world/quests.go)](../../server/internal/world/quests.go#L764), [questKillCount (server/internal/world/quests.go)](../../server/internal/world/quests.go#L783)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L617)
 
 ### Wire layouts and validation
 
@@ -416,7 +416,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>bumpQuestCounter — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L766)
+[Source definition](../../server/internal/world/quests.go#L764)
 
 ```go
 func (s *Session) bumpQuestCounter(q *activeQuest, slot int) {
@@ -441,7 +441,7 @@ func (s *Session) bumpQuestCounter(q *activeQuest, slot int) {
 
 <details><summary>questKillCount — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L785)
+[Source definition](../../server/internal/world/quests.go#L783)
 
 ```go
 func (s *Session) questKillCount(mobID uint16, count uint8) bool {
@@ -530,9 +530,9 @@ Declarations: [packet.QuestFinishedList](../../server/internal/packet/packet.go#
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L230)
+**S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L228)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L584)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L597)
 
 ### Wire layouts and validation
 
@@ -540,7 +540,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>questListPackets — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L230)
+[Source definition](../../server/internal/world/quests.go#L228)
 
 ```go
 func (s *Session) questListPackets() [][]byte {
@@ -612,9 +612,9 @@ Declarations: [packet.QuestChoose](../../server/internal/packet/packet.go#L129),
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L105)
 
-**S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L576)
+**S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L574)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L616)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L629)
 
 ### Wire layouts and validation
 
@@ -622,7 +622,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>completeQuest — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L576)
+[Source definition](../../server/internal/world/quests.go#L574)
 
 ```go
 func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool) {

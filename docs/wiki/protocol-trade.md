@@ -16,7 +16,7 @@ Declarations: [packet.ExchangeRequest](../../server/internal/packet/packet.go#L2
 
 **S→C serializers:** [handleTradeRequest (server/internal/world/trade.go)](../../server/internal/world/trade.go#L157)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L37), [Apply (internal/game/state.go)](../../internal/game/state.go#L569)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L37), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
 
 ### Wire layouts and validation
 
@@ -93,7 +93,7 @@ Declarations: [packet.ExchangeAnswer](../../server/internal/packet/packet.go#L21
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L44), [Apply (internal/game/state.go)](../../internal/game/state.go#L569)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L44), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
 
 ### Wire layouts and validation
 
@@ -151,7 +151,7 @@ Declarations: [packet.ExchangeStart](../../server/internal/packet/packet.go#L214
 
 **S→C serializers:** [buildTradeStart (server/internal/world/trade.go)](../../server/internal/world/trade.go#L136)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L51), [Apply (internal/game/state.go)](../../internal/game/state.go#L569)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L51), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
 
 ### Wire layouts and validation
 
@@ -197,7 +197,7 @@ Declarations: [packet.ExchangeEnd](../../server/internal/packet/packet.go#L215),
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L61), [Apply (internal/game/state.go)](../../internal/game/state.go#L569)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L61), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
 
 ### Wire layouts and validation
 
@@ -237,7 +237,7 @@ Declarations: [packet.ExchangeReady](../../server/internal/packet/packet.go#L216
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L74), [Apply (internal/game/state.go)](../../internal/game/state.go#L569)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L74), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
 
 ### Wire layouts and validation
 
@@ -314,7 +314,7 @@ Declarations: [packet.ExchangeAdd](../../server/internal/packet/packet.go#L217),
 
 **S→C serializers:** [handleTradeAdd (server/internal/world/trade.go)](../../server/internal/world/trade.go#L261)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L569)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
 
 ### Wire layouts and validation
 
@@ -448,7 +448,7 @@ Declarations: [packet.ExchangeAddMoney](../../server/internal/packet/packet.go#L
 
 **S→C serializers:** [buildTradeMoney (server/internal/world/trade.go)](../../server/internal/world/trade.go#L315)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L97), [Apply (internal/game/state.go)](../../internal/game/state.go#L569)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L97), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
 
 ### Wire layouts and validation
 
@@ -514,7 +514,7 @@ Declarations: [packet.ExchangeAddDest](../../server/internal/packet/packet.go#L2
 
 **S→C serializers:** [buildTradeAddDest (server/internal/world/trade.go)](../../server/internal/world/trade.go#L232)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L120), [Apply (internal/game/state.go)](../../internal/game/state.go#L569)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L120), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
 
 ### Wire layouts and validation
 
@@ -578,7 +578,7 @@ Declarations: [packet.ExchangeConfirm](../../server/internal/packet/packet.go#L2
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L74), [Apply (internal/game/state.go)](../../internal/game/state.go#L569)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L74), [Apply (internal/game/state.go)](../../internal/game/state.go#L582)
 
 ### Wire layouts and validation
 

@@ -8,6 +8,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'docs/wiki'
 NAMES = {
+    'map-rules.md': 'Map-Rules', 'gx-studio.md': 'GX-Studio',
     'mounts.md': 'Mounts', 'fall-damage.md': 'Fall-Damage',
     'goddess-blessing.md': 'Goddess-Blessing',
     'obelisks.md': 'Obelisks',
@@ -106,7 +107,7 @@ def main():
         subprocess.run(['git', '-C', str(args.checkout), 'add', '--', '*.md'], check=True)
         changed = subprocess.run(['git', '-C', str(args.checkout), 'diff', '--cached', '--quiet']).returncode
         if changed == 1:
-            subprocess.run(['git', '-C', str(args.checkout), 'commit', '-m', 'Document GX server architecture, packages and complete protocol reference'], check=True)
+            subprocess.run(['git', '-C', str(args.checkout), 'commit', '-m', 'Update Shaiya GX documentation and protocol reference'], check=True)
             subprocess.run(['git', '-C', str(args.checkout), 'push', 'origin', 'HEAD'], check=True)
         elif changed != 0:
             raise RuntimeError('Cannot inspect staged wiki changes')

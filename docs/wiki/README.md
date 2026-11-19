@@ -13,16 +13,17 @@ The reference for current GX gameplay features, item data, administration and
 operation. GX is a Go client with an integrated authoritative world/login
 server, using original EP5 interface resources and protocol foundations.
 
-**Version scope:** updated for [gx-v0.1.12](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.12). These pages describe current development behavior. A released
-binary may predate a documented change. Use matching client/server builds and
-consult release notes when reproducing behavior. Publishing documentation does
-not update executable files, client assets or a running database.
+**Version scope:** these pages follow the current development branch. Use the
+release notes for the features and data shipped in a specific binary release.
 
 The linked Drive download includes gx-v0.1.12 and complete game data. See the
 [gx-v0.1.12 upgrade guide](../releases/gx-v0.1.12-upgrade.md) for updates and
 preserving your personal database.
 
 ## Gameplay and items
+
+- [Map rules, weather and progression](map-rules.md): map access and respawn,
+  synchronized storms, permanent map curses and the shared level cap.
 
 - [Mounts](mounts.md): single/two-seat riding, native effects/audio, jumping,
   invitations, server boarding range and shared racial bones.ini.
@@ -52,7 +53,7 @@ preserving your personal database.
   monster and spell rules, buff lifecycle, detection and native evidence.
 
 - [Blacksmith](blacksmith.md): native buttons, continuous attempts, exact gold
-  table, linking formulas, hammer values, compiled enhancement tables and cap,
+  table, linking formulas, hammer values, SQLite enchant rates and caps,
   selective extraction, failure protection and original system messages.
 - [Item effects](item-effects.md): passive stats, triggered gem skills, recovery,
   healing, cooldown groups, utility items, elements, native field overloading and
@@ -71,6 +72,9 @@ preserving your personal database.
 
 ## Administration and content
 
+- [GX Studio](gx-studio.md): client/server catalog editing with backups,
+  saved installation paths and exact field labels.
+
 - [GM commands](gm-commands.md): role source, complete command syntax, examples,
   limits, transactional inventory changes, temporary spawns and protocol details.
 - [Item data and compiled rules](item-data.md): where each setting lives, what
@@ -82,8 +86,7 @@ preserving your personal database.
 
 ## Server architecture and complete package reference
 
-The integrated server reference belongs to this same Wiki. It documents current
-source after the server modernization; the gx-v0.1.10 download can predate it.
+The server reference is generated from the current Go source.
 
 - [Server architecture and lifecycle](server-architecture.md): processes, ownership,
   concurrency, simulation timeline, transaction flow and failure semantics.

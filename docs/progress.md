@@ -1,6 +1,6 @@
 # Progress and delivered features
 
-Updated November 17, 2026 for gx-v0.1.12. This is a development snapshot, not a claim of complete original-game parity. **Delivered** means the named workflow is implemented and verified within its stated scope; remaining variants are tracked separately.
+Development snapshot updated November 19, 2026. **Delivered** means the named workflow is implemented and verified within its stated scope.
 
 ## Server parity checklist
 
@@ -36,6 +36,13 @@ project completion percentage.
 | Portable GX Server | Terminal console controls login/world; development seed creates a separate mutable runtime | [Distribution guide](../server/docs/distribution.md), [native package verification](../server/tools/package.py) |
 
 Chat, party/raid, quests, trade/duels, social windows and the mall are also implemented; their remaining states and presentation gaps are detailed in [interface status](interface.md). A delivered workflow does not mark every feature variant complete.
+
+## Current development
+
+- [GX Studio](gx-studio.md) edits the Item Mall, items, skills, NPCs and quests across client data and SQLite. It also edits server-only enchant, blessing, mob message, loot and map catalogs.
+- [Map rules and progression](wiki/map-rules.md) add level-gated maps, racial respawn fallback, synchronized weather, map curses and a shared experience cap.
+- [World drops and item boxes](wiki/recreation-and-loot.md) use SQLite definitions. [Goddess blessing](wiki/goddess-blessing.md) loads a shared bonus catalog for both factions.
+- Recorded travel points, party and raid summoning, and account-targeted GM travel extend [travel and administration](wiki/gm-commands.md).
 
 ## gx-v0.1.12 hotfix
 

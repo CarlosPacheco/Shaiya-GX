@@ -59,7 +59,7 @@ function, including all SQL call sites. It is the source map for complete legacy
 column shapes; this page groups the schema by ownership instead of inventing a
 new relational model for old tables.
 
-## Additive, checked migrations
+## Transactional migrations
 
 [migrations.go](../../server/internal/db/migrations.go) applies all pending steps
 and ledger updates in one transaction. It rejects a newer runtime, checksum/name
@@ -75,11 +75,28 @@ published migration; append a new version.
 | 4 | `warehouse_lookup` | Adds `GX_Warehouse_User` on UserStoredItems(ServerID,UserUID,ItemUID) |
 | 5 | `active_account_ownership` | Adds exact-session active account ownership |
 | 6 | `character_teleport_points` | Stores four recorded teleport points per character in `GX_TeleportPoints` |
+| 7–9 | Skill catalog updates | Removes retired skill levels and updates effect and prerequisite data |
+| 10–11 | Enchant rules and target levels | Stores independent enchant curves indexed by the level reached |
+| 12 | `mob_ai_messages` | Stores indexed monster AI text |
+| 13–14 | Goddess blessing | Imports and merges the faction bonus tables into a shared catalog |
+| 15 | `world_drops` | Adds independent chance rules by mob level and item grade |
+| 16 | `item_boxes` | Stores box definitions and reward weights or chances |
+| 17 | `npc_quest` | Adds six tables for NPCs, shops, destinations, quest details and links |
+| 18 | `map_properties` | Adds map rules and racial birth positions |
+| 19 | `unified_experience` | Replaces mode-specific EXP rows with one threshold per level and migrates character progress |
 
 The migration ledger is separate from legacy user_version. The shipped seed is
 not rewritten during an upgrade; migrations apply to the runtime. Back up before
 upgrading and keep matching binaries. Downgrading to code that understands only
 plaintext passwords or a different migration ledger is unsupported.
+
+## Editing game definitions
+
+[GX Studio](gx-studio.md) edits supported catalogs against the active SQLite
+file and backs up the sources it changes. GX World reads server definitions
+at startup. For an upgrade, retain any legacy source files the migration needs
+until successful startup and catalog validation. The shared seed stays at its
+approved baseline, and portables create a separate runtime from that seed.
 
 ## Transaction contracts
 

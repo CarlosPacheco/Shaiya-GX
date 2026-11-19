@@ -36,6 +36,34 @@ func DecodeBlessing(p []byte) (BlessingUpdate, error) {
 }
 ```
 
+```go
+type BlessingSnapshot struct {
+	Country                     uint8
+	Entry                       bool
+	Count, Maximum, RemainingMS uint32
+	Bonuses                     [27]uint16
+}
+```
+
+```go
+func DecodeBlessingSnapshot(p []byte) (BlessingSnapshot, error) {
+	r := NewReader(p)
+	country, flags := r.U8(), r.U8()
+	b := BlessingSnapshot{Country: country, Entry: flags == 1, Count: r.U32(), Maximum: r.U32(), RemainingMS: r.U32()}
+	for i := range b.Bonuses {
+		b.Bonuses[i] = r.U16()
+	}
+	if err := r.Err(); err != nil {
+		return b, err
+	}
+	if country > 1 || flags > 1 || b.Maximum == 0 || b.Count > b.Maximum || b.RemainingMS > 600000 ||
+		b.RemainingMS != 0 && b.Count != b.Maximum || r.Remaining() != 0 {
+		return b, fmt.Errorf("invalid blessing snapshot")
+	}
+	return b, nil
+}
+```
+
 </details>
 
 ## buffs
@@ -4362,6 +4390,35 @@ func DecodeWarehouseMove(p []byte) (items [2]InventoryItem, money uint32, hasMon
 		money, hasMoney = r.U32(), true
 	}
 	return items, money, hasMoney, r.Err()
+}
+```
+
+</details>
+
+## weather
+
+[internal/proto/weather.go](../../internal/proto/weather.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type Weather struct {
+	MapID uint16
+	Type  uint8
+}
+```
+
+```go
+func DecodeWeather(p []byte) (Weather, error) {
+	r := NewReader(p)
+	v := Weather{r.U16(), r.U8()}
+	if err := r.Err(); err != nil {
+		return Weather{}, err
+	}
+	if v.Type > WeatherSnow || r.Remaining() != 0 {
+		return Weather{}, fmt.Errorf("invalid weather snapshot")
+	}
+	return v, nil
 }
 ```
 

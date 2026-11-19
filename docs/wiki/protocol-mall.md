@@ -47,7 +47,7 @@ Declarations: [packet.PointBuy](../../server/internal/packet/packet.go#L190), [p
 
 **S→C serializers:** [buildPointBuyResult (server/internal/world/itemmall.go)](../../server/internal/world/itemmall.go#L28)
 
-**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L31), [Apply (internal/game/state.go)](../../internal/game/state.go#L636)
+**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L31), [Apply (internal/game/state.go)](../../internal/game/state.go#L649)
 
 ### Wire layouts and validation
 
@@ -151,7 +151,7 @@ Declarations: [packet.PointGiftSend](../../server/internal/packet/packet.go#L191
 
 **S→C serializers:** [buildGiftSendResult (server/internal/world/itemmall.go)](../../server/internal/world/itemmall.go#L43)
 
-**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L41), [Apply (internal/game/state.go)](../../internal/game/state.go#L636)
+**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L41), [Apply (internal/game/state.go)](../../internal/game/state.go#L649)
 
 ### Wire layouts and validation
 
@@ -237,7 +237,7 @@ Declarations: [packet.CashPoint](../../server/internal/packet/packet.go#L194), [
 
 **S→C serializers:** [buildCashPoints (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L95)
 
-**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L25), [Apply (internal/game/state.go)](../../internal/game/state.go#L636)
+**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L25), [Apply (internal/game/state.go)](../../internal/game/state.go#L649)
 
 ### Wire layouts and validation
 
@@ -287,7 +287,7 @@ Declarations: [packet.PointStoredItemList](../../server/internal/packet/packet.g
 
 **S→C serializers:** [buildGiftBoxList (server/internal/world/itemmall.go)](../../server/internal/world/itemmall.go#L55)
 
-**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L51), [Apply (internal/game/state.go)](../../internal/game/state.go#L636)
+**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L51), [Apply (internal/game/state.go)](../../internal/game/state.go#L649)
 
 ### Wire layouts and validation
 
@@ -362,7 +362,7 @@ Declarations: [packet.PointStoredItemGet](../../server/internal/packet/packet.go
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
-**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L61), [Apply (internal/game/state.go)](../../internal/game/state.go#L636)
+**Client receive reducers:** [applyMall (internal/game/mall.go)](../../internal/game/mall.go#L61), [Apply (internal/game/state.go)](../../internal/game/state.go#L649)
 
 ### Wire layouts and validation
 

@@ -186,28 +186,27 @@ Direct GX dependencies: `internal/element`, `internal/itemstack`, `internal/pote
 | [`MobDrop`](../../server/internal/db/defs.go#L161)<br>`type MobDrop` | See the source definition and the subsystem ownership contract. |
 | [`ProductItem`](../../server/internal/db/defs.go#L168)<br>`type ProductItem` | See the source definition and the subsystem ownership contract. |
 | [`Product`](../../server/internal/db/defs.go#L173)<br>`type Product` | See the source definition and the subsystem ownership contract. |
-| [`ExpKey`](../../server/internal/db/defs.go#L180)<br>`type ExpKey` | See the source definition and the subsystem ownership contract. |
-| [`StatusKey`](../../server/internal/db/defs.go#L186)<br>`type StatusKey` | StatusKey indexes StatusDefs by level and job (Chars.Job). |
-| [`Status`](../../server/internal/db/defs.go#L192)<br>`type Status` | Status is a StatusDefs row: base max HP/SP/MP for a level and job. |
-| [`BaseItem`](../../server/internal/db/defs.go#L196)<br>`type BaseItem` | BaseItem is a BaseItemsDefs row: an item a new character of that family and job starts with, in inventory bag 1 at Slot. |
-| [`BaseItemKey`](../../server/internal/db/defs.go#L203)<br>`type BaseItemKey` | BaseItemKey indexes BaseItemsDefs by family (race) and job. |
-| [`Defs`](../../server/internal/db/defs.go#L206)<br>`type Defs` | Defs holds every PS_GameDefs table the world needs. |
-| [`defsOnce`](../../server/internal/db/defs.go#L219)<br>`var defsOnce sync.Once` | See the source definition and the subsystem ownership contract. |
-| [`defs`](../../server/internal/db/defs.go#L220)<br>`var defs *Defs` | See the source definition and the subsystem ownership contract. |
-| [`defsErr`](../../server/internal/db/defs.go#L221)<br>`var defsErr error` | See the source definition and the subsystem ownership contract. |
-| [`SetDefsForTest`](../../server/internal/db/defs.go#L225)<br>`func SetDefsForTest(d *Defs)` | SetDefsForTest installs definitions without a database (unit tests). |
-| [`ReloadDefsForTest`](../../server/internal/db/defs.go#L231)<br>`func ReloadDefsForTest() (*Defs, error)` | ReloadDefsForTest replaces test definitions with the database's again. |
-| [`Definitions`](../../server/internal/db/defs.go#L238)<br>`func Definitions() (*Defs, error)` | Definitions returns the cached definitions, loading them on first use. |
-| [`MustDefs`](../../server/internal/db/defs.go#L244)<br>`func MustDefs() *Defs` | MustDefs is for code paths that run only after a successful startup load. |
-| [`clampU8`](../../server/internal/db/defs.go#L252)<br>`func clampU8(v int64) uint8` | See the source definition and the subsystem ownership contract. |
-| [`clampU16`](../../server/internal/db/defs.go#L256)<br>`func clampU16(v int64) uint16` | See the source definition and the subsystem ownership contract. |
-| [`normalizeSkill`](../../server/internal/db/defs.go#L261)<br>`func normalizeSkill(s *SkillDef, defenceType, fixRange uint8, keep uint32, aggro uint16, need [15]uint8, shield uint8)` | normalizeSkill applies CGameData::LoadConstSkill's load-time rules. |
-| [`MobRespawnSeconds`](../../server/internal/db/defs.go#L307)<br>`func MobRespawnSeconds(special uint8) uint64` | MobRespawnSeconds maps Mobs.Attackspecial3 to the respawn delay. |
-| [`loadDefs`](../../server/internal/db/defs.go#L318)<br>`func loadDefs() (*Defs, error)` | See the source definition and the subsystem ownership contract. |
-| [`Item`](../../server/internal/db/defs.go#L620)<br>`func (d *Defs) Item(itemType, typeID uint8) *ItemDef` | Item returns the definition for (type, typeID), or nil. |
-| [`Skill`](../../server/internal/db/defs.go#L623)<br>`func (d *Defs) Skill(skillID uint16, level uint8) *SkillDef` | Skill returns the definition for (skillID, level), or nil. |
-| [`NPCSkill`](../../server/internal/db/defs.go#L629)<br>`func (d *Defs) NPCSkill(skillID uint16) *SkillDef` | NPCSkill selects the independent NpcSkill namespace. The shared SQL schema stores NpcSkill rank one as level 100; player ranks are never a fallback. |
-| [`MobQuestItem`](../../server/internal/db/defs.go#L635)<br>`func MobQuestItem(index int32) ItemKey` | MobQuestItem decodes LoadConstMob's quest-only index. This is not the ordinary Type*1000+TypeID format. Native item IDs are truncated to a byte. |
+| [`StatusKey`](../../server/internal/db/defs.go#L181)<br>`type StatusKey` | StatusKey indexes StatusDefs by level and job (Chars.Job). |
+| [`Status`](../../server/internal/db/defs.go#L187)<br>`type Status` | Status is a StatusDefs row: base max HP/SP/MP for a level and job. |
+| [`BaseItem`](../../server/internal/db/defs.go#L191)<br>`type BaseItem` | BaseItem is a BaseItemsDefs row: an item a new character of that family and job starts with, in inventory bag 1 at Slot. |
+| [`BaseItemKey`](../../server/internal/db/defs.go#L198)<br>`type BaseItemKey` | BaseItemKey indexes BaseItemsDefs by family (race) and job. |
+| [`Defs`](../../server/internal/db/defs.go#L201)<br>`type Defs` | Defs holds every PS_GameDefs table the world needs. |
+| [`defsOnce`](../../server/internal/db/defs.go#L215)<br>`var defsOnce sync.Once` | See the source definition and the subsystem ownership contract. |
+| [`defs`](../../server/internal/db/defs.go#L216)<br>`var defs *Defs` | See the source definition and the subsystem ownership contract. |
+| [`defsErr`](../../server/internal/db/defs.go#L217)<br>`var defsErr error` | See the source definition and the subsystem ownership contract. |
+| [`SetDefsForTest`](../../server/internal/db/defs.go#L221)<br>`func SetDefsForTest(d *Defs)` | SetDefsForTest installs definitions without a database (unit tests). |
+| [`ReloadDefsForTest`](../../server/internal/db/defs.go#L227)<br>`func ReloadDefsForTest() (*Defs, error)` | ReloadDefsForTest replaces test definitions with the database's again. |
+| [`Definitions`](../../server/internal/db/defs.go#L234)<br>`func Definitions() (*Defs, error)` | Definitions returns the cached definitions, loading them on first use. |
+| [`MustDefs`](../../server/internal/db/defs.go#L240)<br>`func MustDefs() *Defs` | MustDefs is for code paths that run only after a successful startup load. |
+| [`clampU8`](../../server/internal/db/defs.go#L248)<br>`func clampU8(v int64) uint8` | See the source definition and the subsystem ownership contract. |
+| [`clampU16`](../../server/internal/db/defs.go#L252)<br>`func clampU16(v int64) uint16` | See the source definition and the subsystem ownership contract. |
+| [`normalizeSkill`](../../server/internal/db/defs.go#L257)<br>`func normalizeSkill(s *SkillDef, defenceType, fixRange uint8, keep uint32, aggro uint16, need [15]uint8, shield uint8)` | normalizeSkill applies CGameData::LoadConstSkill's load-time rules. |
+| [`MobRespawnSeconds`](../../server/internal/db/defs.go#L303)<br>`func MobRespawnSeconds(special uint8) uint64` | MobRespawnSeconds maps Mobs.Attackspecial3 to the respawn delay. |
+| [`loadDefs`](../../server/internal/db/defs.go#L314)<br>`func loadDefs() (*Defs, error)` | See the source definition and the subsystem ownership contract. |
+| [`Item`](../../server/internal/db/defs.go#L628)<br>`func (d *Defs) Item(itemType, typeID uint8) *ItemDef` | Item returns the definition for (type, typeID), or nil. |
+| [`Skill`](../../server/internal/db/defs.go#L631)<br>`func (d *Defs) Skill(skillID uint16, level uint8) *SkillDef` | Skill returns the definition for (skillID, level), or nil. |
+| [`NPCSkill`](../../server/internal/db/defs.go#L637)<br>`func (d *Defs) NPCSkill(skillID uint16) *SkillDef` | NPCSkill selects the independent NpcSkill namespace. The shared SQL schema stores NpcSkill rank one as level 100; player ranks are never a fallback. |
+| [`MobQuestItem`](../../server/internal/db/defs.go#L643)<br>`func MobQuestItem(index int32) ItemKey` | MobQuestItem decodes LoadConstMob's quest-only index. This is not the ordinary Type*1000+TypeID format. Native item IDs are truncated to a byte. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -386,13 +385,6 @@ type Product struct {
 ```
 
 ```go
-type ExpKey struct {
-	Level uint16
-	Grow  uint8 // ExpDefs.Grow, 1-4 (Chars.Grow + 1)
-}
-```
-
-```go
 type StatusKey struct {
 	Level uint16
 	Job   uint8
@@ -422,7 +414,8 @@ type Defs struct {
 	Skills       map[SkillKey]*SkillDef
 	Mobs         map[uint16]*MobDef
 	MobDrops     map[uint16][]MobDrop
-	Exp          map[ExpKey]uint32
+	Exp          map[uint16]uint32
+	LevelCap     uint16
 	Products     map[string]*Product
 	Status       map[StatusKey]Status
 	BaseItems    map[BaseItemKey][]BaseItem
@@ -729,13 +722,14 @@ type GiftEntry struct {
 
 [server/internal/db/migrations.go](../../server/internal/db/migrations.go#L1)
 
-Direct GX dependencies: `internal/enchantrules`.
+Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `internal/itemboxes`, `internal/maprules`, `internal/mobaimessages`, `internal/npcquest`, `internal/worlddrops`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`migration`](../../server/internal/db/migrations.go#L13)<br>`type migration` | See the source definition and the subsystem ownership contract. |
-| [`migrations`](../../server/internal/db/migrations.go#L18)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L72)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
+| [`migration`](../../server/internal/db/migrations.go#L20)<br>`type migration` | See the source definition and the subsystem ownership contract. |
+| [`experienceMigration`](../../server/internal/db/migrations.go#L26)<br>`var experienceMigration string` | See the source definition and the subsystem ownership contract. |
+| [`migrations`](../../server/internal/db/migrations.go#L28)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
+| [`migrate`](../../server/internal/db/migrations.go#L90)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -747,6 +741,16 @@ type migration struct {
 ```
 
 </details>
+
+### npcquest.go
+
+[server/internal/db/npcquest.go](../../server/internal/db/npcquest.go#L1)
+
+Direct GX dependencies: `internal/data/sdata`, `internal/npcquest`, `server/internal/config`.
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`initializeNPCQuest`](../../server/internal/db/npcquest.go#L16)<br>`func initializeNPCQuest(ctx context.Context, tx *sql.Tx) error` | See the source definition and the subsystem ownership contract. |
 
 ### ownership.go
 

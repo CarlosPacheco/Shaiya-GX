@@ -87,7 +87,11 @@ This changes resource storage and loading, not server rules, packet formats, com
 
 `Cursor/01.png` through `07.png` contain the native cursor artwork. Conversion preserves every decoded RGBA pixel and each cursor's dimensions; all seven original hotspots are `(0,0)`, used directly by the client. CUR is retained only as an import/test decoder.
 
-The active skill catalog is `Character/Skill.SData`, encoded as EP5 (nine record slots per group). The author's replacement `Skill4.SData` was identified by Parsec as EP6, despite its filename; EP4 and EP5 readers reject that input. Parsec converted its 326 groups to EP5, retaining the first nine slots and group ordering. No active skills occupied slots 10–15. EP5 serialization was read back and verified byte-for-byte, with names, descriptions, icons and levels checked. The source and previous active catalog remain in private backups outside playable data; only the correctly named converted catalog is installed. This client catalog replacement does not migrate server skill definitions.
+The active player catalog is `Character/Skill.SData` in EP5 layout, with
+nine record slots per group. `Monster/NpcSkill.SData` holds NPC skills, and
+`Npc/NpcQuest.SData` holds client NPC and quest presentation. GX Studio
+reads these and displays the mapped server fields alongside client fields.
+Use a matching loose data set when testing current source.
 
 
 Map audio retains WLD point emitters and terrain walk-sound references. Music
@@ -176,3 +180,13 @@ asset import produces them alongside the other interface resources.
 Item Mall runtime data uses the native binary `Cash.SData` table and SQL
 ProductList on the server, with byte quantities up to 255. The asset importer
 preserves Cash.SData. See [cash catalog](cash-catalog.md).
+
+
+## Outdoor resources
+
+Field skies use a dome and scrolling cloud layers. The loader prefers the
+converted PNG for the WLD sky or cloud basename and can resolve legacy
+references. Weather uses `Sky/sky_001.png`, with the legacy BMP as a fallback,
+and the native rain and normal snow textures in `Effect/DDS/`. Rain audio is
+`Sound/Music/Rain.ogg`. Sun flare textures prefer PNG, and water bump textures
+are stored under `Entity/Water/`.

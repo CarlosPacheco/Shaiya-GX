@@ -77,7 +77,7 @@ Starting a newly extracted package without copying a runtime creates a new world
 
 ## Renaming and migration
 
-Rapture's source is now `server/` in the GX module. Commands and binaries use `gx_*`; the small app and advertised server name use GX Server. Protocol opcodes, gameplay rules, schema and database API behavior are unchanged by integration. The legacy `Rapture_LoginLog` table and `rapture.sqlite` filenames intentionally remain, preserving compatibility. Existing clients still use the same login/world endpoints.
+Rapture's source is now `server/` in the GX module. Commands and binaries use `gx_*`, and the advertised server name is GX Server. The legacy `Rapture_LoginLog` table and `rapture.sqlite` filenames intentionally remain, preserving compatibility. Existing clients still use the same login/world endpoints.
 
 
 ## Equipment condition

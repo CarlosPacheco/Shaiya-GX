@@ -21,6 +21,10 @@ GALLERY_IMAGES = {
     'gallery/2026-11-13-character-selection.png',
     'gallery/2026-11-13-in-game.png',
 }
+# The shipped NPC/quest SQL baseline is larger than the source limit.
+# Pin the exact distributed blob for both staged and historical checks.
+NPC_QUEST_SEED = 'internal/npcquest/seed.sql'
+NPC_QUEST_SEED_SHA256 = '09e5c678f69bdcd4a338df0d6a0272506e89d9a2619735524bec27e3f33de465'
 SECRETS = [re.compile(rb'-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----'),
            re.compile(rb'\bgh[pousr]_[A-Za-z0-9]{30,}\b'),
            re.compile(rb'\bgithub_pat_[A-Za-z0-9_]{40,}\b'),
@@ -108,7 +112,10 @@ def main():
                 if size != expected.get('bytes') or hashlib.sha256(content).hexdigest() != expected.get('sha256'):
                     errors.append(f'font resource checksum mismatch: {path}')
             if size > (33_554_432 if path.startswith('resources/fonts/') and PurePosixPath(path).suffix.lower() in {'.ttf', '.otf'} else 67_108_864 if path.startswith('server/data/') else 8_388_608 if path in GALLERY_IMAGES else 1_048_576):
-                errors.append(f'oversized source blob: {path}')
+                approved_seed = (path == NPC_QUEST_SEED
+                                 and hashlib.sha256(content).hexdigest() == NPC_QUEST_SEED_SHA256)
+                if not approved_seed:
+                    errors.append(f'oversized source blob: {path}')
             if any(pattern.search(content) for pattern in SECRETS):
                 errors.append(f'potential secret: {path}')
     finally:

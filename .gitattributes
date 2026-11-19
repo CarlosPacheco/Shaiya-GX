@@ -1,2 +1,5 @@
 # Font pack hashes and licenses must be byte-identical on both native OSes.
 /resources/fonts/** -text
+
+# Keep the publication audit checksum stable across checkouts.
+/internal/npcquest/seed.sql -text

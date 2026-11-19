@@ -80,3 +80,13 @@ without sleeping. A steady cached marker query performs no allocations in the
 benchmark fixture. The encrypted login/world integration checks a real map's
 catalog against its much smaller visible NPC set and verifies that movement
 neither resends the catalog nor rebuilds the eligibility cache.
+
+## NPC and quest definitions
+
+GX World loads NPCs, shops, gate destinations, quest links and quest details
+from the six SQLite NPC/quest tables at startup. The client keeps encrypted
+`Npc/NpcQuest.SData` for presentation, including quest text and dialogue. GX
+Studio edits mapped gameplay fields and client presentation using coordinated
+backups and verification. Existing runtimes with their original server
+`NpcQuest.SData` import it during migration 17. Fresh runtimes use the shipped
+catalog. See the [GX Studio guide](gx-studio.md) and [map access rules](map-rules.md).

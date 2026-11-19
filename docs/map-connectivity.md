@@ -1,10 +1,11 @@
 # Server map connectivity audit
 
 Snapshot: 2026-11-15. The server loader accepts 77 numeric `data/maps/*.svmap`
-files: maps 0–67 and 100–108. This audit uses the server's SVMAP parser and
+files: maps 0–67 and 100–108. This historical audit used the server's SVMAP parser and
 `NpcQuest.SData` definitions, including only gatekeepers actually placed in those
 maps. It found 265 portal rows and 98 nonempty placed-gatekeeper destinations;
-105 of those routes stay on the same map.
+105 of those routes stay on the same map. The current server reads NPC destinations
+and map policies from SQLite. See [map rules](wiki/map-rules.md) for current access checks.
 
 An orphan below has **no incoming route from another loaded map**, including
 conditionally closed portals. GM commands, login/respawn positions, guild/event

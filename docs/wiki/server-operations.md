@@ -51,6 +51,19 @@ Allow inbound TCP 30800/30810 on the server firewall. Connect the client with `-
 
 For persistent overrides create `.local/runtime.env` in the server directory. Explicit environment values take priority. `RAPTURE_DATA_DIR`, `RAPTURE_DB_PATH` and `RAPTURE_DB_SEED` select data/runtime/seed locations independently. Relative paths in overrides are resolved against the server folder when using the controllers. Prefer absolute paths for direct headless launches with explicit overrides.
 
+## Content and runtime upgrades
+
+Run matching GX client and server builds. Pending SQLite migrations are
+applied on startup to the runtime, with versions recorded in
+`GX_SchemaMigrations`. The current source applies migrations through version
+19. This includes catalogs for enchant, mob AI messages, blessing, world
+drops, item boxes, NPCs and quests, map rules and experience.
+
+Use [GX Studio](gx-studio.md) for supported catalogs and verify the chosen
+database path before editing. Restart GX World to reload changed definitions.
+See [SQLite storage](server-storage.md#transactional-migrations) for the ledger
+and [map rules](map-rules.md) for weather and the level cap.
+
 ## Back up and restore
 
 For a consistent live backup, use the SQLite backup API through the optional Python tool:
@@ -74,7 +87,7 @@ Starting a newly extracted package without copying a runtime creates a new world
 
 ## Renaming and migration
 
-Rapture's source is now `server/` in the GX module. Commands and binaries use `gx_*`; the small app and advertised server name use GX Server. Protocol opcodes, gameplay rules, schema and database API behavior are unchanged by integration. The legacy `Rapture_LoginLog` table and `rapture.sqlite` filenames intentionally remain, preserving compatibility. Existing clients still use the same login/world endpoints.
+Rapture's source is now `server/` in the GX module. Commands and binaries use `gx_*`, and the advertised server name is GX Server. The legacy `Rapture_LoginLog` table and `rapture.sqlite` filenames intentionally remain, preserving compatibility. Existing clients still use the same login/world endpoints.
 
 
 ## Equipment condition

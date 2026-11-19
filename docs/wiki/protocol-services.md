@@ -14,9 +14,9 @@ Declarations: [packet.ShopBuy](../../server/internal/packet/packet.go#L72), [pro
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L99)
 
-**S→C serializers:** [buildShopBuyResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L202)
+**S→C serializers:** [buildShopBuyResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L143)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L736)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L749)
 
 ### Wire layouts and validation
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildShopBuyResult — server/internal/world/npcquest.go</summary>
 
-[Source definition](../../server/internal/world/npcquest.go#L202)
+[Source definition](../../server/internal/world/npcquest.go#L143)
 
 ```go
 func buildShopBuyResult(result, bag, slot, itemType, typeID uint8, count uint16, money uint32) []byte {
@@ -87,7 +87,7 @@ Declarations: [packet.ShopSell](../../server/internal/packet/packet.go#L138), [p
 
 **S→C serializers:** [buildShopSellResult (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L246)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L736)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L749)
 
 ### Wire layouts and validation
 
@@ -157,7 +157,7 @@ Declarations: [packet.WarehouseItemList](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildWarehouseItemList (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L27)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L976)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L989)
 
 ### Wire layouts and validation
 
@@ -242,7 +242,7 @@ Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L208), [pro
 
 **S→C serializers:** [buildGemAddResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L186)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L534)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L547)
 
 ### Wire layouts and validation
 
@@ -335,7 +335,7 @@ Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L209), [
 
 **S→C serializers:** [planGemRemove (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L362)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L510)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L523)
 
 ### Wire layouts and validation
 
@@ -538,7 +538,7 @@ Declarations: [packet.EnchantAdd](../../server/internal/packet/packet.go#L206), 
 
 **S→C serializers:** [buildEnchantResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L37)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L480)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L493)
 
 ### Wire layouts and validation
 
@@ -627,7 +627,7 @@ Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L207),
 
 **S→C serializers:** [buildComposeResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L495)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L461)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L474)
 
 ### Wire layouts and validation
 
