@@ -63,15 +63,24 @@ func TestPotentialTriggersBelowItsMarginOncePerReuse(t *testing.T) {
 	if after.Attack[0] <= before.Attack[0] || after.AttackSpeed != before.AttackSpeed+3 {
 		t.Fatalf("abilities not applied: attack %d -> %d, speed %d -> %d", before.Attack[0], after.Attack[0], before.AttackSpeed, after.AttackSpeed)
 	}
-	notified := false
-	for len(wire) > 0 {
-		if p := <-wire; proto.Op(p) == proto.GXSkillCooldown {
-			c, err := proto.DecodeSkillCooldown(p)
-			notified = err == nil && c.Skill == 24 && c.Seconds == 180 && c.Total == 180
+	waitForReuse := time.NewTimer(time.Second)
+	defer waitForReuse.Stop()
+reuse:
+	for {
+		select {
+		case p, ok := <-wire:
+			if !ok {
+				t.Fatal("the wire closed before the reuse update")
+			}
+			if proto.Op(p) == proto.GXSkillCooldown {
+				c, err := proto.DecodeSkillCooldown(p)
+				if err == nil && c.Skill == 24 && c.Seconds == 180 && c.Total == 180 {
+					break reuse
+				}
+			}
+		case <-waitForReuse.C:
+			t.Fatal("the client was not told about the reuse")
 		}
-	}
-	if !notified {
-		t.Fatal("the client was not told about the reuse")
 	}
 
 	// Expired buff, reuse still running: no new trigger.
