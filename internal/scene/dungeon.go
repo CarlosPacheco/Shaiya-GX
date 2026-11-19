@@ -63,7 +63,6 @@ func LoadDungeon(a *Assets, wldFile string) (*World, error) {
 	if !w.Dungeon {
 		return nil, fmt.Errorf("%s is a field", wldFile)
 	}
-	// DUN has no world fog, even when its WLD contains white field defaults.
 	out := &World{WLD: w}
 	if err := out.loadDG(a, w.Layout); err != nil {
 		return nil, err
@@ -73,6 +72,13 @@ func LoadDungeon(a *Assets, wldFile string) (*World, error) {
 	out.addVanis(a)
 	out.loadMapEffects(a)
 	out.buildDungeonOccluders()
+	if w.Sky != "" || w.CloudA != "" || w.CloudB != "" {
+		out.Sky = LoadSky(a, w)
+	}
+	if w.HasDungeonFog() {
+		out.FogColor = render.V3{w.FogColor[0] / 255, w.FogColor[1] / 255, w.FogColor[2] / 255}
+		out.FogStart, out.FogEnd = w.FogStart, w.FogEnd
+	}
 	return out, nil
 }
 

@@ -365,6 +365,11 @@ func (w *World) Close() {
 	w.dungeonOccluders = nil
 	w.dungeonInstances = nil
 	w.occlusion = nil
+	if w.Sky != nil {
+		w.Sky.Dome.Delete()
+		w.Sky.quad.Delete()
+		w.Sky = nil
+	}
 	if w.stream == nil {
 		return
 	}
@@ -385,14 +390,11 @@ func (w *World) Close() {
 			m.delete()
 		}
 	}
-	if w.Sky != nil {
-		w.Sky.Dome.Delete()
-		w.Sky.quad.Delete()
-	}
+
 	for _, t := range s.assets.textures {
 		if t != nil {
 			t.Delete()
 		}
 	}
-	w.stream, w.Sky = nil, nil
+	w.stream = nil
 }

@@ -124,6 +124,14 @@ func (r *reader) group() Group {
 
 func ParseWLD(b []byte) (*WLD, error) {
 	r := &reader{b: b}
+	w, err := parseWLD(r)
+	if err == nil && w.Dungeon {
+		err = r.readDungeonSky(w)
+	}
+	return w, err
+}
+
+func parseWLD(r *reader) (*WLD, error) {
 	w := &WLD{}
 	kind := r.fixed(4)
 	w.Dungeon = kind == "DUN"

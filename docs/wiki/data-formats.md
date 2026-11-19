@@ -149,6 +149,36 @@ heights. Mesh, height queries and shadow receivers share this surface. See
 [terrain reverse engineering](terrain.md) for original addresses and validation.
 
 
+### Standalone dungeon environments
+
+DUN keeps the black background when no valid sky layers are defined. Its native
+fog RGB, start and end fields are used when they contain a valid authored range.
+The stock grey RGB 128/128/128 with range 150–200 is treated as an unset
+placeholder. Changing the fog does not change the black backdrop.
+
+The native DUN format lacks FLD's three sky filenames. GX reads an optional
+`GXSK` footer immediately after the DUN fog fields. The four ASCII tag bytes
+are followed by three NUL-padded 256-byte basenames in Sky, Cloud A, Cloud B
+order. Any name can be empty. Names resolve under `data/Sky` and prefer their
+converted PNG equivalents. Old files continue to work, and adding the footer
+does not alter native bytes.
+
+PS0107's dungeon branch at `0x451fd6` assigns `Sky_A1.bmp` to map 39 and
+`sky_B1.bmp` to map 40, with two `clouds01_A1.tga` layers in both cases.
+EP5.4's `0x452196` also checks ID 60, whose shipped and installed WLD is an
+FLD with its own sky. The GX data uses the two DUN assignments, without
+map checks in the renderer. The EP5.4 wedding DUN files 59 and 61 already
+contain fog 200–300 and need no patch.
+
+To prepare a loose data pack, build `cmd/assets` and run the following with a
+data directory and two new output paths. Install the generated files as
+`world/39.wld` and `world/40.wld` after backing up the originals.
+
+```sh
+assets -data "$SHAIYA_DATA" dungeon-sky world/39.wld 39.wld Sky_A1.bmp clouds01_A1.tga clouds01_A1.tga
+assets -data "$SHAIYA_DATA" dungeon-sky world/40.wld 40.wld sky_B1.bmp clouds01_A1.tga clouds01_A1.tga
+```
+
 ### Placed dungeon assets and monster skill metadata
 
 FLD `Dungeons` placements reference full `world/dungeon/*.dg` assets. The client

@@ -25,7 +25,7 @@ func main() {
 	dataDir := flag.String("data", os.Getenv("SHAIYA_DATA"), "loose data directory or legacy archive directory")
 	flag.Parse()
 	if *dataDir == "" || flag.NArg() == 0 {
-		log.Fatal("usage: assets -data DIR stats | ls [DIR] | cat FILE | png FILE OUT.png | find SUBSTR | eft FILE | 3de FILE | repair-creature-models OUTDIR")
+		log.Fatal("usage: assets -data DIR stats | ls [DIR] | cat FILE | png FILE OUT.png | find SUBSTR | eft FILE | 3de FILE | dungeon-sky WLD OUTPUT SKY CLOUD_A CLOUD_B | repair-creature-models OUTDIR")
 	}
 	a, err := archive.Open(*dataDir)
 	if err != nil {
@@ -141,6 +141,27 @@ func main() {
 		for i, s := range lib.Sequences {
 			fmt.Printf("sequence %d %q: %v\n", i, s.Name, s.Records)
 		}
+	case "dungeon-sky":
+		if flag.NArg() != 6 {
+			log.Fatal("usage: assets -data DIR dungeon-sky WLD OUTPUT SKY CLOUD_A CLOUD_B")
+		}
+		b, err := a.ReadFile(flag.Arg(1))
+		if err != nil {
+			log.Fatal(err)
+		}
+		patched, err := world.PatchDungeonSky(b, flag.Arg(3), flag.Arg(4), flag.Arg(5))
+		if err != nil {
+			log.Fatal(err)
+		}
+		f, err := os.OpenFile(flag.Arg(2), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = f.Write(patched)
+		closeErr := f.Close()
+		if err != nil || closeErr != nil {
+			log.Fatalf("write dungeon sky: %v %v", err, closeErr)
+		}
 	case "wld":
 		b, err := a.ReadFile(flag.Arg(1))
 		if err != nil {
@@ -150,8 +171,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("dungeon=%v mapsize=%d layers=%d layout=%q sky=%q fog=%v %.0f..%.0f effects=%q (%d)\n",
-			w.Dungeon, w.MapSize, len(w.Layers), w.Layout, w.Sky, w.FogColor, w.FogStart, w.FogEnd, w.EffectFile, len(w.Effects))
+		fmt.Printf("dungeon=%v mapsize=%d layers=%d layout=%q sky=%q clouds=%q/%q fog=%v %.0f..%.0f effects=%q (%d)\n",
+			w.Dungeon, w.MapSize, len(w.Layers), w.Layout, w.Sky, w.CloudA, w.CloudB, w.FogColor, w.FogStart, w.FogEnd, w.EffectFile, len(w.Effects))
 		for _, g := range []struct {
 			name string
 			g    world.Group

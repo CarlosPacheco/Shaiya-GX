@@ -156,9 +156,9 @@ that shaders or asset geometry are the bottleneck.
 
 ## Dungeon visibility and fog
 
-DUN worlds disable world fog. Their WLD distance is retained for the projection
-far plane, so disabling fog does not silently shorten the previous draw distance.
-Field and underwater rendering retain their existing settings.
+DUN worlds use authored WLD fog when available. The stock placeholder keeps fog
+disabled while retaining the WLD distance for the projection far plane. Field
+and underwater rendering retain their existing settings.
 
 The old eager dungeon path submitted every DG fragment and every MAni/SMOD/VAni
 placement. It now rejects off-camera bounds and uses a conservative CPU depth
