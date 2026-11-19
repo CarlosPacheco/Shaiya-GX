@@ -132,3 +132,8 @@ func ParseItems(raw []byte) (map[ItemKey]*Item, error) {
 	}
 	return out, c.err
 }
+
+// NameGrade is the byte at runtime offset 0x18 (0x460ca0 copies the u16 at
+// file offset 0x12 there). 0x45a... item rows index the 0x708d24 colour table
+// with it, e.g. Rune Gaia Sword 4, Daynorth Armor 2.
+func (i *Item) NameGrade() uint8 { return uint8(i.RequiredStats[1]) }

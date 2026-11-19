@@ -208,7 +208,8 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.auctionBoard(a.shop.npcID) {
 		x, y, width := a.auctionPanel(w, h)
-		if start(&a.auction.position, x, y, width, auctionHeight(h), 8, width-64) {
+		// The strip above the tabs is the only free part of the native frame.
+		if in.MouseY < y+0x14 && start(&a.auction.position, x, y, width, auctionHeight(h), 8, width-64) {
 			return true
 		}
 		if pointInside(in, x, y, width, auctionHeight(h)) {

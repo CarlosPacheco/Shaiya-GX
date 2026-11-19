@@ -123,9 +123,8 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 	}
 	vInventory.advanceItemDrag(in)
 	if a.auction.npc != 0 && a.auction.modal == "setup" && in.Clicked && vInventory.dragging {
-		x, y, width := a.auctionPanel(w, h)
-		dialog := auctionDialogBounds(x, y, width, auctionHeight(h), "setup")
-		if !a.auction.keypad && dialog.source().contains(in.MouseX, in.MouseY) && a.auctionSource() {
+		dialog := auctionDialogBox("setup", w, h)
+		if dialog.source().contains(in.MouseX, in.MouseY) && a.auctionSource() {
 			v.uiLeft = 0
 			return platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}
 		}

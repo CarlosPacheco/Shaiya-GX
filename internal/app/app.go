@@ -119,6 +119,9 @@ type App struct {
 	marketUI                            *ui.Market
 	auction                             auctionView
 	auctionSequence                     uint64
+	auctionUI                           auctionWidgets
+	auctionHover                        *proto.AuctionRow
+	auctionConfirm                      *ui.Message
 	pvpRewardUI                         *ui.PvPRewardPanel
 	pvpRewardMessage                    *ui.Message
 	pvpReward                           pvpRewardView
@@ -353,6 +356,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		return nil, err
 	}
 	if a.guildConfirm, err = ui.NewMessage(a); err != nil {
+		return nil, err
+	}
+	if a.auctionConfirm, err = ui.NewMessage(a); err != nil {
 		return nil, err
 	}
 	if a.guildVoteMessage, err = ui.NewMessage(a); err != nil {
@@ -665,6 +671,9 @@ func (a *App) drawFrame(w, h int) {
 	if a.screen == screenWorld && a.guildMessage != nil {
 		a.guildMessage.Draw(a.sprites, a.font, w, h)
 	}
+	if a.screen == screenWorld && a.auctionConfirm != nil {
+		a.auctionConfirm.Draw(a.sprites, a.font, w, h)
+	}
 	if a.screen == screenWorld && a.guildConfirm != nil {
 		a.guildConfirm.Draw(a.sprites, a.font, w, h)
 		if a.socialInviteUI != nil {
@@ -797,6 +806,9 @@ func (a *App) backToLogin(msg string) {
 	}
 	if a.guildConfirm != nil {
 		a.guildConfirm.Visible = false
+	}
+	if a.auctionConfirm != nil {
+		a.auctionConfirm.Visible = false
 	}
 	if a.guildVoteMessage != nil {
 		a.guildVoteMessage.Visible = false

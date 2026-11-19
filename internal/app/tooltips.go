@@ -134,7 +134,7 @@ func tooltipGlyphs(text string, color [4]float32) []tooltipGlyph {
 func (a *App) drawSharedTooltip(w, h int) { a.drawSharedTooltipAt(w, h, nil) }
 
 func (a *App) drawSharedTooltipAt(w, h int, position *[2]int) {
-	for _, dialog := range []*ui.Message{a.accountMessage, a.partyMessage, a.vehicleMessage, a.guildMessage, a.guildConfirm, a.guildDuelMessage, a.duelMessage, a.gemConfirm, a.gateConfirm, a.questConfirm, a.exchangeInvite} {
+	for _, dialog := range []*ui.Message{a.accountMessage, a.partyMessage, a.vehicleMessage, a.guildMessage, a.guildConfirm, a.auctionConfirm, a.guildDuelMessage, a.duelMessage, a.gemConfirm, a.gateConfirm, a.questConfirm, a.exchangeInvite} {
 		if dialog != nil && dialog.Visible {
 			return
 		}

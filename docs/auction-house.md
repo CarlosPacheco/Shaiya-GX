@@ -11,7 +11,7 @@ Talk to an auction board to access the realm-wide gold market. Boards of subtype
 
 The market requires a live character near the board they last interacted with. Item data and prices in the window update from the server. The app shows a confirmation before posting, bidding, buying or canceling. The world server rejects a bid, buy or cancel against a stale listing version. Reopen the listing to review its new price or status.
 
-The client reads the auction PNG atlases from `data/interface` when available. The local import uses the sixteen distinct `auction_*.tga` resources as loose PNGs, preserving the original filename stems, including `auction_completio` and `auction_buy_search_botton`. GX uses the extracted frames and control states within its existing panel layout. Missing atlases fall back to GX-rendered controls.
+The client reads the auction PNG atlases from `data/interface` when available. The local import uses the sixteen distinct `auction_*.tga` resources as loose PNGs, preserving the original filename stems, including `auction_completio` and `auction_buy_search_botton`. The window uses the original EP5.4 geometry: a 740 × 600 window centred on the screen (Game.exe `0x459e70`), the 1024 × 1024 frame drawn 1:1, the four tab, close and action buttons at their native coordinates and the 128 × 32 button cells at native size. Missing atlases fall back to a plain panel.
 
 ## Listing and settlement
 
@@ -32,6 +32,10 @@ Posting and collection change the character's wallet or inventory and the market
 GX client and server exchange bounded requests and paginated replies under opcode `0x7F1F`. Use matching client and server builds. See the [original market research](auction-house-research.md) for the legacy UI, packets and recovered rules.
 
 
-The Search Items category rail expands to show item families. Scroll over
-the rail to see additional choices and over the results to page the listing
-results. The expanded selections filter by catalog item type before paging.
+## Interface reference
+
+Layout and draw routines recovered from EP5.4 `Game.exe` (addresses in the headers): window `0x459e70`, draw `0x45a970`, input `0x45ac40`/`0x455e40`, Search `0x454590`/`0x459020`, Progress `0x453140`/`0x456ac0`, Ended `0x4536a0`/`0x457540`, Interest `0x453c00`/`0x457fd0`, bid dialog `0x45bfa0`/`0x45b730`, listing dialog `0x45c9d0`/`0x45ba20` and details `0x45cfb0`/`0x45dbf0`. Row pitch is `0x33`; Search shows seven rows, the other lists eight, with the `0x52c430` scrollbar. Item names use the grade colour table at `0x708d24`; time left uses the `0x454110` bands (`%dm` red, `%dH` red/orange/yellow, `%dD` yellow). Labels and confirmations come from SysMsg 7000–7166.
+
+Search offers the original category groups (Weapon, Armor, Accessories, Lapis, Miscellaneous). The entries map positionally onto GX's item families. Choosing a group or entry does not search; press Search or Enter, as in the original. Buy Now, Cancel Auction and Delete All ask through the native confirmation box. Double-click a row to open its details window. Level steps are the original 0–70 dropdowns.
+
+The Light/Fury checks and the Quality (grade) dropdown are drawn and kept in the window state, but the GX market does not store item grade or faction, so they do not yet filter results.

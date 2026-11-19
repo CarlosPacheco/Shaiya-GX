@@ -3,7 +3,9 @@
 package app
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 	"time"
@@ -30,7 +32,7 @@ func TestAuctionPanelsGL(t *testing.T) {
 	if err = render.Init(true); err != nil {
 		t.Fatal(err)
 	}
-	arc, err := archive.Open(os.Getenv("SHAIYA_DATA"))
+	arc, err := archive.OpenDirectory(os.Getenv("SHAIYA_DATA"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,21 +43,39 @@ func TestAuctionPanelsGL(t *testing.T) {
 	}
 	defer a.Close()
 	a.state = game.New()
-	a.auction = auctionView{npc: 1, selected: 0, focus: -1, rows: []proto.AuctionRow{{ID: 1, Name: "Healing Potion", Seller: "Merchant", Type: 25, TypeID: 1, Count: 4, Price: 550, Buyout: 1200, Ends: time.Now().Add(time.Hour).Unix(), Active: true}}}
+	a.state.Details.Money = 151_852_352
+	ends := time.Now().Add(5 * time.Hour).Unix()
+	rows := []proto.AuctionRow{
+		{ID: 1, Name: "Long Sword", Seller: "Merchant", Type: 1, TypeID: 1, Level: 1, Count: 1, Price: 55_000, Buyout: 1_200_000, Ends: ends, Active: true},
+		{ID: 2, Name: "Rune Gaia Sword", Seller: "Merchant", Type: 1, TypeID: 100, Level: 56, Count: 1, Price: 5_500_000, Buyout: 12_000_000, Ends: ends + 40*3600, Active: true, Mine: true},
+		{ID: 3, Name: "Apple", Seller: "Merchant", Type: 25, TypeID: 1, Count: 40, Price: 550, Buyout: 1200, Ends: ends - 4*3600, Active: true, HighBidder: true},
+	}
+	a.auction = auctionView{npc: 1, selected: 0, focus: -1, grade: 7, group: 1, sub: 2, rows: rows}
 	a.auction.other = auctionList{selected: 0, rows: []proto.AuctionRow{
-		{ID: 2, Name: "Gold settlement", Gold: 15380, Reason: "sold", Ends: time.Now().Add(24 * time.Hour).Unix()},
+		{ID: 4, Name: "Gold settlement", Gold: 15380, Price: 16000, Reason: "Bought", Ends: ends},
+		{ID: 5, Name: "Refund", Gold: 99000, Reason: "Bid refund", Ends: ends},
 	}}
+	out := os.Getenv("SHAIYA_CAPTURE_DIR")
 	for view := proto.AuctionBrowse; view <= proto.AuctionWatch; view++ {
 		a.auction.view = view
-		for _, modal := range []string{"", "setup", "bid", "buy", "cancel", "details"} {
+		for _, modal := range []string{"", "setup", "bid", "details"} {
 			a.auction.modal = modal
 			for _, viewport := range [][2]int{{404, 480}, {1024, 768}} {
 				width, height := viewport[0], viewport[1]
+				gl.Viewport(0, 0, int32(width), int32(height))
+				gl.ClearColor(.1, .1, .12, 1)
+				gl.Clear(gl.COLOR_BUFFER_BIT)
 				a.sprites.Begin(width, height)
 				a.drawAuction(width, height)
 				a.sprites.End()
 				if code := gl.GetError(); code != gl.NO_ERROR {
 					t.Fatalf("%dx%d view %d modal %q GL error %#x", width, height, view, modal, code)
+				}
+				if out != "" && width == 1024 {
+					_ = os.MkdirAll(out, 0o700)
+					if err := render.SavePNG(filepath.Join(out, fmt.Sprintf("auction-v%d-%s.png", view, modal)), width, height); err != nil {
+						t.Fatal(err)
+					}
 				}
 			}
 		}
