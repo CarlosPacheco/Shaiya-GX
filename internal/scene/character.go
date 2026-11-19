@@ -675,9 +675,9 @@ func (c *Character) preparePose() []render.M4 {
 	return finals
 }
 
-func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
+func (c *Character) prepareDraw(s *render.Scene3D) ([]render.M4, bool) {
 	if c == nil || c.clip == nil || c.Hidden || c.CorpseFade >= 1 || (c.Concealed && s.Shadow) {
-		return
+		return nil, false
 	}
 	finals := c.preparePose()
 	if c.cloak != nil {
@@ -687,7 +687,9 @@ func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
 		c.cloak.prepared = false
 	}
 	if lo, hi, valid := c.WorldBounds(); valid {
-		if c.cloak != nil {
+		if c.cloak != nil && c.cloak.reused {
+			unionTransformedBox(&lo, &hi, &valid, c.cloak.min, c.cloak.max, c.World)
+		} else if c.cloak != nil {
 			for _, p := range c.cloak.physics.positions {
 				for axis := 0; axis < 3; axis++ {
 					lo[axis] = min(lo[axis], p[axis])
@@ -696,8 +698,16 @@ func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
 			}
 		}
 		if s.OccludedBox(lo, hi) {
-			return
+			return nil, false
 		}
+	}
+	return finals, true
+}
+
+func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
+	finals, visible := c.prepareDraw(s)
+	if !visible {
+		return
 	}
 	ambient := float32(.8) // Phoenix account_ep5_render
 	if s.CharacterAmbient > 0 {

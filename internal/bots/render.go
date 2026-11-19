@@ -77,10 +77,8 @@ func (a *Arena) Draw(s *render.Scene3D, skinner *render.Skinner, effects bool) {
 			}
 		}
 	}
-	scene.PrepareCharacterCloth(a.visibleCloth)
-	for _, avatar := range a.visible {
-		avatar.Draw(skinner, s)
-	}
+	scene.PrepareCrowdCloth(a.visibleCloth, s)
+	a.characterBatch.Draw(skinner, s, a.visible)
 	if !effects {
 		return
 	}
@@ -96,6 +94,9 @@ func (a *Arena) Draw(s *render.Scene3D, skinner *render.Skinner, effects bool) {
 		}
 	}
 }
+
+// DrawStats returns the counts from the most recent camera pass.
+func (a *Arena) DrawStats() scene.CrowdDrawStats { return a.characterBatch.Stats }
 
 func effectVisible(s *render.Scene3D, frustum render.Frustum, point render.V3) bool {
 	// Keep a generous radius for effects that rise or extend around targets.

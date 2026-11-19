@@ -54,3 +54,41 @@ func TestCharacterClothBatchMatchesSerial(t *testing.T) {
 		}
 	}
 }
+
+func TestCrowdClothQualityUsesProjectedSize(t *testing.T) {
+	rest := []render.V3{{0, 1, 0}, {1, 1, 0}, {0, 0, 0}, {1, 0, 0}}
+	vertices := make([]render.Vertex, len(rest))
+	c := &Character{clip: poseTestClip(1), World: render.Identity(), cloak: &cloakInstance{
+		geometry: &cloakGeometry{vertices: vertices},
+		vertices: slices.Clone(vertices),
+		physics:  newClothPhysics(rest, 2, 2, 0),
+	}}
+	c.World[14] = 60
+	s := &render.Scene3D{View: render.Identity(), Proj: render.PerspectiveFovLH(.8, 1, .1, 120), ViewportH: 720}
+	c.prepareCrowdCloak(s)
+	c.cloak.lodInterval, c.cloak.lodAt = 1.0/20, 1.0/20
+	c.Update(1.0 / 60)
+	c.prepareCrowdCloak(s)
+	if !c.cloak.reused || c.cloak.elapsed == 0 {
+		t.Fatal("small cape did not reuse the last mesh")
+	}
+	c.Update(1.0 / 20)
+	c.prepareCrowdCloak(s)
+	if c.cloak.reused || c.cloak.elapsed != 0 {
+		t.Fatal("small cape missed its scheduled update")
+	}
+	c.Update(1.0 / 60)
+	s.ClipPlane = [4]float32{0, 1, 0, 0}
+	c.prepareCrowdCloak(s)
+	if c.cloak.reused || c.cloak.elapsed != 0 {
+		t.Fatal("clipped pass did not use ordinary cloth updates")
+	}
+	s.ClipPlane = [4]float32{}
+	c.World[14] = 5
+	c.prepareCrowdCloak(s)
+	c.Update(1.0 / 60)
+	c.prepareCrowdCloak(s)
+	if c.cloak.reused || c.cloak.elapsed != 0 {
+		t.Fatal("large projected cape did not update every frame")
+	}
+}

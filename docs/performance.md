@@ -490,3 +490,38 @@ Phoenix groups bot instances by preset and shared pose and batches the
 mesh draws. GX retains each actor's animation clock and cloth state.
 The remaining draw count makes instancing with independent palette offsets
 a separate candidate. See [Phoenix's bot renderer](https://github.com/Spelunkern/Phoenix-Engine/blob/f1ba55122de7def1e3c49f69eaaccf6922f89a1a/src/character/bot_manager.h#L849-L893).
+
+## Instanced PvP characters and projected cloth detail
+
+In large crowds with skill effects disabled, GX groups compatible skinned
+parts and rigid equipment. The skin shader reads a separate bone palette,
+camera transform, and corpse fade value for each instance. Mesh, texture,
+cutout and lighting state remain part of the group key. Concealed characters,
+blended attachments, and shadow captures use the serial path. Mount draws
+keep their order. The body-only clip envelope also rejects off-camera
+cloaked characters when it can enclose their original skinned bounds.
+
+Small projected capes use staggered refresh times and a shorter simulation
+budget. Large capes keep their full solver. The sampled cape mesh follows the
+actor between updates, and clipped captures use the full cloth path.
+
+A seeded, interleaved 300-bot comparison with skill effects off and a shared
+desktop GPU used 240 frames in each of three runs per version at 1280×720.
+The following values are medians of the corresponding per-run statistics.
+
+| Version | Submission p50 | Submission p99 | Whole loop | Full-frame draws |
+|---|---:|---:|---:|---:|
+| Previous parallel cloth | 19.854 ms | 22.437 ms | 20.005 ms | 3,293 |
+| Instancing, body rejection and cloth detail | 14.343 ms | 16.553 ms | 14.463 ms | 1,278 |
+
+The final main-camera bot pass had 300 skinned batches, 33 rigid equipment
+batches and 288 cape draws. The full-frame counts also include the map,
+overlays and secondary passes. A wider 600-bot view measured 24.308 ms per
+frame for the whole loop and 1,703 full-frame draws in one run. These
+measurements do not establish presented FPS.
+
+A controlled OpenGL fixture with 24 independent animation phases, a
+fading corpse and original equipment produced identical pixels in two
+camera passes while reducing draws from 216 to 32. Tests also cover nearby
+full cloth, reduced distant cadence, fallback in clipped passes, and
+rejection before preparing poses for cloaked actors.

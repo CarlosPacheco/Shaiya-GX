@@ -1,0 +1,107 @@
+//go:build integration
+
+package scene
+
+import (
+	"bytes"
+	"os"
+	"runtime"
+	"testing"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/go-gl/gl/v4.5-core/gl"
+)
+
+func TestCharacterBatchIndependentPalettesGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires original assets and GL")
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	const size = 400
+	win, err := platform.Open(platform.Config{Title: "Crowd batches", Width: size, Height: size, Hidden: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer win.Close()
+	if err := render.Init(true); err != nil {
+		t.Fatal(err)
+	}
+	arc, err := archive.Open(os.Getenv("SHAIYA_DATA"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer arc.Close()
+	assets := NewAssets(arc)
+	defer assets.CloseCharacterResources()
+	s, err := render.NewScene3D()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Delete()
+	k, err := render.NewSkinner()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer k.Delete()
+	s.Proj = render.PerspectiveFovLH(.8, 1, .1, 120)
+	s.LightDir, s.HideWeaponEffects = render.V3{-1, -1, -1}, true
+	actors := make([]*Character, MinCrowdActors)
+	for i := range actors {
+		look := Appearance{Race: 0, Job: 0, Helmet: -1, WeaponType: 1, CloakType: 24}
+		actor, err := BuildCharacter(assets, look, "002_run")
+		if err != nil || !actor.HasCloak() || len(actor.attachments) == 0 {
+			t.Fatalf("incomplete actor fixture: %v", err)
+		}
+		actor.World = render.Basis(render.V3{float32(i%6)*2.6 - 6.5, 0, float32(i/6) * 3}, render.V3{0, 0, -1}, render.V3{0, 1, 0})
+		actor.Time = float32(i) * .027
+		actors[i] = actor
+	}
+	actors[3].CorpseFade = .42
+	var batch CharacterBatch
+	capture := func(instanced bool) ([]byte, int) {
+		gl.Viewport(0, 0, size, size)
+		gl.DepthMask(true)
+		gl.ClearDepth(1)
+		gl.ClearColor(.12, .15, .17, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		s.Begin()
+		render.ResetDrawCalls()
+		if instanced {
+			batch.Draw(k, s, actors)
+		} else {
+			for _, c := range actors {
+				c.Draw(k, s)
+			}
+		}
+		pixels := make([]byte, size*size*4)
+		gl.ReadPixels(0, 0, size, size, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+		return pixels, render.DrawCalls()
+	}
+	for _, eye := range []render.V3{{0, 14, -19}, {1, -14, -19}} {
+		s.SetCameraView(eye, render.V3{0, 0, 4}, render.V3{0, 1, 0})
+		if eye[1] < 0 {
+			s.ClipPlane = [4]float32{0, 1, 0, -.18}
+		}
+		before, n := capture(false)
+		after, m := capture(true)
+		if !bytes.Equal(before, after) {
+			different := 0
+			for i := range before {
+				if before[i] != after[i] {
+					different++
+				}
+			}
+			t.Fatalf("instancing changed %d color bytes for eye %v", different, eye)
+		}
+		if m >= n/2 {
+			t.Fatalf("expected substantial draw reduction, got %d -> %d", n, m)
+		}
+		t.Logf("independent palettes and equipment, eye %v, %d -> %d draws", eye, n, m)
+	}
+	if err := gl.GetError(); err != gl.NO_ERROR {
+		t.Fatalf("OpenGL error %#x", err)
+	}
+}

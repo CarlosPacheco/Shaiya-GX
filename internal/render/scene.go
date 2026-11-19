@@ -76,11 +76,12 @@ in float vDepth;
 in vec4 vEffectColor;
 out vec4 frag;
 void main() {
- if (corpseFade > 0.0) {
+ float fade = mode == 10 ? max(corpseFade, vEffectColor.r) : corpseFade;
+ if (fade > 0.0) {
   const int bayer[16]=int[16](0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5);
   ivec2 pixel=ivec2(gl_FragCoord.xy)&3;
   float threshold=(float(bayer[pixel.y*4+pixel.x])+0.5)/16.0;
-  if (1.0-corpseFade <= threshold) discard;
+  if (1.0-fade <= threshold) discard;
  }
 	vec4 c;
 	if (mode == 7) {

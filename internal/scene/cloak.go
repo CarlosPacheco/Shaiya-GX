@@ -24,8 +24,12 @@ type cloakInstance struct {
 	vertices    []render.Vertex
 	initialized bool
 	prepared    bool
+	reused      bool
+	min, max    render.V3
 	world       render.M4
 	elapsed     float32
+	lodInterval float64
+	lodAt       float64
 }
 
 // HasCloak reports successfully loaded native cloth, including Model zero.
@@ -152,6 +156,11 @@ func (c *Character) attachCloak(a Appearance) {
 	c.cloak = &cloakInstance{geometry: g, physics: p, vertices: append([]render.Vertex(nil), g.vertices...)}
 }
 func (c *cloakInstance) update(world render.M4, finals []render.M4) {
+	c.updateWithBudget(world, finals, 50)
+}
+
+func (c *cloakInstance) updateWithBudget(world render.M4, finals []render.M4, budget int) {
+	c.reused = false
 	p := c.physics
 	if !c.initialized || (render.V3{world[12] - c.world[12], world[13] - c.world[13], world[14] - c.world[14]}).Len() > 20 {
 		for i, v := range p.rest {
@@ -168,7 +177,7 @@ func (c *cloakInstance) update(world render.M4, finals []render.M4) {
 		}
 	}
 	// 0x584ba0: ceil(frameSeconds*200) steps of 0.0005 seconds.
-	steps := min(50, int(math.Ceil(float64(c.elapsed)*200)))
+	steps := min(budget, int(math.Ceil(float64(c.elapsed)*200)))
 	c.elapsed = 0
 	if c.geometry.record.Mode == 1 {
 		steps *= 3
@@ -180,6 +189,12 @@ func (c *cloakInstance) update(world render.M4, finals []render.M4) {
 	for i, v := range p.positions {
 		c.vertices[i].Pos = transformPoint(v, inverse)
 		c.vertices[i].Normal = render.V3{}
+		if i == 0 {
+			c.min, c.max = c.vertices[i].Pos, c.vertices[i].Pos
+		}
+		for axis, value := range c.vertices[i].Pos {
+			c.min[axis], c.max[axis] = min(c.min[axis], value), max(c.max[axis], value)
+		}
 	}
 	for i := 0; i < len(c.geometry.indices); i += 3 {
 		a, b, d := c.geometry.indices[i], c.geometry.indices[i+1], c.geometry.indices[i+2]
@@ -197,6 +212,10 @@ func (c *cloakInstance) update(world render.M4, finals []render.M4) {
 }
 func (c *cloakInstance) draw(s *render.Scene3D, world render.M4, concealed bool) {
 	s.Begin()
+	c.drawInPass(s, world, concealed)
+}
+
+func (c *cloakInstance) drawInPass(s *render.Scene3D, world render.M4, concealed bool) {
 	c.geometry.mesh.UpdateVertices(c.vertices)
 	if concealed {
 		s.DrawCloth(c.geometry.mesh, c.geometry.texture, world, .5, render.StealthOpacity)

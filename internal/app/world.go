@@ -55,6 +55,8 @@ type worldView struct {
 	actors                      map[uint32]*remoteActor
 	visiblePlayers              []remotePlayerDraw
 	visiblePlayerCloth          []*scene.Character
+	crowdCharacters             []*scene.Character
+	crowdBatch                  scene.CharacterBatch
 	mobs                        map[uint32]*mobActor
 	transforms                  map[uint32]*transformActor
 	world                       *scene.World

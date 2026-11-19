@@ -120,19 +120,27 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		t.Fatalf("unknown measurement variant %q", variant)
 	}
 	base := sceneName
+	botCount := 0
 	switch sceneName {
-	case "crowd-200", "crowd-400", "crowd-network", "crowd-effects", "water-visible", "dungeon", "bots-300":
+	case "crowd-200", "crowd-400", "crowd-network", "crowd-effects", "water-visible", "dungeon", "bots-300", "bots-600":
 		base = "world-stream"
+	}
+	switch sceneName {
+	case "bots-300":
+		botCount = 300
+	case "bots-600":
+		botCount = 600
 	}
 	if err = a.Preview(base); err != nil {
 		t.Fatal(err)
 	}
-	if sceneName == "bots-300" {
+	botCameraScale := float32(math.Sqrt(float64(botCount) / 300))
+	if botCount != 0 {
 		a.gameMenu.Settings.SkillEffects = false
 		a.state.Self.IsGM = true
 		v := a.wv
-		v.bots = bots.New(arc, v.world, v.pos, render.V3{0, 0, 1}, 300, 300)
-		v.eye = v.pos.Add(render.V3{0, 16, -22})
+		v.bots = bots.New(arc, v.world, v.pos, render.V3{0, 0, 1}, botCount, 300)
+		v.eye = v.pos.Add(render.V3{0, 16, -22}.Scale(botCameraScale))
 	}
 	if sceneName == "dungeon" {
 		a.releaseWorld()
@@ -212,8 +220,8 @@ func TestClientPerformanceBaseline(t *testing.T) {
 	if len(ids) > 0 {
 		target = a.wv.pos.Add(render.V3{0, 2, 12})
 	}
-	if sceneName == "bots-300" {
-		target = a.wv.pos.Add(render.V3{0, 2, 26})
+	if botCount != 0 {
+		target = a.wv.pos.Add(render.V3{0, 2, 26}.Scale(botCameraScale))
 	}
 	camera := func() { a.wv.eye = eye; a.wv.cameraReady = true; a.wv.cameraEye = eye; a.wv.cameraTarget = target }
 	effectTick := 0
@@ -265,10 +273,10 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		t.Fatal("water fixture did not execute visible reflection")
 	}
 	loaded := 0
-	if sceneName == "bots-300" {
+	if botCount != 0 {
 		loaded = a.wv.bots.Count()
-		if loaded != 300 {
-			t.Fatalf("loaded %d/300 PvP bots", loaded)
+		if loaded != botCount {
+			t.Fatalf("loaded %d/%d PvP bots", loaded, botCount)
 		}
 	}
 	for _, v := range a.wv.actors {
@@ -511,6 +519,9 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		"allocs_per_frame": float64(memAfter.Mallocs-memBefore.Mallocs) / float64(frames), "allocated_bytes_per_frame": float64(memAfter.TotalAlloc-memBefore.TotalAlloc) / float64(frames),
 		"gc_cycles": memAfter.NumGC - memBefore.NumGC, "rss_end_bytes": rss, "gpu_owned_bytes": render.GPUBytes(), "missing_asset_keys": len(a.assets.Missing),
 		"samples_ms": map[string][]float64{"update": update, "draw": draw, "pump": pump, "gpu_wait": wait, "wall": wall, "gpu": gpu},
+	}
+	if botCount != 0 {
+		result["final_main_camera_bot_draws"] = a.wv.bots.DrawStats()
 	}
 	data, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {

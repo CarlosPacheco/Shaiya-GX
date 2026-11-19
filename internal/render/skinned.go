@@ -30,6 +30,13 @@ layout(location=2) in vec2 uv;
 layout(location=3) in vec3 skin; // weight, bone0, bone1
 layout(std140, binding=0) uniform BonePalette { mat4 bones[256]; };
 uniform int boneCount;
+struct CrowdInstance { mat4 model; mat4 modelView; mat4 modelViewProj; ivec4 palette; };
+layout(std430, binding=4) readonly buffer CrowdInstances { CrowdInstance instances[]; };
+layout(std430, binding=5) readonly buffer CrowdPalettes { mat4 crowdBones[]; };
+uniform int crowdBase;
+mat4 skinBone(int i, int base) {
+	return crowdBase == 0 ? bones[i] : crowdBones[base+i];
+}
 uniform mat4 world;
 uniform mat4 worldViewProj;
 uniform mat4 worldView;
@@ -43,28 +50,41 @@ out float vDiffuse;
 out float vDepth;
 out vec4 vEffectColor;
 void main() {
-	vEffectColor = vec4(1.0, 1.0, 1.0, actorOpacity);
 	vec4 p = vec4(pos, 1.0);
 	vec3 n = nrm;
-	if (boneCount > 0) {
+	int count = boneCount;
+	int base = 0;
+	float instanceFade = 0.0;
+	mat4 model = world, mv = worldView, mvp = worldViewProj;
+	if (crowdBase != 0) {
+		CrowdInstance instance = instances[crowdBase-1+gl_InstanceID];
+		count = instance.palette.y;
+		base = instance.palette.x;
+		instanceFade = intBitsToFloat(instance.palette.z);
+		model = instance.model;
+		mv = instance.modelView;
+		mvp = instance.modelViewProj;
+	}
+	vEffectColor = vec4(instanceFade, 1.0, 1.0, actorOpacity);
+	if (count > 0) {
 		p = vec4(0.0); n = vec3(0.0);
 		if (skin.x > 0.0) {
-			mat4 b = bones[clamp(int(skin.y), 0, boneCount-1)];
+			mat4 b = skinBone(clamp(int(skin.y), 0, count-1), base);
 			p += skin.x * (b * vec4(pos, 1.0));
 			n += skin.x * (b * vec4(nrm, 0.0)).xyz;
 		}
 		if (skin.x < 1.0) {
-			mat4 b = bones[clamp(int(skin.z), 0, boneCount-1)];
+			mat4 b = skinBone(clamp(int(skin.z), 0, count-1), base);
 			p += (1.0-skin.x) * (b * vec4(pos, 1.0));
 			n += (1.0-skin.x) * (b * vec4(nrm, 0.0)).xyz;
 		}
 	}
 	vec4 local = vec4(p.xyz, 1.0);
-	gl_Position = worldViewProj * local;
-	gl_ClipDistance[0] = dot(world * local, clipPlane);
-	vDepth = (worldView * local).z;
+	gl_Position = mvp * local;
+	gl_ClipDistance[0] = dot(model * local, clipPlane);
+	vDepth = (mv * local).z;
 	vUV = uv; vUV2 = vec2(0.0);
-	n = normalize((world * vec4(n, 0.0)).xyz);
+	n = normalize((model * vec4(n, 0.0)).xyz);
 	vDiffuse = clamp(ambient + max(0.0, dot(n, -normalize(lightDir))), 0.0, 1.0);
 }`
 
@@ -128,6 +148,9 @@ type Skinner struct {
 	uOpacity                                           int32
 	uCorpseFade                                        int32
 	opacity                                            float32
+	uCrowdBase                                         int32
+	crowdBuffers                                       [2]uint32
+	crowdBytes                                         [2]uint64
 }
 
 func NewSkinner() (*Skinner, error) {
@@ -140,7 +163,7 @@ func NewSkinner() (*Skinner, error) {
 	gl.CreateBuffers(1, &palette)
 	gl.NamedBufferStorage(palette, MaxBones*64, nil, gl.DYNAMIC_STORAGE_BIT)
 	addGPUBytes(MaxBones * 64)
-	return &Skinner{prog: p, palette: palette, uBoneCount: u("boneCount"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"),
+	return &Skinner{prog: p, uCrowdBase: u("crowdBase"), palette: palette, uBoneCount: u("boneCount"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"),
 		uLight: u("lightDir"), uAmb: u("ambient"), uMode: u("mode"), uRef: u("alphaRef"),
 		uDetailBias: u("detailBias"), uFogColor: u("fogColor"), uFogRange: u("fogRange"), uClipPlane: u("clipPlane"), uOpacity: u("actorOpacity"), uCorpseFade: u("corpseFade")}, nil
 }
@@ -207,6 +230,12 @@ func (k *Skinner) Delete() {
 	}
 	gl.DeleteBuffers(1, &k.palette)
 	gl.DeleteProgram(k.prog)
+	for i, buffer := range k.crowdBuffers {
+		if buffer != 0 {
+			gl.DeleteBuffers(1, &k.crowdBuffers[i])
+			removeGPUBytes(k.crowdBytes[i])
+		}
+	}
 	removeGPUBytes(MaxBones * 64)
 	k.palette, k.prog = 0, 0
 }

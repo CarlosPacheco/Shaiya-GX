@@ -129,7 +129,7 @@ func boxRadius(lo, hi render.V3, m render.M4) float64 {
 }
 
 func (c *Character) envelopeRadius() (float64, bool) {
-	if c == nil || c.clip == nil || c.clip.ani == nil || c.cloak != nil || len(c.clip.reach) != len(c.clip.ani.Bones) || len(c.clip.reach) == 0 {
+	if c == nil || c.clip == nil || c.clip.ani == nil || len(c.clip.reach) != len(c.clip.ani.Bones) || len(c.clip.reach) == 0 {
 		return 0, false
 	}
 	e := &c.envelope
@@ -190,10 +190,12 @@ func (c *Character) envelopeRadius() (float64, bool) {
 	return e.radius, e.valid
 }
 
-// coarseWorldBounds needs no current pose. Transforming a sphere by a general
+// coarseBodyBounds encloses the same geometry as WorldBounds, including a
+// cloak's skinned shoulders. The separate cloth mesh enters occlusion at draw.
+// Transforming a sphere by a general
 // affine world matrix gives per-axis extents r*length(column), including scale,
 // reflection and shear. An uncertain bound always uses the exact existing path.
-func (c *Character) coarseWorldBounds() (render.V3, render.V3, bool) {
+func (c *Character) coarseBodyBounds() (render.V3, render.V3, bool) {
 	// The incoming clip's bounds do not cover the outgoing blend pose.
 	if c == nil || c.blendLeft > 0 {
 		return render.V3{}, render.V3{}, false

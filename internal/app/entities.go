@@ -283,16 +283,23 @@ func (a *App) drawRemotePlayers() {
 			v.visiblePlayers = append(v.visiblePlayers, draw)
 		}
 	}
-	scene.PrepareCharacterCloth(v.visiblePlayerCloth)
+	scene.PrepareCrowdCloth(v.visiblePlayerCloth, a.scene3d)
+	flush := func() {
+		v.crowdBatch.Draw(a.skinner, a.scene3d, v.crowdCharacters)
+		clear(v.crowdCharacters)
+		v.crowdCharacters = v.crowdCharacters[:0]
+	}
 	for _, draw := range v.visiblePlayers {
 		if draw.mount != nil {
+			flush()
 			draw.mount.Draw(a.skinner, a.scene3d)
 			draw.mount.DrawEffects(a.scene3d)
 		}
 		if draw.character != nil {
-			draw.character.Draw(a.skinner, a.scene3d)
+			v.crowdCharacters = append(v.crowdCharacters, draw.character)
 		}
 	}
+	flush()
 	clear(v.visiblePlayers)
 	clear(v.visiblePlayerCloth)
 }

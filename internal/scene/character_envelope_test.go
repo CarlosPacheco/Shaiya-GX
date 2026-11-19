@@ -27,7 +27,7 @@ func envelopeFixture() *Character {
 
 func assertEnvelopeContainsExact(t *testing.T, c *Character) {
 	t.Helper()
-	lo, hi, ok := c.coarseWorldBounds()
+	lo, hi, ok := c.coarseBodyBounds()
 	if !ok {
 		t.Fatal("fixture envelope invalid")
 	}
@@ -64,6 +64,7 @@ func TestCharacterEnvelopeContainsAnimatedBounds(t *testing.T) {
 func TestCharacterEnvelopeSkipsPoseButPreservesOtherCameras(t *testing.T) {
 	c := envelopeFixture()
 	c.World[12] = 1000
+	c.cloak = &cloakInstance{}
 	f := render.ViewFrustum(render.Identity(), render.PerspectiveFovLH(math.Pi/4, 1, .1, 100))
 	if c.Visible(f, [4]float32{}) || c.poseReady || c.lastFinals != nil {
 		t.Fatal("offscreen rejection sampled pose")
@@ -94,29 +95,27 @@ func TestCharacterEnvelopeInvalidationAndFallback(t *testing.T) {
 	c.boundReady = false
 	assertEnvelopeContainsExact(t, c)
 	c.cloak = &cloakInstance{}
-	if _, _, ok := c.coarseWorldBounds(); ok {
-		t.Fatal("cloth used a rigid envelope")
-	}
+	assertEnvelopeContainsExact(t, c)
 	c.cloak = nil
 	c.World[3] = 1
-	if _, _, ok := c.coarseWorldBounds(); ok {
+	if _, _, ok := c.coarseBodyBounds(); ok {
 		t.Fatal("projective world accepted")
 	}
 	c.World = render.Identity()
 	c.parts[0].bounded = false
 	c.envelope.ready = false
-	if _, _, ok := c.coarseWorldBounds(); ok {
+	if _, _, ok := c.coarseBodyBounds(); ok {
 		t.Fatal("unknown geometry accepted")
 	}
 	c = envelopeFixture()
 	c.attachments[0].part.bounded = false
 	c.envelope.ready = false
-	if _, _, ok := c.coarseWorldBounds(); ok {
+	if _, _, ok := c.coarseBodyBounds(); ok {
 		t.Fatal("unknown equipment accepted")
 	}
 	c = envelopeFixture()
 	c.World[12] = float32(math.NaN())
-	if _, _, ok := c.coarseWorldBounds(); ok {
+	if _, _, ok := c.coarseBodyBounds(); ok {
 		t.Fatal("nonfinite world accepted")
 	}
 }
@@ -162,12 +161,12 @@ func TestPreculledNameAnchorSamplesCurrentCrown(t *testing.T) {
 func TestCharacterEnvelopeRejectsOverflowRisk(t *testing.T) {
 	c := envelopeFixture()
 	c.parts[0].bones[0][0] = 1e30
-	if _, _, ok := c.coarseWorldBounds(); ok {
+	if _, _, ok := c.coarseBodyBounds(); ok {
 		t.Fatal("extreme inverse bind accepted")
 	}
 	c = envelopeFixture()
 	c.World[0] = 1e30
-	if _, _, ok := c.coarseWorldBounds(); ok {
+	if _, _, ok := c.coarseBodyBounds(); ok {
 		t.Fatal("extreme world accepted")
 	}
 }

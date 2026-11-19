@@ -30,6 +30,7 @@ type Arena struct {
 	actors                 []fighter
 	visible                []*scene.Character
 	visibleCloth           []*scene.Character
+	characterBatch         scene.CharacterBatch
 	count                  int
 	outfits                [2][]loadout
 	effects                []visualEffect
