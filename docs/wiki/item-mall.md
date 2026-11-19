@@ -1,6 +1,7 @@
 # Item Mall catalog
 
-The client reads `data/Cash.SData`; the world server reads
+The client reads `data/Item/Cash.SData`. Older loose packs can still
+use `data/Cash.SData`. The world server reads
 `PS_GameDefs_ProductList` from its configured database at startup. SQL determines
 prices and the items actually purchased or gifted. Keep product codes, prices
 and all 24 bundle slots aligned when editing the two catalogs. Restart the client
@@ -32,8 +33,8 @@ native Cash.SData table and matching SQL ProductList, caps catalog entries at
 255, exports stack definitions, and splits existing carried stacks above 255
 without losing items. It aborts when there is insufficient room or unsupported
 oversized storage. Keep backups before running it. It never replaces a personal
-database with the distributed seed. The normal asset importer copies Cash.SData
-without converting it to CSV.
+database with the distributed seed. The normal asset importer copies the binary catalog to
+`Item/Cash.SData`.
 
 Lapis and lapisias all have a 255 definition stack limit. Every occupied mall
 bundle slot containing either family delivers 255. The catalog also contains

@@ -20,7 +20,6 @@ import (
 )
 
 const ProductTable = "PS_GameDefs_ProductList"
-const CashFilename = "Cash.SData"
 
 // SQLProduct holds the fields shared by the client and the server.
 type SQLProduct struct {
@@ -104,7 +103,10 @@ func readSData(path string) ([]byte, error) {
 }
 
 func Open(ctx context.Context, dataDir, database string) (*Project, error) {
-	cashPath, err := FindFile(dataDir, CashFilename)
+	cashPath, err := FindFile(dataDir, cash.SDataPath)
+	if errors.Is(err, os.ErrNotExist) {
+		cashPath, err = FindFile(dataDir, cash.LegacySDataPath)
+	}
 	if err != nil {
 		return nil, err
 	}

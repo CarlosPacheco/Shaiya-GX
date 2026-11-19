@@ -20,7 +20,7 @@ func TestMallCatalogUsesNativeData(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer arc.Close()
-	raw, err := arc.ReadFile("Cash.SData")
+	raw, err := cash.ReadSData(arc)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func TestMallCatalogUsesNativeData(t *testing.T) {
 	a := inputApp()
 	a.arc = arc
 	if !a.mallCommand("/mall catalog 1") || len(a.mallCatalog) != len(products) || len(a.state.Chat) != 1+min(5, visible) {
-		t.Fatal("first CSV catalog page missing")
+		t.Fatal("first native catalog page missing")
 	}
 	if a.mallCatalog[0].Code != products[0].Code {
 		t.Fatal("product identity changed")
@@ -64,7 +64,13 @@ func TestMallLoadsNativeBinaryAndIgnoresCSV(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = os.WriteFile(filepath.Join(dir, "Cash.SData"), raw, 0600); err != nil {
+	if err = os.Mkdir(filepath.Join(dir, "Item"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(dir, cash.SDataPath), raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(dir, cash.LegacySDataPath), []byte("invalid legacy catalog"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	os.WriteFile(filepath.Join(dir, "cash.csv"), []byte("invalid ignored CSV"), 0600)

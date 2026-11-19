@@ -53,7 +53,7 @@ func fixture(t *testing.T) testInstall {
 		Code: "TEST", Name: "Name", Cost: 5, Items: [cash.Slots]cash.Item{{ItemID: 1001, Count: 1}},
 	}})
 	must(t, err)
-	cashPath := filepath.Join(data, CashFilename)
+	cashPath := filepath.Join(data, cash.SDataPath)
 	writeFixture(t, cashPath, raw)
 	return testInstall{root, data, dbPath, cashPath}
 }
@@ -62,6 +62,23 @@ func writeFixture(t *testing.T, path string, bytes []byte) {
 	t.Helper()
 	must(t, os.MkdirAll(filepath.Dir(path), 0700))
 	must(t, os.WriteFile(path, bytes, 0600))
+}
+
+func TestOpenPrefersItemCashCatalogAndAcceptsLegacy(t *testing.T) {
+	f := fixture(t)
+	legacy := filepath.Join(f.data, cash.LegacySDataPath)
+	writeFixture(t, legacy, []byte("invalid legacy catalog"))
+	project, err := Open(t.Context(), f.data, f.db)
+	must(t, err)
+	if project.CashPath != f.cash {
+		t.Fatalf("loaded %q instead of %q", project.CashPath, f.cash)
+	}
+	must(t, os.Rename(f.cash, legacy))
+	project, err = Open(t.Context(), f.data, f.db)
+	must(t, err)
+	if project.CashPath != legacy {
+		t.Fatalf("loaded %q instead of %q", project.CashPath, legacy)
+	}
 }
 
 func must(t *testing.T, err error) {
@@ -149,8 +166,8 @@ func TestRecoverInterruptBetweenFileAndCommit(t *testing.T) {
 			must(t, err)
 
 			backup := filepath.Join(f.root, "backups", "interrupted")
-			writeFixture(t, filepath.Join(backup, CashFilename), p.cashRaw)
-			writeFixture(t, filepath.Join(backup, "next-"+CashFilename), encoded)
+			writeFixture(t, filepath.Join(backup, Cash.filename()), p.cashRaw)
+			writeFixture(t, filepath.Join(backup, "next-"+Cash.filename()), encoded)
 			if tc.fileCost == 42 {
 				writeFixture(t, f.cash, encoded)
 			}

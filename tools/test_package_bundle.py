@@ -37,7 +37,8 @@ class CashCatalogBundleTests(unittest.TestCase):
             client, server = root / 'client', root / 'server'
             client.mkdir(); server.mkdir()
             with self.assertRaises(ValueError): verify_cash_copies(client, server)
-            (client / 'Cash.SData').write_bytes(b'native table')
+            (client / 'Item').mkdir()
+            (client / 'Item/Cash.SData').write_bytes(b'native table')
             with self.assertRaises(ValueError): verify_cash_copies(client, server)
             (server / 'rapture.sqlite').write_bytes(b'database')
             verify_cash_copies(client, server)

@@ -18,6 +18,7 @@ import shutil
 import sqlite3
 import struct
 
+from cash_path import existing_cash_path
 from update_recreation_content import Native, read_cash, string
 
 
@@ -156,7 +157,7 @@ def main():
     parser.add_argument('--backup-dir', type=Path, required=True)
     args = parser.parse_args()
     args.backup_dir.mkdir(parents=True, exist_ok=False)
-    item_path, cash_path = args.client_data/'Item/Item.SData', args.client_data/'Cash.SData'
+    item_path, cash_path = args.client_data/'Item/Item.SData', existing_cash_path(args.client_data)
     item_raw, cash_raw = item_path.read_bytes(), cash_path.read_bytes()
     original_counts = []
     for path in args.database:

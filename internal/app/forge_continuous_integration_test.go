@@ -4,6 +4,7 @@ package app
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
@@ -191,7 +192,7 @@ func TestForgeContinuousAgainstServer(t *testing.T) {
 		}
 	}
 	// Buy independent gem variants and a new rune through the actual mall packet.
-	rawCash, err := arc.ReadFile("Cash.SData")
+	rawCash, err := cash.ReadSData(arc)
 	if err != nil {
 		t.Fatal(err)
 	}

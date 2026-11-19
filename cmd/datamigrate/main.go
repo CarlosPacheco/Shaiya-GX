@@ -27,6 +27,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/audio"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -212,7 +213,13 @@ func main() {
 		}
 		ext := strings.ToLower(path.Ext(file))
 		target := portablePath(file)
-		if ext == ".wav" {
+		if strings.EqualFold(file, cash.LegacySDataPath) || strings.EqualFold(file, cash.SDataPath) {
+			if current, exists := a.Lookup(cash.SDataPath); exists && current != f {
+				shadowed++
+				return
+			}
+			target = cash.SDataPath
+		} else if ext == ".wav" {
 			target = portablePath(strings.TrimSuffix(file, path.Ext(file)) + ".ogg")
 		} else if strings.HasPrefix(strings.ToLower(file), "interface/") {
 			stem := strings.TrimSuffix(file, path.Ext(file))
@@ -239,7 +246,7 @@ func main() {
 			add(record{Source: file}, e)
 			return
 		}
-		r := record{Source: file, Output: portablePath(file), OldBytes: f.Length, Kind: "copy"}
+		r := record{Source: file, Output: target, OldBytes: f.Length, Kind: "copy"}
 		result := raw
 		if strings.HasPrefix(strings.ToLower(file), "interface/") {
 			r.Kind = "png"

@@ -5,6 +5,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -26,7 +27,7 @@ func (a *App) loadMallCatalog() error {
 	if a.mallCatalog != nil {
 		return nil
 	}
-	b, err := a.arc.ReadFile("Cash.SData")
+	b, err := cash.ReadSData(a.arc)
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,7 @@ the exact SData field and SQLite column under each readable field name.
 
 | Catalog | Client source | SQLite source |
 | --- | --- | --- |
-| Item Mall | `Cash.SData` | `PS_GameDefs_ProductList` |
+| Item Mall | `Item/Cash.SData` | `PS_GameDefs_ProductList` |
 | Items | `Item/Item.SData` | `PS_GameDefs_Items` |
 | Player skills | `Character/Skill.SData` | `PS_GameDefs_Skills`, matching level |
 | NPC skills | `Monster/NpcSkill.SData` | `PS_GameDefs_Skills`, level 100 for SData rank 1 |

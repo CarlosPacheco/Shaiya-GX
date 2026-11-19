@@ -42,7 +42,7 @@ func (k Kind) RelativePath() string {
 	case NPCSkills:
 		return "Monster/NpcSkill.SData"
 	default:
-		return CashFilename
+		return cash.SDataPath
 	}
 }
 

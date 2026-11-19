@@ -177,7 +177,7 @@ func (e *editor) start() {
 				dbActions = selectDB
 			}
 		} else {
-			fields.Add(field("Client data folder", "Cash.SData", container.NewBorder(nil, nil, nil, selectFolder, data)))
+			fields.Add(field("Client data folder", studio.Cash.RelativePath(), container.NewBorder(nil, nil, nil, selectFolder, data)))
 		}
 		fields.Add(field("Server database", dbSource, container.NewBorder(nil, nil, nil, dbActions, db)))
 		fields.Add(container.NewHBox(mode, open))

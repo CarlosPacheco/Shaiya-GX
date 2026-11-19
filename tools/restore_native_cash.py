@@ -14,6 +14,8 @@ import sqlite3
 import struct
 from pathlib import Path
 
+from cash_path import CASH_SDATA
+
 
 def catalog(source):
     with source.open(newline='', encoding='utf-8-sig') as f:
@@ -111,7 +113,8 @@ def main():
             doc['tables']['PS_GameDefs_ProductList']=len(rows)
             manifest.write_text(json.dumps(doc,indent=2)+'\n')
     raw=encode(rows)
-    target=args.client_data/'Cash.SData'
+    target=args.client_data/CASH_SDATA
+    target.parent.mkdir(parents=True,exist_ok=True)
     temporary=target.with_suffix('.SData.new')
     temporary.write_bytes(raw); temporary.replace(target)
     out=io.StringIO(newline='')

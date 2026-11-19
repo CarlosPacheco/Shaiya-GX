@@ -12,6 +12,7 @@ import tarfile
 import tempfile
 import zipfile
 
+from cash_path import existing_cash_path
 from font_pack import validate
 
 ARCHIVES = ('gx-client-linux-amd64.tar.gz', 'gx-client-windows-amd64.zip',
@@ -52,7 +53,7 @@ def merge(source, destination):
 
 
 def verify_cash_copies(client_data, server_data):
-    if not (client_data / 'Cash.SData').is_file():
+    if not existing_cash_path(client_data).is_file():
         raise ValueError('client Cash.SData catalog is missing')
     if not (server_data / 'rapture.sqlite').is_file():
         raise ValueError('server ProductList database is missing')

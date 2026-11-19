@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 )
 
 func TestRealBlessingTiers(t *testing.T) {
@@ -65,10 +66,12 @@ func TestRealCash(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer a.Close()
-	if _, ok := a.Lookup("Cash.SData"); !ok {
-		t.Skip("legacy cash binary is import-only")
+	if _, current := a.Lookup(cash.SDataPath); !current {
+		if _, legacy := a.Lookup(cash.LegacySDataPath); !legacy {
+			t.Skip("no native cash catalog")
+		}
 	}
-	b, err := a.ReadFile("Cash.SData")
+	b, err := cash.ReadSData(a)
 	if err != nil {
 		t.Fatal(err)
 	}

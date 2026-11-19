@@ -17,6 +17,8 @@ import sqlite3
 import struct
 from contextlib import closing
 
+from cash_path import existing_cash_path
+
 STATS = ('STR','DEX','REC','INT','WIS','LUC','HP','MP','SP')
 
 def runes():
@@ -203,7 +205,7 @@ def main():
     ap.add_argument('--client-data',type=Path,required=True)
     ap.add_argument('--backup-dir',type=Path,required=True)
     args=ap.parse_args();args.backup_dir.mkdir(parents=True,exist_ok=False)
-    item=args.client_data/'Item/Item.SData';cash=args.client_data/'Cash.SData'
+    item=args.client_data/'Item/Item.SData';cash=existing_cash_path(args.client_data)
     forge_grades=None
     for path in args.database:
         if not path.is_file():raise ValueError('Missing explicit database')
