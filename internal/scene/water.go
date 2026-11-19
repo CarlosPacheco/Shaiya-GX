@@ -89,7 +89,11 @@ func loadWater(a *Assets, w *World) *waterSurface {
 	d := water.definition
 	water.tint = [4]float32{float32(d.ARGB>>16&255) / 255, float32(d.ARGB>>8&255) / 255, float32(d.ARGB&255) / 255, float32(d.ARGB>>24) / 255}
 	for i, name := range []string{"WaterBumps1.tga", "WaterBumps2.tga"} {
-		if data, err := a.Arc.ReadFile(name); err == nil {
+		file := "Entity/Water/" + name
+		if _, ok := a.Arc.Lookup(file); !ok {
+			file = name // Legacy loose packs store the height maps at the data root.
+		}
+		if data, err := a.Arc.ReadFile(file); err == nil {
 			if height, err := img.DecodeTGA(data); err == nil {
 				if normal := img.WaterNormals(height); normal != nil {
 					water.normals[i] = render.Upload(img.Texture{RGBA: normal})

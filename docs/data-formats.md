@@ -278,6 +278,10 @@ WLD and fall back to the original filename. The compressed `login_sky.dds`
 and `mt.dds` can stay in DDS to preserve GPU compression. The dome geometry
 remains in `Sky/sky.3DO`.
 
+Water surface height maps `WaterBumps1.tga` and `WaterBumps2.tga` belong in
+`Entity/Water/`. GX derives the two surface normal maps from them and also
+accepts the original root paths in older data packs.
+
 ### Skill catalog cleanup
 
 `cmd/skillpatch` (`sdata.NormalizeSkillCatalog`) rewrites `Character/Skill.SData` without reserializing untouched bytes and server migration 7 applies the same decisions to the skill definitions. Dead levels (placeholders such as "Hell LordED" / "Not Available.") of skills that have working levels become empty slots; the chain mechanic is not used, so chain wording leaves the descriptions and the previous-skill word (record offset 52) of chain skills is cleared; Mana Shot and Stamina Shot lose their "enemy players only" sentence; Aggravation loses its time damage (int32 at offset 75); detail 25 becomes detail 21. The output is plain EP5, which the loader accepts. Back up the original catalog before installing the result.
