@@ -45,6 +45,7 @@ type GameMenu struct {
 	close, back                Button
 	ok, cancel, reset          Button
 	slider, check              *render.Texture
+	help                       *menuHelp
 	dragSlider                 int
 	pressedCheck               *bool
 	Settings                   ClientSettings
@@ -99,7 +100,7 @@ func NewGameMenu(t Textures) (*GameMenu, error) {
 			b.UV[state] = UV{float32(x) / 512, float32(y) / 256, float32(x+128) / 512, float32(y+32) / 256}
 		}
 	}
-	m.buttons[5].Disabled = true // Help is unavailable until its content is useful.
+	m.help = newMenuHelp(ld)
 	m.close = nativeClose(ld.get("talk1_close_button.png"), 228, 5)
 	m.back = Button{Tex: ld.get("option_main_button2.png"), DrawW: 128, DrawH: 32, HitW: 128, HitH: 22, UV: FourRowUV}
 	m.ok = Button{Tex: ld.get("ok_button.png"), DrawW: 128, DrawH: 32, HitW: 65, HitH: 25, UV: FourRowUV}
@@ -143,7 +144,7 @@ func (m *GameMenu) Origin(w, h int) (int, int) {
 
 func (m *GameMenu) Open(page MenuPage) {
 	if page == MenuHelp {
-		page = MenuMain
+		m.help.reset()
 	}
 	if page != MenuMain {
 		m.original = m.Settings
@@ -260,6 +261,9 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 			break
 		}
 		return MenuNone
+	}
+	if m.Page == MenuHelp {
+		m.help.update(in, x, y)
 	}
 	if m.cancel.Update(in) {
 		m.Settings = m.original
@@ -451,10 +455,7 @@ func (m *GameMenu) Draw(s *render.Sprites, f *Font, w, h int, solid ...*render.T
 			f.Draw(s, fmt.Sprintf("%d", key), x+120+(i%2)*170, y+68+(i/2)*31, white, 50)
 		}
 	case MenuHelp:
-		lines := []string{"Character controls", "W / S: forward / backward", "A / D: turn; Q / E: side step", "Right mouse: steer; right mouse + A / D: side step", "Both mouse buttons: move forward", "Tab: walk / run; NumLock: automatic run", "Space: jump; C: sit / stand", "Windows", "T: status; I: inventory; K: skills; B: actions", "U: quests; G: guild; M: map; O / Esc: options", "Drag learned skills or inventory items onto an action bar.", "Drag bars to move; corner button changes orientation."}
-		for i, line := range lines {
-			f.Draw(s, line, x+24, y+143+i*16, white, 400)
-		}
+		m.help.draw(s, x, y)
 	}
 	for _, c := range m.checks() {
 		if m.checkSelected(c) {

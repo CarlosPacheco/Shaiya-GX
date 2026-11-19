@@ -18,12 +18,6 @@ func TestNativeOptionsMenuRoutesAllEightButtons(t *testing.T) {
 		m.Update(&in, 1024, 768)
 		in.Pressed, in.MouseDown, in.Clicked = false, false, true
 		action := m.Update(&in, 1024, 768)
-		if index == 5 {
-			if !m.buttons[index].Disabled || m.Page != MenuMain {
-				t.Fatal("Help remains enabled")
-			}
-			continue
-		}
 		if index < 6 && m.Page != MenuPage(index+1) {
 			t.Fatal("wrong subpage", index, m.Page)
 		}
@@ -146,5 +140,43 @@ func TestCapeAndHelmetCheckmarksMeanVisible(t *testing.T) {
 	m.DiscardPage()
 	if m.Settings.HideCloak || m.Settings.HideHelmet {
 		t.Fatal("cancel retained hidden equipment")
+	}
+}
+
+func TestHelpPageTabsEntriesAndScroll(t *testing.T) {
+	m, err := NewGameMenu(marketTextures{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Open(MenuHelp)
+	x, y := m.Origin(1024, 768)
+	click := func(px, py int) {
+		in := platform.Input{MouseX: x + px, MouseY: y + py, Pressed: true, MouseDown: true}
+		m.Update(&in, 1024, 768)
+		in.Pressed, in.MouseDown, in.Clicked = false, false, true
+		m.Update(&in, 1024, 768)
+	}
+	if m.help.tab != 0 || m.help.entry != 0 {
+		t.Fatal("help must open on Basic Play / Move")
+	}
+	click(110, 140) // Fight
+	if m.help.entry != 1 {
+		t.Fatalf("entry %d", m.help.entry)
+	}
+	click(215, 140) // Chat: two stacked pictures, 600 rows
+	if m.help.entry != 3 || m.help.pageRows() != 600 {
+		t.Fatalf("chat entry %d rows %d", m.help.entry, m.help.pageRows())
+	}
+	m.Update(&platform.Input{MouseX: x + 200, MouseY: y + 200, Wheel: -1}, 1024, 768)
+	if m.help.offset == 0 {
+		t.Fatal("the wheel did not scroll the chat page")
+	}
+	click(200, 70) // Play Guide tab
+	if m.help.tab != 1 || m.help.entry != 0 || m.help.offset != 0 || m.help.pageRows() != 200 {
+		t.Fatal("tab change did not reset the page")
+	}
+	click(310, 140) // Trade
+	if m.help.entry != 3 {
+		t.Fatalf("play guide entry %d", m.help.entry)
 	}
 }
