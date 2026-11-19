@@ -21,6 +21,7 @@ Start with [first run](quickstart.md), then [building and testing](building.md).
 | [Interface](interface.md) | Implemented behavior, parameters and remaining work |
 | [Protocol](protocol.md) | Wire compatibility and server authority |
 | [Original spell timing](spell-fluidity-research.md) | Reuse, execution scheduling, the two Wind Spins and Stinger dash evidence |
+| [Animation transitions](animation-transitions.md) | Original blend duration, pose sampling and GX differences |
 | [Mounts](mounts.md) | Mount casting, movement, two riders, MON bones/effects and content migration |
 | [Weapon enchantments](weapon-enchantments.md) | Local/remote equipment presentation and validation |
 | [Server storage](../server/docs/sqlite.md) | Primary production SQLite, WAL, backups and recovery |
