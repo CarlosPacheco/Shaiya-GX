@@ -98,6 +98,7 @@ GX Server retains Rapture's gameplay and protocol behavior. Its programs are `gx
 - [First run on Windows and Linux](docs/quickstart.md)
 - [Build, test and package](docs/building.md)
 - [Server operation, LAN, backup and updates](docs/server.md)
+- [Fixed-destination teleport runes](docs/teleport-runes.md)
 - [Architecture](docs/architecture.md), [protocol](docs/protocol.md), [interface status](docs/interface.md)
 - [Server database](server/docs/sqlite.md), [distribution](server/docs/distribution.md), [gameplay parity](server/docs/original-parity.md)
 - [Contributing](CONTRIBUTING.md) and [agent instructions](AGENTS.md)

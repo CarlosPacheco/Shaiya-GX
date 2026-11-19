@@ -274,6 +274,9 @@ func (s *Session) handleUseItem(p []byte) {
 	case specialTeleportStone:
 		s.openTeleportStone(it)
 		return
+	case specialTeleportRune:
+		s.beginTeleportRune(i, def)
+		return
 	case specialMovementRune:
 		s.beginMovementRune(i, def)
 		return

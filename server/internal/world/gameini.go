@@ -160,6 +160,9 @@ func LoadGameConfig(log *logx.Logger) error {
 	if err := loadNpcQuest(log); err != nil {
 		return fmt.Errorf("NPC and quest definitions: %w", err)
 	}
+	if err := loadTeleportRunes(); err != nil {
+		return fmt.Errorf("teleport runes: %w", err)
+	}
 	if err := loadServerNotices(log); err != nil {
 		return fmt.Errorf("server notices: %w", err)
 	}

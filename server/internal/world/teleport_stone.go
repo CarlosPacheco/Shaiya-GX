@@ -25,6 +25,7 @@ func (s *Session) cancelTravelCast() {
 	s.cancelPartySummon()
 	s.cancelMovementRune()
 	s.cancelRecordedPointCast()
+	s.cancelTeleportRune()
 }
 
 func (s *Session) cancelRecordedPointCast() {
@@ -90,6 +91,10 @@ func (s *Session) teleportStoneMapAllowed(target uint16) bool {
 	if !teleportStoneField(target) || !s.canEnterMap(target, s.char.Level) {
 		return false
 	}
+	return s.teleportPortalAllowed(target)
+}
+
+func (s *Session) teleportPortalAllowed(target uint16) bool {
 	// A portal-gated field must still have an eligible entrance. A point
 	// recorded before a level, faction or event change cannot bypass the gate.
 	hasEntrance := false
@@ -188,8 +193,24 @@ func (s *Session) resolveTeleportStone(action, slot uint8, complete bool) {
 		s.sendTeleportStone(proto.TeleportCasting, true, "", points)
 		return
 	}
+	spent, err := s.commitTeleportItem(i, point.Map, dest)
+	if err != nil {
+		s.logErr("travel to recorded point", err)
+		reply(false, "Unable to travel to this point.")
+		return
+	}
+	s.teleportStone = db.Item{}
+	s.send(buildUseItemResult(ch.ID, &spent), "0x050A teleportation stone used")
+	s.applyTeleport(point.Map, dest[0], dest[1], dest[2], "recorded point")
+	reply(true, "")
+}
+
+// commitTeleportItem saves the destination and consumption in one transaction.
+// The caller has already resolved instance ownership and physical ground.
+func (s *Session) commitTeleportItem(i int, mapID uint16, dest [3]float32) (db.Item, error) {
+	ch := s.char
 	after := *ch
-	after.MapID, after.PosX, after.PosY, after.PosZ = point.Map, dest[0], dest[1], dest[2]
+	after.MapID, after.PosX, after.PosY, after.PosZ = mapID, dest[0], dest[1], dest[2]
 	items := slices.Clone(s.items)
 	spent := items[i]
 	spent.Count--
@@ -199,18 +220,13 @@ func (s *Session) resolveTeleportStone(action, slot uint8, complete bool) {
 		items[i] = spent
 	}
 	if err := db.CommitGameplay([]db.CharacterChange{{Before: *ch, After: after, ItemsBefore: s.items, ItemsAfter: items}}, nil); err != nil {
-		s.logErr("travel to recorded point", err)
-		reply(false, "Unable to travel to this point.")
-		return
+		return db.Item{}, err
 	}
-	s.teleportStone = db.Item{}
 	s.items = items
 	if s.player != nil {
 		s.player.UpdateItems(items)
 	}
-	s.send(buildUseItemResult(ch.ID, &spent), "0x050A teleportation stone used")
-	s.applyTeleport(point.Map, dest[0], dest[1], dest[2], "recorded point")
-	reply(true, "")
+	return spent, nil
 }
 
 // A recorded point cannot be used to leave a wager or an active match.

@@ -15,7 +15,7 @@ import (
 func main() {
 	input := flag.String("input", "", "source Item.SData")
 	output := flag.String("output", "", "new output file")
-	source := flag.String("patches", "", "CSV: type,type_id,req_vg,stack,description")
+	source := flag.String("patches", "", "CSV: type,type_id,req_vg,stack,description OR type,type_id,req_vg,special")
 	flag.Parse()
 	if *input == "" || *output == "" || *input == *output {
 		log.Fatal("distinct input and output paths required")
@@ -34,16 +34,14 @@ func main() {
 		log.Fatal(err)
 	}
 	patches := map[sdata.ItemKey]sdata.ItemPatch{}
-	for n, row := range rows {
-		if n == 0 {
-			if fmt.Sprint(row) != "[type type_id req_vg stack description]" {
-				log.Fatal("invalid patch header")
-			}
-			continue
-		}
-		if len(row) != 5 {
-			log.Fatal("invalid patch row")
-		}
+	if len(rows) == 0 {
+		log.Fatal("missing patch header")
+	}
+	specialOnly := fmt.Sprint(rows[0]) == "[type type_id req_vg special]"
+	if !specialOnly && fmt.Sprint(rows[0]) != "[type type_id req_vg stack description]" {
+		log.Fatal("invalid patch header")
+	}
+	for _, row := range rows[1:] {
 		nums := [4]uint64{}
 		for i := 0; i < 4; i++ {
 			v, e := strconv.ParseUint(row[i], 10, 16)
@@ -55,7 +53,16 @@ func main() {
 		if nums[0] > 255 || nums[1] > 255 || nums[3] > 255 {
 			log.Fatal("native byte field overflow")
 		}
-		patches[sdata.ItemKey{Type: uint8(nums[0]), TypeID: uint8(nums[1])}] = sdata.ItemPatch{ReqVG: uint16(nums[2]), Stack: uint8(nums[3]), Description: row[4]}
+		patch := sdata.ItemPatch{ReqVG: uint16(nums[2])}
+		if specialOnly {
+			special := uint8(nums[3])
+			patch.Special = &special
+			patch.PreserveDescription = true
+		} else {
+			patch.Stack = uint8(nums[3])
+			patch.Description = row[4]
+		}
+		patches[sdata.ItemKey{Type: uint8(nums[0]), TypeID: uint8(nums[1])}] = patch
 	}
 	patched, err := sdata.PatchItemDefinitions(raw, patches)
 	if err != nil {

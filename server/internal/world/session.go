@@ -33,6 +33,7 @@ type Session struct {
 	assisted          [3]uint32 // HP, SP, MP of the last hit after Health Assistant
 	targetHealthSent  [3]uint32 // user, HP and maximum last told for the selected user
 	moveRune          *movementRuneCast
+	teleportRune      *teleportRuneCast
 	traps             []placedTrap
 	nextTrapAt        time.Time
 	economy           *netx.RateLimiter
@@ -437,6 +438,7 @@ func (s *Session) tick(idle bool) {
 	s.applyDuelWins()
 	s.tickReturnToTown()
 	s.tickTeleportStone(time.Now())
+	s.tickTeleportRune(time.Now())
 	s.tickPartySummon(time.Now())
 	s.tickMovementRune(time.Now())
 	s.tickForcedTeleport()
@@ -734,6 +736,7 @@ func (s *Session) selectCharacter(id uint32) {
 	}
 	s.teleportStone = db.Item{}
 	s.teleportCast = nil
+	s.teleportRune = nil
 	s.summonCastEnd = time.Time{}
 	ch, err := db.CharacterDetail(s.accountID, id)
 	if err != nil {
