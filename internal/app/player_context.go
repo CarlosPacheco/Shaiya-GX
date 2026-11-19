@@ -140,9 +140,8 @@ func (a *App) performContextAction(id uint32, action contextAction) {
 		}
 		a.chatUI.Channel, a.chatUI.Recipient = 5, name
 		a.chatUI.ModeOpen, a.chatUI.Typing = false, true
-		a.chatOpen = true
-		a.chatInput = ui.TextField{Max: 120}
-		a.chatHistoryIndex, a.chatDraft = len(a.chatHistory), ""
+		a.openChatComposer()
+		a.chatUI.RecipientFocus = false
 		return
 	}
 	if action.label == "Go together" {

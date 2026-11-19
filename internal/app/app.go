@@ -192,13 +192,15 @@ type App struct {
 	create   *ui.Creation
 	creating bool
 
-	chatOpen         bool
-	chatInput        ui.TextField
-	chatUI           *ui.ChatPanel
-	chatHistory      []string
-	chatHistoryIndex int
-	chatDraft        string
-	chatItems        []chatItemDraft
+	chatOpen                  bool
+	chatInput                 ui.TextField
+	chatCaret, recipientCaret ui.ChatCaret
+	chatRecipientIndex        int
+	chatUI                    *ui.ChatPanel
+	chatHistory               []string
+	chatHistoryIndex          int
+	chatDraft                 string
+	chatItems                 []chatItemDraft
 
 	npcDefs           map[sdata.NPCKey]sdata.NPC
 	questDefs         []sdata.Quest
@@ -469,6 +471,15 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		a.login.Message = "Interface resources missing or damaged. See diagnostic log."
 	}
 	return a, nil
+}
+
+// OptionalInterface lets chat render its text fallback on older data packs.
+func (a *App) OptionalInterface(name string) *render.Texture {
+	if _, ok := a.arc.Lookup("interface/" + name); !ok {
+		return nil
+	}
+	t, _ := a.Interface(name)
+	return t
 }
 
 // Interface implements ui.Textures: data/interface/<name>, cached.

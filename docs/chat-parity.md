@@ -162,7 +162,7 @@ The follow-up used the same executable hash as this audit and the matching
 `data.sah` / `data.saf`. Both original UI panels were extracted and inspected
 locally. The matching EP4 PS0107 archive also contains the named atlases.
 
-| Control | Original evidence | GX status |
+| Control | Original evidence | GX before restoration |
 | --- | --- | --- |
 | Help / Chat Mode | `chat_config1.tga`, opened at `0x477d07`. The panel is anchored at X380, Y=H−296. It shows Common, Whisper, Party, Guild and Trade, plus a separate Alpha checkbox. Its printed help demonstrates `! name message`, `@ message` and `$ message`. | GX handles these prefixes and offers an Area channel through its own dropdown. It has no native help panel. |
 | Filter Option | `chat_config2.tga`, opened at `0x477c7a`. Eight independent checkboxes, drawn by `0x47088d` onward. Message filters are Damage, Acquire, Death and Notice. Conversation filters are Common, Party, Guild and Trade. | GX has no category filter control. |
@@ -195,9 +195,29 @@ Styles 25 and 26 pass through the Notice filter but still use the conversation
 pane under the original routing, so filter groups and pane selection must
 remain independent.
 
-The first restoration worth doing is the two panels, with independent history
-retention and Alpha wired to background visibility. The second is the separate
-whisper recipient, recent-recipient cycling and channel shortcuts. The
-existing Area channel, server moderation, trusted system formatting and
-GX item attachments can coexist with those controls. Native channel cooldown
-and level gates need wire and server tracing before changing any delivery rule.
+### Restored in GX
+
+GX uses the original help and filter atlases when they are installed. Older
+data packs get live text-and-checkbox panels in the same positions. The two
+panel buttons retain their 16px spacing at the left edge. Both popups share
+the native X380 and H−296 anchor, clamped on smaller viewports. The histories
+keep an 8px gap between them and before the composer. When vertical space
+shrinks, visible rows contract without overwriting the saved row settings.
+
+The sidebar uses independent tracks and draggable 13px thumbs, with grab
+offset, arrow repeat, track paging and the existing mouse wheel. The rail
+and frame colors use GX's current draw primitives. The recipient row starts
+at X25 to clear both side controls while whispering. Its 131px popup uses
+15px rows. The composer includes caret navigation, keyboard selection and
+clipboard operations with UTF-8 limits. GLFW receives committed Unicode
+text. Native IME preedit rendering is still unverified.
+
+GX keeps 100 entries per pane. Filtering updates the display without deleting
+messages. Alpha controls background visibility. The optional auto-hide
+setting remains independent. Server delivery routes and cooldowns retain
+their existing protocol behavior.
+
+To use the original panel art with a loose data pack, convert
+`interface/chat_config1.tga`, `interface/chat_config2.tga`, and
+`interface/chat_icon.tga` from the local archive to matching PNG files in
+`data/interface/`. The `assets png` command supports all three.

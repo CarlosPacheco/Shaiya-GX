@@ -249,7 +249,11 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			return
 		}
 		if a.chatOpen && a.shop.quantity == nil {
-			a.updateChatPointer(in, w, h)
+			popup := a.chatUI.PopupOpen()
+			if a.updateChatPointer(in, w, h) && popup && in.HasKey(platform.KeyEscape) {
+				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
+				return
+			}
 		}
 		if a.shop.quantity == nil && a.updateChat(in) {
 			// Empty controls still let an active movement send its stop packet.

@@ -31,7 +31,7 @@ func TestOriginalChatModeButtonSelectsChannel(t *testing.T) {
 	if !c.ModeOpen {
 		t.Fatal("mode button did not open channels")
 	}
-	click(20, y-132+1*22+8)
+	click(20, y-len(chatChannelOrder)*chatModePitch+2*chatModePitch+8)
 	if c.Channel != 3 || c.ModeOpen {
 		t.Fatal("party selection failed", c.Channel, c.ModeOpen)
 	}
@@ -77,16 +77,24 @@ func TestChatPanesScrollIndependentlyAndKeepNewMessages(t *testing.T) {
 	if c.panes[1].offset != 4 {
 		t.Fatal("unchanged history moved the view")
 	}
-	in.Wheel, in.Pressed, in.MouseDown = 0, true, true
-	in.MouseX, in.MouseY = 8, 734-228+20
+	y, height, capacity := c.paneGeometry(734, 1)
+	limit := len(c.panes[1].lines) - capacity
+	top, travel, thumb := c.scrollGeometry(1, y, height, limit, c.panes[1].offset)
+	in = platform.Input{MouseX: 8, MouseY: thumb + 5, Pressed: true, MouseDown: true}
 	c.Update(&in, 734)
-	if c.panes[1].offset != 12 {
-		t.Fatal("scroll track did not reach oldest messages", c.panes[1].offset)
+	if !c.panes[1].dragging || c.panes[1].offset != 4 {
+		t.Fatal("grabbing thumb jumped history")
 	}
-	in.MouseY += 96
+	in.Pressed = false
+	in.MouseY = top + 5
+	c.Update(&in, 734)
+	if c.panes[1].offset != limit {
+		t.Fatal("thumb did not reach oldest messages")
+	}
+	in.MouseY = top + travel + 5
 	c.Update(&in, 734)
 	if c.panes[1].offset != 0 {
-		t.Fatal("drag did not return to newest messages")
+		t.Fatal("thumb did not return to newest messages")
 	}
 	in.MouseDown, in.Pressed, in.Clicked = false, false, true
 	in.MouseX = 500
@@ -151,5 +159,50 @@ func TestChatCombatNumberColorResetsBeforeTheRestOfTheMessage(t *testing.T) {
 	runs := c.panes[0].runs[0]
 	if c.panes[0].lines[0] != "Hit 73 damage." || len(runs) != 3 || runs[0].color != base || runs[1].text != "73" || runs[1].color != RGBColor(0xffff00) || runs[2].color != base {
 		t.Fatal("numeric emphasis leaked into surrounding message", runs)
+	}
+}
+
+func TestChatNativeFiltersAndResponsiveLayout(t *testing.T) {
+	c, err := NewChatPanel(marketTextures{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Rows, c.ViewportWidth = [2]int{20, 20}, 500
+	const h = 420
+	y, paneHeight, _ := c.paneGeometry(h, 0)
+	lower, lowerHeight, _ := c.paneGeometry(h, 1)
+	if y < 0 || lower-y-paneHeight != 8 || chatInputY(h)-lower-lowerHeight != 8 {
+		t.Fatal("resized histories lost their gaps")
+	}
+	click := func(x, y int) {
+		c.Update(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, h)
+		c.Update(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, h)
+	}
+	click(8, h-105)
+	x, y, width, _ := c.optionBounds(h)
+	if c.option != chatFilters || x+width > c.ViewportWidth || y != h-296 {
+		t.Fatal("filter panel did not fit the viewport")
+	}
+	click(x+30, y+56)
+	f := chatTestFont()
+	entries := []ChatEntry{
+		{Text: "damage", System: true, Style: 0},
+		{Text: "loot", System: true, Style: 3},
+		{Text: "whisper", Style: 11},
+	}
+	c.SetEntries(f, entries)
+	if c.Filters != 1 || len(c.panes[0].lines) != 1 || len(c.panes[1].lines) != 1 {
+		t.Fatal("filter hid the wrong categories")
+	}
+	click(x+30, y+56)
+	c.SetEntries(f, entries)
+	if len(c.panes[0].lines) != 2 {
+		t.Fatal("re-enabling damage lost stored entries")
+	}
+	click(8, h-89)
+	x, y, _, _ = c.optionBounds(h)
+	click(x+130, y+229)
+	if !c.Transparent || c.backgroundHovered(h) || c.paneAlpha(0, chatNow()) != 1 {
+		t.Fatal("Alpha should affect the background only")
 	}
 }

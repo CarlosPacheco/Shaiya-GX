@@ -157,7 +157,7 @@ func TestPhoenixChatPickerOwnsClicksAboveActionBars(t *testing.T) {
 	a := inputApp()
 	a.chatOpen = true
 	a.chatUI.ModeOpen = true
-	in := platform.Input{MouseX: 40, MouseY: 734 - 76 - 6*22 + 3*22 + 8, Pressed: true, MouseDown: true, Down: "W"}
+	in := platform.Input{MouseX: 40, MouseY: 734 - 76 - 6*15 + 15 + 8, Pressed: true, MouseDown: true, Down: "W"}
 	controls := a.worldControls(&in, 1024, 734)
 	if controls.Pressed || controls.Down != "W" {
 		t.Fatal("channel picker lost click or blocked held movement", controls)
@@ -218,5 +218,43 @@ func TestWhisperSelectionSurvivesOptionsPreview(t *testing.T) {
 	a.applyClientSettings()
 	if a.chatUI.Channel != 5 {
 		t.Fatal("applying audio/options preferences reset the active whisper channel")
+	}
+}
+
+func TestNativeChatShortcutsRecipientCyclingAndEditing(t *testing.T) {
+	a := inputApp()
+	for _, line := range []game.ChatLine{
+		{Op: proto.ChatWhisper, Sender: "Alice", Text: "a"},
+		{Op: proto.ChatWhisper, Sender: "Bob", Text: "b"},
+		{Op: proto.ChatWhisper, Sender: "alice", Text: "c"},
+	} {
+		a.state.AddChat(line)
+	}
+	a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyChatWhisper}})
+	if !a.chatOpen || a.chatUI.Channel != 5 || !a.chatUI.RecipientFocus {
+		t.Fatal("whisper shortcut did not focus its own field")
+	}
+	a.updateChat(&platform.Input{Chars: []rune("Claire")})
+	if a.chatUI.Recipient != "Claire" || a.chatInput.Text != "" {
+		t.Fatal("recipient typing leaked into body")
+	}
+	for _, want := range []string{"alice", "Bob", "alice"} {
+		a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyTab}})
+		if a.chatUI.Recipient != want || a.chatUI.RecipientFocus {
+			t.Fatalf("recent recipient = %q, want %q", a.chatUI.Recipient, want)
+		}
+	}
+	a.updateChat(&platform.Input{Chars: []rune("Hi 😀!")})
+	a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyLeft}})
+	a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyLeft}, Shift: true})
+	var copied string
+	a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyCopy}, WriteClipboard: func(s string) { copied = s }})
+	a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyPaste}, ReadClipboard: func() string { return "Alice\n" }})
+	if copied != "😀" || a.chatInput.Text != "Hi Alice!" {
+		t.Fatalf("copy/paste at caret produced %q and %q", copied, a.chatInput.Text)
+	}
+	a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyChatGuild}})
+	if a.chatUI.Channel != proto.ChannelGuild || a.chatInput.Text != "Hi Alice!" {
+		t.Fatal("guild shortcut lost the composer draft")
 	}
 }

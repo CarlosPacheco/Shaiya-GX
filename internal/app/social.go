@@ -201,9 +201,8 @@ func (a *App) whisperContact(name string) {
 	}
 	a.chatUI.Channel, a.chatUI.Recipient = 5, name
 	a.chatUI.ModeOpen, a.chatUI.Typing = false, true
-	a.chatOpen = true
-	a.chatInput = ui.TextField{Max: 120}
-	a.chatHistoryIndex, a.chatDraft = len(a.chatHistory), ""
+	a.openChatComposer()
+	a.chatUI.RecipientFocus = false
 }
 func (a *App) drawSocial(w, h int) {
 	if a.socialUI == nil {

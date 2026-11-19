@@ -35,6 +35,16 @@ const (
 	KeyRevolverPage2
 	KeyRevolverPage3
 	KeyRevolverPage4
+	KeyChatWhisper
+	KeyChatParty
+	KeyChatGuild
+	KeyChatTrade
+	KeyChatArea
+	KeyEnd
+	KeySelectAll
+	KeyCopy
+	KeyCut
+	KeyPaste
 )
 
 // Input is one frame of input: the state plus the events since last frame.
@@ -50,6 +60,8 @@ type Input struct {
 	Pressed          bool    // left button pressed this frame
 	Chars            []rune
 	Keys             []Key
+	ReadClipboard    func() string
+	WriteClipboard   func(string)
 	Shift            bool
 	MiddlePressed    bool    // middle button pressed this frame
 	Released         string  // released A..Z, for native double-tap controls
@@ -78,7 +90,7 @@ var keyMap = map[glfw.Key]Key{
 	glfw.KeyF2:          KeySelfTarget,
 	glfw.KeyEnter:       KeyEnter, glfw.KeyKPEnter: KeyEnter, glfw.KeyTab: KeyTab,
 	glfw.KeyBackspace: KeyBackspace, glfw.KeyEscape: KeyEscape, glfw.KeyUp: KeyUp,
-	glfw.KeyHome: KeyHome, glfw.KeyPageUp: KeyPageUp, glfw.KeyPageDown: KeyPageDown,
+	glfw.KeyHome: KeyHome, glfw.KeyEnd: KeyEnd, glfw.KeyPageUp: KeyPageUp, glfw.KeyPageDown: KeyPageDown,
 	glfw.KeyF9: KeyF9, glfw.KeyF10: KeyF10, glfw.KeySpace: KeySpace,
 	glfw.KeyDown: KeyDown, glfw.KeyLeft: KeyLeft, glfw.KeyRight: KeyRight, glfw.KeyDelete: KeyDelete,
 }
@@ -100,10 +112,41 @@ func (w *Window) InstallInput() *InputQueue {
 		}
 		q.cur.Chars = append(q.cur.Chars, r)
 	})
-	w.SetKeyCallback(func(_ *glfw.Window, k glfw.Key, _ int, a glfw.Action, mods glfw.ModifierKey) {
+	w.SetKeyCallback(func(win *glfw.Window, k glfw.Key, _ int, a glfw.Action, mods glfw.ModifierKey) {
 		q.cur.Shift = mods&glfw.ModShift != 0
 		q.keypadChar = false
 		q.suppressChordChar = false
+		if a == glfw.Press {
+			var key Key
+			switch {
+			case mods&(glfw.ModControl|glfw.ModAlt|glfw.ModSuper) == glfw.ModControl && k == glfw.KeyA:
+				key = KeySelectAll
+			case mods&(glfw.ModControl|glfw.ModAlt|glfw.ModSuper) == glfw.ModControl && k == glfw.KeyC:
+				key = KeyCopy
+			case mods&(glfw.ModControl|glfw.ModAlt|glfw.ModSuper) == glfw.ModControl && k == glfw.KeyX:
+				key = KeyCut
+			case mods&(glfw.ModControl|glfw.ModAlt|glfw.ModSuper) == glfw.ModControl && k == glfw.KeyV:
+				key = KeyPaste
+			case k == glfw.KeyZ && win.GetKey(glfw.KeyLeftShift) == glfw.Press:
+				key = KeyChatWhisper
+			case k == glfw.KeyEnter || k == glfw.KeyKPEnter:
+				switch {
+				case win.GetKey(glfw.KeyLeftControl) == glfw.Press:
+					key = KeyChatParty
+				case win.GetKey(glfw.KeyLeftAlt) == glfw.Press:
+					key = KeyChatGuild
+				case win.GetKey(glfw.KeyLeftShift) == glfw.Press:
+					key = KeyChatTrade
+				case win.GetKey(glfw.KeyRightShift) == glfw.Press:
+					key = KeyChatArea
+				}
+			}
+			if key != KeyNone {
+				q.cur.Keys = append(q.cur.Keys, key)
+				q.suppressChordChar = true
+				return
+			}
+		}
 		if mods&(glfw.ModAlt|glfw.ModControl|glfw.ModSuper) == glfw.ModAlt {
 			var key Key
 			switch {
@@ -205,6 +248,7 @@ func (q *InputQueue) Frame() Input {
 		scale = float64(fw) / float64(ww)
 	}
 	in := q.cur
+	in.ReadClipboard, in.WriteClipboard = glfw.GetClipboardString, glfw.SetClipboardString
 	in.MouseX, in.MouseY = int(x*scale), int(y*scale)
 	if q.mouselook {
 		in.MouseLook = true

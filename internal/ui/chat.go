@@ -22,12 +22,14 @@ type ChatEntry struct {
 }
 
 type chatPane struct {
-	lines    []string
-	runs     [][]chatRun
-	offset   int
-	arrows   [2]Button
-	dragging bool
-	active   time.Time // last new line or interaction; drives auto-hide
+	lines       []string
+	runs        [][]chatRun
+	offset      int
+	arrows      [2]Button
+	arrowRepeat [2]time.Time
+	dragging    bool
+	grab        int
+	active      time.Time // last new line or interaction; drives auto-hide
 }
 
 // Optional auto-hide reveals histories while typing or for chatHold after a
@@ -41,7 +43,7 @@ const (
 var chatNow = time.Now
 
 func (c *ChatPanel) paneAlpha(i int, now time.Time) float32 {
-	if !c.AutoHide || c.Typing || c.ModeOpen || c.resizing || c.panes[i].dragging {
+	if !c.AutoHide || c.Typing || c.ModeOpen || c.OptionsOpen() || c.resizing || c.panes[i].dragging {
 		return 1
 	}
 	idle := now.Sub(c.panes[i].active)
@@ -54,7 +56,9 @@ func (c *ChatPanel) paneAlpha(i int, now time.Time) float32 {
 	return 1 - float32(idle-chatHold)/float32(chatFade)
 }
 
-func (c *ChatPanel) inputShown() bool { return !c.AutoHide || c.Typing || c.ModeOpen }
+func (c *ChatPanel) inputShown() bool {
+	return !c.AutoHide || c.Typing || c.ModeOpen || c.OptionsOpen()
+}
 
 // ShowHistory reveals both history panes and restarts their hide timer.
 func (c *ChatPanel) ShowHistory() {
@@ -64,33 +68,51 @@ func (c *ChatPanel) ShowHistory() {
 	}
 }
 
-// ChatPanel follows Phoenix chat_hud.gd and ep4_chat.gd: flat persistent
-// histories and 16px rows, with the native 64px selector and 292px input strip.
+// ChatPanel lays out both native 16px histories and the bottom-anchored composer.
 type ChatPanel struct {
-	LinkedItemCount                  func(proto.InventoryItem) uint16
-	DrawLinkedItem                   func(item proto.InventoryItem, x, y, size int, alpha float32)
-	DraftItems                       proto.ChatItems
-	DrawItem                         func(typ, id uint8, x, y, size int, alpha float32)
-	FocusRequested                   bool
-	Resized, ChannelChanged          bool
-	scroll, input                    *render.Texture
-	ChannelNames                     [6]string
-	Recipient                        string
-	entries                          []ChatEntry
-	panes                            [2]chatPane
-	modeButton                       Button
-	Typing, ModeOpen                 bool
-	AutoHide                         bool
-	Rows                             [2]int
-	resizePane, resizeY, resizeStart int
-	resizing                         bool
-	Channel                          uint8
-	modeHeld                         int
+	LinkedItemCount                         func(proto.InventoryItem) uint16
+	DrawLinkedItem                          func(item proto.InventoryItem, x, y, size int, alpha float32)
+	DraftItems                              proto.ChatItems
+	DrawItem                                func(typ, id uint8, x, y, size int, alpha float32)
+	FocusRequested                          bool
+	Resized, ChannelChanged, OptionsChanged bool
+	RecipientFocus                          bool
+	Recent                                  []string
+	recipientsOpen                          bool
+	recipientHeld                           int
+	RecipientRequested                      bool
+	Caret, RecipientCaret                   ChatCaret
+	ViewportWidth                           int
+	Filters                                 uint8
+	Transparent                             bool
+	appliedFilters                          uint8
+	mouseX, mouseY                          int
+	option                                  int
+	optionPress                             int
+	help, filter, icons                     *render.Texture
+	scroll, input                           *render.Texture
+	ChannelNames                            [6]string
+	Recipient                               string
+	entries                                 []ChatEntry
+	panes                                   [2]chatPane
+	modeButton                              Button
+	Typing, ModeOpen                        bool
+	AutoHide                                bool
+	Rows                                    [2]int
+	resizePane, resizeY, resizeStart        int
+	resizing                                bool
+	Channel                                 uint8
+	modeHeld                                int
 }
 
 func NewChatPanel(t Textures) (*ChatPanel, error) {
 	ld := &loader{t: t}
-	c := &ChatPanel{scroll: ld.get("scrollbar.png"), ChannelNames: chatChannelNames, input: ld.get("chat.png"), modeHeld: -1, Rows: [2]int{5, 5}}
+	c := &ChatPanel{scroll: ld.get("scrollbar.png"), ChannelNames: chatChannelNames, input: ld.get("chat.png"), modeHeld: -1, optionPress: -1, Caret: ChatCaret{Position: -1}, Rows: [2]int{5, 5}}
+	if optional, ok := t.(interface{ OptionalInterface(string) *render.Texture }); ok {
+		c.help = optional.OptionalInterface("chat_config1.png")
+		c.filter = optional.OptionalInterface("chat_config2.png")
+		c.icons = optional.OptionalInterface("chat_icon.png")
+	}
 	c.modeButton = Button{Tex: c.input, DrawW: 64, DrawH: 22, HitW: 64, HitH: 22}
 	for state, row := range []int{0, 32, 64, 64, 96} {
 		c.modeButton.UV[state] = UV{0, float32(row) / 256, 64.0 / 512, float32(row+22) / 256}
@@ -101,26 +123,46 @@ func NewChatPanel(t Textures) (*ChatPanel, error) {
 func ChatOrigin(h int) int { return max(0, h-348) }
 
 func (c *ChatPanel) paneGeometry(h, index int) (y, height, capacity int) {
-	rows := c.Rows[index]
-	rows = max(0, min(20, rows))
-	lowerRows := c.Rows[1]
-	lowerRows = max(0, min(20, lowerRows))
-	height = (rows + 2 + 2*index) * 16
-	y = h - 84 - (lowerRows+4)*16
-	if index == 0 {
-		y -= 8 + height
+	upper, lower := min(20, max(0, c.Rows[0])), min(20, max(0, c.Rows[1]))
+	budget := max(0, (h-92)/16-6)
+	if excess := max(0, upper+lower-budget); excess > 0 {
+		cut := min(upper, (excess+1)/2)
+		upper -= cut
+		lower = max(0, lower-(excess-cut))
+		upper = min(upper, max(0, budget-lower))
 	}
-	return max(0, y), height, max(1, height/16)
+	lowerHeight := (lower + 4) * 16
+	upperHeight := (upper + 2) * 16
+	y = max(0, h-84-lowerHeight)
+	if index == 0 {
+		return max(0, y-8-upperHeight), upperHeight, upper + 2
+	}
+	return y, lowerHeight, lower + 4
 }
 
 func (c *ChatPanel) SetEntries(f *Font, entries []ChatEntry) {
-	if slices.Equal(c.entries, entries) {
+	if c.appliedFilters == c.Filters && slices.Equal(c.entries, entries) {
 		return
 	}
-	overlap := min(len(c.entries), len(entries))
-	for overlap > 0 && !slices.Equal(c.entries[len(c.entries)-overlap:], entries[:overlap]) {
-		overlap--
+	var oldByPane, newByPane [2][]ChatEntry
+	for _, entry := range c.entries {
+		i := chatPaneIndex(entry)
+		oldByPane[i] = append(oldByPane[i], entry)
 	}
+	for _, entry := range entries {
+		i := chatPaneIndex(entry)
+		newByPane[i] = append(newByPane[i], entry)
+	}
+	var overlap [2]int
+	for i := range overlap {
+		old, next := oldByPane[i], newByPane[i]
+		n := min(len(old), len(next))
+		for n > 0 && !slices.Equal(old[len(old)-n:], next[:n]) {
+			n--
+		}
+		overlap[i] = n
+	}
+	c.appliedFilters = c.Filters
 	added := [2]int{}
 	c.entries = append(c.entries[:0], entries...)
 	for i := range c.panes {
@@ -128,18 +170,17 @@ func (c *ChatPanel) SetEntries(f *Font, entries []ChatEntry) {
 		clear(c.panes[i].runs)
 		c.panes[i].runs = c.panes[i].runs[:0]
 	}
-	for entryIndex, entry := range entries {
-		index := 1
-		if entry.System {
-			index = 0
+	var seen [2]int
+	for _, entry := range entries {
+		index := chatPaneIndex(entry)
+		seen[index]++
+		if chatFilter(entry.Style)&c.Filters != 0 {
+			continue
 		}
-		pane := &c.panes[1]
-		if entry.System {
-			pane = &c.panes[0]
-		}
+		pane := &c.panes[index]
 		links := entry.Items.Len()
 		runs, rows := wrapChatContent(f, entry.Text, entry.Color, entry.Markup, 316, entry.ItemType != 0, entry.Items[:links], c.linkedItemSuffix)
-		if entryIndex >= overlap {
+		if seen[index] > overlap[index] {
 			added[index] += len(rows)
 		}
 		for row := range runs {
@@ -164,6 +205,13 @@ func (c *ChatPanel) SetEntries(f *Font, entries []ChatEntry) {
 	}
 }
 
+func chatPaneIndex(entry ChatEntry) int {
+	if entry.System {
+		return 0
+	}
+	return 1
+}
+
 func (c *ChatPanel) controls(h int) {
 	for i := range c.panes {
 		p := &c.panes[i]
@@ -171,11 +219,12 @@ func (c *ChatPanel) controls(h int) {
 		limit := max(0, len(p.lines)-capacity)
 		for arrow := range p.arrows {
 			b := &p.arrows[arrow]
-			b.Tex, b.OriginX, b.OriginY = c.scroll, 4, y+4+arrow*(height-24)
-			b.DrawW, b.DrawH, b.HitW, b.HitH = 16, 16, 16, 16
+			arrowHeight := c.scrollArrowHeight(i, height)
+			b.Tex, b.OriginX, b.OriginY = c.scroll, 4, y+4+arrow*(c.scrollHeight(i, height)-8-arrowHeight)
+			b.DrawW, b.DrawH, b.HitW, b.HitH = 16, arrowHeight, 16, arrowHeight
 			b.Disabled = limit == 0
 			for state, col := range []int{0, 1, 1, 1, 2} {
-				b.UV[state] = UV{float32(col) / 8, float32(arrow) / 2, float32(col+1) / 8, float32(arrow)/2 + 16.0/64}
+				b.UV[state] = UV{float32(col) / 8, float32(arrow) / 2, float32(col+1) / 8, float32(arrow)/2 + 23.0/64}
 			}
 		}
 	}
@@ -184,6 +233,12 @@ func (c *ChatPanel) controls(h int) {
 // Contains keeps world picking behind the visible chat panels from handling
 // the same pointer gesture. Geometry follows the current resized histories.
 func (c *ChatPanel) Contains(mx, my, h int) bool {
+	if c.recipientsOpen && c.recentHit(mx, my, h) >= 0 {
+		return true
+	}
+	if c.optionHit(mx, my, h) || c.optionButton(mx, my, h) != 0 || c.recipientHit(mx, my, h) {
+		return true
+	}
 	if mx < 0 || mx >= 356 {
 		return false
 	}
@@ -210,6 +265,15 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 	c.Resized = false
 	c.ChannelChanged = false
 	c.FocusRequested = false
+	c.OptionsChanged = false
+	c.RecipientRequested = false
+	c.mouseX, c.mouseY = in.MouseX, in.MouseY
+	if c.updateOptions(in, h) {
+		return true
+	}
+	if c.updateRecipient(in, h) {
+		return true
+	}
 	if c.resizing {
 		c.Rows[c.resizePane] = min(20, max(0, c.resizeStart+(c.resizeY-in.MouseY)/16))
 		if in.Clicked || !in.MouseDown {
@@ -239,9 +303,13 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 		c.ModeOpen = !c.ModeOpen
 	}
 	if c.ModeOpen {
+		if in.HasKey(platform.KeyEscape) {
+			c.ModeOpen = false
+			return true
+		}
 		row := -1
-		if in.MouseX >= 0 && in.MouseX < 120 && in.MouseY >= inputY-len(chatChannelOrder)*22 && in.MouseY < inputY {
-			row = (in.MouseY - (inputY - len(chatChannelOrder)*22)) / 22
+		if in.MouseX >= 0 && in.MouseX < 120 && in.MouseY >= inputY-len(chatChannelOrder)*chatModePitch && in.MouseY < inputY {
+			row = (in.MouseY - (inputY - len(chatChannelOrder)*chatModePitch)) / chatModePitch
 		}
 		if in.Pressed {
 			c.modeHeld = row
@@ -250,7 +318,7 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 			c.Channel = chatChannelOrder[row]
 			c.ChannelChanged = true
 			c.FocusRequested = true
-			c.Recipient = ""
+			c.RecipientFocus = c.Channel == 5 && c.Recipient == ""
 			c.ModeOpen = false
 		}
 		if in.Pressed && row < 0 && !c.modeButton.hit(in) {
@@ -260,6 +328,9 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 	}
 	if c.inputShown() && in.MouseX >= 0 && in.MouseX < 356 && in.MouseY >= inputY && in.MouseY < inputY+22 {
 		c.FocusRequested = in.Pressed && in.MouseX >= 64
+		if c.FocusRequested {
+			c.RecipientFocus = false
+		}
 		return true
 	}
 
@@ -288,20 +359,37 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 			}
 			captured = captured || in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.RightDown || in.Wheel != 0
 		}
-		for arrow := range p.arrows {
+		for i := range p.arrows {
+			arrow := &p.arrows[i]
 			if in.Pressed {
-				p.arrows[arrow].held = false
+				arrow.held = false
 			}
-			if p.arrows[arrow].Update(in) {
-				p.offset += 1 - 2*arrow
+			arrow.Update(in)
+			if arrow.held && arrow.hit(in) && in.MouseDown {
+				if in.Pressed {
+					p.offset += 1 - 2*i
+					p.arrowRepeat[i] = now.Add(300 * time.Millisecond)
+				} else if !now.Before(p.arrowRepeat[i]) {
+					p.offset += 1 - 2*i
+					p.arrowRepeat[i] = now.Add(60 * time.Millisecond)
+				}
+			} else if in.Pressed && in.Clicked && !arrow.Disabled && arrow.hit(in) {
+				p.offset += 1 - 2*i
 			}
 		}
-		if in.Pressed && in.MouseX >= 4 && in.MouseX < 17 && in.MouseY >= y+20 && in.MouseY < y+height-20 {
-			p.dragging = true
+		top, travel, thumb := c.scrollGeometry(i, y, height, limit, p.offset)
+		thumbHeight := c.scrollThumbHeight(i, height)
+		if limit > 0 && in.Pressed && in.MouseX >= 4 && in.MouseX < 20 && in.MouseY >= top && in.MouseY < top+travel+thumbHeight {
+			if in.MouseY >= thumb && in.MouseY < thumb+thumbHeight {
+				p.grab, p.dragging = in.MouseY-thumb, true
+			} else if in.MouseY < thumb {
+				p.offset += capacity
+			} else {
+				p.offset -= capacity
+			}
 		}
-		if p.dragging && in.MouseDown {
-			track := max(1, height-48)
-			p.offset = limit - limit*max(0, min(track, in.MouseY-y-20))/track
+		if p.dragging && (in.MouseDown || in.Clicked) {
+			p.offset = limit - (limit*max(0, min(travel, in.MouseY-top-p.grab))+travel/2)/travel
 			captured = true
 		}
 		if p.dragging && (in.Clicked || !in.MouseDown) {
@@ -327,8 +415,11 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 			continue
 		}
 		y, height, capacity := c.paneGeometry(h, i)
-		s.Draw(blank, 0, float32(y), 350, float32(height), 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 154.0 / 255 * a})
+		if !c.Transparent || c.backgroundHovered(h) {
+			DrawTipFrame(s, blank, 0, float32(y), 350, float32(height), 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 154.0 / 255 * a}, [4]float32{.56, .53, .45, a})
+		}
 		restoreClip := s.ClipRect(25, float32(y+1), 316, float32(height-2))
+		p.offset = min(p.offset, max(0, len(p.lines)-capacity))
 		end := max(0, len(p.lines)-p.offset)
 		start := max(0, end-capacity)
 		for row := start; row < end; row++ {
@@ -352,18 +443,13 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 			}
 		}
 		restoreClip()
-		// Phoenix's bordered scrollbar rail is always visible, alpha 0.82.
-		s.Draw(blank, 4, float32(y+4), 16, float32(height-8), 0, 0, 1, 1, [4]float32{.31, .27, .19, .8 * .82 * a})
-		s.Draw(blank, 5, float32(y+5), 14, float32(height-10), 0, 0, 1, 1, [4]float32{.037, .035, .031, .7 * .82 * a})
-		if a == 1 {
-			for arrow := range p.arrows {
-				p.arrows[arrow].Draw(s)
-			}
-		}
+		c.drawScroll(s, blank, i, y, height, max(0, len(p.lines)-capacity), a)
 	}
 	if !c.inputShown() {
 		return
 	}
+	c.drawOptionButtons(s, f, blank, h)
+	c.drawRecipient(s, f, blank, h)
 	y := chatInputY(h)
 	c.modeButton.OriginY = y
 	c.modeButton.Draw(s)
@@ -393,13 +479,24 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 		c.drawLinkedItem(s, f, item, suffixes[i], x, textY, 1)
 		x += f.Height + f.Width(suffixes[i]) + 4
 	}
-	for len(shown) > 0 && f.Width(shown) > available {
-		shown = textwire.DropFirst(shown)
+	runes := []rune(shown)
+	cursor := len(runes)
+	if c.Caret.Position >= 0 {
+		cursor = min(cursor, c.Caret.Position)
 	}
+	leftOfCaret := string(runes[:cursor])
+	for len(leftOfCaret) > 0 && f.Width(leftOfCaret) >= available {
+		leftOfCaret = textwire.DropFirst(leftOfCaret)
+	}
+	shown = leftOfCaret + string(runes[cursor:])
 	restoreClip := s.ClipRect(69, float32(y+2), 264, 19)
+	if typing && !c.RecipientFocus {
+		first := cursor - len([]rune(leftOfCaret))
+		drawChatSelection(s, f, blank, runes, first, c.Caret, 69, textY, available)
+	}
 	f.Draw(s, shown, 69, textY, white, available)
-	if typing && chatNow().UnixMilli()%1000 < 500 {
-		s.Draw(blank, float32(69+f.Width(shown)), float32(textY), 1, float32(f.Height), 0, 0, 1, 1, white)
+	if typing && !c.RecipientFocus && chatNow().UnixMilli()%1000 < 500 {
+		s.Draw(blank, float32(69+f.Width(leftOfCaret)), float32(textY), 1, float32(f.Height), 0, 0, 1, 1, white)
 	}
 	restoreClip()
 }
@@ -428,23 +525,27 @@ func chatEntryTextY(rowY, fontHeight int) int {
 }
 
 var chatChannelNames = [6]string{"Normal", "Trade", "Guild", "Party", "Area", "Whisper"}
-var chatChannelOrder = [6]uint8{0, 3, 2, 5, 4, 1}
+var chatChannelOrder = [6]uint8{0, 5, 3, 2, 1, 4}
+
+const chatModePitch = 15
 
 func (c *ChatPanel) capacity(index int) int { _, _, n := c.paneGeometry(768, index); return n }
 
-// DrawOverlay keeps the Phoenix channel picker above movable HUD bars.
+// DrawOverlay keeps chat popups above movable HUD panels.
 func (c *ChatPanel) DrawOverlay(s *render.Sprites, f *Font, blank *render.Texture, h int) {
+	c.drawOptions(s, f, blank, h)
+	c.drawRecentRecipients(s, f, blank, h)
 	if !c.ModeOpen {
 		return
 	}
-	top := chatInputY(h) - len(chatChannelOrder)*22
-	s.Draw(blank, 0, float32(top), 120, float32(len(chatChannelOrder)*22), 0, 0, 1, 1, [4]float32{.114, .122, .141, .97})
+	top := chatInputY(h) - len(chatChannelOrder)*chatModePitch
+	s.Draw(blank, 0, float32(top), 120, float32(len(chatChannelOrder)*chatModePitch), 0, 0, 1, 1, [4]float32{.114, .122, .141, .97})
 	for i, channel := range chatChannelOrder {
 		tint := white
 		if channel == c.Channel {
 			tint = RGBColor(0xffff00)
 		}
-		f.Draw(s, c.ChannelNames[channel], 8, top+i*22+3, tint, 104)
+		f.Draw(s, c.ChannelNames[channel], 8, top+i*chatModePitch, tint, 104)
 	}
 }
 

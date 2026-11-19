@@ -72,7 +72,7 @@ Place the converted loose `data/` directory beside the Shaiya GX executable, or 
 SHAIYA_TEST_RENDER=1 SHAIYA_DATA=/path/to/ShaiyaGX/data \
 SHAIYA_TEST_ARTIFACTS=/path/to/private/captures \
   go test -tags integration ./internal/app \
-  -run 'TestHUDPolishOriginalAssetsGL|TestPhoenixChatAndLoginLogoGL' -count=1 -v
+  -run 'TestHUDPolishOriginalAssetsGL|TestNativeChatAndLoginLogoGL' -count=1 -v
 ```
 
 `python3 tools/n2_smoke.py` is the Linux end-to-end client/server probe. It uses `server/build`, copies the distributed seed to temporary storage, creates disposable fixtures and uses ports 40800/40810. It does not use your mutable runtime DB or stop your personal services. `GX_SERVER_DIR` overrides the server directory; legacy `RAPTURE_DIR` remains accepted. Legacy SQL Server-only probes are disabled; use N2 for SQLite.

@@ -142,7 +142,7 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 			}
 		}
 	}
-	if !captured && a.chatUI != nil && a.chatUI.ModeOpen {
+	if !captured && a.chatUI != nil && (a.chatUI.ModeOpen || a.chatUI.OptionsOpen()) {
 		captured = a.updateChatPointer(in, w, h)
 		if captured && in.Pressed {
 			v.uiLeft = -3

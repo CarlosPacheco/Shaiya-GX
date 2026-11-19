@@ -18,7 +18,7 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-func TestPhoenixChatAndLoginLogoGL(t *testing.T) {
+func TestNativeChatAndLoginLogoGL(t *testing.T) {
 	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
 		t.Skip("requires GL and original assets")
 	}
@@ -112,9 +112,23 @@ func TestPhoenixChatAndLoginLogoGL(t *testing.T) {
 	a.chatUI.ModeOpen = false
 	a.chatUI.Channel = 5
 	a.chatUI.Recipient = "Bob"
-	a.chatInput.Text = "!Bob Single-row whisper"
+	a.chatInput.Text = "Separate whisper message"
 	draw(screenWorld)
-	save("phoenix-chat-whisper")
+	save("native-chat-whisper")
+	clickChat := func(x, y int) {
+		a.updateChatPointer(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, 1024, 768)
+		a.updateChatPointer(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 1024, 768)
+	}
+	clickChat(8, 768-105)
+	if !a.chatUI.OptionsOpen() {
+		t.Fatal("native filter panel did not open")
+	}
+	draw(screenWorld)
+	save("native-chat-filters")
+	clickChat(8, 768-89)
+	draw(screenWorld)
+	save("native-chat-help")
+	a.updateChatPointer(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, 1024, 768)
 	a.chatOpen = false
 	a.chatUI.Channel = 0
 	draw(screenWorld)
@@ -173,8 +187,13 @@ func verifyNativeChat(t *testing.T, a, b *App, pump func(func() bool)) {
 		}
 	}
 	a.chatUI.Recipient = ""
-	submit(own.Name + " GX Phoenix single-row whisper")
-	pump(func() bool { return contains(b.state, proto.ChatWhisper, "GX Phoenix single-row whisper") })
+	a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyChatWhisper}})
+	a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyTab}})
+	if a.chatUI.Recipient != own.Name {
+		t.Fatal("Tab did not recall the latest whisper recipient")
+	}
+	submit("GX native recent-recipient whisper")
+	pump(func() bool { return contains(b.state, proto.ChatWhisper, "GX native recent-recipient whisper") })
 	a.chatUI.Channel = proto.ChannelNormal
 	submit("!" + own.Name + " GX native prefix whisper")
 	pump(func() bool { return contains(b.state, proto.ChatWhisper, "GX native prefix whisper") })

@@ -16,18 +16,33 @@ import (
 // updateChat captures typing before world controls. Channel syntax is a
 // delivery adaptation; encoding and opcodes use the verified 0x599a60 writer.
 func (a *App) updateChat(in *platform.Input) bool {
+	if a.chatUI != nil {
+		for _, shortcut := range [...]struct {
+			key     platform.Key
+			channel uint8
+		}{
+			{platform.KeyChatWhisper, 5}, {platform.KeyChatParty, proto.ChannelParty},
+			{platform.KeyChatGuild, proto.ChannelGuild}, {platform.KeyChatTrade, proto.ChannelTrade},
+			{platform.KeyChatArea, proto.ChannelShout},
+		} {
+			if in.HasKey(shortcut.key) {
+				if !a.chatOpen {
+					a.openChatComposer()
+				}
+				a.chatUI.Channel = shortcut.channel
+				a.chatUI.RecipientFocus = shortcut.channel == 5 && a.chatUI.Recipient == ""
+				return true
+			}
+		}
+	}
 	if !a.chatOpen {
 		if !in.HasKey(platform.KeyEnter) {
 			return false
 		}
-		a.chatOpen = true
-		if a.wv != nil {
-			a.wv.mobClick = mobClick{}
+		a.openChatComposer()
+		if a.chatUI != nil {
+			a.chatUI.RecipientFocus = a.chatUI.Channel == 5 && a.chatUI.Recipient == ""
 		}
-		a.chatItems = nil
-		a.chatInput = ui.TextField{Max: 120}
-		a.chatHistoryIndex = len(a.chatHistory)
-		a.chatDraft = ""
 		return true
 	}
 	if in.HasKey(platform.KeyEscape) {
@@ -35,10 +50,25 @@ func (a *App) updateChat(in *platform.Input) bool {
 		a.chatOpen = false
 		return true
 	}
+	if a.chatUI != nil && a.chatUI.Channel == 5 {
+		if in.HasKey(platform.KeyTab) {
+			a.cycleWhisperRecipient()
+			return true
+		}
+		if a.chatUI.RecipientFocus {
+			recipient := ui.TextField{Text: a.chatUI.Recipient, Max: 20}
+			recipient.EditAt(in, &a.recipientCaret)
+			a.chatUI.Recipient = strings.TrimSpace(recipient.Text)
+			if in.HasKey(platform.KeyEnter) {
+				a.chatUI.RecipientFocus = false
+			}
+			return true
+		}
+	}
 	if len(a.chatItems) > 0 && a.chatInput.Text == "" && in.HasKey(platform.KeyBackspace) {
 		a.chatItems = a.chatItems[:len(a.chatItems)-1]
 	}
-	a.chatInput.Edit(in)
+	a.chatInput.EditAt(in, &a.chatCaret)
 	if in.HasKey(platform.KeyUp) || in.HasKey(platform.KeyDown) {
 		if a.chatHistoryIndex == len(a.chatHistory) {
 			a.chatDraft = a.chatInput.Text
@@ -52,6 +82,7 @@ func (a *App) updateChat(in *platform.Input) bool {
 		if a.chatHistoryIndex < len(a.chatHistory) {
 			a.chatInput.Text = a.chatHistory[a.chatHistoryIndex]
 		}
+		a.chatCaret.End(a.chatInput.Text)
 	}
 	if in.HasKey(platform.KeyEnter) {
 		text := strings.TrimSpace(a.chatInput.Text)
@@ -150,6 +181,45 @@ func (a *App) updateChat(in *platform.Input) bool {
 	return true
 }
 
+func (a *App) openChatComposer() {
+	a.chatOpen = true
+	if a.wv != nil {
+		a.wv.mobClick = mobClick{}
+	}
+	a.chatItems = nil
+	a.chatInput = ui.TextField{Max: 120}
+	a.chatCaret, a.chatRecipientIndex = ui.ChatCaret{}, -1
+	if a.chatUI != nil {
+		a.recipientCaret.End(a.chatUI.Recipient)
+	}
+	a.chatHistoryIndex, a.chatDraft = len(a.chatHistory), ""
+}
+
+func (a *App) recentWhisperRecipients() []string {
+	if a.state == nil {
+		return nil
+	}
+	var names []string
+	for i := len(a.state.Chat) - 1; i >= 0; i-- {
+		line := a.state.Chat[i]
+		if line.Op == proto.ChatWhisper && line.Sender != "" &&
+			!slices.ContainsFunc(names, func(n string) bool { return strings.EqualFold(n, line.Sender) }) {
+			names = append(names, line.Sender)
+		}
+	}
+	return names
+}
+
+func (a *App) cycleWhisperRecipient() {
+	names := a.recentWhisperRecipients()
+	if len(names) > 0 {
+		a.chatRecipientIndex = (a.chatRecipientIndex + 1) % len(names)
+		a.chatUI.Recipient = names[a.chatRecipientIndex]
+		a.recipientCaret.End(a.chatUI.Recipient)
+		a.chatUI.RecipientFocus = false
+	}
+}
+
 func chatBody(text string, linked bool) string {
 	text = strings.TrimSpace(text)
 	if text == "" && linked {
@@ -174,6 +244,9 @@ func whisperCommand(text string, linked ...bool) ([]byte, bool) {
 
 func (a *App) drawChat(w, h int) {
 	f := a.chatFont()
+	a.chatUI.ViewportWidth = w
+	a.chatUI.Caret, a.chatUI.RecipientCaret = a.chatCaret, a.recipientCaret
+
 	for i, id := range [...]int{5086, 5089, 5088, 5087, 5388, 5377} {
 		if label := a.msg.Get(id); label != "" {
 			a.chatUI.ChannelNames[i] = label
@@ -209,6 +282,7 @@ func (a *App) formattedChat() []ui.ChatEntry {
 	if slices.Equal(a.chatCache, a.state.Chat) {
 		return a.chatEntries
 	}
+	a.chatUI.Recent = a.recentWhisperRecipients()
 	clear(a.chatCache)
 	a.chatCache = append(a.chatCache[:0], a.state.Chat...)
 	clear(a.chatEntries)
@@ -256,20 +330,26 @@ func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
 	}
 	rgb := ui.ChatRGB(style)
 
-	return ui.ChatEntry{Items: c.Items, ItemType: c.ItemType, ItemID: c.ItemID, Text: body, System: game.ChatSystemPane(style), Color: ui.RGBColor(rgb), Style: style, Markup: c.Op == 0}
+	return ui.ChatEntry{Items: c.Items, ItemType: c.ItemType, ItemID: c.ItemID, Text: body, System: c.SystemPane(), Color: ui.RGBColor(rgb), Style: style, Markup: c.Op == 0}
 }
 
-func (a *App) updateChatPointer(in *platform.Input, _, h int) bool {
+func (a *App) updateChatPointer(in *platform.Input, w, h int) bool {
 	if a.chatUI == nil {
 		return false
 	}
 	a.chatUI.Typing = a.chatOpen
+	a.chatUI.ViewportWidth = w
 	captured := a.chatUI.Update(in, h)
 	if a.chatUI.FocusRequested && !a.chatOpen {
 		a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyEnter}})
 	}
-	if (a.chatUI.Resized || a.chatUI.ChannelChanged) && a.gameMenu != nil {
+	if a.chatUI.RecipientRequested {
+		a.chatUI.RecipientFocus = true
+		a.recipientCaret.End(a.chatUI.Recipient)
+	}
+	if (a.chatUI.Resized || a.chatUI.ChannelChanged || a.chatUI.OptionsChanged) && a.gameMenu != nil {
 		a.gameMenu.SetChatRows(a.chatUI.Rows)
+		a.gameMenu.SetChatOptions(a.chatUI.Filters, a.chatUI.Transparent)
 		a.gameMenu.SetChatChannel(a.chatUI.Channel)
 		a.saveClientSettings()
 	}

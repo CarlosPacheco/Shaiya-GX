@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"slices"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
@@ -1513,7 +1514,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 
 func (s *State) addChat(l ChatLine) { s.AddChat(l) }
 
-// AddChat keeps Phoenix's shared 300-message history; each pane scrolls independently.
+// AddChat retains the most recent 100 entries independently in each pane.
 func (s *State) AddChat(l ChatLine) {
 	if l.Sender == "" && l.SenderID != 0 {
 		if e := s.Entities[l.SenderID]; e != nil && e.Shape != nil {
@@ -1531,12 +1532,20 @@ func (s *State) AddChat(l ChatLine) {
 	if s.blockedChat(l) {
 		return
 	}
-	s.Chat = append(s.Chat, l)
-	if len(s.Chat) > 300 {
-		copy(s.Chat, s.Chat[len(s.Chat)-300:])
-		clear(s.Chat[300:])
-		s.Chat = s.Chat[:300]
+	if len(s.Chat) >= 100 {
+		system := l.SystemPane()
+		remaining := 100
+		for i := len(s.Chat) - 1; i >= 0; i-- {
+			if s.Chat[i].SystemPane() == system {
+				remaining--
+				if remaining == 0 {
+					s.Chat = slices.Delete(s.Chat, i, i+1)
+					break
+				}
+			}
+		}
 	}
+	s.Chat = append(s.Chat, l)
 }
 
 func (s *State) applyItem(it proto.InventoryItem) {

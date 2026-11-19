@@ -57,7 +57,9 @@ type ClientSettings struct {
 	DisplayMode                               platform.DisplayMode
 	ChatRows                                  [2]int
 	ChatChannel                               uint8
-	AutoHideChat                              bool `json:",omitempty"`
+	ChatFilters                               uint8 `json:",omitempty"`
+	ChatTransparent                           bool  `json:",omitempty"`
+	AutoHideChat                              bool  `json:",omitempty"`
 	Music, Effects, Ambient                   float64
 	Glow, Brightness, Details, VisualDistance int
 	HideCloak, HideHelmet                     bool
@@ -472,4 +474,9 @@ func (m *GameMenu) SetChatChannel(channel uint8) {
 		channel = 0
 	}
 	m.Settings.ChatChannel, m.original.ChatChannel = channel, channel
+}
+
+func (m *GameMenu) SetChatOptions(filters uint8, transparent bool) {
+	m.Settings.ChatFilters, m.Settings.ChatTransparent = filters, transparent
+	m.original.ChatFilters, m.original.ChatTransparent = filters, transparent
 }

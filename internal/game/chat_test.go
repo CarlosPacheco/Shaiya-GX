@@ -75,12 +75,13 @@ func TestChatChannelsUseServerWireLayouts(t *testing.T) {
 	}
 }
 
-func TestPhoenixChatKeepsThreeHundredMessages(t *testing.T) {
+func TestChatRetainsOneHundredMessagesPerPane(t *testing.T) {
 	s := New()
+	s.AddChat(ChatLine{Op: proto.ChatWhisper, Sender: "Alice", Text: "keep me"})
 	for i := range 301 {
-		s.AddChat(ChatLine{Op: proto.ChatNormal, Sender: "Alice", Text: fmt.Sprint(i)})
+		s.AddChat(ChatLine{Style: 0, Text: fmt.Sprint(i)})
 	}
-	if len(s.Chat) != 300 || s.Chat[0].Text != "1" || s.Chat[299].Text != "300" {
-		t.Fatal("Phoenix history eviction failed", len(s.Chat))
+	if len(s.Chat) != 101 || s.Chat[0].Text != "keep me" || s.Chat[1].Text != "201" || s.Chat[100].Text != "300" {
+		t.Fatal("combat evicted conversation history", len(s.Chat))
 	}
 }
