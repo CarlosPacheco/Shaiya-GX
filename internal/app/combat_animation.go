@@ -132,6 +132,10 @@ func (a *App) confirmedAnimation(p []byte) {
 				cancelGesture(actor)
 			}
 		}
+	case proto.MapNpcAttackPlayer, proto.MapNpcAttackMob:
+		if hit, err := proto.DecodeNpcAttack(p); err == nil && (hit.Target == a.state.SelfID || hit.Target == a.state.Target) {
+			a.showCombatNumber(hit.Target, hit.HP, false, false, false)
+		}
 	case proto.CharacterMobAutoAttack, proto.CharacterUserAutoAttack, proto.MobAttackCharacter:
 		result := a.state.LastAttack
 		if a.state.SelfID != 0 && result.Source == a.state.SelfID {

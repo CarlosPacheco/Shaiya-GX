@@ -61,7 +61,13 @@ func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.Cance
 		}
 		dispatchMoves(TickMobRespawns(viewersByMap(), 128))
 	})
-	add("patrol", 250*time.Millisecond, func(now time.Time) { dispatchMoves(TickNpcPatrol(viewersByMap(), 64)) })
+	add("patrol", 250*time.Millisecond, func(now time.Time) {
+		tick := tickNpcs(now, snapshotCombatPlayers(AllPlayers()), 64)
+		dispatchMoves(tick.moves)
+		for _, hit := range tick.strikes {
+			dispatchNpcStrike(hit, log)
+		}
+	})
 	add("effects", time.Second, func(now time.Time) { runDotSweep(log) })
 	add("guilds", 5*time.Second, func(now time.Time) { TickGuildRanking(now, log) })
 	add("killcount", time.Second, func(now time.Time) { TickKillCount(now, log) })
@@ -75,13 +81,7 @@ func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.Cance
 			dispatchMoves(tick.Moves)
 			return
 		}
-		snaps := make([]PlayerCombatSnapshot, 0, len(players))
-		for _, p := range players {
-			snapshot := p.Snapshot()
-			x, z := snapshot.PosX, snapshot.PosZ
-			c, _ := p.viewCell()
-			snaps = append(snaps, PlayerCombatSnapshot{CharacterID: p.CharacterID, MapID: p.MapID(), PosX: x, PosY: snapshot.PosY, PosZ: z, Alive: p.IsAlive(), Faction: p.Faction(), Cell: c, HP: snapshot.CurrentHP, Invisible: p.noMobTarget.Load()})
-		}
+		snaps := snapshotCombatPlayers(players)
 		tick := TickMobCombat(snaps, 256)
 		for _, a := range tick.Attacks {
 			queueMobAttack(a)
@@ -105,6 +105,17 @@ func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.Cance
 	engine := scheduler.New(started, jobs)
 	go func() { defer close(r.done); engine.Run(ctx) }()
 	return r
+}
+
+func snapshotCombatPlayers(players []*ConnectedPlayer) []PlayerCombatSnapshot {
+	snaps := make([]PlayerCombatSnapshot, 0, len(players))
+	for _, p := range players {
+		snapshot := p.Snapshot()
+		x, z := snapshot.PosX, snapshot.PosZ
+		c, _ := p.viewCell()
+		snaps = append(snaps, PlayerCombatSnapshot{CharacterID: p.CharacterID, MapID: p.MapID(), PosX: x, PosY: snapshot.PosY, PosZ: z, Alive: p.IsAlive(), Faction: p.Faction(), Cell: c, HP: snapshot.CurrentHP, Invisible: p.noMobTarget.Load()})
+	}
+	return snaps
 }
 
 // queueMobAttack hands a mob's attack to its target, or for an area mob

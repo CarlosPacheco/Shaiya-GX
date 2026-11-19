@@ -74,6 +74,12 @@ func (r *remotePosition) updateNPC(e *game.Entity, now float64, def sdata.NPC) r
 		if def.MoveDistance > 0 && def.MoveSpeed > 0 {
 			speed = float32(def.MoveDistance) * 1000 / float32(def.MoveSpeed)
 		}
+		if e.Motion == 1 {
+			speed *= 4
+			if def.MoveDistance <= 0 || def.MoveSpeed <= 0 {
+				speed = 8
+			}
+		}
 		r.from, r.to, r.start = r.pos, target, now
 		r.duration = float64(delta.Len() / max(speed, .1))
 		if r.duration == 0 {

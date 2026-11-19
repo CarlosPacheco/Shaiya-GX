@@ -40,6 +40,7 @@ type pendingTeleport struct {
 }
 
 type pendingDamage struct {
+	Guard       *npcGuardStrike
 	SkillID     uint16
 	MobGlobalID uint32
 	MobID       uint16

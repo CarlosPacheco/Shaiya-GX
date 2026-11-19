@@ -35,6 +35,7 @@ gaps; **invented** is still a GX Server rule to replace.
 | Attack range and speed | `CUser::EnableAttackRange`, `g_ConstUserAttackSpeed` 0x005424e0 | done: weapon reach + mob size + 2.3 + movement allowance (taken as its 2-unit floor); swing index moved by gems, passives and buffs |
 | Visibility | `CZone::EnterUser` / `MoveUserLocal` 0x00416370 / `MoveMob` 0x004169d0 / `SendMoveUser` 0x0041f350 / `SendMoveMob` 0x0041f860 / `SendCellInfoView`, `CCell::SendCellInfoEnter/Leave`, `CZone::PSendView` | done: 40-unit cells kept while inside the 60-unit view window (no flip-flop on borders), 5x5 cell view for users, mobs, NPCs, map items and other users; enter/leave only on cell changes, for both sides (0x0201/0x0202 users, 0x0601/0x0602, 0x0E01/0x0E02, 0x0401/0x0402); moves to the 5x5 view; combat and effects to 60 units; mob corpses leave 5 s after death (`CZone::UpdateMobDeath`). Before this GX Server used circles, re-sent mobs at every border crossing, never sent 0x0202 and sent every map item on entry |
 | NPC patrol | `CNpc::UpdateMove` 0x004bbeb0, `NpcQuest.SData` MoveDistance/MoveSpeed | done: steps of MoveDistance every MoveSpeed ms (16 units / 8 s in EP4.5 data), points walked forward then back, rest rand(10 s) + MoveSpeed + 10 s at each point |
+| NPC guards | `CNpc::UpdateGuard` 0x004bc0a0, `FindTarget` 0x004bc180, `Chase` 0x004bca00 | Type 8 pursues enemies, detects stealth and uses the original guard attack packets |
 | Skill learning | `CUser::LearnSkill` 0x004842e0, `EnableLearnSkill` 0x00484080 | done: levels 1-3, new skills at level 1 and known ones to any higher level, errors 1 points / 2 level / 3 otherwise, Country by family, job, growth mode (easy only Grow 0, normal up to 1, hard all but 3), TypeShow 0 hidden; no prerequisite skill (GX Server's PrevSkillID check was invented) |
 | Mounts | `CUser::PacketMaininterface` 0x00468420, `UpdateRebirth` 0x0048d240, `SendShapeVehicle2` 0x00482660; native client 0x004caae0 / 0x0057ace0; Phoenix seat catalog | implemented with GX metadata: fixed 2-second native cast bar/Town Portal effect, retained ReqIg cooldown, absolute tiers 4/5, explicit racial MON index and seat count, validated two-rider invitations, jump departure and MON bone effects. Normal damage cancels preparation without dismounting established riders; hard CC/death/map departure detach them. See [mounts](../../docs/mounts.md) for fields, external bones.ini and migration. |
 | Mob gold pickup | `ItemGet` 0x0045d2e0 | done: mob gold gets ability 44 percent, +20 White Tiger, +50 Red Phoenix |
@@ -76,6 +77,25 @@ gaps; **invented** is still a GX Server rule to replace.
 | Party dungeons | `CUser::PacketMaininterface` 0x020A, `CMap::IsPartyInsZoneOpenTime` 0x00429020, `CWorld::FindPartyInsZone` 0x00414430, `GetZoneByMapID` (CreateType P) | done: a portal to a P map (64-66) is refused with 0x020A (portal, result) outside its CreateTime slots (9), without a party (4), when the party's instance holds EnterMaxUser (11) or the party has fewer than CreateMinUser members (10); otherwise the party gets its own instance, created on the first entry |
 | Guild ranking battle and ranking | `CMap::IsGuildRankMapOpenTime` 0x00428d20, `GetGuildRankNotices` 0x00428eb0, `CUser::ZoneEnterUserMove`, `CMob::ItemDrop` -> `CGuild::SendRankingZone` 0x0042c6e0, `CZone::UpdateCloseGuildRanking`, `CWorldSendThread::Run`, `CGuildMgr::UpdateGuildPointRank` 0x00432b70, usp_Save_GuildInfo_E2 | done: CreateType R maps (map 50, Sunday 21:00 for 1 hour) open per CreateTime (two slots, past-midnight wrap); notices 0x0D26 (map, start hour at 30/10 minutes before, 100 open, 101/102 ten/one minute before the close); each guild enters its own instance during the battle (no guild or closed: the move fails), every entry counted; Money1 0 / Money2 > 0 mobs give Money2 points to the killer's guild instead of gold, 0x0D27 (guild points, country best and its guild) to the members inside; at the close everyone goes to the bind point and empty instances are removed; 30 minutes later each guild's value is points + min(25 x entries + duel bonus, points / 2), each country ranks its guilds with a value (equal values keep the first, as the original map insert), top 30 ranked 1-30 and the rest 31, stored with usp_Save_GuildInfo_E2 and sent per country (0x0D37). Not modelled: the duel bonus (no guild duels yet) and the house keep-etin settlement |
 | Guilds (rest) | house, NPC upgrades, etin | missing |
+
+## NPC guards and patrol
+
+The EP4.5 server uses NPC type 8 for guards. `CNpc::FindTarget` checks a
+20-unit acquisition radius and a 30-unit limit from the current route point.
+`Chase` uses one quarter of the patrol movement interval. Both attack paths
+pass 2 to the chase routine, which adds 1 to establish the 3-unit contact
+range. `ReturnHome` rejoins the current route point within 1.5 units.
+The original attack packets are 0x0E05 for players and 0x0E06 for mobs.
+The death source type is 3.
+
+GX keeps the NPC and mob factions from their existing definitions. It
+prioritizes enemy players and otherwise selects a nearby hostile or neutral
+mob. A neutral guard follows the native faction comparison. The guard kills
+on contact, including when the victim is stealthed or protected, and never
+awards player kill credit. Route steps respect the map walkability mask and
+interpolate height toward authored patrol points. Pursuit and return use the
+GX map navigation geometry where available. GX revalidates contact in the
+player session before applying a queued strike.
 
 ## Spin combinations and Stinger
 

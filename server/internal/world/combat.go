@@ -186,6 +186,9 @@ func (s *Session) resolveMobDamage(r *MobDamageResult) bool {
 // killed. Slot attacks with a skill (Attacktype = a level-100 Skills row)
 // go through CMob::AttackUser(skill); others are CMob::Attack.
 func (s *Session) applyIncomingMobDamage(d pendingDamage) bool {
+	if d.Guard != nil {
+		return s.applyGuardStrike(*d.Guard)
+	}
 	if s.invulnerable() || (s.player != nil && d.First && s.player.noMobTarget.Load()) {
 		return false
 	}

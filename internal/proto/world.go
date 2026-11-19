@@ -341,6 +341,18 @@ func DecodeNpcMove(p []byte) (n NpcMotion, err error) {
 	return n, r.Err()
 }
 
+type NpcAttack struct {
+	Result         uint8
+	Source, Target uint32
+	HP             uint16
+}
+
+func DecodeNpcAttack(p []byte) (a NpcAttack, err error) {
+	r := NewReader(p)
+	a.Result, a.Source, a.Target, a.HP = r.U8(), r.U32(), r.U32(), r.U16()
+	return a, r.Err()
+}
+
 // ChatByID is 0x1101-style (sender id + text); ChatByName is the
 // 0x1102/0x1107 shape (name[21] + text).
 type Chat struct {

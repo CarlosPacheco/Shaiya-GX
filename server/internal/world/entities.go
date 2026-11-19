@@ -44,6 +44,9 @@ type MapNpc struct {
 	hasCell          bool
 	backward         bool      // walking the patrol points back
 	nextMoveAt       time.Time // CNpc +0x4c
+	guardReady       time.Time
+	guardTarget      guardTarget
+	guardReturning   bool
 }
 
 type MobArea struct{ LowerX, LowerZ, UpperX, UpperZ float32 }
@@ -186,6 +189,7 @@ type MapEntities struct {
 }
 
 type mapShard struct {
+	guardClaims      map[guardTarget]time.Time
 	items            map[uint32]*mapItemEntry
 	lua              *ai.VM
 	aiCommands       []mobAICommand
@@ -572,37 +576,8 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 	return out
 }
 
-// TickNpcPatrol is CNpc::UpdateMove for patrolling NPCs near viewers:
-// every MoveSpeed ms an NPC steps MoveDistance toward its next patrol
-// point; on reaching it, it walks the points forward then back and rests
-// rand(10 s) + MoveSpeed + 10 s. NPCs in use by a player stand still.
-func TickNpcPatrol(viewersByMap map[uint16][][2]float32, maxPerMap int) []entityMove {
-	var out []entityMove
-	now := time.Now()
-	for mapID, viewers := range viewersByMap {
-		s := shard(mapID)
-		s.mu.Lock()
-		buckets := bucketViewers(viewers)
-		moved := 0
-		for i := range s.entities.NPCs {
-			if moved >= maxPerMap {
-				break
-			}
-			n := &s.entities.NPCs[i]
-			if len(n.patrol) <= 1 || now.Before(n.nextMoveAt) || !buckets.nearAny(n.PosX, n.PosZ, ViewportRadius) || npcInUse(n.ID) {
-				continue
-			}
-			if n.stepPatrol(now) {
-				moved++
-				out = append(out, n.relocate(mapID))
-			}
-		}
-		s.mu.Unlock()
-	}
-	return out
-}
-
-func (n *MapNpc) stepPatrol(now time.Time) bool {
+// CNpc::UpdateMove pauses at each waypoint and reverses at route endpoints.
+func (n *MapNpc) stepPatrol(now time.Time, mapID uint16) bool {
 	def := findNpcDef(n.Type, n.TypeID)
 	if def == nil || def.MoveDistance <= 0 {
 		n.nextMoveAt = now.Add(time.Minute)
@@ -610,10 +585,14 @@ func (n *MapNpc) stepPatrol(now time.Time) bool {
 	}
 	interval := time.Duration(max(def.MoveSpeed, 0)) * time.Millisecond
 	p := n.patrol[n.patrolIndex]
-	dx, dz := p.X-float32(math.Round(float64(n.PosX))), p.Z-float32(math.Round(float64(n.PosZ)))
+	dx, dz := p.X-n.PosX, p.Z-n.PosZ
 	dist := float32(math.Hypot(float64(dx), float64(dz)))
 	step := float32(def.MoveDistance)
 	if dist <= step {
+		if !IsMapWalkable(mapID, p.X, p.Z) {
+			n.nextMoveAt = now.Add(interval + 10*time.Second)
+			return false
+		}
 		n.PosX, n.PosY, n.PosZ, n.Angle = p.X, p.Y, p.Z, p.Angle
 		if n.backward {
 			n.patrolIndex--
@@ -629,9 +608,14 @@ func (n *MapNpc) stepPatrol(now time.Time) bool {
 		n.nextMoveAt = now.Add(time.Duration(rand.IntN(10000))*time.Millisecond + interval + 10*time.Second)
 		return true
 	}
-	n.PosX += dx / dist * step
-	n.PosZ += dz / dist * step
 	n.nextMoveAt = now.Add(interval)
+	x, z := n.PosX+dx/dist*step, n.PosZ+dz/dist*step
+	if !IsMapWalkable(mapID, x, z) {
+		return false
+	}
+	n.Angle = npcDirection(dx, dz)
+	n.PosX, n.PosZ = x, z
+	n.PosY += (p.Y - n.PosY) / dist * step
 	return true
 }
 
@@ -706,11 +690,11 @@ func (m *MapMob) relocate(mapID uint16, motion uint8) entityMove {
 		Changed: fresh || from != m.cell, Move: buildMobMove(m, motion), Enter: buildMobEnter(m, false)}
 }
 
-func (n *MapNpc) relocate(mapID uint16) entityMove {
+func (n *MapNpc) relocate(mapID uint16, motion uint8) entityMove {
 	from, fresh := n.cell, !n.hasCell
 	n.cell, n.hasCell = cellAfterMove(n.cell, n.hasCell, n.PosX, n.PosZ), true
 	return entityMove{MapID: mapID, Kind: viewNpc, ID: n.ID, From: from, To: n.cell, Fresh: fresh,
-		Changed: fresh || from != n.cell, Move: buildNpcMove(n, 0), Enter: buildNpcEnter(n)}
+		Changed: fresh || from != n.cell, Move: buildNpcMove(n, motion), Enter: buildNpcEnter(n)}
 }
 
 // mobCorpseDelay is CMob::Damage's death tick: the corpse stays 5 s.
@@ -1490,9 +1474,13 @@ func buildCharacterReviveHitpoints(characterID, hp, mp, sp uint32) []byte {
 }
 
 func buildMobDeath(mobID, killerID uint32) []byte {
+	return buildMobDeathBy(mobID, killerID, 1)
+}
+
+func buildMobDeathBy(mobID, killerID uint32, deathType uint8) []byte {
 	w := packet.New(packet.MobDeath)
 	w.U32(mobID)
-	w.U8(1)
+	w.U8(deathType)
 	w.U32(killerID)
 	return w.MustFinish()
 }

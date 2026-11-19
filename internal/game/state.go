@@ -65,6 +65,8 @@ type Entity struct {
 	ID                           uint32
 	TypeID                       uint16 // mob id or npc type id
 	NpcType                      uint8
+	NpcAttackTarget              uint32
+	NpcAttackSerial              uint64
 	X, Y, Z                      float32
 	Motion                       uint8
 	MoveSerial                   uint64
@@ -1433,6 +1435,15 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		if e := s.Entities[n.ID]; e != nil && e.Kind == KindNpc {
 			e.Motion, e.X, e.Y, e.Z = n.Motion, n.X, n.Y, n.Z
 			e.MoveSerial++
+		}
+	case proto.MapNpcAttackPlayer, proto.MapNpcAttackMob:
+		hit, err := proto.DecodeNpcAttack(p)
+		if err != nil {
+			return fail(err)
+		}
+		if e := s.Entities[hit.Source]; e != nil && e.Kind == KindNpc {
+			e.NpcAttackTarget = hit.Target
+			e.NpcAttackSerial++
 		}
 	case proto.MobSpeechText, proto.MobSpeechIndex:
 		c, err := proto.DecodeMobSpeech(p)

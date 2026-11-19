@@ -674,3 +674,22 @@ func TestAuthoritativeMobZeroHPMarksDeath(t *testing.T) {
 		t.Fatal("script-driven death did not reach client")
 	}
 }
+
+func TestGuardAttacksRetainNpcTargetForAnimation(t *testing.T) {
+	s := New()
+	const guard, target = 9, 17
+	s.Entities[guard] = &Entity{Kind: KindNpc, ID: guard}
+	for _, op := range []proto.Opcode{proto.MapNpcAttackPlayer, proto.MapNpcAttackMob} {
+		w := proto.NewWriter(op)
+		w.U8(1)
+		w.U32(guard)
+		w.U32(target)
+		w.U16(123)
+		if _, err := s.Apply(w.Bytes()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got := s.Entities[guard]; got.NpcAttackSerial != 2 || got.NpcAttackTarget != target {
+		t.Fatal("missing NPC attack presentation", got)
+	}
+}

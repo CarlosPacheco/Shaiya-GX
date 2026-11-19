@@ -93,6 +93,8 @@ const (
 	MapNpcEnter               Opcode = 0x0E01
 	MapNpcLeave               Opcode = 0x0E02
 	MapNpcMove                Opcode = 0x0E03
+	MapNpcAttackPlayer        Opcode = 0x0E05
+	MapNpcAttackMob           Opcode = 0x0E06
 	UseItem                   Opcode = 0x050A
 	CharacterMaxEnergy        Opcode = 0x050B
 	SkillUsedSpMp             Opcode = 0x050C

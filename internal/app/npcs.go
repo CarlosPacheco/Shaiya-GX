@@ -21,6 +21,7 @@ type npcActor struct {
 	entity       *game.Entity
 	position     remotePosition
 	facing       render.V3
+	attackSerial uint64
 }
 
 func (a *App) npcPortrait(def sdata.NPC) *render.Texture {
@@ -104,10 +105,23 @@ func (a *App) prepareNPCs() {
 		if initialized && delta.Len() > .001 {
 			cached.facing = delta.Norm()
 		}
+		if cached.attackSerial != e.NpcAttackSerial {
+			cached.attackSerial = e.NpcAttackSerial
+			if target := a.state.Entities[e.NpcAttackTarget]; target != nil {
+				dir := render.V3{target.X - pos[0], 0, target.Z - pos[2]}
+				if dir.Len() > .001 {
+					cached.facing = dir.Norm()
+				}
+			}
+			cached.actor.PlayOnce(cached.actor.AttackAction(0))
+		}
 		cached.actor.World = render.Basis(pos, cached.facing.Scale(-1), render.V3{0, 1, 0})
 		action := 6
 		if initialized && delta.Len() > .001 {
 			action = 0
+			if e.Motion == 1 {
+				action = 1
+			}
 		}
 		if err := cached.actor.SetAction(action); err != nil {
 			a.assets.Missing[err.Error()] = true
