@@ -46,10 +46,14 @@ type GameMenu struct {
 	ok, cancel, reset          Button
 	slider, check              *render.Texture
 	help                       *menuHelp
-	dragSlider                 int
-	pressedCheck               *bool
-	Settings                   ClientSettings
-	original                   ClientSettings
+	// CharSelect is the character-select variant of the options window
+	// (Game.exe state 3 of 0x4fbbb0/0x4f9bf0): docked at the top right, and a
+	// frameless main page with only Graphics, Sound and User buttons.
+	CharSelect   bool
+	dragSlider   int
+	pressedCheck *bool
+	Settings     ClientSettings
+	original     ClientSettings
 }
 
 // Only settings with a runtime consumer are editable. Other original controls
@@ -139,6 +143,9 @@ func (m *GameMenu) Size() (int, int) {
 
 func (m *GameMenu) Origin(w, h int) (int, int) {
 	width, height := m.Size()
+	if m.CharSelect {
+		return w - width - 5, 10
+	}
 	return m.Position.Origin(w, h, width, height, (w-width)/2, (h-height)/2)
 }
 
@@ -214,6 +221,10 @@ func (m *GameMenu) controls(w, h int) (int, int, int, int) {
 	m.reset.Disabled = m.Page == MenuKeys || m.Page == MenuExtraKeys
 	for i := range m.buttons {
 		m.buttons[i].OriginX, m.buttons[i].OriginY = x, y
+		m.buttons[i].OffX, m.buttons[i].OffY = 64, 77+32*i
+		if m.CharSelect && i < 3 {
+			m.buttons[i].OffX, m.buttons[i].OffY = 64+0x19, 0x11+32*i
+		}
 	}
 	return x, y, width, height
 }
@@ -234,6 +245,18 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 	if in.Pressed {
 		m.pressedCheck = nil
 		m.dragSlider = -1
+	}
+	if m.CharSelect && m.Page == MenuMain {
+		if in.HasKey(platform.KeyEscape) {
+			return MenuClose
+		}
+		for i := 0; i < 3; i++ {
+			if m.buttons[i].Update(in) {
+				m.Open(MenuPage(i + 1))
+				return MenuNone
+			}
+		}
+		return MenuNone
 	}
 	if m.close.Update(in) || in.HasKey(platform.KeyEscape) {
 		if m.Page != MenuMain {
@@ -390,6 +413,12 @@ func (m *GameMenu) checks() []menuCheck {
 
 func (m *GameMenu) Draw(s *render.Sprites, f *Font, w, h int, solid ...*render.Texture) {
 	x, y, width, height := m.controls(w, h)
+	if m.CharSelect && m.Page == MenuMain {
+		for i := 0; i < 3; i++ {
+			m.buttons[i].Draw(s)
+		}
+		return
+	}
 	tex := m.frames[m.Page]
 	if tex != nil {
 		s.Draw(tex, float32(x), float32(y), float32(width), float32(height), 0, 0, float32(width)/float32(tex.W), float32(height)/float32(tex.H), white)

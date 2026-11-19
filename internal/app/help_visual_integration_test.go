@@ -45,6 +45,24 @@ func TestHelpPageGL(t *testing.T) {
 	if dir == "" {
 		dir = t.TempDir()
 	}
+	a.screen = screenCharacters
+	a.openGameMenu()
+	for _, name := range []string{"charselect-options-main", "charselect-options-sound"} {
+		if name == "charselect-options-sound" {
+			a.gameMenu.Open(ui.MenuSound)
+		}
+		gl.Viewport(0, 0, 1024, 768)
+		gl.ClearColor(.2, .25, .3, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		a.sprites.Begin(1024, 768)
+		a.gameMenu.Draw(a.sprites, a.font, 1024, 768, a.white)
+		a.sprites.End()
+		if err := render.SavePNG(filepath.Join(dir, name+".png"), 1024, 768); err != nil {
+			t.Fatal(err)
+		}
+	}
+	a.screen = screenWorld
+	a.openGameMenu()
 	a.gameMenu.Open(ui.MenuHelp)
 	for _, step := range []struct {
 		name       string

@@ -26,6 +26,7 @@ func (a *App) openGameMenu() {
 		a.menuConfirm.Visible = false
 	}
 	a.menuIntent = ui.MenuNone
+	a.gameMenu.CharSelect = a.screen != screenWorld
 	a.gameMenu.Open(ui.MenuMain)
 	a.tooltip = nil
 }
@@ -122,7 +123,7 @@ func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 		a.updateWindowDrag(in, w, h)
 		return
 	}
-	if in.Pressed && in.MouseX >= x+8 && in.MouseX < x+width-30 && in.MouseY >= y+5 && in.MouseY < y+30 {
+	if !a.gameMenu.CharSelect && in.Pressed && in.MouseX >= x+8 && in.MouseX < x+width-30 && in.MouseY >= y+5 && in.MouseY < y+30 {
 		a.windowDrag = windowDrag{position: &a.gameMenu.Position, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: width, height: height}
 		return
 	}
