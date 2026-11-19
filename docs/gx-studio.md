@@ -16,6 +16,7 @@ the exact SData field and SQLite column under each readable field name.
 | World Drops | | `PS_GameDefs_WorldDrops` |
 | Item Boxes | | `PS_GameDefs_ItemBoxes` / `PS_GameDefs_ItemBoxRewards` |
 | NPCs and Quests | `Npc/NpcQuest.SData` | NPC and quest tables in `PS_GameDefs` |
+| Map Rules | | `PS_GameDefs_MapProperties` / `PS_GameDefs_CharacterStartPositions` |
 
 ## Build
 
@@ -134,6 +135,22 @@ and preserves the client's encryption. Dialogues, descriptions, journal text
 and destination labels are stored only in the client file. NPC and quest
 lookup rows remain fixed. A save takes both backups before replacing either
 catalog. Stop GX World and the client while editing and restart both after saving.
+
+## Map Rules
+
+Open **Map Rules** with the server SQLite database. **Map properties**
+contains the level range, instance rules, faction rebirth destinations,
+schedules, weather and three map curse slots. **Character starts** edits
+the four race birth locations, also used when a character has no eligible
+rebirth point or must leave a level-restricted map. Blank rebirth and
+schedule blocks are stored as NULL. Map modifiers are reserved.
+
+A zero minimum or maximum removes that side of the level restriction.
+Weather uses 0 for clear, 1 for rain and 2 for snow. Weather events last ten
+minutes. A zero interval starts an event every 60 minutes of world uptime.
+A nonzero curse references the skill's level-1 persistent buff or debuff.
+The effect is removed on leaving the map. Save creates a verified SQLite
+backup. Restart GX World to apply the changes.
 
 ## Backups and recovery
 

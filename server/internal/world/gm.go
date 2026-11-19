@@ -73,6 +73,8 @@ func (s *Session) handleGMCommand(text string) bool {
 	}
 	var err error
 	switch command {
+	case "/weather":
+		err = s.gmWeather(args)
 	case "/set":
 		err = s.gmSet(args)
 	case "/turbo":

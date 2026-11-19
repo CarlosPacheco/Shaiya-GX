@@ -107,20 +107,24 @@ type Session struct {
 	lastActionAt     time.Time
 	attackMoveUntil  time.Time
 
-	positionDirty    bool
-	lastPositionSave time.Time
-	lastRegenAt      time.Time
-	lastQuestCheck   time.Time
-	usingNpc         uint32
-	quests           []*activeQuest
-	finishedQuests   []db.FinishedQuest
-	regenMode        int // CUser +0x1274: 0 sitting, 1 standing, 2 in combat (next tick's recovery)
-	lastCombatAt     time.Time
-	teleportStone    db.Item
-	teleportCast     *teleportStoneCast
-	summonCastEnd    time.Time
-	shoutReadyAt     time.Time // 0x1107 cooldown (CUser +0x5848)
-	returnAt         time.Time // 0x0556 pending move (CUser +0x581c, type 0)
+	positionDirty        bool
+	lastPositionSave     time.Time
+	lastRegenAt          time.Time
+	lastQuestCheck       time.Time
+	lastWeather          uint8
+	weatherOverride      uint8
+	weatherOverrideUntil time.Time
+	weatherCheck         time.Time
+	usingNpc             uint32
+	quests               []*activeQuest
+	finishedQuests       []db.FinishedQuest
+	regenMode            int // CUser +0x1274: 0 sitting, 1 standing, 2 in combat (next tick's recovery)
+	lastCombatAt         time.Time
+	teleportStone        db.Item
+	teleportCast         *teleportStoneCast
+	summonCastEnd        time.Time
+	shoutReadyAt         time.Time // 0x1107 cooldown (CUser +0x5848)
+	returnAt             time.Time // 0x0556 pending move (CUser +0x581c, type 0)
 }
 
 func acquireAccount(uid uint32, id int64) bool {
@@ -296,6 +300,19 @@ func (s *Session) equipment() EquipmentStats {
 	e = addBuffs(e, s.buffs)
 	applyKCStatus(&e, s.faction)
 	e.AttackAttr, e.DefenseAttr = s.elements.attack, s.elements.defense
+	for _, b := range s.buffs {
+		if !b.MapCurse {
+			continue
+		}
+		switch {
+		case b.Effect == typeEffectBuff && b.Detail == 94 && b.Attr < 9:
+			e.AttackAttr = b.Attr
+		case b.Effect == typeEffectBuff && b.Detail == 95:
+			e.DefenseAttr = b.Attr
+		case b.Effect == typeEffectDebuff && b.Detail == 68:
+			e.DefenseAttr = 0
+		}
+	}
 	if s.player != nil {
 		s.player.UpdateElements(e.AttackAttr, e.DefenseAttr)
 	}
@@ -426,6 +443,7 @@ func (s *Session) tick(idle bool) {
 	if s.char == nil {
 		return
 	}
+	s.updateWeather(time.Now(), false)
 	s.syncPlayerSpeed(false)
 	s.publishPlayerEffects()
 	s.tickTargetEffects(time.Now())
@@ -722,10 +740,14 @@ func (s *Session) selectCharacter(id uint32) {
 		return
 	}
 	normalize(&ch)
+	originalMap := ch.MapID
 	// Instanced maps are not kept across sessions: a character saved in
 	// one starts at that map's bind point.
-	if mapCreateType(ch.MapID) != "" {
-		ch.MapID, ch.PosX, ch.PosY, ch.PosZ = bindPosition(ch.MapID, s.faction, ch.PosX, ch.PosY, ch.PosZ)
+	if !s.canEnterMap(ch.MapID, ch.Level) {
+		p := birthPosition(&ch)
+		ch.MapID, ch.PosX, ch.PosY, ch.PosZ = p.MapID, p.X, p.Y, p.Z
+	} else if mapCreateType(ch.MapID) != "" {
+		ch.MapID, ch.PosX, ch.PosY, ch.PosZ = s.respawnDestination(&ch)
 	}
 	s.char = &ch
 	s.log.SetTag(strings.SplitN(s.log.Tag(), "/", 3)[0] + "/" + s.account.UserID + "/" + ch.Name)
@@ -785,6 +807,7 @@ func (s *Session) selectCharacter(id uint32) {
 	}
 	s.mounted, s.dead, s.cast, s.autoAttack = false, false, nil, false
 	s.lastRegenAt, s.regenMode = time.Now(), 1 // InitEquipment
+	s.refreshMapCurses(false)
 	st := s.stats()
 	s.log.Printf("GX Server World selected character id=%d items=%d skills=%d buffs=%d hp=%d/%d", id, len(s.items), len(s.skills), len(s.buffs), st.CurrentHP, st.MaxHP)
 	if err := s.initPlayerMovement(time.Now()); err != nil {
@@ -792,6 +815,12 @@ func (s *Session) selectCharacter(id uint32) {
 		s.char = nil
 		s.send(buildCharResult(packet.SelectCharacter, false, id), "collision resources unavailable")
 		return
+	}
+	if originalMap != ch.MapID {
+		if err := db.SaveCharacter(&ch); err != nil {
+			failed("relocate character", err)
+			return
+		}
 	}
 	s.awaitingMapLoad = true
 	s.send(buildCharResult(packet.SelectCharacter, true, id), "0x0104 select character ok")
@@ -889,6 +918,7 @@ func (s *Session) handleMapLoaded() {
 	s.send(s.player.visibilityPacket(), "GX visibility")
 	s.send(buildVehicleState(s.player.vehicleState()), "GX own vehicle state")
 	s.sendRelicList()
+	s.updateWeather(time.Now(), true)
 	// CZone::EnterUser + SendCellInfoView: the 5x5 cells around the user.
 	s.placeView()
 	s.syncQuestNPCCatalog(true)
@@ -939,5 +969,7 @@ func (s *Session) handleLogout() {
 	s.items, s.skills, s.quickSlots, s.stored, s.points = nil, nil, nil, nil, 0
 	s.send(buildLeaveWorldAck(id), "0x0107 leave world ack")
 	s.expanded = false
+	s.weatherOverrideUntil = time.Time{}
+	s.weatherCheck = time.Time{}
 	s.sendCharacterSelect()
 }

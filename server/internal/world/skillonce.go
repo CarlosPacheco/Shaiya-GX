@@ -178,11 +178,9 @@ func (s *Session) skillOnce(k db.CharacterSkill, def *db.SkillDef, target uint32
 			return
 		}
 		result(skillResultNormal, 0)
-		if m, x, y, z, ok := bindPositionFound(ch.MapID, s.faction, ch.PosX, ch.PosY, ch.PosZ); ok {
-			// SkillOnce sets the move position (type 1) due now; the next
-			// update (UpdateResetPosition) moves the user.
-			s.player.QueueTeleport(m, x, y, z)
-		}
+		m, x, y, z := s.respawnDestination(ch)
+		// UpdateResetPosition moves the user on the next tick.
+		s.player.QueueTeleport(m, x, y, z)
 	default:
 		s.log.Printf("GX Server World skill once with unknown type %d skill_id=%d", def.TypeDetail, k.SkillID)
 	}

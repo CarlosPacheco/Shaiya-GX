@@ -10,6 +10,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/blessingrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/itemboxes"
+	"github.com/Spelunkern/Shaiya-GX/internal/maprules"
 	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
 	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
 	"github.com/Spelunkern/Shaiya-GX/internal/worlddrops"
@@ -76,6 +77,7 @@ var migrations = []migration{
 	{15, "world_drops", worlddrops.MigrationSQL},
 	{16, "item_boxes", itemboxes.MigrationSQL},
 	{17, "npc_quest", npcquest.MigrationSQL},
+	{18, "map_properties", maprules.MigrationSQL},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

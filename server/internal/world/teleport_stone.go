@@ -87,7 +87,7 @@ func teleportStoneField(mapID uint16) bool {
 }
 
 func (s *Session) teleportStoneMapAllowed(target uint16) bool {
-	if !teleportStoneField(target) {
+	if !teleportStoneField(target) || !s.canEnterMap(target, s.char.Level) {
 		return false
 	}
 	// A portal-gated field must still have an eligible entrance. A point
@@ -104,7 +104,7 @@ func (s *Session) teleportStoneMapAllowed(target uint16) bool {
 				continue
 			}
 			hasEntrance = true
-			if p.IsOpen() && p.AllowsFaction(s.faction) && p.AllowsLevel(s.char.Level) {
+			if p.IsOpen() && p.AllowsFaction(s.faction) && (s.isAdmin || p.AllowsLevel(s.char.Level)) {
 				sh.mu.Unlock()
 				return true
 			}

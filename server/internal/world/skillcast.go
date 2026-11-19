@@ -22,6 +22,7 @@ const (
 // and/or a heal-over-time.
 type ActiveBuff struct {
 	ID                     uint32
+	MapCurse               bool
 	SkillID                uint16
 	SkillLevel             uint8
 	EndsAt                 time.Time
@@ -99,7 +100,11 @@ func buildCharacterActiveBuffs(buffs []ActiveBuff) []byte {
 		w.U32(b.ID)
 		w.U16(b.SkillID)
 		w.U8(b.SkillLevel)
-		w.U32(uint32(max(time.Until(b.EndsAt), 0) / time.Second))
+		if b.MapCurse {
+			w.U32(0)
+		} else {
+			w.U32(uint32(max(time.Until(b.EndsAt), 0) / time.Second))
+		}
 	}
 	return w.MustFinish()
 }
@@ -394,7 +399,7 @@ func (s *Session) processBuffs() {
 	}
 	for i := range s.buffs {
 		b := &s.buffs[i]
-		expiring := !b.EndsAt.After(now)
+		expiring := !b.MapCurse && !b.EndsAt.After(now)
 		hasHeal := b.HealHP+b.HealSP+b.HealMP > 0
 		due := !b.nextTickAt.IsZero() && !b.nextTickAt.After(now)
 		if hasHeal && (due || expiring) {
@@ -431,6 +436,9 @@ func (s *Session) persistBuffs() {
 	}
 	var rows []db.AppliedBuff
 	for _, b := range s.buffs {
+		if b.MapCurse {
+			continue
+		}
 		rows = append(rows, db.AppliedBuff{SkillID: b.SkillID, Level: b.SkillLevel, LeftSeconds: uint32(max(time.Until(b.EndsAt), 0) / time.Second)})
 	}
 	if err := db.SaveAppliedBuffs(s.char.ID, rows); err != nil {

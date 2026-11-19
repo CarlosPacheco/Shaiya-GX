@@ -257,7 +257,7 @@ func (s *Session) handleGatekeeper(p []byte) {
 		fail("empty destination")
 		return
 	}
-	if ch.Money < g.Money || !hasGrid(g.MapID) {
+	if !s.canEnterMap(g.MapID, ch.Level) || ch.Money < g.Money || !hasGrid(g.MapID) {
 		fail("no gold or unknown map")
 		return
 	}

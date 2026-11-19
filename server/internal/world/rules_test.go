@@ -82,8 +82,8 @@ func TestBindPosition(t *testing.T) {
 		{Faction: 2, Boxes: []SpawnBox{{100, 10, 100, 110, 12, 104}}},
 		{Faction: 2, Boxes: []SpawnBox{{900, 10, 900, 910, 12, 904}}},
 	}})
-	if _, x, _, _ := bindPosition(furyOnly, FactionLight, 900, 0, 900); x < 100 || x >= 110 {
-		t.Fatalf("no admitted group should fall back to group 0, x %v", x)
+	if _, _, _, _, ok := bindPositionFound(furyOnly, FactionLight, 900, 0, 900); ok {
+		t.Fatal("the opposing faction's spawn area was admitted")
 	}
 }
 

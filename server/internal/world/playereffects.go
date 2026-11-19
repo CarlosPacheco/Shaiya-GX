@@ -34,7 +34,7 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 	kept := s.buffs[:0]
 	refused := false
 	for _, b := range s.buffs {
-		if b.SkillID == def.SkillID && (b.SkillLevel == gemSkillLevel) == (def.SkillLevel == gemSkillLevel) {
+		if !b.MapCurse && b.SkillID == def.SkillID && (b.SkillLevel == gemSkillLevel) == (def.SkillLevel == gemSkillLevel) {
 			if def.SkillLevel <= 3 && def.SkillLevel < b.SkillLevel {
 				refused = true
 				kept = append(kept, b)
@@ -87,7 +87,7 @@ func (s *Session) canAddEffect(def *db.SkillDef, sourceUser ...uint32) bool {
 		return false
 	}
 	for _, b := range s.buffs {
-		if b.SkillID == def.SkillID && (b.SkillLevel == gemSkillLevel) == (def.SkillLevel == gemSkillLevel) && def.SkillLevel <= 3 && def.SkillLevel < b.SkillLevel {
+		if b.SkillID == def.SkillID && (b.MapCurse || (b.SkillLevel == gemSkillLevel) == (def.SkillLevel == gemSkillLevel) && def.SkillLevel <= 3 && def.SkillLevel < b.SkillLevel) {
 			return false
 		}
 	}
@@ -199,11 +199,15 @@ func (s *Session) broadcastSpeed(sp playerSpeeds) {
 // removeEffects drops the matching applied skills with 0x050E and
 // refreshes the stats and speeds.
 func (s *Session) removeEffects(match func(*ActiveBuff) bool, why string) {
+	s.removeEffectsInternal(match, why, false)
+}
+
+func (s *Session) removeEffectsInternal(match func(*ActiveBuff) bool, why string, includeMapCurses bool) {
 	before := s.speeds()
 	kept := s.buffs[:0]
 	var removed []ActiveBuff
 	for i := range s.buffs {
-		if match(&s.buffs[i]) {
+		if (includeMapCurses || !s.buffs[i].MapCurse) && match(&s.buffs[i]) {
 			removed = append(removed, s.buffs[i])
 			continue
 		}
@@ -270,7 +274,7 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 		if def == nil {
 			continue
 		}
-		expiring := !b.EndsAt.After(now)
+		expiring := !b.MapCurse && !b.EndsAt.After(now)
 		var damage [3]int32
 		switch {
 		case b.Detail == detailTimeDamage && (expiring || now.Sub(b.prevTick) >= effectTick):
@@ -348,6 +352,9 @@ func (s *Session) blocksAttack(kind int) bool {
 			return true
 		case 85:
 			if int(b.DefenceType) == kind && b.BlockLeft > 0 {
+				if b.MapCurse {
+					return true
+				}
 				b.BlockLeft--
 				if b.BlockLeft == 0 {
 					id := b.ID

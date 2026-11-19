@@ -404,9 +404,13 @@ func (s *Scene3D) EndSky() {
 
 // DrawUnlit draws texture * (1,1,1,alpha) with alpha blending.
 func (s *Scene3D) DrawUnlit(m *Mesh, t *Texture, world M4, alpha float32, uvOff [2]float32) {
+	s.DrawUnlitTint(m, t, world, [4]float32{1, 1, 1, alpha}, uvOff)
+}
+
+func (s *Scene3D) DrawUnlitTint(m *Mesh, t *Texture, world M4, tint [4]float32, uvOff [2]float32) {
 	s.setWorld(world)
 	gl.Uniform1i(s.uMode, 3)
-	gl.Uniform4f(s.uTint, 1, 1, 1, alpha)
+	gl.Uniform4f(s.uTint, tint[0], tint[1], tint[2], tint[3])
 	gl.Uniform2f(s.uUVOff, uvOff[0], uvOff[1])
 	s.blend(true)
 	bindDiffuse(t)

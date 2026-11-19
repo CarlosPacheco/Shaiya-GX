@@ -39,6 +39,7 @@ type worldView struct {
 	waterWidth, waterHeight     int
 	waterFailed                 bool
 	sunFlare                    sunFlare
+	weather                     weatherView
 	mapView                     mapView
 	mobClick                    mobClick
 	portrait                    *render.Texture
@@ -687,7 +688,12 @@ func (a *App) drawWorldView(w, h int) {
 	s.Proj = render.PerspectiveFovLH(nativeWorldFOV, aspect, 0.1, far)
 	s.SkyProj = render.PerspectiveFovLH(nativeWorldFOV, aspect, 10, 100000)
 	v.world.PrepareTerrainOcclusion(s, eye)
-	s.FogColor, s.FogStart, s.FogEnd = v.world.FogColor, v.world.FogStart*distanceScale, v.world.FogEnd*distanceScale
+	v.weather.update(a.weatherForView(), float32(a.frameDT))
+	weatherColor, weatherNear, weatherFar := v.weather.fog(v.world.FogColor, v.world.FogStart*distanceScale, v.world.FogEnd*distanceScale)
+	s.FogColor, s.FogStart, s.FogEnd = weatherColor, weatherNear, weatherFar
+	if v.weather.blend > 0 {
+		render.ClearBackground(weatherColor)
+	}
 	underwaterColor, underwater := v.world.UnderwaterFogAt(eye)
 	if underwater {
 		// Phoenix's underwater range; the original's fog curve is not yet known.
@@ -750,7 +756,7 @@ func (a *App) drawWorldView(w, h int) {
 	} else if v.waterReflection != nil && waterVisible && underwater {
 		v.world.PrepareMapEffects(s, eye)
 		fogColor, fogStart, fogEnd := s.FogColor, s.FogStart, s.FogEnd
-		s.FogColor, s.FogStart, s.FogEnd = v.world.FogColor, v.world.FogStart*distanceScale, v.world.FogEnd*distanceScale
+		s.FogColor, s.FogStart, s.FogEnd = weatherColor, weatherNear, weatherFar
 		v.waterReflection.Capture(s.FogColor, func() {
 			s.ClipPlane = [4]float32{0, 1, 0, 0}
 			s.Begin()
@@ -774,6 +780,9 @@ func (a *App) drawWorldView(w, h int) {
 		e.Draw(s)
 	}
 	v.world.RenderMapEffects(s)
+	if !underwater {
+		v.weather.draw(s, a.assets, eye)
+	}
 	s.WaterReflection = nil
 	s.WaterBelow = false
 	s.End()
@@ -784,7 +793,12 @@ func (a *App) drawWorldView(w, h int) {
 func (a *App) drawWorldContents(eye render.V3, underwater bool) {
 	v, s := a.wv, a.scene3d
 	if !underwater && v.world.Sky != nil {
-		v.world.Sky.Draw(s, eye)
+		if v.weather.blend > 0 {
+			tint, opacity := v.weather.sky()
+			v.world.Sky.DrawTinted(s, eye, tint, opacity)
+		} else {
+			v.world.Sky.Draw(s, eye)
+		}
 	}
 	v.world.Draw(s)
 	a.drawGroundItems()

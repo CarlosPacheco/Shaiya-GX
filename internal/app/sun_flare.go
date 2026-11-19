@@ -67,6 +67,10 @@ func (f *sunFlare) update(world *scene.World, eye render.V3, view, projection re
 }
 
 func (a *App) drawSunFlare(width, height int) {
+	if a.wv != nil && a.wv.weather.blend > .25 {
+		return
+	}
+
 	if a.wv == nil || a.assets == nil || a.wv.sunFlare.strength <= 0 || width <= 0 || height <= 0 {
 		return
 	}

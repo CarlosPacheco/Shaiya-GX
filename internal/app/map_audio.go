@@ -8,6 +8,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/audio"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
@@ -136,7 +137,11 @@ func (a *App) updateMapAudio() {
 			}
 		}
 	}
-	a.audioError("map ambience", a.sound.Ambience(m.targets, a.frameDT))
+	targets := m.targets
+	if w != nil && a.weatherForView() == proto.WeatherRain {
+		targets = append(targets, audio.LoopTarget{File: a.audioPath("Rain.wav", false), Gain: .6})
+	}
+	a.audioError("map ambience", a.sound.Ambience(targets, a.frameDT))
 	if w == nil {
 		return
 	}

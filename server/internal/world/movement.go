@@ -30,7 +30,7 @@ func (s *Session) usablePortal(x, y, z float32, index *uint8) (MapPortal, bool) 
 		s.log.Printf("GX Server World rejected closed portal index=%d map=%d", portal.Index, ch.MapID)
 	case !portal.AllowsFaction(s.faction):
 		s.log.Printf("GX Server World rejected portal faction index=%d map=%d faction=%d", portal.Index, ch.MapID, s.faction)
-	case !portal.AllowsLevel(ch.Level):
+	case !s.canEnterMap(portal.TargetMapID, ch.Level) || (!s.isAdmin && !portal.AllowsLevel(ch.Level)):
 		s.log.Printf("GX Server World rejected portal level index=%d map=%d level=%d", portal.Index, ch.MapID, ch.Level)
 	default:
 		return portal, true
@@ -61,6 +61,9 @@ func (s *Session) syncPlayer() {
 // resurrection): moves the character, persists it, acks the client,
 // introduces it to viewers at the destination and refreshes visibility.
 func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmDirect ...bool) {
+	if s.char == nil || !s.canEnterMap(mapID, s.char.Level) {
+		return
+	}
 	s.cancelTravelCast()
 	s.dismount()
 	s.dash = nil
@@ -115,6 +118,9 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 		s.player.SetMap(mapID)
 		s.player.UpdateCharacter(*ch)
 		s.player.UpdateMotion(0, 0)
+	}
+	if changedMap {
+		s.refreshMapCurses(true)
 	}
 	s.savePosition()
 	s.send(buildCharacterMapPosition(ch), "0x020B "+label)
@@ -280,8 +286,6 @@ func (s *Session) tickReturnToTown() {
 	if s.dead {
 		return
 	}
-	ch := s.char
-	if m, x, y, z, ok := bindPositionFound(ch.MapID, s.faction, ch.PosX, ch.PosY, ch.PosZ); ok {
-		s.applyTeleport(m, x, y, z, "return to town")
-	}
+	m, x, y, z := s.respawnDestination(s.char)
+	s.applyTeleport(m, x, y, z, "return to town")
 }

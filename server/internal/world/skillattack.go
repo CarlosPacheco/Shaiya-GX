@@ -319,7 +319,7 @@ func (s *Session) clearBuffsOnDeath() {
 	kept := s.buffs[:0]
 	var removed []uint32
 	for _, b := range s.buffs {
-		if duelDeath && b.SkillID > 200 && b.SkillLevel != 100 {
+		if b.MapCurse || (duelDeath && b.SkillID > 200 && b.SkillLevel != 100) {
 			kept = append(kept, b)
 			continue
 		}

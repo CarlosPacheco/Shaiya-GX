@@ -90,6 +90,10 @@ func (s *Sky) Update(dt float32) {
 // Draw renders behind everything, centred on the eye, with its own
 // (10, 100000) projection like the original sky pass.
 func (s *Sky) Draw(r *render.Scene3D, eye render.V3) {
+	s.DrawTinted(r, eye, render.V3{1, 1, 1}, 0x50/255.0)
+}
+
+func (s *Sky) DrawTinted(r *render.Scene3D, eye, tint render.V3, cloudOpacity float32) {
 	if s == nil {
 		return
 	}
@@ -97,7 +101,7 @@ func (s *Sky) Draw(r *render.Scene3D, eye render.V3) {
 	if s.Dome != nil && s.DomeTex != nil {
 		w := render.Identity()
 		w[12], w[13], w[14] = eye[0], eye[1], eye[2]
-		r.DrawUnlit(s.Dome, s.DomeTex, w, 1, [2]float32{})
+		r.DrawUnlitTint(s.Dome, s.DomeTex, w, [4]float32{tint[0], tint[1], tint[2], 1}, [2]float32{})
 	}
 	for i, h := range [2]float32{1000, 1100} {
 		if s.Clouds[i] == nil {
@@ -105,7 +109,7 @@ func (s *Sky) Draw(r *render.Scene3D, eye render.V3) {
 		}
 		w := render.Identity()
 		w[12], w[13], w[14] = eye[0], eye[1]+h, eye[2]
-		r.DrawUnlit(s.quad, s.Clouds[i], w, 0x50/255.0, [2]float32{s.cloudUV[i], s.cloudUV[i]})
+		r.DrawUnlitTint(s.quad, s.Clouds[i], w, [4]float32{tint[0], tint[1], tint[2], cloudOpacity}, [2]float32{s.cloudUV[i], s.cloudUV[i]})
 	}
 	r.EndSky()
 }

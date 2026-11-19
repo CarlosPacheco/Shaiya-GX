@@ -244,9 +244,8 @@ func grbCloseInstances(mapID uint16, log *logx.Logger) {
 		players := PlayersOnMap(zone)
 		for _, p := range players {
 			c := p.Snapshot()
-			if m, x, y, z, ok := bindPositionFound(zone, p.Faction(), c.PosX, c.PosY, c.PosZ); ok {
-				p.QueueTeleport(m, x, y, z)
-			}
+			m, x, y, z := characterRespawn(&c, p.Faction(), p.IsAdmin)
+			p.QueueTeleport(m, x, y, z)
 		}
 		if len(players) == 0 {
 			grbState.Lock()

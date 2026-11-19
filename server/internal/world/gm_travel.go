@@ -31,7 +31,7 @@ func (s *Session) tickForcedTeleport() {
 		return
 	}
 	f := s.player.takeForcedTeleport()
-	if f == nil || s.dead || s.char.CurrentHP == 0 {
+	if f == nil || s.dead || s.char.CurrentHP == 0 || !s.canEnterMap(f.mapID, s.char.Level) {
 		return
 	}
 	pos := f.pos
@@ -92,6 +92,9 @@ func (s *Session) gmBring(name string) error {
 	}
 	if tradeFor(p.CharacterID) != nil {
 		return fmt.Errorf("%s is trading", p.CharacterName)
+	}
+	if !mapLevelAllowed(s.char.MapID, p.Snapshot().Level, p.IsAdmin) {
+		return fmt.Errorf("%s is outside the destination's level range", p.CharacterName)
 	}
 	p.queueForcedTeleport(forcedTeleport{mapID: s.char.MapID, pos: [3]float32{s.char.PosX, s.char.PosY, s.char.PosZ}})
 	s.gmReply("GM: summoned " + p.CharacterName + ".")

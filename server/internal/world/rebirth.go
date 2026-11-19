@@ -86,20 +86,20 @@ func (s *Session) killSoul() {
 	ch := s.char
 	if ch.Mode != growUltimate || s.deathLoss < 0 {
 		lost := expDrop(ch, s.deathLoss, s.faction)
-		m, x, y, z := bindPosition(ch.MapID, s.faction, ch.PosX, ch.PosY, ch.PosZ)
+		m, x, y, z := s.respawnDestination(ch)
 		s.rebirth(m, x, y, z, rebirthKindBind, true, lost)
 		return
 	}
 	if s.hasBenefit(abilityUltimateRebirth) {
 		s.halfPools()
-		m, x, y, z := bindPosition(ch.MapID, s.faction, ch.PosX, ch.PosY, ch.PosZ)
+		m, x, y, z := s.respawnDestination(ch)
 		s.rebirth(m, x, y, z, rebirthKindBind, false, 0)
 		return
 	}
 	if i := s.findRebirthItem(false); i >= 0 {
 		s.useRebirthItem(i)
 		s.halfPools()
-		m, x, y, z := bindPosition(ch.MapID, s.faction, ch.PosX, ch.PosY, ch.PosZ)
+		m, x, y, z := s.respawnDestination(ch)
 		s.rebirth(m, x, y, z, rebirthKindBind, false, 0)
 		return
 	}
@@ -126,7 +126,7 @@ func (s *Session) killSoulByItem(here bool) {
 		s.rebirth(ch.MapID, ch.PosX, ch.PosY, ch.PosZ, rebirthKindHere, false, 0)
 		return
 	}
-	m, x, y, z := bindPosition(ch.MapID, s.faction, ch.PosX, ch.PosY, ch.PosZ)
+	m, x, y, z := s.respawnDestination(ch)
 	s.rebirth(m, x, y, z, rebirthKindBind, false, 0)
 }
 
@@ -243,6 +243,10 @@ func (s *Session) halfPools() { s.setPools(true) }
 // 0x0551 goes to the user before the zone change. 0x0505 sends the pools.
 func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore bool, lost uint32) {
 	ch := s.char
+	if !s.canEnterMap(mapID, ch.Level) {
+		birth := birthPosition(ch)
+		mapID, x, y, z = birth.MapID, birth.X, birth.Y, birth.Z
+	}
 	if mapID == ch.MapID {
 		p, ok := s.groundTrustedDestination(x, y, z)
 		if !ok {

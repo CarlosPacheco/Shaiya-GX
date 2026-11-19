@@ -1,20 +1,19 @@
 package world
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/maprules"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 	"time"
 )
-
-// The original PS_Game configuration (data/game/, copied from the EP4.5
-// server's PS_Game/Data): Map.ini (start positions, map types, rebirth
-// points). Enchantment rules come from SQLite.
 
 func gameDataDir() string { return filepath.Join(config.DataDir(), "game") }
 
@@ -41,24 +40,17 @@ type MapPos struct {
 	X, Y, Z float32
 }
 
-// parseMapPos reads "map, x, y, z"; map -1 or all-zero coordinates mean
-// "not set", as the original Map.ini documents.
-func parseMapPos(s string) (MapPos, bool) {
-	n := numbers(s)
-	if len(n) < 4 || n[0] < 0 || (n[1] == 0 && n[2] == 0 && n[3] == 0) {
-		return MapPos{}, false
-	}
-	return MapPos{uint16(n[0]), float32(n[1]), float32(n[2]), float32(n[3])}, true
-}
-
-// ZoneConfig is one Map.ini [SET_ZONE_n] entry.
+// ZoneConfig holds the runtime rules for one map.
 type ZoneConfig struct {
 	Dungeon bool // MapType D (F is a field)
-	// Rebirth applies to every faction; RebirthLight/RebirthFury
-	// (RebirthMapPos1/2) are the per-faction alternatives.
-	Rebirth, RebirthLight, RebirthFury *MapPos
-	WarType                            string
-	CreateType                         string // instanced maps (R, H, P)
+	// Rebirth destinations are configured independently for each faction.
+	RebirthLight, RebirthFury *MapPos
+	MinLevel, MaxLevel        uint16
+	WeatherType               uint8
+	WeatherFrequency          time.Duration
+	MapCurses                 [3]uint16
+	WarType                   string
+	CreateType                string // instanced maps (R, H, P)
 	// CreateTime (day of week, start hour, hours) entries, up to 7 as
 	// CMap::LoadConfig stores them (the ranking battle reads two).
 	Schedule []grbSlot
@@ -69,7 +61,7 @@ type ZoneConfig struct {
 	Expire                      time.Duration
 }
 
-// MapConfig is the parsed Map.ini.
+// MapConfig holds the map definitions and race starts loaded at boot.
 type MapConfig struct {
 	// Start is the new-character position per race (Chars.Family): human,
 	// elf, vail, deatheater.
@@ -83,54 +75,64 @@ var mapConfig = MapConfig{
 	Zones: map[uint16]ZoneConfig{},
 }
 
-func loadMapIni(log *logx.Logger) error {
-	ini, err := readIni(filepath.Join(gameDataDir(), "Map.ini"))
+func loadMapProperties(log *logx.Logger) error {
+	pool, err := db.Pool(db.GameDefs)
 	if err != nil {
 		return err
 	}
-	for i, key := range []string{"HUGAMESTARTMAPPOS", "ELGAMESTARTMAPPOS", "BAGAMESTARTMAPPOS", "DEGAMESTARTMAPPOS"} {
-		if p, ok := parseMapPos(ini["BASE"][key]); ok {
-			mapConfig.Start[i] = p
-		}
+	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	defer cancel()
+	tx, err := pool.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return err
 	}
-	defaults := ini["DEFAULT_SET_ZONE"]
-	get := func(sec map[string]string, k string) string {
-		if v, ok := sec[k]; ok {
-			return v
-		}
-		return defaults[k]
+	defer tx.Rollback()
+	c, err := maprules.Read(ctx, tx)
+	if err != nil {
+		return err
 	}
-	for name, sec := range ini {
-		if !strings.HasPrefix(name, "SET_ZONE_") {
-			continue
-		}
-		id, err := strconv.Atoi(strings.TrimPrefix(name, "SET_ZONE_"))
-		if err != nil || id < 0 || id > 65535 {
-			continue
-		}
-		z := ZoneConfig{Dungeon: strings.EqualFold(get(sec, "MAPTYPE"), "D"), WarType: get(sec, "WARTYPE"),
-			CreateType: get(sec, "CREATETYPE")}
-		z.CreateMinUser, _ = strconv.Atoi(strings.TrimSpace(get(sec, "CREATEMINUSER")))
-		z.EnterMaxUser = 30
-		if v, err := strconv.Atoi(strings.TrimSpace(get(sec, "ENTERMAXUSER"))); err == nil {
-			z.EnterMaxUser = v
-		}
-		expire, _ := strconv.Atoi(strings.TrimSpace(get(sec, "EXPIRETIME")))
-		z.Expire = time.Duration(expire)*time.Minute + 30*time.Second
-		if n := numbers(get(sec, "CREATETIME")); len(n) >= 3 {
-			for i := 0; i+2 < len(n) && len(z.Schedule) < 7; i += 3 {
-				z.Schedule = append(z.Schedule, grbSlot{Day: int(n[i]), Hour: int(n[i+1]), Hours: int(n[i+2])})
-			}
-		}
-		for key, dst := range map[string]**MapPos{"REBIRTHMAPPOS": &z.Rebirth, "REBIRTHMAPPOS1": &z.RebirthLight, "REBIRTHMAPPOS2": &z.RebirthFury} {
-			if p, ok := parseMapPos(get(sec, key)); ok {
-				*dst = &p
-			}
-		}
-		mapConfig.Zones[uint16(id)] = z
+	next, err := buildMapProperties(c)
+	if err != nil {
+		return err
 	}
-	log.Printf("GX Server World loaded Map.ini zones=%d start=%v", len(mapConfig.Zones), mapConfig.Start)
+	mapConfig = next
+	weatherStarted = time.Now()
+	log.Printf("GX Server World loaded SQLite map properties zones=%d", len(next.Zones))
 	return nil
+}
+
+func buildMapProperties(c maprules.Catalog) (MapConfig, error) {
+	config := MapConfig{Zones: make(map[uint16]ZoneConfig, len(c.Maps))}
+	point := func(r maprules.Row) *MapPos {
+		if r[0] == nil {
+			return nil
+		}
+		return &MapPos{uint16(r[0].(int64)), float32(r[1].(float64)), float32(r[2].(float64)), float32(r[3].(float64))}
+	}
+	for _, row := range c.Starts {
+		config.Start[row[0].(int64)] = *point(row[1:])
+	}
+	for _, row := range c.Maps {
+		minute := func(i int) time.Duration { return time.Duration(row[i].(int64)) * time.Minute }
+		z := ZoneConfig{Dungeon: row[1] == "D", WarType: row[2].(string), CreateType: row[3].(string),
+			MinLevel: uint16(row[4].(int64)), MaxLevel: uint16(row[5].(int64)),
+			CreateMinUser: int(row[6].(int64)), EnterMaxUser: int(row[7].(int64)), Expire: minute(8) + 30*time.Second,
+			WeatherType: uint8(row[9].(int64)), WeatherFrequency: minute(10),
+			RebirthLight: point(row[17:21]), RebirthFury: point(row[21:25])}
+		for i := range z.MapCurses {
+			z.MapCurses[i] = uint16(row[11+i].(int64))
+			if id := z.MapCurses[i]; id != 0 && mapCurseDef(db.MustDefs(), id) == nil {
+				return MapConfig{}, fmt.Errorf("map %v curse %d must reference a level 1 applied skill", row[0], id)
+			}
+		}
+		for i := 25; i < len(row); i += 3 {
+			if row[i] != nil {
+				z.Schedule = append(z.Schedule, grbSlot{Day: int(row[i].(int64)), Hour: int(row[i+1].(int64)), Hours: int(row[i+2].(int64))})
+			}
+		}
+		config.Zones[uint16(row[0].(int64))] = z
+	}
+	return config, nil
 }
 
 // LoadGameConfig loads the original PS_Game ini files from data/game/.
@@ -142,8 +144,8 @@ func LoadGameConfig(log *logx.Logger) error {
 		return err
 	}
 	log.Printf("GX Server World loaded authoritative Lua 5.5 mob AI catalog")
-	if err := loadMapIni(log); err != nil {
-		return fmt.Errorf("Map.ini: %w", err)
+	if err := loadMapProperties(log); err != nil {
+		return fmt.Errorf("map properties: %w", err)
 	}
 	if err := loadEnchantRules(log); err != nil {
 		return fmt.Errorf("enchant rules: %w", err)
@@ -165,17 +167,13 @@ func LoadGameConfig(log *logx.Logger) error {
 }
 
 // rebirthPosition is where a character of faction revives on mapID, per
-// CMap::LoadConfig: RebirthMapPos for every faction when the zone sets it,
-// otherwise RebirthMapPos1 (light) / RebirthMapPos2 (fury); ok is false
-// where the map defines none (map -1).
+// CMap::LoadConfig: Light and Fury have independent destinations.
 func rebirthPosition(mapID uint16, faction uint8) (MapPos, bool) {
 	z, found := mapConfig.Zones[realMap(mapID)]
 	if !found {
 		return MapPos{}, false
 	}
 	switch {
-	case z.Rebirth != nil:
-		return *z.Rebirth, true
 	case faction == FactionLight && z.RebirthLight != nil:
 		return *z.RebirthLight, true
 	case faction == FactionDark && z.RebirthFury != nil:
@@ -184,7 +182,7 @@ func rebirthPosition(mapID uint16, faction uint8) (MapPos, bool) {
 	return MapPos{}, false
 }
 
-// bindPosition is CMap::GetBindPos 0x004295a0: the Map.ini rebirth point
+// bindPosition is CMap::GetBindPos 0x004295a0: the configured faction rebirth point
 // when its map exists and the point lies inside it (0.9 above), else a
 // random point of the nearest svmap rebirth group of this map, else the
 // current position (zeroed if outside the map).
@@ -194,7 +192,7 @@ func bindPosition(mapID uint16, faction uint8, x, y, z float32) (uint16, float32
 }
 
 // bindPositionFound is bindPosition with GetBindPos's result: false when
-// neither a Map.ini point nor a rebirth group applies.
+// neither a configured point nor a rebirth group applies.
 func bindPositionFound(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32, bool) {
 	if p, ok := rebirthPosition(mapID, faction); ok {
 		if size, ok := mapSize(p.MapID); ok && p.X >= 0 && p.X < size && p.Z >= 0 && p.Z < size {

@@ -41,6 +41,9 @@ func (s *Session) applyElement(b ActiveBuff) {
 	}
 }
 func (s *Session) removeElement(b ActiveBuff) {
+	if b.MapCurse {
+		return
+	}
 	base := GetEquipmentStats(s.items)
 	e := &s.elements
 	switch {
@@ -71,7 +74,9 @@ func (s *Session) syncElements(base EquipmentStats) {
 	if !e.ready {
 		*e = elementRuntime{ready: true, weapon: weapon, armor: armor, attack: base.AttackAttr, defense: base.DefenseAttr}
 		for _, b := range s.buffs {
-			s.applyElement(b)
+			if !b.MapCurse {
+				s.applyElement(b)
+			}
 		}
 		return
 	}

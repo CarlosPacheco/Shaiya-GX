@@ -609,6 +609,7 @@ func (s *Session) notifyExpGain(gained uint32, levels uint16) {
 		s.sendStatPackets()
 		s.partyLevel()
 		s.guildLevelChanged()
+		s.enforceMapLevel()
 	}
 }
 

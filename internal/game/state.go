@@ -125,6 +125,7 @@ type State struct {
 	DeathLossFree          bool
 	LastMotion             proto.CharacterMotionResult
 	Blessing               BlessingState
+	Weather                proto.Weather
 	Mall                   MallState
 	Guild                  GuildState
 	GuildDuel              GuildDuelState
@@ -277,6 +278,12 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		} else if _, ok := proto.GestureAction(m.Motion); ok || m.Motion == proto.MotionJump || m.Motion == proto.MotionBackstep || m.Motion == proto.MotionEvadeLeft || m.Motion == proto.MotionEvadeRight {
 			e.Gesture, e.GestureSerial = m.Motion, e.GestureSerial+1
 		}
+	case proto.GXWeather:
+		value, err := proto.DecodeWeather(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.Weather = value
 	case proto.GXBlessingSnapshot:
 		value, err := proto.DecodeBlessingSnapshot(p)
 		if err != nil {
@@ -1172,6 +1179,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			s.SelfID, s.Phase = r.ID, PhaseLoading
 			s.DeathLossFree = false
 			s.Blessing = BlessingState{}
+			s.Weather = proto.Weather{}
 			s.PvPCountsKnown = [4]bool{}
 			s.PvPRewards = proto.PvPRewards{}
 			s.LastPvPReward = proto.PvPRewardResult{}
@@ -1222,6 +1230,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		if m.ID == s.SelfID {
 			if s.MapID != m.MapID {
 				ev.MapLoadAck = s.Phase == PhaseInWorld
+				s.Weather = proto.Weather{}
 				s.Relics = nil // a map without relics sends no 0x2101
 				s.MapQuestNPCs, s.MapQuestNPCsReady = nil, false
 				s.questNPCStaging, s.questNPCStagingActive = nil, false

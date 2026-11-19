@@ -1067,7 +1067,7 @@ func AddEntities(mapID uint16, e MapEntities) {
 // original's index stays 0), and ok is false only if that group is empty.
 func FindNearestSpawnArea(mapID uint16, faction uint8, x, z float32) (MapSpawnArea, bool) {
 	areas := EntitiesOnMap(mapID).SpawnAreas
-	best, bestDist := 0, float32(9999)
+	best, bestDist := -1, float32(math.Inf(1))
 	for i, a := range areas {
 		if len(a.Boxes) == 0 || !a.allowsFaction(faction) {
 			continue
@@ -1076,7 +1076,7 @@ func FindNearestSpawnArea(mapID uint16, faction uint8, x, z float32) (MapSpawnAr
 			best, bestDist = i, d
 		}
 	}
-	if len(areas) == 0 || len(areas[best].Boxes) == 0 {
+	if best < 0 {
 		return MapSpawnArea{}, false
 	}
 	return areas[best], true
