@@ -81,9 +81,10 @@ func (c *Character) prepareCrowdCloak(s *render.Scene3D) {
 	origin := render.V3{c.World[12], c.World[13], c.World[14]}
 	depth := transformPoint(origin, s.View)[2]
 	height := float32(s.ViewportH) * s.Proj[5] * render.V3{c.World[4], c.World[5], c.World[6]}.Len() / max(depth, .01)
+	reduced := cloak.geometry.grid != nil && (height < 38 || cloak.usingGrid && height < 44)
 	if height >= 72 || !cloak.initialized || origin.Sub(render.V3{cloak.world[12], cloak.world[13], cloak.world[14]}).Len() > .8 {
 		cloak.lodInterval = 0
-		cloak.update(c.World, c.finals())
+		cloak.updateGrid(c.World, c.finals(), 50, reduced)
 		return
 	}
 	interval := 1.0 / 30
@@ -101,6 +102,9 @@ func (c *Character) prepareCrowdCloak(s *render.Scene3D) {
 		cloak.lodInterval = interval
 		cloak.lodAt = c.enchantTime + phase*interval
 	}
+	if cloak.usingGrid && !reduced {
+		cloak.lodAt = c.enchantTime
+	}
 	if c.enchantTime < cloak.lodAt {
 		cloak.reused = true
 		return
@@ -109,5 +113,5 @@ func (c *Character) prepareCrowdCloak(s *render.Scene3D) {
 	if cloak.lodAt <= c.enchantTime {
 		cloak.lodAt = c.enchantTime + interval
 	}
-	cloak.updateWithBudget(c.World, c.finals(), budget)
+	cloak.updateGrid(c.World, c.finals(), budget, reduced)
 }

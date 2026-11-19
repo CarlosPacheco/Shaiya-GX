@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
@@ -55,6 +56,8 @@ func TestOriginalCloakTablesAndBodiesGL(t *testing.T) {
 		dir = t.TempDir()
 	}
 	cases := 0
+	var reducedCapes int
+	var deviations []float32
 	for race := uint8(0); race < 4; race++ {
 		for sex := uint8(0); sex < 2; sex++ {
 			for _, job := range []uint8{0, 4} {
@@ -94,10 +97,23 @@ func TestOriginalCloakTablesAndBodiesGL(t *testing.T) {
 				if actor.cloak == nil {
 					t.Fatalf("missing cloak %s: %v", prefix, s.Missing)
 				}
+				var distant *cloakInstance
+				if actor.cloak.geometry.grid != nil {
+					reducedActor, err := BuildCharacter(s, ap, "000_normal")
+					if err != nil || reducedActor.cloak == nil {
+						t.Fatalf("reduced cloak %s unavailable: %v", prefix, err)
+					}
+					distant = reducedActor.cloak
+					reducedCapes++
+				}
 				actor.World = render.Identity()
 				for frame := 0; frame < 180; frame++ {
 					actor.World = render.Basis(render.V3{float32(frame) / 600, 0, 0}, render.V3{float32(math.Sin(float64(frame) / 60)), 0, float32(math.Cos(float64(frame) / 60))}, render.V3{0, 1, 0})
 					actor.Update(1.0 / 60)
+					if distant != nil {
+						distant.elapsed = actor.cloak.elapsed
+						distant.updateGrid(actor.World, actor.finals(), 50, true)
+					}
 					gl.Viewport(0, 0, 800, 600)
 					gl.ClearColor(.15, .18, .22, 1)
 					gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -116,6 +132,15 @@ func TestOriginalCloakTablesAndBodiesGL(t *testing.T) {
 							}
 						}
 					}
+					if distant != nil {
+						for i, v := range distant.vertices {
+							distance := v.Pos.Sub(actor.cloak.vertices[i].Pos).Len()
+							if !(distance < .5) {
+								t.Fatalf("reduced cloak unstable: %s, vertex %d, deviation %v", prefix, i, distance)
+							}
+							deviations = append(deviations, distance)
+						}
+					}
 				}
 				if race == 0 && sex == 0 && job == 0 {
 					if err := render.SavePNG(filepath.Join(dir, "cloak-native-humf.png"), 800, 600); err != nil {
@@ -128,5 +153,10 @@ func TestOriginalCloakTablesAndBodiesGL(t *testing.T) {
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("cloak GL error %#x", code)
 	}
+	if len(deviations) == 0 {
+		t.Fatal("no original bodies used the reduced simulation")
+	}
+	slices.Sort(deviations)
+	t.Logf("%d reduced cape bodies, local deviation p95 %.4f, maximum %.4f", reducedCapes, deviations[len(deviations)*95/100], deviations[len(deviations)-1])
 	t.Logf("%d native PC configurations, meshes and textures loaded; all 16 bodies simulated and rendered", cases)
 }

@@ -646,3 +646,28 @@ increased the whole loop from 7.864 to 8.275 ms in two paired runs. The
 automatic worker count keeps the lower frame time. A smaller 300-bot case
 measured 7.840 → 5.731 ms. Two paired 400-actor scenes with skill effects off
 measured 5.419 → 5.118 ms and 606 → 511 GL submissions.
+
+## Reduced simulation grids for distant capes
+
+Crowd capes switch to a reduced simulation grid below 38 projected actor
+pixels. The grid keeps the original columns and the top, bottom and pinned
+rows, simulating every other unpinned row. The renderer interpolates movement
+across the existing vertices and retains the authored rest shape, triangles and
+UVs. Each character owns its positions and velocities. A cloak stays on the
+small grid until it reaches 44 projected pixels, then resumes the full grid
+from the displayed surface. Nearby characters and clipped or shadow passes
+use the original grid.
+
+Five interleaved runs at 1280×720 in the seeded 600-bot fight with skill
+effects disabled measured 7.649 → 7.390 ms for the whole loop, with submission
+p99 at 9.177 → 8.672 ms. Draw submissions and cloth position upload size
+remained at about 370 calls and 162 kB per frame, respectively. The simulation
+reduction preserves the GPU mesh. Measurements were made in a hidden window
+on a shared desktop.
+
+The 600-bot diagnostic counted roughly 21,300 live simulation points out of
+36,200 authored vertices. In separate 900-frame profiles, the cloth update
+fell from 9.89 to 5.74 seconds of CPU samples and total CPU samples went from
+23.18 to 20.07 seconds. Two 300-bot pairs measured 5.603 → 5.336 ms for the
+whole loop. An exact animation-phase diagnostic found a potential duplicate
+for about 6% of visible actors, so this change adds no pose cache.

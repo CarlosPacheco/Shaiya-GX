@@ -17,11 +17,15 @@ type cloakGeometry struct {
 	mesh     *render.Mesh
 	shoulder *skinPart
 	texture  *render.Texture
+	grid     *clothGrid
 }
 type cloakInstance struct {
 	id, version uint64
 	geometry    *cloakGeometry
 	physics     *clothPhysics
+	coarse      *clothPhysics
+	coarseLocal []render.V3
+	usingGrid   bool
 	vertices    []render.Vertex
 	initialized bool
 	prepared    bool
@@ -127,6 +131,7 @@ func (s *Assets) cloakGeometry(a Appearance) (*cloakGeometry, error) {
 	}
 	g.mesh = render.NewAnimatedMesh(len(g.vertices), indices)
 	g.mesh.UpdateVertices(g.vertices)
+	g.grid = makeClothGrid(record, g.vertices)
 	if s.cloaks == nil {
 		s.cloaks = map[string]*cloakGeometry{}
 	}
@@ -161,14 +166,36 @@ func (c *Character) attachCloak(a Appearance) {
 	c.cloak = &cloakInstance{id: cloakIDs.Add(1), geometry: g, physics: p, vertices: append([]render.Vertex(nil), g.vertices...)}
 }
 func (c *cloakInstance) update(world render.M4, finals []render.M4) {
-	c.updateWithBudget(world, finals, 50)
+	c.updateGrid(world, finals, 50, false)
 }
 
-func (c *cloakInstance) updateWithBudget(world render.M4, finals []render.M4, budget int) {
+func (c *cloakInstance) updateGrid(world render.M4, finals []render.M4, budget int, reduced bool) {
 	c.reused = false
 	c.version++
 	p := c.physics
-	if !c.initialized || (render.V3{world[12] - c.world[12], world[13] - c.world[13], world[14] - c.world[14]}).Len() > 20 {
+	pins := c.geometry.record.Pins
+	grid := c.geometry.grid
+	reset := !c.initialized || (render.V3{world[12] - c.world[12], world[13] - c.world[13], world[14] - c.world[14]}).Len() > 20
+	if reduced {
+		if c.coarse == nil {
+			c.coarse = grid.simulation()
+			c.coarseLocal = make([]render.V3, len(grid.nodes))
+		}
+		p, pins = c.coarse, grid.pins
+		if !reset && !c.usingGrid {
+			for i, node := range grid.nodes {
+				p.positions[i], p.velocity[i] = c.physics.positions[node], c.physics.velocity[node]
+			}
+		}
+	} else if !reset && c.usingGrid {
+		// Resume from the visible surface and its interpolated velocities.
+		for i, sample := range grid.samples {
+			p.positions[i] = transformPoint(c.vertices[i].Pos, c.world)
+			p.velocity[i] = sample.blend(c.coarse.velocity)
+		}
+	}
+	c.usingGrid = reduced
+	if reset {
 		for i, v := range p.rest {
 			p.positions[i] = transformPoint(v, world)
 			p.velocity[i] = render.V3{}
@@ -176,7 +203,7 @@ func (c *cloakInstance) updateWithBudget(world render.M4, finals []render.M4, bu
 		c.initialized = true
 	}
 	c.world = world
-	for _, pin := range c.geometry.record.Pins {
+	for _, pin := range pins {
 		if pin.Bone < len(finals) {
 			p.positions[pin.Vertex] = transformPoint(render.V3(pin.Offset), finals[pin.Bone].Mul(world))
 			p.velocity[pin.Vertex] = render.V3{}
@@ -194,14 +221,28 @@ func (c *cloakInstance) updateWithBudget(world render.M4, finals []render.M4, bu
 	// Cloth is unlit in every pass. Keep authored normals and update the
 	// positions and bounds used for depth, clipping and the silhouette.
 	inverse := world.Inverse()
-	for i, v := range p.positions {
-		c.vertices[i].Pos = transformPoint(v, inverse)
-		if i == 0 {
-			c.min, c.max = c.vertices[i].Pos, c.vertices[i].Pos
+	if reduced {
+		for i, point := range p.positions {
+			c.coarseLocal[i] = transformPoint(point, inverse)
 		}
-		for axis, value := range c.vertices[i].Pos {
-			c.min[axis], c.max[axis] = min(c.min[axis], value), max(c.max[axis], value)
+		for i, sample := range grid.samples {
+			c.setClothPosition(i, sample.blend(c.coarseLocal).Add(sample.restOffset))
 		}
+	} else {
+		for i, v := range p.positions {
+			c.setClothPosition(i, transformPoint(v, inverse))
+		}
+	}
+}
+
+func (c *cloakInstance) setClothPosition(i int, point render.V3) {
+	c.vertices[i].Pos = point
+	if i == 0 {
+		c.min, c.max = point, point
+		return
+	}
+	for axis, value := range point {
+		c.min[axis], c.max[axis] = min(c.min[axis], value), max(c.max[axis], value)
 	}
 }
 func (c *cloakInstance) draw(s *render.Scene3D, world render.M4, concealed bool) {

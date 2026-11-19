@@ -751,7 +751,7 @@ func (c *Character) prepareDrawPose(shadow bool) ([]render.M4, bool) {
 func (c *Character) drawOcclusionBounds() (render.V3, render.V3, bool) {
 	lo, hi, valid := c.WorldBounds()
 	if valid {
-		if c.cloak != nil && c.cloak.reused {
+		if c.cloak != nil && (c.cloak.reused || c.cloak.usingGrid) {
 			unionTransformedBox(&lo, &hi, &valid, c.cloak.min, c.cloak.max, c.World)
 		} else if c.cloak != nil {
 			for _, p := range c.cloak.physics.positions {
