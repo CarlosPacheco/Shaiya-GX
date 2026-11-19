@@ -115,3 +115,17 @@ func TestMapLevelDeniesPortalsAndRecordedPoints(t *testing.T) {
 		t.Fatal("GM did not bypass the level check")
 	}
 }
+
+func TestClearWeatherPreviewRestoresScheduledWeather(t *testing.T) {
+	old, started := mapConfig, weatherStarted
+	t.Cleanup(func() { mapConfig, weatherStarted = old, started })
+	mapConfig.Zones = map[uint16]ZoneConfig{18: {WeatherType: proto.WeatherRain}}
+	weatherStarted = time.Now().Add(-61 * time.Minute)
+	s, _ := gmWireSession(t, db.Character{MapID: 18}, true)
+	if err := s.gmWeather([]string{"2"}); err != nil || s.lastWeather != proto.WeatherSnow {
+		t.Fatalf("snow preview failed: %v", err)
+	}
+	if err := s.gmWeather([]string{"0"}); err != nil || s.lastWeather != proto.WeatherRain || !s.weatherOverrideUntil.IsZero() {
+		t.Fatalf("scheduled rain was not restored: %v", err)
+	}
+}

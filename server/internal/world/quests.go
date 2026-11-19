@@ -690,7 +690,7 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 		}
 	}
 	change.After.Money = uint32(min(uint64(change.After.Money)+uint64(res.Money), db.MoneyCap))
-	levels := applyExpGain(&change.After, exp)
+	levels, exp := applyExpGain(&change.After, exp)
 	if levels > 0 {
 		st := StatsFor(&change.After, s.equipment())
 		change.After.CurrentHP, change.After.CurrentMP, change.After.CurrentSP = st.MaxHP, st.MaxMP, st.MaxSP

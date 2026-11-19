@@ -77,11 +77,11 @@ func familyPoolBonus(family uint8) (hp, mp, sp uint32) {
 	return
 }
 
-// statusRow is StatusDefs for a job and level (levels 0..60, falling back
+// statusRow is StatusDefs for a job and level (falling back
 // to the last defined level).
 func statusRow(level uint16, job uint8) db.Status {
 	status := db.MustDefs().Status
-	for l := min(level, 60); ; l-- {
+	for l := level; ; l-- {
 		if st, ok := status[db.StatusKey{Level: l, Job: job}]; ok {
 			return st
 		}

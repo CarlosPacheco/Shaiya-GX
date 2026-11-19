@@ -6,4 +6,4 @@ It covers authority, syntax, examples, limits, transient spawns and protocol.
 
 The editable documentation source is [docs/wiki/gm-commands.md](wiki/gm-commands.md).
 
-A GM can preview rain with `/weather 1` or snow with `/weather 2`. The preview lasts ten minutes and applies only to their session.
+A GM can preview rain with `/weather 1` or snow with `/weather 2`. The preview lasts ten minutes and applies only to their session. `/weather 0` cancels the preview and restores the map’s scheduled weather.

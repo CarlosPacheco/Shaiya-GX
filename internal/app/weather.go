@@ -102,7 +102,7 @@ func (v *weatherView) fog(clear render.V3, near, far float32) (render.V3, float3
 	if v.kind == proto.WeatherSnow {
 		return clear.Scale(1 - .62*t).Add(render.V3{.70, .74, .77}.Scale(.62 * t)), near * (1 - .68*t), far * (1 - .40*t)
 	}
-	return clear.Scale(1 - .76*t).Add(render.V3{.35, .41, .48}.Scale(.76 * t)), near * (1 - .68*t), far * (1 - .47*t)
+	return clear.Scale(1 - t).Add(render.V3{.43, .43, .43}.Scale(t)), near * (1 - .68*t), far * (1 - .47*t)
 }
 
 // Render the emitter's billboards as one textured batch.

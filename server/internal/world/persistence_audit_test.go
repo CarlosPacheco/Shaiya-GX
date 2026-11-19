@@ -293,7 +293,8 @@ func TestQuestRollbackIncludesRequiredItemsRewardExpAndCompletion(t *testing.T) 
 				t.Fatal(err)
 			}
 			a.items = append(a.items, required)
-			db.MustDefs().Exp = map[db.ExpKey]uint32{{Level: 1, Grow: 1}: 10, {Level: 2, Grow: 1}: 1000}
+			db.MustDefs().Exp = map[uint16]uint32{1: 10, 2: 1000}
+			db.MustDefs().LevelCap = 3
 			q := &activeQuest{ID: 1, def: &questDef{ID: 1, EndType: 1, ResultType: 1, FarmItems: [3]questItem{{Type: 1, TypeID: 1, Count: 1}}, Results: [3]questResult{{Money: 100, Exp: 20, ItemType: 16, ItemTypeID: 1}}}}
 			a.quests = []*activeQuest{q}
 			if err := db.AddCharacterQuest(a.char.ID, db.CharQuest{QuestID: q.ID}); err != nil {

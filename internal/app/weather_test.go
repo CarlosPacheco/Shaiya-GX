@@ -38,3 +38,11 @@ func TestWeatherContinuesFallingAfterCameraMoves(t *testing.T) {
 		})
 	}
 }
+
+func TestRainFogBecomesNeutralGray(t *testing.T) {
+	view := weatherView{kind: proto.WeatherRain, blend: 1}
+	color, _, _ := view.fog(render.V3{.15, .4, .9}, 100, 200)
+	if color[0] != color[1] || color[1] != color[2] {
+		t.Fatalf("rain fog retained a color cast: %v", color)
+	}
+}

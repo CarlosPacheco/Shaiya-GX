@@ -114,3 +114,10 @@ item content fields, extraction, recreation and drop persistence.
 
 Operational architecture, resource limits, secure remote transport and local
 account management are described in [server modernization](../server/docs/modernization.md).
+
+## Experience curve
+
+GX World loads `PS_GameDefs_ExpDefs` from SQLite at startup. Each consecutive
+`Level` has one cumulative `Exp` threshold for reaching the following level.
+The highest configured level is the cap. Experience stops at the threshold
+used to reach that level. Restart GX World after editing the table.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"time"
 
@@ -20,6 +21,9 @@ type migration struct {
 	Version   int
 	Name, SQL string
 }
+
+//go:embed experience.sql
+var experienceMigration string
 
 var migrations = []migration{
 	{1, "atomic_session_handoff", `CREATE TABLE IF NOT EXISTS GX_SessionHandoff(UserUID INTEGER PRIMARY KEY,Identity BLOB NOT NULL,AESMaterial BLOB NOT NULL,SessionID INTEGER NOT NULL,ExpiresAt INTEGER NOT NULL)`},
@@ -78,6 +82,7 @@ var migrations = []migration{
 	{16, "item_boxes", itemboxes.MigrationSQL},
 	{17, "npc_quest", npcquest.MigrationSQL},
 	{18, "map_properties", maprules.MigrationSQL},
+	{19, "unified_experience", experienceMigration},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

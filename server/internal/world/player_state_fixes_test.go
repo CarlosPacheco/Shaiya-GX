@@ -108,7 +108,8 @@ func TestBuffConsumableAnnouncesSkillAndStopsCombo(t *testing.T) {
 func TestExpWheelOriginalRequirements(t *testing.T) {
 	s, _ := forgeRuleSession(t)
 	defs := db.MustDefs()
-	defs.Exp = map[db.ExpKey]uint32{{Level: 1, Grow: 1}: 1000}
+	defs.Exp = map[uint16]uint32{1: 1000}
+	defs.LevelCap = 2
 	s.char.MapID = 18
 	s.char.Exp = 499
 	if s.canUseExpReset() {

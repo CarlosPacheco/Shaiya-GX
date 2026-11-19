@@ -177,11 +177,6 @@ type Product struct {
 	Items   []ProductItem
 }
 
-type ExpKey struct {
-	Level uint16
-	Grow  uint8 // ExpDefs.Grow, 1-4 (Chars.Grow + 1)
-}
-
 // StatusKey indexes StatusDefs by level and job (Chars.Job).
 type StatusKey struct {
 	Level uint16
@@ -209,7 +204,8 @@ type Defs struct {
 	Skills       map[SkillKey]*SkillDef
 	Mobs         map[uint16]*MobDef
 	MobDrops     map[uint16][]MobDrop
-	Exp          map[ExpKey]uint32
+	Exp          map[uint16]uint32
+	LevelCap     uint16
 	Products     map[string]*Product
 	Status       map[StatusKey]Status
 	BaseItems    map[BaseItemKey][]BaseItem
@@ -322,7 +318,7 @@ func loadDefs() (*Defs, error) {
 	}
 	d := &Defs{Items: map[ItemKey]*ItemDef{}, ItemsByGrade: map[uint16][]*ItemDef{},
 		Skills: map[SkillKey]*SkillDef{}, Mobs: map[uint16]*MobDef{}, MobDrops: map[uint16][]MobDrop{},
-		Exp: map[ExpKey]uint32{}, Products: map[string]*Product{}, Status: map[StatusKey]Status{},
+		Exp: map[uint16]uint32{}, Products: map[string]*Product{}, Status: map[StatusKey]Status{},
 		BaseItems: map[BaseItemKey][]BaseItem{}}
 	c, cancel := longCtx()
 	defer cancel()
@@ -514,20 +510,32 @@ func loadDefs() (*Defs, error) {
 	}
 	rows.Close()
 
-	rows, err = pool.QueryContext(c, `SELECT Level, Grow, Exp FROM PS_GameDefs_ExpDefs`)
+	rows, err = pool.QueryContext(c, `SELECT Level, Exp FROM PS_GameDefs_ExpDefs ORDER BY Level`)
 	if err != nil {
 		return nil, fmt.Errorf("load ExpDefs: %w", err)
 	}
+	var previous uint32
 	for rows.Next() {
-		var level, exp int64
-		var grow uint8
-		if err := rows.Scan(&level, &grow, &exp); err != nil {
+		var level uint16
+		var exp uint32
+		if err := rows.Scan(&level, &exp); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("scan ExpDefs: %w", err)
 		}
-		d.Exp[ExpKey{clampU16(level), grow}] = uint32(max(exp, 0))
+		if int(level) != int(d.LevelCap)+1 || exp == 0 || exp < previous || (level > 2 && previous == d.Exp[level-2]) {
+			rows.Close()
+			return nil, fmt.Errorf("ExpDefs: invalid level or cumulative experience at level %d", level)
+		}
+		d.Exp[level], d.LevelCap, previous = exp, level, exp
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return nil, fmt.Errorf("read ExpDefs: %w", err)
 	}
 	rows.Close()
+	if d.LevelCap == 0 {
+		return nil, fmt.Errorf("ExpDefs is empty")
+	}
 
 	rows, err = pool.QueryContext(c, `SELECT Level, Job, HP, SP, MP FROM PS_GameDefs_StatusDefs`)
 	if err != nil {

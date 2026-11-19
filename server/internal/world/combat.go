@@ -449,57 +449,34 @@ func (s *Session) persist() {
 
 // --- experience ---
 
-// LevelCap is the last level in StatusDefs and ExpDefs.
-const LevelCap = 60
-
-// levelCap is award_experience's: easy mode stops at 30.
-func levelCap(ch *db.Character) uint16 {
-	if ch.Mode == 0 {
-		return 30
-	}
-	return LevelCap
-}
-
-// applyExpGain adds exp. Chars.Exp is the cumulative total and ExpDefs
-// gives, per level and growth mode, the total needed to reach the next
-// level, as in the original server. A level-up refreshes the base pools
-// from StatusDefs and heals fully.
-func applyExpGain(ch *db.Character, gained uint32) (levels uint16) {
-	limit := levelCap(ch)
+// applyExpGain returns the levels gained and experience actually credited.
+func applyExpGain(ch *db.Character, gained uint32) (levels uint16, credited uint32) {
+	defs := db.MustDefs()
+	limit := defs.LevelCap
 	if ch.Level >= limit || gained == 0 {
-		return 0
+		return 0, 0
 	}
-	ch.Exp = satAdd(ch.Exp, gained)
-	exp := db.MustDefs().Exp
-	for ch.Level < limit {
-		req := exp[db.ExpKey{Level: ch.Level, Grow: ch.Mode + 1}]
-		if req == 0 || ch.Exp < req {
-			break
-		}
+	before := ch.Exp
+	ch.Exp = min(satAdd(ch.Exp, gained), defs.Exp[limit-1])
+	for ch.Level < limit && ch.Exp >= defs.Exp[ch.Level] {
 		levelUp(ch)
 		levels++
-	}
-	if ch.Level >= limit {
-		// Reaching the cap leaves the exp at the level's start.
-		prev, _ := expBounds(ch)
-		ch.Exp = prev
 	}
 	if levels > 0 {
 		ch.MaxHP, ch.MaxMP, ch.MaxSP = basePools(ch)
 		ch.CurrentHP, ch.CurrentMP, ch.CurrentSP = ch.MaxHP, ch.MaxMP, ch.MaxSP
 	}
-	return levels
+	return levels, satSub(ch.Exp, before)
 }
 
-// expBounds are the cumulative exp at the start of the character's level
-// and the total needed for the next one (ExpDefs).
+// expBounds returns the cumulative thresholds used by the character's bar.
 func expBounds(ch *db.Character) (prev, next uint32) {
-	exp := db.MustDefs().Exp
-	grow := ch.Mode + 1
-	if ch.Level > 1 {
-		prev = exp[db.ExpKey{Level: ch.Level - 1, Grow: grow}]
+	defs := db.MustDefs()
+	if defs.LevelCap != 0 && ch.Level >= defs.LevelCap {
+		capExp := defs.Exp[defs.LevelCap-1]
+		return capExp, capExp
 	}
-	return prev, exp[db.ExpKey{Level: ch.Level, Grow: grow}]
+	return defs.Exp[ch.Level-1], defs.Exp[ch.Level]
 }
 
 // rewardKill hands out a kill's loot and exp: drops on the ground, gold
@@ -583,7 +560,10 @@ func (s *Session) awardExp(gained uint32, modifiers bool) {
 	if modifiers {
 		gained = s.expScale(gained) // quest rewards skip them
 	}
-	levels := applyExpGain(ch, gained)
+	levels, gained := applyExpGain(ch, gained)
+	if gained == 0 && levels == 0 {
+		return
+	}
 	if levels > 0 {
 		s.setPools(false)
 	}
@@ -643,12 +623,15 @@ func grantOfflineKillExp(characterID uint32, mobID, mobLevel uint16, mobExp uint
 		return
 	}
 	scaled := uint32(float64(mobExperience(mobLevel, uint16(min(mobExp, 65535)), ch.Level)) * 1.2)
-	applyExpGain(&ch, scaled)
+	levels, credited := applyExpGain(&ch, scaled)
+	if credited == 0 && levels == 0 {
+		return
+	}
 	if err := db.SaveCharacter(&ch); err != nil {
 		log.Printf("GX Server World offline exp save failed character_id=%d: %v", characterID, err)
 		return
 	}
-	log.Printf("GX Server World offline exp character_id=%d mob_id=%d gained=%d level=%d exp=%d", characterID, mobID, scaled, ch.Level, ch.Exp)
+	log.Printf("GX Server World offline exp character_id=%d mob_id=%d gained=%d level=%d exp=%d", characterID, mobID, credited, ch.Level, ch.Exp)
 }
 
 type logPrinter interface {

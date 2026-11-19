@@ -351,7 +351,11 @@ func (s *Session) drainRewards(p *ConnectedPlayer) {
 	}
 	before := *s.char
 	after := before
-	levels := applyExpGain(&after, exp)
+	levels, credited := applyExpGain(&after, exp)
+	if credited == 0 && levels == 0 && gold == 0 {
+		p.ackRewardTotals(snapshot, 0)
+		return
+	}
 	if levels > 0 {
 		full := StatsFor(&after, s.equipment())
 		after.CurrentHP, after.CurrentMP, after.CurrentSP = full.MaxHP, full.MaxMP, full.MaxSP
@@ -366,9 +370,7 @@ func (s *Session) drainRewards(p *ConnectedPlayer) {
 	p.ackRewardTotals(snapshot, gold)
 	s.syncPlayer()
 	s.partyPools()
-	if exp > 0 {
-		s.notifyExpGain(exp, levels)
-	}
+	s.notifyExpGain(credited, levels)
 	if gold > 0 {
 		s.send(buildSetMoney(s.char.Money), "0x0213 party gold share")
 	}
