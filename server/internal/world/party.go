@@ -514,16 +514,23 @@ func (s *Session) partyPools() {
 	broadcast(members, w.MustFinish(), "0x0C03 party member pools", s.logger)
 }
 
-// partyLevel (0x0C09) tells the party about a level-up.
+// partyLevel handles the original 0x0C09/0x0C13 level notices for party and raid.
 func (s *Session) partyLevel() {
+	if s.player == nil {
+		return
+	}
 	partyMu.Lock()
 	defer partyMu.Unlock()
-	if pt := partyOf(s.player); pt != nil && !pt.isRaid() {
-		w := packet.New(packet.PartyLevel)
+	if pt := partyOf(s.player); pt != nil {
+		pt.refreshLevel()
+		op, label := packet.PartyLevel, "0x0C09 party member level"
+		if pt.isRaid() {
+			op, label = packet.RaidLevel, "0x0C13 raid member level"
+		}
+		w := packet.New(op)
 		w.U32(s.char.ID)
 		w.U16(s.char.Level)
-		pt.send(w.MustFinish(), "0x0C09 party member level")
-		pt.refreshLevel()
+		pt.send(w.MustFinish(), label)
 	}
 }
 
@@ -558,39 +565,60 @@ func partyExpLevelShare(maxLevel, level uint16) float64 {
 	return 0.2
 }
 
-// killRewards splits a kill's exp per mob_death: solo kills get 1.2x;
-// party members within 100 units on the map get the count factor and the
-// level share. Returns each recipient and amount.
-func killRewards(killer *ConnectedPlayer, mapID uint16, x, z float32, mobLevel, mobExp uint16) map[*ConnectedPlayer]uint32 {
-	out := map[*ConnectedPlayer]uint32{}
+type killReward struct {
+	member *ConnectedPlayer
+	exp    uint32
+}
+
+func (pt *party) perfect() bool { return pt != nil && !pt.isRaid() && len(pt.members) == partyMax }
+
+func (s *Session) perfectParty() bool {
+	if s.player == nil {
+		return false
+	}
+	partyMu.Lock()
+	defer partyMu.Unlock()
+	return partyOf(s.player).perfect()
+}
+
+// killRewards uses the credited player's position and the full party size.
+// Match CMob::Death's two truncations before handing recipients their EXP.
+func killRewards(killer *ConnectedPlayer, mapID, mobLevel, mobExp uint16) ([]killReward, bool) {
+	credited := killer.Snapshot()
 	partyMu.Lock()
 	pt := partyOf(killer)
 	var members []*ConnectedPlayer
 	var maxLevel uint16
-	raid := false
+	raid, perfect := false, false
 	if pt != nil {
 		members, maxLevel, raid = append(members, pt.members...), pt.maxLevel, pt.isRaid()
+		perfect = pt.perfect()
 	}
 	partyMu.Unlock()
 	if len(members) == 0 {
-		lvl := killer.Snapshot().Level
-		out[killer] = uint32(float64(mobExperience(mobLevel, mobExp, lvl)) * 1.2)
-		return out
+		xp := uint32(float64(mobExperience(mobLevel, mobExp, credited.Level)) * 1.2)
+		return []killReward{{member: killer, exp: xp}}, false
+	}
+	if killer.MapID() != mapID {
+		return nil, perfect
 	}
 	factor := partyExpFactor[min(len(members), len(partyExpFactor)-1)]
 	if raid {
-		factor = raidExpFactor[min(len(members), len(raidExpFactor)-1)]
+		factor = raidExpFactor
 	}
+	out := make([]killReward, 0, len(members))
 	for _, m := range members {
-		mx, mz := m.PositionXZ()
-		if m.MapID() != mapID || !m.IsAlive() || DistanceXZ(mx, mz, x, z) > partyRewardRange {
+		if !m.IsAlive() {
 			continue
 		}
-		lvl := m.Snapshot().Level
-		base := float64(mobExperience(mobLevel, mobExp, lvl)) * factor
-		out[m] = uint32(base * partyExpLevelShare(maxLevel, lvl))
+		ch := m.Snapshot()
+		if ch.MapID != mapID || DistanceXZ(ch.PosX, ch.PosZ, credited.PosX, credited.PosZ) > partyRewardRange {
+			continue
+		}
+		base := uint32(float64(mobExperience(mobLevel, mobExp, ch.Level)) * factor)
+		out = append(out, killReward{m, uint32(float64(base) * partyExpLevelShare(maxLevel, ch.Level))})
 	}
-	return out
+	return out, perfect
 }
 
 // partyMembersNear lists the killer's party members on the map within

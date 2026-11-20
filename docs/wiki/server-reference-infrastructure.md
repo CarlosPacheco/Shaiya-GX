@@ -932,6 +932,7 @@ Direct GX dependencies: `internal/itemstack`, `internal/proto`, `internal/textwi
 | [`BaseOpcode`](../../server/internal/packet/packet.go#L336)<br>`func BaseOpcode(v uint16) Opcode` | See the source definition and the subsystem ownership contract. |
 | [`GXForgeQuote`](../../server/internal/packet/packet.go#L338)<br>`const GXForgeQuote = 0x7F03` | See the source definition and the subsystem ownership contract. |
 | [`GXPartyInviteName`](../../server/internal/packet/packet.go#L341)<br>`const GXPartyInviteName = 0x7F15` | GXPartyInviteName is the global /party <name> invitation request. |
+| [`RaidLevel`](../../server/internal/packet/packet.go#L344)<br>`const RaidLevel = 0x0C13` | RaidLevel is the original member level notice, parallel to PartyLevel. |
 
 <details><summary>Type definitions and owned fields</summary>
 

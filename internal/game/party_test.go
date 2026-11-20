@@ -7,6 +7,18 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
 
+func TestRaidLevelNoticeUpdatesMemberOutsideView(t *testing.T) {
+	s := New()
+	s.Party.Raid = true
+	s.Party.Members = []proto.PartyMember{{ID: 2, Level: 20}}
+	w := proto.NewWriter(proto.RaidLevel)
+	w.U32(2)
+	w.U16(21)
+	if _, err := s.Apply(w.Bytes()); err != nil || s.Party.Members[0].Level != 21 {
+		t.Fatalf("raid level notice: %+v, %v", s.Party.Members, err)
+	}
+}
+
 func TestPartyAcknowledgedRosterLeaderLeaveAndMalformedAtomicity(t *testing.T) {
 	s := New()
 	s.SelfID = 1

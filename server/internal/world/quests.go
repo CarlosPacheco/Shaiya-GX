@@ -771,7 +771,8 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 		}
 	}
 	change.After.Money = uint32(min(uint64(change.After.Money)+uint64(res.Money), db.MoneyCap))
-	levels, exp := applyExpGain(&change.After, exp)
+	credited := applyExperienceAward(&change.After, exp, s.perfectParty())
+	levels := change.After.Level - change.Before.Level
 	if levels > 0 {
 		st := StatsFor(&change.After, s.equipment())
 		change.After.CurrentHP, change.After.CurrentMP, change.After.CurrentSP = st.MaxHP, st.MaxMP, st.MaxSP
@@ -802,7 +803,7 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 	w.U16(q.ID)
 	w.U8(1)
 	w.U8(variant)
-	w.U32(exp)
+	w.U32(credited.base)
 	w.U32(res.Money)
 	if reward != nil {
 		w.Bytes([]byte{reward.Bag, reward.Slot, reward.Type, reward.TypeID})
@@ -810,8 +811,8 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 		w.Bytes(make([]byte, 4))
 	}
 	s.send(w.MustFinish(), "0x0903 quest completed")
-	s.notifyExpGain(exp, levels)
-	s.log.Printf("GX Server World quest %d committed variant %d exp %d money %d", q.ID, variant, exp, res.Money)
+	s.notifyExpGain(credited, levels)
+	s.log.Printf("GX Server World quest %d committed variant %d exp %d money %d", q.ID, variant, credited.base+credited.perfect, res.Money)
 }
 
 // removeQuest is QuestRuntime::remove: repeatable quests (TickReceive)

@@ -339,3 +339,6 @@ const GXForgeQuote Opcode = 0x7F03
 
 // GXPartyInviteName is the global /party <name> invitation request.
 const GXPartyInviteName Opcode = 0x7F15
+
+// RaidLevel is the original member level notice, parallel to PartyLevel.
+const RaidLevel Opcode = 0x0C13

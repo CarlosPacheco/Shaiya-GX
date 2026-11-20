@@ -157,7 +157,7 @@ Declarations: [packet.WarehouseItemList](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildWarehouseItemList (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L27)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L915), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L42)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L913), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L42)
 
 ### Wire layouts and validation
 

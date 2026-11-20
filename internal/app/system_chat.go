@@ -115,9 +115,16 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 			}
 		}
 	case proto.ExpGain:
-		r := proto.NewReader(p)
-		gain := r.U32()
-		a.systemMessage(3, 50, map[string]string{"b": number(gain)})
+		gain, err := proto.DecodeExperienceGain(p)
+		if err != nil {
+			return
+		}
+		if gain.Base != 0 {
+			a.systemMessage(3, 50, map[string]string{"b": number(gain.Base)})
+		}
+		if gain.Perfect != 0 {
+			a.systemMessage(3, 66, map[string]string{"b": number(gain.Perfect)})
+		}
 	case proto.SetMoney:
 		if s.Details.Money > previousMoney {
 			a.systemMessage(3, 53, map[string]string{"b": number(s.Details.Money - previousMoney)})

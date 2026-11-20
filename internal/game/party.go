@@ -201,7 +201,7 @@ func (s *State) applyParty(p []byte) error {
 		if m := s.Party.Member(id); m != nil {
 			m.Instance, m.X, m.Y, m.Z = instance, x, y, z
 		}
-	case proto.PartyLevel:
+	case proto.PartyLevel, proto.RaidLevel:
 		r := proto.NewReader(p)
 		id, level := r.U32(), r.U16()
 		if err := r.Err(); err != nil {

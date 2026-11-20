@@ -28,9 +28,8 @@ const (
 	raidErrFull       = 14
 )
 
-// raidExpFactor is MobDeathExperience's raid table by member count.
-var raidExpFactor = [31]float64{1, 1, 0.73, 0.645, 0.56, 0.475, 0.39, 0.305, 0.27, 0.251, 0.235, 0.219, 0.21,
-	0.17, 0.14, 0.1, 0.06, 0.03, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01}
+// GX uses the lowest native raid EXP factor at every raid size.
+const raidExpFactor = 0.01
 
 func (pt *party) isRaid() bool { return pt.kind == raidKindRaid }
 

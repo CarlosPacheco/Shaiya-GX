@@ -355,15 +355,25 @@ func (s *Session) drainRewards(p *ConnectedPlayer) {
 			p.ackQuestKills(mob, count)
 		}
 	}
-	snapshot, exp, gold := p.peekRewardTotals(s.experienceMode())
-	if exp == 0 && gold == 0 {
+	snapshot := p.peekRewardTotals()
+	mode, gold := s.experienceMode(), snapshot.gold
+	if len(snapshot.perfect) == 0 && snapshot.experience[mode] == 0 && gold == 0 {
 		return
 	}
 	before := *s.char
 	after := before
-	levels, credited := applyExpGain(&after, exp)
-	if credited == 0 && levels == 0 && gold == 0 {
-		p.ackRewardTotals(snapshot, 0)
+	var credited experienceCredit
+	for _, event := range snapshot.perfect {
+		_, ordinary := applyExpGain(&after, event.before[mode])
+		award := applyExperienceAward(&after, experienceScaled(event.amount, mode), true)
+		credited.base += ordinary + award.base
+		credited.perfect += award.perfect
+	}
+	_, ordinary := applyExpGain(&after, snapshot.experience[mode])
+	credited.base += ordinary
+	levels := after.Level - before.Level
+	if credited.base == 0 && credited.perfect == 0 && gold == 0 {
+		p.ackRewardTotals(snapshot)
 		return
 	}
 	if levels > 0 {
@@ -377,7 +387,7 @@ func (s *Session) drainRewards(p *ConnectedPlayer) {
 		return
 	}
 	*s.char = after
-	p.ackRewardTotals(snapshot, gold)
+	p.ackRewardTotals(snapshot)
 	s.syncPlayer()
 	s.partyPools()
 	s.notifyExpGain(credited, levels)

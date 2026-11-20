@@ -16,7 +16,7 @@ Declarations: [packet.CharacterShape](../../server/internal/packet/packet.go#L94
 
 **S→C serializers:** [buildCharacterShapeGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L600)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L89)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1178), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L89)
 
 ### Wire layouts and validation
 
@@ -123,7 +123,7 @@ Declarations: [packet.TargetMobGetState](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildMobState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1401), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L927)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L925)
 
 ### Wire layouts and validation
 
@@ -199,7 +199,7 @@ Declarations: [packet.TargetMobHpUpdate](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildMobTargetHP (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1393)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L978)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L976)
 
 ### Wire layouts and validation
 
@@ -527,7 +527,7 @@ Declarations: [packet.MapAddItem](../../server/internal/packet/packet.go#L105), 
 
 **S→C serializers:** [buildMapAddItem (server/internal/world/mapitems.go)](../../server/internal/world/mapitems.go#L129)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L915), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L10)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L913), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L10)
 
 ### Wire layouts and validation
 
@@ -593,7 +593,7 @@ Declarations: [packet.MapRemoveItem](../../server/internal/packet/packet.go#L106
 
 **S→C serializers:** [buildMapRemoveItem (server/internal/world/mapitems.go)](../../server/internal/world/mapitems.go#L146)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L915), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L16)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L913), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L16)
 
 ### Wire layouts and validation
 

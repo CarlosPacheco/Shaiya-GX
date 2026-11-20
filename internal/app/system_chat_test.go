@@ -56,6 +56,23 @@ func TestAcknowledgedEventsUseRuntimeMessagesAndNativePalette(t *testing.T) {
 	}
 }
 
+func TestPerfectPartyExperienceUsesBothNativeMessagesAndUpdatesProgress(t *testing.T) {
+	a := inputApp()
+	a.msg = text.SysMsg{50: "XP <b>", 66: "Perfect party <b>"}
+	a.state.Details.Exp = 90
+	xp := proto.NewWriter(proto.ExpGain)
+	xp.U32(468)
+	xp.U32(468)
+	a.applyWorldPacket(xp.Bytes())
+	if a.state.Details.Exp != 1026 || len(a.state.Chat) != 2 {
+		t.Fatalf("experience %d, messages %+v", a.state.Details.Exp, a.state.Chat)
+	}
+	base, bonus := a.state.Chat[0], a.state.Chat[1]
+	if base.MessageID != 50 || base.Text != "XP 468" || bonus.MessageID != 66 || bonus.Text != "Perfect party 468" || bonus.Style != 3 {
+		t.Fatalf("unexpected experience messages: %+v, %+v", base, bonus)
+	}
+}
+
 func TestSkillChatUsesNumericEmphasisWithoutHPDamageSuffix(t *testing.T) {
 	a := inputApp()
 	a.state.SelfID = 1

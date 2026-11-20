@@ -18,7 +18,7 @@ Source notes: GXGMState is a GX-only server response: self ID:u32, GM:u8, turbo:
 
 **S→C serializers:** [gmReply (server/internal/world/gm.go)](../../server/internal/world/gm.go#L19)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1169)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1167)
 
 ### Wire layouts and validation
 
@@ -91,7 +91,7 @@ Source notes: GXVisibility: character ID:u32, concealed:u8. Sent only to authori
 
 **S→C serializers:** [visibilityPacket (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L25)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1159)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1157)
 
 ### Wire layouts and validation
 
@@ -254,7 +254,7 @@ Declarations: [proto.GXMobEnter](../../internal/proto/world.go#L250).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L119)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1178), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L119)
 
 ### Wire layouts and validation
 
@@ -313,7 +313,7 @@ Declarations: [proto.GXMobMove](../../internal/proto/world.go#L251).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L125)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1178), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L125)
 
 ### Wire layouts and validation
 
@@ -361,7 +361,7 @@ Declarations: [proto.GXPhysicsClock](../../internal/proto/world.go#L248).
 
 **S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L386)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1149)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1147)
 
 ### Wire layouts and validation
 
@@ -395,7 +395,7 @@ Declarations: [proto.GXPlayerCorrection](../../internal/proto/player_physics.go#
 
 **S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L254)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1139)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1137)
 
 ### Wire layouts and validation
 
@@ -1026,7 +1026,7 @@ Source notes: GXSkillDash is a server-authored Stinger trajectory. Native skill 
 
 **S→C serializers:** [buildSkillDash (server/internal/world/skill_dash.go)](../../server/internal/world/skill_dash.go#L83)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1133)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1131)
 
 ### Wire layouts and validation
 
@@ -1766,7 +1766,7 @@ Source notes: GXKillNotice tells a user that it killed another player: the victi
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [notifyKill (server/internal/world/pvpdeath.go)](../../server/internal/world/pvpdeath.go#L243)
+**S→C serializers:** [notifyKill (server/internal/world/pvpdeath.go)](../../server/internal/world/pvpdeath.go#L240)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L782)
 
@@ -1776,7 +1776,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>notifyKill — server/internal/world/pvpdeath.go</summary>
 
-[Source definition](../../server/internal/world/pvpdeath.go#L243)
+[Source definition](../../server/internal/world/pvpdeath.go#L240)
 
 ```go
 func (s *Session) notifyKill(killer *ConnectedPlayer) {

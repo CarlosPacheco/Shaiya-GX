@@ -18,12 +18,9 @@ import (
 //     not to the last hit. A mob or the user itself at the top gives
 //     nothing.
 //   - Normal PvP (PvPGetDeathType 3; duel deaths 4 and 5 are handled
-//     separately): a killer without a party gets CUser::GetExp 0x004581b0 x 1.2
-//     through AddExpFromUser (exp charms apply), then KillPCFrom.
-//     In a party, every member within 100 units gets
-//     GetExp(own level) x m_PartyExp[size] (m_RaidPartyExp for a raid) x
-//     GetPartyExpByLevel, the first of them KillPCFrom and the others
-//     KillPCTo.
+//     separately) credits kills in GX. A solo killer gets KillPCFrom.
+//     In a party, the first eligible member gets KillPCFrom and the others
+//     get KillPCTo.
 //   - KillPCFrom 0x0045b050: KillPCTo for the killer, then the dead user's
 //     deaths + 1 (up to g_tDeathInfo[15] 200000) with 0x020E index 1.
 //     KillPCTo 0x0045aed0: QuestUpdateKillPC, kills + 1 (up to

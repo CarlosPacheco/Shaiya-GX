@@ -100,3 +100,6 @@ func RaidNamePacket(op Opcode, name string) []byte {
 	w.Fixed(name, 21, true)
 	return w.Bytes()
 }
+
+// RaidLevel updates a raid member's level (0x592b80).
+const RaidLevel Opcode = 0x0C13

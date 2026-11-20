@@ -600,7 +600,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 	case proto.QuestList, proto.QuestFinishedList, proto.QuestStart, proto.QuestCounter, proto.QuestChoose, proto.QuestEnd:
 		return s.applyQuestsPacket(p, ev)
-	case proto.PartyRoster, proto.PartyJoined, proto.PartyInvite, proto.PartyInviteName, proto.PartyAnswer, proto.PartyLeft, proto.PartyExpelled, proto.PartyLeader, proto.PartyBadge, proto.PartyPools, proto.PartyLevel, proto.PartyMove, proto.RaidMove, proto.PartyEffectAdd, proto.PartyEffectRemove, proto.RaidEffectAdd, proto.RaidEffectRemove, proto.RaidRoster, proto.RaidJoined, proto.PartyLeaveAlt, proto.RaidConvert, proto.RaidDivision, proto.RaidAutoJoin, proto.RaidSwap, proto.RaidSubLeader, proto.RaidInvite, proto.RaidAnswer, proto.RaidDisband, proto.RaidLeader, proto.RaidInviteName, proto.RaidError, proto.RaidExpel, proto.RaidPools:
+	case proto.PartyRoster, proto.PartyJoined, proto.PartyInvite, proto.PartyInviteName, proto.PartyAnswer, proto.PartyLeft, proto.PartyExpelled, proto.PartyLeader, proto.PartyBadge, proto.PartyPools, proto.PartyLevel, proto.RaidLevel, proto.PartyMove, proto.RaidMove, proto.PartyEffectAdd, proto.PartyEffectRemove, proto.RaidEffectAdd, proto.RaidEffectRemove, proto.RaidRoster, proto.RaidJoined, proto.PartyLeaveAlt, proto.RaidConvert, proto.RaidDivision, proto.RaidAutoJoin, proto.RaidSwap, proto.RaidSubLeader, proto.RaidInvite, proto.RaidAnswer, proto.RaidDisband, proto.RaidLeader, proto.RaidInviteName, proto.RaidError, proto.RaidExpel, proto.RaidPools:
 		if err := s.applyParty(p); err != nil {
 			return fail(err)
 		}
@@ -871,13 +871,11 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		s.Pools.SP -= min(s.Pools.SP, sp)
 		s.Pools.MP -= min(s.Pools.MP, mp)
 	case proto.ExpGain:
-		r := proto.NewReader(p)
-		gain := r.U32()
-		r.U32()
-		if err := r.Err(); err != nil {
+		gain, err := proto.DecodeExperienceGain(p)
+		if err != nil {
 			return fail(err)
 		}
-		s.Details.Exp = uint32(min(uint64(s.Details.Exp)+uint64(gain), uint64(^uint32(0))))
+		s.Details.Exp = uint32(min(uint64(s.Details.Exp)+uint64(gain.Base)+uint64(gain.Perfect), uint64(^uint32(0))))
 	case proto.LevelUpSelf, proto.LevelUpOther:
 		r := proto.NewReader(p)
 		id, level, stats, skills := r.U32(), r.U16(), r.U16(), r.U16()

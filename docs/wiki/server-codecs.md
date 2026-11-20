@@ -983,6 +983,26 @@ func ExchangeConfirmPacket(confirm bool) []byte {
 
 </details>
 
+## experience
+
+[internal/proto/experience.go](../../internal/proto/experience.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type ExperienceGain struct{ Base, Perfect uint32 }
+```
+
+```go
+func DecodeExperienceGain(p []byte) (ExperienceGain, error) {
+	r := NewReader(p)
+	gain := ExperienceGain{Base: r.U32(), Perfect: r.U32()}
+	return gain, r.Err()
+}
+```
+
+</details>
+
 ## fall damage
 
 [internal/proto/fall_damage.go](../../internal/proto/fall_damage.go#L1)

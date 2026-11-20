@@ -360,7 +360,8 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 		}
 	}
 	change.After.Money = uint32(min(uint64(change.After.Money)+uint64(res.Money), db.MoneyCap))
-	levels, exp := applyExpGain(&change.After, exp)
+	credited := applyExperienceAward(&change.After, exp, s.perfectParty())
+	levels := change.After.Level - change.Before.Level
 	if levels > 0 {
 		st := StatsFor(&change.After, s.equipment())
 		change.After.CurrentHP, change.After.CurrentMP, change.After.CurrentSP = st.MaxHP, st.MaxMP, st.MaxSP
@@ -391,7 +392,7 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 	w.U16(q.ID)
 	w.U8(1)
 	w.U8(variant)
-	w.U32(exp)
+	w.U32(credited.base)
 	w.U32(res.Money)
 	if reward != nil {
 		w.Bytes([]byte{reward.Bag, reward.Slot, reward.Type, reward.TypeID})
@@ -399,8 +400,8 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 		w.Bytes(make([]byte, 4))
 	}
 	s.send(w.MustFinish(), "0x0903 quest completed")
-	s.notifyExpGain(exp, levels)
-	s.log.Printf("GX Server World quest %d committed variant %d exp %d money %d", q.ID, variant, exp, res.Money)
+	s.notifyExpGain(credited, levels)
+	s.log.Printf("GX Server World quest %d committed variant %d exp %d money %d", q.ID, variant, credited.base+credited.perfect, res.Money)
 }
 ```
 
@@ -475,7 +476,7 @@ Declarations: [packet.QuestCounter](../../server/internal/packet/packet.go#L136)
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [bumpQuestCounter (server/internal/world/quests.go)](../../server/internal/world/quests.go#L846), [questKillCount (server/internal/world/quests.go)](../../server/internal/world/quests.go#L865)
+**S→C serializers:** [bumpQuestCounter (server/internal/world/quests.go)](../../server/internal/world/quests.go#L847), [questKillCount (server/internal/world/quests.go)](../../server/internal/world/quests.go#L866)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L601), [applyQuestsPacket (internal/game/state_quests_packets.go)](../../internal/game/state_quests_packets.go#L42)
 
@@ -485,7 +486,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>bumpQuestCounter — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L846)
+[Source definition](../../server/internal/world/quests.go#L847)
 
 ```go
 func (s *Session) bumpQuestCounter(q *activeQuest, slot int) {
@@ -510,7 +511,7 @@ func (s *Session) bumpQuestCounter(q *activeQuest, slot int) {
 
 <details><summary>questKillCount — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L865)
+[Source definition](../../server/internal/world/quests.go#L866)
 
 ```go
 func (s *Session) questKillCount(mobID uint16, count uint8) bool {

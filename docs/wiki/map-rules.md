@@ -56,3 +56,26 @@ Migration 19 takes the highest threshold from the former mode rows at each
 level and rounds in bands starting at 100,000 EXP. Existing levels, progress
 within a level and unspent points are retained. Restart GX World after editing
 the curve.
+
+### Party and raid experience
+
+Monster EXP is calculated for each recipient using their level. A solo
+kill grants 120% of that amount. In a normal party the total roster size sets
+the factor. Two members use 100%, then three through seven use 73%, 64.5%,
+56%, 47.5% and 39%. The result is truncated before applying the level share.
+Relative to the highest level in the roster, gaps of 0–7, 8–15, 16–31, 32–47
+and 48 or more use 100%, 80%, 60%, 40% and 20% respectively.
+
+Each recipient must be alive, in the same instance and within 100 horizontal
+units of the player credited with the kill. A raid of any size uses the
+lowest native factor, 1%, before its level share. Raids receive no Perfect
+Party bonus. PvP kills award kill credit and grant zero EXP.
+
+A seven-member normal party qualifies for **Perfect Party** regardless of
+class composition. The server grants an extra amount equal to the recipient's
+eligible EXP, including quest rewards, when the base award alone falls short
+of the next level. The original `CUser::AddExpFromUser` (`0x458240`) selects
+this branch. GX processes any level reached by the bonus immediately and
+clips both amounts to the shared cap. The original `0x0207` packet carries
+normal and bonus EXP separately. The client uses SysMsg IDs 50 and 66 and adds
+both amounts to the EXP bar.

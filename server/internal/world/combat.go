@@ -501,6 +501,24 @@ func applyExpGain(ch *db.Character, gained uint32) (levels uint16, credited uint
 	return levels, satSub(ch.Exp, before)
 }
 
+type experienceCredit struct{ base, perfect uint32 }
+
+// CUser::AddExpFromUser (0x458240) grants an equal extra amount to a normal
+// seven-member party when the base award alone is below the next threshold.
+// Process any level crossed by the bonus immediately using the GX curve.
+func applyExperienceAward(ch *db.Character, amount uint32, perfect bool) experienceCredit {
+	total := amount
+	if perfect {
+		defs := db.MustDefs()
+		if ch.Level < defs.LevelCap && uint64(ch.Exp)+uint64(amount) < uint64(defs.Exp[ch.Level]) {
+			total = satAdd(amount, amount)
+		}
+	}
+	_, credited := applyExpGain(ch, total)
+	base := min(amount, credited)
+	return experienceCredit{base, credited - base}
+}
+
 // expBounds returns the cumulative thresholds used by the character's bar.
 func expBounds(ch *db.Character) (prev, next uint32) {
 	defs := db.MustDefs()
@@ -528,34 +546,36 @@ func rewardKill(killer *ConnectedPlayer, killerID uint32, mapID uint16, m *MapMo
 	if killer != nil {
 		party = partyMembersNear(killer, mapID, m.PosX, m.PosZ)
 	}
-	recipients := party
-	if len(recipients) == 0 && killer != nil {
-		recipients = []*ConnectedPlayer{killer}
+	var rewards []killReward
+	var perfect bool
+	base := uint16(min(m.Exp, 65535))
+	if killer != nil {
+		rewards, perfect = killRewards(killer, mapID, m.Level, base)
 	}
 	for _, it := range rollMobDrops(mapID, m, killerID, party, log) {
 		dispatchItemEnter(mapID, &it, "0x0401 mob drop")
 	}
-	if def := questItemDrop(m, recipients); def != nil {
+	questRecipients := party
+	if len(questRecipients) == 0 && killer != nil {
+		questRecipients = []*ConnectedPlayer{killer}
+	}
+	if def := questItemDrop(m, questRecipients); def != nil {
 		x, z := dropPosition(m.PosX, m.PosZ)
 		mi := MapItem{ID: nextMapItemID(), OwnerID: killerID, DroppedAt: time.Now(), PosX: x, PosZ: z,
 			Item: db.Item{Type: def.Type, TypeID: def.TypeID, Quality: def.Quality, Count: 1}}
 		addMapItem(mapID, mi)
 		dispatchItemEnter(mapID, &mi, "0x0401 quest item drop")
 	}
-	for _, p := range recipients {
-		p.QueueQuestKill(m.MobID)
-	}
-	if m.Exp == 0 {
-		return
-	}
-	base := uint16(min(m.Exp, 65535))
 	if killer == nil {
-		grantOfflineKillExp(killerID, m.MobID, m.Level, uint32(base), log)
+		if base > 0 {
+			grantOfflineKillExp(killerID, m.MobID, m.Level, uint32(base), log)
+		}
 		return
 	}
-	for member, amount := range killRewards(killer, mapID, m.PosX, m.PosZ, m.Level, base) {
-		if amount > 0 {
-			member.QueueExp(amount)
+	for _, reward := range rewards {
+		reward.member.QueueQuestKill(m.MobID)
+		if reward.exp > 0 {
+			reward.member.QueueExp(reward.exp, perfect)
 		}
 	}
 }
@@ -581,34 +601,10 @@ func (s *Session) experienceMode() int {
 	}
 	return mode
 }
-func (s *Session) expScale(gained uint32) uint32 { return experienceScaled(gained, s.experienceMode()) }
-
-// awardExp applies an exp reward to the session's character.
-func (s *Session) awardExp(gained uint32, modifiers bool) {
+func (s *Session) notifyExpGain(credited experienceCredit, levels uint16) {
 	ch := s.char
-	if ch == nil {
-		return
-	}
-	if modifiers {
-		gained = s.expScale(gained) // quest rewards skip them
-	}
-	levels, gained := applyExpGain(ch, gained)
-	if gained == 0 && levels == 0 {
-		return
-	}
-	if levels > 0 {
-		s.setPools(false)
-	}
-	s.persist()
-	s.log.Printf("GX Server World exp character_id=%d gained=%d level=%d exp=%d levels_gained=%d",
-		ch.ID, gained, ch.Level, ch.Exp, levels)
-	s.notifyExpGain(gained, levels)
-}
-
-func (s *Session) notifyExpGain(gained uint32, levels uint16) {
-	ch := s.char
-	if gained > 0 {
-		s.send(buildExpGain(gained), "0x0207 exp gained")
+	if credited.base > 0 || credited.perfect > 0 {
+		s.send(buildExpGain(credited), "0x0207 exp gained")
 	}
 	if levels > 0 {
 		// The level-up notice goes to the character (0x0508) and to the
@@ -625,12 +621,11 @@ func (s *Session) notifyExpGain(gained uint32, levels uint16) {
 	}
 }
 
-// buildExpGain (0x0207): exp gained and a second word the original sends
-// as 0.
-func buildExpGain(amount uint32) []byte {
+// buildExpGain (0x0207): base experience and the extra Perfect Party EXP.
+func buildExpGain(credited experienceCredit) []byte {
 	w := packet.New(packet.ExpGain)
-	w.U32(amount)
-	w.U32(0)
+	w.U32(credited.base)
+	w.U32(credited.perfect)
 	return w.MustFinish()
 }
 

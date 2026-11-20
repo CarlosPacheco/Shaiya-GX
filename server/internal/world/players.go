@@ -5,6 +5,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/telemetry"
 	"math"
 	"net"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -118,6 +119,7 @@ type ConnectedPlayer struct {
 
 	rewardMu   sync.Mutex
 	experience [4]uint32
+	perfectExp []perfectExperience
 	gold       uint32
 	questKills map[uint16]uint8
 
@@ -185,15 +187,33 @@ func (p *ConnectedPlayer) hasQuest(id uint16) bool {
 	return p.questIDs[id]
 }
 
-// QueueExp / QueueGold carry a party member's share of a kill to its own
-// session, the only one that mutates its character.
+type perfectExperience struct {
+	before [4]uint32
+	amount uint32
+}
+
+type rewardSnapshot struct {
+	experience [4]uint32
+	perfect    []perfectExperience
+	gold       uint32
+}
+
 func experienceScaled(amount uint32, mode int) uint32 {
 	factors := [4]float64{1, 1.5, 1.2, 1.7}
 	return uint32(math.Trunc(float64(amount) * factors[mode]))
 }
-func (p *ConnectedPlayer) QueueExp(amount uint32) {
+
+// QueueExp carries a kill reward to its recipient's owning session.
+func (p *ConnectedPlayer) QueueExp(amount uint32, perfect bool) {
 	p.rewardMu.Lock()
 	defer p.rewardMu.Unlock()
+	if perfect {
+		// Keep the award boundary: whether this grant levels the recipient
+		// depends on the EXP from all preceding rewards.
+		p.perfectExp = append(p.perfectExp, perfectExperience{p.experience, amount})
+		p.experience = [4]uint32{}
+		return
+	}
 	// Precompute every possible modifier per event before coalescing, retaining
 	// per-reward rounding. The receiving session chooses its live buff mode.
 	for mode := range p.experience {
@@ -209,22 +229,33 @@ func (p *ConnectedPlayer) takeRewardTotals(mode int) (uint32, uint32) {
 	p.rewardMu.Lock()
 	defer p.rewardMu.Unlock()
 	exp, gold := p.experience[mode], p.gold
+	for _, event := range p.perfectExp {
+		exp = satAdd(exp, satAdd(event.before[mode], experienceScaled(event.amount, mode)))
+	}
+	p.perfectExp = p.perfectExp[:0]
 	p.experience = [4]uint32{}
 	p.gold = 0
 	return exp, gold
 }
-func (p *ConnectedPlayer) peekRewardTotals(mode int) (snapshot [4]uint32, exp, gold uint32) {
+func (p *ConnectedPlayer) peekRewardTotals() rewardSnapshot {
 	p.rewardMu.Lock()
 	defer p.rewardMu.Unlock()
-	return p.experience, p.experience[mode], p.gold
+	return rewardSnapshot{p.experience, slices.Clone(p.perfectExp), p.gold}
 }
-func (p *ConnectedPlayer) ackRewardTotals(snapshot [4]uint32, gold uint32) {
+func (p *ConnectedPlayer) ackRewardTotals(snapshot rewardSnapshot) {
 	p.rewardMu.Lock()
 	defer p.rewardMu.Unlock()
-	for mode, value := range snapshot {
-		p.experience[mode] = satSub(p.experience[mode], value)
+	remaining := copy(p.perfectExp, p.perfectExp[len(snapshot.perfect):])
+	p.perfectExp = p.perfectExp[:remaining]
+	tail := &p.experience
+	if remaining != 0 {
+		// A new perfect award moved the old trailing EXP into its prefix.
+		tail = &p.perfectExp[0].before
 	}
-	p.gold = satSub(p.gold, gold)
+	for mode, value := range snapshot.experience {
+		tail[mode] = satSub(tail[mode], value)
+	}
+	p.gold = satSub(p.gold, snapshot.gold)
 }
 func (p *ConnectedPlayer) TakeRewards() (exp, gold []uint32) {
 	e, g := p.takeRewardTotals(0)
