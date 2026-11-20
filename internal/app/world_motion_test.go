@@ -79,6 +79,48 @@ func TestServerPositionReconcilesBeforeNextPredictionFrame(t *testing.T) {
 	}
 }
 
+func TestSmallGroundCorrectionChangesSimulationImmediatelyAndBlendsModel(t *testing.T) {
+	a := inputApp()
+	a.state.MapID, a.state.SelfID = 1, 10
+	old := render.V3{10, 4, 20}
+	corrected := render.V3{9.7, 4, 20}
+	a.wv = &worldView{mapID: 1, pos: old, eye: render.V3{10, 6, 15}, moving: true}
+	w := proto.NewWriter(proto.GXPlayerCorrection)
+	w.U32(10)
+	w.F32(corrected[0])
+	w.F32(corrected[1])
+	w.F32(corrected[2])
+	w.U8(1)
+	w.U16(0)
+	w.U8(0)
+	w.F32(0)
+	w.F32(0)
+	w.F32(0)
+	a.applyWorldPacket(w.Bytes())
+	v := a.wv
+	if v.pos != corrected || a.state.Self.X != corrected[0] || v.visualPosition() != old {
+		t.Fatalf("correction misplaced simulation or model: physical %v, visual %v", v.pos, v.visualPosition())
+	}
+	r := proto.NewReader(v.movePacket(1))
+	r.U8()
+	r.U16()
+	if x := r.F32(); x != corrected[0] {
+		t.Fatalf("movement packet used visual position: x = %g", x)
+	}
+	v.advanceVisualCorrection(visualCorrectionDuration / 2)
+	if got := v.visualPosition()[0]; math.Abs(float64(got-9.85)) > .0001 {
+		t.Fatalf("model did not converge halfway: x = %g", got)
+	}
+	v.advanceVisualCorrection(visualCorrectionDuration / 2)
+	if v.visualPosition() != corrected {
+		t.Fatal("model did not settle at the authoritative position")
+	}
+	v.reconcilePosition(render.V3{4, 4, 20}, true)
+	if v.visualPosition() != v.pos {
+		t.Fatal("large correction was blended")
+	}
+}
+
 func TestOtherCharacterTeleportDoesNotStopOurMovement(t *testing.T) {
 	a := inputApp()
 	a.state.MapID, a.state.SelfID = 1, 10

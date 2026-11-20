@@ -50,6 +50,49 @@ func (v *worldView) place(pos render.V3) {
 	v.pos = pos
 }
 
+const visualCorrectionDuration float32 = .18
+
+func (v *worldView) visualPosition() render.V3 {
+	if v.visualCorrectionLeft == 0 {
+		return v.pos
+	}
+	return v.world.GroundPlayer(v.pos, v.visualCorrectionOffset, false)
+}
+
+func (v *worldView) clearVisualCorrection() {
+	v.visualCorrectionOffset, v.visualCorrectionLeft = render.V3{}, 0
+}
+
+// Apply the server position immediately for simulation. Only the visible
+// model can converge from its previous position after a small ground update.
+func (v *worldView) reconcilePosition(pos render.V3, smooth bool) {
+	offset := v.visualPosition().Sub(pos)
+	v.place(pos)
+	v.clearVisualCorrection()
+	if !smooth || math.Abs(float64(offset[1])) > .05 {
+		return
+	}
+	offset[1] = 0
+	if length := offset.Len(); length < .001 || length > .45 {
+		return
+	}
+	// A correction at a wall or step must display the legal position.
+	if v.world.GroundPlayer(pos, offset, false).Sub(pos.Add(offset)).Len() > .025 {
+		return
+	}
+	v.visualCorrectionOffset, v.visualCorrectionLeft = offset, visualCorrectionDuration
+}
+
+func (v *worldView) advanceVisualCorrection(dt float32) {
+	if v.visualCorrectionLeft <= dt {
+		v.clearVisualCorrection()
+		return
+	}
+	remaining := v.visualCorrectionLeft - dt
+	v.visualCorrectionOffset = v.visualCorrectionOffset.Scale(remaining / v.visualCorrectionLeft)
+	v.visualCorrectionLeft = remaining
+}
+
 func (v *worldView) movePacket(motion uint8) []byte {
 	direction := uint16(math.Atan2(float64(v.facing[0]), float64(v.facing[2])) / (2 * math.Pi) * 65536)
 	return proto.MovePacket(motion, direction, v.pos[0], v.pos[1], v.pos[2])
@@ -207,12 +250,16 @@ func (a *App) confirmedPosition(p []byte) {
 			v.ladderRetryAt = a.clock + .35
 		}
 	case proto.GXSkillDash:
+		if a.state.LastSkillDash.Source == a.state.SelfID {
+			v.clearVisualCorrection()
+		}
 		a.receiveSkillDash(a.state.LastSkillDash)
 	case proto.GXPlayerCorrection:
 		if proto.NewReader(p).U32() != a.state.SelfID {
 			return
 		}
-		if _, active := v.dashes[a.state.SelfID]; active && v.self != nil && v.self.PlayingAction(101) {
+		_, dashing := v.dashes[a.state.SelfID]
+		if dashing && v.self != nil && v.self.PlayingAction(101) {
 			v.self.ReleaseAction()
 		}
 		delete(v.dashes, a.state.SelfID)
@@ -220,7 +267,10 @@ func (a *App) confirmedPosition(p []byte) {
 		if correction.ID != a.state.SelfID {
 			return
 		}
-		v.place(render.V3{correction.X, correction.Y, correction.Z})
+		smooth := v.moving && !v.jumping && !correction.Jumping && !dashing && !v.ladder.Active && !v.evading &&
+			!a.state.Self.Dead && !a.state.Self.Sitting && a.clock >= v.attackMoveUntil &&
+			(correction.Motion&0x3f != 0 || v.walking)
+		v.reconcilePosition(render.V3{correction.X, correction.Y, correction.Z}, smooth)
 		v.jumping, v.jumpFall, v.groundFall = correction.Jumping, correction.JumpFall, correction.Fall
 		v.slope.Frames = correction.SlopeFrames
 		v.motion = correction.Motion
@@ -240,6 +290,7 @@ func (a *App) confirmedPosition(p []byte) {
 			v.ladderRetryAt = a.clock + .35
 		}
 		v.slope.Frames = 0
+		v.clearVisualCorrection()
 		v.place(render.V3{a.state.Self.X, a.state.Self.Y, a.state.Self.Z})
 		v.combatHeading = render.V3{}
 		v.approachTarget = 0

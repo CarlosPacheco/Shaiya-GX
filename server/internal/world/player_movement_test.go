@@ -87,6 +87,25 @@ func TestPlayerSpeedBudgetUsesServerTime(t *testing.T) {
 	}
 }
 
+func TestGroundMovementSamplingJitterDoesNotRewindPlayer(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	s.commitAttackStop(now)
+	resume := s.attackMoveUntil
+	x, y, z := s.char.PosX, s.char.PosY, s.char.PosZ
+
+	// The first running sample arrives 11 ms ahead of the server's
+	// movement budget. The following sample arrives on schedule.
+	if ok, reason := s.validatePlayerMovement(x+.5, y, z, 1, 0, resume.Add(89*time.Millisecond)); !ok || reason != "" {
+		t.Fatalf("small timing difference corrected the player's position: %s", reason)
+	}
+	if advance := s.char.PosX - x; advance > .446 || advance < .444 {
+		t.Fatalf("timing difference changed the authoritative speed limit: %g", advance)
+	}
+	if ok, reason := s.validatePlayerMovement(x+1, y, z, 1, 0, resume.Add(200*time.Millisecond)); !ok || reason != "" || math.Abs(float64(s.char.PosX-x-1)) > .001 {
+		t.Fatalf("the following sample didn't catch up: position %g, %s", s.char.PosX, reason)
+	}
+}
+
 func TestPlayerCannotHoverOrGainHeightByRelogging(t *testing.T) {
 	s, now := playerPhysicsFixture(t)
 	// Freeze client input in the air: server elapsed time must still land it.

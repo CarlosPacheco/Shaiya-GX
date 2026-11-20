@@ -253,6 +253,9 @@ func (s *Session) commitMovement() {
 }
 func (s *Session) correctMovement(reason string) {
 	m := &s.movement
+	if s.log != nil {
+		s.log.Debugf("movement correction map=%d reason=%s", s.char.MapID, reason)
+	}
 	w := packet.New(packet.Opcode(proto.GXPlayerCorrection))
 	w.U32(s.char.ID)
 	w.F32(s.char.PosX)
@@ -308,18 +311,14 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		dx, dz = 0, 0
 	}
 	distance := float32(math.Hypot(float64(dx), float64(dz)))
+	speedLimited := distance > m.credit
 	reason := ""
 	if attackPaused && distance > .00001 {
 		reason = "movement paused by attack"
 	}
-	if distance > m.credit {
-		if distance > m.credit+.005 && !attackPaused {
-			reason = "movement exceeds server speed"
-		}
-		if distance > 0 {
-			scale := m.credit / distance
-			dx, dz = dx*scale, dz*scale
-		}
+	if speedLimited {
+		scale := m.credit / distance
+		dx, dz = dx*scale, dz*scale
 	}
 	m.credit = max(0, m.credit-float32(math.Hypot(float64(dx), float64(dz))))
 	// Integrate the unsupported part of a walk over its actual travel time,
@@ -359,8 +358,15 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		m.motion |= 0x80
 	}
 	s.commitMovement()
-	if math.Hypot(float64(m.pos[0]-x), float64(m.pos[2]-z)) > .12 {
+	// Keep the authoritative speed cap for every sample. A small timing
+	// difference can resolve on the next sample, using the same threshold as
+	// other horizontal discrepancies instead of correcting a few millimeters.
+	const correctionDistance = .12
+	if reason == "" && math.Hypot(float64(m.pos[0]-x), float64(m.pos[2]-z)) > correctionDistance {
 		reason = "blocked or invalid horizontal path"
+		if speedLimited && math.Hypot(float64(m.pos[0]-(oldX+dx)), float64(m.pos[2]-(oldZ+dz))) <= correctionDistance {
+			reason = "movement exceeds server speed"
+		}
 	}
 	if math.Abs(float64(m.pos[1]-y)) > .3 {
 		reason = "height differs from server physics"

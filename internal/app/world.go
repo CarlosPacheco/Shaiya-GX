@@ -66,6 +66,8 @@ type worldView struct {
 	selfMountRace               uint8
 	selfMountLoaded             bool
 	pos                         render.V3
+	visualCorrectionOffset      render.V3
+	visualCorrectionLeft        float32
 	facing                      render.V3 // logical heading; diagonals must not feed back into this
 	visualFacing                render.V3 // rendered diagonal heading, zero means logical heading
 	combatHeading               render.V3 // heading to restore after facing an attack target
@@ -557,6 +559,13 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	}
 	a.updateWaterPresentation(float32(dt), moving, swimming)
 	airborne := v.jumping || !v.world.PlayerSupported(v.pos)
+	if v.visualCorrectionLeft > 0 {
+		if airborne || climbFrame || dashing || a.state.Self.Dead {
+			v.clearVisualCorrection()
+		} else {
+			v.advanceVisualCorrection(float32(dt))
+		}
+	}
 	if v.self != nil {
 		if v.attackPose && (!v.self.ActionActive() || v.self.ActionID() != v.attackActionID) {
 			v.attackPose = false
@@ -864,7 +873,8 @@ func (a *App) prepareSelfForDraw() {
 		if v.self.Mounted {
 			v.self.SetMountedClip(v.moving, scene.VehicleAlternate(a.state.Self.MountShape))
 		}
-		riderPos := v.pos
+		visualPos := v.visualPosition()
+		riderPos := visualPos
 		heading := v.facing
 		if v.visualFacing.Len() > 0 {
 			heading = v.visualFacing
@@ -882,7 +892,7 @@ func (a *App) prepareSelfForDraw() {
 				if v.selfMount != nil {
 					v.selfMount.SetMotion(v.moving, v.walking || v.motion&0x3f == 0, v.motion&0x3f == 2, v.jumping)
 					v.selfMount.Update(float32(a.frameDT))
-					v.selfMount.World = render.Basis(v.pos, heading.Scale(-1), render.V3{0, 1, 0})
+					v.selfMount.World = render.Basis(visualPos, heading.Scale(-1), render.V3{0, 1, 0})
 					riderPos = v.selfMount.Seat()
 					v.selfMount.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, true, &a.vehicle.effectBudget)
 				}
