@@ -19,6 +19,7 @@ func TestSkillIDsAreOneBased(t *testing.T) {
 	b[12+3], b[12+4], b[12+5], b[12+6] = 100, 98, 2, 37
 	b[12+22] = 121
 	b[12+59], b[12+60], b[12+111] = 2, 0, 1
+	b[12+87], b[12+88], b[12+89], b[12+110] = 18, 244, 255, 20
 	defs, err := ParseSkills(b)
 	if err != nil {
 		t.Fatal(err)
@@ -34,5 +35,8 @@ func TestSkillIDsAreOneBased(t *testing.T) {
 	}
 	if d := defs[SkillKey{1, 1}]; d.KeepTime != 2 || d.FixRange != 1 || d.KeepSeconds() != 7200 {
 		t.Fatal("EP5 duration fields", d)
+	}
+	if d := defs[SkillKey{1, 1}]; d.AbilityType[0] != 18 || d.AbilityValue[0] != -12 || d.LimitHP != 20 {
+		t.Fatal("EP5 ability fields", d)
 	}
 }

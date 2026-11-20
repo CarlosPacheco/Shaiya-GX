@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0702` — ShopBuy**
 
-Declarations: [packet.ShopBuy](../../server/internal/packet/packet.go#L76), [proto.ShopBuy](../../internal/proto/opcodes.go#L60).
+Declarations: [packet.ShopBuy](../../server/internal/packet/packet.go#L78), [proto.ShopBuy](../../internal/proto/opcodes.go#L62).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L101)
 
@@ -81,7 +81,7 @@ type ShopResult struct {
 
 **`0x0703` — ShopSell**
 
-Declarations: [packet.ShopSell](../../server/internal/packet/packet.go#L144), [proto.ShopSell](../../internal/proto/opcodes.go#L129).
+Declarations: [packet.ShopSell](../../server/internal/packet/packet.go#L146), [proto.ShopSell](../../internal/proto/opcodes.go#L131).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L99)
 
@@ -151,7 +151,7 @@ type ShopResult struct {
 
 **`0x0711` — WarehouseItemList**
 
-Declarations: [packet.WarehouseItemList](../../server/internal/packet/packet.go#L143), [proto.WarehouseItemList](../../internal/proto/opcodes.go#L128).
+Declarations: [packet.WarehouseItemList](../../server/internal/packet/packet.go#L145), [proto.WarehouseItemList](../../internal/proto/opcodes.go#L130).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -236,7 +236,7 @@ type WarehouseList struct {
 
 **`0x0801` — GemAdd**
 
-Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L219), [proto.GemAdd](../../internal/proto/opcodes.go#L207).
+Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L221), [proto.GemAdd](../../internal/proto/opcodes.go#L209).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L87)
 
@@ -329,7 +329,7 @@ type GemAddResult struct {
 
 **`0x0802` — GemRemove**
 
-Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L220), [proto.GemRemove](../../internal/proto/opcodes.go#L208).
+Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L222), [proto.GemRemove](../../internal/proto/opcodes.go#L210).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L89)
 
@@ -534,7 +534,7 @@ type GemRemoveResult struct {
 
 **`0x0805` — EnchantAdd**
 
-Declarations: [packet.EnchantAdd](../../server/internal/packet/packet.go#L217), [proto.EnchantAdd](../../internal/proto/opcodes.go#L205).
+Declarations: [packet.EnchantAdd](../../server/internal/packet/packet.go#L219), [proto.EnchantAdd](../../internal/proto/opcodes.go#L207).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L85)
 
@@ -623,7 +623,7 @@ type EnchantResult struct {
 
 **`0x0806` — ItemCompose**
 
-Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L218), [proto.ItemCompose](../../internal/proto/opcodes.go#L206).
+Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L220), [proto.ItemCompose](../../internal/proto/opcodes.go#L208).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L91)
 
@@ -695,7 +695,7 @@ type ComposeResult struct {
 
 **`0x0809` — GemAddPossibility**
 
-Declarations: [packet.GemAddPossibility](../../server/internal/packet/packet.go#L221), [proto.GemAddPossibility](../../internal/proto/opcodes.go#L209).
+Declarations: [packet.GemAddPossibility](../../server/internal/packet/packet.go#L223), [proto.GemAddPossibility](../../internal/proto/opcodes.go#L211).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -709,7 +709,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0x080A` — GemRemovePossibility**
 
-Declarations: [packet.GemRemovePossibility](../../server/internal/packet/packet.go#L222), [proto.GemRemovePossibility](../../internal/proto/opcodes.go#L210).
+Declarations: [packet.GemRemovePossibility](../../server/internal/packet/packet.go#L224), [proto.GemRemovePossibility](../../internal/proto/opcodes.go#L212).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -723,7 +723,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0xB101` — BankItemList**
 
-Declarations: [packet.BankItemList](../../server/internal/packet/packet.go#L206), [proto.BankItemList](../../internal/proto/opcodes.go#L194).
+Declarations: [packet.BankItemList](../../server/internal/packet/packet.go#L208), [proto.BankItemList](../../internal/proto/opcodes.go#L196).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

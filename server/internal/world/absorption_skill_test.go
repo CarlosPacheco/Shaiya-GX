@@ -30,6 +30,8 @@ func TestMobSkillAbsorptionAndWireDamage(t *testing.T) {
 			st := before
 			st.Absorption = tt.absorb
 			mc := mobCombatFor(md)
+			mc.Accuracy = st.Evasion
+			mc.Level = int32(st.Level)
 			s.applyMobSkill(pendingDamage{MobGlobalID: id, MobID: md.MobID, First: true}, md, &mc, sk, &st)
 			if got := before.CurrentHP - s.stats().CurrentHP; got != tt.want {
 				t.Fatalf("HP loss=%d want%d", got, tt.want)
@@ -70,7 +72,7 @@ func TestPVPSkillAbsorptionControlsDisplayAndDrain(t *testing.T) {
 	st := s.stats()
 	st.Absorption = 50
 	before := st.CurrentHP
-	s.applyUserSkillHit(pendingUserHit{AttackerID: attackerChar.ID, Skill: sk, First: true, ItemCast: true}, st)
+	s.applyUserSkillHit(pendingUserHit{AttackerID: attackerChar.ID, Stats: CharacterStats{Accuracy: st.Evasion}, Skill: sk, First: true, ItemCast: true}, st)
 	if before-s.stats().CurrentHP != 150 {
 		t.Fatal("absorbed HP loss mismatch")
 	}

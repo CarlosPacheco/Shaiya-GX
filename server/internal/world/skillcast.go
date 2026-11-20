@@ -4,6 +4,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/skillchance"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -61,7 +62,7 @@ func addBuffs(e EquipmentStats, buffs []ActiveBuff) EquipmentStats {
 			if (b.Detail == 91 && i == 0) || debuff && (a.Type < 32 || a.Type > 34) {
 				v = -v
 			}
-			applyAbility(&e, b.Effect, a.Type, v)
+			applyAbility(&e, b.Effect, a.Type, skillchance.Modifier(a.Type, v))
 		}
 	}
 	return e

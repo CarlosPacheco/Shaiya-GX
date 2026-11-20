@@ -134,16 +134,14 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	s.breakStealth()
 	s.lastActionAt, s.lastCombatAt = time.Now(), time.Now()
 	SetMobAggro(ch.MapID, target, ch.ID)
-	// CUser::AttackSuccess, then CUser::AttackDamage; 0x0503 result is
-	// 0 normal, 1 critical, 3 miss.
+	// 0x0503 result is 0 normal, 1 critical, 3 miss.
 	if !playerHits(&stats, &mc, kind) {
 		recordMobAIMiss(ch.MapID, mob.ID, ch.ID)
 		sendNear(ch.MapID, mob.PosX, mob.PosZ, CombatRadius,
 			buildCharacterMobAttack(ch.ID, mob.ID, attackResultMiss, 0), "0x0503 character mob auto attack (miss)")
 		return true
 	}
-	closeRanged := DistanceXZ(ch.PosX, ch.PosZ, mob.PosX, mob.PosZ) <= closeRangeDistance
-	damage, crit := playerDamage(&stats, &mc, kind, stats.AttackAttr, closeRanged)
+	damage, crit := playerDamage(&stats, &mc, kind)
 	result, ok := DamageMobFrom(ch.MapID, target, uint32(damage), ch.ID)
 	if !ok {
 		return false
@@ -277,7 +275,7 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 		drain := first && sk.TypeDetail == detailDrain
 		var damage [3]int32
 		result := uint8(attackSuccessNormal)
-		if s.blocksAttack(int(sk.Kind)) || !mobSkillHits(mc, md, sk, stats) {
+		if s.blocksAttack(int(sk.Kind)) || !mobSkillHits(mc, sk, stats) {
 			result = attackResultMiss
 		} else {
 			duelHitBy(s.player, 0)
@@ -338,15 +336,21 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 		}
 		s.log.Printf("GX Server World mob skill mob_global_id=%d mob_id=%d skill_id=%d result=%d damage=%d killed=%t",
 			d.MobGlobalID, d.MobID, sk.SkillID, result, hp, killed)
-		if !killed && !drain && result != attackResultMiss && sk.AddDamageHP != 0 {
-			add := uint32(uint16(sk.AddDamageHP))
-			extra := [3]uint16{uint16(min(add, 65535)), uint16(sk.AddDamageSP), uint16(sk.AddDamageMP)}
+		if !killed && !drain && result != attackResultMiss && (sk.AddDamageHP != 0 || sk.AddDamageSP != 0 || sk.AddDamageMP != 0) {
+			add := extraSkillDamage(sk, 100+mobLevelPenalty(stats.Level, mc.Level))
+			extra := [3]uint16{uint16(add[0]), uint16(add[1]), uint16(add[2])}
 			addMirrored := mirrored || s.reflects(min(int(sk.Kind), 2), md)
 			shownAdd := extra
 			if addMirrored {
 				shownAdd = [3]uint16{}
 			} else {
-				killed = s.takeMobDamage(d, add, stats)
+				if add[1] != 0 || add[2] != 0 {
+					s.spendDelta(add[2], add[1])
+					if add[0] == 0 {
+						s.persist()
+					}
+				}
+				killed = s.takeMobDamage(d, add[0], stats)
 			}
 			w := packet.New(0x060E)
 			w.U32(d.MobGlobalID)

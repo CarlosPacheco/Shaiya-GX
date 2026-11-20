@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0601` — MobEnter**
 
-Declarations: [packet.MobEnter](../../server/internal/packet/packet.go#L106), [proto.MobEnter](../../internal/proto/opcodes.go#L90).
+Declarations: [packet.MobEnter](../../server/internal/packet/packet.go#L108), [proto.MobEnter](../../internal/proto/opcodes.go#L92).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -69,7 +69,7 @@ type MobSpawn struct {
 
 **`0x0602` — MobLeave**
 
-Declarations: [packet.MobLeave](../../server/internal/packet/packet.go#L107), [proto.MobLeave](../../internal/proto/opcodes.go#L91).
+Declarations: [packet.MobLeave](../../server/internal/packet/packet.go#L109), [proto.MobLeave](../../internal/proto/opcodes.go#L93).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -109,7 +109,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0603` — MobMove**
 
-Declarations: [packet.MobMove](../../server/internal/packet/packet.go#L108), [proto.MobMove](../../internal/proto/opcodes.go#L92).
+Declarations: [packet.MobMove](../../server/internal/packet/packet.go#L110), [proto.MobMove](../../internal/proto/opcodes.go#L94).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -157,7 +157,7 @@ type MobMotion struct {
 
 **`0x0605` — MobAttackCharacter**
 
-Declarations: [packet.MobAttackCharacter](../../server/internal/packet/packet.go#L109), [proto.MobAttackCharacter](../../internal/proto/opcodes.go#L93).
+Declarations: [packet.MobAttackCharacter](../../server/internal/packet/packet.go#L111), [proto.MobAttackCharacter](../../internal/proto/opcodes.go#L95).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -216,7 +216,7 @@ type AttackResult struct {
 
 **`0x0606` — MobDeath**
 
-Declarations: [packet.MobDeath](../../server/internal/packet/packet.go#L110), [proto.MobDeath](../../internal/proto/opcodes.go#L94).
+Declarations: [packet.MobDeath](../../server/internal/packet/packet.go#L112), [proto.MobDeath](../../internal/proto/opcodes.go#L96).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -276,7 +276,7 @@ type Reader struct {
 
 **`0x0607` — MobPeriodicDamage**
 
-Declarations: [packet.MobPeriodicDamage](../../server/internal/packet/packet.go#L111), [proto.MobPeriodicDamage](../../internal/proto/opcodes.go#L95).
+Declarations: [packet.MobPeriodicDamage](../../server/internal/packet/packet.go#L113), [proto.MobPeriodicDamage](../../internal/proto/opcodes.go#L97).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -335,11 +335,11 @@ type PeriodicEffect struct {
 
 **`0x0609` — MobSpeed**
 
-Declarations: [proto.MobSpeed](../../internal/proto/opcodes.go#L236).
+Declarations: [proto.MobSpeed](../../internal/proto/opcodes.go#L238).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildMobSpeed (server/internal/world/mobeffects.go)](../../server/internal/world/mobeffects.go#L145)
+**S→C serializers:** [buildMobSpeed (server/internal/world/mobeffects.go)](../../server/internal/world/mobeffects.go#L149)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L917)
 
@@ -349,7 +349,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobSpeed — server/internal/world/mobeffects.go</summary>
 
-[Source definition](../../server/internal/world/mobeffects.go#L145)
+[Source definition](../../server/internal/world/mobeffects.go#L149)
 
 ```go
 func buildMobSpeed(m *MapMob) []byte {
@@ -396,13 +396,13 @@ type Reader struct {
 
 **`0x060B` — MobSkillUse**
 
-Declarations: [proto.MobSkillUse](../../internal/proto/opcodes.go#L231).
+Declarations: [proto.MobSkillUse](../../internal/proto/opcodes.go#L233).
 
 Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildMobSkillPacket (server/internal/world/combat.go)](../../server/internal/world/combat.go#L381)
+**S→C serializers:** [buildMobSkillPacket (server/internal/world/combat.go)](../../server/internal/world/combat.go#L385)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L847)
 
@@ -412,7 +412,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobSkillPacket — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L381)
+[Source definition](../../server/internal/world/combat.go#L385)
 
 ```go
 func buildMobSkillPacket(op packet.Opcode, result uint8, mobID, target uint32, sk *db.SkillDef, damage [3]uint16, healed *[3]uint16, attackSlot ...uint8) []byte {
@@ -488,13 +488,13 @@ type SkillResult struct {
 
 **`0x060C` — MobSkillDrain**
 
-Declarations: [proto.MobSkillDrain](../../internal/proto/opcodes.go#L232).
+Declarations: [proto.MobSkillDrain](../../internal/proto/opcodes.go#L234).
 
 Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildMobSkillPacket (server/internal/world/combat.go)](../../server/internal/world/combat.go#L381)
+**S→C serializers:** [buildMobSkillPacket (server/internal/world/combat.go)](../../server/internal/world/combat.go#L385)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L847)
 
@@ -504,7 +504,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobSkillPacket — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L381)
+[Source definition](../../server/internal/world/combat.go#L385)
 
 ```go
 func buildMobSkillPacket(op packet.Opcode, result uint8, mobID, target uint32, sk *db.SkillDef, damage [3]uint16, healed *[3]uint16, attackSlot ...uint8) []byte {
@@ -580,13 +580,13 @@ type SkillResult struct {
 
 **`0x060D` — MobSkillOther**
 
-Declarations: [proto.MobSkillOther](../../internal/proto/opcodes.go#L233).
+Declarations: [proto.MobSkillOther](../../internal/proto/opcodes.go#L235).
 
 Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildMobSkillPacket (server/internal/world/combat.go)](../../server/internal/world/combat.go#L381)
+**S→C serializers:** [buildMobSkillPacket (server/internal/world/combat.go)](../../server/internal/world/combat.go#L385)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L847)
 
@@ -596,7 +596,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobSkillPacket — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L381)
+[Source definition](../../server/internal/world/combat.go#L385)
 
 ```go
 func buildMobSkillPacket(op packet.Opcode, result uint8, mobID, target uint32, sk *db.SkillDef, damage [3]uint16, healed *[3]uint16, attackSlot ...uint8) []byte {
@@ -674,7 +674,7 @@ type SkillResult struct {
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applyMobSkill (server/internal/world/combat.go)](../../server/internal/world/combat.go#L267)
+**S→C serializers:** [applyMobSkill (server/internal/world/combat.go)](../../server/internal/world/combat.go#L265)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -684,7 +684,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>applyMobSkill — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L267)
+[Source definition](../../server/internal/world/combat.go#L265)
 
 ```go
 func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, sk *db.SkillDef, stats *CharacterStats) bool {
@@ -700,7 +700,7 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 		drain := first && sk.TypeDetail == detailDrain
 		var damage [3]int32
 		result := uint8(attackSuccessNormal)
-		if s.blocksAttack(int(sk.Kind)) || !mobSkillHits(mc, md, sk, stats) {
+		if s.blocksAttack(int(sk.Kind)) || !mobSkillHits(mc, sk, stats) {
 			result = attackResultMiss
 		} else {
 			duelHitBy(s.player, 0)
@@ -761,15 +761,21 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 		}
 		s.log.Printf("GX Server World mob skill mob_global_id=%d mob_id=%d skill_id=%d result=%d damage=%d killed=%t",
 			d.MobGlobalID, d.MobID, sk.SkillID, result, hp, killed)
-		if !killed && !drain && result != attackResultMiss && sk.AddDamageHP != 0 {
-			add := uint32(uint16(sk.AddDamageHP))
-			extra := [3]uint16{uint16(min(add, 65535)), uint16(sk.AddDamageSP), uint16(sk.AddDamageMP)}
+		if !killed && !drain && result != attackResultMiss && (sk.AddDamageHP != 0 || sk.AddDamageSP != 0 || sk.AddDamageMP != 0) {
+			add := extraSkillDamage(sk, 100+mobLevelPenalty(stats.Level, mc.Level))
+			extra := [3]uint16{uint16(add[0]), uint16(add[1]), uint16(add[2])}
 			addMirrored := mirrored || s.reflects(min(int(sk.Kind), 2), md)
 			shownAdd := extra
 			if addMirrored {
 				shownAdd = [3]uint16{}
 			} else {
-				killed = s.takeMobDamage(d, add, stats)
+				if add[1] != 0 || add[2] != 0 {
+					s.spendDelta(add[2], add[1])
+					if add[0] == 0 {
+						s.persist()
+					}
+				}
+				killed = s.takeMobDamage(d, add[0], stats)
 			}
 			w := packet.New(0x060E)
 			w.U32(d.MobGlobalID)
@@ -805,7 +811,7 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 
 **`0x0610` — MobCurrentHitpoints**
 
-Declarations: [packet.MobCurrentHitpoints](../../server/internal/packet/packet.go#L112), [proto.MobCurrentHitpoints](../../internal/proto/opcodes.go#L96).
+Declarations: [packet.MobCurrentHitpoints](../../server/internal/packet/packet.go#L114), [proto.MobCurrentHitpoints](../../internal/proto/opcodes.go#L98).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -857,7 +863,7 @@ type MobHealth struct {
 
 **`0x0E01` — MapNpcEnter**
 
-Declarations: [packet.MapNpcEnter](../../server/internal/packet/packet.go#L113), [proto.MapNpcEnter](../../internal/proto/opcodes.go#L97).
+Declarations: [packet.MapNpcEnter](../../server/internal/packet/packet.go#L115), [proto.MapNpcEnter](../../internal/proto/opcodes.go#L99).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -925,7 +931,7 @@ type NpcSpawn struct {
 
 **`0x0E02` — MapNpcLeave**
 
-Declarations: [packet.MapNpcLeave](../../server/internal/packet/packet.go#L114), [proto.MapNpcLeave](../../internal/proto/opcodes.go#L98).
+Declarations: [packet.MapNpcLeave](../../server/internal/packet/packet.go#L116), [proto.MapNpcLeave](../../internal/proto/opcodes.go#L100).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -965,7 +971,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0E03` — MapNpcMove**
 
-Declarations: [packet.MapNpcMove](../../server/internal/packet/packet.go#L115), [proto.MapNpcMove](../../internal/proto/opcodes.go#L99).
+Declarations: [packet.MapNpcMove](../../server/internal/packet/packet.go#L117), [proto.MapNpcMove](../../internal/proto/opcodes.go#L101).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1021,7 +1027,7 @@ type NpcMotion struct {
 
 **`0x0E04` — NpcTalk**
 
-Declarations: [packet.NpcTalk](../../server/internal/packet/packet.go#L137), [proto.NpcTalk](../../internal/proto/opcodes.go#L122).
+Declarations: [packet.NpcTalk](../../server/internal/packet/packet.go#L139), [proto.NpcTalk](../../internal/proto/opcodes.go#L124).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L111)
 
@@ -1051,7 +1057,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 **`0x0E05` — MapNpcAttackPlayer**
 
-Declarations: [packet.MapNpcAttackPlayer](../../server/internal/packet/packet.go#L116), [proto.MapNpcAttackPlayer](../../internal/proto/opcodes.go#L100).
+Declarations: [packet.MapNpcAttackPlayer](../../server/internal/packet/packet.go#L118), [proto.MapNpcAttackPlayer](../../internal/proto/opcodes.go#L102).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1089,7 +1095,7 @@ type NpcAttack struct {
 
 **`0x0E06` — MapNpcAttackMob**
 
-Declarations: [packet.MapNpcAttackMob](../../server/internal/packet/packet.go#L117), [proto.MapNpcAttackMob](../../internal/proto/opcodes.go#L101).
+Declarations: [packet.MapNpcAttackMob](../../server/internal/packet/packet.go#L119), [proto.MapNpcAttackMob](../../internal/proto/opcodes.go#L103).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

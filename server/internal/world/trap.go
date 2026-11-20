@@ -170,6 +170,10 @@ func (s *Session) trapHitsMob(id uint32, def *db.SkillDef) {
 		return
 	}
 	d := trapDamage(def, [3]uint32{mob.CurrentHP, md.MaxSP, md.MaxMP}, [3]uint32{mob.MaxHP, md.MaxSP, md.MaxMP})
+	levelPercent := 100 - mobLevelPenalty(ch.Level, int32(mob.Level))
+	for i, amount := range d {
+		d[i] = uint32(directAmount(int64(amount), levelPercent, math.MaxInt32))
+	}
 	r, ok := DamageMobFrom(ch.MapID, id, d[0], ch.ID)
 	if !ok {
 		return

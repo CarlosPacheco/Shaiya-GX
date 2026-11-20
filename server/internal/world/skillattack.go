@@ -214,10 +214,9 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 		sendNear(ch.MapID, mob.PosX, mob.PosZ, CombatRadius, frame, "skill use (miss)")
 		return true
 	}
-	t := skillTarget{MaxHP: mob.MaxHP, HP: mob.CurrentHP, MaxMP: md.MaxMP, MaxSP: md.MaxSP, MP: md.MaxMP, SP: md.MaxSP}
-	caster := [3]uint32{stats.CurrentHP, stats.CurrentSP, stats.CurrentMP}
-	close := DistanceXZ(ch.PosX, ch.PosZ, mob.PosX, mob.PosZ) <= closeRangeDistance
-	damage, crit := playerSkillDamage(&stats, &mc, def, t, caster, close)
+	current := damagePools{mob.CurrentHP, md.MaxSP, md.MaxMP}
+	maximum := damagePools{mob.MaxHP, md.MaxSP, md.MaxMP}
+	damage, crit := playerSkillDamage(&stats, &mc, def, current, maximum)
 	r, ok := DamageMobFrom(ch.MapID, target, uint32(max(damage[0], 0)), ch.ID)
 	if !ok {
 		return false
@@ -245,15 +244,16 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 	}
 	alive := s.resolveMobDamage(&r)
 	if alive && !drain && (def.AddDamageHP != 0 || def.AddDamageSP != 0 || def.AddDamageMP != 0) {
-		if x, ok := DamageMobFrom(ch.MapID, target, uint32(uint16(def.AddDamageHP)), ch.ID); ok {
+		add := extraSkillDamage(def, 100-mobLevelPenalty(stats.Level, mc.Level))
+		if x, ok := DamageMobFrom(ch.MapID, target, add[0], ch.ID); ok {
 			w := packet.New(packet.SkillExtraDamage)
 			w.U32(ch.ID)
 			w.U32(x.Mob.ID)
 			w.U16(k.SkillID)
 			w.U8(k.Level)
 			w.U16(x.DamageHP)
-			w.U16(uint16(def.AddDamageSP))
-			w.U16(uint16(def.AddDamageMP))
+			w.U16(uint16(add[1]))
+			w.U16(uint16(add[2]))
 			sendNear(ch.MapID, x.Mob.PosX, x.Mob.PosZ, CombatRadius, w.MustFinish(), "0x051A skill extra damage")
 			alive = s.resolveMobDamage(&x)
 		}

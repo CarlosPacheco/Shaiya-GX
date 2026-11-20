@@ -15,7 +15,7 @@ import (
 )
 
 // TestCombatNumbers simulates the migrated test characters against real
-// mobs with the original formulas and logs hit rates and damage.
+// mobs with the GX formulas and logs hit rates and damage.
 func TestCombatNumbers(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
 		t.Chdir("../..")
@@ -44,7 +44,7 @@ func TestCombatNumbers(t *testing.T) {
 			for range 2000 {
 				if playerHits(&st, &mc, attackMelee) {
 					hits++
-					d, _ := playerDamage(&st, &mc, attackMelee, st.AttackAttr, false)
+					d, _ := playerDamage(&st, &mc, attackMelee)
 					dmg += d
 				}
 				if mobHits(&mc, &st, attackMelee) {
@@ -85,7 +85,7 @@ func TestNewCharacterCombat(t *testing.T) {
 		for range 2000 {
 			if playerHits(&st, &mc, attackMelee) {
 				hits++
-				d, _ := playerDamage(&st, &mc, attackMelee, st.AttackAttr, false)
+				d, _ := playerDamage(&st, &mc, attackMelee)
 				dmg += d
 			}
 			if mobHits(&mc, &st, attackMelee) {
@@ -180,7 +180,7 @@ func TestSkillCombat(t *testing.T) {
 		if def.MobSkill {
 			mobs++
 			dmg, _ := mobSkillDamage(&mc, md, def, &st, md.MaxHP)
-			_ = mobSkillHits(&mc, md, def, &st)
+			_ = mobSkillHits(&mc, def, &st)
 			if dmg[0] > maxDamage || (def.DamageType != 0 && dmg[0] < 0) {
 				t.Errorf("mob skill %d mode %d damage %v", def.SkillID, def.DamageType, dmg)
 			}
@@ -188,8 +188,8 @@ func TestSkillCombat(t *testing.T) {
 		}
 		players++
 		modes[def.DamageType]++
-		target := skillTarget{MaxHP: md.MaxHP, HP: md.MaxHP, MaxMP: md.MaxMP, MaxSP: md.MaxSP, MP: md.MaxMP, SP: md.MaxSP}
-		dmg, _ := playerSkillDamage(&st, &mc, def, target, [3]uint32{st.CurrentHP, st.CurrentSP, st.CurrentMP}, false)
+		target := damagePools{md.MaxHP, md.MaxSP, md.MaxMP}
+		dmg, _ := playerSkillDamage(&st, &mc, def, target, target)
 		_ = playerSkillHits(&st, &mc, md, def)
 		weapon := def.DamageType == 1 || def.DamageType == 2 || def.DamageType > 5
 		if dmg[0] > maxDamage || (weapon && dmg[0] < 1) || (!weapon && def.DamageType != 0 && def.DamageHP != 0 && dmg[0] < 1) {
@@ -927,7 +927,7 @@ func TestUserAttack(t *testing.T) {
 	hits := 0
 	for i := 0; i < 200 && !enemy.dead; i++ {
 		before := enemy.char.CurrentHP
-		enemy.player.QueueUserHit(pendingUserHit{AttackerID: attacker.char.ID, Stats: stats, Kind: attackMelee, X: 500, Z: 500})
+		enemy.player.QueueUserHit(pendingUserHit{AttackerID: attacker.char.ID, Stats: stats, Kind: attackMelee})
 		enemy.tickUserHits()
 		if enemy.char.CurrentHP < before {
 			hits++
@@ -971,7 +971,7 @@ func TestUserAttack(t *testing.T) {
 	enemy.player.SetAlive(true)
 	enemy.items = []db.Item{loot}
 	for i := 0; i < 400 && !enemy.dead; i++ {
-		enemy.player.QueueUserHit(pendingUserHit{AttackerID: attacker.char.ID, Stats: stats, Kind: attackMelee, X: 500, Z: 500})
+		enemy.player.QueueUserHit(pendingUserHit{AttackerID: attacker.char.ID, Stats: stats, Kind: attackMelee})
 		enemy.tickUserHits()
 	}
 	if !enemy.dead {
@@ -1217,7 +1217,7 @@ func TestDuel(t *testing.T) {
 
 	stats := a.stats()
 	for i := 0; i < 400 && !b.dead; i++ {
-		b.player.QueueUserHit(pendingUserHit{AttackerID: a.char.ID, Stats: stats, Kind: attackMelee, X: 500, Z: 500})
+		b.player.QueueUserHit(pendingUserHit{AttackerID: a.char.ID, Stats: stats, Kind: attackMelee})
 		b.tickUserHits()
 	}
 	if !b.dead {
@@ -1360,7 +1360,7 @@ func TestGuildDuel(t *testing.T) {
 
 	stats := a.stats()
 	for i := 0; i < 400 && !b.dead; i++ {
-		b.player.QueueUserHit(pendingUserHit{AttackerID: a.char.ID, Stats: stats, Kind: attackMelee, X: 500, Z: 500})
+		b.player.QueueUserHit(pendingUserHit{AttackerID: a.char.ID, Stats: stats, Kind: attackMelee})
 		b.tickUserHits()
 	}
 	if !b.dead {
@@ -1455,7 +1455,7 @@ func TestGemSkills(t *testing.T) {
 	}
 	stats := a.stats()
 	for i := 0; i < 200 && len(a.player.userHits) == 0; i++ {
-		b.player.QueueUserHit(pendingUserHit{AttackerID: a.char.ID, Stats: stats, Kind: attackMelee, X: 500, Z: 500})
+		b.player.QueueUserHit(pendingUserHit{AttackerID: a.char.ID, Stats: stats, Kind: attackMelee})
 		b.tickUserHits()
 		b.char.CurrentHP = b.stats().MaxHP
 	}

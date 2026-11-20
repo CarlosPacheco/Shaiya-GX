@@ -153,9 +153,9 @@ func (s *Session) afterSkillStrikes(def *db.SkillDef) {
 func (s *Session) queueSkillHits(p *ConnectedPlayer, def *db.SkillDef, first bool, n uint8) {
 	ch := s.char
 	stats := s.stats()
-	caster := [3]uint32{stats.CurrentHP, stats.CurrentSP, stats.CurrentMP}
+	caster := currentDamagePools(&stats)
 	for i := uint8(0); i < n; i++ {
-		p.QueueUserHit(pendingUserHit{AttackerID: ch.ID, Stats: stats, Kind: int(def.Kind), X: ch.PosX, Z: ch.PosZ,
+		p.QueueUserHit(pendingUserHit{AttackerID: ch.ID, Stats: stats, Kind: int(def.Kind),
 			Skill: def, First: first, Caster: caster})
 	}
 }
@@ -193,9 +193,8 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 		return false
 	}
 	duelHitBy(s.player, h.AttackerID) // PvPChkLeaveByAttack
-	closeRanged := DistanceXZ(h.X, h.Z, ch.PosX, ch.PosZ) <= closeRangeDistance
 	mirrored := s.reflects(kind, nil)
-	damage, crit := userSkillDamage(&h.Stats, &stats, sk, h.Caster, closeRanged)
+	damage, crit := userSkillDamage(&h.Stats, &stats, sk, h.Caster)
 	words := func(d [3]int32) [3]uint16 {
 		var out [3]uint16
 		for i, v := range d {
@@ -236,7 +235,7 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 		send(code, shown, healed, "pvp skill")
 	}
 	if !drain && !killed && (sk.AddDamageHP != 0 || sk.AddDamageSP != 0 || sk.AddDamageMP != 0) {
-		add := [3]uint32{uint32(uint16(sk.AddDamageHP)), uint32(uint16(sk.AddDamageSP)), uint32(uint16(sk.AddDamageMP))}
+		add := extraSkillDamage(sk, 100)
 		shownAdd, addMirrored := add, mirrored || s.reflects(kind, nil)
 		if addMirrored {
 			shownAdd = [3]uint32{}

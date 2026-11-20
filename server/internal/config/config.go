@@ -140,6 +140,26 @@ func PublicIP() string { return env("RAPTURE_PUBLIC_IP", "127.0.0.1") }
 func LoginListen() string { return env("RAPTURE_LOGIN_LISTEN", "127.0.0.1:30800") }
 func WorldListen() string { return env("RAPTURE_WORLD_LISTEN", "127.0.0.1:30810") }
 
+const (
+	DefaultCombatDEXFirst  = 500
+	DefaultCombatDEXSecond = 800
+)
+
+// CombatDEXThresholds reads the two points where DEX gains change rate.
+func CombatDEXThresholds() (uint32, uint32, error) {
+	const firstKey = "RAPTURE_COMBAT_DEX_FIRST_THRESHOLD"
+	const secondKey = "RAPTURE_COMBAT_DEX_SECOND_THRESHOLD"
+	first, err := strconv.ParseUint(env(firstKey, strconv.Itoa(DefaultCombatDEXFirst)), 10, 32)
+	if err != nil || first == 0 {
+		return 0, 0, fmt.Errorf("%s must be a positive 32-bit integer", firstKey)
+	}
+	second, err := strconv.ParseUint(env(secondKey, strconv.Itoa(DefaultCombatDEXSecond)), 10, 32)
+	if err != nil || second <= first {
+		return 0, 0, fmt.Errorf("%s must be a 32-bit integer greater than %s", secondKey, firstKey)
+	}
+	return uint32(first), uint32(second), nil
+}
+
 // Launchers and direct binaries resolve storage/data against their checkout.
 func resolvePaths(root string) {
 	for key, value := range map[string]string{"RAPTURE_DATA_DIR": DataDir(), "RAPTURE_DB_PATH": DatabasePath(), "RAPTURE_DB_SEED": DatabaseSeed()} {

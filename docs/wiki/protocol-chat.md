@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x1101` — ChatNormal**
 
-Declarations: [packet.ChatNormal](../../server/internal/packet/packet.go#L139), [proto.ChatNormal](../../internal/proto/opcodes.go#L124).
+Declarations: [packet.ChatNormal](../../server/internal/packet/packet.go#L141), [proto.ChatNormal](../../internal/proto/opcodes.go#L126).
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L71), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
 
@@ -66,7 +66,7 @@ type Chat struct {
 
 **`0x1102` — ChatWhisper**
 
-Declarations: [packet.ChatWhisper](../../server/internal/packet/packet.go#L190), [proto.ChatWhisper](../../internal/proto/opcodes.go#L178).
+Declarations: [packet.ChatWhisper](../../server/internal/packet/packet.go#L192), [proto.ChatWhisper](../../internal/proto/opcodes.go#L180).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L75)
 
@@ -141,7 +141,7 @@ type Chat struct {
 
 **`0x1103` — ChatWorld**
 
-Declarations: [packet.ChatWorld](../../server/internal/packet/packet.go#L140), [proto.ChatWorld](../../internal/proto/opcodes.go#L125).
+Declarations: [packet.ChatWorld](../../server/internal/packet/packet.go#L142), [proto.ChatWorld](../../internal/proto/opcodes.go#L127).
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
 
@@ -201,7 +201,7 @@ type Chat struct {
 
 **`0x1104` — ChatGuild**
 
-Declarations: [packet.ChatGuild](../../server/internal/packet/packet.go#L189), [proto.ChatGuild](../../internal/proto/opcodes.go#L177).
+Declarations: [packet.ChatGuild](../../server/internal/packet/packet.go#L191), [proto.ChatGuild](../../internal/proto/opcodes.go#L179).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L150)
 
@@ -263,7 +263,7 @@ type Chat struct {
 
 **`0x1105` — ChatParty**
 
-Declarations: [packet.ChatParty](../../server/internal/packet/packet.go#L74), [proto.ChatParty](../../internal/proto/opcodes.go#L58).
+Declarations: [packet.ChatParty](../../server/internal/packet/packet.go#L76), [proto.ChatParty](../../internal/proto/opcodes.go#L60).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L142)
 
@@ -319,7 +319,7 @@ type Chat struct {
 
 **`0x1106` — ChatError**
 
-Declarations: [packet.ChatError](../../server/internal/packet/packet.go#L141), [proto.ChatError](../../internal/proto/opcodes.go#L126).
+Declarations: [packet.ChatError](../../server/internal/packet/packet.go#L143), [proto.ChatError](../../internal/proto/opcodes.go#L128).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -377,7 +377,7 @@ type Reader struct {
 
 **`0x1107` — ChatShout**
 
-Declarations: [packet.ChatShout](../../server/internal/packet/packet.go#L191), [proto.ChatShout](../../internal/proto/opcodes.go#L179).
+Declarations: [packet.ChatShout](../../server/internal/packet/packet.go#L193), [proto.ChatShout](../../internal/proto/opcodes.go#L181).
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L77), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
 
@@ -433,7 +433,7 @@ type Chat struct {
 
 **`0x1108` — ChatWorldShout**
 
-Declarations: [packet.ChatWorldShout](../../server/internal/packet/packet.go#L192), [proto.ChatWorldShout](../../internal/proto/opcodes.go#L180).
+Declarations: [packet.ChatWorldShout](../../server/internal/packet/packet.go#L194), [proto.ChatWorldShout](../../internal/proto/opcodes.go#L182).
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L84), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
 
@@ -644,7 +644,7 @@ type MobSpeech struct {
 
 **`0x1111` — ChatMap**
 
-Declarations: [packet.ChatMap](../../server/internal/packet/packet.go#L142), [proto.ChatMap](../../internal/proto/opcodes.go#L127).
+Declarations: [packet.ChatMap](../../server/internal/packet/packet.go#L144), [proto.ChatMap](../../internal/proto/opcodes.go#L129).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
 
@@ -704,7 +704,7 @@ type Chat struct {
 
 **`0xF101` — ChatNormalAdmin**
 
-Declarations: [packet.ChatNormalAdmin](../../server/internal/packet/packet.go#L213), [proto.ChatNormalAdmin](../../internal/proto/opcodes.go#L201).
+Declarations: [packet.ChatNormalAdmin](../../server/internal/packet/packet.go#L215), [proto.ChatNormalAdmin](../../internal/proto/opcodes.go#L203).
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L71), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
 
@@ -745,7 +745,7 @@ type Chat struct {
 
 **`0xF103` — ChatWorldAdmin**
 
-Declarations: [packet.ChatWorldAdmin](../../server/internal/packet/packet.go#L214), [proto.ChatWorldAdmin](../../internal/proto/opcodes.go#L202).
+Declarations: [packet.ChatWorldAdmin](../../server/internal/packet/packet.go#L216), [proto.ChatWorldAdmin](../../internal/proto/opcodes.go#L204).
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
 
@@ -786,7 +786,7 @@ type Chat struct {
 
 **`0xF501` — GmCommandError**
 
-Declarations: [packet.GmCommandError](../../server/internal/packet/packet.go#L215), [proto.GmCommandError](../../internal/proto/opcodes.go#L203).
+Declarations: [packet.GmCommandError](../../server/internal/packet/packet.go#L217), [proto.GmCommandError](../../internal/proto/opcodes.go#L205).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -800,7 +800,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0xF702` — GmCommandGetItem**
 
-Declarations: [packet.GmCommandGetItem](../../server/internal/packet/packet.go#L216), [proto.GmCommandGetItem](../../internal/proto/opcodes.go#L204).
+Declarations: [packet.GmCommandGetItem](../../server/internal/packet/packet.go#L218), [proto.GmCommandGetItem](../../internal/proto/opcodes.go#L206).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

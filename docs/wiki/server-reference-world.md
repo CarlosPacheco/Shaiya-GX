@@ -10,19 +10,19 @@ Every production Go file is listed, including OS-specific alternatives. Signatur
 
 Authoritative realm, sessions, maps, actors, game rules, protocol adapters and commit-before-publication application actions.
 
-Tests: [absorption_skill_test.go](../../server/internal/world/absorption_skill_test.go), [absorption_test.go](../../server/internal/world/absorption_test.go), [attack_movement_test.go](../../server/internal/world/attack_movement_test.go), [attack_speed_test.go](../../server/internal/world/attack_speed_test.go), [auction_test.go](../../server/internal/world/auction_test.go), [blessing_lifecycle_test.go](../../server/internal/world/blessing_lifecycle_test.go), [bots_integration_test.go](../../server/internal/world/bots_integration_test.go), [bots_test.go](../../server/internal/world/bots_test.go), [character_enchant_test.go](../../server/internal/world/character_enchant_test.go), [chat_items_test.go](../../server/internal/world/chat_items_test.go), [chat_test.go](../../server/internal/world/chat_test.go), [cloak_fits_test.go](../../server/internal/world/cloak_fits_test.go), [combat_integration_test.go](../../server/internal/world/combat_integration_test.go), [cooldown_reduction_test.go](../../server/internal/world/cooldown_reduction_test.go), [degeneration_test.go](../../server/internal/world/degeneration_test.go), [detection_test.go](../../server/internal/world/detection_test.go), [drop_oj_limits_integration_test.go](../../server/internal/world/drop_oj_limits_integration_test.go), [drop_oj_limits_test.go](../../server/internal/world/drop_oj_limits_test.go), [durability_test.go](../../server/internal/world/durability_test.go), [elements_test.go](../../server/internal/world/elements_test.go), [enchant_ini_test.go](../../server/internal/world/enchant_ini_test.go), [equipment_rejection_test.go](../../server/internal/world/equipment_rejection_test.go), [experience_test.go](../../server/internal/world/experience_test.go), [fall_damage_test.go](../../server/internal/world/fall_damage_test.go), [firethorn_test.go](../../server/internal/world/firethorn_test.go), [forge_quote_test.go](../../server/internal/world/forge_quote_test.go), [forge_rules_test.go](../../server/internal/world/forge_rules_test.go), [free_mall_test.go](../../server/internal/world/free_mall_test.go), [gem_safety_test.go](../../server/internal/world/gem_safety_test.go), [gm_map_test.go](../../server/internal/world/gm_map_test.go), [gm_set_stats_test.go](../../server/internal/world/gm_set_stats_test.go), [gm_test.go](../../server/internal/world/gm_test.go), [grb_integration_test.go](../../server/internal/world/grb_integration_test.go), [guild_integration_test.go](../../server/internal/world/guild_integration_test.go), [guildhouse_test.go](../../server/internal/world/guildhouse_test.go), [healing_delta_test.go](../../server/internal/world/healing_delta_test.go), [healthassist_test.go](../../server/internal/world/healthassist_test.go), [inventory_operation_test.go](../../server/internal/world/inventory_operation_test.go), [isolation_test.go](../../server/internal/world/isolation_test.go), [itemboxes_test.go](../../server/internal/world/itemboxes_test.go), [jump_motion_regression_test.go](../../server/internal/world/jump_motion_regression_test.go), [killcount_test.go](../../server/internal/world/killcount_test.go), [ladders_test.go](../../server/internal/world/ladders_test.go), [lapis_debuff_test.go](../../server/internal/world/lapis_debuff_test.go), [lapis_mob_test.go](../../server/internal/world/lapis_mob_test.go), [mailbox_test.go](../../server/internal/world/mailbox_test.go), [map_rules_test.go](../../server/internal/world/map_rules_test.go), [mapitems_test.go](../../server/internal/world/mapitems_test.go), [miss_feedback_test.go](../../server/internal/world/miss_feedback_test.go), [mob_ai_leak_test.go](../../server/internal/world/mob_ai_leak_test.go), [mob_ai_test.go](../../server/internal/world/mob_ai_test.go), [mob_navigation_test.go](../../server/internal/world/mob_navigation_test.go), [mob_quest_drop_test.go](../../server/internal/world/mob_quest_drop_test.go), [mob_respawn_test.go](../../server/internal/world/mob_respawn_test.go), [notices_test.go](../../server/internal/world/notices_test.go), [npc_guard_test.go](../../server/internal/world/npc_guard_test.go), [npc_probe_test.go](../../server/internal/world/npc_probe_test.go), [oj_limits_test.go](../../server/internal/world/oj_limits_test.go), [party_global_test.go](../../server/internal/world/party_global_test.go), [persistence_audit_test.go](../../server/internal/world/persistence_audit_test.go), [phase_test.go](../../server/internal/world/phase_test.go), [player_movement_test.go](../../server/internal/world/player_movement_test.go), [player_speed_test.go](../../server/internal/world/player_speed_test.go), [player_state_fixes_test.go](../../server/internal/world/player_state_fixes_test.go), [potential_test.go](../../server/internal/world/potential_test.go), [previous_skill_test.go](../../server/internal/world/previous_skill_test.go), [protocol_layout_test.go](../../server/internal/world/protocol_layout_test.go), [pvp_test.go](../../server/internal/world/pvp_test.go), [pvpreward_test.go](../../server/internal/world/pvpreward_test.go), [quest_integration_test.go](../../server/internal/world/quest_integration_test.go), [quest_item_integration_test.go](../../server/internal/world/quest_item_integration_test.go), [quest_map_test.go](../../server/internal/world/quest_map_test.go), [quest_requirements_integration_test.go](../../server/internal/world/quest_requirements_integration_test.go), [recreation_runes_test.go](../../server/internal/world/recreation_runes_test.go), [reflect_test.go](../../server/internal/world/reflect_test.go), [relic_boot_integration_test.go](../../server/internal/world/relic_boot_integration_test.go), [relic_config_test.go](../../server/internal/world/relic_config_test.go), [relics_test.go](../../server/internal/world/relics_test.go), [rules_test.go](../../server/internal/world/rules_test.go), [runtime_test.go](../../server/internal/world/runtime_test.go), [sacrifice_test.go](../../server/internal/world/sacrifice_test.go), [skill_cadence_test.go](../../server/internal/world/skill_cadence_test.go), [skill_dash_test.go](../../server/internal/world/skill_dash_test.go), [skill_failure_test.go](../../server/internal/world/skill_failure_test.go), [skill_range_test.go](../../server/internal/world/skill_range_test.go), [spin_combo_test.go](../../server/internal/world/spin_combo_test.go), [stack_counts_test.go](../../server/internal/world/stack_counts_test.go), [summon_rune_test.go](../../server/internal/world/summon_rune_test.go), [target_effects_test.go](../../server/internal/world/target_effects_test.go), [taunt_test.go](../../server/internal/world/taunt_test.go), [teleport_rune_integration_test.go](../../server/internal/world/teleport_rune_integration_test.go), [teleport_stone_test.go](../../server/internal/world/teleport_stone_test.go), [trap_test.go](../../server/internal/world/trap_test.go), [vehicle_test.go](../../server/internal/world/vehicle_test.go), [visibility_test.go](../../server/internal/world/visibility_test.go), [worldcal_test.go](../../server/internal/world/worldcal_test.go), [worlddrops_test.go](../../server/internal/world/worlddrops_test.go).
+Tests: [absorption_skill_test.go](../../server/internal/world/absorption_skill_test.go), [absorption_test.go](../../server/internal/world/absorption_test.go), [attack_movement_test.go](../../server/internal/world/attack_movement_test.go), [attack_speed_test.go](../../server/internal/world/attack_speed_test.go), [auction_test.go](../../server/internal/world/auction_test.go), [blessing_lifecycle_test.go](../../server/internal/world/blessing_lifecycle_test.go), [bots_integration_test.go](../../server/internal/world/bots_integration_test.go), [bots_test.go](../../server/internal/world/bots_test.go), [character_enchant_test.go](../../server/internal/world/character_enchant_test.go), [chat_items_test.go](../../server/internal/world/chat_items_test.go), [chat_test.go](../../server/internal/world/chat_test.go), [cloak_fits_test.go](../../server/internal/world/cloak_fits_test.go), [combat_integration_test.go](../../server/internal/world/combat_integration_test.go), [combatformula_test.go](../../server/internal/world/combatformula_test.go), [cooldown_reduction_test.go](../../server/internal/world/cooldown_reduction_test.go), [degeneration_test.go](../../server/internal/world/degeneration_test.go), [detection_test.go](../../server/internal/world/detection_test.go), [drop_oj_limits_integration_test.go](../../server/internal/world/drop_oj_limits_integration_test.go), [drop_oj_limits_test.go](../../server/internal/world/drop_oj_limits_test.go), [durability_test.go](../../server/internal/world/durability_test.go), [elements_test.go](../../server/internal/world/elements_test.go), [enchant_ini_test.go](../../server/internal/world/enchant_ini_test.go), [equipment_rejection_test.go](../../server/internal/world/equipment_rejection_test.go), [experience_test.go](../../server/internal/world/experience_test.go), [fall_damage_test.go](../../server/internal/world/fall_damage_test.go), [firethorn_test.go](../../server/internal/world/firethorn_test.go), [forge_quote_test.go](../../server/internal/world/forge_quote_test.go), [forge_rules_test.go](../../server/internal/world/forge_rules_test.go), [free_mall_test.go](../../server/internal/world/free_mall_test.go), [gem_safety_test.go](../../server/internal/world/gem_safety_test.go), [gm_map_test.go](../../server/internal/world/gm_map_test.go), [gm_set_stats_test.go](../../server/internal/world/gm_set_stats_test.go), [gm_test.go](../../server/internal/world/gm_test.go), [grb_integration_test.go](../../server/internal/world/grb_integration_test.go), [guild_integration_test.go](../../server/internal/world/guild_integration_test.go), [guildhouse_test.go](../../server/internal/world/guildhouse_test.go), [healing_delta_test.go](../../server/internal/world/healing_delta_test.go), [healthassist_test.go](../../server/internal/world/healthassist_test.go), [inventory_operation_test.go](../../server/internal/world/inventory_operation_test.go), [isolation_test.go](../../server/internal/world/isolation_test.go), [itemboxes_test.go](../../server/internal/world/itemboxes_test.go), [jump_motion_regression_test.go](../../server/internal/world/jump_motion_regression_test.go), [killcount_test.go](../../server/internal/world/killcount_test.go), [ladders_test.go](../../server/internal/world/ladders_test.go), [lapis_debuff_test.go](../../server/internal/world/lapis_debuff_test.go), [lapis_mob_test.go](../../server/internal/world/lapis_mob_test.go), [mailbox_test.go](../../server/internal/world/mailbox_test.go), [map_rules_test.go](../../server/internal/world/map_rules_test.go), [mapitems_test.go](../../server/internal/world/mapitems_test.go), [miss_feedback_test.go](../../server/internal/world/miss_feedback_test.go), [mob_ai_leak_test.go](../../server/internal/world/mob_ai_leak_test.go), [mob_ai_test.go](../../server/internal/world/mob_ai_test.go), [mob_navigation_test.go](../../server/internal/world/mob_navigation_test.go), [mob_quest_drop_test.go](../../server/internal/world/mob_quest_drop_test.go), [mob_respawn_test.go](../../server/internal/world/mob_respawn_test.go), [notices_test.go](../../server/internal/world/notices_test.go), [npc_guard_test.go](../../server/internal/world/npc_guard_test.go), [npc_probe_test.go](../../server/internal/world/npc_probe_test.go), [oj_limits_test.go](../../server/internal/world/oj_limits_test.go), [party_global_test.go](../../server/internal/world/party_global_test.go), [persistence_audit_test.go](../../server/internal/world/persistence_audit_test.go), [phase_test.go](../../server/internal/world/phase_test.go), [player_movement_test.go](../../server/internal/world/player_movement_test.go), [player_speed_test.go](../../server/internal/world/player_speed_test.go), [player_state_fixes_test.go](../../server/internal/world/player_state_fixes_test.go), [potential_test.go](../../server/internal/world/potential_test.go), [previous_skill_test.go](../../server/internal/world/previous_skill_test.go), [protocol_layout_test.go](../../server/internal/world/protocol_layout_test.go), [pvp_test.go](../../server/internal/world/pvp_test.go), [pvpreward_test.go](../../server/internal/world/pvpreward_test.go), [quest_integration_test.go](../../server/internal/world/quest_integration_test.go), [quest_item_integration_test.go](../../server/internal/world/quest_item_integration_test.go), [quest_map_test.go](../../server/internal/world/quest_map_test.go), [quest_requirements_integration_test.go](../../server/internal/world/quest_requirements_integration_test.go), [recreation_runes_test.go](../../server/internal/world/recreation_runes_test.go), [reflect_test.go](../../server/internal/world/reflect_test.go), [relic_boot_integration_test.go](../../server/internal/world/relic_boot_integration_test.go), [relic_config_test.go](../../server/internal/world/relic_config_test.go), [relics_test.go](../../server/internal/world/relics_test.go), [rules_test.go](../../server/internal/world/rules_test.go), [runtime_test.go](../../server/internal/world/runtime_test.go), [sacrifice_test.go](../../server/internal/world/sacrifice_test.go), [skill_cadence_test.go](../../server/internal/world/skill_cadence_test.go), [skill_dash_test.go](../../server/internal/world/skill_dash_test.go), [skill_failure_test.go](../../server/internal/world/skill_failure_test.go), [skill_range_test.go](../../server/internal/world/skill_range_test.go), [spin_combo_test.go](../../server/internal/world/spin_combo_test.go), [stack_counts_test.go](../../server/internal/world/stack_counts_test.go), [summon_rune_test.go](../../server/internal/world/summon_rune_test.go), [target_effects_test.go](../../server/internal/world/target_effects_test.go), [taunt_test.go](../../server/internal/world/taunt_test.go), [teleport_rune_integration_test.go](../../server/internal/world/teleport_rune_integration_test.go), [teleport_stone_test.go](../../server/internal/world/teleport_stone_test.go), [trap_test.go](../../server/internal/world/trap_test.go), [vehicle_test.go](../../server/internal/world/vehicle_test.go), [visibility_test.go](../../server/internal/world/visibility_test.go), [worldcal_test.go](../../server/internal/world/worldcal_test.go), [worlddrops_test.go](../../server/internal/world/worlddrops_test.go).
 
 ### abilities.go
 
 [server/internal/world/abilities.go](../../server/internal/world/abilities.go#L1)
 
-Direct GX dependencies: `server/internal/db`.
+Direct GX dependencies: `internal/skillchance`, `server/internal/db`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`addSigned`](../../server/internal/world/abilities.go#L6)<br>`func addSigned(u uint32, v int32) uint32` | addSigned adds a signed change to an unsigned stat, flooring at 0. |
-| [`applyAbility`](../../server/internal/world/abilities.go#L16)<br>`func applyAbility(e *EquipmentStats, effect, kind uint8, value int32) bool` | applyAbility is CUser::SetSkillAbility (0x00485e00) for the abilities that change combat stats. Debuffs (effect 3) do not raise maximum pools. It reports whether the ability type is one it models. |
-| [`applyPassives`](../../server/internal/world/abilities.go#L84)<br>`func applyPassives(e *EquipmentStats, skills []db.CharacterSkill)` | applyPassives is CUser::InitPassive / AddSkillPassive (0x00489a80) over the learned skills in load order. Weapon masteries keep a per-type table and each one adds the table's running total for the equipped weapon, as the original does. |
+| [`addSigned`](../../server/internal/world/abilities.go#L9)<br>`func addSigned(u uint32, v int32) uint32` | addSigned adds a signed change to an unsigned stat, flooring at 0. |
+| [`applyAbility`](../../server/internal/world/abilities.go#L19)<br>`func applyAbility(e *EquipmentStats, effect, kind uint8, value int32) bool` | applyAbility is CUser::SetSkillAbility (0x00485e00) for the abilities that change combat stats. Debuffs (effect 3) do not raise maximum pools. It reports whether the ability type is one it models. |
+| [`applyPassives`](../../server/internal/world/abilities.go#L87)<br>`func applyPassives(e *EquipmentStats, skills []db.CharacterSkill)` | applyPassives is CUser::InitPassive / AddSkillPassive (0x00489a80) over the learned skills in load order. Weapon masteries keep a per-type table and each one adds the table's running total for the equipped weapon, as the original does. |
 
 ### attack_movement.go
 
@@ -192,49 +192,49 @@ Direct GX dependencies: `internal/element`, `internal/itemtype`, `server/interna
 | [`satSub`](../../server/internal/world/character.go#L57)<br>`func satSub(a, b uint32) uint32` | See the source definition and the subsystem ownership contract. |
 | [`satMul`](../../server/internal/world/character.go#L64)<br>`func satMul(a, b uint32) uint32` | See the source definition and the subsystem ownership contract. |
 | [`EquipmentStats`](../../server/internal/world/character.go#L73)<br>`type EquipmentStats` | EquipmentStats aggregates equipped items, gems and craft bonuses. |
-| [`CategoryMods`](../../server/internal/world/character.go#L111)<br>`type CategoryMods` | CategoryMods are SetSkillAbility's per-category additions. |
-| [`itemElement`](../../server/internal/world/character.go#L115)<br>`func itemElement(it *db.Item, d *db.ItemDef) uint8` | itemElement applies GX precedence: intrinsic element, otherwise the first elemental lapis in socket order. Later elemental lapis do not add an affinity. |
-| [`activeLapis`](../../server/internal/world/character.go#L134)<br>`func activeLapis(it *db.Item, definition *db.ItemDef) [6]*db.ItemDef` | activeLapis keeps all non-elemental lapis but excludes every inactive elemental lapis from stats, recovery, speed and triggered-item effects. |
-| [`gemItemType`](../../server/internal/world/character.go#L157)<br>`const gemItemType = 30` | See the source definition and the subsystem ownership contract. |
-| [`specialRecoverGem`](../../server/internal/world/character.go#L160)<br>`const specialRecoverGem = 16` | specialRecoverGem is the gem Special that turns its pools into recovery. |
-| [`IsWeaponItemType`](../../server/internal/world/character.go#L163)<br>`func IsWeaponItemType(t uint8) bool` | IsWeaponItemType: Type 1-15 and 45-65. |
-| [`IsArmorItemType`](../../server/internal/world/character.go#L166)<br>`func IsArmorItemType(t uint8) bool` | IsArmorItemType: Type 16-21, 31-36 and 66-92. |
-| [`CraftStats`](../../server/internal/world/character.go#L172)<br>`type CraftStats` | CraftStats is the decoded 20-digit Craftname: str dex rec int wis luc hp/100 mp/100 sp/100 enchant, two digits each. |
-| [`ParseCraftName`](../../server/internal/world/character.go#L178)<br>`func ParseCraftName(name string) (CraftStats, bool)` | See the source definition and the subsystem ownership contract. |
-| [`pos16`](../../server/internal/world/character.go#L195)<br>`func pos16(v int16) uint32` | See the source definition and the subsystem ownership contract. |
-| [`isAccessoryType`](../../server/internal/world/character.go#L197)<br>`func isAccessoryType(t uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`addItemDef`](../../server/internal/world/character.go#L200)<br>`func (e *EquipmentStats) addItemDef(itemType uint8, d *db.ItemDef)` | addItemDef adds full item effects; legacy stored quality never reduces stats. |
-| [`realType`](../../server/internal/world/character.go#L222)<br>`func realType(t uint8) uint8` | realType is GetItemRType (0x004bdad0): item types grouped by family. |
-| [`GetEquipmentStats`](../../server/internal/world/character.go#L225)<br>`func GetEquipmentStats(items []db.Item) EquipmentStats` | GetEquipmentStats sums every bag-0 item, its gems and craft bonuses. |
-| [`CharacterStats`](../../server/internal/world/character.go#L289)<br>`type CharacterStats` | CharacterStats derives maximum pools from stats/equipment. Current pools are absolute durable values; bonuses must never be re-added on every read. |
-| [`StatsFor`](../../server/internal/world/character.go#L325)<br>`func StatsFor(ch *db.Character, e EquipmentStats) CharacterStats` | See the source definition and the subsystem ownership contract. |
-| [`recoverBaseSitting`](../../server/internal/world/character.go#L372)<br>`const recoverBaseSitting = 28` | InitEquipment's base recovery: 28 per pool sitting, 4 standing, 0 in combat. |
-| [`recoverBaseStanding`](../../server/internal/world/character.go#L373)<br>`const recoverBaseStanding = 4` | InitEquipment's base recovery: 28 per pool sitting, 4 standing, 0 in combat. |
-| [`recoveryAmount`](../../server/internal/world/character.go#L376)<br>`func recoveryAmount(value, maxValue uint32, special uint8) uint32` | See the source definition and the subsystem ownership contract. |
-| [`charID`](../../server/internal/world/character.go#L383)<br>`func charID(ch *db.Character) uint32` | See the source definition and the subsystem ownership contract. |
-| [`charName`](../../server/internal/world/character.go#L390)<br>`func charName(ch *db.Character) string` | See the source definition and the subsystem ownership contract. |
-| [`charPos`](../../server/internal/world/character.go#L397)<br>`func charPos(ch *db.Character) (float32, float32, float32)` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterDetails`](../../server/internal/world/character.go#L409)<br>`func buildCharacterDetails(ch *db.Character, s *CharacterStats) []byte` | buildCharacterDetails (0x0105), per the client's reader (0x0058dbd0): stat point, skill point (u16), max HP, MP, SP (u32), direction (u16), then eleven u32 and the 25-byte guild name. The three exp fields are the cumulative exp at the level's start, the total for the next level and the current total; their order is not yet confirmed in game. |
-| [`buildAdditionalStats`](../../server/internal/world/character.go#L449)<br>`func buildAdditionalStats(s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildStatsReset`](../../server/internal/world/character.go#L458)<br>`func buildStatsReset(statPoint, str, rec, intel, wis, dex, luc uint16) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCurrentHitpoints`](../../server/internal/world/character.go#L467)<br>`func buildCurrentHitpoints(s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMaxHPMPSP`](../../server/internal/world/character.go#L475)<br>`func buildMaxHPMPSP(ch *db.Character, s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMaxEnergy`](../../server/internal/world/character.go#L485)<br>`func buildMaxEnergy(ch *db.Character, hitpointType uint8, value uint32) []byte` | buildMaxEnergy (0x050B): hitpointType 0 hp, 1 sp, 2 mp. |
-| [`buildCharacterEnteredMap`](../../server/internal/world/character.go#L494)<br>`func buildCharacterEnteredMap(ch *db.Character, isAdmin, firstLoad bool) []byte` | buildCharacterEnteredMap: marker 0 already present, 1 own first load, 2 admin. |
-| [`buildCharacterEnteredMapGuild`](../../server/internal/world/character.go#L498)<br>`func buildCharacterEnteredMapGuild(ch *db.Character, isAdmin, firstLoad bool, guildID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterMapPosition`](../../server/internal/world/character.go#L518)<br>`func buildCharacterMapPosition(ch *db.Character) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterMove`](../../server/internal/world/character.go#L533)<br>`func buildCharacterMove(ch *db.Character, motion uint8, direction uint16) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterMotion`](../../server/internal/world/character.go#L545)<br>`func buildCharacterMotion(characterID uint32, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildLeaveWorldAck`](../../server/internal/world/character.go#L552)<br>`func buildLeaveWorldAck(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`equippedItem`](../../server/internal/world/character.go#L558)<br>`func equippedItem(items []db.Item, slot uint8) *db.Item` | See the source definition and the subsystem ownership contract. |
-| [`enchantLevel`](../../server/internal/world/character.go#L567)<br>`func enchantLevel(it *db.Item) uint8` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterEquipment`](../../server/internal/world/character.go#L574)<br>`func buildCharacterEquipment(ch *db.Character, items []db.Item, slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildChangeAppearance`](../../server/internal/world/character.go#L596)<br>`func buildChangeAppearance(characterID uint32, hair, face, height, sex uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterShape`](../../server/internal/world/character.go#L604)<br>`func buildCharacterShape(ch *db.Character, faction uint8, items []db.Item, motion uint8) []byte` | buildCharacterShape (0x0303). The persistent motion is 1 only for sitting. |
-| [`buildCharacterShapeGuild`](../../server/internal/world/character.go#L608)<br>`func buildCharacterShapeGuild(ch *db.Character, faction uint8, items []db.Item, motion uint8, guildName string) []byte` | See the source definition and the subsystem ownership contract. |
-| [`statPackets`](../../server/internal/world/character.go#L641)<br>`func statPackets(ch *db.Character, s *CharacterStats) []labeled` | See the source definition and the subsystem ownership contract. |
-| [`buildEmptyCharacterListSlot`](../../server/internal/world/character.go#L652)<br>`func buildEmptyCharacterListSlot(slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterListSlot`](../../server/internal/world/character.go#L659)<br>`func buildCharacterListSlot(ch *db.Character, items []db.Item) []byte` | See the source definition and the subsystem ownership contract. |
+| [`CategoryMods`](../../server/internal/world/character.go#L110)<br>`type CategoryMods` | CategoryMods are SetSkillAbility's per-category additions. |
+| [`itemElement`](../../server/internal/world/character.go#L114)<br>`func itemElement(it *db.Item, d *db.ItemDef) uint8` | itemElement applies GX precedence: intrinsic element, otherwise the first elemental lapis in socket order. Later elemental lapis do not add an affinity. |
+| [`activeLapis`](../../server/internal/world/character.go#L133)<br>`func activeLapis(it *db.Item, definition *db.ItemDef) [6]*db.ItemDef` | activeLapis keeps all non-elemental lapis but excludes every inactive elemental lapis from stats, recovery, speed and triggered-item effects. |
+| [`gemItemType`](../../server/internal/world/character.go#L156)<br>`const gemItemType = 30` | See the source definition and the subsystem ownership contract. |
+| [`specialRecoverGem`](../../server/internal/world/character.go#L159)<br>`const specialRecoverGem = 16` | specialRecoverGem is the gem Special that turns its pools into recovery. |
+| [`IsWeaponItemType`](../../server/internal/world/character.go#L162)<br>`func IsWeaponItemType(t uint8) bool` | IsWeaponItemType: Type 1-15 and 45-65. |
+| [`IsArmorItemType`](../../server/internal/world/character.go#L165)<br>`func IsArmorItemType(t uint8) bool` | IsArmorItemType: Type 16-21, 31-36 and 66-92. |
+| [`CraftStats`](../../server/internal/world/character.go#L171)<br>`type CraftStats` | CraftStats is the decoded 20-digit Craftname: str dex rec int wis luc hp/100 mp/100 sp/100 enchant, two digits each. |
+| [`ParseCraftName`](../../server/internal/world/character.go#L177)<br>`func ParseCraftName(name string) (CraftStats, bool)` | See the source definition and the subsystem ownership contract. |
+| [`pos16`](../../server/internal/world/character.go#L194)<br>`func pos16(v int16) uint32` | See the source definition and the subsystem ownership contract. |
+| [`isAccessoryType`](../../server/internal/world/character.go#L196)<br>`func isAccessoryType(t uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`addItemDef`](../../server/internal/world/character.go#L199)<br>`func (e *EquipmentStats) addItemDef(itemType uint8, d *db.ItemDef)` | addItemDef adds full item effects; legacy stored quality never reduces stats. |
+| [`realType`](../../server/internal/world/character.go#L221)<br>`func realType(t uint8) uint8` | realType is GetItemRType (0x004bdad0): item types grouped by family. |
+| [`GetEquipmentStats`](../../server/internal/world/character.go#L224)<br>`func GetEquipmentStats(items []db.Item) EquipmentStats` | GetEquipmentStats sums every bag-0 item, its gems and craft bonuses. |
+| [`CharacterStats`](../../server/internal/world/character.go#L288)<br>`type CharacterStats` | CharacterStats derives maximum pools from stats/equipment. Current pools are absolute durable values; bonuses must never be re-added on every read. |
+| [`StatsFor`](../../server/internal/world/character.go#L324)<br>`func StatsFor(ch *db.Character, e EquipmentStats) CharacterStats` | See the source definition and the subsystem ownership contract. |
+| [`recoverBaseSitting`](../../server/internal/world/character.go#L364)<br>`const recoverBaseSitting = 28` | InitEquipment's base recovery: 28 per pool sitting, 4 standing, 0 in combat. |
+| [`recoverBaseStanding`](../../server/internal/world/character.go#L365)<br>`const recoverBaseStanding = 4` | InitEquipment's base recovery: 28 per pool sitting, 4 standing, 0 in combat. |
+| [`recoveryAmount`](../../server/internal/world/character.go#L368)<br>`func recoveryAmount(value, maxValue uint32, special uint8) uint32` | See the source definition and the subsystem ownership contract. |
+| [`charID`](../../server/internal/world/character.go#L375)<br>`func charID(ch *db.Character) uint32` | See the source definition and the subsystem ownership contract. |
+| [`charName`](../../server/internal/world/character.go#L382)<br>`func charName(ch *db.Character) string` | See the source definition and the subsystem ownership contract. |
+| [`charPos`](../../server/internal/world/character.go#L389)<br>`func charPos(ch *db.Character) (float32, float32, float32)` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterDetails`](../../server/internal/world/character.go#L401)<br>`func buildCharacterDetails(ch *db.Character, s *CharacterStats) []byte` | buildCharacterDetails (0x0105), per the client's reader (0x0058dbd0): stat point, skill point (u16), max HP, MP, SP (u32), direction (u16), then eleven u32 and the 25-byte guild name. The three exp fields are the cumulative exp at the level's start, the total for the next level and the current total; their order is not yet confirmed in game. |
+| [`buildAdditionalStats`](../../server/internal/world/character.go#L441)<br>`func buildAdditionalStats(s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildStatsReset`](../../server/internal/world/character.go#L450)<br>`func buildStatsReset(statPoint, str, rec, intel, wis, dex, luc uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCurrentHitpoints`](../../server/internal/world/character.go#L459)<br>`func buildCurrentHitpoints(s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMaxHPMPSP`](../../server/internal/world/character.go#L467)<br>`func buildMaxHPMPSP(ch *db.Character, s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMaxEnergy`](../../server/internal/world/character.go#L477)<br>`func buildMaxEnergy(ch *db.Character, hitpointType uint8, value uint32) []byte` | buildMaxEnergy (0x050B): hitpointType 0 hp, 1 sp, 2 mp. |
+| [`buildCharacterEnteredMap`](../../server/internal/world/character.go#L486)<br>`func buildCharacterEnteredMap(ch *db.Character, isAdmin, firstLoad bool) []byte` | buildCharacterEnteredMap: marker 0 already present, 1 own first load, 2 admin. |
+| [`buildCharacterEnteredMapGuild`](../../server/internal/world/character.go#L490)<br>`func buildCharacterEnteredMapGuild(ch *db.Character, isAdmin, firstLoad bool, guildID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterMapPosition`](../../server/internal/world/character.go#L510)<br>`func buildCharacterMapPosition(ch *db.Character) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterMove`](../../server/internal/world/character.go#L525)<br>`func buildCharacterMove(ch *db.Character, motion uint8, direction uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterMotion`](../../server/internal/world/character.go#L537)<br>`func buildCharacterMotion(characterID uint32, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildLeaveWorldAck`](../../server/internal/world/character.go#L544)<br>`func buildLeaveWorldAck(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`equippedItem`](../../server/internal/world/character.go#L550)<br>`func equippedItem(items []db.Item, slot uint8) *db.Item` | See the source definition and the subsystem ownership contract. |
+| [`enchantLevel`](../../server/internal/world/character.go#L559)<br>`func enchantLevel(it *db.Item) uint8` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterEquipment`](../../server/internal/world/character.go#L566)<br>`func buildCharacterEquipment(ch *db.Character, items []db.Item, slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildChangeAppearance`](../../server/internal/world/character.go#L588)<br>`func buildChangeAppearance(characterID uint32, hair, face, height, sex uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterShape`](../../server/internal/world/character.go#L596)<br>`func buildCharacterShape(ch *db.Character, faction uint8, items []db.Item, motion uint8) []byte` | buildCharacterShape (0x0303). The persistent motion is 1 only for sitting. |
+| [`buildCharacterShapeGuild`](../../server/internal/world/character.go#L600)<br>`func buildCharacterShapeGuild(ch *db.Character, faction uint8, items []db.Item, motion uint8, guildName string) []byte` | See the source definition and the subsystem ownership contract. |
+| [`statPackets`](../../server/internal/world/character.go#L633)<br>`func statPackets(ch *db.Character, s *CharacterStats) []labeled` | See the source definition and the subsystem ownership contract. |
+| [`buildEmptyCharacterListSlot`](../../server/internal/world/character.go#L644)<br>`func buildEmptyCharacterListSlot(slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterListSlot`](../../server/internal/world/character.go#L651)<br>`func buildCharacterListSlot(ch *db.Character, items []db.Item) []byte` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -258,7 +258,6 @@ type EquipmentStats struct {
 	Range         int32 // added to the weapon's reach
 	AttackSpeed   int32 // added to the swing-speed index
 	MoveSpeed     int32
-	CrossRoad     int32    // passive detail 9: no close-range bow penalty
 	SitRecoverPct [3]int32 // abilities 10-12: extra sitting recovery % (HP, SP, MP)
 	// Flat recovery from Special 16 gems (CUser +0x1250 sitting, +0x1268
 	// standing; HP, SP, MP).
@@ -294,23 +293,23 @@ type CharacterStats struct {
 	Str, Rec, Int, Wis, Dex, Luc    uint32
 	MaxHP, MaxMP, MaxSP             uint32
 	CurrentHP, CurrentMP, CurrentSP uint32
-	// Display ranges for 0x0526: attack to attack + variance.
+	// Inclusive display ranges for 0x0526: attack to attack + variance.
 	MinAttack, MaxAttack            uint32
 	MinMagic, MaxMagic              uint32
 	Defense, Resistance, Absorption uint32
-	// CUser::SetAttack per category (melee, ranged, magic).
+	// Combat values per category (melee, ranged, magic). Chances use
+	// hundredths of one percentage point.
 	Level        uint16
 	Attack       [3]int32
-	Accuracy     [3]int32
-	Evasion      [3]int32
+	Accuracy     [3]int64
+	Evasion      [3]int64
 	Guard        [3]int32 // defense per category
-	Critical     int32
+	Critical     int64
 	Variance     uint32
 	ItemAttack   uint32 // the weapon's own attack (CUser +0x12d8)
 	AttackAttr   uint8
 	DefenseAttr  uint8
 	RangedWeapon bool
-	CrossRoad    int32
 	Range        int32
 	AttackSpeed  int32
 	MoveSpeed    int32
@@ -381,24 +380,24 @@ Direct GX dependencies: `internal/attackspeed`, `internal/skilltiming`, `server/
 | [`equippedWeaponCombat`](../../server/internal/world/combat.go#L35)<br>`func equippedWeaponCombat(items []db.Item) (weaponCombat, bool)` | See the source definition and the subsystem ownership contract. |
 | [`sendNear`](../../server/internal/world/combat.go#L59)<br>`func sendNear(mapID uint16, x, z, radius float32, frame []byte, label string)` | See the source definition and the subsystem ownership contract. |
 | [`autoAttackSwing`](../../server/internal/world/combat.go#L66)<br>`func (s *Session) autoAttackSwing(target uint32) bool` | autoAttackSwing resolves one swing; false cancels the auto-attack. |
-| [`resolveMobDamage`](../../server/internal/world/combat.go#L169)<br>`func (s *Session) resolveMobDamage(r *MobDamageResult) bool` | resolveMobDamage handles the aftermath of any damage to a mob: death, drops and exp, or an HP sync. Returns whether the mob is still alive. |
-| [`applyIncomingMobDamage`](../../server/internal/world/combat.go#L188)<br>`func (s *Session) applyIncomingMobDamage(d pendingDamage) bool` | applyIncomingMobDamage applies one queued mob attack; true when it killed. Slot attacks with a skill (Attacktype = a level-100 Skills row) go through CMob::AttackUser(skill); others are CMob::Attack. |
-| [`applyMobSkill`](../../server/internal/world/combat.go#L267)<br>`func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, sk *db.SkillDef, stats *CharacterStats) bool` | applyMobSkill is a mob skill on this player: 0x060D on the selected target, 0x060B on area or repeated hits, 0x060C for a drain (the mob heals), then 0x060E for the skill's AddDamage. |
-| [`buildMobSkillPacket`](../../server/internal/world/combat.go#L381)<br>`func buildMobSkillPacket(op packet.Opcode, result uint8, mobID, target uint32, sk *db.SkillDef, damage [3]uint16, healed *[3]uint16, attackSlot ...uint8) []byte` | buildMobSkillPacket: result, mob id, target id, a byte the client reads before the skill id (0x060B/0x060C only), skill id, level, HP/SP/MP damage and, for 0x060C, the healed HP/SP/MP. |
-| [`takeMobDamage`](../../server/internal/world/combat.go#L407)<br>`func (s *Session) takeMobDamage(d pendingDamage, damage uint32, stats *CharacterStats) bool` | takeMobDamage lowers the character's HP; true when it died. |
-| [`afterMobDamage`](../../server/internal/world/combat.go#L435)<br>`func (s *Session) afterMobDamage(d pendingDamage, killed bool)` | See the source definition and the subsystem ownership contract. |
-| [`persist`](../../server/internal/world/combat.go#L459)<br>`func (s *Session) persist()` | persist saves the active character (usp_Save_Char_Info_E) and refreshes the shared snapshot. |
-| [`applyExpGain`](../../server/internal/world/combat.go#L481)<br>`func applyExpGain(ch *db.Character, gained uint32) (levels uint16, credited uint32)` | applyExpGain returns the levels gained and experience actually credited. |
-| [`expBounds`](../../server/internal/world/combat.go#L501)<br>`func expBounds(ch *db.Character) (prev, next uint32)` | expBounds returns the cumulative thresholds used by the character's bar. |
-| [`rewardKill`](../../server/internal/world/combat.go#L514)<br>`func rewardKill(killer *ConnectedPlayer, killerID uint32, mapID uint16, m *MapMob, log logPrinter)` | rewardKill hands out a kill's loot and exp: drops on the ground, gold split across the party (or dropped for a solo killer) and each share of exp queued to its recipient's session. An offline DoT caster gets the solo exp straight in the database. |
-| [`experienceMode`](../../server/internal/world/combat.go#L561)<br>`func (s *Session) experienceMode() int` | expScale is award_experience's modifiers: x1.5 with exp doubling (ability 35), +0.2 with any charm (abilities 40-42). |
-| [`expScale`](../../server/internal/world/combat.go#L580)<br>`func (s *Session) expScale(gained uint32) uint32` | See the source definition and the subsystem ownership contract. |
-| [`awardExp`](../../server/internal/world/combat.go#L583)<br>`func (s *Session) awardExp(gained uint32, modifiers bool)` | awardExp applies an exp reward to the session's character. |
-| [`notifyExpGain`](../../server/internal/world/combat.go#L604)<br>`func (s *Session) notifyExpGain(gained uint32, levels uint16)` | See the source definition and the subsystem ownership contract. |
-| [`buildExpGain`](../../server/internal/world/combat.go#L626)<br>`func buildExpGain(amount uint32) []byte` | buildExpGain (0x0207): exp gained and a second word the original sends as 0. |
-| [`buildLevelUp`](../../server/internal/world/combat.go#L635)<br>`func buildLevelUp(op packet.Opcode, ch *db.Character) []byte` | buildLevelUp (0x0508 self / 0x051E others): character id, level, stat points, skill points, exp at the level's start and for the next level. |
-| [`grantOfflineKillExp`](../../server/internal/world/combat.go#L648)<br>`func grantOfflineKillExp(characterID uint32, mobID, mobLevel uint16, mobExp uint32, log logPrinter)` | grantOfflineKillExp credits a DoT kill to a caster who went offline. |
-| [`logPrinter`](../../server/internal/world/combat.go#L665)<br>`type logPrinter` | See the source definition and the subsystem ownership contract. |
+| [`resolveMobDamage`](../../server/internal/world/combat.go#L167)<br>`func (s *Session) resolveMobDamage(r *MobDamageResult) bool` | resolveMobDamage handles the aftermath of any damage to a mob: death, drops and exp, or an HP sync. Returns whether the mob is still alive. |
+| [`applyIncomingMobDamage`](../../server/internal/world/combat.go#L186)<br>`func (s *Session) applyIncomingMobDamage(d pendingDamage) bool` | applyIncomingMobDamage applies one queued mob attack; true when it killed. Slot attacks with a skill (Attacktype = a level-100 Skills row) go through CMob::AttackUser(skill); others are CMob::Attack. |
+| [`applyMobSkill`](../../server/internal/world/combat.go#L265)<br>`func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, sk *db.SkillDef, stats *CharacterStats) bool` | applyMobSkill is a mob skill on this player: 0x060D on the selected target, 0x060B on area or repeated hits, 0x060C for a drain (the mob heals), then 0x060E for the skill's AddDamage. |
+| [`buildMobSkillPacket`](../../server/internal/world/combat.go#L385)<br>`func buildMobSkillPacket(op packet.Opcode, result uint8, mobID, target uint32, sk *db.SkillDef, damage [3]uint16, healed *[3]uint16, attackSlot ...uint8) []byte` | buildMobSkillPacket: result, mob id, target id, a byte the client reads before the skill id (0x060B/0x060C only), skill id, level, HP/SP/MP damage and, for 0x060C, the healed HP/SP/MP. |
+| [`takeMobDamage`](../../server/internal/world/combat.go#L411)<br>`func (s *Session) takeMobDamage(d pendingDamage, damage uint32, stats *CharacterStats) bool` | takeMobDamage lowers the character's HP; true when it died. |
+| [`afterMobDamage`](../../server/internal/world/combat.go#L439)<br>`func (s *Session) afterMobDamage(d pendingDamage, killed bool)` | See the source definition and the subsystem ownership contract. |
+| [`persist`](../../server/internal/world/combat.go#L463)<br>`func (s *Session) persist()` | persist saves the active character (usp_Save_Char_Info_E) and refreshes the shared snapshot. |
+| [`applyExpGain`](../../server/internal/world/combat.go#L485)<br>`func applyExpGain(ch *db.Character, gained uint32) (levels uint16, credited uint32)` | applyExpGain returns the levels gained and experience actually credited. |
+| [`expBounds`](../../server/internal/world/combat.go#L505)<br>`func expBounds(ch *db.Character) (prev, next uint32)` | expBounds returns the cumulative thresholds used by the character's bar. |
+| [`rewardKill`](../../server/internal/world/combat.go#L518)<br>`func rewardKill(killer *ConnectedPlayer, killerID uint32, mapID uint16, m *MapMob, log logPrinter)` | rewardKill hands out a kill's loot and exp: drops on the ground, gold split across the party (or dropped for a solo killer) and each share of exp queued to its recipient's session. An offline DoT caster gets the solo exp straight in the database. |
+| [`experienceMode`](../../server/internal/world/combat.go#L565)<br>`func (s *Session) experienceMode() int` | expScale is award_experience's modifiers: x1.5 with exp doubling (ability 35), +0.2 with any charm (abilities 40-42). |
+| [`expScale`](../../server/internal/world/combat.go#L584)<br>`func (s *Session) expScale(gained uint32) uint32` | See the source definition and the subsystem ownership contract. |
+| [`awardExp`](../../server/internal/world/combat.go#L587)<br>`func (s *Session) awardExp(gained uint32, modifiers bool)` | awardExp applies an exp reward to the session's character. |
+| [`notifyExpGain`](../../server/internal/world/combat.go#L608)<br>`func (s *Session) notifyExpGain(gained uint32, levels uint16)` | See the source definition and the subsystem ownership contract. |
+| [`buildExpGain`](../../server/internal/world/combat.go#L630)<br>`func buildExpGain(amount uint32) []byte` | buildExpGain (0x0207): exp gained and a second word the original sends as 0. |
+| [`buildLevelUp`](../../server/internal/world/combat.go#L639)<br>`func buildLevelUp(op packet.Opcode, ch *db.Character) []byte` | buildLevelUp (0x0508 self / 0x051E others): character id, level, stat points, skill points, exp at the level's start and for the next level. |
+| [`grantOfflineKillExp`](../../server/internal/world/combat.go#L652)<br>`func grantOfflineKillExp(characterID uint32, mobID, mobLevel uint16, mobExp uint32, log logPrinter)` | grantOfflineKillExp credits a DoT kill to a caster who went offline. |
+| [`logPrinter`](../../server/internal/world/combat.go#L669)<br>`type logPrinter` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -449,36 +448,52 @@ type pendingSpinCombo struct {
 
 [server/internal/world/combatformula.go](../../server/internal/world/combatformula.go#L1)
 
-Direct GX dependencies: `internal/element`, `server/internal/db`.
+Direct GX dependencies: `internal/element`, `server/internal/config`, `server/internal/db`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`attackMelee`](../../server/internal/world/combatformula.go#L17)<br>`const attackMelee = 0` | See the source definition and the subsystem ownership contract. |
-| [`attackRanged`](../../server/internal/world/combatformula.go#L18)<br>`const attackRanged = 1` | See the source definition and the subsystem ownership contract. |
-| [`attackMagic`](../../server/internal/world/combatformula.go#L19)<br>`const attackMagic = 2` | See the source definition and the subsystem ownership contract. |
-| [`maxDamage`](../../server/internal/world/combatformula.go#L20)<br>`const maxDamage = 30000` | See the source definition and the subsystem ownership contract. |
-| [`elementMultiplier`](../../server/internal/world/combatformula.go#L23)<br>`func elementMultiplier(attacker, defender uint8) float32` | See the source definition and the subsystem ownership contract. |
-| [`f32`](../../server/internal/world/combatformula.go#L27)<br>`func f32(v int32) float64` | See the source definition and the subsystem ownership contract. |
-| [`store`](../../server/internal/world/combatformula.go#L28)<br>`func store(v float64) float32` | See the source definition and the subsystem ownership contract. |
-| [`truncInt`](../../server/internal/world/combatformula.go#L31)<br>`func truncInt(v float64) int32` | truncInt is the original FISTP truncation (INT_MIN on overflow). |
-| [`clampInt`](../../server/internal/world/combatformula.go#L39)<br>`func clampInt(v, lo, hi int32) int32` | See the source definition and the subsystem ownership contract. |
-| [`setAttack`](../../server/internal/world/combatformula.go#L43)<br>`func setAttack(s *CharacterStats, e EquipmentStats)` | setAttack is CUser::SetAttack (0x00454280) on top of the equipment and the skill/passive additions per category. |
-| [`mobCombat`](../../server/internal/world/combatformula.go#L82)<br>`type mobCombat` | mobCombat is a mob's derived combat values (rebuild_mob_attack). |
+| [`attackMelee`](../../server/internal/world/combatformula.go#L13)<br>`const attackMelee = iota` | See the source definition and the subsystem ownership contract. |
+| [`attackRanged`](../../server/internal/world/combatformula.go#L14)<br>`const attackRanged` | See the source definition and the subsystem ownership contract. |
+| [`attackMagic`](../../server/internal/world/combatformula.go#L15)<br>`const attackMagic` | See the source definition and the subsystem ownership contract. |
+| [`maxDamage`](../../server/internal/world/combatformula.go#L19)<br>`const maxDamage = 30000` | See the source definition and the subsystem ownership contract. |
+| [`fullChance`](../../server/internal/world/combatformula.go#L20)<br>`const fullChance = 10000` | Hundredths of one percentage point. |
+| [`combatDEXFirst`](../../server/internal/world/combatformula.go#L24)<br>`var combatDEXFirst uint32` | See the source definition and the subsystem ownership contract. |
+| [`combatDEXSecond`](../../server/internal/world/combatformula.go#L25)<br>`var combatDEXSecond uint32` | See the source definition and the subsystem ownership contract. |
+| [`dexChance`](../../server/internal/world/combatformula.go#L28)<br>`func dexChance(dex, first, second uint32) int64` | See the source definition and the subsystem ownership contract. |
+| [`setCombatChances`](../../server/internal/world/combatformula.go#L34)<br>`func setCombatChances(accuracy, evasion *[3]int64, dex, wis uint32, mods [3]CategoryMods)` | See the source definition and the subsystem ownership contract. |
+| [`boundedCombatStat`](../../server/internal/world/combatformula.go#L42)<br>`func boundedCombatStat(value int64) int32` | See the source definition and the subsystem ownership contract. |
+| [`setAttack`](../../server/internal/world/combatformula.go#L48)<br>`func setAttack(s *CharacterStats, e EquipmentStats)` | setAttack uses the same attribute scaling for melee and ranged. Category abilities still apply to their own attack, while melee defense is shared. |
+| [`mobCombat`](../../server/internal/world/combatformula.go#L85)<br>`type mobCombat` | mobCombat contains the combat values derived from a monster's catalog and active effects. Its attack templates supply the weapon part separately. |
 | [`mobCombatFor`](../../server/internal/world/combatformula.go#L96)<br>`func mobCombatFor(d *db.MobDef) mobCombat` | See the source definition and the subsystem ownership contract. |
-| [`magicResisted`](../../server/internal/world/combatformula.go#L116)<br>`func magicResisted(attLevel, defLevel, defEvasion, attDex, defDex, attAccuracy int32) bool` | magicResisted is the magic branch shared by both directions: a miss when the roll is under the level/dex resistance chance (1..90). The stat term reads WIS on both sides (CUser +0x122c, stMOBInfo +0x3a). |
-| [`playerHits`](../../server/internal/world/combatformula.go#L127)<br>`func playerHits(s *CharacterStats, m *mobCombat, kind int) bool` | playerHits is CUser::AttackSuccess for a normal attack on a mob. |
-| [`closeRangeDistance`](../../server/internal/world/combatformula.go#L142)<br>`const closeRangeDistance = 3.0` | closeRangePenalty is the bow rule in CUser::AttackDamage: a ranged hit within 3 units does 70%, unless a cross-road passive (detail 9) is learned. |
-| [`weaponDamage`](../../server/internal/world/combatformula.go#L147)<br>`func weaponDamage(s *CharacterStats, m *mobCombat, kind int, damage *[3]int32, element, defElement uint8, closeRanged bool) bool` | weaponDamage is the weapon branch of CUser::AttackDamage (0x0044d540) against a mob. damage[0] seeds the attack (skill modes 1 and 2); element is the attacking element and defElement the mob's (0 for detail 24). |
-| [`playerDamage`](../../server/internal/world/combatformula.go#L190)<br>`func playerDamage(s *CharacterStats, m *mobCombat, kind int, element uint8, closeRanged bool) (int32, bool)` | playerDamage is CUser::AttackDamage for a normal attack. Returns the HP damage and whether it crit. |
-| [`skillTarget`](../../server/internal/world/combatformula.go#L197)<br>`type skillTarget` | skillTarget is what a skill's damage modes read from the mob. |
-| [`playerSkillDamage`](../../server/internal/world/combatformula.go#L207)<br>`func playerSkillDamage(s *CharacterStats, m *mobCombat, def *db.SkillDef, t skillTarget, caster [3]uint32, closeRanged bool) ([3]int32, bool)` | playerSkillDamage is CUser::AttackDamage with a skill: DamageType 0 is the raw DamageHP/SP/MP, 1 adds them to the weapon attack, 2 multiplies the weapon damage by them, 3 multiplies the caster's own HP/SP/MP, 4 and 5 are a percentage of the mob's maximum or current HP/MP/SP. The element is the skill's AttrType when set; detail 24 ignores the mob's element. |
-| [`playerSkillHits`](../../server/internal/world/combatformula.go#L272)<br>`func playerSkillHits(s *CharacterStats, m *mobCombat, md *db.MobDef, def *db.SkillDef) bool` | playerSkillHits is CUser::AttackSuccess with a skill: mobs resist a skill's StateType or its ID outright; SuccessType 1-3 roll SuccessValue (2 and 3 add LUC or WIS against the mob's, as an integer ratio); otherwise the normal hit chance of the skill's category applies. |
-| [`damageLimits`](../../server/internal/world/combatformula.go#L299)<br>`func damageLimits(v int32) int32` | See the source definition and the subsystem ownership contract. |
-| [`mobHits`](../../server/internal/world/combatformula.go#L308)<br>`func mobHits(m *mobCombat, s *CharacterStats, kind int) bool` | mobHits is CMob::AttackSuccess against a player. |
-| [`mobDamage`](../../server/internal/world/combatformula.go#L324)<br>`func mobDamage(m *mobCombat, a *db.MobAttack, s *CharacterStats) (int32, bool)` | mobDamage is CMob::AttackDamage (0x004a2920) for a normal attack: the slot's Attack + rand(Attackplus) on top of the category attack, element row 0 against the player's armour element. |
-| [`mobWeaponDamage`](../../server/internal/world/combatformula.go#L332)<br>`func mobWeaponDamage(m *mobCombat, kind int, attack float32, plus uint16, element, defElement uint8, s *CharacterStats, damage *[3]int32) bool` | mobWeaponDamage is the shared weapon branch of CMob::AttackDamage. |
-| [`mobSkillDamage`](../../server/internal/world/combatformula.go#L373)<br>`func mobSkillDamage(m *mobCombat, md *db.MobDef, def *db.SkillDef, s *CharacterStats, mobHP uint32) ([3]int32, bool)` | mobSkillDamage is CMob::AttackDamage (0x004a3070) with a mob skill (Skills rows of level 100): the same DamageType modes as the player's, with the mob's own resources for mode 3 and the player's pools for 4 and 5. The weapon branch uses attack slot 1's Attack/Attackplus and element (the skill's AttrType when set). |
-| [`mobSkillHits`](../../server/internal/world/combatformula.go#L437)<br>`func mobSkillHits(m *mobCombat, md *db.MobDef, def *db.SkillDef, s *CharacterStats) bool` | mobSkillHits is CMob::AttackSuccess with a skill: SuccessType 1-3 roll SuccessValue, otherwise the category's normal chance. |
+| [`rollCombatChance`](../../server/internal/world/combatformula.go#L106)<br>`func rollCombatChance(chance int64) bool` | See the source definition and the subsystem ownership contract. |
+| [`effectiveEvasion`](../../server/internal/world/combatformula.go#L110)<br>`func effectiveEvasion(defenderEvasion, attackerAccuracy int64) int64` | See the source definition and the subsystem ownership contract. |
+| [`mobLevelPenalty`](../../server/internal/world/combatformula.go#L115)<br>`func mobLevelPenalty(playerLevel uint16, mobLevel int32) int64` | mobLevelPenalty is the percentage adjustment for a monster above a player. |
+| [`playerHitChance`](../../server/internal/world/combatformula.go#L119)<br>`func playerHitChance(s *CharacterStats, m *mobCombat, kind int) int64` | See the source definition and the subsystem ownership contract. |
+| [`playerDodgeChance`](../../server/internal/world/combatformula.go#L124)<br>`func playerDodgeChance(s *CharacterStats, m *mobCombat, kind int) int64` | See the source definition and the subsystem ownership contract. |
+| [`playerHits`](../../server/internal/world/combatformula.go#L129)<br>`func playerHits(s *CharacterStats, m *mobCombat, kind int) bool` | See the source definition and the subsystem ownership contract. |
+| [`mobHits`](../../server/internal/world/combatformula.go#L133)<br>`func mobHits(m *mobCombat, s *CharacterStats, kind int) bool` | See the source definition and the subsystem ownership contract. |
+| [`userHits`](../../server/internal/world/combatformula.go#L137)<br>`func userHits(att, def *CharacterStats, kind int) bool` | See the source definition and the subsystem ownership contract. |
+| [`skillSuccess`](../../server/internal/world/combatformula.go#L143)<br>`func skillSuccess(def *db.SkillDef) bool` | skillSuccess retains a definition's independent success roll. Accuracy and evasion still apply, even to skills with a guaranteed catalog roll. |
+| [`playerSkillHits`](../../server/internal/world/combatformula.go#L147)<br>`func playerSkillHits(s *CharacterStats, m *mobCombat, md *db.MobDef, def *db.SkillDef) bool` | See the source definition and the subsystem ownership contract. |
+| [`mobSkillHits`](../../server/internal/world/combatformula.go#L159)<br>`func mobSkillHits(m *mobCombat, def *db.SkillDef, s *CharacterStats) bool` | See the source definition and the subsystem ownership contract. |
+| [`userSkillHits`](../../server/internal/world/combatformula.go#L163)<br>`func userSkillHits(att, def *CharacterStats, sk *db.SkillDef) bool` | See the source definition and the subsystem ownership contract. |
+| [`hitDamage`](../../server/internal/world/combatformula.go#L167)<br>`type hitDamage` | See the source definition and the subsystem ownership contract. |
+| [`weaponHit`](../../server/internal/world/combatformula.go#L179)<br>`func (h hitDamage) weaponHit(bonus, multiplier int64) (int32, bool)` | weaponHit computes the same damage for all three categories. Using the element table's exact tenths keeps truncation at the end of the calculation. |
+| [`directAmount`](../../server/internal/world/combatformula.go#L199)<br>`func directAmount(amount, levelPercent, limit int64) int32` | directAmount scales nonzero immediate skill damage and preserves zero components. It is also used for the level adjustment on extra impacts. |
+| [`extraSkillDamage`](../../server/internal/world/combatformula.go#L206)<br>`func extraSkillDamage(def *db.SkillDef, levelPercent int64) [3]uint32` | See the source definition and the subsystem ownership contract. |
+| [`damagePools`](../../server/internal/world/combatformula.go#L215)<br>`type damagePools` | See the source definition and the subsystem ownership contract. |
+| [`currentDamagePools`](../../server/internal/world/combatformula.go#L217)<br>`func currentDamagePools(s *CharacterStats) damagePools` | See the source definition and the subsystem ownership contract. |
+| [`maximumDamagePools`](../../server/internal/world/combatformula.go#L221)<br>`func maximumDamagePools(s *CharacterStats) damagePools` | See the source definition and the subsystem ownership contract. |
+| [`skillHit`](../../server/internal/world/combatformula.go#L225)<br>`func (h hitDamage) skillHit(def *db.SkillDef, caster, current, maximum damagePools) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`characterHitDamage`](../../server/internal/world/combatformula.go#L271)<br>`func characterHitDamage(s *CharacterStats, kind int, guard int32, defenseAttr uint8, levelPercent int64) hitDamage` | See the source definition and the subsystem ownership contract. |
+| [`playerDamage`](../../server/internal/world/combatformula.go#L278)<br>`func playerDamage(s *CharacterStats, m *mobCombat, kind int) (int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`playerSkillDamage`](../../server/internal/world/combatformula.go#L283)<br>`func playerSkillDamage(s *CharacterStats, m *mobCombat, def *db.SkillDef, current, maximum damagePools) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`userDamage`](../../server/internal/world/combatformula.go#L289)<br>`func userDamage(att, def *CharacterStats, kind int) (int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`userSkillDamage`](../../server/internal/world/combatformula.go#L294)<br>`func userSkillDamage(att, def *CharacterStats, sk *db.SkillDef, caster damagePools) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`mobHitDamage`](../../server/internal/world/combatformula.go#L300)<br>`func mobHitDamage(m *mobCombat, a *db.MobAttack, s *CharacterStats, kind int, attr uint8) hitDamage` | See the source definition and the subsystem ownership contract. |
+| [`mobDamage`](../../server/internal/world/combatformula.go#L311)<br>`func mobDamage(m *mobCombat, a *db.MobAttack, s *CharacterStats) (int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`mobSkillDamage`](../../server/internal/world/combatformula.go#L315)<br>`func mobSkillDamage(m *mobCombat, md *db.MobDef, def *db.SkillDef, s *CharacterStats, mobHP uint32) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`f32`](../../server/internal/world/combatformula.go#L322)<br>`func f32(v int32) float64` | f32 preserves the original periodic-damage calculation's input precision. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -486,23 +501,29 @@ Direct GX dependencies: `internal/element`, `server/internal/db`.
 type mobCombat struct {
 	DamageFactor float32
 	Level        int32
-	Accuracy     [3]int32
-	Evasion      [3]int32
+	Accuracy     [3]int64
+	Evasion      [3]int64
 	Guard        [3]int32
 	Attack       [3]int32
-	Critical     int32
-	Luck         int32
-	Wis          int32
-	Dex          int32
+	Critical     int64
 	Attrib       uint8
 }
 ```
 
 ```go
-type skillTarget struct {
-	MaxHP, MaxMP, MaxSP uint32
-	HP, MP, SP          uint32
+type hitDamage struct {
+	attack       int64
+	variance     uint32
+	guard        int32
+	critical     int64
+	attackAttr   uint8
+	defenseAttr  uint8
+	levelPercent int64
 }
+```
+
+```go
+type damagePools [3]uint32
 ```
 
 </details>
@@ -1256,9 +1277,9 @@ Direct GX dependencies: `internal/catalogfiles`, `internal/maprules`, `server/in
 | [`loadMapProperties`](../../server/internal/world/gameini.go#L77)<br>`func loadMapProperties(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
 | [`buildMapProperties`](../../server/internal/world/gameini.go#L92)<br>`func buildMapProperties(c maprules.Catalog) (MapConfig, error)` | See the source definition and the subsystem ownership contract. |
 | [`LoadGameConfig`](../../server/internal/world/gameini.go#L127)<br>`func LoadGameConfig(log *logx.Logger) error` | LoadGameConfig loads the original PS_Game ini files from data/game/. |
-| [`rebirthPosition`](../../server/internal/world/gameini.go#L165)<br>`func rebirthPosition(mapID uint16, faction uint8) (MapPos, bool)` | rebirthPosition is where a character of faction revives on mapID, per CMap::LoadConfig: Light and Fury have independent destinations. |
-| [`bindPosition`](../../server/internal/world/gameini.go#L183)<br>`func bindPosition(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32)` | bindPosition is CMap::GetBindPos 0x004295a0: the configured faction rebirth point when its map exists and the point lies inside it (0.9 above), else a random point of the nearest svmap rebirth group of this map, else the current position (zeroed if outside the map). |
-| [`bindPositionFound`](../../server/internal/world/gameini.go#L190)<br>`func bindPositionFound(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32, bool)` | bindPositionFound is bindPosition with GetBindPos's result: false when neither a configured point nor a rebirth group applies. |
+| [`rebirthPosition`](../../server/internal/world/gameini.go#L171)<br>`func rebirthPosition(mapID uint16, faction uint8) (MapPos, bool)` | rebirthPosition is where a character of faction revives on mapID, per CMap::LoadConfig: Light and Fury have independent destinations. |
+| [`bindPosition`](../../server/internal/world/gameini.go#L189)<br>`func bindPosition(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32)` | bindPosition is CMap::GetBindPos 0x004295a0: the configured faction rebirth point when its map exists and the point lies inside it (0.9 above), else a random point of the nearest svmap rebirth group of this map, else the current position (zeroed if outside the map). |
+| [`bindPositionFound`](../../server/internal/world/gameini.go#L196)<br>`func bindPositionFound(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32, bool)` | bindPositionFound is bindPosition with GetBindPos's result: false when neither a configured point nor a rebirth group applies. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -2283,39 +2304,39 @@ type mobNav struct{ id uint16 }
 
 [server/internal/world/mobeffects.go](../../server/internal/world/mobeffects.go#L1)
 
-Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
+Direct GX dependencies: `internal/skillchance`, `server/internal/db`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`detailTimeDamage`](../../server/internal/world/mobeffects.go#L27)<br>`const detailTimeDamage = 61` | See the source definition and the subsystem ownership contract. |
-| [`detailAbilityDown`](../../server/internal/world/mobeffects.go#L28)<br>`const detailAbilityDown = 62` | See the source definition and the subsystem ownership contract. |
-| [`detailDeathSentence`](../../server/internal/world/mobeffects.go#L29)<br>`const detailDeathSentence = 63` | See the source definition and the subsystem ownership contract. |
-| [`detailStun`](../../server/internal/world/mobeffects.go#L30)<br>`const detailStun = 64` | See the source definition and the subsystem ownership contract. |
-| [`detailStop`](../../server/internal/world/mobeffects.go#L31)<br>`const detailStop = 65` | See the source definition and the subsystem ownership contract. |
-| [`detailSleep`](../../server/internal/world/mobeffects.go#L32)<br>`const detailSleep = 66` | See the source definition and the subsystem ownership contract. |
-| [`detailAbilityDown2`](../../server/internal/world/mobeffects.go#L33)<br>`const detailAbilityDown2 = 67` | See the source definition and the subsystem ownership contract. |
-| [`detailNoElement2`](../../server/internal/world/mobeffects.go#L34)<br>`const detailNoElement2 = 68` | See the source definition and the subsystem ownership contract. |
-| [`detailVisionFix`](../../server/internal/world/mobeffects.go#L35)<br>`const detailVisionFix = 72` | See the source definition and the subsystem ownership contract. |
-| [`effectTick`](../../server/internal/world/mobeffects.go#L36)<br>`const effectTick = 3 * time.Second` | See the source definition and the subsystem ownership contract. |
-| [`MobEffect`](../../server/internal/world/mobeffects.go#L40)<br>`type MobEffect` | MobEffect is one skill applied to a mob. |
-| [`mobMods`](../../server/internal/world/mobeffects.go#L48)<br>`type mobMods` | mobMods are CMob::SetSkillAbility's runtime changes. |
-| [`mods`](../../server/internal/world/mobeffects.go#L58)<br>`func (m *MapMob) mods() mobMods` | See the source definition and the subsystem ownership contract. |
-| [`addAbility`](../../server/internal/world/mobeffects.go#L86)<br>`func (o *mobMods) addAbility(t uint8, v int32)` | See the source definition and the subsystem ownership contract. |
-| [`canAct`](../../server/internal/world/mobeffects.go#L116)<br>`func (o mobMods) canAct() bool` | canAct: stunned or sleeping mobs neither attack nor move. |
-| [`canMove`](../../server/internal/world/mobeffects.go#L119)<br>`func (o mobMods) canMove() bool` | canMove: a stopped mob still attacks in reach. |
-| [`attackSpeedIndex`](../../server/internal/world/mobeffects.go#L123)<br>`func (o mobMods) attackSpeedIndex() uint8` | attackSpeedIndex and moveSpeedIndex are CMob::SendSpeed's values: 255 while blocked, otherwise the speed index (3 and 2 at normal speed). |
-| [`moveSpeedIndex`](../../server/internal/world/mobeffects.go#L130)<br>`func (o mobMods) moveSpeedIndex() uint8` | See the source definition and the subsystem ownership contract. |
-| [`mobAttackSpeedOffsets`](../../server/internal/world/mobeffects.go#L138)<br>`var mobAttackSpeedOffsets` | mobAttackSpeedOffsets is g_ConstMobAttackSpeed by speed index. |
-| [`attackDelayOffset`](../../server/internal/world/mobeffects.go#L140)<br>`func (o mobMods) attackDelayOffset() time.Duration` | See the source definition and the subsystem ownership contract. |
-| [`buildMobSpeed`](../../server/internal/world/mobeffects.go#L145)<br>`func buildMobSpeed(m *MapMob) []byte` | buildMobSpeed (0x0609): mob id, attack speed, move speed. |
-| [`mobCombatOf`](../../server/internal/world/mobeffects.go#L155)<br>`func mobCombatOf(m *MapMob) mobCombat` | mobCombatOf is mobCombatFor with the mob's applied skills. |
-| [`MobCombatByID`](../../server/internal/world/mobeffects.go#L186)<br>`func MobCombatByID(mapID uint16, id uint32) (mobCombat, bool)` | MobCombatByID returns a live mob's combat values with its applied skills. |
-| [`ApplyMobEffect`](../../server/internal/world/mobeffects.go#L203)<br>`func ApplyMobEffect(mapID uint16, id, casterID uint32, def *db.SkillDef) (speed []byte, ok bool)` | ApplyMobEffect is CMob::AddApplySkill: the same skill at the same level refreshes; a higher level (levels 1-3) replaces a lower one; a lower one is ignored. Returns the 0x0609 packet when the mob's speed changed. |
-| [`removeSleep`](../../server/internal/world/mobeffects.go#L257)<br>`func (m *MapMob) removeSleep() []byte` | removeSleep is CMob::RemApplySkillSleep: damage wakes the mob. Returns the 0x0609 packet when it was asleep. The shard lock is held. |
-| [`mobTimeDamage`](../../server/internal/world/mobeffects.go#L278)<br>`func mobTimeDamage(def *db.SkillDef, cur, maxv [3]uint32, elapsed time.Duration) [3]int32` | mobTimeDamage is the TimeDamage formula for a mob target: mode 0 the raw values, 3 the mob's current pools times the value, 4 and 5 a percentage of its maximum or current pools; then scaled by elapsed/3000 and capped at 30000. |
-| [`MobEffectOutcome`](../../server/internal/world/mobeffects.go#L307)<br>`type MobEffectOutcome` | MobEffectOutcome is one damage or expiry event from TickMobEffects. |
-| [`TickMobEffects`](../../server/internal/world/mobeffects.go#L323)<br>`func TickMobEffects() []MobEffectOutcome` | TickMobEffects is ChkKeepSkill (detail 61, every 3 s) and ChkEndTimeSkill (expiry, with the last partial tick of 61 and the whole-HP hit of 63). |
-| [`tickMobEffects`](../../server/internal/world/mobeffects.go#L325)<br>`func tickMobEffects(now time.Time) []MobEffectOutcome` | See the source definition and the subsystem ownership contract. |
+| [`detailTimeDamage`](../../server/internal/world/mobeffects.go#L28)<br>`const detailTimeDamage = 61` | See the source definition and the subsystem ownership contract. |
+| [`detailAbilityDown`](../../server/internal/world/mobeffects.go#L29)<br>`const detailAbilityDown = 62` | See the source definition and the subsystem ownership contract. |
+| [`detailDeathSentence`](../../server/internal/world/mobeffects.go#L30)<br>`const detailDeathSentence = 63` | See the source definition and the subsystem ownership contract. |
+| [`detailStun`](../../server/internal/world/mobeffects.go#L31)<br>`const detailStun = 64` | See the source definition and the subsystem ownership contract. |
+| [`detailStop`](../../server/internal/world/mobeffects.go#L32)<br>`const detailStop = 65` | See the source definition and the subsystem ownership contract. |
+| [`detailSleep`](../../server/internal/world/mobeffects.go#L33)<br>`const detailSleep = 66` | See the source definition and the subsystem ownership contract. |
+| [`detailAbilityDown2`](../../server/internal/world/mobeffects.go#L34)<br>`const detailAbilityDown2 = 67` | See the source definition and the subsystem ownership contract. |
+| [`detailNoElement2`](../../server/internal/world/mobeffects.go#L35)<br>`const detailNoElement2 = 68` | See the source definition and the subsystem ownership contract. |
+| [`detailVisionFix`](../../server/internal/world/mobeffects.go#L36)<br>`const detailVisionFix = 72` | See the source definition and the subsystem ownership contract. |
+| [`effectTick`](../../server/internal/world/mobeffects.go#L37)<br>`const effectTick = 3 * time.Second` | See the source definition and the subsystem ownership contract. |
+| [`MobEffect`](../../server/internal/world/mobeffects.go#L41)<br>`type MobEffect` | MobEffect is one skill applied to a mob. |
+| [`mobMods`](../../server/internal/world/mobeffects.go#L49)<br>`type mobMods` | mobMods are CMob::SetSkillAbility's runtime changes. |
+| [`mods`](../../server/internal/world/mobeffects.go#L60)<br>`func (m *MapMob) mods() mobMods` | See the source definition and the subsystem ownership contract. |
+| [`addAbility`](../../server/internal/world/mobeffects.go#L88)<br>`func (o *mobMods) addAbility(t uint8, v int32)` | See the source definition and the subsystem ownership contract. |
+| [`canAct`](../../server/internal/world/mobeffects.go#L120)<br>`func (o mobMods) canAct() bool` | canAct: stunned or sleeping mobs neither attack nor move. |
+| [`canMove`](../../server/internal/world/mobeffects.go#L123)<br>`func (o mobMods) canMove() bool` | canMove: a stopped mob still attacks in reach. |
+| [`attackSpeedIndex`](../../server/internal/world/mobeffects.go#L127)<br>`func (o mobMods) attackSpeedIndex() uint8` | attackSpeedIndex and moveSpeedIndex are CMob::SendSpeed's values: 255 while blocked, otherwise the speed index (3 and 2 at normal speed). |
+| [`moveSpeedIndex`](../../server/internal/world/mobeffects.go#L134)<br>`func (o mobMods) moveSpeedIndex() uint8` | See the source definition and the subsystem ownership contract. |
+| [`mobAttackSpeedOffsets`](../../server/internal/world/mobeffects.go#L142)<br>`var mobAttackSpeedOffsets` | mobAttackSpeedOffsets is g_ConstMobAttackSpeed by speed index. |
+| [`attackDelayOffset`](../../server/internal/world/mobeffects.go#L144)<br>`func (o mobMods) attackDelayOffset() time.Duration` | See the source definition and the subsystem ownership contract. |
+| [`buildMobSpeed`](../../server/internal/world/mobeffects.go#L149)<br>`func buildMobSpeed(m *MapMob) []byte` | buildMobSpeed (0x0609): mob id, attack speed, move speed. |
+| [`mobCombatOf`](../../server/internal/world/mobeffects.go#L159)<br>`func mobCombatOf(m *MapMob) mobCombat` | mobCombatOf is mobCombatFor with the mob's applied skills. |
+| [`MobCombatByID`](../../server/internal/world/mobeffects.go#L194)<br>`func MobCombatByID(mapID uint16, id uint32) (mobCombat, bool)` | MobCombatByID returns a live mob's combat values with its applied skills. |
+| [`ApplyMobEffect`](../../server/internal/world/mobeffects.go#L211)<br>`func ApplyMobEffect(mapID uint16, id, casterID uint32, def *db.SkillDef) (speed []byte, ok bool)` | ApplyMobEffect is CMob::AddApplySkill: the same skill at the same level refreshes; a higher level (levels 1-3) replaces a lower one; a lower one is ignored. Returns the 0x0609 packet when the mob's speed changed. |
+| [`removeSleep`](../../server/internal/world/mobeffects.go#L265)<br>`func (m *MapMob) removeSleep() []byte` | removeSleep is CMob::RemApplySkillSleep: damage wakes the mob. Returns the 0x0609 packet when it was asleep. The shard lock is held. |
+| [`mobTimeDamage`](../../server/internal/world/mobeffects.go#L286)<br>`func mobTimeDamage(def *db.SkillDef, cur, maxv [3]uint32, elapsed time.Duration) [3]int32` | mobTimeDamage is the TimeDamage formula for a mob target: mode 0 the raw values, 3 the mob's current pools times the value, 4 and 5 a percentage of its maximum or current pools; then scaled by elapsed/3000 and capped at 30000. |
+| [`MobEffectOutcome`](../../server/internal/world/mobeffects.go#L315)<br>`type MobEffectOutcome` | MobEffectOutcome is one damage or expiry event from TickMobEffects. |
+| [`TickMobEffects`](../../server/internal/world/mobeffects.go#L331)<br>`func TickMobEffects() []MobEffectOutcome` | TickMobEffects is ChkKeepSkill (detail 61, every 3 s) and ChkEndTimeSkill (expiry, with the last partial tick of 61 and the whole-HP hit of 63). |
+| [`tickMobEffects`](../../server/internal/world/mobeffects.go#L333)<br>`func tickMobEffects(now time.Time) []MobEffectOutcome` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -2331,6 +2352,7 @@ type MobEffect struct {
 ```go
 type mobMods struct {
 	Wis, Dex, Luc          int32
+	Critical               int32
 	AttackSpeed, MoveSpeed int32
 	Cat                    [3]CategoryMods
 	Disabled               [3]int32
@@ -2371,16 +2393,16 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`savePosition`](../../server/internal/world/movement.go#L42)<br>`func (s *Session) savePosition()` | savePosition persists the character (usp_Save_Char_Info_E). |
 | [`syncPlayer`](../../server/internal/world/movement.go#L54)<br>`func (s *Session) syncPlayer()` | See the source definition and the subsystem ownership contract. |
 | [`applyTeleport`](../../server/internal/world/movement.go#L63)<br>`func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmDirect ...bool)` | applyTeleport is the single path for every teleport (portals, town, resurrection): moves the character, persists it, acks the client, introduces it to viewers at the destination and refreshes visibility. |
-| [`handleCharacterMove`](../../server/internal/world/movement.go#L139)<br>`func (s *Session) handleCharacterMove(p []byte)` | handleCharacterMove (0x0501): motion:u8, direction:u16, x, y, z:f32. |
-| [`handleEnteredPortal`](../../server/internal/world/movement.go#L210)<br>`func (s *Session) handleEnteredPortal(index uint8)` | See the source definition and the subsystem ownership contract. |
-| [`isTownCommand`](../../server/internal/world/movement.go#L223)<br>`func isTownCommand(message string) bool` | See the source definition and the subsystem ownership contract. |
-| [`executeTown`](../../server/internal/world/movement.go#L230)<br>`func (s *Session) executeTown()` | executeTown moves the character to the nearest faction spawn area on its map (also the escape hatch while dead). |
-| [`deathExpPercent`](../../server/internal/world/movement.go#L245)<br>`const deathExpPercent = 5` | deathExpPercent is CUser::Death's drop without charms (deathExpLoss). |
-| [`expDrop`](../../server/internal/world/movement.go#L249)<br>`func expDrop(ch *db.Character, percent int, faction uint8) uint32` | expDrop is CUser::ExpDrop (0x0045ad50): above level 10, percent of the level's exp span, never below the level's start. |
-| [`returnToTownDelay`](../../server/internal/world/movement.go#L269)<br>`const returnToTownDelay = 10 * time.Second` | returnToTownDelay is 0x0556's tick + 10000 (CUser::PacketPC). |
-| [`handleReturnToTown`](../../server/internal/world/movement.go#L273)<br>`func (s *Session) handleReturnToTown()` | handleReturnToTown (0x0556): alive and with no move pending, the user is moved to its bind point 10 s later (UpdateResetPosition, type 0). |
-| [`cancelMove`](../../server/internal/world/movement.go#L282)<br>`func (s *Session) cancelMove()` | cancelMove is CUser::CancleMove for the type-0 move: moving, attacking, casting or being hit drops it without a reply. |
-| [`tickReturnToTown`](../../server/internal/world/movement.go#L284)<br>`func (s *Session) tickReturnToTown()` | See the source definition and the subsystem ownership contract. |
+| [`handleCharacterMove`](../../server/internal/world/movement.go#L140)<br>`func (s *Session) handleCharacterMove(p []byte)` | handleCharacterMove (0x0501): motion:u8, direction:u16, x, y, z:f32. |
+| [`handleEnteredPortal`](../../server/internal/world/movement.go#L212)<br>`func (s *Session) handleEnteredPortal(index uint8)` | See the source definition and the subsystem ownership contract. |
+| [`isTownCommand`](../../server/internal/world/movement.go#L225)<br>`func isTownCommand(message string) bool` | See the source definition and the subsystem ownership contract. |
+| [`executeTown`](../../server/internal/world/movement.go#L232)<br>`func (s *Session) executeTown()` | executeTown moves the character to the nearest faction spawn area on its map (also the escape hatch while dead). |
+| [`deathExpPercent`](../../server/internal/world/movement.go#L247)<br>`const deathExpPercent = 5` | deathExpPercent is CUser::Death's drop without charms (deathExpLoss). |
+| [`expDrop`](../../server/internal/world/movement.go#L251)<br>`func expDrop(ch *db.Character, percent int, faction uint8) uint32` | expDrop is CUser::ExpDrop (0x0045ad50): above level 10, percent of the level's exp span, never below the level's start. |
+| [`returnToTownDelay`](../../server/internal/world/movement.go#L271)<br>`const returnToTownDelay = 10 * time.Second` | returnToTownDelay is 0x0556's tick + 10000 (CUser::PacketPC). |
+| [`handleReturnToTown`](../../server/internal/world/movement.go#L275)<br>`func (s *Session) handleReturnToTown()` | handleReturnToTown (0x0556): alive and with no move pending, the user is moved to its bind point 10 s later (UpdateResetPosition, type 0). |
+| [`cancelMove`](../../server/internal/world/movement.go#L284)<br>`func (s *Session) cancelMove()` | cancelMove is CUser::CancleMove for the type-0 move: moving, attacking, casting or being hit drops it without a reply. |
+| [`tickReturnToTown`](../../server/internal/world/movement.go#L286)<br>`func (s *Session) tickReturnToTown()` | See the source definition and the subsystem ownership contract. |
 
 ### movement_rune.go
 
@@ -2595,27 +2617,28 @@ Direct GX dependencies: `internal/proto`, `server/internal/packet`.
 | [`refreshLevel`](../../server/internal/world/party.go#L70)<br>`func (pt *party) refreshLevel()` | refreshLevel is PartyRuntime::check_experience_level. |
 | [`send`](../../server/internal/world/party.go#L80)<br>`func (pt *party) send(frame []byte, label string)` | See the source definition and the subsystem ownership contract. |
 | [`writePartyMember`](../../server/internal/world/party.go#L89)<br>`func writePartyMember(w *packet.Writer, p *ConnectedPlayer)` | writePartyMember is the roster/join record: id, name, level, job, HP/max, MP/max, SP/max (u32 in the 5.4 client), instance, position and active effects (none sent). |
-| [`partyEffect`](../../server/internal/world/party.go#L133)<br>`func (s *Session) partyEffect(add bool, skillID uint16, level uint8)` | partyEffect is CUser::SendSkillApply / SendSkillRemoveParty: an applied or ended skill goes to the whole party (0x0C04/0x0C05) or raid (0x0C0E/0x0C10) as character id, skill and level. |
-| [`partyIDPacket`](../../server/internal/world/party.go#L164)<br>`func partyIDPacket(op packet.Opcode, id uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`partyError`](../../server/internal/world/party.go#L170)<br>`func partyError(to *ConnectedPlayer, code uint8, id uint32)` | See the source definition and the subsystem ownership contract. |
-| [`partyBadge`](../../server/internal/world/party.go#L179)<br>`func partyBadge(p *ConnectedPlayer)` | partyBadge (0x0520) tells viewers whether the character is in a party (1) or leads one (2). |
-| [`enterParty`](../../server/internal/world/party.go#L197)<br>`func enterParty(pt *party, p *ConnectedPlayer) bool` | enterParty is enter_normal_party (partyMu held): announce the newcomer, send it the roster of the members already there. |
-| [`leaveParty`](../../server/internal/world/party.go#L225)<br>`func leaveParty(pt *party, p *ConnectedPlayer, expelled bool)` | leaveParty is leave_normal_party (partyMu held). expelled sends 0x0B06 instead of 0x0B05. A party left with one member dissolves. |
-| [`partyLeaveOnDisconnect`](../../server/internal/world/party.go#L266)<br>`func partyLeaveOnDisconnect(p *ConnectedPlayer)` | partyLeaveOnDisconnect drops a leaving player from its party and from any pending invitation. |
-| [`handlePartyInvite`](../../server/internal/world/party.go#L276)<br>`func (s *Session) handlePartyInvite(op packet.Opcode, p []byte)` | handlePartyInvite (0x0B02 id / 0x0B09 name). |
-| [`handlePartyInviteGlobal`](../../server/internal/world/party.go#L311)<br>`func (s *Session) handlePartyInviteGlobal(p []byte)` | handlePartyInviteGlobal is the GX /party <name> request (0x7F15): the same invitation as 0x0B09 without the same-map requirement. Offline players, other factions and, unless the inviter is a GM too, GMs all answer with the generic "unavailable" reply, so a hidden GM cannot be told apart from an offline character. |
-| [`partyInviteTarget`](../../server/internal/world/party.go#L326)<br>`func (s *Session) partyInviteTarget(me, target *ConnectedPlayer, targetID uint32, op packet.Opcode, anyMap bool)` | partyInviteTarget validates and delivers an invitation. anyMap lets the target answer from another map (the invitation was global). |
-| [`handlePartyAnswer`](../../server/internal/world/party.go#L366)<br>`func (s *Session) handlePartyAnswer(p []byte)` | handlePartyAnswer (0x0B03): 0 accepts. The inviter's party is created on the first acceptance. |
-| [`handlePartyLeave`](../../server/internal/world/party.go#L400)<br>`func (s *Session) handlePartyLeave()` | See the source definition and the subsystem ownership contract. |
-| [`handlePartyExpel`](../../server/internal/world/party.go#L412)<br>`func (s *Session) handlePartyExpel(p []byte)` | handlePartyExpel (0x0B06) and handlePartyLeader (0x0B07): leader only. |
-| [`handlePartyLeader`](../../server/internal/world/party.go#L431)<br>`func (s *Session) handlePartyLeader(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`partyPools`](../../server/internal/world/party.go#L455)<br>`func (s *Session) partyPools()` | partyPools (0x0C03) shares the character's HP/SP/MP with its party. |
-| [`partyLevel`](../../server/internal/world/party.go#L483)<br>`func (s *Session) partyLevel()` | partyLevel (0x0C09) tells the party about a level-up. |
-| [`partyChat`](../../server/internal/world/party.go#L496)<br>`func (s *Session) partyChat(message string, items proto.ChatItems)` | partyChat (0x1105) relays a message to the party. |
-| [`partyExpLevelShare`](../../server/internal/world/party.go#L512)<br>`func partyExpLevelShare(maxLevel, level uint16) float64` | partyExpLevelShare is the level gap factor against the party's highest level. |
-| [`killRewards`](../../server/internal/world/party.go#L529)<br>`func killRewards(killer *ConnectedPlayer, mapID uint16, x, z float32, mobLevel, mobExp uint16) map[*ConnectedPlayer]uint32` | killRewards splits a kill's exp per mob_death: solo kills get 1.2x; party members within 100 units on the map get the count factor and the level share. Returns each recipient and amount. |
-| [`partyMembersNear`](../../server/internal/world/party.go#L563)<br>`func partyMembersNear(killer *ConnectedPlayer, mapID uint16, x, z float32) []*ConnectedPlayer` | partyMembersNear lists the killer's party members on the map within the reward range (nil without a party). |
-| [`samePartyIDs`](../../server/internal/world/party.go#L582)<br>`func samePartyIDs(a, b uint32) bool` | samePartyIDs reports whether two characters share a party. |
+| [`partyMove`](../../server/internal/world/party.go#L134)<br>`func (s *Session) partyMove(everyone ...bool)` | partyMove is CParty::SendMove (0x445880): after every move the position goes to the other party/raid members on the same map as 0x0C07 / 0x0C12, so their radar shows allies that are out of view. After a map change everyone hears it once, so members left behind drop the stale marker. |
+| [`partyEffect`](../../server/internal/world/party.go#L168)<br>`func (s *Session) partyEffect(add bool, skillID uint16, level uint8)` | partyEffect is CUser::SendSkillApply / SendSkillRemoveParty: an applied or ended skill goes to the whole party (0x0C04/0x0C05) or raid (0x0C0E/0x0C10) as character id, skill and level. |
+| [`partyIDPacket`](../../server/internal/world/party.go#L199)<br>`func partyIDPacket(op packet.Opcode, id uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`partyError`](../../server/internal/world/party.go#L205)<br>`func partyError(to *ConnectedPlayer, code uint8, id uint32)` | See the source definition and the subsystem ownership contract. |
+| [`partyBadge`](../../server/internal/world/party.go#L214)<br>`func partyBadge(p *ConnectedPlayer)` | partyBadge (0x0520) tells viewers whether the character is in a party (1) or leads one (2). |
+| [`enterParty`](../../server/internal/world/party.go#L232)<br>`func enterParty(pt *party, p *ConnectedPlayer) bool` | enterParty is enter_normal_party (partyMu held): announce the newcomer, send it the roster of the members already there. |
+| [`leaveParty`](../../server/internal/world/party.go#L260)<br>`func leaveParty(pt *party, p *ConnectedPlayer, expelled bool)` | leaveParty is leave_normal_party (partyMu held). expelled sends 0x0B06 instead of 0x0B05. A party left with one member dissolves. |
+| [`partyLeaveOnDisconnect`](../../server/internal/world/party.go#L301)<br>`func partyLeaveOnDisconnect(p *ConnectedPlayer)` | partyLeaveOnDisconnect drops a leaving player from its party and from any pending invitation. |
+| [`handlePartyInvite`](../../server/internal/world/party.go#L311)<br>`func (s *Session) handlePartyInvite(op packet.Opcode, p []byte)` | handlePartyInvite (0x0B02 id / 0x0B09 name). |
+| [`handlePartyInviteGlobal`](../../server/internal/world/party.go#L346)<br>`func (s *Session) handlePartyInviteGlobal(p []byte)` | handlePartyInviteGlobal is the GX /party <name> request (0x7F15): the same invitation as 0x0B09 without the same-map requirement. Offline players, other factions and, unless the inviter is a GM too, GMs all answer with the generic "unavailable" reply, so a hidden GM cannot be told apart from an offline character. |
+| [`partyInviteTarget`](../../server/internal/world/party.go#L361)<br>`func (s *Session) partyInviteTarget(me, target *ConnectedPlayer, targetID uint32, op packet.Opcode, anyMap bool)` | partyInviteTarget validates and delivers an invitation. anyMap lets the target answer from another map (the invitation was global). |
+| [`handlePartyAnswer`](../../server/internal/world/party.go#L401)<br>`func (s *Session) handlePartyAnswer(p []byte)` | handlePartyAnswer (0x0B03): 0 accepts. The inviter's party is created on the first acceptance. |
+| [`handlePartyLeave`](../../server/internal/world/party.go#L435)<br>`func (s *Session) handlePartyLeave()` | See the source definition and the subsystem ownership contract. |
+| [`handlePartyExpel`](../../server/internal/world/party.go#L447)<br>`func (s *Session) handlePartyExpel(p []byte)` | handlePartyExpel (0x0B06) and handlePartyLeader (0x0B07): leader only. |
+| [`handlePartyLeader`](../../server/internal/world/party.go#L466)<br>`func (s *Session) handlePartyLeader(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`partyPools`](../../server/internal/world/party.go#L490)<br>`func (s *Session) partyPools()` | partyPools (0x0C03) shares the character's HP/SP/MP with its party. |
+| [`partyLevel`](../../server/internal/world/party.go#L518)<br>`func (s *Session) partyLevel()` | partyLevel (0x0C09) tells the party about a level-up. |
+| [`partyChat`](../../server/internal/world/party.go#L531)<br>`func (s *Session) partyChat(message string, items proto.ChatItems)` | partyChat (0x1105) relays a message to the party. |
+| [`partyExpLevelShare`](../../server/internal/world/party.go#L547)<br>`func partyExpLevelShare(maxLevel, level uint16) float64` | partyExpLevelShare is the level gap factor against the party's highest level. |
+| [`killRewards`](../../server/internal/world/party.go#L564)<br>`func killRewards(killer *ConnectedPlayer, mapID uint16, x, z float32, mobLevel, mobExp uint16) map[*ConnectedPlayer]uint32` | killRewards splits a kill's exp per mob_death: solo kills get 1.2x; party members within 100 units on the map get the count factor and the level share. Returns each recipient and amount. |
+| [`partyMembersNear`](../../server/internal/world/party.go#L598)<br>`func partyMembersNear(killer *ConnectedPlayer, mapID uint16, x, z float32) []*ConnectedPlayer` | partyMembersNear lists the killer's party members on the map within the reward range (nil without a party). |
+| [`samePartyIDs`](../../server/internal/world/party.go#L617)<br>`func samePartyIDs(a, b uint32) bool` | samePartyIDs reports whether two characters share a party. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3000,25 +3023,19 @@ Direct GX dependencies: `internal/attackspeed`, `server/internal/db`, `server/in
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`deathTypeUser`](../../server/internal/world/pvp.go#L36)<br>`const deathTypeUser = 0x01` | See the source definition and the subsystem ownership contract. |
-| [`userAttackRange`](../../server/internal/world/pvp.go#L37)<br>`const userAttackRange = 2.3` | See the source definition and the subsystem ownership contract. |
-| [`pvpCritReduction`](../../server/internal/world/pvp.go#L38)<br>`const pvpCritReduction = 0.034` | See the source definition and the subsystem ownership contract. |
-| [`pendingUserHit`](../../server/internal/world/pvp.go#L43)<br>`type pendingUserHit` | pendingUserHit is a user's normal attack (or a mirrored one coming back) to resolve in the target's session. |
-| [`QueueUserHit`](../../server/internal/world/pvp.go#L61)<br>`func (p *ConnectedPlayer) QueueUserHit(h pendingUserHit)` | See the source definition and the subsystem ownership contract. |
-| [`TakeUserHits`](../../server/internal/world/pvp.go#L72)<br>`func (p *ConnectedPlayer) TakeUserHits() []pendingUserHit` | See the source definition and the subsystem ownership contract. |
-| [`isTeam`](../../server/internal/world/pvp.go#L84)<br>`func (s *Session) isTeam(p *ConnectedPlayer) bool` | isTeam is CUser::IsTeam without duels (none exist yet): the user itself, anyone on a WarType P map, or the same country. isTeam is CUser::IsTeam: the user itself, else not the duel opponent, then a WarType P map or the same country. |
-| [`hostileUser`](../../server/internal/world/pvp.go#L98)<br>`func (s *Session) hostileUser(id uint32) *ConnectedPlayer` | hostileUser finds an attackable user for a normal attack. |
-| [`userHits`](../../server/internal/world/pvp.go#L110)<br>`func userHits(att, def *CharacterStats, kind int) bool` | userHits is CUser::AttackSuccess against a user for a normal attack. |
-| [`userDamage`](../../server/internal/world/pvp.go#L124)<br>`func userDamage(att, def *CharacterStats, kind int, closeRanged bool) (int32, bool)` | userDamage is CUser::AttackDamage against a user for a normal attack. |
-| [`userWeaponDamage`](../../server/internal/world/pvp.go#L137)<br>`func userWeaponDamage(att, def *CharacterStats, kind int, damage *[3]int32, element, defElement uint8, closeRanged bool) bool` | userWeaponDamage is the weapon part of CUser::AttackDamage 0x00457030 against a user; damage[0] seeds it (skill DamageType 1). Melee and ranged: attack - guard + variance, the close-range bow cut, element, LUC/10, critical. Magic: the magic attack reduced by a level term (1..50) plus the target's magic guard over the attacker's weapon attack + INT (1..70) percent, element, LUC/10, critical. Every melee/ranged step stores an integer; the magic steps keep floats. |
-| [`userSkillDamage`](../../server/internal/world/pvp.go#L200)<br>`func userSkillDamage(att, def *CharacterStats, sk *db.SkillDef, caster [3]uint32, closeRanged bool) ([3]int32, bool)` | userSkillDamage is CUser::AttackDamage against a user with a skill, the same DamageType modes as on a mob (0 raw, 1 seeds the weapon damage, 2 multiplies it, 3 the caster's own pools, 4/5 a percentage of the target's maximum/current pools) on the user-target weapon formula. |
-| [`userSkillHits`](../../server/internal/world/pvp.go#L263)<br>`func userSkillHits(att, def *CharacterStats, sk *db.SkillDef) bool` | userSkillHits is CUser::AttackSuccess 0x00456b10 with a skill: SuccessType 1 rolls SuccessValue, 2 and 3 add LUC or WIS as an integer ratio, otherwise the category's normal chance (a category above magic always hits). The target's HP-ability shields (7/8) and state resistances are not modeled. |
-| [`userAttackSwing`](../../server/internal/world/pvp.go#L285)<br>`func (s *Session) userAttackSwing(target uint32) bool` | userAttackSwing is one UpdateAttack step on a user target; false ends the auto-attack. |
-| [`tickUserHits`](../../server/internal/world/pvp.go#L330)<br>`func (s *Session) tickUserHits()` | tickUserHits resolves the user attacks queued on this session. |
-| [`applyUserHit`](../../server/internal/world/pvp.go#L348)<br>`func (s *Session) applyUserHit(h pendingUserHit) bool` | applyUserHit is the target side of CUser::AttackUser; true when this character died. |
-| [`takeUserDamage`](../../server/internal/world/pvp.go#L431)<br>`func (s *Session) takeUserDamage(attackerID, damage uint32) bool` | takeUserDamage is CUser::Damage's HP part; true when it killed. |
-| [`afterUserDamage`](../../server/internal/world/pvp.go#L458)<br>`func (s *Session) afterUserDamage(killerID uint32, killed bool)` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterUserAttack`](../../server/internal/world/pvp.go#L479)<br>`func buildCharacterUserAttack(attackerID, targetID uint32, result uint8, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`deathTypeUser`](../../server/internal/world/pvp.go#L27)<br>`const deathTypeUser = 0x01` | See the source definition and the subsystem ownership contract. |
+| [`userAttackRange`](../../server/internal/world/pvp.go#L28)<br>`const userAttackRange = 2.3` | See the source definition and the subsystem ownership contract. |
+| [`pendingUserHit`](../../server/internal/world/pvp.go#L33)<br>`type pendingUserHit` | pendingUserHit is a user's normal attack (or a mirrored one coming back) to resolve in the target's session. |
+| [`QueueUserHit`](../../server/internal/world/pvp.go#L50)<br>`func (p *ConnectedPlayer) QueueUserHit(h pendingUserHit)` | See the source definition and the subsystem ownership contract. |
+| [`TakeUserHits`](../../server/internal/world/pvp.go#L61)<br>`func (p *ConnectedPlayer) TakeUserHits() []pendingUserHit` | See the source definition and the subsystem ownership contract. |
+| [`isTeam`](../../server/internal/world/pvp.go#L73)<br>`func (s *Session) isTeam(p *ConnectedPlayer) bool` | isTeam is CUser::IsTeam without duels (none exist yet): the user itself, anyone on a WarType P map, or the same country. isTeam is CUser::IsTeam: the user itself, else not the duel opponent, then a WarType P map or the same country. |
+| [`hostileUser`](../../server/internal/world/pvp.go#L87)<br>`func (s *Session) hostileUser(id uint32) *ConnectedPlayer` | hostileUser finds an attackable user for a normal attack. |
+| [`userAttackSwing`](../../server/internal/world/pvp.go#L100)<br>`func (s *Session) userAttackSwing(target uint32) bool` | userAttackSwing is one UpdateAttack step on a user target; false ends the auto-attack. |
+| [`tickUserHits`](../../server/internal/world/pvp.go#L145)<br>`func (s *Session) tickUserHits()` | tickUserHits resolves the user attacks queued on this session. |
+| [`applyUserHit`](../../server/internal/world/pvp.go#L163)<br>`func (s *Session) applyUserHit(h pendingUserHit) bool` | applyUserHit is the target side of CUser::AttackUser; true when this character died. |
+| [`takeUserDamage`](../../server/internal/world/pvp.go#L245)<br>`func (s *Session) takeUserDamage(attackerID, damage uint32) bool` | takeUserDamage is CUser::Damage's HP part; true when it killed. |
+| [`afterUserDamage`](../../server/internal/world/pvp.go#L272)<br>`func (s *Session) afterUserDamage(killerID uint32, killed bool)` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterUserAttack`](../../server/internal/world/pvp.go#L293)<br>`func buildCharacterUserAttack(attackerID, targetID uint32, result uint8, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3027,14 +3044,13 @@ type pendingUserHit struct {
 	AttackerID uint32
 	Stats      CharacterStats // the attacker's, at the swing
 	Kind       int
-	X, Z       float32 // the attacker's position
-	Reflected  bool    // a mirrored hit: Damage is final
-	Fixed      bool    // fixed skill damage (Fire Thorn): Damage is final, Skill names it
-	Trap       bool    // a trap sprang on this user: the damage is worked out here (TrabDamage), Skill names it
+	Reflected  bool // a mirrored hit: Damage is final
+	Fixed      bool // fixed skill damage (Fire Thorn): Damage is final, Skill names it
+	Trap       bool // a trap sprang on this user: the damage is worked out here (TrabDamage), Skill names it
 	Damage     [3]uint32
 	Skill      *db.SkillDef // a hostile skill (pvpskill.go), nil for a normal attack
 	First      bool         // the skill's selected target (0x0511/0x0512), else 0x0513
-	Caster     [3]uint32    // the caster's HP/SP/MP (DamageType 3)
+	Caster     damagePools  // the caster's HP/SP/MP (DamageType 3)
 	DrainHeal  bool         // a drain's heal coming back to its caster
 	Heal       [3]uint32
 	ItemCast   bool // cast by a gem (m_bItemAttack): casts no gems itself
@@ -3122,9 +3138,9 @@ Direct GX dependencies: `internal/skillrange`, `server/internal/db`, `server/int
 | [`afterSkillStrikes`](../../server/internal/world/pvpskill.go#L147)<br>`func (s *Session) afterSkillStrikes(def *db.SkillDef)` | afterSkillStrikes is detail 23's sacrifice of the caster after the hits. |
 | [`queueSkillHits`](../../server/internal/world/pvpskill.go#L153)<br>`func (s *Session) queueSkillHits(p *ConnectedPlayer, def *db.SkillDef, first bool, n uint8)` | See the source definition and the subsystem ownership contract. |
 | [`applyUserSkillHit`](../../server/internal/world/pvpskill.go#L165)<br>`func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool` | applyUserSkillHit is the target side of CUser::AttackUser(skill); true when this character died. |
-| [`takeUserSkillDamage`](../../server/internal/world/pvpskill.go#L274)<br>`func (s *Session) takeUserSkillDamage(attackerID uint32, d [3]uint32) bool` | takeUserSkillDamage is CUser::Damage with SP and MP damage too. |
-| [`applyDrainHeal`](../../server/internal/world/pvpskill.go#L293)<br>`func (s *Session) applyDrainHeal(h pendingUserHit)` | applyDrainHeal is CUser::Heal on the drain's caster. |
-| [`buildUserSkillExtra`](../../server/internal/world/pvpskill.go#L305)<br>`func buildUserSkillExtra(caster, target uint32, skillID uint16, level uint8, add [3]uint32) []byte` | buildUserSkillExtra (0x0514): caster, target, skill, level, the AddDamage HP/SP/MP. |
+| [`takeUserSkillDamage`](../../server/internal/world/pvpskill.go#L273)<br>`func (s *Session) takeUserSkillDamage(attackerID uint32, d [3]uint32) bool` | takeUserSkillDamage is CUser::Damage with SP and MP damage too. |
+| [`applyDrainHeal`](../../server/internal/world/pvpskill.go#L292)<br>`func (s *Session) applyDrainHeal(h pendingUserHit)` | applyDrainHeal is CUser::Heal on the drain's caster. |
+| [`buildUserSkillExtra`](../../server/internal/world/pvpskill.go#L304)<br>`func buildUserSkillExtra(caster, target uint32, skillID uint16, level uint8, add [3]uint32) []byte` | buildUserSkillExtra (0x0514): caster, target, skill, level, the AddDamage HP/SP/MP. |
 
 ### quest_map.go
 
@@ -3869,38 +3885,38 @@ Direct GX dependencies: `internal/skillrange`, `server/internal/db`, `server/int
 
 [server/internal/world/skillcast.go](../../server/internal/world/skillcast.go#L1)
 
-Direct GX dependencies: `internal/skilltiming`, `server/internal/db`, `server/internal/packet`.
+Direct GX dependencies: `internal/skillchance`, `internal/skilltiming`, `server/internal/db`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`skillResultNormal`](../../server/internal/world/skillcast.go#L12)<br>`const skillResultNormal = 0` | See the source definition and the subsystem ownership contract. |
-| [`targetTypeSelf`](../../server/internal/world/skillcast.go#L14)<br>`const targetTypeSelf = 2` | See the source definition and the subsystem ownership contract. |
-| [`targetTypeEnemiesNearCaster`](../../server/internal/world/skillcast.go#L15)<br>`const targetTypeEnemiesNearCaster = 6` | See the source definition and the subsystem ownership contract. |
-| [`targetTypeEnemiesNearTarget`](../../server/internal/world/skillcast.go#L16)<br>`const targetTypeEnemiesNearTarget = 7` | See the source definition and the subsystem ownership contract. |
-| [`periodicHealTick`](../../server/internal/world/skillcast.go#L18)<br>`const periodicHealTick = 3 * time.Second` | See the source definition and the subsystem ownership contract. |
-| [`ActiveBuff`](../../server/internal/world/skillcast.go#L23)<br>`type ActiveBuff` | ActiveBuff is a self-buff on the session's character: stat bonuses and/or a heal-over-time. |
-| [`pendingCast`](../../server/internal/world/skillcast.go#L41)<br>`type pendingCast` | See the source definition and the subsystem ownership contract. |
-| [`buffAbility`](../../server/internal/world/skillcast.go#L49)<br>`type buffAbility` | See the source definition and the subsystem ownership contract. |
-| [`addBuffs`](../../server/internal/world/skillcast.go#L56)<br>`func addBuffs(e EquipmentStats, buffs []ActiveBuff) EquipmentStats` | addBuffs accumulates numeric abilities. Elemental application/removal is event-driven in elementstate.go; replaying the remaining list is not native. |
-| [`newBuff`](../../server/internal/world/skillcast.go#L70)<br>`func newBuff(id uint32, def *db.SkillDef, ends time.Time, log logPrinter) ActiveBuff` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterActiveBuffs`](../../server/internal/world/skillcast.go#L95)<br>`func buildCharacterActiveBuffs(buffs []ActiveBuff) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildSkillUseResult`](../../server/internal/world/skillcast.go#L112)<br>`func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildSkillUsedSpMp`](../../server/internal/world/skillcast.go#L125)<br>`func buildSkillUsedSpMp(sp, mp uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`knownSkill`](../../server/internal/world/skillcast.go#L132)<br>`func (s *Session) knownSkill(number uint8) (db.CharacterSkill, *db.SkillDef, bool)` | See the source definition and the subsystem ownership contract. |
-| [`skillReady`](../../server/internal/world/skillcast.go#L142)<br>`func (s *Session) skillReady(id uint16) bool` | See the source definition and the subsystem ownership contract. |
-| [`previousSkillCooling`](../../server/internal/world/skillcast.go#L150)<br>`func (s *Session) previousSkillCooling(def *db.SkillDef) bool` | previousSkillCooling: PrevSkillID names the skill that must be cooling down for this one to be usable. SysMsg 315 is the client's "A previous skill is required". |
-| [`msgPreviousSkillRequired`](../../server/internal/world/skillcast.go#L154)<br>`const msgPreviousSkillRequired = 315` | See the source definition and the subsystem ownership contract. |
-| [`handleUseSkill`](../../server/internal/world/skillcast.go#L158)<br>`func (s *Session) handleUseSkill(op packet.Opcode, p []byte)` | handleUseSkill (0x0517 / 0x0511): bar number, target id. The ack echoes the request opcode. |
-| [`processPendingCast`](../../server/internal/world/skillcast.go#L293)<br>`func (s *Session) processPendingCast()` | See the source definition and the subsystem ownership contract. |
-| [`startCooldown`](../../server/internal/world/skillcast.go#L303)<br>`func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef, prepared ...bool)` | See the source definition and the subsystem ownership contract. |
-| [`resolveSkill`](../../server/internal/world/skillcast.go#L329)<br>`func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, castPos *[2]float32)` | See the source definition and the subsystem ownership contract. |
-| [`sendBuffStats`](../../server/internal/world/skillcast.go#L382)<br>`func (s *Session) sendBuffStats(why string)` | See the source definition and the subsystem ownership contract. |
-| [`processBuffs`](../../server/internal/world/skillcast.go#L392)<br>`func (s *Session) processBuffs()` | processBuffs ticks heal-over-time and debuff damage, then expires applied skills (CUser::ChkKeepSkill / ChkEndTimeSkill). |
-| [`persistBuffs`](../../server/internal/world/skillcast.go#L433)<br>`func (s *Session) persistBuffs()` | persistBuffs snapshots remaining buff time (frozen while offline). |
-| [`buffSnapshot`](../../server/internal/world/skillcast.go#L442)<br>`func (s *Session) buffSnapshot() []db.AppliedBuff` | See the source definition and the subsystem ownership contract. |
-| [`persistSkillDelays`](../../server/internal/world/skillcast.go#L453)<br>`func (s *Session) persistSkillDelays()` | See the source definition and the subsystem ownership contract. |
-| [`skillDelaySnapshot`](../../server/internal/world/skillcast.go#L460)<br>`func (s *Session) skillDelaySnapshot() []db.CharacterSkill` | skillDelaySnapshot captures changes to remaining cooldown. |
-| [`restoreBuffs`](../../server/internal/world/skillcast.go#L475)<br>`func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error)` | See the source definition and the subsystem ownership contract. |
+| [`skillResultNormal`](../../server/internal/world/skillcast.go#L13)<br>`const skillResultNormal = 0` | See the source definition and the subsystem ownership contract. |
+| [`targetTypeSelf`](../../server/internal/world/skillcast.go#L15)<br>`const targetTypeSelf = 2` | See the source definition and the subsystem ownership contract. |
+| [`targetTypeEnemiesNearCaster`](../../server/internal/world/skillcast.go#L16)<br>`const targetTypeEnemiesNearCaster = 6` | See the source definition and the subsystem ownership contract. |
+| [`targetTypeEnemiesNearTarget`](../../server/internal/world/skillcast.go#L17)<br>`const targetTypeEnemiesNearTarget = 7` | See the source definition and the subsystem ownership contract. |
+| [`periodicHealTick`](../../server/internal/world/skillcast.go#L19)<br>`const periodicHealTick = 3 * time.Second` | See the source definition and the subsystem ownership contract. |
+| [`ActiveBuff`](../../server/internal/world/skillcast.go#L24)<br>`type ActiveBuff` | ActiveBuff is a self-buff on the session's character: stat bonuses and/or a heal-over-time. |
+| [`pendingCast`](../../server/internal/world/skillcast.go#L42)<br>`type pendingCast` | See the source definition and the subsystem ownership contract. |
+| [`buffAbility`](../../server/internal/world/skillcast.go#L50)<br>`type buffAbility` | See the source definition and the subsystem ownership contract. |
+| [`addBuffs`](../../server/internal/world/skillcast.go#L57)<br>`func addBuffs(e EquipmentStats, buffs []ActiveBuff) EquipmentStats` | addBuffs accumulates numeric abilities. Elemental application/removal is event-driven in elementstate.go; replaying the remaining list is not native. |
+| [`newBuff`](../../server/internal/world/skillcast.go#L71)<br>`func newBuff(id uint32, def *db.SkillDef, ends time.Time, log logPrinter) ActiveBuff` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterActiveBuffs`](../../server/internal/world/skillcast.go#L96)<br>`func buildCharacterActiveBuffs(buffs []ActiveBuff) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildSkillUseResult`](../../server/internal/world/skillcast.go#L113)<br>`func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildSkillUsedSpMp`](../../server/internal/world/skillcast.go#L126)<br>`func buildSkillUsedSpMp(sp, mp uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`knownSkill`](../../server/internal/world/skillcast.go#L133)<br>`func (s *Session) knownSkill(number uint8) (db.CharacterSkill, *db.SkillDef, bool)` | See the source definition and the subsystem ownership contract. |
+| [`skillReady`](../../server/internal/world/skillcast.go#L143)<br>`func (s *Session) skillReady(id uint16) bool` | See the source definition and the subsystem ownership contract. |
+| [`previousSkillCooling`](../../server/internal/world/skillcast.go#L151)<br>`func (s *Session) previousSkillCooling(def *db.SkillDef) bool` | previousSkillCooling: PrevSkillID names the skill that must be cooling down for this one to be usable. SysMsg 315 is the client's "A previous skill is required". |
+| [`msgPreviousSkillRequired`](../../server/internal/world/skillcast.go#L155)<br>`const msgPreviousSkillRequired = 315` | See the source definition and the subsystem ownership contract. |
+| [`handleUseSkill`](../../server/internal/world/skillcast.go#L159)<br>`func (s *Session) handleUseSkill(op packet.Opcode, p []byte)` | handleUseSkill (0x0517 / 0x0511): bar number, target id. The ack echoes the request opcode. |
+| [`processPendingCast`](../../server/internal/world/skillcast.go#L294)<br>`func (s *Session) processPendingCast()` | See the source definition and the subsystem ownership contract. |
+| [`startCooldown`](../../server/internal/world/skillcast.go#L304)<br>`func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef, prepared ...bool)` | See the source definition and the subsystem ownership contract. |
+| [`resolveSkill`](../../server/internal/world/skillcast.go#L330)<br>`func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, castPos *[2]float32)` | See the source definition and the subsystem ownership contract. |
+| [`sendBuffStats`](../../server/internal/world/skillcast.go#L383)<br>`func (s *Session) sendBuffStats(why string)` | See the source definition and the subsystem ownership contract. |
+| [`processBuffs`](../../server/internal/world/skillcast.go#L393)<br>`func (s *Session) processBuffs()` | processBuffs ticks heal-over-time and debuff damage, then expires applied skills (CUser::ChkKeepSkill / ChkEndTimeSkill). |
+| [`persistBuffs`](../../server/internal/world/skillcast.go#L434)<br>`func (s *Session) persistBuffs()` | persistBuffs snapshots remaining buff time (frozen while offline). |
+| [`buffSnapshot`](../../server/internal/world/skillcast.go#L443)<br>`func (s *Session) buffSnapshot() []db.AppliedBuff` | See the source definition and the subsystem ownership contract. |
+| [`persistSkillDelays`](../../server/internal/world/skillcast.go#L454)<br>`func (s *Session) persistSkillDelays()` | See the source definition and the subsystem ownership contract. |
+| [`skillDelaySnapshot`](../../server/internal/world/skillcast.go#L461)<br>`func (s *Session) skillDelaySnapshot() []db.CharacterSkill` | skillDelaySnapshot captures changes to remaining cooldown. |
+| [`restoreBuffs`](../../server/internal/world/skillcast.go#L476)<br>`func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -4350,8 +4366,8 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`tickTraps`](../../server/internal/world/trap.go#L93)<br>`func (s *Session) tickTraps(now time.Time)` | tickTraps is CZone::UpdateTrab for this user's traps: an expired trap goes away, and the first enemy (user or mob) within ApplyRange of a trap springs it. A trap left in another map is dropped. |
 | [`springTrap`](../../server/internal/world/trap.go#L121)<br>`func (s *Session) springTrap(t placedTrap) bool` | springTrap hits the nearest enemy in reach and reports whether it did. |
 | [`trapHitsMob`](../../server/internal/world/trap.go#L165)<br>`func (s *Session) trapHitsMob(id uint32, def *db.SkillDef)` | trapHitsMob is the mob branch of UpdateTrab: TrabDamage on the mob's pools, CMob::Damage with the skill's Arrow as aggro, 0x0519 to the view, and the mob turns to the owner when it survives. |
-| [`applyTrapHit`](../../server/internal/world/trap.go#L189)<br>`func (s *Session) applyTrapHit(h pendingUserHit) bool` | applyTrapHit is the victim side of a sprung trap: its stealth ends (RemApplySkillHide), TrabDamage on its pools, CUser::Damage (HP, SP and MP), 0x0513 to the view; true when this character died. |
-| [`mobsNear`](../../server/internal/world/trap.go#L224)<br>`func (s *Session) mobsNear(x, z, r float32, height ...float32) []uint32` | mobsNear lists the living mobs whose centre is within r of a point, measured on the ground plane. The original area loops (UpdateTrab, TauntMob) use the distance in X and Z only, so a slope, a mob's height or a wall between them never narrows a fire's or a trap's reach.  An optional height (y, reach) also keeps only the mobs within reach of it vertically. |
+| [`applyTrapHit`](../../server/internal/world/trap.go#L193)<br>`func (s *Session) applyTrapHit(h pendingUserHit) bool` | applyTrapHit is the victim side of a sprung trap: its stealth ends (RemApplySkillHide), TrabDamage on its pools, CUser::Damage (HP, SP and MP), 0x0513 to the view; true when this character died. |
+| [`mobsNear`](../../server/internal/world/trap.go#L228)<br>`func (s *Session) mobsNear(x, z, r float32, height ...float32) []uint32` | mobsNear lists the living mobs whose centre is within r of a point, measured on the ground plane. The original area loops (UpdateTrab, TauntMob) use the distance in X and Z only, so a slope, a mob's height or a wall between them never narrows a fire's or a trap's reach.  An optional height (y, reach) also keeps only the mobs within reach of it vertically. |
 
 <details><summary>Type definitions and owned fields</summary>
 

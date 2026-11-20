@@ -14,7 +14,7 @@ Declarations: [packet.CharacterEnteredMap](../../server/internal/packet/packet.g
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L206)
 
-**S→C serializers:** [buildCharacterEnteredMapGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L498)
+**S→C serializers:** [buildCharacterEnteredMapGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L490)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L10)
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterEnteredMapGuild — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L498)
+[Source definition](../../server/internal/world/character.go#L490)
 
 ```go
 func buildCharacterEnteredMapGuild(ch *db.Character, isAdmin, firstLoad bool, guildID uint32) []byte {
@@ -91,7 +91,7 @@ type UserEnter struct {
 
 **`0x0202` — UserLeave**
 
-Declarations: [proto.UserLeave](../../internal/proto/opcodes.go#L225).
+Declarations: [proto.UserLeave](../../internal/proto/opcodes.go#L227).
 
 Source notes: Opcodes not named in Rapture's catalog. client handler 0x0059cf70 case 0x0202
 
@@ -133,7 +133,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0204` — ItemBagToBag**
 
-Declarations: [packet.ItemBagToBag](../../server/internal/packet/packet.go#L83), [proto.ItemBagToBag](../../internal/proto/opcodes.go#L67).
+Declarations: [packet.ItemBagToBag](../../server/internal/packet/packet.go#L85), [proto.ItemBagToBag](../../internal/proto/opcodes.go#L69).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L97)
 
@@ -203,7 +203,7 @@ func DecodeWarehouseMove(p []byte) (items [2]InventoryItem, money uint32, hasMon
 
 **`0x0205` — AddItem**
 
-Declarations: [packet.AddItem](../../server/internal/packet/packet.go#L84), [proto.AddItem](../../internal/proto/opcodes.go#L68).
+Declarations: [packet.AddItem](../../server/internal/packet/packet.go#L86), [proto.AddItem](../../internal/proto/opcodes.go#L70).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L95)
 
@@ -286,7 +286,7 @@ type InventoryItem struct {
 
 **`0x0206` — RemoveItem**
 
-Declarations: [packet.RemoveItem](../../server/internal/packet/packet.go#L85), [proto.RemoveItem](../../internal/proto/opcodes.go#L69).
+Declarations: [packet.RemoveItem](../../server/internal/packet/packet.go#L87), [proto.RemoveItem](../../internal/proto/opcodes.go#L71).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L93)
 
@@ -356,7 +356,7 @@ Declarations: [packet.ExpGain](../../server/internal/packet/packet.go#L41), [pro
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L626)
+**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L630)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L873)
 
@@ -366,7 +366,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildExpGain — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L626)
+[Source definition](../../server/internal/world/combat.go#L630)
 
 ```go
 func buildExpGain(amount uint32) []byte {
@@ -411,7 +411,7 @@ type Reader struct {
 
 **`0x0208` — SetStatPoint**
 
-Declarations: [packet.SetStatPoint](../../server/internal/packet/packet.go#L86), [proto.SetStatPoint](../../internal/proto/opcodes.go#L70).
+Declarations: [packet.SetStatPoint](../../server/internal/packet/packet.go#L88), [proto.SetStatPoint](../../internal/proto/opcodes.go#L72).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L210)
 
@@ -521,7 +521,7 @@ func DecodeStatPoints(p []byte) (d StatPoints, err error) {
 
 **`0x0209` — LearnNewSkill**
 
-Declarations: [packet.LearnNewSkill](../../server/internal/packet/packet.go#L88), [proto.LearnNewSkill](../../internal/proto/opcodes.go#L72).
+Declarations: [packet.LearnNewSkill](../../server/internal/packet/packet.go#L90), [proto.LearnNewSkill](../../internal/proto/opcodes.go#L74).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L208)
 
@@ -608,7 +608,7 @@ type LearnResult struct {
 
 **`0x020A` — CharacterEnteredPortal**
 
-Declarations: [packet.CharacterEnteredPortal](../../server/internal/packet/packet.go#L89), [proto.CharacterEnteredPortal](../../internal/proto/opcodes.go#L73).
+Declarations: [packet.CharacterEnteredPortal](../../server/internal/packet/packet.go#L91), [proto.CharacterEnteredPortal](../../internal/proto/opcodes.go#L75).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L202)
 
@@ -639,11 +639,11 @@ func buildPortalResult(index, result uint8) []byte {
 
 **`0x020B` — CharacterMapTeleport**
 
-Declarations: [packet.CharacterMapTeleport](../../server/internal/packet/packet.go#L90), [proto.CharacterMapTeleport](../../internal/proto/opcodes.go#L74).
+Declarations: [packet.CharacterMapTeleport](../../server/internal/packet/packet.go#L92), [proto.CharacterMapTeleport](../../internal/proto/opcodes.go#L76).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterMapPosition (server/internal/world/character.go)](../../server/internal/world/character.go#L518)
+**S→C serializers:** [buildCharacterMapPosition (server/internal/world/character.go)](../../server/internal/world/character.go#L510)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1113)
 
@@ -653,7 +653,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterMapPosition — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L518)
+[Source definition](../../server/internal/world/character.go#L510)
 
 ```go
 func buildCharacterMapPosition(ch *db.Character) []byte {
@@ -700,7 +700,7 @@ type MapPosition struct {
 
 **`0x020C` — Gatekeeper**
 
-Declarations: [packet.Gatekeeper](../../server/internal/packet/packet.go#L75), [proto.Gatekeeper](../../internal/proto/opcodes.go#L59).
+Declarations: [packet.Gatekeeper](../../server/internal/packet/packet.go#L77), [proto.Gatekeeper](../../internal/proto/opcodes.go#L61).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162)
 
@@ -773,7 +773,7 @@ type GatekeeperResult struct {
 
 **`0x020E` — UserKillCountUpdate**
 
-Declarations: [packet.UserKillCountUpdate](../../server/internal/packet/packet.go#L91), [proto.UserKillCountUpdate](../../internal/proto/opcodes.go#L75).
+Declarations: [packet.UserKillCountUpdate](../../server/internal/packet/packet.go#L93), [proto.UserKillCountUpdate](../../internal/proto/opcodes.go#L77).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -831,7 +831,7 @@ type PvPCountUpdate struct {
 
 **`0x020F` — CountryKillCount**
 
-Declarations: [proto.CountryKillCount](../../internal/proto/opcodes.go#L76).
+Declarations: [proto.CountryKillCount](../../internal/proto/opcodes.go#L78).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -909,7 +909,7 @@ type BlessingUpdate struct {
 
 **`0x0211` — BlessInit**
 
-Declarations: [packet.BlessInit](../../server/internal/packet/packet.go#L129), [proto.BlessInit](../../internal/proto/opcodes.go#L114).
+Declarations: [packet.BlessInit](../../server/internal/packet/packet.go#L131), [proto.BlessInit](../../internal/proto/opcodes.go#L116).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1001,7 +1001,7 @@ Declarations: [packet.AutoAttackStop](../../server/internal/packet/packet.go#L39
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L214)
 
-**S→C serializers:** [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L158), [syncVisibility (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L38)
+**S→C serializers:** [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L159), [syncVisibility (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L38)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1011,7 +1011,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleUseSkill — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L158)
+[Source definition](../../server/internal/world/skillcast.go#L159)
 
 ```go
 func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
@@ -1250,11 +1250,11 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0214` — StatsReset**
 
-Declarations: [packet.StatsReset](../../server/internal/packet/packet.go#L87), [proto.StatsReset](../../internal/proto/opcodes.go#L71).
+Declarations: [packet.StatsReset](../../server/internal/packet/packet.go#L89), [proto.StatsReset](../../internal/proto/opcodes.go#L73).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildStatsReset (server/internal/world/character.go)](../../server/internal/world/character.go#L458)
+**S→C serializers:** [buildStatsReset (server/internal/world/character.go)](../../server/internal/world/character.go#L450)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L644)
 
@@ -1264,7 +1264,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildStatsReset — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L458)
+[Source definition](../../server/internal/world/character.go#L450)
 
 ```go
 func buildStatsReset(statPoint, str, rec, intel, wis, dex, luc uint16) []byte {
@@ -1309,7 +1309,7 @@ type StatReset struct {
 
 **`0x0216` — UseVehicle**
 
-Declarations: [packet.UseVehicle](../../server/internal/packet/packet.go#L82), [proto.UseVehicle](../../internal/proto/opcodes.go#L66).
+Declarations: [packet.UseVehicle](../../server/internal/packet/packet.go#L84), [proto.UseVehicle](../../internal/proto/opcodes.go#L68).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L226)
 
@@ -1805,7 +1805,7 @@ type Reader struct {
 
 **`0x0225` — TeleportSavePositionList**
 
-Declarations: [packet.TeleportSavePositionList](../../server/internal/packet/packet.go#L128), [proto.TeleportSavePositionList](../../internal/proto/opcodes.go#L113).
+Declarations: [packet.TeleportSavePositionList](../../server/internal/packet/packet.go#L130), [proto.TeleportSavePositionList](../../internal/proto/opcodes.go#L115).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1835,13 +1835,13 @@ func buildZeroCount(op packet.Opcode) []byte {
 
 **`0x0226` — ChangeAppearance**
 
-Declarations: [packet.ChangeAppearance](../../server/internal/packet/packet.go#L94), [proto.ChangeAppearance](../../internal/proto/opcodes.go#L78).
+Declarations: [packet.ChangeAppearance](../../server/internal/packet/packet.go#L96), [proto.ChangeAppearance](../../internal/proto/opcodes.go#L80).
 
 Source notes: Request bag,slot,hair,face,height,sex:u8; reply charId:u32,hair,face,height,sex:u8.
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L83)
 
-**S→C serializers:** [buildChangeAppearance (server/internal/world/character.go)](../../server/internal/world/character.go#L596)
+**S→C serializers:** [buildChangeAppearance (server/internal/world/character.go)](../../server/internal/world/character.go#L588)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L47)
 
@@ -1851,7 +1851,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildChangeAppearance — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L596)
+[Source definition](../../server/internal/world/character.go#L588)
 
 ```go
 func buildChangeAppearance(characterID uint32, hair, face, height, sex uint8) []byte {

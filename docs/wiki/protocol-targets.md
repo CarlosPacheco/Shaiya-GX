@@ -10,11 +10,11 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0303` — CharacterShape**
 
-Declarations: [packet.CharacterShape](../../server/internal/packet/packet.go#L92), [proto.CharacterShape](../../internal/proto/opcodes.go#L77).
+Declarations: [packet.CharacterShape](../../server/internal/packet/packet.go#L94), [proto.CharacterShape](../../internal/proto/opcodes.go#L79).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterShapeGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L608)
+**S→C serializers:** [buildCharacterShapeGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L600)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L89)
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterShapeGuild — server/internal/world/character.go</summary>
 
-[Source definition](../../server/internal/world/character.go#L608)
+[Source definition](../../server/internal/world/character.go#L600)
 
 ```go
 func buildCharacterShapeGuild(ch *db.Character, faction uint8, items []db.Item, motion uint8, guildName string) []byte {
@@ -117,7 +117,7 @@ type UserShape struct {
 
 **`0x0304` — TargetMobGetState**
 
-Declarations: [packet.TargetMobGetState](../../server/internal/packet/packet.go#L79), [proto.TargetMobGetState](../../internal/proto/opcodes.go#L63).
+Declarations: [packet.TargetMobGetState](../../server/internal/packet/packet.go#L81), [proto.TargetMobGetState](../../internal/proto/opcodes.go#L65).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L257)
 
@@ -193,7 +193,7 @@ type Reader struct {
 
 **`0x0305` — TargetMobHpUpdate**
 
-Declarations: [packet.TargetMobHpUpdate](../../server/internal/packet/packet.go#L80), [proto.TargetMobHpUpdate](../../internal/proto/opcodes.go#L64).
+Declarations: [packet.TargetMobHpUpdate](../../server/internal/packet/packet.go#L82), [proto.TargetMobHpUpdate](../../internal/proto/opcodes.go#L66).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L257)
 
@@ -245,7 +245,7 @@ type MobHealth struct {
 
 **`0x030A` — TargetClear**
 
-Declarations: [packet.TargetClear](../../server/internal/packet/packet.go#L81), [proto.TargetClear](../../internal/proto/opcodes.go#L65).
+Declarations: [packet.TargetClear](../../server/internal/packet/packet.go#L83), [proto.TargetClear](../../internal/proto/opcodes.go#L67).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L214)
 
@@ -521,7 +521,7 @@ func Op(payload []byte) Opcode {
 
 **`0x0401` — MapAddItem**
 
-Declarations: [packet.MapAddItem](../../server/internal/packet/packet.go#L103), [proto.MapAddItem](../../internal/proto/opcodes.go#L87).
+Declarations: [packet.MapAddItem](../../server/internal/packet/packet.go#L105), [proto.MapAddItem](../../internal/proto/opcodes.go#L89).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -587,7 +587,7 @@ type GroundItem struct {
 
 **`0x0402` — MapRemoveItem**
 
-Declarations: [packet.MapRemoveItem](../../server/internal/packet/packet.go#L104), [proto.MapRemoveItem](../../internal/proto/opcodes.go#L88).
+Declarations: [packet.MapRemoveItem](../../server/internal/packet/packet.go#L106), [proto.MapRemoveItem](../../internal/proto/opcodes.go#L90).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -627,7 +627,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0404` — WorldDay**
 
-Declarations: [packet.WorldDay](../../server/internal/packet/packet.go#L95), [proto.WorldDay](../../internal/proto/opcodes.go#L79).
+Declarations: [packet.WorldDay](../../server/internal/packet/packet.go#L97), [proto.WorldDay](../../internal/proto/opcodes.go#L81).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -657,7 +657,7 @@ func buildWorldDay() []byte {
 
 **`0x0406` — CharacterReviveInit**
 
-Declarations: [packet.CharacterReviveInit](../../server/internal/packet/packet.go#L105), [proto.CharacterReviveInit](../../internal/proto/opcodes.go#L89).
+Declarations: [packet.CharacterReviveInit](../../server/internal/packet/packet.go#L107), [proto.CharacterReviveInit](../../internal/proto/opcodes.go#L91).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

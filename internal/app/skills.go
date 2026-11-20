@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/Spelunkern/Shaiya-GX/internal/potential"
 	"log"
 	"math"
 	"sort"
@@ -11,7 +10,9 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/potential"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/skillchance"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
@@ -45,11 +46,46 @@ func (a *App) loadSkills() {
 		defs, err = sdata.ParseSkills(b)
 		if err == nil {
 			normalizePotentials(defs)
+			normalizeCombatSkillDescriptions(defs)
 			a.skillDefs = defs
 		}
 	}
 	if err != nil {
 		log.Printf("Skill.SData: %v", err)
+	}
+}
+
+// Correct legacy descriptions that promise a different combat chance from
+// the current numbers. The duration and abilities come from the skill record.
+func normalizeCombatSkillDescriptions(defs map[sdata.SkillKey]sdata.Skill) {
+	const potentialNimble, bigCoup, evasion = 26, 136, 189
+	for key, d := range defs {
+		if key.Level == 0 || d.KeepSeconds() == 0 {
+			continue
+		}
+		switch key.ID {
+		case potentialNimble:
+			if !potential.Is(d.Effect, d.Detail) || d.AbilityType != [3]uint8{28, 18, 20} {
+				continue
+			}
+			d.Description = fmt.Sprintf("Below %d%% HP, adds %d magic resistance, %d percentage points of critical chance and %d of melee accuracy for %d seconds. Can trigger once every %d seconds.",
+				d.LimitHP, d.AbilityValue[0], skillchance.Modifier(18, int32(d.AbilityValue[1])), skillchance.Modifier(20, int32(d.AbilityValue[2])), d.KeepSeconds(), d.ResetTime)
+		case bigCoup, evasion:
+			stat, melee, ranged := "accuracy", uint8(20), uint8(21)
+			prefix := ""
+			if key.ID == evasion {
+				stat, melee, ranged = "evasion", 29, 30
+				prefix = "Spends remaining SP and MP. "
+			}
+			if d.AbilityType != [3]uint8{melee, ranged} {
+				continue
+			}
+			d.Description = fmt.Sprintf("%sAdds %d percentage points of melee %s and %d of ranged %s for %d seconds.", prefix,
+				skillchance.Modifier(melee, int32(d.AbilityValue[0])), stat, skillchance.Modifier(ranged, int32(d.AbilityValue[1])), stat, d.KeepSeconds())
+		default:
+			continue
+		}
+		defs[key] = d
 	}
 }
 

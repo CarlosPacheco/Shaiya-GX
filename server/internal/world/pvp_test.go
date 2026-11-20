@@ -2,64 +2,38 @@ package world
 
 import "testing"
 
-// CUser::AttackDamage 0x00457030 against a user has no level factor:
-// attack - guard (+ variance), element, LUC/10, critical x1.5 (+LUC*1.4).
 func TestUserDamageFormula(t *testing.T) {
-	att := CharacterStats{Level: 10, Critical: 0}
-	att.Attack[attackMelee] = 500
-	def := CharacterStats{Level: 60}
-	def.Guard[attackMelee] = 100
-	for i := 0; i < 500; i++ {
-		v, crit := userDamage(&att, &def, attackMelee, false)
-		want := int32(400)
-		if crit {
-			want = 600
+	att := CharacterStats{Level: 1, Attack: [3]int32{500, 500, 500}}
+	def := CharacterStats{Level: 60, Luc: 500, Guard: [3]int32{100, 150, 100}}
+	for kind, normal := range [3]int32{400, 350, 400} {
+		if got, crit := userDamage(&att, &def, kind); got != normal || crit {
+			t.Fatalf("kind %d normal = %d, crit = %t", kind, got, crit)
 		}
-		if v != want {
-			t.Fatalf("damage %d crit=%v, want %d", v, crit, want)
+		att.Critical = fullChance
+		if got, crit := userDamage(&att, &def, kind); got != normal*3/2 || !crit {
+			t.Fatalf("kind %d critical = %d, crit = %t", kind, got, crit)
 		}
+		att.Critical = 0
 	}
-	// A bow within 3 units loses 30% without the cross-road passive.
-	att.Attack[attackRanged] = 500
-	def.Guard[attackRanged] = 100
-	if v, crit := userDamage(&att, &def, attackRanged, true); !crit && v != 279 {
-		t.Fatalf("close ranged damage %d, want 279 (float32 0.7)", v)
-	}
-	att.CrossRoad = 1
-	if v, crit := userDamage(&att, &def, attackRanged, true); !crit && v != 400 {
-		t.Fatalf("cross-road close ranged damage %d, want 400", v)
-	}
-	// Guard above attack floors at the 1..10 random minimum.
 	def.Guard[attackMelee] = 900
-	if v, _ := userDamage(&att, &def, attackMelee, false); v < 1 || v > 10 {
-		t.Fatalf("floored damage %d", v)
+	if got, _ := userDamage(&att, &def, attackMelee); got != 1 {
+		t.Fatalf("minimum damage = %d", got)
 	}
 }
 
-// CUser::AttackSuccess 0x00456b10 clamps the user hit chance to 1..99
-// (the mob version floors at 20).
-func TestUserHitChanceClamp(t *testing.T) {
-	weak := CharacterStats{Level: 1}
-	weak.Accuracy[0], weak.Evasion[0] = 1, 1
-	strong := CharacterStats{Level: 80}
-	strong.Accuracy[0], strong.Evasion[0] = 900, 900
-	hits := 0
-	for i := 0; i < 20000; i++ {
-		if userHits(&weak, &strong, attackMelee) {
-			hits++
-		}
+func TestUserHitChanceIgnoresLevels(t *testing.T) {
+	low := CharacterStats{Level: 1}
+	high := CharacterStats{Level: 60}
+	if !userHits(&low, &high, attackMelee) {
+		t.Fatal("equal ratings must hit even across a 59-level gap")
 	}
-	if hits == 0 || hits > 600 {
-		t.Fatalf("weak attacker hit %d/20000, want about 1%%", hits)
+	high.Evasion[attackMelee] = fullChance
+	if userHits(&low, &high, attackMelee) {
+		t.Fatal("unopposed 100% evasion must dodge")
 	}
-	hits = 0
-	for i := 0; i < 20000; i++ {
-		if userHits(&strong, &weak, attackMelee) {
-			hits++
-		}
-	}
-	if hits < 19400 || hits == 20000 {
-		t.Fatalf("strong attacker hit %d/20000, want about 99%%", hits)
+	low.Accuracy[attackMelee] = fullChance
+	if !userHits(&low, &high, attackMelee) {
+		t.Fatal("accuracy cancels the same amount of evasion")
 	}
 }
 
@@ -103,26 +77,5 @@ func TestDamageLedgerTop(t *testing.T) {
 	s.addDamage(damageByUser, 2, 41)
 	if top, _ = s.topDamage(); top.Type != damageByUser || top.ID != 2 || top.Amount != 51 {
 		t.Fatalf("top %+v, want user 2 with 51", top)
-	}
-}
-
-// The magic branch of AttackDamage 0x00457030 against a user: equal
-// levels give the level term's floor 1; guard 100 over weapon attack 0 +
-// INT 200 resists 50%: 1000 x (1 - 51/100) = 490 (735 on a critical).
-func TestUserMagicDamage(t *testing.T) {
-	att := CharacterStats{Level: 60, Int: 200}
-	att.Attack[attackMagic] = 1000
-	def := CharacterStats{Level: 60}
-	def.Guard[attackMagic] = 100
-	for i := 0; i < 300; i++ {
-		var d [3]int32
-		crit := userWeaponDamage(&att, &def, attackMagic, &d, 0, 0, false)
-		want := int32(490)
-		if crit {
-			want = 735
-		}
-		if d[0] != want {
-			t.Fatalf("magic damage %d crit=%v, want %d", d[0], crit, want)
-		}
 	}
 }

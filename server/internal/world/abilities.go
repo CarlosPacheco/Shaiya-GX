@@ -1,6 +1,9 @@
 package world
 
-import "github.com/Spelunkern/Shaiya-GX/server/internal/db"
+import (
+	"github.com/Spelunkern/Shaiya-GX/internal/skillchance"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
+)
 
 // addSigned adds a signed change to an unsigned stat, flooring at 0.
 func addSigned(u uint32, v int32) uint32 {
@@ -107,12 +110,10 @@ func applyPassives(e *EquipmentStats, skills []db.CharacterSkill) {
 			e.ItemAttack = addSigned(e.ItemAttack, added)
 		case 4:
 			for i, t := range d.AbilityType {
-				applyAbility(e, d.TypeEffect, t, int32(d.AbilityValue[i]))
+				applyAbility(e, d.TypeEffect, t, skillchance.Modifier(t, int32(d.AbilityValue[i])))
 			}
 		case 8:
 			mastery(&speed, d, &e.AttackSpeed)
-		case 9:
-			e.CrossRoad++
 		case 10:
 			if d.Weapon1 != 0 {
 				shield += int32(d.WeaponValue)

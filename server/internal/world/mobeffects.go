@@ -4,6 +4,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/skillchance"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -47,6 +48,7 @@ type MobEffect struct {
 // mobMods are CMob::SetSkillAbility's runtime changes.
 type mobMods struct {
 	Wis, Dex, Luc          int32
+	Critical               int32
 	AttackSpeed, MoveSpeed int32
 	Cat                    [3]CategoryMods
 	Disabled               [3]int32
@@ -66,7 +68,7 @@ func (m *MapMob) mods() mobMods {
 				if t >= 32 && t <= 34 {
 					value = int32(d.AbilityValue[i])
 				}
-				o.addAbility(t, value)
+				o.addAbility(t, skillchance.Modifier(t, value))
 			}
 		case detailStun:
 			o.Stun++
@@ -95,6 +97,8 @@ func (o *mobMods) addAbility(t uint8, v int32) {
 		o.AttackSpeed += v
 	case t == 17:
 		o.MoveSpeed += v
+	case t == 18:
+		o.Critical += v
 	case t >= 20 && t <= 31:
 		c := &o.Cat[(t-20)%3]
 		switch (t - 20) / 3 {
@@ -158,23 +162,27 @@ func mobCombatOf(m *MapMob) mobCombat {
 	}
 	o := m.mods()
 	d := *m.def
-	d.Wis = uint16(max(int32(d.Wis)+o.Wis, 0))
-	d.Dex = uint16(max(int32(d.Dex)+o.Dex, 0))
-	d.Luc = uint16(max(int32(d.Luc)+o.Luc, 0))
+	d.Wis = uint16(min(max(int32(d.Wis)+o.Wis, 0), math.MaxUint16))
+	d.Dex = uint16(min(max(int32(d.Dex)+o.Dex, 0), math.MaxUint16))
+	d.Luc = uint16(min(max(int32(d.Luc)+o.Luc, 0), math.MaxUint16))
 	c := mobCombatFor(&d)
+	c.Critical += int64(o.Critical) * 100
+	physicalGuard := int64(d.Defense)
 	if m.lua.initialized {
 		c.DamageFactor = m.lua.damage
-		c.Guard[0] = int32(float32(d.Defense) * m.lua.defense)
-		c.Guard[1] = c.Guard[0] + int32(d.ShieldDefense)
+		physicalGuard = int64(float32(d.Defense) * m.lua.defense)
 		if m.lua.elementSet {
 			c.Attrib = m.lua.element
 		}
 	}
+	physicalGuard += int64(o.Cat[attackMelee].Defense)
+	c.Guard[attackMelee] = boundedCombatStat(physicalGuard)
+	c.Guard[attackRanged] = boundedCombatStat(physicalGuard + int64(d.ShieldDefense) + int64(o.Cat[attackRanged].Defense))
+	c.Guard[attackMagic] = boundedCombatStat(int64(c.Guard[attackMagic]) + int64(o.Cat[attackMagic].Defense))
 	for k := 0; k < 3; k++ {
-		c.Accuracy[k] += o.Cat[k].Accuracy
+		c.Accuracy[k] += int64(o.Cat[k].Accuracy) * 100
 		c.Attack[k] += o.Cat[k].Attack
-		c.Guard[k] += o.Cat[k].Defense
-		c.Evasion[k] += o.Cat[k].Evasion
+		c.Evasion[k] += int64(o.Cat[k].Evasion) * 100
 	}
 	if o.NoElement && !m.elementRestored {
 		c.Attrib = 0

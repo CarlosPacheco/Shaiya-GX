@@ -24,6 +24,9 @@ type Skill struct {
 	SuccessType, SuccessValue                  uint8
 	KeepTime                                   uint16
 	FixRange                                   uint8
+	AbilityType                                [3]uint8
+	AbilityValue                               [3]int16
+	LimitHP                                    uint8
 }
 type SkillKey struct {
 	ID    uint16
@@ -61,6 +64,11 @@ func ParseSkills(raw []byte) (map[SkillKey]Skill, error) {
 			s.AttackRange, s.ApplyRange = p[47], p[57]
 			s.Attribute = p[49]
 			s.KeepTime, s.FixRange = binary.LittleEndian.Uint16(p[59:]), p[111]
+			for i := range s.AbilityType {
+				s.AbilityType[i] = p[87+i*3]
+				s.AbilityValue[i] = int16(binary.LittleEndian.Uint16(p[88+i*3:]))
+			}
+			s.LimitHP = p[110]
 			out[SkillKey{uint16(id + 1), s.Level}] = s
 		}
 	}

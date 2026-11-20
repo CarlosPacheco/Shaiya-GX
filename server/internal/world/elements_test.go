@@ -11,90 +11,51 @@ import (
 )
 
 func TestElementalDamageAllPairsAcrossCombatPaths(t *testing.T) {
-	// Zero luck/variance and ample damage isolate elemental arithmetic. Critical
-	// outcomes are accounted for explicitly instead of depending on RNG seeding.
-	att := CharacterStats{Level: 50}
-	att.Attack = [3]int32{1000, 1000, 1000}
+	att := CharacterStats{Level: 50, Attack: [3]int32{1000, 1000, 1000}}
 	def := CharacterStats{Level: 50}
 	mob := mobCombat{Level: 50}
-	mob.Attack = [3]int32{1000, 1000, 1000}
+	raw := &db.MobDef{}
+	raw.Attacks[0].Attack = 1000
+	sk := &db.SkillDef{DamageType: 1}
 	for a := uint8(0); a < 9; a++ {
 		for d := uint8(0); d < 9; d++ {
 			att.AttackAttr, def.DefenseAttr, mob.Attrib = a, d, d
-			factor := float64(element.Multiplier(a, d))
-			for _, kind := range []int{attackMelee, attackRanged} {
-				got, crit := userDamage(&att, &def, kind, false)
-				want := float64(int32(1000 * factor))
-				if crit {
-					want *= 1.5
+			raw.Attacks[0].Attrib = a
+			want := int32(math.Round(1000 * float64(element.Multiplier(a, d))))
+			for _, kind := range []int{attackMelee, attackRanged, attackMagic} {
+				sk.Kind = uint8(kind)
+				pvp, _ := userDamage(&att, &def, kind)
+				pve, _ := playerDamage(&att, &mob, kind)
+				incoming, _ := mobSkillDamage(&mob, raw, sk, &def, 0)
+				if pvp != want || pve != want || incoming[0] != want {
+					t.Fatalf("kind %d elements %d/%d: PvP %d PvE %d mob %d want %d", kind, a, d, pvp, pve, incoming[0], want)
 				}
-				if got != int32(want) {
-					t.Fatalf("PvP %d/%d got%d want%.0f", a, d, got, want)
-				}
-			}
-			var damage [3]int32
-			crit := weaponDamage(&att, &mob, attackMelee, &damage, a, d, false)
-			want := float32(990 * factor)
-			if crit {
-				want *= 1.5
-			}
-			if damage[0] != int32(want) {
-				t.Fatalf("PvE %d/%d got%d want%v", a, d, damage[0], want)
-			}
-			crit = mobWeaponDamage(&mob, attackMelee, 1000, 0, a, d, &def, &damage)
-			want = float32(1010 * factor)
-			if crit {
-				want *= 1.5
-			}
-			if damage[0] != int32(want) {
-				t.Fatalf("mob skill %d/%d got%d want%v", a, d, damage[0], want)
 			}
 		}
 	}
 }
 
 func TestSpellElementOverrideIgnoredDefenseAndFixedDamage(t *testing.T) {
-	att := CharacterStats{Level: 50, AttackAttr: 2}
-	att.Attack = [3]int32{1000, 1000, 1000}
+	att := CharacterStats{Level: 50, AttackAttr: 2, Attack: [3]int32{1000, 1000, 1000}}
 	mob := mobCombat{Level: 50, Attrib: 4}
 	victim := CharacterStats{Level: 50, DefenseAttr: 4}
-	for _, detail := range []uint16{0, detailNoElement} {
-		sk := &db.SkillDef{DamageType: 1, AttrType: 1, TypeDetail: detail}
-		expectedDef := uint8(4)
-		if detail == detailNoElement {
-			expectedDef = 0
-		}
-		factor := float64(element.Multiplier(1, expectedDef))
-		damage, crit := playerSkillDamage(&att, &mob, sk, skillTarget{}, [3]uint32{}, false)
-		want := float32(990 * factor)
-		if crit {
-			want *= 1.5
-		}
-		if damage[0] != int32(want) {
-			t.Fatal("PvE spell override/no-element", detail, damage, want)
-		}
-		damage, crit = userSkillDamage(&att, &victim, sk, [3]uint32{}, false)
-		v := float64(int32(1000 * factor))
-		if crit {
-			v *= 1.5
-		}
-		if damage[0] != int32(v) {
-			t.Fatal("PvP spell override/no-element", detail, damage, v)
-		}
-		md := &db.MobDef{}
-		md.Attacks[0].Attrib = 2
-		md.Attacks[0].Attack = 1000
-		damage, crit = mobSkillDamage(&mob, md, sk, &victim, 1000)
-		want = float32(1010 * factor)
-		if crit {
-			want *= 1.5
-		}
-		if damage[0] != int32(want) {
-			t.Fatal("mob spell override/no-element", detail, damage, want)
+	md := &db.MobDef{}
+	md.Attacks[0].Attrib = 2
+	md.Attacks[0].Attack = 1000
+	for _, tc := range []struct {
+		detail uint16
+		amount int32
+	}{{0, 1400}, {detailNoElement, 1200}} {
+		sk := &db.SkillDef{DamageType: 1, AttrType: 1, TypeDetail: tc.detail}
+		pve, _ := playerSkillDamage(&att, &mob, sk, damagePools{}, damagePools{})
+		pvp, _ := userSkillDamage(&att, &victim, sk, damagePools{})
+		incoming, _ := mobSkillDamage(&mob, md, sk, &victim, 1000)
+		if pve[0] != tc.amount || pvp[0] != tc.amount || incoming[0] != tc.amount {
+			t.Fatalf("element override detail %d: got %v, %v, %v want %d", tc.detail, pve, pvp, incoming, tc.amount)
 		}
 	}
 	sk := &db.SkillDef{DamageType: 0, DamageHP: 177, AttrType: 1}
-	got, _ := playerSkillDamage(&att, &mob, sk, skillTarget{}, [3]uint32{}, false)
+	got, _ := playerSkillDamage(&att, &mob, sk, damagePools{}, damagePools{})
 	if got[0] != 177 {
 		t.Fatal("fixed native damage must bypass element", got)
 	}
@@ -152,13 +113,8 @@ func TestAttackElementReplacementDoesNotResurrectOldBuff(t *testing.T) {
 	m := mobCombat{Level: 50, Attrib: 1}
 	m.Attack[0] = 1000
 	target := CharacterStats{Level: 50, DefenseAttr: 4}
-	got, crit := mobDamage(&m, &db.MobAttack{}, &target)
-	want := float32(1010 * float64(float32(.8)))
-	if crit {
-		want *= 1.5
-	}
-	if math.Abs(float64(got)-float64(int32(want))) > 0 {
-		t.Fatal("normal mob attack inherited base element", got, want)
+	if got, crit := mobDamage(&m, &db.MobAttack{}, &target); got != 800 || crit {
+		t.Fatal("normal mob attack inherited base element", got, crit)
 	}
 }
 
@@ -194,26 +150,6 @@ func TestNativeArmorElementRemovalDoesNotReplayAnotherBuff(t *testing.T) {
 	s.removeEffects(func(b *ActiveBuff) bool { return b.SkillID == 60009 }, "test")
 	if s.stats().DefenseAttr != 3 || len(s.buffs) != 1 {
 		t.Fatal("native expiry must restore armor, not earlier spell")
-	}
-}
-
-func TestNativeMagicElementAllPairs(t *testing.T) {
-	att := CharacterStats{Level: 50, ItemAttack: 1000, Int: 100}
-	att.Attack[attackMagic] = 1000
-	victim := CharacterStats{Level: 50}
-	for a := uint8(0); a < 9; a++ {
-		for d := uint8(0); d < 9; d++ {
-			var damage [3]int32
-			crit := userWeaponDamage(&att, &victim, attackMagic, &damage, a, d, false)
-			attack := float32(float64(element.Multiplier(a, d)) * 1000)
-			want := float32(float64(attack) - float64(attack)/100*2)
-			if crit {
-				want = float32(float64(want) * 1.5)
-			}
-			if damage[0] != int32(want) {
-				t.Fatal("magic element path", a, d, damage, want)
-			}
-		}
 	}
 }
 

@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0901` — QuestList**
 
-Declarations: [packet.QuestList](../../server/internal/packet/packet.go#L130), [proto.QuestList](../../internal/proto/opcodes.go#L115).
+Declarations: [packet.QuestList](../../server/internal/packet/packet.go#L132), [proto.QuestList](../../internal/proto/opcodes.go#L117).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -97,7 +97,7 @@ type ActiveQuest struct {
 
 **`0x0902` — QuestStart**
 
-Declarations: [packet.QuestStart](../../server/internal/packet/packet.go#L131), [proto.QuestStart](../../internal/proto/opcodes.go#L116).
+Declarations: [packet.QuestStart](../../server/internal/packet/packet.go#L133), [proto.QuestStart](../../internal/proto/opcodes.go#L118).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
 
@@ -233,7 +233,7 @@ func DecodeQuestStart(p []byte) (npc uint32, id uint16, err error) {
 
 **`0x0903` — QuestEnd**
 
-Declarations: [packet.QuestEnd](../../server/internal/packet/packet.go#L132), [proto.QuestEnd](../../internal/proto/opcodes.go#L117).
+Declarations: [packet.QuestEnd](../../server/internal/packet/packet.go#L134), [proto.QuestEnd](../../internal/proto/opcodes.go#L119).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L105)
 
@@ -457,7 +457,7 @@ type QuestEndResult struct {
 
 **`0x0904` — QuestStartAlt**
 
-Declarations: [packet.QuestStartAlt](../../server/internal/packet/packet.go#L133), [proto.QuestStartAlt](../../internal/proto/opcodes.go#L118).
+Declarations: [packet.QuestStartAlt](../../server/internal/packet/packet.go#L135), [proto.QuestStartAlt](../../internal/proto/opcodes.go#L120).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
 
@@ -471,7 +471,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0x0905` — QuestCounter**
 
-Declarations: [packet.QuestCounter](../../server/internal/packet/packet.go#L134), [proto.QuestCounter](../../internal/proto/opcodes.go#L119).
+Declarations: [packet.QuestCounter](../../server/internal/packet/packet.go#L136), [proto.QuestCounter](../../internal/proto/opcodes.go#L121).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -595,7 +595,7 @@ func DecodeQuestCounter(p []byte) (id uint16, slot, value uint8, err error) {
 
 **`0x0906` — QuestFinishedList**
 
-Declarations: [packet.QuestFinishedList](../../server/internal/packet/packet.go#L138), [proto.QuestFinishedList](../../internal/proto/opcodes.go#L123).
+Declarations: [packet.QuestFinishedList](../../server/internal/packet/packet.go#L140), [proto.QuestFinishedList](../../internal/proto/opcodes.go#L125).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -677,7 +677,7 @@ type FinishedQuest struct {
 
 **`0x0907` — QuestChoose**
 
-Declarations: [packet.QuestChoose](../../server/internal/packet/packet.go#L135), [proto.QuestChoose](../../internal/proto/opcodes.go#L120).
+Declarations: [packet.QuestChoose](../../server/internal/packet/packet.go#L137), [proto.QuestChoose](../../internal/proto/opcodes.go#L122).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L107)
 
@@ -791,7 +791,7 @@ func DecodeQuestChoice(p []byte) (uint16, error) {
 
 **`0x0908` — QuestAbandon**
 
-Declarations: [packet.QuestAbandon](../../server/internal/packet/packet.go#L136), [proto.QuestAbandon](../../internal/proto/opcodes.go#L121).
+Declarations: [packet.QuestAbandon](../../server/internal/packet/packet.go#L138), [proto.QuestAbandon](../../internal/proto/opcodes.go#L123).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L109)
 

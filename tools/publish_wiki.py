@@ -15,6 +15,7 @@ NAMES = {
     'goddess-blessing.md': 'Goddess-Blessing',
     'obelisks.md': 'Obelisks',
     'movement-speed.md': 'Movement-Speed', 'attack-speed.md': 'Attack-Speed',
+    'combat-stats.md': 'Combat-Stats',
     'README.md': 'Home', 'quests-and-map.md': 'Quests-and-Map', 'stealth-and-gm-protection.md': 'Stealth-and-GM-Protection', 'elements.md': 'Elements', 'blacksmith.md': 'Blacksmith',
     'item-effects.md': 'Item-Effects', 'gm-commands.md': 'GM-Commands',
     'item-data.md': 'Item-Data', 'recreation-and-loot.md': 'Recreation-and-Loot',

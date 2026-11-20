@@ -27,6 +27,8 @@ preserving your personal database.
   item-family searches, escrow and claims.
 - [Teleport Runes](teleport-runes.md): faction destinations, channeling, guild
   house eligibility and SQLite configuration.
+- [Combat stats and damage](combat-stats.md) covers the live damage, critical,
+  accuracy, evasion and higher-level monster rules.
 - [Combat, world and interface changes in v0.1.13](../releases/gx-v0.1.13.md).
 
 

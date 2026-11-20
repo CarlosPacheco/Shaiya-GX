@@ -81,9 +81,9 @@ func (s *Session) gemCastsOnUser(p *ConnectedPlayer, skills []*db.SkillDef) {
 		s.breakStealth()
 	}
 	stats := s.stats()
-	caster := [3]uint32{stats.CurrentHP, stats.CurrentSP, stats.CurrentMP}
+	caster := currentDamagePools(&stats)
 	for _, sk := range skills {
-		p.QueueUserHit(pendingUserHit{AttackerID: s.char.ID, Stats: stats, Kind: int(sk.Kind), X: s.char.PosX, Z: s.char.PosZ,
+		p.QueueUserHit(pendingUserHit{AttackerID: s.char.ID, Stats: stats, Kind: int(sk.Kind),
 			Skill: sk, First: true, Caster: caster, ItemCast: true})
 	}
 }

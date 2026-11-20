@@ -80,3 +80,24 @@ func TestMalformedEnvDoesNotPartiallyApply(t *testing.T) {
 		t.Fatal("partially applied configuration")
 	}
 }
+
+func TestCombatDEXThresholds(t *testing.T) {
+	const firstKey = "RAPTURE_COMBAT_DEX_FIRST_THRESHOLD"
+	const secondKey = "RAPTURE_COMBAT_DEX_SECOND_THRESHOLD"
+	t.Setenv(firstKey, "")
+	t.Setenv(secondKey, "")
+	if first, second, err := CombatDEXThresholds(); err != nil || first != 500 || second != 800 {
+		t.Fatalf("defaults = %d, %d, %v", first, second, err)
+	}
+	t.Setenv(firstKey, "350")
+	t.Setenv(secondKey, "775")
+	if first, second, err := CombatDEXThresholds(); err != nil || first != 350 || second != 775 {
+		t.Fatalf("custom = %d, %d, %v", first, second, err)
+	}
+	for _, invalid := range []string{"350", "349", "4294967296", "oops"} {
+		t.Setenv(secondKey, invalid)
+		if _, _, err := CombatDEXThresholds(); err == nil {
+			t.Errorf("invalid second threshold %q accepted", invalid)
+		}
+	}
+}

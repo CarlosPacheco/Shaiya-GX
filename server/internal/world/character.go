@@ -89,7 +89,6 @@ type EquipmentStats struct {
 	Range         int32 // added to the weapon's reach
 	AttackSpeed   int32 // added to the swing-speed index
 	MoveSpeed     int32
-	CrossRoad     int32    // passive detail 9: no close-range bow penalty
 	SitRecoverPct [3]int32 // abilities 10-12: extra sitting recovery % (HP, SP, MP)
 	// Flat recovery from Special 16 gems (CUser +0x1250 sitting, +0x1268
 	// standing; HP, SP, MP).
@@ -290,23 +289,23 @@ type CharacterStats struct {
 	Str, Rec, Int, Wis, Dex, Luc    uint32
 	MaxHP, MaxMP, MaxSP             uint32
 	CurrentHP, CurrentMP, CurrentSP uint32
-	// Display ranges for 0x0526: attack to attack + variance.
+	// Inclusive display ranges for 0x0526: attack to attack + variance.
 	MinAttack, MaxAttack            uint32
 	MinMagic, MaxMagic              uint32
 	Defense, Resistance, Absorption uint32
-	// CUser::SetAttack per category (melee, ranged, magic).
+	// Combat values per category (melee, ranged, magic). Chances use
+	// hundredths of one percentage point.
 	Level        uint16
 	Attack       [3]int32
-	Accuracy     [3]int32
-	Evasion      [3]int32
+	Accuracy     [3]int64
+	Evasion      [3]int64
 	Guard        [3]int32 // defense per category
-	Critical     int32
+	Critical     int64
 	Variance     uint32
 	ItemAttack   uint32 // the weapon's own attack (CUser +0x12d8)
 	AttackAttr   uint8
 	DefenseAttr  uint8
 	RangedWeapon bool
-	CrossRoad    int32
 	Range        int32
 	AttackSpeed  int32
 	MoveSpeed    int32
@@ -348,13 +347,6 @@ func StatsFor(ch *db.Character, e EquipmentStats) CharacterStats {
 	}
 	s.CurrentHP, s.CurrentMP, s.CurrentSP = min(curHP, s.MaxHP), min(curMP, s.MaxMP), min(curSP, s.MaxSP)
 	setAttack(&s, e)
-	// Types 18/19: a percent of the melee / ranged defense.
-	for k := 0; k < 2; k++ {
-		if e.KCGuardPct[k] != 0 {
-			s.Guard[k] += int32(kcPercent(uint32(max(s.Guard[k], 0)), e.KCGuardPct[k]))
-		}
-	}
-	s.Defense = uint32(max(s.Guard[attackMelee], 0))
 	s.Absorption = e.Absorption
 	pools := [3]uint32{s.MaxHP, s.MaxSP, s.MaxMP}
 	for i := 0; i < 3; i++ {

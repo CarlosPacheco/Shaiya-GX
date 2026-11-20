@@ -64,11 +64,11 @@ resets altars to their configured bases and delays their return ten minutes.
 | 4–9 | Flat STR, REC, INT, WIS, DEX, LUC; normal stat formulas apply |
 | 10–12 | Percent of maximum HP, SP, MP added to sitting/standing recovery |
 | 13–15 | Percent of maximum HP, SP, MP added to combat recovery |
-| 16 | Critical chance |
-| 17 | Melee accuracy |
-| 18–19 | Percent of melee/ranged defense |
-| 20, 23 | Magic evasion contributions |
-| 21–22 | Melee/ranged evasion |
+| 16 | Critical chance in percentage points |
+| 17 | Melee accuracy in percentage points |
+| 18–19 | Percent of shared physical defense / additional ranged defense percentage |
+| 20, 23 | Magic evasion contributions in percentage points |
+| 21–22 | Melee/ranged evasion in percentage points |
 | 24 | Lapis linking/extraction-all chance modifier in existing forge rules |
 | 25 | Death EXP-loss reduction |
 | 26–27 | Present in the table and client descriptions; no reader in the reference EP4.5 server |
@@ -79,6 +79,8 @@ labels and the verified EP4.5 server behavior. A label alone does not establish
 a gameplay effect; no custom repair/cast-time bonus is invented to reconcile
 the version difference. The existing selective extraction rules remain as
 documented in [Blacksmith](blacksmith.md).
+
+See [combat stats and damage](combat-stats.md) for how these values affect hits.
 
 ## Original client presentation
 

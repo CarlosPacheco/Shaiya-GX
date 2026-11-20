@@ -102,7 +102,7 @@ func TestLapisDebuffFamiliesApplyExpireAndDrainPools(t *testing.T) {
 			defs.NPCSkills[db.SkillKey{SkillID: id, Level: 1}] = &sk
 			before := s.stats()
 			speed := s.speeds()
-			if s.applyUserSkillHit(pendingUserHit{AttackerID: 990001, Skill: &sk, First: true, ItemCast: true}, before) {
+			if s.applyUserSkillHit(pendingUserHit{AttackerID: 990001, Stats: CharacterStats{Accuracy: before.Evasion}, Skill: &sk, First: true, ItemCast: true}, before) {
 				t.Fatal("zero-damage debuff killed target")
 			}
 			if len(s.buffs) != 1 || s.buffs[0].SkillLevel != 100 {

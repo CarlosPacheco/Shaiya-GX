@@ -13,8 +13,8 @@ func TestReflectorCategories(t *testing.T) {
 		return &db.SkillDef{SkillID: id, SkillLevel: 1, TypeEffect: typeEffectBuff, TypeDetail: 83, SuccessType: 1, SuccessValue: 100, AbilityValue: v}
 	}
 	defs := &db.Defs{Skills: map[db.SkillKey]*db.SkillDef{
-		{89, 1}: mk(89, [3]int16{1, 0, 0}),
-		{86, 1}: mk(86, [3]int16{0, 0, 1}),
+		{SkillID: 89, Level: 1}: mk(89, [3]int16{1, 0, 0}),
+		{SkillID: 86, Level: 1}: mk(86, [3]int16{0, 0, 1}),
 	}}
 	db.SetDefsForTest(defs)
 	for _, c := range []struct {
@@ -38,7 +38,7 @@ func TestWarehouseCallCannotBeCancelled(t *testing.T) {
 	old := db.MustDefs()
 	t.Cleanup(func() { db.SetDefsForTest(old) })
 	db.SetDefsForTest(&db.Defs{Skills: map[db.SkillKey]*db.SkillDef{
-		{228, 1}: {SkillID: 228, SkillLevel: 1, TypeEffect: typeEffectBuff, TypeDetail: 82, AbilityType: [3]uint8{39, 0, 0}},
+		{SkillID: 228, Level: 1}: {SkillID: 228, SkillLevel: 1, TypeEffect: typeEffectBuff, TypeDetail: 82, AbilityType: [3]uint8{39, 0, 0}},
 	}})
 	b := ActiveBuff{SkillID: 228, SkillLevel: 1, Effect: typeEffectBuff, Detail: 82}
 	if !isRemoteWarehouse(&b) {

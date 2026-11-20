@@ -51,6 +51,9 @@ Allow inbound TCP 30800/30810 on the server firewall. Connect the client with `-
 
 For persistent overrides create `.local/runtime.env` in the server directory. Explicit environment values take priority. `RAPTURE_DATA_DIR`, `RAPTURE_DB_PATH` and `RAPTURE_DB_SEED` select data/runtime/seed locations independently. Relative paths in overrides are resolved against the server folder when using the controllers. Prefer absolute paths for direct headless launches with explicit overrides.
 
+[Combat DEX thresholds](combat-stats.md#server-configuration) are configurable
+in the same environment file and take effect when World starts.
+
 ## Content and runtime upgrades
 
 Run matching GX client and server builds. Pending SQLite migrations are

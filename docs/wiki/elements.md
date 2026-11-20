@@ -1,6 +1,6 @@
-# Elements: original EP5 rules
+# Elements and damage
 
-GX uses the elemental rules recovered from the original EP5 server and client.
+GX uses the original EP5 elemental damage matrix.
 The shared rules live in `internal/element/element.go`. The world remains
 responsible for actual damage; tooltips and icons present definitions and
 confirmed inventory without authorizing a hit.
@@ -123,10 +123,9 @@ an equipment badge merely because their native fields contain an element.
 ## Player and monster attacks
 
 Player normal attacks use the effective weapon element against the target's
-effective defense element, in both PvE and PvP. Physical, ranged and magical
-native formulas share the same matrix while retaining their own order of
-operations. Element does not independently bypass hit chance, range, attack
-category blocks, critical rules, shields or absorption.
+effective defense element in both PvE and PvP. Melee, ranged and magic use the
+matrix after subtracting defense and before critical damage and absorption.
+See the [worked combat examples](combat-stats.md#one-formula-for-melee-ranged-and-magic).
 
 A monster's SQL `Mobs.Attrib` is its base **defensive** element. Original
 `CGameData::LoadConstMob` (`0x004c1720`) accepts only 0–4 for that field; values

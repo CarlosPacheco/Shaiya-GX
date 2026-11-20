@@ -125,6 +125,10 @@ func buildMapProperties(c maprules.Catalog) (MapConfig, error) {
 
 // LoadGameConfig loads the original PS_Game ini files from data/game/.
 func LoadGameConfig(log *logx.Logger) error {
+	first, second, err := config.CombatDEXThresholds()
+	if err != nil {
+		return err
+	}
 	if err := loadMobAIStrings(); err != nil {
 		return err
 	}
@@ -157,6 +161,8 @@ func LoadGameConfig(log *logx.Logger) error {
 	if err := loadKillStatus(log); err != nil {
 		return fmt.Errorf("goddess blessing: %w", err)
 	}
+	combatDEXFirst, combatDEXSecond = first, second
+	log.Printf("GX Server World combat DEX thresholds: %d, %d", first, second)
 	return nil
 }
 
