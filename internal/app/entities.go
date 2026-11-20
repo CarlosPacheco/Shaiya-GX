@@ -478,7 +478,7 @@ func (a *App) drawPlayerNames(w, h int) {
 			labelWidth := a.font.Width(name)
 			prefixWidth := 0
 			if plate.gm { // GMs have no tag: a normal name in light blue.
-				tint = ui.RGBColor(0x66CCFF)
+				tint = ui.RGBColor(0x3B6CFF)
 			}
 			rank, ranked := pvprank.Index(plate.kills)
 			if a.scene3d.OccludedLabel(pos, x-labelWidth/2, y-a.font.Height-offset, labelWidth, a.font.Height, w, h) {
