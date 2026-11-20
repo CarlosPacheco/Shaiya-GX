@@ -10,7 +10,7 @@ Every production Go file is listed, including OS-specific alternatives. Signatur
 
 Authoritative realm, sessions, maps, actors, game rules, protocol adapters and commit-before-publication application actions.
 
-Tests: [absorption_skill_test.go](../../server/internal/world/absorption_skill_test.go), [absorption_test.go](../../server/internal/world/absorption_test.go), [attack_movement_test.go](../../server/internal/world/attack_movement_test.go), [attack_speed_test.go](../../server/internal/world/attack_speed_test.go), [auction_test.go](../../server/internal/world/auction_test.go), [blessing_lifecycle_test.go](../../server/internal/world/blessing_lifecycle_test.go), [character_enchant_test.go](../../server/internal/world/character_enchant_test.go), [chat_items_test.go](../../server/internal/world/chat_items_test.go), [chat_test.go](../../server/internal/world/chat_test.go), [cloak_fits_test.go](../../server/internal/world/cloak_fits_test.go), [combat_integration_test.go](../../server/internal/world/combat_integration_test.go), [cooldown_reduction_test.go](../../server/internal/world/cooldown_reduction_test.go), [degeneration_test.go](../../server/internal/world/degeneration_test.go), [detection_test.go](../../server/internal/world/detection_test.go), [drop_oj_limits_integration_test.go](../../server/internal/world/drop_oj_limits_integration_test.go), [drop_oj_limits_test.go](../../server/internal/world/drop_oj_limits_test.go), [durability_test.go](../../server/internal/world/durability_test.go), [elements_test.go](../../server/internal/world/elements_test.go), [enchant_ini_test.go](../../server/internal/world/enchant_ini_test.go), [equipment_rejection_test.go](../../server/internal/world/equipment_rejection_test.go), [experience_test.go](../../server/internal/world/experience_test.go), [fall_damage_test.go](../../server/internal/world/fall_damage_test.go), [firethorn_test.go](../../server/internal/world/firethorn_test.go), [forge_quote_test.go](../../server/internal/world/forge_quote_test.go), [forge_rules_test.go](../../server/internal/world/forge_rules_test.go), [free_mall_test.go](../../server/internal/world/free_mall_test.go), [gem_safety_test.go](../../server/internal/world/gem_safety_test.go), [gm_map_test.go](../../server/internal/world/gm_map_test.go), [gm_set_stats_test.go](../../server/internal/world/gm_set_stats_test.go), [gm_test.go](../../server/internal/world/gm_test.go), [grb_integration_test.go](../../server/internal/world/grb_integration_test.go), [guild_integration_test.go](../../server/internal/world/guild_integration_test.go), [guildhouse_test.go](../../server/internal/world/guildhouse_test.go), [healing_delta_test.go](../../server/internal/world/healing_delta_test.go), [healthassist_test.go](../../server/internal/world/healthassist_test.go), [inventory_operation_test.go](../../server/internal/world/inventory_operation_test.go), [isolation_test.go](../../server/internal/world/isolation_test.go), [itemboxes_test.go](../../server/internal/world/itemboxes_test.go), [jump_motion_regression_test.go](../../server/internal/world/jump_motion_regression_test.go), [killcount_test.go](../../server/internal/world/killcount_test.go), [ladders_test.go](../../server/internal/world/ladders_test.go), [lapis_debuff_test.go](../../server/internal/world/lapis_debuff_test.go), [lapis_mob_test.go](../../server/internal/world/lapis_mob_test.go), [mailbox_test.go](../../server/internal/world/mailbox_test.go), [map_rules_test.go](../../server/internal/world/map_rules_test.go), [mapitems_test.go](../../server/internal/world/mapitems_test.go), [miss_feedback_test.go](../../server/internal/world/miss_feedback_test.go), [mob_ai_leak_test.go](../../server/internal/world/mob_ai_leak_test.go), [mob_ai_test.go](../../server/internal/world/mob_ai_test.go), [mob_navigation_test.go](../../server/internal/world/mob_navigation_test.go), [mob_quest_drop_test.go](../../server/internal/world/mob_quest_drop_test.go), [mob_respawn_test.go](../../server/internal/world/mob_respawn_test.go), [notices_test.go](../../server/internal/world/notices_test.go), [npc_guard_test.go](../../server/internal/world/npc_guard_test.go), [npc_probe_test.go](../../server/internal/world/npc_probe_test.go), [oj_limits_test.go](../../server/internal/world/oj_limits_test.go), [party_global_test.go](../../server/internal/world/party_global_test.go), [persistence_audit_test.go](../../server/internal/world/persistence_audit_test.go), [phase_test.go](../../server/internal/world/phase_test.go), [player_movement_test.go](../../server/internal/world/player_movement_test.go), [player_speed_test.go](../../server/internal/world/player_speed_test.go), [player_state_fixes_test.go](../../server/internal/world/player_state_fixes_test.go), [potential_test.go](../../server/internal/world/potential_test.go), [previous_skill_test.go](../../server/internal/world/previous_skill_test.go), [protocol_layout_test.go](../../server/internal/world/protocol_layout_test.go), [pvp_test.go](../../server/internal/world/pvp_test.go), [pvpreward_test.go](../../server/internal/world/pvpreward_test.go), [quest_integration_test.go](../../server/internal/world/quest_integration_test.go), [quest_map_test.go](../../server/internal/world/quest_map_test.go), [recreation_runes_test.go](../../server/internal/world/recreation_runes_test.go), [relic_boot_integration_test.go](../../server/internal/world/relic_boot_integration_test.go), [relic_config_test.go](../../server/internal/world/relic_config_test.go), [relics_test.go](../../server/internal/world/relics_test.go), [rules_test.go](../../server/internal/world/rules_test.go), [runtime_test.go](../../server/internal/world/runtime_test.go), [sacrifice_test.go](../../server/internal/world/sacrifice_test.go), [skill_cadence_test.go](../../server/internal/world/skill_cadence_test.go), [skill_dash_test.go](../../server/internal/world/skill_dash_test.go), [skill_failure_test.go](../../server/internal/world/skill_failure_test.go), [skill_range_test.go](../../server/internal/world/skill_range_test.go), [spin_combo_test.go](../../server/internal/world/spin_combo_test.go), [stack_counts_test.go](../../server/internal/world/stack_counts_test.go), [summon_rune_test.go](../../server/internal/world/summon_rune_test.go), [target_effects_test.go](../../server/internal/world/target_effects_test.go), [taunt_test.go](../../server/internal/world/taunt_test.go), [teleport_rune_integration_test.go](../../server/internal/world/teleport_rune_integration_test.go), [teleport_stone_test.go](../../server/internal/world/teleport_stone_test.go), [trap_test.go](../../server/internal/world/trap_test.go), [vehicle_test.go](../../server/internal/world/vehicle_test.go), [visibility_test.go](../../server/internal/world/visibility_test.go), [worldcal_test.go](../../server/internal/world/worldcal_test.go), [worlddrops_test.go](../../server/internal/world/worlddrops_test.go).
+Tests: [absorption_skill_test.go](../../server/internal/world/absorption_skill_test.go), [absorption_test.go](../../server/internal/world/absorption_test.go), [attack_movement_test.go](../../server/internal/world/attack_movement_test.go), [attack_speed_test.go](../../server/internal/world/attack_speed_test.go), [auction_test.go](../../server/internal/world/auction_test.go), [blessing_lifecycle_test.go](../../server/internal/world/blessing_lifecycle_test.go), [bots_integration_test.go](../../server/internal/world/bots_integration_test.go), [bots_test.go](../../server/internal/world/bots_test.go), [character_enchant_test.go](../../server/internal/world/character_enchant_test.go), [chat_items_test.go](../../server/internal/world/chat_items_test.go), [chat_test.go](../../server/internal/world/chat_test.go), [cloak_fits_test.go](../../server/internal/world/cloak_fits_test.go), [combat_integration_test.go](../../server/internal/world/combat_integration_test.go), [cooldown_reduction_test.go](../../server/internal/world/cooldown_reduction_test.go), [degeneration_test.go](../../server/internal/world/degeneration_test.go), [detection_test.go](../../server/internal/world/detection_test.go), [drop_oj_limits_integration_test.go](../../server/internal/world/drop_oj_limits_integration_test.go), [drop_oj_limits_test.go](../../server/internal/world/drop_oj_limits_test.go), [durability_test.go](../../server/internal/world/durability_test.go), [elements_test.go](../../server/internal/world/elements_test.go), [enchant_ini_test.go](../../server/internal/world/enchant_ini_test.go), [equipment_rejection_test.go](../../server/internal/world/equipment_rejection_test.go), [experience_test.go](../../server/internal/world/experience_test.go), [fall_damage_test.go](../../server/internal/world/fall_damage_test.go), [firethorn_test.go](../../server/internal/world/firethorn_test.go), [forge_quote_test.go](../../server/internal/world/forge_quote_test.go), [forge_rules_test.go](../../server/internal/world/forge_rules_test.go), [free_mall_test.go](../../server/internal/world/free_mall_test.go), [gem_safety_test.go](../../server/internal/world/gem_safety_test.go), [gm_map_test.go](../../server/internal/world/gm_map_test.go), [gm_set_stats_test.go](../../server/internal/world/gm_set_stats_test.go), [gm_test.go](../../server/internal/world/gm_test.go), [grb_integration_test.go](../../server/internal/world/grb_integration_test.go), [guild_integration_test.go](../../server/internal/world/guild_integration_test.go), [guildhouse_test.go](../../server/internal/world/guildhouse_test.go), [healing_delta_test.go](../../server/internal/world/healing_delta_test.go), [healthassist_test.go](../../server/internal/world/healthassist_test.go), [inventory_operation_test.go](../../server/internal/world/inventory_operation_test.go), [isolation_test.go](../../server/internal/world/isolation_test.go), [itemboxes_test.go](../../server/internal/world/itemboxes_test.go), [jump_motion_regression_test.go](../../server/internal/world/jump_motion_regression_test.go), [killcount_test.go](../../server/internal/world/killcount_test.go), [ladders_test.go](../../server/internal/world/ladders_test.go), [lapis_debuff_test.go](../../server/internal/world/lapis_debuff_test.go), [lapis_mob_test.go](../../server/internal/world/lapis_mob_test.go), [mailbox_test.go](../../server/internal/world/mailbox_test.go), [map_rules_test.go](../../server/internal/world/map_rules_test.go), [mapitems_test.go](../../server/internal/world/mapitems_test.go), [miss_feedback_test.go](../../server/internal/world/miss_feedback_test.go), [mob_ai_leak_test.go](../../server/internal/world/mob_ai_leak_test.go), [mob_ai_test.go](../../server/internal/world/mob_ai_test.go), [mob_navigation_test.go](../../server/internal/world/mob_navigation_test.go), [mob_quest_drop_test.go](../../server/internal/world/mob_quest_drop_test.go), [mob_respawn_test.go](../../server/internal/world/mob_respawn_test.go), [notices_test.go](../../server/internal/world/notices_test.go), [npc_guard_test.go](../../server/internal/world/npc_guard_test.go), [npc_probe_test.go](../../server/internal/world/npc_probe_test.go), [oj_limits_test.go](../../server/internal/world/oj_limits_test.go), [party_global_test.go](../../server/internal/world/party_global_test.go), [persistence_audit_test.go](../../server/internal/world/persistence_audit_test.go), [phase_test.go](../../server/internal/world/phase_test.go), [player_movement_test.go](../../server/internal/world/player_movement_test.go), [player_speed_test.go](../../server/internal/world/player_speed_test.go), [player_state_fixes_test.go](../../server/internal/world/player_state_fixes_test.go), [potential_test.go](../../server/internal/world/potential_test.go), [previous_skill_test.go](../../server/internal/world/previous_skill_test.go), [protocol_layout_test.go](../../server/internal/world/protocol_layout_test.go), [pvp_test.go](../../server/internal/world/pvp_test.go), [pvpreward_test.go](../../server/internal/world/pvpreward_test.go), [quest_integration_test.go](../../server/internal/world/quest_integration_test.go), [quest_map_test.go](../../server/internal/world/quest_map_test.go), [recreation_runes_test.go](../../server/internal/world/recreation_runes_test.go), [relic_boot_integration_test.go](../../server/internal/world/relic_boot_integration_test.go), [relic_config_test.go](../../server/internal/world/relic_config_test.go), [relics_test.go](../../server/internal/world/relics_test.go), [rules_test.go](../../server/internal/world/rules_test.go), [runtime_test.go](../../server/internal/world/runtime_test.go), [sacrifice_test.go](../../server/internal/world/sacrifice_test.go), [skill_cadence_test.go](../../server/internal/world/skill_cadence_test.go), [skill_dash_test.go](../../server/internal/world/skill_dash_test.go), [skill_failure_test.go](../../server/internal/world/skill_failure_test.go), [skill_range_test.go](../../server/internal/world/skill_range_test.go), [spin_combo_test.go](../../server/internal/world/spin_combo_test.go), [stack_counts_test.go](../../server/internal/world/stack_counts_test.go), [summon_rune_test.go](../../server/internal/world/summon_rune_test.go), [target_effects_test.go](../../server/internal/world/target_effects_test.go), [taunt_test.go](../../server/internal/world/taunt_test.go), [teleport_rune_integration_test.go](../../server/internal/world/teleport_rune_integration_test.go), [teleport_stone_test.go](../../server/internal/world/teleport_stone_test.go), [trap_test.go](../../server/internal/world/trap_test.go), [vehicle_test.go](../../server/internal/world/vehicle_test.go), [visibility_test.go](../../server/internal/world/visibility_test.go), [worldcal_test.go](../../server/internal/world/worldcal_test.go), [worlddrops_test.go](../../server/internal/world/worlddrops_test.go).
 
 ### abilities.go
 
@@ -50,6 +50,84 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`postAuction`](../../server/internal/world/auction.go#L94)<br>`func (s *Session) postAuction(req proto.AuctionRequest) error` | See the source definition and the subsystem ownership contract. |
 | [`payAuction`](../../server/internal/world/auction.go#L149)<br>`func (s *Session) payAuction(req proto.AuctionRequest) error` | See the source definition and the subsystem ownership contract. |
 | [`collectAuction`](../../server/internal/world/auction.go#L169)<br>`func (s *Session) collectAuction(req proto.AuctionRequest) (string, error)` | See the source definition and the subsystem ownership contract. |
+
+### bot_wire.go
+
+[server/internal/world/bot_wire.go](../../server/internal/world/bot_wire.go#L1)
+
+Direct GX dependencies: `server/internal/crypto`, `server/internal/netx`.
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`botWire`](../../server/internal/world/bot_wire.go#L16)<br>`type botWire` | Each synthetic controller owns a private post-login TCP stream. It uses normal world framing and AES, with credentials and account state absent. |
+| [`openBotWire`](../../server/internal/world/bot_wire.go#L22)<br>`func openBotWire(listener *net.TCPListener) (*botWire, error)` | See the source definition and the subsystem ownership contract. |
+| [`close`](../../server/internal/world/bot_wire.go#L38)<br>`func (w *botWire) close()` | See the source definition and the subsystem ownership contract. |
+| [`request`](../../server/internal/world/bot_wire.go#L43)<br>`func (w *botWire) request(payload []byte) ([]byte, error)` | See the source definition and the subsystem ownership contract. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type botWire struct {
+	client, world net.Conn
+	send, receive *crypto.AESCTR
+	frames        netx.Frames
+}
+```
+
+</details>
+
+### bots.go
+
+[server/internal/world/bots.go](../../server/internal/world/bots.go#L1)
+
+Direct GX dependencies: `internal/mapgeometry`, `internal/proto`, `server/internal/config`, `server/internal/db`, `server/internal/packet`.
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`botHealth`](../../server/internal/world/bots.go#L20)<br>`const botHealth = 12000` | See the source definition and the subsystem ownership contract. |
+| [`botTick`](../../server/internal/world/bots.go#L21)<br>`const botTick = 100 * time.Millisecond` | See the source definition and the subsystem ownership contract. |
+| [`worldBot`](../../server/internal/world/bots.go#L23)<br>`type worldBot` | See the source definition and the subsystem ownership contract. |
+| [`worldBotArena`](../../server/internal/world/bots.go#L37)<br>`type worldBotArena` | See the source definition and the subsystem ownership contract. |
+| [`worldBots`](../../server/internal/world/bots.go#L45)<br>`var worldBots struct { 	sync.Mutex 	nextID uint32 	arena  *worldBotArena }` | See the source definition and the subsystem ownership contract. |
+| [`gmBots`](../../server/internal/world/bots.go#L51)<br>`func (s *Session) gmBots(args []string) error` | See the source definition and the subsystem ownership contract. |
+| [`botEquipment`](../../server/internal/world/bots.go#L126)<br>`func botEquipment(defs *db.Defs) (bySlot [8][]*db.ItemDef)` | See the source definition and the subsystem ownership contract. |
+| [`equip`](../../server/internal/world/bots.go#L142)<br>`func (b *worldBot) equip(defs *db.Defs, gear [8][]*db.ItemDef)` | See the source definition and the subsystem ownership contract. |
+| [`clearWorldBots`](../../server/internal/world/bots.go#L168)<br>`func clearWorldBots()` | See the source definition and the subsystem ownership contract. |
+| [`tickWorldBots`](../../server/internal/world/bots.go#L184)<br>`func tickWorldBots(now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`emit`](../../server/internal/world/bots.go#L236)<br>`func (a *worldBotArena) emit(frame []byte, subject, target int)` | See the source definition and the subsystem ownership contract. |
+| [`advance`](../../server/internal/world/bots.go#L244)<br>`func (a *worldBotArena) advance(i int, now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`applyRequest`](../../server/internal/world/bots.go#L326)<br>`func (a *worldBotArena) applyRequest(i int, payload []byte, target int, now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`resolveAttack`](../../server/internal/world/bots.go#L379)<br>`func (a *worldBotArena) resolveAttack(i, target int, skill *db.SkillDef, now time.Time)` | See the source definition and the subsystem ownership contract. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type worldBot struct {
+	castAt             time.Time
+	castTarget         int
+	castSkill          *db.SkillDef
+	wire               *botWire
+	char               db.Character
+	home               mapgeometry.Position
+	faction            uint8
+	items              []db.Item
+	skills             []*db.SkillDef
+	target             int
+	nextAction, revive time.Time
+}
+```
+
+```go
+type worldBotArena struct {
+	failed   bool
+	owner    uint32
+	geometry *mapgeometry.Geometry
+	bots     []worldBot
+	visible  map[*ConnectedPlayer][]bool
+}
+```
+
+</details>
 
 ### character.go
 
@@ -1213,15 +1291,15 @@ Direct GX dependencies: `internal/gm`, `internal/proto`, `server/internal/db`, `
 | [`gmReply`](../../server/internal/world/gm.go#L19)<br>`func (s *Session) gmReply(message string)` | See the source definition and the subsystem ownership contract. |
 | [`gmNumbers`](../../server/internal/world/gm.go#L39)<br>`func gmNumbers(args []string, bounds ...uint64) ([]uint64, error)` | See the source definition and the subsystem ownership contract. |
 | [`handleGMCommand`](../../server/internal/world/gm.go#L55)<br>`func (s *Session) handleGMCommand(text string) bool` | Known commands are consumed even when refused; they never become public chat. |
-| [`gmClearInventory`](../../server/internal/world/gm.go#L165)<br>`func (s *Session) gmClearInventory() error` | Clear carried inventory only. Equipped items and warehouse contents survive. |
-| [`planGMGrant`](../../server/internal/world/gm.go#L191)<br>`func planGMGrant(items []db.Item, def *db.ItemDef, quantity int) ([]db.Item, []db.Item, []db.Item, error)` | planGMGrant keeps the entire request atomic, including quantities above 255. |
-| [`gmGiveItem`](../../server/internal/world/gm.go#L223)<br>`func (s *Session) gmGiveItem(itemType, id uint8, quantity int) error` | See the source definition and the subsystem ownership contract. |
-| [`gmSpawnPositions`](../../server/internal/world/gm.go#L248)<br>`func gmSpawnPositions(mapID uint16, x, z float32, count int, entities *MapEntities) ([][2]float32, error)` | Spawn positions form expanding rings; occupied points and blocked cells are rejected, including entities created by earlier commands. |
-| [`gmSpawn`](../../server/internal/world/gm.go#L297)<br>`func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error` | See the source definition and the subsystem ownership contract. |
-| [`gmMove`](../../server/internal/world/gm.go#L374)<br>`func (s *Session) gmMove(mapID uint16) error` | See the source definition and the subsystem ownership contract. |
-| [`gmSetUsage`](../../server/internal/world/gm.go#L445)<br>`const gmSetUsage = "usage: /set money&#124;kill&#124;str&#124;dex&#124;rec&#124;int&#124;wis&#124;luc amount"` | See the source definition and the subsystem ownership contract. |
-| [`gmSet`](../../server/internal/world/gm.go#L448)<br>`func (s *Session) gmSet(args []string) error` | gmSet changes only the issuing character. Claimed rewards remain claimed. |
-| [`gmCure`](../../server/internal/world/gm.go#L527)<br>`func (s *Session) gmCure() error` | gmCure restores HP, MP and SP and clears every spell and item cooldown at once and synchronizes the client’s timers. |
+| [`gmClearInventory`](../../server/internal/world/gm.go#L167)<br>`func (s *Session) gmClearInventory() error` | Clear carried inventory only. Equipped items and warehouse contents survive. |
+| [`planGMGrant`](../../server/internal/world/gm.go#L193)<br>`func planGMGrant(items []db.Item, def *db.ItemDef, quantity int) ([]db.Item, []db.Item, []db.Item, error)` | planGMGrant keeps the entire request atomic, including quantities above 255. |
+| [`gmGiveItem`](../../server/internal/world/gm.go#L225)<br>`func (s *Session) gmGiveItem(itemType, id uint8, quantity int) error` | See the source definition and the subsystem ownership contract. |
+| [`gmSpawnPositions`](../../server/internal/world/gm.go#L250)<br>`func gmSpawnPositions(mapID uint16, x, z float32, count int, entities *MapEntities) ([][2]float32, error)` | Spawn positions form expanding rings; occupied points and blocked cells are rejected, including entities created by earlier commands. |
+| [`gmSpawn`](../../server/internal/world/gm.go#L299)<br>`func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error` | See the source definition and the subsystem ownership contract. |
+| [`gmMove`](../../server/internal/world/gm.go#L376)<br>`func (s *Session) gmMove(mapID uint16) error` | See the source definition and the subsystem ownership contract. |
+| [`gmSetUsage`](../../server/internal/world/gm.go#L447)<br>`const gmSetUsage = "usage: /set money&#124;kill&#124;str&#124;dex&#124;rec&#124;int&#124;wis&#124;luc amount"` | See the source definition and the subsystem ownership contract. |
+| [`gmSet`](../../server/internal/world/gm.go#L450)<br>`func (s *Session) gmSet(args []string) error` | gmSet changes only the issuing character. Claimed rewards remain claimed. |
+| [`gmCure`](../../server/internal/world/gm.go#L529)<br>`func (s *Session) gmCure() error` | gmCure restores HP, MP and SP and clears every spell and item cooldown at once and synchronizes the client’s timers. |
 
 ### gm_map.go
 
@@ -3967,12 +4045,12 @@ Direct GX dependencies: `server/internal/db`, `server/internal/logx`, `server/in
 | [`Runtime`](../../server/internal/world/sweeps.go#L15)<br>`type Runtime` | StartSweeps launches the background world ticks: map item despawn, mob roam/respawn/combat, NPC patrol and mob DoTs. |
 | [`Close`](../../server/internal/world/sweeps.go#L24)<br>`func (r *Runtime) Close()` | Close stops producers before storage closes and waits for the current job. |
 | [`StartSweeps`](../../server/internal/world/sweeps.go#L34)<br>`func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.CancelFunc) *Runtime` | See the source definition and the subsystem ownership contract. |
-| [`snapshotCombatPlayers`](../../server/internal/world/sweeps.go#L130)<br>`func snapshotCombatPlayers(players []*ConnectedPlayer) []PlayerCombatSnapshot` | See the source definition and the subsystem ownership contract. |
-| [`queueMobAttack`](../../server/internal/world/sweeps.go#L144)<br>`func queueMobAttack(a MobAttackAction)` | queueMobAttack hands a mob's attack to its target, or for an area mob skill (TargetType 6 around the mob, 7 around the target) to every living player within ApplyRange. |
-| [`viewersByMap`](../../server/internal/world/sweeps.go#L175)<br>`func viewersByMap() map[uint16][][2]float32` | See the source definition and the subsystem ownership contract. |
-| [`dispatchMoves`](../../server/internal/world/sweeps.go#L184)<br>`func dispatchMoves(list []entityMove)` | See the source definition and the subsystem ownership contract. |
-| [`runDotSweep`](../../server/internal/world/sweeps.go#L190)<br>`func runDotSweep(log *logx.Logger)` | See the source definition and the subsystem ownership contract. |
-| [`storageFailure`](../../server/internal/world/sweeps.go#L212)<br>`func storageFailure(err error)` | See the source definition and the subsystem ownership contract. |
+| [`snapshotCombatPlayers`](../../server/internal/world/sweeps.go#L132)<br>`func snapshotCombatPlayers(players []*ConnectedPlayer) []PlayerCombatSnapshot` | See the source definition and the subsystem ownership contract. |
+| [`queueMobAttack`](../../server/internal/world/sweeps.go#L146)<br>`func queueMobAttack(a MobAttackAction)` | queueMobAttack hands a mob's attack to its target, or for an area mob skill (TargetType 6 around the mob, 7 around the target) to every living player within ApplyRange. |
+| [`viewersByMap`](../../server/internal/world/sweeps.go#L177)<br>`func viewersByMap() map[uint16][][2]float32` | See the source definition and the subsystem ownership contract. |
+| [`dispatchMoves`](../../server/internal/world/sweeps.go#L186)<br>`func dispatchMoves(list []entityMove)` | See the source definition and the subsystem ownership contract. |
+| [`runDotSweep`](../../server/internal/world/sweeps.go#L192)<br>`func runDotSweep(log *logx.Logger)` | See the source definition and the subsystem ownership contract. |
+| [`storageFailure`](../../server/internal/world/sweeps.go#L214)<br>`func storageFailure(err error)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 

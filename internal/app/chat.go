@@ -107,7 +107,7 @@ func (a *App) updateChat(in *platform.Input) bool {
 				a.chatHistory = a.chatHistory[len(a.chatHistory)-32:]
 			}
 		}
-		if a.collisionViewCommand(text) || a.botsCommand(text) || a.cameraLimitCommand(text) {
+		if a.collisionViewCommand(text) || a.cameraLimitCommand(text) || (a.world == nil && a.botsCommand(text)) {
 			a.chatOpen = false
 			return true
 		}

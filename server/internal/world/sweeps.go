@@ -49,6 +49,7 @@ func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.Cance
 	add := func(name string, d time.Duration, fn func(time.Time)) {
 		jobs = append(jobs, scheduler.Job{Name: name, Interval: d, Run: fn})
 	}
+	add("bots", botTick, tickWorldBots)
 	add("items", 2*time.Second, func(now time.Time) {
 		for _, e := range sweepExpiredMapItems() {
 			log.Printf("GX Server World despawned map_item_id=%d on map=%d", e.Item.ID, e.MapID)
@@ -106,6 +107,7 @@ func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.Cance
 	engine := scheduler.New(started, jobs)
 	go func() {
 		defer close(r.done)
+		defer func() { worldBots.Lock(); defer worldBots.Unlock(); clearWorldBots() }()
 		var workers sync.WaitGroup
 		workers.Go(func() {
 			ticker := time.NewTicker(10 * time.Second)

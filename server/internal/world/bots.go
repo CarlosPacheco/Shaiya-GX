@@ -1,0 +1,408 @@
+package world
+
+import (
+	"fmt"
+	"math"
+	"math/rand/v2"
+	"net"
+	"slices"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
+)
+
+const botHealth = 12000
+const botTick = 100 * time.Millisecond
+
+type worldBot struct {
+	castAt             time.Time
+	castTarget         int
+	castSkill          *db.SkillDef
+	wire               *botWire
+	char               db.Character
+	home               mapgeometry.Position
+	faction            uint8
+	items              []db.Item
+	skills             []*db.SkillDef
+	target             int
+	nextAction, revive time.Time
+}
+
+type worldBotArena struct {
+	failed   bool
+	owner    uint32
+	geometry *mapgeometry.Geometry
+	bots     []worldBot
+	visible  map[*ConnectedPlayer][]bool
+}
+
+var worldBots struct {
+	sync.Mutex
+	nextID uint32
+	arena  *worldBotArena
+}
+
+func (s *Session) gmBots(args []string) error {
+	host, _, err := net.SplitHostPort(config.WorldListen())
+	if err != nil || !net.ParseIP(host).IsLoopback() && host != "localhost" {
+		return fmt.Errorf("/bots requires a loopback world listener")
+	}
+	if len(args) == 1 && strings.EqualFold(args[0], "off") {
+		worldBots.Lock()
+		clearWorldBots()
+		worldBots.Unlock()
+		s.gmReply("PvP bots removed.")
+		return nil
+	}
+	n, err := gmNumbers(args, 1000)
+	if err != nil {
+		return fmt.Errorf("usage: /bots 1-1000 or /bots off")
+	}
+	g, err := s.playerGeometry(s.char.MapID)
+	if err != nil {
+		return err
+	}
+	a := &worldBotArena{owner: s.char.ID, geometry: g, visible: make(map[*ConnectedPlayer][]bool)}
+	defs := db.MustDefs()
+	listener, err := net.ListenTCP("tcp4", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1)})
+	if err != nil {
+		return err
+	}
+	defer listener.Close()
+	listener.SetDeadline(time.Now().Add(30 * time.Second))
+	gear := botEquipment(defs)
+	worldBots.Lock()
+	defer worldBots.Unlock()
+	for i := range int(n[0]) {
+		angle := float64(i) * 2.399963229728653
+		radius := float32(2 + math.Sqrt(float64(i))*.65)
+		x, z := s.char.PosX+radius*float32(math.Cos(angle)), s.char.PosZ+radius*float32(math.Sin(angle))
+		home, ok := exactMapDestination(g, x, s.char.PosY, z)
+		if !ok {
+			home = mapgeometry.Position{s.char.PosX, s.char.PosY, s.char.PosZ}
+		}
+		if worldBots.nextID < 0x60000000 {
+			worldBots.nextID = 0x60000000
+		}
+		for {
+			worldBots.nextID++
+			if FindPlayerByID(worldBots.nextID) == nil {
+				break
+			}
+		}
+		faction := uint8(i % 2)
+		job := uint8((i / 2) % 6)
+		if i < 2 {
+			job = 5
+		} // A healer in each faction, including small scenarios.
+		b := worldBot{home: home, faction: faction, target: i ^ 1, char: db.Character{
+			ID: worldBots.nextID, Name: fmt.Sprintf("GX Bot %04d", i+1), MapID: s.char.MapID,
+			PosX: home[0], PosY: home[1], PosZ: home[2], Class: job, Race: [2][6]uint8{{0, 0, 1, 1, 1, 0}, {3, 3, 2, 2, 2, 2}}[faction][job], Mode: 3, Height: 2,
+			Gender: uint8(rand.IntN(2)), Face: uint8(rand.IntN(3)), Hair: uint8(rand.IntN(3)), Level: defs.LevelCap,
+			MaxHP: botHealth, CurrentHP: botHealth, MaxMP: 3000, CurrentMP: 3000, MaxSP: 3000, CurrentSP: 3000,
+		}}
+		b.wire, err = openBotWire(listener)
+		if err != nil {
+			for j := range a.bots {
+				a.bots[j].wire.close()
+			}
+			return err
+		}
+		b.equip(defs, gear)
+		a.bots = append(a.bots, b)
+	}
+	clearWorldBots()
+	worldBots.arena = a
+	s.gmReply(fmt.Sprintf("Spawned %d PvP bots around you.", len(a.bots)))
+	return nil
+}
+
+func botEquipment(defs *db.Defs) (bySlot [8][]*db.ItemDef) {
+	for _, item := range defs.Items {
+		if item.TypeID == 0 {
+			continue
+		}
+		rt := realType(item.Type)
+		for slot := range bySlot {
+			if slot == weaponSlot && isWeaponReal(rt) || slot != weaponSlot && int(rt) == equipSlotRealType[uint8(slot)] {
+				bySlot[slot] = append(bySlot[slot], item)
+				break
+			}
+		}
+	}
+	return
+}
+
+func (b *worldBot) equip(defs *db.Defs, gear [8][]*db.ItemDef) {
+	for slot, options := range gear {
+		// Choose a random starting point, then check each candidate at most once.
+		if len(options) == 0 {
+			continue
+		}
+		start := rand.IntN(len(options))
+		for offset := range options {
+			item := options[(start+offset)%len(options)]
+			if canEquip(&b.char, item, uint8(slot), b.items) {
+				b.items = append(b.items, db.Item{Type: item.Type, TypeID: item.TypeID, Slot: uint8(slot), Count: 1})
+				break
+			}
+		}
+	}
+	for _, skill := range defs.Skills {
+		if skill.SkillLevel == 1 && skill.ClassEligible[b.char.Class] && skill.ReqLevel <= b.char.Level &&
+			skillCountryAllows(skill.Country, b.char.Race) && skillGrowAllows(skill.Grow, b.char.Mode) && skill.TypeShow != 0 &&
+			(skill.TypeEffect == typeEffectAttack && skill.DamageHP > 0 || skill.TypeEffect == typeEffectHeal && skill.HealHP > 0) {
+			b.skills = append(b.skills, skill)
+		}
+	}
+	slices.SortFunc(b.skills, func(a, b *db.SkillDef) int { return int(a.SkillID) - int(b.SkillID) })
+	b.skills = b.skills[:min(len(b.skills), 255)]
+}
+
+func clearWorldBots() {
+	if a := worldBots.arena; a != nil {
+		for i := range a.bots {
+			a.bots[i].wire.close()
+		}
+		for viewer, visible := range a.visible {
+			for i, shown := range visible {
+				if shown {
+					_ = viewer.Send(buildUserLeave(a.bots[i].char.ID), "bot leave")
+				}
+			}
+		}
+	}
+	worldBots.arena = nil
+}
+
+func tickWorldBots(now time.Time) {
+	worldBots.Lock()
+	defer worldBots.Unlock()
+	a := worldBots.arena
+	if a == nil {
+		return
+	}
+	if FindPlayerByID(a.owner) == nil {
+		clearWorldBots()
+		return
+	}
+	for viewer := range a.visible {
+		if FindPlayerByID(viewer.CharacterID) != viewer {
+			delete(a.visible, viewer)
+		}
+	}
+	for _, viewer := range AllPlayers() {
+		old := a.visible[viewer]
+		if viewer.MapID() != a.bots[0].char.MapID {
+			delete(a.visible, viewer)
+			continue
+		}
+		if old == nil {
+			old = make([]bool, len(a.bots))
+			a.visible[viewer] = old
+		}
+		x, z := viewer.PositionXZ()
+		for i := range a.bots {
+			b := &a.bots[i]
+			dx, dz := x-b.char.PosX, z-b.char.PosZ
+			show := dx*dx+dz*dz <= BroadcastRadius*BroadcastRadius
+			if show && !old[i] {
+				_ = viewer.Send(buildCharacterEnteredMapGuild(&b.char, false, false, 0), "bot enter")
+				_ = viewer.Send(buildCharacterShapeGuild(&b.char, b.faction, b.items, 0, ""), "bot shape")
+				if b.char.CurrentHP == 0 {
+					_ = viewer.Send(buildCharacterDeathState(b.char.ID), "bot corpse")
+				}
+			} else if !show && old[i] {
+				_ = viewer.Send(buildUserLeave(b.char.ID), "bot leave")
+			}
+			old[i] = show
+		}
+	}
+	for i := range a.bots {
+		a.advance(i, now)
+		if a.failed {
+			clearWorldBots()
+			return
+		}
+	}
+}
+
+func (a *worldBotArena) emit(frame []byte, subject, target int) {
+	for viewer, visible := range a.visible {
+		if visible[subject] && (target < 0 || visible[target]) {
+			_ = viewer.Send(frame, "bot world event")
+		}
+	}
+}
+
+func (a *worldBotArena) advance(i int, now time.Time) {
+	b := &a.bots[i]
+	if b.char.CurrentHP == 0 {
+		if now.Before(b.revive) {
+			return
+		}
+		b.char.PosX, b.char.PosY, b.char.PosZ = b.home[0], b.home[1], b.home[2]
+		b.char.CurrentHP = botHealth
+		b.castSkill = nil
+		b.nextAction = now.Add(time.Second)
+		a.emit(buildCharacterReviveInit(b.char.ID), i, -1)
+		a.emit(buildCharacterResurrect(b.char.ID, 1, 0, b.home[0], b.home[1], b.home[2]), i, -1)
+		a.emit(buildCharacterReviveHitpoints(b.char.ID, botHealth, 3000, 3000), i, -1)
+		return
+	}
+	if b.castSkill != nil {
+		if now.Before(b.castAt) {
+			return
+		}
+		skill, target := b.castSkill, b.castTarget
+		b.castSkill = nil
+		a.resolveAttack(i, target, skill, now)
+		return
+	}
+	if b.target < 0 || b.target >= len(a.bots) || a.bots[b.target].char.CurrentHP == 0 {
+		b.target = -1
+		for j := 1; j < len(a.bots); j++ {
+			k := (i + j) % len(a.bots)
+			if a.bots[k].faction != b.faction && a.bots[k].char.CurrentHP > 0 {
+				b.target = k
+				break
+			}
+		}
+	}
+	if b.target < 0 {
+		return
+	}
+	target := b.target
+	t := &a.bots[target]
+	dx, dz := t.char.PosX-b.char.PosX, t.char.PosZ-b.char.PosZ
+	distance := float32(math.Hypot(float64(dx), float64(dz)))
+	dir := uint16(int(math.Atan2(float64(dx), float64(dz)) * 65536 / (2 * math.Pi)))
+	if !now.Before(b.nextAction) {
+		for _, slot := range rand.Perm(len(b.skills)) {
+			skill := b.skills[slot]
+			k := target
+			if skill.TypeEffect == typeEffectHeal {
+				k = -1
+				for j := int(b.faction); j < len(a.bots); j += 2 {
+					ally := &a.bots[j]
+					if i == j || ally.char.CurrentHP == 0 || ally.char.CurrentHP > botHealth-900 {
+						continue
+					}
+					ax, az := ally.char.PosX-b.char.PosX, ally.char.PosZ-b.char.PosZ
+					if ax*ax+az*az <= float32(max(skill.AttackRange, 8))*float32(max(skill.AttackRange, 8)) {
+						k = j
+						break
+					}
+				}
+			} else if distance > float32(max(skill.AttackRange, 3)) {
+				continue
+			}
+			if k < 0 {
+				continue
+			}
+			a.applyRequest(i, proto.UseSkillPacket(uint8(slot), a.bots[k].char.ID, true), k, now)
+			return
+		}
+		if distance < 2.6 {
+			a.applyRequest(i, proto.UserAttackPacket(t.char.ID), target, now)
+			return
+		}
+	}
+	if distance > 1.8 {
+		step := min(.44, distance-1.6)
+		x, z := b.char.PosX+dx/distance*step, b.char.PosZ+dz/distance*step
+		if p := a.geometry.GroundMove(mapgeometry.Position{b.char.PosX, b.char.PosY, b.char.PosZ}, mapgeometry.Position{x - b.char.PosX, 0, z - b.char.PosZ}, false); p != (mapgeometry.Position{b.char.PosX, b.char.PosY, b.char.PosZ}) {
+			a.applyRequest(i, proto.MovePacket(1, dir, p[0], p[1], p[2]), -1, now)
+		}
+	}
+}
+
+func (a *worldBotArena) applyRequest(i int, payload []byte, target int, now time.Time) {
+	b := &a.bots[i]
+	received, err := b.wire.request(payload)
+	if err != nil {
+		a.failed = true
+		return
+	}
+	payload = received
+	r := proto.NewReader(payload)
+	switch proto.Op(payload) {
+	case proto.CharacterMove:
+		motion, dir := r.U8(), r.U16()
+		x, y, z := r.F32(), r.F32(), r.F32()
+		if r.Err() != nil {
+			return
+		}
+		b.char.PosX, b.char.PosY, b.char.PosZ = x, y, z
+		b.char.Dir = int16(dir)
+		a.emit(buildCharacterMove(&b.char, motion, dir), i, -1)
+	case proto.CharacterUserAutoAttack, proto.SkillUseNoTarget:
+		if target < 0 || target >= len(a.bots) {
+			return
+		}
+		t := &a.bots[target]
+		if t.char.CurrentHP == 0 {
+			return
+		}
+		var skill *db.SkillDef
+		if proto.Op(payload) == proto.SkillUseNoTarget {
+			slot := int(r.U8())
+			if slot >= len(b.skills) {
+				return
+			}
+			skill = b.skills[slot]
+		}
+		if r.U32() != t.char.ID || r.Err() != nil {
+			return
+		}
+		if skill != nil && skill.ReadyTime > 0 {
+			b.castAt = now.Add(time.Duration(skill.ReadyTime) * 250 * time.Millisecond)
+			b.castTarget, b.castSkill = target, skill
+			w := packet.New(packet.SkillCastStarted)
+			w.U32(b.char.ID)
+			w.U32(t.char.ID)
+			w.U16(skill.SkillID)
+			w.U8(skill.SkillLevel)
+			a.emit(w.MustFinish(), i, target)
+			return
+		}
+		a.resolveAttack(i, target, skill, now)
+	}
+}
+
+func (a *worldBotArena) resolveAttack(i, target int, skill *db.SkillDef, now time.Time) {
+	b, t := &a.bots[i], &a.bots[target]
+	b.nextAction = now.Add(time.Duration(850+rand.IntN(650)) * time.Millisecond)
+	if t.char.CurrentHP == 0 {
+		return
+	}
+
+	heal := skill != nil && skill.TypeEffect == typeEffectHeal
+	if heal != (b.faction == t.faction) {
+		return
+	}
+
+	if heal {
+		amount := min(uint32(900), botHealth-t.char.CurrentHP)
+		t.char.CurrentHP += amount
+		a.emit(buildSkillUseResult(packet.SkillUseNoTarget, skillResultNormal, b.char.ID, t.char.ID, skill.SkillID, skill.SkillLevel, uint16(amount), 0, 0), i, target)
+		return
+	}
+	damage := min(t.char.CurrentHP, uint32(300+rand.IntN(450)))
+	t.char.CurrentHP -= damage
+	if skill != nil {
+		a.emit(buildSkillUseResult(opUserSkillPvP, attackSuccessNormal, b.char.ID, t.char.ID, skill.SkillID, skill.SkillLevel, uint16(damage), 0, 0), i, target)
+	} else {
+		a.emit(buildCharacterUserAttack(b.char.ID, t.char.ID, attackSuccessNormal, uint16(damage)), i, target)
+	}
+	if t.char.CurrentHP == 0 {
+		t.revive = now.Add(3 * time.Second)
+		a.emit(buildCharacterDeath(t.char.ID, deathTypeUser, b.char.ID), target, -1)
+	}
+}

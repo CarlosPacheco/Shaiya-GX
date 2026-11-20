@@ -51,25 +51,23 @@ client and world server; the original client does not implement turbo state.
 All command responses, usage hints and validation messages are in English and
 use green system-chat style 4 (`#33FF33`), including refusals.
 
-## Local PvP bots
+## PvP stress-test bots
 
-`/bots 1` through `/bots 1000` starts a new simulation in front of the GM.
-The client loads the requested actors in batches. In a group, Light and Fury
-bots fight one another with randomized native outfits, weapons, cloth capes,
-movement, casts, projectiles and impacts. A single bot shadow-spars.
-Bots reappear at their starting positions after defeat.
+On GX World configured to listen on loopback, `/bots 1` through `/bots 1000`
+replaces the current group with the requested number of bots around the GM.
+The count is split between Light and Fury, with at most one extra Light bot
+for an odd count. Opposing bots fight and allies can heal one another. Bots
+use class-appropriate gear and skills and revive near their original position.
 
-`/bots off` removes the actors and releases their assets. Leaving the map
-or losing GM status also clears the simulation. The chat composer handles
-these commands locally. Bots are visible only to the issuing GM, and their
-combat has no network packets, server entities, player damage or rewards.
-Use open terrain for large groups.
+Nearby players see the combat through normal World updates. Combat targets
+are limited to bots, and the bots have no accounts or persistent characters.
+Their requests use encrypted World frames over local TCP connections and a
+dedicated server-side simulation. `/bots off` or the issuing GM disconnecting
+removes the group. Use open terrain for large groups.
 
-Bots exercise the live client render path, including character batching
-and ordered effect multi-draw. The
+The offline client retains its local rendering benchmark. The
 [performance report](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/performance.md#pvp-effects-with-ordered-parallel-preparation)
-documents the 300- and 600-bot fixtures and visual checks.
-
+documents its 300- and 600-bot fixtures and visual checks.
 
 ## Extended camera zoom
 

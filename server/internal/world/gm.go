@@ -74,6 +74,8 @@ func (s *Session) handleGMCommand(text string) bool {
 	}
 	var err error
 	switch command {
+	case "/bots":
+		err = s.gmBots(args)
 	case "/notice":
 		err = s.gmNotice(strings.TrimSpace(strings.TrimSpace(text)[len(command):]))
 	case "/weather":

@@ -1140,13 +1140,74 @@ Declarations: [packet.SkillCastStarted](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L158)
+**S→C serializers:** [applyRequest (server/internal/world/bots.go)](../../server/internal/world/bots.go#L326), [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L158)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L802)
 
 ### Wire layouts and validation
 
 These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>applyRequest — server/internal/world/bots.go</summary>
+
+[Source definition](../../server/internal/world/bots.go#L326)
+
+```go
+func (a *worldBotArena) applyRequest(i int, payload []byte, target int, now time.Time) {
+	b := &a.bots[i]
+	received, err := b.wire.request(payload)
+	if err != nil {
+		a.failed = true
+		return
+	}
+	payload = received
+	r := proto.NewReader(payload)
+	switch proto.Op(payload) {
+	case proto.CharacterMove:
+		motion, dir := r.U8(), r.U16()
+		x, y, z := r.F32(), r.F32(), r.F32()
+		if r.Err() != nil {
+			return
+		}
+		b.char.PosX, b.char.PosY, b.char.PosZ = x, y, z
+		b.char.Dir = int16(dir)
+		a.emit(buildCharacterMove(&b.char, motion, dir), i, -1)
+	case proto.CharacterUserAutoAttack, proto.SkillUseNoTarget:
+		if target < 0 || target >= len(a.bots) {
+			return
+		}
+		t := &a.bots[target]
+		if t.char.CurrentHP == 0 {
+			return
+		}
+		var skill *db.SkillDef
+		if proto.Op(payload) == proto.SkillUseNoTarget {
+			slot := int(r.U8())
+			if slot >= len(b.skills) {
+				return
+			}
+			skill = b.skills[slot]
+		}
+		if r.U32() != t.char.ID || r.Err() != nil {
+			return
+		}
+		if skill != nil && skill.ReadyTime > 0 {
+			b.castAt = now.Add(time.Duration(skill.ReadyTime) * 250 * time.Millisecond)
+			b.castTarget, b.castSkill = target, skill
+			w := packet.New(packet.SkillCastStarted)
+			w.U32(b.char.ID)
+			w.U32(t.char.ID)
+			w.U16(skill.SkillID)
+			w.U8(skill.SkillLevel)
+			a.emit(w.MustFinish(), i, target)
+			return
+		}
+		a.resolveAttack(i, target, skill, now)
+	}
+}
+```
+
+</details>
 
 <details><summary>handleUseSkill — server/internal/world/skillcast.go</summary>
 
@@ -2581,7 +2642,7 @@ Declarations: [proto.CharacterPvPKills](../../internal/proto/opcodes.go#L107).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [gmSet (server/internal/world/gm.go)](../../server/internal/world/gm.go#L448), [killPCToCount (server/internal/world/pvpdeath.go)](../../server/internal/world/pvpdeath.go#L153)
+**S→C serializers:** [gmSet (server/internal/world/gm.go)](../../server/internal/world/gm.go#L450), [killPCToCount (server/internal/world/pvpdeath.go)](../../server/internal/world/pvpdeath.go#L153)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L390)
 
@@ -2591,7 +2652,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>gmSet — server/internal/world/gm.go</summary>
 
-[Source definition](../../server/internal/world/gm.go#L448)
+[Source definition](../../server/internal/world/gm.go#L450)
 
 ```go
 func (s *Session) gmSet(args []string) error {
