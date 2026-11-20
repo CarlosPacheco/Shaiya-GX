@@ -191,6 +191,12 @@ func (a *App) syncUnionState(wasRaid bool) {
 		// the 30-cell raid window appears; the configuration dialog stays closed
 		a.party.creating, a.party.raidHidden, a.party.moving = false, true, false
 		a.partyUI.ResetRaidSettings()
+		a.partyUI.RaidPage = 0
+		for slot, id := range a.state.Party.RaidSlots {
+			if id == a.state.SelfID {
+				a.partyUI.RaidPage = int(slot) / proto.RaidPageSlots // start on your own raid
+			}
+		}
 	case !raid && wasRaid:
 		a.party.raidHidden, a.party.moving = true, false
 		a.partyUI.ResetRaidSettings()

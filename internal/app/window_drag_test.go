@@ -260,7 +260,43 @@ func TestRaidViewAndInfoPersistAndMoveGroupUsesPlainClicks(t *testing.T) {
 
 func TestEmptyRaidGroupTabsStayGrey(t *testing.T) {
 	slots := map[uint16]uint32{0: 1, 6: 2}
-	if !ui.RaidGroupUsed(slots, 0) || !ui.RaidGroupUsed(slots, 1) || ui.RaidGroupUsed(slots, 2) {
+	if !ui.RaidGroupUsed(slots, 0, 0) || !ui.RaidGroupUsed(slots, 0, 1) || ui.RaidGroupUsed(slots, 0, 2) {
 		t.Fatal("group usage")
+	}
+}
+
+// Five raids of 30: the tabs are always active, empty raids can be viewed and
+// Move Group can cross pages.
+func TestRaid150PagesTabsAndCrossPageMove(t *testing.T) {
+	a := inputApp()
+	a.partyUI, _ = ui.NewPartyPanel(inputTextures{})
+	a.state.SelfID = 1
+	a.state.Party.Raid, a.state.Party.Leader, a.state.Party.RaidSubLeader = true, 1, 1
+	a.state.Party.Members = []proto.PartyMember{{ID: 1, Class: 0}, {ID: 2, Class: 3}, {ID: 3, Class: 3}}
+	a.state.Party.RaidSlots = map[uint16]uint32{0: 1, 1: 2, 31: 3}
+	a.party.raidHidden = true
+	const w, h = 1024, 768
+	gx, gy := a.partyUI.RaidGridOrigin(w, h)
+	// An empty raid (page 5) opens with its tab.
+	tabX, tabY := gx+ui.RaidTabX+4*ui.RaidTabStep+8, gy+ui.RaidTabY+15
+	a.updatePartyPointer(&platform.Input{Pressed: true, MouseDown: true, MouseX: tabX, MouseY: tabY}, w, h)
+	a.updatePartyPointer(&platform.Input{Clicked: true, MouseX: tabX, MouseY: tabY}, w, h)
+	if a.partyUI.RaidPage != 4 {
+		t.Fatalf("page %d", a.partyUI.RaidPage)
+	}
+	// A slot on that page is absolute: 4*30 + column 1 row 0.
+	if slot := a.partyUI.RaidGridSlotAt(w, h, gx+ui.RaidCellWidth+5, gy+5); slot != 4*30+6 {
+		t.Fatalf("slot %d", slot)
+	}
+	// Move Group armed on page 1 survives the page switch.
+	a.partyUI.RaidPage = 0
+	a.performContextAction(1, contextAction{label: "Move group", slot: 1})
+	a.partyUI.RaidPage = 4
+	if !a.party.moving || a.party.moveSlot != 1 {
+		t.Fatal("move lost on page change")
+	}
+	counts := ui.RaidClassCounts(a.state.Party.Members, a.state.Party.RaidSlots)
+	if counts != [6]int{1, 0, 0, 2, 0, 0} {
+		t.Fatalf("class counts %v", counts)
 	}
 }

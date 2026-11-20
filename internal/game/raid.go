@@ -31,12 +31,12 @@ func (s *State) applyRaid(p []byte) (bool, error) {
 			party.raidPending = nil
 			return true, fmt.Errorf("raid: inconsistent roster chunks")
 		}
-		if pending.kind != 1 || len(pending.members)+len(chunk.Members) > 30 {
+		if pending.kind != 1 || len(pending.members)+len(chunk.Members) > proto.RaidSlots {
 			party.raidPending = nil
 			return true, fmt.Errorf("raid: invalid roster")
 		}
 		for _, entry := range chunk.Members {
-			if entry.Slot >= 30 || entry.Member.ID == 0 || pending.slots[entry.Slot] != 0 {
+			if entry.Slot >= proto.RaidSlots || entry.Member.ID == 0 || pending.slots[entry.Slot] != 0 {
 				party.raidPending = nil
 				return true, fmt.Errorf("raid: invalid slot %d", entry.Slot)
 			}
@@ -68,7 +68,7 @@ func (s *State) applyRaid(p []byte) (bool, error) {
 		if err != nil {
 			return true, err
 		}
-		if m.Slot >= 30 || m.Member.ID == 0 {
+		if m.Slot >= proto.RaidSlots || m.Member.ID == 0 {
 			return true, fmt.Errorf("raid: invalid joining member")
 		}
 		if party.RaidSlots == nil {
@@ -95,7 +95,7 @@ func (s *State) applyRaid(p []byte) (bool, error) {
 		if err := r.Err(); err != nil {
 			return true, err
 		}
-		if kind != 1 || leader >= uint32(len(party.Members)) || sub >= uint32(len(party.Members)) || len(party.Members) > 30 {
+		if kind != 1 || leader >= uint32(len(party.Members)) || sub >= uint32(len(party.Members)) || len(party.Members) > proto.RaidSlots {
 			return true, fmt.Errorf("raid: invalid conversion")
 		}
 		slots := make(map[uint16]uint32, len(party.Members))
@@ -141,7 +141,7 @@ func (s *State) applyRaid(p []byte) (bool, error) {
 		if err := r.Err(); err != nil {
 			return true, err
 		}
-		if first >= 30 || second >= 30 || leader >= 30 || sub >= 30 || !party.Raid || party.RaidSlots == nil {
+		if first >= proto.RaidSlots || second >= proto.RaidSlots || leader >= proto.RaidSlots || sub >= proto.RaidSlots || !party.Raid || party.RaidSlots == nil {
 			return true, fmt.Errorf("raid: invalid swap")
 		}
 		a, b := party.RaidSlots[uint16(first)], party.RaidSlots[uint16(second)]

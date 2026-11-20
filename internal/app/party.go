@@ -428,7 +428,7 @@ func (a *App) raidCommand(fields []string) bool {
 		if len(fields) == 3 && p.Raid && (p.Leader == a.state.SelfID || p.RaidSubLeader == a.state.SelfID) {
 			first, e1 := strconv.ParseUint(fields[1], 10, 8)
 			second, e2 := strconv.ParseUint(fields[2], 10, 8)
-			if e1 == nil && e2 == nil && first < 30 && second < 30 {
+			if e1 == nil && e2 == nil && first < proto.RaidSlots && second < proto.RaidSlots {
 				packet = proto.RaidSwapPacket(uint32(first), uint32(second))
 			}
 		}
@@ -504,12 +504,13 @@ func (a *App) drawMemberBuffTooltip() {
 // raidInfoLines are the raid properties panel's rows (0x513bc0): the join
 // mode with the original texts (6528, 6529/6530) and the member count. The
 // loot line of the original is left out for now.
-func (a *App) raidInfoLines() [2]string {
+func (a *App) raidInfoLines() [3]string {
 	mode := a.msg.Get(6530)
 	if a.state.Party.RaidAutoJoin {
 		mode = a.msg.Get(6529)
 	}
-	return [2]string{
+	return [3]string{
+		fmt.Sprintf("Raid %d", a.partyUI.RaidPage+1), // the raid (page) being viewed
 		fmt.Sprintf("%s %s", a.msg.Get(6528), mode),
 		fmt.Sprintf("Members : %d", len(a.state.Party.Members)),
 	}

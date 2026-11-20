@@ -23,6 +23,9 @@ type PartyPanel struct {
 	raidHeld                          int
 	raidCompactHeld                   uint32
 	raidGridHeld                      uint32
+	raidGridTabHeld                   int
+	RaidPage                          int            // the raid (1-5) being viewed, 0-4
+	raidBase                          int            // first slot of the raid you belong to (compact list)
 	RaidInfoPosition                  WindowPosition // the raid properties panel
 	raidInfoFade                      float32
 	infoFill                          *render.Texture // message2: the panel's hover fill
@@ -107,15 +110,17 @@ func RaidSlotPosition(w, h int, slot uint16) (int, int) {
 
 func (p *PartyPanel) RaidSlotPosition(w, h int, slot uint16) (int, int) {
 	x, y := p.RaidOrigin(w, h)
+	slot %= proto.RaidPageSlots // the window shows one raid (page) at a time
 	return x + 20 + int(slot)/6*RaidSlotWidth, y + 68 + int(slot)%6*RaidSlotHeight
 }
 
-// RaidSlotAt is the slot (0-29) under the pointer in the union window, or -1.
+// RaidSlotAt is the absolute slot under the pointer in the dialog (the slot of
+// the raid page being viewed), or -1.
 func (p *PartyPanel) RaidSlotAt(w, h, mouseX, mouseY int) int {
-	for slot := 0; slot < 30; slot++ {
+	for slot := 0; slot < proto.RaidPageSlots; slot++ {
 		x, y := p.RaidSlotPosition(w, h, uint16(slot))
 		if mouseX >= x && mouseX < x+RaidSlotWidth && mouseY >= y && mouseY < y+RaidSlotHeight {
-			return slot
+			return p.RaidPage*proto.RaidPageSlots + slot
 		}
 	}
 	return -1
@@ -128,11 +133,8 @@ func (p *PartyPanel) RaidInside(w, h, mouseX, mouseY int) bool {
 }
 
 func (p *PartyPanel) RaidMemberAt(w, h, mouseX, mouseY int, slots map[uint16]uint32) uint32 {
-	for slot, id := range slots {
-		x, y := p.RaidSlotPosition(w, h, slot)
-		if id != 0 && mouseX >= x && mouseX < x+RaidSlotWidth && mouseY >= y && mouseY < y+RaidSlotHeight {
-			return id
-		}
+	if slot := p.RaidSlotAt(w, h, mouseX, mouseY); slot >= 0 {
+		return slots[uint16(slot)]
 	}
 	return 0
 }
@@ -250,8 +252,8 @@ func (p *PartyPanel) DrawRaid(s *render.Sprites, f *Font, w, h int, members []pr
 	opacity := float32(1)
 	tint := white
 	s.Draw(p.raidFrame, float32(x), float32(y), RaidWidth, RaidHeight, 0, 0, float32(RaidWidth)/1024, float32(RaidHeight)/512, tint)
-	for slot := uint16(0); slot < 30; slot++ {
-		id := slots[slot]
+	for slot := uint16(0); slot < proto.RaidPageSlots; slot++ {
+		id := slots[slot+uint16(p.RaidPage*proto.RaidPageSlots)]
 		sx, sy := p.RaidSlotPosition(w, h, slot)
 		v := float32(0)
 		if id != 0 && id == target {

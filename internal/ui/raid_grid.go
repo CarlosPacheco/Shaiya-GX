@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -13,10 +15,15 @@ import (
 const (
 	RaidGridWidth, RaidGridHeight = 490, 210
 	RaidCellWidth, RaidCellHeight = 98, 35
+	// The raid window also carries the page tabs above it (always active)
+	// and the class counter on its right.
+	RaidTabX, RaidTabY, RaidTabStep  = 4, -30, 24
+	RaidCounterGap, RaidCounterWidth = 4, 64
+	RaidWindowWidth                  = RaidGridWidth + RaidCounterGap + RaidCounterWidth
 )
 
 func (p *PartyPanel) RaidGridOrigin(w, h int) (int, int) {
-	return p.RaidGridPosition.Origin(w, h, RaidGridWidth, RaidGridHeight, 520, 425)
+	return p.RaidGridPosition.Origin(w, h, RaidWindowWidth, RaidGridHeight, 520-RaidCounterGap-RaidCounterWidth, 425)
 }
 
 // RaidGridVisible is the "Raid Window On/Off" setting (DAT_021fd8c4).
@@ -25,39 +32,76 @@ func (p *PartyPanel) RaidGridVisible() bool { return p.raidCompact }
 // RaidOpacity is the window transparency (ALPAH_VALUE).
 func (p *PartyPanel) RaidOpacity() float32 { return p.raidOpacity }
 
-// RaidGridSlotAt is the slot (column*6 + row) under the pointer, or -1.
+// RaidTabAt is the page tab (0-4) under the pointer, or -1: the tabs are the
+// same buttons as the party groups, drawn flush above the raid's top-left.
+func (p *PartyPanel) RaidTabAt(w, h, mouseX, mouseY int) int {
+	x, y := p.RaidGridOrigin(w, h)
+	tx, ty := x+RaidTabX, y+RaidTabY
+	if mouseX < tx || mouseX >= tx+proto.RaidPages*RaidTabStep || mouseY < ty+7 || mouseY >= ty+30 {
+		return -1
+	}
+	return (mouseX - tx) / RaidTabStep
+}
+
+// RaidGridSlotAt is the absolute slot under the pointer (page*30 + column*6 +
+// row), or -1.
 func (p *PartyPanel) RaidGridSlotAt(w, h, mouseX, mouseY int) int {
 	x, y := p.RaidGridOrigin(w, h)
 	if mouseX < x || mouseX >= x+RaidGridWidth || mouseY < y || mouseY >= y+RaidGridHeight {
 		return -1
 	}
-	return (mouseX-x)/RaidCellWidth*6 + (mouseY-y)/RaidCellHeight
+	return p.RaidPage*proto.RaidPageSlots + (mouseX-x)/RaidCellWidth*6 + (mouseY-y)/RaidCellHeight
 }
 
-// UpdateRaidGrid selects the member whose cell is pressed and released.
+// RaidGridInside covers the cells, the page tabs and the class counter.
+func (p *PartyPanel) RaidGridInside(w, h, mouseX, mouseY int) bool {
+	x, y := p.RaidGridOrigin(w, h)
+	if mouseX >= x && mouseX < x+RaidWindowWidth && mouseY >= y && mouseY < y+RaidGridHeight {
+		return true
+	}
+	return p.RaidTabAt(w, h, mouseX, mouseY) >= 0
+}
+
+// UpdateRaidGrid selects the member whose cell is pressed and released and
+// switches the viewed raid with the tabs.
 func (p *PartyPanel) UpdateRaidGrid(in *platform.Input, w, h int, slots map[uint16]uint32) (uint32, bool) {
 	id := uint32(0)
 	if slot := p.RaidGridSlotAt(w, h, in.MouseX, in.MouseY); slot >= 0 {
 		id = slots[uint16(slot)]
 	}
+	tab := p.RaidTabAt(w, h, in.MouseX, in.MouseY)
 	if in.Pressed {
-		p.raidGridHeld = id
+		p.raidGridHeld, p.raidGridTabHeld = id, tab+1
 	}
 	selected := uint32(0)
 	if in.Clicked {
-		if p.raidGridHeld == id {
+		if tab >= 0 && p.raidGridTabHeld == tab+1 {
+			p.RaidPage = tab
+		} else if p.raidGridHeld == id {
 			selected = id
 		}
-		p.raidGridHeld = 0
+		p.raidGridHeld, p.raidGridTabHeld = 0, 0
 	}
-	x, y := p.RaidGridOrigin(w, h)
-	inside := in.MouseX >= x && in.MouseX < x+RaidGridWidth && in.MouseY >= y && in.MouseY < y+RaidGridHeight
-	return selected, inside && (in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.RightDown || in.Wheel != 0)
+	return selected, p.RaidGridInside(w, h, in.MouseX, in.MouseY) && (in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.RightDown || in.Wheel != 0)
 }
 
-// DrawRaidGrid draws all 30 cells. The selected member's cell (DAT_021fd808)
-// is the red party2 row, the Move Group source (DAT_021fd80c) gets the orange
-// outline and the last row has both. moveSlot is -1 when no move is armed.
+// RaidClassCounts counts the raid's members by class (0-5).
+func RaidClassCounts(members []proto.PartyMember, slots map[uint16]uint32) (counts [6]int) {
+	for _, id := range slots {
+		for i := range members {
+			if members[i].ID == id && id != 0 && members[i].Class < 6 {
+				counts[members[i].Class]++
+				break
+			}
+		}
+	}
+	return counts
+}
+
+// DrawRaidGrid draws the viewed raid's 30 cells with the tabs and the class
+// counter. The selected member's cell (DAT_021fd808) is the red party2 row,
+// the Move Group source (DAT_021fd80c) gets the orange outline and the last
+// row has both. moveSlot is -1 when no move is armed.
 func (p *PartyPanel) DrawRaidGrid(s *render.Sprites, f *Font, w, h int, members []proto.PartyMember, slots map[uint16]uint32, leader, sub, target uint32, moveSlot int) {
 	x, y := p.RaidGridOrigin(w, h)
 	alpha := p.raidOpacity
@@ -65,8 +109,18 @@ func (p *PartyPanel) DrawRaidGrid(s *render.Sprites, f *Font, w, h int, members 
 		alpha = p.raidDraftOpacity // the slider previews live while the dialog is open
 	}
 	tint := [4]float32{1, 1, 1, alpha}
-	for slot := 0; slot < 30; slot++ {
-		cx, cy := x+slot/6*RaidCellWidth, y+slot%6*RaidCellHeight
+	for tab := 0; tab < proto.RaidPages; tab++ {
+		v := float32(0)
+		if tab == p.RaidPage {
+			v = .25
+		}
+		s.Draw(p.raidSelector, float32(x+RaidTabX+tab*RaidTabStep), float32(y+RaidTabY), 32, 32, float32(tab)/8, v, float32(tab+1)/8, v+.25, [4]float32{1, 1, 1, 1})
+	}
+	base := p.RaidPage * proto.RaidPageSlots
+	for i := 0; i < proto.RaidPageSlots; i++ {
+		slot := base + i
+		cx, cy := x+i/6*RaidCellWidth, y+i%6*RaidCellHeight
+
 		id := slots[uint16(slot)]
 		// party2 rows: normal, selected (red), Move Group source, both.
 		row := 0
@@ -108,5 +162,24 @@ func (p *PartyPanel) DrawRaidGrid(s *render.Sprites, f *Font, w, h int, members 
 			}
 			s.Draw(p.mark, float32(cx), float32(cy), 32, 32, u, 0, u+.5, 1, tint)
 		}
+	}
+
+	// Class counter on the right: an icon per class and its number over a
+	// semi-opaque rectangle (a GX addition).
+	counts := RaidClassCounts(members, slots)
+	cx, cy := x+RaidGridWidth+RaidCounterGap, y
+	if p.White != nil {
+		s.Draw(p.White, float32(cx), float32(cy), RaidCounterWidth, RaidGridHeight, 0, 0, 1, 1, [4]float32{0, 0, 0, .5 * alpha})
+	}
+	for class := 0; class < 6; class++ {
+		row := cy + 6 + class*RaidCellHeight
+		col := [...]int{2, 5, 1, 0, 3, 4}[class]
+		s.Draw(p.icons, float32(cx+6), float32(row), 24, 24, float32(col)/8, 0, float32(col+1)/8, 1, tint)
+		number := fmt.Sprint(counts[class])
+		shade := [4]float32{.93, .93, .89, alpha}
+		if counts[class] == 0 {
+			shade = [4]float32{.6, .58, .56, alpha}
+		}
+		f.Draw(s, number, cx+RaidCounterWidth-10-f.Width(number), row+6, shade, 0)
 	}
 }

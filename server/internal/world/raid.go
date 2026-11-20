@@ -8,7 +8,7 @@ import (
 )
 
 // Raids are parties converted with 0x0B0E (party_runtime_raid*, recovered
-// by Eternity): up to 30 members in numbered wire slots, a leader and a
+// by Eternity; GX raises the capacity to 150): up to 150 members in numbered wire slots, a leader and a
 // sub-leader, an item-division mode and an auto-join flag. Packets:
 //
 //	0x0B0E convert, 0x0B0F item division, 0x0B10 auto-join, 0x0B16
@@ -18,7 +18,7 @@ import (
 //	of six), 0x0B0C member joined, 0x0C0C member pools.
 
 const (
-	raidMax           = 30
+	raidMax           = 150 // five raids of 30 slots (GX extension of the original 30)
 	raidKindNormal    = 0
 	raidKindRaid      = 1
 	raidRosterChunk   = 6
@@ -411,6 +411,9 @@ func (s *Session) handleRaidRoles(op packet.Opcode, p []byte) {
 		}
 		first, second := uint16(id), uint16(0)
 		v, _ := packet.U32(p[6:])
+		if id >= raidMax || v >= raidMax {
+			return
+		}
 		second = uint16(v)
 		for i, sl := range pt.slots {
 			switch sl {

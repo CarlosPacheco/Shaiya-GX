@@ -17,6 +17,13 @@ type RaidRosterChunk struct {
 }
 
 // 0x596740 and Rapture send up to six member records per chunk.
+// RaidSlots is the raid capacity: five raids (pages) of RaidPageSlots slots each.
+const (
+	RaidSlots     = 150
+	RaidPageSlots = 30
+	RaidPages     = 5
+)
+
 func DecodeRaidRoster(p []byte) (RaidRosterChunk, error) {
 	r := NewReader(p)
 	var chunk RaidRosterChunk

@@ -20,24 +20,26 @@ func (p *PartyPanel) RaidCompactOrigin(w, h int) (int, int) {
 	return p.RaidCompactPosition.Origin(w, h, RaidCompactWidth, height, 25, 150)
 }
 
-// RaidGroupUsed reports whether any of the group's six slots holds a member.
-func RaidGroupUsed(slots map[uint16]uint32, group int) bool {
+// RaidGroupUsed reports whether any of the group's six slots in the raid
+// starting at base holds a member.
+func RaidGroupUsed(slots map[uint16]uint32, base, group int) bool {
 	for i := 0; i < 6; i++ {
-		if slots[uint16(group*6+i)] != 0 {
+		if slots[uint16(base+group*6+i)] != 0 {
 			return true
 		}
 	}
 	return false
 }
 
+// syncRaidGroup keeps the compact list on your own raid and on a group that
+// has members (yours by default).
 func (p *PartyPanel) syncRaidGroup(self uint32, slots map[uint16]uint32) {
-	if p.raidGroupInitialized && p.raidGroups && RaidGroupUsed(slots, p.raidGroup) {
-		return
-	}
-	p.raidGroupInitialized = false
 	for slot, id := range slots {
-		if id == self && slot < 30 {
-			p.raidGroup, p.raidGroupInitialized = int(slot)/6, true
+		if id == self && int(slot) < proto.RaidSlots {
+			p.raidBase = int(slot) / proto.RaidPageSlots * proto.RaidPageSlots
+			if !p.raidGroupInitialized || !p.raidGroups || !RaidGroupUsed(slots, p.raidBase, p.raidGroup) {
+				p.raidGroup, p.raidGroupInitialized = int(slot)%proto.RaidPageSlots/6, true
+			}
 			return
 		}
 	}
@@ -52,7 +54,7 @@ func (p *PartyPanel) RaidCompactMemberAt(w, h, mouseX, mouseY int, self uint32, 
 	if mouseX < x || mouseX >= x+RaidCompactWidth || mouseY < y || mouseY >= y+6*PartyRowHeight {
 		return 0
 	}
-	return slots[uint16(p.raidGroup*6+(mouseY-y)/PartyRowHeight)]
+	return slots[uint16(p.raidBase+p.raidGroup*6+(mouseY-y)/PartyRowHeight)]
 }
 
 // RaidCompactSlotAt is the slot shown under the pointer in the compact union
@@ -66,7 +68,7 @@ func (p *PartyPanel) RaidCompactSlotAt(w, h, mouseX, mouseY int, self uint32, sl
 	if mouseX < x || mouseX >= x+RaidCompactWidth || mouseY < y || mouseY >= y+6*PartyRowHeight {
 		return -1
 	}
-	return p.raidGroup*6 + (mouseY-y)/PartyRowHeight
+	return p.raidBase + p.raidGroup*6 + (mouseY-y)/PartyRowHeight
 }
 
 // Native compact raid view: 0x514a30, 0x514f70 and 0x5152c0.
@@ -87,7 +89,7 @@ func (p *PartyPanel) UpdateRaidCompact(in *platform.Input, w, h int, self uint32
 	}
 	selected := uint32(0)
 	if in.Clicked {
-		if p.raidTabHeld == tab+1 && tab >= 0 && tab < 5 && RaidGroupUsed(slots, tab) {
+		if p.raidTabHeld == tab+1 && tab >= 0 && tab < 5 && RaidGroupUsed(slots, p.raidBase, tab) {
 			p.raidGroup, p.raidGroupInitialized = tab, true
 		} else if p.raidCompactHeld == id {
 			selected = id
@@ -106,7 +108,7 @@ func (p *PartyPanel) DrawRaidCompact(s *render.Sprites, f *Font, w, h int, self 
 		for group := 0; group < 5; group++ {
 			v := float32(0)
 			switch {
-			case !RaidGroupUsed(slots, group):
+			case !RaidGroupUsed(slots, p.raidBase, group):
 				v = .75 // an empty group stays grey: nothing to show there
 			case group == p.raidGroup:
 				v = .25
@@ -116,7 +118,7 @@ func (p *PartyPanel) DrawRaidCompact(s *render.Sprites, f *Font, w, h int, self 
 		y += 24
 	}
 	for row := 0; row < 6; row++ {
-		id := slots[uint16(p.raidGroup*6+row)]
+		id := slots[uint16(p.raidBase+p.raidGroup*6+row)]
 		for _, member := range members {
 			if member.ID == id && id != 0 {
 				p.drawMemberOpacity(s, f, x, y+row*PartyRowHeight, member, leader, target, 1)

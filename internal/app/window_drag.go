@@ -324,13 +324,13 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.partyUI != nil && a.raidGridShown() && !a.unionConfigCovers(in, w, h) {
 		x, y := a.partyUI.RaidGridOrigin(w, h)
-		if pointInside(in, x, y, ui.RaidGridWidth, ui.RaidGridHeight) {
+		if pointInside(in, x, y, ui.RaidWindowWidth, ui.RaidGridHeight) {
 			slot := a.partyUI.RaidGridSlotAt(w, h, in.MouseX, in.MouseY)
 			id := uint32(0)
 			if slot >= 0 {
 				id = a.state.Party.RaidSlots[uint16(slot)]
 			}
-			a.windowDrag = windowDrag{position: &a.partyUI.RaidGridPosition, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: ui.RaidGridWidth, height: ui.RaidGridHeight, portrait: true, pressX: in.MouseX, pressY: in.MouseY,
+			a.windowDrag = windowDrag{position: &a.partyUI.RaidGridPosition, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: ui.RaidWindowWidth, height: ui.RaidGridHeight, portrait: true, pressX: in.MouseX, pressY: in.MouseY,
 				click: func() {
 					// A plain click either finishes Move Group (empty cells too) or selects.
 					if a.party.moving {
