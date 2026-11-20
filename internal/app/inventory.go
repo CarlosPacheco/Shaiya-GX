@@ -2,8 +2,9 @@ package app
 
 import (
 	"fmt"
-	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
@@ -208,6 +209,13 @@ func (a *App) useInventoryItem(key [2]uint8) {
 		return
 	}
 	if a.openAppearanceEditor(key) || a.itemCooldown(it) > 0 {
+		return
+	}
+	if isQuestInventoryItem(it.Type) {
+		item := sdata.ItemKey{Type: it.Type, TypeID: it.TypeID}
+		if !a.offerItemQuest(key, item, 4) {
+			a.offerItemQuest(key, item, 3)
+		}
 		return
 	}
 	if err := a.world.Send(proto.UseItemPacket(key[0], key[1])); err != nil {

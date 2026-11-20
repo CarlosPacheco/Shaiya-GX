@@ -7,13 +7,13 @@ import (
 	"testing"
 )
 
-func TestQuestStartVisibilityMatchesServerConditions(t *testing.T) {
+func TestQuestStartVisibilityMatchesNativeClientConditions(t *testing.T) {
 	a := inputApp()
 	a.state.SelfID = 7
 	a.state.Slots[0] = proto.CharacterSlot{ID: 7, Level: 10, Race: 0, Class: 0, Mode: 1}
 	a.state.FinishedQuests = map[uint16]uint8{}
 	e := &game.Entity{Kind: game.KindNpc, NpcType: 8, TypeID: 83}
-	q := sdata.Quest{MinLevel: 3, MaxLevel: 20, Faction: 2, Mode: 1, Jobs: [6]uint8{1, 0, 0, 0, 0, 0}, StartType: 1, StartNPCType: 8, StartNPCID: 83}
+	q := sdata.Quest{MinLevel: 3, MaxLevel: 20, Faction: 2, Mode: 1, Male: true, Jobs: [6]uint8{1, 0, 0, 0, 0, 0}, StartType: 1, StartNPCType: 8, StartNPCID: 83}
 	if !a.questStartVisible(q, e) {
 		t.Fatal("eligible quest hidden")
 	}
@@ -23,6 +23,7 @@ func TestQuestStartVisibilityMatchesServerConditions(t *testing.T) {
 	}{
 		{"level", func(q *sdata.Quest) { q.MinLevel = 11 }}, {"class", func(q *sdata.Quest) { q.Jobs[0] = 0 }},
 		{"race", func(q *sdata.Quest) { q.Faction = 5 }}, {"mode", func(q *sdata.Quest) { q.Mode = 2 }},
+		{"gender", func(q *sdata.Quest) { q.Male = false; q.Female = true }},
 		{"npc", func(q *sdata.Quest) { q.StartNPCID = 84 }}, {"item quest", func(q *sdata.Quest) { q.StartType = 3 }},
 		{"prerequisite", func(q *sdata.Quest) { q.PrevQuest = 5 }},
 	} {

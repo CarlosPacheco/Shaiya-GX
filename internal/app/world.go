@@ -956,6 +956,7 @@ func (a *App) releaseWorld() {
 		a.subActionsOpen = false
 		a.playerContext = playerContext{}
 		a.questLog = questLogView{}
+		a.questItemOffer = itemQuestOffer{}
 		if a.questConfirm != nil {
 			a.questConfirm.Visible = false
 		}

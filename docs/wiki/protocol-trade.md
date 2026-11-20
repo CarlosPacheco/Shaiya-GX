@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0A01` — ExchangeRequest**
 
-Declarations: [packet.ExchangeRequest](../../server/internal/packet/packet.go#L219), [proto.ExchangeRequest](../../internal/proto/opcodes.go#L207).
+Declarations: [packet.ExchangeRequest](../../server/internal/packet/packet.go#L223), [proto.ExchangeRequest](../../internal/proto/opcodes.go#L211).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L164)
 
@@ -87,7 +87,7 @@ func DecodeExchangeID(p []byte) (uint32, error) { r := NewReader(p); id := r.U32
 
 **`0x0A02` — ExchangeAnswer**
 
-Declarations: [packet.ExchangeAnswer](../../server/internal/packet/packet.go#L220), [proto.ExchangeAnswer](../../internal/proto/opcodes.go#L208).
+Declarations: [packet.ExchangeAnswer](../../server/internal/packet/packet.go#L224), [proto.ExchangeAnswer](../../internal/proto/opcodes.go#L212).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L169)
 
@@ -145,7 +145,7 @@ func DecodeExchangeByte(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(
 
 **`0x0A03` — ExchangeStart**
 
-Declarations: [packet.ExchangeStart](../../server/internal/packet/packet.go#L221), [proto.ExchangeStart](../../internal/proto/opcodes.go#L209).
+Declarations: [packet.ExchangeStart](../../server/internal/packet/packet.go#L225), [proto.ExchangeStart](../../internal/proto/opcodes.go#L213).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -191,7 +191,7 @@ func DecodeExchangeStart(p []byte) (id uint32, result uint8, err error) {
 
 **`0x0A04` — ExchangeEnd**
 
-Declarations: [packet.ExchangeEnd](../../server/internal/packet/packet.go#L222), [proto.ExchangeEnd](../../internal/proto/opcodes.go#L210).
+Declarations: [packet.ExchangeEnd](../../server/internal/packet/packet.go#L226), [proto.ExchangeEnd](../../internal/proto/opcodes.go#L214).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -231,7 +231,7 @@ func DecodeExchangeByte(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(
 
 **`0x0A05` — ExchangeReady**
 
-Declarations: [packet.ExchangeReady](../../server/internal/packet/packet.go#L223), [proto.ExchangeReady](../../internal/proto/opcodes.go#L211).
+Declarations: [packet.ExchangeReady](../../server/internal/packet/packet.go#L227), [proto.ExchangeReady](../../internal/proto/opcodes.go#L215).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L173)
 
@@ -308,7 +308,7 @@ func Op(payload []byte) Opcode {
 
 **`0x0A06` — ExchangeAdd**
 
-Declarations: [packet.ExchangeAdd](../../server/internal/packet/packet.go#L224), [proto.ExchangeAdd](../../internal/proto/opcodes.go#L212).
+Declarations: [packet.ExchangeAdd](../../server/internal/packet/packet.go#L228), [proto.ExchangeAdd](../../internal/proto/opcodes.go#L216).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L177)
 
@@ -412,7 +412,7 @@ type ExchangeOwnItem struct {
 
 **`0x0A07` — ExchangeRemove**
 
-Declarations: [packet.ExchangeRemove](../../server/internal/packet/packet.go#L225), [proto.ExchangeRemove](../../internal/proto/opcodes.go#L213).
+Declarations: [packet.ExchangeRemove](../../server/internal/packet/packet.go#L229), [proto.ExchangeRemove](../../internal/proto/opcodes.go#L217).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L185)
 
@@ -442,7 +442,7 @@ func ExchangeRemovePacket(slot uint8) []byte {
 
 **`0x0A08` — ExchangeAddMoney**
 
-Declarations: [packet.ExchangeAddMoney](../../server/internal/packet/packet.go#L226), [proto.ExchangeAddMoney](../../internal/proto/opcodes.go#L214).
+Declarations: [packet.ExchangeAddMoney](../../server/internal/packet/packet.go#L230), [proto.ExchangeAddMoney](../../internal/proto/opcodes.go#L218).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L189)
 
@@ -508,7 +508,7 @@ type ExchangeMoneyUpdate struct {
 
 **`0x0A09` — ExchangeAddDest**
 
-Declarations: [packet.ExchangeAddDest](../../server/internal/packet/packet.go#L227), [proto.ExchangeAddDest](../../internal/proto/opcodes.go#L215).
+Declarations: [packet.ExchangeAddDest](../../server/internal/packet/packet.go#L231), [proto.ExchangeAddDest](../../internal/proto/opcodes.go#L219).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -572,7 +572,7 @@ type ExchangeItem struct {
 
 **`0x0A0A` — ExchangeConfirm**
 
-Declarations: [packet.ExchangeConfirm](../../server/internal/packet/packet.go#L228), [proto.ExchangeConfirm](../../internal/proto/opcodes.go#L216).
+Declarations: [packet.ExchangeConfirm](../../server/internal/packet/packet.go#L232), [proto.ExchangeConfirm](../../internal/proto/opcodes.go#L220).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L194)
 

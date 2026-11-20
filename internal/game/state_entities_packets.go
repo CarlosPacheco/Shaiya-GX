@@ -52,6 +52,9 @@ func (s *State) applyEntitiesPacket(p []byte, ev Event) (Event, error) {
 		if m.ID == s.SelfID {
 			for slot, c := range s.Slots {
 				if c.ID == m.ID {
+					if c.Gender != m.Gender {
+						s.QuestMapRevision++
+					}
 					c.Hair, c.Face, c.Height, c.Gender = m.Hair, m.Face, m.Height, m.Gender
 					s.Slots[slot] = c
 				}

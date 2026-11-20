@@ -45,6 +45,19 @@ with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
    account_env=dict(env,SHAIYA_TEST_USER=name,SHAIYA_PASSWORD=password)
    for test,extra in [('TestFactionAgainstRapture',{'SHAIYA_TEST_FACTION':'1'}),('TestCreationAgainstRapture',{'SHAIYA_TEST_CREATE':'試🧙'+secrets.token_hex(4)})]:
     subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^'+test+'$','-count=1','-v'],cwd=client,env=dict(account_env,**extra),check=True,timeout=60)
+  name,password,uid=users[0]
+  with sqlite3.connect(db) as c:
+   char_id,job,level,grow=c.execute('SELECT CharID,Job,Level,Grow FROM PS_GameData_Chars WHERE UserUID=? AND Del=0',(uid,)).fetchone()
+   c.execute('UPDATE PS_GameData_Chars SET Job=0,Level=43,Grow=1 WHERE CharID=?',(char_id,))
+   c.execute('INSERT INTO PS_GameData_CharQuests(CharID,QuestID,Delay,Count1,Count2,Count3,Success,Finish,Del) VALUES(?,844,0,0,0,0,1,1,0)',(char_id,))
+   item_uid=c.execute('SELECT COALESCE(MAX(ItemUID),0)+1 FROM PS_GameData_CharItems').fetchone()[0]
+   c.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,29001,?,29,1,1,20,0,0,0,0,0,0,0,'',1,datetime('now'),'N2',0)",(char_id,item_uid))
+  subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestQuestItemOfferAgainstGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_USER=name,SHAIYA_PASSWORD=password,SHAIYA_TEST_ITEM_QUEST='1'),check=True,timeout=60)
+  with sqlite3.connect(db) as c:
+   if c.execute('SELECT Finish,Success FROM PS_GameData_CharQuests WHERE CharID=? AND QuestID=845',(char_id,)).fetchone() != (1,0):
+    raise RuntimeError('quest 845 abandonment did not persist')
+   c.execute('DELETE FROM PS_GameData_CharQuests WHERE CharID=? AND QuestID IN (844,845)',(char_id,))
+   c.execute('UPDATE PS_GameData_Chars SET Job=?,Level=?,Grow=? WHERE CharID=?',(job,level,grow,char_id))
   with sqlite3.connect(db) as c:
    for n,(_,_,uid) in enumerate(users):
     c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=?,PosY=78,PosZ=1762,Level=40,SkillPoint=100 WHERE UserUID=?',(578+n*2,uid))

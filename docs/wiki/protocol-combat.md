@@ -10,13 +10,13 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0501` — CharacterMove**
 
-Declarations: [packet.CharacterMove](../../server/internal/packet/packet.go#L92), [proto.CharacterMove](../../internal/proto/opcodes.go#L76).
+Declarations: [packet.CharacterMove](../../server/internal/packet/packet.go#L96), [proto.CharacterMove](../../internal/proto/opcodes.go#L80).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L198)
 
 **S→C serializers:** [buildCharacterMove (server/internal/world/character.go)](../../server/internal/world/character.go#L533)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L102)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L105)
 
 ### Wire layouts and validation
 
@@ -93,7 +93,7 @@ type UserMove struct {
 
 **`0x0502` — CharacterUserAutoAttack**
 
-Declarations: [packet.CharacterUserAutoAttack](../../server/internal/packet/packet.go#L94), [proto.CharacterUserAutoAttack](../../internal/proto/opcodes.go#L78).
+Declarations: [packet.CharacterUserAutoAttack](../../server/internal/packet/packet.go#L98), [proto.CharacterUserAutoAttack](../../internal/proto/opcodes.go#L82).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L243)
 
@@ -166,7 +166,7 @@ type AttackResult struct {
 
 **`0x0503` — CharacterMobAutoAttack**
 
-Declarations: [packet.CharacterMobAutoAttack](../../server/internal/packet/packet.go#L95), [proto.CharacterMobAutoAttack](../../internal/proto/opcodes.go#L79).
+Declarations: [packet.CharacterMobAutoAttack](../../server/internal/packet/packet.go#L99), [proto.CharacterMobAutoAttack](../../internal/proto/opcodes.go#L83).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L234)
 
@@ -239,7 +239,7 @@ type AttackResult struct {
 
 **`0x0504` — CharacterDeath**
 
-Declarations: [packet.CharacterDeath](../../server/internal/packet/packet.go#L96), [proto.CharacterDeath](../../internal/proto/opcodes.go#L80).
+Declarations: [packet.CharacterDeath](../../server/internal/packet/packet.go#L100), [proto.CharacterDeath](../../internal/proto/opcodes.go#L84).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -299,7 +299,7 @@ type Reader struct {
 
 **`0x0505` — CharacterReviveHitpoints**
 
-Declarations: [packet.CharacterReviveHitpoints](../../server/internal/packet/packet.go#L93), [proto.CharacterReviveHitpoints](../../internal/proto/opcodes.go#L77).
+Declarations: [packet.CharacterReviveHitpoints](../../server/internal/packet/packet.go#L97), [proto.CharacterReviveHitpoints](../../internal/proto/opcodes.go#L81).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -360,7 +360,7 @@ type Reader struct {
 
 **`0x0506` — CharacterMotion**
 
-Declarations: [packet.CharacterMotion](../../server/internal/packet/packet.go#L97), [proto.CharacterMotion](../../internal/proto/opcodes.go#L81).
+Declarations: [packet.CharacterMotion](../../server/internal/packet/packet.go#L101), [proto.CharacterMotion](../../internal/proto/opcodes.go#L85).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L200)
 
@@ -450,13 +450,13 @@ func GestureAction(motion uint8) (int, bool) {
 
 **`0x0507` — CharacterEquipment**
 
-Declarations: [packet.CharacterEquipment](../../server/internal/packet/packet.go#L98), [proto.CharacterEquipment](../../internal/proto/opcodes.go#L82).
+Declarations: [packet.CharacterEquipment](../../server/internal/packet/packet.go#L102), [proto.CharacterEquipment](../../internal/proto/opcodes.go#L86).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [buildCharacterEquipment (server/internal/world/character.go)](../../server/internal/world/character.go#L574)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L69)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L72)
 
 ### Wire layouts and validation
 
@@ -522,7 +522,7 @@ type EquipmentChange struct {
 
 **`0x0508` — LevelUpSelf**
 
-Declarations: [packet.LevelUpSelf](../../server/internal/packet/packet.go#L73), [proto.LevelUpSelf](../../internal/proto/opcodes.go#L57).
+Declarations: [packet.LevelUpSelf](../../server/internal/packet/packet.go#L77), [proto.LevelUpSelf](../../internal/proto/opcodes.go#L61).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -586,7 +586,7 @@ type Reader struct {
 
 **`0x050A` — UseItem**
 
-Declarations: [packet.UseItem](../../server/internal/packet/packet.go#L114), [proto.UseItem](../../internal/proto/opcodes.go#L98).
+Declarations: [packet.UseItem](../../server/internal/packet/packet.go#L118), [proto.UseItem](../../internal/proto/opcodes.go#L102).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L81)
 
@@ -661,7 +661,7 @@ type ItemUseResult struct {
 
 **`0x050B` — CharacterMaxEnergy**
 
-Declarations: [packet.CharacterMaxEnergy](../../server/internal/packet/packet.go#L115), [proto.CharacterMaxEnergy](../../internal/proto/opcodes.go#L99).
+Declarations: [packet.CharacterMaxEnergy](../../server/internal/packet/packet.go#L119), [proto.CharacterMaxEnergy](../../internal/proto/opcodes.go#L103).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -715,7 +715,7 @@ type MaxEnergy struct {
 
 **`0x050C` — SkillUsedSpMp**
 
-Declarations: [packet.SkillUsedSpMp](../../server/internal/packet/packet.go#L116), [proto.SkillUsedSpMp](../../internal/proto/opcodes.go#L100).
+Declarations: [packet.SkillUsedSpMp](../../server/internal/packet/packet.go#L120), [proto.SkillUsedSpMp](../../internal/proto/opcodes.go#L104).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -774,11 +774,11 @@ type Reader struct {
 
 **`0x050D` — BuffAdd**
 
-Declarations: [packet.BuffAdd](../../server/internal/packet/packet.go#L118), [proto.BuffAdd](../../internal/proto/opcodes.go#L102).
+Declarations: [packet.BuffAdd](../../server/internal/packet/packet.go#L122), [proto.BuffAdd](../../internal/proto/opcodes.go#L106).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildBuffAdd (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L99)
+**S→C serializers:** [buildBuffAdd (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L100)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L622)
 
@@ -788,7 +788,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildBuffAdd — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L99)
+[Source definition](../../server/internal/world/playereffects.go#L100)
 
 ```go
 func buildBuffAdd(id uint32, skillID uint16, level uint8) []byte {
@@ -830,11 +830,11 @@ type ActiveBuff struct {
 
 **`0x050E` — BuffRemove**
 
-Declarations: [packet.BuffRemove](../../server/internal/packet/packet.go#L119), [proto.BuffRemove](../../internal/proto/opcodes.go#L103).
+Declarations: [packet.BuffRemove](../../server/internal/packet/packet.go#L123), [proto.BuffRemove](../../internal/proto/opcodes.go#L107).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [removeEffectsInternal (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L205), [clearBuffsOnDeath (server/internal/world/skillattack.go)](../../server/internal/world/skillattack.go#L310)
+**S→C serializers:** [removeEffectsInternal (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L206), [clearBuffsOnDeath (server/internal/world/skillattack.go)](../../server/internal/world/skillattack.go#L310)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L631)
 
@@ -844,7 +844,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>removeEffectsInternal — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L205)
+[Source definition](../../server/internal/world/playereffects.go#L206)
 
 ```go
 func (s *Session) removeEffectsInternal(match func(*ActiveBuff) bool, why string, includeMapCurses bool) {
@@ -867,6 +867,7 @@ func (s *Session) removeEffectsInternal(match func(*ActiveBuff) bool, why string
 		w := packet.New(packet.BuffRemove)
 		w.U32(b.ID)
 		s.send(w.MustFinish(), "0x050E applied skill removed "+why)
+		s.partyEffect(false, b.SkillID, b.SkillLevel)
 	}
 	s.syncVisibility()
 	s.sendBuffStats(why)
@@ -894,6 +895,7 @@ func (s *Session) clearBuffsOnDeath() {
 	s.startRebirthTimer()
 	kept := s.buffs[:0]
 	var removed []uint32
+	var gone []ActiveBuff
 	for _, b := range s.buffs {
 		if b.MapCurse || (duelDeath && b.SkillID > 200 && b.SkillLevel != db.NPCSkillWireLevel) {
 			kept = append(kept, b)
@@ -904,6 +906,7 @@ func (s *Session) clearBuffsOnDeath() {
 			continue
 		}
 		removed = append(removed, b.ID)
+		gone = append(gone, b)
 	}
 	s.buffs = kept
 	s.syncVisibility()
@@ -911,6 +914,9 @@ func (s *Session) clearBuffsOnDeath() {
 		w := packet.New(packet.BuffRemove)
 		w.U32(id)
 		s.send(w.MustFinish(), "0x050E buff removed by death")
+	}
+	for _, b := range gone {
+		s.partyEffect(false, b.SkillID, b.SkillLevel)
 	}
 	if len(removed) > 0 {
 		s.sendBuffStats("after death")
@@ -934,11 +940,11 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x050F` — SkillKeep**
 
-Declarations: [packet.SkillKeep](../../server/internal/packet/packet.go#L120), [proto.SkillKeep](../../internal/proto/opcodes.go#L104).
+Declarations: [packet.SkillKeep](../../server/internal/packet/packet.go#L124), [proto.SkillKeep](../../internal/proto/opcodes.go#L108).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applyFixedHit (server/internal/world/firethorn.go)](../../server/internal/world/firethorn.go#L99), [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L262), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L392)
+**S→C serializers:** [applyFixedHit (server/internal/world/firethorn.go)](../../server/internal/world/firethorn.go#L99), [tickDebuffs (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L264), [processBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L392)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L835)
 
@@ -987,7 +993,7 @@ func (s *Session) applyFixedHit(h pendingUserHit) bool {
 
 <details><summary>tickDebuffs — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L262)
+[Source definition](../../server/internal/world/playereffects.go#L264)
 
 ```go
 func (s *Session) tickDebuffs(now time.Time) bool {
@@ -1161,7 +1167,7 @@ type PeriodicEffect struct {
 
 **`0x0510` — SkillCastStarted**
 
-Declarations: [packet.SkillCastStarted](../../server/internal/packet/packet.go#L117), [proto.SkillCastStarted](../../internal/proto/opcodes.go#L101).
+Declarations: [packet.SkillCastStarted](../../server/internal/packet/packet.go#L121), [proto.SkillCastStarted](../../internal/proto/opcodes.go#L105).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1403,7 +1409,7 @@ type SkillCast struct {
 
 **`0x0511` — SkillUseNoTarget**
 
-Declarations: [packet.SkillUseNoTarget](../../server/internal/packet/packet.go#L141), [proto.SkillUseNoTarget](../../internal/proto/opcodes.go#L126).
+Declarations: [packet.SkillUseNoTarget](../../server/internal/packet/packet.go#L145), [proto.SkillUseNoTarget](../../internal/proto/opcodes.go#L130).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L255)
 
@@ -1481,7 +1487,7 @@ type SkillResult struct {
 
 **`0x0512` — SkillUserDrain**
 
-Declarations: [proto.SkillUserDrain](../../internal/proto/opcodes.go#L127).
+Declarations: [proto.SkillUserDrain](../../internal/proto/opcodes.go#L131).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1538,7 +1544,7 @@ type SkillResult struct {
 
 **`0x0513` — SkillPartyMember**
 
-Declarations: [packet.SkillPartyMember](../../server/internal/packet/packet.go#L142), [proto.SkillPartyMember](../../internal/proto/opcodes.go#L128).
+Declarations: [packet.SkillPartyMember](../../server/internal/packet/packet.go#L146), [proto.SkillPartyMember](../../internal/proto/opcodes.go#L132).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1616,7 +1622,7 @@ type SkillResult struct {
 
 **`0x0514` — SkillUserExtraDamage**
 
-Declarations: [proto.SkillUserExtraDamage](../../internal/proto/opcodes.go#L129).
+Declarations: [proto.SkillUserExtraDamage](../../internal/proto/opcodes.go#L133).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1685,7 +1691,7 @@ type SkillResult struct {
 
 **`0x0515` — SkillUserReflectedDamage**
 
-Declarations: [proto.SkillUserReflectedDamage](../../internal/proto/opcodes.go#L130).
+Declarations: [proto.SkillUserReflectedDamage](../../internal/proto/opcodes.go#L134).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1819,7 +1825,7 @@ type ReflectedDamage struct {
 
 **`0x0517` — SkillUse**
 
-Declarations: [packet.SkillUse](../../server/internal/packet/packet.go#L192), [proto.SkillUse](../../internal/proto/opcodes.go#L179).
+Declarations: [packet.SkillUse](../../server/internal/packet/packet.go#L196), [proto.SkillUse](../../internal/proto/opcodes.go#L183).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L255)
 
@@ -1897,7 +1903,7 @@ type SkillResult struct {
 
 **`0x0518` — SkillMobDrain**
 
-Declarations: [proto.SkillMobDrain](../../internal/proto/opcodes.go#L131).
+Declarations: [proto.SkillMobDrain](../../internal/proto/opcodes.go#L135).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1978,7 +1984,7 @@ type SkillResult struct {
 
 **`0x0519` — SkillMobOther**
 
-Declarations: [proto.SkillMobOther](../../internal/proto/opcodes.go#L132).
+Declarations: [proto.SkillMobOther](../../internal/proto/opcodes.go#L136).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2056,7 +2062,7 @@ type SkillResult struct {
 
 **`0x051A` — SkillExtraDamage**
 
-Declarations: [packet.SkillExtraDamage](../../server/internal/packet/packet.go#L193), [proto.SkillExtraDamage](../../internal/proto/opcodes.go#L180).
+Declarations: [packet.SkillExtraDamage](../../server/internal/packet/packet.go#L197), [proto.SkillExtraDamage](../../internal/proto/opcodes.go#L184).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2211,11 +2217,11 @@ type SkillResult struct {
 
 **`0x051B` — SkillMobReflectedDamage**
 
-Declarations: [proto.SkillMobReflectedDamage](../../internal/proto/opcodes.go#L181).
+Declarations: [proto.SkillMobReflectedDamage](../../internal/proto/opcodes.go#L185).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [reflectToMob (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L480)
+**S→C serializers:** [reflectToMob (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L482)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L859)
 
@@ -2225,7 +2231,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>reflectToMob — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L480)
+[Source definition](../../server/internal/world/playereffects.go#L482)
 
 ```go
 func (s *Session) reflectToMob(mobGlobalID uint32, damage [3]uint16) {
@@ -2279,11 +2285,11 @@ type ReflectedDamage struct {
 
 **`0x051C` — CharacterDeathState**
 
-Declarations: [packet.CharacterDeathState](../../server/internal/packet/packet.go#L195), [proto.CharacterDeathState](../../internal/proto/opcodes.go#L183).
+Declarations: [packet.CharacterDeathState](../../server/internal/packet/packet.go#L199), [proto.CharacterDeathState](../../internal/proto/opcodes.go#L187).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterDeathState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1441), [buildCharacterSpeed (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L157)
+**S→C serializers:** [buildCharacterDeathState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1441), [buildCharacterSpeed (server/internal/world/playereffects.go)](../../server/internal/world/playereffects.go#L158)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L680)
 
@@ -2309,7 +2315,7 @@ func buildCharacterDeathState(characterID uint32) []byte {
 
 <details><summary>buildCharacterSpeed — server/internal/world/playereffects.go</summary>
 
-[Source definition](../../server/internal/world/playereffects.go#L157)
+[Source definition](../../server/internal/world/playereffects.go#L158)
 
 ```go
 func buildCharacterSpeed(id uint32, sp playerSpeeds) []byte {
@@ -2348,7 +2354,7 @@ type CharacterSpeed struct {
 
 **`0x051D` — CharacterMountShape**
 
-Declarations: [packet.CharacterMountShape](../../server/internal/packet/packet.go#L194), [proto.CharacterMountShape](../../internal/proto/opcodes.go#L182).
+Declarations: [packet.CharacterMountShape](../../server/internal/packet/packet.go#L198), [proto.CharacterMountShape](../../internal/proto/opcodes.go#L186).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2420,7 +2426,7 @@ type MountShape struct {
 
 **`0x051E` — LevelUpOther**
 
-Declarations: [packet.LevelUpOther](../../server/internal/packet/packet.go#L74), [proto.LevelUpOther](../../internal/proto/opcodes.go#L58).
+Declarations: [packet.LevelUpOther](../../server/internal/packet/packet.go#L78), [proto.LevelUpOther](../../internal/proto/opcodes.go#L62).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2484,7 +2490,7 @@ type Reader struct {
 
 **`0x051F` — CharacterMaxHpMpSp**
 
-Declarations: [packet.CharacterMaxHpMpSp](../../server/internal/packet/packet.go#L121), [proto.CharacterMaxHpMpSp](../../internal/proto/opcodes.go#L105).
+Declarations: [packet.CharacterMaxHpMpSp](../../server/internal/packet/packet.go#L125), [proto.CharacterMaxHpMpSp](../../internal/proto/opcodes.go#L109).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2549,7 +2555,7 @@ Declarations: [packet.PartyBadge](../../server/internal/packet/packet.go#L51), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [partyBadge (server/internal/world/party.go)](../../server/internal/world/party.go#L123)
+**S→C serializers:** [partyBadge (server/internal/world/party.go)](../../server/internal/world/party.go#L179)
 
 **Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L145), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
 
@@ -2559,7 +2565,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>partyBadge — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L123)
+[Source definition](../../server/internal/world/party.go#L179)
 
 ```go
 func partyBadge(p *ConnectedPlayer) {
@@ -2613,7 +2619,7 @@ type Reader struct {
 
 **`0x0521` — CharacterCurrentHitpoints**
 
-Declarations: [packet.CharacterCurrentHitpoints](../../server/internal/packet/packet.go#L122), [proto.CharacterCurrentHitpoints](../../internal/proto/opcodes.go#L106).
+Declarations: [packet.CharacterCurrentHitpoints](../../server/internal/packet/packet.go#L126), [proto.CharacterCurrentHitpoints](../../internal/proto/opcodes.go#L110).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2663,7 +2669,7 @@ type Pools struct{ HP, MP, SP uint32 }
 
 **`0x0522` — CharacterPvPKills**
 
-Declarations: [proto.CharacterPvPKills](../../internal/proto/opcodes.go#L107).
+Declarations: [proto.CharacterPvPKills](../../internal/proto/opcodes.go#L111).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2820,7 +2826,7 @@ type VisiblePvPKills struct{ ID, Kills uint32 }
 
 **`0x0526` — CharacterAdditionalStats**
 
-Declarations: [packet.CharacterAdditionalStats](../../server/internal/packet/packet.go#L123), [proto.CharacterAdditionalStats](../../internal/proto/opcodes.go#L108).
+Declarations: [packet.CharacterAdditionalStats](../../server/internal/packet/packet.go#L127), [proto.CharacterAdditionalStats](../../internal/proto/opcodes.go#L112).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2876,7 +2882,7 @@ type AdditionalStats struct {
 
 **`0x0551` — CharacterResurrect**
 
-Declarations: [packet.CharacterResurrect](../../server/internal/packet/packet.go#L191), [proto.CharacterResurrect](../../internal/proto/opcodes.go#L178).
+Declarations: [packet.CharacterResurrect](../../server/internal/packet/packet.go#L195), [proto.CharacterResurrect](../../internal/proto/opcodes.go#L182).
 
 Source notes: charId:u32, 5-byte blob 04 46 AF 37 01 (verbatim), x,y,z:f32.
 
@@ -2937,7 +2943,7 @@ type Resurrection struct {
 
 **`0x0553` — ResurrectRequest**
 
-Declarations: [packet.ResurrectRequest](../../server/internal/packet/packet.go#L143), [proto.ResurrectRequest](../../internal/proto/opcodes.go#L133).
+Declarations: [packet.ResurrectRequest](../../server/internal/packet/packet.go#L147), [proto.ResurrectRequest](../../internal/proto/opcodes.go#L137).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L220)
 
@@ -2971,7 +2977,7 @@ type ReviveMode uint8
 
 **`0x0554` — ItemRepair**
 
-Declarations: [packet.ItemRepair](../../server/internal/packet/packet.go#L144), [proto.ItemRepair](../../internal/proto/opcodes.go#L134).
+Declarations: [packet.ItemRepair](../../server/internal/packet/packet.go#L148), [proto.ItemRepair](../../internal/proto/opcodes.go#L138).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L222)
 
@@ -3028,7 +3034,7 @@ type ItemRepairResult struct {
 
 **`0x0556` — ReturnToTown**
 
-Declarations: [packet.ReturnToTown](../../server/internal/packet/packet.go#L145), [proto.ReturnToTown](../../internal/proto/opcodes.go#L135).
+Declarations: [packet.ReturnToTown](../../server/internal/packet/packet.go#L149), [proto.ReturnToTown](../../internal/proto/opcodes.go#L139).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224)
 
@@ -3042,7 +3048,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0x0558` — SkillDetectInfo**
 
-Declarations: [packet.SkillDetectInfo](../../server/internal/packet/packet.go#L189), [proto.SkillDetectInfo](../../internal/proto/opcodes.go#L177).
+Declarations: [packet.SkillDetectInfo](../../server/internal/packet/packet.go#L193), [proto.SkillDetectInfo](../../internal/proto/opcodes.go#L181).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

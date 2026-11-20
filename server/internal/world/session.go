@@ -124,6 +124,7 @@ type Session struct {
 	auctionContact       bool
 	quests               []*activeQuest
 	finishedQuests       []db.FinishedQuest
+	lastQuestItem        questItemUse
 	regenMode            int // CUser +0x1274: 0 sitting, 1 standing, 2 in combat (next tick's recovery)
 	lastCombatAt         time.Time
 	teleportStone        db.Item

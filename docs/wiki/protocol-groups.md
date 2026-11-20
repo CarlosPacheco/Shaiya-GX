@@ -14,7 +14,7 @@ Declarations: [packet.PartyRoster](../../server/internal/packet/packet.go#L42), 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [enterParty (server/internal/world/party.go)](../../server/internal/world/party.go#L141)
+**S→C serializers:** [enterParty (server/internal/world/party.go)](../../server/internal/world/party.go#L197)
 
 **Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L51), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>enterParty — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L141)
+[Source definition](../../server/internal/world/party.go#L197)
 
 ```go
 func enterParty(pt *party, p *ConnectedPlayer) bool {
@@ -150,7 +150,7 @@ Declarations: [packet.PartyAnswer](../../server/internal/packet/packet.go#L44), 
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L122)
 
-**S→C serializers:** [partyError (server/internal/world/party.go)](../../server/internal/world/party.go#L114)
+**S→C serializers:** [partyError (server/internal/world/party.go)](../../server/internal/world/party.go#L170)
 
 **Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L115), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
 
@@ -160,7 +160,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>partyError — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L114)
+[Source definition](../../server/internal/world/party.go#L170)
 
 ```go
 func partyError(to *ConnectedPlayer, code uint8, id uint32) {
@@ -221,7 +221,7 @@ Declarations: [packet.PartyJoined](../../server/internal/packet/packet.go#L45), 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [enterParty (server/internal/world/party.go)](../../server/internal/world/party.go#L141)
+**S→C serializers:** [enterParty (server/internal/world/party.go)](../../server/internal/world/party.go#L197)
 
 **Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L77), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
 
@@ -231,7 +231,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>enterParty — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L141)
+[Source definition](../../server/internal/world/party.go#L197)
 
 ```go
 func enterParty(pt *party, p *ConnectedPlayer) bool {
@@ -374,7 +374,7 @@ Declarations: [packet.PartyLeader](../../server/internal/packet/packet.go#L48), 
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L128)
 
-**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L108), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L164), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L137), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
 
@@ -384,7 +384,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>partyIDPacket — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L108)
+[Source definition](../../server/internal/world/party.go#L164)
 
 ```go
 func partyIDPacket(op packet.Opcode, id uint32) []byte {
@@ -915,7 +915,7 @@ Declarations: [packet.RaidSubLeader](../../server/internal/packet/packet.go#L59)
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L138), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L380)
 
-**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L108), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L164), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L156), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
 
@@ -925,7 +925,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>partyIDPacket — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L108)
+[Source definition](../../server/internal/world/party.go#L164)
 
 ```go
 func partyIDPacket(op packet.Opcode, id uint32) []byte {
@@ -1105,7 +1105,7 @@ Declarations: [packet.RaidLeader](../../server/internal/packet/packet.go#L63), [
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L138), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L387)
 
-**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L108), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L164), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L156), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
 
@@ -1115,7 +1115,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>partyIDPacket — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L108)
+[Source definition](../../server/internal/world/party.go#L164)
 
 ```go
 func partyIDPacket(op packet.Opcode, id uint32) []byte {
@@ -1334,6 +1334,128 @@ type Reader struct {
 
 </details>
 
+## Opcode 0c04
+
+**`0x0C04` — PartyEffectAdd**
+
+Declarations: [packet.PartyEffectAdd](../../server/internal/packet/packet.go#L70), [proto.PartyEffectAdd](../../internal/proto/opcodes.go#L54).
+
+Source notes: handlers 0x5929a0 / 0x5747b0
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
+
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L166), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
+}
+```
+
+</details>
+
+<details><summary>Op — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L161)
+
+```go
+func Op(payload []byte) Opcode {
+	if len(payload) < 2 {
+		return 0
+	}
+	return Opcode(itemstack.Base(binary.LittleEndian.Uint16(payload)))
+}
+```
+
+</details>
+
+## Opcode 0c05
+
+**`0x0C05` — PartyEffectRemove**
+
+Declarations: [packet.PartyEffectRemove](../../server/internal/packet/packet.go#L71), [proto.PartyEffectRemove](../../internal/proto/opcodes.go#L55).
+
+Source notes: handlers 0x592a00 / 0x573b50
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
+
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L166), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
+}
+```
+
+</details>
+
+<details><summary>Op — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L161)
+
+```go
+func Op(payload []byte) Opcode {
+	if len(payload) < 2 {
+		return 0
+	}
+	return Opcode(itemstack.Base(binary.LittleEndian.Uint16(payload)))
+}
+```
+
+</details>
+
 ## Opcode 0c09
 
 **`0x0C09` — PartyLevel**
@@ -1342,9 +1464,9 @@ Declarations: [packet.PartyLevel](../../server/internal/packet/packet.go#L69), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [partyLevel (server/internal/world/party.go)](../../server/internal/world/party.go#L427)
+**S→C serializers:** [partyLevel (server/internal/world/party.go)](../../server/internal/world/party.go#L483)
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L166), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L179), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
 
 ### Wire layouts and validation
 
@@ -1352,7 +1474,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>partyLevel — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L427)
+[Source definition](../../server/internal/world/party.go#L483)
 
 ```go
 func (s *Session) partyLevel() {
@@ -1437,6 +1559,124 @@ type Reader struct {
 	b    []byte
 	off  int
 	err  error
+}
+```
+
+</details>
+
+## Opcode 0c0e
+
+**`0x0C0E` — RaidEffectAdd**
+
+Declarations: [packet.RaidEffectAdd](../../server/internal/packet/packet.go#L72), [proto.RaidEffectAdd](../../internal/proto/opcodes.go#L56).
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
+
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L166), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
+}
+```
+
+</details>
+
+<details><summary>Op — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L161)
+
+```go
+func Op(payload []byte) Opcode {
+	if len(payload) < 2 {
+		return 0
+	}
+	return Opcode(itemstack.Base(binary.LittleEndian.Uint16(payload)))
+}
+```
+
+</details>
+
+## Opcode 0c10
+
+**`0x0C10` — RaidEffectRemove**
+
+Declarations: [packet.RaidEffectRemove](../../server/internal/packet/packet.go#L73), [proto.RaidEffectRemove](../../internal/proto/opcodes.go#L57).
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
+
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L166), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
+}
+```
+
+</details>
+
+<details><summary>Op — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L161)
+
+```go
+func Op(payload []byte) Opcode {
+	if len(payload) < 2 {
+		return 0
+	}
+	return Opcode(itemstack.Base(binary.LittleEndian.Uint16(payload)))
 }
 ```
 

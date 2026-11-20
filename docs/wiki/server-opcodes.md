@@ -163,8 +163,12 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x0B19` | [RaidError](protocol-groups.md#opcode-0b19) | — | yes | yes |
 | `0x0B1A` | [RaidExpel](protocol-groups.md#opcode-0b1a) | yes | yes | yes |
 | `0x0C03` | [PartyPools](protocol-groups.md#opcode-0c03) | — | — | yes |
+| `0x0C04` | [PartyEffectAdd](protocol-groups.md#opcode-0c04) | — | — | yes |
+| `0x0C05` | [PartyEffectRemove](protocol-groups.md#opcode-0c05) | — | — | yes |
 | `0x0C09` | [PartyLevel](protocol-groups.md#opcode-0c09) | — | yes | yes |
 | `0x0C0C` | [RaidPools](protocol-groups.md#opcode-0c0c) | — | — | yes |
+| `0x0C0E` | [RaidEffectAdd](protocol-groups.md#opcode-0c0e) | — | — | yes |
+| `0x0C10` | [RaidEffectRemove](protocol-groups.md#opcode-0c10) | — | — | yes |
 | `0x0D01` | [GuildCreateFailed](protocol-guilds.md#opcode-0d01) | — | yes | yes |
 | `0x0D03` | [GuildDisband](protocol-guilds.md#opcode-0d03) | yes | yes | yes |
 | `0x0D04` | [GuildDisbandAgree](protocol-guilds.md#opcode-0d04) | yes | yes | yes |
@@ -306,6 +310,6 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0xF501` | [GmCommandError](protocol-chat.md#opcode-f501) | — | — | — |
 | `0xF702` | [GmCommandGetItem](protocol-chat.md#opcode-f702) | — | — | — |
 
-Inventory: **295 numeric opcodes**, **497 typed declarations**, **15 families**.
+Inventory: **299 numeric opcodes**, **505 typed declarations**, **15 families**.
 
 Regenerate with `python3 tools/generate_server_reference.py`; verify freshness with `--check`. The generator parses source for both operating systems and tests are excluded from implementation evidence. Source links track main; use Git history when comparing older binaries.

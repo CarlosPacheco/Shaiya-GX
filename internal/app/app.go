@@ -222,6 +222,8 @@ type App struct {
 	questSnapshotAt   map[uint16]time.Time
 	questUI           *ui.QuestLog
 	questConfirm      *ui.Message
+	questItemOffer    itemQuestOffer
+	questItemLinks    map[sdata.ItemKey]sdata.QuestItemLinks
 	questLog          questLogView
 	exchangeUI        *ui.ExchangePanel
 	exchangeMoney     *ui.ExchangeMoney
@@ -843,6 +845,7 @@ func (a *App) backToLogin(msg string) {
 		a.exchangeInvite.Visible = false
 	}
 	a.npcQuest = npcQuestView{}
+	a.questItemOffer = itemQuestOffer{}
 	if a.questConfirm != nil {
 		a.questConfirm.Visible = false
 	}

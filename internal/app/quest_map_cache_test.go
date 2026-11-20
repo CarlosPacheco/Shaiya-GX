@@ -20,7 +20,7 @@ func questCatalogApp() *App {
 	s.Quests = map[uint16]proto.ActiveQuest{}
 	s.FinishedQuests = map[uint16]uint8{}
 	s.Slots[0] = proto.CharacterSlot{ID: 1, Level: 10, Class: 0, Race: 0}
-	return &App{state: s, npcDefs: map[sdata.NPCKey]sdata.NPC{{Type: 8, ID: 2}: {StartQuests: []uint16{1}, EndQuests: []uint16{1}}}, questDefs: []sdata.Quest{{StartType: 1, StartNPCType: 8, StartNPCID: 2, EndNPCType: 8, EndNPCID: 2, EndType: 2, MinLevel: 1, MaxLevel: 60, Jobs: [6]uint8{1}, MobIDs: [2]uint16{99}, MobCounts: [2]uint8{2}}}}
+	return &App{state: s, npcDefs: map[sdata.NPCKey]sdata.NPC{{Type: 8, ID: 2}: {StartQuests: []uint16{1}, EndQuests: []uint16{1}}}, questDefs: []sdata.Quest{{StartType: 1, StartNPCType: 8, StartNPCID: 2, EndNPCType: 8, EndNPCID: 2, EndType: 2, MinLevel: 1, MaxLevel: 60, Male: true, Jobs: [6]uint8{1}, MobIDs: [2]uint16{99}, MobCounts: [2]uint8{2}}}}
 }
 
 func TestQuestMapEntireMapWithoutVisibleNPCAndCacheHits(t *testing.T) {

@@ -25,11 +25,11 @@ func (a *App) loadQuests() error {
 	if err != nil {
 		return err
 	}
-	npcs, quests, err := sdata.ParseQuests(raw)
+	npcs, quests, links, err := sdata.ParseQuestCatalog(raw)
 	if err != nil {
 		return err
 	}
-	a.npcDefs, a.questDefs = npcs, quests
+	a.npcDefs, a.questDefs, a.questItemLinks = npcs, quests, links
 	return nil
 }
 func (a *App) questMessage(message string) {
@@ -73,6 +73,10 @@ func (a *App) confirmedQuest(p []byte) {
 			} else {
 				a.questMessage("Quest started: " + a.questName(id))
 			}
+		}
+	case proto.AddItem:
+		if item, err := proto.DecodeItemAdd(p); err == nil && isQuestInventoryItem(item.Type) {
+			a.offerItemQuest([2]uint8{item.Bag, item.Slot}, sdata.ItemKey{Type: item.Type, TypeID: item.TypeID}, 3)
 		}
 	case proto.QuestCounter:
 		id, slot, value, err := proto.DecodeQuestCounter(p)

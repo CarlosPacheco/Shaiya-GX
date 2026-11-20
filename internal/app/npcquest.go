@@ -18,6 +18,7 @@ type npcQuestView struct {
 	npc      uint32
 	selected uint16
 	ending   bool
+	followUp bool
 	offset   int
 	result   *proto.QuestEndResult
 }
@@ -66,6 +67,13 @@ func (a *App) questResultText(q sdata.Quest, result *proto.QuestEndResult) strin
 	return description
 }
 
+func questOfferText(q sdata.Quest) string {
+	if text := questText(q.Descriptions[0]); text != "" {
+		return text
+	}
+	return questText(q.Summary)
+}
+
 // questStartVisible mirrors Rapture's eligibility checks for presentation.
 // Missing snapshots are treated as unknown; the server makes the decision.
 func (a *App) questStartVisible(q sdata.Quest, e *game.Entity) bool {
@@ -75,8 +83,15 @@ func (a *App) questStartVisible(q sdata.Quest, e *game.Entity) bool {
 	if (q.StartType != 0 || q.StartNPCType != 0) && (q.StartNPCType != e.NpcType || q.StartNPCID != e.TypeID) {
 		return false
 	}
+	return a.questRequirementsVisible(q)
+}
+
+func (a *App) questRequirementsVisible(q sdata.Quest) bool {
 	if slot, ok := a.selfSlot(); ok {
 		if slot.Level < q.MinLevel || slot.Level > q.MaxLevel || slot.Class >= 6 || q.Jobs[slot.Class] == 0 {
+			return false
+		}
+		if (slot.Gender == 0 && !q.Male) || (slot.Gender == 1 && !q.Female) {
 			return false
 		}
 		allowed := true
@@ -173,13 +188,7 @@ func (a *App) npcQuestEntries(e *game.Entity) []npcQuestEntry {
 		}
 	}
 	for _, id := range def.StartQuests {
-		if _, active := a.state.Quests[id]; active {
-			continue
-		}
-		if _, finished := a.state.FinishedQuests[id]; finished {
-			continue
-		}
-		if id > 0 && int(id) <= len(a.questDefs) && a.questStartVisible(a.questDefs[id-1], e) {
+		if a.npcQuestCanOffer(id, e) {
 			out = append(out, npcQuestEntry{id, false})
 		}
 	}
@@ -203,6 +212,9 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 				found = true
 				break
 			}
+		}
+		if v.followUp && !v.ending && a.npcQuestCanOffer(v.selected, e) {
+			found = true
 		}
 		if !found {
 			// The request was accepted (or no longer applies): the conversation ends.
@@ -238,10 +250,15 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 	}
 	if action.Row >= 0 {
 		entry := entries[action.Row]
-		v.selected, v.ending = entry.id, entry.ending
+		v.selected, v.ending, v.followUp = entry.id, entry.ending, false
 		a.npcQuestUI.ResetDescriptionScroll()
 	}
 	if action.Accept && v.result != nil {
+		if next := a.npcQuestFollowUp(v.result, e); next != 0 {
+			*v = npcQuestView{npc: e.ID, selected: next, followUp: true}
+			a.npcQuestUI.ResetDescriptionScroll()
+			return true
+		}
 		a.closeNPC()
 		return true
 	}
@@ -262,6 +279,26 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 	}
 	return panelPointer(in, x, y, ui.NPCQuestWidth, height)
 }
+
+func (a *App) npcQuestFollowUp(result *proto.QuestEndResult, e *game.Entity) uint16 {
+	if result.Success == 0 || result.ID == 0 || int(result.ID) > len(a.questDefs) || result.Variant >= 3 {
+		return 0
+	}
+	next := a.questDefs[result.ID-1].Results[result.Variant].NextQuest
+	if a.npcQuestCanOffer(next, e) {
+		return next
+	}
+	return 0
+}
+
+func (a *App) npcQuestCanOffer(id uint16, e *game.Entity) bool {
+	if id == 0 || int(id) > len(a.questDefs) {
+		return false
+	}
+	_, active := a.state.Quests[id]
+	_, finished := a.state.FinishedQuests[id]
+	return !active && !finished && a.questStartVisible(a.questDefs[id-1], e)
+}
 func (a *App) drawNPCQuest(w, h int, e *game.Entity) {
 	v := &a.npcQuest
 	a.npcQuestUI.Detail = v.selected != 0
@@ -279,9 +316,7 @@ func (a *App) drawNPCQuest(w, h int, e *game.Entity) {
 		title = q.Name
 		description = questText(q.Summary)
 		if !v.ending {
-			if text := questText(q.Descriptions[0]); text != "" {
-				description = text
-			}
+			description = questOfferText(q)
 		}
 		if v.result != nil {
 			description = a.questResultText(q, v.result)

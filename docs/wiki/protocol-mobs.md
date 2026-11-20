@@ -10,13 +10,13 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0601` — MobEnter**
 
-Declarations: [packet.MobEnter](../../server/internal/packet/packet.go#L102), [proto.MobEnter](../../internal/proto/opcodes.go#L86).
+Declarations: [packet.MobEnter](../../server/internal/packet/packet.go#L106), [proto.MobEnter](../../internal/proto/opcodes.go#L90).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L116)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L119)
 
 ### Wire layouts and validation
 
@@ -69,7 +69,7 @@ type MobSpawn struct {
 
 **`0x0602` — MobLeave**
 
-Declarations: [packet.MobLeave](../../server/internal/packet/packet.go#L103), [proto.MobLeave](../../internal/proto/opcodes.go#L87).
+Declarations: [packet.MobLeave](../../server/internal/packet/packet.go#L107), [proto.MobLeave](../../internal/proto/opcodes.go#L91).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -109,13 +109,13 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0603` — MobMove**
 
-Declarations: [packet.MobMove](../../server/internal/packet/packet.go#L104), [proto.MobMove](../../internal/proto/opcodes.go#L88).
+Declarations: [packet.MobMove](../../server/internal/packet/packet.go#L108), [proto.MobMove](../../internal/proto/opcodes.go#L92).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L122)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L125)
 
 ### Wire layouts and validation
 
@@ -157,7 +157,7 @@ type MobMotion struct {
 
 **`0x0605` — MobAttackCharacter**
 
-Declarations: [packet.MobAttackCharacter](../../server/internal/packet/packet.go#L105), [proto.MobAttackCharacter](../../internal/proto/opcodes.go#L89).
+Declarations: [packet.MobAttackCharacter](../../server/internal/packet/packet.go#L109), [proto.MobAttackCharacter](../../internal/proto/opcodes.go#L93).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -216,7 +216,7 @@ type AttackResult struct {
 
 **`0x0606` — MobDeath**
 
-Declarations: [packet.MobDeath](../../server/internal/packet/packet.go#L106), [proto.MobDeath](../../internal/proto/opcodes.go#L90).
+Declarations: [packet.MobDeath](../../server/internal/packet/packet.go#L110), [proto.MobDeath](../../internal/proto/opcodes.go#L94).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -276,7 +276,7 @@ type Reader struct {
 
 **`0x0607` — MobPeriodicDamage**
 
-Declarations: [packet.MobPeriodicDamage](../../server/internal/packet/packet.go#L107), [proto.MobPeriodicDamage](../../internal/proto/opcodes.go#L91).
+Declarations: [packet.MobPeriodicDamage](../../server/internal/packet/packet.go#L111), [proto.MobPeriodicDamage](../../internal/proto/opcodes.go#L95).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -335,7 +335,7 @@ type PeriodicEffect struct {
 
 **`0x0609` — MobSpeed**
 
-Declarations: [proto.MobSpeed](../../internal/proto/opcodes.go#L232).
+Declarations: [proto.MobSpeed](../../internal/proto/opcodes.go#L236).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -396,7 +396,7 @@ type Reader struct {
 
 **`0x060B` — MobSkillUse**
 
-Declarations: [proto.MobSkillUse](../../internal/proto/opcodes.go#L227).
+Declarations: [proto.MobSkillUse](../../internal/proto/opcodes.go#L231).
 
 Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 
@@ -488,7 +488,7 @@ type SkillResult struct {
 
 **`0x060C` — MobSkillDrain**
 
-Declarations: [proto.MobSkillDrain](../../internal/proto/opcodes.go#L228).
+Declarations: [proto.MobSkillDrain](../../internal/proto/opcodes.go#L232).
 
 Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 
@@ -580,7 +580,7 @@ type SkillResult struct {
 
 **`0x060D` — MobSkillOther**
 
-Declarations: [proto.MobSkillOther](../../internal/proto/opcodes.go#L229).
+Declarations: [proto.MobSkillOther](../../internal/proto/opcodes.go#L233).
 
 Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 
@@ -805,7 +805,7 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 
 **`0x0610` — MobCurrentHitpoints**
 
-Declarations: [packet.MobCurrentHitpoints](../../server/internal/packet/packet.go#L108), [proto.MobCurrentHitpoints](../../internal/proto/opcodes.go#L92).
+Declarations: [packet.MobCurrentHitpoints](../../server/internal/packet/packet.go#L112), [proto.MobCurrentHitpoints](../../internal/proto/opcodes.go#L96).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -857,13 +857,13 @@ type MobHealth struct {
 
 **`0x0E01` — MapNpcEnter**
 
-Declarations: [packet.MapNpcEnter](../../server/internal/packet/packet.go#L109), [proto.MapNpcEnter](../../internal/proto/opcodes.go#L93).
+Declarations: [packet.MapNpcEnter](../../server/internal/packet/packet.go#L113), [proto.MapNpcEnter](../../internal/proto/opcodes.go#L97).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [buildNpcEnter (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1315)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L132)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L135)
 
 ### Wire layouts and validation
 
@@ -925,7 +925,7 @@ type NpcSpawn struct {
 
 **`0x0E02` — MapNpcLeave**
 
-Declarations: [packet.MapNpcLeave](../../server/internal/packet/packet.go#L110), [proto.MapNpcLeave](../../internal/proto/opcodes.go#L94).
+Declarations: [packet.MapNpcLeave](../../server/internal/packet/packet.go#L114), [proto.MapNpcLeave](../../internal/proto/opcodes.go#L98).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -965,13 +965,13 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0E03` — MapNpcMove**
 
-Declarations: [packet.MapNpcMove](../../server/internal/packet/packet.go#L111), [proto.MapNpcMove](../../internal/proto/opcodes.go#L95).
+Declarations: [packet.MapNpcMove](../../server/internal/packet/packet.go#L115), [proto.MapNpcMove](../../internal/proto/opcodes.go#L99).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** [buildNpcMove (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1336)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L138)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L141)
 
 ### Wire layouts and validation
 
@@ -1021,7 +1021,7 @@ type NpcMotion struct {
 
 **`0x0E04` — NpcTalk**
 
-Declarations: [packet.NpcTalk](../../server/internal/packet/packet.go#L133), [proto.NpcTalk](../../internal/proto/opcodes.go#L118).
+Declarations: [packet.NpcTalk](../../server/internal/packet/packet.go#L137), [proto.NpcTalk](../../internal/proto/opcodes.go#L122).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L111)
 
@@ -1051,13 +1051,13 @@ func idPacket(op Opcode, id uint32) []byte {
 
 **`0x0E05` — MapNpcAttackPlayer**
 
-Declarations: [packet.MapNpcAttackPlayer](../../server/internal/packet/packet.go#L112), [proto.MapNpcAttackPlayer](../../internal/proto/opcodes.go#L96).
+Declarations: [packet.MapNpcAttackPlayer](../../server/internal/packet/packet.go#L116), [proto.MapNpcAttackPlayer](../../internal/proto/opcodes.go#L100).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L147)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L150)
 
 ### Wire layouts and validation
 
@@ -1089,13 +1089,13 @@ type NpcAttack struct {
 
 **`0x0E06` — MapNpcAttackMob**
 
-Declarations: [packet.MapNpcAttackMob](../../server/internal/packet/packet.go#L113), [proto.MapNpcAttackMob](../../internal/proto/opcodes.go#L97).
+Declarations: [packet.MapNpcAttackMob](../../server/internal/packet/packet.go#L117), [proto.MapNpcAttackMob](../../internal/proto/opcodes.go#L101).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L147)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L150)
 
 ### Wire layouts and validation
 

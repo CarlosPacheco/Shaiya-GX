@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x2601` — AccountPoints**
 
-Declarations: [packet.AccountPoints](../../server/internal/packet/packet.go#L196), [proto.AccountPoints](../../internal/proto/opcodes.go#L184).
+Declarations: [packet.AccountPoints](../../server/internal/packet/packet.go#L200), [proto.AccountPoints](../../internal/proto/opcodes.go#L188).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -41,7 +41,7 @@ func buildAccountPoints(points uint32) []byte {
 
 **`0x2602` — PointBuy**
 
-Declarations: [packet.PointBuy](../../server/internal/packet/packet.go#L197), [proto.PointBuy](../../internal/proto/opcodes.go#L185).
+Declarations: [packet.PointBuy](../../server/internal/packet/packet.go#L201), [proto.PointBuy](../../internal/proto/opcodes.go#L189).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L269)
 
@@ -145,7 +145,7 @@ type MallPurchase struct {
 
 **`0x2603` — PointGiftSend**
 
-Declarations: [packet.PointGiftSend](../../server/internal/packet/packet.go#L198), [proto.PointGiftSend](../../internal/proto/opcodes.go#L186).
+Declarations: [packet.PointGiftSend](../../server/internal/packet/packet.go#L202), [proto.PointGiftSend](../../internal/proto/opcodes.go#L190).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L271)
 
@@ -231,7 +231,7 @@ type MallGiftResult struct {
 
 **`0x2605` — CashPoint**
 
-Declarations: [packet.CashPoint](../../server/internal/packet/packet.go#L201), [proto.CashPoint](../../internal/proto/opcodes.go#L189).
+Declarations: [packet.CashPoint](../../server/internal/packet/packet.go#L205), [proto.CashPoint](../../internal/proto/opcodes.go#L193).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L279)
 
@@ -281,7 +281,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x2606` — PointStoredItemList**
 
-Declarations: [packet.PointStoredItemList](../../server/internal/packet/packet.go#L199), [proto.PointStoredItemList](../../internal/proto/opcodes.go#L187).
+Declarations: [packet.PointStoredItemList](../../server/internal/packet/packet.go#L203), [proto.PointStoredItemList](../../internal/proto/opcodes.go#L191).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -356,7 +356,7 @@ type MallStoredItem struct {
 
 **`0x2607` — PointStoredItemGet**
 
-Declarations: [packet.PointStoredItemGet](../../server/internal/packet/packet.go#L200), [proto.PointStoredItemGet](../../internal/proto/opcodes.go#L188).
+Declarations: [packet.PointStoredItemGet](../../server/internal/packet/packet.go#L204), [proto.PointStoredItemGet](../../internal/proto/opcodes.go#L192).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L273)
 

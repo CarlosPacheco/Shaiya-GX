@@ -9,12 +9,58 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
+
+func TestQuestItemOfferAgainstGX(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_ITEM_QUEST") != "1" {
+		t.Skip("requires a disposable character with the quest 845 letter")
+	}
+	st, w, send, wait := testworld.Enter(t)
+	arc, err := archive.Open(os.Getenv("SHAIYA_DATA"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = arc.Close() })
+	a := inputApp()
+	a.state, a.world, a.arc = st, w, arc
+	a.questUI, _ = ui.NewQuestLog(inputTextures{})
+	a.questConfirm, _ = ui.NewMessage(inputTextures{})
+	const id = 845
+	var pos [2]uint8
+	for key, item := range st.Inventory {
+		if item.Type == 29 && item.TypeID == 1 {
+			pos = key
+			break
+		}
+	}
+	if pos[0] == 0 || !a.offerItemQuest(pos, sdata.ItemKey{Type: 29, TypeID: 1}, 4) || a.questItemOffer.id != id {
+		t.Fatal("authored letter failed to open its quest offer")
+	}
+	a.updateQuestLog(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, 1024, 768)
+	if st.Inventory[pos].Count != 1 || len(st.Quests) != 0 {
+		t.Fatal("cancelling used the letter or started the quest")
+	}
+	a.useInventoryItem(pos)
+	if a.questItemOffer.id != id {
+		t.Fatal("inventory use did not reopen the quest offer")
+	}
+	a.updateQuestLog(&platform.Input{Keys: []platform.Key{platform.KeyEnter}}, 1024, 768)
+	wait(func() bool { _, active := st.Quests[id]; return active })
+	if _, held := st.Inventory[pos]; held {
+		t.Fatal("quest accepted but letter remains")
+	}
+	send(proto.QuestAbandonPacket(id))
+	wait(func() bool { return st.LastQuestEnd.ID == id })
+	if st.LastQuestEnd.Success != 0 {
+		t.Fatal("abandonment rewarded the quest")
+	}
+}
 
 func TestQuestStartAndAbandonAgainstRapture(t *testing.T) {
 	st, w, _, wait := testworld.Enter(t)

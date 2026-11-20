@@ -194,6 +194,7 @@ func (q *activeQuest) row() db.CharQuest {
 // loadQuests restores the character's quests as PacketUserDBSetInfo does.
 func (s *Session) loadQuests() error {
 	s.quests, s.finishedQuests = nil, nil
+	s.lastQuestItem = questItemUse{}
 	rows, err := db.CharacterQuests(s.char.ID)
 	if err != nil {
 		return err
@@ -354,7 +355,35 @@ func (s *Session) questNPCInReach(npc MapNpc) bool {
 	return DistanceXZ(s.char.PosX, s.char.PosZ, npc.PosX, npc.PosZ) < questNPCReach
 }
 
-// handleQuestStart (0x0902): npc id, quest id (CUser::QuestStartRequest).
+type questItemUse struct {
+	item     [2]uint8
+	deadline time.Time
+}
+
+// Native ItemUse (0x4655e0) opens the same window for types 27–29. Type 29
+// consumes one unit before the client can request the quest.
+func (s *Session) useQuestItem(index int) bool {
+	it := s.items[index]
+	if it.Bag < InventoryFirstBag || it.Bag > InventoryLastBag || s.dead || s.char.CurrentHP == 0 {
+		return false
+	}
+	if it.Type == 29 {
+		remaining, err := s.consumeOne(index)
+		if err != nil {
+			s.logErr("consume quest item", err)
+			return false
+		}
+		if s.player != nil {
+			s.player.UpdateItems(s.items)
+		}
+		s.send(buildRemoveItem(&remaining, remaining.Count == 0), "quest item used")
+		s.broadcastNear(buildUseItemResult(s.char.ID, &remaining), "0x050A quest item used", false)
+	}
+	s.lastQuestItem = questItemUse{[2]uint8{it.Type, it.TypeID}, time.Now().Add(5 * time.Minute)}
+	return true
+}
+
+// handleQuestStart (0x0902): NPC or item context, followed by the quest row.
 func (s *Session) handleQuestStart(p []byte) {
 	if len(p) < 8 || s.char == nil {
 		return
@@ -362,7 +391,7 @@ func (s *Session) handleQuestStart(p []byte) {
 	npcID, _ := packet.U32(p[2:])
 	id, _ := packet.U16(p[6:])
 	q := findQuestDef(id)
-	if q == nil || q.StartType > 4 || q.StartType == 4 {
+	if q == nil || q.StartType > 4 {
 		return
 	}
 	if q.StartType <= 2 {
@@ -379,13 +408,16 @@ func (s *Session) handleQuestStart(p []byte) {
 	} else if npcID != uint32(q.StartItemID) {
 		return
 	}
+	if q.StartType == 4 && (s.lastQuestItem.item != [2]uint8{q.StartItemType, q.StartItemID} || !time.Now().Before(s.lastQuestItem.deadline)) {
+		return
+	}
 	if s.findQuest(id) != nil || s.questFinished(id, false) || !s.questEnableStart(q) {
 		s.log.Printf("GX Server World quest %d refused (active, finished or requirements)", id)
 		return
 	}
 	// The native acknowledgement carries an NPC only for types 1 and 2.
 	context := npcID
-	if q.StartType == 0 || q.StartType == 3 {
+	if q.StartType == 0 || q.StartType >= 3 {
 		context = 0
 	}
 	s.startQuest(q, id, context)
@@ -585,12 +617,14 @@ func (s *Session) handleQuestEnd(p []byte) {
 func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool) {
 	d := q.def
 	if !success {
+		if !s.removeQuest(q, 0) {
+			return
+		}
 		w := packet.New(packet.QuestEnd)
 		w.U32(ctx)
 		w.U16(q.ID)
 		w.Bytes(make([]byte, 14))
 		s.send(w.MustFinish(), "0x0903 quest failed")
-		s.removeQuest(q, 0)
 		s.log.Printf("GX Server World quest %d failed", q.ID)
 		return
 	}
@@ -751,7 +785,7 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 
 // removeQuest is QuestRuntime::remove: repeatable quests (TickReceive)
 // are deleted, others finish with their success flag.
-func (s *Session) removeQuest(q *activeQuest, success uint8) {
+func (s *Session) removeQuest(q *activeQuest, success uint8) bool {
 	var err error
 	if q.def.TickReceive != 0 {
 		err = db.DeleteCharacterQuest(s.char.ID, q.ID)
@@ -760,9 +794,10 @@ func (s *Session) removeQuest(q *activeQuest, success uint8) {
 	}
 	if err != nil {
 		s.logErr("finish quest", err)
-		return
+		return false
 	}
 	s.removeQuestFromMemory(q, success)
+	return true
 }
 
 func (s *Session) removeQuestFromMemory(q *activeQuest, success uint8) {

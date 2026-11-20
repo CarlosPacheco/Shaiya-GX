@@ -258,6 +258,12 @@ func (s *Session) handleUseItem(p []byte) {
 		reject("no item definition")
 		return
 	}
+	if isQuestItemType(it.Type) {
+		if !s.useQuestItem(i) {
+			reject("cannot use quest item")
+		}
+		return
+	}
 	if !isConsumableType(it.Type) {
 		reject("not a consumable")
 		return

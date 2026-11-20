@@ -23,7 +23,7 @@ the map's revision during its normal loop. No periodic client polling is used.
 The client caches the filtered quest markers and reuses them while drawing.
 Availability is rebuilt after changes to:
 
-- The character, map, level, or received map catalog.
+- The character, map, level, sex, or received map catalog.
 - Active quests, counters, completion, abandonment or prerequisites.
 - Inventory readiness or relevant quest-item quantities in carried bags.
 - A known quest minimum-duration deadline, once that deadline is reached.
@@ -89,19 +89,50 @@ from `data/game/NpcQuest.SData` at startup. The client uses its own
 files, keeps their texts and encodings separate, and backs up both before
 writing. See [GX Studio](gx-studio.md) and [map access rules](map-rules.md).
 
-### Native quest admission and GX safeguards
+### Quest properties in EP5 and GX
 
-The recovered EP5 server admission path checks level, family, class, mode
-and prerequisite quests. It reads neither the sex nor party composition fields
-during admission. The recovered reward routine does not start `NextQuest`.
-Those stored fields are retained for catalog fidelity.
+The audit compared the original EP5 server and client with 1,720 quest rows
+from the distributed server catalog and the installed server and client catalogs.
+`QuestRow` is the one-based lookup key. All audited `EmbeddedID` values match
+their rows. Keep these two values aligned when editing. NPC and item link
+tables preserve the direction and order of offers and turn-ins.
 
-GX validates the distance to the NPC at acceptance and turn-in. When a quest
-names a turn-in NPC, that NPC is required. A reward submitted after opening a
-choice at an NPC also requires the player to remain within reach. Acceptance,
-the starting item cost and initial grants commit together before confirmation.
+| Native fields | Behaviour in GX |
+|---|---|
+| `MinLevel`, `MaxLevel`, `Faction`, `Mode`, six class flags | The client filters offers and map markers. World validates these fields at acceptance. `Faction` selects eligible character families. |
+| `Male`, `Female` | The original client checks these fields for NPC and item offers. GX applies them to both and to offer markers. The original server admission routine leaves this check to the client. Seven audited quests restrict one sex. |
+| `PrevQuest`, `HG`, `VG` | World admits the character after any of the configured quest IDs has been completed successfully. The client uses the same rule to present offers. |
+| `CG`, `OG`, `IG`, `RequireParty`, six party class flags | Stored. No rule for these fields was found in the recovered offer or admission paths. All audited quests have `RequireParty=0`; one has a party class flag set. |
+| `MinMinutes`, `MaxMinutes` | Minimum elapsed time gates completion, and the maximum triggers failure. World persists timing and counters. The catalogs contain 162 maximum durations and zero minimum durations. |
+| `TickReceive` | Any nonzero value makes the quest repeatable. World deletes the active record when it ends so it can be offered again. The 69 authored repeatable quests all use `1`. |
+| `TickStart`, `TickKeep` | Stored. Both are zero throughout the audited catalogs, with no runtime rule established. |
+| `StartType`, `StartNPCType`, `StartNPCID` | Types 0–2 use a nearby NPC. Types 1 and 2 require the configured NPC. Type 0 can name a specific NPC or use the NPC in the quest chain. |
+| `StartItemType`, `StartItemID` | Type 2 consumes one matching carried item on acceptance. Type 3 offers the quest after acquisition and requires possession at acceptance. The item stays in the bag. Type 4 offers the quest when using the item from inventory. |
+| Three `StartItem` type, ID and count groups | World plans the initial grants and commits them with acceptance and the type 2 cost. A full inventory rejects the start before publishing quest or item changes. |
+| `EndType`, `EndNPCType`, `EndNPCID` | Types 0–3 cover dialogue, inventory, monster and PvP turn-ins. A named NPC is required and must be within 30 units, including when selecting the reward. Eligible item and kill objectives can complete automatically when the NPC type is zero. An end type of 0 with no NPC has no recovered completion route. |
+| Three `FarmItem` type, ID and count groups | World counts carried items and consumes the required quantities as part of the reward transaction. Native quest-item stacks are removed in full when handed in. |
+| `Mob1ID`, `Mob1Count`, `Mob2ID`, `Mob2Count`, `PVPKills` | World tracks the two monster counters and the PvP kill counter, with native party credit for supported monster kills. |
+| `ResultType`, `UserSelect`, each variant's `NeedMobID`, `NeedMobCount`, `NeedItemID`, `NeedItemCount` | World uses the fixed reward, offers a reward choice, or selects a variant from the qualifying objective counts. The variant IDs in the `NeedMobID` and `NeedItemID` columns select objective slots. |
+| Each variant's `NeedTime`, `NeedHG`, `NeedVG`, `NeedOG` | Stored. All values are zero in the audited catalogs. The recovered reward selector reads the monster and item count fields. |
+| Each variant's `XP`, `Gold`, `ItemType`, `ItemTypeID` | World commits the reward with the quest and any item costs. Native rules double XP for quest modes 0–2. |
+| Each variant's `NextQuest` | The original client reads this field from the confirmed reward variant. GX offers the next quest when the reward dialog is acknowledged and its NPC context and eligibility still apply. Acceptance is a separate request. The audited catalogs have 757 variant links, all with a turn-in NPC. |
+| `QuestName`, `MsgSummary`, `MsgTake`, `MsgComplete`, `MsgResponse1`, `MsgResponse2`, `MsgIncomplete` | GX uses these for quest titles, journal objectives, initial offers, completion messages by variant, and incomplete turn-ins. |
+| `MsgWelcome`, `MsgResponse4` | Editable in GX Studio and preserved in each catalog encoding. Their original display triggers remain unverified. |
 
-An item-backed quest of start type 3 can be requested with `/quest start ID`
-while holding its required item. World checks possession and keeps the item.
-Start type 4 additionally needs the original recent-item-use state and remains
-unavailable while that client path is unverified.
+For type 4, the original client sends `0x050A` before `0x0902` when the player
+accepts the item offer. World records the last used quest item for five minutes.
+Items of types 27 and 28 remain in the inventory. Type 29 consumes one unit on
+use, so the following start request can succeed even if that stack is gone.
+The owner receives the inventory change and nearby viewers receive `0x050A`.
+GX matches both item type and ID. The type 3 fallback `/quest start ID` uses
+the same possession check as the inventory offer.
+
+Original server references are `0x4CA5D0` (definition load), `0x47F080`
+(admission), `0x4655E0` (item use), `0x47F500` (type 4 start) and `0x47F8E0`
+(inventory objectives). Original client references are `0x461946` and
+`0x462220` (NPC offer eligibility), `0x462540` (item links and offers),
+`0x43ED13` (confirmation packet order), and `0x52DAD7` / `0x43EC20`
+(reward follow-up offer).
+The text loader at `0x42BB96` reads all seven dialogue strings after the
+numeric fields. The offer and reward dialog at `0x43EB84` reads `MsgTake`,
+the selected response or the summary.

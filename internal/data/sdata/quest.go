@@ -3,6 +3,7 @@ package sdata
 import "fmt"
 
 type QuestItem struct{ Type, ID, Count uint8 }
+type QuestItemLinks struct{ Start, End []uint16 }
 type QuestResult struct {
 	NeedMobID                               uint16
 	NeedMobCount, NeedItemID, NeedItemCount uint8
@@ -60,24 +61,31 @@ func questItem(c *cursor) QuestItem { return QuestItem{c.u8(), c.u8(), c.u8()} }
 // ParseQuests uses the one-based row ID used by Rapture and NPC links;
 // the embedded ID is kept for diagnostics. It also returns the NPC links.
 func ParseQuests(raw []byte) (map[NPCKey]NPC, []Quest, error) {
+	npcs, quests, _, err := ParseQuestCatalog(raw)
+	return npcs, quests, err
+}
+
+// ParseQuestCatalog also returns ordered native item links.
+func ParseQuestCatalog(raw []byte) (map[NPCKey]NPC, []Quest, map[ItemKey]QuestItemLinks, error) {
 	b, err := Decrypt(raw)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	c := &cursor{b: b}
 	npcs, err := parseNPCs(c)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
+	links := make(map[ItemKey]QuestItemLinks)
 	for i := 0; i < 256*256 && c.err == nil; i++ {
-		for j := 0; j < 2; j++ {
-			n := c.count(2)
-			c.take(n * 2)
+		start, end := questWords(c), questWords(c)
+		if len(start)+len(end) != 0 {
+			links[ItemKey{uint8(i >> 8), uint8(i)}] = QuestItemLinks{start, end}
 		}
 	}
 	n := c.count(130)
 	if n > 65535 {
-		return nil, nil, fmt.Errorf("quest: too many rows %d", n)
+		return nil, nil, nil, fmt.Errorf("quest: too many rows %d", n)
 	}
 	quests := make([]Quest, 0, n)
 	for i := 0; i < n && c.err == nil; i++ {
@@ -132,10 +140,10 @@ func ParseQuests(raw []byte) (map[NPCKey]NPC, []Quest, error) {
 		quests = append(quests, q)
 	}
 	if c.err != nil {
-		return nil, nil, c.err
+		return nil, nil, nil, c.err
 	}
 	if c.off != len(b) {
-		return nil, nil, fmt.Errorf("quest sdata: %d trailing bytes", len(b)-c.off)
+		return nil, nil, nil, fmt.Errorf("quest sdata: %d trailing bytes", len(b)-c.off)
 	}
-	return npcs, quests, nil
+	return npcs, quests, links, nil
 }

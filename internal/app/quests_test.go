@@ -6,7 +6,9 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
+	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 func TestQuestCommandsDisplayNPCLinksAndRejectInvalidActions(t *testing.T) {
@@ -40,6 +42,49 @@ func TestQuestCommandsDisplayNPCLinksAndRejectInvalidActions(t *testing.T) {
 	}
 	if a.questCommand("/party hello") {
 		t.Fatal("intercepted unrelated command")
+	}
+}
+
+func TestItemQuestOfferFiltersEligibilityAndCanBeCancelled(t *testing.T) {
+	a := inputApp()
+	a.questUI, _ = ui.NewQuestLog(inputTextures{})
+	a.questConfirm, _ = ui.NewMessage(inputTextures{})
+	a.questDataLoaded = true
+	a.state.SelfID = 7
+	a.state.Slots[0] = proto.CharacterSlot{ID: 7, Level: 20, Gender: 1}
+	q := sdata.Quest{ID: 1, MaxLevel: 80, Female: true, Jobs: [6]uint8{1}, StartType: 4, StartItemType: 29, StartItemID: 6}
+	a.questDefs = []sdata.Quest{q}
+	item := sdata.ItemKey{Type: 29, TypeID: 6}
+	a.questItemLinks = map[sdata.ItemKey]sdata.QuestItemLinks{item: {Start: []uint16{1}}}
+	if a.offerItemQuest([2]uint8{1, 3}, item, 3) || !a.offerItemQuest([2]uint8{1, 3}, item, 4) {
+		t.Fatal("inventory use should open only the matching offer")
+	}
+	a.updateQuestLog(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, 1024, 768)
+	if a.questConfirm.Visible || a.questItemOffer.id != 0 || len(a.state.Quests) != 0 {
+		t.Fatal("cancelling changed the quest or kept the offer")
+	}
+	a.state.Slots[0] = proto.CharacterSlot{ID: 7, Level: 20, Gender: 0}
+	if a.offerItemQuest([2]uint8{1, 3}, item, 4) {
+		t.Fatal("wrong gender received an offer")
+	}
+}
+
+func TestQuestFollowUpUsesConfirmedVariantAndNPCContext(t *testing.T) {
+	a := inputApp()
+	a.questDefs = []sdata.Quest{
+		{Results: [3]sdata.QuestResult{{NextQuest: 2}, {NextQuest: 3}}},
+		{StartType: 1, StartNPCType: 8, StartNPCID: 5},
+		{StartType: 0, PrevQuest: 1},
+	}
+	a.state.FinishedQuests = map[uint16]uint8{1: 1}
+	npc := &game.Entity{ID: 9, NpcType: 8, TypeID: 4}
+	result := &proto.QuestEndResult{ID: 1, Variant: 1, Success: 1}
+	if next := a.npcQuestFollowUp(result, npc); next != 3 {
+		t.Fatalf("expected variant's unlisted follow-up, got %d", next)
+	}
+	result.Variant = 0
+	if next := a.npcQuestFollowUp(result, npc); next != 0 {
+		t.Fatalf("follow-up requires a different NPC, got %d", next)
 	}
 }
 

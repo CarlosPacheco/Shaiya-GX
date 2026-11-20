@@ -2774,6 +2774,36 @@ func PartyGlobalInvitePacket(name string) []byte {
 }
 ```
 
+```go
+func (m *PartyMember) AddEffect(skill uint16, level uint8) {
+	for i := range m.Effects {
+		e := &m.Effects[i]
+		if e.Skill != skill {
+			continue
+		}
+		if e.Level == level {
+			return
+		}
+		if level != 100 {
+			e.Level = level
+			return
+		}
+	}
+	m.Effects = append(m.Effects, PartyEffect{Skill: skill, Level: level})
+}
+```
+
+```go
+func (m *PartyMember) RemoveEffect(skill uint16, level uint8) {
+	for i, e := range m.Effects {
+		if e.Skill == skill && e.Level == level {
+			m.Effects = append(m.Effects[:i], m.Effects[i+1:]...)
+			return
+		}
+	}
+}
+```
+
 </details>
 
 ## periodic

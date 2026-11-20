@@ -71,6 +71,15 @@ func (a *App) updateQuestLog(in *platform.Input, w, h int) bool {
 	v := &a.questLog
 	if a.questConfirm.Visible {
 		result := a.questConfirm.Update(in, w, h)
+		if offer := a.questItemOffer; offer.id != 0 {
+			if result != ui.MessageNone {
+				a.questItemOffer = itemQuestOffer{}
+			}
+			if result == ui.MessageOK {
+				a.acceptItemQuest(offer)
+			}
+			return true
+		}
 		if result == ui.MessageOK {
 			if _, ok := a.state.Quests[v.confirm]; ok {
 				if err := a.world.Send(proto.QuestAbandonPacket(v.confirm)); err != nil {
@@ -116,6 +125,7 @@ func (a *App) updateQuestLog(in *platform.Input, w, h int) bool {
 	}
 	if quit && v.selected != 0 {
 		v.confirm = v.selected
+		a.questItemOffer = itemQuestOffer{}
 		a.questConfirm.Open("Abandon "+a.questName(v.selected)+"?", true)
 		return true
 	}

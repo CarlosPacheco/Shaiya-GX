@@ -118,14 +118,27 @@ func SaveCharacterQuest(charID uint32, q CharQuest) error {
 
 // FinishCharacterQuest runs usp_Save_Char_FinishedQuest_E on the active row.
 func FinishCharacterQuest(charID uint32, questID uint16, success uint8) error {
-	return execSQL(GameData, `UPDATE PS_GameData_CharQuests SET Success=@success,Finish=1 WHERE CharID=@charid AND QuestID=@questid`, sql.Named("charid", int32(charID)),
-		sql.Named("questid", int16(questID)), sql.Named("success", success), sql.Named("insert", false))
+	return changeActiveQuest(`UPDATE PS_GameData_CharQuests SET Success=?1,Finish=1 WHERE CharID=?2 AND QuestID=?3 AND COALESCE(Finish,0)=0 AND Del=0`, success, charID, int16(questID))
 }
 
 // DeleteCharacterQuest runs usp_Save_Char_Quest_Del_E (repeatable quests).
 func DeleteCharacterQuest(charID uint32, questID uint16) error {
-	return execSQL(GameData, `DELETE FROM PS_GameData_CharQuests WHERE CharID=@charid AND QuestID=@questid`, sql.Named("charid", int32(charID)),
-		sql.Named("questid", int16(questID)))
+	return changeActiveQuest(`DELETE FROM PS_GameData_CharQuests WHERE CharID=? AND QuestID=? AND COALESCE(Finish,0)=0 AND Del=0`, charID, int16(questID))
+}
+
+func changeActiveQuest(query string, args ...any) error {
+	pool, err := Pool(GameData)
+	if err != nil {
+		return err
+	}
+	c, cancel := ctx()
+	defer cancel()
+	result, err := pool.ExecContext(c, query, args...)
+	if err != nil {
+		reportStorageFailure(err)
+		return err
+	}
+	return requireOne(result)
 }
 
 // SaveCharacterQuests atomically snapshots active counters. A stale/finished
