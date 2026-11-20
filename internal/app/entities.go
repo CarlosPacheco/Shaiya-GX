@@ -477,9 +477,8 @@ func (a *App) drawPlayerNames(w, h int) {
 			}
 			labelWidth := a.font.Width(name)
 			prefixWidth := 0
-			if plate.gm {
-				prefixWidth = a.font.Width("(GM) ")
-				labelWidth += prefixWidth
+			if plate.gm { // GMs have no tag: a normal name in light blue.
+				tint = ui.RGBColor(0x66CCFF)
 			}
 			rank, ranked := pvprank.Index(plate.kills)
 			if a.scene3d.OccludedLabel(pos, x-labelWidth/2, y-a.font.Height-offset, labelWidth, a.font.Height, w, h) {
@@ -491,9 +490,6 @@ func (a *App) drawPlayerNames(w, h int) {
 			}
 			a.sprites.NameDepth(depth)
 			left, top := x-labelWidth/2, y-a.font.Height-offset
-			if prefixWidth > 0 {
-				a.font.DrawName(a.sprites, "(GM)", left, top, ui.RGBColor(0x66CCFF))
-			}
 			a.font.DrawName(a.sprites, name, left+prefixWidth, top, tint)
 			l, r, drawn = left, left+labelWidth, true
 			if ranked {
