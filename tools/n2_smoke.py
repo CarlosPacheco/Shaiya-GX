@@ -18,8 +18,9 @@ with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
   (data/name).symlink_to(server/'data'/name,target_is_directory=True)
  enchant=data/'game/ItemEnchant.ini'
  text=enchant.read_text(encoding='utf-8')
- text,count=re.subn(r'(?m)^WeaponStep06[ 	]*=.*$', 'WeaponStep06=1000000',text,count=1)
- if count!=1:raise RuntimeError('missing WeaponStep06 in the test enchant INI')
+ # The rate table uses the current enchant level. The fixture starts at +5.
+ text,count=re.subn(r'(?m)^WeaponStep05[ 	]*=.*$', 'WeaponStep05=1000000',text,count=1)
+ if count!=1:raise RuntimeError('missing WeaponStep05 in the test enchant INI')
  enchant.write_text(text,encoding='utf-8')
  env['RAPTURE_DATA_DIR']=str(data)
  env['PATH']=str(Path.home()/'.local/opt/go-1.27.4/bin')+':'+env['PATH']

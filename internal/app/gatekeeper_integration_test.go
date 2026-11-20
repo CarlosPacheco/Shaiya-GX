@@ -180,6 +180,17 @@ func TestGatekeeperCrossMapAgainstRapture(t *testing.T) {
 	if a.shop.npcID != id {
 		t.Fatal("paid gatekeeper did not open")
 	}
+	if graphics {
+		if !a.shop.talk {
+			t.Fatal("paid gatekeeper did not start with its conversation")
+		}
+		x, y := a.npcTalkUI.Origin(1024, 768)
+		a.worldControls(&platform.Input{MouseX: x + 63, MouseY: y + 344, Pressed: true, MouseDown: true}, 1024, 768)
+		a.worldControls(&platform.Input{MouseX: x + 63, MouseY: y + 344, Clicked: true}, 1024, 768)
+		if a.shop.talk || a.shop.npcID != id {
+			t.Fatal("paid gatekeeper conversation did not open the travel service")
+		}
+	}
 	def := a.npcDefs[sdata.NPCKey{Type: 2, ID: 2}]
 	if def.Gates[0].MapID == st.MapID || def.Gates[0].Cost == 0 {
 		t.Fatal("fixture does not leave map for a fee")
