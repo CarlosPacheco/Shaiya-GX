@@ -331,6 +331,8 @@ clears the two obsolete higher records without shifting IDs. Server migration
 
 Dead levels are recognised by their description ("Not Available.", "Skill not available currently", "Non-existant skill"), not by their fields: many keep copied effect data. The same tool now rewrites the descriptions listed in `internal/data/sdata/skill_text_fixes.csv` (id, level, current text, new text): typos and grammar, values that did not match the real definition, heals that add twice the caster's WIS, dispels that remove every harmful effect, sitting recovery every 5 seconds, and areas that use `ApplyRange` as the radius (the server applies it as is). A row applies when the slot still has its old text, is skipped when it already has the new one, and aborts on anything else. Server migrations 7 and 8 delete the same dead levels from the definitions.
 
+`skillpatch -combat-debuff-text-only -input Skill.SData -output Skill.updated.SData` updates the Slump Shot and Confusion tooltips. Their text distinguishes penalties that affect both enemy players and monsters from STR and REC reductions that affect enemy players only. The patch reads the values, duration, and Confusion radius from each rank and changes only the descriptions. Full catalog normalization also applies this text update.
+
 `PrevSkillID` (offset 52) is a property any skill can have: the skill it names must be cooling down for this one to be usable, otherwise the server answers with SysMsg 315 ("A previous skill is required"). The tool restores the original values and appends "Can only be used while X is cooling down." to those descriptions; server migration 9 restores them in the definitions.
 
 

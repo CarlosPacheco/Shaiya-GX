@@ -17,11 +17,12 @@ func main() {
 	output := flag.String("output", "", "new output file")
 	retiredOnly := flag.Bool("retired-only", false, "only remove retired player skills")
 	soulBurnOnly := flag.Bool("soul-burn-only", false, "only enable Soul Burn")
+	debuffTextOnly := flag.Bool("combat-debuff-text-only", false, "only update Slump Shot and Confusion tooltips")
 	flag.Parse()
 	if *input == "" || *output == "" || *input == *output {
 		log.Fatal("distinct input and output paths required")
 	}
-	if *retiredOnly && *soulBurnOnly {
+	if (*retiredOnly && *soulBurnOnly) || (*debuffTextOnly && (*retiredOnly || *soulBurnOnly)) {
 		log.Fatal("choose one single-purpose patch")
 	}
 	raw, err := os.ReadFile(*input)
@@ -34,6 +35,8 @@ func main() {
 		patch = sdata.RemoveRetiredPlayerSkills
 	case *soulBurnOnly:
 		patch = sdata.EnableSoulBurn
+	case *debuffTextOnly:
+		patch = sdata.UpdateCombatDebuffTooltips
 	}
 	out, report, err := patch(raw)
 	if err != nil {

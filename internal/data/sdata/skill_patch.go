@@ -28,8 +28,8 @@ import (
 //   - detail 25 (an attack with extra HP/MP/SP damage) becomes detail 21, the
 //     standard attack; AddDamage is read from its own fields, so the effects
 //     are identical;
-//   - descriptions follow the real spell values: skill_text_fixes.csv holds each
-//     rewrite as id, level, current text, new text.
+//   - descriptions follow the real spell values: combat debuff text reflects
+//     target type, and skill_text_fixes.csv lists the other rewrites.
 const (
 	skillRecordSize   = 116
 	skillSlotsPerID   = 9
@@ -268,6 +268,7 @@ func normalizeSkillCatalog(raw, textFixes []byte) ([]byte, SkillCatalogReport, e
 	if err := applyTextFixes(slots, textFixes, &rep); err != nil {
 		return nil, rep, err
 	}
+	updateCombatDebuffText(slots, &rep)
 	// After the rewrites, which match the text without this sentence.
 	skillNames := map[int]string{}
 	for _, s := range slots {

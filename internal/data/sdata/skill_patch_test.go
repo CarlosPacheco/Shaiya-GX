@@ -47,6 +47,63 @@ func TestSoulBurnCatalogPatchIsScopedAndRepeatable(t *testing.T) {
 	}
 }
 
+func TestCombatDebuffTooltipsChangeOnlyDescriptions(t *testing.T) {
+	groups := make([][]fakeSlot, 96)
+	groups[50] = []fakeSlot{{"Slump Shot Lv1", "Old tooltip", 1, 3, 3, 62, 0, 0},
+		{"Slump Shot Lv2", "Old tooltip", 2, 3, 3, 62, 0, 0},
+		{"Slump ShotED", "Not Available.", 3, 3, 3, 62, 0, 0}}
+	groups[95] = []fakeSlot{{"Confusion Lv1", "Old tooltip", 1, 3, 3, 62, 0, 0}}
+	count, slots, err := readSkillCatalog(buildCatalog(groups))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		id, rank, kind, target, radius, duration, damage int
+		abilities                                        [3]uint8
+		values                                           [3]uint16
+	}{
+		{51, 1, 2, 3, 0, 30, 0, [3]uint8{4, 5, 0}, [3]uint16{18, 18, 0}},
+		{51, 2, 2, 3, 0, 30, 0, [3]uint8{4, 5, 16}, [3]uint16{30, 30, 1}},
+		{51, 3, 2, 3, 0, 30, 0, [3]uint8{4, 5, 16}, [3]uint16{41, 41, 1}},
+		{96, 1, 3, 6, 5, 12, 315, [3]uint8{5, 8, 7}, [3]uint16{150, 150, 150}},
+	} {
+		p := slots[(tc.id-1)*9+tc.rank-1].rec
+		p[20], p[56], p[57], p[67] = byte(tc.kind), byte(tc.target), byte(tc.radius), 1
+		binary.LittleEndian.PutUint16(p[59:], uint16(tc.duration))
+		binary.LittleEndian.PutUint16(p[68:], uint16(tc.damage))
+		for i, ability := range tc.abilities {
+			p[87+3*i] = ability
+			binary.LittleEndian.PutUint16(p[88+3*i:], tc.values[i])
+		}
+	}
+	plain, err := writeSkillCatalog(count, slots)
+	if err != nil {
+		t.Fatal(err)
+	}
+	patched, report, err := UpdateCombatDebuffTooltips(plain)
+	if err != nil || report.TextFixes != 3 {
+		t.Fatalf("tooltip patch: %s, %v", report, err)
+	}
+	for _, tc := range []struct {
+		id, rank int
+		want     string
+	}{
+		{51, 1, "Deals ranged damage. For 30 seconds, lowers STR by 18 and REC by 18 on enemy players."},
+		{51, 2, "Deals ranged damage. For 30 seconds, lowers attack speed by 1 tier on players and monsters, and lowers STR by 30 and REC by 30 on enemy players only."},
+		{96, 1, "Deals magic damage with a bonus of 315 to enemies within 5 m. For 12 seconds, lowers DEX by 150 and WIS by 150 on players and monsters, and lowers REC by 150 on enemy players only."},
+	} {
+		slots[(tc.id-1)*9+tc.rank-1].descRaw = lengthPrefixed(tc.want)
+	}
+	want, err := writeSkillCatalog(count, slots)
+	if err != nil || !bytes.Equal(patched, want) {
+		t.Fatalf("catalog differs from expected description-only update: %v", err)
+	}
+	again, report, err := UpdateCombatDebuffTooltips(patched)
+	if err != nil || report.TextFixes != 0 || !bytes.Equal(again, patched) {
+		t.Fatalf("tooltip patch is not idempotent: %s, %v", report, err)
+	}
+}
+
 // catalog builds a plain EP5 catalog: groups of nine slots.
 type fakeSlot struct {
 	name, desc string
