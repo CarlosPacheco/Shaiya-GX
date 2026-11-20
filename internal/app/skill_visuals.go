@@ -4,6 +4,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
@@ -45,6 +46,12 @@ func (a *App) startSkillResultEffects(r proto.SkillResult) {
 	if !ok {
 		return
 	}
+	if d.IsSoulBurn() {
+		if r.Result == 0 {
+			a.startSoulBurnImpact(r)
+		}
+		return
+	}
 	a.startSkillReleaseEffect(r, d)
 	if a.wv.physicalSkillQueued {
 		return
@@ -80,6 +87,28 @@ func (a *App) startSkillResultEffects(r proto.SkillResult) {
 		}
 		a.startSkillImpactAt(r.Target, impact, int(r.Level)-1, elapsed)
 	}
+}
+
+// Soul Burn's result arrives while the corpse is still in the view. Freeze
+// the impact at its feet so it stays there through the subsequent rebirth.
+func (a *App) startSoulBurnImpact(r proto.SkillResult) {
+	if r.Target == 0 || len(a.wv.impacts) >= 32 {
+		return
+	}
+	pos, ok := a.effectPosition(r.Target)
+	if !ok {
+		return
+	}
+	file := effect.ImpactLibrary(r.ID)
+	x := a.loadSkillEffect(file, int(r.Level)-1)
+	if x == nil {
+		return
+	}
+	m := render.Identity()
+	m[12], m[13], m[14] = pos[0], pos[1], pos[2]
+	x.SetTransform(m)
+	a.wv.impacts = append(a.wv.impacts, skillImpact{instance: x, fixedWorld: &m, authoredLifetime: true})
+	a.playSound(effect.ImpactSound(file), pos[0], pos[2])
 }
 
 // Area, party and additional hits have already announced the cast; render an

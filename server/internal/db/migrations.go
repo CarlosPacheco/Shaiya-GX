@@ -152,6 +152,14 @@ var migrations = []migration{
 		DELETE FROM PS_GameData_CharApplySkills WHERE SkillID IN (3,4) AND SkillLevel<>100;
 		DELETE FROM PS_GameDefs_Skills WHERE SkillID IN (3,4);
 	`},
+	{29, "enable_soul_burn", `
+		UPDATE PS_GameDefs_Skills
+		SET Defensemage=1, SkillPoint=3, TypeShow=4, TypeEffect=6, SuccessType=1, SuccessValue=100, KeepTime=0
+		WHERE SkillID=125 AND SkillLevel=1 AND TypeDetail=122;
+		UPDATE PS_GameData_CharSkills SET SkillLevel=1 WHERE SkillID=125 AND SkillLevel IN (2,3)
+		AND EXISTS (SELECT 1 FROM PS_GameDefs_Skills WHERE SkillID=125 AND SkillLevel=1 AND TypeDetail=122);
+		DELETE FROM PS_GameDefs_Skills WHERE SkillID=125 AND SkillLevel IN (2,3) AND TypeDetail=122;
+	`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

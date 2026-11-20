@@ -211,7 +211,7 @@ func (s *Session) tickVehicle(now time.Time) {
 	}
 	if v.State == proto.VehiclePassenger {
 		driver := FindPlayerByID(v.Driver)
-		if driver == nil || driver.MapID() != s.char.MapID || !driver.alive.Load() {
+		if driver == nil || driver.MapID() != s.char.MapID || !driver.IsAlive() {
 			s.dismount()
 			return
 		}
@@ -242,7 +242,7 @@ func (s *Session) mountSpeed() float32 {
 	return 7
 }
 func vehicleNear(a, b *ConnectedPlayer) bool {
-	if a == nil || b == nil || a == b || a.MapID() != b.MapID() || !a.alive.Load() || !b.alive.Load() || a.IsSitting() || b.IsSitting() {
+	if a == nil || b == nil || a == b || a.MapID() != b.MapID() || !a.IsAlive() || !b.IsAlive() || a.IsSitting() || b.IsSitting() {
 		return false
 	}
 	x, y := a.Snapshot(), b.Snapshot()

@@ -114,6 +114,12 @@ func TestPlayerCanBeSelectedWithoutMobRequest(t *testing.T) {
 	if got := a.pickMob(&platform.Input{}, 512, 512); got != 0 {
 		t.Fatal("tab selected a player", got)
 	}
+	a.state.Entities[42].Dead = true
+	a.state.Target = 0
+	a.updateCombat(click, 512, 512)
+	if a.state.Target != 42 {
+		t.Fatal("the player's corpse could not be selected with the pointer")
+	}
 }
 
 func TestPlayerPickingAndEffectsFollowDisplayedPosition(t *testing.T) {

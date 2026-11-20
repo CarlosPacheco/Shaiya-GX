@@ -991,7 +991,7 @@ Declarations: [packet.AutoAttackStop](../../server/internal/packet/packet.go#L39
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L216)
 
-**S→C serializers:** [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L158), [syncVisibility (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L38)
+**S→C serializers:** [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L159), [syncVisibility (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L38)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1001,7 +1001,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleUseSkill — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L158)
+[Source definition](../../server/internal/world/skillcast.go#L159)
 
 ```go
 func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
@@ -1077,8 +1077,16 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		}
 	}
 	var pos *[2]float32
+	var corpse corpseTarget
 	if def.TypeEffect == typeEffectOnce {
 		p, ok := s.userSkillTarget(def, target)
+		if def.TypeDetail == detailKillSoul {
+			corpse = s.soulBurnCorpse(p)
+			if corpse.player == nil {
+				s.rejectSoulBurn(k)
+				return
+			}
+		}
 		if !ok {
 			return
 		}
@@ -1137,7 +1145,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	now := time.Now()
 	s.lastActionAt = now
-	s.cast = &pendingCast{target, number, op, now.Add(castTime), pos}
+	s.cast = &pendingCast{targetMobID: target, number: number, op: op, readyAt: now.Add(castTime), targetPos: pos, corpse: corpse}
 	s.autoAttack = false
 	s.syncPlayerSpeed(false)
 	s.log.Printf("GX Server World skill cast started skill_id=%d level=%d cast_time=%s", k.SkillID, k.Level, castTime)

@@ -1,10 +1,51 @@
 package sdata
 
 import (
+	"bytes"
 	"encoding/binary"
 	"strings"
 	"testing"
 )
+
+func TestSoulBurnCatalogPatchIsScopedAndRepeatable(t *testing.T) {
+	groups := make([][]fakeSlot, 126)
+	groups[124] = []fakeSlot{{"Soul Burn Lv1", "Old tooltip", 1, 4, 3, 122, 0, 0},
+		{"Soul Burn Lv2", "Old tooltip", 2, 4, 3, 122, 0, 0}, {"Soul BurnED", "Not Available", 3, 4, 3, 122, 0, 0}}
+	groups[125] = []fakeSlot{{"Resurrection Lv1", "Allied corpse", 1, 4, 6, 121, 0, 0}}
+	plain := buildCatalog(groups)
+	patched, report, err := EnableSoulBurn(plain)
+	if err != nil || len(report.SoulBurnLevels) != 3 {
+		t.Fatalf("Soul Burn patch: %v, %v", report, err)
+	}
+	defs, err := ParseSkills(patched)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := defs[SkillKey{ID: 125, Level: 1}]
+	if d.Effect != 6 || !d.IsSoulBurn() || d.Classes != ([6]uint8{0, 0, 0, 0, 0, 1}) || d.Points != 3 || d.SuccessType != 1 || d.SuccessValue != 100 || d.Description != soulBurnDescription {
+		t.Fatalf("wrong active Soul Burn definition: %+v", d)
+	}
+	if _, ok := defs[SkillKey{ID: 125, Level: 2}]; ok {
+		t.Fatal("obsolete Soul Burn rank survived")
+	}
+	_, before, err := readSkillCatalog(plain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, after, err := readSkillCatalog(patched)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, s := range before {
+		if s.id != 125 && (!bytes.Equal(s.rec, after[i].rec) || !bytes.Equal(s.nameRaw, after[i].nameRaw) || !bytes.Equal(s.descRaw, after[i].descRaw)) {
+			t.Fatalf("unrelated skill %d changed", s.id)
+		}
+	}
+	again, report, err := EnableSoulBurn(patched)
+	if err != nil || len(report.SoulBurnLevels) != 0 || !bytes.Equal(again, patched) {
+		t.Fatalf("patch is not idempotent: %v, %v", report, err)
+	}
+}
 
 // catalog builds a plain EP5 catalog: groups of nine slots.
 type fakeSlot struct {

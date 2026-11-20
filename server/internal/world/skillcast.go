@@ -44,6 +44,7 @@ type pendingCast struct {
 	op          packet.Opcode
 	readyAt     time.Time
 	targetPos   *[2]float32 // Non-nil marks an accepted prepared cast; distance is checked only at launch.
+	corpse      corpseTarget
 }
 
 type buffAbility struct {
@@ -228,8 +229,16 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		}
 	}
 	var pos *[2]float32
+	var corpse corpseTarget
 	if def.TypeEffect == typeEffectOnce {
 		p, ok := s.userSkillTarget(def, target)
+		if def.TypeDetail == detailKillSoul {
+			corpse = s.soulBurnCorpse(p)
+			if corpse.player == nil {
+				s.rejectSoulBurn(k)
+				return
+			}
+		}
 		if !ok {
 			return
 		}
@@ -288,7 +297,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	now := time.Now()
 	s.lastActionAt = now
-	s.cast = &pendingCast{target, number, op, now.Add(castTime), pos}
+	s.cast = &pendingCast{targetMobID: target, number: number, op: op, readyAt: now.Add(castTime), targetPos: pos, corpse: corpse}
 	s.autoAttack = false
 	s.syncPlayerSpeed(false)
 	s.log.Printf("GX Server World skill cast started skill_id=%d level=%d cast_time=%s", k.SkillID, k.Level, castTime)
@@ -301,7 +310,7 @@ func (s *Session) processPendingCast() {
 	}
 	s.cast = nil
 	s.syncPlayerSpeed(false)
-	s.resolveSkill(c.targetMobID, c.number, c.op, c.targetPos)
+	s.resolveSkill(c.targetMobID, c.number, c.op, c)
 }
 
 func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef, prepared ...bool) {
@@ -330,7 +339,7 @@ func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef, prepared 
 	}
 }
 
-func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, castPos *[2]float32) {
+func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, cast *pendingCast) {
 	ch := s.char
 	if ch == nil {
 		return
@@ -338,6 +347,10 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 	k, def, ok := s.knownSkill(number)
 	if !ok {
 		return
+	}
+	var castPos *[2]float32
+	if cast != nil {
+		castPos = cast.targetPos
 	}
 	if isPotential(def) {
 		return // triggers by itself (tickPotentials); it cannot be cast
@@ -375,7 +388,7 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 			s.skillAttack(k, def, target, castPos, stats)
 		}
 	case typeEffectOnce:
-		s.skillOnce(k, def, target, stats, castPos != nil)
+		s.skillOnce(k, def, target, stats, cast)
 	case typeEffectField:
 		s.skillField(k, def, stats, castPos != nil)
 	default:

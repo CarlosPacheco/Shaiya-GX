@@ -721,7 +721,7 @@ func TestSkillOnce(t *testing.T) {
 	}
 
 	rez, rezDef := skill(126)
-	caster.skillOnce(rez, rezDef, target.char.ID, caster.stats())
+	caster.skillOnce(rez, rezDef, target.char.ID, caster.stats(), nil)
 	if target.player.TakeLifeSkill() != nil {
 		t.Fatal("resurrection queued on a living user")
 	}
@@ -731,7 +731,7 @@ func TestSkillOnce(t *testing.T) {
 	target.startRebirthTimer()
 	exp := target.char.Exp
 	caster.skillCooldowns = map[uint16]time.Time{}
-	caster.skillOnce(rez, rezDef, target.char.ID, caster.stats())
+	caster.skillOnce(rez, rezDef, target.char.ID, caster.stats(), nil)
 	target.tickSkillOnce()
 	if target.dead || !target.player.IsAlive() || target.char.PosX != 500 || target.char.Exp != exp ||
 		target.stats().CurrentHP != target.stats().MaxHP {
@@ -740,10 +740,10 @@ func TestSkillOnce(t *testing.T) {
 	}
 
 	det, detDef := skill(100)
-	caster.skillOnce(det, detDef, enemy.char.ID, caster.stats())
+	caster.skillOnce(det, detDef, enemy.char.ID, caster.stats(), nil)
 
 	ret, retDef := skill(192)
-	caster.skillOnce(ret, retDef, caster.char.ID, caster.stats())
+	caster.skillOnce(ret, retDef, caster.char.ID, caster.stats(), nil)
 	tp := caster.player.TakeTeleport()
 	if tp == nil || tp.X < 300 || tp.X >= 310 || tp.Z < 300 || tp.Z >= 310 {
 		t.Fatalf("return skill teleport %+v", tp)

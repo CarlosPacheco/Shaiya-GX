@@ -322,6 +322,13 @@ accepts the original root paths in older data packs.
 
 The player catalog reserves the IDs of Interpretation (3) and Backpack Upgrade (4) as empty groups. Run `skillpatch -retired-only -input Skill.SData -output Skill.updated.SData` to apply just this change to an existing catalog. The client also hides these IDs when it loads older data. Server migration 28 removes their player definitions, learned rows, obsolete skill shortcuts and persisted player effects. Existing skill point balances and the separate NPC skill catalog are preserved.
 
+Run `skillpatch -soul-burn-only -input Skill.SData -output Skill.updated.SData`
+to enable Soul Burn in an existing player catalog. The patch enables rank 1
+at ID 125 for the Priest and Oracle class slot, rewrites its description, and
+clears the two obsolete higher records without shifting IDs. Server migration
+29 applies the corresponding definitions. The two catalogs share `TypeEffect=6`,
+`TypeDetail=122`, `SuccessType=1`, `SuccessValue=100`, and `KeepTime=0`.
+
 Dead levels are recognised by their description ("Not Available.", "Skill not available currently", "Non-existant skill"), not by their fields: many keep copied effect data. The same tool now rewrites the descriptions listed in `internal/data/sdata/skill_text_fixes.csv` (id, level, current text, new text): typos and grammar, values that did not match the real definition, heals that add twice the caster's WIS, dispels that remove every harmful effect, sitting recovery every 5 seconds, and areas that use `ApplyRange` as the radius (the server applies it as is). A row applies when the slot still has its old text, is skipped when it already has the new one, and aborts on anything else. Server migrations 7 and 8 delete the same dead levels from the definitions.
 
 `PrevSkillID` (offset 52) is a property any skill can have: the skill it names must be cooling down for this one to be usable, otherwise the server answers with SysMsg 315 ("A previous skill is required"). The tool restores the original values and appends "Can only be used while X is cooling down." to those descriptions; server migration 9 restores them in the definitions.

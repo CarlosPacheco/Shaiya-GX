@@ -719,7 +719,7 @@ Declarations: [packet.SkillUsedSpMp](../../server/internal/packet/packet.go#L122
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildSkillUsedSpMp (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L125)
+**S→C serializers:** [buildSkillUsedSpMp (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L126)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L887)
 
@@ -729,7 +729,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSkillUsedSpMp — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L125)
+[Source definition](../../server/internal/world/skillcast.go#L126)
 
 ```go
 func buildSkillUsedSpMp(sp, mp uint32) []byte {
@@ -1171,7 +1171,7 @@ Declarations: [packet.SkillCastStarted](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applyRequest (server/internal/world/bots.go)](../../server/internal/world/bots.go#L303), [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L158)
+**S→C serializers:** [applyRequest (server/internal/world/bots.go)](../../server/internal/world/bots.go#L303), [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L159)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L760)
 
@@ -1242,7 +1242,7 @@ func (a *worldBotArena) applyRequest(i int, payload []byte, target int, now time
 
 <details><summary>handleUseSkill — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L158)
+[Source definition](../../server/internal/world/skillcast.go#L159)
 
 ```go
 func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
@@ -1318,8 +1318,16 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		}
 	}
 	var pos *[2]float32
+	var corpse corpseTarget
 	if def.TypeEffect == typeEffectOnce {
 		p, ok := s.userSkillTarget(def, target)
+		if def.TypeDetail == detailKillSoul {
+			corpse = s.soulBurnCorpse(p)
+			if corpse.player == nil {
+				s.rejectSoulBurn(k)
+				return
+			}
+		}
 		if !ok {
 			return
 		}
@@ -1378,7 +1386,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	now := time.Now()
 	s.lastActionAt = now
-	s.cast = &pendingCast{target, number, op, now.Add(castTime), pos}
+	s.cast = &pendingCast{targetMobID: target, number: number, op: op, readyAt: now.Add(castTime), targetPos: pos, corpse: corpse}
 	s.autoAttack = false
 	s.syncPlayerSpeed(false)
 	s.log.Printf("GX Server World skill cast started skill_id=%d level=%d cast_time=%s", k.SkillID, k.Level, castTime)
@@ -1417,7 +1425,7 @@ Declarations: [packet.SkillUseNoTarget](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L257)
 
-**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L112)
+**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L113)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L869)
 
@@ -1427,7 +1435,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSkillUseResult — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L112)
+[Source definition](../../server/internal/world/skillcast.go#L113)
 
 ```go
 func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte {
@@ -1552,7 +1560,7 @@ Declarations: [packet.SkillPartyMember](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L112)
+**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L113)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L869)
 
@@ -1562,7 +1570,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSkillUseResult — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L112)
+[Source definition](../../server/internal/world/skillcast.go#L113)
 
 ```go
 func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte {
@@ -1832,7 +1840,7 @@ Declarations: [packet.SkillUse](../../server/internal/packet/packet.go#L198), [p
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L257)
 
-**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L112)
+**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L113)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L869)
 
@@ -1842,7 +1850,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSkillUseResult — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L112)
+[Source definition](../../server/internal/world/skillcast.go#L113)
 
 ```go
 func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte {
@@ -1991,7 +1999,7 @@ Declarations: [proto.SkillMobOther](../../internal/proto/opcodes.go#L138).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L112)
+**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L113)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L869)
 
@@ -2001,7 +2009,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSkillUseResult — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L112)
+[Source definition](../../server/internal/world/skillcast.go#L113)
 
 ```go
 func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte {
@@ -3121,7 +3129,7 @@ Declarations: [packet.SkillDetectInfo](../../server/internal/packet/packet.go#L1
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildDetectInfo (server/internal/world/skillonce.go)](../../server/internal/world/skillonce.go#L75)
+**S→C serializers:** [buildDetectInfo (server/internal/world/skillonce.go)](../../server/internal/world/skillonce.go#L111)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L863)
 
@@ -3131,7 +3139,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildDetectInfo — server/internal/world/skillonce.go</summary>
 
-[Source definition](../../server/internal/world/skillonce.go#L75)
+[Source definition](../../server/internal/world/skillonce.go#L111)
 
 ```go
 func buildDetectInfo(attr uint32, level uint16, mode uint8) []byte {

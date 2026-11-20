@@ -154,6 +154,42 @@ func TestRaidSkillCastKeepsCombatSelection(t *testing.T) {
 	}
 }
 
+func TestSoulBurnTargetsOnlyEnemyPlayerCorpses(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID, a.state.Target = 42, 99
+	a.state.Faction.Faction = 0
+	k := proto.LearnedSkill{ID: 125, Level: 1, Number: 7}
+	key := sdata.SkillKey{ID: k.ID, Level: k.Level}
+	for _, effect := range []uint8{3, 6} {
+		a.skillDefs = map[sdata.SkillKey]sdata.Skill{key: {Effect: effect, Detail: 122, Target: 3}}
+		e := &game.Entity{ID: 99, Kind: game.KindUser, Shape: &proto.UserShape{Faction: 1}, Dead: true}
+		a.state.Entities[99] = e
+		p := a.learnedSkillPacket(k)
+		r := proto.NewReader(p)
+		if proto.Op(p) != proto.SkillUseNoTarget || r.U8() != k.Number || r.U32() != 99 || r.Err() != nil {
+			t.Fatalf("Soul Burn sent the wrong corpse request: %x", p)
+		}
+		for _, tc := range []struct {
+			name   string
+			change func()
+		}{
+			{"living", func() { e.Dead = false }},
+			{"ally", func() { e.Shape.Faction = 0 }},
+			{"Ultimate", func() { e.Shape.Mode = 3 }},
+			{"mob", func() { e.Kind = game.KindMob }},
+			{"self", func() { a.state.Target = a.state.SelfID }},
+			{"unselected", func() { a.state.Target = 0 }},
+		} {
+			e.Kind, e.Dead, e.Shape.Faction, e.Shape.Mode, a.state.Target = game.KindUser, true, 1, 0, 99
+			tc.change()
+			if p := a.learnedSkillPacket(k); p != nil {
+				t.Fatalf("Soul Burn accepted %s: %x", tc.name, p)
+			}
+		}
+		a.state.Target = 99
+	}
+}
+
 func TestFriendlyMobRefusedBeforeAttackPredictionAndSkillRequest(t *testing.T) {
 	a := inputApp()
 	a.msg = text.SysMsg{317: "Wrong target"}

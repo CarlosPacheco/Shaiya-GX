@@ -15,6 +15,7 @@ import (
 // GX skill catalog cleanup. NormalizeSkillCatalog rewrites Character/Skill.SData
 // without touching any byte it does not need to:
 //   - Interpretation and Backpack Upgrade are removed from the player catalog;
+//   - Soul Burn becomes a learnable one-rank Priest/Oracle spell;
 //   - dead skill levels (a placeholder such as "Hell LordED" / "Not Available.")
 //     of skills that have working levels become the same empty slot as the
 //     unused levels; skills with no working level at all are left alone;
@@ -78,6 +79,7 @@ var (
 // SkillCatalogReport counts what NormalizeSkillCatalog changed.
 type SkillCatalogReport struct {
 	RetiredLevels   []SkillKey // blanked without shifting IDs
+	SoulBurnLevels  []SkillKey // enabled base rank or blanked higher ranks
 	DeadLevels      []SkillKey // blanked
 	ChainTexts      int
 	PrevRestored    []SkillKey
@@ -89,8 +91,8 @@ type SkillCatalogReport struct {
 }
 
 func (r SkillCatalogReport) String() string {
-	return fmt.Sprintf("retired levels: %d; dead levels removed: %d; chain descriptions rewritten: %d; previous skill restored: %d; Mana/Stamina Shot texts: %d; Aggravation time damage cleared: %d; detail 25 -> 21: %d; descriptions corrected: %d; skills with no working level left alone: %v",
-		len(r.RetiredLevels), len(r.DeadLevels), r.ChainTexts, len(r.PrevRestored), r.ManaStaminaText, len(r.TimeDamage), len(r.DetailMoved), r.TextFixes, r.FullyDeadSkills)
+	return fmt.Sprintf("retired levels: %d; Soul Burn levels updated: %d; dead levels removed: %d; chain descriptions rewritten: %d; previous skill restored: %d; Mana/Stamina Shot texts: %d; Aggravation time damage cleared: %d; detail 25 -> 21: %d; descriptions corrected: %d; skills with no working level left alone: %v",
+		len(r.RetiredLevels), len(r.SoulBurnLevels), len(r.DeadLevels), r.ChainTexts, len(r.PrevRestored), r.ManaStaminaText, len(r.TimeDamage), len(r.DetailMoved), r.TextFixes, r.FullyDeadSkills)
 }
 
 type skillSlot struct {
@@ -202,6 +204,7 @@ func normalizeSkillCatalog(raw, textFixes []byte) ([]byte, SkillCatalogReport, e
 		return nil, rep, err
 	}
 	retirePlayerSkillSlots(slots, &rep)
+	enableSoulBurnSlots(slots, &rep)
 	working := map[int]bool{}
 	for _, s := range slots {
 		if !s.blank() && !s.dead() {

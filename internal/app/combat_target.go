@@ -209,7 +209,8 @@ func (a *App) pickMob(in *platform.Input, w, h int) uint32 {
 		origin, direction, rayOK = clickRay(in.MouseX, in.MouseY, w, h, vp)
 	}
 	for id, e := range a.state.Entities {
-		if e.Dead || e.ID == a.state.SelfID || (e.Kind != game.KindMob && !(in.Clicked && e.Kind == game.KindUser && e.Shape != nil)) {
+		clickPlayer := in.Clicked && e.Kind == game.KindUser && e.Shape != nil
+		if e.ID == a.state.SelfID || !clickPlayer && (e.Kind != game.KindMob || e.Dead) {
 			continue
 		}
 		if in.Clicked {

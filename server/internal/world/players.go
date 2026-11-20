@@ -89,6 +89,7 @@ type ConnectedPlayer struct {
 	tradeRefresh *tradeRefresh
 	damage       []pendingDamage
 	lifeSkill    *pendingLifeSkill
+	soulKill     *pendingSoulKill
 	friendly     []pendingFriendly
 	userHits     []pendingUserHit
 	pvpKillCount uint32
@@ -96,18 +97,17 @@ type ConnectedPlayer struct {
 	duelWins     int
 	itemGrants   []db.Item
 
-	guild    playerGuildState // guarded by guildMu
-	soulKill bool
-	reveal   bool // an enemy's Detection found this user: stealth ends
+	guild  playerGuildState // guarded by guildMu
+	reveal bool             // an enemy's Detection found this user: stealth ends
 
 	hidden atomic.Bool
 
 	transformMob atomic.Uint32 // monster the user looks like (Degeneration), 0 none
 	immune       atomic.Bool
 	noMobTarget  atomic.Bool
-	alive        atomic.Bool
-	debuffed     atomic.Bool // an active debuff (PvPHaveDebuff), refreshed by its session
-	kcRefresh    atomic.Bool // the country tier changed (ApplyKillCount)
+	lifeState    atomic.Uint64 // incremented on alive/dead transitions; odd while alive
+	debuffed     atomic.Bool   // an active debuff (PvPHaveDebuff), refreshed by its session
+	kcRefresh    atomic.Bool   // the country tier changed (ApplyKillCount)
 
 	duel duelState // guarded by duelMu
 
@@ -303,7 +303,7 @@ func RegisterPlayer(ch db.Character, items []db.Item, isAdmin bool, faction uint
 	if len(owner) > 0 {
 		p.owner = owner[0]
 	}
-	p.alive.Store(true)
+	p.lifeState.Store(1)
 	realm.registryMu.Lock()
 	bucket(ch.MapID)[ch.ID] = p
 	realm.registryMu.Unlock()
@@ -401,8 +401,15 @@ func (p *ConnectedPlayer) GMVisible() bool {
 	return p.gmVisible
 }
 
-func (p *ConnectedPlayer) IsAlive() bool   { return p.alive.Load() }
-func (p *ConnectedPlayer) SetAlive(v bool) { p.alive.Store(v) }
+func (p *ConnectedPlayer) IsAlive() bool { return p.lifeState.Load()&1 != 0 }
+
+// SetAlive is called by the owning session. A death has a distinct state
+// even if the same character revives and dies again during a prepared cast.
+func (p *ConnectedPlayer) SetAlive(alive bool) {
+	if state := p.lifeState.Load(); (state&1 != 0) != alive {
+		p.lifeState.Store(state + 1)
+	}
+}
 
 func (p *ConnectedPlayer) QueueTeleport(mapID uint16, x, y, z float32) {
 	p.mailMu.Lock()

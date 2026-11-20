@@ -84,7 +84,7 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 		target := a.pickMob(in, w, h)
 		if in.HasKey(platform.KeyPreviousTarget) {
 			target = a.state.PreviousTarget
-			if e := a.state.Entities[target]; target != a.state.SelfID && (e == nil || e.Dead) {
+			if e := a.state.Entities[target]; target != a.state.SelfID && (e == nil || e.Dead && e.Kind != game.KindUser) {
 				return
 			}
 		}

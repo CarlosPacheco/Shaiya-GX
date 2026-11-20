@@ -43,19 +43,55 @@ func (p *ConnectedPlayer) TakeLifeSkill() *pendingLifeSkill {
 	return l
 }
 
-// QueueSoulKill asks a dead user's session to run KillSoul.
-func (p *ConnectedPlayer) QueueSoulKill() {
-	p.mailMu.Lock()
-	p.soulKill = true
-	p.mailMu.Unlock()
+type corpseTarget struct {
+	player *ConnectedPlayer
+	state  uint64
 }
 
-func (p *ConnectedPlayer) TakeSoulKill() bool {
+type pendingSoulKill struct {
+	source *ConnectedPlayer
+	state  uint64
+	mapID  uint16
+	skill  db.CharacterSkill
+}
+
+func (p *ConnectedPlayer) queueSoulKill(k pendingSoulKill) bool {
+	p.mailMu.Lock()
+	defer p.mailMu.Unlock()
+	if p.lifeState.Load() != k.state || p.soulKill != nil && p.soulKill.state == k.state {
+		return false
+	}
+	p.soulKill = &k
+	return true
+}
+
+func (p *ConnectedPlayer) takeSoulKill() *pendingSoulKill {
 	p.mailMu.Lock()
 	defer p.mailMu.Unlock()
 	k := p.soulKill
-	p.soulKill = false
+	p.soulKill = nil
 	return k
+}
+
+// Soul Burn follows the normal PvP team and visibility rules with a dead
+// target. SkillOnce 0x453690 excludes Ultimate Mode before calling KillSoul.
+func (s *Session) soulBurnCorpse(p *ConnectedPlayer) corpseTarget {
+	if p == nil || s.player == nil || s.dead || p == s.player {
+		return corpseTarget{}
+	}
+	state := p.lifeState.Load()
+	if state == 0 || state&1 != 0 || p.Snapshot().Mode == growUltimate || s.isTeam(p) {
+		return corpseTarget{}
+	}
+	return corpseTarget{player: p, state: state}
+}
+
+func soulBurnRejection(source uint32, k db.CharacterSkill) []byte {
+	return buildSkillUseResult(packet.SkillUseNoTarget, skillResultNotTarget, source, 0, k.SkillID, k.Level, 0, 0, 0)
+}
+
+func (s *Session) rejectSoulBurn(k db.CharacterSkill) {
+	s.send(soulBurnRejection(s.char.ID, k), "0x0511 Soul Burn target refused")
 }
 
 // equipmentDefenseAttr reads CUser +0x1284: live authoritative defense
@@ -118,14 +154,22 @@ func (s *Session) skillOnceSucceeds(def *db.SkillDef, self bool) bool {
 
 // skillOnce runs a TypeEffect 6 skill after its cast: SP/MP and the reset
 // time are spent whatever the outcome (AttackUser 0x00451d1d).
-func (s *Session) skillOnce(k db.CharacterSkill, def *db.SkillDef, target uint32, stats CharacterStats, completed ...bool) {
+func (s *Session) skillOnce(k db.CharacterSkill, def *db.SkillDef, target uint32, stats CharacterStats, cast *pendingCast) {
 	ch := s.char
 	p, ok := s.userSkillTarget(def, target)
-	if !ok || !s.userSkillReach(p, def, len(completed) > 0 && completed[0]) {
+	var corpse corpseTarget
+	if def.TypeDetail == detailKillSoul {
+		corpse = s.soulBurnCorpse(p)
+		if corpse.player == nil || cast != nil && cast.corpse != corpse {
+			s.rejectSoulBurn(k)
+			return
+		}
+	}
+	if !ok || !s.userSkillReach(p, def, cast != nil) {
 		s.sendUserSkillRangeFailure(k, p)
 		return
 	}
-	s.startCooldown(k, def, len(completed) > 0 && completed[0])
+	s.startCooldown(k, def, cast != nil)
 	sp, mp := s.skillCosts(def, &stats)
 	s.spendDelta(mp, sp)
 	s.persist()
@@ -149,12 +193,11 @@ func (s *Session) skillOnce(k db.CharacterSkill, def *db.SkillDef, target uint32
 		result(skillResultNormal, p.CharacterID)
 		p.QueueLifeSkill(pendingLifeSkill{ch.ID, ch.PosX, ch.PosY, ch.PosZ})
 	case detailKillSoul:
-		if p.Snapshot().Mode != growUltimate && s.skillOnceSucceeds(def, self) {
-			result(skillResultNormal, p.CharacterID)
-			p.QueueSoulKill()
-			return
+		if !s.skillOnceSucceeds(def, false) {
+			result(skillResultFailed, p.CharacterID)
+		} else if !p.queueSoulKill(pendingSoulKill{source: s.player, state: corpse.state, mapID: ch.MapID, skill: k}) {
+			s.rejectSoulBurn(k)
 		}
-		result(skillResultNormal, p.CharacterID)
 	case detailDetect:
 		if !s.skillOnceSucceeds(def, self) {
 			result(skillResultFailed, p.CharacterID)
@@ -196,7 +239,16 @@ func (s *Session) tickSkillOnce() {
 	if l := p.TakeLifeSkill(); l != nil && s.dead && !s.invulnerable() {
 		s.lifeSkill(l)
 	}
-	if p.TakeSoulKill() && s.dead && !s.invulnerable() {
+	if k := p.takeSoulKill(); k != nil {
+		ch := s.char
+		if !s.dead || s.invulnerable() || ch.Mode == growUltimate || ch.MapID != k.mapID || p.lifeState.Load() != k.state {
+			k.source.Send(soulBurnRejection(k.source.CharacterID, k.skill), "0x0511 Soul Burn corpse no longer available")
+			return
+		}
+		// The corpse is still present when the result arrives. Its view sees
+		// the impact before KillSoul emits corpse leave and rebirth packets.
+		frame := buildSkillUseResult(packet.SkillUseNoTarget, skillResultNormal, k.source.CharacterID, ch.ID, k.skill.SkillID, k.skill.Level, 0, 0, 0)
+		sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius, frame, "0x0511 Soul Burn")
 		s.killSoul()
 	}
 }

@@ -143,6 +143,20 @@ effect's own tick calculation, including any resource percentages it lists.
 Periodic effects skip the weapon damage, critical and higher-monster-level
 multipliers.
 
+## Soul Burn
+
+Priests and Oracles can learn Soul Burn at level 22 for three skill points.
+It has one rank, a two-second cast, a cost of 430 MP, a 24-unit base
+`AttackRange`, and a five-minute cooldown. It has a fixed 100% success rate
+against eligible targets.
+
+Select an enemy player's corpse. The caster and corpse must be in the same
+instance and the cast follows standard launch reach and visibility checks.
+Ultimate Mode corpses are immune. On success, the enemy immediately returns
+to their normal respawn point with the usual respawn rules. The visual effect
+plays where the corpse lay. There is no lingering debuff or resurrection timer
+added by the spell.
+
 ## Server configuration
 
 Set the two DEX thresholds in the environment or in the server's

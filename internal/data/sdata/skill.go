@@ -33,6 +33,9 @@ type SkillKey struct {
 	Level uint8
 }
 
+// IsSoulBurn also recognizes the original catalog's pre-normalized effect.
+func (s Skill) IsSoulBurn() bool { return s.Detail == 122 && (s.Effect == 3 || s.Effect == 6) }
+
 // RetiredPlayerSkill applies only to the player catalog. NPC skill IDs are independent.
 func RetiredPlayerSkill(id uint16) bool { return id == 3 || id == 4 }
 

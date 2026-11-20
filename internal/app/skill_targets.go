@@ -10,6 +10,11 @@ import (
 // Validate before sending or predicting anything; server still owns hostility,
 // costs, range and outcomes. Caster/party and caster-area spells need no victim.
 func (a *App) validSkillTarget(d sdata.Skill, target uint32) bool {
+	if d.IsSoulBurn() {
+		e := a.state.Entities[target]
+		return !a.state.Self.Dead && target != a.state.SelfID && e != nil && e.Kind == game.KindUser && e.Dead &&
+			e.Shape != nil && e.Shape.Mode != 3 && a.selectedSkillEnemy(target)
+	}
 	if d.Target == proto.SkillTargetRaid {
 		return proto.SupportsRaidSkillTarget(d.Effect) && target == a.state.SelfID && !a.state.Self.Dead
 	}
@@ -36,7 +41,7 @@ func (a *App) validSkillTarget(d sdata.Skill, target uint32) bool {
 	if e.Kind == game.KindMob && a.friendlyMob(e) && (d.Effect == 1 || d.Effect == 3 || d.Effect == 5) {
 		return false
 	}
-	corpse := d.Effect == 6 && (d.Detail == 121 || d.Detail == 122)
+	corpse := d.Effect == 6 && d.Detail == 121
 	if corpse {
 		return e.Kind == game.KindUser && e.Dead
 	}
@@ -45,6 +50,9 @@ func (a *App) validSkillTarget(d sdata.Skill, target uint32) bool {
 
 // Resolve the spell recipient without changing the selected combat target.
 func (a *App) resolveSkillTarget(d sdata.Skill) uint32 {
+	if d.IsSoulBurn() {
+		return a.state.Target
+	}
 	if (d.Effect == 2 || d.Effect == 4) && d.Target != 3 && d.Target != 7 {
 		return a.state.SelfID
 	}
