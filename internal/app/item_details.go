@@ -149,7 +149,7 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 			add(fmt.Sprintf("%s %d", label(485, "Absorption"), absorption), white)
 		}
 	}
-	if def.Attribute >= 1 && def.Attribute <= 8 {
+	if def.Attribute >= 1 && def.Attribute <= 8 && proto.FirecrackerVariant(def.Type, def.TypeID) == 0 {
 		add(elementName(def.Attribute, messages...), [4]float32{1, 1, 0, 1})
 	}
 	hp, mp, sp := def.RecoveryHP, def.RecoveryMP, def.RecoverySP
