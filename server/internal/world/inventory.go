@@ -562,28 +562,15 @@ func (s *Session) equipmentChanged(slots []uint8) {
 	}
 }
 
-// mobGoldBonus is ItemGet's mob-gold rate: ability 44's percent, +20 with
-// the White Tiger charm, +50 with the Red Phoenix.
+// mobGoldBonus applies the dedicated mob-gold ability.
 func (s *Session) mobGoldBonus(amount uint32) uint32 {
-	rate, charm := int32(0), 0
+	rate := int32(0)
 	for _, b := range s.buffs {
 		for _, a := range b.Abilities {
-			switch {
-			case a.Type == 44:
+			if a.Type == 44 {
 				rate = max(a.Value, 0)
-			case a.Type >= 40 && a.Type <= 42 && a.Value > 0:
-				charm = max(charm, int(a.Type)-39)
 			}
 		}
-	}
-	switch charm {
-	case 2:
-		rate += 20
-	case 3:
-		rate += 50
-	}
-	if rate <= 0 {
-		return amount
 	}
 	return amount + uint32(math.Trunc(float64(float32(rate))/100*float64(float32(amount))))
 }

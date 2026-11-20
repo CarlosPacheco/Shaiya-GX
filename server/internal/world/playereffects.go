@@ -405,28 +405,14 @@ func (s *Session) blocksAttack(kind int) bool {
 	return false
 }
 
-// deathExpLoss is CUser::Death's percent: 0 with an exp-protection
-// ability (38) or the Red Phoenix charm (42), 1 with the Blue Dragon (40)
-// or White Tiger (41) charm, otherwise 5.
+// deathExpLoss honors the dedicated EXP loss protection ability.
 func (s *Session) deathExpLoss() int {
-	charm, protected := 0, false
 	for _, b := range s.buffs {
 		for _, a := range b.Abilities {
-			switch a.Type {
-			case 38:
-				protected = protected || a.Value > 0
-			case 40, 41, 42:
-				if a.Value > 0 {
-					charm = max(charm, int(a.Type)-39)
-				}
+			if a.Type == 38 && a.Value > 0 {
+				return 0
 			}
 		}
-	}
-	switch {
-	case protected || charm == 3:
-		return 0
-	case charm > 0:
-		return 1
 	}
 	return deathExpPercent
 }

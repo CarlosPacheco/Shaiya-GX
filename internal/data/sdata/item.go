@@ -23,7 +23,8 @@ type Item struct {
 	Classes                            [6]uint8
 	Grow                               uint8
 	RequiredStats, Stats               [6]uint16
-	Range, AttackTime, Attribute       uint8
+	Range                              uint16 // native byte, widened for GX skill references
+	AttackTime, Attribute              uint8
 	Speed                              uint8
 	ExpAbsorb                          uint8 // Exp: flat damage absorption while equipped.
 	ReqOG, ReqIg                       uint8
@@ -106,7 +107,7 @@ func ParseItems(raw []byte) (map[ItemKey]*Item, error) {
 			it.ReqVG = c.u16()
 			it.ReqOG = c.u8()
 			it.ReqIg = c.u8()
-			it.Range, it.AttackTime, it.Attribute = c.u8(), c.u8(), c.u8()
+			it.Range, it.AttackTime, it.Attribute = uint16(c.u8()), c.u8(), c.u8()
 			it.Special = c.u8()
 			it.Slot = c.u8()
 			it.Quality = c.u16()

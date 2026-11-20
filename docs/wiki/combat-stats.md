@@ -76,6 +76,10 @@ LUC, and 99.5% against one with 50 LUC. A critical multiplies the damage by 1.5.
 
 ## Accuracy and evasion
 
+Skill accuracy and evasion values are percentage-point modifiers by category.
+An ability value of 5 adds five points of melee, ranged or magic chance
+according to its ability type. A reduction subtracts the listed points.
+
 **Effective evasion = defender's evasion − attacker's accuracy**, limited to
 0–100%. **Hit chance = 100% − effective evasion.**
 

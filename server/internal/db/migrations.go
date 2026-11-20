@@ -36,6 +36,9 @@ var auctionMigration string
 //go:embed prune_legacy.sql
 var pruneLegacyMigration string
 
+//go:embed percentage_skills.sql
+var percentageSkillsMigration string
+
 var migrations = []migration{
 	{1, "atomic_session_handoff", `CREATE TABLE IF NOT EXISTS GX_SessionHandoff(UserUID INTEGER PRIMARY KEY,Identity BLOB NOT NULL,AESMaterial BLOB NOT NULL,SessionID INTEGER NOT NULL,ExpiresAt INTEGER NOT NULL)`},
 	{2, "indexed_account_lookup", `CREATE INDEX IF NOT EXISTS GX_Users_UserID ON PS_UserData_Users_Master(UserID)`},
@@ -191,6 +194,7 @@ var migrations = []migration{
 			ItemID13,ItemID14,ItemID15,ItemID16,ItemID17,ItemID18,ItemID19,ItemID20,ItemID21,ItemID22,ItemID23,ItemID24
 		));
 	`},
+	{33, "explicit_experience_and_combat_chance_percentages", percentageSkillsMigration},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

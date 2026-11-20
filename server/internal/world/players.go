@@ -3,7 +3,6 @@ package world
 import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/netx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/telemetry"
-	"math"
 	"net"
 	"slices"
 	"strings"
@@ -123,7 +122,7 @@ type ConnectedPlayer struct {
 	viewedShop *ConnectedPlayer
 
 	rewardMu   sync.Mutex
-	experience [4]uint32
+	experience experienceBatch
 	perfectExp []perfectExperience
 	gold       uint32
 	questKills map[uint16]uint8
@@ -194,19 +193,56 @@ func (p *ConnectedPlayer) hasQuest(id uint16) bool {
 }
 
 type perfectExperience struct {
-	before [4]uint32
+	before experienceBatch
 	amount uint32
 }
 
 type rewardSnapshot struct {
-	experience [4]uint32
+	experience experienceBatch
 	perfect    []perfectExperience
 	gold       uint32
 }
 
-func experienceScaled(amount uint32, mode int) uint32 {
-	factors := [4]float64{1, 1.5, 1.2, 1.7}
-	return uint32(math.Trunc(float64(amount) * factors[mode]))
+// An award's integer hundreds and remainder can be aggregated independently.
+// This keeps ordinary rewards bounded while retaining rounding per kill for any bonus.
+type experienceBatch struct {
+	hundreds   uint64
+	remainders [100]uint64
+}
+
+func experienceScaled(amount uint32, bonus uint32) uint32 {
+	return uint32(min(uint64(^uint32(0)), uint64(amount)+uint64(amount)*uint64(bonus)/100))
+}
+
+func (b *experienceBatch) add(amount uint32) {
+	b.hundreds += uint64(amount / 100)
+	if remainder := amount % 100; remainder != 0 {
+		b.remainders[remainder]++
+	}
+}
+
+func (b *experienceBatch) scaled(bonus uint32) uint32 {
+	const limit = uint64(^uint32(0))
+	factor := 100 + uint64(bonus)
+	if b.hundreds > limit/factor {
+		return uint32(limit)
+	}
+	total := b.hundreds * factor
+	for remainder, count := range b.remainders {
+		value := uint64(remainder) * factor / 100
+		if value != 0 && count > (limit-total)/value {
+			return uint32(limit)
+		}
+		total += count * value
+	}
+	return uint32(total)
+}
+
+func (b *experienceBatch) subtract(credited experienceBatch) {
+	b.hundreds -= credited.hundreds
+	for remainder, count := range credited.remainders {
+		b.remainders[remainder] -= count
+	}
 }
 
 // QueueExp carries a kill reward to its recipient's owning session.
@@ -214,32 +250,27 @@ func (p *ConnectedPlayer) QueueExp(amount uint32, perfect bool) {
 	p.rewardMu.Lock()
 	defer p.rewardMu.Unlock()
 	if perfect {
-		// Keep the award boundary: whether this grant levels the recipient
-		// depends on the EXP from all preceding rewards.
+		// Preserve award order for the Perfect Party level-up boundary.
 		p.perfectExp = append(p.perfectExp, perfectExperience{p.experience, amount})
-		p.experience = [4]uint32{}
+		p.experience = experienceBatch{}
 		return
 	}
-	// Precompute every possible modifier per event before coalescing, retaining
-	// per-reward rounding. The receiving session chooses its live buff mode.
-	for mode := range p.experience {
-		p.experience[mode] = satAdd(p.experience[mode], experienceScaled(amount, mode))
-	}
+	p.experience.add(amount)
 }
 func (p *ConnectedPlayer) QueueGold(amount uint32) {
 	p.rewardMu.Lock()
 	defer p.rewardMu.Unlock()
 	p.gold = satAdd(p.gold, amount)
 }
-func (p *ConnectedPlayer) takeRewardTotals(mode int) (uint32, uint32) {
+func (p *ConnectedPlayer) takeRewardTotals(bonus uint32) (uint32, uint32) {
 	p.rewardMu.Lock()
 	defer p.rewardMu.Unlock()
-	exp, gold := p.experience[mode], p.gold
+	exp, gold := p.experience.scaled(bonus), p.gold
 	for _, event := range p.perfectExp {
-		exp = satAdd(exp, satAdd(event.before[mode], experienceScaled(event.amount, mode)))
+		exp = satAdd(exp, satAdd(event.before.scaled(bonus), experienceScaled(event.amount, bonus)))
 	}
 	p.perfectExp = p.perfectExp[:0]
-	p.experience = [4]uint32{}
+	p.experience = experienceBatch{}
 	p.gold = 0
 	return exp, gold
 }
@@ -258,9 +289,7 @@ func (p *ConnectedPlayer) ackRewardTotals(snapshot rewardSnapshot) {
 		// A new perfect award moved the old trailing EXP into its prefix.
 		tail = &p.perfectExp[0].before
 	}
-	for mode, value := range snapshot.experience {
-		tail[mode] = satSub(tail[mode], value)
-	}
+	tail.subtract(snapshot.experience)
 	p.gold = satSub(p.gold, snapshot.gold)
 }
 func (p *ConnectedPlayer) TakeRewards() (exp, gold []uint32) {

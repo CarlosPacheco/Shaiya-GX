@@ -246,7 +246,7 @@ func (s *Session) executeTown() {
 		"0x1101 town command result")
 }
 
-// deathExpPercent is CUser::Death's drop without charms (deathExpLoss).
+// deathExpPercent is CUser::Death's drop without protection (deathExpLoss).
 const deathExpPercent = 5
 
 // expDrop is CUser::ExpDrop (0x0045ad50): above level 10, percent of the

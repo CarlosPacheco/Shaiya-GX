@@ -364,20 +364,21 @@ func (s *Session) drainRewards(p *ConnectedPlayer) {
 		}
 	}
 	snapshot := p.peekRewardTotals()
-	mode, gold := s.experienceMode(), snapshot.gold
-	if len(snapshot.perfect) == 0 && snapshot.experience[mode] == 0 && gold == 0 {
+	bonus, gold := s.experienceBonus(), snapshot.gold
+	trailingExperience := snapshot.experience.scaled(bonus)
+	if len(snapshot.perfect) == 0 && trailingExperience == 0 && gold == 0 {
 		return
 	}
 	before := *s.char
 	after := before
 	var credited experienceCredit
 	for _, event := range snapshot.perfect {
-		_, ordinary := applyExpGain(&after, event.before[mode])
-		award := applyExperienceAward(&after, experienceScaled(event.amount, mode), true)
+		_, ordinary := applyExpGain(&after, event.before.scaled(bonus))
+		award := applyExperienceAward(&after, experienceScaled(event.amount, bonus), true)
 		credited.base += ordinary + award.base
 		credited.perfect += award.perfect
 	}
-	_, ordinary := applyExpGain(&after, snapshot.experience[mode])
+	_, ordinary := applyExpGain(&after, trailingExperience)
 	credited.base += ordinary
 	levels := after.Level - before.Level
 	if credited.base == 0 && credited.perfect == 0 && gold == 0 {

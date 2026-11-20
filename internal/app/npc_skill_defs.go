@@ -17,6 +17,7 @@ func (a *App) loadNPCSkills() {
 	raw, err := a.arc.ReadFile("Monster/NpcSkill.SData")
 	if err == nil {
 		a.npcSkillDefs, err = sdata.ParseSkills(raw)
+		sdata.NormalizePercentageSkills(a.npcSkillDefs, true)
 	}
 	if err != nil {
 		log.Printf("NpcSkill.SData: %v", err)

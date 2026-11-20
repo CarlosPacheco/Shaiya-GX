@@ -30,6 +30,17 @@ duplicate skills share one icon. Icons resolve the independent NPC definitions,
 never a same-numbered player skill. Recovery lapis
 do not add an effect icon.
 
+## Experience consumables
+
+The server reads each active skill's ability 35 value as its bonus percentage.
+Distinct spells add their bonuses. For example, +100%, +50% and +50% give
+300% of the original monster EXP. A repeated cast of the same skill refreshes
+its buff according to the usual rank rules. Quest EXP is awarded separately.
+
+Increase EXP and the Sun EXP Stones each give +50%. Blue Dragon, White Tiger
+and Red Phoenix each give +20% monster EXP as their sole benefit. Dedicated
+EXP-loss protection and mob-gold skills use their own abilities.
+
 ## Permanent equipment bonuses
 
 | SQL field | Current use |

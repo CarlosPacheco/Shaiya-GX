@@ -392,12 +392,12 @@ Direct GX dependencies: `internal/attackspeed`, `internal/skilltiming`, `server/
 | [`applyExperienceAward`](../../server/internal/world/combat.go#L511)<br>`func applyExperienceAward(ch *db.Character, amount uint32, perfect bool) experienceCredit` | CUser::AddExpFromUser (0x458240) grants an equal extra amount to a normal seven-member party when the base award alone is below the next threshold. Process any level crossed by the bonus immediately using the GX curve. |
 | [`expBounds`](../../server/internal/world/combat.go#L525)<br>`func expBounds(ch *db.Character) (prev, next uint32)` | expBounds returns the cumulative thresholds used by the character's bar. |
 | [`rewardKill`](../../server/internal/world/combat.go#L538)<br>`func rewardKill(killer *ConnectedPlayer, killerID uint32, mapID uint16, m *MapMob, log logPrinter)` | rewardKill hands out a kill's loot and exp: drops on the ground, gold split across the party (or dropped for a solo killer) and each share of exp queued to its recipient's session. An offline DoT caster gets the solo exp straight in the database. |
-| [`experienceMode`](../../server/internal/world/combat.go#L597)<br>`func (s *Session) experienceMode() int` | expScale is award_experience's modifiers: x1.5 with exp doubling (ability 35), +0.2 with any charm (abilities 40-42). |
-| [`notifyExpGain`](../../server/internal/world/combat.go#L616)<br>`func (s *Session) notifyExpGain(credited experienceCredit, levels uint16)` | See the source definition and the subsystem ownership contract. |
-| [`buildExpGain`](../../server/internal/world/combat.go#L637)<br>`func buildExpGain(credited experienceCredit) []byte` | buildExpGain (0x0207): base experience and the extra Perfect Party EXP. |
-| [`buildLevelUp`](../../server/internal/world/combat.go#L646)<br>`func buildLevelUp(op packet.Opcode, ch *db.Character) []byte` | buildLevelUp (0x0508 self / 0x051E others): character id, level, stat points, skill points, exp at the level's start and for the next level. |
-| [`grantOfflineKillExp`](../../server/internal/world/combat.go#L659)<br>`func grantOfflineKillExp(characterID uint32, mobID, mobLevel uint16, mobExp uint32, log logPrinter)` | grantOfflineKillExp credits a DoT kill to a caster who went offline. |
-| [`logPrinter`](../../server/internal/world/combat.go#L676)<br>`type logPrinter` | See the source definition and the subsystem ownership contract. |
+| [`experienceBonus`](../../server/internal/world/combat.go#L597)<br>`func (s *Session) experienceBonus() uint32` | Active skill IDs are unique within each skill catalog. Each EXP ability contributes percentage points to the total applied to monster rewards. |
+| [`notifyExpGain`](../../server/internal/world/combat.go#L609)<br>`func (s *Session) notifyExpGain(credited experienceCredit, levels uint16)` | See the source definition and the subsystem ownership contract. |
+| [`buildExpGain`](../../server/internal/world/combat.go#L630)<br>`func buildExpGain(credited experienceCredit) []byte` | buildExpGain (0x0207): base experience and the extra Perfect Party EXP. |
+| [`buildLevelUp`](../../server/internal/world/combat.go#L639)<br>`func buildLevelUp(op packet.Opcode, ch *db.Character) []byte` | buildLevelUp (0x0508 self / 0x051E others): character id, level, stat points, skill points, exp at the level's start and for the next level. |
+| [`grantOfflineKillExp`](../../server/internal/world/combat.go#L652)<br>`func grantOfflineKillExp(characterID uint32, mobID, mobLevel uint16, mobExp uint32, log logPrinter)` | grantOfflineKillExp credits a DoT kill to a caster who went offline. |
+| [`logPrinter`](../../server/internal/world/combat.go#L669)<br>`type logPrinter` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -1897,14 +1897,14 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 | [`broadcastNear`](../../server/internal/world/inventory.go#L483)<br>`func (s *Session) broadcastNear(frame []byte, label string, includeSelf bool)` | broadcastNear sends to viewers within the viewport that may see this character; includeSelf also echoes it to this session. |
 | [`handleDropItem`](../../server/internal/world/inventory.go#L493)<br>`func (s *Session) handleDropItem(p []byte)` | handleDropItem (0x0206): bag, slot, count. |
 | [`equipmentChanged`](../../server/internal/world/inventory.go#L551)<br>`func (s *Session) equipmentChanged(slots []uint8)` | equipmentChanged pushes 0x0507 for the slots to self and viewers. |
-| [`mobGoldBonus`](../../server/internal/world/inventory.go#L567)<br>`func (s *Session) mobGoldBonus(amount uint32) uint32` | mobGoldBonus is ItemGet's mob-gold rate: ability 44's percent, +20 with the White Tiger charm, +50 with the Red Phoenix. |
-| [`handlePickupItem`](../../server/internal/world/inventory.go#L592)<br>`func (s *Session) handlePickupItem(p []byte)` | handlePickupItem (0x0205): map item id. |
-| [`moveItem`](../../server/internal/world/inventory.go#L666)<br>`func (s *Session) moveItem(srcBag, srcSlot, destBag, destSlot uint8) (frame []byte, ok bool)` | moveItem performs an inventory move/swap/merge and returns the 0x0204. |
-| [`planMoveItem`](../../server/internal/world/inventory.go#L672)<br>`func (s *Session) planMoveItem(srcBag, srcSlot, destBag, destSlot uint8) ([]byte, bool)` | See the source definition and the subsystem ownership contract. |
-| [`handleItemBagToBag`](../../server/internal/world/inventory.go#L726)<br>`func (s *Session) handleItemBagToBag(p []byte)` | handleItemBagToBag (0x0204): src bag/slot, dest bag/slot. |
-| [`equipAllowed`](../../server/internal/world/inventory.go#L776)<br>`func (s *Session) equipAllowed(srcBag, srcSlot, destBag, destSlot uint8) bool` | equipAllowed checks both directions of a move that touches the equipment bag. |
-| [`equipmentMoveFailure`](../../server/internal/world/inventory.go#L780)<br>`func (s *Session) equipmentMoveFailure(srcBag, srcSlot, destBag, destSlot uint8) string` | See the source definition and the subsystem ownership contract. |
-| [`planGiveItem`](../../server/internal/world/inventory.go#L806)<br>`func planGiveItem(items *[]db.Item, tpl *db.Item, count, maxStack uint16) (packets [][]byte, left uint16)` | planGiveItem uses the native placement/stacking rules on a private copy. It allocates identifiers but performs no writes or network operations. |
+| [`mobGoldBonus`](../../server/internal/world/inventory.go#L566)<br>`func (s *Session) mobGoldBonus(amount uint32) uint32` | mobGoldBonus applies the dedicated mob-gold ability. |
+| [`handlePickupItem`](../../server/internal/world/inventory.go#L579)<br>`func (s *Session) handlePickupItem(p []byte)` | handlePickupItem (0x0205): map item id. |
+| [`moveItem`](../../server/internal/world/inventory.go#L653)<br>`func (s *Session) moveItem(srcBag, srcSlot, destBag, destSlot uint8) (frame []byte, ok bool)` | moveItem performs an inventory move/swap/merge and returns the 0x0204. |
+| [`planMoveItem`](../../server/internal/world/inventory.go#L659)<br>`func (s *Session) planMoveItem(srcBag, srcSlot, destBag, destSlot uint8) ([]byte, bool)` | See the source definition and the subsystem ownership contract. |
+| [`handleItemBagToBag`](../../server/internal/world/inventory.go#L713)<br>`func (s *Session) handleItemBagToBag(p []byte)` | handleItemBagToBag (0x0204): src bag/slot, dest bag/slot. |
+| [`equipAllowed`](../../server/internal/world/inventory.go#L763)<br>`func (s *Session) equipAllowed(srcBag, srcSlot, destBag, destSlot uint8) bool` | equipAllowed checks both directions of a move that touches the equipment bag. |
+| [`equipmentMoveFailure`](../../server/internal/world/inventory.go#L767)<br>`func (s *Session) equipmentMoveFailure(srcBag, srcSlot, destBag, destSlot uint8) string` | See the source definition and the subsystem ownership contract. |
+| [`planGiveItem`](../../server/internal/world/inventory.go#L793)<br>`func planGiveItem(items *[]db.Item, tpl *db.Item, count, maxStack uint16) (packets [][]byte, left uint16)` | planGiveItem uses the native placement/stacking rules on a private copy. It allocates identifiers but performs no writes or network operations. |
 
 ### inventory_operation.go
 
@@ -2241,7 +2241,7 @@ type MapItem struct {
 	Money            uint32
 	OwnerID          uint32
 	NoParty          bool // a player's drop: its party does not share it
-	FromMob          bool // mob loot (drop type 1): gold gets the charm bonus
+	FromMob          bool // mob loot (drop type 1): gold can receive the mob-gold bonus
 	DroppedAt        time.Time
 	PosX, PosY, PosZ float32
 }
@@ -2503,7 +2503,7 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`handleEnteredPortal`](../../server/internal/world/movement.go#L215)<br>`func (s *Session) handleEnteredPortal(index uint8)` | See the source definition and the subsystem ownership contract. |
 | [`isTownCommand`](../../server/internal/world/movement.go#L228)<br>`func isTownCommand(message string) bool` | See the source definition and the subsystem ownership contract. |
 | [`executeTown`](../../server/internal/world/movement.go#L235)<br>`func (s *Session) executeTown()` | executeTown moves the character to the nearest faction spawn area on its map (also the escape hatch while dead). |
-| [`deathExpPercent`](../../server/internal/world/movement.go#L250)<br>`const deathExpPercent = 5` | deathExpPercent is CUser::Death's drop without charms (deathExpLoss). |
+| [`deathExpPercent`](../../server/internal/world/movement.go#L250)<br>`const deathExpPercent = 5` | deathExpPercent is CUser::Death's drop without protection (deathExpLoss). |
 | [`expDrop`](../../server/internal/world/movement.go#L254)<br>`func expDrop(ch *db.Character, percent int, faction uint8) uint32` | expDrop is CUser::ExpDrop (0x0045ad50): above level 10, percent of the level's exp span, never below the level's start. |
 | [`returnToTownDelay`](../../server/internal/world/movement.go#L274)<br>`const returnToTownDelay = 10 * time.Second` | returnToTownDelay is 0x0556's tick + 10000 (CUser::PacketPC). |
 | [`handleReturnToTown`](../../server/internal/world/movement.go#L278)<br>`func (s *Session) handleReturnToTown()` | handleReturnToTown (0x0556): alive and with no move pending, the user is moved to its bind point 10 s later (UpdateResetPosition, type 0). |
@@ -3011,10 +3011,10 @@ Direct GX dependencies: `internal/attackspeed`, `internal/movespeed`, `internal/
 | [`playerTimeDamage`](../../server/internal/world/playereffects.go#L274)<br>`func playerTimeDamage(def *db.SkillDef, st *CharacterStats, elapsed time.Duration) [3]int32` | playerTimeDamage is CUser::TimeDamage (0x00486290) on the player. |
 | [`tickDebuffs`](../../server/internal/world/playereffects.go#L282)<br>`func (s *Session) tickDebuffs(now time.Time) bool` | tickDebuffs runs the damage of applied debuffs: detail 61 every 3 s and on expiry, detail 63 on expiry. Returns whether the player died. |
 | [`blocksAttack`](../../server/internal/world/playereffects.go#L378)<br>`func (s *Session) blocksAttack(kind int) bool` | blocksAttack is the defender's block check before CMob::AttackSuccess: detail 92 blocks everything; 85 blocks DefenceValue attacks of its category and then ends; 86 blocks with a DefenceValue% chance. |
-| [`deathExpLoss`](../../server/internal/world/playereffects.go#L411)<br>`func (s *Session) deathExpLoss() int` | deathExpLoss is CUser::Death's percent: 0 with an exp-protection ability (38) or the Red Phoenix charm (42), 1 with the Blue Dragon (40) or White Tiger (41) charm, otherwise 5. |
-| [`reflects`](../../server/internal/world/playereffects.go#L439)<br>`func (s *Session) reflects(kind int, md *db.MobDef) bool` | reflects is CUser::ChkMirror (0x0044e080) with a detail-83 buff covering the category (its AbilityValue for that category is non-zero): SuccessType 1 rolls SuccessValue%, 2 rolls LUC x 10 / SuccessValue and 3 WIS x 10 / SuccessValue (CUser +0x1234 / +0x122c). A mob resisting the melee mirror skill cannot be reflected; md is nil for a user attacker. |
-| [`mirrorDamage`](../../server/internal/world/playereffects.go#L488)<br>`func (s *Session) mirrorDamage(userID, mobID uint32, d [3]uint32)` | mirrorDamage returns a mirrored hit to its source: a user takes it as the 0x0515 mirrored hit, a mob through 0x051B. |
-| [`reflectToMob`](../../server/internal/world/playereffects.go#L501)<br>`func (s *Session) reflectToMob(mobGlobalID uint32, damage [3]uint16)` | reflectToMob sends a reflected hit back to the mob (0x051B: character, mob, HP/SP/MP). |
+| [`deathExpLoss`](../../server/internal/world/playereffects.go#L409)<br>`func (s *Session) deathExpLoss() int` | deathExpLoss honors the dedicated EXP loss protection ability. |
+| [`reflects`](../../server/internal/world/playereffects.go#L425)<br>`func (s *Session) reflects(kind int, md *db.MobDef) bool` | reflects is CUser::ChkMirror (0x0044e080) with a detail-83 buff covering the category (its AbilityValue for that category is non-zero): SuccessType 1 rolls SuccessValue%, 2 rolls LUC x 10 / SuccessValue and 3 WIS x 10 / SuccessValue (CUser +0x1234 / +0x122c). A mob resisting the melee mirror skill cannot be reflected; md is nil for a user attacker. |
+| [`mirrorDamage`](../../server/internal/world/playereffects.go#L474)<br>`func (s *Session) mirrorDamage(userID, mobID uint32, d [3]uint32)` | mirrorDamage returns a mirrored hit to its source: a user takes it as the 0x0515 mirrored hit, a mob through 0x051B. |
+| [`reflectToMob`](../../server/internal/world/playereffects.go#L487)<br>`func (s *Session) reflectToMob(mobGlobalID uint32, damage [3]uint16)` | reflectToMob sends a reflected hit back to the mob (0x051B: character, mob, HP/SP/MP). |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3032,71 +3032,75 @@ Direct GX dependencies: `server/internal/crypto`, `server/internal/db`, `server/
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`connWriter`](../../server/internal/world/players.go#L21)<br>`type connWriter` | connWriter serializes every write to one client socket: the owning session and broadcasts from other sessions share it. |
-| [`write`](../../server/internal/world/players.go#L27)<br>`func (w *connWriter) write(b []byte) error` | See the source definition and the subsystem ownership contract. |
-| [`pendingTeleport`](../../server/internal/world/players.go#L38)<br>`type pendingTeleport` | See the source definition and the subsystem ownership contract. |
-| [`pendingDamage`](../../server/internal/world/players.go#L43)<br>`type pendingDamage` | See the source definition and the subsystem ownership contract. |
-| [`ConnectedPlayer`](../../server/internal/world/players.go#L56)<br>`type ConnectedPlayer` | ConnectedPlayer is a player in the world, reachable from any session for broadcasts. Cross-session work is queued in mailboxes and applied by the owning session's loop. Paired trades hold both owners' state locks. |
-| [`QueueQuestKill`](../../server/internal/world/players.go#L140)<br>`func (p *ConnectedPlayer) QueueQuestKill(mobID uint16)` | QueueQuestKill credits a kill to the player's quests (party members get it too, as mob_death does). |
-| [`pendingQuestKills`](../../server/internal/world/players.go#L161)<br>`func (p *ConnectedPlayer) pendingQuestKills() map[uint16]uint8` | See the source definition and the subsystem ownership contract. |
-| [`ackQuestKills`](../../server/internal/world/players.go#L170)<br>`func (p *ConnectedPlayer) ackQuestKills(id uint16, count uint8)` | See the source definition and the subsystem ownership contract. |
-| [`setQuests`](../../server/internal/world/players.go#L180)<br>`func (p *ConnectedPlayer) setQuests(ids []uint16)` | See the source definition and the subsystem ownership contract. |
-| [`hasQuest`](../../server/internal/world/players.go#L190)<br>`func (p *ConnectedPlayer) hasQuest(id uint16) bool` | See the source definition and the subsystem ownership contract. |
-| [`perfectExperience`](../../server/internal/world/players.go#L196)<br>`type perfectExperience` | See the source definition and the subsystem ownership contract. |
-| [`rewardSnapshot`](../../server/internal/world/players.go#L201)<br>`type rewardSnapshot` | See the source definition and the subsystem ownership contract. |
-| [`experienceScaled`](../../server/internal/world/players.go#L207)<br>`func experienceScaled(amount uint32, mode int) uint32` | See the source definition and the subsystem ownership contract. |
-| [`QueueExp`](../../server/internal/world/players.go#L213)<br>`func (p *ConnectedPlayer) QueueExp(amount uint32, perfect bool)` | QueueExp carries a kill reward to its recipient's owning session. |
-| [`QueueGold`](../../server/internal/world/players.go#L229)<br>`func (p *ConnectedPlayer) QueueGold(amount uint32)` | See the source definition and the subsystem ownership contract. |
-| [`takeRewardTotals`](../../server/internal/world/players.go#L234)<br>`func (p *ConnectedPlayer) takeRewardTotals(mode int) (uint32, uint32)` | See the source definition and the subsystem ownership contract. |
-| [`peekRewardTotals`](../../server/internal/world/players.go#L246)<br>`func (p *ConnectedPlayer) peekRewardTotals() rewardSnapshot` | See the source definition and the subsystem ownership contract. |
-| [`ackRewardTotals`](../../server/internal/world/players.go#L251)<br>`func (p *ConnectedPlayer) ackRewardTotals(snapshot rewardSnapshot)` | See the source definition and the subsystem ownership contract. |
-| [`TakeRewards`](../../server/internal/world/players.go#L266)<br>`func (p *ConnectedPlayer) TakeRewards() (exp, gold []uint32)` | See the source definition and the subsystem ownership contract. |
-| [`maxPendingCombat`](../../server/internal/world/players.go#L277)<br>`const maxPendingCombat = 4096` | See the source definition and the subsystem ownership contract. |
-| [`maxPendingItemGrants`](../../server/internal/world/players.go#L278)<br>`const maxPendingItemGrants = 256` | See the source definition and the subsystem ownership contract. |
-| [`mailboxOverflows`](../../server/internal/world/players.go#L280)<br>`var mailboxOverflows` | See the source definition and the subsystem ownership contract. |
-| [`mailboxOverflow`](../../server/internal/world/players.go#L282)<br>`func (p *ConnectedPlayer) mailboxOverflow()` | See the source definition and the subsystem ownership contract. |
-| [`bucket`](../../server/internal/world/players.go#L291)<br>`func bucket(mapID uint16) map[uint32]*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`RegisterPlayer`](../../server/internal/world/players.go#L301)<br>`func RegisterPlayer(ch db.Character, items []db.Item, isAdmin bool, faction uint8, out *connWriter, log *logx.Logger, owner ...*Session) *ConnectedPlayer` | RegisterPlayer adds a player to its map's realm.registry. |
-| [`Unregister`](../../server/internal/world/players.go#L315)<br>`func (p *ConnectedPlayer) Unregister()` | Unregister removes the player and cancels any trade it was part of. |
-| [`SetMap`](../../server/internal/world/players.go#L330)<br>`func (p *ConnectedPlayer) SetMap(mapID uint16)` | See the source definition and the subsystem ownership contract. |
-| [`MapID`](../../server/internal/world/players.go#L346)<br>`func (p *ConnectedPlayer) MapID() uint16` | See the source definition and the subsystem ownership contract. |
-| [`Faction`](../../server/internal/world/players.go#L352)<br>`func (p *ConnectedPlayer) Faction() uint8` | See the source definition and the subsystem ownership contract. |
-| [`PositionXZ`](../../server/internal/world/players.go#L358)<br>`func (p *ConnectedPlayer) PositionXZ() (float32, float32)` | See the source definition and the subsystem ownership contract. |
-| [`UpdateCharacter`](../../server/internal/world/players.go#L364)<br>`func (p *ConnectedPlayer) UpdateCharacter(ch db.Character)` | See the source definition and the subsystem ownership contract. |
-| [`Snapshot`](../../server/internal/world/players.go#L370)<br>`func (p *ConnectedPlayer) Snapshot() db.Character` | See the source definition and the subsystem ownership contract. |
-| [`UpdateItems`](../../server/internal/world/players.go#L376)<br>`func (p *ConnectedPlayer) UpdateItems(items []db.Item)` | See the source definition and the subsystem ownership contract. |
-| [`UpdateMotion`](../../server/internal/world/players.go#L382)<br>`func (p *ConnectedPlayer) UpdateMotion(motion uint8, direction uint16)` | See the source definition and the subsystem ownership contract. |
-| [`SetSitting`](../../server/internal/world/players.go#L388)<br>`func (p *ConnectedPlayer) SetSitting(v bool)` | See the source definition and the subsystem ownership contract. |
-| [`IsSitting`](../../server/internal/world/players.go#L394)<br>`func (p *ConnectedPlayer) IsSitting() bool` | See the source definition and the subsystem ownership contract. |
-| [`GMVisible`](../../server/internal/world/players.go#L400)<br>`func (p *ConnectedPlayer) GMVisible() bool` | See the source definition and the subsystem ownership contract. |
-| [`IsAlive`](../../server/internal/world/players.go#L406)<br>`func (p *ConnectedPlayer) IsAlive() bool` | See the source definition and the subsystem ownership contract. |
-| [`SetAlive`](../../server/internal/world/players.go#L410)<br>`func (p *ConnectedPlayer) SetAlive(alive bool)` | SetAlive is called by the owning session. A death has a distinct state even if the same character revives and dies again during a prepared cast. |
-| [`QueueTeleport`](../../server/internal/world/players.go#L416)<br>`func (p *ConnectedPlayer) QueueTeleport(mapID uint16, x, y, z float32)` | See the source definition and the subsystem ownership contract. |
-| [`TakeTeleport`](../../server/internal/world/players.go#L422)<br>`func (p *ConnectedPlayer) TakeTeleport() *pendingTeleport` | See the source definition and the subsystem ownership contract. |
-| [`tradeRefresh`](../../server/internal/world/players.go#L433)<br>`type tradeRefresh` | tradeRefresh tells the other side of a completed trade to reload its items and apply the money change itself (only the owner mutates its character). |
-| [`QueueTradeRefresh`](../../server/internal/world/players.go#L438)<br>`func (p *ConnectedPlayer) QueueTradeRefresh(packets [][]byte, moneyDelta int64)` | See the source definition and the subsystem ownership contract. |
-| [`TakeTradeRefresh`](../../server/internal/world/players.go#L444)<br>`func (p *ConnectedPlayer) TakeTradeRefresh() *tradeRefresh` | See the source definition and the subsystem ownership contract. |
-| [`QueueDamage`](../../server/internal/world/players.go#L452)<br>`func (p *ConnectedPlayer) QueueDamage(d pendingDamage)` | See the source definition and the subsystem ownership contract. |
-| [`TakeDamage`](../../server/internal/world/players.go#L463)<br>`func (p *ConnectedPlayer) TakeDamage() []pendingDamage` | See the source definition and the subsystem ownership contract. |
-| [`SitMotionPacket`](../../server/internal/world/players.go#L471)<br>`func (p *ConnectedPlayer) SitMotionPacket() []byte` | See the source definition and the subsystem ownership contract. |
-| [`EnteredMapPacket`](../../server/internal/world/players.go#L476)<br>`func (p *ConnectedPlayer) EnteredMapPacket() []byte` | EnteredMapPacket introduces an already-present character to a viewer. |
-| [`ShapePacket`](../../server/internal/world/players.go#L484)<br>`func (p *ConnectedPlayer) ShapePacket() []byte` | ShapePacket never embeds sitting; sit is sent as a separate 0x0506. |
-| [`MovePacket`](../../server/internal/world/players.go#L491)<br>`func (p *ConnectedPlayer) MovePacket() []byte` | See the source definition and the subsystem ownership contract. |
-| [`EquipmentPacket`](../../server/internal/world/players.go#L497)<br>`func (p *ConnectedPlayer) EquipmentPacket(slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`Send`](../../server/internal/world/players.go#L505)<br>`func (p *ConnectedPlayer) Send(frame []byte, label string) error` | Send writes a frame to this player with the post-handshake expanded XOR encoding, which is stateless and safe from any goroutine. |
-| [`appendWorldFrame`](../../server/internal/world/players.go#L513)<br>`func appendWorldFrame(dst, frame []byte) []byte` | See the source definition and the subsystem ownership contract. |
-| [`playersWhere`](../../server/internal/world/players.go#L521)<br>`func playersWhere(mapID uint16, keep func(*ConnectedPlayer) bool) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`PlayersOnMap`](../../server/internal/world/players.go#L537)<br>`func PlayersOnMap(mapID uint16) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`PlayersNear`](../../server/internal/world/players.go#L541)<br>`func PlayersNear(mapID uint16, x, z, radius float32) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`PlayersNearExcluding`](../../server/internal/world/players.go#L548)<br>`func PlayersNearExcluding(mapID uint16, characterID uint32, x, z, radius float32) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`AllPlayers`](../../server/internal/world/players.go#L558)<br>`func AllPlayers() []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`FindPlayerByName`](../../server/internal/world/players.go#L570)<br>`func FindPlayerByName(name string) *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`FindPlayerByID`](../../server/internal/world/players.go#L579)<br>`func FindPlayerByID(id uint32) *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`canSeeCharacter`](../../server/internal/world/players.go#L589)<br>`func canSeeCharacter(viewerIsAdmin, subjectIsAdmin, subjectGMVisible bool) bool` | Hidden GMs are visible only to other GMs. |
-| [`broadcast`](../../server/internal/world/players.go#L594)<br>`func broadcast(players []*ConnectedPlayer, frame []byte, label string, log *logx.Logger)` | broadcast sends frame to each player, logging failures. |
-| [`UpdateElements`](../../server/internal/world/players.go#L604)<br>`func (p *ConnectedPlayer) UpdateElements(attack, defense uint8)` | UpdateElements publishes the owning session's native event state for detection; no other session reads or mutates its applied skill list. |
-| [`QueueTradeCommit`](../../server/internal/world/players.go#L611)<br>`func (p *ConnectedPlayer) QueueTradeCommit(trade *tradeSession)` | See the source definition and the subsystem ownership contract. |
-| [`takeTradeCommit`](../../server/internal/world/players.go#L616)<br>`func (p *ConnectedPlayer) takeTradeCommit() *tradeSession` | See the source definition and the subsystem ownership contract. |
+| [`connWriter`](../../server/internal/world/players.go#L20)<br>`type connWriter` | connWriter serializes every write to one client socket: the owning session and broadcasts from other sessions share it. |
+| [`write`](../../server/internal/world/players.go#L26)<br>`func (w *connWriter) write(b []byte) error` | See the source definition and the subsystem ownership contract. |
+| [`pendingTeleport`](../../server/internal/world/players.go#L37)<br>`type pendingTeleport` | See the source definition and the subsystem ownership contract. |
+| [`pendingDamage`](../../server/internal/world/players.go#L42)<br>`type pendingDamage` | See the source definition and the subsystem ownership contract. |
+| [`ConnectedPlayer`](../../server/internal/world/players.go#L55)<br>`type ConnectedPlayer` | ConnectedPlayer is a player in the world, reachable from any session for broadcasts. Cross-session work is queued in mailboxes and applied by the owning session's loop. Paired trades hold both owners' state locks. |
+| [`QueueQuestKill`](../../server/internal/world/players.go#L139)<br>`func (p *ConnectedPlayer) QueueQuestKill(mobID uint16)` | QueueQuestKill credits a kill to the player's quests (party members get it too, as mob_death does). |
+| [`pendingQuestKills`](../../server/internal/world/players.go#L160)<br>`func (p *ConnectedPlayer) pendingQuestKills() map[uint16]uint8` | See the source definition and the subsystem ownership contract. |
+| [`ackQuestKills`](../../server/internal/world/players.go#L169)<br>`func (p *ConnectedPlayer) ackQuestKills(id uint16, count uint8)` | See the source definition and the subsystem ownership contract. |
+| [`setQuests`](../../server/internal/world/players.go#L179)<br>`func (p *ConnectedPlayer) setQuests(ids []uint16)` | See the source definition and the subsystem ownership contract. |
+| [`hasQuest`](../../server/internal/world/players.go#L189)<br>`func (p *ConnectedPlayer) hasQuest(id uint16) bool` | See the source definition and the subsystem ownership contract. |
+| [`perfectExperience`](../../server/internal/world/players.go#L195)<br>`type perfectExperience` | See the source definition and the subsystem ownership contract. |
+| [`rewardSnapshot`](../../server/internal/world/players.go#L200)<br>`type rewardSnapshot` | See the source definition and the subsystem ownership contract. |
+| [`experienceBatch`](../../server/internal/world/players.go#L208)<br>`type experienceBatch` | An award's integer hundreds and remainder can be aggregated independently. This keeps ordinary rewards bounded while retaining rounding per kill for any bonus. |
+| [`experienceScaled`](../../server/internal/world/players.go#L213)<br>`func experienceScaled(amount uint32, bonus uint32) uint32` | See the source definition and the subsystem ownership contract. |
+| [`add`](../../server/internal/world/players.go#L217)<br>`func (b *experienceBatch) add(amount uint32)` | See the source definition and the subsystem ownership contract. |
+| [`scaled`](../../server/internal/world/players.go#L224)<br>`func (b *experienceBatch) scaled(bonus uint32) uint32` | See the source definition and the subsystem ownership contract. |
+| [`subtract`](../../server/internal/world/players.go#L241)<br>`func (b *experienceBatch) subtract(credited experienceBatch)` | See the source definition and the subsystem ownership contract. |
+| [`QueueExp`](../../server/internal/world/players.go#L249)<br>`func (p *ConnectedPlayer) QueueExp(amount uint32, perfect bool)` | QueueExp carries a kill reward to its recipient's owning session. |
+| [`QueueGold`](../../server/internal/world/players.go#L260)<br>`func (p *ConnectedPlayer) QueueGold(amount uint32)` | See the source definition and the subsystem ownership contract. |
+| [`takeRewardTotals`](../../server/internal/world/players.go#L265)<br>`func (p *ConnectedPlayer) takeRewardTotals(bonus uint32) (uint32, uint32)` | See the source definition and the subsystem ownership contract. |
+| [`peekRewardTotals`](../../server/internal/world/players.go#L277)<br>`func (p *ConnectedPlayer) peekRewardTotals() rewardSnapshot` | See the source definition and the subsystem ownership contract. |
+| [`ackRewardTotals`](../../server/internal/world/players.go#L282)<br>`func (p *ConnectedPlayer) ackRewardTotals(snapshot rewardSnapshot)` | See the source definition and the subsystem ownership contract. |
+| [`TakeRewards`](../../server/internal/world/players.go#L295)<br>`func (p *ConnectedPlayer) TakeRewards() (exp, gold []uint32)` | See the source definition and the subsystem ownership contract. |
+| [`maxPendingCombat`](../../server/internal/world/players.go#L306)<br>`const maxPendingCombat = 4096` | See the source definition and the subsystem ownership contract. |
+| [`maxPendingItemGrants`](../../server/internal/world/players.go#L307)<br>`const maxPendingItemGrants = 256` | See the source definition and the subsystem ownership contract. |
+| [`mailboxOverflows`](../../server/internal/world/players.go#L309)<br>`var mailboxOverflows` | See the source definition and the subsystem ownership contract. |
+| [`mailboxOverflow`](../../server/internal/world/players.go#L311)<br>`func (p *ConnectedPlayer) mailboxOverflow()` | See the source definition and the subsystem ownership contract. |
+| [`bucket`](../../server/internal/world/players.go#L320)<br>`func bucket(mapID uint16) map[uint32]*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`RegisterPlayer`](../../server/internal/world/players.go#L330)<br>`func RegisterPlayer(ch db.Character, items []db.Item, isAdmin bool, faction uint8, out *connWriter, log *logx.Logger, owner ...*Session) *ConnectedPlayer` | RegisterPlayer adds a player to its map's realm.registry. |
+| [`Unregister`](../../server/internal/world/players.go#L344)<br>`func (p *ConnectedPlayer) Unregister()` | Unregister removes the player and cancels any trade it was part of. |
+| [`SetMap`](../../server/internal/world/players.go#L359)<br>`func (p *ConnectedPlayer) SetMap(mapID uint16)` | See the source definition and the subsystem ownership contract. |
+| [`MapID`](../../server/internal/world/players.go#L375)<br>`func (p *ConnectedPlayer) MapID() uint16` | See the source definition and the subsystem ownership contract. |
+| [`Faction`](../../server/internal/world/players.go#L381)<br>`func (p *ConnectedPlayer) Faction() uint8` | See the source definition and the subsystem ownership contract. |
+| [`PositionXZ`](../../server/internal/world/players.go#L387)<br>`func (p *ConnectedPlayer) PositionXZ() (float32, float32)` | See the source definition and the subsystem ownership contract. |
+| [`UpdateCharacter`](../../server/internal/world/players.go#L393)<br>`func (p *ConnectedPlayer) UpdateCharacter(ch db.Character)` | See the source definition and the subsystem ownership contract. |
+| [`Snapshot`](../../server/internal/world/players.go#L399)<br>`func (p *ConnectedPlayer) Snapshot() db.Character` | See the source definition and the subsystem ownership contract. |
+| [`UpdateItems`](../../server/internal/world/players.go#L405)<br>`func (p *ConnectedPlayer) UpdateItems(items []db.Item)` | See the source definition and the subsystem ownership contract. |
+| [`UpdateMotion`](../../server/internal/world/players.go#L411)<br>`func (p *ConnectedPlayer) UpdateMotion(motion uint8, direction uint16)` | See the source definition and the subsystem ownership contract. |
+| [`SetSitting`](../../server/internal/world/players.go#L417)<br>`func (p *ConnectedPlayer) SetSitting(v bool)` | See the source definition and the subsystem ownership contract. |
+| [`IsSitting`](../../server/internal/world/players.go#L423)<br>`func (p *ConnectedPlayer) IsSitting() bool` | See the source definition and the subsystem ownership contract. |
+| [`GMVisible`](../../server/internal/world/players.go#L429)<br>`func (p *ConnectedPlayer) GMVisible() bool` | See the source definition and the subsystem ownership contract. |
+| [`IsAlive`](../../server/internal/world/players.go#L435)<br>`func (p *ConnectedPlayer) IsAlive() bool` | See the source definition and the subsystem ownership contract. |
+| [`SetAlive`](../../server/internal/world/players.go#L439)<br>`func (p *ConnectedPlayer) SetAlive(alive bool)` | SetAlive is called by the owning session. A death has a distinct state even if the same character revives and dies again during a prepared cast. |
+| [`QueueTeleport`](../../server/internal/world/players.go#L445)<br>`func (p *ConnectedPlayer) QueueTeleport(mapID uint16, x, y, z float32)` | See the source definition and the subsystem ownership contract. |
+| [`TakeTeleport`](../../server/internal/world/players.go#L451)<br>`func (p *ConnectedPlayer) TakeTeleport() *pendingTeleport` | See the source definition and the subsystem ownership contract. |
+| [`tradeRefresh`](../../server/internal/world/players.go#L462)<br>`type tradeRefresh` | tradeRefresh tells the other side of a completed trade to reload its items and apply the money change itself (only the owner mutates its character). |
+| [`QueueTradeRefresh`](../../server/internal/world/players.go#L467)<br>`func (p *ConnectedPlayer) QueueTradeRefresh(packets [][]byte, moneyDelta int64)` | See the source definition and the subsystem ownership contract. |
+| [`TakeTradeRefresh`](../../server/internal/world/players.go#L473)<br>`func (p *ConnectedPlayer) TakeTradeRefresh() *tradeRefresh` | See the source definition and the subsystem ownership contract. |
+| [`QueueDamage`](../../server/internal/world/players.go#L481)<br>`func (p *ConnectedPlayer) QueueDamage(d pendingDamage)` | See the source definition and the subsystem ownership contract. |
+| [`TakeDamage`](../../server/internal/world/players.go#L492)<br>`func (p *ConnectedPlayer) TakeDamage() []pendingDamage` | See the source definition and the subsystem ownership contract. |
+| [`SitMotionPacket`](../../server/internal/world/players.go#L500)<br>`func (p *ConnectedPlayer) SitMotionPacket() []byte` | See the source definition and the subsystem ownership contract. |
+| [`EnteredMapPacket`](../../server/internal/world/players.go#L505)<br>`func (p *ConnectedPlayer) EnteredMapPacket() []byte` | EnteredMapPacket introduces an already-present character to a viewer. |
+| [`ShapePacket`](../../server/internal/world/players.go#L513)<br>`func (p *ConnectedPlayer) ShapePacket() []byte` | ShapePacket never embeds sitting; sit is sent as a separate 0x0506. |
+| [`MovePacket`](../../server/internal/world/players.go#L520)<br>`func (p *ConnectedPlayer) MovePacket() []byte` | See the source definition and the subsystem ownership contract. |
+| [`EquipmentPacket`](../../server/internal/world/players.go#L526)<br>`func (p *ConnectedPlayer) EquipmentPacket(slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`Send`](../../server/internal/world/players.go#L534)<br>`func (p *ConnectedPlayer) Send(frame []byte, label string) error` | Send writes a frame to this player with the post-handshake expanded XOR encoding, which is stateless and safe from any goroutine. |
+| [`appendWorldFrame`](../../server/internal/world/players.go#L542)<br>`func appendWorldFrame(dst, frame []byte) []byte` | See the source definition and the subsystem ownership contract. |
+| [`playersWhere`](../../server/internal/world/players.go#L550)<br>`func playersWhere(mapID uint16, keep func(*ConnectedPlayer) bool) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`PlayersOnMap`](../../server/internal/world/players.go#L566)<br>`func PlayersOnMap(mapID uint16) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`PlayersNear`](../../server/internal/world/players.go#L570)<br>`func PlayersNear(mapID uint16, x, z, radius float32) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`PlayersNearExcluding`](../../server/internal/world/players.go#L577)<br>`func PlayersNearExcluding(mapID uint16, characterID uint32, x, z, radius float32) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`AllPlayers`](../../server/internal/world/players.go#L587)<br>`func AllPlayers() []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`FindPlayerByName`](../../server/internal/world/players.go#L599)<br>`func FindPlayerByName(name string) *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`FindPlayerByID`](../../server/internal/world/players.go#L608)<br>`func FindPlayerByID(id uint32) *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`canSeeCharacter`](../../server/internal/world/players.go#L618)<br>`func canSeeCharacter(viewerIsAdmin, subjectIsAdmin, subjectGMVisible bool) bool` | Hidden GMs are visible only to other GMs. |
+| [`broadcast`](../../server/internal/world/players.go#L623)<br>`func broadcast(players []*ConnectedPlayer, frame []byte, label string, log *logx.Logger)` | broadcast sends frame to each player, logging failures. |
+| [`UpdateElements`](../../server/internal/world/players.go#L633)<br>`func (p *ConnectedPlayer) UpdateElements(attack, defense uint8)` | UpdateElements publishes the owning session's native event state for detection; no other session reads or mutates its applied skill list. |
+| [`QueueTradeCommit`](../../server/internal/world/players.go#L640)<br>`func (p *ConnectedPlayer) QueueTradeCommit(trade *tradeSession)` | See the source definition and the subsystem ownership contract. |
+| [`takeTradeCommit`](../../server/internal/world/players.go#L645)<br>`func (p *ConnectedPlayer) takeTradeCommit() *tradeSession` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3198,7 +3202,7 @@ type ConnectedPlayer struct {
 	viewedShop *ConnectedPlayer
 
 	rewardMu   sync.Mutex
-	experience [4]uint32
+	experience experienceBatch
 	perfectExp []perfectExperience
 	gold       uint32
 	questKills map[uint16]uint8
@@ -3213,16 +3217,23 @@ type ConnectedPlayer struct {
 
 ```go
 type perfectExperience struct {
-	before [4]uint32
+	before experienceBatch
 	amount uint32
 }
 ```
 
 ```go
 type rewardSnapshot struct {
-	experience [4]uint32
+	experience experienceBatch
 	perfect    []perfectExperience
 	gold       uint32
+}
+```
+
+```go
+type experienceBatch struct {
+	hundreds   uint64
+	remainders [100]uint64
 }
 ```
 
@@ -3986,24 +3997,24 @@ Direct GX dependencies: `internal/proto`, `internal/skilltiming`, `server/intern
 | [`stats`](../../server/internal/world/session.go#L338)<br>`func (s *Session) stats() CharacterStats` | See the source definition and the subsystem ownership contract. |
 | [`sendStatPackets`](../../server/internal/world/session.go#L346)<br>`func (s *Session) sendStatPackets()` | See the source definition and the subsystem ownership contract. |
 | [`drainRewards`](../../server/internal/world/session.go#L359)<br>`func (s *Session) drainRewards(p *ConnectedPlayer)` | drainRewards applies bounded, coalesced rewards before normal simulation or logout. Aggregation keeps individual scaling/rounding and caps unchanged. |
-| [`normalize`](../../server/internal/world/session.go#L409)<br>`func normalize(ch *db.Character)` | normalize derives the base pools from StatusDefs (Chars only stores the current HP/MP/SP). Effective clamping waits for equipment and buffs. |
-| [`tick`](../../server/internal/world/session.go#L416)<br>`func (s *Session) tick(idle bool)` | tick runs the per-iteration work: mailboxes, buffs, regen, casts and the auto-attack swing. |
-| [`applyTradeRefresh`](../../server/internal/world/session.go#L507)<br>`func (s *Session) applyTradeRefresh(r *tradeRefresh)` | See the source definition and the subsystem ownership contract. |
-| [`recoveryTick`](../../server/internal/world/session.go#L532)<br>`func (s *Session) recoveryTick()` | recoveryTick is CUser::UpdateRecover every 5 seconds: the mode seen at the previous tick decides the amount (0 sitting: 5% of each maximum plus the sitting abilities' percent plus the flat sitting recovery; 1 standing: the flat standing recovery; 2 in combat: the flat in-combat recovery), then the mode for the next tick is taken (in combat, else sitting or standing). Viewers get 0x0505 (absolute pools) and the character 0x0521. |
-| [`inCombat`](../../server/internal/world/session.go#L575)<br>`func (s *Session) inCombat() bool` | inCombat approximates the original attack mode: swinging, or a hit given or taken within the last recovery interval. |
-| [`deadGated`](../../server/internal/world/session.go#L580)<br>`func deadGated(op packet.Opcode) bool` | deadGated lists the inputs ignored while dead (revive is 0x0553). |
-| [`frame`](../../server/internal/world/session.go#L589)<br>`func (s *Session) frame(f []byte) error` | See the source definition and the subsystem ownership contract. |
-| [`handshake`](../../server/internal/world/session.go#L613)<br>`func (s *Session) handshake(f []byte) error` | See the source definition and the subsystem ownership contract. |
-| [`sendCharacterSelect`](../../server/internal/world/session.go#L654)<br>`func (s *Session) sendCharacterSelect()` | See the source definition and the subsystem ownership contract. |
-| [`logErr`](../../server/internal/world/session.go#L676)<br>`func (s *Session) logErr(what string, err error)` | See the source definition and the subsystem ownership contract. |
-| [`handleCreateCharacter`](../../server/internal/world/session.go#L683)<br>`func (s *Session) handleCreateCharacter(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`createCharacter`](../../server/internal/world/session.go#L692)<br>`func (s *Session) createCharacter(nc db.NewCharacter)` | See the source definition and the subsystem ownership contract. |
-| [`handleRename`](../../server/internal/world/session.go#L738)<br>`func (s *Session) handleRename(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`selectCharacter`](../../server/internal/world/session.go#L759)<br>`func (s *Session) selectCharacter(id uint32)` | See the source definition and the subsystem ownership contract. |
-| [`sendInitialState`](../../server/internal/world/session.go#L885)<br>`func (s *Session) sendInitialState(st *CharacterStats)` | sendInitialState is the captured character-select sequence; afterwards the server->client direction switches to the expanded XOR scheme. |
-| [`handleMapLoaded`](../../server/internal/world/session.go#L938)<br>`func (s *Session) handleMapLoaded()` | handleMapLoaded (0x0201 from the client): send the map state, register the player and exchange visibility with nearby players. |
-| [`handleMotion`](../../server/internal/world/session.go#L986)<br>`func (s *Session) handleMotion(p []byte)` | handleMotion (0x0506): sit/stand persist; other motions are one-shot. The sender gets its own echo, which the client needs to play it. |
-| [`handleLogout`](../../server/internal/world/session.go#L1018)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
+| [`normalize`](../../server/internal/world/session.go#L410)<br>`func normalize(ch *db.Character)` | normalize derives the base pools from StatusDefs (Chars only stores the current HP/MP/SP). Effective clamping waits for equipment and buffs. |
+| [`tick`](../../server/internal/world/session.go#L417)<br>`func (s *Session) tick(idle bool)` | tick runs the per-iteration work: mailboxes, buffs, regen, casts and the auto-attack swing. |
+| [`applyTradeRefresh`](../../server/internal/world/session.go#L508)<br>`func (s *Session) applyTradeRefresh(r *tradeRefresh)` | See the source definition and the subsystem ownership contract. |
+| [`recoveryTick`](../../server/internal/world/session.go#L533)<br>`func (s *Session) recoveryTick()` | recoveryTick is CUser::UpdateRecover every 5 seconds: the mode seen at the previous tick decides the amount (0 sitting: 5% of each maximum plus the sitting abilities' percent plus the flat sitting recovery; 1 standing: the flat standing recovery; 2 in combat: the flat in-combat recovery), then the mode for the next tick is taken (in combat, else sitting or standing). Viewers get 0x0505 (absolute pools) and the character 0x0521. |
+| [`inCombat`](../../server/internal/world/session.go#L576)<br>`func (s *Session) inCombat() bool` | inCombat approximates the original attack mode: swinging, or a hit given or taken within the last recovery interval. |
+| [`deadGated`](../../server/internal/world/session.go#L581)<br>`func deadGated(op packet.Opcode) bool` | deadGated lists the inputs ignored while dead (revive is 0x0553). |
+| [`frame`](../../server/internal/world/session.go#L590)<br>`func (s *Session) frame(f []byte) error` | See the source definition and the subsystem ownership contract. |
+| [`handshake`](../../server/internal/world/session.go#L614)<br>`func (s *Session) handshake(f []byte) error` | See the source definition and the subsystem ownership contract. |
+| [`sendCharacterSelect`](../../server/internal/world/session.go#L655)<br>`func (s *Session) sendCharacterSelect()` | See the source definition and the subsystem ownership contract. |
+| [`logErr`](../../server/internal/world/session.go#L677)<br>`func (s *Session) logErr(what string, err error)` | See the source definition and the subsystem ownership contract. |
+| [`handleCreateCharacter`](../../server/internal/world/session.go#L684)<br>`func (s *Session) handleCreateCharacter(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`createCharacter`](../../server/internal/world/session.go#L693)<br>`func (s *Session) createCharacter(nc db.NewCharacter)` | See the source definition and the subsystem ownership contract. |
+| [`handleRename`](../../server/internal/world/session.go#L739)<br>`func (s *Session) handleRename(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`selectCharacter`](../../server/internal/world/session.go#L760)<br>`func (s *Session) selectCharacter(id uint32)` | See the source definition and the subsystem ownership contract. |
+| [`sendInitialState`](../../server/internal/world/session.go#L886)<br>`func (s *Session) sendInitialState(st *CharacterStats)` | sendInitialState is the captured character-select sequence; afterwards the server->client direction switches to the expanded XOR scheme. |
+| [`handleMapLoaded`](../../server/internal/world/session.go#L939)<br>`func (s *Session) handleMapLoaded()` | handleMapLoaded (0x0201 from the client): send the map state, register the player and exchange visibility with nearby players. |
+| [`handleMotion`](../../server/internal/world/session.go#L987)<br>`func (s *Session) handleMotion(p []byte)` | handleMotion (0x0506): sit/stand persist; other motions are one-shot. The sender gets its own echo, which the client needs to play it. |
+| [`handleLogout`](../../server/internal/world/session.go#L1019)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
 
 <details><summary>Type definitions and owned fields</summary>
 

@@ -4169,6 +4169,15 @@ func DecodeShopResult(p []byte) (m ShopResult, err error) {
 }
 ```
 
+```go
+func ItemDropPacket(bag, slot uint8, count uint16) []byte {
+	w := NewWriter(RemoveItem)
+	w.Raw([]byte{bag, slot})
+	w.Count(count)
+	return w.Bytes()
+}
+```
+
 </details>
 
 ## skill cooldown

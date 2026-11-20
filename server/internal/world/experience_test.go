@@ -25,7 +25,7 @@ func TestExperienceUsesSharedCapAndCreditsOnlyRemainingXP(t *testing.T) {
 	p := &ConnectedPlayer{}
 	p.QueueExp(200, false)
 	s.drainRewards(p)
-	if snapshot := p.peekRewardTotals(); snapshot.experience[0] != 0 || len(snapshot.perfect) != 0 {
+	if snapshot := p.peekRewardTotals(); snapshot.experience.scaled(0) != 0 || len(snapshot.perfect) != 0 {
 		t.Fatal("capped reward was not discarded")
 	}
 	select {
@@ -125,5 +125,22 @@ func TestRaidLevelRefreshesExperienceAndSendsNativeNotice(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("no raid level notice")
+	}
+}
+
+func TestDifferentExperienceBuffsAddTheirAuthoredPercentages(t *testing.T) {
+	s := &Session{buffs: []ActiveBuff{
+		{SkillID: 222, Abilities: [3]buffAbility{{35, 100}}},
+		{SkillID: 250, Abilities: [3]buffAbility{{35, 50}}},
+		{SkillID: 251, Abilities: [3]buffAbility{{35, 50}}},
+	}}
+	if got := experienceScaled(101, s.experienceBonus()); got != 303 {
+		t.Fatalf("101 base EXP with 200%% bonus yielded %d", got)
+	}
+	if got := experienceScaled(100, 300); got != 400 {
+		t.Fatalf("100 base EXP with 300%% bonus yielded %d", got)
+	}
+	if got := experienceScaled(^uint32(0), ^uint32(0)); got != ^uint32(0) {
+		t.Fatalf("EXP overflow: %d", got)
 	}
 }

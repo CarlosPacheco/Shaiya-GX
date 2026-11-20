@@ -51,6 +51,7 @@ func (a *App) loadSkills() {
 				}
 			}
 			normalizePotentials(defs)
+			sdata.NormalizePercentageSkills(defs, false)
 			normalizeCombatSkillDescriptions(defs)
 			a.skillDefs = defs
 		}

@@ -376,10 +376,10 @@ func TestPlayerEffects(t *testing.T) {
 		}
 		return s.deathExpLoss()
 	}
-	if got := charm(231); got != 1 {
+	if got := charm(231); got != deathExpPercent {
 		t.Errorf("Blue Dragon charm loss %d", got)
 	}
-	if got := charm(233); got != 0 {
+	if got := charm(233); got != deathExpPercent {
 		t.Errorf("Red Phoenix charm loss %d", got)
 	}
 	if got := charm(230); got != 0 {

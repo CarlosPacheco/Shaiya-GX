@@ -592,27 +592,20 @@ func rewardKill(killer *ConnectedPlayer, killerID uint32, mapID uint16, m *MapMo
 	}
 }
 
-// expScale is award_experience's modifiers: x1.5 with exp doubling
-// (ability 35), +0.2 with any charm (abilities 40-42).
-func (s *Session) experienceMode() int {
-	double, charm := false, false
+// Active skill IDs are unique within each skill catalog. Each EXP ability
+// contributes percentage points to the total applied to monster rewards.
+func (s *Session) experienceBonus() uint32 {
+	var bonus uint32
 	for _, b := range s.buffs {
 		for _, a := range b.Abilities {
-			if a.Value > 0 {
-				double = double || a.Type == 35
-				charm = charm || (a.Type >= 40 && a.Type <= 42)
+			if a.Type == 35 && a.Value > 0 {
+				bonus = satAdd(bonus, uint32(a.Value))
 			}
 		}
 	}
-	mode := 0
-	if double {
-		mode = 1
-	}
-	if charm {
-		mode += 2
-	}
-	return mode
+	return bonus
 }
+
 func (s *Session) notifyExpGain(credited experienceCredit, levels uint16) {
 	ch := s.char
 	if credited.base > 0 || credited.perfect > 0 {

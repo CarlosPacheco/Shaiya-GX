@@ -320,6 +320,21 @@ func buildRemoveItem(it *db.Item, full bool) []byte {
 
 </details>
 
+<details><summary>ItemDropPacket — internal/proto/shop.go</summary>
+
+[Source definition](../../internal/proto/shop.go#L35)
+
+```go
+func ItemDropPacket(bag, slot uint8, count uint16) []byte {
+	w := NewWriter(RemoveItem)
+	w.Raw([]byte{bag, slot})
+	w.Count(count)
+	return w.Bytes()
+}
+```
+
+</details>
+
 <details><summary>NewReader — internal/proto/rw.go</summary>
 
 [Source definition](../../internal/proto/rw.go#L28)
@@ -356,7 +371,7 @@ Declarations: [packet.ExpGain](../../server/internal/packet/packet.go#L41), [pro
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L637)
+**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L630)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L947)
 
@@ -366,7 +381,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildExpGain — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L637)
+[Source definition](../../server/internal/world/combat.go#L630)
 
 ```go
 func buildExpGain(credited experienceCredit) []byte {
