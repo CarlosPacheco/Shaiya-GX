@@ -237,9 +237,17 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 	}
 	if !drain && !killed && (sk.AddDamageHP != 0 || sk.AddDamageSP != 0 || sk.AddDamageMP != 0) {
 		add := [3]uint32{uint32(uint16(sk.AddDamageHP)), uint32(uint16(sk.AddDamageSP)), uint32(uint16(sk.AddDamageMP))}
-		killed = s.takeUserSkillDamage(h.AttackerID, add)
+		shownAdd, addMirrored := add, mirrored || s.reflects(kind, nil)
+		if addMirrored {
+			shownAdd = [3]uint32{}
+		} else {
+			killed = s.takeUserSkillDamage(h.AttackerID, add)
+		}
 		sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius,
-			buildUserSkillExtra(h.AttackerID, ch.ID, sk.SkillID, sk.SkillLevel, add), "0x0514 pvp skill extra damage")
+			buildUserSkillExtra(h.AttackerID, ch.ID, sk.SkillID, sk.SkillLevel, shownAdd), "0x0514 pvp skill extra damage")
+		if addMirrored {
+			s.mirrorDamage(h.AttackerID, 0, add)
+		}
 	}
 	if mirrored && attacker != nil {
 		attacker.QueueUserHit(pendingUserHit{AttackerID: ch.ID, Reflected: true,

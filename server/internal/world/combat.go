@@ -340,16 +340,26 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 			d.MobGlobalID, d.MobID, sk.SkillID, result, hp, killed)
 		if !killed && !drain && result != attackResultMiss && sk.AddDamageHP != 0 {
 			add := uint32(uint16(sk.AddDamageHP))
-			killed = s.takeMobDamage(d, add, stats)
+			extra := [3]uint16{uint16(min(add, 65535)), uint16(sk.AddDamageSP), uint16(sk.AddDamageMP)}
+			addMirrored := mirrored || s.reflects(min(int(sk.Kind), 2), md)
+			shownAdd := extra
+			if addMirrored {
+				shownAdd = [3]uint16{}
+			} else {
+				killed = s.takeMobDamage(d, add, stats)
+			}
 			w := packet.New(0x060E)
 			w.U32(d.MobGlobalID)
 			w.U32(ch.ID)
 			w.U16(sk.SkillID)
 			w.U8(sk.SkillLevel)
-			w.U16(uint16(min(add, 65535)))
-			w.U16(uint16(sk.AddDamageSP))
-			w.U16(uint16(sk.AddDamageMP))
+			w.U16(shownAdd[0])
+			w.U16(shownAdd[1])
+			w.U16(shownAdd[2])
 			sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius, w.MustFinish(), "0x060E mob skill extra damage")
+			if addMirrored {
+				s.reflectToMob(d.MobGlobalID, extra)
+			}
 		}
 		// CMob::AttackUser(skill): a debuff stays on the player.
 		if !killed && result != attackResultMiss && sk.TypeEffect == typeEffectDebuff {

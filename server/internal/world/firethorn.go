@@ -98,8 +98,16 @@ func (s *Session) fixedDamagePulse(def *db.SkillDef, x, y, z, reach float32) {
 // users get the periodic damage packet 0x050F; true when this character died.
 func (s *Session) applyFixedHit(h pendingUserHit) bool {
 	ch := s.char
-	killed := s.takeUserSkillDamage(h.AttackerID, h.Damage)
-	shown := h.Damage
+	damage := h.Damage
+	var back [3]uint32
+	if damage[0]+damage[1]+damage[2] > 0 && s.reflects(min(int(h.Skill.Kind), 2), nil) {
+		back, damage = damage, [3]uint32{} // a mirror returns the fixed damage to its caster
+	}
+	killed := false
+	if back == ([3]uint32{}) {
+		killed = s.takeUserSkillDamage(h.AttackerID, damage)
+	}
+	shown := damage
 	if shown[0] > 0 { // Health Assistant moved part of it to SP / MP
 		shown = [3]uint32{s.assisted[0], shown[1] + s.assisted[1], shown[2] + s.assisted[2]}
 	}
@@ -111,6 +119,10 @@ func (s *Session) applyFixedHit(h pendingUserHit) bool {
 		w.U16(uint16(min(v, 65535)))
 	}
 	sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius, w.MustFinish(), "0x050F fire thorn damage")
+	if back != ([3]uint32{}) {
+		s.mirrorDamage(h.AttackerID, 0, back)
+		return false
+	}
 	s.afterUserDamage(h.AttackerID, killed)
 	return killed
 }

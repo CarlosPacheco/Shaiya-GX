@@ -298,6 +298,14 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 		}
 		hp := uint32(max(damage[0], 0))
 		sp, mp := uint32(max(damage[1], 0)), uint32(max(damage[2], 0))
+		// A mirror also turns periodic damage back on whoever applied it.
+		var back [3]uint32
+		mirrored := b.Detail == detailTimeDamage && hp+sp+mp > 0 && s.reflects(min(int(def.Kind), 2), nil)
+		if mirrored {
+			back = [3]uint32{hp, sp, mp}
+			hp, sp, mp = 0, 0, 0
+			damage = [3]int32{}
+		}
 		if sp > 0 || mp > 0 {
 			s.spendDelta(mp, sp)
 			if hp == 0 {
@@ -305,7 +313,9 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 			}
 		}
 		var killed bool
-		if b.CasterUser != 0 {
+		if mirrored {
+			// nothing reaches this character
+		} else if b.CasterUser != 0 {
 			killed = s.takeUserDamage(b.CasterUser, hp)
 		} else {
 			killed = s.takeMobDamage(pendingDamage{MobGlobalID: b.CasterMob}, hp, nil)
@@ -322,6 +332,9 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 		w.U16(uint16(min(max(damage[1], 0), 65535)))
 		w.U16(uint16(min(max(damage[2], 0), 65535)))
 		sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius, w.MustFinish(), "0x050F debuff damage")
+		if mirrored {
+			s.mirrorDamage(b.CasterUser, b.CasterMob, back)
+		}
 		if killed {
 			if b.CasterUser != 0 {
 				s.afterUserDamage(b.CasterUser, true)
@@ -447,6 +460,19 @@ func (s *Session) reflects(kind int, md *db.MobDef) bool {
 		}
 	}
 	return true
+}
+
+// mirrorDamage returns a mirrored hit to its source: a user takes it as the
+// 0x0515 mirrored hit, a mob through 0x051B.
+func (s *Session) mirrorDamage(userID, mobID uint32, d [3]uint32) {
+	switch {
+	case userID != 0:
+		if a := FindPlayerByID(userID); a != nil {
+			a.QueueUserHit(pendingUserHit{AttackerID: s.char.ID, Reflected: true, Damage: d})
+		}
+	case mobID != 0:
+		s.reflectToMob(mobID, [3]uint16{uint16(min(d[0], 65535)), uint16(min(d[1], 65535)), uint16(min(d[2], 65535))})
+	}
 }
 
 // reflectToMob sends a reflected hit back to the mob (0x051B: character,

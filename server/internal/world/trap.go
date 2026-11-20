@@ -191,7 +191,14 @@ func (s *Session) applyTrapHit(h pendingUserHit) bool {
 	s.breakStealth()
 	st := s.stats()
 	d := trapDamage(h.Skill, [3]uint32{st.CurrentHP, st.CurrentSP, st.CurrentMP}, [3]uint32{st.MaxHP, st.MaxSP, st.MaxMP})
-	killed := s.takeUserSkillDamage(h.AttackerID, d)
+	back := [3]uint32{}
+	if d[0]+d[1]+d[2] > 0 && s.reflects(min(int(h.Skill.Kind), 2), nil) {
+		back, d = d, [3]uint32{} // a mirror sends the trap's damage back to its owner
+	}
+	killed := false
+	if back == ([3]uint32{}) {
+		killed = s.takeUserSkillDamage(h.AttackerID, d)
+	}
 	shown := d
 	if d[0] > 0 { // Health Assistant moved part of it to SP / MP
 		shown = [3]uint32{s.assisted[0], d[1] + s.assisted[1], d[2] + s.assisted[2]}
@@ -199,6 +206,10 @@ func (s *Session) applyTrapHit(h pendingUserHit) bool {
 	sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius,
 		buildSkillUseResult(opUserSkillOther, 0, h.AttackerID, ch.ID, h.Skill.SkillID, h.Skill.SkillLevel,
 			uint16(min(shown[0], 65535)), uint16(min(shown[1], 65535)), uint16(min(shown[2], 65535))), "0x0513 trap damage")
+	if back != ([3]uint32{}) {
+		s.mirrorDamage(h.AttackerID, 0, back)
+		return false
+	}
 	s.afterUserDamage(h.AttackerID, killed)
 	return killed
 }
