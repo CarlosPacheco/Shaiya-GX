@@ -201,3 +201,19 @@ func CommitItems(charID uint32, before, after []Item) error {
 		return writeInventoryChange(c, tx, CharacterChange{Before: Character{ID: charID}, After: Character{ID: charID}, ItemsBefore: before, ItemsAfter: after})
 	})
 }
+
+// CommitStatusItem saves the consumed item and remaining effects together.
+func CommitStatusItem(change CharacterChange, buffs []AppliedBuff) error {
+	pool, err := Pool(GameData)
+	if err != nil {
+		return err
+	}
+	c, cancel := ctx()
+	defer cancel()
+	return withTx(c, pool, func(tx *sql.Tx) error {
+		if err := commitGameplayTx(c, tx, []CharacterChange{change}, nil); err != nil {
+			return err
+		}
+		return saveBuffsTx(c, tx, change.After.ID, buffs)
+	})
+}

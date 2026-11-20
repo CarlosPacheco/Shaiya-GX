@@ -99,7 +99,8 @@ type Session struct {
 	mounted                         bool
 	mountItemUID                    int64
 	dead                            bool
-	deathLoss                       int       // CUser::Death exp-loss percent, kept until revive
+	deathLoss                       int // CUser::Death exp-loss percent, kept until revive
+	statusItemProtection            uint16
 	rebirthAt                       time.Time // UpdateRebirth deadline while dead
 	rebirthParty                    bool      // 0x0553 mode 3 waiting for the party leader
 
@@ -842,6 +843,7 @@ func (s *Session) selectCharacter(id uint32) {
 		return
 	}
 	s.mounted, s.dead, s.cast, s.autoAttack = false, false, nil, false
+	s.statusItemProtection = 0
 	s.lastRegenAt, s.regenMode = time.Now(), 1 // InitEquipment
 	s.refreshMapCurses(false)
 	st := s.stats()

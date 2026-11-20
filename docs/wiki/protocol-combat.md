@@ -886,6 +886,7 @@ func (s *Session) removeEffectsInternal(match func(*ActiveBuff) bool, why string
 
 ```go
 func (s *Session) clearBuffsOnDeath() {
+	s.statusItemProtection = 0
 	s.endMyShop()
 	s.deathLoss = s.deathExpLoss()
 	duelDeath := s.duelDeathMark

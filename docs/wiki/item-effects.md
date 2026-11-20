@@ -176,6 +176,31 @@ are not consumed by that rejection.
 Source: `handleUseItem` and `cooldownForReqIg` in
 `server/internal/world/inventory.go`.
 
+## Status cures and protection scrolls
+
+EP4.5 `CUser::ItemUseRemState` (0x4653e0) chooses which active effects to
+remove by the skill definition's `StateType`. The broad Perfect Cure uses
+the debuff category instead. These rules apply to consumables with no complete
+item-skill reference.
+
+| Item | Native effect |
+|---|---|
+| Single-state cures (Special 1–6 and 9–15) | Remove the matching StateType |
+| Scroll Protected Faint / Death (7 / 8) | Remove state 7 / 8 and block the next incoming skill with that state |
+| Cure (18) | Remove states 9–11 |
+| Dispel (19) | Remove states 1, 2, 5 and 6 |
+| Abolishing (20) | Remove states 3 and 4 |
+| Blessing (21) | Remove states 14 and 15 |
+| Holy (22) | Remove states 12 and 13 |
+| Combined protection (23) | Remove states 7 and 8 and arm both protections |
+| Perfect Cure (26) | Remove debuffs and arm both protections |
+
+GX retains map curses and shares the item's existing `ReqIg` cooldown. A
+usable cure consumes one even when there is no matching effect. The two
+protection flags are independent, have no timer, and do not stack. The
+player and monster skill hit checks consume the matching flag before the
+success roll. GX keeps these flags in the current character session.
+
 ## Service and utility Special values
 
 | Special | Implemented role / service |

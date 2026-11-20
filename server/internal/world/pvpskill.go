@@ -187,7 +187,7 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 	lapisDebuff := h.ItemCast && sk.TypeEffect == typeEffectDebuff
 	s.cancelMove()
 	kind := min(int(sk.Kind), 2)
-	if s.blocksAttack(kind) || !userSkillHits(&h.Stats, &stats, sk) {
+	if s.blocksAttack(kind) || s.blocksStatusSkill(sk) || !userSkillHits(&h.Stats, &stats, sk) {
 		if !lapisDebuff {
 			send(attackResultMiss, [3]uint16{}, [3]uint16{}, "pvp skill (miss)")
 		}

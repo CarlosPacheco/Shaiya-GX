@@ -491,9 +491,13 @@ func (s *Session) persistBuffs() {
 }
 
 func (s *Session) buffSnapshot() []db.AppliedBuff {
+	return s.buffSnapshotExcept(nil)
+}
+
+func (s *Session) buffSnapshotExcept(exclude func(*ActiveBuff) bool) []db.AppliedBuff {
 	var rows []db.AppliedBuff
 	for _, b := range s.buffs {
-		if b.MapCurse || b.Form.kind != proto.FormNone && b.Form.kind != proto.FormDegeneration {
+		if b.MapCurse || b.Form.kind != proto.FormNone && b.Form.kind != proto.FormDegeneration || exclude != nil && exclude(&b) {
 			continue
 		}
 		rows = append(rows, db.AppliedBuff{SkillID: b.SkillID, Level: b.SkillLevel, LeftSeconds: uint32(max(time.Until(b.EndsAt), 0) / time.Second)})

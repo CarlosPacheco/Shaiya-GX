@@ -268,6 +268,14 @@ func (s *Session) handleUseItem(p []byte) {
 		reject("not a consumable")
 		return
 	}
+	if def.Range == 0 || def.AttackTime == 0 {
+		if states, _, allDebuffs := statusItemRule(def.Special); states != 0 || allDebuffs {
+			if !s.useStatusItem(i, def) {
+				reject("status item unavailable")
+			}
+			return
+		}
+	}
 	switch def.Special {
 	case specialItemBox:
 		if !s.openItemBox(i, def.ReqVg) {

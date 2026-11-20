@@ -566,6 +566,7 @@ Direct GX dependencies: `server/internal/config`.
 | [`sameInventory`](../../server/internal/db/gameplay.go#L108)<br>`func sameInventory(a, b []Item) bool` | See the source definition and the subsystem ownership contract. |
 | [`writeInventoryChange`](../../server/internal/db/gameplay.go#L129)<br>`func writeInventoryChange(c context.Context, tx *sql.Tx, change CharacterChange) error` | See the source definition and the subsystem ownership contract. |
 | [`CommitItems`](../../server/internal/db/gameplay.go#L186)<br>`func CommitItems(charID uint32, before, after []Item) error` | CommitItems applies an inventory-only plan without overwriting character money/stats. Used by item grants whose character state is owned elsewhere. |
+| [`CommitStatusItem`](../../server/internal/db/gameplay.go#L206)<br>`func CommitStatusItem(change CharacterChange, buffs []AppliedBuff) error` | CommitStatusItem saves the consumed item and remaining effects together. |
 
 <details><summary>Type definitions and owned fields</summary>
 
