@@ -195,6 +195,9 @@ func (a *App) updatePersonalMarket(in *platform.Input, w, h int) bool {
 	}
 	v := &a.personalMarket
 	buyer := a.state.ShopView.Open
+	if buyer {
+		return a.updatePersonalMarketBuyer(in, w, h)
+	}
 	x, y := a.personalMarketUI.Origin(w, h)
 	capture := panelPointer(in, x, y, ui.PersonalMarketWidth, ui.PersonalMarketHeight)
 	if v.pending != 0 {
@@ -214,19 +217,6 @@ func (a *App) updatePersonalMarket(in *platform.Input, w, h int) bool {
 		}
 		a.sendPersonalMarket(proto.NewWriter(op).Bytes())
 		return true
-	}
-	if buyer {
-		if action == ui.PersonalMarketCancel {
-			a.sendPersonalMarket(proto.NewWriter(proto.MyShopLeave).Bytes())
-			return true
-		}
-		if action >= 0 && action < proto.MyShopSlots && a.state.ShopView.Present[action] {
-			entry := a.state.ShopView.Items[action]
-			v.selected = action
-			v.dialog = marketDialog{op: proto.MyShopBuy, index: entry.Index, price: entry.Price, item: entry.Item, seller: a.state.ShopView.Seller}
-			a.quantityUI.OpenWithValue(in.MouseX, in.MouseY, w, h, int(entry.Item.Count), 1)
-		}
-		return capture
 	}
 	if action == ui.PersonalMarketCancel {
 		a.sendPersonalMarket(proto.NewWriter(proto.MyShopCancel).Bytes())
@@ -368,4 +358,26 @@ func (a *App) updatePersonalMarketModal(in *platform.Input, w, h int) bool {
 		}
 	}
 	return d.op != 0
+}
+
+// Buyers use the common merchant window (market.png) with the seller's list.
+func (a *App) updatePersonalMarketBuyer(in *platform.Input, w, h int) bool {
+	v := &a.personalMarket
+	x, y := a.marketUI.Origin(w, h)
+	capture := panelPointer(in, x, y, ui.MarketWidth, ui.MarketHeight)
+	if v.pending != 0 {
+		return capture
+	}
+	_, closed := a.marketUI.Update(in, w, h, 0, proto.MyShopSlots, false)
+	if closed || in.HasKey(platform.KeyEscape) {
+		a.sendPersonalMarket(proto.NewWriter(proto.MyShopLeave).Bytes())
+		return true
+	}
+	if cell, ok := ui.MarketHit(in.MouseX-x, in.MouseY-y); ok && in.Clicked && cell < proto.MyShopSlots && a.state.ShopView.Present[cell] {
+		entry := a.state.ShopView.Items[cell]
+		v.selected = cell
+		v.dialog = marketDialog{op: proto.MyShopBuy, index: entry.Index, price: entry.Price, item: entry.Item, seller: a.state.ShopView.Seller}
+		a.quantityUI.OpenWithValue(in.MouseX, in.MouseY, w, h, int(entry.Item.Count), 1)
+	}
+	return capture
 }

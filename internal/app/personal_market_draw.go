@@ -13,6 +13,10 @@ func (a *App) drawPersonalMarket(w, h int) {
 	if !a.personalMarketOpen() {
 		return
 	}
+	if a.state.ShopView.Open {
+		a.drawPersonalMarketBuyer(w, h)
+		return
+	}
 	v, p := &a.personalMarket, a.personalMarketUI
 	s, b := &a.state.MyShop, &a.state.ShopView
 	title := v.title.Text
@@ -108,5 +112,33 @@ func (a *App) drawPersonalMarketSigns(w, h int) {
 		}
 		a.sprites.Draw(a.white, float32(left), float32(top), float32(width), float32(height), 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 154.0 / 255}) // 0x44c186: 9a1d1f24
 		f.Draw(a.sprites, title, left+10, top+(height-f.Height)/2, ui.RGBColor(0xccff66), textWidth)                                                                   // 0x44c181: ffccff66
+	}
+}
+
+func (a *App) drawPersonalMarketBuyer(w, h int) {
+	b := &a.state.ShopView
+	x, y := a.marketUI.Origin(w, h)
+	a.clearTooltipUnderPanel(x, y, ui.MarketWidth, ui.MarketHeight)
+	name := a.chatEntityName(b.Seller)
+	a.marketUI.Draw(a.sprites, a.font, w, h, 0, proto.MyShopSlots, a.personalMarket.pending != 0, name, nil)
+	hover, hovered := ui.MarketHit(a.lastMouseX-x, a.lastMouseY-y)
+	for i := range proto.MyShopSlots {
+		if !b.Present[i] {
+			continue
+		}
+		it := b.Items[i].Item
+		def := a.itemsItem(it.Type, it.TypeID)
+		if def == nil {
+			continue
+		}
+		cx, cy, _ := ui.MarketCell(i)
+		a.drawItemIcon(def, x+cx, y+cy, 32, white, &it)
+		if count := a.itemCount(it.Type, it.TypeID, it.Count); count > 1 {
+			text := strconv.Itoa(int(count))
+			a.font.Draw(a.sprites, text, x+cx+31-a.font.Width(text), y+cy+18, white, 32)
+		}
+		if hovered && hover == i && !a.personalMarket.modal() {
+			a.drawItemDetails(def, &it, it.Count, min(x+ui.MarketWidth+8, max(0, w-296)), min(y+112, max(0, h-106)), w, h, fmt.Sprintf("%d gold per unit", b.Items[i].Price))
+		}
 	}
 }
