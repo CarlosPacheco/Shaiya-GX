@@ -350,6 +350,7 @@ func (s *Session) sendStatPackets() {
 // drainRewards applies bounded, coalesced rewards before normal simulation or
 // logout. Aggregation keeps individual scaling/rounding and caps unchanged.
 func (s *Session) drainRewards(p *ConnectedPlayer) {
+	s.applyLoot(p)
 	for mob, count := range p.pendingQuestKills() {
 		if s.questKillCount(mob, count) {
 			p.ackQuestKills(mob, count)

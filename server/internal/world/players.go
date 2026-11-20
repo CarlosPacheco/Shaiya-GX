@@ -122,6 +122,7 @@ type ConnectedPlayer struct {
 	perfectExp []perfectExperience
 	gold       uint32
 	questKills map[uint16]uint8
+	lootQueue  []lootGrant // group loot waiting for this session
 
 	questMu  sync.Mutex
 	questIDs map[uint16]bool // active quests, for loot eligibility

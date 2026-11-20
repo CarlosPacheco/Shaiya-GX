@@ -122,7 +122,9 @@ type State struct {
 	LastDetectInfo         proto.DetectInfo
 	LastPeriodicEffect     proto.PeriodicEffect
 	LastField              proto.Field
-	LastKillNotice         string                        // name of the player the user killed
+	LastKillNotice         string           // name of the player the user killed
+	LastLootNotice         proto.LootNotice // the party member who just received loot
+	LootNoticeSerial       uint64
 	Transforms             map[uint32]uint16             // character -> monster it looks like
 	UserHealth             map[uint32]proto.TargetHealth // HP of the selected user
 	DeathLossFree          bool
@@ -779,6 +781,13 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		s.LastSkillCooldown = result
+	case proto.GXLootNotice:
+		n, err := proto.DecodeLootNotice(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastLootNotice = n
+		s.LootNoticeSerial++
 	case proto.GXKillNotice:
 		name, err := proto.DecodeKillNotice(p)
 		if err != nil {

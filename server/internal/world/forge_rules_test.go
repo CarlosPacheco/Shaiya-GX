@@ -183,7 +183,7 @@ func TestNewDropRecreationSurvivesPickupAndRedrop(t *testing.T) {
 	defer clearMapItems(s.char.MapID)
 	defs.MobDrops[1] = []db.MobDrop{{ItemOrder: 1, Grade: 1, DropRate: 100}}
 	buildDropCatalog()
-	drops := rollMobDrops(s.char.MapID, &MapMob{MobID: 1, ID: 1, Level: 1}, s.char.ID, nil, s.log)
+	drops := rollMobDrops(s.char.MapID, &MapMob{MobID: 1, ID: 1, Level: 1}, s.char.ID, s.char.ID, nil, s.log)
 	if len(drops) != 1 {
 		t.Fatal("missing forced drop", len(drops))
 	}

@@ -49,6 +49,8 @@ type party struct {
 	autoJoin     bool
 	itemDivision int32
 	itemDivSeq   int // m_nItemDivSeq, the rotation for divisions 1 and 3
+
+	loot map[uint32]*lootEntry // universal loot rounds, see loot.go
 }
 
 var (
@@ -249,6 +251,7 @@ func enterParty(pt *party, p *ConnectedPlayer) bool {
 	}
 	p.Send(w.MustFinish(), "0x0B01 party roster")
 	pt.members = append(pt.members, p)
+	pt.lootJoin(p.CharacterID, time.Now())
 	p.party, p.inviterID = pt, 0
 	pt.refreshLevel()
 	partyBadge(p)
@@ -277,6 +280,7 @@ func leaveParty(pt *party, p *ConnectedPlayer, expelled bool) {
 	}
 	pt.send(partyIDPacket(op, p.CharacterID), label)
 	p.party = nil
+	pt.lootLeave(p.CharacterID, time.Now())
 	pt.members = append(pt.members[:index], pt.members[index+1:]...)
 	leaderChanged := false
 	switch {

@@ -146,11 +146,19 @@ func dropPosition(x, z float32) (float32, float32) {
 //
 // With two or more party members in range, the gold is split evenly among
 // them instead of dropped (at least 1 each).
-func rollMobDrops(mapID uint16, mob *MapMob, ownerID uint32, party []*ConnectedPlayer, log logPrinter) []MapItem {
+func rollMobDrops(mapID uint16, mob *MapMob, ownerID, killerID uint32, party []*ConnectedPlayer, log logPrinter) []MapItem {
 	defs := db.MustDefs()
 	var packets []MapItem
 	place := func(def *db.ItemDef, money uint32) {
 		x, z := dropPosition(mob.PosX, mob.PosZ)
+		if def != nil && len(party) >= 1 {
+			// Universal loot: a party or raid's item goes straight into one member's bag.
+			item := newDroppedItem(def)
+			if to := distributeLoot(party, &item, time.Now()); to != nil {
+				to.QueueLoot(lootGrant{item: item, mapID: mapID, x: x, z: z})
+				return
+			}
+		}
 		mi := MapItem{ID: nextMapItemID(), OwnerID: ownerID, FromMob: true, DroppedAt: time.Now(), PosX: x, PosZ: z}
 		if def != nil {
 			mi.Item = newDroppedItem(def)
@@ -184,7 +192,7 @@ func rollMobDrops(mapID uint16, mob *MapMob, ownerID uint32, party []*ConnectedP
 			log.Printf("GX Server World world drop mob_id=%d rule=%d grade=%d item=%d/%d", mob.MobID, rule.Index, rule.Grade, def.Type, def.TypeID)
 		}
 	})
-	if grbKill(mapID, mob, ownerID) {
+	if grbKill(mapID, mob, killerID) {
 		return packets
 	}
 	if rand.IntN(100) < 30 {

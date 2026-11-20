@@ -104,3 +104,17 @@ func TestPartyMemberEffects(t *testing.T) {
 		t.Fatalf("after remove %+v", m.Effects)
 	}
 }
+
+func TestLootNoticeDecode(t *testing.T) {
+	w := NewWriter(GXLootNotice)
+	w.U32(77)
+	w.U8(3)
+	w.U8(9)
+	n, err := DecodeLootNotice(w.Bytes())
+	if err != nil || n != (LootNotice{77, 3, 9}) {
+		t.Fatalf("%+v %v", n, err)
+	}
+	if _, err := DecodeLootNotice(w.Bytes()[:7]); err == nil {
+		t.Fatal("short packet accepted")
+	}
+}

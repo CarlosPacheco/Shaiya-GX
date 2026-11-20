@@ -80,6 +80,12 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 			style = 17
 		}
 		a.systemMessage(style, int(s.LastSkillFailure.Message), nil)
+	case proto.GXLootNotice:
+		n := s.LastLootNotice
+		if name := itemName(n.Type, n.TypeID); name != "" && a.msg.Get(61) != "" {
+			// SysMsg 61 "<p> attained <i>" for a group mate's item, with its link.
+			a.state.AddChat(game.ChatLine{Text: a.msg.Format(61, map[string]string{"p": a.chatEntityName(n.Receiver), "i": "\uFFFC " + name}), Style: 3, MessageID: 61, ItemType: n.Type, ItemID: n.TypeID})
+		}
 	case proto.GXKillNotice:
 		a.systemMessage(1, 8, map[string]string{"t": s.LastKillNotice}) // red: "Killed <t>"
 	case proto.GXFallDamage:

@@ -70,7 +70,8 @@ type MapMob struct {
 	eventGeneration      uint64
 	eventFresh           bool
 	eventDamage          []eventDamageEntry
-	elementRestored      bool // RemApplySkillDebuff68 restores base even with another68 active.
+	lootDamage           []eventDamageEntry // damage per attacker: who earns the loot
+	elementRestored      bool               // RemApplySkillDebuff68 restores base even with another68 active.
 	ID                   uint32
 	MobID                uint16
 	Level                uint16
@@ -234,6 +235,7 @@ func cloneMob(m *MapMob) MapMob {
 	c.lua.rng = nil
 	c.Effects = append([]MobEffect(nil), m.Effects...)
 	c.eventDamage = append([]eventDamageEntry(nil), m.eventDamage...)
+	c.lootDamage = append([]eventDamageEntry(nil), m.lootDamage...)
 	if m.Area != nil {
 		a := *m.Area
 		c.Area = &a
@@ -425,6 +427,7 @@ func DamageMobFrom(mapID uint16, id uint32, damage, attacker uint32) (MobDamageR
 			damage = 0
 		}
 		m.recordEventDamage(attacker, applied)
+		m.recordLootDamage(attacker, applied)
 		m.CurrentHP -= applied
 		r := MobDamageResult{DamageHP: uint16(min(damage, 65535)), AppliedHP: applied, Killed: m.CurrentHP == 0}
 		if r.Killed {
@@ -558,6 +561,7 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 			}
 			m.PosX, m.PosZ, m.homeX, m.homeZ = x, z, x, z
 			m.CurrentHP = max(m.MaxHP, 1)
+			m.lootDamage = nil
 			if m.def != nil {
 				m.CurrentSP, m.CurrentMP = m.def.MaxSP, m.def.MaxMP
 			}
@@ -1518,4 +1522,18 @@ func HealMob(mapID uint16, id, amount uint32) (MapMob, uint32, bool) {
 		}
 	}
 	return MapMob{}, 0, false
+}
+
+// recordLootDamage books damage against the attacker for the loot owner.
+func (m *MapMob) recordLootDamage(id, damage uint32) {
+	if id == 0 || damage == 0 {
+		return
+	}
+	for i := range m.lootDamage {
+		if m.lootDamage[i].ID == id {
+			m.lootDamage[i].Amount += uint64(damage)
+			return
+		}
+	}
+	m.lootDamage = append(m.lootDamage, eventDamageEntry{id, uint64(damage)})
 }

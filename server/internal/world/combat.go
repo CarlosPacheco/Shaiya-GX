@@ -546,13 +546,23 @@ func rewardKill(killer *ConnectedPlayer, killerID uint32, mapID uint16, m *MapMo
 	if killer != nil {
 		party = partyMembersNear(killer, mapID, m.PosX, m.PosZ)
 	}
+	// The loot belongs to whoever dealt the most damage (its whole party counts
+	// together), not to the killing blow or the aggro holder.
+	lootBy, lootByID := killer, killerID
+	if top := lootOwner(m); top != nil {
+		lootBy, lootByID = top, top.CharacterID
+	}
+	var lootParty []*ConnectedPlayer
+	if lootBy != nil {
+		lootParty = partyMembersNear(lootBy, mapID, m.PosX, m.PosZ)
+	}
 	var rewards []killReward
 	var perfect bool
 	base := uint16(min(m.Exp, 65535))
 	if killer != nil {
 		rewards, perfect = killRewards(killer, mapID, m.Level, base)
 	}
-	for _, it := range rollMobDrops(mapID, m, killerID, party, log) {
+	for _, it := range rollMobDrops(mapID, m, lootByID, killerID, lootParty, log) {
 		dispatchItemEnter(mapID, &it, "0x0401 mob drop")
 	}
 	questRecipients := party

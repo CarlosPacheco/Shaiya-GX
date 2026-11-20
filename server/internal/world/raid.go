@@ -71,6 +71,7 @@ func enterRaid(pt *party, p *ConnectedPlayer) bool {
 		return false
 	}
 	pt.members = append(pt.members, p)
+	pt.lootJoin(p.CharacterID, time.Now())
 	pt.slots = append(pt.slots, uint16(slot))
 	if len(pt.members) == 2 && pt.subLeader == pt.leader {
 		pt.subLeader = 1 // a raid started by an invitation: the first to join assists
@@ -129,6 +130,7 @@ func removeRaid(pt *party, p *ConnectedPlayer, expelled bool) {
 	}
 	pt.send(partyIDPacket(op, p.CharacterID), label)
 	p.party = nil
+	pt.lootLeave(p.CharacterID, time.Now())
 	pt.members = append(pt.members[:index], pt.members[index+1:]...)
 	pt.slots = append(pt.slots[:index], pt.slots[index+1:]...)
 	if index < pt.leader {
