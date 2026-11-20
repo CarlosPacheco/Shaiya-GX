@@ -85,9 +85,7 @@ func (s *Session) tickRebirth(now time.Time) {
 func (s *Session) killSoul() {
 	ch := s.char
 	if ch.Mode != growUltimate || s.deathLoss < 0 {
-		lost := expDrop(ch, s.deathLoss, s.faction)
-		m, x, y, z := s.respawnDestination(ch)
-		s.rebirth(m, x, y, z, rebirthKindBind, true, lost)
+		s.rebirthAtBind()
 		return
 	}
 	if s.hasBenefit(abilityUltimateRebirth) {
@@ -104,6 +102,14 @@ func (s *Session) killSoul() {
 		return
 	}
 	s.ultimateDeath()
+}
+
+// rebirthAtBind applies the normal death penalty and returns the user with full pools.
+func (s *Session) rebirthAtBind() {
+	ch := s.char
+	lost := expDrop(ch, s.deathLoss, s.faction)
+	m, x, y, z := s.respawnDestination(ch)
+	s.rebirth(m, x, y, z, rebirthKindBind, true, lost)
 }
 
 // killSoulByItem is KillSoulByItem (here false: bind point, preferring

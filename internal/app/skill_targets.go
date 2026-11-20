@@ -13,7 +13,7 @@ func (a *App) validSkillTarget(d sdata.Skill, target uint32) bool {
 	if d.IsSoulBurn() {
 		e := a.state.Entities[target]
 		return !a.state.Self.Dead && target != a.state.SelfID && e != nil && e.Kind == game.KindUser && e.Dead &&
-			e.Shape != nil && e.Shape.Mode != 3 && a.selectedSkillEnemy(target)
+			e.Shape != nil && a.selectedSkillEnemy(target)
 	}
 	if d.Target == proto.SkillTargetRaid {
 		return proto.SupportsRaidSkillTarget(d.Effect) && target == a.state.SelfID && !a.state.Self.Dead

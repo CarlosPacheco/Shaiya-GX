@@ -47,7 +47,7 @@ func TestSoulBurnRespawnsTheSameEnemyCorpseAfterItsImpact(t *testing.T) {
 	caster.syncPlayer()
 	caster.skills = []db.CharacterSkill{{SkillID: 125, Level: 1, Number: 1}}
 	ch := *caster.char
-	ch.ID, ch.PosX, ch.PosY, ch.Mode = ch.ID+8125, 510, 11, growNormal
+	ch.ID, ch.PosX, ch.PosY, ch.Mode = ch.ID+8125, 510, 11, growUltimate // legacy stored value
 	victim, wire := gmWireSession(t, ch, false)
 	victim.faction = FactionDark
 	victim.player = RegisterPlayer(ch, nil, false, victim.faction, victim.out, victim.logger)
@@ -71,13 +71,6 @@ func TestSoulBurnRespawnsTheSameEnemyCorpseAfterItsImpact(t *testing.T) {
 	victim.dead, victim.char.CurrentHP = true, 0
 	victim.player.SetAlive(false)
 	victim.startRebirthTimer()
-	victim.char.Mode = growUltimate
-	victim.syncPlayer()
-	cast()
-	if caster.cast != nil {
-		t.Fatal("Soul Burn prepared on an Ultimate corpse")
-	}
-	victim.char.Mode = growNormal
 	victim.syncPlayer()
 	caster.faction = FactionDark
 	cast()
@@ -100,8 +93,14 @@ func TestSoulBurnRespawnsTheSameEnemyCorpseAfterItsImpact(t *testing.T) {
 		t.Fatal("Soul Burn did not charge its authored cost and start reuse")
 	}
 	victim.tickSkillOnce()
+	if victim.char == nil {
+		t.Fatal("Soul Burn ran legacy character deletion instead of rebirth")
+	}
 	if victim.dead || !victim.player.IsAlive() || victim.char.PosX < 300 || victim.char.PosX >= 310 {
 		t.Fatalf("the enemy did not return to their respawn point: dead %v, x %.2f", victim.dead, victim.char.PosX)
+	}
+	if pools := victim.stats(); pools.CurrentHP != pools.MaxHP || pools.CurrentMP != pools.MaxMP || pools.CurrentSP != pools.MaxSP {
+		t.Fatal("Soul Burn did not restore the standard respawn pools")
 	}
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()

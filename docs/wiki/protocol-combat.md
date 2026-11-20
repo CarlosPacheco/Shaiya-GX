@@ -3129,7 +3129,7 @@ Declarations: [packet.SkillDetectInfo](../../server/internal/packet/packet.go#L1
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildDetectInfo (server/internal/world/skillonce.go)](../../server/internal/world/skillonce.go#L111)
+**S→C serializers:** [buildDetectInfo (server/internal/world/skillonce.go)](../../server/internal/world/skillonce.go#L110)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L863)
 
@@ -3139,7 +3139,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildDetectInfo — server/internal/world/skillonce.go</summary>
 
-[Source definition](../../server/internal/world/skillonce.go#L111)
+[Source definition](../../server/internal/world/skillonce.go#L110)
 
 ```go
 func buildDetectInfo(attr uint32, level uint16, mode uint8) []byte {

@@ -152,8 +152,8 @@ against eligible targets.
 
 Select an enemy player's corpse. The caster and corpse must be in the same
 instance and the cast follows standard launch reach and visibility checks.
-Ultimate Mode corpses are immune. On success, the enemy immediately returns
-to their normal respawn point with the usual respawn rules. The visual effect
+On success, the enemy immediately returns to their normal respawn point with
+full pools and the usual death penalty. The visual effect
 plays where the corpse lay. There is no lingering debuff or resurrection timer
 added by the spell.
 

@@ -14,7 +14,7 @@ const (
 	typeEffectOnce = 6
 
 	detailLifeSkill = 121 // resurrection: revive a dead user (LifeSkill)
-	detailKillSoul  = 122 // send a dead non-ultimate user to its bind point
+	detailKillSoul  = 122 // send an enemy corpse to its bind point
 	detailDetect    = 123 // reveal an enemy's defence element, level, mode
 	detailCheck     = 124 // success roll only
 	detailReturn    = 125 // move the caster to its bind point
@@ -73,14 +73,13 @@ func (p *ConnectedPlayer) takeSoulKill() *pendingSoulKill {
 	return k
 }
 
-// Soul Burn follows the normal PvP team and visibility rules with a dead
-// target. SkillOnce 0x453690 excludes Ultimate Mode before calling KillSoul.
+// Soul Burn follows the normal PvP team and visibility rules with a dead target.
 func (s *Session) soulBurnCorpse(p *ConnectedPlayer) corpseTarget {
 	if p == nil || s.player == nil || s.dead || p == s.player {
 		return corpseTarget{}
 	}
 	state := p.lifeState.Load()
-	if state == 0 || state&1 != 0 || p.Snapshot().Mode == growUltimate || s.isTeam(p) {
+	if state == 0 || state&1 != 0 || s.isTeam(p) {
 		return corpseTarget{}
 	}
 	return corpseTarget{player: p, state: state}
@@ -241,15 +240,15 @@ func (s *Session) tickSkillOnce() {
 	}
 	if k := p.takeSoulKill(); k != nil {
 		ch := s.char
-		if !s.dead || s.invulnerable() || ch.Mode == growUltimate || ch.MapID != k.mapID || p.lifeState.Load() != k.state {
+		if !s.dead || s.invulnerable() || ch.MapID != k.mapID || p.lifeState.Load() != k.state {
 			k.source.Send(soulBurnRejection(k.source.CharacterID, k.skill), "0x0511 Soul Burn corpse no longer available")
 			return
 		}
 		// The corpse is still present when the result arrives. Its view sees
-		// the impact before KillSoul emits corpse leave and rebirth packets.
+		// the impact before corpse leave and rebirth packets.
 		frame := buildSkillUseResult(packet.SkillUseNoTarget, skillResultNormal, k.source.CharacterID, ch.ID, k.skill.SkillID, k.skill.Level, 0, 0, 0)
 		sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius, frame, "0x0511 Soul Burn")
-		s.killSoul()
+		s.rebirthAtBind()
 	}
 }
 

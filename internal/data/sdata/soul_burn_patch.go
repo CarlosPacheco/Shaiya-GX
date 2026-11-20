@@ -8,7 +8,7 @@ import (
 
 const soulBurnSkillID = 125
 
-const soulBurnDescription = "Forces a dead enemy player to respawn immediately at their bind point. Ultimate Mode corpses are immune."
+const soulBurnDescription = "Forces a dead enemy player to respawn immediately at their bind point."
 
 // EnableSoulBurn enables only skill 125 in an existing player catalog.
 func EnableSoulBurn(raw []byte) ([]byte, SkillCatalogReport, error) {
