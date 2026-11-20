@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/studio"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
@@ -268,6 +269,9 @@ func (e *editor) definitionForm(index int, inline bool, apply func(map[string]st
 		}
 		disabled := f.Column != "" && !record.DatabaseRow
 		if options := readableValues(f.Source); len(options) != 0 {
+			if f.Source == "TargetType" && catalog.Kind == studio.Skills {
+				options = append(options, fmt.Sprintf("%d · Entire raid (heal or buff)", proto.SkillTargetRaid))
+			}
 			choice := widget.NewSelect(options, nil)
 			choice.PlaceHolder = "Choose a known value"
 			input.OnChanged = func(raw string) {

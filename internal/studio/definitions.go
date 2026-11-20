@@ -19,6 +19,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/textwire"
 )
 
@@ -487,6 +488,14 @@ func (d *Definitions) apply(edits DefinitionEdits) ([]byte, []definitionUpdate, 
 		}
 		if matched != len(patch) {
 			return nil, nil, fmt.Errorf("unsupported field in definition %d/%d", r.ID, r.Level)
+		}
+		if d.Kind == Skills || d.Kind == NPCSkills {
+			_, targetEdited := patch["TargetType"]
+			_, effectEdited := patch["TypeEffect"]
+			if (targetEdited || effectEdited) && body[skillTargetOffset] == proto.SkillTargetRaid &&
+				(d.Kind != Skills || !proto.SupportsRaidSkillTarget(body[skillEffectOffset])) {
+				return nil, nil, fmt.Errorf("definition %d/%d: TargetType %d requires a player heal or buff (TypeEffect 2 or 4)", r.ID, r.Level, proto.SkillTargetRaid)
+			}
 		}
 		if len(update.columns) != 0 {
 			updates = append(updates, update)

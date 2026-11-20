@@ -7,7 +7,53 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
+
+func TestRaidTargetSavesInBothPlayerSkillCatalogs(t *testing.T) {
+	ctx, root := t.Context(), t.TempDir()
+	path := filepath.Join(root, "installed.sqlite")
+	db, err := openDB(ctx, path, "rwc")
+	must(t, err)
+	defer db.Close()
+	columns := mappedColumns(Skills)
+	for i := range columns {
+		columns[i] += " INTEGER DEFAULT 0"
+	}
+	columns[0] = quote("SkillName") + " TEXT"
+	_, err = db.ExecContext(ctx, "CREATE TABLE "+Skills.Table()+" (SkillID INTEGER, SkillLevel INTEGER, "+strings.Join(columns, ",")+")")
+	must(t, err)
+	_, err = db.ExecContext(ctx, "INSERT INTO "+Skills.Table()+" (SkillID,SkillLevel,SkillName,TypeEffect,TargetType) VALUES (1,1,'Raid',4,4)")
+	must(t, err)
+	body := make([]byte, 116)
+	body[0], body[skillEffectOffset], body[skillTargetOffset] = 1, 4, 4
+	plain := binary.LittleEndian.AppendUint32(nil, 1)
+	plain = binary.LittleEndian.AppendUint32(plain, 4)
+	plain = append(plain, "Raid"...)
+	plain = binary.LittleEndian.AppendUint32(plain, 0)
+	plain = append(plain, body...)
+	plain = append(plain, make([]byte, 8*124)...)
+	file := filepath.Join(root, Skills.RelativePath())
+	writeFixture(t, file, plain)
+	d, err := OpenDefinitions(ctx, root, path, Skills)
+	must(t, err)
+	if err := d.ValidateEdit(0, map[string]string{"TargetType": "8", "TypeEffect": "1"}); err == nil {
+		t.Fatal("an attack cannot use the whole-raid target")
+	}
+	_, err = SaveDefinitions(ctx, root, d, DefinitionEdits{0: {"TargetType": "8"}})
+	must(t, err)
+	saved, err := readSData(file)
+	must(t, err)
+	defs, err := sdata.ParseSkills(saved)
+	must(t, err)
+	var target int
+	must(t, db.QueryRowContext(ctx, "SELECT TargetType FROM "+Skills.Table()+" WHERE SkillID=1 AND SkillLevel=1").Scan(&target))
+	if target != proto.SkillTargetRaid || defs[sdata.SkillKey{ID: 1, Level: 1}].Target != proto.SkillTargetRaid {
+		t.Fatal("whole-raid selector did not round-trip in both catalogs")
+	}
+}
 
 func TestNPCSkillUpdatesOnlyItsOwnNamespace(t *testing.T) {
 	ctx := t.Context()

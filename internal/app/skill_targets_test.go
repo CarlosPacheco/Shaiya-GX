@@ -127,6 +127,33 @@ func TestFriendlySpellOnEnemyUsesSelfWithoutLosingSelection(t *testing.T) {
 	}
 }
 
+func TestRaidSkillCastKeepsCombatSelection(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID, a.state.Target = 42, 99
+	a.state.Entities[99] = &game.Entity{Kind: game.KindMob}
+	k := proto.LearnedSkill{ID: 124, Level: 1, Number: 7}
+	key := sdata.SkillKey{ID: k.ID, Level: k.Level}
+	a.skillDefs = make(map[sdata.SkillKey]sdata.Skill)
+	for _, d := range []sdata.Skill{
+		{Effect: 2, Detail: 41}, {Effect: 4, Detail: 81}, {Effect: 4, Detail: 82}, {Effect: 1, Detail: 21}, {Effect: 5, Detail: 101},
+	} {
+		d.Target = proto.SkillTargetRaid
+		a.skillDefs[key] = d
+		p := a.learnedSkillPacket(k)
+		if d.Effect == 2 || d.Effect == 4 {
+			r := proto.NewReader(p)
+			if proto.Op(p) != proto.SkillUseNoTarget || r.U8() != k.Number || r.U32() != a.state.SelfID || r.Err() != nil {
+				t.Fatalf("raid skill %d sent wrong cast request: %x", d.Detail, p)
+			}
+		} else if p != nil {
+			t.Fatalf("effect %d sent an unsupported raid cast: %x", d.Effect, p)
+		}
+		if a.state.Target != 99 {
+			t.Fatal("raid cast changed the selected enemy")
+		}
+	}
+}
+
 func TestFriendlyMobRefusedBeforeAttackPredictionAndSkillRequest(t *testing.T) {
 	a := inputApp()
 	a.msg = text.SysMsg{317: "Wrong target"}

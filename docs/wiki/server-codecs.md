@@ -4075,6 +4075,10 @@ func DecodeSkillFailure(p []byte) (v SkillFailure, err error) {
 <details><summary>Types and codecs</summary>
 
 ```go
+func SupportsRaidSkillTarget(effect uint8) bool { return effect == 2 || effect == 4 }
+```
+
+```go
 type LearnedSkill struct {
 	ID            uint16
 	Level, Number uint8

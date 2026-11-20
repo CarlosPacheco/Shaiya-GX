@@ -83,6 +83,11 @@ var itemFields = func() []Field {
 	return fields
 }()
 
+const (
+	skillEffectOffset = 21
+	skillTargetOffset = 56
+)
+
 var skillFields = func() []Field {
 	fields := []Field{textField("Name", "Name", "SkillName", 0), textField("Description", "Description", "", 1)}
 	add := func(label, field, section string, offset, size int) {
@@ -106,7 +111,7 @@ var skillFields = func() []Field {
 	add("Skill point cost", "SkillPoint", req, 18, 1)
 	add("Visibility / learnability", "TypeShow", req, 19, 1)
 	add("Attack kind", "TypeAttack", cast, 20, 1)
-	add("Effect kind", "TypeEffect", effects, 21, 1)
+	add("Effect kind", "TypeEffect", effects, skillEffectOffset, 1)
 	add("Effect detail", "TypeDetail", effects, 22, 2)
 	for i := 0; i < 15; i++ {
 		add(fmt.Sprintf("Weapon eligibility %d", i+1), fmt.Sprintf("NeedWeapon%d", i+1), req, 24+i, 1)
@@ -122,7 +127,7 @@ var skillFields = func() []Field {
 	add("Required skill on cooldown", "PrevSkillID", req, 52, 2)
 	add("Success mode", "SuccessType", cast, 54, 1)
 	add("Success value", "SuccessValue", cast, 55, 1)
-	add("Target type", "TargetType", cast, 56, 1)
+	add("Target type", "TargetType", cast, skillTargetOffset, 1)
 	add("Effect radius", "ApplyRange", cast, 57, 1)
 	add("Multi-hit setting", "MultiAttack", cast, 58, 1)
 	add("Duration (hours if FixRange = 1, seconds otherwise)", "KeepTime", effects, 59, 2)

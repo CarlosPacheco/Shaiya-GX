@@ -10,6 +10,9 @@ import (
 // Validate before sending or predicting anything; server still owns hostility,
 // costs, range and outcomes. Caster/party and caster-area spells need no victim.
 func (a *App) validSkillTarget(d sdata.Skill, target uint32) bool {
+	if d.Target == proto.SkillTargetRaid {
+		return proto.SupportsRaidSkillTarget(d.Effect) && target == a.state.SelfID && !a.state.Self.Dead
+	}
 	if d.Target == 6 {
 		return true
 	}

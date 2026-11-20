@@ -607,7 +607,7 @@ func buildCharacterSkills(skills []db.CharacterSkill) []byte {
 
 <details><summary>DecodeSkills — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L12)
+[Source definition](../../internal/proto/skills.go#L18)
 
 ```go
 func DecodeSkills(p []byte) ([]LearnedSkill, error) {
@@ -705,7 +705,7 @@ Declarations: [packet.CharacterActiveBuffs](../../server/internal/packet/packet.
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterActiveBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L94)
+**S→C serializers:** [buildCharacterActiveBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L95)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L626)
 
@@ -715,7 +715,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterActiveBuffs — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L94)
+[Source definition](../../server/internal/world/skillcast.go#L95)
 
 ```go
 func buildCharacterActiveBuffs(buffs []ActiveBuff) []byte {
@@ -813,7 +813,7 @@ func buildCharacterSkillBar(slots []db.QuickSlot) []byte {
 
 <details><summary>SkillBarPacket — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L44)
+[Source definition](../../internal/proto/skills.go#L50)
 
 ```go
 func SkillBarPacket(slots []QuickSlot) ([]byte, error) {
@@ -846,7 +846,7 @@ type QuickSlot struct {
 
 <details><summary>DecodeQuickSlots — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L30)
+[Source definition](../../internal/proto/skills.go#L36)
 
 ```go
 func DecodeQuickSlots(p []byte) ([]QuickSlot, error) {

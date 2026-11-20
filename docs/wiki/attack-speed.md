@@ -135,11 +135,12 @@ valid target directly. Moving beyond launch range, or beyond the retired GX
 2.5-unit grace, does not itself cancel that cast. Instant spells still use launch
 reach. Dead, unavailable, protected or no-longer-hostile targets remain invalid.
 
-GX retains its geometry checks: walls/floors can block a targeted spell at
-launch or release. Area recipients use exact `ApplyRange` in 3D and visibility
-from the current release center. These geometry and launch-radius rules are GX
-choices; the native launch helper uses horizontal distance and an additional
-movement-dependent allowance. No full native launch/geometry parity is claimed.
+Walls and floors can block a targeted spell at launch or release. Attack areas
+use exact `ApplyRange` in 3D and visibility from the current release center.
+Friendly party skills with `TargetType=4` and whole-raid skills with
+`TargetType=8` use horizontal `ApplyRange` from the caster at cast completion.
+The native single-target launch helper uses horizontal distance and an
+additional movement-dependent allowance.
 
 Movement interrupts preparation only after the server accepts a locomotion
 packet with its native non-interrupting 0x80 flag clear. Motion-zero idle/height

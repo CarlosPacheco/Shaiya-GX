@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/skillrange"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -11,8 +12,8 @@ import (
 // 0x00450670 and BuffUser: TargetType 3 (and 7) is one chosen user, who
 // must be friendly (CUser::IsTeamUsable 0x0044bf30: the caster, or alive,
 // same country or a WarType P map), 4 and 5 the caster's party members on
-// the map within the skill's ApplyRange (a raid only its group), anything
-// else the caster. A single target answers 0x0511 (result, caster, target,
+// the map within the skill's ApplyRange (a raid only its group), and GX's
+// TargetType 8 the whole raid within range. A single target answers 0x0511 (result, caster, target,
 // skill, level, HP/SP/MP healed) to the view; a party skill announces
 // 0x0511 result 4 and sends each member's 0x0513.
 
@@ -98,13 +99,13 @@ func (s *Session) friendlyTargets(def *db.SkillDef, target uint32, completed ...
 			return nil, false, false
 		}
 		return []*ConnectedPlayer{p}, false, true
-	case targetTypeParty, targetTypeNParty:
+	case targetTypeParty, targetTypeNParty, proto.SkillTargetRaid:
 		partyMu.Lock()
 		pt := partyOf(me)
 		var members []*ConnectedPlayer
 		if pt != nil {
 			group := -1
-			if pt.kind != raidKindNormal {
+			if pt.isRaid() && def.TargetType != proto.SkillTargetRaid {
 				for i, m := range pt.members {
 					if m == me && i < len(pt.slots) {
 						group = int(pt.slots[i]) / raidGroupSize
@@ -124,22 +125,22 @@ func (s *Session) friendlyTargets(def *db.SkillDef, target uint32, completed ...
 		}
 		center := skillrange.Position{s.char.PosX, s.char.PosY, s.char.PosZ}
 		radius := float32(def.ApplyRange)
-		periodicHeal := def.TypeEffect == typeEffectBuff && def.TypeDetail == detailPeriodicHeal
 		var out []*ConnectedPlayer
 		for _, m := range members {
 			if m != me && (m.MapID() != s.char.MapID || !m.IsAlive() || !s.teamUsable(m)) {
 				continue
 			}
 			c := m.Snapshot()
-			if periodicHeal {
-				// EnableApplyRange measures X/Z once at cast completion.
-				if !(DistanceXZ(center[0], center[2], c.PosX, c.PosZ) <= radius) {
-					continue
-				}
-			} else if !s.skillAreaContains(center, skillrange.Position{c.PosX, c.PosY, c.PosZ}, radius) {
-				continue
+			var inRange bool
+			if def.TargetType == targetTypeNParty {
+				inRange = s.skillAreaContains(center, skillrange.Position{c.PosX, c.PosY, c.PosZ}, radius)
+			} else {
+				// EnableApplyRange measures X/Z once, for every effect using this scope.
+				inRange = DistanceXZ(center[0], center[2], c.PosX, c.PosZ) <= radius
 			}
-			out = append(out, m)
+			if inRange {
+				out = append(out, m)
+			}
 		}
 		return out, true, true
 	}

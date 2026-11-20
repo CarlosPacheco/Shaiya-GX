@@ -445,7 +445,7 @@ func buildMobSkillPacket(op packet.Opcode, result uint8, mobID, target uint32, s
 
 <details><summary>DecodeSkillResult — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L117)
+[Source definition](../../internal/proto/skills.go#L123)
 
 ```go
 func DecodeSkillResult(p []byte) (m SkillResult, err error) {
@@ -537,7 +537,7 @@ func buildMobSkillPacket(op packet.Opcode, result uint8, mobID, target uint32, s
 
 <details><summary>DecodeSkillResult — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L117)
+[Source definition](../../internal/proto/skills.go#L123)
 
 ```go
 func DecodeSkillResult(p []byte) (m SkillResult, err error) {
@@ -629,7 +629,7 @@ func buildMobSkillPacket(op packet.Opcode, result uint8, mobID, target uint32, s
 
 <details><summary>DecodeSkillResult — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L117)
+[Source definition](../../internal/proto/skills.go#L123)
 
 ```go
 func DecodeSkillResult(p []byte) (m SkillResult, err error) {

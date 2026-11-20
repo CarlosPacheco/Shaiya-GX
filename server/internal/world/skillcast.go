@@ -1,10 +1,11 @@
 package world
 
 import (
-	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/skillchance"
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -177,6 +178,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		s.log.Printf("GX Server World rejected skill use: no skill in slot number=%d", number)
 		return
 	}
+	if def.TargetType == proto.SkillTargetRaid && !proto.SupportsRaidSkillTarget(def.TypeEffect) {
+		s.sendSkillMessage(k.SkillID, 317)
+		return
+	}
 	s.autoAttack = false
 	if !s.skillActionReady(def, time.Now()) {
 		if !s.queueSpinCombo(def, op, p) {
@@ -212,13 +217,13 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	castTarget := target
 	if def.TypeEffect == typeEffectHeal || def.TypeEffect == typeEffectBuff {
-		targets, _, ok := s.friendlyTargets(def, target)
-		if !ok {
-			s.sendFriendlySkillFailure(k, def, target)
-			return
-		}
 		castTarget = ch.ID
 		if def.TargetType == targetTypeOther || def.TargetType == targetTypeOtherAlt {
+			targets, _, ok := s.friendlyTargets(def, target)
+			if !ok {
+				s.sendFriendlySkillFailure(k, def, target)
+				return
+			}
 			castTarget = targets[0].CharacterID
 		}
 	}

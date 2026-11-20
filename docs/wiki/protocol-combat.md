@@ -719,7 +719,7 @@ Declarations: [packet.SkillUsedSpMp](../../server/internal/packet/packet.go#L122
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildSkillUsedSpMp (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L124)
+**S→C serializers:** [buildSkillUsedSpMp (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L125)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L887)
 
@@ -729,7 +729,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSkillUsedSpMp — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L124)
+[Source definition](../../server/internal/world/skillcast.go#L125)
 
 ```go
 func buildSkillUsedSpMp(sp, mp uint32) []byte {
@@ -1171,7 +1171,7 @@ Declarations: [packet.SkillCastStarted](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applyRequest (server/internal/world/bots.go)](../../server/internal/world/bots.go#L303), [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L157)
+**S→C serializers:** [applyRequest (server/internal/world/bots.go)](../../server/internal/world/bots.go#L303), [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L158)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L760)
 
@@ -1242,7 +1242,7 @@ func (a *worldBotArena) applyRequest(i int, payload []byte, target int, now time
 
 <details><summary>handleUseSkill — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L157)
+[Source definition](../../server/internal/world/skillcast.go#L158)
 
 ```go
 func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
@@ -1266,6 +1266,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	k, def, ok := s.knownSkill(number)
 	if !ok {
 		s.log.Printf("GX Server World rejected skill use: no skill in slot number=%d", number)
+		return
+	}
+	if def.TargetType == proto.SkillTargetRaid && !proto.SupportsRaidSkillTarget(def.TypeEffect) {
+		s.sendSkillMessage(k.SkillID, 317)
 		return
 	}
 	s.autoAttack = false
@@ -1303,13 +1307,13 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	castTarget := target
 	if def.TypeEffect == typeEffectHeal || def.TypeEffect == typeEffectBuff {
-		targets, _, ok := s.friendlyTargets(def, target)
-		if !ok {
-			s.sendFriendlySkillFailure(k, def, target)
-			return
-		}
 		castTarget = ch.ID
 		if def.TargetType == targetTypeOther || def.TargetType == targetTypeOtherAlt {
+			targets, _, ok := s.friendlyTargets(def, target)
+			if !ok {
+				s.sendFriendlySkillFailure(k, def, target)
+				return
+			}
 			castTarget = targets[0].CharacterID
 		}
 	}
@@ -1385,7 +1389,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 
 <details><summary>DecodeSkillCast — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L111)
+[Source definition](../../internal/proto/skills.go#L117)
 
 ```go
 func DecodeSkillCast(p []byte) (m SkillCast, err error) {
@@ -1413,7 +1417,7 @@ Declarations: [packet.SkillUseNoTarget](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L257)
 
-**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L111)
+**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L112)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L869)
 
@@ -1423,7 +1427,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSkillUseResult — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L111)
+[Source definition](../../server/internal/world/skillcast.go#L112)
 
 ```go
 func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte {
@@ -1444,7 +1448,7 @@ func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, 
 
 <details><summary>DecodeSkillResult — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L117)
+[Source definition](../../internal/proto/skills.go#L123)
 
 ```go
 func DecodeSkillResult(p []byte) (m SkillResult, err error) {
@@ -1501,7 +1505,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>DecodeSkillResult — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L117)
+[Source definition](../../internal/proto/skills.go#L123)
 
 ```go
 func DecodeSkillResult(p []byte) (m SkillResult, err error) {
@@ -1548,7 +1552,7 @@ Declarations: [packet.SkillPartyMember](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L111)
+**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L112)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L869)
 
@@ -1558,7 +1562,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSkillUseResult — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L111)
+[Source definition](../../server/internal/world/skillcast.go#L112)
 
 ```go
 func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte {
@@ -1579,7 +1583,7 @@ func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, 
 
 <details><summary>DecodeSkillResult — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L117)
+[Source definition](../../internal/proto/skills.go#L123)
 
 ```go
 func DecodeSkillResult(p []byte) (m SkillResult, err error) {
@@ -1656,7 +1660,7 @@ func buildUserSkillExtra(caster, target uint32, skillID uint16, level uint8, add
 
 <details><summary>DecodeSkillExtra — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L139)
+[Source definition](../../internal/proto/skills.go#L145)
 
 ```go
 func DecodeSkillExtra(p []byte) (m SkillResult, err error) {
@@ -1794,7 +1798,7 @@ func (s *Session) applyUserHit(h pendingUserHit) bool {
 
 <details><summary>DecodeReflectedDamage — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L158)
+[Source definition](../../internal/proto/skills.go#L164)
 
 ```go
 func DecodeReflectedDamage(p []byte) (m ReflectedDamage, err error) {
@@ -1828,7 +1832,7 @@ Declarations: [packet.SkillUse](../../server/internal/packet/packet.go#L198), [p
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L257)
 
-**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L111)
+**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L112)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L869)
 
@@ -1838,7 +1842,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSkillUseResult — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L111)
+[Source definition](../../server/internal/world/skillcast.go#L112)
 
 ```go
 func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte {
@@ -1859,7 +1863,7 @@ func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, 
 
 <details><summary>DecodeSkillResult — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L117)
+[Source definition](../../internal/proto/skills.go#L123)
 
 ```go
 func DecodeSkillResult(p []byte) (m SkillResult, err error) {
@@ -1940,7 +1944,7 @@ func buildDrainPacket(op packet.Opcode, result uint8, sender, target uint32, ski
 
 <details><summary>DecodeSkillResult — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L117)
+[Source definition](../../internal/proto/skills.go#L123)
 
 ```go
 func DecodeSkillResult(p []byte) (m SkillResult, err error) {
@@ -1987,7 +1991,7 @@ Declarations: [proto.SkillMobOther](../../internal/proto/opcodes.go#L138).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L111)
+**S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L112)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L869)
 
@@ -1997,7 +2001,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSkillUseResult — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L111)
+[Source definition](../../server/internal/world/skillcast.go#L112)
 
 ```go
 func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte {
@@ -2018,7 +2022,7 @@ func buildSkillUseResult(op packet.Opcode, result uint8, sender, target uint32, 
 
 <details><summary>DecodeSkillResult — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L117)
+[Source definition](../../internal/proto/skills.go#L123)
 
 ```go
 func DecodeSkillResult(p []byte) (m SkillResult, err error) {
@@ -2181,7 +2185,7 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 
 <details><summary>DecodeSkillExtra — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L139)
+[Source definition](../../internal/proto/skills.go#L145)
 
 ```go
 func DecodeSkillExtra(p []byte) (m SkillResult, err error) {
@@ -2254,7 +2258,7 @@ func (s *Session) reflectToMob(mobGlobalID uint32, damage [3]uint16) {
 
 <details><summary>DecodeReflectedDamage — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L158)
+[Source definition](../../internal/proto/skills.go#L164)
 
 ```go
 func DecodeReflectedDamage(p []byte) (m ReflectedDamage, err error) {

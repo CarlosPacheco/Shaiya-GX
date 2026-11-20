@@ -559,7 +559,7 @@ func buildLearnSkillResult(ok bool, number uint8, skillID uint16, level uint8) [
 
 <details><summary>LearnSkillPacket — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L75)
+[Source definition](../../internal/proto/skills.go#L81)
 
 ```go
 func LearnSkillPacket(id uint16, level uint8) []byte {
@@ -574,7 +574,7 @@ func LearnSkillPacket(id uint16, level uint8) []byte {
 
 <details><summary>DecodeLearnResult — internal/proto/skills.go</summary>
 
-[Source definition](../../internal/proto/skills.go#L68)
+[Source definition](../../internal/proto/skills.go#L74)
 
 ```go
 func DecodeLearnResult(p []byte) (m LearnResult, err error) {
@@ -991,7 +991,7 @@ Declarations: [packet.AutoAttackStop](../../server/internal/packet/packet.go#L39
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L216)
 
-**S→C serializers:** [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L157), [syncVisibility (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L38)
+**S→C serializers:** [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L158), [syncVisibility (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L38)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1001,7 +1001,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleUseSkill — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L157)
+[Source definition](../../server/internal/world/skillcast.go#L158)
 
 ```go
 func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
@@ -1025,6 +1025,10 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	k, def, ok := s.knownSkill(number)
 	if !ok {
 		s.log.Printf("GX Server World rejected skill use: no skill in slot number=%d", number)
+		return
+	}
+	if def.TargetType == proto.SkillTargetRaid && !proto.SupportsRaidSkillTarget(def.TypeEffect) {
+		s.sendSkillMessage(k.SkillID, 317)
 		return
 	}
 	s.autoAttack = false
@@ -1062,13 +1066,13 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	castTarget := target
 	if def.TypeEffect == typeEffectHeal || def.TypeEffect == typeEffectBuff {
-		targets, _, ok := s.friendlyTargets(def, target)
-		if !ok {
-			s.sendFriendlySkillFailure(k, def, target)
-			return
-		}
 		castTarget = ch.ID
 		if def.TargetType == targetTypeOther || def.TargetType == targetTypeOtherAlt {
+			targets, _, ok := s.friendlyTargets(def, target)
+			if !ok {
+				s.sendFriendlySkillFailure(k, def, target)
+				return
+			}
 			castTarget = targets[0].CharacterID
 		}
 	}

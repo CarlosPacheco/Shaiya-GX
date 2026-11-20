@@ -2,6 +2,12 @@ package proto
 
 import "fmt"
 
+// SkillTargetRaid is the GX TargetType value shared by Skill.SData and SQLite.
+const SkillTargetRaid = 8
+
+// SupportsRaidSkillTarget reports which TypeEffect values can use this selector.
+func SupportsRaidSkillTarget(effect uint8) bool { return effect == 2 || effect == 4 }
+
 // LearnedSkill: 0x0108, Rapture buildCharacterSkills (client 0x58e020).
 type LearnedSkill struct {
 	ID            uint16

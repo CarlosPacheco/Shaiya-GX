@@ -426,6 +426,9 @@ func (a *App) learnedSkillPacket(k proto.LearnedSkill) []byte {
 		return nil
 	}
 	def := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]
+	if def.Target == proto.SkillTargetRaid && !proto.SupportsRaidSkillTarget(def.Effect) {
+		return nil
+	}
 	if potential.Is(def.Effect, def.Detail) {
 		return nil // triggers by itself; a bar slot only shows it and its reuse
 	}
