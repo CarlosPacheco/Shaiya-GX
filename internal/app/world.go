@@ -956,7 +956,19 @@ func (a *App) refreshSelf(v *worldView) {
 	if !ok {
 		return
 	}
-	ch, err := scene.BuildCharacter(a.assets, a.appearance(&slot), "000_normal")
+	form := a.state.PlayerForms[a.state.SelfID]
+	if form.Kind == proto.FormDisguise {
+		sh := form.Shape
+		slot.Race, slot.Gender, slot.Class, slot.Face, slot.Hair, slot.Height = sh.Race, sh.Gender, sh.Class, sh.Face, sh.Hair, sh.Height
+		for i, item := range sh.Equipment {
+			slot.EquipType[i], slot.EquipTypeID[i] = item[0], item[1]
+		}
+	}
+	appearance := a.appearance(&slot)
+	if form.Kind == proto.FormDisguise {
+		appearance.WeaponEnchant, appearance.OffhandEnchant = form.Shape.Equipment[5][2], form.Shape.Equipment[6][2]
+	}
+	ch, err := scene.BuildCharacter(a.assets, appearance, "000_normal")
 	if err != nil {
 		log.Printf("self character: %v", err)
 	}

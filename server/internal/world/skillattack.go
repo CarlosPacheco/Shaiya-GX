@@ -49,7 +49,7 @@ func (s *Session) skillCosts(def *db.SkillDef, st *CharacterStats) (sp, mp uint3
 func (s *Session) skillAttack(k db.CharacterSkill, def *db.SkillDef, target uint32, castPos *[2]float32, stats CharacterStats) {
 	ch := s.char
 	if def.TypeDetail < detailAttack || def.TypeDetail > detailDrain {
-		if def.TypeEffect == typeEffectAttack {
+		if !def.MobSkill && def.TypeEffect == typeEffectAttack {
 			s.log.Printf("GX Server World rejected skill use: attack detail %d not modeled skill_id=%d", def.TypeDetail, k.SkillID)
 			return
 		}
@@ -78,6 +78,7 @@ func (s *Session) skillAttack(k db.CharacterSkill, def *db.SkillDef, target uint
 		return
 	}
 	sp, mp := s.skillCosts(def, &stats)
+	s.breakCombatForm()
 	s.breakStealth()
 	s.startCooldown(k, def, castPos != nil)
 	s.spendDelta(mp, sp)

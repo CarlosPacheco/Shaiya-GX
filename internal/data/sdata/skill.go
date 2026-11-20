@@ -27,6 +27,7 @@ type Skill struct {
 	AbilityType                                [3]uint8
 	AbilityValue                               [3]int16
 	LimitHP                                    uint8
+	ChangeType, ChangeLevel                    uint16
 }
 type SkillKey struct {
 	ID    uint16
@@ -37,7 +38,14 @@ type SkillKey struct {
 func (s Skill) IsSoulBurn() bool { return s.Detail == 122 && (s.Effect == 3 || s.Effect == 6) }
 
 // RetiredPlayerSkill applies only to the player catalog. NPC skill IDs are independent.
-func RetiredPlayerSkill(id uint16) bool { return id == 3 || id == 4 }
+func RetiredPlayerSkill(id uint16) bool {
+	switch id {
+	case 3, 4, 234, 236, 253, 254:
+		return true
+	default:
+		return false
+	}
+}
 
 func ParseSkills(raw []byte) (map[SkillKey]Skill, error) {
 	b, err := Decrypt(raw)
@@ -75,6 +83,7 @@ func ParseSkills(raw []byte) (map[SkillKey]Skill, error) {
 				s.AbilityValue[i] = int16(binary.LittleEndian.Uint16(p[88+i*3:]))
 			}
 			s.LimitHP = p[110]
+			s.ChangeType, s.ChangeLevel = binary.LittleEndian.Uint16(p[112:]), binary.LittleEndian.Uint16(p[114:])
 			out[SkillKey{uint16(id + 1), s.Level}] = s
 		}
 	}

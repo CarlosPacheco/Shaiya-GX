@@ -92,12 +92,21 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 		goal = render.V3{e.X, e.Y, e.Z}
 		reach = a.attackReach()
 		if len(v.approachSkill) > 0 {
-			current, ok := a.state.Skills[v.approachLearned.Number]
-			if !ok || current.ID != v.approachLearned.ID || current.Level != v.approachLearned.Level || a.skills.cooldowns[current.ID] > a.clock {
+			var def sdata.Skill
+			var ok bool
+			if proto.Op(v.approachSkill) == proto.GXEvolutionCast {
+				def, ok = a.evolutionCastDefinition(v.approachSkill)
+			} else {
+				learned := v.approachLearned
+				current, known := a.state.Skills[learned.Number]
+				def = a.skillDefs[sdata.SkillKey{ID: learned.ID, Level: learned.Level}]
+				ok = known && current.ID == learned.ID && current.Level == learned.Level && a.skills.cooldowns[current.ID] <= a.clock
+			}
+			if !ok {
 				v.approachTarget, v.travel = 0, false
 				return true
 			}
-			reach = a.skillApproachReach(a.skillDefs[sdata.SkillKey{ID: current.ID, Level: current.Level}], e)
+			reach = a.skillApproachReach(def, e)
 		}
 	}
 	delta := goal.Sub(v.pos)
@@ -134,6 +143,12 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 	if len(v.approachSkill) > 0 {
 		packet := v.approachSkill
 		v.approachSkill = nil
+		if proto.Op(packet) == proto.GXEvolutionCast {
+			if def, ok := a.evolutionCastDefinition(packet); ok && a.validSkillTarget(def, id) && a.skillResourcesAvailable(def) {
+				return a.sendEvolutionCast(packet, id)
+			}
+			return true
+		}
 		def := a.skillDefs[sdata.SkillKey{ID: v.approachLearned.ID, Level: v.approachLearned.Level}]
 		if !a.validSkillTarget(def, id) || !a.skillResourcesAvailable(def) {
 			return true

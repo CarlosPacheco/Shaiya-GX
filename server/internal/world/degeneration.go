@@ -2,7 +2,6 @@ package world
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
-	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
 
@@ -27,18 +26,7 @@ func (s *Session) degenerated() bool {
 // They can still use consumables and change equipment, which do not ask this.
 func (s *Session) cannotAct() bool { return s.actionBlocked() || s.degenerated() }
 
-// transformedMob is the monster the active Degeneration makes this user look
-// like (the skill's ChangeLevel when its ChangeType is 101), 0 when none.
-func (s *Session) transformedMob() uint16 {
-	for _, b := range s.buffs {
-		if b.Effect == typeEffectDebuff && b.Detail == detailDegeneration {
-			if def := db.MustDefs().EffectSkill(b.SkillID, b.SkillLevel); def != nil && def.ChangeType == 101 {
-				return def.ChangeLevel
-			}
-		}
-	}
-	return 0
-}
+func (s *Session) transformedMob() uint16 { return s.activeForm().mob }
 
 func buildTransform(user uint32, mob uint16) []byte {
 	w := packet.New(packet.Opcode(proto.GXTransform))
@@ -47,19 +35,27 @@ func buildTransform(user uint32, mob uint16) []byte {
 	return w.MustFinish()
 }
 
-// tickTransform shows or ends the creature look: whoever sees this user and the
-// user itself are told when it changes (a user entering a view gets it with its
-// other state).
+// tickTransform publishes a change and keeps the view snapshot for late observers.
 func (s *Session) tickTransform() {
 	p := s.player
 	if p == nil || s.char == nil {
 		return
 	}
-	mob := uint32(s.transformedMob())
-	if p.transformMob.Swap(mob) == mob {
+	var old formLook
+	if published := p.formLook.Load(); published != nil {
+		old = *published
+	}
+	next := s.activeForm()
+	if old == next {
 		return
 	}
-	frame := buildTransform(s.char.ID, uint16(mob))
-	s.send(frame, "GX transform")
-	s.sendToViewers(frame, "GX transform (view)")
+	if next.kind == proto.FormNone {
+		p.formLook.Store(nil)
+	} else {
+		p.formLook.Store(&next)
+	}
+	s.publishForm(old, next)
+	if old.kind == proto.FormEvolution || next.kind == proto.FormEvolution {
+		s.updateEvolutionGrant(next)
+	}
 }

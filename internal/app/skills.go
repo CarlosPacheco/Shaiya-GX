@@ -422,7 +422,7 @@ func (a *App) actionPacket(index int) []byte {
 }
 
 func (a *App) learnedSkillPacket(k proto.LearnedSkill) []byte {
-	if a.state.Self.Mounted {
+	if a.state.Self.Mounted || a.state.Evolution.Generation != 0 {
 		return nil
 	}
 	def := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]

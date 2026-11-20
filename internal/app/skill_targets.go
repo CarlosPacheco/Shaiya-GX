@@ -10,6 +10,14 @@ import (
 // Validate before sending or predicting anything; server still owns hostility,
 // costs, range and outcomes. Caster/party and caster-area spells need no victim.
 func (a *App) validSkillTarget(d sdata.Skill, target uint32) bool {
+	switch proto.SkillForm(d.Effect, d.Detail, d.ChangeType) {
+	case proto.FormMonsterCopy:
+		e := a.state.Entities[target]
+		return !a.state.Self.Dead && e != nil && e.Kind == game.KindMob && !e.Dead && !a.friendlyMob(e) && !(e.HealthKnown && e.HP == 0)
+	case proto.FormDisguise:
+		e := a.state.Entities[target]
+		return !a.state.Self.Dead && e != nil && e.Kind == game.KindUser && !e.Dead && a.selectedSkillEnemy(target)
+	}
 	if d.IsSoulBurn() {
 		e := a.state.Entities[target]
 		return !a.state.Self.Dead && target != a.state.SelfID && e != nil && e.Kind == game.KindUser && e.Dead &&
@@ -50,6 +58,9 @@ func (a *App) validSkillTarget(d sdata.Skill, target uint32) bool {
 
 // Resolve the spell recipient without changing the selected combat target.
 func (a *App) resolveSkillTarget(d sdata.Skill) uint32 {
+	if form := proto.SkillForm(d.Effect, d.Detail, d.ChangeType); form == proto.FormMonsterCopy || form == proto.FormDisguise {
+		return a.state.Target
+	}
 	if d.IsSoulBurn() {
 		return a.state.Target
 	}

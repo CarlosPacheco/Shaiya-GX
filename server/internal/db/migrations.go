@@ -168,6 +168,16 @@ var migrations = []migration{
 		UPDATE PS_GameDefs_NpcSkills SET TypeEffect=3,KeepTime=20
 		WHERE SkillID=344 AND Rank=1 AND SkillName='Wide Death Sentence' AND TypeEffect=1 AND TypeDetail=63 AND KeepTime=0;
 	`},
+	{31, "retire_warehouse_and_drop_protection_skills", `
+		DELETE FROM PS_GameData_CharQuickSlots AS q WHERE q.Bag=100
+		AND EXISTS (SELECT 1 FROM PS_GameData_CharSkills AS s
+			WHERE s.CharID=q.CharID AND s.Number=q.Number AND s.SkillID IN (234,236,253,254))
+		AND NOT EXISTS (SELECT 1 FROM PS_GameData_CharSkills AS s
+			WHERE s.CharID=q.CharID AND s.Number=q.Number AND s.Del=0 AND s.SkillID NOT IN (234,236,253,254));
+		DELETE FROM PS_GameData_CharSkills WHERE SkillID IN (234,236,253,254);
+		DELETE FROM PS_GameData_CharApplySkills WHERE SkillLevel<>100 AND SkillID IN (77,107,127,234,236,253,254);
+		DELETE FROM PS_GameDefs_Skills WHERE SkillID IN (234,236,253,254);
+	`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

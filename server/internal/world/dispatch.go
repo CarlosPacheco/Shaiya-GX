@@ -25,6 +25,8 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 		s.cancelTravelCast()
 	}
 	switch op {
+	case packet.Opcode(proto.GXEvolutionCast):
+		s.handleEvolutionCast(p)
 	case packet.Opcode(proto.GXTargetEffectsQuery):
 		s.handleTargetEffects(p)
 	case packet.Opcode(proto.GXAuction):

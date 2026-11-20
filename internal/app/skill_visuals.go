@@ -41,6 +41,9 @@ func skillEffectLibraries(r proto.SkillResult, d sdata.Skill) (flight, impact st
 }
 
 func (a *App) startSkillResultEffects(r proto.SkillResult) {
+	if a.evolutionSkillEffects(r, true) {
+		return
+	}
 	a.loadSkills()
 	d, ok := a.skillDefs[sdata.SkillKey{ID: r.ID, Level: r.Level}]
 	if !ok {
@@ -114,6 +117,9 @@ func (a *App) startSoulBurnImpact(r proto.SkillResult) {
 // Area, party and additional hits have already announced the cast; render an
 // impact for each successful target without restarting the caster's animation.
 func (a *App) startSkillSecondaryEffect(r proto.SkillResult) {
+	if a.evolutionSkillEffects(r, false) {
+		return
+	}
 	if a.wv != nil && a.wv.physicalSkillQueued {
 		return
 	}

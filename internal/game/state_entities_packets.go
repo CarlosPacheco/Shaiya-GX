@@ -43,6 +43,8 @@ func (s *State) applyEntitiesPacket(p []byte, ev Event) (Event, error) {
 		delete(s.Entities, id)
 		if ev.Op == proto.UserLeave {
 			delete(s.ShopSigns, id)
+			delete(s.PlayerForms, id)
+			delete(s.Transforms, id)
 		}
 		if s.Target == id {
 			s.Target = 0

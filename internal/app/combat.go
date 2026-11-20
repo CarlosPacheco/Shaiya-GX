@@ -272,6 +272,9 @@ func (a *App) drawCombat(w, h int) {
 		view.TargetHP, view.TargetKnown, view.TargetNoValue = ui.Resource{Current: 1, Max: 1}, true, true
 	} else if e != nil && e.Kind == game.KindUser && e.Shape != nil {
 		view.TargetName = e.Shape.Name
+		if look := s.PlayerForms[e.ID]; look.Kind == proto.FormDisguise {
+			view.TargetName = look.Shape.Name
+		}
 		if member := s.Party.Member(e.ID); member != nil {
 			view.TargetHP = ui.Resource{Current: member.HP, Max: member.MaxHP}
 			view.TargetKnown = true

@@ -14,12 +14,12 @@ import (
 // Shared presentation from Phoenix skill_tooltip.gd / item_tooltip.gd:
 // 208px tipbox, 185px body, 12px text, cursor-left placement and gold border.
 func (a *App) queueSkillTooltip(key sdata.SkillKey) {
-	d, ok := a.skillDefs[key]
+	d, ok := a.skillDefinition(key.ID, key.Level)
 	if !ok {
 		return
 	}
 	title := d.Name
-	if !strings.HasSuffix(strings.ToLower(strings.TrimSpace(title)), fmt.Sprintf("lv%d", key.Level)) && !strings.HasSuffix(strings.ToLower(strings.TrimSpace(title)), fmt.Sprintf("lv %d", key.Level)) {
+	if key.Level != 100 && !strings.HasSuffix(strings.ToLower(strings.TrimSpace(title)), fmt.Sprintf("lv%d", key.Level)) && !strings.HasSuffix(strings.ToLower(strings.TrimSpace(title)), fmt.Sprintf("lv %d", key.Level)) {
 		title = fmt.Sprintf("%s Lv%d", title, key.Level)
 	}
 	rows := []itemDetailLine{{title, [4]float32{1, 1, 0, 1}}}
@@ -45,7 +45,7 @@ func (a *App) queueSkillTooltip(key sdata.SkillKey) {
 	} else if d.Detail == 94 || d.Detail == 95 {
 		rows = append(rows, itemDetailLine{elementName(0, a.msg), white})
 	}
-	if _, learned := a.learnedSkill(key.ID); !learned {
+	if _, learned := a.learnedSkill(key.ID); key.Level != 100 && !learned {
 		rows = append(rows, itemDetailLine{fmt.Sprintf("Required level: %d", d.RequiredLevel), gray}, itemDetailLine{fmt.Sprintf("Skill points: %d", d.Points), gray})
 	}
 

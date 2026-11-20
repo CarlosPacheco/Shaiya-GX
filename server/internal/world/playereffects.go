@@ -6,6 +6,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -25,6 +26,11 @@ import (
 func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...uint32) (ActiveBuff, bool) {
 	if !s.canAddEffect(def, sourceUser...) {
 		return ActiveBuff{}, false
+	}
+	if formOf(def) == proto.FormDegeneration {
+		s.removeEffects(func(b *ActiveBuff) bool {
+			return b.Form.kind == proto.FormEvolution || breakableForm(b)
+		}, "hostile transformation")
 	}
 	before := s.speeds()
 
@@ -62,6 +68,9 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 		b.CasterUser = sourceUser[0]
 	}
 	s.buffs = append(s.buffs, b)
+	if b.Form.kind != proto.FormNone {
+		s.tickTransform()
+	}
 	if c := s.cast; c != nil {
 		_, pending, known := s.knownSkill(c.number)
 		if s.cannotAct() || known && s.stats().Disabled[min(int(pending.Kind), 2)] > 0 {
@@ -84,6 +93,13 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 // canAddEffect also guards item consumption, so a refused lower-level buff
 // cannot consume a candy or start its cooldown.
 func (s *Session) canAddEffect(def *db.SkillDef, sourceUser ...uint32) bool {
+	form := formOf(def)
+	if form == proto.FormEvolution && db.MustDefs().Mobs[def.ChangeLevel] == nil {
+		return false
+	}
+	if form != proto.FormNone && form != proto.FormDegeneration && (s.ridingVehicle() || s.activeForm().kind != proto.FormNone) {
+		return false
+	}
 	self := s.char != nil && len(sourceUser) == 1 && sourceUser[0] == s.char.ID && (def.TypeEffect == typeEffectBuff || isPotential(def))
 	if s.invulnerable() && !self {
 		return false
@@ -227,6 +243,7 @@ func (s *Session) removeEffectsInternal(match func(*ActiveBuff) bool, why string
 		s.partyEffect(false, b.SkillID, b.SkillLevel)
 	}
 	s.syncVisibility()
+	s.tickTransform()
 	s.sendBuffStats(why)
 	if after := s.speeds(); after != before {
 		s.broadcastSpeed(after)
@@ -296,6 +313,7 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 			continue
 		}
 		if damage[0] > 0 || damage[1] > 0 || damage[2] > 0 {
+			s.breakCombatForm()
 			s.cancelTravelCast()
 			s.breakStealth()
 		}

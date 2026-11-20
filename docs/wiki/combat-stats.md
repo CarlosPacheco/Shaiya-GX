@@ -169,3 +169,19 @@ RAPTURE_COMBAT_DEX_SECOND_THRESHOLD=800
 ```
 
 [Server operations](server-operations.md) · [Combat implementation](../../server/internal/world/combatformula.go)
+
+
+## Transformation, Disguise, and Evolution
+
+Transformation copies the selected living monster. Disguise copies the
+appearance and visible name of the selected living opposing player. Both require
+a template in range at the caster’s level or lower and end on combat or expiry.
+The real character ID, equipment and faction continue to govern game rules.
+
+Evolution uses `ChangeLevel` for the monster on each side. The client selects
+the model from its player skill catalog. The server selects the NPC skills from
+the monster's three attack slots, skipping basic attacks and unused slots. The
+recipient retains its stats and basic attack, and uses the temporary NPC skills
+by clicking the bar above quick potions. An empty slot stays empty. The NPC
+skill uses its catalog’s damage, effects, range and reuse. The grant expires
+with the form, and recasting the buff does not reset an active reuse timer.

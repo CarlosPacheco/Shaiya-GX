@@ -133,6 +133,8 @@ type State struct {
 	ShopView               ShopViewState    // another player's market, open
 	LastLootNotice         proto.LootNotice // the party member who just received loot
 	LootNoticeSerial       uint64
+	PlayerForms            map[uint32]proto.PlayerFormAppearance
+	Evolution              proto.EvolutionBar
 	Transforms             map[uint32]uint16             // character -> monster it looks like
 	UserHealth             map[uint32]proto.TargetHealth // HP of the selected user
 	DeathLossFree          bool
@@ -813,6 +815,25 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		s.UserHealth = map[uint32]proto.TargetHealth{result.User: result} // only the selected user is kept
+	case proto.GXFormAppearance:
+		form, err := proto.DecodePlayerForm(p)
+		if err != nil {
+			return fail(err)
+		}
+		if form.Kind == proto.FormNone {
+			delete(s.PlayerForms, form.User)
+		} else {
+			if s.PlayerForms == nil {
+				s.PlayerForms = map[uint32]proto.PlayerFormAppearance{}
+			}
+			s.PlayerForms[form.User] = form
+		}
+	case proto.GXEvolutionBar:
+		bar, err := proto.DecodeEvolutionBar(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.Evolution = bar
 	case proto.GXTransform:
 		result, err := proto.DecodeTransform(p)
 		if err != nil {
@@ -1146,6 +1167,16 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 				s.Guild.RankingPointsKnown = false
 				s.GroundItems = map[uint32]proto.GroundItem{}
 				s.Entities = map[uint32]*Entity{}
+				for id := range s.PlayerForms {
+					if id != s.SelfID {
+						delete(s.PlayerForms, id)
+					}
+				}
+				for id := range s.Transforms {
+					if id != s.SelfID {
+						delete(s.Transforms, id)
+					}
+				}
 				s.MyShop, s.ShopView, s.ShopSigns = MyShopState{}, ShopViewState{}, nil
 				s.Self.ShopTitle = ""
 				s.Target = 0
@@ -1212,6 +1243,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		s.LastPortalNotice = proto.PortalOwnerNotice{}
 		s.GuildDuel = GuildDuelState{}
 		s.Phase, s.SelfID = PhaseCharSelect, 0
+		s.PlayerForms, s.Transforms, s.Evolution = nil, nil, proto.EvolutionBar{}
 		s.Target = 0
 		s.Entities = map[uint32]*Entity{}
 		s.chatGuard.senders = nil

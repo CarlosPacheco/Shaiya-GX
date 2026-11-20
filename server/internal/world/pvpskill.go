@@ -68,7 +68,7 @@ func (s *Session) hostileUsersWithin(x, z, r float32) []*ConnectedPlayer {
 // userSkillAttack runs an attack or debuff skill sent as 0x0511.
 func (s *Session) userSkillAttack(k db.CharacterSkill, def *db.SkillDef, target uint32, castPos *[2]float32, stats CharacterStats) {
 	ch := s.char
-	if def.TypeEffect == typeEffectAttack && (def.TypeDetail < detailAttack || def.TypeDetail > detailDrain) {
+	if !def.MobSkill && def.TypeEffect == typeEffectAttack && (def.TypeDetail < detailAttack || def.TypeDetail > detailDrain) {
 		s.log.Printf("GX Server World rejected skill use: attack detail %d not modeled skill_id=%d", def.TypeDetail, k.SkillID)
 		return
 	}
@@ -93,6 +93,7 @@ func (s *Session) userSkillAttack(k db.CharacterSkill, def *db.SkillDef, target 
 		}
 	}
 	sp, mp := s.skillCosts(def, &stats)
+	s.breakCombatForm()
 	s.breakStealth()
 	s.startCooldown(k, def, castPos != nil)
 	s.spendDelta(mp, sp)
@@ -276,6 +277,7 @@ func (s *Session) takeUserSkillDamage(attackerID uint32, d [3]uint32) bool {
 		return false
 	}
 	if d[0] > 0 || d[1] > 0 || d[2] > 0 {
+		s.breakCombatForm()
 		s.cancelTravelCast()
 		s.breakStealth()
 	}

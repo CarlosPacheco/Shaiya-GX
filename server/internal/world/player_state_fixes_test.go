@@ -68,7 +68,12 @@ func TestBuffConsumableAnnouncesSkillAndStopsCombo(t *testing.T) {
 			t.Fatal("non-buff accepted")
 		}
 	}
-	const wantBuffReferences = 182
+	for _, id := range []uint8{75, 77, 174} {
+		if d := defs.Item(100, id); d != nil && itemBuffSkill(d) != nil {
+			t.Fatalf("retired consumable %d still grants a buff", id)
+		}
+	}
+	const wantBuffReferences = 179
 	if count != wantBuffReferences {
 		t.Fatalf("release consumable audit: got %d valid buff references, want %d", count, wantBuffReferences)
 	}

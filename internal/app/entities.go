@@ -111,6 +111,9 @@ func (a *App) prepareRemotePlayers() {
 			continue
 		}
 		sh := *e.Shape
+		if form := a.state.PlayerForms[id]; form.Kind == proto.FormDisguise {
+			sh = form.Shape
+		}
 		cached := v.actors[id]
 		if cached == nil || cached.shape != sh || cached.entity != e {
 			var gestureSerial uint64
@@ -552,7 +555,7 @@ func (a *App) drawPlayerNames(w, h int) {
 				continue
 			}
 			if actor := v.actors[e.ID]; actor != nil && actor.character != nil && e.Shape != nil {
-				name = e.Shape.Name
+				name = actor.shape.Name
 				pos, valid = actor.character.NameAnchor()
 			}
 		case game.KindMob:

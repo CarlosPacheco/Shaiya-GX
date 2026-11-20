@@ -103,12 +103,12 @@ type ConnectedPlayer struct {
 
 	hidden atomic.Bool
 
-	transformMob atomic.Uint32 // monster the user looks like (Degeneration), 0 none
-	immune       atomic.Bool
-	noMobTarget  atomic.Bool
-	lifeState    atomic.Uint64 // incremented on alive/dead transitions; odd while alive
-	debuffed     atomic.Bool   // an active debuff (PvPHaveDebuff), refreshed by its session
-	kcRefresh    atomic.Bool   // the country tier changed (ApplyKillCount)
+	formLook    atomic.Pointer[formLook] // immutable form appearance for users entering the view
+	immune      atomic.Bool
+	noMobTarget atomic.Bool
+	lifeState   atomic.Uint64 // incremented on alive/dead transitions; odd while alive
+	debuffed    atomic.Bool   // an active debuff (PvPHaveDebuff), refreshed by its session
+	kcRefresh   atomic.Bool   // the country tier changed (ApplyKillCount)
 
 	duel duelState // guarded by duelMu
 

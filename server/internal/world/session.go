@@ -89,16 +89,19 @@ type Session struct {
 	points     uint32
 	player     *ConnectedPlayer
 
-	itemCooldowns  map[uint8]time.Time
-	skillCooldowns map[uint16]time.Time
-	buffs          []ActiveBuff
-	cast           *pendingCast
-	mounted        bool
-	mountItemUID   int64
-	dead           bool
-	deathLoss      int       // CUser::Death exp-loss percent, kept until revive
-	rebirthAt      time.Time // UpdateRebirth deadline while dead
-	rebirthParty   bool      // 0x0553 mode 3 waiting for the party leader
+	itemCooldowns                   map[uint8]time.Time
+	skillCooldowns                  map[uint16]time.Time
+	evolutionReadyAt                map[uint16]time.Time
+	evolutionSerial, evolutionGrant uint32
+	evolutionActions                [2]evolutionAction
+	buffs                           []ActiveBuff
+	cast                            *pendingCast
+	mounted                         bool
+	mountItemUID                    int64
+	dead                            bool
+	deathLoss                       int       // CUser::Death exp-loss percent, kept until revive
+	rebirthAt                       time.Time // UpdateRebirth deadline while dead
+	rebirthParty                    bool      // 0x0553 mode 3 waiting for the party leader
 
 	autoAttack       bool
 	autoAttackTarget uint32
@@ -799,6 +802,7 @@ func (s *Session) selectCharacter(id uint32) {
 	s.pendingCombo = nil
 	s.lastSkillID = 0
 	s.skillCooldowns, s.itemCooldowns = map[uint16]time.Time{}, map[uint8]time.Time{}
+	s.evolutionReadyAt, s.evolutionGrant, s.evolutionActions = nil, 0, [2]evolutionAction{}
 	for i := range s.skills {
 		k := &s.skills[i]
 		if d := db.MustDefs().Skill(k.SkillID, k.Level); d != nil && skilltiming.ReuseSeconds(d.ResetTimeSeconds) == 0 {

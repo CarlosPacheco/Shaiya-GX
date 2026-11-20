@@ -339,6 +339,7 @@ func (a *App) drawCharacters(w, h int) {
 		a.drawParty(w, h)
 		a.drawChat(w, h)
 		a.drawQuickPotions(w, h)
+		a.drawEvolutionBar(w, h)
 		a.drawRevolver(w, h)
 		a.drawShop(w, h)
 		a.drawExchange(w, h)

@@ -152,6 +152,7 @@ func (s *Session) userAttackSwing(target uint32) bool {
 		return false
 	}
 	s.commitAttackStop(time.Now())
+	s.breakCombatForm()
 	s.breakStealth()
 	s.lastActionAt, s.lastCombatAt = time.Now(), time.Now()
 	p.QueueUserHit(pendingUserHit{AttackerID: ch.ID, Stats: stats, Kind: kind})

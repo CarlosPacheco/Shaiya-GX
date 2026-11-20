@@ -12,11 +12,11 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 Declarations: [packet.ShopBuy](../../server/internal/packet/packet.go#L78), [proto.ShopBuy](../../internal/proto/opcodes.go#L62).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L101)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
 
 **S→C serializers:** [buildShopBuyResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L130)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L722)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L724)
 
 ### Wire layouts and validation
 
@@ -83,11 +83,11 @@ type ShopResult struct {
 
 Declarations: [packet.ShopSell](../../server/internal/packet/packet.go#L146), [proto.ShopSell](../../internal/proto/opcodes.go#L131).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L99)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L101)
 
 **S→C serializers:** [buildShopSellResult (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L246)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L722)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L724)
 
 ### Wire layouts and validation
 
@@ -157,7 +157,7 @@ Declarations: [packet.WarehouseItemList](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildWarehouseItemList (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L27)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L935), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L42)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L956), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L42)
 
 ### Wire layouts and validation
 
@@ -238,11 +238,11 @@ type WarehouseList struct {
 
 Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L221), [proto.GemAdd](../../internal/proto/opcodes.go#L209).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L87)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L89)
 
 **S→C serializers:** [buildGemAddResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L186)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L573)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L575)
 
 ### Wire layouts and validation
 
@@ -331,11 +331,11 @@ type GemAddResult struct {
 
 Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L222), [proto.GemRemove](../../internal/proto/opcodes.go#L210).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L89)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L91)
 
 **S→C serializers:** [planGemRemove (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L363)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L549)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L551)
 
 ### Wire layouts and validation
 
@@ -536,11 +536,11 @@ type GemRemoveResult struct {
 
 Declarations: [packet.EnchantAdd](../../server/internal/packet/packet.go#L219), [proto.EnchantAdd](../../internal/proto/opcodes.go#L207).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L85)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L87)
 
 **S→C serializers:** [buildEnchantResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L37)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L519)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L521)
 
 ### Wire layouts and validation
 
@@ -625,11 +625,11 @@ type EnchantResult struct {
 
 Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L220), [proto.ItemCompose](../../internal/proto/opcodes.go#L208).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L91)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L93)
 
 **S→C serializers:** [buildComposeResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L498)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L500)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L502)
 
 ### Wire layouts and validation
 

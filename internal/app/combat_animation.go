@@ -67,7 +67,7 @@ func (a *App) confirmedAnimation(p []byte) {
 
 		if actor := a.playerActor(r.Source); actor != nil {
 			a.loadSkills()
-			d := a.skillDefs[sdata.SkillKey{ID: r.ID, Level: r.Level}]
+			d, _ := a.skillDefinition(r.ID, r.Level)
 			a.faceSkillTarget(r.Source, r.Target)
 			actor.PlayCast(scene.SkillCastAction(d.Animation, d.Effect), float32(d.ReadyTime)*.25)
 		}
@@ -157,7 +157,7 @@ func (a *App) confirmedAnimation(p []byte) {
 				}
 			}
 			a.attackVariant++
-			if actor.PlayBasicAttack(typ, a.attackVariant) {
+			if !a.playFormAttack(result.Source, 0) && actor.PlayBasicAttack(typ, a.attackVariant) {
 				if result.Source == a.state.SelfID {
 					v.attackActionID = actor.ActionID()
 				}

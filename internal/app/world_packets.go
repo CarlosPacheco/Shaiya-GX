@@ -52,6 +52,7 @@ func (a *App) applyWorldPacket(p []byte) {
 		return
 	}
 	wasRaid := a.state.Party.Raid
+	previousForm := a.state.PlayerForms[a.state.SelfID]
 	var previousAppearance scene.Appearance
 	if proto.Op(p) == proto.ItemBagToBag || proto.Op(p) == proto.ChangeAppearance || proto.Op(p) == proto.EnchantAdd {
 		if slot, ok := a.selfSlot(); ok {
@@ -63,6 +64,13 @@ func (a *App) applyWorldPacket(p []byte) {
 	if err != nil {
 		log.Printf("packet: %v", err)
 		return
+	}
+	if ev.Op == proto.GXEvolutionBar {
+		a.confirmEvolutionBar()
+	}
+	if ev.Op == proto.GXFormAppearance && a.wv != nil && previousForm != a.state.PlayerForms[a.state.SelfID] &&
+		(previousForm.Kind == proto.FormDisguise || a.state.PlayerForms[a.state.SelfID].Kind == proto.FormDisguise) {
+		a.refreshSelf(a.wv)
 	}
 	if ev.ChatQuiet {
 		return

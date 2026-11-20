@@ -277,7 +277,7 @@ func (s *Session) handleVehicleInvite(packetData []byte) {
 		passenger = a
 	}
 	now := time.Now()
-	valid := driver.ride.state.State == proto.VehicleDriver && driver.ride.state.Seats == 2 && driver.ride.state.Passenger == 0 && passenger.ride.state.State == proto.VehicleOff && !(a.ride.inviteTo != 0 && now.Before(a.ride.inviteEnd)) && !(b.ride.inviteFrom != 0 && now.Before(b.ride.inviteEnd))
+	valid := driver.ride.state.State == proto.VehicleDriver && driver.ride.state.Seats == 2 && driver.ride.state.Passenger == 0 && passenger.ride.state.State == proto.VehicleOff && passenger.formLook.Load() == nil && !(a.ride.inviteTo != 0 && now.Before(a.ride.inviteEnd)) && !(b.ride.inviteFrom != 0 && now.Before(b.ride.inviteEnd))
 	if valid {
 		a.ride.inviteTo = b.CharacterID
 		a.ride.inviteEnd = now.Add(30 * time.Second)
@@ -349,7 +349,7 @@ func (s *Session) handleVehicleAnswer(data []byte) {
 
 func (s *Session) vehicleBlocked() bool {
 	a, move, action := s.blocks()
-	return a != 0 || move != 0 || action != 0
+	return a != 0 || move != 0 || action != 0 || s.activeForm().kind != proto.FormNone
 }
 
 func (s *Session) ridingVehicle() bool {

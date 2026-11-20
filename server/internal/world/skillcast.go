@@ -31,6 +31,7 @@ type ActiveBuff struct {
 	DefenceType            uint8
 	BlockLeft              uint32 // detail 85 blocks left / 86 chance
 	CasterMob              uint32 // the mob that applied a debuff
+	Form                   formLook
 	CasterUser             uint32 // the user that applied a debuff (its damage counts as theirs)
 	prevTick               time.Time
 	Abilities              [3]buffAbility
@@ -45,6 +46,7 @@ type pendingCast struct {
 	readyAt     time.Time
 	targetPos   *[2]float32 // Non-nil marks an accepted prepared cast; distance is checked only at launch.
 	corpse      corpseTarget
+	evolution   uint32 // granting form generation for a temporary monster skill
 }
 
 type buffAbility struct {
@@ -72,6 +74,12 @@ func newBuff(id uint32, def *db.SkillDef, now, ends time.Time, log logPrinter) A
 	b := ActiveBuff{ID: id, SkillID: def.SkillID, SkillLevel: def.SkillLevel, EndsAt: ends, Effect: def.TypeEffect,
 		Detail: uint8(min(def.TypeDetail, 255)), Attr: def.AttrType,
 		HealHP: uint32(max(def.TimeHealHP, 0)), HealSP: uint32(max(def.TimeHealSP, 0)), HealMP: uint32(max(def.TimeHealMP, 0))}
+	switch formOf(def) {
+	case proto.FormDegeneration:
+		b.Form = formLook{kind: proto.FormDegeneration, mob: def.ChangeLevel}
+	case proto.FormEvolution:
+		b.Form = formLook{kind: proto.FormEvolution, mob: def.ChangeLevel, skill: def.SkillID, rank: def.SkillLevel}
+	}
 	if b.Effect == typeEffectBuff && b.Detail == detailPeriodicHeal && b.HealHP|b.HealSP|b.HealMP != 0 {
 		b.nextTickAt = now.Add(periodicHealTick)
 	}
@@ -170,7 +178,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	target, _ := packet.U32(p[3:])
 	s.cancelVehicleCast()
-	if s.ridingVehicle() || s.cast != nil || s.cannotAct() {
+	if s.ridingVehicle() || s.cast != nil || s.cannotAct() || s.evolutionGrant != 0 {
 		s.log.Printf("GX Server World rejected skill use (mounted, casting, stunned or asleep) character_id=%d", ch.ID)
 		return
 	}
@@ -179,13 +187,19 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		s.log.Printf("GX Server World rejected skill use: no skill in slot number=%d", number)
 		return
 	}
+	s.beginSkill(op, k, def, target, 0, p)
+}
+
+func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.SkillDef, target, evolution uint32, p []byte) {
+	ch := s.char
+	number := k.Number
 	if def.TargetType == proto.SkillTargetRaid && !proto.SupportsRaidSkillTarget(def.TypeEffect) {
 		s.sendSkillMessage(k.SkillID, 317)
 		return
 	}
 	s.autoAttack = false
 	if !s.skillActionReady(def, time.Now()) {
-		if !s.queueSpinCombo(def, op, p) {
+		if p == nil || !s.queueSpinCombo(def, op, p) {
 			s.sendSkillMessage(k.SkillID, 215)
 		}
 		return
@@ -193,17 +207,24 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && !s.attackMovementAllowed(time.Now()) {
 		return
 	}
-	target = s.friendlySkillRecipient(def, target)
+	if kind := formOf(def); kind == proto.FormMonsterCopy || kind == proto.FormDisguise {
+		if _, ok := s.copyFormTarget(def, target, false); !ok || !s.canAddEffect(def, ch.ID) {
+			s.rejectCopyForm(op, k)
+			return
+		}
+	} else {
+		target = s.friendlySkillRecipient(def, target)
+	}
 	castTime := time.Duration(def.ReadyTime) * 250 * time.Millisecond
 	if castTime == 0 {
-		s.resolveSkill(target, number, op, nil)
+		s.resolveSkillDefinition(target, k, def, op, nil)
 		return
 	}
-	if !s.skillReady(k.SkillID) {
+	if !s.definitionReady(def) {
 		s.sendSkillMessage(k.SkillID, 215)
 		return
 	}
-	if !s.previousSkillCooling(def) {
+	if !def.MobSkill && !s.previousSkillCooling(def) {
 		s.sendSkillMessage(k.SkillID, msgPreviousSkillRequired)
 		return
 	}
@@ -283,6 +304,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		pos = &[2]float32{mob.PosX, mob.PosZ}
 	}
 	if def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff {
+		s.breakCombatForm()
 		s.breakStealth()
 	}
 	s.send(packet.New(packet.AutoAttackStop).MustFinish(), "0x0212 auto attack stop (casting)")
@@ -297,7 +319,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 	}
 	now := time.Now()
 	s.lastActionAt = now
-	s.cast = &pendingCast{targetMobID: target, number: number, op: op, readyAt: now.Add(castTime), targetPos: pos, corpse: corpse}
+	s.cast = &pendingCast{targetMobID: target, number: number, op: op, readyAt: now.Add(castTime), targetPos: pos, corpse: corpse, evolution: evolution}
 	s.autoAttack = false
 	s.syncPlayerSpeed(false)
 	s.log.Printf("GX Server World skill cast started skill_id=%d level=%d cast_time=%s", k.SkillID, k.Level, castTime)
@@ -310,6 +332,12 @@ func (s *Session) processPendingCast() {
 	}
 	s.cast = nil
 	s.syncPlayerSpeed(false)
+	if c.evolution != 0 {
+		if def := s.evolutionSkill(c.evolution, c.number); def != nil {
+			s.resolveSkillDefinition(c.targetMobID, db.CharacterSkill{SkillID: def.SkillID, Level: def.SkillLevel, Number: c.number}, def, c.op, c)
+		}
+		return
+	}
 	s.resolveSkill(c.targetMobID, c.number, c.op, c)
 }
 
@@ -321,6 +349,15 @@ func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef, prepared 
 	s.pendingCombo = nil
 	s.lastSkillID, s.lastSkillAt = k.SkillID, s.lastActionAt
 	s.commitAttackStop(now)
+	if def.MobSkill {
+		if s.evolutionReadyAt == nil {
+			s.evolutionReadyAt = map[uint16]time.Time{}
+		}
+		s.evolutionReadyAt[k.SkillID] = now.Add(time.Duration(def.ResetTimeSeconds) * time.Second)
+		s.lastSkillID = 0
+		s.sendEvolutionBar()
+		return
+	}
 	reuse := skilltiming.ReuseSeconds(def.ResetTimeSeconds)
 	if reuse > 0 && !isPotential(def) {
 		if cut := s.cooldownCut(); cut > 0 {
@@ -348,6 +385,13 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 	if !ok {
 		return
 	}
+	if s.evolutionGrant != 0 {
+		return
+	}
+	s.resolveSkillDefinition(target, k, def, op, cast)
+}
+
+func (s *Session) resolveSkillDefinition(target uint32, k db.CharacterSkill, def *db.SkillDef, op packet.Opcode, cast *pendingCast) {
 	var castPos *[2]float32
 	if cast != nil {
 		castPos = cast.targetPos
@@ -355,11 +399,11 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 	if isPotential(def) {
 		return // triggers by itself (tickPotentials); it cannot be cast
 	}
-	if !s.skillReady(k.SkillID) {
+	if !s.definitionReady(def) {
 		s.sendSkillMessage(k.SkillID, 215)
 		return
 	}
-	if !s.previousSkillCooling(def) {
+	if !def.MobSkill && !s.previousSkillCooling(def) {
 		s.sendSkillMessage(k.SkillID, msgPreviousSkillRequired)
 		return
 	}
@@ -374,6 +418,10 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 	}
 	if sp, mp := s.skillCosts(def, &stats); stats.CurrentMP < mp || stats.CurrentSP < sp {
 		s.log.Printf("GX Server World rejected skill use: not enough MP/SP skill_id=%d", k.SkillID)
+		return
+	}
+	if kind := formOf(def); kind == proto.FormMonsterCopy || kind == proto.FormDisguise {
+		s.castCopiedForm(op, k, def, target, stats, castPos != nil)
 		return
 	}
 	switch def.TypeEffect {
@@ -445,7 +493,7 @@ func (s *Session) persistBuffs() {
 func (s *Session) buffSnapshot() []db.AppliedBuff {
 	var rows []db.AppliedBuff
 	for _, b := range s.buffs {
-		if b.MapCurse {
+		if b.MapCurse || b.Form.kind != proto.FormNone && b.Form.kind != proto.FormDegeneration {
 			continue
 		}
 		rows = append(rows, db.AppliedBuff{SkillID: b.SkillID, Level: b.SkillLevel, LeftSeconds: uint32(max(time.Until(b.EndsAt), 0) / time.Second)})
@@ -484,7 +532,7 @@ func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error) {
 	now := time.Now()
 	for _, r := range rows {
 		def := db.MustDefs().Skill(r.SkillID, r.Level)
-		if def == nil || def.TypeEffect != typeEffectBuff && !isPotential(def) {
+		if def == nil || def.TypeEffect != typeEffectBuff && !isPotential(def) || formOf(def) != proto.FormNone {
 			continue
 		}
 		out = append(out, newBuff(uint32(len(out)+1), def, now, now.Add(time.Duration(r.LeftSeconds)*time.Second), log))

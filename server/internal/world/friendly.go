@@ -180,7 +180,10 @@ func (s *Session) friendlySkill(k db.CharacterSkill, def *db.SkillDef, target ui
 		default:
 			// HealUser: a non-zero HealHP adds twice the caster's WIS.
 			if def.HealHP > 0 {
-				heal.HP = satAdd(uint32(def.HealHP), satMul(stats.Wis, 2))
+				heal.HP = uint32(def.HealHP)
+				if !def.MobSkill {
+					heal.HP = satAdd(heal.HP, satMul(stats.Wis, 2))
+				}
 			}
 			heal.MP, heal.SP = uint32(max(def.HealMP, 0)), uint32(max(def.HealSP, 0))
 		}
@@ -216,7 +219,9 @@ func (s *Session) applyFriendly(f pendingFriendly) {
 	switch {
 	case f.IsBuff:
 		if def := db.MustDefs().EffectSkill(f.SkillID, f.Level); def != nil {
-			s.addEffect(def, 0, f.Source)
+			if _, ok := s.addEffect(def, 0, f.Source); !ok && formOf(def) != proto.FormNone {
+				return
+			}
 		}
 	case f.Cure:
 		s.removeEffects(func(b *ActiveBuff) bool { return b.Effect == typeEffectDebuff }, "cure")

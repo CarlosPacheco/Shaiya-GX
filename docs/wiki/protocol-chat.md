@@ -12,11 +12,11 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 Declarations: [packet.ChatNormal](../../server/internal/packet/packet.go#L141), [proto.ChatNormal](../../internal/proto/opcodes.go#L126).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L71), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L71), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L74)
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
 
 ### Wire layouts and validation
 
@@ -68,11 +68,11 @@ type Chat struct {
 
 Declarations: [packet.ChatWhisper](../../server/internal/packet/packet.go#L192), [proto.ChatWhisper](../../internal/proto/opcodes.go#L180).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L75)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L77)
 
 **S→C serializers:** [buildWhisper (server/internal/world/chat.go)](../../server/internal/world/chat.go#L136)
 
-**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L42)
+**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L42)
 
 ### Wire layouts and validation
 
@@ -143,11 +143,11 @@ type Chat struct {
 
 Declarations: [packet.ChatWorld](../../server/internal/packet/packet.go#L142), [proto.ChatWorld](../../internal/proto/opcodes.go#L127).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L74)
 
 **S→C serializers:** [buildChatByName (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L155)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
 
 ### Wire layouts and validation
 
@@ -203,11 +203,11 @@ type Chat struct {
 
 Declarations: [packet.ChatGuild](../../server/internal/packet/packet.go#L191), [proto.ChatGuild](../../internal/proto/opcodes.go#L179).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L150)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L152)
 
 **S→C serializers:** [guildChat (server/internal/world/guild.go)](../../server/internal/world/guild.go#L284)
 
-**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L108), [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
+**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L108), [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
 
 ### Wire layouts and validation
 
@@ -265,11 +265,11 @@ type Chat struct {
 
 Declarations: [packet.ChatParty](../../server/internal/packet/packet.go#L76), [proto.ChatParty](../../internal/proto/opcodes.go#L60).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L142)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L144)
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
-**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L106), [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
+**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L106), [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
 
 ### Wire layouts and validation
 
@@ -325,7 +325,7 @@ Declarations: [packet.ChatError](../../server/internal/packet/packet.go#L143), [
 
 **S→C serializers:** [buildChatError (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L166)
 
-**Client receive reducers:** [SystemPane (internal/game/chat_style.go)](../../internal/game/chat_style.go#L7), [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L48)
+**Client receive reducers:** [SystemPane (internal/game/chat_style.go)](../../internal/game/chat_style.go#L7), [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L48)
 
 ### Wire layouts and validation
 
@@ -379,11 +379,11 @@ type Reader struct {
 
 Declarations: [packet.ChatShout](../../server/internal/packet/packet.go#L193), [proto.ChatShout](../../internal/proto/opcodes.go#L181).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L77), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L77), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L74)
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
 
 ### Wire layouts and validation
 
@@ -435,11 +435,11 @@ type Chat struct {
 
 Declarations: [packet.ChatWorldShout](../../server/internal/packet/packet.go#L194), [proto.ChatWorldShout](../../internal/proto/opcodes.go#L182).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L84), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L84), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L74)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
 
 ### Wire layouts and validation
 
@@ -480,7 +480,7 @@ Declarations: [proto.MobSpeechText](../../internal/proto/mob_speech.go#L6).
 
 **S→C serializers:** [buildMobAIMessage (server/internal/world/mob_ai_speech.go)](../../server/internal/world/mob_ai_speech.go#L26)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L13)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L13)
 
 ### Wire layouts and validation
 
@@ -565,7 +565,7 @@ Declarations: [proto.MobSpeechIndex](../../internal/proto/mob_speech.go#L7).
 
 **S→C serializers:** [buildMobAIMessage (server/internal/world/mob_ai_speech.go)](../../server/internal/world/mob_ai_speech.go#L26)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L13)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L13)
 
 ### Wire layouts and validation
 
@@ -646,11 +646,11 @@ type MobSpeech struct {
 
 Declarations: [packet.ChatMap](../../server/internal/packet/packet.go#L144), [proto.ChatMap](../../internal/proto/opcodes.go#L129).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L74)
 
 **S→C serializers:** [buildChatByName (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L155)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
 
 ### Wire layouts and validation
 
@@ -706,11 +706,11 @@ type Chat struct {
 
 Declarations: [packet.ChatNormalAdmin](../../server/internal/packet/packet.go#L215), [proto.ChatNormalAdmin](../../internal/proto/opcodes.go#L203).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L71), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L71), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L74)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
 
 ### Wire layouts and validation
 
@@ -747,11 +747,11 @@ type Chat struct {
 
 Declarations: [packet.ChatWorldAdmin](../../server/internal/packet/packet.go#L216), [proto.ChatWorldAdmin](../../internal/proto/opcodes.go#L204).
 
-**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L72)
+**C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L74), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L74)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1205), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
 
 ### Wire layouts and validation
 

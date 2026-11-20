@@ -131,6 +131,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 		return false
 	}
 	s.commitAttackStop(time.Now())
+	s.breakCombatForm()
 	s.breakStealth()
 	s.lastActionAt, s.lastCombatAt = time.Now(), time.Now()
 	SetMobAggro(ch.MapID, target, ch.ID)
@@ -286,6 +287,7 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 			}
 		}
 		if damage[0] > 0 || damage[1] > 0 || damage[2] > 0 {
+			s.breakCombatForm()
 			s.breakStealth()
 		}
 		hp := uint32(max(damage[0], 0))

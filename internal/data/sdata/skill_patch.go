@@ -14,7 +14,7 @@ import (
 
 // GX skill catalog cleanup. NormalizeSkillCatalog rewrites Character/Skill.SData
 // without touching any byte it does not need to:
-//   - Interpretation and Backpack Upgrade are removed from the player catalog;
+//   - retired skills are removed from the player catalog;
 //   - Soul Burn becomes a learnable one-rank Priest/Oracle spell;
 //   - dead skill levels (a placeholder such as "Hell LordED" / "Not Available.")
 //     of skills that have working levels become the same empty slot as the
@@ -139,7 +139,7 @@ func NormalizeSkillCatalog(raw []byte) ([]byte, SkillCatalogReport, error) {
 	return normalizeSkillCatalog(raw, skillTextFixesCSV)
 }
 
-// RemoveRetiredPlayerSkills changes only the two retired groups in an existing catalog.
+// RemoveRetiredPlayerSkills changes only the retired groups in an existing catalog.
 func RemoveRetiredPlayerSkills(raw []byte) ([]byte, SkillCatalogReport, error) {
 	var rep SkillCatalogReport
 	groups, slots, err := readSkillCatalog(raw)

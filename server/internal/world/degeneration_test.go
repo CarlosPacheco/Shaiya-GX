@@ -88,7 +88,7 @@ func TestDegenerationAnnouncesTheMonsterLook(t *testing.T) {
 	if v, ok := last(); !ok || v.User != s.char.ID || v.Mob != 60 {
 		t.Fatalf("announcement %+v %v, want monster 60", v, ok)
 	}
-	if s.player.transformMob.Load() != 60 {
+	if s.player.formLook.Load() == nil || s.player.formLook.Load().mob != 60 {
 		t.Fatal("the new viewers' state was not kept")
 	}
 	s.wake()
