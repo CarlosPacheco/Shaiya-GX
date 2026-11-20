@@ -624,6 +624,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		}
 		jumpAction := v.self.PlayingAction(8)
 		previousPoseTime := v.self.Time
+		a.setSelfAnimationRates(v.self)
 		v.self.Update(float32(dt))
 		if climbFrame && !moving && !v.self.ActionActive() {
 			v.self.Time = previousPoseTime

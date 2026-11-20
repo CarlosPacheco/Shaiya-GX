@@ -80,6 +80,7 @@ type Character struct {
 	CorpseFade           float32 // opaque screen-door coverage, 0 visible, 1 gone
 	enchantTime          float64
 	cloak                *cloakInstance
+	rate                 playbackRate
 	attachments          []attachment
 	actions              []model.Action
 	actionsLoaded        bool
@@ -156,6 +157,11 @@ func (c *Character) SetClip(name string) {
 		} else if c.folder == "Vile" && strings.HasPrefix(c.prefix, "viw") {
 			fileName = "006_swnomal"
 		}
+	}
+	switch name {
+	case "001_walk", "002_run", "003_bstep", "004_lstep", "005_rstep":
+		c.rate.next = rateMove
+		defer func() { c.rate.next = rateNone }()
 	}
 	file := c.locomotionFile(name)
 	if file == "" {
@@ -457,7 +463,7 @@ func (c *Character) Update(dt float32) {
 	if c.externalTime {
 		c.externalTime = false
 	} else {
-		c.Time += playback
+		c.Time += playback * c.rate.factor()
 	}
 	if c.spinLeft > 0 {
 		c.spinLeft = max(0, c.spinLeft-dt)
@@ -496,6 +502,8 @@ func (c *Character) Update(dt float32) {
 // PlayBasicAttack alone refreshes the native weapon-ready posture. Spells
 // can share an attack ALT slot without changing this basic-attack timer.
 func (c *Character) PlayBasicAttack(weapon, variant uint8) bool {
+	c.rate.next = rateAttack
+	defer func() { c.rate.next = rateNone }()
 	if !c.PlayAction(AttackAction(weapon, variant), false) {
 		return false
 	}

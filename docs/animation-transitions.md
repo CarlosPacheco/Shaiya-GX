@@ -61,3 +61,22 @@ fighter clips, including idle, movement, attacks, Stinger, death and a
 gesture, the evaluated pose at the first frame matched the stored reference
 pose to the precision printed by the probe. This is a sample of the catalog.
 Native playthrough and visual comparison remain to be done.
+
+## Playback rate by speed index
+
+The blend clock is fixed at 30 frames per second, but the frame cursor of an
+action advances by seconds times a rate that depends on the actor's speed
+indices (EP5.4 `0x41b300` for characters, `0x432520` for monsters):
+
+| Actor and state | Index | Frames per second |
+| --- | --- | --- |
+| Character walking/running/stepping | move 0..4 (0x051C) | 24, 27, 30, 33, 36 |
+| Character basic attack | attack index minus the weapon's AttackTime, plus 5 | 15, 18, 21, 24, 27, 30, 34, 38, 42, 45; outside 0..9 gives 50; no weapon gives 30 |
+| Monster moving (walk and chase) | move 0..4 (0x0609) | (index + 1) x 10 |
+| Monster idle, attack, damage, death | attack 0..6 (0x0609) | 15, 20, 25, 30, 35, 40, 45; others 30 |
+| Everything else | none | 30 |
+
+GX applies these rates to the frame cursor and to the one-shot cue timer of
+monsters, leaving the blend at real time. With default indices (move 2, attack
+equal to the weapon base, monster 3/2) nothing changes; buffs, debuffs and
+mastery now speed up or slow down the animations as in the original.

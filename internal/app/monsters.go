@@ -28,6 +28,7 @@ type mobActor struct {
 func (a *App) prepareMonsters() {
 	effectBudget := 2
 	v := a.wv
+	a.updatePlayerAnimationRates()
 	if v.mobs == nil {
 		v.mobs = map[uint32]*mobActor{}
 	}
@@ -61,6 +62,7 @@ func (a *App) prepareMonsters() {
 				a.assets.Missing[err.Error()] = true
 			}
 			cached.actor.CorpseFade = cached.updateCorpse(true, a.clock)
+			a.setMobAnimationRate(e, cached.actor)
 			cached.actor.Update(float32(a.frameDT))
 			cached.actor.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, false, &effectBudget)
 			continue
@@ -117,8 +119,22 @@ func (a *App) prepareMonsters() {
 			a.assets.Missing[err.Error()] = true
 		}
 		cached.actor.CorpseFade = cached.updateCorpse(false, a.clock)
+		a.setMobAnimationRate(e, cached.actor)
 		cached.actor.Update(float32(a.frameDT))
 		cached.actor.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, !e.Dead, &effectBudget)
+	}
+}
+
+// updatePlayerAnimationRates runs with the monsters: remote characters take
+// their rates from the speed indices the server broadcasts (0x051C).
+func (a *App) updatePlayerAnimationRates() {
+	for id, r := range a.wv.actors {
+		e := a.state.Entities[id]
+		if e == nil || e.Speed == nil || r.character == nil || e.Shape == nil {
+			continue
+		}
+		base, have := a.weaponAttackTime(e.Shape.Equipment[5][0], e.Shape.Equipment[5][1])
+		r.character.SetSpeedTiers(e.Speed.Move, e.Speed.Attack, base, have)
 	}
 }
 

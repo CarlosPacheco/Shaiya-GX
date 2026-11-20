@@ -40,6 +40,7 @@ func (c *Character) startClip(next *Clip, oneShot bool) {
 		c.blendLeft = 0
 	}
 	c.clip, c.Time, c.oneShot = next, 0, oneShot
+	c.rate.kind, c.rate.next = c.rate.next, rateNone
 	c.invalidatePose()
 }
 

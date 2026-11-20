@@ -2,6 +2,7 @@ package scene
 
 import (
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"path"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/model"
@@ -139,7 +140,10 @@ func (m *CreatureActor) setAction(action int, oneShot bool) error {
 // Death is a one-shot; live movement/breath clips loop in the shared sampler.
 func (m *CreatureActor) Update(dt float32) {
 	oneShot := m.cueTime > 0
-	m.cueTime = max(0, m.cueTime-dt)
+	// The cue lasts one playback of the clip: the blend runs at real time, the
+	// rest at the actor's rate.
+	blend := min(m.blendLeft, dt)
+	m.cueTime = max(0, m.cueTime-(blend+(dt-blend)*m.rate.factor()))
 	m.Character.Update(dt)
 	if (m.action == 5 || oneShot) && m.clip != nil {
 		if end := m.clip.Duration(); end > 0 {
@@ -219,4 +223,15 @@ func (m *CreatureActor) SetTransform(world render.M4) {
 		}
 	}
 	m.World = world
+}
+
+// SetSpeedIndices picks the playback rate of the current action from the
+// monster's attack and move indices (0x0609): walking and chasing follow the
+// move index, every other action the attack index.
+func (m *CreatureActor) SetSpeedIndices(move, attack uint8) {
+	if m.action == 0 || m.action == 1 {
+		m.SetCreatureRate(attackspeed.MobMoveFPS(move))
+	} else {
+		m.SetCreatureRate(attackspeed.MobActionFPS(attack))
+	}
 }
