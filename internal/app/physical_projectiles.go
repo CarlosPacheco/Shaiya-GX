@@ -102,9 +102,9 @@ func (a *App) finishPhysicalProjectile(p *physicalProjectile) {
 	r := p.result
 	if r.Source == a.state.SelfID || r.Target == a.state.SelfID || r.Target == a.state.Target {
 		if _, ok := a.effectPosition(r.Target); ok {
-			a.showCombatNumber(r.Target, r.HP, r.Result == 1, r.Result == 3, false)
+			a.showCombatNumber(r.Target, r.HP, r.Result == 1, r.Result == 3, combatDamage)
 		} else {
-			a.emitCombatNumberAt(p.destination.Add(render.V3{0, p.numberHeight - .9, 0}), uint32(r.HP), r.Result == 1, r.Result == 3, false)
+			a.emitCombatNumberAt(p.destination.Add(render.V3{0, p.numberHeight - .9, 0}), uint32(r.HP), r.Result == 1, r.Result == 3, combatDamage)
 		}
 	}
 	if r.HP > 0 && r.Result <= 1 {

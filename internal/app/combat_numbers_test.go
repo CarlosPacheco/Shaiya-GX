@@ -14,11 +14,11 @@ func TestCombatNumbersDetachExpireAndStayBounded(t *testing.T) {
 	a := inputApp()
 	a.state.SelfID = 1
 	a.state.Entities[2] = &game.Entity{ID: 2, Kind: game.KindMob, X: 4, Z: 8}
-	a.showCombatNumber(2, 0, false, false, true)
+	a.showCombatNumber(2, 0, false, false, combatHealHP)
 	if len(a.combatNumbers) != 0 {
 		t.Fatal("zero healing invented a number")
 	}
-	a.showCombatNumber(2, 0, true, true, false)
+	a.showCombatNumber(2, 0, true, true, combatDamage)
 	if len(a.combatNumbers) != 1 || !a.combatNumbers[0].Missed || a.combatNumbers[0].Critical {
 		t.Fatal(a.combatNumbers)
 	}
@@ -27,7 +27,7 @@ func TestCombatNumbersDetachExpireAndStayBounded(t *testing.T) {
 		t.Fatal("confirmed number followed the moving target")
 	}
 	for range 150 {
-		a.showCombatNumber(2, 12, false, false, false)
+		a.showCombatNumber(2, 12, false, false, combatDamage)
 	}
 	if len(a.combatNumbers) != 128 {
 		t.Fatal("unbounded queue", len(a.combatNumbers))
@@ -84,14 +84,14 @@ func TestCombatNumbersUseNativeUserAndCreatureAnchors(t *testing.T) {
 	a := inputApp()
 	a.state.SelfID = 1
 	a.wv.pos = render.V3{0, 10, 0}
-	a.showCombatNumber(1, 10, false, false, true)
+	a.showCombatNumber(1, 10, false, false, combatHealHP)
 	if math.Abs(float64(a.combatNumbers[0].Point[1]-12.1)) > .001 {
 		t.Fatal("user number missed logical-origin offset", a.combatNumbers)
 	}
 	a.state.Entities[2] = &game.Entity{ID: 2, Kind: game.KindMob, X: 4, Y: 3}
 	a.wv.mobs = map[uint32]*mobActor{}
 	a.wv.mobs[2] = &mobActor{actor: &scene.CreatureActor{}}
-	a.showCombatNumber(2, 10, false, false, false)
+	a.showCombatNumber(2, 10, false, false, combatDamage)
 	if math.Abs(float64(a.combatNumbers[1].Point[1]-3.2)) > .0001 {
 		t.Fatal("MON zero-height anchor overwritten by generic +1.2", a.combatNumbers)
 	}

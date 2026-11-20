@@ -160,6 +160,14 @@ var migrations = []migration{
 		AND EXISTS (SELECT 1 FROM PS_GameDefs_Skills WHERE SkillID=125 AND SkillLevel=1 AND TypeDetail=122);
 		DELETE FROM PS_GameDefs_Skills WHERE SkillID=125 AND SkillLevel IN (2,3) AND TypeDetail=122;
 	`},
+	{30, "repair_special_npc_skills", `
+		UPDATE PS_GameDefs_NpcSkills SET ChangeType=101
+		WHERE SkillID=100 AND Rank=1 AND SkillName='Porcine Party' AND TypeEffect=3 AND TypeDetail=90 AND ChangeType=7 AND ChangeLevel=60;
+		UPDATE PS_GameDefs_NpcSkills SET TypeEffect=3,TypeDetail=64,DamageType=4,DamageHP=25,TimeDamageType=0,TimeDamageHP=0
+		WHERE SkillID=172 AND Rank=1 AND SkillName='Ice Stun' AND TypeEffect=7 AND TypeDetail=61;
+		UPDATE PS_GameDefs_NpcSkills SET TypeEffect=3,KeepTime=20
+		WHERE SkillID=344 AND Rank=1 AND SkillName='Wide Death Sentence' AND TypeEffect=1 AND TypeDetail=63 AND KeepTime=0;
+	`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

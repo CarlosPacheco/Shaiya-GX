@@ -325,7 +325,7 @@ func mobDamage(m *mobCombat, a *db.MobAttack, s *CharacterStats) (int32, bool) {
 func mobSkillDamage(m *mobCombat, md *db.MobDef, def *db.SkillDef, s *CharacterStats, mobHP uint32) ([3]int32, bool) {
 	slot := &md.Attacks[0]
 	h := mobHitDamage(m, slot, s, int(def.Kind), slot.Attrib)
-	return h.skillHit(def, damagePools{mobHP, md.MaxSP, md.MaxMP}, currentDamagePools(s), maximumDamagePools(s))
+	return h.skillHit(def, damagePools{mobHP}, currentDamagePools(s), maximumDamagePools(s))
 }
 
 // f32 preserves the original periodic-damage calculation's input precision.

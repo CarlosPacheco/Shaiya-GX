@@ -28,8 +28,8 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 		if source != a.state.SelfID && target != a.state.SelfID && target != a.state.Target {
 			return
 		}
-		if r.HealedHP > 0 {
-			a.showCombatNumber(r.Source, r.HealedHP, r.Result == 1, false, true)
+		if r.Result < 3 {
+			a.showDrainRecovery(r.Source, r.HealedHP, r.HealedSP, r.HealedMP, critical)
 		}
 		if a.wv != nil {
 			d, ok := a.skillDefinition(r.ID, r.Level)
@@ -93,5 +93,9 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 	if label != "Miss" && value == 0 {
 		return
 	}
-	a.showCombatNumber(target, value, critical, label == "Miss", label == "Healing")
+	kind := combatDamage
+	if label == "Healing" {
+		kind = combatHealHP
+	}
+	a.showCombatNumber(target, value, critical, label == "Miss", kind)
 }

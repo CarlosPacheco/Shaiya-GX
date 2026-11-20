@@ -60,7 +60,7 @@ func verifyNativeCloakAndHealing(t *testing.T, a, b *App, pump func(func() bool)
 	}
 	send(b, packet)
 	pump(func() bool { return b.state.LastSkill.ID == 148 && b.state.LastSkill.Target == a.state.SelfID })
-	if b.state.LastSkill.Result > 1 || len(b.combatNumbers) <= before || !b.combatNumbers[len(b.combatNumbers)-1].Healing {
+	if b.state.LastSkill.Result > 1 || len(b.combatNumbers) <= before || b.combatNumbers[len(b.combatNumbers)-1].Kind != combatHealHP {
 		t.Fatal("server Instant Heal did not produce green combat number", b.state.LastSkill, b.combatNumbers)
 	}
 	t.Log("native cloak equipped/removed on self and observer; original Instant Heal number appears only after server confirmation")
@@ -99,7 +99,9 @@ func TestPhoenixCombatNumbersGL(t *testing.T) {
 		{Point: render.V3{-1.7, 1, 0}, Amount: 1234},
 		{Point: render.V3{-.5, 1, 0}, Amount: 567, Critical: true},
 		{Point: render.V3{.6, 1, 0}, Missed: true},
-		{Point: render.V3{1.7, 1, 0}, Amount: 890, Healing: true},
+		{Point: render.V3{1.7, 1, 0}, Amount: 890, Kind: combatHealHP},
+		{Point: render.V3{-1.7, 2, 0}, Amount: 222, Kind: combatHealSP},
+		{Point: render.V3{1.7, 2, 0}, Amount: 333, Kind: combatHealMP},
 	}
 	a.clock = .1
 	gl.Viewport(0, 0, 1024, 768)
@@ -113,7 +115,7 @@ func TestPhoenixCombatNumbersGL(t *testing.T) {
 	}
 	pixels := make([]byte, 1024*768*4)
 	gl.ReadPixels(0, 0, 1024, 768, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
-	green, red, light := 0, 0, 0
+	green, red, light, yellow, blue := 0, 0, 0, 0, 0
 	for i := 0; i < len(pixels); i += 4 {
 		r, g, b := int(pixels[i]), int(pixels[i+1]), int(pixels[i+2])
 		if g > 90 && g > r*2 && g > b {
@@ -125,9 +127,15 @@ func TestPhoenixCombatNumbersGL(t *testing.T) {
 		if r > 150 && g > 150 && b > 150 {
 			light++
 		}
+		if r > 110 && g > 80 && r > g && g > 2*b {
+			yellow++
+		}
+		if b > 100 && g > 70 && b > g && g > 2*r {
+			blue++
+		}
 	}
-	if green < 10 || red < 10 || light < 10 {
-		t.Fatal("atlas digits/critical/healing were not rendered", green, red, light)
+	if green < 10 || red < 10 || light < 10 || yellow < 10 || blue < 10 {
+		t.Fatal("atlas damage, critical, and recovery colors were not rendered", green, red, light, yellow, blue)
 	}
 	dir := os.Getenv("SHAIYA_TEST_ARTIFACTS")
 	if dir == "" {

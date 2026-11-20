@@ -215,9 +215,6 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 	killed := false
 	if !mirrored {
 		killed = s.takeUserSkillDamage(h.AttackerID, [3]uint32{hp, uint32(dealt[1]), uint32(dealt[2])})
-		if drain && attacker != nil {
-			attacker.QueueUserHit(pendingUserHit{AttackerID: ch.ID, DrainHeal: true, Heal: [3]uint32{uint32(dealt[0]), uint32(dealt[1]), uint32(dealt[2])}})
-		}
 	}
 	shown := dealt
 	if mirrored {
@@ -227,12 +224,16 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 		shown[1] = uint16(min(uint32(shown[1])+s.assisted[1], 65535))
 		shown[2] = uint16(min(uint32(shown[2])+s.assisted[2], 65535))
 	}
-	healed := [3]uint16{}
-	if drain && !mirrored {
-		healed = dealt
+	drainQueued := false
+	if drain && !mirrored && attacker != nil && dealt != ([3]uint16{}) {
+		resolved := &pendingDrain{
+			source: h.AttackerID, target: ch.ID, mapID: ch.MapID, x: ch.PosX, z: ch.PosZ,
+			skill: sk, result: code, dealt: shown, recovery: dealt,
+		}
+		drainQueued = attacker.QueueUserHit(pendingUserHit{Drain: resolved})
 	}
-	if !lapisDebuff {
-		send(code, shown, healed, "pvp skill")
+	if !lapisDebuff && !drainQueued {
+		send(code, shown, [3]uint16{}, "pvp skill")
 	}
 	if !drain && !killed && (sk.AddDamageHP != 0 || sk.AddDamageSP != 0 || sk.AddDamageMP != 0) {
 		add := extraSkillDamage(sk, 100)
@@ -256,7 +257,7 @@ func (s *Session) applyUserSkillHit(h pendingUserHit, stats CharacterStats) bool
 		if _, ok := s.addEffect(sk, 0); ok {
 			s.buffs[len(s.buffs)-1].CasterUser = h.AttackerID
 			if lapisDebuff {
-				send(code, shown, healed, "pvp skill")
+				send(code, shown, [3]uint16{}, "pvp skill")
 			}
 		}
 	}
@@ -288,15 +289,37 @@ func (s *Session) takeUserSkillDamage(attackerID uint32, d [3]uint32) bool {
 	return s.takeUserDamage(attackerID, d[0])
 }
 
+// pendingDrain carries a landed PvP hit to the caster, whose session owns the
+// pools and can put the actual recovery into the native 0x0512 result.
+type pendingDrain struct {
+	source, target  uint32
+	mapID           uint16
+	x, z            float32
+	skill           *db.SkillDef
+	result          uint8
+	dealt, recovery [3]uint16
+}
+
+func (d *pendingDrain) broadcast(healed [3]uint16) {
+	frame := buildDrainPacket(opUserSkillDrain, d.result, d.source, d.target, d.skill.SkillID, d.skill.SkillLevel, d.dealt, healed)
+	sendNear(d.mapID, d.x, d.z, CombatRadius, frame, "0x0512 pvp drain")
+}
+
 // applyDrainHeal is CUser::Heal on the drain's caster.
-func (s *Session) applyDrainHeal(h pendingUserHit) {
-	if s.char == nil || s.char.CurrentHP == 0 {
-		return
+func (s *Session) applyDrainHeal(d *pendingDrain) {
+	var healed [3]uint16
+	if !s.dead && s.char != nil && s.char.CurrentHP > 0 {
+		hp, mp, sp := s.healDelta(uint32(d.recovery[0]), uint32(d.recovery[2]), uint32(d.recovery[1]))
+		healed = [3]uint16{uint16(hp), uint16(sp), uint16(mp)}
+		if healed != ([3]uint16{}) {
+			s.persist()
+		}
 	}
-	s.healDelta(h.Heal[0], h.Heal[2], h.Heal[1])
-	s.persist()
-	st := s.stats()
-	s.send(buildCurrentHitpoints(&st), "0x0521 current hp after drain")
+	d.broadcast(healed)
+	if healed != ([3]uint16{}) {
+		st := s.stats()
+		s.send(buildCurrentHitpoints(&st), "0x0521 current hp after drain")
+	}
 }
 
 // buildUserSkillExtra (0x0514): caster, target, skill, level, the

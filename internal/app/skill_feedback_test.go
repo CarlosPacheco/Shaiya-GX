@@ -14,7 +14,7 @@ func TestSkillFeedbackUsesOnlyRelevantConfirmedHits(t *testing.T) {
 	a.skillDefs = map[sdata.SkillKey]sdata.Skill{{ID: 4, Level: 1}: {Effect: 2}}
 	a.state.LastSkill = proto.SkillResult{Source: 1, Target: 2, ID: 4, Level: 1, HP: 34}
 	a.confirmedSkillFeedback(proto.SkillPartyMember)
-	if len(a.combatNumbers) != 1 || !a.combatNumbers[0].Healing || a.combatNumbers[0].Amount != 34 || a.combatNumbers[0].Point[0] != 4 {
+	if len(a.combatNumbers) != 1 || a.combatNumbers[0].Kind != combatHealHP || a.combatNumbers[0].Amount != 34 || a.combatNumbers[0].Point[0] != 4 {
 		t.Fatal(a.combatNumbers)
 	}
 	a.state.LastSkill = proto.SkillResult{Source: 4, Target: 5, ID: 4, Level: 1, HP: 34}
@@ -24,7 +24,7 @@ func TestSkillFeedbackUsesOnlyRelevantConfirmedHits(t *testing.T) {
 	}
 	a.state.LastReflectedDamage = proto.ReflectedDamage{Source: 2, Target: 1, HP: 9}
 	a.confirmedSkillFeedback(proto.SkillUserReflectedDamage)
-	if len(a.combatNumbers) != 2 || a.combatNumbers[1].Healing || a.combatNumbers[1].Amount != 9 {
+	if len(a.combatNumbers) != 2 || a.combatNumbers[1].Kind != combatDamage || a.combatNumbers[1].Amount != 9 {
 		t.Fatal(a.combatNumbers)
 	}
 }
@@ -36,17 +36,17 @@ func TestPeriodicSkillFeedbackUsesRelevantTargetsAndSkillType(t *testing.T) {
 	a.skillDefs = map[sdata.SkillKey]sdata.Skill{{ID: 4, Level: 1}: {Effect: 4}, {ID: 5, Level: 1}: {Effect: 3}}
 	a.state.LastPeriodicEffect = proto.PeriodicEffect{Target: 1, Skill: 4, Level: 1, HP: 30}
 	a.confirmedSkillFeedback(proto.SkillKeep)
-	if len(a.combatNumbers) != 1 || !a.combatNumbers[0].Healing {
+	if len(a.combatNumbers) != 1 || a.combatNumbers[0].Kind != combatHealHP {
 		t.Fatal(a.combatNumbers)
 	}
 	a.state.LastPeriodicEffect.Skill = 5
 	a.confirmedSkillFeedback(proto.SkillKeep)
-	if len(a.combatNumbers) != 2 || a.combatNumbers[1].Healing {
+	if len(a.combatNumbers) != 2 || a.combatNumbers[1].Kind != combatDamage {
 		t.Fatal(a.combatNumbers)
 	}
 	a.state.LastPeriodicEffect.Target = 2
 	a.confirmedSkillFeedback(proto.MobPeriodicDamage)
-	if len(a.combatNumbers) != 3 || a.combatNumbers[2].Healing {
+	if len(a.combatNumbers) != 3 || a.combatNumbers[2].Kind != combatDamage {
 		t.Fatal(a.combatNumbers)
 	}
 	a.state.LastPeriodicEffect.Target = 3
@@ -71,5 +71,27 @@ func TestConfirmedZeroHealingProducesNoNumber(t *testing.T) {
 	a.confirmedSkillFeedback(proto.SkillUseNoTarget)
 	if len(a.combatNumbers) != 1 || a.combatNumbers[0].Amount != 7 {
 		t.Fatal("actual healing delta not displayed", a.combatNumbers)
+	}
+}
+
+func TestDrainSkillFeedbackUsesRecoveryAmountsOnTheCaster(t *testing.T) {
+	for _, op := range []proto.Opcode{proto.SkillUserDrain, proto.SkillMobDrain, proto.MobSkillDrain} {
+		a := inputApp()
+		a.state.SelfID = 1
+		a.state.Entities[2] = &game.Entity{ID: 2, Kind: game.KindUser, X: 4}
+		a.state.LastSkill = proto.SkillResult{Source: 2, Target: 1, HealedHP: 11, HealedSP: 22, HealedMP: 33, HP: 44}
+		a.confirmedSkillFeedback(op)
+		if len(a.combatNumbers) != 4 {
+			t.Fatalf("opcode %04x numbers = %+v", op, a.combatNumbers)
+		}
+		for i, kind := range []combatNumberKind{combatHealHP, combatHealSP, combatHealMP} {
+			entry := a.combatNumbers[i]
+			if entry.Amount != uint32((i+1)*11) || entry.Kind != kind || entry.Point[0] != 4 || i > 0 && entry.Point[1] <= a.combatNumbers[i-1].Point[1] {
+				t.Fatalf("opcode %04x wrong recovery number %+v", op, entry)
+			}
+		}
+		if damage := a.combatNumbers[3]; damage.Kind != combatDamage || damage.Amount != 44 || damage.Point[0] == 4 {
+			t.Fatal("damage number must remain on the target", damage)
+		}
 	}
 }

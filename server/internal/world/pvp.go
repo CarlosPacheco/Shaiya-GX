@@ -38,24 +38,28 @@ type pendingUserHit struct {
 	Fixed      bool // fixed skill damage (Fire Thorn): Damage is final, Skill names it
 	Trap       bool // a trap sprang on this user: the damage is worked out here (TrabDamage), Skill names it
 	Damage     [3]uint32
-	Skill      *db.SkillDef // a hostile skill (pvpskill.go), nil for a normal attack
-	First      bool         // the skill's selected target (0x0511/0x0512), else 0x0513
-	Caster     damagePools  // the caster's HP/SP/MP (DamageType 3)
-	DrainHeal  bool         // a drain's heal coming back to its caster
-	Heal       [3]uint32
-	ItemCast   bool // cast by a gem (m_bItemAttack): casts no gems itself
-	GemAttack  bool // run AttackItemOption on AttackerID (the target hit)
+	Skill      *db.SkillDef  // a hostile skill (pvpskill.go), nil for a normal attack
+	First      bool          // the skill's selected target (0x0511/0x0512), else 0x0513
+	Caster     damagePools   // the caster's HP/SP/MP (DamageType 3)
+	Drain      *pendingDrain // a landed drain to finish in the caster's session
+	ItemCast   bool          // cast by a gem (m_bItemAttack): casts no gems itself
+	GemAttack  bool          // run AttackItemOption on AttackerID (the target hit)
 }
 
-func (p *ConnectedPlayer) QueueUserHit(h pendingUserHit) {
+func (p *ConnectedPlayer) QueueUserHit(h pendingUserHit) bool {
 	p.mailMu.Lock()
+	if p.combatMailClosed {
+		p.mailMu.Unlock()
+		return false
+	}
 	if len(p.userHits) >= maxPendingCombat {
 		p.mailMu.Unlock()
 		p.mailboxOverflow()
-		return
+		return false
 	}
 	p.userHits = append(p.userHits, h)
 	p.mailMu.Unlock()
+	return true
 }
 
 func (p *ConnectedPlayer) TakeUserHits() []pendingUserHit {
@@ -64,6 +68,19 @@ func (p *ConnectedPlayer) TakeUserHits() []pendingUserHit {
 	h := p.userHits
 	p.userHits = nil
 	return h
+}
+
+func (p *ConnectedPlayer) closeUserHits() {
+	p.mailMu.Lock()
+	p.combatMailClosed = true
+	hits := p.userHits
+	p.userHits = nil
+	p.mailMu.Unlock()
+	for _, h := range hits {
+		if h.Drain != nil {
+			h.Drain.broadcast([3]uint16{})
+		}
+	}
 }
 
 // isTeam is CUser::IsTeam without duels (none exist yet): the user
@@ -147,8 +164,12 @@ func (s *Session) tickUserHits() {
 		return
 	}
 	for _, h := range s.player.TakeUserHits() {
+		if h.Drain != nil {
+			s.applyDrainHeal(h.Drain)
+			continue
+		}
 		if s.dead {
-			return
+			continue
 		}
 		if s.applyUserHit(h) {
 			s.dead, s.autoAttack, s.cast = true, false, nil
@@ -173,10 +194,6 @@ func (s *Session) applyUserHit(h pendingUserHit) bool {
 		return false
 	}
 	s.lastCombatAt = time.Now()
-	if h.DrainHeal {
-		s.applyDrainHeal(h)
-		return false
-	}
 	if h.GemAttack {
 		s.applyGemAttack(h.AttackerID)
 		return false

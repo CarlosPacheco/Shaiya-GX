@@ -115,7 +115,7 @@ func TestAltarReachRespawnAndNativeHealingGL(t *testing.T) {
 	t.Logf("original start.EFT: %d visible pixels; authored finite lifetime", visible)
 	a.scene3d.View = render.LookAtLH(render.V3{0, 2, -5}, render.V3{0, 1, 0}, render.V3{0, 1, 0})
 	a.scene3d.Proj = render.PerspectiveFovLH(math.Pi/3, 800.0/600, .1, 100)
-	a.combatNumbers = []combatNumber{{Point: render.V3{0, 1, 0}, Amount: 888, Healing: true}}
+	a.combatNumbers = []combatNumber{{Point: render.V3{0, 1, 0}, Amount: 888, Kind: combatHealHP}}
 	gl.Viewport(0, 0, 800, 600)
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)

@@ -159,7 +159,7 @@ func (s *Session) springTrap(t placedTrap) bool {
 	return true
 }
 
-// trapHitsMob is the mob branch of UpdateTrab: TrabDamage on the mob's pools,
+// trapHitsMob is the mob branch of UpdateTrab: TrabDamage on the mob's HP,
 // CMob::Damage with the skill's Arrow as aggro, 0x0519 to the view, and the
 // mob turns to the owner when it survives.
 func (s *Session) trapHitsMob(id uint32, def *db.SkillDef) {
@@ -169,19 +169,16 @@ func (s *Session) trapHitsMob(id uint32, def *db.SkillDef) {
 	if !ok || md == nil {
 		return
 	}
-	d := trapDamage(def, [3]uint32{mob.CurrentHP, md.MaxSP, md.MaxMP}, [3]uint32{mob.MaxHP, md.MaxSP, md.MaxMP})
+	d := trapDamage(def, [3]uint32{mob.CurrentHP}, [3]uint32{mob.MaxHP})
 	levelPercent := 100 - mobLevelPenalty(ch.Level, int32(mob.Level))
-	for i, amount := range d {
-		d[i] = uint32(directAmount(int64(amount), levelPercent, math.MaxInt32))
-	}
-	r, ok := DamageMobFrom(ch.MapID, id, d[0], ch.ID)
+	hp := uint32(directAmount(int64(d[0]), levelPercent, math.MaxInt32))
+	r, ok := DamageMobFrom(ch.MapID, id, hp, ch.ID)
 	if !ok {
 		return
 	}
 	AddMobAggro(ch.MapID, id, ch.ID, int64(def.Aggro))
-	words := [3]uint16{uint16(min(r.DamageHP, 65535)), uint16(min(d[1], 65535)), uint16(min(d[2], 65535))}
 	sendNear(ch.MapID, r.Mob.PosX, r.Mob.PosZ, CombatRadius,
-		buildSkillUseResult(opSkillOther, 0, ch.ID, r.Mob.ID, def.SkillID, def.SkillLevel, words[0], words[1], words[2]), "0x0519 trap damage")
+		buildSkillUseResult(opSkillOther, 0, ch.ID, r.Mob.ID, def.SkillID, def.SkillLevel, r.DamageHP, 0, 0), "0x0519 trap damage")
 	if s.resolveMobDamage(&r) {
 		ForceMobTarget(ch.MapID, id, ch.ID)
 	}

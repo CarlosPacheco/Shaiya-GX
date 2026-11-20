@@ -214,8 +214,8 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 		sendNear(ch.MapID, mob.PosX, mob.PosZ, CombatRadius, frame, "skill use (miss)")
 		return true
 	}
-	current := damagePools{mob.CurrentHP, md.MaxSP, md.MaxMP}
-	maximum := damagePools{mob.MaxHP, md.MaxSP, md.MaxMP}
+	current := damagePools{mob.CurrentHP}
+	maximum := damagePools{mob.MaxHP}
 	damage, crit := playerSkillDamage(&stats, &mc, def, current, maximum)
 	r, ok := DamageMobFrom(ch.MapID, target, uint32(max(damage[0], 0)), ch.ID)
 	if !ok {
@@ -226,11 +226,16 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 	if crit {
 		code = attackResultCritical
 	}
-	dealt := [3]uint16{r.DamageHP, uint16(min(max(damage[1], 0), 65535)), uint16(min(max(damage[2], 0), 65535))}
-	frame := buildSkillUseResult(op, code, ch.ID, r.Mob.ID, k.SkillID, k.Level, dealt[0], dealt[1], dealt[2])
+	dealt := [3]uint16{r.DamageHP}
+	frame := buildSkillUseResult(op, code, ch.ID, r.Mob.ID, k.SkillID, k.Level, dealt[0], 0, 0)
 	if drain {
-		// The caster heals what it drained (CUser::Heal), HP/SP/MP.
-		hp, mp, sp := s.healDelta(uint32(dealt[0]), uint32(dealt[2]), uint32(dealt[1]))
+		// A monster has only an HP pool. Fixed SP/MP drains still restore the
+		// spell's amount to the caster on each hit without debiting the monster.
+		var mpDrain, spDrain uint32
+		if def.DamageType < 3 {
+			mpDrain, spDrain = uint32(max(damage[2], 0)), uint32(max(damage[1], 0))
+		}
+		hp, mp, sp := s.healDelta(uint32(dealt[0]), mpDrain, spDrain)
 		frame = buildSkillDrainResult(code, ch.ID, r.Mob.ID, k.SkillID, k.Level, dealt,
 			[3]uint16{uint16(min(hp, 65535)), uint16(min(sp, 65535)), uint16(min(mp, 65535))})
 		s.persist()
@@ -243,7 +248,7 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 		s.send(buildCurrentHitpoints(&st), "0x0521 current hp after drain")
 	}
 	alive := s.resolveMobDamage(&r)
-	if alive && !drain && (def.AddDamageHP != 0 || def.AddDamageSP != 0 || def.AddDamageMP != 0) {
+	if alive && !drain && def.AddDamageHP != 0 {
 		add := extraSkillDamage(def, 100-mobLevelPenalty(stats.Level, mc.Level))
 		if x, ok := DamageMobFrom(ch.MapID, target, add[0], ch.ID); ok {
 			w := packet.New(packet.SkillExtraDamage)
@@ -252,8 +257,8 @@ func (s *Session) skillHit(target uint32, def *db.SkillDef, k db.CharacterSkill,
 			w.U16(k.SkillID)
 			w.U8(k.Level)
 			w.U16(x.DamageHP)
-			w.U16(uint16(add[1]))
-			w.U16(uint16(add[2]))
+			w.U16(0)
+			w.U16(0)
 			sendNear(ch.MapID, x.Mob.PosX, x.Mob.PosZ, CombatRadius, w.MustFinish(), "0x051A skill extra damage")
 			alive = s.resolveMobDamage(&x)
 		}

@@ -333,6 +333,8 @@ Dead levels are recognised by their description ("Not Available.", "Skill not av
 
 `skillpatch -combat-debuff-text-only -input Skill.SData -output Skill.updated.SData` updates the Slump Shot and Confusion tooltips. Their text distinguishes penalties that affect both enemy players and monsters from STR and REC reductions that affect enemy players only. The patch reads the values, duration, and Confusion radius from each rank and changes only the descriptions. Full catalog normalization also applies this text update.
 
+Use `skillpatch -npc-special-only -input NpcSkill.SData -output NpcSkill.updated.SData` on the EP5 monster catalog to update Porcine Party (100), Ice Stun (172), and Wide Death Sentence (344). The patch preserves the catalog's SEED encoding and all other records. Server migration 30 updates the corresponding entries in `PS_GameDefs_NpcSkills`.
+
 `PrevSkillID` (offset 52) is a property any skill can have: the skill it names must be cooling down for this one to be usable, otherwise the server answers with SysMsg 315 ("A previous skill is required"). The tool restores the original values and appends "Can only be used while X is cooling down." to those descriptions; server migration 9 restores them in the definitions.
 
 

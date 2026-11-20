@@ -51,7 +51,7 @@ func TestLaunchedShotFinishesAtLastDestinationAfterDespawn(t *testing.T) {
 	if len(a.wv.physicalProjectiles) != 0 || len(a.combatNumbers) != 1 || a.combatNumbers[0].Point != (render.V3{8, 3, 0}) {
 		t.Fatal("despawn lost confirmed impact", a.combatNumbers)
 	}
-	a.emitCombatNumberAt(render.V3{}, 0, false, false, false)
+	a.emitCombatNumberAt(render.V3{}, 0, false, false, combatDamage)
 	if len(a.combatNumbers) != 1 {
 		t.Fatal("zero damage invented a number")
 	}

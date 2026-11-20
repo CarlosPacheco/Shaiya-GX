@@ -481,6 +481,9 @@ func (s *Session) mirrorDamage(userID, mobID uint32, d [3]uint32) {
 // reflectToMob sends a reflected hit back to the mob (0x051B: character,
 // mob, HP/SP/MP).
 func (s *Session) reflectToMob(mobGlobalID uint32, damage [3]uint16) {
+	if damage[0] == 0 {
+		return
+	}
 	ch := s.char
 	r, ok := DamageMobFrom(ch.MapID, mobGlobalID, uint32(damage[0]), ch.ID)
 	if !ok {
@@ -489,9 +492,9 @@ func (s *Session) reflectToMob(mobGlobalID uint32, damage [3]uint16) {
 	w := packet.New(0x051B)
 	w.U32(ch.ID)
 	w.U32(mobGlobalID)
-	for _, v := range damage {
-		w.U16(v)
-	}
+	w.U16(r.DamageHP)
+	w.U16(0)
+	w.U16(0)
 	sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius, w.MustFinish(), "0x051B reflected hit")
 	s.resolveMobDamage(&r)
 }

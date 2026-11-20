@@ -77,7 +77,7 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x050F` | [SkillKeep](protocol-combat.md#opcode-050f) | — | yes | yes |
 | `0x0510` | [SkillCastStarted](protocol-combat.md#opcode-0510) | — | yes | yes |
 | `0x0511` | [SkillUseNoTarget](protocol-combat.md#opcode-0511) | yes | yes | yes |
-| `0x0512` | [SkillUserDrain](protocol-combat.md#opcode-0512) | — | — | yes |
+| `0x0512` | [SkillUserDrain](protocol-combat.md#opcode-0512) | — | yes | yes |
 | `0x0513` | [SkillPartyMember](protocol-combat.md#opcode-0513) | — | yes | yes |
 | `0x0514` | [SkillUserExtraDamage](protocol-combat.md#opcode-0514) | — | yes | yes |
 | `0x0515` | [SkillUserReflectedDamage](protocol-combat.md#opcode-0515) | — | yes | yes |

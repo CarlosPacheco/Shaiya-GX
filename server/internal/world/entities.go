@@ -86,7 +86,6 @@ type MapMob struct {
 	homeY                float32
 	homeX, homeZ         float32
 	CurrentHP, MaxHP     uint32
-	CurrentSP, CurrentMP uint32
 	MoneyMin, MoneyMax   uint32
 	Exp                  uint32
 	Area                 *MobArea
@@ -563,7 +562,6 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 			m.CurrentHP = max(m.MaxHP, 1)
 			m.lootDamage = nil
 			if m.def != nil {
-				m.CurrentSP, m.CurrentMP = m.def.MaxSP, m.def.MaxMP
 			}
 			m.resetAI()
 			m.respawnAt = time.Time{}
@@ -1112,7 +1110,6 @@ func NewStaticMob(def *db.MobDef, mobID uint16, x, z float32, area *MobArea, res
 	m.nextMoveAt = time.Now().Add(time.Duration(rand.IntN(60000)) * time.Millisecond)
 	m.CurrentHP = m.MaxHP
 	if m.def != nil {
-		m.CurrentSP, m.CurrentMP = m.def.MaxSP, m.def.MaxMP
 	}
 	m.resetAI()
 	m.cell, m.hasCell = cellFor(x, z), true

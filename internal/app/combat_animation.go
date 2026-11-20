@@ -41,7 +41,7 @@ func (a *App) confirmedAnimation(p []byte) {
 	switch op {
 	case proto.GXFallDamage:
 		r := a.state.LastFallDamage
-		a.showCombatNumberAmount(r.Target, r.Amount, false, false, false)
+		a.showCombatNumberAmount(r.Target, r.Amount, false, false, combatDamage)
 	case proto.CharacterMotion:
 		m := a.state.LastMotion
 		if m.ID == a.state.SelfID && (m.Motion == proto.MotionSitDown || m.Motion == proto.MotionStandUp) {
@@ -137,7 +137,7 @@ func (a *App) confirmedAnimation(p []byte) {
 		}
 	case proto.MapNpcAttackPlayer, proto.MapNpcAttackMob:
 		if hit, err := proto.DecodeNpcAttack(p); err == nil && (hit.Target == a.state.SelfID || hit.Target == a.state.Target) {
-			a.showCombatNumber(hit.Target, hit.HP, false, false, false)
+			a.showCombatNumber(hit.Target, hit.HP, false, false, combatDamage)
 		}
 	case proto.CharacterMobAutoAttack, proto.CharacterUserAutoAttack, proto.MobAttackCharacter:
 		result := a.state.LastAttack
@@ -177,7 +177,7 @@ func (a *App) confirmedAnimation(p []byte) {
 			}
 		}
 		if !ranged && (result.Source == a.state.SelfID || result.Target == a.state.SelfID || result.Target == a.state.Target) {
-			a.showCombatNumber(result.Target, result.HP, result.Result == 1, result.Result == 3, false)
+			a.showCombatNumber(result.Target, result.HP, result.Result == 1, result.Result == 3, combatDamage)
 		}
 	case proto.CharacterDeath:
 		id := proto.NewReader(p).U32()

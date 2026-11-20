@@ -82,20 +82,21 @@ type ConnectedPlayer struct {
 	gmVisible                     bool
 	mount                         uint8 // 0x051D vehicle shape, 0 on foot
 
-	mailMu       sync.Mutex
-	teleport     *pendingTeleport
-	summonOffer  *partySummonOffer
-	forced       *forcedTeleport // a GM's /asummon waiting for this user's session
-	tradeRefresh *tradeRefresh
-	damage       []pendingDamage
-	lifeSkill    *pendingLifeSkill
-	soulKill     *pendingSoulKill
-	friendly     []pendingFriendly
-	userHits     []pendingUserHit
-	pvpKillCount uint32
-	duelEnds     []pendingDuelEnd
-	duelWins     int
-	itemGrants   []db.Item
+	mailMu           sync.Mutex
+	teleport         *pendingTeleport
+	summonOffer      *partySummonOffer
+	forced           *forcedTeleport // a GM's /asummon waiting for this user's session
+	tradeRefresh     *tradeRefresh
+	damage           []pendingDamage
+	lifeSkill        *pendingLifeSkill
+	soulKill         *pendingSoulKill
+	friendly         []pendingFriendly
+	userHits         []pendingUserHit
+	combatMailClosed bool
+	pvpKillCount     uint32
+	duelEnds         []pendingDuelEnd
+	duelWins         int
+	itemGrants       []db.Item
 
 	guild  playerGuildState // guarded by guildMu
 	reveal bool             // an enemy's Detection found this user: stealth ends
@@ -319,6 +320,7 @@ func (p *ConnectedPlayer) Unregister() {
 	realm.registryMu.Lock()
 	delete(bucket(p.MapID()), p.CharacterID)
 	realm.registryMu.Unlock()
+	p.closeUserHits()
 	tradeCancelForDisconnect(p.CharacterID, p.log)
 	duelLeave(p, 0, false) // PvPChkLeaveByZoneLeave
 	guildDuelLeave(p, nil, 1)

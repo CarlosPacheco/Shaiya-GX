@@ -347,8 +347,6 @@ func tickMobEffects(now time.Time) []MobEffectOutcome {
 					damage = [3]int32{}
 				}
 				m.recordEventDamage(e.CasterID, applied)
-				m.CurrentSP = satSub(m.CurrentSP, uint32(max(damage[1], 0)))
-				m.CurrentMP = satSub(m.CurrentMP, uint32(max(damage[2], 0)))
 				m.CurrentHP -= applied
 				killed := m.CurrentHP == 0
 				o := MobEffectOutcome{MapID: mapID, CasterID: e.CasterID, SkillID: e.Def.SkillID, SkillLevel: e.Def.SkillLevel,
@@ -363,21 +361,13 @@ func tickMobEffects(now time.Time) []MobEffectOutcome {
 				out = append(out, o)
 				return killed
 			}
-			pools := func() ([3]uint32, [3]uint32) {
-				var maxSP, maxMP uint32
-				if m.def != nil {
-					maxSP, maxMP = m.def.MaxSP, m.def.MaxMP
-				}
-				return [3]uint32{m.CurrentHP, m.CurrentSP, m.CurrentMP}, [3]uint32{m.MaxHP, maxSP, maxMP}
-			}
 			for j := 0; j < len(m.Effects); {
 				e := m.Effects[j]
 				expired := !e.endsAt.After(now)
 				if e.Def.TypeDetail == detailTimeDamage && (expired || now.Sub(e.prevTick) >= effectTick) {
-					cur, maxv := pools()
-					dmg := mobTimeDamage(e.Def, cur, maxv, now.Sub(e.prevTick))
+					dmg := mobTimeDamage(e.Def, [3]uint32{m.CurrentHP}, [3]uint32{m.MaxHP}, now.Sub(e.prevTick))
 					m.Effects[j].prevTick = now
-					if hit(&e, dmg, uint32(max(dmg[0], 0))) {
+					if dmg[0] > 0 && hit(&e, [3]int32{dmg[0]}, uint32(dmg[0])) {
 						break
 					}
 				}

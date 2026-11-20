@@ -18,25 +18,34 @@ func main() {
 	retiredOnly := flag.Bool("retired-only", false, "only remove retired player skills")
 	soulBurnOnly := flag.Bool("soul-burn-only", false, "only enable Soul Burn")
 	debuffTextOnly := flag.Bool("combat-debuff-text-only", false, "only update Slump Shot and Confusion tooltips")
+	npcSpecialOnly := flag.Bool("npc-special-only", false, "repair Porcine Party, Ice Stun, and Wide Death Sentence in NpcSkill.SData")
 	flag.Parse()
 	if *input == "" || *output == "" || *input == *output {
 		log.Fatal("distinct input and output paths required")
 	}
-	if (*retiredOnly && *soulBurnOnly) || (*debuffTextOnly && (*retiredOnly || *soulBurnOnly)) {
-		log.Fatal("choose one single-purpose patch")
+	var patch func([]byte) ([]byte, sdata.SkillCatalogReport, error)
+	for _, option := range []struct {
+		selected bool
+		apply    func([]byte) ([]byte, sdata.SkillCatalogReport, error)
+	}{
+		{*retiredOnly, sdata.RemoveRetiredPlayerSkills},
+		{*soulBurnOnly, sdata.EnableSoulBurn},
+		{*debuffTextOnly, sdata.UpdateCombatDebuffTooltips},
+		{*npcSpecialOnly, sdata.RepairNPCSkillCatalog},
+	} {
+		if option.selected {
+			if patch != nil {
+				log.Fatal("choose one single-purpose patch")
+			}
+			patch = option.apply
+		}
+	}
+	if patch == nil {
+		patch = sdata.NormalizeSkillCatalog
 	}
 	raw, err := os.ReadFile(*input)
 	if err != nil {
 		log.Fatal(err)
-	}
-	patch := sdata.NormalizeSkillCatalog
-	switch {
-	case *retiredOnly:
-		patch = sdata.RemoveRetiredPlayerSkills
-	case *soulBurnOnly:
-		patch = sdata.EnableSoulBurn
-	case *debuffTextOnly:
-		patch = sdata.UpdateCombatDebuffTooltips
 	}
 	out, report, err := patch(raw)
 	if err != nil {

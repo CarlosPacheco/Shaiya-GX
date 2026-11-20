@@ -48,7 +48,7 @@ func TestGemNPCProcAppliesToMobHonorsChanceAndPreventsRecursion(t *testing.T) {
 	}
 }
 
-func TestLapisPeriodicSPMPDrainAndMobSleepWake(t *testing.T) {
+func TestLapisPeriodicResourceDamageLeavesMobHPAndSleepAlone(t *testing.T) {
 	s, defs := lapisSession(t)
 	id, _ := lapisMob(t, s, defs)
 	for _, gem := range []uint8{160, 161} {
@@ -68,8 +68,13 @@ func TestLapisPeriodicSPMPDrainAndMobSleepWake(t *testing.T) {
 	sh.mu.Unlock()
 	outcomes := tickMobEffects(now)
 	m, _ := MobByID(s.char.MapID, id)
-	if len(outcomes) < 2 || m.CurrentSP != 9100 || m.CurrentMP != 9100 || m.CurrentHP != 10000 {
-		t.Fatalf("mob periodic resource drain missing: hp=%d sp=%d mp=%d", m.CurrentHP, m.CurrentSP, m.CurrentMP)
+	if len(m.Effects) != 2 || m.CurrentHP != 10000 {
+		t.Fatalf("resource skills should apply without damaging the mob: hp=%d effects=%+v", m.CurrentHP, m.Effects)
+	}
+	for _, outcome := range outcomes {
+		if outcome.Mob.ID == id && outcome.Damaged {
+			t.Fatalf("resource tick sent monster damage: %+v", outcome.Damage)
+		}
 	}
 	// Restrictions on mob categories use positive disable counters too.
 	for _, skill := range []uint16{211, 214} {

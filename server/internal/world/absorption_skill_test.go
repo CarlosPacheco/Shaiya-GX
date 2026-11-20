@@ -66,9 +66,14 @@ func TestPVPSkillAbsorptionControlsDisplayAndDrain(t *testing.T) {
 	t.Cleanup(s.player.Unregister)
 	attackerChar := *s.char
 	attackerChar.ID++
-	attacker := RegisterPlayer(attackerChar, nil, false, 1, s.out, s.logger)
-	t.Cleanup(attacker.Unregister)
-	sk := &db.SkillDef{SkillID: 61001, SkillLevel: 1, TypeEffect: typeEffectAttack, TypeDetail: detailDrain, DamageType: 0, DamageHP: 200, SuccessType: 1, SuccessValue: 100}
+	attacker, _ := gmWireSession(t, attackerChar, false)
+	attacker.items = base.items
+	max := attacker.stats()
+	attacker.char.CurrentHP, attacker.char.CurrentSP, attacker.char.CurrentMP = max.MaxHP-60, max.MaxSP-20, max.MaxMP
+	attacker.player = RegisterPlayer(*attacker.char, nil, false, 1, attacker.out, attacker.logger)
+	t.Cleanup(attacker.player.Unregister)
+	sk := &db.SkillDef{SkillID: 61001, SkillLevel: 1, TypeEffect: typeEffectAttack, TypeDetail: detailDrain,
+		DamageType: 0, DamageHP: 200, DamageSP: 50, DamageMP: 60, SuccessType: 1, SuccessValue: 100}
 	st := s.stats()
 	st.Absorption = 50
 	before := st.CurrentHP
@@ -76,23 +81,64 @@ func TestPVPSkillAbsorptionControlsDisplayAndDrain(t *testing.T) {
 	if before-s.stats().CurrentHP != 150 {
 		t.Fatal("absorbed HP loss mismatch")
 	}
-	heals := attacker.TakeUserHits()
-	if len(heals) != 1 || !heals[0].DrainHeal || heals[0].Heal[0] != 150 {
-		t.Fatal("drain healed unabsorbed amount", heals)
+	attacker.tickUserHits()
+	if st := attacker.stats(); st.CurrentHP != st.MaxHP || st.CurrentSP != st.MaxSP || st.CurrentMP != st.MaxMP {
+		t.Fatal("caster was not healed")
 	}
+	r := nextSkillFeedback(t, wire, proto.SkillUserDrain)
+	if r.HP != 150 || r.SP != 50 || r.MP != 60 || r.HealedHP != 60 || r.HealedSP != 20 || r.HealedMP != 0 {
+		t.Fatalf("PvP drain result disagrees with target damage or caster recovery: %+v", r)
+	}
+}
+
+func TestMobResourceDrainIsRepeatableWithoutResourceDamage(t *testing.T) {
+	base, defs := lapisSession(t)
+	id, md := lapisMob(t, base, defs)
+	md.MaxMP, md.MaxSP = 1, 1 // Legacy resource fields do not cap fixed drains.
+	s, wire := gmWireSession(t, *base.char, false)
+	s.items = base.items
+	s.player = RegisterPlayer(*s.char, nil, false, s.faction, s.out, s.logger)
+	t.Cleanup(s.player.Unregister)
+	s.char.Level = md.Level
+	def := &db.SkillDef{SkillID: 61001, SkillLevel: 1, TypeEffect: typeEffectAttack,
+		TypeDetail: detailDrain, DamageSP: 30, DamageMP: 50, SuccessType: 1, SuccessValue: 100}
+	k := db.CharacterSkill{SkillID: def.SkillID, Level: def.SkillLevel}
+	for range 2 {
+		before := s.stats()
+		s.skillHit(id, def, k, true)
+		after := s.stats()
+		r := nextSkillFeedback(t, wire, proto.SkillMobDrain)
+		if r.Result != 0 || r.HP != 0 || r.MP != 0 || r.SP != 0 || r.HealedMP != 50 || r.HealedSP != 30 ||
+			after.CurrentMP-before.CurrentMP != 50 || after.CurrentSP-before.CurrentSP != 30 {
+			t.Fatalf("incorrect monster drain: %+v", r)
+		}
+	}
+	def.TypeDetail = detailAttack
+	def.AddDamageMP, def.AddDamageSP = 50, 30
+	before := s.stats()
+	s.skillHit(id, def, k, true)
+	r := nextSkillFeedback(t, wire, proto.SkillUse)
+	if after := s.stats(); r.Result != 0 || r.HP != 0 || r.MP != 0 || r.SP != 0 || after.CurrentMP != before.CurrentMP || after.CurrentSP != before.CurrentSP {
+		t.Fatalf("resource destruction affected the monster or caster: %+v", r)
+	}
+}
+
+func nextSkillFeedback(t *testing.T, wire <-chan []byte, op proto.Opcode) proto.SkillResult {
+	t.Helper()
 	timeout := time.After(time.Second)
 	for {
 		select {
 		case p := <-wire:
-			if proto.Op(p) != proto.Opcode(opUserSkillDrain) {
+			if proto.Op(p) != op {
 				continue
 			}
-			if len(p) < 26 || binary.LittleEndian.Uint16(p[14:]) != 150 || binary.LittleEndian.Uint16(p[20:]) != 150 {
-				t.Fatalf("wire drain uses pre-absorption damage: %x", p)
+			result, err := proto.DecodeSkillResult(p)
+			if err != nil {
+				t.Fatal(err)
 			}
-			return
+			return result
 		case <-timeout:
-			t.Fatal("missing PvP drain result")
+			t.Fatalf("missing skill result %#x", op)
 		}
 	}
 }
