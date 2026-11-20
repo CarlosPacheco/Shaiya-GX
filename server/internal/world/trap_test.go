@@ -202,14 +202,9 @@ func TestFireBushIsAnnouncedToTheView(t *testing.T) {
 	st := s.stats()
 	s.char.CurrentSP, s.char.CurrentMP = st.MaxSP, st.MaxMP
 	s.skillField(db.CharacterSkill{SkillID: 48, Level: 2, Number: 1}, def, s.stats())
-	var field proto.Field
-	for len(wire) > 0 {
-		if p := <-wire; proto.Op(p) == proto.GXField {
-			var err error
-			if field, err = proto.DecodeField(p); err != nil {
-				t.Fatal(err)
-			}
-		}
+	field, err := proto.DecodeField(waitWorldPacket(t, wire, proto.GXField))
+	if err != nil {
+		t.Fatal(err)
 	}
 	if field.Owner != s.char.ID || field.Skill != 48 || field.Level != 2 || field.Seconds != 12 || field.X != s.char.PosX || field.Z != s.char.PosZ {
 		t.Fatalf("announcement %+v", field)

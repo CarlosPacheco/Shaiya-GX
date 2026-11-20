@@ -49,11 +49,17 @@ func TestCooldownReductionRunningAndNewCooldowns(t *testing.T) {
 		t.Fatalf("a Potential reuse was reduced: %v", d)
 	}
 	told := map[uint16]proto.SkillCooldown{}
-	for len(wire) > 0 {
-		if p := <-wire; proto.Op(p) == proto.GXSkillCooldown {
-			c, _ := proto.DecodeSkillCooldown(p)
-			told[c.Skill] = c
+	receive := func() proto.SkillCooldown {
+		t.Helper()
+		c, err := proto.DecodeSkillCooldown(waitWorldPacket(t, wire, proto.GXSkillCooldown))
+		if err != nil {
+			t.Fatal(err)
 		}
+		return c
+	}
+	for range 2 {
+		c := receive()
+		told[c.Skill] = c
 	}
 	if c := told[slow]; c.Seconds < 19 || c.Seconds > 21 || c.Total != 0 {
 		t.Fatalf("client told %+v, want about 20s and an unchanged total", c)
@@ -72,13 +78,11 @@ func TestCooldownReductionRunningAndNewCooldowns(t *testing.T) {
 	if _, running := s.skillCooldowns[quick]; running || !s.skillReady(quick) {
 		t.Fatal("a spell shorter than the reduction must have no reuse")
 	}
-	for len(wire) > 0 {
-		if p := <-wire; proto.Op(p) == proto.GXSkillCooldown {
-			c, _ := proto.DecodeSkillCooldown(p)
-			told[c.Skill] = c
-		}
+	cooldown := receive()
+	if cooldown.Skill != slow {
+		t.Fatalf("first new reuse announced for skill %d, want %d", cooldown.Skill, slow)
 	}
-	if c := told[slow]; c.Seconds < 29 || c.Seconds > 31 || c.Total != c.Seconds {
+	if c := cooldown; c.Seconds < 29 || c.Seconds > 31 || c.Total != c.Seconds {
 		t.Fatalf("new timer announced as %+v", c)
 	}
 

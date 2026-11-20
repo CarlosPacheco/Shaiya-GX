@@ -45,25 +45,32 @@ func gmWireSession(t *testing.T, ch db.Character, admin bool) (*Session, <-chan 
 	return s, packets
 }
 
-func gmResponse(t *testing.T, packets <-chan []byte) proto.GMState {
+func waitWorldPacket(t *testing.T, packets <-chan []byte, opcode proto.Opcode) []byte {
 	t.Helper()
+	timeout := time.NewTimer(3 * time.Second)
+	defer timeout.Stop()
 	for {
 		select {
 		case p, ok := <-packets:
 			if !ok {
-				t.Fatal("closed GM connection")
+				t.Fatalf("connection closed before packet 0x%04x", opcode)
 			}
-			if proto.Op(p) == proto.GXGMState {
-				g, e := proto.DecodeGMState(p)
-				if e != nil {
-					t.Fatal(e)
-				}
-				return g
+			if proto.Op(p) == opcode {
+				return p
 			}
-		case <-time.After(3 * time.Second):
-			t.Fatal("missing GM response")
+		case <-timeout.C:
+			t.Fatalf("missing packet 0x%04x", opcode)
 		}
 	}
+}
+
+func gmResponse(t *testing.T, packets <-chan []byte) proto.GMState {
+	t.Helper()
+	g, err := proto.DecodeGMState(waitWorldPacket(t, packets, proto.GXGMState))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return g
 }
 
 func TestGMCommandsRequireRoleAndToggleAuthoritativeState(t *testing.T) {

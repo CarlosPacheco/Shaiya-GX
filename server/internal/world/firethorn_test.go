@@ -83,15 +83,7 @@ func TestFireThornHurtsHostileUsersIgnoringStats(t *testing.T) {
 	if lost := hp - other.stats().CurrentHP; lost != 8 {
 		t.Fatalf("the user lost %d HP, want the fixed 8", lost)
 	}
-	seen := false
-	for len(wire) > 0 {
-		if p := <-wire; proto.Op(p) == proto.SkillKeep {
-			seen = true
-		}
-	}
-	if !seen {
-		t.Fatal("nearby users did not get the periodic damage packet")
-	}
+	waitWorldPacket(t, wire, proto.SkillKeep)
 }
 
 // The reach is measured on the ground plane and the height counts leniently:
