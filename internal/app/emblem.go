@@ -20,9 +20,8 @@ import (
 const emblemMerchant = 8
 
 // emblemPreviewYaw turns the preview toward the back of the character, at
-// the three quarters of 0x47f120 (3*pi/4 about the vertical axis from the
-// side the cape hangs); 225 degrees from the frontal inventory pose here.
-var emblemPreviewYaw = 225 * math.Pi / 180
+// exactly (GX choice: the original turns it three quarters).
+var emblemPreviewYaw = 180 * math.Pi / 180
 
 type emblemState struct {
 	npc          uint32
@@ -37,6 +36,7 @@ type emblemState struct {
 	box          *ui.Message
 	preview      *scene.Character
 	previewApp   scene.Appearance
+	previewMark  [6]uint8
 	previewReady bool
 }
 
@@ -109,13 +109,15 @@ func (a *App) emblemSync() {
 	}
 }
 
-func (a *App) emblemMessage(id int) {
+func (a *App) emblemMessage(id int) { a.emblemText(a.msg.Get(id)) }
+
+func (a *App) emblemText(text string) {
 	v := &a.emblem
 	if v.box == nil {
 		v.box, _ = ui.NewMessage(a)
 	}
 	if v.box != nil {
-		v.box.Open(a.msg.Get(id), false)
+		v.box.Open(text, false)
 	}
 }
 
@@ -230,6 +232,7 @@ func (a *App) emblemResult() {
 	v := &a.emblem
 	if a.state.EmblemRemoveSerial != v.removeSerial {
 		a.emblemPlace(v.key, a.state.Inventory[v.key])
+		a.emblemText("The cape's customization has been removed.")
 		return
 	}
 	if a.state.LastEmblem.Result == 0 {
@@ -237,6 +240,7 @@ func (a *App) emblemResult() {
 		return
 	}
 	a.emblemPlace(v.key, a.state.Inventory[v.key])
+	a.emblemText("Your cape has been customized.")
 }
 
 // updateEmblemDrag drops a dragged cape on the item slot (0x47f400 requires
@@ -301,8 +305,18 @@ func (a *App) drawEmblemPreview(w, h, wx, wy int) {
 	slot.Cloak = a.emblemPattern().Bytes()
 	ap := a.appearance(&slot)
 	ap.CloakType = it.Type
-	if !v.previewReady || ap != v.previewApp {
-		v.previewReady, v.previewApp = true, ap
+	pattern := ap.CloakEmblem
+	// Editing a pattern or colour only swaps the decals, so the preview keeps
+	// its pose and cloth motion; anything else rebuilds the character.
+	ap.CloakEmblem = [6]uint8{}
+	if v.previewReady && ap == v.previewApp && v.preview != nil {
+		if pattern != v.previewMark {
+			v.previewMark = pattern
+			v.preview.SetCloakEmblem(pattern)
+		}
+	} else {
+		v.previewReady, v.previewApp, v.previewMark = true, ap, pattern
+		ap.CloakEmblem = pattern
 		var err error
 		v.preview, err = scene.BuildCharacter(a.assets, ap, "000_normal")
 		if err != nil {
@@ -317,6 +331,8 @@ func (a *App) drawEmblemPreview(w, h, wx, wy int) {
 	render.InViewport(wx+px, wy+py, pw, ph, h, func() {
 		s := a.actorPreviewScene()
 		centerY, distance := v.preview.InventoryFrame(34*math.Pi/180, ap.HeightScale())
+		// Closer and higher than the inventory framing: the cape is the subject.
+		centerY, distance = centerY*1.22, distance*.62
 		s.SetCameraView(render.V3{0, centerY, distance}, render.V3{0, centerY, 0}, render.V3{0, 1, 0})
 		s.Proj = render.PerspectiveFovLH(34*math.Pi/180, float32(pw)/float32(ph), .1, 100)
 		s.FogStart, s.FogEnd = 10000, 20000

@@ -98,6 +98,7 @@ func stripItemColors(text string) string {
 // Native 0x4a3950 distinguishes equipment bonuses from consumable restoration.
 // SysMsg owns labels; inline description controls remain archive data.
 func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint16, price string, gemName func(uint8) string, messages ...text.SysMsg) []itemDetailLine {
+	instance = withoutCloakGems(instance)
 	label := func(id int, fallback string) string {
 		if len(messages) > 0 {
 			if value := messages[0].Get(id); value != "" {

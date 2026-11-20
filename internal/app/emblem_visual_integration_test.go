@@ -73,7 +73,7 @@ func TestEmblemWindowGL(t *testing.T) {
 	a.emblem.selection = [3]int{4, 2, 9}
 	a.emblem.colors = [3]uint8{0, 6, 11}
 	a.emblem.active = 2
-	for _, deg := range []float64{225} {
+	for _, deg := range []float64{180} {
 		emblemPreviewYaw = deg * math.Pi / 180
 		gl.Viewport(0, 0, 1024, 768)
 		gl.ClearColor(.1, .1, .1, 1)

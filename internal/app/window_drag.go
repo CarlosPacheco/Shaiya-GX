@@ -215,6 +215,15 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 	}
+	if a.emblemOpen() {
+		x, y := a.emblemUI.Origin(w, h)
+		if start(&a.emblemUI.Position, x, y, ui.EmblemWidth, ui.EmblemHeight, 300, 300) {
+			return true
+		}
+		if pointInside(in, x, y, ui.EmblemWidth, ui.EmblemHeight) {
+			return false
+		}
+	}
 	if a.blacksmithOpen() {
 		x, y := a.blacksmithUI.Origin(w, h)
 		bw, bh := a.blacksmithUI.Size()
@@ -458,6 +467,9 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 	}
 	if a.gateUI != nil {
 		out["gatekeeper"] = &a.gateUI.Position
+	}
+	if a.emblemUI != nil {
+		out["emblem"] = &a.emblemUI.Position
 	}
 	if a.blacksmithUI != nil {
 		out["blacksmith"] = &a.blacksmithUI.Position

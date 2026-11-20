@@ -164,3 +164,12 @@ func (c *cloakInstance) drawEmblem(s *render.Scene3D, assets *Assets, world rend
 		s.DrawClothOverlay(assets.emblemMesh, layer.tex, world, tint)
 	}
 }
+
+// SetCloakEmblem swaps the pattern of the worn cloak without rebuilding the
+// character, so the cloth keeps its motion while a window edits it.
+func (c *Character) SetCloakEmblem(pattern [6]uint8) {
+	if c == nil || c.cloak == nil {
+		return
+	}
+	c.cloak.emblem = c.assets.newCloakEmblem(pattern, *c.cloak.geometry)
+}

@@ -54,7 +54,7 @@ func (a *App) applyWorldPacket(p []byte) {
 	wasRaid := a.state.Party.Raid
 	previousForm := a.state.PlayerForms[a.state.SelfID]
 	var previousAppearance scene.Appearance
-	if proto.Op(p) == proto.ItemBagToBag || proto.Op(p) == proto.ChangeAppearance || proto.Op(p) == proto.EnchantAdd {
+	if proto.Op(p) == proto.ItemBagToBag || proto.Op(p) == proto.ChangeAppearance || proto.Op(p) == proto.EnchantAdd || proto.Op(p) == proto.CloakAdd || proto.Op(p) == proto.CloakRemove {
 		if slot, ok := a.selfSlot(); ok {
 			previousAppearance = a.appearance(&slot)
 		}
@@ -266,7 +266,7 @@ func (a *App) applyInventoryFeedback(p []byte, op proto.Opcode, previousAppearan
 			a.refreshSelf(a.wv)
 		}
 	}
-	if (op == proto.ChangeAppearance || op == proto.EnchantAdd) && a.wv != nil {
+	if (op == proto.ChangeAppearance || op == proto.EnchantAdd || op == proto.CloakAdd || op == proto.CloakRemove) && a.wv != nil {
 		if slot, ok := a.selfSlot(); ok && a.appearance(&slot) != previousAppearance {
 			a.refreshSelf(a.wv)
 		}

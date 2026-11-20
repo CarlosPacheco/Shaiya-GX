@@ -15,7 +15,19 @@ import (
 )
 
 // effectiveItemElement is shared by the tooltip and every icon presentation.
+// withoutCloakGems hides the six emblem bytes of a cape: the game stores them
+// in the gem fields, but a cape has no lapis sockets.
+func withoutCloakGems(instance *proto.InventoryItem) *proto.InventoryItem {
+	if instance == nil || (instance.Type != 24 && instance.Type != 39) || instance.Gems == [6]uint8{} {
+		return instance
+	}
+	c := *instance
+	c.Gems = [6]uint8{}
+	return &c
+}
+
 func (a *App) itemElementState(d *sdata.Item, instance *proto.InventoryItem) (uint8, [6]bool) {
+	instance = withoutCloakGems(instance)
 	var inactive [6]bool
 	if d == nil {
 		return 0, inactive
@@ -73,6 +85,9 @@ func (a *App) itemBadge(d *sdata.Item, instance *proto.InventoryItem) ui.ItemBad
 	return ui.ItemBadge{Tex: a.assets.Texture("interface/enemy_elemental.png"), UV: uv}
 }
 func (a *App) drawItemIcon(d *sdata.Item, x, y, size int, tint [4]float32, instances ...*proto.InventoryItem) {
+	for i := range instances {
+		instances[i] = withoutCloakGems(instances[i])
+	}
 	if file, uv, ok := ui.ItemIcon(d.Type, d.Icon); ok {
 		if tex := a.assets.Texture("interface/" + file); tex != nil {
 			a.sprites.Draw(tex, float32(x), float32(y), float32(size), float32(size), uv.U0, uv.V0, uv.U1, uv.V1, tint)
@@ -88,6 +103,7 @@ func (a *App) drawItemIcon(d *sdata.Item, x, y, size int, tint [4]float32, insta
 // Tooltip data comes from the instance for mutable state and from SData for
 // names and base effects. Clamp its dynamically sized frame to the viewport.
 func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, count uint16, left, top, w, h int, price string) {
+	instance = withoutCloakGems(instance)
 	// A socketed elemental lapis changes the item's effective tooltip element.
 	// Keep the cached definition immutable; intrinsic/first-socket priority wins.
 	display := *def
