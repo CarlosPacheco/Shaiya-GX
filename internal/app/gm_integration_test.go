@@ -13,7 +13,7 @@ import (
 	"testing"
 )
 
-func TestGMCyanNameTagGL(t *testing.T) {
+func TestGMNameplateColorGL(t *testing.T) {
 	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
 		t.Skip("GL and resources")
 	}
@@ -63,7 +63,7 @@ func TestGMCyanNameTagGL(t *testing.T) {
 	if err = render.SavePNG(filepath.Join(out, "gm-world.png"), 1280, 800); err != nil {
 		t.Fatal(err)
 	}
-	// Isolate the name pass so UI colours cannot satisfy the GM tag check.
+	// Isolate the name pass so UI colours cannot satisfy the GM name color check.
 	gl.ClearColor(0, 0, 0, 1)
 	gl.ClearDepth(1)
 	gl.DepthMask(true)
@@ -73,18 +73,18 @@ func TestGMCyanNameTagGL(t *testing.T) {
 	a.sprites.End()
 	pixels := make([]byte, 1280*800*4)
 	gl.ReadPixels(0, 0, 1280, 800, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(pixels))
-	cyan, white := 0, 0
+	blue, white := 0, 0
 	for i := 0; i < len(pixels); i += 4 {
 		r, g, b := int(pixels[i]), int(pixels[i+1]), int(pixels[i+2])
 		if b > 150 && g > r+40 && b > g+15 {
-			cyan++
+			blue++
 		}
 		if r > 180 && g > 180 && b > 180 {
 			white++
 		}
 	}
-	if cyan < 10 || white < 10 {
-		t.Fatalf("GM prefix or white name missing: cyan=%d white=%d", cyan, white)
+	if blue < 10 || white != 0 {
+		t.Fatalf("expected a blue GM name: blue=%d white=%d", blue, white)
 	}
 	if err = render.SavePNG(filepath.Join(out, "gm-nameplate.png"), 1280, 800); err != nil {
 		t.Fatal(err)

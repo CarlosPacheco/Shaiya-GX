@@ -200,6 +200,8 @@ type App struct {
 	wv                                  *worldView
 	dungeonMinimaps                     dungeonMinimapData
 	hoverPicking                        bool
+	hoveredMob                          uint32
+	hoveredMobX, hoveredMobY            int
 	lastMouseX                          int
 	lastMouseY                          int
 

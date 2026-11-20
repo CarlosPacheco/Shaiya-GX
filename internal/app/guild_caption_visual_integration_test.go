@@ -55,15 +55,12 @@ func TestGuildCaptionOriginalColorsAndSpacingGL(t *testing.T) {
 
 	defer func() { delete(a.wv.actors, 99) }()
 	a.scene3d.Occlusion = nil
-	anchor, ok := a.wv.self.NameAnchor()
-	if !ok {
-		t.Fatal("missing self anchor")
-	}
+	slot, _ := a.selfSlot()
+	anchor, _ := a.playerNameplateAnchor(a.state.SelfID, a.wv.self, slot.Race, false, a.state.Self.Vehicle)
 	x, y, depth, ok := projectLabel(anchor, a.scene3d.View.Mul(a.scene3d.Proj), w, h)
 	if !ok {
 		t.Fatal("anchor off screen")
 	}
-	slot, _ := a.selfSlot()
 	slot.Name = "GuildPlayer"
 	a.state.Slots[0] = slot
 	a.state.Self.IsGM = false
@@ -90,8 +87,8 @@ func TestGuildCaptionOriginalColorsAndSpacingGL(t *testing.T) {
 			guildID = 8
 		}
 		if remote {
-			a.state.Entities[99] = &game.Entity{Kind: game.KindUser, ID: 99, GuildID: guildID, Shape: &proto.UserShape{ID: 99, Name: slot.Name, Guild: "Guardians"}}
-			a.wv.actors[99] = &remoteActor{character: a.wv.self}
+			a.state.Entities[99] = &game.Entity{Kind: game.KindUser, ID: 99, GuildID: guildID, Shape: &proto.UserShape{ID: 99, Race: slot.Race, Name: slot.Name, Guild: "Guardians"}}
+			a.wv.actors[99] = &remoteActor{character: a.wv.self, shape: *a.state.Entities[99].Shape}
 		}
 		for _, variant := range []string{"member", "leader", "without-directory"} {
 			if variant == "without-directory" && !remote {
@@ -118,8 +115,8 @@ func TestGuildCaptionOriginalColorsAndSpacingGL(t *testing.T) {
 			clear()
 			a.sprites.Begin(w, h)
 			a.sprites.NameDepth(depth)
-			a.font.DrawName(a.sprites, slot.Name, x-a.font.Width(slot.Name)/2, y-a.font.Height, white)
-			a.font.DrawName(a.sprites, "Guardians", x-a.font.Width("Guardians")/2, y-a.font.Height-15, ui.RGBColor(tint))
+			a.font.DrawName(a.sprites, slot.Name, x-a.font.Width(slot.Name)/2, y, white)
+			a.font.DrawName(a.sprites, "Guardians", x-a.font.Width("Guardians")/2, y-15, ui.RGBColor(tint))
 			a.sprites.End()
 			want := pixels()
 			if !bytes.Equal(got, want) {

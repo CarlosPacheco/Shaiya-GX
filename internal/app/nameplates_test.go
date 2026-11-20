@@ -8,14 +8,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
 
-func TestNPCTypeLabelsFollowOriginalCategories(t *testing.T) {
-	for kind, want := range map[uint8]string{1: "Merchant", 2: "GateKeeper", 3: "Blacksmith", 4: "PvPManager", 5: "", 6: "Warehouse", 7: "", 8: "Guard", 9: "", 10: "Apprentice", 11: "GuildMaster", 12: "DeadNpc", 255: ""} {
-		if got := npcTypeLabel(kind); got != want {
-			t.Errorf("type %d: %q, want %q", kind, got, want)
-		}
-	}
-}
-
 func TestGroundItemNameDoesNotInventGoldAmount(t *testing.T) {
 	a := inputApp()
 	a.items = map[sdata.ItemKey]*sdata.Item{

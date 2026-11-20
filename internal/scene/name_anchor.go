@@ -62,3 +62,22 @@ func (c *Character) NameAnchor() (render.V3, bool) {
 	point[1] += .15
 	return point, true
 }
+
+// MonsterPlateAnchor follows client 0x431770 and 0x44c39b. The combat
+// number fallback belongs to 0x450a10 and does not apply to names.
+func (m *CreatureActor) MonsterPlateAnchor() render.V3 {
+	return render.V3{m.World[12], m.World[13] + m.visual.Height*m.modelScale() + .2, m.World[14]}
+}
+
+// NPCPlateAnchor follows client 0x4344cd and 0x44b2a7. The seasonal
+// animals and dead NPC type have authored adjustments to the label height.
+func (m *CreatureActor) NPCPlateAnchor(kind uint8, id uint16) render.V3 {
+	height := m.visual.Height + .3
+	switch {
+	case kind == 7 && id >= 541 && id <= 543:
+		height *= .2
+	case kind == 12:
+		height *= .5
+	}
+	return render.V3{m.World[12], m.World[13] + height, m.World[14]}
+}

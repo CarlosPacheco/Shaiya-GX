@@ -37,6 +37,7 @@ func (a *App) LoadCursors(window *platform.Window) *platform.Cursors {
 // path to the crosshair (07.png): no skill, approach or assignment state ever
 // selects it, so GX never shows it. Windows and the bottom UI keep the arrow.
 func (a *App) CursorIndex(w, h int) int {
+	a.hoveredMob = 0
 	a.hoverPicking = true
 	defer func() { a.hoverPicking = false }()
 	if a.screen != screenWorld || a.wv == nil || a.state == nil {
@@ -74,7 +75,11 @@ func (a *App) CursorIndex(w, h int) int {
 		return 2
 	}
 	if id := a.pickMob(in, w, h); id != 0 {
-		if entity := a.state.Entities[id]; entity.Kind == game.KindUser && entity.Shape != nil {
+		entity := a.state.Entities[id]
+		if entity.Kind == game.KindMob {
+			a.hoveredMob, a.hoveredMobX, a.hoveredMobY = id, in.MouseX, in.MouseY
+		}
+		if entity.Kind == game.KindUser && entity.Shape != nil {
 			if own, ok := a.selfSlot(); ok && own.Race/2 == entity.Shape.Race/2 {
 				return 0
 			}

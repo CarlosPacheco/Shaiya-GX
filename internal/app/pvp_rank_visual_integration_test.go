@@ -77,15 +77,12 @@ func TestPvPRankNameplateAndStatusGL(t *testing.T) {
 		gl.ReadPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(p))
 		return p
 	}
-	anchor, ok := a.wv.self.NameAnchor()
-	if !ok {
-		t.Fatal("self name anchor missing")
-	}
+	slot, _ := a.selfSlot()
+	anchor, _ := a.playerNameplateAnchor(a.state.SelfID, a.wv.self, slot.Race, false, a.state.Self.Vehicle)
 	x, y, _, ok := projectLabel(anchor, a.scene3d.View.Mul(a.scene3d.Proj), w, h)
 	if !ok {
 		t.Fatal("self name anchor off screen")
 	}
-	slot, _ := a.selfSlot()
 	slot.Name = "RankedPlayer"
 	a.state.Slots[0] = slot
 	a.state.Self.IsGM = false
@@ -103,8 +100,8 @@ func TestPvPRankNameplateAndStatusGL(t *testing.T) {
 			name := slot.Name
 			if remote {
 				name = "OtherPlayer"
-				a.state.Entities[99] = &game.Entity{Kind: game.KindUser, ID: 99, Shape: &proto.UserShape{ID: 99, Name: name}}
-				a.wv.actors[99] = &remoteActor{character: a.wv.self}
+				a.state.Entities[99] = &game.Entity{Kind: game.KindUser, ID: 99, Shape: &proto.UserShape{ID: 99, Race: slot.Race, Name: name}}
+				a.wv.actors[99] = &remoteActor{character: a.wv.self, shape: *a.state.Entities[99].Shape}
 				update := proto.NewWriter(proto.CharacterPvPKills)
 				update.U32(99)
 				update.U32(c.kills)
@@ -117,7 +114,7 @@ func TestPvPRankNameplateAndStatusGL(t *testing.T) {
 			a.drawPlayerNames(w, h)
 			a.sprites.End()
 			p := pixels()
-			left, top := x-a.font.Width(name)/2+a.font.Width(name)+1, y-a.font.Height-3
+			left, top := x-a.font.Width(name)/2+a.font.Width(name)+1, y-3
 			colored := 0
 			for dy := 0; dy < 32; dy++ {
 				for dx := 0; dx < 32; dx++ {

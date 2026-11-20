@@ -322,33 +322,6 @@ func projectLabel(p render.V3, vp render.M4, w, h int) (int, int, float32, bool)
 	return int((x/cw + 1) * float32(w) / 2), int((1 - y/cw) * float32(h) / 2), z / cw, true
 }
 
-// Phoenix uses the original NPC categories as a second line, omitting the
-// generic, gambling-house and animal categories.
-func npcTypeLabel(kind uint8) string {
-	switch kind {
-	case 1:
-		return "Merchant"
-	case 2:
-		return "GateKeeper"
-	case 3:
-		return "Blacksmith"
-	case 4:
-		return "PvPManager"
-	case 6:
-		return "Warehouse"
-	case 8:
-		return "Guard"
-	case 10:
-		return "Apprentice"
-	case 11:
-		return "GuildMaster"
-	case 12:
-		return "DeadNpc"
-	default:
-		return ""
-	}
-}
-
 // Character entry contains only a guild ID. Resolve names exclusively from
 // Rapture's confirmed own-guild data or its directory, never guess unknown IDs.
 func guildCaption(s *game.State, guildID uint32) string {
@@ -426,8 +399,35 @@ func groundItemLabelPosition(w *scene.World, it proto.GroundItem) render.V3 {
 	return groundItemPosition(w, it).Add(render.V3{0, .3, 0})
 }
 
-// Phoenix player_nameplate.gd / creature_labels.gd / classic_overlay.gdshader:
-// posed crown anchors, outlined fixed-pixel text, 50m range and scene occlusion.
+// playerNameplateAnchor uses the projected actor origin from the native
+// player pass. GX stores the feet position, 0.9 below the native base.
+func (a *App) playerNameplateAnchor(id uint32, actor *scene.Character, race uint8, low bool, vehicle proto.VehicleState) (render.V3, int) {
+	pos := render.V3{actor.World[12], actor.World[13], actor.World[14]}
+	if form := a.wv.transforms[id]; actor.Hidden && form != nil && form.actor != nil {
+		return form.actor.MonsterPlateAnchor(), 0
+	}
+	if actor.Mounted {
+		if mount := a.driverMount(vehicle.Driver); mount != nil {
+			top := mount.MonsterPlateAnchor()
+			if vehicle.State == proto.VehiclePassenger {
+				pos[1] = top[1]
+				return pos, -15
+			}
+			return top, 0
+		}
+	}
+	height := float32(2.2)
+	if low {
+		height = 1.5
+	}
+	if race != 3 {
+		height -= .2
+	}
+	pos[1] += height
+	return pos, 0
+}
+
+// drawPlayerNames uses the original world anchors and fixed pixel overlays.
 func (a *App) drawPlayerNames(w, h int) {
 	settings := a.clientSettings()
 	a.sprites.InvalidateNameDepth()
@@ -469,149 +469,115 @@ func (a *App) drawPlayerNames(w, h int) {
 			}
 		}
 	}
-	// label draws a nameplate and reports the horizontal extent it covers,
-	// including a GM prefix and the rank badge, so markers can sit beside it.
-	label := func(name string, pos render.V3, tint [4]float32, offset int, extra ...playerPlate) (l, r int, drawn bool) {
-		if name == "" || pos.Sub(v.pos).Len() > 50 {
+	// Overlay text starts at the projected Y, centered on the projected X.
+	label := func(name string, pos render.V3, tint [4]float32, offset int, plate playerPlate, marker string) {
+		if name == "" {
 			return
 		}
-		if x, y, depth, ok := projectLabel(pos, vp, w, h); ok {
-			plate := playerPlate{}
-			if len(extra) > 0 {
-				plate = extra[0]
+		x, y, depth, ok := projectLabel(pos, vp, w, h)
+		if !ok {
+			return
+		}
+		width := a.font.Width(name)
+		left, top := x-width/2, y-offset
+		if a.scene3d.OccludedLabel(pos, left, top, width, a.font.Height, w, h) {
+			return
+		}
+		if !captured {
+			a.sprites.CaptureNameDepth(w, h)
+			captured = true
+		}
+		a.sprites.NameDepth(depth)
+		if plate.gm {
+			tint = ui.RGBColor(0x3B6CFF)
+		}
+		a.font.DrawName(a.sprites, name, left, top, tint)
+		outerLeft, outerRight := left, left+width
+		rank, ranked := pvprank.Index(plate.kills)
+		if plate.party != 0 {
+			file := "interface/party_jang.png"
+			if plate.party == 1 {
+				file = "interface/party_member.png"
 			}
-			labelWidth := a.font.Width(name)
-			prefixWidth := 0
-			if plate.gm { // GMs have no tag: a normal name in light blue.
-				tint = ui.RGBColor(0x3B6CFF)
-			}
-			rank, ranked := pvprank.Index(plate.kills)
-			if a.scene3d.OccludedLabel(pos, x-labelWidth/2, y-a.font.Height-offset, labelWidth, a.font.Height, w, h) {
-				return
-			}
-			if !captured {
-				a.sprites.CaptureNameDepth(w, h)
-				captured = true
-			}
-			a.sprites.NameDepth(depth)
-			left, top := x-labelWidth/2, y-a.font.Height-offset
-			a.font.DrawName(a.sprites, name, left+prefixWidth, top, tint)
-			iconLeft := left
-			if plate.party != 0 {
-				// The party_member / party_jang coin (16x16) sits to the left of the
-				// name with a slight gap, 3px up; the target marks move out beyond it.
-				file := "interface/party_jang.png"
-				if plate.party == 1 {
-					file = "interface/party_member.png"
+			if tex := a.assets.Texture(file); tex != nil {
+				outerLeft = left - 11 // 0x44bdb6: left of name by 5+6 pixels.
+				if ranked {
+					outerLeft -= 6 // Match the early PvP-rank offset before it is compensated.
 				}
-				if tex := a.assets.Texture(file); tex != nil {
-					iconLeft = left - 16 - 2
-					a.sprites.Draw(tex, float32(iconLeft), float32(top-3), 16, 16, 0, 0, 1, 1, white)
-				}
+				a.sprites.Draw(tex, float32(outerLeft), float32(top-3), 16, 16, 0, 0, 1, 1, white)
 			}
-			l, r, drawn = iconLeft, left+labelWidth, true
-			if ranked {
-				grade := a.assets.Texture("interface/grade2.png")
-				if grade == nil {
-					return
-				}
-				r = left + labelWidth + 1 + 32
-				// Native 0x0044be5c/0x00443f90: 32x32 cell of grade2 right of the
-				// name, 1px right and 3px up; ranks 1-16 in the left column, 17-31 right.
+		}
+		if ranked {
+			if grade := a.assets.Texture("interface/grade2.png"); grade != nil {
+				outerRight += 1 + 32
 				u0, v0 := float32(rank/16)*.5, float32(rank%16)/16
-				a.sprites.Draw(grade, float32(left+labelWidth+1), float32(top-3), 32, 32, u0, v0, u0+.5, v0+1./16, white)
+				a.sprites.Draw(grade, float32(left+width+1), float32(top-3), 32, 32, u0, v0, u0+.5, v0+1./16, white)
 			}
 		}
-		return
-	}
-	// Beside the whole plate: past a GM prefix and a rank badge.
-	selectionMarks := func(pos render.V3, left, right int) {
-		if _, y, depth, ok := projectLabel(pos, vp, w, h); ok {
-			a.sprites.NameDepth(depth)
-			if dot := a.assets.Texture("interface/name_select.png"); dot != nil {
-				for _, edge := range []int{left - 10, right + 10} {
-					a.sprites.DrawImage(dot, float32(edge-dot.W/2), float32(y-a.font.Height+(a.font.Height-dot.H)/2))
+		if marker != "" {
+			dot := a.assets.Texture(marker)
+			if dot == nil {
+				dot = a.assets.Texture("interface/name_select.png")
+			}
+			if dot != nil {
+				for _, edge := range []int{outerLeft - 17, outerRight + 1} {
+					a.sprites.Draw(dot, float32(edge), float32(top-3), 16, 16, 0, 0, 1, 1, white)
 				}
 			}
 		}
 	}
-	selfTargeted := a.state.SelfID != 0 && a.state.Target == a.state.SelfID
-	if slot, ok := a.selfSlot(); ok && v.self != nil && (settings.OwnName || selfTargeted) {
-		if pos, ok := v.self.NameAnchor(); ok {
-			left, right, drawn := label(slot.Name, pos, white, 0, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills, party: a.partyBadgeKind(a.state.SelfID)})
-			if drawn && selfTargeted {
-				selectionMarks(pos, left, right) // targeting yourself shows the same marks as any target
-			}
-			label(guildCaption(a.state, a.state.Guild.ID), pos, guildCaptionColor(a.state, a.state.Guild.ID, a.state.SelfID, slot.Name), guildCaptionOffset)
+	const neutralMarker = "interface/mon_not.png"
+	targetMarker := func(id uint32) string {
+		if id != 0 && a.state.Target == id {
+			return neutralMarker
 		}
+		return ""
 	}
+	slot, hasSlot := a.selfSlot()
+	selfTargeted := a.state.SelfID != 0 && a.state.Target == a.state.SelfID
+	if hasSlot && v.self != nil && (settings.OwnName || selfTargeted) {
+		pos, offset := a.playerNameplateAnchor(a.state.SelfID, v.self, slot.Race, a.state.Self.Dead || a.state.Self.Sitting, a.state.Self.Vehicle)
+		label(slot.Name, pos, white, offset, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills, party: a.partyBadgeKind(a.state.SelfID)}, targetMarker(a.state.SelfID))
+		label(guildCaption(a.state, a.state.Guild.ID), pos, guildCaptionColor(a.state, a.state.Guild.ID, a.state.SelfID, slot.Name), offset+guildCaptionOffset, playerPlate{}, "")
+	}
+	hoveredMob := uint32(0)
+	if a.hoveredMob != 0 && a.hoveredMobX == a.lastMouseX && a.hoveredMobY == a.lastMouseY {
+		hoveredMob = a.hoveredMob
+	}
+	mobMarkers := [...]string{neutralMarker, "interface/mon_fire.png", "interface/mon_water.png", "interface/mon_ground.png", "interface/mon_wind.png"}
 	for _, e := range a.state.Entities {
-		name := ""
-		pos := render.V3{}
-		valid := false
-		tint := white
 		switch e.Kind {
 		case game.KindUser:
-			if !settings.PlayerNames {
+			actor := v.actors[e.ID]
+			if !settings.PlayerNames || actor == nil || actor.character == nil || e.Shape == nil {
 				continue
 			}
-			if actor := v.actors[e.ID]; actor != nil && actor.character != nil && e.Shape != nil {
-				name = actor.shape.Name
-				pos, valid = actor.character.NameAnchor()
+			name := actor.shape.Name
+			pos, offset := a.playerNameplateAnchor(e.ID, actor.character, actor.shape.Race, e.Dead || e.Sitting, e.Vehicle)
+			tint := white
+			if hasSlot && slot.Race/2 != e.Shape.Race/2 {
+				tint = ui.RGBColor(0xff0000)
 			}
+			label(name, pos, tint, offset, playerPlate{gm: e.IsGM, kills: e.PvPKills, party: a.partyBadgeKind(e.ID)}, targetMarker(e.ID))
+			caption := guildCaption(a.state, e.GuildID)
+			if caption == "" && e.GuildID != 0 {
+				caption = e.Shape.Guild
+			}
+			label(caption, pos, guildCaptionColor(a.state, e.GuildID, e.ID, name), offset+guildCaptionOffset, playerPlate{}, "")
 		case game.KindMob:
-			if !settings.MonsterNames {
+			actor := v.mobs[e.ID]
+			if !settings.MonsterNames || (e.ID != a.state.Target && e.ID != hoveredMob) || e.Dead || actor == nil || actor.actor == nil || actor.pos.Sub(v.pos).Len() > 100 {
 				continue
 			}
-			if actor := v.mobs[e.ID]; actor != nil && actor.actor != nil {
-				name = actor.actor.Name
-				pos, valid = actor.actor.NameAnchor()
-				if a.state.Target != e.ID {
-					// Only the pointed-at or selected monster has a plate in the reference.
-					center := actor.pos.Add(pos.Sub(actor.pos).Scale(.5))
-					x, y, ok := projectName(center, vp, w, h)
-					_, top, topOK := projectName(pos, vp, w, h)
-					radius := max(18, min(60, absInt(y-top)))
-					dx, dy := a.lastMouseX-x, a.lastMouseY-y
-					if !ok || !topOK || dx*dx+dy*dy > radius*radius {
-						continue
-					}
-				}
+			mob := actor.actor
+			marker := ""
+			if element := mob.Definition.Element; e.ID == a.state.Target && int(element) < len(mobMarkers) {
+				marker = mobMarkers[element]
 			}
-			if actor := v.mobs[e.ID]; actor != nil && actor.actor != nil {
-				player, _ := a.selfSlot()
-				tint = ui.RGBColor(ui.MobNameRGB(actor.actor.Level, player.Level))
-			}
+			label(mob.Name, mob.MonsterPlateAnchor(), ui.RGBColor(ui.MobNameRGB(mob.Level, slot.Level)), 0, playerPlate{}, marker)
 		case game.KindNpc:
 			if actor := v.npcs[e.ID]; actor != nil && actor.actor != nil {
-				name = actor.actor.Name
-				pos, valid = actor.actor.NameAnchor()
-			}
-			tint = [4]float32{1, .96, .3, 1}
-		}
-		if valid {
-			if kind := npcTypeLabel(e.NpcType); e.Kind == game.KindNpc && kind != "" {
-				label(kind, pos, [4]float32{.35, .9, 1, 1}, a.font.Height-2)
-				if left, right, drawn := label(name, pos, tint, 0); drawn && a.state.Target == e.ID {
-					selectionMarks(pos, left, right)
-				}
-			} else {
-				plate := playerPlate{gm: e.Kind == game.KindUser && e.IsGM}
-				if e.Kind == game.KindUser {
-					plate.kills = e.PvPKills
-					plate.party = a.partyBadgeKind(e.ID)
-				}
-				left, right, drawn := label(name, pos, tint, 0, plate)
-				if drawn && (e.Kind == game.KindMob || e.Kind == game.KindUser || e.Kind == game.KindNpc) && a.state.Target == e.ID {
-					selectionMarks(pos, left, right)
-				}
-				if e.Kind == game.KindUser {
-					caption := guildCaption(a.state, e.GuildID)
-					if caption == "" && e.GuildID != 0 && e.Shape != nil {
-						caption = e.Shape.Guild
-					}
-					label(caption, pos, guildCaptionColor(a.state, e.GuildID, e.ID, name), guildCaptionOffset)
-				}
+				label(actor.actor.Name, actor.actor.NPCPlateAnchor(e.NpcType, e.TypeID), ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID))
 			}
 		}
 	}

@@ -126,7 +126,16 @@ Mob names and target captions share `0x4cb250`'s signed monster-level minus play
 | +8…+9 | `FF00FF` |
 | ≥ +10 | `808080` |
 
-Selected monster names use original `name_select` dots, with the same 10px spacing from the text edge as Phoenix. The English client's grave-accent key (`0x43cd51`, DirectInput `0x29`) cycles living monsters by increasing distance and wraps. Backspace (`0x43c7a5`, `0x4cb2d0`) restores the previous selection; text editing still receives repeated Backspace events. The native locale-specific Tab variant is not substituted for the existing walk/run binding.
+World names project a fixed offset from the actor origin. NPCs display one
+yellow line at their authored `Npc.MON` height plus 0.3 (`0x4344cd`), with
+the native half-height dead NPCs and one-fifth-height animals 541–543.
+Monsters use their `Monster.MON` height times the model scale plus 0.2
+(`0x431770`, `0x44c39b`). A selected monster has a name within 100 units and
+two 16-pixel `mon_*.png` markers matching its element. Hovering a different
+monster shows its unmarked name. Text starts at the projected Y coordinate;
+the markers start three pixels above it with a one-pixel side gap.
+
+ The English client's grave-accent key (`0x43cd51`, DirectInput `0x29`) cycles living monsters by increasing distance and wraps. Backspace (`0x43c7a5`, `0x4cb2d0`) restores the previous selection; text editing still receives repeated Backspace events. The native locale-specific Tab variant is not substituted for the existing walk/run binding.
 
 ## Local chat protection
 
@@ -278,8 +287,9 @@ shadow captures and the water option in a rendered map.
 
 ## Local presentation adjustments after gx-v0.1.4
 
-The blue cast column grows from its bottom edge. NPC service captions and
-player guild captions are centred 15px above character names. The raw guild
+The blue cast column grows from its bottom edge. Player guild captions are
+centred 15px above character names. Player plates use the native standing or
+lowered height, with adjustments for race, creature forms and mounts. The raw guild
 name has no added brackets: members use `#E4E4E4`, and the guild master uses
 `#E0AFFA` on the guild caption only. Character-name/GM/faction colours remain
 independent. The confirmed directory master or own-guild role determines the

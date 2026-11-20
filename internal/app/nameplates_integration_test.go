@@ -97,8 +97,12 @@ func TestNPCNameplateOriginalAssetsGL(t *testing.T) {
 	entity.Y = pos[1]
 	actor.position = originalPosition
 	a.prepareNPCs()
-	if _, ok := actor.actor.NameAnchor(); !ok {
-		t.Fatal("NPC pose lacks a name anchor")
+	anchor := actor.actor.NPCPlateAnchor(entity.NpcType, entity.TypeID)
+	if anchor[0] != pos[0] || anchor[2] != pos[2] || anchor[1] <= pos[1] {
+		t.Fatalf("NPC label did not use its world origin and authored height: %v", anchor)
+	}
+	if a.assets.Texture("interface/mon_not.png") == nil {
+		t.Fatal("original neutral label marker unavailable")
 	}
 	center := a.visualEntityPosition(a.state.Entities[42]).Add(render.V3{0, 1, 0})
 	mx, my, ok := projectName(center, a.scene3d.View.Mul(a.scene3d.Proj), 1024, 734)
