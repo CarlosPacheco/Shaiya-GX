@@ -314,7 +314,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
-	if a.partyUI != nil && a.state.Party.Raid && !a.party.raidHidden {
+	if a.partyUI != nil && a.unionConfigOpen() {
 		x, y := a.partyUI.RaidOrigin(w, h)
 		if start(&a.partyUI.RaidPosition, x, y, ui.RaidWidth, ui.RaidHeight, 20, 520) {
 			return true

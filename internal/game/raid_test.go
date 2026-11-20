@@ -113,3 +113,31 @@ func TestRaidRejectsMalformedRosterWithoutPartialCommit(t *testing.T) {
 		t.Fatal("truncated member accepted")
 	}
 }
+
+func TestRaidEventNotices(t *testing.T) {
+	s := New()
+	s.SelfID = 1
+	s.Party.Raid = true
+	s.Party.Members = []proto.PartyMember{{ID: 1, Name: "Me"}, {ID: 2, Name: "Other"}}
+	apply := func(op proto.Opcode, f func(w *proto.Writer)) {
+		w := proto.NewWriter(op)
+		f(w)
+		if _, err := s.Apply(w.Bytes()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	apply(proto.RaidDivision, func(w *proto.Writer) { w.U32(4) })
+	apply(proto.RaidAutoJoin, func(w *proto.Writer) { w.U8(1) })
+	apply(proto.RaidSubLeader, func(w *proto.Writer) { w.U32(2) })
+	apply(proto.RaidLeader, func(w *proto.Writer) { w.U32(1) })
+	apply(proto.RaidExpel, func(w *proto.Writer) { w.U32(2) })
+	want := []PartyNotice{{6518, ""}, {6520, ""}, {6515, "Other"}, {307, ""}, {6534, "Other"}}
+	if len(s.Party.Notices) != len(want) {
+		t.Fatalf("notices %+v", s.Party.Notices)
+	}
+	for i, n := range want {
+		if s.Party.Notices[i] != n {
+			t.Fatalf("notice %d = %+v want %+v", i, s.Party.Notices[i], n)
+		}
+	}
+}

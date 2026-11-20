@@ -104,6 +104,7 @@ func (s *State) applyRaid(p []byte) (bool, error) {
 		}
 		party.Raid, party.RaidSlots, party.RaidDivision, party.RaidAutoJoin = true, slots, div, auto != 0
 		party.Leader, party.RaidSubLeader = slots[uint16(leader)], slots[uint16(sub)]
+		party.notify(6532, "") // 0x574d76: Union Party created
 		return true, nil
 	case proto.RaidDivision, proto.RaidAutoJoin:
 		r := proto.NewReader(p)
@@ -113,12 +114,25 @@ func (s *State) applyRaid(p []byte) (bool, error) {
 				return true, err
 			}
 			party.RaidDivision = div
+			switch div { // 0x572f00
+			case 1:
+				party.notify(6516, "")
+			case 2:
+				party.notify(6517, "")
+			case 4:
+				party.notify(6518, "")
+			}
 		} else {
 			auto := r.U8()
 			if err := r.Err(); err != nil {
 				return true, err
 			}
 			party.RaidAutoJoin = auto != 0
+			if auto != 0 { // 0x572f50
+				party.notify(6520, "")
+			} else {
+				party.notify(6521, "")
+			}
 		}
 		return true, nil
 	case proto.RaidSwap:
@@ -158,11 +172,22 @@ func (s *State) applyRaid(p []byte) (bool, error) {
 		if err != nil {
 			return true, err
 		}
-		if party.Member(id) != nil {
-			if op == proto.RaidLeader {
+		if m := party.Member(id); m != nil {
+			self := id == s.SelfID
+			if op == proto.RaidLeader { // 0x572f90
 				party.Leader = id
-			} else {
+				if self {
+					party.notify(307, "")
+				} else {
+					party.notify(308, m.Name)
+				}
+			} else { // 0x573000
 				party.RaidSubLeader = id
+				if self {
+					party.notify(6514, "")
+				} else {
+					party.notify(6515, m.Name)
+				}
 			}
 		}
 		return true, nil
@@ -210,6 +235,7 @@ func (s *State) applyRaid(p []byte) (bool, error) {
 		party.RaidErrorSerial++
 		return true, nil
 	case proto.RaidDisband:
+		party.notify(6531, "") // 0x574080 with its message flag
 		party.Members, party.Leader, party.RaidSlots, party.RaidSubLeader, party.Raid, party.raidPending = nil, 0, nil, 0, false, nil
 		return true, nil
 	case proto.PartyLeaveAlt, proto.RaidExpel:
@@ -218,8 +244,14 @@ func (s *State) applyRaid(p []byte) (bool, error) {
 			return true, err
 		}
 		if id == s.SelfID {
+			if op == proto.RaidExpel {
+				party.notify(6533, "") // 0x5741a0: kicked by the leader
+			}
 			party.Members, party.Leader, party.RaidSlots, party.RaidSubLeader, party.Raid, party.raidPending = nil, 0, nil, 0, false, nil
 			return true, nil
+		}
+		if m := party.Member(id); m != nil && op == proto.RaidExpel {
+			party.notify(6534, m.Name)
 		}
 		for i, m := range party.Members {
 			if m.ID == id {

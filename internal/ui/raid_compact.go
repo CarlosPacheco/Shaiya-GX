@@ -44,6 +44,23 @@ func (p *PartyPanel) RaidCompactMemberAt(w, h, mouseX, mouseY int, self uint32, 
 	return slots[uint16(p.raidGroup*6+(mouseY-y)/PartyRowHeight)]
 }
 
+// RaidCompactSlotAt is the slot shown under the pointer in the compact union
+// window (empty rows included), or -1.
+func (p *PartyPanel) RaidCompactSlotAt(w, h, mouseX, mouseY int, self uint32, slots map[uint16]uint32) int {
+	if !p.raidCompact {
+		return -1
+	}
+	p.syncRaidGroup(self, slots)
+	x, y := p.RaidCompactOrigin(w, h)
+	if p.raidGroups {
+		y += 24
+	}
+	if mouseX < x || mouseX >= x+RaidCompactWidth || mouseY < y || mouseY >= y+6*PartyRowHeight {
+		return -1
+	}
+	return p.raidGroup*6 + (mouseY-y)/PartyRowHeight
+}
+
 // Native compact raid view: 0x514a30, 0x514f70 and 0x5152c0.
 func (p *PartyPanel) UpdateRaidCompact(in *platform.Input, w, h int, self uint32, slots map[uint16]uint32) (uint32, bool) {
 	if !p.raidCompact {

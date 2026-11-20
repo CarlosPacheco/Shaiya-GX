@@ -23,6 +23,17 @@ type PartyState struct {
 	RaidError       uint32
 	RaidErrorSerial uint64
 	raidPending     *raidRoster
+	Notices         []PartyNotice // SysMsg lines the original prints for party/raid events; the app drains them
+}
+
+// PartyNotice is one chat system message (FUN_0041fce0(7, id)) with its <p> name.
+type PartyNotice struct {
+	ID   int
+	Name string
+}
+
+func (p *PartyState) notify(id int, name string) {
+	p.Notices = append(p.Notices, PartyNotice{id, name})
 }
 
 func (p *PartyState) Member(id uint32) *proto.PartyMember {
@@ -139,8 +150,13 @@ func (s *State) applyParty(p []byte) error {
 		if err != nil {
 			return err
 		}
-		if id != 0 && s.Party.Member(id) != nil {
+		if m := s.Party.Member(id); id != 0 && m != nil {
 			s.Party.Leader = id
+			if id == s.SelfID { // 0x572f90
+				s.Party.notify(307, "")
+			} else {
+				s.Party.notify(308, m.Name)
+			}
 		}
 	case proto.PartyBadge:
 		r := proto.NewReader(p)

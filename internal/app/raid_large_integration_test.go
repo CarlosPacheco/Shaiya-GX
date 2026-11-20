@@ -83,7 +83,7 @@ func TestRaidSevenAgainstRapture(t *testing.T) {
 		}
 	}
 	leader.app.partyUI, _ = ui.NewPartyPanel(inputTextures{})
-	leader.app.party.raidHidden = true
+	leader.app.party.raidHidden, leader.app.party.unionOpen = true, true
 	cx, cy := leader.app.partyUI.RaidCompactOrigin(1024, 768)
 	compactClick := func(x, y int) {
 		leader.app.updatePartyPointer(&platform.Input{Pressed: true, MouseDown: true, MouseX: x, MouseY: y}, 1024, 768)

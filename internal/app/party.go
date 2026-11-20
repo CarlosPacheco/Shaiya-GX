@@ -13,7 +13,11 @@ import (
 type partyView struct {
 	inviteSerial, replySerial uint64
 	raidErrorSerial           uint64
-	raidHidden                bool
+	raidHidden                bool // the configuration window is closed
+	unionOpen                 bool // DAT_021fd8c8: the compact union window
+	creating                  bool // Create Union: the window shows the party before converting
+	moving                    bool // Move Group picked a slot, waiting for the target
+	moveSlot                  int
 	expires                   float64
 	inviteName                string // last name typed in an invite command, for refusals of players on other maps
 }
@@ -21,7 +25,7 @@ type partyView struct {
 // Native SysMsg ids for party and raid refusals, indexed by the server's
 // result code. They go to the chat log like every other notification.
 var partyReplyMessages = [...]int{206, 304, 345, 346, 347, 348}
-var raidErrorMessages = map[uint32]int{0: 206, 1: 304, 2: 6540, 3: 346, 4: 347, 5: 348, 12: 6535, 13: 6536, 14: 6538}
+var raidErrorMessages = map[uint32]int{0: 206, 1: 304, 2: 6540, 3: 346, 4: 347, 5: 348, 10: 6522, 11: 6523, 12: 6535, 13: 6536, 14: 6538}
 
 // partyNotice writes a native SysMsg line to the chat (never a screen overlay).
 func (a *App) partyNotice(id int, name string) {
@@ -102,56 +106,107 @@ func (a *App) updatePartyInvite(in *platform.Input, w, h int) bool {
 	return true
 }
 func (a *App) updatePartyPointer(in *platform.Input, w, h int) bool {
-	if a.partyUI == nil || len(a.state.Party.Members) == 0 {
+	if a.partyUI == nil {
 		return false
 	}
-	var id uint32
-	var captured bool
-	if a.state.Party.Raid {
-		if a.party.raidHidden {
-			id, captured = a.partyUI.UpdateRaidCompact(in, w, h, a.state.SelfID, a.state.Party.RaidSlots)
-			if id != 0 {
-				a.state.Target = id
-			}
-			return captured
-		}
-		a.partyUI.SetRaidSettings(a.state.Party.RaidDivision, a.state.Party.RaidAutoJoin)
-		var action ui.RaidAction
-		id, action, captured = a.partyUI.UpdateRaid(in, w, h, a.state.Party.RaidSlots, a.state.Party.Leader == a.state.SelfID)
-		var packet []byte
-		switch action {
-		case ui.RaidClose:
-			a.party.raidHidden = true
-			a.partyUI.ResetRaidSettings()
-		case ui.RaidApply:
-			division, auto := a.partyUI.RaidSettings()
-			a.partyUI.ApplyRaidViewSettings()
-			if a.state.Party.Leader == a.state.SelfID {
-				if division != a.state.Party.RaidDivision {
-					packet = proto.RaidDivisionPacket(division)
-				}
-				if auto != a.state.Party.RaidAutoJoin {
-					if err := a.world.Send(proto.RaidAutoJoinPacket(auto)); err != nil {
-						a.backToLogin("Unable to update raid settings.")
-						return true
-					}
-				}
-			}
-			a.party.raidHidden = true
-			a.partyUI.ResetRaidSettings()
-		}
-		if packet != nil {
-			if err := a.world.Send(packet); err != nil {
-				a.backToLogin("Unable to update raid settings.")
-			}
-		}
-	} else {
-		id, captured = a.partyUI.Update(in, w, h, a.state.Party.Members)
+	p := &a.state.Party
+	if p.Raid || a.party.creating && len(p.Members) > 0 {
+		return a.updateUnion(in, w, h)
 	}
+	if len(p.Members) == 0 {
+		return false
+	}
+	id, captured := a.partyUI.Update(in, w, h, p.Members)
 	if id != 0 {
 		a.state.Target = id
 	}
 	return captured
+}
+
+// updateUnion drives the two union windows: the configuration window (opened
+// by Create/Config, on top) and the compact window (while "Open Union" is on).
+func (a *App) updateUnion(in *platform.Input, w, h int) bool {
+	p := &a.state.Party
+	if a.party.moving && (in.HasKey(platform.KeyEscape) || !p.Raid) {
+		a.party.moving = false
+	}
+	slots := a.unionSlots()
+	var captured bool
+	if a.unionConfigOpen() {
+		if a.party.creating {
+			a.partyUI.SetRaidSettings(0, false)
+		} else {
+			a.partyUI.SetRaidSettings(p.RaidDivision, p.RaidAutoJoin)
+		}
+		controls := a.party.creating || p.Leader == a.state.SelfID
+		id, action, c := a.partyUI.UpdateRaid(in, w, h, slots, controls)
+		captured = c
+		if id != 0 {
+			a.state.Target = id
+		}
+		if in.Clicked && a.party.moving && c && p.Raid {
+			a.finishMove(a.partyUI.RaidSlotAt(w, h, in.MouseX, in.MouseY))
+		}
+		switch action {
+		case ui.RaidClose:
+			a.closeUnionConfig()
+		case ui.RaidApply:
+			if !a.applyUnionConfig() {
+				return true
+			}
+		}
+		if captured {
+			return true
+		}
+	}
+	if p.Raid && a.party.unionOpen {
+		id, c := a.partyUI.UpdateRaidCompact(in, w, h, a.state.SelfID, slots)
+		if id != 0 {
+			a.state.Target = id
+		}
+		if in.Clicked && a.party.moving && c {
+			a.finishMove(a.partyUI.RaidCompactSlotAt(w, h, in.MouseX, in.MouseY, a.state.SelfID, slots))
+		}
+		captured = captured || c
+	}
+	return captured
+}
+
+// applyUnionConfig is the OK button (0x48e050 case 4): a conversion needs a
+// chosen loot mode (0x196f "Select Loot"), a raid sends what changed.
+func (a *App) applyUnionConfig() bool {
+	p := &a.state.Party
+	division, auto := a.partyUI.RaidSettings()
+	if a.party.creating {
+		if division == 0 {
+			a.questMessage(a.msg.Get(6511))
+			return false
+		}
+		a.partyUI.ApplyRaidViewSettings()
+		if err := a.world.Send(proto.RaidConvertPacket(1, auto, division)); err != nil {
+			a.backToLogin("Unable to create the union.")
+			return true
+		}
+		a.closeUnionConfig()
+		return true
+	}
+	a.partyUI.ApplyRaidViewSettings()
+	if p.Leader == a.state.SelfID {
+		if division != p.RaidDivision {
+			if err := a.world.Send(proto.RaidDivisionPacket(division)); err != nil {
+				a.backToLogin("Unable to update raid settings.")
+				return true
+			}
+		}
+		if auto != p.RaidAutoJoin {
+			if err := a.world.Send(proto.RaidAutoJoinPacket(auto)); err != nil {
+				a.backToLogin("Unable to update raid settings.")
+				return true
+			}
+		}
+	}
+	a.closeUnionConfig()
+	return true
 }
 func (a *App) drawParty(w, h int) {
 	if a.partyUI == nil {
@@ -166,12 +221,18 @@ func (a *App) drawParty(w, h int) {
 	}
 	a.prepareMemberBuffs()
 	defer a.drawMemberBuffTooltip()
-	if a.state.Party.Raid {
-		if !a.party.raidHidden {
-			a.partyUI.SetRaidSettings(a.state.Party.RaidDivision, a.state.Party.RaidAutoJoin)
-			a.partyUI.DrawRaid(a.sprites, a.font, w, h, members, a.state.Party.RaidSlots, a.state.Party.Leader, a.state.Target)
-		} else {
-			a.partyUI.DrawRaidCompact(a.sprites, a.font, w, h, a.state.SelfID, members, a.state.Party.RaidSlots, a.state.Party.Leader, a.state.Target)
+	if a.state.Party.Raid || a.party.creating && len(members) > 0 {
+		slots := a.unionSlots()
+		if a.state.Party.Raid && a.party.unionOpen {
+			a.partyUI.DrawRaidCompact(a.sprites, a.font, w, h, a.state.SelfID, members, slots, a.state.Party.Leader, a.state.Target)
+		}
+		if a.unionConfigOpen() {
+			if a.party.creating {
+				a.partyUI.SetRaidSettings(0, false)
+			} else {
+				a.partyUI.SetRaidSettings(a.state.Party.RaidDivision, a.state.Party.RaidAutoJoin)
+			}
+			a.partyUI.DrawRaid(a.sprites, a.font, w, h, members, slots, a.state.Party.Leader, a.state.Target)
 		}
 	} else {
 		a.partyUI.Draw(a.sprites, a.font, w, h, members, a.state.Party.Leader, a.state.Target)
@@ -295,7 +356,11 @@ func (a *App) raidCommand(fields []string) bool {
 	switch command {
 	case "/raidwindow":
 		if p.Raid {
-			a.party.raidHidden = !a.party.raidHidden
+			if a.party.raidHidden {
+				a.openUnionConfig()
+			} else {
+				a.closeUnionConfig()
+			}
 			return true
 		}
 	case "/raid":

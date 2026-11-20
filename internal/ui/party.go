@@ -104,6 +104,23 @@ func (p *PartyPanel) RaidSlotPosition(w, h int, slot uint16) (int, int) {
 	return x + 20 + int(slot)/6*RaidSlotWidth, y + 68 + int(slot)%6*RaidSlotHeight
 }
 
+// RaidSlotAt is the slot (0-29) under the pointer in the union window, or -1.
+func (p *PartyPanel) RaidSlotAt(w, h, mouseX, mouseY int) int {
+	for slot := 0; slot < 30; slot++ {
+		x, y := p.RaidSlotPosition(w, h, uint16(slot))
+		if mouseX >= x && mouseX < x+RaidSlotWidth && mouseY >= y && mouseY < y+RaidSlotHeight {
+			return slot
+		}
+	}
+	return -1
+}
+
+// RaidInside reports whether the pointer is over the union configuration window.
+func (p *PartyPanel) RaidInside(w, h, mouseX, mouseY int) bool {
+	x, y := p.RaidOrigin(w, h)
+	return mouseX >= x && mouseX < x+RaidWidth && mouseY >= y && mouseY < y+RaidHeight
+}
+
 func (p *PartyPanel) RaidMemberAt(w, h, mouseX, mouseY int, slots map[uint16]uint32) uint32 {
 	for slot, id := range slots {
 		x, y := p.RaidSlotPosition(w, h, slot)

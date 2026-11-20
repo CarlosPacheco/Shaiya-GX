@@ -15,10 +15,13 @@ type playerContext struct {
 	width, height int
 	heldLabel     string
 	open          bool
+	mode, slot    int // contextClassic, contextPortrait (own portrait) or contextUnion (a raid slot)
 }
 type contextAction struct {
 	label  string
 	packet []byte
+	slot   int    // Move group: the picked slot
+	name   string // union whisper: the member's name
 }
 
 func (a *App) contextActions(id uint32) []contextAction {
@@ -46,23 +49,23 @@ func (a *App) contextActions(id uint32) []contextAction {
 		if e := a.state.Entities[id]; e != nil {
 			own, other := a.state.Self.Vehicle, e.Vehicle
 			if own.State == proto.VehicleDriver && own.Seats == 2 && own.Passenger == 0 && other.State == proto.VehicleOff || other.State == proto.VehicleDriver && other.Seats == 2 && other.Passenger == 0 && own.State == proto.VehicleOff {
-				out = append(out, contextAction{"Go together", proto.VehicleInvitePacket(id)})
+				out = append(out, contextAction{label: "Go together", packet: proto.VehicleInvitePacket(id)})
 			}
 		}
 	}
 	room := a.state.Party.Raid || len(a.state.Party.Members) < 7
 	if sameFaction && room && member == nil && id != a.state.SelfID && (len(a.state.Party.Members) == 0 || leader || a.state.Party.Raid && a.state.Party.RaidSubLeader == a.state.SelfID) {
 		if a.state.Party.Raid {
-			out = append(out, contextAction{"Invite to raid", proto.RaidInvitePacket(id)})
+			out = append(out, contextAction{label: "Invite to raid", packet: proto.RaidInvitePacket(id)})
 		} else {
-			out = append(out, contextAction{"Invite to party", proto.PartyInvitePacket(id)})
+			out = append(out, contextAction{label: "Invite to party", packet: proto.PartyInvitePacket(id)})
 		}
 	}
 	if member != nil && leader && id != a.state.SelfID {
 		if a.state.Party.Raid {
-			out = append(out, contextAction{"Remove from raid", proto.RaidExpelPacket(id)}, contextAction{"Make leader", proto.RaidLeaderPacket(id)}, contextAction{"Make assistant", proto.RaidSubLeaderPacket(id)})
+			out = append(out, contextAction{label: "Remove from raid", packet: proto.RaidExpelPacket(id)}, contextAction{label: "Make leader", packet: proto.RaidLeaderPacket(id)}, contextAction{label: "Make assistant", packet: proto.RaidSubLeaderPacket(id)})
 		} else {
-			out = append(out, contextAction{"Remove from party", proto.PartyExpelPacket(id)}, contextAction{"Make leader", proto.PartyLeaderPacket(id)})
+			out = append(out, contextAction{label: "Remove from party", packet: proto.PartyExpelPacket(id)}, contextAction{label: "Make leader", packet: proto.PartyLeaderPacket(id)})
 		}
 	}
 	if member != nil && id == a.state.SelfID {
@@ -70,25 +73,25 @@ func (a *App) contextActions(id uint32) []contextAction {
 		if a.state.Party.Raid {
 			label = "Leave raid"
 		}
-		out = append(out, contextAction{label, proto.PartyLeavePacket()})
+		out = append(out, contextAction{label: label, packet: proto.PartyLeavePacket()})
 	}
 	if id != a.state.SelfID && !a.state.Exchange.Active && a.state.Duel.Phase == game.DuelNone && a.state.GuildDuel.Phase == game.DuelNone {
-		out = append(out, contextAction{"Trade", proto.ExchangeRequestPacket(id)}, contextAction{"Duel", proto.DuelRequestPacket(id)})
+		out = append(out, contextAction{label: "Trade", packet: proto.ExchangeRequestPacket(id)}, contextAction{label: "Duel", packet: proto.DuelRequestPacket(id)})
 	}
 	if id != a.state.SelfID && a.state.Guild.ID != 0 && a.state.Guild.Rank > 0 && a.state.Guild.Rank <= 4 && a.state.GuildDuel.Phase == game.DuelNone && a.state.Duel.Phase == game.DuelNone && !a.state.Exchange.Active {
 		if e := a.state.Entities[id]; e != nil && e.Kind == game.KindUser && e.GuildID != 0 && e.GuildID != a.state.Guild.ID {
-			out = append(out, contextAction{"Guild duel", proto.GuildDuelRequestPacket(id)})
+			out = append(out, contextAction{label: "Guild duel", packet: proto.GuildDuelRequestPacket(id)})
 		}
 	}
 	if id != a.state.SelfID && a.state.Guild.ID != 0 && a.state.Guild.Rank > 0 && a.state.Guild.Rank <= 2 {
 		if e := a.state.Entities[id]; e != nil && e.GuildID == 0 {
 			if _, member := a.state.Guild.Members[id]; !member {
-				out = append(out, contextAction{"Invite to guild", proto.GuildInvitePacket(id)})
+				out = append(out, contextAction{label: "Invite to guild", packet: proto.GuildInvitePacket(id)})
 			}
 		}
 	}
 	if id != a.state.SelfID && a.chatEntityName(id) != "" {
-		out = append(out, contextAction{"Whisper", nil})
+		out = append(out, contextAction{label: "Whisper", packet: nil})
 	}
 	return out
 }
@@ -123,6 +126,24 @@ func (a *App) contextLabels(actions []contextAction) []string {
 			id = 5339
 		case "Whisper":
 			id = 5007
+		case "Create union":
+			id = 6500
+		case "Leave union":
+			id = 6501
+		case "Dismantle union":
+			id = 6502
+		case "Config union":
+			id = 6503
+		case "Open union":
+			id = 6504
+		case "Hide union":
+			id = 6505
+		case "Move group":
+			id = 6506
+		case "Delegate leader":
+			id = 6507
+		case "Union whisper":
+			id = 6510
 		}
 		labels[i] = a.msg.Get(id)
 		if labels[i] == "" {
@@ -133,8 +154,25 @@ func (a *App) contextLabels(actions []contextAction) []string {
 }
 
 func (a *App) performContextAction(id uint32, action contextAction) {
-	if action.label == "Whisper" {
+	switch action.label {
+	case "Create union":
+		a.openUnionCreate()
+		return
+	case "Config union":
+		a.openUnionConfig()
+		return
+	case "Open union", "Hide union":
+		a.party.unionOpen = action.label == "Open union"
+		return
+	case "Move group":
+		a.party.moving, a.party.moveSlot = true, action.slot
+		return
+	}
+	if action.label == "Whisper" || action.label == "Union whisper" {
 		name := a.chatEntityName(id)
+		if action.label == "Union whisper" {
+			name = action.name
+		}
 		if name == "" || a.chatUI == nil {
 			return
 		}
@@ -163,8 +201,8 @@ func (a *App) performContextAction(id uint32, action contextAction) {
 func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 	c := &a.playerContext
 	if c.open {
-		actions := a.contextActions(c.id)
-		if len(actions) == 0 || (a.state.Entities[c.id] == nil && a.state.Party.Member(c.id) == nil) {
+		actions := a.menuActions(c)
+		if len(actions) == 0 || c.mode == contextClassic && a.state.Entities[c.id] == nil && a.state.Party.Member(c.id) == nil {
 			c.open = false
 			return false
 		}
@@ -219,8 +257,16 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 	if a.hud != nil {
 		hx, hy = a.hud.Origin(w, h)
 	}
+	mode, slot := contextClassic, 0
 	if pointInside(in, hx, hy, 213, 114) && a.state.Party.Member(a.state.SelfID) != nil {
-		id = a.state.SelfID
+		id, mode = a.state.SelfID, contextPortrait
+	}
+	if s, over := a.unionSlotAt(in, w, h); over && id == 0 {
+		if s >= 0 {
+			id, mode, slot = 1, contextUnion, s
+		} else {
+			return false
+		}
 	}
 	tx, ty := 256, 0
 	if a.hud != nil {
@@ -234,11 +280,7 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 		}
 	}
 	if id == 0 && a.partyUI != nil && len(a.state.Party.Members) > 0 {
-		if a.state.Party.Raid && !a.party.raidHidden {
-			id = a.partyUI.RaidMemberAt(w, h, in.MouseX, in.MouseY, a.state.Party.RaidSlots)
-		} else if a.state.Party.Raid {
-			id = a.partyUI.RaidCompactMemberAt(w, h, in.MouseX, in.MouseY, a.state.SelfID, a.state.Party.RaidSlots)
-		} else if !a.state.Party.Raid {
+		if !a.state.Party.Raid {
 			x, y := a.partyUI.Origin(w, h, len(a.state.Party.Members))
 			if in.MouseX >= x && in.MouseX < x+ui.PartyWidth && in.MouseY >= y && in.MouseY < y+len(a.state.Party.Members)*ui.PartyRowHeight {
 				id = a.state.Party.Members[(in.MouseY-y)/ui.PartyRowHeight].ID
@@ -255,12 +297,14 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 			id = picked
 		}
 	}
-	actions := a.contextActions(id)
+	next := playerContext{id: id, mode: mode, slot: slot}
+	actions := a.menuActions(&next)
 	if len(actions) == 0 {
 		return false
 	}
 	width, height := ui.PlayerMenuSize(a.font, a.contextLabels(actions))
-	*c = playerContext{id: id, x: max(0, min(in.MouseX, w-width)), y: max(0, min(in.MouseY, h-height)), width: width, height: height, held: -1, open: true}
+	next.x, next.y, next.width, next.height, next.held, next.open = max(0, min(in.MouseX, w-width)), max(0, min(in.MouseY, h-height)), width, height, -1, true
+	*c = next
 	return true
 }
 func (a *App) drawPlayerContext(w, h int) {
@@ -268,7 +312,7 @@ func (a *App) drawPlayerContext(w, h int) {
 	if !c.open || a.state == nil || a.playerMenuUI == nil {
 		return
 	}
-	actions := a.contextActions(c.id)
+	actions := a.menuActions(c)
 	labels := a.contextLabels(actions)
 	c.width, c.height = ui.PlayerMenuSize(a.font, labels)
 	c.x, c.y = max(0, min(c.x, w-c.width)), max(0, min(c.y, h-c.height))

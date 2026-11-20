@@ -64,9 +64,8 @@ func (a *App) applyWorldPacket(p []byte) {
 		log.Printf("packet: %v", err)
 		return
 	}
-	if !wasRaid && a.state.Party.Raid {
-		a.party.raidHidden = false
-	}
+	a.syncUnionState(wasRaid)
+	a.drainPartyNotices()
 	if ev.Op == proto.Logout && a.state.Phase == game.PhaseCharSelect {
 		if a.menuPending && a.menuIntent == ui.MenuExit {
 			a.Quit = true
