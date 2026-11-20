@@ -529,3 +529,50 @@ func TestGMAmoveAndAsummonMoveAtOnce(t *testing.T) {
 		t.Fatal("a non-GM moved with /amove")
 	}
 }
+
+func TestGMSetStatAndSkillPoints(t *testing.T) {
+	account := testAccount(t)
+	id, err := db.CreateCharacter(account, db.NewCharacter{Slot: 4, Name: "GMPointsProbe", HP: 100, MP: 100, SP: 100, MapID: 60070})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pool, _ := db.Pool(db.GameData)
+	t.Cleanup(func() { pool.Exec(`DELETE FROM PS_GameData_Chars WHERE CharID=?`, id) })
+	ch, err := db.CharacterByID(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, packets := gmWireSession(t, ch, true)
+	state := game.New()
+	state.SelfID = id
+	for _, tc := range []struct {
+		command     string
+		stat, skill uint16
+	}{
+		{"/set statpoint 25", 25, ch.SkillPoint},
+		{"/set skillpoint 7", 25, 7},
+		{"/set statpoint 99999999", db.BaseStatCap, 7},
+	} {
+		if !s.handleGMCommand(tc.command) {
+			t.Fatal("command escaped to chat")
+		}
+		for done := false; !done; {
+			select {
+			case p := <-packets:
+				if _, err := state.Apply(p); err != nil {
+					t.Fatal(err)
+				}
+				done = proto.Op(p) == proto.GXGMState
+			case <-time.After(3 * time.Second):
+				t.Fatal("missing set confirmation")
+			}
+		}
+		saved, err := db.CharacterByID(id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if saved.StatPoint != tc.stat || saved.SkillPoint != tc.skill || state.Details.StatPoint != tc.stat || state.Details.SkillPoint != tc.skill {
+			t.Fatalf("%s: saved %d/%d client %d/%d", tc.command, saved.StatPoint, saved.SkillPoint, state.Details.StatPoint, state.Details.SkillPoint)
+		}
+	}
+}

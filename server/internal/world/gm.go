@@ -444,7 +444,7 @@ func (s *Session) gmMove(mapID uint16) error {
 	return nil
 }
 
-const gmSetUsage = "usage: /set money|kill|str|dex|rec|int|wis|luc amount"
+const gmSetUsage = "usage: /set money|kill|str|dex|rec|int|wis|luc|statpoint|skillpoint amount"
 
 // gmSet changes only the issuing character. Claimed rewards remain claimed.
 func (s *Session) gmSet(args []string) error {
@@ -458,7 +458,7 @@ func (s *Session) gmSet(args []string) error {
 		cap = db.MoneyCap
 	case "kill":
 		cap = pvpKillCap
-	case "str", "dex", "rec", "int", "wis", "luc":
+	case "str", "dex", "rec", "int", "wis", "luc", "statpoint", "skillpoint":
 		cap = db.BaseStatCap
 	default:
 		return fmt.Errorf("%s", gmSetUsage)
@@ -492,8 +492,13 @@ func (s *Session) gmSet(args []string) error {
 		next.Wis = uint16(value)
 	case "luc":
 		next.Luc = uint16(value)
+	case "statpoint":
+		next.StatPoint = uint16(value)
+	case "skillpoint":
+		next.SkillPoint = uint16(value)
 	}
-	stat := field != "money" && field != "kill"
+	points := field == "statpoint" || field == "skillpoint"
+	stat := field != "money" && field != "kill" && !points
 	if stat {
 		normalize(&next)
 	}
@@ -504,6 +509,9 @@ func (s *Session) gmSet(args []string) error {
 	s.syncPlayer()
 	if field == "money" {
 		s.send(buildSetMoney(next.Money), "GM set money")
+	} else if points {
+		// Unspent points are shown by the level-up record, which carries both.
+		s.send(buildLevelUp(packet.LevelUpSelf, &next), "GM set points")
 	} else if field == "kill" {
 		s.send(buildKillCountUpdate(0, next.Kills), "GM set kills")
 		w := packet.New(0x0522)
