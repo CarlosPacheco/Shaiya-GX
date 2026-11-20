@@ -217,3 +217,50 @@ func TestRaidSideListIsMovable(t *testing.T) {
 		t.Fatal("raid list position did not persist")
 	}
 }
+
+func TestRaidViewAndInfoPersistAndMoveGroupUsesPlainClicks(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	a := inputApp()
+	a.cfg.RememberLayout = true
+	a.partyUI, _ = ui.NewPartyPanel(inputTextures{})
+	a.state.SelfID = 1
+	a.state.Party.Raid, a.state.Party.Leader, a.state.Party.RaidSubLeader = true, 1, 1
+	a.state.Party.Members = []proto.PartyMember{{ID: 1}, {ID: 2}}
+	a.state.Party.RaidSlots = map[uint16]uint32{0: 1, 1: 2}
+	a.party.raidHidden = true
+	const w, h = 1024, 768
+	// The properties panel moves and is remembered.
+	x, y := a.partyUI.RaidInfoOrigin(w, h)
+	a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + 10, MouseY: y + 10}, w, h)
+	a.worldControls(&platform.Input{MouseDown: true, MouseX: x + 110, MouseY: y + 60}, w, h)
+	a.worldControls(&platform.Input{Clicked: true, MouseX: x + 110, MouseY: y + 60}, w, h)
+	if nx, ny := a.partyUI.RaidInfoOrigin(w, h); nx != x+100 || ny != y+50 {
+		t.Fatalf("info panel at %d,%d from %d,%d", nx, ny, x, y)
+	}
+	// Transparency and options survive.
+	a.partyUI.SetRaidViewSettings(.4, true, false)
+	a.saveUILayout()
+	b := inputApp()
+	b.cfg.RememberLayout = true
+	b.partyUI, _ = ui.NewPartyPanel(inputTextures{})
+	b.loadUILayout()
+	if o, c, g := b.partyUI.RaidViewSettings(); o != .4 || !c || g || b.partyUI.RaidInfoPosition != a.partyUI.RaidInfoPosition {
+		t.Fatalf("raid view not restored: %v %v %v", o, c, g)
+	}
+	// Move Group completes with a plain click on a cell, empty ones included.
+	a.performContextAction(1, contextAction{label: "Move group", slot: 1})
+	gx, gy := a.partyUI.RaidGridOrigin(w, h)
+	px, py := gx+98*2+5, gy+5 // slot 12: an empty cell of another group
+	a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: px, MouseY: py}, w, h)
+	a.worldControls(&platform.Input{Clicked: true, MouseX: px, MouseY: py}, w, h)
+	if a.party.moving {
+		t.Fatal("the click did not finish Move Group")
+	}
+}
+
+func TestEmptyRaidGroupTabsStayGrey(t *testing.T) {
+	slots := map[uint16]uint32{0: 1, 6: 2}
+	if !ui.RaidGroupUsed(slots, 0) || !ui.RaidGroupUsed(slots, 1) || ui.RaidGroupUsed(slots, 2) {
+		t.Fatal("group usage")
+	}
+}

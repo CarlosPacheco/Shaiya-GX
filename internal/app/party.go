@@ -198,6 +198,7 @@ func (a *App) syncUnionDraft() {
 // applyUnionConfig is the OK button (0x48e050 case 4): a conversion sends the
 // chosen settings, a raid sends what changed.
 func (a *App) applyUnionConfig() bool {
+	defer a.saveUILayout() // transparency and list options persist
 	p := &a.state.Party
 	division, auto := a.partyUI.RaidSettings()
 	if a.party.creating {
@@ -242,6 +243,7 @@ func (a *App) drawParty(w, h int) {
 	defer a.drawMemberBuffTooltip()
 	if a.state.Party.Raid {
 		a.partyUI.DrawRaidCompact(a.sprites, a.font, w, h, a.state.SelfID, members, a.state.Party.RaidSlots, a.state.Party.Leader, a.state.Target)
+		a.partyUI.DrawRaidInfo(a.sprites, a.font, w, h, a.raidInfoLines(), a.lastMouseX, a.lastMouseY, float32(a.frameDT))
 		if a.raidGridShown() {
 			moveSlot := -1
 			if a.party.moving {
@@ -497,4 +499,18 @@ func (a *App) drawMemberBuffTooltip() {
 	a.tooltip = []itemDetailLine{{name, [4]float32{1, 1, 0, 1}}}
 	a.tooltipItem, a.tooltipSockets = false, nil
 	a.tooltipDescription = strings.ReplaceAll(def.Description, `\n`, "\n")
+}
+
+// raidInfoLines are the raid properties panel's rows (0x513bc0): the join
+// mode with the original texts (6528, 6529/6530) and the member count. The
+// loot line of the original is left out for now.
+func (a *App) raidInfoLines() [2]string {
+	mode := a.msg.Get(6530)
+	if a.state.Party.RaidAutoJoin {
+		mode = a.msg.Get(6529)
+	}
+	return [2]string{
+		fmt.Sprintf("%s %s", a.msg.Get(6528), mode),
+		fmt.Sprintf("Members : %d", len(a.state.Party.Members)),
+	}
 }

@@ -124,12 +124,13 @@ func TestUnionMenusGL(t *testing.T) {
 		a.state.Party.Raid, a.state.Party.RaidSubLeader = true, 2
 		a.state.Party.RaidSlots = map[uint16]uint32{}
 		a.state.Party.Members = nil
-		for slot := uint16(0); slot < 30; slot++ {
+		for slot := uint16(0); slot < 9; slot++ {
 			id := uint32(slot) + 1
 			a.state.Party.RaidSlots[slot] = id
 			a.state.Party.Members = append(a.state.Party.Members, proto.PartyMember{ID: id, Name: fmt.Sprintf("Player %02d", id), Level: 60, Class: uint8(slot % 6), HP: 80, MaxHP: 100, MP: 60, MaxMP: 100, SP: 40, MaxSP: 100})
 		}
 		a.syncUnionState(false)
-		a.lastMouseX, a.lastMouseY = 560, 470
+		a.lastMouseX, a.lastMouseY = 130, 120
+		a.state.Party.RaidAutoJoin = true
 	})
 }

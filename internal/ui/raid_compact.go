@@ -20,10 +20,21 @@ func (p *PartyPanel) RaidCompactOrigin(w, h int) (int, int) {
 	return p.RaidCompactPosition.Origin(w, h, RaidCompactWidth, height, 25, 150)
 }
 
+// RaidGroupUsed reports whether any of the group's six slots holds a member.
+func RaidGroupUsed(slots map[uint16]uint32, group int) bool {
+	for i := 0; i < 6; i++ {
+		if slots[uint16(group*6+i)] != 0 {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *PartyPanel) syncRaidGroup(self uint32, slots map[uint16]uint32) {
-	if p.raidGroupInitialized && p.raidGroups {
+	if p.raidGroupInitialized && p.raidGroups && RaidGroupUsed(slots, p.raidGroup) {
 		return
 	}
+	p.raidGroupInitialized = false
 	for slot, id := range slots {
 		if id == self && slot < 30 {
 			p.raidGroup, p.raidGroupInitialized = int(slot)/6, true
@@ -76,7 +87,7 @@ func (p *PartyPanel) UpdateRaidCompact(in *platform.Input, w, h int, self uint32
 	}
 	selected := uint32(0)
 	if in.Clicked {
-		if p.raidTabHeld == tab+1 && tab >= 0 {
+		if p.raidTabHeld == tab+1 && tab >= 0 && tab < 5 && RaidGroupUsed(slots, tab) {
 			p.raidGroup, p.raidGroupInitialized = tab, true
 		} else if p.raidCompactHeld == id {
 			selected = id
@@ -94,7 +105,10 @@ func (p *PartyPanel) DrawRaidCompact(s *render.Sprites, f *Font, w, h int, self 
 		tint := [4]float32{1, 1, 1, 1}
 		for group := 0; group < 5; group++ {
 			v := float32(0)
-			if group == p.raidGroup {
+			switch {
+			case !RaidGroupUsed(slots, group):
+				v = .75 // an empty group stays grey: nothing to show there
+			case group == p.raidGroup:
 				v = .25
 			}
 			s.Draw(p.raidSelector, float32(x+20+group*24), float32(y+7), 32, 32, float32(group)/8, v, float32(group+1)/8, v+.25, tint)

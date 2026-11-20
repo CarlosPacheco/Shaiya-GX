@@ -23,6 +23,9 @@ type PartyPanel struct {
 	raidHeld                          int
 	raidCompactHeld                   uint32
 	raidGridHeld                      uint32
+	RaidInfoPosition                  WindowPosition // the raid properties panel
+	raidInfoFade                      float32
+	infoFill                          *render.Texture // message2: the panel's hover fill
 	RaidGridPosition                  WindowPosition  // the 30-cell raid window
 	mark                              *render.Texture // union_party_mark_small: leader / assistant
 	raidTabHeld                       int
@@ -43,7 +46,7 @@ type PartyPanel struct {
 
 func NewPartyPanel(t Textures) (*PartyPanel, error) {
 	ld := &loader{t: t}
-	p := &PartyPanel{frame: ld.get("party.png"), graph: ld.get("party_graph.png"), icons: ld.get("party_icon.png"), raidFrame: ld.get("union_party.png"), raidRows: ld.get("party2.png"), raidCheck: ld.get("chat_check.png"), raidSelector: ld.get("union_select.png"), mark: ld.get("union_party_mark_small.png"), raidSlider: ld.get("option_graphic_slider.png"), raidCompact: true, raidGroups: true, raidOpacity: 1}
+	p := &PartyPanel{frame: ld.get("party.png"), graph: ld.get("party_graph.png"), icons: ld.get("party_icon.png"), raidFrame: ld.get("union_party.png"), raidRows: ld.get("party2.png"), raidCheck: ld.get("chat_check.png"), raidSelector: ld.get("union_select.png"), mark: ld.get("union_party_mark_small.png"), infoFill: ld.get("message2.png"), raidSlider: ld.get("option_graphic_slider.png"), raidCompact: true, raidGroups: true, raidOpacity: 1}
 	p.raidClose = nativeClose(ld.get("talk1_close_button.png"), 549, 4)
 	p.raidOK = Button{Tex: ld.get("ok_button.png"), OffX: 380, OffY: 402, DrawW: 128, DrawH: 32, HitW: 65, HitH: 25, UV: FourRowUV}
 	p.raidCancel = Button{Tex: ld.get("cancel_button.png"), OffX: 467, OffY: 402, DrawW: 128, DrawH: 32, HitW: 65, HitH: 25, UV: FourRowUV}

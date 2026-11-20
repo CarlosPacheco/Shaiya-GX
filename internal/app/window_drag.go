@@ -314,16 +314,28 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
+	if a.partyUI != nil && a.state.Party.Raid {
+		x, y := a.partyUI.RaidInfoOrigin(w, h)
+		if pointInside(in, x, y, ui.RaidInfoWidth, ui.RaidInfoHeight) {
+			a.windowDrag = windowDrag{position: &a.partyUI.RaidInfoPosition, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: ui.RaidInfoWidth, height: ui.RaidInfoHeight}
+			a.wv.uiLeft = -2
+			return true
+		}
+	}
 	if a.partyUI != nil && a.raidGridShown() && !a.unionConfigCovers(in, w, h) {
 		x, y := a.partyUI.RaidGridOrigin(w, h)
 		if pointInside(in, x, y, ui.RaidGridWidth, ui.RaidGridHeight) {
+			slot := a.partyUI.RaidGridSlotAt(w, h, in.MouseX, in.MouseY)
 			id := uint32(0)
-			if slot := a.partyUI.RaidGridSlotAt(w, h, in.MouseX, in.MouseY); slot >= 0 {
+			if slot >= 0 {
 				id = a.state.Party.RaidSlots[uint16(slot)]
 			}
 			a.windowDrag = windowDrag{position: &a.partyUI.RaidGridPosition, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: ui.RaidGridWidth, height: ui.RaidGridHeight, portrait: true, pressX: in.MouseX, pressY: in.MouseY,
 				click: func() {
-					if id != 0 {
+					// A plain click either finishes Move Group (empty cells too) or selects.
+					if a.party.moving {
+						a.finishMove(slot)
+					} else if id != 0 {
 						a.state.Target = id
 					}
 				}}
@@ -346,9 +358,12 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 		onTabs := a.partyUI.RaidCompactGroups() && in.MouseY < body && in.MouseX >= x+20 && in.MouseX < x+140
 		if pointInside(in, x, y, ui.RaidCompactWidth, height) && !onTabs {
 			id := a.partyUI.RaidCompactMemberAt(w, h, in.MouseX, in.MouseY, a.state.SelfID, a.state.Party.RaidSlots)
+			slot := a.partyUI.RaidCompactSlotAt(w, h, in.MouseX, in.MouseY, a.state.SelfID, a.state.Party.RaidSlots)
 			a.windowDrag = windowDrag{position: &a.partyUI.RaidCompactPosition, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: ui.RaidCompactWidth, height: height, portrait: true, pressX: in.MouseX, pressY: in.MouseY,
 				click: func() {
-					if id != 0 {
+					if a.party.moving {
+						a.finishMove(slot)
+					} else if id != 0 {
 						a.state.Target = id
 					}
 				}}
@@ -399,6 +414,7 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 		out["raid"] = &a.partyUI.RaidPosition
 		out["raid_list"] = &a.partyUI.RaidCompactPosition
 		out["raid_grid"] = &a.partyUI.RaidGridPosition
+		out["raid_info"] = &a.partyUI.RaidInfoPosition
 	}
 	if a.mallUI != nil {
 		out["mall"] = &a.mallUI.Position
@@ -459,6 +475,13 @@ func uiLayoutPath() (string, error) {
 type savedWindowLayout struct {
 	ui.WindowPosition
 	Hidden bool `json:",omitempty"`
+	// Raid carries the raid window options (transparency, list and tabs) under "raid_view".
+	Raid *savedRaidView `json:",omitempty"`
+}
+
+type savedRaidView struct {
+	Opacity         float32
+	Compact, Groups bool
 }
 
 func (a *App) loadUILayout() {
@@ -486,6 +509,9 @@ func (a *App) loadUILayout() {
 			*position = saved.WindowPosition
 		}
 	}
+	if v, ok := values["raid_view"]; ok && v.Raid != nil && a.partyUI != nil {
+		a.partyUI.SetRaidViewSettings(v.Raid.Opacity, v.Raid.Compact, v.Raid.Groups)
+	}
 	if a.actionBar != nil {
 		a.actionBar.HideSecond = values["action_bar_1"].Hidden
 		if third, ok := values["action_bar_2"]; ok {
@@ -507,6 +533,10 @@ func (a *App) saveUILayout() {
 		values := make(map[string]savedWindowLayout, len(positions))
 		for key, position := range positions {
 			values[key] = savedWindowLayout{WindowPosition: *position, Hidden: key == "action_bar_1" && a.actionBar.HideSecond || key == "action_bar_2" && !a.actionBar.ShowThird}
+		}
+		if a.partyUI != nil {
+			opacity, compact, groups := a.partyUI.RaidViewSettings()
+			values["raid_view"] = savedWindowLayout{Raid: &savedRaidView{Opacity: opacity, Compact: compact, Groups: groups}}
 		}
 		data, err = json.Marshal(values)
 		if err == nil {
