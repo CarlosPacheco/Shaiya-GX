@@ -1,19 +1,19 @@
 # Shaiya GX portable client and server
 
-## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1E6IkTncfp3Yal4OshmTGu6kWsxs1aCqs/view?usp=sharing)
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1TPyHqlapcyItIbuVFsL5ISzapfQPbnPC/view?usp=sharing)
 
-**gx-v0.1.13 for Windows and Linux.** This Google Drive package includes both
+**gx-v0.1.14 for Windows and Linux.** This Google Drive package includes both
 executables, GX Server, GX Studio, client game data, fonts and the development database.
 **Everything is included; no separate data download is needed.**
 Extract the entire package into a writable folder:
 
 ```text
-Shaiya GX gx-v0.1.13 Portable/
+Shaiya GX gx-v0.1.14 Portable/
   Client/
     Shaiya GX
     Shaiya GX.exe
     data/
-    licenses/
+    Studio/
   Server/
     build/
     data/
@@ -21,12 +21,11 @@ Shaiya GX gx-v0.1.13 Portable/
 
 Start `Server/build/gx_console` on Linux or `Server/build/gx_console.exe` on Windows,
 then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
-Keep `Client/data/` beside the client executables and preserve all licenses.
+Keep `Client/data/` beside the client executables.
 
 **Latest binary update: [gx-v0.1.14](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.14).**
-The Drive download above contains gx-v0.1.13. Use matching loose client data and preserve your
-server runtime when updating. See the [upgrade guide](releases/gx-v0.1.14-upgrade.md).
-In the new combined package, GX Studio is in Client/Studio/.
+Preserve your server runtime when updating. See the [upgrade guide](releases/gx-v0.1.14-upgrade.md).
+GX Studio is in `Client/Studio/`.
 
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
 Server packages include all 68 physics/navigation maps, the approved development

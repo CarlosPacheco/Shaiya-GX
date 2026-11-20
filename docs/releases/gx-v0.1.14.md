@@ -8,6 +8,6 @@ Changes since gx-v0.1.13.
 - **GX Server and Studio.** Edit game catalogs through the native files and SQLite as appropriate. The distributed development seed has schema migration 31 and retains the existing test accounts and inventory.
 - **Downloads.** The native Windows and Linux archives include GX Studio, the terminal GX Server, fonts and server resources. Setup and upgrade instructions are maintained in the repository.
 
-Use matching gx-v0.1.14 loose client data. The existing Google Drive download contains the full gx-v0.1.13 package. GitHub hosts the gx-v0.1.14 binaries and server data.
+The [complete gx-v0.1.14 portable on Google Drive](https://drive.google.com/file/d/1TPyHqlapcyItIbuVFsL5ISzapfQPbnPC/view?usp=sharing) includes the client, GX Server, GX Studio and matching loose client data for Windows and Linux. GitHub hosts the native binaries and server resources.
 
 [Upgrade guide](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/releases/gx-v0.1.14-upgrade.md) · [Quickstart](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/quickstart.md)

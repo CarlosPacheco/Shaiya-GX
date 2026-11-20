@@ -61,7 +61,7 @@ administration tools, not required for ordinary account creation.
 
 ## Run the client
 
-Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1E6IkTncfp3Yal4OshmTGu6kWsxs1aCqs/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. The Drive folder includes the matching gx-v0.1.13 client/server builds, GX Studio and complete game data. Follow the
+Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1TPyHqlapcyItIbuVFsL5ISzapfQPbnPC/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. The Drive folder includes the matching gx-v0.1.14 client/server builds, GX Studio and complete game data. Follow the
 [upgrade guide](releases/gx-v0.1.14-upgrade.md).
 The game discovers its data automatically; no build tools or data conversion are needed.
 
