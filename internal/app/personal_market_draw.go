@@ -71,21 +71,11 @@ func (a *App) drawPersonalMarketModal(w int) {
 		a.tooltip = nil
 		q := a.quantityUI
 		q.Draw(a.sprites, a.font)
-		text := fmt.Sprintf("Total: %d G", uint64(q.Value())*uint64(d.price))
-		a.drawMarketDialogCaption(text, q.X, q.Y, ui.QuantityWidth, w)
 	case proto.MyShopAdd, proto.MyShopPrice:
 		a.tooltip = nil
 		m := a.exchangeMoney
 		m.Draw(a.sprites, a.font)
-		a.drawMarketDialogCaption("Unit price (gold)", m.X, m.Y, 200, w)
 	}
-}
-
-func (a *App) drawMarketDialogCaption(text string, x, y, width, w int) {
-	y = max(y-a.font.Height-4, 0)
-	width = min(w-x, width)
-	a.sprites.Draw(a.white, float32(x), float32(y), float32(width), float32(a.font.Height+4), 0, 0, 1, 1, ui.RGBColor(0x24201a))
-	a.font.Draw(a.sprites, text, x+6, y+2, white, max(0, width-12))
 }
 
 func (a *App) drawPersonalMarketSigns(w, h int) {
