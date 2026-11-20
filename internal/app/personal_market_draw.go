@@ -113,12 +113,14 @@ func (a *App) drawPersonalMarketSigns(w, h int) {
 		if !ok {
 			continue
 		}
-		width, height := min(292, f.Width(title))+16, f.Height+8
+		// The common speech bubble (gray, translucent) with green text.
+		textWidth := min(292, f.Width(title))
+		width, height := textWidth+20, 30
 		left, top := x-width/2, y-height-40
 		if a.scene3d.OccludedLabel(pos, left, top, width, height, w, h) {
 			continue
 		}
-		a.sprites.Draw(a.white, float32(left), float32(top), float32(width), float32(height), 0, 0, 1, 1, [4]float32{.18, .12, .06, .86})
-		f.Draw(a.sprites, title, left+8, top+4, ui.RGBColor(0xf0cd8b), width-16)
+		a.sprites.Draw(a.white, float32(left), float32(top), float32(width), float32(height), 0, 0, 1, 1, [4]float32{72.0 / 255, 72.0 / 255, 72.0 / 255, 128.0 / 255})
+		f.Draw(a.sprites, title, left+10, top+(height-f.Height)/2, ui.RGBColor(0x33ff33), textWidth)
 	}
 }
