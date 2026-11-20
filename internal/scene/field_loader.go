@@ -20,6 +20,7 @@ const (
 	fieldSMOD
 	fieldVANI
 	fieldTextureIndex
+	fieldTerrain
 )
 
 type fieldAssetKey struct {
@@ -29,9 +30,11 @@ type fieldAssetKey struct {
 type fieldAssetJob struct {
 	key        fieldAssetKey
 	generation uint64
+	terrain    terrainBatchKey
 }
 type fieldAssetResult struct {
 	textureIndex map[string]string
+	terrain      *terrainBatchCPU
 	lods         [][]staticLODCPU
 	cullBack     []bool
 	job          fieldAssetJob
@@ -40,7 +43,10 @@ type fieldAssetResult struct {
 	vani         *world.VANI
 	err          error
 }
-type fieldAssetState struct{ result *fieldAssetResult }
+type fieldAssetState struct {
+	result     *fieldAssetResult
+	generation uint64
+}
 
 // Workers own file reads and CPU decoding only. States, GPU uploads and caches
 // belong exclusively to the render thread. Four jobs bound in-flight work.
@@ -58,7 +64,7 @@ type fieldLoader struct {
 	pinned        map[fieldAssetKey]bool
 }
 
-func newFieldLoader(arc *archive.Archive) *fieldLoader {
+func newFieldLoader(arc *archive.Archive, geometry *World) *fieldLoader {
 	ctx, cancel := context.WithCancel(context.Background())
 	l := &fieldLoader{cancel: cancel, jobs: make(chan fieldAssetJob, 4), results: make(chan fieldAssetResult, 4)}
 	l.reset()
@@ -78,6 +84,8 @@ func newFieldLoader(arc *archive.Archive) *fieldLoader {
 				var err error
 				if job.key.kind == fieldTextureIndex {
 					r.textureIndex = textureFileIndex(arc)
+				} else if job.key.kind == fieldTerrain {
+					r.terrain = buildTerrainBatch(geometry, job.terrain)
 				} else {
 					b, err = arc.ReadFile(job.key.file)
 				}
@@ -118,7 +126,7 @@ func (l *fieldLoader) reset() {
 // tools retain synchronous loading unless they explicitly opt in.
 func (w *World) EnableAsyncStreaming() {
 	if w.stream != nil && w.stream.loader == nil {
-		w.stream.loader = newFieldLoader(w.stream.assets.Arc)
+		w.stream.loader = newFieldLoader(w.stream.assets.Arc, w)
 	}
 }
 func (s *fieldStream) assetCached(k fieldAssetKey) bool {
@@ -138,25 +146,28 @@ func (s *fieldStream) assetCached(k fieldAssetKey) bool {
 	return false
 }
 func (s *fieldStream) requestAsset(kind fieldAssetKind, file string) *fieldAssetState {
-	l := s.loader
 	k := fieldAssetKey{kind, strings.ToLower(file)}
-	l.pinned[k] = true
+	s.loader.pinned[k] = true
 	if s.assetCached(k) {
 		return nil
 	}
+	return s.loader.request(k, terrainBatchKey{})
+}
+
+func (l *fieldLoader) request(k fieldAssetKey, terrain terrainBatchKey) *fieldAssetState {
 	if state := l.states[k]; state != nil {
 		return state
 	}
-	if (kind == fieldSMOD || kind == fieldVANI) && l.decodedModels > 0 {
+	if (k.kind == fieldSMOD || k.kind == fieldVANI) && l.decodedModels >= 2 {
 		return nil
 	}
 	if l.outstanding >= 4 {
 		return nil
 	}
-	state := &fieldAssetState{}
+	state := &fieldAssetState{generation: l.generation}
 	l.states[k] = state
 	l.outstanding++
-	l.jobs <- fieldAssetJob{k, l.generation}
+	l.jobs <- fieldAssetJob{key: k, generation: l.generation, terrain: terrain}
 	return state
 }
 func (s *fieldStream) pollAssets(deadline time.Time) {
@@ -169,11 +180,8 @@ func (s *fieldStream) pollAssets(deadline time.Time) {
 				s.assets.byStem = result.textureIndex
 				continue
 			}
-			if result.job.generation != l.generation {
-				continue
-			}
 			state := l.states[result.job.key]
-			if state == nil {
+			if state == nil || state.generation != result.job.generation {
 				continue
 			}
 			state.result = &result
@@ -280,7 +288,15 @@ func (s *fieldStream) prepareCellAssets(key cellKey, deadline time.Time) bool {
 			if x0 < 0 || z0 < 0 || max(x0, sx*section) >= min(x1, (sx+1)*section) || max(z0, sz*section) >= min(z1, (sz+1)*section) {
 				continue
 			}
-			if _, ok := s.materials[sz*n+sx]; ok {
+			id := sz*n + sx
+			group := terrainBatchKey{key.x / terrainBatchCells, key.z / terrainBatchCells, id}
+			if s.terrainBatches[group] == nil {
+				state := s.loader.request(terrainAssetKey(group), group)
+				if state == nil || state.result == nil {
+					ready = false
+				}
+			}
+			if _, ok := s.materials[id]; ok {
 				continue
 			}
 			stem := fmt.Sprintf("world/Field/%s/%s_%d%d", s.stem, s.stem, sz, sx)

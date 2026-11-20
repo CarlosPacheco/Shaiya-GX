@@ -766,3 +766,39 @@ and 11.032 → 10.178 ms for 600 bots (four pairs). The 600-bot projection-only
 variant measured 10.251 ms. The draws remained near 630 and 867 per frame.
 The measurements use a hidden Linux window on a shared desktop with an
 RTX 3050 and Ryzen 7 5700G and exclude display presentation.
+
+## Map geometry, terrain streaming and reflections
+
+Static map geometry stays in a bounded GPU cache with its placement
+transforms. On drivers with bindless textures and shader draw parameters,
+each camera uploads the visible placement IDs, materials and indirect
+commands. The renderer preserves native draw order and groups compatible
+commands. Drivers missing these extensions retain ordinary and instanced
+draws. Visibility workers test cached dungeon bounds and field placements.
+Animated map models retain their original animation and draw paths.
+
+Terrain workers prepare fixed four-by-four blocks. A block remains resident
+while any of its cells is needed, and the render thread submits the visible
+ranges. Terrain overlays keep the original framebuffer blending and use one
+indirect submission per block when supported. Masks whose authored alpha
+levels all fall below the original threshold can be skipped after the base
+layer. Water reflection rendering uses a conservative viewport region padded
+for normal-map displacement and filtering. A receiver near the camera or
+uncertain coverage uses the full reflection target.
+
+Three 420-frame runs per case at 1280×720, with fixed cameras on the RTX 3050
+and Ryzen 7 5700G shared Linux desktop. CPU times are median submission times
+including driver waits. GPU figures are mean timestamp intervals.
+
+| Fixture | CPU ms before → after | GPU ms before → after | GL draws/frame before → after |
+|---|---:|---:|---:|
+| Dungeon map 15 | 4.580 → 1.840 | 4.658 → 1.885 | 1,501 → 418 |
+| Map 1 coast with reflections | 4.738 → 2.450 | 4.788 → 2.457 | 816 → 198 |
+| Map 1 coast with reflections disabled | 2.884 → 1.383 | 2.907 → 1.408 | 412 → 117 |
+| Map 1 field | 0.605 → 0.541 | 0.736 → 0.690 | 165 → 71 |
+
+Renderer-owned GPU memory rose by 5–9 MiB in these scenes. Real map draw
+comparisons test dungeon alpha and lightmaps, field terrain and placements,
+and the final water composite with full and cropped reflections. The packed
+field path differed by up to two channels per captured frame, each by one
+8-bit level. Asynchronous route tests cover movement and terrain residency.

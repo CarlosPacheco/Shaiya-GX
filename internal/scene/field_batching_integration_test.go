@@ -62,6 +62,8 @@ func TestFieldBatchingPreservesVisiblePixelsGL(t *testing.T) {
 			if !w.Ready() {
 				t.Fatal("stream not ready")
 			}
+			w.prepareMapBatch()
+			placements := w.mapBatch.Transforms
 			// Reference traversal follows native passes and stable material priority,
 			// independently of instancing and camera visibility.
 			nativeOrder := append([]int(nil), w.stream.drawObjects...)
@@ -77,7 +79,7 @@ func TestFieldBatchingPreservesVisiblePixelsGL(t *testing.T) {
 			for turn := 0; turn < 8; turn++ {
 				angle := float64(turn) * math.Pi / 4
 				r.View = render.LookAtLH(origin, origin.Add(render.V3{float32(math.Sin(angle)), -.12, float32(math.Cos(angle))}), render.V3{0, 1, 0})
-				draw := func(optimized, clipCulling bool) ([]byte, int, time.Duration) {
+				draw := func(optimized, clipCulling, packed bool) ([]byte, int, time.Duration) {
 					gl.Viewport(0, 0, 640, 360)
 					gl.DepthMask(true)
 					gl.ClearColor(.13, .17, .2, 1)
@@ -87,6 +89,10 @@ func TestFieldBatchingPreservesVisiblePixelsGL(t *testing.T) {
 					render.ResetDrawCalls()
 					start := time.Now()
 					if optimized {
+						w.mapBatch.Transforms = nil
+						if packed {
+							w.mapBatch.Transforms = placements
+						}
 						w.stream.drawWithClipCulling(r, clipCulling)
 					} else {
 						s := w.stream
@@ -130,30 +136,33 @@ func TestFieldBatchingPreservesVisiblePixelsGL(t *testing.T) {
 					gl.ReadPixels(0, 0, 640, 360, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
 					return pixels, count, elapsed
 				}
-				before, oldCalls, oldCPU := draw(false, false)
-				after, newCalls, newCPU := draw(true, true)
-				different, largest := 0, 0
-				for i, v := range before {
-					d := int(v) - int(after[i])
-					if d < 0 {
-						d = -d
+				before, oldCalls, oldCPU := draw(false, false, false)
+				for _, packed := range []bool{false, true} {
+					after, newCalls, newCPU := draw(true, true, packed)
+					different, largest := 0, 0
+					for i, v := range before {
+						d := int(v) - int(after[i])
+						if d < 0 {
+							d = -d
+						}
+						if d != 0 {
+							different++
+						}
+						largest = max(largest, d)
 					}
-					if d != 0 {
-						different++
+					t.Logf("map=%s turn=%d packed=%t draws=%d -> %d CPU submission=%s -> %s differing channels=%d max=%d", tc.stem, turn, packed, oldCalls, newCalls, oldCPU, newCPU, different, largest)
+					// Compute-side transforms can round a few 8-bit channels by one.
+					if different != 0 && (!packed || largest > 1 || different > len(before)/100_000) {
+						t.Errorf("map %s turn %d packed=%t changed %d channels (max %d)", tc.stem, turn, packed, different, largest)
 					}
-					largest = max(largest, d)
-				}
-				t.Logf("map=%s turn=%d draws=%d -> %d CPU submission=%s -> %s differing channels=%d max=%d", tc.stem, turn, oldCalls, newCalls, oldCPU, newCPU, different, largest)
-				if different != 0 {
-					t.Errorf("map %s turn %d changed %d channels (max %d)", tc.stem, turn, different, largest)
-				}
-				if newCalls >= oldCalls {
-					t.Error("draw count did not improve")
+					if newCalls >= oldCalls {
+						t.Error("draw count did not improve")
+					}
 				}
 				if tc.stem == "1" && turn == 0 {
 					r.ClipPlane = [4]float32{0, 1, 0, 0}
-					beforeClip, beforeCalls, _ := draw(true, false)
-					afterClip, afterCalls, _ := draw(true, true)
+					beforeClip, beforeCalls, _ := draw(true, false, true)
+					afterClip, afterCalls, _ := draw(true, true, true)
 					for i := range beforeClip {
 						if beforeClip[i] != afterClip[i] {
 							t.Fatalf("clip culling changed field pixel channel %d", i)

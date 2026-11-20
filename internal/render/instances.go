@@ -20,6 +20,10 @@ func (s *Scene3D) Delete() {
 		s.effectStream.Delete()
 	}
 	s.effectPipeline.delete()
+	gl.DeleteProgram(s.mapPipeline.draw)
+	gl.DeleteProgram(s.mapPipeline.compute)
+	gl.DeleteProgram(s.terrainOverlay.prog)
+	s.terrainOverlay.indirect.delete()
 	s.ReleaseWaterBackground()
 	if s.terrainIndirect != 0 {
 		gl.DeleteBuffers(1, &s.terrainIndirect)

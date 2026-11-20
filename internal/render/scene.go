@@ -215,6 +215,7 @@ type Scene3D struct {
 	effectPass                                                effectPassState
 	effectQueue                                               effectQueue
 	effectPipeline                                            effectPipeline
+	mapPipeline                                               mapPipeline
 	prog                                                      uint32
 	uWorld, uViewProj, uView, uLight, uAmb, uLit, uMode, uRef int32
 	uFogColor, uFogRange, uTile, uTint, uUVOff                int32
@@ -225,6 +226,7 @@ type Scene3D struct {
 	terrainIndirect                                           uint32
 	terrainIndirectBytes                                      uint64
 	terrainCommands                                           []terrainCommand
+	terrainOverlay                                            terrainOverlay
 	View, Proj, SkyProj                                       M4
 	LightDir                                                  V3
 	Ambient                                                   float32
@@ -232,6 +234,7 @@ type Scene3D struct {
 	FogColor                                                  V3
 	FogStart, FogEnd                                          float32
 	ClipPlane                                                 [4]float32 // world-space half-plane; zero disables clipping
+	CullProjection                                            M4         // optional cropped reflection frustum
 	WaterReflection                                           *WaterTarget
 	WaterNormals                                              [2]*Texture
 	WaterTime                                                 float32
@@ -346,6 +349,10 @@ func (s *Scene3D) drawModel(m *Mesh, t *Texture, world M4, alphaRef float32, ble
 	if s.meshOccluded(m, world) {
 		return
 	}
+	s.drawVisibleModel(m, t, world, alphaRef, blend, lit)
+}
+
+func (s *Scene3D) drawVisibleModel(m *Mesh, t *Texture, world M4, alphaRef float32, blend, lit bool) {
 	s.setWorld(world)
 	gl.Uniform1i(s.uMode, 0)
 	if s.Shadow {
@@ -459,7 +466,11 @@ func (s *Scene3D) DrawUnlitTint(m *Mesh, t *Texture, world M4, tint [4]float32, 
 
 // DrawLightmapped draws DG geometry: texture * lightmap (clamp), unlit.
 func (s *Scene3D) DrawLightmapped(m *Mesh, t, lm *Texture) {
-	if s.meshOccluded(m, Identity()) {
+	s.drawLightmapped(m, t, lm, false)
+}
+
+func (s *Scene3D) drawLightmapped(m *Mesh, t, lm *Texture, visible bool) {
+	if !visible && s.meshOccluded(m, Identity()) {
 		return
 	}
 	id := Identity()

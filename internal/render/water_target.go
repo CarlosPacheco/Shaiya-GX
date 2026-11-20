@@ -45,6 +45,11 @@ func NewWaterTarget(width, height int) (*WaterTarget, error) {
 // Capture preserves target bindings, viewport, scissor and clear values.
 // The caller restores its camera and scene program after the callback.
 func (t *WaterTarget) Capture(clear V3, draw func()) {
+	t.CaptureRegion(clear, FullScreenRegion, draw)
+}
+
+// CaptureRegion leaves the sampling coordinates and target size unchanged.
+func (t *WaterTarget) CaptureRegion(clear V3, region ScreenRegion, draw func()) {
 	var framebuffer, read int32
 	var viewport, scissor [4]int32
 	var color [4]float32
@@ -63,6 +68,11 @@ func (t *WaterTarget) Capture(clear V3, draw func()) {
 	gl.ClearDepth(depth)
 	gl.ClearColor(clear[0], clear[1], clear[2], 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	if region != FullScreenRegion {
+		x, y, w, h := region.Pixels(t.width, t.height)
+		gl.Scissor(x, y, w, h)
+		gl.Enable(gl.SCISSOR_TEST)
+	}
 	restoreAlpha := KeepSceneAlphaOpaque()
 	draw()
 	restoreAlpha()

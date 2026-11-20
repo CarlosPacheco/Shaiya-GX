@@ -24,7 +24,8 @@ type World struct {
 	collision           *collision.Index
 	physics             *mapgeometry.Geometry
 	movingColliders     []mapgeometry.Dynamic
-	dungeonInstances    []render.M4
+	mapBatch            render.MapBatch
+	dungeonPlan         dungeonDrawPlan
 	occlusion           *render.TerrainOcclusion
 	occlusionRevision   uint64
 	occlusionEye        render.V3
@@ -230,6 +231,9 @@ func (w *World) addObjects(a *Assets) {
 
 // Draw renders terrain passes, the lightmap and the objects.
 func (w *World) Draw(s *render.Scene3D) {
+	if len(w.mapBatch.Transforms) == 0 {
+		w.prepareMapBatch()
+	}
 	if w.stream != nil {
 		w.stream.draw(s)
 	}
@@ -237,17 +241,7 @@ func (w *World) Draw(s *render.Scene3D) {
 		drawSection(s, sec)
 	}
 	frustum := render.ViewFrustum(s.View, s.VisibilityProjection())
-	for _, p := range w.dg {
-		if !frustum.BoxVisible(p.minimum, p.maximum) || !render.ClipBoxVisible(s.ClipPlane, p.minimum, p.maximum) || s.OccludedBox(p.minimum, p.maximum) {
-			continue
-		}
-		if p.lightmap != nil {
-			s.DrawLightmapped(p.mesh, p.tex, p.lightmap)
-		} else {
-			// No lightmap pages: EP5 material (Phoenix draws it the same way).
-			s.DrawModel(p.mesh, p.tex, render.Identity(), render.NativeWorldAlphaRef(true), false)
-		}
-	}
+	w.drawDG(s, frustum)
 	for _, rotor := range w.rotors {
 		transform := rotor.transform(w.DynamicTime())
 		if !dungeonModelVisible(s, frustum, rotor.model, transform) {
@@ -257,11 +251,10 @@ func (w *World) Draw(s *render.Scene3D) {
 			if !dungeonMeshVisible(s, frustum, p.Mesh, transform) {
 				continue
 			}
-			s.DrawWorldModel(p.Mesh, p.Tex, transform, render.NativeWorldAlphaRef(true))
+			s.DrawVisibleWorldModel(p.Mesh, p.Tex, transform, render.NativeWorldAlphaRef(true))
 		}
 	}
-	// Retain native MAni/SMOD order; consecutive single-material placements
-	// can share a draw without reordering overlapping material parts.
+	// Keep native MAni/SMOD order across the packed draw commands.
 	w.drawDungeonObjects(s, frustum)
 
 	for _, vani := range w.vanis {

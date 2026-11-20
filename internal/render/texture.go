@@ -10,6 +10,7 @@ import (
 
 type Texture struct {
 	Opaque        bool // proven full alpha coverage at every authored mip
+	EmptyMask     bool // all terrain alpha samples are below the overlay threshold
 	bytes         uint64
 	ID            uint32
 	W, H          int
@@ -107,6 +108,7 @@ func uploadTexture(t img.Texture, world bool) *Texture {
 	tex := &Texture{ID: id}
 	if world {
 		tex.Opaque = img.Opaque(t)
+		tex.EmptyMask = !tex.Opaque && img.TerrainMaskEmpty(t)
 	}
 	if t.DDS != nil {
 		d := t.DDS

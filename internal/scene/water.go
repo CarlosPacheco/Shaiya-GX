@@ -151,10 +151,14 @@ func (water *waterSurface) indexTerrain(w *World) {
 // DrawWater follows the original WTR flipbook. Transparent surfaces draw after
 // opaque actors/geometry, so submerged models retain the water's attenuation.
 func (w *World) DrawWater(s *render.Scene3D) {
-	water := w.water
-	if !w.WaterVisible(s.View, s.Proj) {
-		return
+	if w.WaterVisible(s.View, s.Proj) {
+		w.DrawVisibleWater(s)
 	}
+}
+
+// DrawVisibleWater accepts the visibility result from the same camera pass.
+func (w *World) DrawVisibleWater(s *render.Scene3D) {
+	water := w.water
 	s.Begin()
 	if len(water.frames) > 0 {
 		index := water.definition.FrameAt(w.elapsed)
@@ -173,40 +177,48 @@ func (w *World) DrawWater(s *render.Scene3D) {
 
 // WaterVisible is conservative for the map-wide flat WTR surface.
 func (w *World) WaterVisible(view, projection render.M4) bool {
+	visible, _ := w.WaterCoverage(view, projection, false)
+	return visible
+}
+
+// WaterCoverage bounds the screen region that can sample the reflection.
+// An uncertain receiver or near-plane crossing retains the full target.
+func (w *World) WaterCoverage(view, projection render.M4, region bool) (bool, render.ScreenRegion) {
+	full := render.FullScreenRegion
 	if w == nil || w.water == nil || w.WLD == nil {
-		return false
+		return false, full
 	}
 	size := float32(w.WLD.MapSize)
 	frustum := render.ViewFrustum(view, projection)
 	if !frustum.BoxVisible(render.V3{0, waterSurfaceY, 0}, render.V3{size, waterSurfaceY, size}) {
-		return false
+		return false, full
 	}
 	water, stream := w.water, w.stream
 	if !water.indexed || stream == nil || !w.Ready() || projection[0] == 0 || projection[5] == 0 || projection[10] <= 1 || projection[14] >= 0 {
-		return true
+		return true, full
 	}
 	for _, v := range view {
 		if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {
-			return true
+			return true, full
 		}
 	}
 	// Inverse() returns identity for a singular matrix; it must not turn an
 	// unknown camera into an apparent in-map viewpoint.
 	det := view[0]*(view[5]*view[10]-view[6]*view[9]) - view[4]*(view[1]*view[10]-view[2]*view[9]) + view[8]*(view[1]*view[6]-view[2]*view[5])
 	if math.Abs(float64(det)) < 1e-6 || view[3] != 0 || view[7] != 0 || view[11] != 0 || view[15] != 1 {
-		return true
+		return true, full
 	}
 	far := projection[14] / (1 - projection[10])
 	near := -projection[14] / projection[10]
 	if far <= 0 || near <= 0 || math.IsNaN(float64(far)) || math.IsInf(float64(far), 0) {
-		return true
+		return true, full
 	}
 	// Only trust occlusion when the full view is resident and all loaded
 	// terrain sections have at least one opaque layer.
 	rx, ry := float64(1/projection[0]), float64(1/projection[5])
 	required := far * float32(math.Sqrt(1+rx*rx+ry*ry))
 	if math.IsNaN(float64(required)) || math.IsInf(float64(required), 0) || stream.radius+stream.size()*.25 < required {
-		return true
+		return true, full
 	}
 	for _, mat := range stream.materials {
 		opaque := false
@@ -217,28 +229,64 @@ func (w *World) WaterVisible(view, projection render.M4) bool {
 			}
 		}
 		if !opaque {
-			return true
+			return true, full
 		}
 	}
 	if len(stream.materials) == 0 {
-		return true
+		return true, full
 	}
 	inverse := view.Inverse()
 	eye := render.V3{inverse[12], inverse[13], inverse[14]}
 	if math.IsNaN(float64(eye[0])) || math.IsNaN(float64(eye[1])) || math.IsNaN(float64(eye[2])) || math.IsInf(float64(eye[0]), 0) || math.IsInf(float64(eye[1]), 0) || math.IsInf(float64(eye[2]), 0) || eye[0] < 0 || eye[2] < 0 || eye[0] > size || eye[2] > size || eye[1] <= w.Height(eye[0], eye[2])+near*2 {
-		return true
+		return true, full
 	}
 	cellSize := stream.size()
 	if stream.center != (cellKey{int(math.Floor(float64(eye[0] / cellSize))), int(math.Floor(float64(eye[2] / cellSize)))}) {
-		return true
+		return true, full
 	}
+	rect := render.ScreenRegion{X0: 1, Y0: 1}
+	minDepth := float32(math.MaxFloat32)
+	vp := view.Mul(projection)
+	visible := false
 	for _, cell := range water.wetCells {
 		x, z := float32(cell.x)*cellSize, float32(cell.z)*cellSize
-		if frustum.BoxVisible(render.V3{x - .01, waterSurfaceY - .01, z - .01}, render.V3{min(x+cellSize, size) + .01, waterSurfaceY + .01, min(z+cellSize, size) + .01}) {
-			return true
+		lo := render.V3{x - .01, waterSurfaceY - .01, z - .01}
+		hi := render.V3{min(x+cellSize, size) + .01, waterSurfaceY + .01, min(z+cellSize, size) + .01}
+		if !frustum.BoxVisible(lo, hi) {
+			continue
+		}
+		visible = true
+		if !region {
+			return true, full
+		}
+		for i := range 8 {
+			p := lo
+			for axis := range 3 {
+				if i&(1<<axis) != 0 {
+					p[axis] = hi[axis]
+				}
+			}
+			depth := p[0]*vp[3] + p[1]*vp[7] + p[2]*vp[11] + vp[15]
+			if depth <= near {
+				return true, full
+			}
+			minDepth = min(minDepth, depth)
+			u := ((p[0]*vp[0]+p[1]*vp[4]+p[2]*vp[8]+vp[12])/depth + 1) * .5
+			v := ((p[0]*vp[1]+p[1]*vp[5]+p[2]*vp[9]+vp[13])/depth + 1) * .5
+			rect.X0, rect.X1 = min(rect.X0, u), max(rect.X1, u)
+			rect.Y0, rect.Y1 = min(rect.Y0, v), max(rect.Y1, v)
 		}
 	}
-	return false
+	if !visible {
+		return false, full
+	}
+	// The four normal samples can shift reflection UV by at most .128*.95/z.
+	// Reflections without normal maps use screen UV directly.
+	margin := float32(0)
+	if w.HasWaterNormals() {
+		margin = .122 / max(minDepth, .1)
+	}
+	return true, rect.Expand(margin, margin)
 }
 
 func (w *World) HasWaterNormals() bool {

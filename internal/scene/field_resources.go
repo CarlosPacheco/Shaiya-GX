@@ -140,6 +140,7 @@ func (s *fieldStream) trim() {
 		}
 		delete(s.assets.textures, file)
 	}
+	s.world.mapBatch.Trim()
 	s.prepareDrawEntries()
 }
 
@@ -148,9 +149,6 @@ func (s *fieldStream) trim() {
 func (s *fieldStream) prepareDrawEntries() {
 	if s.batches == nil {
 		s.batches = map[modelBatchKey]*fieldModelBatch{}
-	}
-	for _, b := range s.batches {
-		b.worlds = b.worlds[:0]
 	}
 	clear(s.drawEntries)
 	clear(s.modelBatches)
@@ -181,7 +179,7 @@ func (s *fieldStream) prepareDrawEntries() {
 	}
 	for _, id := range s.drawObjects {
 		o := &s.objects[id]
-		entry := fieldDrawEntry{object: o}
+		entry := fieldDrawEntry{object: o, placement: uint32(len(s.world.Objects) + 1 + id)}
 		resource := &s.resources[o.resourceID]
 		if o.vani {
 			entry.vani = resource.vani
@@ -200,6 +198,9 @@ func (s *fieldStream) prepareDrawEntries() {
 			}
 			batch := resource.batches[pass]
 			entry.batch = batch
+			if o.rotor != nil {
+				batch.dynamic = true
+			}
 			if !o.drawBoundsValid {
 				o.drawCenter = transformPoint(m.center, o.world)
 				o.drawRadius = m.radius * o.scale
@@ -262,9 +263,9 @@ func (s *fieldStream) drawWithClipCulling(r *render.Scene3D, clipCulling bool) {
 
 	s.lodInstances, s.submittedTriangles, s.detailCulled = 0, 0, 0
 	for _, batch := range s.modelBatches {
-		batch.worlds = batch.worlds[:0]
-		for i := range batch.lodWorlds {
-			batch.lodWorlds[i] = batch.lodWorlds[i][:0]
+		for i := range 3 {
+			batch.placements[i] = batch.placements[i][:0]
+			batch.worlds[i] = batch.worlds[i][:0]
 		}
 	}
 	for _, asset := range s.vanis {
@@ -273,67 +274,122 @@ func (s *fieldStream) drawWithClipCulling(r *render.Scene3D, clipCulling bool) {
 		}
 	}
 	s.updateSectors(r, frustum, clipCulling)
-	for i := range s.drawEntries {
-		entry := &s.drawEntries[i]
-		if !s.disableSectors && !s.drawSectors[entry.sector].visible {
+	occlusion := r.ActiveOcclusion()
+	clock := s.world.DynamicTime()
+	if cap(s.visibility) < len(s.drawEntries) {
+		s.visibility = make([]fieldVisibility, len(s.drawEntries))
+	}
+	s.visibility = s.visibility[:len(s.drawEntries)]
+	parallelMap(len(s.drawEntries), func(lo, hi int) {
+		for i := lo; i < hi; i++ {
+			visible := &s.visibility[i]
+			entry := &s.drawEntries[i]
+			visible.state = 0
+			if !s.disableSectors && !s.drawSectors[entry.sector].visible {
+				continue
+			}
+			visible.state = 1
+			o := entry.object
+			center, radius := entry.center, entry.radius
+			if o.rotor != nil {
+				visible.transform = o.rotor.transform(clock)
+				center = transformPoint(entry.batch.model.center, visible.transform)
+			}
+			if clipCulling && !render.ClipSphereVisible(r.ClipPlane, center, radius) ||
+				!frustum.SphereVisible(center, radius) || occlusion.SphereHidden(center, radius) {
+				continue
+			}
+			if !entry.detailVisible(r, center, radius) {
+				visible.state = 2
+				continue
+			}
+			if entry.vani == nil {
+				visible.lod = uint8(entry.chooseLOD(r, center, radius))
+			}
+			visible.state = 3
+		}
+	})
+	packed := len(s.world.mapBatch.Transforms) != 0
+	saveLOD := r.StaticObjectLOD && !r.Shadow && r.ClipPlane == [4]float32{}
+	for i, v := range s.visibility {
+		if v.state == 0 {
 			continue
 		}
 		s.objectTests++
-		o := entry.object
-		center, radius, transform := entry.center, entry.radius, o.world
-		if o.rotor != nil {
-			transform = o.rotor.transform(s.world.DynamicTime())
-			center = transformPoint(entry.batch.model.center, transform)
-		}
-		if clipCulling && !render.ClipSphereVisible(r.ClipPlane, center, radius) || !frustum.SphereVisible(center, radius) || r.OccludedSphere(center, radius) {
-			continue
-		}
-		if !entry.detailVisible(r, center, radius) {
+		if v.state == 2 {
 			s.detailCulled++
+		}
+		if v.state != 3 {
 			continue
 		}
-		if entry.vani != nil {
-			entry.vani.worlds = append(entry.vani.worlds, transform)
+		e := &s.drawEntries[i]
+		transform := e.object.world
+		if e.object.rotor != nil {
+			transform = v.transform
+		}
+		if e.vani != nil {
+			e.vani.worlds = append(e.vani.worlds, transform)
+			continue
+		}
+		level := int(v.lod)
+		if saveLOD {
+			e.object.drawLOD = level
+		}
+		if level != 0 {
+			s.lodInstances++
+		}
+		if packed && !e.batch.dynamic {
+			e.batch.placements[level] = append(e.batch.placements[level], e.placement)
 		} else {
-			entry.lod = entry.chooseLOD(r, center, radius)
-			if r.StaticObjectLOD && !r.Shadow && r.ClipPlane == [4]float32{} {
-				o.drawLOD = entry.lod
-			}
-			if entry.lod == 0 {
-				entry.batch.worlds = append(entry.batch.worlds, transform)
-			} else {
-				entry.batch.lodWorlds[entry.lod-1] = append(entry.batch.lodWorlds[entry.lod-1], transform)
-				s.lodInstances++
-			}
+			e.batch.worlds[level] = append(e.batch.worlds[level], transform)
 		}
 	}
-	// Stable native material order, precomputed when residency changes.
-	for _, batch := range s.modelBatches {
-		groups := [3][]render.M4{batch.worlds, batch.lodWorlds[0], batch.lodWorlds[1]}
-		for level, worlds := range groups {
-			if len(worlds) == 0 {
-				continue
-			}
-			if len(worlds) > 1 {
-				r.SetInstances(worlds)
-			}
-			for i := range batch.model.Parts {
-				p := &batch.model.Parts[i]
-				mesh := p.meshAtLOD(level)
-				s.submittedTriangles += int(mesh.Count) / 3 * len(worlds)
-				if len(worlds) == 1 {
-					r.DrawWorldModel(mesh, p.Tex, worlds[0], render.NativeWorldAlphaRef(batch.key.mani))
-				} else {
-					r.DrawWorldInstanced(mesh, p.Tex, render.NativeWorldAlphaRef(batch.key.mani))
-				}
-			}
-		}
-	}
+	s.drawModelBatches(r)
 	for _, asset := range s.vanis {
 		if asset != nil {
 			asset.draw(r, s.world.elapsed)
 		}
 	}
+}
+
+// Both paths maintain the model, LOD and material order. Animated placements
+// flush the immutable queue before using their current world matrix.
+func (s *fieldStream) drawModelBatches(r *render.Scene3D) {
+	packed := &s.world.mapBatch
+	for _, batch := range s.modelBatches {
+		alpha := render.NativeWorldAlphaRef(batch.key.mani)
+		for level, ids := range batch.placements {
+			worlds := batch.worlds[level]
+			count := len(ids) + len(worlds)
+			if count == 0 {
+				continue
+			}
+			first := 0
+			if len(ids) != 0 {
+				first = packed.Placements(ids)
+			} else {
+				packed.Draw(r)
+				if len(worlds) > 1 {
+					r.SetInstances(worlds)
+				}
+			}
+			for i := range batch.model.Parts {
+				p := &batch.model.Parts[i]
+				mesh := p.meshAtLOD(level)
+				s.submittedTriangles += int(mesh.Count) / 3 * count
+				if len(ids) != 0 {
+					if count != 1 || !r.WorldMeshHidden(mesh, packed.Transforms[ids[0]]) {
+						packed.Add(mesh, p.Tex, nil, alpha, first, count)
+					}
+				} else if count == 1 {
+					r.DrawWorldModel(mesh, p.Tex, worlds[0], alpha)
+				} else {
+					r.DrawWorldInstanced(mesh, p.Tex, alpha)
+				}
+			}
+		}
+	}
+	packed.Draw(r)
 }
 
 // Close releases the field's owned resources. Eager menu/dungeon worlds keep
@@ -363,7 +419,8 @@ func (w *World) Close() {
 	w.dg = nil
 	w.dgOrder = nil
 	w.dungeonOccluders = nil
-	w.dungeonInstances = nil
+	w.mapBatch.Delete()
+	w.dungeonPlan = dungeonDrawPlan{}
 	w.occlusion = nil
 	if w.Sky != nil {
 		w.Sky.Dome.Delete()

@@ -40,3 +40,27 @@ func TestOccluderOpacityChecksEveryMipAndCompressedAlpha(t *testing.T) {
 		t.Fatal("transparent authored mip accepted")
 	}
 }
+
+func TestTerrainMaskEmptyRequiresEveryAuthoredMipBelowThreshold(t *testing.T) {
+	// Selector 7 yields the lowest interpolant, even with a large endpoint.
+	dxt5 := []byte{40, 0, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0}
+	for _, tc := range []struct {
+		format  Format
+		empty   []byte
+		visible []byte
+	}{
+		{FormatRGBA, []byte{0, 0, 0, 7}, []byte{0, 0, 0, 8}},
+		{FormatDXT1, []byte{0, 0, 0, 0, 255, 255, 255, 255}, make([]byte, 8)},
+		{FormatDXT3, make([]byte, 16), append([]byte{1}, make([]byte, 15)...)},
+		{FormatDXT5, dxt5, append([]byte{8}, make([]byte, 15)...)},
+	} {
+		d := &DDS{Format: tc.format, Levels: [][]byte{tc.empty}}
+		if !TerrainMaskEmpty(Texture{DDS: d}) {
+			t.Errorf("format %v: empty mask retained", tc.format)
+		}
+		d.Levels = append(d.Levels, tc.visible)
+		if TerrainMaskEmpty(Texture{DDS: d}) {
+			t.Errorf("format %v: visible authored mip discarded", tc.format)
+		}
+	}
+}

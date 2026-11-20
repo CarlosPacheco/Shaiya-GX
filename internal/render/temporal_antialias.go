@@ -290,6 +290,9 @@ func jitterProjection(p M4, jitter [2]float32) M4 {
 // VisibilityProjection matches raster jitter while the original Proj remains
 // stable for input rays and UI/name anchors. Reflections/shadows stay unjittered.
 func (s *Scene3D) VisibilityProjection() M4 {
+	if s.CullProjection != (M4{}) {
+		return s.CullProjection
+	}
 	if s.Shadow || s.ClipPlane != [4]float32{} {
 		return s.Proj
 	}

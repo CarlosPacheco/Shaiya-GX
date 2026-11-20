@@ -144,48 +144,25 @@ func (w *World) buildDungeonOccluders() {
 }
 
 func (w *World) drawDungeonObjects(s *render.Scene3D, f render.Frustum) {
-	for _, mani := range []bool{true, false} {
-		var pending *Model
-		w.dungeonInstances = w.dungeonInstances[:0]
-		flush := func() {
-			matrices := w.dungeonInstances
-			if len(matrices) == 0 {
-				return
-			}
-			p := pending.Parts[0]
-			if len(matrices) == 1 {
-				s.DrawWorldModel(p.Mesh, p.Tex, matrices[0], render.NativeWorldAlphaRef(mani))
-			} else {
-				s.SetInstances(matrices)
-				s.DrawWorldInstanced(p.Mesh, p.Tex, render.NativeWorldAlphaRef(mani))
-			}
-			w.dungeonInstances = w.dungeonInstances[:0]
-		}
-		for _, object := range w.Objects {
-			if object.Mani != mani || !dungeonModelVisible(s, f, object.Model, object.World) {
-				continue
-			}
-			model := object.Model
-			if len(model.Parts) == 1 {
-				p := model.Parts[0]
-				if !dungeonMeshVisible(s, f, p.Mesh, object.World) {
-					continue
-				}
-				if pending != model {
-					flush()
-					pending = model
-				}
-				w.dungeonInstances = append(w.dungeonInstances, object.World)
-			} else {
-				flush()
-				pending = nil
-				for _, p := range model.Parts {
-					if dungeonMeshVisible(s, f, p.Mesh, object.World) {
-						s.DrawWorldModel(p.Mesh, p.Tex, object.World, render.NativeWorldAlphaRef(mani))
-					}
-				}
-			}
-		}
-		flush()
+	p := &w.dungeonPlan
+	if len(p.entries) == 0 {
+		return
 	}
+	o, clip := s.ActiveOcclusion(), s.ClipPlane
+	for i, sector := range p.sectors {
+		p.sectorVisible[i] = sector.visible(f, clip, o)
+	}
+	parallelMap(len(p.entries), func(lo, hi int) {
+		for i := lo; i < hi; i++ {
+			entry := &p.entries[i]
+			p.partVisible[i] = (entry.sector < 0 || p.sectorVisible[entry.sector]) && entry.bounds.visible(f, clip, o)
+		}
+	})
+	for i, entry := range p.entries {
+		if p.partVisible[i] {
+			first := w.mapBatch.Placements([]uint32{entry.id})
+			w.mapBatch.Add(entry.mesh, entry.texture, nil, render.NativeWorldAlphaRef(entry.mani), first, 1)
+		}
+	}
+	w.mapBatch.Draw(s)
 }

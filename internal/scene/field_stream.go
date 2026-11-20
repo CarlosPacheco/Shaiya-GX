@@ -48,6 +48,7 @@ type terrainBatch struct {
 	mesh     *render.Mesh
 	material Section
 	ranges   []render.TerrainRange
+	cells    [terrainBatchCells * terrainBatchCells]render.TerrainRange
 }
 type fieldCell struct {
 	parts   []cellPart
@@ -59,20 +60,27 @@ type modelBatchKey struct {
 }
 
 type fieldDrawEntry struct {
-	lod    int
-	sector int
-	object *cellObject
-	batch  *fieldModelBatch
-	vani   *vaniAsset
-	center render.V3
-	radius float32
+	placement uint32
+	sector    int
+	object    *cellObject
+	batch     *fieldModelBatch
+	vani      *vaniAsset
+	center    render.V3
+	radius    float32
 }
 type fieldModelBatch struct {
-	prepared  uint64
-	lodWorlds [2][]render.M4
-	key       modelBatchKey
-	model     *Model
-	worlds    []render.M4
+	prepared   uint64
+	placements [3][]uint32
+	dynamic    bool
+	key        modelBatchKey
+	model      *Model
+	worlds     [3][]render.M4
+}
+
+type fieldVisibility struct {
+	transform render.M4
+	lod       uint8
+	state     uint8
 }
 
 type fieldStream struct {
@@ -92,6 +100,7 @@ type fieldStream struct {
 	loader                             *fieldLoader
 	revision                           uint64
 	drawEntries                        []fieldDrawEntry
+	visibility                         []fieldVisibility
 	modelBatches                       []*fieldModelBatch
 	batches                            map[modelBatchKey]*fieldModelBatch
 	world                              *World
@@ -105,8 +114,6 @@ type fieldStream struct {
 	materials                          map[int]Section
 	terrainBatches                     map[terrainBatchKey]*terrainBatch
 	visibleTerrain                     []*terrainBatch
-	terrainVertices                    []render.Vertex
-	terrainIndices                     []uint32
 	order, pending                     []cellKey
 	drawObjects                        []int
 	center                             cellKey
@@ -189,9 +196,6 @@ func (w *World) UpdateVisible(eye render.V3, radius float32) {
 	changed := !s.planned || center != s.center || radius != s.radius
 	dirtyTerrain := make(map[terrainBatchKey]bool)
 	if changed {
-		if s.loader != nil {
-			s.loader.reset()
-		}
 		s.center, s.radius, s.planned = center, radius, true
 		s.order, s.pending = nil, nil
 		wanted := map[cellKey]bool{}
@@ -205,6 +209,9 @@ func (w *World) UpdateVisible(eye render.V3, radius float32) {
 			if s.cells[key] == nil {
 				s.pending = append(s.pending, key)
 			}
+		}
+		if s.loader != nil {
+			s.replanAssets()
 		}
 		for key, c := range s.cells {
 			if !wanted[key] {
@@ -294,7 +301,7 @@ func (s *fieldStream) loadCell(key cellKey) *fieldCell {
 						lo[1], hi[1] = min(lo[1], height), max(hi[1], height)
 					}
 				}
-				c.parts = append(c.parts, cellPart{section: id, terrain: mat, minimum: lo, maximum: hi, center: lo.Add(hi).Scale(.5), radius: hi.Sub(lo).Len() * .5, x: ax, z: az, nx: bx - ax, nz: bz - az, sx: sx, sz: sz, batch: terrainBatchKey{key.x / 4, key.z / 4, id}})
+				c.parts = append(c.parts, cellPart{section: id, terrain: mat, minimum: lo, maximum: hi, center: lo.Add(hi).Scale(.5), radius: hi.Sub(lo).Len() * .5, x: ax, z: az, nx: bx - ax, nz: bz - az, sx: sx, sz: sz, batch: terrainBatchKey{key.x / terrainBatchCells, key.z / terrainBatchCells, id}})
 			}
 		}
 	}

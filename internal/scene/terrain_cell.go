@@ -40,14 +40,21 @@ func appendTerrain(v []render.Vertex, idx []uint32, w *World, x0, z0, nx, nz, sx
 	return v, idx
 }
 func drawSection(s *render.Scene3D, sec Section) {
-	first := true
+	if sec.Mesh != nil {
+		drawTerrainSplats(s, sec.Mesh, sec, 0)
+	}
+}
+
+func drawTerrainSplats(s *render.Scene3D, mesh *render.Mesh, sec Section, ranges int) {
+	var local [8]render.TerrainSplat
+	layers := local[:0]
 	for _, l := range sec.Layers {
-		if l.Mask == nil || l.Tile == nil || sec.Mesh == nil {
+		if l.Mask == nil || l.Tile == nil || len(layers) != 0 && l.Mask.EmptyMask {
 			continue
 		}
-		s.DrawTerrainLayer(sec.Mesh, l.Mask, l.Tile, sec.Lightmap, l.TileSize, first)
-		first = false
+		layers = append(layers, render.TerrainSplat{Mask: l.Mask, Tile: l.Tile, TileSize: l.TileSize})
 	}
+	s.DrawTerrainSplats(mesh, layers, sec.Lightmap, ranges)
 }
 
 // Use the original finest fan topology rather than rendering every stored

@@ -101,6 +101,7 @@ func testWaterOcclusionMap(t *testing.T, stem string) {
 	if !found {
 		t.Fatal("no dry visible-plane viewpoint found")
 	}
+	capturesCropped := 0
 	draw := func(eye render.V3, view render.M4, optimized bool) ([]byte, int) {
 		t.Helper()
 		w.UpdateVisible(eye, radius)
@@ -121,21 +122,28 @@ func testWaterOcclusionMap(t *testing.T, stem string) {
 		s.WaterReflection = nil
 		s.Begin()
 		render.ResetDrawCalls()
-		if w.WaterVisible(view, s.Proj) {
+		visible, region := w.WaterCoverage(view, s.Proj, optimized)
+		if visible {
+			region = region.Expand(2.0/128, 2.0/128)
+			if region != render.FullScreenRegion {
+				capturesCropped++
+			}
 			mirror := render.Identity()
 			mirror[5] = -1
 			rv := mirror.Mul(view)
 			refEye := eye
 			refEye[1] = -refEye[1]
-			target.Capture(s.FogColor, func() {
+			target.CaptureRegion(s.FogColor, region, func() {
 				s.View = rv
 				s.ClipPlane = [4]float32{0, 1, 0, 0}
+				s.CullProjection = region.CropProjection(s.Proj)
 				s.Begin()
 				if w.Sky != nil {
 					w.Sky.Draw(s, refEye)
 				}
 				w.Draw(s)
 			})
+			s.CullProjection = render.M4{}
 			s.View = view
 			s.ClipPlane = [4]float32{}
 			s.Begin()
@@ -182,10 +190,10 @@ func testWaterOcclusionMap(t *testing.T, stem string) {
 	wetView := render.LookAtLH(wetEye, wetEye.Add(render.V3{0, 0, 5}), render.V3{0, 1, 0})
 	old, oldCalls = draw(wetEye, wetView, false)
 	optimized, newCalls = draw(wetEye, wetView, true)
-	if !bytes.Equal(old, optimized) || oldCalls != newCalls {
+	if !bytes.Equal(old, optimized) || newCalls > oldCalls {
 		t.Fatalf("visible water changed: draws %d/%d equal=%v", oldCalls, newCalls, bytes.Equal(old, optimized))
 	}
-	t.Logf("water eye=%v draws %d unchanged", wetEye, newCalls)
+	t.Logf("water eye=%v draws %d -> %d", wetEye, oldCalls, newCalls)
 	for _, point := range []render.V3{dryEye, wetEye} {
 		for turn := 0; turn < 8; turn++ {
 			angle := float64(turn) * math.Pi / 4
@@ -197,7 +205,10 @@ func testWaterOcclusionMap(t *testing.T, stem string) {
 			}
 		}
 	}
-	t.Log("16 additional dry/wet directions preserved all pixels")
+	if stem == "19" && capturesCropped == 0 {
+		t.Fatal("no camera exercised the reflection crop")
+	}
+	t.Logf("16 additional dry/wet directions preserved all pixels, cropped captures=%d", capturesCropped)
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("GL error %#x", code)
 	}

@@ -200,6 +200,15 @@ func (s *Scene3D) OccludedSphere(c V3, r float32) bool {
 	d := V3{r, r, r}
 	return s.OccludedBox(c.Sub(d), c.Add(d))
 }
+
+// SphereHidden reads the current camera mask without touching render statistics.
+func (o *TerrainOcclusion) SphereHidden(c V3, radius float32) bool {
+	if o == nil || math.IsNaN(float64(radius)) || math.IsInf(float64(radius), 0) || radius < 0 {
+		return false
+	}
+	d := V3{radius, radius, radius}
+	return o.BoxHidden(c.Sub(d), c.Add(d))
+}
 func (s *Scene3D) meshOccluded(m *Mesh, world M4) bool {
 	if s.Occlusion == nil || m == nil || !m.boundsValid {
 		return false
@@ -209,7 +218,8 @@ func (s *Scene3D) meshOccluded(m *Mesh, world M4) bool {
 
 // ModelBoundsOccluded tests local-space bounds using the regular mesh path.
 func (s *Scene3D) ModelBoundsOccluded(minimum, maximum V3, world M4) bool {
-	if s.Occlusion == nil {
+	o := s.ActiveOcclusion()
+	if o == nil {
 		return false
 	}
 	lo, hi := V3{math.MaxFloat32, math.MaxFloat32, math.MaxFloat32}, V3{-math.MaxFloat32, -math.MaxFloat32, -math.MaxFloat32}
@@ -226,7 +236,7 @@ func (s *Scene3D) ModelBoundsOccluded(minimum, maximum V3, world M4) bool {
 			hi[axis] = max(hi[axis], v)
 		}
 	}
-	return s.OccludedBox(lo, hi)
+	return o.Box(lo, hi)
 }
 func (s *Scene3D) visibleEffectInstances(m *Mesh, worlds []M4, colors [][4]float32) ([]M4, [][4]float32) {
 	if s.Occlusion == nil {

@@ -745,7 +745,9 @@ func (a *App) drawWorldView(w, h int) {
 		v.effect.Update(float32(a.frameDT))
 	}
 	s.WaterReflection = nil
-	waterVisible := a.clientSettings().Water && (underwater || eye[1] > 0) && v.world.WaterVisible(s.View, s.Proj)
+	waterEffect := a.clientSettings().Water && (underwater || eye[1] > 0)
+	surfaceVisible, reflectionRegion := v.world.WaterCoverage(s.View, s.Proj, waterEffect && !underwater)
+	waterVisible := waterEffect && surfaceVisible
 	if waterVisible {
 		divisor := waterReflectionDivisor(a.clientSettings().Details)
 		width, height := max(1, w/divisor), max(1, h/divisor)
@@ -771,13 +773,17 @@ func (a *App) drawWorldView(w, h int) {
 		reflectedView := mirror.Mul(view)
 		reflectedEye := eye
 		reflectedEye[1] = -reflectedEye[1]
+		// Widen by two target texels for bilinear filtering and scissor rounding.
+		reflectionRegion = reflectionRegion.Expand(2/float32(v.waterWidth), 2/float32(v.waterHeight))
 		v.world.PrepareMapEffects(s, eye, scene.EffectCamera{Eye: reflectedEye, View: reflectedView, Projection: s.Proj})
-		v.waterReflection.Capture(s.FogColor, func() {
+		v.waterReflection.CaptureRegion(s.FogColor, reflectionRegion, func() {
 			s.View, s.ClipPlane = reflectedView, [4]float32{0, 1, 0, 0}
+			s.CullProjection = reflectionRegion.CropProjection(s.Proj)
 			s.Begin()
 			a.drawWorldContents(reflectedEye, false)
 			v.world.RenderMapEffects(s)
 		})
+		s.CullProjection = render.M4{}
 		s.View, s.ClipPlane = view, [4]float32{}
 		s.Begin()
 		s.WaterReflection = v.waterReflection
@@ -804,7 +810,9 @@ func (a *App) drawWorldView(w, h int) {
 		s.CaptureWaterBackground()
 	}
 	// Water Surface Effect controls reflection/refraction, not water visibility.
-	v.world.DrawWater(s)
+	if surfaceVisible {
+		v.world.DrawVisibleWater(s)
+	}
 	for _, e := range v.waterPresentation.effects {
 		e.Draw(s)
 	}

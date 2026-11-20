@@ -13,6 +13,7 @@ import (
 )
 
 var skinIndirectSupported bool
+var drawParametersSupported bool
 
 // Init loads GL entry points; debug installs a KHR_debug logger.
 func Init(debug bool) error {
@@ -46,6 +47,7 @@ func Init(debug bool) error {
 		}
 	}
 	skinIndirectSupported = bindless && drawParameters
+	drawParametersSupported = drawParameters
 	fallbackDiffuse = nil
 	if debug {
 		gl.Enable(gl.DEBUG_OUTPUT)
