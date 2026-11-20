@@ -314,14 +314,6 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
-	if a.partyUI != nil && a.state.Party.Raid {
-		x, y := a.partyUI.RaidInfoOrigin(w, h)
-		if pointInside(in, x, y, ui.RaidInfoWidth, ui.RaidInfoHeight) {
-			a.windowDrag = windowDrag{position: &a.partyUI.RaidInfoPosition, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: ui.RaidInfoWidth, height: ui.RaidInfoHeight}
-			a.wv.uiLeft = -2
-			return true
-		}
-	}
 	if a.partyUI != nil && a.raidGridShown() && !a.unionConfigCovers(in, w, h) {
 		x, y := a.partyUI.RaidGridOrigin(w, h)
 		if pointInside(in, x, y, ui.RaidWindowWidth, ui.RaidGridHeight) {
@@ -414,7 +406,6 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 		out["raid"] = &a.partyUI.RaidPosition
 		out["raid_list"] = &a.partyUI.RaidCompactPosition
 		out["raid_grid"] = &a.partyUI.RaidGridPosition
-		out["raid_info"] = &a.partyUI.RaidInfoPosition
 	}
 	if a.mallUI != nil {
 		out["mall"] = &a.mallUI.Position

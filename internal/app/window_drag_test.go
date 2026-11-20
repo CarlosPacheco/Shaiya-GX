@@ -218,7 +218,7 @@ func TestRaidSideListIsMovable(t *testing.T) {
 	}
 }
 
-func TestRaidViewAndInfoPersistAndMoveGroupUsesPlainClicks(t *testing.T) {
+func TestRaidViewPersistsAndMoveGroupUsesPlainClicks(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	a := inputApp()
 	a.cfg.RememberLayout = true
@@ -229,14 +229,6 @@ func TestRaidViewAndInfoPersistAndMoveGroupUsesPlainClicks(t *testing.T) {
 	a.state.Party.RaidSlots = map[uint16]uint32{0: 1, 1: 2}
 	a.party.raidHidden = true
 	const w, h = 1024, 768
-	// The properties panel moves and is remembered.
-	x, y := a.partyUI.RaidInfoOrigin(w, h)
-	a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + 10, MouseY: y + 10}, w, h)
-	a.worldControls(&platform.Input{MouseDown: true, MouseX: x + 110, MouseY: y + 60}, w, h)
-	a.worldControls(&platform.Input{Clicked: true, MouseX: x + 110, MouseY: y + 60}, w, h)
-	if nx, ny := a.partyUI.RaidInfoOrigin(w, h); nx != x+100 || ny != y+50 {
-		t.Fatalf("info panel at %d,%d from %d,%d", nx, ny, x, y)
-	}
 	// Transparency and options survive.
 	a.partyUI.SetRaidViewSettings(.4, true, false)
 	a.saveUILayout()
@@ -244,7 +236,7 @@ func TestRaidViewAndInfoPersistAndMoveGroupUsesPlainClicks(t *testing.T) {
 	b.cfg.RememberLayout = true
 	b.partyUI, _ = ui.NewPartyPanel(inputTextures{})
 	b.loadUILayout()
-	if o, c, g := b.partyUI.RaidViewSettings(); o != .4 || !c || g || b.partyUI.RaidInfoPosition != a.partyUI.RaidInfoPosition {
+	if o, c, g := b.partyUI.RaidViewSettings(); o != .4 || !c || g {
 		t.Fatalf("raid view not restored: %v %v %v", o, c, g)
 	}
 	// Move Group completes with a plain click on a cell, empty ones included.

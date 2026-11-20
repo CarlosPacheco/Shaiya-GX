@@ -15,15 +15,16 @@ import (
 const (
 	RaidGridWidth, RaidGridHeight = 490, 210
 	RaidCellWidth, RaidCellHeight = 98, 35
-	// The raid window also carries the page tabs above it (always active)
-	// and the class counter on its right.
-	RaidTabX, RaidTabY, RaidTabStep  = 4, -30, 24
-	RaidCounterGap, RaidCounterWidth = 4, 64
-	RaidWindowWidth                  = RaidGridWidth + RaidCounterGap + RaidCounterWidth
+	// Above the window: the page tabs flush with its left edge and the class
+	// counter flush with its right edge.
+	RaidTabX, RaidTabY, RaidTabStep    = 0, -26, 24
+	RaidCounterCell, RaidCounterHeight = 32, 18
+	RaidCounterWidth                   = 6 * RaidCounterCell
+	RaidWindowWidth                    = RaidGridWidth
 )
 
 func (p *PartyPanel) RaidGridOrigin(w, h int) (int, int) {
-	return p.RaidGridPosition.Origin(w, h, RaidWindowWidth, RaidGridHeight, 520-RaidCounterGap-RaidCounterWidth, 425)
+	return p.RaidGridPosition.Origin(w, h, RaidWindowWidth, RaidGridHeight, 520, 425)
 }
 
 // RaidGridVisible is the "Raid Window On/Off" setting (DAT_021fd8c4).
@@ -37,7 +38,7 @@ func (p *PartyPanel) RaidOpacity() float32 { return p.raidOpacity }
 func (p *PartyPanel) RaidTabAt(w, h, mouseX, mouseY int) int {
 	x, y := p.RaidGridOrigin(w, h)
 	tx, ty := x+RaidTabX, y+RaidTabY
-	if mouseX < tx || mouseX >= tx+proto.RaidPages*RaidTabStep || mouseY < ty+7 || mouseY >= ty+30 {
+	if mouseX < tx || mouseX >= tx+proto.RaidPages*RaidTabStep || mouseY < ty+7 || mouseY >= y {
 		return -1
 	}
 	return (mouseX - tx) / RaidTabStep
@@ -53,7 +54,7 @@ func (p *PartyPanel) RaidGridSlotAt(w, h, mouseX, mouseY int) int {
 	return p.RaidPage*proto.RaidPageSlots + (mouseX-x)/RaidCellWidth*6 + (mouseY-y)/RaidCellHeight
 }
 
-// RaidGridInside covers the cells, the page tabs and the class counter.
+// RaidGridInside covers the cells and the page tabs.
 func (p *PartyPanel) RaidGridInside(w, h, mouseX, mouseY int) bool {
 	x, y := p.RaidGridOrigin(w, h)
 	if mouseX >= x && mouseX < x+RaidWindowWidth && mouseY >= y && mouseY < y+RaidGridHeight {
@@ -114,7 +115,7 @@ func (p *PartyPanel) DrawRaidGrid(s *render.Sprites, f *Font, w, h int, members 
 		if tab == p.RaidPage {
 			v = .25
 		}
-		s.Draw(p.raidSelector, float32(x+RaidTabX+tab*RaidTabStep), float32(y+RaidTabY), 32, 32, float32(tab)/8, v, float32(tab+1)/8, v+.25, [4]float32{1, 1, 1, 1})
+		s.Draw(p.raidSelector, float32(x+RaidTabX+tab*RaidTabStep), float32(y+RaidTabY), 32, 32, float32(tab)/8, v, float32(tab+1)/8, v+.25, tint) // follows the raid's transparency
 	}
 	base := p.RaidPage * proto.RaidPageSlots
 	for i := 0; i < proto.RaidPageSlots; i++ {
@@ -164,22 +165,31 @@ func (p *PartyPanel) DrawRaidGrid(s *render.Sprites, f *Font, w, h int, members 
 		}
 	}
 
-	// Class counter on the right: an icon per class and its number over a
-	// semi-opaque rectangle (a GX addition).
+	// Class counter above the right edge, the mirror of the tabs: a small
+	// icon and its number with a thin black outline over a semi-opaque
+	// rectangle. It ignores the window transparency (a GX addition).
 	counts := RaidClassCounts(members, slots)
-	cx, cy := x+RaidGridWidth+RaidCounterGap, y
+	cx, cy := x+RaidGridWidth-RaidCounterWidth, y+RaidTabY+RaidCounterHeight-RaidCounterHeight+4
 	if p.White != nil {
-		s.Draw(p.White, float32(cx), float32(cy), RaidCounterWidth, RaidGridHeight, 0, 0, 1, 1, [4]float32{0, 0, 0, .5 * alpha})
+		s.Draw(p.White, float32(cx), float32(cy), RaidCounterWidth, RaidCounterHeight, 0, 0, 1, 1, [4]float32{0, 0, 0, .5})
 	}
 	for class := 0; class < 6; class++ {
-		row := cy + 6 + class*RaidCellHeight
+		cellX := cx + class*RaidCounterCell
 		col := [...]int{2, 5, 1, 0, 3, 4}[class]
-		s.Draw(p.icons, float32(cx+6), float32(row), 24, 24, float32(col)/8, 0, float32(col+1)/8, 1, tint)
-		number := fmt.Sprint(counts[class])
-		shade := [4]float32{.93, .93, .89, alpha}
+		s.Draw(p.icons, float32(cellX+2), float32(cy+1), 16, 16, float32(col)/8, 0, float32(col+1)/8, 1, white)
+		shade := [4]float32{.96, .96, .92, 1}
 		if counts[class] == 0 {
-			shade = [4]float32{.6, .58, .56, alpha}
+			shade = [4]float32{.7, .68, .66, 1}
 		}
-		f.Draw(s, number, cx+RaidCounterWidth-10-f.Width(number), row+6, shade, 0)
+		f.DrawOutlined(s, fmt.Sprint(counts[class]), cellX+20, cy+2, shade)
 	}
+}
+
+// RaidViewSettings are the window options kept between sessions.
+func (p *PartyPanel) RaidViewSettings() (opacity float32, compact, groups bool) {
+	return p.raidOpacity, p.raidCompact, p.raidGroups
+}
+
+func (p *PartyPanel) SetRaidViewSettings(opacity float32, compact, groups bool) {
+	p.raidOpacity, p.raidCompact, p.raidGroups = min(max(opacity, 0), 1), compact, groups
 }
