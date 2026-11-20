@@ -96,9 +96,11 @@ func TestRaidAgainstSQLite(t *testing.T) {
 	seen := map[packet.Opcode]int{}
 	le := func(v uint32) []byte { return []byte{byte(v), byte(v >> 8), byte(v >> 16), byte(v >> 24)} }
 
-	leader.write(msg(packet.RaidInvite, le(memberID)...))
-	member.until(packet.RaidInvite, seen)
-	member.write(msg(packet.RaidAnswer, append([]byte{0}, le(leaderID)...)...))
+	// A raid invitation now creates a raid immediately. Start with a normal
+	// party here so the test can exercise the separate conversion request.
+	leader.write(msg(packet.PartyInvite, le(memberID)...))
+	member.until(packet.PartyInvite, seen)
+	member.write(msg(packet.PartyAnswer, append([]byte{0}, le(leaderID)...)...))
 	member.until(packet.PartyRoster, seen)
 
 	// Convert to a raid: kind 1, auto-join on, item division 2.
