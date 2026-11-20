@@ -525,17 +525,22 @@ func (s *Scene3D) SetCameraView(eye, target, up V3) {
 func (s *Scene3D) modelView(world M4) M4 {
 	mv := world.Mul(s.View)
 	if s.cameraValid && s.View == s.cameraView {
-		// Subtract large positions before rotating, instead of cancelling two
-		// separately rounded world-space dot products.
-		for j := 0; j < 3; j++ {
-			var t float64
-			for i := 0; i < 3; i++ {
-				t += (float64(world[12+i]) - float64(s.cameraEye[i])) * float64(s.View[i*4+j])
-			}
-			mv[12+j] = float32(t)
-		}
+		t := cameraRelativeTranslation(world, s.View, s.cameraEye)
+		mv[12], mv[13], mv[14] = t[0], t[1], t[2]
 	}
 	return mv
+}
+
+func cameraRelativeTranslation(world, view M4, eye V3) (t V3) {
+	// Subtract large positions before rotating, instead of cancelling two
+	// separately rounded world-space dot products.
+	x := float64(world[12]) - float64(eye[0])
+	y := float64(world[13]) - float64(eye[1])
+	z := float64(world[14]) - float64(eye[2])
+	for j := range t {
+		t[j] = float32(x*float64(view[j]) + y*float64(view[4+j]) + z*float64(view[8+j]))
+	}
+	return t
 }
 
 // Keep CPU projection/frustum coordinates native; invert only the GPU depth.

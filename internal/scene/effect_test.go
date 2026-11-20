@@ -9,6 +9,28 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
+func TestCachedEffectTiltPreservesAuthoredRotation(t *testing.T) {
+	base := render.Basis(render.V3{11, 7, 3}, render.V3{.5, .2, -.8}, render.V3{0, 1, 0})
+	for axis := int32(0); axis <= 4; axis++ {
+		d := &effect.Emitter{Unk30: axis, RotationAxis: 2}
+		for _, angle := range []float32{-7.4, -.01, .01, .75, 3, 5.6} {
+			cached := newEffectTilt(axis, angle)
+			tilt := effectRotation(axis, angle)
+			if got := cached.matrix(axis); got != tilt {
+				t.Fatalf("axis %d tilt %g: got %v, want %v", axis, angle, got, tilt)
+			}
+			spinAngle := float32(.43)
+			spin := effectRotation(d.RotationAxis, spinAngle)
+			if got := particleRotation(d, cached, spinAngle, base, true); got != spin.MulAffine(tilt).MulAffine(base) {
+				t.Fatalf("axis %d tilt %g changed the rotating mesh", axis, angle)
+			}
+			if got := particleRotation(d, cached, spinAngle, base, false); got != tilt.MulAffine(spin).MulAffine(base) {
+				t.Fatalf("axis %d tilt %g changed the rotating billboard", axis, angle)
+			}
+		}
+	}
+}
+
 func TestParallelEffectsShareMotionPathWithoutChangingDrawScratch(t *testing.T) {
 	workers := runtime.GOMAXPROCS(4)
 	defer runtime.GOMAXPROCS(workers)

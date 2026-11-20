@@ -747,3 +747,22 @@ measured 7.342 → 7.237 ms with 600 bots and skill effects disabled, and
 effects run rose by about 4.8 MiB. The controlled pixel comparison covers mixed
 textures, wrap modes, 3DE keyframes, alpha and additive blending, opaque depth,
 reverse depth, temporal jitter and a reflection clip plane.
+
+## Cheaper particle transforms
+
+The compact effect queue uses affine model-view multiplication and skips
+zero terms in the native perspective projection. Camera-relative translation
+still subtracts the eye before rotation in double precision. Temporal jitter
+and reverse depth use the existing projection coefficients. Other projection
+layouts use general multiplication.
+
+Each EFT particle stores the two coefficients of its initial tilt at birth.
+The renderer composes the animated spin with that tilt in the authored order
+for meshes and billboards. This also preserves the falling meteor's axis.
+
+In interleaved 240-frame trials at 1280×720 with effects enabled, the
+whole loop measured 7.833 → 7.193 ms for 300 local PvP bots (three pairs)
+and 11.032 → 10.178 ms for 600 bots (four pairs). The 600-bot projection-only
+variant measured 10.251 ms. The draws remained near 630 and 867 per frame.
+The measurements use a hidden Linux window on a shared desktop with an
+RTX 3050 and Ryzen 7 5700G and exclude display presentation.

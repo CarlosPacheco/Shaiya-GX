@@ -19,7 +19,7 @@ type effectParticle struct {
 	sizeSeed       float32
 	staticSizeSeed float32
 	angle, speed   float32
-	initial        float32
+	tilt           effectTilt
 	frame          float32
 }
 type effectEmitter struct {
@@ -327,7 +327,7 @@ func (x *Effect) Update(dt float32) {
 						high = 360
 					}
 				}
-				v.initial = between(low, high) * math.Pi / 180
+				v.tilt = newEffectTilt(d.Unk30, between(low, high)*math.Pi/180)
 				if d.RotationEnabled != 0 {
 					v.speed = d.RotationMax
 					if d.RotationRandom != 0 {
@@ -503,7 +503,7 @@ func (x *Effect) prepareDraw(view render.M4, occlusion *render.TerrainOcclusion)
 				m[4+row] *= size
 				m[8+row] *= size
 			}
-			m = particleRotation(e.definition, v.initial, v.angle, m, e.geometry != nil)
+			m = particleRotation(e.definition, v.tilt, v.angle, m, e.geometry != nil)
 			pos := x.particlePosition(v, e.definition)
 			m[12], m[13], m[14] = pos[0], pos[1], pos[2]
 			for i, c := range color {
@@ -666,16 +666,46 @@ func (x *Effect) SetBoneTransform(m render.M4) {
 	x.basis = m
 }
 
+// A fixed single-axis tilt needs just the two nontrivial matrix coefficients.
+// Derive them from the rounded half-angle quaternion used by effectRotation.
+type effectTilt struct{ cosine, sine float32 }
+
+func newEffectTilt(axis int32, angle float32) effectTilt {
+	if angle == 0 {
+		return effectTilt{}
+	}
+	if axis < 1 || axis > 3 {
+		return effectTilt{cosine: 1}
+	}
+	half := float64(angle) * .5
+	sin, cos := float32(math.Sin(half)), float32(math.Cos(half))
+	return effectTilt{1 - 2*(sin*sin), 2 * (sin * cos)}
+}
+
+func (t effectTilt) matrix(axis int32) render.M4 {
+	m := render.Identity()
+	c, s := t.cosine, t.sine
+	switch axis {
+	case 1:
+		m[5], m[10], m[6], m[9] = c, c, s, -s
+	case 2:
+		m[0], m[10], m[8], m[2] = c, c, s, -s
+	case 3:
+		m[0], m[5], m[1], m[4] = c, c, s, -s
+	}
+	return m
+}
+
 // The original mesh path (0x55b1f0) first builds tilt * placement, then
 // prepends axial spin. Reversing them makes a tilted projectile precess.
-func particleRotation(d *effect.Emitter, initial, angle float32, base render.M4, mesh bool) render.M4 {
-	if initial == 0 {
+func particleRotation(d *effect.Emitter, fixedTilt effectTilt, angle float32, base render.M4, mesh bool) render.M4 {
+	if fixedTilt == (effectTilt{}) {
 		if angle == 0 {
 			return base
 		}
 		return effectRotation(d.RotationAxis, angle).MulAffine(base)
 	}
-	tilt := effectRotation(d.Unk30, initial)
+	tilt := fixedTilt.matrix(d.Unk30)
 	if angle == 0 {
 		return tilt.MulAffine(base)
 	}

@@ -2,6 +2,7 @@ package render
 
 import (
 	"log"
+	"math"
 	"strings"
 	"unsafe"
 
@@ -156,8 +157,10 @@ func (s *Scene3D) drawCompactEffects(q *effectQueue) bool {
 		return false
 	}
 	p.placements = p.placements[:0]
+	relative := s.cameraValid && s.View == s.cameraView
+	perspective := sparseEffectPerspective(s.projection)
 	for i, world := range q.worlds {
-		mvp := s.modelView(world).Mul(s.projection)
+		mvp := s.effectMVP(world, relative, perspective)
 		p.placements = append(p.placements, effectPlacement{mvp, q.colors[i], q.poses[i]})
 	}
 	p.instances.upload(len(p.placements)*int(unsafe.Sizeof(effectPlacement{})), unsafe.Pointer(&p.placements[0]))
@@ -173,6 +176,38 @@ func (s *Scene3D) drawCompactEffects(q *effectQueue) bool {
 	}
 	gl.UseProgram(s.prog)
 	return true
+}
+
+// The ordinary perspective projection can add jitter in the third row or
+// reverse depth without introducing other nonzero entries.
+func sparseEffectPerspective(p M4) bool {
+	return p[1] == 0 && p[2] == 0 && p[3] == 0 && p[4] == 0 && p[6] == 0 && p[7] == 0 &&
+		p[11] == 1 && p[12] == 0 && p[13] == 0 && p[15] == 0
+}
+
+func (s *Scene3D) effectMVP(world M4, relative, perspective bool) M4 {
+	mv := world.MulAffine(s.View)
+	if relative {
+		t := cameraRelativeTranslation(world, s.View, s.cameraEye)
+		mv[12], mv[13], mv[14] = t[0], t[1], t[2]
+	}
+	p := s.projection
+	// Omitting products with zero is equivalent for finite operands. A
+	// nonfinite sum uses the general path, including overflow in this guard.
+	sum := mv[0] + mv[1] + mv[2] + mv[3] + mv[4] + mv[5] + mv[6] + mv[7] +
+		mv[8] + mv[9] + mv[10] + mv[11] + mv[12] + mv[13] + mv[14] + mv[15]
+	if !perspective || math.Float32bits(sum)&0x7f800000 == 0x7f800000 {
+		return mv.Mul(p)
+	}
+	var out M4
+	for i := 0; i < len(out); i += 4 {
+		z := mv[i+2]
+		out[i] = float32(mv[i]*p[0]) + float32(z*p[8])
+		out[i+1] = float32(mv[i+1]*p[5]) + float32(z*p[9])
+		out[i+2] = float32(z*p[10]) + float32(mv[i+3]*p[14])
+		out[i+3] = z
+	}
+	return out
 }
 
 func (p *effectPipeline) drawSerial(s *Scene3D, draws []queuedEffect) {

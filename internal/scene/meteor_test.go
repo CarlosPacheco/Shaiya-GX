@@ -38,10 +38,11 @@ func TestMeteorAxialSpinPreservesAuthoredDiagonal(t *testing.T) {
 	d := &effect.Emitter{Unk30: 3, RotationAxis: 2}
 	placement := render.Basis(render.V3{}, render.V3{-.6, 0, -.8}, render.V3{0, 1, 0})
 	tilt := float32(333 * math.Pi / 180)
-	first := effectPoint(render.V3{0, 1, 0}, particleRotation(d, tilt, 0, placement, true))
+	fixedTilt := newEffectTilt(d.Unk30, tilt)
+	first := effectPoint(render.V3{0, 1, 0}, particleRotation(d, fixedTilt, 0, placement, true))
 	for frame := 0; frame < 120; frame++ {
 		angle := float32(frame) * 10 / 60
-		axis := effectPoint(render.V3{0, 1, 0}, particleRotation(d, tilt, angle, placement, true))
+		axis := effectPoint(render.V3{0, 1, 0}, particleRotation(d, fixedTilt, angle, placement, true))
 		if axis.Sub(first).Len() > 1e-5 {
 			t.Fatal("axial spin changed projectile direction", frame, axis, first)
 		}
@@ -55,12 +56,13 @@ func TestMeteorAxialSpinPreservesAuthoredDiagonal(t *testing.T) {
 
 func TestMeteorTiltFacesAlongDiagonalTravelInNativeEFTSpace(t *testing.T) {
 	d := &effect.Emitter{Unk30: 3, RotationAxis: 2}
+	fixedTilt := newEffectTilt(d.Unk30, float32(333*math.Pi/180))
 	for _, dir := range []render.V3{{1, 0, 0}, {0, 0, 1}, {-1, 0, 0}, {0, 0, -1}, {.6, 0, .8}} {
 		var x Effect
 		x.SetMeteorTransform(render.Basis(render.V3{}, dir.Scale(-1), render.V3{0, 1, 0}))
 		velocity := render.V3{-dir[2] * 7.5, -15, dir[0] * 7.5}.Norm()
 		for frame := 0; frame < 60; frame++ {
-			axis := effectPoint(render.V3{0, 1, 0}, particleRotation(d, float32(333*math.Pi/180), float32(frame)/6, x.meteorWorld, true)).Norm()
+			axis := effectPoint(render.V3{0, 1, 0}, particleRotation(d, fixedTilt, float32(frame)/6, x.meteorWorld, true)).Norm()
 			if axis.Dot(velocity.Scale(-1)) < .999 {
 				t.Fatal("mesh tilt opposes actual fall", dir, frame, axis, velocity)
 			}
