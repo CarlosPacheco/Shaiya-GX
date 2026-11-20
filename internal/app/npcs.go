@@ -22,6 +22,8 @@ type npcActor struct {
 	entity       *game.Entity
 	position     remotePosition
 	facing       render.V3
+	lookAt       render.V3 // direction the NPC turns to while someone talks to it
+	talking      bool
 	attackSerial uint64
 }
 
@@ -84,8 +86,10 @@ func (a *App) prepareNPCs() {
 		key := sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}
 		cached := v.npcs[id]
 		if cached == nil || cached.key != key || cached.entity != e {
-			angle := float64(e.Dir) / 65536 * 2 * math.Pi
-			cached = &npcActor{key: key, entity: e, facing: render.V3{float32(math.Sin(angle)), 0, float32(math.Cos(angle))}}
+			// 0x0E01 carries degrees; the original (Game.exe 0x5659a0) builds the
+			// heading (-sin, 0, cos) of angle * pi/180.
+			angle := float64(e.Dir) * math.Pi / 180
+			cached = &npcActor{key: key, entity: e, facing: render.V3{-float32(math.Sin(angle)), 0, float32(math.Cos(angle))}}
 			if def, ok := a.npcDefs[key]; ok {
 				var err error
 				cached.actor, err = a.assets.BuildNPC(def)
@@ -121,6 +125,7 @@ func (a *App) prepareNPCs() {
 			}
 			cached.actor.PlayOnce(cached.actor.AttackAction(0))
 		}
+		a.turnNPCToTalker(id, e, cached, pos)
 		cached.actor.World = render.Basis(pos, cached.facing.Scale(-1), render.V3{0, 1, 0})
 		action := 6
 		if initialized && delta.Len() > .001 {

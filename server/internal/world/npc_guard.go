@@ -235,8 +235,14 @@ func (n *MapNpc) guardMove(now time.Time, mapID uint16, nav *mapnav.Map, def *np
 	return true
 }
 
+// npcDirection is the 0x0E01 angle in whole degrees: the client turns it into
+// the heading (-sin, cos) of angle*pi/180 (Game.exe 0x5659a0).
 func npcDirection(dx, dz float32) uint16 {
-	return uint16(int(math.Round(math.Atan2(float64(dx), float64(dz)) * 65536 / (2 * math.Pi))))
+	degrees := math.Round(math.Atan2(-float64(dx), float64(dz)) * 180 / math.Pi)
+	if degrees < 0 {
+		degrees += 360
+	}
+	return uint16(int(degrees) % 360)
 }
 
 func buildNpcAttack(npcID, target uint32, mob bool, hp uint32) []byte {

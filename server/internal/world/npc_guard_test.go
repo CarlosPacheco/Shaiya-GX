@@ -89,7 +89,7 @@ func TestNpcPatrolReversesAndInterpolatesWaypointHeight(t *testing.T) {
 	guardFixture(t, id)
 	now := time.Unix(150, 0)
 	n, _ := NewPatrolNpc(npcTypeGuard, 1, []NpcPatrolPoint{{X: 100, Y: 10, Z: 80}, {X: 132, Y: 18, Z: 80}})
-	if !n.stepPatrol(now, id) || n.PosX != 116 || n.PosY != 14 || n.Angle != 16384 || n.nextMoveAt.Sub(now) != 8*time.Second {
+	if !n.stepPatrol(now, id) || n.PosX != 116 || n.PosY != 14 || n.Angle != 270 || n.nextMoveAt.Sub(now) != 8*time.Second {
 		t.Fatalf("wrong NPC patrol step %+v", n)
 	}
 	now = n.nextMoveAt
@@ -97,7 +97,7 @@ func TestNpcPatrolReversesAndInterpolatesWaypointHeight(t *testing.T) {
 		n.nextMoveAt.Sub(now) < 18*time.Second || n.nextMoveAt.Sub(now) >= 28*time.Second {
 		t.Fatalf("wrong NPC patrol arrival %+v", n)
 	}
-	if !n.stepPatrol(n.nextMoveAt, id) || n.PosX != 116 || n.PosY != 14 || n.Angle != 49152 {
+	if !n.stepPatrol(n.nextMoveAt, id) || n.PosX != 116 || n.PosY != 14 || n.Angle != 90 {
 		t.Fatalf("wrong NPC patrol return %+v", n)
 	}
 }
