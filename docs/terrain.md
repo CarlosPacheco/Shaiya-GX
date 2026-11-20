@@ -77,12 +77,14 @@ owner that stops sending input still receives authoritative gravity/landing
 updates after the existing 300-ms idle threshold. No movement or height allowance
 was increased to suppress the rewind.
 
-World still enforces the elapsed-time movement budget on every sample. For a
-small horizontal difference, the next sample can catch up before a correction
-is needed. A correction immediately updates the client's physical position.
-While walking or running, the visible model blends small corrections across
-clear ground over 180 ms. Falls, blocked paths and large corrections snap to
-the server position.
+The predictor carries the sub-coordinate fraction between frames. World
+subdivides the same horizontal displacement for collision checks while keeping
+the rounded endpoint, and charges that endpoint against its elapsed-time
+movement budget. This prevents per-frame rounding from accumulating at high
+frame rates and triggering corrections on clear ground. Corrections still
+update the physical position immediately. While walking or running, the visible
+model blends small corrections across clear ground over 180 ms. Falls, blocked
+paths and large corrections snap to the server position.
 
 Jump presentation plays original ALT action 8 once. Its animation duration is
 independent of the physical time spent airborne. Once it finishes, continued

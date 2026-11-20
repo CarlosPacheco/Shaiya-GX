@@ -106,6 +106,32 @@ func TestGroundMovementSamplingJitterDoesNotRewindPlayer(t *testing.T) {
 	}
 }
 
+func TestGroundMovementAtRunSpeedKeepsRoundedEndpoints(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	g := &mapgeometry.Geometry{}
+	g.Reindex()
+	g.Add(collision.Triangle{{0, 0, 0}, {0, 0, 50}, {2048, 0, 0}})
+	g.Add(collision.Triangle{{2048, 0, 50}, {2048, 0, 0}, {0, 0, 50}})
+	s.movement.geometry = g
+	s.movement.pos[0] = 1051
+	s.commitMovement()
+	s.commitAttackStop(now)
+	start, y := s.attackMoveUntil, s.char.PosY
+	var elapsed time.Duration
+	for range 800 {
+		// Alternate unequal intervals at exactly 5 units per second. The
+		// sample bytes contain a float32 position, just like the live client.
+		for _, interval := range []time.Duration{87 * time.Millisecond, 113 * time.Millisecond} {
+			elapsed += interval
+			x := float32(1051 + 5*elapsed.Seconds())
+			ok, reason := s.validatePlayerMovement(x, y, 5, 1, 0, start.Add(elapsed))
+			if diff := math.Abs(float64(s.char.PosX - x)); !ok || reason != "" || diff > .0002 {
+				t.Fatalf("normal run corrected at %s: requested %g, accepted %g (%s)", elapsed, x, s.char.PosX, reason)
+			}
+		}
+	}
+}
+
 func TestPlayerCannotHoverOrGainHeightByRelogging(t *testing.T) {
 	s, now := playerPhysicsFixture(t)
 	// Freeze client input in the air: server elapsed time must still land it.

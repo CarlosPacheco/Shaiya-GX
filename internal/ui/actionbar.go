@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -292,18 +293,25 @@ func (b *ActionBar) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h
 			if slot.Count > 0 {
 				f.DrawOutlined(s, fmt.Sprint(slot.Count), cx+12, cy+15, white)
 			}
-			if slot.Cooldown > 0 {
-				ratio := float32(1)
-				if slot.CooldownDuration > 0 {
-					ratio = float32(slot.Cooldown / slot.CooldownDuration)
-				}
-				s.DrawCooldown(blank, float32(cx), float32(cy), 32, ratio, [4]float32{0, 0, 0, 160.0 / 255})
-			}
+			drawShortcutCooldown(s, f, blank, cx, cy, slot.Cooldown, slot.CooldownDuration)
 			if slot.Pressed || b.held == index || heldKeys&(1<<(bar*ActionSlots+cell)) != 0 {
 				s.Draw(blank, float32(cx), float32(cy), 32, 32, 0, 0, 1, 1, [4]float32{1, 1, 1, 80.0 / 255})
 			}
 		}
 	}
+}
+
+func drawShortcutCooldown(s *render.Sprites, f *Font, blank *render.Texture, x, y int, remaining, duration float64) {
+	if remaining <= 0 {
+		return
+	}
+	ratio := float32(1)
+	if duration > 0 {
+		ratio = float32(remaining / duration)
+	}
+	s.DrawCooldown(blank, float32(x), float32(y), 32, ratio, [4]float32{1, 0, 0, 80.0 / 255})
+	label := fmt.Sprint(int(math.Ceil(remaining)))
+	f.DrawOutlined(s, label, x+16-f.Width(label)/2, y+9, [4]float32{1, 1, 0, 1})
 }
 
 // SkillIcon matches 0x4a1810: thousands select the sheet, remainder is 1-based.

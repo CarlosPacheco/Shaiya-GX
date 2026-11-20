@@ -123,10 +123,10 @@ func (g *Geometry) DeepWater(p Position) bool {
 // GroundMove retains native horizontal edge sliding and adds a bounded swept
 // step only when it improves blocked ground movement onto a real support face.
 func (g *Geometry) GroundMove(p, delta Position, airborne bool) Position {
-	length := float32(math.Hypot(float64(delta[0]), float64(delta[2])))
-	count := max(1, int(math.Ceil(float64(length/.15))))
-	move := Position{delta[0] / float32(count), 0, delta[2] / float32(count)}
+	start := p
+	count := HorizontalStepCount(delta)
 	for i := 0; i < count; i++ {
+		move := HorizontalStep(start, delta, i, count)
 		next := Position{p[0] + move[0], p[1], p[2] + move[2]}
 		if g.HasTerrain() && (next[0] < 0 || next[2] < 0 || next[0] > float32(g.MapSize) || next[2] > float32(g.MapSize)) {
 			break
@@ -175,6 +175,26 @@ func (g *Geometry) GroundMove(p, delta Position, airborne bool) Position {
 		p = g.StandingPosition(p)
 	}
 	return p
+}
+
+func HorizontalStepCount(delta Position) int {
+	return max(1, int(math.Ceil(math.Hypot(float64(delta[0]), float64(delta[2]))/.15)))
+}
+
+// HorizontalStep partitions the original path into short sweeps. Sampling
+// endpoints before subtracting preserves the final position on clear ground,
+// even when a world-coordinate float cannot represent each equal subdivision.
+func HorizontalStep(start, delta Position, index, count int) Position {
+	if count == 1 {
+		return Position{delta[0], 0, delta[2]}
+	}
+	previous, next := float64(index)/float64(count), float64(index+1)/float64(count)
+	x, z := float64(start[0]), float64(start[2])
+	dx, dz := float64(delta[0]), float64(delta[2])
+	return Position{
+		float32(x+dx*next) - float32(x+dx*previous), 0,
+		float32(z+dz*next) - float32(z+dz*previous),
+	}
 }
 
 // Entry fixes authored spawn-volume heights without projecting onto another

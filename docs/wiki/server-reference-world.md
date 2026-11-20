@@ -463,37 +463,38 @@ Direct GX dependencies: `internal/element`, `server/internal/config`, `server/in
 | [`setCombatChances`](../../server/internal/world/combatformula.go#L34)<br>`func setCombatChances(accuracy, evasion *[3]int64, dex, wis uint32, mods [3]CategoryMods)` | See the source definition and the subsystem ownership contract. |
 | [`boundedCombatStat`](../../server/internal/world/combatformula.go#L42)<br>`func boundedCombatStat(value int64) int32` | See the source definition and the subsystem ownership contract. |
 | [`setAttack`](../../server/internal/world/combatformula.go#L48)<br>`func setAttack(s *CharacterStats, e EquipmentStats)` | setAttack uses the same attribute scaling for melee and ranged. Category abilities still apply to their own attack, while melee defense is shared. |
-| [`mobCombat`](../../server/internal/world/combatformula.go#L85)<br>`type mobCombat` | mobCombat contains the combat values derived from a monster's catalog and active effects. Its attack templates supply the weapon part separately. |
-| [`mobCombatFor`](../../server/internal/world/combatformula.go#L96)<br>`func mobCombatFor(d *db.MobDef) mobCombat` | See the source definition and the subsystem ownership contract. |
-| [`rollCombatChance`](../../server/internal/world/combatformula.go#L106)<br>`func rollCombatChance(chance int64) bool` | See the source definition and the subsystem ownership contract. |
-| [`effectiveEvasion`](../../server/internal/world/combatformula.go#L110)<br>`func effectiveEvasion(defenderEvasion, attackerAccuracy int64) int64` | See the source definition and the subsystem ownership contract. |
-| [`mobLevelPenalty`](../../server/internal/world/combatformula.go#L115)<br>`func mobLevelPenalty(playerLevel uint16, mobLevel int32) int64` | mobLevelPenalty is the percentage adjustment for a monster above a player. |
-| [`playerHitChance`](../../server/internal/world/combatformula.go#L119)<br>`func playerHitChance(s *CharacterStats, m *mobCombat, kind int) int64` | See the source definition and the subsystem ownership contract. |
-| [`playerDodgeChance`](../../server/internal/world/combatformula.go#L124)<br>`func playerDodgeChance(s *CharacterStats, m *mobCombat, kind int) int64` | See the source definition and the subsystem ownership contract. |
-| [`playerHits`](../../server/internal/world/combatformula.go#L129)<br>`func playerHits(s *CharacterStats, m *mobCombat, kind int) bool` | See the source definition and the subsystem ownership contract. |
-| [`mobHits`](../../server/internal/world/combatformula.go#L133)<br>`func mobHits(m *mobCombat, s *CharacterStats, kind int) bool` | See the source definition and the subsystem ownership contract. |
-| [`userHits`](../../server/internal/world/combatformula.go#L137)<br>`func userHits(att, def *CharacterStats, kind int) bool` | See the source definition and the subsystem ownership contract. |
-| [`skillSuccess`](../../server/internal/world/combatformula.go#L143)<br>`func skillSuccess(def *db.SkillDef) bool` | skillSuccess retains a definition's independent success roll. Accuracy and evasion still apply, even to skills with a guaranteed catalog roll. |
-| [`playerSkillHits`](../../server/internal/world/combatformula.go#L147)<br>`func playerSkillHits(s *CharacterStats, m *mobCombat, md *db.MobDef, def *db.SkillDef) bool` | See the source definition and the subsystem ownership contract. |
-| [`mobSkillHits`](../../server/internal/world/combatformula.go#L159)<br>`func mobSkillHits(m *mobCombat, def *db.SkillDef, s *CharacterStats) bool` | See the source definition and the subsystem ownership contract. |
-| [`userSkillHits`](../../server/internal/world/combatformula.go#L163)<br>`func userSkillHits(att, def *CharacterStats, sk *db.SkillDef) bool` | See the source definition and the subsystem ownership contract. |
-| [`hitDamage`](../../server/internal/world/combatformula.go#L167)<br>`type hitDamage` | See the source definition and the subsystem ownership contract. |
-| [`weaponHit`](../../server/internal/world/combatformula.go#L179)<br>`func (h hitDamage) weaponHit(bonus, multiplier int64) (int32, bool)` | weaponHit computes the same damage for all three categories. Using the element table's exact tenths keeps truncation at the end of the calculation. |
-| [`directAmount`](../../server/internal/world/combatformula.go#L199)<br>`func directAmount(amount, levelPercent, limit int64) int32` | directAmount scales nonzero immediate skill damage and preserves zero components. It is also used for the level adjustment on extra impacts. |
-| [`extraSkillDamage`](../../server/internal/world/combatformula.go#L206)<br>`func extraSkillDamage(def *db.SkillDef, levelPercent int64) [3]uint32` | See the source definition and the subsystem ownership contract. |
-| [`damagePools`](../../server/internal/world/combatformula.go#L215)<br>`type damagePools` | See the source definition and the subsystem ownership contract. |
-| [`currentDamagePools`](../../server/internal/world/combatformula.go#L217)<br>`func currentDamagePools(s *CharacterStats) damagePools` | See the source definition and the subsystem ownership contract. |
-| [`maximumDamagePools`](../../server/internal/world/combatformula.go#L221)<br>`func maximumDamagePools(s *CharacterStats) damagePools` | See the source definition and the subsystem ownership contract. |
-| [`skillHit`](../../server/internal/world/combatformula.go#L225)<br>`func (h hitDamage) skillHit(def *db.SkillDef, caster, current, maximum damagePools) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
-| [`characterHitDamage`](../../server/internal/world/combatformula.go#L271)<br>`func characterHitDamage(s *CharacterStats, kind int, guard int32, defenseAttr uint8, levelPercent int64) hitDamage` | See the source definition and the subsystem ownership contract. |
-| [`playerDamage`](../../server/internal/world/combatformula.go#L278)<br>`func playerDamage(s *CharacterStats, m *mobCombat, kind int) (int32, bool)` | See the source definition and the subsystem ownership contract. |
-| [`playerSkillDamage`](../../server/internal/world/combatformula.go#L283)<br>`func playerSkillDamage(s *CharacterStats, m *mobCombat, def *db.SkillDef, current, maximum damagePools) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
-| [`userDamage`](../../server/internal/world/combatformula.go#L289)<br>`func userDamage(att, def *CharacterStats, kind int) (int32, bool)` | See the source definition and the subsystem ownership contract. |
-| [`userSkillDamage`](../../server/internal/world/combatformula.go#L294)<br>`func userSkillDamage(att, def *CharacterStats, sk *db.SkillDef, caster damagePools) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
-| [`mobHitDamage`](../../server/internal/world/combatformula.go#L300)<br>`func mobHitDamage(m *mobCombat, a *db.MobAttack, s *CharacterStats, kind int, attr uint8) hitDamage` | See the source definition and the subsystem ownership contract. |
-| [`mobDamage`](../../server/internal/world/combatformula.go#L311)<br>`func mobDamage(m *mobCombat, a *db.MobAttack, s *CharacterStats) (int32, bool)` | See the source definition and the subsystem ownership contract. |
-| [`mobSkillDamage`](../../server/internal/world/combatformula.go#L315)<br>`func mobSkillDamage(m *mobCombat, md *db.MobDef, def *db.SkillDef, s *CharacterStats, mobHP uint32) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
-| [`f32`](../../server/internal/world/combatformula.go#L322)<br>`func f32(v int32) float64` | f32 preserves the original periodic-damage calculation's input precision. |
+| [`mobCombat`](../../server/internal/world/combatformula.go#L87)<br>`type mobCombat` | mobCombat contains the combat values derived from a monster's catalog and active effects. Its attack templates supply the weapon part separately. |
+| [`mobCombatFor`](../../server/internal/world/combatformula.go#L99)<br>`func mobCombatFor(d *db.MobDef) mobCombat` | See the source definition and the subsystem ownership contract. |
+| [`rollCombatChance`](../../server/internal/world/combatformula.go#L109)<br>`func rollCombatChance(chance int64) bool` | See the source definition and the subsystem ownership contract. |
+| [`effectiveEvasion`](../../server/internal/world/combatformula.go#L113)<br>`func effectiveEvasion(defenderEvasion, attackerAccuracy int64) int64` | See the source definition and the subsystem ownership contract. |
+| [`mobLevelPenalty`](../../server/internal/world/combatformula.go#L118)<br>`func mobLevelPenalty(playerLevel uint16, mobLevel int32) int64` | mobLevelPenalty is the percentage adjustment for a monster above a player. |
+| [`playerHitChance`](../../server/internal/world/combatformula.go#L122)<br>`func playerHitChance(s *CharacterStats, m *mobCombat, kind int) int64` | See the source definition and the subsystem ownership contract. |
+| [`playerDodgeChance`](../../server/internal/world/combatformula.go#L127)<br>`func playerDodgeChance(s *CharacterStats, m *mobCombat, kind int) int64` | See the source definition and the subsystem ownership contract. |
+| [`playerHits`](../../server/internal/world/combatformula.go#L132)<br>`func playerHits(s *CharacterStats, m *mobCombat, kind int) bool` | See the source definition and the subsystem ownership contract. |
+| [`mobHits`](../../server/internal/world/combatformula.go#L136)<br>`func mobHits(m *mobCombat, s *CharacterStats, kind int) bool` | See the source definition and the subsystem ownership contract. |
+| [`userHits`](../../server/internal/world/combatformula.go#L140)<br>`func userHits(att, def *CharacterStats, kind int) bool` | See the source definition and the subsystem ownership contract. |
+| [`skillSuccess`](../../server/internal/world/combatformula.go#L146)<br>`func skillSuccess(def *db.SkillDef) bool` | skillSuccess retains a definition's independent success roll. Accuracy and evasion still apply, even to skills with a guaranteed catalog roll. |
+| [`playerSkillHits`](../../server/internal/world/combatformula.go#L150)<br>`func playerSkillHits(s *CharacterStats, m *mobCombat, md *db.MobDef, def *db.SkillDef) bool` | See the source definition and the subsystem ownership contract. |
+| [`mobSkillHits`](../../server/internal/world/combatformula.go#L162)<br>`func mobSkillHits(m *mobCombat, def *db.SkillDef, s *CharacterStats) bool` | See the source definition and the subsystem ownership contract. |
+| [`userSkillHits`](../../server/internal/world/combatformula.go#L166)<br>`func userSkillHits(att, def *CharacterStats, sk *db.SkillDef) bool` | See the source definition and the subsystem ownership contract. |
+| [`hitDamage`](../../server/internal/world/combatformula.go#L170)<br>`type hitDamage` | See the source definition and the subsystem ownership contract. |
+| [`criticalChance`](../../server/internal/world/combatformula.go#L183)<br>`func criticalChance(critical, targetLuc int64) int64` | criticalChance is the attacker's critical chance (0.2 points per LUC plus bonuses) less 0.01 percentage points per point of the target's LUC. |
+| [`weaponHit`](../../server/internal/world/combatformula.go#L189)<br>`func (h hitDamage) weaponHit(bonus, multiplier int64) (int32, bool)` | weaponHit computes the same damage for all three categories. Using the element table's exact tenths keeps truncation at the end of the calculation. |
+| [`directAmount`](../../server/internal/world/combatformula.go#L209)<br>`func directAmount(amount, levelPercent, limit int64) int32` | directAmount scales nonzero immediate skill damage and preserves zero components. It is also used for the level adjustment on extra impacts. |
+| [`extraSkillDamage`](../../server/internal/world/combatformula.go#L216)<br>`func extraSkillDamage(def *db.SkillDef, levelPercent int64) [3]uint32` | See the source definition and the subsystem ownership contract. |
+| [`damagePools`](../../server/internal/world/combatformula.go#L225)<br>`type damagePools` | See the source definition and the subsystem ownership contract. |
+| [`currentDamagePools`](../../server/internal/world/combatformula.go#L227)<br>`func currentDamagePools(s *CharacterStats) damagePools` | See the source definition and the subsystem ownership contract. |
+| [`maximumDamagePools`](../../server/internal/world/combatformula.go#L231)<br>`func maximumDamagePools(s *CharacterStats) damagePools` | See the source definition and the subsystem ownership contract. |
+| [`skillHit`](../../server/internal/world/combatformula.go#L235)<br>`func (h hitDamage) skillHit(def *db.SkillDef, caster, current, maximum damagePools) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`characterHitDamage`](../../server/internal/world/combatformula.go#L281)<br>`func characterHitDamage(s *CharacterStats, kind int, guard int32, defenseAttr uint8, levelPercent, targetLuc int64) hitDamage` | See the source definition and the subsystem ownership contract. |
+| [`playerDamage`](../../server/internal/world/combatformula.go#L288)<br>`func playerDamage(s *CharacterStats, m *mobCombat, kind int) (int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`playerSkillDamage`](../../server/internal/world/combatformula.go#L293)<br>`func playerSkillDamage(s *CharacterStats, m *mobCombat, def *db.SkillDef, current, maximum damagePools) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`userDamage`](../../server/internal/world/combatformula.go#L299)<br>`func userDamage(att, def *CharacterStats, kind int) (int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`userSkillDamage`](../../server/internal/world/combatformula.go#L304)<br>`func userSkillDamage(att, def *CharacterStats, sk *db.SkillDef, caster damagePools) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`mobHitDamage`](../../server/internal/world/combatformula.go#L310)<br>`func mobHitDamage(m *mobCombat, a *db.MobAttack, s *CharacterStats, kind int, attr uint8) hitDamage` | See the source definition and the subsystem ownership contract. |
+| [`mobDamage`](../../server/internal/world/combatformula.go#L321)<br>`func mobDamage(m *mobCombat, a *db.MobAttack, s *CharacterStats) (int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`mobSkillDamage`](../../server/internal/world/combatformula.go#L325)<br>`func mobSkillDamage(m *mobCombat, md *db.MobDef, def *db.SkillDef, s *CharacterStats, mobHP uint32) ([3]int32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`f32`](../../server/internal/world/combatformula.go#L332)<br>`func f32(v int32) float64` | f32 preserves the original periodic-damage calculation's input precision. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -506,6 +507,7 @@ type mobCombat struct {
 	Guard        [3]int32
 	Attack       [3]int32
 	Critical     int64
+	Luc          int64 // its LUC lowers the critical chance of whoever hits it
 	Attrib       uint8
 }
 ```
@@ -516,6 +518,7 @@ type hitDamage struct {
 	variance     uint32
 	guard        int32
 	critical     int64
+	targetLuc    int64 // each point of the target's LUC removes 0.01 percentage points
 	attackAttr   uint8
 	defenseAttr  uint8
 	levelPercent int64
@@ -2704,8 +2707,8 @@ Direct GX dependencies: `internal/gm`, `internal/mapgeometry`, `internal/movespe
 | [`commitMovement`](../../server/internal/world/player_movement.go#L249)<br>`func (s *Session) commitMovement()` | See the source definition and the subsystem ownership contract. |
 | [`correctMovement`](../../server/internal/world/player_movement.go#L254)<br>`func (s *Session) correctMovement(reason string)` | See the source definition and the subsystem ownership contract. |
 | [`validatePlayerMovement`](../../server/internal/world/player_movement.go#L273)<br>`func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, direction uint16, now time.Time) (bool, string)` | See the source definition and the subsystem ownership contract. |
-| [`sendPhysicsClock`](../../server/internal/world/player_movement.go#L377)<br>`func (s *Session) sendPhysicsClock()` | See the source definition and the subsystem ownership contract. |
-| [`groundTrustedDestination`](../../server/internal/world/player_movement.go#L389)<br>`func (s *Session) groundTrustedDestination(x, y, z float32) (mapgeometry.Position, bool)` | groundTrustedDestination normalizes a server-authored same-map relocation. A live selected session always has geometry; unselected sessions have none. |
+| [`sendPhysicsClock`](../../server/internal/world/player_movement.go#L386)<br>`func (s *Session) sendPhysicsClock()` | See the source definition and the subsystem ownership contract. |
+| [`groundTrustedDestination`](../../server/internal/world/player_movement.go#L398)<br>`func (s *Session) groundTrustedDestination(x, y, z float32) (mapgeometry.Position, bool)` | groundTrustedDestination normalizes a server-authored same-map relocation. A live selected session always has geometry; unselected sessions have none. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -2719,7 +2722,7 @@ type playerMovement struct {
 	mapID                          uint16
 	pos                            mapgeometry.Position
 	at, packetAt, budgetAt, jumpAt time.Time
-	credit                         float32
+	credit                         float64
 	jumping                        bool
 	jumpFall, fall, waterFall      float32
 	horizontalAt                   time.Time
@@ -3343,7 +3346,7 @@ Direct GX dependencies: `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`raidMax`](../../server/internal/world/raid.go#L21)<br>`const raidMax = 30` | See the source definition and the subsystem ownership contract. |
+| [`raidMax`](../../server/internal/world/raid.go#L21)<br>`const raidMax = 150` | five raids of 30 slots (GX extension of the original 30) |
 | [`raidKindNormal`](../../server/internal/world/raid.go#L22)<br>`const raidKindNormal = 0` | See the source definition and the subsystem ownership contract. |
 | [`raidKindRaid`](../../server/internal/world/raid.go#L23)<br>`const raidKindRaid = 1` | See the source definition and the subsystem ownership contract. |
 | [`raidRosterChunk`](../../server/internal/world/raid.go#L24)<br>`const raidRosterChunk = 6` | See the source definition and the subsystem ownership contract. |
@@ -3364,7 +3367,7 @@ Direct GX dependencies: `server/internal/packet`.
 | [`handleRaidAnswer`](../../server/internal/world/raid.go#L298)<br>`func (s *Session) handleRaidAnswer(p []byte)` | handleRaidAnswer (0x0B15): 0 accepts; joins the inviter's raid (or creates its party). |
 | [`handleRaidAutoJoin`](../../server/internal/world/raid.go#L335)<br>`func (s *Session) handleRaidAutoJoin(p []byte)` | handleRaidAutoJoin (0x0B11): join the raid of the named member when it allows auto-join. |
 | [`handleRaidRoles`](../../server/internal/world/raid.go#L363)<br>`func (s *Session) handleRaidRoles(op packet.Opcode, p []byte)` | handleRaidRoles covers 0x0B12 (swap wire slots; leader or sub-leader), 0x0B13 (sub-leader) and 0x0B17 (leader). |
-| [`handleRaidExpel`](../../server/internal/world/raid.go#L433)<br>`func (s *Session) handleRaidExpel(p []byte)` | handleRaidExpel (0x0B1A): leader only. |
+| [`handleRaidExpel`](../../server/internal/world/raid.go#L436)<br>`func (s *Session) handleRaidExpel(p []byte)` | handleRaidExpel (0x0B1A): leader only. |
 
 ### realm.go
 

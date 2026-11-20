@@ -141,6 +141,25 @@ func TestOtherCharacterTeleportDoesNotStopOurMovement(t *testing.T) {
 	}
 }
 
+func TestRunningKeepsSubFramePositionPrecision(t *testing.T) {
+	v := worldView{pos: render.V3{1051, 2, 410}}
+	const fps, seconds = 240, 80
+	for range fps * seconds {
+		v.step(render.V3{5.0 / fps, 0, 0})
+	}
+	if got := v.pos[0]; got != 1051+5*seconds {
+		t.Fatalf("continuous 5 u/s run ended at %v, want %v", got, 1051+5*seconds)
+	}
+	v.step(render.V3{5.0 / fps, 0, 0})
+	if v.movementRemainder[0] == 0 {
+		t.Fatal("sample did not exercise a fractional world-coordinate step")
+	}
+	v.place(render.V3{300, 2, 400})
+	if v.movementRemainder != [2]float64{} {
+		t.Fatal("server relocation kept a fraction from the previous movement")
+	}
+}
+
 func TestNativeMovementSpeedIncludesBlockedAndUnknownIndices(t *testing.T) {
 	for index, want := range map[uint8]float32{0: 3, 1: 4, 2: 5, 3: 6, 4: 7, 255: 0, 17: 5} {
 		if got := movementSpeed(&proto.CharacterSpeed{Move: index}); got != want {

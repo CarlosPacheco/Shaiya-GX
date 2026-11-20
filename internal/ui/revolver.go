@@ -129,9 +129,7 @@ func (l RevolverLayout) Draw(s *render.Sprites, f *Font, art [9]*render.Texture,
 		}
 		u := slot.UV
 		s.Draw(slot.Icon, float32(b.X), float32(b.Y), 32, 32, u.U0, u.V0, u.U1, u.V1, tint)
-		if slot.Cooldown > 0 && slot.CooldownDuration > 0 {
-			s.DrawCooldown(blank, float32(b.X), float32(b.Y), 32, float32(slot.Cooldown/slot.CooldownDuration), [4]float32{0, 0, 0, 160.0 / 255})
-		}
+		drawShortcutCooldown(s, f, blank, b.X, b.Y, slot.Cooldown, slot.CooldownDuration)
 	}
 	for i := range 3 {
 		tint := white

@@ -46,6 +46,9 @@ func swimmingMovementSpeed(speed float32, swimming bool) float32 {
 
 // place keeps the complete camera offset, including elevation and user zoom.
 func (v *worldView) place(pos render.V3) {
+	if v.pos[0] != pos[0] || v.pos[2] != pos[2] {
+		v.movementRemainder = [2]float64{}
+	}
 	v.eye = v.eye.Add(pos.Sub(v.pos))
 	v.pos = pos
 }
@@ -100,6 +103,14 @@ func (v *worldView) movePacket(motion uint8) []byte {
 
 func (v *worldView) step(delta render.V3) bool {
 	pos := v.pos.Add(delta)
+	// Keep the fraction lost when each frame is rounded to the world position.
+	// At high frame rates, discarding that fraction every frame can make a
+	// sustained run cover more distance than the server's elapsed-time budget.
+	x := float64(v.pos[0]) + float64(delta[0]) + v.movementRemainder[0]
+	z := float64(v.pos[2]) + float64(delta[2]) + v.movementRemainder[1]
+	targetX, targetZ := float32(x), float32(z)
+	pos[0], pos[2] = targetX, targetZ
+	delta[0], delta[2] = targetX-v.pos[0], targetZ-v.pos[2]
 	groundSolved := false
 	if v.world != nil && v.world.HasTerrain() {
 		size := float32(v.world.WLD.MapSize)
@@ -134,6 +145,13 @@ func (v *worldView) step(delta render.V3) bool {
 	}
 	moved := pos != v.pos
 	v.place(pos)
+	v.movementRemainder = [2]float64{}
+	if pos[0] == targetX {
+		v.movementRemainder[0] = x - float64(targetX)
+	}
+	if pos[2] == targetZ {
+		v.movementRemainder[1] = z - float64(targetZ)
+	}
 	return moved
 }
 

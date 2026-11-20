@@ -68,6 +68,7 @@ type worldView struct {
 	pos                         render.V3
 	visualCorrectionOffset      render.V3
 	visualCorrectionLeft        float32
+	movementRemainder           [2]float64
 	facing                      render.V3 // logical heading; diagonals must not feed back into this
 	visualFacing                render.V3 // rendered diagonal heading, zero means logical heading
 	combatHeading               render.V3 // heading to restore after facing an attack target

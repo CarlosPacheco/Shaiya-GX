@@ -359,7 +359,7 @@ Declarations: [proto.GXPhysicsClock](../../internal/proto/world.go#L248).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L377)
+**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L386)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1149)
 
@@ -369,7 +369,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendPhysicsClock — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L377)
+[Source definition](../../server/internal/world/player_movement.go#L386)
 
 ```go
 func (s *Session) sendPhysicsClock() {

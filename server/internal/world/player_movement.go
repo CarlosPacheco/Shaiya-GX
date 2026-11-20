@@ -22,7 +22,7 @@ type playerMovement struct {
 	mapID                          uint16
 	pos                            mapgeometry.Position
 	at, packetAt, budgetAt, jumpAt time.Time
-	credit                         float32
+	credit                         float64
 	jumping                        bool
 	jumpFall, fall, waterFall      float32
 	horizontalAt                   time.Time
@@ -292,44 +292,53 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	if s.attackMoveUntil.After(budgetAt) {
 		budgetAt = s.attackMoveUntil
 	}
-	elapsed := max(float32(0), float32(now.Sub(budgetAt).Seconds()))
+	elapsed := max(0, now.Sub(budgetAt).Seconds())
 	m.budgetAt = now
 	speed := s.movementSpeed()
 	attackPaused := now.Before(s.attackMoveUntil)
 	if attackPaused {
 		speed = 0
 	}
-	m.credit = min(speed*.65+.2, m.credit+elapsed*speed)
+	rate := float64(speed)
+	m.credit = min(rate*.65+.2, m.credit+elapsed*rate)
 	if speed == 0 {
 		m.credit = 0
 	}
-	oldX, oldZ := m.pos[0], m.pos[2]
-	dx, dz := x-oldX, z-oldZ
+	start := m.pos
+	oldX, oldZ := start[0], start[2]
+	dx, dz := float64(x)-float64(oldX), float64(z)-float64(oldZ)
 	// An idle refresh during preparation cannot translate the caster. Keep
 	// authoritative gravity/height, but reject hidden walking under motion zero.
 	if s.cast != nil && motion&0x3f == 0 {
 		dx, dz = 0, 0
 	}
-	distance := float32(math.Hypot(float64(dx), float64(dz)))
-	speedLimited := distance > m.credit
+	distance := math.Hypot(dx, dz)
+	available := max(0, m.credit)
+	speedLimited := distance > available
 	reason := ""
 	if attackPaused && distance > .00001 {
 		reason = "movement paused by attack"
 	}
 	if speedLimited {
-		scale := m.credit / distance
+		scale := available / distance
 		dx, dz = dx*scale, dz*scale
 	}
-	m.credit = max(0, m.credit-float32(math.Hypot(float64(dx), float64(dz))))
+	targetX, targetZ := float32(float64(oldX)+dx), float32(float64(oldZ)+dz)
+	delta := mapgeometry.Position{targetX - oldX, 0, targetZ - oldZ}
+	travel := math.Hypot(float64(delta[0]), float64(delta[2]))
+	// Account for the rounded endpoint, including a possible fractional debt.
+	// The next sample can spend only positive credit earned from server time.
+	m.credit -= travel
 	// Integrate the unsupported part of a walk over its actual travel time,
 	// so batching movement packets cannot bridge a gap at a fixed altitude.
 	wasSupported := m.geometry.Supported(m.pos) && !m.jumping
-	count := max(1, int(math.Ceil(math.Hypot(float64(dx), float64(dz))/.15)))
+	count := mapgeometry.HorizontalStepCount(delta)
 	for i := 0; i < count; i++ {
-		m.pos = m.geometry.GroundMove(m.pos, mapgeometry.Position{dx / float32(count), 0, dz / float32(count)}, m.jumping || m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5)
+		step := mapgeometry.HorizontalStep(start, delta, i, count)
+		m.pos = m.geometry.GroundMove(m.pos, step, m.jumping || m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5)
 		if wasSupported && !m.geometry.Supported(m.pos) && !m.jumping && speed > 0 {
 			saveAt := m.at
-			m.at = now.Add(-time.Duration(float64(time.Second) * math.Hypot(float64(dx), float64(dz)) / float64(speed) / float64(count)))
+			m.at = now.Add(-time.Duration(float64(time.Second) * travel / rate / float64(count)))
 			s.advancePlayerVertical(now)
 			m.at = saveAt
 		}
@@ -337,7 +346,7 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	// Underwater input is bounded in both directions and cannot leave the water
 	// volume or cross its floor. No such vertical freedom exists on dry ground.
 	if m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5 {
-		limit := min(elapsed, .2) * 2.8
+		limit := float32(min(elapsed, .2) * 2.8)
 		dy := min(max(y-m.pos[1], -limit), limit)
 		dy = min(dy, -1.5-m.pos[1])
 		m.pos, _ = m.geometry.MoveFeet(m.pos, mapgeometry.Position{0, dy, 0})
@@ -364,7 +373,7 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	const correctionDistance = .12
 	if reason == "" && math.Hypot(float64(m.pos[0]-x), float64(m.pos[2]-z)) > correctionDistance {
 		reason = "blocked or invalid horizontal path"
-		if speedLimited && math.Hypot(float64(m.pos[0]-(oldX+dx)), float64(m.pos[2]-(oldZ+dz))) <= correctionDistance {
+		if speedLimited && math.Hypot(float64(m.pos[0]-targetX), float64(m.pos[2]-targetZ)) <= correctionDistance {
 			reason = "movement exceeds server speed"
 		}
 	}

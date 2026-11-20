@@ -509,7 +509,7 @@ func (pt *party) sendRaidRoster(to *ConnectedPlayer) {
 
 <details><summary>DecodeRaidRoster — internal/proto/raid.go</summary>
 
-[Source definition](../../internal/proto/raid.go#L20)
+[Source definition](../../internal/proto/raid.go#L27)
 
 ```go
 func DecodeRaidRoster(p []byte) (RaidRosterChunk, error) {
@@ -605,7 +605,7 @@ func enterRaid(pt *party, p *ConnectedPlayer) bool {
 
 <details><summary>DecodeRaidJoined — internal/proto/raid.go</summary>
 
-[Source definition](../../internal/proto/raid.go#L43)
+[Source definition](../../internal/proto/raid.go#L50)
 
 ```go
 func DecodeRaidJoined(p []byte) (RaidMember, error) {
@@ -668,7 +668,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>RaidConvertPacket — internal/proto/raid.go</summary>
 
-[Source definition](../../internal/proto/raid.go#L49)
+[Source definition](../../internal/proto/raid.go#L56)
 
 ```go
 func RaidConvertPacket(kind uint8, autoJoin bool, division uint32) []byte {
@@ -790,7 +790,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>RaidAutoJoinPacket — internal/proto/raid.go</summary>
 
-[Source definition](../../internal/proto/raid.go#L61)
+[Source definition](../../internal/proto/raid.go#L68)
 
 ```go
 func RaidAutoJoinPacket(enabled bool) []byte {
@@ -866,7 +866,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>RaidSwapPacket — internal/proto/raid.go</summary>
 
-[Source definition](../../internal/proto/raid.go#L70)
+[Source definition](../../internal/proto/raid.go#L77)
 
 ```go
 func RaidSwapPacket(first, second uint32) []byte {
@@ -1033,7 +1033,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>RaidAnswerPacket — internal/proto/raid.go</summary>
 
-[Source definition](../../internal/proto/raid.go#L81)
+[Source definition](../../internal/proto/raid.go#L88)
 
 ```go
 func RaidAnswerPacket(accept bool, id uint32) []byte {
@@ -1089,7 +1089,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>RaidDisbandPacket — internal/proto/raid.go</summary>
 
-[Source definition](../../internal/proto/raid.go#L80)
+[Source definition](../../internal/proto/raid.go#L87)
 
 ```go
 func RaidDisbandPacket() []byte            { return NewWriter(RaidDisband).Bytes() }

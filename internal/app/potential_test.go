@@ -30,15 +30,27 @@ func TestPotentialSkillsAreDraggableShowReuseAndCannotBeUsed(t *testing.T) {
 
 	a := inputApp()
 	a.skillDefs = defs
-	if packet := a.learnedSkillPacket(proto.LearnedSkill{ID: 24, Level: 3, Number: 1}); packet != nil {
+	a.state.Skills[7] = proto.LearnedSkill{ID: 24, Level: 3, Number: 7}
+	a.state.QuickSlots = []proto.QuickSlot{{Bar: 1, Slot: 3, Bag: 100, Number: 7}}
+	if packet := a.actionPacket(13); packet != nil {
 		t.Fatal("a Potential produced a use request")
 	}
 
 	// The server announces the reuse when the Potential triggers by itself.
 	a.clock = 100
-	a.state.LastSkillCooldown = proto.SkillCooldown{Skill: 24, Seconds: 180, Total: 180}
+	w := proto.NewWriter(proto.GXSkillCooldown)
+	w.U16(24)
+	w.U16(180)
+	w.U16(180)
+	if _, err := a.state.Apply(w.Bytes()); err != nil {
+		t.Fatal(err)
+	}
 	a.confirmedSkills(proto.GXSkillCooldown)
-	if until := a.skills.cooldowns[24]; until != 280 {
+	slot := a.skillBar()[13]
+	if slot == nil || slot.ID != 24 || a.skillCooldownTotal(slot.ID, p) != 180 {
+		t.Fatalf("slot lost the Potential's confirmed timer: %+v", slot)
+	}
+	if until := a.skills.cooldowns[slot.ID]; until != 280 {
 		t.Fatalf("reuse ends at %v, want 280", until)
 	}
 }
