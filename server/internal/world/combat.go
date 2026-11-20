@@ -294,13 +294,23 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 		if hp > 0 && stats.Absorption > 0 {
 			hp = max(satSub(hp, stats.Absorption), 1)
 		}
+		// CMob::AttackUser: a landed skill goes through CUser::ChkMirror for its
+		// category; a mirrored hit spares the player and hurts the mob instead.
+		mirrored := result != attackResultMiss && s.reflects(min(int(sk.Kind), 2), md)
+		var back [3]uint16
+		if mirrored {
+			back = [3]uint16{uint16(min(hp, 65535)), uint16(min(max(damage[1], 0), 65535)), uint16(min(max(damage[2], 0), 65535))}
+			hp, damage[1], damage[2] = 0, 0, 0
+		}
 		if damage[1] > 0 || damage[2] > 0 {
 			s.spendDelta(uint32(max(damage[2], 0)), uint32(max(damage[1], 0)))
 			if hp == 0 {
 				s.persist()
 			}
 		}
-		killed = s.takeMobDamage(d, hp, stats)
+		if !mirrored {
+			killed = s.takeMobDamage(d, hp, stats)
+		}
 		if hp > 0 {
 			hp = s.assisted[0]
 			damage[1], damage[2] = damage[1]+int32(s.assisted[1]), damage[2]+int32(s.assisted[2])
@@ -310,7 +320,9 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 		switch {
 		case drain:
 			var healed [3]uint16
-			if r, gain, ok := HealMob(ch.MapID, d.MobGlobalID, hp); ok {
+			if mirrored {
+				// the mob is not healed by a mirrored drain
+			} else if r, gain, ok := HealMob(ch.MapID, d.MobGlobalID, hp); ok {
 				healed[0] = uint16(min(gain, 65535))
 				sendNear(ch.MapID, r.PosX, r.PosZ, CombatRadius, buildMobCurrentHP(r.ID, r.CurrentHP), "0x0610 mob hp after drain")
 			}
@@ -321,6 +333,9 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 			frame = buildMobSkillPacket(0x060B, result, d.MobGlobalID, ch.ID, sk, words, nil, d.Slot)
 		}
 		sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius, frame, "mob skill on character")
+		if mirrored {
+			s.reflectToMob(d.MobGlobalID, back)
+		}
 		s.log.Printf("GX Server World mob skill mob_global_id=%d mob_id=%d skill_id=%d result=%d damage=%d killed=%t",
 			d.MobGlobalID, d.MobID, sk.SkillID, result, hp, killed)
 		if !killed && !drain && result != attackResultMiss && sk.AddDamageHP != 0 {
