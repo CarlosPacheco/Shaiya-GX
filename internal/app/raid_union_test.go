@@ -22,19 +22,18 @@ func unionApp(self uint32) *App {
 	a.state.Party.Raid, a.state.Party.Leader, a.state.Party.RaidSubLeader = true, 1, 2
 	a.state.Party.Members = []proto.PartyMember{{ID: 1, Name: "L"}, {ID: 2, Name: "S"}, {ID: 3, Name: "M"}}
 	a.state.Party.RaidSlots = map[uint16]uint32{0: 1, 1: 2, 2: 3}
-	a.party.raidHidden, a.party.unionOpen = true, true
+	a.party.raidHidden = true
 	return a
 }
 
 // 0x47ebe0 mode 1: the portrait menu by role.
 func TestUnionPortraitMenu(t *testing.T) {
 	a := unionApp(1)
-	if got := labels(a.portraitActions()); len(got) != 4 || got[0] != "Leave union" || got[1] != "Dismantle union" || got[2] != "Config union" || got[3] != "Hide union" {
+	if got := labels(a.portraitActions()); len(got) != 3 || got[0] != "Leave union" || got[1] != "Dismantle union" || got[2] != "Config union" {
 		t.Fatalf("leader %v", got)
 	}
-	a.party.unionOpen = false
 	a.state.SelfID = 3
-	if got := labels(a.portraitActions()); len(got) != 3 || got[0] != "Leave union" || got[1] != "Config union" || got[2] != "Open union" {
+	if got := labels(a.portraitActions()); len(got) != 2 || got[0] != "Leave union" || got[1] != "Config union" {
 		t.Fatalf("member %v", got)
 	}
 	a.state.Party.Raid = false
@@ -73,7 +72,7 @@ func TestUnionSlotMenu(t *testing.T) {
 	}
 }
 
-func TestUnionCreateNeedsLootMode(t *testing.T) {
+func TestUnionCreateKeepsPartyVisible(t *testing.T) {
 	a := inputApp()
 	a.partyUI, _ = ui.NewPartyPanel(inputTextures{})
 	a.state.SelfID = 1
@@ -83,10 +82,7 @@ func TestUnionCreateNeedsLootMode(t *testing.T) {
 	if !a.unionConfigOpen() {
 		t.Fatal("create did not open the window")
 	}
-	if a.applyUnionConfig() {
-		t.Fatal("OK without a loot mode must stay open")
-	}
-	a.partyUI.SetRaidSettings(0, false)
+	a.partyUI.SetRaidSettings(1, false)
 	x, y := a.partyUI.RaidOrigin(1024, 768)
 	for _, c := range []platform.Input{{Pressed: true, MouseDown: true, MouseX: x + 35, MouseY: y + 315}, {Clicked: true, MouseX: x + 35, MouseY: y + 315}} {
 		c := c
@@ -94,6 +90,9 @@ func TestUnionCreateNeedsLootMode(t *testing.T) {
 	}
 	if d, _ := a.partyUI.RaidSettings(); d != 1 {
 		t.Fatalf("division %d", d)
+	}
+	if a.state.Party.Raid || !a.unionConfigOpen() {
+		t.Fatal("creating must not change the party list before the server confirms")
 	}
 }
 

@@ -9,7 +9,7 @@ import (
 // the dispatcher 0x48e050:
 //
 //	own portrait  (mode 1): Create Union 6500 | Leave 6501, Dismantle 6502 (leader),
-//	                         Config 6503, Open 6504 / Hiding 6505 Union
+//	                         Config 6503
 //	union slot    (mode 2): Move Group 6506, Delegate leader 6507, sub-leader 6508,
 //	                         Kick 6509, Whisper 6510, by role
 //
@@ -41,8 +41,8 @@ func (a *App) unionConfigOpen() bool {
 	return p.Raid && !a.party.raidHidden || !p.Raid && a.party.creating && len(p.Members) > 0
 }
 
-// openUnionCreate is menu entry 0x1964: the window opens empty of choices, so
-// the leader must pick a loot mode (0x196f "Select Loot" otherwise).
+// openUnionCreate is menu entry 0x1964. The loot choice is a placeholder for
+// now: Group Loot is preselected.
 func (a *App) openUnionCreate() {
 	a.party.creating, a.party.raidHidden = true, true
 	a.partyUI.ResetRaidSettings()
@@ -81,11 +81,7 @@ func (a *App) portraitActions() []contextAction {
 	if a.unionRole() == 0 {
 		out = append(out, contextAction{label: "Dismantle union", packet: proto.RaidDisbandPacket()})
 	}
-	out = append(out, contextAction{label: "Config union"})
-	if a.party.unionOpen {
-		return append(out, contextAction{label: "Hide union"})
-	}
-	return append(out, contextAction{label: "Open union"})
+	return append(out, contextAction{label: "Config union"})
 }
 
 // unionActions is popup mode 2, a slot of either union window.
@@ -140,10 +136,8 @@ func (a *App) unionSlotAt(in *platform.Input, w, h int) (int, bool) {
 	if !a.party.raidHidden && a.partyUI.RaidInside(w, h, in.MouseX, in.MouseY) {
 		return a.partyUI.RaidSlotAt(w, h, in.MouseX, in.MouseY), true
 	}
-	if a.party.unionOpen {
-		if slot := a.partyUI.RaidCompactSlotAt(w, h, in.MouseX, in.MouseY, a.state.SelfID, p.RaidSlots); slot >= 0 {
-			return slot, true
-		}
+	if slot := a.partyUI.RaidCompactSlotAt(w, h, in.MouseX, in.MouseY, a.state.SelfID, p.RaidSlots); slot >= 0 {
+		return slot, true
 	}
 	return -1, false
 }
@@ -178,10 +172,11 @@ func (a *App) syncUnionState(wasRaid bool) {
 	raid := a.state.Party.Raid
 	switch {
 	case raid && !wasRaid:
-		a.party.creating, a.party.raidHidden, a.party.unionOpen, a.party.moving = false, true, true, false
+		// the raid window opens with the new raid
+		a.party.creating, a.party.raidHidden, a.party.moving = false, false, false
 		a.partyUI.ResetRaidSettings()
 	case !raid && wasRaid:
-		a.party.raidHidden, a.party.unionOpen, a.party.moving = true, false, false
+		a.party.raidHidden, a.party.moving = true, false
 		a.partyUI.ResetRaidSettings()
 	}
 	if len(a.state.Party.Members) == 0 {

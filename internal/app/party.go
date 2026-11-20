@@ -14,7 +14,6 @@ type partyView struct {
 	inviteSerial, replySerial uint64
 	raidErrorSerial           uint64
 	raidHidden                bool // the configuration window is closed
-	unionOpen                 bool // DAT_021fd8c8: the compact union window
 	creating                  bool // Create Union: the window shows the party before converting
 	moving                    bool // Move Group picked a slot, waiting for the target
 	moveSlot                  int
@@ -123,8 +122,9 @@ func (a *App) updatePartyPointer(in *platform.Input, w, h int) bool {
 	return captured
 }
 
-// updateUnion drives the two union windows: the configuration window (opened
-// by Create/Config, on top) and the compact window (while "Open Union" is on).
+// updateUnion drives the raid window (the 30-member union_party.png, on top)
+// and the side list; the list never hides. While a raid is only being
+// created the party list stays as it is and the window shows the party.
 func (a *App) updateUnion(in *platform.Input, w, h int) bool {
 	p := &a.state.Party
 	if a.party.moving && (in.HasKey(platform.KeyEscape) || !p.Raid) {
@@ -133,11 +133,7 @@ func (a *App) updateUnion(in *platform.Input, w, h int) bool {
 	slots := a.unionSlots()
 	var captured bool
 	if a.unionConfigOpen() {
-		if a.party.creating {
-			a.partyUI.SetRaidSettings(0, false)
-		} else {
-			a.partyUI.SetRaidSettings(p.RaidDivision, p.RaidAutoJoin)
-		}
+		a.syncUnionDraft()
 		controls := a.party.creating || p.Leader == a.state.SelfID
 		id, action, c := a.partyUI.UpdateRaid(in, w, h, slots, controls)
 		captured = c
@@ -159,7 +155,7 @@ func (a *App) updateUnion(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
-	if p.Raid && a.party.unionOpen {
+	if p.Raid {
 		id, c := a.partyUI.UpdateRaidCompact(in, w, h, a.state.SelfID, slots)
 		if id != 0 {
 			a.state.Target = id
@@ -167,21 +163,32 @@ func (a *App) updateUnion(in *platform.Input, w, h int) bool {
 		if in.Clicked && a.party.moving && c {
 			a.finishMove(a.partyUI.RaidCompactSlotAt(w, h, in.MouseX, in.MouseY, a.state.SelfID, slots))
 		}
-		captured = captured || c
+		return captured || c
 	}
-	return captured
+	// Creating: the ordinary party list keeps working underneath.
+	id, c := a.partyUI.Update(in, w, h, p.Members)
+	if id != 0 {
+		a.state.Target = id
+	}
+	return captured || c
 }
 
-// applyUnionConfig is the OK button (0x48e050 case 4): a conversion needs a
-// chosen loot mode (0x196f "Select Loot"), a raid sends what changed.
+// syncUnionDraft keeps the window's draft in step with the confirmed state.
+func (a *App) syncUnionDraft() {
+	p := &a.state.Party
+	if a.party.creating {
+		a.partyUI.SetRaidSettings(1, false)
+		return
+	}
+	a.partyUI.SetRaidSettings(p.RaidDivision, p.RaidAutoJoin)
+}
+
+// applyUnionConfig is the OK button (0x48e050 case 4): a conversion sends the
+// chosen settings, a raid sends what changed.
 func (a *App) applyUnionConfig() bool {
 	p := &a.state.Party
 	division, auto := a.partyUI.RaidSettings()
 	if a.party.creating {
-		if division == 0 {
-			a.questMessage(a.msg.Get(6511))
-			return false
-		}
 		a.partyUI.ApplyRaidViewSettings()
 		if err := a.world.Send(proto.RaidConvertPacket(1, auto, division)); err != nil {
 			a.backToLogin("Unable to create the union.")
@@ -221,21 +228,18 @@ func (a *App) drawParty(w, h int) {
 	}
 	a.prepareMemberBuffs()
 	defer a.drawMemberBuffTooltip()
-	if a.state.Party.Raid || a.party.creating && len(members) > 0 {
-		slots := a.unionSlots()
-		if a.state.Party.Raid && a.party.unionOpen {
-			a.partyUI.DrawRaidCompact(a.sprites, a.font, w, h, a.state.SelfID, members, slots, a.state.Party.Leader, a.state.Target)
-		}
+	if a.state.Party.Raid {
+		a.partyUI.DrawRaidCompact(a.sprites, a.font, w, h, a.state.SelfID, members, a.state.Party.RaidSlots, a.state.Party.Leader, a.state.Target)
 		if a.unionConfigOpen() {
-			if a.party.creating {
-				a.partyUI.SetRaidSettings(0, false)
-			} else {
-				a.partyUI.SetRaidSettings(a.state.Party.RaidDivision, a.state.Party.RaidAutoJoin)
-			}
-			a.partyUI.DrawRaid(a.sprites, a.font, w, h, members, slots, a.state.Party.Leader, a.state.Target)
+			a.syncUnionDraft()
+			a.partyUI.DrawRaid(a.sprites, a.font, w, h, members, a.state.Party.RaidSlots, a.state.Party.Leader, a.state.Target)
 		}
 	} else {
 		a.partyUI.Draw(a.sprites, a.font, w, h, members, a.state.Party.Leader, a.state.Target)
+		if a.unionConfigOpen() {
+			a.syncUnionDraft()
+			a.partyUI.DrawRaid(a.sprites, a.font, w, h, members, a.unionSlots(), a.state.Party.Leader, a.state.Target)
+		}
 	}
 }
 

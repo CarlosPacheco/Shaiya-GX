@@ -134,10 +134,6 @@ func (a *App) contextLabels(actions []contextAction) []string {
 			id = 6502
 		case "Config union":
 			id = 6503
-		case "Open union":
-			id = 6504
-		case "Hide union":
-			id = 6505
 		case "Move group":
 			id = 6506
 		case "Delegate leader":
@@ -160,9 +156,6 @@ func (a *App) performContextAction(id uint32, action contextAction) {
 		return
 	case "Config union":
 		a.openUnionConfig()
-		return
-	case "Open union", "Hide union":
-		a.party.unionOpen = action.label == "Open union"
 		return
 	case "Move group":
 		a.party.moving, a.party.moveSlot = true, action.slot

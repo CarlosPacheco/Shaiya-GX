@@ -239,7 +239,13 @@ func (p *PartyPanel) UpdateRaid(in *platform.Input, w, h int, slots map[uint16]u
 
 func (p *PartyPanel) DrawRaid(s *render.Sprites, f *Font, w, h int, members []proto.PartyMember, slots map[uint16]uint32, leader, target uint32) {
 	x, y := p.RaidOrigin(w, h)
-	s.Draw(p.raidFrame, float32(x), float32(y), RaidWidth, RaidHeight, 0, 0, float32(RaidWidth)/1024, float32(RaidHeight)/512, white)
+	// The transparency slider belongs to this window, not to the party list.
+	opacity := p.raidOpacity
+	if p.raidDraftReady {
+		opacity = p.raidDraftOpacity
+	}
+	tint := [4]float32{1, 1, 1, opacity}
+	s.Draw(p.raidFrame, float32(x), float32(y), RaidWidth, RaidHeight, 0, 0, float32(RaidWidth)/1024, float32(RaidHeight)/512, tint)
 	for slot := uint16(0); slot < 30; slot++ {
 		id := slots[slot]
 		sx, sy := p.RaidSlotPosition(w, h, slot)
@@ -247,18 +253,18 @@ func (p *PartyPanel) DrawRaid(s *render.Sprites, f *Font, w, h int, members []pr
 		if id != 0 && id == target {
 			v = .5
 		}
-		s.Draw(p.raidRows, float32(sx), float32(sy), 128, 64, 0, v, 1, v+.25, white)
+		s.Draw(p.raidRows, float32(sx), float32(sy), 128, 64, 0, v, 1, v+.25, tint)
 		for _, m := range members {
 			if m.ID == id {
-				color := [4]float32{.65, .62, .62, 1}
+				color := [4]float32{.65, .62, .62, opacity}
 				if id == leader {
-					color = [4]float32{.93, .93, .89, 1}
+					color = [4]float32{.93, .93, .89, opacity}
 				}
 				f.Draw(s, fmt.Sprint(m.Level), sx+4, sy+8, color, 24)
 				f.Draw(s, m.Name, sx+25, sy+8, color, 72)
 				if m.MaxHP > 0 {
 					width := 88 * float32(min(m.HP, m.MaxHP)) / float32(m.MaxHP)
-					s.Draw(p.graph, float32(sx+4), float32(sy+24), width, 8, 0, 0, 0, .25, white)
+					s.Draw(p.graph, float32(sx+4), float32(sy+24), width, 8, 0, 0, 0, .25, tint)
 				}
 				break
 			}

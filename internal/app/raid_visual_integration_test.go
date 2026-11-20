@@ -72,7 +72,7 @@ func TestRaidPanelOriginalAssetsGL(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	a.party.raidHidden, a.party.unionOpen = true, true
+	a.party.raidHidden = true
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	a.sprites.Begin(1024, 768)
 	a.drawParty(1024, 768)

@@ -44,7 +44,7 @@ func TestCompactRaidCapturesSelectionAndContext(t *testing.T) {
 	a.state.Party.Raid, a.state.Party.Leader = true, 1
 	a.state.Party.Members = []proto.PartyMember{{ID: 1}, {ID: 2}}
 	a.state.Party.RaidSlots = map[uint16]uint32{0: 1, 1: 2}
-	a.party.raidHidden, a.party.unionOpen = true, true
+	a.party.raidHidden = true
 	x, y := a.partyUI.RaidCompactOrigin(1024, 768)
 	pointX, pointY := x+8, y+24+ui.PartyRowHeight+8
 	pressed := a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: pointX, MouseY: pointY}, 1024, 768)

@@ -118,13 +118,18 @@ func TestUnionMenusGL(t *testing.T) {
 	}
 	shot("union-create.png", func() {
 		a.performContextAction(1, contextAction{label: "Create union"})
-		a.playerContext = playerContext{id: 1, mode: contextPortrait, x: 20, y: 120, held: -1, open: true, width: 90, height: 40}
 	})
 	shot("union-raid.png", func() {
 		a.closeUnionConfig()
 		a.state.Party.Raid, a.state.Party.RaidSubLeader = true, 2
-		a.state.Party.RaidSlots = map[uint16]uint32{0: 1, 1: 2, 2: 3, 3: 4}
-		a.party.unionOpen = true
-		a.playerContext = playerContext{id: 1, mode: contextUnion, slot: 2, x: 200, y: 200, held: -1, open: true}
+		a.state.Party.RaidSlots = map[uint16]uint32{}
+		a.state.Party.Members = nil
+		for slot := uint16(0); slot < 30; slot++ {
+			id := uint32(slot) + 1
+			a.state.Party.RaidSlots[slot] = id
+			a.state.Party.Members = append(a.state.Party.Members, proto.PartyMember{ID: id, Name: fmt.Sprintf("Player %02d", id), Level: 60, Class: uint8(slot % 6), HP: 80, MaxHP: 100, MP: 60, MaxMP: 100, SP: 40, MaxSP: 100})
+		}
+		a.syncUnionState(false)
+		a.partyUI.SetRaidSettings(1, false)
 	})
 }
