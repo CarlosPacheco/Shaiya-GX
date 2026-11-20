@@ -11,6 +11,7 @@ NAMES = {
     'chat-parity.md': 'Chat-Controls', 'revolver.md': 'Revolver',
     'auction-house.md': 'Auction-House', 'teleport-runes.md': 'Teleport-Runes',
     'map-rules.md': 'Map-Rules', 'gx-studio.md': 'GX-Studio',
+    'group-loot.md': 'Group-Loot',
     'mounts.md': 'Mounts', 'fall-damage.md': 'Fall-Damage',
     'goddess-blessing.md': 'Goddess-Blessing',
     'obelisks.md': 'Obelisks',
