@@ -159,9 +159,14 @@ type MapMarker struct {
 	Kind MapMarkerKind
 }
 
-func (m *Minimap) drawMarkers(s *render.Sprites, markers []MapMarker, view UV, x, y, side, size float32, circular bool) {
+// drawMarkers draws either the allies (party radar dots) or every other mark;
+// the allies go over the player's arrow, everything else under it.
+func (m *Minimap) drawMarkers(s *render.Sprites, markers []MapMarker, view UV, x, y, side, size float32, circular, allies bool) {
 	base := size
 	for _, mark := range markers {
+		if (mark.Kind == MapParty) != allies {
+			continue
+		}
 		size := base
 		texture := m.party
 		switch mark.Kind {
@@ -200,12 +205,13 @@ func (m *Minimap) Draw(s *render.Sprites, f *Font, image, solid *render.Texture,
 	}
 	s.DrawCircle(tex, float32(x+16), float32(y+16), MinimapImageSize, view.U0, view.V0, view.U1, view.V1, tint)
 	if image != nil {
-		m.drawMarkers(s, markers, view, float32(x+16), float32(y+16), MinimapImageSize, 12, true)
+		m.drawMarkers(s, markers, view, float32(x+16), float32(y+16), MinimapImageSize, 12, true, false)
 		px, py, ok := MapPoint(u, v, view)
 		dx, dy := px-.5, py-.5
 		if ok && dx*dx+dy*dy < .24 {
 			s.DrawRotated(m.arrow, float32(x+16)+px*MinimapImageSize, float32(y+16)+py*MinimapImageSize, 16, 16, heading, 0, 0, 1, 1, white)
 		}
+		m.drawMarkers(s, markers, view, float32(x+16), float32(y+16), MinimapImageSize, 12, true, true)
 	}
 	s.DrawImage(m.frame, float32(x+4), float32(y+4))
 	s.Draw(m.plate, float32(x+9), float32(y+157), 150, 40, 0, 0, 150.0/256, 40.0/64, white)
@@ -230,10 +236,11 @@ func (m *Minimap) DrawFull(s *render.Sprites, f *Font, image, solid *render.Text
 	s.Draw(solid, mapX, mapY, side, side, 0, 0, 1, 1, [4]float32{.03, .04, .05, .98})
 	if image != nil {
 		s.Draw(image, mapX, mapY, side, side, view.U0, view.V0, view.U1, view.V1, white)
-		m.drawMarkers(s, markers, view, mapX, mapY, side, 12*scale, false)
+		m.drawMarkers(s, markers, view, mapX, mapY, side, 12*scale, false, false)
 		if px, py, ok := MapPoint(u, v, view); ok {
 			s.DrawRotated(m.arrow, mapX+px*side, mapY+py*side, 20*scale, 20*scale, heading, 0, 0, 1, 1, white)
 		}
+		m.drawMarkers(s, markers, view, mapX, mapY, side, 12*scale, false, true)
 	} else {
 		f.Draw(s, "Map image unavailable", int(mapX+12), int(mapY+12), white, 0)
 	}

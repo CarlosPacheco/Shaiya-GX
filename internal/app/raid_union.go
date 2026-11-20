@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 // Union (raid) flows of the original UI, from the popup builder 0x47ebe0 and
@@ -82,13 +83,14 @@ func (a *App) portraitActions() []contextAction {
 	p := &a.state.Party
 	if !p.Raid {
 		if p.Leader != a.state.SelfID {
-			return nil // only the party leader can create a raid
+			// only the party leader can create a raid; anyone can still leave
+			return []contextAction{{label: "Leave party", packet: proto.PartyLeavePacket()}}
 		}
 		return []contextAction{{label: "Create union"}}
 	}
 	out := []contextAction{{label: "Leave union", packet: proto.PartyLeavePacket()}}
 	if a.unionRole() == 0 {
-		out = append(out, contextAction{label: "Dismantle union", packet: proto.RaidDisbandPacket()})
+		out = append(out, contextAction{label: "Dismantle union"}) // asks first
 	}
 	return append(out, contextAction{label: "Config union"})
 }
@@ -196,4 +198,31 @@ func (a *App) syncUnionState(wasRaid bool) {
 	if len(a.state.Party.Members) == 0 {
 		a.party.creating = false
 	}
+}
+
+// askDismantle opens the confirmation (the same message box as returning to
+// the character screen) before a leader dissolves the raid.
+func (a *App) askDismantle() {
+	if a.unionConfirm == nil || !a.state.Party.Raid || a.unionRole() != 0 {
+		return
+	}
+	text := a.msg.Get(6502)
+	if text == "" {
+		text = "Dismantle Union"
+	}
+	a.unionConfirm.Open(text+"?", true)
+}
+
+func (a *App) updateUnionConfirm(in *platform.Input, w, h int) bool {
+	if a.unionConfirm == nil || !a.unionConfirm.Visible || a.state == nil {
+		return false
+	}
+	if result := a.unionConfirm.Update(in, w, h); result != ui.MessageNone {
+		if result == ui.MessageOK && a.state.Party.Raid && a.unionRole() == 0 && a.world != nil {
+			if err := a.world.Send(proto.RaidDisbandPacket()); err != nil {
+				a.backToLogin("Unable to dismantle the raid.")
+			}
+		}
+	}
+	return true
 }

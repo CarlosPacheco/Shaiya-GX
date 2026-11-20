@@ -37,8 +37,8 @@ func TestUnionPortraitMenu(t *testing.T) {
 		t.Fatalf("member %v", got)
 	}
 	a.state.Party.Raid = false
-	if got := a.portraitActions(); len(got) != 0 {
-		t.Fatalf("a member who is not the leader may not create a raid: %v", labels(got))
+	if got := labels(a.portraitActions()); len(got) != 1 || got[0] != "Leave party" {
+		t.Fatalf("a member who is not the leader may not create a raid: %v", got)
 	}
 	a.state.Party.Leader = a.state.SelfID
 	if got := labels(a.portraitActions()); len(got) != 1 || got[0] != "Create union" {
@@ -140,5 +140,31 @@ func TestPartyBadgeKind(t *testing.T) {
 	a.state.Party.Members = nil
 	if a.partyBadgeKind(3) != 0 {
 		t.Fatal("no party, no badge")
+	}
+}
+
+func TestDismantleAsksFirst(t *testing.T) {
+	a := unionApp(1)
+	a.unionConfirm, _ = ui.NewMessage(inputTextures{})
+	a.performContextAction(1, contextAction{label: "Dismantle union"})
+	if !a.unionConfirm.Visible {
+		t.Fatal("dismantle did not ask for confirmation")
+	}
+	a.unionConfirm.Visible = false
+	a.state.SelfID = 3 // a member cannot dismantle
+	a.performContextAction(3, contextAction{label: "Dismantle union"})
+	if a.unionConfirm.Visible {
+		t.Fatal("a member was asked to dismantle")
+	}
+}
+
+func TestMembersCanLeaveFromThePortrait(t *testing.T) {
+	a := unionApp(3)
+	if got := labels(a.portraitActions()); len(got) != 2 || got[0] != "Leave union" || got[1] != "Config union" {
+		t.Fatalf("raid member menu %v", got)
+	}
+	a.state.Party.Raid = false
+	if got := labels(a.portraitActions()); len(got) != 1 || got[0] != "Leave party" {
+		t.Fatalf("party member menu %v", got)
 	}
 }

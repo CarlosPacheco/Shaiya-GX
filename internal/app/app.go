@@ -79,6 +79,7 @@ type App struct {
 	deathUI                             *ui.DeathDialog
 	guildMessage                        *ui.Message
 	guildConfirm                        *ui.Message
+	unionConfirm                        *ui.Message // confirm before dismantling a raid
 	guildVoteMessage                    *ui.Message
 	guildDuelMessage                    *ui.Message
 	guildDuel                           guildDuelView
@@ -365,6 +366,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		return nil, err
 	}
 	if a.guildConfirm, err = ui.NewMessage(a); err != nil {
+		return nil, err
+	}
+	if a.unionConfirm, err = ui.NewMessage(a); err != nil {
 		return nil, err
 	}
 	if a.auctionConfirm, err = ui.NewMessage(a); err != nil {
@@ -693,6 +697,9 @@ func (a *App) drawFrame(w, h int) {
 	if a.screen == screenWorld && !a.worldUIHidden() && a.auctionConfirm != nil {
 		a.auctionConfirm.Draw(a.sprites, a.font, w, h)
 	}
+	if a.screen == screenWorld && !a.worldUIHidden() && a.unionConfirm != nil {
+		a.unionConfirm.Draw(a.sprites, a.font, w, h)
+	}
 	if a.screen == screenWorld && !a.worldUIHidden() && a.guildConfirm != nil {
 		a.guildConfirm.Draw(a.sprites, a.font, w, h)
 		if a.socialInviteUI != nil {
@@ -825,6 +832,9 @@ func (a *App) backToLogin(msg string) {
 	}
 	if a.guildMessage != nil {
 		a.guildMessage.Visible = false
+	}
+	if a.unionConfirm != nil {
+		a.unionConfirm.Visible = false
 	}
 	if a.guildConfirm != nil {
 		a.guildConfirm.Visible = false

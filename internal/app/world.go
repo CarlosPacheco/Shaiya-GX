@@ -991,6 +991,9 @@ func (a *App) releaseWorld() {
 		if a.guildMessage != nil {
 			a.guildMessage.Visible = false
 		}
+		if a.unionConfirm != nil {
+			a.unionConfirm.Visible = false
+		}
 		if a.guildConfirm != nil {
 			a.guildConfirm.Visible = false
 		}

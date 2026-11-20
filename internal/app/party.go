@@ -34,7 +34,7 @@ func (a *App) partyNotice(id int, name string) {
 // invitedNotice tells the inviter whom the request went to (native SysMsg 203).
 func (a *App) invitedNotice(name string) {
 	if name != "" {
-		a.systemMessage(17, 203, map[string]string{"p": name})
+		a.systemMessage(7, 203, map[string]string{"p": name}) // 0x48e050: FUN_0041fce0(7, 0xcb)
 	}
 }
 

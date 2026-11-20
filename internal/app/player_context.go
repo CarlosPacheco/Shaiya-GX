@@ -157,6 +157,9 @@ func (a *App) performContextAction(id uint32, action contextAction) {
 	case "Config union":
 		a.openUnionConfig()
 		return
+	case "Dismantle union":
+		a.askDismantle()
+		return
 	case "Move group":
 		a.party.moving, a.party.moveSlot = true, action.slot
 		return
