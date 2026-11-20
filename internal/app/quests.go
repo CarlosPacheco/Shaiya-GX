@@ -188,6 +188,15 @@ func (a *App) questCommand(text string) bool {
 	var packet []byte
 	switch strings.ToLower(fields[1]) {
 	case "start", "end":
+		if strings.EqualFold(fields[1], "start") {
+			if !a.questDataLoaded && a.arc != nil {
+				_ = a.loadQuests()
+			}
+			if int(id) <= len(a.questDefs) && a.questDefs[id-1].StartType == 3 {
+				packet = proto.QuestStartPacket(uint32(a.questDefs[id-1].StartItemID), id)
+				break
+			}
+		}
 		npc := a.state.Entities[a.shop.npcID]
 		if npc == nil || npc.Kind != game.KindNpc {
 			a.questMessage("Talk to the quest NPC first.")

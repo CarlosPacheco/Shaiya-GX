@@ -80,6 +80,35 @@ func AddCharacterQuest(charID uint32, q CharQuest) error {
 		sql.Named("count2", q.Counts[1]), sql.Named("count3", q.Counts[2]))
 }
 
+// CommitQuestStart commits the inventory cost, starting grants and quest row
+// together. A duplicate start or changed inventory rolls back the whole plan.
+func CommitQuestStart(charID uint32, q CharQuest, before, after []Item) error {
+	pool, err := Pool(GameData)
+	if err != nil {
+		return err
+	}
+	c, cancel := ctx()
+	defer cancel()
+	return withTx(c, pool, func(tx *sql.Tx) error {
+		if !sameInventory(before, after) {
+			actual, err := characterItems(c, tx, charID)
+			if err != nil {
+				return err
+			}
+			if !sameInventory(actual, before) {
+				return fmt.Errorf("quest start inventory changed")
+			}
+			change := CharacterChange{After: Character{ID: charID}, ItemsBefore: before, ItemsAfter: after}
+			if err := writeInventoryChange(c, tx, change); err != nil {
+				return err
+			}
+		}
+		_, err := tx.ExecContext(c, `INSERT INTO PS_GameData_CharQuests(CharID,QuestID,Delay,Count1,Count2,Count3) VALUES(?,?,?,?,?,?)`,
+			charID, int16(q.QuestID), q.Delay, q.Counts[0], q.Counts[1], q.Counts[2])
+		return err
+	})
+}
+
 // SaveCharacterQuest runs usp_Save_Char_Quest_Mod_E.
 func SaveCharacterQuest(charID uint32, q CharQuest) error {
 	return execSQL(GameData, `UPDATE PS_GameData_CharQuests SET [Delay]=@delay,Count1=@count1,Count2=@count2,Count3=@count3 WHERE CharID=@charid AND QuestID=@questid`, sql.Named("charid", int32(charID)),

@@ -88,3 +88,20 @@ from `data/game/NpcQuest.SData` at startup. The client uses its own
 `Npc/NpcQuest.SData` for presentation. GX Studio saves shared rules to both
 files, keeps their texts and encodings separate, and backs up both before
 writing. See [GX Studio](gx-studio.md) and [map access rules](map-rules.md).
+
+### Native quest admission and GX safeguards
+
+The recovered EP5 server admission path checks level, family, class, mode
+and prerequisite quests. It reads neither the sex nor party composition fields
+during admission. The recovered reward routine does not start `NextQuest`.
+Those stored fields are retained for catalog fidelity.
+
+GX validates the distance to the NPC at acceptance and turn-in. When a quest
+names a turn-in NPC, that NPC is required. A reward submitted after opening a
+choice at an NPC also requires the player to remain within reach. Acceptance,
+the starting item cost and initial grants commit together before confirmation.
+
+An item-backed quest of start type 3 can be requested with `/quest start ID`
+while holding its required item. World checks possession and keeps the item.
+Start type 4 additionally needs the original recent-item-use state and remains
+unavailable while that client path is unverified.

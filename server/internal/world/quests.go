@@ -2,6 +2,7 @@ package world
 
 import (
 	"math/rand/v2"
+	"slices"
 	"sort"
 	"time"
 
@@ -176,6 +177,7 @@ type activeQuest struct {
 	endAt     time.Time // timed quests
 	successAt time.Time // MinMinutes elapsed
 	success   uint8     // 1: waiting for the reward choice
+	rewardNPC uint32
 }
 
 func (q *activeQuest) delayMinutes() int16 {
@@ -342,23 +344,14 @@ func raceAllowed(country, race uint8) bool {
 
 func (s *Session) npcMatches(npcID uint32, npcType uint8, typeID uint16) (MapNpc, bool) {
 	npc, ok := npcOnMap(s.char.MapID, npcID)
-	return npc, ok && npc.Type == npcType && npc.TypeID == typeID
+	return npc, ok && s.questNPCInReach(npc) && npc.Type == npcType && npc.TypeID == typeID
 }
 
-// findInventoryItem finds (and optionally consumes one of) an item.
-func (s *Session) findInventoryItem(t, id uint8, consume bool) bool {
-	for i := range s.items {
-		it := s.items[i]
-		if it.Bag >= InventoryFirstBag && it.Bag <= InventoryLastBag && it.Type == t && it.TypeID == id {
-			if consume {
-				res, err := s.consumeOne(i)
-				s.logErr("consume quest item", err)
-				s.send(buildRemoveItem(&res, res.Count == 0), "0x0206 quest item used")
-			}
-			return true
-		}
-	}
-	return false
+// Use the same authoritative interaction radius as other NPC services.
+const questNPCReach = 30.0
+
+func (s *Session) questNPCInReach(npc MapNpc) bool {
+	return DistanceXZ(s.char.PosX, s.char.PosZ, npc.PosX, npc.PosZ) < questNPCReach
 }
 
 // handleQuestStart (0x0902): npc id, quest id (CUser::QuestStartRequest).
@@ -374,7 +367,7 @@ func (s *Session) handleQuestStart(p []byte) {
 	}
 	if q.StartType <= 2 {
 		npc, ok := npcOnMap(s.char.MapID, npcID)
-		if !ok {
+		if !ok || !s.questNPCInReach(npc) {
 			return
 		}
 		if (q.StartType != 0 || q.StartNpcType != 0) && (npc.Type != q.StartNpcType || npc.TypeID != q.StartNpcID) {
@@ -390,14 +383,14 @@ func (s *Session) handleQuestStart(p []byte) {
 		s.log.Printf("GX Server World quest %d refused (active, finished or requirements)", id)
 		return
 	}
-	if (q.StartType == 2 || q.StartType == 3) && !s.findInventoryItem(q.StartItemType, q.StartItemID, q.StartType == 2) {
-		return
+	// The native acknowledgement carries an NPC only for types 1 and 2.
+	context := npcID
+	if q.StartType == 0 || q.StartType == 3 {
+		context = 0
 	}
-	s.startQuest(q, id, npcID)
+	s.startQuest(q, id, context)
 }
 
-// startQuest adds the quest, saves it, tells the client and hands out
-// the start items.
 func (s *Session) startQuest(q *questDef, id uint16, npcID uint32) {
 	now := time.Now()
 	aq := &activeQuest{ID: id, def: q, startAt: now}
@@ -407,42 +400,62 @@ func (s *Session) startQuest(q *questDef, id uint16, npcID uint32) {
 	if q.MinMinutes != 0 {
 		aq.successAt = now.Add(time.Duration(q.MinMinutes) * time.Minute)
 	}
-	if err := db.AddCharacterQuest(s.char.ID, db.CharQuest{QuestID: id, Delay: int16(min(q.MaxMinutes, 32767))}); err != nil {
-		s.log.Printf("GX Server World quest %d start failed: %v", id, err)
+	after := slices.Clone(s.items)
+	var removed *db.Item
+	if q.StartType == 2 || q.StartType == 3 {
+		i := slices.IndexFunc(after, func(it db.Item) bool {
+			return it.Bag >= InventoryFirstBag && it.Bag <= InventoryLastBag && it.Count > 0 &&
+				it.Type == q.StartItemType && it.TypeID == q.StartItemID
+		})
+		if i < 0 {
+			return
+		}
+		if q.StartType == 2 {
+			after[i].Count--
+			item := after[i]
+			removed = &item
+			if item.Count == 0 {
+				after = slices.Delete(after, i, i+1)
+			}
+		}
+	}
+	var grants [][]byte
+	for _, it := range q.StartItems {
+		if it.Type == 0 {
+			continue
+		}
+		def := db.MustDefs().Item(it.Type, it.TypeID)
+		if def == nil {
+			return
+		}
+		tpl := db.Item{Type: it.Type, TypeID: it.TypeID, Quality: def.Quality, MakeType: "Q"}
+		adds, left := planGiveItem(&after, &tpl, uint16(max(it.Count, 1)), def.MaxStack())
+		if left != 0 {
+			s.send(buildAddItemError(1), "quest start inventory full")
+			return
+		}
+		grants = append(grants, adds...)
+	}
+	if err := db.CommitQuestStart(s.char.ID, db.CharQuest{QuestID: id, Delay: int16(min(q.MaxMinutes, 32767))}, s.items, after); err != nil {
+		s.logErr("quest start transaction", err)
 		return
 	}
+	s.items = after
 	s.quests = append(s.quests, aq)
+	if s.player != nil {
+		s.player.UpdateItems(s.items)
+	}
+	if removed != nil {
+		s.send(buildRemoveItem(removed, removed.Count == 0), "quest start cost")
+	}
 	w := packet.New(packet.QuestStart)
 	w.U32(npcID)
 	w.U16(id)
 	s.send(w.MustFinish(), "0x0902 quest start")
-	for _, it := range q.StartItems {
-		if it.Type != 0 {
-			s.giveQuestItem(it.Type, it.TypeID, max(it.Count, 1))
-		}
+	for _, frame := range grants {
+		s.send(frame, "quest start item")
 	}
 	s.log.Printf("GX Server World quest %d %q started", id, q.Name)
-}
-
-// giveQuestItem adds an item to the inventory and tells the client; it
-// returns the item's placement, if any.
-func (s *Session) giveQuestItem(t, id, count uint8) *db.Item {
-	def := db.MustDefs().Item(t, id)
-	if def == nil {
-		return nil
-	}
-	tpl := db.Item{Type: t, TypeID: id, Quality: def.Quality, MakeType: "Q"}
-	adds, _, err := s.giveItem(&tpl, uint16(count), def.MaxStack())
-	s.logErr("give quest item", err)
-	for _, a := range adds {
-		s.send(a, "0x0205 quest item")
-	}
-	for i := len(s.items) - 1; i >= 0; i-- {
-		if s.items[i].Type == t && s.items[i].TypeID == id {
-			return &s.items[i]
-		}
-	}
-	return nil
 }
 
 // questFindItems is QuestFindItem (0x0047f8e0): the farm items must all be
@@ -541,7 +554,7 @@ func (s *Session) handleQuestEnd(p []byte) {
 	if d.EndType > 3 || (d.EndType == 0 && d.EndNpcType == 0) {
 		return
 	}
-	if d.EndType == 0 || npcID != 0 {
+	if d.EndNpcType != 0 || npcID != 0 {
 		if _, ok := s.npcMatches(npcID, d.EndNpcType, d.EndNpcID); !ok {
 			return
 		}
@@ -564,6 +577,7 @@ func (s *Session) handleQuestEnd(p []byte) {
 	if d.EndType >= 2 {
 		ctx = 0
 	}
+	q.rewardNPC = npcID
 	s.completeQuest(q, ctx, true)
 }
 
@@ -625,6 +639,11 @@ func (s *Session) handleQuestChoose(p []byte) {
 	q := s.findQuest(id)
 	if q == nil || q.success == 0 || choice >= q.def.UserSelect || choice >= 3 {
 		return
+	}
+	if q.rewardNPC != 0 {
+		if _, ok := s.npcMatches(q.rewardNPC, q.def.EndNpcType, q.def.EndNpcID); !ok {
+			return
+		}
 	}
 	if q.def.EndNpcType != 0 && !s.questFindItems(q) {
 		return

@@ -3168,49 +3168,49 @@ Direct GX dependencies: `internal/npcquest`, `server/internal/db`, `server/inter
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`questItem`](../../server/internal/world/quests.go#L20)<br>`type questItem` | See the source definition and the subsystem ownership contract. |
-| [`questResult`](../../server/internal/world/quests.go#L22)<br>`type questResult` | See the source definition and the subsystem ownership contract. |
-| [`questDef`](../../server/internal/world/quests.go#L35)<br>`type questDef` | See the source definition and the subsystem ownership contract. |
-| [`questItemLink`](../../server/internal/world/quests.go#L70)<br>`type questItemLink` | See the source definition and the subsystem ownership contract. |
-| [`questDefs`](../../server/internal/world/quests.go#L73)<br>`var questDefs []questDef` | See the source definition and the subsystem ownership contract. |
-| [`questItemLinks`](../../server/internal/world/quests.go#L74)<br>`var questItemLinks` | See the source definition and the subsystem ownership contract. |
-| [`mobQuestLinks`](../../server/internal/world/quests.go#L75)<br>`var mobQuestLinks` | See the source definition and the subsystem ownership contract. |
-| [`sqliteQuest`](../../server/internal/world/quests.go#L79)<br>`func sqliteQuest(row npcquest.Row) questDef` | sqliteQuest follows the native field order declared by QuestDetails. |
-| [`findQuestDef`](../../server/internal/world/quests.go#L130)<br>`func findQuestDef(id uint16) *questDef` | findQuestDef is GetQuest: by row (1-based), not the embedded id. |
-| [`buildMobQuestLinks`](../../server/internal/world/quests.go#L139)<br>`func buildMobQuestLinks()` | buildMobQuestLinks maps mobs to the mob-kill quests that count them, ascending by minimum level (MobQuestLinks::build). |
-| [`activeQuest`](../../server/internal/world/quests.go#L171)<br>`type activeQuest` | activeQuest is a quest in progress. |
-| [`delayMinutes`](../../server/internal/world/quests.go#L181)<br>`func (q *activeQuest) delayMinutes() int16` | See the source definition and the subsystem ownership contract. |
-| [`row`](../../server/internal/world/quests.go#L188)<br>`func (q *activeQuest) row() db.CharQuest` | See the source definition and the subsystem ownership contract. |
-| [`loadQuests`](../../server/internal/world/quests.go#L193)<br>`func (s *Session) loadQuests() error` | loadQuests restores the character's quests as PacketUserDBSetInfo does. |
-| [`questListPackets`](../../server/internal/world/quests.go#L228)<br>`func (s *Session) questListPackets() [][]byte` | questListPackets are 0x0901 (id, minutes left, counters) and 0x0906 (id, success), up to 255 entries each. |
-| [`questSnapshot`](../../server/internal/world/quests.go#L259)<br>`func (s *Session) questSnapshot() []db.CharQuest` | questSnapshot captures active timers and counters on exit. |
-| [`findQuest`](../../server/internal/world/quests.go#L267)<br>`func (s *Session) findQuest(id uint16) *activeQuest` | See the source definition and the subsystem ownership contract. |
-| [`questFinished`](../../server/internal/world/quests.go#L276)<br>`func (s *Session) questFinished(id uint16, onlySuccess bool) bool` | See the source definition and the subsystem ownership contract. |
-| [`questPrerequisites`](../../server/internal/world/quests.go#L286)<br>`func (s *Session) questPrerequisites(q *questDef) bool` | questPrerequisites: PrevQuest, HG or VG finished successfully (any). |
-| [`questEnableStart`](../../server/internal/world/quests.go#L301)<br>`func (s *Session) questEnableStart(q *questDef) bool` | questEnableStart is CUser::QuestEnableStart: level range, race (Faction), job, mode and prerequisites. |
-| [`raceAllowed`](../../server/internal/world/quests.go#L327)<br>`func raceAllowed(country, race uint8) bool` | raceAllowed is the Country/Faction race rule shared with items. |
-| [`npcMatches`](../../server/internal/world/quests.go#L343)<br>`func (s *Session) npcMatches(npcID uint32, npcType uint8, typeID uint16) (MapNpc, bool)` | See the source definition and the subsystem ownership contract. |
-| [`findInventoryItem`](../../server/internal/world/quests.go#L349)<br>`func (s *Session) findInventoryItem(t, id uint8, consume bool) bool` | findInventoryItem finds (and optionally consumes one of) an item. |
-| [`handleQuestStart`](../../server/internal/world/quests.go#L365)<br>`func (s *Session) handleQuestStart(p []byte)` | handleQuestStart (0x0902): npc id, quest id (CUser::QuestStartRequest). |
-| [`startQuest`](../../server/internal/world/quests.go#L401)<br>`func (s *Session) startQuest(q *questDef, id uint16, npcID uint32)` | startQuest adds the quest, saves it, tells the client and hands out the start items. |
-| [`giveQuestItem`](../../server/internal/world/quests.go#L429)<br>`func (s *Session) giveQuestItem(t, id, count uint8) *db.Item` | giveQuestItem adds an item to the inventory and tells the client; it returns the item's placement, if any. |
-| [`questFindItems`](../../server/internal/world/quests.go#L451)<br>`func (s *Session) questFindItems(q *activeQuest) bool` | questFindItems is QuestFindItem (0x0047f8e0): the farm items must all be held; counters take the held totals; consuming removes what the chosen reward variant needs (whole stacks for quest-type items). |
-| [`planQuestItems`](../../server/internal/world/quests.go#L456)<br>`func planQuestItems(q *activeQuest, original []db.Item, consume bool) (items []db.Item, packets [][]byte, ok bool)` | See the source definition and the subsystem ownership contract. |
-| [`handleQuestEnd`](../../server/internal/world/quests.go#L530)<br>`func (s *Session) handleQuestEnd(p []byte)` | handleQuestEnd (0x0903): npc id, quest id (quest_end_request). |
-| [`completeQuest`](../../server/internal/world/quests.go#L571)<br>`func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool)` | completeQuest is quest_requests_complete. |
-| [`handleQuestChoose`](../../server/internal/world/quests.go#L619)<br>`func (s *Session) handleQuestChoose(p []byte)` | handleQuestChoose (0x0907): quest id, reward index. |
-| [`handleQuestAbandon`](../../server/internal/world/quests.go#L636)<br>`func (s *Session) handleQuestAbandon(p []byte)` | handleQuestAbandon (0x0908): quest id. |
-| [`awardQuest`](../../server/internal/world/quests.go#L648)<br>`func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32)` | awardQuest is award_quest_reward: exp (doubled unless the quest is ultimate-only), gold and an item; 0x0903 reports them. |
-| [`removeQuest`](../../server/internal/world/quests.go#L735)<br>`func (s *Session) removeQuest(q *activeQuest, success uint8)` | removeQuest is QuestRuntime::remove: repeatable quests (TickReceive) are deleted, others finish with their success flag. |
-| [`removeQuestFromMemory`](../../server/internal/world/quests.go#L749)<br>`func (s *Session) removeQuestFromMemory(q *activeQuest, success uint8)` | See the source definition and the subsystem ownership contract. |
-| [`bumpQuestCounter`](../../server/internal/world/quests.go#L761)<br>`func (s *Session) bumpQuestCounter(q *activeQuest, slot int)` | See the source definition and the subsystem ownership contract. |
-| [`questKill`](../../server/internal/world/quests.go#L779)<br>`func (s *Session) questKill(mobID uint16)` | questKill is update_mob_kill_quests for one kill of mobID. |
-| [`questKillCount`](../../server/internal/world/quests.go#L780)<br>`func (s *Session) questKillCount(mobID uint16, count uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`questNeeds`](../../server/internal/world/quests.go#L840)<br>`func (s *Session) questNeeds(t, id uint8) bool` | questNeeds: an item that starts a quest, or one an active quest ends with. |
-| [`questPickup`](../../server/internal/world/quests.go#L857)<br>`func (s *Session) questPickup(t, id uint8)` | questPickup is quest_requests_progress_pick_item. |
-| [`questTimers`](../../server/internal/world/quests.go#L882)<br>`func (s *Session) questTimers()` | questTimers fails timed quests whose time ran out. |
-| [`questItemDrop`](../../server/internal/world/quests.go#L896)<br>`func questItemDrop(mob *MapMob, recipients []*ConnectedPlayer) *db.ItemDef` | questItemDrop is mob_loot's quest item: Mobs.QuestItemID drops (chance = the item's Quality per cent) when it starts a quest or any recipient has a quest it ends. |
-| [`syncQuestIDs`](../../server/internal/world/quests.go#L920)<br>`func (s *Session) syncQuestIDs()` | syncQuestIDs publishes the active quest ids for other sessions' loot. |
+| [`questItem`](../../server/internal/world/quests.go#L21)<br>`type questItem` | See the source definition and the subsystem ownership contract. |
+| [`questResult`](../../server/internal/world/quests.go#L23)<br>`type questResult` | See the source definition and the subsystem ownership contract. |
+| [`questDef`](../../server/internal/world/quests.go#L36)<br>`type questDef` | See the source definition and the subsystem ownership contract. |
+| [`questItemLink`](../../server/internal/world/quests.go#L71)<br>`type questItemLink` | See the source definition and the subsystem ownership contract. |
+| [`questDefs`](../../server/internal/world/quests.go#L74)<br>`var questDefs []questDef` | See the source definition and the subsystem ownership contract. |
+| [`questItemLinks`](../../server/internal/world/quests.go#L75)<br>`var questItemLinks` | See the source definition and the subsystem ownership contract. |
+| [`mobQuestLinks`](../../server/internal/world/quests.go#L76)<br>`var mobQuestLinks` | See the source definition and the subsystem ownership contract. |
+| [`sqliteQuest`](../../server/internal/world/quests.go#L80)<br>`func sqliteQuest(row npcquest.Row) questDef` | sqliteQuest follows the native field order declared by QuestDetails. |
+| [`findQuestDef`](../../server/internal/world/quests.go#L131)<br>`func findQuestDef(id uint16) *questDef` | findQuestDef is GetQuest: by row (1-based), not the embedded id. |
+| [`buildMobQuestLinks`](../../server/internal/world/quests.go#L140)<br>`func buildMobQuestLinks()` | buildMobQuestLinks maps mobs to the mob-kill quests that count them, ascending by minimum level (MobQuestLinks::build). |
+| [`activeQuest`](../../server/internal/world/quests.go#L172)<br>`type activeQuest` | activeQuest is a quest in progress. |
+| [`delayMinutes`](../../server/internal/world/quests.go#L183)<br>`func (q *activeQuest) delayMinutes() int16` | See the source definition and the subsystem ownership contract. |
+| [`row`](../../server/internal/world/quests.go#L190)<br>`func (q *activeQuest) row() db.CharQuest` | See the source definition and the subsystem ownership contract. |
+| [`loadQuests`](../../server/internal/world/quests.go#L195)<br>`func (s *Session) loadQuests() error` | loadQuests restores the character's quests as PacketUserDBSetInfo does. |
+| [`questListPackets`](../../server/internal/world/quests.go#L230)<br>`func (s *Session) questListPackets() [][]byte` | questListPackets are 0x0901 (id, minutes left, counters) and 0x0906 (id, success), up to 255 entries each. |
+| [`questSnapshot`](../../server/internal/world/quests.go#L261)<br>`func (s *Session) questSnapshot() []db.CharQuest` | questSnapshot captures active timers and counters on exit. |
+| [`findQuest`](../../server/internal/world/quests.go#L269)<br>`func (s *Session) findQuest(id uint16) *activeQuest` | See the source definition and the subsystem ownership contract. |
+| [`questFinished`](../../server/internal/world/quests.go#L278)<br>`func (s *Session) questFinished(id uint16, onlySuccess bool) bool` | See the source definition and the subsystem ownership contract. |
+| [`questPrerequisites`](../../server/internal/world/quests.go#L288)<br>`func (s *Session) questPrerequisites(q *questDef) bool` | questPrerequisites: PrevQuest, HG or VG finished successfully (any). |
+| [`questEnableStart`](../../server/internal/world/quests.go#L303)<br>`func (s *Session) questEnableStart(q *questDef) bool` | questEnableStart is CUser::QuestEnableStart: level range, race (Faction), job, mode and prerequisites. |
+| [`raceAllowed`](../../server/internal/world/quests.go#L329)<br>`func raceAllowed(country, race uint8) bool` | raceAllowed is the Country/Faction race rule shared with items. |
+| [`npcMatches`](../../server/internal/world/quests.go#L345)<br>`func (s *Session) npcMatches(npcID uint32, npcType uint8, typeID uint16) (MapNpc, bool)` | See the source definition and the subsystem ownership contract. |
+| [`questNPCReach`](../../server/internal/world/quests.go#L351)<br>`const questNPCReach = 30.0` | Use the same authoritative interaction radius as other NPC services. |
+| [`questNPCInReach`](../../server/internal/world/quests.go#L353)<br>`func (s *Session) questNPCInReach(npc MapNpc) bool` | See the source definition and the subsystem ownership contract. |
+| [`handleQuestStart`](../../server/internal/world/quests.go#L358)<br>`func (s *Session) handleQuestStart(p []byte)` | handleQuestStart (0x0902): npc id, quest id (CUser::QuestStartRequest). |
+| [`startQuest`](../../server/internal/world/quests.go#L394)<br>`func (s *Session) startQuest(q *questDef, id uint16, npcID uint32)` | See the source definition and the subsystem ownership contract. |
+| [`questFindItems`](../../server/internal/world/quests.go#L464)<br>`func (s *Session) questFindItems(q *activeQuest) bool` | questFindItems is QuestFindItem (0x0047f8e0): the farm items must all be held; counters take the held totals; consuming removes what the chosen reward variant needs (whole stacks for quest-type items). |
+| [`planQuestItems`](../../server/internal/world/quests.go#L469)<br>`func planQuestItems(q *activeQuest, original []db.Item, consume bool) (items []db.Item, packets [][]byte, ok bool)` | See the source definition and the subsystem ownership contract. |
+| [`handleQuestEnd`](../../server/internal/world/quests.go#L543)<br>`func (s *Session) handleQuestEnd(p []byte)` | handleQuestEnd (0x0903): npc id, quest id (quest_end_request). |
+| [`completeQuest`](../../server/internal/world/quests.go#L585)<br>`func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool)` | completeQuest is quest_requests_complete. |
+| [`handleQuestChoose`](../../server/internal/world/quests.go#L633)<br>`func (s *Session) handleQuestChoose(p []byte)` | handleQuestChoose (0x0907): quest id, reward index. |
+| [`handleQuestAbandon`](../../server/internal/world/quests.go#L655)<br>`func (s *Session) handleQuestAbandon(p []byte)` | handleQuestAbandon (0x0908): quest id. |
+| [`awardQuest`](../../server/internal/world/quests.go#L667)<br>`func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32)` | awardQuest is award_quest_reward: exp (doubled unless the quest is ultimate-only), gold and an item; 0x0903 reports them. |
+| [`removeQuest`](../../server/internal/world/quests.go#L754)<br>`func (s *Session) removeQuest(q *activeQuest, success uint8)` | removeQuest is QuestRuntime::remove: repeatable quests (TickReceive) are deleted, others finish with their success flag. |
+| [`removeQuestFromMemory`](../../server/internal/world/quests.go#L768)<br>`func (s *Session) removeQuestFromMemory(q *activeQuest, success uint8)` | See the source definition and the subsystem ownership contract. |
+| [`bumpQuestCounter`](../../server/internal/world/quests.go#L780)<br>`func (s *Session) bumpQuestCounter(q *activeQuest, slot int)` | See the source definition and the subsystem ownership contract. |
+| [`questKill`](../../server/internal/world/quests.go#L798)<br>`func (s *Session) questKill(mobID uint16)` | questKill is update_mob_kill_quests for one kill of mobID. |
+| [`questKillCount`](../../server/internal/world/quests.go#L799)<br>`func (s *Session) questKillCount(mobID uint16, count uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`questNeeds`](../../server/internal/world/quests.go#L859)<br>`func (s *Session) questNeeds(t, id uint8) bool` | questNeeds: an item that starts a quest, or one an active quest ends with. |
+| [`questPickup`](../../server/internal/world/quests.go#L876)<br>`func (s *Session) questPickup(t, id uint8)` | questPickup is quest_requests_progress_pick_item. |
+| [`questTimers`](../../server/internal/world/quests.go#L901)<br>`func (s *Session) questTimers()` | questTimers fails timed quests whose time ran out. |
+| [`questItemDrop`](../../server/internal/world/quests.go#L915)<br>`func questItemDrop(mob *MapMob, recipients []*ConnectedPlayer) *db.ItemDef` | questItemDrop is mob_loot's quest item: Mobs.QuestItemID drops (chance = the item's Quality per cent) when it starts a quest or any recipient has a quest it ends. |
+| [`syncQuestIDs`](../../server/internal/world/quests.go#L939)<br>`func (s *Session) syncQuestIDs()` | syncQuestIDs publishes the active quest ids for other sessions' loot. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3283,6 +3283,7 @@ type activeQuest struct {
 	endAt     time.Time // timed quests
 	successAt time.Time // MinMinutes elapsed
 	success   uint8     // 1: waiting for the reward choice
+	rewardNPC uint32
 }
 ```
 

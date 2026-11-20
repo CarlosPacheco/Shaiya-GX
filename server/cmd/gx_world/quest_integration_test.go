@@ -39,6 +39,22 @@ func TestQuestAgainstSQLite(t *testing.T) {
 			DELETE FROM PS_GameData_Chars WHERE CharID = ?1`, int32(charID))
 	}()
 
+	var startNpc uint32
+	for _, n := range world.EntitiesOnMap(1).NPCs {
+		if n.Type == 8 && n.TypeID == 83 {
+			startNpc = n.ID
+			pool, err := db.Pool(db.GameData)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := pool.Exec("UPDATE PS_GameData_Chars SET Map=1, PosX=?, PosY=?, PosZ=? WHERE CharID=?", n.PosX, n.PosY, n.PosZ, charID); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	if startNpc == 0 {
+		t.Skip("quest NPC 8/83 not on map 1")
+	}
 	c.write(msg(packet.SelectCharacter, byte(charID), byte(charID>>8), byte(charID>>16), byte(charID>>24)))
 	c.until(packet.QuestList, seen)
 	c.until(packet.CharacterSkillBar, seen)
@@ -47,15 +63,6 @@ func TestQuestAgainstSQLite(t *testing.T) {
 	c.until(packet.CharacterMove, seen)
 	time.Sleep(500 * time.Millisecond)
 
-	var startNpc uint32
-	for _, n := range world.EntitiesOnMap(1).NPCs {
-		if n.Type == 8 && n.TypeID == 83 {
-			startNpc = n.ID
-		}
-	}
-	if startNpc == 0 {
-		t.Skip("quest NPC 8/83 not on map 1")
-	}
 	le := func(v uint32) []byte { return []byte{byte(v), byte(v >> 8), byte(v >> 16), byte(v >> 24)} }
 	req := func(op packet.Opcode, npc uint32, quest uint16) []byte {
 		return msg(op, append(le(npc), byte(quest), byte(quest>>8))...)
