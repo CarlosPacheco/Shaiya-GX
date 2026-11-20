@@ -134,6 +134,8 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 			case pressedItem && key == v.source:
 				a.useInventoryItem(key)
 			}
+		} else if dragged && !captured {
+			a.noteItemDrop(v.source)
 		}
 	}
 	return captured

@@ -21,7 +21,7 @@ const emblemMerchant = 8
 
 // emblemPreviewYaw turns the preview toward the back of the character, at
 // exactly (GX choice: the original turns it three quarters).
-var emblemPreviewYaw = 180 * math.Pi / 180
+var emblemPreviewYaw = 225 * math.Pi / 180
 
 type emblemState struct {
 	npc          uint32

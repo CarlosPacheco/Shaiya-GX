@@ -106,6 +106,7 @@ type App struct {
 	blacksmithUI                        *ui.Blacksmith
 	emblemUI                            *ui.EmblemWindow
 	emblem                              emblemState
+	drop                                itemDrop
 	gateUI                              *ui.Gatekeeper
 	gateConfirm                         *ui.Message
 	teleportStone                       teleportStoneView

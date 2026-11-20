@@ -372,6 +372,7 @@ func (a *App) drawCharacters(w, h int) {
 		if a.gemConfirm != nil {
 			a.gemConfirm.Draw(a.sprites, a.font, w, h)
 		}
+		a.drawDropDialog(w, h)
 		if a.questConfirm != nil {
 			a.questConfirm.Draw(a.sprites, a.font, w, h)
 		}

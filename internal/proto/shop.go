@@ -29,3 +29,12 @@ func DecodeShopResult(p []byte) (m ShopResult, err error) {
 	m.Money = r.U32()
 	return m, r.Err()
 }
+
+// ItemDropPacket is the 0x0206 request of Game.exe 0x5982f0: bag, slot and the
+// amount to throw on the ground. The server owns the resulting map item.
+func ItemDropPacket(bag, slot uint8, count uint16) []byte {
+	w := NewWriter(RemoveItem)
+	w.Raw([]byte{bag, slot})
+	w.Count(count)
+	return w.Bytes()
+}
