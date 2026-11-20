@@ -31,7 +31,11 @@ func (a *App) LoadCursors(window *platform.Window) *platform.Cursors {
 	return c
 }
 
-// Native 0x41fde0: default, attack, pickup, interaction, drag, talk, aim.
+// Native 0x41fde0 picks the cursor every frame from what lies under the
+// pointer, in this order: a ground item (pickup), a hostile character or
+// monster (attack), an NPC (talk), otherwise the arrow. Its switch has no
+// path to the crosshair (07.png): no skill, approach or assignment state ever
+// selects it, so GX never shows it. Windows and the bottom UI keep the arrow.
 func (a *App) CursorIndex(w, h int) int {
 	a.hoverPicking = true
 	defer func() { a.hoverPicking = false }()
@@ -66,14 +70,8 @@ func (a *App) CursorIndex(w, h int) int {
 			return 0
 		}
 	}
-	if a.skills.assign != nil || len(a.wv.approachSkill) > 0 {
-		return 6
-	}
 	if a.pickGroundModel(in, w, h) != 0 {
 		return 2
-	}
-	if a.pickNPC(in, w, h) != 0 {
-		return 5
 	}
 	if id := a.pickMob(in, w, h); id != 0 {
 		if entity := a.state.Entities[id]; entity.Kind == game.KindUser && entity.Shape != nil {
@@ -82,6 +80,9 @@ func (a *App) CursorIndex(w, h int) int {
 			}
 		}
 		return 1
+	}
+	if a.pickNPC(in, w, h) != 0 {
+		return 5
 	}
 	return 0
 }
