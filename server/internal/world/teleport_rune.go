@@ -2,7 +2,6 @@ package world
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
-	"path/filepath"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -20,7 +19,7 @@ type teleportRuneCast struct {
 }
 
 func loadTeleportRunes() error {
-	rules, err := catalogfiles.Read(filepath.Join(gameDataDir(), catalogfiles.TeleportRunes), catalogfiles.ParseTeleportRunes)
+	rules, err := catalogfiles.Read(catalogfiles.TeleportRunesPath(gameDataDir()), catalogfiles.ParseTeleportRunes)
 	if err != nil {
 		return err
 	}

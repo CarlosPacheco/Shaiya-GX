@@ -4021,18 +4021,18 @@ Direct GX dependencies: `internal/catalogfiles`, `server/internal/db`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`specialTeleportRune`](../../server/internal/world/teleport_rune.go#L11)<br>`const specialTeleportRune = 47` | See the source definition and the subsystem ownership contract. |
-| [`guildHouseCreateType`](../../server/internal/world/teleport_rune.go#L12)<br>`const guildHouseCreateType = "H"` | See the source definition and the subsystem ownership contract. |
-| [`teleportRunes`](../../server/internal/world/teleport_rune.go#L14)<br>`var teleportRunes map[int16][2]db.TeleportRuneDestination` | See the source definition and the subsystem ownership contract. |
-| [`teleportRuneCast`](../../server/internal/world/teleport_rune.go#L16)<br>`type teleportRuneCast` | See the source definition and the subsystem ownership contract. |
-| [`loadTeleportRunes`](../../server/internal/world/teleport_rune.go#L22)<br>`func loadTeleportRunes() error` | See the source definition and the subsystem ownership contract. |
-| [`canCastTeleportRune`](../../server/internal/world/teleport_rune.go#L39)<br>`func (s *Session) canCastTeleportRune() bool` | See the source definition and the subsystem ownership contract. |
-| [`activeGuildHouse`](../../server/internal/world/teleport_rune.go#L51)<br>`func (s *Session) activeGuildHouse() uint32` | See the source definition and the subsystem ownership contract. |
-| [`resolveTeleportRune`](../../server/internal/world/teleport_rune.go#L65)<br>`func (s *Session) resolveTeleportRune(index int16) (uint16, [3]float32, uint32, string)` | A configured house destination automatically requires the user's own operational house, regardless of which item references the destination. |
-| [`refuseTeleportRune`](../../server/internal/world/teleport_rune.go#L97)<br>`func (s *Session) refuseTeleportRune(message string)` | See the source definition and the subsystem ownership contract. |
-| [`beginTeleportRune`](../../server/internal/world/teleport_rune.go#L104)<br>`func (s *Session) beginTeleportRune(i int, def *db.ItemDef)` | See the source definition and the subsystem ownership contract. |
-| [`cancelTeleportRune`](../../server/internal/world/teleport_rune.go#L124)<br>`func (s *Session) cancelTeleportRune()` | See the source definition and the subsystem ownership contract. |
-| [`tickTeleportRune`](../../server/internal/world/teleport_rune.go#L135)<br>`func (s *Session) tickTeleportRune(now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`specialTeleportRune`](../../server/internal/world/teleport_rune.go#L10)<br>`const specialTeleportRune = 47` | See the source definition and the subsystem ownership contract. |
+| [`guildHouseCreateType`](../../server/internal/world/teleport_rune.go#L11)<br>`const guildHouseCreateType = "H"` | See the source definition and the subsystem ownership contract. |
+| [`teleportRunes`](../../server/internal/world/teleport_rune.go#L13)<br>`var teleportRunes map[int16][2]db.TeleportRuneDestination` | See the source definition and the subsystem ownership contract. |
+| [`teleportRuneCast`](../../server/internal/world/teleport_rune.go#L15)<br>`type teleportRuneCast` | See the source definition and the subsystem ownership contract. |
+| [`loadTeleportRunes`](../../server/internal/world/teleport_rune.go#L21)<br>`func loadTeleportRunes() error` | See the source definition and the subsystem ownership contract. |
+| [`canCastTeleportRune`](../../server/internal/world/teleport_rune.go#L38)<br>`func (s *Session) canCastTeleportRune() bool` | See the source definition and the subsystem ownership contract. |
+| [`activeGuildHouse`](../../server/internal/world/teleport_rune.go#L50)<br>`func (s *Session) activeGuildHouse() uint32` | See the source definition and the subsystem ownership contract. |
+| [`resolveTeleportRune`](../../server/internal/world/teleport_rune.go#L64)<br>`func (s *Session) resolveTeleportRune(index int16) (uint16, [3]float32, uint32, string)` | A configured house destination automatically requires the user's own operational house, regardless of which item references the destination. |
+| [`refuseTeleportRune`](../../server/internal/world/teleport_rune.go#L96)<br>`func (s *Session) refuseTeleportRune(message string)` | See the source definition and the subsystem ownership contract. |
+| [`beginTeleportRune`](../../server/internal/world/teleport_rune.go#L103)<br>`func (s *Session) beginTeleportRune(i int, def *db.ItemDef)` | See the source definition and the subsystem ownership contract. |
+| [`cancelTeleportRune`](../../server/internal/world/teleport_rune.go#L123)<br>`func (s *Session) cancelTeleportRune()` | See the source definition and the subsystem ownership contract. |
+| [`tickTeleportRune`](../../server/internal/world/teleport_rune.go#L134)<br>`func (s *Session) tickTeleportRune(now time.Time)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 

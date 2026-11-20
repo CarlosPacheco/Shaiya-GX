@@ -2,12 +2,33 @@ package studio
 
 import (
 	"math"
+	"os"
 	"path/filepath"
 	"slices"
 	"testing"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
 	"github.com/Spelunkern/Shaiya-GX/internal/teleportrunes"
 )
+
+func TestOpenTeleportRunesPrefersCorrectedName(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, catalogfiles.TeleportRunes)
+	runes := []teleportrunes.Rune{{Index: 1, Light: teleportrunes.Destination{MapID: 35}}}
+	must(t, os.WriteFile(filepath.Join(dir, "TeleportRUnes.ini"), catalogfiles.EncodeTeleportRunes(runes), 0600))
+	before, err := OpenTeleportRunes(t.Context(), path)
+	must(t, err)
+	if !slices.Equal(before.Rules, runes) {
+		t.Fatal("legacy file destinations were lost")
+	}
+	runes[0].Light.MapID = 42
+	must(t, os.WriteFile(path, catalogfiles.EncodeTeleportRunes(runes), 0600))
+	after, err := OpenTeleportRunes(t.Context(), path)
+	must(t, err)
+	if !slices.Equal(after.Rules, runes) {
+		t.Fatal("corrected file did not take precedence")
+	}
+}
 
 func TestSaveTeleportRunesKeepsFactionDestinationsAndVerifiedBackup(t *testing.T) {
 	ctx := t.Context()

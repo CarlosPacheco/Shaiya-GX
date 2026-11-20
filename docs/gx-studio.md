@@ -17,7 +17,7 @@ the exact SData field and SQLite column under each readable field name.
 | Item Boxes | | `ItemBoxes.ini` |
 | NPCs and Quests | `Npc/NpcQuest.SData` | `NpcQuest.SData` |
 | Map Rules | | `Map.ini` |
-| Teleport Runes | | `TeleportRUnes.ini` |
+| Teleport Runes | | `TeleportRunes.ini` |
 | Notices | | `Notices.ini` |
 
 ## Build
@@ -140,6 +140,6 @@ with an unused index from 1 to 32767. Items with Special 47 reference that index
 through their Variant (`ReqVg`). Removing the row leaves those items without a
 destination until their Variant is reassigned or the row is restored.
 
-Saving creates and verifies a backup of `TeleportRUnes.ini` in the editor's backup directory.
+Saving creates and verifies a backup of `TeleportRunes.ini` in the editor's backup directory.
 Restart GX World to apply the changes. See [Teleport runes](teleport-runes.md)
 for the original destinations and item setup.

@@ -23,7 +23,7 @@ PROGRAMS = ("gx_login", "gx_world", "gx_console")
 GAME_DATA = (
     "GuildHouse.ini", "Obelisk.ini", "ItemEnchant.ini", "MobAIMessages.txt",
     "KillStatus.ini", "WorldDrops.ini", "ItemBoxes.ini", "Map.ini",
-    "NpcQuest.SData", "TeleportRUnes.ini", "Notices.ini",
+    "NpcQuest.SData", "TeleportRunes.ini", "Notices.ini",
 )
 GEOMETRY_EXTENSIONS = ("gxnav", "gxcol", "gxphysics", "manifest.json")
 

@@ -2,7 +2,9 @@
 
 Fixed-destination runes use item `Special` 47. Set the native `ReqVg`
 (Variant) in Item.SData and the matching server item definition to a row's
-the index of a `[Rune_N]` section in `data/game/TeleportRUnes.ini`. Indices range from 1 to 32767.
+the index of a `[Rune_N]` section in `data/game/TeleportRunes.ini`. Indices range from 1 to 32767.
+When upgrading an existing file-based installation, carry over your edited
+`TeleportRUnes.ini` as `TeleportRunes.ini`.
 Each row has `LightMapID`, `LightX`, `LightY`, `LightZ`, and the equivalent
 `FuryMapID`, `FuryX`, `FuryY`, `FuryZ`. The world service reads the table
 on startup. Several items can reference the same row.

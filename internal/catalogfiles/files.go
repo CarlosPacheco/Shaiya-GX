@@ -24,9 +24,22 @@ const (
 	ItemBoxes     = "ItemBoxes.ini"
 	Map           = "Map.ini"
 	NPCQuest      = "NpcQuest.SData"
-	TeleportRunes = "TeleportRUnes.ini"
+	TeleportRunes = "TeleportRunes.ini"
 	Notices       = "Notices.ini"
 )
+
+// TeleportRunesPath accepts the original filename when upgrading a server
+// whose customized file has not been renamed yet.
+func TeleportRunesPath(dir string) string {
+	path := filepath.Join(dir, TeleportRunes)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		legacy := filepath.Join(dir, "TeleportRUnes.ini")
+		if _, err := os.Stat(legacy); err == nil {
+			return legacy
+		}
+	}
+	return path
+}
 
 func Read[T any](path string, parse func([]byte) (T, error)) (T, error) {
 	raw, err := os.ReadFile(path)
