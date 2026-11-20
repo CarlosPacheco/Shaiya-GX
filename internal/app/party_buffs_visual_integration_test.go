@@ -130,6 +130,6 @@ func TestUnionMenusGL(t *testing.T) {
 			a.state.Party.Members = append(a.state.Party.Members, proto.PartyMember{ID: id, Name: fmt.Sprintf("Player %02d", id), Level: 60, Class: uint8(slot % 6), HP: 80, MaxHP: 100, MP: 60, MaxMP: 100, SP: 40, MaxSP: 100})
 		}
 		a.syncUnionState(false)
-		a.partyUI.SetRaidSettings(1, false)
+		a.lastMouseX, a.lastMouseY = 560, 470
 	})
 }

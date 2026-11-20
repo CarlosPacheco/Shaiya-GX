@@ -156,6 +156,18 @@ func (a *App) updateUnion(in *platform.Input, w, h int) bool {
 		}
 	}
 	if p.Raid {
+		if a.raidGridShown() {
+			id, c := a.partyUI.UpdateRaidGrid(in, w, h, slots)
+			if id != 0 {
+				a.state.Target = id
+			}
+			if in.Clicked && a.party.moving && c {
+				a.finishMove(a.partyUI.RaidGridSlotAt(w, h, in.MouseX, in.MouseY))
+			}
+			if c {
+				return true
+			}
+		}
 		id, c := a.partyUI.UpdateRaidCompact(in, w, h, a.state.SelfID, slots)
 		if id != 0 {
 			a.state.Target = id
@@ -230,6 +242,13 @@ func (a *App) drawParty(w, h int) {
 	defer a.drawMemberBuffTooltip()
 	if a.state.Party.Raid {
 		a.partyUI.DrawRaidCompact(a.sprites, a.font, w, h, a.state.SelfID, members, a.state.Party.RaidSlots, a.state.Party.Leader, a.state.Target)
+		if a.raidGridShown() {
+			moveSlot := -1
+			if a.party.moving {
+				moveSlot = a.party.moveSlot
+			}
+			a.partyUI.DrawRaidGrid(a.sprites, a.font, w, h, members, a.state.Party.RaidSlots, a.state.Party.Leader, a.state.Party.RaidSubLeader, a.state.Target, moveSlot)
+		}
 		if a.unionConfigOpen() {
 			a.syncUnionDraft()
 			a.partyUI.DrawRaid(a.sprites, a.font, w, h, members, a.state.Party.RaidSlots, a.state.Party.Leader, a.state.Target)

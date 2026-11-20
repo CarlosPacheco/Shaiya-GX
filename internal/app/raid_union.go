@@ -36,6 +36,11 @@ func (a *App) unionSlots() map[uint16]uint32 {
 	return slots
 }
 
+// raidGridShown: the party2 raid window (hidden while the dialog is open).
+func (a *App) raidGridShown() bool {
+	return a.state.Party.Raid && a.partyUI != nil && a.partyUI.RaidGridVisible() && a.party.raidHidden
+}
+
 func (a *App) unionConfigOpen() bool {
 	p := &a.state.Party
 	return p.Raid && !a.party.raidHidden || !p.Raid && a.party.creating && len(p.Members) > 0
@@ -136,6 +141,11 @@ func (a *App) unionSlotAt(in *platform.Input, w, h int) (int, bool) {
 	if !a.party.raidHidden && a.partyUI.RaidInside(w, h, in.MouseX, in.MouseY) {
 		return a.partyUI.RaidSlotAt(w, h, in.MouseX, in.MouseY), true
 	}
+	if a.raidGridShown() {
+		if slot := a.partyUI.RaidGridSlotAt(w, h, in.MouseX, in.MouseY); slot >= 0 {
+			return slot, true
+		}
+	}
 	if slot := a.partyUI.RaidCompactSlotAt(w, h, in.MouseX, in.MouseY, a.state.SelfID, p.RaidSlots); slot >= 0 {
 		return slot, true
 	}
@@ -172,8 +182,8 @@ func (a *App) syncUnionState(wasRaid bool) {
 	raid := a.state.Party.Raid
 	switch {
 	case raid && !wasRaid:
-		// the raid window opens with the new raid
-		a.party.creating, a.party.raidHidden, a.party.moving = false, false, false
+		// the 30-cell raid window appears; the configuration dialog stays closed
+		a.party.creating, a.party.raidHidden, a.party.moving = false, true, false
 		a.partyUI.ResetRaidSettings()
 	case !raid && wasRaid:
 		a.party.raidHidden, a.party.moving = true, false

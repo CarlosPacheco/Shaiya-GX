@@ -314,6 +314,23 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
+	if a.partyUI != nil && a.raidGridShown() {
+		x, y := a.partyUI.RaidGridOrigin(w, h)
+		if pointInside(in, x, y, ui.RaidGridWidth, ui.RaidGridHeight) {
+			id := uint32(0)
+			if slot := a.partyUI.RaidGridSlotAt(w, h, in.MouseX, in.MouseY); slot >= 0 {
+				id = a.state.Party.RaidSlots[uint16(slot)]
+			}
+			a.windowDrag = windowDrag{position: &a.partyUI.RaidGridPosition, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: ui.RaidGridWidth, height: ui.RaidGridHeight, portrait: true, pressX: in.MouseX, pressY: in.MouseY,
+				click: func() {
+					if id != 0 {
+						a.state.Target = id
+					}
+				}}
+			a.wv.uiLeft = -2
+			return true
+		}
+	}
 	if a.partyUI != nil && a.state.Party.Raid && !a.unionConfigCovers(in, w, h) {
 		// The raid's side list moves like the party list: a press that never
 		// moves selects the member, a drag takes the whole list.
@@ -381,6 +398,7 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 		out["party"] = &a.partyUI.Position
 		out["raid"] = &a.partyUI.RaidPosition
 		out["raid_list"] = &a.partyUI.RaidCompactPosition
+		out["raid_grid"] = &a.partyUI.RaidGridPosition
 	}
 	if a.mallUI != nil {
 		out["mall"] = &a.mallUI.Position

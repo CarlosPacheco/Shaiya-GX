@@ -8,8 +8,8 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
-// A conversion packet must open the 30-member raid window.
-func TestRaidConvertOpensWindow(t *testing.T) {
+// A conversion packet shows the 30-cell party2 raid window, not the dialog.
+func TestRaidConvertShowsRaidWindow(t *testing.T) {
 	a := inputApp()
 	a.partyUI, _ = ui.NewPartyPanel(inputTextures{})
 	a.state.SelfID = 1
@@ -22,15 +22,14 @@ func TestRaidConvertOpensWindow(t *testing.T) {
 	w.U32(0)
 	w.U32(1)
 	a.applyWorldPacket(w.Bytes())
-	if !a.state.Party.Raid || !a.unionConfigOpen() {
+	if !a.state.Party.Raid || a.unionConfigOpen() || !a.raidGridShown() {
 		t.Fatalf("raid=%v hidden=%v creating=%v", a.state.Party.Raid, a.party.raidHidden, a.party.creating)
 	}
-	x, y := a.partyUI.RaidOrigin(1024, 768)
-	for i := 0; i < 5; i++ {
-		a.updatePartyPointer(&platform.Input{MouseX: x + 390, MouseY: y + 410}, 1024, 768)
-		a.updatePartyPointer(&platform.Input{MouseX: 5, MouseY: 5}, 1024, 768)
-	}
-	if !a.unionConfigOpen() {
-		t.Fatal("window closed by itself")
+	// A click on a cell selects its member.
+	gx, gy := a.partyUI.RaidGridOrigin(1024, 768)
+	a.updatePartyPointer(&platform.Input{Pressed: true, MouseDown: true, MouseX: gx + 5 + 98*0, MouseY: gy + 40}, 1024, 768)
+	a.updatePartyPointer(&platform.Input{Clicked: true, MouseX: gx + 5, MouseY: gy + 40}, 1024, 768)
+	if a.state.Target != 2 {
+		t.Fatalf("target %d", a.state.Target)
 	}
 }
