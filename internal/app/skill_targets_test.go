@@ -155,3 +155,22 @@ func TestFriendlyMobRefusedBeforeAttackPredictionAndSkillRequest(t *testing.T) {
 		}
 	}
 }
+
+// With yourself selected, an offensive skill goes for the nearest enemy.
+func TestOffensiveSkillWithSelfSelectedPicksNearestEnemy(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID = 42
+	a.wv.pos[0], a.wv.pos[2] = 10, 10
+	a.state.Entities = map[uint32]*game.Entity{
+		4: {ID: 4, Kind: game.KindMob, X: 20, Z: 10}, 5: {ID: 5, Kind: game.KindMob, X: 12, Z: 10},
+	}
+	a.state.Target = 42
+	if got := a.resolveSkillTarget(sdata.Skill{Target: 1, Effect: 1}); got != 5 || a.state.Target != 5 {
+		t.Fatalf("self selected: target %d, selected %d", got, a.state.Target)
+	}
+	// Buffs and heals still act on yourself.
+	a.state.Target = 42
+	if got := a.resolveSkillTarget(sdata.Skill{Target: 1, Effect: 4}); got != 42 {
+		t.Fatalf("a buff left yourself: %d", got)
+	}
+}

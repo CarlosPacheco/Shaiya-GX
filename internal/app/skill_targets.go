@@ -52,6 +52,11 @@ func (a *App) resolveSkillTarget(d sdata.Skill) uint32 {
 	if d.Target == 2 || d.Target == 4 || d.Target == 5 {
 		return a.state.SelfID
 	}
+	if target == a.state.SelfID && (d.Effect == 1 || d.Effect == 3 || d.Effect == 5) {
+		// With yourself selected an offensive skill acts as with nothing
+		// selected: it goes for the nearest enemy in range.
+		target = 0
+	}
 	if target != 0 {
 		if (d.Effect == 2 || d.Effect == 4) && a.selectedSkillEnemy(target) {
 			return a.state.SelfID
