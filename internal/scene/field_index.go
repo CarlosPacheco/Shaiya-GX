@@ -17,7 +17,7 @@ func (s *fieldStream) indexObjects() {
 		valid  bool
 	}
 	bounds := map[string]sphere{}
-	add := func(file string, m render.M4, rotor *maniRotor, vani, mani bool) {
+	add := func(file string, m render.M4, rotor *maniRotor, vani, mani, blendedVani bool) {
 		b, known := bounds[file]
 		if !known {
 			raw, err := s.assets.Arc.ReadPrefix(file, 16)
@@ -54,7 +54,7 @@ func (s *fieldStream) indexObjects() {
 		} else if strings.HasPrefix(file, "entity/tree/") {
 			detailClass = 2
 		}
-		s.objects = append(s.objects, cellObject{detailClass: detailClass, detailRank: uint8(id % 4), file: file, world: m, rotor: rotor, vani: vani, mani: mani, center: b.center, radius: b.radius, scale: scale})
+		s.objects = append(s.objects, cellObject{detailClass: detailClass, detailRank: uint8(id % 4), file: file, world: m, rotor: rotor, vani: vani, mani: mani, blendedVani: blendedVani, center: b.center, radius: b.radius, scale: scale})
 		x0, x1 := int(math.Floor(float64((center[0]-radius)/s.size()))), int(math.Floor(float64((center[0]+radius)/s.size())))
 		z0, z1 := int(math.Floor(float64((center[2]-radius)/s.size()))), int(math.Floor(float64((center[2]+radius)/s.size())))
 		if x1-x0 > 64 || z1-z0 > 64 {
@@ -79,7 +79,7 @@ func (s *fieldStream) indexObjects() {
 			}
 			file := strings.ToLower(g.dir + "/" + name)
 			m := render.Basis(render.V3(inst.Pos), render.V3(inst.Fwd), render.V3(inst.Up))
-			add(file, m, nil, false, false)
+			add(file, m, nil, false, false, false)
 		}
 	}
 	cache := make(map[int32]world.Mani)
@@ -94,9 +94,9 @@ func (s *fieldStream) indexObjects() {
 		if mani.Rotate && mani.Speed != 0 && render.V3(mani.Axis).Len() > 0 {
 			rotor = &maniRotor{base: base, axis: render.V3(mani.Axis), speed: mani.Speed}
 		}
-		add(file, base, rotor, false, true)
+		add(file, base, rotor, false, true, false)
 	}
-	for _, group := range []world.Group{s.world.WLD.VaniA, s.world.WLD.VaniB} {
+	for groupIndex, group := range []world.Group{s.world.WLD.VaniA, s.world.WLD.VaniB} {
 		for _, instance := range group.Instances {
 			if instance.Asset < 0 || int(instance.Asset) >= len(group.Assets) {
 				continue
@@ -104,7 +104,7 @@ func (s *fieldStream) indexObjects() {
 			name := path.Base(strings.ReplaceAll(group.Assets[instance.Asset], `\`, "/"))
 			file := strings.ToLower("Entity/VAni/" + name)
 			base := render.Basis(render.V3(instance.Pos), render.V3(instance.Fwd), render.V3(instance.Up))
-			add(file, base, nil, true, false)
+			add(file, base, nil, true, false, groupIndex == 1)
 		}
 	}
 }

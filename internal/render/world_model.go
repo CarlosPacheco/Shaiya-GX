@@ -42,3 +42,38 @@ func (s *Scene3D) DrawWorldInstanced(m *Mesh, t *Texture, alphaRef float32) {
 	s.DrawInstanced(m, t, alphaRef)
 	endWorldFaces(culled)
 }
+
+// BeginTranslucentWorldModels uses the WLD blended pass state, with depth
+// testing against the opaque scene and no alpha test or depth writes.
+func (s *Scene3D) BeginTranslucentWorldModels() {
+	s.Begin()
+	gl.Uniform1i(s.uMode, 0)
+	gl.Uniform1f(s.uRef, -1)
+	s.blend(true)
+	gl.DepthMask(false)
+}
+
+func (s *Scene3D) DrawTranslucentWorldModel(m *Mesh, t *Texture, worlds []M4, lit bool) {
+	if m == nil || m.Count == 0 || len(worlds) == 0 {
+		return
+	}
+	lighting := int32(0)
+	if lit {
+		lighting = 1
+	}
+	gl.Uniform1i(s.uLit, lighting)
+	bindDiffuse(t)
+	if len(worlds) == 1 {
+		s.setWorld(worlds[0])
+		m.Draw()
+		return
+	}
+	s.SetInstances(worlds)
+	gl.Uniform1i(s.uInstanced, 1)
+	s.drawInstances(m)
+}
+
+func (s *Scene3D) EndTranslucentWorldModels() {
+	gl.DepthMask(true)
+	s.blend(false)
+}

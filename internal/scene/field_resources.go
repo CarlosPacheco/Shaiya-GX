@@ -328,7 +328,13 @@ func (s *fieldStream) drawWithClipCulling(r *render.Scene3D, clipCulling bool) {
 			transform = v.transform
 		}
 		if e.vani != nil {
-			e.vani.worlds = append(e.vani.worlds, transform)
+			if e.object.blendedVani {
+				if !r.Shadow {
+					s.world.queueBlendedVani(r, e.vani, transform, e.center)
+				}
+			} else {
+				e.vani.worlds = append(e.vani.worlds, transform)
+			}
 			continue
 		}
 		level := int(v.lod)
@@ -409,6 +415,9 @@ func (w *World) Close() {
 		v.close()
 	}
 	w.vanis = nil
+	w.blendedVani = nil
+	w.visibleBlendedVani = nil
+	w.vaniBlendRun = nil
 	if w.mapFX != nil {
 		w.mapFX.close()
 		w.mapFX = nil

@@ -56,7 +56,7 @@ func (a *App) drawCreation(width, height int) {
 	if w.Sky != nil {
 		w.Sky.Draw(s, eye)
 	}
-	w.Draw(s)
+	w.DrawOpaque(s)
 	if actor := a.createActor; actor != nil {
 		scale := render.Identity()
 		scale[5] = ap.HeightScale()
@@ -65,6 +65,7 @@ func (a *App) drawCreation(width, height int) {
 		actor.Draw(a.skinner, s)
 	}
 	w.DrawWater(s)
+	w.DrawTranslucentVANI(s)
 	w.DrawMapEffects(s, eye)
 	s.End()
 }

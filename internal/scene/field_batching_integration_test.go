@@ -121,7 +121,11 @@ func TestFieldBatchingPreservesVisiblePixelsGL(t *testing.T) {
 							o := s.objects[id]
 							if o.vani && s.vanis[o.file] != nil {
 								asset := s.vanis[o.file]
-								asset.worlds = append(asset.worlds, o.world)
+								if o.blendedVani {
+									w.queueBlendedVani(r, asset, o.world, transformPoint(asset.center, o.world))
+								} else {
+									asset.worlds = append(asset.worlds, o.world)
+								}
 							}
 						}
 						for _, asset := range s.vanis {
@@ -130,6 +134,7 @@ func TestFieldBatchingPreservesVisiblePixelsGL(t *testing.T) {
 							}
 						}
 					}
+					w.DrawTranslucentVANI(r)
 					elapsed := time.Since(start)
 					count := render.DrawCalls()
 					pixels := make([]byte, 640*360*4)

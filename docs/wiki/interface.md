@@ -72,7 +72,9 @@ A server cast-start supersedes any predicted instant release. If local SData dec
 
 Confirmed skills also create the separate caster release sequence used by native `0x57bdc0`/`0x57e320`. `IN_*` sequence zero supplies the release body; sequence one remains the preparation on the hands. Physical skills select the activation library through `0x5768e0`, except the native ranged weapon families, which use the generic release. This fills the missing early visual phase without deleting the later offsets authored in the target library. Release effects capture their world transform, recover elapsed animation time and are not recreated by secondary area hits. Native attack-speed modulation and the remaining special effect branches still need full comparison.
 
-Login VANI assets now use the frame interval stored at header offset 48, rather than a fixed 12 fps. The original login water and rocks specify 33 ms per pose. Animated UVs use repeat addressing, including the negative and greater-than-one coordinates in the basin water. The falling water uses an unlit alpha pass following the Phoenix reference; the native flat-water geometry and UV poses remain intact. Real-asset GL checks cover the frame clock, addressing, early spell release, delayed target column and fountain emitters.
+Login VANI assets use the frame interval stored at header offset 48. The original login water and rocks specify 33 ms per pose. Animated UVs use repeat addressing, including the negative and greater-than-one coordinates in the basin water.
+
+The WLD placement group selects how VANI textures use alpha. Group A writes depth and keeps fragments with alpha at least 80/255 (`Game.exe` 0x44867a and 0x448a72). Group B blends the texture's full alpha range back to front, after opaque geometry and characters (`Game.exe` 0x44a666–0x44a769). Depth testing stays enabled and depth writes are disabled during this pass. This preserves low-alpha fabric in the Light selection scene and the intended transparency of login water. Both groups share the same texture and animation data.
 
 ## Phoenix chat and native targets
 

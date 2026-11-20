@@ -790,6 +790,7 @@ func (a *App) drawWorldView(w, h int) {
 			s.CullProjection = reflectionRegion.CropProjection(s.Proj)
 			s.Begin()
 			a.drawWorldContents(reflectedEye, false)
+			v.world.DrawTranslucentVANI(s)
 			v.world.RenderMapEffects(s)
 		})
 		s.CullProjection = render.M4{}
@@ -804,6 +805,7 @@ func (a *App) drawWorldView(w, h int) {
 			s.ClipPlane = [4]float32{0, 1, 0, 0}
 			s.Begin()
 			a.drawWorldContents(eye, false)
+			v.world.DrawTranslucentVANI(s)
 			v.world.RenderMapEffects(s)
 		})
 		s.ClipPlane = [4]float32{}
@@ -822,6 +824,9 @@ func (a *App) drawWorldView(w, h int) {
 	if surfaceVisible {
 		v.world.DrawVisibleWater(s)
 	}
+	beforeVANI := render.DrawCalls()
+	v.world.DrawTranslucentVANI(s)
+	v.draws.WorldGeometry += render.DrawCalls() - beforeVANI
 	for _, e := range v.waterPresentation.effects {
 		e.Draw(s)
 	}
@@ -843,7 +848,7 @@ func (a *App) drawWorldContents(eye render.V3, underwater bool) {
 		v.world.Sky.DrawWeather(s, eye, v.weather.blend)
 	}
 	beforeMap := render.DrawCalls()
-	v.world.Draw(s)
+	v.world.DrawOpaque(s)
 	if s.ClipPlane == [4]float32{} {
 		v.draws.WorldGeometry = render.DrawCalls() - beforeMap
 	}

@@ -92,13 +92,14 @@ func (s *LoginScene) Draw(r *render.Scene3D, aspect float32) {
 		}
 	}
 	r.EndSky()
-	s.World.Draw(r)
+	s.World.DrawOpaque(r)
 	if s.rock != nil {
 		rock := translate(LoginTarget.Add(render.V3{3, -13, 10}))
 		for _, p := range s.rock.Parts {
 			r.DrawModel(p.Mesh, p.Tex, rock, 0.5, false)
 		}
 	}
+	s.World.DrawTranslucentVANI(r)
 	s.World.DrawMapEffects(r, eye)
 	r.End()
 }

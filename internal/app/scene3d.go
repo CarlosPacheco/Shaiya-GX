@@ -67,7 +67,7 @@ func (a *App) drawWorld(w *scene.World, eye, target render.V3, width, height int
 	s.Begin()
 	w.Update(float32(a.frameDT))
 	w.Sky.Draw(s, eye)
-	w.Draw(s)
+	w.DrawOpaque(s)
 	if actor := a.selectActor(w); actor != nil {
 		// Selection rotates the actor while the scenery camera stays fixed.
 		pos := selectActorPos
@@ -83,6 +83,7 @@ func (a *App) drawWorld(w *scene.World, eye, target render.V3, width, height int
 		actor.Draw(a.skinner, s)
 	}
 	w.DrawWater(s)
+	w.DrawTranslucentVANI(s)
 	w.DrawMapEffects(s, eye)
 	s.End()
 }

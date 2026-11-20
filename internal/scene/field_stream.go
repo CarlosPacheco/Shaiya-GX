@@ -28,6 +28,7 @@ type cellObject struct {
 	rotor           *maniRotor
 	vani            bool
 	mani            bool
+	blendedVani     bool
 	center          render.V3
 	radius          float32
 	scale           float32

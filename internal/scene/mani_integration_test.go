@@ -54,17 +54,11 @@ func TestLoginManiAssetsGL(t *testing.T) {
 	if len(w.vanis) == 0 {
 		t.Fatal("login has no VANI assets")
 	}
-	renderer, err := render.NewScene3D()
-	if err != nil {
-		t.Fatal(err)
-	}
-	renderer.View, renderer.Proj = render.Identity(), render.Identity()
-	renderer.Begin()
-	w.vanis[0].draw(renderer, 0)
+	w.vanis[0].updatePose(0)
 	if w.vanis[0].frame != 0 {
-		t.Fatal("VANI did not draw its initial frame")
+		t.Fatal("VANI did not upload its initial frame")
 	}
-	w.vanis[0].draw(renderer, .2)
+	w.vanis[0].updatePose(.2)
 	if w.vanis[0].frameMilliseconds != 33 || w.vanis[0].frame != 6 {
 		t.Fatal("VANI did not advance to the expected frame")
 	}

@@ -1,14 +1,15 @@
 package scene
 
 import (
+	"cmp"
 	"fmt"
 	"math"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 type vaniPart struct {
@@ -32,7 +33,7 @@ func loadVani(a *Assets, file string) (*vaniAsset, error) {
 }
 func uploadVani(a *Assets, file string, parsed *world.VANI) (*vaniAsset, error) {
 	asset := &vaniAsset{frame: -1, count: parsed.FrameCount, frameMilliseconds: parsed.FrameMilliseconds, center: render.V3(parsed.Center), radius: parsed.Radius}
-	asset.cascade = strings.EqualFold(path.Base(file), "Login_effect_water01a.VANI")
+	asset.unlit = strings.EqualFold(path.Base(file), "Login_effect_water01a.VANI")
 	for _, m := range parsed.Meshes {
 		part := vaniPart{texture: a.FindTexture(m.Texture), frames: m.Frames, faces: m.Faces, vertices: make([]render.Vertex, len(m.Frames[0]))}
 		if part.texture != nil {
@@ -52,7 +53,7 @@ type vaniAsset struct {
 	visibleWorlds     []render.M4
 	parts             []vaniPart
 	frameMilliseconds int32
-	cascade           bool
+	unlit             bool
 	worlds            []render.M4
 	frame             int
 	count             int
@@ -64,6 +65,21 @@ func (v *vaniAsset) draw(s *render.Scene3D, elapsed float64) {
 	if len(v.worlds) == 0 || v.count == 0 {
 		return
 	}
+	v.updatePose(elapsed)
+	alpha := render.NativeWorldAlphaRef(false)
+	if len(v.worlds) == 1 {
+		for _, part := range v.parts {
+			s.DrawWorldModel(part.mesh, part.texture, v.worlds[0], alpha)
+		}
+		return
+	}
+	s.SetInstances(v.worlds)
+	for _, part := range v.parts {
+		s.DrawWorldInstanced(part.mesh, part.texture, alpha)
+	}
+}
+
+func (v *vaniAsset) updatePose(elapsed float64) {
 	frame := v.frameAt(elapsed)
 	if frame != v.frame {
 		for i := range v.parts {
@@ -75,29 +91,6 @@ func (v *vaniAsset) draw(s *render.Scene3D, elapsed float64) {
 		}
 		v.frame = frame
 	}
-	if v.cascade {
-		// Phoenix's login cascade reference: preserve smooth texture alpha,
-		// emit unlit water and leave the backdrop's depth unchanged.
-		if !s.Shadow {
-			for _, matrix := range v.worlds {
-				for _, part := range v.parts {
-					s.DrawEffect(part.mesh, part.texture, matrix, [4]float32{1, 1, 1, 1}, 4, 5)
-				}
-			}
-			gl.DepthMask(true)
-		}
-		return
-	}
-	if len(v.worlds) == 1 {
-		for _, part := range v.parts {
-			s.DrawWorldModel(part.mesh, part.texture, v.worlds[0], render.NativeWorldAlphaRef(false))
-		}
-		return
-	}
-	s.SetInstances(v.worlds)
-	for _, part := range v.parts {
-		s.DrawWorldInstanced(part.mesh, part.texture, render.NativeWorldAlphaRef(false))
-	}
 }
 
 func (v *vaniAsset) close() {
@@ -106,11 +99,17 @@ func (v *vaniAsset) close() {
 	}
 }
 
-// addVanis shares one dynamic vertex stream per asset, irrespective of the
-// number of WLD placements. Each asset retains its authored frame interval.
+type vaniPlacement struct {
+	asset  *vaniAsset
+	matrix render.M4
+	depth  float32
+}
+
+// Both WLD groups share one animated vertex stream per asset. Game.exe draws
+// group A at 0x448a72 and group B with source-alpha blending at 0x44a769.
 func (w *World) addVanis(a *Assets) {
 	assets := make(map[string]*vaniAsset)
-	for _, group := range []world.Group{w.WLD.VaniA, w.WLD.VaniB} {
+	for groupIndex, group := range []world.Group{w.WLD.VaniA, w.WLD.VaniB} {
 		for _, inst := range group.Instances {
 			if inst.Asset < 0 || int(inst.Asset) >= len(group.Assets) {
 				continue
@@ -127,10 +126,68 @@ func (w *World) addVanis(a *Assets) {
 				assets[key] = asset
 			}
 			if asset != nil {
-				asset.worlds = append(asset.worlds, render.Basis(render.V3(inst.Pos), render.V3(inst.Fwd), render.V3(inst.Up)))
+				matrix := render.Basis(render.V3(inst.Pos), render.V3(inst.Fwd), render.V3(inst.Up))
+				if groupIndex == 0 {
+					asset.worlds = append(asset.worlds, matrix)
+				} else {
+					w.blendedVani = append(w.blendedVani, vaniPlacement{asset: asset, matrix: matrix})
+				}
 			}
 		}
 	}
+}
+
+func (w *World) queueBlendedVani(s *render.Scene3D, asset *vaniAsset, matrix render.M4, center render.V3) {
+	depth := center[0]*s.View[2] + center[1]*s.View[6] + center[2]*s.View[10]
+	w.visibleBlendedVani = append(w.visibleBlendedVani, vaniPlacement{asset: asset, matrix: matrix, depth: depth})
+}
+
+// DrawTranslucentVANI runs after opaque geometry and actors so that transparent
+// texels reveal the correct surface. Consecutive one-part placements can share
+// an instanced draw without changing the back-to-front compositing order.
+func (w *World) DrawTranslucentVANI(s *render.Scene3D) {
+	if s.Shadow {
+		return
+	}
+	if len(w.blendedVani) != 0 {
+		f := render.ViewFrustum(s.View, s.VisibilityProjection())
+		for _, placement := range w.blendedVani {
+			asset, matrix := placement.asset, placement.matrix
+			center := transformPoint(asset.center, matrix)
+			if asset.visible(s, f, matrix, center) {
+				w.queueBlendedVani(s, asset, matrix, center)
+			}
+		}
+	}
+	visible := w.visibleBlendedVani
+	if len(visible) == 0 {
+		return
+	}
+	slices.SortStableFunc(visible, func(a, b vaniPlacement) int { return cmp.Compare(b.depth, a.depth) })
+	s.BeginTranslucentWorldModels()
+	for i := 0; i < len(visible); {
+		asset := visible[i].asset
+		asset.updatePose(w.elapsed)
+		run := visible[i : i+1]
+		if len(asset.parts) == 1 {
+			end := i + 1
+			for end < len(visible) && visible[end].asset == asset {
+				end++
+			}
+			run = visible[i:end]
+		}
+		w.vaniBlendRun = w.vaniBlendRun[:0]
+		for _, placement := range run {
+			w.vaniBlendRun = append(w.vaniBlendRun, placement.matrix)
+		}
+		for _, part := range asset.parts {
+			s.DrawTranslucentWorldModel(part.mesh, part.texture, w.vaniBlendRun, !asset.unlit)
+		}
+		i += len(run)
+	}
+	s.EndTranslucentWorldModels()
+	clear(visible)
+	w.visibleBlendedVani = visible[:0]
 }
 
 func (v *vaniAsset) frameAt(elapsed float64) int {
@@ -147,19 +204,23 @@ func (v *vaniAsset) frameAt(elapsed float64) int {
 // Eager dungeon placements keep all authored transforms and filter into scratch
 // storage; animation bounds encompass every frame, not just the current pose.
 func (v *vaniAsset) drawCulled(s *render.Scene3D, elapsed float64, f render.Frustum) {
-	if v.cascade || v.radius <= 0 {
+	if v.radius <= 0 {
 		v.draw(s, elapsed)
 		return
 	}
 	all := v.worlds
 	v.visibleWorlds = v.visibleWorlds[:0]
 	for _, matrix := range all {
-		c, r := transformPoint(v.center, matrix), v.radius*sphereScale(matrix)
-		if f.SphereVisible(c, r) && render.ClipSphereVisible(s.ClipPlane, c, r) && !s.OccludedSphere(c, r) {
+		if v.visible(s, f, matrix, transformPoint(v.center, matrix)) {
 			v.visibleWorlds = append(v.visibleWorlds, matrix)
 		}
 	}
 	v.worlds = v.visibleWorlds
 	v.draw(s, elapsed)
 	v.worlds = all
+}
+
+func (v *vaniAsset) visible(s *render.Scene3D, f render.Frustum, matrix render.M4, center render.V3) bool {
+	radius := v.radius * sphereScale(matrix)
+	return radius <= 0 || f.SphereVisible(center, radius) && render.ClipSphereVisible(s.ClipPlane, center, radius) && !s.OccludedSphere(center, radius)
 }

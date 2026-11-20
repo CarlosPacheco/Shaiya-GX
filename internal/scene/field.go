@@ -39,6 +39,9 @@ type World struct {
 	Objects             []Instance
 	rotors              []maniRotor
 	vanis               []*vaniAsset
+	blendedVani         []vaniPlacement
+	visibleBlendedVani  []vaniPlacement
+	vaniBlendRun        []render.M4
 	mapFX               *mapEffects
 	frameDT             float32
 	Sky                 *Sky
@@ -229,8 +232,16 @@ func (w *World) addObjects(a *Assets) {
 	}
 }
 
-// Draw renders terrain passes, the lightmap and the objects.
+// Draw renders the entire map when there are no intervening actor draws.
 func (w *World) Draw(s *render.Scene3D) {
+	w.DrawOpaque(s)
+	w.DrawTranslucentVANI(s)
+}
+
+// DrawOpaque renders terrain and the world geometry that writes depth.
+func (w *World) DrawOpaque(s *render.Scene3D) {
+	clear(w.visibleBlendedVani)
+	w.visibleBlendedVani = w.visibleBlendedVani[:0]
 	if len(w.mapBatch.Transforms) == 0 {
 		w.prepareMapBatch()
 	}
