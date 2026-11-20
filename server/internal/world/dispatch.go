@@ -159,6 +159,8 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 		packet.GuildInvite, packet.GuildInviteAnswer, packet.GuildApply, packet.GuildJoinResult,
 		packet.GuildLeave, packet.GuildExpel, packet.GuildStatus, packet.GuildRemark, packet.GuildEtin:
 		s.handleGuild(op, p)
+	case opMyShopBegin, opMyShopCancel, opMyShopOpen, opMyShopStop, opMyShopAdd, opMyShopRemove, opMyShopPrice, opMyShopEnter, opMyShopLeave, opMyShopBuy:
+		s.handleMyShop(op, p)
 	case packet.Gatekeeper:
 		s.handleGatekeeper(p)
 	case packet.ExchangeRequest:
@@ -310,6 +312,9 @@ func economicOpcode(op packet.Opcode) bool {
 		packet.Opcode(proto.GXAuction), packet.Opcode(proto.GXTeleportStone), packet.UseItem, packet.ChangeAppearance, packet.EnchantAdd, packet.GemAdd, packet.GemRemove, packet.ItemCompose, packet.RemoveItem, packet.AddItem, packet.ItemBagToBag, packet.ShopSell, packet.ShopBuy,
 		packet.QuestStart, packet.QuestStartAlt, packet.QuestEnd, packet.QuestChoose, packet.QuestAbandon, packet.LearnNewSkill, packet.SetStatPoint, packet.PointBuy, packet.PointGiftSend, packet.PointStoredItemGet:
 		return true
+	}
+	if op >= opMyShopBegin && op <= opMyShopBuy {
+		return true // personal market purchases move items and gold
 	}
 	return op >= 0x0d00 && op <= 0x0dff // guild changes include permissions and shared storage
 }

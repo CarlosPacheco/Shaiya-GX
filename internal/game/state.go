@@ -52,6 +52,7 @@ type Entity struct {
 	Gesture                      uint8
 	GestureSerial                uint64
 	PartyBadge                   uint8
+	ShopTitle                    string // personal market message, empty when not selling
 	MountShape                   uint8
 	Vehicle                      proto.VehicleState
 	VehicleKnown                 bool
@@ -127,6 +128,8 @@ type State struct {
 	LastPeriodicEffect     proto.PeriodicEffect
 	LastField              proto.Field
 	LastKillNotice         string           // name of the player the user killed
+	MyShop                 MyShopState      // the player's own personal market
+	ShopView               ShopViewState    // another player's market, open
 	LastLootNotice         proto.LootNotice // the party member who just received loot
 	LootNoticeSerial       uint64
 	Transforms             map[uint32]uint16             // character -> monster it looks like
@@ -595,6 +598,10 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 	case proto.GuildListBegin, proto.GuildListEnd, proto.GuildList, proto.GuildNew, proto.GuildDisbanded, proto.GuildOnlineList, proto.GuildOfflineList, proto.GuildMemberAdded, proto.GuildApplicantList, proto.GuildApplicant, proto.GuildApplicantRemoved, proto.GuildApply, proto.GuildStatus, proto.GuildInvite, proto.GuildInviteAnswer, proto.GuildJoinResult, proto.GuildCreate, proto.GuildCreateAgree, proto.GuildCreateFailed, proto.GuildLeave, proto.GuildDisband, proto.GuildDisbandAgree, proto.GuildExpel, proto.GuildBankList, proto.GuildBankPlaced, proto.GuildBankTaken, proto.GuildBankResult, proto.GuildRankingNotice, proto.GuildRankingPoints, proto.GuildRankingList, proto.GuildEtin, proto.GuildRemark, proto.GuildNpcList, proto.GuildNpcUpgrade, proto.GuildHouseBuy, proto.GuildDonate:
 		if err := s.applyGuild(p); err != nil {
+			return fail(err)
+		}
+	case proto.MyShopBegin, proto.MyShopCancel, proto.MyShopOpen, proto.MyShopStop, proto.MyShopAdd, proto.MyShopRemove, proto.MyShopPrice, proto.MyShopSold, proto.MyShopEnter, proto.MyShopList, proto.MyShopStock, proto.MyShopBuy, proto.MyShopClosed, proto.MyShopLeave, proto.ShopBubble:
+		if err := s.applyMyShop(p); err != nil {
 			return fail(err)
 		}
 	case proto.DuelRequest, proto.DuelAnswer, proto.DuelCountdown, proto.DuelStart, proto.DuelResult, proto.DuelEnd, proto.DuelWindow, proto.DuelWindowEnd, proto.DuelReady, proto.DuelAdd, proto.DuelRemove, proto.DuelMoney, proto.DuelAddOther:

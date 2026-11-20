@@ -339,6 +339,9 @@ func (p *ConnectedPlayer) enterFrames() [][]byte {
 	if p.IsSitting() {
 		frames = append(frames, p.SitMotionPacket())
 	}
+	if title := p.currentShopTitle(); title != "" {
+		frames = append(frames, shopBubbleFrame(p.CharacterID, title))
+	}
 	return frames
 }
 

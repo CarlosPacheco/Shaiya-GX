@@ -308,6 +308,7 @@ func (s *Session) inSkillRange(m *MapMob, def *db.SkillDef, st *CharacterStats) 
 // clearBuffsOnDeath is CUser::ClearApplySkillByDeath: every active skill
 // ends except those with FixRange set.
 func (s *Session) clearBuffsOnDeath() {
+	s.endMyShop()
 	s.deathLoss = s.deathExpLoss()
 	duelDeath := s.duelDeathMark
 	if duelDeath {

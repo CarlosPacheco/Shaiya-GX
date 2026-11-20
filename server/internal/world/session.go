@@ -46,6 +46,8 @@ type Session struct {
 	inputFrames       *netx.RateLimiter
 	inputBytes        *netx.RateLimiter
 	stateMu           sync.Mutex
+	shop              myShop // the personal market this character sets up
+	shopViewing       uint32 // the seller whose market this character has open
 	effectWatchID     uint32
 	effectWatchKind   uint8
 	effectWatchAt     time.Time
@@ -259,6 +261,7 @@ func (s *Session) leaveWorld(disconnect bool) bool {
 		return true
 	}
 	if s.player != nil {
+		s.endMyShop()
 		s.drainRewards(s.player)
 		s.tickPvP()
 		s.applyDuelWins()
@@ -982,6 +985,9 @@ func (s *Session) handleMotion(p []byte) {
 			s.player.SetSitting(true)
 		case MotionStandUp:
 			s.player.SetSitting(false)
+		}
+		if motion != MotionSitDown {
+			s.endMyShop() // standing, jumping or any other motion ends the market
 		}
 	}
 	s.broadcastNear(buildCharacterMotion(s.char.ID, motion), "0x0506 character motion", true)

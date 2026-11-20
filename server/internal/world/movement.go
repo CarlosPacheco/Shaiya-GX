@@ -65,6 +65,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 		return
 	}
 	s.cancelTravelCast()
+	s.endMyShop()
 	s.dismount()
 	s.dash = nil
 	s.pendingCombo = nil
@@ -180,6 +181,7 @@ func (s *Session) handleCharacterMove(p []byte) {
 	}
 	if ch.PosX != oldX || ch.PosZ != oldZ {
 		s.autoAttack = false
+		s.endMyShop() // moving cancels the personal market
 	}
 	x, y, z = ch.PosX, ch.PosY, ch.PosZ
 	motion = s.movement.motion

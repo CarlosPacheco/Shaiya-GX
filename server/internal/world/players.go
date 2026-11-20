@@ -117,6 +117,9 @@ type ConnectedPlayer struct {
 	inviteDeadline time.Time
 	inviteAnyMap   bool // the pending party invitation was global (/party name)
 
+	shopMu    sync.Mutex
+	shopTitle string // the market bubble over this character
+
 	rewardMu   sync.Mutex
 	experience [4]uint32
 	perfectExp []perfectExperience
