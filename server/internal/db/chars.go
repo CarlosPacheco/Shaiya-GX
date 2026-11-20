@@ -62,7 +62,7 @@ func u16(v int64) uint16 { return clampU16(v) }
 // CharactersForAccount lists live characters (usp_Read_Chars_R) plus those
 // deleted within DeleteWindow, flagged PendingDelete.
 func CharactersForAccount(userUID uint32) ([]Character, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,28 @@ WHERE ServerID=@serverid AND UserUID=@useruid AND Del=@del`,
 // usp_Read_Chars_Detail2_R (which also stamps JoinDate). It returns
 // ErrNotFound unless the character belongs to userUID and is not deleted.
 func CharacterDetail(userUID, charID uint32) (Character, error) {
+	ch, err := readCharacterDetail(userUID, charID)
+	if err != nil {
+		return Character{}, err
+	}
 	pool, err := Pool(GameData)
+	if err != nil {
+		return Character{}, err
+	}
+	c, cancel := ctx()
+	defer cancel()
+	result, err := pool.ExecContext(c, `UPDATE PS_GameData_Chars SET JoinDate=CURRENT_TIMESTAMP WHERE CharID=? AND UserUID=? AND Del=0`, charID, userUID)
+	if err != nil {
+		return Character{}, err
+	}
+	if err := requireOne(result); err != nil {
+		return Character{}, err
+	}
+	return ch, nil
+}
+
+func readCharacterDetail(userUID, charID uint32) (Character, error) {
+	pool, err := ReadPool()
 	if err != nil {
 		return Character{}, err
 	}
@@ -156,14 +177,14 @@ func CharacterDetail(userUID, charID uint32) (Character, error) {
 	var hg, vg int16
 	var cg, og, ig, del uint8
 	var guildLevel, killLevel, deadLevel sql.NullInt64
-	var event1, event2 sql.NullInt64
+	var event1, event2, renameCnt sql.NullInt64
 	var leave [6]sql.NullInt32
 	var posX, posY, posZ float32
-	err = pool.QueryRowContext(c, `SELECT C.UserUID,C.CharID,C.CharName,C.Slot,C.Family,C.Grow,C.Hair,C.Face,C.Size,C.Job,C.Sex,C.Level,C.StatPoint,C.SkillPoint,C.Str,C.Dex,C.Rec,C.[Int],C.Luc,C.Wis,C.HP,C.MP,C.SP,C.Map,C.Dir,C.Exp,C.Money,C.PosX,C.PosY,C.PosZ,C.Hg,C.Vg,C.Cg,C.Og,C.Ig,C.Del,C.K1,C.K2,C.K3,C.K4,COALESCE(M.Money,0),COALESCE(G.GuildID,0),COALESCE(G.GuildLevel,0),C.KillLevel,C.DeadLevel,E.Event1,E.Event2,CAST(strftime('%Y',C.LeaveDate) AS INTEGER),CAST(strftime('%m',C.LeaveDate) AS INTEGER),CAST(strftime('%d',C.LeaveDate) AS INTEGER),CAST(strftime('%H',C.LeaveDate) AS INTEGER),CAST(strftime('%M',C.LeaveDate) AS INTEGER),CAST(strftime('%S',C.LeaveDate) AS INTEGER) FROM PS_GameData_Chars C LEFT JOIN PS_GameData_UserStoredMoney M ON M.UserUID=C.UserUID LEFT JOIN PS_GameData_GuildChars G ON G.CharID=C.CharID AND G.Del=0 LEFT JOIN PS_GameData_CharEvents E ON E.CharID=C.CharID WHERE C.CharID=@charid`, sql.Named("charid", int32(charID))).Scan(
+	err = pool.QueryRowContext(c, `SELECT C.UserUID,C.CharID,C.CharName,C.Slot,C.Family,C.Grow,C.Hair,C.Face,C.Size,C.Job,C.Sex,C.Level,C.StatPoint,C.SkillPoint,C.Str,C.Dex,C.Rec,C.[Int],C.Luc,C.Wis,C.HP,C.MP,C.SP,C.Map,C.Dir,C.Exp,C.Money,C.PosX,C.PosY,C.PosZ,C.Hg,C.Vg,C.Cg,C.Og,C.Ig,C.Del,C.K1,C.K2,C.K3,C.K4,COALESCE(M.Money,0),COALESCE(G.GuildID,0),COALESCE(G.GuildLevel,0),C.KillLevel,C.DeadLevel,E.Event1,E.Event2,C.RenameCnt,CAST(strftime('%Y',C.LeaveDate) AS INTEGER),CAST(strftime('%m',C.LeaveDate) AS INTEGER),CAST(strftime('%d',C.LeaveDate) AS INTEGER),CAST(strftime('%H',C.LeaveDate) AS INTEGER),CAST(strftime('%M',C.LeaveDate) AS INTEGER),CAST(strftime('%S',C.LeaveDate) AS INTEGER) FROM PS_GameData_Chars C LEFT JOIN PS_GameData_UserStoredMoney M ON M.UserUID=C.UserUID AND M.ServerID=C.ServerID LEFT JOIN PS_GameData_GuildChars G ON G.CharID=C.CharID AND G.Del=0 LEFT JOIN PS_GameData_CharEvents E ON E.CharID=C.CharID WHERE C.CharID=@charid`, sql.Named("charid", int32(charID))).Scan(
 		&owner, &ch.ID, &ch.Name, &ch.Slot, &ch.Race, &ch.Mode, &ch.Hair, &ch.Face, &ch.Height, &ch.Class,
 		&ch.Gender, &level, &statPoint, &skillPoint, &str, &dex, &rec, &intel, &luc, &wis, &hp, &mp, &sp,
 		&mapID, &dir, &exp, &money, &posX, &posY, &posZ, &hg, &vg, &cg, &og, &ig, &del, &k1, &k2, &k3, &k4,
-		&storedMoney, &guildID, &guildLevel, &killLevel, &deadLevel, &event1, &event2,
+		&storedMoney, &guildID, &guildLevel, &killLevel, &deadLevel, &event1, &event2, &renameCnt,
 		&leave[0], &leave[1], &leave[2], &leave[3], &leave[4], &leave[5])
 	if errors.Is(err, sql.ErrNoRows) || (err == nil && (uint32(owner) != userUID || del != 0)) {
 		return Character{}, ErrNotFound
@@ -183,19 +204,13 @@ func CharacterDetail(userUID, charID uint32) (Character, error) {
 	ch.Hg, ch.Vg, ch.Cg, ch.Og, ch.Ig = hg, vg, cg, og, ig
 	ch.Kills, ch.Deaths, ch.Victories, ch.Defeats = uint32(max(k1, 0)), uint32(max(k2, 0)), uint32(max(k3, 0)), uint32(max(k4, 0))
 	ch.KillLevel, ch.DeadLevel = uint8(killLevel.Int64), uint8(deadLevel.Int64)
-	var renameCnt uint8
-	if err := pool.QueryRowContext(c, `SELECT RenameCnt FROM PS_GameData_Chars WHERE CharID = ?1`, int32(charID)).Scan(&renameCnt); err == nil {
-		ch.RenamePending = renameCnt > 0
-	}
-	if _, err := pool.ExecContext(c, `UPDATE PS_GameData_Chars SET JoinDate=CURRENT_TIMESTAMP WHERE CharID=?1`, int32(charID)); err != nil {
-		return Character{}, err
-	}
+	ch.RenamePending = renameCnt.Int64 > 0
 	return ch, nil
 }
 
 // CharacterIDInSlot runs usp_Read_CharSlots_R.
 func CharacterIDInSlot(userUID uint32, slot uint8) (uint32, bool, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return 0, false, err
 	}
@@ -213,7 +228,7 @@ func CharacterIDInSlot(userUID uint32, slot uint8) (uint32, bool, error) {
 // NameTaken reports whether a live character, or one deleted within the
 // restore window, already uses name.
 func NameTaken(name string) (bool, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return false, err
 	}
@@ -407,9 +422,10 @@ func SaveCharacter(ch *Character) error {
 	}
 	c, cancel := ctx()
 	defer cancel()
-	_, err = writeCharacter(c, pool, ch)
-	reportStorageFailure(err)
-	return err
+	return groupWrite(c, pool, func(c context.Context, tx *sql.Tx) error {
+		_, err := writeCharacter(c, tx, ch)
+		return err
+	})
 }
 
 func writeCharacter(c context.Context, executor sqlExecutor, ch *Character) (sql.Result, error) {
@@ -421,7 +437,7 @@ HP = @hp, Mp = @mp, Sp = @sp,
 Map = @map, dir = @dir, [exp] = @exp, [money] = @money,
 PosX = @posx, PosY = @posy, PosZ = @posz, hg = @hg, vg = @vg, cg = @cg, og = @og, ig = @ig,
 KillLevel=@killlevel, DeadLevel=@deadlevel,LeaveDate=CURRENT_TIMESTAMP, K1=@k1,K2=@k2,K3=@k3,K4=@k4
-WHERE CharID = @charid`,
+WHERE CharID = @charid AND Del=0`,
 		sql.Named("charid", int32(ch.ID)), sql.Named("level", int32(ch.Level)),
 		sql.Named("statpoint", int16(ch.StatPoint)), sql.Named("skillpoint", int16(ch.SkillPoint)),
 		sql.Named("str", int16(ch.Str)), sql.Named("dex", int16(ch.Dex)), sql.Named("rec", int16(ch.Rec)),
@@ -445,7 +461,7 @@ WHERE CharID = @charid`, sql.Named("charid", int32(charID)),
 
 // CharacterByName finds a live character's account and id by name.
 func CharacterByName(name string) (charID, userUID uint32, found bool, err error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return 0, 0, false, err
 	}
@@ -462,7 +478,7 @@ func CharacterByName(name string) (charID, userUID uint32, found bool, err error
 // CharacterByID loads any live character regardless of account (used to
 // credit an offline caster).
 func CharacterByID(charID uint32) (Character, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return Character{}, err
 	}
@@ -476,7 +492,7 @@ func CharacterByID(charID uint32) (Character, error) {
 	if err != nil {
 		return Character{}, err
 	}
-	return CharacterDetail(uint32(uid), charID)
+	return readCharacterDetail(uint32(uid), charID)
 }
 
 func execSQL(database, name string, args ...any) error {

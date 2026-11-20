@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Spelunkern/Shaiya-GX/server/internal/telemetry"
 	"time"
 )
 
@@ -16,7 +15,7 @@ const GiftBoxSlots = 240
 
 // Points reads the account's item-mall balance.
 func Points(userUID uint32) (uint32, error) {
-	pool, err := Pool(UserData)
+	pool, err := ReadPool()
 	if err != nil {
 		return 0, err
 	}
@@ -54,14 +53,11 @@ func SpendPoints(userUID, charID, cost uint32, productCode, targetName string, u
 // spendPointsTx keeps charging and delivery in the same transaction.
 func spendPointsTx(c context.Context, tx *sql.Tx, userUID, charID, cost uint32, productCode, targetName string, useType uint8) (uint32, error) {
 	var remaining uint32
-	res, err := tx.ExecContext(c, `UPDATE PS_UserData_Users_Master SET Point=Point-?2 WHERE UserUID=?1 AND Point>=?2`, int32(userUID), int64(cost))
-	if err != nil {
-		return 0, err
-	}
-	if n, _ := res.RowsAffected(); n != 1 {
+	err := tx.QueryRowContext(c, `UPDATE PS_UserData_Users_Master SET Point=Point-?2 WHERE UserUID=?1 AND Point>=?2 RETURNING Point`, int32(userUID), int64(cost)).Scan(&remaining)
+	if errors.Is(err, sql.ErrNoRows) {
 		return 0, ErrNotEnoughPoints
 	}
-	if err = tx.QueryRowContext(c, `SELECT Point FROM PS_UserData_Users_Master WHERE UserUID=?1`, int32(userUID)).Scan(&remaining); err != nil {
+	if err != nil {
 		return 0, err
 	}
 	_, err = tx.ExecContext(c, `INSERT INTO PS_GameData_PointLog(UseType,UserUID,CharID,UsePoint,ProductCode,TargetName,UseDate,RemainPoint) VALUES(?1,?2,?3,?4,?5,?6,CURRENT_TIMESTAMP,?7)`, useType, int32(userUID), int32(charID), int64(cost), productCode, targetName, int64(remaining))
@@ -78,7 +74,7 @@ func PurchaseMallItems(userUID, charID uint32, product *Product, items []Item) (
 	c, cancel := ctx()
 	defer cancel()
 	var remaining uint32
-	err = withTx(c, pool, func(tx *sql.Tx) error {
+	err = groupWrite(c, pool, func(c context.Context, tx *sql.Tx) error {
 		var err error
 		remaining, err = spendPointsTx(c, tx, userUID, charID, product.BuyCost, product.Code, "", 1)
 		if err != nil {
@@ -113,7 +109,7 @@ type GiftEntry struct {
 
 // GiftBox runs usp_Read_User_StoredPointItems.
 func GiftBox(userUID uint32) ([]GiftEntry, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return nil, err
 	}
@@ -309,26 +305,3 @@ func ClaimGift(userUID, charID uint32, giftSlot uint8, it *Item) (bool, error) {
 }
 
 var errRollback = errors.New("rollback")
-
-var transactionTime = telemetry.DurationMetric("gx_db_transaction_seconds")
-var transactionFailures = telemetry.NumberMetric("gx_db_transaction_failures_total")
-
-func withTx(c context.Context, pool *sql.DB, fn func(*sql.Tx) error) (err error) {
-	start := time.Now()
-	defer func() {
-		transactionTime.Observe(time.Since(start))
-		if err != nil {
-			transactionFailures.Add(1)
-			reportStorageFailure(err)
-		}
-	}()
-	tx, err := pool.BeginTx(c, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback() // also releases the writer lock if the operation panics
-	if err := fn(tx); err != nil {
-		return err
-	}
-	return tx.Commit()
-}

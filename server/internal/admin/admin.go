@@ -38,13 +38,21 @@ func secret() (string, error) {
 }
 func Run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("use account create NAME [--admin], account password NAME, or tls-init")
+		return errors.New("use account create NAME [--admin], account password NAME, account upgrade-legacy, or tls-init")
 	}
 	if err := config.LoadRuntimeEnv(); err != nil {
 		return err
 	}
 	if args[0] == "tls-init" {
 		return certificates(args[1:])
+	}
+	if len(args) == 2 && args[0] == "account" && args[1] == "upgrade-legacy" {
+		defer db.Close()
+		upgraded, needsReset, err := db.UpgradeLegacyPasswords()
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(os.Stdout).Encode(map[string]int{"upgraded": upgraded, "needs_reset": needsReset})
 	}
 	if args[0] != "account" || len(args) < 3 {
 		return errors.New("use account create NAME [--admin] or account password NAME")

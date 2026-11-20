@@ -3,6 +3,7 @@ package world
 import (
 	"context"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/scheduler"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/session"
 	"sync"
 	"time"
 
@@ -125,6 +126,20 @@ func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.Cance
 		workers.Go(func() {
 			botScheduler := scheduler.New(started, []scheduler.Job{{Name: "bots", Interval: botTick, Run: tickWorldBots}})
 			botScheduler.Run(ctx)
+		})
+		workers.Go(func() {
+			ticker := time.NewTicker(time.Minute)
+			defer ticker.Stop()
+			for ctx.Err() == nil {
+				if err := session.PurgeExpired(); err != nil {
+					log.Printf("session handoff expiry: %v", err)
+				}
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+				}
+			}
 		})
 		engine.Run(ctx)
 		workers.Wait()

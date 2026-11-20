@@ -434,6 +434,12 @@ func (s *Session) persistBuffs() {
 	if s.char == nil {
 		return
 	}
+	if err := db.SaveAppliedBuffs(s.char.ID, s.buffSnapshot()); err != nil {
+		s.log.Printf("GX Server World failed to save buffs: %v", err)
+	}
+}
+
+func (s *Session) buffSnapshot() []db.AppliedBuff {
 	var rows []db.AppliedBuff
 	for _, b := range s.buffs {
 		if b.MapCurse {
@@ -441,16 +447,17 @@ func (s *Session) persistBuffs() {
 		}
 		rows = append(rows, db.AppliedBuff{SkillID: b.SkillID, Level: b.SkillLevel, LeftSeconds: uint32(max(time.Until(b.EndsAt), 0) / time.Second)})
 	}
-	if err := db.SaveAppliedBuffs(s.char.ID, rows); err != nil {
-		s.log.Printf("GX Server World failed to save buffs: %v", err)
+	return rows
+}
+
+func (s *Session) persistSkillDelays() {
+	if s.char != nil {
+		s.logErr("save skill delays", db.SaveSkillDelays(s.char.ID, s.skillDelaySnapshot()))
 	}
 }
 
-// persistSkillDelays saves each skill's remaining cooldown.
-func (s *Session) persistSkillDelays() {
-	if s.char == nil {
-		return
-	}
+// skillDelaySnapshot captures changes to remaining cooldown.
+func (s *Session) skillDelaySnapshot() []db.CharacterSkill {
 	var changed []db.CharacterSkill
 	for _, k := range s.skills {
 		left := int16(0)
@@ -462,7 +469,7 @@ func (s *Session) persistSkillDelays() {
 			changed = append(changed, k)
 		}
 	}
-	s.logErr("save skill delays", db.SaveSkillDelays(s.char.ID, changed))
+	return changed
 }
 
 func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error) {

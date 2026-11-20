@@ -255,16 +255,13 @@ func (s *Session) questListPackets() [][]byte {
 	return out
 }
 
-// saveQuests writes every active quest's delay and counters.
-func (s *Session) saveQuests() {
-	if s.char == nil {
-		return
-	}
+// questSnapshot captures active timers and counters on exit.
+func (s *Session) questSnapshot() []db.CharQuest {
 	rows := make([]db.CharQuest, 0, len(s.quests))
 	for _, q := range s.quests {
 		rows = append(rows, q.row())
 	}
-	s.logErr("save quests", db.SaveCharacterQuests(s.char.ID, rows))
+	return rows
 }
 
 func (s *Session) findQuest(id uint16) *activeQuest {

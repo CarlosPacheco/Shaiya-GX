@@ -44,7 +44,7 @@ explicit state ownership rather than extra services or a parallel framework.
 ## Limits
 
 All policy values are validated at startup. Defaults are 200 login connections,
-500 world connections, 32 concurrent connections/IP, 120 new connections/IP/minute,
+1,200 world connections, 32 concurrent connections/IP, 120 new connections/IP/minute,
 30 login attempts/IP/minute and 10/account/minute. World input allows 512 frames
 and 1 MiB/second; ordered output allows 256 packets and 1 MiB including in-flight
 bytes. Economy commands allow 20/second. Slow clients disconnect on overflow.

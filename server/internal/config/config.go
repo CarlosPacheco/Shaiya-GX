@@ -102,6 +102,13 @@ func DatabaseSeed() string { return env("RAPTURE_DB_SEED", filepath.Join(DataDir
 
 // DSN applies connection settings to every connection, including both servers.
 func DSN(_ string) (string, error) {
+	return sqliteDSN(false)
+}
+
+// ReadDSN opens a WAL reader that cannot mutate gameplay data.
+func ReadDSN() (string, error) { return sqliteDSN(true) }
+
+func sqliteDSN(readOnly bool) (string, error) {
 	path, err := filepath.Abs(DatabasePath())
 	if err != nil {
 		return "", err
@@ -109,10 +116,17 @@ func DSN(_ string) (string, error) {
 	u := url.URL{Scheme: "file", Path: sqliteURIPath(filepath.ToSlash(path))}
 	q := url.Values{}
 	q.Add("_pragma", "busy_timeout(10000)")
-	q.Add("_pragma", "journal_mode(WAL)")
-	q.Add("_pragma", "synchronous(FULL)")
 	q.Add("_pragma", "foreign_keys(ON)")
-	q.Set("_txlock", "immediate")
+	q.Add("_pragma", "trusted_schema(OFF)")
+	if readOnly {
+		q.Set("mode", "ro")
+		q.Add("_pragma", "query_only(ON)")
+	} else {
+		q.Set("mode", "rw")
+		q.Add("_pragma", "journal_mode(WAL)")
+		q.Add("_pragma", "synchronous(FULL)")
+		q.Set("_txlock", "immediate")
+	}
 	u.RawQuery = q.Encode()
 	return u.String(), nil
 }

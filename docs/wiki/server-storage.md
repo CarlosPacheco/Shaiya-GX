@@ -18,9 +18,10 @@ authority. See [complete storage API](server-reference-storage.md),
 | `GX_SessionHandoff`, `GX_ActiveSessions` | Transient durable authentication/ownership records in the same runtime |
 
 All former logical databases use prefixed tables in one physical file. Calls to
-`Pool(UserData)`, `Pool(GameData)` and `Pool(GameDefs)` share a single connection
-pool per process, capped at one open connection. Login and world have independent
-process connections coordinated by SQLite locking. This permits account/item/
+`Pool(UserData)`, `Pool(GameData)` and `Pool(GameDefs)` share the process writer,
+capped at one open connection. Login and World coordinate their writer
+connections through SQLite locking. Queries outside write transactions can
+use a separate pool of up to four read-only connections per process. This permits account/item/
 guild/audit mutations to share an atomic transaction without a distributed
 transaction protocol.
 
@@ -88,6 +89,8 @@ published migration; append a new version.
 | 21 | `server_notices` | Adds the former SQLite notice catalog |
 | 22 | `teleport_runes` | Adds the former SQLite rune destination catalog and updates item references |
 | 23 | `auction_house` | Adds auction, claim and watch tables |
+| 24 | `runtime_write_indexes` | Indexes handoff expiry, guild storage, character events, reverse social lookups and live names |
+| 25 | `indexed_legacy_row_identity` | Indexes identity allocation for actively written legacy tables |
 
 The migration ledger is separate from legacy user_version. The shipped seed is
 not rewritten during an upgrade; migrations apply to the runtime. Back up before
@@ -102,6 +105,19 @@ SQLite definition rows remain available for exporting customized older
 installations. SQLite continues to store durable game state and the
 active item, skill, experience and mall catalogs.
 
+
+## Write concurrency and durability
+
+World and Login each use one WAL writer with full synchronization. Gameplay
+reads use up to four read-only connections per process. Independent writes can
+share a durable commit with per-operation savepoints. Character exit commits
+character state, buffs, skill delays and quest counters in one transaction.
+
+World handoff tickets store a token digest and expire from the runtime.
+The local `gx_console account upgrade-legacy` command hashes legacy password
+rows in place and reports conversion and reset counts. See the
+[SQLite production guide](../../server/docs/sqlite.md) for disk-backed load
+validation, administration and backups.
 
 ## Transaction contracts
 

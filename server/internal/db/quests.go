@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 )
@@ -21,7 +22,7 @@ type FinishedQuest struct {
 
 // CharacterQuests runs usp_Read_Char_Quest_R.
 func CharacterQuests(charID uint32) ([]CharQuest, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +48,7 @@ func CharacterQuests(charID uint32) ([]CharQuest, error) {
 
 // FinishedQuests runs usp_Read_Char_FinishedQuest_R.
 func FinishedQuests(charID uint32) ([]FinishedQuest, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return nil, err
 	}
@@ -110,21 +111,23 @@ func SaveCharacterQuests(charID uint32, quests []CharQuest) error {
 	}
 	c, cancel := ctx()
 	defer cancel()
-	return withTx(c, pool, func(tx *sql.Tx) error {
-		stmt, err := tx.PrepareContext(c, `UPDATE PS_GameData_CharQuests SET Delay=?,Count1=?,Count2=?,Count3=? WHERE CharID=? AND QuestID=? AND Finish=0 AND Del=0`)
+	return withTx(c, pool, func(tx *sql.Tx) error { return saveQuestsTx(c, tx, charID, quests) })
+}
+
+func saveQuestsTx(c context.Context, tx *sql.Tx, charID uint32, quests []CharQuest) error {
+	stmt, err := tx.PrepareContext(c, `UPDATE PS_GameData_CharQuests SET Delay=?,Count1=?,Count2=?,Count3=? WHERE CharID=? AND QuestID=? AND Finish=0 AND Del=0`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for _, q := range quests {
+		result, err := stmt.ExecContext(c, q.Delay, q.Counts[0], q.Counts[1], q.Counts[2], charID, q.QuestID)
 		if err != nil {
 			return err
 		}
-		defer stmt.Close()
-		for _, q := range quests {
-			result, err := stmt.ExecContext(c, q.Delay, q.Counts[0], q.Counts[1], q.Counts[2], charID, q.QuestID)
-			if err != nil {
-				return err
-			}
-			if err = requireOne(result); err != nil {
-				return err
-			}
+		if err = requireOne(result); err != nil {
+			return err
 		}
-		return nil
-	})
+	}
+	return nil
 }

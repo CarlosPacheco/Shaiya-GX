@@ -397,9 +397,9 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.FriendInvite](../../internal/proto/social.go#L7).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L103)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L113)
 
-**S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L80)
+**S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L90)
 
 **Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L39), [Apply (internal/game/state.go)](../../internal/game/state.go#L264)
 
@@ -409,7 +409,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleSocial — server/internal/world/social.go</summary>
 
-[Source definition](../../server/internal/world/social.go#L80)
+[Source definition](../../server/internal/world/social.go#L90)
 
 ```go
 func (s *Session) handleSocial(op packet.Opcode, p []byte) {
@@ -487,9 +487,14 @@ func (s *Session) handleSocial(op packet.Opcode, p []byte) {
 			s.log.Printf("friend result: %v", err)
 		}
 		s.sendSocial()
-		if data, err := socialList(sender.CharacterID, false); err == nil {
-			if err = sender.Send(data, "friend list"); err != nil {
-				s.log.Printf("friend list send: %v", err)
+		if code == 1 {
+			if sender.owner != nil {
+				sender.owner.socialRefresh.Store(true)
+			}
+			if friends, err := db.SocialContacts(sender.CharacterID, false); err == nil {
+				if err = sender.Send(buildSocialList(friends, false), "friend list"); err != nil {
+					s.log.Printf("friend list send: %v", err)
+				}
 			}
 		}
 	case 0x2205, 0x220a:
@@ -587,9 +592,9 @@ type Reader struct {
 
 Declarations: [proto.FriendAnswer](../../internal/proto/social.go#L8).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L125)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L135)
 
-**S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L80)
+**S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L90)
 
 **Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L47), [Apply (internal/game/state.go)](../../internal/game/state.go#L264)
 
@@ -599,7 +604,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleSocial — server/internal/world/social.go</summary>
 
-[Source definition](../../server/internal/world/social.go#L80)
+[Source definition](../../server/internal/world/social.go#L90)
 
 ```go
 func (s *Session) handleSocial(op packet.Opcode, p []byte) {
@@ -677,9 +682,14 @@ func (s *Session) handleSocial(op packet.Opcode, p []byte) {
 			s.log.Printf("friend result: %v", err)
 		}
 		s.sendSocial()
-		if data, err := socialList(sender.CharacterID, false); err == nil {
-			if err = sender.Send(data, "friend list"); err != nil {
-				s.log.Printf("friend list send: %v", err)
+		if code == 1 {
+			if sender.owner != nil {
+				sender.owner.socialRefresh.Store(true)
+			}
+			if friends, err := db.SocialContacts(sender.CharacterID, false); err == nil {
+				if err = sender.Send(buildSocialList(friends, false), "friend list"); err != nil {
+					s.log.Printf("friend list send: %v", err)
+				}
 			}
 		}
 	case 0x2205, 0x220a:
@@ -854,7 +864,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.FriendDelete](../../internal/proto/social.go#L10).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L160)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L175)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -913,7 +923,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.FriendMemo](../../internal/proto/social.go#L11).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L190)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L205)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1093,9 +1103,9 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.BlockAdd](../../internal/proto/social.go#L14).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L173)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L188)
 
-**S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L80)
+**S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L90)
 
 **Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L66), [Apply (internal/game/state.go)](../../internal/game/state.go#L264)
 
@@ -1105,7 +1115,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleSocial — server/internal/world/social.go</summary>
 
-[Source definition](../../server/internal/world/social.go#L80)
+[Source definition](../../server/internal/world/social.go#L90)
 
 ```go
 func (s *Session) handleSocial(op packet.Opcode, p []byte) {
@@ -1183,9 +1193,14 @@ func (s *Session) handleSocial(op packet.Opcode, p []byte) {
 			s.log.Printf("friend result: %v", err)
 		}
 		s.sendSocial()
-		if data, err := socialList(sender.CharacterID, false); err == nil {
-			if err = sender.Send(data, "friend list"); err != nil {
-				s.log.Printf("friend list send: %v", err)
+		if code == 1 {
+			if sender.owner != nil {
+				sender.owner.socialRefresh.Store(true)
+			}
+			if friends, err := db.SocialContacts(sender.CharacterID, false); err == nil {
+				if err = sender.Send(buildSocialList(friends, false), "friend list"); err != nil {
+					s.log.Printf("friend list send: %v", err)
+				}
 			}
 		}
 	case 0x2205, 0x220a:
@@ -1298,7 +1313,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.BlockDelete](../../internal/proto/social.go#L15).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L160)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L175)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1357,7 +1372,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.BlockMemo](../../internal/proto/social.go#L16).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L190)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L205)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1416,7 +1431,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [proto.PartySearchRequest](../../internal/proto/social.go#L17).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L209)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34), [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L224)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1462,7 +1477,7 @@ Declarations: [proto.PartySearchList](../../internal/proto/social.go#L18).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [sendPartySearch (server/internal/world/social.go)](../../server/internal/world/social.go#L217)
+**S→C serializers:** [sendPartySearch (server/internal/world/social.go)](../../server/internal/world/social.go#L232)
 
 **Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L33), [Apply (internal/game/state.go)](../../internal/game/state.go#L264)
 
@@ -1472,7 +1487,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendPartySearch — server/internal/world/social.go</summary>
 
-[Source definition](../../server/internal/world/social.go#L217)
+[Source definition](../../server/internal/world/social.go#L232)
 
 ```go
 func (s *Session) sendPartySearch() {

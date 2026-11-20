@@ -102,6 +102,33 @@ var migrations = []migration{
 	VALUES (1, 'GX Automatic Notice - Test', 60);`},
 	{22, "teleport_runes", teleportrunes.MigrationSQL},
 	{23, "auction_house", auctionMigration},
+	{24, "runtime_write_indexes", `
+		CREATE INDEX GX_Handoff_Expiry ON GX_SessionHandoff(ExpiresAt);
+		CREATE INDEX GX_CharEvents_Char ON PS_GameData_CharEvents(CharID);
+		CREATE INDEX GX_GuildBank_Guild ON PS_GameData_GuildStoredItems(GuildID,ItemUID);
+		CREATE INDEX GX_Friends_Reverse ON PS_GameData_FriendChars(FriendID);
+		CREATE INDEX GX_Blocked_Reverse ON PS_GameData_BanChars(BanID);
+		CREATE INDEX GX_Chars_LiveName ON PS_GameData_Chars(CharName COLLATE NOCASE) WHERE Del=0;
+	`},
+	{25, "indexed_legacy_row_identity", `
+		-- The imported RowID triggers preserve the exporter identity values.
+		-- Their MAX(RowID) lookup must not scan all previous player rows.
+		CREATE INDEX GX_Identity_Users_Master ON PS_UserData_Users_Master(RowID);
+		CREATE INDEX GX_Identity_UserOnlineTimeLog ON PS_UserData_UserOnlineTimeLog(RowID);
+		CREATE INDEX GX_Identity_BanChars ON PS_GameData_BanChars(RowID);
+		CREATE INDEX GX_Identity_CharApplySkills ON PS_GameData_CharApplySkills(RowID);
+		CREATE INDEX GX_Identity_CharItems ON PS_GameData_CharItems(RowID);
+		CREATE INDEX GX_Identity_CharQuests ON PS_GameData_CharQuests(RowID);
+		CREATE INDEX GX_Identity_CharQuickSlots ON PS_GameData_CharQuickSlots(RowID);
+		CREATE INDEX GX_Identity_CharSkills ON PS_GameData_CharSkills(RowID);
+		CREATE INDEX GX_Identity_FriendChars ON PS_GameData_FriendChars(RowID);
+		CREATE INDEX GX_Identity_Guilds ON PS_GameData_Guilds(RowID);
+		CREATE INDEX GX_Identity_GuildStoredItems ON PS_GameData_GuildStoredItems(RowID);
+		CREATE INDEX GX_Identity_Keeps ON PS_GameData_Keeps(RowID);
+		CREATE INDEX GX_Identity_UserMaxGrow ON PS_GameData_UserMaxGrow(RowID);
+		CREATE INDEX GX_Identity_UserStoredItems ON PS_GameData_UserStoredItems(RowID);
+		CREATE INDEX GX_Identity_UserStoredMoney ON PS_GameData_UserStoredMoney(RowID);
+	`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

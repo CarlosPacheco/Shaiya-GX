@@ -192,7 +192,7 @@ Direct GX dependencies: `internal/data/archive`, `internal/data/world`, `interna
 
 World bootstrap/lease, definition/map loading, owned scheduler, bounded sessions and graceful storage shutdown.
 
-Tests: [combat_integration_test.go](../../server/cmd/gx_world/combat_integration_test.go), [fixtures_integration_test.go](../../server/cmd/gx_world/fixtures_integration_test.go), [itemmall_integration_test.go](../../server/cmd/gx_world/itemmall_integration_test.go), [journey_integration_test.go](../../server/cmd/gx_world/journey_integration_test.go), [load_integration_test.go](../../server/cmd/gx_world/load_integration_test.go), [party_integration_test.go](../../server/cmd/gx_world/party_integration_test.go), [quest_atomic_integration_test.go](../../server/cmd/gx_world/quest_atomic_integration_test.go), [quest_integration_test.go](../../server/cmd/gx_world/quest_integration_test.go), [spell_fluidity_integration_test.go](../../server/cmd/gx_world/spell_fluidity_integration_test.go), [trade_integration_test.go](../../server/cmd/gx_world/trade_integration_test.go), [traffic_probe_test.go](../../server/cmd/gx_world/traffic_probe_test.go), [view_integration_test.go](../../server/cmd/gx_world/view_integration_test.go), [world_integration_test.go](../../server/cmd/gx_world/world_integration_test.go).
+Tests: [combat_integration_test.go](../../server/cmd/gx_world/combat_integration_test.go), [fixtures_integration_test.go](../../server/cmd/gx_world/fixtures_integration_test.go), [itemmall_integration_test.go](../../server/cmd/gx_world/itemmall_integration_test.go), [journey_integration_test.go](../../server/cmd/gx_world/journey_integration_test.go), [load_integration_test.go](../../server/cmd/gx_world/load_integration_test.go), [party_integration_test.go](../../server/cmd/gx_world/party_integration_test.go), [quest_atomic_integration_test.go](../../server/cmd/gx_world/quest_atomic_integration_test.go), [quest_integration_test.go](../../server/cmd/gx_world/quest_integration_test.go), [spell_fluidity_integration_test.go](../../server/cmd/gx_world/spell_fluidity_integration_test.go), [storage_load_integration_test.go](../../server/cmd/gx_world/storage_load_integration_test.go), [trade_integration_test.go](../../server/cmd/gx_world/trade_integration_test.go), [traffic_probe_test.go](../../server/cmd/gx_world/traffic_probe_test.go), [view_integration_test.go](../../server/cmd/gx_world/view_integration_test.go), [world_integration_test.go](../../server/cmd/gx_world/world_integration_test.go).
 
 ### main.go
 
@@ -259,13 +259,15 @@ back to .local/runtime.env for local overrides. SQLite needs no credentials.
 | [`DatabasePath`](../../server/internal/config/config.go#L100)<br>`func DatabasePath() string` | DatabasePath is the mutable runtime copy, never the versioned seed. |
 | [`DatabaseSeed`](../../server/internal/config/config.go#L101)<br>`func DatabaseSeed() string` | See the source definition and the subsystem ownership contract. |
 | [`DSN`](../../server/internal/config/config.go#L104)<br>`func DSN(_ string) (string, error)` | DSN applies connection settings to every connection, including both servers. |
-| [`DataDir`](../../server/internal/config/config.go#L121)<br>`func DataDir() string` | DataDir holds map data (data/maps/*.svmap). |
-| [`PublicIP`](../../server/internal/config/config.go#L124)<br>`func PublicIP() string` | PublicIP is the world address sent to clients after server selection. |
-| [`LoginListen`](../../server/internal/config/config.go#L126)<br>`func LoginListen() string` | See the source definition and the subsystem ownership contract. |
-| [`WorldListen`](../../server/internal/config/config.go#L127)<br>`func WorldListen() string` | See the source definition and the subsystem ownership contract. |
-| [`resolvePaths`](../../server/internal/config/config.go#L130)<br>`func resolvePaths(root string)` | Launchers and direct binaries resolve storage/data against their checkout. |
-| [`sqliteURIPath`](../../server/internal/config/config.go#L142)<br>`func sqliteURIPath(path string) string` | A Windows drive is part of the URI path, never its authority. Without the leading slash net/url emits file://C:/..., which SQLite rejects. |
-| [`FallDamageEnabled`](../../server/internal/config/config.go#L150)<br>`func FallDamageEnabled() bool` | FallDamageEnabled defaults to the GX landing rule; an explicit false opts out. |
+| [`ReadDSN`](../../server/internal/config/config.go#L109)<br>`func ReadDSN() (string, error)` | ReadDSN opens a WAL reader that cannot mutate gameplay data. |
+| [`sqliteDSN`](../../server/internal/config/config.go#L111)<br>`func sqliteDSN(readOnly bool) (string, error)` | See the source definition and the subsystem ownership contract. |
+| [`DataDir`](../../server/internal/config/config.go#L135)<br>`func DataDir() string` | DataDir holds map data (data/maps/*.svmap). |
+| [`PublicIP`](../../server/internal/config/config.go#L138)<br>`func PublicIP() string` | PublicIP is the world address sent to clients after server selection. |
+| [`LoginListen`](../../server/internal/config/config.go#L140)<br>`func LoginListen() string` | See the source definition and the subsystem ownership contract. |
+| [`WorldListen`](../../server/internal/config/config.go#L141)<br>`func WorldListen() string` | See the source definition and the subsystem ownership contract. |
+| [`resolvePaths`](../../server/internal/config/config.go#L144)<br>`func resolvePaths(root string)` | Launchers and direct binaries resolve storage/data against their checkout. |
+| [`sqliteURIPath`](../../server/internal/config/config.go#L156)<br>`func sqliteURIPath(path string) string` | A Windows drive is part of the URI path, never its authority. Without the leading slash net/url emits file://C:/..., which SQLite rejects. |
+| [`FallDamageEnabled`](../../server/internal/config/config.go#L164)<br>`func FallDamageEnabled() bool` | FallDamageEnabled defaults to the GX landing rule; an explicit false opts out. |
 
 ### gameini.go
 
@@ -1029,13 +1031,14 @@ Direct GX dependencies: `server/internal/db`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`MaxAge`](../../server/internal/session/session.go#L18)<br>`const MaxAge = 10 * time.Minute` | MaxAge bounds how long a handoff stays valid after login. |
-| [`Handoff`](../../server/internal/session/session.go#L20)<br>`type Handoff` | See the source definition and the subsystem ownership contract. |
-| [`NewIdentity`](../../server/internal/session/session.go#L29)<br>`func NewIdentity() [16]byte` | NewIdentity returns a fresh random token for one login. |
-| [`NewSessionID`](../../server/internal/session/session.go#L38)<br>`func NewSessionID() int64` | NewSessionID returns the bigint session id passed to the login procedures. |
-| [`ErrInvalid`](../../server/internal/session/session.go#L46)<br>`var ErrInvalid` | See the source definition and the subsystem ownership contract. |
-| [`Save`](../../server/internal/session/session.go#L49)<br>`func Save(h Handoff) error` | Save replaces the previous login ticket in the configured runtime database. |
-| [`Consume`](../../server/internal/session/session.go#L78)<br>`func Consume(userUID uint32, identity [16]byte) (Handoff, error)` | Consume validates and deletes a ticket in one write transaction, including concurrent callers in different processes. Invalid identities cannot burn it. |
+| [`MaxAge`](../../server/internal/session/session.go#L20)<br>`const MaxAge = 10 * time.Minute` | MaxAge bounds how long a handoff stays valid after login. |
+| [`Handoff`](../../server/internal/session/session.go#L22)<br>`type Handoff` | See the source definition and the subsystem ownership contract. |
+| [`NewIdentity`](../../server/internal/session/session.go#L31)<br>`func NewIdentity() [16]byte` | NewIdentity returns a fresh random token for one login. |
+| [`NewSessionID`](../../server/internal/session/session.go#L40)<br>`func NewSessionID() int64` | NewSessionID returns the bigint session id passed to the login procedures. |
+| [`ErrInvalid`](../../server/internal/session/session.go#L48)<br>`var ErrInvalid` | See the source definition and the subsystem ownership contract. |
+| [`Save`](../../server/internal/session/session.go#L51)<br>`func Save(h Handoff) error` | Save replaces the previous login ticket in the configured runtime database. |
+| [`Consume`](../../server/internal/session/session.go#L78)<br>`func Consume(userUID uint32, identity [16]byte) (Handoff, error)` | Consume first checks the token on a read-only connection. A valid candidate is then consumed by one guarded DELETE that rechecks expiry and revocation. |
+| [`PurgeExpired`](../../server/internal/session/session.go#L124)<br>`func PurgeExpired() error` | PurgeExpired drops old key material in bounded batches. |
 
 <details><summary>Type definitions and owned fields</summary>
 

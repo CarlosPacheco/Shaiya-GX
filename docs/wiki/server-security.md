@@ -81,7 +81,7 @@ policy, not an unbounded array of historical attempts.
 | Setting | Default | Environment key |
 |---|---:|---|
 | Login simultaneous connections | 200 | `RAPTURE_LOGIN_MAX_CONNECTIONS` |
-| World simultaneous connections | 500 | `RAPTURE_WORLD_MAX_CONNECTIONS` |
+| World simultaneous connections | 1,200 | `RAPTURE_WORLD_MAX_CONNECTIONS` |
 | Simultaneous connections per source IP | 32 | `RAPTURE_CONNECTIONS_PER_IP` |
 | New connections per source IP/minute | 120 | `RAPTURE_CONNECTIONS_PER_IP_PER_MINUTE` |
 | Login attempts per source IP/minute | 30 | `RAPTURE_LOGIN_ATTEMPTS_PER_IP` |

@@ -117,3 +117,40 @@ For the opt-in earned early-game sequence with two new characters, a real world
 restart and dungeon party resurrection, see the [progression journey](party-progression.md).
 Its explicit position-only portal checkpoint does not validate the complete
 overland route.
+
+## Runtime write audit and 1,000-client workload
+
+The runtime audit examined SQLite's writer path, imported identity triggers,
+authentication tickets, character exit and the frequently written inventory and
+quick-bar tables. A schema-only inspection and integrity/duplicate checks of the
+approved seed found valid integrity and no duplicate live character or inventory
+slots in that snapshot. Authoritative gameplay catalogs, archived tables and the
+distributed seed were retained. Existing login and economic logs remain available
+for operator-defined retention rather than being pruned during a schema upgrade.
+
+A production-sized probe is described in the [SQLite guide](sqlite.md). The
+original 1,000-connection probe hit database context deadlines. CPU profiling
+identified the full-table `MAX(RowID)` in imported insert triggers as a primary
+cost. Migrations add indexed access without changing legacy values or
+regenerating existing data. Reader isolation, set-based quick-bar updates and
+group commit remove secondary contention while preserving full WAL sync.
+
+The probe is disk-backed when `TMPDIR` points to the target filesystem. It
+measures encrypted World sessions with a mixed, closed-loop write workload.
+Credential login rate, storage capacity on other hosts and multi-hour soak
+testing require separate measurements.
+
+On the Linux development host with the fixture on the local disk, the
+1,000-session probe completed 96,000 mixed operations in 39.81 seconds, plus
+1,000 clean logouts and sampled relogs. It recorded zero failed transactions
+and zero outgoing queue overflows. SQLite integrity and foreign-key checks
+passed, and all 1,000 accounts had the expected balances, sale logs, items and
+quick-slot rows. The writer grouped 104,447 operations, including background
+and exit work, into 3,302 durable commits.
+
+| Wire operation under the sustained burst | Samples | p50 | p95 | p99 |
+|---|---:|---:|---:|---:|
+| Purchase | 32,000 | 383 ms | 701 ms | 2.42 s |
+| Inventory move | 32,000 | 333 ms | 730 ms | 2.17 s |
+| Quick-bar save followed by ping | 32,000 | 376 ms | 765 ms | 1.45 s |
+| Character logout | 1,000 | 550 ms | 1.03 s | 1.05 s |

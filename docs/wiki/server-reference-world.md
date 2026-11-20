@@ -1834,10 +1834,10 @@ Direct GX dependencies: `server/internal/db`.
 | [`packet`](../../server/internal/world/inventory_operation.go#L25)<br>`func (op *inventoryOperation) packet(frame []byte, label string, view bool)` | See the source definition and the subsystem ownership contract. |
 | [`inventoryOperation`](../../server/internal/world/inventory_operation.go#L32)<br>`func (s *Session) inventoryOperation(run func()) bool` | See the source definition and the subsystem ownership contract. |
 | [`inventoryOperationWithCommit`](../../server/internal/world/inventory_operation.go#L35)<br>`func (s *Session) inventoryOperationWithCommit(run func(), commit func(db.CharacterChange) error) (ok bool)` | See the source definition and the subsystem ownership contract. |
-| [`saveInventoryItem`](../../server/internal/world/inventory_operation.go#L115)<br>`func (s *Session) saveInventoryItem(it *db.Item) error` | See the source definition and the subsystem ownership contract. |
-| [`addInventoryItem`](../../server/internal/world/inventory_operation.go#L121)<br>`func (s *Session) addInventoryItem(it *db.Item) error` | See the source definition and the subsystem ownership contract. |
-| [`operationPlayer`](../../server/internal/world/inventory_operation.go#L134)<br>`func (s *Session) operationPlayer() *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`guildPublication`](../../server/internal/world/inventory_operation.go#L140)<br>`func (s *Session) guildPublication(g *guild, frame []byte, label string, except *ConnectedPlayer)` | See the source definition and the subsystem ownership contract. |
+| [`saveInventoryItem`](../../server/internal/world/inventory_operation.go#L117)<br>`func (s *Session) saveInventoryItem(it *db.Item) error` | See the source definition and the subsystem ownership contract. |
+| [`addInventoryItem`](../../server/internal/world/inventory_operation.go#L123)<br>`func (s *Session) addInventoryItem(it *db.Item) error` | See the source definition and the subsystem ownership contract. |
+| [`operationPlayer`](../../server/internal/world/inventory_operation.go#L136)<br>`func (s *Session) operationPlayer() *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`guildPublication`](../../server/internal/world/inventory_operation.go#L142)<br>`func (s *Session) guildPublication(g *guild, frame []byte, label string, except *ConnectedPlayer)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3181,34 +3181,34 @@ Direct GX dependencies: `internal/npcquest`, `server/internal/db`, `server/inter
 | [`row`](../../server/internal/world/quests.go#L188)<br>`func (q *activeQuest) row() db.CharQuest` | See the source definition and the subsystem ownership contract. |
 | [`loadQuests`](../../server/internal/world/quests.go#L193)<br>`func (s *Session) loadQuests() error` | loadQuests restores the character's quests as PacketUserDBSetInfo does. |
 | [`questListPackets`](../../server/internal/world/quests.go#L228)<br>`func (s *Session) questListPackets() [][]byte` | questListPackets are 0x0901 (id, minutes left, counters) and 0x0906 (id, success), up to 255 entries each. |
-| [`saveQuests`](../../server/internal/world/quests.go#L259)<br>`func (s *Session) saveQuests()` | saveQuests writes every active quest's delay and counters. |
-| [`findQuest`](../../server/internal/world/quests.go#L270)<br>`func (s *Session) findQuest(id uint16) *activeQuest` | See the source definition and the subsystem ownership contract. |
-| [`questFinished`](../../server/internal/world/quests.go#L279)<br>`func (s *Session) questFinished(id uint16, onlySuccess bool) bool` | See the source definition and the subsystem ownership contract. |
-| [`questPrerequisites`](../../server/internal/world/quests.go#L289)<br>`func (s *Session) questPrerequisites(q *questDef) bool` | questPrerequisites: PrevQuest, HG or VG finished successfully (any). |
-| [`questEnableStart`](../../server/internal/world/quests.go#L304)<br>`func (s *Session) questEnableStart(q *questDef) bool` | questEnableStart is CUser::QuestEnableStart: level range, race (Faction), job, mode and prerequisites. |
-| [`raceAllowed`](../../server/internal/world/quests.go#L330)<br>`func raceAllowed(country, race uint8) bool` | raceAllowed is the Country/Faction race rule shared with items. |
-| [`npcMatches`](../../server/internal/world/quests.go#L346)<br>`func (s *Session) npcMatches(npcID uint32, npcType uint8, typeID uint16) (MapNpc, bool)` | See the source definition and the subsystem ownership contract. |
-| [`findInventoryItem`](../../server/internal/world/quests.go#L352)<br>`func (s *Session) findInventoryItem(t, id uint8, consume bool) bool` | findInventoryItem finds (and optionally consumes one of) an item. |
-| [`handleQuestStart`](../../server/internal/world/quests.go#L368)<br>`func (s *Session) handleQuestStart(p []byte)` | handleQuestStart (0x0902): npc id, quest id (CUser::QuestStartRequest). |
-| [`startQuest`](../../server/internal/world/quests.go#L404)<br>`func (s *Session) startQuest(q *questDef, id uint16, npcID uint32)` | startQuest adds the quest, saves it, tells the client and hands out the start items. |
-| [`giveQuestItem`](../../server/internal/world/quests.go#L432)<br>`func (s *Session) giveQuestItem(t, id, count uint8) *db.Item` | giveQuestItem adds an item to the inventory and tells the client; it returns the item's placement, if any. |
-| [`questFindItems`](../../server/internal/world/quests.go#L454)<br>`func (s *Session) questFindItems(q *activeQuest) bool` | questFindItems is QuestFindItem (0x0047f8e0): the farm items must all be held; counters take the held totals; consuming removes what the chosen reward variant needs (whole stacks for quest-type items). |
-| [`planQuestItems`](../../server/internal/world/quests.go#L459)<br>`func planQuestItems(q *activeQuest, original []db.Item, consume bool) (items []db.Item, packets [][]byte, ok bool)` | See the source definition and the subsystem ownership contract. |
-| [`handleQuestEnd`](../../server/internal/world/quests.go#L533)<br>`func (s *Session) handleQuestEnd(p []byte)` | handleQuestEnd (0x0903): npc id, quest id (quest_end_request). |
-| [`completeQuest`](../../server/internal/world/quests.go#L574)<br>`func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool)` | completeQuest is quest_requests_complete. |
-| [`handleQuestChoose`](../../server/internal/world/quests.go#L622)<br>`func (s *Session) handleQuestChoose(p []byte)` | handleQuestChoose (0x0907): quest id, reward index. |
-| [`handleQuestAbandon`](../../server/internal/world/quests.go#L639)<br>`func (s *Session) handleQuestAbandon(p []byte)` | handleQuestAbandon (0x0908): quest id. |
-| [`awardQuest`](../../server/internal/world/quests.go#L651)<br>`func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32)` | awardQuest is award_quest_reward: exp (doubled unless the quest is ultimate-only), gold and an item; 0x0903 reports them. |
-| [`removeQuest`](../../server/internal/world/quests.go#L738)<br>`func (s *Session) removeQuest(q *activeQuest, success uint8)` | removeQuest is QuestRuntime::remove: repeatable quests (TickReceive) are deleted, others finish with their success flag. |
-| [`removeQuestFromMemory`](../../server/internal/world/quests.go#L752)<br>`func (s *Session) removeQuestFromMemory(q *activeQuest, success uint8)` | See the source definition and the subsystem ownership contract. |
-| [`bumpQuestCounter`](../../server/internal/world/quests.go#L764)<br>`func (s *Session) bumpQuestCounter(q *activeQuest, slot int)` | See the source definition and the subsystem ownership contract. |
-| [`questKill`](../../server/internal/world/quests.go#L782)<br>`func (s *Session) questKill(mobID uint16)` | questKill is update_mob_kill_quests for one kill of mobID. |
-| [`questKillCount`](../../server/internal/world/quests.go#L783)<br>`func (s *Session) questKillCount(mobID uint16, count uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`questNeeds`](../../server/internal/world/quests.go#L843)<br>`func (s *Session) questNeeds(t, id uint8) bool` | questNeeds: an item that starts a quest, or one an active quest ends with. |
-| [`questPickup`](../../server/internal/world/quests.go#L860)<br>`func (s *Session) questPickup(t, id uint8)` | questPickup is quest_requests_progress_pick_item. |
-| [`questTimers`](../../server/internal/world/quests.go#L885)<br>`func (s *Session) questTimers()` | questTimers fails timed quests whose time ran out. |
-| [`questItemDrop`](../../server/internal/world/quests.go#L899)<br>`func questItemDrop(mob *MapMob, recipients []*ConnectedPlayer) *db.ItemDef` | questItemDrop is mob_loot's quest item: Mobs.QuestItemID drops (chance = the item's Quality per cent) when it starts a quest or any recipient has a quest it ends. |
-| [`syncQuestIDs`](../../server/internal/world/quests.go#L923)<br>`func (s *Session) syncQuestIDs()` | syncQuestIDs publishes the active quest ids for other sessions' loot. |
+| [`questSnapshot`](../../server/internal/world/quests.go#L259)<br>`func (s *Session) questSnapshot() []db.CharQuest` | questSnapshot captures active timers and counters on exit. |
+| [`findQuest`](../../server/internal/world/quests.go#L267)<br>`func (s *Session) findQuest(id uint16) *activeQuest` | See the source definition and the subsystem ownership contract. |
+| [`questFinished`](../../server/internal/world/quests.go#L276)<br>`func (s *Session) questFinished(id uint16, onlySuccess bool) bool` | See the source definition and the subsystem ownership contract. |
+| [`questPrerequisites`](../../server/internal/world/quests.go#L286)<br>`func (s *Session) questPrerequisites(q *questDef) bool` | questPrerequisites: PrevQuest, HG or VG finished successfully (any). |
+| [`questEnableStart`](../../server/internal/world/quests.go#L301)<br>`func (s *Session) questEnableStart(q *questDef) bool` | questEnableStart is CUser::QuestEnableStart: level range, race (Faction), job, mode and prerequisites. |
+| [`raceAllowed`](../../server/internal/world/quests.go#L327)<br>`func raceAllowed(country, race uint8) bool` | raceAllowed is the Country/Faction race rule shared with items. |
+| [`npcMatches`](../../server/internal/world/quests.go#L343)<br>`func (s *Session) npcMatches(npcID uint32, npcType uint8, typeID uint16) (MapNpc, bool)` | See the source definition and the subsystem ownership contract. |
+| [`findInventoryItem`](../../server/internal/world/quests.go#L349)<br>`func (s *Session) findInventoryItem(t, id uint8, consume bool) bool` | findInventoryItem finds (and optionally consumes one of) an item. |
+| [`handleQuestStart`](../../server/internal/world/quests.go#L365)<br>`func (s *Session) handleQuestStart(p []byte)` | handleQuestStart (0x0902): npc id, quest id (CUser::QuestStartRequest). |
+| [`startQuest`](../../server/internal/world/quests.go#L401)<br>`func (s *Session) startQuest(q *questDef, id uint16, npcID uint32)` | startQuest adds the quest, saves it, tells the client and hands out the start items. |
+| [`giveQuestItem`](../../server/internal/world/quests.go#L429)<br>`func (s *Session) giveQuestItem(t, id, count uint8) *db.Item` | giveQuestItem adds an item to the inventory and tells the client; it returns the item's placement, if any. |
+| [`questFindItems`](../../server/internal/world/quests.go#L451)<br>`func (s *Session) questFindItems(q *activeQuest) bool` | questFindItems is QuestFindItem (0x0047f8e0): the farm items must all be held; counters take the held totals; consuming removes what the chosen reward variant needs (whole stacks for quest-type items). |
+| [`planQuestItems`](../../server/internal/world/quests.go#L456)<br>`func planQuestItems(q *activeQuest, original []db.Item, consume bool) (items []db.Item, packets [][]byte, ok bool)` | See the source definition and the subsystem ownership contract. |
+| [`handleQuestEnd`](../../server/internal/world/quests.go#L530)<br>`func (s *Session) handleQuestEnd(p []byte)` | handleQuestEnd (0x0903): npc id, quest id (quest_end_request). |
+| [`completeQuest`](../../server/internal/world/quests.go#L571)<br>`func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool)` | completeQuest is quest_requests_complete. |
+| [`handleQuestChoose`](../../server/internal/world/quests.go#L619)<br>`func (s *Session) handleQuestChoose(p []byte)` | handleQuestChoose (0x0907): quest id, reward index. |
+| [`handleQuestAbandon`](../../server/internal/world/quests.go#L636)<br>`func (s *Session) handleQuestAbandon(p []byte)` | handleQuestAbandon (0x0908): quest id. |
+| [`awardQuest`](../../server/internal/world/quests.go#L648)<br>`func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32)` | awardQuest is award_quest_reward: exp (doubled unless the quest is ultimate-only), gold and an item; 0x0903 reports them. |
+| [`removeQuest`](../../server/internal/world/quests.go#L735)<br>`func (s *Session) removeQuest(q *activeQuest, success uint8)` | removeQuest is QuestRuntime::remove: repeatable quests (TickReceive) are deleted, others finish with their success flag. |
+| [`removeQuestFromMemory`](../../server/internal/world/quests.go#L749)<br>`func (s *Session) removeQuestFromMemory(q *activeQuest, success uint8)` | See the source definition and the subsystem ownership contract. |
+| [`bumpQuestCounter`](../../server/internal/world/quests.go#L761)<br>`func (s *Session) bumpQuestCounter(q *activeQuest, slot int)` | See the source definition and the subsystem ownership contract. |
+| [`questKill`](../../server/internal/world/quests.go#L779)<br>`func (s *Session) questKill(mobID uint16)` | questKill is update_mob_kill_quests for one kill of mobID. |
+| [`questKillCount`](../../server/internal/world/quests.go#L780)<br>`func (s *Session) questKillCount(mobID uint16, count uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`questNeeds`](../../server/internal/world/quests.go#L840)<br>`func (s *Session) questNeeds(t, id uint8) bool` | questNeeds: an item that starts a quest, or one an active quest ends with. |
+| [`questPickup`](../../server/internal/world/quests.go#L857)<br>`func (s *Session) questPickup(t, id uint8)` | questPickup is quest_requests_progress_pick_item. |
+| [`questTimers`](../../server/internal/world/quests.go#L882)<br>`func (s *Session) questTimers()` | questTimers fails timed quests whose time ran out. |
+| [`questItemDrop`](../../server/internal/world/quests.go#L896)<br>`func questItemDrop(mob *MapMob, recipients []*ConnectedPlayer) *db.ItemDef` | questItemDrop is mob_loot's quest item: Mobs.QuestItemID drops (chance = the item's Quality per cent) when it starts a quest or any recipient has a quest it ends. |
+| [`syncQuestIDs`](../../server/internal/world/quests.go#L920)<br>`func (s *Session) syncQuestIDs()` | syncQuestIDs publishes the active quest ids for other sessions' loot. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3625,39 +3625,39 @@ Direct GX dependencies: `internal/proto`, `internal/skilltiming`, `server/intern
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`loopTick`](../../server/internal/world/session.go#L24)<br>`const loopTick = 100 * time.Millisecond` | See the source definition and the subsystem ownership contract. |
-| [`recoveryInterval`](../../server/internal/world/session.go#L25)<br>`const recoveryInterval = 5 * time.Second` | See the source definition and the subsystem ownership contract. |
-| [`characterListSize`](../../server/internal/world/session.go#L26)<br>`const characterListSize = MaxCharacterSlots` | See the source definition and the subsystem ownership contract. |
-| [`Session`](../../server/internal/world/session.go#L31)<br>`type Session` | Session is one client connection. Its loop owns its fields under stateMu. A paired trade may also update them while holding both sessions' state locks. |
-| [`acquireAccount`](../../server/internal/world/session.go#L132)<br>`func acquireAccount(uid uint32, id int64) bool` | See the source definition and the subsystem ownership contract. |
-| [`releaseAccount`](../../server/internal/world/session.go#L150)<br>`func releaseAccount(uid uint32, id int64)` | See the source definition and the subsystem ownership contract. |
-| [`Serve`](../../server/internal/world/session.go#L161)<br>`func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error` | Serve runs one client connection until it closes. |
-| [`processInput`](../../server/internal/world/session.go#L195)<br>`func (s *Session) processInput(n int, buf []byte, frames *netx.Frames) error` | processInput never holds the session lock while waiting for socket input. |
-| [`close`](../../server/internal/world/session.go#L239)<br>`func (s *Session) close()` | close persists the active character and releases the account. |
-| [`leaveWorld`](../../server/internal/world/session.go#L252)<br>`func (s *Session) leaveWorld()` | leaveWorld saves and unregisters the active character. |
-| [`send`](../../server/internal/world/session.go#L276)<br>`func (s *Session) send(frame []byte, label string)` | send writes a frame to this client: AES-CTR until the initial character state, the stateless expanded XOR afterwards. |
-| [`equipment`](../../server/internal/world/session.go#L298)<br>`func (s *Session) equipment() EquipmentStats` | See the source definition and the subsystem ownership contract. |
-| [`stats`](../../server/internal/world/session.go#L323)<br>`func (s *Session) stats() CharacterStats` | See the source definition and the subsystem ownership contract. |
-| [`sendStatPackets`](../../server/internal/world/session.go#L331)<br>`func (s *Session) sendStatPackets()` | See the source definition and the subsystem ownership contract. |
-| [`drainRewards`](../../server/internal/world/session.go#L344)<br>`func (s *Session) drainRewards(p *ConnectedPlayer)` | drainRewards applies bounded, coalesced rewards before normal simulation or logout. Aggregation keeps individual scaling/rounding and caps unchanged. |
-| [`normalize`](../../server/internal/world/session.go#L383)<br>`func normalize(ch *db.Character)` | normalize derives the base pools from StatusDefs (Chars only stores the current HP/MP/SP). Effective clamping waits for equipment and buffs. |
-| [`tick`](../../server/internal/world/session.go#L390)<br>`func (s *Session) tick(idle bool)` | tick runs the per-iteration work: mailboxes, buffs, regen, casts and the auto-attack swing. |
-| [`applyTradeRefresh`](../../server/internal/world/session.go#L480)<br>`func (s *Session) applyTradeRefresh(r *tradeRefresh)` | See the source definition and the subsystem ownership contract. |
-| [`recoveryTick`](../../server/internal/world/session.go#L505)<br>`func (s *Session) recoveryTick()` | recoveryTick is CUser::UpdateRecover every 5 seconds: the mode seen at the previous tick decides the amount (0 sitting: 5% of each maximum plus the sitting abilities' percent plus the flat sitting recovery; 1 standing: the flat standing recovery; 2 in combat: the flat in-combat recovery), then the mode for the next tick is taken (in combat, else sitting or standing). Viewers get 0x0505 (absolute pools) and the character 0x0521. |
-| [`inCombat`](../../server/internal/world/session.go#L548)<br>`func (s *Session) inCombat() bool` | inCombat approximates the original attack mode: swinging, or a hit given or taken within the last recovery interval. |
-| [`deadGated`](../../server/internal/world/session.go#L553)<br>`func deadGated(op packet.Opcode) bool` | deadGated lists the inputs ignored while dead (revive is 0x0553). |
-| [`frame`](../../server/internal/world/session.go#L562)<br>`func (s *Session) frame(f []byte) error` | See the source definition and the subsystem ownership contract. |
-| [`handshake`](../../server/internal/world/session.go#L586)<br>`func (s *Session) handshake(f []byte) error` | See the source definition and the subsystem ownership contract. |
-| [`sendCharacterSelect`](../../server/internal/world/session.go#L627)<br>`func (s *Session) sendCharacterSelect()` | See the source definition and the subsystem ownership contract. |
-| [`logErr`](../../server/internal/world/session.go#L649)<br>`func (s *Session) logErr(what string, err error)` | See the source definition and the subsystem ownership contract. |
-| [`handleCreateCharacter`](../../server/internal/world/session.go#L656)<br>`func (s *Session) handleCreateCharacter(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`createCharacter`](../../server/internal/world/session.go#L665)<br>`func (s *Session) createCharacter(nc db.NewCharacter)` | See the source definition and the subsystem ownership contract. |
-| [`handleRename`](../../server/internal/world/session.go#L711)<br>`func (s *Session) handleRename(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`selectCharacter`](../../server/internal/world/session.go#L732)<br>`func (s *Session) selectCharacter(id uint32)` | See the source definition and the subsystem ownership contract. |
-| [`sendInitialState`](../../server/internal/world/session.go#L843)<br>`func (s *Session) sendInitialState(st *CharacterStats)` | sendInitialState is the captured character-select sequence; afterwards the server->client direction switches to the expanded XOR scheme. |
-| [`handleMapLoaded`](../../server/internal/world/session.go#L893)<br>`func (s *Session) handleMapLoaded()` | handleMapLoaded (0x0201 from the client): send the map state, register the player and exchange visibility with nearby players. |
-| [`handleMotion`](../../server/internal/world/session.go#L941)<br>`func (s *Session) handleMotion(p []byte)` | handleMotion (0x0506): sit/stand persist; other motions are one-shot. The sender gets its own echo, which the client needs to play it. |
-| [`handleLogout`](../../server/internal/world/session.go#L970)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
+| [`loopTick`](../../server/internal/world/session.go#L25)<br>`const loopTick = 100 * time.Millisecond` | See the source definition and the subsystem ownership contract. |
+| [`recoveryInterval`](../../server/internal/world/session.go#L26)<br>`const recoveryInterval = 5 * time.Second` | See the source definition and the subsystem ownership contract. |
+| [`characterListSize`](../../server/internal/world/session.go#L27)<br>`const characterListSize = MaxCharacterSlots` | See the source definition and the subsystem ownership contract. |
+| [`Session`](../../server/internal/world/session.go#L32)<br>`type Session` | Session is one client connection. Its loop owns its fields under stateMu. A paired trade may also update them while holding both sessions' state locks. |
+| [`acquireAccount`](../../server/internal/world/session.go#L136)<br>`func acquireAccount(uid uint32, id int64) bool` | See the source definition and the subsystem ownership contract. |
+| [`releaseAccount`](../../server/internal/world/session.go#L154)<br>`func releaseAccount(uid uint32, id int64)` | See the source definition and the subsystem ownership contract. |
+| [`Serve`](../../server/internal/world/session.go#L165)<br>`func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error` | Serve runs one client connection until it closes. |
+| [`processInput`](../../server/internal/world/session.go#L199)<br>`func (s *Session) processInput(n int, buf []byte, frames *netx.Frames) error` | processInput never holds the session lock while waiting for socket input. |
+| [`close`](../../server/internal/world/session.go#L243)<br>`func (s *Session) close()` | close persists the active character and releases the account. |
+| [`leaveWorld`](../../server/internal/world/session.go#L256)<br>`func (s *Session) leaveWorld(disconnect bool) bool` | leaveWorld saves and unregisters the active character. |
+| [`send`](../../server/internal/world/session.go#L283)<br>`func (s *Session) send(frame []byte, label string)` | send writes a frame to this client: AES-CTR until the initial character state, the stateless expanded XOR afterwards. |
+| [`equipment`](../../server/internal/world/session.go#L305)<br>`func (s *Session) equipment() EquipmentStats` | See the source definition and the subsystem ownership contract. |
+| [`stats`](../../server/internal/world/session.go#L330)<br>`func (s *Session) stats() CharacterStats` | See the source definition and the subsystem ownership contract. |
+| [`sendStatPackets`](../../server/internal/world/session.go#L338)<br>`func (s *Session) sendStatPackets()` | See the source definition and the subsystem ownership contract. |
+| [`drainRewards`](../../server/internal/world/session.go#L351)<br>`func (s *Session) drainRewards(p *ConnectedPlayer)` | drainRewards applies bounded, coalesced rewards before normal simulation or logout. Aggregation keeps individual scaling/rounding and caps unchanged. |
+| [`normalize`](../../server/internal/world/session.go#L390)<br>`func normalize(ch *db.Character)` | normalize derives the base pools from StatusDefs (Chars only stores the current HP/MP/SP). Effective clamping waits for equipment and buffs. |
+| [`tick`](../../server/internal/world/session.go#L397)<br>`func (s *Session) tick(idle bool)` | tick runs the per-iteration work: mailboxes, buffs, regen, casts and the auto-attack swing. |
+| [`applyTradeRefresh`](../../server/internal/world/session.go#L487)<br>`func (s *Session) applyTradeRefresh(r *tradeRefresh)` | See the source definition and the subsystem ownership contract. |
+| [`recoveryTick`](../../server/internal/world/session.go#L512)<br>`func (s *Session) recoveryTick()` | recoveryTick is CUser::UpdateRecover every 5 seconds: the mode seen at the previous tick decides the amount (0 sitting: 5% of each maximum plus the sitting abilities' percent plus the flat sitting recovery; 1 standing: the flat standing recovery; 2 in combat: the flat in-combat recovery), then the mode for the next tick is taken (in combat, else sitting or standing). Viewers get 0x0505 (absolute pools) and the character 0x0521. |
+| [`inCombat`](../../server/internal/world/session.go#L555)<br>`func (s *Session) inCombat() bool` | inCombat approximates the original attack mode: swinging, or a hit given or taken within the last recovery interval. |
+| [`deadGated`](../../server/internal/world/session.go#L560)<br>`func deadGated(op packet.Opcode) bool` | deadGated lists the inputs ignored while dead (revive is 0x0553). |
+| [`frame`](../../server/internal/world/session.go#L569)<br>`func (s *Session) frame(f []byte) error` | See the source definition and the subsystem ownership contract. |
+| [`handshake`](../../server/internal/world/session.go#L593)<br>`func (s *Session) handshake(f []byte) error` | See the source definition and the subsystem ownership contract. |
+| [`sendCharacterSelect`](../../server/internal/world/session.go#L634)<br>`func (s *Session) sendCharacterSelect()` | See the source definition and the subsystem ownership contract. |
+| [`logErr`](../../server/internal/world/session.go#L656)<br>`func (s *Session) logErr(what string, err error)` | See the source definition and the subsystem ownership contract. |
+| [`handleCreateCharacter`](../../server/internal/world/session.go#L663)<br>`func (s *Session) handleCreateCharacter(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`createCharacter`](../../server/internal/world/session.go#L672)<br>`func (s *Session) createCharacter(nc db.NewCharacter)` | See the source definition and the subsystem ownership contract. |
+| [`handleRename`](../../server/internal/world/session.go#L718)<br>`func (s *Session) handleRename(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`selectCharacter`](../../server/internal/world/session.go#L739)<br>`func (s *Session) selectCharacter(id uint32)` | See the source definition and the subsystem ownership contract. |
+| [`sendInitialState`](../../server/internal/world/session.go#L850)<br>`func (s *Session) sendInitialState(st *CharacterStats)` | sendInitialState is the captured character-select sequence; afterwards the server->client direction switches to the expanded XOR scheme. |
+| [`handleMapLoaded`](../../server/internal/world/session.go#L903)<br>`func (s *Session) handleMapLoaded()` | handleMapLoaded (0x0201 from the client): send the map state, register the player and exchange visibility with nearby players. |
+| [`handleMotion`](../../server/internal/world/session.go#L951)<br>`func (s *Session) handleMotion(p []byte)` | handleMotion (0x0506): sit/stand persist; other motions are one-shot. The sender gets its own echo, which the client needs to play it. |
+| [`handleLogout`](../../server/internal/world/session.go#L980)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3692,6 +3692,9 @@ type Session struct {
 	gmConcealed       bool
 	elements          elementRuntime
 	socialChecked     time.Time
+	socialReloadAt    time.Time
+	socialFriends     []db.SocialContact
+	socialRefresh     atomic.Bool
 	conn              net.Conn
 	out               *connWriter
 	log               *logx.Tag
@@ -3860,8 +3863,10 @@ Direct GX dependencies: `internal/skilltiming`, `server/internal/db`, `server/in
 | [`sendBuffStats`](../../server/internal/world/skillcast.go#L382)<br>`func (s *Session) sendBuffStats(why string)` | See the source definition and the subsystem ownership contract. |
 | [`processBuffs`](../../server/internal/world/skillcast.go#L392)<br>`func (s *Session) processBuffs()` | processBuffs ticks heal-over-time and debuff damage, then expires applied skills (CUser::ChkKeepSkill / ChkEndTimeSkill). |
 | [`persistBuffs`](../../server/internal/world/skillcast.go#L433)<br>`func (s *Session) persistBuffs()` | persistBuffs snapshots remaining buff time (frozen while offline). |
-| [`persistSkillDelays`](../../server/internal/world/skillcast.go#L450)<br>`func (s *Session) persistSkillDelays()` | persistSkillDelays saves each skill's remaining cooldown. |
-| [`restoreBuffs`](../../server/internal/world/skillcast.go#L468)<br>`func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error)` | See the source definition and the subsystem ownership contract. |
+| [`buffSnapshot`](../../server/internal/world/skillcast.go#L442)<br>`func (s *Session) buffSnapshot() []db.AppliedBuff` | See the source definition and the subsystem ownership contract. |
+| [`persistSkillDelays`](../../server/internal/world/skillcast.go#L453)<br>`func (s *Session) persistSkillDelays()` | See the source definition and the subsystem ownership contract. |
+| [`skillDelaySnapshot`](../../server/internal/world/skillcast.go#L460)<br>`func (s *Session) skillDelaySnapshot() []db.CharacterSkill` | skillDelaySnapshot captures changes to remaining cooldown. |
+| [`restoreBuffs`](../../server/internal/world/skillcast.go#L475)<br>`func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3953,24 +3958,24 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`skillBarCount`](../../server/internal/world/skills.go#L11)<br>`const skillBarCount = 5` | See the source definition and the subsystem ownership contract. |
-| [`skillBarSlotCount`](../../server/internal/world/skills.go#L12)<br>`const skillBarSlotCount = 10` | See the source definition and the subsystem ownership contract. |
-| [`quickSlotSkillBag`](../../server/internal/world/skills.go#L13)<br>`const quickSlotSkillBag = 100` | See the source definition and the subsystem ownership contract. |
-| [`maxQuickSlots`](../../server/internal/world/skills.go#L14)<br>`const maxQuickSlots = 128` | See the source definition and the subsystem ownership contract. |
-| [`mountSlot`](../../server/internal/world/skills.go#L16)<br>`const mountSlot = 13` | See the source definition and the subsystem ownership contract. |
-| [`mountItemType`](../../server/internal/world/skills.go#L17)<br>`const mountItemType = 42` | See the source definition and the subsystem ownership contract. |
-| [`unmountedShape`](../../server/internal/world/skills.go#L18)<br>`const unmountedShape = 0x00` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterSkills`](../../server/internal/world/skills.go#L21)<br>`func buildCharacterSkills(skills []db.CharacterSkill) []byte` | See the source definition and the subsystem ownership contract. |
-| [`isValidQuickSlot`](../../server/internal/world/skills.go#L34)<br>`func isValidQuickSlot(q db.QuickSlot) bool` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterSkillBar`](../../server/internal/world/skills.go#L39)<br>`func buildCharacterSkillBar(slots []db.QuickSlot) []byte` | See the source definition and the subsystem ownership contract. |
-| [`parseSkillBar`](../../server/internal/world/skills.go#L58)<br>`func parseSkillBar(p []byte) []db.QuickSlot` | parseSkillBar (0x010B): count, then bar, slot, bag, number:u16. |
-| [`handleSkillBar`](../../server/internal/world/skills.go#L78)<br>`func (s *Session) handleSkillBar(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`buildLearnSkillError`](../../server/internal/world/skills.go#L91)<br>`func buildLearnSkillError(reason uint8, skillID uint16, level uint8) []byte` | buildLearnSkillError (0x0209): reason, skill id, level. |
-| [`skillCountryAllows`](../../server/internal/world/skills.go#L102)<br>`func skillCountryAllows(country, family uint8) bool` | skillCountryAllows is EnableLearnSkill's Country byte by family (0 human, 1 elf, 2 vail, 3 deatheater). |
-| [`skillGrowAllows`](../../server/internal/world/skills.go#L122)<br>`func skillGrowAllows(grow, mode uint8) bool` | skillGrowAllows: easy mode learns only Grow 0 skills, normal up to 1, hard all but 3. |
-| [`buildLearnSkillResult`](../../server/internal/world/skills.go#L134)<br>`func buildLearnSkillResult(ok bool, number uint8, skillID uint16, level uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`handleLearnSkill`](../../server/internal/world/skills.go#L144)<br>`func (s *Session) handleLearnSkill(p []byte)` | handleLearnSkill (0x0209): skill id:u16, level. |
-| [`handleSetStatPoint`](../../server/internal/world/skills.go#L233)<br>`func (s *Session) handleSetStatPoint(p []byte)` | handleSetStatPoint (0x0208): six u16 deltas str, dex, rec, int, wis, luc. |
+| [`skillBarCount`](../../server/internal/world/skills.go#L12)<br>`const skillBarCount = 5` | See the source definition and the subsystem ownership contract. |
+| [`skillBarSlotCount`](../../server/internal/world/skills.go#L13)<br>`const skillBarSlotCount = 10` | See the source definition and the subsystem ownership contract. |
+| [`quickSlotSkillBag`](../../server/internal/world/skills.go#L14)<br>`const quickSlotSkillBag = 100` | See the source definition and the subsystem ownership contract. |
+| [`maxQuickSlots`](../../server/internal/world/skills.go#L15)<br>`const maxQuickSlots = 128` | See the source definition and the subsystem ownership contract. |
+| [`mountSlot`](../../server/internal/world/skills.go#L17)<br>`const mountSlot = 13` | See the source definition and the subsystem ownership contract. |
+| [`mountItemType`](../../server/internal/world/skills.go#L18)<br>`const mountItemType = 42` | See the source definition and the subsystem ownership contract. |
+| [`unmountedShape`](../../server/internal/world/skills.go#L19)<br>`const unmountedShape = 0x00` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterSkills`](../../server/internal/world/skills.go#L22)<br>`func buildCharacterSkills(skills []db.CharacterSkill) []byte` | See the source definition and the subsystem ownership contract. |
+| [`isValidQuickSlot`](../../server/internal/world/skills.go#L35)<br>`func isValidQuickSlot(q db.QuickSlot) bool` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterSkillBar`](../../server/internal/world/skills.go#L40)<br>`func buildCharacterSkillBar(slots []db.QuickSlot) []byte` | See the source definition and the subsystem ownership contract. |
+| [`parseSkillBar`](../../server/internal/world/skills.go#L59)<br>`func parseSkillBar(p []byte) []db.QuickSlot` | parseSkillBar (0x010B): count, then bar, slot, bag, number:u16. |
+| [`handleSkillBar`](../../server/internal/world/skills.go#L79)<br>`func (s *Session) handleSkillBar(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`buildLearnSkillError`](../../server/internal/world/skills.go#L99)<br>`func buildLearnSkillError(reason uint8, skillID uint16, level uint8) []byte` | buildLearnSkillError (0x0209): reason, skill id, level. |
+| [`skillCountryAllows`](../../server/internal/world/skills.go#L110)<br>`func skillCountryAllows(country, family uint8) bool` | skillCountryAllows is EnableLearnSkill's Country byte by family (0 human, 1 elf, 2 vail, 3 deatheater). |
+| [`skillGrowAllows`](../../server/internal/world/skills.go#L130)<br>`func skillGrowAllows(grow, mode uint8) bool` | skillGrowAllows: easy mode learns only Grow 0 skills, normal up to 1, hard all but 3. |
+| [`buildLearnSkillResult`](../../server/internal/world/skills.go#L142)<br>`func buildLearnSkillResult(ok bool, number uint8, skillID uint16, level uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`handleLearnSkill`](../../server/internal/world/skills.go#L152)<br>`func (s *Session) handleLearnSkill(p []byte)` | handleLearnSkill (0x0209): skill id:u16, level. |
+| [`handleSetStatPoint`](../../server/internal/world/skills.go#L241)<br>`func (s *Session) handleSetStatPoint(p []byte)` | handleSetStatPoint (0x0208): six u16 deltas str, dex, rec, int, wis, luc. |
 
 ### social.go
 
@@ -3982,13 +3987,13 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 |---|---|
 | [`socialState`](../../server/internal/world/social.go#L13)<br>`var socialState` | Native EP5 0x2201..0x220e, writers 0x59bb30..0x59bd80. |
 | [`socialInvite`](../../server/internal/world/social.go#L19)<br>`type socialInvite` | See the source definition and the subsystem ownership contract. |
-| [`socialList`](../../server/internal/world/social.go#L24)<br>`func socialList(charID uint32, blocked bool) ([]byte, error)` | See the source definition and the subsystem ownership contract. |
-| [`truncateSocialMemo`](../../server/internal/world/social.go#L52)<br>`func truncateSocialMemo(v string) string` | See the source definition and the subsystem ownership contract. |
-| [`sendSocial`](../../server/internal/world/social.go#L59)<br>`func (s *Session) sendSocial()` | See the source definition and the subsystem ownership contract. |
-| [`tickSocial`](../../server/internal/world/social.go#L73)<br>`func (s *Session) tickSocial()` | See the source definition and the subsystem ownership contract. |
-| [`handleSocial`](../../server/internal/world/social.go#L80)<br>`func (s *Session) handleSocial(op packet.Opcode, p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`sendPartySearch`](../../server/internal/world/social.go#L217)<br>`func (s *Session) sendPartySearch()` | See the source definition and the subsystem ownership contract. |
-| [`clearSocialSession`](../../server/internal/world/social.go#L247)<br>`func clearSocialSession(id uint32)` | See the source definition and the subsystem ownership contract. |
+| [`buildSocialList`](../../server/internal/world/social.go#L24)<br>`func buildSocialList(rows []db.SocialContact, blocked bool) []byte` | See the source definition and the subsystem ownership contract. |
+| [`truncateSocialMemo`](../../server/internal/world/social.go#L48)<br>`func truncateSocialMemo(v string) string` | See the source definition and the subsystem ownership contract. |
+| [`sendSocial`](../../server/internal/world/social.go#L55)<br>`func (s *Session) sendSocial()` | See the source definition and the subsystem ownership contract. |
+| [`tickSocial`](../../server/internal/world/social.go#L77)<br>`func (s *Session) tickSocial()` | See the source definition and the subsystem ownership contract. |
+| [`handleSocial`](../../server/internal/world/social.go#L90)<br>`func (s *Session) handleSocial(op packet.Opcode, p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`sendPartySearch`](../../server/internal/world/social.go#L232)<br>`func (s *Session) sendPartySearch()` | See the source definition and the subsystem ownership contract. |
+| [`clearSocialSession`](../../server/internal/world/social.go#L262)<br>`func clearSocialSession(id uint32)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -4094,19 +4099,19 @@ type svmapLoad struct {
 
 [server/internal/world/sweeps.go](../../server/internal/world/sweeps.go#L1)
 
-Direct GX dependencies: `server/internal/db`, `server/internal/logx`, `server/internal/scheduler`.
+Direct GX dependencies: `server/internal/db`, `server/internal/logx`, `server/internal/scheduler`, `server/internal/session`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`Runtime`](../../server/internal/world/sweeps.go#L15)<br>`type Runtime` | StartSweeps launches the background world ticks: map item despawn, mob roam/respawn/combat, NPC patrol and mob DoTs. |
-| [`Close`](../../server/internal/world/sweeps.go#L24)<br>`func (r *Runtime) Close()` | Close stops producers before storage closes and waits for the current job. |
-| [`StartSweeps`](../../server/internal/world/sweeps.go#L34)<br>`func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.CancelFunc) *Runtime` | See the source definition and the subsystem ownership contract. |
-| [`snapshotCombatPlayers`](../../server/internal/world/sweeps.go#L135)<br>`func snapshotCombatPlayers(players []*ConnectedPlayer) []PlayerCombatSnapshot` | See the source definition and the subsystem ownership contract. |
-| [`queueMobAttack`](../../server/internal/world/sweeps.go#L149)<br>`func queueMobAttack(a MobAttackAction)` | queueMobAttack hands a mob's attack to its target, or for an area mob skill (TargetType 6 around the mob, 7 around the target) to every living player within ApplyRange. |
-| [`viewersByMap`](../../server/internal/world/sweeps.go#L180)<br>`func viewersByMap() map[uint16][][2]float32` | See the source definition and the subsystem ownership contract. |
-| [`dispatchMoves`](../../server/internal/world/sweeps.go#L189)<br>`func dispatchMoves(list []entityMove)` | See the source definition and the subsystem ownership contract. |
-| [`runDotSweep`](../../server/internal/world/sweeps.go#L195)<br>`func runDotSweep(log *logx.Logger)` | See the source definition and the subsystem ownership contract. |
-| [`storageFailure`](../../server/internal/world/sweeps.go#L217)<br>`func storageFailure(err error)` | See the source definition and the subsystem ownership contract. |
+| [`Runtime`](../../server/internal/world/sweeps.go#L16)<br>`type Runtime` | StartSweeps launches the background world ticks: map item despawn, mob roam/respawn/combat, NPC patrol and mob DoTs. |
+| [`Close`](../../server/internal/world/sweeps.go#L25)<br>`func (r *Runtime) Close()` | Close stops producers before storage closes and waits for the current job. |
+| [`StartSweeps`](../../server/internal/world/sweeps.go#L35)<br>`func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.CancelFunc) *Runtime` | See the source definition and the subsystem ownership contract. |
+| [`snapshotCombatPlayers`](../../server/internal/world/sweeps.go#L150)<br>`func snapshotCombatPlayers(players []*ConnectedPlayer) []PlayerCombatSnapshot` | See the source definition and the subsystem ownership contract. |
+| [`queueMobAttack`](../../server/internal/world/sweeps.go#L164)<br>`func queueMobAttack(a MobAttackAction)` | queueMobAttack hands a mob's attack to its target, or for an area mob skill (TargetType 6 around the mob, 7 around the target) to every living player within ApplyRange. |
+| [`viewersByMap`](../../server/internal/world/sweeps.go#L195)<br>`func viewersByMap() map[uint16][][2]float32` | See the source definition and the subsystem ownership contract. |
+| [`dispatchMoves`](../../server/internal/world/sweeps.go#L204)<br>`func dispatchMoves(list []entityMove)` | See the source definition and the subsystem ownership contract. |
+| [`runDotSweep`](../../server/internal/world/sweeps.go#L210)<br>`func runDotSweep(log *logx.Logger)` | See the source definition and the subsystem ownership contract. |
+| [`storageFailure`](../../server/internal/world/sweeps.go#L232)<br>`func storageFailure(err error)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 

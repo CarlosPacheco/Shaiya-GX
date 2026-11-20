@@ -190,7 +190,7 @@ func CommitItems(charID uint32, before, after []Item) error {
 	}
 	c, cancel := ctx()
 	defer cancel()
-	return withTx(c, pool, func(tx *sql.Tx) error {
+	return groupWrite(c, pool, func(c context.Context, tx *sql.Tx) error {
 		actual, err := characterItems(c, tx, charID)
 		if err != nil {
 			return err

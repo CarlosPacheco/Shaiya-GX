@@ -10,24 +10,24 @@ Every production Go file is listed, including OS-specific alternatives. Signatur
 
 All authoritative SQLite access, definitions, migrations, guarded economy transactions and crash/session ownership.
 
-Tests: [account_session_test.go](../../server/internal/db/account_session_test.go), [auction_test.go](../../server/internal/db/auction_test.go), [cash_test.go](../../server/internal/db/cash_test.go), [character_creation_test.go](../../server/internal/db/character_creation_test.go), [chars_integration_test.go](../../server/internal/db/chars_integration_test.go), [defs_integration_test.go](../../server/internal/db/defs_integration_test.go), [economy_atomic_test.go](../../server/internal/db/economy_atomic_test.go), [gm_test.go](../../server/internal/db/gm_test.go), [isolation_test.go](../../server/internal/db/isolation_test.go), [keeps_test.go](../../server/internal/db/keeps_test.go), [mall_transaction_test.go](../../server/internal/db/mall_transaction_test.go), [migrations_test.go](../../server/internal/db/migrations_test.go), [mob_quest_test.go](../../server/internal/db/mob_quest_test.go), [production_integration_test.go](../../server/internal/db/production_integration_test.go), [skill_cleanup_test.go](../../server/internal/db/skill_cleanup_test.go), [snapshot_atomic_test.go](../../server/internal/db/snapshot_atomic_test.go), [social_test.go](../../server/internal/db/social_test.go), [sqlite_test.go](../../server/internal/db/sqlite_test.go).
+Tests: [account_session_test.go](../../server/internal/db/account_session_test.go), [auction_test.go](../../server/internal/db/auction_test.go), [cash_test.go](../../server/internal/db/cash_test.go), [character_creation_test.go](../../server/internal/db/character_creation_test.go), [chars_integration_test.go](../../server/internal/db/chars_integration_test.go), [defs_integration_test.go](../../server/internal/db/defs_integration_test.go), [economy_atomic_test.go](../../server/internal/db/economy_atomic_test.go), [gm_test.go](../../server/internal/db/gm_test.go), [group_write_test.go](../../server/internal/db/group_write_test.go), [isolation_test.go](../../server/internal/db/isolation_test.go), [keeps_test.go](../../server/internal/db/keeps_test.go), [mall_transaction_test.go](../../server/internal/db/mall_transaction_test.go), [migrations_test.go](../../server/internal/db/migrations_test.go), [mob_quest_test.go](../../server/internal/db/mob_quest_test.go), [production_integration_test.go](../../server/internal/db/production_integration_test.go), [skill_cleanup_test.go](../../server/internal/db/skill_cleanup_test.go), [snapshot_atomic_test.go](../../server/internal/db/snapshot_atomic_test.go), [social_test.go](../../server/internal/db/social_test.go), [sqlite_test.go](../../server/internal/db/sqlite_test.go).
 
 ### account.go
 
 [server/internal/db/account.go](../../server/internal/db/account.go#L1)
 
-Direct GX dependencies: `server/internal/password`.
+Direct GX dependencies: `server/internal/config`, `server/internal/password`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`LoginResult`](../../server/internal/db/account.go#L10)<br>`type LoginResult` | LoginResult is what PS_UserData.dbo.usp_Try_GameLogin_Taiwan selects. |
-| [`TryGameLogin`](../../server/internal/db/account.go#L18)<br>`func TryGameLogin(userID, passwordValue string, sessionID int64, userIP string) (LoginResult, error)` | TryGameLogin translates the original procedure into one SQLite transaction, including account status, the login log and UserLoginStatus. |
-| [`TryGameLogout`](../../server/internal/db/account.go#L110)<br>`func TryGameLogout(userUID int32, sessionID int64) error` | Logout and the original two-minute online-point credit commit together. |
-| [`LoginDecision`](../../server/internal/db/account.go#L157)<br>`func LoginDecision(login LoginResult) (result uint8, permission uint8)` | LoginDecision maps the procedure's Status to the client's login result byte and permission (auth status), as recovered from the original ps_login (CUser login handling; see Eternity src/auth/login_protocol.cpp). Permission 11 is a regular account; 1..5 are the admin tiers. |
-| [`CanPlay`](../../server/internal/db/account.go#L215)<br>`func CanPlay(status int32) bool` | Account is the account state the world server needs. CanPlay rejects unrecognized authorization states rather than granting permissions from arbitrary legacy status bits. |
-| [`Account`](../../server/internal/db/account.go#L219)<br>`type Account` | See the source definition and the subsystem ownership contract. |
-| [`ErrNotFound`](../../server/internal/db/account.go#L231)<br>`var ErrNotFound` | See the source definition and the subsystem ownership contract. |
-| [`AccountByUID`](../../server/internal/db/account.go#L235)<br>`func AccountByUID(userUID int32) (Account, error)` | AccountByUID reads Users_Master plus the realm's UserMaxGrow row (PS_GameData.dbo.usp_Read_User_MaxGrow_R). |
+| [`LoginResult`](../../server/internal/db/account.go#L11)<br>`type LoginResult` | LoginResult is what PS_UserData.dbo.usp_Try_GameLogin_Taiwan selects. |
+| [`TryGameLogin`](../../server/internal/db/account.go#L19)<br>`func TryGameLogin(userID, passwordValue string, sessionID int64, userIP string) (LoginResult, error)` | TryGameLogin translates the original procedure into one SQLite transaction, including account status, the login log and UserLoginStatus. |
+| [`TryGameLogout`](../../server/internal/db/account.go#L122)<br>`func TryGameLogout(userUID int32, sessionID int64) error` | Logout and the original two-minute online-point credit commit together. |
+| [`LoginDecision`](../../server/internal/db/account.go#L164)<br>`func LoginDecision(login LoginResult) (result uint8, permission uint8)` | LoginDecision maps the procedure's Status to the client's login result byte and permission (auth status), as recovered from the original ps_login (CUser login handling; see Eternity src/auth/login_protocol.cpp). Permission 11 is a regular account; 1..5 are the admin tiers. |
+| [`CanPlay`](../../server/internal/db/account.go#L222)<br>`func CanPlay(status int32) bool` | Account is the account state the world server needs. CanPlay rejects unrecognized authorization states rather than granting permissions from arbitrary legacy status bits. |
+| [`Account`](../../server/internal/db/account.go#L226)<br>`type Account` | See the source definition and the subsystem ownership contract. |
+| [`ErrNotFound`](../../server/internal/db/account.go#L238)<br>`var ErrNotFound` | See the source definition and the subsystem ownership contract. |
+| [`AccountByUID`](../../server/internal/db/account.go#L242)<br>`func AccountByUID(userUID int32) (Account, error)` | AccountByUID reads Users_Master plus the realm's UserMaxGrow row (PS_GameData.dbo.usp_Read_User_MaxGrow_R). |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -63,8 +63,22 @@ Direct GX dependencies: `internal/authwire`, `server/internal/password`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`CreateAccount`](../../server/internal/db/accounts_admin.go#L11)<br>`func CreateAccount(name, secret string, admin bool) (int32, error)` | CreateAccount never stores plaintext and never replaces an existing account. |
-| [`SetAccountPassword`](../../server/internal/db/accounts_admin.go#L50)<br>`func SetAccountPassword(name, secret string) error` | SetAccountPassword revokes pending tickets and active sessions through a monotonically increasing credential version. World checks it every 30 seconds. |
+| [`CreateAccount`](../../server/internal/db/accounts_admin.go#L12)<br>`func CreateAccount(name, secret string, admin bool) (int32, error)` | CreateAccount never stores plaintext and never replaces an existing account. |
+| [`SetAccountPassword`](../../server/internal/db/accounts_admin.go#L51)<br>`func SetAccountPassword(name, secret string) error` | SetAccountPassword revokes pending tickets and active sessions through a monotonically increasing credential version. World checks it every 30 seconds. |
+| [`UpgradeLegacyPasswords`](../../server/internal/db/accounts_admin.go#L84)<br>`func UpgradeLegacyPasswords() (upgraded, needsReset int, err error)` | UpgradeLegacyPasswords hashes passwords still stored in the legacy format. Each update compares the original row so a concurrent password reset wins. Invalid legacy credentials are counted and can be reset with the account CLI. |
+| [`legacyPassword`](../../server/internal/db/accounts_admin.go#L124)<br>`type legacyPassword` | See the source definition and the subsystem ownership contract. |
+| [`legacyPasswords`](../../server/internal/db/accounts_admin.go#L129)<br>`func legacyPasswords(reader *sql.DB, after int64) ([]legacyPassword, error)` | See the source definition and the subsystem ownership contract. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type legacyPassword struct {
+	uid    int64
+	secret string
+}
+```
+
+</details>
 
 ### auction.go
 
@@ -118,6 +132,14 @@ type AuctionClaim struct {
 
 </details>
 
+### character_exit.go
+
+[server/internal/db/character_exit.go](../../server/internal/db/character_exit.go#L1)
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`SaveCharacterExit`](../../server/internal/db/character_exit.go#L10)<br>`func SaveCharacterExit(ch Character, buffs []AppliedBuff, skills []CharacterSkill, quests []CharQuest) error` | SaveCharacterExit commits the final character state and offline timers together. Other sessions can share the durable commit. |
+
 ### chars.go
 
 [server/internal/db/chars.go](../../server/internal/db/chars.go#L1)
@@ -134,21 +156,22 @@ Direct GX dependencies: `server/internal/config`.
 | [`u16`](../../server/internal/db/chars.go#L60)<br>`func u16(v int64) uint16` | See the source definition and the subsystem ownership contract. |
 | [`CharactersForAccount`](../../server/internal/db/chars.go#L64)<br>`func CharactersForAccount(userUID uint32) ([]Character, error)` | CharactersForAccount lists live characters (usp_Read_Chars_R) plus those deleted within DeleteWindow, flagged PendingDelete. |
 | [`CharacterDetail`](../../server/internal/db/chars.go#L143)<br>`func CharacterDetail(userUID, charID uint32) (Character, error)` | CharacterDetail loads a playable character with usp_Read_Chars_Detail2_R (which also stamps JoinDate). It returns ErrNotFound unless the character belongs to userUID and is not deleted. |
-| [`CharacterIDInSlot`](../../server/internal/db/chars.go#L197)<br>`func CharacterIDInSlot(userUID uint32, slot uint8) (uint32, bool, error)` | CharacterIDInSlot runs usp_Read_CharSlots_R. |
-| [`NameTaken`](../../server/internal/db/chars.go#L215)<br>`func NameTaken(name string) (bool, error)` | NameTaken reports whether a live character, or one deleted within the restore window, already uses name. |
-| [`CreateCharacter`](../../server/internal/db/chars.go#L232)<br>`func CreateCharacter(account Account, nc NewCharacter) (uint32, error)` | CreateCharacter runs usp_Create_Char_R. The procedure itself rejects duplicate names (return -2) and fixes SkillPoint at 5. The parameters mirror the original CUser::ProcessCharacterCreate: level 1, no stat or skill points, Vg 200. |
-| [`CreateCharacterWithItems`](../../server/internal/db/chars.go#L238)<br>`func CreateCharacterWithItems(account Account, nc NewCharacter, items []Item) (uint32, error)` | CreateCharacterWithItems commits the character and initial inventory together. Slot/name validation is repeated under the writer lock, not trusted to callers. |
-| [`DeleteCharacter`](../../server/internal/db/chars.go#L295)<br>`func DeleteCharacter(userUID, charID uint32) (bool, error)` | DeleteCharacter runs usp_Delete_Char_E for a live character owned by userUID (Del=1, DeleteDate, guild membership removed). |
-| [`RestoreCharacter`](../../server/internal/db/chars.go#L327)<br>`func RestoreCharacter(userUID, charID uint32) (bool, error)` | RestoreCharacter undoes a deletion within DeleteWindow. The EP4.5 procedures have no restore; this is the inverse of usp_Delete_Char_E's Chars update. |
-| [`EnableRename`](../../server/internal/db/chars.go#L349)<br>`func EnableRename(charID uint32) error` | EnableRename runs Usp_Save_Char_EnableRename_E (name-change stone). |
-| [`RenameCharacter`](../../server/internal/db/chars.go#L355)<br>`func RenameCharacter(userUID, charID uint32, oldName, newName string) (bool, error)` | RenameCharacter commits a pending rename with usp_Update_Char_Rename and consumes one RenameCnt. |
-| [`MapForSave`](../../server/internal/db/chars.go#L399)<br>`var MapForSave` | MapForSave maps a world zone to the map stored in Chars.Map (the world replaces it so instanced zones save their real map). |
-| [`SaveCharacter`](../../server/internal/db/chars.go#L403)<br>`func SaveCharacter(ch *Character) error` | SaveCharacter persists level, points, stats, HP/MP/SP, position, exp, money and kill counters with usp_Save_Char_Info_E. |
-| [`writeCharacter`](../../server/internal/db/chars.go#L415)<br>`func writeCharacter(c context.Context, executor sqlExecutor, ch *Character) (sql.Result, error)` | See the source definition and the subsystem ownership contract. |
-| [`SaveAppearance`](../../server/internal/db/chars.go#L439)<br>`func SaveAppearance(charID uint32, hair, face, size, sex uint8) error` | SaveAppearance runs usp_Save_Char_BodyChg_E. |
-| [`CharacterByName`](../../server/internal/db/chars.go#L447)<br>`func CharacterByName(name string) (charID, userUID uint32, found bool, err error)` | CharacterByName finds a live character's account and id by name. |
-| [`CharacterByID`](../../server/internal/db/chars.go#L464)<br>`func CharacterByID(charID uint32) (Character, error)` | CharacterByID loads any live character regardless of account (used to credit an offline caster). |
-| [`execSQL`](../../server/internal/db/chars.go#L482)<br>`func execSQL(database, name string, args ...any) error` | See the source definition and the subsystem ownership contract. |
+| [`readCharacterDetail`](../../server/internal/db/chars.go#L164)<br>`func readCharacterDetail(userUID, charID uint32) (Character, error)` | See the source definition and the subsystem ownership contract. |
+| [`CharacterIDInSlot`](../../server/internal/db/chars.go#L212)<br>`func CharacterIDInSlot(userUID uint32, slot uint8) (uint32, bool, error)` | CharacterIDInSlot runs usp_Read_CharSlots_R. |
+| [`NameTaken`](../../server/internal/db/chars.go#L230)<br>`func NameTaken(name string) (bool, error)` | NameTaken reports whether a live character, or one deleted within the restore window, already uses name. |
+| [`CreateCharacter`](../../server/internal/db/chars.go#L247)<br>`func CreateCharacter(account Account, nc NewCharacter) (uint32, error)` | CreateCharacter runs usp_Create_Char_R. The procedure itself rejects duplicate names (return -2) and fixes SkillPoint at 5. The parameters mirror the original CUser::ProcessCharacterCreate: level 1, no stat or skill points, Vg 200. |
+| [`CreateCharacterWithItems`](../../server/internal/db/chars.go#L253)<br>`func CreateCharacterWithItems(account Account, nc NewCharacter, items []Item) (uint32, error)` | CreateCharacterWithItems commits the character and initial inventory together. Slot/name validation is repeated under the writer lock, not trusted to callers. |
+| [`DeleteCharacter`](../../server/internal/db/chars.go#L310)<br>`func DeleteCharacter(userUID, charID uint32) (bool, error)` | DeleteCharacter runs usp_Delete_Char_E for a live character owned by userUID (Del=1, DeleteDate, guild membership removed). |
+| [`RestoreCharacter`](../../server/internal/db/chars.go#L342)<br>`func RestoreCharacter(userUID, charID uint32) (bool, error)` | RestoreCharacter undoes a deletion within DeleteWindow. The EP4.5 procedures have no restore; this is the inverse of usp_Delete_Char_E's Chars update. |
+| [`EnableRename`](../../server/internal/db/chars.go#L364)<br>`func EnableRename(charID uint32) error` | EnableRename runs Usp_Save_Char_EnableRename_E (name-change stone). |
+| [`RenameCharacter`](../../server/internal/db/chars.go#L370)<br>`func RenameCharacter(userUID, charID uint32, oldName, newName string) (bool, error)` | RenameCharacter commits a pending rename with usp_Update_Char_Rename and consumes one RenameCnt. |
+| [`MapForSave`](../../server/internal/db/chars.go#L414)<br>`var MapForSave` | MapForSave maps a world zone to the map stored in Chars.Map (the world replaces it so instanced zones save their real map). |
+| [`SaveCharacter`](../../server/internal/db/chars.go#L418)<br>`func SaveCharacter(ch *Character) error` | SaveCharacter persists level, points, stats, HP/MP/SP, position, exp, money and kill counters with usp_Save_Char_Info_E. |
+| [`writeCharacter`](../../server/internal/db/chars.go#L431)<br>`func writeCharacter(c context.Context, executor sqlExecutor, ch *Character) (sql.Result, error)` | See the source definition and the subsystem ownership contract. |
+| [`SaveAppearance`](../../server/internal/db/chars.go#L455)<br>`func SaveAppearance(charID uint32, hair, face, size, sex uint8) error` | SaveAppearance runs usp_Save_Char_BodyChg_E. |
+| [`CharacterByName`](../../server/internal/db/chars.go#L463)<br>`func CharacterByName(name string) (charID, userUID uint32, found bool, err error)` | CharacterByName finds a live character's account and id by name. |
+| [`CharacterByID`](../../server/internal/db/chars.go#L480)<br>`func CharacterByID(charID uint32) (Character, error)` | CharacterByID loads any live character regardless of account (used to credit an offline caster). |
+| [`execSQL`](../../server/internal/db/chars.go#L498)<br>`func execSQL(database, name string, args ...any) error` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -201,24 +224,29 @@ Direct GX dependencies: `server/internal/config`, `server/internal/filelock`, `s
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`UserData`](../../server/internal/db/db.go#L22)<br>`const UserData = "PS_UserData"` | See the source definition and the subsystem ownership contract. |
-| [`GameData`](../../server/internal/db/db.go#L23)<br>`const GameData = "PS_GameData"` | See the source definition and the subsystem ownership contract. |
-| [`GameDefs`](../../server/internal/db/db.go#L24)<br>`const GameDefs = "PS_GameDefs"` | See the source definition and the subsystem ownership contract. |
-| [`Billing`](../../server/internal/db/db.go#L25)<br>`const Billing = "PS_Billing"` | See the source definition and the subsystem ownership contract. |
-| [`Timeout`](../../server/internal/db/db.go#L27)<br>`const Timeout = 10 * time.Second` | See the source definition and the subsystem ownership contract. |
-| [`mu`](../../server/internal/db/db.go#L30)<br>`var mu sync.Mutex` | See the source definition and the subsystem ownership contract. |
-| [`pools`](../../server/internal/db/db.go#L31)<br>`var pools` | See the source definition and the subsystem ownership contract. |
-| [`Initialize`](../../server/internal/db/db.go#L36)<br>`func Initialize() error` | Initialize copies the versioned seed once. A process lock and atomic rename prevent login/world from observing a partially copied database at startup. |
-| [`Pool`](../../server/internal/db/db.go#L84)<br>`func Pool(database string) (*sql.DB, error)` | Pool shares a single connection per process; SQLite coordinates the two server processes through WAL and a bounded busy timeout. |
-| [`Open`](../../server/internal/db/db.go#L120)<br>`func Open(databases ...string) error` | See the source definition and the subsystem ownership contract. |
-| [`ctx`](../../server/internal/db/db.go#L128)<br>`func ctx() (context.Context, context.CancelFunc)` | See the source definition and the subsystem ownership contract. |
-| [`longCtx`](../../server/internal/db/db.go#L131)<br>`func longCtx() (context.Context, context.CancelFunc)` | See the source definition and the subsystem ownership contract. |
-| [`Close`](../../server/internal/db/db.go#L137)<br>`func Close() error` | Close runs bounded planner maintenance and closes process-owned connections. Call only after network handlers have drained. |
-| [`Observe`](../../server/internal/db/db.go#L153)<br>`func Observe()` | Observe reports bounded database contention and WAL size without acquiring the writer connection for checkpointing. Maintenance never truncates a live WAL. |
-| [`dbWaits`](../../server/internal/db/db.go#L171)<br>`var dbWaits` | See the source definition and the subsystem ownership contract. |
-| [`dbWaitNanos`](../../server/internal/db/db.go#L172)<br>`var dbWaitNanos` | See the source definition and the subsystem ownership contract. |
-| [`dbOpen`](../../server/internal/db/db.go#L173)<br>`var dbOpen` | See the source definition and the subsystem ownership contract. |
-| [`dbWAL`](../../server/internal/db/db.go#L174)<br>`var dbWAL` | See the source definition and the subsystem ownership contract. |
+| [`UserData`](../../server/internal/db/db.go#L24)<br>`const UserData = "PS_UserData"` | See the source definition and the subsystem ownership contract. |
+| [`GameData`](../../server/internal/db/db.go#L25)<br>`const GameData = "PS_GameData"` | See the source definition and the subsystem ownership contract. |
+| [`GameDefs`](../../server/internal/db/db.go#L26)<br>`const GameDefs = "PS_GameDefs"` | See the source definition and the subsystem ownership contract. |
+| [`Billing`](../../server/internal/db/db.go#L27)<br>`const Billing = "PS_Billing"` | See the source definition and the subsystem ownership contract. |
+| [`Timeout`](../../server/internal/db/db.go#L29)<br>`const Timeout = 10 * time.Second` | See the source definition and the subsystem ownership contract. |
+| [`mu`](../../server/internal/db/db.go#L32)<br>`var mu sync.RWMutex` | See the source definition and the subsystem ownership contract. |
+| [`pools`](../../server/internal/db/db.go#L33)<br>`var pools` | See the source definition and the subsystem ownership contract. |
+| [`Initialize`](../../server/internal/db/db.go#L38)<br>`func Initialize() error` | Initialize copies the versioned seed once. A process lock and atomic rename prevent login/world from observing a partially copied database at startup. |
+| [`runtimeExists`](../../server/internal/db/db.go#L84)<br>`func runtimeExists(path string) (bool, error)` | See the source definition and the subsystem ownership contract. |
+| [`Pool`](../../server/internal/db/db.go#L100)<br>`func Pool(database string) (*sql.DB, error)` | Pool shares one durable writer per process. SQLite coordinates the login and world writers through WAL; each process serializes its own write transactions. |
+| [`openPool`](../../server/internal/db/db.go#L139)<br>`func openPool(name string) *sql.DB` | See the source definition and the subsystem ownership contract. |
+| [`ReadPool`](../../server/internal/db/db.go#L147)<br>`func ReadPool() (*sql.DB, error)` | ReadPool serves queries whose decisions do not require the writer lock. Always revalidate state inside the write transaction before committing. |
+| [`Open`](../../server/internal/db/db.go#L173)<br>`func Open(databases ...string) error` | See the source definition and the subsystem ownership contract. |
+| [`ctx`](../../server/internal/db/db.go#L181)<br>`func ctx() (context.Context, context.CancelFunc)` | See the source definition and the subsystem ownership contract. |
+| [`longCtx`](../../server/internal/db/db.go#L184)<br>`func longCtx() (context.Context, context.CancelFunc)` | See the source definition and the subsystem ownership contract. |
+| [`Close`](../../server/internal/db/db.go#L190)<br>`func Close() error` | Close runs bounded planner maintenance and closes process-owned connections. Call only after network handlers have drained. |
+| [`Observe`](../../server/internal/db/db.go#L210)<br>`func Observe()` | Observe reports bounded database contention and WAL size without acquiring the writer connection for checkpointing. Maintenance never truncates a live WAL. |
+| [`dbWaits`](../../server/internal/db/db.go#L231)<br>`var dbWaits` | See the source definition and the subsystem ownership contract. |
+| [`dbWaitNanos`](../../server/internal/db/db.go#L232)<br>`var dbWaitNanos` | See the source definition and the subsystem ownership contract. |
+| [`dbOpen`](../../server/internal/db/db.go#L233)<br>`var dbOpen` | See the source definition and the subsystem ownership contract. |
+| [`dbWAL`](../../server/internal/db/db.go#L234)<br>`var dbWAL` | See the source definition and the subsystem ownership contract. |
+| [`dbReaderWaits`](../../server/internal/db/db.go#L236)<br>`var dbReaderWaits` | See the source definition and the subsystem ownership contract. |
+| [`dbReaderWaitNanos`](../../server/internal/db/db.go#L237)<br>`var dbReaderWaitNanos` | See the source definition and the subsystem ownership contract. |
 
 ### defs.go
 
@@ -759,32 +787,27 @@ type Keep struct {
 
 [server/internal/db/mall.go](../../server/internal/db/mall.go#L1)
 
-Direct GX dependencies: `server/internal/telemetry`.
-
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`GiftBoxSlots`](../../server/internal/db/mall.go#L15)<br>`const GiftBoxSlots = 240` | See the source definition and the subsystem ownership contract. |
-| [`Points`](../../server/internal/db/mall.go#L18)<br>`func Points(userUID uint32) (uint32, error)` | Points reads the account's item-mall balance. |
-| [`ErrNotEnoughPoints`](../../server/internal/db/mall.go#L34)<br>`var ErrNotEnoughPoints` | ErrNotEnoughPoints means the balance does not cover the cost. |
-| [`SpendPoints`](../../server/internal/db/mall.go#L38)<br>`func SpendPoints(userUID, charID, cost uint32, productCode, targetName string, useType uint8) (uint32, error)` | SpendPoints guards the balance and records the original NCash PointLog in the same transaction. useType: 1 buy, 2 gift. |
-| [`spendPointsTx`](../../server/internal/db/mall.go#L55)<br>`func spendPointsTx(c context.Context, tx *sql.Tx, userUID, charID, cost uint32, productCode, targetName string, useType uint8) (uint32, error)` | spendPointsTx keeps charging and delivery in the same transaction. |
-| [`PurchaseMallItems`](../../server/internal/db/mall.go#L73)<br>`func PurchaseMallItems(userUID, charID uint32, product *Product, items []Item) (uint32, error)` | PurchaseMallItems atomically charges, logs and inserts a validated delivery. The caller publishes packets and updates session memory only after commit. |
-| [`GiftEntry`](../../server/internal/db/mall.go#L108)<br>`type GiftEntry` | GiftEntry is one gift-box slot. |
-| [`GiftBox`](../../server/internal/db/mall.go#L115)<br>`func GiftBox(userUID uint32) ([]GiftEntry, error)` | GiftBox runs usp_Read_User_StoredPointItems. |
-| [`GiftOK`](../../server/internal/db/mall.go#L146)<br>`const GiftOK = 0` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
-| [`GiftNoSuchChar`](../../server/internal/db/mall.go#L147)<br>`const GiftNoSuchChar = 1` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
-| [`GiftSameAccount`](../../server/internal/db/mall.go#L148)<br>`const GiftSameAccount = 2` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
-| [`GiftBoxFull`](../../server/internal/db/mall.go#L149)<br>`const GiftBoxFull = 3` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
-| [`GiftNotEnoughSlots`](../../server/internal/db/mall.go#L150)<br>`const GiftNotEnoughSlots = 4` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
-| [`GiftInsertError`](../../server/internal/db/mall.go#L151)<br>`const GiftInsertError = 5` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
-| [`StoreGift`](../../server/internal/db/mall.go#L156)<br>`func StoreGift(targetName string, senderUID uint32, product *Product) (uint8, uint32, error)` | StoreGift puts every item of product into the gift box of the account owning targetName, in free slots, atomically. |
-| [`PurchaseGift`](../../server/internal/db/mall.go#L162)<br>`func PurchaseGift(targetName string, senderUID, charID uint32, product *Product) (uint8, uint32, uint32, error)` | PurchaseGift charges the sender and stores every gift in one transaction. |
-| [`storeGift`](../../server/internal/db/mall.go#L166)<br>`func storeGift(targetName string, senderUID, charID uint32, product *Product, charge bool) (result uint8, targetUID, points uint32, err error)` | See the source definition and the subsystem ownership contract. |
-| [`ClaimGift`](../../server/internal/db/mall.go#L256)<br>`func ClaimGift(userUID, charID uint32, giftSlot uint8, it *Item) (bool, error)` | ClaimGift moves gift-box slot into the character's inventory as it, in one transaction (the effect of usp_Save_User_StoredPointItems). It returns false if the slot was already claimed. |
-| [`errRollback`](../../server/internal/db/mall.go#L311)<br>`var errRollback` | See the source definition and the subsystem ownership contract. |
-| [`transactionTime`](../../server/internal/db/mall.go#L313)<br>`var transactionTime` | See the source definition and the subsystem ownership contract. |
-| [`transactionFailures`](../../server/internal/db/mall.go#L314)<br>`var transactionFailures` | See the source definition and the subsystem ownership contract. |
-| [`withTx`](../../server/internal/db/mall.go#L316)<br>`func withTx(c context.Context, pool *sql.DB, fn func(*sql.Tx) error) (err error)` | See the source definition and the subsystem ownership contract. |
+| [`GiftBoxSlots`](../../server/internal/db/mall.go#L14)<br>`const GiftBoxSlots = 240` | See the source definition and the subsystem ownership contract. |
+| [`Points`](../../server/internal/db/mall.go#L17)<br>`func Points(userUID uint32) (uint32, error)` | Points reads the account's item-mall balance. |
+| [`ErrNotEnoughPoints`](../../server/internal/db/mall.go#L33)<br>`var ErrNotEnoughPoints` | ErrNotEnoughPoints means the balance does not cover the cost. |
+| [`SpendPoints`](../../server/internal/db/mall.go#L37)<br>`func SpendPoints(userUID, charID, cost uint32, productCode, targetName string, useType uint8) (uint32, error)` | SpendPoints guards the balance and records the original NCash PointLog in the same transaction. useType: 1 buy, 2 gift. |
+| [`spendPointsTx`](../../server/internal/db/mall.go#L54)<br>`func spendPointsTx(c context.Context, tx *sql.Tx, userUID, charID, cost uint32, productCode, targetName string, useType uint8) (uint32, error)` | spendPointsTx keeps charging and delivery in the same transaction. |
+| [`PurchaseMallItems`](../../server/internal/db/mall.go#L69)<br>`func PurchaseMallItems(userUID, charID uint32, product *Product, items []Item) (uint32, error)` | PurchaseMallItems atomically charges, logs and inserts a validated delivery. The caller publishes packets and updates session memory only after commit. |
+| [`GiftEntry`](../../server/internal/db/mall.go#L104)<br>`type GiftEntry` | GiftEntry is one gift-box slot. |
+| [`GiftBox`](../../server/internal/db/mall.go#L111)<br>`func GiftBox(userUID uint32) ([]GiftEntry, error)` | GiftBox runs usp_Read_User_StoredPointItems. |
+| [`GiftOK`](../../server/internal/db/mall.go#L142)<br>`const GiftOK = 0` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
+| [`GiftNoSuchChar`](../../server/internal/db/mall.go#L143)<br>`const GiftNoSuchChar = 1` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
+| [`GiftSameAccount`](../../server/internal/db/mall.go#L144)<br>`const GiftSameAccount = 2` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
+| [`GiftBoxFull`](../../server/internal/db/mall.go#L145)<br>`const GiftBoxFull = 3` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
+| [`GiftNotEnoughSlots`](../../server/internal/db/mall.go#L146)<br>`const GiftNotEnoughSlots = 4` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
+| [`GiftInsertError`](../../server/internal/db/mall.go#L147)<br>`const GiftInsertError = 5` | GiftResult codes match the original usp_Save_User_GiftPointItems_NCash and the client's gift result byte. |
+| [`StoreGift`](../../server/internal/db/mall.go#L152)<br>`func StoreGift(targetName string, senderUID uint32, product *Product) (uint8, uint32, error)` | StoreGift puts every item of product into the gift box of the account owning targetName, in free slots, atomically. |
+| [`PurchaseGift`](../../server/internal/db/mall.go#L158)<br>`func PurchaseGift(targetName string, senderUID, charID uint32, product *Product) (uint8, uint32, uint32, error)` | PurchaseGift charges the sender and stores every gift in one transaction. |
+| [`storeGift`](../../server/internal/db/mall.go#L162)<br>`func storeGift(targetName string, senderUID, charID uint32, product *Product, charge bool) (result uint8, targetUID, points uint32, err error)` | See the source definition and the subsystem ownership contract. |
+| [`ClaimGift`](../../server/internal/db/mall.go#L252)<br>`func ClaimGift(userUID, charID uint32, giftSlot uint8, it *Item) (bool, error)` | ClaimGift moves gift-box slot into the character's inventory as it, in one transaction (the effect of usp_Save_User_StoredPointItems). It returns false if the slot was already claimed. |
+| [`errRollback`](../../server/internal/db/mall.go#L307)<br>`var errRollback` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -811,7 +834,7 @@ Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `inte
 | [`npcSkillsMigration`](../../server/internal/db/migrations.go#L31)<br>`var npcSkillsMigration string` | See the source definition and the subsystem ownership contract. |
 | [`auctionMigration`](../../server/internal/db/migrations.go#L34)<br>`var auctionMigration string` | See the source definition and the subsystem ownership contract. |
 | [`migrations`](../../server/internal/db/migrations.go#L36)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L109)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
+| [`migrate`](../../server/internal/db/migrations.go#L136)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -855,15 +878,16 @@ Direct GX dependencies: `server/internal/config`, `server/internal/filelock`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`CharQuest`](../../server/internal/db/quests.go#L10)<br>`type CharQuest` | CharQuest is an active quest row: Delay is minutes left (timed quests) or minutes elapsed (untimed), as the original saves it. |
-| [`FinishedQuest`](../../server/internal/db/quests.go#L17)<br>`type FinishedQuest` | FinishedQuest is a finished quest row (Success 1 completed, 0 failed). |
-| [`CharacterQuests`](../../server/internal/db/quests.go#L23)<br>`func CharacterQuests(charID uint32) ([]CharQuest, error)` | CharacterQuests runs usp_Read_Char_Quest_R. |
-| [`FinishedQuests`](../../server/internal/db/quests.go#L49)<br>`func FinishedQuests(charID uint32) ([]FinishedQuest, error)` | FinishedQuests runs usp_Read_Char_FinishedQuest_R. |
-| [`AddCharacterQuest`](../../server/internal/db/quests.go#L76)<br>`func AddCharacterQuest(charID uint32, q CharQuest) error` | AddCharacterQuest runs usp_Save_Char_Quest_Add_E. |
-| [`SaveCharacterQuest`](../../server/internal/db/quests.go#L83)<br>`func SaveCharacterQuest(charID uint32, q CharQuest) error` | SaveCharacterQuest runs usp_Save_Char_Quest_Mod_E. |
-| [`FinishCharacterQuest`](../../server/internal/db/quests.go#L90)<br>`func FinishCharacterQuest(charID uint32, questID uint16, success uint8) error` | FinishCharacterQuest runs usp_Save_Char_FinishedQuest_E on the active row. |
-| [`DeleteCharacterQuest`](../../server/internal/db/quests.go#L96)<br>`func DeleteCharacterQuest(charID uint32, questID uint16) error` | DeleteCharacterQuest runs usp_Save_Char_Quest_Del_E (repeatable quests). |
-| [`SaveCharacterQuests`](../../server/internal/db/quests.go#L103)<br>`func SaveCharacterQuests(charID uint32, quests []CharQuest) error` | SaveCharacterQuests atomically snapshots active counters. A stale/finished quest cannot be updated after another operation completed it. |
+| [`CharQuest`](../../server/internal/db/quests.go#L11)<br>`type CharQuest` | CharQuest is an active quest row: Delay is minutes left (timed quests) or minutes elapsed (untimed), as the original saves it. |
+| [`FinishedQuest`](../../server/internal/db/quests.go#L18)<br>`type FinishedQuest` | FinishedQuest is a finished quest row (Success 1 completed, 0 failed). |
+| [`CharacterQuests`](../../server/internal/db/quests.go#L24)<br>`func CharacterQuests(charID uint32) ([]CharQuest, error)` | CharacterQuests runs usp_Read_Char_Quest_R. |
+| [`FinishedQuests`](../../server/internal/db/quests.go#L50)<br>`func FinishedQuests(charID uint32) ([]FinishedQuest, error)` | FinishedQuests runs usp_Read_Char_FinishedQuest_R. |
+| [`AddCharacterQuest`](../../server/internal/db/quests.go#L77)<br>`func AddCharacterQuest(charID uint32, q CharQuest) error` | AddCharacterQuest runs usp_Save_Char_Quest_Add_E. |
+| [`SaveCharacterQuest`](../../server/internal/db/quests.go#L84)<br>`func SaveCharacterQuest(charID uint32, q CharQuest) error` | SaveCharacterQuest runs usp_Save_Char_Quest_Mod_E. |
+| [`FinishCharacterQuest`](../../server/internal/db/quests.go#L91)<br>`func FinishCharacterQuest(charID uint32, questID uint16, success uint8) error` | FinishCharacterQuest runs usp_Save_Char_FinishedQuest_E on the active row. |
+| [`DeleteCharacterQuest`](../../server/internal/db/quests.go#L97)<br>`func DeleteCharacterQuest(charID uint32, questID uint16) error` | DeleteCharacterQuest runs usp_Save_Char_Quest_Del_E (repeatable quests). |
+| [`SaveCharacterQuests`](../../server/internal/db/quests.go#L104)<br>`func SaveCharacterQuests(charID uint32, quests []CharQuest) error` | SaveCharacterQuests atomically snapshots active counters. A stale/finished quest cannot be updated after another operation completed it. |
+| [`saveQuestsTx`](../../server/internal/db/quests.go#L117)<br>`func saveQuestsTx(c context.Context, tx *sql.Tx, charID uint32, quests []CharQuest) error` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -890,18 +914,20 @@ type FinishedQuest struct {
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`CharacterSkill`](../../server/internal/db/skills.go#L10)<br>`type CharacterSkill` | CharacterSkill is one learned skill. Delay is the remaining cooldown in seconds as last saved (CharSkills.Delay). |
-| [`CharacterSkills`](../../server/internal/db/skills.go#L18)<br>`func CharacterSkills(charID uint32) ([]CharacterSkill, error)` | CharacterSkills runs usp_Read_Char_Skills_R. |
-| [`AddCharacterSkill`](../../server/internal/db/skills.go#L44)<br>`func AddCharacterSkill(charID uint32, s CharacterSkill) error` | AddCharacterSkill runs usp_Save_Char_Skill_Add_E. |
-| [`SaveCharacterSkill`](../../server/internal/db/skills.go#L52)<br>`func SaveCharacterSkill(charID uint32, s CharacterSkill) error` | SaveCharacterSkill runs usp_Save_Char_Skill_Mod_E (level and remaining cooldown). |
-| [`QuickSlot`](../../server/internal/db/skills.go#L58)<br>`type QuickSlot` | QuickSlot is one skill-bar entry. |
-| [`QuickSlots`](../../server/internal/db/skills.go#L64)<br>`func QuickSlots(charID uint32) ([]QuickSlot, error)` | QuickSlots runs usp_Read_Char_QuickSlots_R. |
-| [`SaveQuickSlots`](../../server/internal/db/skills.go#L91)<br>`func SaveQuickSlots(charID uint32, slots []QuickSlot) error` | SaveQuickSlots replaces the skill bar (usp_Save_Char_QuickSlot_Del_E then usp_Save_Char_QuickSlot_Add_E per entry, at most 128). |
-| [`AppliedBuff`](../../server/internal/db/skills.go#L118)<br>`type AppliedBuff` | AppliedBuff is a persisted active buff with its remaining seconds. |
-| [`AppliedBuffs`](../../server/internal/db/skills.go#L125)<br>`func AppliedBuffs(charID uint32) ([]AppliedBuff, error)` | AppliedBuffs runs usp_Read_Char_ApplySkills_R. |
-| [`SaveAppliedBuffs`](../../server/internal/db/skills.go#L154)<br>`func SaveAppliedBuffs(charID uint32, buffs []AppliedBuff) error` | SaveAppliedBuffs replaces the persisted buffs (usp_Save_Char_ApplySkill_Del_E with DeleteAll, then usp_Save_Char_ApplySkill_Add_E2 per buff). |
-| [`CommitLearnSkill`](../../server/internal/db/skills.go#L180)<br>`func CommitLearnSkill(before, after Character, previous *CharacterSkill, learned CharacterSkill) error` | CommitLearnSkill guards both the previous skill level and available points; learning never grants a skill without committing its cost. |
-| [`SaveSkillDelays`](../../server/internal/db/skills.go#L217)<br>`func SaveSkillDelays(charID uint32, skills []CharacterSkill) error` | See the source definition and the subsystem ownership contract. |
+| [`CharacterSkill`](../../server/internal/db/skills.go#L12)<br>`type CharacterSkill` | CharacterSkill is one learned skill. Delay is the remaining cooldown in seconds as last saved (CharSkills.Delay). |
+| [`CharacterSkills`](../../server/internal/db/skills.go#L20)<br>`func CharacterSkills(charID uint32) ([]CharacterSkill, error)` | CharacterSkills runs usp_Read_Char_Skills_R. |
+| [`AddCharacterSkill`](../../server/internal/db/skills.go#L46)<br>`func AddCharacterSkill(charID uint32, s CharacterSkill) error` | AddCharacterSkill runs usp_Save_Char_Skill_Add_E. |
+| [`SaveCharacterSkill`](../../server/internal/db/skills.go#L54)<br>`func SaveCharacterSkill(charID uint32, s CharacterSkill) error` | SaveCharacterSkill runs usp_Save_Char_Skill_Mod_E (level and remaining cooldown). |
+| [`QuickSlot`](../../server/internal/db/skills.go#L60)<br>`type QuickSlot` | QuickSlot is one skill-bar entry. |
+| [`QuickSlots`](../../server/internal/db/skills.go#L66)<br>`func QuickSlots(charID uint32) ([]QuickSlot, error)` | QuickSlots runs usp_Read_Char_QuickSlots_R. |
+| [`SaveQuickSlots`](../../server/internal/db/skills.go#L93)<br>`func SaveQuickSlots(charID uint32, slots []QuickSlot) error` | SaveQuickSlots atomically applies the complete bar using two set operations. Sending the same bar does not rewrite its unchanged slots. |
+| [`AppliedBuff`](../../server/internal/db/skills.go#L131)<br>`type AppliedBuff` | AppliedBuff is a persisted active buff with its remaining seconds. |
+| [`AppliedBuffs`](../../server/internal/db/skills.go#L138)<br>`func AppliedBuffs(charID uint32) ([]AppliedBuff, error)` | AppliedBuffs runs usp_Read_Char_ApplySkills_R. |
+| [`SaveAppliedBuffs`](../../server/internal/db/skills.go#L167)<br>`func SaveAppliedBuffs(charID uint32, buffs []AppliedBuff) error` | SaveAppliedBuffs replaces the persisted buffs (usp_Save_Char_ApplySkill_Del_E with DeleteAll, then usp_Save_Char_ApplySkill_Add_E2 per buff). |
+| [`saveBuffsTx`](../../server/internal/db/skills.go#L177)<br>`func saveBuffsTx(c context.Context, tx *sql.Tx, charID uint32, buffs []AppliedBuff) error` | See the source definition and the subsystem ownership contract. |
+| [`CommitLearnSkill`](../../server/internal/db/skills.go#L194)<br>`func CommitLearnSkill(before, after Character, previous *CharacterSkill, learned CharacterSkill) error` | CommitLearnSkill guards both the previous skill level and available points; learning never grants a skill without committing its cost. |
+| [`SaveSkillDelays`](../../server/internal/db/skills.go#L231)<br>`func SaveSkillDelays(charID uint32, skills []CharacterSkill) error` | See the source definition and the subsystem ownership contract. |
+| [`saveSkillDelaysTx`](../../server/internal/db/skills.go#L244)<br>`func saveSkillDelaysTx(c context.Context, tx *sql.Tx, charID uint32, skills []CharacterSkill) error` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -999,6 +1025,49 @@ Direct GX dependencies: `internal/teleportrunes`.
 type TeleportRuneDestination struct {
 	MapID   uint16
 	X, Y, Z float32
+}
+```
+
+</details>
+
+### transactions.go
+
+[server/internal/db/transactions.go](../../server/internal/db/transactions.go#L1)
+
+Direct GX dependencies: `server/internal/telemetry`.
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`writeGroupSize`](../../server/internal/db/transactions.go#L14)<br>`const writeGroupSize = 32` | See the source definition and the subsystem ownership contract. |
+| [`writeQueueLimit`](../../server/internal/db/transactions.go#L15)<br>`const writeQueueLimit = 2048` | See the source definition and the subsystem ownership contract. |
+| [`writeGatherTime`](../../server/internal/db/transactions.go#L16)<br>`const writeGatherTime = time.Millisecond` | See the source definition and the subsystem ownership contract. |
+| [`groupedWrite`](../../server/internal/db/transactions.go#L19)<br>`type groupedWrite` | See the source definition and the subsystem ownership contract. |
+| [`writeQueue`](../../server/internal/db/transactions.go#L25)<br>`type writeQueue` | See the source definition and the subsystem ownership contract. |
+| [`writeQueues`](../../server/internal/db/transactions.go#L31)<br>`var writeQueues sync.Map` | keyed by the owning writer pool |
+| [`groupedCommits`](../../server/internal/db/transactions.go#L32)<br>`var groupedCommits` | See the source definition and the subsystem ownership contract. |
+| [`groupedOperations`](../../server/internal/db/transactions.go#L33)<br>`var groupedOperations` | See the source definition and the subsystem ownership contract. |
+| [`groupWrite`](../../server/internal/db/transactions.go#L38)<br>`func groupWrite(c context.Context, pool *sql.DB, fn func(context.Context, *sql.Tx) error) error` | groupWrite shares a durable commit across independent operations. Each operation has its own savepoint and learns its result only after COMMIT. A caller whose request is already executing waits for the commit outcome. |
+| [`run`](../../server/internal/db/transactions.go#L59)<br>`func (q *writeQueue) run(pool *sql.DB)` | See the source definition and the subsystem ownership contract. |
+| [`commitWriteGroup`](../../server/internal/db/transactions.go#L80)<br>`func commitWriteGroup(pool *sql.DB, tasks []groupedWrite)` | See the source definition and the subsystem ownership contract. |
+| [`transactionTime`](../../server/internal/db/transactions.go#L124)<br>`var transactionTime` | See the source definition and the subsystem ownership contract. |
+| [`transactionFailures`](../../server/internal/db/transactions.go#L125)<br>`var transactionFailures` | See the source definition and the subsystem ownership contract. |
+| [`withTx`](../../server/internal/db/transactions.go#L127)<br>`func withTx(c context.Context, pool *sql.DB, fn func(*sql.Tx) error) (err error)` | See the source definition and the subsystem ownership contract. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type groupedWrite struct {
+	context.Context
+	run  func(context.Context, *sql.Tx) error
+	done chan error
+}
+```
+
+```go
+type writeQueue struct {
+	sync.Mutex
+	pending []groupedWrite
+	running bool
 }
 ```
 

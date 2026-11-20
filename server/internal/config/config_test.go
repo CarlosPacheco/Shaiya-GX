@@ -34,7 +34,7 @@ func TestSQLiteDSNRetainsPathsAndConnectionSettings(t *testing.T) {
 	if uri.Host != "" || uri.Path != sqliteURIPath(filepath.ToSlash(path)) {
 		t.Fatal("database path changed", value)
 	}
-	if uri.Query().Get("_txlock") != "immediate" || len(uri.Query()["_pragma"]) != 4 {
+	if uri.Query().Get("_txlock") != "immediate" || uri.Query().Get("mode") != "rw" || len(uri.Query()["_pragma"]) != 5 {
 		t.Fatal("connection settings changed", value)
 	}
 }

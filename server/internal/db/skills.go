@@ -1,7 +1,9 @@
 package db
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 )
 
@@ -16,7 +18,7 @@ type CharacterSkill struct {
 
 // CharacterSkills runs usp_Read_Char_Skills_R.
 func CharacterSkills(charID uint32) ([]CharacterSkill, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +64,7 @@ type QuickSlot struct {
 
 // QuickSlots runs usp_Read_Char_QuickSlots_R.
 func QuickSlots(charID uint32) ([]QuickSlot, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return nil, err
 	}
@@ -86,31 +88,42 @@ func QuickSlots(charID uint32) ([]QuickSlot, error) {
 	return slots, rows.Err()
 }
 
-// SaveQuickSlots replaces the skill bar (usp_Save_Char_QuickSlot_Del_E then
-// usp_Save_Char_QuickSlot_Add_E per entry, at most 128).
+// SaveQuickSlots atomically applies the complete bar using two set operations.
+// Sending the same bar does not rewrite its unchanged slots.
 func SaveQuickSlots(charID uint32, slots []QuickSlot) error {
+	if len(slots) == 0 {
+		return execSQL(GameData, "DELETE FROM PS_GameData_CharQuickSlots WHERE CharID=?", charID)
+	}
+	entries := make([][3]uint16, 0, min(128, len(slots)))
+	seen := make(map[uint16]bool, cap(entries))
+	for _, q := range slots[:min(128, len(slots))] {
+		key := uint16(q.QuickBar)*256 + uint16(q.QuickSlot)
+		if seen[key] {
+			return fmt.Errorf("duplicate quick slot")
+		}
+		seen[key] = true
+		entries = append(entries, [3]uint16{key, uint16(q.Bag), q.Number})
+	}
+	data, err := json.Marshal(entries)
+	if err != nil {
+		return err
+	}
 	pool, err := Pool(GameData)
 	if err != nil {
 		return err
 	}
 	c, cancel := ctx()
 	defer cancel()
-	return withTx(c, pool, func(tx *sql.Tx) error {
-
-		if _, err := tx.ExecContext(c, `DELETE FROM PS_GameData_CharQuickSlots WHERE CharID=@charid`, sql.Named("charid", int32(charID))); err != nil {
+	return groupWrite(c, pool, func(c context.Context, tx *sql.Tx) error {
+		const keys = `SELECT CAST(value->>0 AS INTEGER) FROM json_each(?)`
+		if _, err := tx.ExecContext(c, `DELETE FROM PS_GameData_CharQuickSlots WHERE CharID=? AND QuickBar*256+QuickSlot NOT IN (`+keys+`)`, charID, string(data)); err != nil {
 			return err
 		}
-		for i, q := range slots {
-			if i >= 128 {
-				break
-			}
-			if _, err := tx.ExecContext(c, `INSERT INTO PS_GameData_CharQuickSlots(CharID,QuickBar,QuickSlot,Bag,Number) VALUES(@charid,@quickbar,@quickslot,@bag,@number)`, sql.Named("charid", int32(charID)),
-				sql.Named("quickbar", q.QuickBar), sql.Named("quickslot", q.QuickSlot), sql.Named("bag", q.Bag),
-				sql.Named("number", int16(q.Number))); err != nil {
-				return err
-			}
-		}
-		return nil
+		_, err := tx.ExecContext(c, `INSERT INTO PS_GameData_CharQuickSlots(CharID,QuickBar,QuickSlot,Bag,Number)
+			SELECT ?, (value->>0)/256, (value->>0)%256, value->>1, value->>2 FROM json_each(?) WHERE true
+			ON CONFLICT(CharID,QuickBar,QuickSlot) DO UPDATE SET Bag=excluded.Bag,Number=excluded.Number
+			WHERE Bag IS NOT excluded.Bag OR Number IS NOT excluded.Number`, charID, string(data))
+		return err
 	})
 }
 
@@ -123,7 +136,7 @@ type AppliedBuff struct {
 
 // AppliedBuffs runs usp_Read_Char_ApplySkills_R.
 func AppliedBuffs(charID uint32) ([]AppliedBuff, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return nil, err
 	}
@@ -158,21 +171,22 @@ func SaveAppliedBuffs(charID uint32, buffs []AppliedBuff) error {
 	}
 	c, cancel := ctx()
 	defer cancel()
-	return withTx(c, pool, func(tx *sql.Tx) error {
+	return withTx(c, pool, func(tx *sql.Tx) error { return saveBuffsTx(c, tx, charID, buffs) })
+}
 
-		if _, err := tx.ExecContext(c, `DELETE FROM PS_GameData_CharApplySkills WHERE CharID=@charid AND (@deleteall=1 OR (SkillID=@skillid AND SkillLevel=@skilllevel))`, sql.Named("charid", int32(charID)),
-			sql.Named("skillid", int16(0)), sql.Named("skilllevel", uint8(0)), sql.Named("deleteall", true)); err != nil {
+func saveBuffsTx(c context.Context, tx *sql.Tx, charID uint32, buffs []AppliedBuff) error {
+
+	if _, err := tx.ExecContext(c, `DELETE FROM PS_GameData_CharApplySkills WHERE CharID=?`, charID); err != nil {
+		return err
+	}
+	for _, b := range buffs {
+		if _, err := tx.ExecContext(c, `INSERT INTO PS_GameData_CharApplySkills(CharID,Skillid,SkillLevel,LeftResetTime) VALUES(@charid,@skillid,@skilllevel,@leftresettime)`, sql.Named("charid", int32(charID)),
+			sql.Named("skillid", int16(b.SkillID)), sql.Named("skilllevel", b.Level),
+			sql.Named("leftresettime", int32(b.LeftSeconds))); err != nil {
 			return err
 		}
-		for _, b := range buffs {
-			if _, err := tx.ExecContext(c, `INSERT INTO PS_GameData_CharApplySkills(CharID,Skillid,SkillLevel,LeftResetTime) VALUES(@charid,@skillid,@skilllevel,@leftresettime)`, sql.Named("charid", int32(charID)),
-				sql.Named("skillid", int16(b.SkillID)), sql.Named("skilllevel", b.Level),
-				sql.Named("leftresettime", int32(b.LeftSeconds))); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	}
+	return nil
 }
 
 // CommitLearnSkill guards both the previous skill level and available points;
@@ -224,21 +238,23 @@ func SaveSkillDelays(charID uint32, skills []CharacterSkill) error {
 	}
 	c, cancel := ctx()
 	defer cancel()
-	return withTx(c, pool, func(tx *sql.Tx) error {
-		stmt, err := tx.PrepareContext(c, `UPDATE PS_GameData_CharSkills SET Delay=? WHERE CharID=? AND SkillID=? AND Del=0`)
+	return withTx(c, pool, func(tx *sql.Tx) error { return saveSkillDelaysTx(c, tx, charID, skills) })
+}
+
+func saveSkillDelaysTx(c context.Context, tx *sql.Tx, charID uint32, skills []CharacterSkill) error {
+	stmt, err := tx.PrepareContext(c, `UPDATE PS_GameData_CharSkills SET Delay=? WHERE CharID=? AND SkillID=? AND Del=0`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for _, skill := range skills {
+		result, err := stmt.ExecContext(c, skill.Delay, charID, skill.SkillID)
 		if err != nil {
 			return err
 		}
-		defer stmt.Close()
-		for _, skill := range skills {
-			result, err := stmt.ExecContext(c, skill.Delay, charID, skill.SkillID)
-			if err != nil {
-				return err
-			}
-			if err = requireOne(result); err != nil {
-				return err
-			}
+		if err = requireOne(result); err != nil {
+			return err
 		}
-		return nil
-	})
+	}
+	return nil
 }

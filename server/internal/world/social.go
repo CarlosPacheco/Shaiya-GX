@@ -21,11 +21,7 @@ type socialInvite struct {
 	until time.Time
 }
 
-func socialList(charID uint32, blocked bool) ([]byte, error) {
-	rows, err := db.SocialContacts(charID, blocked)
-	if err != nil {
-		return nil, err
-	}
+func buildSocialList(rows []db.SocialContact, blocked bool) []byte {
 	op := packet.Opcode(0x2201)
 	if blocked {
 		op = 0x2208
@@ -47,7 +43,7 @@ func socialList(charID uint32, blocked bool) ([]byte, error) {
 		w.U8(uint8(len(memo) + 1))
 		w.Bytes(append([]byte(memo), 0))
 	}
-	return w.MustFinish(), nil
+	return w.MustFinish()
 }
 func truncateSocialMemo(v string) string {
 	v = strings.ReplaceAll(v, "\x00", "")
@@ -60,23 +56,37 @@ func (s *Session) sendSocial() {
 	if s.char == nil {
 		return
 	}
-	for _, blocked := range []bool{false, true} {
-		p, err := socialList(s.char.ID, blocked)
-		if err != nil {
-			s.log.Printf("social list: %v", err)
-			continue
-		}
-		s.send(p, "native social list")
+	s.socialChecked = time.Now()
+	friends, err := db.SocialContacts(s.char.ID, false)
+	if err == nil {
+		s.socialFriends = friends
+		s.socialReloadAt = s.socialChecked.Add(30 * time.Second)
+		s.send(buildSocialList(friends, false), "native friends list")
+	} else {
+		s.socialReloadAt = s.socialChecked.Add(3 * time.Second)
+		s.log.Printf("friends list: %v", err)
 	}
-
+	blocked, err := db.SocialContacts(s.char.ID, true)
+	if err == nil {
+		s.send(buildSocialList(blocked, true), "native block list")
+	} else {
+		s.log.Printf("block list: %v", err)
+	}
 }
+
 func (s *Session) tickSocial() {
-	if s.char == nil || time.Since(s.socialChecked) < 3*time.Second {
+	now := time.Now()
+	if s.char == nil || now.Sub(s.socialChecked) < 3*time.Second {
 		return
 	}
-	s.socialChecked = time.Now()
-	s.sendSocial()
+	if s.socialRefresh.Swap(false) || !now.Before(s.socialReloadAt) {
+		s.sendSocial()
+		return
+	}
+	s.socialChecked = now
+	s.send(buildSocialList(s.socialFriends, false), "native friend presence")
 }
+
 func (s *Session) handleSocial(op packet.Opcode, p []byte) {
 	if s.char == nil {
 		return
@@ -152,9 +162,14 @@ func (s *Session) handleSocial(op packet.Opcode, p []byte) {
 			s.log.Printf("friend result: %v", err)
 		}
 		s.sendSocial()
-		if data, err := socialList(sender.CharacterID, false); err == nil {
-			if err = sender.Send(data, "friend list"); err != nil {
-				s.log.Printf("friend list send: %v", err)
+		if code == 1 {
+			if sender.owner != nil {
+				sender.owner.socialRefresh.Store(true)
+			}
+			if friends, err := db.SocialContacts(sender.CharacterID, false); err == nil {
+				if err = sender.Send(buildSocialList(friends, false), "friend list"); err != nil {
+					s.log.Printf("friend list send: %v", err)
+				}
 			}
 		}
 	case 0x2205, 0x220a:

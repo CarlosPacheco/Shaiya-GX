@@ -73,7 +73,7 @@ func scanItems(rows *sql.Rows, stored bool) ([]Item, error) {
 
 // CharacterItems runs usp_Read_Char_Items_Detail_R.
 func CharacterItems(charID uint32) ([]Item, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func DeleteCharacterItems(charID uint32, uids ...int64) error {
 
 // StoredItems runs usp_Read_User_StoredItems_Detail_R (account warehouse).
 func StoredItems(userUID uint32) ([]Item, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +263,7 @@ func DeleteStoredItems(userUID uint32, uids ...int64) error {
 
 // GuildStoredItems runs usp_Read_Guild_StoredItems_Detail_R.
 func GuildStoredItems(guildID uint32) ([]Item, error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return nil, err
 	}

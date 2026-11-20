@@ -7,15 +7,17 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
-	"github.com/Spelunkern/Shaiya-GX/server/internal/filelock"
-	"github.com/Spelunkern/Shaiya-GX/server/internal/telemetry"
 	"io"
-	_ "modernc.org/sqlite"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	_ "modernc.org/sqlite"
+
+	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/filelock"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/telemetry"
 )
 
 const (
@@ -27,7 +29,7 @@ const (
 const Timeout = 10 * time.Second
 
 var (
-	mu    sync.Mutex
+	mu    sync.RWMutex
 	pools = map[string]*sql.DB{}
 )
 
@@ -35,9 +37,8 @@ var (
 // prevent login/world from observing a partially copied database at startup.
 func Initialize() error {
 	path := config.DatabasePath()
-	if _, err := os.Stat(path); err == nil {
-		return nil
-	} else if !os.IsNotExist(err) {
+	exists, err := runtimeExists(path)
+	if err != nil || exists {
 		return err
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
@@ -52,8 +53,9 @@ func Initialize() error {
 	}
 	defer release()
 
-	if _, err := os.Stat(path); err == nil {
-		return nil
+	exists, err = runtimeExists(path)
+	if err != nil || exists {
+		return err
 	}
 	seed, err := os.Open(config.DatabaseSeed())
 	if err != nil {
@@ -79,9 +81,26 @@ func Initialize() error {
 	return os.Rename(tmp.Name(), path)
 }
 
-// Pool shares a single connection per process; SQLite coordinates the two
-// server processes through WAL and a bounded busy timeout.
+func runtimeExists(path string) (bool, error) {
+	info, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if seed, err := os.Stat(config.DatabaseSeed()); err == nil && os.SameFile(info, seed) {
+		return false, fmt.Errorf("runtime SQLite database aliases the distributed seed")
+	}
+	return true, nil
+}
+
+// Pool shares one durable writer per process. SQLite coordinates the login and
+// world writers through WAL; each process serializes its own write transactions.
 func Pool(database string) (*sql.DB, error) {
+	if p := openPool("sqlite"); p != nil {
+		return p, nil
+	}
 	mu.Lock()
 	defer mu.Unlock()
 	if p := pools["sqlite"]; p != nil {
@@ -117,6 +136,40 @@ func Pool(database string) (*sql.DB, error) {
 	pools["sqlite"] = p
 	return p, nil
 }
+func openPool(name string) *sql.DB {
+	mu.RLock()
+	defer mu.RUnlock()
+	return pools[name]
+}
+
+// ReadPool serves queries whose decisions do not require the writer lock.
+// Always revalidate state inside the write transaction before committing.
+func ReadPool() (*sql.DB, error) {
+	if p := openPool("reader"); p != nil {
+		return p, nil
+	}
+	if _, err := Pool(GameData); err != nil {
+		return nil, err
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if p := pools["reader"]; p != nil {
+		return p, nil
+	}
+	dsn, err := config.ReadDSN()
+	if err != nil {
+		return nil, err
+	}
+	p, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		return nil, err
+	}
+	p.SetMaxOpenConns(4)
+	p.SetMaxIdleConns(4)
+	pools["reader"] = p
+	return p, nil
+}
+
 func Open(databases ...string) error {
 	for _, d := range databases {
 		if _, err := Pool(d); err != nil {
@@ -139,10 +192,14 @@ func Close() error {
 	defer mu.Unlock()
 	var result error
 	for key, p := range pools {
-		c, cancel := ctx()
-		_, err := p.ExecContext(c, "PRAGMA optimize")
-		cancel()
-		result = errors.Join(result, err, p.Close())
+		if key == "sqlite" {
+			c, cancel := ctx()
+			_, err := p.ExecContext(c, "PRAGMA optimize")
+			cancel()
+			result = errors.Join(result, err)
+		}
+		writeQueues.Delete(p)
+		result = errors.Join(result, p.Close())
 		delete(pools, key)
 	}
 	return result
@@ -151,9 +208,7 @@ func Close() error {
 // Observe reports bounded database contention and WAL size without acquiring the
 // writer connection for checkpointing. Maintenance never truncates a live WAL.
 func Observe() {
-	mu.Lock()
-	p := pools["sqlite"]
-	mu.Unlock()
+	p := openPool("sqlite")
 	if p == nil {
 		return
 	}
@@ -161,6 +216,11 @@ func Observe() {
 	dbWaits.Set(stats.WaitCount)
 	dbWaitNanos.Set(stats.WaitDuration.Nanoseconds())
 	dbOpen.Set(int64(stats.OpenConnections))
+	if reader := openPool("reader"); reader != nil {
+		stats := reader.Stats()
+		dbReaderWaits.Set(stats.WaitCount)
+		dbReaderWaitNanos.Set(stats.WaitDuration.Nanoseconds())
+	}
 	if info, err := os.Stat(config.DatabasePath() + "-wal"); err == nil {
 		dbWAL.Set(info.Size())
 	} else if os.IsNotExist(err) {
@@ -172,3 +232,6 @@ var dbWaits = telemetry.NumberMetric("gx_db_connection_wait_total")
 var dbWaitNanos = telemetry.NumberMetric("gx_db_connection_wait_nanoseconds_total")
 var dbOpen = telemetry.NumberMetric("gx_db_connections_open")
 var dbWAL = telemetry.NumberMetric("gx_db_wal_bytes")
+
+var dbReaderWaits = telemetry.NumberMetric("gx_db_reader_wait_total")
+var dbReaderWaitNanos = telemetry.NumberMetric("gx_db_reader_wait_nanoseconds_total")

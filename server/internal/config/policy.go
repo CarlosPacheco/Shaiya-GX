@@ -14,7 +14,7 @@ type NetworkPolicy struct {
 }
 
 func Network(service string) (NetworkPolicy, error) {
-	p := NetworkPolicy{Establishments: 120, Economy: 20, Connections: 500, PerIP: 32, IPAttempts: 30, AccountAttempts: 10, InputFrames: 512, InputBytes: 1 << 20, OutputPackets: 256, OutputBytes: 1 << 20}
+	p := NetworkPolicy{Establishments: 120, Economy: 20, Connections: 1200, PerIP: 32, IPAttempts: 30, AccountAttempts: 10, InputFrames: 512, InputBytes: 1 << 20, OutputPackets: 256, OutputBytes: 1 << 20}
 	key := "RAPTURE_WORLD_MAX_CONNECTIONS"
 	if service == "login" {
 		p.Connections = 200

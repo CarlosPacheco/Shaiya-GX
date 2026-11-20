@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
@@ -58,6 +59,9 @@ type Session struct {
 	gmConcealed       bool
 	elements          elementRuntime
 	socialChecked     time.Time
+	socialReloadAt    time.Time
+	socialFriends     []db.SocialContact
+	socialRefresh     atomic.Bool
 	conn              net.Conn
 	out               *connWriter
 	log               *logx.Tag
@@ -239,7 +243,7 @@ func (s *Session) processInput(n int, buf []byte, frames *netx.Frames) error {
 func (s *Session) close() {
 	s.stateMu.Lock()
 	defer s.stateMu.Unlock()
-	s.leaveWorld()
+	s.leaveWorld(true)
 	if s.accountID != 0 {
 		if err := db.TryGameLogout(int32(s.accountID), s.sessionID); err != nil {
 			s.log.Printf("GX Server World logout procedure failed: %v", err)
@@ -249,19 +253,21 @@ func (s *Session) close() {
 }
 
 // leaveWorld saves and unregisters the active character.
-func (s *Session) leaveWorld() {
+func (s *Session) leaveWorld(disconnect bool) bool {
 	if s.char == nil {
-		return
+		return true
 	}
 	if s.player != nil {
 		s.drainRewards(s.player)
 		s.tickPvP()
 		s.applyDuelWins()
 	}
-	s.savePosition()
-	s.persistBuffs()
-	s.persistSkillDelays()
-	s.saveQuests()
+	if err := db.SaveCharacterExit(*s.char, s.buffSnapshot(), s.skillDelaySnapshot(), s.questSnapshot()); err != nil {
+		s.logErr("save character exit", err)
+		if !disconnect {
+			return false
+		}
+	}
 	s.useNpc(0)
 	s.guildDisconnect()
 	if s.player != nil {
@@ -269,6 +275,7 @@ func (s *Session) leaveWorld() {
 		s.player = nil
 	}
 	s.char = nil
+	return true
 }
 
 // send writes a frame to this client: AES-CTR until the initial character
@@ -844,6 +851,9 @@ func (s *Session) sendInitialState(st *CharacterStats) {
 	s.sendEnchantRules()
 	s.sendOJLimits()
 	s.sendChestCloakFits()
+	s.socialFriends = nil
+	s.socialReloadAt = time.Time{}
+	s.socialRefresh.Store(false)
 	s.sendSocial()
 	ch := s.char
 	for _, p := range []labeled{
@@ -972,7 +982,12 @@ func (s *Session) handleLogout() {
 	if s.char != nil {
 		id = s.char.ID
 	}
-	s.leaveWorld()
+	if !s.leaveWorld(false) {
+		if s.conn != nil {
+			netx.Abort(s.conn)
+		}
+		return
+	}
 	s.awaitingMapLoad = false
 	s.buffs, s.cast, s.mounted, s.dead, s.autoAttack = nil, nil, false, false, false
 	s.items, s.skills, s.quickSlots, s.stored, s.points = nil, nil, nil, nil, 0

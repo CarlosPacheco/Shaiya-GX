@@ -14,7 +14,7 @@ const FactionNone = 2
 // procedure always reports MaxGrow 3; without a row the account has no
 // faction yet.
 func ReadMaxGrow(userUID int32) (country, maxGrow uint8, err error) {
-	pool, err := Pool(GameData)
+	pool, err := ReadPool()
 	if err != nil {
 		return 0, 0, err
 	}
@@ -36,10 +36,6 @@ func ReadMaxGrow(userUID int32) (country, maxGrow uint8, err error) {
 // SaveCountry runs PS_GameData.dbo.usp_Save_Char_Country_E, inserting the
 // UserMaxGrow row the first time an account picks a faction.
 func SaveCountry(userUID int32, country uint8) error {
-	current, _, err := ReadMaxGrow(userUID)
-	if err != nil {
-		return err
-	}
 	pool, err := Pool(GameData)
 	if err != nil {
 		return err
@@ -48,6 +44,6 @@ func SaveCountry(userUID int32, country uint8) error {
 	defer cancel()
 	_, err = pool.ExecContext(c, `INSERT INTO PS_GameData_UserMaxGrow(ServerID,UserUID,Country,MaxGrow) VALUES(@serverid,@useruid,@country,1) ON CONFLICT(ServerID,UserUID) DO UPDATE SET Country=excluded.Country`,
 		sql.Named("serverid", config.ServerID), sql.Named("useruid", userUID),
-		sql.Named("country", int16(country)), sql.Named("insert", current == FactionNone))
+		sql.Named("country", int16(country)))
 	return err
 }

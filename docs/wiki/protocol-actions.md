@@ -415,7 +415,7 @@ Declarations: [packet.SetStatPoint](../../server/internal/packet/packet.go#L82),
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L210)
 
-**S→C serializers:** [handleSetStatPoint (server/internal/world/skills.go)](../../server/internal/world/skills.go#L233)
+**S→C serializers:** [handleSetStatPoint (server/internal/world/skills.go)](../../server/internal/world/skills.go#L241)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L638)
 
@@ -425,7 +425,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleSetStatPoint — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L233)
+[Source definition](../../server/internal/world/skills.go#L241)
 
 ```go
 func (s *Session) handleSetStatPoint(p []byte) {
@@ -525,7 +525,7 @@ Declarations: [packet.LearnNewSkill](../../server/internal/packet/packet.go#L84)
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L208)
 
-**S→C serializers:** [buildLearnSkillError (server/internal/world/skills.go)](../../server/internal/world/skills.go#L91), [buildLearnSkillResult (server/internal/world/skills.go)](../../server/internal/world/skills.go#L134)
+**S→C serializers:** [buildLearnSkillError (server/internal/world/skills.go)](../../server/internal/world/skills.go#L99), [buildLearnSkillResult (server/internal/world/skills.go)](../../server/internal/world/skills.go#L142)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L736)
 
@@ -535,7 +535,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildLearnSkillError — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L91)
+[Source definition](../../server/internal/world/skills.go#L99)
 
 ```go
 func buildLearnSkillError(reason uint8, skillID uint16, level uint8) []byte {
@@ -552,7 +552,7 @@ func buildLearnSkillError(reason uint8, skillID uint16, level uint8) []byte {
 
 <details><summary>buildLearnSkillResult — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L134)
+[Source definition](../../server/internal/world/skills.go#L142)
 
 ```go
 func buildLearnSkillResult(ok bool, number uint8, skillID uint16, level uint8) []byte {

@@ -153,7 +153,7 @@ func setupWorld(t *testing.T) string {
 		}
 		go func() {
 			defer close(done)
-			netx.Serve(ctx, listener, policy.Connections, policy.PerIP, func(conn net.Conn) { world.Serve(conn, logger, logger.Tagged("test")) })
+			netx.Serve(ctx, listener, policy.Connections, policy.PerIP, func(conn net.Conn) { world.Serve(conn, logger, logger.Tagged("test")) }, netx.NewRateLimiter(4096, policy.Establishments, time.Minute))
 		}()
 		shutdownWorld = func() { cancel(); <-done; engine.Close(); logger.Close() }
 
@@ -170,6 +170,11 @@ func connect(t *testing.T, account uint32) *client {
 	t.Helper()
 	// A previous test's session for the account may still be closing.
 	time.Sleep(time.Second)
+	return connectWorld(t, account)
+}
+
+func connectWorld(t *testing.T, account uint32) *client {
+	t.Helper()
 	var material [32]byte
 	rand.Read(material[:])
 	address := setupWorld(t)

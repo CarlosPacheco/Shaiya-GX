@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bytes"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"path/filepath"
 	"sync"
@@ -19,6 +20,14 @@ func TestHandoffExactlyOnce(t *testing.T) {
 	h := Handoff{UserUID: 990999, Identity: NewIdentity(), SessionID: NewSessionID()}
 	if err := Save(h); err != nil {
 		t.Fatal(err)
+	}
+	pool, err := db.Pool(db.UserData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stored []byte
+	if err := pool.QueryRow("SELECT Identity FROM GX_SessionHandoff WHERE UserUID=?", h.UserUID).Scan(&stored); err != nil || len(stored) != 32 || bytes.Equal(stored, h.Identity[:]) {
+		t.Fatalf("handoff raw token storage: length=%d err=%v", len(stored), err)
 	}
 	if _, err := Consume(h.UserUID, NewIdentity()); err != ErrInvalid {
 		t.Fatal("invalid token accepted", err)
@@ -41,15 +50,18 @@ func TestHandoffExactlyOnce(t *testing.T) {
 	if err := Save(h); err != nil {
 		t.Fatal(err)
 	}
-	pool, err := db.Pool(db.UserData)
-	if err != nil {
-		t.Fatal(err)
-	}
 	if _, err = pool.Exec(`UPDATE GX_SessionHandoff SET ExpiresAt=?`, time.Now().Add(-time.Second).Unix()); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = Consume(h.UserUID, h.Identity); err != ErrInvalid {
 		t.Fatal("expired token accepted", err)
+	}
+	if err := PurgeExpired(); err != nil {
+		t.Fatal(err)
+	}
+	var tickets int
+	if err := pool.QueryRow("SELECT COUNT(*) FROM GX_SessionHandoff WHERE UserUID=?", h.UserUID).Scan(&tickets); err != nil || tickets != 0 {
+		t.Fatalf("expired tickets=%d err=%v", tickets, err)
 	}
 	db.Close()
 }

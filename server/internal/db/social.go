@@ -37,7 +37,7 @@ func AddFriends(a, b Character) error {
 }
 
 func SocialContacts(charID uint32, blocked bool) ([]SocialContact, error) {
-	p, err := Pool(GameData)
+	p, err := ReadPool()
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func SocialContacts(charID uint32, blocked bool) ([]SocialContact, error) {
 	return out, rows.Err()
 }
 func SocialCharacter(name string) (Character, error) {
-	p, err := Pool(GameData)
+	p, err := ReadPool()
 	if err != nil {
 		return Character{}, err
 	}
@@ -135,7 +135,7 @@ func SocialMemo(charID, target uint32, memo string, blocked bool) error {
 	return err
 }
 func SocialBlocked(charID, sender uint32) bool {
-	p, err := Pool(GameData)
+	p, err := ReadPool()
 	if err != nil {
 		return false
 	}

@@ -13,7 +13,10 @@ checks does not imply every gameplay operation is atomic.
 - `runtime/rapture.sqlite`: mutable working copy, ignored by Git. Startup copies the seed only when absent. An existing runtime is never reset by an update.
 - `RAPTURE_DB_PATH`, `RAPTURE_DB_SEED`, `RAPTURE_DATA_DIR`: compatible overrides for runtime, seed and supplied server maps/configuration.
 
-The names remain compatible with the former Rapture server. They no longer identify a separate project. Login and world share one SQLite file using `modernc.org/sqlite`; no C SQLite library, credentials, Docker or database daemon is required. Each process owns a bounded connection. WAL, a busy timeout, full synchronization and immediate write transactions coordinate writes.
+The names remain compatible with the former Rapture server. They no longer identify a separate project. Login and world share one SQLite file using `modernc.org/sqlite`; no C SQLite library, credentials, Docker or database daemon is required. Each process has one write connection and up to four read-only connections.
+WAL, a bounded busy timeout, full synchronization and immediate transactions
+coordinate durable writes. Verified readers observe committed state while a
+writer is active. Runtime opening rejects a path that aliases the seed.
 
 The snapshot includes test account credentials and gameplay state by explicit choice. Personal future runtime files, backups, local overrides and logs remain outside Git and releases.
 
@@ -35,6 +38,13 @@ python3 tools/sqlite.py query --file query.sql
 
 On Windows use `py -3`. Account creation prompts for a password. Automation may use `RAPTURE_ACCOUNT_PASSWORD` in the environment. The account tool never overwrites an existing account. SQL files use SQLite syntax and prefixed table names.
 
+For a runtime imported from an older server, `build/gx_console account
+upgrade-legacy` hashes the existing legacy passwords in place and reports
+only counts. The command preserves valid passwords and leaves credentials
+requiring a reset for the operator to handle. Backups made before conversion
+may still contain legacy values. Rotate credentials that have been shared or
+exposed. Keep the runtime, its WAL/SHM companions and backups private.
+
 For a consistent backup:
 
 ```sh
@@ -55,3 +65,42 @@ Account creation and password changes now write Argon2id directly through the
 built gx_console command. See [modernization](modernization.md) for commands,
 credential revocation and TLS provisioning. Existing legacy credentials upgrade
 on successful authentication; do not downgrade to plaintext-only binaries.
+
+## Write path and capacity test
+
+Independent inventory, purchase, character and quick-bar writes can share a
+durable commit. A failed operation rolls back to its own savepoint. Success is
+reported only after the outer commit. A character exit commits the character
+and its buff, skill and quest snapshots together. Changes that use a
+gameplay transaction still validate their expected inventory and balances
+on the writer.
+
+GX migrations 24 and 25 index active write lookups and the legacy
+`MAX(RowID)` computation. The latter keeps original identity semantics while
+avoiding table scans as players accumulate items and quick slots. Historical
+tables and authored game definitions remain compatible with exports.
+World handoff tokens are stored as SHA-256 digests. The login encryption
+material is short-lived and expired handoffs are cleared in bounded batches.
+
+Reproduce the mixed write probe from the source checkout on the target
+filesystem. Set `TMPDIR` to a writable directory on that filesystem so the
+probe measures its durability cost. The test always creates a separate
+runtime from the approved seed.
+
+```sh
+source tools/go-env.sh
+GX_STORAGE_LOAD_CLIENTS=1000 GX_STORAGE_LOAD_ROUNDS=32 \
+  go test -tags integration ./server/cmd/gx_world -run '^TestPersistentWorldLoad$' -count=1 -v
+```
+
+The probe uses encrypted World sockets, scattered placements and independent
+accounts. It checks balances, sale logs, item stacks, positions in inventory,
+quick bars, logouts, sampled relogs and SQLite integrity after the load.
+It provisions tickets directly to isolate the World write workload from
+Argon2 and does not characterize simultaneous credential logins or a single
+PvP crowd. The live World default is 1,200 connections. The probe raises
+loopback per-IP limits only in its own process. Confirm that the operating
+system's open-file limit exceeds the connection cap plus logs and SQLite
+files. Keep the per-IP limits enabled on a public listener. Monitor writer
+wait, transaction latency, WAL growth and storage errors on the deployment
+disk during rollout.

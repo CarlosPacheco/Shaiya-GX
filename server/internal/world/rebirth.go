@@ -310,7 +310,7 @@ func (s *Session) ultimateDeath() {
 // usual restore window applies) and the connection closes (LogoutUser).
 func (s *Session) endUltimateCharacter() {
 	charID := s.char.ID
-	s.leaveWorld()
+	s.leaveWorld(true)
 	if ok, err := db.DeleteCharacter(s.accountID, charID); err != nil || !ok {
 		s.log.Printf("GX Server World ultimate death delete failed character_id=%d ok=%v: %v", charID, ok, err)
 	}

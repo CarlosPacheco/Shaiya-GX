@@ -30,6 +30,7 @@ func sqliteFixture(t *testing.T) *sql.DB {
 		mu.Lock()
 		defer mu.Unlock()
 		for _, p := range pools {
+			writeQueues.Delete(p)
 			p.Close()
 		}
 		pools = map[string]*sql.DB{}

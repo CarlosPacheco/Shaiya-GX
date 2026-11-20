@@ -1,6 +1,7 @@
 package world
 
 import (
+	"slices"
 	"sort"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -79,12 +80,19 @@ func (s *Session) handleSkillBar(p []byte) {
 	if s.char == nil {
 		return
 	}
-	s.quickSlots = parseSkillBar(p)
-	if err := db.SaveQuickSlots(s.char.ID, s.quickSlots); err != nil {
+	if len(p) < 3 || int(p[2]) > maxQuickSlots || len(p) != 3+int(p[2])*5 {
+		return
+	}
+	slots := parseSkillBar(p)
+	if slices.Equal(slots, s.quickSlots) {
+		return
+	}
+	if err := db.SaveQuickSlots(s.char.ID, slots); err != nil {
 		s.log.Printf("GX Server World failed to save quick slots: %v", err)
 		return
 	}
-	s.log.Printf("GX Server World saved %d quick slots", len(s.quickSlots))
+	s.quickSlots = slots
+
 }
 
 // buildLearnSkillError (0x0209): reason, skill id, level.

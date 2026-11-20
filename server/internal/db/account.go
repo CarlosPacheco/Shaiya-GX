@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"errors"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/password"
 )
 
@@ -16,15 +17,16 @@ type LoginResult struct {
 // TryGameLogin translates the original procedure into one SQLite transaction,
 // including account status, the login log and UserLoginStatus.
 func TryGameLogin(userID, passwordValue string, sessionID int64, userIP string) (LoginResult, error) {
-	p, err := Pool(UserData)
+	reader, err := ReadPool()
 	if err != nil {
 		return LoginResult{}, err
 	}
 	c, cancel := ctx()
 	defer cancel()
-	// Expensive password work runs outside SQLite's single-writer transaction.
+	// Password checks and failed attempts never take SQLite's writer lock.
 	var stored string
-	err = p.QueryRowContext(c, `SELECT Pw FROM PS_UserData_Users_Master WHERE UserID=?`, userID).Scan(&stored)
+	var uid, leave int32
+	err = reader.QueryRowContext(c, `SELECT Pw,UserUID,Leave FROM PS_UserData_Users_Master WHERE UserID=?`, userID).Scan(&stored, &uid, &leave)
 	if errors.Is(err, sql.ErrNoRows) {
 		return LoginResult{Status: -3}, password.Dummy(c, passwordValue)
 	}
@@ -35,8 +37,18 @@ func TryGameLogin(userID, passwordValue string, sessionID int64, userIP string) 
 	if err != nil {
 		return LoginResult{}, err
 	}
+	if leave != 0 {
+		return LoginResult{Status: -3, UserUID: uid}, nil
+	}
+	if !valid {
+		return LoginResult{Status: -1, UserUID: uid}, nil
+	}
+	p, err := Pool(UserData)
+	if err != nil {
+		return LoginResult{}, err
+	}
 	var upgraded string
-	if valid && legacy {
+	if legacy {
 		upgraded, err = password.HashContext(c, passwordValue)
 		if err != nil {
 			return LoginResult{}, err
@@ -61,7 +73,7 @@ func TryGameLogin(userID, passwordValue string, sessionID int64, userIP string) 
 			result.Status = -3
 			return nil
 		}
-		if !matches || !valid {
+		if !matches {
 			result.Status = -1
 			return nil
 		}
@@ -118,7 +130,8 @@ func TryGameLogout(userUID int32, sessionID int64) error {
 		var loginSession int64
 		var minutes int
 		var loginTime string
-		e := tx.QueryRowContext(c, `SELECT LoginSession,MAX(0,CAST((julianday('now')-julianday(LoginTime))*1440 AS INTEGER)),LoginTime FROM PS_UserData_UserLoginStatus WHERE UserUID=?1`, userUID).Scan(&loginSession, &minutes, &loginTime)
+		var online int
+		e := tx.QueryRowContext(c, `SELECT LoginSession,MAX(0,CAST((julianday('now')-julianday(LoginTime))*1440 AS INTEGER)),LoginTime,LoginStatus FROM PS_UserData_UserLoginStatus WHERE UserUID=?1`, userUID).Scan(&loginSession, &minutes, &loginTime, &online)
 		if errors.Is(e, sql.ErrNoRows) {
 			return nil
 		}
@@ -126,21 +139,15 @@ func TryGameLogout(userUID int32, sessionID int64) error {
 			return e
 		}
 		// A delayed disconnect must never alter a newer login or credit twice.
-		var online int
-		if e = tx.QueryRowContext(c, `SELECT LoginStatus FROM PS_UserData_UserLoginStatus WHERE UserUID=?`, userUID).Scan(&online); e != nil {
-			return e
-		}
 		if sessionID != loginSession || online == 0 {
 			return nil
 		}
-		if sessionID == loginSession {
-			if _, e = tx.ExecContext(c, `INSERT INTO PS_UserData_UserOnlineTimeLog(UserUID,OldPoint,AddPoint,LoginTime,LogoutTime,SessionID)
+		if _, e = tx.ExecContext(c, `INSERT INTO PS_UserData_UserOnlineTimeLog(UserUID,OldPoint,AddPoint,LoginTime,LogoutTime,SessionID)
     SELECT UserUID,COALESCE(Point,0),?2,?3,CURRENT_TIMESTAMP,?4 FROM PS_UserData_Users_Master WHERE UserUID=?1`, userUID, minutes, loginTime, sessionID); e != nil {
-				return e
-			}
-			if _, e = tx.ExecContext(c, `UPDATE PS_UserData_Users_Master SET Point=COALESCE(Point,0)+?2 WHERE UserUID=?1`, userUID, minutes/2); e != nil {
-				return e
-			}
+			return e
+		}
+		if _, e = tx.ExecContext(c, `UPDATE PS_UserData_Users_Master SET Point=COALESCE(Point,0)+?2 WHERE UserUID=?1`, userUID, minutes/2); e != nil {
+			return e
 		}
 		if _, e = tx.ExecContext(c, `UPDATE PS_UserData_UserLoginStatus SET LoginStatus=0,LogoutTime=CURRENT_TIMESTAMP,LogoutSession=?2,LastPlayTime=?3 WHERE UserUID=?1`, userUID, sessionID, minutes); e != nil {
 			return e
@@ -233,22 +240,26 @@ var ErrNotFound = errors.New("not found")
 // AccountByUID reads Users_Master plus the realm's UserMaxGrow row
 // (PS_GameData.dbo.usp_Read_User_MaxGrow_R).
 func AccountByUID(userUID int32) (Account, error) {
-	pool, err := Pool(UserData)
+	pool, err := ReadPool()
 	if err != nil {
 		return Account{}, err
 	}
 	c, cancel := ctx()
 	defer cancel()
 	var a Account
-	err = pool.QueryRowContext(c, `SELECT UserUID, UserID, Status, Admin, AdminLevel, Point,COALESCE((SELECT Version FROM GX_AccountSecurity WHERE UserUID=PS_UserData_Users_Master.UserUID),1)
-		FROM PS_UserData_Users_Master WHERE UserUID = ?1 AND Leave = 0`, userUID).
-		Scan(&a.UserUID, &a.UserID, &a.Status, &a.Admin, &a.AdminLevel, &a.Point, &a.CredentialVersion)
+	var country int16
+	err = pool.QueryRowContext(c, `SELECT U.UserUID,U.UserID,U.Status,U.Admin,U.AdminLevel,U.Point,
+		COALESCE(S.Version,1),COALESCE(G.Country,2)
+		FROM PS_UserData_Users_Master U LEFT JOIN GX_AccountSecurity S ON S.UserUID=U.UserUID
+		LEFT JOIN PS_GameData_UserMaxGrow G ON G.ServerID=?2 AND G.UserUID=U.UserUID
+		WHERE U.UserUID=?1 AND U.Leave=0`, userUID, config.ServerID).
+		Scan(&a.UserUID, &a.UserID, &a.Status, &a.Admin, &a.AdminLevel, &a.Point, &a.CredentialVersion, &country)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Account{}, ErrNotFound
 	}
 	if err != nil {
 		return Account{}, err
 	}
-	a.Country, a.MaxGrow, err = ReadMaxGrow(userUID)
-	return a, err
+	a.Country, a.MaxGrow = uint8(country), 3
+	return a, nil
 }

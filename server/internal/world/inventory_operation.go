@@ -77,6 +77,8 @@ func (s *Session) inventoryOperationWithCommit(run func(), commit func(db.Charac
 		var err error
 		if commit != nil {
 			err = commit(change)
+		} else if before == after {
+			err = db.CommitItems(before.ID, items, s.items)
 		} else {
 			err = db.CommitGameplay([]db.CharacterChange{change}, nil)
 		}

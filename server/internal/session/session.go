@@ -6,12 +6,14 @@ package session
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"database/sql"
 	"encoding/binary"
 	"errors"
-	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
 
 // MaxAge bounds how long a handoff stays valid after login.
@@ -53,61 +55,80 @@ func Save(h Handoff) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
 	defer cancel()
-	tx, err := pool.BeginTx(ctx, nil)
+	token := sha256.Sum256(h.Identity[:])
+	result, err := pool.ExecContext(ctx, `INSERT INTO GX_SessionHandoff(UserUID,Identity,AESMaterial,SessionID,ExpiresAt,CredentialVersion)
+		SELECT ?1,?2,?3,?4,?5,Version
+		FROM (SELECT COALESCE((SELECT Version FROM GX_AccountSecurity WHERE UserUID=?1),1) AS Version)
+		WHERE ?6=0 OR ?6=Version
+		ON CONFLICT(UserUID) DO UPDATE SET Identity=excluded.Identity,AESMaterial=excluded.AESMaterial,
+		SessionID=excluded.SessionID,ExpiresAt=excluded.ExpiresAt,CredentialVersion=excluded.CredentialVersion`,
+		h.UserUID, token[:], h.AESMaterial[:], h.SessionID, time.Now().Add(MaxAge).Unix(), h.CredentialVersion)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
-	var version int64
-	if err = tx.QueryRowContext(ctx, `SELECT COALESCE((SELECT Version FROM GX_AccountSecurity WHERE UserUID=?),1)`, h.UserUID).Scan(&version); err != nil {
-		return err
-	}
-	if h.CredentialVersion != 0 && h.CredentialVersion != version {
+	affected, err := result.RowsAffected()
+	if err == nil && affected != 1 {
 		return ErrInvalid
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO GX_SessionHandoff(UserUID,Identity,AESMaterial,SessionID,ExpiresAt,CredentialVersion) VALUES(?,?,?,?,?,?) ON CONFLICT(UserUID) DO UPDATE SET Identity=excluded.Identity,AESMaterial=excluded.AESMaterial,SessionID=excluded.SessionID,ExpiresAt=excluded.ExpiresAt,CredentialVersion=excluded.CredentialVersion`, h.UserUID, h.Identity[:], h.AESMaterial[:], h.SessionID, time.Now().Add(MaxAge).Unix(), version)
-	if err == nil {
-		err = tx.Commit()
-	}
-
 	return err
 }
 
-// Consume validates and deletes a ticket in one write transaction, including
-// concurrent callers in different processes. Invalid identities cannot burn it.
+// Consume first checks the token on a read-only connection. A valid candidate
+// is then consumed by one guarded DELETE that rechecks expiry and revocation.
 func Consume(userUID uint32, identity [16]byte) (Handoff, error) {
-	pool, err := db.Pool(db.UserData)
+	reader, err := db.ReadPool()
 	if err != nil {
 		return Handoff{}, err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
 	defer cancel()
-	tx, err := pool.BeginTx(ctx, nil)
-	if err != nil {
-		return Handoff{}, err
-	}
-	defer tx.Rollback()
-	var stored, material []byte
-	var expires, version int64
-	h := Handoff{UserUID: userUID}
-	err = tx.QueryRowContext(ctx, `SELECT Identity,AESMaterial,SessionID,ExpiresAt,CredentialVersion,COALESCE((SELECT Version FROM GX_AccountSecurity WHERE UserUID=GX_SessionHandoff.UserUID),1)
- FROM GX_SessionHandoff WHERE UserUID=?`, userUID).Scan(&stored, &material, &h.SessionID, &expires, &h.CredentialVersion, &version)
+	var stored []byte
+	err = reader.QueryRowContext(ctx, `SELECT Identity FROM GX_SessionHandoff WHERE UserUID=? AND ExpiresAt>unixepoch()`, userUID).Scan(&stored)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Handoff{}, ErrInvalid
 	}
 	if err != nil {
 		return Handoff{}, err
 	}
-	if version != h.CredentialVersion || len(stored) != 16 || len(material) != 32 || expires <= time.Now().Unix() || subtle.ConstantTimeCompare(stored, identity[:]) != 1 {
+	token := sha256.Sum256(identity[:])
+	expected := token[:]
+	// Tickets pending during an upgrade retain their original 16-byte encoding
+	// until consumed or expired.
+	if len(stored) == len(identity) {
+		expected = identity[:]
+	}
+	if subtle.ConstantTimeCompare(stored, expected) != 1 {
 		return Handoff{}, ErrInvalid
 	}
-	copy(h.Identity[:], stored)
+	writer, err := db.Pool(db.UserData)
+	if err != nil {
+		return Handoff{}, err
+	}
+	h := Handoff{UserUID: userUID, Identity: identity}
+	var material []byte
+	err = writer.QueryRowContext(ctx, `DELETE FROM GX_SessionHandoff
+		WHERE UserUID=?1 AND Identity=?2 AND ExpiresAt>unixepoch() AND length(AESMaterial)=32
+		AND CredentialVersion=COALESCE((SELECT Version FROM GX_AccountSecurity WHERE UserUID=?1),1)
+		RETURNING AESMaterial,SessionID,CredentialVersion`, userUID, stored).Scan(&material, &h.SessionID, &h.CredentialVersion)
+	if errors.Is(err, sql.ErrNoRows) {
+		return Handoff{}, ErrInvalid
+	}
+	if err != nil {
+		return Handoff{}, err
+	}
 	copy(h.AESMaterial[:], material)
-	if _, err = tx.ExecContext(ctx, `DELETE FROM GX_SessionHandoff WHERE UserUID=?`, userUID); err != nil {
-		return Handoff{}, err
-	}
-	if err = tx.Commit(); err != nil {
-		return Handoff{}, err
-	}
 	return h, nil
+}
+
+// PurgeExpired drops old key material in bounded batches.
+func PurgeExpired() error {
+	pool, err := db.Pool(db.UserData)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
+	defer cancel()
+	_, err = pool.ExecContext(ctx, `DELETE FROM GX_SessionHandoff WHERE UserUID IN
+		(SELECT UserUID FROM GX_SessionHandoff WHERE ExpiresAt<=unixepoch() ORDER BY ExpiresAt LIMIT 1024)`)
+	return err
 }
