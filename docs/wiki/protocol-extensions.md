@@ -2409,3 +2409,87 @@ func EvolutionCastPacket(generation uint32, cell uint8, target uint32) []byte {
 ```
 
 </details>
+
+## Opcode 7f24
+
+**`0x7F24` — GXFirecracker**
+
+Declarations: [proto.GXFirecracker](../../internal/proto/firecracker.go#L9).
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** [useFirecracker (server/internal/world/firecracker.go)](../../server/internal/world/firecracker.go#L16)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>useFirecracker — server/internal/world/firecracker.go</summary>
+
+[Source definition](../../server/internal/world/firecracker.go#L16)
+
+```go
+func (s *Session) useFirecracker(index int, def *db.ItemDef) bool {
+	ch := s.char
+	variant := proto.FirecrackerVariant(def.Type, def.TypeID)
+	if variant == 0 || s.dead || ch.CurrentHP == 0 {
+		return false
+	}
+	now := time.Now()
+	delay := cooldownForReqIg(def.ReqIg)
+	if delay > 0 && now.Sub(s.itemCooldowns[def.ReqIg]) < delay {
+		return false
+	}
+	item, err := s.consumeOne(index)
+	if err != nil {
+		s.logErr("consume firecracker", err)
+		return false
+	}
+	if delay > 0 {
+		if s.itemCooldowns == nil {
+			s.itemCooldowns = make(map[uint8]time.Time)
+		}
+		s.itemCooldowns[def.ReqIg] = now
+	}
+	s.send(buildUseItemResult(ch.ID, &item), "0x050A firecracker used")
+	payload := proto.FirecrackerPacket(proto.Firecracker{Variant: variant, X: ch.PosX, Y: ch.PosY, Z: ch.PosZ, Name: ch.Name})
+	w := packet.New(packet.Opcode(proto.GXFirecracker))
+	w.Bytes(payload[2:])
+	frame := w.MustFinish()
+	s.send(frame, "local firecracker")
+	for _, viewer := range PlayersNearExcluding(ch.MapID, ch.ID, ch.PosX, ch.PosZ, firecrackerRadius) {
+		viewer.Send(frame, "local firecracker")
+	}
+	return true
+}
+```
+
+</details>
+
+<details><summary>FirecrackerPacket — internal/proto/firecracker.go</summary>
+
+[Source definition](../../internal/proto/firecracker.go#L32)
+
+```go
+func FirecrackerPacket(v Firecracker) []byte {
+	w := NewWriter(GXFirecracker)
+	w.U8(v.Variant)
+	w.F32(v.X)
+	w.F32(v.Y)
+	w.F32(v.Z)
+	w.Text(v.Name)
+	return w.Bytes()
+}
+```
+
+```go
+type Firecracker struct {
+	Variant uint8
+	X, Y, Z float32
+	Name    string
+}
+```
+
+</details>

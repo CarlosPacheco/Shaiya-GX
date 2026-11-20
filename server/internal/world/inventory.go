@@ -277,6 +277,11 @@ func (s *Session) handleUseItem(p []byte) {
 		}
 	}
 	switch def.Special {
+	case specialFirecracker:
+		if !s.useFirecracker(i, def) {
+			reject("firecracker unavailable")
+		}
+		return
 	case specialSkillReset:
 		if !s.resetSkillsWithItem(i) {
 			reject("skill reset unavailable")

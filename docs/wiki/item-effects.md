@@ -221,6 +221,7 @@ success roll. GX keeps these flags in the current character session.
 | 41 | Immediately revive a selected fallen ally with full HP, MP and SP |
 | 44 | Appearance change; validated through the appearance workflow |
 | 45 | Sex change; validated through the appearance workflow |
+| 46 | Launch the item’s nearby firecracker notice, visual effect and positional sound |
 | 51 | Enable the character rename workflow |
 | 58 | Extraction hammer; ReqVg is direct success percent |
 | 62 | Recreation rune; consumed by the recreation service |
@@ -243,6 +244,14 @@ when the user is moving. The server validates the same faction and instance
 and a maximum distance of 60 units. EP4.5 ItemUse (0x4655e0) and LifeSkill
 (0x459d20) check the same zone without a separate numeric range. GX caps
 the distance at its combat visibility range.
+
+### Firecrackers
+
+Victory, Love, Conquest and Butterfly firecrackers use the corresponding
+1–4 flarebomb effects, with the explosion audio cues verified against Phoenix.
+The server consumes one item and sends the launch to both factions within
+40 units in the same instance. The client shows the localized SysMsg 835.
+The four items share the 20-second item cooldown configured in the catalog.
 
 ## Compatible targets in gem tooltips
 

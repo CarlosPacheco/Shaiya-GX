@@ -40,6 +40,10 @@ func (a *App) pumpWorld() {
 }
 
 func (a *App) applyWorldPacket(p []byte) {
+	if proto.Op(p) == proto.GXFirecracker {
+		a.confirmedFirecracker(p)
+		return
+	}
 	if proto.Op(p) == proto.GXAuction {
 		a.applyAuction(p)
 		return
