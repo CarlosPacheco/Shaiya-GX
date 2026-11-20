@@ -2262,6 +2262,32 @@ func DecodeWorldHandshake(p []byte) (m WorldHandshake, err error) {
 
 </details>
 
+## loot notice
+
+[internal/proto/loot_notice.go](../../internal/proto/loot_notice.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type LootNotice struct {
+	Receiver     uint32
+	Type, TypeID uint8
+}
+```
+
+```go
+func DecodeLootNotice(p []byte) (LootNotice, error) {
+	if len(p) != 8 {
+		return LootNotice{}, fmt.Errorf("invalid GX loot notice length")
+	}
+	r := NewReader(p)
+	n := LootNotice{Receiver: r.U32(), Type: r.U8(), TypeID: r.U8()}
+	return n, r.Err()
+}
+```
+
+</details>
+
 ## mall
 
 [internal/proto/mall.go](../../internal/proto/mall.go#L1)

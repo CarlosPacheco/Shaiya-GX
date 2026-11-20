@@ -15,10 +15,16 @@ type ChatEntry struct {
 	Items            proto.ChatItems
 	ItemType, ItemID uint8
 	Text             string
+	Repetitions      uint16
 	System           bool
 	Color            [4]float32
 	Style            uint8
 	Markup           bool
+}
+
+func sameChatLine(a, b ChatEntry) bool {
+	a.Repetitions, b.Repetitions = 0, 0
+	return a == b
 }
 
 type chatPane struct {
@@ -162,7 +168,7 @@ func (c *ChatPanel) SetEntries(f *Font, entries []ChatEntry) {
 	for i := range overlap {
 		old, next := oldByPane[i], newByPane[i]
 		n := min(len(old), len(next))
-		for n > 0 && !slices.Equal(old[len(old)-n:], next[:n]) {
+		for n > 0 && !slices.EqualFunc(old[len(old)-n:], next[:n], sameChatLine) {
 			n--
 		}
 		overlap[i] = n
@@ -184,7 +190,11 @@ func (c *ChatPanel) SetEntries(f *Font, entries []ChatEntry) {
 		}
 		pane := &c.panes[index]
 		links := entry.Items.Len()
-		runs, rows := wrapChatContent(f, entry.Text, entry.Color, entry.Markup, 316, entry.ItemType != 0, entry.Items[:links], c.linkedItemSuffix)
+		body := entry.Text
+		if entry.Repetitions > 1 {
+			body += " ×" + strconv.Itoa(int(entry.Repetitions))
+		}
+		runs, rows := wrapChatContent(f, body, entry.Color, entry.Markup, 316, entry.ItemType != 0, entry.Items[:links], c.linkedItemSuffix)
 		if seen[index] > overlap[index] {
 			added[index] += len(rows)
 		}

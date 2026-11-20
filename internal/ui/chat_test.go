@@ -152,6 +152,18 @@ func TestNativeChatScrollAnchorSurvivesHistoryLimit(t *testing.T) {
 	}
 }
 
+func TestChatRepetitionsDoNotWakeHiddenHistory(t *testing.T) {
+	c, f := &ChatPanel{Rows: [2]int{5, 5}, AutoHide: true}, chatTestFont()
+	entries := []ChatEntry{{Text: "Trade", Style: 9}, {Text: "Another player", Style: 9}}
+	c.SetEntries(f, entries)
+	c.panes[1].active = c.panes[1].active.Add(-chatHold - chatFade)
+	entries[0].Repetitions = 2
+	c.SetEntries(f, entries)
+	if c.paneAlpha(1, chatNow()) != 0 || len(c.panes[1].lines) != 2 || c.panes[1].lines[0] != "Trade ×2" {
+		t.Fatalf("a repeated message woke chat or failed to update the row: %+v", c.panes[1])
+	}
+}
+
 func TestChatCombatNumberColorResetsBeforeTheRestOfTheMessage(t *testing.T) {
 	c, f := &ChatPanel{Rows: [2]int{5, 5}}, chatTestFont()
 	base := RGBColor(ChatRGB(0))

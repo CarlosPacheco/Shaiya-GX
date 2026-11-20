@@ -89,11 +89,15 @@ type ChatLine struct {
 	SenderID         uint32
 	Sender           string
 	Text             string
+	Repetitions      uint16
+	ChatProtected    bool
+	chatSerial       uint64
 }
 
 // Event tells the caller what a payload changed; Text is for logs.
 type Event struct {
 	MapLoadAck bool // Send 0x0201 after initial state or a self cross-map placement.
+	ChatQuiet  bool // The player chat was filtered and must stay out of ancillary presentation.
 	Op         proto.Opcode
 	Text       string
 }
@@ -202,8 +206,9 @@ type State struct {
 	LastBuffRemoved uint32
 	Self            Entity
 
-	Entities map[uint32]*Entity
-	Chat     []ChatLine
+	Entities  map[uint32]*Entity
+	Chat      []ChatLine
+	chatGuard chatProtection
 
 	Unknown map[proto.Opcode]int // opcodes received but not modeled
 }
@@ -1198,6 +1203,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		s.Phase, s.SelfID = PhaseCharSelect, 0
 		s.Target = 0
 		s.Entities = map[uint32]*Entity{}
+		s.chatGuard.senders = nil
 		ev.Text = "back to character select"
 	default:
 		s.Unknown[op]++
@@ -1213,6 +1219,13 @@ func (s *State) addChat(l ChatLine) { s.AddChat(l) }
 
 // AddChat retains the most recent 100 entries independently in each pane.
 func (s *State) AddChat(l ChatLine) {
+	s.resolveChatSender(&l)
+	if !s.blockedChat(l) {
+		s.appendChat(l)
+	}
+}
+
+func (s *State) resolveChatSender(l *ChatLine) {
 	if l.Sender == "" && l.SenderID != 0 {
 		if e := s.Entities[l.SenderID]; e != nil && e.Shape != nil {
 			l.Sender = e.Shape.Name
@@ -1226,9 +1239,9 @@ func (s *State) AddChat(l ChatLine) {
 			}
 		}
 	}
-	if s.blockedChat(l) {
-		return
-	}
+}
+
+func (s *State) appendChat(l ChatLine) {
 	if len(s.Chat) >= 100 {
 		system := l.SystemPane()
 		remaining := 100

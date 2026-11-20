@@ -126,6 +126,14 @@ Mob names and target captions share `0x4cb250`'s signed monster-level minus play
 
 Selected monster names use original `name_select` dots, with the same 10px spacing from the text edge as Phoenix. The English client's grave-accent key (`0x43cd51`, DirectInput `0x29`) cycles living monsters by increasing distance and wraps. Backspace (`0x43c7a5`, `0x4cb2d0`) restores the previous selection; text editing still receives repeated Backspace events. The native locale-specific Tab variant is not substituted for the existing walk/run binding.
 
+## Local chat protection
+
+The client checks incoming player chat before it reaches the history or speech bubbles. Links stay plain text. The client hides links to local files and private network destinations, app launch links, direct downloads of executables or scripts, and some lookalikes of common service domains. It also removes characters that can invisibly reorder chat, limits extreme glyph repetition, and hides credential and download requests that come with an unverified staff claim. Staff verification uses server-provided character roles and admin channels when available. Links are checked locally without visiting them.
+
+Repeated messages from the same player are grouped for 15 seconds after the latest repeat. A `×N` counter updates the existing line without reopening hidden chat or showing another bubble. Public channels share a limit of six new messages per player every ten seconds. Incoming whispers have a separate limit of six. Party and guild each allow twelve. A local notice appears when a sender reaches a limit. Players can mute that sender via **Guild → Block**.
+
+Profanity, system notices and in-game item links are outside the content checks. Item links remain available when an external URL on the same line is hidden.
+
 ## Item details, cooldowns and cursors
 
 Item properties use original SysMsg labels, yellow titles/base bonuses, orange remake values and white prices. Recovery amounts on consumable families are no longer shown as permanent equipment bonuses. Classes, stack metadata and extra attribute requirements have been removed from the tooltip. Original inline description controls and confirmed gem sockets remain. Full modifier-key/rarity presentation still needs comparison.

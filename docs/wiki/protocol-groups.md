@@ -14,9 +14,9 @@ Declarations: [packet.PartyRoster](../../server/internal/packet/packet.go#L42), 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [enterParty (server/internal/world/party.go)](../../server/internal/world/party.go#L232)
+**S→C serializers:** [enterParty (server/internal/world/party.go)](../../server/internal/world/party.go#L234)
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L62), [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L62), [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>enterParty — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L232)
+[Source definition](../../server/internal/world/party.go#L234)
 
 ```go
 func enterParty(pt *party, p *ConnectedPlayer) bool {
@@ -47,6 +47,7 @@ func enterParty(pt *party, p *ConnectedPlayer) bool {
 	}
 	p.Send(w.MustFinish(), "0x0B01 party roster")
 	pt.members = append(pt.members, p)
+	pt.lootJoin(p.CharacterID, time.Now())
 	p.party, p.inviterID = pt, 0
 	pt.refreshLevel()
 	partyBadge(p)
@@ -112,7 +113,7 @@ Declarations: [packet.PartyInvite](../../server/internal/packet/packet.go#L43), 
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L101), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L101), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -150,9 +151,9 @@ Declarations: [packet.PartyAnswer](../../server/internal/packet/packet.go#L44), 
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L122)
 
-**S→C serializers:** [partyError (server/internal/world/party.go)](../../server/internal/world/party.go#L205)
+**S→C serializers:** [partyError (server/internal/world/party.go)](../../server/internal/world/party.go#L207)
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L126), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L126), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -160,7 +161,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>partyError — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L205)
+[Source definition](../../server/internal/world/party.go#L207)
 
 ```go
 func partyError(to *ConnectedPlayer, code uint8, id uint32) {
@@ -221,9 +222,9 @@ Declarations: [packet.PartyJoined](../../server/internal/packet/packet.go#L45), 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [enterParty (server/internal/world/party.go)](../../server/internal/world/party.go#L232)
+**S→C serializers:** [enterParty (server/internal/world/party.go)](../../server/internal/world/party.go#L234)
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L88), [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L88), [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -231,7 +232,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>enterParty — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L232)
+[Source definition](../../server/internal/world/party.go#L234)
 
 ```go
 func enterParty(pt *party, p *ConnectedPlayer) bool {
@@ -254,6 +255,7 @@ func enterParty(pt *party, p *ConnectedPlayer) bool {
 	}
 	p.Send(w.MustFinish(), "0x0B01 party roster")
 	pt.members = append(pt.members, p)
+	pt.lootJoin(p.CharacterID, time.Now())
 	p.party, p.inviterID = pt, 0
 	pt.refreshLevel()
 	partyBadge(p)
@@ -300,7 +302,7 @@ Declarations: [packet.PartyLeft](../../server/internal/packet/packet.go#L46), [p
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L133), [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L133), [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -336,7 +338,7 @@ Declarations: [packet.PartyExpelled](../../server/internal/packet/packet.go#L47)
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L133), [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L133), [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -374,9 +376,9 @@ Declarations: [packet.PartyLeader](../../server/internal/packet/packet.go#L48), 
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L128)
 
-**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L199), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L201), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L148), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L148), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -384,7 +386,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>partyIDPacket — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L199)
+[Source definition](../../server/internal/world/party.go#L201)
 
 ```go
 func partyIDPacket(op packet.Opcode, id uint32) []byte {
@@ -430,7 +432,7 @@ Declarations: [packet.PartyInviteName](../../server/internal/packet/packet.go#L4
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L112), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L112), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -472,9 +474,9 @@ Declarations: [packet.RaidRoster](../../server/internal/packet/packet.go#L52), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [sendRaidRoster (server/internal/world/raid.go)](../../server/internal/world/raid.go#L93)
+**S→C serializers:** [sendRaidRoster (server/internal/world/raid.go)](../../server/internal/world/raid.go#L94)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L21), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L21), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -482,7 +484,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendRaidRoster — server/internal/world/raid.go</summary>
 
-[Source definition](../../server/internal/world/raid.go#L93)
+[Source definition](../../server/internal/world/raid.go#L94)
 
 ```go
 func (pt *party) sendRaidRoster(to *ConnectedPlayer) {
@@ -566,7 +568,7 @@ Declarations: [packet.RaidJoined](../../server/internal/packet/packet.go#L53), [
 
 **S→C serializers:** [enterRaid (server/internal/world/raid.go)](../../server/internal/world/raid.go#L65)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L66), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L66), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -586,6 +588,7 @@ func enterRaid(pt *party, p *ConnectedPlayer) bool {
 		return false
 	}
 	pt.members = append(pt.members, p)
+	pt.lootJoin(p.CharacterID, time.Now())
 	pt.slots = append(pt.slots, uint16(slot))
 	if len(pt.members) == 2 && pt.subLeader == pt.leader {
 		pt.subLeader = 1 // a raid started by an invitation: the first to join assists
@@ -637,7 +640,7 @@ Declarations: [packet.PartyLeaveAlt](../../server/internal/packet/packet.go#L50)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L241), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L241), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -659,11 +662,11 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.RaidConvert](../../server/internal/packet/packet.go#L54), [proto.RaidConvert](../../internal/proto/opcodes.go#L38).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L130), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L182)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L130), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L184)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L92), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L92), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -723,11 +726,11 @@ type Reader struct {
 
 Declarations: [packet.RaidDivision](../../server/internal/packet/packet.go#L55), [proto.RaidDivision](../../internal/proto/opcodes.go#L39).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L130), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L214)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L130), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L216)
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L109), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L109), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -781,11 +784,11 @@ type Reader struct {
 
 Declarations: [packet.RaidAutoJoin](../../server/internal/packet/packet.go#L56), [proto.RaidAutoJoin](../../internal/proto/opcodes.go#L40).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L130), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L222)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L130), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L224)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L109), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L109), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -857,11 +860,11 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 Declarations: [packet.RaidSwap](../../server/internal/packet/packet.go#L58), [proto.RaidSwap](../../internal/proto/opcodes.go#L42).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L138), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L412)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L138), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L414)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L138), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L138), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -916,11 +919,11 @@ type Reader struct {
 
 Declarations: [packet.RaidSubLeader](../../server/internal/packet/packet.go#L59), [proto.RaidSubLeader](../../internal/proto/opcodes.go#L43).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L138), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L384)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L138), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L386)
 
-**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L199), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L201), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L170), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L170), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -928,7 +931,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>partyIDPacket — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L199)
+[Source definition](../../server/internal/world/party.go#L201)
 
 ```go
 func partyIDPacket(op packet.Opcode, id uint32) []byte {
@@ -974,7 +977,7 @@ Declarations: [packet.RaidInvite](../../server/internal/packet/packet.go#L60), [
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L194), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L194), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1028,7 +1031,7 @@ Declarations: [packet.RaidAnswer](../../server/internal/packet/packet.go#L61), [
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L220), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L220), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1080,11 +1083,11 @@ type PartyReply struct {
 
 Declarations: [packet.RaidDisband](../../server/internal/packet/packet.go#L62), [proto.RaidDisband](../../internal/proto/opcodes.go#L46).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L130), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L229)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L130), [handleRaidSettings (server/internal/world/raid.go)](../../server/internal/world/raid.go#L231)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L237), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L237), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1106,11 +1109,11 @@ func RaidDisbandPacket() []byte            { return NewWriter(RaidDisband).Bytes
 
 Declarations: [packet.RaidLeader](../../server/internal/packet/packet.go#L63), [proto.RaidLeader](../../internal/proto/opcodes.go#L47).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L138), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L391)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L138), [handleRaidRoles (server/internal/world/raid.go)](../../server/internal/world/raid.go#L393)
 
-**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L199), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [partyIDPacket (server/internal/world/party.go)](../../server/internal/world/party.go#L201), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L170), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L170), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1118,7 +1121,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>partyIDPacket — server/internal/world/party.go</summary>
 
-[Source definition](../../server/internal/world/party.go#L199)
+[Source definition](../../server/internal/world/party.go#L201)
 
 ```go
 func partyIDPacket(op packet.Opcode, id uint32) []byte {
@@ -1164,7 +1167,7 @@ Declarations: [packet.RaidInviteName](../../server/internal/packet/packet.go#L64
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L194), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L194), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1204,7 +1207,7 @@ Declarations: [packet.RaidError](../../server/internal/packet/packet.go#L65), [p
 
 **S→C serializers:** [raidError (server/internal/world/raid.go)](../../server/internal/world/raid.go#L57)
 
-**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L228), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L228), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1263,7 +1266,7 @@ Declarations: [packet.RaidExpel](../../server/internal/packet/packet.go#L66), [p
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L241), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L241), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1303,7 +1306,7 @@ Declarations: [packet.PartyPools](../../server/internal/packet/packet.go#L68), [
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L173), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L173), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1349,7 +1352,7 @@ Source notes: handlers 0x5929a0 / 0x5747b0
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L182), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L182), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1410,7 +1413,7 @@ Source notes: handlers 0x592a00 / 0x573b50
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L182), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L182), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1471,7 +1474,7 @@ Source notes: 0x592a90 -> 0x573670: id, map, x, y, z
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L195), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L195), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1515,7 +1518,7 @@ Declarations: [packet.PartyLevel](../../server/internal/packet/packet.go#L69), [
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L204), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L204), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1559,7 +1562,7 @@ Declarations: [packet.RaidPools](../../server/internal/packet/packet.go#L67), [p
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L268), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyRaid (internal/game/raid.go)](../../internal/game/raid.go#L268), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1603,7 +1606,7 @@ Declarations: [packet.RaidEffectAdd](../../server/internal/packet/packet.go#L74)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L182), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L182), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1662,7 +1665,7 @@ Declarations: [packet.RaidEffectRemove](../../server/internal/packet/packet.go#L
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L182), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L182), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1721,7 +1724,7 @@ Declarations: [packet.RaidMove](../../server/internal/packet/packet.go#L71), [pr
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L195), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L195), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 
@@ -1767,7 +1770,7 @@ Source notes: RaidLevel is the original member level notice, parallel to PartyLe
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L204), [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [applyParty (internal/game/party.go)](../../internal/game/party.go#L204), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
 
 ### Wire layouts and validation
 

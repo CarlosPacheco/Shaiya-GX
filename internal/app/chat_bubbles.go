@@ -19,7 +19,7 @@ func (a *App) confirmedChatBubble(op proto.Opcode) {
 		return
 	}
 	line := a.state.Chat[len(a.state.Chat)-1]
-	if line.Op != op || line.SenderID == 0 || strings.TrimSpace(line.Text) == "" {
+	if line.Op != op || line.SenderID == 0 || line.ChatProtected || strings.TrimSpace(line.Text) == "" {
 		return
 	}
 	for i := range a.chatBubbles {

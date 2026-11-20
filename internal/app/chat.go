@@ -204,7 +204,7 @@ func (a *App) recentWhisperRecipients() []string {
 	var names []string
 	for i := len(a.state.Chat) - 1; i >= 0; i-- {
 		line := a.state.Chat[i]
-		if line.Op == proto.ChatWhisper && line.Sender != "" &&
+		if line.Op == proto.ChatWhisper && line.Sender != "" && !line.ChatProtected &&
 			!slices.ContainsFunc(names, func(n string) bool { return strings.EqualFold(n, line.Sender) }) {
 			names = append(names, line.Sender)
 		}
@@ -332,7 +332,7 @@ func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
 	}
 	rgb := ui.ChatRGB(style)
 
-	return ui.ChatEntry{Items: c.Items, ItemType: c.ItemType, ItemID: c.ItemID, Text: body, System: c.SystemPane(), Color: ui.RGBColor(rgb), Style: style, Markup: c.Op == 0}
+	return ui.ChatEntry{Items: c.Items, ItemType: c.ItemType, ItemID: c.ItemID, Text: body, Repetitions: c.Repetitions, System: c.SystemPane(), Color: ui.RGBColor(rgb), Style: style, Markup: c.Op == 0}
 }
 
 func (a *App) updateChatPointer(in *platform.Input, w, h int) bool {
