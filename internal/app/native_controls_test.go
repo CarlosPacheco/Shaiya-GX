@@ -25,8 +25,8 @@ func TestNativeCameraZoomFlipAndModes(t *testing.T) {
 	for range 100 {
 		v.cameraInput(&platform.Input{Down: "-"}, .016, 0, 0)
 	}
-	if d := v.eye.Sub(v.cameraOrigin()).Len(); math.Abs(float64(d)-zoomMax) > .0001 {
-		t.Fatal("page down did not clamp", d)
+	if d := v.eye.Sub(v.cameraOrigin()).Len(); math.Abs(float64(d)-20) > .0001 {
+		t.Fatal("zoom-out key did not clamp at 20", d)
 	}
 	before := v.eye.Sub(v.target())
 	v.cameraInput(&platform.Input{Keys: []platform.Key{platform.KeyHome}}, .016, 0, 0)

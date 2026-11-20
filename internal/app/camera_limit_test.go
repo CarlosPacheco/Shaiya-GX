@@ -54,7 +54,7 @@ func TestGMOnlyCameraZoomLimit(t *testing.T) {
 	v.updateRenderedCamera(.1)
 	checkDistance(v.eye, 100)
 	checkDistance(v.cameraEye, 100)
-	submit("/camlimit", "Camera zoom limit restored to 13.")
+	submit("/camlimit", "Camera zoom limit restored to 20.")
 	checkDistance(v.eye, zoomMax)
 	checkDistance(v.cameraEye, zoomMax)
 	zoomOut()
@@ -70,4 +70,22 @@ func TestGMOnlyCameraZoomLimit(t *testing.T) {
 	}
 	checkDistance(v.eye, zoomMax)
 	checkDistance(v.cameraEye, zoomMax)
+}
+
+func TestSittingAndStandingPreserveWorldCamera(t *testing.T) {
+	a := inputApp()
+	v := a.wv
+	v.world = &scene.World{}
+	v.facing = render.V3{0, 0, 1}
+	v.resetCamera()
+	step := func() { a.updateWorldStep(&platform.Input{}, 1.0/60) }
+	step()
+	eye, target := v.cameraEye, v.cameraTarget
+	for _, sitting := range []bool{true, false} {
+		a.state.Self.Sitting = sitting
+		step()
+		if v.cameraEye != eye || v.cameraTarget != target {
+			t.Fatalf("camera moved after sitting=%v: eye %v to %v, target %v to %v", sitting, eye, v.cameraEye, target, v.cameraTarget)
+		}
+	}
 }

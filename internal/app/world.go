@@ -86,7 +86,6 @@ type worldView struct {
 	travelEffect                *scene.Effect
 	firstPerson                 bool
 	extendedCameraZoom          bool
-	sittingCamera               bool
 	mouselook                   bool
 	cameraReady                 bool
 	cameraEye, cameraTarget     render.V3
@@ -147,7 +146,7 @@ type worldDrawBreakdown struct {
 const (
 	runSpeed   = 5.0 // native normal speed base
 	zoomMin    = 2.1 // distance to the character origin
-	zoomMax    = 13.0
+	zoomMax    = 20.0
 	camArrowYw = 150.0 * math.Pi / 180
 	camArrowPt = 80.0 * math.Pi / 180
 	mouseScale = 0.1 * math.Pi / 180 // per pixel at sensitivity 3
@@ -184,7 +183,7 @@ func (v *worldView) target() render.V3 {
 		return v.eye.Add(v.firstDirection)
 	}
 	height := float32(.5)
-	if v.sittingCamera || v.world.SwimmingAt(v.pos[0], v.pos[1], v.pos[2]) {
+	if v.world.SwimmingAt(v.pos[0], v.pos[1], v.pos[2]) {
 		height = -.2
 	}
 	return v.cameraOrigin().Add(render.V3{0, height, 0})
@@ -263,7 +262,6 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	if a.wv != v {
 		return
 	}
-	v.sittingCamera = a.state.Self.Sitting
 	settings := a.clientSettings()
 	pointer := *in
 	if !settings.UseMouse {
