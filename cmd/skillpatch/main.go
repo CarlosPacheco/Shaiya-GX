@@ -15,6 +15,7 @@ import (
 func main() {
 	input := flag.String("input", "", "source Skill.SData")
 	output := flag.String("output", "", "new output file")
+	retiredOnly := flag.Bool("retired-only", false, "only remove retired player skills")
 	flag.Parse()
 	if *input == "" || *output == "" || *input == *output {
 		log.Fatal("distinct input and output paths required")
@@ -23,7 +24,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	out, report, err := sdata.NormalizeSkillCatalog(raw)
+	patch := sdata.NormalizeSkillCatalog
+	if *retiredOnly {
+		patch = sdata.RemoveRetiredPlayerSkills
+	}
+	out, report, err := patch(raw)
 	if err != nil {
 		log.Fatal(err)
 	}

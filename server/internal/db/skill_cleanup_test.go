@@ -1,6 +1,51 @@
 package db
 
-import "testing"
+import (
+	"database/sql"
+	"testing"
+)
+
+func TestRetirePlayerSkillsPreservesNPCSkillsAndUnrelatedSlots(t *testing.T) {
+	p, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Close()
+	_, err = p.Exec(`
+		CREATE TABLE PS_GameDefs_Skills(SkillID INTEGER);
+		CREATE TABLE PS_GameDefs_NpcSkills(SkillID INTEGER);
+		CREATE TABLE PS_GameData_CharSkills(CharID INTEGER,SkillID INTEGER,Number INTEGER,Del INTEGER);
+		CREATE TABLE PS_GameData_CharQuickSlots(CharID INTEGER,Bag INTEGER,Number INTEGER);
+		CREATE TABLE PS_GameData_CharApplySkills(SkillID INTEGER,SkillLevel INTEGER);
+		INSERT INTO PS_GameDefs_Skills VALUES(3),(4),(5);
+		INSERT INTO PS_GameDefs_NpcSkills VALUES(3),(4);
+		INSERT INTO PS_GameData_CharSkills VALUES(1,3,10,0),(1,4,11,1),(1,5,11,0),(2,5,10,0);
+		INSERT INTO PS_GameData_CharQuickSlots VALUES(1,100,10),(1,100,11),(1,1,10),(2,100,10);
+		INSERT INTO PS_GameData_CharApplySkills VALUES(3,1),(4,3),(3,100),(4,100);`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	step := migrations[27]
+	step.Version = 1
+	if err := migrate(t.Context(), p, []migration{step}); err != nil {
+		t.Fatal(err)
+	}
+	for query, want := range map[string]int{
+		"SELECT COUNT(*) FROM PS_GameDefs_Skills WHERE SkillID IN (3,4)":                           0,
+		"SELECT COUNT(*) FROM PS_GameDefs_Skills WHERE SkillID=5":                                  1,
+		"SELECT COUNT(*) FROM PS_GameDefs_NpcSkills WHERE SkillID IN (3,4)":                        2,
+		"SELECT COUNT(*) FROM PS_GameData_CharSkills WHERE SkillID IN (3,4)":                       0,
+		"SELECT COUNT(*) FROM PS_GameData_CharQuickSlots WHERE CharID=1 AND Bag=100 AND Number=10": 0,
+		"SELECT COUNT(*) FROM PS_GameData_CharQuickSlots":                                          3,
+		"SELECT COUNT(*) FROM PS_GameData_CharApplySkills WHERE SkillLevel=100":                    2,
+		"SELECT COUNT(*) FROM PS_GameData_CharApplySkills WHERE SkillLevel<>100":                   0,
+	} {
+		var got int
+		if err := p.QueryRow(query).Scan(&got); err != nil || got != want {
+			t.Fatalf("%s: got %d, want %d (%v)", query, got, want, err)
+		}
+	}
+}
 
 // Migration 7 removes dead skill levels, the chain relation, Aggravation's
 // time damage and detail 25, and keeps every working level.

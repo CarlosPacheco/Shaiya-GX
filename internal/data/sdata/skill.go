@@ -33,6 +33,9 @@ type SkillKey struct {
 	Level uint8
 }
 
+// RetiredPlayerSkill applies only to the player catalog. NPC skill IDs are independent.
+func RetiredPlayerSkill(id uint16) bool { return id == 3 || id == 4 }
+
 func ParseSkills(raw []byte) (map[SkillKey]Skill, error) {
 	b, err := Decrypt(raw)
 	if err != nil {

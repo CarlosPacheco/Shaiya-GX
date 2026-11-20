@@ -69,6 +69,7 @@ func TestNormalizeSkillCatalog(t *testing.T) {
 			{"Fatal Hit Lv2", "Opening skill of chain skill that deals 10 extra damage plus your Attack Power but the following chain skill must be used in 8 seconds.", 2, 3, 3, 21, 0, 0},
 			{"Fatal HitED", "Not Available.", 3, 0, 0, 0, 0, 0}},
 		{{"Tetanus Lv1", "Chain skill that requires Fatal Hit; Deals initial damage but the following chain skill must be used in 3 seconds.", 1, 3, 3, 21, 1, 0}},
+		nil, nil, // IDs 3 and 4 are retired.
 		{{"Shadow Attack Lv1", "Deals damage only in Stealth mode.", 1, 3, 3, 21, 63, 0}},
 		{{"Blank", "Skill not available currently", 1, 0, 0, 0, 0, 0}}, // fully dead: left alone
 	}...)
@@ -104,7 +105,7 @@ func TestNormalizeSkillCatalog(t *testing.T) {
 	if d := defs[SkillKey{ID: 2, Level: 1}].Description; d != "Deals initial damage." {
 		t.Fatalf("chain text %q", d)
 	}
-	if got := defs[SkillKey{ID: 3, Level: 1}].Description; got != "Deals damage only in Stealth mode." {
+	if got := defs[SkillKey{ID: 5, Level: 1}].Description; got != "Deals damage only in Stealth mode." {
 		t.Fatalf("a stealth requirement was rewritten: %q", got)
 	}
 	if got := defs[SkillKey{ID: 115, Level: 1}]; got.Detail != 21 || strings.Contains(got.Description, "Only usable") || got.Description != "Deals 243 damage on mana plus initial damage." {
@@ -118,13 +119,33 @@ func TestNormalizeSkillCatalog(t *testing.T) {
 	if len(plainOut) != len(out) {
 		t.Fatal("output is not plain")
 	}
-	if rep.ChainTexts != 4 || len(rep.PrevRestored) != 1 || len(rep.DeadLevels) != 1 || len(rep.TimeDamage) != 1 || len(rep.DetailMoved) != 2 || rep.ManaStaminaText != 1 || len(rep.FullyDeadSkills) != 1 || rep.FullyDeadSkills[0] != 4 {
+	if rep.ChainTexts != 4 || len(rep.PrevRestored) != 1 || len(rep.DeadLevels) != 1 || len(rep.TimeDamage) != 1 || len(rep.DetailMoved) != 2 || rep.ManaStaminaText != 1 || len(rep.FullyDeadSkills) != 1 || rep.FullyDeadSkills[0] != 6 {
 		t.Fatalf("report %s", rep)
 	}
 	// Idempotent: a second pass changes nothing.
 	again, rep2, err := normalizeSkillCatalog(out, nil)
 	if err != nil || string(again) != string(out) || rep2.ChainTexts != 0 || len(rep2.DeadLevels) != 0 {
 		t.Fatalf("second pass changed the catalog: %v %s", err, rep2)
+	}
+}
+
+func TestRemoveRetiredPlayerSkillsKeepsNeighborIDsAndUntouchedBytes(t *testing.T) {
+	groups := [][]fakeSlot{nil, nil,
+		{{"Interpretation", "Original description", 1, 1, 0, 5, 0, 0}},
+		{{"Backpack Upgrade", "Original description", 3, 1, 0, 2, 0, 0}},
+		{{"Sharpen", "Keep this description unchanged", 1, 1, 0, 1, 0, 0}},
+	}
+	out, rep, err := RemoveRetiredPlayerSkills(buildCatalog(groups))
+	if err != nil || len(rep.RetiredLevels) != 2 {
+		t.Fatalf("retirement: %v %v", rep, err)
+	}
+	groups[2], groups[3] = nil, nil
+	if string(out) != string(buildCatalog(groups)) {
+		t.Fatal("the patch modified records outside the retired slots")
+	}
+	again, rep, err := RemoveRetiredPlayerSkills(out)
+	if err != nil || len(rep.RetiredLevels) != 0 || string(again) != string(out) {
+		t.Fatalf("second pass changed catalog: %v %v", rep, err)
 	}
 }
 

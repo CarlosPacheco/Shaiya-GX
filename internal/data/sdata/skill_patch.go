@@ -14,6 +14,7 @@ import (
 
 // GX skill catalog cleanup. NormalizeSkillCatalog rewrites Character/Skill.SData
 // without touching any byte it does not need to:
+//   - Interpretation and Backpack Upgrade are removed from the player catalog;
 //   - dead skill levels (a placeholder such as "Hell LordED" / "Not Available.")
 //     of skills that have working levels become the same empty slot as the
 //     unused levels; skills with no working level at all are left alone;
@@ -76,6 +77,7 @@ var (
 
 // SkillCatalogReport counts what NormalizeSkillCatalog changed.
 type SkillCatalogReport struct {
+	RetiredLevels   []SkillKey // blanked without shifting IDs
 	DeadLevels      []SkillKey // blanked
 	ChainTexts      int
 	PrevRestored    []SkillKey
@@ -87,8 +89,8 @@ type SkillCatalogReport struct {
 }
 
 func (r SkillCatalogReport) String() string {
-	return fmt.Sprintf("dead levels removed: %d; chain descriptions rewritten: %d; previous skill restored: %d; Mana/Stamina Shot texts: %d; Aggravation time damage cleared: %d; detail 25 -> 21: %d; descriptions corrected: %d; skills with no working level left alone: %v",
-		len(r.DeadLevels), r.ChainTexts, len(r.PrevRestored), r.ManaStaminaText, len(r.TimeDamage), len(r.DetailMoved), r.TextFixes, r.FullyDeadSkills)
+	return fmt.Sprintf("retired levels: %d; dead levels removed: %d; chain descriptions rewritten: %d; previous skill restored: %d; Mana/Stamina Shot texts: %d; Aggravation time damage cleared: %d; detail 25 -> 21: %d; descriptions corrected: %d; skills with no working level left alone: %v",
+		len(r.RetiredLevels), len(r.DeadLevels), r.ChainTexts, len(r.PrevRestored), r.ManaStaminaText, len(r.TimeDamage), len(r.DetailMoved), r.TextFixes, r.FullyDeadSkills)
 }
 
 type skillSlot struct {
@@ -134,14 +136,40 @@ func NormalizeSkillCatalog(raw []byte) ([]byte, SkillCatalogReport, error) {
 	return normalizeSkillCatalog(raw, skillTextFixesCSV)
 }
 
-func normalizeSkillCatalog(raw, textFixes []byte) ([]byte, SkillCatalogReport, error) {
+// RemoveRetiredPlayerSkills changes only the two retired groups in an existing catalog.
+func RemoveRetiredPlayerSkills(raw []byte) ([]byte, SkillCatalogReport, error) {
 	var rep SkillCatalogReport
-	plain, err := Decrypt(raw)
+	groups, slots, err := readSkillCatalog(raw)
 	if err != nil {
 		return nil, rep, err
 	}
+	retirePlayerSkillSlots(slots, &rep)
+	if len(rep.RetiredLevels) == 0 {
+		return raw, rep, nil
+	}
+	out, err := writeSkillCatalog(groups, slots)
+	return out, rep, err
+}
+
+func retirePlayerSkillSlots(slots []*skillSlot, report *SkillCatalogReport) {
+	for _, s := range slots {
+		if RetiredPlayerSkill(uint16(s.id)) && (!s.blank() || s.name != "" || s.desc != "") {
+			report.RetiredLevels = append(report.RetiredLevels, s.key())
+			s.name, s.desc, s.rec, s.changed = "", "", make([]byte, skillRecordSize), true
+		}
+	}
+}
+
+func readSkillCatalog(raw []byte) (int, []*skillSlot, error) {
+	plain, err := Decrypt(raw)
+	if err != nil {
+		return 0, nil, err
+	}
 	c := &cursor{b: plain}
 	groups := c.count(skillSlotsPerID * 124)
+	if groups > 65535 {
+		return 0, nil, fmt.Errorf("skill: too many groups %d", groups)
+	}
 	slots := make([]*skillSlot, 0, groups*skillSlotsPerID)
 	for id := 1; id <= groups && c.err == nil; id++ {
 		for slot := 1; slot <= skillSlotsPerID && c.err == nil; slot++ {
@@ -159,12 +187,21 @@ func normalizeSkillCatalog(raw, textFixes []byte) ([]byte, SkillCatalogReport, e
 		}
 	}
 	if c.err != nil {
-		return nil, rep, c.err
+		return 0, nil, c.err
 	}
 	if c.off != len(plain) {
-		return nil, rep, fmt.Errorf("Skill.SData trailing data")
+		return 0, nil, fmt.Errorf("Skill.SData trailing data")
 	}
+	return groups, slots, nil
+}
 
+func normalizeSkillCatalog(raw, textFixes []byte) ([]byte, SkillCatalogReport, error) {
+	var rep SkillCatalogReport
+	groups, slots, err := readSkillCatalog(raw)
+	if err != nil {
+		return nil, rep, err
+	}
+	retirePlayerSkillSlots(slots, &rep)
 	working := map[int]bool{}
 	for _, s := range slots {
 		if !s.blank() && !s.dead() {
@@ -243,6 +280,11 @@ func normalizeSkillCatalog(raw, textFixes []byte) ([]byte, SkillCatalogReport, e
 		}
 	}
 
+	out, err := writeSkillCatalog(groups, slots)
+	return out, rep, err
+}
+
+func writeSkillCatalog(groups int, slots []*skillSlot) ([]byte, error) {
 	out := binary.LittleEndian.AppendUint32(nil, uint32(groups))
 	for _, s := range slots {
 		if s.changed {
@@ -251,9 +293,9 @@ func normalizeSkillCatalog(raw, textFixes []byte) ([]byte, SkillCatalogReport, e
 		out = append(append(append(out, s.nameRaw...), s.descRaw...), s.rec...)
 	}
 	if _, err := ParseSkills(out); err != nil {
-		return nil, rep, err
+		return nil, err
 	}
-	return out, rep, nil
+	return out, nil
 }
 
 // applyTextFixes rewrites the descriptions listed in skill_text_fixes.csv. A

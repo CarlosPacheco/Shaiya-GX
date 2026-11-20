@@ -45,6 +45,11 @@ func (a *App) loadSkills() {
 		var defs map[sdata.SkillKey]sdata.Skill
 		defs, err = sdata.ParseSkills(b)
 		if err == nil {
+			for key := range defs {
+				if sdata.RetiredPlayerSkill(key.ID) {
+					delete(defs, key)
+				}
+			}
 			normalizePotentials(defs)
 			normalizeCombatSkillDescriptions(defs)
 			a.skillDefs = defs
@@ -138,7 +143,7 @@ func (a *App) skillBar() [ui.TotalActionSlots]*proto.LearnedSkill {
 	var bar [ui.TotalActionSlots]*proto.LearnedSkill
 	for _, q := range a.state.QuickSlots {
 		if q.Bar < ui.ActionPages && q.Slot < ui.ActionSlots && q.Bag == 100 {
-			if k, ok := a.state.Skills[uint8(q.Number)]; ok && q.Number < 256 {
+			if k, ok := a.state.Skills[uint8(q.Number)]; ok && q.Number < 256 && !sdata.RetiredPlayerSkill(k.ID) {
 				cp := k
 				bar[int(q.Bar)*ui.ActionSlots+int(q.Slot)] = &cp
 			}
@@ -155,6 +160,9 @@ func (a *App) skillBar() [ui.TotalActionSlots]*proto.LearnedSkill {
 	i := 0
 	for _, n := range numbers {
 		k := a.state.Skills[uint8(n)]
+		if sdata.RetiredPlayerSkill(k.ID) {
+			continue
+		}
 		if d, ok := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]; ok && d.Effect == 0 {
 			continue
 		}
@@ -451,6 +459,9 @@ func (a *App) learnedSkillPacket(k proto.LearnedSkill) []byte {
 	return proto.UseSkillPacket(k.Number, target, userTarget)
 }
 func (a *App) learnedSkill(id uint16) (proto.LearnedSkill, bool) {
+	if sdata.RetiredPlayerSkill(id) {
+		return proto.LearnedSkill{}, false
+	}
 	for _, k := range a.state.Skills {
 		if k.ID == id {
 			return k, true
