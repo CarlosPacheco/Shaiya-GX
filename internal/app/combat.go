@@ -163,6 +163,20 @@ func (a *App) attackTarget() bool {
 		a.wv.sitAttack = 0
 		return true
 	}
+	if a.state.Target == a.state.SelfID && a.state.SelfID != 0 {
+		// With yourself selected the attack goes for the nearest enemy, like an
+		// offensive skill does.
+		if id := a.nearestHostileMob(); id != 0 {
+			if a.world != nil {
+				if err := a.world.Send(proto.TargetMobPacket(id)); err != nil {
+					a.backToLogin("Unable to select target.")
+					return false
+				}
+			}
+			a.state.PreviousTarget = a.state.SelfID
+			a.state.Target = id
+		}
+	}
 	e := a.state.Entities[a.state.Target]
 	if e == nil || e.Dead || e.Kind != game.KindMob && (e.Kind != game.KindUser || e.ID == a.state.SelfID) {
 		return true
@@ -335,4 +349,22 @@ func castBarOrigin(pos render.V3, view, proj render.M4, w, h int) (int, int, boo
 	x := (1 + (p[0]*vp[0]+p[1]*vp[4]+p[2]*vp[8]+vp[12])/cw) * float32(w) * .5
 	y := (1 - (p[0]*vp[1]+p[1]*vp[5]+p[2]*vp[9]+vp[13])/cw) * float32(h) * .5
 	return int(math.RoundToEven(float64(x))), int(math.RoundToEven(float64(y))), true
+}
+
+// nearestHostileMob is the closest living enemy monster (the lowest id on a tie).
+func (a *App) nearestHostileMob() uint32 {
+	if a.wv == nil {
+		return 0
+	}
+	id, best := uint32(0), float32(math.MaxFloat32)
+	for k, e := range a.state.Entities {
+		if e.Kind != game.KindMob || e.Dead || a.friendlyMob(e) {
+			continue
+		}
+		dx, dz := e.X-a.wv.pos[0], e.Z-a.wv.pos[2]
+		if d := dx*dx + dz*dz; d < best || d == best && k < id {
+			id, best = k, d
+		}
+	}
+	return id
 }
