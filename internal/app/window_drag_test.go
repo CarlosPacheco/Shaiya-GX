@@ -287,8 +287,4 @@ func TestRaid150PagesTabsAndCrossPageMove(t *testing.T) {
 	if !a.party.moving || a.party.moveSlot != 1 {
 		t.Fatal("move lost on page change")
 	}
-	counts := ui.RaidClassCounts(a.state.Party.Members, a.state.Party.RaidSlots)
-	if counts != [6]int{1, 0, 0, 2, 0, 0} {
-		t.Fatalf("class counts %v", counts)
-	}
 }

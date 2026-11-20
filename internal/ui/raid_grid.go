@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -15,12 +13,9 @@ import (
 const (
 	RaidGridWidth, RaidGridHeight = 490, 210
 	RaidCellWidth, RaidCellHeight = 98, 35
-	// Above the window: the page tabs flush with its left edge and the class
-	// counter flush with its right edge.
-	RaidTabX, RaidTabY, RaidTabStep    = 0, -26, 24
-	RaidCounterCell, RaidCounterHeight = 32, 18
-	RaidCounterWidth                   = 6 * RaidCounterCell
-	RaidWindowWidth                    = RaidGridWidth
+	// Above the window: the page tabs flush with its left edge.
+	RaidTabX, RaidTabY, RaidTabStep = 0, -26, 24
+	RaidWindowWidth                 = RaidGridWidth
 )
 
 func (p *PartyPanel) RaidGridOrigin(w, h int) (int, int) {
@@ -86,21 +81,7 @@ func (p *PartyPanel) UpdateRaidGrid(in *platform.Input, w, h int, slots map[uint
 	return selected, p.RaidGridInside(w, h, in.MouseX, in.MouseY) && (in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.RightDown || in.Wheel != 0)
 }
 
-// RaidClassCounts counts the raid's members by class (0-5).
-func RaidClassCounts(members []proto.PartyMember, slots map[uint16]uint32) (counts [6]int) {
-	for _, id := range slots {
-		for i := range members {
-			if members[i].ID == id && id != 0 && members[i].Class < 6 {
-				counts[members[i].Class]++
-				break
-			}
-		}
-	}
-	return counts
-}
-
-// DrawRaidGrid draws the viewed raid's 30 cells with the tabs and the class
-// counter. The selected member's cell (DAT_021fd808) is the red party2 row,
+// DrawRaidGrid draws the viewed raid's 30 cells with the tabs. The selected member's cell (DAT_021fd808) is the red party2 row,
 // the Move Group source (DAT_021fd80c) gets the orange outline and the last
 // row has both. moveSlot is -1 when no move is armed.
 func (p *PartyPanel) DrawRaidGrid(s *render.Sprites, f *Font, w, h int, members []proto.PartyMember, slots map[uint16]uint32, leader, sub, target uint32, moveSlot int) {
@@ -163,25 +144,6 @@ func (p *PartyPanel) DrawRaidGrid(s *render.Sprites, f *Font, w, h int, members 
 			}
 			s.Draw(p.mark, float32(cx), float32(cy), 32, 32, u, 0, u+.5, 1, tint)
 		}
-	}
-
-	// Class counter above the right edge, the mirror of the tabs: a small
-	// icon and its number with a thin black outline over a semi-opaque
-	// rectangle. It ignores the window transparency (a GX addition).
-	counts := RaidClassCounts(members, slots)
-	cx, cy := x+RaidGridWidth-RaidCounterWidth, y+RaidTabY+RaidCounterHeight-RaidCounterHeight+4
-	if p.White != nil {
-		s.Draw(p.White, float32(cx), float32(cy), RaidCounterWidth, RaidCounterHeight, 0, 0, 1, 1, [4]float32{0, 0, 0, .5})
-	}
-	for class := 0; class < 6; class++ {
-		cellX := cx + class*RaidCounterCell
-		col := [...]int{2, 5, 1, 0, 3, 4}[class]
-		s.Draw(p.icons, float32(cellX+2), float32(cy+1), 16, 16, float32(col)/8, 0, float32(col+1)/8, 1, white)
-		shade := [4]float32{.96, .96, .92, 1}
-		if counts[class] == 0 {
-			shade = [4]float32{.7, .68, .66, 1}
-		}
-		f.DrawOutlined(s, fmt.Sprint(counts[class]), cellX+20, cy+2, shade)
 	}
 }
 
