@@ -187,6 +187,9 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 	a.tooltipDescription = description
 	rt := itemtype.Real(def.Type)
 	effects, immunities := a.itemEffects(def, instance)
+	if itemtype.IsAntiDebuffLapis(def.Type, def.TypeID) && len(immunities) == 1 {
+		a.tooltipDescription = "Blocks " + immunities[0].Name + " while linked to equipped gear."
+	}
 	a.tooltipExtra = tooltipExtras{forgeInfo: itemForgeInfo(def), effects: effects, immunities: immunities, effectChance: def.Type == 30 || rt >= 1 && rt <= 15}
 	if rt := itemtype.Real(def.Type); rt >= 1 && rt <= 25 && def.Server > 0 && def.RequiredStats[4] > 0 {
 		a.tooltipExtra.maxOJ = min(def.RequiredStats[4], 99)
