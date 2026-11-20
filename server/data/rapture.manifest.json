@@ -5,17 +5,18 @@
     "GX_AuctionClaims": 0,
     "GX_AuctionWatch": 0,
     "GX_Auctions": 0,
-    "GX_SchemaMigrations": 26,
+    "GX_QuestStartTerms": 0,
+    "GX_SchemaMigrations": 31,
     "GX_SessionHandoff": 0,
     "GX_TeleportPoints": 4,
     "PS_GameData_BanChars": 0,
-    "PS_GameData_CharApplySkills": 50,
+    "PS_GameData_CharApplySkills": 48,
     "PS_GameData_CharEvents": 0,
     "PS_GameData_CharItems": 183,
     "PS_GameData_CharQuests": 1,
     "PS_GameData_CharQuickSlots": 27,
     "PS_GameData_CharRenameLog": 0,
-    "PS_GameData_CharSkills": 532,
+    "PS_GameData_CharSkills": 508,
     "PS_GameData_Chars": 13,
     "PS_GameData_FriendChars": 0,
     "PS_GameData_GuildChars": 0,
@@ -38,7 +39,7 @@
     "PS_GameDefs_Mobs": 2474,
     "PS_GameDefs_NpcSkills": 348,
     "PS_GameDefs_ProductList": 226,
-    "PS_GameDefs_Skills": 834,
+    "PS_GameDefs_Skills": 824,
     "PS_GameDefs_StatusDefs": 360,
     "PS_UserData_CreatedGuilds": 0,
     "PS_UserData_UserLoginStatus": 0,
@@ -47,5 +48,5 @@
     "PS_UserData_Users_Master": 10,
     "Rapture_LoginLog": 0
   },
-  "sha256": "0128811ec34b8b2342e406684ebbb3340368b781f792a6d924ff4f171050ddff"
+  "sha256": "b6a77d2c563f7429647dd50f91ce1ff4ea50b9bda3b49906c4a1f3a3dfffd302"
 }

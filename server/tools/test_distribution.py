@@ -83,9 +83,9 @@ class PackageDataTests(unittest.TestCase):
             target = Path(temporary) / "staged"
             expected = {"rapture.sqlite", "rapture.manifest.json", "maps/1.svmap",
                         "geometry/catalog.json", "geometry/1.gxnav", "geometry/1.gxcol",
-                        "geometry/1.gxphysics", "geometry/1.manifest.json", "game/README.txt"}
+                        "geometry/1.gxphysics", "geometry/1.manifest.json"}
             expected.update("game/" + name for name in GAME_DATA)
-            residues = {"game/Map/1.svmap", "game/MapWar.ini", "item-stack-limits.csv",
+            residues = {"game/Map/1.svmap", "game/MapWar.ini", "game/README.txt", "maps/README.txt", "item-stack-limits.csv",
                         "rapture.sqlite-wal", "maps/old.svmap", "geometry/9.gxnav"}
             for name in expected | residues:
                 path = source / name

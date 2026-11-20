@@ -2,6 +2,15 @@
 
 This log records delivered changes and data-package updates. Client data is hosted separately on Drive; changing it does not automatically produce a new executable release.
 
+## gx-v0.1.14 — 2026-11-20
+
+[Patch notes](docs/releases/gx-v0.1.14.md) · [Upgrade guide](docs/releases/gx-v0.1.14-upgrade.md).
+
+- Add personal markets, guild house rates, larger raids, shared loot and Perfect Party experience.
+- Expand quest rules and add Transformation, Disguise, Evolution and Soul Burn. Update combat formulas, periodic effects and resource drains.
+- Batch world rendering and restore native VANI alpha passes, NPC conversations and guild panels.
+- Ship native Linux and Windows builds with the GX Studio editor, terminal GX Server and the schema-31 development seed. Keep setup and upgrade guides in the repository.
+
 ## gx-v0.1.13 — 2026-11-19
 
 [Patch notes](docs/releases/gx-v0.1.13.md) · [Discord summary](docs/releases/gx-v0.1.13-discord.md) · [Upgrade guide](docs/releases/gx-v0.1.13-upgrade.md).

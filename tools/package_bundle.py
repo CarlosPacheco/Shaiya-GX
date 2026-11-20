@@ -13,7 +13,7 @@ import tempfile
 import zipfile
 
 from cash_path import existing_cash_path
-from font_pack import validate
+from font_pack import remove_readmes, validate
 
 ARCHIVES = ('gx-client-linux-amd64.tar.gz', 'gx-client-windows-amd64.zip',
             'gx-server-linux-amd64.tar.gz', 'gx-server-windows-amd64.zip')
@@ -59,7 +59,7 @@ def verify_cash_copies(client_data, server_data):
         raise ValueError('server ProductList database is missing')
 
 
-def prepare(archives, data, output, tag):
+def prepare(archives, data, output):
     if output.exists():
         raise ValueError('output already exists; choose a new folder')
     if data is not None and (not data.is_dir() or output.is_relative_to(data)):
@@ -95,7 +95,9 @@ def prepare(archives, data, output, tag):
         if data is not None:
             print('Copying local loose game data...', flush=True)
             shutil.copytree(data, client / 'data', dirs_exist_ok=True)
-        validate(client / 'data/fonts')
+        fonts = client / 'data/fonts'
+        remove_readmes(fonts)
+        validate(fonts)
         for platform in ('linux-amd64', 'windows-amd64'):
             source = extracted / ('gx-server-' + platform)
             manifest = source / 'package.manifest.json'
@@ -103,35 +105,19 @@ def prepare(archives, data, output, tag):
             for name, sha in record['files'].items():
                 if digest(source / name) != sha:
                     raise ValueError('native server manifest mismatch: ' + name)
-            (server / 'manifests').mkdir(parents=True, exist_ok=True)
-            shutil.copy2(manifest, server / 'manifests' / (platform + '.json'))
             manifest.unlink()
             merge(source, server)
         if data is not None:
             verify_cash_copies(client / 'data', server / 'data')
+        for path in stage.rglob('*'):
+            if path.is_file() and path.name.casefold().split('.')[0] == 'readme':
+                path.unlink()
+        # Older native archives carried a documentation directory and a Lua host guide.
+        if (server / 'docs').is_dir():
+            shutil.rmtree(server / 'docs')
+        (server / 'ai/HOST.md').unlink(missing_ok=True)
         files = {p.relative_to(server).as_posix(): digest(p) for p in sorted(server.rglob('*')) if p.is_file()}
         (server / 'package.manifest.json').write_text(json.dumps({'platform': 'linux-amd64+windows-amd64', 'files': files}, indent=2) + '\n')
-        data_instruction = ('Add your updated loose game data to Client/data/ before starting the client.\nKeep the supplied data/fonts/ directory and its licenses. No local game resources were copied.\n\n' if data is None else '')
-        (stage / 'README.txt').write_text(f'''Shaiya GX {tag} — Windows and Linux
-
-{data_instruction}1. Open Server/build/gx_console (Linux terminal) or gx_console.exe (Windows), then type start server.
-   Console launchers Start GX Server.sh and Start GX Server.bat are also included.
-2. Open Client/Shaiya GX (Linux) or Client/Shaiya GX.exe (Windows).
-
-The client executables share Client/data/, including external fonts and licenses.
-Keep the complete folder together. An OpenGL 4.5-capable GPU/driver is required.
-Default local endpoints: 127.0.0.1:30800 and 127.0.0.1:30810.
-
-GM role and commands: Server/docs/gm.md. Example: /nmake 1 1 creates merchant 1.
-The supplied development seed has GM test accounts. Server startup creates a new
-independent runtime database; the seed includes the requested development snapshot.
-SQLite is the primary production database.
-
-Original game resources retain their respective ownership. Font and software
-licenses are included in Client/ and Server/. SHA256SUMS.txt verifies this folder.
-''')
-        (stage / 'SHA256SUMS.txt').write_text(''.join(digest(p) + '  ' + p.relative_to(stage).as_posix() + '\n'
-                                                  for p in sorted(stage.rglob('*')) if p.is_file()))
         stage.replace(output)
     print('Distributable folder ready:', output, flush=True)
 
@@ -143,9 +129,9 @@ def main():
     data_source.add_argument('--data', type=Path)
     data_source.add_argument('--without-data', action='store_true', help='Keep client game resources separate; include only packaged fonts')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--tag', required=True)
+    parser.add_argument('--tag', help=argparse.SUPPRESS)
     args = parser.parse_args()
-    prepare(args.archives.resolve(), args.data.resolve() if args.data is not None else None, args.output.resolve(), args.tag)
+    prepare(args.archives.resolve(), args.data.resolve() if args.data is not None else None, args.output.resolve())
 
 
 if __name__ == '__main__':

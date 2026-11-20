@@ -135,6 +135,5 @@ jobs:
           cp portable/gx-server-linux-amd64/*.tar.gz release/
           cp portable/gx-server-windows-amd64/*.zip release/
           (cd release && sha256sum *.tar.gz *.zip > SHA256SUMS.txt)
-          python3 tools/package_release.py --archives release --tag "$GX_TAG" --notes "docs/releases/$GX_TAG.md"
-          cp "docs/releases/$GX_TAG.md" release-notes.txt
-          gh release create "$GX_TAG" release/* --verify-tag --title "Shaiya GX $GX_TAG" --notes-file release-notes.txt
+          python3 tools/package_release.py --archives release --tag "$GX_TAG"
+          gh release create "$GX_TAG" release/* --verify-tag --title "Shaiya GX $GX_TAG" --notes-file "docs/releases/$GX_TAG.md" --latest

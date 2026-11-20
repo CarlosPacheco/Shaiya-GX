@@ -232,6 +232,12 @@ func TestMobEffects(t *testing.T) {
 		return nil
 	}
 	const mapID = 60000
+	s := shard(mapID)
+	t.Cleanup(func() {
+		s.mu.Lock()
+		s.entities = MapEntities{}
+		s.mu.Unlock()
+	})
 	md := db.MustDefs().Mobs[103]
 	AddEntities(mapID, MapEntities{Mobs: []MapMob{NewStaticMob(md, 103, 10, 10, nil, 0)}})
 	mob := EntitiesOnMap(mapID).Mobs[0]
@@ -257,16 +263,21 @@ func TestMobEffects(t *testing.T) {
 		t.Fatal("sleep survived damage")
 	}
 
-	dot := find(detailTimeDamage)
-	ApplyMobEffect(mapID, mob.ID, 7, dot)
-	s := shard(mapID)
-	s.mu.Lock()
-	for i := range s.entities.Mobs[0].Effects {
-		s.entities.Mobs[0].Effects[i].prevTick = time.Now().Add(-3 * time.Second)
+	// Meteor rank 1 damages HP. Mana and stamina leakage share the
+	// same effect detail but mobs do not have those resource pools.
+	dot := db.MustDefs().Skills[db.SkillKey{SkillID: 68, Level: 1}]
+	if dot == nil || dot.TypeDetail != detailTimeDamage || dot.KeepSeconds <= 3 {
+		t.Fatalf("missing periodic Meteor damage: %+v", dot)
 	}
+	if _, ok := ApplyMobEffect(mapID, mob.ID, 7, dot); !ok {
+		t.Fatal("Meteor effect was not applied")
+	}
+	s.mu.Lock()
+	effects := s.entities.Mobs[0].Effects
+	firstTick := effects[len(effects)-1].prevTick.Add(effectTick)
 	s.mu.Unlock()
 	var dotHits int
-	for _, o := range TickMobEffects() {
+	for _, o := range tickMobEffects(firstTick) {
 		if o.MapID == mapID && o.Damaged && o.SkillID == dot.SkillID {
 			dotHits++
 			t.Logf("dot %d/%d type %d dealt %v", dot.SkillID, dot.SkillLevel, dot.TimeDamageType, o.Damage)

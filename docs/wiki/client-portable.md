@@ -23,9 +23,9 @@ Start `Server/build/gx_console` on Linux or `Server/build/gx_console.exe` on Win
 then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables and preserve all licenses.
 
-**Latest binary update: [gx-v0.1.13](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.13).**
-The Drive download above includes v0.1.13 and its matching loose client data. Preserve your server
-runtime and follow the [upgrade guide](releases/gx-v0.1.13-upgrade.md).
+**Latest binary update: [gx-v0.1.14](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.14).**
+The Drive download above contains gx-v0.1.13. Use matching loose client data and preserve your
+server runtime when updating. See the [upgrade guide](releases/gx-v0.1.14-upgrade.md).
 In the new combined package, GX Studio is in Client/Studio/.
 
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
@@ -48,7 +48,7 @@ The executable discovers adjacent data independently of the working directory. F
 Source, build instructions and third-party font sources: https://github.com/Spelunkern/Shaiya-GX
 
 Update GX Server and the client together. Use a complete package containing matching client/server builds and game data; preserve existing server runtime
-databases when upgrading. See the [current patch notes](releases/gx-v0.1.13.md).
+databases when upgrading. See the [current patch notes](releases/gx-v0.1.14.md).
 
 
 ## Optional maintainer packaging
@@ -57,7 +57,7 @@ The complete Drive download above needs no assembly. Maintainers who want a
 binary-only folder from GitHub release archives can run:
 
 ```sh
-python3 tools/package_bundle.py --archives /path/to/archives --without-data --output /path/to/new-folder --tag gx-v0.1.10
+python3 tools/package_bundle.py --archives /path/to/archives --without-data --output /path/to/new-folder
 ```
 
 The resulting `Client/` and `Server/` directories contain both operating

@@ -7,6 +7,7 @@
 # Local analysis, captures and build outputs.
 /work/
 /build/
+/shaiya
 /logs/
 *.pcap
 *.packetlog

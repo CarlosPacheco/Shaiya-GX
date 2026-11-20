@@ -196,12 +196,11 @@ def copy_runtime_data(source, target):
     for name in ("rapture.sqlite", "rapture.manifest.json"):
         shutil.copy2(source / name, target / name)
     (target / "game").mkdir()
-    for name in (*GAME_DATA, "README.txt"):
+    for name in GAME_DATA:
         shutil.copy2(source / "game" / name, target / "game" / name)
     (target / "maps").mkdir()
     for path in (source / "maps").iterdir():
-        if path.is_file() and (path.name == "README.txt" or
-                               re.fullmatch(r"[0-9]+\.svmap", path.name, re.IGNORECASE)):
+        if path.is_file() and re.fullmatch(r"[0-9]+\.svmap", path.name, re.IGNORECASE):
             shutil.copy2(path, target / "maps" / path.name)
     geometry = source / "geometry"
     (target / "geometry").mkdir()
@@ -230,21 +229,12 @@ def build_package(platform, output, go):
         # Editable policies accompany the same embedded default catalog.
         ai = root / "ai"
         ai.mkdir()
-        for asset_name in ("catalog.lua", "README.md", "HOST.md"):
-            shutil.copy2(ROOT / "ai" / asset_name, ai / asset_name)
+        shutil.copy2(ROOT / "ai/catalog.lua", ai / "catalog.lua")
         for asset_name in ("core", "definitions"):
             shutil.copytree(ROOT / "ai" / asset_name, ai / asset_name,
                             ignore=lambda directory, names: [n for n in names if not n.endswith(".lua")])
         shutil.copy2(ROOT / "LICENSE", root / "LICENSE")
-        shutil.copy2(ROOT / "THIRD_PARTY_NOTICES.md", root / "THIRD_PARTY_NOTICES.md")
         shutil.copytree(ROOT / "licenses", root / "licenses")
-        (root / "docs").mkdir()
-        for document in ("sqlite.md", "distribution.md", "social.md", "architecture.md", "modernization.md", "persistence-audit.md"):
-            text = (ROOT / "docs" / document).read_text().replace("../../docs/", "")
-            (root / "docs" / document).write_text(text)
-        for document in ("server.md", "quickstart.md", "building.md", "gm.md", "mob-navigation.md", "mounts.md", "fall-damage.md"):
-            text = (ROOT.parent / "docs" / document).read_text().replace("../server/docs/", "")
-            (root / "docs" / document).write_text(text)
         (root / "tools").mkdir()
         for tool in ("sqlite.py", "runtime_lock.py", "snapshot_sqlite.py", "enable_test_gms.sql"):
             shutil.copy2(ROOT / "tools" / tool, root / "tools" / tool)
@@ -257,34 +247,6 @@ def build_package(platform, output, go):
             launcher = root / "Start GX Server.sh"
             launcher.write_text('#!/bin/sh\nset -eu\ncd "$(dirname "$0")"\nexec ./build/gx_console\n')
             launcher.chmod(0o755)
-        (root / "README.txt").write_text("""GX Server — the integrated Shaiya GX server
-
-GX Server is terminal-only. Run the console launcher below, or open
-build/gx_console (Linux) or build/gx_console.exe (Windows).
-
-SQLite is the primary production database. Its embedded operation requires
-no separate database service.
-
-Run Start GX Server.sh (Linux) or Start GX Server.bat (Windows).
-Type: start server
-To stop: shutdown server
-Closing the console leaves the server processes running.
-
-GM commands and Admin 0/1 account roles: see docs/gm.md.
-Example: /nmake 1 1 creates merchant 1. Test accounts in the seed are GMs.
-
-No Go, Docker, SQL Server, Python or database installation is needed to run
-this package. Python 3 is optional for the tools in tools/.
-
-Keep build/ and data/ together. First startup copies the included database
-to runtime/rapture.sqlite. Later starts preserve your working database.
-The included snapshot retains the current development accounts and characters.
-To create another account: python3 tools/sqlite.py account NAME
-
-Default endpoints are 127.0.0.1:30800 (login) and 127.0.0.1:30810 (world).
-Set RAPTURE_LOGIN_LISTEN, RAPTURE_WORLD_LISTEN and RAPTURE_PUBLIC_IP to use
-other addresses. See docs/distribution.md and docs/sqlite.md for details.
-""")
         check_seed(root)
         files = {str(path.relative_to(root)).replace(os.sep, "/"): checksum(path)
                  for path in sorted(root.rglob("*")) if path.is_file()}

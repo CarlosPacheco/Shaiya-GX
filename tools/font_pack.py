@@ -8,6 +8,18 @@ ROOT = Path(__file__).resolve().parents[1]
 FONT_PACK = ROOT / 'resources/fonts'
 
 
+def remove_readmes(directory):
+    """Remove font documentation and update the staged inventory."""
+    manifest_path = directory / 'pack.json'
+    manifest = json.loads(manifest_path.read_text())
+    readmes = [name for name in manifest['files'] if PurePosixPath(name).name == 'README.md']
+    for name in readmes:
+        (directory / name).unlink(missing_ok=True)
+        del manifest['files'][name]
+    if readmes:
+        manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+
+
 def validate(directory=FONT_PACK):
     directory = Path(directory)
     manifest = json.loads((directory / 'pack.json').read_text())

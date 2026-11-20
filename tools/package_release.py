@@ -8,18 +8,11 @@ import tempfile
 from package_bundle import digest, prepare
 
 
-def package(archives, tag, notes):
+def package(archives, tag):
     archives = archives.resolve()
     with tempfile.TemporaryDirectory(prefix='gx-complete-release-') as temporary:
         portable = Path(temporary) / ('Shaiya GX ' + tag + ' Portable')
-        prepare(archives, None, portable, tag)
-        shutil.copy2(notes, portable / 'PATCH-NOTES.md')
-        with (portable / 'README.txt').open('a') as stream:
-            stream.write('\nBinary update: keep the client game data from the complete Drive package.\nServer maps and physics resources are included. See PATCH-NOTES.md.\n')
-        (portable / 'SHA256SUMS.txt').write_text(''.join(
-            digest(path) + '  ' + path.relative_to(portable).as_posix() + '\n'
-            for path in sorted(portable.rglob('*'))
-            if path.is_file() and path != portable / 'SHA256SUMS.txt'))
+        prepare(archives, None, portable)
         shutil.make_archive(str(archives / 'gx-portable-linux-windows'), 'zip',
                             root_dir=portable.parent, base_dir=portable.name)
     files = sorted(path for path in archives.iterdir()
@@ -33,6 +26,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--archives', type=Path, required=True)
     parser.add_argument('--tag', required=True)
-    parser.add_argument('--notes', type=Path, required=True)
     args = parser.parse_args()
-    package(args.archives, args.tag, args.notes)
+    package(args.archives, args.tag)

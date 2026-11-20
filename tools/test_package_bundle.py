@@ -61,6 +61,8 @@ class BinaryOnlyBundleTests(unittest.TestCase):
                     (source/('Shaiya GX.exe' if windows else 'Shaiya GX')).write_bytes(b'native executable')
                     fonts=source/'data/fonts';fonts.mkdir(parents=True)
                     (fonts/'LICENSE.txt').write_text('packaged licensed fonts')
+                    (fonts/'README.md').write_text('font notes')
+                    (fonts/'pack.json').write_text(json.dumps({'files': {'README.md': {}, 'LICENSE.txt': {}}}))
                     bindings=source/'data/Vehicle';bindings.mkdir()
                     (bindings/'bones.ini').write_text('[Human]\n0=25,-1\n')
                 else:
@@ -78,7 +80,7 @@ class BinaryOnlyBundleTests(unittest.TestCase):
             (archives/'SHA256SUMS.txt').write_text(''.join(digest(archives/n)+'  '+n+'\n' for n in ARCHIVES))
             output=root/'portable'
             with patch('package_bundle.validate') as validate:
-                prepare(archives,None,output,'gx-v-test')
+                prepare(archives,None,output)
                 validate.assert_called_once()
                 self.assertEqual(validate.call_args.args[0].parts[-2:],('data','fonts'))
             self.assertTrue((output/'Client/Shaiya GX').is_file())
@@ -86,14 +88,15 @@ class BinaryOnlyBundleTests(unittest.TestCase):
             self.assertEqual({p.name for p in (output/'Client/data').iterdir()},{'fonts','Vehicle'})
             self.assertFalse((output/'Client/data/Cash.SData').exists())
             self.assertTrue((output/'Server/data/rapture.sqlite').is_file())
-            self.assertIn('Add your updated loose game data',(output/'README.txt').read_text())
-            self.assertIn('Client/Shaiya GX.exe',(output/'SHA256SUMS.txt').read_text())
+            self.assertEqual(list(output.rglob('README*')), [])
+            fonts = output/'Client/data/fonts'
+            self.assertEqual(set(json.loads((fonts/'pack.json').read_text())['files']), {'LICENSE.txt'})
 
             data=root/'local-data';(data/'fonts').mkdir(parents=True)
             (data/'fonts/LICENSE.txt').write_text('local licensed font data')
             (data/'Cash.SData').write_bytes(b'local original catalog')
             with patch('package_bundle.validate'):
-                prepare(archives,data,root/'with-data','gx-v-test')
+                prepare(archives,data,root/'with-data')
             for source in data.rglob('*'):
                 if source.is_file():
                     self.assertEqual(source.read_bytes(),(root/'with-data/Client/data'/source.relative_to(data)).read_bytes())

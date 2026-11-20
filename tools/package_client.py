@@ -7,7 +7,7 @@ import shutil
 import tarfile
 import zipfile
 from tempfile import TemporaryDirectory
-from font_pack import FONT_PACK, validate
+from font_pack import FONT_PACK, remove_readmes, validate
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -46,18 +46,15 @@ def package_client(platform, output):
         studio = 'GX Studio.exe' if platform.startswith('windows') else 'GX Studio'
         (stage/'Studio').mkdir()
         shutil.copy2(ROOT/'build'/'GX Studio'/studio, stage/'Studio'/studio)
-        shutil.copy2(ROOT/'docs/gx-studio.md', stage/'Studio'/'README.md')
-        shutil.copytree(FONT_PACK, stage/'data/fonts')
+        fonts = stage/'data/fonts'
+        shutil.copytree(FONT_PACK, fonts)
+        remove_readmes(fonts)
+        validate(fonts)
         shutil.copytree(ROOT/'resources/vehicle', stage/'data/Vehicle')
         for file in ['LICENSE', 'NOTICE']:
             shutil.copy2(ROOT/file, stage/file)
         licenses = stage/'licenses'
-        licenses.mkdir()
-        for file in ['OFL.txt', 'Tahoma-NOTICE.txt', 'LGPL-2.1-or-later.txt', 'LiberationSans-OFL.txt']:
-            shutil.copy2(ROOT/'internal/ui/fonts'/file, licenses/file)
-        for file in (ROOT/'licenses').glob('*.txt'):
-            shutil.copy2(file, licenses/file.name)
-        shutil.copy2(ROOT/'docs/client-portable.md', stage/'README.md')
+        shutil.copytree(ROOT/'licenses', licenses)
         if platform.startswith('windows'):
             archive = stage.parent/(name+'.zip')
             with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:

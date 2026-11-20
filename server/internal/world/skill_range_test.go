@@ -1,15 +1,17 @@
 package world
 
 import (
+	"math"
+	"testing"
+	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/collision"
 	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/skillrange"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
-	"math"
-	"testing"
-	"time"
 )
 
 func spellCastRangeFixture(t *testing.T) (*Session, *db.SkillDef, *mapShard) {
@@ -139,9 +141,10 @@ func TestPreparedFriendlySpellUsesUserReach(t *testing.T) {
 	c.PosX = 14
 	p.UpdateCharacter(c)
 	s.cast.readyAt = time.Now().Add(-time.Second)
+	beforeRelease := time.Now()
 	s.processPendingCast()
-	if time.Until(s.attackMoveUntil) < 700*time.Millisecond {
-		t.Fatal("friendly skill did not stop movement for 800ms")
+	if s.attackMoveUntil.Before(beforeRelease.Add(attackspeed.MovementPauseMilliseconds * time.Millisecond)) {
+		t.Fatal("friendly skill did not apply the full movement pause")
 	}
 	if len(p.TakeFriendly()) != 1 {
 		t.Fatal("friendly cast did not honor release grace")
@@ -163,11 +166,12 @@ func TestFriendlyEnemyFallbackAndOneSecondReuse(t *testing.T) {
 	}
 	for _, seconds := range []uint16{0, 1, 2, 10} {
 		d.ResetTimeSeconds = seconds
+		beforeCast := time.Now()
 		s.startCooldown(s.skills[0], d)
 		if got := s.skillReady(d.SkillID); got != (seconds <= 1) {
 			t.Fatal("wrong authoritative reuse", seconds, got)
 		}
-		if time.Until(s.attackMoveUntil) < 700*time.Millisecond {
+		if s.attackMoveUntil.Before(beforeCast.Add(attackspeed.MovementPauseMilliseconds * time.Millisecond)) {
 			t.Fatal("rapid chaining removed movement stop")
 		}
 	}

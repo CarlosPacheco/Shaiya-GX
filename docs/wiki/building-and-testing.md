@@ -83,7 +83,7 @@ SHAIYA_TEST_ARTIFACTS=/path/to/private/captures \
 python3 server/tools/package.py --output out/portable
 ```
 
-This requires Go and Python 3; the server needs no C compiler or GUI libraries. It emits `gx-server-linux-amd64.tar.gz`, `gx-server-windows-amd64.zip` and `SHA256SUMS.txt`. Every package includes the terminal console, login/world, seed, server data, docs, license and optional account/backup tools. The packager validates seed hashes, table counts and integrity before shipping and starts the native target in a disposable relocated directory.
+This requires Go and Python 3; the server needs no C compiler or GUI libraries. It emits `gx-server-linux-amd64.tar.gz`, `gx-server-windows-amd64.zip` and `SHA256SUMS.txt`. Every package includes the terminal console, login/world, seed, server data, license notices and optional account/backup tools. The packager validates seed hashes, table counts and integrity before shipping and starts the native target in a disposable relocated directory.
 
 Rebuilding does not take a new snapshot from a personal runtime. Refresh deliberately using [server storage instructions](../server/docs/sqlite.md), then build. Release binaries are attached to the GX repository's releases rather than committed into source history.
 
