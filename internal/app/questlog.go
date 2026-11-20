@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
@@ -23,12 +24,13 @@ type questLogView struct {
 // Rapture sends whole remaining minutes, rounded down. Keep an upper bound
 // rather than displaying a fabricated seconds-accurate countdown.
 func (a *App) questTimeHint(def sdata.Quest, q proto.ActiveQuest) string {
-	if def.MaxMinutes == 0 {
+	limit := npcquest.Deadline(def.MaxMinutes, def.TickKeep)
+	if limit == 0 {
 		return ""
 	}
 	var seconds float64
 	if at, ok := a.questStartedAt[q.ID]; ok {
-		seconds = float64(def.MaxMinutes)*60 - time.Since(at).Seconds()
+		seconds = limit.Seconds() - time.Since(at).Seconds()
 	} else if at, ok := a.questSnapshotAt[q.ID]; ok {
 		seconds = float64(uint32(q.MinutesLeft)+1)*60 - time.Since(at).Seconds()
 	} else {

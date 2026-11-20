@@ -1,6 +1,7 @@
 package world
 
 import (
+	"errors"
 	"math/rand/v2"
 	"slices"
 	"sort"
@@ -181,14 +182,18 @@ type activeQuest struct {
 }
 
 func (q *activeQuest) delayMinutes() int16 {
-	if q.def.MaxMinutes != 0 {
-		return int16(max(time.Until(q.endAt), 0) / time.Minute)
+	if !q.endAt.IsZero() {
+		return int16(min(max(time.Until(q.endAt), 0)/time.Minute, 32767))
 	}
-	return int16(min(time.Since(q.startAt)/time.Minute, 32767))
+	return int16(min(max(time.Since(q.startAt), 0)/time.Minute, 32767))
 }
 
 func (q *activeQuest) row() db.CharQuest {
-	return db.CharQuest{QuestID: q.ID, Delay: q.delayMinutes(), Counts: q.counters}
+	r := db.CharQuest{QuestID: q.ID, Delay: q.delayMinutes(), Counts: q.counters}
+	if q.def.usesElapsedSeconds() && !q.startAt.IsZero() {
+		r.StartedAt = q.startAt.UnixMilli()
+	}
+	return r
 }
 
 // loadQuests restores the character's quests as PacketUserDBSetInfo does.
@@ -200,6 +205,7 @@ func (s *Session) loadQuests() error {
 		return err
 	}
 	now := time.Now()
+	var recovered []db.CharQuest
 	for _, r := range rows {
 		def := findQuestDef(r.QuestID)
 		if def == nil {
@@ -207,16 +213,32 @@ func (s *Session) loadQuests() error {
 		}
 		q := &activeQuest{ID: r.QuestID, def: def, counters: r.Counts}
 		delay := time.Duration(max(r.Delay, 0)) * time.Minute
-		if def.MaxMinutes != 0 {
-			q.endAt = now.Add(delay)
-			q.startAt = q.endAt.Add(-time.Duration(def.MaxMinutes) * time.Minute)
-		} else {
+		limit := npcquest.Deadline(def.MaxMinutes, def.TickKeep)
+		switch {
+		case r.StartedAt > 0 && def.usesElapsedSeconds():
+			q.startAt = time.UnixMilli(r.StartedAt)
+			if limit > 0 {
+				q.endAt = q.startAt.Add(limit)
+			}
+		case def.MaxMinutes != 0:
+			q.startAt = now.Add(delay - npcquest.Deadline(def.MaxMinutes, 0))
+			q.endAt = q.startAt.Add(limit)
+		default:
 			q.startAt = now.Add(-delay)
+			if limit > 0 {
+				q.endAt = q.startAt.Add(limit)
+			}
 		}
 		if def.MinMinutes != 0 {
-			q.successAt = q.startAt.Add(time.Duration(def.MinMinutes) * time.Minute)
+			q.successAt = q.startAt.Add(npcquest.Deadline(def.MinMinutes, 0))
+		}
+		if r.StartedAt == 0 && def.usesElapsedSeconds() {
+			recovered = append(recovered, q.row())
 		}
 		s.quests = append(s.quests, q)
+	}
+	if err := db.SaveCharacterQuests(s.char.ID, recovered); err != nil {
+		return err
 	}
 	fin, err := db.FinishedQuests(s.char.ID)
 	if err != nil {
@@ -237,8 +259,8 @@ func (s *Session) questListPackets() [][]byte {
 		for _, q := range s.quests[start:end] {
 			w.U16(q.ID)
 			left := uint16(0)
-			if q.def.MaxMinutes != 0 {
-				left = uint16(max(time.Until(q.endAt), 0) / time.Minute)
+			if !q.endAt.IsZero() {
+				left = uint16(min(max(time.Until(q.endAt), 0)/time.Minute, 65535))
 			}
 			w.U16(left)
 			w.Bytes(q.counters[:])
@@ -309,6 +331,9 @@ func (s *Session) questEnableStart(q *questDef) bool {
 	if !raceAllowed(q.Faction, ch.Race) {
 		return false
 	}
+	if (ch.Gender == 0 && !q.Male) || (ch.Gender == 1 && !q.Female) {
+		return false
+	}
 	switch ch.Mode {
 	case growEasy:
 		if q.Mode != 0 {
@@ -356,8 +381,9 @@ func (s *Session) questNPCInReach(npc MapNpc) bool {
 }
 
 type questItemUse struct {
-	item     [2]uint8
-	deadline time.Time
+	item       [2]uint8
+	deadline   time.Time
+	pendingUID int64
 }
 
 // Native ItemUse (0x4655e0) opens the same window for types 27–29. Type 29
@@ -367,7 +393,10 @@ func (s *Session) useQuestItem(index int) bool {
 	if it.Bag < InventoryFirstBag || it.Bag > InventoryLastBag || s.dead || s.char.CurrentHP == 0 {
 		return false
 	}
-	if it.Type == 29 {
+	use := questItemUse{item: [2]uint8{it.Type, it.TypeID}, deadline: time.Now().Add(5 * time.Minute)}
+	if it.Type == 29 && questItemNeedsAtomicStart(it.Type, it.TypeID) {
+		use.pendingUID = it.UID
+	} else if it.Type == 29 {
 		remaining, err := s.consumeOne(index)
 		if err != nil {
 			s.logErr("consume quest item", err)
@@ -379,7 +408,7 @@ func (s *Session) useQuestItem(index int) bool {
 		s.send(buildRemoveItem(&remaining, remaining.Count == 0), "quest item used")
 		s.broadcastNear(buildUseItemResult(s.char.ID, &remaining), "0x050A quest item used", false)
 	}
-	s.lastQuestItem = questItemUse{[2]uint8{it.Type, it.TypeID}, time.Now().Add(5 * time.Minute)}
+	s.lastQuestItem = use
 	return true
 }
 
@@ -415,6 +444,10 @@ func (s *Session) handleQuestStart(p []byte) {
 		s.log.Printf("GX Server World quest %d refused (active, finished or requirements)", id)
 		return
 	}
+	if reason := s.questStartRestriction(q); reason != "" {
+		s.questFeedback(reason)
+		return
+	}
 	// The native acknowledgement carries an NPC only for types 1 and 2.
 	context := npcID
 	if q.StartType == 0 || q.StartType >= 3 {
@@ -426,23 +459,28 @@ func (s *Session) handleQuestStart(p []byte) {
 func (s *Session) startQuest(q *questDef, id uint16, npcID uint32) {
 	now := time.Now()
 	aq := &activeQuest{ID: id, def: q, startAt: now}
-	if q.MaxMinutes != 0 {
-		aq.endAt = now.Add(time.Duration(q.MaxMinutes) * time.Minute)
+	limit := npcquest.Deadline(q.MaxMinutes, q.TickKeep)
+	if limit > 0 {
+		aq.endAt = now.Add(limit)
 	}
 	if q.MinMinutes != 0 {
-		aq.successAt = now.Add(time.Duration(q.MinMinutes) * time.Minute)
+		aq.successAt = now.Add(npcquest.Deadline(q.MinMinutes, 0))
 	}
 	after := slices.Clone(s.items)
 	var removed *db.Item
-	if q.StartType == 2 || q.StartType == 3 {
+	pendingUID := int64(0)
+	if q.StartType == 4 {
+		pendingUID = s.lastQuestItem.pendingUID
+	}
+	if q.StartType == 2 || q.StartType == 3 || pendingUID != 0 {
 		i := slices.IndexFunc(after, func(it db.Item) bool {
 			return it.Bag >= InventoryFirstBag && it.Bag <= InventoryLastBag && it.Count > 0 &&
-				it.Type == q.StartItemType && it.TypeID == q.StartItemID
+				it.Type == q.StartItemType && it.TypeID == q.StartItemID && (pendingUID == 0 || it.UID == pendingUID)
 		})
 		if i < 0 {
 			return
 		}
-		if q.StartType == 2 {
+		if q.StartType == 2 || pendingUID != 0 {
 			after[i].Count--
 			item := after[i]
 			removed = &item
@@ -468,8 +506,14 @@ func (s *Session) startQuest(q *questDef, id uint16, npcID uint32) {
 		}
 		grants = append(grants, adds...)
 	}
-	if err := db.CommitQuestStart(s.char.ID, db.CharQuest{QuestID: id, Delay: int16(min(q.MaxMinutes, 32767))}, s.items, after); err != nil {
-		s.logErr("quest start transaction", err)
+	row := aq.row()
+	row.Delay = int16(min(limit/time.Minute, 32767))
+	if err := db.CommitQuestStart(s.char.ID, row, s.items, after, time.Duration(q.TickStart)*time.Second); err != nil {
+		if errors.Is(err, db.ErrQuestStartTerm) {
+			s.questFeedback("This quest's start interval has not elapsed.")
+		} else {
+			s.logErr("quest start transaction", err)
+		}
 		return
 	}
 	s.items = after
@@ -479,6 +523,10 @@ func (s *Session) startQuest(q *questDef, id uint16, npcID uint32) {
 	}
 	if removed != nil {
 		s.send(buildRemoveItem(removed, removed.Count == 0), "quest start cost")
+	}
+	if pendingUID != 0 {
+		s.lastQuestItem = questItemUse{}
+		s.broadcastNear(buildUseItemResult(s.char.ID, removed), "0x050A quest item used", false)
 	}
 	w := packet.New(packet.QuestStart)
 	w.U32(npcID)
@@ -490,18 +538,8 @@ func (s *Session) startQuest(q *questDef, id uint16, npcID uint32) {
 	s.log.Printf("GX Server World quest %d %q started", id, q.Name)
 }
 
-// questFindItems is QuestFindItem (0x0047f8e0): the farm items must all be
-// held; counters take the held totals; consuming removes what the chosen
-// reward variant needs (whole stacks for quest-type items).
-func (s *Session) questFindItems(q *activeQuest) bool {
-	_, _, ok := planQuestItems(q, s.items, false)
-	return ok
-}
-
-func planQuestItems(q *activeQuest, original []db.Item, consume bool) (items []db.Item, packets [][]byte, ok bool) {
-	items = append([]db.Item(nil), original...)
-	d := q.def
-	var totals [3]int
+// questItemTotals counts actual items in carried bags.
+func questItemTotals(d *questDef, items []db.Item) (totals [3]int) {
 	for _, it := range items {
 		if it.Bag < InventoryFirstBag || it.Bag > InventoryLastBag {
 			continue
@@ -513,33 +551,22 @@ func planQuestItems(q *activeQuest, original []db.Item, consume bool) (items []d
 			}
 		}
 	}
+	return totals
+}
+
+func planQuestItems(d *questDef, r questResult, original []db.Item) (items []db.Item, packets [][]byte, ok bool) {
+	totals := questItemTotals(d, original)
 	var remaining [3]int
 	for i, f := range d.FarmItems {
-		if totals[i] < int(f.Count) {
+		remaining[i] = int(f.Count)
+		if r.NeedItemID == uint8(i+1) {
+			remaining[i] = max(remaining[i], int(r.NeedItemCount))
+		}
+		if totals[i] < remaining[i] {
 			return nil, nil, false
 		}
-		if totals[i] > int(q.counters[i]) {
-			q.counters[i] = f.Count
-		} else {
-			q.counters[i] = uint8(min(totals[i], 255))
-		}
-		remaining[i] = int(f.Count)
 	}
-	if d.ResultType != 1 && d.UserSelect == 0 {
-		for v := 2; v >= 0; v-- {
-			sel, req := d.Results[v].NeedItemID, d.Results[v].NeedItemCount
-			if d.EndType == 1 && req != 0 && sel >= 1 && sel <= 3 {
-				q.counters[v] = uint8(min(totals[v], 255))
-				if int(q.counters[sel-1]) >= int(req) {
-					remaining[sel-1] = int(req)
-					break
-				}
-			}
-		}
-	}
-	if !consume {
-		return items, nil, true
-	}
+	items = slices.Clone(original)
 	for i := len(items) - 1; i >= 0; i-- {
 		it := items[i]
 		if it.Bag < InventoryFirstBag || it.Bag > InventoryLastBag {
@@ -591,30 +618,16 @@ func (s *Session) handleQuestEnd(p []byte) {
 			return
 		}
 	}
-	switch d.EndType {
-	case 1:
-		if !s.questFindItems(q) {
-			return
-		}
-	case 2:
-		if q.counters[0] < d.MobCounts[0] || q.counters[1] < d.MobCounts[1] {
-			return
-		}
-	case 3:
-		if q.counters[0] < d.PvpKills {
-			return
-		}
-	}
 	ctx := npcID
 	if d.EndType >= 2 {
 		ctx = 0
 	}
 	q.rewardNPC = npcID
-	s.completeQuest(q, ctx, true)
+	s.completeQuest(q, ctx, true, true)
 }
 
 // completeQuest is quest_requests_complete.
-func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool) {
+func (s *Session) completeQuest(q *activeQuest, ctx uint32, success, requested bool) {
 	d := q.def
 	if !success {
 		if !s.removeQuest(q, 0) {
@@ -628,38 +641,50 @@ func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool) {
 		s.log.Printf("GX Server World quest %d failed", q.ID)
 		return
 	}
-	if d.MinMinutes != 0 && time.Now().Before(q.successAt) {
+	now := time.Now()
+	if q.expired(now) {
+		s.completeQuest(q, ctx, false, requested)
 		return
 	}
-	if d.ResultType == 1 {
-		s.awardQuest(q, 0, ctx)
+	totals, ready := s.questObjectives(q)
+	if !ready {
 		return
 	}
-	if d.UserSelect != 0 {
-		q.success = 1
-		w := packet.New(packet.QuestChoose)
-		w.U16(q.ID)
-		s.send(w.MustFinish(), "0x0907 quest reward choice")
-		return
-	}
-	for v := 2; v >= 0; v-- {
-		var sel, req uint16
-		switch d.EndType {
-		case 1:
-			sel, req = uint16(d.Results[v].NeedItemID), uint16(d.Results[v].NeedItemCount)
-			if sel > 3 {
-				sel = 0
-			}
-		case 2:
-			sel, req = d.Results[v].NeedMobID, uint16(d.Results[v].NeedMobCount)
-			if sel > 2 {
-				sel = 0
-			}
+	if now.Before(q.successAt) {
+		if requested {
+			s.questFeedback("The minimum quest time has not elapsed.")
 		}
-		if v == 0 || (sel != 0 && req != 0 && uint16(q.counters[sel-1]) >= req) {
-			s.awardQuest(q, uint8(v), ctx)
+		return
+	}
+	eligible := func(i int) bool {
+		return s.questRewardEligible(q, d.Results[i], totals, now)
+	}
+	switch {
+	case d.ResultType == 1:
+		if eligible(0) {
+			s.awardQuest(q, 0, ctx)
 			return
 		}
+	case d.UserSelect != 0:
+		for i := 0; i < min(int(d.UserSelect), len(d.Results)); i++ {
+			if eligible(i) {
+				q.success = 1
+				w := packet.New(packet.QuestChoose)
+				w.U16(q.ID)
+				s.send(w.MustFinish(), "0x0907 quest reward choice")
+				return
+			}
+		}
+	default:
+		for i := len(d.Results) - 1; i >= 0; i-- {
+			if (i == 0 || d.Results[i].hasRequirements()) && eligible(i) {
+				s.awardQuest(q, uint8(i), ctx)
+				return
+			}
+		}
+	}
+	if requested {
+		s.questFeedback("No quest reward is available yet. Check the reward requirements.")
 	}
 }
 
@@ -679,7 +704,14 @@ func (s *Session) handleQuestChoose(p []byte) {
 			return
 		}
 	}
-	if q.def.EndNpcType != 0 && !s.questFindItems(q) {
+	now := time.Now()
+	if q.expired(now) {
+		s.completeQuest(q, 0, false, true)
+		return
+	}
+	totals, ready := s.questObjectives(q)
+	if !ready || !s.questRewardEligible(q, q.def.Results[choice], totals, now) {
+		s.questFeedback("You do not meet the requirements for this reward.")
 		return
 	}
 	s.awardQuest(q, choice, 0)
@@ -692,7 +724,7 @@ func (s *Session) handleQuestAbandon(p []byte) {
 	}
 	id, _ := packet.U16(p[2:])
 	if q := s.findQuest(id); q != nil {
-		s.completeQuest(q, 0, false)
+		s.completeQuest(q, 0, false, true)
 	}
 }
 
@@ -710,9 +742,8 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 	change := db.CharacterChange{Before: *s.char, After: *s.char, ItemsBefore: s.items, ItemsAfter: append([]db.Item(nil), s.items...)}
 	var packets [][]byte
 	if q.def.EndType == 1 {
-		plannedQuest := *q
 		var ok bool
-		change.ItemsAfter, packets, ok = planQuestItems(&plannedQuest, s.items, true)
+		change.ItemsAfter, packets, ok = planQuestItems(q.def, res, s.items)
 		if !ok {
 			return
 		}
@@ -884,7 +915,7 @@ func (s *Session) questKillCount(mobID uint16, count uint8) bool {
 	for _, change := range changes {
 		q := change.quest
 		if s.findQuest(q.ID) == q && q.def.EndNpcType == 0 && q.counters[0] >= q.def.MobCounts[0] && q.counters[1] >= q.def.MobCounts[1] {
-			s.completeQuest(q, 0, true)
+			s.completeQuest(q, 0, true, false)
 		}
 	}
 	return true
@@ -913,10 +944,9 @@ func (s *Session) questPickup(t, id uint8) {
 	if !ok || s.char == nil {
 		return
 	}
-	now := time.Now()
 	for _, qid := range link.End {
 		q := s.findQuest(qid)
-		if q == nil || q.def.EndType != 1 || (q.def.MinMinutes != 0 && now.After(q.successAt)) {
+		if q == nil || q.def.EndType != 1 {
 			continue
 		}
 		for slot, f := range q.def.FarmItems {
@@ -924,8 +954,8 @@ func (s *Session) questPickup(t, id uint8) {
 				continue
 			}
 			s.bumpQuestCounter(q, slot)
-			if q.def.EndNpcType == 0 && s.questFindItems(q) {
-				s.completeQuest(q, 0, true)
+			if q.def.EndNpcType == 0 && q.success == 0 {
+				s.completeQuest(q, 0, true, false)
 			}
 			break
 		}
@@ -936,10 +966,10 @@ func (s *Session) questPickup(t, id uint8) {
 func (s *Session) questTimers() {
 	now := time.Now()
 	for _, q := range append([]*activeQuest(nil), s.quests...) {
-		if q.def.MaxMinutes != 0 && !now.Before(q.endAt) {
-			s.completeQuest(q, 0, false)
-		} else if q.success == 0 && q.def.EndNpcType == 0 && q.def.EndType == 2 && q.counters[0] >= q.def.MobCounts[0] && q.counters[1] >= q.def.MobCounts[1] {
-			s.completeQuest(q, 0, true)
+		if q.expired(now) {
+			s.completeQuest(q, 0, false, false)
+		} else if q.retryAutomatically() {
+			s.completeQuest(q, 0, true, false)
 		}
 	}
 }

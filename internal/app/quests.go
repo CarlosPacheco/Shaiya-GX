@@ -140,6 +140,10 @@ func (a *App) confirmedQuest(p []byte) {
 					def = a.questDefs[result.ID-1]
 				}
 				a.questMessage(a.questResultText(def, &result))
+			} else if result.Success == 0 && result.ID > 0 && int(result.ID) <= len(a.questDefs) {
+				if text := questText(a.questDefs[result.ID-1].Descriptions[3]); text != "" {
+					a.questMessage(text)
+				}
 			}
 		}
 	}
@@ -198,6 +202,12 @@ func (a *App) questCommand(text string) bool {
 			}
 			if int(id) <= len(a.questDefs) && a.questDefs[id-1].StartType == 3 {
 				packet = proto.QuestStartPacket(uint32(a.questDefs[id-1].StartItemID), id)
+				break
+			}
+		} else if int(id) <= len(a.questDefs) {
+			q := a.questDefs[id-1]
+			if q.EndType >= 1 && q.EndType <= 3 && q.EndNPCType == 0 {
+				packet = proto.QuestEndPacket(0, id)
 				break
 			}
 		}

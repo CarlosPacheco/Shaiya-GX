@@ -847,7 +847,7 @@ Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `inte
 | [`auctionMigration`](../../server/internal/db/migrations.go#L34)<br>`var auctionMigration string` | See the source definition and the subsystem ownership contract. |
 | [`pruneLegacyMigration`](../../server/internal/db/migrations.go#L37)<br>`var pruneLegacyMigration string` | See the source definition and the subsystem ownership contract. |
 | [`migrations`](../../server/internal/db/migrations.go#L39)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L140)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX migrations have their own transactional, checksummed ledger. |
+| [`migrate`](../../server/internal/db/migrations.go#L149)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -891,26 +891,28 @@ Direct GX dependencies: `server/internal/config`, `server/internal/filelock`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`CharQuest`](../../server/internal/db/quests.go#L11)<br>`type CharQuest` | CharQuest is an active quest row: Delay is minutes left (timed quests) or minutes elapsed (untimed), as the original saves it. |
-| [`FinishedQuest`](../../server/internal/db/quests.go#L18)<br>`type FinishedQuest` | FinishedQuest is a finished quest row (Success 1 completed, 0 failed). |
-| [`CharacterQuests`](../../server/internal/db/quests.go#L24)<br>`func CharacterQuests(charID uint32) ([]CharQuest, error)` | CharacterQuests runs usp_Read_Char_Quest_R. |
-| [`FinishedQuests`](../../server/internal/db/quests.go#L50)<br>`func FinishedQuests(charID uint32) ([]FinishedQuest, error)` | FinishedQuests runs usp_Read_Char_FinishedQuest_R. |
-| [`AddCharacterQuest`](../../server/internal/db/quests.go#L77)<br>`func AddCharacterQuest(charID uint32, q CharQuest) error` | AddCharacterQuest runs usp_Save_Char_Quest_Add_E. |
-| [`CommitQuestStart`](../../server/internal/db/quests.go#L85)<br>`func CommitQuestStart(charID uint32, q CharQuest, before, after []Item) error` | CommitQuestStart commits the inventory cost, starting grants and quest row together. A duplicate start or changed inventory rolls back the whole plan. |
-| [`SaveCharacterQuest`](../../server/internal/db/quests.go#L113)<br>`func SaveCharacterQuest(charID uint32, q CharQuest) error` | SaveCharacterQuest runs usp_Save_Char_Quest_Mod_E. |
-| [`FinishCharacterQuest`](../../server/internal/db/quests.go#L120)<br>`func FinishCharacterQuest(charID uint32, questID uint16, success uint8) error` | FinishCharacterQuest runs usp_Save_Char_FinishedQuest_E on the active row. |
-| [`DeleteCharacterQuest`](../../server/internal/db/quests.go#L125)<br>`func DeleteCharacterQuest(charID uint32, questID uint16) error` | DeleteCharacterQuest runs usp_Save_Char_Quest_Del_E (repeatable quests). |
-| [`changeActiveQuest`](../../server/internal/db/quests.go#L129)<br>`func changeActiveQuest(query string, args ...any) error` | See the source definition and the subsystem ownership contract. |
-| [`SaveCharacterQuests`](../../server/internal/db/quests.go#L146)<br>`func SaveCharacterQuests(charID uint32, quests []CharQuest) error` | SaveCharacterQuests atomically snapshots active counters. A stale/finished quest cannot be updated after another operation completed it. |
-| [`saveQuestsTx`](../../server/internal/db/quests.go#L159)<br>`func saveQuestsTx(c context.Context, tx *sql.Tx, charID uint32, quests []CharQuest) error` | See the source definition and the subsystem ownership contract. |
+| [`CharQuest`](../../server/internal/db/quests.go#L13)<br>`type CharQuest` | CharQuest is an active quest row: Delay is minutes left (timed quests) or minutes elapsed (untimed), as the original saves it. |
+| [`ErrQuestStartTerm`](../../server/internal/db/quests.go#L20)<br>`var ErrQuestStartTerm` | See the source definition and the subsystem ownership contract. |
+| [`FinishedQuest`](../../server/internal/db/quests.go#L23)<br>`type FinishedQuest` | FinishedQuest is a finished quest row (Success 1 completed, 0 failed). |
+| [`CharacterQuests`](../../server/internal/db/quests.go#L29)<br>`func CharacterQuests(charID uint32) ([]CharQuest, error)` | CharacterQuests runs usp_Read_Char_Quest_R. |
+| [`FinishedQuests`](../../server/internal/db/quests.go#L55)<br>`func FinishedQuests(charID uint32) ([]FinishedQuest, error)` | FinishedQuests runs usp_Read_Char_FinishedQuest_R. |
+| [`AddCharacterQuest`](../../server/internal/db/quests.go#L82)<br>`func AddCharacterQuest(charID uint32, q CharQuest) error` | AddCharacterQuest runs usp_Save_Char_Quest_Add_E. |
+| [`CommitQuestStart`](../../server/internal/db/quests.go#L90)<br>`func CommitQuestStart(charID uint32, q CharQuest, before, after []Item, interval time.Duration) error` | CommitQuestStart commits the inventory cost, starting grants and quest row together. A duplicate start or changed inventory rolls back the whole plan. |
+| [`SaveCharacterQuest`](../../server/internal/db/quests.go#L134)<br>`func SaveCharacterQuest(charID uint32, q CharQuest) error` | SaveCharacterQuest runs usp_Save_Char_Quest_Mod_E. |
+| [`FinishCharacterQuest`](../../server/internal/db/quests.go#L141)<br>`func FinishCharacterQuest(charID uint32, questID uint16, success uint8) error` | FinishCharacterQuest runs usp_Save_Char_FinishedQuest_E on the active row. |
+| [`DeleteCharacterQuest`](../../server/internal/db/quests.go#L146)<br>`func DeleteCharacterQuest(charID uint32, questID uint16) error` | DeleteCharacterQuest runs usp_Save_Char_Quest_Del_E (repeatable quests). |
+| [`changeActiveQuest`](../../server/internal/db/quests.go#L150)<br>`func changeActiveQuest(query string, args ...any) error` | See the source definition and the subsystem ownership contract. |
+| [`SaveCharacterQuests`](../../server/internal/db/quests.go#L167)<br>`func SaveCharacterQuests(charID uint32, quests []CharQuest) error` | SaveCharacterQuests atomically snapshots active counters. A stale/finished quest cannot be updated after another operation completed it. |
+| [`saveQuestsTx`](../../server/internal/db/quests.go#L180)<br>`func saveQuestsTx(c context.Context, tx *sql.Tx, charID uint32, quests []CharQuest) error` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
 ```go
 type CharQuest struct {
-	QuestID uint16
-	Delay   int16
-	Counts  [3]uint8
+	QuestID   uint16
+	Delay     int16
+	Counts    [3]uint8
+	StartedAt int64 // Unix milliseconds for GX timing, 0 for legacy rows.
 }
 ```
 

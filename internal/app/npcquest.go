@@ -2,9 +2,11 @@ package app
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
+	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
@@ -68,10 +70,21 @@ func (a *App) questResultText(q sdata.Quest, result *proto.QuestEndResult) strin
 }
 
 func questOfferText(q sdata.Quest) string {
-	if text := questText(q.Descriptions[0]); text != "" {
-		return text
+	var parts []string
+	if welcome := questText(q.Descriptions[1]); welcome != "" {
+		parts = append(parts, welcome)
 	}
-	return questText(q.Summary)
+	take := questText(q.Descriptions[0])
+	if take == "" {
+		take = questText(q.Summary)
+	}
+	if take != "" {
+		parts = append(parts, take)
+	}
+	if q.CG != 0 || q.OG != 0 || q.IG != 0 {
+		parts = append(parts, fmt.Sprintf("Minimum character attributes: CG %d, OG %d, IG %d.", q.CG, q.OG, q.IG))
+	}
+	return strings.Join(parts, "\n\n")
 }
 
 // questStartVisible mirrors Rapture's eligibility checks for presentation.
@@ -87,6 +100,17 @@ func (a *App) questStartVisible(q sdata.Quest, e *game.Entity) bool {
 }
 
 func (a *App) questRequirementsVisible(q sdata.Quest) bool {
+	if q.RequireParty {
+		var jobs [6]uint8
+		for _, member := range a.state.Party.Members {
+			if member.Class < 6 {
+				jobs[member.Class]++
+			}
+		}
+		if !npcquest.PartyMeetsJobs(len(a.state.Party.Members), jobs, q.PartyJobs) {
+			return false
+		}
+	}
 	if slot, ok := a.selfSlot(); ok {
 		if slot.Level < q.MinLevel || slot.Level > q.MaxLevel || slot.Class >= 6 || q.Jobs[slot.Class] == 0 {
 			return false
@@ -323,6 +347,9 @@ func (a *App) drawNPCQuest(w, h int, e *game.Entity) {
 		} else if v.ending {
 			active := a.state.Quests[v.selected]
 			text := questText(q.Descriptions[2])
+			if text == "" {
+				text = questText(q.Descriptions[3])
+			}
 			if questMapReady(q, active, a.state) {
 				text = questText(q.Completion[0])
 			}
@@ -333,12 +360,42 @@ func (a *App) drawNPCQuest(w, h int, e *game.Entity) {
 		}
 		if v.result == nil && v.ending {
 			a.npcQuestUI.RewardText = "Reward\n" + a.questRewardLabel(q, 0)
+			if q.ResultType == 1 {
+				description += questRewardRequirementsText(q, 0)
+			}
 		}
 		if a.state.QuestChoosing && a.state.QuestChoice == v.selected {
 			for i := 0; i < min(int(q.UserSelect), 3); i++ {
 				choices = append(choices, a.questRewardLabel(q, i))
+				description += questRewardRequirementsText(q, i)
 			}
 		}
 	}
 	a.npcQuestUI.Draw(a.sprites, a.font, w, h, def.Name, questText(def.Welcome), a.npcPortrait(def), names, v.offset, v.selected != 0, v.ending, title, description, choices)
+}
+
+func questRewardRequirementsText(q sdata.Quest, i int) string {
+	r := q.Results[i]
+	var requirements []string
+	if r.NeedTime != 0 {
+		requirements = append(requirements, fmt.Sprintf("%d seconds since acceptance", r.NeedTime))
+	}
+	for _, entry := range []struct {
+		name  string
+		value int
+	}{{"HG", int(r.NeedHG)}, {"VG", int(r.NeedVG)}, {"OG", int(r.NeedOG)}} {
+		if entry.value != 0 {
+			requirements = append(requirements, fmt.Sprintf("%s ≥ %d", entry.name, entry.value))
+		}
+	}
+	if q.EndType == 2 && r.NeedMobCount != 0 {
+		requirements = append(requirements, fmt.Sprintf("%d kills for objective %d", r.NeedMobCount, r.NeedMobID))
+	}
+	if q.EndType == 1 && r.NeedItemCount != 0 {
+		requirements = append(requirements, fmt.Sprintf("%d items for objective %d", r.NeedItemCount, r.NeedItemID))
+	}
+	if len(requirements) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("\n\nReward %d requires %s.", i+1, strings.Join(requirements, ", "))
 }

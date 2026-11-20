@@ -25,6 +25,7 @@ Availability is rebuilt after changes to:
 
 - The character, map, level, sex, or received map catalog.
 - Active quests, counters, completion, abandonment or prerequisites.
+- Party and raid membership or composition.
 - Inventory readiness or relevant quest-item quantities in carried bags.
 - A known quest minimum-duration deadline, once that deadline is reached.
 
@@ -100,12 +101,13 @@ tables preserve the direction and order of offers and turn-ins.
 | Native fields | Behaviour in GX |
 |---|---|
 | `MinLevel`, `MaxLevel`, `Faction`, `Mode`, six class flags | The client filters offers and map markers. World validates these fields at acceptance. `Faction` selects eligible character families. |
-| `Male`, `Female` | The original client checks these fields for NPC and item offers. GX applies them to both and to offer markers. The original server admission routine leaves this check to the client. Seven audited quests restrict one sex. |
+| `Male`, `Female` | The original client checks these fields for NPC and item offers. GX applies them to offers, markers and World admission. Seven audited quests restrict one sex. |
 | `PrevQuest`, `HG`, `VG` | World admits the character after any of the configured quest IDs has been completed successfully. The client uses the same rule to present offers. |
-| `CG`, `OG`, `IG`, `RequireParty`, six party class flags | Stored. No rule for these fields was found in the recovered offer or admission paths. All audited quests have `RequireParty=0`; one has a party class flag set. |
+| `CG`, `OG`, `IG` | Optional minimum values of the corresponding character attributes at acceptance. Zero leaves the attribute unrestricted. |
+| `RequireParty`, six party class counts | With `RequireParty=1`, the character needs a party or raid of at least two members. Each class field sets its minimum count in that roster, including the character accepting the quest. `RequireParty=0` disables the group requirements. |
 | `MinMinutes`, `MaxMinutes` | Minimum elapsed time gates completion, and the maximum triggers failure. World persists timing and counters. The catalogs contain 162 maximum durations and zero minimum durations. |
 | `TickReceive` | Any nonzero value makes the quest repeatable. World deletes the active record when it ends so it can be offered again. The 69 authored repeatable quests all use `1`. |
-| `TickStart`, `TickKeep` | Stored. Both are zero throughout the audited catalogs, with no runtime rule established. |
+| `TickStart`, `TickKeep` | `TickStart` is the minimum interval in seconds between accepted starts of the same quest. `TickKeep` is a time limit in seconds since acceptance. The earliest of `TickKeep` and `MaxMinutes` expires the quest. Zero disables the corresponding limit. |
 | `StartType`, `StartNPCType`, `StartNPCID` | Types 0–2 use a nearby NPC. Types 1 and 2 require the configured NPC. Type 0 can name a specific NPC or use the NPC in the quest chain. |
 | `StartItemType`, `StartItemID` | Type 2 consumes one matching carried item on acceptance. Type 3 offers the quest after acquisition and requires possession at acceptance. The item stays in the bag. Type 4 offers the quest when using the item from inventory. |
 | Three `StartItem` type, ID and count groups | World plans the initial grants and commits them with acceptance and the type 2 cost. A full inventory rejects the start before publishing quest or item changes. |
@@ -113,11 +115,11 @@ tables preserve the direction and order of offers and turn-ins.
 | Three `FarmItem` type, ID and count groups | World counts carried items and consumes the required quantities as part of the reward transaction. Native quest-item stacks are removed in full when handed in. |
 | `Mob1ID`, `Mob1Count`, `Mob2ID`, `Mob2Count`, `PVPKills` | World tracks the two monster counters and the PvP kill counter, with native party credit for supported monster kills. |
 | `ResultType`, `UserSelect`, each variant's `NeedMobID`, `NeedMobCount`, `NeedItemID`, `NeedItemCount` | World uses the fixed reward, offers a reward choice, or selects a variant from the qualifying objective counts. The variant IDs in the `NeedMobID` and `NeedItemID` columns select objective slots. |
-| Each variant's `NeedTime`, `NeedHG`, `NeedVG`, `NeedOG` | Stored. All values are zero in the audited catalogs. The recovered reward selector reads the monster and item count fields. |
+| Each variant's `NeedTime`, `NeedHG`, `NeedVG`, `NeedOG` | Optional cumulative requirements on the reward variant. `NeedTime` sets the minimum seconds since acceptance. The other fields set minimum character HG, signed VG and OG. Zero disables that requirement. World checks them for fixed, automatic and chosen rewards. |
 | Each variant's `XP`, `Gold`, `ItemType`, `ItemTypeID` | World commits the reward with the quest and any item costs. Native rules double XP for quest modes 0–2. |
 | Each variant's `NextQuest` | The original client reads this field from the confirmed reward variant. GX offers the next quest when the reward dialog is acknowledged and its NPC context and eligibility still apply. Acceptance is a separate request. The audited catalogs have 757 variant links, all with a turn-in NPC. |
 | `QuestName`, `MsgSummary`, `MsgTake`, `MsgComplete`, `MsgResponse1`, `MsgResponse2`, `MsgIncomplete` | GX uses these for quest titles, journal objectives, initial offers, completion messages by variant, and incomplete turn-ins. |
-| `MsgWelcome`, `MsgResponse4` | Editable in GX Studio and preserved in each catalog encoding. Their original display triggers remain unverified. |
+| `MsgWelcome`, `MsgResponse4` | GX displays the welcome text before the offer. The alternate response appears when a quest fails or is abandoned. It also supplies the incomplete turn-in text when `MsgIncomplete` is empty. |
 
 For type 4, the original client sends `0x050A` before `0x0902` when the player
 accepts the item offer. World records the last used quest item for five minutes.
@@ -126,6 +128,23 @@ use, so the following start request can succeed even if that stack is gone.
 The owner receives the inventory change and nearby viewers receive `0x050A`.
 GX matches both item type and ID. The type 3 fallback `/quest start ID` uses
 the same possession check as the inventory offer.
+
+The additional conditions for previously inactive fields are GX rules. The
+audited EP5 catalogs use zero for the added timers, reward attributes and
+character attributes, and leave `RequireParty` off. For a type 29 item linked
+to a quest with an added admission condition, GX consumes the selected item
+in the same SQLite transaction as acceptance. This keeps the item if the
+start is refused. A normal type 29 item retains the EP5 item-use sequence.
+
+World persists start intervals per character and quest. An interval begins
+when acceptance commits and survives success, abandonment and reconnects.
+`TickKeep` and `NeedTime` use elapsed wall-clock time, including time offline.
+Existing active quests with these fields can recover their start time from
+the legacy minute snapshot once. Legacy quest timing uses its original
+minute-based snapshot. The native quest packets still report whole minutes.
+World checks the current inventory and requirements again at reward
+selection. It consumes the chosen variant's item requirement and the base
+objective quantity whenever the base requires more.
 
 Original server references are `0x4CA5D0` (definition load), `0x47F080`
 (admission), `0x4655E0` (item use), `0x47F500` (type 4 start) and `0x47F8E0`

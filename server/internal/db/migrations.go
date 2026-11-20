@@ -133,6 +133,15 @@ var migrations = []migration{
 		CREATE INDEX GX_Identity_UserStoredMoney ON PS_GameData_UserStoredMoney(RowID);
 	`},
 	{pruneLegacyVersion, "remove_inactive_sqlite_tables", pruneLegacyMigration},
+	{27, "quest_timing", `
+		ALTER TABLE PS_GameData_CharQuests ADD COLUMN StartedAt INTEGER NOT NULL DEFAULT 0;
+		CREATE TABLE GX_QuestStartTerms (
+			CharID INTEGER NOT NULL REFERENCES PS_GameData_Chars(CharID) ON DELETE CASCADE,
+			QuestID INTEGER NOT NULL,
+			AvailableAt INTEGER NOT NULL,
+			PRIMARY KEY(CharID, QuestID)
+		) WITHOUT ROWID;
+	`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

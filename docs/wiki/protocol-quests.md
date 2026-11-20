@@ -14,7 +14,7 @@ Declarations: [packet.QuestList](../../server/internal/packet/packet.go#L130), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L231)
+**S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L253)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L601), [applyQuestsPacket (internal/game/state_quests_packets.go)](../../internal/game/state_quests_packets.go#L11)
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>questListPackets — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L231)
+[Source definition](../../server/internal/world/quests.go#L253)
 
 ```go
 func (s *Session) questListPackets() [][]byte {
@@ -36,8 +36,8 @@ func (s *Session) questListPackets() [][]byte {
 		for _, q := range s.quests[start:end] {
 			w.U16(q.ID)
 			left := uint16(0)
-			if q.def.MaxMinutes != 0 {
-				left = uint16(max(time.Until(q.endAt), 0) / time.Minute)
+			if !q.endAt.IsZero() {
+				left = uint16(min(max(time.Until(q.endAt), 0)/time.Minute, 65535))
 			}
 			w.U16(left)
 			w.Bytes(q.counters[:])
@@ -101,7 +101,7 @@ Declarations: [packet.QuestStart](../../server/internal/packet/packet.go#L131), 
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
 
-**S→C serializers:** [startQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L426)
+**S→C serializers:** [startQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L459)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L601), [applyQuestsPacket (internal/game/state_quests_packets.go)](../../internal/game/state_quests_packets.go#L33)
 
@@ -111,29 +111,34 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>startQuest — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L426)
+[Source definition](../../server/internal/world/quests.go#L459)
 
 ```go
 func (s *Session) startQuest(q *questDef, id uint16, npcID uint32) {
 	now := time.Now()
 	aq := &activeQuest{ID: id, def: q, startAt: now}
-	if q.MaxMinutes != 0 {
-		aq.endAt = now.Add(time.Duration(q.MaxMinutes) * time.Minute)
+	limit := npcquest.Deadline(q.MaxMinutes, q.TickKeep)
+	if limit > 0 {
+		aq.endAt = now.Add(limit)
 	}
 	if q.MinMinutes != 0 {
-		aq.successAt = now.Add(time.Duration(q.MinMinutes) * time.Minute)
+		aq.successAt = now.Add(npcquest.Deadline(q.MinMinutes, 0))
 	}
 	after := slices.Clone(s.items)
 	var removed *db.Item
-	if q.StartType == 2 || q.StartType == 3 {
+	pendingUID := int64(0)
+	if q.StartType == 4 {
+		pendingUID = s.lastQuestItem.pendingUID
+	}
+	if q.StartType == 2 || q.StartType == 3 || pendingUID != 0 {
 		i := slices.IndexFunc(after, func(it db.Item) bool {
 			return it.Bag >= InventoryFirstBag && it.Bag <= InventoryLastBag && it.Count > 0 &&
-				it.Type == q.StartItemType && it.TypeID == q.StartItemID
+				it.Type == q.StartItemType && it.TypeID == q.StartItemID && (pendingUID == 0 || it.UID == pendingUID)
 		})
 		if i < 0 {
 			return
 		}
-		if q.StartType == 2 {
+		if q.StartType == 2 || pendingUID != 0 {
 			after[i].Count--
 			item := after[i]
 			removed = &item
@@ -159,8 +164,14 @@ func (s *Session) startQuest(q *questDef, id uint16, npcID uint32) {
 		}
 		grants = append(grants, adds...)
 	}
-	if err := db.CommitQuestStart(s.char.ID, db.CharQuest{QuestID: id, Delay: int16(min(q.MaxMinutes, 32767))}, s.items, after); err != nil {
-		s.logErr("quest start transaction", err)
+	row := aq.row()
+	row.Delay = int16(min(limit/time.Minute, 32767))
+	if err := db.CommitQuestStart(s.char.ID, row, s.items, after, time.Duration(q.TickStart)*time.Second); err != nil {
+		if errors.Is(err, db.ErrQuestStartTerm) {
+			s.questFeedback("This quest's start interval has not elapsed.")
+		} else {
+			s.logErr("quest start transaction", err)
+		}
 		return
 	}
 	s.items = after
@@ -170,6 +181,10 @@ func (s *Session) startQuest(q *questDef, id uint16, npcID uint32) {
 	}
 	if removed != nil {
 		s.send(buildRemoveItem(removed, removed.Count == 0), "quest start cost")
+	}
+	if pendingUID != 0 {
+		s.lastQuestItem = questItemUse{}
+		s.broadcastNear(buildUseItemResult(s.char.ID, removed), "0x050A quest item used", false)
 	}
 	w := packet.New(packet.QuestStart)
 	w.U32(npcID)
@@ -222,7 +237,7 @@ Declarations: [packet.QuestEnd](../../server/internal/packet/packet.go#L132), [p
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L105)
 
-**S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L617), [awardQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L701)
+**S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L630), [awardQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L733)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L601), [applyQuestsPacket (internal/game/state_quests_packets.go)](../../internal/game/state_quests_packets.go#L60)
 
@@ -232,10 +247,10 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>completeQuest — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L617)
+[Source definition](../../server/internal/world/quests.go#L630)
 
 ```go
-func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool) {
+func (s *Session) completeQuest(q *activeQuest, ctx uint32, success, requested bool) {
 	d := q.def
 	if !success {
 		if !s.removeQuest(q, 0) {
@@ -249,38 +264,50 @@ func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool) {
 		s.log.Printf("GX Server World quest %d failed", q.ID)
 		return
 	}
-	if d.MinMinutes != 0 && time.Now().Before(q.successAt) {
+	now := time.Now()
+	if q.expired(now) {
+		s.completeQuest(q, ctx, false, requested)
 		return
 	}
-	if d.ResultType == 1 {
-		s.awardQuest(q, 0, ctx)
+	totals, ready := s.questObjectives(q)
+	if !ready {
 		return
 	}
-	if d.UserSelect != 0 {
-		q.success = 1
-		w := packet.New(packet.QuestChoose)
-		w.U16(q.ID)
-		s.send(w.MustFinish(), "0x0907 quest reward choice")
-		return
-	}
-	for v := 2; v >= 0; v-- {
-		var sel, req uint16
-		switch d.EndType {
-		case 1:
-			sel, req = uint16(d.Results[v].NeedItemID), uint16(d.Results[v].NeedItemCount)
-			if sel > 3 {
-				sel = 0
-			}
-		case 2:
-			sel, req = d.Results[v].NeedMobID, uint16(d.Results[v].NeedMobCount)
-			if sel > 2 {
-				sel = 0
-			}
+	if now.Before(q.successAt) {
+		if requested {
+			s.questFeedback("The minimum quest time has not elapsed.")
 		}
-		if v == 0 || (sel != 0 && req != 0 && uint16(q.counters[sel-1]) >= req) {
-			s.awardQuest(q, uint8(v), ctx)
+		return
+	}
+	eligible := func(i int) bool {
+		return s.questRewardEligible(q, d.Results[i], totals, now)
+	}
+	switch {
+	case d.ResultType == 1:
+		if eligible(0) {
+			s.awardQuest(q, 0, ctx)
 			return
 		}
+	case d.UserSelect != 0:
+		for i := 0; i < min(int(d.UserSelect), len(d.Results)); i++ {
+			if eligible(i) {
+				q.success = 1
+				w := packet.New(packet.QuestChoose)
+				w.U16(q.ID)
+				s.send(w.MustFinish(), "0x0907 quest reward choice")
+				return
+			}
+		}
+	default:
+		for i := len(d.Results) - 1; i >= 0; i-- {
+			if (i == 0 || d.Results[i].hasRequirements()) && eligible(i) {
+				s.awardQuest(q, uint8(i), ctx)
+				return
+			}
+		}
+	}
+	if requested {
+		s.questFeedback("No quest reward is available yet. Check the reward requirements.")
 	}
 }
 ```
@@ -289,7 +316,7 @@ func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool) {
 
 <details><summary>awardQuest — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L701)
+[Source definition](../../server/internal/world/quests.go#L733)
 
 ```go
 func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
@@ -304,9 +331,8 @@ func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 	change := db.CharacterChange{Before: *s.char, After: *s.char, ItemsBefore: s.items, ItemsAfter: append([]db.Item(nil), s.items...)}
 	var packets [][]byte
 	if q.def.EndType == 1 {
-		plannedQuest := *q
 		var ok bool
-		change.ItemsAfter, packets, ok = planQuestItems(&plannedQuest, s.items, true)
+		change.ItemsAfter, packets, ok = planQuestItems(q.def, res, s.items)
 		if !ok {
 			return
 		}
@@ -449,7 +475,7 @@ Declarations: [packet.QuestCounter](../../server/internal/packet/packet.go#L134)
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [bumpQuestCounter (server/internal/world/quests.go)](../../server/internal/world/quests.go#L815), [questKillCount (server/internal/world/quests.go)](../../server/internal/world/quests.go#L834)
+**S→C serializers:** [bumpQuestCounter (server/internal/world/quests.go)](../../server/internal/world/quests.go#L846), [questKillCount (server/internal/world/quests.go)](../../server/internal/world/quests.go#L865)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L601), [applyQuestsPacket (internal/game/state_quests_packets.go)](../../internal/game/state_quests_packets.go#L42)
 
@@ -459,7 +485,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>bumpQuestCounter — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L815)
+[Source definition](../../server/internal/world/quests.go#L846)
 
 ```go
 func (s *Session) bumpQuestCounter(q *activeQuest, slot int) {
@@ -484,7 +510,7 @@ func (s *Session) bumpQuestCounter(q *activeQuest, slot int) {
 
 <details><summary>questKillCount — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L834)
+[Source definition](../../server/internal/world/quests.go#L865)
 
 ```go
 func (s *Session) questKillCount(mobID uint16, count uint8) bool {
@@ -540,7 +566,7 @@ func (s *Session) questKillCount(mobID uint16, count uint8) bool {
 	for _, change := range changes {
 		q := change.quest
 		if s.findQuest(q.ID) == q && q.def.EndNpcType == 0 && q.counters[0] >= q.def.MobCounts[0] && q.counters[1] >= q.def.MobCounts[1] {
-			s.completeQuest(q, 0, true)
+			s.completeQuest(q, 0, true, false)
 		}
 	}
 	return true
@@ -573,7 +599,7 @@ Declarations: [packet.QuestFinishedList](../../server/internal/packet/packet.go#
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L231)
+**S→C serializers:** [questListPackets (server/internal/world/quests.go)](../../server/internal/world/quests.go#L253)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L601), [applyQuestsPacket (internal/game/state_quests_packets.go)](../../internal/game/state_quests_packets.go#L22)
 
@@ -583,7 +609,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>questListPackets — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L231)
+[Source definition](../../server/internal/world/quests.go#L253)
 
 ```go
 func (s *Session) questListPackets() [][]byte {
@@ -595,8 +621,8 @@ func (s *Session) questListPackets() [][]byte {
 		for _, q := range s.quests[start:end] {
 			w.U16(q.ID)
 			left := uint16(0)
-			if q.def.MaxMinutes != 0 {
-				left = uint16(max(time.Until(q.endAt), 0) / time.Minute)
+			if !q.endAt.IsZero() {
+				left = uint16(min(max(time.Until(q.endAt), 0)/time.Minute, 65535))
 			}
 			w.U16(left)
 			w.Bytes(q.counters[:])
@@ -655,7 +681,7 @@ Declarations: [packet.QuestChoose](../../server/internal/packet/packet.go#L135),
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L107)
 
-**S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L617)
+**S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L630)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L601), [applyQuestsPacket (internal/game/state_quests_packets.go)](../../internal/game/state_quests_packets.go#L54)
 
@@ -665,10 +691,10 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>completeQuest — server/internal/world/quests.go</summary>
 
-[Source definition](../../server/internal/world/quests.go#L617)
+[Source definition](../../server/internal/world/quests.go#L630)
 
 ```go
-func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool) {
+func (s *Session) completeQuest(q *activeQuest, ctx uint32, success, requested bool) {
 	d := q.def
 	if !success {
 		if !s.removeQuest(q, 0) {
@@ -682,38 +708,50 @@ func (s *Session) completeQuest(q *activeQuest, ctx uint32, success bool) {
 		s.log.Printf("GX Server World quest %d failed", q.ID)
 		return
 	}
-	if d.MinMinutes != 0 && time.Now().Before(q.successAt) {
+	now := time.Now()
+	if q.expired(now) {
+		s.completeQuest(q, ctx, false, requested)
 		return
 	}
-	if d.ResultType == 1 {
-		s.awardQuest(q, 0, ctx)
+	totals, ready := s.questObjectives(q)
+	if !ready {
 		return
 	}
-	if d.UserSelect != 0 {
-		q.success = 1
-		w := packet.New(packet.QuestChoose)
-		w.U16(q.ID)
-		s.send(w.MustFinish(), "0x0907 quest reward choice")
-		return
-	}
-	for v := 2; v >= 0; v-- {
-		var sel, req uint16
-		switch d.EndType {
-		case 1:
-			sel, req = uint16(d.Results[v].NeedItemID), uint16(d.Results[v].NeedItemCount)
-			if sel > 3 {
-				sel = 0
-			}
-		case 2:
-			sel, req = d.Results[v].NeedMobID, uint16(d.Results[v].NeedMobCount)
-			if sel > 2 {
-				sel = 0
-			}
+	if now.Before(q.successAt) {
+		if requested {
+			s.questFeedback("The minimum quest time has not elapsed.")
 		}
-		if v == 0 || (sel != 0 && req != 0 && uint16(q.counters[sel-1]) >= req) {
-			s.awardQuest(q, uint8(v), ctx)
+		return
+	}
+	eligible := func(i int) bool {
+		return s.questRewardEligible(q, d.Results[i], totals, now)
+	}
+	switch {
+	case d.ResultType == 1:
+		if eligible(0) {
+			s.awardQuest(q, 0, ctx)
 			return
 		}
+	case d.UserSelect != 0:
+		for i := 0; i < min(int(d.UserSelect), len(d.Results)); i++ {
+			if eligible(i) {
+				q.success = 1
+				w := packet.New(packet.QuestChoose)
+				w.U16(q.ID)
+				s.send(w.MustFinish(), "0x0907 quest reward choice")
+				return
+			}
+		}
+	default:
+		for i := len(d.Results) - 1; i >= 0; i-- {
+			if (i == 0 || d.Results[i].hasRequirements()) && eligible(i) {
+				s.awardQuest(q, uint8(i), ctx)
+				return
+			}
+		}
+	}
+	if requested {
+		s.questFeedback("No quest reward is available yet. Check the reward requirements.")
 	}
 }
 ```

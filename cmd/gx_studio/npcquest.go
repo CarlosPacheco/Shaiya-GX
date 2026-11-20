@@ -139,8 +139,31 @@ func npcQuestLabel(name string) string {
 		return "Direction (0 Start, 1 End)"
 	case "QuestRow":
 		return "Quest row"
+	case "CG", "OG", "IG":
+		return "Minimum character " + name
+	case "RequireParty":
+		return "Require party and class counts"
+	case "TickStart":
+		return "Interval between starts (seconds)"
+	case "TickKeep":
+		return "Time limit (seconds)"
+	case "TickReceive":
+		return "Repeatable (0 No, nonzero Yes)"
+	case "MsgWelcome":
+		return "Quest greeting"
+	case "MsgResponse4":
+		return "Alternate or failure response"
 	case "Money":
 		return "Price (gold)"
+	}
+	if strings.HasPrefix(name, "Reward") && len(name) > 7 {
+		prefix := "Reward " + name[6:7] + " minimum "
+		switch name[7:] {
+		case "NeedTime":
+			return prefix + "elapsed seconds"
+		case "NeedHG", "NeedVG", "NeedOG":
+			return prefix + name[11:]
+		}
 	}
 	var b strings.Builder
 	var previous rune

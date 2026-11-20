@@ -11,7 +11,9 @@ import (
 func questMapStateChanged(op proto.Opcode) bool {
 	switch op {
 	case proto.CharacterList, proto.CharacterDetails, proto.LevelUpSelf, proto.CharacterMapTeleport,
-		proto.QuestList, proto.QuestFinishedList, proto.QuestStart, proto.QuestCounter, proto.QuestChoose, proto.QuestEnd:
+		proto.QuestList, proto.QuestFinishedList, proto.QuestStart, proto.QuestCounter, proto.QuestChoose, proto.QuestEnd,
+		proto.PartyRoster, proto.PartyJoined, proto.PartyLeft, proto.PartyExpelled, proto.PartyLeaveAlt,
+		proto.RaidRoster, proto.RaidJoined, proto.RaidDisband, proto.RaidExpel:
 		return true
 	}
 	return false

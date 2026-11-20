@@ -11,7 +11,9 @@ import (
 func TestLegacyCleanupKeepsVerifiedPreMigrationBackup(t *testing.T) {
 	pool := sqliteFixture(t)
 	if _, err := pool.Exec(`
-		DELETE FROM GX_SchemaMigrations WHERE Version=26;
+		DELETE FROM GX_SchemaMigrations WHERE Version>=26;
+		ALTER TABLE PS_GameData_CharQuests DROP COLUMN StartedAt;
+		DROP TABLE GX_QuestStartTerms;
 		CREATE TABLE PS_GameData__CreatedChars(CharID INTEGER);
 		INSERT INTO PS_GameData__CreatedChars VALUES(42);
 		CREATE TABLE PS_Billing_Considers(Record INTEGER);

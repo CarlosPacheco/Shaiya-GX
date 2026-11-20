@@ -88,6 +88,31 @@ func TestQuestFollowUpUsesConfirmedVariantAndNPCContext(t *testing.T) {
 	}
 }
 
+func TestQuestPartyAndAlternateDialogue(t *testing.T) {
+	a := inputApp()
+	q := sdata.Quest{Name: "Outpost", RequireParty: true, PartyJobs: [6]uint8{1, 0, 0, 0, 0, 1},
+		Descriptions: [4]string{"Talk to the captain.", "Welcome to the outpost.", "", "Return with allies."}}
+	if a.questRequirementsVisible(q) {
+		t.Fatal("party quest was offered solo")
+	}
+	a.state.Party.Members = []proto.PartyMember{{ID: 10, Class: 0}, {ID: 11, Class: 5}}
+	if !a.questRequirementsVisible(q) {
+		t.Fatal("matching party could not see its offer")
+	}
+	if got := questOfferText(q); got != "Welcome to the outpost.\n\nTalk to the captain." {
+		t.Fatal("quest greeting missing", got)
+	}
+	a.questDefs, a.questDataLoaded = []sdata.Quest{q}, true
+	p := proto.NewWriter(proto.QuestEnd)
+	p.U32(0)
+	p.U16(1)
+	p.Raw(make([]byte, 14))
+	a.confirmedQuest(p.Bytes())
+	if len(a.state.Chat) != 2 || a.state.Chat[1].Text != "Return with allies." {
+		t.Fatal("failed quest missing its alternate text", a.state.Chat)
+	}
+}
+
 func TestAutomaticQuestResultUsesConfirmedReward(t *testing.T) {
 	a := inputApp()
 	a.questDataLoaded = true

@@ -17,8 +17,8 @@ func TestQuestItemUseOpensOnlyMatchingType4Start(t *testing.T) {
 	original := questDefs
 	t.Cleanup(func() { questDefs = original })
 	questDefs = []questDef{
-		{ID: 1, StartType: 4, StartItemType: 29, StartItemID: 7, MaxLevel: 100, Jobs: [6]uint8{1, 1, 1, 1, 1, 1}, Faction: 6},
-		{ID: 2, StartType: 4, StartItemType: 27, StartItemID: 7, MaxLevel: 100, Jobs: [6]uint8{1, 1, 1, 1, 1, 1}, Faction: 6},
+		{ID: 1, StartType: 4, StartItemType: 29, StartItemID: 7, MaxLevel: 100, Male: true, Female: true, Jobs: [6]uint8{1, 1, 1, 1, 1, 1}, Faction: 6},
+		{ID: 2, StartType: 4, StartItemType: 27, StartItemID: 7, MaxLevel: 100, Male: true, Female: true, Jobs: [6]uint8{1, 1, 1, 1, 1, 1}, Faction: 6},
 	}
 	defs := db.MustDefs().Items
 	for _, typ := range []uint8{27, 29} {

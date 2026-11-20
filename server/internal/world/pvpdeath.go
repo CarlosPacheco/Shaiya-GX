@@ -186,7 +186,7 @@ func (s *Session) questKillPC() {
 		}
 		s.bumpQuestCounter(q, 0)
 		if q.def.EndNpcType == 0 && q.def.PvpKills <= q.counters[0] {
-			s.completeQuest(q, 0, true)
+			s.completeQuest(q, 0, true, false)
 		}
 		return
 	}

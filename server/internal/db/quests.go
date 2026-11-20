@@ -3,16 +3,21 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"time"
 )
 
 // CharQuest is an active quest row: Delay is minutes left (timed quests)
 // or minutes elapsed (untimed), as the original saves it.
 type CharQuest struct {
-	QuestID uint16
-	Delay   int16
-	Counts  [3]uint8
+	QuestID   uint16
+	Delay     int16
+	Counts    [3]uint8
+	StartedAt int64 // Unix milliseconds for GX timing, 0 for legacy rows.
 }
+
+var ErrQuestStartTerm = errors.New("quest start interval has not elapsed")
 
 // FinishedQuest is a finished quest row (Success 1 completed, 0 failed).
 type FinishedQuest struct {
@@ -28,7 +33,7 @@ func CharacterQuests(charID uint32) ([]CharQuest, error) {
 	}
 	c, cancel := ctx()
 	defer cancel()
-	rows, err := pool.QueryContext(c, `SELECT QuestID, [Delay], Count1, Count2, Count3 FROM PS_GameData_CharQuests WHERE CharID=@charid AND Finish=0 AND Del=0`, sql.Named("charid", int32(charID)))
+	rows, err := pool.QueryContext(c, `SELECT QuestID, [Delay], Count1, Count2, Count3, StartedAt FROM PS_GameData_CharQuests WHERE CharID=@charid AND Finish=0 AND Del=0`, sql.Named("charid", int32(charID)))
 	if err != nil {
 		return nil, fmt.Errorf("usp_Read_Char_Quest_R: %w", err)
 	}
@@ -37,7 +42,7 @@ func CharacterQuests(charID uint32) ([]CharQuest, error) {
 	for rows.Next() {
 		var q CharQuest
 		var id int64
-		if err := rows.Scan(&id, &q.Delay, &q.Counts[0], &q.Counts[1], &q.Counts[2]); err != nil {
+		if err := rows.Scan(&id, &q.Delay, &q.Counts[0], &q.Counts[1], &q.Counts[2], &q.StartedAt); err != nil {
 			return nil, err
 		}
 		q.QuestID = clampU16(id)
@@ -82,7 +87,7 @@ func AddCharacterQuest(charID uint32, q CharQuest) error {
 
 // CommitQuestStart commits the inventory cost, starting grants and quest row
 // together. A duplicate start or changed inventory rolls back the whole plan.
-func CommitQuestStart(charID uint32, q CharQuest, before, after []Item) error {
+func CommitQuestStart(charID uint32, q CharQuest, before, after []Item, interval time.Duration) error {
 	pool, err := Pool(GameData)
 	if err != nil {
 		return err
@@ -90,6 +95,22 @@ func CommitQuestStart(charID uint32, q CharQuest, before, after []Item) error {
 	c, cancel := ctx()
 	defer cancel()
 	return withTx(c, pool, func(tx *sql.Tx) error {
+		if interval > 0 {
+			now := time.Now().UnixMilli()
+			result, err := tx.ExecContext(c, `INSERT INTO GX_QuestStartTerms(CharID,QuestID,AvailableAt) VALUES(?,?,?)
+				ON CONFLICT(CharID,QuestID) DO UPDATE SET AvailableAt=excluded.AvailableAt WHERE AvailableAt<=?`,
+				charID, q.QuestID, now+interval.Milliseconds(), now)
+			if err != nil {
+				return err
+			}
+			changed, err := result.RowsAffected()
+			if err != nil {
+				return err
+			}
+			if changed == 0 {
+				return ErrQuestStartTerm
+			}
+		}
 		if !sameInventory(before, after) {
 			actual, err := characterItems(c, tx, charID)
 			if err != nil {
@@ -103,8 +124,8 @@ func CommitQuestStart(charID uint32, q CharQuest, before, after []Item) error {
 				return err
 			}
 		}
-		_, err := tx.ExecContext(c, `INSERT INTO PS_GameData_CharQuests(CharID,QuestID,Delay,Count1,Count2,Count3) VALUES(?,?,?,?,?,?)`,
-			charID, int16(q.QuestID), q.Delay, q.Counts[0], q.Counts[1], q.Counts[2])
+		_, err := tx.ExecContext(c, `INSERT INTO PS_GameData_CharQuests(CharID,QuestID,Delay,Count1,Count2,Count3,StartedAt) VALUES(?,?,?,?,?,?,?)`,
+			charID, int16(q.QuestID), q.Delay, q.Counts[0], q.Counts[1], q.Counts[2], q.StartedAt)
 		return err
 	})
 }
@@ -157,13 +178,14 @@ func SaveCharacterQuests(charID uint32, quests []CharQuest) error {
 }
 
 func saveQuestsTx(c context.Context, tx *sql.Tx, charID uint32, quests []CharQuest) error {
-	stmt, err := tx.PrepareContext(c, `UPDATE PS_GameData_CharQuests SET Delay=?,Count1=?,Count2=?,Count3=? WHERE CharID=? AND QuestID=? AND Finish=0 AND Del=0`)
+	stmt, err := tx.PrepareContext(c, `UPDATE PS_GameData_CharQuests SET Delay=?,Count1=?,Count2=?,Count3=?,
+		StartedAt=CASE WHEN StartedAt=0 THEN ? ELSE StartedAt END WHERE CharID=? AND QuestID=? AND Finish=0 AND Del=0`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 	for _, q := range quests {
-		result, err := stmt.ExecContext(c, q.Delay, q.Counts[0], q.Counts[1], q.Counts[2], charID, q.QuestID)
+		result, err := stmt.ExecContext(c, q.Delay, q.Counts[0], q.Counts[1], q.Counts[2], q.StartedAt, charID, q.QuestID)
 		if err != nil {
 			return err
 		}
