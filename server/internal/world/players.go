@@ -462,11 +462,15 @@ func (p *ConnectedPlayer) Send(frame []byte, label string) error {
 		return nil
 	}
 	frame = p.redactPartyPositions(frame)
-	out := frame
-	if len(frame) > 2 {
-		out = append(append([]byte{}, frame[:2]...), crypto.ExpandedXOR(frame[2:])...)
+	return p.out.write(appendWorldFrame(nil, frame))
+}
+
+func appendWorldFrame(dst, frame []byte) []byte {
+	if len(frame) <= 2 {
+		return append(dst, frame...)
 	}
-	return p.out.write(out)
+	dst = append(dst, frame[:2]...)
+	return append(dst, crypto.ExpandedXOR(frame[2:])...)
 }
 
 func playersWhere(mapID uint16, keep func(*ConnectedPlayer) bool) []*ConnectedPlayer {

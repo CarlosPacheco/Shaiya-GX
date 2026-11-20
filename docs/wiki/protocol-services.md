@@ -16,7 +16,7 @@ Declarations: [packet.ShopBuy](../../server/internal/packet/packet.go#L72), [pro
 
 **S→C serializers:** [buildShopBuyResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L130)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L764)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L707)
 
 ### Wire layouts and validation
 
@@ -87,7 +87,7 @@ Declarations: [packet.ShopSell](../../server/internal/packet/packet.go#L140), [p
 
 **S→C serializers:** [buildShopSellResult (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L246)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L764)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L707)
 
 ### Wire layouts and validation
 
@@ -157,7 +157,7 @@ Declarations: [packet.WarehouseItemList](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildWarehouseItemList (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L27)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1004)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L915), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L42)
 
 ### Wire layouts and validation
 

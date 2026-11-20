@@ -24,15 +24,16 @@ func TestWorldBotsNativeTrafficAndIsolation(t *testing.T) {
 	s1, p1 := gmWireSession(t, ch, true)
 	ch.ID++
 	s2, p2 := gmWireSession(t, ch, false)
-	v1 := &ConnectedPlayer{CharacterID: 701, out: s1.out}
-	v2 := &ConnectedPlayer{CharacterID: 702, out: s2.out}
+	v1 := &ConnectedPlayer{CharacterID: 701, mapID: 7, out: s1.out}
+	v2 := &ConnectedPlayer{CharacterID: 702, mapID: 7, out: s2.out}
 	a := &worldBotArena{bots: []worldBot{
-		{wire: link, char: db.Character{ID: 0x60000001, CurrentHP: botHealth}},
+		{wire: link, char: db.Character{ID: 0x60000001, MapID: 7, CurrentHP: botHealth}},
 		{faction: 1, char: db.Character{ID: 0x60000002, CurrentHP: 1}},
 		{char: db.Character{ID: 0x60000003, CurrentHP: 1200}},
-	}, visible: map[*ConnectedPlayer][]bool{v1: {true, true, true}, v2: {true, true, true}}}
+	}, visible: map[*ConnectedPlayer]*botObserver{v1: {visible: []bool{true, true, true}}, v2: {visible: []bool{true, true, true}}}}
 	expect := func(op proto.Opcode) {
 		t.Helper()
+		a.flush()
 		for _, observer := range []<-chan []byte{p1, p2} {
 			select {
 			case body := <-observer:

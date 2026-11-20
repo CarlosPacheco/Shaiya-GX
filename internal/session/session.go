@@ -6,13 +6,11 @@ package session
 import (
 	"errors"
 	"fmt"
-	"github.com/Spelunkern/Shaiya-GX/internal/authwire"
-	"io"
 	"net"
 	"strconv"
-	"sync"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/authwire"
 	"github.com/Spelunkern/Shaiya-GX/internal/netx"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
@@ -137,18 +135,6 @@ func (l *Login) SelectServer(id uint8, version uint32) (net.IP, error) {
 	return net.IPv4(r.IPv4[0], r.IPv4[1], r.IPv4[2], r.IPv4[3]), nil
 }
 
-// World is the game-server connection. Packets delivers every decoded
-// payload in order; it is closed when the connection ends, after which Err
-// reports why.
-type World struct {
-	conn     *netx.Conn
-	Packets  <-chan []byte
-	err      error
-	done     chan struct{}
-	stop     chan struct{}
-	stopOnce sync.Once
-}
-
 var ErrHandshake = errors.New("world handshake rejected")
 
 // DialWorld connects to ip:port and performs the 0xA301 handshake.
@@ -176,69 +162,3 @@ func (l *Login) DialWorld(ip net.IP, port int) (*World, error) {
 	c.SetTableMode(hs.Mode, hs.Seed)
 	return startWorld(c), nil
 }
-
-func startWorld(c *netx.Conn) *World {
-	ch := make(chan []byte, 256)
-	w := &World{conn: c, Packets: ch, done: make(chan struct{}), stop: make(chan struct{})}
-	go func() {
-		defer close(ch)
-		defer close(w.done)
-		for {
-			p, err := c.Read()
-			if err != nil {
-				w.err = err
-				return
-			}
-			select {
-			case ch <- p:
-			case <-w.stop:
-				return
-			}
-		}
-	}()
-	return w
-}
-
-// Send writes one payload; a nil payload (refused by its builder) is ignored.
-func (w *World) Send(p []byte) error {
-	if p == nil {
-		return nil
-	}
-	return w.conn.Write(p)
-}
-
-func (w *World) Close() error {
-	w.stopOnce.Do(func() { close(w.stop) })
-	return w.conn.Close()
-}
-
-// Shutdown waits for the server to persist and release the account before
-// closing its socket (Rapture Session.close, then the connection's close).
-// Drain packets so the reader cannot remain blocked on its output channel.
-func (w *World) Shutdown(timeout time.Duration) error {
-	defer w.Close()
-	if err := w.conn.SetReadDeadline(time.Now().Add(timeout)); err != nil {
-		return err
-	}
-	if err := w.conn.CloseWrite(); err != nil {
-		return err
-	}
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-	for {
-		select {
-		case _, ok := <-w.Packets:
-			if !ok {
-				if err := w.Err(); err != nil && !errors.Is(err, io.EOF) {
-					return err
-				}
-				return nil
-			}
-		case <-timer.C:
-			return fmt.Errorf("world shutdown timed out after %s", timeout)
-		}
-	}
-}
-
-// Err is valid after Packets is closed.
-func (w *World) Err() error { <-w.done; return w.err }

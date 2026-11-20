@@ -61,7 +61,7 @@ in melee and stay within five world units of their spawn point when chasing.
 Allies can heal one another. Bots use class-appropriate gear and skills and
 revive near their original position.
 
-Nearby players see the combat through normal World updates. Combat targets
+Nearby players receive normal World updates. Large groups appear in batches over several ticks. Combat targets
 are limited to bots, and the bots have no accounts or persistent characters.
 Their requests use encrypted World frames over local TCP connections and a
 dedicated server-side simulation. `/bots off` or the issuing GM disconnecting

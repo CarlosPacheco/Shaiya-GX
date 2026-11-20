@@ -11,6 +11,7 @@ import io
 import json
 import secrets
 import sqlite3
+from contextlib import closing
 import struct
 from pathlib import Path
 
@@ -45,7 +46,7 @@ def encode(rows):
 
 
 def migrate(path, rows):
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db, db:
         db.row_factory=sqlite3.Row
         db.execute('BEGIN IMMEDIATE')
         # Inventory splitting is planned before any persistent changes; any

@@ -22,8 +22,9 @@ import (
 )
 
 const (
-	maxName    = 1024
-	maxEntries = 1 << 20
+	maxName             = 1024
+	maxEntries          = 1 << 20
+	maxLegacyAssetBytes = 256 << 20
 )
 
 type File struct {
@@ -51,6 +52,7 @@ type Archive struct {
 
 	mu        sync.Mutex
 	saf       *os.File
+	safSize   int64
 	directory string
 }
 
@@ -95,6 +97,22 @@ func OpenFiles(sahPath, safPath string) (*Archive, error) {
 	}
 	if a.saf, err = os.Open(safPath); err != nil {
 		return nil, err
+	}
+	info, err := a.saf.Stat()
+	if err != nil {
+		a.saf.Close()
+		return nil, err
+	}
+	a.safSize = info.Size()
+	var invalid error
+	a.Walk(func(path string, file *File) {
+		if invalid == nil {
+			invalid = a.validateLegacyRange(path, file)
+		}
+	})
+	if invalid != nil {
+		a.saf.Close()
+		return nil, invalid
 	}
 	return a, nil
 }
@@ -154,6 +172,13 @@ func (a *Archive) ReadFile(path string) ([]byte, error) {
 	return a.Read(f)
 }
 
+func (a *Archive) validateLegacyRange(path string, f *File) error {
+	if f.Offset < 0 || f.Offset > a.safSize || int64(f.Length) > a.safSize-f.Offset || f.Length > maxLegacyAssetBytes {
+		return fmt.Errorf("archive: %s: invalid SAF range at %d for %d bytes", path, f.Offset, f.Length)
+	}
+	return nil
+}
+
 func (a *Archive) Read(f *File) ([]byte, error) {
 	if a.directory != "" {
 		handle, err := os.Open(f.diskPath)
@@ -164,6 +189,9 @@ func (a *Archive) Read(f *File) ([]byte, error) {
 		buf := make([]byte, f.Length)
 		_, err = io.ReadFull(handle, buf)
 		return buf, err
+	}
+	if err := a.validateLegacyRange(f.Name, f); err != nil {
+		return nil, err
 	}
 	buf := make([]byte, f.Length)
 	a.mu.Lock()
@@ -254,7 +282,12 @@ func (r *reader) dir(depth int) *Dir {
 	d := &Dir{Name: r.name(), fileByHash: map[uint32]*File{}, dirByHash: map[uint32]*Dir{}}
 	n := r.count()
 	for i := 0; i < n && r.err == nil; i++ {
-		f := &File{Name: r.name(), Offset: r.i64(), Length: uint32(r.i32()), Version: r.i32()}
+		name, offset, length, version := r.name(), r.i64(), r.i32(), r.i32()
+		if length < 0 {
+			r.fail(fmt.Errorf("negative length for %s", name))
+			break
+		}
+		f := &File{Name: name, Offset: offset, Length: uint32(length), Version: version}
 		d.Files = append(d.Files, f)
 		d.fileByHash[Hash(f.Name)] = f
 	}

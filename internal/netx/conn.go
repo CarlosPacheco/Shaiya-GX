@@ -2,11 +2,14 @@ package netx
 
 import (
 	"bufio"
+	"crypto/tls"
 	"encoding/binary"
-	"github.com/Spelunkern/Shaiya-GX/internal/transport"
+	"io"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/transport"
 )
 
 // Opcodes that drive the inbound transport mode (dispatcher 0x59cf70).
@@ -43,6 +46,15 @@ func Dial(addr string, timeout time.Duration) (*Conn, error) {
 }
 
 func (c *Conn) Close() error { return c.nc.Close() }
+
+// Abort closes the socket without a TLS close notification. It unblocks
+// pending reads and writes when normal shutdown cannot complete.
+func (c *Conn) Abort() error {
+	if secure, ok := c.nc.(*tls.Conn); ok {
+		return secure.NetConn().Close()
+	}
+	return c.nc.Close()
+}
 
 // CloseWrite delivers EOF after queued requests, leaving the read side open.
 func (c *Conn) CloseWrite() error {
@@ -89,7 +101,10 @@ func (c *Conn) Write(payload []byte) error {
 	if err = c.nc.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
 		return err
 	}
-	_, err = c.nc.Write(frame)
+	n, err := c.nc.Write(frame)
+	if err == nil && n != len(frame) {
+		return io.ErrShortWrite
+	}
 	return err
 }
 

@@ -16,7 +16,7 @@ Declarations: [packet.MobEnter](../../server/internal/packet/packet.go#L102), [p
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1413)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L116)
 
 ### Wire layouts and validation
 
@@ -75,7 +75,7 @@ Declarations: [packet.MobLeave](../../server/internal/packet/packet.go#L103), [p
 
 **S→C serializers:** [buildMobLeave (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1385)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1335)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L38)
 
 ### Wire layouts and validation
 
@@ -115,7 +115,7 @@ Declarations: [packet.MobMove](../../server/internal/packet/packet.go#L104), [pr
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1419)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L122)
 
 ### Wire layouts and validation
 
@@ -163,7 +163,7 @@ Declarations: [packet.MobAttackCharacter](../../server/internal/packet/packet.go
 
 **S→C serializers:** [buildMobAttackCharacter (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1421)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1115)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L988)
 
 ### Wire layouts and validation
 
@@ -222,7 +222,7 @@ Declarations: [packet.MobDeath](../../server/internal/packet/packet.go#L106), [p
 
 **S→C serializers:** [buildMobDeathBy (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1480)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1121)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L994)
 
 ### Wire layouts and validation
 
@@ -282,7 +282,7 @@ Declarations: [packet.MobPeriodicDamage](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildMobPeriodicDamage (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1488)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L892)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L835)
 
 ### Wire layouts and validation
 
@@ -341,7 +341,7 @@ Declarations: [proto.MobSpeed](../../internal/proto/opcodes.go#L232).
 
 **S→C serializers:** [buildMobSpeed (server/internal/world/mobeffects.go)](../../server/internal/world/mobeffects.go#L145)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1044)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L917)
 
 ### Wire layouts and validation
 
@@ -404,7 +404,7 @@ Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 
 **S→C serializers:** [buildMobSkillPacket (server/internal/world/combat.go)](../../server/internal/world/combat.go#L356)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L904)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L847)
 
 ### Wire layouts and validation
 
@@ -496,7 +496,7 @@ Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 
 **S→C serializers:** [buildMobSkillPacket (server/internal/world/combat.go)](../../server/internal/world/combat.go#L356)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L904)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L847)
 
 ### Wire layouts and validation
 
@@ -588,7 +588,7 @@ Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 
 **S→C serializers:** [buildMobSkillPacket (server/internal/world/combat.go)](../../server/internal/world/combat.go#L356)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L904)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L847)
 
 ### Wire layouts and validation
 
@@ -786,7 +786,7 @@ Declarations: [packet.MobCurrentHitpoints](../../server/internal/packet/packet.g
 
 **S→C serializers:** [buildMobCurrentHP (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1499)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1105)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L978)
 
 ### Wire layouts and validation
 
@@ -838,7 +838,7 @@ Declarations: [packet.MapNpcEnter](../../server/internal/packet/packet.go#L109),
 
 **S→C serializers:** [buildNpcEnter (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1314)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1429)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L132)
 
 ### Wire layouts and validation
 
@@ -906,7 +906,7 @@ Declarations: [packet.MapNpcLeave](../../server/internal/packet/packet.go#L110),
 
 **S→C serializers:** [buildNpcLeave (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1329)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1335)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L38)
 
 ### Wire layouts and validation
 
@@ -946,7 +946,7 @@ Declarations: [packet.MapNpcMove](../../server/internal/packet/packet.go#L111), 
 
 **S→C serializers:** [buildNpcMove (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1335)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1435)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L138)
 
 ### Wire layouts and validation
 
@@ -1032,7 +1032,7 @@ Declarations: [packet.MapNpcAttackPlayer](../../server/internal/packet/packet.go
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1444)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L147)
 
 ### Wire layouts and validation
 
@@ -1070,7 +1070,7 @@ Declarations: [packet.MapNpcAttackMob](../../server/internal/packet/packet.go#L1
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1444)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1180), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L147)
 
 ### Wire layouts and validation
 

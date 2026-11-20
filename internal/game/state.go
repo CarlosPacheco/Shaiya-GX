@@ -223,7 +223,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 	}()
 	ev := Event{Op: op}
-	fail := func(err error) (Event, error) { return ev, fmt.Errorf("0x%04X: %w", uint16(op), err) }
+	fail := ev.packetError
 	switch op {
 	case proto.GXItemCooldownReset:
 		if len(p) != 2 {
@@ -598,65 +598,8 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		if err := s.applyExchange(p); err != nil {
 			return fail(err)
 		}
-	case proto.QuestList:
-		quests, err := proto.DecodeQuestList(p)
-		if err != nil {
-			return fail(err)
-		}
-		if s.Quests == nil {
-			s.Quests = make(map[uint16]proto.ActiveQuest)
-		}
-		for _, q := range quests {
-			s.Quests[q.ID] = q
-		}
-	case proto.QuestFinishedList:
-		quests, err := proto.DecodeFinishedQuests(p)
-		if err != nil {
-			return fail(err)
-		}
-		if s.FinishedQuests == nil {
-			s.FinishedQuests = make(map[uint16]uint8)
-		}
-		for _, q := range quests {
-			s.FinishedQuests[q.ID] = q.Success
-		}
-	case proto.QuestStart:
-		_, id, err := proto.DecodeQuestStart(p)
-		if err != nil {
-			return fail(err)
-		}
-		if s.Quests == nil {
-			s.Quests = make(map[uint16]proto.ActiveQuest)
-		}
-		s.Quests[id] = proto.ActiveQuest{ID: id}
-	case proto.QuestCounter:
-		id, slot, value, err := proto.DecodeQuestCounter(p)
-		if err != nil {
-			return fail(err)
-		}
-		if slot >= 3 {
-			return fail(fmt.Errorf("invalid quest counter slot %d", slot))
-		}
-		if q, ok := s.Quests[id]; ok {
-			q.Counters[slot] = value
-			s.Quests[id] = q
-		}
-	case proto.QuestChoose:
-		id, err := proto.DecodeQuestChoice(p)
-		if err != nil {
-			return fail(err)
-		}
-		s.QuestChoice, s.QuestChoosing = id, true
-	case proto.QuestEnd:
-		result, err := proto.DecodeQuestEnd(p)
-		if err != nil {
-			return fail(err)
-		}
-		s.LastQuestEnd = result
-		delete(s.Quests, result.ID)
-		if s.QuestChoosing && s.QuestChoice == result.ID {
-			s.QuestChoosing = false
-		}
+	case proto.QuestList, proto.QuestFinishedList, proto.QuestStart, proto.QuestCounter, proto.QuestChoose, proto.QuestEnd:
+		return s.applyQuestsPacket(p, ev)
 	case proto.PartyRoster, proto.PartyJoined, proto.PartyInvite, proto.PartyInviteName, proto.PartyAnswer, proto.PartyLeft, proto.PartyExpelled, proto.PartyLeader, proto.PartyBadge, proto.PartyPools, proto.PartyLevel, proto.RaidRoster, proto.RaidJoined, proto.PartyLeaveAlt, proto.RaidConvert, proto.RaidDivision, proto.RaidAutoJoin, proto.RaidSwap, proto.RaidSubLeader, proto.RaidInvite, proto.RaidAnswer, proto.RaidDisband, proto.RaidLeader, proto.RaidInviteName, proto.RaidError, proto.RaidExpel, proto.RaidPools:
 		if err := s.applyParty(p); err != nil {
 			return fail(err)
@@ -969,78 +912,8 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		if id == s.SelfID {
 			s.Details.MaxHP, s.Details.MaxMP, s.Details.MaxSP = hp, mp, sp
 		}
-	case proto.MapAddItem:
-		it, err := proto.DecodeGroundItem(p)
-		if err != nil {
-			return fail(err)
-		}
-		s.GroundItems[it.ID] = it
-	case proto.MapRemoveItem:
-		id, err := proto.DecodeU32(p)
-		if err != nil {
-			return fail(err)
-		}
-		delete(s.GroundItems, id)
-	case proto.CharacterItems:
-		items, err := proto.DecodeInventory(p)
-		if err != nil {
-			return fail(err)
-		}
-		for _, it := range items {
-			s.applyItem(it)
-		}
-		s.InventoryReady = true
-	case proto.ItemBagToBag:
-		items, money, hasMoney, err := proto.DecodeWarehouseMove(p)
-		if err != nil {
-			return fail(err)
-		}
-		for _, it := range items {
-			s.applyItem(it)
-		}
-		if hasMoney {
-			s.Details.Money = money
-		}
-	case proto.WarehouseItemList:
-		list, err := proto.DecodeWarehouse(p)
-		if err != nil {
-			return fail(err)
-		}
-		stored := make(map[uint8]proto.InventoryItem, len(list.Items))
-		for _, it := range list.Items {
-			stored[it.Slot] = it
-		}
-		s.Warehouse, s.WarehouseGold, s.WarehouseReady = stored, list.Gold, true
-	case proto.AddItem:
-		if len(p) == 4 {
-			ev.Text = fmt.Sprintf("item rejected: %d", p[3])
-			break
-		}
-		it, err := proto.DecodeItemAdd(p)
-		if err != nil {
-			return fail(err)
-		}
-		// Rapture's gold acknowledgement uses a synthetic slot (26/0).
-		// Only 0x0213 changes the balance; this packet must not replace a bag item.
-		if it.Type != 26 || it.TypeID != 0 {
-			s.applyItem(it)
-		}
-	case proto.RemoveItem:
-		r := proto.NewReader(p)
-		bag, slot, typ, id, count := r.U8(), r.U8(), r.U8(), r.U8(), r.Count()
-		if err := r.Err(); err != nil {
-			return fail(err)
-		}
-		key := [2]uint8{bag, slot}
-		it := s.Inventory[key]
-		it.Bag, it.Slot, it.Type, it.TypeID, it.Count = bag, slot, typ, id, count
-		s.applyItem(it)
-	case proto.SetMoney:
-		money, err := proto.DecodeU32(p)
-		if err != nil {
-			return fail(err)
-		}
-		s.Details.Money = money
+	case proto.MapAddItem, proto.MapRemoveItem, proto.CharacterItems, proto.ItemBagToBag, proto.WarehouseItemList, proto.AddItem, proto.RemoveItem, proto.SetMoney:
+		return s.applyInventoryPacket(p, ev)
 	case proto.MobSpeed:
 		r := proto.NewReader(p)
 		id, attack, move := r.U32(), r.U8(), r.U8()
@@ -1304,197 +1177,10 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 				s.addChat(ChatLine{Op: proto.ChatError, Text: g.Message, Style: 4})
 			}
 		}
-	case proto.CharacterEnteredMap:
-		u, err := proto.DecodeUserEnter(p)
-		if err != nil {
-			return fail(err)
-		}
-		if u.ID == s.SelfID {
-			s.Self.X, s.Self.Y, s.Self.Z = u.X, u.Y, u.Z
-			s.Self.IsGM = u.Marker == 2
-			if !s.Self.IsGM {
-				s.GMTurbo = false
-			}
-			s.Guild.ID = u.GuildID
-			if info, ok := s.Guild.Directory[u.GuildID]; ok {
-				s.Guild.Remark, s.Guild.RemarkKnown = info.Remark, true
-			}
-			s.Phase = PhaseInWorld
-		} else {
-			e := s.Entities[u.ID]
-			if e == nil {
-				e = &Entity{Kind: KindUser, ID: u.ID}
-				s.Entities[u.ID] = e
-			}
-			e.X, e.Y, e.Z, e.GuildID = u.X, u.Y, u.Z, u.GuildID
-			e.IsGM = u.Marker == 2
-			e.PositionResetSerial++
-			e.ClimbMode = 0
-		}
-		ev.Text = fmt.Sprintf("user %d enters", u.ID)
-	case proto.UserLeave, proto.MobLeave, proto.MapNpcLeave:
-		id, err := proto.DecodeU32(p)
-		if err != nil {
-			return fail(err)
-		}
-		delete(s.Entities, id)
-		if s.Target == id {
-			s.Target = 0
-		}
-	case proto.ChangeAppearance:
-		m, err := proto.DecodeAppearanceChange(p)
-		if err != nil {
-			return fail(err)
-		}
-		if m.ID == s.SelfID {
-			for slot, c := range s.Slots {
-				if c.ID == m.ID {
-					c.Hair, c.Face, c.Height, c.Gender = m.Hair, m.Face, m.Height, m.Gender
-					s.Slots[slot] = c
-				}
-			}
-		}
-		e := s.Entities[m.ID]
-		if m.ID == s.SelfID {
-			e = &s.Self
-		}
-		if e != nil && e.Shape != nil {
-			shape := *e.Shape
-			shape.Hair, shape.Face, shape.Height, shape.Gender = m.Hair, m.Face, m.Height, m.Gender
-			e.Shape = &shape
-		}
-	case proto.CharacterEquipment:
-		m, err := proto.DecodeEquipment(p)
-		if err != nil {
-			return fail(err)
-		}
-		e := s.Entities[m.ID]
-		if m.ID == s.SelfID {
-			e = &s.Self
-		}
-		if e != nil && e.Shape != nil && m.Slot < 8 {
-			copyShape := *e.Shape
-			copyShape.Equipment[m.Slot] = [3]uint8{m.Type, m.TypeID, m.Enchant}
-			if m.Slot == 7 {
-				copyShape.Cloak = m.Cloak
-			}
-			e.Shape = &copyShape
-		}
-	case proto.CharacterShape:
-		shape, err := proto.DecodeUserShape(p)
-		if err != nil {
-			return fail(err)
-		}
-		e := &s.Self
-		if shape.ID != s.SelfID {
-			e = s.Entities[shape.ID]
-			if e == nil {
-				e = &Entity{Kind: KindUser, ID: shape.ID}
-				s.Entities[shape.ID] = e
-			}
-		}
-		e.Shape = &shape
-		e.PvPKills, e.PvPKillsKnown = shape.Kills, true
-		e.Dead = shape.Dead != 0
-	case proto.CharacterMove:
-		m, err := proto.DecodeUserMove(p)
-		if err != nil {
-			return fail(err)
-		}
-		e := &s.Self
-		if m.ID != s.SelfID {
-			if e = s.Entities[m.ID]; e == nil {
-				e = &Entity{Kind: KindUser, ID: m.ID}
-				s.Entities[m.ID] = e
-			}
-		}
-		e.Motion, e.Dir, e.X, e.Y, e.Z = m.Motion, m.Dir, m.X, m.Y, m.Z
-		e.MoveSerial++
-	case proto.MobEnter, proto.GXMobEnter:
-		m, err := proto.DecodeMobEnter(p)
-		if err != nil {
-			return fail(err)
-		}
-		s.Entities[m.ID] = &Entity{Kind: KindMob, ID: m.ID, TypeID: m.MobID, X: m.X, Y: m.Y, Z: m.Z, MobHeightKnown: m.HeightKnown, MobCountry: m.Country, MobCountryKnown: m.CountryKnown}
-	case proto.MobMove, proto.GXMobMove:
-		m, err := proto.DecodeMobMove(p)
-		if err != nil {
-			return fail(err)
-		}
-		if e := s.Entities[m.ID]; e != nil {
-			e.Motion, e.X, e.Y, e.Z, e.MobHeightKnown = m.Motion, m.X, m.Y, m.Z, m.HeightKnown
-			e.MobMoveDurationMS = m.DurationMS
-			e.MoveSerial++
-		}
-	case proto.MapNpcEnter:
-		n, err := proto.DecodeNpcEnter(p)
-		if err != nil {
-			return fail(err)
-		}
-		s.Entities[n.ID] = &Entity{Kind: KindNpc, Summoned: n.Summoned, ID: n.ID, NpcType: n.Type, TypeID: n.TypeID, X: n.X, Y: n.Y, Z: n.Z, Dir: n.Angle}
-	case proto.MapNpcMove:
-		n, err := proto.DecodeNpcMove(p)
-		if err != nil {
-			return fail(err)
-		}
-		if e := s.Entities[n.ID]; e != nil && e.Kind == KindNpc {
-			e.Motion, e.X, e.Y, e.Z = n.Motion, n.X, n.Y, n.Z
-			e.MoveSerial++
-		}
-	case proto.MapNpcAttackPlayer, proto.MapNpcAttackMob:
-		hit, err := proto.DecodeNpcAttack(p)
-		if err != nil {
-			return fail(err)
-		}
-		if e := s.Entities[hit.Source]; e != nil && e.Kind == KindNpc {
-			e.NpcAttackTarget = hit.Target
-			e.NpcAttackSerial++
-		}
-	case proto.MobSpeechText, proto.MobSpeechIndex:
-		c, err := proto.DecodeMobSpeech(p)
-		if err != nil {
-			return fail(err)
-		}
-		s.LastMobSpeech = c
-		if op == proto.MobSpeechText {
-			s.addChat(ChatLine{Op: op, SenderID: c.MobID, Text: c.Text, Style: 1})
-		}
-		ev.Text = fmt.Sprintf("mob speech %d: %d", c.MobID, c.MessageID)
-	case proto.ChatNormal, proto.ChatParty, proto.ChatShout, proto.ChatNormalAdmin:
-		c, err := proto.DecodeChatByID(p)
-		if err != nil {
-			return fail(err)
-		}
-		s.addChat(ChatLine{Op: op, SenderID: c.SenderID, Text: c.Text, Items: c.Items, Raid: op == proto.ChatParty && s.Party.Raid})
-		ev.Text = fmt.Sprintf("chat %d: %s", c.SenderID, c.Text)
-	case proto.ChatWorld, proto.ChatGuild, proto.ChatMap, proto.ChatWorldShout, proto.ChatWorldAdmin:
-		c, err := proto.DecodeChatByName(p)
-		if err != nil {
-			return fail(err)
-		}
-		s.addChat(ChatLine{Op: op, Sender: c.Sender, Text: c.Text, Items: c.Items})
-		ev.Text = fmt.Sprintf("chat %s: %s", c.Sender, c.Text)
-	case proto.ChatWhisper:
-		c, err := proto.DecodeWhisper(p)
-		if err != nil {
-			return fail(err)
-		}
-		s.addChat(ChatLine{Op: op, Sender: c.Sender, Text: c.Text, Items: c.Items, Direction: c.Direction})
-	case proto.ChatError:
-		r := proto.NewReader(p)
-		code := r.U8()
-		if err := r.Err(); err != nil {
-			return fail(err)
-		}
-		message := fmt.Sprintf("Chat error %d.", code)
-		if code == 1 {
-			message = "Whisper recipient not found or unavailable."
-		}
-		id := 0
-		if code == 1 {
-			id = 347
-		}
-		s.addChat(ChatLine{Op: op, Text: message, MessageID: id, Style: 1})
+	case proto.CharacterEnteredMap, proto.UserLeave, proto.MobLeave, proto.MapNpcLeave, proto.ChangeAppearance, proto.CharacterEquipment, proto.CharacterShape, proto.CharacterMove, proto.MobEnter, proto.GXMobEnter, proto.MobMove, proto.GXMobMove, proto.MapNpcEnter, proto.MapNpcMove, proto.MapNpcAttackPlayer, proto.MapNpcAttackMob:
+		return s.applyEntitiesPacket(p, ev)
+	case proto.MobSpeechText, proto.MobSpeechIndex, proto.ChatNormal, proto.ChatParty, proto.ChatShout, proto.ChatNormalAdmin, proto.ChatWorld, proto.ChatGuild, proto.ChatMap, proto.ChatWorldShout, proto.ChatWorldAdmin, proto.ChatWhisper, proto.ChatError:
+		return s.applyChatPacket(p, ev)
 	case proto.Logout:
 		s.Party = PartyState{}
 		s.Guild = GuildState{}
@@ -1510,6 +1196,10 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		s.Unknown[op]++
 	}
 	return ev, nil
+}
+
+func (e Event) packetError(err error) (Event, error) {
+	return e, fmt.Errorf("0x%04X: %w", uint16(e.Op), err)
 }
 
 func (s *State) addChat(l ChatLine) { s.AddChat(l) }

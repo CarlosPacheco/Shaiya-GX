@@ -1,6 +1,7 @@
 package archive
 
 import (
+	"encoding/binary"
 	"os"
 	"path/filepath"
 	"testing"
@@ -34,7 +35,7 @@ func TestReadPrefixKeepsArchiveEntryIntact(t *testing.T) {
 	}
 	defer handle.Close()
 	entry := &File{Name: "model.smod", Length: 6}
-	a := &Archive{saf: handle, Root: &Dir{fileByHash: map[uint32]*File{Hash(entry.Name): entry}}}
+	a := &Archive{saf: handle, safSize: 6, Root: &Dir{fileByHash: map[uint32]*File{Hash(entry.Name): entry}}}
 	prefix, err := a.ReadPrefix("MODEL.SMOD", 2)
 	if err != nil || string(prefix) != "ab" || entry.Length != 6 {
 		t.Fatal("prefix altered archive entry", string(prefix), err)
@@ -45,5 +46,46 @@ func TestReadPrefixKeepsArchiveEntryIntact(t *testing.T) {
 	}
 	if _, err := a.ReadPrefix("model.smod", -1); err == nil {
 		t.Fatal("negative prefix")
+	}
+}
+
+func TestLegacyArchiveRejectsInvalidEntryRanges(t *testing.T) {
+	dir := t.TempDir()
+	sah, saf := filepath.Join(dir, "data.sah"), filepath.Join(dir, "data.saf")
+	if err := os.WriteFile(saf, []byte("abcdef"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name           string
+		offset, length uint64
+		valid          bool
+	}{
+		{"within archive", 2, 4, true},
+		{"zero at EOF", 6, 0, true},
+		{"negative length", 0, 0xffffffff, false},
+		{"beyond EOF", 2, 5, false},
+		{"negative offset", ^uint64(0), 0, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			index := append([]byte("SAH"), make([]byte, 48)...)
+			index = binary.LittleEndian.AppendUint32(index, 0)
+			index = binary.LittleEndian.AppendUint32(index, 1)
+			index = binary.LittleEndian.AppendUint32(index, 2)
+			index = append(index, 'a', 0)
+			index = binary.LittleEndian.AppendUint64(index, tc.offset)
+			index = binary.LittleEndian.AppendUint32(index, uint32(tc.length))
+			index = binary.LittleEndian.AppendUint32(index, 0)
+			index = binary.LittleEndian.AppendUint32(index, 0)
+			if err := os.WriteFile(sah, index, 0600); err != nil {
+				t.Fatal(err)
+			}
+			a, err := OpenFiles(sah, saf)
+			if (err == nil) != tc.valid {
+				t.Fatalf("OpenFiles error=%v, expected valid=%v", err, tc.valid)
+			}
+			if a != nil {
+				a.Close()
+			}
+		})
 	}
 }

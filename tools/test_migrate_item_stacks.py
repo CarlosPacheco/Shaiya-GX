@@ -1,5 +1,6 @@
 import csv
 import sqlite3
+from contextlib import closing
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,7 +13,7 @@ class StackMigrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
             dbpath=root/'seed.sqlite'
-            with sqlite3.connect(dbpath) as db:
+            with closing(sqlite3.connect(dbpath)) as db, db:
                 db.executescript('CREATE TABLE PS_GameDefs_Items(Type,TypeID,Count);'
                                  'INSERT INTO PS_GameDefs_Items VALUES(25,1,10),(1,1,1);'
                                  'CREATE TABLE Inventory(Count); INSERT INTO Inventory VALUES(7);')
@@ -23,7 +24,7 @@ class StackMigrationTests(unittest.TestCase):
             client=root/'client'
             client.mkdir()
             migrate([dbpath],catalog,client)
-            with sqlite3.connect(dbpath) as db:
+            with closing(sqlite3.connect(dbpath)) as db, db:
                 self.assertEqual(db.execute('SELECT Count FROM PS_GameDefs_Items ORDER BY Type').fetchall(),[(1,),(255,)])
                 self.assertEqual(db.execute('SELECT Count FROM Inventory').fetchone(),(7,))
             with catalog.open() as f:

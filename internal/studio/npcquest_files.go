@@ -65,8 +65,8 @@ func saveNPCQuestFiles(root string, project *NPCQuestCatalog, catalog npcquest.C
 	if err := project.Server.checkCurrent(); err != nil {
 		return "", err
 	}
-	if clientFile.Path == project.Server.Path {
-		return "", errors.New("select separate client and server NpcQuest files")
+	if err := distinctNPCQuestFiles(clientFile.Path, project.Server.Path); err != nil {
+		return "", err
 	}
 	backup, err := catalogBackup(root, "npc-quest")
 	if err != nil {
@@ -90,19 +90,33 @@ func saveNPCQuestFiles(root string, project *NPCQuestCatalog, catalog npcquest.C
 	return finishNPCQuestFiles(root, record)
 }
 
-// Once the two verified replacements have a durable journal, recovery
-// completes both writes. It rejects files externally modified after staging.
-func finishNPCQuestFiles(root string, record journal) (string, error) {
-	if record.Kind != NPCQuest || !filepath.IsAbs(record.CashPath) || !filepath.IsAbs(record.ServerPath) ||
-		record.CashPath == record.ServerPath || record.Backup == "" || record.Backup == "." || record.Backup == ".." || record.Backup != filepath.Base(record.Backup) {
-		return "", errors.New("invalid NPC and quest recovery journal")
+func distinctNPCQuestFiles(client, server string) error {
+	clientInfo, err := os.Lstat(client)
+	if err != nil {
+		return err
 	}
-	dir := filepath.Join(root, "backups", record.Backup)
-	targets := []struct {
-		path, before, after, candidate string
-		data                           []byte
-		mode                           os.FileMode
-	}{
+	serverInfo, err := os.Lstat(server)
+	if err != nil {
+		return err
+	}
+	if !clientInfo.Mode().IsRegular() || !serverInfo.Mode().IsRegular() || os.SameFile(clientInfo, serverInfo) {
+		return errors.New("select separate regular client and server NpcQuest files")
+	}
+	return nil
+}
+
+type npcQuestReplacement struct {
+	path, before, after, candidate string
+	data                           []byte
+	mode                           os.FileMode
+}
+
+// Check both files and stage their replacements before writing either one.
+func planNPCQuestRecovery(dir string, record journal) ([]npcQuestReplacement, error) {
+	if err := distinctNPCQuestFiles(record.CashPath, record.ServerPath); err != nil {
+		return nil, err
+	}
+	targets := []npcQuestReplacement{
 		{path: record.CashPath, before: record.CashBefore, after: record.CashAfter, candidate: "client-next.SData"},
 		{path: record.ServerPath, before: record.ServerBefore, after: record.ServerAfter, candidate: "server-next.SData"},
 	}
@@ -110,23 +124,37 @@ func finishNPCQuestFiles(root string, record journal) (string, error) {
 		t := &targets[i]
 		current, err := readSData(t.path)
 		if err != nil {
-			return dir, err
+			return nil, err
 		}
 		switch hash(current) {
 		case t.after:
 			continue
 		case t.before:
 		default:
-			return dir, fmt.Errorf("%s has an unexpected state; review the backups", t.path)
+			return nil, fmt.Errorf("%s has an unexpected state; review the backups", t.path)
 		}
 		t.data, err = readSData(filepath.Join(dir, t.candidate))
 		if err != nil || hash(t.data) != t.after {
-			return dir, errors.Join(errors.New("NPC and quest recovery copy failed verification"), err)
+			return nil, errors.Join(errors.New("NPC and quest recovery copy failed verification"), err)
 		}
 		t.mode, err = fileMode(t.path)
 		if err != nil {
-			return dir, err
+			return nil, err
 		}
+	}
+	return targets, nil
+}
+
+func finishNPCQuestFiles(root string, record journal) (string, error) {
+	if record.Kind != NPCQuest || !filepath.IsAbs(record.CashPath) || !filepath.IsAbs(record.ServerPath) ||
+		record.Backup == "" || record.Backup == "." || record.Backup == ".." || record.Backup != filepath.Base(record.Backup) ||
+		len(record.CashBefore) != 64 || len(record.CashAfter) != 64 || len(record.ServerBefore) != 64 || len(record.ServerAfter) != 64 {
+		return "", errors.New("invalid NPC and quest recovery journal")
+	}
+	dir := filepath.Join(root, "backups", record.Backup)
+	targets, err := planNPCQuestRecovery(dir, record)
+	if err != nil {
+		return dir, err
 	}
 	for _, t := range targets {
 		if t.data != nil {

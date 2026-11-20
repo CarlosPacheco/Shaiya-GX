@@ -41,7 +41,7 @@ type worldBotArena struct {
 	owner    uint32
 	geometry *mapgeometry.Geometry
 	bots     []worldBot
-	visible  map[*ConnectedPlayer][]bool
+	visible  map[*ConnectedPlayer]*botObserver
 }
 
 var worldBots struct {
@@ -70,7 +70,7 @@ func (s *Session) gmBots(args []string) error {
 	if err != nil {
 		return err
 	}
-	a := &worldBotArena{owner: s.char.ID, geometry: g, visible: make(map[*ConnectedPlayer][]bool)}
+	a := &worldBotArena{owner: s.char.ID, geometry: g, visible: make(map[*ConnectedPlayer]*botObserver)}
 	defs := db.MustDefs()
 	listener, err := net.ListenTCP("tcp4", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1)})
 	if err != nil {
@@ -208,82 +208,6 @@ func (b *worldBot) equip(defs *db.Defs, gear [8][]*db.ItemDef) {
 	}
 	slices.SortFunc(b.skills, func(a, b *db.SkillDef) int { return int(a.SkillID) - int(b.SkillID) })
 	b.skills = b.skills[:min(len(b.skills), 255)]
-}
-
-func clearWorldBots() {
-	if a := worldBots.arena; a != nil {
-		for i := range a.bots {
-			a.bots[i].wire.close()
-		}
-		for viewer, visible := range a.visible {
-			for i, shown := range visible {
-				if shown {
-					_ = viewer.Send(buildUserLeave(a.bots[i].char.ID), "bot leave")
-				}
-			}
-		}
-	}
-	worldBots.arena = nil
-}
-
-func tickWorldBots(now time.Time) {
-	worldBots.Lock()
-	defer worldBots.Unlock()
-	a := worldBots.arena
-	if a == nil {
-		return
-	}
-	if FindPlayerByID(a.owner) == nil {
-		clearWorldBots()
-		return
-	}
-	for viewer := range a.visible {
-		if FindPlayerByID(viewer.CharacterID) != viewer {
-			delete(a.visible, viewer)
-		}
-	}
-	for _, viewer := range AllPlayers() {
-		old := a.visible[viewer]
-		if viewer.MapID() != a.bots[0].char.MapID {
-			delete(a.visible, viewer)
-			continue
-		}
-		if old == nil {
-			old = make([]bool, len(a.bots))
-			a.visible[viewer] = old
-		}
-		x, z := viewer.PositionXZ()
-		for i := range a.bots {
-			b := &a.bots[i]
-			dx, dz := x-b.char.PosX, z-b.char.PosZ
-			show := dx*dx+dz*dz <= BroadcastRadius*BroadcastRadius
-			if show && !old[i] {
-				_ = viewer.Send(buildCharacterEnteredMapGuild(&b.char, false, false, 0), "bot enter")
-				_ = viewer.Send(buildCharacterShapeGuild(&b.char, b.faction, b.items, 0, ""), "bot shape")
-				if b.char.CurrentHP == 0 {
-					_ = viewer.Send(buildCharacterDeathState(b.char.ID), "bot corpse")
-				}
-			} else if !show && old[i] {
-				_ = viewer.Send(buildUserLeave(b.char.ID), "bot leave")
-			}
-			old[i] = show
-		}
-	}
-	for i := range a.bots {
-		a.advance(i, now)
-		if a.failed {
-			clearWorldBots()
-			return
-		}
-	}
-}
-
-func (a *worldBotArena) emit(frame []byte, subject, target int) {
-	for viewer, visible := range a.visible {
-		if visible[subject] && (target < 0 || visible[target]) {
-			_ = viewer.Send(frame, "bot world event")
-		}
-	}
 }
 
 func (a *worldBotArena) advance(i int, now time.Time) {

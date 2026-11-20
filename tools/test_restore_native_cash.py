@@ -1,5 +1,6 @@
 import shutil
 import sqlite3
+from contextlib import closing
 import struct
 import tempfile
 import unittest
@@ -24,14 +25,14 @@ class NativeCashMigrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             target=Path(tmp)/'test.sqlite'
             shutil.copy2(ROOT/'server/data/rapture.sqlite',target)
-            with sqlite3.connect(target) as db:
+            with closing(sqlite3.connect(target)) as db, db:
                 db.row_factory=sqlite3.Row
                 item=dict(db.execute('SELECT * FROM PS_GameData_CharItems LIMIT 1').fetchone())
                 item.update(CharID=999001,ItemUID=999001,ItemID=100067,Type=100,TypeID=67,Bag=1,Slot=0,Count=999,Del=0)
                 db.execute('INSERT INTO PS_GameData_CharItems('+','.join(item)+') VALUES('+','.join('?' for _ in item)+')',list(item.values()))
             changes,limits=migrate(target,rows)
             self.assertEqual(len(changes),1)
-            with sqlite3.connect(target) as db:
+            with closing(sqlite3.connect(target)) as db, db:
                 counts=[r[0] for r in db.execute('SELECT Count FROM PS_GameData_CharItems WHERE CharID=999001')]
                 self.assertEqual(sorted(counts),[234,255,255,255])
                 self.assertEqual(sum(counts),999)

@@ -16,7 +16,7 @@ Declarations: [packet.CharacterList](../../server/internal/packet/packet.go#L21)
 
 **S→C serializers:** [buildEmptyCharacterListSlot (server/internal/world/character.go)](../../server/internal/world/character.go#L652), [buildCharacterListSlot (server/internal/world/character.go)](../../server/internal/world/character.go#L659)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1157)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1030)
 
 ### Wire layouts and validation
 
@@ -136,7 +136,7 @@ Declarations: [packet.CreateCharacter](../../server/internal/packet/packet.go#L2
 
 **S→C serializers:** [buildCreateCharacterResult (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L41)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1168)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1041)
 
 ### Wire layouts and validation
 
@@ -206,7 +206,7 @@ Source notes: Request charId:u32; response result:u8 (0=ok), charId:u32. Soft de
 
 **S→C serializers:** [buildCharResult (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L47), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1174)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1047)
 
 ### Wire layouts and validation
 
@@ -272,7 +272,7 @@ Declarations: [packet.SelectCharacter](../../server/internal/packet/packet.go#L2
 
 **S→C serializers:** [buildCharResult (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L47), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1188)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1061)
 
 ### Wire layouts and validation
 
@@ -338,7 +338,7 @@ Declarations: [packet.CharacterDetails](../../server/internal/packet/packet.go#L
 
 **S→C serializers:** [buildCharacterDetails (server/internal/world/character.go)](../../server/internal/world/character.go#L409)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1230)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1103)
 
 ### Wire layouts and validation
 
@@ -434,7 +434,7 @@ Declarations: [packet.CharacterItems](../../server/internal/packet/packet.go#L32
 
 **S→C serializers:** [buildInventoryPackets (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L14), [buildZeroCount (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L74)
 
-**Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L46), [Apply (internal/game/state.go)](../../internal/game/state.go#L984)
+**Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L46), [Apply (internal/game/state.go)](../../internal/game/state.go#L915), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L22)
 
 ### Wire layouts and validation
 
@@ -538,7 +538,7 @@ Declarations: [packet.Logout](../../server/internal/packet/packet.go#L33), [prot
 
 **S→C serializers:** [buildLeaveWorldAck (server/internal/world/character.go)](../../server/internal/world/character.go#L552)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1498)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1184)
 
 ### Wire layouts and validation
 
@@ -578,7 +578,7 @@ Declarations: [packet.CharacterSkills](../../server/internal/packet/packet.go#L3
 
 **S→C serializers:** [buildCharacterSkills (server/internal/world/skills.go)](../../server/internal/world/skills.go#L21)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L776)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L719)
 
 ### Wire layouts and validation
 
@@ -644,7 +644,7 @@ Declarations: [packet.AccountFaction](../../server/internal/packet/packet.go#L35
 
 **S→C serializers:** [buildAccountFaction (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L24)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1145)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1018)
 
 ### Wire layouts and validation
 
@@ -707,7 +707,7 @@ Declarations: [packet.CharacterActiveBuffs](../../server/internal/packet/packet.
 
 **S→C serializers:** [buildCharacterActiveBuffs (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L95)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L668)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L611)
 
 ### Wire layouts and validation
 
@@ -779,7 +779,7 @@ Declarations: [packet.CharacterSkillBar](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildCharacterSkillBar (server/internal/world/skills.go)](../../server/internal/world/skills.go#L39)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L785)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L728)
 
 ### Wire layouts and validation
 
@@ -909,7 +909,7 @@ Source notes: Same shape as DeleteCharacter.
 
 **S→C serializers:** [buildCharResult (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L47), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1174)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1047)
 
 ### Wire layouts and validation
 

@@ -121,3 +121,32 @@ func TestCloseReleasesReaderWithFullPacketQueue(t *testing.T) {
 		t.Fatal("full packet queue leaked the reader after close")
 	}
 }
+
+func TestWorldSendReleasesProducerWhilePeerIsNotReading(t *testing.T) {
+	begin := make(chan struct{})
+	t.Cleanup(func() { close(begin) })
+	w := tcpWorld(t, func(conn net.Conn) {
+		<-begin
+	})
+	// Do not let the peer drain its socket. A bounded producer must either
+	// enqueue or reject promptly even while the writer is on a blocked send.
+	done := make(chan error, 1)
+	go func() {
+		payload := make([]byte, netx.MaxFrame-2)
+		for range 512 {
+			if err := w.Send(payload); err != nil {
+				done <- err
+				return
+			}
+		}
+		done <- nil
+	}()
+	select {
+	case err := <-done:
+		if err == nil {
+			t.Fatal("an unresponsive peer did not exhaust the bounded queue")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("sending blocked the producer")
+	}
+}

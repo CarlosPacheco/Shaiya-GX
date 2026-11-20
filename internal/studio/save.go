@@ -303,6 +303,10 @@ func Recover(ctx context.Context, root string) (string, error) {
 	if record.ServerPath != "" {
 		return finishNPCQuestFiles(root, record)
 	}
+	return recoverSQLiteCatalog(ctx, root, record)
+}
+
+func recoverSQLiteCatalog(ctx context.Context, root string, record journal) (string, error) {
 	if (!record.Kind.valid() && record.Kind != NPCQuest) || !filepath.IsAbs(record.CashPath) || !filepath.IsAbs(record.DBPath) ||
 		record.Backup == "" || record.Backup == "." || record.Backup == ".." || record.Backup != filepath.Base(record.Backup) ||
 		len(record.CashBefore) != 64 || len(record.CashAfter) != 64 || len(record.SQLBefore) != 64 || len(record.SQLAfter) != 64 {
@@ -328,17 +332,9 @@ func Recover(ctx context.Context, root string) (string, error) {
 		return backup, err
 	}
 	cashState := hash(raw)
-	if cashState != record.CashBefore && cashState != record.CashAfter {
-		return backup, errors.New("The SData file has an unexpected state. Review the backups before changing it")
-	}
-
-	target, candidate := record.CashBefore, record.Kind.filename()
-	switch {
-	case sqlState == record.SQLAfter && (record.SQLBefore != record.SQLAfter || cashState == record.CashAfter):
-		target, candidate = record.CashAfter, "next-"+record.Kind.filename()
-	case sqlState == record.SQLBefore:
-	default:
-		return backup, errors.New("The SQLite catalog has an unexpected state. Review the backups before changing it")
+	target, candidate, err := planSQLiteRecovery(record, sqlState, cashState)
+	if err != nil {
+		return backup, err
 	}
 	if target != cashState {
 		data, err := readSData(filepath.Join(backup, candidate))
@@ -360,6 +356,22 @@ func Recover(ctx context.Context, root string) (string, error) {
 		return backup, err
 	}
 	return backup, finish(root, backup)
+}
+
+func planSQLiteRecovery(record journal, sqlState, cashState string) (string, string, error) {
+	if cashState != record.CashBefore && cashState != record.CashAfter {
+		return "", "", errors.New("The SData file has an unexpected state. Review the backups before changing it")
+	}
+
+	target, candidate := record.CashBefore, record.Kind.filename()
+	switch {
+	case sqlState == record.SQLAfter && (record.SQLBefore != record.SQLAfter || cashState == record.CashAfter):
+		target, candidate = record.CashAfter, "next-"+record.Kind.filename()
+	case sqlState == record.SQLBefore:
+	default:
+		return "", "", errors.New("The SQLite catalog has an unexpected state. Review the backups before changing it")
+	}
+	return target, candidate, nil
 }
 
 func finish(root, backup string) error {

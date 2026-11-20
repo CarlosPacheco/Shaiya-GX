@@ -401,18 +401,20 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		// Ten batches per simulated second, equivalent to a 2,000 payload/s stress
 		// input. This measures decoded-packet pumping, not sockets/TLS/server latency.
 		if sceneName == "crowd-network" && frame%6 == 0 {
+			if len(ch) != 0 {
+				t.Fatal("traffic fixture did not drain before the next burst")
+			}
 			for _, p := range batches[(frame/6)%2] {
 				ch <- p
 			}
+		}
+		if pendingPackets := len(ch); pendingPackets != 0 {
 			a.world = incoming
 			started = time.Now()
 			a.pumpWorld()
 			pump[frame] = float64(time.Since(started)) / 1e6
 			a.world = nil
-			packets += len(ids)
-			if len(ch) != 0 {
-				t.Fatal("traffic fixture did not drain")
-			}
+			packets += pendingPackets - len(ch)
 		}
 		started = time.Now()
 		effects()
