@@ -88,6 +88,9 @@ func (a *App) confirmedVehicle(p []byte) {
 		if v.ID != a.state.SelfID {
 			return
 		}
+		if v.State >= proto.VehicleDriver && previous < proto.VehicleDriver {
+			a.cancelSkillIntentOnMount()
+		}
 		a.vehicle.cooldownEnd = a.clock + float64(v.CooldownMS)/1000
 		if v.State != proto.VehicleCasting {
 			a.vehicle.pending = false
@@ -112,6 +115,24 @@ func (a *App) confirmedVehicle(p []byte) {
 	if r.Result == 0 {
 		a.questMessage(a.chatEntityName(a.state.SelfID) + " " + a.msg.Get(5245))
 	}
+}
+
+func (a *App) cancelSkillIntentOnMount() {
+	a.skills.queuedSkill = nil
+	a.revolver.cast = revolverCast{}
+	v := a.wv
+	if v == nil {
+		return
+	}
+	if len(v.approachSkill) > 0 {
+		v.approachSkill, v.approachTarget, v.travel = nil, 0, false
+	}
+	v.requestedSkill, v.requestedSkills = nil, nil
+	v.attackPose, v.attackMoveUntil = false, 0
+	if v.self.ActionActive() {
+		v.self.ReleaseAction()
+	}
+	a.stopCastEffects(a.state.SelfID)
 }
 
 // Native 0x4178a0 creates sequence 1 twice, following the casting hands.

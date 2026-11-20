@@ -196,6 +196,9 @@ func (a *App) useRevolver() {
 		a.activateSubAction(int(slot.Action) - 1)
 		return
 	}
+	if a.state.Self.Mounted {
+		return
+	}
 	k, ok := a.learnedSkill(slot.Skill)
 	if !ok {
 		return

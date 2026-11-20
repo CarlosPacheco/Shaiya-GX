@@ -44,6 +44,9 @@ func (a *App) prepareSkillMovement(p []byte) bool {
 	if len(p) != 7 || proto.Op(p) != proto.SkillUse && proto.Op(p) != proto.SkillUseNoTarget {
 		return true
 	}
+	if a.state.Self.Mounted {
+		return false
+	}
 	k, ok := a.state.Skills[proto.NewReader(p).U8()]
 	if !ok {
 		return true

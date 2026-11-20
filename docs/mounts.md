@@ -9,6 +9,9 @@ removing the equipped mount do. The object's `ReqIg` cooldown, in seconds,
 starts when preparation completes and survives dismounting and reconnecting
 within the running world service.
 
+Active skills require dismounting for both drivers and passengers. Mounting
+clears any queued skill and stops any approach started for a skill.
+
 Type 42 items reuse existing definition fields in both Item.SData and server
 Items definitions:
 

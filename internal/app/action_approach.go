@@ -164,7 +164,7 @@ func (a *App) attackReach() float32 {
 }
 
 func (a *App) approachSkillPacket(packet []byte) bool {
-	if a.wv == nil || len(packet) != 7 || proto.Op(packet) != proto.SkillUse && proto.Op(packet) != proto.SkillUseNoTarget {
+	if a.wv == nil || a.state.Self.Mounted || len(packet) != 7 || proto.Op(packet) != proto.SkillUse && proto.Op(packet) != proto.SkillUseNoTarget {
 		return false
 	}
 	r := proto.NewReader(packet)

@@ -194,6 +194,9 @@ func (a *App) applyGuildFeedback(p []byte, op proto.Opcode) {
 }
 
 func (a *App) applyWorldPresentation(p []byte, op proto.Opcode) {
+	if op == proto.SkillCastStarted && a.state.Self.Mounted && a.state.LastCast.Source == a.state.SelfID {
+		return
+	}
 	a.confirmedAnimation(p)
 	a.confirmedGesture(op)
 	a.confirmedSkills(op)

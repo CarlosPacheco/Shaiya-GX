@@ -414,6 +414,9 @@ func (a *App) actionPacket(index int) []byte {
 }
 
 func (a *App) learnedSkillPacket(k proto.LearnedSkill) []byte {
+	if a.state.Self.Mounted {
+		return nil
+	}
 	def := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]
 	if potential.Is(def.Effect, def.Detail) {
 		return nil // triggers by itself; a bar slot only shows it and its reuse

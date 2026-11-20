@@ -17,7 +17,7 @@ type requestedSkillPresentation struct {
 }
 
 func (a *App) requestedSkillPresentation(packet []byte) {
-	if a.wv == nil || len(packet) != 7 || proto.Op(packet) != proto.SkillUse && proto.Op(packet) != proto.SkillUseNoTarget {
+	if a.wv == nil || a.state.Self.Mounted || len(packet) != 7 || proto.Op(packet) != proto.SkillUse && proto.Op(packet) != proto.SkillUseNoTarget {
 		return
 	}
 	r := proto.NewReader(packet)

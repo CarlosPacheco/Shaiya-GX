@@ -73,6 +73,9 @@ func (a *App) confirmedAnimation(p []byte) {
 		}
 	case proto.SkillUse, proto.SkillUseNoTarget, proto.SkillUserDrain, proto.SkillMobDrain:
 		r := a.state.LastSkill
+		if r.Source == a.state.SelfID && a.state.Self.Mounted {
+			return
+		}
 		if r.Source == a.state.SelfID && r.Result <= 4 && !(r.Result == 3 && r.Target == 0) {
 			a.confirmAttackStop()
 		}
