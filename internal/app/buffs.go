@@ -52,11 +52,14 @@ func (a *App) confirmedBuffs(op proto.Opcode) {
 		rows = append(rows, badge)
 	}
 	a.buffs.rows = rows
+	if op == proto.BuffAdd && a.state.LastBuff.Skill == warehouseCallSkill {
+		a.openRemoteWarehouse() // using the rune opens the warehouse at once
+	}
 }
 
 func (a *App) buffCancelPacket(index int) []byte {
-	if index < 0 || index >= len(a.buffs.rows) || (a.buffs.rows[index].def.Effect != 4 || a.buffs.rows[index].buff.Level == 100) {
-		return nil
+	if index < 0 || index >= len(a.buffs.rows) || (a.buffs.rows[index].def.Effect != 4 || a.buffs.rows[index].buff.Level == 100 || a.buffs.rows[index].buff.Skill == warehouseCallSkill) {
+		return nil // Warehouse Call is never cancelled by hand
 	}
 	// Rapture friendly.go cancelBuff accepts only own TypeEffect=4 and SkillID.
 	return proto.CancelBuffPacket(a.buffs.rows[index].buff.Skill)
@@ -70,6 +73,9 @@ func (a *App) updateBuffs(in *platform.Input, w, h int) bool {
 	i := a.buffHit(w, h, in.MouseX, in.MouseY)
 	if i < 0 {
 		return false
+	}
+	if in.Clicked && a.buffs.rows[i].buff.Skill == warehouseCallSkill {
+		a.openRemoteWarehouse() // the buff reopens the window
 	}
 	if in.RightPressed && a.world != nil {
 		if p := a.buffCancelPacket(i); p != nil {
@@ -127,7 +133,7 @@ func (a *App) drawBuffTooltip(w, h int) {
 	a.tooltipDescription = strings.ReplaceAll(b.def.Description, `\n`, "\n")
 
 	a.tooltip = append(a.tooltip, itemDetailLine{ui.BuffDuration(b.seconds(a.clock), b.timed), white})
-	if b.def.Effect == 4 && b.buff.Level != 100 {
+	if b.def.Effect == 4 && b.buff.Level != 100 && b.buff.Skill != warehouseCallSkill {
 		a.tooltip = append(a.tooltip, itemDetailLine{"Right click: cancel", white})
 	}
 }

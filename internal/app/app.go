@@ -87,6 +87,7 @@ type App struct {
 	guildDirectoryUI                    *ui.GuildDirectory
 	guildHouseUI                        *ui.GuildHouseWindow
 	npcTalkUI                           *ui.NPCTalk
+	remoteBank                          bool // Warehouse Call: the warehouse window opened from its buff.
 	uiHidden                            bool // F11 hides the whole world UI (DAT_007198c4 cleared).
 	tipTexture                          *render.Texture
 	guildPointUI                        *ui.GuildPointWindow

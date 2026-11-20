@@ -56,6 +56,9 @@ func (a *App) updateShop(in *platform.Input, w, h int) bool {
 		}
 	}
 	if v.npcID == 0 {
+		if a.remoteWarehouseOpen() {
+			return a.updateWarehouse(in, w, h)
+		}
 		return false
 	}
 	e := a.state.Entities[v.npcID]
@@ -178,6 +181,9 @@ func (a *App) drawShop(w, h int) {
 	v := &a.shop
 	e := a.state.Entities[v.npcID]
 	if e == nil {
+		if v.npcID == 0 && a.remoteWarehouseOpen() {
+			a.drawWarehouse(w, h, sdata.NPC{Name: a.remoteWarehouseName()})
+		}
 		return
 	}
 	if a.auctionBoard(v.npcID) {

@@ -33,3 +33,15 @@ func TestReflectorCategories(t *testing.T) {
 		}
 	}
 }
+
+func TestWarehouseCallCannotBeCancelled(t *testing.T) {
+	old := db.MustDefs()
+	t.Cleanup(func() { db.SetDefsForTest(old) })
+	db.SetDefsForTest(&db.Defs{Skills: map[db.SkillKey]*db.SkillDef{
+		{228, 1}: {SkillID: 228, SkillLevel: 1, TypeEffect: typeEffectBuff, TypeDetail: 82, AbilityType: [3]uint8{39, 0, 0}},
+	}})
+	b := ActiveBuff{SkillID: 228, SkillLevel: 1, Effect: typeEffectBuff, Detail: 82}
+	if !isRemoteWarehouse(&b) {
+		t.Fatal("Warehouse Call must be protected from manual cancel")
+	}
+}

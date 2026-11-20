@@ -90,12 +90,63 @@ func (a *App) guildBankAllowed(source, destination [2]uint8) bool {
 	return true
 }
 
+// warehouseCallSkill is the Warehouse Call buff (ability 39): while it lasts
+// the warehouse can be opened from anywhere, and it cannot be cancelled.
+const warehouseCallSkill = 228
+
+func (a *App) hasWarehouseCall() bool {
+	if a.state == nil {
+		return false
+	}
+	for _, b := range a.state.Buffs {
+		if b.Skill == warehouseCallSkill {
+			return true
+		}
+	}
+	return false
+}
+
+// remoteWarehouseOpen: the buff's window, shown while no NPC is being talked to.
+func (a *App) remoteWarehouseOpen() bool {
+	if a.remoteBank && (!a.hasWarehouseCall() || a.shop.npcID != 0 || a.state.Self.Dead) {
+		a.remoteBank = false
+	}
+	return a.remoteBank && a.bankUI != nil
+}
+
+func (a *App) remoteWarehouseName() string {
+	for _, b := range a.buffs.rows {
+		if b.buff.Skill == warehouseCallSkill && b.def.Name != "" {
+			return b.def.Name
+		}
+	}
+	return "Warehouse"
+}
+
+// openRemoteWarehouse shows the window from the buff, with the bag beside it.
+func (a *App) openRemoteWarehouse() {
+	if a.bankUI == nil || !a.hasWarehouseCall() || a.shop.npcID != 0 || a.state.Self.Dead {
+		return
+	}
+	a.remoteBank = true
+	if !a.inventory.open {
+		a.toggleInventory()
+	}
+}
+
 func (a *App) warehouseOpen() bool {
+	if a.remoteWarehouseOpen() {
+		return true
+	}
 	e := a.state.Entities[a.shop.npcID]
 	return a.bankUI != nil && e != nil && e.NpcType == 6 && !a.shop.overlay() && !a.state.Self.Dead
 }
 func (a *App) closeWarehouse() {
 	a.bank.selected, a.bank.dragging = false, false
+	if a.remoteBank {
+		a.remoteBank = false // no NPC conversation to end
+		return
+	}
 	if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
 		a.backToLogin("Unable to close warehouse.")
 		return

@@ -235,7 +235,7 @@ func (s *Session) tickFriendly() {
 // cancelBuff is 0x0511 with 0xFF: CUser::RemApplySkill of an own buff.
 func (s *Session) cancelBuff(skillID uint32) {
 	s.removeEffects(func(b *ActiveBuff) bool {
-		return uint32(b.SkillID) == skillID && b.Effect == typeEffectBuff
+		return uint32(b.SkillID) == skillID && b.Effect == typeEffectBuff && !isRemoteWarehouse(b)
 	}, "cancelled by the user")
 }
 
@@ -260,4 +260,11 @@ func (s *Session) sendFriendlySkillFailure(k db.CharacterSkill, def *db.SkillDef
 		return
 	}
 	s.send(buildSkillUseResult(packet.SkillUseNoTarget, skillResultNotTarget, s.char.ID, 0, k.SkillID, k.Level, 0, 0, 0), "friendly skill target refused")
+}
+
+// isRemoteWarehouse marks Warehouse Call (ability 39): it cannot be cancelled
+// by hand, so a stray right click never drops the remote warehouse.
+func isRemoteWarehouse(b *ActiveBuff) bool {
+	d := db.MustDefs().EffectSkill(b.SkillID, b.SkillLevel)
+	return d != nil && (d.AbilityType[0] == 39 || d.AbilityType[1] == 39 || d.AbilityType[2] == 39)
 }
