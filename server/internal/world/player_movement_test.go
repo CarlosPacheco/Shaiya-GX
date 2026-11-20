@@ -121,12 +121,15 @@ func TestGroundMovementAtRunSpeedKeepsRoundedEndpoints(t *testing.T) {
 	for range 800 {
 		// Alternate unequal intervals at exactly 5 units per second. The
 		// sample bytes contain a float32 position, just like the live client.
-		for _, interval := range []time.Duration{87 * time.Millisecond, 113 * time.Millisecond} {
+		for _, interval := range []time.Duration{86 * time.Millisecond, 114 * time.Millisecond} {
 			elapsed += interval
 			x := float32(1051 + 5*elapsed.Seconds())
 			ok, reason := s.validatePlayerMovement(x, y, 5, 1, 0, start.Add(elapsed))
 			if diff := math.Abs(float64(s.char.PosX - x)); !ok || reason != "" || diff > .0002 {
 				t.Fatalf("normal run corrected at %s: requested %g, accepted %g (%s)", elapsed, x, s.char.PosX, reason)
+			}
+			if elapsed == 86*time.Millisecond && s.char.PosX != x {
+				t.Fatalf("three short sweeps changed the rounded first endpoint: %g, want %g", s.char.PosX, x)
 			}
 		}
 	}

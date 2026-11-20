@@ -3346,28 +3346,29 @@ Direct GX dependencies: `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`raidMax`](../../server/internal/world/raid.go#L21)<br>`const raidMax = 150` | five raids of 30 slots (GX extension of the original 30) |
-| [`raidKindNormal`](../../server/internal/world/raid.go#L22)<br>`const raidKindNormal = 0` | See the source definition and the subsystem ownership contract. |
-| [`raidKindRaid`](../../server/internal/world/raid.go#L23)<br>`const raidKindRaid = 1` | See the source definition and the subsystem ownership contract. |
-| [`raidRosterChunk`](../../server/internal/world/raid.go#L24)<br>`const raidRosterChunk = 6` | See the source definition and the subsystem ownership contract. |
-| [`raidErrNoRaid`](../../server/internal/world/raid.go#L25)<br>`const raidErrNoRaid = 12` | See the source definition and the subsystem ownership contract. |
-| [`raidErrNoAutoJoin`](../../server/internal/world/raid.go#L26)<br>`const raidErrNoAutoJoin = 13` | See the source definition and the subsystem ownership contract. |
-| [`raidErrFull`](../../server/internal/world/raid.go#L27)<br>`const raidErrFull = 14` | See the source definition and the subsystem ownership contract. |
-| [`raidExpFactor`](../../server/internal/world/raid.go#L31)<br>`var raidExpFactor` | raidExpFactor is MobDeathExperience's raid table by member count. |
-| [`isRaid`](../../server/internal/world/raid.go#L34)<br>`func (pt *party) isRaid() bool` | See the source definition and the subsystem ownership contract. |
-| [`subLeaderPlayer`](../../server/internal/world/raid.go#L36)<br>`func (pt *party) subLeaderPlayer() *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`emptyRaidSlot`](../../server/internal/world/raid.go#L44)<br>`func (pt *party) emptyRaidSlot() int` | emptyRaidSlot is the lowest wire slot not in use. |
-| [`raidError`](../../server/internal/world/raid.go#L57)<br>`func raidError(to *ConnectedPlayer, reason, id uint32)` | See the source definition and the subsystem ownership contract. |
-| [`enterRaid`](../../server/internal/world/raid.go#L65)<br>`func enterRaid(pt *party, p *ConnectedPlayer) bool` | enterRaid is enter_raid_party (partyMu held). |
-| [`sendRaidRoster`](../../server/internal/world/raid.go#L90)<br>`func (pt *party) sendRaidRoster(to *ConnectedPlayer)` | sendRaidRoster sends the roster in 0x0B0B chunks of six; the first byte flags whether more chunks follow. |
-| [`removeRaid`](../../server/internal/world/raid.go#L111)<br>`func removeRaid(pt *party, p *ConnectedPlayer, expelled bool)` | removeRaid is remove_raid_party (partyMu held): 0x0B0D or 0x0B1A, the sub-leader takes over a departed leader, a raid of one dissolves. |
-| [`handleRaidSettings`](../../server/internal/world/raid.go#L167)<br>`func (s *Session) handleRaidSettings(op packet.Opcode, p []byte)` | handleRaidSettings covers 0x0B0E (convert), 0x0B0F (item division), 0x0B10 (auto-join) and 0x0B16 (disband), all leader-only. |
-| [`mayInvite`](../../server/internal/world/raid.go#L234)<br>`func (pt *party) mayInvite(p *ConnectedPlayer) bool` | See the source definition and the subsystem ownership contract. |
-| [`handleRaidInvite`](../../server/internal/world/raid.go#L240)<br>`func (s *Session) handleRaidInvite(op packet.Opcode, p []byte)` | handleRaidInvite (0x0B14 id / 0x0B18 name): the leader or sub-leader invites; outside a raid it starts a new party as raid-capable. |
-| [`handleRaidAnswer`](../../server/internal/world/raid.go#L298)<br>`func (s *Session) handleRaidAnswer(p []byte)` | handleRaidAnswer (0x0B15): 0 accepts; joins the inviter's raid (or creates its party). |
-| [`handleRaidAutoJoin`](../../server/internal/world/raid.go#L335)<br>`func (s *Session) handleRaidAutoJoin(p []byte)` | handleRaidAutoJoin (0x0B11): join the raid of the named member when it allows auto-join. |
-| [`handleRaidRoles`](../../server/internal/world/raid.go#L363)<br>`func (s *Session) handleRaidRoles(op packet.Opcode, p []byte)` | handleRaidRoles covers 0x0B12 (swap wire slots; leader or sub-leader), 0x0B13 (sub-leader) and 0x0B17 (leader). |
-| [`handleRaidExpel`](../../server/internal/world/raid.go#L436)<br>`func (s *Session) handleRaidExpel(p []byte)` | handleRaidExpel (0x0B1A): leader only. |
+| [`raidGroupSize`](../../server/internal/world/raid.go#L21)<br>`const raidGroupSize = 6` | slots per group (party) inside a raid |
+| [`raidMax`](../../server/internal/world/raid.go#L22)<br>`const raidMax = 150` | five raids of 30 slots (GX extension of the original 30) |
+| [`raidKindNormal`](../../server/internal/world/raid.go#L23)<br>`const raidKindNormal = 0` | See the source definition and the subsystem ownership contract. |
+| [`raidKindRaid`](../../server/internal/world/raid.go#L24)<br>`const raidKindRaid = 1` | See the source definition and the subsystem ownership contract. |
+| [`raidRosterChunk`](../../server/internal/world/raid.go#L25)<br>`const raidRosterChunk = 6` | See the source definition and the subsystem ownership contract. |
+| [`raidErrNoRaid`](../../server/internal/world/raid.go#L26)<br>`const raidErrNoRaid = 12` | See the source definition and the subsystem ownership contract. |
+| [`raidErrNoAutoJoin`](../../server/internal/world/raid.go#L27)<br>`const raidErrNoAutoJoin = 13` | See the source definition and the subsystem ownership contract. |
+| [`raidErrFull`](../../server/internal/world/raid.go#L28)<br>`const raidErrFull = 14` | See the source definition and the subsystem ownership contract. |
+| [`raidExpFactor`](../../server/internal/world/raid.go#L32)<br>`var raidExpFactor` | raidExpFactor is MobDeathExperience's raid table by member count. |
+| [`isRaid`](../../server/internal/world/raid.go#L35)<br>`func (pt *party) isRaid() bool` | See the source definition and the subsystem ownership contract. |
+| [`subLeaderPlayer`](../../server/internal/world/raid.go#L37)<br>`func (pt *party) subLeaderPlayer() *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`emptyRaidSlot`](../../server/internal/world/raid.go#L45)<br>`func (pt *party) emptyRaidSlot() int` | emptyRaidSlot is the lowest wire slot not in use. |
+| [`raidError`](../../server/internal/world/raid.go#L58)<br>`func raidError(to *ConnectedPlayer, reason, id uint32)` | See the source definition and the subsystem ownership contract. |
+| [`enterRaid`](../../server/internal/world/raid.go#L66)<br>`func enterRaid(pt *party, p *ConnectedPlayer) bool` | enterRaid is enter_raid_party (partyMu held). |
+| [`sendRaidRoster`](../../server/internal/world/raid.go#L94)<br>`func (pt *party) sendRaidRoster(to *ConnectedPlayer)` | sendRaidRoster sends the roster in 0x0B0B chunks of six; the first byte flags whether more chunks follow. |
+| [`removeRaid`](../../server/internal/world/raid.go#L115)<br>`func removeRaid(pt *party, p *ConnectedPlayer, expelled bool)` | removeRaid is remove_raid_party (partyMu held): 0x0B0D or 0x0B1A, the sub-leader takes over a departed leader, a raid of one dissolves. |
+| [`handleRaidSettings`](../../server/internal/world/raid.go#L171)<br>`func (s *Session) handleRaidSettings(op packet.Opcode, p []byte)` | handleRaidSettings covers 0x0B0E (convert), 0x0B0F (item division), 0x0B10 (auto-join) and 0x0B16 (disband), all leader-only. |
+| [`mayInvite`](../../server/internal/world/raid.go#L238)<br>`func (pt *party) mayInvite(p *ConnectedPlayer) bool` | See the source definition and the subsystem ownership contract. |
+| [`handleRaidInvite`](../../server/internal/world/raid.go#L244)<br>`func (s *Session) handleRaidInvite(op packet.Opcode, p []byte)` | handleRaidInvite (0x0B14 id / 0x0B18 name): the leader or sub-leader invites; outside a raid it starts a new party as raid-capable. |
+| [`handleRaidAnswer`](../../server/internal/world/raid.go#L302)<br>`func (s *Session) handleRaidAnswer(p []byte)` | handleRaidAnswer (0x0B15): 0 accepts; joins the inviter's raid (or creates its party). |
+| [`handleRaidAutoJoin`](../../server/internal/world/raid.go#L340)<br>`func (s *Session) handleRaidAutoJoin(p []byte)` | handleRaidAutoJoin (0x0B11): join the raid of the named member when it allows auto-join. |
+| [`handleRaidRoles`](../../server/internal/world/raid.go#L368)<br>`func (s *Session) handleRaidRoles(op packet.Opcode, p []byte)` | handleRaidRoles covers 0x0B12 (swap wire slots; leader or sub-leader), 0x0B13 (sub-leader) and 0x0B17 (leader). |
+| [`handleRaidExpel`](../../server/internal/world/raid.go#L441)<br>`func (s *Session) handleRaidExpel(p []byte)` | handleRaidExpel (0x0B1A): leader only. |
 
 ### realm.go
 
