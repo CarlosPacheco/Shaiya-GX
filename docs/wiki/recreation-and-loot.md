@@ -151,21 +151,20 @@ Offline previews fall back to the local item definition.
 
 ## World drops
 
-GX World loads `PS_GameDefs_WorldDrops` at startup. Each rule rolls
+GX World loads `data/game/WorldDrops.ini` at startup. Each rule rolls
 independently per loot-bearing kill within its inclusive `MinLevel`–
 `MaxLevel` range. A successful roll picks an item from `Grade` using
 the regular item selection and per-item drop limits. A world drop can occur
 alongside a normal drop. `Description` is an internal label.
 
-`DropChance` is an integer in units of 0.00000001 percentage points.
-The 12 migrated rules start at `10000` (0.0001%, one in a million for each
-eligible rule). GX Studio displays the percentage directly.
+`DropChance` is a literal percentage with up to eight decimal places.
+The 12 starter rules use `0.0001` (one in a million for each eligible rule).
 
 
 ## Item boxes
 
 Consumables with `Special = 42` use `ReqVg` to look up a box in
-`PS_GameDefs_ItemBoxes`. Its reward list is stored in `PS_GameDefs_ItemBoxRewards`.
+`data/game/ItemBoxes.ini`. Each `[Box_N]` section stores its numbered reward list.
 Normal boxes choose one row by relative weight (0–1000); independent boxes
 evaluate each reward against its own chance (0–100%). Each winning row grants
 one item, selected uniformly from the referenced grade or looked up by its

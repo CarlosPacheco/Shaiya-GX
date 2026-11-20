@@ -36,13 +36,13 @@ type npcQuestInput struct {
 
 func (e *editor) npcQuestCatalog() {
 	q := &npcQuestEditor{editor: e, project: e.npcQuests, draft: npcquest.Clone(e.npcQuests.Doc.Catalog), texts: map[npcquest.TextKey]string{}}
-	e.databaseDraftDirty = func() bool { return len(q.texts) > 0 || !npcquest.Equal(q.draft, q.project.Doc.Catalog) }
+	e.serverDraftDirty = func() bool { return len(q.texts) > 0 || !npcquest.Equal(q.draft, q.project.Doc.Catalog) }
 	e.status = wrapped("")
 	tabs := container.NewAppTabs(
 		container.NewTabItem("NPCs", q.npcBrowser()),
 		container.NewTabItem("Quests", q.questBrowser()),
 		container.NewTabItem("Item quest links", q.itemLinks()))
-	save := widget.NewButtonWithIcon("Save client and database", theme.DocumentSaveIcon(), func() {
+	save := widget.NewButtonWithIcon("Save client and server files", theme.DocumentSaveIcon(), func() {
 		if e.busy {
 			return
 		}
@@ -51,7 +51,7 @@ func (e *editor) npcQuestCatalog() {
 			backup, err := studio.SaveNPCQuest(context.Background(), e.root, q.project, q.draft, q.texts)
 			var reopened *studio.NPCQuestCatalog
 			if err == nil {
-				reopened, err = studio.OpenNPCQuest(context.Background(), e.dataDir, e.dbPath)
+				reopened, err = studio.OpenNPCQuest(context.Background(), e.dataDir, q.project.Server.Path)
 			}
 			return func() {
 				if e.showError(err) {
@@ -66,7 +66,7 @@ func (e *editor) npcQuestCatalog() {
 	})
 	save.Importance = widget.HighImportance
 	q.refreshSave = func() {
-		if e.databaseDraftDirty() {
+		if e.serverDraftDirty() {
 			save.Enable()
 		} else {
 			save.Disable()
@@ -75,7 +75,7 @@ func (e *editor) npcQuestCatalog() {
 	q.refreshSave()
 	top := container.NewVBox(
 		container.NewHBox(widget.NewButton("Open another installation", func() { e.leave(e.start) }), e.switcher(studio.NPCQuest), save),
-		wrapped(q.project.Path), wrapped(q.project.DBPath),
+		wrapped(q.project.Path), wrapped(q.project.Server.Path),
 	)
 	e.window.SetContent(container.NewPadded(container.NewBorder(top, e.status, nil, nil, tabs)))
 }
@@ -164,7 +164,7 @@ func (q *npcQuestEditor) editRow(title string, table, index, start, end int, don
 		if table == npcquest.NPCs && f.Name == "MerchantType" && row[0] != int64(1) {
 			continue
 		}
-		fields = append(fields, npcQuestInput{npcQuestLabel(f.Name), t.Name + "." + f.Name, npcquest.FormatValue(row[i]), f.Type, false})
+		fields = append(fields, npcQuestInput{npcQuestLabel(f.Name), "NpcQuest.SData · " + f.Name, npcquest.FormatValue(row[i]), f.Type, false})
 		columns = append(columns, i)
 	}
 	q.form(title, fields, func(values []any) error {
@@ -332,7 +332,7 @@ func (q *npcQuestEditor) linkedRows(table int, prefix []int64, done func()) fyne
 		add = widget.NewButtonWithIcon("Add row", theme.ContentAddIcon(), func() {
 			var inputs []npcQuestInput
 			for _, f := range t.Fields[t.Keys:] {
-				inputs = append(inputs, npcQuestInput{npcQuestLabel(f.Name), t.Name + "." + f.Name, "0", f.Type, false})
+				inputs = append(inputs, npcQuestInput{npcQuestLabel(f.Name), "NpcQuest.SData · " + f.Name, "0", f.Type, false})
 			}
 			q.form("Add row", inputs, func(values []any) error {
 				var row npcquest.Row

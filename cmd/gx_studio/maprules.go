@@ -27,10 +27,10 @@ func (e *editor) mapRulesCatalog() {
 		return out
 	}
 	draft := maprules.Catalog{Maps: clone(catalog.Rules.Maps), Starts: clone(catalog.Rules.Starts)}
-	e.databaseDraftDirty = func() bool { return !reflect.DeepEqual(draft, catalog.Rules) }
+	e.serverDraftDirty = func() bool { return !reflect.DeepEqual(draft, catalog.Rules) }
 	e.status = wrapped("")
 	var content *container.AppTabs
-	save := widget.NewButtonWithIcon("Save database", theme.DocumentSaveIcon(), func() {
+	save := widget.NewButtonWithIcon("Save server file", theme.DocumentSaveIcon(), func() {
 		if e.busy {
 			return
 		}
@@ -42,7 +42,7 @@ func (e *editor) mapRulesCatalog() {
 					content.Show()
 					return
 				}
-				e.mapRules = &studio.MapRulesCatalog{DBPath: catalog.DBPath, Rules: draft}
+				e.mapRules = &studio.MapRulesCatalog{DBPath: catalog.DBPath, File: catalog.File, Rules: draft}
 				e.mapRulesCatalog()
 				e.status.SetText("Saved. Restart GX World to apply. Backup · " + backup)
 			}
@@ -75,7 +75,7 @@ func (e *editor) mapRulesCatalog() {
 			original = append(original, val)
 			input := inspectorEntry(val)
 			inputs = append(inputs, input)
-			panel.Add(container.NewVBox(fieldHeading(label, table+"."+f.Name), input))
+			panel.Add(container.NewVBox(fieldHeading(label, mapINIField(table, row, f.Name)), input))
 		}
 		status := wrapped("")
 		var popup *dialog.CustomDialog
@@ -94,7 +94,7 @@ func (e *editor) mapRulesCatalog() {
 				values[i] = v
 			}
 			copy(row[first:end], values)
-			if e.databaseDraftDirty() {
+			if e.serverDraftDirty() {
 				save.Enable()
 			} else {
 				save.Disable()
@@ -175,6 +175,27 @@ func (e *editor) mapRulesCatalog() {
 	content = container.NewAppTabs(container.NewTabItem("Map properties", split),
 		container.NewTabItem("Character starts", container.NewVScroll(starts)))
 	top := container.NewVBox(container.NewHBox(widget.NewButton("Open another installation", func() { e.leave(e.start) }), e.switcher(studio.MapRules), save),
-		wrapped(catalog.DBPath))
+		wrapped(catalog.File.Path))
 	e.window.SetContent(container.NewPadded(container.NewBorder(top, e.status, nil, nil, content)))
+}
+
+func mapINIField(table string, row maprules.Row, field string) string {
+	if table == maprules.Starts {
+		names := [...]string{"HUGameStartMapPos", "ELGameStartMapPos", "BAGameStartMapPos", "DEGameStartMapPos"}
+		return "[Base] " + names[row[0].(int64)] + " · " + field
+	}
+	key := field
+	switch {
+	case field == "WeatherType":
+		key = "WeatherState"
+	case field == "ExpireMinutes":
+		key = "ExpireTime"
+	case strings.HasPrefix(field, "LightRebirth"):
+		key = "RebirthMapPos1 · " + strings.TrimPrefix(field, "LightRebirth")
+	case strings.HasPrefix(field, "FuryRebirth"):
+		key = "RebirthMapPos2 · " + strings.TrimPrefix(field, "FuryRebirth")
+	case strings.HasPrefix(field, "Schedule"):
+		key = "CreateTime · " + field
+	}
+	return fmt.Sprintf("[SET_ZONE_%v] %s", row[0], key)
 }

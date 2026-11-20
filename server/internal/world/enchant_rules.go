@@ -1,12 +1,12 @@
 package world
 
 import (
-	"context"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
+	"path/filepath"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
-	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -16,7 +16,7 @@ const (
 	enchantMaxLevel        = enchantrules.MaxLevel // armor encodes 50+level in the two-digit Craftname pair
 )
 
-// Runtime enchant configuration is loaded atomically from SQLite.
+// Runtime enchant configuration is loaded atomically from ItemEnchant.ini.
 // These initial values retain the historical defaults before startup loading.
 // Step N is the probability of N -> N+1, in successes per million.
 type enchantRulesConfig struct {
@@ -64,13 +64,7 @@ func applyEnchantRules(rows enchantrules.Catalog) error {
 }
 
 func loadEnchantRules(log *logx.Logger) error {
-	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
-	defer cancel()
-	pool, err := db.Pool(db.GameDefs)
-	if err != nil {
-		return err
-	}
-	rows, err := enchantrules.Read(ctx, pool)
+	rows, err := catalogfiles.Read(filepath.Join(gameDataDir(), catalogfiles.Enchant), catalogfiles.ParseEnchant)
 	if err != nil {
 		return err
 	}
@@ -78,7 +72,7 @@ func loadEnchantRules(log *logx.Logger) error {
 		return err
 	}
 	if log != nil {
-		log.Printf("GX Server World loaded enchant rules weapon_cap=%d armor_cap=%d", enchantConfig.WeaponCap, enchantConfig.ArmorCap)
+		log.Printf("GX Server World loaded ItemEnchant.ini weapon_cap=%d armor_cap=%d", enchantConfig.WeaponCap, enchantConfig.ArmorCap)
 	}
 	return nil
 }

@@ -20,11 +20,11 @@ func (e *editor) teleportRuneCatalog() {
 	catalog := e.teleportRunes
 	draft := slices.Clone(catalog.Rules)
 	invalid := make(map[int16]map[string]string)
-	e.databaseDraftDirty = func() bool { return len(invalid) > 0 || !slices.Equal(catalog.Rules, draft) }
+	e.serverDraftDirty = func() bool { return len(invalid) > 0 || !slices.Equal(catalog.Rules, draft) }
 	e.status = wrapped("")
 	selectPrompt := wrapped("Select or add a rune.")
 	details := container.NewStack(selectPrompt)
-	save := widget.NewButtonWithIcon("Save database", theme.DocumentSaveIcon(), func() {
+	save := widget.NewButtonWithIcon("Save server file", theme.DocumentSaveIcon(), func() {
 		if e.busy || len(invalid) > 0 {
 			return
 		}
@@ -49,7 +49,7 @@ func (e *editor) teleportRuneCatalog() {
 		e.status.SetText("")
 		if len(invalid) > 0 {
 			e.status.SetText("Map IDs must be integers from 0 to 999. Coordinates must be finite numbers.")
-		} else if e.databaseDraftDirty() {
+		} else if e.serverDraftDirty() {
 			save.Enable()
 		}
 	}
@@ -118,7 +118,11 @@ func (e *editor) teleportRuneCatalog() {
 				}
 				refreshSave()
 			}
-			return container.NewVBox(fieldHeading(label, column), entry)
+			side := "Fury"
+			if strings.HasPrefix(column, "Light") {
+				side = "Light"
+			}
+			return container.NewVBox(fieldHeading(label, side+" · "+strings.TrimPrefix(column, side)), entry)
 		}
 		destination := func(faction string, d *teleportrunes.Destination) fyne.CanvasObject {
 			mapID := input("Map ID", faction+"MapID", strconv.Itoa(int(d.MapID)), func(raw string) bool {
@@ -160,7 +164,7 @@ func (e *editor) teleportRuneCatalog() {
 					refreshSave()
 				}, e.window)
 		})
-		editor := container.NewVBox(fieldHeading(fmt.Sprintf("Rune %d", r.Index), "Index"),
+		editor := container.NewVBox(fieldHeading(fmt.Sprintf("Rune %d", r.Index), fmt.Sprintf("[Rune_%d]", r.Index)),
 			wrapped("Items with Special 47 use this index as their Variant (ReqVg)."),
 			destination("Light", &draft[i].Light), destination("Fury", &draft[i].Fury),
 			container.NewHBox(remove))
@@ -169,7 +173,7 @@ func (e *editor) teleportRuneCatalog() {
 	}
 	header := container.NewVBox(
 		container.NewHBox(widget.NewButton("Open another installation", func() { e.leave(e.start) }), e.switcher(studio.TeleportRunes), save),
-		wrapped(catalog.DBPath), wrapped(teleportrunes.Table),
+		wrapped(catalog.File.Path),
 	)
 	split := container.NewHSplit(container.NewBorder(add, nil, nil, nil, list), details)
 	split.SetOffset(0.28)

@@ -1129,7 +1129,7 @@ Source notes: GXEnchantRules publishes server enchant bonuses for authoritative 
 
 **C→S receive adapters:** [frame (server/cmd/gx_login/main.go)](../../server/cmd/gx_login/main.go#L224)
 
-**S→C serializers:** [sendEnchantRules (server/internal/world/enchant_rules.go)](../../server/internal/world/enchant_rules.go#L86)
+**S→C serializers:** [sendEnchantRules (server/internal/world/enchant_rules.go)](../../server/internal/world/enchant_rules.go#L80)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L243)
 
@@ -1139,7 +1139,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendEnchantRules — server/internal/world/enchant_rules.go</summary>
 
-[Source definition](../../server/internal/world/enchant_rules.go#L86)
+[Source definition](../../server/internal/world/enchant_rules.go#L80)
 
 ```go
 func (s *Session) sendEnchantRules() {
@@ -1812,7 +1812,7 @@ Source notes: GXBlessingSnapshot carries the server's presentation data independ
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [blessingSnapshotLocked (server/internal/world/killcount.go)](../../server/internal/world/killcount.go#L305)
+**S→C serializers:** [blessingSnapshotLocked (server/internal/world/killcount.go)](../../server/internal/world/killcount.go#L299)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L295)
 
@@ -1822,7 +1822,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>blessingSnapshotLocked — server/internal/world/killcount.go</summary>
 
-[Source definition](../../server/internal/world/killcount.go#L305)
+[Source definition](../../server/internal/world/killcount.go#L299)
 
 ```go
 func blessingSnapshotLocked(c uint8, entry bool) []byte {
@@ -1975,7 +1975,7 @@ Source notes: GXServerNotice carries a global announcement as native length-pref
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [broadcastNotice (server/internal/world/notices.go)](../../server/internal/world/notices.go#L106)
+**S→C serializers:** [broadcastNotice (server/internal/world/notices.go)](../../server/internal/world/notices.go#L107)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L377)
 
@@ -1985,7 +1985,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>broadcastNotice — server/internal/world/notices.go</summary>
 
-[Source definition](../../server/internal/world/notices.go#L106)
+[Source definition](../../server/internal/world/notices.go#L107)
 
 ```go
 func broadcastNotice(message string) {

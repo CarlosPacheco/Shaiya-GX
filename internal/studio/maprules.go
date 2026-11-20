@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
+	"path/filepath"
 	"reflect"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/maprules"
@@ -13,9 +15,17 @@ import (
 type MapRulesCatalog struct {
 	DBPath string
 	Rules  maprules.Catalog
+	File   *ServerFile
 }
 
 func OpenMapRules(ctx context.Context, path string) (*MapRulesCatalog, error) {
+	if filepath.Base(path) == catalogfiles.Map {
+		file, value, err := openServerCatalog(path, catalogfiles.ParseMap)
+		if err != nil {
+			return nil, err
+		}
+		return &MapRulesCatalog{File: file, Rules: value}, nil
+	}
 	path, err := canonicalFile(path)
 	if err != nil {
 		return nil, err
@@ -38,6 +48,13 @@ func OpenMapRules(ctx context.Context, path string) (*MapRulesCatalog, error) {
 }
 
 func SaveMapRules(ctx context.Context, root string, catalog *MapRulesCatalog, rules maprules.Catalog) (string, error) {
+	if catalog.File != nil {
+		next, err := catalogfiles.EncodeMap(rules, catalog.File.original)
+		if err != nil {
+			return "", err
+		}
+		return saveServerCatalog(root, catalog.File, next, catalogfiles.ParseMap, func(v maprules.Catalog) bool { return reflect.DeepEqual(v, rules) })
+	}
 	lock, err := lockRoot(root)
 	if err != nil {
 		return "", err

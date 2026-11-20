@@ -24,10 +24,10 @@ func (e *editor) worldDropCatalog() {
 		column string
 	}
 	invalid := make(map[fieldKey]string)
-	e.databaseDraftDirty = func() bool { return len(invalid) != 0 || !slices.Equal(catalog.Rules, draft) }
+	e.serverDraftDirty = func() bool { return len(invalid) != 0 || !slices.Equal(catalog.Rules, draft) }
 	e.status = wrapped("")
 	details := container.NewStack(wrapped("Select or add a rule."))
-	save := widget.NewButtonWithIcon("Save database", theme.DocumentSaveIcon(), func() {
+	save := widget.NewButtonWithIcon("Save server file", theme.DocumentSaveIcon(), func() {
 		if e.busy {
 			return
 		}
@@ -40,7 +40,7 @@ func (e *editor) worldDropCatalog() {
 					details.Show()
 					return
 				}
-				e.worldDrops = &studio.WorldDropCatalog{DBPath: catalog.DBPath, Rules: pending}
+				e.worldDrops = &studio.WorldDropCatalog{DBPath: catalog.DBPath, File: catalog.File, Rules: pending}
 				e.worldDropCatalog()
 				e.status.SetText("Saved. Restart GX World to apply. Backup · " + backup)
 			}
@@ -55,7 +55,7 @@ func (e *editor) worldDropCatalog() {
 			e.status.SetText(err.Error())
 		} else {
 			e.status.SetText("")
-			if e.databaseDraftDirty() {
+			if e.serverDraftDirty() {
 				save.Enable()
 			}
 		}
@@ -99,7 +99,7 @@ func (e *editor) worldDropCatalog() {
 				}
 				refreshSave()
 			}
-			return container.NewVBox(fieldHeading(label, column), entry)
+			return container.NewVBox(fieldHeading(label, fmt.Sprintf("[Drop_%d] %s", r.Index, column)), entry)
 		}
 		integer := func(label, column string, value uint16, set func(uint16)) fyne.CanvasObject {
 			return input(label, column, strconv.Itoa(int(value)), func(text string) bool {
@@ -159,7 +159,7 @@ func (e *editor) worldDropCatalog() {
 	}
 	header := container.NewVBox(
 		container.NewHBox(widget.NewButton("Open another installation", func() { e.leave(e.start) }), e.switcher(studio.WorldDrops), save),
-		wrapped(catalog.DBPath), wrapped(worlddrops.Table),
+		wrapped(catalog.File.Path),
 	)
 	split := container.NewHSplit(container.NewBorder(add, nil, nil, nil, list), details)
 	split.SetOffset(0.35)

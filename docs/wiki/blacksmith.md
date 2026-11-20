@@ -106,18 +106,12 @@ positive material count also consume only one. The server supplies the chance
 for the placed equipment before consumables are selected; this preview does
 not authorize execution.
 
-GX World loads `PS_GameDefs_EnchantAttack` for weapons and
-`PS_GameDefs_EnchantDefense` for armor. Each table contains consecutive
-`Level` rows starting at +1. The last row sets that table's cap, up to +49.
-The shipped cap is **+20** in both tables. With an empty table, forging cannot
-increase that equipment type's enchant level.
-
-`SuccessChance` is the rate per million of reaching the listed level
-from the previous one (0–1,000,000). `AttackBonus` and `AbsorptionBonus` are the total bonus
-at the listed level (0–2,147,483,647). Removing levels also removes those
-levels' bonuses for existing gear. A legacy upgrade imports the INI through
-its configured cap when both tables are empty. Edit rules in GX Studio and
-restart gx_world after saving.
+GX World loads `data/game/ItemEnchant.ini`. The shipped cap is **+20**.
+`MaxLevel` applies to both equipment types. Optional `WeaponMaxLevel`
+and `DefenseMaxLevel` allow independent caps from 0 through 49.
+`[LapisianEnchantPercentRate]` contains the per-million chances to advance
+from each step. `[LapisianEnchantAddValue]` holds total bonuses at each
+step. Restart GX World after editing the file.
 
 | Resulting level | Weapon chance | Armor chance | Weapon attack bonus | Armor absorption |
 |---:|---:|---:|---:|---:|

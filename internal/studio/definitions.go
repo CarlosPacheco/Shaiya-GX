@@ -37,10 +37,11 @@ const (
 	NPCQuest
 	MapRules
 	TeleportRunes
+	Notices
 )
 
-func (k Kind) DatabaseOnly() bool {
-	return k == Enchant || k == MobAIMessages || k == Blessing || k == WorldDrops || k == ItemBoxes || k == MapRules || k == TeleportRunes
+func (k Kind) ServerOnly() bool {
+	return k == Enchant || k == MobAIMessages || k == Blessing || k == WorldDrops || k == ItemBoxes || k == MapRules || k == TeleportRunes || k == Notices
 }
 
 func (k Kind) valid() bool { return k <= NPCSkills }

@@ -16,46 +16,38 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"github.com/Spelunkern/Shaiya-GX/internal/blessingrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
-	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
-	"github.com/Spelunkern/Shaiya-GX/internal/itemboxes"
-	"github.com/Spelunkern/Shaiya-GX/internal/maprules"
-	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
-	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
 	"github.com/Spelunkern/Shaiya-GX/internal/studio"
-	"github.com/Spelunkern/Shaiya-GX/internal/teleportrunes"
-	"github.com/Spelunkern/Shaiya-GX/internal/worlddrops"
 )
 
 type editor struct {
-	window                 fyne.Window
-	root                   string
-	preferences            studio.Preferences
-	dataDir, dbPath        string
-	definitions            *studio.Definitions
-	definitionDraft        studio.DefinitionEdits
-	cashQuery, cashCode    string
-	cashSection            int
-	cashFormDirty          func() bool
-	itemFormDirty          func() bool
-	enchant                *studio.EnchantCatalog
-	mobAIMessages          *studio.MobAIMessageCatalog
-	blessing               *studio.BlessingCatalog
-	worldDrops             *studio.WorldDropCatalog
-	itemBoxes              *studio.ItemBoxCatalog
-	npcQuests              *studio.NPCQuestCatalog
-	mapRules               *studio.MapRulesCatalog
-	teleportRunes          *studio.TeleportRuneCatalog
-	databaseDraftDirty     func() bool
-	itemSection, itemFocus int
-	itemQuery              string
-	project                *studio.Project
-	draft                  []cash.Product
-	assets                 *assets
-	status                 *widget.Label
-	pending                bool
-	busy                   bool
+	window                         fyne.Window
+	root                           string
+	preferences                    studio.Preferences
+	dataDir, dbPath, serverGameDir string
+	definitions                    *studio.Definitions
+	definitionDraft                studio.DefinitionEdits
+	cashQuery, cashCode            string
+	cashSection                    int
+	cashFormDirty                  func() bool
+	itemFormDirty                  func() bool
+	enchant                        *studio.EnchantCatalog
+	mobAIMessages                  *studio.MobAIMessageCatalog
+	blessing                       *studio.BlessingCatalog
+	worldDrops                     *studio.WorldDropCatalog
+	itemBoxes                      *studio.ItemBoxCatalog
+	npcQuests                      *studio.NPCQuestCatalog
+	mapRules                       *studio.MapRulesCatalog
+	teleportRunes                  *studio.TeleportRuneCatalog
+	serverDraftDirty               func() bool
+	itemSection, itemFocus         int
+	itemQuery                      string
+	project                        *studio.Project
+	draft                          []cash.Product
+	assets                         *assets
+	status                         *widget.Label
+	pending                        bool
+	busy                           bool
 }
 
 func main() {
@@ -80,7 +72,7 @@ func (e *editor) leave(next func()) {
 	if e.busy {
 		return
 	}
-	if !e.pending && ((e.project != nil && (e.dirty() || e.cashFormDirty != nil && e.cashFormDirty())) || len(e.definitionDraft) > 0 || e.itemFormDirty != nil && e.itemFormDirty() || e.databaseDraftDirty != nil && e.databaseDraftDirty()) {
+	if !e.pending && ((e.project != nil && (e.dirty() || e.cashFormDirty != nil && e.cashFormDirty())) || len(e.definitionDraft) > 0 || e.itemFormDirty != nil && e.itemFormDirty() || e.serverDraftDirty != nil && e.serverDraftDirty()) {
 		dialog.ShowConfirm("Discard draft?", "Your unapplied catalog edits will be discarded.", func(ok bool) {
 			if ok {
 				next()
@@ -93,7 +85,7 @@ func (e *editor) leave(next func()) {
 
 func (e *editor) start() {
 	e.project, e.draft, e.assets = nil, nil, nil
-	e.enchant, e.mobAIMessages, e.blessing, e.worldDrops, e.itemBoxes, e.npcQuests, e.mapRules, e.teleportRunes, e.databaseDraftDirty = nil, nil, nil, nil, nil, nil, nil, nil, nil
+	e.enchant, e.mobAIMessages, e.blessing, e.worldDrops, e.itemBoxes, e.npcQuests, e.mapRules, e.teleportRunes, e.serverDraftDirty = nil, nil, nil, nil, nil, nil, nil, nil, nil
 	e.definitions, e.definitionDraft = nil, nil
 	e.itemFormDirty, e.itemSection, e.itemFocus, e.itemQuery = nil, 0, -1, ""
 	e.cashQuery, e.cashCode, e.cashSection = "", "", 0
@@ -119,6 +111,17 @@ func (e *editor) start() {
 	db.SetPlaceHolder("SQLite database")
 	data.SetText(preferences.DataDir)
 	db.SetText(preferences.Database)
+	gameDir := widget.NewEntry()
+	gameDir.SetPlaceHolder("Server data/game folder")
+	gameDir.SetText(preferences.ServerGameDir)
+	selectGame := widget.NewButton("Browse…", func() {
+		dialog.ShowFolderOpen(func(dir fyne.ListableURI, err error) {
+			if e.showError(err) || dir == nil {
+				return
+			}
+			gameDir.SetText(dir.Path())
+		}, e.window)
+	})
 	appearance := widget.NewSelect(themeOptions, nil)
 	appearance.SetSelectedIndex(themeIndex)
 
@@ -154,12 +157,8 @@ func (e *editor) start() {
 		}
 		dataDir, dbPath := data.Text, db.Text
 		kind := studio.Kind(mode.SelectedIndex())
-		if strings.TrimSpace(dbPath) == "" || (!kind.DatabaseOnly() && strings.TrimSpace(dataDir) == "") {
-			if kind.DatabaseOnly() {
-				e.showError(fmt.Errorf("select the server SQLite database"))
-			} else {
-				e.showError(fmt.Errorf("select the client data folder and the server SQLite database"))
-			}
+		if !kind.ServerOnly() && strings.TrimSpace(dataDir) == "" {
+			e.showError(fmt.Errorf("select the client data folder"))
 			return
 		}
 		var err error
@@ -169,11 +168,13 @@ func (e *editor) start() {
 				return
 			}
 		}
-		dbPath, err = filepath.Abs(dbPath)
-		if e.showError(err) {
-			return
+		if strings.TrimSpace(dbPath) != "" {
+			dbPath, err = filepath.Abs(dbPath)
+			if e.showError(err) {
+				return
+			}
 		}
-		e.dataDir, e.dbPath = dataDir, dbPath
+		e.dataDir, e.dbPath, e.serverGameDir = dataDir, dbPath, gameDir.Text
 		e.openKind(kind)
 	}
 	e.status = wrapped("")
@@ -183,35 +184,21 @@ func (e *editor) start() {
 	render := func() {
 		title := widget.NewLabelWithStyle("Open an installation", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 		fields := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewHBox(widget.NewLabel("Theme"), appearance), title))
-		dbSource := studio.ProductTable
-		var dbActions fyne.CanvasObject = container.NewHBox(detect, selectDB)
 		kind := studio.Kind(mode.SelectedIndex())
-		if kind.DatabaseOnly() {
-			if kind == studio.MobAIMessages {
-				dbSource = mobaimessages.Table
-			} else if kind == studio.Blessing {
-				dbSource = blessingrules.Table
-			} else if kind == studio.WorldDrops {
-				dbSource = worlddrops.Table
-			} else if kind == studio.ItemBoxes {
-				dbSource = itemboxes.Table + " · " + itemboxes.RewardsTable
-			} else if kind == studio.MapRules {
-				dbSource = maprules.Properties + " · " + maprules.Starts
-			} else if kind == studio.TeleportRunes {
-				dbSource = teleportrunes.Table
-			} else {
-				dbSource = enchantrules.AttackTable + " · " + enchantrules.DefenseTable
-			}
-			if data.Text == "" {
-				dbActions = selectDB
-			}
-		} else {
-			if kind == studio.NPCQuest {
-				dbSource = npcquest.Tables[npcquest.NPCs].Name + " · " + npcquest.Tables[npcquest.Quests].Name
-			}
+		name := studio.ServerCatalogName(kind)
+		if !kind.ServerOnly() {
 			fields.Add(field("Client data folder", kind.RelativePath(), container.NewBorder(nil, nil, nil, selectFolder, data)))
 		}
-		fields.Add(field("Server database", dbSource, container.NewBorder(nil, nil, nil, dbActions, db)))
+		if name != "" {
+			fields.Add(field("Server data/game folder", name, container.NewBorder(nil, nil, nil, selectGame, gameDir)))
+		}
+		if name == "" || kind == studio.ItemBoxes {
+			source := "Required for this catalog"
+			if kind == studio.ItemBoxes {
+				source = "Optional. Used to check reward references."
+			}
+			fields.Add(field("Server database", source, container.NewBorder(nil, nil, nil, container.NewHBox(detect, selectDB), db)))
+		}
 		fields.Add(container.NewHBox(mode, open))
 		fields.Add(e.status)
 		e.window.SetContent(container.NewPadded(container.NewBorder(nil, nil, nil, nil, container.NewVBox(fields))))
@@ -236,7 +223,7 @@ func (e *editor) start() {
 	render()
 }
 
-var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills", "Enchant", "Mob AI messages", "Goddess Blessing", "World Drops", "Item Boxes", "NPCs and Quests", "Map Rules", "Teleport Runes"}
+var catalogNames = []string{"Item Mall", "Items", "Player skills", "NPC skills", "Enchant", "Mob AI messages", "Goddess Blessing", "World Drops", "Item Boxes", "NPCs and Quests", "Map Rules", "Teleport Runes", "Notices"}
 
 func (e *editor) switcher(current studio.Kind) *widget.Select {
 	control := widget.NewSelect(catalogNames, nil)
@@ -256,27 +243,30 @@ func (e *editor) openKind(kind studio.Kind) {
 	if e.busy {
 		return
 	}
-	if !kind.DatabaseOnly() && strings.TrimSpace(e.dataDir) == "" {
+	if !kind.ServerOnly() && strings.TrimSpace(e.dataDir) == "" {
 		e.showError(fmt.Errorf("open an installation with a client data folder to edit that catalog"))
 		return
 	}
 	dataDir, dbPath, existingAssets := e.dataDir, e.dbPath, e.assets
-	preferences := studio.Preferences{DataDir: dataDir, Database: dbPath, Theme: e.preferences.Theme}
+	name := studio.ServerCatalogName(kind)
+	gamePath := ""
 	message := "Reading " + kind.RelativePath() + " and SQLite…"
-	if kind == studio.Enchant {
-		message = "Reading enchant rules from SQLite…"
-	} else if kind == studio.MobAIMessages {
-		message = "Reading mob AI messages from SQLite…"
-	} else if kind == studio.Blessing {
-		message = "Reading Goddess Blessing tiers from SQLite…"
-	} else if kind == studio.WorldDrops {
-		message = "Reading World Drops from SQLite…"
-	} else if kind == studio.ItemBoxes {
-		message = "Reading Item Boxes from SQLite…"
-	} else if kind == studio.MapRules {
-		message = "Reading map rules from SQLite…"
-	} else if kind == studio.TeleportRunes {
-		message = "Reading teleport runes from SQLite…"
+	if name != "" {
+		dir, err := studio.ResolveServerGameDir(e.serverGameDir, dbPath, dataDir)
+		if e.showError(err) {
+			return
+		}
+		e.serverGameDir = dir
+		gamePath = filepath.Join(dir, name)
+		message = "Reading " + name + "…"
+	} else if dbPath == "" {
+		e.showError(fmt.Errorf("select the server SQLite database"))
+		return
+	}
+	preferences := studio.Preferences{DataDir: dataDir, Database: dbPath, ServerGameDir: e.serverGameDir, Theme: e.preferences.Theme}
+	if kind == studio.Notices {
+		e.openNotices(gamePath, preferences)
+		return
 	}
 	e.run(message, func() func() {
 		ctx := context.Background()
@@ -294,28 +284,31 @@ func (e *editor) openKind(kind studio.Kind) {
 		if kind == studio.Cash {
 			project, err = studio.Open(ctx, dataDir, dbPath)
 		} else if kind == studio.Enchant {
-			enchant, err = studio.OpenEnchant(ctx, dbPath)
+			enchant, err = studio.OpenEnchant(ctx, gamePath)
 		} else if kind == studio.MobAIMessages {
-			messages, err = studio.OpenMobAIMessages(ctx, dbPath)
+			messages, err = studio.OpenMobAIMessages(ctx, gamePath)
 		} else if kind == studio.Blessing {
-			blessing, err = studio.OpenBlessing(ctx, dbPath)
+			blessing, err = studio.OpenBlessing(ctx, gamePath)
 		} else if kind == studio.WorldDrops {
-			worldRules, err = studio.OpenWorldDrops(ctx, dbPath)
+			worldRules, err = studio.OpenWorldDrops(ctx, gamePath)
 		} else if kind == studio.ItemBoxes {
-			boxes, err = studio.OpenItemBoxes(ctx, dbPath)
+			boxes, err = studio.OpenItemBoxes(ctx, gamePath)
+			if err == nil {
+				boxes.DBPath = dbPath
+			}
 		} else if kind == studio.NPCQuest {
-			npcQuests, err = studio.OpenNPCQuest(ctx, dataDir, dbPath)
+			npcQuests, err = studio.OpenNPCQuest(ctx, dataDir, gamePath)
 		} else if kind == studio.MapRules {
-			mapRules, err = studio.OpenMapRules(ctx, dbPath)
+			mapRules, err = studio.OpenMapRules(ctx, gamePath)
 		} else if kind == studio.TeleportRunes {
-			teleportRunes, err = studio.OpenTeleportRunes(ctx, dbPath)
+			teleportRunes, err = studio.OpenTeleportRunes(ctx, gamePath)
 		} else {
 			definitions, err = studio.OpenDefinitions(ctx, dataDir, dbPath, kind)
 		}
 		images := existingAssets
 		var preferencesErr error
 		if err == nil {
-			if images == nil && !kind.DatabaseOnly() {
+			if images == nil && !kind.ServerOnly() {
 				images = loadAssets(dataDir)
 			}
 			preferencesErr = studio.SavePreferences(e.root, preferences)
@@ -327,7 +320,7 @@ func (e *editor) openKind(kind studio.Kind) {
 			e.preferences = preferences
 			e.itemFormDirty = nil
 			e.project, e.definitions, e.assets = project, definitions, images
-			e.enchant, e.mobAIMessages, e.blessing, e.worldDrops, e.itemBoxes, e.npcQuests, e.mapRules, e.teleportRunes, e.databaseDraftDirty = enchant, messages, blessing, worldRules, boxes, npcQuests, mapRules, teleportRunes, nil
+			e.enchant, e.mobAIMessages, e.blessing, e.worldDrops, e.itemBoxes, e.npcQuests, e.mapRules, e.teleportRunes, e.serverDraftDirty = enchant, messages, blessing, worldRules, boxes, npcQuests, mapRules, teleportRunes, nil
 			e.draft, e.definitionDraft = nil, make(studio.DefinitionEdits)
 			if kind == studio.Cash {
 				e.draft = append([]cash.Product(nil), project.Products...)

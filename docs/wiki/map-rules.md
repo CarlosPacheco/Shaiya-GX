@@ -1,13 +1,13 @@
 # Map rules, weather and progression
 
-GX World loads map and experience definitions from SQLite at startup. [GX Studio](gx-studio.md) edits map rules and birth positions. See [server operations](server-operations.md) for backups and restarts.
+GX World loads map rules from `Map.ini` and experience thresholds from SQLite at startup. [GX Studio](gx-studio.md) edits map rules and birth positions. See [server operations](server-operations.md) for backups and restarts.
 
 ## Map access and respawn
 
-`PS_GameDefs_MapProperties` stores map type, level limits, faction respawns,
-instance configuration and schedules, weather and map curses. Its 68 initial
-rows preserve the server definitions migrated from `Map.ini`.
-`PS_GameDefs_CharacterStartPositions` stores the birth position of each race.
+`Map.ini` uses `[SET_ZONE_N]` sections for map type, level limits,
+faction respawns, instance schedules, weather and map curses. Shared
+defaults belong in `[DEFAULT_SET_ZONE]`. The four racial birth positions
+are stored in `[BASE]`.
 
 | Map | Inclusive level range |
 | --- | --- |
@@ -28,7 +28,7 @@ map row, while [obelisk rules](obelisks.md) retain their own configuration.
 
 | Column | Meaning |
 | --- | --- |
-| `WeatherType` | 0 clear, 1 rain, 2 snow |
+| `WeatherState` | 0 clear, 1 rain, 2 snow |
 | `WeatherFrequency` | Minutes between event starts, counted from GX World startup. Zero selects 60 minutes. |
 | `MapCurse1`–`MapCurse3` | Zero disables the slot. A skill ID applies its supported level-one effect on entry, persists through death and dispels, and is removed when leaving. |
 | `MapModifier1`–`MapModifier3` | Reserved for future server rules. The shipped values are zero. |

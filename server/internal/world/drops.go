@@ -1,8 +1,9 @@
 package world
 
 import (
-	"context"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
 	"math/rand/v2"
+	"path/filepath"
 	"sort"
 	"sync"
 	"time"
@@ -87,20 +88,14 @@ func buildDropCatalog() {
 }
 
 func loadWorldDrops(log *logx.Logger) error {
-	pool, err := db.Pool(db.GameDefs)
-	if err != nil {
-		return err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
-	defer cancel()
-	rules, err := worlddrops.Read(ctx, pool)
+	rules, err := catalogfiles.Read(filepath.Join(gameDataDir(), catalogfiles.WorldDrops), catalogfiles.ParseWorldDrops)
 	if err != nil {
 		return err
 	}
 	dropCatalog.mu.Lock()
 	dropCatalog.worldRules = rules
 	dropCatalog.mu.Unlock()
-	log.Printf("GX Server World loaded world drop rules=%d", len(rules))
+	log.Printf("GX Server World loaded WorldDrops.ini rules=%d", len(rules))
 	return nil
 }
 

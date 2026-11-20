@@ -20,10 +20,11 @@ import (
 const pendingName = "pending-save.json"
 
 type journal struct {
-	Backup, CashPath, DBPath string
-	Kind                     Kind
-	CashBefore, CashAfter    string
-	SQLBefore, SQLAfter      string
+	Backup, CashPath, DBPath              string
+	Kind                                  Kind
+	CashBefore, CashAfter                 string
+	SQLBefore, SQLAfter                   string
+	ServerPath, ServerBefore, ServerAfter string
 }
 
 func hash(raw []byte) string {
@@ -298,6 +299,9 @@ func Recover(ctx context.Context, root string) (string, error) {
 	var record journal
 	if err := json.Unmarshal(payload, &record); err != nil {
 		return "", err
+	}
+	if record.ServerPath != "" {
+		return finishNPCQuestFiles(root, record)
 	}
 	if (!record.Kind.valid() && record.Kind != NPCQuest) || !filepath.IsAbs(record.CashPath) || !filepath.IsAbs(record.DBPath) ||
 		record.Backup == "" || record.Backup == "." || record.Backup == ".." || record.Backup != filepath.Base(record.Backup) ||

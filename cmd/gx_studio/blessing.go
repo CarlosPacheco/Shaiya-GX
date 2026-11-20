@@ -21,13 +21,13 @@ func (e *editor) blessingCatalog() {
 	e.status = wrapped("")
 	type inputKey struct{ tier, field int }
 	invalid := make(map[inputKey]string)
-	e.databaseDraftDirty = func() bool {
+	e.serverDraftDirty = func() bool {
 		return len(invalid) != 0 || !slices.Equal(draft, catalog.Rules)
 	}
 	var active int
 	var render func()
 	details := container.NewStack()
-	save := widget.NewButtonWithIcon("Save database", theme.DocumentSaveIcon(), func() {
+	save := widget.NewButtonWithIcon("Save server file", theme.DocumentSaveIcon(), func() {
 		if e.busy {
 			return
 		}
@@ -40,7 +40,7 @@ func (e *editor) blessingCatalog() {
 					details.Show()
 					return
 				}
-				e.blessing = &studio.BlessingCatalog{DBPath: catalog.DBPath, Rules: pending}
+				e.blessing = &studio.BlessingCatalog{DBPath: catalog.DBPath, File: catalog.File, Rules: pending}
 				e.blessingCatalog()
 				e.status.SetText("Saved. Restart GX World to apply. Backup · " + backup)
 			}
@@ -55,7 +55,7 @@ func (e *editor) blessingCatalog() {
 			e.status.SetText(err.Error())
 		} else {
 			e.status.SetText("")
-			if e.databaseDraftDirty() {
+			if e.serverDraftDirty() {
 				save.Enable()
 				return
 			}
@@ -103,7 +103,7 @@ func (e *editor) blessingCatalog() {
 			list.RefreshItem(index)
 		})
 		rows := container.NewVBox(
-			fieldHeading(fmt.Sprintf("Tier %d", index+1), "Tier"),
+			fieldHeading(fmt.Sprintf("Tier %d", index+1), fmt.Sprintf("[Tier_%d]", index+1)),
 			fieldHeading("Kills required", "RequiredKills"), threshold,
 			wrapped("The same rules apply to Light and Fury. Effective bonuses include the highest value from earlier tiers."),
 		)
@@ -134,8 +134,7 @@ func (e *editor) blessingCatalog() {
 	left := container.NewBorder(widget.NewLabel("Tier   Required kills"), nil, nil, nil, list)
 	top := container.NewVBox(
 		container.NewHBox(widget.NewButton("Open another installation", func() { e.leave(e.start) }), e.switcher(studio.Blessing), save),
-		wrapped(catalog.DBPath),
-		wrapped(blessingrules.Table),
+		wrapped(catalog.File.Path),
 	)
 	split := container.NewHSplit(left, details)
 	split.SetOffset(0.22)

@@ -704,7 +704,7 @@ Declarations: [packet.Gatekeeper](../../server/internal/packet/packet.go#L71), [
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162)
 
-**S→C serializers:** [buildGatekeeperResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L242)
+**S→C serializers:** [buildGatekeeperResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L228)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L481)
 
@@ -714,7 +714,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildGatekeeperResult — server/internal/world/npcquest.go</summary>
 
-[Source definition](../../server/internal/world/npcquest.go#L242)
+[Source definition](../../server/internal/world/npcquest.go#L228)
 
 ```go
 func buildGatekeeperResult(ok bool, money uint32) []byte {
@@ -835,7 +835,7 @@ Declarations: [proto.CountryKillCount](../../internal/proto/opcodes.go#L72).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [kcBroadcast (server/internal/world/killcount.go)](../../server/internal/world/killcount.go#L247)
+**S→C serializers:** [kcBroadcast (server/internal/world/killcount.go)](../../server/internal/world/killcount.go#L241)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L301)
 
@@ -845,7 +845,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>kcBroadcast — server/internal/world/killcount.go</summary>
 
-[Source definition](../../server/internal/world/killcount.go#L247)
+[Source definition](../../server/internal/world/killcount.go#L241)
 
 ```go
 func kcBroadcast(c int, snapshot bool) {
@@ -913,7 +913,7 @@ Declarations: [packet.BlessInit](../../server/internal/packet/packet.go#L125), [
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildKCStatus (server/internal/world/killcount.go)](../../server/internal/world/killcount.go#L281), [buildBlessInit (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L80)
+**S→C serializers:** [buildKCStatus (server/internal/world/killcount.go)](../../server/internal/world/killcount.go#L275), [buildBlessInit (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L80)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L301)
 
@@ -923,7 +923,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildKCStatus — server/internal/world/killcount.go</summary>
 
-[Source definition](../../server/internal/world/killcount.go#L281)
+[Source definition](../../server/internal/world/killcount.go#L275)
 
 ```go
 func buildKCStatus(c uint8) []byte {

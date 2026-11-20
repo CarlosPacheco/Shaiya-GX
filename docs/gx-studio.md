@@ -4,20 +4,21 @@ GX Studio is a standalone desktop editor for the loose data files and SQLite
 database of Shaiya GX. It opens both sources from the same window and displays
 the exact SData field and SQLite column under each readable field name.
 
-| Catalog | Client source | SQLite source |
+| Catalog | Client source | Server source |
 | --- | --- | --- |
 | Item Mall | `Item/Cash.SData` | `PS_GameDefs_ProductList` |
 | Items | `Item/Item.SData` | `PS_GameDefs_Items` |
 | Player skills | `Character/Skill.SData` | `PS_GameDefs_Skills`, matching level |
 | NPC skills | `Monster/NpcSkill.SData` | `PS_GameDefs_NpcSkills`, matching SData rank |
-| Enchant |  | `PS_GameDefs_EnchantAttack` / `PS_GameDefs_EnchantDefense` |
-| Mob AI messages | | `PS_GameDefs_MobAIMessages` |
-| Goddess Blessing | | `PS_GameDefs_GoddessBlessing` |
-| World Drops | | `PS_GameDefs_WorldDrops` |
-| Item Boxes | | `PS_GameDefs_ItemBoxes` / `PS_GameDefs_ItemBoxRewards` |
-| NPCs and Quests | `Npc/NpcQuest.SData` | NPC and quest tables in `PS_GameDefs` |
-| Map Rules | | `PS_GameDefs_MapProperties` / `PS_GameDefs_CharacterStartPositions` |
-| Teleport Runes | | `PS_GameDefs_TeleportRunes` |
+| Enchant |  | `ItemEnchant.ini` |
+| Mob AI messages | | `MobAIMessages.txt` |
+| Goddess Blessing | | `KillStatus.ini` |
+| World Drops | | `WorldDrops.ini` |
+| Item Boxes | | `ItemBoxes.ini` |
+| NPCs and Quests | `Npc/NpcQuest.SData` | `NpcQuest.SData` |
+| Map Rules | | `Map.ini` |
+| Teleport Runes | | `TeleportRUnes.ini` |
+| Notices | | `Notices.ini` |
 
 ## Build
 
@@ -76,82 +77,43 @@ Keep the executable in a writable folder for the local backups and recovery jour
 
 ## Enchant
 
-Choose Enchant with the server SQLite database. The Attack and Defense
-tabs let you edit the chances and bonuses directly. The last level in each
-tab sets that equipment type’s cap. Add the next level or remove the highest
-level to change it, up to +49. An empty table disables enchanting for that equipment type. Removing levels also removes their
-bonuses for existing gear. **Save database** takes a full SQLite backup and
-applies both tables in one transaction. Restart GX World to load the new rules.
+Select the server's `data/game` folder. **Enchant** edits the
+`ItemEnchant.ini` rates per million and total bonuses. Add or remove levels
+to adjust the cap for each equipment type, up to +49. Zero disables
+enchanting for that type.
 
-## Mob AI messages
+## File-backed server catalogs
 
-Open the server SQLite database in **Mob AI messages**. Edit **Message**
-(`Text`) beside its fixed **Message ID** (`Index`), which the AI scripts use.
-**Save database** creates a verified SQLite backup before saving the text.
-Restart GX World to load the changes. To display Korean with no client
-folder selected, place the GX CJK font and its license in `fonts/` beside
-the Studio executable.
+**Mob AI messages** edits the English UTF-8 text in `MobAIMessages.txt`.
+The message IDs are fixed so scripts continue to reference the same line.
+**Goddess Blessing** edits the shared tiers in `KillStatus.ini`. The two
+factions keep independent counts and use the same thresholds and bonuses.
 
-## Goddess Blessing
+**World Drops** uses literal percentages with up to eight decimal places
+and matches mobs by an inclusive level range. **Item Boxes** supports both
+weighted single rewards and independent percentage rolls. Its targets can
+be a grade or an exact ItemID. Select the optional SQLite database to
+validate reward references against the server's items.
 
-Open **Goddess Blessing** with the server SQLite database. Select a tier
-to edit the kill threshold and bonuses used by both factions. Each bonus
-shows its unit, SQLite column, original type ID and effective total after
-inheritance from earlier tiers. **Save database** takes a verified SQLite
-backup and updates the shared table in one transaction. Restart GX World
-to apply the changes.
+**Map Rules** edits `Map.ini` with the original map sections and character
+starts. The editor shows the native keys for faction respawns, instance
+schedules, level restrictions, weather and map curses. It retains other
+settings in the existing INI. **Notices** edits `Notices.ini`, including
+periodic, fixed weekly and manual announcements.
 
-## World Drops
-
-Open **World Drops** with the server SQLite database. Add, edit or remove
-rules by grade and inclusive mob level range. Enter **Drop chance (%)**
-with up to eight decimal places. `0` disables the rule. SQLite stores
-`DropChance` in units of 0.00000001 percentage points, so `0.0001%`
-is stored as `10000`. Saving creates a verified SQLite backup. Restart
-GX World to apply the changes.
-
-## Item Boxes
-
-Open **Item Boxes** with the server SQLite database. A bag with
-`Special = 42` uses its `ReqVg` as the box `Index`. Choose **Grade** or
-**Item ID** and add the linked rewards.
-
-Normal boxes award exactly one reward using relative weights from 0 to 1000.
-Studio shows the normalized probability next to each weight. Independent
-boxes roll against each reward's literal percentage and can award any subset.
-SQLite stores independent chances in units of 0.00000001 percentage points.
-A zero chance disables that row in either mode. Saving backs up SQLite and
-updates the box and reward tables together. Restart GX World to apply edits.
+The file editors create a verified backup, refuse to overwrite a file
+changed since opening, and replace the file atomically. Restart GX World
+to apply a saved catalog.
 
 ## NPCs and Quests
 
-Select a matching client data folder and server SQLite database. The NPC
-browser groups rows by service and shows shop products, gate destinations
-and ordered quest links. The quest browser groups the original fields into
-requirements, starting items, objectives and reward choices. Item quest
-links can be edited by item type and ID.
-
-The same save updates gameplay fields in SQLite and the native client file
-and preserves the client's encryption. Dialogues, descriptions, journal text
-and destination labels are stored only in the client file. NPC and quest
-lookup rows remain fixed. A save takes both backups before replacing either
-catalog. Stop GX World and the client while editing and restart both after saving.
-
-## Map Rules
-
-Open **Map Rules** with the server SQLite database. **Map properties**
-contains the level range, instance rules, faction rebirth destinations,
-schedules, weather and three map curse slots. **Character starts** edits
-the four race birth locations, also used when a character has no eligible
-rebirth point or must leave a level-restricted map. Blank rebirth and
-schedule blocks are stored as NULL. Map modifiers are reserved.
-
-A zero minimum or maximum removes that side of the level restriction.
-Weather uses 0 for clear, 1 for rain and 2 for snow. Weather events last ten
-minutes. A zero interval starts an event every 60 minutes of world uptime.
-A nonzero curse references the skill's level-1 persistent buff or debuff.
-The effect is removed on leaving the map. Save creates a verified SQLite
-backup. Restart GX World to apply the changes.
+Select a client data folder and a server data/game folder with matching
+`NpcQuest.SData` definitions. The editor shows NPC services, shop products,
+gate destinations, quest rules, rewards and links. Shared fields are saved
+to both files. Client dialogue, descriptions and destination labels are
+edited separately. The editor preserves the encoding of each file, backs
+up both and leaves a journal to complete an interrupted two-file save.
+Stop GX World and the client while editing and restart both after saving.
 
 ## Backups and recovery
 
@@ -172,12 +134,12 @@ until recovery is complete.
 
 ## Teleport Runes
 
-Open **Teleport Runes** with the server SQLite database. Select a rune to edit
+Open **Teleport Runes** with the server data/game folder. Select a rune to edit
 the Light and Fury map IDs and XYZ coordinates independently, or add a row
 with an unused index from 1 to 32767. Items with Special 47 reference that index
 through their Variant (`ReqVg`). Removing the row leaves those items without a
 destination until their Variant is reassigned or the row is restored.
 
-Saving creates and verifies a SQLite backup in the editor's backup directory.
+Saving creates and verifies a backup of `TeleportRUnes.ini` in the editor's backup directory.
 Restart GX World to apply the changes. See [Teleport runes](teleport-runes.md)
 for the original destinations and item setup.

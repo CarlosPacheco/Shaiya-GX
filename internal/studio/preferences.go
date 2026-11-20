@@ -13,9 +13,10 @@ import (
 const preferencesFile = "gx-studio.ini"
 
 type Preferences struct {
-	DataDir  string
-	Database string
-	Theme    string
+	DataDir       string
+	Database      string
+	ServerGameDir string
+	Theme         string
 }
 
 func LoadPreferences(root string) (Preferences, error) {
@@ -45,6 +46,8 @@ func LoadPreferences(root string) (Preferences, error) {
 		switch section + strings.TrimSpace(key) {
 		case "[Installation]ClientData":
 			target = &paths.DataDir
+		case "[Installation]ServerGame":
+			target = &paths.ServerGameDir
 		case "[Installation]Database":
 			target = &paths.Database
 		case "[Appearance]Theme":
@@ -65,6 +68,9 @@ func LoadPreferences(root string) (Preferences, error) {
 
 func SavePreferences(root string, paths Preferences) error {
 	data := fmt.Appendf(nil, "[Installation]\nClientData=%q\nDatabase=%q\n", paths.DataDir, paths.Database)
+	if paths.ServerGameDir != "" {
+		data = fmt.Appendf(data, "ServerGame=%q\n", paths.ServerGameDir)
+	}
 	if paths.Theme != "" {
 		data = fmt.Appendf(data, "\n[Appearance]\nTheme=%s\n", paths.Theme)
 	}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
+	"path/filepath"
 	"slices"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/teleportrunes"
@@ -12,9 +14,17 @@ import (
 type TeleportRuneCatalog struct {
 	DBPath string
 	Rules  []teleportrunes.Rune
+	File   *ServerFile
 }
 
 func OpenTeleportRunes(ctx context.Context, path string) (*TeleportRuneCatalog, error) {
+	if filepath.Base(path) == catalogfiles.TeleportRunes {
+		file, value, err := openServerCatalog(path, catalogfiles.ParseTeleportRunes)
+		if err != nil {
+			return nil, err
+		}
+		return &TeleportRuneCatalog{File: file, Rules: value}, nil
+	}
 	path, err := canonicalFile(path)
 	if err != nil {
 		return nil, err
@@ -32,6 +42,10 @@ func OpenTeleportRunes(ctx context.Context, path string) (*TeleportRuneCatalog, 
 }
 
 func SaveTeleportRunes(ctx context.Context, root string, catalog *TeleportRuneCatalog, rules []teleportrunes.Rune) (string, error) {
+	if catalog.File != nil {
+		next := catalogfiles.EncodeTeleportRunes(rules)
+		return saveServerCatalog(root, catalog.File, next, catalogfiles.ParseTeleportRunes, func(v []teleportrunes.Rune) bool { return slices.Equal(v, rules) })
+	}
 	if err := teleportrunes.Validate(rules); err != nil {
 		return "", err
 	}

@@ -2,20 +2,21 @@ package world
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
-	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
 
-var noticeCatalog []db.ServerNotice
+var noticeCatalog []catalogfiles.Notice
 
 func loadServerNotices(log *logx.Logger) error {
-	notices, err := db.ServerNotices()
+	notices, err := catalogfiles.Read(filepath.Join(gameDataDir(), catalogfiles.Notices), catalogfiles.ParseNotices)
 	if err != nil {
 		return err
 	}
@@ -24,7 +25,7 @@ func loadServerNotices(log *logx.Logger) error {
 			return fmt.Errorf("notice %d: invalid message", n.Index)
 		}
 		for i, value := range n.Fixed {
-			if _, valid := parseNoticeHour(value); strings.TrimSpace(value) != "" && !valid {
+			if _, valid := parseNoticeHour(value); strings.TrimSpace(value) != "" && !valid && log != nil {
 				log.Printf("GX Server World ignored invalid FixedHour%d for notice %d", i+1, n.Index)
 			}
 		}
@@ -54,7 +55,7 @@ type scheduledNotice struct {
 	fixed    map[noticeHour]int // Last calendar date sent per weekly slot.
 }
 
-func scheduleNotices(rows []db.ServerNotice, start time.Time) []scheduledNotice {
+func scheduleNotices(rows []catalogfiles.Notice, start time.Time) []scheduledNotice {
 	notices := make([]scheduledNotice, 0, len(rows))
 	for _, row := range rows {
 		n := scheduledNotice{message: row.Message, interval: time.Duration(row.Frequency) * time.Minute}

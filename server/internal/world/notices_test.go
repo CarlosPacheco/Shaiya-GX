@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
 	"testing"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 func TestNoticeSchedules(t *testing.T) {
 	local := time.FixedZone("server", -3*60*60)
 	start := time.Date(2026, 11, 16, 12, 0, 0, 0, local) // Monday
-	notices := scheduleNotices([]db.ServerNotice{
+	notices := scheduleNotices([]catalogfiles.Notice{
 		{Message: "interval", Frequency: 60, Fixed: [5]string{"1/27/10"}},
 		{Message: "fixed", Frequency: 1, Fixed: [5]string{"1/12/10", "1/12/10", "1/13/10"}},
 		{Message: "manual only"},
@@ -34,8 +35,7 @@ func TestNoticeSchedules(t *testing.T) {
 func TestNoticeCommandReachesBothFactions(t *testing.T) {
 	old := noticeCatalog
 	t.Cleanup(func() { noticeCatalog = old })
-	var err error
-	noticeCatalog, err = db.ServerNotices()
+	err := loadServerNotices(nil)
 	if err != nil || len(noticeCatalog) != 1 || noticeCatalog[0].Frequency != 60 {
 		t.Fatalf("missing hourly notice seed: %+v (%v)", noticeCatalog, err)
 	}

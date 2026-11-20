@@ -1,8 +1,8 @@
 package world
 
 import (
-	"context"
-	"database/sql"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
+	"path/filepath"
 	"sync"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
@@ -46,29 +46,15 @@ type npcDef struct {
 var npcDefs [npcTypeCount][]npcDef
 
 func loadNpcQuest(log *logx.Logger) error {
-	pool, err := db.Pool(db.GameDefs)
+	doc, err := catalogfiles.Read(filepath.Join(gameDataDir(), catalogfiles.NPCQuest), catalogfiles.ParseNPCQuest)
 	if err != nil {
 		return err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
-	defer cancel()
-	tx, err := pool.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	catalog, err := npcquest.Read(ctx, tx)
-	if err != nil {
-		return err
-	}
-	if _, err := npcquest.Encode(catalog, nil, nil); err != nil {
-		return err
-	}
-	npcs, quests, itemLinks := buildNPCQuest(catalog)
+	npcs, quests, itemLinks := buildNPCQuest(doc.Catalog)
 	npcDefs, questDefs, questItemLinks = npcs, quests, itemLinks
 	buildMobQuestLinks()
-	log.Printf("GX Server World loaded SQLite NpcQuest npcs=%d shops=%d gatekeepers=%d item_links=%d quests=%d",
-		len(catalog[npcquest.NPCs]), len(npcs[0]), len(npcs[1]), len(itemLinks), len(quests))
+	log.Printf("GX Server World loaded NpcQuest.SData npcs=%d shops=%d gatekeepers=%d item_links=%d quests=%d",
+		len(doc.Catalog[npcquest.NPCs]), len(npcs[0]), len(npcs[1]), len(itemLinks), len(quests))
 	return nil
 }
 

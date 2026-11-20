@@ -1,9 +1,10 @@
 package world
 
 import (
-	"context"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
 	"math/rand/v2"
+	"path/filepath"
 	"slices"
 	"sync/atomic"
 
@@ -29,19 +30,13 @@ type itemBox struct {
 var itemBoxCatalog atomic.Pointer[map[int16]itemBox]
 
 func loadItemBoxes(log *logx.Logger) error {
-	pool, err := db.Pool(db.GameDefs)
-	if err != nil {
-		return err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
-	defer cancel()
-	boxes, err := itemboxes.Read(ctx, pool)
+	boxes, err := catalogfiles.Read(filepath.Join(gameDataDir(), catalogfiles.ItemBoxes), catalogfiles.ParseItemBoxes)
 	if err != nil {
 		return err
 	}
 	catalog := compileItemBoxes(boxes, db.MustDefs(), log)
 	itemBoxCatalog.Store(&catalog)
-	log.Printf("GX Server World loaded item boxes=%d", len(catalog))
+	log.Printf("GX Server World loaded ItemBoxes.ini boxes=%d", len(catalog))
 	return nil
 }
 

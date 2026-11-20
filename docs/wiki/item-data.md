@@ -4,7 +4,7 @@
 
 | Data | Authoritative source | Applying a change |
 |---|---|---|
-| Enchant cap, weapon/armor rates and stat bonuses | SQLite `PS_GameDefs_EnchantAttack` and `PS_GameDefs_EnchantDefense` | Edit with GX Studio and restart world |
+| Enchant cap, weapon/armor rates and stat bonuses | `data/game/ItemEnchant.ini` | Edit with GX Studio and restart world |
 | Native forge gold table | `lapisiaMoney` in `server/internal/world/crafting.go` | Rebuild and restart world |
 | Linking/extraction formulas | `server/internal/world/forge_quote.go` | Rebuild and restart world |
 | Item requirements, hammer ReqVg, stack limits | SQL `PS_GameDefs_Items` in the selected server DB | Restart world |

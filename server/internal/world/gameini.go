@@ -1,9 +1,8 @@
 package world
 
 import (
-	"context"
-	"database/sql"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -76,18 +75,7 @@ var mapConfig = MapConfig{
 }
 
 func loadMapProperties(log *logx.Logger) error {
-	pool, err := db.Pool(db.GameDefs)
-	if err != nil {
-		return err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
-	defer cancel()
-	tx, err := pool.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	c, err := maprules.Read(ctx, tx)
+	c, err := catalogfiles.Read(filepath.Join(gameDataDir(), catalogfiles.Map), catalogfiles.ParseMap)
 	if err != nil {
 		return err
 	}
@@ -97,7 +85,7 @@ func loadMapProperties(log *logx.Logger) error {
 	}
 	mapConfig = next
 	weatherStarted = time.Now()
-	log.Printf("GX Server World loaded SQLite map properties zones=%d", len(next.Zones))
+	log.Printf("GX Server World loaded Map.ini zones=%d", len(next.Zones))
 	return nil
 }
 

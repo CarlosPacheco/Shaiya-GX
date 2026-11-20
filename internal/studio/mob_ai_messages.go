@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
+	"path/filepath"
 	"slices"
 	"unicode/utf8"
 
@@ -13,9 +15,17 @@ import (
 type MobAIMessageCatalog struct {
 	DBPath   string
 	Messages []mobaimessages.Message
+	File     *ServerFile
 }
 
 func OpenMobAIMessages(ctx context.Context, path string) (*MobAIMessageCatalog, error) {
+	if filepath.Base(path) == catalogfiles.MobMessages {
+		file, value, err := openServerCatalog(path, catalogfiles.ParseMobMessages)
+		if err != nil {
+			return nil, err
+		}
+		return &MobAIMessageCatalog{File: file, Messages: value}, nil
+	}
 	path, err := canonicalFile(path)
 	if err != nil {
 		return nil, err
@@ -33,6 +43,10 @@ func OpenMobAIMessages(ctx context.Context, path string) (*MobAIMessageCatalog, 
 }
 
 func SaveMobAIMessages(ctx context.Context, root string, catalog *MobAIMessageCatalog, messages []mobaimessages.Message) (string, error) {
+	if catalog.File != nil {
+		next := catalogfiles.EncodeMobMessages(messages)
+		return saveServerCatalog(root, catalog.File, next, catalogfiles.ParseMobMessages, func(v []mobaimessages.Message) bool { return slices.Equal(v, messages) })
+	}
 	if len(messages) != len(catalog.Messages) {
 		return "", errors.New("keep the message indexes used by the AI scripts")
 	}

@@ -1,6 +1,7 @@
 package studio
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -53,4 +54,50 @@ func TestNPCQuestSaveKeepsClientTextOutOfSQLite(t *testing.T) {
 	if oldDoc.Text(key) != "" || oldDoc.Catalog[npcquest.Quests][0][2] == next.Doc.Catalog[npcquest.Quests][0][2] {
 		t.Fatal("backup changed original client dialog or quest name")
 	}
+}
+
+func TestNPCQuestFileSavePreservesSeparateTexts(t *testing.T) {
+	ctx := t.Context()
+	root := t.TempDir()
+	clientDir := filepath.Join(root, "client")
+	client := filepath.Join(clientDir, NPCQuest.RelativePath())
+	server := filepath.Join(root, "game", "NpcQuest.SData")
+	seed, err := os.ReadFile(filepath.Join("..", "..", "server", "data", "game", "NpcQuest.SData"))
+	must(t, err)
+	for _, path := range []string{client, server} {
+		must(t, os.MkdirAll(filepath.Dir(path), 0700))
+		must(t, os.WriteFile(path, seed, 0600))
+	}
+	project, err := OpenNPCQuest(ctx, clientDir, server)
+	must(t, err)
+	edited := npcquest.Clone(project.Doc.Catalog)
+	edited[npcquest.NPCs][0][8] = "NPC File Test"
+	key := npcquest.TextKey{Table: npcquest.Quests, Row: 0, Field: "MsgSummary"}
+	serverText := project.serverDoc.Text(key)
+	backup, err := SaveNPCQuest(ctx, root, project, edited, map[npcquest.TextKey]string{key: "Client-only dialog."})
+	must(t, err)
+	next, err := OpenNPCQuest(ctx, clientDir, server)
+	must(t, err)
+	if !npcquest.Equal(next.Doc.Catalog, edited) || !npcquest.Equal(next.serverDoc.Catalog, edited) ||
+		next.Doc.Text(key) != "Client-only dialog." || next.serverDoc.Text(key) != serverText {
+		t.Fatal("the shared rules or client/server text changed")
+	}
+	for _, name := range []string{"client-before.SData", "server-before.SData"} {
+		raw, err := os.ReadFile(filepath.Join(backup, name))
+		must(t, err)
+		if !bytes.Equal(raw, seed) {
+			t.Fatal("backup does not match the original")
+		}
+	}
+	// Simulate an interruption after the client replacement.
+	must(t, os.WriteFile(server, seed, 0600))
+	must(t, os.Rename(filepath.Join(backup, "save.json"), filepath.Join(root, pendingName)))
+	_, err = Recover(ctx, root)
+	must(t, err)
+	restored, err := OpenNPCQuest(ctx, clientDir, server)
+	must(t, err)
+	if !npcquest.Equal(restored.serverDoc.Catalog, edited) || restored.Doc.Text(key) != "Client-only dialog." {
+		t.Fatal("recovery did not finish the two-file save")
+	}
+
 }

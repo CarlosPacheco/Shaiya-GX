@@ -1,14 +1,14 @@
 package world
 
 import (
-	"context"
 	"errors"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
 	"math"
+	"path/filepath"
 	"slices"
 	"sync"
 	"time"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/blessingrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
@@ -75,13 +75,7 @@ var (
 
 // loadKillStatus is CGameData::LoadKCStatus.
 func loadKillStatus(log *logx.Logger) error {
-	pool, err := db.Pool(db.GameDefs)
-	if err != nil {
-		return err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
-	defer cancel()
-	catalog, err := blessingrules.Read(ctx, pool)
+	catalog, err := catalogfiles.Read(filepath.Join(gameDataDir(), catalogfiles.KillStatus), catalogfiles.ParseKillStatus)
 	if err != nil {
 		return err
 	}
@@ -95,7 +89,7 @@ func loadKillStatus(log *logx.Logger) error {
 	kcMu.Lock()
 	kcTiers = tiers
 	kcMu.Unlock()
-	log.Printf("GX Server World loaded shared SQLite blessing tiers=%d", len(tiers))
+	log.Printf("GX Server World loaded KillStatus.ini blessing tiers=%d", len(tiers))
 	return nil
 }
 

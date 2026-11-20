@@ -43,14 +43,14 @@ func (e *editor) enchantCatalog() {
 		attack, defense, err := rules.Caps()
 		return rules, attack, defense, err
 	}
-	e.databaseDraftDirty = func() bool {
+	e.serverDraftDirty = func() bool {
 		rules, _, _, err := read()
 		return err != nil || !rules.Equal(catalog.Rules)
 	}
 	capLabel := widget.NewLabel("")
 	tabs := container.NewAppTabs()
 	var update func()
-	save := widget.NewButtonWithIcon("Save database", theme.DocumentSaveIcon(), func() {
+	save := widget.NewButtonWithIcon("Save server file", theme.DocumentSaveIcon(), func() {
 		if e.busy {
 			return
 		}
@@ -78,7 +78,7 @@ func (e *editor) enchantCatalog() {
 		} else {
 			capLabel.SetText(fmt.Sprintf("Attack cap +%d  ·  Defense cap +%d  ·  Maximum +%d", attack, defense, enchantrules.MaxLevel))
 		}
-		if err == nil && e.databaseDraftDirty() && !e.busy {
+		if err == nil && e.serverDraftDirty() && !e.busy {
 			save.Enable()
 		} else {
 			save.Disable()
@@ -89,13 +89,13 @@ func (e *editor) enchantCatalog() {
 			rows[i] = append(rows[i], enchantInputs(level))
 		}
 	}
-	tabs.Append(container.NewTabItem("Attack", enchantTable(&rows[0], enchantrules.AttackTable, "Attack bonus", "AttackBonus", update)))
-	tabs.Append(container.NewTabItem("Defense", enchantTable(&rows[1], enchantrules.DefenseTable, "Absorption bonus", "AbsorptionBonus", update)))
+	tabs.Append(container.NewTabItem("Attack", enchantTable(&rows[0], "Weapon", "Attack bonus", update)))
+	tabs.Append(container.NewTabItem("Defense", enchantTable(&rows[1], "Defense", "Absorption bonus", update)))
 	update()
 	top := container.NewVBox(
 		container.NewHBox(widget.NewButton("Open another installation", func() { e.leave(e.start) }),
 			e.switcher(studio.Enchant), save),
-		wrapped(catalog.DBPath), capLabel,
+		wrapped(catalog.File.Path), capLabel,
 		wrapped("Chances are per million to reach the listed level. Bonuses are totals at the listed level."),
 	)
 	e.window.SetContent(container.NewPadded(container.NewBorder(top, e.status, nil, nil, tabs)))
@@ -106,7 +106,7 @@ func enchantInputs(level enchantrules.Level) enchantRow {
 		bonus: inspectorEntry(strconv.FormatUint(uint64(level.Bonus), 10))}
 }
 
-func enchantTable(rows *[]enchantRow, table, bonusTitle, bonusField string, update func()) fyne.CanvasObject {
+func enchantTable(rows *[]enchantRow, prefix, bonusTitle string, update func()) fyne.CanvasObject {
 	body := container.NewVBox()
 	grid := func(cells ...fyne.CanvasObject) fyne.CanvasObject {
 		return container.NewGridWithColumns(4, cells...)
@@ -128,7 +128,7 @@ func enchantTable(rows *[]enchantRow, table, bonusTitle, bonusField string, upda
 			row.chance.OnChanged = updateChance
 			row.bonus.OnChanged = func(string) { update() }
 			updateChance(row.chance.Text)
-			body.Add(grid(widget.NewLabel(fmt.Sprintf("+%d", row.level)), row.chance, percent, row.bonus))
+			body.Add(grid(widget.NewLabel(fmt.Sprintf("+%d", row.level)), container.NewVBox(small(fmt.Sprintf("%sStep%02d", prefix, row.level-1)), row.chance), percent, container.NewVBox(small(fmt.Sprintf("%sStep%02d", prefix, row.level)), row.bonus)))
 		}
 		body.Refresh()
 		add.Enable()
@@ -150,9 +150,9 @@ func enchantTable(rows *[]enchantRow, table, bonusTitle, bonusField string, upda
 		render()
 	}
 	render()
-	header := grid(fieldHeading("Level", "Level"), fieldHeading("Success chance", "SuccessChance"),
-		widget.NewLabel("Percent"), fieldHeading(bonusTitle, bonusField))
-	top := container.NewVBox(wrapped(table), container.NewHBox(add, remove), header, widget.NewSeparator())
+	header := grid(fieldHeading("Level", "[Enchant]"), fieldHeading("Success chance", "[LapisianEnchantPercentRate]"),
+		widget.NewLabel("Percent"), fieldHeading(bonusTitle, "[LapisianEnchantAddValue]"))
+	top := container.NewVBox(container.NewHBox(add, remove), header, widget.NewSeparator())
 	return container.NewBorder(top, nil, nil, nil, container.NewVScroll(body))
 }
 
@@ -170,7 +170,7 @@ func (e *editor) saveEnchant(rules enchantrules.Catalog, failed func()) {
 				failed()
 				return
 			}
-			e.enchant = &studio.EnchantCatalog{DBPath: catalog.DBPath, Rules: rules}
+			e.enchant = &studio.EnchantCatalog{DBPath: catalog.DBPath, File: catalog.File, Rules: rules}
 			e.enchantCatalog()
 			e.status.SetText("Saved. Restart GX World to apply. Backup · " + backup)
 		}

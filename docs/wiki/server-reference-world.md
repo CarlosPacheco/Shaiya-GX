@@ -503,22 +503,22 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 
 [server/internal/world/drops.go](../../server/internal/world/drops.go#L1)
 
-Direct GX dependencies: `internal/worlddrops`, `server/internal/db`, `server/internal/logx`.
+Direct GX dependencies: `internal/catalogfiles`, `internal/worlddrops`, `server/internal/db`, `server/internal/logx`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`chanceSucceeds`](../../server/internal/world/drops.go#L22)<br>`func chanceSucceeds(percent uint32) bool` | See the source definition and the subsystem ownership contract. |
-| [`dropLimitIntervals`](../../server/internal/world/drops.go#L33)<br>`var dropLimitIntervals` | dropLimitIntervals are the original Drop selectors (ms per window). |
-| [`gradeEntry`](../../server/internal/world/drops.go#L35)<br>`type gradeEntry` | See the source definition and the subsystem ownership contract. |
-| [`dropCatalog`](../../server/internal/world/drops.go#L44)<br>`var dropCatalog struct { 	mu         sync.Mutex 	grades     map[uint16][]*gradeEntry 	worldRules []worlddrops.Rule }` | See the source definition and the subsystem ownership contract. |
-| [`isQuestItemType`](../../server/internal/world/drops.go#L50)<br>`func isQuestItemType(t uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`buildDropCatalog`](../../server/internal/world/drops.go#L54)<br>`func buildDropCatalog()` | buildDropCatalog groups items by grade, unrestricted items first, then those with a Server or Drop restriction, as CGameData's init does. |
-| [`loadWorldDrops`](../../server/internal/world/drops.go#L89)<br>`func loadWorldDrops(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
-| [`pickGradeItem`](../../server/internal/world/drops.go#L109)<br>`func pickGradeItem(grade uint16) *db.ItemDef` | pickGradeItem is MobDropCatalog::select: a random item of the grade, dropped only if its time limit allows it. |
-| [`rollWorldDrops`](../../server/internal/world/drops.go#L131)<br>`func rollWorldDrops(level uint16, roll func(uint64) uint64, drop func(worlddrops.Rule))` | See the source definition and the subsystem ownership contract. |
-| [`dropPosition`](../../server/internal/world/drops.go#L145)<br>`func dropPosition(x, z float32) (float32, float32)` | dropPosition is CMob::GetDropPosRand: within half a unit of the mob, with Y 0 (the server has no terrain heights; the client places it). |
-| [`rollMobDrops`](../../server/internal/world/drops.go#L154)<br>`func rollMobDrops(mapID uint16, mob *MapMob, ownerID uint32, party []*ConnectedPlayer, log logPrinter) []MapItem` | rollMobDrops rolls one kill's loot, registers it on the map and returns the new map items.  With two or more party members in range, the gold is split evenly among them instead of dropped (at least 1 each). |
-| [`newDroppedItem`](../../server/internal/world/drops.go#L214)<br>`func newDroppedItem(def *db.ItemDef) db.Item` | See the source definition and the subsystem ownership contract. |
+| [`chanceSucceeds`](../../server/internal/world/drops.go#L23)<br>`func chanceSucceeds(percent uint32) bool` | See the source definition and the subsystem ownership contract. |
+| [`dropLimitIntervals`](../../server/internal/world/drops.go#L34)<br>`var dropLimitIntervals` | dropLimitIntervals are the original Drop selectors (ms per window). |
+| [`gradeEntry`](../../server/internal/world/drops.go#L36)<br>`type gradeEntry` | See the source definition and the subsystem ownership contract. |
+| [`dropCatalog`](../../server/internal/world/drops.go#L45)<br>`var dropCatalog struct { 	mu         sync.Mutex 	grades     map[uint16][]*gradeEntry 	worldRules []worlddrops.Rule }` | See the source definition and the subsystem ownership contract. |
+| [`isQuestItemType`](../../server/internal/world/drops.go#L51)<br>`func isQuestItemType(t uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`buildDropCatalog`](../../server/internal/world/drops.go#L55)<br>`func buildDropCatalog()` | buildDropCatalog groups items by grade, unrestricted items first, then those with a Server or Drop restriction, as CGameData's init does. |
+| [`loadWorldDrops`](../../server/internal/world/drops.go#L90)<br>`func loadWorldDrops(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
+| [`pickGradeItem`](../../server/internal/world/drops.go#L104)<br>`func pickGradeItem(grade uint16) *db.ItemDef` | pickGradeItem is MobDropCatalog::select: a random item of the grade, dropped only if its time limit allows it. |
+| [`rollWorldDrops`](../../server/internal/world/drops.go#L126)<br>`func rollWorldDrops(level uint16, roll func(uint64) uint64, drop func(worlddrops.Rule))` | See the source definition and the subsystem ownership contract. |
+| [`dropPosition`](../../server/internal/world/drops.go#L140)<br>`func dropPosition(x, z float32) (float32, float32)` | dropPosition is CMob::GetDropPosRand: within half a unit of the mob, with Y 0 (the server has no terrain heights; the client places it). |
+| [`rollMobDrops`](../../server/internal/world/drops.go#L149)<br>`func rollMobDrops(mapID uint16, mob *MapMob, ownerID uint32, party []*ConnectedPlayer, log logPrinter) []MapItem` | rollMobDrops rolls one kill's loot, registers it on the map and returns the new map items.  With two or more party members in range, the gold is split evenly among them instead of dropped (at least 1 each). |
+| [`newDroppedItem`](../../server/internal/world/drops.go#L209)<br>`func newDroppedItem(def *db.ItemDef) db.Item` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -671,20 +671,20 @@ type elementRuntime struct {
 
 [server/internal/world/enchant_rules.go](../../server/internal/world/enchant_rules.go#L1)
 
-Direct GX dependencies: `internal/enchantrules`, `internal/proto`, `server/internal/db`, `server/internal/logx`, `server/internal/packet`.
+Direct GX dependencies: `internal/catalogfiles`, `internal/enchantrules`, `internal/proto`, `server/internal/logx`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
 | [`defaultEnchantMaxLevel`](../../server/internal/world/enchant_rules.go#L15)<br>`const defaultEnchantMaxLevel = 20` | See the source definition and the subsystem ownership contract. |
 | [`enchantMaxLevel`](../../server/internal/world/enchant_rules.go#L16)<br>`const enchantMaxLevel = enchantrules.MaxLevel` | armor encodes 50+level in the two-digit Craftname pair |
-| [`enchantRulesConfig`](../../server/internal/world/enchant_rules.go#L22)<br>`type enchantRulesConfig` | Runtime enchant configuration is loaded atomically from SQLite. These initial values retain the historical defaults before startup loading. Step N is the probability of N -> N+1, in successes per million. |
+| [`enchantRulesConfig`](../../server/internal/world/enchant_rules.go#L22)<br>`type enchantRulesConfig` | Runtime enchant configuration is loaded atomically from ItemEnchant.ini. These initial values retain the historical defaults before startup loading. Step N is the probability of N -> N+1, in successes per million. |
 | [`enchantConfig`](../../server/internal/world/enchant_rules.go#L27)<br>`var enchantConfig` | See the source definition and the subsystem ownership contract. |
 | [`weaponEnchantAttackBonus`](../../server/internal/world/enchant_rules.go#L34)<br>`var weaponEnchantAttackBonus` | Bonuses are indexed by the resulting enchantment level, starting at zero. |
 | [`armorEnchantAbsorption`](../../server/internal/world/enchant_rules.go#L35)<br>`var armorEnchantAbsorption` | See the source definition and the subsystem ownership contract. |
 | [`validateEnchantRules`](../../server/internal/world/enchant_rules.go#L37)<br>`func validateEnchantRules() error` | See the source definition and the subsystem ownership contract. |
 | [`applyEnchantRules`](../../server/internal/world/enchant_rules.go#L49)<br>`func applyEnchantRules(rows enchantrules.Catalog) error` | See the source definition and the subsystem ownership contract. |
 | [`loadEnchantRules`](../../server/internal/world/enchant_rules.go#L66)<br>`func loadEnchantRules(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
-| [`sendEnchantRules`](../../server/internal/world/enchant_rules.go#L86)<br>`func (s *Session) sendEnchantRules()` | See the source definition and the subsystem ownership contract. |
+| [`sendEnchantRules`](../../server/internal/world/enchant_rules.go#L80)<br>`func (s *Session) sendEnchantRules()` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -1134,25 +1134,25 @@ type pendingFriendly struct {
 
 [server/internal/world/gameini.go](../../server/internal/world/gameini.go#L1)
 
-Direct GX dependencies: `internal/maprules`, `server/internal/config`, `server/internal/db`, `server/internal/logx`.
+Direct GX dependencies: `internal/catalogfiles`, `internal/maprules`, `server/internal/config`, `server/internal/db`, `server/internal/logx`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`gameDataDir`](../../server/internal/world/gameini.go#L18)<br>`func gameDataDir() string` | See the source definition and the subsystem ownership contract. |
-| [`iniFile`](../../server/internal/world/gameini.go#L20)<br>`type iniFile` | See the source definition and the subsystem ownership contract. |
-| [`readIni`](../../server/internal/world/gameini.go#L22)<br>`func readIni(path string) (iniFile, error)` | See the source definition and the subsystem ownership contract. |
-| [`numberRE`](../../server/internal/world/gameini.go#L25)<br>`var numberRE` | numbers extracts every number in s ("(1, 577.98, 78.56, 1762.12)"). |
-| [`numbers`](../../server/internal/world/gameini.go#L27)<br>`func numbers(s string) []float64` | See the source definition and the subsystem ownership contract. |
-| [`MapPos`](../../server/internal/world/gameini.go#L38)<br>`type MapPos` | MapPos is a map and position from the original configs. |
-| [`ZoneConfig`](../../server/internal/world/gameini.go#L44)<br>`type ZoneConfig` | ZoneConfig holds the runtime rules for one map. |
-| [`MapConfig`](../../server/internal/world/gameini.go#L65)<br>`type MapConfig` | MapConfig holds the map definitions and race starts loaded at boot. |
-| [`mapConfig`](../../server/internal/world/gameini.go#L72)<br>`var mapConfig` | See the source definition and the subsystem ownership contract. |
-| [`loadMapProperties`](../../server/internal/world/gameini.go#L78)<br>`func loadMapProperties(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
-| [`buildMapProperties`](../../server/internal/world/gameini.go#L104)<br>`func buildMapProperties(c maprules.Catalog) (MapConfig, error)` | See the source definition and the subsystem ownership contract. |
-| [`LoadGameConfig`](../../server/internal/world/gameini.go#L139)<br>`func LoadGameConfig(log *logx.Logger) error` | LoadGameConfig loads the original PS_Game ini files from data/game/. |
-| [`rebirthPosition`](../../server/internal/world/gameini.go#L177)<br>`func rebirthPosition(mapID uint16, faction uint8) (MapPos, bool)` | rebirthPosition is where a character of faction revives on mapID, per CMap::LoadConfig: Light and Fury have independent destinations. |
-| [`bindPosition`](../../server/internal/world/gameini.go#L195)<br>`func bindPosition(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32)` | bindPosition is CMap::GetBindPos 0x004295a0: the configured faction rebirth point when its map exists and the point lies inside it (0.9 above), else a random point of the nearest svmap rebirth group of this map, else the current position (zeroed if outside the map). |
-| [`bindPositionFound`](../../server/internal/world/gameini.go#L202)<br>`func bindPositionFound(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32, bool)` | bindPositionFound is bindPosition with GetBindPos's result: false when neither a configured point nor a rebirth group applies. |
+| [`gameDataDir`](../../server/internal/world/gameini.go#L17)<br>`func gameDataDir() string` | See the source definition and the subsystem ownership contract. |
+| [`iniFile`](../../server/internal/world/gameini.go#L19)<br>`type iniFile` | See the source definition and the subsystem ownership contract. |
+| [`readIni`](../../server/internal/world/gameini.go#L21)<br>`func readIni(path string) (iniFile, error)` | See the source definition and the subsystem ownership contract. |
+| [`numberRE`](../../server/internal/world/gameini.go#L24)<br>`var numberRE` | numbers extracts every number in s ("(1, 577.98, 78.56, 1762.12)"). |
+| [`numbers`](../../server/internal/world/gameini.go#L26)<br>`func numbers(s string) []float64` | See the source definition and the subsystem ownership contract. |
+| [`MapPos`](../../server/internal/world/gameini.go#L37)<br>`type MapPos` | MapPos is a map and position from the original configs. |
+| [`ZoneConfig`](../../server/internal/world/gameini.go#L43)<br>`type ZoneConfig` | ZoneConfig holds the runtime rules for one map. |
+| [`MapConfig`](../../server/internal/world/gameini.go#L64)<br>`type MapConfig` | MapConfig holds the map definitions and race starts loaded at boot. |
+| [`mapConfig`](../../server/internal/world/gameini.go#L71)<br>`var mapConfig` | See the source definition and the subsystem ownership contract. |
+| [`loadMapProperties`](../../server/internal/world/gameini.go#L77)<br>`func loadMapProperties(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
+| [`buildMapProperties`](../../server/internal/world/gameini.go#L92)<br>`func buildMapProperties(c maprules.Catalog) (MapConfig, error)` | See the source definition and the subsystem ownership contract. |
+| [`LoadGameConfig`](../../server/internal/world/gameini.go#L127)<br>`func LoadGameConfig(log *logx.Logger) error` | LoadGameConfig loads the original PS_Game ini files from data/game/. |
+| [`rebirthPosition`](../../server/internal/world/gameini.go#L165)<br>`func rebirthPosition(mapID uint16, faction uint8) (MapPos, bool)` | rebirthPosition is where a character of faction revives on mapID, per CMap::LoadConfig: Light and Fury have independent destinations. |
+| [`bindPosition`](../../server/internal/world/gameini.go#L183)<br>`func bindPosition(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32)` | bindPosition is CMap::GetBindPos 0x004295a0: the configured faction rebirth point when its map exists and the point lies inside it (0.9 above), else a random point of the nearest svmap rebirth group of this map, else the current position (zeroed if outside the map). |
+| [`bindPositionFound`](../../server/internal/world/gameini.go#L190)<br>`func bindPositionFound(mapID uint16, faction uint8, x, y, z float32) (uint16, float32, float32, float32, bool)` | bindPositionFound is bindPosition with GetBindPos's result: false when neither a configured point nor a rebirth group applies. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -1743,20 +1743,20 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 
 [server/internal/world/itemboxes.go](../../server/internal/world/itemboxes.go#L1)
 
-Direct GX dependencies: `internal/itemboxes`, `internal/worlddrops`, `server/internal/db`, `server/internal/logx`.
+Direct GX dependencies: `internal/catalogfiles`, `internal/itemboxes`, `internal/worlddrops`, `server/internal/db`, `server/internal/logx`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`specialItemBox`](../../server/internal/world/itemboxes.go#L16)<br>`const specialItemBox = 42` | See the source definition and the subsystem ownership contract. |
-| [`boxReward`](../../server/internal/world/itemboxes.go#L18)<br>`type boxReward` | See the source definition and the subsystem ownership contract. |
-| [`itemBox`](../../server/internal/world/itemboxes.go#L23)<br>`type itemBox` | See the source definition and the subsystem ownership contract. |
-| [`itemBoxCatalog`](../../server/internal/world/itemboxes.go#L29)<br>`var itemBoxCatalog atomic.Pointer[map[int16]itemBox]` | See the source definition and the subsystem ownership contract. |
-| [`loadItemBoxes`](../../server/internal/world/itemboxes.go#L31)<br>`func loadItemBoxes(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
-| [`compileItemBoxes`](../../server/internal/world/itemboxes.go#L48)<br>`func compileItemBoxes(boxes []itemboxes.Box, defs *db.Defs, log logPrinter) map[int16]itemBox` | See the source definition and the subsystem ownership contract. |
-| [`roll`](../../server/internal/world/itemboxes.go#L90)<br>`func (b itemBox) roll(draw func(uint64) uint64, award func(*db.ItemDef))` | See the source definition and the subsystem ownership contract. |
-| [`boxItem`](../../server/internal/world/itemboxes.go#L109)<br>`func boxItem(def *db.ItemDef) db.Item` | See the source definition and the subsystem ownership contract. |
-| [`canOpen`](../../server/internal/world/itemboxes.go#L113)<br>`func (b itemBox) canOpen(items []db.Item) bool` | See the source definition and the subsystem ownership contract. |
-| [`openItemBox`](../../server/internal/world/itemboxes.go#L155)<br>`func (s *Session) openItemBox(slot int, index int16) bool` | See the source definition and the subsystem ownership contract. |
+| [`specialItemBox`](../../server/internal/world/itemboxes.go#L17)<br>`const specialItemBox = 42` | See the source definition and the subsystem ownership contract. |
+| [`boxReward`](../../server/internal/world/itemboxes.go#L19)<br>`type boxReward` | See the source definition and the subsystem ownership contract. |
+| [`itemBox`](../../server/internal/world/itemboxes.go#L24)<br>`type itemBox` | See the source definition and the subsystem ownership contract. |
+| [`itemBoxCatalog`](../../server/internal/world/itemboxes.go#L30)<br>`var itemBoxCatalog atomic.Pointer[map[int16]itemBox]` | See the source definition and the subsystem ownership contract. |
+| [`loadItemBoxes`](../../server/internal/world/itemboxes.go#L32)<br>`func loadItemBoxes(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
+| [`compileItemBoxes`](../../server/internal/world/itemboxes.go#L43)<br>`func compileItemBoxes(boxes []itemboxes.Box, defs *db.Defs, log logPrinter) map[int16]itemBox` | See the source definition and the subsystem ownership contract. |
+| [`roll`](../../server/internal/world/itemboxes.go#L85)<br>`func (b itemBox) roll(draw func(uint64) uint64, award func(*db.ItemDef))` | See the source definition and the subsystem ownership contract. |
+| [`boxItem`](../../server/internal/world/itemboxes.go#L104)<br>`func boxItem(def *db.ItemDef) db.Item` | See the source definition and the subsystem ownership contract. |
+| [`canOpen`](../../server/internal/world/itemboxes.go#L108)<br>`func (b itemBox) canOpen(items []db.Item) bool` | See the source definition and the subsystem ownership contract. |
+| [`openItemBox`](../../server/internal/world/itemboxes.go#L150)<br>`func (s *Session) openItemBox(slot int, index int16) bool` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -1835,7 +1835,7 @@ Direct GX dependencies: `server/internal/db`.
 
 [server/internal/world/killcount.go](../../server/internal/world/killcount.go#L1)
 
-Direct GX dependencies: `internal/blessingrules`, `internal/proto`, `server/internal/db`, `server/internal/logx`, `server/internal/packet`.
+Direct GX dependencies: `internal/catalogfiles`, `internal/proto`, `server/internal/db`, `server/internal/logx`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
@@ -1849,26 +1849,26 @@ Direct GX dependencies: `internal/blessingrules`, `internal/proto`, `server/inte
 | [`kcTiers`](../../server/internal/world/killcount.go#L72)<br>`var kcTiers []kcTier` | See the source definition and the subsystem ownership contract. |
 | [`kcWorld`](../../server/internal/world/killcount.go#L73)<br>`var kcWorld` | See the source definition and the subsystem ownership contract. |
 | [`loadKillStatus`](../../server/internal/world/killcount.go#L77)<br>`func loadKillStatus(log *logx.Logger) error` | loadKillStatus is CGameData::LoadKCStatus. |
-| [`kcTierFor`](../../server/internal/world/killcount.go#L103)<br>`func kcTierFor(count uint32) int` | kcTierFor is CGameData::GetKCStatusByCount (-1 below the first tier). |
-| [`kcMaxKill`](../../server/internal/world/killcount.go#L113)<br>`func kcMaxKill() uint32` | See the source definition and the subsystem ownership contract. |
-| [`setKillCountLocked`](../../server/internal/world/killcount.go#L121)<br>`func setKillCountLocked(c int, count uint32, now time.Time)` | setKillCountLocked is CWorld::SetKillCount / InitKillCount for c. |
-| [`InitKillCount`](../../server/internal/world/killcount.go#L136)<br>`func InitKillCount(log *logx.Logger)` | InitKillCount loads the saved counts at world start. |
-| [`AddKillCount`](../../server/internal/world/killcount.go#L150)<br>`func AddKillCount(c uint8, n uint32, log logPrinter)` | AddKillCount is CWorld::AddKillCount for country c. |
-| [`TickKillCount`](../../server/internal/world/killcount.go#L194)<br>`func TickKillCount(now time.Time, log logPrinter)` | TickKillCount is CWorld::UpdateKillCount. |
-| [`kcSave`](../../server/internal/world/killcount.go#L229)<br>`func kcSave(light, dark uint32, log logPrinter)` | kcSave stores both counts; without a WorldInfo row (the world calendar creates it at start) it creates the row first. |
-| [`kcStore`](../../server/internal/world/killcount.go#L236)<br>`var kcStore` | kcStore is the storage step (tests replace it). |
-| [`kcBroadcast`](../../server/internal/world/killcount.go#L247)<br>`func kcBroadcast(c int, snapshot bool)` | kcBroadcast sends the native country count and, on state changes, the GX snapshot. |
-| [`kcApplyCountry`](../../server/internal/world/killcount.go#L272)<br>`func kcApplyCountry(c int)` | kcApplyCountry is ApplyKillCount: every user of c refreshes its stats. |
-| [`buildKCStatus`](../../server/internal/world/killcount.go#L281)<br>`func buildKCStatus(c uint8) []byte` | buildKCStatus is CUser::SendKCStatus (0x0211). |
-| [`buildBlessingSnapshot`](../../server/internal/world/killcount.go#L299)<br>`func buildBlessingSnapshot(c uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`blessingSnapshotLocked`](../../server/internal/world/killcount.go#L305)<br>`func blessingSnapshotLocked(c uint8, entry bool) []byte` | See the source definition and the subsystem ownership contract. |
-| [`kcStatus`](../../server/internal/world/killcount.go#L339)<br>`func kcStatus(c uint8) [kcTypes]int32` | kcStatus is the country's current tier types (zero below the first). |
-| [`kcAbility`](../../server/internal/world/killcount.go#L349)<br>`var kcAbility` | kcAbility maps the flat KC types onto SetSkillAbility kinds (same field). |
-| [`applyKCStatus`](../../server/internal/world/killcount.go#L352)<br>`func applyKCStatus(e *EquipmentStats, c uint8)` | applyKCStatus adds the country tier's user types to the stats. |
-| [`kcPercent`](../../server/internal/world/killcount.go#L366)<br>`func kcPercent(base uint32, v int32) uint32` | kcPercent is UpdateKCStatus' (int)((float)(base * value) * 0.01). |
-| [`kcWorldType`](../../server/internal/world/killcount.go#L375)<br>`func kcWorldType(c uint8, typ int) int32` | kcWorldType is a country-wide type (24 gem chance, 25 exp loss cut). |
-| [`SubKillCount`](../../server/internal/world/killcount.go#L379)<br>`func SubKillCount(c uint8, n uint32, log logPrinter)` | SubKillCount is the obelisk capture debit. Active blessing freezes both countries, including subtraction; counts cannot wrap below zero. |
-| [`addKillCountBatch`](../../server/internal/world/killcount.go#L408)<br>`func addKillCountBatch(country uint8, count uint32, log logPrinter)` | Keep threshold/hold semantics identical to individual kill credits while reducing a burst to at most one update per country tier. |
+| [`kcTierFor`](../../server/internal/world/killcount.go#L97)<br>`func kcTierFor(count uint32) int` | kcTierFor is CGameData::GetKCStatusByCount (-1 below the first tier). |
+| [`kcMaxKill`](../../server/internal/world/killcount.go#L107)<br>`func kcMaxKill() uint32` | See the source definition and the subsystem ownership contract. |
+| [`setKillCountLocked`](../../server/internal/world/killcount.go#L115)<br>`func setKillCountLocked(c int, count uint32, now time.Time)` | setKillCountLocked is CWorld::SetKillCount / InitKillCount for c. |
+| [`InitKillCount`](../../server/internal/world/killcount.go#L130)<br>`func InitKillCount(log *logx.Logger)` | InitKillCount loads the saved counts at world start. |
+| [`AddKillCount`](../../server/internal/world/killcount.go#L144)<br>`func AddKillCount(c uint8, n uint32, log logPrinter)` | AddKillCount is CWorld::AddKillCount for country c. |
+| [`TickKillCount`](../../server/internal/world/killcount.go#L188)<br>`func TickKillCount(now time.Time, log logPrinter)` | TickKillCount is CWorld::UpdateKillCount. |
+| [`kcSave`](../../server/internal/world/killcount.go#L223)<br>`func kcSave(light, dark uint32, log logPrinter)` | kcSave stores both counts; without a WorldInfo row (the world calendar creates it at start) it creates the row first. |
+| [`kcStore`](../../server/internal/world/killcount.go#L230)<br>`var kcStore` | kcStore is the storage step (tests replace it). |
+| [`kcBroadcast`](../../server/internal/world/killcount.go#L241)<br>`func kcBroadcast(c int, snapshot bool)` | kcBroadcast sends the native country count and, on state changes, the GX snapshot. |
+| [`kcApplyCountry`](../../server/internal/world/killcount.go#L266)<br>`func kcApplyCountry(c int)` | kcApplyCountry is ApplyKillCount: every user of c refreshes its stats. |
+| [`buildKCStatus`](../../server/internal/world/killcount.go#L275)<br>`func buildKCStatus(c uint8) []byte` | buildKCStatus is CUser::SendKCStatus (0x0211). |
+| [`buildBlessingSnapshot`](../../server/internal/world/killcount.go#L293)<br>`func buildBlessingSnapshot(c uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`blessingSnapshotLocked`](../../server/internal/world/killcount.go#L299)<br>`func blessingSnapshotLocked(c uint8, entry bool) []byte` | See the source definition and the subsystem ownership contract. |
+| [`kcStatus`](../../server/internal/world/killcount.go#L333)<br>`func kcStatus(c uint8) [kcTypes]int32` | kcStatus is the country's current tier types (zero below the first). |
+| [`kcAbility`](../../server/internal/world/killcount.go#L343)<br>`var kcAbility` | kcAbility maps the flat KC types onto SetSkillAbility kinds (same field). |
+| [`applyKCStatus`](../../server/internal/world/killcount.go#L346)<br>`func applyKCStatus(e *EquipmentStats, c uint8)` | applyKCStatus adds the country tier's user types to the stats. |
+| [`kcPercent`](../../server/internal/world/killcount.go#L360)<br>`func kcPercent(base uint32, v int32) uint32` | kcPercent is UpdateKCStatus' (int)((float)(base * value) * 0.01). |
+| [`kcWorldType`](../../server/internal/world/killcount.go#L369)<br>`func kcWorldType(c uint8, typ int) int32` | kcWorldType is a country-wide type (24 gem chance, 25 exp loss cut). |
+| [`SubKillCount`](../../server/internal/world/killcount.go#L373)<br>`func SubKillCount(c uint8, n uint32, log logPrinter)` | SubKillCount is the obelisk capture debit. Active blessing freezes both countries, including subtraction; counts cannot wrap below zero. |
+| [`addKillCountBatch`](../../server/internal/world/killcount.go#L402)<br>`func addKillCountBatch(country uint8, count uint32, log logPrinter)` | Keep threshold/hold semantics identical to individual kill credits while reducing a burst to at most one update per country tier. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -2104,14 +2104,14 @@ type mobAICommand struct {
 
 [server/internal/world/mob_ai_speech.go](../../server/internal/world/mob_ai_speech.go#L1)
 
-Direct GX dependencies: `internal/mobaimessages`, `server/internal/db`, `server/internal/packet`.
+Direct GX dependencies: `internal/catalogfiles`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`mobAIStrings`](../../server/internal/world/mob_ai_speech.go#L12)<br>`var mobAIStrings` | See the source definition and the subsystem ownership contract. |
-| [`loadMobAIStrings`](../../server/internal/world/mob_ai_speech.go#L14)<br>`func loadMobAIStrings() error` | See the source definition and the subsystem ownership contract. |
-| [`buildMobAIMessage`](../../server/internal/world/mob_ai_speech.go#L33)<br>`func buildMobAIMessage(owner uint32, index uint16, text string, indexed bool) []byte` | See the source definition and the subsystem ownership contract. |
-| [`publishMobAISpeech`](../../server/internal/world/mob_ai_speech.go#L52)<br>`func publishMobAISpeech(c mobAICommand)` | See the source definition and the subsystem ownership contract. |
+| [`mobAIStrings`](../../server/internal/world/mob_ai_speech.go#L11)<br>`var mobAIStrings` | See the source definition and the subsystem ownership contract. |
+| [`loadMobAIStrings`](../../server/internal/world/mob_ai_speech.go#L13)<br>`func loadMobAIStrings() error` | See the source definition and the subsystem ownership contract. |
+| [`buildMobAIMessage`](../../server/internal/world/mob_ai_speech.go#L26)<br>`func buildMobAIMessage(owner uint32, index uint16, text string, indexed bool) []byte` | See the source definition and the subsystem ownership contract. |
+| [`publishMobAISpeech`](../../server/internal/world/mob_ai_speech.go#L45)<br>`func publishMobAISpeech(c mobAICommand)` | See the source definition and the subsystem ownership contract. |
 
 ### mob_navigation.go
 
@@ -2279,20 +2279,20 @@ type movementRuneCast struct {
 
 [server/internal/world/notices.go](../../server/internal/world/notices.go#L1)
 
-Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal/logx`, `server/internal/packet`.
+Direct GX dependencies: `internal/catalogfiles`, `internal/proto`, `server/internal/logx`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`noticeCatalog`](../../server/internal/world/notices.go#L15)<br>`var noticeCatalog []db.ServerNotice` | See the source definition and the subsystem ownership contract. |
-| [`loadServerNotices`](../../server/internal/world/notices.go#L17)<br>`func loadServerNotices(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
-| [`noticeHour`](../../server/internal/world/notices.go#L36)<br>`type noticeHour` | See the source definition and the subsystem ownership contract. |
-| [`parseNoticeHour`](../../server/internal/world/notices.go#L38)<br>`func parseNoticeHour(text string) (noticeHour, bool)` | See the source definition and the subsystem ownership contract. |
-| [`scheduledNotice`](../../server/internal/world/notices.go#L50)<br>`type scheduledNotice` | See the source definition and the subsystem ownership contract. |
-| [`scheduleNotices`](../../server/internal/world/notices.go#L57)<br>`func scheduleNotices(rows []db.ServerNotice, start time.Time) []scheduledNotice` | See the source definition and the subsystem ownership contract. |
-| [`due`](../../server/internal/world/notices.go#L80)<br>`func (n *scheduledNotice) due(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
-| [`validNoticeMessage`](../../server/internal/world/notices.go#L101)<br>`func validNoticeMessage(message string) bool` | See the source definition and the subsystem ownership contract. |
-| [`broadcastNotice`](../../server/internal/world/notices.go#L106)<br>`func broadcastNotice(message string)` | See the source definition and the subsystem ownership contract. |
-| [`gmNotice`](../../server/internal/world/notices.go#L115)<br>`func (s *Session) gmNotice(message string) error` | See the source definition and the subsystem ownership contract. |
+| [`noticeCatalog`](../../server/internal/world/notices.go#L16)<br>`var noticeCatalog []catalogfiles.Notice` | See the source definition and the subsystem ownership contract. |
+| [`loadServerNotices`](../../server/internal/world/notices.go#L18)<br>`func loadServerNotices(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
+| [`noticeHour`](../../server/internal/world/notices.go#L37)<br>`type noticeHour` | See the source definition and the subsystem ownership contract. |
+| [`parseNoticeHour`](../../server/internal/world/notices.go#L39)<br>`func parseNoticeHour(text string) (noticeHour, bool)` | See the source definition and the subsystem ownership contract. |
+| [`scheduledNotice`](../../server/internal/world/notices.go#L51)<br>`type scheduledNotice` | See the source definition and the subsystem ownership contract. |
+| [`scheduleNotices`](../../server/internal/world/notices.go#L58)<br>`func scheduleNotices(rows []catalogfiles.Notice, start time.Time) []scheduledNotice` | See the source definition and the subsystem ownership contract. |
+| [`due`](../../server/internal/world/notices.go#L81)<br>`func (n *scheduledNotice) due(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
+| [`validNoticeMessage`](../../server/internal/world/notices.go#L102)<br>`func validNoticeMessage(message string) bool` | See the source definition and the subsystem ownership contract. |
+| [`broadcastNotice`](../../server/internal/world/notices.go#L107)<br>`func broadcastNotice(message string)` | See the source definition and the subsystem ownership contract. |
+| [`gmNotice`](../../server/internal/world/notices.go#L116)<br>`func (s *Session) gmNotice(message string) error` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -2372,7 +2372,7 @@ type npcTick struct {
 
 [server/internal/world/npcquest.go](../../server/internal/world/npcquest.go#L1)
 
-Direct GX dependencies: `internal/npcquest`, `internal/proto`, `server/internal/db`, `server/internal/logx`, `server/internal/packet`.
+Direct GX dependencies: `internal/catalogfiles`, `internal/npcquest`, `internal/proto`, `server/internal/db`, `server/internal/logx`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
@@ -2384,18 +2384,18 @@ Direct GX dependencies: `internal/npcquest`, `internal/proto`, `server/internal/
 | [`npcDef`](../../server/internal/world/npcquest.go#L33)<br>`type npcDef` | See the source definition and the subsystem ownership contract. |
 | [`npcDefs`](../../server/internal/world/npcquest.go#L46)<br>`var npcDefs [npcTypeCount][]npcDef` | See the source definition and the subsystem ownership contract. |
 | [`loadNpcQuest`](../../server/internal/world/npcquest.go#L48)<br>`func loadNpcQuest(log *logx.Logger) error` | See the source definition and the subsystem ownership contract. |
-| [`buildNPCQuest`](../../server/internal/world/npcquest.go#L75)<br>`func buildNPCQuest(c npcquest.Catalog) ([npcTypeCount][]npcDef, []questDef, map[[2]uint8]questItemLink)` | See the source definition and the subsystem ownership contract. |
-| [`findNpcDef`](../../server/internal/world/npcquest.go#L128)<br>`func findNpcDef(npcType uint8, typeID uint16) *npcDef` | findNpcDef is GetNpc (0x0041d640): by type and row. |
-| [`npcOnMap`](../../server/internal/world/npcquest.go#L135)<br>`func npcOnMap(mapID uint16, id uint32) (MapNpc, bool)` | See the source definition and the subsystem ownership contract. |
-| [`buildShopBuyResult`](../../server/internal/world/npcquest.go#L144)<br>`func buildShopBuyResult(result, bag, slot, itemType, typeID uint8, count uint16, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`handleShopBuy`](../../server/internal/world/npcquest.go#L155)<br>`func (s *Session) handleShopBuy(p []byte)` | handleShopBuy (0x0702): npc id, item index, count; CUser::PacketShop (0x0046af10). Result 0 bought, 1 not enough gold, 2 no room. A stack must take the whole purchase; otherwise the first free slot is used. |
-| [`planShopBuy`](../../server/internal/world/npcquest.go#L156)<br>`func (s *Session) planShopBuy(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`buildGatekeeperResult`](../../server/internal/world/npcquest.go#L242)<br>`func buildGatekeeperResult(ok bool, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`handleGatekeeper`](../../server/internal/world/npcquest.go#L252)<br>`func (s *Session) handleGatekeeper(p []byte)` | handleGatekeeper (0x020C): npc id, destination 0-2. A gatekeeper of the character's faction (or neutral) within 30 units moves it for the destination's fee. |
-| [`npcUseMu`](../../server/internal/world/npcquest.go#L324)<br>`var npcUseMu sync.Mutex` | NPC usage (CUser::PacketNpc 0x00467510): 0x0E04 records the NPC a player is talking to; an NPC in use stops patrolling. |
-| [`npcUsers`](../../server/internal/world/npcquest.go#L325)<br>`var npcUsers` | NPC usage (CUser::PacketNpc 0x00467510): 0x0E04 records the NPC a player is talking to; an NPC in use stops patrolling. |
-| [`useNpc`](../../server/internal/world/npcquest.go#L328)<br>`func (s *Session) useNpc(id uint32)` | See the source definition and the subsystem ownership contract. |
-| [`npcInUse`](../../server/internal/world/npcquest.go#L352)<br>`func npcInUse(id uint32) bool` | See the source definition and the subsystem ownership contract. |
+| [`buildNPCQuest`](../../server/internal/world/npcquest.go#L61)<br>`func buildNPCQuest(c npcquest.Catalog) ([npcTypeCount][]npcDef, []questDef, map[[2]uint8]questItemLink)` | See the source definition and the subsystem ownership contract. |
+| [`findNpcDef`](../../server/internal/world/npcquest.go#L114)<br>`func findNpcDef(npcType uint8, typeID uint16) *npcDef` | findNpcDef is GetNpc (0x0041d640): by type and row. |
+| [`npcOnMap`](../../server/internal/world/npcquest.go#L121)<br>`func npcOnMap(mapID uint16, id uint32) (MapNpc, bool)` | See the source definition and the subsystem ownership contract. |
+| [`buildShopBuyResult`](../../server/internal/world/npcquest.go#L130)<br>`func buildShopBuyResult(result, bag, slot, itemType, typeID uint8, count uint16, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`handleShopBuy`](../../server/internal/world/npcquest.go#L141)<br>`func (s *Session) handleShopBuy(p []byte)` | handleShopBuy (0x0702): npc id, item index, count; CUser::PacketShop (0x0046af10). Result 0 bought, 1 not enough gold, 2 no room. A stack must take the whole purchase; otherwise the first free slot is used. |
+| [`planShopBuy`](../../server/internal/world/npcquest.go#L142)<br>`func (s *Session) planShopBuy(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`buildGatekeeperResult`](../../server/internal/world/npcquest.go#L228)<br>`func buildGatekeeperResult(ok bool, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`handleGatekeeper`](../../server/internal/world/npcquest.go#L238)<br>`func (s *Session) handleGatekeeper(p []byte)` | handleGatekeeper (0x020C): npc id, destination 0-2. A gatekeeper of the character's faction (or neutral) within 30 units moves it for the destination's fee. |
+| [`npcUseMu`](../../server/internal/world/npcquest.go#L310)<br>`var npcUseMu sync.Mutex` | NPC usage (CUser::PacketNpc 0x00467510): 0x0E04 records the NPC a player is talking to; an NPC in use stops patrolling. |
+| [`npcUsers`](../../server/internal/world/npcquest.go#L311)<br>`var npcUsers` | NPC usage (CUser::PacketNpc 0x00467510): 0x0E04 records the NPC a player is talking to; an NPC in use stops patrolling. |
+| [`useNpc`](../../server/internal/world/npcquest.go#L314)<br>`func (s *Session) useNpc(id uint32)` | See the source definition and the subsystem ownership contract. |
+| [`npcInUse`](../../server/internal/world/npcquest.go#L338)<br>`func npcInUse(id uint32) bool` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -4017,22 +4017,22 @@ Direct GX dependencies: `server/internal/db`.
 
 [server/internal/world/teleport_rune.go](../../server/internal/world/teleport_rune.go#L1)
 
-Direct GX dependencies: `server/internal/db`.
+Direct GX dependencies: `internal/catalogfiles`, `server/internal/db`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`specialTeleportRune`](../../server/internal/world/teleport_rune.go#L9)<br>`const specialTeleportRune = 47` | See the source definition and the subsystem ownership contract. |
-| [`guildHouseCreateType`](../../server/internal/world/teleport_rune.go#L10)<br>`const guildHouseCreateType = "H"` | See the source definition and the subsystem ownership contract. |
-| [`teleportRunes`](../../server/internal/world/teleport_rune.go#L12)<br>`var teleportRunes map[int16][2]db.TeleportRuneDestination` | See the source definition and the subsystem ownership contract. |
-| [`teleportRuneCast`](../../server/internal/world/teleport_rune.go#L14)<br>`type teleportRuneCast` | See the source definition and the subsystem ownership contract. |
-| [`loadTeleportRunes`](../../server/internal/world/teleport_rune.go#L20)<br>`func loadTeleportRunes() error` | See the source definition and the subsystem ownership contract. |
-| [`canCastTeleportRune`](../../server/internal/world/teleport_rune.go#L29)<br>`func (s *Session) canCastTeleportRune() bool` | See the source definition and the subsystem ownership contract. |
-| [`activeGuildHouse`](../../server/internal/world/teleport_rune.go#L41)<br>`func (s *Session) activeGuildHouse() uint32` | See the source definition and the subsystem ownership contract. |
-| [`resolveTeleportRune`](../../server/internal/world/teleport_rune.go#L55)<br>`func (s *Session) resolveTeleportRune(index int16) (uint16, [3]float32, uint32, string)` | A configured house destination automatically requires the user's own operational house, regardless of which item references the destination. |
-| [`refuseTeleportRune`](../../server/internal/world/teleport_rune.go#L87)<br>`func (s *Session) refuseTeleportRune(message string)` | See the source definition and the subsystem ownership contract. |
-| [`beginTeleportRune`](../../server/internal/world/teleport_rune.go#L94)<br>`func (s *Session) beginTeleportRune(i int, def *db.ItemDef)` | See the source definition and the subsystem ownership contract. |
-| [`cancelTeleportRune`](../../server/internal/world/teleport_rune.go#L114)<br>`func (s *Session) cancelTeleportRune()` | See the source definition and the subsystem ownership contract. |
-| [`tickTeleportRune`](../../server/internal/world/teleport_rune.go#L125)<br>`func (s *Session) tickTeleportRune(now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`specialTeleportRune`](../../server/internal/world/teleport_rune.go#L11)<br>`const specialTeleportRune = 47` | See the source definition and the subsystem ownership contract. |
+| [`guildHouseCreateType`](../../server/internal/world/teleport_rune.go#L12)<br>`const guildHouseCreateType = "H"` | See the source definition and the subsystem ownership contract. |
+| [`teleportRunes`](../../server/internal/world/teleport_rune.go#L14)<br>`var teleportRunes map[int16][2]db.TeleportRuneDestination` | See the source definition and the subsystem ownership contract. |
+| [`teleportRuneCast`](../../server/internal/world/teleport_rune.go#L16)<br>`type teleportRuneCast` | See the source definition and the subsystem ownership contract. |
+| [`loadTeleportRunes`](../../server/internal/world/teleport_rune.go#L22)<br>`func loadTeleportRunes() error` | See the source definition and the subsystem ownership contract. |
+| [`canCastTeleportRune`](../../server/internal/world/teleport_rune.go#L39)<br>`func (s *Session) canCastTeleportRune() bool` | See the source definition and the subsystem ownership contract. |
+| [`activeGuildHouse`](../../server/internal/world/teleport_rune.go#L51)<br>`func (s *Session) activeGuildHouse() uint32` | See the source definition and the subsystem ownership contract. |
+| [`resolveTeleportRune`](../../server/internal/world/teleport_rune.go#L65)<br>`func (s *Session) resolveTeleportRune(index int16) (uint16, [3]float32, uint32, string)` | A configured house destination automatically requires the user's own operational house, regardless of which item references the destination. |
+| [`refuseTeleportRune`](../../server/internal/world/teleport_rune.go#L97)<br>`func (s *Session) refuseTeleportRune(message string)` | See the source definition and the subsystem ownership contract. |
+| [`beginTeleportRune`](../../server/internal/world/teleport_rune.go#L104)<br>`func (s *Session) beginTeleportRune(i int, def *db.ItemDef)` | See the source definition and the subsystem ownership contract. |
+| [`cancelTeleportRune`](../../server/internal/world/teleport_rune.go#L124)<br>`func (s *Session) cancelTeleportRune()` | See the source definition and the subsystem ownership contract. |
+| [`tickTeleportRune`](../../server/internal/world/teleport_rune.go#L135)<br>`func (s *Session) tickTeleportRune(now time.Time)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 

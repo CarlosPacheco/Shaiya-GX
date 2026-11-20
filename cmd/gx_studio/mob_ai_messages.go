@@ -10,7 +10,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
 	"github.com/Spelunkern/Shaiya-GX/internal/studio"
 )
 
@@ -25,9 +24,9 @@ func (e *editor) mobAIMessageCatalog() {
 	e.status = wrapped("")
 	catalog := e.mobAIMessages
 	draft := slices.Clone(catalog.Messages)
-	e.databaseDraftDirty = func() bool { return !slices.Equal(draft, catalog.Messages) }
+	e.serverDraftDirty = func() bool { return !slices.Equal(draft, catalog.Messages) }
 	rows := container.NewVBox()
-	save := widget.NewButtonWithIcon("Save database", theme.DocumentSaveIcon(), func() {
+	save := widget.NewButtonWithIcon("Save server file", theme.DocumentSaveIcon(), func() {
 		if e.busy {
 			return
 		}
@@ -39,7 +38,7 @@ func (e *editor) mobAIMessageCatalog() {
 					rows.Show()
 					return
 				}
-				e.mobAIMessages = &studio.MobAIMessageCatalog{DBPath: catalog.DBPath, Messages: pending}
+				e.mobAIMessages = &studio.MobAIMessageCatalog{DBPath: catalog.DBPath, File: catalog.File, Messages: pending}
 				e.mobAIMessageCatalog()
 				e.status.SetText("Saved. Restart GX World to apply. Backup · " + backup)
 			}
@@ -54,7 +53,7 @@ func (e *editor) mobAIMessageCatalog() {
 		entry := inspectorEntry(message.Text)
 		entry.OnChanged = func(text string) {
 			draft[i].Text = text
-			if e.databaseDraftDirty() {
+			if e.serverDraftDirty() {
 				save.Enable()
 			} else {
 				save.Disable()
@@ -70,7 +69,7 @@ func (e *editor) mobAIMessageCatalog() {
 	top := container.NewVBox(
 		container.NewHBox(widget.NewButton("Open another installation", func() { e.leave(e.start) }),
 			e.switcher(studio.MobAIMessages), save),
-		wrapped(catalog.DBPath), wrapped(mobaimessages.Table),
+		wrapped(catalog.File.Path),
 		container.NewHBox(fieldHeading("Message ID", "Index"), fieldHeading("Message", "Text")),
 		widget.NewSeparator(),
 	)

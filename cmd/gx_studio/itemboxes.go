@@ -26,10 +26,10 @@ func (e *editor) itemBoxCatalog() {
 		chance   bool
 	}
 	invalid := map[entryKey]string{}
-	e.databaseDraftDirty = func() bool { return len(invalid) > 0 || !itemboxes.Equal(draft, catalog.Rules) }
+	e.serverDraftDirty = func() bool { return len(invalid) > 0 || !itemboxes.Equal(draft, catalog.Rules) }
 	e.status = wrapped("")
 	details := container.NewStack(wrapped("Select a box or add an index."))
-	save := widget.NewButtonWithIcon("Save database", theme.DocumentSaveIcon(), func() {
+	save := widget.NewButtonWithIcon("Save server file", theme.DocumentSaveIcon(), func() {
 		if e.busy {
 			return
 		}
@@ -42,7 +42,7 @@ func (e *editor) itemBoxCatalog() {
 					details.Show()
 					return
 				}
-				e.itemBoxes = &studio.ItemBoxCatalog{DBPath: catalog.DBPath, Rules: pending}
+				e.itemBoxes = &studio.ItemBoxCatalog{DBPath: catalog.DBPath, File: catalog.File, Rules: pending}
 				e.itemBoxCatalog()
 				e.status.SetText("Saved. Restart GX World to apply. Backup · " + backup)
 			}
@@ -57,7 +57,7 @@ func (e *editor) itemBoxCatalog() {
 			e.status.SetText(err.Error())
 		} else {
 			e.status.SetText("")
-			if e.databaseDraftDirty() {
+			if e.serverDraftDirty() {
 				save.Enable()
 			}
 		}
@@ -159,7 +159,7 @@ func (e *editor) itemBoxCatalog() {
 		if b.BoxType == itemboxes.Independent {
 			chanceLabel = "Chance (%)"
 		}
-		rows.Add(container.NewGridWithColumns(4, fieldHeading(itemLabel, "Item"), fieldHeading(chanceLabel, "Chance"),
+		rows.Add(container.NewGridWithColumns(4, fieldHeading(itemLabel, "RewardN · item"), fieldHeading(chanceLabel, "RewardN · chance"),
 			widget.NewLabel("Effective chance"), widget.NewLabel("Position")))
 		for j, r := range b.Rewards {
 			item := input(entryKey{id, j, false}, strconv.FormatInt(int64(r.Item), 10), func(text string) bool {
@@ -235,7 +235,7 @@ func (e *editor) itemBoxCatalog() {
 				refreshSave()
 			}, e.window)
 		})
-		editor := container.NewVBox(fieldHeading(fmt.Sprintf("Box %d (ReqVg)", id), "Index / BoxIndex"),
+		editor := container.NewVBox(fieldHeading(fmt.Sprintf("Box %d (ReqVg)", id), fmt.Sprintf("[Box_%d]", id)),
 			fieldHeading("Internal description", "Description"), description,
 			container.NewGridWithColumns(2, container.NewVBox(fieldHeading("Roll mode", "BoxType"), roll), container.NewVBox(fieldHeading("Reward target", "ItemType"), target)),
 			container.NewHBox(addReward, deleteBox), rows)
@@ -248,7 +248,7 @@ func (e *editor) itemBoxCatalog() {
 		}
 	}
 	header := container.NewVBox(container.NewHBox(widget.NewButton("Open another installation", func() { e.leave(e.start) }), e.switcher(studio.ItemBoxes), save),
-		wrapped(catalog.DBPath), wrapped(itemboxes.Table+" · "+itemboxes.RewardsTable))
+		wrapped(catalog.File.Path))
 	split := container.NewHSplit(container.NewBorder(add, nil, nil, nil, list), details)
 	split.SetOffset(.29)
 	e.window.SetContent(container.NewPadded(container.NewBorder(header, e.status, nil, nil, split)))

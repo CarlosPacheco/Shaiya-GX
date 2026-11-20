@@ -105,10 +105,10 @@ fresh quote before opening a link/extract confirmation. Enchant attempts execute
 immediately; their success percentage is displayed above the action button.
 
 Forge costs use the native ReqIg table without Vg/level discounts or the old
-free-cost environment override. Enchant rules are stored in SQLite `PS_GameDefs_EnchantAttack` and
-`PS_GameDefs_EnchantDefense`. Each table has its own cap, set by its highest
-consecutive level starting at +1, with a maximum of +49. Shipped caps are
-+20 for both. Edit the Enchant catalog in GX Studio, then restart gx_world.
+free-cost environment override. GX World loads `ItemEnchant.ini` from `data/game`. The shipped
+cap is +20. `MaxLevel` configures both equipment types and
+`WeaponMaxLevel` or `DefenseMaxLevel` can override it up to +49.
+Restart GX World after editing the file in GX Studio.
 The client receives the server bonus tables for its tooltips. See the [feature wiki](wiki/README.md) for exact rules,
 item content fields, extraction, recreation and drop persistence.
 
@@ -124,7 +124,7 @@ used to reach that level. Restart GX World after editing the table.
 
 ## Global server notices
 
-`PS_GameDefs_ServerNotices` in SQLite stores `Index`, `Message`,
+`data/game/Notices.ini` uses `[Notice_N]` sections with `Message`,
 `Frequency` and `FixedHour1` through `FixedHour5`. GX World reads them at
 startup. All connected players receive each announcement in the system chat
 and the on-screen news panel, with the same sound as an altar notice.
@@ -134,10 +134,32 @@ and the on-screen news panel, with the same sound as an altar notice.
   manual use.
 - Fixed times use `day/hour/minute` in the server's local time zone, with
   Sunday = 0 through Saturday = 6. For example, `1/20/30` is Monday at 20:30.
-  Leave unused slots empty or NULL. One valid slot switches the row to fixed
+  Leave unused slots empty. One valid slot switches the row to fixed
   times. Duplicate slots send once, and invalid slots are ignored.
 - `/notice message` sends text immediately. `/notice index1` sends the
   configured message with index 1. Manual sends leave the schedule intact.
 
 The starter row sends `GX Automatic Notice - Test` every 60 minutes. Edit
-the runtime database and restart GX World to apply catalog changes.
+the INI and restart GX World to apply catalog changes.
+
+## File-backed game catalogs
+
+GX World reads the nine gameplay catalogs from `data/game` at startup.
+These files take precedence over the retired SQLite definition tables.
+Existing migration histories and rows are retained for upgrades and export.
+Use GX Studio for structured edits and verified file backups.
+
+To carry a customized SQLite catalog into a file-based installation, export
+from a verified SQLite backup into a new directory. Supply the matching
+server or client `NpcQuest.SData` to preserve its text and binary envelope.
+The optional historical `Map.ini` preserves its additional keys.
+
+```sh
+go run ./server/cmd/gx_export_catalogs \
+  -db /backups/rapture.sqlite -out /backups/exported-game \
+  -npc-template /current/data/Npc/NpcQuest.SData \
+  -mob-translations server/data/game/MobAIMessages.txt
+```
+
+Review the output and copy it into the target server's `data/game` folder
+before restarting GX World. Keep a copy of any existing server files.

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
+	"path/filepath"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/itemboxes"
 )
@@ -12,9 +14,17 @@ import (
 type ItemBoxCatalog struct {
 	DBPath string
 	Rules  []itemboxes.Box
+	File   *ServerFile
 }
 
 func OpenItemBoxes(ctx context.Context, path string) (*ItemBoxCatalog, error) {
+	if filepath.Base(path) == catalogfiles.ItemBoxes {
+		file, value, err := openServerCatalog(path, catalogfiles.ParseItemBoxes)
+		if err != nil {
+			return nil, err
+		}
+		return &ItemBoxCatalog{File: file, Rules: value}, nil
+	}
 	path, err := canonicalFile(path)
 	if err != nil {
 		return nil, err
@@ -32,6 +42,15 @@ func OpenItemBoxes(ctx context.Context, path string) (*ItemBoxCatalog, error) {
 }
 
 func SaveItemBoxes(ctx context.Context, root string, catalog *ItemBoxCatalog, rules []itemboxes.Box) (string, error) {
+	if catalog.File != nil {
+		if catalog.DBPath != "" {
+			if err := verifyBoxFileItems(ctx, catalog.DBPath, rules); err != nil {
+				return "", err
+			}
+		}
+		next := catalogfiles.EncodeItemBoxes(rules)
+		return saveServerCatalog(root, catalog.File, next, catalogfiles.ParseItemBoxes, func(v []itemboxes.Box) bool { return itemboxes.Equal(v, rules) })
+	}
 	if err := itemboxes.Validate(rules); err != nil {
 		return "", err
 	}
@@ -152,4 +171,18 @@ func validateBoxItems(ctx context.Context, tx *sql.Tx, boxes []itemboxes.Box) er
 		}
 	}
 	return nil
+}
+
+func verifyBoxFileItems(ctx context.Context, path string, boxes []itemboxes.Box) error {
+	db, err := openDB(ctx, path, "ro")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	return validateBoxItems(ctx, tx, boxes)
 }

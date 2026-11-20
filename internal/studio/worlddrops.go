@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
+	"path/filepath"
 	"slices"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/worlddrops"
@@ -12,9 +14,17 @@ import (
 type WorldDropCatalog struct {
 	DBPath string
 	Rules  []worlddrops.Rule
+	File   *ServerFile
 }
 
 func OpenWorldDrops(ctx context.Context, path string) (*WorldDropCatalog, error) {
+	if filepath.Base(path) == catalogfiles.WorldDrops {
+		file, value, err := openServerCatalog(path, catalogfiles.ParseWorldDrops)
+		if err != nil {
+			return nil, err
+		}
+		return &WorldDropCatalog{File: file, Rules: value}, nil
+	}
 	path, err := canonicalFile(path)
 	if err != nil {
 		return nil, err
@@ -32,6 +42,10 @@ func OpenWorldDrops(ctx context.Context, path string) (*WorldDropCatalog, error)
 }
 
 func SaveWorldDrops(ctx context.Context, root string, catalog *WorldDropCatalog, rules []worlddrops.Rule) (string, error) {
+	if catalog.File != nil {
+		next := catalogfiles.EncodeWorldDrops(rules)
+		return saveServerCatalog(root, catalog.File, next, catalogfiles.ParseWorldDrops, func(v []worlddrops.Rule) bool { return slices.Equal(v, rules) })
+	}
 	if err := worlddrops.Validate(rules); err != nil {
 		return "", err
 	}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -13,9 +15,17 @@ import (
 type BlessingCatalog struct {
 	DBPath string
 	Rules  blessingrules.Catalog
+	File   *ServerFile
 }
 
 func OpenBlessing(ctx context.Context, path string) (*BlessingCatalog, error) {
+	if filepath.Base(path) == catalogfiles.KillStatus {
+		file, value, err := openServerCatalog(path, catalogfiles.ParseKillStatus)
+		if err != nil {
+			return nil, err
+		}
+		return &BlessingCatalog{File: file, Rules: value}, nil
+	}
 	path, err := canonicalFile(path)
 	if err != nil {
 		return nil, err
@@ -33,6 +43,10 @@ func OpenBlessing(ctx context.Context, path string) (*BlessingCatalog, error) {
 }
 
 func SaveBlessing(ctx context.Context, root string, catalog *BlessingCatalog, rules blessingrules.Catalog) (string, error) {
+	if catalog.File != nil {
+		next := catalogfiles.EncodeKillStatus(rules)
+		return saveServerCatalog(root, catalog.File, next, catalogfiles.ParseKillStatus, func(v blessingrules.Catalog) bool { return slices.Equal(v, rules) })
+	}
 	if err := rules.Validate(); err != nil {
 		return "", err
 	}

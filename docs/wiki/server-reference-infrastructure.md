@@ -104,6 +104,25 @@ Direct GX dependencies: `server/internal/admin`, `server/internal/control`.
 | [`status`](../../server/cmd/gx_console/main.go#L17)<br>`func status()` | See the source definition and the subsystem ownership contract. |
 | [`main`](../../server/cmd/gx_console/main.go#L27)<br>`func main()` | See the source definition and the subsystem ownership contract. |
 
+## server/cmd/gx_export_catalogs
+
+
+
+### main.go
+
+[server/cmd/gx_export_catalogs/main.go](../../server/cmd/gx_export_catalogs/main.go#L1)
+
+gx_export_catalogs exports the retired SQLite definition tables without
+modifying the source database. GX World reads the resulting files at boot.
+
+Direct GX dependencies: `internal/blessingrules`, `internal/catalogfiles`, `internal/data/sdata`, `internal/enchantrules`, `internal/itemboxes`, `internal/maprules`, `internal/mobaimessages`, `internal/npcquest`, `internal/teleportrunes`, `internal/worlddrops`.
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`main`](../../server/cmd/gx_export_catalogs/main.go#L32)<br>`func main()` | See the source definition and the subsystem ownership contract. |
+| [`encode`](../../server/cmd/gx_export_catalogs/main.go#L58)<br>`func encode[T any](value T, readErr error, format func(T) []byte) ([]byte, error)` | See the source definition and the subsystem ownership contract. |
+| [`export`](../../server/cmd/gx_export_catalogs/main.go#L65)<br>`func export(ctx context.Context, dbPath, npcFile, mapFile, mobFile string) (map[string][]byte, error)` | See the source definition and the subsystem ownership contract. |
+
 ## server/cmd/gx_login
 
 Login handshake, bounded credential verification, handoff creation, server selection and diagnostics.
@@ -252,16 +271,17 @@ back to .local/runtime.env for local overrides. SQLite needs no credentials.
 
 [server/internal/config/gameini.go](../../server/internal/config/gameini.go#L1)
 
+Direct GX dependencies: `internal/gameini`.
+
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`GameINI`](../../server/internal/config/gameini.go#L9)<br>`type GameINI` | See the source definition and the subsystem ownership contract. |
-| [`blockComment`](../../server/internal/config/gameini.go#L11)<br>`var blockComment` | See the source definition and the subsystem ownership contract. |
-| [`ReadGameINI`](../../server/internal/config/gameini.go#L15)<br>`func ReadGameINI(path string) (GameINI, error)` | ReadGameINI parses the original server's ini dialect: [SECTION], key = value, with ;, // and /* */ comments. Section and key names are upper-cased. |
+| [`GameINI`](../../server/internal/config/gameini.go#L5)<br>`type GameINI` | See the source definition and the subsystem ownership contract. |
+| [`ReadGameINI`](../../server/internal/config/gameini.go#L7)<br>`func ReadGameINI(path string) (GameINI, error)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
 ```go
-type GameINI map[string]map[string]string
+type GameINI = gameini.File
 ```
 
 </details>

@@ -478,7 +478,7 @@ Declarations: [proto.MobSpeechText](../../internal/proto/mob_speech.go#L6).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildMobAIMessage (server/internal/world/mob_ai_speech.go)](../../server/internal/world/mob_ai_speech.go#L33)
+**S→C serializers:** [buildMobAIMessage (server/internal/world/mob_ai_speech.go)](../../server/internal/world/mob_ai_speech.go#L26)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1453)
 
@@ -488,7 +488,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobAIMessage — server/internal/world/mob_ai_speech.go</summary>
 
-[Source definition](../../server/internal/world/mob_ai_speech.go#L33)
+[Source definition](../../server/internal/world/mob_ai_speech.go#L26)
 
 ```go
 func buildMobAIMessage(owner uint32, index uint16, text string, indexed bool) []byte {
@@ -563,7 +563,7 @@ Declarations: [proto.MobSpeechIndex](../../internal/proto/mob_speech.go#L7).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildMobAIMessage (server/internal/world/mob_ai_speech.go)](../../server/internal/world/mob_ai_speech.go#L33)
+**S→C serializers:** [buildMobAIMessage (server/internal/world/mob_ai_speech.go)](../../server/internal/world/mob_ai_speech.go#L26)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1453)
 
@@ -573,7 +573,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobAIMessage — server/internal/world/mob_ai_speech.go</summary>
 
-[Source definition](../../server/internal/world/mob_ai_speech.go#L33)
+[Source definition](../../server/internal/world/mob_ai_speech.go#L26)
 
 ```go
 func buildMobAIMessage(owner uint32, index uint16, text string, indexed bool) []byte {

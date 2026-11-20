@@ -484,12 +484,12 @@ type Defs struct {
 
 [server/internal/db/enchant_legacy.go](../../server/internal/db/enchant_legacy.go#L1)
 
-Direct GX dependencies: `internal/enchantrules`, `server/internal/config`.
+Direct GX dependencies: `internal/catalogfiles`, `internal/enchantrules`, `server/internal/config`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
 | [`ReadLegacyEnchant`](../../server/internal/db/enchant_legacy.go#L17)<br>`func ReadLegacyEnchant(path string) (enchantrules.Catalog, error)` | ReadLegacyEnchant is used only to initialize a pre-migration installation. |
-| [`initializeEnchant11`](../../server/internal/db/enchant_legacy.go#L68)<br>`func initializeEnchant11(ctx context.Context, tx *sql.Tx) error` | initializeEnchant11 runs inside migration 11 and never imports an INI again after that migration is recorded, including when both caps are later zero. |
+| [`initializeEnchant11`](../../server/internal/db/enchant_legacy.go#L23)<br>`func initializeEnchant11(ctx context.Context, tx *sql.Tx) error` | initializeEnchant11 runs inside migration 11 and never imports an INI again after that migration is recorded, including when both caps are later zero. |
 
 ### errors.go
 
@@ -819,28 +819,6 @@ Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `inte
 type migration struct {
 	Version   int
 	Name, SQL string
-}
-```
-
-</details>
-
-### notices.go
-
-[server/internal/db/notices.go](../../server/internal/db/notices.go#L1)
-
-| Declaration | Responsibility / source comment |
-|---|---|
-| [`ServerNotice`](../../server/internal/db/notices.go#L4)<br>`type ServerNotice` | ServerNotice is a configured global announcement. |
-| [`ServerNotices`](../../server/internal/db/notices.go#L11)<br>`func ServerNotices() ([]ServerNotice, error)` | See the source definition and the subsystem ownership contract. |
-
-<details><summary>Type definitions and owned fields</summary>
-
-```go
-type ServerNotice struct {
-	Index     uint32
-	Message   string
-	Frequency uint32
-	Fixed     [5]string
 }
 ```
 

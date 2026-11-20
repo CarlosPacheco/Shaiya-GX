@@ -1,24 +1,17 @@
 package world
 
 import (
-	"context"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
+	"path/filepath"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/mobaimessages"
-	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
 
 var mobAIStrings = map[uint16]string{}
 
 func loadMobAIStrings() error {
-	pool, err := db.Pool(db.GameDefs)
-	if err != nil {
-		return err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), db.Timeout)
-	defer cancel()
-	messages, err := mobaimessages.Read(ctx, pool)
+	messages, err := catalogfiles.Read(filepath.Join(gameDataDir(), catalogfiles.MobMessages), catalogfiles.ParseMobMessages)
 	if err != nil {
 		return fmt.Errorf("AI dialogue: %w", err)
 	}

@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
@@ -15,6 +17,8 @@ import (
 
 type NPCQuestCatalog struct {
 	Path, DBPath string
+	Server       *ServerFile
+	serverDoc    *npcquest.Document
 	Doc          *npcquest.Document
 	original     []byte
 	dbHash       string
@@ -22,10 +26,6 @@ type NPCQuestCatalog struct {
 
 func OpenNPCQuest(ctx context.Context, dataDir, dbPath string) (*NPCQuestCatalog, error) {
 	path, err := FindFile(dataDir, NPCQuest.RelativePath())
-	if err != nil {
-		return nil, err
-	}
-	dbPath, err = canonicalFile(dbPath)
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +38,20 @@ func OpenNPCQuest(ctx context.Context, dataDir, dbPath string) (*NPCQuestCatalog
 		return nil, err
 	}
 	doc, err := npcquest.Parse(plain)
+	if err != nil {
+		return nil, err
+	}
+	if filepath.Base(dbPath) == catalogfiles.NPCQuest {
+		server, serverDoc, err := openServerCatalog(dbPath, catalogfiles.ParseNPCQuest)
+		if err != nil {
+			return nil, err
+		}
+		if !npcquest.Equal(serverDoc.Catalog, doc.Catalog) {
+			return nil, errors.New("client and server NpcQuest definitions differ; open a matching installation")
+		}
+		return &NPCQuestCatalog{Path: path, Doc: doc, original: raw, Server: server, serverDoc: serverDoc}, nil
+	}
+	dbPath, err = canonicalFile(dbPath)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +90,9 @@ func SaveNPCQuest(ctx context.Context, root string, project *NPCQuestCatalog, ca
 	next, err := sdata.EncodeLike(project.original, plain)
 	if err != nil {
 		return "", err
+	}
+	if project.Server != nil {
+		return saveNPCQuestFiles(root, project, catalog, texts, next)
 	}
 	if bytes.Equal(next, project.original) {
 		return "", errors.New("there are no NPC or quest changes to save")

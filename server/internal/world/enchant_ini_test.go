@@ -3,6 +3,8 @@ package world
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
+	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"os"
@@ -136,7 +138,7 @@ func TestItemEnchantIniRatesBonusesCapAndWire(t *testing.T) {
 	}
 }
 
-func TestEnchantCatalogUsesSQLiteAfterLegacyMigration(t *testing.T) {
+func TestEnchantCatalogUsesINIWithMigratedDatabase(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("RAPTURE_DATA_DIR", dir)
 	t.Setenv("RAPTURE_DB_PATH", filepath.Join(dir, "rapture.sqlite"))
@@ -147,7 +149,7 @@ func TestEnchantCatalogUsesSQLiteAfterLegacyMigration(t *testing.T) {
 	t.Setenv("RAPTURE_DB_SEED", seed)
 	old, weapon, armor := enchantConfig, weaponEnchantAttackBonus, armorEnchantAbsorption
 	t.Cleanup(func() { enchantConfig, weaponEnchantAttackBonus, armorEnchantAbsorption = old, weapon, armor })
-	// A migrated runtime with no rows has both caps disabled.
+	// Retired SQL rows have no effect on the active file.
 	seedBytes, err := os.ReadFile(seed)
 	if err != nil {
 		t.Fatal(err)
@@ -181,8 +183,8 @@ func TestEnchantCatalogUsesSQLiteAfterLegacyMigration(t *testing.T) {
 	if err := loadEnchantRules(nil); err != nil {
 		t.Fatal(err)
 	}
-	if enchantConfig.WeaponCap != 0 || enchantConfig.ArmorCap != 0 {
-		t.Fatal("a legacy INI overrides an empty migrated catalog")
+	if enchantConfig.WeaponCap != 20 || enchantConfig.ArmorCap != 20 {
+		t.Fatal("the file did not override the empty retired tables")
 	}
 	pool, err := db.Pool(db.GameDefs)
 	if err != nil {
@@ -191,8 +193,12 @@ func TestEnchantCatalogUsesSQLiteAfterLegacyMigration(t *testing.T) {
 	if _, err := pool.Exec("INSERT INTO PS_GameDefs_EnchantAttack VALUES(1, 0, 7)"); err != nil {
 		t.Fatal(err)
 	}
+	rows := enchantrules.Catalog{Attack: []enchantrules.Level{{Number: 1, Bonus: 7}}}
+	if err := os.WriteFile(path, catalogfiles.EncodeEnchant(rows), 0600); err != nil {
+		t.Fatal(err)
+	}
 	if err := loadEnchantRules(nil); err != nil || enchantConfig.WeaponCap != 1 || enchantConfig.ArmorCap != 0 {
-		t.Fatalf("SQLite-only reload failed: %v", err)
+		t.Fatalf("file reload with independent caps failed: %v", err)
 	}
 	if _, ok := enchantRate(db.Item{Type: 1}, 1); !ok {
 		t.Fatal("attack cap did not allow weapon enchant")
