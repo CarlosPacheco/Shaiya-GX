@@ -17,6 +17,7 @@ func ladderFixture() *Geometry {
 func TestLadderClimbHoldDownAndLanding(t *testing.T) {
 	g := ladderFixture()
 	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0)
+	m.Tier = 2
 	if !ok {
 		t.Fatal("cannot attach")
 	}
@@ -24,7 +25,7 @@ func TestLadderClimbHoldDownAndLanding(t *testing.T) {
 	for range 60 {
 		p = m.Step(g, p, 1.0/120)
 	}
-	if math.Abs(float64(p[1]-1.295)) > .01 {
+	if math.Abs(float64(p[1]-.945)) > .01 {
 		t.Fatal("wrong climb speed", p)
 	}
 	m.Mode = LadderHold
@@ -39,7 +40,7 @@ func TestLadderClimbHoldDownAndLanding(t *testing.T) {
 	for range 24 {
 		p = m.Step(g, p, 1.0/120)
 	}
-	if math.Abs(float64(p[1]-.795)) > .01 {
+	if math.Abs(float64(p[1]-.585)) > .01 {
 		t.Fatal("cannot descend", p)
 	}
 	m.Mode = LadderUp
@@ -61,6 +62,7 @@ func TestLadderRejectsRemoteFacingWallAndCeiling(t *testing.T) {
 		}
 	}
 	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0)
+	m.Speed = 2.5
 	if !ok {
 		t.Fatal("fixture attachment")
 	}
@@ -96,6 +98,7 @@ func TestNativeLadderCatalog(t *testing.T) {
 func TestLadderDescendsFromUpperLanding(t *testing.T) {
 	g := ladderFixture()
 	m, p, ok := g.AttachLadder(Position{5, 5.045, 4.45}, Position{0, 0, 1}, 0)
+	m.Speed = 2.5
 	if !ok {
 		t.Fatal("cannot board from upper landing")
 	}
@@ -115,6 +118,7 @@ func TestLadderNarrowLandingAboveVisualRungs(t *testing.T) {
 	g.Add(collision.Triangle{{4, 5.35, 4.88}, {4, 5.35, 5.12}, {6, 5.35, 4.88}})
 	g.Add(collision.Triangle{{6, 5.35, 5.12}, {6, 5.35, 4.88}, {4, 5.35, 5.12}})
 	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0)
+	m.Speed = 2.5
 	if !ok {
 		t.Fatal("cannot attach")
 	}
@@ -137,6 +141,7 @@ func TestLadderClearsPlatformLipWithoutCrossingCeiling(t *testing.T) {
 	g.Add(collision.Triangle{{3, 5, 2}, {7, 5, 2}, {3, 5, 5.7}})
 	g.Add(collision.Triangle{{7, 5, 5.7}, {3, 5, 5.7}, {7, 5, 2}})
 	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0)
+	m.Speed = 2.5
 	if !ok {
 		t.Fatal("cannot attach")
 	}

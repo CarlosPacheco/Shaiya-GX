@@ -11,7 +11,16 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 )
 
-const LadderSpeed = float32(2.5)
+// LadderSpeed is the climbing speed of a character with the given move index:
+// the original table 0.8, 1.3, 1.8, 2.3, 2.8 (Game.exe 0x43aea0 and the
+// climbing branch of 0x419f60). Other indices use the normal tier.
+func LadderSpeed(tier uint8) float32 {
+	if tier <= 4 {
+		return 0.8 + 0.5*float32(tier)
+	}
+	return 1.8
+}
+
 const (
 	LadderDetach uint8 = iota
 	LadderHold
@@ -86,6 +95,10 @@ type LadderMotion struct {
 	Index  int
 	Side   float32
 	Mode   uint8
+	// Tier is the character's move index; it selects the climbing speed.
+	// Speed overrides it when nonzero (geometry fixtures).
+	Tier  uint8
+	Speed float32
 }
 
 func (g *Geometry) AttachLadder(p, facing Position, index int) (LadderMotion, Position, bool) {
@@ -157,7 +170,11 @@ func (m *LadderMotion) Step(g *Geometry, p Position, dt float32) Position {
 	}
 	l := g.Ladders[m.Index]
 	offset := max(float32(.55), min(float32(1.45), float32(cv(p).Sub(cv(l.at(p[1]))).Dot(cv(l.Normal)))*m.Side))
-	dy := LadderSpeed * max(float32(0), min(dt, .1))
+	speed := m.Speed
+	if speed <= 0 {
+		speed = LadderSpeed(m.Tier)
+	}
+	dy := speed * max(float32(0), min(dt, .1))
 	if m.Mode == LadderDown {
 		dy = -dy
 	}
@@ -171,7 +188,7 @@ func (m *LadderMotion) Step(g *Geometry, p Position, dt float32) Position {
 	q, _ = g.MoveFeet(p, pv(cv(q).Sub(cv(p))))
 	if m.Mode == LadderUp && q[1] < wantedY-.002 && offset < 1.45 {
 		// Clear a platform lip by moving out along the rung normal, never through it.
-		extra := min(LadderSpeed*dt, 1.45-offset)
+		extra := min(speed*dt, 1.45-offset)
 		outward := Position{l.Normal[0] * m.Side * extra, 0, l.Normal[2] * m.Side * extra}
 		shifted, _ := g.MoveFeet(q, outward)
 		gained := float32(cv(shifted).Sub(cv(q)).Dot(cv(l.Normal))) * m.Side

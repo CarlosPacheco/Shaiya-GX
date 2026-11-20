@@ -33,7 +33,7 @@ func TestLadderServerOwnsHeightAndPacketFlood(t *testing.T) {
 	s.advancePlayerVertical(now)
 	s.commitMovement()
 	y := s.movement.pos[1]
-	if math.Abs(float64(y-.295)) > .02 {
+	if math.Abs(float64(y-.225)) > .02 {
 		t.Fatal("wrong authoritative speed", y)
 	}
 	for range 100 {

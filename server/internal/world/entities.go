@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 	"math"
 	"math/rand/v2"
 	"sync"
@@ -1177,7 +1178,11 @@ func (m *MapMob) advanceRoam(mapID uint16) bool {
 	if m.nav != nil {
 		travelled, ok := m.navigate(mapID, mapnav.Point{nx, m.PosY, nz}, length)
 		if ok {
-			m.moveDuration = max(mobNavigationTick, time.Duration(float64(time.Duration(m.def.NormalTimeMS)*time.Millisecond)*float64(travelled/length)))
+			// Game.exe 0x4312a0 walks a monster at a constant speed, so the
+			// hop lasts as long as its real length needs.
+			if v := movespeed.MobUnitsPerSecond(int(m.def.NormalStep), m.def.NormalTimeMS, uint8(min(max(2+mods.MoveSpeed, 0), 4))); v > 0 {
+				m.moveDuration = max(mobNavigationTick, time.Duration(float64(travelled)/v*float64(time.Second)))
+			}
 		}
 		return ok
 	}

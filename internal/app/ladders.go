@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
+	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -71,6 +72,11 @@ func (a *App) updateLadderMovement(in *platform.Input, forward, back bool, straf
 		a.sendLadderMode(mode)
 	}
 	old := v.pos
+	if sp := a.state.Self.Speed; sp != nil {
+		v.ladder.Tier = sp.Move
+	} else {
+		v.ladder.Tier = movespeed.Normal
+	}
 	next := v.world.StepLadder(&v.ladder, v.pos, float32(dt))
 	v.place(next)
 	l := v.world.PlayerLadders()[v.ladder.Index]

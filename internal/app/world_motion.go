@@ -34,16 +34,6 @@ func playerMovementSpeed(s *proto.CharacterSpeed, mounted bool) float32 {
 	return movementSpeed(s)
 }
 
-// Phoenix's Shaiya mount catalog contains no aquatic mounts; their normal
-// movement animations are also the available fallback in water. The swimming
-// speed remains provisional pending a measurement from the original client.
-func swimmingMovementSpeed(speed float32, swimming bool) float32 {
-	if swimming && speed > 0 {
-		return 2.8
-	}
-	return speed
-}
-
 // place keeps the complete camera offset, including elevation and user zoom.
 func (v *worldView) place(pos render.V3) {
 	if v.pos[0] != pos[0] || v.pos[2] != pos[2] {

@@ -30,12 +30,6 @@ func TestMountedMovementSpeed(t *testing.T) {
 	if got := playerMovementSpeed(&proto.CharacterSpeed{Move: 0}, false); got != 3 {
 		t.Fatalf("unmounted speed = %v, want 3", got)
 	}
-	if got := swimmingMovementSpeed(playerMovementSpeed(nil, true), true); got != 2.8 {
-		t.Fatalf("common mount swimming speed = %v, want 2.8", got)
-	}
-	if got := swimmingMovementSpeed(0, true); got != 0 {
-		t.Fatalf("immobilized swimmer speed = %v, want 0", got)
-	}
 }
 
 func TestSwimmingDirectionFollowsPitchOnlyForForwardAndBack(t *testing.T) {

@@ -87,9 +87,6 @@ func (s *Session) movementSpeed() float32 {
 	if s.mounted {
 		speed = s.mountSpeed()
 	}
-	if m := &s.movement; m.geometry != nil && m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5 {
-		speed = 2.8
-	}
 	if s.isAdmin && s.gmTurbo {
 		speed *= gm.TurboMultiplier
 	}

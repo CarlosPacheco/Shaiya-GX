@@ -376,7 +376,6 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		v.sitAttack = 0
 	}
 	swimming := v.world.SwimmingAt(v.pos[0], v.pos[1], v.pos[2])
-	speed = swimmingMovementSpeed(speed, swimming)
 	remaining := float32(math.MaxFloat32)
 	if v.travel && !in.SuppressAutoRun {
 		delta := v.destination.Sub(v.pos)
@@ -516,15 +515,15 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 			if v.evadeTime >= .5 {
 				speed = 0
 			}
-		} else if !forward && strafe != 0 && !swimming && !a.state.Self.Mounted {
+		} else if !forward && strafe != 0 && !a.state.Self.Mounted {
 			speed = backwardMovementSpeed(a.state.Self.Speed, a.state.Self.Mounted)
-		} else if back && !swimming {
+		} else if back {
 			if v.evading {
 				speed = 2.5
 			} else {
 				speed = backwardMovementSpeed(a.state.Self.Speed, a.state.Self.Mounted)
 			}
-		} else if back || v.walking && !swimming {
+		} else if v.walking {
 			speed /= 2
 		}
 		if a.state.Self.IsGM && a.state.GMTurbo {

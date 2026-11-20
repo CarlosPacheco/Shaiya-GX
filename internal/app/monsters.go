@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 	"log"
 	"math"
 
@@ -74,21 +75,20 @@ func (a *App) prepareMonsters() {
 		newMove := cached.position.initialized && cached.position.moveSerial != e.MoveSerial
 		pos := cached.position.update(e, a.clock)
 		if newMove && cached.position.duration > 0 && !(e.MobHeightKnown && e.MobMoveDurationMS > 0) {
-			ms := cached.actor.Definition.NormalTimeMS
+			def := cached.actor.Definition
+			step, ms := def.NormalStep, def.NormalTimeMS
 			if e.Motion != 0 {
-				ms = cached.actor.Definition.ChaseTimeMS
+				step, ms = def.ChaseStep, def.ChaseTimeMS
 			}
-			if ms > 0 {
-				duration := float64(ms) / 1000
-				if e.Motion != 0 && cached.actor.Definition.ChaseStep > 0 {
-					delta := cached.position.to.Sub(cached.position.from)
-					step := float64(cached.actor.Definition.ChaseStep)
-					if e.MobSpeedKnown && e.MobMoveSpeed <= 4 {
-						step = max(1, step+float64([]int{-4, -2, 0, 2, 4}[e.MobMoveSpeed]))
-					}
-					duration *= math.Hypot(float64(delta[0]), float64(delta[2])) / step
-				}
-				cached.position.duration = min(10, max(.05, duration))
+			tier := uint8(2)
+			if e.MobSpeedKnown {
+				tier = e.MobMoveSpeed
+			}
+			// 0x4312a0: constant speed from the monster's step and time, so a
+			// longer hop takes proportionally longer.
+			if v := movespeed.MobUnitsPerSecond(int(step), ms, tier); v > 0 {
+				delta := cached.position.to.Sub(cached.position.from)
+				cached.position.duration = min(10, max(.05, math.Hypot(float64(delta[0]), float64(delta[2]))/v))
 			}
 		}
 		pos = cached.ground.resolve(v.world, pos, e.MobHeightKnown, e.PositionResetSerial)

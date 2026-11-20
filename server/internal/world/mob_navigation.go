@@ -3,6 +3,7 @@ package world
 import (
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
+	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 	"math"
 	"os"
 	"path/filepath"
@@ -186,5 +187,12 @@ func (m *MapMob) movementTiming(now time.Time, travel, step float32, interval ti
 	// stand idle while the next corner packet waits for a sweep.
 	duration = max(mobNavigationTick, (duration+mobNavigationTick-1)/mobNavigationTick*mobNavigationTick)
 	m.moveDuration = duration
+	if m.def != nil {
+		mods := m.mods()
+		if v := movespeed.MobUnitsPerSecond(int(m.def.ChaseStep), m.def.ChaseTimeMS, uint8(min(max(2+mods.MoveSpeed, 0), 4))); v > 0 {
+			// The client draws the hop at the original constant speed.
+			m.moveDuration = max(mobNavigationTick, time.Duration(float64(travel)/v*float64(time.Second)))
+		}
+	}
 	m.nextChaseAt = now.Add(duration)
 }

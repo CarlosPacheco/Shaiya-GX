@@ -112,6 +112,7 @@ func (s *Session) advanceLadder(now time.Time, dt float32) {
 	if now.Before(s.attackMoveUntil) || s.movementSpeed() == 0 {
 		return
 	}
+	m.ladder.Tier = s.speeds().move
 	m.pos = m.ladder.Step(m.geometry, m.pos, dt)
 	if !m.ladder.Active {
 		m.ladderRetryAt = now.Add(350 * time.Millisecond)
