@@ -130,6 +130,7 @@ func (a *App) itemsItem(typ, id uint8) *sdata.Item {
 		a.items = map[sdata.ItemKey]*sdata.Item{}
 		if b, err := a.arc.ReadFile("Item/Item.SData"); err == nil {
 			if it, err := sdata.ParseItems(b); err == nil {
+				sdata.NormalizeRestoredConsumables(it)
 				sdata.NormalizePercentageItems(it)
 				a.items = it
 				// GX stackability follows the server definitions, rather than

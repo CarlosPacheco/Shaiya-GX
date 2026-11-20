@@ -40,7 +40,7 @@ func (s Skill) IsSoulBurn() bool { return s.Detail == 122 && (s.Effect == 3 || s
 // RetiredPlayerSkill applies only to the player catalog. NPC skill IDs are independent.
 func RetiredPlayerSkill(id uint16) bool {
 	switch id {
-	case 3, 4, 234, 236, 253, 254:
+	case 3, 4, 226, 227, 229, 230, 234, 236, 240, 241, 253, 254, 255, 261, 266, 267, 286:
 		return true
 	default:
 		return false

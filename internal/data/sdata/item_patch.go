@@ -13,6 +13,7 @@ type ItemPatch struct {
 	Description         string
 	Stack               uint8
 	Special             *uint8
+	ClearSkill          bool
 	PreserveDescription bool
 }
 
@@ -54,6 +55,9 @@ func PatchItemDefinitions(raw []byte, patches map[ItemKey]ItemPatch) ([]byte, er
 				} else {
 					out = binary.LittleEndian.AppendUint32(out, uint32(len(patch.Description)))
 					out = append(out, patch.Description...)
+				}
+				if patch.ClearSkill {
+					body[32], body[33] = 0, 0 // Range and AttackTime
 				}
 				if patch.Special != nil {
 					body[35] = *patch.Special

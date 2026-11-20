@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
@@ -35,7 +36,11 @@ func (a *App) loadMallCatalog() error {
 	if err != nil {
 		return err
 	}
-	a.mallCatalog = catalog
+	a.mallCatalog = slices.DeleteFunc(catalog, func(product sdata.CashProduct) bool {
+		return slices.ContainsFunc(product.Items[:], func(item sdata.CashItem) bool {
+			return sdata.RetiredConsumable(item.ItemID)
+		})
+	})
 	return nil
 }
 

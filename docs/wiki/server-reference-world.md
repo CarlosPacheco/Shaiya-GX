@@ -2681,10 +2681,10 @@ Direct GX dependencies: `internal/mapnav`, `server/internal/packet`.
 | [`updateGuard`](../../server/internal/world/npc_guard.go#L130)<br>`func (n *MapNpc) updateGuard(now time.Time, mapID uint16, s *mapShard, players []PlayerCombatSnapshot, out *npcTick) bool` | See the source definition and the subsystem ownership contract. |
 | [`guardChase`](../../server/internal/world/npc_guard.go#L171)<br>`func (n *MapNpc) guardChase(now time.Time, mapID uint16, s *mapShard, def *npcDef, home NpcPatrolPoint, target guardTarget, goal mapnav.Point, mob *MapMob, out *npcTick) bool` | See the source definition and the subsystem ownership contract. |
 | [`guardMove`](../../server/internal/world/npc_guard.go#L197)<br>`func (n *MapNpc) guardMove(now time.Time, mapID uint16, nav *mapnav.Map, def *npcDef, goal mapnav.Point, reach float32, out *npcTick) bool` | See the source definition and the subsystem ownership contract. |
-| [`npcDirection`](../../server/internal/world/npc_guard.go#L238)<br>`func npcDirection(dx, dz float32) uint16` | See the source definition and the subsystem ownership contract. |
-| [`buildNpcAttack`](../../server/internal/world/npc_guard.go#L242)<br>`func buildNpcAttack(npcID, target uint32, mob bool, hp uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`dispatchNpcStrike`](../../server/internal/world/npc_guard.go#L255)<br>`func dispatchNpcStrike(hit npcGuardStrike, log logPrinter)` | See the source definition and the subsystem ownership contract. |
-| [`applyGuardStrike`](../../server/internal/world/npc_guard.go#L267)<br>`func (s *Session) applyGuardStrike(hit npcGuardStrike) bool` | The session owns player death. Revalidate map and contact after crossing its mailbox so a teleport cannot apply a stale strike to a new position. |
+| [`npcDirection`](../../server/internal/world/npc_guard.go#L240)<br>`func npcDirection(dx, dz float32) uint16` | npcDirection is the 0x0E01 angle in whole degrees: the client turns it into the heading (-sin, cos) of angle*pi/180 (Game.exe 0x5659a0). |
+| [`buildNpcAttack`](../../server/internal/world/npc_guard.go#L248)<br>`func buildNpcAttack(npcID, target uint32, mob bool, hp uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`dispatchNpcStrike`](../../server/internal/world/npc_guard.go#L261)<br>`func dispatchNpcStrike(hit npcGuardStrike, log logPrinter)` | See the source definition and the subsystem ownership contract. |
+| [`applyGuardStrike`](../../server/internal/world/npc_guard.go#L273)<br>`func (s *Session) applyGuardStrike(hit npcGuardStrike) bool` | The session owns player death. Revalidate map and contact after crossing its mailbox so a teleport cannot apply a stale strike to a new position. |
 
 <details><summary>Type definitions and owned fields</summary>
 

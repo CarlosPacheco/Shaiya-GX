@@ -53,29 +53,40 @@ func TestBuffConsumableAnnouncesSkillAndStopsCombo(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.itemCooldowns = map[uint8]time.Time{}
-	// Audit the synchronized release seed, including preserved wide SQL skill IDs.
-	count := 0
-	for _, d := range defs.Items {
-		if !isConsumableType(d.Type) || d.Range == 0 || d.AttackTime == 0 {
-			continue
-		}
-		sk := itemBuffSkill(d)
-		if sk == nil {
-			continue
-		}
-		count++
-		if sk.TypeEffect != typeEffectBuff {
-			t.Fatal("non-buff accepted")
-		}
-	}
 	for _, id := range []uint8{75, 77, 174} {
 		if d := defs.Item(100, id); d != nil && itemBuffSkill(d) != nil {
 			t.Fatalf("retired consumable %d still grants a buff", id)
 		}
 	}
-	const wantBuffReferences = 179
-	if count != wantBuffReferences {
-		t.Fatalf("release consumable audit: got %d valid buff references, want %d", count, wantBuffReferences)
+	for _, family := range []struct {
+		itemType, first, count uint8
+		skill                  uint16
+		level                  uint8
+	}{
+		{44, 99, 3, 276, 1}, {44, 102, 3, 277, 1}, {44, 105, 3, 278, 1}, {44, 108, 3, 279, 1},
+		{44, 223, 1, 270, 2}, {44, 224, 1, 269, 2}, {44, 225, 1, 268, 2},
+		{100, 92, 3, 257, 1}, {100, 95, 3, 256, 1}, {100, 98, 3, 258, 1},
+		{100, 101, 3, 259, 1}, {100, 104, 3, 260, 1},
+		{100, 145, 3, 280, 1}, {100, 148, 3, 281, 1}, {100, 151, 3, 282, 1},
+		{100, 154, 3, 283, 1}, {100, 157, 3, 284, 1}, {100, 160, 3, 285, 1},
+	} {
+		for offset := uint8(0); offset < family.count; offset++ {
+			item := defs.Item(family.itemType, family.first+offset)
+			if item == nil {
+				t.Fatalf("missing restored item %d/%d", family.itemType, family.first+offset)
+			}
+			if skill := itemBuffSkill(item); skill == nil || skill.SkillID != family.skill || skill.SkillLevel != family.level+offset {
+				t.Fatalf("invalid restored buff on item %d/%d: %+v", item.Type, item.TypeID, skill)
+			}
+		}
+	}
+	for _, id := range []uint8{44, 52, 53, 55, 56, 57, 67, 81, 87, 110, 112, 127, 129, 130, 163, 164, 165, 173} {
+		if defs.Item(100, id) != nil {
+			t.Fatalf("retired item 100/%d still in catalog", id)
+		}
+	}
+	if box := defs.Item(100, 79); box == nil || box.Special != 0 || box.ReqVg != 0 || box.Range != 0 || box.AttackTime != 0 {
+		t.Fatalf("Hard Item Pocket is not inert: %+v", box)
 	}
 	d := defs.Item(100, 54) // Special 35 also follows UseItemSkill, not just Special 0.
 	if itemBuffSkill(d) == nil {

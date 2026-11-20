@@ -103,7 +103,7 @@ func writeOutput(output string, patched []byte) {
 }
 
 func isRetiredItem(id uint32) bool {
-	if id >= 30071 && id <= 30077 {
+	if sdata.RetiredConsumable(id) || id >= 30071 && id <= 30077 {
 		return true
 	}
 	switch id {
@@ -124,8 +124,9 @@ func retireItemCatalog(raw []byte) ([]byte, error) {
 		switch {
 		case isRetiredItem(uint32(key.Type)*1000 + uint32(key.TypeID)):
 			patches[key] = sdata.ItemPatch{Remove: true}
-		case key.Type == 100 && item.Special == 41:
-			patches[key] = sdata.ItemPatch{ReqVG: item.ReqVG, Description: "Instantly revives a selected fallen ally within 60 units with full HP, MP and SP."}
+		case sdata.InertItemBox(uint32(key.Type)*1000+uint32(key.TypeID)) && item.Special == 42:
+			special := uint8(0)
+			patches[key] = sdata.ItemPatch{Special: &special, ClearSkill: true, Description: "This item has no effect."}
 		case key.Type == 100 && item.Special == 33:
 			patches[key] = sdata.ItemPatch{ReqVG: item.ReqVG, Description: "Resets learned skills and restores your level's original skill points. Active skill cooldowns continue."}
 		}

@@ -228,8 +228,6 @@ success roll. GX keeps these flags in the current character session.
 | 33 | Reset learned skills and restore the original skill point budget for your level and mode |
 | 34 | Reset allocated character stats through the item-use path |
 | 36 | Linking hammer; ReqVg adds percentage points |
-| 37 | Rebirth-item handling; validated by the separate rebirth service |
-| 41 | Immediately revive a selected fallen ally with full HP, MP and SP |
 | 44 | Appearance change; validated through the appearance workflow |
 | 45 | Sex change; validated through the appearance workflow |
 | 46 | Launch the item’s nearby firecracker notice, visual effect and positional sound |
@@ -242,19 +240,23 @@ other servers works. A service item is not necessarily usable by double-clicking
 it. For example, recreation requires equipment and a rune at the blacksmith;
 extraction requires a selected socket and an extraction hammer.
 
-### Skill Reset Stone and Target Resurrection Rune
+### Skill Reset Stone
 
 The skill reset restores the original EP4.5 budget of five starting skill
 points plus three per level gained (four in Hard and five in Ultimate).
 Learned skills and their shortcuts are cleared. Cooldown deadlines remain
 keyed by skill ID in SQLite so relearning or reconnecting cannot reset them.
 
-Use the Target Resurrection Rune from a bag or shortcut with a dead ally
-selected. It revives them on the spot with full HP, MP and SP, including
-when the user is moving. The server validates the same faction and instance
-and a maximum distance of 60 units. EP4.5 ItemUse (0x4655e0) and LifeSkill
-(0x459d20) check the same zone without a separate numeric range. GX caps
-the distance at its combat visibility range.
+### Restored consumables
+
+Untouchable Potions apply spell 276 at ranks 1–3. Grape, Melon and Vanilla
+Ice Cream use rank 2 of spells 268–270. Continuous HP, SP and MP potions
+use spells 277–279, restoring the corresponding resource every three seconds
+for one minute. Remedy and Nostrum variants use their matching later spell IDs.
+GX expands the legacy byte-sized references when loading the client catalog.
+
+Resurrection runes and item/EXP drop protection consumables have been retired.
+Unconfigured legacy boxes are retained as inert items with a zero box reference.
 
 ### Firecrackers
 

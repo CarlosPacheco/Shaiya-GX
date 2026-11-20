@@ -64,7 +64,7 @@ func experienceDescription(bonus int, seconds uint32) string {
 
 // NormalizePercentageItems replaces the legacy text on the affected consumables.
 func NormalizePercentageItems(items map[ItemKey]*Item) {
-	for id, hours := range map[uint8]uint32{42: 168, 43: 720, 72: 240, 73: 720, 74: 720, 87: 168, 108: 1, 109: 12, 135: 24} {
+	for id, hours := range map[uint8]uint32{42: 168, 43: 720, 72: 240, 73: 720, 74: 720, 108: 1, 109: 12, 135: 24} {
 		if item := items[ItemKey{100, id}]; item != nil {
 			bonus := 50
 			if id >= 72 && id <= 74 {
@@ -74,7 +74,7 @@ func NormalizePercentageItems(items map[ItemKey]*Item) {
 			if id == 135 && item.Range == 16 && item.AttackTime == 1 {
 				item.Range = 272
 			}
-			if id == 87 || id == 135 {
+			if id == 135 {
 				item.Description += " <Cannot be traded>"
 			}
 		}
