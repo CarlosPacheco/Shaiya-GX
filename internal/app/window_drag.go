@@ -314,6 +314,31 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
+	if a.partyUI != nil && a.state.Party.Raid && !a.unionConfigCovers(in, w, h) {
+		// The raid's side list moves like the party list: a press that never
+		// moves selects the member, a drag takes the whole list.
+		x, y := a.partyUI.RaidCompactOrigin(w, h)
+		height := 6 * ui.PartyRowHeight
+		if a.partyUI.RaidCompactGroups() {
+			height += 24
+		}
+		body := y
+		if a.partyUI.RaidCompactGroups() {
+			body += 24
+		}
+		onTabs := a.partyUI.RaidCompactGroups() && in.MouseY < body && in.MouseX >= x+20 && in.MouseX < x+140
+		if pointInside(in, x, y, ui.RaidCompactWidth, height) && !onTabs {
+			id := a.partyUI.RaidCompactMemberAt(w, h, in.MouseX, in.MouseY, a.state.SelfID, a.state.Party.RaidSlots)
+			a.windowDrag = windowDrag{position: &a.partyUI.RaidCompactPosition, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: ui.RaidCompactWidth, height: height, portrait: true, pressX: in.MouseX, pressY: in.MouseY,
+				click: func() {
+					if id != 0 {
+						a.state.Target = id
+					}
+				}}
+			a.wv.uiLeft = -2
+			return true
+		}
+	}
 	if a.partyUI != nil && a.unionConfigOpen() {
 		x, y := a.partyUI.RaidOrigin(w, h)
 		if start(&a.partyUI.RaidPosition, x, y, ui.RaidWidth, ui.RaidHeight, 20, 520) {
@@ -355,6 +380,7 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 	if a.partyUI != nil {
 		out["party"] = &a.partyUI.Position
 		out["raid"] = &a.partyUI.RaidPosition
+		out["raid_list"] = &a.partyUI.RaidCompactPosition
 	}
 	if a.mallUI != nil {
 		out["mall"] = &a.mallUI.Position
@@ -484,4 +510,9 @@ func (a *App) saveUILayout() {
 	if err != nil {
 		log.Printf("save UI layout: %v", err)
 	}
+}
+
+// unionConfigCovers: the raid window sits over the side list when they overlap.
+func (a *App) unionConfigCovers(in *platform.Input, w, h int) bool {
+	return a.unionConfigOpen() && a.partyUI.RaidInside(w, h, in.MouseX, in.MouseY)
 }

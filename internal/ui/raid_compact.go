@@ -9,6 +9,9 @@ import (
 const RaidCompactWidth, RaidCompactHeight = 160, 336
 
 func (p *PartyPanel) RaidCompactVisible() bool { return p.raidCompact }
+
+// RaidCompactGroups reports whether the group tabs are drawn above the rows.
+func (p *PartyPanel) RaidCompactGroups() bool { return p.raidGroups }
 func (p *PartyPanel) RaidCompactOrigin(w, h int) (int, int) {
 	height := 6 * PartyRowHeight
 	if p.raidGroups {

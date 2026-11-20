@@ -188,3 +188,32 @@ func TestPartyListIsMovableSelectsOnPlainClickAndPersists(t *testing.T) {
 		t.Fatal("party position did not persist")
 	}
 }
+
+func TestRaidSideListIsMovable(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	a := inputApp()
+	a.cfg.RememberLayout = true
+	a.partyUI, _ = ui.NewPartyPanel(inputTextures{})
+	a.state.SelfID = 1
+	a.state.Party.Raid, a.state.Party.Leader = true, 1
+	a.state.Party.Members = []proto.PartyMember{{ID: 1}, {ID: 2}}
+	a.state.Party.RaidSlots = map[uint16]uint32{0: 1, 1: 2}
+	a.party.raidHidden = true
+	const w, h = 1024, 768
+	x, y := a.partyUI.RaidCompactOrigin(w, h)
+	py := y + 24 + ui.PartyRowHeight + 5
+	a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + 20, MouseY: py}, w, h)
+	a.worldControls(&platform.Input{MouseDown: true, MouseX: x + 220, MouseY: py + 100}, w, h)
+	a.worldControls(&platform.Input{Clicked: true, MouseX: x + 220, MouseY: py + 100}, w, h)
+	nx, ny := a.partyUI.RaidCompactOrigin(w, h)
+	if nx != x+200 || ny != y+100 {
+		t.Fatalf("drag: origin %d,%d from %d,%d", nx, ny, x, y)
+	}
+	b := inputApp()
+	b.cfg.RememberLayout = true
+	b.partyUI, _ = ui.NewPartyPanel(inputTextures{})
+	b.loadUILayout()
+	if b.partyUI.RaidCompactPosition != a.partyUI.RaidCompactPosition {
+		t.Fatal("raid list position did not persist")
+	}
+}
