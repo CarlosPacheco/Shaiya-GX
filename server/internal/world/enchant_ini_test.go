@@ -1,7 +1,6 @@
 package world
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
 	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
@@ -149,24 +148,6 @@ func TestEnchantCatalogUsesINIWithMigratedDatabase(t *testing.T) {
 	t.Setenv("RAPTURE_DB_SEED", seed)
 	old, weapon, armor := enchantConfig, weaponEnchantAttackBonus, armorEnchantAbsorption
 	t.Cleanup(func() { enchantConfig, weaponEnchantAttackBonus, armorEnchantAbsorption = old, weapon, armor })
-	// Retired SQL rows have no effect on the active file.
-	seedBytes, err := os.ReadFile(seed)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "rapture.sqlite"), seedBytes, 0600); err != nil {
-		t.Fatal(err)
-	}
-	legacyDB, err := sql.Open("sqlite", filepath.Join(dir, "rapture.sqlite"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := legacyDB.Exec("DELETE FROM PS_GameDefs_EnchantAttack; DELETE FROM PS_GameDefs_EnchantDefense"); err != nil {
-		t.Fatal(err)
-	}
-	if err := legacyDB.Close(); err != nil {
-		t.Fatal(err)
-	}
 	db.Close()
 	t.Cleanup(func() { _ = db.Close() })
 	raw, err := os.ReadFile(filepath.Join("testdata", "enchant-legacy.ini"))
@@ -184,14 +165,15 @@ func TestEnchantCatalogUsesINIWithMigratedDatabase(t *testing.T) {
 		t.Fatal(err)
 	}
 	if enchantConfig.WeaponCap != 20 || enchantConfig.ArmorCap != 20 {
-		t.Fatal("the file did not override the empty retired tables")
+		t.Fatal("the file did not load independently of the retired tables")
 	}
 	pool, err := db.Pool(db.GameDefs)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := pool.Exec("INSERT INTO PS_GameDefs_EnchantAttack VALUES(1, 0, 7)"); err != nil {
-		t.Fatal(err)
+	var legacy bool
+	if err := pool.QueryRow("SELECT EXISTS(SELECT 1 FROM sqlite_schema WHERE name='PS_GameDefs_EnchantAttack')").Scan(&legacy); err != nil || legacy {
+		t.Fatalf("retired enchant table present=%v err=%v", legacy, err)
 	}
 	rows := enchantrules.Catalog{Attack: []enchantrules.Level{{Number: 1, Bonus: 7}}}
 	if err := os.WriteFile(path, catalogfiles.EncodeEnchant(rows), 0600); err != nil {

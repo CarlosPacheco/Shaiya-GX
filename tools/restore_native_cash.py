@@ -51,7 +51,10 @@ def migrate(path, rows):
         db.execute('BEGIN IMMEDIATE')
         # Inventory splitting is planned before any persistent changes; any
         # unsupported oversized storage row aborts the entire transaction.
-        for table in ('PS_GameData_UserStoredItems','PS_GameData_GuildStoredItems','PS_GameData_MarketItems'):
+        storage = ['PS_GameData_UserStoredItems', 'PS_GameData_GuildStoredItems']
+        if db.execute("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='PS_GameData_MarketItems'").fetchone():
+            storage.append('PS_GameData_MarketItems')
+        for table in storage:
             if db.execute('SELECT COUNT(*) FROM '+table+' WHERE Count>255').fetchone()[0]:
                 raise ValueError('oversized storage needs explicit slot migration: '+table)
         if db.execute('SELECT COUNT(*) FROM PS_GameData_UserStoredPointItems WHERE ItemCount>255').fetchone()[0]:

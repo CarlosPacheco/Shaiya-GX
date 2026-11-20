@@ -24,7 +24,6 @@ const (
 	UserData = "PS_UserData"
 	GameData = "PS_GameData"
 	GameDefs = "PS_GameDefs"
-	Billing  = "PS_Billing"
 )
 const Timeout = 10 * time.Second
 
@@ -118,7 +117,7 @@ func Pool(database string) (*sql.DB, error) {
 		return nil, err
 	}
 	p.SetMaxOpenConns(1)
-	c, cancel := ctx()
+	c, cancel := longCtx()
 	defer cancel()
 	var version int
 	if err = p.QueryRowContext(c, "PRAGMA user_version").Scan(&version); err == nil && version != 1 {
@@ -128,7 +127,7 @@ func Pool(database string) (*sql.DB, error) {
 		p.Close()
 		return nil, err
 	}
-	if err = migrate(c, p, migrations); err != nil {
+	if err = migrateRuntime(c, p); err != nil {
 		p.Close()
 		return nil, err
 	}

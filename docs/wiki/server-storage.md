@@ -91,9 +91,10 @@ published migration; append a new version.
 | 23 | `auction_house` | Adds auction, claim and watch tables |
 | 24 | `runtime_write_indexes` | Indexes handoff expiry, guild storage, character events, reverse social lookups and live names |
 | 25 | `indexed_legacy_row_identity` | Indexes identity allocation for actively written legacy tables |
+| 26 | `remove_inactive_sqlite_tables` | Backs up the runtime and drops the retired catalog, Billing, market, backup and audit tables |
 
-The migration ledger is separate from legacy user_version. The shipped seed is
-not rewritten during an upgrade; migrations apply to the runtime. Back up before
+The migration ledger is separate from legacy user_version. The shipped seed contains the active schema. Existing installations upgrade their
+runtime in place with a verified backup. Back up before
 upgrading and keep matching binaries. Downgrading to code that understands only
 plaintext passwords or a different migration ledger is unsupported.
 
@@ -101,8 +102,8 @@ plaintext passwords or a different migration ledger is unsupported.
 
 [GX Studio](gx-studio.md) edits the active source of each catalog. GX
 World reads the game files in `data/game` at startup. The historical
-SQLite definition rows remain available for exporting customized older
-installations. SQLite continues to store durable game state and the
+SQLite definition rows can be exported from a pre-26 backup. Migration 26
+creates and verifies that backup beside the runtime before dropping the tables. SQLite continues to store durable game state and the
 active item, skill, experience and mall catalogs.
 
 

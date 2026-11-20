@@ -22,7 +22,10 @@ The snapshot includes test account credentials and gameplay state by explicit ch
 
 ## Schema and behavior
 
-Original `PS_UserData`, `PS_GameData`, `PS_GameDefs` and `PS_Billing` names become table prefixes in one file. The schema retains source columns, primary keys, indexes and IDs. Former stored procedures are parameterized queries/transactions in `server/internal/db`. Character creation/deletion/rename, guild changes, item claims, login/logout and point deductions preserve the existing API. The original `Rapture_LoginLog` name remains intact.
+The active `PS_UserData`, `PS_GameData` and `PS_GameDefs` tables share one
+SQLite file. The schema retains active source columns, primary keys, indexes
+and IDs. Migration 26 removes the unused `PS_Billing` namespace, retired
+market tables, historical logs and catalog copies now loaded from INI/SData. Former stored procedures are parameterized queries/transactions in `server/internal/db`. Character creation/deletion/rename, guild changes, item claims, login/logout and point deductions preserve the existing API. The original `Rapture_LoginLog` name remains intact.
 
 Dates use UTC text; integer/blob data is not exported through floating-point CSV. SQLite NOCASE is not identical to every SQL Server non-ASCII collation. SQLite initialization is serialized and atomic. The distributed seed is closed/checkpointed with no required WAL/SHM; a running runtime can have both companions.
 
@@ -54,6 +57,20 @@ python3 tools/snapshot_sqlite.py --source runtime/rapture.sqlite --output /priva
 To deliberately update the distributed test seed, omit `--output` or specify `data/rapture.sqlite`. This includes accounts and gameplay state; review the intended source before publishing. Keep seed and manifest together. It does not touch the source runtime and includes committed WAL. Rebuilding a portable alone does not take a fresh snapshot.
 
 Stop both services before restoring/replacing a runtime. Use the backup API for a live copy; never copy only an open main file and discard its WAL. Detailed upgrade/LAN/restore instructions are in the source [operations guide](../../docs/server.md).
+
+## Legacy schema cleanup
+
+Stop both services before upgrading an existing installation. Migration 26
+creates a private, verified SQLite backup in a `.gx-before-schema-26-*`
+directory beside the runtime before dropping any tables. If the backup
+cannot be created and verified, startup stops before deleting data.
+Fresh installs use the compacted seed with only the active schema.
+Retired catalog exports work against the pre-26 backup using
+`gx_export_catalogs --db <backup>` and the original templates. GX Studio
+can also open legacy snapshots for compatibility. Keep these backups
+outside public packages. Compact the upgraded runtime with SQLite
+`VACUUM` while both services are stopped if you need to return freed
+pages to the filesystem.
 
 ## Legacy migration and tests
 

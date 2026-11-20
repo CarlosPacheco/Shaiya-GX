@@ -33,6 +33,9 @@ var npcSkillsMigration string
 //go:embed auction.sql
 var auctionMigration string
 
+//go:embed prune_legacy.sql
+var pruneLegacyMigration string
+
 var migrations = []migration{
 	{1, "atomic_session_handoff", `CREATE TABLE IF NOT EXISTS GX_SessionHandoff(UserUID INTEGER PRIMARY KEY,Identity BLOB NOT NULL,AESMaterial BLOB NOT NULL,SessionID INTEGER NOT NULL,ExpiresAt INTEGER NOT NULL)`},
 	{2, "indexed_account_lookup", `CREATE INDEX IF NOT EXISTS GX_Users_UserID ON PS_UserData_Users_Master(UserID)`},
@@ -129,10 +132,11 @@ var migrations = []migration{
 		CREATE INDEX GX_Identity_UserStoredItems ON PS_GameData_UserStoredItems(RowID);
 		CREATE INDEX GX_Identity_UserStoredMoney ON PS_GameData_UserStoredMoney(RowID);
 	`},
+	{pruneLegacyVersion, "remove_inactive_sqlite_tables", pruneLegacyMigration},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.
-// GX's additive migrations have their own transactional, checksummed ledger.
+// GX migrations have their own transactional, checksummed ledger.
 func migrate(ctx context.Context, pool *sql.DB, steps []migration) error {
 	tx, err := pool.BeginTx(ctx, nil)
 	if err != nil {

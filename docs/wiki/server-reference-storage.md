@@ -10,7 +10,7 @@ Every production Go file is listed, including OS-specific alternatives. Signatur
 
 All authoritative SQLite access, definitions, migrations, guarded economy transactions and crash/session ownership.
 
-Tests: [account_session_test.go](../../server/internal/db/account_session_test.go), [auction_test.go](../../server/internal/db/auction_test.go), [cash_test.go](../../server/internal/db/cash_test.go), [character_creation_test.go](../../server/internal/db/character_creation_test.go), [chars_integration_test.go](../../server/internal/db/chars_integration_test.go), [defs_integration_test.go](../../server/internal/db/defs_integration_test.go), [economy_atomic_test.go](../../server/internal/db/economy_atomic_test.go), [gm_test.go](../../server/internal/db/gm_test.go), [group_write_test.go](../../server/internal/db/group_write_test.go), [isolation_test.go](../../server/internal/db/isolation_test.go), [keeps_test.go](../../server/internal/db/keeps_test.go), [mall_transaction_test.go](../../server/internal/db/mall_transaction_test.go), [migrations_test.go](../../server/internal/db/migrations_test.go), [mob_quest_test.go](../../server/internal/db/mob_quest_test.go), [production_integration_test.go](../../server/internal/db/production_integration_test.go), [skill_cleanup_test.go](../../server/internal/db/skill_cleanup_test.go), [snapshot_atomic_test.go](../../server/internal/db/snapshot_atomic_test.go), [social_test.go](../../server/internal/db/social_test.go), [sqlite_test.go](../../server/internal/db/sqlite_test.go).
+Tests: [account_session_test.go](../../server/internal/db/account_session_test.go), [auction_test.go](../../server/internal/db/auction_test.go), [cash_test.go](../../server/internal/db/cash_test.go), [character_creation_test.go](../../server/internal/db/character_creation_test.go), [chars_integration_test.go](../../server/internal/db/chars_integration_test.go), [defs_integration_test.go](../../server/internal/db/defs_integration_test.go), [economy_atomic_test.go](../../server/internal/db/economy_atomic_test.go), [gm_test.go](../../server/internal/db/gm_test.go), [group_write_test.go](../../server/internal/db/group_write_test.go), [isolation_test.go](../../server/internal/db/isolation_test.go), [keeps_test.go](../../server/internal/db/keeps_test.go), [legacy_backup_test.go](../../server/internal/db/legacy_backup_test.go), [mall_transaction_test.go](../../server/internal/db/mall_transaction_test.go), [migrations_test.go](../../server/internal/db/migrations_test.go), [mob_quest_test.go](../../server/internal/db/mob_quest_test.go), [production_integration_test.go](../../server/internal/db/production_integration_test.go), [skill_cleanup_test.go](../../server/internal/db/skill_cleanup_test.go), [snapshot_atomic_test.go](../../server/internal/db/snapshot_atomic_test.go), [social_test.go](../../server/internal/db/social_test.go), [sqlite_test.go](../../server/internal/db/sqlite_test.go).
 
 ### account.go
 
@@ -227,26 +227,25 @@ Direct GX dependencies: `server/internal/config`, `server/internal/filelock`, `s
 | [`UserData`](../../server/internal/db/db.go#L24)<br>`const UserData = "PS_UserData"` | See the source definition and the subsystem ownership contract. |
 | [`GameData`](../../server/internal/db/db.go#L25)<br>`const GameData = "PS_GameData"` | See the source definition and the subsystem ownership contract. |
 | [`GameDefs`](../../server/internal/db/db.go#L26)<br>`const GameDefs = "PS_GameDefs"` | See the source definition and the subsystem ownership contract. |
-| [`Billing`](../../server/internal/db/db.go#L27)<br>`const Billing = "PS_Billing"` | See the source definition and the subsystem ownership contract. |
-| [`Timeout`](../../server/internal/db/db.go#L29)<br>`const Timeout = 10 * time.Second` | See the source definition and the subsystem ownership contract. |
-| [`mu`](../../server/internal/db/db.go#L32)<br>`var mu sync.RWMutex` | See the source definition and the subsystem ownership contract. |
-| [`pools`](../../server/internal/db/db.go#L33)<br>`var pools` | See the source definition and the subsystem ownership contract. |
-| [`Initialize`](../../server/internal/db/db.go#L38)<br>`func Initialize() error` | Initialize copies the versioned seed once. A process lock and atomic rename prevent login/world from observing a partially copied database at startup. |
-| [`runtimeExists`](../../server/internal/db/db.go#L84)<br>`func runtimeExists(path string) (bool, error)` | See the source definition and the subsystem ownership contract. |
-| [`Pool`](../../server/internal/db/db.go#L100)<br>`func Pool(database string) (*sql.DB, error)` | Pool shares one durable writer per process. SQLite coordinates the login and world writers through WAL; each process serializes its own write transactions. |
-| [`openPool`](../../server/internal/db/db.go#L139)<br>`func openPool(name string) *sql.DB` | See the source definition and the subsystem ownership contract. |
-| [`ReadPool`](../../server/internal/db/db.go#L147)<br>`func ReadPool() (*sql.DB, error)` | ReadPool serves queries whose decisions do not require the writer lock. Always revalidate state inside the write transaction before committing. |
-| [`Open`](../../server/internal/db/db.go#L173)<br>`func Open(databases ...string) error` | See the source definition and the subsystem ownership contract. |
-| [`ctx`](../../server/internal/db/db.go#L181)<br>`func ctx() (context.Context, context.CancelFunc)` | See the source definition and the subsystem ownership contract. |
-| [`longCtx`](../../server/internal/db/db.go#L184)<br>`func longCtx() (context.Context, context.CancelFunc)` | See the source definition and the subsystem ownership contract. |
-| [`Close`](../../server/internal/db/db.go#L190)<br>`func Close() error` | Close runs bounded planner maintenance and closes process-owned connections. Call only after network handlers have drained. |
-| [`Observe`](../../server/internal/db/db.go#L210)<br>`func Observe()` | Observe reports bounded database contention and WAL size without acquiring the writer connection for checkpointing. Maintenance never truncates a live WAL. |
-| [`dbWaits`](../../server/internal/db/db.go#L231)<br>`var dbWaits` | See the source definition and the subsystem ownership contract. |
-| [`dbWaitNanos`](../../server/internal/db/db.go#L232)<br>`var dbWaitNanos` | See the source definition and the subsystem ownership contract. |
-| [`dbOpen`](../../server/internal/db/db.go#L233)<br>`var dbOpen` | See the source definition and the subsystem ownership contract. |
-| [`dbWAL`](../../server/internal/db/db.go#L234)<br>`var dbWAL` | See the source definition and the subsystem ownership contract. |
-| [`dbReaderWaits`](../../server/internal/db/db.go#L236)<br>`var dbReaderWaits` | See the source definition and the subsystem ownership contract. |
-| [`dbReaderWaitNanos`](../../server/internal/db/db.go#L237)<br>`var dbReaderWaitNanos` | See the source definition and the subsystem ownership contract. |
+| [`Timeout`](../../server/internal/db/db.go#L28)<br>`const Timeout = 10 * time.Second` | See the source definition and the subsystem ownership contract. |
+| [`mu`](../../server/internal/db/db.go#L31)<br>`var mu sync.RWMutex` | See the source definition and the subsystem ownership contract. |
+| [`pools`](../../server/internal/db/db.go#L32)<br>`var pools` | See the source definition and the subsystem ownership contract. |
+| [`Initialize`](../../server/internal/db/db.go#L37)<br>`func Initialize() error` | Initialize copies the versioned seed once. A process lock and atomic rename prevent login/world from observing a partially copied database at startup. |
+| [`runtimeExists`](../../server/internal/db/db.go#L83)<br>`func runtimeExists(path string) (bool, error)` | See the source definition and the subsystem ownership contract. |
+| [`Pool`](../../server/internal/db/db.go#L99)<br>`func Pool(database string) (*sql.DB, error)` | Pool shares one durable writer per process. SQLite coordinates the login and world writers through WAL; each process serializes its own write transactions. |
+| [`openPool`](../../server/internal/db/db.go#L138)<br>`func openPool(name string) *sql.DB` | See the source definition and the subsystem ownership contract. |
+| [`ReadPool`](../../server/internal/db/db.go#L146)<br>`func ReadPool() (*sql.DB, error)` | ReadPool serves queries whose decisions do not require the writer lock. Always revalidate state inside the write transaction before committing. |
+| [`Open`](../../server/internal/db/db.go#L172)<br>`func Open(databases ...string) error` | See the source definition and the subsystem ownership contract. |
+| [`ctx`](../../server/internal/db/db.go#L180)<br>`func ctx() (context.Context, context.CancelFunc)` | See the source definition and the subsystem ownership contract. |
+| [`longCtx`](../../server/internal/db/db.go#L183)<br>`func longCtx() (context.Context, context.CancelFunc)` | See the source definition and the subsystem ownership contract. |
+| [`Close`](../../server/internal/db/db.go#L189)<br>`func Close() error` | Close runs bounded planner maintenance and closes process-owned connections. Call only after network handlers have drained. |
+| [`Observe`](../../server/internal/db/db.go#L209)<br>`func Observe()` | Observe reports bounded database contention and WAL size without acquiring the writer connection for checkpointing. Maintenance never truncates a live WAL. |
+| [`dbWaits`](../../server/internal/db/db.go#L230)<br>`var dbWaits` | See the source definition and the subsystem ownership contract. |
+| [`dbWaitNanos`](../../server/internal/db/db.go#L231)<br>`var dbWaitNanos` | See the source definition and the subsystem ownership contract. |
+| [`dbOpen`](../../server/internal/db/db.go#L232)<br>`var dbOpen` | See the source definition and the subsystem ownership contract. |
+| [`dbWAL`](../../server/internal/db/db.go#L233)<br>`var dbWAL` | See the source definition and the subsystem ownership contract. |
+| [`dbReaderWaits`](../../server/internal/db/db.go#L235)<br>`var dbReaderWaits` | See the source definition and the subsystem ownership contract. |
+| [`dbReaderWaitNanos`](../../server/internal/db/db.go#L236)<br>`var dbReaderWaitNanos` | See the source definition and the subsystem ownership contract. |
 
 ### defs.go
 
@@ -783,6 +782,19 @@ type Keep struct {
 
 </details>
 
+### legacy_backup.go
+
+[server/internal/db/legacy_backup.go](../../server/internal/db/legacy_backup.go#L1)
+
+Direct GX dependencies: `server/internal/config`, `server/internal/filelock`.
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`pruneLegacyVersion`](../../server/internal/db/legacy_backup.go#L18)<br>`const pruneLegacyVersion = 26` | See the source definition and the subsystem ownership contract. |
+| [`migrateRuntime`](../../server/internal/db/legacy_backup.go#L22)<br>`func migrateRuntime(ctx context.Context, pool *sql.DB) error` | Keep the pre-prune schema available to the legacy exporters. A separate process lock serializes backup and migration across Login and World. |
+| [`backupLegacyRuntime`](../../server/internal/db/legacy_backup.go#L47)<br>`func backupLegacyRuntime(ctx context.Context, pool *sql.DB, path string) error` | See the source definition and the subsystem ownership contract. |
+| [`verifyLegacyBackup`](../../server/internal/db/legacy_backup.go#L92)<br>`func verifyLegacyBackup(ctx context.Context, archive string) error` | See the source definition and the subsystem ownership contract. |
+
 ### mall.go
 
 [server/internal/db/mall.go](../../server/internal/db/mall.go#L1)
@@ -833,8 +845,9 @@ Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `inte
 | [`experienceMigration`](../../server/internal/db/migrations.go#L28)<br>`var experienceMigration string` | See the source definition and the subsystem ownership contract. |
 | [`npcSkillsMigration`](../../server/internal/db/migrations.go#L31)<br>`var npcSkillsMigration string` | See the source definition and the subsystem ownership contract. |
 | [`auctionMigration`](../../server/internal/db/migrations.go#L34)<br>`var auctionMigration string` | See the source definition and the subsystem ownership contract. |
-| [`migrations`](../../server/internal/db/migrations.go#L36)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L136)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX's additive migrations have their own transactional, checksummed ledger. |
+| [`pruneLegacyMigration`](../../server/internal/db/migrations.go#L37)<br>`var pruneLegacyMigration string` | See the source definition and the subsystem ownership contract. |
+| [`migrations`](../../server/internal/db/migrations.go#L39)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
+| [`migrate`](../../server/internal/db/migrations.go#L140)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 

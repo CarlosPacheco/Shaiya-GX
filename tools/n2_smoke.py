@@ -4,7 +4,7 @@
 Requires Rapture's build/ binaries and the original client assets. No Docker,
 SQL credentials, personal runtime DB or existing game service is used.
 """
-import os,secrets,shutil,socket,sqlite3,subprocess,tempfile,time
+import os,re,secrets,shutil,socket,sqlite3,subprocess,tempfile,time
 from pathlib import Path
 client=Path(__file__).resolve().parents[1]
 server=Path(os.environ.get('GX_SERVER_DIR',os.environ.get('RAPTURE_DIR',client/'server'))).expanduser().resolve()
@@ -12,14 +12,22 @@ children=[]
 with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
  temp=Path(temp);db=temp/'rapture.sqlite';shutil.copyfile(server/'data/rapture.sqlite',db)
  env=dict(os.environ,RAPTURE_DB_PATH=str(db),RAPTURE_DATA_DIR=str(server/'data'),RAPTURE_LOGIN_LISTEN='127.0.0.1:40800',RAPTURE_WORLD_LISTEN='127.0.0.1:40810',RAPTURE_PUBLIC_IP='127.0.0.1',SHAIYA_TEST_LOGIN_ADDR='127.0.0.1:40800',SHAIYA_TEST_WORLD_PORT='40810',SHAIYA_TEST_DISPOSABLE='1',SHAIYA_TEST_RENDER='1',SHAIYA_TEST_NATIVE_CONTROLS='1',SHAIYA_TEST_ACTIONS='1',SHAIYA_TEST_ARTIFACTS=str(client/'work'),SHAIYA_DATA=os.environ.get('SHAIYA_DATA',str(Path.home()/'Desktop/Shaiya GX/data')),GOTOOLCHAIN='local')
+ data=temp/'data';data.mkdir()
+ shutil.copytree(server/'data/game',data/'game')
+ for name in ('maps','geometry'):
+  (data/name).symlink_to(server/'data'/name,target_is_directory=True)
+ enchant=data/'game/ItemEnchant.ini'
+ text=enchant.read_text(encoding='utf-8')
+ text,count=re.subn(r'(?m)^WeaponStep06[ 	]*=.*$', 'WeaponStep06=1000000',text,count=1)
+ if count!=1:raise RuntimeError('missing WeaponStep06 in the test enchant INI')
+ enchant.write_text(text,encoding='utf-8')
+ env['RAPTURE_DATA_DIR']=str(data)
  env['PATH']=str(Path.home()/'.local/opt/go-1.27.4/bin')+':'+env['PATH']
  for port in (40800,40810):
   with socket.socket() as check:
    if check.connect_ex(('127.0.0.1',port))==0:raise RuntimeError('test port is already in use: '+str(port))
  users=[]
  with sqlite3.connect(db) as c:
-  # Keep presentation checks deterministic while exercising the real forge ACK.
-  c.execute('UPDATE PS_GameDefs_EnchantAttack SET SuccessChance=1000000 WHERE Level=6')
   for _ in range(2):
    name='測'+secrets.token_hex(5);password='密'+secrets.token_hex(5);uid=c.execute('SELECT MAX(UserUID)+1 FROM PS_UserData_Users_Master').fetchone()[0]
    c.execute("INSERT INTO PS_UserData_Users_Master(UserUID,UserID,Pw,Admin,AdminLevel,UseQueue,Status,Leave,UserType,Point) VALUES(?,?,?,0,0,0,0,0,'N',0)",(uid,name,password));users.append((name,password,uid))

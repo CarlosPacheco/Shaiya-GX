@@ -30,7 +30,7 @@ import (
 )
 
 func main() {
-	db := flag.String("db", "", "SQLite database or verified backup containing migrations through version 23")
+	db := flag.String("db", "", "Legacy SQLite database or verified backup from before migration 26")
 	out := flag.String("out", "", "New output directory")
 	npc := flag.String("npc-template", "", "Matching NpcQuest.SData for original texts and encoding")
 	mapFile := flag.String("map-template", "", "Optional Map.ini whose additional keys should be retained")
@@ -78,6 +78,13 @@ func export(ctx context.Context, dbPath, npcFile, mapFile, mobFile string) (map[
 		return nil, err
 	}
 	defer tx.Rollback()
+	var legacy bool
+	if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM sqlite_schema WHERE name='PS_GameDefs_EnchantAttack' AND type='table')`).Scan(&legacy); err != nil {
+		return nil, err
+	}
+	if !legacy {
+		return nil, errors.New("legacy catalog tables are absent; use a verified SQLite backup from before migration 26")
+	}
 	files := map[string][]byte{}
 	ench, e := enchantrules.Read(ctx, tx)
 	files[catalogfiles.Enchant], err = encode(ench, e, catalogfiles.EncodeEnchant)

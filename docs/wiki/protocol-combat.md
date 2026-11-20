@@ -526,7 +526,7 @@ Declarations: [packet.LevelUpSelf](../../server/internal/packet/packet.go#L73), 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildLevelUp (server/internal/world/combat.go)](../../server/internal/world/combat.go#L610)
+**S→C serializers:** [buildLevelUp (server/internal/world/combat.go)](../../server/internal/world/combat.go#L625)
 
 **Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L881)
 
@@ -536,7 +536,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildLevelUp — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L610)
+[Source definition](../../server/internal/world/combat.go#L625)
 
 ```go
 func buildLevelUp(op packet.Opcode, ch *db.Character) []byte {
@@ -2399,7 +2399,7 @@ Declarations: [packet.LevelUpOther](../../server/internal/packet/packet.go#L74),
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildLevelUp (server/internal/world/combat.go)](../../server/internal/world/combat.go#L610)
+**S→C serializers:** [buildLevelUp (server/internal/world/combat.go)](../../server/internal/world/combat.go#L625)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L881)
 
@@ -2409,7 +2409,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildLevelUp — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L610)
+[Source definition](../../server/internal/world/combat.go#L625)
 
 ```go
 func buildLevelUp(op packet.Opcode, ch *db.Character) []byte {
