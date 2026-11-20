@@ -105,7 +105,8 @@ they block while equipped. They block every hit from that NPC skill. Other
 IDs still resolve normally, including skills with the same StateType and
 player spells with the same numeric ID. For example, Anti-Sleep blocks the
 Sleep Lapis proc and leaves Hypnosis eligible to hit. Lapis and equipment
-tooltips list the matching skill icons in a separate **Immune to** row.
+tooltips list the matching skill icons in a separate **Immune to** row. The
+offensive counterpart supplies the icon for legacy records without a skill icon.
 
 After a landed hit, current trigger routing is:
 

@@ -13,9 +13,21 @@ type tooltipExtras struct {
 	maxOJStats   uint8
 	forgeInfo    string
 	material     *sdata.Item
-	effects      []sdata.Skill
-	immunities   []sdata.Skill
+	effects      []tooltipItemEffect
+	immunities   []tooltipItemEffect
 	effectChance bool
+}
+
+type tooltipItemEffect struct {
+	sdata.Skill
+	fallback *sdata.Item
+}
+
+func (e tooltipItemEffect) icon() (string, ui.UV, bool) {
+	if file, uv, ok := ui.SkillIcon(e.Icon); ok || e.fallback == nil {
+		return file, uv, ok
+	}
+	return ui.ItemIcon(e.fallback.Type, e.fallback.Icon)
 }
 
 type tooltipSocket struct {
@@ -124,7 +136,7 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 	}
 	if item && len(extras) > 0 {
 		e := extras[0]
-		addEffects := func(label string, skills []sdata.Skill, showChance bool) {
+		addEffects := func(label string, skills []tooltipItemEffect, showChance bool) {
 			if len(skills) == 0 {
 				return
 			}

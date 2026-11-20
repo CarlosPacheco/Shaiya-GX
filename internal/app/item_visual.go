@@ -227,7 +227,7 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 var nativeEnhancementDescription = regexp.MustCompile(`(?i)(?:\{c[0-9]+\})?\[Enhancement:[^\]]*\](?:\{/c\})?`)
 
 // itemEffects resolves only integrated attack/debuff lapis in the NPC namespace.
-func (a *App) itemEffects(def *sdata.Item, instance *proto.InventoryItem) (effects, immunities []sdata.Skill) {
+func (a *App) itemEffects(def *sdata.Item, instance *proto.InventoryItem) (effects, immunities []tooltipItemEffect) {
 	if def == nil {
 		return nil, nil
 	}
@@ -243,11 +243,15 @@ func (a *App) itemEffects(def *sdata.Item, instance *proto.InventoryItem) (effec
 		}
 		if itemtype.IsAntiDebuffLapis(gem.Type, gem.TypeID) {
 			if !seenImmunities[id] {
-				immunities = append(immunities, sk)
+				counterpart := a.itemsItem(gem.Type, gem.TypeID-1)
+				if counterpart == nil || counterpart.Special != gem.Special {
+					counterpart = gem
+				}
+				immunities = append(immunities, tooltipItemEffect{Skill: sk, fallback: counterpart})
 				seenImmunities[id] = true
 			}
 		} else if (!defensive || gem.Special > 15) && !seenEffects[id] {
-			effects = append(effects, sk)
+			effects = append(effects, tooltipItemEffect{Skill: sk})
 			seenEffects[id] = true
 		}
 	}
