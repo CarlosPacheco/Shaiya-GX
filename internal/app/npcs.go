@@ -7,6 +7,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
+	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
@@ -42,6 +43,11 @@ func (a *App) loadNPCs() {
 		var defs map[sdata.NPCKey]sdata.NPC
 		defs, err = sdata.ParseNPCs(b)
 		if err == nil {
+			for key := range defs {
+				if npcquest.RetiredType(key.Type) {
+					delete(defs, key)
+				}
+			}
 			a.npcDefs = defs
 		}
 	}

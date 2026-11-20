@@ -29,16 +29,10 @@ func (a *App) npcServiceLabel(e *game.Entity, def sdata.NPC) string {
 		id = 5161 // Blacksmith: GX replaces the native "repair weapon" with the forge menu
 	case 4:
 		id = 0x14b7
-	case 5:
-		id = 0x14b6
 	case 6:
 		id = 0x14b3
 	case 11:
 		id = 0x14b5
-	case 13:
-		id = 0x14b1
-	case 14:
-		id = 0x14b0
 	}
 	return a.msg.Get(id)
 }

@@ -356,7 +356,7 @@ Declarations: [packet.ExpGain](../../server/internal/packet/packet.go#L41), [pro
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L616)
+**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L626)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L873)
 
@@ -366,7 +366,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildExpGain — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L616)
+[Source definition](../../server/internal/world/combat.go#L626)
 
 ```go
 func buildExpGain(amount uint32) []byte {

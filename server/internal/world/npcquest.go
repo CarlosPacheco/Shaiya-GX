@@ -112,7 +112,7 @@ func buildNPCQuest(c npcquest.Catalog) ([npcTypeCount][]npcDef, []questDef, map[
 
 // findNpcDef is GetNpc (0x0041d640): by type and row.
 func findNpcDef(npcType uint8, typeID uint16) *npcDef {
-	if npcType < 1 || npcType > npcTypeCount || typeID < 1 || int(typeID) > len(npcDefs[npcType-1]) {
+	if npcquest.RetiredType(npcType) || npcType < 1 || npcType > npcTypeCount || typeID < 1 || int(typeID) > len(npcDefs[npcType-1]) {
 		return nil
 	}
 	return &npcDefs[npcType-1][typeID-1]

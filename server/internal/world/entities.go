@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/mapnav"
+	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/ai"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -1085,7 +1086,7 @@ func FindPortalAt(mapID uint16, x, y, z float32) (MapPortal, bool) {
 }
 
 func NewPatrolNpc(npcType uint8, typeID uint16, points []NpcPatrolPoint) (MapNpc, bool) {
-	if len(points) == 0 {
+	if len(points) == 0 || npcquest.RetiredType(npcType) {
 		return MapNpc{}, false
 	}
 	p := points[0]
