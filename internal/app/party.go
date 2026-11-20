@@ -295,6 +295,17 @@ func (a *App) partyCommand(text string) bool {
 		return false
 	}
 	command := strings.ToLower(fields[0])
+	if command == "/join" { // 6543 "/Join": enter the raid of that character
+		if len(fields) < 2 || a.state.Party.Raid || len(a.state.Party.Members) > 0 {
+			return true
+		}
+		name := strings.Join(fields[1:], " ")
+		a.party.inviteName = name
+		if err := a.world.Send(proto.RaidNamePacket(proto.RaidAutoJoinName, name)); err != nil {
+			a.backToLogin("Unable to send raid request.")
+		}
+		return true
+	}
 	if strings.HasPrefix(command, "/raid") {
 		return a.raidCommand(fields)
 	}
@@ -388,7 +399,12 @@ func (a *App) raidCommand(fields []string) bool {
 			return true
 		}
 	case "/raid":
-		if len(p.Members) > 1 && !p.Raid && p.Leader == a.state.SelfID {
+		if arg != "" && (p.Raid || len(p.Members) == 0) {
+			// /raid <name> starts a raid by invitation, with no party first.
+			a.party.inviteName = arg
+			packet = proto.RaidNamePacket(proto.RaidInviteName, arg)
+			a.invitedNotice(arg)
+		} else if arg == "" && len(p.Members) > 1 && !p.Raid && p.Leader == a.state.SelfID {
 			packet = proto.RaidConvertPacket(1, false, 1)
 		}
 	case "/raidinvite":

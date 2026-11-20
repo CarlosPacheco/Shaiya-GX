@@ -18,6 +18,7 @@ import (
 //	of six), 0x0B0C member joined, 0x0C0C member pools.
 
 const (
+	raidGroupSize     = 6   // slots per group (party) inside a raid
 	raidMax           = 150 // five raids of 30 slots (GX extension of the original 30)
 	raidKindNormal    = 0
 	raidKindRaid      = 1
@@ -72,6 +73,9 @@ func enterRaid(pt *party, p *ConnectedPlayer) bool {
 	}
 	pt.members = append(pt.members, p)
 	pt.slots = append(pt.slots, uint16(slot))
+	if len(pt.members) == 2 && pt.subLeader == pt.leader {
+		pt.subLeader = 1 // a raid started by an invitation: the first to join assists
+	}
 	p.party, p.inviterID = pt, 0
 	if len(pt.members) > 1 {
 		w := packet.New(packet.RaidJoined)
@@ -318,8 +322,9 @@ func (s *Session) handleRaidAnswer(p []byte) {
 	pt := partyOf(inviter)
 	switch {
 	case pt == nil:
+		// /raid <name>: accepting starts the raid itself, no party first.
 		nextPartyID++
-		pt = &party{id: nextPartyID, itemDivision: 1}
+		pt = &party{id: nextPartyID, itemDivision: 1, kind: raidKindRaid}
 		enterParty(pt, inviter)
 	case !pt.mayInvite(inviter):
 		raidError(inviter, partyErrBusy, me.CharacterID)

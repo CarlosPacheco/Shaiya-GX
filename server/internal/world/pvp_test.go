@@ -9,7 +9,7 @@ func TestUserDamageFormula(t *testing.T) {
 		if got, crit := userDamage(&att, &def, kind); got != normal || crit {
 			t.Fatalf("kind %d normal = %d, crit = %t", kind, got, crit)
 		}
-		att.Critical = fullChance
+		att.Critical = fullChance + int64(def.Luc) // the target's LUC takes 0.01 points per point off
 		if got, crit := userDamage(&att, &def, kind); got != normal*3/2 || !crit {
 			t.Fatalf("kind %d critical = %d, crit = %t", kind, got, crit)
 		}

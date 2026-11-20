@@ -25,8 +25,9 @@ func TestPartySummonRaidScope(t *testing.T) {
 		want   []*ConnectedPlayer
 	}{
 		{leader, []*ConnectedPlayer{a, b, c}},
-		{a, []*ConnectedPlayer{b}},
-		{c, nil},
+		{a, []*ConnectedPlayer{leader}}, // slot 5 is the last of group 1 (slots 0-5)
+		{b, []*ConnectedPlayer{c}},      // slots 6-11 are group 2
+		{c, []*ConnectedPlayer{b}},
 	} {
 		if group, got := partySummonTargets(tc.caster); group != pt || !slices.Equal(got, tc.want) {
 			t.Fatalf("summon scope: got %v want %v", got, tc.want)
@@ -124,5 +125,17 @@ func TestMovementRuneGoesToAPartyMemberDeadOrAlive(t *testing.T) {
 	user.tickMovementRune(time.Now())
 	if user.moveRune != nil || user.char.PosX < 599 || user.char.PosX > 601 || user.char.PosZ < 449 || user.char.PosZ > 451 {
 		t.Fatalf("the rune left the user at %v,%v, want about 600,450", user.char.PosX, user.char.PosZ)
+	}
+}
+
+// Group boundaries follow CParty::GetGroup 0x445980: six slots per group.
+func TestRaidGroupBoundaryIsSix(t *testing.T) {
+	leader, a, b := &ConnectedPlayer{}, &ConnectedPlayer{}, &ConnectedPlayer{}
+	pt := &party{kind: raidKindRaid, members: []*ConnectedPlayer{leader, a, b}, slots: []uint16{0, 5, 6}}
+	for _, p := range pt.members {
+		p.party = pt
+	}
+	if _, got := partySummonTargets(a); !slices.Equal(got, []*ConnectedPlayer{leader}) {
+		t.Fatalf("slot 5 must stay with group 1: %v", got)
 	}
 }

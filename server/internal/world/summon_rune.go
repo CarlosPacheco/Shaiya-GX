@@ -44,11 +44,11 @@ func partySummonTargets(caster *ConnectedPlayer) (*party, []*ConnectedPlayer) {
 		if index >= len(pt.slots) {
 			return nil, nil
 		}
-		group = int(pt.slots[index]) / 5
+		group = int(pt.slots[index]) / raidGroupSize // the six slots of its group
 	}
 	var targets []*ConnectedPlayer
 	for i, p := range pt.members {
-		if p != caster && (group < 0 || i < len(pt.slots) && int(pt.slots[i])/5 == group) {
+		if p != caster && (group < 0 || i < len(pt.slots) && int(pt.slots[i])/raidGroupSize == group) {
 			targets = append(targets, p)
 		}
 	}
