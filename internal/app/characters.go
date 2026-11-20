@@ -117,6 +117,19 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			a.screen = screenWorld
 			a.enterWorld()
 		}
+		// 0x43bfa0: DirectInput 0x57 (F11) flips DAT_007198c4, which gates
+		// the UI draw (0x4354b0, 0x41c5c0) and UI input (0x48caf0).
+		if in.HasKey(platform.KeyF11) {
+			a.uiHidden = !a.uiHidden
+		}
+		if a.worldUIHidden() && !a.menuOpen {
+			controls := *in
+			a.updateCombat(&controls, w, h)
+			if a.state != nil && a.wv != nil && a.world != nil {
+				a.updateWorld(&controls, dt)
+			}
+			return
+		}
 		if a.state.Self.Dead {
 			a.stopTeleportCast()
 			if a.summonMessage != nil {
@@ -305,6 +318,9 @@ func (a *App) drawCharacters(w, h int) {
 	case game.PhaseInWorld:
 		a.tooltip = nil
 		a.tooltipMuted = false
+		if a.worldUIHidden() {
+			break
+		}
 		a.drawPlayerNames(w, h)
 		a.drawCombat(w, h)
 		a.drawChatBubbles(w, h)

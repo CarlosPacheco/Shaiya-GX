@@ -26,6 +26,7 @@ const (
 	KeySelfTarget // F2 selects the local player.
 	KeyF9
 	KeyF10
+	KeyF11 // Native English client: DirectInput 0x57 toggles the whole UI.
 	KeySpace
 	KeyTarget         // Native English client: DirectInput 0x29 (grave accent).
 	KeyPreviousTarget // Press edge only; Backspace still repeats inside text fields.
@@ -91,7 +92,7 @@ var keyMap = map[glfw.Key]Key{
 	glfw.KeyEnter:       KeyEnter, glfw.KeyKPEnter: KeyEnter, glfw.KeyTab: KeyTab,
 	glfw.KeyBackspace: KeyBackspace, glfw.KeyEscape: KeyEscape, glfw.KeyUp: KeyUp,
 	glfw.KeyHome: KeyHome, glfw.KeyEnd: KeyEnd, glfw.KeyPageUp: KeyPageUp, glfw.KeyPageDown: KeyPageDown,
-	glfw.KeyF9: KeyF9, glfw.KeyF10: KeyF10, glfw.KeySpace: KeySpace,
+	glfw.KeyF9: KeyF9, glfw.KeyF10: KeyF10, glfw.KeyF11: KeyF11, glfw.KeySpace: KeySpace,
 	glfw.KeyDown: KeyDown, glfw.KeyLeft: KeyLeft, glfw.KeyRight: KeyRight, glfw.KeyDelete: KeyDelete,
 }
 

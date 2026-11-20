@@ -87,6 +87,7 @@ type App struct {
 	guildDirectoryUI                    *ui.GuildDirectory
 	guildHouseUI                        *ui.GuildHouseWindow
 	npcTalkUI                           *ui.NPCTalk
+	uiHidden                            bool // F11 hides the whole world UI (DAT_007198c4 cleared).
 	tipTexture                          *render.Texture
 	guildPointUI                        *ui.GuildPointWindow
 	house                               houseView
@@ -676,41 +677,41 @@ func (a *App) drawFrame(w, h int) {
 	if a.accountMessage != nil {
 		a.accountMessage.Draw(a.sprites, a.font, w, h)
 	}
-	if a.screen == screenWorld && a.partyMessage != nil {
+	if a.screen == screenWorld && !a.worldUIHidden() && a.partyMessage != nil {
 		a.partyMessage.Draw(a.sprites, a.font, w, h)
 		a.vehicleMessage.Draw(a.sprites, a.font, w, h)
 	}
-	if a.screen == screenWorld && a.exchangeInvite != nil {
+	if a.screen == screenWorld && !a.worldUIHidden() && a.exchangeInvite != nil {
 		a.exchangeInvite.Draw(a.sprites, a.font, w, h)
 	}
-	if a.screen == screenWorld && a.guildMessage != nil {
+	if a.screen == screenWorld && !a.worldUIHidden() && a.guildMessage != nil {
 		a.guildMessage.Draw(a.sprites, a.font, w, h)
 	}
-	if a.screen == screenWorld && a.auctionConfirm != nil {
+	if a.screen == screenWorld && !a.worldUIHidden() && a.auctionConfirm != nil {
 		a.auctionConfirm.Draw(a.sprites, a.font, w, h)
 	}
-	if a.screen == screenWorld && a.guildConfirm != nil {
+	if a.screen == screenWorld && !a.worldUIHidden() && a.guildConfirm != nil {
 		a.guildConfirm.Draw(a.sprites, a.font, w, h)
 		if a.socialInviteUI != nil {
 			a.socialInviteUI.Draw(a.sprites, a.font, w, h)
 		}
 	}
-	if a.screen == screenWorld && a.guildDuelMessage != nil {
+	if a.screen == screenWorld && !a.worldUIHidden() && a.guildDuelMessage != nil {
 		a.guildDuelMessage.Draw(a.sprites, a.font, w, h)
 	}
-	if a.screen == screenWorld && a.duelMessage != nil {
+	if a.screen == screenWorld && !a.worldUIHidden() && a.duelMessage != nil {
 		a.duelMessage.Draw(a.sprites, a.font, w, h)
 	}
-	if a.screen == screenWorld && a.pvpRewardMessage != nil {
+	if a.screen == screenWorld && !a.worldUIHidden() && a.pvpRewardMessage != nil {
 		a.pvpRewardMessage.Draw(a.sprites, a.font, w, h)
 	}
-	if a.screen == screenWorld && a.guildCreateUI != nil {
+	if a.screen == screenWorld && !a.worldUIHidden() && a.guildCreateUI != nil {
 		a.guildCreateUI.Draw(a.sprites, a.font, w, h)
 	}
-	if a.screen == screenWorld && a.guildVoteMessage != nil {
+	if a.screen == screenWorld && !a.worldUIHidden() && a.guildVoteMessage != nil {
 		a.guildVoteMessage.Draw(a.sprites, a.font, w, h)
 	}
-	if a.screen == screenWorld {
+	if a.screen == screenWorld && !a.worldUIHidden() {
 		a.drawMallConfirm(w, h)
 	}
 	a.drawPerformance(w)
@@ -768,7 +769,7 @@ func (a *App) backToLogin(msg string) {
 		a.world.Close()
 		a.world = nil
 	}
-	a.sess, a.state = nil, nil
+	a.sess, a.state, a.uiHidden = nil, nil, false
 	a.creating = false
 	a.account = accountAction{}
 	if a.accountMessage != nil {
@@ -1126,4 +1127,9 @@ func (a *App) saveID() {
 	}
 	os.MkdirAll(filepath.Dir(p), 0o700)
 	os.WriteFile(p, []byte(a.login.ID.Text), 0o600)
+}
+
+// worldUIHidden reports the F11 state; the death dialog stays visible.
+func (a *App) worldUIHidden() bool {
+	return a.uiHidden && a.screen == screenWorld && a.state != nil && !a.state.Self.Dead
 }
