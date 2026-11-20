@@ -62,6 +62,8 @@ func setAttack(s *CharacterStats, e EquipmentStats) {
 	}
 	setCombatChances(&s.Accuracy, &s.Evasion, s.Dex, s.Wis, e.Mods)
 	s.Critical = int64(s.Luc)*20 + int64(e.Critical)*100
+	// Each LUC point also gives half a point of ranged (archery) attack.
+	s.Attack[attackRanged] = boundedCombatStat((int64(s.Str)*13+int64(s.Dex)*2+int64(s.Luc)*5)/10 + int64(e.ItemAttack) + int64(e.Mods[attackRanged].Attack))
 	s.Variance, s.AttackAttr, s.RangedWeapon, s.ItemAttack = e.Variance, e.AttackAttr, e.RangedWeapon, e.ItemAttack
 	s.DefenseAttr, s.Range, s.AttackSpeed = e.DefenseAttr, e.Range, e.AttackSpeed
 	s.SPCostCut, s.MPCostCut, s.MoveSpeed, s.Disabled = e.SPCostCut, e.MPCostCut, e.MoveSpeed, e.Disabled
@@ -90,11 +92,12 @@ type mobCombat struct {
 	Guard        [3]int32
 	Attack       [3]int32
 	Critical     int64
+	Luc          int64 // its LUC lowers the critical chance of whoever hits it
 	Attrib       uint8
 }
 
 func mobCombatFor(d *db.MobDef) mobCombat {
-	m := mobCombat{Level: int32(d.Level), Attrib: d.Attrib, Critical: int64(d.Luc) * 20}
+	m := mobCombat{Level: int32(d.Level), Attrib: d.Attrib, Critical: int64(d.Luc) * 20, Luc: int64(d.Luc)}
 	setCombatChances(&m.Accuracy, &m.Evasion, uint32(d.Dex), uint32(d.Wis), [3]CategoryMods{})
 	m.Guard[attackMelee] = int32(d.Defense)
 	m.Guard[attackRanged] = boundedCombatStat(int64(d.Defense) + int64(d.ShieldDefense))
@@ -169,9 +172,16 @@ type hitDamage struct {
 	variance     uint32
 	guard        int32
 	critical     int64
+	targetLuc    int64 // each point of the target's LUC removes 0.01 percentage points
 	attackAttr   uint8
 	defenseAttr  uint8
 	levelPercent int64
+}
+
+// criticalChance is the attacker's critical chance (0.2 points per LUC plus
+// bonuses) less 0.01 percentage points per point of the target's LUC.
+func criticalChance(critical, targetLuc int64) int64 {
+	return min(max(critical-targetLuc, 0), fullChance)
 }
 
 // weaponHit computes the same damage for all three categories. Using the
@@ -181,7 +191,7 @@ func (h hitDamage) weaponHit(bonus, multiplier int64) (int32, bool) {
 	if h.variance != 0 {
 		attack += int64(rand.Uint64N(uint64(h.variance) + 1))
 	}
-	crit := rollCombatChance(h.critical)
+	crit := rollCombatChance(criticalChance(h.critical, h.targetLuc))
 	critHalves := int64(2)
 	if crit {
 		critHalves = 3
@@ -268,32 +278,32 @@ func (h hitDamage) skillHit(def *db.SkillDef, caster, current, maximum damagePoo
 	return damage, crit
 }
 
-func characterHitDamage(s *CharacterStats, kind int, guard int32, defenseAttr uint8, levelPercent int64) hitDamage {
+func characterHitDamage(s *CharacterStats, kind int, guard int32, defenseAttr uint8, levelPercent, targetLuc int64) hitDamage {
 	return hitDamage{
-		attack: int64(s.Attack[kind]), variance: s.Variance, guard: guard, critical: s.Critical,
+		attack: int64(s.Attack[kind]), variance: s.Variance, guard: guard, critical: s.Critical, targetLuc: targetLuc,
 		attackAttr: s.AttackAttr, defenseAttr: defenseAttr, levelPercent: levelPercent,
 	}
 }
 
 func playerDamage(s *CharacterStats, m *mobCombat, kind int) (int32, bool) {
-	h := characterHitDamage(s, kind, m.Guard[kind], m.Attrib, 100-mobLevelPenalty(s.Level, m.Level))
+	h := characterHitDamage(s, kind, m.Guard[kind], m.Attrib, 100-mobLevelPenalty(s.Level, m.Level), m.Luc)
 	return h.weaponHit(0, 1)
 }
 
 func playerSkillDamage(s *CharacterStats, m *mobCombat, def *db.SkillDef, current, maximum damagePools) ([3]int32, bool) {
 	kind := int(def.Kind)
-	h := characterHitDamage(s, kind, m.Guard[kind], m.Attrib, 100-mobLevelPenalty(s.Level, m.Level))
+	h := characterHitDamage(s, kind, m.Guard[kind], m.Attrib, 100-mobLevelPenalty(s.Level, m.Level), m.Luc)
 	return h.skillHit(def, currentDamagePools(s), current, maximum)
 }
 
 func userDamage(att, def *CharacterStats, kind int) (int32, bool) {
-	h := characterHitDamage(att, kind, def.Guard[kind], def.DefenseAttr, 100)
+	h := characterHitDamage(att, kind, def.Guard[kind], def.DefenseAttr, 100, int64(def.Luc))
 	return h.weaponHit(0, 1)
 }
 
 func userSkillDamage(att, def *CharacterStats, sk *db.SkillDef, caster damagePools) ([3]int32, bool) {
 	kind := int(sk.Kind)
-	h := characterHitDamage(att, kind, def.Guard[kind], def.DefenseAttr, 100)
+	h := characterHitDamage(att, kind, def.Guard[kind], def.DefenseAttr, 100, int64(def.Luc))
 	return h.skillHit(sk, caster, currentDamagePools(def), maximumDamagePools(def))
 }
 
@@ -303,7 +313,7 @@ func mobHitDamage(m *mobCombat, a *db.MobAttack, s *CharacterStats, kind int, at
 		attack = int64(float64(attack) * float64(m.DamageFactor))
 	}
 	return hitDamage{
-		attack: attack, variance: uint32(a.Plus), guard: s.Guard[kind], critical: m.Critical,
+		attack: attack, variance: uint32(a.Plus), guard: s.Guard[kind], critical: m.Critical, targetLuc: int64(s.Luc),
 		attackAttr: attr, defenseAttr: s.DefenseAttr, levelPercent: 100 + mobLevelPenalty(s.Level, m.Level),
 	}
 }

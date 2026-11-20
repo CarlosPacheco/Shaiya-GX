@@ -43,7 +43,7 @@ func TestCombatStatsSharedPhysicalGuardAndStraightMagic(t *testing.T) {
 	e.Mods[attackRanged] = CategoryMods{Defense: 30, Accuracy: 20}
 	e.Mods[attackMagic] = CategoryMods{Defense: 10, Accuracy: 5}
 	setAttack(&stats, e)
-	if stats.Attack != ([3]int32{430, 430, 430}) || stats.MinAttack != 430 || stats.MaxAttack != 450 {
+	if stats.Attack != ([3]int32{430, 480, 430}) || stats.MinAttack != 430 || stats.MaxAttack != 450 {
 		t.Errorf("attacks and inclusive range: %v, %d–%d", stats.Attack, stats.MinAttack, stats.MaxAttack)
 	}
 	if stats.Guard != ([3]int32{100, 130, 590}) || stats.Defense != 100 || stats.Resistance != 590 {
@@ -128,6 +128,32 @@ func TestCombatDirectSkillsAndCatalogRoll(t *testing.T) {
 		got, crit := playerSkillDamage(&attacker, &m, &fixed, damagePools{500, 250, 100}, damagePools{1000, 500, 200})
 		if got != tc.want || crit {
 			t.Errorf("skill mode %d = %v, want %v, crit %t", tc.damageType, got, tc.want, crit)
+		}
+	}
+}
+
+// Each LUC point adds 0.5 ranged attack and the target's LUC takes 0.01 percentage
+// points off the attacker's critical chance.
+func TestLuckRangedAttackAndCriticalReduction(t *testing.T) {
+	var s CharacterStats
+	s.Str, s.Dex, s.Luc = 100, 50, 200
+	setAttack(&s, EquipmentStats{})
+	if melee, ranged := s.Attack[attackMelee], s.Attack[attackRanged]; melee != 140 || ranged != 240 {
+		t.Fatalf("melee %d ranged %d", melee, ranged)
+	}
+	if s.Critical != 200*20 {
+		t.Fatalf("critical %d", s.Critical)
+	}
+	for _, c := range []struct{ crit, luc, want int64 }{{4000, 0, 4000}, {4000, 500, 3500}, {100, 500, 0}, {20000, 0, 10000}} {
+		if got := criticalChance(c.crit, c.luc); got != c.want {
+			t.Errorf("criticalChance(%d,%d)=%d want %d", c.crit, c.luc, got, c.want)
+		}
+	}
+	// A target with enough LUC can never be critically hit.
+	h := hitDamage{attack: 1000, critical: 500, targetLuc: 500, defenseAttr: 0, levelPercent: 100}
+	for i := 0; i < 200; i++ {
+		if _, crit := h.weaponHit(0, 1); crit {
+			t.Fatal("critical despite the target's LUC")
 		}
 	}
 }

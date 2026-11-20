@@ -9,7 +9,11 @@
 | INT | +1.3 magic attack |
 | WIS | +0.2 magic attack, +1 magic resistance, +5 maximum MP, +2 direct HP healing, and +0.02 percentage points of both magic accuracy and magic evasion |
 | DEX | +0.2 melee and ranged attack, +5 maximum SP, and melee/ranged accuracy and evasion at the rates below |
-| LUC | +0.2 percentage points of critical chance |
+| LUC | +0.5 ranged (archery) attack, +0.2 percentage points of critical chance, and each point of the *target's* LUC removes 0.01 percentage points from the attacker's critical chance |
+
+Ranged (archery) attack gains half a point per LUC. The character sheet shows
+it for Hunters and Archers only, because it is the attack range of the bow
+they wield; melee and magic classes see no change.
 
 Use your effective attributes, including equipment, active lapis, skills and
 the Goddess Blessing. The character sheet's attack range already includes the
@@ -53,19 +57,22 @@ adjustment. See [the element table and damage modes](elements.md).
 
 ## Critical chance
 
-**Critical chance = 0.2% × LUC + critical bonuses**, limited to 0–100%.
-The starting chance at 0 LUC is 0%. The roll uses the attacker's stats.
-The defender's LUC has no effect on it.
+**Critical chance = 0.2% × attacker LUC + critical bonuses − 0.01% × target
+LUC**, limited to 0–100%. The starting chance at 0 LUC is 0%. The target's LUC
+counts for players and monsters alike, on normal hits and on skill hits.
 
-| Effective LUC | Critical chance from LUC alone |
-|---:|---:|
-| 0 | 0% |
-| 100 | 20% |
-| 475 | 95% |
-| 500 | 100% |
+| Attacker LUC | Chance from LUC alone | Against 500 target LUC |
+|---:|---:|---:|
+| 0 | 0% | 0% |
+| 100 | 20% | 15% |
+| 475 | 95% | 90% |
+| 500 | 100% | 95% |
 
-A skill that grants +5 critical adds **5 percentage points**. For example,
-475 LUC plus that skill reaches 100%. A critical multiplies the damage by 1.5.
+Every 100 points of the target's LUC take 1 percentage point off the roll,
+so 500 LUC on the target removes 5 percentage points. A skill
+that grants +5 critical adds **5 percentage points** before that reduction.
+For example, 475 LUC plus that skill reaches 100% against a target with no
+LUC, and 99.5% against one with 50 LUC. A critical multiplies the damage by 1.5.
 
 ## Accuracy and evasion
 
