@@ -53,7 +53,7 @@ NAMES = {
 ALIASES = {'server.md': 'server-operations.md', 'gm.md': 'gm-commands.md',
            'cash-catalog.md': 'item-mall.md', 'building.md': 'building-and-testing.md',
            'weapon-enchantments.md': 'weapon-effects.md'}
-LINK = re.compile(r'(?<!!)\[([^\]]+)\]\(([^)]+)\)')
+LINK = re.compile(r'`[^`]*`|(?<!!)\[([^\]]+)\]\(([^)]+)\)')
 
 def export(destination):
     destination.mkdir(parents=True, exist_ok=True)
@@ -61,6 +61,8 @@ def export(destination):
         source = SOURCE / filename
         def replace(match):
             label, target = match.groups()
+            if target is None:
+                return match.group(0)
             if target.startswith(('https:', 'http:', '#', 'mailto:')):
                 return match.group(0)
             raw, sep, anchor = target.partition('#')

@@ -84,9 +84,7 @@ neither resends the catalog nor rebuilds the eligibility cache.
 ## NPC and quest definitions
 
 GX World loads NPCs, shops, gate destinations, quest links and quest details
-from the six SQLite NPC/quest tables at startup. The client keeps encrypted
-`Npc/NpcQuest.SData` for presentation, including quest text and dialogue. GX
-Studio edits mapped gameplay fields and client presentation using coordinated
-backups and verification. Existing runtimes with their original server
-`NpcQuest.SData` import it during migration 17. Fresh runtimes use the shipped
-catalog. See the [GX Studio guide](gx-studio.md) and [map access rules](map-rules.md).
+from `data/game/NpcQuest.SData` at startup. The client uses its own
+`Npc/NpcQuest.SData` for presentation. GX Studio saves shared rules to both
+files, keeps their texts and encodings separate, and backs up both before
+writing. See [GX Studio](gx-studio.md) and [map access rules](map-rules.md).

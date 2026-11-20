@@ -85,7 +85,9 @@ published migration; append a new version.
 | 18 | `map_properties` | Adds map rules and racial birth positions |
 | 19 | `unified_experience` | Replaces mode-specific EXP rows with one threshold per level and migrates character progress |
 | 20 | `separate_npc_skills` | Moves former level-100 NPC definitions to an independent `SkillID, Rank` catalog |
-| 21 | `server_notices` | Adds global announcements with an interval or weekly local-time slots |
+| 21 | `server_notices` | Adds the former SQLite notice catalog |
+| 22 | `teleport_runes` | Adds the former SQLite rune destination catalog and updates item references |
+| 23 | `auction_house` | Adds auction, claim and watch tables |
 
 The migration ledger is separate from legacy user_version. The shipped seed is
 not rewritten during an upgrade; migrations apply to the runtime. Back up before
@@ -94,11 +96,12 @@ plaintext passwords or a different migration ledger is unsupported.
 
 ## Editing game definitions
 
-[GX Studio](gx-studio.md) edits supported catalogs against the active SQLite
-file and backs up the sources it changes. GX World reads server definitions
-at startup. For an upgrade, retain any legacy source files the migration needs
-until successful startup and catalog validation. The shared seed stays at its
-approved baseline, and portables create a separate runtime from that seed.
+[GX Studio](gx-studio.md) edits the active source of each catalog. GX
+World reads the game files in `data/game` at startup. The historical
+SQLite definition rows remain available for exporting customized older
+installations. SQLite continues to store durable game state and the
+active item, skill, experience and mall catalogs.
+
 
 ## Transaction contracts
 

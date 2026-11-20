@@ -65,6 +65,12 @@ these commands locally. Bots are visible only to the issuing GM, and their
 combat has no network packets, server entities, player damage or rewards.
 Use open terrain for large groups.
 
+Bots exercise the live client render path, including character batching
+and ordered effect multi-draw. The
+[performance report](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/performance.md#pvp-effects-with-ordered-parallel-preparation)
+documents the 300- and 600-bot fixtures and visual checks.
+
+
 ## Extended camera zoom
 
 `/camlimit` lets a GM zoom out to 100 world units using the mouse wheel or the
