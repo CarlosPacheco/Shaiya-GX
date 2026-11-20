@@ -14,6 +14,9 @@ func panelPointer(in *platform.Input, x, y, w, h int) bool {
 }
 
 func (a *App) checkPendingActions() bool {
+	if a.personalMarketTimeout() {
+		return false
+	}
 	var sitPending bool
 	var sitDeadline float64
 	if a.wv != nil {
@@ -70,6 +73,9 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 	}
 	if a.appearanceEdit != nil {
 		a.updateAppearanceEditor(in, w, h)
+		return platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}
+	}
+	if a.personalMarket.modal() && a.updatePersonalMarketModal(in, w, h) {
 		return platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}
 	}
 	if a.gateConfirm != nil && a.gateConfirm.Visible {
@@ -180,6 +186,9 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 	if !underMall && !captured {
 		captured = a.updatePlayerContext(in, w, h)
 	}
+	if !underMall && !captured {
+		captured = a.dropPersonalMarketItem(in, w, h)
+	}
 	if !captured {
 		captured = a.updateDuelDrag(in, w, h)
 	}
@@ -208,7 +217,7 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		}
 	}
 
-	for index, update := range []func(*platform.Input, int, int) bool{a.updateMall, a.updateGuild, a.updateQuickPotions, a.updateRevolver, a.updateBarEditing, a.updateQuestLog, a.updateStatus, a.updateSubActions, a.updateSkills, a.updateInventory, a.updateDuel, a.updateExchange, a.updateShop, a.updateBottom, a.updateHUDPointer, a.updateChatPointer, a.updateBuffs, a.updateMinimap, a.updatePartyPointer} {
+	for index, update := range []func(*platform.Input, int, int) bool{a.updateMall, a.updatePersonalMarket, a.updateGuild, a.updateQuickPotions, a.updateRevolver, a.updateBarEditing, a.updateQuestLog, a.updateStatus, a.updateSubActions, a.updateSkills, a.updateInventory, a.updateDuel, a.updateExchange, a.updateShop, a.updateBottom, a.updateHUDPointer, a.updateChatPointer, a.updateBuffs, a.updateMinimap, a.updatePartyPointer} {
 		if captured {
 			break
 		}

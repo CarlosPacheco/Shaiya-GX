@@ -42,9 +42,15 @@ func (a *App) contextActions(id uint32) []contextAction {
 		}
 	}
 	if !sameFaction && id != a.state.SelfID {
-		return nil // the user menu is not offered on a player of the other faction
+		if a.canViewPersonalMarket(id) {
+			return []contextAction{{label: "View market"}}
+		}
+		return nil
 	}
 	var out []contextAction
+	if a.canViewPersonalMarket(id) {
+		out = append(out, contextAction{label: "View market"})
+	}
 	if sameFaction && id != a.state.SelfID {
 		if e := a.state.Entities[id]; e != nil {
 			own, other := a.state.Self.Vehicle, e.Vehicle
@@ -120,6 +126,8 @@ func (a *App) contextLabels(actions []contextAction) []string {
 			id = 5366
 		case "Trade":
 			id = 5091
+		case "View market":
+			id = 5090
 		case "Duel":
 			id = 5008
 		case "Guild duel":
@@ -151,6 +159,9 @@ func (a *App) contextLabels(actions []contextAction) []string {
 
 func (a *App) performContextAction(id uint32, action contextAction) {
 	switch action.label {
+	case "View market":
+		a.viewPersonalMarket(id)
+		return
 	case "Create union":
 		a.openUnionCreate()
 		return

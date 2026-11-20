@@ -44,9 +44,12 @@ func NewQuantity(t Textures) (*Quantity, error) {
 	return q, ld.err
 }
 func (q *Quantity) Open(mx, my, w, h, limit int) {
+	q.OpenWithValue(mx, my, w, h, limit, limit)
+}
+func (q *Quantity) OpenWithValue(mx, my, w, h, limit, value int) {
 	q.X, q.Y = max(0, min(mx-82, w-QuantityWidth)), max(0, min(my-50, h-QuantityHeight))
 	q.limit = max(1, min(limit, itemstack.Max))
-	q.value, q.editing = q.limit, false
+	q.value, q.editing = max(1, min(value, q.limit)), false
 	q.draft = strconv.Itoa(q.value)
 	for i := range q.buttons {
 		q.buttons[i].held = false
@@ -54,13 +57,17 @@ func (q *Quantity) Open(mx, my, w, h, limit int) {
 	}
 }
 func (q *Quantity) commit() {
+	q.value = q.Value()
+	q.draft = strconv.Itoa(q.value)
+	q.editing = false
+}
+
+func (q *Quantity) Value() int {
 	n, err := strconv.Atoi(q.draft)
 	if err != nil {
 		n = 1
 	}
-	q.value = max(1, min(n, q.limit))
-	q.draft = strconv.Itoa(q.value)
-	q.editing = false
+	return max(1, min(n, q.limit))
 }
 
 // Update returns 0 while open, -1 on cancel, or the confirmed quantity.

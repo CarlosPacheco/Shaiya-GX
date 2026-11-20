@@ -47,7 +47,6 @@ type Session struct {
 	inputBytes        *netx.RateLimiter
 	stateMu           sync.Mutex
 	shop              myShop // the personal market this character sets up
-	shopViewing       uint32 // the seller whose market this character has open
 	effectWatchID     uint32
 	effectWatchKind   uint8
 	effectWatchAt     time.Time
@@ -262,6 +261,7 @@ func (s *Session) leaveWorld(disconnect bool) bool {
 	}
 	if s.player != nil {
 		s.endMyShop()
+		s.closeMyShopView()
 		s.drainRewards(s.player)
 		s.tickPvP()
 		s.applyDuelWins()
@@ -457,6 +457,7 @@ func (s *Session) tick(idle bool) {
 	s.tickUserHits()
 	s.tickPvP()
 	s.tickDuel()
+	s.tickMyShop()
 	if s.player != nil && s.player.kcRefresh.Swap(false) {
 		s.sendStatPackets() // ApplyKillCountAllUser -> UpdateKCStatus
 	}

@@ -22,7 +22,7 @@ FAMILIES = {
     'mobs': ('Monsters and NPCs', {0x06, 0x0E}),
     'services': ('Shops, storage and blacksmith', {0x07, 0x08, 0xB1}),
     'quests': ('Quest lifecycle', {0x09}),
-    'trade': ('Player exchange', {0x0A}),
+    'trade': ('Player exchange and personal markets', {0x0A, 0x23}),
     'groups': ('Party, raid and group resources', {0x0B, 0x0C}),
     'guilds': ('Guilds and guild storage', {0x0D}),
     'chat': ('Chat and legacy administration', {0x11, 0xF1, 0xF5, 0xF7}),

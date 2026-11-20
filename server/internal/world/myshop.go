@@ -2,8 +2,12 @@ package world
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/chatguard"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/textwire"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -30,8 +34,7 @@ const (
 	opMyShopStock  packet.Opcode = 0x230e // to buyers: an item's new count
 	opShopBubble   packet.Opcode = 0x0523 // the market's bubble over the seller
 
-	myShopSlots     = 20
-	myShopTitleMax  = 120
+	myShopSlots     = proto.MyShopSlots
 	myShopBuyersMax = 16
 )
 
@@ -61,16 +64,32 @@ const (
 )
 
 type shopSlot struct {
-	used      bool
-	bag, slot uint8
-	price     uint32
+	used  bool
+	item  db.Item
+	price uint32
 }
 
 type myShop struct {
 	status int
 	slots  [myShopSlots]shopSlot
-	title  string
-	buyers []uint32
+	buyers []*ConnectedPlayer
+}
+
+// Match the offered item even when its bag position is occupied by a new item.
+func (sl shopSlot) itemIndex(items []db.Item) int {
+	if !sl.used {
+		return -1
+	}
+	i := findItem(items, sl.item.Bag, sl.item.Slot)
+	if i < 0 {
+		return -1
+	}
+	it := items[i]
+	if it.Count == 0 || it.UID != sl.item.UID || it.Type != sl.item.Type || it.TypeID != sl.item.TypeID ||
+		it.Quality != sl.item.Quality || it.Gems != sl.item.Gems || it.CraftName != sl.item.CraftName {
+		return -1
+	}
+	return i
 }
 
 func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
@@ -107,13 +126,67 @@ func (p *ConnectedPlayer) currentShopTitle() string {
 	return p.shopTitle
 }
 
+func (p *ConnectedPlayer) setViewedShop(seller *ConnectedPlayer) {
+	p.shopMu.Lock()
+	p.viewedShop = seller
+	p.shopMu.Unlock()
+}
+
+func (p *ConnectedPlayer) currentViewedShop() *ConnectedPlayer {
+	p.shopMu.Lock()
+	defer p.shopMu.Unlock()
+	return p.viewedShop
+}
+
+// Order a seller's notifications against the buyer switching or leaving a shop.
+func (p *ConnectedPlayer) sendShopUpdate(seller *ConnectedPlayer, frame []byte, closing bool) {
+	p.shopMu.Lock()
+	defer p.shopMu.Unlock()
+	if p.viewedShop != seller {
+		return
+	}
+	if closing {
+		p.viewedShop = nil
+	}
+	p.Send(frame, "personal market update")
+}
+
+func (s *Session) closeMyShopView() {
+	p := s.player
+	if p == nil {
+		return
+	}
+	p.shopMu.Lock()
+	defer p.shopMu.Unlock()
+	if p.viewedShop != nil {
+		p.viewedShop = nil
+		s.send(shopAck(opMyShopClosed, nil), "0x230c market view closed")
+	}
+}
+
+func (s *Session) tickMyShop() {
+	if s.player == nil {
+		return
+	}
+	if s.shop.status != myShopStatusNone {
+		if s.dead || s.ridingVehicle() || tradeFor(s.char.ID) != nil {
+			s.endMyShop()
+		} else {
+			s.refreshMyShop()
+		}
+	}
+	if seller := s.player.currentViewedShop(); seller != nil && !s.canBrowseShop(seller) {
+		s.closeMyShopView()
+	}
+}
+
 // canOpenMyShop is the setup precondition.
 func (s *Session) canOpenMyShop() int {
 	ch := s.char
 	if !myShopMaps[ch.MapID] {
 		return myShopBeginWrongMap
 	}
-	if s.dead || ch.CurrentHP == 0 || s.player == nil || tradeFor(ch.ID) != nil || s.ridingVehicle() || s.cast != nil || s.dash != nil ||
+	if s.dead || ch.CurrentHP == 0 || s.player == nil || tradeFor(ch.ID) != nil || s.player.vehicleState().State != proto.VehicleOff || s.cast != nil || s.dash != nil ||
 		s.inCombat() || s.actionBlocked() || s.movement.ladder.Active || s.movement.jumping {
 		return myShopBeginBusy
 	}
@@ -134,6 +207,7 @@ func (s *Session) handleMyShop(op packet.Opcode, p []byte) {
 		result := s.canOpenMyShop()
 		s.send(shopAck(opMyShopBegin, func(w *packet.Writer) { w.U8(uint8(result)) }), "0x2301 market setup")
 		if result == myShopBeginOK {
+			s.closeMyShopView()
 			s.shop = myShop{status: myShopStatusSetup}
 		}
 	case opMyShopCancel:
@@ -160,11 +234,11 @@ func (s *Session) handleMyShop(op packet.Opcode, p []byte) {
 			return
 		}
 		for _, o := range s.shop.slots {
-			if o.used && o.bag == bag && o.slot == slot {
+			if o.used && o.item.UID == s.items[i].UID {
 				return
 			}
 		}
-		s.shop.slots[idx] = shopSlot{used: true, bag: bag, slot: slot, price: price}
+		s.shop.slots[idx] = shopSlot{used: true, item: s.items[i], price: price}
 		s.send(shopAck(opMyShopAdd, func(w *packet.Writer) { w.U8(idx); w.U8(bag); w.U8(slot); w.U32(price) }), "0x2305 market item added")
 	case opMyShopRemove:
 		if len(p) < 3 || s.shop.status != myShopStatusSetup || int(p[2]) >= myShopSlots || !s.shop.slots[p[2]].used {
@@ -188,7 +262,7 @@ func (s *Session) handleMyShop(op packet.Opcode, p []byte) {
 			s.enterMyShop(id)
 		}
 	case opMyShopLeave:
-		s.shopViewing = 0
+		s.player.setViewedShop(nil)
 		s.send(shopAck(opMyShopLeave, nil), "0x230a market left")
 	case opMyShopBuy:
 		if len(p) >= 4 {
@@ -202,24 +276,16 @@ func (s *Session) openMyShop(p []byte) {
 	if s.shop.status != myShopStatusSetup || len(p) < 3 {
 		return
 	}
-	n := min(int(p[2]), myShopTitleMax, len(p)-3)
-	title := strings.TrimSpace(strings.TrimRight(string(p[3:3+n]), "\x00"))
-	title = strings.Map(func(r rune) rune {
-		if r < 32 || r == 127 {
-			return -1
-		}
-		return r
-	}, title)
-	listed := 0
-	for _, sl := range s.shop.slots {
-		if sl.used && findItem(s.items, sl.bag, sl.slot) >= 0 {
-			listed++
-		}
-	}
-	if listed == 0 || title == "" || s.canOpenMyShop() != myShopBeginOK {
+	n := int(p[2])
+	if n > proto.MyShopTitleBytes || n != len(p)-3 {
 		return
 	}
-	s.shop.status, s.shop.title = myShopStatusSelling, title
+	title := cleanShopTitle(decodeText(p[3:]))
+	if !s.refreshMyShop() || title == "" || s.canOpenMyShop() != myShopBeginOK {
+		return
+	}
+	s.shop.status = myShopStatusSelling
+	s.cancelMove()
 	s.player.setShopTitle(title)
 	if !s.player.IsSitting() {
 		s.player.SetSitting(true)
@@ -227,6 +293,15 @@ func (s *Session) openMyShop(p []byte) {
 	}
 	s.send(shopAck(opMyShopOpen, nil), "0x2303 market opened")
 	s.broadcastNear(shopBubbleFrame(s.char.ID, title), "0x0523 market bubble", true)
+}
+
+func cleanShopTitle(title string) string {
+	filtered := chatguard.Filter(title, false)
+	if filtered.Impersonation {
+		return "[Message hidden]"
+	}
+	runes := []rune(strings.TrimSpace(filtered.Text))
+	return textwire.Prefix(string(runes[:min(len(runes), proto.MyShopTitleMax)]), proto.MyShopTitleBytes)
 }
 
 // stopMyShop goes back to setup: buyers are told, the bubble goes away.
@@ -241,12 +316,50 @@ func (s *Session) stopMyShop() {
 }
 
 func (s *Session) closeMyShopBuyers() {
-	for _, id := range s.shop.buyers {
-		if p := FindPlayerByID(id); p != nil {
-			p.Send(shopAck(opMyShopClosed, nil), "0x230c market closed")
-		}
+	frame := shopAck(opMyShopClosed, nil)
+	for _, buyer := range s.shop.buyers {
+		buyer.sendShopUpdate(s.player, frame, true)
 	}
 	s.shop.buyers = nil
+}
+
+func (s *Session) canBrowseShop(seller *ConnectedPlayer) bool {
+	if seller == nil || seller == s.player || seller.owner == nil || s.dead || s.char.CurrentHP == 0 || s.shop.status != myShopStatusNone || tradeFor(s.char.ID) != nil ||
+		seller.MapID() != s.char.MapID || (seller.Faction() != s.faction && s.char.MapID != 42) || !s.player.canSee(seller) {
+		return false
+	}
+	x, z := seller.PositionXZ()
+	dx, dz := s.char.PosX-x, s.char.PosZ-z
+	return dx*dx+dz*dz <= proto.MyShopReach*proto.MyShopReach
+}
+
+// Reconcile offers when a stack changes or the original item leaves its slot.
+// An empty, published market closes and disconnects its buyers.
+func (s *Session) refreshMyShop() bool {
+	listed := false
+	for index, sl := range s.shop.slots {
+		if !sl.used {
+			continue
+		}
+		i := sl.itemIndex(s.items)
+		if i < 0 {
+			s.shop.slots[index] = shopSlot{}
+			s.send(shopAck(opMyShopRemove, func(w *packet.Writer) { w.U8(uint8(index)) }), "unavailable market item removed")
+		} else {
+			listed = true
+			s.shop.slots[index].item.Count = s.items[i].Count
+		}
+		if count := s.shop.slots[index].item.Count; s.shop.status == myShopStatusSelling && count != sl.item.Count {
+			frame := shopAck(opMyShopStock, func(w *packet.Writer) { w.U8(uint8(index)); w.U8(uint8(min(count, 255))) })
+			for _, buyer := range s.shop.buyers {
+				buyer.sendShopUpdate(s.player, frame, false)
+			}
+		}
+	}
+	if !listed && s.shop.status == myShopStatusSelling {
+		s.endMyShop()
+	}
+	return listed
 }
 
 // endMyShop closes the market for good (stand up, move, die, leave...).
@@ -270,7 +383,7 @@ func (s *Session) enterMyShop(id uint32) {
 		s.send(shopAck(opMyShopEnter, func(w *packet.Writer) { w.U8(result); w.U32(id) }), "0x2309 market enter")
 	}
 	seller := FindPlayerByID(id)
-	if seller == nil || seller == s.player || seller.owner == nil || seller.MapID() != s.char.MapID || seller.Faction() != s.faction && s.char.MapID != 42 || s.dead {
+	if !s.canBrowseShop(seller) {
 		reply(myShopEnterFailed)
 		return
 	}
@@ -280,39 +393,38 @@ func (s *Session) enterMyShop(id uint32) {
 		return
 	}
 	defer other.stateMu.Unlock()
-	if other.player != seller || other.char == nil || other.shop.status != myShopStatusSelling {
+	if other.player != seller || other.char == nil || other.shop.status != myShopStatusSelling || !s.canBrowseShop(seller) || tradeFor(other.char.ID) != nil || !other.refreshMyShop() {
 		reply(myShopEnterFailed)
 		return
 	}
-	if len(other.shop.buyers) >= myShopBuyersMax {
-		reply(myShopEnterTooMany)
-		return
+	other.shop.buyers = slices.DeleteFunc(other.shop.buyers, func(buyer *ConnectedPlayer) bool { return buyer.currentViewedShop() != seller })
+	if !slices.Contains(other.shop.buyers, s.player) {
+		if len(other.shop.buyers) >= myShopBuyersMax {
+			reply(myShopEnterTooMany)
+			return
+		}
+		other.shop.buyers = append(other.shop.buyers, s.player)
 	}
-	known := false
-	for _, b := range other.shop.buyers {
-		known = known || b == s.char.ID
-	}
-	if !known {
-		other.shop.buyers = append(other.shop.buyers, s.char.ID)
-	}
-	s.shopViewing = id
+	s.player.setViewedShop(seller)
 	reply(myShopEnterOK)
 	s.send(other.myShopList(), "0x230b market list")
 }
 
 // myShopList is 0x230b: count and, per listed item, its index, price and record.
 func (s *Session) myShopList() []byte {
-	var idxs []int
-	for idx, sl := range s.shop.slots {
-		if sl.used && findItem(s.items, sl.bag, sl.slot) >= 0 {
-			idxs = append(idxs, idx)
+	count := 0
+	for _, sl := range s.shop.slots {
+		if sl.used {
+			count++
 		}
 	}
 	w := packet.New(opMyShopList)
-	w.U8(uint8(len(idxs)))
-	for _, idx := range idxs {
-		sl := s.shop.slots[idx]
-		it := &s.items[findItem(s.items, sl.bag, sl.slot)]
+	w.U8(uint8(count))
+	for idx, sl := range s.shop.slots {
+		if !sl.used {
+			continue
+		}
+		it := sl.item
 		w.U8(uint8(idx))
 		w.U32(sl.price)
 		w.U8(it.Type)
@@ -330,8 +442,8 @@ func (s *Session) buyFromMyShop(idx, count uint8) {
 	reply := func(result uint8) {
 		s.send(shopAck(opMyShopBuy, func(w *packet.Writer) { w.U8(result) }), fmt.Sprintf("0x230d market buy result %d", result))
 	}
-	seller := FindPlayerByID(s.shopViewing)
-	if seller == nil || seller.owner == nil || seller.owner == s || count == 0 || int(idx) >= myShopSlots || s.dead {
+	seller := s.player.currentViewedShop()
+	if !s.canBrowseShop(seller) || count == 0 || int(idx) >= myShopSlots {
 		reply(myShopBuyInvalid)
 		return
 	}
@@ -341,13 +453,14 @@ func (s *Session) buyFromMyShop(idx, count uint8) {
 		return
 	}
 	defer other.stateMu.Unlock()
-	if other.player != seller || other.char == nil || other.shop.status != myShopStatusSelling || !other.shop.slots[idx].used {
+	if other.player != seller || other.char == nil || other.shop.status != myShopStatusSelling || !s.canBrowseShop(seller) || tradeFor(other.char.ID) != nil {
 		reply(myShopBuyInvalid)
 		return
 	}
 	sl := other.shop.slots[idx]
-	si := findItem(other.items, sl.bag, sl.slot)
+	si := sl.itemIndex(other.items)
 	if si < 0 || other.items[si].Count < uint16(count) {
+		other.refreshMyShop()
 		reply(myShopBuyInvalid)
 		return
 	}
@@ -394,23 +507,7 @@ func (s *Session) buyFromMyShop(idx, count uint8) {
 	other.send(sellerPacket, "0x0204 market sale item")
 	other.send(buildSetMoney(other.char.Money), "0x0213 market sale money")
 	reply(myShopBuyOK)
-	if remaining == 0 {
-		other.shop.slots[idx] = shopSlot{}
-	}
-	stock := shopAck(opMyShopStock, func(w *packet.Writer) { w.U8(idx); w.U8(uint8(min(remaining, 255))) })
-	for _, id := range other.shop.buyers {
-		if p := FindPlayerByID(id); p != nil {
-			p.Send(stock, "0x230e market stock")
-		}
-	}
 	other.send(shopAck(opMyShopSold, func(w *packet.Writer) { w.U8(idx); w.U8(count); w.U32(uint32(total)) }), "0x2308 market sale")
 	s.log.Printf("GX Server World market sale seller=%d buyer=%d item=%d/%d count=%d total=%d", other.char.ID, s.char.ID, tpl.Type, tpl.TypeID, count, total)
-	// Nothing left to sell: the market closes.
-	empty := true
-	for _, o := range other.shop.slots {
-		empty = empty && !o.used
-	}
-	if empty {
-		other.endMyShop()
-	}
+	other.refreshMyShop()
 }

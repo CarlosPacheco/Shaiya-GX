@@ -263,18 +263,19 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			}
 			return
 		}
-		if a.shop.quantity == nil && a.updateChatItemDrag(in, w, h) {
+		allowsChat := a.shop.quantity == nil && !a.personalMarket.modal()
+		if allowsChat && a.updateChatItemDrag(in, w, h) {
 			a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
 			return
 		}
-		if a.chatOpen && a.shop.quantity == nil {
+		if a.chatOpen && allowsChat {
 			popup := a.chatUI.PopupOpen()
 			if a.updateChatPointer(in, w, h) && popup && in.HasKey(platform.KeyEscape) {
 				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
 				return
 			}
 		}
-		if a.shop.quantity == nil && a.updateChat(in) {
+		if allowsChat && a.updateChat(in) {
 			// Empty controls still let an active movement send its stop packet.
 			if a.wv != nil && a.world != nil && a.state != nil {
 				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
@@ -330,6 +331,7 @@ func (a *App) drawCharacters(w, h int) {
 		a.drawPlayerNames(w, h)
 		a.drawCombat(w, h)
 		a.drawChatBubbles(w, h)
+		a.drawPersonalMarketSigns(w, h)
 		a.drawMapLabels(w, h)
 		a.drawMinimap(w, h, false)
 		a.drawBuffs(w, h)
@@ -355,6 +357,7 @@ func (a *App) drawCharacters(w, h int) {
 		a.drawStatus(w, h)
 		a.drawQuestLog(w, h)
 		a.drawGuild(w, h)
+		a.drawPersonalMarket(w, h)
 		a.drawMall(w, h)
 		a.drawPlayerContext(w, h)
 		a.chatUI.DrawOverlay(a.sprites, a.chatFont(), a.white, h)
@@ -394,6 +397,7 @@ func (a *App) drawCharacters(w, h int) {
 		if a.shop.quantity != nil {
 			a.quantityUI.Draw(a.sprites, a.font)
 		}
+		a.drawPersonalMarketModal(w)
 		a.drawRecreationDetails(w, h)
 		a.drawScreenNotices(w, h)
 		a.drawSharedTooltip(w, h)

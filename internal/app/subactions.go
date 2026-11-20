@@ -57,6 +57,8 @@ func (a *App) activateSubAction(selected int) {
 		a.pickupNearest()
 	case 4:
 		a.autoAttackNearest()
+	case 15:
+		a.setupPersonalMarket()
 	default:
 		if selected >= 5 && selected <= 14 {
 			a.sendGesture(uint8(selected + 111))

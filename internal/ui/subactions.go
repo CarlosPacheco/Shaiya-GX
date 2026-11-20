@@ -7,6 +7,7 @@ import (
 
 const SubActionWidth, SubActionHeight = 275, 466
 const SubActionClose = -2
+const SubActionCount = 16
 
 // SubActions uses the original Sub.png frame and the 4x4 icon_sub atlas.
 // Coordinates follow 0x507960/0x507C30. Click activation is a temporary
@@ -30,10 +31,10 @@ func (p *SubActions) Origin(w, h int) (int, int) {
 	return p.Position.Origin(w, h, SubActionWidth, SubActionHeight, x, y)
 }
 func SubActionCell(index int) (int, int) { return 46 + (index%2)*113, 58 + (index/2)*44 }
-func subActionEnabled(i int) bool        { return i >= 0 && i <= 14 }
+func subActionEnabled(i int) bool        { return i >= 0 && i < SubActionCount }
 func (p *SubActions) CellAt(mx, my, w, h int) int {
 	x, y := p.Origin(w, h)
-	for i := 0; i < 15; i++ {
+	for i := range SubActionCount {
 		cx, cy := SubActionCell(i)
 		if mx >= x+cx && mx < x+cx+32 && my >= y+cy && my < y+cy+32 {
 			return i
@@ -47,7 +48,7 @@ func (p *SubActions) Update(in *platform.Input, w, h int) (int, bool) {
 	p.close.OriginX, p.close.OriginY = x, y
 	close := p.close.Update(in)
 	p.hover = -1
-	for i := 0; i < 16; i++ {
+	for i := range SubActionCount {
 		cx, cy := SubActionCell(i)
 		if in.MouseX >= x+cx && in.MouseX < x+cx+32 && in.MouseY >= y+cy && in.MouseY < y+cy+32 {
 			p.hover = i
@@ -77,7 +78,7 @@ func (p *SubActions) Draw(s *render.Sprites, w, h int, walking, autoRun bool) {
 	s.Draw(p.tabs, float32(x), float32(y+150), 32, 128, 0, 0, .5, .25, white)
 	p.close.OriginX, p.close.OriginY = x, y
 	p.close.Draw(s)
-	for i := 0; i < 16; i++ {
+	for i := range SubActionCount {
 		cx, cy := SubActionCell(i)
 		col := white
 		if !subActionEnabled(i) {

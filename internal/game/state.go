@@ -127,8 +127,9 @@ type State struct {
 	LastDetectInfo         proto.DetectInfo
 	LastPeriodicEffect     proto.PeriodicEffect
 	LastField              proto.Field
-	LastKillNotice         string           // name of the player the user killed
-	MyShop                 MyShopState      // the player's own personal market
+	LastKillNotice         string      // name of the player the user killed
+	MyShop                 MyShopState // the player's own personal market
+	ShopSigns              map[uint32]string
 	ShopView               ShopViewState    // another player's market, open
 	LastLootNotice         proto.LootNotice // the party member who just received loot
 	LootNoticeSerial       uint64
@@ -1117,6 +1118,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			s.questNPCStaging, s.questNPCStagingActive = nil, false
 			s.GroundItems = map[uint32]proto.GroundItem{}
 			s.Entities = map[uint32]*Entity{}
+			s.MyShop, s.ShopView, s.ShopSigns = MyShopState{}, ShopViewState{}, nil
 		}
 		ev.Text = fmt.Sprintf("select result=%d id=%d", r.Result, r.ID)
 	case proto.CharacterDetails:
@@ -1144,6 +1146,8 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 				s.Guild.RankingPointsKnown = false
 				s.GroundItems = map[uint32]proto.GroundItem{}
 				s.Entities = map[uint32]*Entity{}
+				s.MyShop, s.ShopView, s.ShopSigns = MyShopState{}, ShopViewState{}, nil
+				s.Self.ShopTitle = ""
 				s.Target = 0
 			}
 			s.MapID, s.Self.X, s.Self.Y, s.Self.Z = m.MapID, m.X, m.Y, m.Z
@@ -1211,6 +1215,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		s.Target = 0
 		s.Entities = map[uint32]*Entity{}
 		s.chatGuard.senders = nil
+		s.MyShop, s.ShopView, s.ShopSigns = MyShopState{}, ShopViewState{}, nil
 		ev.Text = "back to character select"
 	default:
 		s.Unknown[op]++

@@ -203,6 +203,16 @@ original service states still need full comparison. Presence refreshes every
 three seconds; membership changes follow ACKs.
 
 
+## Personal markets
+
+Open **Sub Skill** with **B** and choose **Setup Market**. This action can also be assigned to a shortcut. Drag items from a bag into any of the 20 listing slots and enter a gold price per unit. Select an existing listing to change its price or remove it. Enter a market message and choose **Open Market**. The seller sits and the message appears above the character. **Stop selling** returns to setup with unsold offers available for editing. Standing, moving, dying, changing maps or logging out closes the market. The last sale closes an empty market.
+
+To buy, right-click a nearby seller and choose **View markets**. Select a listing, choose **Buy**, and confirm the quantity and total. The server updates both inventories and balances in one SQLite transaction, then updates the visible stock. Available space, both gold balances, the original item's identity and the buyer's distance are checked on purchase. The closing notice also dismisses the purchase dialog if a seller stops while someone is browsing.
+
+Markets can be opened in maps 35, 36 and 42. Buyers must be within ten world units of the seller. Map 42 allows buyers from either faction. A market has up to 16 active browsers.
+
+The client can use the original `interface/p_market.png` and `interface/p_market_button.png`. They can be converted from their `.tga` entries in an owned client archive with the [asset tool](data-formats.md). The panel supports older loose data sets through a built-in layout for missing textures.
+
 ## Resource checks, self-targeting and loot
 
 Skill requests check the known MP/SP budget before sending or starting predicted animation. Failures use SysMsg 214 with the original MP/SP labels. Queued approach skills recheck on arrival; the server remains authoritative. The original cost value 1 retains its consume-current-pool meaning.

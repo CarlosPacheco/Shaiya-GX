@@ -1,6 +1,10 @@
 package proto
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/textwire"
+)
 
 // Personal markets (setup market): the request and reply opcodes of
 // CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
@@ -21,8 +25,17 @@ const (
 	MyShopStock  Opcode = 0x230e // to buyers: index, new count
 	ShopBubble   Opcode = 0x0523
 
-	MyShopSlots    = 20
-	MyShopTitleMax = 60 // characters the client lets you type
+	MyShopSlots      = 20
+	MyShopTitleMax   = 60
+	MyShopTitleBytes = 120
+	MyShopReach      = 10
+	MyShopPriceMax   = 4_000_000_000
+)
+
+const (
+	MyShopInactive = iota
+	MyShopSetup
+	MyShopSelling
 )
 
 // MyShop begin results.
@@ -41,14 +54,15 @@ const (
 	MyShopBuyNoRoom    = 4
 )
 
-func MyShopSimplePacket(op Opcode) []byte { return NewWriter(op).Bytes() }
+const (
+	MyShopEnterFailed = 0
+	MyShopEnterOK     = 1
+	MyShopEnterFull   = 2
+)
 
 func MyShopOpenPacket(title string) []byte {
 	w := NewWriter(MyShopOpen)
-	text := []byte(title)
-	if len(text) > 120 {
-		text = text[:120]
-	}
+	text := []byte(textwire.Prefix(title, MyShopTitleBytes))
 	w.U8(uint8(len(text)))
 	w.Raw(text)
 	return w.Bytes()
@@ -102,10 +116,12 @@ func DecodeMyShopList(p []byte) ([]MyShopItem, error) {
 	if err := r.Err(); err != nil {
 		return nil, err
 	}
-	if n > MyShopSlots || n > r.Remaining()/37 {
+	const recordSize = 37
+	if Op(p) != MyShopList || n > MyShopSlots || n*recordSize != r.Remaining() {
 		return nil, fmt.Errorf("market list: invalid count %d", n)
 	}
 	out := make([]MyShopItem, n)
+	var seen [MyShopSlots]bool
 	for i := range out {
 		e := &out[i]
 		e.Index, e.Price = r.U8(), r.U32()
@@ -115,9 +131,10 @@ func DecodeMyShopList(p []byte) ([]MyShopItem, error) {
 			e.Item.Gems[j] = r.U8()
 		}
 		e.Item.Craft = r.Fixed(21)
-		if int(e.Index) >= MyShopSlots {
-			return nil, fmt.Errorf("market list: invalid index %d", e.Index)
+		if int(e.Index) >= MyShopSlots || seen[e.Index] || e.Price == 0 || e.Price > MyShopPriceMax || e.Item.Type == 0 || e.Item.Count == 0 {
+			return nil, fmt.Errorf("market list: invalid item at index %d", e.Index)
 		}
+		seen[e.Index] = true
 	}
 	return out, r.Err()
 }
@@ -130,7 +147,12 @@ func DecodeShopBubble(p []byte) (id uint32, title string, err error) {
 	on := r.U8()
 	if on != 0 {
 		n := int(r.U8())
-		title = string(r.Bytes(n))
+		if on != 1 || n > MyShopTitleBytes || n != r.Remaining() {
+			return id, "", fmt.Errorf("invalid market message length %d", n)
+		}
+		title = textwire.Decode(r.Bytes(n))
+	} else if r.Remaining() != 0 {
+		return id, "", fmt.Errorf("trailing bytes in closed market sign")
 	}
 	return id, title, r.Err()
 }

@@ -2629,6 +2629,126 @@ func VehicleLeavePacket() []byte { return NewWriter(VehicleLeave).Bytes() }
 
 </details>
 
+## myshop
+
+[internal/proto/myshop.go](../../internal/proto/myshop.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+func MyShopOpenPacket(title string) []byte {
+	w := NewWriter(MyShopOpen)
+	text := []byte(textwire.Prefix(title, MyShopTitleBytes))
+	w.U8(uint8(len(text)))
+	w.Raw(text)
+	return w.Bytes()
+}
+```
+
+```go
+func MyShopAddPacket(index, bag, slot uint8, price uint32) []byte {
+	w := NewWriter(MyShopAdd)
+	w.U8(index)
+	w.U8(bag)
+	w.U8(slot)
+	w.U32(price)
+	return w.Bytes()
+}
+```
+
+```go
+func MyShopRemovePacket(index uint8) []byte {
+	w := NewWriter(MyShopRemove)
+	w.U8(index)
+	return w.Bytes()
+}
+```
+
+```go
+func MyShopPricePacket(index uint8, price uint32) []byte {
+	w := NewWriter(MyShopPrice)
+	w.U8(index)
+	w.U32(price)
+	return w.Bytes()
+}
+```
+
+```go
+func MyShopEnterPacket(seller uint32) []byte {
+	w := NewWriter(MyShopEnter)
+	w.U32(seller)
+	return w.Bytes()
+}
+```
+
+```go
+func MyShopBuyPacket(index, count uint8) []byte {
+	w := NewWriter(MyShopBuy)
+	w.U8(index)
+	w.U8(count)
+	return w.Bytes()
+}
+```
+
+```go
+type MyShopItem struct {
+	Index byte
+	Price uint32
+	Item  InventoryItem
+}
+```
+
+```go
+func DecodeMyShopList(p []byte) ([]MyShopItem, error) {
+	r := NewReader(p)
+	n := int(r.U8())
+	if err := r.Err(); err != nil {
+		return nil, err
+	}
+	const recordSize = 37
+	if Op(p) != MyShopList || n > MyShopSlots || n*recordSize != r.Remaining() {
+		return nil, fmt.Errorf("market list: invalid count %d", n)
+	}
+	out := make([]MyShopItem, n)
+	var seen [MyShopSlots]bool
+	for i := range out {
+		e := &out[i]
+		e.Index, e.Price = r.U8(), r.U32()
+		e.Item.Type, e.Item.TypeID, e.Item.Count = r.U8(), r.U8(), uint16(r.U8())
+		e.Item.Quality = r.U16()
+		for j := range e.Item.Gems {
+			e.Item.Gems[j] = r.U8()
+		}
+		e.Item.Craft = r.Fixed(21)
+		if int(e.Index) >= MyShopSlots || seen[e.Index] || e.Price == 0 || e.Price > MyShopPriceMax || e.Item.Type == 0 || e.Item.Count == 0 {
+			return nil, fmt.Errorf("market list: invalid item at index %d", e.Index)
+		}
+		seen[e.Index] = true
+	}
+	return out, r.Err()
+}
+```
+
+```go
+func DecodeShopBubble(p []byte) (id uint32, title string, err error) {
+	r := NewReader(p)
+	id = r.U32()
+	on := r.U8()
+	if on != 0 {
+		n := int(r.U8())
+		if on != 1 || n > MyShopTitleBytes || n != r.Remaining() {
+			return id, "", fmt.Errorf("invalid market message length %d", n)
+		}
+		title = textwire.Decode(r.Bytes(n))
+	} else if r.Remaining() != 0 {
+		return id, "", fmt.Errorf("trailing bytes in closed market sign")
+	}
+	return id, title, r.Err()
+}
+```
+
+</details>
+
 ## oj limits
 
 [internal/proto/oj_limits.go](../../internal/proto/oj_limits.go#L1)

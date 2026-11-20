@@ -1,4 +1,4 @@
-# Protocol: Player exchange
+# Protocol: Player exchange and personal markets
 
 > Generated from Go source by `tools/generate_server_reference.py`; do not edit by hand.
 
@@ -12,11 +12,11 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 Declarations: [packet.ExchangeRequest](../../server/internal/packet/packet.go#L225), [proto.ExchangeRequest](../../internal/proto/opcodes.go#L213).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L164)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L166)
 
 **S→C serializers:** [handleTradeRequest (server/internal/world/trade.go)](../../server/internal/world/trade.go#L157)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L37), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L37), [Apply (internal/game/state.go)](../../internal/game/state.go#L612)
 
 ### Wire layouts and validation
 
@@ -89,11 +89,11 @@ func DecodeExchangeID(p []byte) (uint32, error) { r := NewReader(p); id := r.U32
 
 Declarations: [packet.ExchangeAnswer](../../server/internal/packet/packet.go#L226), [proto.ExchangeAnswer](../../internal/proto/opcodes.go#L214).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L169)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L171)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L44), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L44), [Apply (internal/game/state.go)](../../internal/game/state.go#L612)
 
 ### Wire layouts and validation
 
@@ -151,7 +151,7 @@ Declarations: [packet.ExchangeStart](../../server/internal/packet/packet.go#L227
 
 **S→C serializers:** [buildTradeStart (server/internal/world/trade.go)](../../server/internal/world/trade.go#L136)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L51), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L51), [Apply (internal/game/state.go)](../../internal/game/state.go#L612)
 
 ### Wire layouts and validation
 
@@ -197,7 +197,7 @@ Declarations: [packet.ExchangeEnd](../../server/internal/packet/packet.go#L228),
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L61), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L61), [Apply (internal/game/state.go)](../../internal/game/state.go#L612)
 
 ### Wire layouts and validation
 
@@ -233,11 +233,11 @@ func DecodeExchangeByte(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(
 
 Declarations: [packet.ExchangeReady](../../server/internal/packet/packet.go#L229), [proto.ExchangeReady](../../internal/proto/opcodes.go#L217).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L173)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L175)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L74), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L74), [Apply (internal/game/state.go)](../../internal/game/state.go#L612)
 
 ### Wire layouts and validation
 
@@ -310,11 +310,11 @@ func Op(payload []byte) Opcode {
 
 Declarations: [packet.ExchangeAdd](../../server/internal/packet/packet.go#L230), [proto.ExchangeAdd](../../internal/proto/opcodes.go#L218).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L177)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L179)
 
 **S→C serializers:** [handleTradeAdd (server/internal/world/trade.go)](../../server/internal/world/trade.go#L261)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L612)
 
 ### Wire layouts and validation
 
@@ -414,7 +414,7 @@ type ExchangeOwnItem struct {
 
 Declarations: [packet.ExchangeRemove](../../server/internal/packet/packet.go#L231), [proto.ExchangeRemove](../../internal/proto/opcodes.go#L219).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L185)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L187)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -444,11 +444,11 @@ func ExchangeRemovePacket(slot uint8) []byte {
 
 Declarations: [packet.ExchangeAddMoney](../../server/internal/packet/packet.go#L232), [proto.ExchangeAddMoney](../../internal/proto/opcodes.go#L220).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L189)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L191)
 
 **S→C serializers:** [buildTradeMoney (server/internal/world/trade.go)](../../server/internal/world/trade.go#L315)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L97), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L97), [Apply (internal/game/state.go)](../../internal/game/state.go#L612)
 
 ### Wire layouts and validation
 
@@ -514,7 +514,7 @@ Declarations: [packet.ExchangeAddDest](../../server/internal/packet/packet.go#L2
 
 **S→C serializers:** [buildTradeAddDest (server/internal/world/trade.go)](../../server/internal/world/trade.go#L232)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L120), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L120), [Apply (internal/game/state.go)](../../internal/game/state.go#L612)
 
 ### Wire layouts and validation
 
@@ -574,11 +574,11 @@ type ExchangeItem struct {
 
 Declarations: [packet.ExchangeConfirm](../../server/internal/packet/packet.go#L234), [proto.ExchangeConfirm](../../internal/proto/opcodes.go#L222).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L194)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L196)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
-**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L74), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+**Client receive reducers:** [applyExchange (internal/game/exchange.go)](../../internal/game/exchange.go#L74), [Apply (internal/game/state.go)](../../internal/game/state.go#L612)
 
 ### Wire layouts and validation
 
@@ -644,6 +644,860 @@ func Op(payload []byte) Opcode {
 		return 0
 	}
 	return Opcode(itemstack.Base(binary.LittleEndian.Uint16(payload)))
+}
+```
+
+</details>
+
+## Opcode 2301
+
+**`0x2301` — MyShopBegin**
+
+Declarations: [proto.MyShopBegin](../../internal/proto/myshop.go#L12).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523. setup; the reply carries a result
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L203)
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L39), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
+}
+```
+
+</details>
+
+## Opcode 2302
+
+**`0x2302` — MyShopCancel**
+
+Declarations: [proto.MyShopCancel](../../internal/proto/myshop.go#L13).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523. cancel; also the notice that the market ended
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L213)
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L49), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+## Opcode 2303
+
+**`0x2303` — MyShopOpen**
+
+Declarations: [proto.MyShopOpen](../../internal/proto/myshop.go#L14).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523. sell, with the market message
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L215)
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L51), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>MyShopOpenPacket — internal/proto/myshop.go</summary>
+
+[Source definition](../../internal/proto/myshop.go#L63)
+
+```go
+func MyShopOpenPacket(title string) []byte {
+	w := NewWriter(MyShopOpen)
+	text := []byte(textwire.Prefix(title, MyShopTitleBytes))
+	w.U8(uint8(len(text)))
+	w.Raw(text)
+	return w.Bytes()
+}
+```
+
+</details>
+
+## Opcode 2304
+
+**`0x2304` — MyShopStop**
+
+Declarations: [proto.MyShopStop](../../internal/proto/myshop.go#L15).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L217)
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L55), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+## Opcode 2305
+
+**`0x2305` — MyShopAdd**
+
+Declarations: [proto.MyShopAdd](../../internal/proto/myshop.go#L16).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L223)
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L59), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>MyShopAddPacket — internal/proto/myshop.go</summary>
+
+[Source definition](../../internal/proto/myshop.go#L71)
+
+```go
+func MyShopAddPacket(index, bag, slot uint8, price uint32) []byte {
+	w := NewWriter(MyShopAdd)
+	w.U8(index)
+	w.U8(bag)
+	w.U8(slot)
+	w.U32(price)
+	return w.Bytes()
+}
+```
+
+</details>
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
+}
+```
+
+</details>
+
+## Opcode 2306
+
+**`0x2306` — MyShopRemove**
+
+Declarations: [proto.MyShopRemove](../../internal/proto/myshop.go#L17).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L243)
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L68), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>MyShopRemovePacket — internal/proto/myshop.go</summary>
+
+[Source definition](../../internal/proto/myshop.go#L80)
+
+```go
+func MyShopRemovePacket(index uint8) []byte {
+	w := NewWriter(MyShopRemove)
+	w.U8(index)
+	return w.Bytes()
+}
+```
+
+</details>
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
+}
+```
+
+</details>
+
+## Opcode 2307
+
+**`0x2307` — MyShopPrice**
+
+Declarations: [proto.MyShopPrice](../../internal/proto/myshop.go#L18).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L249)
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L77), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>MyShopPricePacket — internal/proto/myshop.go</summary>
+
+[Source definition](../../internal/proto/myshop.go#L86)
+
+```go
+func MyShopPricePacket(index uint8, price uint32) []byte {
+	w := NewWriter(MyShopPrice)
+	w.U8(index)
+	w.U32(price)
+	return w.Bytes()
+}
+```
+
+</details>
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
+}
+```
+
+</details>
+
+## Opcode 2308
+
+**`0x2308` — MyShopSold**
+
+Declarations: [proto.MyShopSold](../../internal/proto/myshop.go#L19).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523. to the seller: index, count, gold
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L86), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
+}
+```
+
+</details>
+
+## Opcode 2309
+
+**`0x2309` — MyShopEnter**
+
+Declarations: [proto.MyShopEnter](../../internal/proto/myshop.go#L20).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L259)
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L97), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>MyShopEnterPacket — internal/proto/myshop.go</summary>
+
+[Source definition](../../internal/proto/myshop.go#L93)
+
+```go
+func MyShopEnterPacket(seller uint32) []byte {
+	w := NewWriter(MyShopEnter)
+	w.U32(seller)
+	return w.Bytes()
+}
+```
+
+</details>
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
+}
+```
+
+</details>
+
+## Opcode 230a
+
+**`0x230A` — MyShopLeave**
+
+Declarations: [proto.MyShopLeave](../../internal/proto/myshop.go#L21).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L264)
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L139), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+## Opcode 230b
+
+**`0x230B` — MyShopList**
+
+Declarations: [proto.MyShopList](../../internal/proto/myshop.go#L22).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** [myShopList (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L414)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L107), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>myShopList — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L414)
+
+```go
+func (s *Session) myShopList() []byte {
+	count := 0
+	for _, sl := range s.shop.slots {
+		if sl.used {
+			count++
+		}
+	}
+	w := packet.New(opMyShopList)
+	w.U8(uint8(count))
+	for idx, sl := range s.shop.slots {
+		if !sl.used {
+			continue
+		}
+		it := sl.item
+		w.U8(uint8(idx))
+		w.U32(sl.price)
+		w.U8(it.Type)
+		w.U8(it.TypeID)
+		w.U8(uint8(min(it.Count, 255)))
+		w.U16(it.Quality)
+		w.Bytes(it.Gems[:])
+		w.FixedString(it.CraftName, 21)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>DecodeMyShopList — internal/proto/myshop.go</summary>
+
+[Source definition](../../internal/proto/myshop.go#L113)
+
+```go
+func DecodeMyShopList(p []byte) ([]MyShopItem, error) {
+	r := NewReader(p)
+	n := int(r.U8())
+	if err := r.Err(); err != nil {
+		return nil, err
+	}
+	const recordSize = 37
+	if Op(p) != MyShopList || n > MyShopSlots || n*recordSize != r.Remaining() {
+		return nil, fmt.Errorf("market list: invalid count %d", n)
+	}
+	out := make([]MyShopItem, n)
+	var seen [MyShopSlots]bool
+	for i := range out {
+		e := &out[i]
+		e.Index, e.Price = r.U8(), r.U32()
+		e.Item.Type, e.Item.TypeID, e.Item.Count = r.U8(), r.U8(), uint16(r.U8())
+		e.Item.Quality = r.U16()
+		for j := range e.Item.Gems {
+			e.Item.Gems[j] = r.U8()
+		}
+		e.Item.Craft = r.Fixed(21)
+		if int(e.Index) >= MyShopSlots || seen[e.Index] || e.Price == 0 || e.Price > MyShopPriceMax || e.Item.Type == 0 || e.Item.Count == 0 {
+			return nil, fmt.Errorf("market list: invalid item at index %d", e.Index)
+		}
+		seen[e.Index] = true
+	}
+	return out, r.Err()
+}
+```
+
+```go
+type MyShopItem struct {
+	Index byte
+	Price uint32
+	Item  InventoryItem
+}
+```
+
+</details>
+
+## Opcode 230c
+
+**`0x230C` — MyShopClosed**
+
+Declarations: [proto.MyShopClosed](../../internal/proto/myshop.go#L23).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523. to buyers
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L139), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+## Opcode 230d
+
+**`0x230D` — MyShopBuy**
+
+Declarations: [proto.MyShopBuy](../../internal/proto/myshop.go#L24).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L162), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L267)
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L132), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>MyShopBuyPacket — internal/proto/myshop.go</summary>
+
+[Source definition](../../internal/proto/myshop.go#L99)
+
+```go
+func MyShopBuyPacket(index, count uint8) []byte {
+	w := NewWriter(MyShopBuy)
+	w.U8(index)
+	w.U8(count)
+	return w.Bytes()
+}
+```
+
+</details>
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
+}
+```
+
+</details>
+
+## Opcode 230e
+
+**`0x230E` — MyShopStock**
+
+Declarations: [proto.MyShopStock](../../internal/proto/myshop.go#L25).
+
+Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523. to buyers: index, new count
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
+
+**Client receive reducers:** [applyMyShop (internal/game/myshop.go)](../../internal/game/myshop.go#L119), [Apply (internal/game/state.go)](../../internal/game/state.go#L604)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>shopAck — server/internal/world/myshop.go</summary>
+
+[Source definition](../../server/internal/world/myshop.go#L95)
+
+```go
+func shopAck(op packet.Opcode, body func(w *packet.Writer)) []byte {
+	w := packet.New(op)
+	if body != nil {
+		body(w)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>NewReader — internal/proto/rw.go</summary>
+
+[Source definition](../../internal/proto/rw.go#L28)
+
+```go
+func NewReader(payload []byte) *Reader {
+	r := &Reader{b: payload, off: 2}
+	if len(payload) >= 2 {
+		r.wide = itemstack.Wide(binary.LittleEndian.Uint16(payload))
+	}
+	if len(payload) < 2 {
+		r.err = ErrShort
+	}
+	return r
+}
+```
+
+```go
+type Reader struct {
+	wide bool
+	b    []byte
+	off  int
+	err  error
 }
 ```
 

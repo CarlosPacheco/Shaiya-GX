@@ -3,6 +3,7 @@ package world
 import (
 	"testing"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -12,6 +13,24 @@ func shopSession(mapID uint16) *Session {
 	s := &Session{player: p, char: &db.Character{ID: 7, MapID: mapID, CurrentHP: 100}}
 	s.items = []db.Item{{UID: 1, Bag: 1, Slot: 0, Type: 1, TypeID: 1, Count: 10}, {UID: 2, Bag: 1, Slot: 1, Type: 27, TypeID: 1, Count: 1}}
 	return s
+}
+
+func TestMyShopReplacingBagItemInvalidatesListing(t *testing.T) {
+	s := shopSession(35)
+	s.handleMyShop(opMyShopBegin, nil)
+	s.handleMyShop(opMyShopAdd, proto.MyShopAddPacket(0, 1, 0, 20))
+	s.openMyShop(proto.MyShopOpenPacket("Trade goods"))
+	if s.shop.status != myShopStatusSelling {
+		t.Fatal("fixture failed to publish")
+	}
+	// Identical items in the same position still have different ownership records.
+	s.items[0].UID++
+	if s.shop.slots[0].itemIndex(s.items) >= 0 {
+		t.Fatal("the replacement inherited the old price")
+	}
+	if s.refreshMyShop() || s.shop.status != myShopStatusNone || s.player.currentShopTitle() != "" {
+		t.Fatal("an empty shop retained its open sign")
+	}
 }
 
 func addFrame(idx, bag, slot uint8, price uint32) []byte {

@@ -20,7 +20,7 @@ type subActionDrag struct {
 	source, x, y, mouseX, mouseY int
 }
 
-var subActionNames = [15]string{"Sit / Stand", "Walk / Run", "Auto Run", "Pick Up", "Attack", "Victory", "Beg", "Love", "Laugh", "Clap", "Greet", "Start", "Defeat", "Provoke", "Insult"}
+var subActionNames = [ui.SubActionCount]string{"Sit / Stand", "Walk / Run", "Auto Run", "Pick Up", "Attack", "Victory", "Beg", "Love", "Laugh", "Clap", "Greet", "Start", "Defeat", "Provoke", "Insult", "Setup Market"}
 
 type localActionStore map[string][ui.TotalActionSlots]uint8
 
@@ -67,7 +67,7 @@ func (a *App) loadLocalActions() {
 	}
 	slots := m[a.localActionsKey()]
 	for i, v := range slots {
-		if v <= 15 {
+		if v <= ui.SubActionCount {
 			a.wv.localActions[i] = v
 		}
 	}
@@ -131,7 +131,7 @@ func (a *App) localAction(index int) (int, bool) {
 		return 0, false
 	}
 	v := a.wv.localActions[index]
-	if v == 0 || v > 15 {
+	if v == 0 || v > ui.SubActionCount {
 		return 0, false
 	}
 	for _, q := range a.state.QuickSlots {

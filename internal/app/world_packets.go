@@ -111,6 +111,9 @@ func (a *App) applyWorldPacket(p []byte) {
 	if a.state == nil {
 		return
 	}
+	if ev.Op >= proto.MyShopBegin && ev.Op <= proto.MyShopStock {
+		a.confirmedPersonalMarket(ev.Op)
+	}
 	if ev.Op == proto.GXTeleportStone {
 		a.confirmedTeleportStone(p)
 	}

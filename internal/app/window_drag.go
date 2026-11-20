@@ -84,6 +84,15 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 	}
+	if a.personalMarketOpen() {
+		x, y := a.personalMarketUI.Origin(w, h)
+		if start(&a.personalMarketUI.Position, x, y, ui.PersonalMarketWidth, ui.PersonalMarketHeight, 10, 150) {
+			return true
+		}
+		if pointInside(in, x, y, ui.PersonalMarketWidth, ui.PersonalMarketHeight) {
+			return false
+		}
+	}
 	if a.guild.open && a.guildUI != nil {
 		x, y := a.guildUI.Origin(w, h)
 		if start(&a.guildUI.Position, x, y, ui.GuildWidth, ui.GuildHeight, 30, 270) {
@@ -400,6 +409,9 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 	}
 	if a.subActionsUI != nil {
 		out["sub_actions"] = &a.subActionsUI.Position
+	}
+	if a.personalMarketUI != nil {
+		out["personal_market"] = &a.personalMarketUI.Position
 	}
 	if a.partyUI != nil {
 		out["party"] = &a.partyUI.Position

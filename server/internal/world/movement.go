@@ -66,6 +66,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 	}
 	s.cancelTravelCast()
 	s.endMyShop()
+	s.closeMyShopView()
 	s.dismount()
 	s.dash = nil
 	s.pendingCombo = nil

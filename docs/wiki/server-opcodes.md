@@ -93,6 +93,7 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x0520` | [PartyBadge](protocol-combat.md#opcode-0520) | — | yes | yes |
 | `0x0521` | [CharacterCurrentHitpoints](protocol-combat.md#opcode-0521) | — | yes | yes |
 | `0x0522` | [CharacterPvPKills](protocol-combat.md#opcode-0522) | — | yes | yes |
+| `0x0523` | [ShopBubble](protocol-combat.md#opcode-0523) | — | yes | yes |
 | `0x0526` | [CharacterAdditionalStats](protocol-combat.md#opcode-0526) | — | yes | yes |
 | `0x0551` | [CharacterResurrect](protocol-combat.md#opcode-0551) | — | yes | yes |
 | `0x0553` | [ResurrectRequest](protocol-combat.md#opcode-0553) | yes | — | — |
@@ -244,6 +245,20 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x220C` | [PartySearchRequest](protocol-social.md#opcode-220c) | yes | — | yes |
 | `0x220D` | [PartySearchList](protocol-social.md#opcode-220d) | — | yes | yes |
 | `0x220E` | [SocialError](protocol-social.md#opcode-220e) | — | — | yes |
+| `0x2301` | [MyShopBegin](protocol-trade.md#opcode-2301) | yes | yes | yes |
+| `0x2302` | [MyShopCancel](protocol-trade.md#opcode-2302) | yes | yes | yes |
+| `0x2303` | [MyShopOpen](protocol-trade.md#opcode-2303) | yes | yes | yes |
+| `0x2304` | [MyShopStop](protocol-trade.md#opcode-2304) | yes | yes | yes |
+| `0x2305` | [MyShopAdd](protocol-trade.md#opcode-2305) | yes | yes | yes |
+| `0x2306` | [MyShopRemove](protocol-trade.md#opcode-2306) | yes | yes | yes |
+| `0x2307` | [MyShopPrice](protocol-trade.md#opcode-2307) | yes | yes | yes |
+| `0x2308` | [MyShopSold](protocol-trade.md#opcode-2308) | — | yes | yes |
+| `0x2309` | [MyShopEnter](protocol-trade.md#opcode-2309) | yes | yes | yes |
+| `0x230A` | [MyShopLeave](protocol-trade.md#opcode-230a) | yes | yes | yes |
+| `0x230B` | [MyShopList](protocol-trade.md#opcode-230b) | — | yes | yes |
+| `0x230C` | [MyShopClosed](protocol-trade.md#opcode-230c) | — | yes | yes |
+| `0x230D` | [MyShopBuy](protocol-trade.md#opcode-230d) | yes | yes | yes |
+| `0x230E` | [MyShopStock](protocol-trade.md#opcode-230e) | — | yes | yes |
 | `0x2401` | [DuelRequest](protocol-social.md#opcode-2401) | yes | yes | yes |
 | `0x2402` | [DuelAnswer](protocol-social.md#opcode-2402) | yes | — | yes |
 | `0x2403` | [DuelCountdown](protocol-social.md#opcode-2403) | — | yes | yes |
@@ -314,6 +329,6 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0xF501` | [GmCommandError](protocol-chat.md#opcode-f501) | — | — | — |
 | `0xF702` | [GmCommandGetItem](protocol-chat.md#opcode-f702) | — | — | — |
 
-Inventory: **303 numeric opcodes**, **512 typed declarations**, **15 families**.
+Inventory: **318 numeric opcodes**, **527 typed declarations**, **15 families**.
 
 Regenerate with `python3 tools/generate_server_reference.py`; verify freshness with `--check`. The generator parses source for both operating systems and tests are excluded from implementation evidence. Source links track main; use Git history when comparing older binaries.

@@ -1,12 +1,16 @@
 package game
 
-import "github.com/Spelunkern/Shaiya-GX/internal/proto"
+import (
+	"github.com/Spelunkern/Shaiya-GX/internal/chatguard"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+)
 
 // MyShopSlot is one item the player lists in their own market.
 type MyShopSlot struct {
 	Used      bool
 	Bag, Slot uint8
 	Price     uint32
+	Item      proto.InventoryItem
 }
 
 // MyShopState is the player's own personal market: 0 none, 1 setting up,
@@ -14,26 +18,20 @@ type MyShopSlot struct {
 type MyShopState struct {
 	Phase       int
 	Slots       [proto.MyShopSlots]MyShopSlot
-	BeginSerial uint64
 	BeginResult uint8
-	EndedSerial uint64 // the server closed the market (move, stand, death...)
-	SoldSerial  uint64
-	SoldIndex   uint8
 	SoldCount   uint8
 	SoldGold    uint32
+	SoldItem    proto.InventoryItem
 }
 
 // ShopViewState is another player's market the player has open.
 type ShopViewState struct {
-	Seller       uint32
-	Open         bool
-	Items        [proto.MyShopSlots]proto.MyShopItem
-	Present      [proto.MyShopSlots]bool
-	EnterSerial  uint64
-	EnterResult  uint8
-	BuySerial    uint64
-	BuyResult    uint8
-	ClosedSerial uint64
+	Seller      uint32
+	Open        bool
+	Items       [proto.MyShopSlots]proto.MyShopItem
+	Present     [proto.MyShopSlots]bool
+	EnterResult uint8
+	BuyResult   uint8
 }
 
 func (s *State) applyMyShop(p []byte) error {
@@ -45,23 +43,18 @@ func (s *State) applyMyShop(p []byte) error {
 			return err
 		}
 		s.MyShop.BeginResult = result
-		s.MyShop.BeginSerial++
 		if result == proto.MyShopBeginOK {
-			s.MyShop = MyShopState{Phase: 1, BeginSerial: s.MyShop.BeginSerial, BeginResult: result, EndedSerial: s.MyShop.EndedSerial, SoldSerial: s.MyShop.SoldSerial}
+			s.MyShop = MyShopState{Phase: proto.MyShopSetup, BeginResult: result}
 		}
 	case proto.MyShopCancel:
-		if s.MyShop.Phase != 0 {
-			s.MyShop.EndedSerial++
-		}
-		serials := s.MyShop
-		s.MyShop = MyShopState{BeginSerial: serials.BeginSerial, EndedSerial: serials.EndedSerial, SoldSerial: serials.SoldSerial}
+		s.MyShop = MyShopState{}
 	case proto.MyShopOpen:
-		if s.MyShop.Phase == 1 {
-			s.MyShop.Phase = 2
+		if s.MyShop.Phase == proto.MyShopSetup {
+			s.MyShop.Phase = proto.MyShopSelling
 		}
 	case proto.MyShopStop:
-		if s.MyShop.Phase == 2 {
-			s.MyShop.Phase = 1
+		if s.MyShop.Phase == proto.MyShopSelling {
+			s.MyShop.Phase = proto.MyShopSetup
 		}
 	case proto.MyShopAdd:
 		r := proto.NewReader(p)
@@ -69,8 +62,8 @@ func (s *State) applyMyShop(p []byte) error {
 		if err := r.Err(); err != nil {
 			return err
 		}
-		if int(index) < proto.MyShopSlots {
-			s.MyShop.Slots[index] = MyShopSlot{true, bag, slot, price}
+		if int(index) < proto.MyShopSlots && s.MyShop.Phase == proto.MyShopSetup {
+			s.MyShop.Slots[index] = MyShopSlot{Used: true, Bag: bag, Slot: slot, Price: price, Item: s.Inventory[[2]uint8{bag, slot}]}
 		}
 	case proto.MyShopRemove:
 		r := proto.NewReader(p)
@@ -96,8 +89,11 @@ func (s *State) applyMyShop(p []byte) error {
 		if err := r.Err(); err != nil {
 			return err
 		}
-		s.MyShop.SoldIndex, s.MyShop.SoldCount, s.MyShop.SoldGold = index, count, gold
-		s.MyShop.SoldSerial++
+		s.MyShop.SoldCount, s.MyShop.SoldGold = count, gold
+		s.MyShop.SoldItem = proto.InventoryItem{}
+		if int(index) < proto.MyShopSlots {
+			s.MyShop.SoldItem = s.MyShop.Slots[index].Item
+		}
 	case proto.MyShopEnter:
 		r := proto.NewReader(p)
 		result, id := r.U8(), r.U32()
@@ -105,14 +101,16 @@ func (s *State) applyMyShop(p []byte) error {
 			return err
 		}
 		s.ShopView.EnterResult = result
-		s.ShopView.EnterSerial++
-		if result == 1 {
-			s.ShopView = ShopViewState{Seller: id, Open: true, EnterSerial: s.ShopView.EnterSerial, EnterResult: result, BuySerial: s.ShopView.BuySerial, ClosedSerial: s.ShopView.ClosedSerial}
+		if result == proto.MyShopEnterOK {
+			s.ShopView = ShopViewState{Seller: id, Open: true, EnterResult: result}
 		}
 	case proto.MyShopList:
 		items, err := proto.DecodeMyShopList(p)
 		if err != nil {
 			return err
+		}
+		if !s.ShopView.Open {
+			return nil
 		}
 		s.ShopView.Items, s.ShopView.Present = [proto.MyShopSlots]proto.MyShopItem{}, [proto.MyShopSlots]bool{}
 		for _, it := range items {
@@ -138,16 +136,25 @@ func (s *State) applyMyShop(p []byte) error {
 			return err
 		}
 		s.ShopView.BuyResult = result
-		s.ShopView.BuySerial++
-	case proto.MyShopClosed:
-		serial := s.ShopView.ClosedSerial + 1
-		s.ShopView = ShopViewState{ClosedSerial: serial, BuySerial: s.ShopView.BuySerial, EnterSerial: s.ShopView.EnterSerial}
-	case proto.MyShopLeave:
-		s.ShopView = ShopViewState{ClosedSerial: s.ShopView.ClosedSerial, BuySerial: s.ShopView.BuySerial, EnterSerial: s.ShopView.EnterSerial}
+	case proto.MyShopClosed, proto.MyShopLeave:
+		s.ShopView = ShopViewState{}
 	case proto.ShopBubble:
 		id, title, err := proto.DecodeShopBubble(p)
 		if err != nil {
 			return err
+		}
+		checked := chatguard.Filter(title, false)
+		title = checked.Text
+		if checked.Impersonation {
+			title = "[Message hidden]"
+		}
+		if title == "" {
+			delete(s.ShopSigns, id)
+		} else if id != 0 && (id == s.SelfID || s.Entities[id] != nil) {
+			if s.ShopSigns == nil {
+				s.ShopSigns = make(map[uint32]string)
+			}
+			s.ShopSigns[id] = title
 		}
 		if e := s.Entities[id]; e != nil {
 			e.ShopTitle = title

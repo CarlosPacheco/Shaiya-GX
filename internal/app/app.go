@@ -125,6 +125,7 @@ type App struct {
 	inventoryUI                         *ui.Inventory
 	statusUI                            *ui.Status
 	marketUI                            *ui.Market
+	personalMarketUI                    *ui.PersonalMarket
 	auction                             auctionView
 	auctionSequence                     uint64
 	auctionUI                           auctionWidgets
@@ -233,6 +234,7 @@ type App struct {
 	npcQuestUI        *ui.NPCQuest
 	npcQuest          npcQuestView
 	shop              shopView
+	personalMarket    personalMarketView
 	blacksmith        blacksmithView
 	gate              gatekeeperView
 	vehicle           vehicleView
@@ -448,6 +450,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.marketUI, err = ui.NewMarket(a); err != nil {
 		return nil, err
 	}
+	if a.personalMarketUI, err = ui.NewPersonalMarket(a); err != nil {
+		return nil, err
+	}
 	if a.pvpRewardUI, err = ui.NewPvPRewardPanel(a); err != nil {
 		return nil, err
 	}
@@ -503,7 +508,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	return a, nil
 }
 
-// OptionalInterface lets chat render its text fallback on older data packs.
+// OptionalInterface allows interface panels to work with older data packs.
 func (a *App) OptionalInterface(name string) *render.Texture {
 	if _, ok := a.arc.Lookup("interface/" + name); !ok {
 		return nil
@@ -802,6 +807,7 @@ func (a *App) backToLogin(msg string) {
 		a.statusUI.Clear()
 	}
 	a.shop = shopView{}
+	a.personalMarket = personalMarketView{selected: -1}
 	a.auction = auctionView{}
 	a.blacksmith = blacksmithView{}
 	a.gate = gatekeeperView{}
