@@ -944,6 +944,7 @@ func (a *App) selfSlot() (proto.CharacterSlot, bool) {
 				it := a.state.Inventory[[2]uint8{0, uint8(i)}]
 				slot.EquipType[i], slot.EquipTypeID[i] = it.Type, it.TypeID
 			}
+			slot.Cloak = a.state.Inventory[[2]uint8{0, 7}].Gems
 		}
 		return slot, true
 	}

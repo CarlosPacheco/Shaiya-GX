@@ -104,6 +104,8 @@ type App struct {
 	bank                                warehouseView
 	bankUI                              *ui.Warehouse
 	blacksmithUI                        *ui.Blacksmith
+	emblemUI                            *ui.EmblemWindow
+	emblem                              emblemState
 	gateUI                              *ui.Gatekeeper
 	gateConfirm                         *ui.Message
 	teleportStone                       teleportStoneView
@@ -436,6 +438,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		return nil, err
 	}
 	a.summonMessage.Movable = true
+	if a.emblemUI, err = ui.NewEmblemWindow(a); err != nil {
+		return nil, err
+	}
 	if a.blacksmithUI, err = ui.NewBlacksmith(a); err != nil {
 		return nil, err
 	}

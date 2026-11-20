@@ -23,6 +23,8 @@ type Assets struct {
 	monsterEffectLibrary *effect.Library
 	monsterEffectTried   bool
 	cloaks               map[string]*cloakGeometry
+	emblems              *emblemTables
+	emblemMesh           *render.Mesh
 	Arc                  *archive.Archive
 	textures             map[string]*render.Texture
 	models               map[string]*Model

@@ -145,6 +145,7 @@ type CharacterSlot struct {
 	Str, Rec, Int, Wis, Dex, Luc                  uint16
 	MaxHP, MaxMP, MaxSP                           uint16
 	EquipType, EquipTypeID                        [8]uint8
+	Cloak                                         [6]uint8 // gem bytes of the equipped cloak: its emblem
 	Name                                          string
 	PendingDelete, RenamePending                  bool
 }

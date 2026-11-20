@@ -171,6 +171,9 @@ type State struct {
 	EnchantSerial          uint64
 	LastGemAdd             proto.GemAddResult
 	LastGemRemove          proto.GemRemoveResult
+	LastEmblem             proto.EmblemResult
+	EmblemSerial           uint64
+	EmblemRemoveSerial     uint64
 	GemRemoveSerial        uint64
 	GemAddSerial           uint64
 	LastShop               proto.ShopResult
@@ -572,6 +575,34 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		s.LastGemRemove = result
 		s.GemRemoveSerial++
+	case proto.CloakAdd:
+		result, err := proto.DecodeEmblemResult(p)
+		if err != nil {
+			return fail(err)
+		}
+		key := [2]uint8{result.Bag, result.Slot}
+		item, ok := s.Inventory[key]
+		if result.Result == 1 && !ok {
+			return fail(fmt.Errorf("emblem references missing item"))
+		}
+		if ok && result.Result == 1 {
+			item.Gems = result.Pattern
+			s.Inventory[key] = item
+		}
+		s.Details.Money = result.Money
+		s.LastEmblem = result
+		s.EmblemSerial++
+	case proto.CloakRemove:
+		result, err := proto.DecodeEmblemRemoved(p)
+		if err != nil {
+			return fail(err)
+		}
+		key := [2]uint8{result.Bag, result.Slot}
+		if item, ok := s.Inventory[key]; ok {
+			item.Gems = [6]uint8{}
+			s.Inventory[key] = item
+		}
+		s.EmblemRemoveSerial++
 	case proto.GemAdd:
 		result, err := proto.DecodeGemAddResult(p)
 		if err != nil {
@@ -1130,6 +1161,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			s.LastEnchant, s.EnchantSerial = proto.EnchantResult{}, 0
 			s.LastGemAdd, s.GemAddSerial = proto.GemAddResult{}, 0
 			s.LastGemRemove, s.GemRemoveSerial = proto.GemRemoveResult{}, 0
+			s.LastEmblem, s.EmblemSerial, s.EmblemRemoveSerial = proto.EmblemResult{}, 0, 0
 			s.InventoryReady = false
 			s.Warehouse, s.WarehouseReady = nil, false
 			s.Skills = map[uint8]proto.LearnedSkill{}

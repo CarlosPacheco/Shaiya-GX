@@ -74,6 +74,9 @@ func (a *App) updateShop(in *platform.Input, w, h int) bool {
 	if kind, ok := a.houseKind(e); ok {
 		return a.updateHouse(in, w, h, e, kind)
 	}
+	if a.emblemNPC(e) {
+		return a.updateEmblem(in, w, h, e)
+	}
 	if e.NpcType == 4 && a.pvpRewardUI != nil {
 		return a.updatePvPRewards(in, w, h)
 	}
@@ -200,6 +203,10 @@ func (a *App) drawShop(w, h int) {
 	}
 	if kind, ok := a.houseKind(e); ok {
 		a.drawHouse(w, h, e, kind)
+		return
+	}
+	if a.emblemNPC(e) {
+		a.drawEmblem(w, h)
 		return
 	}
 	if e.NpcType == 4 && a.pvpRewardUI != nil {

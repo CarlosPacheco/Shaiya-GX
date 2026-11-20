@@ -208,6 +208,8 @@ const (
 	ItemCompose               Opcode = 0x0806
 	GemAdd                    Opcode = 0x0801
 	GemRemove                 Opcode = 0x0802
+	CloakAdd                  Opcode = 0x0803
+	CloakRemove               Opcode = 0x0804
 	GemAddPossibility         Opcode = 0x0809
 	GemRemovePossibility      Opcode = 0x080A
 	ExchangeRequest           Opcode = 0x0A01

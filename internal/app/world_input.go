@@ -205,6 +205,9 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		captured = a.updateBlacksmithDrag(in, w, h)
 	}
 	if !captured {
+		captured = a.updateEmblemDrag(in, w, h)
+	}
+	if !captured {
 		captured = a.updateWarehouseDrag(in, w, h)
 	}
 	if !captured {

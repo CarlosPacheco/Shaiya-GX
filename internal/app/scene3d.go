@@ -183,6 +183,7 @@ func (a *App) appearance(c *proto.CharacterSlot) scene.Appearance {
 	ap.WeaponType, ap.WeaponModel = c.EquipType[5], m(5)
 	ap.ShieldType, ap.ShieldModel = c.EquipType[6], m(6)
 	ap.CloakType, ap.CloakModel = c.EquipType[7], m(7)
+	ap.CloakEmblem = c.Cloak
 	if a.state != nil && c.ID == a.state.SelfID && a.state.InventoryReady {
 		ap.WeaponEnchant = weaponEnchantFromCraft(a.state.Inventory[[2]uint8{0, 5}].Craft)
 		ap.OffhandEnchant = weaponEnchantFromCraft(a.state.Inventory[[2]uint8{0, 6}].Craft)

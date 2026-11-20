@@ -613,6 +613,18 @@ func (s *Scene3D) drawModelFaded(m *Mesh, t *Texture, world M4, alphaRef, opacit
 	gl.Disable(gl.BLEND)
 }
 
+// DrawClothOverlay draws a decal that follows a cloak: the texture times an
+// RGBA tint, alpha blended over the cloth, without writing depth.
+func (s *Scene3D) DrawClothOverlay(m *Mesh, t *Texture, world M4, tint [4]float32) {
+	if s.Shadow || s.meshOccluded(m, world) {
+		return
+	}
+	gl.Disable(gl.CULL_FACE)
+	gl.DepthMask(false)
+	s.DrawUnlitTint(m, t, world, tint, [2]float32{})
+	gl.DepthMask(true)
+}
+
 // DrawCloth uses a constant diffuse term, like the unlit cloak shoulder pass.
 // Cutout, concealment and shadow behavior are shared with ordinary models.
 func (s *Scene3D) DrawCloth(m *Mesh, t *Texture, world M4, alphaRef, opacity float32) {

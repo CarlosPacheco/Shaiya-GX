@@ -9,7 +9,10 @@ type CloakPin struct {
 type CloakRecord struct {
 	Body, Texture, Shoulder, Mode int
 	Columns, Rows                 int
-	Pins                          []CloakPin
+	// Emblem is the 3x3 cloth sample of 0x582280..0x5810b0, read at record
+	// offsets 0x18..0x24: centre column, centre row, column and row half span.
+	Emblem [4]int
+	Pins   []CloakPin
 }
 type CloakTable struct {
 	Bodies, Shoulders []string
@@ -50,7 +53,10 @@ func ParseCloakPC(raw []byte) (*CloakTable, error) {
 		r := &table.Records[i]
 		r.Body, r.Texture, r.Mode, r.Shoulder = int(c.u32()), int(c.u32()), int(c.u32()), int(c.u32())
 		r.Columns, r.Rows = int(c.u32())+1, int(c.u32())+1
-		c.take(20)
+		for i := range r.Emblem {
+			r.Emblem[i] = int(c.u32())
+		}
+		c.take(4)
 		for range 20 {
 			active, vertex, bone := c.u32(), int(c.u32()), int(c.u32())
 			offset := [3]float32{c.f32(), c.f32(), c.f32()}

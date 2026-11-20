@@ -26,6 +26,8 @@ type cloakInstance struct {
 	coarse      *clothPhysics
 	coarseLocal []render.V3
 	usingGrid   bool
+	emblem      *cloakEmblem
+	assets      *Assets
 	vertices    []render.Vertex
 	initialized bool
 	prepared    bool
@@ -164,6 +166,8 @@ func (c *Character) attachCloak(a Appearance) {
 		p.pins[pin.Vertex] = true
 	}
 	c.cloak = &cloakInstance{id: cloakIDs.Add(1), geometry: g, physics: p, vertices: append([]render.Vertex(nil), g.vertices...)}
+	c.cloak.emblem = c.assets.newCloakEmblem(a.CloakEmblem, *g)
+	c.cloak.assets = c.assets
 }
 func (c *cloakInstance) update(world render.M4, finals []render.M4) {
 	c.updateGrid(world, finals, 50, false)
@@ -257,4 +261,5 @@ func (c *cloakInstance) drawInPass(s *render.Scene3D, world render.M4, concealed
 	} else {
 		s.DrawCloth(c.geometry.mesh, c.geometry.texture, world, .5, 1)
 	}
+	c.drawEmblem(s, c.assets, world, concealed)
 }

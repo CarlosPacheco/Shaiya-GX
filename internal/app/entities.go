@@ -128,6 +128,7 @@ func (a *App) prepareRemotePlayers() {
 			for i, it := range sh.Equipment {
 				slot.EquipType[i], slot.EquipTypeID[i] = it[0], it[1]
 			}
+			slot.Cloak = sh.Cloak
 			appearance := a.appearance(&slot)
 			appearance.WeaponEnchant, appearance.OffhandEnchant = sh.Equipment[5][2], sh.Equipment[6][2]
 			actor, err := scene.BuildCharacter(a.assets, appearance, "000_normal")

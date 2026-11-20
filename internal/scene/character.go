@@ -26,6 +26,7 @@ type Appearance struct {
 	WeaponType, WeaponModel, ShieldType, ShieldModel uint8
 	WeaponEnchant, OffhandEnchant                    uint8
 	CloakType, CloakModel, CloakFit                  uint8
+	CloakEmblem                                      [6]uint8
 }
 
 var raceFolders = [...]string{"Human", "Elf", "Vile", "DeathEater"}
