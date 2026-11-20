@@ -15,14 +15,13 @@ func (a *App) drawPersonalMarket(w, h int) {
 	}
 	v, p := &a.personalMarket, a.personalMarketUI
 	s, b := &a.state.MyShop, &a.state.ShopView
-	title, detail := v.title.Text, "Drag items from your bag"
+	title := v.title.Text
 	if b.Open {
-		detail = "Select an item"
 		if e := a.state.Entities[b.Seller]; e != nil {
 			title = e.ShopTitle
 		}
 	} else if s.Phase == proto.MyShopSelling {
-		title, detail = a.state.Self.ShopTitle, "Selling"
+		title = a.state.Self.ShopTitle
 	} else if v.editing {
 		title += "|"
 	} else if title == "" {
@@ -38,12 +37,9 @@ func (a *App) drawPersonalMarket(w, h int) {
 			items[i], prices[i] = a.state.Inventory[[2]uint8{entry.Bag, entry.Slot}], entry.Price
 		}
 	}
-	if v.selected >= 0 && items[v.selected].Type != 0 {
-		detail = fmt.Sprintf("%d G / unit", prices[v.selected])
-	}
 	x, y := p.Origin(w, h)
 	a.clearTooltipUnderPanel(x, y, ui.PersonalMarketWidth, ui.PersonalMarketHeight)
-	p.Draw(a.sprites, a.font, a.white, w, h, title, detail, v.selected, b.Open, s.Phase == proto.MyShopSelling, v.pending != 0)
+	p.Draw(a.sprites, a.font, w, h, title, b.Open, s.Phase == proto.MyShopSelling, v.pending != 0)
 	hover := ui.PersonalMarketCellAt(a.lastMouseX-x, a.lastMouseY-y)
 	for i, it := range items {
 		if it.Type == 0 {
@@ -113,14 +109,14 @@ func (a *App) drawPersonalMarketSigns(w, h int) {
 		if !ok {
 			continue
 		}
-		// The common speech bubble (gray, translucent) with green text.
+		// 0x44c12a: the common bubble routine 0x41c5c0 with its own colours.
 		textWidth := min(292, f.Width(title))
 		width, height := textWidth+20, 30
 		left, top := x-width/2, y-height-40
 		if a.scene3d.OccludedLabel(pos, left, top, width, height, w, h) {
 			continue
 		}
-		a.sprites.Draw(a.white, float32(left), float32(top), float32(width), float32(height), 0, 0, 1, 1, [4]float32{72.0 / 255, 72.0 / 255, 72.0 / 255, 128.0 / 255})
-		f.Draw(a.sprites, title, left+10, top+(height-f.Height)/2, ui.RGBColor(0x33ff33), textWidth)
+		a.sprites.Draw(a.white, float32(left), float32(top), float32(width), float32(height), 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 154.0 / 255}) // 0x44c186: 9a1d1f24
+		f.Draw(a.sprites, title, left+10, top+(height-f.Height)/2, ui.RGBColor(0xccff66), textWidth)                                                                   // 0x44c181: ffccff66
 	}
 }

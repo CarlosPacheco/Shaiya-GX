@@ -209,6 +209,12 @@ func (s *Session) handleMyShop(op packet.Opcode, p []byte) {
 		if result == myShopBeginOK {
 			s.closeMyShopView()
 			s.shop = myShop{status: myShopStatusSetup}
+			// The seller sits as soon as the setup starts.
+			s.cancelMove()
+			if !s.player.IsSitting() {
+				s.player.SetSitting(true)
+				s.broadcastNear(buildCharacterMotion(s.char.ID, MotionSitDown), "0x0506 market sit", true)
+			}
 		}
 	case opMyShopCancel:
 		s.endMyShop()

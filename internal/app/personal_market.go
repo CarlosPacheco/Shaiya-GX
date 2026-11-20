@@ -200,6 +200,12 @@ func (a *App) updatePersonalMarket(in *platform.Input, w, h int) bool {
 	if v.pending != 0 {
 		return capture
 	}
+	if in.RightPressed && !buyer && a.state.MyShop.Phase == proto.MyShopSetup {
+		if i := ui.PersonalMarketCellAt(in.MouseX-x, in.MouseY-y); i >= 0 && a.state.MyShop.Slots[i].Used {
+			a.sendPersonalMarket(proto.MyShopRemovePacket(uint8(i)))
+			return true
+		}
+	}
 	action := a.personalMarketUI.Update(in, w, h, buyer)
 	if action == ui.PersonalMarketClose {
 		op := proto.MyShopCancel
@@ -209,21 +215,22 @@ func (a *App) updatePersonalMarket(in *platform.Input, w, h int) bool {
 		a.sendPersonalMarket(proto.NewWriter(op).Bytes())
 		return true
 	}
-	if action >= 0 && action < proto.MyShopSlots {
-		v.selected = action
-		if buyer && !a.state.ShopView.Present[action] || !buyer && !a.state.MyShop.Slots[action].Used {
-			v.selected = -1
-		}
-	}
 	if buyer {
-		if action == ui.PersonalMarketBuy && v.selected >= 0 {
-			entry := a.state.ShopView.Items[v.selected]
-			if a.state.ShopView.Present[v.selected] {
-				v.dialog = marketDialog{op: proto.MyShopBuy, index: entry.Index, price: entry.Price, item: entry.Item, seller: a.state.ShopView.Seller}
-				a.quantityUI.OpenWithValue(in.MouseX, in.MouseY, w, h, int(entry.Item.Count), 1)
-			}
+		if action == ui.PersonalMarketCancel {
+			a.sendPersonalMarket(proto.NewWriter(proto.MyShopLeave).Bytes())
+			return true
+		}
+		if action >= 0 && action < proto.MyShopSlots && a.state.ShopView.Present[action] {
+			entry := a.state.ShopView.Items[action]
+			v.selected = action
+			v.dialog = marketDialog{op: proto.MyShopBuy, index: entry.Index, price: entry.Price, item: entry.Item, seller: a.state.ShopView.Seller}
+			a.quantityUI.OpenWithValue(in.MouseX, in.MouseY, w, h, int(entry.Item.Count), 1)
 		}
 		return capture
+	}
+	if action == ui.PersonalMarketCancel {
+		a.sendPersonalMarket(proto.NewWriter(proto.MyShopCancel).Bytes())
+		return true
 	}
 	if a.state.MyShop.Phase == proto.MyShopSelling {
 		if action == ui.PersonalMarketToggle {
@@ -247,22 +254,19 @@ func (a *App) updatePersonalMarket(in *platform.Input, w, h int) bool {
 			}
 		}
 		a.personalMarketNotice(10002, "Add an item before opening the market.", nil)
-	case ui.PersonalMarketPrice:
-		if v.selected >= 0 {
-			entry := a.state.MyShop.Slots[v.selected]
-			v.dialog = marketDialog{op: proto.MyShopPrice, index: uint8(v.selected), item: entry.Item}
+	default:
+		if action >= 0 && action < proto.MyShopSlots && a.state.MyShop.Slots[action].Used {
+			entry := a.state.MyShop.Slots[action]
+			v.selected = action
+			v.dialog = marketDialog{op: proto.MyShopPrice, index: uint8(action), item: entry.Item}
 			a.exchangeMoney.Open(w, h, entry.Price)
-		}
-	case ui.PersonalMarketRemove:
-		if v.selected >= 0 {
-			a.sendPersonalMarket(proto.MyShopRemovePacket(uint8(v.selected)))
 		}
 	}
 	return capture
 }
 
 func (a *App) dropPersonalMarketItem(in *platform.Input, w, h int) bool {
-	if a.personalMarketUI == nil || a.state.MyShop.Phase != proto.MyShopSetup || !in.Clicked || !a.inventory.dragging {
+	if a.personalMarketUI == nil || a.state.MyShop.Phase != proto.MyShopSetup || !in.Clicked || !(a.inventory.dragging || a.inventory.selected) {
 		return false
 	}
 	x, y := a.personalMarketUI.Origin(w, h)
