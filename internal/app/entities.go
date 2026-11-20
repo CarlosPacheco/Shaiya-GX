@@ -492,22 +492,20 @@ func (a *App) drawPlayerNames(w, h int) {
 			a.sprites.NameDepth(depth)
 			left, top := x-labelWidth/2, y-a.font.Height-offset
 			a.font.DrawName(a.sprites, name, left+prefixWidth, top, tint)
+			iconLeft := left
 			if plate.party != 0 {
-				// Native 0x44bd81: party_member (1) or party_jang, 16x16, 11px left of
-				// the name and 3px up (6 more when the PvP grade badge is shown).
+				// The party_member / party_jang coin (16x16) sits to the left of the
+				// name with a slight gap, 3px up; the target marks move out beyond it.
 				file := "interface/party_jang.png"
 				if plate.party == 1 {
 					file = "interface/party_member.png"
 				}
 				if tex := a.assets.Texture(file); tex != nil {
-					px := left - 11
-					if ranked {
-						px -= 6
-					}
-					a.sprites.Draw(tex, float32(px), float32(top-3), 16, 16, 0, 0, 1, 1, white)
+					iconLeft = left - 16 - 2
+					a.sprites.Draw(tex, float32(iconLeft), float32(top-3), 16, 16, 0, 0, 1, 1, white)
 				}
 			}
-			l, r, drawn = left, left+labelWidth, true
+			l, r, drawn = iconLeft, left+labelWidth, true
 			if ranked {
 				grade := a.assets.Texture("interface/grade2.png")
 				if grade == nil {

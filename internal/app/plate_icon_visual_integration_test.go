@@ -52,7 +52,7 @@ func TestPlatePartyIconGL(t *testing.T) {
 			file = "interface/party_jang.png"
 		}
 		if tex := a.assets.Texture(file); tex != nil {
-			a.sprites.Draw(tex, float32(left-11), float32(y-3), 16, 16, 0, 0, 1, 1, white)
+			a.sprites.Draw(tex, float32(left-18), float32(y-3), 16, 16, 0, 0, 1, 1, white)
 		}
 	}
 	a.sprites.End()
