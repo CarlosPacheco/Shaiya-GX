@@ -154,11 +154,11 @@ func (c *Character) drawWeaponEnchant(s *render.Scene3D, a *attachment, matrix r
 	if a.enchant == nil || s.Shadow || s.HideWeaponEffects {
 		return
 	}
-	c.prepareWeaponEnchant(s.View, a.enchant, matrix)
+	c.prepareWeaponEnchant(s.View, a.enchant, matrix, s.ActiveOcclusion())
 	c.submitWeaponEnchant(s, a.enchant)
 }
 
-func (c *Character) prepareWeaponEnchant(view render.M4, enchant *weaponEnchant, matrix render.M4) {
+func (c *Character) prepareWeaponEnchant(view render.M4, enchant *weaponEnchant, matrix render.M4, occlusion *render.TerrainOcclusion) {
 	enchant.worlds, enchant.colors, enchant.ends = enchant.worlds[:0], enchant.colors[:0], enchant.ends[:0]
 	viewPosition := matrix.MulAffine(view)
 	if viewPosition[12]*viewPosition[12]+viewPosition[13]*viewPosition[13]+viewPosition[14]*viewPosition[14] > 50*50 {
@@ -167,6 +167,7 @@ func (c *Character) prepareWeaponEnchant(view render.M4, enchant *weaponEnchant,
 	basis := effectBaseBasis(0, view, render.Identity())
 	// One instanced draw per authored layer, never one draw per particle.
 	for i, layer := range enchant.recipe.layers {
+		start := len(enchant.worlds)
 		d := layer.definition
 		interval := float64(1000/d.Rate) / 1000
 		hold := float64(d.LifetimeMS) / 1000
@@ -194,6 +195,8 @@ func (c *Character) prepareWeaponEnchant(view render.M4, enchant *weaponEnchant,
 			enchant.worlds = append(enchant.worlds, m)
 			enchant.colors = append(enchant.colors, color)
 		}
+		end := start + occlusion.CullEffectInstances(c.assets.weaponQuad, enchant.worlds[start:], enchant.colors[start:])
+		enchant.worlds, enchant.colors = enchant.worlds[:end], enchant.colors[:end]
 		enchant.ends = append(enchant.ends, len(enchant.worlds))
 	}
 }
@@ -202,7 +205,7 @@ func (c *Character) submitWeaponEnchant(s *render.Scene3D, enchant *weaponEnchan
 	start := 0
 	for i, end := range enchant.ends {
 		if end > start {
-			s.DrawEffectBatch(c.assets.weaponQuad, enchant.recipe.layers[i].texture, enchant.worlds[start:end], enchant.colors[start:end], 4, 1, true)
+			s.DrawVisibleEffectBatch(c.assets.weaponQuad, enchant.recipe.layers[i].texture, enchant.worlds[start:end], enchant.colors[start:end], 4, 1, true)
 		}
 		start = end
 	}

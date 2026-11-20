@@ -6,15 +6,15 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-const skinCommandStride = int(unsafe.Sizeof(skinCommand{}))
+const indexedDrawStride = int(unsafe.Sizeof(indexedDrawCommand{}))
 
 // With DRAW_INDIRECT_BUFFER bound, GL interprets this argument as a byte
 // offset in GPU storage. Neither Go nor the driver dereferences it as a pointer.
 //
 //go:nocheckptr
-func skinCommandOffset(byteOffset int) unsafe.Pointer { return gl.PtrOffset(byteOffset) }
+func indexedDrawOffset(byteOffset int) unsafe.Pointer { return gl.PtrOffset(byteOffset) }
 
-type skinCommand struct {
+type indexedDrawCommand struct {
 	count, instances, first, baseVertex, baseInstance uint32
 }
 
@@ -33,12 +33,12 @@ type skinDrawRun struct {
 	twoSided  bool
 }
 
-type skinMeshBuffer struct {
+type packedMeshBuffer struct {
 	id             uint32
 	used, capacity int
 }
 
-func (b *skinMeshBuffer) copy(source uint32, offset, size, limit int) {
+func (b *packedMeshBuffer) copy(source uint32, offset, size, limit int) {
 	if need := offset + size; need > b.capacity {
 		capacity := min(limit, max(need, 2*b.capacity, 256<<10))
 		var buffer uint32
@@ -56,15 +56,23 @@ func (b *skinMeshBuffer) copy(source uint32, offset, size, limit int) {
 	b.used = offset + size
 }
 
+func (b *packedMeshBuffer) delete() {
+	if b.id != 0 {
+		gl.DeleteBuffers(1, &b.id)
+		removeGPUBytes(uint64(b.capacity))
+		*b = packedMeshBuffer{}
+	}
+}
+
 // SkinCrowd retains packed geometry for one scene. Meshes are immutable and
 // their assets must outlive the cache. The ordinary VAOs remain available.
 type SkinCrowd struct {
 	vao, indirect           uint32
 	boundVertex, boundIndex uint32
 	commandBytes            uint64
-	vertices, indices       skinMeshBuffer
+	vertices, indices       packedMeshBuffer
 	meshes                  map[*SkinMesh]skinLocation
-	commands                []skinCommand
+	commands                []indexedDrawCommand
 	materials               []skinDrawMaterial
 	runs                    []skinDrawRun
 }
@@ -93,7 +101,8 @@ func (b *SkinCrowd) plan(groups []SkinGroup, ambient float32) bool {
 	}
 	b.commands, b.materials, b.runs = b.commands[:0], b.materials[:0], b.runs[:0]
 	for _, group := range groups {
-		handle := diffuseTexture(group.Texture).skinHandle()
+		texture := diffuseTexture(group.Texture)
+		handle := texture.bindlessHandle(texture.repeat)
 		at, ok := b.meshLocation(group.Mesh)
 		if !ok || handle == 0 {
 			return false
@@ -105,7 +114,7 @@ func (b *SkinCrowd) plan(groups []SkinGroup, ambient float32) bool {
 		if n := len(b.runs); n == 0 || b.runs[n-1].indexType != group.Mesh.indexType || b.runs[n-1].twoSided != group.TwoSided {
 			b.runs = append(b.runs, skinDrawRun{len(b.commands), group.Mesh.indexType, group.TwoSided})
 		}
-		b.commands = append(b.commands, skinCommand{uint32(group.Mesh.Count), uint32(group.Count), uint32(at.index / indexSize), uint32(at.vertex), uint32(group.First)})
+		b.commands = append(b.commands, indexedDrawCommand{uint32(group.Mesh.Count), uint32(group.Count), uint32(at.index / indexSize), uint32(at.vertex), uint32(group.First)})
 		light := ambient
 		if group.Unlit {
 			light = 1
@@ -129,7 +138,7 @@ func (k *Skinner) DrawCrowdIndirect(s *Scene3D, b *SkinCrowd, groups []SkinGroup
 		bindSkinMeshLayout(b.vao, b.vertices.id, b.indices.id)
 		b.boundVertex, b.boundIndex = b.vertices.id, b.indices.id
 	}
-	commandBytes := len(b.commands) * skinCommandStride
+	commandBytes := len(b.commands) * indexedDrawStride
 	gl.NamedBufferData(b.indirect, commandBytes, unsafe.Pointer(&b.commands[0]), gl.STREAM_DRAW)
 	removeGPUBytes(b.commandBytes)
 	b.commandBytes = uint64(commandBytes)
@@ -153,7 +162,7 @@ func (k *Skinner) DrawCrowdIndirect(s *Scene3D, b *SkinCrowd, groups []SkinGroup
 			end = b.runs[i+1].first
 		}
 		gl.Uniform1i(k.indirect.uCrowdDrawOffset, int32(run.first))
-		gl.MultiDrawElementsIndirect(gl.TRIANGLES, run.indexType, skinCommandOffset(run.first*skinCommandStride), int32(end-run.first), 0)
+		gl.MultiDrawElementsIndirect(gl.TRIANGLES, run.indexType, indexedDrawOffset(run.first*indexedDrawStride), int32(end-run.first), 0)
 		drawCalls++
 	}
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, 0)
@@ -167,12 +176,8 @@ func (b *SkinCrowd) Delete() {
 		gl.DeleteVertexArrays(1, &b.vao)
 		gl.DeleteBuffers(1, &b.indirect)
 	}
-	for _, buffer := range []*skinMeshBuffer{&b.vertices, &b.indices} {
-		if buffer.id != 0 {
-			gl.DeleteBuffers(1, &buffer.id)
-			removeGPUBytes(uint64(buffer.capacity))
-		}
-	}
+	b.vertices.delete()
+	b.indices.delete()
 	removeGPUBytes(b.commandBytes)
 	*b = SkinCrowd{}
 }

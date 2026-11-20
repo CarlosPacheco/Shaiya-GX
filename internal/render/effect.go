@@ -42,10 +42,7 @@ func (s *Scene3D) effectMaterial(t *Texture, src, dst uint32, repeat bool) {
 		gl.BindTextureUnit(0, t.ID)
 		return
 	}
-	if p.src != src || p.dst != dst {
-		gl.BlendFunc(src, dst)
-		p.src, p.dst = src, dst
-	}
+	s.effectBlend(src, dst)
 	if p.texture == t && p.repeat == repeat {
 		return
 	}
@@ -59,19 +56,42 @@ func (s *Scene3D) effectMaterial(t *Texture, src, dst uint32, repeat bool) {
 	p.texture, p.repeat = t, repeat
 }
 
+func (s *Scene3D) effectBlend(src, dst uint32) {
+	p := &s.effectPass
+	if p.src != src || p.dst != dst {
+		gl.BlendFunc(src, dst)
+		p.src, p.dst = src, dst
+	}
+}
+
 // DrawEffectBatch preserves particle order within one emitter while sharing
 // geometry, material and draw call; each instance has its own tint.
 func (s *Scene3D) DrawEffectBatch(m *Mesh, t *Texture, worlds []M4, colors [][4]float32, source, destination int32, clampTexture ...bool) {
+	s.drawEffectBatch(m, t, worlds, colors, source, destination, len(clampTexture) != 0 && clampTexture[0], false)
+}
+
+// DrawVisibleEffectBatch submits instances already filtered against this pass.
+func (s *Scene3D) DrawVisibleEffectBatch(m *Mesh, t *Texture, worlds []M4, colors [][4]float32, source, destination int32, clamp bool) {
+	if len(worlds) == 1 && len(colors) == 1 {
+		s.drawEffect(m, t, worlds[0], colors[0], source, destination, clamp, true)
+		return
+	}
+	s.drawEffectBatch(m, t, worlds, colors, source, destination, clamp, true)
+}
+
+func (s *Scene3D) drawEffectBatch(m *Mesh, t *Texture, worlds []M4, colors [][4]float32, source, destination int32, clamp, checked bool) {
 	src, dst, ok := EFTBlend(source, destination)
 	if !ok || t == nil || m == nil || m.Count == 0 || len(worlds) == 0 || len(worlds) != len(colors) {
 		return
 	}
-	worlds, colors = s.visibleEffectInstances(m, worlds, colors)
-	if len(worlds) == 0 {
-		return
+	if !checked {
+		worlds, colors = s.visibleEffectInstances(m, worlds, colors)
+		if len(worlds) == 0 {
+			return
+		}
 	}
-	repeat := len(clampTexture) == 0 || !clampTexture[0]
-	if s.queueEffect(m, t, worlds, colors, nil, 0, src, dst, repeat) {
+	repeat := !clamp
+	if s.queueEffect(m, t, worlds, colors, nil, nil, src, dst, repeat) {
 		return
 	}
 	s.flushEffectQueue()
@@ -154,13 +174,17 @@ func EFTBlend(source, destination int32) (uint32, uint32, bool) {
 // DrawEffect renders texture * vertex-equivalent tint, depth tested without
 // depth writes (0x55cb10, native_effect_ports.cpp and native_controller_state.cpp).
 func (s *Scene3D) DrawEffect(m *Mesh, t *Texture, world M4, color [4]float32, source, destination int32, clampTexture ...bool) {
+	s.drawEffect(m, t, world, color, source, destination, len(clampTexture) != 0 && clampTexture[0], false)
+}
+
+func (s *Scene3D) drawEffect(m *Mesh, t *Texture, world M4, color [4]float32, source, destination int32, clamp, checked bool) {
 	src, dst, ok := EFTBlend(source, destination)
-	if !ok || t == nil || s.meshOccluded(m, world) {
+	if !ok || t == nil || m == nil || m.Count == 0 || (!checked && s.meshOccluded(m, world)) {
 		return
 	}
-	repeat := len(clampTexture) == 0 || !clampTexture[0]
+	repeat := !clamp
 	if s.effectPass.active {
-		if m == nil || m.Count == 0 || s.queueEffect(m, t, []M4{world}, [][4]float32{color}, nil, 0, src, dst, repeat) {
+		if s.queueEffect(m, t, []M4{world}, [][4]float32{color}, nil, nil, src, dst, repeat) {
 			return
 		}
 	}

@@ -9,15 +9,15 @@ import (
 )
 
 type Texture struct {
-	Opaque    bool // proven full alpha coverage at every authored mip
-	bytes     uint64
-	ID        uint32
-	W, H      int
-	repeat    bool
-	skinViews [2]skinTextureView
+	Opaque        bool // proven full alpha coverage at every authored mip
+	bytes         uint64
+	ID            uint32
+	W, H          int
+	repeat        bool
+	bindlessViews [2]bindlessTextureView
 }
 
-type skinTextureView struct {
+type bindlessTextureView struct {
 	id     uint32
 	handle uint64
 }
@@ -42,12 +42,14 @@ func diffuseTexture(t *Texture) *Texture {
 
 // Only the view enters the immutable bindless state. The original can still
 // change wrapping for ordinary draws and both views share its texel storage.
-func (t *Texture) skinHandle() uint64 {
+func (t *Texture) bindlessHandle(repeat bool) uint64 {
 	index := 0
-	if t.repeat {
+	mode := int32(gl.CLAMP_TO_EDGE)
+	if repeat {
 		index = 1
+		mode = gl.REPEAT
 	}
-	v := &t.skinViews[index]
+	v := &t.bindlessViews[index]
 	if v.handle != 0 {
 		return v.handle
 	}
@@ -62,11 +64,13 @@ func (t *Texture) skinHandle() uint64 {
 	gl.GetTextureLevelParameteriv(t.ID, 0, gl.TEXTURE_INTERNAL_FORMAT, &format)
 	gl.GenTextures(1, &v.id)
 	gl.TextureView(v.id, gl.TEXTURE_2D, t.ID, uint32(format), 0, uint32(levels), 0, 1)
-	for _, parameter := range [...]uint32{gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER, gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T, gl.TEXTURE_MAX_LEVEL} {
+	for _, parameter := range [...]uint32{gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER, gl.TEXTURE_MAX_LEVEL} {
 		var value int32
 		gl.GetTextureParameteriv(t.ID, parameter, &value)
 		gl.TextureParameteri(v.id, parameter, value)
 	}
+	gl.TextureParameteri(v.id, gl.TEXTURE_WRAP_S, mode)
+	gl.TextureParameteri(v.id, gl.TEXTURE_WRAP_T, mode)
 	v.handle = gl.GetTextureHandleARB(v.id)
 	if v.handle != 0 {
 		gl.MakeTextureHandleResidentARB(v.handle)
@@ -77,7 +81,7 @@ func (t *Texture) skinHandle() uint64 {
 	if v.id != 0 {
 		gl.DeleteTextures(1, &v.id)
 	}
-	*v = skinTextureView{}
+	*v = bindlessTextureView{}
 	return 0
 }
 
@@ -186,12 +190,12 @@ func (t *Texture) Delete() {
 	if t == nil {
 		return
 	}
-	for i := range t.skinViews {
-		v := &t.skinViews[i]
+	for i := range t.bindlessViews {
+		v := &t.bindlessViews[i]
 		if v.handle != 0 {
 			gl.MakeTextureHandleNonResidentARB(v.handle)
 			gl.DeleteTextures(1, &v.id)
-			*v = skinTextureView{}
+			*v = bindlessTextureView{}
 		}
 	}
 	gl.DeleteTextures(1, &t.ID)

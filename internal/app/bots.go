@@ -23,9 +23,7 @@ func (a *App) botsCommand(text string) bool {
 		return true
 	}
 	if len(fields) == 2 && strings.EqualFold(fields[1], "off") {
-		if a.wv != nil {
-			a.wv.clearBots()
-		}
+		a.clearBots()
 		a.questMessage("Local PvP bots removed.")
 		return true
 	}
@@ -36,7 +34,7 @@ func (a *App) botsCommand(text string) bool {
 				a.questMessage("Enter a map to start local PvP bots.")
 				return true
 			}
-			a.wv.clearBots()
+			a.clearBots()
 			a.wv.bots = bots.New(a.arc, a.wv.world, a.wv.pos, a.wv.facing, count, rand.Uint64())
 			a.questMessage(fmt.Sprintf("Loading %d local PvP bots.", count))
 			return true
@@ -46,10 +44,11 @@ func (a *App) botsCommand(text string) bool {
 	return true
 }
 
-func (v *worldView) clearBots() {
-	if v.bots != nil {
+func (a *App) clearBots() {
+	if v := a.wv; v != nil && v.bots != nil {
 		v.bots.Close()
 		v.bots = nil
+		a.scene3d.ReleasePackedEffects()
 	}
 }
 
@@ -59,7 +58,7 @@ func (a *App) updateBots() {
 		return
 	}
 	if a.state == nil || !a.state.Self.IsGM {
-		v.clearBots()
+		a.clearBots()
 		return
 	}
 	if v.bots.Update(float32(a.frameDT), a.clientSettings().SkillEffects) {

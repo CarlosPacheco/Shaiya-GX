@@ -6,7 +6,7 @@ type queuedEffect struct {
 	mesh       *Mesh
 	texture    *Texture
 	first, end int
-	keys       uint32
+	geometry   *EffectGeometry
 	src, dst   uint32
 	repeat     bool
 }
@@ -20,9 +20,9 @@ type effectQueue struct {
 
 // Queue an ordered run. The shared upload is bounded even in a long
 // transparent pass. Individual draw ranges retain their original material.
-func (s *Scene3D) queueEffect(m *Mesh, texture *Texture, worlds []M4, colors [][4]float32, poses []EffectPose, keys, src, dst uint32, repeat bool) bool {
+func (s *Scene3D) queueEffect(m *Mesh, texture *Texture, worlds []M4, colors [][4]float32, poses []EffectPose, geometry *EffectGeometry, src, dst uint32, repeat bool) bool {
 	const maxInstances = 16384
-	if !s.effectPass.active || m == nil || len(worlds) > maxInstances {
+	if !s.effectPass.active || m == nil || m == s.effectStream || len(worlds) > maxInstances {
 		return false
 	}
 	q := &s.effectQueue
@@ -41,12 +41,12 @@ func (s *Scene3D) queueEffect(m *Mesh, texture *Texture, worlds []M4, colors [][
 	}
 	if len(q.draws) > 0 {
 		previous := &q.draws[len(q.draws)-1]
-		if previous.mesh == m && previous.texture == texture && previous.keys == keys && previous.src == src && previous.dst == dst && previous.repeat == repeat {
+		if previous.mesh == m && previous.texture == texture && previous.geometry == geometry && previous.src == src && previous.dst == dst && previous.repeat == repeat {
 			previous.end = len(q.worlds)
 			return true
 		}
 	}
-	q.draws = append(q.draws, queuedEffect{m, texture, first, len(q.worlds), keys, src, dst, repeat})
+	q.draws = append(q.draws, queuedEffect{m, texture, first, len(q.worlds), geometry, src, dst, repeat})
 	return true
 }
 
@@ -55,6 +55,14 @@ func (s *Scene3D) flushEffectQueue() {
 	if len(q.draws) == 0 {
 		return
 	}
+	if !s.drawCompactEffects(q) {
+		s.drawOriginalEffectQueue(q)
+	}
+	clear(q.draws)
+	q.draws, q.worlds, q.colors, q.poses = q.draws[:0], q.worlds[:0], q.colors[:0], q.poses[:0]
+}
+
+func (s *Scene3D) drawOriginalEffectQueue(q *effectQueue) {
 	poseOffset := s.uploadInstanceData(q.worlds, q.colors, q.poses)
 	colorOffset := poseOffset - int32(len(q.colors))
 	gl.Uniform1i(s.uInstanced, 1)
@@ -62,15 +70,19 @@ func (s *Scene3D) flushEffectQueue() {
 	var boundKeys uint32
 	for _, draw := range q.draws {
 		gl.Uniform1i(s.uInstanceColorOffset, colorOffset+int32(draw.first))
-		if draw.keys != 0 {
-			if draw.keys != boundKeys {
-				gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 5, draw.keys)
+		var keys uint32
+		if draw.geometry != nil {
+			keys = draw.geometry.keys
+		}
+		if keys != 0 {
+			if keys != boundKeys {
+				gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 5, keys)
 			}
 			gl.Uniform1i(s.uEffectPoseOffset, poseOffset+int32(draw.first))
 		} else if boundKeys != 0 {
 			gl.Uniform1i(s.uEffectPoseOffset, 0)
 		}
-		boundKeys = draw.keys
+		boundKeys = keys
 		s.effectMaterial(draw.texture, draw.src, draw.dst, draw.repeat)
 		s.bindInstances(draw.mesh)
 		gl.DrawElementsInstancedBaseInstance(gl.TRIANGLES, draw.mesh.Count, draw.mesh.indexType, nil, int32(draw.end-draw.first), uint32(draw.first))
@@ -80,6 +92,4 @@ func (s *Scene3D) flushEffectQueue() {
 		gl.Uniform1i(s.uEffectPoseOffset, 0)
 	}
 	gl.Uniform1i(s.uInstanceColorOffset, 0)
-	clear(q.draws)
-	q.draws, q.worlds, q.colors, q.poses = q.draws[:0], q.worlds[:0], q.colors[:0], q.poses[:0]
 }

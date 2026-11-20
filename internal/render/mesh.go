@@ -27,6 +27,7 @@ type Mesh struct {
 	indexType        uint32
 	indexBytes       uintptr
 	vertexCapacity   int
+	immutable        bool
 }
 
 func NewMesh(v []Vertex, idx []uint32) *Mesh {
@@ -41,6 +42,7 @@ func NewMesh(v []Vertex, idx []uint32) *Mesh {
 	m.indexType, m.indexBytes = uploadMeshIndices(m.ebo, idx)
 	m.bindLayout()
 	m.bytes = uint64(len(v)*vertexSize + len(idx)*int(m.indexBytes))
+	m.immutable = true
 	addGPUBytes(m.bytes)
 	return m
 }
@@ -74,16 +76,20 @@ func (m *Mesh) UpdateVertices(v []Vertex) {
 
 func (m *Mesh) bindLayout() {
 	gl.CreateVertexArrays(1, &m.vao)
-	gl.VertexArrayVertexBuffer(m.vao, 0, m.vbo, 0, int32(vertexSize))
-	gl.VertexArrayElementBuffer(m.vao, m.ebo)
+	bindMeshLayout(m.vao, m.vbo, m.ebo)
+}
+
+func bindMeshLayout(vao, vbo, ebo uint32) {
+	gl.VertexArrayVertexBuffer(vao, 0, vbo, 0, int32(vertexSize))
+	gl.VertexArrayElementBuffer(vao, ebo)
 	attrs := []struct {
 		n   int32
 		off uint32
 	}{{3, 0}, {3, 12}, {2, 24}, {2, 32}}
 	for i, a := range attrs {
-		gl.EnableVertexArrayAttrib(m.vao, uint32(i))
-		gl.VertexArrayAttribFormat(m.vao, uint32(i), a.n, gl.FLOAT, false, a.off)
-		gl.VertexArrayAttribBinding(m.vao, uint32(i), 0)
+		gl.EnableVertexArrayAttrib(vao, uint32(i))
+		gl.VertexArrayAttribFormat(vao, uint32(i), a.n, gl.FLOAT, false, a.off)
+		gl.VertexArrayAttribBinding(vao, uint32(i), 0)
 	}
 }
 

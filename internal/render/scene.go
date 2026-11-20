@@ -214,6 +214,7 @@ type Scene3D struct {
 	effectStream                                              *Mesh
 	effectPass                                                effectPassState
 	effectQueue                                               effectQueue
+	effectPipeline                                            effectPipeline
 	prog                                                      uint32
 	uWorld, uViewProj, uView, uLight, uAmb, uLit, uMode, uRef int32
 	uFogColor, uFogRange, uTile, uTint, uUVOff                int32

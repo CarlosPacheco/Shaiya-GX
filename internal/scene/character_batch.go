@@ -212,15 +212,15 @@ func (b *CharacterBatch) add(s *render.Scene3D, c *Character, instance render.Sk
 }
 
 func (b *CharacterBatch) flush(k *render.Skinner, s *render.Scene3D) {
-	view := s.View
+	view, occlusion := s.View, s.ActiveOcclusion()
 	parallelEffects(len(b.weaponFX), func(i int) {
 		job := b.weaponFX[i]
 		if enchant := job.attachment.enchant; enchant != nil {
-			job.actor.prepareWeaponEnchant(view, enchant, job.world)
+			job.actor.prepareWeaponEnchant(view, enchant, job.world, occlusion)
 		}
 		if glow := job.attachment.glow; glow != nil {
 			job.actor.updateWeaponGlow(job.attachment, job.world)
-			glow.prepareDraw(view)
+			glow.prepareDraw(view, occlusion)
 		}
 	})
 	for i := range b.groups {

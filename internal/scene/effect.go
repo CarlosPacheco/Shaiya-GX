@@ -448,11 +448,11 @@ type effectDraw struct {
 }
 
 func (x *Effect) drawInPass(s *render.Scene3D) {
-	x.prepareDraw(s.View)
+	x.prepareDraw(s.View, s.ActiveOcclusion())
 	x.submitDraw(s)
 }
 
-func (x *Effect) prepareDraw(view render.M4) {
+func (x *Effect) prepareDraw(view render.M4, occlusion *render.TerrainOcclusion) {
 	x.batchWorld, x.batchColor = x.batchWorld[:0], x.batchColor[:0]
 	x.batchFrames, x.batchPoses = x.batchFrames[:0], x.batchPoses[:0]
 	clear(x.draws)
@@ -513,6 +513,13 @@ func (x *Effect) prepareDraw(view render.M4) {
 			x.batchColor = append(x.batchColor, color)
 		}
 		draw.end = len(x.batchWorld)
+		if e.geometry == nil && occlusion != nil {
+			draw.end = draw.start + occlusion.CullEffectInstances(draw.mesh, x.batchWorld[draw.start:], x.batchColor[draw.start:])
+			x.batchWorld, x.batchColor = x.batchWorld[:draw.end], x.batchColor[:draw.end]
+			if draw.end == draw.start {
+				continue
+			}
+		}
 		x.draws = append(x.draws, draw)
 	}
 }
@@ -537,11 +544,7 @@ func (x *Effect) submitDraw(s *render.Scene3D) {
 			}
 			continue
 		}
-		if len(worlds) == 1 {
-			s.DrawEffect(draw.mesh, draw.texture, worlds[0], colors[0], draw.source, draw.destination, draw.clamp)
-		} else {
-			s.DrawEffectBatch(draw.mesh, draw.texture, worlds, colors, draw.source, draw.destination, draw.clamp)
-		}
+		s.DrawVisibleEffectBatch(draw.mesh, draw.texture, worlds, colors, draw.source, draw.destination, draw.clamp)
 	}
 }
 

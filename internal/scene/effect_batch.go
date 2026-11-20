@@ -27,8 +27,8 @@ func DrawEffects(s *render.Scene3D, effects []*Effect) {
 	if len(effects) == 0 {
 		return
 	}
-	view := s.View
-	parallelEffects(len(effects), func(i int) { effects[i].prepareDraw(view) })
+	view, occlusion := s.View, s.ActiveOcclusion()
+	parallelEffects(len(effects), func(i int) { effects[i].prepareDraw(view, occlusion) })
 	s.BeginEffects()
 	for _, effect := range effects {
 		effect.submitDraw(s)

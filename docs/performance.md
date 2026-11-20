@@ -713,3 +713,37 @@ CPU sampling with mixed blend modes and a clip plane.
 Separate 900-frame profiles collected 61.28 → 32.98 CPU seconds. One 300-bot
 effects-on comparison measured 31.578 → 12.529 ms. The map-15 dungeon control
 measured 11.792 → 8.236 ms. The measurements exclude display presentation.
+
+## Ordered multi-draw for combat effects
+
+Consecutive effect draws with the same blend factors and index format share
+an indirect OpenGL submission. A bounded scene cache packs immutable mesh
+topology and the original 3DE position and UV keys. Each command selects its
+own geometry, texture and wrap mode. The GL thread submits commands in their
+original order and keeps depth testing active with depth writes disabled.
+Drivers without bindless textures use the compact instanced path. Animated
+geometry beyond the resident cache can still use CPU sampling, and small
+passes use ordinary instancing.
+
+Effects are unlit and unfogged. The compact shader needs only a projected
+matrix, tint and 3DE key selection, reducing the main-camera instance upload
+from 224 to 96 bytes. The clipped reflection pass also supplies the original
+world matrix. Workers use the current camera's read-only terrain mask to
+discard fully hidden groups of billboard particles and compact the surviving
+placements in order. Simulation and particle lifetimes continue normally.
+
+Three interleaved 180-frame pairs per case on Ryzen 7 5700G and RTX 3050,
+at 1280×720 in a hidden window on a shared desktop with effects enabled.
+
+| Local PvP fixture | Whole loop ms/frame before → after | Submission p99 ms before → after | GL calls/frame before → after |
+|---|---:|---:|---:|
+| 300 bots | 12.428 → 7.764 | 14.562 → 9.500 | 1,437 → 624 |
+| 600 bots | 17.753 → 10.791 | 19.947 → 12.255 | 2,167 → 851 |
+
+A single 600-bot run per intermediate stage measured 16.968 ms with compact
+uploads and 14.264 ms with worker-side occlusion added. Single control pairs
+measured 7.342 → 7.237 ms with 600 bots and skill effects disabled, and
+8.256 → 4.537 ms in the map-15 dungeon. Renderer-owned memory for the 600-bot
+effects run rose by about 4.8 MiB. The controlled pixel comparison covers mixed
+textures, wrap modes, 3DE keyframes, alpha and additive blending, opaque depth,
+reverse depth, temporal jitter and a reflection clip plane.

@@ -87,7 +87,7 @@ func (s *Scene3D) DrawEffectGeometry(g *EffectGeometry, t *Texture, worlds []M4,
 	if !ok || t == nil || len(worlds) == 0 || len(poses) != len(worlds) || len(colors) != len(worlds) {
 		return
 	}
-	if s.queueEffect(g.mesh, t, worlds, colors, poses, g.keys, src, dst, true) {
+	if s.queueEffect(g.mesh, t, worlds, colors, poses, g, src, dst, true) {
 		return
 	}
 	s.flushEffectQueue()

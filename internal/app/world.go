@@ -1002,11 +1002,12 @@ func (a *App) releaseWorld() {
 		}
 	}
 	if a.wv != nil {
-		a.wv.clearBots()
+		a.clearBots()
 		a.wv.crowdBatch.Delete()
 		a.wv.shadow.Delete()
 		a.wv.waterReflection.Delete()
 		a.scene3d.ReleaseWaterBackground()
+		a.scene3d.ReleasePackedEffects()
 		if a.wv.mapView.image != nil {
 			a.wv.mapView.image.Delete()
 		}
