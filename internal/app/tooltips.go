@@ -171,12 +171,16 @@ func (a *App) drawSharedTooltipAt(w, h int, position *[2]int) {
 		f.DrawScaled(a.sprites, run.text, float32(left)+float32(run.x)*scale, float32(top)+float32(run.y)*scale, scale, run.color, 185)
 	}
 	if a.tooltipItem {
-		for i, skill := range a.tooltipExtra.effects {
-			if file, uv, ok := ui.SkillIcon(skill.Icon); ok {
-				if tex := a.assets.Texture("interface/" + file); tex != nil {
-					x, y := layout.effectIcons[i][0], layout.effectIcons[i][1]
-					a.sprites.Draw(tex, float32(left)+float32(x)*scale, float32(top)+float32(y)*scale, 18*scale, 18*scale, uv.U0, uv.V0, uv.U1, uv.V1, white)
+		i := 0
+		for _, row := range [2][]sdata.Skill{a.tooltipExtra.effects, a.tooltipExtra.immunities} {
+			for _, skill := range row {
+				if file, uv, ok := ui.SkillIcon(skill.Icon); ok {
+					if tex := a.assets.Texture("interface/" + file); tex != nil {
+						x, y := layout.effectIcons[i][0], layout.effectIcons[i][1]
+						a.sprites.Draw(tex, float32(left)+float32(x)*scale, float32(top)+float32(y)*scale, 18*scale, 18*scale, uv.U0, uv.V0, uv.U1, uv.V1, white)
+					}
 				}
+				i++
 			}
 		}
 	}

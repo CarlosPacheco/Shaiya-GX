@@ -2006,20 +2006,21 @@ type grantedItem struct {
 
 [server/internal/world/itemoption.go](../../server/internal/world/itemoption.go#L1)
 
-Direct GX dependencies: `server/internal/db`.
+Direct GX dependencies: `internal/itemtype`, `server/internal/db`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`gemSkillLevel`](../../server/internal/world/itemoption.go#L25)<br>`const gemSkillLevel = db.NPCSkillWireLevel` | See the source definition and the subsystem ownership contract. |
-| [`gemArmourOrder`](../../server/internal/world/itemoption.go#L28)<br>`var gemArmourOrder` | See the source definition and the subsystem ownership contract. |
-| [`gemSkillsOf`](../../server/internal/world/itemoption.go#L30)<br>`func gemSkillsOf(it *db.Item) []*db.SkillDef` | See the source definition and the subsystem ownership contract. |
-| [`weaponGemSkills`](../../server/internal/world/itemoption.go#L51)<br>`func weaponGemSkills(items []db.Item) []*db.SkillDef` | weaponGemSkills is AttackItemOption's weapon scan. |
-| [`armourGemSkills`](../../server/internal/world/itemoption.go#L59)<br>`func armourGemSkills(items []db.Item) []*db.SkillDef` | armourGemSkills is BeAttackedItemOption's armour scan. |
-| [`gemCharSkill`](../../server/internal/world/itemoption.go#L71)<br>`func gemCharSkill(sk *db.SkillDef) db.CharacterSkill` | See the source definition and the subsystem ownership contract. |
-| [`gemCastsOnUser`](../../server/internal/world/itemoption.go#L76)<br>`func (s *Session) gemCastsOnUser(p *ConnectedPlayer, skills []*db.SkillDef)` | gemCastsOnUser queues this user's gem skills on p. |
-| [`gemCastsOnMob`](../../server/internal/world/itemoption.go#L92)<br>`func (s *Session) gemCastsOnMob(mobID uint32, skills []*db.SkillDef)` | gemCastsOnMob casts this user's gem skills on a mob. |
-| [`itemOptionsAfterUserHit`](../../server/internal/world/itemoption.go#L108)<br>`func (s *Session) itemOptionsAfterUserHit(h pendingUserHit)` | itemOptionsAfterUserHit runs both sides for a landed user-on-user hit, in the target's (this) session. |
-| [`applyGemAttack`](../../server/internal/world/itemoption.go#L121)<br>`func (s *Session) applyGemAttack(target uint32)` | applyGemAttack is AttackItemOption for this (attacking) user on target. |
+| [`gemSkillLevel`](../../server/internal/world/itemoption.go#L26)<br>`const gemSkillLevel = db.NPCSkillWireLevel` | See the source definition and the subsystem ownership contract. |
+| [`gemArmourOrder`](../../server/internal/world/itemoption.go#L29)<br>`var gemArmourOrder` | See the source definition and the subsystem ownership contract. |
+| [`gemSkillsOf`](../../server/internal/world/itemoption.go#L31)<br>`func gemSkillsOf(it *db.Item) []*db.SkillDef` | See the source definition and the subsystem ownership contract. |
+| [`immuneToLapisSkill`](../../server/internal/world/itemoption.go#L51)<br>`func (s *Session) immuneToLapisSkill(skill *db.SkillDef) bool` | immuneToLapisSkill uses the NPC skill namespace and exact ID. Equipped gems remain effective across gaps in armor slots. |
+| [`weaponGemSkills`](../../server/internal/world/itemoption.go#L72)<br>`func weaponGemSkills(items []db.Item) []*db.SkillDef` | weaponGemSkills is AttackItemOption's weapon scan. |
+| [`armourGemSkills`](../../server/internal/world/itemoption.go#L80)<br>`func armourGemSkills(items []db.Item) []*db.SkillDef` | armourGemSkills is BeAttackedItemOption's armour scan. |
+| [`gemCharSkill`](../../server/internal/world/itemoption.go#L92)<br>`func gemCharSkill(sk *db.SkillDef) db.CharacterSkill` | See the source definition and the subsystem ownership contract. |
+| [`gemCastsOnUser`](../../server/internal/world/itemoption.go#L97)<br>`func (s *Session) gemCastsOnUser(p *ConnectedPlayer, skills []*db.SkillDef)` | gemCastsOnUser queues this user's gem skills on p. |
+| [`gemCastsOnMob`](../../server/internal/world/itemoption.go#L113)<br>`func (s *Session) gemCastsOnMob(mobID uint32, skills []*db.SkillDef)` | gemCastsOnMob casts this user's gem skills on a mob. |
+| [`itemOptionsAfterUserHit`](../../server/internal/world/itemoption.go#L129)<br>`func (s *Session) itemOptionsAfterUserHit(h pendingUserHit)` | itemOptionsAfterUserHit runs both sides for a landed user-on-user hit, in the target's (this) session. |
+| [`applyGemAttack`](../../server/internal/world/itemoption.go#L142)<br>`func (s *Session) applyGemAttack(target uint32)` | applyGemAttack is AttackItemOption for this (attacking) user on target. |
 
 ### killcount.go
 

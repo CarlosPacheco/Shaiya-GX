@@ -15,3 +15,9 @@ func Real(t uint8) uint8 {
 	}
 	return 0
 }
+
+// IsAntiDebuffLapis identifies the fifteen defensive counterparts in the
+// native lapis catalog. Their Special field may point to any NPC skill ID.
+func IsAntiDebuffLapis(t, id uint8) bool {
+	return t == 30 && id >= 111 && id <= 139 && id%2 == 1
+}

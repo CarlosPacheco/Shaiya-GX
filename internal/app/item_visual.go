@@ -186,7 +186,8 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 	a.tooltipItem = true
 	a.tooltipDescription = description
 	rt := itemtype.Real(def.Type)
-	a.tooltipExtra = tooltipExtras{forgeInfo: itemForgeInfo(def), effects: a.itemEffects(def, instance), effectChance: def.Type == 30 || rt >= 1 && rt <= 15}
+	effects, immunities := a.itemEffects(def, instance)
+	a.tooltipExtra = tooltipExtras{forgeInfo: itemForgeInfo(def), effects: effects, immunities: immunities, effectChance: def.Type == 30 || rt >= 1 && rt <= 15}
 	if rt := itemtype.Real(def.Type); rt >= 1 && rt <= 25 && def.Server > 0 && def.RequiredStats[4] > 0 {
 		a.tooltipExtra.maxOJ = min(def.RequiredStats[4], 99)
 		pool := uint8(9)
@@ -226,20 +227,28 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 var nativeEnhancementDescription = regexp.MustCompile(`(?i)(?:\{c[0-9]+\})?\[Enhancement:[^\]]*\](?:\{/c\})?`)
 
 // itemEffects resolves only integrated attack/debuff lapis in the NPC namespace.
-func (a *App) itemEffects(def *sdata.Item, instance *proto.InventoryItem) []sdata.Skill {
+func (a *App) itemEffects(def *sdata.Item, instance *proto.InventoryItem) (effects, immunities []sdata.Skill) {
 	if def == nil {
-		return nil
+		return nil, nil
 	}
-	var out []sdata.Skill
-	seen := map[uint16]bool{}
+	seenEffects, seenImmunities := map[uint16]bool{}, map[uint16]bool{}
 	add := func(gem *sdata.Item, defensive bool) {
-		if gem == nil || gem.Special == 0 || gem.Special == 16 || defensive && gem.Special <= 15 {
+		if gem == nil || gem.Special == 0 || gem.Special == 16 {
 			return
 		}
 		id := uint16(gem.Special)
-		if sk, ok := a.skillDefinition(id, 100); ok && (sk.Effect == 1 || sk.Effect == 3) && !seen[id] {
-			out = append(out, sk)
-			seen[id] = true
+		sk, ok := a.skillDefinition(id, 100)
+		if !ok || (sk.Effect != 1 && sk.Effect != 3) {
+			return
+		}
+		if itemtype.IsAntiDebuffLapis(gem.Type, gem.TypeID) {
+			if !seenImmunities[id] {
+				immunities = append(immunities, sk)
+				seenImmunities[id] = true
+			}
+		} else if (!defensive || gem.Special > 15) && !seenEffects[id] {
+			effects = append(effects, sk)
+			seenEffects[id] = true
 		}
 	}
 	rt := itemtype.Real(def.Type)
@@ -254,5 +263,5 @@ func (a *App) itemEffects(def *sdata.Item, instance *proto.InventoryItem) []sdat
 			}
 		}
 	}
-	return out
+	return effects, immunities
 }

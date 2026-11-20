@@ -14,6 +14,7 @@ type tooltipExtras struct {
 	forgeInfo    string
 	material     *sdata.Item
 	effects      []sdata.Skill
+	immunities   []sdata.Skill
 	effectChance bool
 }
 
@@ -123,14 +124,17 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 	}
 	if item && len(extras) > 0 {
 		e := extras[0]
-		if len(e.effects) > 0 {
+		addEffects := func(label string, skills []sdata.Skill, showChance bool) {
+			if len(skills) == 0 {
+				return
+			}
 			y += 5
-			block("Effects", [4]float32{.75, .75, .75, 1}, y+3, false)
-			x := 16 + f.Width("Effects")
-			for _, skill := range e.effects {
+			block(label, [4]float32{.75, .75, .75, 1}, y+3, false)
+			x := 16 + f.Width(label)
+			for _, skill := range skills {
 				chance := ""
 				width := 18
-				if e.effectChance && skill.Effect == 3 && skill.SuccessType >= 1 && skill.SuccessType <= 3 {
+				if showChance && skill.Effect == 3 && skill.SuccessType >= 1 && skill.SuccessType <= 3 {
 					chance = fmt.Sprintf("(%d%%)", skill.SuccessValue)
 					width = 22 + f.Width(chance)
 				}
@@ -146,6 +150,8 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 			}
 			y += 22
 		}
+		addEffects("Effects", e.effects, e.effectChance)
+		addEffects("Immune to", e.immunities, false)
 		if e.maxOJ > 0 {
 			y += 5
 			_, n := block(fmt.Sprintf("Max OJ %d/%d (%d stats)", e.maxOJ, e.maxOJ*100, e.maxOJStats), [4]float32{.6, 1, .6, 1}, y, false)

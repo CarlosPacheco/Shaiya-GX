@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/itemtype"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
 
@@ -34,9 +35,7 @@ func gemSkillsOf(it *db.Item) []*db.SkillDef {
 		if d == nil || d.Special == 0 || d.Special == specialRecoverGem {
 			continue
 		}
-		// Low-Special armor lapis are defensive state-resistance stones,
-		// not reactive attack procs. That mechanic remains unsupported.
-		if it.Slot != weaponSlot && d.Special <= 15 {
+		if itemtype.IsAntiDebuffLapis(d.Type, d.TypeID) || it.Slot != weaponSlot && d.Special <= 15 {
 			continue
 		}
 		if sk := defs.NPCSkill(uint16(d.Special)); sk != nil &&
@@ -45,6 +44,28 @@ func gemSkillsOf(it *db.Item) []*db.SkillDef {
 		}
 	}
 	return out
+}
+
+// immuneToLapisSkill uses the NPC skill namespace and exact ID. Equipped
+// gems remain effective across gaps in armor slots.
+func (s *Session) immuneToLapisSkill(skill *db.SkillDef) bool {
+	if skill.SkillLevel != gemSkillLevel || skill.SkillID == 0 || skill.SkillID == specialRecoverGem {
+		return false
+	}
+	defs := db.MustDefs()
+	for i := range s.items {
+		item := &s.items[i]
+		family := realType(item.Type)
+		if item.Bag != 0 || item.Count == 0 || family < 1 || family > 25 {
+			continue
+		}
+		for _, gem := range activeLapis(item, defs.Item(item.Type, item.TypeID)) {
+			if gem != nil && itemtype.IsAntiDebuffLapis(gem.Type, gem.TypeID) && uint16(gem.Special) == skill.SkillID {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // weaponGemSkills is AttackItemOption's weapon scan.

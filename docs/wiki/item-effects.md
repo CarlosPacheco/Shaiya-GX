@@ -27,7 +27,7 @@ loss or reduce equipment stats because of old quality values.
 Supported attack/debuff lapis show an **Effects** row in silver with the called
 NpcSkill icon. Equipment shows the distinct skills from its active linked lapis;
 duplicate skills share one icon. Icons resolve the independent NPC definitions,
-never a same-numbered player skill. Recovery and unsupported resistance lapis
+never a same-numbered player skill. Recovery lapis
 do not add an effect icon.
 
 ## Permanent equipment bonuses
@@ -100,8 +100,12 @@ HP damage wakes sleep. NPC and player effects with the same ID can coexist.
 Periodic damage debits the relevant pools on players and mobs.
 
 Endure's durability bonus remains unused because GX has no durability loss.
-Anti-Darkness and the old low-Special armor state-resistance lapis remain
-unsupported and do not counter-cast offensive skills.
+The 15 catalog Anti-Lapis use their Special value as the exact NpcSkill ID
+they block while equipped. They block every hit from that NPC skill. Other
+IDs still resolve normally, including skills with the same StateType and
+player spells with the same numeric ID. For example, Anti-Sleep blocks the
+Sleep Lapis proc and leaves Hypnosis eligible to hit. Lapis and equipment
+tooltips list the matching skill icons in a separate **Immune to** row.
 
 After a landed hit, current trigger routing is:
 

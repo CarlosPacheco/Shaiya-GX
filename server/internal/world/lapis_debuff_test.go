@@ -204,3 +204,32 @@ func TestSilenceBlocksHealingAndPreparedCastAndPreservesPlayerNamespace(t *testi
 		t.Fatal("NPC debuff replaced/refused same-numbered player buff")
 	}
 }
+
+func TestAntiDebuffLapisBlocksOnlyItsNPCSkillWhileEquipped(t *testing.T) {
+	s, defs := lapisSession(t)
+	for gemID := uint8(111); gemID <= 139; gemID += 2 {
+		gem := defs.Item(30, gemID)
+		skill := defs.NPCSkill(uint16(gem.Special))
+		if skill == nil {
+			t.Fatalf("Anti-Lapis %d points to missing NpcSkill %d", gemID, gem.Special)
+		}
+		s.items[0] = db.Item{Bag: 0, Slot: 3, Count: 1, Type: 34, TypeID: 1, Gems: [6]uint8{gemID}}
+		if !s.immuneToLapisSkill(skill) || len(gemSkillsOf(&s.items[0])) != 0 {
+			t.Fatalf("Anti-Lapis %d does not block its skill passively", gemID)
+		}
+		other := *skill
+		other.SkillID += 100
+		if s.immuneToLapisSkill(&other) {
+			t.Fatal("another skill with the same state was blocked")
+		}
+		other = *skill
+		other.SkillLevel = 1
+		if s.immuneToLapisSkill(&other) {
+			t.Fatal("a player spell with the same ID was blocked")
+		}
+		s.items[0].Bag = 1
+		if s.immuneToLapisSkill(skill) {
+			t.Fatal("a bagged Anti-Lapis blocked a skill")
+		}
+	}
+}

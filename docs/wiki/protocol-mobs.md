@@ -700,7 +700,7 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 		drain := first && sk.TypeDetail == detailDrain
 		var damage [3]int32
 		result := uint8(attackSuccessNormal)
-		if s.blocksAttack(int(sk.Kind)) || s.blocksStatusSkill(sk) || !mobSkillHits(mc, sk, stats) {
+		if s.blocksAttack(int(sk.Kind)) || s.immuneToLapisSkill(sk) || s.blocksStatusSkill(sk) || !mobSkillHits(mc, sk, stats) {
 			result = attackResultMiss
 		} else {
 			duelHitBy(s.player, 0)
