@@ -117,6 +117,8 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x0711` | [WarehouseItemList](protocol-services.md#opcode-0711) | — | yes | yes |
 | `0x0801` | [GemAdd](protocol-services.md#opcode-0801) | yes | yes | yes |
 | `0x0802` | [GemRemove](protocol-services.md#opcode-0802) | yes | yes | yes |
+| `0x0803` | [CloakAdd](protocol-services.md#opcode-0803) | yes | yes | yes |
+| `0x0804` | [CloakRemove](protocol-services.md#opcode-0804) | yes | yes | yes |
 | `0x0805` | [EnchantAdd](protocol-services.md#opcode-0805) | yes | yes | yes |
 | `0x0806` | [ItemCompose](protocol-services.md#opcode-0806) | yes | yes | yes |
 | `0x0809` | [GemAddPossibility](protocol-services.md#opcode-0809) | — | — | — |
@@ -332,6 +334,6 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0xF501` | [GmCommandError](protocol-chat.md#opcode-f501) | — | — | — |
 | `0xF702` | [GmCommandGetItem](protocol-chat.md#opcode-f702) | — | — | — |
 
-Inventory: **321 numeric opcodes**, **530 typed declarations**, **15 families**.
+Inventory: **323 numeric opcodes**, **534 typed declarations**, **15 families**.
 
 Regenerate with `python3 tools/generate_server_reference.py`; verify freshness with `--check`. The generator parses source for both operating systems and tests are excluded from implementation evidence. Source links track main; use Git history when comparing older binaries.

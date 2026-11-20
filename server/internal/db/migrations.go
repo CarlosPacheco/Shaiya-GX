@@ -178,6 +178,19 @@ var migrations = []migration{
 		DELETE FROM PS_GameData_CharApplySkills WHERE SkillLevel<>100 AND SkillID IN (77,107,127,234,236,253,254);
 		DELETE FROM PS_GameDefs_Skills WHERE SkillID IN (234,236,253,254);
 	`},
+	{32, "retire_obsolete_items_and_preserve_reset_cooldowns", `
+		CREATE TABLE IF NOT EXISTS GX_ResetSkillCooldowns (
+			CharID INTEGER NOT NULL, SkillID INTEGER NOT NULL, ExpiresAt INTEGER NOT NULL,
+			PRIMARY KEY(CharID, SkillID)
+		) WITHOUT ROWID;
+		DELETE FROM PS_GameDefs_Items WHERE ItemID IN (30071,30072,30073,30074,30075,30076,30077,100041,100064,100066,100069,100075,100077,100139,100174);
+		WITH retired(ItemID) AS (VALUES (30071),(30072),(30073),(30074),(30075),(30076),(30077),(100041),(100064),(100066),(100069),(100075),(100077),(100139),(100174))
+		DELETE FROM PS_GameDefs_ProductList
+		WHERE EXISTS (SELECT 1 FROM retired WHERE retired.ItemID IN (
+			ItemID1,ItemID2,ItemID3,ItemID4,ItemID5,ItemID6,ItemID7,ItemID8,ItemID9,ItemID10,ItemID11,ItemID12,
+			ItemID13,ItemID14,ItemID15,ItemID16,ItemID17,ItemID18,ItemID19,ItemID20,ItemID21,ItemID22,ItemID23,ItemID24
+		));
+	`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

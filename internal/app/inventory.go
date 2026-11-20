@@ -218,7 +218,7 @@ func (a *App) useInventoryItem(key [2]uint8) {
 		}
 		return
 	}
-	if err := a.world.Send(proto.UseItemPacket(key[0], key[1])); err != nil {
+	if err := a.world.Send(a.inventoryUsePacket(key[0], key[1], it)); err != nil {
 		a.backToLogin("Unable to use item.")
 		return
 	}
@@ -267,4 +267,13 @@ func inventoryEquipSlots(typ uint8) []uint8 {
 		}
 	}
 	return nil
+}
+
+func (a *App) inventoryUsePacket(bag, slot uint8, it proto.InventoryItem) []byte {
+	if it.Type == 100 && (a.items != nil || a.arc != nil) {
+		if def := a.itemsItem(it.Type, it.TypeID); def != nil && def.Special == 41 {
+			return proto.TargetResurrectionItemPacket(bag, slot, a.state.Target)
+		}
+	}
+	return proto.UseItemPacket(bag, slot)
 }

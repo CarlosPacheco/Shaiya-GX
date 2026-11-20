@@ -894,45 +894,47 @@ Direct GX dependencies: `internal/itemstack`, `internal/proto`, `internal/textwi
 | [`ItemCompose`](../../server/internal/packet/packet.go#L220)<br>`const ItemCompose = 0x0806` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
 | [`GemAdd`](../../server/internal/packet/packet.go#L221)<br>`const GemAdd = 0x0801` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
 | [`GemRemove`](../../server/internal/packet/packet.go#L222)<br>`const GemRemove = 0x0802` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`GemAddPossibility`](../../server/internal/packet/packet.go#L223)<br>`const GemAddPossibility = 0x0809` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`GemRemovePossibility`](../../server/internal/packet/packet.go#L224)<br>`const GemRemovePossibility = 0x080A` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`ExchangeRequest`](../../server/internal/packet/packet.go#L225)<br>`const ExchangeRequest = 0x0A01` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`ExchangeAnswer`](../../server/internal/packet/packet.go#L226)<br>`const ExchangeAnswer = 0x0A02` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`ExchangeStart`](../../server/internal/packet/packet.go#L227)<br>`const ExchangeStart = 0x0A03` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`ExchangeEnd`](../../server/internal/packet/packet.go#L228)<br>`const ExchangeEnd = 0x0A04` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`ExchangeReady`](../../server/internal/packet/packet.go#L229)<br>`const ExchangeReady = 0x0A05` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`ExchangeAdd`](../../server/internal/packet/packet.go#L230)<br>`const ExchangeAdd = 0x0A06` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`ExchangeRemove`](../../server/internal/packet/packet.go#L231)<br>`const ExchangeRemove = 0x0A07` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`ExchangeAddMoney`](../../server/internal/packet/packet.go#L232)<br>`const ExchangeAddMoney = 0x0A08` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`ExchangeAddDest`](../../server/internal/packet/packet.go#L233)<br>`const ExchangeAddDest = 0x0A09` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`ExchangeConfirm`](../../server/internal/packet/packet.go#L234)<br>`const ExchangeConfirm = 0x0A0A` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
-| [`ErrTooLarge`](../../server/internal/packet/packet.go#L237)<br>`var ErrTooLarge` | See the source definition and the subsystem ownership contract. |
-| [`ErrStringTooLarge`](../../server/internal/packet/packet.go#L238)<br>`var ErrStringTooLarge` | See the source definition and the subsystem ownership contract. |
-| [`Writer`](../../server/internal/packet/packet.go#L241)<br>`type Writer` | Writer builds one frame; the length prefix is filled in by Bytes. |
-| [`New`](../../server/internal/packet/packet.go#L246)<br>`func New(opcode Opcode) *Writer` | See the source definition and the subsystem ownership contract. |
-| [`Count`](../../server/internal/packet/packet.go#L253)<br>`func (w *Writer) Count(v uint16)` | See the source definition and the subsystem ownership contract. |
-| [`U8`](../../server/internal/packet/packet.go#L260)<br>`func (w *Writer) U8(v uint8)` | See the source definition and the subsystem ownership contract. |
-| [`U16`](../../server/internal/packet/packet.go#L261)<br>`func (w *Writer) U16(v uint16)` | See the source definition and the subsystem ownership contract. |
-| [`U32`](../../server/internal/packet/packet.go#L262)<br>`func (w *Writer) U32(v uint32)` | See the source definition and the subsystem ownership contract. |
-| [`I32`](../../server/internal/packet/packet.go#L263)<br>`func (w *Writer) I32(v int32)` | See the source definition and the subsystem ownership contract. |
-| [`U64`](../../server/internal/packet/packet.go#L264)<br>`func (w *Writer) U64(v uint64)` | See the source definition and the subsystem ownership contract. |
-| [`F32`](../../server/internal/packet/packet.go#L265)<br>`func (w *Writer) F32(v float32)` | See the source definition and the subsystem ownership contract. |
-| [`Bytes`](../../server/internal/packet/packet.go#L266)<br>`func (w *Writer) Bytes(v []byte)` | See the source definition and the subsystem ownership contract. |
-| [`Bool`](../../server/internal/packet/packet.go#L267)<br>`func (w *Writer) Bool(v bool)` | See the source definition and the subsystem ownership contract. |
-| [`FixedString`](../../server/internal/packet/packet.go#L277)<br>`func (w *Writer) FixedString(value string, size int)` | FixedString writes value null-padded to size bytes; an oversized value makes Finish fail instead of truncating silently. |
-| [`Len`](../../server/internal/packet/packet.go#L288)<br>`func (w *Writer) Len() int` | See the source definition and the subsystem ownership contract. |
-| [`Finish`](../../server/internal/packet/packet.go#L291)<br>`func (w *Writer) Finish() ([]byte, error)` | Finish returns the frame with its length prefix set. |
-| [`MustFinish`](../../server/internal/packet/packet.go#L303)<br>`func (w *Writer) MustFinish() []byte` | MustFinish is for frames whose shape is fixed and cannot overflow. |
-| [`ErrShort`](../../server/internal/packet/packet.go#L311)<br>`var ErrShort` | See the source definition and the subsystem ownership contract. |
-| [`U16`](../../server/internal/packet/packet.go#L313)<br>`func U16(b []byte) (uint16, error)` | See the source definition and the subsystem ownership contract. |
-| [`U32`](../../server/internal/packet/packet.go#L320)<br>`func U32(b []byte) (uint32, error)` | See the source definition and the subsystem ownership contract. |
-| [`F32`](../../server/internal/packet/packet.go#L327)<br>`func F32(b []byte) (float32, error)` | See the source definition and the subsystem ownership contract. |
-| [`FixedText`](../../server/internal/packet/packet.go#L333)<br>`func FixedText(b []byte) string` | FixedText decodes NUL-terminated UTF-8 with a legacy ANSI fallback. |
-| [`NewReader`](../../server/internal/packet/packet.go#L335)<br>`func NewReader(p []byte) *proto.Reader` | See the source definition and the subsystem ownership contract. |
-| [`BaseOpcode`](../../server/internal/packet/packet.go#L336)<br>`func BaseOpcode(v uint16) Opcode` | See the source definition and the subsystem ownership contract. |
-| [`GXForgeQuote`](../../server/internal/packet/packet.go#L338)<br>`const GXForgeQuote = 0x7F03` | See the source definition and the subsystem ownership contract. |
-| [`GXPartyInviteName`](../../server/internal/packet/packet.go#L341)<br>`const GXPartyInviteName = 0x7F15` | GXPartyInviteName is the global /party <name> invitation request. |
-| [`RaidLevel`](../../server/internal/packet/packet.go#L344)<br>`const RaidLevel = 0x0C13` | RaidLevel is the original member level notice, parallel to PartyLevel. |
+| [`CloakAdd`](../../server/internal/packet/packet.go#L223)<br>`const CloakAdd = 0x0803` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`CloakRemove`](../../server/internal/packet/packet.go#L224)<br>`const CloakRemove = 0x0804` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`GemAddPossibility`](../../server/internal/packet/packet.go#L225)<br>`const GemAddPossibility = 0x0809` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`GemRemovePossibility`](../../server/internal/packet/packet.go#L226)<br>`const GemRemovePossibility = 0x080A` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`ExchangeRequest`](../../server/internal/packet/packet.go#L227)<br>`const ExchangeRequest = 0x0A01` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`ExchangeAnswer`](../../server/internal/packet/packet.go#L228)<br>`const ExchangeAnswer = 0x0A02` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`ExchangeStart`](../../server/internal/packet/packet.go#L229)<br>`const ExchangeStart = 0x0A03` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`ExchangeEnd`](../../server/internal/packet/packet.go#L230)<br>`const ExchangeEnd = 0x0A04` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`ExchangeReady`](../../server/internal/packet/packet.go#L231)<br>`const ExchangeReady = 0x0A05` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`ExchangeAdd`](../../server/internal/packet/packet.go#L232)<br>`const ExchangeAdd = 0x0A06` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`ExchangeRemove`](../../server/internal/packet/packet.go#L233)<br>`const ExchangeRemove = 0x0A07` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`ExchangeAddMoney`](../../server/internal/packet/packet.go#L234)<br>`const ExchangeAddMoney = 0x0A08` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`ExchangeAddDest`](../../server/internal/packet/packet.go#L235)<br>`const ExchangeAddDest = 0x0A09` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`ExchangeConfirm`](../../server/internal/packet/packet.go#L236)<br>`const ExchangeConfirm = 0x0A0A` | Opcodes. Comments carry the confirmed wire shapes recorded while the server was written against captures of the real 5.4 client. |
+| [`ErrTooLarge`](../../server/internal/packet/packet.go#L239)<br>`var ErrTooLarge` | See the source definition and the subsystem ownership contract. |
+| [`ErrStringTooLarge`](../../server/internal/packet/packet.go#L240)<br>`var ErrStringTooLarge` | See the source definition and the subsystem ownership contract. |
+| [`Writer`](../../server/internal/packet/packet.go#L243)<br>`type Writer` | Writer builds one frame; the length prefix is filled in by Bytes. |
+| [`New`](../../server/internal/packet/packet.go#L248)<br>`func New(opcode Opcode) *Writer` | See the source definition and the subsystem ownership contract. |
+| [`Count`](../../server/internal/packet/packet.go#L255)<br>`func (w *Writer) Count(v uint16)` | See the source definition and the subsystem ownership contract. |
+| [`U8`](../../server/internal/packet/packet.go#L262)<br>`func (w *Writer) U8(v uint8)` | See the source definition and the subsystem ownership contract. |
+| [`U16`](../../server/internal/packet/packet.go#L263)<br>`func (w *Writer) U16(v uint16)` | See the source definition and the subsystem ownership contract. |
+| [`U32`](../../server/internal/packet/packet.go#L264)<br>`func (w *Writer) U32(v uint32)` | See the source definition and the subsystem ownership contract. |
+| [`I32`](../../server/internal/packet/packet.go#L265)<br>`func (w *Writer) I32(v int32)` | See the source definition and the subsystem ownership contract. |
+| [`U64`](../../server/internal/packet/packet.go#L266)<br>`func (w *Writer) U64(v uint64)` | See the source definition and the subsystem ownership contract. |
+| [`F32`](../../server/internal/packet/packet.go#L267)<br>`func (w *Writer) F32(v float32)` | See the source definition and the subsystem ownership contract. |
+| [`Bytes`](../../server/internal/packet/packet.go#L268)<br>`func (w *Writer) Bytes(v []byte)` | See the source definition and the subsystem ownership contract. |
+| [`Bool`](../../server/internal/packet/packet.go#L269)<br>`func (w *Writer) Bool(v bool)` | See the source definition and the subsystem ownership contract. |
+| [`FixedString`](../../server/internal/packet/packet.go#L279)<br>`func (w *Writer) FixedString(value string, size int)` | FixedString writes value null-padded to size bytes; an oversized value makes Finish fail instead of truncating silently. |
+| [`Len`](../../server/internal/packet/packet.go#L290)<br>`func (w *Writer) Len() int` | See the source definition and the subsystem ownership contract. |
+| [`Finish`](../../server/internal/packet/packet.go#L293)<br>`func (w *Writer) Finish() ([]byte, error)` | Finish returns the frame with its length prefix set. |
+| [`MustFinish`](../../server/internal/packet/packet.go#L305)<br>`func (w *Writer) MustFinish() []byte` | MustFinish is for frames whose shape is fixed and cannot overflow. |
+| [`ErrShort`](../../server/internal/packet/packet.go#L313)<br>`var ErrShort` | See the source definition and the subsystem ownership contract. |
+| [`U16`](../../server/internal/packet/packet.go#L315)<br>`func U16(b []byte) (uint16, error)` | See the source definition and the subsystem ownership contract. |
+| [`U32`](../../server/internal/packet/packet.go#L322)<br>`func U32(b []byte) (uint32, error)` | See the source definition and the subsystem ownership contract. |
+| [`F32`](../../server/internal/packet/packet.go#L329)<br>`func F32(b []byte) (float32, error)` | See the source definition and the subsystem ownership contract. |
+| [`FixedText`](../../server/internal/packet/packet.go#L335)<br>`func FixedText(b []byte) string` | FixedText decodes NUL-terminated UTF-8 with a legacy ANSI fallback. |
+| [`NewReader`](../../server/internal/packet/packet.go#L337)<br>`func NewReader(p []byte) *proto.Reader` | See the source definition and the subsystem ownership contract. |
+| [`BaseOpcode`](../../server/internal/packet/packet.go#L338)<br>`func BaseOpcode(v uint16) Opcode` | See the source definition and the subsystem ownership contract. |
+| [`GXForgeQuote`](../../server/internal/packet/packet.go#L340)<br>`const GXForgeQuote = 0x7F03` | See the source definition and the subsystem ownership contract. |
+| [`GXPartyInviteName`](../../server/internal/packet/packet.go#L343)<br>`const GXPartyInviteName = 0x7F15` | GXPartyInviteName is the global /party <name> invitation request. |
+| [`RaidLevel`](../../server/internal/packet/packet.go#L346)<br>`const RaidLevel = 0x0C13` | RaidLevel is the original member level notice, parallel to PartyLevel. |
 
 <details><summary>Type definitions and owned fields</summary>
 

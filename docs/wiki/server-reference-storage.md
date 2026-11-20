@@ -848,7 +848,7 @@ Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `inte
 | [`auctionMigration`](../../server/internal/db/migrations.go#L34)<br>`var auctionMigration string` | See the source definition and the subsystem ownership contract. |
 | [`pruneLegacyMigration`](../../server/internal/db/migrations.go#L37)<br>`var pruneLegacyMigration string` | See the source definition and the subsystem ownership contract. |
 | [`migrations`](../../server/internal/db/migrations.go#L39)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L185)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX migrations have their own transactional, checksummed ledger. |
+| [`migrate`](../../server/internal/db/migrations.go#L198)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -925,6 +925,15 @@ type FinishedQuest struct {
 ```
 
 </details>
+
+### skill_reset.go
+
+[server/internal/db/skill_reset.go](../../server/internal/db/skill_reset.go#L1)
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`ResetSkillCooldowns`](../../server/internal/db/skill_reset.go#L8)<br>`func ResetSkillCooldowns(charID uint32) (map[uint16]time.Time, error)` | See the source definition and the subsystem ownership contract. |
+| [`CommitSkillReset`](../../server/internal/db/skill_reset.go#L32)<br>`func CommitSkillReset(change CharacterChange, deadlines map[uint16]time.Time) error` | See the source definition and the subsystem ownership contract. |
 
 ### skills.go
 

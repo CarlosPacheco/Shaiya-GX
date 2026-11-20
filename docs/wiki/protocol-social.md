@@ -18,7 +18,7 @@ Source notes: EP5.4 SHA256 8e5ef14a...bb3263 readers 0x594d20/0x594d80/0x594dd0 
 
 **S→C serializers:** [relicListFor (server/internal/world/relics.go)](../../server/internal/world/relics.go#L534)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L367)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L370)
 
 ### Wire layouts and validation
 
@@ -120,7 +120,7 @@ Source notes: EP5.4 SHA256 8e5ef14a...bb3263 readers 0x594d20/0x594d80/0x594dd0 
 
 **S→C serializers:** [buildRelicOwner (server/internal/world/relics.go)](../../server/internal/world/relics.go#L77)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L373)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L376)
 
 ### Wire layouts and validation
 
@@ -180,7 +180,7 @@ Source notes: EP5.4 SHA256 8e5ef14a...bb3263 readers 0x594d20/0x594d80/0x594dd0 
 
 **S→C serializers:** [buildRelicNotice (server/internal/world/relics.go)](../../server/internal/world/relics.go#L83)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L397)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L400)
 
 ### Wire layouts and validation
 
@@ -241,7 +241,7 @@ Source notes: EP5.4 SHA256 8e5ef14a...bb3263 readers 0x594d20/0x594d80/0x594dd0 
 
 **S→C serializers:** [changeRelicPortal (server/internal/world/relic_portals.go)](../../server/internal/world/relic_portals.go#L87)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L384)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L387)
 
 ### Wire layouts and validation
 
@@ -324,7 +324,7 @@ Declarations: [proto.FriendList](../../internal/proto/social.go#L6).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L19), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L19), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -401,7 +401,7 @@ Declarations: [proto.FriendInvite](../../internal/proto/social.go#L7).
 
 **S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L90)
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L39), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L39), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -596,7 +596,7 @@ Declarations: [proto.FriendAnswer](../../internal/proto/social.go#L8).
 
 **S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L90)
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L47), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L47), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -809,7 +809,7 @@ Declarations: [proto.FriendAdded](../../internal/proto/social.go#L9).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L66), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L66), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -868,7 +868,7 @@ Declarations: [proto.FriendDelete](../../internal/proto/social.go#L10).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L55), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L55), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -927,7 +927,7 @@ Declarations: [proto.FriendMemo](../../internal/proto/social.go#L11).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L99), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L99), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -986,7 +986,7 @@ Declarations: [proto.FriendPresence](../../internal/proto/social.go#L12).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L88), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L88), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -1030,7 +1030,7 @@ Declarations: [proto.BlockList](../../internal/proto/social.go#L13).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L19), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L19), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -1107,7 +1107,7 @@ Declarations: [proto.BlockAdd](../../internal/proto/social.go#L14).
 
 **S→C serializers:** [handleSocial (server/internal/world/social.go)](../../server/internal/world/social.go#L90)
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L66), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L66), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -1317,7 +1317,7 @@ Declarations: [proto.BlockDelete](../../internal/proto/social.go#L15).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L55), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L55), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -1376,7 +1376,7 @@ Declarations: [proto.BlockMemo](../../internal/proto/social.go#L16).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L99), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L99), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -1435,7 +1435,7 @@ Declarations: [proto.PartySearchRequest](../../internal/proto/social.go#L17).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L47), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L47), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -1479,7 +1479,7 @@ Declarations: [proto.PartySearchList](../../internal/proto/social.go#L18).
 
 **S→C serializers:** [sendPartySearch (server/internal/world/social.go)](../../server/internal/world/social.go#L232)
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L33), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L33), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -1567,7 +1567,7 @@ Declarations: [proto.SocialError](../../internal/proto/social.go#L19).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L47), [Apply (internal/game/state.go)](../../internal/game/state.go#L277)
+**Client receive reducers:** [applySocial (internal/game/social.go)](../../internal/game/social.go#L47), [Apply (internal/game/state.go)](../../internal/game/state.go#L280)
 
 ### Wire layouts and validation
 
@@ -1607,11 +1607,11 @@ type Reader struct {
 
 Declarations: [proto.DuelRequest](../../internal/proto/duel.go#L4).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L220), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L258)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L258)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L35), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L35), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -1671,11 +1671,11 @@ type DuelChallenge struct{ Requester, Target uint32 }
 
 Declarations: [proto.DuelAnswer](../../internal/proto/duel.go#L5).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L220), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L263)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L263)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L49), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L49), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -1745,7 +1745,7 @@ Declarations: [proto.DuelCountdown](../../internal/proto/duel.go#L6).
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L69), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L69), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -1791,7 +1791,7 @@ Declarations: [proto.DuelStart](../../internal/proto/duel.go#L7).
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L75), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L75), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -1833,7 +1833,7 @@ Declarations: [proto.DuelResult](../../internal/proto/duel.go#L8).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L80), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L80), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -1855,11 +1855,11 @@ func DecodeExchangeByte(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(
 
 Declarations: [proto.DuelEnd](../../internal/proto/duel.go#L9).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L220), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L267)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L267)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L49), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L49), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -1921,7 +1921,7 @@ Declarations: [proto.DuelWindow](../../internal/proto/duel.go#L10).
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L59), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L59), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -1968,7 +1968,7 @@ Declarations: [proto.DuelWindowEnd](../../internal/proto/duel.go#L11).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L87), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L87), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -1990,11 +1990,11 @@ func DecodeExchangeByte(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(
 
 Declarations: [proto.DuelReady](../../internal/proto/duel.go#L12).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L220), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L269)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L269)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L96), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L96), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -2050,11 +2050,11 @@ type ExchangeUpdate struct{ Kind, Value uint8 }
 
 Declarations: [proto.DuelAdd](../../internal/proto/duel.go#L13).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L220), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L273)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L273)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L123), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L123), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -2122,11 +2122,11 @@ type ExchangeOwnItem struct {
 
 Declarations: [proto.DuelRemove](../../internal/proto/duel.go#L14).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L220), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L281)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L281)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L139), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L139), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -2182,11 +2182,11 @@ type ExchangeUpdate struct{ Kind, Value uint8 }
 
 Declarations: [proto.DuelMoney](../../internal/proto/duel.go#L15).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L220), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L285)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L285)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -2249,7 +2249,7 @@ Declarations: [proto.DuelAddOther](../../internal/proto/duel.go#L16).
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
-**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L133), [Apply (internal/game/state.go)](../../internal/game/state.go#L610)
+**Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L133), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
 ### Wire layouts and validation
 
@@ -2310,11 +2310,11 @@ type ExchangeItem struct {
 
 Declarations: [proto.GuildDuelRequest](../../internal/proto/guild_duel.go#L4).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L222), [handleGuildDuel (server/internal/world/guildduel.go)](../../server/internal/world/guildduel.go#L125)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L226), [handleGuildDuel (server/internal/world/guildduel.go)](../../server/internal/world/guildduel.go#L125)
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L25), [Apply (internal/game/state.go)](../../internal/game/state.go#L598)
+**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L25), [Apply (internal/game/state.go)](../../internal/game/state.go#L629)
 
 ### Wire layouts and validation
 
@@ -2374,11 +2374,11 @@ type DuelChallenge struct{ Requester, Target uint32 }
 
 Declarations: [proto.GuildDuelAnswer](../../internal/proto/guild_duel.go#L5).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L222), [handleGuildDuel (server/internal/world/guildduel.go)](../../server/internal/world/guildduel.go#L130)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L226), [handleGuildDuel (server/internal/world/guildduel.go)](../../server/internal/world/guildduel.go#L130)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L41), [Apply (internal/game/state.go)](../../internal/game/state.go#L598)
+**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L41), [Apply (internal/game/state.go)](../../internal/game/state.go#L629)
 
 ### Wire layouts and validation
 
@@ -2433,7 +2433,7 @@ Declarations: [proto.GuildDuelCountdown](../../internal/proto/guild_duel.go#L6).
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
-**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L52), [Apply (internal/game/state.go)](../../internal/game/state.go#L598)
+**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L52), [Apply (internal/game/state.go)](../../internal/game/state.go#L629)
 
 ### Wire layouts and validation
 
@@ -2486,7 +2486,7 @@ Declarations: [proto.GuildDuelStart](../../internal/proto/guild_duel.go#L7).
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
-**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L59), [Apply (internal/game/state.go)](../../internal/game/state.go#L598)
+**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L59), [Apply (internal/game/state.go)](../../internal/game/state.go#L629)
 
 ### Wire layouts and validation
 
@@ -2528,7 +2528,7 @@ Declarations: [proto.GuildDuelResult](../../internal/proto/guild_duel.go#L8).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L64), [Apply (internal/game/state.go)](../../internal/game/state.go#L598)
+**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L64), [Apply (internal/game/state.go)](../../internal/game/state.go#L629)
 
 ### Wire layouts and validation
 
@@ -2536,7 +2536,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>DecodeU8 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L187)
+[Source definition](../../internal/proto/world.go#L188)
 
 ```go
 func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return v, r.Err() }
@@ -2554,7 +2554,7 @@ Declarations: [proto.GuildDuelLeave](../../internal/proto/guild_duel.go#L9).
 
 **S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
 
-**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L71), [Apply (internal/game/state.go)](../../internal/game/state.go#L598)
+**Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L71), [Apply (internal/game/state.go)](../../internal/game/state.go#L629)
 
 ### Wire layouts and validation
 

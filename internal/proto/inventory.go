@@ -90,6 +90,15 @@ func UseItemPacket(bag, slot uint8) []byte {
 	return w.Bytes()
 }
 
+// TargetResurrectionItemPacket adds the selected player to an item request.
+func TargetResurrectionItemPacket(bag, slot uint8, target uint32) []byte {
+	w := NewWriter(UseItem)
+	w.U8(bag)
+	w.U8(slot)
+	w.U32(target)
+	return w.Bytes()
+}
+
 type ItemUseResult struct {
 	ID                      uint32
 	Bag, Slot, Type, TypeID uint8

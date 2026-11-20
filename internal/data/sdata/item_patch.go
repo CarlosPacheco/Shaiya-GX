@@ -8,6 +8,7 @@ import (
 // ItemPatch changes only the specified native definition fields. All other
 // record bytes, including unknown fields, are preserved exactly.
 type ItemPatch struct {
+	Remove              bool
 	ReqVG               uint16
 	Description         string
 	Stack               uint8
@@ -26,7 +27,9 @@ func PatchItemDefinitions(raw []byte, patches map[ItemKey]ItemPatch) ([]byte, er
 	found := map[ItemKey]bool{}
 	for g := 0; g < groups && c.err == nil; g++ {
 		count := c.count(60)
+		countOffset := len(out)
 		out = binary.LittleEndian.AppendUint32(out, uint32(count))
+		kept := uint32(count)
 		for i := 0; i < count && c.err == nil; i++ {
 			start := c.off
 			c.str()
@@ -38,6 +41,11 @@ func PatchItemDefinitions(raw []byte, patches map[ItemKey]ItemPatch) ([]byte, er
 				return nil, c.err
 			}
 			key := ItemKey{Type: body[0], TypeID: body[1]}
+			if patch, ok := patches[key]; ok && patch.Remove {
+				found[key] = true
+				kept--
+				continue
+			}
 			out = append(out, plain[start:nameEnd]...)
 			if patch, ok := patches[key]; ok {
 				found[key] = true
@@ -59,6 +67,7 @@ func PatchItemDefinitions(raw []byte, patches map[ItemKey]ItemPatch) ([]byte, er
 			}
 			out = append(out, body...)
 		}
+		binary.LittleEndian.PutUint32(out[countOffset:], kept)
 	}
 	if c.err != nil {
 		return nil, c.err

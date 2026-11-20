@@ -620,6 +620,75 @@ func DuelMoneyPacket(money uint32) []byte { w := NewWriter(DuelMoney); w.U32(mon
 
 </details>
 
+## emblem
+
+[internal/proto/emblem.go](../../internal/proto/emblem.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type EmblemResult struct {
+	Result, Bag, Slot uint8
+	Pattern           [6]uint8
+	Money             uint32
+}
+```
+
+```go
+func DecodeEmblemResult(p []byte) (EmblemResult, error) {
+	r := NewReader(p)
+	v := EmblemResult{Result: r.U8(), Bag: r.U8(), Slot: r.U8()}
+	for i := range v.Pattern {
+		v.Pattern[i] = r.U8()
+	}
+	v.Money = r.U32()
+	if err := r.Err(); err != nil {
+		return v, err
+	}
+	if v.Result > 1 || v.Bag > 5 || v.Slot >= 24 {
+		return v, fmt.Errorf("invalid emblem result")
+	}
+	return v, nil
+}
+```
+
+```go
+type EmblemRemoved struct{ Bag, Slot uint8 }
+```
+
+```go
+func DecodeEmblemRemoved(p []byte) (EmblemRemoved, error) {
+	r := NewReader(p)
+	v := EmblemRemoved{Bag: r.U8(), Slot: r.U8()}
+	if err := r.Err(); err != nil {
+		return v, err
+	}
+	if v.Bag > 5 || v.Slot >= 24 {
+		return v, fmt.Errorf("invalid emblem removal")
+	}
+	return v, nil
+}
+```
+
+```go
+func EmblemApplyPacket(bag, slot uint8, pattern [6]uint8) []byte {
+	w := NewWriter(CloakAdd)
+	w.Raw([]byte{bag, slot})
+	w.Raw(pattern[:])
+	return w.Bytes()
+}
+```
+
+```go
+func EmblemRemovePacket(bag, slot uint8) []byte {
+	w := NewWriter(CloakRemove)
+	w.Raw([]byte{bag, slot})
+	return w.Bytes()
+}
+```
+
+</details>
+
 ## enchant
 
 [internal/proto/enchant.go](../../internal/proto/enchant.go#L1)
@@ -2035,6 +2104,16 @@ func UseItemPacket(bag, slot uint8) []byte {
 	w := NewWriter(UseItem)
 	w.U8(bag)
 	w.U8(slot)
+	return w.Bytes()
+}
+```
+
+```go
+func TargetResurrectionItemPacket(bag, slot uint8, target uint32) []byte {
+	w := NewWriter(UseItem)
+	w.U8(bag)
+	w.U8(slot)
+	w.U32(target)
 	return w.Bytes()
 }
 ```
@@ -5126,6 +5205,7 @@ type CharacterSlot struct {
 	Str, Rec, Int, Wis, Dex, Luc                  uint16
 	MaxHP, MaxMP, MaxSP                           uint16
 	EquipType, EquipTypeID                        [8]uint8
+	Cloak                                         [6]uint8 // gem bytes of the equipped cloak: its emblem
 	Name                                          string
 	PendingDelete, RenamePending                  bool
 }

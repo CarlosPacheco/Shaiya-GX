@@ -813,6 +813,19 @@ func (s *Session) selectCharacter(id uint32) {
 			s.skillCooldowns[k.SkillID] = time.Now().Add(time.Duration(k.Delay) * time.Second)
 		}
 	}
+	retainedCooldowns, err := db.ResetSkillCooldowns(id)
+	if err != nil {
+		failed("load retained skill cooldowns", err)
+		return
+	}
+	for skillID, deadline := range retainedCooldowns {
+		if deadline.After(s.skillCooldowns[skillID]) {
+			s.skillCooldowns[skillID] = deadline
+		}
+	}
+	for i := range s.skills {
+		s.skills[i].Delay = s.remainingSkillDelay(s.skills[i].SkillID)
+	}
 	s.speedKnown = false
 	s.movement = playerMovement{}
 	s.elements = elementRuntime{}

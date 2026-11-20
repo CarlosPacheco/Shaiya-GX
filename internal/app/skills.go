@@ -412,7 +412,7 @@ func (a *App) actionPacket(index int) []byte {
 			if a.itemCooldown(it) > 0 {
 				return nil
 			}
-			return proto.UseItemPacket(q.Bag, uint8(q.Number))
+			return a.inventoryUsePacket(q.Bag, uint8(q.Number), it)
 		}
 	}
 	if k := a.skillBar()[index]; k != nil {

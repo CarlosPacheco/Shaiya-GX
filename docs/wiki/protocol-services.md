@@ -12,11 +12,11 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 Declarations: [packet.ShopBuy](../../server/internal/packet/packet.go#L78), [proto.ShopBuy](../../internal/proto/opcodes.go#L62).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L107)
 
 **S→C serializers:** [buildShopBuyResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L130)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L724)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L755)
 
 ### Wire layouts and validation
 
@@ -83,11 +83,11 @@ type ShopResult struct {
 
 Declarations: [packet.ShopSell](../../server/internal/packet/packet.go#L146), [proto.ShopSell](../../internal/proto/opcodes.go#L131).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L101)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L105)
 
 **S→C serializers:** [buildShopSellResult (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L246)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L724)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L755)
 
 ### Wire layouts and validation
 
@@ -157,7 +157,7 @@ Declarations: [packet.WarehouseItemList](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildWarehouseItemList (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L27)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L956), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L42)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L987), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L42)
 
 ### Wire layouts and validation
 
@@ -242,7 +242,7 @@ Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L221), [pro
 
 **S→C serializers:** [buildGemAddResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L186)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L575)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L606)
 
 ### Wire layouts and validation
 
@@ -335,7 +335,7 @@ Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L222), [
 
 **S→C serializers:** [planGemRemove (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L363)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L551)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L554)
 
 ### Wire layouts and validation
 
@@ -530,6 +530,166 @@ type GemRemoveResult struct {
 
 </details>
 
+## Opcode 0803
+
+**`0x0803` — CloakAdd**
+
+Declarations: [packet.CloakAdd](../../server/internal/packet/packet.go#L223), [proto.CloakAdd](../../internal/proto/opcodes.go#L211).
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L93)
+
+**S→C serializers:** [buildEmblemAddResult (server/internal/world/emblem.go)](../../server/internal/world/emblem.go#L15)
+
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L578)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>buildEmblemAddResult — server/internal/world/emblem.go</summary>
+
+[Source definition](../../server/internal/world/emblem.go#L15)
+
+```go
+func buildEmblemAddResult(result, bag, slot uint8, data [6]uint8, gold uint32) []byte {
+	w := packet.New(packet.CloakAdd)
+	w.Bytes([]byte{result, bag, slot})
+	w.Bytes(data[:])
+	w.U32(gold)
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>EmblemApplyPacket — internal/proto/emblem.go</summary>
+
+[Source definition](../../internal/proto/emblem.go#L46)
+
+```go
+func EmblemApplyPacket(bag, slot uint8, pattern [6]uint8) []byte {
+	w := NewWriter(CloakAdd)
+	w.Raw([]byte{bag, slot})
+	w.Raw(pattern[:])
+	return w.Bytes()
+}
+```
+
+</details>
+
+<details><summary>DecodeEmblemResult — internal/proto/emblem.go</summary>
+
+[Source definition](../../internal/proto/emblem.go#L14)
+
+```go
+func DecodeEmblemResult(p []byte) (EmblemResult, error) {
+	r := NewReader(p)
+	v := EmblemResult{Result: r.U8(), Bag: r.U8(), Slot: r.U8()}
+	for i := range v.Pattern {
+		v.Pattern[i] = r.U8()
+	}
+	v.Money = r.U32()
+	if err := r.Err(); err != nil {
+		return v, err
+	}
+	if v.Result > 1 || v.Bag > 5 || v.Slot >= 24 {
+		return v, fmt.Errorf("invalid emblem result")
+	}
+	return v, nil
+}
+```
+
+```go
+type EmblemResult struct {
+	Result, Bag, Slot uint8
+	Pattern           [6]uint8
+	Money             uint32
+}
+```
+
+</details>
+
+## Opcode 0804
+
+**`0x0804` — CloakRemove**
+
+Declarations: [packet.CloakRemove](../../server/internal/packet/packet.go#L224), [proto.CloakRemove](../../internal/proto/opcodes.go#L212).
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L95)
+
+**S→C serializers:** [planCloakRemove (server/internal/world/emblem.go)](../../server/internal/world/emblem.go#L64)
+
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L595)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>planCloakRemove — server/internal/world/emblem.go</summary>
+
+[Source definition](../../server/internal/world/emblem.go#L64)
+
+```go
+func (s *Session) planCloakRemove(p []byte) {
+	if len(p) < 4 || s.char == nil {
+		return
+	}
+	bag, slot := p[2], p[3]
+	i := s.emblemTarget(bag, slot)
+	if i < 0 {
+		return
+	}
+	s.items[i].Gems = [6]uint8{}
+	s.saveInventoryItem(&s.items[i])
+	w := packet.New(packet.CloakRemove)
+	w.Bytes([]byte{bag, slot})
+	s.send(w.MustFinish(), "0x0804 cloak emblem removed")
+	if bag == 0 && slot == 7 {
+		s.equipmentChanged([]uint8{7})
+	}
+}
+```
+
+</details>
+
+<details><summary>EmblemRemovePacket — internal/proto/emblem.go</summary>
+
+[Source definition](../../internal/proto/emblem.go#L54)
+
+```go
+func EmblemRemovePacket(bag, slot uint8) []byte {
+	w := NewWriter(CloakRemove)
+	w.Raw([]byte{bag, slot})
+	return w.Bytes()
+}
+```
+
+</details>
+
+<details><summary>DecodeEmblemRemoved — internal/proto/emblem.go</summary>
+
+[Source definition](../../internal/proto/emblem.go#L33)
+
+```go
+func DecodeEmblemRemoved(p []byte) (EmblemRemoved, error) {
+	r := NewReader(p)
+	v := EmblemRemoved{Bag: r.U8(), Slot: r.U8()}
+	if err := r.Err(); err != nil {
+		return v, err
+	}
+	if v.Bag > 5 || v.Slot >= 24 {
+		return v, fmt.Errorf("invalid emblem removal")
+	}
+	return v, nil
+}
+```
+
+```go
+type EmblemRemoved struct{ Bag, Slot uint8 }
+```
+
+</details>
+
 ## Opcode 0805
 
 **`0x0805` — EnchantAdd**
@@ -540,7 +700,7 @@ Declarations: [packet.EnchantAdd](../../server/internal/packet/packet.go#L219), 
 
 **S→C serializers:** [buildEnchantResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L37)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L521)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L524)
 
 ### Wire layouts and validation
 
@@ -625,11 +785,11 @@ type EnchantResult struct {
 
 Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L220), [proto.ItemCompose](../../internal/proto/opcodes.go#L208).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L93)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L97)
 
 **S→C serializers:** [buildComposeResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L498)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L502)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L505)
 
 ### Wire layouts and validation
 
@@ -695,7 +855,7 @@ type ComposeResult struct {
 
 **`0x0809` — GemAddPossibility**
 
-Declarations: [packet.GemAddPossibility](../../server/internal/packet/packet.go#L223), [proto.GemAddPossibility](../../internal/proto/opcodes.go#L211).
+Declarations: [packet.GemAddPossibility](../../server/internal/packet/packet.go#L225), [proto.GemAddPossibility](../../internal/proto/opcodes.go#L213).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -709,7 +869,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0x080A` — GemRemovePossibility**
 
-Declarations: [packet.GemRemovePossibility](../../server/internal/packet/packet.go#L224), [proto.GemRemovePossibility](../../internal/proto/opcodes.go#L212).
+Declarations: [packet.GemRemovePossibility](../../server/internal/packet/packet.go#L226), [proto.GemRemovePossibility](../../internal/proto/opcodes.go#L214).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

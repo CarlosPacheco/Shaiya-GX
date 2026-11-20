@@ -16,7 +16,7 @@ Declarations: [packet.ChatNormal](../../server/internal/packet/packet.go#L141), 
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
 
 ### Wire layouts and validation
 
@@ -39,7 +39,7 @@ func buildChatByID(op packet.Opcode, senderID uint32, message string) []byte {
 
 <details><summary>DecodeChatByID — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L366)
+[Source definition](../../internal/proto/world.go#L367)
 
 ```go
 func DecodeChatByID(p []byte) (m Chat, err error) {
@@ -72,7 +72,7 @@ Declarations: [packet.ChatWhisper](../../server/internal/packet/packet.go#L192),
 
 **S→C serializers:** [buildWhisper (server/internal/world/chat.go)](../../server/internal/world/chat.go#L136)
 
-**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L42)
+**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L42)
 
 ### Wire layouts and validation
 
@@ -114,7 +114,7 @@ func WhisperPacket(target, text string) []byte {
 
 <details><summary>DecodeWhisper — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L380)
+[Source definition](../../internal/proto/world.go#L381)
 
 ```go
 func DecodeWhisper(p []byte) (m Chat, err error) {
@@ -147,7 +147,7 @@ Declarations: [packet.ChatWorld](../../server/internal/packet/packet.go#L142), [
 
 **S→C serializers:** [buildChatByName (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L155)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
 
 ### Wire layouts and validation
 
@@ -174,7 +174,7 @@ func buildChatByName(op packet.Opcode, sender, message string) []byte {
 
 <details><summary>DecodeChatByName — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L373)
+[Source definition](../../internal/proto/world.go#L374)
 
 ```go
 func DecodeChatByName(p []byte) (m Chat, err error) {
@@ -203,11 +203,11 @@ type Chat struct {
 
 Declarations: [packet.ChatGuild](../../server/internal/packet/packet.go#L191), [proto.ChatGuild](../../internal/proto/opcodes.go#L179).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L152)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156)
 
 **S→C serializers:** [guildChat (server/internal/world/guild.go)](../../server/internal/world/guild.go#L284)
 
-**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L108), [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
+**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L108), [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
 
 ### Wire layouts and validation
 
@@ -236,7 +236,7 @@ func (s *Session) guildChat(message string, items proto.ChatItems) {
 
 <details><summary>DecodeChatByName — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L373)
+[Source definition](../../internal/proto/world.go#L374)
 
 ```go
 func DecodeChatByName(p []byte) (m Chat, err error) {
@@ -265,11 +265,11 @@ type Chat struct {
 
 Declarations: [packet.ChatParty](../../server/internal/packet/packet.go#L76), [proto.ChatParty](../../internal/proto/opcodes.go#L60).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L144)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L148)
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
-**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L106), [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
+**Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L106), [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
 
 ### Wire layouts and validation
 
@@ -292,7 +292,7 @@ func buildChatByID(op packet.Opcode, senderID uint32, message string) []byte {
 
 <details><summary>DecodeChatByID — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L366)
+[Source definition](../../internal/proto/world.go#L367)
 
 ```go
 func DecodeChatByID(p []byte) (m Chat, err error) {
@@ -325,7 +325,7 @@ Declarations: [packet.ChatError](../../server/internal/packet/packet.go#L143), [
 
 **S→C serializers:** [buildChatError (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L166)
 
-**Client receive reducers:** [SystemPane (internal/game/chat_style.go)](../../internal/game/chat_style.go#L7), [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L48)
+**Client receive reducers:** [SystemPane (internal/game/chat_style.go)](../../internal/game/chat_style.go#L7), [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L48)
 
 ### Wire layouts and validation
 
@@ -383,7 +383,7 @@ Declarations: [packet.ChatShout](../../server/internal/packet/packet.go#L193), [
 
 **S→C serializers:** [buildChatByID (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L144)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
 
 ### Wire layouts and validation
 
@@ -406,7 +406,7 @@ func buildChatByID(op packet.Opcode, senderID uint32, message string) []byte {
 
 <details><summary>DecodeChatByID — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L366)
+[Source definition](../../internal/proto/world.go#L367)
 
 ```go
 func DecodeChatByID(p []byte) (m Chat, err error) {
@@ -439,7 +439,7 @@ Declarations: [packet.ChatWorldShout](../../server/internal/packet/packet.go#L19
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
 
 ### Wire layouts and validation
 
@@ -447,7 +447,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>DecodeChatByName — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L373)
+[Source definition](../../internal/proto/world.go#L374)
 
 ```go
 func DecodeChatByName(p []byte) (m Chat, err error) {
@@ -480,7 +480,7 @@ Declarations: [proto.MobSpeechText](../../internal/proto/mob_speech.go#L6).
 
 **S→C serializers:** [buildMobAIMessage (server/internal/world/mob_ai_speech.go)](../../server/internal/world/mob_ai_speech.go#L26)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L13)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L13)
 
 ### Wire layouts and validation
 
@@ -565,7 +565,7 @@ Declarations: [proto.MobSpeechIndex](../../internal/proto/mob_speech.go#L7).
 
 **S→C serializers:** [buildMobAIMessage (server/internal/world/mob_ai_speech.go)](../../server/internal/world/mob_ai_speech.go#L26)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L13)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L13)
 
 ### Wire layouts and validation
 
@@ -650,7 +650,7 @@ Declarations: [packet.ChatMap](../../server/internal/packet/packet.go#L144), [pr
 
 **S→C serializers:** [buildChatByName (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L155)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
 
 ### Wire layouts and validation
 
@@ -677,7 +677,7 @@ func buildChatByName(op packet.Opcode, sender, message string) []byte {
 
 <details><summary>DecodeChatByName — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L373)
+[Source definition](../../internal/proto/world.go#L374)
 
 ```go
 func DecodeChatByName(p []byte) (m Chat, err error) {
@@ -710,7 +710,7 @@ Declarations: [packet.ChatNormalAdmin](../../server/internal/packet/packet.go#L2
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L23)
 
 ### Wire layouts and validation
 
@@ -718,7 +718,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>DecodeChatByID — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L366)
+[Source definition](../../internal/proto/world.go#L367)
 
 ```go
 func DecodeChatByID(p []byte) (m Chat, err error) {
@@ -751,7 +751,7 @@ Declarations: [packet.ChatWorldAdmin](../../server/internal/packet/packet.go#L21
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
 
 ### Wire layouts and validation
 
@@ -759,7 +759,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>DecodeChatByName — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L373)
+[Source definition](../../internal/proto/world.go#L374)
 
 ```go
 func DecodeChatByName(p []byte) (m Chat, err error) {

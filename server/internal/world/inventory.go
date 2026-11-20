@@ -277,6 +277,20 @@ func (s *Session) handleUseItem(p []byte) {
 		}
 	}
 	switch def.Special {
+	case specialSkillReset:
+		if !s.resetSkillsWithItem(i) {
+			reject("skill reset unavailable")
+		}
+		return
+	case specialTargetResurrection:
+		var target uint32
+		if len(p) == 8 {
+			target, _ = packet.U32(p[4:])
+		}
+		if !s.resurrectWithItem(i, target) {
+			reject("invalid resurrection target")
+		}
+		return
 	case specialItemBox:
 		if !s.openItemBox(i, def.ReqVg) {
 			reject("item box unavailable or insufficient inventory space")
