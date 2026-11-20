@@ -55,7 +55,8 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 		}
 		id++
 	}
-	b := newBuff(id, def, time.Now().Add(time.Duration(def.KeepSeconds)*time.Second), s.log)
+	now := time.Now()
+	b := newBuff(id, def, now, now.Add(time.Duration(def.KeepSeconds)*time.Second), s.log)
 	b.CasterMob = casterMob
 	if len(sourceUser) == 1 {
 		b.CasterUser = sourceUser[0]

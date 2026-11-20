@@ -107,12 +107,12 @@ func (s *Session) friendlyTargets(def *db.SkillDef, target uint32, completed ...
 			if pt.kind != raidKindNormal {
 				for i, m := range pt.members {
 					if m == me && i < len(pt.slots) {
-						group = int(pt.slots[i]) / 5
+						group = int(pt.slots[i]) / raidGroupSize
 					}
 				}
 			}
 			for i, m := range pt.members {
-				if group >= 0 && (i >= len(pt.slots) || int(pt.slots[i])/5 != group) {
+				if group >= 0 && (i >= len(pt.slots) || int(pt.slots[i])/raidGroupSize != group) {
 					continue
 				}
 				members = append(members, m)
@@ -122,13 +122,21 @@ func (s *Session) friendlyTargets(def *db.SkillDef, target uint32, completed ...
 		if len(members) == 0 {
 			return []*ConnectedPlayer{me}, true, true
 		}
+		center := skillrange.Position{s.char.PosX, s.char.PosY, s.char.PosZ}
+		radius := float32(def.ApplyRange)
+		periodicHeal := def.TypeEffect == typeEffectBuff && def.TypeDetail == detailPeriodicHeal
 		var out []*ConnectedPlayer
 		for _, m := range members {
 			if m != me && (m.MapID() != s.char.MapID || !m.IsAlive() || !s.teamUsable(m)) {
 				continue
 			}
 			c := m.Snapshot()
-			if !s.skillAreaContains(skillrange.Position{s.char.PosX, s.char.PosY, s.char.PosZ}, skillrange.Position{c.PosX, c.PosY, c.PosZ}, float32(def.ApplyRange)) {
+			if periodicHeal {
+				// EnableApplyRange measures X/Z once at cast completion.
+				if !(DistanceXZ(center[0], center[2], c.PosX, c.PosZ) <= radius) {
+					continue
+				}
+			} else if !s.skillAreaContains(center, skillrange.Position{c.PosX, c.PosY, c.PosZ}, radius) {
 				continue
 			}
 			out = append(out, m)

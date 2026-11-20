@@ -55,9 +55,8 @@ func (s *Session) refreshMapCurses(publish bool) {
 		for _, b := range s.buffs {
 			buffID = max(buffID, b.ID)
 		}
-		b := newBuff(buffID+1, def, time.Time{}, s.log)
+		b := newBuff(buffID+1, def, time.Now(), time.Time{}, s.log)
 		b.MapCurse = true
-		b.prevTick = time.Now()
 		s.buffs = append(s.buffs, b)
 		added = true
 		if publish {

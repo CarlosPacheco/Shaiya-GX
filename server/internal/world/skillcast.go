@@ -15,8 +15,6 @@ const (
 	targetTypeSelf              = 2
 	targetTypeEnemiesNearCaster = 6
 	targetTypeEnemiesNearTarget = 7
-
-	periodicHealTick = 3 * time.Second
 )
 
 // ActiveBuff is a self-buff on the session's character: stat bonuses
@@ -68,19 +66,19 @@ func addBuffs(e EquipmentStats, buffs []ActiveBuff) EquipmentStats {
 	return e
 }
 
-func newBuff(id uint32, def *db.SkillDef, ends time.Time, log logPrinter) ActiveBuff {
+func newBuff(id uint32, def *db.SkillDef, now, ends time.Time, log logPrinter) ActiveBuff {
 	b := ActiveBuff{ID: id, SkillID: def.SkillID, SkillLevel: def.SkillLevel, EndsAt: ends, Effect: def.TypeEffect,
 		Detail: uint8(min(def.TypeDetail, 255)), Attr: def.AttrType,
 		HealHP: uint32(max(def.TimeHealHP, 0)), HealSP: uint32(max(def.TimeHealSP, 0)), HealMP: uint32(max(def.TimeHealMP, 0))}
-	if b.HealHP+b.HealSP+b.HealMP > 0 {
-		b.nextTickAt = time.Now().Add(periodicHealTick)
+	if b.Effect == typeEffectBuff && b.Detail == detailPeriodicHeal && b.HealHP|b.HealSP|b.HealMP != 0 {
+		b.nextTickAt = now.Add(periodicHealTick)
 	}
-	b.DefenceType, b.BlockLeft, b.prevTick = def.DefenceType, uint32(def.DefenceValue), time.Now()
+	b.DefenceType, b.BlockLeft, b.prevTick = def.DefenceType, uint32(def.DefenceValue), now
 	if def.TypeEffect == typeEffectBuff && def.TypeDetail == detailFireThorn {
-		b.nextTickAt = time.Now().Add(fireThornTick)
+		b.nextTickAt = now.Add(fireThornTick)
 	}
 	if def.TypeEffect == typeEffectBuff && def.TypeDetail == detailDetection {
-		b.nextTickAt = time.Now() // the first sweep is immediate
+		b.nextTickAt = now // the first sweep is immediate
 	}
 	if def.TypeDetail == 82 || def.TypeDetail == 91 || def.TypeDetail == detailAbilityDown || def.TypeDetail == detailAbilityDown2 || isPotential(def) {
 		for i, t := range def.AbilityType {
@@ -391,34 +389,20 @@ func (s *Session) sendBuffStats(why string) {
 // processBuffs ticks heal-over-time and debuff damage, then expires
 // applied skills (CUser::ChkKeepSkill / ChkEndTimeSkill).
 func (s *Session) processBuffs() {
+	s.processBuffsAt(time.Now())
+}
+
+func (s *Session) processBuffsAt(now time.Time) {
 	if len(s.buffs) == 0 || s.char == nil || s.dead {
 		return
 	}
-	now := time.Now()
 	if s.tickDebuffs(now) {
 		return
 	}
 	for i := range s.buffs {
 		b := &s.buffs[i]
-		expiring := !b.MapCurse && !b.EndsAt.After(now)
-		hasHeal := b.HealHP+b.HealSP+b.HealMP > 0
-		due := !b.nextTickAt.IsZero() && !b.nextTickAt.After(now)
-		if hasHeal && (due || expiring) {
-			hp, mp, sp := s.healDelta(b.HealHP, b.HealMP, b.HealSP)
-			s.persist()
-			w := packet.New(packet.SkillKeep)
-			w.U32(s.char.ID)
-			w.U16(b.SkillID)
-			w.U8(b.SkillLevel)
-			w.U16(uint16(min(hp, 65535)))
-			w.U16(uint16(min(mp, 65535)))
-			w.U16(uint16(min(sp, 65535)))
-			s.send(w.MustFinish(), "0x050F buff heal tick")
-			st := s.stats()
-			s.send(buildCurrentHitpoints(&st), "0x0521 current hp/mp/sp after buff heal tick")
-			if !expiring {
-				b.nextTickAt = b.nextTickAt.Add(periodicHealTick)
-			}
+		if b.Effect == typeEffectBuff && b.Detail == detailPeriodicHeal {
+			s.tickPeriodicHeal(b, now)
 		}
 	}
 	s.removeEffects(func(b *ActiveBuff) bool {
@@ -479,12 +463,13 @@ func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error) {
 		return nil, err
 	}
 	var out []ActiveBuff
+	now := time.Now()
 	for _, r := range rows {
 		def := db.MustDefs().Skill(r.SkillID, r.Level)
 		if def == nil || def.TypeEffect != typeEffectBuff && !isPotential(def) {
 			continue
 		}
-		out = append(out, newBuff(uint32(len(out)+1), def, time.Now().Add(time.Duration(r.LeftSeconds)*time.Second), log))
+		out = append(out, newBuff(uint32(len(out)+1), def, now, now.Add(time.Duration(r.LeftSeconds)*time.Second), log))
 	}
 	return out, nil
 }
