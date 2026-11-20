@@ -34,3 +34,14 @@ func TestNoticeFileRetainsBothSchedulesAndLiteralMessage(t *testing.T) {
 		t.Fatalf("notices changed: %v, %v", got, err)
 	}
 }
+
+func TestMobMessagesINI(t *testing.T) {
+	rows, err := ParseMobMessages([]byte("[Messages]\n31 = \"Stop; look // there!\"\n2 = \"Hello\"\n"))
+	if err != nil || len(rows) != 2 || rows[0].Index != 2 || rows[1].Text != "Stop; look // there!" {
+		t.Fatalf("messages = %v, error = %v", rows, err)
+	}
+	got, err := ParseMobMessages(EncodeMobMessages(rows))
+	if err != nil || !slices.Equal(rows, got) {
+		t.Fatalf("round trip = %v, error = %v", got, err)
+	}
+}

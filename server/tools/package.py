@@ -21,7 +21,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 PROGRAMS = ("gx_login", "gx_world", "gx_console")
 GAME_DATA = (
-    "GuildHouse.ini", "Obelisk.ini", "ItemEnchant.ini", "MobAIMessages.txt",
+    "GuildHouse.ini", "Obelisk.ini", "ItemEnchant.ini", "MobAIMessages.ini",
     "KillStatus.ini", "WorldDrops.ini", "ItemBoxes.ini", "Map.ini",
     "NpcQuest.SData", "TeleportRunes.ini", "Notices.ini",
 )

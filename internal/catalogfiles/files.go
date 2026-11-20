@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -18,7 +19,7 @@ import (
 
 const (
 	Enchant       = "ItemEnchant.ini"
-	MobMessages   = "MobAIMessages.txt"
+	MobMessages   = "MobAIMessages.ini"
 	KillStatus    = "KillStatus.ini"
 	WorldDrops    = "WorldDrops.ini"
 	ItemBoxes     = "ItemBoxes.ini"
@@ -67,6 +68,26 @@ func ParseMobMessages(raw []byte) ([]mobaimessages.Message, error) {
 	if !utf8.Valid(raw) {
 		return nil, fmt.Errorf("expected UTF-8 text")
 	}
+	if text := strings.TrimSpace(string(raw)); text != "" && (text[0] < '0' || text[0] > '9') {
+		ini, err := gameini.Parse(raw)
+		if err != nil {
+			return nil, err
+		}
+		fields, ok := ini["MESSAGES"]
+		if !ok {
+			return nil, fmt.Errorf("missing [Messages] section")
+		}
+		rows := make([]mobaimessages.Message, 0, len(fields))
+		for key, text := range fields {
+			id, err := strconv.ParseUint(key, 10, 16)
+			if err != nil || strconv.FormatUint(id, 10) != key || strings.TrimSpace(text) == "" || strings.ContainsAny(text, "\x00\r\n") {
+				return nil, fmt.Errorf("invalid message %q", key)
+			}
+			rows = append(rows, mobaimessages.Message{Index: uint16(id), Text: text})
+		}
+		slices.SortFunc(rows, func(a, b mobaimessages.Message) int { return int(a.Index) - int(b.Index) })
+		return rows, nil
+	}
 	lines := strings.Split(strings.TrimSpace(string(raw)), "\n")
 	var out []mobaimessages.Message
 	var prev uint64
@@ -93,8 +114,9 @@ func ParseMobMessages(raw []byte) ([]mobaimessages.Message, error) {
 
 func EncodeMobMessages(rows []mobaimessages.Message) []byte {
 	var b strings.Builder
+	b.WriteString("; Message IDs are referenced by the mob AI scripts.\n[Messages]\n")
 	for _, row := range rows {
-		fmt.Fprintf(&b, "%d\n%s\n", row.Index, row.Text)
+		fmt.Fprintf(&b, "%d = %q\n", row.Index, row.Text)
 	}
 	return []byte(b.String())
 }

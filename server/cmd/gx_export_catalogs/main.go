@@ -34,7 +34,7 @@ func main() {
 	out := flag.String("out", "", "New output directory")
 	npc := flag.String("npc-template", "", "Matching NpcQuest.SData for original texts and encoding")
 	mapFile := flag.String("map-template", "", "Optional Map.ini whose additional keys should be retained")
-	mob := flag.String("mob-translations", "", "UTF-8 MobAIMessages.txt used to translate Korean rows by index")
+	mob := flag.String("mob-translations", "", "UTF-8 MobAIMessages.ini used to translate Korean rows by index")
 	flag.Parse()
 	if *db == "" || *out == "" || *npc == "" || *mob == "" {
 		flag.Usage()

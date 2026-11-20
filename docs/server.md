@@ -158,7 +158,7 @@ The optional historical `Map.ini` preserves its additional keys.
 go run ./server/cmd/gx_export_catalogs \
   -db /backups/rapture.sqlite -out /backups/exported-game \
   -npc-template /current/data/Npc/NpcQuest.SData \
-  -mob-translations server/data/game/MobAIMessages.txt
+  -mob-translations server/data/game/MobAIMessages.ini
 ```
 
 Review the output and copy it into the target server's `data/game` folder

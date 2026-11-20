@@ -138,7 +138,7 @@ func EncodeMap(c maprules.Catalog, original []byte) ([]byte, error) {
 		ini["BASE"] = map[string]string{}
 	}
 	base := ini["BASE"]
-	base["MAPCOUNT"] = strconv.Itoa(len(c.Maps))
+	delete(base, "MAPCOUNT")
 	point := func(row maprules.Row) (string, error) {
 		m, mok := row[0].(int64)
 		x, xok := row[1].(float64)

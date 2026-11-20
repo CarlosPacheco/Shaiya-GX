@@ -7,7 +7,8 @@ GX World loads map rules from `Map.ini` and experience thresholds from SQLite at
 `Map.ini` uses `[SET_ZONE_N]` sections for map type, level limits,
 faction respawns, instance schedules, weather and map curses. Shared
 defaults belong in `[DEFAULT_SET_ZONE]`. The four racial birth positions
-are stored in `[BASE]`.
+are stored in `[BASE]`. GX World discovers maps from their sections.
+The optional default section supplies keys omitted by individual maps.
 
 | Map | Inclusive level range |
 | --- | --- |

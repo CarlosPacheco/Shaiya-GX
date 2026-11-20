@@ -11,7 +11,7 @@ the exact SData field and SQLite column under each readable field name.
 | Player skills | `Character/Skill.SData` | `PS_GameDefs_Skills`, matching level |
 | NPC skills | `Monster/NpcSkill.SData` | `PS_GameDefs_NpcSkills`, matching SData rank |
 | Enchant |  | `ItemEnchant.ini` |
-| Mob AI messages | | `MobAIMessages.txt` |
+| Mob AI messages | | `MobAIMessages.ini` |
 | Goddess Blessing | | `KillStatus.ini` |
 | World Drops | | `WorldDrops.ini` |
 | Item Boxes | | `ItemBoxes.ini` |
@@ -84,7 +84,7 @@ enchanting for that type.
 
 ## File-backed server catalogs
 
-**Mob AI messages** edits the English UTF-8 text in `MobAIMessages.txt`.
+**Mob AI messages** edits the English UTF-8 text in `MobAIMessages.ini`.
 The message IDs are fixed so scripts continue to reference the same line.
 **Goddess Blessing** edits the shared tiers in `KillStatus.ini`. The two
 factions keep independent counts and use the same thresholds and bonuses.
