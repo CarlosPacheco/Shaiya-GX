@@ -111,3 +111,33 @@ func PartyGlobalInvitePacket(name string) []byte {
 	w.Fixed(name, 21, true)
 	return w.Bytes()
 }
+
+// AddEffect is the member-effect add handler 0x5747b0: the same skill at the
+// same level is left alone, another level (not 100) replaces it in place, and
+// anything else is appended.
+func (m *PartyMember) AddEffect(skill uint16, level uint8) {
+	for i := range m.Effects {
+		e := &m.Effects[i]
+		if e.Skill != skill {
+			continue
+		}
+		if e.Level == level {
+			return
+		}
+		if level != 100 {
+			e.Level = level
+			return
+		}
+	}
+	m.Effects = append(m.Effects, PartyEffect{Skill: skill, Level: level})
+}
+
+// RemoveEffect is 0x573b50: the first effect with this skill and level goes.
+func (m *PartyMember) RemoveEffect(skill uint16, level uint8) {
+	for i, e := range m.Effects {
+		if e.Skill == skill && e.Level == level {
+			m.Effects = append(m.Effects[:i], m.Effects[i+1:]...)
+			return
+		}
+	}
+}

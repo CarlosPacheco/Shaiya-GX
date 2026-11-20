@@ -164,6 +164,8 @@ func (a *App) drawParty(w, h int) {
 			members[i] = a.state.SelfPartyMember()
 		}
 	}
+	a.prepareMemberBuffs()
+	defer a.drawMemberBuffTooltip()
 	if a.state.Party.Raid {
 		if !a.party.raidHidden {
 			a.partyUI.SetRaidSettings(a.state.Party.RaidDivision, a.state.Party.RaidAutoJoin)
@@ -355,4 +357,56 @@ func (a *App) raidCommand(fields []string) bool {
 		a.backToLogin("Unable to send raid request.")
 	}
 	return true
+}
+
+// prepareMemberBuffs feeds the member rows' effect strip (0x50abd0). Your own
+// row lists your active effects; the others list what the party packets sent.
+func (a *App) prepareMemberBuffs() {
+	a.loadSkills()
+	icon := func(skill uint16, level uint8) (ui.PartyBuff, bool) {
+		def, ok := a.skillDefinition(skill, level)
+		e := ui.PartyBuff{Skill: skill, Level: level, Debuff: level == 100 || def.Effect == 3}
+		if !ok && level != 100 {
+			return e, false
+		}
+		if file, uv, found := ui.SkillIcon(def.Icon); found {
+			e.Tex, e.UV = a.assets.Texture("interface/"+file), uv
+		}
+		return e, true
+	}
+	b := &a.partyUI.Buffs
+	b.MouseX, b.MouseY, b.Flash, b.Hovered = a.lastMouseX, a.lastMouseY, debuffFlash(a.clock), false
+	a.partyUI.White = a.white
+	b.Of = func(m proto.PartyMember) (out []ui.PartyBuff) {
+		if m.ID == a.state.SelfID {
+			for _, row := range a.buffs.rows {
+				if e, ok := icon(row.buff.Skill, row.buff.Level); ok {
+					out = append(out, e)
+				}
+			}
+			return out
+		}
+		for _, f := range m.Effects {
+			e, ok := icon(f.Skill, f.Level)
+			e.Skip = !ok // the slot stays empty, as in the original
+			out = append(out, e)
+		}
+		return out
+	}
+}
+
+// drawMemberBuffTooltip names the hovered member effect with its description.
+func (a *App) drawMemberBuffTooltip() {
+	b := &a.partyUI.Buffs
+	if !b.Hovered {
+		return
+	}
+	def, _ := a.skillDefinition(b.Hover.Skill, b.Hover.Level)
+	name := def.Name
+	if name == "" {
+		name = fmt.Sprintf("Skill %d, level %d", b.Hover.Skill, b.Hover.Level)
+	}
+	a.tooltip = []itemDetailLine{{name, [4]float32{1, 1, 0, 1}}}
+	a.tooltipItem, a.tooltipSockets = false, nil
+	a.tooltipDescription = strings.ReplaceAll(def.Description, `\n`, "\n")
 }

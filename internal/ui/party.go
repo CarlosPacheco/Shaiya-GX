@@ -34,6 +34,8 @@ type PartyPanel struct {
 	raidGroupInitialized              bool
 	raidDraftReady, raidDraftDirty    bool
 	held                              uint32
+	Buffs                             PartyBuffs // member effect icons, filled by the app
+	White                             *render.Texture
 }
 
 func NewPartyPanel(t Textures) (*PartyPanel, error) {
@@ -289,4 +291,5 @@ func (p *PartyPanel) drawMemberOpacity(s *render.Sprites, f *Font, x, rowY int, 
 		dy := [...]int{27, 36, 43}[j]
 		s.Draw(p.graph, float32(x+21), float32(rowY+dy), width, 8, 0, float32(j)/4, 0, float32(j+1)/4, tint)
 	}
+	p.Buffs.draw(s, p.White, x, rowY, m, opacity)
 }

@@ -87,3 +87,20 @@ func FuzzPartyList(f *testing.F) {
 	f.Add(w.Bytes())
 	f.Fuzz(func(t *testing.T, p []byte) { _, _ = DecodePartyList(p); _, _ = DecodePartyJoined(p) })
 }
+
+func TestPartyMemberEffects(t *testing.T) {
+	var m PartyMember
+	m.AddEffect(10, 1)
+	m.AddEffect(10, 1) // same level: untouched
+	m.AddEffect(10, 2) // other level replaces in place
+	m.AddEffect(10, 100)
+	m.AddEffect(20, 3)
+	if len(m.Effects) != 3 || m.Effects[0].Level != 2 || m.Effects[1].Level != 100 || m.Effects[2].Skill != 20 {
+		t.Fatalf("effects=%+v", m.Effects)
+	}
+	m.RemoveEffect(10, 1) // no exact match
+	m.RemoveEffect(10, 2)
+	if len(m.Effects) != 2 || m.Effects[0].Level != 100 {
+		t.Fatalf("after remove %+v", m.Effects)
+	}
+}

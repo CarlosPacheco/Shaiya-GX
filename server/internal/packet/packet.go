@@ -67,6 +67,10 @@ const (
 	RaidPools              Opcode = 0x0C0C
 	PartyPools             Opcode = 0x0C03
 	PartyLevel             Opcode = 0x0C09
+	PartyEffectAdd         Opcode = 0x0C04 // member buff: u32 id, u16 skill, u8 level
+	PartyEffectRemove      Opcode = 0x0C05
+	RaidEffectAdd          Opcode = 0x0C0E
+	RaidEffectRemove       Opcode = 0x0C10
 	ChatParty              Opcode = 0x1105
 	Gatekeeper             Opcode = 0x020C
 	ShopBuy                Opcode = 0x0702

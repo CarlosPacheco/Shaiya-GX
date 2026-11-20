@@ -72,6 +72,7 @@ func (s *Session) addEffect(def *db.SkillDef, casterMob uint32, sourceUser ...ui
 	s.applyElement(b)
 	s.reduceCooldowns(time.Now(), effectCooldownCut(&b))
 	s.send(buildBuffAdd(id, def.SkillID, def.SkillLevel), "0x050D skill applied")
+	s.partyEffect(true, def.SkillID, def.SkillLevel)
 	s.sendBuffStats("after applied skill")
 	if after := s.speeds(); after != before {
 		s.broadcastSpeed(after)
@@ -222,6 +223,7 @@ func (s *Session) removeEffectsInternal(match func(*ActiveBuff) bool, why string
 		w := packet.New(packet.BuffRemove)
 		w.U32(b.ID)
 		s.send(w.MustFinish(), "0x050E applied skill removed "+why)
+		s.partyEffect(false, b.SkillID, b.SkillLevel)
 	}
 	s.syncVisibility()
 	s.sendBuffStats(why)

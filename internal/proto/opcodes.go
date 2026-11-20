@@ -51,6 +51,10 @@ const (
 	RaidPools                 Opcode = 0x0C0C
 	PartyPools                Opcode = 0x0C03
 	PartyLevel                Opcode = 0x0C09
+	PartyEffectAdd            Opcode = 0x0C04 // handlers 0x5929a0 / 0x5747b0
+	PartyEffectRemove         Opcode = 0x0C05 // handlers 0x592a00 / 0x573b50
+	RaidEffectAdd             Opcode = 0x0C0E
+	RaidEffectRemove          Opcode = 0x0C10
 	ChatParty                 Opcode = 0x1105
 	Gatekeeper                Opcode = 0x020C
 	ShopBuy                   Opcode = 0x0702

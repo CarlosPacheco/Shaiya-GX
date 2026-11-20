@@ -600,7 +600,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 	case proto.QuestList, proto.QuestFinishedList, proto.QuestStart, proto.QuestCounter, proto.QuestChoose, proto.QuestEnd:
 		return s.applyQuestsPacket(p, ev)
-	case proto.PartyRoster, proto.PartyJoined, proto.PartyInvite, proto.PartyInviteName, proto.PartyAnswer, proto.PartyLeft, proto.PartyExpelled, proto.PartyLeader, proto.PartyBadge, proto.PartyPools, proto.PartyLevel, proto.RaidRoster, proto.RaidJoined, proto.PartyLeaveAlt, proto.RaidConvert, proto.RaidDivision, proto.RaidAutoJoin, proto.RaidSwap, proto.RaidSubLeader, proto.RaidInvite, proto.RaidAnswer, proto.RaidDisband, proto.RaidLeader, proto.RaidInviteName, proto.RaidError, proto.RaidExpel, proto.RaidPools:
+	case proto.PartyRoster, proto.PartyJoined, proto.PartyInvite, proto.PartyInviteName, proto.PartyAnswer, proto.PartyLeft, proto.PartyExpelled, proto.PartyLeader, proto.PartyBadge, proto.PartyPools, proto.PartyLevel, proto.PartyEffectAdd, proto.PartyEffectRemove, proto.RaidEffectAdd, proto.RaidEffectRemove, proto.RaidRoster, proto.RaidJoined, proto.PartyLeaveAlt, proto.RaidConvert, proto.RaidDivision, proto.RaidAutoJoin, proto.RaidSwap, proto.RaidSubLeader, proto.RaidInvite, proto.RaidAnswer, proto.RaidDisband, proto.RaidLeader, proto.RaidInviteName, proto.RaidError, proto.RaidExpel, proto.RaidPools:
 		if err := s.applyParty(p); err != nil {
 			return fail(err)
 		}

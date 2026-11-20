@@ -102,7 +102,63 @@ func writePartyMember(w *packet.Writer, p *ConnectedPlayer) {
 	w.F32(ch.PosX)
 	w.F32(ch.PosY)
 	w.F32(ch.PosZ)
-	w.U8(0) // effects
+	// Active effects (SendSkillApply keeps them in step afterwards): skill,
+	// level, remaining milliseconds.
+	now := time.Now()
+	p.mu.Lock()
+	type effect struct {
+		skill uint16
+		level uint8
+		ms    uint32
+	}
+	var effects []effect
+	for _, b := range p.targetEffects {
+		if left := b.EndsAt.Sub(now); b.MapCurse || left > 0 {
+			effects = append(effects, effect{b.SkillID, b.SkillLevel, uint32(max(left, 0) / time.Millisecond)})
+		}
+	}
+	p.mu.Unlock()
+	effects = effects[:min(len(effects), 255)]
+	w.U8(uint8(len(effects)))
+	for _, e := range effects {
+		w.U16(e.skill)
+		w.U8(e.level)
+		w.U32(e.ms)
+	}
+}
+
+// partyEffect is CUser::SendSkillApply / SendSkillRemoveParty: an applied or
+// ended skill goes to the whole party (0x0C04/0x0C05) or raid (0x0C0E/0x0C10)
+// as character id, skill and level.
+func (s *Session) partyEffect(add bool, skillID uint16, level uint8) {
+	if s.player == nil || s.char == nil {
+		return
+	}
+	partyMu.Lock()
+	pt := partyOf(s.player)
+	var members []*ConnectedPlayer
+	op := packet.PartyEffectRemove
+	if add {
+		op = packet.PartyEffectAdd
+	}
+	if pt != nil {
+		members = append(members, pt.members...)
+		if pt.isRaid() {
+			op = packet.RaidEffectRemove
+			if add {
+				op = packet.RaidEffectAdd
+			}
+		}
+	}
+	partyMu.Unlock()
+	if len(members) == 0 {
+		return
+	}
+	w := packet.New(op)
+	w.U32(s.char.ID)
+	w.U16(skillID)
+	w.U8(level)
+	broadcast(members, w.MustFinish(), "0x0C04 party member effect", s.logger)
 }
 
 func partyIDPacket(op packet.Opcode, id uint32) []byte {

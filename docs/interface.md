@@ -15,7 +15,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 | Effects | Independently draggable positive/negative strips; 32px icons, 6px gaps, native yellow duration bars and the original white debuff pulse | Full effect categories and all special states |
 | Maps | Native World Map with region previews, ring buttons, expanded-map name, original clock frame with date/seconds and portrait-name text styling and native zone/hover labels, draggable minimap/full map, pan and zoom | Remaining map services and indicator variants |
 | Options | Menu and six subpages; classic glow/brightness/detail/distance sliders, cloak/helmet visibility, audio, mouse, chat and monitor resolution selection | Other service controls and shortcut editing |
-| Party/raid | Member frames, invitations, leader and selection flows | Complete badges, buffs and visual variants |
+| Party/raid | Member frames, invitations, leader and selection flows, member effect icons (`0x50abd0`, packets 0x0C04/0x0C05/0x0C0E/0x0C10) | Complete badges and visual variants |
 | Player context | Original classic TipBox frame, SysMsg rows, hover, character/target/party picking, whisper focus and supported party/trade/duel/guild actions | Inspect, follow, personal shops and remaining social windows/services |
 | Quests | Original U button, journal artwork, state icons, seven 31px rows, three scrollbars, selection and confirmed abandonment; NPC dialogs/rewards/progress | Native tracker and remaining markers |
 | Trade/duels | Wager/item/money interfaces and confirmation flows | Complete comparison across all states |

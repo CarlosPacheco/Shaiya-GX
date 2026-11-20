@@ -318,6 +318,7 @@ func (s *Session) clearBuffsOnDeath() {
 	s.startRebirthTimer()
 	kept := s.buffs[:0]
 	var removed []uint32
+	var gone []ActiveBuff
 	for _, b := range s.buffs {
 		if b.MapCurse || (duelDeath && b.SkillID > 200 && b.SkillLevel != db.NPCSkillWireLevel) {
 			kept = append(kept, b)
@@ -328,6 +329,7 @@ func (s *Session) clearBuffsOnDeath() {
 			continue
 		}
 		removed = append(removed, b.ID)
+		gone = append(gone, b)
 	}
 	s.buffs = kept
 	s.syncVisibility()
@@ -335,6 +337,9 @@ func (s *Session) clearBuffsOnDeath() {
 		w := packet.New(packet.BuffRemove)
 		w.U32(id)
 		s.send(w.MustFinish(), "0x050E buff removed by death")
+	}
+	for _, b := range gone {
+		s.partyEffect(false, b.SkillID, b.SkillLevel)
 	}
 	if len(removed) > 0 {
 		s.sendBuffStats("after death")

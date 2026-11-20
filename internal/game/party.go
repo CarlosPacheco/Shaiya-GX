@@ -163,6 +163,19 @@ func (s *State) applyParty(p []byte) error {
 		if m := s.Party.Member(id); m != nil {
 			m.HP, m.SP, m.MP = hp, sp, mp
 		}
+	case proto.PartyEffectAdd, proto.RaidEffectAdd, proto.PartyEffectRemove, proto.RaidEffectRemove:
+		r := proto.NewReader(p)
+		id, skill, level := r.U32(), r.U16(), r.U8()
+		if err := r.Err(); err != nil {
+			return err
+		}
+		if m := s.Party.Member(id); m != nil {
+			if op := proto.Op(p); op == proto.PartyEffectAdd || op == proto.RaidEffectAdd {
+				m.AddEffect(skill, level)
+			} else {
+				m.RemoveEffect(skill, level)
+			}
+		}
 	case proto.PartyLevel:
 		r := proto.NewReader(p)
 		id, level := r.U32(), r.U16()
