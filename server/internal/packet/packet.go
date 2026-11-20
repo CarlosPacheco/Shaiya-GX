@@ -67,6 +67,8 @@ const (
 	RaidPools              Opcode = 0x0C0C
 	PartyPools             Opcode = 0x0C03
 	PartyLevel             Opcode = 0x0C09
+	PartyMove              Opcode = 0x0C07 // member position: u32 id, u16 map, 3 x f32
+	RaidMove               Opcode = 0x0C12
 	PartyEffectAdd         Opcode = 0x0C04 // member buff: u32 id, u16 skill, u8 level
 	PartyEffectRemove      Opcode = 0x0C05
 	RaidEffectAdd          Opcode = 0x0C0E

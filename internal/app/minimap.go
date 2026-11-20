@@ -126,17 +126,43 @@ func (a *App) visibleQuestMapMarkers(mapSize float32, markers []ui.MapMarker) []
 	return markers
 }
 
-// Only visible entities provide a current position known to be on this map.
-// Party roster coordinates lack a map ID and can become stale out of range.
-func partyMapMarkers(s *game.State, mapSize float32, markers []ui.MapMarker) []ui.MapMarker {
+// partyMapMarkers is the party radar of 0x4c73a0: every ally of the party, or in
+// a raid only the members of your own group (the six slots of DAT_021fd7f4),
+// on this map. The server keeps their positions current (0x0C07 / 0x0C12), so
+// allies out of view still show; a visible ally uses its live position.
+func partyMapMarkers(s *game.State, mapID uint16, mapSize float32, markers []ui.MapMarker) []ui.MapMarker {
+	group := -1
+	if s.Party.Raid {
+		for slot, id := range s.Party.RaidSlots {
+			if id == s.SelfID {
+				group = int(slot) / 6
+			}
+		}
+	}
+	inGroup := func(id uint32) bool {
+		if group < 0 {
+			return !s.Party.Raid
+		}
+		for slot, member := range s.Party.RaidSlots {
+			if member == id {
+				return int(slot)/6 == group
+			}
+		}
+		return false
+	}
 	for _, member := range s.Party.Members {
-		if member.ID == s.SelfID {
+		if member.ID == s.SelfID || !inGroup(member.ID) {
 			continue
 		}
+		x, z, known := member.X, member.Z, mapID != 0 && member.Instance == mapID
 		if e := s.Entities[member.ID]; e != nil && e.Kind == game.KindUser {
-			if u, v, ok := ui.MapPosition(e.X, e.Z, mapSize); ok {
-				markers = append(markers, ui.MapMarker{U: u, V: v})
-			}
+			x, z, known = e.X, e.Z, true
+		}
+		if !known {
+			continue
+		}
+		if u, v, ok := ui.MapPosition(x, z, mapSize); ok {
+			markers = append(markers, ui.MapMarker{U: u, V: v})
 		}
 	}
 	return markers
@@ -302,7 +328,7 @@ func (a *App) drawMinimap(w, h int, full bool) {
 	heading := float32(math.Atan2(float64(a.wv.facing[0]), float64(a.wv.facing[2])))
 	square := max(projection.Width, projection.Height)
 	markers := relicMapMarkers(a.state, square, v.markers[:0])
-	markers = partyMapMarkers(a.state, square, markers)
+	markers = partyMapMarkers(a.state, a.wv.mapID, square, markers)
 	markers = a.questMapMarkers(square, markers)
 	markers = calibrateMapMarkers(markers, projection, square)
 	v.markers = markers

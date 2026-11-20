@@ -51,6 +51,8 @@ const (
 	RaidPools                 Opcode = 0x0C0C
 	PartyPools                Opcode = 0x0C03
 	PartyLevel                Opcode = 0x0C09
+	PartyMove                 Opcode = 0x0C07 // 0x592a90 -> 0x573670: id, map, x, y, z
+	RaidMove                  Opcode = 0x0C12
 	PartyEffectAdd            Opcode = 0x0C04 // handlers 0x5929a0 / 0x5747b0
 	PartyEffectRemove         Opcode = 0x0C05 // handlers 0x592a00 / 0x573b50
 	RaidEffectAdd             Opcode = 0x0C0E

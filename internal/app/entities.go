@@ -16,6 +16,7 @@ import (
 type playerPlate struct {
 	gm    bool
 	kills uint32
+	party uint8 // 1 party member, 2 party leader (jang): the 16x16 coin left of the name
 }
 
 type remoteActor struct {
@@ -491,6 +492,21 @@ func (a *App) drawPlayerNames(w, h int) {
 			a.sprites.NameDepth(depth)
 			left, top := x-labelWidth/2, y-a.font.Height-offset
 			a.font.DrawName(a.sprites, name, left+prefixWidth, top, tint)
+			if plate.party != 0 {
+				// Native 0x44bd81: party_member (1) or party_jang, 16x16, 11px left of
+				// the name and 3px up (6 more when the PvP grade badge is shown).
+				file := "interface/party_jang.png"
+				if plate.party == 1 {
+					file = "interface/party_member.png"
+				}
+				if tex := a.assets.Texture(file); tex != nil {
+					px := left - 11
+					if ranked {
+						px -= 6
+					}
+					a.sprites.Draw(tex, float32(px), float32(top-3), 16, 16, 0, 0, 1, 1, white)
+				}
+			}
 			l, r, drawn = left, left+labelWidth, true
 			if ranked {
 				grade := a.assets.Texture("interface/grade2.png")
@@ -520,7 +536,7 @@ func (a *App) drawPlayerNames(w, h int) {
 	selfTargeted := a.state.SelfID != 0 && a.state.Target == a.state.SelfID
 	if slot, ok := a.selfSlot(); ok && v.self != nil && (settings.OwnName || selfTargeted) {
 		if pos, ok := v.self.NameAnchor(); ok {
-			left, right, drawn := label(slot.Name, pos, white, 0, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills})
+			left, right, drawn := label(slot.Name, pos, white, 0, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills, party: a.partyBadgeKind(a.state.SelfID)})
 			if drawn && selfTargeted {
 				selectionMarks(pos, left, right) // targeting yourself shows the same marks as any target
 			}
@@ -581,6 +597,7 @@ func (a *App) drawPlayerNames(w, h int) {
 				plate := playerPlate{gm: e.Kind == game.KindUser && e.IsGM}
 				if e.Kind == game.KindUser {
 					plate.kills = e.PvPKills
+					plate.party = a.partyBadgeKind(e.ID)
 				}
 				left, right, drawn := label(name, pos, tint, 0, plate)
 				if drawn && (e.Kind == game.KindMob || e.Kind == game.KindUser || e.Kind == game.KindNpc) && a.state.Target == e.ID {
@@ -604,4 +621,30 @@ func absInt(n int) int {
 		return -n
 	}
 	return n
+}
+
+// partyBadgeKind is the name-plate coin of 0x44bd44: yourself by your own
+// group state (leader or raid role 0 -> jang), anyone else by the 0x0520 badge
+// the server broadcasts, with your own party's roster as the fallback.
+func (a *App) partyBadgeKind(id uint32) uint8 {
+	p := &a.state.Party
+	if id == a.state.SelfID {
+		switch {
+		case len(p.Members) == 0:
+			return 0
+		case p.Leader == id:
+			return 2
+		}
+		return 1
+	}
+	if e := a.state.Entities[id]; e != nil && e.PartyBadge != 0 {
+		return min(e.PartyBadge, 2)
+	}
+	if p.Member(id) != nil {
+		if p.Leader == id {
+			return 2
+		}
+		return 1
+	}
+	return 0
 }

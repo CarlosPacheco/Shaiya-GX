@@ -314,7 +314,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
-	if a.partyUI != nil && a.raidGridShown() {
+	if a.partyUI != nil && a.raidGridShown() && !a.unionConfigCovers(in, w, h) {
 		x, y := a.partyUI.RaidGridOrigin(w, h)
 		if pointInside(in, x, y, ui.RaidGridWidth, ui.RaidGridHeight) {
 			id := uint32(0)

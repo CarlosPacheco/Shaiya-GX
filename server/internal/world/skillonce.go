@@ -222,6 +222,7 @@ func (s *Session) lifeSkill(l *pendingLifeSkill) {
 		s.player.SetAlive(true)
 		s.player.UpdateCharacter(*ch)
 	}
+	s.partyMove()
 	s.persist()
 	s.placeView()
 	s.broadcastNear(buildCharacterResurrect(ch.ID, rebirthKindBind, ch.Exp, ch.PosX, ch.PosY, ch.PosZ), "0x0551 life skill", true)

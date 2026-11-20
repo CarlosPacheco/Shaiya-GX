@@ -37,6 +37,10 @@ func TestUnionPortraitMenu(t *testing.T) {
 		t.Fatalf("member %v", got)
 	}
 	a.state.Party.Raid = false
+	if got := a.portraitActions(); len(got) != 0 {
+		t.Fatalf("a member who is not the leader may not create a raid: %v", labels(got))
+	}
+	a.state.Party.Leader = a.state.SelfID
 	if got := labels(a.portraitActions()); len(got) != 1 || got[0] != "Create union" {
 		t.Fatalf("party %v", got)
 	}
@@ -120,5 +124,21 @@ func TestRaidPartyNotices(t *testing.T) {
 	a.drainPartyNotices()
 	if len(a.state.Party.Notices) != 0 {
 		t.Fatal("notices not drained")
+	}
+}
+
+// 0x44bd44: yourself by group role, others by the server badge or the roster.
+func TestPartyBadgeKind(t *testing.T) {
+	a := unionApp(1)
+	if a.partyBadgeKind(1) != 2 || a.partyBadgeKind(2) != 1 || a.partyBadgeKind(3) != 1 || a.partyBadgeKind(99) != 0 {
+		t.Fatalf("badges %d %d %d %d", a.partyBadgeKind(1), a.partyBadgeKind(2), a.partyBadgeKind(3), a.partyBadgeKind(99))
+	}
+	a.state.SelfID = 3
+	if a.partyBadgeKind(3) != 1 {
+		t.Fatal("a member is not a leader")
+	}
+	a.state.Party.Members = nil
+	if a.partyBadgeKind(3) != 0 {
+		t.Fatal("no party, no badge")
 	}
 }

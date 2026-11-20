@@ -61,6 +61,9 @@ func (p *PartyPanel) UpdateRaidGrid(in *platform.Input, w, h int, slots map[uint
 func (p *PartyPanel) DrawRaidGrid(s *render.Sprites, f *Font, w, h int, members []proto.PartyMember, slots map[uint16]uint32, leader, sub, target uint32, moveSlot int) {
 	x, y := p.RaidGridOrigin(w, h)
 	alpha := p.raidOpacity
+	if p.raidDraftReady {
+		alpha = p.raidDraftOpacity // the slider previews live while the dialog is open
+	}
 	tint := [4]float32{1, 1, 1, alpha}
 	for slot := 0; slot < 30; slot++ {
 		cx, cy := x+slot/6*RaidCellWidth, y+slot%6*RaidCellHeight

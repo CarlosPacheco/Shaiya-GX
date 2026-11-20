@@ -126,6 +126,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 		s.refreshMapCurses(true)
 	}
 	s.savePosition()
+	s.partyMove(changedMap)
 	s.send(buildCharacterMapPosition(ch), "0x020B "+label)
 	s.send(buildCharacterMove(ch, 0, 0), "0x0501 "+label+" move")
 	if changedMap {
@@ -190,6 +191,7 @@ func (s *Session) handleCharacterMove(p []byte) {
 		s.player.UpdateCharacter(*ch)
 		s.player.UpdateMotion(motion, direction)
 	}
+	s.partyMove()
 	s.duelCheckMove()
 	// A gated map (0x020A refusals) is left to the explicit portal request.
 	if portal, ok := s.usablePortal(x, y, z, nil); ok && s.portalGate(portal.TargetMapID) == 0 {

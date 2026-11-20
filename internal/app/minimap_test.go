@@ -115,22 +115,33 @@ func TestQuestMapRespectsKnownMinimumTime(t *testing.T) {
 	}
 }
 
-func TestPartyMapMarkersUseOnlyCurrentVisibleAllies(t *testing.T) {
-	s := &game.State{SelfID: 1, Party: game.PartyState{Members: []proto.PartyMember{{ID: 1}, {ID: 2}, {ID: 3}, {ID: 4}}}, Entities: map[uint32]*game.Entity{
-		2: {ID: 2, Kind: game.KindUser, X: 25, Z: 75},
-		4: {ID: 4, Kind: game.KindMob, X: 50, Z: 50},
+func TestPartyMapMarkersFollowServerPositions(t *testing.T) {
+	s := &game.State{SelfID: 1, Party: game.PartyState{Members: []proto.PartyMember{
+		{ID: 1}, {ID: 2, Instance: 7, X: 10, Z: 20}, {ID: 3, Instance: 9, X: 50, Z: 50}, {ID: 4},
+	}}, Entities: map[uint32]*game.Entity{
+		4: {ID: 4, Kind: game.KindUser, X: 25, Z: 75},
 	}}
-	marks := partyMapMarkers(s, 100, nil)
-	if len(marks) != 1 || marks[0] != (ui.MapMarker{U: .25, V: .25}) {
-		t.Fatalf("unexpected party markers: %+v", marks)
+	marks := partyMapMarkers(s, 7, 100, nil)
+	if len(marks) != 2 || marks[0] != (ui.MapMarker{U: .1, V: .8}) || marks[1] != (ui.MapMarker{U: .25, V: .25}) {
+		t.Fatalf("party markers (out-of-view ally by server position, visible ally live): %+v", marks)
 	}
-	s.Entities[2].X = 75
-	if marks = partyMapMarkers(s, 100, marks[:0]); len(marks) != 1 || marks[0].U != .75 {
-		t.Fatalf("marker did not follow movement: %+v", marks)
+	// An ally on another map is not drawn.
+	s.Party.Members[1].Instance = 8
+	if marks = partyMapMarkers(s, 7, 100, marks[:0]); len(marks) != 1 {
+		t.Fatalf("other map still marked: %+v", marks)
 	}
-	delete(s.Entities, 2)
-	if marks = partyMapMarkers(s, 100, marks[:0]); len(marks) != 0 {
-		t.Fatalf("retained stale marker after leaving visibility: %+v", marks)
+}
+
+func TestRaidRadarShowsOnlyYourGroup(t *testing.T) {
+	members := []proto.PartyMember{{ID: 1, Instance: 7}}
+	slots := map[uint16]uint32{0: 1}
+	for i := uint32(2); i <= 12; i++ {
+		members = append(members, proto.PartyMember{ID: i, Instance: 7, X: float32(i), Z: float32(i)})
+		slots[uint16(i-1)] = i
+	}
+	s := &game.State{SelfID: 1, Party: game.PartyState{Raid: true, Members: members, RaidSlots: slots}}
+	if marks := partyMapMarkers(s, 7, 100, nil); len(marks) != 5 { // slots 1-5 of group 0
+		t.Fatalf("raid radar markers: %d", len(marks))
 	}
 }
 

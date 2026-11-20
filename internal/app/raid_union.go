@@ -36,9 +36,10 @@ func (a *App) unionSlots() map[uint16]uint32 {
 	return slots
 }
 
-// raidGridShown: the party2 raid window (hidden while the dialog is open).
+// raidGridShown: the party2 raid window; it stays under the dialog so the
+// transparency slider can be judged live.
 func (a *App) raidGridShown() bool {
-	return a.state.Party.Raid && a.partyUI != nil && a.partyUI.RaidGridVisible() && a.party.raidHidden
+	return a.state.Party.Raid && a.partyUI != nil && a.partyUI.RaidGridVisible()
 }
 
 func (a *App) unionConfigOpen() bool {
@@ -80,6 +81,9 @@ func (a *App) unionRole() int {
 func (a *App) portraitActions() []contextAction {
 	p := &a.state.Party
 	if !p.Raid {
+		if p.Leader != a.state.SelfID {
+			return nil // only the party leader can create a raid
+		}
 		return []contextAction{{label: "Create union"}}
 	}
 	out := []contextAction{{label: "Leave union", packet: proto.PartyLeavePacket()}}

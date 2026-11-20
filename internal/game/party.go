@@ -192,6 +192,15 @@ func (s *State) applyParty(p []byte) error {
 				m.RemoveEffect(skill, level)
 			}
 		}
+	case proto.PartyMove, proto.RaidMove:
+		r := proto.NewReader(p)
+		id, instance, x, y, z := r.U32(), r.U16(), r.F32(), r.F32(), r.F32()
+		if err := r.Err(); err != nil {
+			return err
+		}
+		if m := s.Party.Member(id); m != nil {
+			m.Instance, m.X, m.Y, m.Z = instance, x, y, z
+		}
 	case proto.PartyLevel:
 		r := proto.NewReader(p)
 		id, level := r.U32(), r.U16()

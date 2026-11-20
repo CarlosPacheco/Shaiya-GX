@@ -98,7 +98,7 @@ func writePartyMember(w *packet.Writer, p *ConnectedPlayer) {
 	for _, v := range []uint32{st.CurrentHP, st.MaxHP, st.CurrentMP, st.MaxMP, st.CurrentSP, st.MaxSP} {
 		w.U32(v)
 	}
-	w.U16(0) // instance
+	w.U16(ch.MapID) // instance: the map the member is on
 	w.F32(ch.PosX)
 	w.F32(ch.PosY)
 	w.F32(ch.PosZ)
@@ -125,6 +125,41 @@ func writePartyMember(w *packet.Writer, p *ConnectedPlayer) {
 		w.U8(e.level)
 		w.U32(e.ms)
 	}
+}
+
+// partyMove is CParty::SendMove (0x445880): after every move the position
+// goes to the other party/raid members on the same map as 0x0C07 / 0x0C12, so
+// their radar shows allies that are out of view. After a map change everyone
+// hears it once, so members left behind drop the stale marker.
+func (s *Session) partyMove(everyone ...bool) {
+	if s.player == nil || s.char == nil {
+		return
+	}
+	partyMu.Lock()
+	pt := partyOf(s.player)
+	var members []*ConnectedPlayer
+	op := packet.PartyMove
+	if pt != nil {
+		for _, m := range pt.members {
+			if m != s.player && (m.MapID() == s.char.MapID || len(everyone) > 0 && everyone[0]) {
+				members = append(members, m)
+			}
+		}
+		if pt.isRaid() {
+			op = packet.RaidMove
+		}
+	}
+	partyMu.Unlock()
+	if len(members) == 0 {
+		return
+	}
+	w := packet.New(op)
+	w.U32(s.char.ID)
+	w.U16(s.char.MapID)
+	w.F32(s.char.PosX)
+	w.F32(s.char.PosY)
+	w.F32(s.char.PosZ)
+	broadcast(members, w.MustFinish(), "0x0C07 party member position", s.logger)
 }
 
 // partyEffect is CUser::SendSkillApply / SendSkillRemoveParty: an applied or
