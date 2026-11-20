@@ -54,8 +54,6 @@ fail the fixture rather than silently producing an easier scene.
 | `crowd-400` | 200 users, 120 monsters and 80 NPCs |
 | `crowd-effects` | 200 actors plus repeated real EFT impacts, using the normal 32-impact cap |
 | `crowd-network` | 200 actors plus predecoded movement batches through the real packet pump |
-| `bots-300` (opt-in) | 300 local PvP bots with seeded native outfits and capes, active combat and skill effects disabled |
-| `bots-600` (opt-in) | 600 local PvP bots with the same settings and a wider view of the formation |
 
 Crowd users vary race, sex, valid class/body variants and sword equipment.
 Monsters use four original definitions; NPCs use a known original model. The
@@ -63,24 +61,9 @@ fixture validates that every expected actor loads. Positions are fixed, some
 intentionally beyond the near camera view. These synthetic scenes are not a
 specific live town, player-count capacity test or server load test.
 
-Select `--cases bots-300 --profile bots-300` to measure the local GM bot
-simulation. The fixture fixes the seed and camera and waits for all 300
-avatars before recording samples. Both bot simulation and rendering cost
-are included in the draw submission time.
-Use `bots-300:effects` or `bots-600:effects` for the same seeded fight with
-skill effects, weapon glows and enchantments enabled. The unsuffixed bot
-cases retain the effects-off baseline.
-The final main-camera count reports skinned batches, rigid attachments,
-cloth and serial fallback separately. The full-frame counter also includes
-the map, HUD and any secondary passes.
-`final_main_camera_bot_draws.skin` counts OpenGL submissions. With indirect
-draws, `skin_groups` counts the individual mesh/material groups inside them.
-`skin_palette_bytes` records the skin matrices submitted for that camera pass.
-It excludes instance transforms and any serial fallback draws.
-The bot cases also report main-camera cloth position upload bytes and operations
-averaged over the measured frames. Position bytes include dirty-range headers
-and exclude instance transforms. The final frame's world breakdown records
-map geometry, the reflection pass, the total world scene and UI separately.
+For live PvP stress tests, run [`/bots`](wiki/gm-commands.md#pvp-stress-test-bots)
+on a loopback GX World. Historical offline bot results remain in the
+[performance report](performance.md).
 
 `crowd-network` injects 200 payloads every six simulated frames: 2,000 payloads
 per simulated second. Payload construction is outside the pump timer; decoding,

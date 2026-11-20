@@ -107,12 +107,14 @@ func (a *App) updateChat(in *platform.Input) bool {
 				a.chatHistory = a.chatHistory[len(a.chatHistory)-32:]
 			}
 		}
-		if a.collisionViewCommand(text) || a.cameraLimitCommand(text) || (a.world == nil && a.botsCommand(text)) {
+		if a.collisionViewCommand(text) || a.cameraLimitCommand(text) {
 			a.chatOpen = false
 			return true
 		}
 		if _, _, known := gm.Parse(text); known {
-			if err := a.world.Send(proto.ChatPacket(proto.ChannelNormal, false, text)); err != nil {
+			if a.world == nil {
+				a.questMessage("Connect to GX World to use this command.")
+			} else if err := a.world.Send(proto.ChatPacket(proto.ChannelNormal, false, text)); err != nil {
 				a.backToLogin("Unable to send GM command.")
 			}
 			a.chatOpen = false

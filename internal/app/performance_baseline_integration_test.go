@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/bots"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
@@ -124,27 +123,12 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		t.Fatalf("unknown measurement variant %q", variant)
 	}
 	base := sceneName
-	botCount := 0
 	switch sceneName {
-	case "crowd-200", "crowd-400", "crowd-network", "crowd-effects", "water-visible", "dungeon", "bots-300", "bots-600":
+	case "crowd-200", "crowd-400", "crowd-network", "crowd-effects", "water-visible", "dungeon":
 		base = "world-stream"
-	}
-	switch sceneName {
-	case "bots-300":
-		botCount = 300
-	case "bots-600":
-		botCount = 600
 	}
 	if err = a.Preview(base); err != nil {
 		t.Fatal(err)
-	}
-	botCameraScale := float32(math.Sqrt(float64(botCount) / 300))
-	if botCount != 0 {
-		a.gameMenu.Settings.SkillEffects = variant == "effects"
-		a.state.Self.IsGM = true
-		v := a.wv
-		v.bots = bots.New(arc, v.world, v.pos, render.V3{0, 0, 1}, botCount, 300)
-		v.eye = v.pos.Add(render.V3{0, 16, -22}.Scale(botCameraScale))
 	}
 	if sceneName == "dungeon" {
 		a.releaseWorld()
@@ -224,9 +208,6 @@ func TestClientPerformanceBaseline(t *testing.T) {
 	if len(ids) > 0 {
 		target = a.wv.pos.Add(render.V3{0, 2, 12})
 	}
-	if botCount != 0 {
-		target = a.wv.pos.Add(render.V3{0, 2, 26}.Scale(botCameraScale))
-	}
 	camera := func() { a.wv.eye = eye; a.wv.cameraReady = true; a.wv.cameraEye = eye; a.wv.cameraTarget = target }
 	effectTick := 0
 	effects := func() {
@@ -277,12 +258,6 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		t.Fatal("water fixture did not execute visible reflection")
 	}
 	loaded := 0
-	if botCount != 0 {
-		loaded = a.wv.bots.Count()
-		if loaded != botCount {
-			t.Fatalf("loaded %d/%d PvP bots", loaded, botCount)
-		}
-	}
 	for _, v := range a.wv.actors {
 		if v.character != nil && v.character.PlayingClip("000_normal") {
 			loaded++
@@ -384,7 +359,6 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		}
 	}
 	update, draw, pump, wait, wall, calls := make([]float64, frames), make([]float64, frames), make([]float64, frames), make([]float64, frames), make([]float64, frames), make([]float64, frames)
-	var clothBytes, clothUploads float64
 	profilePath := os.Getenv("GX_MEASURE_CPU_PROFILE")
 	stopProfile := func() {}
 	if profilePath != "" {
@@ -460,11 +434,6 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		fences[slot] = gl.FenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0)
 		gl.Flush()
 		calls[frame] = float64(render.DrawCalls())
-		if botCount != 0 {
-			stats := a.wv.bots.DrawStats()
-			clothBytes += float64(stats.ClothBytes)
-			clothUploads += float64(stats.ClothUploads)
-		}
 		wall[frame] = float64(time.Since(frameStart)) / 1e6
 	}
 	gl.Finish()
@@ -529,12 +498,6 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		"allocs_per_frame": float64(memAfter.Mallocs-memBefore.Mallocs) / float64(frames), "allocated_bytes_per_frame": float64(memAfter.TotalAlloc-memBefore.TotalAlloc) / float64(frames),
 		"gc_cycles": memAfter.NumGC - memBefore.NumGC, "rss_end_bytes": rss, "gpu_owned_bytes": render.GPUBytes(), "missing_asset_keys": len(a.assets.Missing),
 		"samples_ms": map[string][]float64{"update": update, "draw": draw, "pump": pump, "gpu_wait": wait, "wall": wall, "gpu": gpu},
-	}
-	if botCount != 0 {
-		result["final_main_camera_bot_draws"] = a.wv.bots.DrawStats()
-		result["final_world_draw_breakdown"] = a.wv.draws
-		result["main_cloth_position_bytes_mean"] = clothBytes / float64(frames)
-		result["main_cloth_position_uploads_mean"] = clothUploads / float64(frames)
 	}
 	data, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {

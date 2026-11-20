@@ -47,7 +47,8 @@ func TestWorldBotsSixHundred(t *testing.T) {
 		t.Fatalf("invalid composition: factions %v, weapons %d, skills %d", counts, weapons, skilled)
 	}
 	start = time.Now()
-	for step := range 30 {
+	const ticks = 400
+	for step := range ticks {
 		for i := range a.bots {
 			a.advance(i, start.Add(time.Duration(step)*botTick))
 		}
@@ -55,8 +56,16 @@ func TestWorldBotsSixHundred(t *testing.T) {
 	if a.failed {
 		t.Fatal("synthetic TCP traffic failed")
 	}
-	var moved, hit int
+	var moved, hit, outer int
 	for _, b := range a.bots {
+		dx, dz := b.char.PosX-s.char.PosX, b.char.PosZ-s.char.PosZ
+		if dx*dx+dz*dz >= 15*15 {
+			outer++
+		}
+		hx, hz := b.char.PosX-b.home[0], b.char.PosZ-b.home[2]
+		if hx*hx+hz*hz > botHomeRange*botHomeRange {
+			t.Fatalf("bot %d chased outside its area", b.char.ID)
+		}
 		if (mapgeometry.Position{b.char.PosX, b.char.PosY, b.char.PosZ}) != b.home {
 			moved++
 		}
@@ -67,10 +76,19 @@ func TestWorldBotsSixHundred(t *testing.T) {
 	if moved == 0 || hit == 0 {
 		t.Fatalf("no movement or combat: moved=%d hit=%d", moved, hit)
 	}
-	t.Logf("30 ticks in %s, moved %d, took damage %d", time.Since(start), moved, hit)
+	if outer < 300 {
+		t.Fatalf("combat collapsed toward center: only %d bots at least 15 units out", outer)
+	}
+	t.Logf("%d ticks in %s, moved %d, damaged %d, outside 15 units %d", ticks, time.Since(start), moved, hit, outer)
 	s.handleGMCommand("/bots off")
 	gmResponse(t, packets)
 	if worldBots.arena != nil {
 		t.Fatal("off did not remove the arena")
+	}
+
+	s.handleGMCommand("/bots 1000")
+	gmResponse(t, packets)
+	if a := worldBots.arena; a == nil || len(a.bots) != 1000 {
+		t.Fatal("expected 1000 actors at the command limit")
 	}
 }

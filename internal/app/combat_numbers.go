@@ -82,8 +82,7 @@ func combatGlyphRect(point render.V3, width, height float32, view, projection re
 
 func (a *App) drawCombatNumbers(w, h int) {
 	a.expireCombatNumbers()
-	localBots := a.wv != nil && a.wv.bots != nil
-	if len(a.combatNumbers) == 0 && !localBots || a.scene3d == nil {
+	if len(a.combatNumbers) == 0 || a.scene3d == nil {
 		return
 	}
 	atlas, err := a.Interface("count.png")
@@ -125,11 +124,6 @@ func (a *App) drawCombatNumbers(w, h int) {
 	}
 	for _, entry := range a.combatNumbers {
 		draw(entry, max(0, float32(a.clock-entry.Started)))
-	}
-	if localBots {
-		a.wv.bots.DamageNumbers(a.wv.pos, func(point render.V3, age float32, amount uint32, critical, missed bool) {
-			draw(combatNumber{Point: point, Amount: amount, Critical: critical, Missed: missed}, age)
-		})
 	}
 }
 

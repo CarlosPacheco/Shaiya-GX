@@ -56,18 +56,16 @@ use green system-chat style 4 (`#33FF33`), including refusals.
 On GX World configured to listen on loopback, `/bots 1` through `/bots 1000`
 replaces the current group with the requested number of bots around the GM.
 The count is split between Light and Fury, with at most one extra Light bot
-for an odd count. Opposing bots fight and allies can heal one another. Bots
-use class-appropriate gear and skills and revive near their original position.
+for an odd count. Opposing bots deploy in nearby pairs, keep a short distance
+in melee and stay within five world units of their spawn point when chasing.
+Allies can heal one another. Bots use class-appropriate gear and skills and
+revive near their original position.
 
 Nearby players see the combat through normal World updates. Combat targets
 are limited to bots, and the bots have no accounts or persistent characters.
 Their requests use encrypted World frames over local TCP connections and a
 dedicated server-side simulation. `/bots off` or the issuing GM disconnecting
 removes the group. Use open terrain for large groups.
-
-The offline client retains its local rendering benchmark. The
-[performance report](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/performance.md#pvp-effects-with-ordered-parallel-preparation)
-documents its 300- and 600-bot fixtures and visual checks.
 
 ## Extended camera zoom
 

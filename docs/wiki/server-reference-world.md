@@ -86,18 +86,21 @@ Direct GX dependencies: `internal/mapgeometry`, `internal/proto`, `server/intern
 |---|---|
 | [`botHealth`](../../server/internal/world/bots.go#L20)<br>`const botHealth = 12000` | See the source definition and the subsystem ownership contract. |
 | [`botTick`](../../server/internal/world/bots.go#L21)<br>`const botTick = 100 * time.Millisecond` | See the source definition and the subsystem ownership contract. |
-| [`worldBot`](../../server/internal/world/bots.go#L23)<br>`type worldBot` | See the source definition and the subsystem ownership contract. |
-| [`worldBotArena`](../../server/internal/world/bots.go#L37)<br>`type worldBotArena` | See the source definition and the subsystem ownership contract. |
-| [`worldBots`](../../server/internal/world/bots.go#L45)<br>`var worldBots struct { 	sync.Mutex 	nextID uint32 	arena  *worldBotArena }` | See the source definition and the subsystem ownership contract. |
-| [`gmBots`](../../server/internal/world/bots.go#L51)<br>`func (s *Session) gmBots(args []string) error` | See the source definition and the subsystem ownership contract. |
-| [`botEquipment`](../../server/internal/world/bots.go#L126)<br>`func botEquipment(defs *db.Defs) (bySlot [8][]*db.ItemDef)` | See the source definition and the subsystem ownership contract. |
-| [`equip`](../../server/internal/world/bots.go#L142)<br>`func (b *worldBot) equip(defs *db.Defs, gear [8][]*db.ItemDef)` | See the source definition and the subsystem ownership contract. |
-| [`clearWorldBots`](../../server/internal/world/bots.go#L168)<br>`func clearWorldBots()` | See the source definition and the subsystem ownership contract. |
-| [`tickWorldBots`](../../server/internal/world/bots.go#L184)<br>`func tickWorldBots(now time.Time)` | See the source definition and the subsystem ownership contract. |
-| [`emit`](../../server/internal/world/bots.go#L236)<br>`func (a *worldBotArena) emit(frame []byte, subject, target int)` | See the source definition and the subsystem ownership contract. |
-| [`advance`](../../server/internal/world/bots.go#L244)<br>`func (a *worldBotArena) advance(i int, now time.Time)` | See the source definition and the subsystem ownership contract. |
-| [`applyRequest`](../../server/internal/world/bots.go#L326)<br>`func (a *worldBotArena) applyRequest(i int, payload []byte, target int, now time.Time)` | See the source definition and the subsystem ownership contract. |
-| [`resolveAttack`](../../server/internal/world/bots.go#L379)<br>`func (a *worldBotArena) resolveAttack(i, target int, skill *db.SkillDef, now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`botHomeRange`](../../server/internal/world/bots.go#L22)<br>`const botHomeRange = 5` | See the source definition and the subsystem ownership contract. |
+| [`botMeleeSpacing`](../../server/internal/world/bots.go#L23)<br>`const botMeleeSpacing = 2.15` | See the source definition and the subsystem ownership contract. |
+| [`worldBot`](../../server/internal/world/bots.go#L25)<br>`type worldBot` | See the source definition and the subsystem ownership contract. |
+| [`worldBotArena`](../../server/internal/world/bots.go#L39)<br>`type worldBotArena` | See the source definition and the subsystem ownership contract. |
+| [`worldBots`](../../server/internal/world/bots.go#L47)<br>`var worldBots struct { 	sync.Mutex 	nextID uint32 	arena  *worldBotArena }` | See the source definition and the subsystem ownership contract. |
+| [`gmBots`](../../server/internal/world/bots.go#L53)<br>`func (s *Session) gmBots(args []string) error` | See the source definition and the subsystem ownership contract. |
+| [`separatedBotHome`](../../server/internal/world/bots.go#L140)<br>`func separatedBotHome(g *mapgeometry.Geometry, x, y, z float32, homes []mapgeometry.Position) (mapgeometry.Position, bool)` | When terrain blocks a formation point, look for a nearby spot before opening any connections. Sending blocked bots back to the GM stacks them. |
+| [`botEquipment`](../../server/internal/world/bots.go#L171)<br>`func botEquipment(defs *db.Defs) (bySlot [8][]*db.ItemDef)` | See the source definition and the subsystem ownership contract. |
+| [`equip`](../../server/internal/world/bots.go#L187)<br>`func (b *worldBot) equip(defs *db.Defs, gear [8][]*db.ItemDef)` | See the source definition and the subsystem ownership contract. |
+| [`clearWorldBots`](../../server/internal/world/bots.go#L213)<br>`func clearWorldBots()` | See the source definition and the subsystem ownership contract. |
+| [`tickWorldBots`](../../server/internal/world/bots.go#L229)<br>`func tickWorldBots(now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`emit`](../../server/internal/world/bots.go#L281)<br>`func (a *worldBotArena) emit(frame []byte, subject, target int)` | See the source definition and the subsystem ownership contract. |
+| [`advance`](../../server/internal/world/bots.go#L289)<br>`func (a *worldBotArena) advance(i int, now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`applyRequest`](../../server/internal/world/bots.go#L379)<br>`func (a *worldBotArena) applyRequest(i int, payload []byte, target int, now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`resolveAttack`](../../server/internal/world/bots.go#L432)<br>`func (a *worldBotArena) resolveAttack(i, target int, skill *db.SkillDef, now time.Time)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 

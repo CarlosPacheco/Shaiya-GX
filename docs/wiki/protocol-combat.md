@@ -1140,7 +1140,7 @@ Declarations: [packet.SkillCastStarted](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applyRequest (server/internal/world/bots.go)](../../server/internal/world/bots.go#L326), [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L158)
+**S→C serializers:** [applyRequest (server/internal/world/bots.go)](../../server/internal/world/bots.go#L379), [handleUseSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L158)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L802)
 
@@ -1150,7 +1150,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>applyRequest — server/internal/world/bots.go</summary>
 
-[Source definition](../../server/internal/world/bots.go#L326)
+[Source definition](../../server/internal/world/bots.go#L379)
 
 ```go
 func (a *worldBotArena) applyRequest(i int, payload []byte, target int, now time.Time) {

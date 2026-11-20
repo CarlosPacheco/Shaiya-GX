@@ -19,6 +19,8 @@ import (
 
 const botHealth = 12000
 const botTick = 100 * time.Millisecond
+const botHomeRange = 5
+const botMeleeSpacing = 2.15
 
 type worldBot struct {
 	castAt             time.Time
@@ -79,14 +81,24 @@ func (s *Session) gmBots(args []string) error {
 	gear := botEquipment(defs)
 	worldBots.Lock()
 	defer worldBots.Unlock()
+	homes := make([]mapgeometry.Position, 0, int(n[0]))
 	for i := range int(n[0]) {
-		angle := float64(i) * 2.399963229728653
-		radius := float32(2 + math.Sqrt(float64(i))*.65)
-		x, z := s.char.PosX+radius*float32(math.Cos(angle)), s.char.PosZ+radius*float32(math.Sin(angle))
-		home, ok := exactMapDestination(g, x, s.char.PosY, z)
-		if !ok {
-			home = mapgeometry.Position{s.char.PosX, s.char.PosY, s.char.PosZ}
+		angle := float64(i/2) * 2.399963229728653
+		radius := float32(2.5 + math.Sqrt(float64(i/2))*2.15)
+		sin, cos := math.Sincos(angle)
+		side := float32(-2)
+		if i%2 != 0 {
+			side = -side
 		}
+		x := s.char.PosX + radius*float32(cos) - side*float32(sin)
+		z := s.char.PosZ + radius*float32(sin) + side*float32(cos)
+		home, ok := separatedBotHome(g, x, s.char.PosY, z, homes)
+		if !ok {
+			return fmt.Errorf("not enough open terrain for %d PvP bots around you", n[0])
+		}
+		homes = append(homes, home)
+	}
+	for i, home := range homes {
 		if worldBots.nextID < 0x60000000 {
 			worldBots.nextID = 0x60000000
 		}
@@ -121,6 +133,39 @@ func (s *Session) gmBots(args []string) error {
 	worldBots.arena = a
 	s.gmReply(fmt.Sprintf("Spawned %d PvP bots around you.", len(a.bots)))
 	return nil
+}
+
+// When terrain blocks a formation point, look for a nearby spot before
+// opening any connections. Sending blocked bots back to the GM stacks them.
+func separatedBotHome(g *mapgeometry.Geometry, x, y, z float32, homes []mapgeometry.Position) (mapgeometry.Position, bool) {
+	pick := func(x, z float32) (mapgeometry.Position, bool) {
+		for _, home := range homes {
+			dx, dz := x-home[0], z-home[2]
+			if dx*dx+dz*dz < 1.8*1.8 {
+				return mapgeometry.Position{}, false
+			}
+		}
+		if p, ok := exactMapDestination(g, x, y, z); ok {
+			return p, true
+		}
+		if g.HasTerrain() && abs32(g.Height(x, z)-y) <= 12 {
+			return exactMapDestination(g, x, g.Height(x, z), z)
+		}
+		return mapgeometry.Position{}, false
+	}
+	if p, ok := pick(x, z); ok {
+		return p, true
+	}
+	for radius := float64(2); radius <= 18; radius += 2 {
+		points := int(math.Ceil(math.Pi * radius))
+		for j := range points {
+			sin, cos := math.Sincos(float64(j) * 2 * math.Pi / float64(points))
+			if p, ok := pick(x+float32(radius*cos), z+float32(radius*sin)); ok {
+				return p, true
+			}
+		}
+	}
+	return mapgeometry.Position{}, false
 }
 
 func botEquipment(defs *db.Defs) (bySlot [8][]*db.ItemDef) {
@@ -265,13 +310,19 @@ func (a *worldBotArena) advance(i int, now time.Time) {
 		a.resolveAttack(i, target, skill, now)
 		return
 	}
-	if b.target < 0 || b.target >= len(a.bots) || a.bots[b.target].char.CurrentHP == 0 {
+	// Prefer the opponent deployed beside this bot. While that opponent is
+	// down, look near home so temporary targets cannot draw the formation in.
+	pair := i ^ 1
+	if pair < len(a.bots) && a.bots[pair].char.CurrentHP > 0 {
+		b.target = pair
+	} else if b.target == pair || b.target < 0 || b.target >= len(a.bots) || a.bots[b.target].char.CurrentHP == 0 {
 		b.target = -1
-		for j := 1; j < len(a.bots); j++ {
-			k := (i + j) % len(a.bots)
-			if a.bots[k].faction != b.faction && a.bots[k].char.CurrentHP > 0 {
-				b.target = k
-				break
+		nearest := float32(8 * 8)
+		for j := 1 - int(b.faction); j < len(a.bots); j += 2 {
+			enemy := &a.bots[j].char
+			dx, dz := enemy.PosX-b.home[0], enemy.PosZ-b.home[2]
+			if distance := dx*dx + dz*dz; enemy.CurrentHP > 0 && distance < nearest {
+				b.target, nearest = j, distance
 			}
 		}
 	}
@@ -314,10 +365,12 @@ func (a *worldBotArena) advance(i int, now time.Time) {
 			return
 		}
 	}
-	if distance > 1.8 {
-		step := min(.44, distance-1.6)
-		x, z := b.char.PosX+dx/distance*step, b.char.PosZ+dz/distance*step
-		if p := a.geometry.GroundMove(mapgeometry.Position{b.char.PosX, b.char.PosY, b.char.PosZ}, mapgeometry.Position{x - b.char.PosX, 0, z - b.char.PosZ}, false); p != (mapgeometry.Position{b.char.PosX, b.char.PosY, b.char.PosZ}) {
+	if distance > botMeleeSpacing {
+		step := min(.44, distance-botMeleeSpacing)
+		from := mapgeometry.Position{b.char.PosX, b.char.PosY, b.char.PosZ}
+		p := a.geometry.GroundMove(from, mapgeometry.Position{dx / distance * step, 0, dz / distance * step}, false)
+		hx, hz := p[0]-b.home[0], p[2]-b.home[2]
+		if p != from && hx*hx+hz*hz <= botHomeRange*botHomeRange {
 			a.applyRequest(i, proto.MovePacket(1, dir, p[0], p[1], p[2]), -1, now)
 		}
 	}
