@@ -64,10 +64,14 @@ func (a *App) applyWorldPacket(p []byte) {
 		}
 	}
 	previousMoney := a.state.Details.Money
+	previousPhase := a.state.Phase
 	ev, err := a.state.Apply(p)
 	if err != nil {
 		log.Printf("packet: %v", err)
 		return
+	}
+	if previousPhase == game.PhaseLoading && a.state.Phase == game.PhaseInWorld {
+		a.rememberCharacterSlot()
 	}
 	if ev.Op == proto.GXEvolutionBar {
 		a.confirmEvolutionBar()

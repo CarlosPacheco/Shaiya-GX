@@ -64,7 +64,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			return
 		}
 		a.chars.Light = a.state.Faction.Faction == 0
-		a.chars.SetChars(a.state.Slots)
+		a.refreshCharacterRoster()
 		a.chars.Busy = a.account.op != 0
 		action := a.chars.Update(in, w, h, dt)
 		if action != ui.CharNone {

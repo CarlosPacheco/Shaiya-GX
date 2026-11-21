@@ -150,6 +150,8 @@ type App struct {
 	factionUI                           *ui.FactionScreen
 	accountMessage                      *ui.Message
 	account                             accountAction
+	characterSlotFile                   string
+	restoreCharacterSlot                bool
 	factionDeadline                     float64
 	hud                                 *ui.HUD
 	minimap                             *ui.Minimap
@@ -906,6 +908,8 @@ func (a *App) connectWorld() {
 				return
 			}
 			a.world, a.state = w, game.New()
+			a.characterSlotFile = characterSlotPath(a.cfg, sv.ID, l.Result.UserUID)
+			a.restoreCharacterSlot = true
 			a.screen = screenCharacters
 		})
 	}()
