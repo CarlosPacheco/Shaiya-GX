@@ -299,3 +299,26 @@ func TestOneShotEmitterDoesNotMissFloatBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestMeshAttractionUsesTheSpawnOrigin(t *testing.T) {
+	d := &effect.Emitter{
+		Unk21: 1, UnkVec6: [3]float32{0, 2, 0}, RotationMin: 3,
+		Position: [3]float32{0, -8, 0}, InitialDelay: 2, Unk13: 2,
+		Unk12: 60, Unk14: 60, Unk16: 1,
+	}
+	for _, origin := range []render.V3{{0, 0, 0}, {150, 39, 180}} {
+		x := &Effect{emitters: []effectEmitter{
+			{definition: d, geometry: &effectGeometry{source: &effect.Mesh3DE{}}},
+		}}
+		m := render.Identity()
+		m[12], m[13], m[14] = origin[0], origin[1], origin[2]
+		x.SetTransform(m)
+		for range 30 {
+			x.Update(1.0 / 60)
+		}
+		p := x.emitters[0].particles[0]
+		if p.pos[0] != origin[0] || p.pos[2] != origin[2] || p.pos[1] <= origin[1]-8 {
+			t.Fatalf("spawn column drifted from %v or stopped rising: %v", origin, p.pos)
+		}
+	}
+}

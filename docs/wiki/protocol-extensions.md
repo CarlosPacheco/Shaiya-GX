@@ -2036,7 +2036,7 @@ Source notes: GXItemCooldownReset clears the recipient’s item and mount cooldo
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [gmCure (server/internal/world/gm.go)](../../server/internal/world/gm.go#L537)
+**S→C serializers:** [gmCure (server/internal/world/gm.go)](../../server/internal/world/gm.go#L540)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L246)
 
@@ -2046,7 +2046,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>gmCure — server/internal/world/gm.go</summary>
 
-[Source definition](../../server/internal/world/gm.go#L537)
+[Source definition](../../server/internal/world/gm.go#L540)
 
 ```go
 func (s *Session) gmCure() error {

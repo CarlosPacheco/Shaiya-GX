@@ -444,7 +444,7 @@ func (s *Session) gmMove(mapID uint16) error {
 	return nil
 }
 
-const gmSetUsage = "usage: /set money|kill|str|dex|rec|int|wis|luc|statpoint|skillpoint amount"
+const gmSetUsage = "usage: /set money|kill|str|dex|rec|int|wis|luc|statpoint|skillpoint|level amount"
 
 // gmSet changes only the issuing character. Claimed rewards remain claimed.
 func (s *Session) gmSet(args []string) error {
@@ -452,6 +452,9 @@ func (s *Session) gmSet(args []string) error {
 		return fmt.Errorf("%s", gmSetUsage)
 	}
 	field := strings.ToLower(args[0])
+	if field == "level" {
+		return s.gmSetLevel(args[1:])
+	}
 	var cap uint64
 	switch field {
 	case "money":

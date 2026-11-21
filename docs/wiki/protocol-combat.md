@@ -2740,6 +2740,9 @@ func (s *Session) gmSet(args []string) error {
 		return fmt.Errorf("%s", gmSetUsage)
 	}
 	field := strings.ToLower(args[0])
+	if field == "level" {
+		return s.gmSetLevel(args[1:])
+	}
 	var cap uint64
 	switch field {
 	case "money":

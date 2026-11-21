@@ -244,7 +244,8 @@ func (x *Effect) Update(dt float32) {
 				orbitSin, orbitCos = float32(math.Sin(float64(d.Unk17)/60)), float32(math.Cos(float64(d.Unk17)/60))
 			}
 			attractor := render.V3(d.UnkVec6)
-			if d.Unk21 != 0 && e.geometry == nil {
+			// Attraction is expressed in the same space as the particles.
+			if d.Unk21 != 0 && !x.localParticles && !(x.meteor && e.geometry != nil) {
 				attractor = effectPoint(attractor, x.basis).Add(x.Origin)
 			}
 			alive := e.particles[:0]
