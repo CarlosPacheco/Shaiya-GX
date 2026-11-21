@@ -66,7 +66,7 @@ func TestWarehouseCallTooltipsExplainRemoteAccess(t *testing.T) {
 	a.buffs.rows = []buffBadge{{buff: proto.ActiveBuff{Skill: warehouseCallSkill, Level: 1}, def: def, until: 20, timed: true}}
 	a.lastMouseX, a.lastMouseY = a.buffSlot(1024, 768, 0)
 	a.drawBuffTooltip(1024, 768)
-	if a.tooltipDescription != warehouseCallDescription || len(a.tooltip) != 2 || a.tooltip[1].text != "20s" {
+	if a.tooltipDescription != warehouseCallDescription+"\n00:00:20" || len(a.tooltip) != 1 {
 		t.Fatalf("wrong active buff tooltip: %q %+v", a.tooltipDescription, a.tooltip)
 	}
 }

@@ -29,3 +29,14 @@ func TestBuffDuration(t *testing.T) {
 		t.Fatal("untimed effect displayed as expired")
 	}
 }
+
+func TestBuffRemainingTextUsesOriginalClockFormat(t *testing.T) {
+	for _, tc := range []struct {
+		seconds uint32
+		want    string
+	}{{0, ""}, {9, "00:00:09"}, {60, "00:01:00"}, {119, "00:01:59"}, {3600, "01:00:00"}, {86400, "01 - 00:00:00"}, {2*86400 + 3661, "02 - 01:01:01"}} {
+		if got := BuffRemainingText(tc.seconds); got != tc.want {
+			t.Errorf("%d seconds: got %q, want %q", tc.seconds, got, tc.want)
+		}
+	}
+}

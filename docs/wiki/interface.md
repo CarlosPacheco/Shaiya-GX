@@ -31,6 +31,11 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 - Options construction: `0x4fbbb0`; subpage placement: `0x4fa800`. Main buttons are at `(64, 77 + 32*i)`, drawn at 128×32 with 128×22 hit regions. Original coordinates take precedence over Phoenix's compact spacing.
 - Cash catalog rendering: `0x4d8b10` calls `0x4a3400` with type 200 and `Cash.Icon - 1`. This selects the type-100 atlas, or type-102 after index 1000; it is not a normal consumable icon.
 - Duration bars: `0x4a2fa0`; a 32×5 black background below the icon contains a 30×3 yellow fill.
+- Hovering your own buffs or debuffs shows the remaining whole seconds as
+  `HH:MM:SS` beneath the description. A timer of at least a day uses
+  `DD - HH:MM:SS`. EP4 PS0107 selects the timed tooltip at `0x4b8e02`
+  and formats its footer at `0x49eb50`. With zero seconds or an untimed
+  effect, the tooltip omits the timer. The server still controls icon removal.
 - Status: EXP at `(73,132)`, 183×15; resources at `(73,265 + 20*i)`, 68×15. Values are centered in the original field insets in both layouts. Long values scale to fit their cells, including allocation values on the expanded sheet.
 - Inventory preview: 136×217 opening at `(54,33)`, 34-degree FOV and height-based framing. Bind-pose arm span no longer shrinks the idle actor. This framing is calibrated against the reference composition; the complete native camera matrix has not been recovered.
 - Inventory gold: native comma grouping (`0x4ce790`/`0x4cb420`) and the `0x4cb4a0` colour table. Boundaries are 1,000 (`80FFFF`), 10,000 (`0080FF`), 100,000 (`00FF40`), 1,000,000 (`FFFF00`), 10,000,000 (`FF8000`), 100,000,000 (`FF00FF`) and 1,000,000,000 (`B673FF`); smaller balances are white. GX lightens the top violet tier.

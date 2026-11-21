@@ -44,3 +44,17 @@ func BuffDuration(seconds uint32, timed bool) string {
 	}
 	return fmt.Sprintf("%ds", seconds)
 }
+
+// BuffRemainingText is the PS0107 hover footer (0x49eb50). The caller in
+// 0x4b8e02 omits it when no whole seconds remain.
+func BuffRemainingText(seconds uint32) string {
+	if seconds == 0 {
+		return ""
+	}
+	days := seconds / 86400
+	clock := fmt.Sprintf("%02d:%02d:%02d", seconds/3600%24, seconds/60%60, seconds%60)
+	if days != 0 {
+		return fmt.Sprintf("%02d - %s", days, clock)
+	}
+	return clock
+}
