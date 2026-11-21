@@ -74,14 +74,16 @@ owner no longer receives an unconditional landing correction containing X/Z
 from its previous 10-Hz sample: that stale snapshot rewound newer predicted
 movement. Invalid height/path/speed samples still receive corrections, and an
 owner that stops sending input still receives authoritative gravity/landing
-updates after the existing 300-ms idle threshold. No movement or height allowance
-was increased to suppress the rewind.
+updates after the 300-ms idle threshold.
 
 The predictor carries the sub-coordinate fraction between frames. World
 subdivides the same horizontal displacement for collision checks while keeping
 the rounded endpoint, and charges that endpoint against its elapsed-time
 movement budget. This prevents per-frame rounding from accumulating at high
-frame rates and triggering corrections on clear ground. Corrections still
+frame rates and triggering corrections on clear ground. Periodic samples use
+the position at the end of the rendered frame. World retains bounded elapsed
+time for delayed running samples and keeps the per-sample speed cap. A small
+speed-only discrepancy on solid ground has one sample to resolve. Corrections
 update the physical position immediately. While walking or running, the visible
 model blends small corrections across clear ground over 180 ms. Falls, blocked
 paths and large corrections snap to the server position.

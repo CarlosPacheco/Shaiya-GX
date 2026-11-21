@@ -306,3 +306,88 @@ func TestMountedDriverJumpKeepsPhysicsAndRejectsAirJump(t *testing.T) {
 		t.Fatal("mounted air jump accepted")
 	}
 }
+
+func TestStraightRunWaitsOneSampleForTimingShortfall(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	x, y, z := s.char.PosX, s.char.PosY, s.char.PosZ
+	if ok, reason := s.validatePlayerMovement(x+.5, y, z, 1, 0, now.Add(100*time.Millisecond)); !ok || reason != "" {
+		t.Fatalf("on-time sample triggered a rewind: %q", reason)
+	}
+	if ok, reason := s.validatePlayerMovement(x+1, y, z, 1, 0, now.Add(115*time.Millisecond)); !ok || reason != "" {
+		t.Fatalf("early sample triggered a rewind: %q", reason)
+	}
+	if got := s.char.PosX - x; math.Abs(float64(got-.775)) > .001 {
+		t.Fatalf("early sample exceeded the movement budget: %g", got)
+	}
+	if ok, reason := s.validatePlayerMovement(x+1.5, y, z, 1, 0, now.Add(300*time.Millisecond)); !ok || reason != "" || math.Abs(float64(s.char.PosX-x-1.5)) > .001 {
+		t.Fatalf("on-time sample did not catch up: position %g, correction %q", s.char.PosX, reason)
+	}
+}
+
+func TestStraightRunStillCorrectsPersistentTimingShortfall(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	s.commitAttackStop(now)
+	resume := s.attackMoveUntil
+	x, y, z := s.char.PosX, s.char.PosY, s.char.PosZ
+	_, _ = s.validatePlayerMovement(x+.5, y, z, 1, 0, resume.Add(55*time.Millisecond))
+	if ok, reason := s.validatePlayerMovement(x+1, y, z, 1, 0, resume.Add(155*time.Millisecond)); !ok || reason != "movement exceeds server speed" {
+		t.Fatalf("persistent speed deficit escaped correction: %q", reason)
+	}
+	if got := s.char.PosX - x; math.Abs(float64(got-.775)) > .001 {
+		t.Fatalf("persistent deficit exceeded the movement budget: %g", got)
+	}
+}
+
+func TestTimingGraceKeepsOtherGroundCorrectionsImmediate(t *testing.T) {
+	for _, tc := range []struct {
+		name, reason string
+		dx, dy       float32
+		motion       uint8
+	}{
+		{"large speed deficit", "movement exceeds server speed", 1, 0, 1},
+		{"height", "height differs from server physics", .5, .5, 1},
+		{"stopped", "movement exceeds server speed", .5, 0, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, now := playerPhysicsFixture(t)
+			s.commitAttackStop(now)
+			ch := s.char
+			ok, reason := s.validatePlayerMovement(ch.PosX+tc.dx, ch.PosY+tc.dy, ch.PosZ, tc.motion, 0, s.attackMoveUntil.Add(55*time.Millisecond))
+			if !ok || reason != tc.reason {
+				t.Fatalf("got correction %q, want %q", reason, tc.reason)
+			}
+		})
+	}
+}
+
+func TestStraightRunDrainsDelayedSamplesWithoutLosingElapsedBudget(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	s.char.PosX, s.movement.pos[0] = 2, 2
+	x, y, z := s.char.PosX, s.char.PosY, s.char.PosZ
+	if ok, reason := s.validatePlayerMovement(x+.5, y, z, 1, 0, now.Add(100*time.Millisecond)); !ok || reason != "" {
+		t.Fatalf("initial sample: %q", reason)
+	}
+	arrival := now.Add(1200 * time.Millisecond)
+	for step := 2; step <= 12; step++ {
+		want := x + float32(step)*.5
+		ok, reason := s.validatePlayerMovement(want, y, z, 1, 0, arrival)
+		if !ok || reason != "" || math.Abs(float64(s.char.PosX-want)) > .001 {
+			t.Fatalf("delayed sample %d: position %g, want %g, correction %q", step, s.char.PosX, want, reason)
+		}
+	}
+	_, _ = s.validatePlayerMovement(x+7, y, z, 1, 0, arrival)
+	if s.char.PosX > x+6.201 {
+		t.Fatalf("delayed samples granted excess movement: %g", s.char.PosX)
+	}
+}
+
+func TestRunningGapKeepsSingleSampleLimit(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	s.char.PosX, s.movement.pos[0] = 2, 2
+	x, y, z := s.char.PosX, s.char.PosY, s.char.PosZ
+	_, _ = s.validatePlayerMovement(x+.5, y, z, 1, 0, now.Add(100*time.Millisecond))
+	_, reason := s.validatePlayerMovement(x+7, y, z, 1, 0, now.Add(10*time.Second))
+	if reason != "movement exceeds server speed" || s.char.PosX > x+.5+3.451 {
+		t.Fatalf("single sample spent the delayed packet budget: position %g correction %q", s.char.PosX, reason)
+	}
+}

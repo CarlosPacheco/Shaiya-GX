@@ -232,8 +232,8 @@ func (a *App) updateWorld(in *platform.Input, dt float64) {
 	controls := *in
 	for {
 		step := min(remaining, 1.0/60)
-		a.updateWorldStep(&controls, step)
 		remaining -= step
+		a.stepWorld(&controls, step, remaining < 1e-8)
 		if remaining < 1e-8 || a.wv == nil || a.state == nil {
 			return
 		}
@@ -246,6 +246,10 @@ func (a *App) updateWorld(in *platform.Input, dt float64) {
 }
 
 func (a *App) updateWorldStep(in *platform.Input, dt float64) {
+	a.stepWorld(in, dt, true)
+}
+
+func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	v := a.wv
 	if v == nil {
 		return
@@ -671,12 +675,19 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	}
 	v.constrainCamera()
 	v.updateRenderedCamera(float32(dt))
-	if moving != v.moving || motion != v.motion || ((moving || v.jumping) && v.sendT <= 0) || (v.waterDirty && (v.sendT <= 0 || (swimming && v.pos[1] >= scene.SwimSurfaceY))) {
+	// A slow frame can run several physics steps at once. Periodic packets
+	// must represent the position at the end of that frame, when they are sent.
+	periodic := lastStep && v.sendT <= 0
+	if moving != v.moving || motion != v.motion || ((moving || v.jumping) && periodic) || (v.waterDirty && (periodic || (swimming && v.pos[1] >= scene.SwimSurfaceY))) {
 		if err := a.world.Send(v.movePacket(motion)); err != nil {
 			a.backToLogin("Unable to send movement.")
 			return
 		}
-		v.sendT, v.moving, v.motion = 0.1, moving, motion
+		nextSample := 0.1
+		if periodic && moving == v.moving && motion == v.motion && (moving || v.jumping) {
+			nextSample = max(0, nextSample+v.sendT)
+		}
+		v.sendT, v.moving, v.motion = nextSample, moving, motion
 		v.waterDirty = false
 	}
 	a.state.Self.X, a.state.Self.Y, a.state.Self.Z = v.pos[0], v.pos[1], v.pos[2]

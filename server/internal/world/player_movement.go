@@ -23,6 +23,7 @@ type playerMovement struct {
 	pos                            mapgeometry.Position
 	at, packetAt, budgetAt, jumpAt time.Time
 	credit                         float64
+	speedCorrectionPending         bool
 	jumping                        bool
 	jumpFall, fall, waterFall      float32
 	horizontalAt                   time.Time
@@ -277,6 +278,7 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	s.advancePlayerVertical(now)
 	if m.ladder.Active {
 		m.packetAt, m.budgetAt = now, now
+		m.speedCorrectionPending = false
 		m.direction = direction
 		s.commitMovement()
 		if math.Abs(float64(m.pos[1]-y)) > .35 || math.Hypot(float64(m.pos[0]-x), float64(m.pos[2]-z)) > .2 {
@@ -296,7 +298,14 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		speed = 0
 	}
 	rate := float64(speed)
-	m.credit = min(rate*.65+.2, m.credit+elapsed*rate)
+	sampleLimit := rate*.65 + .2
+	bankLimit := sampleLimit
+	if m.motion&0x3f != 0 && motion&0x3f != 0 && !m.jumping && motion&proto.MotionFlag80 == 0 {
+		// A stream interrupted while running can deliver several old samples
+		// together. Retain their elapsed budget, with the usual cap per sample.
+		bankLimit = rate*1.5 + .2
+	}
+	m.credit = min(bankLimit, m.credit+elapsed*rate)
 	if speed == 0 {
 		m.credit = 0
 	}
@@ -309,7 +318,7 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		dx, dz = 0, 0
 	}
 	distance := math.Hypot(dx, dz)
-	available := max(0, m.credit)
+	available := min(sampleLimit, max(0, m.credit))
 	speedLimited := distance > available
 	reason := ""
 	if attackPaused && distance > .00001 {
@@ -367,14 +376,28 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	// difference can resolve on the next sample, using the same threshold as
 	// other horizontal discrepancies instead of correcting a few millimeters.
 	const correctionDistance = .12
-	if reason == "" && math.Hypot(float64(m.pos[0]-x), float64(m.pos[2]-z)) > correctionDistance {
+	shortfall := math.Hypot(float64(m.pos[0]-x), float64(m.pos[2]-z))
+	limitedBySpeed := false
+	if reason == "" && shortfall > correctionDistance {
 		reason = "blocked or invalid horizontal path"
 		if speedLimited && math.Hypot(float64(m.pos[0]-targetX), float64(m.pos[2]-targetZ)) <= correctionDistance {
 			reason = "movement exceeds server speed"
+			limitedBySpeed = true
 		}
 	}
 	if math.Abs(float64(m.pos[1]-y)) > .3 {
 		reason = "height differs from server physics"
+		limitedBySpeed = false
+	}
+	pending := m.speedCorrectionPending
+	m.speedCorrectionPending = limitedBySpeed
+	// One early running sample can arrive up to a send interval ahead of
+	// its budget. Keep the legal position and give the next sample a chance
+	// to catch up before sending a rewind. A persistent deficit is corrected.
+	if limitedBySpeed && !pending && motion&0x3f != 0 && wasSupported && !m.jumping &&
+		shortfall <= rate*.1 && m.geometry.Supported(m.pos) && !m.geometry.DeepWater(m.pos) &&
+		math.Hypot(float64(m.pos[0]-targetX), float64(m.pos[2]-targetZ)) <= .002 {
+		return true, ""
 	}
 	return true, reason
 }
