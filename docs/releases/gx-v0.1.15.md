@@ -29,6 +29,6 @@ Changes since the gx-v0.1.14 full portable.
 
 GX Studio now opens native item catalogs containing reserved empty slots and preserves those slots when saving.
 
-The GitHub archives contain native Windows and Linux builds of Shaiya GX, GX Studio and GX Server, with external fonts, server resources and the schema-35 development seed. Use matching loose client data for the updated interface and catalogs. The [complete gx-v0.1.14 portable on Google Drive](https://drive.google.com/file/d/1TPyHqlapcyItIbuVFsL5ISzapfQPbnPC/view?usp=sharing) is the previous data snapshot.
+The GitHub archives contain native Windows and Linux builds of Shaiya GX, GX Studio and GX Server, with external fonts, server resources and the schema-35 development seed. The [complete gx-v0.1.15 portable on Google Drive](https://drive.google.com/file/d/1oBq9bmt0eTmu9NNabIma0gmgGCe7i_Hk/view?usp=sharing) includes the matching loose client data, interface artwork and catalogs.
 
 [Upgrade guide](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/releases/gx-v0.1.15-upgrade.md) · [Quickstart](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/quickstart.md)
