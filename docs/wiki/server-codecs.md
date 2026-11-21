@@ -1441,6 +1441,22 @@ func DecodeGMState(p []byte) (GMState, error) {
 }
 ```
 
+```go
+type GMModes struct {
+	ID                       uint32
+	Concealed, Immune, Turbo bool
+}
+```
+
+```go
+func DecodeGMModes(p []byte) (GMModes, error) {
+	if len(p) != 9 || p[6] > 1 || p[7] > 1 || p[8] > 1 {
+		return GMModes{}, fmt.Errorf("invalid GX GM modes")
+	}
+	return GMModes{ID: binary.LittleEndian.Uint32(p[2:6]), Concealed: p[6] == 1, Immune: p[7] == 1, Turbo: p[8] == 1}, nil
+}
+```
+
 </details>
 
 ## gm map
