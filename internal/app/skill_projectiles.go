@@ -117,6 +117,7 @@ func (a *App) effectTargetMatrix(id uint32) (render.M4, bool) {
 func (a *App) updateResolvedEffects() {
 	v := a.wv
 	initialImpacts := len(v.impacts)
+	a.updatePlayerFeedback()
 	a.updateSkillImpactCues()
 	dt := float32(min(max(a.frameDT, 0), .25))
 	a.updateSkillReleaseEffects(dt)

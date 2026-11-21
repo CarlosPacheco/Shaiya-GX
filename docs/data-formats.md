@@ -372,3 +372,33 @@ The tool copies known names for installed numeric WLD maps and adds `Map N`
 for unused slots. It removes the old map-name rows and preserves other entries,
 including previously configured names in the new range. To name a future map, edit
 or add its message in the same UTF-16LE format, then restart the client.
+
+## Player progression and map-entry effects
+
+The EP5 client uses sequence 0 of `Start.EFT` on fresh map entry (effect
+dispatch at `0x4F085B` in the unpacked client). Ordinary view snapshots
+do not replay it. Level-up uses `LevelUp.EFT` sequence 0 for the Alliance of
+Light and 1 for the Union of Fury, with `ch_levup001.wav` (`0x4ECD9C`,
+`0x4ECDBF`, and the deferred path at `0x4C0F47`). A successful skill
+learn or upgrade uses sequence 0 of `Up.EFT` and `ui_skillnew001.wav`
+(`0x50048C` and `0x50058F`). All three libraries retain their authored
+emission times.
+
+GX uses native `0x0201`, `0x0508` and `0x0209` for the local player.
+Observers receive the existing level-up `0x051E` and GX `0x7F25` for
+fresh map entry and skill progression. The GX packet contains the player
+ID (u32) and cue (u8, 1 for entry or 2 for skill). It is sent after view
+registration or a committed skill change, and respects stealth and view
+membership. The nearby skill confirmation is a GX presentation addition.
+
+For loose packs missing the original cues, import them from your own EP5
+archive with the GX asset tool and FFmpeg. Run from the repository root
+with `EP5_ARCHIVE_DIR` and `GX_DATA_DIR` set to the source archive directory
+and the destination loose `data` directory.
+
+```sh
+for cue in ch_levup001 ui_skillnew001; do
+    build/assets -data "$EP5_ARCHIVE_DIR" cat "Sound/$cue.wav" |
+        ffmpeg -n -i pipe:0 -ar 44100 -c:a libvorbis -q:a 6 "$GX_DATA_DIR/Sound/$cue.ogg"
+done
+```

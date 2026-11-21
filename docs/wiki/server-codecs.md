@@ -3138,6 +3138,35 @@ func DecodePeriodicEffect(p []byte) (v PeriodicEffect, err error) {
 
 </details>
 
+## player feedback
+
+[internal/proto/player_feedback.go](../../internal/proto/player_feedback.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+func PlayerFeedbackPacket(id uint32, kind uint8) []byte {
+	w := NewWriter(GXPlayerFeedback)
+	w.U32(id)
+	w.U8(kind)
+	return w.Bytes()
+}
+```
+
+```go
+func DecodePlayerFeedback(p []byte) (id uint32, kind uint8, err error) {
+	r := NewReader(p)
+	id, kind = r.U32(), r.U8()
+	if Op(p) != GXPlayerFeedback || r.Err() != nil || r.Remaining() != 0 ||
+		id == 0 || (kind != PlayerSpawnFeedback && kind != PlayerSkillFeedback) {
+		err = fmt.Errorf("invalid player feedback")
+	}
+	return
+}
+```
+
+</details>
+
 ## player forms
 
 [internal/proto/player_forms.go](../../internal/proto/player_forms.go#L1)

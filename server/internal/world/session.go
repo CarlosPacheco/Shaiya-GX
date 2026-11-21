@@ -975,6 +975,7 @@ func (s *Session) handleMapLoaded() {
 	s.updateWeather(time.Now(), true)
 	// CZone::EnterUser + SendCellInfoView: the 5x5 cells around the user.
 	s.placeView()
+	s.sendPlayerFeedback(proto.PlayerSpawnFeedback)
 	s.syncQuestNPCCatalog(true)
 	near := EntitiesInView(ch.MapID, cellFor(ch.PosX, ch.PosZ))
 	others := s.player.knownIDs(viewUser)

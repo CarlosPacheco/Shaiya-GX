@@ -577,7 +577,7 @@ Declarations: [packet.CharacterSkills](../../server/internal/packet/packet.go#L3
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterSkills (server/internal/world/skills.go)](../../server/internal/world/skills.go#L23)
+**S→C serializers:** [buildCharacterSkills (server/internal/world/skills.go)](../../server/internal/world/skills.go#L25)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L768)
 
@@ -587,7 +587,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterSkills — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L23)
+[Source definition](../../server/internal/world/skills.go#L25)
 
 ```go
 func buildCharacterSkills(skills []db.CharacterSkill) []byte {
@@ -779,7 +779,7 @@ Declarations: [packet.CharacterSkillBar](../../server/internal/packet/packet.go#
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L226)
 
-**S→C serializers:** [buildCharacterSkillBar (server/internal/world/skills.go)](../../server/internal/world/skills.go#L41)
+**S→C serializers:** [buildCharacterSkillBar (server/internal/world/skills.go)](../../server/internal/world/skills.go#L43)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L777)
 
@@ -789,7 +789,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterSkillBar — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L41)
+[Source definition](../../server/internal/world/skills.go#L43)
 
 ```go
 func buildCharacterSkillBar(slots []db.QuickSlot) []byte {

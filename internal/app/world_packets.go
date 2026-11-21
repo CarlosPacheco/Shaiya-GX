@@ -40,6 +40,12 @@ func (a *App) pumpWorld() {
 }
 
 func (a *App) applyWorldPacket(p []byte) {
+	if proto.Op(p) == proto.GXPlayerFeedback {
+		if id, kind, err := proto.DecodePlayerFeedback(p); err == nil && a.state != nil && id != a.state.SelfID {
+			a.queuePlayerFeedback(id, kind)
+		}
+		return
+	}
 	if proto.Op(p) == proto.GXFirecracker {
 		a.confirmedFirecracker(p)
 		return
@@ -65,6 +71,12 @@ func (a *App) applyWorldPacket(p []byte) {
 	}
 	previousMoney := a.state.Details.Money
 	previousPhase := a.state.Phase
+	var previousLevel uint16
+	if proto.Op(p) == proto.LevelUpSelf {
+		if ch, ok := a.selfSlot(); ok {
+			previousLevel = ch.Level
+		}
+	}
 	ev, err := a.state.Apply(p)
 	if err != nil {
 		log.Printf("packet: %v", err)
@@ -73,6 +85,7 @@ func (a *App) applyWorldPacket(p []byte) {
 	if previousPhase == game.PhaseLoading && a.state.Phase == game.PhaseInWorld {
 		a.rememberCharacterSlot()
 	}
+	a.confirmedPlayerFeedback(p, previousLevel)
 	if ev.Op == proto.GXEvolutionBar {
 		a.confirmEvolutionBar()
 	}
@@ -90,6 +103,7 @@ func (a *App) applyWorldPacket(p []byte) {
 	a.syncUnionState(wasRaid)
 	a.drainPartyNotices()
 	if ev.Op == proto.Logout && a.state.Phase == game.PhaseCharSelect {
+		a.playerFeedback = a.playerFeedback[:0]
 		if a.menuPending && a.menuIntent == ui.MenuExit {
 			a.Quit = true
 		}

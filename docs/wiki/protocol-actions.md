@@ -420,7 +420,7 @@ Declarations: [packet.SetStatPoint](../../server/internal/packet/packet.go#L88),
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224)
 
-**S→C serializers:** [handleSetStatPoint (server/internal/world/skills.go)](../../server/internal/world/skills.go#L232)
+**S→C serializers:** [handleSetStatPoint (server/internal/world/skills.go)](../../server/internal/world/skills.go#L235)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L688)
 
@@ -430,7 +430,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleSetStatPoint — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L232)
+[Source definition](../../server/internal/world/skills.go#L235)
 
 ```go
 func (s *Session) handleSetStatPoint(p []byte) {
@@ -530,7 +530,7 @@ Declarations: [packet.LearnNewSkill](../../server/internal/packet/packet.go#L90)
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L222)
 
-**S→C serializers:** [buildLearnSkillError (server/internal/world/skills.go)](../../server/internal/world/skills.go#L100), [buildLearnSkillResult (server/internal/world/skills.go)](../../server/internal/world/skills.go#L129)
+**S→C serializers:** [buildLearnSkillError (server/internal/world/skills.go)](../../server/internal/world/skills.go#L102), [buildLearnSkillResult (server/internal/world/skills.go)](../../server/internal/world/skills.go#L131)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L785)
 
@@ -540,7 +540,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildLearnSkillError — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L100)
+[Source definition](../../server/internal/world/skills.go#L102)
 
 ```go
 func buildLearnSkillError(reason uint8, skillID uint16, level uint8) []byte {
@@ -557,7 +557,7 @@ func buildLearnSkillError(reason uint8, skillID uint16, level uint8) []byte {
 
 <details><summary>buildLearnSkillResult — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L129)
+[Source definition](../../server/internal/world/skills.go#L131)
 
 ```go
 func buildLearnSkillResult(ok bool, number uint8, skillID uint16, level uint8) []byte {
@@ -1006,7 +1006,7 @@ Declarations: [packet.AutoAttackStop](../../server/internal/packet/packet.go#L39
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L228)
 
-**S→C serializers:** [beginSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L193), [syncVisibility (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L38)
+**S→C serializers:** [beginSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L193), [syncVisibility (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L40)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1159,7 +1159,7 @@ func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.Skil
 
 <details><summary>syncVisibility — server/internal/world/visibility.go</summary>
 
-[Source definition](../../server/internal/world/visibility.go#L38)
+[Source definition](../../server/internal/world/visibility.go#L40)
 
 ```go
 func (s *Session) syncVisibility() {

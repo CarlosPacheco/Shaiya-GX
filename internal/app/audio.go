@@ -18,13 +18,17 @@ func (a *App) audioError(file string, err error) {
 	}
 }
 func (a *App) playSound(name string, x, z float32) {
+	a.playSoundWithin(name, x, z, 40)
+}
+
+func (a *App) playSoundWithin(name string, x, z float32, radius float64) {
 	if a.sound == nil || name == "" || strings.EqualFold(name, "LOAD") {
 		return
 	}
 	gain := 1.0
 	if a.wv != nil {
 		dx, dz := float64(x-a.wv.pos[0]), float64(z-a.wv.pos[2])
-		gain = math.Max(0, 1-math.Hypot(dx, dz)/40)
+		gain = math.Max(0, 1-math.Hypot(dx, dz)/radius)
 	}
 	if gain == 0 {
 		return

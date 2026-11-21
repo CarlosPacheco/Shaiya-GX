@@ -89,7 +89,7 @@ Source notes: GXVisibility: character ID:u32, concealed:u8. Sent only to authori
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [visibilityPacket (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L25)
+**S→C serializers:** [visibilityPacket (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L27)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1248)
 
@@ -99,7 +99,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>visibilityPacket — server/internal/world/visibility.go</summary>
 
-[Source definition](../../server/internal/world/visibility.go#L25)
+[Source definition](../../server/internal/world/visibility.go#L27)
 
 ```go
 func (p *ConnectedPlayer) visibilityPacket() []byte {
@@ -2489,6 +2489,54 @@ type Firecracker struct {
 	Variant uint8
 	X, Y, Z float32
 	Name    string
+}
+```
+
+</details>
+
+## Opcode 7f25
+
+**`0x7F25` — GXPlayerFeedback**
+
+Declarations: [proto.GXPlayerFeedback](../../internal/proto/player_feedback.go#L6).
+
+Source notes: GXPlayerFeedback carries a presentation event for an already visible player.
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** [sendPlayerFeedback (server/internal/world/player_feedback.go)](../../server/internal/world/player_feedback.go#L8)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>sendPlayerFeedback — server/internal/world/player_feedback.go</summary>
+
+[Source definition](../../server/internal/world/player_feedback.go#L8)
+
+```go
+func (s *Session) sendPlayerFeedback(kind uint8) {
+	p := proto.PlayerFeedbackPacket(s.char.ID, kind)
+	w := packet.New(packet.Opcode(proto.GXPlayerFeedback))
+	w.Bytes(p[2:])
+	s.sendToViewers(w.MustFinish(), "GX player feedback")
+}
+```
+
+</details>
+
+<details><summary>PlayerFeedbackPacket — internal/proto/player_feedback.go</summary>
+
+[Source definition](../../internal/proto/player_feedback.go#L13)
+
+```go
+func PlayerFeedbackPacket(id uint32, kind uint8) []byte {
+	w := NewWriter(GXPlayerFeedback)
+	w.U32(id)
+	w.U8(kind)
+	return w.Bytes()
 }
 ```
 

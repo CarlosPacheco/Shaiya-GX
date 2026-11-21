@@ -150,6 +150,7 @@ type App struct {
 	factionUI                           *ui.FactionScreen
 	accountMessage                      *ui.Message
 	account                             accountAction
+	playerFeedback                      []playerFeedback
 	characterSlotFile                   string
 	restoreCharacterSlot                bool
 	factionDeadline                     float64
@@ -805,6 +806,7 @@ func (a *App) backToLogin(msg string) {
 	a.sess, a.state, a.uiHidden = nil, nil, false
 	a.creating = false
 	a.account = accountAction{}
+	a.playerFeedback = a.playerFeedback[:0]
 	if a.accountMessage != nil {
 		a.accountMessage.Visible = false
 	}

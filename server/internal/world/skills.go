@@ -1,9 +1,11 @@
 package world
 
 import (
-	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"slices"
 	"sort"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -222,6 +224,7 @@ func (s *Session) handleLearnSkill(p []byte) {
 
 	s.log.Printf("GX Server World learned skill number=%d skill_id=%d level=%d remaining_skill_point=%d", learned.Number, skillID, level, ch.SkillPoint)
 	s.send(buildLearnSkillResult(true, learned.Number, skillID, level), "0x0209 learn skill ok")
+	s.sendPlayerFeedback(proto.PlayerSkillFeedback)
 	if learned.Delay > 0 {
 		s.sendSkillCooldown(skillID, uint16(learned.Delay), skilltiming.ReuseSeconds(def.ResetTimeSeconds))
 	}
