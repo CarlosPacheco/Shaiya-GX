@@ -168,6 +168,7 @@ func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore boo
 		s.send(pools, "0x0505 rebirth pools")
 		s.applyTeleport(mapID, x, y, z, "rebirth")
 	}
+	s.syncPlayerSpeed(true)
 	s.log.Printf("GX Server World rebirth character_id=%d kind=%d map=%d pos=(%.2f, %.2f, %.2f) exp_lost=%d",
 		ch.ID, kind, mapID, x, y, z, lost)
 }

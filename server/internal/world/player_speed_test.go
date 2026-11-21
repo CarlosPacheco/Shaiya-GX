@@ -16,7 +16,7 @@ func speedDefs(t *testing.T) {
 	t.Cleanup(func() { db.SetDefsForTest(old) })
 	db.SetDefsForTest(&db.Defs{Items: map[db.ItemKey]*db.ItemDef{
 		{Type: 21, TypeID: 1}:   {Type: 21, TypeID: 1, Slot: 6},
-		{Type: 30, TypeID: 106}: {Type: 30, TypeID: 106, Slot: 1, Speed: 1},
+		{Type: 30, TypeID: 106}: {Type: 30, TypeID: 106, Slot: 1, Speed: 1, AttackTime: 1},
 		{Type: 30, TypeID: 107}: {Type: 30, TypeID: 107, Slot: 1, Speed: 2},
 		{Type: 23, TypeID: 57}:  {Type: 23, TypeID: 57, Speed: 1},
 	}})
@@ -91,6 +91,9 @@ func TestServerSpeedSnapshotAndChangePublication(t *testing.T) {
 	s.items = []db.Item{{Bag: 0, Slot: 4, Type: 21, TypeID: 1, Gems: [6]uint8{106}}}
 	s.sendChangedPools(s.maxPools(), "Sonic linking")
 	next(3)
+	if frame := <-wire; proto.Op(frame) != proto.CharacterAdditionalStats {
+		t.Fatalf("missing additional stats: %x", frame)
+	}
 	state := game.New()
 	state.SelfID = 990062
 	for _, p := range s.player.enterFrames() {
@@ -286,5 +289,39 @@ func TestSubTolerancePacketFloodCannotAccumulateFreeMovement(t *testing.T) {
 	}
 	if delta := s.char.PosZ - start; delta > .701 {
 		t.Fatal("small packets exceeded elapsed server time", delta)
+	}
+}
+
+func TestRebirthRepublishesEquipmentSpeedAfterDeathState(t *testing.T) {
+	speedDefs(t)
+	s, wire := gmWireSession(t, db.Character{ID: 990063, MapID: 60093, CurrentHP: 100}, true)
+	base := s.speeds()
+	s.items = []db.Item{
+		{Bag: 0, Slot: 4, Type: 21, TypeID: 1, Gems: [6]uint8{106}},
+		{Bag: 0, Slot: 8, Type: 23, TypeID: 57},
+	}
+	state := game.New()
+	state.SelfID = s.char.ID
+	apply := func(frame []byte) {
+		t.Helper()
+		if _, err := state.Apply(frame); err != nil {
+			t.Fatal(err)
+		}
+	}
+	s.syncPlayerSpeed(true)
+	apply(waitWorldPacket(t, wire, proto.CharacterDeathState))
+	want := *state.Self.Speed
+	if want.Move != 4 || want.Attack == base.attack {
+		t.Fatalf("fixture did not apply both gear and lapis: %+v", want)
+	}
+
+	s.dead = true
+	apply(buildCharacterDeathState(s.char.ID)[2:])
+	apply(buildCharacterDeath(s.char.ID, deathTypeMob, 0)[2:])
+	s.rebirth(s.char.MapID, s.char.PosX, s.char.PosY, s.char.PosZ, rebirthKindBind, true, 0)
+	apply(waitWorldPacket(t, wire, proto.CharacterResurrect))
+	apply(waitWorldPacket(t, wire, proto.CharacterDeathState))
+	if state.Self.Dead || *state.Self.Speed != want {
+		t.Fatalf("revived with incorrect speed: %+v, want %+v", state.Self.Speed, want)
 	}
 }

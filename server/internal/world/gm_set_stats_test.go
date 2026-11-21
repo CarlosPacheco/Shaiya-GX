@@ -112,3 +112,13 @@ func TestNormalAllocationCannotOverflowGMBaseStatCap(t *testing.T) {
 		t.Fatal("over-cap request spent points or changed other stats")
 	}
 }
+
+func TestStatAllocationPublishesCurrentDerivedStats(t *testing.T) {
+	s, wire := gmWireSession(t, db.Character{ID: 990078, Str: 20, StatPoint: 10}, false)
+	s.handleSetStatPoint(proto.StatPointsPacket(proto.StatPoints{5}))
+	waitWorldPacket(t, wire, proto.SetStatPoint)
+	stats, err := proto.DecodeAdditionalStats(waitWorldPacket(t, wire, proto.CharacterAdditionalStats))
+	if err != nil || stats.Str != 25 || stats.MinAttack != s.stats().MinAttack {
+		t.Fatalf("allocation stats = %+v, err = %v", stats, err)
+	}
+}

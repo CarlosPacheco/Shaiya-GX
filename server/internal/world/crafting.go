@@ -163,6 +163,8 @@ func (s *Session) planEnchantAdd(p []byte) {
 	s.send(buildEnchantResult(1, lBag, lSlot, lapLeft, mBag, mSlot, matLeft, iBag, iSlot, ch.Money, name), "0x0805 enchant add result")
 	if iBag == 0 {
 		s.equipmentChanged([]uint8{iSlot})
+		stats := s.stats()
+		s.send(buildAdditionalStats(&stats), "0x0526 additional stats after enchant")
 	}
 }
 
@@ -199,11 +201,12 @@ func (s *Session) maxPools() [3]uint32 {
 	return [3]uint32{st.MaxHP, st.MaxSP, st.MaxMP}
 }
 
-// sendChangedPools sends 0x050B only for pools that changed; a full stat
-// resend crashes the client after item mutations.
+// sendChangedPools refreshes derived stats and sends 0x050B only for pools that changed.
 func (s *Session) sendChangedPools(before [3]uint32, why string) {
 	s.syncPlayerSpeed(false)
-	after := s.maxPools()
+	stats := s.stats()
+	s.send(buildAdditionalStats(&stats), "0x0526 additional stats ("+why+")")
+	after := [3]uint32{stats.MaxHP, stats.MaxSP, stats.MaxMP}
 	for t := range 3 {
 		if before[t] != after[t] {
 			s.send(buildMaxEnergy(s.char, uint8(t), after[t]), "0x050B max energy ("+why+")")

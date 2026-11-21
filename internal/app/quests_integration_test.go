@@ -87,7 +87,7 @@ func TestQuestStartAndAbandonAgainstRapture(t *testing.T) {
 		}
 		return false
 	})
-	a.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	a.openNPC(id)
 	if a.shop.npcID != id {
 		t.Fatalf("quest NPC not opened: got %d want %d", a.shop.npcID, id)
 	}
@@ -182,7 +182,7 @@ func TestQuestCompleteAgainstRapture(t *testing.T) {
 		return false
 	})
 	wait(func() bool { q, ok := st.Quests[1]; return ok && q.Counters[0] >= 5 })
-	a.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	a.openNPC(npc)
 	if a.shop.npcID != npc {
 		t.Fatalf("end NPC not opened: %d want %d", a.shop.npcID, npc)
 	}
@@ -264,7 +264,7 @@ func TestQuestRewardChoiceAgainstRapture(t *testing.T) {
 		return false
 	})
 	wait(func() bool { q, ok := st.Quests[226]; return ok && q.Counters[0] >= 5 })
-	a.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	a.openNPC(npc)
 	if a.shop.npcID != npc {
 		t.Fatalf("choice NPC not opened: %d want %d", a.shop.npcID, npc)
 	}
@@ -367,7 +367,7 @@ func TestMerchantQuestAgainstRapture(t *testing.T) {
 		}
 		return false
 	})
-	a.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	a.openNPC(npc)
 	if a.shop.npcID != npc {
 		t.Fatalf("merchant not opened: %d want %d", a.shop.npcID, npc)
 	}
@@ -578,7 +578,7 @@ func TestQuestItemHandInAgainstRapture(t *testing.T) {
 		return false
 	})
 	wait(func() bool { _, ok := st.Quests[9]; return ok })
-	a.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	a.openNPC(npc)
 	if a.shop.npcID != npc {
 		t.Fatal("quest merchant not opened")
 	}

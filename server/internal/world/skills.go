@@ -270,6 +270,7 @@ func (s *Session) handleSetStatPoint(p []byte) {
 		w.U16(v)
 	}
 	s.send(w.MustFinish(), "0x0208 stat point applied")
+	s.send(buildAdditionalStats(&stats), "0x0526 additional stats after stat allocation")
 	if d[2] > 0 {
 		s.send(buildMaxEnergy(ch, 0, stats.MaxHP), "0x050B max hp")
 	}

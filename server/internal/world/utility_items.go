@@ -89,6 +89,7 @@ func (s *Session) resurrectWithItem(index int, id uint32) bool {
 	player.UpdateCharacter(after)
 	target.broadcastNear(buildCharacterResurrect(id, rebirthKindBind, after.Exp, after.PosX, after.PosY, after.PosZ), "0x0551 target resurrection rune", true)
 	target.send(buildCharacterReviveHitpoints(id, after.CurrentHP, after.CurrentMP, after.CurrentSP), "0x0505 rune pools")
+	target.syncPlayerSpeed(true)
 	target.partyPools()
 	s.send(buildUseItemResult(ch.ID, &item), "0x050A target resurrection rune")
 	return true

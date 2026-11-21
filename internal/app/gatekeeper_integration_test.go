@@ -50,7 +50,7 @@ func TestGatekeeperAgainstRapture(t *testing.T) {
 		}
 		return false
 	})
-	a.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	a.openNPC(id)
 	if a.shop.npcID != id {
 		t.Fatal("gatekeeper did not open")
 	}
@@ -165,7 +165,7 @@ func TestGatekeeperCrossMapAgainstRapture(t *testing.T) {
 		}
 		return false
 	})
-	a.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	a.openNPC(id)
 	if graphics && a.wv.approachNPC {
 		if a.shop.npcID != 0 {
 			t.Fatal("portal conversation opened before approach finished")

@@ -81,7 +81,7 @@ func TestGuildCreationAgainstRapture(t *testing.T) {
 		}
 	}
 	master.wv.pos = render.V3{manager.X, manager.Y, manager.Z}
-	master.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	master.openNPC(manager.ID)
 	if master.shop.npcID != manager.ID {
 		t.Fatal("guild manager not opened")
 	}

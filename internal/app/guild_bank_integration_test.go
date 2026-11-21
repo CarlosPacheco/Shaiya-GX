@@ -39,7 +39,7 @@ func TestGuildBankAgainstRapture(t *testing.T) {
 		return false
 	})
 	appA.wv.pos[0], appA.wv.pos[1], appA.wv.pos[2] = a.Self.X, a.Self.Y, a.Self.Z
-	appA.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	appA.openNPC(npc)
 	if appA.shop.npcID != npc {
 		t.Fatal("banker not opened")
 	}

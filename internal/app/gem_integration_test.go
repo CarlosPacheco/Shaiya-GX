@@ -64,7 +64,7 @@ func TestGemAddAgainstRapture(t *testing.T) {
 		}
 		return false
 	})
-	app.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	app.openNPC(smith)
 	if app.shop.npcID != smith {
 		t.Fatal("nearby blacksmith did not open")
 	}
@@ -225,7 +225,7 @@ func TestGemExtractionAgainstRapture(t *testing.T) {
 		}
 		return false
 	})
-	a.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	a.openNPC(smith)
 	if a.shop.npcID != smith {
 		t.Fatal("blacksmith did not open")
 	}

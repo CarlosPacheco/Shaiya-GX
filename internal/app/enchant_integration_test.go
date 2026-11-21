@@ -34,7 +34,7 @@ func TestEnchantAgainstRapture(t *testing.T) {
 		}
 		return false
 	})
-	a.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	a.openNPC(smith)
 	if a.shop.npcID != smith {
 		t.Fatal("blacksmith did not open")
 	}

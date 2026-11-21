@@ -32,30 +32,6 @@ func (a *App) updateShop(in *platform.Input, w, h int) bool {
 	if a.state.Entities[v.npcID] == nil {
 		v.npcID = 0
 	}
-	for _, r := range in.Chars {
-		if (r == 'n' || r == 'N') && !a.state.Self.Dead {
-			a.loadNPCs()
-			best := float32(50 * 50)
-			id := uint32(0)
-			for k, e := range a.state.Entities {
-				if e.Kind != game.KindNpc {
-					continue
-				}
-				dx, dz := e.X-a.wv.pos[0], e.Z-a.wv.pos[2]
-				d := dx*dx + dz*dz
-				if d >= 50*50 {
-					continue
-				}
-				if d < best || d == best && (id == 0 || k < id) {
-					best, id = d, k
-				}
-			}
-			if id != 0 {
-				a.openNPC(id)
-				return true
-			}
-		}
-	}
 	if v.npcID == 0 {
 		if a.remoteWarehouseOpen() {
 			return a.updateWarehouse(in, w, h)

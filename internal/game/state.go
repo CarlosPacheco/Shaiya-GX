@@ -518,9 +518,6 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			item.Craft = result.Craft
 			s.Inventory[key] = item
 		}
-		if result.Bag == 0 && result.Result == 0 {
-			s.StatsKnown = false
-		}
 		s.LastCompose = result
 		s.ComposeSerial++
 	case proto.EnchantAdd:
@@ -542,9 +539,6 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		s.applyItem(mat)
 		s.Inventory[itemKey] = item
 		s.Details.Money = result.Money
-		if result.ItemBag == 0 {
-			s.StatsKnown = false
-		}
 		s.LastEnchant = result
 		s.EnchantSerial++
 	case proto.ItemRepair:
@@ -572,9 +566,6 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			s.Inventory[key] = item
 		}
 		s.Details.Money = result.Money
-		if result.ItemBag == 0 {
-			s.StatsKnown = false
-		}
 		s.LastGemRemove = result
 		s.GemRemoveSerial++
 	case proto.CloakAdd:
@@ -623,9 +614,6 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		gem.Count = result.GemCount
 		s.applyItem(gem)
 		s.Details.Money = result.Money
-		if result.ItemBag == 0 {
-			s.StatsKnown = false
-		}
 		s.LastGemAdd = result
 		s.GemAddSerial++
 	case proto.GuildDuelRequest, proto.GuildDuelAnswer, proto.GuildDuelCountdown, proto.GuildDuelStart, proto.GuildDuelResult, proto.GuildDuelLeave:
@@ -697,7 +685,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		if d.Result == 1 {
-			s.Details.StatPoint, s.StatsKnown = d.Points, false
+			s.Details.StatPoint = d.Points
 			for i, c := range s.Slots {
 				if c.ID == s.SelfID {
 					c.Str, c.Rec, c.Int, c.Wis, c.Dex, c.Luc = d.Str, d.Rec, d.Int, d.Wis, d.Dex, d.Luc
@@ -972,7 +960,6 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			}
 		}
 		if id == s.SelfID {
-			s.StatsKnown = false
 			s.Details.StatPoint, s.Details.SkillPoint = stats, skills
 			s.Details.PrevExp, s.Details.NextExp = prev, next
 		}
@@ -1139,6 +1126,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		if r.Result == 0 {
 			s.SelfID, s.Phase = r.ID, PhaseLoading
+			s.StatsKnown = false
 			s.DeathLossFree = false
 			s.Blessing = BlessingState{}
 			s.Weather = proto.Weather{}

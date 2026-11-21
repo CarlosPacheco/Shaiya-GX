@@ -232,7 +232,7 @@ func TestGuildApplicationAgainstRapture(t *testing.T) {
 	})
 	manager := b.Entities[npcID]
 	appB.wv.pos = render.V3{manager.X, manager.Y, manager.Z}
-	appB.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	appB.openNPC(npcID)
 	if appB.shop.npcID != npcID {
 		t.Fatal("did not open the actual guild manager")
 	}
@@ -317,7 +317,7 @@ func TestGuildDisbandSmallAgainstRapture(t *testing.T) {
 		return false
 	})
 	appA.wv.pos = render.V3{manager.X, manager.Y, manager.Z}
-	appA.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	appA.openNPC(manager.ID)
 	if appA.shop.npcID != manager.ID {
 		t.Fatal("guild manager not opened")
 	}

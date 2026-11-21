@@ -34,7 +34,7 @@ func TestWarehouseMovesAgainstRapture(t *testing.T) {
 		return false
 	})
 	a.wv.pos[0], a.wv.pos[1], a.wv.pos[2] = st.Self.X, st.Self.Y, st.Self.Z
-	a.worldControls(&platform.Input{Chars: []rune{'n'}}, 1024, 768)
+	a.openNPC(npc)
 	if a.shop.npcID != npc {
 		t.Fatal("interacting with the server's banker did not open it")
 	}

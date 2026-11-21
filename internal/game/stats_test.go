@@ -18,7 +18,7 @@ func TestStatAcknowledgementUpdatesOnlyOwnConfirmedBase(t *testing.T) {
 		t.Fatal(err)
 	}
 	c := s.Slots[0]
-	if s.Details.StatPoint != 1 || c.Str != 65535 || c.Dex != 4 || c.Rec != 6 || c.Int != 5 || c.Wis != 6 || c.Luc != 7 || s.Slots[1].Str != 99 || s.StatsKnown {
+	if s.Details.StatPoint != 1 || c.Str != 65535 || c.Dex != 4 || c.Rec != 6 || c.Int != 5 || c.Wis != 6 || c.Luc != 7 || s.Slots[1].Str != 99 || !s.StatsKnown {
 		t.Fatal("acknowledgement applied incorrectly", c, s.Details)
 	}
 	before := s.Slots[0]
@@ -62,8 +62,30 @@ func TestLevelUpAddsJobAttributeWithoutSpendingAllocation(t *testing.T) {
 				t.Fatal("job attribute mismatch", job, c)
 			}
 		}
-		if s.Details.StatPoint != 15 || s.Details.SkillPoint != 9 || s.StatsKnown {
+		if s.Details.StatPoint != 15 || s.Details.SkillPoint != 9 || !s.StatsKnown {
 			t.Fatal("level-up allocation/totals mismatch")
 		}
+	}
+}
+
+func TestFailedEquippedLapisLinkKeepsDerivedStats(t *testing.T) {
+	s := New()
+	s.StatsKnown = true
+	s.Stats.MinAttack, s.Stats.MaxAttack = 100, 150
+	s.Stats.MinMagic, s.Stats.MaxMagic = 80, 120
+	s.Stats.Defense, s.Stats.Resistance = 75, 50
+	before := s.Stats
+	s.Inventory[[2]uint8{1, 0}] = proto.InventoryItem{Bag: 1, Type: 30, TypeID: 106, Count: 2}
+	w := proto.NewWriter(proto.GemAdd)
+	w.Raw([]byte{0, 1, 0})
+	w.Count(1)
+	w.Raw([]byte{0, 4, 0, 0})
+	w.U32(0)
+	w.U32(1000)
+	if _, err := s.Apply(w.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	if !s.StatsKnown || s.Stats != before || s.Inventory[[2]uint8{1, 0}].Count != 1 {
+		t.Fatal("failed link changed confirmed stats or did not consume lapis")
 	}
 }

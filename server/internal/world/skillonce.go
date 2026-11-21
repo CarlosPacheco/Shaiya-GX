@@ -279,5 +279,6 @@ func (s *Session) lifeSkill(l *pendingLifeSkill) {
 	s.broadcastNear(buildCharacterResurrect(ch.ID, rebirthKindBind, ch.Exp, ch.PosX, ch.PosY, ch.PosZ), "0x0551 life skill", true)
 	st := s.stats()
 	s.send(buildCharacterReviveHitpoints(ch.ID, st.CurrentHP, st.CurrentMP, st.CurrentSP), "0x0505 life skill pools")
+	s.syncPlayerSpeed(true)
 	s.log.Printf("GX Server World revived by skill character_id=%d caster=%d", ch.ID, l.CasterID)
 }
