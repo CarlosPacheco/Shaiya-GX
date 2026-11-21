@@ -304,3 +304,25 @@ func TestSameFactionPlayerIsFollowedWithoutPackets(t *testing.T) {
 		t.Fatal("enemy faction must be attackable")
 	}
 }
+
+// The world acts on the left press (0x43bfa0); the release is swallowed.
+func TestWorldActsOnPressAndSwallowsRelease(t *testing.T) {
+	a := inputApp()
+	press := a.worldControls(&platform.Input{MouseX: 512, MouseY: 300, Pressed: true, MouseDown: true}, 1024, 768)
+	if !press.Clicked {
+		t.Fatal("an unowned press did not reach the world as a click")
+	}
+	release := a.worldControls(&platform.Input{MouseX: 512, MouseY: 300, Clicked: true}, 1024, 768)
+	if release.Clicked {
+		t.Fatal("the release repeated the action")
+	}
+	both := a.worldControls(&platform.Input{MouseX: 512, MouseY: 300, Pressed: true, MouseDown: true, RightDown: true}, 1024, 768)
+	if both.Clicked {
+		t.Fatal("mouse-run (both buttons) must not click")
+	}
+	a.worldControls(&platform.Input{MouseX: 512, MouseY: 300}, 1024, 768)
+	hud := a.worldControls(&platform.Input{MouseX: 40, MouseY: 50, Pressed: true, MouseDown: true}, 1024, 768)
+	if hud.Clicked {
+		t.Fatal("a panel-owned press reached the world")
+	}
+}

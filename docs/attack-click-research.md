@@ -30,5 +30,8 @@ no packet of any kind (not even the heading), unless they are your duel opponent
 or, during a guild duel, belong to another guild. The same applies to the F key.
 Players without shape data keep the server's verdict. Still different: the
 native range buff is not added, GX World's own WarType P maps (where everyone is
-a teammate) are not known to the client, and the native client acts on mouse
-press while GX acts on release.
+a teammate) are not known to the client.
+
+Update: the world now acts on the left press too. A press no panel owns reaches
+selection, engage and ground travel at once as a click, and its release is
+swallowed. Both buttons down (mouse-run) and a held item/skill drag do not click.

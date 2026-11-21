@@ -78,6 +78,7 @@ type worldView struct {
 	autoRun                     bool
 	travel                      bool
 	approachTarget              uint32
+	worldPressActed             bool    // the world already acted on this left press
 	engagedID                   uint32  // target of the last basic attack sent by the chase
 	engagedAt                   float64 // when it was sent
 	approachSkill               []byte

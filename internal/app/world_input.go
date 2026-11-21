@@ -276,6 +276,18 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		controls.MiddlePressed = false
 	}
 
+	// Native 0x43bfa0 picks and acts when the left button goes down, not when
+	// it is released. A press that no panel owns reaches the world as a click
+	// and its later release is swallowed. Both buttons down is mouse-run.
+	holding := a.inventory.dragging || a.shop.dragging || a.bank.dragging || a.skills.drag.active || a.wv.localActionDrag.active
+	if controls.Pressed && !in.RightDown && !captured && !pointerOwned && !holding {
+		controls.Clicked = true
+		v.worldPressActed = !in.Clicked
+	} else if v.worldPressActed && (in.Clicked || !in.MouseDown) {
+		controls.Clicked = false
+		v.worldPressActed = false
+	}
+
 	if dismissContext {
 		controls.RightPressed, controls.RightDown = in.RightPressed, in.RightDown
 	}
