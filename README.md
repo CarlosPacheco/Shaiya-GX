@@ -113,7 +113,7 @@ GX Server retains Rapture's gameplay and protocol behavior. Its programs are `gx
 | Space / C / Tab / NumLock | Jump / sit / walk or run / automatic movement |
 | F1–F7 | Select a party member. F1–F6 select within your raid group |
 | F / X / H | Assist the selected group member / stop attack / toggle catalog IDs |
-| F11 / F12 or Print Screen | Toggle HUD / save a JPEG in `SCREENSHOT` |
+| F11 / F12 or Print Screen | Toggle HUD / save a PNG in `screenshot` |
 | I / T / K / B | Inventory / Status / skills / actions |
 | U / G / M / V / O | Quests / guild / map / minimap / options |
 | Enter / Up / Down | Chat / sent-message history while typing |

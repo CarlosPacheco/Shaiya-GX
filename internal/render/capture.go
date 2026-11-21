@@ -2,7 +2,6 @@ package render
 
 import (
 	"image"
-	"image/jpeg"
 	"image/png"
 	"io"
 	"os"
@@ -18,11 +17,12 @@ func SavePNG(path string, w, h int) error {
 		return err
 	}
 	defer f.Close()
-	return png.Encode(f, readFramebuffer(w, h))
+	return CapturePNG(f, w, h)
 }
 
-func CaptureJPEG(dst io.Writer, w, h int) error {
-	return jpeg.Encode(dst, readFramebuffer(w, h), &jpeg.Options{Quality: 90})
+// CapturePNG writes the default framebuffer with standard PNG compression.
+func CapturePNG(dst io.Writer, w, h int) error {
+	return png.Encode(dst, readFramebuffer(w, h))
 }
 
 func readFramebuffer(w, h int) *image.NRGBA {

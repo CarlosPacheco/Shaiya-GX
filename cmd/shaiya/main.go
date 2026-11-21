@@ -216,16 +216,16 @@ func saveGameScreenshot(w, h int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	dir := filepath.Join(filepath.Dir(exe), "SCREENSHOT")
+	dir := filepath.Join(filepath.Dir(exe), "screenshot")
 	if err = os.MkdirAll(dir, 0755); err != nil {
 		return "", err
 	}
-	file, err := os.CreateTemp(dir, time.Now().Format("2006-01-02_15-04-05")+"-*.jpg")
+	file, err := os.CreateTemp(dir, time.Now().Format("2006-01-02_15-04-05")+"-*.png")
 	if err != nil {
 		return "", err
 	}
 	path := file.Name()
-	err = render.CaptureJPEG(file, w, h)
+	err = render.CapturePNG(file, w, h)
 	if closeErr := file.Close(); err == nil {
 		err = closeErr
 	}

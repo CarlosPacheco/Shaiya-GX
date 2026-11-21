@@ -54,7 +54,7 @@ Inventory (I), Status (T), Skills (K) and Actions (B) open independently through
 
 Options remains nonmodal: opening it preserves keyboard movement and automatic travel. Pointer gestures belong to the window where they started. Logout confirmations remain modal and await the server response.
 
-Click a binding in **Keys** or **Extra Hotkey**, press its new key and confirm with OK. Press Escape to cancel a pending assignment. **User Option → Invert Mouse** exchanges the two mouse buttons. Click walkable terrain or a model surface to move there while keeping the selected target. **F12** and **Print Screen** save a JPEG in the `SCREENSHOT` directory next to the executable.
+Click a binding in **Keys** or **Extra Hotkey**, press its new key and confirm with OK. Press Escape to cancel a pending assignment. **User Option → Invert Mouse** exchanges the two mouse buttons. Click walkable terrain or a model surface to move there while keeping the selected target. **F12** and **Print Screen** save a PNG in the `screenshot` directory next to the executable.
 
 Visual approval and complete comparison against the original remain ongoing. Opt-in rendering tests exercise real archives and preserve captures only in ignored local directories.
 
