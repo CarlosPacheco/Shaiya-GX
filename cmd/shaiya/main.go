@@ -5,7 +5,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -117,8 +116,11 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 	if autoUser != "" {
 		auto = &app.Autoplay{User: autoUser, Password: os.Getenv("SHAIYA_PASSWORD"), StopAtSelect: autoSelect >= 0, Slot: autoSelect, CastSlot: uint8(autoCast), WaitResult: shotScreen == "world-projectile"}
 	}
+	var screenshots gameScreenshots
+	defer screenshots.close()
 	lastWidth, lastHeight := w, h
 	frame := func(dt float64) {
+		screenshots.poll(a)
 		fw, fh := win.GetFramebufferSize()
 		if fw > 0 && fh > 0 {
 			lastWidth, lastHeight = fw, fh
@@ -140,10 +142,10 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		a.Draw(fw, fh)
 		if shot == "" && auto == nil && in.HasKey(platform.KeyScreenshot) && a.InWorld() {
-			if path, err := saveGameScreenshot(fw, fh); err != nil {
-				log.Printf("Screenshot: %v", err)
+			if err := screenshots.readback.Start(fw, fh); err != nil {
+				screenshotResult{err: err}.report(a)
 			} else {
-				log.Printf("Screenshot saved to %s", path)
+				screenshots.capturedAt = time.Now()
 			}
 		}
 		cursors.Set(a.CursorIndex(fw, fh))
@@ -209,29 +211,4 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 		}
 	}
 	return nil
-}
-
-func saveGameScreenshot(w, h int) (string, error) {
-	exe, err := os.Executable()
-	if err != nil {
-		return "", err
-	}
-	dir := filepath.Join(filepath.Dir(exe), "screenshot")
-	if err = os.MkdirAll(dir, 0755); err != nil {
-		return "", err
-	}
-	file, err := os.CreateTemp(dir, time.Now().Format("2006-01-02_15-04-05")+"-*.png")
-	if err != nil {
-		return "", err
-	}
-	path := file.Name()
-	err = render.CapturePNG(file, w, h)
-	if closeErr := file.Close(); err == nil {
-		err = closeErr
-	}
-	if err != nil {
-		os.Remove(path)
-		return "", err
-	}
-	return path, nil
 }

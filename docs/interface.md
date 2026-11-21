@@ -54,7 +54,7 @@ Inventory (I), Status (T), Skills (K) and Actions (B) open independently through
 
 Options remains nonmodal: opening it preserves keyboard movement and automatic travel. Pointer gestures belong to the window where they started. Logout confirmations remain modal and await the server response.
 
-Click a binding in **Keys** or **Extra Hotkey**, press its new key and confirm with OK. Press Escape to cancel a pending assignment. **User Option → Invert Mouse** exchanges the two mouse buttons. Click walkable terrain or a model surface to move there while keeping the selected target. **F12** and **Print Screen** save a PNG in the `screenshot` directory next to the executable.
+Click a binding in **Keys** or **Extra Hotkey**, press its new key and confirm with OK. Press Escape to cancel a pending assignment. **User Option → Invert Mouse** exchanges the two mouse buttons. Click walkable terrain or a model surface to move there while keeping the selected target. **F12** and **Print Screen** save a PNG in the `screenshot` directory next to the executable. The capture is written in the background, and the system chat shows the filename once it is saved.
 
 Visual approval and complete comparison against the original remain ongoing. Opt-in rendering tests exercise real archives and preserve captures only in ignored local directories.
 
@@ -318,6 +318,8 @@ the right) 1px to the right of the name and 3px above it. The name stays centred
 the native temporary -6px offset is compensated before its final draw.
 Own kills come from 0x020E/0x0105 and other players' from 0x0522; a character
 without kills shows no icon.
+
+In the expanded Status window, tap **+** to allocate one point or hold it to add ten points per second after a short delay. **Apply** sends the draft to World for confirmation.
 
 Status (T) shows server-confirmed kills, deaths, duel victories and defeats.
 Its Title field uses the same rank table as the world icon: ranks 1-15 combine

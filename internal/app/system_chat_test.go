@@ -133,3 +133,16 @@ func TestPeriodicAndExtraDamageChatPreservesWireResourceMeaning(t *testing.T) {
 		t.Fatal("unrelated pulse polluted chat")
 	}
 }
+
+func TestScreenshotNoticeUsesNativeSysMsg(t *testing.T) {
+	a := inputApp()
+	a.state.Phase = game.PhaseInWorld
+	a.msg = text.SysMsg{359: "saved <b>", 360: "capture failed"}
+	a.ReportScreenshot("capture.png")
+	a.ReportScreenshot("")
+	lines := a.state.Chat
+	if len(lines) != 2 || lines[0].MessageID != 359 || lines[0].Style != 7 || lines[0].Text != "saved capture.png" ||
+		lines[1].MessageID != 360 || lines[1].Style != 17 || lines[1].Text != "capture failed" {
+		t.Fatalf("wrong localized screenshot notices: %+v", lines)
+	}
+}

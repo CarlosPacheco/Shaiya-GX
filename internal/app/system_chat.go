@@ -26,6 +26,18 @@ func (a *App) addSystemText(style uint8, id int, text string) {
 	}
 }
 
+// ReportScreenshot displays the native world notice after the PNG is written.
+func (a *App) ReportScreenshot(filename string) {
+	if a.state == nil || a.state.Phase != game.PhaseInWorld {
+		return
+	}
+	if filename == "" {
+		a.systemMessage(17, 360, nil)
+		return
+	}
+	a.systemMessage(7, 359, map[string]string{"b": filename})
+}
+
 // Keep diagnostic fallbacks usable without an archive in offline tools/tests.
 func (a *App) localizedNotice(style uint8, id int, values map[string]string, fallback string) {
 	if a.msg.Get(id) != "" {

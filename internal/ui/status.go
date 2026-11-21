@@ -19,6 +19,9 @@ type Status struct {
 	close, expand        Button
 	apply, cancel        Button
 	steps                [12]Button
+	heldStep             int // one-based index of the button that owns the press
+	repeatIn             float64
+	repeated             bool
 	Expanded             bool
 	Draft                proto.StatPoints
 }
@@ -75,7 +78,13 @@ func NewStatus(t Textures) (*Status, error) {
 	return v, ld.err
 }
 
-func (v *Status) Clear() { v.Draft = proto.StatPoints{}; v.Expanded = false }
+func (v *Status) Clear() {
+	v.Draft, v.Expanded = proto.StatPoints{}, false
+	v.heldStep = 0
+	for _, b := range v.buttons() {
+		b.held = false
+	}
+}
 
 func (v *Status) controls(w, h int, state StatusState) {
 	x, y := v.Origin(w, h)
@@ -132,9 +141,10 @@ func (v *Status) FreeAt(mx, my, w, h int, state StatusState) bool {
 }
 
 // Update returns Apply and Close; Draft is never written into confirmed state.
-func (v *Status) Update(in *platform.Input, w, h int, state StatusState) (bool, bool) {
+func (v *Status) Update(in *platform.Input, w, h int, state StatusState, dt float64) (bool, bool) {
 	v.controls(w, h, state)
 	if in.Pressed {
+		v.heldStep = 0
 		for _, b := range v.buttons() {
 			b.held = false
 		}
@@ -152,17 +162,32 @@ func (v *Status) Update(in *platform.Input, w, h int, state StatusState) (bool, 
 	// The 22px hit boxes overlap on the 20px row pitch; like 0x5037f0 the last
 	// button under the pointer wins.
 	for i := len(v.steps) - 1; i >= 0; i-- {
-		if v.steps[i].Update(in) {
-			for j := range v.steps {
-				v.steps[j].held = false
-			}
-			index := statOrder[i/2]
-			if i%2 == 0 {
-				v.Draft[index]++
-			} else {
-				v.Draft[index]--
+		b := &v.steps[i]
+		pointer := *in
+		pointer.Pressed = in.Pressed && v.heldStep == 0 && !b.Disabled && b.hit(in)
+		if pointer.Pressed {
+			v.heldStep, v.repeatIn, v.repeated = i+1, .3, false
+		}
+		click := b.Update(&pointer)
+		if v.heldStep != i+1 {
+			continue
+		}
+		index := statOrder[i/2]
+		switch {
+		case click:
+			v.heldStep = 0
+			if !v.repeated {
+				if i%2 == 0 {
+					v.Draft[index]++
+				} else {
+					v.Draft[index]--
+				}
 			}
 			return false, false
+		case !in.MouseDown || !b.hit(in) || b.Disabled:
+			v.heldStep, b.held = 0, false
+		case !in.Pressed && i%2 == 0:
+			v.repeatStatPoint(index, state, dt)
 		}
 	}
 	if v.cancel.Update(in) {
@@ -170,6 +195,20 @@ func (v *Status) Update(in *platform.Input, w, h int, state StatusState) (bool, 
 		return false, false
 	}
 	return v.apply.Update(in), false
+}
+
+func (v *Status) repeatStatPoint(index int, state StatusState, dt float64) {
+	const interval = .1
+	v.repeatIn -= max(0, dt)
+	if v.repeatIn > 1e-9 {
+		return
+	}
+	repeats := 1 + int((-v.repeatIn+1e-9)/interval)
+	v.repeatIn += float64(repeats) * interval
+	available := int(state.Points) - int(v.Draft.Total())
+	room := 65535 - int(state.Base[index]) - int(v.Draft[index])
+	v.Draft[index] += uint16(min(repeats, available, room))
+	v.repeated = true
 }
 
 func (v *Status) buttons() []*Button {

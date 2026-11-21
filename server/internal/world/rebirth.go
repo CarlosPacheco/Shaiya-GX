@@ -141,9 +141,6 @@ func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore boo
 		s.player.SetAlive(true)
 	}
 	s.persist()
-	stats := s.stats()
-	resurrect := buildCharacterResurrect(ch.ID, kind, ch.Exp, x, y, z)
-	pools := buildCharacterReviveHitpoints(ch.ID, stats.CurrentHP, stats.CurrentMP, stats.CurrentSP)
 	if mapID == ch.MapID {
 		if x != ch.PosX || y != ch.PosY || z != ch.PosZ {
 			s.clearView(true)
@@ -161,13 +158,15 @@ func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore boo
 		} else if s.player != nil {
 			s.player.UpdateCharacter(*ch)
 		}
-		s.broadcastNear(resurrect, "0x0551 rebirth", true)
-		s.send(pools, "0x0505 rebirth pools")
+		s.broadcastNear(buildCharacterResurrect(ch.ID, kind, ch.Exp, x, y, z), "0x0551 rebirth", true)
 	} else {
-		s.send(resurrect, "0x0551 rebirth")
-		s.send(pools, "0x0505 rebirth pools")
+		// 0x0551 has coordinates but no map ID. Publish the map change first
+		// so a client never applies the destination to the old scene.
 		s.applyTeleport(mapID, x, y, z, "rebirth")
+		s.send(buildCharacterResurrect(ch.ID, kind, ch.Exp, ch.PosX, ch.PosY, ch.PosZ), "0x0551 rebirth")
 	}
+	stats := s.stats()
+	s.send(buildCharacterReviveHitpoints(ch.ID, stats.CurrentHP, stats.CurrentMP, stats.CurrentSP), "0x0505 rebirth pools")
 	s.syncPlayerSpeed(true)
 	s.log.Printf("GX Server World rebirth character_id=%d kind=%d map=%d pos=(%.2f, %.2f, %.2f) exp_lost=%d",
 		ch.ID, kind, mapID, x, y, z, lost)

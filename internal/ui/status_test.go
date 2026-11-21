@@ -15,8 +15,8 @@ func TestStatusDraftLimitsCancellationAndWireOrder(t *testing.T) {
 	state := StatusState{Points: 3, Base: proto.StatPoints{65535, 10, 10, 10, 10, 10}}
 	click := func(x, y int) bool {
 		t.Helper()
-		v.Update(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, 1024, 768, state)
-		apply, _ := v.Update(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 1024, 768, state)
+		v.Update(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, 1024, 768, state, 0)
+		apply, _ := v.Update(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 1024, 768, state, 0)
 		return apply
 	}
 	x, y := StatusOrigin(1024, 768, false)
@@ -58,8 +58,8 @@ func TestStatusTabOnlyOpensAndApplyFoldsSheet(t *testing.T) {
 	}
 	state := StatusState{Points: 3, Base: proto.StatPoints{10, 10, 10, 10, 10, 10}}
 	click := func(x, y int) bool {
-		v.Update(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, 1024, 768, state)
-		apply, _ := v.Update(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 1024, 768, state)
+		v.Update(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, 1024, 768, state, 0)
+		apply, _ := v.Update(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 1024, 768, state, 0)
 		return apply
 	}
 	x, y := StatusOrigin(1024, 768, false)
@@ -74,5 +74,76 @@ func TestStatusTabOnlyOpensAndApplyFoldsSheet(t *testing.T) {
 	}
 	if !click(x+16, y+270) {
 		t.Fatal("empty Apply must still be accepted")
+	}
+}
+
+func TestStatusHoldRepeatsPlusAtTenPointsPerSecond(t *testing.T) {
+	v, err := NewStatus(marketTextures{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	v.Expanded = true
+	x, y := StatusOrigin(1024, 768, true)
+	state := StatusState{Points: 100}
+	held := platform.Input{MouseX: x + 86, MouseY: y + 129, MouseDown: true}
+	press := func() {
+		in := held
+		in.Pressed = true
+		v.Update(&in, 1024, 768, state, 0)
+	}
+	release := func() {
+		in := held
+		in.MouseDown, in.Clicked = false, true
+		v.Update(&in, 1024, 768, state, 0)
+	}
+
+	press()
+	v.Update(&held, 1024, 768, state, .29)
+	if v.Draft[0] != 0 {
+		t.Fatal("repeat started before hold delay")
+	}
+	release()
+	if v.Draft[0] != 1 {
+		t.Fatal("short tap must add exactly one point")
+	}
+
+	press()
+	v.Update(&held, 1024, 768, state, .3)
+	start := v.Draft[0]
+	if start != 2 {
+		t.Fatal("missing first automatic point", start)
+	}
+	for range 60 {
+		v.Update(&held, 1024, 768, state, 1.0/60)
+	}
+	release()
+	if v.Draft[0] != start+10 {
+		t.Fatalf("expected ten repeats in one second and zero on release, gained %d", v.Draft[0]-start)
+	}
+
+	press()
+	outside := held
+	outside.MouseX -= 50
+	v.Update(&outside, 1024, 768, state, .5)
+	v.Update(&held, 1024, 768, state, .5)
+	release()
+	if v.Draft[0] != start+10 {
+		t.Fatal("repeat resumed after leaving the original button")
+	}
+
+	state.Base[0] = 65534 - v.Draft[0]
+	press()
+	v.Update(&held, 1024, 768, state, .8)
+	release()
+	if v.Draft[0] != start+11 {
+		t.Fatal("repeat exceeded attribute limit", v.Draft[0])
+	}
+	state.Base[0] = 0
+	state.Points = v.Draft[0] + 2
+	press()
+	v.Update(&held, 1024, 768, state, .8)
+	release()
+	if v.Draft[0] != state.Points {
+		t.Fatal("repeat exceeded available points", v.Draft[0])
 	}
 }
