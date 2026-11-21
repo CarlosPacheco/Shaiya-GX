@@ -59,6 +59,7 @@ type Session struct {
 	gmTurbo           bool
 	gmImmune          bool
 	gmConcealed       bool
+	lastGMModeAt      time.Time
 	elements          elementRuntime
 	socialChecked     time.Time
 	socialReloadAt    time.Time

@@ -65,6 +65,7 @@ func TestCharAndAttackCommandsToggleConcealmentAndImmunity(t *testing.T) {
 		{"/CHAR off", "Character's transparent setting is off", false, true},
 		{"/attack off", "Will be attacked", false, false},
 	} {
+		s.lastGMModeAt = time.Time{} // the guard has its own test
 		if !s.handleGMCommand(c.command) {
 			t.Fatal("command leaked to chat", c.command)
 		}
@@ -77,6 +78,14 @@ func TestCharAndAttackCommandsToggleConcealmentAndImmunity(t *testing.T) {
 			t.Fatal("state after", c.command, m)
 		}
 	}
+	s.lastGMModeAt = time.Time{}
+	s.handleGMCommand("/attack on")
+	gmResponse(t, packets)
+	s.handleGMCommand("/attack off")
+	if reply := gmResponse(t, packets); reply.Message != "GM: wait a moment before changing this again." || !s.gmImmune {
+		t.Fatal("a second change inside 750 ms must be refused", reply)
+	}
+	s.lastGMModeAt = time.Time{}
 	s.handleGMCommand("/attack invalid")
 	if reply := gmResponse(t, packets); reply.Message != "Usage: /attack on|off" {
 		t.Fatal(reply)

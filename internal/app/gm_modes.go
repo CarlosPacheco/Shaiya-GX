@@ -1,6 +1,8 @@
 package app
 
 import (
+	"log"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
@@ -43,6 +45,7 @@ func (a *App) toggleGMMode(i int) {
 		return
 	}
 	a.gmModePendingUntil[i] = a.clock + 1
+	log.Printf("GM mode toggle %s at %.3f", gmModeInfos[i].command, a.clock)
 	text := gmModeInfos[i].command
 	if i < 2 {
 		if a.gmModeActive(i) {

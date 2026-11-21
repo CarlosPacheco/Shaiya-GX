@@ -62,6 +62,19 @@ func (s *Session) sendGMModes() {
 // PacketAdminCmdE 0xFA01/0xFA02 bVisible and 0xFA05/0xFA06 bAttackable, chat
 // "/char on|off" and "/attack on|off" at Game.exe 0x471c20). "/char on" makes
 // the character transparent; "/attack on" makes it unattackable.
+// gmModeGuard rejects a /char or /attack change that follows another within
+// 750 ms. Each change re-evaluates who sees the GM, so a client that loops (or
+// an input burst) must not be able to flood the world with them.
+func (s *Session) gmModeGuard() bool {
+	now := time.Now()
+	if now.Sub(s.lastGMModeAt) < 750*time.Millisecond {
+		s.gmReply("GM: wait a moment before changing this again.")
+		return false
+	}
+	s.lastGMModeAt = now
+	return true
+}
+
 func (s *Session) setGMChar(on bool) {
 	s.gmConcealed = on
 	s.syncVisibility()
@@ -132,6 +145,9 @@ func (s *Session) handleGMCommand(text string) bool {
 	case "/char", "/attack":
 		if len(args) != 1 || (!strings.EqualFold(args[0], "on") && !strings.EqualFold(args[0], "off")) {
 			s.gmReply("Usage: " + command + " on|off")
+			break
+		}
+		if !s.gmModeGuard() {
 			break
 		}
 		if command == "/char" {
