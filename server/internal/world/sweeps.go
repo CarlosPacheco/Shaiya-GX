@@ -153,7 +153,7 @@ func snapshotCombatPlayers(players []*ConnectedPlayer) []PlayerCombatSnapshot {
 		snapshot := p.Snapshot()
 		x, z := snapshot.PosX, snapshot.PosZ
 		c, _ := p.viewCell()
-		snaps = append(snaps, PlayerCombatSnapshot{CharacterID: p.CharacterID, MapID: p.MapID(), PosX: x, PosY: snapshot.PosY, PosZ: z, Alive: p.IsAlive(), Faction: p.Faction(), Cell: c, HP: snapshot.CurrentHP, Invisible: p.noMobTarget.Load() || p.immune.Load()})
+		snaps = append(snaps, PlayerCombatSnapshot{CharacterID: p.CharacterID, MapID: p.MapID(), PosX: x, PosY: snapshot.PosY, PosZ: z, Alive: p.IsAlive(), Faction: p.Faction(), Cell: c, HP: snapshot.CurrentHP, Invisible: p.noMobTarget.Load() || p.immune.Load(), GMUndetected: p.immune.Load() || !p.GMVisible()})
 	}
 	return snaps
 }

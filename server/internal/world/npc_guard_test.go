@@ -145,3 +145,19 @@ func TestSummonedGuardWaitsAtSpawnThenAttacks(t *testing.T) {
 		t.Fatal("summoned guard did not return to its spawn")
 	}
 }
+
+// Skill stealth is seen through by guards, but a GM in /char on or /attack on
+// mode (the original bVisible/bAttackable flags) is invisible to them.
+func TestGuardsIgnoreGMUndetectedPlayers(t *testing.T) {
+	const id = 65483
+	guardFixture(t, id)
+	now := time.Unix(100, 0)
+	target := PlayerCombatSnapshot{CharacterID: 12, MapID: id, PosX: 110, PosY: 10, PosZ: 100, Alive: true, Faction: 1, GMUndetected: true}
+	if r := tickNpcs(now, []PlayerCombatSnapshot{target}, 64); len(r.moves)+len(r.strikes) != 0 {
+		t.Fatal("guard reacted to a GM-undetected player")
+	}
+	target.GMUndetected = false
+	if r := tickNpcs(now, []PlayerCombatSnapshot{target}, 64); len(r.moves)+len(r.strikes) == 0 {
+		t.Fatal("guard stopped reacting to an ordinary enemy")
+	}
+}

@@ -456,6 +456,10 @@ type PlayerCombatSnapshot struct {
 	Cell             cell
 	HP               uint32
 	Invisible        bool
+	// GMUndetected is a GM in /char on or /attack on mode. Unlike skill stealth,
+	// which guards see through, the original admin flags hide the user from
+	// every NPC (bVisible and bAttackable).
+	GMUndetected bool
 }
 
 type MobAttackAction struct {

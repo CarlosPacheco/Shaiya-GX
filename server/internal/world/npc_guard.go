@@ -103,7 +103,7 @@ func (n *MapNpc) findGuardTarget(s *mapShard, players []PlayerCombatSnapshot, co
 		return true
 	}
 	for _, p := range players {
-		if p.Alive && p.Faction != country {
+		if p.Alive && p.Faction != country && !p.GMUndetected {
 			consider(guardTarget{id: p.CharacterID}, p.PosX, p.PosY, p.PosZ)
 		}
 	}
