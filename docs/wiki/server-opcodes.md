@@ -298,7 +298,7 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x7F09` | [GXGMMapTeleport](protocol-extensions.md#opcode-7f09) | yes | — | — |
 | `0x7F0A` | [GXOJLimits](protocol-extensions.md#opcode-7f0a) | — | yes | yes |
 | `0x7F0B` | [GXChestCloakFits](protocol-extensions.md#opcode-7f0b) | — | yes | yes |
-| `0x7F0C` | [GXFallDamage](protocol-extensions.md#opcode-7f0c) | — | yes | yes |
+| `0x7F0C` | [GXFallDamage](protocol-extensions.md#opcode-7f0c) | — | — | yes |
 | `0x7F0D` | [GXLadder](protocol-extensions.md#opcode-7f0d) | yes | yes | yes |
 | `0x7F0E` | [GXSkillFailure](protocol-extensions.md#opcode-7f0e) | — | yes | yes |
 | `0x7F0F` | [GXTargetEffectsQuery](protocol-extensions.md#opcode-7f0f) | yes | — | — |
@@ -324,6 +324,8 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x7F23` | [GXEvolutionCast](protocol-extensions.md#opcode-7f23) | yes | — | — |
 | `0x7F24` | [GXFirecracker](protocol-extensions.md#opcode-7f24) | — | yes | — |
 | `0x7F25` | [GXPlayerFeedback](protocol-extensions.md#opcode-7f25) | — | yes | — |
+| `0x7F26` | [GXOxygen](protocol-extensions.md#opcode-7f26) | — | yes | yes |
+| `0x7F27` | [GXDrowningDamage](protocol-extensions.md#opcode-7f27) | — | — | yes |
 | `0xA101` | [LoginHandshake](protocol-authentication.md#opcode-a101) | yes | yes | — |
 | `0xA102` | [LoginRequest](protocol-authentication.md#opcode-a102) | yes | yes | — |
 | `0xA106` | [LoginRequestEx](protocol-authentication.md#opcode-a106) | — | — | — |
@@ -337,6 +339,6 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0xF501` | [GmCommandError](protocol-chat.md#opcode-f501) | — | — | — |
 | `0xF702` | [GmCommandGetItem](protocol-chat.md#opcode-f702) | — | — | — |
 
-Inventory: **326 numeric opcodes**, **538 typed declarations**, **15 families**.
+Inventory: **328 numeric opcodes**, **540 typed declarations**, **15 families**.
 
 Regenerate with `python3 tools/generate_server_reference.py`; verify freshness with `--check`. The generator parses source for both operating systems and tests are excluded from implementation evidence. Source links track main; use Git history when comparing older binaries.

@@ -440,6 +440,11 @@ func TestGMSetPersistsAndUpdatesClientWithoutReopeningRewards(t *testing.T) {
 func TestGMCureRestoresPoolsAndCooldowns(t *testing.T) {
 	s, packets := potentialSession(t)
 	s.isAdmin = true
+	s.buffs = []ActiveBuff{
+		{ID: 9870, Effect: typeEffectBuff},
+		{ID: 9871, Effect: typeEffectDebuff},
+		{ID: 9872, Effect: typeEffectDebuff, MapCurse: true},
+	}
 	st := s.stats()
 	s.char.CurrentHP, s.char.CurrentMP, s.char.CurrentSP = 1, 1, 1
 	s.skillCooldowns = map[uint16]time.Time{30: time.Now().Add(time.Minute), 31: time.Now().Add(time.Hour)}
@@ -462,15 +467,21 @@ func TestGMCureRestoresPoolsAndCooldowns(t *testing.T) {
 	if len(s.skillCooldowns) != 0 || len(s.itemCooldowns) != 0 {
 		t.Fatal("a cooldown survived")
 	}
+	if len(s.buffs) != 1 || s.buffs[0].ID != 9870 {
+		t.Fatal("GM cure did not remove all debuffs while preserving the buff", s.buffs)
+	}
 	if cooldown := s.player.vehicleState().CooldownMS; cooldown != 0 {
 		t.Fatalf("mount cooldown survived: %d ms", cooldown)
 	}
 	reset := false
+	removed := map[uint32]bool{}
 	gmReply := false
 	for !gmReply {
 		select {
 		case p := <-packets:
 			switch proto.Op(p) {
+			case proto.BuffRemove:
+				removed[proto.NewReader(p).U32()] = true
 			case proto.GXItemCooldownReset:
 				_, err := game.New().Apply(p)
 				if err != nil {
@@ -483,6 +494,9 @@ func TestGMCureRestoresPoolsAndCooldowns(t *testing.T) {
 		case <-time.After(3 * time.Second):
 			t.Fatal("missing cure response")
 		}
+	}
+	if !removed[9871] || !removed[9872] || removed[9870] {
+		t.Fatal("missing or incorrect debuff removal notifications", removed)
 	}
 	if !reset {
 		t.Fatal("missing item cooldown reset")

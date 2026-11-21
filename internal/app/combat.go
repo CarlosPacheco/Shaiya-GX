@@ -286,16 +286,7 @@ func (a *App) drawCombat(w, h int) {
 	}
 	a.hud.Draw(a.sprites, a.font, view)
 	a.drawTargetEffects(w, h)
-	if a.wv != nil && a.wv.self != nil {
-		left, total, active := a.wv.self.CastTiming()
-		if active {
-			// Native 0x004c02d0 projects player position plus half a world
-			// unit along camera-right; this is not a fixed HUD element.
-			if x, y, ok := castBarOrigin(a.wv.pos, a.scene3d.View, a.scene3d.Proj, w, h); ok {
-				a.hud.DrawCast(a.sprites, a.white, x, y, left, total)
-			}
-		}
-	}
+	a.drawCastAndOxygen(w, h)
 	a.bottom.QuestOpen, a.bottom.GuildOpen = a.questLog.open, a.guild.open
 	a.bottom.Draw(a.sprites, a.font, a.white, w, h, view, a.inventory.open, a.skills.open, a.status.open, a.subActionsOpen)
 	a.drawBlessingTooltip(w, h)

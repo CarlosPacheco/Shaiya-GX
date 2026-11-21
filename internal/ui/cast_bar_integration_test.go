@@ -33,26 +33,31 @@ func TestNativeBlueCastPixelsGL(t *testing.T) {
 	solid := render.Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{255, 255, 255, 255}}})
 	defer solid.Delete()
 	for _, state := range []struct {
-		left float32
-		fill int
-	}{{3, 0}, {1.5, 31}, {.001, 62}, {0, 0}} {
+		left   float32
+		fill   int
+		oxygen bool
+	}{{3, 0, false}, {1.5, 31, false}, {.001, 62, false}, {0, 0, false}, {1, 62, true}, {.5, 31, true}, {0, 0, true}} {
 		left := state.left
 		gl.Viewport(0, 0, 64, 96)
 		gl.ClearColor(1, 0, 0, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 		s.Begin(64, 96)
-		(&HUD{}).DrawCast(s, solid, 20, 10, left, 3)
+		if state.oxygen {
+			(&HUD{}).DrawOxygen(s, solid, 20, 10, float64(left))
+		} else {
+			(&HUD{}).DrawCast(s, solid, 20, 10, left, 3)
+		}
 		s.Flush()
 		pixels := make([]byte, 64*96*4)
 		gl.ReadPixels(0, 0, 64, 96, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
 		for y := 0; y < 96; y++ {
 			for x := 0; x < 64; x++ {
 				want := [4]byte{255, 0, 0, 255}
-				if left > 0 && x >= 20 && x < 25 && y >= 10 && y < 74 {
+				if (left > 0 || state.oxygen) && x >= 20 && x < 25 && y >= 10 && y < 74 {
 					want = [4]byte{0, 0, 0, 255}
 				}
 				fill := state.fill
-				if left > 0 && x >= 21 && x < 24 && y >= 73-fill && y < 73 {
+				if (left > 0 || state.oxygen) && x >= 21 && x < 24 && y >= 73-fill && y < 73 {
 					want = [4]byte{0, 0, 255, 255}
 				}
 				i := ((95-y)*64 + x) * 4

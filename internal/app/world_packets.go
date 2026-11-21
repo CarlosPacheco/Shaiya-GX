@@ -85,6 +85,10 @@ func (a *App) applyWorldPacket(p []byte) {
 	if previousPhase == game.PhaseLoading && a.state.Phase == game.PhaseInWorld {
 		a.rememberCharacterSlot()
 	}
+	if ev.Op == proto.GXOxygen {
+		a.oxygenAt = a.clock
+		return
+	}
 	a.confirmedPlayerFeedback(p, previousLevel)
 	if ev.Op == proto.GXEvolutionBar {
 		a.confirmEvolutionBar()

@@ -27,7 +27,7 @@ unavailable. Skill-based stealth remains available.
 | `/set kill count` | Sets your own kills to 0–1,000,000; larger values clamp to one million. Updates your rank/title and nearby nameplates immediately. Already claimed PvP rewards remain claimed. |
 | `/iclear` | Permanently deletes the issuing character's carried items (bags 1–5). Equipped items, mounts, other characters and account storage are preserved. |
 | `/turbo` | Toggles the issuing GM's turbo off/on for this session. |
-| `/cure` | Restores your HP, MP and SP, and resets skill, consumable and mount cooldowns in the server and client. |
+| `/cure` | Restores your HP, MP and SP, clears active debuffs, and resets skill, consumable and mount cooldowns in the server and client. |
 | `/getitem type id [quantity]` | Defaults to one when quantity is omitted. Grants the complete quantity, respecting definition stack limits and free bag slots. `/getitem 25 1 200` grants 200 apples in one stack with the current 255 limit. |
 | `/mmake mobid [quantity=1]` | Spawns 1–100 live mobs around the GM, with their normal stats, AI and drops, without automatic respawn. |
 | `/nmake type id` | Spawns exactly one static NPC around the GM, retaining its definition and services. `/nmake 1 1` selects merchant 1; `/nmake 2 1` selects gatekeeper 1. Type and row ID are separate arguments. |

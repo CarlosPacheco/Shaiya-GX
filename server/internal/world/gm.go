@@ -535,12 +535,12 @@ func (s *Session) gmSet(args []string) error {
 	return nil
 }
 
-// gmCure restores HP, MP and SP and clears every spell and item cooldown at
-// once and synchronizes the client’s timers.
+// gmCure clears all debuffs and cooldowns and restores HP, MP and SP.
 func (s *Session) gmCure() error {
 	if s.dead {
 		return fmt.Errorf("you are dead")
 	}
+	s.removeEffectsInternal(func(b *ActiveBuff) bool { return b.Effect == typeEffectDebuff }, "GM cure", true)
 	s.refillPools()
 	s.persist()
 	st := s.stats()
@@ -555,6 +555,6 @@ func (s *Session) gmCure() error {
 	vehicleMu.Unlock()
 	s.send(packet.New(packet.Opcode(proto.GXItemCooldownReset)).MustFinish(), "GM item cooldown reset")
 	s.persistSkillDelays()
-	s.gmReply("GM: restored HP, MP, SP and every cooldown.")
+	s.gmReply("GM: restored HP, MP and SP and cleared all debuffs and cooldowns.")
 	return nil
 }

@@ -20,7 +20,14 @@ func (s *Session) applyFallDamage(drop float32) {
 		return
 	}
 	st := s.stats()
-	damage := min(st.CurrentHP, fallDamage(drop, st.MaxHP))
+	s.applyEnvironmentalDamage(fallDamage(drop, st.MaxHP), proto.GXFallDamage, "fall")
+}
+
+func (s *Session) applyEnvironmentalDamage(amount uint32, opcode proto.Opcode, cause string) {
+	if s.char == nil || s.dead || s.invulnerable() {
+		return
+	}
+	damage := min(s.char.CurrentHP, amount)
 	if damage == 0 {
 		return
 	}
@@ -30,24 +37,24 @@ func (s *Session) applyFallDamage(drop float32) {
 	s.breakStealth()
 	s.char.CurrentHP = satSub(s.char.CurrentHP, damage)
 	s.persist()
-	w := packet.New(packet.Opcode(proto.GXFallDamage))
+	w := packet.New(packet.Opcode(opcode))
 	w.U32(s.char.ID)
 	w.U32(damage)
 	frame := w.MustFinish()
-	s.send(frame, "GX fall damage")
-	s.sendToViewers(frame, "GX fall damage (view)")
+	s.send(frame, "GX "+cause+" damage")
+	s.sendToViewers(frame, "GX "+cause+" damage (view)")
 	current := s.stats()
-	s.send(buildCurrentHitpoints(&current), "current hp after fall")
+	s.send(buildCurrentHitpoints(&current), "current hp after "+cause)
 	if current.CurrentHP > 0 {
 		s.wake()
 		return
 	}
 	s.damageLedger = nil
 	state, death := buildCharacterDeathState(s.char.ID), buildCharacterDeath(s.char.ID, deathTypeMob, 0)
-	s.send(state, "fall death state")
-	s.send(death, "fall death")
-	s.sendToViewers(state, "fall death state (view)")
-	s.sendToViewers(death, "fall death (view)")
+	s.send(state, cause+" death state")
+	s.send(death, cause+" death")
+	s.sendToViewers(state, cause+" death state (view)")
+	s.sendToViewers(death, cause+" death (view)")
 	if s.player != nil {
 		s.player.SetAlive(false)
 		duelLeave(s.player, 3, true)

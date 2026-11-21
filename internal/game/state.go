@@ -195,6 +195,8 @@ type State struct {
 	Pools                  proto.Pools
 	LastAttack             proto.AttackResult
 	LastFallDamage         proto.FallDamage
+	LastDrowningDamage     proto.EnvironmentalDamage
+	Oxygen                 proto.OxygenStatus
 	PvPCountsKnown         [4]bool
 	PvPRewards             proto.PvPRewards
 	LastPvPReward          proto.PvPRewardResult
@@ -889,6 +891,18 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		} else if e := s.Entities[result.ID]; e != nil {
 			e.ClimbMode, e.ClimbIndex = result.Mode, result.Index
 		}
+	case proto.GXOxygen:
+		status, err := proto.DecodeOxygen(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.Oxygen = status
+	case proto.GXDrowningDamage:
+		result, err := proto.DecodeDrowningDamage(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastDrowningDamage = result
 	case proto.GXFallDamage:
 		result, err := proto.DecodeFallDamage(p)
 		if err != nil {
@@ -1066,6 +1080,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 				s.GuildDuel.deathLeavePending = false
 			}
 			s.Self.Dead = true
+			s.Oxygen = proto.OxygenStatus{}
 			s.Pools.HP = 0
 		}
 		if e := s.Entities[id]; e != nil {
@@ -1126,6 +1141,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		if r.Result == 0 {
 			s.SelfID, s.Phase = r.ID, PhaseLoading
+			s.Oxygen = proto.OxygenStatus{}
 			s.StatsKnown = false
 			s.DeathLossFree = false
 			s.Blessing = BlessingState{}

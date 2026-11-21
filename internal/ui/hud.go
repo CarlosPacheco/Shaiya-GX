@@ -151,6 +151,16 @@ func (h *HUD) DrawCast(s *render.Sprites, solid *render.Texture, x, y int, left,
 	if !ok {
 		return
 	}
+	drawProgressColumn(s, solid, x, y, fill)
+}
+
+// DrawOxygen reuses the cast column with the remaining fraction filled.
+func (h *HUD) DrawOxygen(s *render.Sprites, solid *render.Texture, x, y int, fraction float64) {
+	fill := int(math.RoundToEven(min(1, max(0, fraction)) * 62))
+	drawProgressColumn(s, solid, x, y, fill)
+}
+
+func drawProgressColumn(s *render.Sprites, solid *render.Texture, x, y, fill int) {
 	s.Draw(solid, float32(x), float32(y), 5, 64, 0, 0, 1, 1, [4]float32{0, 0, 0, 1})
 	s.Draw(solid, float32(x+1), float32(y+63-fill), 3, float32(fill), 0, 0, 1, 1, [4]float32{0, 0, 1, 1})
 }

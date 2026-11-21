@@ -41,6 +41,9 @@ func (a *App) confirmedAnimation(p []byte) {
 		return
 	}
 	switch op {
+	case proto.GXDrowningDamage:
+		r := a.state.LastDrowningDamage
+		a.showCombatNumberAmount(r.Target, r.Amount, false, false, combatDamage)
 	case proto.GXFallDamage:
 		r := a.state.LastFallDamage
 		a.showCombatNumberAmount(r.Target, r.Amount, false, false, combatDamage)

@@ -54,6 +54,7 @@ type Session struct {
 	speedKnown        bool
 	lastSpeeds        playerSpeeds
 	movement          playerMovement
+	oxygen            oxygenState
 	questNPCCatalog   questNPCCatalogState
 	gmTurbo           bool
 	gmImmune          bool
@@ -487,7 +488,9 @@ func (s *Session) tick(idle bool) {
 	s.publishPlayerEffects()
 	s.tickTargetEffects(time.Now())
 	s.tickVehicle(time.Now())
-	s.tickPlayerMovement(time.Now())
+	now := time.Now()
+	s.tickPlayerMovement(now)
+	s.tickOxygen(now)
 	s.recoveryTick()
 	s.syncQuestNPCCatalog(false)
 	if time.Since(s.lastQuestCheck) >= 5*time.Second {
@@ -563,6 +566,9 @@ func (s *Session) recoveryTick() {
 		mp = sittingRecovery(st.MaxMP, st.SitRecover[2], r[2])
 	} else {
 		hp, sp, mp = r[0], r[1], r[2]
+	}
+	if s.oxygen.phase == proto.OxygenDraining && s.oxygen.remaining == 0 {
+		hp = 0
 	}
 	hp, mp, sp = s.healDelta(hp, mp, sp)
 	if hp+mp+sp == 0 {
@@ -834,6 +840,7 @@ func (s *Session) selectCharacter(id uint32) {
 	}
 	s.speedKnown = false
 	s.movement = playerMovement{}
+	s.oxygen = oxygenState{}
 	s.elements = elementRuntime{}
 	s.gmConcealed, s.gmImmune = false, false
 	s.buffs, err = restoreBuffs(id, s.log)

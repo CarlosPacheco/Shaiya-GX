@@ -10,4 +10,4 @@ A GM can preview rain with `/weather 1` or snow with `/weather 2`. The preview l
 
 `/notice message` broadcasts custom text. `/notice index1` broadcasts notice 1 from the SQLite catalog.
 
-`/cure` restores HP, MP and SP and resets skill, consumable and mount cooldowns.
+`/cure` restores HP, MP and SP, clears active debuffs, and resets skill, consumable and mount cooldowns.

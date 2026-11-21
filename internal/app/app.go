@@ -273,8 +273,9 @@ type App struct {
 	world *session.World
 	state *game.State
 
-	clock   float64
-	frameDT float64
+	clock    float64
+	oxygenAt float64
+	frameDT  float64
 
 	posted chan func()
 	Quit   bool

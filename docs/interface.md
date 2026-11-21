@@ -337,6 +337,13 @@ The kill progress strip shows kills divided by the next claim threshold;
 the death-benefit strip shows the next claim level divided by 31. Their
 native widths are 153px and 200px, using the red and violet atlas strips.
 
+Diving below the swimming surface starts a 30-second oxygen bar. It uses the
+cast bar's shape and drains from full to empty. At the surface or on dry land
+it refills in up to three seconds and hides when full. Diving again uses the air
+currently available. At zero air, drowning deals 20% of maximum HP every two
+seconds. World tracks oxygen from the character's position and applies normal
+environmental death handling.
+
 Swimming and floating use the original 007_swim and 006_swnormal clips, including
 race/sex filename aliases. Entering swimming releases a previous locked pose;
 water locomotion takes precedence over sitting in presentation. Surface contact

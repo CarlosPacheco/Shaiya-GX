@@ -1079,13 +1079,23 @@ func DecodeExperienceGain(p []byte) (ExperienceGain, error) {
 <details><summary>Types and codecs</summary>
 
 ```go
-type FallDamage struct{ Target, Amount uint32 }
+type EnvironmentalDamage struct{ Target, Amount uint32 }
 ```
 
 ```go
-func DecodeFallDamage(p []byte) (v FallDamage, err error) {
+type FallDamage = EnvironmentalDamage
+```
+
+```go
+func DecodeFallDamage(p []byte) (FallDamage, error) {
+	return decodeEnvironmentalDamage(p, "fall")
+}
+```
+
+```go
+func decodeEnvironmentalDamage(p []byte, cause string) (v EnvironmentalDamage, err error) {
 	if len(p) != 10 {
-		return v, fmt.Errorf("fall damage: expected 10 bytes, got %d", len(p))
+		return v, fmt.Errorf("%s damage: expected 10 bytes, got %d", cause, len(p))
 	}
 	r := NewReader(p)
 	v.Target, v.Amount = r.U32(), r.U32()
@@ -2927,6 +2937,53 @@ func DecodeOJLimits(p []byte) ([]OJLimit, error) {
 		out = append(out, v)
 	}
 	return out, nil
+}
+```
+
+</details>
+
+## oxygen
+
+[internal/proto/oxygen.go](../../internal/proto/oxygen.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type OxygenPhase uint8
+```
+
+```go
+type OxygenStatus struct {
+	Phase       OxygenPhase
+	RemainingMS uint16
+}
+```
+
+```go
+func OxygenPacket(v OxygenStatus) []byte {
+	w := NewWriter(GXOxygen)
+	w.U8(uint8(v.Phase))
+	w.U16(v.RemainingMS)
+	return w.Bytes()
+}
+```
+
+```go
+func DecodeOxygen(p []byte) (OxygenStatus, error) {
+	r := NewReader(p)
+	v := OxygenStatus{Phase: OxygenPhase(r.U8()), RemainingMS: r.U16()}
+	if Op(p) != GXOxygen || r.Err() != nil || r.Remaining() != 0 ||
+		v.Phase > OxygenRefilling || v.RemainingMS > uint16(OxygenCapacity.Milliseconds()) ||
+		v.Phase == OxygenHidden && v.RemainingMS != 0 {
+		return OxygenStatus{}, fmt.Errorf("invalid oxygen status")
+	}
+	return v, nil
+}
+```
+
+```go
+func DecodeDrowningDamage(p []byte) (EnvironmentalDamage, error) {
+	return decodeEnvironmentalDamage(p, "drowning")
 }
 ```
 
