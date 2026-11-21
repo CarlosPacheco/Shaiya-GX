@@ -127,6 +127,20 @@ func npcOnMap(mapID uint16, id uint32) (MapNpc, bool) {
 	return MapNpc{}, false
 }
 
+// The inventory plan temporarily detaches s.player while staging a purchase.
+func (s *Session) houseShopRate(npcTypeID uint16, shopType uint8) (float64, uint8, uint8) {
+	p := s.operationPlayer()
+	if p == nil {
+		return 0, guildBankRefused, guildBankRanked
+	}
+	guildMu.Lock()
+	defer guildMu.Unlock()
+	if g := p.guild.guild; g != nil {
+		return g.shopBuyRate(npcTypeID, shopType)
+	}
+	return 0, guildBankRefused, guildBankRanked
+}
+
 func buildShopBuyResult(result, bag, slot, itemType, typeID uint8, count uint16, money uint32) []byte {
 	w := packet.New(packet.ShopBuy)
 	w.Bytes([]byte{result, bag, slot, itemType, typeID})
@@ -165,15 +179,7 @@ func (s *Session) planShopBuy(p []byte) {
 	price := uint64(count) * uint64(max(item.Buy, 0))
 	if s.inGuildHouseZone() {
 		// CUser::PacketShop: inside a house map the guild's NPC levels set the price.
-		guildMu.Lock()
-		g := s.player.guild.guild
-		if g == nil {
-			guildMu.Unlock()
-			s.houseNpcRefusal(guildBankRefused, guildBankRanked)
-			return
-		}
-		rate, result, detail := g.shopBuyRate(npc.TypeID, def.ShopType)
-		guildMu.Unlock()
+		rate, result, detail := s.houseShopRate(npc.TypeID, def.ShopType)
 		if result != 0 {
 			s.houseNpcRefusal(result, detail)
 			return

@@ -14,7 +14,7 @@ Declarations: [packet.ShopBuy](../../server/internal/packet/packet.go#L78), [pro
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L107)
 
-**S→C serializers:** [buildShopBuyResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L130)
+**S→C serializers:** [buildShopBuyResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L144)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L756)
 
@@ -24,7 +24,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildShopBuyResult — server/internal/world/npcquest.go</summary>
 
-[Source definition](../../server/internal/world/npcquest.go#L130)
+[Source definition](../../server/internal/world/npcquest.go#L144)
 
 ```go
 func buildShopBuyResult(result, bag, slot, itemType, typeID uint8, count uint16, money uint32) []byte {
