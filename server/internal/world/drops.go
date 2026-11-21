@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"github.com/Spelunkern/Shaiya-GX/internal/worlddrops"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
@@ -135,10 +136,43 @@ func rollWorldDrops(level uint16, roll func(uint64) uint64, drop func(worlddrops
 	}
 }
 
-// dropPosition is CMob::GetDropPosRand: within half a unit of the mob, with
-// Y 0 (the server has no terrain heights; the client places it).
+// dropPosition scatters a drop within half a unit along each horizontal axis.
 func dropPosition(x, z float32) (float32, float32) {
 	return x + float32(rand.IntN(1000))/1000 - 0.5, z + float32(rand.IntN(1000))/1000 - 0.5
+}
+
+// mobDropPosition keeps CMob::GetDropPosRand's scatter around the monster and
+// uses its authoritative height to select the floor.
+func mobDropPosition(mob *MapMob) (x, y, z float32) {
+	origin := mapgeometry.Position{mob.PosX, mob.PosY, mob.PosZ}
+	candidate := origin
+	candidate[0], candidate[2] = dropPosition(mob.PosX, mob.PosZ)
+	if mob.nav != nil {
+		nav, err := loadMobNavigation(mob.nav.id)
+		if err != nil || nav == nil {
+			return origin[0], origin[1], origin[2]
+		}
+		if g, ok := nav.PlayerGeometry(); ok {
+			candidate = floorMobDrop(g, origin, candidate)
+		}
+	}
+	return candidate[0], candidate[1], candidate[2]
+}
+
+func floorMobDrop(g *mapgeometry.Geometry, origin, candidate mapgeometry.Position) mapgeometry.Position {
+	y, ok := g.Floor(candidate, mapgeometry.MaxGroundStep, false)
+	if !ok {
+		return origin
+	}
+	candidate[1] = y
+	// Test slightly above the floor so an offset cannot cross a wall.
+	from, to := origin, candidate
+	from[1] += mapgeometry.FootSkin
+	to[1] += mapgeometry.FootSkin
+	if !g.SegmentVisible(from, to) {
+		return origin
+	}
+	return candidate
 }
 
 // rollMobDrops rolls one kill's loot, registers it on the map and returns
@@ -150,16 +184,16 @@ func rollMobDrops(mapID uint16, mob *MapMob, ownerID, killerID uint32, party []*
 	defs := db.MustDefs()
 	var packets []MapItem
 	place := func(def *db.ItemDef, money uint32) {
-		x, z := dropPosition(mob.PosX, mob.PosZ)
+		x, y, z := mobDropPosition(mob)
 		if def != nil && len(party) >= 1 {
 			// Universal loot: a party or raid's item goes straight into one member's bag.
 			item := newDroppedItem(def)
 			if to := distributeLoot(party, &item, time.Now()); to != nil {
-				to.QueueLoot(lootGrant{item: item, mapID: mapID, x: x, z: z})
+				to.QueueLoot(lootGrant{item: item, mapID: mapID, x: x, y: y, z: z})
 				return
 			}
 		}
-		mi := MapItem{ID: nextMapItemID(), OwnerID: ownerID, FromMob: true, DroppedAt: time.Now(), PosX: x, PosZ: z}
+		mi := MapItem{ID: nextMapItemID(), OwnerID: ownerID, FromMob: true, DroppedAt: time.Now(), PosX: x, PosY: y, PosZ: z}
 		if def != nil {
 			mi.Item = newDroppedItem(def)
 		} else {

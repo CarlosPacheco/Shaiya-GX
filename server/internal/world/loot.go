@@ -129,9 +129,9 @@ func distributeLoot(members []*ConnectedPlayer, tpl *db.Item, now time.Time) *Co
 
 // lootGrant is an item queued for a member's session.
 type lootGrant struct {
-	item  db.Item
-	mapID uint16
-	x, z  float32
+	item    db.Item
+	mapID   uint16
+	x, y, z float32
 }
 
 func (p *ConnectedPlayer) QueueLoot(g lootGrant) {
@@ -160,7 +160,7 @@ func (s *Session) applyLoot(p *ConnectedPlayer) {
 				}
 				g.item.Count = left
 			}
-			mi := MapItem{ID: nextMapItemID(), OwnerID: s.char.ID, FromMob: true, DroppedAt: time.Now(), PosX: g.x, PosZ: g.z, Item: g.item}
+			mi := MapItem{ID: nextMapItemID(), OwnerID: s.char.ID, FromMob: true, DroppedAt: time.Now(), PosX: g.x, PosY: g.y, PosZ: g.z, Item: g.item}
 			addMapItem(g.mapID, mi)
 			dispatchItemEnter(g.mapID, &mi, "0x0401 group loot overflow")
 			continue

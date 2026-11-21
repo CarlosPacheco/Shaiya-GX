@@ -572,8 +572,8 @@ func rewardKill(killer *ConnectedPlayer, killerID uint32, mapID uint16, m *MapMo
 		questRecipients = []*ConnectedPlayer{killer}
 	}
 	if def := questItemDrop(m, questRecipients); def != nil {
-		x, z := dropPosition(m.PosX, m.PosZ)
-		mi := MapItem{ID: nextMapItemID(), OwnerID: killerID, DroppedAt: time.Now(), PosX: x, PosZ: z,
+		x, y, z := mobDropPosition(m)
+		mi := MapItem{ID: nextMapItemID(), OwnerID: killerID, DroppedAt: time.Now(), PosX: x, PosY: y, PosZ: z,
 			Item: db.Item{Type: def.Type, TypeID: def.TypeID, Quality: def.Quality, Count: 1}}
 		addMapItem(mapID, mi)
 		dispatchItemEnter(mapID, &mi, "0x0401 quest item drop")

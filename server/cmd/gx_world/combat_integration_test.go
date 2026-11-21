@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/world"
@@ -15,8 +16,8 @@ import (
 
 // TestCombatAgainstSQLite plays a disposable armed fighter: it
 // walks onto a low-level mob, uses an attack skill, auto-attacks it to
-// death and checks the death, the 0x0503 results and that every drop
-// (0x0401) carries Y 0 as CMob::GetDropPosRand sends it.
+// death and checks the death, the 0x0503 results and that drops (0x0401)
+// stay near the mob's position at death, including its floor height.
 func TestCombatAgainstSQLite(t *testing.T) {
 	setupWorld(t)
 	charID, uid := newProtocolCharacter(t, 0)
@@ -93,7 +94,15 @@ func TestCombatAgainstSQLite(t *testing.T) {
 
 	c.write(msg(packet.CharacterMobAutoAttack, le(target.ID)...))
 	deadline := time.Now().Add(60 * time.Second)
-	swings, drops := 0, 0
+	swings := 0
+	var drops []proto.GroundItem
+	readDrop := func(p []byte) {
+		item, err := proto.DecodeGroundItem(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		drops = append(drops, item)
+	}
 	for time.Now().Before(deadline) {
 		p := c.read(5 * time.Second)
 		if p == nil {
@@ -109,10 +118,7 @@ func TestCombatAgainstSQLite(t *testing.T) {
 				}
 			}
 		case packet.MapAddItem:
-			drops++
-			if y := math.Float32frombits(binary.LittleEndian.Uint32(p[14:])); y != 0 {
-				t.Fatalf("drop Y %.2f, the original sends 0", y)
-			}
+			readDrop(p)
 		case packet.MobDeath:
 			if got, _ := packet.U32(p[2:]); got == target.ID {
 				// Drops follow the death notice in the same burst.
@@ -122,13 +128,21 @@ func TestCombatAgainstSQLite(t *testing.T) {
 						continue
 					}
 					if op(q) == packet.MapAddItem {
-						drops++
-						if y := math.Float32frombits(binary.LittleEndian.Uint32(q[14:])); y != 0 {
-							t.Fatalf("drop Y %.2f, the original sends 0", y)
-						}
+						readDrop(q)
 					}
 				}
-				t.Logf("mob %d (id %d) died after %d swings, %d drops; opcodes %v", target.MobID, target.ID, swings, drops, seen)
+				for _, mob := range world.EntitiesOnMap(saved.MapID).Mobs {
+					if mob.ID == target.ID {
+						target = mob
+						break
+					}
+				}
+				for _, item := range drops {
+					if math.Abs(float64(item.X-target.PosX)) > .501 || math.Abs(float64(item.Y-target.PosY)) > .501 || math.Abs(float64(item.Z-target.PosZ)) > .501 {
+						t.Fatalf("drop at (%g, %g, %g), mob died at (%g, %g, %g)", item.X, item.Y, item.Z, target.PosX, target.PosY, target.PosZ)
+					}
+				}
+				t.Logf("mob %d (id %d) died after %d swings, %d drops; opcodes %v", target.MobID, target.ID, swings, len(drops), seen)
 				c.write(msg(packet.Logout))
 				return
 			}

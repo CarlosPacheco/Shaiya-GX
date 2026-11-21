@@ -183,11 +183,16 @@ func TestNewDropRecreationSurvivesPickupAndRedrop(t *testing.T) {
 	defer clearMapItems(s.char.MapID)
 	defs.MobDrops[1] = []db.MobDrop{{ItemOrder: 1, Grade: 1, DropRate: 100}}
 	buildDropCatalog()
-	drops := rollMobDrops(s.char.MapID, &MapMob{MobID: 1, ID: 1, Level: 1}, s.char.ID, s.char.ID, nil, s.log)
+	mob := &MapMob{MobID: 1, ID: 1, Level: 1, PosY: 15.7}
+	drops := rollMobDrops(s.char.MapID, mob, s.char.ID, s.char.ID, nil, s.log)
 	if len(drops) != 1 {
 		t.Fatal("missing forced drop", len(drops))
 	}
 	d := drops[0]
+	wire, err := proto.DecodeGroundItem(buildMapAddItem(&d)[2:])
+	if err != nil || wire.Y != mob.PosY {
+		t.Fatalf("mob loot packet did not preserve the kill height: %+v, %v", wire, err)
+	}
 	validateRecreationRoll(t, defs.Item(1, 1), d.Item.CraftName, 0)
 	s.handlePickupItem(proto.PickupPacket(d.ID))
 	saved, err := db.CharacterItems(s.char.ID)
@@ -201,8 +206,8 @@ func TestNewDropRecreationSurvivesPickupAndRedrop(t *testing.T) {
 	p.Count(1)
 	s.handleDropItem(p.Bytes())
 	ground := itemsOnMap(s.char.MapID)
-	if len(ground) != 1 || ground[0].Item.CraftName != old.CraftName {
-		t.Fatal("redrop rerolled stats", ground)
+	if len(ground) != 1 || ground[0].Item.CraftName != old.CraftName || ground[0].PosY != s.char.PosY {
+		t.Fatal("redrop lost stats or did not use the player's height", ground)
 	}
 	s.handlePickupItem(proto.PickupPacket(ground[0].ID))
 	saved, err = db.CharacterItems(s.char.ID)
