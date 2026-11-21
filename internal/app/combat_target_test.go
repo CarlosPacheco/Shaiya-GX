@@ -262,3 +262,45 @@ func TestAttackReachFollowsWeaponAndMobSize(t *testing.T) {
 		t.Fatal("bare hands reach", got)
 	}
 }
+
+// Same-faction players are followed at 1.5 units without any packet
+// (a nil World would panic on Send); duel and guild-duel foes are attacked.
+func TestSameFactionPlayerIsFollowedWithoutPackets(t *testing.T) {
+	a := inputApp()
+	a.state.Faction.Faction = 1
+	ally := &game.Entity{ID: 42, Kind: game.KindUser, X: 20, Shape: &proto.UserShape{Faction: 1, Guild: "A"}}
+	a.state.Entities[ally.ID], a.state.Target = ally, ally.ID
+	a.wv.facing = render.V3{1, 0, 0}
+	a.clock = 5
+	if !a.followOnly(ally) || a.attackReachTo(ally) != 1.5 {
+		t.Fatal("ally must be follow-only at 1.5")
+	}
+	if !a.attackTarget() || a.wv.approachTarget != ally.ID || !a.wv.travel {
+		t.Fatal("ally was not followed")
+	}
+	a.wv.pos = render.V3{19, 0, 0}
+	a.updateActionApproach(&platform.Input{})
+	if a.wv.travel || a.wv.approachTarget != ally.ID || a.wv.engagedID != ally.ID {
+		t.Fatal("must hold beside the ally and keep following", a.wv.travel, a.wv.approachTarget, a.wv.engagedID)
+	}
+	ally.X = 40
+	a.updateActionApproach(&platform.Input{})
+	if !a.wv.travel {
+		t.Fatal("follow did not resume when the ally walked away")
+	}
+	a.state.Duel = game.DuelState{Phase: game.DuelFighting, Opponent: ally.ID}
+	if a.followOnly(ally) {
+		t.Fatal("duel opponent must be attackable")
+	}
+	a.state.Duel = game.DuelState{}
+	a.state.GuildDuel.Active = true
+	a.state.Guild.Name = "B"
+	if a.followOnly(ally) {
+		t.Fatal("rival guild in a guild duel must be attackable")
+	}
+	a.state.GuildDuel.Active = false
+	ally.Shape.Faction = 0
+	if a.followOnly(ally) {
+		t.Fatal("enemy faction must be attackable")
+	}
+}

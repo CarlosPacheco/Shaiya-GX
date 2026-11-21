@@ -25,6 +25,10 @@ id (`player+0x16c`).
 
 GX now follows the same rules: the second click needs no timing, the chase keeps
 following a moving target and swings again after it leaves reach, and reach uses
-the weapon and monster Size. Still different: same-faction players are attacked
-through the server instead of only followed, and the native range buff is not
-added. The native client acts on mouse press; GX still acts on release.
+the weapon and monster Size. A same-faction player is followed at 1.5 units with
+no packet of any kind (not even the heading), unless they are your duel opponent
+or, during a guild duel, belong to another guild. The same applies to the F key.
+Players without shape data keep the server's verdict. Still different: the
+native range buff is not added, GX World's own WarType P maps (where everyone is
+a teammate) are not known to the client, and the native client acts on mouse
+press while GX acts on release.

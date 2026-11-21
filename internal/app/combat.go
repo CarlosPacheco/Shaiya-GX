@@ -193,6 +193,9 @@ func (a *App) attackTarget() bool {
 	a.wv.approachTarget, a.wv.approachSkill = 0, nil
 	a.wv.approachNPC = false
 	a.wv.travel, a.wv.autoRun = false, false
+	if a.followOnly(e) {
+		return a.followPlayer(e)
+	}
 	if !a.faceRequestedTarget(e.ID) {
 		return false
 	}
@@ -368,4 +371,37 @@ func (a *App) nearestHostileMob() uint32 {
 		}
 	}
 	return id
+}
+
+// followOnly is the native team test of 0x43bfa0: a player of your own
+// faction is followed, never attacked, unless they are your duel or rival
+// guild-duel opponent. Players without shape data keep the server's verdict.
+func (a *App) followOnly(e *game.Entity) bool {
+	if e == nil || e.Kind != game.KindUser || e.ID == a.state.SelfID || e.Shape == nil {
+		return false
+	}
+	if e.Shape.Faction != a.state.Faction.Faction {
+		return false
+	}
+	if d := a.state.Duel; d.Phase == game.DuelFighting && d.Opponent == e.ID {
+		return false
+	}
+	if g := a.state.GuildDuel; g.Active && e.Shape.Guild != a.state.Guild.Name {
+		return false
+	}
+	return true
+}
+
+// followPlayer walks to 1.5 units from a friendly player and keeps following
+// them. Purely client side: no attack, target or heading packet is sent.
+func (a *App) followPlayer(e *game.Entity) bool {
+	v := a.wv
+	v.approachTarget, v.approachLoot, v.approachNPC, v.approachSkill = e.ID, false, false, nil
+	delta := render.V3{e.X - v.pos[0], 0, e.Z - v.pos[2]}
+	if delta.Len() <= a.attackReachTo(e) {
+		v.engagedID, v.engagedAt = e.ID, a.clock
+		return true
+	}
+	v.engagedID = 0
+	return a.updateActionApproach(&platform.Input{})
 }

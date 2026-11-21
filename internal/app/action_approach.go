@@ -196,6 +196,9 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 func (a *App) attackReachTo(e *game.Entity) float32 {
 	weapon := a.state.Inventory[[2]uint8{0, 5}]
 	def := a.itemsItem(weapon.Type, weapon.TypeID)
+	if a.followOnly(e) {
+		return 1.5
+	}
 	if def == nil {
 		return 1
 	}
