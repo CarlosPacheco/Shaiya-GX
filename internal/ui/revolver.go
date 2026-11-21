@@ -78,10 +78,12 @@ func RevolverCompactSlot(cell, selected, count int) int {
 func (l RevolverLayout) Controls() [8]RevolverBox {
 	x, y := l.Main.X, l.Main.Y
 	var out [8]RevolverBox
+	// EP5.4 0x4e80af–0x4e8666. The vertical artwork puts rotate at
+	// the right of the bottom row, then reset and editor to its left.
 	if l.Vertical {
-		out = [8]RevolverBox{{x + 14, y + 141, 12, 12}, {x + 25, y + 141, 12, 12}, {x + 37, y + 141, 12, 12}, {x + 40, y + 17, 14, 14}, {x + 40, y + 124, 14, 14}}
+		out = [8]RevolverBox{{x + 33, y + 141, 12, 12}, {x + 22, y + 141, 12, 12}, {x + 10, y + 141, 12, 12}, {x + 43, y + 20, 12, 12}, {x + 43, y + 126, 12, 12}}
 	} else {
-		out = [8]RevolverBox{{x + 141, y + 14, 12, 12}, {x + 141, y + 25, 12, 12}, {x + 141, y + 37, 12, 12}, {x + 19, y + 1, 14, 14}, {x + 124, y + 1, 14, 14}}
+		out = [8]RevolverBox{{x + 141, y + 14, 12, 12}, {x + 141, y + 25, 12, 12}, {x + 141, y + 37, 12, 12}, {x + 20, y + 4, 12, 12}, {x + 126, y + 4, 12, 12}}
 	}
 	if l.Vertical {
 		out[7] = RevolverBox{x + 21, y + 5, 14, 14}

@@ -111,3 +111,53 @@ func TestRevolverCompactDropsPersistAcrossReload(t *testing.T) {
 		t.Fatalf("compact assignments did not survive reload: %+v", saved.revolverConfig)
 	}
 }
+
+func TestRevolverControlHitsMatchVerticalArtwork(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", dir)
+	t.Setenv("APPDATA", dir)
+	a := inputApp()
+	a.state.SelfID = 12
+	v := a.revolverState()
+	const w, h = 1024, 768
+	click := func(dx, dy int) {
+		t.Helper()
+		main := a.revolverLayout(w, h).Main
+		in := platform.Input{MouseX: main.X + dx, MouseY: main.Y + dy, Pressed: true, MouseDown: true}
+		if !a.updateRevolver(&in, w, h) {
+			t.Fatalf("press at %d,%d was not captured", dx, dy)
+		}
+		in.Pressed, in.MouseDown, in.Clicked = false, false, true
+		if !a.updateRevolver(&in, w, h) {
+			t.Fatalf("release at %d,%d was not captured", dx, dy)
+		}
+	}
+	for _, expanded := range []bool{false, true} {
+		v.Expanded = expanded
+		click(146, 19) // Horizontal circular arrow.
+		if !v.Position.Vertical || v.Expanded != expanded {
+			t.Fatalf("horizontal rotate failed (editor=%t)", expanded)
+		}
+		v.selected = 2
+		click(47, 24) // Advance.
+		if v.selected != 0 {
+			t.Fatal("vertical advance did not wrap")
+		}
+		click(47, 132) // Go back.
+		if v.selected != 2 {
+			t.Fatal("vertical back did not wrap")
+		}
+		click(25, 146) // Vertical R button.
+		if v.selected != 0 || !v.Position.Vertical || v.Expanded != expanded {
+			t.Fatalf("vertical reset activated the wrong control (editor=%t)", expanded)
+		}
+		click(14, 146) // Vertical editor button.
+		if v.Expanded == expanded || !v.Position.Vertical {
+			t.Fatalf("vertical editor activated the wrong control (editor=%t)", expanded)
+		}
+		click(36, 146) // Vertical circular arrow.
+		if v.Position.Vertical || v.Expanded == expanded {
+			t.Fatalf("vertical rotate activated the wrong control (editor=%t)", expanded)
+		}
+	}
+}
