@@ -38,9 +38,16 @@ func TestMonsterNativeFields(t *testing.T) {
 }
 
 func TestMonsterNativeVisualScale(t *testing.T) {
-	for code, want := range []float32{.6, 1, 1.3, 1.6, 2, 5, .4, 1} {
-		if got := (Monster{ScaleCode: uint8(code), Size: 8}).VisualScale(); got != want {
-			t.Fatalf("code %d: %v, want %v", code, got, want)
+	known := [...]float32{.6, 1, 1.3, 1.6, 2, 5, .4}
+	for code := range 256 {
+		want := float32(1)
+		if code < len(known) {
+			want = known[code]
+		}
+		for _, width := range []uint8{0, 1, 8, 255} {
+			if got := (Monster{ScaleCode: uint8(code), Size: width}).VisualScale(); got != want {
+				t.Fatalf("code %d, width %d: got %v, want %v", code, width, got, want)
+			}
 		}
 	}
 }

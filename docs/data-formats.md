@@ -290,7 +290,8 @@ proprietary backups remain local, outside source history and release assets.
 
 ### Monster definition fields and visual scale
 
-See [mob properties research](mob-properties-research.md) for the complete
+See [monster sizes](wiki/monster-sizes.md) for the scale table and original
+combinations. See [mob properties research](mob-properties-research.md) for the complete
 31-byte Monster.SData payload and the database/runtime authority split.
 The byte traditionally called `Day` is the native client visual scale selector,
 independent of combat `Size`. GX retains the full payload and applies the native

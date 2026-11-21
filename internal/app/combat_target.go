@@ -137,7 +137,7 @@ func (a *App) pickNPC(in *platform.Input, w, h int) uint32 {
 	return id
 }
 
-// EP5's monster picker (0x4D73C0) ray-tests a vertical quad facing the
+// EP5.4's monster picker (0x43B8C0) ray-tests a vertical quad facing the
 // camera horizontally. Its width is Monster.SData Size (0x432E36) and
 // its height follows the scaled MON height plus .2 (0x4318E4).
 func (a *App) monsterRayHit(m *scene.CreatureActor, origin, direction render.V3) (float32, bool) {

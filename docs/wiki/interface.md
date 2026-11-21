@@ -146,7 +146,7 @@ Mob names and target captions share `0x4cb250`'s signed monster-level minus play
 World names project a fixed offset from the actor origin. NPCs display one
 yellow line at their authored `Npc.MON` height plus 0.3 (`0x4344cd`), with
 the native half-height dead NPCs and one-fifth-height animals 541–543.
-Monsters use their `Monster.MON` height times the model scale plus 0.2
+[Monsters](monster-sizes.md) use their `Monster.MON` height times the model scale plus 0.2
 (`0x431770`, `0x44c39b`). A selected monster has a name within 100 units and
 two 16-pixel `mon_*.png` markers matching its element. Hovering a different
 monster shows its unmarked name. Text starts at the projected Y coordinate;

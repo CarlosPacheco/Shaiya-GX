@@ -10,7 +10,7 @@ SOURCE = ROOT / 'docs/wiki'
 NAMES = {
     'chat-parity.md': 'Chat-Controls', 'user-options.md': 'User-Options', 'revolver.md': 'Revolver',
     'auction-house.md': 'Auction-House', 'teleport-runes.md': 'Teleport-Runes',
-    'map-rules.md': 'Map-Rules', 'gx-studio.md': 'GX-Studio',
+    'map-rules.md': 'Map-Rules', 'monster-sizes.md': 'Monster-Sizes', 'gx-studio.md': 'GX-Studio',
     'group-loot.md': 'Group-Loot',
     'mounts.md': 'Mounts', 'fall-damage.md': 'Fall-Damage',
     'goddess-blessing.md': 'Goddess-Blessing',

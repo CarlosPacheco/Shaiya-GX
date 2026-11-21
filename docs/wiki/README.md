@@ -26,6 +26,7 @@ See the [gx-v0.1.15 upgrade guide](../releases/gx-v0.1.15-upgrade.md) to update 
 - [Teleport Runes](teleport-runes.md): faction destinations, channeling, guild
   house eligibility and SQLite configuration.
 - [Group loot](group-loot.md) explains how party and raid items are shared.
+- [Monster sizes](monster-sizes.md) covers the original scale codes, target widths and examples.
 - [Combat stats and damage](combat-stats.md) covers the live damage, critical,
   accuracy, evasion and higher-level monster rules.
 - [Combat, world and interface changes in v0.1.15](../releases/gx-v0.1.15.md).
