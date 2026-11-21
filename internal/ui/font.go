@@ -19,13 +19,14 @@ import (
 // Font uses a fast Latin-1 atlas and shaped Unicode fallback. Height follows D3DXCreateFont with a
 // positive height: the cell (ascent + descent) is Height pixels.
 type Font struct {
-	tex     *render.Texture
-	glyphs  [256]glyph
-	unicode *unicodeFont
-	Ascent  int
-	Height  int
-	atlasW  float32
-	atlasH  float32
+	tex           *render.Texture
+	glyphs        [256]glyph
+	unicode       *unicodeFont
+	Ascent        int
+	Height        int
+	atlasW        float32
+	atlasH        float32
+	subtleOutline bool
 }
 
 type glyph struct {
@@ -124,9 +125,9 @@ func (f *Font) Width(s string) int {
 // DrawOutlined follows Phoenix's black-outlined fixed-pixel nameplates.
 func (f *Font) DrawOutlined(s *render.Sprites, text string, x, y int, tint [4]float32) {
 	for _, offset := range [][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}} {
-		f.Draw(s, text, x+offset[0], y+offset[1], [4]float32{0, 0, 0, tint[3]}, 0)
+		f.drawText(s, text, float32(x+offset[0]), float32(y+offset[1]), 1, [4]float32{0, 0, 0, tint[3]}, 0, false)
 	}
-	f.Draw(s, text, x, y, tint, 0)
+	f.drawText(s, text, float32(x), float32(y), 1, tint, 0, false)
 }
 
 // DrawName uses the US EP4 single foreground and four one-pixel outline passes.
@@ -142,8 +143,20 @@ func (f *Font) Draw(s *render.Sprites, text string, x, y int, rgba [4]float32, m
 
 // DrawScaled keeps tooltip text and frame together on small viewports.
 func (f *Font) DrawScaled(s *render.Sprites, text string, x, y, scale float32, rgba [4]float32, maxW int) {
+	if f.subtleOutline && (rgba[0] != 0 || rgba[1] != 0 || rgba[2] != 0) && rgba[3] > 0 {
+		edge := .65 * scale
+		ink := [4]float32{0, 0, 0, rgba[3] * .23}
+		f.drawText(s, text, x-edge, y, scale, ink, maxW, true)
+		f.drawText(s, text, x+edge, y, scale, ink, maxW, true)
+		f.drawText(s, text, x, y-edge, scale, ink, maxW, true)
+		f.drawText(s, text, x, y+edge, scale, ink, maxW, true)
+	}
+	f.drawText(s, text, x, y, scale, rgba, maxW, false)
+}
+
+func (f *Font) drawText(s *render.Sprites, text string, x, y, scale float32, rgba [4]float32, maxW int, monochromeOnly bool) {
 	if f.unicode != nil && needsUnicode(text) {
-		f.unicode.draw(s, text, x, y, scale, rgba, maxW)
+		f.unicode.draw(s, text, x, y, scale, rgba, maxW, monochromeOnly)
 		return
 	}
 	pen := 0

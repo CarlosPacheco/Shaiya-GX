@@ -139,7 +139,7 @@ func (u *unicodeFont) rasterize(s string) *unicodeTexture {
 	}
 	return t
 }
-func (u *unicodeFont) draw(s *render.Sprites, text string, x, y, scale float32, tint [4]float32, maxW int) {
+func (u *unicodeFont) draw(s *render.Sprites, text string, x, y, scale float32, tint [4]float32, maxW int, monochromeOnly bool) {
 	if maxW <= 0 || maxW > 4096 {
 		maxW = 4096
 	}
@@ -170,7 +170,7 @@ func (u *unicodeFont) draw(s *render.Sprites, text string, x, y, scale float32, 
 		s.Draw(tex, x-float32(t.pad)*scale, y-float32(t.pad)*scale, float32(t.width)*scale, float32(t.height)*scale, 0, 0, 1, 1, c)
 	}
 	draw(t.mono, tint)
-	if t.colored != nil {
+	if !monochromeOnly && t.colored != nil {
 		colorTint := [4]float32{1, 1, 1, tint[3]}
 		if tint[0] == 0 && tint[1] == 0 && tint[2] == 0 {
 			colorTint = tint

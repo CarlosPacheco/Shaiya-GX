@@ -141,9 +141,6 @@ func (a *App) drawBuffTooltip(w, h int) {
 			a.tooltipDescription += remaining
 		}
 	}
-	if b.def.Effect == 4 && b.buff.Level != 100 && b.buff.Skill != warehouseCallSkill {
-		a.tooltip = append(a.tooltip, itemDetailLine{"Right click: cancel", white})
-	}
 }
 
 func buffGroup(b buffBadge) int {
