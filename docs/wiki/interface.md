@@ -690,8 +690,10 @@ filled cells, including three-digit stacks.
 
 ## Personal warehouse
 
+Merchants and bankers open the inventory flush to the left of the service window. The inventory returns to its saved position when the service closes.
+
 A personal banker opens account storage. While Warehouse Call is active,
 click its buff icon to reopen personal storage and the inventory. Drag the
 icon to reposition the buff strip. The remote window has an empty portrait
 slot. Both personal warehouse entry points use the same six storage pages.
-Guild storage opens through its own banker in the guild house.
+Drop a stored item on a page tab to move it to that page’s first free slot. For an exact destination, select the item, switch tabs and click the slot. Guild storage opens through its own banker in the guild house.

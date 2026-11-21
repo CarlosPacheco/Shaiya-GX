@@ -51,7 +51,9 @@ func inputApp() *App {
 	if err != nil {
 		panic(err)
 	}
-	return &App{gameMenu: menu, menuConfirm: message, statusUI: status, chatUI: chat, bottom: bottom, subActionsUI: sub, accountMessage: message, skillBook: book, quantityUI: quantity, state: game.New(), wv: &worldView{}, login: &ui.Login{}, actionBar: &ui.ActionBar{Hover: -1}, inventoryUI: &ui.Inventory{}, marketUI: market, skillDefs: map[sdata.SkillKey]sdata.Skill{}, npcDefs: map[sdata.NPCKey]sdata.NPC{}}
+	a := &App{gameMenu: menu, menuConfirm: message, statusUI: status, chatUI: chat, bottom: bottom, subActionsUI: sub, accountMessage: message, skillBook: book, quantityUI: quantity, state: game.New(), wv: &worldView{}, login: &ui.Login{}, actionBar: &ui.ActionBar{Hover: -1}, inventoryUI: &ui.Inventory{}, marketUI: market, skillDefs: map[sdata.SkillKey]sdata.Skill{}, npcDefs: map[sdata.NPCKey]sdata.NPC{}}
+	a.inventoryUI.DockOrigin = a.inventoryDockOrigin
+	return a
 }
 
 func TestBottomMenuSharesPanelTogglesAndOwnsPointer(t *testing.T) {
@@ -118,12 +120,13 @@ func TestInventoryDoesNotBlockShopScrollingOrWorldZoom(t *testing.T) {
 	a.shop.npcID = 42
 	a.state.Entities[42] = &game.Entity{Kind: game.KindNpc, NpcType: 1, TypeID: 1}
 	a.npcDefs[sdata.NPCKey{Type: 1, ID: 1}] = sdata.NPC{Items: make([]sdata.ItemKey, 61)}
-	in := platform.Input{MouseX: 50, MouseY: 220, Wheel: -120}
+	mx, my := a.marketUI.Origin(1024, 768)
+	in := platform.Input{MouseX: mx + 18, MouseY: my + 138, Wheel: -120}
 	controls := a.worldControls(&in, 1024, 768)
 	if a.shop.page != 1 || controls.Wheel != 0 {
 		t.Fatal("shop did not own its wheel with inventory open")
 	}
-	in.MouseX = 500
+	in.MouseX = 700
 	in.MouseY = 400
 	controls = a.worldControls(&in, 1024, 768)
 	if controls.Wheel != -120 || a.shop.page != 1 {
@@ -192,7 +195,7 @@ func TestCatalogDragCancelsWithoutActivatingDestination(t *testing.T) {
 		a.shop.npcID = 42
 		a.state.Entities[42] = &game.Entity{Kind: game.KindNpc, NpcType: 1, TypeID: 1}
 		a.npcDefs[sdata.NPCKey{Type: 1, ID: 1}] = sdata.NPC{Items: []sdata.ItemKey{{Type: 25, TypeID: 4}}}
-		x, y := ui.MarketOrigin(1024, 768)
+		x, y := a.marketUI.Origin(1024, 768)
 		a.worldControls(&platform.Input{MouseX: x + 16, MouseY: y + 113, Pressed: true, MouseDown: true}, 1024, 768)
 		if !a.shop.dragging {
 			t.Fatal("catalog press did not start drag")

@@ -378,6 +378,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.inventoryUI, err = ui.NewInventory(a); err != nil {
 		return nil, err
 	}
+	a.inventoryUI.DockOrigin = a.inventoryDockOrigin
 	if a.duelUI, err = ui.NewDuelPanel(a); err != nil {
 		return nil, err
 	}

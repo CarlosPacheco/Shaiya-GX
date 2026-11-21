@@ -63,7 +63,7 @@ func (a *App) guildBankAllowed(source, destination [2]uint8) bool {
 		}
 		return true
 	}
-	if destination[0] != proto.GuildBankBag || source[0] == 0 || destination[1] >= 40 {
+	if destination[0] != proto.GuildBankBag || source[0] == 0 {
 		return false
 	}
 	if g.Rank == 9 {
@@ -163,10 +163,7 @@ func (a *App) updateWarehouse(in *platform.Input, w, h int) bool {
 	// personal storage: there is no selector between the two.
 	v.guild = !a.remoteBank && houseMaps[a.state.MapID]
 	page, close := a.bankUI.Update(in, w, h, v.page)
-	if page != v.page {
-		v.page = page
-		v.selected, v.dragging = false, false
-	}
+	v.page = page
 	if close || in.HasKey(platform.KeyEscape) {
 		a.closeWarehouse()
 		return true
@@ -183,6 +180,19 @@ func (a *App) updateWarehouse(in *platform.Input, w, h int) bool {
 	if in.Clicked {
 		wasDrag := v.dragging
 		v.dragging = false
+		if tab := ui.WarehouseTab(in.MouseX-x, in.MouseY-y); wasDrag && v.selected && tab >= 0 {
+			if tab != int(v.source)/ui.WarehousePageSize {
+				if slot, ok := firstFreeWarehouseSlot(a.warehouseItems(), tab); ok {
+					bag := a.warehouseBag()
+					v.page = tab
+					a.moveWarehouseItem([2]uint8{bag, v.source}, [2]uint8{bag, slot})
+				} else {
+					a.questMessage("This warehouse page is full.")
+				}
+			}
+			v.selected = false
+			return true
+		}
 		if v.hovered && v.selected {
 			if v.source != v.hover {
 				bag := a.warehouseBag()
@@ -197,6 +207,16 @@ func (a *App) updateWarehouse(in *platform.Input, w, h int) bool {
 	}
 	return captured
 }
+func firstFreeWarehouseSlot(items map[uint8]proto.InventoryItem, page int) (uint8, bool) {
+	for i := range ui.WarehousePageSize {
+		slot := uint8(page*ui.WarehousePageSize + i)
+		if _, occupied := items[slot]; !occupied {
+			return slot, true
+		}
+	}
+	return 0, false
+}
+
 func (a *App) moveWarehouseItem(source, destination [2]uint8) {
 	if !a.warehouseOpen() || (!a.bank.guild && !a.state.WarehouseReady) || a.inventory.pending || a.shop.pending {
 		return
@@ -271,12 +291,7 @@ func (a *App) drawWarehouse(w, h int, portrait *render.Texture) {
 			a.font.Draw(a.sprites, text, cx+32-a.font.Width(text), cy+18, white, 32)
 		}
 	}
-	if v.dragging && v.selected {
-		if it, ok := a.warehouseItems()[v.source]; ok {
-			if d := a.itemsItem(it.Type, it.TypeID); d != nil {
-				a.drawItemIcon(d, a.lastMouseX-16, a.lastMouseY-16, 32, [4]float32{1, 1, 1, .85}, &it)
-			}
-		}
+	if v.dragging {
 		return
 	}
 	if hover, hovered := ui.WarehouseHit(a.lastMouseX-x, a.lastMouseY-y, v.page); hovered {
@@ -291,6 +306,18 @@ func (a *App) drawWarehouse(w, h int, portrait *render.Texture) {
 				}
 				a.drawItemDetails(d, &it, it.Count, min(x+ui.WarehouseWidth+4, max(0, w-304)), min(y+140, max(0, h-110)), w, h, feeText)
 			}
+		}
+	}
+}
+
+func (a *App) drawWarehouseDrag() {
+	v := &a.bank
+	if !v.dragging || !v.selected || !a.warehouseOpen() {
+		return
+	}
+	if it, ok := a.warehouseItems()[v.source]; ok {
+		if d := a.itemsItem(it.Type, it.TypeID); d != nil {
+			a.drawItemIcon(d, a.lastMouseX-16, a.lastMouseY-16, 32, [4]float32{1, 1, 1, .85}, &it)
 		}
 	}
 }

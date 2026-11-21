@@ -48,8 +48,6 @@ func TestPanelsAgainstRapture(t *testing.T) {
 		}
 		return merchant != 0
 	})
-	send(proto.NpcTalkPacket(merchant))
-	a.shop.npcID = merchant
 	click := func(x, y int, shift bool) {
 		t.Helper()
 		a.worldControls(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true, Shift: shift}, 1024, 768)
@@ -67,10 +65,18 @@ func TestPanelsAgainstRapture(t *testing.T) {
 	}
 	ix, iy := a.inventoryUI.Origin(1024, 768)
 	drag(ix, iy, 650, 100)
+	savedInventory := a.inventoryUI.Position
+	send(proto.NpcTalkPacket(merchant))
+	a.shop.npcID = merchant
 	sx, sy := a.marketUI.Origin(1024, 768)
 	drag(sx, sy, 50, 100)
-	if !a.inventoryUI.Position.Moved || !a.marketUI.Position.Moved {
-		t.Fatal("trade frames did not move")
+	if !savedInventory.Moved || a.inventoryUI.Position != savedInventory || !a.marketUI.Position.Moved {
+		t.Fatal("service docking changed the saved inventory position")
+	}
+	ix, iy = a.inventoryUI.Origin(1024, 768)
+	sx, sy = a.marketUI.Origin(1024, 768)
+	if ix+ui.InventoryWidth != sx || iy != sy {
+		t.Fatal("inventory did not follow the moved merchant")
 	}
 	ack := func(cond func() bool) {
 		t.Helper()

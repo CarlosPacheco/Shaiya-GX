@@ -14,6 +14,23 @@ func (a *App) toggleInventory() {
 	}
 }
 
+// EP5.4 merchant 0x43e1c2 and warehouse 0x440369 align both panels at the
+// same Y and put their edges together. GX anchors the inventory on the left.
+func (a *App) inventoryDockOrigin(w, h int) (x, y int, active bool) {
+	if a.state == nil {
+		return 0, 0, false
+	}
+	switch {
+	case a.warehouseOpen():
+		x, y = a.bankUI.Origin(w, h)
+	case a.merchantOpen():
+		x, y = a.marketUI.Origin(w, h)
+	default:
+		return 0, 0, false
+	}
+	return max(0, x-ui.InventoryWidth), min(y, max(0, h-ui.InventoryHeight)), true
+}
+
 func (a *App) toggleSkills(assign bool) {
 	v := &a.skills
 	v.open = !v.open || v.assignMode != assign
@@ -104,8 +121,9 @@ func (a *App) placeNewPersonalPanels(previous uint8, w, h int) {
 		}
 		frames[3] = frame{&a.statusUI.Position, a.statusUI.Origin, width, ui.StatusHeight}
 	}
+	_, _, inventoryDocked := a.inventoryDockOrigin(w, h)
 	for i, f := range frames {
-		if mask&^previous&(1<<i) == 0 || f.position == nil || f.position.Moved {
+		if mask&^previous&(1<<i) == 0 || f.position == nil || f.position.Moved || i == 0 && inventoryDocked {
 			continue
 		}
 		x, y := f.origin(w, h)

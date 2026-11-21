@@ -23,6 +23,15 @@ type shopView struct {
 	dragIndex uint8
 }
 
+func (a *App) merchantOpen() bool {
+	e := a.state.Entities[a.shop.npcID]
+	if a.marketUI == nil || e == nil || e.NpcType != 1 || a.shop.overlay() || a.state.Self.Dead || a.auctionBoard(a.shop.npcID) || a.emblemNPC(e) {
+		return false
+	}
+	_, house := a.houseKind(e)
+	return !house
+}
+
 func (a *App) updateShop(in *platform.Input, w, h int) bool {
 	v := &a.shop
 	if a.state.Self.Dead {

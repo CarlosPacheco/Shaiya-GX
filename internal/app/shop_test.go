@@ -81,3 +81,40 @@ func TestNPCWindowRangeTracksMovingNPCAndLeavesRemoteWarehouseOpen(t *testing.T)
 		t.Fatal("NPC range closed remote warehouse")
 	}
 }
+
+func TestInventoryDocksToServiceWithoutSavingPosition(t *testing.T) {
+	for _, npcType := range []uint8{1, 6} {
+		a := inputApp()
+		a.bankUI, _ = ui.NewWarehouse(inputTextures{})
+		a.inventoryUI.Position.Move(740, 190, 1024, 768, ui.InventoryWidth, ui.InventoryHeight)
+		saved := a.inventoryUI.Position
+		e := &game.Entity{ID: 42, Kind: game.KindNpc, NpcType: npcType}
+		a.state.Entities[e.ID] = e
+		a.shop.npcID, a.shop.talk = e.ID, true
+		a.enterNPCService(e)
+		a.placeNewPersonalPanels(0, 1024, 768)
+		if !a.inventory.open {
+			t.Fatalf("service type %d did not open inventory", npcType)
+		}
+		position := &a.marketUI.Position
+		origin := a.marketUI.Origin
+		width, height := ui.MarketWidth, ui.MarketHeight
+		if npcType == 6 {
+			position, origin = &a.bankUI.Position, a.bankUI.Origin
+			width, height = ui.WarehouseWidth, ui.WarehouseHeight
+		}
+		for _, x := range []int{32, 600} {
+			position.Move(x, 110, 1024, 768, width, height)
+			sx, sy := origin(1024, 768)
+			ix, iy := a.inventoryUI.Origin(1024, 768)
+			if ix+ui.InventoryWidth != sx || iy != sy || a.inventoryUI.Position != saved {
+				t.Fatalf("service type %d: invalid docking or saved position changed", npcType)
+			}
+		}
+		a.closeNPC()
+		x, y := a.inventoryUI.Origin(1024, 768)
+		if x != 740 || y != 190 {
+			t.Fatalf("service type %d: original position not restored: %d,%d", npcType, x, y)
+		}
+	}
+}

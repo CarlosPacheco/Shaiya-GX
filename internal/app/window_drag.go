@@ -147,7 +147,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.inventory.open && a.inventoryUI != nil {
 		x, y := a.inventoryUI.Origin(w, h)
-		if start(&a.inventoryUI.Position, x, y, ui.InventoryWidth, ui.InventoryHeight, 8, 215) {
+		if _, _, docked := a.inventoryDockOrigin(w, h); !docked && start(&a.inventoryUI.Position, x, y, ui.InventoryWidth, ui.InventoryHeight, 8, 215) {
 			return true
 		}
 		if pointInside(in, x, y, ui.InventoryWidth, ui.InventoryHeight) {

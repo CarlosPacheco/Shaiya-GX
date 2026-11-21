@@ -104,6 +104,9 @@ func (a *App) enterNPCService(e *game.Entity) {
 		a.closeNPC()
 		return
 	}
+	if (a.merchantOpen() || a.warehouseOpen()) && !a.inventory.open {
+		a.toggleInventory()
+	}
 	if e.NpcType == 4 {
 		a.openPvPRewards()
 	}

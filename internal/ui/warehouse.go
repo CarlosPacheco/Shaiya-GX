@@ -29,7 +29,8 @@ func (v *Warehouse) Origin(w, h int) (int, int) {
 	if v == nil {
 		return x, y
 	}
-	return v.Position.Origin(w, h, WarehouseWidth, WarehouseHeight, x, y)
+	x, y = v.Position.Origin(w, h, WarehouseWidth, WarehouseHeight, x, y)
+	return commerceOrigin(x, y, w, WarehouseWidth)
 }
 func WarehouseCell(page int, slot uint8) (int, int, bool) {
 	i := int(slot) - page*WarehousePageSize
@@ -48,14 +49,18 @@ func WarehouseHit(x, y, page int) (uint8, bool) {
 	}
 	return 0, false
 }
+func WarehouseTab(x, y int) int {
+	if x >= 11 && x < 323 && y >= 114 && y < 142 {
+		return (x - 11) / 52
+	}
+	return -1
+}
+
 func (v *Warehouse) Update(in *platform.Input, w, h, page int) (int, bool) {
 	x, y := v.Origin(w, h)
 	v.close.OriginX, v.close.OriginY = x, y
 	closed := v.close.Update(in)
-	v.hover = -1
-	if in.MouseX >= x+11 && in.MouseX < x+323 && in.MouseY >= y+114 && in.MouseY < y+142 {
-		v.hover = (in.MouseX - x - 11) / 52
-	}
+	v.hover = WarehouseTab(in.MouseX-x, in.MouseY-y)
 	if in.Pressed {
 		v.held = v.hover
 	}

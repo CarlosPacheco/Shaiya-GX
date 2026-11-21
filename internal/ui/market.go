@@ -99,5 +99,6 @@ func (m *Market) Origin(w, h int) (int, int) {
 	if m == nil {
 		return x, y
 	}
-	return m.Position.Origin(w, h, MarketWidth, MarketHeight, x, y)
+	x, y = m.Position.Origin(w, h, MarketWidth, MarketHeight, x, y)
+	return commerceOrigin(x, y, w, MarketWidth)
 }

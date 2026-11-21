@@ -49,6 +49,7 @@ func InventoryHit(mx, my int, bag uint8) ([2]uint8, bool) {
 // Close art is the common native 22px control, also used by the Phoenix reference.
 type Inventory struct {
 	Position    WindowPosition
+	DockOrigin  func(w, h int) (x, y int, active bool)
 	frame, bag  *render.Texture
 	tabs        [2]*render.Texture
 	close       Button
@@ -105,6 +106,11 @@ func (v *Inventory) Origin(w, h int) (int, int) {
 	if v == nil {
 		return x, y
 	}
+	if v.DockOrigin != nil {
+		if dx, dy, active := v.DockOrigin(w, h); active {
+			return dx, dy
+		}
+	}
 	return v.Position.Origin(w, h, InventoryWidth, InventoryHeight, x, y)
 }
 
@@ -114,4 +120,12 @@ func InventoryBagTab(x, y int) int {
 		return (x - 11) / 47
 	}
 	return -1
+}
+
+// commerceOrigin reserves space for a temporary inventory on the left.
+func commerceOrigin(x, y, w, serviceWidth int) (int, int) {
+	if w >= InventoryWidth+serviceWidth {
+		x = max(x, InventoryWidth)
+	}
+	return x, y
 }

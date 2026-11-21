@@ -41,7 +41,7 @@ func TestMarketPageLimitsPendingAndClose(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	x, y := MarketOrigin(1024, 768)
+	x, y := m.Origin(1024, 768)
 	page := 0
 	click := func(cx, cy, count int, busy bool) bool {
 		t.Helper()
