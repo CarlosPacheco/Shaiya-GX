@@ -137,7 +137,6 @@ func TestChatHistoryRestoresUnsentDraft(t *testing.T) {
 func TestChatHistoryOwnsPointerWithoutBlockingHeldMovement(t *testing.T) {
 	a := inputApp()
 	a.msg = chatTestMessages
-	a.chatUI.ShowHistory()
 	in := platform.Input{MouseX: 40, MouseY: ui.ChatOrigin(734) + 130, Wheel: 120, Down: "W"}
 	controls := a.worldControls(&in, 1024, 734)
 	if controls.Wheel != 0 || controls.Down != "W" {

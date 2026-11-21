@@ -103,7 +103,7 @@ The chat retains the chosen flat Phoenix-style plates while using recovered nati
 
 The authored entry row sits at `height - 76`: a 64×22 selector followed by a 292×22 field with its right-hand language icon removed by request. The combined visible width is 356px. Input text starts at X69 and the selector label at X7, both vertically centred in the 22px row (Y+3 with the 15px English chat font; a fixed Y+6 left the larger font touching the bottom border). A blinking vertical caret replaces the permanent underscore. Pointer bounds follow the corrected row.
 
-Chat and its entry row stay visible by default. The User Option page offers **Auto-hide chat**. When enabled, a new line reveals both histories; typing, scrolling, resizing, the picker and hover keep them visible. After ten seconds without activity they fade over one second. The entry row is then visible only while typing. Hidden controls do not capture world input.
+Both chat histories remain visible. Press Enter to open the chat entry row.
 
 Golden frames, Alpha/filter/help panels and the separate native whisper-recipient row remain retired under the chosen flat presentation. Histories retain a shared 300-message buffer and independent scroll anchors. Settings preserve row sizes and the selected channel; Whisper is not restored at startup. Whisper accepts the existing recipient syntax, including `!name message` and `/w name message`. Raid is outside the six-channel picker.
 

@@ -35,47 +35,17 @@ type chatPane struct {
 	arrowRepeat [2]time.Time
 	dragging    bool
 	grab        int
-	active      time.Time // last new line or interaction; drives auto-hide
 }
 
-// Optional auto-hide reveals histories while typing or for chatHold after a
-// new line or interaction, then fades over chatFade. Persistent chat remains
-// the default.
 const (
 	chatWidth       = 350
 	chatPaneGap     = 2
 	chatComposerGap = 2
 	chatBottom      = 84
-	chatHold        = 10 * time.Second
-	chatFade        = time.Second
 )
-
-var chatNow = time.Now
-
-func (c *ChatPanel) paneAlpha(i int, now time.Time) float32 {
-	if !c.AutoHide || c.Typing || c.ModeOpen || c.OptionsOpen() || c.resizing || c.panes[i].dragging {
-		return 1
-	}
-	idle := now.Sub(c.panes[i].active)
-	if c.panes[i].active.IsZero() || idle >= chatHold+chatFade {
-		return 0
-	}
-	if idle <= chatHold {
-		return 1
-	}
-	return 1 - float32(idle-chatHold)/float32(chatFade)
-}
 
 func (c *ChatPanel) inputShown() bool {
 	return c.Typing
-}
-
-// ShowHistory reveals both history panes and restarts their hide timer.
-func (c *ChatPanel) ShowHistory() {
-	now := chatNow()
-	for i := range c.panes {
-		c.panes[i].active = now
-	}
 }
 
 // ChatPanel lays out both native 16px histories and the bottom-anchored composer.
@@ -107,7 +77,6 @@ type ChatPanel struct {
 	panes                                   [2]chatPane
 	modeButton                              Button
 	Typing, ModeOpen                        bool
-	AutoHide                                bool
 	Rows                                    [2]int
 	resizePane, resizeY, resizeStart        int
 	resizing                                bool
@@ -208,9 +177,6 @@ func (c *ChatPanel) SetEntries(f *Font, entries []ChatEntry) {
 		pane.runs = append(pane.runs, runs...)
 		pane.lines = append(pane.lines, rows...)
 	}
-	if added[0]+added[1] > 0 {
-		c.ShowHistory() // any new line brings up both panes together
-	}
 	for i := range c.panes {
 		p := &c.panes[i]
 		if p.offset > 0 {
@@ -259,11 +225,7 @@ func (c *ChatPanel) Contains(mx, my, h int) bool {
 	if c.inputShown() && my >= chatInputY(h) && my < chatInputY(h)+22 {
 		return true
 	}
-	now := chatNow()
 	for i := range c.panes {
-		if c.paneAlpha(i, now) == 0 {
-			continue
-		}
 		y, height, _ := c.paneGeometry(h, i)
 		if my >= y && my < y+height {
 			return true
@@ -293,12 +255,9 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 		}
 		return true
 	}
-	now := chatNow()
+	now := time.Now()
 	if in.Pressed && in.MouseX >= 25 && in.MouseX < chatWidth {
 		for pane := range c.panes {
-			if c.paneAlpha(pane, now) == 0 {
-				continue
-			}
 			y, _, _ := c.paneGeometry(h, pane)
 			if in.MouseY >= y-4 && in.MouseY < y+5 {
 				c.resizing = true
@@ -353,15 +312,7 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 		p := &c.panes[i]
 		y, height, capacity := c.paneGeometry(h, i)
 		limit := max(0, len(p.lines)-capacity)
-		if c.paneAlpha(i, now) == 0 {
-			p.dragging = false
-			p.offset = max(0, min(p.offset, limit))
-			continue
-		}
 		over := in.MouseX >= 0 && in.MouseX < chatWidth && in.MouseY >= y && in.MouseY < y+height
-		if over {
-			p.active = now // keep a visible pane up while the pointer is on it
-		}
 		if in.Pressed {
 			p.dragging = false
 		}
@@ -418,19 +369,11 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h int, typing bool, text string) {
 	c.Typing = typing
 	c.controls(h)
-	now := chatNow()
 	for i := range c.panes {
 		p := &c.panes[i]
-		if c.inputShown() {
-			p.active = now // closing the input starts the hold timer
-		}
-		a := c.paneAlpha(i, now)
-		if a == 0 {
-			continue
-		}
 		y, height, capacity := c.paneGeometry(h, i)
 		if !c.Transparent || c.backgroundHovered(h) {
-			s.Draw(blank, 0, float32(y), chatWidth, float32(height), 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 154.0 / 255 * a})
+			s.Draw(blank, 0, float32(y), chatWidth, float32(height), 0, 0, 1, 1, [4]float32{29.0 / 255, 31.0 / 255, 36.0 / 255, 154.0 / 255})
 		}
 		restoreClip := s.ClipRect(25, float32(y+1), 316, float32(height-2))
 		p.offset = min(p.offset, max(0, len(p.lines)-capacity))
@@ -441,9 +384,9 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 			for _, run := range p.runs[row] {
 				if run.icon {
 					if run.item.Type != 0 && c.DrawLinkedItem != nil && yText >= y+1 && yText+f.Height <= y+height-1 {
-						c.drawLinkedItem(s, f, run.item, run.suffix, 25+run.x, yText, a)
+						c.drawLinkedItem(s, f, run.item, run.suffix, 25+run.x, yText, 1)
 					} else if c.DrawItem != nil && run.itemType != 0 {
-						c.DrawItem(run.itemType, run.itemID, 25+run.x, yText, f.Height, a)
+						c.DrawItem(run.itemType, run.itemID, 25+run.x, yText, f.Height, 1)
 					}
 					continue
 				}
@@ -451,17 +394,14 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 				if tint[3] == 0 {
 					tint = white
 				}
-				tint[3] *= a
 				f.Draw(s, run.text, 26+run.x, yText+1, [4]float32{0, 0, 0, tint[3]}, 316-run.x)
 				f.Draw(s, run.text, 25+run.x, yText, tint, 316-run.x)
 			}
 		}
 		restoreClip()
-		c.drawScroll(s, i, y, height, max(0, len(p.lines)-capacity), a)
+		c.drawScroll(s, i, y, height, max(0, len(p.lines)-capacity), 1)
 	}
-	if c.optionButtonsShown() {
-		c.drawOptionButtons(s, f, blank, h)
-	}
+	c.drawOptionButtons(s, f, blank, h)
 	if !c.inputShown() {
 		return
 	}
@@ -511,7 +451,7 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 		drawChatSelection(s, f, blank, runes, first, c.Caret, 69, textY, available)
 	}
 	f.Draw(s, shown, 69, textY, white, available)
-	if typing && !c.RecipientFocus && chatNow().UnixMilli()%1000 < 500 {
+	if typing && !c.RecipientFocus && time.Now().UnixMilli()%1000 < 500 {
 		s.Draw(blank, float32(69+f.Width(leftOfCaret)), float32(textY), 1, float32(f.Height), 0, 0, 1, 1, white)
 	}
 	restoreClip()

@@ -152,15 +152,14 @@ func TestNativeChatScrollAnchorSurvivesHistoryLimit(t *testing.T) {
 	}
 }
 
-func TestChatRepetitionsDoNotWakeHiddenHistory(t *testing.T) {
-	c, f := &ChatPanel{Rows: [2]int{5, 5}, AutoHide: true}, chatTestFont()
+func TestChatRepetitionsUpdateTheExistingRow(t *testing.T) {
+	c, f := &ChatPanel{Rows: [2]int{5, 5}}, chatTestFont()
 	entries := []ChatEntry{{Text: "Trade", Style: 9}, {Text: "Another player", Style: 9}}
 	c.SetEntries(f, entries)
-	c.panes[1].active = c.panes[1].active.Add(-chatHold - chatFade)
 	entries[0].Repetitions = 2
 	c.SetEntries(f, entries)
-	if c.paneAlpha(1, chatNow()) != 0 || len(c.panes[1].lines) != 2 || c.panes[1].lines[0] != "Trade ×2" {
-		t.Fatalf("a repeated message woke chat or failed to update the row: %+v", c.panes[1])
+	if len(c.panes[1].lines) != 2 || c.panes[1].lines[0] != "Trade ×2" {
+		t.Fatalf("a repeated message failed to update the row: %+v", c.panes[1])
 	}
 }
 
@@ -214,7 +213,7 @@ func TestChatNativeFiltersAndResponsiveLayout(t *testing.T) {
 	click(8, c.optionY(h, 1)+8)
 	x, y, _, _ = c.optionBounds(h)
 	click(x+130, y+229)
-	if !c.Transparent || c.backgroundHovered(h) || c.paneAlpha(0, chatNow()) != 1 {
+	if !c.Transparent || c.backgroundHovered(h) {
 		t.Fatal("Alpha should affect the background only")
 	}
 }

@@ -64,7 +64,6 @@ type ClientSettings struct {
 	ChatChannel                               uint8
 	ChatFilters                               uint8 `json:",omitempty"`
 	ChatTransparent                           bool  `json:",omitempty"`
-	AutoHideChat                              bool  `json:",omitempty"`
 	Music, Effects, Ambient                   float64
 	Glow, Brightness, Details, VisualDistance int
 	HideCloak, HideHelmet                     bool
@@ -303,7 +302,6 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 		case MenuSound:
 			m.Settings.Music, m.Settings.Effects, m.Settings.Ambient = defaults.Music, defaults.Effects, defaults.Ambient
 		case MenuUser:
-			m.Settings.AutoHideChat = defaults.AutoHideChat
 			m.Settings.UseMouse, m.Settings.InvertY, m.Settings.MouseSensitivity = true, false, 3
 			m.Settings.OwnName, m.Settings.PlayerNames, m.Settings.MonsterNames = true, true, true
 		case MenuGraphics:
@@ -407,7 +405,7 @@ func (m *GameMenu) checks() []menuCheck {
 	s := &m.Settings
 	switch m.Page {
 	case MenuUser:
-		return []menuCheck{{34, 83, &s.UseMouse}, {137, 83, nil}, {241, 83, &s.InvertY}, {34, 202, &s.OwnName}, {137, 202, &s.PlayerNames}, {34, 228, &s.MonsterNames}, {137, 228, &s.AutoHideChat}}
+		return []menuCheck{{34, 83, &s.UseMouse}, {137, 83, nil}, {241, 83, &s.InvertY}, {34, 202, &s.OwnName}, {137, 202, &s.PlayerNames}, {34, 228, &s.MonsterNames}}
 	case MenuGraphics:
 		return []menuCheck{{35, 404, &s.Shadows}, {156, 404, &s.Water}, {35, 429, &s.HideCloak}, {156, 429, &s.HideHelmet}, {35, 451, &s.SkillEffects}}
 	}
@@ -450,11 +448,6 @@ func (m *GameMenu) Draw(s *render.Sprites, f *Font, w, h int, solid ...*render.T
 		knob(35, 206, m.Settings.Ambient, 185)
 	case MenuUser:
 		knob(36, 140, float64(m.Settings.MouseSensitivity)/6, 185)
-		// Reuse the unsupported banned-words filter slot in Name/Chat Setup.
-		if len(solid) > 0 {
-			s.Draw(solid[0], float32(x+155), float32(y+225), 191, 22, 0, 0, 1, 1, [4]float32{.045, .045, .04, 1})
-			f.Draw(s, "Auto-hide chat", x+156, y+229, white, 185)
-		}
 	case MenuGraphics:
 		for i, v := range []int{m.Settings.Glow, m.Settings.Brightness, m.Settings.Details, m.Settings.VisualDistance} {
 			limit := []int{2, 4, 2, 2}[i]

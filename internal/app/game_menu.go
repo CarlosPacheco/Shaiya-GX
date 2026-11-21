@@ -191,7 +191,6 @@ func (a *App) applyClientSettings() {
 	if a.chatUI != nil {
 		settings := a.clientSettings()
 		a.chatUI.Rows = settings.ChatRows
-		a.chatUI.AutoHide = settings.AutoHideChat
 		a.chatUI.Filters, a.chatUI.Transparent = settings.ChatFilters, settings.ChatTransparent
 	}
 	if a.sound != nil {

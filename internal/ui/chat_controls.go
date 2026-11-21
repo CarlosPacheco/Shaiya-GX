@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
@@ -64,15 +66,12 @@ const (
 
 var chatOptionOrder = [...]int{chatFilters, chatHelp}
 
-func (c *ChatPanel) optionButtonsShown() bool {
-	return c.paneAlpha(1, chatNow()) > 0
-}
 func (c *ChatPanel) optionY(h, i int) int {
 	y, height, _ := c.paneGeometry(h, 1)
 	return y + height - (len(chatOptionOrder)-i)*chatOptionHeight
 }
 func (c *ChatPanel) optionButton(x, y, h int) int {
-	if !c.optionButtonsShown() || x < 0 || x >= chatOptionWidth {
+	if x < 0 || x >= chatOptionWidth {
 		return 0
 	}
 	for i := range 2 {
@@ -297,7 +296,7 @@ func (c *ChatPanel) drawRecipient(s *render.Sprites, f *Font, blank *render.Text
 	if len(c.Recent) > 0 {
 		f.Draw(s, "▾", chatRecipientX+179, textY, white, 14)
 	}
-	if c.RecipientFocus && chatNow().UnixMilli()%1000 < 500 {
+	if c.RecipientFocus && time.Now().UnixMilli()%1000 < 500 {
 		cursor := min(len(runes), max(0, c.RecipientCaret.Position))
 		s.Draw(blank, float32(chatRecipientX+66+min(105, f.Width(string(runes[:cursor])))), float32(textY), 1, float32(f.Height), 0, 0, 1, 1, white)
 	}

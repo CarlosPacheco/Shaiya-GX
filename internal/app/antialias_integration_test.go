@@ -123,24 +123,9 @@ func TestAntialiasSceneAndMenuGL(t *testing.T) {
 		t.Fatalf("AA menu GL error %#x", code)
 	}
 	a.gameMenu.Open(ui.MenuUser)
-	x, y = a.gameMenu.Origin(960, 600)
-	if a.chatUI.AutoHide {
-		t.Fatal("default chat auto-hides")
-	}
-	a.gameMenu.Update(&platform.Input{MouseX: x + 140, MouseY: y + 232, Pressed: true, MouseDown: true}, 960, 600)
-	a.gameMenu.Update(&platform.Input{MouseX: x + 140, MouseY: y + 232, Clicked: true}, 960, 600)
-	a.applyClientSettings()
-	if !a.chatUI.AutoHide {
-		t.Fatal("chat auto-hide option was not applied")
-	}
 	a.Draw(960, 600)
 	if e = render.SavePNG(filepath.Join(out, "chat-options.png"), 960, 600); e != nil {
 		t.Fatal(e)
-	}
-	a.gameMenu.DiscardPage()
-	a.applyClientSettings()
-	if a.chatUI.AutoHide {
-		t.Fatal("cancelling options retained chat auto-hide")
 	}
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("chat menu GL error %#x", code)
