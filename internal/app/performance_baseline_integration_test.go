@@ -258,8 +258,14 @@ func TestClientPerformanceBaseline(t *testing.T) {
 	if a.sceneGlowFailed && a.gameMenu.Settings.Glow > 0 {
 		t.Fatal("glow failed")
 	}
-	if sceneName == "water-visible" && variant != "no-water" && (a.wv.waterReflection == nil || !a.wv.world.WaterVisible(a.scene3d.View, a.scene3d.Proj)) {
-		t.Fatal("water fixture did not execute visible reflection")
+	if sceneName == "water-visible" {
+		if !a.wv.world.WaterVisible(a.scene3d.View, a.scene3d.Proj) {
+			t.Fatal("water fixture did not show a water surface")
+		}
+		wantsReflection := a.gameMenu.Settings.Water && a.gameMenu.Settings.Details > 0
+		if (a.wv.draws.Reflected > 0) != wantsReflection {
+			t.Fatalf("water fixture reflection draws = %d, expected reflection = %t", a.wv.draws.Reflected, wantsReflection)
+		}
 	}
 	loaded := 0
 	for _, v := range a.wv.actors {
