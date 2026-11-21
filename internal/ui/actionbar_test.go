@@ -161,3 +161,23 @@ func TestSecondActionBarTogglesThird(t *testing.T) {
 		t.Fatal("closing the second bar should close the third")
 	}
 }
+
+// Empty slots are plain bar background; occupied ones keep their press.
+func TestActionBarEmptySlotsDragTheBar(t *testing.T) {
+	b := &ActionBar{Hover: -1, held: -1}
+	const w, h = 1024, 768
+	cx, cy := b.cellOrigin(0, 2, w, h)
+	press := &platform.Input{MouseX: cx + 4, MouseY: cy + 4, Pressed: true, MouseDown: true}
+	if captured, _ := b.Layout(press, w, h); captured {
+		t.Fatal("without a predicate a slot keeps its press")
+	}
+	b.SlotKeeps = func(slot int) bool { return slot == 3 }
+	if captured, _ := b.Layout(press, w, h); !captured || b.dragging == 0 {
+		t.Fatal("an empty slot did not drag the bar")
+	}
+	b.dragging = 0
+	cx, cy = b.cellOrigin(0, 3, w, h)
+	if captured, _ := b.Layout(&platform.Input{MouseX: cx + 4, MouseY: cy + 4, Pressed: true, MouseDown: true}, w, h); captured {
+		t.Fatal("an occupied slot started a bar drag")
+	}
+}

@@ -74,6 +74,10 @@ func replaceAction(slots []proto.QuickSlot, index uint8, source *proto.QuickSlot
 // after a successful send; the next character login replaces it with server data.
 func (a *App) updateBarEditing(in *platform.Input, w, h int) bool {
 	v := &a.skills
+	a.actionBar.SlotKeeps = func(slot int) bool {
+		q, local := a.shortcutAt(slot)
+		return q != nil || local != 0 || v.assign != nil || v.editing || in.Shift
+	}
 	if a.actionBar.LayoutActive() || !a.barCovered(in, w, h) {
 		if captured, changed := a.actionBar.Layout(in, w, h); captured {
 			if changed {

@@ -37,6 +37,10 @@ type ActionBar struct {
 	dragging, controlHeld int
 	control               int // one-based; zero means idle
 	offsetX, offsetY      int
+	// SlotKeeps reports whether a press on a slot belongs to the slot (a held
+	// shortcut, an assignment). Without it every slot keeps its press; empty
+	// slots otherwise drag the bar like any other background.
+	SlotKeeps func(slot int) bool
 }
 
 func NewActionBar(t Textures, plus *render.Texture) (*ActionBar, error) {
@@ -206,7 +210,7 @@ func (b *ActionBar) Layout(in *platform.Input, w, h int) (captured, changed bool
 		}
 		return true, changed
 	}
-	if !in.Pressed || b.SlotAt(in.MouseX, in.MouseY, w, h) >= 0 {
+	if slot := b.SlotAt(in.MouseX, in.MouseY, w, h); !in.Pressed || slot >= 0 && (b.SlotKeeps == nil || b.SlotKeeps(slot)) {
 		return false, false
 	}
 	bar := b.barAt(in.MouseX, in.MouseY, w, h)

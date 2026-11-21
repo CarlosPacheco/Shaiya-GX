@@ -53,8 +53,8 @@ func (a *App) CursorIndex(w, h int) int {
 	if a.barCovered(in, w, h) || a.menuOpen || a.chatOpen || a.wv.mapView.full {
 		return 0
 	}
-	if a.actionBar != nil && a.actionBar.SlotAt(in.MouseX, in.MouseY, w, h) >= 0 {
-		return 3
+	if a.actionBar != nil && a.actionBar.Contains(in.MouseX, in.MouseY, w, h) {
+		return 0 // the original never swaps the arrow over the bars
 	}
 	x, y := 8, 8
 	tx, ty := 256, 0
