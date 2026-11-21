@@ -27,11 +27,14 @@ are on at every GM login; turbo is off.
 
 ### GM modes bar
 
-GMs get a small movable bar of three 32px icons, like a buff strip: **Char**
-(Stealth icon), **Attack** (Untouchable icon) and **Turbo** (Sprinter icon). They
+GMs get a panel like the potion bar, widened to three cells: **Char** (Stealth
+icon), **Attack** (Untouchable icon) and **Turbo** (Sprinter icon). It sits above
+the potion bar by default and can be dragged anywhere by its frame. The modes
 have no duration. Hovering one shows its effect; clicking it sends the matching
-command (`/char on|off`, `/attack on|off`, `/turbo`). Modes that are off are
-drawn grey. The bar remembers its position with the other movable windows.
+command (`/char on|off`, `/attack on|off`, `/turbo`) and further clicks on that
+mode are ignored for a second so a burst cannot flood the world. Modes that are
+off are drawn grey. The panel remembers its position with the other movable
+windows.
 
 | Command | Result |
 |---|---|

@@ -347,11 +347,10 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 		}
 	}
 	if a.gmModesVisible() {
-		gx, gy, gw, gh := a.gmModes.Rect(w, h)
-		if pointInside(in, gx, gy, gw, gh) {
-			mode := a.gmModes.Hit(w, h, in.MouseX, in.MouseY)
-			a.windowDrag = windowDrag{position: &a.gmModes.Position, offsetX: in.MouseX - gx, offsetY: in.MouseY - gy, width: gw, height: gh}
-			if mode >= 0 {
+		gx, gy := a.gmModes.Origin(w, h)
+		if pointInside(in, gx, gy, ui.GMModesWidth, ui.GMModesHeight) {
+			a.windowDrag = windowDrag{position: &a.gmModes.Position, offsetX: in.MouseX - gx, offsetY: in.MouseY - gy, width: ui.GMModesWidth, height: ui.GMModesHeight}
+			if mode := a.gmModes.Hit(w, h, in.MouseX, in.MouseY); mode >= 0 {
 				// A press that never moves toggles the mode; moving drags the bar.
 				a.windowDrag.pressX, a.windowDrag.pressY = in.MouseX, in.MouseY
 				a.windowDrag.click = func() { a.toggleGMMode(mode) }

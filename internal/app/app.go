@@ -73,6 +73,8 @@ type App struct {
 	combatNumbers                       []combatNumber
 	buffLayout                          ui.BuffLayout
 	gmModes                             ui.GMModes
+	gmSend                              func(string) // test hook for GM commands
+	gmModePendingUntil                  [ui.GMModeCount]float64
 	gameMenu                            *ui.GameMenu
 	menuOpen                            bool
 	raidOnce                            bool

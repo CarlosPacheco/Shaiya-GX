@@ -3,6 +3,7 @@ package world
 import (
 	"sync"
 
+	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
 
@@ -236,13 +237,24 @@ func buildUserLeave(id uint32) []byte {
 // its first placement): the leave packets of what left the 5x5 view, the
 // enter packets of what entered it (SendCellInfoLeave / SendCellInfoEnter),
 // and the user's own enter or leave for the other users concerned.
-func (s *Session) refreshView() {
+func (s *Session) refreshView() { s.refreshViewFor(false) }
+
+// refreshUserView re-evaluates only who can see whom: a visibility change never
+// alters the monsters, NPCs and items in view, and walking all of them on every
+// toggle is wasted work on crowded maps.
+func (s *Session) refreshUserView() { s.refreshViewFor(true) }
+
+func (s *Session) refreshViewFor(usersOnly bool) {
 	p, ch := s.player, s.char
 	if p == nil || ch == nil {
 		return
 	}
 	c, ok := p.viewCell()
 	if !ok {
+		return
+	}
+	if usersOnly {
+		s.refreshUsers(p, ch, c)
 		return
 	}
 	near := EntitiesInView(ch.MapID, c)
@@ -280,6 +292,10 @@ func (s *Session) refreshView() {
 			viewLeave(p, viewItem, id, buildMapRemoveItem(id), "0x0402 map item leave")
 		}
 	}
+	s.refreshUsers(p, ch, c)
+}
+
+func (s *Session) refreshUsers(p *ConnectedPlayer, ch *db.Character, c cell) {
 	mine := s.userEnterFrames()
 	for _, o := range PlayersOnMap(ch.MapID) {
 		if o == p {

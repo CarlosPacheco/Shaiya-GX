@@ -18,7 +18,7 @@ var gmModeInfos = [ui.GMModeCount]gmModeInfo{
 }
 
 func (a *App) gmModesVisible() bool {
-	return a.state != nil && a.state.Self.IsGM && a.world != nil
+	return a.state != nil && a.state.Self.IsGM && (a.world != nil || a.gmSend != nil)
 }
 
 func (a *App) gmModeActive(i int) bool {
@@ -37,6 +37,12 @@ func (a *App) toggleGMMode(i int) {
 	if !a.gmModesVisible() || i < 0 || i >= ui.GMModeCount {
 		return
 	}
+	// Wait for the server's answer before accepting another click on a mode:
+	// a burst of toggles would only flood the world with visibility changes.
+	if a.clock < a.gmModePendingUntil[i] {
+		return
+	}
+	a.gmModePendingUntil[i] = a.clock + 1
 	text := gmModeInfos[i].command
 	if i < 2 {
 		if a.gmModeActive(i) {
@@ -44,6 +50,10 @@ func (a *App) toggleGMMode(i int) {
 		} else {
 			text += " on"
 		}
+	}
+	if a.gmSend != nil {
+		a.gmSend(text)
+		return
 	}
 	if err := a.world.Send(proto.ChatPacket(proto.ChannelNormal, false, text)); err != nil {
 		a.backToLogin("Unable to send GM command.")
@@ -54,19 +64,21 @@ func (a *App) drawGMModes(w, h int) {
 	if !a.gmModesVisible() {
 		return
 	}
+	x, y := a.gmModes.Origin(w, h)
+	ui.DrawGMModesFrame(a.sprites, a.assets.Texture("interface/QuickPotion.png"), x, y)
 	for i := 0; i < ui.GMModeCount; i++ {
-		x, y := a.gmModes.Slot(w, h, i)
+		cx, cy := a.gmModes.Cell(w, h, i)
 		tint := white
 		if !a.gmModeActive(i) {
 			tint = [4]float32{.32, .32, .32, 1} // off modes are grey
 		}
 		if file, uv, ok := ui.SkillIcon(ui.GMModeIcons[i]); ok {
 			if tex := a.assets.Texture("interface/" + file); tex != nil {
-				a.sprites.Draw(tex, float32(x), float32(y), 32, 32, uv.U0, uv.V0, uv.U1, uv.V1, tint)
+				a.sprites.Draw(tex, float32(cx), float32(cy), 32, 32, uv.U0, uv.V0, uv.U1, uv.V1, tint)
 				continue
 			}
 		}
-		a.sprites.Draw(a.white, float32(x), float32(y), 32, 32, 0, 0, 1, 1, tint)
+		a.sprites.Draw(a.white, float32(cx), float32(cy), 32, 32, 0, 0, 1, 1, tint)
 	}
 }
 

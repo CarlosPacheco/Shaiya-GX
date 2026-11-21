@@ -66,7 +66,7 @@ func (s *Session) syncVisibility() {
 			s.autoAttack, s.cast = false, nil
 			s.send(packet.New(packet.AutoAttackStop).MustFinish(), "stealth attack stop")
 		}
-		s.refreshView()
+		s.refreshUserView()
 		frame := p.visibilityPacket()
 		s.send(frame, "GX visibility")
 		s.sendToViewers(frame, "GX visibility")
