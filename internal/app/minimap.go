@@ -16,6 +16,7 @@ import (
 )
 
 type mapView struct {
+	compactHidden          bool
 	atlas                  worldMapView
 	image                  *render.Texture
 	loaded, full, dragging bool
@@ -209,6 +210,10 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 	if v == nil {
 		return false
 	}
+	if hasChar(in, 'v') {
+		v.compactHidden = !v.compactHidden
+		return true
+	}
 	for _, ch := range in.Chars {
 		if ch == 'm' || ch == 'M' {
 			v.click = mapClick{}
@@ -223,6 +228,8 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 	}
 	if v.full {
 		a.loadWorldMap(v)
+	} else if v.compactHidden {
+		return false
 	}
 	a.minimap.WorldAvailable = len(v.atlas.regions) > 0
 	a.minimap.WorldReturn = v.atlas.overview && v.atlas.preview < 0
@@ -311,7 +318,7 @@ func (a *App) drawMinimap(w, h int, full bool) {
 		return
 	}
 	v := a.mapState()
-	if full && !v.full {
+	if full && !v.full || !full && v.compactHidden {
 		return
 	}
 	a.loadMapImage(v)

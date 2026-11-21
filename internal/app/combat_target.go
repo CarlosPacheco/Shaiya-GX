@@ -189,7 +189,7 @@ func rayBox(origin, direction, lo, hi render.V3) (float32, bool) {
 	return near, true
 }
 
-// Grave accent cycles monsters in increasing distance, wrapping to the nearest; pointer selection also supports players.
+// Grave accent cycles hostile targets in increasing distance, wrapping to the nearest.
 // Pointer selection uses the camera from the last rendered frame.
 func (a *App) pickMob(in *platform.Input, w, h int) uint32 {
 	best, target := float32(math.MaxFloat32), uint32(0)
@@ -203,6 +203,7 @@ func (a *App) pickMob(in *platform.Input, w, h int) uint32 {
 	var origin, direction render.V3
 	var rayOK bool
 	bestRay := float32(math.MaxFloat32)
+	bestMob := false
 	if in.Clicked {
 		if a.scene3d == nil {
 			return 0
@@ -211,8 +212,9 @@ func (a *App) pickMob(in *platform.Input, w, h int) uint32 {
 		origin, direction, rayOK = clickRay(in.MouseX, in.MouseY, w, h, vp)
 	}
 	for id, e := range a.state.Entities {
-		clickPlayer := in.Clicked && e.Kind == game.KindUser && e.Shape != nil
-		if e.ID == a.state.SelfID || !clickPlayer && (e.Kind != game.KindMob || e.Dead) {
+		player := e.Kind == game.KindUser && e.Shape != nil && (in.Clicked || !e.Dead && !e.Concealed && !a.followOnly(e))
+		monster := e.Kind == game.KindMob && !e.Dead && (in.Clicked || !a.friendlyMob(e))
+		if e.ID == a.state.SelfID || !player && !monster {
 			continue
 		}
 		if in.Clicked {
@@ -225,7 +227,7 @@ func (a *App) pickMob(in *platform.Input, w, h int) uint32 {
 		}
 		dx, dz := e.X-a.wv.pos[0], e.Z-a.wv.pos[2]
 		d := dx*dx + dz*dz
-		if !in.Clicked && id != a.state.Target && d > currentDistance && (d < nextDistance || d == nextDistance && id < nextTarget) {
+		if !in.Clicked && id != a.state.Target && (d > currentDistance || d == currentDistance && id > a.state.Target) && (d < nextDistance || d == nextDistance && id < nextTarget) {
 			nextDistance, nextTarget = d, id
 		}
 		if in.Clicked {
@@ -258,8 +260,8 @@ func (a *App) pickMob(in *platform.Input, w, h int) uint32 {
 				}
 				if hit {
 					_, _, depth, projected := projectLabel(origin.Add(direction.Scale(occlusionDistance)), vp, w, h)
-					if projected && (a.sprites == nil || a.pickNameVisibleAt(in.MouseX, in.MouseY, w, h, depth)) && (distance < bestRay || distance == bestRay && (target == 0 || id < target)) {
-						bestRay, target = distance, id
+					if projected && (a.sprites == nil || a.pickNameVisibleAt(in.MouseX, in.MouseY, w, h, depth)) && (monster && !bestMob || monster == bestMob && (distance < bestRay || distance == bestRay && (target == 0 || id < target))) {
+						bestRay, target, bestMob = distance, id, monster
 					}
 				}
 				if tested {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -110,6 +111,7 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 	cursors := a.LoadCursors(win)
 	defer cursors.Close()
 	queue := win.InstallInput()
+	queue.SetSwapMouse(a.MouseButtonsSwapped())
 	var auto *app.Autoplay
 	inWorld := false
 	if autoUser != "" {
@@ -128,6 +130,7 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 		a.Update(&in, lastWidth, lastHeight, dt)
 		fw, fh = win.GetFramebufferSize() // display changes preserve context but resize its targets
 		queue.SetMouseLook(a.MouseLookActive())
+		queue.SetSwapMouse(a.MouseButtonsSwapped())
 		if fw <= 0 || fh <= 0 {
 			return
 		}
@@ -136,6 +139,13 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 		gl.ClearDepth(1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		a.Draw(fw, fh)
+		if shot == "" && auto == nil && in.HasKey(platform.KeyScreenshot) && a.InWorld() {
+			if path, err := saveGameScreenshot(fw, fh); err != nil {
+				log.Printf("Screenshot: %v", err)
+			} else {
+				log.Printf("Screenshot saved to %s", path)
+			}
+		}
 		cursors.Set(a.CursorIndex(fw, fh))
 	}
 	if auto != nil {
@@ -199,4 +209,29 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 		}
 	}
 	return nil
+}
+
+func saveGameScreenshot(w, h int) (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	dir := filepath.Join(filepath.Dir(exe), "SCREENSHOT")
+	if err = os.MkdirAll(dir, 0755); err != nil {
+		return "", err
+	}
+	file, err := os.CreateTemp(dir, time.Now().Format("2006-01-02_15-04-05")+"-*.jpg")
+	if err != nil {
+		return "", err
+	}
+	path := file.Name()
+	err = render.CaptureJPEG(file, w, h)
+	if closeErr := file.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		os.Remove(path)
+		return "", err
+	}
+	return path, nil
 }

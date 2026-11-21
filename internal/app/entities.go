@@ -462,6 +462,16 @@ func (a *App) playerNameplateAnchor(id uint32, actor *scene.Character, race uint
 	return pos, 0
 }
 
+func (a *App) catalogNameSuffix(e *game.Entity) string {
+	if !a.showCatalogIDs {
+		return ""
+	}
+	if e.Kind == game.KindNpc {
+		return fmt.Sprintf(" (%d %d)", e.NpcType, e.TypeID)
+	}
+	return fmt.Sprintf(" (%d)", e.TypeID)
+}
+
 // drawPlayerNames uses the original world anchors and fixed pixel overlays.
 func (a *App) drawPlayerNames(w, h int) {
 	settings := a.clientSettings()
@@ -565,12 +575,6 @@ func (a *App) drawPlayerNames(w, h int) {
 			}
 		}
 	}
-	catalogSuffix := func(id uint16) string {
-		if a.showCatalogIDs {
-			return fmt.Sprintf(" (%d)", id)
-		}
-		return ""
-	}
 	const neutralMarker = "interface/mon_not.png"
 	targetMarker := func(id uint32) string {
 		if id != 0 && a.state.Target == id {
@@ -610,7 +614,7 @@ func (a *App) drawPlayerNames(w, h int) {
 			label(caption, pos, guildCaptionColor(a.state, e.GuildID, e.ID, name), offset+guildCaptionOffset, playerPlate{}, "", "")
 		case game.KindMob:
 			actor := v.mobs[e.ID]
-			if (!a.showCatalogIDs && (!settings.MonsterNames || e.ID != a.state.Target && e.ID != hoveredMob)) || e.Dead || actor == nil || actor.actor == nil || actor.pos.Sub(v.pos).Len() > 100 {
+			if (!settings.MonsterNames || e.ID != a.state.Target && e.ID != hoveredMob) || e.Dead || actor == nil || actor.actor == nil || actor.pos.Sub(v.pos).Len() > 100 {
 				continue
 			}
 			mob := actor.actor
@@ -618,7 +622,7 @@ func (a *App) drawPlayerNames(w, h int) {
 			if element := mob.Definition.Element; e.ID == a.state.Target && int(element) < len(mobMarkers) {
 				marker = mobMarkers[element]
 			}
-			label(mob.Name, mob.MonsterPlateAnchor(), ui.RGBColor(ui.MobNameRGB(mob.Level, slot.Level)), 0, playerPlate{}, marker, catalogSuffix(e.TypeID))
+			label(mob.Name, mob.MonsterPlateAnchor(), ui.RGBColor(ui.MobNameRGB(mob.Level, slot.Level)), 0, playerPlate{}, marker, a.catalogNameSuffix(e))
 		case game.KindNpc:
 			if actor := v.npcs[e.ID]; actor != nil && actor.actor != nil {
 				pos := actor.actor.NPCPlateAnchor(e.NpcType, e.TypeID)
@@ -627,7 +631,7 @@ func (a *App) drawPlayerNames(w, h int) {
 				if _, hi, ok := actor.actor.WorldBounds(); ok && e.NpcType != 12 && pos[1] < hi[1]+.15 {
 					pos[1] = hi[1] + .15
 				}
-				label(actor.actor.Name, pos, ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID), catalogSuffix(e.TypeID))
+				label(actor.actor.Name, pos, ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID), a.catalogNameSuffix(e))
 				label(npcTypeLabel(e.NpcType), pos, [4]float32{.35, .9, 1, 1}, a.font.Height-2, playerPlate{}, "", "")
 			}
 		}

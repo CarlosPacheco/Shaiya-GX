@@ -101,6 +101,7 @@ type worldView struct {
 	jumping                     bool
 	jumpFall                    float32
 	jumpFloor                   float32
+	partySelection              uint32
 	controlTime                 float64
 	forwardRelease              float64
 	forwardReleased             bool
@@ -151,10 +152,9 @@ type worldDrawBreakdown struct {
 const (
 	runSpeed   = 5.0 // native normal speed base
 	zoomMin    = 2.1 // distance to the character origin
-	zoomMax    = 20.0
+	zoomMax    = 13.0
 	camArrowYw = 150.0 * math.Pi / 180
 	camArrowPt = 80.0 * math.Pi / 180
-	mouseScale = 0.1 * math.Pi / 180 // per pixel at sensitivity 3
 )
 
 func (a *App) enterWorld() {
@@ -233,6 +233,9 @@ func rotateAxis(p, k render.V3, ang float32) render.V3 {
 func (a *App) updateWorld(in *platform.Input, dt float64) {
 	// Phoenix limits simulation steps to 1/60s and stalled frames to 250ms.
 	// Edge events and physical mouse deltas belong to the first step only.
+	if a.wv != nil {
+		a.wv.controlTime += max(dt, 0)
+	}
 	remaining := min(max(dt, 0), .25)
 	controls := *in
 	for {
@@ -252,12 +255,19 @@ func (a *App) updateWorld(in *platform.Input, dt float64) {
 }
 
 func (a *App) updateWorldStep(in *platform.Input, dt float64) {
+	if a.wv != nil {
+		a.wv.controlTime += max(dt, 0)
+	}
 	a.stepWorld(in, dt, true)
 }
 
 func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	v := a.wv
 	if v == nil {
+		return
+	}
+	a.publishPartySelection()
+	if a.wv != v {
 		return
 	}
 	if v.extendedCameraZoom && !a.state.Self.IsGM {
@@ -279,8 +289,12 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		if pointer.MouseLook {
 			dx, dy = pointer.MouseDX, pointer.MouseDY
 		}
-		factor := max(0.5, float64(settings.MouseSensitivity)) / 3
-		pointer.MouseDX, pointer.MouseDY = dx*factor, dy*factor
+		sensitivity := float64(settings.MouseSensitivity)
+		yawFactor, pitchFactor := (2*sensitivity-1)/5, (2*sensitivity-1)/5
+		if v.firstPerson {
+			yawFactor, pitchFactor = sensitivity/3, (sensitivity+2)/5
+		}
+		pointer.MouseDX, pointer.MouseDY = dx*yawFactor, dy*pitchFactor
 		if settings.InvertY {
 			pointer.MouseDY = -pointer.MouseDY
 		}
@@ -290,7 +304,6 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	v.mouselook = in.RightDown
 	yaw, pitch := v.cameraInput(in, dt, a.lastMouseX, a.lastMouseY)
 	a.lastMouseX, a.lastMouseY = in.MouseX, in.MouseY
-	v.controlTime += dt
 	backEvade := false
 	evadeMotion := uint8(0)
 	if in.SuppressAutoRun {
@@ -414,28 +427,31 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	if blocked {
 		dir = render.V3{}
 	} else {
-		turn := float64(intent.turn) * 1.8 * dt // Phoenix KEY_ORBIT_SPEED.
-		if speed == 0 {
-			turn = 0
+		turnSpeed := speed
+		if v.walking {
+			turnSpeed /= 2
 		}
+		if a.state.Self.IsGM && a.state.GMTurbo {
+			turnSpeed *= gm.TurboMultiplier
+		}
+		// EP5.4 0x43f4f5 turns 15 degrees per unit of this step's travel.
+		turn := float64(intent.turn) * float64(turnSpeed) * dt * (math.Pi / 12)
 		yaw += turn
 		v.turnFacing(turn)
 	}
 	if yaw != 0 || pitch != 0 {
 		v.orbitCamera(yaw, pitch)
 	}
-	if in.RightDown && !blocked && speed > 0 && !a.state.Self.Dead {
-		// Right drag steers immediately; A/D become strafe keys.
-		v.facing = cameraHeading(v.target().Sub(v.eye), v.facing)
+	if v.facing.Len() == 0 {
+		v.facing = render.V3{0, 0, 1}
 	}
-	fwd := v.facing
-	if fwd.Len() == 0 {
-		fwd = cameraHeading(v.target().Sub(v.eye), render.V3{0, 0, 1})
+	fwd := cameraHeading(v.target().Sub(v.eye), v.facing)
+	if !blocked && speed > 0 && !a.state.Self.Dead && (in.RightDown || !v.travel && (intent.forward || intent.back)) {
 		v.facing = fwd
 	}
-	right := render.V3{0, 1, 0}.Cross(fwd)
+	right := render.V3{0, 1, 0}.Cross(v.facing)
 	if !blocked {
-		dir = controlDirection(fwd, intent)
+		dir = controlVector(fwd, right, intent)
 		if v.travel && !in.SuppressAutoRun {
 			dir = v.destination.Sub(v.pos)
 			dir[1] = 0

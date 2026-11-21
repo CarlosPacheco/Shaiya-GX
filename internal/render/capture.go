@@ -2,7 +2,9 @@ package render
 
 import (
 	"image"
+	"image/jpeg"
 	"image/png"
+	"io"
 	"os"
 	"unsafe"
 
@@ -11,6 +13,19 @@ import (
 
 // SavePNG reads the default framebuffer (w x h) into a PNG file.
 func SavePNG(path string, w, h int) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return png.Encode(f, readFramebuffer(w, h))
+}
+
+func CaptureJPEG(dst io.Writer, w, h int) error {
+	return jpeg.Encode(dst, readFramebuffer(w, h), &jpeg.Options{Quality: 90})
+}
+
+func readFramebuffer(w, h int) *image.NRGBA {
 	px := make([]byte, w*h*4)
 	gl.PixelStorei(gl.PACK_ALIGNMENT, 1)
 	gl.ReadPixels(0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&px[0]))
@@ -21,10 +36,5 @@ func SavePNG(path string, w, h int) error {
 	for i := 3; i < len(img.Pix); i += 4 {
 		img.Pix[i] = 255
 	}
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	return png.Encode(f, img)
+	return img
 }

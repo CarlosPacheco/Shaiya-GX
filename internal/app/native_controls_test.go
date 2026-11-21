@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -25,8 +26,8 @@ func TestNativeCameraZoomFlipAndModes(t *testing.T) {
 	for range 100 {
 		v.cameraInput(&platform.Input{Down: "-"}, .016, 0, 0)
 	}
-	if d := v.eye.Sub(v.cameraOrigin()).Len(); math.Abs(float64(d)-20) > .0001 {
-		t.Fatal("zoom-out key did not clamp at 20", d)
+	if d := v.eye.Sub(v.cameraOrigin()).Len(); math.Abs(float64(d)-13) > .0001 {
+		t.Fatal("zoom-out key did not clamp at 13", d)
 	}
 	before := v.eye.Sub(v.target())
 	v.cameraInput(&platform.Input{Keys: []platform.Key{platform.KeyHome}}, .016, 0, 0)
@@ -268,5 +269,39 @@ func TestCameraResetUsesNativeModelOrigin(t *testing.T) {
 	}
 	if v.pos != (render.V3{}) {
 		t.Fatal("camera conversion changed player coordinates", v.pos)
+	}
+}
+
+func TestEmptyWorldClickKeepsTargetAndHostileCycleIncludesPlayers(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID = 1
+	a.state.Target = 20
+	a.updateCombat(&platform.Input{Clicked: true, MouseX: 500, MouseY: 300}, 1024, 768)
+	if a.state.Target != 20 {
+		t.Fatal("clicking empty ground changed the selected target")
+	}
+	a.state.Entities[20] = &game.Entity{ID: 20, Kind: game.KindUser, Shape: &proto.UserShape{Faction: 0}}
+	a.state.Entities[21] = &game.Entity{ID: 21, X: 2, Kind: game.KindUser, Shape: &proto.UserShape{Faction: 1}}
+	a.state.Entities[22] = &game.Entity{ID: 22, X: 1, Kind: game.KindUser, Concealed: true, Shape: &proto.UserShape{Faction: 1}}
+	a.updateCombat(&platform.Input{Keys: []platform.Key{platform.KeyTarget}}, 1024, 768)
+	if a.state.Target != 21 || a.wv.approachTarget != 0 {
+		t.Fatal("cycling did not select the visible hostile player")
+	}
+}
+
+func TestTurnSpeedAndDoubleTapUseNativeTiming(t *testing.T) {
+	a := inputApp()
+	v := a.wv
+	v.facing = render.V3{0, 0, 1}
+	v.resetCamera()
+	a.updateWorld(&platform.Input{Down: "A"}, .2)
+	got := math.Abs(math.Atan2(float64(v.facing[0]), float64(v.facing[2]))) * 180 / math.Pi
+	if math.Abs(got-15) > .001 {
+		t.Fatalf("turn at speed 5 over 200 ms = %.4f degrees, want 15", got)
+	}
+	a.updateWorld(&platform.Input{Released: "W"}, .01)
+	a.updateWorld(&platform.Input{Released: "W"}, .4)
+	if v.autoRun {
+		t.Fatal("a long frame counted as a double tap")
 	}
 }

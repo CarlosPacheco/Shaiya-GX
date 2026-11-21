@@ -14,7 +14,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 | Chat | Phoenix geometry, external Tahoma with Unicode fallbacks, channel colours, persistent grey histories, single input row, six-channel picker and original SysMsg messages | Remaining special notices and complete state comparison |
 | Effects | Independently draggable positive/negative strips; 32px icons, 6px gaps, native yellow duration bars and the original white debuff pulse | Full effect categories and all special states |
 | Maps | Native World Map with region previews, ring buttons, expanded-map name, original clock frame with date/seconds and portrait resource text styling and native zone/hover labels, draggable minimap/full map, pan and zoom | Remaining map services and indicator variants |
-| Options | Menu and six subpages; classic glow/brightness/detail/distance sliders, cloak/helmet visibility, audio, mouse, chat and monitor resolution selection | Other service controls and shortcut editing |
+| Options | Menu and six subpages; classic glow/brightness/detail/distance sliders, cloak/helmet visibility, audio, mouse, chat, editable hotkeys and monitor resolution selection | Other service controls |
 | Party/raid | Member frames, invitations, leader and selection flows, member effect icons (`0x50abd0`, packets 0x0C04/0x0C05/0x0C0E/0x0C10), union (raid) portrait/slot menus, create/config window and event notices (`0x47ebe0`, `0x48e050`) | Complete badges and visual variants |
 | Player context | Original classic TipBox frame, SysMsg rows, hover, character/target/party picking, whisper focus and supported party/trade/duel/guild actions | Inspect, follow, personal shops and remaining social windows/services |
 | Quests | Original U button, journal artwork, state icons, seven 31px rows, three scrollbars, selection and confirmed abandonment; NPC dialogs/rewards/progress | Native tracker and remaining markers |
@@ -48,17 +48,19 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 
 Click an NPC to approach its displayed position and talk within two units. NPC conversations and service windows close beyond three units in 3D. Manual movement cancels the approach; moving NPCs also retain the server interaction-range check. Choose a populated destination, press Move and confirm. The client sends the NPC ID and destination index; GX Server validates availability, faction, distance and money, then supplies the balance and teleport position. Empty destinations remain inactive, including correct support for valid map-zero destinations with nonzero coordinates. Paid cross-map tests also verify scene replacement and persistence after reconnecting.
 
-Press **H** to toggle catalog IDs. Nearby monster and NPC nameplates show a white ID, and item tooltips show the full numeric item ID. The toggle starts off when the client launches.
+Press **H** to toggle white catalog IDs. Monster IDs appear on nameplates already shown by the current selection and name settings. Every visible NPC displays its type and ID, for example `6 1`. Item tooltips use the same two-number format, for example `100 120`. The toggle starts off each time the client launches.
 
 Inventory (I), Status (T), Skills (K) and Actions (B) open independently through either hotkeys or the bottom bar. Opening one keeps the others visible. New frames use free horizontal space when possible; manually positioned frames keep their layout. Overlapping personal panels route clicks, title dragging and Escape in their drawing order: Status, Actions, Skills, Inventory. Escape closes one panel at a time.
 
 Options remains nonmodal: opening it preserves keyboard movement and automatic travel. Pointer gestures belong to the window where they started. Logout confirmations remain modal and await the server response.
 
+Click a binding in **Keys** or **Extra Hotkey**, press its new key and confirm with OK. Press Escape to cancel a pending assignment. **User Option → Invert Mouse** exchanges the two mouse buttons. Click walkable terrain or a model surface to move there while keeping the selected target. **F12** and **Print Screen** save a JPEG in the `SCREENSHOT` directory next to the executable.
+
 Visual approval and complete comparison against the original remain ongoing. Opt-in rendering tests exercise real archives and preserve captures only in ignored local directories.
 
 The player popup follows `0x47de10`/`0x47e1e0`: text starts at `(10,10)` with 15px rows. Its classic skin uses `TipBox.TGA`, 4px borders and the native `CD1D1F24` background. The `RightMenu_*` feature skin is absent from the local archive. The native minimum width is 90px of content plus borders; longer translated labels expand the width to fit the current font. Existing actions use original SysMsg labels, including party request/kick/leadership/leave (5002–5005), whisper (5007), battle (5008), transaction (5091), guild duel (5339) and raid leadership controls (6507–6509).
 
-Right-click another character, the target frame or a party/raid member to open their actions. Right-click the local portrait in a group to leave it. Whisper selects the recipient and focuses the existing chat input. The popup preserves held movement and owns its pointer gestures; changed rows cannot activate an action that replaced the one originally pressed. Group leadership, capacity, faction and guild eligibility filter supported requests; membership, trades and duels still await GX Server responses. Friends/ignore, inspect, follow and personal-shop services are not represented by invented actions.
+Right-click the selected character in the world, the target frame or a party/raid member to open their actions. Right-click the local portrait in a group to leave it. Whisper selects the recipient and focuses the existing chat input. The popup preserves held movement and owns its pointer gestures; changed rows cannot activate an action that replaced the one originally pressed. Group leadership, capacity, faction and guild eligibility filter supported requests; membership, trades and duels still await GX Server responses. Friends/ignore, inspect, follow and personal-shop services are not represented by invented actions.
 
 ## Cloaks and combat presentation
 
@@ -238,7 +240,7 @@ The client can use the original `interface/p_market.png` and `interface/p_market
 
 Skill requests check the known MP/SP budget before sending or starting predicted animation. Failures use SysMsg 214 with the original MP/SP labels. Queued approach skills recheck on arrival; the server remains authoritative. The original cost value 1 retains its consume-current-pool meaning.
 
-F2 or a left click on the local portrait selects the player as a normal friendly target; the target frame displays their name and current HP. Dropped items have no floating text. Click their native selection area or use H to approach and pick up, stopping within one horizontal unit. Pickup and removal still require server confirmation.
+F1–F7 select party members in roster order. F1–F6 select within your raid subgroup. Solo players can use F2 or the local portrait to select themselves. Press F with a nearby group member selected to copy their target. Click dropped items or use the pickup action to approach and collect them within one horizontal unit. The server confirms pickup and removal.
 
 Friendly skill results are sent after the recipient applies the heal. Green numbers show effective HP gained rather than the requested amount; zero gain displays no number. Apply the updated GX Server build as well as the client to use the corrected healing announcements.
 

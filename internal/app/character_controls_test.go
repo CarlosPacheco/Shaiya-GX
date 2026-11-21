@@ -9,7 +9,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
-func TestPhoenixMouseAndKeyboardMovement(t *testing.T) {
+func TestMouseAndKeyboardMovement(t *testing.T) {
 	for _, tc := range []struct {
 		in            platform.Input
 		forward, back bool
@@ -17,8 +17,8 @@ func TestPhoenixMouseAndKeyboardMovement(t *testing.T) {
 	}{
 		{in: platform.Input{Down: "A"}, turn: 1},
 		{in: platform.Input{Down: "D"}, turn: -1},
-		{in: platform.Input{Down: "A", RightDown: true}, side: -1},
-		{in: platform.Input{Down: "D", RightDown: true}, side: 1},
+		{in: platform.Input{Down: "A", RightDown: true}, turn: 1},
+		{in: platform.Input{Down: "D", RightDown: true}, turn: -1},
 		{in: platform.Input{MouseDown: true, RightDown: true}, forward: true},
 		{in: platform.Input{Down: "WQ"}, forward: true, side: -1},
 		{in: platform.Input{Down: "SE"}, back: true, side: 1},
@@ -31,12 +31,12 @@ func TestPhoenixMouseAndKeyboardMovement(t *testing.T) {
 	}
 	heading := render.V3{0, 0, 1}
 	for _, keys := range []string{"W", "WQ", "WE", "S", "SQ", "SE", "Q", "E"} {
-		d := controlDirection(heading, characterControls(&platform.Input{Down: keys}, false))
+		d := controlVector(heading, render.V3{1, 0, 0}, characterControls(&platform.Input{Down: keys}, false))
 		if math.Abs(float64(d.Len()-1)) > .00001 {
 			t.Fatal("diagonal changes speed", keys, d)
 		}
 	}
-	if d := controlDirection(heading, characterControls(&platform.Input{Down: "WSQE"}, false)); d.Len() != 0 {
+	if d := controlVector(heading, render.V3{1, 0, 0}, characterControls(&platform.Input{Down: "WSQE"}, false)); d.Len() != 0 {
 		t.Fatal("opposed keys did not cancel", d)
 	}
 	if playerMovementSpeed(&proto.CharacterSpeed{Move: 255}, true) != 0 {

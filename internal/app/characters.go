@@ -133,7 +133,23 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			a.uiHidden = !a.uiHidden
 		}
 		if a.worldUIHidden() && !a.menuOpen {
-			controls := *in
+			controls := in.WithBindings(a.clientSettings().Bindings)
+			if a.wv.uiLeft != 0 {
+				controls.MouseDown = false
+			}
+			if a.wv.uiRight {
+				controls.RightPressed, controls.RightDown = false, false
+			}
+			a.wv.worldLeftPress(&controls, in, a.wv.uiLeft == 0 && !a.wv.uiRight)
+			if in.HasKey(platform.KeyShowIDs) {
+				a.showCatalogIDs = !a.showCatalogIDs
+			}
+			if !in.MouseDown {
+				a.wv.uiLeft = 0
+			}
+			if !in.RightDown {
+				a.wv.uiRight = false
+			}
 			a.updateCombat(&controls, w, h)
 			if a.state != nil && a.wv != nil && a.world != nil {
 				a.updateWorld(&controls, dt)
@@ -257,7 +273,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
 			return
 		}
-		if a.menuOpen && (a.menuPending || a.menuConfirm != nil && a.menuConfirm.Visible || a.gameMenu.DisplayPopupOpen()) {
+		if a.menuOpen && (a.menuPending || a.menuConfirm != nil && a.menuConfirm.Visible || a.gameMenu.DisplayPopupOpen() || a.gameMenu.BindingCapture()) {
 			controls := a.worldControls(in, w, h)
 			if a.wv != nil && a.world != nil && a.state != nil {
 				a.updateWorld(&controls, dt)
@@ -289,6 +305,9 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			}
 			pointer := chatWorldInput(*in)
 			in = &pointer
+		} else if a.auction.npc == 0 || a.auction.focus < 0 {
+			gameplay := in.WithBindings(a.clientSettings().Bindings)
+			in = &gameplay
 		}
 		controls := a.worldControls(in, w, h)
 		if a.state == nil {

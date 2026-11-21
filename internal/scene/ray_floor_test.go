@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/collision"
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
@@ -92,6 +93,22 @@ func TestRayFloorKeepsOcclusionAndFloorLayers(t *testing.T) {
 	} {
 		if _, ok := w.RayFloor(query.origin, query.direction, query.distance); ok {
 			t.Fatal("invalid ray accepted", query)
+		}
+	}
+}
+
+func TestRayFloorFindsOutdoorPlatformBeforeTerrain(t *testing.T) {
+	index := collision.NewIndex()
+	index.Add(collision.Triangle{{0, 3, 0}, {0, 3, 8}, {8, 3, 0}})
+	ground := &mapgeometry.Geometry{MapSize: 16, Heights: make([]uint16, 81), Index: index}
+	for i := range ground.Heights {
+		ground.Heights[i] = 10000
+	}
+	w := &World{collision: index, physics: ground}
+	for _, point := range []render.V3{{2, 3, 2}, {10, 0, 10}} {
+		p, ok := w.RayFloor(point.Add(render.V3{0, 20, 0}), render.V3{0, -1, 0}, 25)
+		if !ok || p != point {
+			t.Fatalf("expected %v, got %v (%v)", point, p, ok)
 		}
 	}
 }

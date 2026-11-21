@@ -20,12 +20,12 @@ func TestCameraRightDragSteersCharacterImmediately(t *testing.T) {
 	}
 }
 
-func TestMovementWithoutRightDragKeepsCharacterHeading(t *testing.T) {
+func TestMovementWithoutRightDragUsesCameraHeading(t *testing.T) {
 	a := inputApp()
 	a.wv = &worldView{pos: render.V3{100, 0, 100}, eye: render.V3{95, 2, 100}, facing: render.V3{0, 0, 1}, sendT: 100}
 	a.wv.moving, a.wv.motion = true, 1
 	a.updateWorld(&platform.Input{Down: "W", MouseLook: true}, .016)
-	if a.wv.facing != (render.V3{0, 0, 1}) || a.wv.pos[2] <= 100 || a.wv.pos[0] != 100 {
-		t.Fatal("movement without right drag followed camera instead of character", a.wv.facing, a.wv.pos)
+	if a.wv.facing != (render.V3{1, 0, 0}) || a.wv.pos[2] != 100 || a.wv.pos[0] <= 100 {
+		t.Fatal("movement without right drag did not follow the camera", a.wv.facing, a.wv.pos)
 	}
 }

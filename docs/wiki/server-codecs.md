@@ -3169,6 +3169,23 @@ func (m *PartyMember) RemoveEffect(skill uint16, level uint8) {
 
 </details>
 
+## party assist
+
+[internal/proto/party_assist.go](../../internal/proto/party_assist.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+func PartyAssistPacket(action uint8, id uint32) []byte {
+	w := NewWriter(GXPartyAssist)
+	w.U8(action)
+	w.U32(id)
+	return w.Bytes()
+}
+```
+
+</details>
+
 ## periodic
 
 [internal/proto/periodic.go](../../internal/proto/periodic.go#L1)

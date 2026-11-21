@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
-	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
 )
@@ -44,7 +43,7 @@ func TestFactionPvPAgainstRapture(t *testing.T) {
 	}
 	initialHP := b.Pools.HP
 	a.Target = b.SelfID
-	appA.updateCombat(&platform.Input{Chars: []rune{'f'}}, 1024, 768)
+	appA.attackTarget()
 	deadline := time.Now().Add(20 * time.Second)
 	for a.LastAttack.Source != a.SelfID || a.LastAttack.Target != b.SelfID || (b.Pools.HP >= initialHP && !b.Self.Dead) {
 		appA.pumpWorld()

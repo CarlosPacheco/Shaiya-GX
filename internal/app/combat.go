@@ -40,8 +40,7 @@ func (a *App) confirmedPickup(p []byte) {
 	}
 }
 
-// Delivery controls: click a player or mob to select;
-// Double click or F requests auto-attack. The server owns range, cadence and damage.
+// Select on the first click and engage on a subsequent click on the same target.
 func (a *App) updateCombat(in *platform.Input, w, h int) {
 	if a.wv == nil {
 		return
@@ -58,8 +57,19 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 		}
 		return
 	}
-	if in.HasKey(platform.KeySelfTarget) {
-		a.selectSelf()
+	for key := platform.KeyParty1; key <= platform.KeyParty8; key++ {
+		if in.HasKey(key) {
+			id := a.partyShortcutTarget(int(key - platform.KeyParty1))
+			if id == a.state.SelfID && id != 0 {
+				a.selectSelf()
+			} else if id != 0 {
+				a.selectGroupTarget(id)
+			}
+			return
+		}
+	}
+	if in.HasKey(platform.KeyAssist) {
+		a.requestPartyAssist()
 		return
 	}
 	id := a.pickGroundModel(in, w, h)
@@ -68,19 +78,23 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 		in.Clicked = false // This click issued the approach; do not cancel it in movement.
 		return
 	}
-	if id := a.pickNPC(in, w, h); id != 0 {
-		// A click targets the NPC; a click on the selected NPC walks to it and talks.
-		if a.state.Target == id {
-			a.openNPC(id)
-		} else {
-			a.selectNPC(id)
-		}
-		in.Clicked = false
-		return
-	}
 	if in.Clicked || in.HasKey(platform.KeyTarget) || in.HasKey(platform.KeyPreviousTarget) {
 		selected := a.state.Target
 		target := a.pickMob(in, w, h)
+		if in.Clicked && target == 0 {
+			if npc := a.pickNPC(in, w, h); npc != 0 {
+				if selected == npc {
+					a.openNPC(npc)
+				} else {
+					a.selectNPC(npc)
+				}
+				in.Clicked = false
+				return
+			}
+			a.wv.travel = false
+			a.moveToGround(in, w, h)
+			return
+		}
 		if in.HasKey(platform.KeyPreviousTarget) {
 			target = a.state.PreviousTarget
 			if e := a.state.Entities[target]; target != a.state.SelfID && (e == nil || e.Dead && e.Kind != game.KindUser) {
@@ -107,9 +121,6 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 		a.state.Target = target
 		if in.Clicked {
 			a.wv.travel = false
-			if target == 0 {
-				a.moveToGround(in, w, h)
-			}
 		}
 		// Native 0x43bfa0: a click selects; a click on the already selected
 		// target engages it. There is no time window between the two clicks.
@@ -118,21 +129,6 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 			if !a.attackTarget() {
 				return
 			}
-		}
-	}
-	for _, r := range in.Chars {
-
-		if r == 'h' || r == 'H' {
-			if !a.pickupNearest() {
-				return
-			}
-			continue
-		}
-		if r != 'f' && r != 'F' {
-			continue
-		}
-		if !a.attackTarget() {
-			return
 		}
 	}
 }

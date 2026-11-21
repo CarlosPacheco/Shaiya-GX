@@ -99,7 +99,7 @@ type ActiveQuest struct {
 
 Declarations: [packet.QuestStart](../../server/internal/packet/packet.go#L133), [proto.QuestStart](../../internal/proto/opcodes.go#L118).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L109)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L111)
 
 **S→C serializers:** [startQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L446)
 
@@ -235,7 +235,7 @@ func DecodeQuestStart(p []byte) (npc uint32, id uint16, err error) {
 
 Declarations: [packet.QuestEnd](../../server/internal/packet/packet.go#L134), [proto.QuestEnd](../../internal/proto/opcodes.go#L119).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L111)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L113)
 
 **S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L617), [awardQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L719)
 
@@ -457,7 +457,7 @@ type QuestEndResult struct {
 
 Declarations: [packet.QuestStartAlt](../../server/internal/packet/packet.go#L135), [proto.QuestStartAlt](../../internal/proto/opcodes.go#L120).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L109)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L111)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -677,7 +677,7 @@ type FinishedQuest struct {
 
 Declarations: [packet.QuestChoose](../../server/internal/packet/packet.go#L137), [proto.QuestChoose](../../internal/proto/opcodes.go#L122).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L113)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L115)
 
 **S→C serializers:** [completeQuest (server/internal/world/quests.go)](../../server/internal/world/quests.go#L617)
 
@@ -791,7 +791,7 @@ func DecodeQuestChoice(p []byte) (uint16, error) {
 
 Declarations: [packet.QuestAbandon](../../server/internal/packet/packet.go#L138), [proto.QuestAbandon](../../internal/proto/opcodes.go#L123).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L115)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L117)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 

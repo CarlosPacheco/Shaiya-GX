@@ -218,7 +218,7 @@ func TestDuelVictoryWagersAgainstRapture(t *testing.T) {
 		before[id] = true
 	}
 	a.Target = b.SelfID
-	appA.updateCombat(&platform.Input{Chars: []rune{'f'}}, 1024, 768)
+	appA.attackTarget()
 	deadline := time.Now().Add(30 * time.Second)
 	for a.Duel.Phase != game.DuelNone || b.Duel.Phase != game.DuelNone || !b.Self.Dead {
 		appA.pumpWorld()

@@ -35,7 +35,8 @@ func (a *App) openGameMenu() {
 // while held movement, automatic travel and gameplay outside keep running.
 func (a *App) gameMenuControls(in *platform.Input, w, h int) (platform.Input, bool) {
 	controls := *in
-	keyboardCapture := a.gameMenu.DisplayPopupOpen()
+	bindingCapture := a.gameMenu.BindingCapture()
+	keyboardCapture := a.gameMenu.DisplayPopupOpen() || bindingCapture
 	modal := a.menuPending || a.menuConfirm != nil && a.menuConfirm.Visible
 	width, height := a.gameMenu.Size()
 	x, y := a.gameMenu.Origin(w, h)
@@ -63,7 +64,9 @@ func (a *App) gameMenuControls(in *platform.Input, w, h int) (platform.Input, bo
 	if keyboardCapture || in.HasKey(platform.KeyEscape) || hasChar(in, 'o') {
 		controls.Keys = nil
 		controls.Chars = nil
-		if keyboardCapture {
+		if bindingCapture {
+			controls = chatWorldInput(controls)
+		} else if keyboardCapture {
 			controls.Space = false
 			controls.Down = strings.Map(func(r rune) rune {
 				if strings.ContainsRune("<>^v", r) {
@@ -133,7 +136,7 @@ func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 			a.taa.Reset()
 		}
 	}()
-	if hasChar(in, 'o') {
+	if !a.gameMenu.BindingCapture() && hasChar(in, 'o') {
 		a.gameMenu.DiscardPage()
 		a.applyClientSettings()
 		a.menuOpen = false
@@ -172,6 +175,8 @@ func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 		}
 	}
 }
+
+func (a *App) MouseButtonsSwapped() bool { return a.clientSettings().SwapMouse }
 
 func (a *App) clientSettings() ui.ClientSettings {
 	if a.gameMenu != nil {
@@ -282,7 +287,7 @@ func (a *App) saveClientSettings() {
 // gameMenuOwnsInput reports whether this frame's input belongs to the options
 // window rather than to the screen behind it (character selection).
 func (a *App) gameMenuOwnsInput(in *platform.Input, w, h int) bool {
-	if a.menuPending || a.menuConfirm.Visible || a.gameMenu.DisplayPopupOpen() || a.windowDrag.position == &a.gameMenu.Position || hasChar(in, 'o') || in.HasKey(platform.KeyEscape) {
+	if a.menuPending || a.menuConfirm.Visible || a.gameMenu.DisplayPopupOpen() || a.gameMenu.BindingCapture() || a.windowDrag.position == &a.gameMenu.Position || hasChar(in, 'o') || in.HasKey(platform.KeyEscape) {
 		return true
 	}
 	width, height := a.gameMenu.Size()

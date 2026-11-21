@@ -124,7 +124,7 @@ Declarations: [packet.GXForgeQuote](../../server/internal/packet/packet.go#L341)
 
 Source notes: GXForgeQuote is a read-only preview; execution still validates live inventory.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L292)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L294)
 
 **S→C serializers:** [handleForgeQuote (server/internal/world/forge_quote.go)](../../server/internal/world/forge_quote.go#L105)
 
@@ -477,7 +477,7 @@ Declarations: [proto.GXGMMapTeleport](../../internal/proto/gm_map.go#L10).
 
 Source notes: GXGMMapTeleport requests an exact map-image coordinate. The server owns Y.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L290)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L292)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -714,7 +714,7 @@ Declarations: [proto.GXLadder](../../internal/proto/ladder.go#L7).
 
 Source notes: GXLadder is additive. Requests contain guide index + mode; notifications also identify the actor. Native movement positions and flags retain their layouts.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L36)
 
 **S→C serializers:** [buildLadderState (server/internal/world/ladders.go)](../../server/internal/world/ladders.go#L11)
 
@@ -847,7 +847,7 @@ Declarations: [proto.GXTargetEffectsQuery](../../internal/proto/target_effects.g
 
 Source notes: GX requests a selected target's native snapshot; no native request is claimed.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L30)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L32)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1214,7 +1214,7 @@ func Decode(payload []byte) (string, string, error) {
 
 Declarations: [proto.GXTeleportStone](../../internal/proto/teleport_stone.go#L4).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L81)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L83)
 
 **S→C serializers:** [sendTeleportStone (server/internal/world/teleport_stone.go)](../../server/internal/world/teleport_stone.go#L51)
 
@@ -1271,7 +1271,7 @@ func TeleportStonePacket(action, slot uint8) []byte {
 
 Declarations: [proto.GXSummonRune](../../internal/proto/summon_rune.go#L4).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L79)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L81)
 
 **S→C serializers:** [summonResult (server/internal/world/summon_rune.go)](../../server/internal/world/summon_rune.go#L58), [publishSummonCast (server/internal/world/summon_rune.go)](../../server/internal/world/summon_rune.go#L65), [tickPartySummon (server/internal/world/summon_rune.go)](../../server/internal/world/summon_rune.go#L134)
 
@@ -1410,7 +1410,7 @@ Declarations: [packet.GXPartyInviteName](../../server/internal/packet/packet.go#
 
 Source notes: GXPartyInviteName is the global /party <name> invitation request. GXPartyInviteName is the GX /party <name> request: the party invitation of 0x0B09 without the proximity or same-map requirement. The target still receives the native 0x0B09 prompt.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L126)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L128)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2024,7 +2024,7 @@ func (s *Session) gmCure() error {
 
 Declarations: [proto.GXAuction](../../internal/proto/auction.go#L8).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L32)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L34)
 
 **S→C serializers:** [auctionReply (server/internal/world/auction.go)](../../server/internal/world/auction.go#L28)
 
@@ -2590,6 +2590,80 @@ These are the exact source serializers/decoders. Parameter names and assignments
 ```go
 func DecodeDrowningDamage(p []byte) (EnvironmentalDamage, error) {
 	return decodeEnvironmentalDamage(p, "drowning")
+}
+```
+
+</details>
+
+## Opcode 7f28
+
+**`0x7F28` — GXPartyAssist**
+
+Declarations: [proto.GXPartyAssist](../../internal/proto/party_assist.go#L4).
+
+Source notes: GXPartyAssist shares selected targets with nearby members of the same group.
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L30)
+
+**S→C serializers:** [handlePartyAssist (server/internal/world/party_assist.go)](../../server/internal/world/party_assist.go#L8)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>handlePartyAssist — server/internal/world/party_assist.go</summary>
+
+[Source definition](../../server/internal/world/party_assist.go#L8)
+
+```go
+func (s *Session) handlePartyAssist(frame []byte) {
+	me := s.player
+	if me == nil || len(frame) != 7 || !me.IsAlive() {
+		return
+	}
+	r := proto.NewReader(frame)
+	action, id := r.U8(), r.U32()
+	switch action {
+	case proto.PartyAssistSelection:
+		if id != 0 && !me.knowsAssistTarget(id) {
+			id = 0
+		}
+		me.mu.Lock()
+		me.assistTarget = id
+		me.mu.Unlock()
+	case proto.PartyAssistRequest:
+		ally := FindPlayerByID(id)
+		if ally == nil || ally == me || !ally.IsAlive() || !samePartyIDs(me.CharacterID, id) ||
+			!me.knows(viewUser, id) || !me.canSee(ally) {
+			return
+		}
+		ally.mu.Lock()
+		target, sameMap := ally.assistTarget, ally.mapID == s.char.MapID
+		ally.mu.Unlock()
+		if sameMap && (target == 0 || ally.knowsAssistTarget(target) && me.knowsAssistTarget(target)) {
+			reply := packet.New(packet.Opcode(proto.GXPartyAssist))
+			reply.U32(id)
+			reply.U32(target)
+			s.send(reply.MustFinish(), "GX party assist")
+		}
+	}
+}
+```
+
+</details>
+
+<details><summary>PartyAssistPacket — internal/proto/party_assist.go</summary>
+
+[Source definition](../../internal/proto/party_assist.go#L11)
+
+```go
+func PartyAssistPacket(action uint8, id uint32) []byte {
+	w := NewWriter(GXPartyAssist)
+	w.U8(action)
+	w.U32(id)
+	return w.Bytes()
 }
 ```
 

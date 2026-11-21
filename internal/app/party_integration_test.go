@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
@@ -80,14 +81,41 @@ func TestPartyAgainstRapture(t *testing.T) {
 	if st1.Party.Leader != st1.SelfID || st2.Party.Leader != st1.SelfID || st1.Party.Member(st2.SelfID).Name != name2 {
 		t.Fatal("roster/leader mismatch", st1.Party, st2.Party)
 	}
+	st2.Target = st1.SelfID
+	a2.publishPartySelection()
+	send2(proto.NewWriter(proto.Ping).Bytes())
+	timer := time.NewTimer(3 * time.Second)
+	defer timer.Stop()
+waitForSelection:
+	for {
+		select {
+		case p, ok := <-w2.Packets:
+			if !ok {
+				t.Fatal("party member disconnected")
+			}
+			if proto.Op(p) == proto.Ping {
+				break waitForSelection
+			}
+			a2.applyWorldPacket(p)
+		case <-timer.C:
+			t.Fatal("party selection was not processed")
+		}
+	}
+	st1.Target = st2.SelfID
+	a1.updateCombat(&platform.Input{Keys: []platform.Key{platform.KeyAssist}}, 1024, 768)
+	for deadline := time.Now().Add(3 * time.Second); st1.Target != st1.SelfID && time.Now().Before(deadline); {
+		a1.pumpWorld()
+		time.Sleep(5 * time.Millisecond)
+	}
+	if st1.Target != st1.SelfID || a1.wv.approachTarget != 0 || a1.wv.travel {
+		t.Fatal("F did not copy the idle party member's selection without approaching")
+	}
 	if graphics {
-		for i := 0; i < 240; i++ {
+		for deadline := time.Now().Add(8 * time.Second); !a1.SceneReady() && time.Now().Before(deadline); {
 			gl.Viewport(0, 0, 1024, 734)
 			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 			a1.Draw(1024, 734)
-			if a1.SceneReady() {
-				break
-			}
+			time.Sleep(time.Millisecond)
 		}
 		if !a1.SceneReady() {
 			t.Fatal("party scene did not finish streaming")
@@ -147,5 +175,5 @@ func TestPartyAgainstRapture(t *testing.T) {
 	wait2(func() bool { return st2.SelfID == 0 })
 	send1(proto.LogoutPacket())
 	wait1(func() bool { return st1.SelfID == 0 })
-	t.Log("Two disposable players: name/id invite, modal decline/accept, authoritative roster, row selection, leadership, party chat, kick and leave confirmed")
+	t.Log("Two disposable players: name/id invite, modal decline/accept, authoritative roster, F assistance, row selection, leadership, party chat, kick and leave confirmed")
 }

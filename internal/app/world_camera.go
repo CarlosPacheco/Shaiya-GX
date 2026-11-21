@@ -40,7 +40,7 @@ func (a *App) cameraLimitCommand(text string) bool {
 	}
 	if v.extendedCameraZoom {
 		v.restoreCameraZoomLimit()
-		a.questMessage("Camera zoom limit restored to 20.")
+		a.questMessage("Camera zoom limit restored to 13.")
 	} else {
 		v.extendedCameraZoom = true
 		a.questMessage("Camera zoom limit extended to 100.")
@@ -224,3 +224,5 @@ func (v *worldView) updateRenderedCamera(dt float32) {
 		v.cameraEye = origin.Sub(v.facing.Scale(.3))
 	}
 }
+
+func (a *App) InWorld() bool { return a.screen == screenWorld && a.wv != nil }

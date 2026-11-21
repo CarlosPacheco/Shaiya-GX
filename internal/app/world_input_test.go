@@ -282,8 +282,13 @@ func TestCameraRightDragKeepsOwnershipAcrossPanels(t *testing.T) {
 
 func TestCatalogIDsToggleAndItemTooltip(t *testing.T) {
 	a := inputApp()
+	a.state.GroundItems[1] = proto.GroundItem{X: a.wv.pos[0] + 10, Z: a.wv.pos[2]}
 	in := platform.Input{Keys: []platform.Key{platform.KeyShowIDs}, Chars: []rune{'h'}}
-	a.worldControls(&in, 1024, 768)
+	controls := a.worldControls(&in, 1024, 768)
+	a.updateCombat(&controls, 1024, 768)
+	if a.wv.travel || a.wv.approachTarget != 0 || a.wv.autoRun {
+		t.Fatal("H started a pickup or movement")
+	}
 	if !a.showCatalogIDs {
 		t.Fatal("H did not enable catalog IDs")
 	}
@@ -293,15 +298,18 @@ func TestCatalogIDsToggleAndItemTooltip(t *testing.T) {
 	if !a.showCatalogIDs {
 		t.Fatal("text input or key repeat toggled catalog IDs")
 	}
-	item := &sdata.Item{Type: 42, TypeID: 7, Name: "Test item"}
+	if npc, mob := a.catalogNameSuffix(&game.Entity{Kind: game.KindNpc, NpcType: 6, TypeID: 1}), a.catalogNameSuffix(&game.Entity{Kind: game.KindMob, TypeID: 61}); npc != " (6 1)" || mob != " (61)" {
+		t.Fatalf("catalog suffixes did not preserve their fields: %q, %q", npc, mob)
+	}
+	item := &sdata.Item{Type: 100, TypeID: 120, Name: "Test item"}
 	a.drawItemDetails(item, nil, 1, 0, 0, 1024, 768, "")
-	if len(a.tooltip) < 2 || a.tooltip[1] != (itemDetailLine{"ID: 42007", white}) {
+	if len(a.tooltip) < 2 || a.tooltip[1] != (itemDetailLine{"ID: 100 120", white}) {
 		t.Fatalf("full item ID missing from tooltip: %+v", a.tooltip)
 	}
 	a.worldControls(&in, 1024, 768)
 	a.drawItemDetails(item, nil, 1, 0, 0, 1024, 768, "")
 	for _, row := range a.tooltip {
-		if row.text == "ID: 42007" {
+		if row.text == "ID: 100 120" {
 			t.Fatal("item ID remained after hiding catalog IDs")
 		}
 	}

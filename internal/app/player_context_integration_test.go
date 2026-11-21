@@ -89,7 +89,13 @@ func TestOriginalPlayerContextGL(t *testing.T) {
 		t.Fatal("player model is outside context test camera")
 	}
 	a.state.Target = 0
-	a.worldControls(&platform.Input{MouseX: x, MouseY: y, RightPressed: true, RightDown: true}, 1024, 734)
+	press := platform.Input{MouseX: x, MouseY: y, RightPressed: true, RightDown: true}
+	controls := a.worldControls(&press, 1024, 734)
+	if a.playerContext.open || !controls.RightDown {
+		t.Fatal("right click on an unselected model did not go to the camera")
+	}
+	a.state.Target = 2
+	a.worldControls(&press, 1024, 734)
 	if !a.playerContext.open || a.playerContext.id != 2 {
 		t.Fatal("right click on player model did not open its own context", x, y, a.playerContext)
 	}

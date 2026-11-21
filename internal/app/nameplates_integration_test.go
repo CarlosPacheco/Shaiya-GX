@@ -3,6 +3,7 @@
 package app
 
 import (
+	"bytes"
 	"math"
 	"os"
 	"path/filepath"
@@ -140,10 +141,42 @@ func TestNPCNameplateOriginalAssetsGL(t *testing.T) {
 	monster.World[13] += delta[1]
 	monster.World[14] += delta[2]
 	a.state.Entities[101] = &game.Entity{ID: 101, Kind: game.KindMob}
-	a.wv.mobs[101] = &mobActor{entity: a.state.Entities[101], actor: monster}
+	a.wv.mobs[101] = &mobActor{entity: a.state.Entities[101], actor: monster, pos: render.V3{monster.World[12], monster.World[13], monster.World[14]}}
 	if a.pickMob(&platform.Input{Clicked: true, MouseX: mx, MouseY: my}, 1024, 734) != 101 {
 		t.Fatal("front monster was not selected over NPC")
 	}
+	entities, target, occlusion := a.state.Entities, a.state.Target, a.scene3d.Occlusion
+	a.state.Target, a.scene3d.Occlusion = 0, nil
+	renderPlates := func(showIDs bool) []byte {
+		a.showCatalogIDs = showIDs
+		gl.DepthFunc(gl.LEQUAL)
+		gl.DepthMask(true)
+		gl.ClearColor(0, 0, 0, 1)
+		gl.ClearDepth(1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		a.sprites.Begin(1024, 734)
+		a.drawPlayerNames(1024, 734)
+		a.sprites.End()
+		pixels := make([]byte, 1024*734*4)
+		gl.ReadPixels(0, 0, 1024, 734, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+		return pixels
+	}
+	entities[101].TypeID = 2009
+	a.state.Entities = map[uint32]*game.Entity{101: entities[101]}
+	if !bytes.Equal(renderPlates(false), renderPlates(true)) {
+		t.Fatal("debug IDs revealed an unselected monster's nameplate")
+	}
+	a.state.Target = 101
+	if bytes.Equal(renderPlates(false), renderPlates(true)) {
+		t.Fatal("the selected monster's nameplate did not get its catalog ID")
+	}
+	a.state.Target = 0
+	a.state.Entities = map[uint32]*game.Entity{42: entities[42]}
+	if bytes.Equal(renderPlates(false), renderPlates(true)) {
+		t.Fatal("an unselected NPC did not show its catalog ID")
+	}
+	a.state.Entities, a.state.Target, a.scene3d.Occlusion = entities, target, occlusion
+	a.showCatalogIDs = false
 	gl.DepthMask(true)
 	gl.ClearDepth(0)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
@@ -185,6 +218,7 @@ func TestNPCNameplateOriginalAssetsGL(t *testing.T) {
 		t.Fatal("NPC did not reach patrol destination")
 	}
 	if dir := os.Getenv("SHAIYA_TEST_ARTIFACTS"); dir != "" {
+		a.Draw(1024, 734)
 		if err := render.SavePNG(filepath.Join(dir, "npc-nameplate-preview.png"), 1024, 734); err != nil {
 			t.Fatal(err)
 		}

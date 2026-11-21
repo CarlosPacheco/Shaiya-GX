@@ -13,7 +13,7 @@ const minFloorNormalY = .5
 
 // RayFloor intersects a ray with the map's collision surfaces (dungeon floors,
 // ramps, model platforms) and returns the nearest hit when it is walkable.
-// Click-to-move uses it where there is no terrain heightmap.
+// Terrain and model triangles compete by distance along the same ray.
 func (w *World) RayFloor(origin, direction render.V3, maxDistance float32) (render.V3, bool) {
 	if w == nil || w.collision == nil || maxDistance <= 0 || math.IsNaN(float64(maxDistance)) || math.IsInf(float64(maxDistance), 0) {
 		return render.V3{}, false
@@ -22,18 +22,33 @@ func (w *World) RayFloor(origin, direction render.V3, maxDistance float32) (rend
 	if !o.Finite() || !d.Finite() || d.Len() == 0 {
 		return render.V3{}, false
 	}
-	end := o.Add(d.Scale(float64(maxDistance)))
-	box := collision.Box{
-		Min: collision.Vec{math.Min(o[0], end[0]) - .01, math.Min(o[1], end[1]) - .01, math.Min(o[2], end[2]) - .01},
-		Max: collision.Vec{math.Max(o[0], end[0]) + .01, math.Max(o[1], end[1]) + .01, math.Max(o[2], end[2]) + .01},
-	}
-	best, walkable, hit := float64(maxDistance), false, false
-	w.collision.Visit(box, func(t collision.Triangle) {
-		if distance, normal, ok := rayTriangle(o, d, t); ok && distance < best {
-			best, hit = distance, true
-			walkable = normal[1] >= minFloorNormalY && normal.Dot(d) < 0
+	limit := float64(maxDistance)
+	best, walkable, hit := limit, false, false
+	test := func(t collision.Triangle) {
+		distance, normal, ok := rayTriangle(o, d, t)
+		up := normal[1] >= minFloorNormalY && normal.Dot(d) < 0
+		if ok && (distance < best || hit && distance == best && up) {
+			best, hit, walkable = distance, true, up
 		}
-	})
+	}
+	// Keep each query narrow along long diagonal rays. Stop as soon as the
+	// closest hit falls inside the section just examined.
+	for start := float64(0); start < limit; start += 16 {
+		stop := min(start+16, limit)
+		from, to := o.Add(d.Scale(start)), o.Add(d.Scale(stop))
+		var box collision.Box
+		for axis := range 3 {
+			box.Min[axis] = min(from[axis], to[axis]) - .01
+			box.Max[axis] = max(from[axis], to[axis]) + .01
+		}
+		w.visitCollisions(box, test)
+		if w.physics != nil {
+			w.physics.TerrainVisit(box, test)
+		}
+		if hit && best <= stop {
+			break
+		}
+	}
 	if !hit || !walkable {
 		return render.V3{}, false
 	}

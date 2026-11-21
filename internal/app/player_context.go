@@ -227,7 +227,7 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 		}
 		c.width, c.height = ui.PlayerMenuSize(a.font, a.contextLabels(actions))
 		c.x, c.y = max(0, min(c.x, w-c.width)), max(0, min(c.y, h-c.height))
-		if in.HasKey(platform.KeyEscape) {
+		if in.RightPressed || in.HasKey(platform.KeyEscape) {
 			c.open = false
 			return true
 		}
@@ -261,7 +261,7 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 	if a.actionBar != nil && a.actionBar.SlotAt(in.MouseX, in.MouseY, w, h) >= 0 {
 		return false
 	}
-	if a.minimap != nil {
+	if a.minimap != nil && !a.wv.mapView.compactHidden {
 		x, y := a.minimap.Origin(w, h)
 		if pointInside(in, x, y, 196, 197) {
 			return false
@@ -309,7 +309,7 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 		pointer := *in
 		pointer.Clicked = true
 		picked := a.pickMob(&pointer, w, h)
-		if e := a.state.Entities[picked]; e != nil && e.Kind == game.KindUser {
+		if e := a.state.Entities[picked]; picked == a.state.Target && e != nil && e.Kind == game.KindUser {
 			id, checkRange = picked, true
 		}
 	}

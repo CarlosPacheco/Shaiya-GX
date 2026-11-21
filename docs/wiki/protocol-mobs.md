@@ -1030,7 +1030,7 @@ type NpcMotion struct {
 
 Declarations: [packet.NpcTalk](../../server/internal/packet/packet.go#L139), [proto.NpcTalk](../../internal/proto/opcodes.go#L124).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L117)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L119)
 
 **S→C serializers:** [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 

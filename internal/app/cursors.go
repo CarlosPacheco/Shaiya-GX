@@ -65,7 +65,7 @@ func (a *App) CursorIndex(w, h int) int {
 	if in.MouseY >= h-64 || pointInside(in, x, y, 213, 114) || a.state.Target != 0 && pointInside(in, tx, ty, 256, 64) {
 		return 0
 	}
-	if a.minimap != nil {
+	if a.minimap != nil && !a.wv.mapView.compactHidden {
 		x, y := a.minimap.Origin(w, h)
 		if pointInside(in, x, y, 196, 197) {
 			return 0

@@ -58,6 +58,7 @@ type ConnectedPlayer struct {
 	ride        vehiclePresence // guarded by vehicleMu
 
 	targetEffects []ActiveBuff
+	assistTarget  uint32 // guarded by mu
 	CharacterID   uint32
 	CharacterName string
 	IsAdmin       bool
@@ -360,6 +361,9 @@ func (p *ConnectedPlayer) SetMap(mapID uint16) {
 	p.mu.Lock()
 	old := p.mapID
 	p.mapID = mapID
+	if old != mapID {
+		p.assistTarget = 0
+	}
 	p.mu.Unlock()
 	if old == mapID {
 		return

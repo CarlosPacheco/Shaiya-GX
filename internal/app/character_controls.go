@@ -5,9 +5,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
-// Phoenix player_controller.gd _read_controls/_update_movement: character-relative
-// travel, right-drag steering, mouse chord forward and normalized diagonals.
-// Speeds and wire motions continue to use the EP5/Rapture definitions.
+// Movement input is shared by keyboard travel, mouse-run and autorun.
 type movementControls struct {
 	forward, back bool
 	side, turn    int
@@ -18,19 +16,17 @@ func characterControls(in *platform.Input, autoRun bool) movementControls {
 		return movementControls{}
 	}
 	c := movementControls{forward: in.Held('W') || autoRun || in.MouseDown && in.RightDown, back: in.Held('S')}
-	if in.Held('Q') || in.RightDown && in.Held('A') {
+	if in.Held('Q') {
 		c.side--
 	}
-	if in.Held('E') || in.RightDown && in.Held('D') {
+	if in.Held('E') {
 		c.side++
 	}
-	if !in.RightDown {
-		if in.Held('A') {
-			c.turn++
-		}
-		if in.Held('D') {
-			c.turn--
-		}
+	if in.Held('A') {
+		c.turn++
+	}
+	if in.Held('D') {
+		c.turn--
 	}
 	return c
 }
@@ -43,7 +39,7 @@ func cameraHeading(view, fallback render.V3) render.V3 {
 	return view.Norm()
 }
 
-func controlDirection(heading render.V3, c movementControls) render.V3 {
+func controlVector(heading, right render.V3, c movementControls) render.V3 {
 	dir := render.V3{}
 	if c.forward {
 		dir = dir.Add(heading)
@@ -51,7 +47,7 @@ func controlDirection(heading render.V3, c movementControls) render.V3 {
 	if c.back {
 		dir = dir.Sub(heading)
 	}
-	dir = dir.Add(render.V3{0, 1, 0}.Cross(heading).Scale(float32(c.side)))
+	dir = dir.Add(right.Scale(float32(c.side)))
 	return dir.Norm()
 }
 

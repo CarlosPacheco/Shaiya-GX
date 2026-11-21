@@ -182,13 +182,7 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 			underMall = underMall || pointInside(in, x, y, ui.GiftBoxWidth, ui.GiftBoxHeight)
 		}
 	}
-	dismissContext := !underMall && !captured && a.playerContext.open && in.RightPressed
-	if dismissContext {
-		// Dismiss the popup without offering the press to another panel.
-		// The same held button starts the camera drag.
-		a.playerContext.open = false
-		captured = true
-	} else if !underMall && !captured {
+	if !underMall && !captured {
 		captured = a.updatePlayerContext(in, w, h)
 	}
 	if !underMall && !captured {
@@ -249,7 +243,7 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		v.uiLeft = 0
 	}
 	if in.RightPressed {
-		v.uiRight = captured && !dismissContext
+		v.uiRight = captured
 	}
 	pointerOwned := v.uiLeft != 0 || v.uiRight
 	if in.Clicked || !in.MouseDown {
@@ -265,8 +259,6 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		controls.Released = ""
 	}
 	if captured || pointerOwned {
-		if in.Pressed || in.Clicked {
-		}
 		controls.Pressed = false
 		controls.Clicked = false
 		controls.MouseDown = false
@@ -280,20 +272,10 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 	// it is released. A press that no panel owns reaches the world as a click
 	// and its later release is swallowed. Both buttons down is mouse-run.
 	holding := a.inventory.dragging || a.shop.dragging || a.bank.dragging || a.skills.drag.active || a.wv.localActionDrag.active
-	if controls.Pressed && !in.RightDown && !captured && !pointerOwned && !holding {
-		controls.Clicked = true
-		v.worldPressActed = !in.Clicked
-	} else if v.worldPressActed && (in.Clicked || !in.MouseDown) {
-		controls.Clicked = false
-		v.worldPressActed = false
-	}
-
-	if dismissContext {
-		controls.RightPressed, controls.RightDown = in.RightPressed, in.RightDown
-	}
 	if cameraDrag {
 		controls.RightDown = true
 	}
+	v.worldLeftPress(&controls, in, !captured && !pointerOwned && !holding)
 	if controls.HasKey(platform.KeyShowIDs) {
 		a.showCatalogIDs = !a.showCatalogIDs
 	}
@@ -302,4 +284,21 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		controls.Keys, controls.Chars = nil, nil
 	}
 	return controls
+}
+
+func (v *worldView) worldLeftPress(controls, pointer *platform.Input, free bool) {
+	if !free {
+		controls.Pressed, controls.Clicked = false, false
+	}
+	if controls.Pressed {
+		if controls.RightDown {
+			controls.Clicked = false
+		} else {
+			controls.Clicked = true
+		}
+		v.worldPressActed = !pointer.Clicked
+	} else if v.worldPressActed && (pointer.Clicked || !pointer.MouseDown) {
+		controls.Clicked = false
+		v.worldPressActed = false
+	}
 }

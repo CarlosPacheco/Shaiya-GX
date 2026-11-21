@@ -337,7 +337,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
-	if a.minimap != nil {
+	if a.minimap != nil && !a.wv.mapView.compactHidden {
 		x, y := a.minimap.Origin(w, h)
 		// Drag the rim or lower information plate; leave buttons and map zoom free.
 		if a.minimap.DragHandleAt(in.MouseX, in.MouseY, w, h) {

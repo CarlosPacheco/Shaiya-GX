@@ -40,6 +40,10 @@ func (a *App) pumpWorld() {
 }
 
 func (a *App) applyWorldPacket(p []byte) {
+	if proto.Op(p) == proto.GXPartyAssist {
+		a.confirmPartyAssist(p)
+		return
+	}
 	if proto.Op(p) == proto.GXPlayerFeedback {
 		if id, kind, err := proto.DecodePlayerFeedback(p); err == nil && a.state != nil && (id != a.state.SelfID || kind == proto.PlayerLevelFeedback) {
 			a.queuePlayerFeedback(id, kind)

@@ -264,8 +264,11 @@ func (a *App) drawMallTooltip(p ui.MallProduct, w, h int) {
 	}
 	if showIDs {
 		line := "ID:"
-		for _, id := range p.ItemIDs {
-			value := fmt.Sprintf(" %d", id)
+		for i, id := range p.ItemIDs {
+			if i > 0 {
+				line += ","
+			}
+			value := fmt.Sprintf(" %d %d", id/1000, id%1000)
 			if a.font.Width(line+value) > 270 {
 				lines = append(lines, line)
 				line = ""

@@ -63,7 +63,7 @@ func DecodeGuildCreateFailure(p []byte) (uint8, error) {
 
 Declarations: [packet.GuildDisband](../../server/internal/packet/packet.go#L156), [proto.GuildDisband](../../internal/proto/opcodes.go#L144).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L308)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L308)
 
 **S→C serializers:** [guildResult (server/internal/world/guild_packets.go)](../../server/internal/world/guild_packets.go#L138)
 
@@ -113,7 +113,7 @@ func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return 
 
 Declarations: [packet.GuildDisbandAgree](../../server/internal/packet/packet.go#L157), [proto.GuildDisbandAgree](../../internal/proto/opcodes.go#L145).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L310)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L310)
 
 **S→C serializers:** [guildID32 (server/internal/world/guild_packets.go)](../../server/internal/world/guild_packets.go#L151)
 
@@ -171,7 +171,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.GuildInvite](../../server/internal/packet/packet.go#L158), [proto.GuildInvite](../../internal/proto/opcodes.go#L146).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L314)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L314)
 
 **S→C serializers:** [guildID32 (server/internal/world/guild_packets.go)](../../server/internal/world/guild_packets.go#L151), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -225,7 +225,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.GuildInviteAnswer](../../server/internal/packet/packet.go#L159), [proto.GuildInviteAnswer](../../internal/proto/opcodes.go#L147).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L319)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L319)
 
 **S→C serializers:** [guildResultID (server/internal/world/guild_packets.go)](../../server/internal/world/guild_packets.go#L144)
 
@@ -295,7 +295,7 @@ type PartyReply struct {
 
 Declarations: [packet.GuildApply](../../server/internal/packet/packet.go#L160), [proto.GuildApply](../../internal/proto/opcodes.go#L148).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L323)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L323)
 
 **S→C serializers:** [guildResult (server/internal/world/guild_packets.go)](../../server/internal/world/guild_packets.go#L138), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -349,7 +349,7 @@ func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return 
 
 Declarations: [packet.GuildJoinResult](../../server/internal/packet/packet.go#L161), [proto.GuildJoinResult](../../internal/proto/opcodes.go#L149).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L328)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L328)
 
 **S→C serializers:** [buildGuildJoined (server/internal/world/guild_packets.go)](../../server/internal/world/guild_packets.go#L129)
 
@@ -424,7 +424,7 @@ type GuildJoin struct {
 
 Declarations: [packet.GuildLeave](../../server/internal/packet/packet.go#L162), [proto.GuildLeave](../../internal/proto/opcodes.go#L150).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L333)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L333)
 
 **S→C serializers:** [guildResult (server/internal/world/guild_packets.go)](../../server/internal/world/guild_packets.go#L138)
 
@@ -474,7 +474,7 @@ func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return 
 
 Declarations: [packet.GuildExpel](../../server/internal/packet/packet.go#L163), [proto.GuildExpel](../../internal/proto/opcodes.go#L151).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L335)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L335)
 
 **S→C serializers:** [guildResultID (server/internal/world/guild_packets.go)](../../server/internal/world/guild_packets.go#L144), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -540,7 +540,7 @@ type PartyReply struct {
 
 Declarations: [packet.GuildStatus](../../server/internal/packet/packet.go#L164), [proto.GuildStatus](../../internal/proto/opcodes.go#L152).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L340)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L340)
 
 **S→C serializers:** [guildStatus (server/internal/world/guild_packets.go)](../../server/internal/world/guild_packets.go#L7)
 
@@ -1141,7 +1141,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.GuildRemark](../../server/internal/packet/packet.go#L174), [proto.GuildRemark](../../internal/proto/opcodes.go#L162).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L345)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L345)
 
 **S→C serializers:** [guildRemark (server/internal/world/guild.go)](../../server/internal/world/guild.go#L498)
 
@@ -1237,7 +1237,7 @@ type GuildRemarkResult struct {
 
 Declarations: [packet.GuildCreate](../../server/internal/packet/packet.go#L182), [proto.GuildCreate](../../internal/proto/opcodes.go#L170).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L302)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L302)
 
 **S→C serializers:** [buildGuildCreateResult (server/internal/world/guild_packets.go)](../../server/internal/world/guild_packets.go#L119)
 
@@ -1310,7 +1310,7 @@ type GuildJoin struct {
 
 Declarations: [packet.GuildCreateAgree](../../server/internal/packet/packet.go#L183), [proto.GuildCreateAgree](../../internal/proto/opcodes.go#L171).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L304)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L304)
 
 **S→C serializers:** [guildCreateRequest (server/internal/world/guild_creation.go)](../../server/internal/world/guild_creation.go#L11)
 
@@ -1443,7 +1443,7 @@ type GuildCreateVote struct {
 
 Declarations: [packet.GuildEtin](../../server/internal/packet/packet.go#L184), [proto.GuildEtin](../../internal/proto/opcodes.go#L172).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L347)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L347)
 
 **S→C serializers:** [guildID32 (server/internal/world/guild_packets.go)](../../server/internal/world/guild_packets.go#L151)
 
@@ -1567,7 +1567,7 @@ type GuildNpc struct {
 
 Declarations: [packet.GuildNpcUpgrade](../../server/internal/packet/packet.go#L186), [proto.GuildNpcUpgrade](../../internal/proto/opcodes.go#L174).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L358)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L358)
 
 **S→C serializers:** [buildGuildNpcResult (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L306)
 
@@ -2381,7 +2381,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 Declarations: [packet.GuildHouseBuy](../../server/internal/packet/packet.go#L188), [proto.GuildHouseBuy](../../internal/proto/opcodes.go#L176).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L367)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L367)
 
 **S→C serializers:** [buildGuildHouseBuy (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L400)
 
@@ -2443,7 +2443,7 @@ type GuildHouseBuyResult struct {
 
 Declarations: [packet.GuildDonate](../../server/internal/packet/packet.go#L189), [proto.GuildDonate](../../internal/proto/opcodes.go#L177).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L170), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L378)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L172), [handleGuild (server/internal/world/guild.go)](../../server/internal/world/guild.go#L378)
 
 **S→C serializers:** [guildDonate (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L464)
 

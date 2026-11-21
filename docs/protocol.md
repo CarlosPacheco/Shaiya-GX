@@ -34,3 +34,10 @@ Same-map teleports, other actors and the server's same-map placement echo must
 not generate another acknowledgement. The shared reducer reports this boundary
 through `Event.MapLoadAck`; the graphical client, CLI and protocol fixtures use
 that event without changing gameplay packet layouts.
+
+
+GX `0x7F28` carries party assist. A request contains a mode byte (0 to
+publish a selection, 1 to ask for an ally's selection) followed by a
+little-endian uint32. The reply contains the ally ID and target ID, both
+uint32. World checks group membership, shared map and visibility before
+replying. A target ID of zero represents an empty selection.

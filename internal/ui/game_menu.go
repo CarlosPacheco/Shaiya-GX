@@ -50,6 +50,7 @@ type GameMenu struct {
 	// (Game.exe state 3 of 0x4fbbb0/0x4f9bf0): docked at the top right, and a
 	// frameless main page with only Graphics, Sound and User buttons.
 	CharSelect   bool
+	bindingSlot  int // one-based, zero while no binding is being edited
 	dragSlider   int
 	pressedCheck *bool
 	Settings     ClientSettings
@@ -69,7 +70,8 @@ type ClientSettings struct {
 	Glow, Brightness, Details, VisualDistance int
 	HideCloak, HideHelmet                     bool
 	MouseSensitivity                          int
-	UseMouse, InvertY                         bool
+	UseMouse, InvertY, SwapMouse              bool
+	Bindings                                  platform.KeyBindings
 	OwnName, PlayerNames, MonsterNames        bool
 	BannedWords                               bool `json:",omitempty"`
 	Shadows, Water, SkillEffects              bool
@@ -93,7 +95,7 @@ func (c ClientSettings) Valid() bool {
 			return false
 		}
 	}
-	return c.DisplayMode.Valid() && c.Antialias >= 0 && c.Antialias < antialiasLevels && c.Glow >= 0 && c.Glow <= 2 && c.Brightness >= 0 && c.Brightness <= 4 && c.Details >= 0 && c.Details <= 2 && c.VisualDistance >= 0 && c.VisualDistance <= 2 && c.ChatChannel <= 5 && !math.IsNaN(c.Music) && !math.IsNaN(c.Effects) && c.Music >= 0 && c.Music <= 1 && c.Effects >= 0 && c.Effects <= 1 && !math.IsNaN(c.Ambient) && c.Ambient >= 0 && c.Ambient <= 1 && c.MouseSensitivity >= 0 && c.MouseSensitivity <= 6
+	return c.Bindings.Valid() && c.DisplayMode.Valid() && c.Antialias >= 0 && c.Antialias < antialiasLevels && c.Glow >= 0 && c.Glow <= 2 && c.Brightness >= 0 && c.Brightness <= 4 && c.Details >= 0 && c.Details <= 2 && c.VisualDistance >= 0 && c.VisualDistance <= 2 && c.ChatChannel <= 5 && !math.IsNaN(c.Music) && !math.IsNaN(c.Effects) && c.Music >= 0 && c.Music <= 1 && c.Effects >= 0 && c.Effects <= 1 && !math.IsNaN(c.Ambient) && c.Ambient >= 0 && c.Ambient <= 1 && c.MouseSensitivity >= 0 && c.MouseSensitivity <= 6
 }
 
 func NewGameMenu(t Textures) (*GameMenu, error) {
@@ -164,6 +166,7 @@ func (m *GameMenu) Open(page MenuPage) {
 		m.original = m.Settings
 	}
 	m.Page = page
+	m.bindingSlot = 0
 	m.displayOpen = false
 	m.displayHeld = -1
 	m.displayButton.held = false
@@ -225,7 +228,6 @@ func (m *GameMenu) controls(w, h int) (int, int, int, int) {
 	m.displayButton.OriginX, m.displayButton.OriginY = x, y
 	m.displayButton.Disabled = len(m.DisplayModes) < 2
 	m.antialiasButton.OriginX, m.antialiasButton.OriginY = x, y
-	m.reset.Disabled = m.Page == MenuKeys || m.Page == MenuExtraKeys
 	for i := range m.buttons {
 		m.buttons[i].OriginX, m.buttons[i].OriginY = x, y
 		m.buttons[i].OffX, m.buttons[i].OffY = 64, 77+32*i
@@ -238,6 +240,9 @@ func (m *GameMenu) controls(w, h int) (int, int, int, int) {
 
 func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 	x, y, _, _ := m.controls(w, h)
+	if m.updateBinding(in, x, y) {
+		return MenuNone
+	}
 	if m.Page == MenuGraphics {
 		if !m.displayOpen {
 			if handled, result := m.updateAntialias(in, x, y); handled {
@@ -311,12 +316,18 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 			m.Settings.Music, m.Settings.Effects, m.Settings.Ambient = defaults.Music, defaults.Effects, defaults.Ambient
 			m.Settings.CharacterSound, m.Settings.RiskSensor = defaults.CharacterSound, defaults.RiskSensor
 		case MenuUser:
-			m.Settings.UseMouse, m.Settings.InvertY, m.Settings.MouseSensitivity = true, false, 3
+			m.Settings.UseMouse, m.Settings.InvertY, m.Settings.SwapMouse = defaults.UseMouse, defaults.InvertY, defaults.SwapMouse
+			m.Settings.MouseSensitivity = defaults.MouseSensitivity
 			m.Settings.OwnName, m.Settings.PlayerNames, m.Settings.MonsterNames = true, true, true
 			m.Settings.BannedWords = defaults.BannedWords
 			m.Settings.WarningMsg = defaults.WarningMsg
 			m.Settings.RejectBattle, m.Settings.RejectParty, m.Settings.RejectTrade = defaults.RejectBattle, defaults.RejectParty, defaults.RejectTrade
 			m.Settings.ShakeScreen, m.Settings.WordBalloon, m.Settings.HideDamage = defaults.ShakeScreen, defaults.WordBalloon, defaults.HideDamage
+		case MenuKeys, MenuExtraKeys:
+			start, end := m.bindingRange()
+			for slot := start; slot < end; slot++ {
+				m.Settings.Bindings.Bind(slot, defaults.Bindings.At(slot))
+			}
 		case MenuGraphics:
 			m.Settings.Shadows, m.Settings.Water, m.Settings.SkillEffects = true, true, true
 			m.Settings.Glow, m.Settings.Brightness, m.Settings.Details, m.Settings.VisualDistance = 2, 2, 2, 2
@@ -422,7 +433,7 @@ func (m *GameMenu) checks() []menuCheck {
 	case MenuSound:
 		return []menuCheck{{33, 284, &s.CharacterSound}, {33, 314, &s.RiskSensor}}
 	case MenuUser:
-		return []menuCheck{{34, 83, &s.UseMouse}, {137, 83, nil}, {241, 83, &s.InvertY}, {34, 202, &s.OwnName}, {137, 202, &s.PlayerNames}, {34, 228, &s.MonsterNames}, {137, 228, &s.BannedWords},
+		return []menuCheck{{34, 83, &s.UseMouse}, {137, 83, &s.SwapMouse}, {241, 83, &s.InvertY}, {34, 202, &s.OwnName}, {137, 202, &s.PlayerNames}, {34, 228, &s.MonsterNames}, {137, 228, &s.BannedWords},
 			// Other Setup: the original grid without All Windows and Re-open UI.
 			{34, 306, &s.RejectBattle}, {137, 306, &s.RejectParty}, {241, 306, &s.WarningMsg},
 			{34, 332, &s.RejectTrade}, {137, 332, &s.ShakeScreen}, {241, 332, &s.WordBalloon},
@@ -488,17 +499,15 @@ func (m *GameMenu) Draw(s *render.Sprites, f *Font, w, h int, solid ...*render.T
 			blank = solid[0]
 		}
 		m.drawAntialias(s, f, blank, x, y)
-	case MenuKeys:
-		keys := [][2]string{{"A", "D"}, {"W", "S"}, {"Q", "E"}, {"Tab", "NumLock"}, {"C", "Space"}, {"T", "I"}, {"K", "B"}, {"U", "G"}, {"O", "M"}, {"", "Esc"}}
-		for i, row := range keys {
-			for col, key := range row {
-				f.Draw(s, key, x+120+170*col, y+68+31*i, white, 50)
+	case MenuKeys, MenuExtraKeys:
+		first, end := m.bindingRange()
+		for slot := first; slot < end; slot++ {
+			bx, by := bindingOrigin(slot - first)
+			key := platform.BindingName(m.Settings.Bindings.At(slot))
+			if m.bindingSlot == slot+1 {
+				key = "Press key"
 			}
-		}
-	case MenuExtraKeys:
-		for i := 0; i < 10; i++ {
-			key := (i + 1) % 10
-			f.Draw(s, fmt.Sprintf("%d", key), x+120+(i%2)*170, y+68+(i/2)*31, white, 50)
+			f.Draw(s, key, x+bx+5, y+by+5, white, 50)
 		}
 	case MenuHelp:
 		m.help.draw(s, x, y)
@@ -526,4 +535,48 @@ func (m *GameMenu) SetChatChannel(channel uint8) {
 func (m *GameMenu) SetChatOptions(filters uint8, transparent bool) {
 	m.Settings.ChatFilters, m.Settings.ChatTransparent = filters, transparent
 	m.original.ChatFilters, m.original.ChatTransparent = filters, transparent
+}
+
+func (m *GameMenu) BindingCapture() bool { return m.bindingSlot != 0 }
+
+func (m *GameMenu) bindingRange() (int, int) {
+	switch m.Page {
+	case MenuKeys:
+		return 0, 20
+	case MenuExtraKeys:
+		return 20, 30
+	}
+	return 0, 0
+}
+
+func bindingOrigin(index int) (int, int) { return 114 + index%2*170, 63 + index/2*31 }
+
+func (m *GameMenu) updateBinding(in *platform.Input, x, y int) bool {
+	if m.BindingCapture() {
+		for _, key := range in.KeyPresses {
+			if key == platform.PhysicalEscape || m.Settings.Bindings.Bind(m.bindingSlot-1, key) {
+				m.bindingSlot = 0
+				return true
+			}
+		}
+		if len(in.KeyPresses) == 0 && in.HasKey(platform.KeyEscape) {
+			m.bindingSlot = 0
+			return true
+		}
+		if !in.Pressed {
+			return true
+		}
+		m.bindingSlot = 0
+	}
+	first, end := m.bindingRange()
+	if in.Pressed {
+		for slot := first; slot < end; slot++ {
+			bx, by := bindingOrigin(slot - first)
+			if in.MouseX >= x+bx && in.MouseX < x+bx+55 && in.MouseY >= y+by && in.MouseY < y+by+23 {
+				m.bindingSlot = slot + 1
+				return true
+			}
+		}
+	}
+	return false
 }

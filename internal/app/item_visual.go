@@ -135,8 +135,7 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 	}, a.msg)
 
 	if a.showCatalogIDs {
-		id := uint32(def.Type)*1000 + uint32(def.TypeID)
-		lines = slices.Insert(lines, min(1, len(lines)), itemDetailLine{fmt.Sprintf("ID: %d", id), white})
+		lines = slices.Insert(lines, min(1, len(lines)), itemDetailLine{fmt.Sprintf("ID: %d %d", def.Type, def.TypeID), white})
 	}
 
 	if warning, restricted := a.itemClassWarning(def); restricted {

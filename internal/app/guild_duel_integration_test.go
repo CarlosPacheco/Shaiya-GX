@@ -98,7 +98,7 @@ func TestGuildDuelAgainstRapture(t *testing.T) {
 		t.Fatal("non-leader leaving ended the guild duel")
 	}
 	a.Target = b.SelfID
-	appA.updateCombat(&platform.Input{Chars: []rune{'f'}}, 1024, 768)
+	appA.attackTarget()
 	poll(func() bool {
 		return a.GuildDuel.Phase == game.DuelNone && b.GuildDuel.Phase == game.DuelNone && c.GuildDuel.Phase == game.DuelNone && b.Self.Dead
 	})

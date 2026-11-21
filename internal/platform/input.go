@@ -23,7 +23,14 @@ const (
 	KeyHome
 	KeyPageUp
 	KeyPageDown
-	KeySelfTarget // F2 selects the local player.
+	KeyParty1
+	KeyParty2
+	KeyParty3
+	KeyParty4
+	KeyParty5
+	KeyParty6
+	KeyParty7
+	KeyParty8
 	KeyF9
 	KeyF10
 	KeyF11 // Native English client: DirectInput 0x57 toggles the whole UI.
@@ -47,7 +54,11 @@ const (
 	KeyCut
 	KeyPaste
 	KeyShowIDs
+	KeyAssist
+	KeyScreenshot
 )
+
+const KeySelfTarget = KeyParty2
 
 // Input is one frame of input: the state plus the events since last frame.
 type Input struct {
@@ -61,6 +72,11 @@ type Input struct {
 	Clicked          bool    // left button released this frame
 	Pressed          bool    // left button pressed this frame
 	Chars            []rune
+	KeyPresses       []PhysicalKey
+	physical         bool
+	charKeys         []PhysicalKey
+	keyReleases      []PhysicalKey
+	heldKeys         uint64
 	Keys             []Key
 	ReadClipboard    func() string
 	WriteClipboard   func(string)
@@ -89,8 +105,10 @@ func (in *Input) HasKey(k Key) bool {
 
 var keyMap = map[glfw.Key]Key{
 	glfw.KeyGraveAccent: KeyTarget,
-	glfw.KeyF2:          KeySelfTarget,
-	glfw.KeyEnter:       KeyEnter, glfw.KeyKPEnter: KeyEnter, glfw.KeyTab: KeyTab,
+	glfw.KeyF1:          KeyParty1, glfw.KeyF2: KeyParty2, glfw.KeyF3: KeyParty3, glfw.KeyF4: KeyParty4,
+	glfw.KeyF5: KeyParty5, glfw.KeyF6: KeyParty6, glfw.KeyF7: KeyParty7, glfw.KeyF8: KeyParty8,
+	glfw.KeyF: KeyAssist, glfw.KeyF12: KeyScreenshot, glfw.KeyPrintScreen: KeyScreenshot,
+	glfw.KeyEnter: KeyEnter, glfw.KeyKPEnter: KeyEnter, glfw.KeyTab: KeyTab,
 	glfw.KeyBackspace: KeyBackspace, glfw.KeyEscape: KeyEscape, glfw.KeyUp: KeyUp,
 	glfw.KeyHome: KeyHome, glfw.KeyEnd: KeyEnd, glfw.KeyPageUp: KeyPageUp, glfw.KeyPageDown: KeyPageDown,
 	glfw.KeyF9: KeyF9, glfw.KeyF10: KeyF10, glfw.KeyF11: KeyF11, glfw.KeySpace: KeySpace,
@@ -113,11 +131,21 @@ func (w *Window) InstallInput() *InputQueue {
 			q.cur.KeypadChars += string(r)
 		}
 		q.cur.Chars = append(q.cur.Chars, r)
+		q.cur.charKeys = append(q.cur.charKeys, q.charKey)
 	})
 	w.SetKeyCallback(func(win *glfw.Window, k glfw.Key, _ int, a glfw.Action, mods glfw.ModifierKey) {
 		q.cur.Shift = mods&glfw.ModShift != 0
 		q.keypadChar = false
 		q.suppressChordChar = false
+		q.charKey = k
+		shortcut := mods&(glfw.ModControl|glfw.ModAlt|glfw.ModSuper) == 0
+		if a == glfw.Press && shortcut {
+			q.cur.KeyPresses = append(q.cur.KeyPresses, k)
+		}
+		if a == glfw.Release {
+			q.cur.keyReleases = append(q.cur.keyReleases, k)
+			q.charKey = 0
+		}
 		if a == glfw.Press {
 			var key Key
 			switch {
@@ -201,12 +229,20 @@ func (w *Window) InstallInput() *InputQueue {
 		if k == glfw.KeyBackspace && a == glfw.Press {
 			q.cur.Keys = append(q.cur.Keys, KeyPreviousTarget)
 		}
-		if mk, ok := keyMap[k]; ok && (a == glfw.Press || mk <= KeyDelete && mk != KeyTab) {
+		if mk, ok := keyMap[k]; ok && (a == glfw.Press || mk <= KeyDelete && mk != KeyTab) && (mk != KeyAssist || shortcut) {
 			q.cur.Keys = append(q.cur.Keys, mk)
 		}
 	})
 	w.SetScrollCallback(func(_ *glfw.Window, _, dy float64) { q.cur.Wheel += dy * 120 })
 	w.SetMouseButtonCallback(func(_ *glfw.Window, b glfw.MouseButton, a glfw.Action, _ glfw.ModifierKey) {
+		if q.swapMouse {
+			switch b {
+			case glfw.MouseButtonLeft:
+				b = glfw.MouseButtonRight
+			case glfw.MouseButtonRight:
+				b = glfw.MouseButtonLeft
+			}
+		}
 		if b == glfw.MouseButtonMiddle {
 			q.cur.MiddlePressed = a == glfw.Press
 			return
@@ -235,6 +271,8 @@ type InputQueue struct {
 	win               *Window
 	cur               Input
 	mouselook         bool
+	swapMouse         bool
+	charKey           PhysicalKey
 	keypadChar        bool
 	suppressChordChar bool
 	anchorX, anchorY  float64
@@ -264,10 +302,12 @@ func (q *InputQueue) Frame() Input {
 		q.cur = Input{}
 		return Input{MouseX: in.MouseX, MouseY: in.MouseY}
 	}
+	in.physical = true
 	var down [32]byte
 	n := 0
 	for key := glfw.KeyA; key <= glfw.KeyZ; key++ {
 		if q.win.GetKey(key) == glfw.Press {
+			in.heldKeys |= bindingKeyBit(key)
 			down[n] = byte('A' + key - glfw.KeyA)
 			n++
 		}
@@ -280,6 +320,11 @@ func (q *InputQueue) Frame() Input {
 	}
 	in.Down = string(down[:n])
 	in.Space = q.win.GetKey(glfw.KeySpace) == glfw.Press
+	for _, key := range [...]PhysicalKey{glfw.KeySpace, glfw.KeyTab, glfw.KeyEscape, glfw.KeyNumLock} {
+		if q.win.GetKey(key) == glfw.Press {
+			in.heldKeys |= bindingKeyBit(key)
+		}
+	}
 	var mods glfw.ModifierKey
 	for _, modifier := range []struct {
 		left, right glfw.Key
@@ -303,8 +348,9 @@ func (q *InputQueue) Frame() Input {
 		if q.win.GetKey(glfw.Key0+glfw.Key(digit)) == glfw.Press {
 			in.ActionHeld |= 1 << (numberRowOffset + slot)
 		}
-		if q.win.GetKey(glfw.KeyKP0+glfw.Key(digit)) == glfw.Press {
+		if key := glfw.KeyKP0 + glfw.Key(digit); q.win.GetKey(key) == glfw.Press {
 			in.ActionHeld |= 1 << (10 + slot)
+			in.heldKeys |= bindingKeyBit(key)
 		}
 	}
 	q.cur = Input{MouseDown: in.MouseDown, RightDown: in.RightDown, Shift: in.Shift}
@@ -327,4 +373,13 @@ func (q *InputQueue) SetMouseLook(active bool) {
 		q.win.SetInputMode(glfw.CursorMode, glfw.CursorNormal)
 		q.win.SetCursorPos(q.anchorX, q.anchorY)
 	}
+}
+
+// SetSwapMouse applies the new mapping between gestures, so a release can
+// always reach the logical button that owned the press.
+func (q *InputQueue) SetSwapMouse(swap bool) {
+	if q.swapMouse == swap || q.cur.MouseDown || q.cur.RightDown {
+		return
+	}
+	q.swapMouse = swap
 }

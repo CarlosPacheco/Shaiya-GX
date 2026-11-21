@@ -54,7 +54,7 @@ func TestGMOnlyCameraZoomLimit(t *testing.T) {
 	v.updateRenderedCamera(.1)
 	checkDistance(v.eye, 100)
 	checkDistance(v.cameraEye, 100)
-	submit("/camlimit", "Camera zoom limit restored to 20.")
+	submit("/camlimit", "Camera zoom limit restored to 13.")
 	checkDistance(v.eye, zoomMax)
 	checkDistance(v.cameraEye, zoomMax)
 	zoomOut()

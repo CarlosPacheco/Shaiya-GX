@@ -71,7 +71,7 @@ removes the group. Use open terrain for large groups.
 ## Extended camera zoom
 
 `/camlimit` lets a GM zoom out to 100 world units using the mouse wheel or the
-normal zoom keys. Run it again to restore the 20-unit limit. The command applies
+normal zoom keys. Run it again to restore the 13-unit limit. The command applies
 only to the current map in the GM's client and resets if GM status is revoked.
 Camera collision still applies.
 

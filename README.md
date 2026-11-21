@@ -107,17 +107,20 @@ GX Server retains Rapture's gameplay and protocol behavior. Its programs are `gx
 
 | Input | Action |
 |---|---|
-| W/S, A/D, Q/E | Forward/back, turn, side step |
+| W/S, A/D, Q/E | Move forward/back relative to camera, turn, side step |
 | Right mouse / both buttons | Steer / move forward |
 | Wheel / F9 / F10 | Zoom / reset camera / first person |
 | Space / C / Tab / NumLock | Jump / sit / walk or run / automatic movement |
-| F2 | Select yourself |
-| F / X / H | Attack target / stop attack / approach nearby loot |
+| F1–F7 | Select a party member. F1–F6 select within your raid group |
+| F / X / H | Assist the selected group member / stop attack / toggle catalog IDs |
+| F11 / F12 or Print Screen | Toggle HUD / save a JPEG in `SCREENSHOT` |
 | I / T / K / B | Inventory / Status / skills / actions |
-| U / G / M / O | Quests / guild / map / options |
+| U / G / M / V / O | Quests / guild / map / minimap / options |
 | Enter / Up / Down | Chat / sent-message history while typing |
 | 1–9, 0 / numeric keypad | First / second action bar |
-| Grave accent / Backspace | Cycle enemies / previous target |
+| Grave accent / Backspace | Cycle hostile mobs and players / previous target |
+
+Click a target once to select it. Click the selected target again to interact or attack. Choose **Keys** or **Extra Hotkey** in Options to change gameplay bindings.
 
 Inventory: left-click uses an item, right-click equips/replaces it, drag moves it. Supported window headers and action bars are draggable. Escape closes the active panel first. Chat uses `!name message` for whisper, `@message` for party, `#message` for guild and `$message` for trade. Settings are kept in the user's configuration directory; passwords are not saved by the graphical client.
 
