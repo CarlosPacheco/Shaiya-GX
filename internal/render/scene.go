@@ -80,6 +80,7 @@ layout(binding=6) uniform sampler2D waterNormalB;
 uniform int hasTerrainLight;
 uniform int mode;
 uniform float alphaRef;
+uniform bool skinReflection;
 uniform float corpseFade; // zero for all ordinary scene draws
 uniform vec3 fogColor;
 uniform float detailBias;
@@ -99,6 +100,7 @@ in float vDepth;
 in vec4 vEffectColor;
 #ifdef SKIN_INDIRECT
 flat in uvec2 vSkinTexture;
+flat in uvec2 vSkinReflection;
 flat in float vSkinAlphaRef;
 #endif
 out vec4 frag;
@@ -166,6 +168,19 @@ void main() {
 		c = texture(tex0, vUV, detailBias);
 		#endif
 		c.rgb *= vDiffuse;
+		if (mode == 10) {
+			// D3DTOP_MODULATEALPHA_ADDCOLOR. DDS alpha is the reflection
+			// weight; the actor's opacity is applied separately below.
+			#ifdef SKIN_INDIRECT
+			if (any(notEqual(vSkinReflection, uvec2(0)))) {
+				c.rgb = min(vec3(1.0), c.rgb + c.a * texture(sampler2D(vSkinReflection), vUV2).rgb);
+			}
+			#else
+			if (skinReflection) {
+				c.rgb = min(vec3(1.0), c.rgb + c.a * texture(tex1, vUV2).rgb);
+			}
+			#endif
+		}
 	}
 	#ifdef SKIN_INDIRECT
 	if (c.a <= vSkinAlphaRef) discard;

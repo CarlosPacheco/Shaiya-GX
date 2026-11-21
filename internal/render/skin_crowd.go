@@ -13,13 +13,14 @@ type SkinInstance struct {
 }
 
 type SkinGroup struct {
-	Mesh     *SkinMesh
-	Texture  *Texture
-	AlphaRef float32
-	Unlit    bool
-	TwoSided bool
-	First    int
-	Count    int
+	Mesh       *SkinMesh
+	Texture    *Texture
+	Reflection *Texture
+	AlphaRef   float32
+	Unlit      bool
+	TwoSided   bool
+	First      int
+	Count      int
 }
 
 func (s *Scene3D) CrowdSkinInstance(world M4) SkinInstance {
@@ -58,6 +59,7 @@ func (k *Skinner) DrawCrowd(s *Scene3D, groups []SkinGroup, instances []SkinInst
 	for _, group := range groups {
 		gl.Uniform1i(k.uCrowdBase, int32(group.First+1))
 		gl.Uniform1f(k.uRef, group.AlphaRef)
+		k.bindSkinReflection(group.Reflection)
 		light := ambient
 		if group.Unlit {
 			light = 1

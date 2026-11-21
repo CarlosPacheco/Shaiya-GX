@@ -161,7 +161,7 @@ func (b *CharacterBatch) add(s *render.Scene3D, c *Character, instance render.Sk
 		if part.cut {
 			ref = .5
 		}
-		group := render.SkinGroup{Mesh: part.mesh, Texture: part.tex, AlphaRef: ref, Unlit: part.unlit, TwoSided: part.twoSided}
+		group := render.SkinGroup{Mesh: part.mesh, Texture: part.tex, Reflection: part.reflection, AlphaRef: ref, Unlit: part.unlit, TwoSided: part.twoSided}
 		index, ok := b.keys[group]
 		if !ok {
 			index = len(b.groups)
