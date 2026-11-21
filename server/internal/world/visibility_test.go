@@ -274,3 +274,20 @@ func TestProtectedGMSelfBuffKeepsConfirmationAndExternalImmunity(t *testing.T) {
 		t.Fatal("self provenance allowed a debuff through immunity")
 	}
 }
+
+// bAttackable=false in the original makes monsters ignore the user entirely
+// (CMob::FindTarget and friends), so "/attack on" hides the GM from mob AI too.
+func TestAttackOnMakesMonstersIgnoreTheGM(t *testing.T) {
+	s, _ := gmWireSession(t, db.Character{ID: 990012, MapID: 60078, CurrentHP: 100}, true)
+	s.player = RegisterPlayer(*s.char, nil, true, 0, s.out, nil)
+	t.Cleanup(s.player.Unregister)
+	s.lastGMModeAt = time.Time{}
+	s.setGMAttack(true)
+	if snap := snapshotCombatPlayers([]*ConnectedPlayer{s.player}); len(snap) != 1 || !snap[0].Invisible {
+		t.Fatal("unattackable GM still visible to mob AI")
+	}
+	s.setGMAttack(false)
+	if snap := snapshotCombatPlayers([]*ConnectedPlayer{s.player}); snap[0].Invisible {
+		t.Fatal("attackable GM must be detectable again")
+	}
+}

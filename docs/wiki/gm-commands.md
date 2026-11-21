@@ -20,7 +20,7 @@ Map bounds, collision, gravity, immobilization and death still apply.
 chat handler `0x471c20`; World `CUser::PacketAdminCmdE` packets `0xFA01/0xFA02`
 for `bVisible` and `0xFA05/0xFA06` for `bAttackable`). `/char on` makes your
 character transparent to every non-GM player; `/attack on` makes you
-unattackable: players and monsters cannot target or hit you and active debuffs
+unattackable: players cannot target or hit you, monsters no longer detect you or keep you as a target, and active debuffs
 are cleared. Replies use the original system messages: "Character's transparent
 setting is on/off", "Won't be attacked anymore" and "Will be attacked". Both
 are on at every GM login; turbo is off.
