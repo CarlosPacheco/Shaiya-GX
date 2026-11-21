@@ -120,3 +120,10 @@ func instanceZones(mapID uint16) []uint16 {
 	}
 	return out
 }
+
+// instanceOwnerOf is the owner id (guild, party) an instance was created for.
+func instanceOwnerOf(zone uint16) uint32 {
+	realm.instanceMu.Lock()
+	defer realm.instanceMu.Unlock()
+	return realm.instanceOwner[zone]
+}

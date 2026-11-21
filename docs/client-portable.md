@@ -23,8 +23,8 @@ Start `Server/build/gx_console` on Linux or `Server/build/gx_console.exe` on Win
 then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables.
 
-**Latest binary update: [gx-v0.1.14](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.14).**
-Preserve your server runtime when updating. See the [upgrade guide](releases/gx-v0.1.14-upgrade.md).
+**Latest binary update: [gx-v0.1.15](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.15).**
+Preserve your server runtime when updating. See the [upgrade guide](releases/gx-v0.1.15-upgrade.md).
 GX Studio is in `Client/Studio/`.
 
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
@@ -47,7 +47,7 @@ The executable discovers adjacent data independently of the working directory. F
 Source, build instructions and third-party font sources: https://github.com/Spelunkern/Shaiya-GX
 
 Update GX Server and the client together. Use a complete package containing matching client/server builds and game data; preserve existing server runtime
-databases when upgrading. See the [current patch notes](releases/gx-v0.1.14.md).
+databases when upgrading. See the [current patch notes](releases/gx-v0.1.15.md).
 
 
 ## Optional maintainer packaging

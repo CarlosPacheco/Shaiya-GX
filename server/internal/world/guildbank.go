@@ -102,8 +102,6 @@ func buildGuildBankResult(result, arg uint8) []byte {
 // permitted slot; it sends the 0x0D28 refusal itself.
 func (s *Session) guildBankCheck(g *guild, rank uint8, slot uint8, adminOnly bool) bool {
 	switch {
-	case g.Rank > guildBankRanked:
-		s.send(buildGuildBankResult(guildBankRefused, guildBankRanked), "0x0D28 guild bank refused (rank)")
 	case !adminOnly && rank == guildRankMember:
 		s.send(buildGuildBankResult(guildBankMember9, 8), "0x0D28 guild bank refused (rank 9)")
 	case adminOnly && rank > guildRankAdmin:

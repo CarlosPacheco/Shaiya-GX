@@ -19,6 +19,7 @@ type ActionSlot struct {
 	UV               UV
 	Label            string
 	Count            uint16
+	Level            uint8 // skill level printed over the icon (0 and 100 print nothing)
 	Cooldown         float64
 	Pressed          bool
 	CooldownDuration float64
@@ -290,6 +291,7 @@ func (b *ActionBar) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h
 			u := slot.UV
 			s.Draw(slot.Icon, float32(cx), float32(cy), 32, 32, u.U0, u.V0, u.U1, u.V1, white)
 			slot.Badge.Draw(s, cx, cy, 32, white)
+			DrawSkillLevel(s, f, cx, cy, slot.Level)
 			if slot.Count > 0 {
 				f.DrawOutlined(s, fmt.Sprint(slot.Count), cx+12, cy+15, white)
 			}
@@ -326,4 +328,13 @@ func SkillIcon(icon uint16) (string, UV, bool) {
 	}
 	u, v := float32(index%16)/16, float32(index/16)/16
 	return name, UV{u, v, u + 1.0/16, v + 1.0/16}, true
+}
+
+// DrawSkillLevel is the number 0x4a1810 prints after every skill icon: yellow
+// "%3d" (the format string at 0x6c1020) at (+12,+15), except for level 100 (evolution skills).
+func DrawSkillLevel(s *render.Sprites, f *Font, x, y int, level uint8) {
+	if level == 0 || level == 100 {
+		return
+	}
+	f.DrawOutlined(s, fmt.Sprintf("%3d", level), x+12, y+15, [4]float32{1, 1, 0, 1})
 }

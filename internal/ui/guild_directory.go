@@ -8,13 +8,16 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
-const GuildDirectoryWidth, GuildDirectoryHeight, GuildDirectoryRows = 586, 489, 19
+// Rows follow 0x49a560: first row at +0x6e, 0x1b apart, 12 rows (limit 0x144).
+const GuildDirectoryWidth, GuildDirectoryHeight, GuildDirectoryRows = 586, 489, 12
 
 type GuildDirectory struct {
 	Position                            WindowPosition
 	frame                               *render.Texture
 	close, join, create, leave, disband Button
 	held                                int
+	// NPCName and Subtitle are the two centred titles (+0x86, +0x16 / +0x2f).
+	NPCName, Subtitle string
 }
 
 func NewGuildDirectory(t Textures) (*GuildDirectory, error) {
@@ -50,7 +53,7 @@ func (p *GuildDirectory) Update(in *platform.Input, w, h, count, offset int, can
 	close, join, create, leave, disband = p.close.Update(in), p.join.Update(in), p.create.Update(in), p.leave.Update(in), p.disband.Update(in)
 	row, scroll = -1, max(0, min(offset, max(0, count-GuildDirectoryRows)))
 	hit := -1
-	if in.MouseX >= x+270 && in.MouseX < x+575 && in.MouseY >= y+91 && in.MouseY < y+91+GuildDirectoryRows*18 {
+	if in.MouseX >= x+0x112 && in.MouseX <= x+0x230 && in.MouseY >= y+0x6e && in.MouseY < y+0x6e+GuildDirectoryRows*0x1b {
 		if in.Wheel != 0 {
 			delta := 1
 			if in.Wheel < 0 {
@@ -58,7 +61,9 @@ func (p *GuildDirectory) Update(in *platform.Input, w, h, count, offset int, can
 			}
 			scroll = max(0, min(max(0, count-GuildDirectoryRows), scroll-delta))
 		}
-		hit = (in.MouseY - y - 91) / 18
+		if rel := in.MouseY - y - 0x6e; rel%0x1b <= 0x12 {
+			hit = rel / 0x1b
+		}
 	}
 	if in.Pressed {
 		p.held = hit
@@ -75,30 +80,26 @@ func (p *GuildDirectory) Update(in *platform.Input, w, h, count, offset int, can
 func (p *GuildDirectory) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, h int, entries []proto.GuildInfo, offset int, selected uint32, canJoin, canCreate, canLeave, canDisband bool) {
 	x, y := p.Origin(w, h)
 	s.Draw(p.frame, float32(x), float32(y), GuildDirectoryWidth, GuildDirectoryHeight, 0, 0, 586.0/1024, 489.0/512, white)
+	if p.NPCName != "" {
+		f.Draw(s, p.NPCName, x+0x86-f.Width(p.NPCName)/2, y+0x16, white, 0)
+	}
+	if p.Subtitle != "" {
+		f.Draw(s, p.Subtitle, x+0x86-f.Width(p.Subtitle)/2, y+0x2f, white, 0)
+	}
 	for i := 0; i < GuildDirectoryRows && offset+i < len(entries); i++ {
 		g := entries[offset+i]
-		rowY := y + 93 + i*18
+		rowY := y + 0x6e + i*0x1b
 		if g.ID == selected {
-			s.Draw(blank, float32(x+270), float32(rowY-1), 300, 17, 0, 0, 1, 1, [4]float32{.28, .23, .15, .55})
+			s.Draw(blank, float32(x+0x112), float32(rowY), 0x11f, 0x13, 0, 0, 1, 1, [4]float32{.28, .23, .15, .55})
 		}
-		f.Draw(s, g.Name, x+275, rowY, white, 125)
-		f.Draw(s, g.Master, x+405, rowY, white, 104)
-		f.Draw(s, fmt.Sprint(g.Points), x+512, rowY, white, 55)
-	}
-	for _, g := range entries {
-		if g.ID != selected {
-			continue
+		rank, points := " - ", " - "
+		if g.Rank <= 30 {
+			rank, points = fmt.Sprintf("%3d", g.Rank), fmt.Sprint(g.Points)
 		}
-		f.Draw(s, g.Name, x+20, y+92, white, 210)
-		f.Draw(s, "Master: "+g.Master, x+20, y+114, white, 210)
-		f.Draw(s, fmt.Sprintf("Rank: %d  Points: %d", g.Rank, g.Points), x+20, y+128, white, 210)
-		for i, line := range wrapLines(f, g.Remark, 205) {
-			if i >= 6 {
-				break
-			}
-			f.Draw(s, line, x+20, y+145+i*14, white, 205)
-		}
-		break
+		f.Draw(s, rank, x+0x112, rowY, white, 0)
+		f.Draw(s, g.Name, x+0x131, rowY, white, 0)
+		f.Draw(s, points, x+0x19f, rowY, white, 0)
+		f.Draw(s, g.Master, x+0x1e0, rowY, white, 0)
 	}
 	p.close.OriginX, p.close.OriginY = x, y
 	p.join.OriginX, p.join.OriginY, p.join.Disabled = x, y, !canJoin

@@ -16,6 +16,9 @@ type requestedSkillPresentation struct {
 	started float64
 }
 
+// predictInstantSkillPose is off: see requestedSkillPresentation.
+const predictInstantSkillPose = false
+
 func (a *App) requestedSkillPresentation(packet []byte) {
 	if a.wv == nil || a.state.Self.Mounted || len(packet) != 7 || proto.Op(packet) != proto.SkillUse && proto.Op(packet) != proto.SkillUseNoTarget {
 		return
@@ -35,9 +38,10 @@ func (a *App) requestedSkillPresentation(packet []byte) {
 	if actor == nil {
 		return
 	}
-	// Timed casts start on the server's cast-start packet. Instant skills
-	// can begin their release animation as soon as the request is sent.
-	if d.ReadyTime > 0 || k.ID == 56 {
+	// The original starts the animation, cast and impact effects together when
+	// the server's result arrives (0x57bdc0); predicting the pose at send time
+	// left the effects trailing it. Timed casts start on the cast-start packet.
+	if d.ReadyTime > 0 || k.ID == 56 || !predictInstantSkillPose {
 		return
 	}
 	p := &requestedSkillPresentation{key: key, target: target, actor: actor, started: a.clock}

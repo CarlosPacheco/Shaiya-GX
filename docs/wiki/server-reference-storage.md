@@ -648,24 +648,24 @@ type GuildNpcRow struct {
 | [`mirrorGuildTx`](../../server/internal/db/guilds.go#L24)<br>`func mirrorGuildTx(c context.Context, tx *sql.Tx, guildID uint32) error` | mirrorGuild is what Trig_Guilds_Insert/Update/Delete did through the linked server PS_USERDB01 (disabled, see tools/sqlserver.py prepare): PS_UserData.dbo.CreatedGuilds holds a copy of the Guilds row for server 1. The EP4.5 CreatedGuilds also has a NOT NULL UpdateDate the triggers never set; it gets the time of the change. |
 | [`guildOfMember`](../../server/internal/db/guilds.go#L35)<br>`func guildOfMember(charID uint32) uint32` | guildOfMember is the live guild of a character, for the mirror after procedures keyed by CharID. |
 | [`GuildRow`](../../server/internal/db/guilds.go#L48)<br>`type GuildRow` | GuildRow is one usp_Read_Guild2_R row. |
-| [`GuildCharRow`](../../server/internal/db/guilds.go#L64)<br>`type GuildCharRow` | GuildCharRow is one usp_Read_GuildChar_R row. |
-| [`LoadGuilds`](../../server/internal/db/guilds.go#L74)<br>`func LoadGuilds() ([]GuildRow, []GuildCharRow, error)` | LoadGuilds reads every live guild and its members. |
-| [`NextGuildID`](../../server/internal/db/guilds.go#L123)<br>`func NextGuildID() (uint32, error)` | MaxGuildID is usp_Read_MaxGuildID_R: the next free guild id. |
-| [`execStatus`](../../server/internal/db/guilds.go#L135)<br>`func execStatus(query string, args ...any) (int, error)` | See the source definition and the subsystem ownership contract. |
-| [`CreateGuild`](../../server/internal/db/guilds.go#L151)<br>`func CreateGuild(id uint32, name, masterUserID string, masterCharID uint32, masterName string, country uint8, remark string) error` | CreateGuild is usp_Create_Guild2_E (0 on success). |
-| [`AddGuildChar`](../../server/internal/db/guilds.go#L179)<br>`func AddGuildChar(guildID, charID uint32, rank uint8) error` | AddGuildChar is usp_Create_GuildChar_E (rank 0 for an applicant). |
-| [`SaveGuildCharRank`](../../server/internal/db/guilds.go#L207)<br>`func SaveGuildCharRank(charID uint32, rank uint8) error` | SaveGuildCharRank is usp_Save_GuildChar_E (rank 1 also moves the master). |
-| [`DeleteGuildChar`](../../server/internal/db/guilds.go#L234)<br>`func DeleteGuildChar(guildID, charID uint32) error` | DeleteGuildChar is usp_Delete_GuildChar_E. |
-| [`DeleteLastGuildChar`](../../server/internal/db/guilds.go#L235)<br>`func DeleteLastGuildChar(guildID, charID uint32) error` | See the source definition and the subsystem ownership contract. |
-| [`deleteGuildChar`](../../server/internal/db/guilds.go#L236)<br>`func deleteGuildChar(guildID, charID uint32, disband bool) error` | See the source definition and the subsystem ownership contract. |
-| [`DeleteGuild`](../../server/internal/db/guilds.go#L272)<br>`func DeleteGuild(guildID uint32) error` | DeleteGuild is usp_Delete_Guild_E. |
-| [`SaveGuildRemark`](../../server/internal/db/guilds.go#L292)<br>`func SaveGuildRemark(guildID uint32, remark string) error` | SaveGuildRemark stores the notice in GuildDetails (usp_Save_GuildRemark_E's update or insert). |
-| [`SaveGuildRanking`](../../server/internal/db/guilds.go#L298)<br>`func SaveGuildRanking(g GuildRow) error` | SaveGuildRanking is usp_Save_GuildInfo_E2 (the DB agent's 0x0B16 batch): guild points, rank and the house fields, then the CreatedGuilds copy. |
-| [`ReadGodBless`](../../server/internal/db/guilds.go#L321)<br>`func ReadGodBless() (light, dark uint32, err error)` | ReadGodBless is usp_Read_GodBless_R (ps_dbAgent CWorld::DBKillCountLoad): the light and dark country kill counts, 0 without a row. |
-| [`ErrNoWorldInfo`](../../server/internal/db/guilds.go#L341)<br>`var ErrNoWorldInfo` | ErrNoWorldInfo is usp_Save_GodBless_E's -1: PS_GameData.dbo.WorldInfo has no row yet (the world calendar creates it). |
-| [`SaveGodBless`](../../server/internal/db/guilds.go#L345)<br>`func SaveGodBless(light, dark uint32) error` | SaveGodBless is usp_Save_GodBless_E (CWorld::DBKillCountSave): 1 saved, -1 without a WorldInfo row. |
-| [`SaveWorldInfo`](../../server/internal/db/guilds.go#L355)<br>`func SaveWorldInfo(lastWorldTime int32) error` | SaveWorldInfo is usp_Save_WorldInfo_E (the DB agent's world calendar save), which creates the WorldInfo row when missing. |
-| [`ReadWorldInfo`](../../server/internal/db/guilds.go#L381)<br>`func ReadWorldInfo() (int32, error)` | ReadWorldInfo is usp_Read_WorldInfo_E: the packed world calendar base (0 without a row). |
+| [`GuildCharRow`](../../server/internal/db/guilds.go#L67)<br>`type GuildCharRow` | GuildCharRow is one usp_Read_GuildChar_R row. |
+| [`LoadGuilds`](../../server/internal/db/guilds.go#L77)<br>`func LoadGuilds() ([]GuildRow, []GuildCharRow, error)` | LoadGuilds reads every live guild and its members. |
+| [`NextGuildID`](../../server/internal/db/guilds.go#L127)<br>`func NextGuildID() (uint32, error)` | MaxGuildID is usp_Read_MaxGuildID_R: the next free guild id. |
+| [`execStatus`](../../server/internal/db/guilds.go#L139)<br>`func execStatus(query string, args ...any) (int, error)` | See the source definition and the subsystem ownership contract. |
+| [`CreateGuild`](../../server/internal/db/guilds.go#L155)<br>`func CreateGuild(id uint32, name, masterUserID string, masterCharID uint32, masterName string, country uint8, remark string) error` | CreateGuild is usp_Create_Guild2_E (0 on success). |
+| [`AddGuildChar`](../../server/internal/db/guilds.go#L183)<br>`func AddGuildChar(guildID, charID uint32, rank uint8) error` | AddGuildChar is usp_Create_GuildChar_E (rank 0 for an applicant). |
+| [`SaveGuildCharRank`](../../server/internal/db/guilds.go#L211)<br>`func SaveGuildCharRank(charID uint32, rank uint8) error` | SaveGuildCharRank is usp_Save_GuildChar_E (rank 1 also moves the master). |
+| [`DeleteGuildChar`](../../server/internal/db/guilds.go#L238)<br>`func DeleteGuildChar(guildID, charID uint32) error` | DeleteGuildChar is usp_Delete_GuildChar_E. |
+| [`DeleteLastGuildChar`](../../server/internal/db/guilds.go#L239)<br>`func DeleteLastGuildChar(guildID, charID uint32) error` | See the source definition and the subsystem ownership contract. |
+| [`deleteGuildChar`](../../server/internal/db/guilds.go#L240)<br>`func deleteGuildChar(guildID, charID uint32, disband bool) error` | See the source definition and the subsystem ownership contract. |
+| [`DeleteGuild`](../../server/internal/db/guilds.go#L276)<br>`func DeleteGuild(guildID uint32) error` | DeleteGuild is usp_Delete_Guild_E. |
+| [`SaveGuildRemark`](../../server/internal/db/guilds.go#L296)<br>`func SaveGuildRemark(guildID uint32, remark string) error` | SaveGuildRemark stores the notice in GuildDetails (usp_Save_GuildRemark_E's update or insert). |
+| [`SaveGuildRanking`](../../server/internal/db/guilds.go#L302)<br>`func SaveGuildRanking(g GuildRow) error` | SaveGuildRanking is usp_Save_GuildInfo_E2 (the DB agent's 0x0B16 batch): guild points, rank and the house fields, then the CreatedGuilds copy. |
+| [`ReadGodBless`](../../server/internal/db/guilds.go#L325)<br>`func ReadGodBless() (light, dark uint32, err error)` | ReadGodBless is usp_Read_GodBless_R (ps_dbAgent CWorld::DBKillCountLoad): the light and dark country kill counts, 0 without a row. |
+| [`ErrNoWorldInfo`](../../server/internal/db/guilds.go#L345)<br>`var ErrNoWorldInfo` | ErrNoWorldInfo is usp_Save_GodBless_E's -1: PS_GameData.dbo.WorldInfo has no row yet (the world calendar creates it). |
+| [`SaveGodBless`](../../server/internal/db/guilds.go#L349)<br>`func SaveGodBless(light, dark uint32) error` | SaveGodBless is usp_Save_GodBless_E (CWorld::DBKillCountSave): 1 saved, -1 without a WorldInfo row. |
+| [`SaveWorldInfo`](../../server/internal/db/guilds.go#L359)<br>`func SaveWorldInfo(lastWorldTime int32) error` | SaveWorldInfo is usp_Save_WorldInfo_E (the DB agent's world calendar save), which creates the WorldInfo row when missing. |
+| [`ReadWorldInfo`](../../server/internal/db/guilds.go#L385)<br>`func ReadWorldInfo() (int32, error)` | ReadWorldInfo is usp_Read_WorldInfo_E: the packed world calendar base (0 without a row). |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -683,6 +683,9 @@ type GuildRow struct {
 	UseHouse   uint8
 	EtinReturn uint32
 	KeepEtin   uint32
+	// MasterAdmin: the guild master's account is a GM (test guilds keep an
+	// always-active house).
+	MasterAdmin bool
 }
 ```
 

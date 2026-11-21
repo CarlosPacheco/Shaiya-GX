@@ -36,6 +36,10 @@ type GuildPanel struct {
 	ClassNames              [6]string
 	nav                     *render.Texture
 	hoverRow                int
+	// GradeOpen is the rank-permission extension; it opens with the window and
+	// its own X (top right of the extension) closes only that part.
+	GradeOpen  bool
+	gradeClose Button
 }
 
 func NewGuildPanel(t Textures) (*GuildPanel, error) {
@@ -55,6 +59,8 @@ func NewGuildPanel(t Textures) (*GuildPanel, error) {
 		p.waitHeaders[i] = ld.get(name)
 	}
 	p.close = nativeClose(ld.get("talk1_close_button.png"), 307, 8)
+	p.gradeClose = nativeClose(ld.get("talk1_close_button.png"), 0x2f0-30, 8)
+	p.GradeOpen = true
 	buttons := ld.get("guild_button1.png")
 	for i := range p.actions {
 		b := &p.actions[i]
@@ -112,6 +118,12 @@ func (p *GuildPanel) Update(in *platform.Input, w, h, count, offset int, waiting
 	}
 	p.close.OriginX, p.close.OriginY = x, y
 	close = p.close.Update(in)
+	if p.GradeOpen && !waiting {
+		p.gradeClose.OriginX, p.gradeClose.OriginY = x, y
+		if p.gradeClose.Update(in) {
+			p.GradeOpen = false
+		}
+	}
 	row, scroll, action = -1, max(0, min(offset, max(0, count-GuildRows))), -1
 	buttonSet := p.actions[:]
 	toggleButton := &p.toggle
@@ -159,7 +171,7 @@ func (p *GuildPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, 
 		frame = p.waitFrame
 	}
 	s.Draw(frame, float32(x), float32(y), 337, 512, 0, 0, 337.0/512, 1, white)
-	if !waiting && p.gradeInfo != nil {
+	if !waiting && p.GradeOpen && p.gradeInfo != nil {
 		// Rank permissions table attached to the roster page (0x4ef9d0: x+0x14a).
 		s.Draw(p.gradeInfo, float32(x+GuildGradeInfoX), float32(y), 512, 512, 0, 0, 1, 1, white)
 	}
@@ -220,6 +232,10 @@ func (p *GuildPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, 
 	p.scroll.Draw(s, x, y, len(members), GuildRows, offset)
 	p.close.OriginX, p.close.OriginY = x, y
 	p.close.Draw(s)
+	if p.GradeOpen && !waiting {
+		p.gradeClose.OriginX, p.gradeClose.OriginY = x, y
+		p.gradeClose.Draw(s)
+	}
 	buttonSet := p.actions[:]
 	toggleButton := &p.toggle
 	if waiting {

@@ -58,6 +58,17 @@ func (a *App) updatePartyInvite(in *platform.Input, w, h int) bool {
 			a.partyMessage.Visible = false
 			return false
 		}
+		if a.clientSettings().RejectParty {
+			// Reject Party (0x572ce0, 0x573160): decline at once, no prompt or sound.
+			packet := proto.PartyAnswerPacket(false, a.state.SelfID)
+			if p.RaidInvite {
+				packet = proto.RaidAnswerPacket(false, a.state.SelfID)
+			}
+			if err := a.world.Send(packet); err != nil {
+				a.backToLogin("Unable to answer party invitation.")
+			}
+			return false
+		}
 		name := p.InviteName
 		if name == "" {
 			name = fmt.Sprintf("Player %d", p.InviteID)

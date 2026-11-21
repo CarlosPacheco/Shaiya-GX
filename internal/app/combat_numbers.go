@@ -115,8 +115,8 @@ func combatGlyphRect(point render.V3, width, height float32, view, projection re
 
 func (a *App) drawCombatNumbers(w, h int) {
 	a.expireCombatNumbers()
-	if len(a.combatNumbers) == 0 || a.scene3d == nil {
-		return
+	if len(a.combatNumbers) == 0 || a.scene3d == nil || a.clientSettings().HideDamage {
+		return // Hide Damage (0x44ae0e): the floating numbers are not drawn
 	}
 	atlas, err := a.Interface("count.png")
 	if err != nil || atlas == nil || atlas.W != 512 || atlas.H != 32 {

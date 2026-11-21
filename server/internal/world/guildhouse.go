@@ -37,7 +37,6 @@ const (
 	guildNpcNoEtin    = 1
 	guildNpcBadLevel  = 2
 	guildNpcRefused   = 3
-	guildNpcRankLimit = 4
 )
 
 // Results of 0x0D34.
@@ -64,15 +63,14 @@ type guildServiceTable struct {
 type guildHouseSettings struct {
 	CreateMoney, BuyMoney, DefaultKeep uint32
 	Services                           [guildNpcServices]guildServiceTable // gate, weapon, defense, general, smith, potion, bank
-	ShopRate, PotionRate               [4]float64                          // g_GuildNpcShopDecreRate, g_GuildNpcPotionShopDecreRate
-	GateRate                           [6]float64                          // g_GuildNpcGateKeeperDecreRate (MoveDecreRate)
-	RepairRate                         [6]float64                          // g_GuildNpcSmithRepairDecreRate
-	MixRate                            [6]float64                          // g_GuildNpcSmithRapiceMixDecreRate
-	MixPercent                         [6]int32                            // g_GuildNpcSmithRapiceMixPercentRate
-	BankSlots                          [6]uint16                           // g_GuildNpcBankMaxSlot (PermitSlot)
-	// NpcIDs is g_GuildNpcIdShopOnLevel: [country][gate, weapon, defense,
-	// general][level 0-3][3 NPC type ids].
-	NpcIDs [2][4][4][3]uint16
+	// ShopFactor is the price factor of a shop type (1 weapon, 2 defense, 3
+	// general, 4 potion) by the guild's level of that service (0-3).
+	ShopFactor [5][4]float64
+	GateRate   [6]float64 // teleport fee factor by gatekeeper level
+	RepairRate [6]float64 // smith repair factor by level
+	MixRate    [6]float64 // gem link cost factor by smith level
+	MixPercent [6]int32   // gem link success bonus by smith level
+	BankSlots  [6]uint16  // usable warehouse slots by bank level
 }
 
 func defaultGuildHouse() guildHouseSettings {
@@ -87,16 +85,11 @@ func defaultGuildHouse() guildHouseSettings {
 			{Type: guildNpcPotion, Cost: [7]uint16{0, 2000, 5000, 10000}, Keep: [6]uint16{0, 50, 200, 500}},
 			{Type: guildNpcBank, Cost: [7]uint16{0, 200, 500, 1000, 2000, 5000}, Keep: [6]uint16{0, 100, 200, 500, 800, 1000}},
 		},
-		ShopRate:   [4]float64{0.99, 0.98, 0.95, 0.9},
-		PotionRate: [4]float64{0.9, 0.8, 0.7, 0.6},
+		ShopFactor: [5][4]float64{{}, {0.99, 0.98, 0.95, 0.9}, {0.99, 0.98, 0.95, 0.9}, {0.99, 0.98, 0.95, 0.9}, {0.9, 0.8, 0.7, 0.6}},
 		RepairRate: [6]float64{0.99, 0.95, 0.95, 0.9, 0.9, 0.9},
 		MixRate:    [6]float64{1, 1, 0.95, 0.95, 0.95, 0.9},
 		MixPercent: [6]int32{0, 0, 0, 0, 1, 2},
 		BankSlots:  [6]uint16{40, 80, 120, 160, 200, 240},
-		NpcIDs: [2][4][4][3]uint16{
-			{{{}, {37}, {38}, {39}}, {{}, {196}, {197}, {198}}, {{}, {200}, {201}, {202}}, {{}, {200}, {201}, {202}}},
-			{{{}, {41}, {42}, {43}}, {{}, {207}, {208}, {209}}, {{}, {211}, {212}, {213}}, {{}, {200}, {201}, {202}}},
-		},
 	}
 }
 
@@ -125,103 +118,93 @@ func iniInt(token string) int64 {
 	return n
 }
 
-// fillU16 stores up to len(dst) tokens from the start of dst; missing tokens
-// keep their value.
-func fillU16(dst []uint16, value string) {
-	for i, t := range iniTokens(value) {
-		if i >= len(dst) {
-			return
-		}
-		dst[i] = uint16(iniInt(t))
-	}
-}
-
-func fillF64(dst []float64, value string) {
-	for i, t := range iniTokens(value) {
-		if i >= len(dst) {
-			return
-		}
-		if v, err := strconv.ParseFloat(t, 64); err == nil {
-			dst[i] = v
-		} else {
-			dst[i] = 0
-		}
-	}
-}
-
-func fillI32(dst []int32, value string) {
-	for i, t := range iniTokens(value) {
-		if i >= len(dst) {
-			return
-		}
-		dst[i] = int32(iniInt(t))
-	}
-}
-
-// parseGuildHouse applies GuildHouse.ini over the executable defaults. The
-// original runs GetPrivateProfileString for each key and keeps the default
-// when it is absent.
+// parseGuildHouse applies GuildHouse.ini over the built-in defaults. Missing
+// sections, levels or fields keep their default. Each service section lists
+// its levels as `LevelN = Field value, Field value`; see the file itself.
 func parseGuildHouse(ini iniFile) guildHouseSettings {
 	h := defaultGuildHouse()
-	get := func(section, key string) string { return ini[section][key] }
-	if v := get("DEFAULTSET", "GUILDCREATEMONEY"); v != "" {
-		if n, err := strconv.ParseUint(strings.TrimSpace(v), 10, 32); err == nil {
-			h.CreateMoney = uint32(n)
-		}
+	number := func(v string) (float64, bool) {
+		n, err := strconv.ParseFloat(strings.TrimSpace(v), 64)
+		return n, err == nil
 	}
-	if v := get("DEFAULTSET", "HOUSEBUYMONEY"); v != "" {
-		if n := iniInt(v); n > 0 {
-			h.BuyMoney = uint32(n)
-		}
+	if n, ok := number(ini["HOUSE"]["CREATEGUILDCOST"]); ok && n >= 0 && n <= math.MaxUint32 {
+		h.CreateMoney = uint32(n)
 	}
-	if v := get("DEFAULTSET", "HOUSEKEEPETIN"); v != "" {
-		h.DefaultKeep = uint32(iniInt(v))
+	if n, ok := number(ini["HOUSE"]["HOUSECOST"]); ok && n > 0 && n <= math.MaxUint32 {
+		h.BuyMoney = uint32(n)
 	}
-	table := func(service int, section string, costCount, keepCount int) {
-		if v := get(section, "UPGRADEETIN"); v != "" {
-			fillU16(h.Services[service].Cost[1:1+costCount], v)
-		}
-		if v := get(section, "KEEPETIN"); v != "" && keepCount > 0 {
-			fillU16(h.Services[service].Keep[1:1+keepCount], v)
-		}
+	if n, ok := number(ini["HOUSE"]["BASEUPKEEP"]); ok && n >= 0 && n <= math.MaxUint32 {
+		h.DefaultKeep = uint32(n)
 	}
-	table(0, "GATEKEEPER", 3, 3)
-	table(1, "SHOPWEAPON", 3, 0)
-	table(2, "SHOPDEFEN", 3, 0)
-	table(3, "GENERAL", 3, 0)
-	table(4, "SMITH", 5, 5)
-	table(5, "SHOPPOSION", 3, 3)
-	table(6, "BANK", 5, 5)
-	if v := get("GATEKEEPER", "MOVEDECRERATE"); v != "" {
-		fillF64(h.GateRate[:], v)
-	}
-	if v := get("SHOPDEFAULT", "BUYDECRERATE"); v != "" {
-		fillF64(h.ShopRate[:], v)
-	}
-	if v := get("SHOPDEFAULT", "BUYPOTIONDECRERATE"); v != "" {
-		fillF64(h.PotionRate[:], v)
-	}
-	if v := get("BANK", "PERMITSLOT"); v != "" {
-		fillU16(h.BankSlots[:], v)
-	}
-	if v := get("SMITH", "REPAIRDECRERATE"); v != "" {
-		fillF64(h.RepairRate[:], v)
-	}
-	if v := get("SMITH", "RAPICEMIXDECRERATE"); v != "" {
-		fillF64(h.MixRate[:], v)
-	}
-	if v := get("SMITH", "RAPICEMIXPERCENTRATE"); v != "" {
-		fillI32(h.MixPercent[:], v)
-	}
-	for country, section := range [2]string{"NPCLEVEL_LIGHT", "NPCLEVEL_DARK"} {
-		for kind, name := range [4]string{"GATEKEEPER", "SHOPWEAPON", "SHOPDEFEN", "SHOPGENERAL"} {
-			for level := 1; level <= 3; level++ {
-				if v := get(section, name+strconv.Itoa(level)); v != "" {
-					h.NpcIDs[country][kind][level][0] = uint16(iniInt(v))
+	// levels reads "Level0".."Level5" of a section as field -> value maps.
+	levels := func(section string, count int) []map[string]float64 {
+		out := make([]map[string]float64, count)
+		for level := range out {
+			value, found := ini[section]["LEVEL"+strconv.Itoa(level)]
+			if !found {
+				continue
+			}
+			out[level] = map[string]float64{}
+			for _, part := range strings.Split(value, ",") {
+				fields := strings.Fields(part)
+				if len(fields) != 2 {
+					continue
+				}
+				if n, ok := number(fields[1]); ok {
+					out[level][strings.ToUpper(fields[0])] = n
 				}
 			}
 		}
+		return out
 	}
+	service := func(index int, section string, count int, apply func(level int, row map[string]float64)) {
+		for level, row := range levels(section, count) {
+			if row == nil {
+				continue
+			}
+			if v, ok := row["UPGRADE"]; ok && level >= 1 {
+				h.Services[index].Cost[level] = uint16(max(v, 0))
+			}
+			if v, ok := row["UPKEEP"]; ok && level >= 1 && level < len(h.Services[index].Keep) {
+				h.Services[index].Keep[level] = uint16(max(v, 0))
+			}
+			if apply != nil {
+				apply(level, row)
+			}
+		}
+	}
+	shop := func(index int, section string, shopType int) {
+		service(index, section, 4, func(level int, row map[string]float64) {
+			if v, ok := row["PRICE"]; ok {
+				h.ShopFactor[shopType][level] = v
+			}
+		})
+	}
+	service(0, "PORTAL", 4, func(level int, row map[string]float64) {
+		if v, ok := row["FEE"]; ok {
+			h.GateRate[level] = v
+		}
+	})
+	shop(1, "WEAPONSHOP", 1)
+	shop(2, "ARMORSHOP", 2)
+	shop(3, "GENERALSHOP", 3)
+	shop(5, "POTIONSHOP", 4)
+	service(4, "BLACKSMITH", 6, func(level int, row map[string]float64) {
+		if v, ok := row["REPAIR"]; ok {
+			h.RepairRate[level] = v
+		}
+		if v, ok := row["LINK"]; ok {
+			h.MixRate[level] = v
+		}
+		if v, ok := row["LINKBONUS"]; ok {
+			h.MixPercent[level] = int32(v)
+		}
+	})
+	service(6, "WAREHOUSE", 6, func(level int, row map[string]float64) {
+		if v, ok := row["SLOTS"]; ok {
+			h.BankSlots[level] = uint16(max(v, 0))
+		}
+	})
 	return h
 }
 
@@ -254,9 +237,18 @@ func (g *guild) npcLevel(npcType uint16) uint16 {
 	return 0
 }
 
-// houseEnabled is CGuild::EnableGuildHouse: ranked, active and bought.
+// houseEnabled is CGuild::EnableGuildHouse without the ranking condition: the
+// house is active and bought.
 func (g *guild) houseEnabled() bool {
-	return g.Rank < 31 && g.UseHouse == 1 && g.BuyHouse != 0
+	return g.UseHouse == 1 && g.BuyHouse != 0
+}
+
+// forceGMHouse keeps a GM-founded guild's house open:
+// bought, active and free of upkeep.
+func (g *guild) forceGMHouse() {
+	if g.gmHouse {
+		g.BuyHouse, g.UseHouse = 1, 1
+	}
 }
 
 // calculateKeepEtin is CGuild::CalculateKeepEtin: the default plus the upkeep
@@ -335,15 +327,7 @@ func (s *Session) guildNpcUpgrade(g *guild, npcType uint16, level uint8) {
 			return
 		}
 	case guildNpcSmith:
-		if g.Rank > 14 {
-			refuse(guildNpcRankLimit)
-			return
-		}
 	case guildNpcPotion:
-		if g.Rank > 6 {
-			refuse(guildNpcRankLimit)
-			return
-		}
 		if level > 3 {
 			refuse(guildNpcRefused)
 			return
@@ -408,6 +392,9 @@ func (s *Session) guildNpcUpgrade(g *guild, npcType uint16, level uint8) {
 	g.npcs, g.KeepEtin, g.Etin = next.npcs, next.KeepEtin, next.Etin
 	g.send(buildGuildNpcResult(guildNpcOK, npcType, level, uint8(slot)), "0x0D25 guild NPC upgraded", nil)
 	s.send(guildID32(packet.GuildEtin, g.Etin), "0x0D23 guild etin")
+	if f := g.houseStatusPacket(); f != nil {
+		g.send(f, "0x0D33 guild house bonuses", nil)
+	}
 }
 
 func buildGuildHouseBuy(result uint8, money uint32) []byte {
@@ -443,6 +430,9 @@ func (s *Session) guildHouseBuy(g *guild, rank uint8) {
 	})
 	if committed {
 		g.BuyHouse, g.KeepEtin = next.BuyHouse, next.KeepEtin
+		if f := g.houseStatusPacket(); f != nil {
+			g.send(f, "0x0D33 guild house owned", nil)
+		}
 	}
 }
 
@@ -515,6 +505,10 @@ func (s *Session) guildDonate(g *guild) {
 // ranked guild: below the upkeep the house is suspended (UseHouse 2),
 // otherwise the upkeep is paid from the etin. Called with guildMu held.
 func (g *guild) settleGuildHouse() {
+	if g.gmHouse {
+		g.forceGMHouse()
+		return
+	}
 	if g.BuyHouse != 1 {
 		return
 	}
@@ -538,72 +532,23 @@ func (s *Session) houseNpcRefusal(result, detail uint8) {
 	s.send(buildGuildBankResult(result, detail), "0x0D28 guild house service refused")
 }
 
-// houseNpcColumn finds a NPC type id in the shop table of its kind and
-// returns the level that unlocks it (0 when not listed above from).
-func houseNpcAbove(country int32, kind int, from int, npcTypeID uint16) (level uint8, found bool) {
-	if country > 1 {
-		country = 1
+// shopBuyRate is the price factor of a shop type (1 weapon, 2 defense, 3
+// general, 4 potion) at the guild's level of that service, or the refusal
+// result and detail. Ranking no longer restricts any service, and NPC ids
+// no longer matter: the discount belongs to the kind of shop.
+func (g *guild) shopBuyRate(shopType uint8) (rate float64, result, detail uint8) {
+	if shopType < 1 || shopType > 4 {
+		return 1, 0, 0
 	}
-	for next := from; next <= 3; next++ {
-		for _, id := range guildHouse.NpcIDs[country][kind][next] {
-			if id == npcTypeID {
-				return uint8(next), true
-			}
-		}
-	}
-	return 0, false
-}
-
-// shopBuyRate is CGuild::GetGuildHouseShopBuyRate: the price factor for a
-// shop of the given type (1 weapon, 2 defense, 3 general, 4 potion), or the
-// refusal result and detail (1 rank limit, 2 NPC level above the guild's).
-func (g *guild) shopBuyRate(npcTypeID uint16, shopType uint8) (rate float64, result, detail uint8) {
-	level := g.npcLevel(uint16(shopType)<<8 | 1)
-	if level > 3 {
-		level = 3
-	}
-	rate = guildHouse.ShopRate[level]
-	if shopType == 4 {
-		rate = guildHouse.PotionRate[level]
-	}
-	switch shopType {
-	case 4:
-		if g.Rank > 6 {
-			return rate, 1, 6
-		}
-		return rate, 0, 0
-	case 3:
-		if g.Rank > 30 {
-			return rate, 1, 30
-		}
-	case 1, 2:
-	default:
-		return rate, 0, 0
-	}
-	if level == 3 {
-		return rate, 0, 0
-	}
-	if next, ok := houseNpcAbove(int32(g.Country), int(shopType), int(level)+1, npcTypeID); ok {
-		return rate, 2, next
-	}
+	level := min(g.npcLevel(uint16(shopType)<<8|1), 3)
+	rate = guildHouse.ShopFactor[shopType][level]
 	return rate, 0, 0
 }
 
-// gateRate is CGuild::GetGuildHouseUseGateRate: the fee factor, or the
-// level the gatekeeper NPC needs when it is above the guild's.
-func (g *guild) gateRate(npcTypeID uint16) (rate float64, needLevel uint8, ok bool) {
-	level := g.npcLevel(guildNpcGate)
-	if level > 3 {
-		level = 3
-	}
-	rate = guildHouse.GateRate[level]
-	if level == 3 {
-		return rate, 0, true
-	}
-	if next, found := houseNpcAbove(int32(g.Country), 0, int(level)+1, npcTypeID); found {
-		return rate, next, false
-	}
-	return rate, 0, true
+// gateRate is the teleport fee factor of the guild's gatekeeper level. The
+// upgrades only change this fee; every gatekeeper stays usable.
+func (g *guild) gateRate() float64 {
+	return guildHouse.GateRate[min(g.npcLevel(guildNpcGate), 3)]
 }
 
 // roundHalfAway is the x87 ROUND of the original price products.
@@ -616,12 +561,13 @@ func (g *guild) smithIndex() int { return int(min(g.npcLevel(guildNpcSmith), 5))
 // success bonus (RapiceMixPercentRate, active house only) for the guild
 // smith inside a house map; (1, 0) elsewhere.
 func (s *Session) houseMix() (rate float64, bonus int) {
-	if !s.inGuildHouseZone() || s.player == nil {
+	p := s.operationPlayer()
+	if !s.inGuildHouseZone() || p == nil {
 		return 1, 0
 	}
 	guildMu.Lock()
 	defer guildMu.Unlock()
-	g := s.player.guild.guild
+	g := p.guild.guild
 	if g == nil {
 		return 1, 0
 	}
@@ -631,4 +577,47 @@ func (s *Session) houseMix() (rate float64, bonus int) {
 		bonus = int(guildHouse.MixPercent[i])
 	}
 	return rate, bonus
+}
+
+// houseShopRate resolves the guild's shop factor under guildMu, released on
+// every path. A nil guild means the buyer has none.
+func (s *Session) houseShopRate(shopType uint8) (g *guild, rate float64, result, detail uint8) {
+	p := s.operationPlayer()
+	if p == nil {
+		return nil, 0, 0, 0
+	}
+	guildMu.Lock()
+	defer guildMu.Unlock()
+	if g = p.guild.guild; g == nil {
+		return nil, 0, 0, 0
+	}
+	rate, result, detail = g.shopBuyRate(shopType)
+	return g, rate, result, detail
+}
+
+// houseStatusPacket is the GX-only 0x0D33 notice (the EP5.4 client has no reader
+// for it), sent to a guild's members only while the house is bought: the keep
+// etin (bit 31 marks a GM guild) and, as whole percentages, the discounts the
+// guild's current service levels give. The client shows them in tooltips and
+// greys its Buy House option.
+func (g *guild) houseStatusPacket() []byte {
+	if g.BuyHouse == 0 {
+		return nil
+	}
+	v := max(g.KeepEtin, 1) & 0x7fffffff
+	if g.gmHouse {
+		v |= 1 << 31
+	}
+	off := func(factor float64) uint8 { return uint8(min(100, max(0, houseRound((1-factor)*100)))) }
+	w := packet.New(packet.GuildHouseKeepEtin)
+	w.U32(v)
+	for shop := uint8(1); shop <= 4; shop++ {
+		level := min(g.npcLevel(uint16(shop)<<8|1), 3)
+		w.U8(off(guildHouse.ShopFactor[shop][level]))
+	}
+	w.U8(off(guildHouse.GateRate[min(g.npcLevel(guildNpcGate), 3)]))
+	smith := min(g.npcLevel(guildNpcSmith), 5)
+	w.U8(uint8(min(100, max(0, guildHouse.MixPercent[smith]))))
+	w.U8(off(guildHouse.MixRate[smith]))
+	return w.MustFinish()
 }

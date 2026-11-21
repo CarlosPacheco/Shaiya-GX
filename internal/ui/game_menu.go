@@ -74,11 +74,17 @@ type ClientSettings struct {
 	BannedWords                               bool `json:",omitempty"`
 	Shadows, Water, SkillEffects              bool
 	Antialias                                 int `json:",omitempty"`
+	// "Other Setup" of the User Option page. The original's All Windows and
+	// Re-open UI checkboxes had no effect and were removed.
+	WarningMsg                             bool
+	RejectBattle, RejectParty, RejectTrade bool
+	ShakeScreen, WordBalloon, HideDamage   bool
 }
 
 func DefaultClientSettings() ClientSettings {
 	return ClientSettings{Antialias: AntialiasOff, Glow: 2, Brightness: 2, Details: 2, VisualDistance: 2, ChatRows: [2]int{5, 5}, Music: 1, Effects: 1, Ambient: 1, CharacterSound: true, RiskSensor: true, MouseSensitivity: 3, UseMouse: true,
-		OwnName: true, PlayerNames: true, MonsterNames: true, Shadows: true, Water: true, SkillEffects: true}
+		OwnName: true, PlayerNames: true, MonsterNames: true, Shadows: true, Water: true, SkillEffects: true,
+		WarningMsg: true, ShakeScreen: true, WordBalloon: true}
 }
 
 func (c ClientSettings) Valid() bool {
@@ -308,6 +314,9 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 			m.Settings.UseMouse, m.Settings.InvertY, m.Settings.MouseSensitivity = true, false, 3
 			m.Settings.OwnName, m.Settings.PlayerNames, m.Settings.MonsterNames = true, true, true
 			m.Settings.BannedWords = defaults.BannedWords
+			m.Settings.WarningMsg = defaults.WarningMsg
+			m.Settings.RejectBattle, m.Settings.RejectParty, m.Settings.RejectTrade = defaults.RejectBattle, defaults.RejectParty, defaults.RejectTrade
+			m.Settings.ShakeScreen, m.Settings.WordBalloon, m.Settings.HideDamage = defaults.ShakeScreen, defaults.WordBalloon, defaults.HideDamage
 		case MenuGraphics:
 			m.Settings.Shadows, m.Settings.Water, m.Settings.SkillEffects = true, true, true
 			m.Settings.Glow, m.Settings.Brightness, m.Settings.Details, m.Settings.VisualDistance = 2, 2, 2, 2
@@ -413,7 +422,11 @@ func (m *GameMenu) checks() []menuCheck {
 	case MenuSound:
 		return []menuCheck{{33, 284, &s.CharacterSound}, {33, 314, &s.RiskSensor}}
 	case MenuUser:
-		return []menuCheck{{34, 83, &s.UseMouse}, {137, 83, nil}, {241, 83, &s.InvertY}, {34, 202, &s.OwnName}, {137, 202, &s.PlayerNames}, {34, 228, &s.MonsterNames}, {137, 228, &s.BannedWords}}
+		return []menuCheck{{34, 83, &s.UseMouse}, {137, 83, nil}, {241, 83, &s.InvertY}, {34, 202, &s.OwnName}, {137, 202, &s.PlayerNames}, {34, 228, &s.MonsterNames}, {137, 228, &s.BannedWords},
+			// Other Setup: the original grid without All Windows and Re-open UI.
+			{34, 306, &s.RejectBattle}, {137, 306, &s.RejectParty}, {241, 306, &s.WarningMsg},
+			{34, 332, &s.RejectTrade}, {137, 332, &s.ShakeScreen}, {241, 332, &s.WordBalloon},
+			{34, 358, &s.HideDamage}}
 	case MenuGraphics:
 		return []menuCheck{{35, 404, &s.Shadows}, {156, 404, &s.Water}, {35, 429, &s.HideCloak}, {156, 429, &s.HideHelmet}, {35, 451, &s.SkillEffects}}
 	}

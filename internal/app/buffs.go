@@ -101,10 +101,7 @@ func (a *App) drawBuffs(w, h int) {
 		} else {
 			a.sprites.Draw(a.white, float32(x), float32(y), 32, 32, 0, 0, 1, 1, gray)
 		}
-		if b.buff.Level > 0 && b.buff.Level != 100 {
-			level := fmt.Sprint(b.buff.Level)
-			a.font.Draw(a.sprites, level, x+32-a.font.Width(level), y+18, [4]float32{1, 1, 0, 1}, 32)
-		}
+		ui.DrawSkillLevel(a.sprites, a.font, x, y, b.buff.Level)
 		if buffGroup(b) == 1 {
 			a.sprites.Draw(a.white, float32(x), float32(y), 32, 32, 0, 0, 1, 1, [4]float32{1, 1, 1, debuffFlash(a.clock)})
 		}

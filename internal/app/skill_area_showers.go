@@ -99,6 +99,7 @@ func (a *App) updateSkillAreaShowers(dt float32) {
 					floor := ground(p.pos)
 					p.instance.FinishMeteor()
 					p.grounded = true
+					a.cameraShake(.5) // 0x430a80: every shard that lands renews a half-second shake
 					if len(a.wv.impacts) < 32 {
 						if x := a.loadSkillEffect(shower.file, shower.profile.ImpactSequence); x != nil {
 							m := render.Identity()

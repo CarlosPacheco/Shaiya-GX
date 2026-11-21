@@ -23,6 +23,7 @@ func (s *Session) announceItemSkill(sk *db.SkillDef) {
 	s.lastActionAt = now
 	s.lastSkillID = 0
 	s.pendingCombo = nil
+	s.pendingSkill = nil
 	s.autoAttack = false
 	s.commitAttackStop(now)
 	s.broadcastNear(buildSkillUseResult(packet.SkillUseNoTarget, 0, s.char.ID, s.char.ID, sk.SkillID, sk.SkillLevel, 0, 0, 0), "item skill release", true)

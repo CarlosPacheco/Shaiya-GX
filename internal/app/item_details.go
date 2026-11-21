@@ -223,7 +223,19 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 		add(fmt.Sprintf("%s %d", label(5211, "level"), def.MinLevel), white)
 	}
 
-	if price != "" && price != "Sell: 0 gold" {
+	if rest, ok := strings.CutPrefix(price, "HouseBuy:"); ok {
+		// 0x4a3950: inside a guild house a merchant tooltip shows the reduced
+		// price under SysMsg 8025 (red when unaffordable), then the normal price in grey.
+		parts := strings.Split(rest, "|")
+		if len(parts) == 3 {
+			color := white
+			if parts[0] == "short" {
+				color = [4]float32{1, 0, 0, 1}
+			}
+			add(label(8025, "reduced rate")+" : "+parts[1], color)
+			add(label(5220, "Purchasing price")+" : "+parts[2], [4]float32{150.0 / 255, 150.0 / 255, 150.0 / 255, 1})
+		}
+	} else if price != "" && price != "Sell: 0 gold" {
 		color := white
 		if strings.HasPrefix(price, "Buy:") {
 			price = strings.TrimPrefix(price, "Buy:")

@@ -177,6 +177,7 @@ func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
 		return
 	}
 	target, _ := packet.U32(p[3:])
+	s.pendingSkill = nil
 	s.cancelVehicleCast()
 	if s.ridingVehicle() || s.cast != nil || s.cannotAct() || s.evolutionGrant != 0 {
 		s.log.Printf("GX Server World rejected skill use (mounted, casting, stunned or asleep) character_id=%d", ch.ID)
@@ -200,6 +201,9 @@ func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.Skil
 	s.autoAttack = false
 	if !s.skillActionReady(def, time.Now()) {
 		if p == nil || !s.queueSpinCombo(def, op, p) {
+			if evolution == 0 && s.holdSkillUse(def, op, p, time.Now()) {
+				return
+			}
 			s.sendSkillMessage(k.SkillID, 215)
 		}
 		return

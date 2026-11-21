@@ -15,6 +15,9 @@ type GuildCreateDialog struct {
 	Visible      bool
 	NoticeMode   bool
 	focus        int
+	// Anchor places the founding dialog at (+0xa0,+0x8c) of the guild window, as
+	// 0x49a560 does; unset it is centred.
+	Anchor func(w, h int) (int, int)
 }
 
 func NewGuildCreateDialog(t Textures) (*GuildCreateDialog, error) {
@@ -49,6 +52,9 @@ func (d *GuildCreateDialog) origin(w, h int) (int, int) {
 	}
 	d.ok.OffX, d.ok.OffY = 48, 210
 	d.cancel.OffX, d.cancel.OffY = 143, 210
+	if d.Anchor != nil {
+		return d.Anchor(w, h)
+	}
 	return w/2 - 128, h/2 - 128
 }
 func (d *GuildCreateDialog) Update(in *platform.Input, w, h int) int {
@@ -102,17 +108,23 @@ func (d *GuildCreateDialog) Draw(s *render.Sprites, f *Font, w, h int) {
 		remark += "_"
 	}
 	if !d.NoticeMode {
-		f.Draw(s, name, x+28, y+67, white, 200)
+		f.Draw(s, name, x+0x28, y+0x46, white, 0) // 0x49a560: name at (+0x28,+0x46)
 	}
-	textY := 135
 	if d.NoticeMode {
-		textY = 46
-	}
-	for i, line := range wrapLines(f, remark, 200) {
-		if i >= 4 {
-			break
+		for i, line := range wrapLines(f, remark, 200) {
+			if i >= 4 {
+				break
+			}
+			f.Draw(s, line, x+28, y+46+i*14, white, 200)
 		}
-		f.Draw(s, line, x+28, y+textY+i*14, white, 200)
+	} else {
+		// The message is split once at 200 px: lines at (+0x23,+0x8a) and (+0x23,+0x99).
+		for i, line := range wrapLines(f, remark, 200) {
+			if i >= 2 {
+				break
+			}
+			f.Draw(s, line, x+0x23, y+0x8a+i*0xf, white, 0)
+		}
 	}
 	d.ok.OriginX, d.ok.OriginY = x, y
 	d.cancel.OriginX, d.cancel.OriginY = x, y

@@ -179,6 +179,12 @@ func (a *App) skillBar() [ui.TotalActionSlots]*proto.LearnedSkill {
 
 func (a *App) updateSkills(in *platform.Input, w, h int) bool {
 	v := &a.skills
+	if a.learnConfirm != nil && a.learnConfirm.Visible {
+		if result := a.learnConfirm.Update(in, w, h); result != ui.MessageNone && result == ui.MessageOK {
+			a.sendLearnSkill(a.learnKey)
+		}
+		return true
+	}
 	if a.updateGuildPoints(in) {
 		return true
 	}
@@ -251,15 +257,32 @@ func (a *App) updateSkills(in *platform.Input, w, h int) bool {
 		index := v.offset + action.Learn
 		if index < len(keys) && a.canLearn(keys[index]) {
 			key := keys[index]
-			if err := a.world.Send(proto.LearnSkillPacket(key.ID, key.Level)); err != nil {
-				a.backToLogin("Unable to learn skill.")
+			if a.clientSettings().WarningMsg && a.learnConfirm != nil {
+				// Warning Msg (0x502682): ask SysMsg 10086 before spending the point.
+				a.learnKey = key
+				a.learnConfirm.Open(a.msgOr(10086, "Do you want to spend the point?\n(Unable to restore it once it's been spent.)"), true)
 				return true
 			}
-			v.pending, v.deadline = true, a.clock+10
+			if !a.sendLearnSkill(key) {
+				return true
+			}
 		}
 	}
 
 	return captured
+}
+
+// sendLearnSkill asks the server to learn a skill; false after a failed send.
+func (a *App) sendLearnSkill(key sdata.SkillKey) bool {
+	if a.world == nil {
+		return false
+	}
+	if err := a.world.Send(proto.LearnSkillPacket(key.ID, key.Level)); err != nil {
+		a.backToLogin("Unable to learn skill.")
+		return false
+	}
+	a.skills.pending, a.skills.deadline = true, a.clock+10
+	return true
 }
 
 func (a *App) updateActions(in *platform.Input, w, h int) bool {
@@ -480,6 +503,7 @@ func (a *App) drawSkillIcon(k proto.LearnedSkill, x, y int) {
 			a.sprites.Draw(tex, float32(x), float32(y), 32, 32, uv.U0, uv.V0, uv.U1, uv.V1, white)
 		}
 	}
+	ui.DrawSkillLevel(a.sprites, a.font, x, y, k.Level)
 }
 
 func (a *App) useAction(index int) {
@@ -515,6 +539,7 @@ func (a *App) drawActionBar(w, h int) {
 		slot := &slots[i]
 		slot.Cooldown = max(0, a.skills.cooldowns[k.ID]-a.clock)
 		slot.CooldownDuration = a.skillCooldownTotal(k.ID, d)
+		slot.Level = k.Level
 		slot.Label = fmt.Sprintf("%s Lv%d | MP %s SP %s", d.Name, k.Level, a.skillCostValue(d.MP), a.skillCostValue(d.SP))
 		if file, uv, ok := ui.SkillIcon(d.Icon); ok {
 			slot.Icon, slot.UV = a.assets.Texture("interface/"+file), uv

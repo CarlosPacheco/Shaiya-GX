@@ -5,6 +5,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"log"
 	"math"
+	"math/rand/v2"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
@@ -89,6 +90,8 @@ type worldView struct {
 	mouselook                   bool
 	cameraReady                 bool
 	cameraEye, cameraTarget     render.V3
+	shake                       float32 // seconds of camera shake left (0x54fe20 / 0x54fe70)
+	shakeOffset                 render.V3
 	firstDirection              render.V3
 	attackMoveUntil             float64
 	attackPose                  bool
@@ -674,6 +677,17 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		motion = 4 | proto.MotionFlag80
 	}
 	v.constrainCamera()
+	v.shakeOffset = render.V3{}
+	if v.shake > 0 {
+		// 0x54fe70 offsets the desired camera (one random value in [-0.2, 0.2] per
+		// axis, eye and target together), not the drawn one: the follow step 0x550090
+		// then eases toward it, which is what keeps the shake subtle. Shake Screen off
+		// keeps the timer but adds no offset.
+		v.shake = max(0, v.shake-float32(dt))
+		if a.clientSettings().ShakeScreen {
+			v.shakeOffset = render.V3{rand.Float32()*.4 - .2, rand.Float32()*.4 - .2, rand.Float32()*.4 - .2}
+		}
+	}
 	v.updateRenderedCamera(float32(dt))
 	// A slow frame can run several physics steps at once. Periodic packets
 	// must represent the position at the end of that frame, when they are sent.
@@ -1079,4 +1093,11 @@ func (a *App) SceneReady() bool {
 		return a.wv != nil && a.wv.world != nil && a.wv.world.Ready()
 	}
 	return true
+}
+
+// cameraShake is 0x54fe20: the timer only ever grows to the longer request.
+func (a *App) cameraShake(seconds float32) {
+	if a.wv != nil && seconds > a.wv.shake {
+		a.wv.shake = seconds
+	}
 }

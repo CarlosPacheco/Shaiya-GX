@@ -96,3 +96,27 @@ func TestPreparedReleaseDoesNotChargeASecondAttackInterval(t *testing.T) {
 		t.Fatal("prepared cast charged two intervals")
 	}
 }
+
+func TestEarlySkillRequestIsHeldAndRunsWhenRecoveryEnds(t *testing.T) {
+	s := cadenceSession(t, 0)
+	cast := func(slot uint8) {
+		s.handleUseSkill(packet.SkillUseNoTarget, proto.UseSkillPacket(slot, s.char.ID, true))
+	}
+	interval, _ := skilltiming.Interval(s.speeds().attack)
+	s.lastActionAt = time.Now().Add(-interval + 50*time.Millisecond)
+	hp := s.char.CurrentHP
+	cast(1)
+	cast(2) // the latest early selection replaces the earlier one
+	if s.char.CurrentHP != hp || s.pendingSkill == nil {
+		t.Fatal("early request was not held")
+	}
+	s.processPendingSkill()
+	if s.char.CurrentHP != hp || s.pendingSkill == nil {
+		t.Fatal("held request ran before recovery ended")
+	}
+	s.lastActionAt = time.Now().Add(-interval)
+	s.processPendingSkill()
+	if s.char.CurrentHP <= hp || s.pendingSkill != nil {
+		t.Fatal("held request did not run when recovery ended")
+	}
+}

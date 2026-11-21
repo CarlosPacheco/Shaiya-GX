@@ -13,7 +13,6 @@ type Warehouse struct {
 	frame, bag  *render.Texture
 	tabs        [2]*render.Texture
 	close       Button
-	guildSwitch Button
 	hover, held int
 }
 
@@ -22,26 +21,9 @@ func NewWarehouse(t Textures) (*Warehouse, error) {
 	v := &Warehouse{frame: ld.get("bank.png"), bag: ld.get("inven_bag.png"), hover: -1, held: -1}
 	v.tabs = [2]*render.Texture{ld.get("store_slot_button1.png"), ld.get("store_slot_button2.png")}
 	v.close = nativeClose(ld.get("talk1_close_button.png"), 309, 5)
-	v.guildSwitch = Button{Tex: ld.get("guild_button2_blank.png"), OffX: 237, OffY: 82, DrawW: 128, DrawH: 32, HitW: 75, HitH: 21, UV: FourRowUV}
 	return v, ld.err
 }
 
-func (v *Warehouse) UpdateGuildSwitch(in *platform.Input, w, h int, enabled bool) bool {
-	x, y := v.Origin(w, h)
-	v.guildSwitch.OriginX, v.guildSwitch.OriginY, v.guildSwitch.Disabled = x, y, !enabled
-	return v.guildSwitch.Update(in)
-}
-
-func (v *Warehouse) DrawGuildSwitch(s *render.Sprites, f *Font, w, h int, enabled, guild bool) {
-	x, y := v.Origin(w, h)
-	v.guildSwitch.OriginX, v.guildSwitch.OriginY, v.guildSwitch.Disabled = x, y, !enabled
-	v.guildSwitch.Draw(s)
-	label := "Guild"
-	if guild {
-		label = "Personal"
-	}
-	f.Draw(s, label, x+245, y+85, white, 64)
-}
 func (v *Warehouse) Origin(w, h int) (int, int) {
 	x, y := min(32, max(0, w-WarehouseWidth)), min(82, max(0, h-WarehouseHeight))
 	if v == nil {
@@ -90,9 +72,6 @@ func (v *Warehouse) Draw(s *render.Sprites, f *Font, w, h, page int, name, welco
 	s.Draw(v.frame, float32(x), float32(y), 512, 512, 0, 0, 1, 1, white)
 	if portrait != nil {
 		s.Draw(portrait, float32(x+7), float32(y+7), 64, 64, 0, 0, 1, 1, white)
-	}
-	for i, line := range wrapLines(f, "Drag items between inventory and storage.", 210) {
-		f.Draw(s, line, x+90, y+46+i*15, white, 210)
 	}
 	for i := 0; i < 6; i++ {
 		sheet, dy, gx, gu := 1, 120, 16, float32(.5)

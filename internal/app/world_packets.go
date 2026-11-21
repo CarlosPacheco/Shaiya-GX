@@ -186,16 +186,6 @@ func (a *App) applyWorldPacket(p []byte) {
 	if ev.Op == proto.GuildBankResult && a.bank.guildPending {
 		a.bank.guildPending = false
 		a.inventory.pending = false
-		msg := "Guild bank request refused."
-		switch a.state.Guild.BankResult.Result {
-		case 1:
-			msg = "The guild must be ranked to use its bank."
-		case 2:
-			msg = "Insufficient guild bank permissions or page unavailable."
-		case 4:
-			msg = "Your guild rank cannot deposit items."
-		}
-		a.questMessage(msg)
 	}
 	a.confirmedPosition(p)
 	if proto.Op(p) == proto.CharacterSkillBar && a.screen == screenWorld {

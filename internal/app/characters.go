@@ -26,10 +26,13 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 	}
 	if a.state.Phase == game.PhaseCharSelect && !a.creating {
 		if a.menuOpen {
-			a.updateGameMenu(in, w, h)
-			return
-		}
-		if hasChar(in, 'o') || in.HasKey(platform.KeyEscape) {
+			// The options window is not modal here: pointer input outside it
+			// still reaches the roster buttons.
+			if a.gameMenuOwnsInput(in, w, h) {
+				a.updateGameMenu(in, w, h)
+				return
+			}
+		} else if hasChar(in, 'o') || in.HasKey(platform.KeyEscape) {
 			a.openGameMenu()
 			return
 		}
@@ -72,7 +75,9 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 		}
 		switch action {
 		case ui.CharOptions:
-			a.openGameMenu()
+			if !a.menuOpen {
+				a.openGameMenu()
+			}
 		case ui.CharStart:
 			if ch := a.chars.Chars[a.chars.Selected]; ch != nil {
 				a.sendAccountAction(proto.SelectCharacter, ch.ID)
@@ -84,6 +89,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			}
 			a.confirmCharacterRemoval(*ch)
 		case ui.CharCreate:
+			a.menuOpen = false
 			for slot := uint8(0); slot < 5; slot++ {
 				if _, used := a.state.Slots[slot]; !used {
 					a.create.Open(slot, a.state.Faction.Faction)

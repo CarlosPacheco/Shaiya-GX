@@ -70,6 +70,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 	s.dismount()
 	s.dash = nil
 	s.pendingCombo = nil
+	s.pendingSkill = nil
 	// /cmove may inspect the base map without joining a party/guild instance.
 	direct := (s.isAdmin || s.gmForced) && len(gmDirect) > 0 && gmDirect[0]
 	ch := s.char
@@ -111,6 +112,9 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 	}
 	if s.auctionContact {
 		s.useNpc(0)
+	}
+	if mapID != ch.MapID {
+		s.endGMGuildRanking(false)
 	}
 	s.clearView(mapID == ch.MapID)
 	changedMap := mapID != ch.MapID
@@ -160,6 +164,7 @@ func (s *Session) handleCharacterMove(p []byte) {
 	oldX, oldZ := ch.PosX, ch.PosZ
 	if x != oldX || z != oldZ {
 		s.pendingCombo = nil
+		s.pendingSkill = nil
 	}
 	if x != ch.PosX || z != ch.PosZ {
 		s.cancelMove()

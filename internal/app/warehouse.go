@@ -163,19 +163,9 @@ func (a *App) updateWarehouse(in *platform.Input, w, h int) bool {
 	}
 	x, y := a.bankUI.Origin(w, h)
 	captured := panelPointer(in, x, y, ui.WarehouseWidth, ui.WarehouseHeight)
-	if a.bankUI.UpdateGuildSwitch(in, w, h, a.state.Guild.ID != 0 && !a.inventory.pending && !a.shop.pending) {
-		v.guild = !v.guild
-		v.page = 0
-		v.selected = false
-		v.dragging = false
-		return true
-	}
-	if v.guild && a.state.Guild.ID == 0 {
-		v.guild = false
-		v.page = 0
-		v.selected = false
-		v.dragging = false
-	}
+	// The bank NPC of a house map is the guild warehouse and every other one the
+	// personal storage: there is no selector between the two.
+	v.guild = houseMaps[a.state.MapID]
 	page, close := a.bankUI.Update(in, w, h, v.page)
 	if page != v.page {
 		v.page = page
@@ -268,10 +258,6 @@ func (a *App) drawWarehouse(w, h int, def sdata.NPC) {
 	x, y := a.bankUI.Origin(w, h)
 	a.clearTooltipUnderPanel(x, y, ui.WarehouseWidth, ui.WarehouseHeight)
 	a.bankUI.Draw(a.sprites, a.font, w, h, v.page, def.Name, def.Welcome, a.npcPortrait(def))
-	a.bankUI.DrawGuildSwitch(a.sprites, a.font, w, h, a.state.Guild.ID != 0, v.guild)
-	if v.guild {
-		a.font.Draw(a.sprites, "Guild Bank", x+90, y+84, white, 135)
-	}
 	for slot, it := range a.warehouseItems() {
 		cx, cy, ok := ui.WarehouseCell(v.page, slot)
 		if !ok {

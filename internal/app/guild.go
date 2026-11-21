@@ -19,6 +19,8 @@ type guildView struct {
 	leaveSerial, disbandSerial, disbandVoteSerial uint64
 	disbandedSerial                               uint64
 	createPending                                 bool
+	confirmCreate                                 bool // the gold confirmation is up (SysMsg 10004)
+	pendingName, pendingRemark                    string
 	createDeadline                                float64
 	lifecyclePending                              bool
 	lifecycleDeadline                             float64
@@ -101,10 +103,10 @@ func (a *App) updateGuildDirectory(in *platform.Input, w, h int, e *game.Entity)
 		a.guild.confirmGuild = a.state.Guild.ID
 		if leave {
 			a.guild.confirmKind = 2
-			a.guildConfirm.Open("Leave "+a.state.Guild.Name+"?", true)
+			a.guildConfirm.Open(a.msgOr(10018, "Leave "+a.state.Guild.Name+"?"), true)
 		} else {
 			a.guild.confirmKind = 3
-			a.guildConfirm.Open("Disband "+a.state.Guild.Name+"?", true)
+			a.guildConfirm.Open(a.msgOr(10005, "Disband "+a.state.Guild.Name+"?"), true)
 		}
 		return true
 	}
@@ -127,6 +129,10 @@ func (a *App) drawGuildDirectory(w, h int) {
 	a.refreshGuildDirectory()
 	_, exists := a.state.Guild.Directory[a.guild.directorySelected]
 	available := !a.guild.lifecyclePending && !a.guild.voting
+	a.guildDirectoryUI.Subtitle = a.msgOr(5180, "Guild Master")
+	if e := a.state.Entities[a.shop.npcID]; e != nil {
+		a.guildDirectoryUI.NPCName = a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}].Name
+	}
 	a.guildDirectoryUI.Draw(a.sprites, a.font, a.white, w, h, a.guild.directory, a.guild.directoryOffset, a.guild.directorySelected, exists && a.state.Guild.ID == 0 && a.state.Guild.DirectoryReady, a.state.Guild.ID == 0 && !a.guild.createPending && !a.guild.voting, a.state.Guild.ID != 0 && a.state.Guild.Rank > 1 && available, a.state.Guild.ID != 0 && a.state.Guild.Rank == 1 && available)
 	if e := a.state.Entities[a.shop.npcID]; e != nil {
 		def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
@@ -156,12 +162,12 @@ func (a *App) updateGuildCreate(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if result == ui.MessageOK && a.state.Guild.ID == 0 && !a.guild.createPending {
-		name := strings.TrimSpace(a.guildCreateUI.Name.Text)
-		remark := strings.TrimSpace(a.guildCreateUI.Remark.Text)
-		if err := a.world.Send(proto.GuildCreatePacket(name, remark)); err != nil {
-			a.backToLogin("Unable to request guild creation.")
-		} else {
-			a.guild.createPending, a.guild.createDeadline = true, a.clock+10
+		// Founding costs gold even alone or as a GM: always ask first.
+		a.guild.pendingName = strings.TrimSpace(a.guildCreateUI.Name.Text)
+		a.guild.pendingRemark = strings.TrimSpace(a.guildCreateUI.Remark.Text)
+		if a.guildVoteMessage != nil {
+			a.guild.confirmCreate = true
+			a.guildVoteMessage.Open(a.msgOr(10004, "Do you want to create a guild?"), true)
 		}
 	}
 	return true
@@ -278,6 +284,17 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 		return false
 	}
 	if result := a.guildVoteMessage.Update(in, w, h); result != ui.MessageNone {
+		if v.confirmCreate {
+			v.confirmCreate = false
+			if result == ui.MessageOK && a.state.Guild.ID == 0 && !v.createPending {
+				if err := a.world.Send(proto.GuildCreatePacket(v.pendingName, v.pendingRemark)); err != nil {
+					a.backToLogin("Unable to request guild creation.")
+				} else {
+					v.createPending, v.createDeadline = true, a.clock+10
+				}
+			}
+			return true
+		}
 		packet := proto.GuildCreateAnswerPacket(result == ui.MessageOK)
 		if v.disbandVote {
 			packet = proto.GuildDisbandAnswerPacket(result == ui.MessageOK)
@@ -292,6 +309,7 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 func (a *App) toggleGuild() {
 	a.guild.open = !a.guild.open
 	if a.guild.open {
+		a.guildUI.GradeOpen = true
 		a.questLog.open = false
 		a.guild.etinRequestedFor = 0
 	}
@@ -331,7 +349,7 @@ func (a *App) updateGuild(in *platform.Input, w, h int) bool {
 	a.refreshGuildRoster()
 	x, y := a.guildUI.Origin(w, h)
 	captured := panelPointer(in, x, y, ui.GuildWidth, ui.GuildHeight) ||
-		!a.guild.waiting && panelPointer(in, x+ui.GuildGradeInfoX, y, ui.GuildGradeInfoWidth, ui.GuildHeight)
+		!a.guild.waiting && a.guildUI.GradeOpen && panelPointer(in, x+ui.GuildGradeInfoX, y, ui.GuildGradeInfoWidth, ui.GuildHeight)
 	canToggle := a.state.Guild.ID != 0 && a.state.Guild.Rank > 0 && a.state.Guild.Rank <= 2
 	if a.guild.waiting && !canToggle {
 		a.guild.waiting, a.guild.rosterDirty, a.guild.selected = false, true, 0
@@ -680,4 +698,12 @@ func (a *App) guildCommand(text string) bool {
 		a.backToLogin("Unable to invite player to guild.")
 	}
 	return true
+}
+
+// msgOr is the client's SysMsg text, or the fallback when the table lacks it.
+func (a *App) msgOr(id int, fallback string) string {
+	if text := strings.TrimSpace(a.msg.Get(id)); text != "" {
+		return text
+	}
+	return fallback
 }

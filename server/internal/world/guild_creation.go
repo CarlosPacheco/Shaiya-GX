@@ -155,7 +155,8 @@ func (c *guildCreate) complete(log *logx.Logger, caller *Session) bool {
 		return true
 	}
 	g := &guild{ID: nextGuildID, Name: c.name, Master: master.Name, Remark: c.remark, Country: c.master.Faction(),
-		Rank: 31, members: map[uint32]*guildMember{}, applicants: map[uint32]*guildMember{}}
+		Rank: 31, gmHouse: owner.isAdmin, members: map[uint32]*guildMember{}, applicants: map[uint32]*guildMember{}}
+	g.forceGMHouse()
 	founders := make([]db.GuildCharRow, 0, len(c.players))
 	for _, p := range c.players {
 		rank := uint8(guildRankMember)

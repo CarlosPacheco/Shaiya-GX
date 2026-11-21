@@ -112,6 +112,8 @@ type Session struct {
 	lastSkillID      uint16
 	lastSkillAt      time.Time
 	pendingCombo     *pendingSpinCombo
+	pendingSkill     *pendingSkillUse
+	gmGRBGuild       uint32 // guild whose ranking participation this GM started
 	dash             *proto.SkillDash
 	lastActionAt     time.Time
 	attackMoveUntil  time.Time
@@ -276,6 +278,7 @@ func (s *Session) leaveWorld(disconnect bool) bool {
 		}
 	}
 	s.useNpc(0)
+	s.endGMGuildRanking(true)
 	s.guildDisconnect()
 	if s.player != nil {
 		s.player.Unregister()
@@ -443,6 +446,7 @@ func (s *Session) tick(idle bool) {
 				s.lastActionAt = time.Time{}
 				s.dash = nil
 				s.pendingCombo = nil
+				s.pendingSkill = nil
 				s.lastSkillID = 0
 				s.clearBuffsOnDeath()
 			}
@@ -492,6 +496,7 @@ func (s *Session) tick(idle bool) {
 		s.syncQuestIDs()
 	}
 	s.processSpinCombo()
+	s.processPendingSkill()
 	s.processPendingCast()
 	if idle && s.autoAttack {
 		swing := s.autoAttackSwing
@@ -801,6 +806,7 @@ func (s *Session) selectCharacter(id uint32) {
 	s.lastActionAt = time.Time{}
 	s.dash = nil
 	s.pendingCombo = nil
+	s.pendingSkill = nil
 	s.lastSkillID = 0
 	s.skillCooldowns, s.itemCooldowns = map[uint16]time.Time{}, map[uint8]time.Time{}
 	s.evolutionReadyAt, s.evolutionGrant, s.evolutionActions = nil, 0, [2]evolutionAction{}

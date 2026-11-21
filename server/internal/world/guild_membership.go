@@ -83,6 +83,9 @@ func (g *guild) joinUser(p *ConnectedPlayer, log *logx.Logger) bool {
 	if f := g.npcListPacket(); f != nil {
 		p.Send(f, "0x0D24 guild NPC levels")
 	}
+	if f := g.houseStatusPacket(); f != nil {
+		p.Send(f, "0x0D33 guild house owned")
+	}
 	return true
 }
 
@@ -178,6 +181,9 @@ func (s *Session) guildAnswerApplicant(accept bool, charID uint32) {
 		}
 		if f := g.npcListPacket(); f != nil {
 			p.Send(f, "0x0D24 guild NPC levels")
+		}
+		if f := g.houseStatusPacket(); f != nil {
+			p.Send(f, "0x0D33 guild house owned")
 		}
 	}
 }

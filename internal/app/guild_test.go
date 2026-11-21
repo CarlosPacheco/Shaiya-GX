@@ -127,8 +127,8 @@ func TestGuildDirectorySelectsAndCaptures(t *testing.T) {
 	a.state.Guild.DirectoryReady = true
 	a.state.Guild.Directory = map[uint32]proto.GuildInfo{7: {ID: 7, Name: "Alpha"}, 8: {ID: 8, Name: "Zeta"}}
 	x, y := a.guildDirectoryUI.Origin(1024, 768)
-	a.worldControls(&platform.Input{MouseX: x + 275, MouseY: y + 95, Pressed: true, MouseDown: true}, 1024, 768)
-	controls := a.worldControls(&platform.Input{MouseX: x + 275, MouseY: y + 95, Clicked: true}, 1024, 768)
+	a.worldControls(&platform.Input{MouseX: x + 0x131, MouseY: y + 0x6e + 4, Pressed: true, MouseDown: true}, 1024, 768)
+	controls := a.worldControls(&platform.Input{MouseX: x + 0x131, MouseY: y + 0x6e + 4, Clicked: true}, 1024, 768)
 	if a.guild.directorySelected != 7 || controls.Clicked {
 		t.Fatal("directory selection escaped", a.guild.directorySelected)
 	}

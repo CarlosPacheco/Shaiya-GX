@@ -214,12 +214,12 @@ func (v *worldView) updateRenderedCamera(dt float32) {
 	if eye, hit := v.world.CameraIntersection(origin, v.eye); hit && !v.firstPerson {
 		v.cameraEye = eye
 	} else {
-		v.cameraEye = cameraApproach(v.cameraEye, v.eye, dt)
+		v.cameraEye = cameraApproach(v.cameraEye, v.eye.Add(v.shakeOffset), dt)
 	}
 	if v.extendedCameraZoom && !v.firstPerson {
 		v.cameraEye = v.limitCameraDistance(v.cameraEye, gmZoomMax)
 	}
-	v.cameraTarget = cameraApproach(v.cameraTarget, v.target(), dt)
+	v.cameraTarget = cameraApproach(v.cameraTarget, v.target().Add(v.shakeOffset), dt)
 	if !v.firstPerson && v.cameraEye.Sub(origin).Len() < .3 {
 		v.cameraEye = origin.Sub(v.facing.Scale(.3))
 	}

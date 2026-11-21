@@ -123,6 +123,15 @@ func (a *App) updateDuelInvite(in *platform.Input, w, h int) bool {
 	d, v := &a.state.Duel, &a.duel
 	if d.RequestSerial != v.requestSerial {
 		v.requestSerial = d.RequestSerial
+		if d.Phase == game.DuelIncoming && a.clientSettings().RejectBattle {
+			// Reject Battle (0x562a7e): declined at once with the "no" answer.
+			if err := a.world.Send(proto.DuelAnswerPacket(false)); err != nil {
+				a.backToLogin("Unable to answer duel.")
+				return true
+			}
+			d.Phase = game.DuelNone
+			return false
+		}
 		if d.Phase == game.DuelIncoming {
 			name := fmt.Sprintf("Player %d", d.Opponent)
 			if e := a.state.Entities[d.Opponent]; e != nil && e.Shape != nil && e.Shape.Name != "" {

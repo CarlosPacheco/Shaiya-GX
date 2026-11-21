@@ -242,6 +242,11 @@ func (a *App) drawBlacksmith(w, h int, name, welcome string) {
 	x, y := a.blacksmithUI.Origin(w, h)
 	bw, bh := a.blacksmithUI.Size()
 	a.clearTooltipUnderPanel(x, y, bw, bh)
+	// GX: the guild house smith's gem-linking bonus, in plain yellow under its name.
+	if bonus := a.state.Guild.HouseLinkBonus; houseMaps[a.state.MapID] && a.state.Guild.ID != 0 && bonus > 0 {
+		text := fmt.Sprintf("Guild House bonus: +%d%%", bonus)
+		a.font.Draw(a.sprites, text, x+0x41+(0xff-0x41-a.font.Width(text))/2, y+0x2e, [4]float32{1, 1, 0, 1}, 0)
+	}
 	if e := a.state.Entities[a.shop.npcID]; e != nil {
 		def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 		if portrait := a.npcPortrait(def); portrait != nil {

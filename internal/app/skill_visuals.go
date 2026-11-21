@@ -55,6 +55,12 @@ func (a *App) startSkillResultEffects(r proto.SkillResult) {
 		}
 		return
 	}
+	switch r.ID { // 0x577020: Earthquake shakes the camera for two seconds, Earth Spikes for half
+	case 69:
+		a.cameraShake(2)
+	case 83:
+		a.cameraShake(.5)
+	}
 	a.startSkillReleaseEffect(r, d)
 	if a.wv.physicalSkillQueued {
 		return

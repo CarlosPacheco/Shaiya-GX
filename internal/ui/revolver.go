@@ -131,6 +131,7 @@ func (l RevolverLayout) Draw(s *render.Sprites, f *Font, art [9]*render.Texture,
 		}
 		u := slot.UV
 		s.Draw(slot.Icon, float32(b.X), float32(b.Y), 32, 32, u.U0, u.V0, u.U1, u.V1, tint)
+		DrawSkillLevel(s, f, b.X, b.Y, slot.Level)
 		drawShortcutCooldown(s, f, blank, b.X, b.Y, slot.Cooldown, slot.CooldownDuration)
 	}
 	for i := range 3 {

@@ -53,7 +53,7 @@ func (s *Session) activeGuildHouse() uint32 {
 	id := s.char.ID
 	g := guildOfChar[id]
 	if g == nil || g.members[id] == nil || g.Country != s.faction ||
-		g.Rank > guildBankRanked || g.BuyHouse == 0 || g.UseHouse != 1 {
+		g.BuyHouse == 0 || g.UseHouse != 1 {
 		return 0
 	}
 	return g.ID

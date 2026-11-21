@@ -56,6 +56,7 @@ type HouseView struct {
 	ListOffset           int
 	CanManage            bool // Guild Manager: the Manager tab is enabled (guild rank 1-2)
 	CanBuy               bool
+	HouseOwned           bool // the guild already owns its house: the Buy tab and button are greyed
 }
 
 // HouseAction is what the player did this frame; -1 means nothing.
@@ -76,6 +77,8 @@ type GuildHouseWindow struct {
 	close       Button
 	tabs        [4]Button
 	buy         Button
+	configured  bool
+	kind        HouseKind
 	heldUpgrade int
 	hover       int  // upgrade button under the pointer
 	down        bool // primary button held
@@ -122,6 +125,12 @@ func (w *GuildHouseWindow) Origin(sw, sh int) (int, int) {
 
 // configure positions the tab buttons of a kind.
 func (w *GuildHouseWindow) configure(kind HouseKind) {
+	// Rebuilding the buttons every frame would drop their pressed state, so a
+	// click (press on one frame, release on another) could never complete.
+	if w.configured && w.kind == kind {
+		return
+	}
+	w.configured, w.kind = true, kind
 	if kind == HouseEtinManager {
 		w.tabs[0] = houseButton(w.labels, 26, 289, houseLabelBuyHouse)
 		w.tabs[1] = houseButton(w.labels, 140, 289, houseLabelServiceInfo)
@@ -148,6 +157,13 @@ func tabMode(kind HouseKind, i int) int {
 	return [2]int{HouseModeInfo, HouseModeManager}[i]
 }
 
+func houseTabDisabled(kind HouseKind, i int, v *HouseView) bool {
+	if kind == HouseGuildManager {
+		return tabMode(kind, i) == HouseModeManager && !v.CanManage
+	}
+	return tabMode(kind, i) == HouseModeBuy && v.HouseOwned
+}
+
 // rowY is the top of service row k: Info rows start at 0x5b, Manager rows at 0x56.
 func rowY(mode, k int) int {
 	if mode == HouseModeManager {
@@ -167,7 +183,7 @@ func (w *GuildHouseWindow) Update(in *platform.Input, sw, sh int, kind HouseKind
 	for i := 0; i < w.tabCount(kind); i++ {
 		b := &w.tabs[i]
 		b.OriginX, b.OriginY = x, y
-		b.Disabled = kind == HouseGuildManager && tabMode(kind, i) == HouseModeManager && !v.CanManage
+		b.Disabled = houseTabDisabled(kind, i, v)
 		if b.Update(in) {
 			if m := tabMode(kind, i); m < 0 {
 				act.Donate = true
@@ -241,11 +257,12 @@ func (w *GuildHouseWindow) Draw(s *render.Sprites, f *Font, blank *render.Textur
 	if v.Title != "" {
 		f.Draw(s, v.Title, x+0x86-f.Width(v.Title)/2, y+0x36, white, 0)
 	}
-	for i, line := range wrapLines(f, v.Text, 220) {
-		if i >= 11 {
+	// 0x52cf20: the text box starts at (+0x1a,+0x66), 200 px wide, 10 lines.
+	for i, line := range wrapLines(f, v.Text, 200) {
+		if i >= 10 {
 			break
 		}
-		f.Draw(s, line, x+15, y+0x5b+i*15, white, 220)
+		f.Draw(s, line, x+0x1a, y+0x66+i*15, white, 200)
 	}
 	switch mode {
 	case HouseModeInfo, HouseModeManager:
@@ -266,7 +283,7 @@ func (w *GuildHouseWindow) Draw(s *render.Sprites, f *Font, blank *render.Textur
 	for i := 0; i < w.tabCount(kind); i++ {
 		b := &w.tabs[i]
 		b.OriginX, b.OriginY = x, y
-		b.Disabled = kind == HouseGuildManager && tabMode(kind, i) == HouseModeManager && !v.CanManage
+		b.Disabled = houseTabDisabled(kind, i, v)
 		b.Draw(s)
 	}
 	w.close.OriginX, w.close.OriginY = x, y

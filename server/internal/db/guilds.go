@@ -58,6 +58,9 @@ type GuildRow struct {
 	UseHouse   uint8
 	EtinReturn uint32
 	KeepEtin   uint32
+	// MasterAdmin: the guild master's account is a GM (test guilds keep an
+	// always-active house).
+	MasterAdmin bool
 }
 
 // GuildCharRow is one usp_Read_GuildChar_R row.
@@ -80,7 +83,8 @@ func LoadGuilds() ([]GuildRow, []GuildCharRow, error) {
 	defer cancel()
 	rows, err := pool.QueryContext(c, `SELECT G.GuildID, G.GuildName, G.MasterName, G.Country, G.GuildPoint,
 		COALESCE(H.Rank,31), COALESCE(H.Etin,0), COALESCE(H.Remark,''), COALESCE(H.BuyHouse,0), COALESCE(H.UseHouse,0),
-		COALESCE(H.EtinReturnCnt,0), COALESCE(H.KeepEtin,0)
+		COALESCE(H.EtinReturnCnt,0), COALESCE(H.KeepEtin,0),
+		COALESCE((SELECT U.Admin FROM PS_GameData_Chars C JOIN PS_UserData_Users_Master U ON U.UserUID=C.UserUID WHERE C.CharName=G.MasterName AND C.Del=0 LIMIT 1),0)
 		FROM PS_GameData_Guilds G LEFT OUTER JOIN PS_GameData_GuildDetails H ON G.GuildID = H.GuildID WHERE G.Del = 0`)
 	if err != nil {
 		return nil, nil, fmt.Errorf("read guilds: %w", err)
@@ -90,7 +94,7 @@ func LoadGuilds() ([]GuildRow, []GuildCharRow, error) {
 		var g GuildRow
 		var id, points, etin, ret, keep int64
 		if err := rows.Scan(&id, &g.Name, &g.MasterName, &g.Country, &points, &g.Rank, &etin, &g.Remark, &g.BuyHouse,
-			&g.UseHouse, &ret, &keep); err != nil {
+			&g.UseHouse, &ret, &keep, &g.MasterAdmin); err != nil {
 			rows.Close()
 			return nil, nil, err
 		}

@@ -122,21 +122,40 @@ func grbMaps() []uint16 {
 
 // enterGuildRanking resolves a teleport to a battle map: the guild's own
 // instance while the battle is open, otherwise no zone (the move fails).
-func (s *Session) enterGuildRanking(destination uint16) (uint16, bool) {
+func (s *Session) enterGuildRanking(destination uint16) (zoneOut uint16, ok bool) {
 	if s.player == nil {
 		return 0, false
 	}
 	guildMu.Lock()
 	g := s.player.guild.guild
+	// A GM who owns the guild may enter at any time: a private participation
+	// that ends, and is credited, when that GM leaves.
+	gm := g != nil && s.isAdmin && s.char != nil && g.Master == s.char.Name
+	if gm {
+		g.gmGRB = true
+	}
 	guildMu.Unlock()
 	if g == nil {
 		return 0, false
+	}
+	if gm {
+		defer func() {
+			if ok {
+				s.gmGRBGuild = g.ID
+				return
+			}
+			if s.gmGRBGuild == 0 {
+				guildMu.Lock()
+				g.gmGRB = false
+				guildMu.Unlock()
+			}
+		}()
 	}
 	mapID := realMap(destination)
 	cfg := mapConfig.Zones[mapID]
 	grbState.Lock()
 	defer grbState.Unlock()
-	if !grbOpen(grbSlots(cfg), grbNow()) {
+	if !gm && !grbOpen(grbSlots(cfg), grbNow()) {
 		return 0, false
 	}
 	zone, found := findInstance(mapID, g.ID)
@@ -152,6 +171,56 @@ func (s *Session) enterGuildRanking(destination uint16) (uint16, bool) {
 		return 0, false
 	}
 	return zone, true
+}
+
+// endGMGuildRanking closes a GM's ranking participation when the GM leaves the
+// battle map or the game, open or closed: the points earned are credited to the
+// guild (kept for the regular settlement while a real battle still runs) and
+// stored. There is no global notice.
+func (s *Session) endGMGuildRanking(final bool) {
+	id := s.gmGRBGuild
+	if id == 0 || s.char == nil {
+		return
+	}
+	mapID := realMap(s.char.MapID)
+	if mapCreateType(s.char.MapID) != grbCreateType {
+		if !final {
+			return // the teleport that starts the participation has not landed yet
+		}
+		s.gmGRBGuild = 0
+		guildMu.Lock()
+		if g := guildsByID[id]; g != nil {
+			g.gmGRB = false
+		}
+		guildMu.Unlock()
+		return
+	}
+	s.gmGRBGuild = 0
+	open := grbOpen(grbSlots(mapConfig.Zones[mapID]), grbNow())
+	guildMu.Lock()
+	g := guildsByID[id]
+	if g == nil {
+		guildMu.Unlock()
+		return
+	}
+	g.gmGRB = false
+	var row db.GuildRow
+	credited := g.grbPoints > 0
+	if credited {
+		g.Points = g.grbPoints
+		if !open {
+			g.grbPoints = 0
+		}
+		g.forceGMHouse()
+		row = db.GuildRow{ID: g.ID, Points: g.Points, Rank: g.Rank, Etin: g.Etin, Remark: g.Remark,
+			BuyHouse: g.BuyHouse, UseHouse: g.UseHouse, EtinReturn: g.EtinReturn, KeepEtin: g.KeepEtin}
+	}
+	guildMu.Unlock()
+	if credited {
+		if err := db.SaveGuildRanking(row); err != nil {
+			s.log.Printf("GX Server World GM guild ranking save failed guild=%d: %v", id, err)
+		}
+	}
 }
 
 // grbKill is CMob::ItemDrop's map type 5 branch; true when the mob gave
@@ -172,7 +241,7 @@ func grbKill(zone uint16, mob *MapMob, killerID uint32) bool {
 	}
 	mapID := realMap(zone)
 	grbState.Lock()
-	if owned, found := findInstance(mapID, g.ID); !found || owned != zone || !grbOpen(grbSlots(mapConfig.Zones[mapID]), grbNow()) {
+	if owned, found := findInstance(mapID, g.ID); !found || owned != zone || !g.gmGRB && !grbOpen(grbSlots(mapConfig.Zones[mapID]), grbNow()) {
 		grbState.Unlock()
 		return true
 	}
@@ -240,12 +309,23 @@ func TickGuildRanking(now time.Time, log *logx.Logger) {
 // grbCloseInstances is MoveAllBindPos at the close, then the empty
 // instances are removed.
 func grbCloseInstances(mapID uint16, log *logx.Logger) {
+	guildMu.Lock()
+	gmOwners := map[uint32]bool{}
+	for id, g := range guildsByID {
+		if g.gmGRB {
+			gmOwners[id] = true
+		}
+	}
+	guildMu.Unlock()
 	grbState.Lock()
 	defer grbState.Unlock()
 	if grbOpen(grbSlots(mapConfig.Zones[mapID]), grbNow()) {
 		return
 	}
 	for _, zone := range instanceZones(mapID) {
+		if gmOwners[instanceOwnerOf(zone)] {
+			continue // a GM's own participation outlives the schedule
+		}
 		players := PlayersOnMap(zone)
 		for _, p := range players {
 			c := p.Snapshot()
@@ -284,9 +364,13 @@ func updateGuildRanking(log *logx.Logger) {
 		value := g.grbPoints
 		g.grbPoints = 0
 		g.Points = value
+		if g.gmHouse {
+			g.forceGMHouse() // test guilds stay out of the standings
+			continue
+		}
 		c := int(g.Country) & 1
 		if value == 0 {
-			g.Rank, g.UseHouse = grbUnranked, 0
+			g.Rank = grbUnranked
 		} else if !seen[c][value] {
 			seen[c][value] = true
 			ranked[c] = append(ranked[c], entry{g, value})
@@ -300,10 +384,9 @@ func updateGuildRanking(log *logx.Logger) {
 		for i, e := range ranked[c] {
 			if i < grbRankedGuilds {
 				e.g.Rank = uint8(i + 1)
-				e.g.settleGuildHouse()
 				count++
 			} else {
-				e.g.Rank, e.g.UseHouse = grbUnranked, 0
+				e.g.Rank = grbUnranked
 			}
 		}
 		w.U8(uint8(count))
@@ -316,6 +399,7 @@ func updateGuildRanking(log *logx.Logger) {
 	}
 	for _, id := range ids {
 		g := guildsByID[id]
+		g.settleGuildHouse() // every guild with a house pays its upkeep, ranked or not
 		rows = append(rows, db.GuildRow{ID: g.ID, Points: g.Points, Rank: g.Rank, Etin: g.Etin, Remark: g.Remark,
 			BuyHouse: g.BuyHouse, UseHouse: g.UseHouse, EtinReturn: g.EtinReturn, KeepEtin: g.KeepEtin})
 	}

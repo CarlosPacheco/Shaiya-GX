@@ -50,7 +50,7 @@ accept. Founders can be any level. They must be free to
 join and choose an available guild name.
 
 The founder pays the fee once the guild is created. Set
-`GuildCreateMoney` under `[DefaultSet]` in `GuildHouse.ini`. The default
+`CreateGuildCost` under `[House]` in `GuildHouse.ini`. The default
 is 1,000,000 gold. Leaving a guild carries no waiting period before
 applying again, including to the same guild. Normal approval still applies.
 

@@ -98,13 +98,6 @@ func houseRecord(d *sdata.GuildHouseData, npcType uint16, level uint8) *sdata.Gu
 	return d.Service(npcType, min(level, limit))
 }
 
-func (a *App) houseGuildRanking() uint8 {
-	if info, ok := a.state.Guild.Directory[a.state.Guild.ID]; ok {
-		return info.Rank
-	}
-	return 31
-}
-
 // houseView builds what the window draws for the current page.
 func (a *App) houseBuildView(kind ui.HouseKind, e *game.Entity) *ui.HouseView {
 	h := &a.house
@@ -117,12 +110,12 @@ func (a *App) houseBuildView(kind ui.HouseKind, e *game.Entity) *ui.HouseView {
 		v.Title = a.msg.Get(8009)
 	} else {
 		v.Title = a.msg.Get(8010)
-		v.CanBuy = g.ID != 0 && g.Rank == 1
+		v.HouseOwned = g.HouseBought
+		v.CanBuy = g.ID != 0 && g.Rank == 1 && !g.HouseBought
 	}
 	if d == nil {
 		return v
 	}
-	ranking := a.houseGuildRanking()
 	etin := g.Etin
 	keepDefault := d.DefaultKeep
 	if keepDefault == 0 {
@@ -160,20 +153,16 @@ func (a *App) houseBuildView(kind ui.HouseKind, e *game.Entity) *ui.HouseView {
 		name := a.msg.Get(houseServiceNames[i])
 		row.Title = fmt.Sprintf("%s %s%d", name, a.msg.Get(5211), level)
 		if kind == ui.HouseEtinManager {
-			rankOK := ranking <= cur.RankLimit
 			feeOK := uint32(cur.KeepEtin) <= available
-			row.RankText = fmt.Sprintf("%s %d", a.msg.Get(8019), cur.RankLimit)
 			row.FeeText = fmt.Sprintf("%s %d %s", a.msg.Get(8020), cur.KeepEtin, etinWord)
-			row.RankOK, row.FeeOK, row.IconDim = rankOK, feeOK, !(rankOK && feeOK)
+			row.RankOK, row.FeeOK, row.IconDim = true, feeOK, !feeOK
 		} else {
-			rankOK := ranking <= next.RankLimit
 			costOK := uint32(next.UpgradeEtin) <= available
 			row.Title = fmt.Sprintf("%s %s%d", name, a.msg.Get(5211), next.Level)
-			row.RankText = fmt.Sprintf("%s %d", a.msg.Get(8019), next.RankLimit)
 			row.FeeText = fmt.Sprintf("%s %d %s", a.msg.Get(8048), next.UpgradeEtin, etinWord)
-			row.RankOK, row.FeeOK, row.IconDim = rankOK, costOK, !(rankOK && costOK)
-			row.UpgradeLook = rankOK && costOK && canLevel
-			row.UpgradeOn = rankOK && uint32(next.KeepEtin) <= available && canLevel
+			row.RankOK, row.FeeOK, row.IconDim = true, costOK, !costOK
+			row.UpgradeLook = costOK && canLevel
+			row.UpgradeOn = uint32(next.KeepEtin) <= available && canLevel
 		}
 		v.Rows = append(v.Rows, row)
 	}
@@ -193,7 +182,9 @@ func (a *App) houseBuildView(kind ui.HouseKind, e *game.Entity) *ui.HouseView {
 			k++
 		}
 	}
-	if v.Text == "" && h.mode == ui.HouseModeBuy {
+	// 0x483210: the Etin manager's text box is filled with SysMsg 8031 at creation
+	// and keeps it on every page except the service information.
+	if v.Text == "" && kind == ui.HouseEtinManager && h.mode != ui.HouseModeInfo {
 		v.Text = a.msg.Get(8031)
 	}
 	if kind == ui.HouseEtinManager && h.mode == ui.HouseModeList {
@@ -391,12 +382,13 @@ func (a *App) houseEvents() {
 	}
 	if g.BankResultSerial != hv.bankSerial {
 		hv.bankSerial = g.BankResultSerial
-		if !a.bank.guildPending && a.houseWindowOpenNow() {
-			id := map[uint8]int{1: 8026, 2: 8027, 3: 8028, 4: 2038}[g.BankResult.Result]
-			if id != 0 {
-				a.systemMessage(0, id, nil)
-			}
+		// 0x5979b0 -> 0x569890: every refusal prints its SysMsg whichever service
+		// asked (bank, shop, gatekeeper, blacksmith); nothing else is awaited.
+		if id := map[uint8]int{1: 8026, 2: 8027, 3: 8028, 4: 2038}[g.BankResult.Result]; id != 0 {
+			fallback := map[uint8]string{1: "The guild must be ranked to use this service.", 2: "Insufficient guild permissions.", 3: "The guild's service NPC level is too low.", 4: "Your guild rank cannot do this."}[g.BankResult.Result]
+			a.localizedNotice(0, id, nil, fallback)
 		}
+		a.shop.pending, a.inventory.pending, a.gate.pending = false, false, false
 	}
 	if g.HouseSerial != hv.houseSerial {
 		hv.houseSerial = g.HouseSerial

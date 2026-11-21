@@ -278,3 +278,14 @@ func (a *App) saveClientSettings() {
 		log.Printf("save settings: %v", err)
 	}
 }
+
+// gameMenuOwnsInput reports whether this frame's input belongs to the options
+// window rather than to the screen behind it (character selection).
+func (a *App) gameMenuOwnsInput(in *platform.Input, w, h int) bool {
+	if a.menuPending || a.menuConfirm.Visible || a.gameMenu.DisplayPopupOpen() || a.windowDrag.position == &a.gameMenu.Position || hasChar(in, 'o') || in.HasKey(platform.KeyEscape) {
+		return true
+	}
+	width, height := a.gameMenu.Size()
+	x, y := a.gameMenu.Origin(w, h)
+	return in.MouseX >= x && in.MouseX < x+width && in.MouseY >= y && in.MouseY < y+height
+}

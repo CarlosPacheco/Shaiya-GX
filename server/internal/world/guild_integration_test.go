@@ -227,13 +227,7 @@ func TestGuildLifecycle(t *testing.T) {
 	}
 	give(ss[0])
 	give(ss[5])
-	ss[0].handleGuildBankMove(1, 0, guildBankBag, 3)
-	if g.bank[3] != nil {
-		t.Fatal("unranked guild used the bank")
-	}
-	guildMu.Lock()
-	g.Rank = 5
-	guildMu.Unlock()
+	// Ranking no longer matters: an unranked guild uses its bank.
 	ss[5].handleGuildBankMove(1, 0, guildBankBag, 4)  // rank 9
 	ss[0].handleGuildBankMove(1, 0, guildBankBag, 45) // beyond the 40 permitted slots
 	if g.bank[4] != nil || g.bank[45] != nil {
@@ -329,7 +323,7 @@ func TestGuildLifecycle(t *testing.T) {
 	etinItem(3, 2, 10) // [100]Etin x2
 	etinItem(1, 7, 11) // [1]Etin x7
 	etinBefore := g.Etin
-	ss[0].handleGuild(packet.GuildDonate, []byte{0x35, 0x0d, 0, 0, 0, 0})
+	ss[0].dispatch(packet.GuildDonate, []byte{0x35, 0x0d, 0, 0, 0, 0})
 	if g.Etin != etinBefore+207 || g.EtinReturn != 1 || findItem(ss[0].items, 1, 10) >= 0 || findItem(ss[0].items, 1, 11) >= 0 {
 		t.Fatalf("donation: etin %d (want %d) returns %d", g.Etin, etinBefore+207, g.EtinReturn)
 	}

@@ -52,6 +52,13 @@ func (a *App) updateExchangeInvite(in *platform.Input, w, h int) bool {
 	v := &a.exchange
 	if x.InviteSerial != v.inviteSerial {
 		v.inviteSerial = x.InviteSerial
+		if x.InviteID != 0 && !x.Active && a.clientSettings().RejectTrade {
+			// Reject Trade (0x56c920): declined at once and silently.
+			if err := a.world.Send(proto.ExchangeAnswerPacket(false)); err != nil {
+				a.backToLogin("Unable to answer trade request.")
+			}
+			return false
+		}
 		if x.InviteID != 0 && !x.Active {
 			name := fmt.Sprintf("Player %d", x.InviteID)
 			if e := a.state.Entities[x.InviteID]; e != nil && e.Shape != nil && e.Shape.Name != "" {

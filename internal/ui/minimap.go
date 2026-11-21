@@ -59,9 +59,9 @@ type Minimap struct {
 	relicPortal                                                                *render.Texture
 	alarm                                                                      *render.Texture
 	// Alarm is the native pulse timer (0x4c6550): 0..2 seconds-halves, 0 when idle.
-	Alarm float32
-	buttons                                                                    [3]Button
-	close                                                                      Button
+	Alarm   float32
+	buttons [3]Button
+	close   Button
 }
 
 func NewMinimap(t Textures) (*Minimap, error) {

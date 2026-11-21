@@ -32,8 +32,8 @@ func (a *App) confirmedChatBubble(op proto.Opcode) {
 	a.chatBubbles = append(a.chatBubbles, chatBubble{line.SenderID, line.Text, a.clock + 5})
 }
 func (a *App) drawChatBubbles(w, h int) {
-	if a.wv == nil || a.scene3d == nil {
-		return
+	if a.wv == nil || a.scene3d == nil || !a.clientSettings().WordBalloon {
+		return // Word Balloon off (0x411e10): no balloon is updated or drawn
 	}
 	f := a.chatFont()
 	vp := a.scene3d.View.Mul(a.scene3d.Proj)

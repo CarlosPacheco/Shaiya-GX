@@ -21,40 +21,46 @@ type GuildState struct {
 	NpcSerial          uint64
 	HouseResult        uint8 // 0x0D34
 	HouseBought        bool
-	HouseSerial        uint64
-	Donated            int // items consumed by the last 0x0D35
-	DonateSerial       uint64
-	EtinKnown          bool
-	Remark             string
-	RemarkKnown        bool
-	RemarkResult       uint8
-	RemarkSerial       uint64
-	Members            map[uint32]proto.GuildMember
-	Applicants         map[uint32]proto.GuildCandidate
-	Bank               map[uint8]proto.InventoryItem
-	BankResult         proto.GuildBankResultInfo
-	BankResultSerial   uint64
-	ApplyResult        uint8
-	ApplySerial        uint64
-	JoinResult         uint8
-	JoinSerial         uint64
-	CreateResult       uint8
-	CreateSerial       uint64
-	CreateVote         proto.GuildCreateVote
-	VoteSerial         uint64
-	CreateFailure      uint8
-	FailureSerial      uint64
-	LeaveResult        uint8
-	LeaveSerial        uint64
-	DisbandResult      uint8
-	DisbandSerial      uint64
-	DisbandMaster      uint32
-	DisbandVoteSerial  uint64
-	DisbandedSerial    uint64
-	InviteID           uint32
-	InviteSerial       uint64
-	LastReply          proto.PartyReply
-	ReplySerial        uint64
+	HouseGM            bool // GX: GM-founded guild (no upkeep)
+	// GX 0x0D33: the guild's current house bonuses as whole percentages: shop
+	// discount by type (weapon, armor, general, potion), teleport fee discount,
+	// gem link success bonus and gem link cost discount.
+	HouseShopDiscount                                    [4]uint8
+	HouseGateDiscount, HouseLinkBonus, HouseLinkDiscount uint8
+	HouseSerial                                          uint64
+	Donated                                              int // items consumed by the last 0x0D35
+	DonateSerial                                         uint64
+	EtinKnown                                            bool
+	Remark                                               string
+	RemarkKnown                                          bool
+	RemarkResult                                         uint8
+	RemarkSerial                                         uint64
+	Members                                              map[uint32]proto.GuildMember
+	Applicants                                           map[uint32]proto.GuildCandidate
+	Bank                                                 map[uint8]proto.InventoryItem
+	BankResult                                           proto.GuildBankResultInfo
+	BankResultSerial                                     uint64
+	ApplyResult                                          uint8
+	ApplySerial                                          uint64
+	JoinResult                                           uint8
+	JoinSerial                                           uint64
+	CreateResult                                         uint8
+	CreateSerial                                         uint64
+	CreateVote                                           proto.GuildCreateVote
+	VoteSerial                                           uint64
+	CreateFailure                                        uint8
+	FailureSerial                                        uint64
+	LeaveResult                                          uint8
+	LeaveSerial                                          uint64
+	DisbandResult                                        uint8
+	DisbandSerial                                        uint64
+	DisbandMaster                                        uint32
+	DisbandVoteSerial                                    uint64
+	DisbandedSerial                                      uint64
+	InviteID                                             uint32
+	InviteSerial                                         uint64
+	LastReply                                            proto.PartyReply
+	ReplySerial                                          uint64
 }
 
 func (s *State) clearVisibleGuild(id uint32) {
@@ -111,6 +117,17 @@ func (s *State) applyGuild(p []byte) error {
 				g.Npcs = map[uint8]proto.GuildNpc{}
 			}
 			g.Npcs[v.Npc.Slot] = v.Npc
+		}
+	case proto.GuildHouseKeepEtin:
+		// GX: sent only for a guild that owns its house (0x0D33 has no EP5.4 reader).
+		v, err := proto.DecodeU32(p)
+		if err != nil {
+			return err
+		}
+		g.HouseBought, g.HouseGM = true, v&(1<<31) != 0
+		if len(p) >= 6+7 {
+			copy(g.HouseShopDiscount[:], p[6:10])
+			g.HouseGateDiscount, g.HouseLinkBonus, g.HouseLinkDiscount = p[10], p[11], p[12]
 		}
 	case proto.GuildHouseBuy:
 		v, err := proto.DecodeGuildHouseBuy(p)
@@ -312,7 +329,7 @@ func (s *State) applyGuild(p []byte) error {
 			s.clearVisibleGuild(g.ID)
 			g.ID, g.Name, g.Rank, g.Members = 0, "", 0, nil
 			g.Bank = nil
-			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought = 0, false, "", false, nil, false
+			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought, g.HouseGM, g.HouseShopDiscount, g.HouseGateDiscount, g.HouseLinkBonus, g.HouseLinkDiscount = 0, false, "", false, nil, false, false, [4]uint8{}, 0, 0, 0
 			g.Applicants = nil
 			s.Details.Guild = ""
 			return nil
@@ -366,7 +383,7 @@ func (s *State) applyGuild(p []byte) error {
 		g.JoinSerial++
 		if v.Result == 1 {
 			g.ID, g.Name, g.Rank, g.Members = v.ID, v.Name, v.Rank, nil
-			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought = 0, false, "", false, nil, false
+			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought, g.HouseGM, g.HouseShopDiscount, g.HouseGateDiscount, g.HouseLinkBonus, g.HouseLinkDiscount = 0, false, "", false, nil, false, false, [4]uint8{}, 0, 0, 0
 			if info, ok := g.Directory[v.ID]; ok {
 				g.Remark, g.RemarkKnown = info.Remark, true
 			}
@@ -413,7 +430,7 @@ func (s *State) applyGuild(p []byte) error {
 		g.LeaveSerial++
 		if v == 1 {
 			g.ID, g.Name, g.Rank, g.Members = 0, "", 0, nil
-			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought = 0, false, "", false, nil, false
+			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought, g.HouseGM, g.HouseShopDiscount, g.HouseGateDiscount, g.HouseLinkBonus, g.HouseLinkDiscount = 0, false, "", false, nil, false, false, [4]uint8{}, 0, 0, 0
 			g.Bank = nil
 			g.Applicants = nil
 			s.Details.Guild = ""
@@ -439,7 +456,7 @@ func (s *State) applyGuild(p []byte) error {
 		}
 		if reply.Result == 1 && reply.ID == s.SelfID {
 			g.ID, g.Name, g.Rank, g.Members = 0, "", 0, nil
-			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought = 0, false, "", false, nil, false
+			g.Etin, g.EtinKnown, g.Remark, g.RemarkKnown, g.Npcs, g.HouseBought, g.HouseGM, g.HouseShopDiscount, g.HouseGateDiscount, g.HouseLinkBonus, g.HouseLinkDiscount = 0, false, "", false, nil, false, false, [4]uint8{}, 0, 0, 0
 			g.Bank = nil
 			g.Applicants = nil
 			s.Details.Guild = ""

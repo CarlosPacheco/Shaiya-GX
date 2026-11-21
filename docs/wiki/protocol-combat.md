@@ -12,7 +12,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 Declarations: [packet.CharacterMove](../../server/internal/packet/packet.go#L98), [proto.CharacterMove](../../internal/proto/opcodes.go#L82).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L212)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L213)
 
 **S→C serializers:** [buildCharacterMove (server/internal/world/character.go)](../../server/internal/world/character.go#L524)
 
@@ -95,7 +95,7 @@ type UserMove struct {
 
 Declarations: [packet.CharacterUserAutoAttack](../../server/internal/packet/packet.go#L100), [proto.CharacterUserAutoAttack](../../internal/proto/opcodes.go#L84).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L257)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L258)
 
 **S→C serializers:** [buildCharacterUserAttack (server/internal/world/pvp.go)](../../server/internal/world/pvp.go#L311), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -168,7 +168,7 @@ type AttackResult struct {
 
 Declarations: [packet.CharacterMobAutoAttack](../../server/internal/packet/packet.go#L101), [proto.CharacterMobAutoAttack](../../internal/proto/opcodes.go#L85).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L248)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L249)
 
 **S→C serializers:** [buildCharacterMobAttack (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1430), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -362,7 +362,7 @@ type Reader struct {
 
 Declarations: [packet.CharacterMotion](../../server/internal/packet/packet.go#L103), [proto.CharacterMotion](../../internal/proto/opcodes.go#L87).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L214)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L215)
 
 **S→C serializers:** [buildCharacterMotion (server/internal/world/character.go)](../../server/internal/world/character.go#L536)
 
@@ -1190,7 +1190,7 @@ Declarations: [packet.SkillCastStarted](../../server/internal/packet/packet.go#L
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [applyRequest (server/internal/world/bots.go)](../../server/internal/world/bots.go#L303), [beginSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L193)
+**S→C serializers:** [applyRequest (server/internal/world/bots.go)](../../server/internal/world/bots.go#L303), [beginSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L194)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L794)
 
@@ -1261,7 +1261,7 @@ func (a *worldBotArena) applyRequest(i int, payload []byte, target int, now time
 
 <details><summary>beginSkill — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L193)
+[Source definition](../../server/internal/world/skillcast.go#L194)
 
 ```go
 func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.SkillDef, target, evolution uint32, p []byte) {
@@ -1274,6 +1274,9 @@ func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.Skil
 	s.autoAttack = false
 	if !s.skillActionReady(def, time.Now()) {
 		if p == nil || !s.queueSpinCombo(def, op, p) {
+			if evolution == 0 && s.holdSkillUse(def, op, p, time.Now()) {
+				return
+			}
 			s.sendSkillMessage(k.SkillID, 215)
 		}
 		return
@@ -1430,7 +1433,7 @@ type SkillCast struct {
 
 Declarations: [packet.SkillUseNoTarget](../../server/internal/packet/packet.go#L148), [proto.SkillUseNoTarget](../../internal/proto/opcodes.go#L133).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L269)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L270)
 
 **S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L121)
 
@@ -1865,7 +1868,7 @@ type ReflectedDamage struct {
 
 Declarations: [packet.SkillUse](../../server/internal/packet/packet.go#L199), [proto.SkillUse](../../internal/proto/opcodes.go#L186).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L269)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L270)
 
 **S→C serializers:** [buildSkillUseResult (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L121)
 
@@ -3068,7 +3071,7 @@ type Resurrection struct {
 
 Declarations: [packet.ResurrectRequest](../../server/internal/packet/packet.go#L150), [proto.ResurrectRequest](../../internal/proto/opcodes.go#L140).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L234)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L235)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -3102,7 +3105,7 @@ type ReviveMode uint8
 
 Declarations: [packet.ItemRepair](../../server/internal/packet/packet.go#L151), [proto.ItemRepair](../../internal/proto/opcodes.go#L141).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L236)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L237)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -3159,7 +3162,7 @@ type ItemRepairResult struct {
 
 Declarations: [packet.ReturnToTown](../../server/internal/packet/packet.go#L152), [proto.ReturnToTown](../../internal/proto/opcodes.go#L142).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L238)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L239)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 

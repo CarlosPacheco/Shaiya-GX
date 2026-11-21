@@ -84,6 +84,8 @@ type App struct {
 	guildConfirm                        *ui.Message
 	unionConfirm                        *ui.Message // confirm before dismantling a raid
 	guildVoteMessage                    *ui.Message
+	learnConfirm                        *ui.Message
+	learnKey                            sdata.SkillKey
 	guildDuelMessage                    *ui.Message
 	guildDuel                           guildDuelView
 	guildCreateUI                       *ui.GuildCreateDialog
@@ -392,6 +394,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.auctionConfirm, err = ui.NewMessage(a); err != nil {
 		return nil, err
 	}
+	if a.learnConfirm, err = ui.NewMessage(a); err != nil {
+		return nil, err
+	}
 	if a.guildVoteMessage, err = ui.NewMessage(a); err != nil {
 		return nil, err
 	}
@@ -414,6 +419,13 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.guildDirectoryUI, err = ui.NewGuildDirectory(a); err != nil {
 		return nil, err
 	}
+	if a.guildCreateUI != nil && a.guildDirectoryUI != nil {
+		a.guildCreateUI.Anchor = func(w, h int) (int, int) {
+			x, y := a.guildDirectoryUI.Origin(w, h)
+			return x + 0xa0, y + 0x8c
+		}
+	}
+
 	if a.npcTalkUI, err = ui.NewNPCTalk(a); err != nil {
 		return nil, err
 	}
@@ -745,6 +757,9 @@ func (a *App) drawFrame(w, h int) {
 	if a.screen == screenWorld && !a.worldUIHidden() && a.guildVoteMessage != nil {
 		a.guildVoteMessage.Draw(a.sprites, a.font, w, h)
 	}
+	if a.screen == screenWorld && !a.worldUIHidden() && a.learnConfirm != nil {
+		a.learnConfirm.Draw(a.sprites, a.font, w, h)
+	}
 	if a.screen == screenWorld && !a.worldUIHidden() {
 		a.drawMallConfirm(w, h)
 	}
@@ -870,6 +885,9 @@ func (a *App) backToLogin(msg string) {
 	}
 	if a.guildVoteMessage != nil {
 		a.guildVoteMessage.Visible = false
+	}
+	if a.learnConfirm != nil {
+		a.learnConfirm.Visible = false
 	}
 	if a.guildCreateUI != nil {
 		a.guildCreateUI.Visible = false

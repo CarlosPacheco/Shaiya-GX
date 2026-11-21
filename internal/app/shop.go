@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
@@ -270,7 +271,7 @@ func (a *App) drawMarket(w, h int, def sdata.NPC) {
 	if cell, ok := ui.MarketHit(a.lastMouseX-x, a.lastMouseY-y); ok && !v.dragging && start+cell < len(def.Items) {
 		it := def.Items[start+cell]
 		if d := a.itemsItem(it.Type, it.TypeID); d != nil {
-			a.drawItemDetails(d, nil, 1, min(x+ui.MarketWidth+8, max(0, w-296)), min(y+112, max(0, h-106)), w, h, fmt.Sprintf("Buy: %d gold", d.BuyPrice))
+			a.drawItemDetails(d, nil, 1, min(x+ui.MarketWidth+8, max(0, w-296)), min(y+112, max(0, h-106)), w, h, a.shopPriceText(def, d))
 		}
 	}
 }
@@ -293,3 +294,19 @@ func (a *App) sellItem(source [2]uint8, count uint16) {
 
 // overlay reports a conversation or quest window covering the NPC's service.
 func (v *shopView) overlay() bool { return v.questMode || v.talk }
+
+// shopPriceText is the price line of a merchant tooltip. In a guild house the
+// guild's discount for that kind of shop applies (the server charges the same).
+func (a *App) shopPriceText(def sdata.NPC, d *sdata.Item) string {
+	g := &a.state.Guild
+	if !houseMaps[a.state.MapID] || g.ID == 0 || def.MerchantType < 1 || def.MerchantType > 4 || g.HouseShopDiscount[def.MerchantType-1] == 0 {
+		return fmt.Sprintf("Buy: %d gold", d.BuyPrice)
+	}
+	price := float64(max(d.BuyPrice, 0))
+	reduced := uint32(math.Floor(price*float64(100-g.HouseShopDiscount[def.MerchantType-1])/100 + 0.5))
+	state := "ok"
+	if a.state.Details.Money < reduced {
+		state = "short"
+	}
+	return fmt.Sprintf("HouseBuy:%s|%d|%d", state, reduced, max(d.BuyPrice, 0))
+}

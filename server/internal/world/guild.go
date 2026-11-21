@@ -59,6 +59,12 @@ type guild struct {
 	UseHouse   uint8
 	EtinReturn uint32
 	KeepEtin   uint32
+	// gmHouse: founded by a GM account. A test guild whose house is always
+	// active, ranked and paid, with no GRB or etin upkeep.
+	gmHouse bool
+	// gmGRB: a GM owner is inside the guild's ranking instance outside the
+	// normal schedule; points are credited when that GM leaves.
+	gmGRB bool
 	// Monster points earned in the current guild ranking battle.
 	grbPoints  uint32
 	gd         guildDuel // guarded by duelMu
@@ -115,7 +121,8 @@ func LoadGuilds(log *logx.Logger) error {
 	for _, r := range rows {
 		guildsByID[r.ID] = &guild{ID: r.ID, Name: r.Name, Master: r.MasterName, Remark: r.Remark, Country: r.Country,
 			Points: r.Points, Rank: r.Rank, Etin: r.Etin, BuyHouse: r.BuyHouse, UseHouse: r.UseHouse,
-			EtinReturn: r.EtinReturn, KeepEtin: r.KeepEtin, members: map[uint32]*guildMember{}, applicants: map[uint32]*guildMember{}}
+			EtinReturn: r.EtinReturn, KeepEtin: r.KeepEtin, gmHouse: r.MasterAdmin, members: map[uint32]*guildMember{}, applicants: map[uint32]*guildMember{}}
+		guildsByID[r.ID].forceGMHouse()
 		next = max(next, r.ID+1)
 	}
 	for _, m := range members {
@@ -220,6 +227,9 @@ func (s *Session) guildConnect() {
 			lists = append(lists, g.memberListPackets()...)
 			lists = append(lists, g.bankListPackets()...)
 			if f := g.npcListPacket(); f != nil {
+				lists = append(lists, f)
+			}
+			if f := g.houseStatusPacket(); f != nil {
 				lists = append(lists, f)
 			}
 			if m.Rank <= guildRankAdmin {

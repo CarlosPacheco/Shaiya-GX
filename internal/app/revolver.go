@@ -353,6 +353,7 @@ func (a *App) revolverIcon(slot revolverSlot) (out ui.ActionSlot) {
 		if file, uv, ok := ui.SkillIcon(d.Icon); ok {
 			out.Icon, out.UV = a.assets.Texture("interface/"+file), uv
 		}
+		out.Level = k.Level
 		out.Cooldown = max(0, a.skills.cooldowns[k.ID]-a.clock)
 		out.CooldownDuration = a.skillCooldownTotal(k.ID, d)
 	}

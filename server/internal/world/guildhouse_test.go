@@ -24,8 +24,22 @@ func TestGuildHouseINIOverridesAndKeepsMissing(t *testing.T) {
 		t.Fatal(err)
 	}
 	h := parseGuildHouse(ini)
-	if h.ShopRate != [4]float64{0.95, 0.90, 0.85, 0.80} || h.PotionRate != [4]float64{0.90, 0.80, 0.70, 0.60} {
-		t.Fatalf("shop rates %v %v", h.ShopRate, h.PotionRate)
+	for shop := 1; shop <= 3; shop++ {
+		if h.ShopFactor[shop] != [4]float64{0.95, 0.90, 0.85, 0.80} {
+			t.Fatalf("shop %d factors %v", shop, h.ShopFactor[shop])
+		}
+	}
+	if h.ShopFactor[4] != [4]float64{0.90, 0.80, 0.70, 0.60} {
+		t.Fatalf("potion factors %v", h.ShopFactor[4])
+	}
+	if h.GateRate != [6]float64{} || h.RepairRate != [6]float64{0.99, 0.95, 0.95, 0.90, 0.90, 0.90} || h.MixRate != [6]float64{0.90, 0.80, 0.70, 0.60, 0.50, 0.10} {
+		t.Fatalf("gate %v repair %v link %v", h.GateRate, h.RepairRate, h.MixRate)
+	}
+	if got := h.service(guildNpcSmith).Keep; got != [6]uint16{0, 100, 200, 500, 800, 1500} {
+		t.Fatalf("smith keep %v", got)
+	}
+	if h.CreateMoney != 1_000_000 || h.BuyMoney != 50_000_000 || h.DefaultKeep != 2000 {
+		t.Fatalf("house %d %d %d", h.CreateMoney, h.BuyMoney, h.DefaultKeep)
 	}
 	if got := h.service(guildNpcGeneral).Cost; got != [7]uint16{0, 150, 200, 400, 0, 0, 0} {
 		t.Fatalf("general costs %v", got)
@@ -36,12 +50,15 @@ func TestGuildHouseINIOverridesAndKeepsMissing(t *testing.T) {
 	if h.MixPercent != [6]int32{0, 0, 1, 1, 2, 2} || h.BankSlots != [6]uint16{40, 80, 120, 160, 200, 240} {
 		t.Fatalf("mix %v bank %v", h.MixPercent, h.BankSlots)
 	}
-	if h.NpcIDs[0][1][1][0] != 196 || h.NpcIDs[0][1][2][0] != 198 || h.NpcIDs[1][2][2][0] != 212 {
-		t.Fatalf("NPC ids %v", h.NpcIDs)
-	}
-	// Absent keys (the potion shop tables) keep the executable values.
 	if got := h.service(guildNpcPotion).Cost; got != [7]uint16{0, 2000, 5000, 10000, 0, 0, 0} {
 		t.Fatalf("potion costs %v", got)
+	}
+	if got := h.service(guildNpcBank).Cost; got != [7]uint16{0, 200, 500, 1000, 2000, 5000, 0} {
+		t.Fatalf("bank costs %v", got)
+	}
+	// Absent sections keep the built-in values.
+	if d := parseGuildHouse(iniFile{}); d.ShopFactor != defaultGuildHouse().ShopFactor {
+		t.Fatal("empty file changed the defaults")
 	}
 }
 
@@ -79,29 +96,50 @@ func TestGuildHouseRates(t *testing.T) {
 	defer func() { guildHouse = old }()
 	g := &guild{Rank: 5, Country: 0}
 	g.npcs[0] = guildNpcSlot{Type: guildNpcWeapon, Level: 1}
-	if r, res, _ := g.shopBuyRate(196, 1); res != 0 || r != 0.98 {
+	// The discount belongs to the kind of shop, whatever NPC sells.
+	if r, res, _ := g.shopBuyRate(1); res != 0 || r != 0.98 {
 		t.Fatalf("level-1 weapon shop: %v %d", r, res)
 	}
-	if _, res, detail := g.shopBuyRate(197, 1); res != 2 || detail != 2 {
-		t.Fatalf("level-2 weapon shop NPC: %d %d", res, detail)
+	if r, res, _ := g.shopBuyRate(2); res != 0 || r != 0.99 {
+		t.Fatalf("level-0 armor shop: %v %d", r, res)
 	}
-	if _, res, detail := (&guild{Rank: 7}).shopBuyRate(1, 4); res != 1 || detail != 6 {
-		t.Fatalf("potion rank limit: %d %d", res, detail)
-	}
-	if _, need, ok := g.gateRate(38); ok || need != 2 {
-		t.Fatalf("level-2 gatekeeper: %d %v", need, ok)
+	if _, res, _ := (&guild{Rank: 31}).shopBuyRate(4); res != 0 {
+		t.Fatalf("an unranked guild was refused the potion shop: %d", res)
 	}
 	g.npcs[1] = guildNpcSlot{Type: guildNpcGate, Level: 3}
-	if r, _, ok := g.gateRate(39); !ok || r != 0 {
-		t.Fatalf("level-3 gatekeeper: %v %v", r, ok)
+	guildHouse.GateRate = [6]float64{1, 0.9, 0.8, 0.5}
+	if r := g.gateRate(); r != 0.5 {
+		t.Fatalf("level-3 gatekeeper fee factor %v", r)
 	}
 }
 
 func TestGuildCreateFeeINI(t *testing.T) {
 	for value, want := range map[string]uint32{"0": 0, "250000": 250000, "-1": 1000000, "4294967296": 1000000} {
-		h := parseGuildHouse(iniFile{"DEFAULTSET": {"GUILDCREATEMONEY": value}})
+		h := parseGuildHouse(iniFile{"HOUSE": {"CREATEGUILDCOST": value}})
 		if h.CreateMoney != want {
 			t.Errorf("GuildCreateMoney %q = %d, want %d", value, h.CreateMoney, want)
 		}
+	}
+}
+
+func TestGMGuildHouseIsAlwaysOpenWithoutGRB(t *testing.T) {
+	g := &guild{Rank: 31, gmHouse: true, Etin: 0, KeepEtin: 2000}
+	g.forceGMHouse()
+	if !g.houseEnabled() || g.Rank != 31 {
+		t.Fatalf("GM house closed: rank=%d use=%d buy=%d", g.Rank, g.UseHouse, g.BuyHouse)
+	}
+	g.UseHouse = 2
+	g.settleGuildHouse() // no upkeep, never suspended
+	if g.UseHouse != 1 || g.Etin != 0 {
+		t.Fatal("GM house was suspended or charged")
+	}
+	normal := &guild{Rank: 31}
+	normal.forceGMHouse()
+	if normal.houseEnabled() {
+		t.Fatal("a guild without a purchased house got one")
+	}
+	bought := &guild{Rank: 31, BuyHouse: 1, UseHouse: 1}
+	if !bought.houseEnabled() {
+		t.Fatal("an unranked guild with a bought house is closed")
 	}
 }

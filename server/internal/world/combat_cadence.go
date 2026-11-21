@@ -52,3 +52,47 @@ func (s *Session) processSpinCombo() {
 		s.handleUseSkill(q.op, q.payload)
 	}
 }
+
+// pendingSkillUse is the classic one-slot selection: a request that reaches the
+// server before the shared execution deadline is kept (latest wins) and runs the
+// moment the interval allows, instead of being refused by a few milliseconds of
+// network jitter. Own reuse, costs and validation are checked again at release.
+type pendingSkillUse struct {
+	payload []byte
+	op      packet.Opcode
+	expires time.Time
+}
+
+func (s *Session) holdSkillUse(def *db.SkillDef, op packet.Opcode, payload []byte, now time.Time) bool {
+	if payload == nil || s.dash != nil || !s.skillReady(def.SkillID) || s.lastActionAt.IsZero() {
+		return false
+	}
+	interval, ok := skilltiming.Interval(s.speeds().attack)
+	if !ok {
+		return false
+	}
+	s.pendingSkill = &pendingSkillUse{append([]byte(nil), payload...), op, s.lastActionAt.Add(interval + time.Second)}
+	return true
+}
+
+func (s *Session) processPendingSkill() {
+	q := s.pendingSkill
+	if q == nil {
+		return
+	}
+	now := time.Now()
+	if now.After(q.expires) || s.dead || s.cast != nil {
+		s.pendingSkill = nil
+		return
+	}
+	_, def, ok := s.knownSkill(q.payload[2])
+	if !ok {
+		s.pendingSkill = nil
+		return
+	}
+	if !s.skillActionReady(def, now) {
+		return
+	}
+	s.pendingSkill = nil
+	s.handleUseSkill(q.op, q.payload)
+}

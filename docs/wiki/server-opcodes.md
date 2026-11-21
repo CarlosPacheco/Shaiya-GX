@@ -208,7 +208,7 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x0D30` | [GuildNew](protocol-guilds.md#opcode-0d30) | — | yes | yes |
 | `0x0D31` | [GuildBankPlaced](protocol-guilds.md#opcode-0d31) | — | yes | yes |
 | `0x0D32` | [GuildBankTaken](protocol-guilds.md#opcode-0d32) | — | yes | yes |
-| `0x0D33` | [GuildHouseKeepEtin](protocol-guilds.md#opcode-0d33) | — | — | — |
+| `0x0D33` | [GuildHouseKeepEtin](protocol-guilds.md#opcode-0d33) | — | yes | yes |
 | `0x0D34` | [GuildHouseBuy](protocol-guilds.md#opcode-0d34) | yes | yes | yes |
 | `0x0D35` | [GuildDonate](protocol-guilds.md#opcode-0d35) | yes | yes | yes |
 | `0x0D37` | [GuildRankingList](protocol-guilds.md#opcode-0d37) | — | yes | yes |

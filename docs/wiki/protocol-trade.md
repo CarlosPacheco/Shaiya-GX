@@ -12,7 +12,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 Declarations: [packet.ExchangeRequest](../../server/internal/packet/packet.go#L228), [proto.ExchangeRequest](../../internal/proto/opcodes.go#L216).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L178)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L179)
 
 **S→C serializers:** [handleTradeRequest (server/internal/world/trade.go)](../../server/internal/world/trade.go#L157)
 
@@ -89,7 +89,7 @@ func DecodeExchangeID(p []byte) (uint32, error) { r := NewReader(p); id := r.U32
 
 Declarations: [packet.ExchangeAnswer](../../server/internal/packet/packet.go#L229), [proto.ExchangeAnswer](../../internal/proto/opcodes.go#L217).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L183)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L184)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
@@ -233,7 +233,7 @@ func DecodeExchangeByte(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(
 
 Declarations: [packet.ExchangeReady](../../server/internal/packet/packet.go#L232), [proto.ExchangeReady](../../internal/proto/opcodes.go#L220).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L187)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L188)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
@@ -310,7 +310,7 @@ func Op(payload []byte) Opcode {
 
 Declarations: [packet.ExchangeAdd](../../server/internal/packet/packet.go#L233), [proto.ExchangeAdd](../../internal/proto/opcodes.go#L221).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L191)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L192)
 
 **S→C serializers:** [handleTradeAdd (server/internal/world/trade.go)](../../server/internal/world/trade.go#L261)
 
@@ -414,7 +414,7 @@ type ExchangeOwnItem struct {
 
 Declarations: [packet.ExchangeRemove](../../server/internal/packet/packet.go#L234), [proto.ExchangeRemove](../../internal/proto/opcodes.go#L222).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L199)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L200)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -444,7 +444,7 @@ func ExchangeRemovePacket(slot uint8) []byte {
 
 Declarations: [packet.ExchangeAddMoney](../../server/internal/packet/packet.go#L235), [proto.ExchangeAddMoney](../../internal/proto/opcodes.go#L223).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L203)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L204)
 
 **S→C serializers:** [buildTradeMoney (server/internal/world/trade.go)](../../server/internal/world/trade.go#L315)
 
@@ -574,7 +574,7 @@ type ExchangeItem struct {
 
 Declarations: [packet.ExchangeConfirm](../../server/internal/packet/packet.go#L237), [proto.ExchangeConfirm](../../internal/proto/opcodes.go#L225).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L208)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L209)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 
@@ -657,7 +657,7 @@ Declarations: [proto.MyShopBegin](../../internal/proto/myshop.go#L12).
 
 Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523. setup; the reply carries a result
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L174), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L203)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L175), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L203)
 
 **S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
 
@@ -719,7 +719,7 @@ Declarations: [proto.MyShopCancel](../../internal/proto/myshop.go#L13).
 
 Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523. cancel; also the notice that the market ended
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L174), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L219)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L175), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L219)
 
 **S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
 
@@ -753,7 +753,7 @@ Declarations: [proto.MyShopOpen](../../internal/proto/myshop.go#L14).
 
 Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523. sell, with the market message
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L174), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L221)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L175), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L221)
 
 **S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
 
@@ -803,7 +803,7 @@ Declarations: [proto.MyShopStop](../../internal/proto/myshop.go#L15).
 
 Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L174), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L223)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L175), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L223)
 
 **S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
 
@@ -837,7 +837,7 @@ Declarations: [proto.MyShopAdd](../../internal/proto/myshop.go#L16).
 
 Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L174), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L229)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L175), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L229)
 
 **S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
 
@@ -916,7 +916,7 @@ Declarations: [proto.MyShopRemove](../../internal/proto/myshop.go#L17).
 
 Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L174), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L249)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L175), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L249)
 
 **S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
 
@@ -992,7 +992,7 @@ Declarations: [proto.MyShopPrice](../../internal/proto/myshop.go#L18).
 
 Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L174), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L255)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L175), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L255)
 
 **S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
 
@@ -1131,7 +1131,7 @@ Declarations: [proto.MyShopEnter](../../internal/proto/myshop.go#L20).
 
 Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L174), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L265)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L175), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L265)
 
 **S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
 
@@ -1207,7 +1207,7 @@ Declarations: [proto.MyShopLeave](../../internal/proto/myshop.go#L21).
 
 Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L174), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L270)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L175), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L270)
 
 **S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
 
@@ -1372,7 +1372,7 @@ Declarations: [proto.MyShopBuy](../../internal/proto/myshop.go#L24).
 
 Source notes: Personal markets (setup market): the request and reply opcodes of CUser::PacketMyShop (0x2301-0x230e) and the bubble broadcast 0x0523.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L174), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L273)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L175), [handleMyShop (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L273)
 
 **S→C serializers:** [shopAck (server/internal/world/myshop.go)](../../server/internal/world/myshop.go#L95)
 
