@@ -11,28 +11,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
-func TestMobDoubleClickRequiresUninterruptedPair(t *testing.T) {
-	var c mobClick
-	for _, click := range []struct {
-		id   uint32
-		x, y int
-		at   float64
-		want bool
-	}{
-		{1, 100, 100, 1, false}, {1, 103, 102, 1.2, true},
-		{1, 103, 102, 1.3, false}, // Third click starts a new pair.
-		{2, 103, 102, 1.4, false}, // Another target breaks the pair.
-		{2, 110, 102, 1.5, false}, // Pointer moved more than six pixels.
-		{2, 110, 102, 2, false},   // Too late.
-		{0, 110, 102, 2.1, false}, {2, 110, 102, 2.2, false},
-		{2, 110, 102, 1, false}, // Clock rollback cannot trigger an attack.
-	} {
-		if got := c.double(click.id, click.x, click.y, click.at); got != click.want {
-			t.Fatalf("click %+v: double=%v", click, got)
-		}
-	}
-}
-
 func TestPickupRejectionsReachSystemChat(t *testing.T) {
 	a := inputApp()
 	for code, want := range map[byte]string{
@@ -86,14 +64,13 @@ func TestMobPickingUsesLiveMobsAndVisibleProjection(t *testing.T) {
 	}
 }
 
-func TestHUDClickBlocksWorldAndBreaksAttackPair(t *testing.T) {
+func TestHUDClickBlocksWorld(t *testing.T) {
 	for _, point := range [][2]int{{40, 50}, {300, 30}, {717, 715}} {
 		a := inputApp()
 		a.state.Target = 1
-		a.wv.mobClick.double(1, 512, 400, 1)
 		controls := a.worldControls(&platform.Input{MouseX: point[0], MouseY: point[1], Pressed: true, MouseDown: true, Down: "W"}, 1024, 768)
-		if controls.Pressed || controls.MouseDown || controls.Down != "W" || a.wv.mobClick.id != 0 {
-			t.Fatal("HUD press reached world/stopped movement/retained double click", point, controls)
+		if controls.Pressed || controls.MouseDown || controls.Down != "W" {
+			t.Fatal("HUD press reached world/stopped movement", point, controls)
 		}
 		controls = a.worldControls(&platform.Input{MouseX: 512, MouseY: 400, Clicked: true}, 1024, 768)
 		if controls.Clicked {
@@ -239,5 +216,49 @@ func TestAttackApproachWaitsDuringPreviousAttackPause(t *testing.T) {
 	a.updateActionApproach(&platform.Input{})
 	if a.wv.approachTarget != mob.ID {
 		t.Fatal("arriving during the movement pause discarded the attack")
+	}
+}
+
+// Native 0x43bfa0: a click selects, a click on the selected target engages it
+// with no time window, and the chase keeps following and swinging.
+func TestClickOnSelectedMobEngagesWithoutTimeLimitAndChaseKeepsFollowing(t *testing.T) {
+	a := inputApp()
+	a.scene3d = &render.Scene3D{
+		View: render.LookAtLH(render.V3{0, 1, -5}, render.V3{0, 1, 0}, render.V3{0, 1, 0}),
+		Proj: render.PerspectiveFovLH(math.Pi/4, 1, .1, 100),
+	}
+	mob := &game.Entity{ID: 42, Kind: game.KindMob, Z: 12}
+	a.state.Entities[mob.ID] = mob
+	a.wv.facing = render.V3{0, 0, 1}
+	click := func(at float64) {
+		a.clock = at
+		in := &platform.Input{Clicked: true, MouseX: 256, MouseY: 256}
+		a.updateCombat(in, 512, 512)
+		a.updateActionApproach(in)
+	}
+	a.state.Target = mob.ID // already selected by an earlier click
+	click(9)               // however long ago: there is no time window
+	if a.wv.approachTarget != mob.ID || !a.wv.travel {
+		t.Fatal("second click on the selected mob did not start the chase")
+	}
+	// Arriving and attacking leaves the chase tracking the mob.
+	a.wv.pos = render.V3{0, 0, 11.5}
+	mob.Z = 12
+	a.wv.engagedID = mob.ID
+	a.updateActionApproach(&platform.Input{})
+	if a.wv.approachTarget != mob.ID || a.wv.travel {
+		t.Fatal("chase must keep tracking the engaged mob without moving")
+	}
+	mob.Z = 30 // it runs away
+	a.updateActionApproach(&platform.Input{})
+	if !a.wv.travel || a.wv.engagedID != 0 {
+		t.Fatal("chase did not resume after the mob left reach", a.wv.travel, a.wv.engagedID)
+	}
+}
+
+func TestAttackReachFollowsWeaponAndMobSize(t *testing.T) {
+	a := inputApp()
+	if got := a.attackReachTo(&game.Entity{Kind: game.KindMob}); got != 1 {
+		t.Fatal("bare hands reach", got)
 	}
 }

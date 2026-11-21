@@ -90,7 +90,7 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 			return true
 		}
 		goal = render.V3{e.X, e.Y, e.Z}
-		reach = a.attackReach()
+		reach = a.attackReachTo(e)
 		if len(v.approachSkill) > 0 {
 			var def sdata.Skill
 			var ok bool
@@ -113,7 +113,10 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 	delta[1] = 0
 	if delta.Len() > reach {
 		v.travel = true
-		v.destination = goal.Sub(delta.Norm().Scale(reach * .9))
+		v.destination = goal.Sub(delta.Norm().Scale(reach * .97))
+		if v.engagedID == v.approachTarget {
+			v.engagedID = 0 // the target left reach: the chase attacks again on arrival
+		}
 		return true
 	}
 
@@ -129,6 +132,17 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 	// queued at the target until it can actually be requested.
 	if !v.approachNPC && !v.approachLoot && len(v.approachSkill) == 0 &&
 		(!a.attackMovementAllowed() || a.clock < v.attackMoveUntil) {
+		v.travel = false
+		return true
+	}
+	plain := !v.approachNPC && !v.approachLoot && len(v.approachSkill) == 0
+	if plain && v.engagedID == v.approachTarget {
+		// Already attacking: keep following (0x43bfa0 state 3 stays active
+		// while the target lives) and swing again only after it left reach.
+		v.travel = false
+		return true
+	}
+	if plain && a.clock-v.engagedAt < .25 {
 		v.travel = false
 		return true
 	}
@@ -174,6 +188,26 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 		return true
 	}
 	return a.attackTarget()
+}
+
+// attackReachTo is the horizontal centre distance at which the original stops
+// chasing (0x43bfa0): bare hands 1.0; otherwise weapon range plus the mob's
+// Size minus 0.3, or plus 0.5 against players.
+func (a *App) attackReachTo(e *game.Entity) float32 {
+	weapon := a.state.Inventory[[2]uint8{0, 5}]
+	def := a.itemsItem(weapon.Type, weapon.TypeID)
+	if def == nil {
+		return 1
+	}
+	reach := float32(def.Range)
+	if e != nil && e.Kind == game.KindMob {
+		if md, err := a.assets.MonsterDefinition(e.TypeID); err == nil {
+			reach += float32(md.Size) - .3
+		}
+	} else {
+		reach += .5
+	}
+	return max(reach, 1)
 }
 
 func (a *App) attackReach() float32 {

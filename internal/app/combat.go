@@ -47,7 +47,6 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 		return
 	}
 	if a.state.Self.Dead {
-		a.wv.mobClick = mobClick{}
 		for _, r := range in.Chars {
 			if (r == 'r' || r == 'R') && a.clock >= a.wv.reviveAt {
 				if err := a.world.Send(proto.RevivePacket()); err != nil {
@@ -65,14 +64,13 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 	}
 	id := a.pickGroundModel(in, w, h)
 	if id != 0 {
-		a.wv.mobClick = mobClick{}
 		a.approachLoot(id)
 		in.Clicked = false // This click issued the approach; do not cancel it in movement.
 		return
 	}
 	if id := a.pickNPC(in, w, h); id != 0 {
-		// A click targets the NPC; a double click walks to it and talks.
-		if a.wv.mobClick.double(id, in.MouseX, in.MouseY, a.clock) {
+		// A click targets the NPC; a click on the selected NPC walks to it and talks.
+		if a.state.Target == id {
 			a.openNPC(id)
 		} else {
 			a.selectNPC(id)
@@ -81,6 +79,7 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 		return
 	}
 	if in.Clicked || in.HasKey(platform.KeyTarget) || in.HasKey(platform.KeyPreviousTarget) {
+		selected := a.state.Target
 		target := a.pickMob(in, w, h)
 		if in.HasKey(platform.KeyPreviousTarget) {
 			target = a.state.PreviousTarget
@@ -112,15 +111,13 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 				a.moveToGround(in, w, h)
 			}
 		}
-		if in.Clicked {
-			if a.wv.mobClick.double(target, in.MouseX, in.MouseY, a.clock) {
-				in.Clicked = false
-				if !a.attackTarget() {
-					return
-				}
+		// Native 0x43bfa0: a click selects; a click on the already selected
+		// target engages it. There is no time window between the two clicks.
+		if in.Clicked && target != 0 && target == selected && target != a.state.SelfID {
+			in.Clicked = false
+			if !a.attackTarget() {
+				return
 			}
-		} else {
-			a.wv.mobClick = mobClick{}
 		}
 	}
 	for _, r := range in.Chars {
@@ -134,7 +131,6 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 		if r != 'f' && r != 'F' {
 			continue
 		}
-		a.wv.mobClick = mobClick{}
 		if !a.attackTarget() {
 			return
 		}
@@ -201,7 +197,7 @@ func (a *App) attackTarget() bool {
 		return false
 	}
 	delta := render.V3{e.X - a.wv.pos[0], 0, e.Z - a.wv.pos[2]}
-	if delta.Len() > a.attackReach() || !a.attackMovementAllowed() || a.clock < a.wv.attackMoveUntil {
+	if delta.Len() > a.attackReachTo(e) || !a.attackMovementAllowed() || a.clock < a.wv.attackMoveUntil {
 		a.wv.autoRun = false
 		a.wv.approachTarget, a.wv.approachLoot = e.ID, false
 		a.wv.approachSkill = nil
@@ -217,6 +213,7 @@ func (a *App) attackTarget() bool {
 			a.backToLogin("Unable to attack duel opponent.")
 			return false
 		}
+		a.keepChasing(e.ID)
 		return true
 	}
 	if e != nil && e.Kind == game.KindMob && !e.Dead {
@@ -224,8 +221,19 @@ func (a *App) attackTarget() bool {
 			a.backToLogin("Unable to send attack request.")
 			return false
 		}
+		a.keepChasing(e.ID)
 	}
 	return true
+}
+
+// keepChasing leaves the approach tracking a target after its attack request:
+// in the original the attack state persists, following the target and swinging
+// again whenever it leaves and re-enters reach.
+func (a *App) keepChasing(id uint32) {
+	v := a.wv
+	v.approachTarget, v.approachLoot, v.approachNPC = id, false, false
+	v.approachSkill = nil
+	v.engagedID, v.engagedAt = id, a.clock
 }
 
 func (a *App) drawCombat(w, h int) {
@@ -324,7 +332,6 @@ func (a *App) selectSelf() {
 	if a.wv != nil {
 		a.wv.approachTarget = 0
 		a.wv.approachSkill = nil
-		a.wv.mobClick = mobClick{}
 	}
 }
 

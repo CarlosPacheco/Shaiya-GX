@@ -43,7 +43,6 @@ type worldView struct {
 	sunFlare                    sunFlare
 	weather                     weatherView
 	mapView                     mapView
-	mobClick                    mobClick
 	portrait                    *render.Texture
 	portraitAppearance          scene.Appearance
 	portraitLoaded              bool
@@ -79,6 +78,8 @@ type worldView struct {
 	autoRun                     bool
 	travel                      bool
 	approachTarget              uint32
+	engagedID                   uint32  // target of the last basic attack sent by the chase
+	engagedAt                   float64 // when it was sent
 	approachSkill               []byte
 	approachLearned             proto.LearnedSkill
 	approachLoot                bool

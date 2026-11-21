@@ -108,7 +108,6 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		return platform.Input{MouseX: in.MouseX, MouseY: in.MouseY}
 	}
 	if a.shop.quantity != nil {
-		v.mobClick = mobClick{}
 		if in.Pressed {
 			v.uiLeft = 5
 		}
@@ -267,7 +266,6 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 	}
 	if captured || pointerOwned {
 		if in.Pressed || in.Clicked {
-			v.mobClick = mobClick{}
 		}
 		controls.Pressed = false
 		controls.Clicked = false

@@ -9,14 +9,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
-// Delivery double-click gesture: same mob, <=350ms and <=6 screen pixels.
-// Consuming the pair prevents a third click from repeating the request.
-type mobClick struct {
-	id   uint32
-	at   float64
-	x, y int
-}
-
 // pickGroundLabel uses the exact label anchor and font rectangle from the last
 // rendered frame. Rapture still validates ownership, distance and inventory.
 func (a *App) pickGroundLabel(in *platform.Input, w, h int) uint32 {
@@ -46,16 +38,6 @@ func (a *App) pickGroundLabel(in *platform.Input, w, h int) uint32 {
 		return bestID
 	}
 	return 0
-}
-
-func (c *mobClick) double(id uint32, x, y int, now float64) bool {
-	dx, dy, elapsed := x-c.x, y-c.y, now-c.at
-	double := id != 0 && c.id == id && elapsed >= 0 && elapsed <= .35 && dx*dx+dy*dy <= 36
-	*c = mobClick{id, now, x, y}
-	if double || id == 0 {
-		*c = mobClick{}
-	}
-	return double
 }
 
 // pickNPC uses the displayed position while eligibility uses the confirmed
