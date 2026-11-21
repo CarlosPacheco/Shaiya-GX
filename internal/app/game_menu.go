@@ -186,9 +186,6 @@ func (a *App) applyClientSettings() {
 		if settings.HideCloak != a.appliedHideCloak || settings.HideHelmet != a.appliedHideHelmet {
 			a.appliedHideCloak, a.appliedHideHelmet = settings.HideCloak, settings.HideHelmet
 			a.refreshSelf(a.wv)
-			for id := range a.wv.actors {
-				delete(a.wv.actors, id)
-			}
 		}
 	}
 	if a.chatUI != nil {

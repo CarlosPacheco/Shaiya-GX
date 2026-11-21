@@ -32,6 +32,8 @@ type remoteActor struct {
 	dead            bool
 	swimming        bool
 	shape           proto.UserShape
+	hideCloak       bool
+	hideHelmet      bool
 	character       *scene.Character
 	mount           *scene.Vehicle
 	mountShape      uint8
@@ -106,6 +108,7 @@ func (a *App) prepareRemotePlayers() {
 			delete(v.actors, id)
 		}
 	}
+	settings := a.clientSettings()
 	for id, e := range a.state.Entities {
 		if e.Kind != game.KindUser || e.Shape == nil {
 			continue
@@ -114,16 +117,15 @@ func (a *App) prepareRemotePlayers() {
 		if form := a.state.PlayerForms[id]; form.Kind == proto.FormDisguise {
 			sh = form.Shape
 		}
+		hideCloak := settings.HideCloak && sh.Equipment[7][0] != 0
+		hideHelmet := settings.HideHelmet && sh.Equipment[0][0] != 0
 		cached := v.actors[id]
-		if cached == nil || cached.shape != sh || cached.entity != e {
-			var gestureSerial uint64
-			var position remotePosition
-			moveSerial, moveMode, moveX, moveZ, walkUntil := e.MoveSerial, e.Motion&0x3f, e.X, e.Z, float64(0)
-			if cached != nil && cached.entity == e {
-				position = cached.position
-				gestureSerial = cached.gestureSerial
-				moveSerial, moveMode, moveX, moveZ, walkUntil = cached.moveSerial, cached.moveMode, cached.moveX, cached.moveZ, cached.walkUntil
-			}
+		newEntity := cached == nil || cached.entity != e
+		if newEntity {
+			cached = &remoteActor{entity: e, moveSerial: e.MoveSerial, moveMode: e.Motion & 0x3f, moveX: e.X, moveZ: e.Z}
+			v.actors[id] = cached
+		}
+		if newEntity || cached.shape != sh || cached.hideCloak != hideCloak || cached.hideHelmet != hideHelmet {
 			slot := proto.CharacterSlot{Race: sh.Race, Gender: sh.Gender, Class: sh.Class, Face: sh.Face, Hair: sh.Hair, Height: sh.Height}
 			for i, it := range sh.Equipment {
 				slot.EquipType[i], slot.EquipTypeID[i] = it[0], it[1]
@@ -135,8 +137,11 @@ func (a *App) prepareRemotePlayers() {
 			if err != nil {
 				log.Printf("player %d model: %v", id, err)
 			}
-			cached = &remoteActor{entity: e, shape: sh, character: actor, position: position, gestureSerial: gestureSerial, moveSerial: moveSerial, moveMode: moveMode, moveX: moveX, moveZ: moveZ, walkUntil: walkUntil}
-			v.actors[id] = cached
+			// Cosmetics can replace the model, but must not reset which
+			// gestures have already been consumed for this entity.
+			cached.character, cached.shape = actor, sh
+			cached.hideCloak, cached.hideHelmet = hideCloak, hideHelmet
+			cached.dead, cached.mountCasting = false, false
 		}
 		c := cached.character
 		if c == nil {
