@@ -116,3 +116,31 @@ func TestNPCSkillUpdatesOnlyItsOwnNamespace(t *testing.T) {
 		t.Fatal("backup does not match the original")
 	}
 }
+
+func TestReservedItemRowsSurviveDefinitionEdits(t *testing.T) {
+	plain := binary.LittleEndian.AppendUint32(nil, 1)
+	plain = binary.LittleEndian.AppendUint32(plain, 2)
+	// Native reserved item slots use NUL-terminated empty strings and a zero body.
+	for range 2 {
+		plain = binary.LittleEndian.AppendUint32(plain, 1)
+		plain = append(plain, 0)
+	}
+	plain = append(plain, make([]byte, 81)...)
+	plain = binary.LittleEndian.AppendUint32(plain, 0)
+	plain = binary.LittleEndian.AppendUint32(plain, 0)
+	body := make([]byte, 81)
+	body[0], body[1] = 1, 2
+	plain = append(plain, body...)
+	records, err := definitionRecords(Items, plain)
+	must(t, err)
+	if len(records) != 1 || records[0].ID != 1002 {
+		t.Fatalf("unexpected editable item records: %+v", records)
+	}
+	records[0].DatabaseRow = true
+	definitions := &Definitions{Kind: Items, Records: records, plain: plain}
+	patched, _, err := definitions.apply(DefinitionEdits{0: {"Name": "Edited"}})
+	must(t, err)
+	if !bytes.Equal(patched[:records[0].start], plain[:records[0].start]) {
+		t.Fatal("editing an item changed the preceding reserved bytes")
+	}
+}

@@ -267,7 +267,7 @@ func definitionRecords(kind Kind, plain []byte) ([]Record, error) {
 			row := Record{start: r.pos}
 			row.Name = r.text()
 			row.description = r.pos
-			r.text()
+			description := r.text()
 			row.body = r.pos
 			body := r.take(size)
 			if r.err != nil {
@@ -275,6 +275,9 @@ func definitionRecords(kind Kind, plain []byte) ([]Record, error) {
 			}
 			row.end = r.pos
 			if kind == Items {
+				if row.Name == "" && description == "" && bytes.Count(body, []byte{0}) == len(body) {
+					continue // Reserved item slot, preserved in the original bytes.
+				}
 				typ, id := uint32(body[0]), uint32(body[1])
 				if typ != group || id == 0 {
 					return nil, fmt.Errorf("invalid item identity %d/%d in family %d", typ, id, group)

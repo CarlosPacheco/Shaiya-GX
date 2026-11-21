@@ -9,7 +9,7 @@ Changes since the gx-v0.1.14 full portable.
 - Existing portal routes use 248 recovered original trigger volumes. Cloron's Lair uses its original C2-to-C1 volume, and the C2-to-C3 landing point has been moved onto walkable ground.
 - Character and monster animation playback follows the original speed indices. NPCs face the player they are speaking to. Nameplates use native model heights and NPC role captions.
 - Players and nearby observers can see spawn and faction-specific level-up effects. Leveling up and learning or upgrading a skill play their original feedback. Spawn effects stay anchored, including on monsters. GMs can use `/set level` to change their own level from 1 through the cap, with level-up feedback and equipment preserved.
-- Skill casts and attacks respect server cadence under rapid inputs. Character progression, EXP thresholds and revival rules are shared across former growth modes. Authored experience and combat chance bonuses use explicit percentages and stack according to their effect rules.
+- Skill casts and attacks respect server cadence under rapid inputs. Instant skill animations and effects begin together when the server confirms the skill. Character progression, EXP thresholds and revival rules are shared across former growth modes. Authored experience and combat chance bonuses use explicit percentages and stack according to their effect rules.
 
 ## Items and guilds
 
@@ -26,6 +26,8 @@ Changes since the gx-v0.1.14 full portable.
 - The Risk Sensor warns about nearby enemies on the minimap and plays original battle music when enabled in Sound Options. Character Sound controls original character voices independently of weapon and spell audio.
 - The Revolver controls follow the bar when it rotates. The same right-button drag can close a player context menu and move the camera. Mouse controls apply correctly, the seated camera stays steady, and the normal zoom reaches farther.
 - Geometry detail and texture quality are independent. The Details slider applies rendering presets live. Native helmets render their inner surfaces when visible, and movement remains smooth when remote characters change cosmetic settings.
+
+GX Studio now opens native item catalogs containing reserved empty slots and preserves those slots when saving.
 
 The GitHub archives contain native Windows and Linux builds of Shaiya GX, GX Studio and GX Server, with external fonts, server resources and the schema-35 development seed. Use matching loose client data for the updated interface and catalogs. The [complete gx-v0.1.14 portable on Google Drive](https://drive.google.com/file/d/1TPyHqlapcyItIbuVFsL5ISzapfQPbnPC/view?usp=sharing) is the previous data snapshot.
 

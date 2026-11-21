@@ -206,24 +206,25 @@ func verifyInstantSkillTiming(t *testing.T, a *App, pump func(func() bool)) {
 	}
 	old := a.state.QuickSlots
 	a.state.QuickSlots = []proto.QuickSlot{{Bar: 0, Slot: 0, Bag: 100, Number: uint16(a.state.LastLearn.Number)}}
-	a.useAction(0)
 	action := a.wv.self.ActionID()
+	impacts, releases := len(a.wv.impacts), len(a.wv.releaseEffects)
+	a.useAction(0)
+	if a.wv.self.ActionID() != action || len(a.wv.impacts) != impacts || len(a.wv.releaseEffects) != releases {
+		t.Fatal("instant skill presented before server confirmation")
+	}
 	a.wv.self.Update(.15)
 	pump(func() bool { return a.state.LastSkill.ID == 31 })
 	if a.wv.attackMoveUntil-a.clock < .799 {
 		t.Fatal("self buff omitted 800ms movement recovery", a.wv.attackMoveUntil, a.clock)
 	}
-	if a.wv.self.ActionID() != action || a.wv.self.Time < .15 {
-		t.Fatal("instant skill ACK restarted release animation")
+	if a.wv.self.ActionID() == action || a.wv.self.Time > .001 {
+		t.Fatal("instant skill confirmation did not start the release animation")
 	}
-	if len(a.wv.impacts) == 0 {
-		t.Fatal("self buff did not create its original effect")
+	if len(a.wv.impacts) <= impacts || a.wv.impacts[len(a.wv.impacts)-1].instance.Time > .001 {
+		t.Fatal("instant skill confirmation did not start the impact with the animation")
 	}
-	if a.wv.impacts[len(a.wv.impacts)-1].instance.Time < .12 {
-		t.Fatal("effect clock did not catch up with its release animation")
-	}
-	if len(a.wv.releaseEffects) == 0 || a.wv.releaseEffects[len(a.wv.releaseEffects)-1].instance.Time < .12 {
-		t.Fatal("Concentration omitted its release or restarted its clock")
+	if len(a.wv.releaseEffects) <= releases || a.wv.releaseEffects[len(a.wv.releaseEffects)-1].instance.Time > .001 {
+		t.Fatal("instant skill confirmation did not start the release effect with the animation")
 	}
 	release := a.wv.releaseEffects[len(a.wv.releaseEffects)-1].instance
 	origin, matrix := release.Origin, a.wv.self.World
@@ -234,5 +235,5 @@ func verifyInstantSkillTiming(t *testing.T, a *App, pump func(func() bool)) {
 		t.Fatal("world release followed the caster after emission")
 	}
 	a.state.QuickSlots = old
-	t.Log("instant self spell began on request; ACK retained its animation clock and created its effect")
+	t.Log("instant self spell began animation, release and impact together on server confirmation")
 }

@@ -101,14 +101,14 @@ func TestSharedCombatSpeedAgainstIsolatedGX(t *testing.T) {
 		t.Fatal("packet flood bypassed recovery")
 	}
 	next(2)
-	if ids[1] != 30 {
-		t.Fatal("queued first skill did not release", ids)
+	if ids[1] != 31 {
+		t.Fatal("latest server-buffered skill did not release", ids)
 	}
-	if a.prepareSkillMovement(proto.UseSkillPacket(43, st.SelfID, true)) || a.skills.queuedSkill == nil {
+	if a.prepareSkillMovement(proto.UseSkillPacket(42, st.SelfID, true)) || a.skills.queuedSkill == nil {
 		t.Fatal("second combo skill was not buffered")
 	}
 	next(3)
-	if ids[2] != 31 {
+	if ids[2] != 30 {
 		t.Fatal("queued second skill did not release", ids)
 	}
 	send(proto.UserAttackPacket(other.SelfID))
@@ -123,5 +123,5 @@ func TestSharedCombatSpeedAgainstIsolatedGX(t *testing.T) {
 			t.Fatal("Ext. Fast shared interval mismatch", i, gap)
 		}
 	}
-	t.Log("encrypted basic -> buffered spell -> buffered spell -> basic: shared 1000ms cap, raw packet flood refused")
+	t.Log("encrypted basic -> buffered spell -> buffered spell -> basic: shared 1000ms cap, raw packet flooding produced just one buffered skill")
 }

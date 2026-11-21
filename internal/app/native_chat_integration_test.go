@@ -198,14 +198,22 @@ func verifyNativeChat(t *testing.T, a, b *App, pump func(func() bool)) {
 	pump(func() bool {
 		return contains(a.state, proto.ChatWhisper, "GX native whisper message") && contains(b.state, proto.ChatWhisper, "GX native whisper message")
 	})
-	for _, line := range a.state.Chat {
-		if line.Op == proto.ChatWhisper && line.Text == "GX native whisper message" {
-			entry := chatEntry(a.msg, line)
-			if entry.Color != ui.RGBColor(0xf3a0a0) || entry.Text != a.msg.Format(354, map[string]string{"p": own.Name, "b": line.Text}) {
-				t.Fatal("whisper did not use SysMsg template and native RGB", entry)
+	sender, _ := a.selfSlot()
+	verifyWhisper := func(client *App, expected string) {
+		t.Helper()
+		for _, line := range client.state.Chat {
+			if line.Op == proto.ChatWhisper && line.Text == "GX native whisper message" {
+				entry := chatEntry(client.msg, line)
+				if entry.Color != ui.RGBColor(0xf3a0a0) || entry.Text != expected {
+					t.Fatal("whisper did not use its direction and native color", entry)
+				}
+				return
 			}
 		}
+		t.Fatal("whisper is missing from chat history")
 	}
+	verifyWhisper(a, "Whisper to "+own.Name+": GX native whisper message")
+	verifyWhisper(b, "Whisper from "+sender.Name+": GX native whisper message")
 	a.chatUI.Recipient = ""
 	a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyChatWhisper}})
 	a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyTab}})
