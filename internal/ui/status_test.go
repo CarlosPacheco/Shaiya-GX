@@ -97,45 +97,51 @@ func TestStatusHoldRepeatsPlusAtTenPointsPerSecond(t *testing.T) {
 		v.Update(&in, 1024, 768, state, 0)
 	}
 
+	// A press adds one point at once; releasing adds nothing more.
 	press()
-	v.Update(&held, 1024, 768, state, .29)
-	if v.Draft[0] != 0 {
-		t.Fatal("repeat started before hold delay")
+	if v.Draft[0] != 1 {
+		t.Fatal("the press itself must add one point", v.Draft[0])
+	}
+	v.Update(&held, 1024, 768, state, .09)
+	if v.Draft[0] != 1 {
+		t.Fatal("repeat started before 100 ms")
+	}
+	v.Update(&held, 1024, 768, state, .02)
+	if v.Draft[0] != 2 {
+		t.Fatal("first repeat at 100 ms", v.Draft[0])
 	}
 	release()
-	if v.Draft[0] != 1 {
-		t.Fatal("short tap must add exactly one point")
+	if v.Draft[0] != 2 {
+		t.Fatal("release added a point")
 	}
 
-	press()
-	v.Update(&held, 1024, 768, state, .3)
 	start := v.Draft[0]
-	if start != 2 {
-		t.Fatal("missing first automatic point", start)
-	}
+	press()
 	for range 60 {
 		v.Update(&held, 1024, 768, state, 1.0/60)
 	}
 	release()
-	if v.Draft[0] != start+10 {
-		t.Fatalf("expected ten repeats in one second and zero on release, gained %d", v.Draft[0]-start)
+	if gained := v.Draft[0] - start; gained != 11 {
+		t.Fatalf("one second held must give the press plus ten repeats, gained %d", gained)
 	}
+	start = v.Draft[0]
 
 	press()
+	start++
 	outside := held
 	outside.MouseX -= 50
 	v.Update(&outside, 1024, 768, state, .5)
 	v.Update(&held, 1024, 768, state, .5)
 	release()
-	if v.Draft[0] != start+10 {
-		t.Fatal("repeat resumed after leaving the original button")
+	if v.Draft[0] != start {
+		t.Fatal("repeat resumed after leaving the original button", v.Draft[0], start)
 	}
 
 	state.Base[0] = 65534 - v.Draft[0]
 	press()
 	v.Update(&held, 1024, 768, state, .8)
 	release()
-	if v.Draft[0] != start+11 {
+	if uint32(state.Base[0])+uint32(v.Draft[0]) != 65535 {
 		t.Fatal("repeat exceeded attribute limit", v.Draft[0])
 	}
 	state.Base[0] = 0
@@ -145,5 +151,29 @@ func TestStatusHoldRepeatsPlusAtTenPointsPerSecond(t *testing.T) {
 	release()
 	if v.Draft[0] != state.Points {
 		t.Fatal("repeat exceeded available points", v.Draft[0])
+	}
+}
+
+func TestStatusMinusButtonRepeatsLikeTheNativeRepeatButtons(t *testing.T) {
+	v, err := NewStatus(marketTextures{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	v.Expanded = true
+	v.Draft[0] = 25
+	state := StatusState{Points: 100, Base: [6]uint16{10}}
+	x, y := StatusOrigin(1024, 768, true)
+	held := platform.Input{MouseX: x + 112, MouseY: y + 129, MouseDown: true} // STR minus
+	press := held
+	press.Pressed = true
+	v.Update(&press, 1024, 768, state, 0)
+	for range 30 {
+		v.Update(&held, 1024, 768, state, 1.0/60)
+	}
+	release := held
+	release.MouseDown, release.Clicked = false, true
+	v.Update(&release, 1024, 768, state, 0)
+	if v.Draft[0] != 25-1-5 {
+		t.Fatal("half a second on the minus button must take back the press plus five", v.Draft[0])
 	}
 }

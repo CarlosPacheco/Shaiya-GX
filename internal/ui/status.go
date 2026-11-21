@@ -166,28 +166,20 @@ func (v *Status) Update(in *platform.Input, w, h int, state StatusState, dt floa
 		pointer := *in
 		pointer.Pressed = in.Pressed && v.heldStep == 0 && !b.Disabled && b.hit(in)
 		if pointer.Pressed {
-			v.heldStep, v.repeatIn, v.repeated = i+1, .3, false
+			// Native repeat buttons (mode 5, 0x527450) act on the press itself and
+			// then every 100 ms while held: no initial delay.
+			v.heldStep, v.repeatIn = i+1, statRepeatInterval
+			v.stepStat(i, state, 1)
 		}
-		click := b.Update(&pointer)
+		b.Update(&pointer) // pressed/hover art only; the action already ran
 		if v.heldStep != i+1 {
 			continue
 		}
-		index := statOrder[i/2]
 		switch {
-		case click:
-			v.heldStep = 0
-			if !v.repeated {
-				if i%2 == 0 {
-					v.Draft[index]++
-				} else {
-					v.Draft[index]--
-				}
-			}
-			return false, false
-		case !in.MouseDown || !b.hit(in) || b.Disabled:
+		case in.Clicked || !in.MouseDown || !b.hit(in) || b.Disabled:
 			v.heldStep, b.held = 0, false
-		case !in.Pressed && i%2 == 0:
-			v.repeatStatPoint(index, state, dt)
+		case !pointer.Pressed:
+			v.repeatStatPoint(i, state, dt)
 		}
 	}
 	if v.cancel.Update(in) {
@@ -197,17 +189,29 @@ func (v *Status) Update(in *platform.Input, w, h int, state StatusState, dt floa
 	return v.apply.Update(in), false
 }
 
-func (v *Status) repeatStatPoint(index int, state StatusState, dt float64) {
-	const interval = .1
+const statRepeatInterval = .1
+
+// stepStat moves one allocation row by n points: even buttons add, odd ones
+// take back, both bounded by the free points, the 16-bit cap and the draft.
+func (v *Status) stepStat(i int, state StatusState, n int) {
+	index := statOrder[i/2]
+	if i%2 == 0 {
+		available := int(state.Points) - int(v.Draft.Total())
+		room := 65535 - int(state.Base[index]) - int(v.Draft[index])
+		v.Draft[index] += uint16(max(0, min(n, available, room)))
+		return
+	}
+	v.Draft[index] -= uint16(max(0, min(n, int(v.Draft[index]))))
+}
+
+func (v *Status) repeatStatPoint(i int, state StatusState, dt float64) {
 	v.repeatIn -= max(0, dt)
 	if v.repeatIn > 1e-9 {
 		return
 	}
-	repeats := 1 + int((-v.repeatIn+1e-9)/interval)
-	v.repeatIn += float64(repeats) * interval
-	available := int(state.Points) - int(v.Draft.Total())
-	room := 65535 - int(state.Base[index]) - int(v.Draft[index])
-	v.Draft[index] += uint16(min(repeats, available, room))
+	repeats := 1 + int((-v.repeatIn+1e-9)/statRepeatInterval)
+	v.repeatIn += float64(repeats) * statRepeatInterval
+	v.stepStat(i, state, repeats)
 	v.repeated = true
 }
 
@@ -220,7 +224,7 @@ func (v *Status) buttons() []*Button {
 }
 
 // The original field insets are 15 pixels tall on both status frames.
-func drawStatusValue(s *render.Sprites, f *Font, value string, x, y, width int) {
+func drawStatusValue(s *render.Sprites, f *Font, value string, x, y, width int, tint ...[4]float32) {
 	if value == "" {
 		return
 	}
@@ -230,7 +234,11 @@ func drawStatusValue(s *render.Sprites, f *Font, value string, x, y, width int) 
 	scale := min(float32(1), float32(width-4)/max(1, textWidth), height/max(1, textHeight))
 	left := x + int((float32(width)-textWidth*scale)/2)
 	top := y + int((height-textHeight*scale)/2)
-	f.DrawScaled(s, value, float32(left), float32(top), scale, white, 0)
+	color := white
+	if len(tint) > 0 {
+		color = tint[0]
+	}
+	f.DrawScaled(s, value, float32(left), float32(top), scale, color, 0)
 }
 
 func (v *Status) Draw(s *render.Sprites, f *Font, w, h int, state StatusState) {
@@ -285,8 +293,13 @@ func (v *Status) Draw(s *render.Sprites, f *Font, w, h int, state StatusState) {
 		v.expand.Draw(s)
 	} else {
 		drawStatusValue(s, f, fmt.Sprint(uint32(state.Points)-min(uint32(state.Points), v.Draft.Total())), x+78, y+102, 68)
+		// 0x503ee0: each row shows base + draft; yellow once points are placed.
 		for i, index := range statOrder {
-			drawStatusValue(s, f, fmt.Sprint(v.Draft[index]), x+51, y+131+i*20, 30)
+			tint := white
+			if v.Draft[index] != 0 {
+				tint = [4]float32{1, 1, 0, 1}
+			}
+			drawStatusValue(s, f, fmt.Sprint(uint32(state.Base[index])+uint32(v.Draft[index])), x+51, y+131+i*20, 30, tint)
 		}
 		for i := range v.steps {
 			v.steps[i].Draw(s)

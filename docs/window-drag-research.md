@@ -54,6 +54,10 @@ Still on title strips: the gift box, the raid configuration window, the full map
 - Opening resets the draft and takes the free points from the character.
 - The 12 +/- buttons have 22x22 hit boxes on a 20px pitch; the loop keeps the
   last button under the pointer.
+- Each row of the expanded sheet shows **base + draft** (`0x503ee0`), white until
+  points are placed and yellow after, not just the draft count. The +/- buttons
+  are native repeat buttons (mode 5): they act on the press itself and again
+  every 100 ms while held, for both directions, with no initial delay.
 - A press inside the expanded graph panel (`x..x+0x9b`, `y+0x4e..y+0x12a`)
   neither drags nor clicks.
 - Collapsed frame 277x465 at `(screen width-0x129, 0)`; expanded it grows 132
