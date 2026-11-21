@@ -107,3 +107,13 @@ and deep-water entry do not inherit an earlier drop.
 Native WLD Ladder/Object placements also support shared client/server climbing,
 with server-owned vertical motion and collision-checked landings. See
 [functional ladders](ladders.md) for controls and the asset-free guide catalog.
+
+## Portal volumes
+
+World uses the original WLD trigger bounds for the matching maps and routes
+listed in `server/data/game/PortalBounds.json`. Each row is keyed by map and
+SVMAP portal index. The destination map and source position must match before
+World uses the bounds. Routes without a verified match keep the SVMAP point
+trigger. World checks the actor origin above the feet, as in EP5. The C2
+portal to Cloron's Lair C3 has an arrival height override for the upper entry
+corridor at the authored X/Z position.

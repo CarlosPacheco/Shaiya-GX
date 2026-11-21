@@ -122,9 +122,14 @@ type MapPortal struct {
 	TargetMapID               uint16
 	PosX, PosY, PosZ          float32
 	TargetX, TargetY, TargetZ float32
+	volume                    *portalVolume
 }
 
 func (p *MapPortal) Contains(x, y, z float32) bool {
+	if p.volume != nil {
+		// The original tests the actor origin, .9 above the player's feet.
+		return p.volume.contains(x, y+.9, z, 0)
+	}
 	return abs32(p.PosX-x) <= 5 && abs32(p.PosY-y) <= 5 && abs32(p.PosZ-z) <= 5
 }
 func (p *MapPortal) IsOpen() bool { return p.FactionOrPortalID <= 2 }
@@ -1080,12 +1085,20 @@ func FindPortalByIndex(mapID uint16, index uint8) (MapPortal, bool) {
 }
 
 func FindPortalAt(mapID uint16, x, y, z float32) (MapPortal, bool) {
+	var legacy MapPortal
+	foundLegacy := false
 	for _, p := range EntitiesOnMap(mapID).Portals {
-		if p.Contains(x, y, z) {
+		if !p.Contains(x, y, z) {
+			continue
+		}
+		if p.volume != nil {
 			return p, true
 		}
+		if !foundLegacy {
+			legacy, foundLegacy = p, true
+		}
 	}
-	return MapPortal{}, false
+	return legacy, foundLegacy
 }
 
 func NewPatrolNpc(npcType uint8, typeID uint16, points []NpcPatrolPoint) (MapNpc, bool) {

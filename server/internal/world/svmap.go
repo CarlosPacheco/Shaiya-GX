@@ -110,6 +110,9 @@ func ensureMapDataDir() error {
 
 // LoadSvmaps loads every data/maps/<id>.svmap into the world.
 func LoadSvmaps(log *logx.Logger) error {
+	if err := loadPortalVolumes(); err != nil {
+		return fmt.Errorf("portal bounds: %w", err)
+	}
 	complete, err := mapnav.ValidateCatalog(filepath.Join(config.DataDir(), "geometry"))
 	if err != nil {
 		return fmt.Errorf("server navigation installation: %w", err)
@@ -216,6 +219,7 @@ func loadSvmapFile(mapID uint16, path string, defs *db.Defs) (svmapLoad, error) 
 	if load.entities.Portals, err = readPortals(r); err != nil {
 		return load, err
 	}
+	portalVolumes.apply(mapID, load.entities.Portals)
 	if load.entities.SpawnAreas, err = readSpawnAreas(r); err != nil {
 		return load, err
 	}
