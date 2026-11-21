@@ -10,6 +10,9 @@ import (
 )
 
 func cadenceSession(t *testing.T, ready uint8) *Session {
+	// These tests pin the table ceiling; animation-bound cadence has its own test.
+	skilltiming.AnimationBound = false
+	t.Cleanup(func() { skilltiming.AnimationBound = true })
 	s, d, _ := spellCastRangeFixture(t)
 	s.player = RegisterPlayer(*s.char, nil, false, s.faction, s.out, s.logger)
 	t.Cleanup(s.player.Unregister)
@@ -118,5 +121,31 @@ func TestEarlySkillRequestIsHeldAndRunsWhenRecoveryEnds(t *testing.T) {
 	s.processPendingSkill()
 	if s.char.CurrentHP <= hp || s.pendingSkill != nil {
 		t.Fatal("held request did not run when recovery ended")
+	}
+}
+
+// Animation-bound cadence: the next action is due when the basic-attack clip at
+// the weapon-relative animation rate ends, never later than the table.
+func TestAnimationBoundIntervalWakesAtExactDeadline(t *testing.T) {
+	s := cadenceSession(t, 0)
+	skilltiming.AnimationBound = true
+	old := db.MustDefs()
+	t.Cleanup(func() { db.SetDefsForTest(old) })
+	db.SetDefsForTest(&db.Defs{Items: map[db.ItemKey]*db.ItemDef{{Type: 1, TypeID: 1}: {Type: 1, TypeID: 1, AttackTime: 5}}})
+	s.items = []db.Item{{Bag: 0, Slot: 5, Type: 1, TypeID: 1}}
+	s.buffs = []ActiveBuff{{Effect: typeEffectBuff, Abilities: [3]buffAbility{{Type: 16, Value: 4}}}}
+	interval, ok := s.actionInterval()
+	if !ok || interval.Milliseconds() != 666 {
+		t.Fatal("tier 9 with a base 5 weapon must follow the 45 fps clip", interval)
+	}
+	now := time.Now()
+	s.lastActionAt = now.Add(-interval + 30*time.Millisecond)
+	s.pendingSkill = &pendingSkillUse{expires: now.Add(time.Second)}
+	if w := s.nextWake(); w > 35*time.Millisecond || w < minWake {
+		t.Fatal("the loop would sleep past the held skill's deadline", w)
+	}
+	s.pendingSkill = nil
+	if w := s.nextWake(); w != loopTick {
+		t.Fatal("idle loop must keep the regular tick", w)
 	}
 }

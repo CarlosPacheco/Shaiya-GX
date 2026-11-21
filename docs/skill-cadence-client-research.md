@@ -53,3 +53,14 @@ data. No gameplay change is made by this note.
    like the original client), keeping the table as the slow-speed ceiling.
    Needs an explicit decision because the EP5.4 server rule cannot be verified
    from the client.
+
+## Implemented (trial)
+
+- `skilltiming.IntervalFor` caps the table by the basic-attack clip (30 frames at
+  the weapon-relative animation rate), shared by client and server, so the shared
+  action interval at the maximum index with a base-5 weapon is 667 ms instead of
+  1000 ms (neutral 1000 ms, slowest 2000 ms). `GX_ANIMATION_CADENCE=off` in both
+  processes restores the pure table.
+- Skills may be sent up to 150 ms before the deadline (the server keeps the
+  latest early request) and the session loop wakes at the exact deadline of a
+  held skill, spin combo or auto-attack swing instead of the next 100 ms tick.

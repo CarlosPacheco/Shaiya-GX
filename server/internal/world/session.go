@@ -189,7 +189,10 @@ func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error {
 		if s.aesRecv == nil && time.Now().After(handshakeDeadline) {
 			return fmt.Errorf("world handshake timed out")
 		}
-		conn.SetReadDeadline(time.Now().Add(loopTick))
+		s.stateMu.Lock()
+		wake := s.nextWake()
+		s.stateMu.Unlock()
+		conn.SetReadDeadline(time.Now().Add(wake))
 		n, err := conn.Read(buf)
 		var nerr net.Error
 		timeout := err != nil && errors.As(err, &nerr) && nerr.Timeout()

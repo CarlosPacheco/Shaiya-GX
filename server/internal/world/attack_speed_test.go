@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -63,6 +64,8 @@ func TestNativeWeaponAccessoryLapisMasteryAndBuffSpeed(t *testing.T) {
 }
 
 func TestAttackCadenceCannotBeBypassedByRestartOrTargetSwitch(t *testing.T) {
+	skilltiming.AnimationBound = false
+	t.Cleanup(func() { skilltiming.AnimationBound = true })
 	s, _ := gmWireSession(t, db.Character{ID: 990070, MapID: 60094, CurrentHP: 100}, false)
 	old := db.MustDefs()
 	t.Cleanup(func() { db.SetDefsForTest(old) })
@@ -71,7 +74,7 @@ func TestAttackCadenceCannotBeBypassedByRestartOrTargetSwitch(t *testing.T) {
 	for tier := uint8(0); tier <= 9; tier++ {
 		s.buffs = []ActiveBuff{{Effect: typeEffectBuff, Abilities: [3]buffAbility{{Type: 16, Value: int32(tier) - 5}}}}
 		ms, _ := attackspeed.Milliseconds(tier)
-		if d, ok := weaponAttackDelay(tier); !ok || d != time.Duration(ms)*time.Millisecond {
+		if d, ok := weaponAttackDelay(tier, 5); !ok || d != time.Duration(ms)*time.Millisecond {
 			t.Fatal("delay mismatch")
 		}
 		s.lastActionAt = time.Now().Add(-time.Duration(ms-100) * time.Millisecond)

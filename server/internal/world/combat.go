@@ -28,8 +28,8 @@ type weaponCombat struct {
 }
 
 // weaponAttackDelay takes the native zero-based attack index, not index+1.
-func weaponAttackDelay(tier uint8) (time.Duration, bool) {
-	return skilltiming.Interval(tier)
+func weaponAttackDelay(tier, weaponBase uint8) (time.Duration, bool) {
+	return skilltiming.IntervalFor(tier, weaponBase, true)
 }
 
 func equippedWeaponCombat(items []db.Item) (weaponCombat, bool) {
@@ -45,7 +45,7 @@ func equippedWeaponCombat(items []db.Item) (weaponCombat, bool) {
 		return weaponCombat{}, false
 	}
 	at := d.AttackTime
-	delay, ok := weaponAttackDelay(attackspeed.Tier(at, 0))
+	delay, ok := weaponAttackDelay(attackspeed.Tier(at, 0), at)
 	if !ok {
 		return weaponCombat{}, false
 	}
@@ -87,7 +87,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	stats := StatsFor(ch, s.equipment())
 	// CUser::GetAttackSpeedNow: the swing index moves with gems, passives
 	// and buffs (0..9 over g_ConstUserAttackSpeed).
-	wc.Delay, _ = weaponAttackDelay(attackspeed.Tier(wc.AttackTime, stats.AttackSpeed))
+	wc.Delay, _ = weaponAttackDelay(attackspeed.Tier(wc.AttackTime, stats.AttackSpeed), wc.AttackTime)
 	if !s.lastActionAt.IsZero() && time.Since(s.lastActionAt) < wc.Delay {
 		return true
 	}

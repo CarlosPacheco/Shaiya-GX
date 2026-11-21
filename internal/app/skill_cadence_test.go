@@ -1,13 +1,22 @@
 package app
 
 import (
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"testing"
 )
 
+// tableCadence restores the pure ps_game table for tests of that ceiling.
+func tableCadence(t *testing.T) {
+	old := skilltiming.AnimationBound
+	skilltiming.AnimationBound = false
+	t.Cleanup(func() { skilltiming.AnimationBound = old })
+}
+
 func TestSharedNativeCadenceAndInstantAckWithoutExtraLatency(t *testing.T) {
+	tableCadence(t)
 	a := inputApp()
 	a.clock = 10
 	a.state.SelfID = 1
@@ -25,19 +34,20 @@ func TestSharedNativeCadenceAndInstantAckWithoutExtraLatency(t *testing.T) {
 	if a.skills.lastActionAt != start {
 		t.Fatal("acknowledgment added latency")
 	}
-	a.clock = 10.999
+	a.clock = 10.84
 	if a.prepareSkillMovement(proto.UseSkillPacket(2, 1, true)) || a.skills.lastActionAt != start {
-		t.Fatal("alternating skills bypassed native speed cap")
+		t.Fatal("alternating skills left earlier than the send-early window")
 	}
-	a.clock = 11
+	a.clock = 10.86 // inside the 150 ms before the 1000 ms deadline; the server holds it until due
 	if !a.prepareSkillMovement(proto.UseSkillPacket(2, 1, true)) {
-		t.Fatal("Ext. Fast did not expire at 1000ms")
+		t.Fatal("Ext. Fast skill was not sent inside the early window")
 	}
 	if a.wv.attackMoveUntil < a.clock+.799 {
 		t.Fatal("movement pause changed")
 	}
 }
 func TestPreparedReleaseDoesNotRestartClientRecovery(t *testing.T) {
+	tableCadence(t)
 	a := inputApp()
 	a.state.SelfID = 1
 	a.state.Self.Speed = &proto.CharacterSpeed{Attack: 9}
@@ -52,6 +62,7 @@ func TestPreparedReleaseDoesNotRestartClientRecovery(t *testing.T) {
 	}
 }
 func TestBasicFeedbackAndLiveSpeedShareSkillRecovery(t *testing.T) {
+	tableCadence(t)
 	a := inputApp()
 	a.state.SelfID = 1
 	a.clock = 10
@@ -93,5 +104,23 @@ func TestSharedRecoveryBuffersOnlyLatestSkillAndMovementCancels(t *testing.T) {
 	a.updateQueuedSkill(&platform.Input{Down: "W"})
 	if a.skills.queuedSkill != nil {
 		t.Fatal("manual movement did not cancel queued spell")
+	}
+}
+
+// Animation-bound cadence: the table is only a ceiling over the basic-attack
+// clip at the weapon-relative animation rate (30 frames at 15-45 fps).
+func TestAnimationBoundIntervalFollowsClipAndKeepsTableCeiling(t *testing.T) {
+	for _, c := range []struct {
+		tier, base uint8
+		have       bool
+		ms         int64
+	}{{9, 5, true, 666}, {5, 5, true, 1000}, {0, 5, true, 2000}, {9, 9, true, 1000}, {9, 0, false, 1000}, {2, 2, true, 1000}} {
+		got, ok := skilltiming.IntervalFor(c.tier, c.base, c.have)
+		if !ok || got.Milliseconds() != c.ms {
+			t.Fatalf("%+v: %v", c, got)
+		}
+	}
+	if _, ok := skilltiming.IntervalFor(255, 5, true); ok {
+		t.Fatal("blocked index acted")
 	}
 }

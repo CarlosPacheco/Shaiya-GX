@@ -7,13 +7,19 @@ import (
 	"time"
 )
 
+// actionInterval is the shared interval at the live attack index and weapon.
+func (s *Session) actionInterval() (time.Duration, bool) {
+	wc, have := equippedWeaponCombat(s.items)
+	return skilltiming.IntervalFor(s.speeds().attack, wc.AttackTime, have)
+}
+
 // Both basic attack routes and skills recover from lastActionAt. Use the live
 // equipment/buff tier so haste, slow and gear changes affect recovery immediately.
 func (s *Session) combatActionReady(now time.Time) bool {
 	if s.dash != nil {
 		return false
 	}
-	interval, ok := skilltiming.Interval(s.speeds().attack)
+	interval, ok := s.actionInterval()
 	return ok && (s.lastActionAt.IsZero() || now.Sub(s.lastActionAt) >= interval)
 }
 
@@ -24,7 +30,7 @@ func (s *Session) skillActionReady(def *db.SkillDef, now time.Time) bool {
 	if s.combatActionReady(now) {
 		return true
 	}
-	_, allowed := skilltiming.Interval(s.speeds().attack)
+	_, allowed := s.actionInterval()
 	return allowed && s.lastSkillAt.Equal(s.lastActionAt) && now.Sub(s.lastSkillAt) >= skilltiming.SpinContact && now.Sub(s.lastSkillAt) < skilltiming.SpinDuration && skilltiming.AreaCombo(s.lastSkillID, def.SkillID, def.TargetType, def.TypeEffect, def.ReadyTime)
 }
 
@@ -67,7 +73,7 @@ func (s *Session) holdSkillUse(def *db.SkillDef, op packet.Opcode, payload []byt
 	if payload == nil || s.dash != nil || !s.skillReady(def.SkillID) || s.lastActionAt.IsZero() {
 		return false
 	}
-	interval, ok := skilltiming.Interval(s.speeds().attack)
+	interval, ok := s.actionInterval()
 	if !ok {
 		return false
 	}
@@ -95,4 +101,26 @@ func (s *Session) processPendingSkill() {
 	}
 	s.pendingSkill = nil
 	s.handleUseSkill(q.op, q.payload)
+}
+
+// minWake keeps a blocked pending action from spinning the loop.
+const minWake = 5 * time.Millisecond
+
+// nextWake is how long the session loop may sleep: the usual tick, shortened to
+// the moment a held skill, a spin combo or the next auto-attack swing becomes
+// due, so those run at their exact deadline instead of the next 100 ms tick.
+func (s *Session) nextWake() time.Duration {
+	wake, now := loopTick, time.Now()
+	consider := func(due time.Time) {
+		wake = min(wake, max(due.Sub(now), minWake))
+	}
+	if s.char != nil && !s.lastActionAt.IsZero() && (s.pendingSkill != nil || s.autoAttack) {
+		if interval, ok := s.actionInterval(); ok {
+			consider(s.lastActionAt.Add(interval))
+		}
+	}
+	if s.pendingCombo != nil {
+		consider(s.pendingCombo.due)
+	}
+	return wake
 }
