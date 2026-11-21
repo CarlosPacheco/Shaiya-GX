@@ -187,14 +187,17 @@ ranges glow0–2, brightness0–4, details0–2 and distance0–2. Glow uses nat
 neighbor/center weights (0/0,22/17,44/35). Brightness applies the windowed power
 curve and +10 black offset to the completed game frame, including UI, without
 changing desktop gamma. The original byte input divisor is256 (`0x541540`).
-Geometry Quality defaults to **High**, preserving subpixel static-object LOD
-and full decoration density. Medium and Low raise the allowed static-mesh
-screen error to 1.25 and 3 pixels. They thin grass beyond 25 units to one-half
-and one-quarter density, limit grass to 120 and 60 units, and limit ordinary
-trees to 300 and 160 units. Large landmark trees remain. All presets use the
-same texture filtering and half-size water reflections. The setting controls
-static scene geometry. Terrain, characters and collision follow their normal
-rules. Preset changes clear the previous LOD choice for each object. Distance uses
+Details uses the original slider and defaults to the rightmost position.
+The middle position allows up to 4 pixels of static-mesh error, thins grass
+beyond 12 units and limits ordinary trees to 135 units. The leftmost position
+allows up to 12 pixels of static-mesh error, hides decorative grass, and
+limits ordinary trees to 55 units. Large landmark trees remain eligible
+within the view range. The middle and leftmost positions cap the view range
+at 260 and 120 units respectively and shorten fog to match. The leftmost
+position also skips water reflections and the local character's dynamic
+shadow. Texture filtering and collision are independent of Details. Moving
+the slider applies the changes immediately. Cancel restores the saved setting.
+Distance uses
 half/three-quarter/full view and fog ranges; this scaling is an implementation
 adaptation, not a claim that the entire native distance pipeline is recovered.
 Checked Cape/Helmet boxes mean visible; the stored hide flags remain compatible

@@ -699,11 +699,12 @@ func (a *App) drawWorldView(w, h int) {
 	s := a.scene3d
 	s.StaticObjectLOD = true
 	s.ViewportW, s.ViewportH = w, h
-	s.HideWeaponEffects = !a.clientSettings().SkillEffects
-	s.GeometryReduction = 2 - a.clientSettings().Details
+	settings := a.clientSettings()
+	s.HideWeaponEffects = !settings.SkillEffects
+	s.GeometryReduction = 2 - settings.Details
 	s.SetCameraView(eye, target, render.V3{0, 1, 0})
 	aspect := projectionAspect(w, h)
-	distanceScale := []float32{.5, .75, 1}[a.clientSettings().VisualDistance]
+	distanceScale := []float32{.5, .75, 1}[settings.VisualDistance]
 	far := max(float32(200), max(float32(400), v.world.FogEnd)*distanceScale)
 	if v.world.WLD != nil && v.world.WLD.Dungeon {
 		far = max(far, v.world.WLD.FogEnd*distanceScale)
@@ -715,6 +716,12 @@ func (a *App) drawWorldView(w, h int) {
 		v.world.EnableAsyncStreaming()
 	}
 	v.world.UpdateVisible(eye, radius)
+	switch s.GeometryReduction {
+	case 1:
+		far = min(far*.75, 260)
+	case 2:
+		far = min(far*.55, 120)
+	}
 	s.Proj = render.PerspectiveFovLH(nativeWorldFOV, aspect, 0.1, far)
 	s.SkyProj = render.PerspectiveFovLH(nativeWorldFOV, aspect, 10, 100000)
 	v.world.PrepareTerrainOcclusion(s, eye)
@@ -725,6 +732,10 @@ func (a *App) drawWorldView(w, h int) {
 	}
 	v.weather.update(a.weatherForView(), float32(a.frameDT), eye.Add(forward).Add(render.V3{0, 15, 0}))
 	weatherColor, weatherNear, weatherFar := v.weather.fog(v.world.FogColor, v.world.FogStart*distanceScale, v.world.FogEnd*distanceScale)
+	if s.GeometryReduction > 0 {
+		weatherFar = min(weatherFar, far)
+		weatherNear = min(weatherNear, weatherFar*.65)
+	}
 	s.FogColor, s.FogStart, s.FogEnd = weatherColor, weatherNear, weatherFar
 	if v.weather.blend > 0 {
 		render.ClearBackground(weatherColor)
@@ -753,7 +764,7 @@ func (a *App) drawWorldView(w, h int) {
 		v.effect.Update(float32(a.frameDT))
 	}
 	s.WaterReflection = nil
-	waterEffect := a.clientSettings().Water && (underwater || eye[1] > 0)
+	waterEffect := settings.Water && s.GeometryReduction < 2 && (underwater || eye[1] > 0)
 	surfaceVisible, reflectionRegion := v.world.WaterCoverage(s.View, s.Proj, waterEffect && !underwater)
 	waterVisible := waterEffect && surfaceVisible
 	if waterVisible {

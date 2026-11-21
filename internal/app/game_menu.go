@@ -127,6 +127,12 @@ func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 		a.windowDrag = windowDrag{position: &a.gameMenu.Position, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: width, height: height}
 		return
 	}
+	previousDetails := a.gameMenu.Settings.Details
+	defer func() {
+		if a.gameMenu.Settings.Details != previousDetails {
+			a.taa.Reset()
+		}
+	}()
 	if hasChar(in, 'o') {
 		a.gameMenu.DiscardPage()
 		a.applyClientSettings()

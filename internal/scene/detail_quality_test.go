@@ -12,15 +12,19 @@ func TestDetailsOnlyTrimDecorationsWhenReduced(t *testing.T) {
 		t.Fatal("default detail lost vegetation")
 	}
 	s.GeometryReduction = 1
-	if !e.detailVisible(s, render.V3{0, 0, 20}, 1) || e.detailVisible(s, render.V3{0, 0, 150}, 1) || e.detailVisible(s, render.V3{0, 0, 40}, 1) {
+	if !e.detailVisible(s, render.V3{0, 0, 10}, 1) || e.detailVisible(s, render.V3{0, 0, 150}, 1) || e.detailVisible(s, render.V3{0, 0, 40}, 1) {
 		t.Fatal("medium detail vegetation budget not applied")
 	}
 	e.object.detailClass = 0
 	if !e.detailVisible(s, render.V3{0, 0, 500}, 1) {
 		t.Fatal("structural mesh was culled")
 	}
-	e.object.detailClass = 2
 	s.GeometryReduction = 2
+	e.object.detailClass = 1
+	if e.detailVisible(s, render.V3{0, 0, 5}, 1) {
+		t.Fatal("low detail retained grass")
+	}
+	e.object.detailClass = 2
 	if e.detailVisible(s, render.V3{0, 0, 200}, 10) || !e.detailVisible(s, render.V3{0, 0, 40}, 10) {
 		t.Fatal("low tree distance budget not applied")
 	}

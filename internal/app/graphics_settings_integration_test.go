@@ -88,3 +88,62 @@ func TestAAAppliesAfterRestartGL(t *testing.T) {
 		}()
 	}
 }
+
+func TestDetailsSliderPreviewsWorldBeforeSavingGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("GL and field resources")
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("APPDATA", t.TempDir())
+	const width, height = 1024, 768
+	win, err := platform.Open(platform.Config{Width: width, Height: height, Hidden: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer win.Close()
+	if err = render.Init(false); err != nil {
+		t.Fatal(err)
+	}
+	arc, err := archive.OpenDirectory(os.Getenv("SHAIYA_DATA"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer arc.Close()
+	a, err := New(Config{}, arc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer a.Close()
+	if err = a.Preview("world-stream"); err != nil {
+		t.Fatal(err)
+	}
+	a.openGameMenu()
+	a.gameMenu.Open(ui.MenuGraphics)
+	x, y := a.gameMenu.Origin(width, height)
+	a.Draw(width, height)
+	high := a.scene3d.Proj
+
+	a.gameMenuControls(&platform.Input{MouseX: x + 275, MouseY: y + 284, Pressed: true, MouseDown: true}, width, height)
+	a.gameMenuControls(&platform.Input{MouseX: x + 155, MouseY: y + 284, MouseDown: true}, width, height)
+	a.Draw(width, height)
+	medium := a.scene3d.Proj
+	if a.scene3d.GeometryReduction != 1 || medium == high {
+		t.Fatal("medium detail did not render during the drag")
+	}
+	a.gameMenuControls(&platform.Input{MouseX: x + 35, MouseY: y + 284, MouseDown: true}, width, height)
+	a.Draw(width, height)
+	if a.scene3d.GeometryReduction != 2 || a.scene3d.Proj == medium || a.gameMenu.SavedSettings().Details != 2 {
+		t.Fatal("low detail did not preview independently of the saved value")
+	}
+	a.gameMenuControls(&platform.Input{MouseX: x + 35, MouseY: y + 284, Clicked: true}, width, height)
+	a.gameMenuControls(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, width, height)
+	a.Draw(width, height)
+	if a.scene3d.GeometryReduction != 0 || a.scene3d.Proj != high {
+		t.Fatal("cancel did not restore the high-detail projection")
+	}
+	if code := gl.GetError(); code != gl.NO_ERROR {
+		t.Fatalf("details preview GL error %#x", code)
+	}
+}

@@ -121,9 +121,9 @@ func (e *fieldDrawEntry) chooseLOD(s *render.Scene3D, center render.V3, radius f
 		}
 		limit := float32(.35)
 		if s.GeometryReduction >= 2 {
-			limit = 3
+			limit = 12
 		} else if s.GeometryReduction >= 1 {
-			limit = 1.25
+			limit = 4
 		}
 		if e.object.drawLOD == level {
 			if s.GeometryReduction < 1 {
