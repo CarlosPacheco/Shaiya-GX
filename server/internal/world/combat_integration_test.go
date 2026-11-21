@@ -382,8 +382,8 @@ func TestPlayerEffects(t *testing.T) {
 	if got := charm(233); got != deathExpPercent {
 		t.Errorf("Red Phoenix charm loss %d", got)
 	}
-	if got := charm(230); got != 0 {
-		t.Errorf("Prevent EXP Drop loss %d", got)
+	if db.MustDefs().Skill(230, 1) != nil {
+		t.Error("retired Prevent EXP Drop skill is still in the catalog")
 	}
 	s.buffs = nil
 	if got := s.deathExpLoss(); got != deathExpPercent {
@@ -599,11 +599,8 @@ func TestCraftRules(t *testing.T) {
 	}
 }
 
-// TestRebirth follows KillSoul / KillSoulByItem(NoMove) / UpdateRebirth:
-// the normal revive loses exp and restores full pools at the bind point;
-// runes cost no exp, give half pools and are chosen by ReqVg (0 to stay,
-// set to move); ultimate mode needs a rune, and without one the character
-// ends.
+// TestRebirth covers normal bind, fallback for legacy rune requests, the
+// automatic revive deadline and ultimate death with retired rune items.
 func TestRebirth(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
 		t.Chdir("../..")
@@ -647,18 +644,24 @@ func TestRebirth(t *testing.T) {
 		t.Fatalf("bind revive: dead %v pos (%v, %v) hp %d/%d exp %d", s.dead, ch.PosX, ch.PosZ, s.stats().CurrentHP, full().MaxHP, ch.Exp)
 	}
 
-	// The release catalog has separate here and bind runes. Prefer the matching rune even when its slot is later.
+	// Inventories saved before retirement can still contain both rune IDs.
 	s.items = []db.Item{{Bag: 1, Slot: 3, Type: 100, TypeID: 44, Count: 2}, {Bag: 1, Slot: 1, Type: 100, TypeID: 81, Count: 1}}
-	exp := ch.Exp
-	die()
-	s.handleResurrect([]byte{0x53, 0x05, reviveRuneHere})
-	if s.dead || ch.PosX != 900 || ch.Exp != exp || s.stats().CurrentHP != full().MaxHP/2 || len(s.items) != 2 || s.items[0].TypeID != 44 || s.items[0].Count != 1 || s.items[1].TypeID != 81 {
-		t.Fatalf("rune here: dead %v pos %v exp %d hp %d items %+v", s.dead, ch.PosX, ch.Exp, s.stats().CurrentHP, s.items)
+	for _, it := range s.items {
+		if db.MustDefs().Item(it.Type, it.TypeID) != nil {
+			t.Errorf("retired resurrection rune %d/%d is still in the catalog", it.Type, it.TypeID)
+		}
 	}
-	die()
-	s.handleResurrect([]byte{0x53, 0x05, reviveRuneAtBind})
-	if s.dead || !inBox() || ch.Exp != exp || len(s.items) != 1 || s.items[0].TypeID != 44 {
-		t.Fatalf("rune at bind: dead %v pos (%v, %v) exp %d items %+v", s.dead, ch.PosX, ch.PosZ, ch.Exp, s.items)
+	for _, request := range []byte{reviveRuneHere, reviveRuneAtBind} {
+		ch.Exp = prev + (next-prev)/2
+		exp := ch.Exp
+		die()
+		s.handleResurrect([]byte{0x53, 0x05, request})
+		if s.dead || !inBox() || ch.Exp >= exp || s.stats().CurrentHP != full().MaxHP {
+			t.Errorf("legacy rune request %d: dead %v pos (%v, %v) exp %d hp %d", request, s.dead, ch.PosX, ch.PosZ, ch.Exp, s.stats().CurrentHP)
+		}
+		if len(s.items) != 2 || s.items[0].TypeID != 44 || s.items[0].Count != 2 || s.items[1].TypeID != 81 || s.items[1].Count != 1 {
+			t.Fatalf("legacy rune request %d modified the inventory: %+v", request, s.items)
+		}
 	}
 
 	die()
@@ -672,16 +675,10 @@ func TestRebirth(t *testing.T) {
 	}
 
 	ch.Mode = growUltimate
-	exp = ch.Exp
-	die()
-	s.handleResurrect([]byte{0x53, 0x05, reviveAtBind})
-	if s.dead || ch.Exp != exp || len(s.items) != 0 || s.stats().CurrentHP != full().MaxHP/2 {
-		t.Fatalf("ultimate with rune: dead %v exp %d items %+v", s.dead, ch.Exp, s.items)
-	}
 	die()
 	s.handleResurrect([]byte{0x53, 0x05, reviveAtBind})
 	if s.char != nil {
-		t.Fatal("ultimate death without a rune kept the character")
+		t.Fatal("ultimate death with retired runes kept the character")
 	}
 }
 
