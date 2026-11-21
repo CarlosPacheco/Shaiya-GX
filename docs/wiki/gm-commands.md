@@ -8,15 +8,30 @@ SQL in `server/tools/enable_test_gms.sql` can update those named accounts in an
 intentionally selected offline database.
 
 GM characters display a light-blue `(GM)` prefix (`#66CCFF`) beside their white
-world name when visible to the viewer. GMs start visible and vulnerable;
-skill-based stealth follows the ordinary faction visibility rules. Stored character names are
-unchanged. Turbo starts disabled for GM sessions. When enabled, the client
+world name when visible to the viewer. GMs start transparent and unattackable
+(`/char on`, `/attack on`); skill-based stealth follows the ordinary faction
+visibility rules. Stored character names are unchanged. Turbo starts disabled
+for GM sessions. When enabled, the client
 multiplies movement speed by 12, including backward movement, mounts and
 swimming. World skips the horizontal speed limit and fall damage for that GM.
 Map bounds, collision, gravity, immobilization and death still apply.
 
-The `/char` and `/attack` controls, including both on/off forms, are temporarily
-unavailable. Skill-based stealth remains available.
+`/char on|off` and `/attack on|off` are the original admin switches (Game.exe
+chat handler `0x471c20`; World `CUser::PacketAdminCmdE` packets `0xFA01/0xFA02`
+for `bVisible` and `0xFA05/0xFA06` for `bAttackable`). `/char on` makes your
+character transparent to every non-GM player; `/attack on` makes you
+unattackable: players and monsters cannot target or hit you and active debuffs
+are cleared. Replies use the original system messages: "Character's transparent
+setting is on/off", "Won't be attacked anymore" and "Will be attacked". Both
+are on at every GM login; turbo is off.
+
+### GM modes bar
+
+GMs get a small movable bar of three 32px icons, like a buff strip: **Char**
+(Stealth icon), **Attack** (Untouchable icon) and **Turbo** (Sprinter icon). They
+have no duration. Hovering one shows its effect; clicking it sends the matching
+command (`/char on|off`, `/attack on|off`, `/turbo`). Modes that are off are
+drawn grey. The bar remembers its position with the other movable windows.
 
 | Command | Result |
 |---|---|
@@ -27,6 +42,8 @@ unavailable. Skill-based stealth remains available.
 | `/set level number` | Sets your own level from 1 through the server's EXP cap. Example: `/set level 30`. Starts at the new level’s EXP threshold and updates resource limits immediately. An actual change plays the faction’s level-up effect and sound. Equipped items, inventory, learned skills, attributes and unspent points are preserved. |
 | `/set kill count` | Sets your own kills to 0–1,000,000; larger values clamp to one million. Updates your rank/title and nearby nameplates immediately. Already claimed PvP rewards remain claimed. |
 | `/iclear` | Permanently deletes the issuing character's carried items (bags 1–5). Equipped items, mounts, other characters and account storage are preserved. |
+| `/char on` / `/char off` | Makes your character transparent / visible to non-GM players (original `bVisible`). |
+| `/attack on` / `/attack off` | Makes you unattackable / attackable again (original `bAttackable`). |
 | `/turbo` | Toggles turbo for the issuing GM's session and reports the current fall-damage and speed rules. |
 | `/cure` | Restores your HP, MP and SP, clears active debuffs, and resets skill, consumable and mount cooldowns in the server and client. |
 | `/getitem type id [quantity]` | Defaults to one when quantity is omitted. Grants the complete quantity, respecting definition stack limits and free bag slots. `/getitem 25 1 200` grants 200 apples in one stack with the current 255 limit. |
@@ -49,6 +66,10 @@ fields little-endian. GM/turbo bytes must be 0 or 1; turbo requires GM. Ordinary
 `0x0201` marker 2 supplies GM role metadata for remote nameplates. A forged client
 response cannot grant server privileges. This extension requires the updated GX
 client and world server; the original client does not implement turbo state.
+
+`GXGMModes` (`0x7F29`) is sent to the GM on entry and after every change: self
+character ID `u32`, concealed `u8`, immune `u8`, turbo `u8` (each 0 or 1). It
+drives the modes bar.
 
 All command responses, usage hints and validation messages are in English and
 use green system-chat style 4 (`#33FF33`), including refusals.

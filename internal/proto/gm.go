@@ -32,3 +32,20 @@ func DecodeGMState(p []byte) (GMState, error) {
 
 // GXItemCooldownReset clears the recipient’s item and mount cooldowns.
 const GXItemCooldownReset Opcode = 0x7F1E
+
+// GXGMModes tells a GM's own client which modes are active: self ID:u32,
+// concealed:u8 (/char on), immune:u8 (/attack on), turbo:u8. Every byte is 0
+// or 1 and the modes require GM. Sent on entry and after every change.
+const GXGMModes Opcode = 0x7F29
+
+type GMModes struct {
+	ID                       uint32
+	Concealed, Immune, Turbo bool
+}
+
+func DecodeGMModes(p []byte) (GMModes, error) {
+	if len(p) != 9 || p[6] > 1 || p[7] > 1 || p[8] > 1 {
+		return GMModes{}, fmt.Errorf("invalid GX GM modes")
+	}
+	return GMModes{ID: binary.LittleEndian.Uint32(p[2:6]), Concealed: p[6] == 1, Immune: p[7] == 1, Turbo: p[8] == 1}, nil
+}

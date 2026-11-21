@@ -702,3 +702,33 @@ func TestGuardAttacksRetainNpcTargetForAnimation(t *testing.T) {
 		t.Fatal("missing NPC attack presentation", got)
 	}
 }
+
+func TestGMModesPacketUpdatesOnlyOwnGM(t *testing.T) {
+	s := New()
+	s.SelfID = 7
+	s.Self.IsGM = true
+	w := proto.NewWriter(proto.GXGMModes)
+	w.U32(7)
+	w.U8(1)
+	w.U8(0)
+	w.U8(1)
+	if _, err := s.Apply(w.Bytes()); err != nil || !s.GMConcealed || s.GMImmune || !s.GMTurbo {
+		t.Fatal("own modes", err, s.GMConcealed, s.GMImmune, s.GMTurbo)
+	}
+	other := proto.NewWriter(proto.GXGMModes)
+	other.U32(8)
+	other.U8(0)
+	other.U8(1)
+	other.U8(0)
+	if _, err := s.Apply(other.Bytes()); err != nil || !s.GMConcealed || s.GMImmune {
+		t.Fatal("another character's modes changed ours")
+	}
+	bad := proto.NewWriter(proto.GXGMModes)
+	bad.U32(7)
+	bad.U8(2)
+	bad.U8(0)
+	bad.U8(0)
+	if _, err := s.Apply(bad.Bytes()); err == nil {
+		t.Fatal("non 0/1 mode accepted")
+	}
+}

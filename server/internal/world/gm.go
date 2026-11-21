@@ -15,6 +15,7 @@ import (
 
 const gxGMState packet.Opcode = 0x7F01
 const gmMaxSpawn = 100
+const gxGMModes packet.Opcode = 0x7F29
 
 func (s *Session) turboActive() bool { return s.isAdmin && s.gmTurbo }
 
@@ -38,6 +39,54 @@ func (s *Session) gmReply(message string) {
 	s.send(w.MustFinish(), "GX GM state")
 }
 
+// sendGMModes publishes the three GM switches to the GM's own client.
+func (s *Session) sendGMModes() {
+	if s.char == nil || !s.isAdmin {
+		return
+	}
+	b := func(v bool) uint8 {
+		if v {
+			return 1
+		}
+		return 0
+	}
+	w := packet.New(gxGMModes)
+	w.U32(s.char.ID)
+	w.U8(b(s.gmConcealed))
+	w.U8(b(s.gmImmune))
+	w.U8(b(s.turboActive()))
+	s.send(w.MustFinish(), "GX GM modes")
+}
+
+// setGMChar and setGMAttack are the original admin commands (CUser::
+// PacketAdminCmdE 0xFA01/0xFA02 bVisible and 0xFA05/0xFA06 bAttackable, chat
+// "/char on|off" and "/attack on|off" at Game.exe 0x471c20). "/char on" makes
+// the character transparent; "/attack on" makes it unattackable.
+func (s *Session) setGMChar(on bool) {
+	s.gmConcealed = on
+	s.syncVisibility()
+	if on {
+		s.gmReply("Character's transparent setting is on")
+	} else {
+		s.gmReply("Character's transparent setting is off")
+	}
+	s.sendGMModes()
+}
+
+func (s *Session) setGMAttack(on bool) {
+	s.gmImmune = on
+	if on {
+		s.removeEffects(func(b *ActiveBuff) bool { return b.Effect != typeEffectBuff }, "GM immunity")
+	}
+	s.syncVisibility()
+	if on {
+		s.gmReply("Won't be attacked anymore")
+	} else {
+		s.gmReply("Will be attacked")
+	}
+	s.sendGMModes()
+}
+
 func gmNumbers(args []string, bounds ...uint64) ([]uint64, error) {
 	if len(args) != len(bounds) {
 		return nil, fmt.Errorf("argument count")
@@ -55,10 +104,6 @@ func gmNumbers(args []string, bounds ...uint64) ([]uint64, error) {
 
 // Known commands are consumed even when refused; they never become public chat.
 func (s *Session) handleGMCommand(text string) bool {
-	if gm.Retired(text) {
-		s.gmReply("GM: command unavailable.")
-		return true
-	}
 	command, args, known := gm.Parse(text)
 	if !known {
 		return false
@@ -84,12 +129,23 @@ func (s *Session) handleGMCommand(text string) bool {
 		err = s.gmWeather(args)
 	case "/set":
 		err = s.gmSet(args)
+	case "/char", "/attack":
+		if len(args) != 1 || (!strings.EqualFold(args[0], "on") && !strings.EqualFold(args[0], "off")) {
+			s.gmReply("Usage: " + command + " on|off")
+			break
+		}
+		if command == "/char" {
+			s.setGMChar(strings.EqualFold(args[0], "on"))
+		} else {
+			s.setGMAttack(strings.EqualFold(args[0], "on"))
+		}
 	case "/turbo":
 		if len(args) != 0 {
 			s.gmReply("Usage: /turbo")
 			break
 		}
 		s.gmTurbo = !s.gmTurbo
+		defer s.sendGMModes()
 		s.movement.budgetAt, s.movement.credit = time.Now(), 0
 		s.movement.speedCorrectionPending = false
 		if s.gmTurbo {

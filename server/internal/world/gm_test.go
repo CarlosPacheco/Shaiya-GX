@@ -102,7 +102,7 @@ func TestGMCommandsRequireRoleAndToggleAuthoritativeState(t *testing.T) {
 		}
 		// Exercise the exact server codec against the client state machine.
 		s.gmReply("")
-		p := <-packets
+		p := waitWorldPacket(t, packets, proto.GXGMState)
 		if _, e := state.Apply(p); e != nil || state.GMTurbo != want || !state.Self.IsGM {
 			t.Fatal("client GM state", e)
 		}

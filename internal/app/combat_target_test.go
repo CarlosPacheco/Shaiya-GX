@@ -237,7 +237,7 @@ func TestClickOnSelectedMobEngagesWithoutTimeLimitAndChaseKeepsFollowing(t *test
 		a.updateActionApproach(in)
 	}
 	a.state.Target = mob.ID // already selected by an earlier click
-	click(9)               // however long ago: there is no time window
+	click(9)                // however long ago: there is no time window
 	if a.wv.approachTarget != mob.ID || !a.wv.travel {
 		t.Fatal("second click on the selected mob did not start the chase")
 	}

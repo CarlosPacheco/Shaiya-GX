@@ -1,10 +1,10 @@
 package app
 
 import (
-	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"testing"
 )
 

@@ -14,14 +14,8 @@ func Parse(text string) (string, []string, bool) {
 	}
 	command := strings.ToLower(fields[0])
 	switch command {
-	case "/set", "/iclear", "/turbo", "/getitem", "/mmake", "/nmake", "/cmove", "/cure", "/amove", "/asummon", "/weather", "/notice", "/bots":
+	case "/set", "/iclear", "/turbo", "/char", "/attack", "/getitem", "/mmake", "/nmake", "/cmove", "/cure", "/amove", "/asummon", "/weather", "/notice", "/bots":
 		return command, fields[1:], true
 	}
 	return "", nil, false
-}
-
-// Retired reserves removed commands so old clients cannot broadcast them as chat.
-func Retired(text string) bool {
-	fields := strings.Fields(text)
-	return len(fields) > 0 && (strings.EqualFold(fields[0], "/char") || strings.EqualFold(fields[0], "/attack"))
 }

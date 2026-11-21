@@ -346,6 +346,20 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
+	if a.gmModesVisible() {
+		gx, gy, gw, gh := a.gmModes.Rect(w, h)
+		if pointInside(in, gx, gy, gw, gh) {
+			mode := a.gmModes.Hit(w, h, in.MouseX, in.MouseY)
+			a.windowDrag = windowDrag{position: &a.gmModes.Position, offsetX: in.MouseX - gx, offsetY: in.MouseY - gy, width: gw, height: gh}
+			if mode >= 0 {
+				// A press that never moves toggles the mode; moving drags the bar.
+				a.windowDrag.pressX, a.windowDrag.pressY = in.MouseX, in.MouseY
+				a.windowDrag.click = func() { a.toggleGMMode(mode) }
+			}
+			a.wv.uiLeft = -2
+			return true
+		}
+	}
 	for group, count := range a.buffCounts() {
 		if count == 0 {
 			continue
@@ -445,7 +459,7 @@ func (a *App) finishWindowDrag() {
 	}
 }
 func (a *App) layoutPositions() map[string]*ui.WindowPosition {
-	out := map[string]*ui.WindowPosition{"quick_potions": &a.quickPotions.Position, "revolver": &a.revolver.Position, "buffs": &a.buffLayout.Position[0], "debuffs": &a.buffLayout.Position[1]}
+	out := map[string]*ui.WindowPosition{"quick_potions": &a.quickPotions.Position, "revolver": &a.revolver.Position, "buffs": &a.buffLayout.Position[0], "debuffs": &a.buffLayout.Position[1], "gm_modes": &a.gmModes.Position}
 	if a.hud != nil {
 		out["portrait_hud"] = &a.hud.Position
 		out["target_hud"] = &a.hud.TargetPosition

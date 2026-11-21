@@ -72,6 +72,7 @@ type App struct {
 	appliedHideCloak, appliedHideHelmet bool
 	combatNumbers                       []combatNumber
 	buffLayout                          ui.BuffLayout
+	gmModes                             ui.GMModes
 	gameMenu                            *ui.GameMenu
 	menuOpen                            bool
 	raidOnce                            bool

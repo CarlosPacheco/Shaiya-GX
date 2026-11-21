@@ -845,7 +845,8 @@ func (s *Session) selectCharacter(id uint32) {
 	s.movement = playerMovement{}
 	s.oxygen = oxygenState{}
 	s.elements = elementRuntime{}
-	s.gmConcealed, s.gmImmune = false, false
+	// GMs start transparent and unattackable (the original admin switches).
+	s.gmConcealed, s.gmImmune = s.isAdmin, s.isAdmin
 	s.buffs, err = restoreBuffs(id, s.log)
 	if err != nil {
 		failed("load buffs", err)
@@ -986,6 +987,7 @@ func (s *Session) handleMapLoaded() {
 	s.syncPlayerSpeed(true)
 	s.syncVisibility()
 	s.send(s.player.visibilityPacket(), "GX visibility")
+	s.sendGMModes()
 	s.send(buildVehicleState(s.player.vehicleState()), "GX own vehicle state")
 	s.sendRelicList()
 	s.updateWeather(time.Now(), true)

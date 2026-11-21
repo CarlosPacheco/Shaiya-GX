@@ -125,6 +125,7 @@ type State struct {
 	questNPCStaging        []proto.QuestNPC
 	questNPCStagingActive  bool
 	GMTurbo                bool
+	GMConcealed, GMImmune  bool // /char on and /attack on, published by GXGMModes
 	Social                 SocialState
 	LastDetectInfo         proto.DetectInfo
 	LastPeriodicEffect     proto.PeriodicEffect
@@ -1259,6 +1260,14 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		} else if e := s.Entities[id]; e != nil {
 			e.Concealed = p[6] != 0
 		}
+	case proto.GXGMModes:
+		m, err := proto.DecodeGMModes(p)
+		if err != nil {
+			return fail(err)
+		}
+		if m.ID == s.SelfID && s.Self.IsGM {
+			s.GMConcealed, s.GMImmune, s.GMTurbo = m.Concealed, m.Immune, m.Turbo
+		}
 	case proto.GXGMState:
 		g, err := proto.DecodeGMState(p)
 		if err != nil {
@@ -1266,6 +1275,9 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		if g.ID == s.SelfID {
 			s.Self.IsGM, s.GMTurbo = g.GM, g.GM && g.Turbo
+			if !g.GM {
+				s.GMConcealed, s.GMImmune = false, false
+			}
 			if g.Message != "" {
 				s.addChat(ChatLine{Op: proto.ChatError, Text: g.Message, Style: 4})
 			}

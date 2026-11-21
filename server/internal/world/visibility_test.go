@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -41,20 +42,49 @@ func TestVisibilityAuthorityAndGMDefaults(t *testing.T) {
 	}
 }
 
-func TestRemovedGMProtectionCommandsCannotToggleState(t *testing.T) {
+// The original admin switches (0xFA01/0xFA02 visible, 0xFA05/0xFA06 attackable):
+// "/char on" makes the character transparent, "/attack on" unattackable.
+func TestCharAndAttackCommandsToggleConcealmentAndImmunity(t *testing.T) {
 	s, packets := gmWireSession(t, db.Character{ID: 990010, MapID: 60078, CurrentHP: 100}, true)
 	s.player = RegisterPlayer(*s.char, nil, true, 0, s.out, nil)
 	t.Cleanup(s.player.Unregister)
-	for _, command := range []string{"/char on", "/char off", "/attack on", "/attack off", "/CHAR on", "/attack invalid"} {
-		if !s.handleGMCommand(command) {
-			t.Fatal("retired command leaked to chat")
+	modes := func() proto.GMModes {
+		t.Helper()
+		m, err := proto.DecodeGMModes(waitWorldPacket(t, packets, proto.GXGMModes))
+		if err != nil {
+			t.Fatal(err)
 		}
-		if reply := gmResponse(t, packets); reply.Message != "GM: command unavailable." {
-			t.Fatal(reply)
+		return m
+	}
+	for _, c := range []struct {
+		command, message  string
+		concealed, immune bool
+	}{
+		{"/char on", "Character's transparent setting is on", true, false},
+		{"/attack on", "Won't be attacked anymore", true, true},
+		{"/CHAR off", "Character's transparent setting is off", false, true},
+		{"/attack off", "Will be attacked", false, false},
+	} {
+		if !s.handleGMCommand(c.command) {
+			t.Fatal("command leaked to chat", c.command)
 		}
-		if s.gmConcealed || s.gmImmune || s.player.hidden.Load() || s.player.immune.Load() {
-			t.Fatal("retired command changed protection")
+		if reply := gmResponse(t, packets); reply.Message != c.message {
+			t.Fatal(c.command, reply)
 		}
+		m := modes()
+		if m.Concealed != c.concealed || m.Immune != c.immune || s.gmConcealed != c.concealed || s.gmImmune != c.immune ||
+			s.player.hidden.Load() != c.concealed || s.player.immune.Load() != c.immune {
+			t.Fatal("state after", c.command, m)
+		}
+	}
+	s.handleGMCommand("/attack invalid")
+	if reply := gmResponse(t, packets); reply.Message != "Usage: /attack on|off" {
+		t.Fatal(reply)
+	}
+	s.isAdmin = false
+	s.handleGMCommand("/char on")
+	if reply := gmResponse(t, packets); reply.GM || s.gmConcealed {
+		t.Fatal("non-GM changed a mode")
 	}
 }
 

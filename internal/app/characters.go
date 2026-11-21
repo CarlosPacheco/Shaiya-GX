@@ -363,6 +363,8 @@ func (a *App) drawCharacters(w, h int) {
 		a.drawMinimap(w, h, false)
 		a.drawBuffs(w, h)
 		a.drawBuffTooltip(w, h)
+		a.drawGMModes(w, h)
+		a.drawGMModesTooltip(w, h)
 		a.drawParty(w, h)
 		a.drawChat(w, h)
 		a.drawQuickPotions(w, h)
