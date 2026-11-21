@@ -144,8 +144,8 @@ func (f *Font) Draw(s *render.Sprites, text string, x, y int, rgba [4]float32, m
 // DrawScaled keeps tooltip text and frame together on small viewports.
 func (f *Font) DrawScaled(s *render.Sprites, text string, x, y, scale float32, rgba [4]float32, maxW int) {
 	if f.subtleOutline && (rgba[0] != 0 || rgba[1] != 0 || rgba[2] != 0) && rgba[3] > 0 {
-		edge := .65 * scale
-		ink := [4]float32{0, 0, 0, rgba[3] * .23}
+		edge := .8 * scale
+		ink := [4]float32{0, 0, 0, rgba[3] * .30}
 		f.drawText(s, text, x-edge, y, scale, ink, maxW, true)
 		f.drawText(s, text, x+edge, y, scale, ink, maxW, true)
 		f.drawText(s, text, x, y-edge, scale, ink, maxW, true)
