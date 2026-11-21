@@ -183,7 +183,13 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 			underMall = underMall || pointInside(in, x, y, ui.GiftBoxWidth, ui.GiftBoxHeight)
 		}
 	}
-	if !underMall && !captured {
+	dismissContext := !underMall && !captured && a.playerContext.open && in.RightPressed
+	if dismissContext {
+		// Dismiss the popup without offering the press to another panel.
+		// The same held button starts the camera drag.
+		a.playerContext.open = false
+		captured = true
+	} else if !underMall && !captured {
 		captured = a.updatePlayerContext(in, w, h)
 	}
 	if !underMall && !captured {
@@ -244,7 +250,7 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		v.uiLeft = 0
 	}
 	if in.RightPressed {
-		v.uiRight = captured
+		v.uiRight = captured && !dismissContext
 	}
 	pointerOwned := v.uiLeft != 0 || v.uiRight
 	if in.Clicked || !in.MouseDown {
@@ -272,6 +278,9 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 		controls.MiddlePressed = false
 	}
 
+	if dismissContext {
+		controls.RightPressed, controls.RightDown = in.RightPressed, in.RightDown
+	}
 	if cameraDrag {
 		controls.RightDown = true
 	}

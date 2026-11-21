@@ -136,3 +136,33 @@ func TestPlayerContextDoesNotOpenThroughInventory(t *testing.T) {
 		t.Fatal("target popup opened through a foreground window")
 	}
 }
+
+func TestRightDragDismissesPlayerContextAndTurnsCamera(t *testing.T) {
+	const w, h = 1024, 768
+	a := inputApp()
+	a.state.SelfID, a.state.Target = 1, 2
+	a.state.Entities[2] = &game.Entity{ID: 2, Kind: game.KindUser, Shape: &proto.UserShape{Name: "Ally"}}
+	pointer := platform.Input{MouseX: 300, MouseY: 20, RightPressed: true, RightDown: true}
+	if controls := a.worldControls(&pointer, w, h); !a.playerContext.open || controls.RightDown {
+		t.Fatal("the opening press did not belong to the player menu")
+	}
+	pointer.RightPressed = false
+	if controls := a.worldControls(&pointer, w, h); !a.playerContext.open || controls.RightDown {
+		t.Fatal("holding the opening press started a camera drag")
+	}
+	pointer.RightDown = false
+	a.worldControls(&pointer, w, h)
+
+	pointer.RightPressed, pointer.RightDown = true, true
+	controls := a.worldControls(&pointer, w, h)
+	if a.playerContext.open || !controls.RightPressed || !controls.RightDown || a.wv.uiRight {
+		t.Fatal("the next right press did not dismiss the menu and reach the camera")
+	}
+	a.wv.mouselook = true
+	pointer.RightPressed, pointer.MouseLook, pointer.MouseDX = false, true, 16
+	controls = a.worldControls(&pointer, w, h)
+	yaw, _ := a.wv.cameraInput(&controls, 1.0/60, pointer.MouseX, pointer.MouseY)
+	if yaw == 0 || a.playerContext.open {
+		t.Fatal("camera did not move on the first held drag")
+	}
+}

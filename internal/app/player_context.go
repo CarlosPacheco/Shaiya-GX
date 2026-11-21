@@ -250,10 +250,6 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 			c.open = false
 			return true
 		}
-		if in.RightPressed {
-			c.open = false
-			return true
-		}
 		return panelPointer(in, c.x, c.y, c.width, c.height)
 	}
 	if !in.RightPressed || a.wv == nil || a.wv.mapView.full {
