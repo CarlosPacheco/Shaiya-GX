@@ -3,8 +3,12 @@ package app
 import (
 	"testing"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
 func TestNativeSkillReleasePhases(t *testing.T) {
@@ -41,5 +45,32 @@ func TestNativeSkillReleasePhases(t *testing.T) {
 		if file, _ := skillReleaseLibrary(r, d, tc.weapon); file != "" {
 			t.Fatal("passive created a release")
 		}
+	}
+}
+
+func TestGroundShockReleaseUsesCasterHeading(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID = 1
+	a.wv = &worldView{self: &scene.Character{}}
+	pos, up := render.V3{5, 2, 10}, render.V3{0, 1, 0}
+	r := proto.SkillResult{Source: 1, ID: 40, Level: 1}
+	for _, heading := range []render.V3{{0, 0, 1}, {1, 0, 0}, {0, 0, -1}, {-1, 0, 0}} {
+		actor := render.Basis(pos, heading.Scale(-1), up)
+		a.wv.self.World = actor
+		got, ok := a.skillReleaseMatrix(r, effect.ActivationLibrary(r.ID))
+		if !ok || got != render.Basis(pos, heading, up) || a.wv.self.World != actor {
+			t.Fatalf("heading %v: misplaced Ground Shock or changed actor transform: %v", heading, got)
+		}
+		other := proto.SkillResult{Source: 1, ID: 301, Level: 1}
+		if got, _ := a.skillReleaseMatrix(other, effect.ActivationLibrary(other.ID)); got != actor {
+			t.Fatalf("shared activation changed for skill %d", other.ID)
+		}
+	}
+	// A remote result may arrive before the caster's model is ready.
+	a.state.Entities[2] = &game.Entity{ID: 2, Kind: game.KindUser, X: pos[0], Y: pos[1], Z: pos[2], Dir: 16384}
+	r.Source = 2
+	got, ok := a.skillReleaseMatrix(r, effect.ActivationLibrary(r.ID))
+	if !ok || got[8] < .999 || (render.V3{got[12], got[13], got[14]}) != pos {
+		t.Fatalf("remote Ground Shock ignored its network heading: %v", got)
 	}
 }

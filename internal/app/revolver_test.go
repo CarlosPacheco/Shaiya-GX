@@ -120,6 +120,10 @@ func TestRevolverControlHitsMatchVerticalArtwork(t *testing.T) {
 	a.state.SelfID = 12
 	v := a.revolverState()
 	const w, h = 1024, 768
+	center := func() [2]int {
+		main := a.revolverLayout(w, h).Main
+		return [2]int{main.X + main.W/2, main.Y + main.H/2}
+	}
 	click := func(dx, dy int) {
 		t.Helper()
 		main := a.revolverLayout(w, h).Main
@@ -134,9 +138,15 @@ func TestRevolverControlHitsMatchVerticalArtwork(t *testing.T) {
 	}
 	for _, expanded := range []bool{false, true} {
 		v.Expanded = expanded
+		panel := a.revolverLayout(w, h).Panel
+		v.Position.Move(400, 240, w, h, panel.W, panel.H)
+		before := center()
 		click(146, 19) // Horizontal circular arrow.
 		if !v.Position.Vertical || v.Expanded != expanded {
 			t.Fatalf("horizontal rotate failed (editor=%t)", expanded)
+		}
+		if got := center(); got != before {
+			t.Fatalf("horizontal rotate moved the bar center from %v to %v", before, got)
 		}
 		v.selected = 2
 		click(47, 24) // Advance.
@@ -155,9 +165,13 @@ func TestRevolverControlHitsMatchVerticalArtwork(t *testing.T) {
 		if v.Expanded == expanded || !v.Position.Vertical {
 			t.Fatalf("vertical editor activated the wrong control (editor=%t)", expanded)
 		}
+		before = center()
 		click(36, 146) // Vertical circular arrow.
 		if v.Position.Vertical || v.Expanded == expanded {
 			t.Fatalf("vertical rotate activated the wrong control (editor=%t)", expanded)
+		}
+		if got := center(); got != before {
+			t.Fatalf("vertical rotate moved the bar center from %v to %v", before, got)
 		}
 	}
 }

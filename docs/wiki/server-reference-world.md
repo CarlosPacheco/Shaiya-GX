@@ -1912,20 +1912,20 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 | [`consumeOne`](../../server/internal/world/inventory.go#L214)<br>`func (s *Session) consumeOne(i int) (db.Item, error)` | consumeOne decrements the item at index i by one, persisting it. |
 | [`cooldownForReqIg`](../../server/internal/world/inventory.go#L231)<br>`func cooldownForReqIg(reqIg uint8) time.Duration` | See the source definition and the subsystem ownership contract. |
 | [`handleUseItem`](../../server/internal/world/inventory.go#L237)<br>`func (s *Session) handleUseItem(p []byte)` | handleUseItem (0x050A): bag, slot. |
-| [`healDelta`](../../server/internal/world/inventory.go#L422)<br>`func (s *Session) healDelta(hp, mp, sp uint32) (uint32, uint32, uint32)` | healDelta raises effective HP/MP/SP by up to the given amounts, applied to the durable absolute fields. Returns the actual amounts gained. |
-| [`spendDelta`](../../server/internal/world/inventory.go#L433)<br>`func (s *Session) spendDelta(mp, sp uint32)` | spendDelta lowers effective MP/SP by the given amounts (as deltas). |
-| [`handleChangeAppearance`](../../server/internal/world/inventory.go#L441)<br>`func (s *Session) handleChangeAppearance(p []byte)` | handleChangeAppearance (0x0226): bag, slot, hair, face, height, sex. |
-| [`broadcastNear`](../../server/internal/world/inventory.go#L483)<br>`func (s *Session) broadcastNear(frame []byte, label string, includeSelf bool)` | broadcastNear sends to viewers within the viewport that may see this character; includeSelf also echoes it to this session. |
-| [`handleDropItem`](../../server/internal/world/inventory.go#L493)<br>`func (s *Session) handleDropItem(p []byte)` | handleDropItem (0x0206): bag, slot, count. |
-| [`equipmentChanged`](../../server/internal/world/inventory.go#L551)<br>`func (s *Session) equipmentChanged(slots []uint8)` | equipmentChanged pushes 0x0507 for the slots to self and viewers. |
-| [`mobGoldBonus`](../../server/internal/world/inventory.go#L566)<br>`func (s *Session) mobGoldBonus(amount uint32) uint32` | mobGoldBonus applies the dedicated mob-gold ability. |
-| [`handlePickupItem`](../../server/internal/world/inventory.go#L579)<br>`func (s *Session) handlePickupItem(p []byte)` | handlePickupItem (0x0205): map item id. |
-| [`moveItem`](../../server/internal/world/inventory.go#L653)<br>`func (s *Session) moveItem(srcBag, srcSlot, destBag, destSlot uint8) (frame []byte, ok bool)` | moveItem performs an inventory move/swap/merge and returns the 0x0204. |
-| [`planMoveItem`](../../server/internal/world/inventory.go#L659)<br>`func (s *Session) planMoveItem(srcBag, srcSlot, destBag, destSlot uint8) ([]byte, bool)` | See the source definition and the subsystem ownership contract. |
-| [`handleItemBagToBag`](../../server/internal/world/inventory.go#L713)<br>`func (s *Session) handleItemBagToBag(p []byte)` | handleItemBagToBag (0x0204): src bag/slot, dest bag/slot. |
-| [`equipAllowed`](../../server/internal/world/inventory.go#L763)<br>`func (s *Session) equipAllowed(srcBag, srcSlot, destBag, destSlot uint8) bool` | equipAllowed checks both directions of a move that touches the equipment bag. |
-| [`equipmentMoveFailure`](../../server/internal/world/inventory.go#L767)<br>`func (s *Session) equipmentMoveFailure(srcBag, srcSlot, destBag, destSlot uint8) string` | See the source definition and the subsystem ownership contract. |
-| [`planGiveItem`](../../server/internal/world/inventory.go#L793)<br>`func planGiveItem(items *[]db.Item, tpl *db.Item, count, maxStack uint16) (packets [][]byte, left uint16)` | planGiveItem uses the native placement/stacking rules on a private copy. It allocates identifiers but performs no writes or network operations. |
+| [`healDelta`](../../server/internal/world/inventory.go#L425)<br>`func (s *Session) healDelta(hp, mp, sp uint32) (uint32, uint32, uint32)` | healDelta raises effective HP/MP/SP by up to the given amounts, applied to the durable absolute fields. Returns the actual amounts gained. |
+| [`spendDelta`](../../server/internal/world/inventory.go#L436)<br>`func (s *Session) spendDelta(mp, sp uint32)` | spendDelta lowers effective MP/SP by the given amounts (as deltas). |
+| [`handleChangeAppearance`](../../server/internal/world/inventory.go#L444)<br>`func (s *Session) handleChangeAppearance(p []byte)` | handleChangeAppearance (0x0226): bag, slot, hair, face, height, sex. |
+| [`broadcastNear`](../../server/internal/world/inventory.go#L486)<br>`func (s *Session) broadcastNear(frame []byte, label string, includeSelf bool)` | broadcastNear sends to viewers within the viewport that may see this character; includeSelf also echoes it to this session. |
+| [`handleDropItem`](../../server/internal/world/inventory.go#L496)<br>`func (s *Session) handleDropItem(p []byte)` | handleDropItem (0x0206): bag, slot, count. |
+| [`equipmentChanged`](../../server/internal/world/inventory.go#L554)<br>`func (s *Session) equipmentChanged(slots []uint8)` | equipmentChanged pushes 0x0507 for the slots to self and viewers. |
+| [`mobGoldBonus`](../../server/internal/world/inventory.go#L569)<br>`func (s *Session) mobGoldBonus(amount uint32) uint32` | mobGoldBonus applies the dedicated mob-gold ability. |
+| [`handlePickupItem`](../../server/internal/world/inventory.go#L582)<br>`func (s *Session) handlePickupItem(p []byte)` | handlePickupItem (0x0205): map item id. |
+| [`moveItem`](../../server/internal/world/inventory.go#L656)<br>`func (s *Session) moveItem(srcBag, srcSlot, destBag, destSlot uint8) (frame []byte, ok bool)` | moveItem performs an inventory move/swap/merge and returns the 0x0204. |
+| [`planMoveItem`](../../server/internal/world/inventory.go#L662)<br>`func (s *Session) planMoveItem(srcBag, srcSlot, destBag, destSlot uint8) ([]byte, bool)` | See the source definition and the subsystem ownership contract. |
+| [`handleItemBagToBag`](../../server/internal/world/inventory.go#L716)<br>`func (s *Session) handleItemBagToBag(p []byte)` | handleItemBagToBag (0x0204): src bag/slot, dest bag/slot. |
+| [`equipAllowed`](../../server/internal/world/inventory.go#L766)<br>`func (s *Session) equipAllowed(srcBag, srcSlot, destBag, destSlot uint8) bool` | equipAllowed checks both directions of a move that touches the equipment bag. |
+| [`equipmentMoveFailure`](../../server/internal/world/inventory.go#L770)<br>`func (s *Session) equipmentMoveFailure(srcBag, srcSlot, destBag, destSlot uint8) string` | See the source definition and the subsystem ownership contract. |
+| [`planGiveItem`](../../server/internal/world/inventory.go#L796)<br>`func planGiveItem(items *[]db.Item, tpl *db.Item, count, maxStack uint16) (packets [][]byte, left uint16)` | planGiveItem uses the native placement/stacking rules on a private copy. It allocates identifiers but performs no writes or network operations. |
 
 ### inventory_operation.go
 

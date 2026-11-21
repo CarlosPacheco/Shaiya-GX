@@ -1,9 +1,12 @@
 package app
 
 import (
+	"math"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
@@ -39,7 +42,7 @@ func (a *App) startSkillReleaseEffect(r proto.SkillResult, d sdata.Skill) {
 	if file == "" || len(a.wv.releaseEffects) >= 32 {
 		return
 	}
-	matrix, ok := a.effectTargetMatrix(r.Source)
+	matrix, ok := a.skillReleaseMatrix(r, file)
 	if !ok {
 		return
 	}
@@ -56,6 +59,35 @@ func (a *App) startSkillReleaseEffect(r proto.SkillResult, d sdata.Skill) {
 	}
 	advanceSkillEffect(instance, elapsed)
 	a.wv.releaseEffects = append(a.wv.releaseEffects, skillRelease{instance, elapsed})
+}
+
+func (a *App) skillReleaseMatrix(r proto.SkillResult, file string) (render.M4, bool) {
+	matrix, ok := a.effectTargetMatrix(r.Source)
+	if !ok || r.ID != 40 || file != effect.ActivationLibrary(r.ID) {
+		return matrix, ok
+	}
+
+	// Ground Shock's ground meshes are authored at local Z = -1.6.
+	// Use the caster's heading as the input to the EFT basis for this release.
+	pos := render.V3{matrix[12], matrix[13], matrix[14]}
+	heading := render.V3{-matrix[8], 0, -matrix[10]}
+	if a.playerActor(r.Source) == nil || heading == (render.V3{}) {
+		pos, ok = a.effectPosition(r.Source)
+		if !ok {
+			return render.M4{}, false
+		}
+		if r.Source == a.state.SelfID {
+			heading = a.wv.facing
+		} else {
+			angle := float64(a.state.Entities[r.Source].Dir) * (2 * math.Pi / 65536)
+			sin, cos := math.Sincos(angle)
+			heading = render.V3{float32(sin), 0, float32(cos)}
+		}
+	}
+	if heading == (render.V3{}) {
+		heading[2] = 1
+	}
+	return render.Basis(pos, heading, render.V3{0, 1, 0}), true
 }
 
 func advanceSkillEffect(instance *scene.Effect, elapsed float32) {

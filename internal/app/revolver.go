@@ -310,7 +310,11 @@ func (a *App) updateRevolver(in *platform.Input, w, h int) bool {
 	case hit == 1:
 		v.Position.Vertical = !v.Position.Vertical
 		l := a.revolverLayout(w, h)
-		v.Position.Move(layout.Panel.X, layout.Panel.Y, w, h, l.Panel.W, l.Panel.H)
+		centerX := layout.Main.X + layout.Main.W/2
+		centerY := layout.Main.Y + layout.Main.H/2
+		x := centerX - l.Main.W/2 - (l.Main.X - l.Panel.X)
+		y := centerY - l.Main.H/2 - (l.Main.Y - l.Panel.Y)
+		v.Position.Move(x, y, w, h, l.Panel.W, l.Panel.H)
 		a.saveUILayout()
 	case hit == 2:
 		v.selected, v.cast = 0, revolverCast{}

@@ -122,3 +122,57 @@ func TestStatAllocationPublishesCurrentDerivedStats(t *testing.T) {
 		t.Fatalf("allocation stats = %+v, err = %v", stats, err)
 	}
 }
+
+func TestStatResetStonePublishesCurrentDerivedStats(t *testing.T) {
+	fixture, add := forgeRuleSession(t)
+	fixture.char.Str, fixture.char.Rec, fixture.char.Int, fixture.char.Wis = 180, 165, 160, 150
+	if err := db.SaveCharacter(fixture.char); err != nil {
+		t.Fatal(err)
+	}
+	key := db.ItemKey{Type: 100, TypeID: 48}
+	db.MustDefs().Items[key] = &db.ItemDef{Type: key.Type, TypeID: key.TypeID, Count: 1, Special: specialResetStats}
+	stone := add(db.Item{Type: key.Type, TypeID: key.TypeID, Bag: 1, Count: 1})
+	s, wire := gmWireSession(t, *fixture.char, false)
+	s.items = []db.Item{stone}
+	state := game.New()
+	state.SelfID = s.char.ID
+	state.Slots[0] = proto.CharacterSlot{ID: s.char.ID, Str: s.char.Str}
+	before := s.stats()
+	if _, err := state.Apply(buildAdditionalStats(&before)[2:]); err != nil {
+		t.Fatal(err)
+	}
+
+	request := proto.UseItemPacket(stone.Bag, stone.Slot)
+	pool, err := db.Pool(db.GameData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	trigger := fmt.Sprintf("CREATE TRIGGER reject_stat_reset BEFORE UPDATE OF Str ON PS_GameData_Chars WHEN OLD.CharID=%d BEGIN SELECT RAISE(ABORT,'injected failure'); END", s.char.ID)
+	if _, err := pool.Exec(trigger); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { pool.Exec("DROP TRIGGER IF EXISTS reject_stat_reset") })
+	s.handleUseItem(request)
+	waitWorldPacket(t, wire, proto.UseItem)
+	if *s.char != *fixture.char || len(s.items) != 1 || s.items[0] != stone {
+		t.Fatal("failed reset changed the character or consumed the stone")
+	}
+	if _, err := pool.Exec("DROP TRIGGER reject_stat_reset"); err != nil {
+		t.Fatal(err)
+	}
+
+	s.handleUseItem(request)
+	for _, op := range []proto.Opcode{proto.UseItem, proto.StatsReset, proto.CharacterAdditionalStats, proto.CharacterCurrentHitpoints} {
+		if _, err := state.Apply(waitWorldPacket(t, wire, op)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, after := state.Stats, s.stats()
+	if !state.StatsKnown || got.MinAttack == before.MinAttack || got.MinAttack != after.MinAttack || got.MaxAttack != after.MaxAttack ||
+		got.MinMagic != after.MinMagic || got.MaxMagic != after.MaxMagic || got.Defense != after.Defense || got.Resistance != after.Resistance {
+		t.Fatalf("client derived stats after reset = %+v, World = %+v", got, after)
+	}
+	if state.Slots[0].Str != s.char.Str || state.Details.StatPoint != s.char.StatPoint || len(s.items) != 0 {
+		t.Fatal("reset did not refund points and consume the stone")
+	}
+}

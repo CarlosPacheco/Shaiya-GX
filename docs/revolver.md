@@ -14,7 +14,7 @@ configurable cells. The Z/X potion shortcuts are a separate control.
 | Arrow buttons | Step through the current sequence |
 | Editor button | Show or hide the complete sequence for editing |
 | + and − in the editor | Change the number of visible cells |
-| Orientation button | Switch between horizontal and vertical |
+| Orientation button | Rotate around the bar’s center, with the frame kept inside the screen |
 
 Drag a learned skill from K or a basic action from B to any of the three compact
 cells or to an editor cell. You can also copy a shortcut from a regular action bar. Drag between editor

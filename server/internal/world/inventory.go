@@ -327,12 +327,14 @@ func (s *Session) handleUseItem(p []byte) {
 		s.send(buildUseItemResult(ch.ID, &res), "0x050A use item")
 		return
 	case specialResetStats:
-		resetStats(ch)
-		res, err := s.consumeOne(i)
-		if err != nil {
-			s.log.Printf("GX Server World failed to consume item: %v", err)
+		var res db.Item
+		if !s.inventoryOperation(func() {
+			resetStats(s.char)
+			res, s.operation.err = s.consumeOne(i)
+		}) {
+			reject("stat reset could not be saved")
+			return
 		}
-		s.persist()
 		stats := s.stats()
 		s.log.Printf("GX Server World reset stats character_id=%d stat_point=%d", ch.ID, ch.StatPoint)
 		s.send(buildUseItemResult(ch.ID, &res), "0x050A use item")
@@ -340,6 +342,7 @@ func (s *Session) handleUseItem(p []byte) {
 		s.send(buildMaxEnergy(ch, 0, stats.MaxHP), "0x050B max hp (reset)")
 		s.send(buildMaxEnergy(ch, 1, stats.MaxSP), "0x050B max sp (reset)")
 		s.send(buildMaxEnergy(ch, 2, stats.MaxMP), "0x050B max mp (reset)")
+		s.send(buildAdditionalStats(&stats), "0x0526 additional stats after stat reset")
 		s.send(buildCurrentHitpoints(&stats), "0x0521 current hp/mp/sp (reset)")
 		return
 	}
