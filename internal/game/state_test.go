@@ -333,7 +333,8 @@ func TestCombatUsesAuthoritativeHealth(t *testing.T) {
 func TestResurrectionUsesServerPositionAndPools(t *testing.T) {
 	s := New()
 	s.SelfID = 1
-	s.Self.Dead = true
+	s.Self.Dead, s.Self.Sitting = true, true
+	s.Entities[2] = &Entity{Dead: true, Sitting: true}
 	s.Duel.Outcome = 2
 	w := proto.NewWriter(proto.CharacterResurrect)
 	w.U32(1)
@@ -345,11 +346,19 @@ func TestResurrectionUsesServerPositionAndPools(t *testing.T) {
 	if _, err := s.Apply(w.Bytes()); err != nil {
 		t.Fatal(err)
 	}
-	if s.Self.Dead || s.Self.X != 100 || s.Self.Z != 200 || s.Details.Exp != 123 {
+	if s.Self.Dead || s.Self.Sitting || s.Self.X != 100 || s.Self.Z != 200 || s.Details.Exp != 123 {
 		t.Fatal("resurrection state mismatch")
 	}
 	if s.Duel.Outcome != 0 {
 		t.Fatal("duel death status remained after resurrection")
+	}
+	remote := w.Bytes()
+	remote[2] = 2
+	if _, err := s.Apply(remote); err != nil {
+		t.Fatal(err)
+	}
+	if e := s.Entities[2]; e.Dead || e.Sitting {
+		t.Fatal("remote character did not revive standing")
 	}
 	pools := proto.NewWriter(proto.CharacterReviveHitpoints)
 	pools.U32(1)

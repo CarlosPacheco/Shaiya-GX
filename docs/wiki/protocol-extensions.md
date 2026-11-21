@@ -18,7 +18,7 @@ Source notes: GXGMState is a GX-only server response: self ID:u32, GM:u8, turbo:
 
 **S→C serializers:** [gmReply (server/internal/world/gm.go)](../../server/internal/world/gm.go#L19)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1254)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1256)
 
 ### Wire layouts and validation
 
@@ -91,7 +91,7 @@ Source notes: GXVisibility: character ID:u32, concealed:u8. Sent only to authori
 
 **S→C serializers:** [visibilityPacket (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L25)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1244)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1246)
 
 ### Wire layouts and validation
 
@@ -254,7 +254,7 @@ Declarations: [proto.GXMobEnter](../../internal/proto/world.go#L252).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1265), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L124)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1267), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L124)
 
 ### Wire layouts and validation
 
@@ -313,7 +313,7 @@ Declarations: [proto.GXMobMove](../../internal/proto/world.go#L253).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1265), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L130)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1267), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L130)
 
 ### Wire layouts and validation
 
@@ -361,7 +361,7 @@ Declarations: [proto.GXPhysicsClock](../../internal/proto/world.go#L250).
 
 **S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L383)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1234)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1236)
 
 ### Wire layouts and validation
 
@@ -395,7 +395,7 @@ Declarations: [proto.GXPlayerCorrection](../../internal/proto/player_physics.go#
 
 **S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L251)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1224)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1226)
 
 ### Wire layouts and validation
 
@@ -1026,7 +1026,7 @@ Source notes: GXSkillDash is a server-authored Stinger trajectory. Native skill 
 
 **S→C serializers:** [buildSkillDash (server/internal/world/skill_dash.go)](../../server/internal/world/skill_dash.go#L83)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1218)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1220)
 
 ### Wire layouts and validation
 

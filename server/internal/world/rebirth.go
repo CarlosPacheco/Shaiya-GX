@@ -2,6 +2,8 @@ package world
 
 import (
 	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
 
 // Resurrection follows ps_game.exe: the 0x0553 request (CUser::PacketPC),
@@ -27,9 +29,8 @@ const (
 const (
 	// rebirthDeadline is EnterDead's tick + 200000: the dead user is
 	// revived at the bind point when it has not chosen.
-	rebirthDeadline = 200 * time.Second
-	// partyRebirthWait is 0x0553 mode 3's tick + 30000.
-	partyRebirthWait = 30 * time.Second
+	rebirthDeadline  = 200 * time.Second
+	partyRebirthWait = proto.PartyReviveSeconds * time.Second
 )
 
 // startRebirthTimer is EnterDead's deadline (code 0).

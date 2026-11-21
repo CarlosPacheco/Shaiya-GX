@@ -16,7 +16,7 @@ Declarations: [packet.CharacterEnteredMap](../../server/internal/packet/packet.g
 
 **S→C serializers:** [buildCharacterEnteredMapGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L489)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1265), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L10)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1267), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L10)
 
 ### Wire layouts and validation
 
@@ -99,7 +99,7 @@ Source notes: Opcodes not named in Rapture's catalog. client handler 0x0059cf70 
 
 **S→C serializers:** [buildUserLeave (server/internal/world/view.go)](../../server/internal/world/view.go#L229)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1265), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L38)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1267), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L38)
 
 ### Wire layouts and validation
 
@@ -650,7 +650,7 @@ Declarations: [packet.CharacterMapTeleport](../../server/internal/packet/packet.
 
 **S→C serializers:** [buildCharacterMapPosition (server/internal/world/character.go)](../../server/internal/world/character.go#L509)
 
-**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1186)
+**Client receive reducers:** [questMapStateChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L13), [Apply (internal/game/state.go)](../../internal/game/state.go#L1187)
 
 ### Wire layouts and validation
 
@@ -1203,7 +1203,7 @@ func (s *Session) syncVisibility() {
 
 <details><summary>StopAttackPacket — internal/proto/combat.go</summary>
 
-[Source definition](../../internal/proto/combat.go#L77)
+[Source definition](../../internal/proto/combat.go#L80)
 
 ```go
 func StopAttackPacket() []byte { return NewWriter(AutoAttackStop).Bytes() }
@@ -1848,7 +1848,7 @@ Source notes: Request bag,slot,hair,face,height,sex:u8; reply charId:u32,hair,fa
 
 **S→C serializers:** [buildChangeAppearance (server/internal/world/character.go)](../../server/internal/world/character.go#L587)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1265), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L52)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1267), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L52)
 
 ### Wire layouts and validation
 

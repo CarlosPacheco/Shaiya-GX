@@ -16,7 +16,7 @@ Declarations: [packet.CharacterShape](../../server/internal/packet/packet.go#L94
 
 **S→C serializers:** [buildCharacterShapeGuild (server/internal/world/character.go)](../../server/internal/world/character.go#L599)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1265), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L94)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1267), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L94)
 
 ### Wire layouts and validation
 
@@ -203,7 +203,7 @@ Declarations: [packet.TargetMobHpUpdate](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildMobTargetHP (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1399)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1049)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1050)
 
 ### Wire layouts and validation
 
@@ -226,7 +226,7 @@ func buildMobTargetHP(m *MapMob) []byte {
 
 <details><summary>DecodeMobHealth — internal/proto/combat.go</summary>
 
-[Source definition](../../internal/proto/combat.go#L18)
+[Source definition](../../internal/proto/combat.go#L21)
 
 ```go
 func DecodeMobHealth(p []byte) (m MobHealth, err error) {

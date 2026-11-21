@@ -438,6 +438,9 @@ func (p *ConnectedPlayer) IsAlive() bool { return p.lifeState.Load()&1 != 0 }
 // even if the same character revives and dies again during a prepared cast.
 func (p *ConnectedPlayer) SetAlive(alive bool) {
 	if state := p.lifeState.Load(); (state&1 != 0) != alive {
+		if alive {
+			p.SetSitting(false)
+		}
 		p.lifeState.Store(state + 1)
 	}
 }

@@ -292,6 +292,10 @@ func (a *App) confirmedPosition(p []byte) {
 			return
 		}
 		if proto.Op(p) != proto.CharacterMove {
+			v.sitPending, v.sitAttack = false, 0
+			if v.self != nil && (v.self.PlayingAction(10) || v.self.PlayingAction(11)) {
+				v.self.ReleaseAction()
+			}
 			delete(v.dashes, a.state.SelfID)
 			v.ladder.Active = false
 			v.ladderFinishing = false

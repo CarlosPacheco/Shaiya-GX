@@ -6,6 +6,7 @@ import (
 )
 
 const InventoryWidth, InventoryHeight = 256, 486
+const InventoryBagSlots = 24
 
 // Original slots: Game.exe 0x4f6750, table 0x70a2f8 (14 position pairs).
 var equipmentCells = [...][2]int{{24, 53}, {24, 93}, {24, 133}, {24, 173}, {24, 213}, {196, 133}, {196, 173}, {196, 213}, {191, 53}, {191, 77}, {215, 77}, {191, 101}, {215, 101}, {215, 53}}
@@ -27,14 +28,14 @@ func InventoryCell(bag, slot uint8) (x, y, size int, ok bool) {
 		}
 		return p[0], p[1], size, true
 	}
-	if bag > 5 || slot >= 24 {
+	if bag > 5 || slot >= InventoryBagSlots {
 		return
 	}
 	return 15 + int(slot%6)*39, 283 + int(slot/6)*39, 32, true
 }
 func InventoryHit(mx, my int, bag uint8) ([2]uint8, bool) {
 	for _, b := range []uint8{0, bag} {
-		for slot := uint8(0); slot < 24; slot++ {
+		for slot := uint8(0); slot < InventoryBagSlots; slot++ {
 			x, y, size, ok := InventoryCell(b, slot)
 			if ok && mx >= x && mx < x+size && my >= y && my < y+size {
 				return [2]uint8{b, slot}, true

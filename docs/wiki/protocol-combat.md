@@ -16,7 +16,7 @@ Declarations: [packet.CharacterMove](../../server/internal/packet/packet.go#L98)
 
 **S→C serializers:** [buildCharacterMove (server/internal/world/character.go)](../../server/internal/world/character.go#L524)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1265), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L110)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1267), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L110)
 
 ### Wire layouts and validation
 
@@ -99,7 +99,7 @@ Declarations: [packet.CharacterUserAutoAttack](../../server/internal/packet/pack
 
 **S→C serializers:** [buildCharacterUserAttack (server/internal/world/pvp.go)](../../server/internal/world/pvp.go#L311), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1059)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1060)
 
 ### Wire layouts and validation
 
@@ -140,7 +140,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 <details><summary>DecodeAttackResult — internal/proto/combat.go</summary>
 
-[Source definition](../../internal/proto/combat.go#L32)
+[Source definition](../../internal/proto/combat.go#L35)
 
 ```go
 func DecodeAttackResult(p []byte) (m AttackResult, err error) {
@@ -172,7 +172,7 @@ Declarations: [packet.CharacterMobAutoAttack](../../server/internal/packet/packe
 
 **S→C serializers:** [buildCharacterMobAttack (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1417), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1059)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1060)
 
 ### Wire layouts and validation
 
@@ -213,7 +213,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 <details><summary>DecodeAttackResult — internal/proto/combat.go</summary>
 
-[Source definition](../../internal/proto/combat.go#L32)
+[Source definition](../../internal/proto/combat.go#L35)
 
 ```go
 func DecodeAttackResult(p []byte) (m AttackResult, err error) {
@@ -245,7 +245,7 @@ Declarations: [packet.CharacterDeath](../../server/internal/packet/packet.go#L10
 
 **S→C serializers:** [buildCharacterDeath (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1439)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1065)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1066)
 
 ### Wire layouts and validation
 
@@ -305,7 +305,7 @@ Declarations: [packet.CharacterReviveHitpoints](../../server/internal/packet/pac
 
 **S→C serializers:** [buildCharacterReviveHitpoints (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1474)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1033)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1034)
 
 ### Wire layouts and validation
 
@@ -456,7 +456,7 @@ Declarations: [packet.CharacterEquipment](../../server/internal/packet/packet.go
 
 **S→C serializers:** [buildCharacterEquipment (server/internal/world/character.go)](../../server/internal/world/character.go#L565)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1265), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L77)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1267), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L77)
 
 ### Wire layouts and validation
 
@@ -2674,7 +2674,7 @@ Declarations: [packet.CharacterCurrentHitpoints](../../server/internal/packet/pa
 
 **S→C serializers:** [buildCurrentHitpoints (server/internal/world/character.go)](../../server/internal/world/character.go#L458)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1043)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1044)
 
 ### Wire layouts and validation
 
@@ -2698,7 +2698,7 @@ func buildCurrentHitpoints(s *CharacterStats) []byte {
 
 <details><summary>DecodePools — internal/proto/combat.go</summary>
 
-[Source definition](../../internal/proto/combat.go#L6)
+[Source definition](../../internal/proto/combat.go#L9)
 
 ```go
 func DecodePools(p []byte) (m Pools, err error) {
@@ -3037,7 +3037,7 @@ func buildCharacterResurrect(characterID uint32, kind uint8, exp uint32, x, y, z
 
 <details><summary>DecodeResurrection — internal/proto/combat.go</summary>
 
-[Source definition](../../internal/proto/combat.go#L48)
+[Source definition](../../internal/proto/combat.go#L51)
 
 ```go
 func DecodeResurrection(p []byte) (m Resurrection, err error) {
@@ -3077,7 +3077,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>ReviveChoicePacket — internal/proto/combat.go</summary>
 
-[Source definition](../../internal/proto/combat.go#L70)
+[Source definition](../../internal/proto/combat.go#L73)
 
 ```go
 func ReviveChoicePacket(mode ReviveMode) []byte {

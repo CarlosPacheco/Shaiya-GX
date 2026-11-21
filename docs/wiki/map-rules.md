@@ -34,11 +34,12 @@ class stat. Existing characters receive the difference in per-level awards
 once. Previously allocated attributes, learned skills and claimed PvP stages
 are preserved.
 
-Characters can revive at their bind point or request revival at an eligible
-party leader. The automatic bind timer still applies. Death never deletes a
-character or ends the session. Quests grant their authored EXP and use their
-level, class, faction and other active eligibility rules. Skills use their
-level, class, faction and skill-point requirements.
+Any character can revive at their bind point or choose to revive at an eligible
+party leader. Revival at the party leader takes 10 seconds. The automatic bind
+timer still applies. Death never deletes a character or ends the session. Quests
+grant their authored EXP and use their level, class, faction and other active
+eligibility rules. Skills use their level, class, faction and skill-point
+requirements.
 
 ## Guild founding and roles
 

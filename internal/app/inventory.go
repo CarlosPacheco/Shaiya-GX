@@ -70,12 +70,6 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 	captured := panelPointer(in, x, y, ui.InventoryWidth, ui.InventoryHeight)
 	var closed bool
 	v.bag, closed = a.inventoryUI.Update(in, w, h, v.bag)
-	// Native bag tabs must be reachable without releasing the held item.
-	if v.dragging && v.selected && !in.Clicked {
-		if tab := ui.InventoryBagTab(in.MouseX-x, in.MouseY-y); tab >= 0 {
-			v.bag = uint8(tab + 1)
-		}
-	}
 	if in.Pressed {
 		v.message = ""
 	}
@@ -119,8 +113,21 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 	if in.Clicked {
 		pressedItem, dragged := v.pressedItem, v.dragging
 		v.cancelItemPointer()
-		if v.hovered {
-			key := v.hover
+		key, hit := v.hover, v.hovered
+		if tab := ui.InventoryBagTab(in.MouseX-x, in.MouseY-y); dragged && tab >= 0 {
+			bag := uint8(tab + 1)
+			// Game.exe 0x4f5e31 scans the destination page for its first empty slot.
+			if bag != v.source[0] {
+				for slot := uint8(0); slot < ui.InventoryBagSlots; slot++ {
+					key = [2]uint8{bag, slot}
+					if _, occupied := a.state.Inventory[key]; !occupied {
+						hit = true
+						break
+					}
+				}
+			}
+		}
+		if hit {
 			switch {
 			case dragged && key != v.source:
 				if a.world == nil {

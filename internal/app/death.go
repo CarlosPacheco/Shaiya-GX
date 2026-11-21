@@ -55,7 +55,7 @@ func (a *App) requestDeathRevival(mode proto.ReviveMode) {
 	a.wv.reviveAt = a.clock + 3
 	if mode == proto.ReviveParty {
 		a.wv.death.waiting = true
-		a.wv.death.waitUntil = a.clock + 30
+		a.wv.death.waitUntil = a.clock + proto.PartyReviveSeconds
 	} else {
 		a.wv.death.pending = true
 	}

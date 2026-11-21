@@ -119,7 +119,7 @@ func TestRuneCanBeRemovedWithoutConsumingAndRecreationNeedsNoConfirmation(t *tes
 	}
 }
 
-func TestInventoryHeldItemCanSwitchAllBags(t *testing.T) {
+func TestInventoryHeldItemDoesNotSwitchBags(t *testing.T) {
 	a := inputApp()
 	a.inventory.open = true
 	source := [2]uint8{1, 0}
@@ -128,8 +128,8 @@ func TestInventoryHeldItemCanSwitchAllBags(t *testing.T) {
 	a.updateInventory(&platform.Input{MouseX: x + 17, MouseY: y + 285, Pressed: true, MouseDown: true}, 1024, 768)
 	for bag := uint8(2); bag <= 5; bag++ {
 		a.updateInventory(&platform.Input{MouseX: x + 12 + int(bag-1)*47, MouseY: y + 260, MouseDown: true}, 1024, 768)
-		if a.inventory.bag != bag || !a.inventory.dragging || a.inventory.source != source {
-			t.Fatal("bag switch lost held source", a.inventory)
+		if a.inventory.bag != 1 || !a.inventory.dragging || a.inventory.source != source {
+			t.Fatal("hovering a bag tab changed the selected bag or held item", a.inventory)
 		}
 	}
 }

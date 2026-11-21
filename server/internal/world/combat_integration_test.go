@@ -674,12 +674,27 @@ func TestRebirth(t *testing.T) {
 		t.Fatal("not revived at the deadline")
 	}
 
+	ch.ID = 100
+	wire, _ := gmWireSession(t, *ch, false)
+	s.player = &ConnectedPlayer{CharacterID: ch.ID, character: *ch, out: wire.out}
+	leader := &ConnectedPlayer{CharacterID: 101, out: wire.out, character: db.Character{ID: 101, MapID: mapID, PosX: 400, PosZ: 410}}
+	leader.SetMap(mapID)
+	leader.SetAlive(true)
+	s.player.party = &party{members: []*ConnectedPlayer{leader, s.player}}
 	for value := uint8(0); value < 4; value++ {
 		ch.Mode = value
 		die()
-		s.handleResurrect([]byte{0x53, 0x05, reviveAtBind})
-		if s.char == nil || s.dead || !inBox() {
-			t.Fatalf("legacy value %d did not revive normally", value)
+		s.player.SetAlive(false)
+		s.player.SetSitting(true)
+		start := time.Now()
+		s.handleResurrect([]byte{0x53, 0x05, reviveWithParty})
+		s.tickRebirth(start.Add(9 * time.Second))
+		if !s.dead || !s.rebirthParty {
+			t.Fatalf("legacy value %d bypassed the party revival wait", value)
+		}
+		s.tickRebirth(start.Add(11 * time.Second))
+		if s.dead || ch.PosX != 400 || ch.PosZ != 410 || s.player.IsSitting() {
+			t.Fatalf("legacy value %d did not revive standing at the party leader", value)
 		}
 	}
 }

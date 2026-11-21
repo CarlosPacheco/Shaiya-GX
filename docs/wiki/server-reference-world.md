@@ -2490,16 +2490,16 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`savePosition`](../../server/internal/world/movement.go#L42)<br>`func (s *Session) savePosition()` | savePosition persists the character (usp_Save_Char_Info_E). |
 | [`syncPlayer`](../../server/internal/world/movement.go#L54)<br>`func (s *Session) syncPlayer()` | See the source definition and the subsystem ownership contract. |
 | [`applyTeleport`](../../server/internal/world/movement.go#L63)<br>`func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmDirect ...bool)` | applyTeleport is the single path for every teleport (portals, town, resurrection): moves the character, persists it, acks the client, introduces it to viewers at the destination and refreshes visibility. |
-| [`handleCharacterMove`](../../server/internal/world/movement.go#L142)<br>`func (s *Session) handleCharacterMove(p []byte)` | handleCharacterMove (0x0501): motion:u8, direction:u16, x, y, z:f32. |
-| [`handleEnteredPortal`](../../server/internal/world/movement.go#L215)<br>`func (s *Session) handleEnteredPortal(index uint8)` | See the source definition and the subsystem ownership contract. |
-| [`isTownCommand`](../../server/internal/world/movement.go#L228)<br>`func isTownCommand(message string) bool` | See the source definition and the subsystem ownership contract. |
-| [`executeTown`](../../server/internal/world/movement.go#L235)<br>`func (s *Session) executeTown()` | executeTown moves the character to the nearest faction spawn area on its map (also the escape hatch while dead). |
-| [`deathExpPercent`](../../server/internal/world/movement.go#L250)<br>`const deathExpPercent = 5` | deathExpPercent is CUser::Death's drop without protection (deathExpLoss). |
-| [`expDrop`](../../server/internal/world/movement.go#L254)<br>`func expDrop(ch *db.Character, percent int, faction uint8) uint32` | expDrop is CUser::ExpDrop (0x0045ad50): above level 10, percent of the level's exp span, never below the level's start. |
-| [`returnToTownDelay`](../../server/internal/world/movement.go#L274)<br>`const returnToTownDelay = 10 * time.Second` | returnToTownDelay is 0x0556's tick + 10000 (CUser::PacketPC). |
-| [`handleReturnToTown`](../../server/internal/world/movement.go#L278)<br>`func (s *Session) handleReturnToTown()` | handleReturnToTown (0x0556): alive and with no move pending, the user is moved to its bind point 10 s later (UpdateResetPosition, type 0). |
-| [`cancelMove`](../../server/internal/world/movement.go#L287)<br>`func (s *Session) cancelMove()` | cancelMove is CUser::CancleMove for the type-0 move: moving, attacking, casting or being hit drops it without a reply. |
-| [`tickReturnToTown`](../../server/internal/world/movement.go#L289)<br>`func (s *Session) tickReturnToTown()` | See the source definition and the subsystem ownership contract. |
+| [`handleCharacterMove`](../../server/internal/world/movement.go#L143)<br>`func (s *Session) handleCharacterMove(p []byte)` | handleCharacterMove (0x0501): motion:u8, direction:u16, x, y, z:f32. |
+| [`handleEnteredPortal`](../../server/internal/world/movement.go#L216)<br>`func (s *Session) handleEnteredPortal(index uint8)` | See the source definition and the subsystem ownership contract. |
+| [`isTownCommand`](../../server/internal/world/movement.go#L229)<br>`func isTownCommand(message string) bool` | See the source definition and the subsystem ownership contract. |
+| [`executeTown`](../../server/internal/world/movement.go#L236)<br>`func (s *Session) executeTown()` | executeTown moves the character to the nearest faction spawn area on its map (also the escape hatch while dead). |
+| [`deathExpPercent`](../../server/internal/world/movement.go#L251)<br>`const deathExpPercent = 5` | deathExpPercent is CUser::Death's drop without protection (deathExpLoss). |
+| [`expDrop`](../../server/internal/world/movement.go#L255)<br>`func expDrop(ch *db.Character, percent int, faction uint8) uint32` | expDrop is CUser::ExpDrop (0x0045ad50): above level 10, percent of the level's exp span, never below the level's start. |
+| [`returnToTownDelay`](../../server/internal/world/movement.go#L275)<br>`const returnToTownDelay = 10 * time.Second` | returnToTownDelay is 0x0556's tick + 10000 (CUser::PacketPC). |
+| [`handleReturnToTown`](../../server/internal/world/movement.go#L279)<br>`func (s *Session) handleReturnToTown()` | handleReturnToTown (0x0556): alive and with no move pending, the user is moved to its bind point 10 s later (UpdateResetPosition, type 0). |
+| [`cancelMove`](../../server/internal/world/movement.go#L288)<br>`func (s *Session) cancelMove()` | cancelMove is CUser::CancleMove for the type-0 move: moving, attacking, casting or being hit drops it without a reply. |
+| [`tickReturnToTown`](../../server/internal/world/movement.go#L290)<br>`func (s *Session) tickReturnToTown()` | See the source definition and the subsystem ownership contract. |
 
 ### movement_rune.go
 
@@ -3066,32 +3066,32 @@ Direct GX dependencies: `server/internal/crypto`, `server/internal/db`, `server/
 | [`GMVisible`](../../server/internal/world/players.go#L429)<br>`func (p *ConnectedPlayer) GMVisible() bool` | See the source definition and the subsystem ownership contract. |
 | [`IsAlive`](../../server/internal/world/players.go#L435)<br>`func (p *ConnectedPlayer) IsAlive() bool` | See the source definition and the subsystem ownership contract. |
 | [`SetAlive`](../../server/internal/world/players.go#L439)<br>`func (p *ConnectedPlayer) SetAlive(alive bool)` | SetAlive is called by the owning session. A death has a distinct state even if the same character revives and dies again during a prepared cast. |
-| [`QueueTeleport`](../../server/internal/world/players.go#L445)<br>`func (p *ConnectedPlayer) QueueTeleport(mapID uint16, x, y, z float32)` | See the source definition and the subsystem ownership contract. |
-| [`TakeTeleport`](../../server/internal/world/players.go#L451)<br>`func (p *ConnectedPlayer) TakeTeleport() *pendingTeleport` | See the source definition and the subsystem ownership contract. |
-| [`tradeRefresh`](../../server/internal/world/players.go#L462)<br>`type tradeRefresh` | tradeRefresh tells the other side of a completed trade to reload its items and apply the money change itself (only the owner mutates its character). |
-| [`QueueTradeRefresh`](../../server/internal/world/players.go#L467)<br>`func (p *ConnectedPlayer) QueueTradeRefresh(packets [][]byte, moneyDelta int64)` | See the source definition and the subsystem ownership contract. |
-| [`TakeTradeRefresh`](../../server/internal/world/players.go#L473)<br>`func (p *ConnectedPlayer) TakeTradeRefresh() *tradeRefresh` | See the source definition and the subsystem ownership contract. |
-| [`QueueDamage`](../../server/internal/world/players.go#L481)<br>`func (p *ConnectedPlayer) QueueDamage(d pendingDamage)` | See the source definition and the subsystem ownership contract. |
-| [`TakeDamage`](../../server/internal/world/players.go#L492)<br>`func (p *ConnectedPlayer) TakeDamage() []pendingDamage` | See the source definition and the subsystem ownership contract. |
-| [`SitMotionPacket`](../../server/internal/world/players.go#L500)<br>`func (p *ConnectedPlayer) SitMotionPacket() []byte` | See the source definition and the subsystem ownership contract. |
-| [`EnteredMapPacket`](../../server/internal/world/players.go#L505)<br>`func (p *ConnectedPlayer) EnteredMapPacket() []byte` | EnteredMapPacket introduces an already-present character to a viewer. |
-| [`ShapePacket`](../../server/internal/world/players.go#L513)<br>`func (p *ConnectedPlayer) ShapePacket() []byte` | ShapePacket never embeds sitting; sit is sent as a separate 0x0506. |
-| [`MovePacket`](../../server/internal/world/players.go#L520)<br>`func (p *ConnectedPlayer) MovePacket() []byte` | See the source definition and the subsystem ownership contract. |
-| [`EquipmentPacket`](../../server/internal/world/players.go#L526)<br>`func (p *ConnectedPlayer) EquipmentPacket(slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`Send`](../../server/internal/world/players.go#L534)<br>`func (p *ConnectedPlayer) Send(frame []byte, label string) error` | Send writes a frame to this player with the post-handshake expanded XOR encoding, which is stateless and safe from any goroutine. |
-| [`appendWorldFrame`](../../server/internal/world/players.go#L542)<br>`func appendWorldFrame(dst, frame []byte) []byte` | See the source definition and the subsystem ownership contract. |
-| [`playersWhere`](../../server/internal/world/players.go#L550)<br>`func playersWhere(mapID uint16, keep func(*ConnectedPlayer) bool) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`PlayersOnMap`](../../server/internal/world/players.go#L566)<br>`func PlayersOnMap(mapID uint16) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`PlayersNear`](../../server/internal/world/players.go#L570)<br>`func PlayersNear(mapID uint16, x, z, radius float32) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`PlayersNearExcluding`](../../server/internal/world/players.go#L577)<br>`func PlayersNearExcluding(mapID uint16, characterID uint32, x, z, radius float32) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`AllPlayers`](../../server/internal/world/players.go#L587)<br>`func AllPlayers() []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`FindPlayerByName`](../../server/internal/world/players.go#L599)<br>`func FindPlayerByName(name string) *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`FindPlayerByID`](../../server/internal/world/players.go#L608)<br>`func FindPlayerByID(id uint32) *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`canSeeCharacter`](../../server/internal/world/players.go#L618)<br>`func canSeeCharacter(viewerIsAdmin, subjectIsAdmin, subjectGMVisible bool) bool` | Hidden GMs are visible only to other GMs. |
-| [`broadcast`](../../server/internal/world/players.go#L623)<br>`func broadcast(players []*ConnectedPlayer, frame []byte, label string, log *logx.Logger)` | broadcast sends frame to each player, logging failures. |
-| [`UpdateElements`](../../server/internal/world/players.go#L633)<br>`func (p *ConnectedPlayer) UpdateElements(attack, defense uint8)` | UpdateElements publishes the owning session's native event state for detection; no other session reads or mutates its applied skill list. |
-| [`QueueTradeCommit`](../../server/internal/world/players.go#L640)<br>`func (p *ConnectedPlayer) QueueTradeCommit(trade *tradeSession)` | See the source definition and the subsystem ownership contract. |
-| [`takeTradeCommit`](../../server/internal/world/players.go#L645)<br>`func (p *ConnectedPlayer) takeTradeCommit() *tradeSession` | See the source definition and the subsystem ownership contract. |
+| [`QueueTeleport`](../../server/internal/world/players.go#L448)<br>`func (p *ConnectedPlayer) QueueTeleport(mapID uint16, x, y, z float32)` | See the source definition and the subsystem ownership contract. |
+| [`TakeTeleport`](../../server/internal/world/players.go#L454)<br>`func (p *ConnectedPlayer) TakeTeleport() *pendingTeleport` | See the source definition and the subsystem ownership contract. |
+| [`tradeRefresh`](../../server/internal/world/players.go#L465)<br>`type tradeRefresh` | tradeRefresh tells the other side of a completed trade to reload its items and apply the money change itself (only the owner mutates its character). |
+| [`QueueTradeRefresh`](../../server/internal/world/players.go#L470)<br>`func (p *ConnectedPlayer) QueueTradeRefresh(packets [][]byte, moneyDelta int64)` | See the source definition and the subsystem ownership contract. |
+| [`TakeTradeRefresh`](../../server/internal/world/players.go#L476)<br>`func (p *ConnectedPlayer) TakeTradeRefresh() *tradeRefresh` | See the source definition and the subsystem ownership contract. |
+| [`QueueDamage`](../../server/internal/world/players.go#L484)<br>`func (p *ConnectedPlayer) QueueDamage(d pendingDamage)` | See the source definition and the subsystem ownership contract. |
+| [`TakeDamage`](../../server/internal/world/players.go#L495)<br>`func (p *ConnectedPlayer) TakeDamage() []pendingDamage` | See the source definition and the subsystem ownership contract. |
+| [`SitMotionPacket`](../../server/internal/world/players.go#L503)<br>`func (p *ConnectedPlayer) SitMotionPacket() []byte` | See the source definition and the subsystem ownership contract. |
+| [`EnteredMapPacket`](../../server/internal/world/players.go#L508)<br>`func (p *ConnectedPlayer) EnteredMapPacket() []byte` | EnteredMapPacket introduces an already-present character to a viewer. |
+| [`ShapePacket`](../../server/internal/world/players.go#L516)<br>`func (p *ConnectedPlayer) ShapePacket() []byte` | ShapePacket never embeds sitting; sit is sent as a separate 0x0506. |
+| [`MovePacket`](../../server/internal/world/players.go#L523)<br>`func (p *ConnectedPlayer) MovePacket() []byte` | See the source definition and the subsystem ownership contract. |
+| [`EquipmentPacket`](../../server/internal/world/players.go#L529)<br>`func (p *ConnectedPlayer) EquipmentPacket(slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`Send`](../../server/internal/world/players.go#L537)<br>`func (p *ConnectedPlayer) Send(frame []byte, label string) error` | Send writes a frame to this player with the post-handshake expanded XOR encoding, which is stateless and safe from any goroutine. |
+| [`appendWorldFrame`](../../server/internal/world/players.go#L545)<br>`func appendWorldFrame(dst, frame []byte) []byte` | See the source definition and the subsystem ownership contract. |
+| [`playersWhere`](../../server/internal/world/players.go#L553)<br>`func playersWhere(mapID uint16, keep func(*ConnectedPlayer) bool) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`PlayersOnMap`](../../server/internal/world/players.go#L569)<br>`func PlayersOnMap(mapID uint16) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`PlayersNear`](../../server/internal/world/players.go#L573)<br>`func PlayersNear(mapID uint16, x, z, radius float32) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`PlayersNearExcluding`](../../server/internal/world/players.go#L580)<br>`func PlayersNearExcluding(mapID uint16, characterID uint32, x, z, radius float32) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`AllPlayers`](../../server/internal/world/players.go#L590)<br>`func AllPlayers() []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`FindPlayerByName`](../../server/internal/world/players.go#L602)<br>`func FindPlayerByName(name string) *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`FindPlayerByID`](../../server/internal/world/players.go#L611)<br>`func FindPlayerByID(id uint32) *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`canSeeCharacter`](../../server/internal/world/players.go#L621)<br>`func canSeeCharacter(viewerIsAdmin, subjectIsAdmin, subjectGMVisible bool) bool` | Hidden GMs are visible only to other GMs. |
+| [`broadcast`](../../server/internal/world/players.go#L626)<br>`func broadcast(players []*ConnectedPlayer, frame []byte, label string, log *logx.Logger)` | broadcast sends frame to each player, logging failures. |
+| [`UpdateElements`](../../server/internal/world/players.go#L636)<br>`func (p *ConnectedPlayer) UpdateElements(attack, defense uint8)` | UpdateElements publishes the owning session's native event state for detection; no other session reads or mutates its applied skill list. |
+| [`QueueTradeCommit`](../../server/internal/world/players.go#L643)<br>`func (p *ConnectedPlayer) QueueTradeCommit(trade *tradeSession)` | See the source definition and the subsystem ownership contract. |
+| [`takeTradeCommit`](../../server/internal/world/players.go#L648)<br>`func (p *ConnectedPlayer) takeTradeCommit() *tradeSession` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3703,25 +3703,27 @@ type realmState struct {
 
 [server/internal/world/rebirth.go](../../server/internal/world/rebirth.go#L1)
 
+Direct GX dependencies: `internal/proto`.
+
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`reviveAtBind`](../../server/internal/world/rebirth.go#L15)<br>`const reviveAtBind = 2` | 0x0553 request byte. |
-| [`reviveWithParty`](../../server/internal/world/rebirth.go#L16)<br>`const reviveWithParty = 3` | 0x0553 request byte. |
-| [`reviveRuneAtBind`](../../server/internal/world/rebirth.go#L17)<br>`const reviveRuneAtBind = 4` | 0x0553 request byte. |
-| [`reviveRuneHere`](../../server/internal/world/rebirth.go#L18)<br>`const reviveRuneHere = 5` | 0x0553 request byte. |
-| [`rebirthKindBind`](../../server/internal/world/rebirth.go#L23)<br>`const rebirthKindBind = 4` | CUser::Rebirth kind byte of 0x0551. |
-| [`rebirthKindParty`](../../server/internal/world/rebirth.go#L24)<br>`const rebirthKindParty = 5` | CUser::Rebirth kind byte of 0x0551. |
-| [`rebirthDeadline`](../../server/internal/world/rebirth.go#L30)<br>`const rebirthDeadline = 200 * time.Second` | rebirthDeadline is EnterDead's tick + 200000: the dead user is revived at the bind point when it has not chosen. |
-| [`partyRebirthWait`](../../server/internal/world/rebirth.go#L32)<br>`const partyRebirthWait = 30 * time.Second` | partyRebirthWait is 0x0553 mode 3's tick + 30000. |
-| [`startRebirthTimer`](../../server/internal/world/rebirth.go#L36)<br>`func (s *Session) startRebirthTimer()` | startRebirthTimer is EnterDead's deadline (code 0). |
-| [`handleResurrect`](../../server/internal/world/rebirth.go#L41)<br>`func (s *Session) handleResurrect(p []byte)` | handleResurrect (0x0553): mode byte. |
-| [`tickRebirth`](../../server/internal/world/rebirth.go#L58)<br>`func (s *Session) tickRebirth(now time.Time)` | tickRebirth is UpdateRebirth's death timer. |
-| [`rebirthAtBind`](../../server/internal/world/rebirth.go#L70)<br>`func (s *Session) rebirthAtBind()` | rebirthAtBind applies the normal death penalty and returns the user with full pools. |
-| [`killSoulParty`](../../server/internal/world/rebirth.go#L80)<br>`func (s *Session) killSoulParty()` | killSoulParty is KillSoulParty: at the party leader's position with full pools (after the exp loss) when the leader is alive on the same map; otherwise return to the bind point. |
-| [`inParty`](../../server/internal/world/rebirth.go#L92)<br>`func (s *Session) inParty() bool` | See the source definition and the subsystem ownership contract. |
-| [`partyLeader`](../../server/internal/world/rebirth.go#L101)<br>`func (s *Session) partyLeader() *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`refillPools`](../../server/internal/world/rebirth.go#L114)<br>`func (s *Session) refillPools()` | refillPools sets current HP, MP and SP to their effective maxima. |
-| [`rebirth`](../../server/internal/world/rebirth.go#L121)<br>`func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore bool, lost uint32)` | rebirth restores the character and publishes the result to the world. |
+| [`reviveAtBind`](../../server/internal/world/rebirth.go#L17)<br>`const reviveAtBind = 2` | 0x0553 request byte. |
+| [`reviveWithParty`](../../server/internal/world/rebirth.go#L18)<br>`const reviveWithParty = 3` | 0x0553 request byte. |
+| [`reviveRuneAtBind`](../../server/internal/world/rebirth.go#L19)<br>`const reviveRuneAtBind = 4` | 0x0553 request byte. |
+| [`reviveRuneHere`](../../server/internal/world/rebirth.go#L20)<br>`const reviveRuneHere = 5` | 0x0553 request byte. |
+| [`rebirthKindBind`](../../server/internal/world/rebirth.go#L25)<br>`const rebirthKindBind = 4` | CUser::Rebirth kind byte of 0x0551. |
+| [`rebirthKindParty`](../../server/internal/world/rebirth.go#L26)<br>`const rebirthKindParty = 5` | CUser::Rebirth kind byte of 0x0551. |
+| [`rebirthDeadline`](../../server/internal/world/rebirth.go#L32)<br>`const rebirthDeadline = 200 * time.Second` | rebirthDeadline is EnterDead's tick + 200000: the dead user is revived at the bind point when it has not chosen. |
+| [`partyRebirthWait`](../../server/internal/world/rebirth.go#L33)<br>`const partyRebirthWait = proto.PartyReviveSeconds * time.Second` | See the source definition and the subsystem ownership contract. |
+| [`startRebirthTimer`](../../server/internal/world/rebirth.go#L37)<br>`func (s *Session) startRebirthTimer()` | startRebirthTimer is EnterDead's deadline (code 0). |
+| [`handleResurrect`](../../server/internal/world/rebirth.go#L42)<br>`func (s *Session) handleResurrect(p []byte)` | handleResurrect (0x0553): mode byte. |
+| [`tickRebirth`](../../server/internal/world/rebirth.go#L59)<br>`func (s *Session) tickRebirth(now time.Time)` | tickRebirth is UpdateRebirth's death timer. |
+| [`rebirthAtBind`](../../server/internal/world/rebirth.go#L71)<br>`func (s *Session) rebirthAtBind()` | rebirthAtBind applies the normal death penalty and returns the user with full pools. |
+| [`killSoulParty`](../../server/internal/world/rebirth.go#L81)<br>`func (s *Session) killSoulParty()` | killSoulParty is KillSoulParty: at the party leader's position with full pools (after the exp loss) when the leader is alive on the same map; otherwise return to the bind point. |
+| [`inParty`](../../server/internal/world/rebirth.go#L93)<br>`func (s *Session) inParty() bool` | See the source definition and the subsystem ownership contract. |
+| [`partyLeader`](../../server/internal/world/rebirth.go#L102)<br>`func (s *Session) partyLeader() *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`refillPools`](../../server/internal/world/rebirth.go#L115)<br>`func (s *Session) refillPools()` | refillPools sets current HP, MP and SP to their effective maxima. |
+| [`rebirth`](../../server/internal/world/rebirth.go#L122)<br>`func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore bool, lost uint32)` | rebirth restores the character and publishes the result to the world. |
 
 ### recreation_runes.go
 

@@ -1,5 +1,8 @@
 package proto
 
+// PartyReviveSeconds is the delay between requesting and executing a party revival.
+const PartyReviveSeconds = 10
+
 // Pools is 0x0521 (Game.exe 0x595090; Rapture buildCurrentHitpoints).
 type Pools struct{ HP, MP, SP uint32 }
 

@@ -540,8 +540,8 @@ operation confirmations. Recreation runs immediately without confirmation.
 
 ## Continuous forge operations and inventory bag dragging
 
-Dragging a held inventory item over another native bag tab selects that bag
-without releasing its source, allowing authoritative cross-bag moves and swaps.
+Dropping an inventory item on another bag tab moves it to the first empty slot
+in that bag and keeps the current bag visible. A full bag leaves the item in place.
 Enchant now consumes exactly one material and lapisia per click, without quantity
 or confirmation dialogs; the server chance is displayed above its button.
 Native success/failure sounds and a 500ms additive Lensflare flash accompany

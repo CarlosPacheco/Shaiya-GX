@@ -20,6 +20,7 @@ def main():
     ap.add_argument('--world',type=Path,default=ROOT/'server/build/gx_world')
     ap.add_argument('--item-data',type=Path,required=True)
     ap.add_argument('--data',type=Path,default=Path.home()/'Desktop/Shaiya GX/data')
+    ap.add_argument('--inventory-only',action='store_true')
     args=ap.parse_args()
     logs=ROOT/'work/forge-rules';logs.mkdir(parents=True,exist_ok=True)
     for port in (41800,41810):
@@ -46,9 +47,14 @@ def main():
                 if 'RowID' in e:e['RowID']=db.execute('SELECT COALESCE(MAX(RowID),0)+1 FROM PS_GameData_CharEvents').fetchone()[0]
                 db.execute('INSERT INTO PS_GameData_CharEvents('+','.join('"'+k+'"' for k in e)+') VALUES('+','.join('?' for k in e)+')',list(e.values()))
             fixtures=[(1,2,1),(95,1,3),(25,43,3),(100,171,3),(30,1,2),(100,82,3),(100,140,2),(101,10,3),(101,1,3)]
-            for slot,(typ,identity,count) in enumerate(fixtures):
-                db.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,?,?,?,?,1,?,500,0,0,0,0,0,0,'00000000000000000000',?,datetime('now'),'N2',0)",(cid,typ*1000+identity,secrets.randbits(62),typ,identity,slot,count))
+            slots = [(1, slot, *item) for slot, item in enumerate(fixtures)]
+            slots += [(2, 0, 25, 43, 1)]
+            slots += [(3, slot, 25, 43, 1) for slot in range(24)]
+            for bag,slot,typ,identity,count in slots:
+                db.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,?,?,?,?,?,?,500,0,0,0,0,0,0,'00000000000000000000',?,datetime('now'),'N2',0)",(cid,typ*1000+identity,secrets.randbits(62),typ,identity,bag,slot,count))
         env=dict(os.environ,RAPTURE_DB_PATH=str(dbpath),RAPTURE_DATA_DIR=str(ROOT/'server/data'),RAPTURE_LOGIN_LISTEN='127.0.0.1:41800',RAPTURE_WORLD_LISTEN='127.0.0.1:41810',RAPTURE_PUBLIC_IP='127.0.0.1',SHAIYA_TEST_LOGIN_ADDR='127.0.0.1:41800',SHAIYA_TEST_WORLD_PORT='41810',SHAIYA_TEST_DISPOSABLE='1',SHAIYA_TEST_FORGE_CONTINUOUS='1',SHAIYA_DATA=str(args.data),SHAIYA_TEST_ITEM_FILE=str(args.item_data.resolve()),SHAIYA_TEST_USER=user,SHAIYA_PASSWORD=password,GOTOOLCHAIN='local')
+        if args.inventory_only:
+            env['SHAIYA_TEST_INVENTORY_BAGS']='1'
         env['PATH']=str(Path.home()/'.local/opt/go-1.27.4/bin')+':'+env['PATH']
         try:
             for executable,port in [(ROOT/'server/build/gx_login',41800),(args.world.resolve(),41810)]:
@@ -61,6 +67,8 @@ def main():
                     if p.poll() is not None or time.monotonic()>until:raise RuntimeError('isolated startup failed')
                     time.sleep(.05)
             subprocess.run(['go','test','-tags','integration','./internal/app','-run','^TestForgeContinuousAgainstServer$','-count=1','-v'],cwd=ROOT,env=env,check=True,timeout=90)
+            if args.inventory_only:
+                return
             with sqlite3.connect(dbpath) as db:
                 rows=db.execute('SELECT Type,TypeID,Count,Craftname FROM PS_GameData_CharItems WHERE CharID=? AND Del=0 ORDER BY Bag,Slot',(cid,)).fetchall()
                 assert db.execute('SELECT Money FROM PS_GameData_Chars WHERE CharID=?',(cid,)).fetchone()[0]==14987715

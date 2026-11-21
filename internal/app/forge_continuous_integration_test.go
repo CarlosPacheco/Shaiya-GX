@@ -93,36 +93,62 @@ func TestForgeContinuousAgainstServer(t *testing.T) {
 		pump(func() bool { return !a.shop.pending })
 	}
 	target := [2]uint8{1, 0}
-	// Move out and back by hovering the native bag tab while holding the item.
-	for _, bag := range []uint8{2, 1} {
-		sx, sy, _, _ := ui.InventoryCell(1, 0)
+	dropOnBag := func(source [2]uint8, bag uint8) {
+		t.Helper()
+		sx, sy, _, _ := ui.InventoryCell(source[0], source[1])
+		tx, ty := ix+12+int(bag-1)*47, iy+260
 		a.worldControls(&platform.Input{MouseX: ix + sx + 2, MouseY: iy + sy + 2, Pressed: true, MouseDown: true}, 1024, 768)
-		a.worldControls(&platform.Input{MouseX: ix + 12 + int(bag-1)*47, MouseY: iy + 260, MouseDown: true}, 1024, 768)
-		if a.inventory.bag != bag || !a.inventory.dragging {
-			t.Fatal("held-item bag switch failed")
+		a.worldControls(&platform.Input{MouseX: tx, MouseY: ty, MouseDown: true}, 1024, 768)
+		if a.inventory.bag != source[0] || !a.inventory.dragging {
+			t.Fatal("held item changed the visible bag")
 		}
-		a.worldControls(&platform.Input{MouseX: ix + sx + 2, MouseY: iy + sy + 2, Clicked: true}, 1024, 768)
-		pump(func() bool { return !a.inventory.pending })
-		if _, ok := st.Inventory[[2]uint8{bag, 0}]; !ok {
-			t.Fatal("cross-bag move not confirmed")
+		a.worldControls(&platform.Input{MouseX: tx, MouseY: ty, Clicked: true}, 1024, 768)
+		if a.inventory.bag != source[0] {
+			t.Fatal("cross-bag drop changed the visible bag")
 		}
 	}
+	dropOnBag(target, 3)
+	if a.inventory.pending || a.inventory.dragging {
+		t.Fatal("dropping onto a full bag sent a move or kept the item held")
+	}
+	dropOnBag(target, 2)
+	moved := [2]uint8{2, 1}
+	pump(func() bool { return !a.inventory.pending })
+	if _, ok := st.Inventory[moved]; !ok {
+		t.Fatal("cross-bag move did not use the first empty slot")
+	}
+	click(ix+12+47, iy+260)
+	dropOnBag(moved, 1)
+	pump(func() bool { return !a.inventory.pending })
+	if _, ok := st.Inventory[target]; !ok {
+		t.Fatal("cross-bag return move did not complete")
+	}
+	click(ix+12, iy+260)
+	if os.Getenv("SHAIYA_TEST_INVENTORY_BAGS") == "1" {
+		return
+	}
 	initialMoney := st.Details.Money
+	click(bx+40, by+362)
+	if a.blacksmithUI.Mode != ui.ForgeLapis {
+		t.Fatal("lapis tab failed")
+	}
 	drag(target, 0)
 	drag([2]uint8{1, 4}, 1)
 	drag([2]uint8{1, 5}, 3)
 	click(bx+300, by+380)
 	confirm()
-	if st.Inventory[target].Gems[0] != 1 || !a.blacksmith.selected[0] || !a.blacksmith.selected[1] || st.Inventory[[2]uint8{1, 4}].Count != 1 {
-		t.Fatal("link cleared selections or stack")
+	if st.Inventory[target].Gems[0] != 1 || !a.blacksmith.selected[0] || a.blacksmith.selected[1] || st.Inventory[[2]uint8{1, 4}].Count != 1 {
+		t.Fatal("link did not retain equipment and release the lapis selection")
 	}
 	// Extraction can succeed or fail, but only its chosen socket is removed.
 	drag([2]uint8{1, 6}, 3)
+	click(bx+275, by+210)
 	click(bx+435, by+380)
 	confirm()
 	if st.Inventory[target].Gems[0] != 0 || !a.blacksmith.selected[0] || st.Inventory[[2]uint8{1, 6}].Count != 1 {
 		t.Fatal("extraction lost equipment or hammer stack")
 	}
+	drag([2]uint8{1, 4}, 1)
 	drag([2]uint8{1, 5}, 3)
 	click(bx+300, by+380)
 	confirm()

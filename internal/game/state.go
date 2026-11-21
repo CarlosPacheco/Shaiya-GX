@@ -1025,6 +1025,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		if e != nil {
 			e.Dead = false
+			e.Sitting = false
 			e.PositionResetSerial++
 			e.ClimbMode = 0
 			e.X, e.Y, e.Z = m.X, m.Y, m.Z
@@ -1212,6 +1213,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 				s.Self.ShopTitle = ""
 				s.Target = 0
 			}
+			s.Self.Sitting = false
 			s.MapID, s.Self.X, s.Self.Y, s.Self.Z = m.MapID, m.X, m.Y, m.Z
 		}
 		ev.Text = fmt.Sprintf("map %d pos=(%.1f,%.1f,%.1f)", m.MapID, m.X, m.Y, m.Z)

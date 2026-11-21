@@ -320,6 +320,9 @@ func TestGMMoveUsesRelativeSafeDestinationAndNormalTeleport(t *testing.T) {
 	g.Add(collision.Triangle{{20, lower, 40}, {20, lower, 70}, {50, lower, 40}})
 	g.Add(collision.Triangle{{50, lower, 70}, {50, lower, 40}, {20, lower, 70}})
 	s.movement = playerMovement{geometry: g, mapID: target}
+	s.player = &ConnectedPlayer{CharacterID: s.char.ID, character: *s.char}
+	s.player.SetMap(source)
+	s.player.SetSitting(true)
 
 	if err := s.gmMove(target); err != nil {
 		t.Fatal(err)
@@ -330,6 +333,10 @@ func TestGMMoveUsesRelativeSafeDestinationAndNormalTeleport(t *testing.T) {
 	state := game.New()
 	state.SelfID = s.char.ID
 	state.MapID = source
+	state.Self.Sitting = true
+	if s.player.IsSitting() {
+		t.Fatal("/cmove carried the sitting posture to the destination")
+	}
 	for {
 		select {
 		case p := <-packets:
@@ -337,7 +344,7 @@ func TestGMMoveUsesRelativeSafeDestinationAndNormalTeleport(t *testing.T) {
 				t.Fatal(err)
 			}
 			if proto.Op(p) == proto.GXGMState {
-				if state.MapID != target || state.Self.X != 175 || !state.Self.IsGM || state.GMTurbo {
+				if state.MapID != target || state.Self.X != 175 || state.Self.Sitting || !state.Self.IsGM || state.GMTurbo {
 					t.Fatal("teleport did not reach client state")
 				}
 				if err := s.gmMove(974); err == nil || s.char.MapID != target {

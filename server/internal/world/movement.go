@@ -120,6 +120,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 		return
 	}
 	if s.player != nil {
+		s.player.SetSitting(false)
 		s.player.SetMap(mapID)
 		s.player.UpdateCharacter(*ch)
 		s.player.UpdateMotion(0, 0)
