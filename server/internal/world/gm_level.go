@@ -3,6 +3,7 @@ package world
 import (
 	"fmt"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
 
@@ -29,6 +30,7 @@ func (s *Session) gmSetLevel(args []string) error {
 		s.send(buildCharacterListSlot(s.char, s.items), "GM set level")
 		s.send(buildCharacterDetails(s.char, &stats), "GM set level experience")
 		s.sendStatPackets()
+		s.sendPlayerFeedback(proto.PlayerLevelFeedback)
 		s.partyLevel()
 		s.partyPools()
 		if s.player != nil {

@@ -9,5 +9,9 @@ func (s *Session) sendPlayerFeedback(kind uint8) {
 	p := proto.PlayerFeedbackPacket(s.char.ID, kind)
 	w := packet.New(packet.Opcode(proto.GXPlayerFeedback))
 	w.Bytes(p[2:])
-	s.sendToViewers(w.MustFinish(), "GX player feedback")
+	frame := w.MustFinish()
+	if kind == proto.PlayerLevelFeedback {
+		s.send(frame, "GX level feedback")
+	}
+	s.sendToViewers(frame, "GX player feedback")
 }

@@ -1415,11 +1415,11 @@ Direct GX dependencies: `internal/gm`, `internal/proto`, `server/internal/db`, `
 
 [server/internal/world/gm_level.go](../../server/internal/world/gm_level.go#L1)
 
-Direct GX dependencies: `server/internal/db`.
+Direct GX dependencies: `internal/proto`, `server/internal/db`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`gmSetLevel`](../../server/internal/world/gm_level.go#L9)<br>`func (s *Session) gmSetLevel(args []string) error` | See the source definition and the subsystem ownership contract. |
+| [`gmSetLevel`](../../server/internal/world/gm_level.go#L10)<br>`func (s *Session) gmSetLevel(args []string) error` | See the source definition and the subsystem ownership contract. |
 
 ### gm_map.go
 

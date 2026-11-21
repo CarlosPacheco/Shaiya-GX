@@ -60,10 +60,12 @@ func TestNativePlayerFeedbackGL(t *testing.T) {
 	level(proto.LevelUpSelf, 1, 10) // GM stat point notification.
 	level(proto.LevelUpSelf, 1, 11)
 	level(proto.LevelUpOther, 2, 11)
+	a.applyWorldPacket(proto.PlayerFeedbackPacket(1, proto.PlayerLevelFeedback))
+	a.applyWorldPacket(proto.PlayerFeedbackPacket(2, proto.PlayerLevelFeedback))
 
 	a.frameDT = .05
 	a.updateResolvedEffects()
-	if len(a.wv.impacts) != 4 || len(a.wv.effectErrors) != 0 {
+	if len(a.wv.impacts) != 6 || len(a.wv.effectErrors) != 0 {
 		t.Fatalf("effects = %d, errors = %v", len(a.wv.impacts), a.wv.effectErrors)
 	}
 	m := a.wv.impacts[0].fixedWorld

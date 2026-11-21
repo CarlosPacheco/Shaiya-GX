@@ -36,20 +36,32 @@ func TestGMSetLevelPreservesEquipmentAndSkills(t *testing.T) {
 
 	state := game.New()
 	state.SelfID, state.Phase = ch.ID, game.PhaseInWorld
-	applyUntilReply := func() {
+	applyUntilReply := func(wantFeedback bool) {
 		t.Helper()
 		timeout := time.NewTimer(time.Second)
 		defer timeout.Stop()
+		feedback := false
 		for {
 			select {
 			case p := <-wire:
 				if proto.Op(p) == proto.LevelUpSelf {
 					t.Fatal("administrative level change announced a gameplay level-up")
 				}
+				if proto.Op(p) == proto.GXPlayerFeedback {
+					id, kind, err := proto.DecodePlayerFeedback(p)
+					if err != nil || id != ch.ID || kind != proto.PlayerLevelFeedback || feedback {
+						t.Fatalf("unexpected GM level feedback: %d/%d, %v", id, kind, err)
+					}
+					feedback = true
+					continue
+				}
 				if _, err := state.Apply(p); err != nil {
 					t.Fatal(err)
 				}
 				if proto.Op(p) == proto.GXGMState {
+					if feedback != wantFeedback {
+						t.Fatalf("feedback = %t, want %t", feedback, wantFeedback)
+					}
 					return
 				}
 			case <-timeout.C:
@@ -59,7 +71,7 @@ func TestGMSetLevelPreservesEquipmentAndSkills(t *testing.T) {
 	}
 	for _, level := range []uint16{1, defs.LevelCap} {
 		s.handleGMCommand(fmt.Sprintf("/set level %d", level))
-		applyUntilReply()
+		applyUntilReply(true)
 		saved, err := db.CharacterByID(ch.ID)
 		if err != nil {
 			t.Fatal(err)
@@ -73,14 +85,16 @@ func TestGMSetLevelPreservesEquipmentAndSkills(t *testing.T) {
 	}
 	for _, text := range []string{"/set level 0", "/set level -1", "/set level 1.5", fmt.Sprintf("/set level %d", defs.LevelCap+1)} {
 		s.handleGMCommand(text)
-		applyUntilReply()
+		applyUntilReply(false)
 		if s.char.Level != defs.LevelCap {
 			t.Fatalf("invalid level applied for %q", text)
 		}
 	}
+	s.handleGMCommand(fmt.Sprintf("/set level %d", defs.LevelCap))
+	applyUntilReply(false)
 	s.isAdmin = false
 	s.handleGMCommand("/set level 1")
-	applyUntilReply()
+	applyUntilReply(false)
 	if s.char.Level != defs.LevelCap {
 		t.Fatal("non-GM changed level")
 	}

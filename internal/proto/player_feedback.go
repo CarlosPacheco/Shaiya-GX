@@ -8,6 +8,7 @@ const GXPlayerFeedback Opcode = 0x7F25
 const (
 	PlayerSpawnFeedback uint8 = 1
 	PlayerSkillFeedback uint8 = 2
+	PlayerLevelFeedback uint8 = 3
 )
 
 func PlayerFeedbackPacket(id uint32, kind uint8) []byte {
@@ -21,7 +22,7 @@ func DecodePlayerFeedback(p []byte) (id uint32, kind uint8, err error) {
 	r := NewReader(p)
 	id, kind = r.U32(), r.U8()
 	if Op(p) != GXPlayerFeedback || r.Err() != nil || r.Remaining() != 0 ||
-		id == 0 || (kind != PlayerSpawnFeedback && kind != PlayerSkillFeedback) {
+		id == 0 || (kind != PlayerSpawnFeedback && kind != PlayerSkillFeedback && kind != PlayerLevelFeedback) {
 		err = fmt.Errorf("invalid player feedback")
 	}
 	return

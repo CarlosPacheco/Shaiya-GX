@@ -387,7 +387,7 @@ emission times.
 GX uses native `0x0201`, `0x0508` and `0x0209` for the local player.
 Observers receive the existing level-up `0x051E` and GX `0x7F25` for
 fresh map entry and skill progression. The GX packet contains the player
-ID (u32) and cue (u8, 1 for entry or 2 for skill). It is sent after view
+ID (u32) and cue (u8, 1 for entry, 2 for skill, or 3 for an administrative level change). It is sent after view
 registration or a committed skill change, and respects stealth and view
 membership. The nearby skill confirmation is a GX presentation addition.
 

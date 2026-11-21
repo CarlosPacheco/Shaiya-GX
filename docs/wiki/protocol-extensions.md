@@ -2521,7 +2521,11 @@ func (s *Session) sendPlayerFeedback(kind uint8) {
 	p := proto.PlayerFeedbackPacket(s.char.ID, kind)
 	w := packet.New(packet.Opcode(proto.GXPlayerFeedback))
 	w.Bytes(p[2:])
-	s.sendToViewers(w.MustFinish(), "GX player feedback")
+	frame := w.MustFinish()
+	if kind == proto.PlayerLevelFeedback {
+		s.send(frame, "GX level feedback")
+	}
+	s.sendToViewers(frame, "GX player feedback")
 }
 ```
 
@@ -2529,7 +2533,7 @@ func (s *Session) sendPlayerFeedback(kind uint8) {
 
 <details><summary>PlayerFeedbackPacket — internal/proto/player_feedback.go</summary>
 
-[Source definition](../../internal/proto/player_feedback.go#L13)
+[Source definition](../../internal/proto/player_feedback.go#L14)
 
 ```go
 func PlayerFeedbackPacket(id uint32, kind uint8) []byte {

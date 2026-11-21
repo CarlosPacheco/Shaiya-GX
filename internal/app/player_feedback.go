@@ -6,8 +6,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
-const playerLevelFeedback = 3
-
 type playerFeedback struct {
 	id    uint32
 	mapID uint16
@@ -45,7 +43,7 @@ func (a *App) confirmedPlayerFeedback(p []byte, previousLevel uint16) {
 		id, level := r.U32(), r.U16()
 		// GM point updates reuse 0508 without increasing the level.
 		if id != a.state.SelfID || level > previousLevel {
-			a.queuePlayerFeedback(id, playerLevelFeedback)
+			a.queuePlayerFeedback(id, proto.PlayerLevelFeedback)
 		}
 	case proto.LearnNewSkill:
 		if a.state.LastLearn.Result == 0 {
@@ -71,7 +69,7 @@ func (a *App) updatePlayerFeedback() {
 			file = "Effect/Start.EFT"
 		case proto.PlayerSkillFeedback:
 			file, sound = "Effect/Up.EFT", "ui_skillnew001.wav"
-		case playerLevelFeedback:
+		case proto.PlayerLevelFeedback:
 			file, sound = "Effect/LevelUp.EFT", "ch_levup001.wav"
 			if cue.id == a.state.SelfID {
 				sequence = int(a.state.Faction.Faction)
