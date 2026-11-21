@@ -196,3 +196,48 @@ func TestNativeTargetKeyCyclesByDistanceAndWraps(t *testing.T) {
 		a.state.Target = got
 	}
 }
+
+func TestDoubleClickKeepsApproachToMovingMonster(t *testing.T) {
+	a := inputApp()
+	a.scene3d = &render.Scene3D{
+		View: render.LookAtLH(render.V3{0, 1, -5}, render.V3{0, 1, 0}, render.V3{0, 1, 0}),
+		Proj: render.PerspectiveFovLH(math.Pi/4, 1, .1, 100),
+	}
+	mob := &game.Entity{ID: 42, Kind: game.KindMob, Z: 12}
+	a.state.Entities[mob.ID], a.state.Target = mob, mob.ID
+	a.wv.facing = render.V3{0, 0, 1}
+	for _, at := range []float64{1, 1.2} {
+		a.clock = at
+		in := &platform.Input{Clicked: true, MouseX: 256, MouseY: 256}
+		a.updateCombat(in, 512, 512)
+		a.updateActionApproach(in)
+	}
+	if a.wv.approachTarget != mob.ID || !a.wv.travel {
+		t.Fatal("double-click did not leave the selected monster queued")
+	}
+	first := a.wv.destination
+	mob.X, mob.Z = 5, 6
+	a.updateActionApproach(&platform.Input{})
+	if a.wv.destination[0] <= 3 || a.wv.destination[2] >= first[2] {
+		t.Fatalf("approach kept stale destination %v after target moved to %v", a.wv.destination, mob)
+	}
+	a.updateActionApproach(&platform.Input{Down: "W"})
+	if a.wv.approachTarget != 0 || a.wv.travel {
+		t.Fatal("manual movement could not cancel the approach")
+	}
+}
+
+func TestAttackApproachWaitsDuringPreviousAttackPause(t *testing.T) {
+	a := inputApp()
+	mob := &game.Entity{ID: 42, Kind: game.KindMob, Z: 1}
+	a.state.Entities[mob.ID], a.state.Target = mob, mob.ID
+	a.wv.facing = render.V3{0, 0, 1}
+	a.clock, a.wv.attackMoveUntil = 1, 1.1
+	if !a.attackTarget() || a.wv.approachTarget != mob.ID || a.wv.travel {
+		t.Fatal("attack clicked during the movement pause was dropped")
+	}
+	a.updateActionApproach(&platform.Input{})
+	if a.wv.approachTarget != mob.ID {
+		t.Fatal("arriving during the movement pause discarded the attack")
+	}
+}

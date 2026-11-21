@@ -115,28 +115,48 @@ func (a *App) pickNPC(in *platform.Input, w, h int) uint32 {
 			if e.Dead || e.ID == a.state.SelfID {
 				continue
 			}
-			var actor *scene.Character
+			var distance float32
+			var hit bool
 			switch e.Kind {
 			case game.KindMob:
 				if m := a.wv.mobs[key]; m != nil && m.entity == e && m.actor != nil {
-					actor = m.actor.Character
+					distance, hit = a.monsterRayHit(m.actor, origin, direction)
 				}
 			case game.KindUser:
-				if p := a.wv.actors[key]; p != nil && p.entity == e {
-					actor = p.character
+				if p := a.wv.actors[key]; p != nil && p.entity == e && p.character != nil {
+					if lo, hi, valid := p.character.WorldBounds(); valid {
+						distance, hit = rayBox(origin, direction, lo, hi)
+					}
 				}
 			}
-			if actor == nil {
-				continue
-			}
-			if lo, hi, valid := actor.WorldBounds(); valid {
-				if d, hit := rayBox(origin, direction, lo, hi); hit && d < bestDistance {
-					return 0
-				}
+			if hit && distance < bestDistance {
+				return 0
 			}
 		}
 	}
 	return id
+}
+
+// EP5's monster picker (0x4D73C0) ray-tests a vertical quad facing the
+// camera horizontally. Its width is Monster.SData Size (0x432E36) and
+// its height follows the scaled MON height plus .2 (0x4318E4).
+func (a *App) monsterRayHit(m *scene.CreatureActor, origin, direction render.V3) (float32, bool) {
+	base := render.V3{m.World[12], m.World[13], m.World[14]}
+	view := a.scene3d.View
+	right := render.V3{view[0], 0, view[8]}.Norm()
+	return rayVerticalQuad(origin, direction, base, right, float32(m.Definition.Size), m.MonsterPlateAnchor()[1]-base[1])
+}
+
+func rayVerticalQuad(origin, direction, base, right render.V3, width, height float32) (float32, bool) {
+	normal := render.V3{-right[2], 0, right[0]}
+	dot := direction.Dot(normal)
+	if math.Abs(float64(dot)) < 1e-7 || width <= 0 || height <= 0 {
+		return 0, false
+	}
+	distance := base.Sub(origin).Dot(normal) / dot
+	hit := origin.Add(direction.Scale(distance)).Sub(base)
+	horizontal := hit.Dot(right)
+	return distance, distance >= 0 && horizontal >= -width*.5 && horizontal <= width*.5 && hit[1] >= 0 && hit[1] <= height
 }
 
 func clickRay(x, y, w, h int, vp render.M4) (render.V3, render.V3, bool) {
@@ -227,23 +247,41 @@ func (a *App) pickMob(in *platform.Input, w, h int) uint32 {
 			nextDistance, nextTarget = d, id
 		}
 		if in.Clicked {
-			var actor *scene.Character
-			if e.Kind == game.KindMob {
-				if m := a.wv.mobs[id]; m != nil && m.actor != nil {
-					actor = m.actor.Character
-				}
-			} else if p := a.wv.actors[id]; p != nil {
-				actor = p.character
-			}
-			if actor != nil && rayOK {
-				if lo, hi, valid := actor.WorldBounds(); valid {
-					if distance, hit := rayBox(origin, direction, lo, hi); hit {
-						_, _, depth, projected := projectLabel(origin.Add(direction.Scale(distance)), vp, w, h)
-						if projected && (a.sprites == nil || a.pickNameVisibleAt(in.MouseX, in.MouseY, w, h, depth)) && (distance < bestRay || distance == bestRay && (target == 0 || id < target)) {
-							bestRay, target = distance, id
+			if rayOK {
+				var distance float32
+				var hit, tested bool
+				var occlusionDistance float32
+				if e.Kind == game.KindMob {
+					if m := a.wv.mobs[id]; m != nil && m.actor != nil {
+						distance, hit = a.monsterRayHit(m.actor, origin, direction)
+						tested = true
+						occlusionDistance = distance
+						if hit {
+							hit = a.wv.world.SegmentVisible(origin, origin.Add(direction.Scale(distance)))
+							// Scene depth contains the actor itself, whose front can
+							// be closer than the native selection plane.
+							if lo, hi, valid := m.actor.WorldBounds(); valid {
+								if front, ok := rayBox(origin, direction, lo, hi); ok {
+									occlusionDistance = min(front, distance)
+								}
+							}
 						}
-						continue
 					}
+				} else if p := a.wv.actors[id]; p != nil && p.character != nil {
+					if lo, hi, valid := p.character.WorldBounds(); valid {
+						distance, hit = rayBox(origin, direction, lo, hi)
+						tested = hit
+						occlusionDistance = distance
+					}
+				}
+				if hit {
+					_, _, depth, projected := projectLabel(origin.Add(direction.Scale(occlusionDistance)), vp, w, h)
+					if projected && (a.sprites == nil || a.pickNameVisibleAt(in.MouseX, in.MouseY, w, h, depth)) && (distance < bestRay || distance == bestRay && (target == 0 || id < target)) {
+						bestRay, target = distance, id
+					}
+				}
+				if tested {
+					continue
 				}
 			}
 			pos := a.visualEntityPosition(e)

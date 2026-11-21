@@ -56,15 +56,5 @@ func (a *App) pickGroundModel(in *platform.Input, w, h int) uint32 {
 
 // The original uses two triangles in a vertical billboard, not mesh triangles.
 func groundPickupIntersection(origin, direction, right, position render.V3) (float32, bool) {
-	normal := (render.V3{0, 1, 0}).Cross(right)
-	denom := direction.Dot(normal)
-	if float32(math.Abs(float64(denom))) < 1e-7 {
-		return 0, false
-	}
-	distance := position.Sub(origin).Dot(normal) / denom
-	if distance < 0 {
-		return 0, false
-	}
-	hit := origin.Add(direction.Scale(distance)).Sub(position)
-	return distance, hit[1] >= 0 && hit[1] <= 1 && float32(math.Abs(float64(hit.Dot(right)))) <= .3
+	return rayVerticalQuad(origin, direction, position, right, .6, 1)
 }

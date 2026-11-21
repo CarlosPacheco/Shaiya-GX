@@ -125,6 +125,13 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 			return true
 		}
 	}
+	// An attack clicked during the previous swing's movement pause stays
+	// queued at the target until it can actually be requested.
+	if !v.approachNPC && !v.approachLoot && len(v.approachSkill) == 0 &&
+		(!a.attackMovementAllowed() || a.clock < v.attackMoveUntil) {
+		v.travel = false
+		return true
+	}
 	id, loot := v.approachTarget, v.approachLoot
 	v.approachTarget, v.travel = 0, false
 	if v.approachNPC {

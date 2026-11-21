@@ -113,8 +113,11 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 			}
 		}
 		if in.Clicked {
-			if a.wv.mobClick.double(target, in.MouseX, in.MouseY, a.clock) && !a.attackTarget() {
-				return
+			if a.wv.mobClick.double(target, in.MouseX, in.MouseY, a.clock) {
+				in.Clicked = false
+				if !a.attackTarget() {
+					return
+				}
 			}
 		} else {
 			a.wv.mobClick = mobClick{}
@@ -156,9 +159,6 @@ func (a *App) pickupNearest() bool {
 }
 
 func (a *App) attackTarget() bool {
-	if !a.attackMovementAllowed() || a.clock < a.wv.attackMoveUntil {
-		return true
-	}
 	if a.state.Self.Dead {
 		a.wv.sitAttack = 0
 		return true
@@ -201,7 +201,7 @@ func (a *App) attackTarget() bool {
 		return false
 	}
 	delta := render.V3{e.X - a.wv.pos[0], 0, e.Z - a.wv.pos[2]}
-	if delta.Len() > a.attackReach() {
+	if delta.Len() > a.attackReach() || !a.attackMovementAllowed() || a.clock < a.wv.attackMoveUntil {
 		a.wv.autoRun = false
 		a.wv.approachTarget, a.wv.approachLoot = e.ID, false
 		a.wv.approachSkill = nil

@@ -139,6 +139,11 @@ func (w *World) PlayerSupported(feet render.V3) bool {
 	return w == nil || w.physics == nil || w.physics.Supported(mapgeometry.Position(feet))
 }
 
+// SegmentVisible tests an exact world-space ray against map geometry.
+func (w *World) SegmentVisible(a, b render.V3) bool {
+	return w == nil || w.physics == nil || w.physics.SegmentVisible(mapgeometry.Position(a), mapgeometry.Position(b))
+}
+
 // SpellLineOfSight shares the server's CPU geometry and actor-center ray.
 func (w *World) SpellLineOfSight(a, b render.V3) bool {
 	return w == nil || w.physics == nil || w.physics.LineOfSight(mapgeometry.Position(a), mapgeometry.Position(b))

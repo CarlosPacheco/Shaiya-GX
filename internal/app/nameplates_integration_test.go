@@ -3,6 +3,7 @@
 package app
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -243,4 +244,78 @@ func TestNameDepthCaptureIsLazyGL(t *testing.T) {
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("lazy name depth GL error %#x", code)
 	}
+}
+
+func TestOriginalBossPickWidthLeavesOtherMonsterSelectableGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires original monster assets and OpenGL")
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	win, err := platform.Open(platform.Config{Width: 64, Height: 64, Hidden: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer win.Close()
+	if err := render.Init(false); err != nil {
+		t.Fatal(err)
+	}
+	arc, err := archive.Open(os.Getenv("SHAIYA_DATA"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer arc.Close()
+	assets := scene.NewAssets(arc)
+	boss, err := assets.BuildMonster(872) // Cloron Dragon
+	if err != nil {
+		t.Fatal(err)
+	}
+	monkey, err := assets.BuildMonster(2009)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	boss.SetTransform(render.Basis(render.V3{0, 0, 10}, render.V3{0, 0, -1}, render.V3{0, 1, 0}))
+	height := boss.MonsterPlateAnchor()[1] / 2
+	camera := &render.Scene3D{
+		View: render.LookAtLH(render.V3{0, height, -10}, render.V3{0, height, 10}, render.V3{0, 1, 0}),
+		Proj: render.PerspectiveFovLH(math.Pi/4, 1, .1, 100),
+	}
+	a := &App{state: game.New(), scene3d: camera, wv: &worldView{mobs: make(map[uint32]*mobActor)}}
+	bossEntity := &game.Entity{ID: 101, Kind: game.KindMob, Z: 10}
+	a.state.Entities[101] = bossEntity
+	a.wv.mobs[101] = &mobActor{entity: bossEntity, actor: boss}
+
+	const size = 512
+	center := &platform.Input{Clicked: true, MouseX: size / 2, MouseY: size / 2}
+	if got := a.pickMob(center, size, size); got != bossEntity.ID {
+		t.Fatalf("click within the original rectangle selected %d", got)
+	}
+	lo, hi, ok := boss.WorldBounds()
+	if !ok {
+		t.Fatal("missing dragon mesh bounds")
+	}
+	vp := camera.View.Mul(camera.Proj)
+	for x := size/2 + 1; x < size; x++ {
+		origin, direction, ok := clickRay(x, size/2, size, size, vp)
+		if !ok {
+			continue
+		}
+		front, boxHit := rayBox(origin, direction, lo, hi)
+		_, quadHit := a.monsterRayHit(boss, origin, direction)
+		if !boxHit || quadHit {
+			continue
+		}
+		pos := origin.Add(direction.Scale(front + 10))
+		pos[1] -= .25
+		monkey.SetTransform(render.Basis(pos, render.V3{0, 0, -1}, render.V3{0, 1, 0}))
+		other := &game.Entity{ID: 102, Kind: game.KindMob, X: pos[0], Y: pos[1], Z: pos[2]}
+		a.state.Entities[other.ID] = other
+		a.wv.mobs[other.ID] = &mobActor{entity: other, actor: monkey}
+		if got := a.pickMob(&platform.Input{Clicked: true, MouseX: x, MouseY: size / 2}, size, size); got != other.ID {
+			t.Fatalf("dragon envelope stole click from visible monster: got %d", got)
+		}
+		return
+	}
+	t.Fatal("dragon fixture did not provide a ray outside its original selection rectangle")
 }
