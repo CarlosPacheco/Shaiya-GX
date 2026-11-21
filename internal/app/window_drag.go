@@ -23,14 +23,15 @@ type windowDrag struct {
 func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	d := &a.windowDrag
 	if d.position != nil {
-		if !d.portrait || absInt(in.MouseX-d.pressX) > 4 || absInt(in.MouseY-d.pressY) > 4 {
+		clickable := d.portrait || d.click != nil
+		if !clickable || absInt(in.MouseX-d.pressX) > 4 || absInt(in.MouseY-d.pressY) > 4 {
 			d.moved = true
 		}
 		if d.moved {
 			d.position.Move(in.MouseX-d.offsetX, in.MouseY-d.offsetY, w, h, d.width, d.height)
 		}
 		if in.Clicked || !in.MouseDown {
-			if d.portrait && !d.moved && in.Clicked {
+			if clickable && !d.moved && in.Clicked {
 				if d.click != nil {
 					d.click()
 				} else {
@@ -325,6 +326,15 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 		x, y, width, height := a.buffLayout.Rect(w, h, group, count)
 		if pointInside(in, x, y, width, height) {
 			a.windowDrag = windowDrag{position: &a.buffLayout.Position[group], offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: width, height: height}
+			if i := a.buffHit(w, h, in.MouseX, in.MouseY); i >= 0 && a.buffs.rows[i].buff.Skill == warehouseCallSkill {
+				a.windowDrag.pressX, a.windowDrag.pressY = in.MouseX, in.MouseY
+				instance := a.buffs.rows[i].buff.Instance
+				a.windowDrag.click = func() {
+					if i < len(a.buffs.rows) && a.buffs.rows[i].buff.Instance == instance && a.buffs.rows[i].buff.Skill == warehouseCallSkill {
+						a.openRemoteWarehouse()
+					}
+				}
+			}
 			a.wv.uiLeft = -2
 			return true
 		}

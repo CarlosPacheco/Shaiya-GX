@@ -3,9 +3,9 @@ package app
 import (
 	"fmt"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
@@ -114,19 +114,13 @@ func (a *App) remoteWarehouseOpen() bool {
 	return a.remoteBank && a.bankUI != nil
 }
 
-func (a *App) remoteWarehouseName() string {
-	for _, b := range a.buffs.rows {
-		if b.buff.Skill == warehouseCallSkill && b.def.Name != "" {
-			return b.def.Name
-		}
-	}
-	return "Warehouse"
-}
-
 // openRemoteWarehouse shows the window from the buff, with the bag beside it.
 func (a *App) openRemoteWarehouse() {
 	if a.bankUI == nil || !a.hasWarehouseCall() || a.shop.npcID != 0 || a.state.Self.Dead {
 		return
+	}
+	if !a.remoteBank {
+		a.bank = warehouseView{}
 	}
 	a.remoteBank = true
 	if !a.inventory.open {
@@ -165,7 +159,7 @@ func (a *App) updateWarehouse(in *platform.Input, w, h int) bool {
 	captured := panelPointer(in, x, y, ui.WarehouseWidth, ui.WarehouseHeight)
 	// The bank NPC of a house map is the guild warehouse and every other one the
 	// personal storage: there is no selector between the two.
-	v.guild = houseMaps[a.state.MapID]
+	v.guild = !a.remoteBank && houseMaps[a.state.MapID]
 	page, close := a.bankUI.Update(in, w, h, v.page)
 	if page != v.page {
 		v.page = page
@@ -253,11 +247,11 @@ func (a *App) updateWarehouseDrag(in *platform.Input, w, h int) bool {
 	}
 	return false
 }
-func (a *App) drawWarehouse(w, h int, def sdata.NPC) {
+func (a *App) drawWarehouse(w, h int, portrait *render.Texture) {
 	v := &a.bank
 	x, y := a.bankUI.Origin(w, h)
 	a.clearTooltipUnderPanel(x, y, ui.WarehouseWidth, ui.WarehouseHeight)
-	a.bankUI.Draw(a.sprites, a.font, w, h, v.page, def.Name, def.Welcome, a.npcPortrait(def))
+	a.bankUI.Draw(a.sprites, w, h, v.page, portrait)
 	for slot, it := range a.warehouseItems() {
 		cx, cy, ok := ui.WarehouseCell(v.page, slot)
 		if !ok {
@@ -286,9 +280,12 @@ func (a *App) drawWarehouse(w, h int, def sdata.NPC) {
 	if hover, hovered := ui.WarehouseHit(a.lastMouseX-x, a.lastMouseY-y, v.page); hovered {
 		if it, ok := a.warehouseItems()[hover]; ok {
 			if d := a.itemsItem(it.Type, it.TypeID); d != nil {
-				feeText := "Withdrawal fee: 5% of the stack's sell value."
-				if it.Type == 94 {
-					feeText = "Free withdrawal."
+				var feeText string
+				if v.guild {
+					feeText = "Withdrawal fee: 5% of the stack's sell value."
+					if it.Type == 94 {
+						feeText = "Free withdrawal."
+					}
 				}
 				a.drawItemDetails(d, &it, it.Count, min(x+ui.WarehouseWidth+4, max(0, w-304)), min(y+140, max(0, h-110)), w, h, feeText)
 			}

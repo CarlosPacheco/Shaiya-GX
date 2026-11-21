@@ -183,7 +183,7 @@ func TestElementBadgesAcrossInventoryAndBarsGL(t *testing.T) {
 	a.state.Exchange.Active = true
 	a.state.Exchange.Other[0] = proto.ExchangeItem{Type: it.Type, TypeID: it.TypeID, Count: 1, Gems: it.Gems}
 	a.exchangeUI.Position.Move(700, 82, 1024, 768, ui.ExchangeWidth, ui.ExchangeHeight)
-	capture("warehouse-and-trade", func() { a.drawWarehouse(1024, 768, sdata.NPC{}); a.drawExchange(1024, 768) })
+	capture("warehouse-and-trade", func() { a.drawWarehouse(1024, 768, nil); a.drawExchange(1024, 768) })
 	a.state.Duel.Phase = game.DuelWager
 	a.state.Duel.Other[0] = a.state.Exchange.Other[0]
 	capture("duel-offer", func() { a.drawDuel(1024, 768) })

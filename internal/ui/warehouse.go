@@ -67,7 +67,7 @@ func (v *Warehouse) Update(in *platform.Input, w, h, page int) (int, bool) {
 	}
 	return page, closed
 }
-func (v *Warehouse) Draw(s *render.Sprites, f *Font, w, h, page int, name, welcome string, portrait *render.Texture) {
+func (v *Warehouse) Draw(s *render.Sprites, w, h, page int, portrait *render.Texture) {
 	x, y := v.Origin(w, h)
 	s.Draw(v.frame, float32(x), float32(y), 512, 512, 0, 0, 1, 1, white)
 	if portrait != nil {

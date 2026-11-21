@@ -186,7 +186,7 @@ func (a *App) drawShop(w, h int) {
 	e := a.state.Entities[v.npcID]
 	if e == nil {
 		if v.npcID == 0 && a.remoteWarehouseOpen() {
-			a.drawWarehouse(w, h, sdata.NPC{Name: a.remoteWarehouseName()})
+			a.drawWarehouse(w, h, nil)
 		}
 		return
 	}
@@ -228,7 +228,7 @@ func (a *App) drawShop(w, h int) {
 		return
 	}
 	if e.NpcType == 6 && a.bankUI != nil {
-		a.drawWarehouse(w, h, def)
+		a.drawWarehouse(w, h, a.npcPortrait(def))
 		return
 	}
 	if e.NpcType != 1 && e.NpcType != 6 && a.npcQuestUI != nil {

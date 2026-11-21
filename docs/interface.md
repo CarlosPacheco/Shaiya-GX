@@ -671,3 +671,12 @@ The Z/X potion bar uses the native item-count anchor `(iconX + 12, iconY + 16)`
 from Game.exe 0x4a3400, called by 0x4ddc30. Shortcut captions are drawn before
 item icons, matching the original layer order; quantities remain legible on
 filled cells, including three-digit stacks.
+
+
+## Personal warehouse
+
+A personal banker opens account storage. While Warehouse Call is active,
+click its buff icon to reopen personal storage and the inventory. Drag the
+icon to reposition the buff strip. The remote window has an empty portrait
+slot. Both personal warehouse entry points use the same six storage pages.
+Guild storage opens through its own banker in the guild house.
