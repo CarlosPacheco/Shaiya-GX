@@ -117,6 +117,7 @@ func (a *App) confirmedSound(p []byte) {
 	case proto.SkillUse, proto.SkillUseNoTarget, proto.SkillUserDrain, proto.SkillMobDrain, proto.SkillPartyMember, proto.SkillMobOther:
 		r := a.state.LastSkill
 		a.playSkillDamageVoice()
+		a.playSkillHitSound(r)
 		if r.Result <= 4 && !(r.Result == 3 && r.Target == 0) {
 			a.playSkillSound(r.Source, r.ID, r.Level, false)
 		}
@@ -188,4 +189,19 @@ type skillSoundKey struct {
 	id        uint16
 	level     uint8
 	preparing bool
+}
+
+// Trap and Demon Hushing have no sound in the original (no voice for clips
+// 108/109 and no impact id in 0x5761b0). GX gives their damage the registered
+// but otherwise unused hit cue ef_dmg_hit01 (0x426613, id 0x30) on the target.
+func (a *App) playSkillHitSound(r proto.SkillResult) {
+	if r.HP == 0 || r.Result > 1 || r.Target == 0 {
+		return
+	}
+	switch r.ID {
+	case 113, 169, 171:
+		if pos, ok := a.effectPosition(r.Target); ok {
+			a.playSound("ef_dmg_hit01.ogg", pos[0], pos[2])
+		}
+	}
 }
