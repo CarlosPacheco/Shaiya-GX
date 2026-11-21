@@ -1,12 +1,55 @@
 # Original client typography
 
-This audit follows the EP5.4 `Game.exe` with SHA-256
+The US EP4 client PS0107 is the primary typography reference for GX.
+The EP5.4 client is useful for tracking later changes.
+
+## EP4 PS0107 reference
+
+This audit used the local US client with SHA-256
+`5f045bcb4a2e29562ac79effc4108fbaa6404ab29258df02c4dfc6ed7e3401a6`
+and its matching game archive. At `0x408c40` the client reads
+`[LOGIN] VERSION` from its config. The PE default is locale 6 and the value
+`ENGLISH` also selects 6 (`0x408d18–0x408d36`). The local US config has no
+VERSION override. `VIETNAM` selects locale 3 (`0x408c8c–0x408caa`).
+
+| Font slot | US EP4 English (locale 6) | EP4 Vietnam branch (locale 3) |
+| --- | --- | --- |
+| `+0x3a8` regular, used by ordinary chat and names | Arial 13, weight 400 | Arial 15, weight 400 |
+| `+0x39c` small | Arial 12, weight 400 | Arial 12, weight 400 |
+| `+0x3a0` emphasis | Arial 12, weight 700 | Arial 15, weight 700 |
+| `+0x3ac` separate GDI handle | Arial 15, weight 400 | Arial 12, weight 400 |
+
+The renderer starts at `0x5315c0`. The English branch at `0x5319f6`
+passes the system face name `arial` to the constructors. Heights are positive
+logical cell requests. The separate 15 px GDI handle is distinct from the
+13 px draw slot used by the English chat and nameplates. The Vietnam branch
+uses the name `Arial` from a separate string. Neither case loads a packaged
+font file. The matching EP4 archive contains no TTF, OTF, TTC, FON or FNT files.
+
+| Surface | EP4 PS0107 evidence |
+| --- | --- |
+| Chat history | `0x46f883`, `0x46fb43` and `0x46fc49` use the regular draw wrapper `0x52eed0` for ordinary lines. The layout multiplies the row index by 16 (`0x46f7a7`), and the text origin is X25 relative to the history. |
+| Chat input | The selector calls the width-limited draw helper at `0x46fe7b → 0x5312c0`. Its label starts at X7/Y6 inside the control. The helper can select alternate font slots for styled text. |
+| World names | The texture generator at `0x5373b0` calls the regular draw wrapper five times (`0x53751e–0x537573)). Four black passes sit at ±1 px along the axes around a single white center. |
+| Window text | The wrappers around `0x52f030` and `0x52f070` use the emphasis and small slots. The ordinary path uses `+0x3a8`. |
+| Floating combat text | `0x42747f` loads `interface/count.TGA`. The extracted 512×32 atlas is byte-identical to the EP5.4 version. |
+
+The D3DX draw wrapper at `0x538c90` uses the ANSI entry with `DT_NOCLIP`.
+The measurement routine uses the wide entry with `DT_CALCRECT`
+(`0x52f380–0x52f393`). For GX, the difference from this reference is both
+the face (Wine Tahoma instead of Arial) and the requested chat height
+(15 instead of 13 px). The nameplate height request matches at 13 px,
+with a different face and an extra half-pixel foreground pass in GX.
+
+## EP5.4 comparison
+
+The secondary audit follows the EP5.4 `Game.exe` with SHA-256
 `8e5ef14a2a3bfef15bae61b03d185e551b6c3fd44d09a2861d57428400bb3263`
 and its matching game archive. The font choice can vary between builds and
 locale branches. The matching archive has no TTF, OTF, TTC, FON or FNT files.
 The executable requests system faces by name.
 
-## Faces and sizes
+### Faces and sizes
 
 The renderer initializes the font objects at `0x544620`. The locale field
 at `0x708598` starts at **6** in this executable's PE data. The separate
@@ -28,7 +71,7 @@ and the default charset and quality. A separate `CreateFontA` call creates
 the GDI handle. Other branches include SimSun, `courier`, Verdana and locale
 cases that read a `FontName` setting. Those cases have their own sizes.
 
-## How text is displayed
+### How text is displayed
 
 | Surface | Observed EP5.4 path | Current GX |
 | --- | --- | --- |
@@ -61,6 +104,7 @@ Latin-1 font setup against the distributed Tahoma file. The sample was
 | --- | ---: | ---: | ---: |
 | Wine GDI, Tahoma 12 | 12 | 10 / 2 | 65 px |
 | Wine GDI, Tahoma 13 | 13 | 11 / 2 | 74 px |
+| Wine GDI, Arial 13 | 13 | 10 / 3 | 67 px |
 | Wine GDI, Arial 15 | 15 | 12 / 3 | 81 px |
 | GX, Tahoma 12 | 12 | 10 / 3 | 64 px |
 | GX, Tahoma 13 | 13 | 11 / 3 | 68 px |

@@ -302,7 +302,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		return nil, err
 	}
 
-	// Native English locale3 uses a 15px regular chat font (0x544620 / 0x54bdf0).
+	// GX currently keeps a 15px regular chat cell. US EP4 English requests 13px Arial.
 	if a.chatTextFont, err = fonts.Load(15); err != nil {
 		return nil, err
 	}
