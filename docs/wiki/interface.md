@@ -26,6 +26,8 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 | Combat numbers | Original count atlas with Phoenix damage, critical, miss and green healing billboards; server-confirmed results only | Healing from item pool snapshots lacks an explicit gain event |
 | Spell/map effects | Native EFT/3DE particles, mirrored halos, caster/target area announcements and release-clock synchronization | Remaining native effect branches and full per-skill comparison |
 
+Press **H** in the world to toggle catalog IDs for any account. Monster and NPC names show a white numeric suffix, and item tooltips include the full item ID. The toggle starts off each time the client launches.
+
 ## Recent recovered parameters
 
 - Options construction: `0x4fbbb0`; subpage placement: `0x4fa800`. Main buttons are at `(64, 77 + 32*i)`, drawn at 128×32 with 128×22 hit regions. Original coordinates take precedence over Phoenix's compact spacing.

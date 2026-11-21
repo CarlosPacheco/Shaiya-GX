@@ -78,6 +78,11 @@ func (a *App) prepareMall() error {
 		}
 		category := min(int(p.Bag)-1, 3)
 		product := ui.MallProduct{Name: p.Name, Code: p.Code, Description: p.Description, Cost: p.Cost}
+		for _, entry := range p.Items {
+			if entry.ItemID != 0 && !slices.Contains(product.ItemIDs, entry.ItemID) {
+				product.ItemIDs = append(product.ItemIDs, entry.ItemID)
+			}
+		}
 		if a.assets != nil {
 			if p.Icon == 0 {
 				for _, entry := range p.Items {
@@ -233,7 +238,8 @@ func (a *App) drawMall(w, h int) {
 }
 
 func (a *App) drawMallTooltip(p ui.MallProduct, w, h int) {
-	if p.Description == "" || a.white == nil {
+	showIDs := a.showCatalogIDs && len(p.ItemIDs) > 0
+	if a.white == nil || p.Description == "" && !showIDs {
 		return
 	}
 	lines := []string{p.Name}
@@ -254,6 +260,18 @@ func (a *App) drawMallTooltip(p ui.MallProduct, w, h int) {
 		}
 	}
 	if line != "" && len(lines) < 8 {
+		lines = append(lines, line)
+	}
+	if showIDs {
+		line := "ID:"
+		for _, id := range p.ItemIDs {
+			value := fmt.Sprintf(" %d", id)
+			if a.font.Width(line+value) > 270 {
+				lines = append(lines, line)
+				line = ""
+			}
+			line += value
+		}
 		lines = append(lines, line)
 	}
 	height := 12 + 15*len(lines)

@@ -502,7 +502,7 @@ func (a *App) drawPlayerNames(w, h int) {
 		}
 	}
 	// Overlay text starts at the projected Y, centered on the projected X.
-	label := func(name string, pos render.V3, tint [4]float32, offset int, plate playerPlate, marker string) {
+	label := func(name string, pos render.V3, tint [4]float32, offset int, plate playerPlate, marker, suffix string) {
 		if name == "" {
 			return
 		}
@@ -510,7 +510,8 @@ func (a *App) drawPlayerNames(w, h int) {
 		if !ok {
 			return
 		}
-		width := a.font.Width(name)
+		nameWidth := a.font.Width(name)
+		width := nameWidth + a.font.Width(suffix)
 		left, top := x-width/2, y-offset
 		if a.scene3d.OccludedLabel(pos, left, top, width, a.font.Height, w, h) {
 			return
@@ -524,6 +525,9 @@ func (a *App) drawPlayerNames(w, h int) {
 			tint = ui.RGBColor(0x3B6CFF)
 		}
 		a.font.DrawName(a.sprites, name, left, top, tint)
+		if suffix != "" {
+			a.font.DrawName(a.sprites, suffix, left+nameWidth, top, white)
+		}
 		outerLeft, outerRight := left, left+width
 		rank, ranked := pvprank.Index(plate.kills)
 		if plate.party != 0 {
@@ -558,6 +562,12 @@ func (a *App) drawPlayerNames(w, h int) {
 			}
 		}
 	}
+	catalogSuffix := func(id uint16) string {
+		if a.showCatalogIDs {
+			return fmt.Sprintf(" (%d)", id)
+		}
+		return ""
+	}
 	const neutralMarker = "interface/mon_not.png"
 	targetMarker := func(id uint32) string {
 		if id != 0 && a.state.Target == id {
@@ -568,8 +578,8 @@ func (a *App) drawPlayerNames(w, h int) {
 	slot, hasSlot := a.selfSlot()
 	if hasSlot && v.self != nil && settings.OwnName {
 		pos, offset := a.playerNameplateAnchor(a.state.SelfID, v.self, slot.Race, a.state.Self.Dead || a.state.Self.Sitting, a.state.Self.Vehicle)
-		label(slot.Name, pos, white, offset, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills, party: a.partyBadgeKind(a.state.SelfID)}, targetMarker(a.state.SelfID))
-		label(guildCaption(a.state, a.state.Guild.ID), pos, guildCaptionColor(a.state, a.state.Guild.ID, a.state.SelfID, slot.Name), offset+guildCaptionOffset, playerPlate{}, "")
+		label(slot.Name, pos, white, offset, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills, party: a.partyBadgeKind(a.state.SelfID)}, targetMarker(a.state.SelfID), "")
+		label(guildCaption(a.state, a.state.Guild.ID), pos, guildCaptionColor(a.state, a.state.Guild.ID, a.state.SelfID, slot.Name), offset+guildCaptionOffset, playerPlate{}, "", "")
 	}
 	hoveredMob := uint32(0)
 	if a.hoveredMob != 0 && a.hoveredMobX == a.lastMouseX && a.hoveredMobY == a.lastMouseY {
@@ -589,15 +599,15 @@ func (a *App) drawPlayerNames(w, h int) {
 			if hasSlot && slot.Race/2 != e.Shape.Race/2 {
 				tint = ui.RGBColor(0xff0000)
 			}
-			label(name, pos, tint, offset, playerPlate{gm: e.IsGM, kills: e.PvPKills, party: a.partyBadgeKind(e.ID)}, targetMarker(e.ID))
+			label(name, pos, tint, offset, playerPlate{gm: e.IsGM, kills: e.PvPKills, party: a.partyBadgeKind(e.ID)}, targetMarker(e.ID), "")
 			caption := guildCaption(a.state, e.GuildID)
 			if caption == "" && e.GuildID != 0 {
 				caption = e.Shape.Guild
 			}
-			label(caption, pos, guildCaptionColor(a.state, e.GuildID, e.ID, name), offset+guildCaptionOffset, playerPlate{}, "")
+			label(caption, pos, guildCaptionColor(a.state, e.GuildID, e.ID, name), offset+guildCaptionOffset, playerPlate{}, "", "")
 		case game.KindMob:
 			actor := v.mobs[e.ID]
-			if !settings.MonsterNames || (e.ID != a.state.Target && e.ID != hoveredMob) || e.Dead || actor == nil || actor.actor == nil || actor.pos.Sub(v.pos).Len() > 100 {
+			if (!a.showCatalogIDs && (!settings.MonsterNames || e.ID != a.state.Target && e.ID != hoveredMob)) || e.Dead || actor == nil || actor.actor == nil || actor.pos.Sub(v.pos).Len() > 100 {
 				continue
 			}
 			mob := actor.actor
@@ -605,7 +615,7 @@ func (a *App) drawPlayerNames(w, h int) {
 			if element := mob.Definition.Element; e.ID == a.state.Target && int(element) < len(mobMarkers) {
 				marker = mobMarkers[element]
 			}
-			label(mob.Name, mob.MonsterPlateAnchor(), ui.RGBColor(ui.MobNameRGB(mob.Level, slot.Level)), 0, playerPlate{}, marker)
+			label(mob.Name, mob.MonsterPlateAnchor(), ui.RGBColor(ui.MobNameRGB(mob.Level, slot.Level)), 0, playerPlate{}, marker, catalogSuffix(e.TypeID))
 		case game.KindNpc:
 			if actor := v.npcs[e.ID]; actor != nil && actor.actor != nil {
 				pos := actor.actor.NPCPlateAnchor(e.NpcType, e.TypeID)
@@ -614,8 +624,8 @@ func (a *App) drawPlayerNames(w, h int) {
 				if _, hi, ok := actor.actor.WorldBounds(); ok && e.NpcType != 12 && pos[1] < hi[1]+.15 {
 					pos[1] = hi[1] + .15
 				}
-				label(actor.actor.Name, pos, ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID))
-				label(npcTypeLabel(e.NpcType), pos, [4]float32{.35, .9, 1, 1}, a.font.Height-2, playerPlate{}, "")
+				label(actor.actor.Name, pos, ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID), catalogSuffix(e.TypeID))
+				label(npcTypeLabel(e.NpcType), pos, [4]float32{.35, .9, 1, 1}, a.font.Height-2, playerPlate{}, "", "")
 			}
 		}
 	}

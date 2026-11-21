@@ -16,6 +16,7 @@ type MallProduct struct {
 	Badge                   ItemBadge
 	Name, Code, Description string
 	Cost                    uint32
+	ItemIDs                 []uint32
 	Icon                    *render.Texture
 	UV                      UV
 }

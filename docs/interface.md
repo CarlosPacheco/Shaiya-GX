@@ -48,6 +48,8 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 
 Click an NPC to approach its displayed position and talk within two units. `N` chooses a nearby NPC within 50 units. Manual movement cancels the approach; moving NPCs also retain the server interaction-range check. Choose a populated destination, press Move and confirm. The client sends the NPC ID and destination index; GX Server validates availability, faction, distance and money, then supplies the balance and teleport position. Empty destinations remain inactive, including correct support for valid map-zero destinations with nonzero coordinates. Paid cross-map tests also verify scene replacement and persistence after reconnecting.
 
+Press **H** to toggle catalog IDs. Nearby monster and NPC nameplates show a white ID, and item tooltips show the full numeric item ID. The toggle starts off when the client launches.
+
 Inventory (I), Status (T), Skills (K) and Actions (B) open independently through either hotkeys or the bottom bar. Opening one keeps the others visible. New frames use free horizontal space when possible; manually positioned frames keep their layout. Overlapping personal panels route clicks, title dragging and Escape in their drawing order: Status, Actions, Skills, Inventory. Escape closes one panel at a time.
 
 Options remains nonmodal: opening it preserves keyboard movement and automatic travel. Pointer gestures belong to the window where they started. Logout confirmations remain modal and await the server response.

@@ -276,3 +276,30 @@ func TestCameraRightDragKeepsOwnershipAcrossPanels(t *testing.T) {
 		t.Fatal("UI press escaped into camera orbit")
 	}
 }
+
+func TestCatalogIDsToggleAndItemTooltip(t *testing.T) {
+	a := inputApp()
+	in := platform.Input{Keys: []platform.Key{platform.KeyShowIDs}, Chars: []rune{'h'}}
+	a.worldControls(&in, 1024, 768)
+	if !a.showCatalogIDs {
+		t.Fatal("H did not enable catalog IDs")
+	}
+	a.worldControls(&platform.Input{Chars: []rune{'h'}}, 1024, 768)
+	pointer := chatWorldInput(in)
+	a.worldControls(&pointer, 1024, 768)
+	if !a.showCatalogIDs {
+		t.Fatal("text input or key repeat toggled catalog IDs")
+	}
+	item := &sdata.Item{Type: 42, TypeID: 7, Name: "Test item"}
+	a.drawItemDetails(item, nil, 1, 0, 0, 1024, 768, "")
+	if len(a.tooltip) < 2 || a.tooltip[1] != (itemDetailLine{"ID: 42007", white}) {
+		t.Fatalf("full item ID missing from tooltip: %+v", a.tooltip)
+	}
+	a.worldControls(&in, 1024, 768)
+	a.drawItemDetails(item, nil, 1, 0, 0, 1024, 768, "")
+	for _, row := range a.tooltip {
+		if row.text == "ID: 42007" {
+			t.Fatal("item ID remained after hiding catalog IDs")
+		}
+	}
+}

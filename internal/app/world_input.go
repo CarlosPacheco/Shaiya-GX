@@ -284,6 +284,9 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 	if cameraDrag {
 		controls.RightDown = true
 	}
+	if controls.HasKey(platform.KeyShowIDs) {
+		a.showCatalogIDs = !a.showCatalogIDs
+	}
 	if controls.HasKey(platform.KeyEscape) || hasChar(&controls, 'o') {
 		a.openGameMenu()
 		controls.Keys, controls.Chars = nil, nil

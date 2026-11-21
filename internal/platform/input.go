@@ -46,6 +46,7 @@ const (
 	KeyCopy
 	KeyCut
 	KeyPaste
+	KeyShowIDs
 )
 
 // Input is one frame of input: the state plus the events since last frame.
@@ -128,6 +129,8 @@ func (w *Window) InstallInput() *InputQueue {
 				key = KeyCut
 			case mods&(glfw.ModControl|glfw.ModAlt|glfw.ModSuper) == glfw.ModControl && k == glfw.KeyV:
 				key = KeyPaste
+			case k == glfw.KeyH && mods&(glfw.ModControl|glfw.ModAlt|glfw.ModSuper) == 0:
+				q.cur.Keys = append(q.cur.Keys, KeyShowIDs)
 			case k == glfw.KeyZ && win.GetKey(glfw.KeyLeftShift) == glfw.Press:
 				key = KeyChatWhisper
 			case k == glfw.KeyEnter || k == glfw.KeyKPEnter:

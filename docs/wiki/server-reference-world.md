@@ -2405,16 +2405,17 @@ Direct GX dependencies: `internal/mapgeometry`, `internal/mapnav`, `internal/mov
 | [`point`](../../server/internal/world/mob_navigation.go#L72)<br>`func (m *MapMob) point() mapnav.Point` | See the source definition and the subsystem ownership contract. |
 | [`setPoint`](../../server/internal/world/mob_navigation.go#L73)<br>`func (m *MapMob) setPoint(p mapnav.Point)` | See the source definition and the subsystem ownership contract. |
 | [`placeOnNavigation`](../../server/internal/world/mob_navigation.go#L75)<br>`func (m *MapMob) placeOnNavigation(nav *mapnav.Map, mapID uint16) bool` | See the source definition and the subsystem ownership contract. |
-| [`navigate`](../../server/internal/world/mob_navigation.go#L114)<br>`func (m *MapMob) navigate(mapID uint16, goal mapnav.Point, step float32) (float32, bool)` | See the source definition and the subsystem ownership contract. |
-| [`targetDistance`](../../server/internal/world/mob_navigation.go#L141)<br>`func (m *MapMob) targetDistance(t *PlayerCombatSnapshot) float32` | See the source definition and the subsystem ownership contract. |
-| [`canReachTarget`](../../server/internal/world/mob_navigation.go#L147)<br>`func (m *MapMob) canReachTarget(t *PlayerCombatSnapshot) bool` | See the source definition and the subsystem ownership contract. |
-| [`mobNav`](../../server/internal/world/mob_navigation.go#L156)<br>`type mobNav` | Mobs retain a lightweight map reference. The decoded geometry cache is bounded instead of keeping every world map resident merely because it has spawns. |
-| [`Path`](../../server/internal/world/mob_navigation.go#L158)<br>`func (n *mobNav) Path(a, b mapnav.Point) ([]mapnav.Point, bool)` | See the source definition and the subsystem ownership contract. |
-| [`Step`](../../server/internal/world/mob_navigation.go#L165)<br>`func (n *mobNav) Step(a mapnav.Point, path []mapnav.Point, d float32, walkable func(float32, float32) bool) (mapnav.Point, float32, int, bool)` | See the source definition and the subsystem ownership contract. |
-| [`Visible`](../../server/internal/world/mob_navigation.go#L172)<br>`func (n *mobNav) Visible(a, b mapnav.Point) bool` | See the source definition and the subsystem ownership contract. |
-| [`placeRespawn`](../../server/internal/world/mob_navigation.go#L176)<br>`func (m *MapMob) placeRespawn(mapID uint16) bool` | See the source definition and the subsystem ownership contract. |
-| [`mobNavigationTick`](../../server/internal/world/mob_navigation.go#L182)<br>`const mobNavigationTick = 50 * time.Millisecond` | Corner arrivals need a finer scheduler than the legacy half-second sweep. |
-| [`movementTiming`](../../server/internal/world/mob_navigation.go#L184)<br>`func (m *MapMob) movementTiming(now time.Time, travel, step float32, interval time.Duration)` | See the source definition and the subsystem ownership contract. |
+| [`mobSpawnHasExit`](../../server/internal/world/mob_navigation.go#L133)<br>`func mobSpawnHasExit(nav *mapnav.Map, mapID uint16, spawn mapnav.Point) bool` | See the source definition and the subsystem ownership contract. |
+| [`navigate`](../../server/internal/world/mob_navigation.go#L149)<br>`func (m *MapMob) navigate(mapID uint16, goal mapnav.Point, step float32) (float32, bool)` | See the source definition and the subsystem ownership contract. |
+| [`targetDistance`](../../server/internal/world/mob_navigation.go#L176)<br>`func (m *MapMob) targetDistance(t *PlayerCombatSnapshot) float32` | See the source definition and the subsystem ownership contract. |
+| [`canReachTarget`](../../server/internal/world/mob_navigation.go#L182)<br>`func (m *MapMob) canReachTarget(t *PlayerCombatSnapshot) bool` | See the source definition and the subsystem ownership contract. |
+| [`mobNav`](../../server/internal/world/mob_navigation.go#L191)<br>`type mobNav` | Mobs retain a lightweight map reference. The decoded geometry cache is bounded instead of keeping every world map resident merely because it has spawns. |
+| [`Path`](../../server/internal/world/mob_navigation.go#L193)<br>`func (n *mobNav) Path(a, b mapnav.Point) ([]mapnav.Point, bool)` | See the source definition and the subsystem ownership contract. |
+| [`Step`](../../server/internal/world/mob_navigation.go#L200)<br>`func (n *mobNav) Step(a mapnav.Point, path []mapnav.Point, d float32, walkable func(float32, float32) bool) (mapnav.Point, float32, int, bool)` | See the source definition and the subsystem ownership contract. |
+| [`Visible`](../../server/internal/world/mob_navigation.go#L207)<br>`func (n *mobNav) Visible(a, b mapnav.Point) bool` | See the source definition and the subsystem ownership contract. |
+| [`placeRespawn`](../../server/internal/world/mob_navigation.go#L211)<br>`func (m *MapMob) placeRespawn(mapID uint16) bool` | See the source definition and the subsystem ownership contract. |
+| [`mobNavigationTick`](../../server/internal/world/mob_navigation.go#L217)<br>`const mobNavigationTick = 50 * time.Millisecond` | Corner arrivals need a finer scheduler than the legacy half-second sweep. |
+| [`movementTiming`](../../server/internal/world/mob_navigation.go#L219)<br>`func (m *MapMob) movementTiming(now time.Time, travel, step float32, interval time.Duration)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 

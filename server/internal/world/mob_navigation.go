@@ -87,10 +87,19 @@ func (m *MapMob) placeOnNavigation(nav *mapnav.Map, mapID uint16) bool {
 	if m.spawnHeightKnown {
 		hint[1] = (m.spawnMinY + m.spawnMaxY) / 2
 	}
-	for attempt := 0; attempt < 256; attempt++ {
-		if attempt > 0 && m.Area != nil {
+	// Grounded polygons can still be isolated from the surrounding terrain.
+	// Prefer a spawn with room to leave when the mob is meant to move.
+	checkExit := m.Area != nil && m.def != nil && !m.def.Obelisk && (m.def.NormalStep != 0 || m.def.ChaseStep != 0)
+	var spawn mapnav.Point
+	found := false
+	attempts := 1
+	if m.Area != nil {
+		attempts += 64 // areaCandidate repeats after one 8x8 grid.
+	}
+	for attempt := range attempts {
+		if attempt > 0 {
 			a := m.Area.normalized()
-			p := areaCandidate(vec3{a.LowerX, hint[1], a.LowerZ}, vec3{a.UpperX, hint[1], a.UpperZ}, uint32(attempt))
+			p := areaCandidate(vec3{a.LowerX, hint[1], a.LowerZ}, vec3{a.UpperX, hint[1], a.UpperZ}, m.ID+uint32(attempt)-1)
 			hint[0], hint[2] = p.x, p.z
 		}
 		p, ok := nav.Spawn(hint, .75, tolerance)
@@ -103,14 +112,40 @@ func (m *MapMob) placeOnNavigation(nav *mapnav.Map, mapID uint16) bool {
 				continue
 			}
 		}
-		m.setPoint(p)
-		m.cell, m.hasCell = cellFor(p[0], p[2]), true
-		m.homeX, m.homeY, m.homeZ = p[0], p[1], p[2]
-		m.navPath = nil
-		return true
+		if !found {
+			spawn, found = p, true
+		}
+		if !checkExit || mobSpawnHasExit(nav, mapID, p) {
+			spawn = p
+			break
+		}
+	}
+	if !found {
+		return false
+	}
+	m.setPoint(spawn)
+	m.cell, m.hasCell = cellFor(spawn[0], spawn[2]), true
+	m.homeX, m.homeY, m.homeZ = spawn[0], spawn[1], spawn[2]
+	m.navPath = nil
+	return true
+}
+
+func mobSpawnHasExit(nav *mapnav.Map, mapID uint16, spawn mapnav.Point) bool {
+	const distance = 6
+	for _, offset := range [][2]float32{{distance, 0}, {-distance, 0}, {0, distance}, {0, -distance}} {
+		goal := mapnav.Point{spawn[0] + offset[0], spawn[1], spawn[2] + offset[1]}
+		path, ok := nav.Path(spawn, goal)
+		if !ok || len(path) < 2 {
+			continue
+		}
+		end := path[len(path)-1]
+		if IsMapWalkable(mapID, end[0], end[2]) {
+			return true
+		}
 	}
 	return false
 }
+
 func (m *MapMob) navigate(mapID uint16, goal mapnav.Point, step float32) (float32, bool) {
 	if m.nav == nil {
 		return 0, false

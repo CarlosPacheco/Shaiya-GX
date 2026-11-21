@@ -150,3 +150,67 @@ func TestOriginalMobNavigation(t *testing.T) {
 		})
 	}
 }
+
+// The first two points in this spawn box projected onto an isolated polygon.
+func TestTiarusasSpawnCanChaseInJungle(t *testing.T) {
+	const mapID, mobID = 47, 1603
+	directory := os.Getenv("GX_TEST_GEOMETRY")
+	if directory == "" {
+		t.Skip("requires local derived navigation data")
+	}
+	nav, err := mapnav.Load(directory, mapID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mob := &db.MobDef{MobID: mobID, AI: 1, Country: 2, MaxHP: 8522, Size: 3, NormalStep: 8, ChaseRange: 24, ChaseStep: 9, ChaseTimeMS: 1800}
+	mob.Attacks[0] = db.MobAttack{Range: 3, OK: 1}
+	load, err := loadSvmapFile(mapID, filepath.Join(config.DataDir(), "maps", "47.svmap"), &db.Defs{Mobs: map[uint16]*db.MobDef{mobID: mob}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	RegisterMapGrid(mapID, load.mapSize, load.mask)
+
+	// Run chase against the same geometry used to resolve the spawn.
+	mobNavigation.Lock()
+	oldMaps, oldUsed, oldDirectory := mobNavigation.maps, mobNavigation.used, mobNavigation.directory
+	mobNavigation.maps = map[uint16]*mapnav.Map{mapID: nav}
+	mobNavigation.used = map[uint16]time.Time{mapID: time.Now()}
+	mobNavigation.directory = filepath.Join(config.DataDir(), "geometry")
+	mobNavigation.Unlock()
+	t.Cleanup(func() {
+		mobNavigation.Lock()
+		mobNavigation.maps, mobNavigation.used, mobNavigation.directory = oldMaps, oldUsed, oldDirectory
+		mobNavigation.Unlock()
+	})
+
+	goal, ok := nav.Project(mapnav.Point{414, 7, 655}, .5, 2)
+	if !ok {
+		t.Fatal("missing ground at the player position")
+	}
+	player := PlayerCombatSnapshot{CharacterID: 1, MapID: mapID, Alive: true, PosX: goal[0], PosY: goal[1], PosZ: goal[2], Cell: cellFor(goal[0], goal[2])}
+	sh := &mapShard{}
+	tested := 0
+	for _, spawn := range load.entities.Mobs {
+		if spawn.MobID != mobID || spawn.PosX < 405 || spawn.PosX > 416 || spawn.PosZ < 640 || spawn.PosZ > 651 {
+			continue
+		}
+		tested++
+		if !spawn.placeOnNavigation(nav, mapID) {
+			t.Fatal("monster failed to spawn")
+		}
+		tick := &MobCombatTick{}
+		h := &mobAIHost{mob: &spawn, shard: sh, mapID: mapID, now: time.Now(), players: []PlayerCombatSnapshot{player}, tick: tick}
+		for range 20 {
+			h.event("idle")
+			h.notifyTarget()
+			h.event("combat")
+			h.now = h.now.Add(time.Second)
+		}
+		if spawn.AggroTarget != player.CharacterID || len(tick.Moves) == 0 || len(tick.Attacks) == 0 {
+			t.Fatalf("Tiarusas at %v could not chase and attack from proximity: target=%d, moves=%d, attacks=%d", spawn.point(), spawn.AggroTarget, len(tick.Moves), len(tick.Attacks))
+		}
+	}
+	if tested != 2 {
+		t.Fatalf("tested %d Tiarusas, want 2", tested)
+	}
+}

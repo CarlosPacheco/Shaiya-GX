@@ -48,6 +48,7 @@ const (
 )
 
 type App struct {
+	showCatalogIDs                      bool
 	physicsClockAt                      time.Time
 	collisionLines                      *render.DebugLines
 	collisionVertices                   []render.DebugLineVertex

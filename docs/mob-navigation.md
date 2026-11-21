@@ -71,7 +71,10 @@ platform passenger attachment. Mob routes bake animated rotors in their base pos
 Spawn selects the first supporting surface under the original spawn volume,
 with a small upward tolerance. Buried outdoor volumes fall back to the native
 terrain base. It never chooses a global highest surface. Missing clearance or
-missing physical support rejects the spawn with map-level diagnostics.
+missing physical support rejects the spawn with map-level diagnostics. When a
+mobile mob has an authored spawn area, the server prefers a point in that area
+with a short route out to nearby walkable ground. If no such point exists, it
+keeps the first grounded candidate so narrow spawn areas retain their mobs.
 Respawn, roaming, chase, home return, GM spawning and instanced copies use the
 same ground navigation. A* must reach the requested polygon; partial paths are
 rejected. Movement consumes collinear polygon crossings together and stops at actual
