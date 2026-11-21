@@ -68,8 +68,9 @@ Keep the executable in a writable folder for the local backups and recovery jour
    ranks are fixed. Shared fields are enabled only for records with a unique
    SQLite counterpart. Appearance and description can be edited on the client
    side independently. Each definition save updates only the explicitly edited
-   mapped columns. It preserves other SQLite values, reserved slots and
-   untouched SData bytes. Normal EP5 SEED envelopes in the definition files
+   mapped columns. Reserved empty item rows and level-zero skill slots are
+   omitted from the editor and preserved byte-for-byte on save. Other SQLite
+   values and SData fields retain their original values. Normal EP5 SEED envelopes in the definition files
    are preserved on save. Encrypted Cash.SData opens in read-only mode.
    In **Skills → Cast and target**, **8 · Entire raid (heal or buff)** writes
    `TargetType=8` to both catalogs. It uses `ApplyRange` at cast completion for

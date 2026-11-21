@@ -7,7 +7,8 @@ commands, paths, field mappings and recovery behavior.
 Choose the client data folder, server `data/game` folder or SQLite file as needed. Studio remembers
 both paths and the Light, Dark or Dark blue theme in `gx-studio.ini` beside
 the executable. Each edit shows the readable name and the exact native field
-or SQLite column it changes.
+or SQLite column it changes. Reserved empty item and skill slots stay in the
+native files and are omitted from the editor.
 
 | Catalogs | Sources |
 |---|---|

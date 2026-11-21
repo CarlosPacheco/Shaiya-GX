@@ -177,3 +177,6 @@ the consumable intact. A valid independent roll with no winners still
 consumes it. Migration 16 imports original groups whose positive-weight
 grades all exist and that have a corresponding box item in the database.
 Where necessary the original weights are reduced or rounded to fit 0–1000.
+
+The Uber Mystery Box uses section `[Box_39]`. Its seven remaining rewards
+retain their relative weights after the EXP drop protection item was retired.
