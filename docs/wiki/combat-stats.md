@@ -114,6 +114,14 @@ A skill's listed success chance is an additional roll. For example, an 80%
 hit chance and a 50% skill success chance give a 40% chance to land, assuming
 the target can be affected. Blocks and monster skill immunities still apply.
 
+## When monsters cast
+
+Each attack opportunity with a routine spell ready and in range gives the
+monster a 50% chance to cast. If it skips the spell, it can use another eligible
+attack or wait for the next attack opportunity. Skipping a spell leaves it ready.
+Scripted casts and attacks tied to health or target conditions follow their own
+rules.
+
 ## Fighting a higher-level monster
 
 For each level the monster is above you, the adjustment increases by **5%**,

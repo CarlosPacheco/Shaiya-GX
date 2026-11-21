@@ -52,6 +52,27 @@ combat. File FSM states and Lua callbacks both reuse native targeting, movement,
 attacks and skills. In particular an empty Lua combat callback does **not** mean
 that the mob cannot attack.
 
+### Routine spell timing
+
+The EP4.5 server's `CMob::UpdateAttack` (`0x004a7db0`) checks the shared
+attack deadline. `CMob::AttackAI` (`0x004a1ab0`) and `CMob::AttackAIExp`
+(`0x004b66f0`) scan slots 3 through 1 in order, checking the slot deadline,
+`Attackok` conditions, and range. The slot scan contains no random cast roll.
+A successful `CMob::UseSkill` (`0x004a48e0`) starts the shared 2.5-second
+attack delay with its speed adjustment. The slot deadline uses the skill reset
+time in seconds. Scripted encounters can make separate random decisions, as
+Lua AI 115 does, or explicitly choose a skill through `CMob::LuaAttackAI`
+(`0x004b25b0`). This evidence is specific to the audited EP4.5 server binary.
+An isolated x86 run with an in-range target selected the highest-priority
+ready spell in all 32 repetitions. With both spell slots cooling down it used
+the basic attack, and it selected the top spell again at its exact deadline.
+
+GX gives eligible routine spells (`Attackok` 1 or 2) a single 50% roll per
+attack decision. On a failed roll, the mob can still use a basic or conditional
+attack. If only routine spells are available, it waits for the ordinary attack
+retry. A skipped spell stays ready. HP- and target-conditioned actions and
+explicit scripted casts keep their authored rules.
+
 ### Generic cases, 0–9
 
 | Value | Seed templates | Code-driven distinction |

@@ -651,7 +651,7 @@ func (h *mobAIHost) attack(stationary bool) {
 	}
 	d := m.targetDistance(target)
 	if !h.now.Before(m.nextAttackAt) && m.canReachTarget(target) {
-		slot, ok := m.pickAttackSlot(h.now, d, &mods)
+		slot, ok, declinedSpell := m.pickAttackSlot(h.now, d, &mods, func() bool { return rand.IntN(2) == 0 })
 		if ok {
 			weakest := m.def.Attacks[slot].OK == 6 && mods.VisionFix == 0 && m.targetWeakest(h.players)
 			if !weakest {
@@ -675,8 +675,11 @@ func (h *mobAIHost) attack(stationary bool) {
 			h.tick.Attacks = append(h.tick.Attacks, MobAttackAction{MobGlobalID: m.ID, MobID: m.MobID, Attack: m.Attack, TargetCharacterID: m.AggroTarget, Slot: slot, MobX: m.PosX, MobZ: m.PosZ})
 			return
 		}
-		if d < m.attackReach() {
+		inBasicReach := d < m.attackReach()
+		if declinedSpell || inBasicReach {
 			m.nextAttackAt = h.now.Add(mobAttackIdle + mods.attackDelayOffset())
+		}
+		if inBasicReach {
 			return
 		}
 	}

@@ -964,33 +964,33 @@ Direct GX dependencies: `internal/mapnav`, `internal/movespeed`, `internal/npcqu
 | [`chaseInterval`](../../server/internal/world/entities.go#L1216)<br>`func (m *MapMob) chaseInterval() time.Duration` | See the source definition and the subsystem ownership contract. |
 | [`attackReach`](../../server/internal/world/entities.go#L1224)<br>`func (m *MapMob) attackReach() float32` | attackReach is vertical_mobs_attack_range: Size + Attackrange + 0.3. |
 | [`mobAttackIdle`](../../server/internal/world/entities.go#L1233)<br>`const mobAttackIdle = 2500 * time.Millisecond` | mobAttackIdle is AttackAI's wait when no slot is ready (2500 ms plus g_ConstMobAttackSpeed, 0 at normal speed). |
-| [`pickAttackSlot`](../../server/internal/world/entities.go#L1238)<br>`func (m *MapMob) pickAttackSlot(now time.Time, distance float32, mods *mobMods) (uint8, bool)` | pickAttackSlot is CMob::AttackAI's scan: slots 3 to 1, the first one in use (Attackok), off its own cooldown, within its HP condition (3: HP 20-40%, 4: HP at most 5%, 5: HP under 20%) and in reach. |
-| [`useSlot`](../../server/internal/world/entities.go#L1288)<br>`func (m *MapMob) useSlot(slot uint8, now time.Time) []byte` | useSlot starts a slot's cooldown and the next attack time. A mob heal skill (TypeEffect 2) applies at once and returns its HP packet. |
-| [`attackSpeedFactor`](../../server/internal/world/entities.go#L1308)<br>`func (m *MapMob) attackSpeedFactor() float32` | See the source definition and the subsystem ownership contract. |
-| [`movable`](../../server/internal/world/entities.go#L1316)<br>`func (m *MapMob) movable() bool` | movable: not stunned, asleep or stopped. |
-| [`attackInterval`](../../server/internal/world/entities.go#L1321)<br>`func (m *MapMob) attackInterval() time.Duration` | See the source definition and the subsystem ownership contract. |
-| [`roamWalkable`](../../server/internal/world/entities.go#L1328)<br>`func roamWalkable(mapID uint16, x, z float32, a MobArea) bool` | See the source definition and the subsystem ownership contract. |
-| [`buildNpcEnter`](../../server/internal/world/entities.go#L1334)<br>`func buildNpcEnter(n *MapNpc) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildNpcLeave`](../../server/internal/world/entities.go#L1349)<br>`func buildNpcLeave(id uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildNpcMove`](../../server/internal/world/entities.go#L1355)<br>`func buildNpcMove(n *MapNpc, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobEnter`](../../server/internal/world/entities.go#L1365)<br>`func buildMobEnter(m *MapMob, isNew bool) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobMove`](../../server/internal/world/entities.go#L1386)<br>`func buildMobMove(m *MapMob, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobLeave`](../../server/internal/world/entities.go#L1405)<br>`func buildMobLeave(id uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobTargetHP`](../../server/internal/world/entities.go#L1412)<br>`func buildMobTargetHP(m *MapMob) []byte` | buildMobTargetHP (0x0305): mob id, HP (client reader 0x0058f2d0). |
-| [`buildMobState`](../../server/internal/world/entities.go#L1420)<br>`func buildMobState(m *MapMob) []byte` | buildMobState (0x0304): mob id, HP, attack speed, move speed. |
-| [`buildCharacterMobAttack`](../../server/internal/world/entities.go#L1430)<br>`func buildCharacterMobAttack(characterID, mobID uint32, result uint8, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobAttackCharacter`](../../server/internal/world/entities.go#L1441)<br>`func buildMobAttackCharacter(result uint8, mobID, characterID uint32, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterDeath`](../../server/internal/world/entities.go#L1452)<br>`func buildCharacterDeath(characterID uint32, deathType uint8, killerID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterDeathState`](../../server/internal/world/entities.go#L1460)<br>`func buildCharacterDeathState(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterReviveInit`](../../server/internal/world/entities.go#L1468)<br>`func buildCharacterReviveInit(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterResurrect`](../../server/internal/world/entities.go#L1476)<br>`func buildCharacterResurrect(characterID uint32, kind uint8, exp uint32, x, y, z float32) []byte` | buildCharacterResurrect (0x0551) is CUser::Rebirth's packet: id, kind (1 in place, 4 bind point, 5 party leader), current exp, position. |
-| [`buildCharacterReviveHitpoints`](../../server/internal/world/entities.go#L1487)<br>`func buildCharacterReviveHitpoints(characterID, hp, mp, sp uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobDeath`](../../server/internal/world/entities.go#L1496)<br>`func buildMobDeath(mobID, killerID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobDeathBy`](../../server/internal/world/entities.go#L1500)<br>`func buildMobDeathBy(mobID, killerID uint32, deathType uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobPeriodicDamage`](../../server/internal/world/entities.go#L1508)<br>`func buildMobPeriodicDamage(mobID uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobCurrentHP`](../../server/internal/world/entities.go#L1519)<br>`func buildMobCurrentHP(mobID, hp uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`HealMob`](../../server/internal/world/entities.go#L1527)<br>`func HealMob(mapID uint16, id, amount uint32) (MapMob, uint32, bool)` | HealMob restores HP to a living mob (a drain's heal); returns the mob. |
-| [`recordLootDamage`](../../server/internal/world/entities.go#L1543)<br>`func (m *MapMob) recordLootDamage(id, damage uint32)` | recordLootDamage books damage against the attacker for the loot owner. |
+| [`pickAttackSlot`](../../server/internal/world/entities.go#L1238)<br>`func (m *MapMob) pickAttackSlot(now time.Time, distance float32, mods *mobMods, rollSpell func() bool) (slotIndex uint8, found, declinedSpell bool)` | pickAttackSlot keeps CMob::AttackAI's slot order and eligibility checks. GX draws once per decision for routine spells. A declined spell remains ready and the mob can still choose a basic or conditional attack. |
+| [`useSlot`](../../server/internal/world/entities.go#L1295)<br>`func (m *MapMob) useSlot(slot uint8, now time.Time) []byte` | useSlot starts a slot's cooldown and the next attack time. A mob heal skill (TypeEffect 2) applies at once and returns its HP packet. |
+| [`attackSpeedFactor`](../../server/internal/world/entities.go#L1315)<br>`func (m *MapMob) attackSpeedFactor() float32` | See the source definition and the subsystem ownership contract. |
+| [`movable`](../../server/internal/world/entities.go#L1323)<br>`func (m *MapMob) movable() bool` | movable: not stunned, asleep or stopped. |
+| [`attackInterval`](../../server/internal/world/entities.go#L1328)<br>`func (m *MapMob) attackInterval() time.Duration` | See the source definition and the subsystem ownership contract. |
+| [`roamWalkable`](../../server/internal/world/entities.go#L1335)<br>`func roamWalkable(mapID uint16, x, z float32, a MobArea) bool` | See the source definition and the subsystem ownership contract. |
+| [`buildNpcEnter`](../../server/internal/world/entities.go#L1341)<br>`func buildNpcEnter(n *MapNpc) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildNpcLeave`](../../server/internal/world/entities.go#L1356)<br>`func buildNpcLeave(id uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildNpcMove`](../../server/internal/world/entities.go#L1362)<br>`func buildNpcMove(n *MapNpc, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobEnter`](../../server/internal/world/entities.go#L1372)<br>`func buildMobEnter(m *MapMob, isNew bool) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobMove`](../../server/internal/world/entities.go#L1393)<br>`func buildMobMove(m *MapMob, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobLeave`](../../server/internal/world/entities.go#L1412)<br>`func buildMobLeave(id uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobTargetHP`](../../server/internal/world/entities.go#L1419)<br>`func buildMobTargetHP(m *MapMob) []byte` | buildMobTargetHP (0x0305): mob id, HP (client reader 0x0058f2d0). |
+| [`buildMobState`](../../server/internal/world/entities.go#L1427)<br>`func buildMobState(m *MapMob) []byte` | buildMobState (0x0304): mob id, HP, attack speed, move speed. |
+| [`buildCharacterMobAttack`](../../server/internal/world/entities.go#L1437)<br>`func buildCharacterMobAttack(characterID, mobID uint32, result uint8, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobAttackCharacter`](../../server/internal/world/entities.go#L1448)<br>`func buildMobAttackCharacter(result uint8, mobID, characterID uint32, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterDeath`](../../server/internal/world/entities.go#L1459)<br>`func buildCharacterDeath(characterID uint32, deathType uint8, killerID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterDeathState`](../../server/internal/world/entities.go#L1467)<br>`func buildCharacterDeathState(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterReviveInit`](../../server/internal/world/entities.go#L1475)<br>`func buildCharacterReviveInit(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterResurrect`](../../server/internal/world/entities.go#L1483)<br>`func buildCharacterResurrect(characterID uint32, kind uint8, exp uint32, x, y, z float32) []byte` | buildCharacterResurrect (0x0551) is CUser::Rebirth's packet: id, kind (1 in place, 4 bind point, 5 party leader), current exp, position. |
+| [`buildCharacterReviveHitpoints`](../../server/internal/world/entities.go#L1494)<br>`func buildCharacterReviveHitpoints(characterID, hp, mp, sp uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobDeath`](../../server/internal/world/entities.go#L1503)<br>`func buildMobDeath(mobID, killerID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobDeathBy`](../../server/internal/world/entities.go#L1507)<br>`func buildMobDeathBy(mobID, killerID uint32, deathType uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobPeriodicDamage`](../../server/internal/world/entities.go#L1515)<br>`func buildMobPeriodicDamage(mobID uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobCurrentHP`](../../server/internal/world/entities.go#L1526)<br>`func buildMobCurrentHP(mobID, hp uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`HealMob`](../../server/internal/world/entities.go#L1534)<br>`func HealMob(mapID uint16, id, amount uint32) (MapMob, uint32, bool)` | HealMob restores HP to a living mob (a drain's heal); returns the mob. |
+| [`recordLootDamage`](../../server/internal/world/entities.go#L1550)<br>`func (m *MapMob) recordLootDamage(id, damage uint32)` | recordLootDamage books damage against the attacker for the loot owner. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -2329,10 +2329,10 @@ Direct GX dependencies: `internal/mapnav`, `server/ai`, `server/internal/config`
 | [`selectDirection`](../../server/internal/world/mob_ai.go#L588)<br>`func (h *mobAIHost) selectDirection(extra float32)` | See the source definition and the subsystem ownership contract. |
 | [`moveSelected`](../../server/internal/world/mob_ai.go#L599)<br>`func (h *mobAIHost) moveSelected(run bool)` | See the source definition and the subsystem ownership contract. |
 | [`attack`](../../server/internal/world/mob_ai.go#L642)<br>`func (h *mobAIHost) attack(stationary bool)` | See the source definition and the subsystem ownership contract. |
-| [`skill`](../../server/internal/world/mob_ai.go#L687)<br>`func (h *mobAIHost) skill(id uint16)` | See the source definition and the subsystem ownership contract. |
-| [`mobAICommand`](../../server/internal/world/mob_ai.go#L714)<br>`type mobAICommand` | See the source definition and the subsystem ownership contract. |
-| [`runMobAICommands`](../../server/internal/world/mob_ai.go#L727)<br>`func runMobAICommands(tick *MobCombatTick)` | See the source definition and the subsystem ownership contract. |
-| [`recordMobAIMiss`](../../server/internal/world/mob_ai.go#L843)<br>`func recordMobAIMiss(mapID uint16, id, user uint32)` | See the source definition and the subsystem ownership contract. |
+| [`skill`](../../server/internal/world/mob_ai.go#L690)<br>`func (h *mobAIHost) skill(id uint16)` | See the source definition and the subsystem ownership contract. |
+| [`mobAICommand`](../../server/internal/world/mob_ai.go#L717)<br>`type mobAICommand` | See the source definition and the subsystem ownership contract. |
+| [`runMobAICommands`](../../server/internal/world/mob_ai.go#L730)<br>`func runMobAICommands(tick *MobCombatTick)` | See the source definition and the subsystem ownership contract. |
+| [`recordMobAIMiss`](../../server/internal/world/mob_ai.go#L846)<br>`func recordMobAIMiss(mapID uint16, id, user uint32)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 

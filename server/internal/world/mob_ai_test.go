@@ -2,10 +2,11 @@ package world
 
 import (
 	"fmt"
-	"github.com/Spelunkern/Shaiya-GX/internal/proto"
-	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"testing"
 	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
 
 func luaWorldFixture(t testing.TB, code uint8) (*mapShard, *mobAIHost) {
@@ -45,6 +46,57 @@ func eventOK(t *testing.T, h *mobAIHost, event string, args ...any) {
 	t.Helper()
 	if !h.event(event, args...) {
 		t.Fatalf("event %s: %v", event, h.mob.lua.fault)
+	}
+}
+
+func TestRoutineMobSpellSelection(t *testing.T) {
+	_, h := luaWorldFixture(t, 1)
+	db.MustDefs().NPCSkills = map[db.SkillKey]*db.SkillDef{
+		{SkillID: 610, Level: 1}: {TypeEffect: 1, AttackRange: 8, ResetTimeSeconds: 4},
+		{SkillID: 611, Level: 1}: {TypeEffect: 1, AttackRange: 8, ResetTimeSeconds: 6},
+	}
+	m := h.mob
+	m.def.Attacks[1] = db.MobAttack{Type: 610, OK: 1}
+	m.def.Attacks[2] = db.MobAttack{Type: 611, OK: 2}
+	mods := m.mods()
+	check := func(at time.Time, distance float32, cast bool, wantSlot uint8, wantFound, wantDeclined bool, wantRolls int) {
+		t.Helper()
+		rolls := 0
+		slot, found, declined := m.pickAttackSlot(at, distance, &mods, func() bool {
+			rolls++
+			return cast
+		})
+		if slot != wantSlot || found != wantFound || declined != wantDeclined || rolls != wantRolls {
+			t.Fatalf("slot=%d found=%t declined=%t rolls=%d, want %d %t %t %d", slot, found, declined, rolls, wantSlot, wantFound, wantDeclined, wantRolls)
+		}
+	}
+
+	check(h.now, 2, false, 0, true, true, 1) // Both spells share one roll.
+	m.useSlot(0, h.now)
+	if !m.slotReadyAt[1].IsZero() || !m.slotReadyAt[2].IsZero() {
+		t.Fatal("declining a spell consumed its cooldown")
+	}
+	castAt := m.nextAttackAt
+	check(castAt, 5, true, 2, true, false, 1)
+	m.useSlot(2, castAt)
+	readyAt := castAt.Add(6 * time.Second)
+	if !m.slotReadyAt[2].Equal(readyAt) {
+		t.Fatalf("cast cooldown ends at %v, want %v", m.slotReadyAt[2], readyAt)
+	}
+	check(readyAt.Add(-time.Millisecond), 5, true, 1, true, false, 1)
+	check(readyAt, 5, false, 0, false, true, 1) // A caster outside basic range can wait.
+	check(readyAt, 10, false, 0, false, false, 0)
+
+	m.def.Attacks[2].OK = 3
+	m.CurrentHP = 300
+	check(readyAt, 5, false, 2, true, false, 0)
+	m.CurrentHP = 500
+	check(readyAt, 5, true, 1, true, false, 1)
+
+	h.mob.AggroTarget = h.players[0].CharacterID
+	h.skill(611)
+	if len(h.tick.Attacks) != 1 || h.tick.Attacks[0].SkillID != 611 {
+		t.Fatalf("explicit scripted cast: %+v", h.tick.Attacks)
 	}
 }
 

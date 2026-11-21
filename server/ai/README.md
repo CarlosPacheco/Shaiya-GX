@@ -62,6 +62,12 @@ that field; GX does not invent incoming-damage immunity from this setter.
 Native Lua-family attacks continue alongside custom callbacks, even for missing
 scripts. Lua selects the scheduling in `core/scripted.lua`.
 
+In GX, each eligible attack decision rolls once for a 50% chance to use a
+routine spell (`Attackok` 1 or 2). When a spell is skipped, its cooldown stays
+ready and the mob can use a basic or conditional attack. A mob with only
+routine spells available waits for its next attack opportunity. Explicit
+scripted casts and HP- or target-conditioned actions keep their own rules.
+
 Original anomalies remain explicit: shadowed phases22/24/36, Empty Battle25,
 `IsEndBattle`'s diagnostic stub, Huistaton's skipped bands, controller115's time
 comparison/early return, and116's empty reset. They are preserved intentionally.

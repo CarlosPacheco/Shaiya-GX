@@ -1232,12 +1232,12 @@ func (m *MapMob) attackReach() float32 {
 // g_ConstMobAttackSpeed, 0 at normal speed).
 const mobAttackIdle = 2500 * time.Millisecond
 
-// pickAttackSlot is CMob::AttackAI's scan: slots 3 to 1, the first one in
-// use (Attackok), off its own cooldown, within its HP condition (3: HP
-// 20-40%, 4: HP at most 5%, 5: HP under 20%) and in reach.
-func (m *MapMob) pickAttackSlot(now time.Time, distance float32, mods *mobMods) (uint8, bool) {
+// pickAttackSlot keeps CMob::AttackAI's slot order and eligibility checks.
+// GX draws once per decision for routine spells. A declined spell remains
+// ready and the mob can still choose a basic or conditional attack.
+func (m *MapMob) pickAttackSlot(now time.Time, distance float32, mods *mobMods, rollSpell func() bool) (slotIndex uint8, found, declinedSpell bool) {
 	if m.def == nil {
-		return 0, true
+		return 0, true, false
 	}
 	maxHP := float64(float32(m.MaxHP))
 	threshold := func(f float32) uint32 { return uint32(int32(maxHP * float64(f))) }
@@ -1261,6 +1261,7 @@ func (m *MapMob) pickAttackSlot(now time.Time, distance float32, mods *mobMods) 
 			}
 		}
 		reach := float32(m.def.Size) + float32(a.Range) + 0.3
+		routineSpell := false
 		if a.Type == 0 && mods.Disabled[0] > 0 {
 			continue // CMob::Attack: m_pAttack[0].nDisable
 		}
@@ -1269,18 +1270,24 @@ func (m *MapMob) pickAttackSlot(now time.Time, distance float32, mods *mobMods) 
 				if mods.Disabled[sk.Kind] > 0 {
 					continue
 				}
+				routineSpell = a.OK < 3
 				if sk.TypeEffect == 2 {
-					return uint8(slot), true // self heal: no reach needed
+					reach = float32(math.Inf(1)) // Self-heal has no target range.
+				} else {
+					reach = float32(m.def.Size) + float32(sk.AttackRange) + 0.3
 				}
-				reach = float32(m.def.Size) + float32(sk.AttackRange) + 0.3
 			}
 		}
 		if distance > reach {
 			continue
 		}
-		return uint8(slot), true
+		if routineSpell && (declinedSpell || !rollSpell()) {
+			declinedSpell = true
+			continue
+		}
+		return uint8(slot), true, declinedSpell
 	}
-	return 0, false
+	return 0, false, declinedSpell
 }
 
 // useSlot starts a slot's cooldown and the next attack time. A mob heal
