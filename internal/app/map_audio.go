@@ -2,7 +2,9 @@ package app
 
 import (
 	"math"
+	"math/rand/v2"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 
@@ -16,6 +18,7 @@ type mapAudioState struct {
 	world         *world.WLD
 	refresh, step float64
 	targets       []audio.LoopTarget
+	riskTrack     string
 }
 
 // WLD names still carry WAV extensions. The portable catalog contains OGG,
@@ -117,6 +120,31 @@ func mapAudioTargets(w *world.WLD, pos render.V3) []audio.LoopTarget {
 	return kept
 }
 
+var riskMusic = [...]string{"bgm_battle01.ogg", "bgm_battle02.ogg", "bgm_battle03.ogg"}
+
+func (a *App) mixRiskMusic(targets []audio.LoopTarget, active bool) []audio.LoopTarget {
+	m := &a.mapAudio
+	if !active {
+		m.riskTrack = ""
+		return targets
+	}
+	if m.riskTrack == "" {
+		var available []string
+		for _, cue := range riskMusic {
+			file := a.audioPath(cue, true)
+			if _, ok := a.arc.Lookup(file); ok {
+				available = append(available, file)
+			}
+		}
+		if len(available) == 0 {
+			return targets
+		}
+		m.riskTrack = available[rand.IntN(len(available))]
+	}
+	targets = slices.DeleteFunc(targets, func(t audio.LoopTarget) bool { return t.Music })
+	return append(targets, audio.LoopTarget{File: m.riskTrack, Gain: .72, Music: true})
+}
+
 func (a *App) updateMapAudio() {
 	m := &a.mapAudio
 	var w *world.WLD
@@ -127,6 +155,7 @@ func (a *App) updateMapAudio() {
 	if m.world != w || m.refresh <= 0 {
 		if m.world != w {
 			m.step = 0
+			m.riskTrack = ""
 		}
 		m.world, m.refresh = w, .25
 		m.targets = nil
@@ -135,6 +164,7 @@ func (a *App) updateMapAudio() {
 			for i := range m.targets {
 				m.targets[i].File = a.audioPath(m.targets[i].File, m.targets[i].Music)
 			}
+			m.targets = a.mixRiskMusic(m.targets, a.state != nil && a.state.MapID == a.wv.mapID && a.enemyNearby())
 		}
 	}
 	targets := m.targets

@@ -373,6 +373,15 @@ for unused slots. It removes the old map-name rows and preserves other entries,
 including previously configured names in the new range. To name a future map, edit
 or add its message in the same UTF-16LE format, then restart the client.
 
+## Risk Sensor music
+
+The original EP5 client passes the nearby-enemy flag to its music selector
+at `0x450067`. The selector at `0x53A2A0` picks one of `bgm_battle01`,
+`bgm_battle02`, and `bgm_battle03`. GX resolves the loose OGG tracks through
+the music channel. It holds a single track for the encounter, fades back to
+the map music when the alert clears, and keeps environmental ambience mixed
+in both cases.
+
 ## Player progression and map-entry effects
 
 The EP5 client uses sequence 0 of `Start.EFT` on fresh map entry (effect
