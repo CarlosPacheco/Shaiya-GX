@@ -38,6 +38,7 @@ func (a *App) drawChatBubbles(w, h int) {
 	f := a.chatFont()
 	vp := a.scene3d.View.Mul(a.scene3d.Proj)
 	active := a.chatBubbles[:0]
+	filter := a.chatFilter != nil && a.clientSettings().BannedWords
 	for _, b := range a.chatBubbles {
 		if a.clock >= b.until {
 			continue
@@ -66,10 +67,14 @@ func (a *App) drawChatBubbles(w, h int) {
 				}
 			}
 		}
-		width := f.Width(b.text)
+		body := b.text
+		if filter {
+			body = a.chatFilter.Censor(body)
+		}
+		width := f.Width(body)
 		left, top := x-width/2-10, y-10
 		a.sprites.Draw(a.white, float32(left), float32(top), float32(width+20), 30, 0, 0, 1, 1, [4]float32{72.0 / 255, 72.0 / 255, 72.0 / 255, 128.0 / 255})
-		f.Draw(a.sprites, b.text, left+10, top+(30-f.Height)/2, white, 0)
+		f.Draw(a.sprites, body, left+10, top+(30-f.Height)/2, white, 0)
 	}
 	a.chatBubbles = active
 }

@@ -124,6 +124,19 @@ func TestGuildCaptionOriginalColorsAndSpacingGL(t *testing.T) {
 			}
 		}
 	}
+	// Selection must not override either player nameplate checkbox.
+	a.gameMenu.Settings.OwnName, a.gameMenu.Settings.PlayerNames = false, false
+	for _, id := range []uint32{a.state.SelfID, 99} {
+		a.state.Target = id
+		clear()
+		want := pixels()
+		a.sprites.Begin(w, h)
+		a.drawPlayerNames(w, h)
+		a.sprites.End()
+		if !bytes.Equal(pixels(), want) {
+			t.Fatalf("selected player %d retained a hidden name or guild caption", id)
+		}
+	}
 	// The remote fixture shares the self model solely for the annotation pass.
 	delete(a.wv.actors, 99)
 }

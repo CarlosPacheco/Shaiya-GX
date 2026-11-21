@@ -3,7 +3,6 @@ package text
 
 import (
 	"bufio"
-	"bytes"
 	"strconv"
 	"strings"
 	"unicode/utf16"
@@ -21,8 +20,12 @@ func ParseSysMsg(b []byte) SysMsg {
 	for i := range u {
 		u[i] = uint16(b[2*i]) | uint16(b[2*i+1])<<8
 	}
+	return parseMessageTable(string(utf16.Decode(u)))
+}
+
+func parseMessageTable(content string) SysMsg {
 	m := SysMsg{}
-	sc := bufio.NewScanner(bytes.NewReader([]byte(string(utf16.Decode(u)))))
+	sc := bufio.NewScanner(strings.NewReader(content))
 	sc.Buffer(make([]byte, 64<<10), 1<<20)
 	for sc.Scan() {
 		line := strings.TrimSpace(sc.Text())

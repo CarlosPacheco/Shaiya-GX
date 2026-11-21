@@ -25,6 +25,8 @@ def main():
     staged = output/'.Shaiya GX.next'
     subprocess.run(['go','build','-o',str(staged),'./cmd/shaiya'],cwd=ROOT,env=env,check=True)
     if not args.update: shutil.copytree(source,output/'data')
+    if not (output/'data/filter.txt').exists():
+        (output/'data/filter.txt').touch()
     validate()
     shutil.copytree(FONT_PACK,output/'data/fonts',dirs_exist_ok=True)
     staged.replace(output/'Shaiya GX')

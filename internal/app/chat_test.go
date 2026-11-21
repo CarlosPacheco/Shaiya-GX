@@ -256,3 +256,28 @@ func TestNativeChatShortcutsRecipientCyclingAndEditing(t *testing.T) {
 		t.Fatal("guild shortcut lost the composer draft")
 	}
 }
+
+func TestBannedWordsRefreshReceivedChatWithoutChangingOriginal(t *testing.T) {
+	a := inputApp()
+	a.chatFilter = text.ParseWordFilter([]byte("1\t\t\"bad\"\n2\t\t\"bad phrase\"\n3\t\t\"Árbol\""))
+	a.state.Chat = []game.ChatLine{
+		{Op: proto.ChatWhisper, Sender: "bad", Text: "BAD PHRASE + árbol"},
+		{Op: proto.ChatWhisper, Sender: "bad", Direction: 1, Text: "bad"},
+		{Text: "bad"},
+	}
+	if got := a.formattedChat()[0].Text; got != "Whisper from bad: BAD PHRASE + árbol" {
+		t.Fatal(got)
+	}
+	a.gameMenu.Settings.BannedWords = true
+	got := a.formattedChat()
+	if got[0].Text != "Whisper from bad: ********** + *****" || got[1].Text != "Whisper to bad: bad" || got[2].Text != "bad" {
+		t.Fatalf("unexpected filtered history: %+v", got)
+	}
+	if a.state.Chat[0].Text != "BAD PHRASE + árbol" {
+		t.Fatal("filter changed the original chat line")
+	}
+	a.gameMenu.Settings.BannedWords = false
+	if got := a.formattedChat()[0].Text; got != "Whisper from bad: BAD PHRASE + árbol" {
+		t.Fatal(got)
+	}
+}

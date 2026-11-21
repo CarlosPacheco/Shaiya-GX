@@ -105,6 +105,12 @@ The authored entry row sits at `height - 76`: a 64×22 selector followed by a 29
 
 Both chat histories remain visible. Press Enter to open the chat entry row.
 
+**Banned words Filter** in User Options masks matching text in received player chat and
+speech bubbles. Edit `data/filter.txt` next to `sysmsg-uni.txt` and restart the
+client to load your rules. Use one numeric ID and one quoted word or phrase per
+line, such as `1<TAB><TAB>"example"`. The file accepts UTF-16LE and UTF-8 and
+starts empty, and the checkbox starts off. Matching is case-insensitive and treats each rule as literal text.
+
 Golden frames, Alpha/filter/help panels and the separate native whisper-recipient row remain retired under the chosen flat presentation. Histories retain a shared 300-message buffer and independent scroll anchors. Settings preserve row sizes and the selected channel; Whisper is not restored at startup. Whisper accepts the existing recipient syntax, including `!name message` and `/w name message`. Raid is outside the six-channel picker.
 
 | Channel | Native RGB |

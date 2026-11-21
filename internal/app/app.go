@@ -164,6 +164,8 @@ type App struct {
 	tooltipSockets                      []tooltipSocket
 	chatCache                           []game.ChatLine
 	chatEntries                         []ui.ChatEntry
+	chatFilter                          *text.WordFilter
+	chatFilterApplied                   bool
 	msg                                 text.SysMsg
 	white                               *render.Texture
 	cache                               map[string]*render.Texture
@@ -302,6 +304,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		a.msg = text.ParseSysMsg(b)
 	} else {
 		a.msg = text.SysMsg{}
+	}
+	if b, err := arc.ReadFile("filter.txt"); err == nil {
+		a.chatFilter = text.ParseWordFilter(b)
 	}
 	a.white = render.Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{255, 255, 255, 255}}})
 	if a.login, err = ui.NewLogin(a); err != nil {

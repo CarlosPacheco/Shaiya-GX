@@ -70,6 +70,7 @@ type ClientSettings struct {
 	MouseSensitivity                          int
 	UseMouse, InvertY                         bool
 	OwnName, PlayerNames, MonsterNames        bool
+	BannedWords                               bool `json:",omitempty"`
 	Shadows, Water, SkillEffects              bool
 	Antialias                                 int `json:",omitempty"`
 }
@@ -304,6 +305,7 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 		case MenuUser:
 			m.Settings.UseMouse, m.Settings.InvertY, m.Settings.MouseSensitivity = true, false, 3
 			m.Settings.OwnName, m.Settings.PlayerNames, m.Settings.MonsterNames = true, true, true
+			m.Settings.BannedWords = defaults.BannedWords
 		case MenuGraphics:
 			m.Settings.Shadows, m.Settings.Water, m.Settings.SkillEffects = true, true, true
 			m.Settings.Glow, m.Settings.Brightness, m.Settings.Details, m.Settings.VisualDistance = 2, 2, 2, 2
@@ -405,7 +407,7 @@ func (m *GameMenu) checks() []menuCheck {
 	s := &m.Settings
 	switch m.Page {
 	case MenuUser:
-		return []menuCheck{{34, 83, &s.UseMouse}, {137, 83, nil}, {241, 83, &s.InvertY}, {34, 202, &s.OwnName}, {137, 202, &s.PlayerNames}, {34, 228, &s.MonsterNames}}
+		return []menuCheck{{34, 83, &s.UseMouse}, {137, 83, nil}, {241, 83, &s.InvertY}, {34, 202, &s.OwnName}, {137, 202, &s.PlayerNames}, {34, 228, &s.MonsterNames}, {137, 228, &s.BannedWords}}
 	case MenuGraphics:
 		return []menuCheck{{35, 404, &s.Shadows}, {156, 404, &s.Water}, {35, 429, &s.HideCloak}, {156, 429, &s.HideHelmet}, {35, 451, &s.SkillEffects}}
 	}

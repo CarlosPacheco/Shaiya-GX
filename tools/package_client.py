@@ -48,6 +48,7 @@ def package_client(platform, output):
         shutil.copy2(ROOT/'build'/'GX Studio'/studio, stage/'Studio'/studio)
         fonts = stage/'data/fonts'
         shutil.copytree(FONT_PACK, fonts)
+        (stage/'data/filter.txt').touch()
         remove_readmes(fonts)
         validate(fonts)
         shutil.copytree(ROOT/'resources/vehicle', stage/'data/Vehicle')

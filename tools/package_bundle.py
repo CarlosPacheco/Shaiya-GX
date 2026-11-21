@@ -95,6 +95,7 @@ def prepare(archives, data, output):
         if data is not None:
             print('Copying local loose game data...', flush=True)
             shutil.copytree(data, client / 'data', dirs_exist_ok=True)
+        (client / 'data/filter.txt').write_bytes(b'')
         fonts = client / 'data/fonts'
         remove_readmes(fonts)
         validate(fonts)

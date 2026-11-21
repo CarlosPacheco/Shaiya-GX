@@ -566,8 +566,7 @@ func (a *App) drawPlayerNames(w, h int) {
 		return ""
 	}
 	slot, hasSlot := a.selfSlot()
-	selfTargeted := a.state.SelfID != 0 && a.state.Target == a.state.SelfID
-	if hasSlot && v.self != nil && (settings.OwnName || selfTargeted) {
+	if hasSlot && v.self != nil && settings.OwnName {
 		pos, offset := a.playerNameplateAnchor(a.state.SelfID, v.self, slot.Race, a.state.Self.Dead || a.state.Self.Sitting, a.state.Self.Vehicle)
 		label(slot.Name, pos, white, offset, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills, party: a.partyBadgeKind(a.state.SelfID)}, targetMarker(a.state.SelfID))
 		label(guildCaption(a.state, a.state.Guild.ID), pos, guildCaptionColor(a.state, a.state.Guild.ID, a.state.SelfID, slot.Name), offset+guildCaptionOffset, playerPlate{}, "")

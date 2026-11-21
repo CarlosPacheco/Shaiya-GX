@@ -281,15 +281,20 @@ func (a *App) drawChat(w, h int) {
 }
 
 func (a *App) formattedChat() []ui.ChatEntry {
-	if slices.Equal(a.chatCache, a.state.Chat) {
+	filter := a.chatFilter != nil && a.clientSettings().BannedWords
+	if filter == a.chatFilterApplied && slices.Equal(a.chatCache, a.state.Chat) {
 		return a.chatEntries
 	}
+	a.chatFilterApplied = filter
 	a.chatUI.Recent = a.recentWhisperRecipients()
 	clear(a.chatCache)
 	a.chatCache = append(a.chatCache[:0], a.state.Chat...)
 	clear(a.chatEntries)
 	a.chatEntries = a.chatEntries[:0]
 	for _, line := range a.state.Chat {
+		if filter && line.Op != 0 && line.Op != proto.ChatError && line.Op != proto.MobSpeechText && line.Direction != 1 {
+			line.Text = a.chatFilter.Censor(line.Text)
+		}
 		a.chatEntries = append(a.chatEntries, chatEntry(a.msg, line))
 	}
 	return a.chatEntries
