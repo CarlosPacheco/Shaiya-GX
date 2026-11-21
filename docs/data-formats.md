@@ -35,16 +35,6 @@ GX indexes loose file paths once at startup and preserves the old case-insensiti
 | Text and map configuration | `sysmsg-uni.txt`, existing map metadata | Read by their dedicated loaders; not a general document/config importer |
 | Server maps | SVMAP | GX Server data, separate from client WLD/Field assets |
 
-### Character armor materials
-
-The third field of each MLT part record selects the material. Mode 0 uses
-the cutout path. A nonzero value enables the original sphere-map pass
-(`Game.exe` 0x41554b and 0x41585b). The shader adds the reflected RGB from
-`spheremap.bmp` weighted by the base DDS alpha. Actor opacity is applied
-separately. The original `spheremap.bmp` belongs at the asset root beside
-the Character directory. This material is shared by individual characters
-and both crowd rendering paths.
-
 Format support means the layouts implemented by the corresponding [image](../internal/data/image), [model](../internal/data/model), [world](../internal/data/world), [effect](../internal/data/effect) and [SData](../internal/data/sdata) parsers. It does not imply every episode/version or every effect branch is implemented.
 
 ```mermaid

@@ -153,7 +153,7 @@ func ParseANI(b []byte) (*ANI, error) {
 	return a, c.err
 }
 
-// MLT is a part table: record i -> mesh + texture + material mode.
+// MLT is a part table: record i -> mesh + texture + alpha mode.
 type MLT struct {
 	Meshes   []string
 	Textures []string
@@ -162,7 +162,7 @@ type MLT struct {
 
 type MLTRecord struct {
 	Mesh, Texture int32
-	Material      int32 // 0: cutout; nonzero: sphere-map reflection
+	Alpha         int32
 }
 
 func ParseMLT(b []byte) (*MLT, error) {

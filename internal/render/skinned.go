@@ -37,16 +37,14 @@ struct CrowdInstance { mat4 model; mat4 modelView; mat4 modelViewProj; ivec4 pal
 layout(std430, binding=4) readonly buffer CrowdInstances { CrowdInstance instances[]; };
 layout(std430, binding=5) readonly buffer CrowdPalettes { mat4 crowdBones[]; };
 #ifdef SKIN_INDIRECT
-struct SkinMaterial { uvec2 handle; uvec2 reflection; float alphaRef; float ambient; };
+struct SkinMaterial { uvec2 handle; float alphaRef; float ambient; };
 layout(std430, binding=6) readonly buffer CrowdMaterials { SkinMaterial materials[]; };
 uniform int drawOffset;
 flat out uvec2 vSkinTexture;
-flat out uvec2 vSkinReflection;
 flat out float vSkinAlphaRef;
 mat4 skinBone(int i, int base) { return crowdBones[base+i]; }
 #else
 uniform int crowdBase;
-uniform bool skinReflection;
 mat4 skinBone(int i, int base) {
 	return crowdBase == 0 ? bones[i] : crowdBones[base+i];
 }
@@ -54,7 +52,6 @@ mat4 skinBone(int i, int base) {
 uniform mat4 world;
 uniform mat4 worldViewProj;
 uniform mat4 worldView;
-uniform mat4 cameraView;
 uniform vec4 clipPlane;
 uniform vec3 lightDir;
 uniform float ambient;
@@ -75,7 +72,6 @@ void main() {
 	#ifdef SKIN_INDIRECT
 	SkinMaterial material = materials[drawOffset+gl_DrawIDARB];
 	vSkinTexture = material.handle;
-	vSkinReflection = material.reflection;
 	vSkinAlphaRef = material.alphaRef;
 	materialAmbient = material.ambient;
 	{
@@ -111,18 +107,6 @@ void main() {
 	vDepth = (mv * local).z;
 	vUV = uv; vUV2 = vec2(0.0);
 	n = normalize((model * vec4(n, 0.0)).xyz);
-	// EP5 skin vertex shader projects the world-space reflection onto
-	// spheremap.bmp. Use camera-relative position to keep distant maps stable.
-	#ifdef SKIN_INDIRECT
-	if (any(notEqual(vSkinReflection, uvec2(0)))) {
-	#else
-	if (skinReflection) {
-	#endif
-		vec3 toEye = transpose(mat3(cameraView)) * normalize(-(mv * local).xyz);
-		vec3 r = reflect(-toEye, n);
-		float radius = .25 * inversesqrt(max(.5 - .5*r.z, 1e-8));
-		vUV2 = (r.xy * radius + .5) * vec2(1.0, -1.0);
-	}
 	vDiffuse = clamp(materialAmbient + max(0.0, dot(n, -normalize(lightDir))), 0.0, 1.0);
 }`
 
@@ -185,7 +169,7 @@ type Skinner struct {
 	prog                                               uint32
 	uBoneCount, uWorld, uViewProj, uView, uLight, uAmb int32
 	uMode, uRef, uFogColor, uFogRange                  int32
-	uDetailBias, uCameraView, uReflection              int32
+	uDetailBias                                        int32
 	uClipPlane                                         int32
 	uOpacity                                           int32
 	uCorpseFade                                        int32
@@ -224,7 +208,7 @@ func skinProgram(p, palette uint32) *Skinner {
 	u := func(n string) int32 { return gl.GetUniformLocation(p, gl.Str(n+"\x00")) }
 	return &Skinner{prog: p, uCrowdBase: u("crowdBase"), uCrowdDrawOffset: u("drawOffset"), palette: palette, uBoneCount: u("boneCount"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"),
 		uLight: u("lightDir"), uAmb: u("ambient"), uMode: u("mode"), uRef: u("alphaRef"),
-		uDetailBias: u("detailBias"), uCameraView: u("cameraView"), uReflection: u("skinReflection"), uFogColor: u("fogColor"), uFogRange: u("fogRange"), uClipPlane: u("clipPlane"), uOpacity: u("actorOpacity"), uCorpseFade: u("corpseFade")}
+		uDetailBias: u("detailBias"), uFogColor: u("fogColor"), uFogRange: u("fogRange"), uClipPlane: u("clipPlane"), uOpacity: u("actorOpacity"), uCorpseFade: u("corpseFade")}
 }
 
 // Begin binds the program with the scene's camera, light and fog.
@@ -243,8 +227,6 @@ func (k *Skinner) Begin(s *Scene3D, ambient float32) {
 	gl.BindBufferBase(gl.UNIFORM_BUFFER, 0, k.palette)
 	gl.Uniform4fv(k.uClipPlane, 1, &s.ClipPlane[0])
 	k.view, k.projection = s.View, s.depthProjection(s.Proj)
-	gl.UniformMatrix4fv(k.uCameraView, 1, false, &k.view[0])
-	gl.Uniform1i(k.uReflection, 0)
 	k.camera = s
 	gl.Uniform3f(k.uLight, s.LightDir[0], s.LightDir[1], s.LightDir[2])
 	gl.Uniform1f(k.uAmb, ambient)
@@ -306,30 +288,19 @@ func (k *Skinner) Delete() {
 }
 
 func (k *Skinner) Draw(m *SkinMesh, t *Texture, alphaRef float32) {
-	k.DrawMaterial(m, t, nil, alphaRef, false)
+	k.draw(m, t, alphaRef, false)
 }
 
 // DrawTwoSided preserves the native cloak-shoulder pass's D3DCULL_NONE.
 func (k *Skinner) DrawTwoSided(m *SkinMesh, t *Texture, alphaRef float32) {
-	k.DrawMaterial(m, t, nil, alphaRef, true)
+	k.draw(m, t, alphaRef, true)
 }
 
-func (k *Skinner) bindSkinReflection(texture *Texture) {
-	if texture == nil {
-		gl.Uniform1i(k.uReflection, 0)
-		return
-	}
-	gl.Uniform1i(k.uReflection, 1)
-	gl.BindTextureUnit(1, texture.ID)
-}
-
-// DrawMaterial shares the part's material between serial and batched draws.
-func (k *Skinner) DrawMaterial(m *SkinMesh, t, reflection *Texture, alphaRef float32, twoSided bool) {
+func (k *Skinner) draw(m *SkinMesh, t *Texture, alphaRef float32, twoSided bool) {
 	if m.Count == 0 {
 		return
 	}
 	gl.Uniform1f(k.uRef, alphaRef)
-	k.bindSkinReflection(reflection)
 	// Native skinned surfaces use clockwise front faces, including opaque NPCs.
 	if twoSided {
 		gl.Disable(gl.CULL_FACE)

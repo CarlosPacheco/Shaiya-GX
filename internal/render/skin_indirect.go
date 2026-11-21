@@ -19,9 +19,8 @@ type indexedDrawCommand struct {
 }
 
 type skinDrawMaterial struct {
-	handleLow, handleHigh         uint32
-	reflectionLow, reflectionHigh uint32
-	alphaRef, ambient             float32
+	handleLow, handleHigh uint32
+	alphaRef, ambient     float32
 }
 
 type skinLocation struct {
@@ -120,16 +119,7 @@ func (b *SkinCrowd) plan(groups []SkinGroup, ambient float32) bool {
 		if group.Unlit {
 			light = 1
 		}
-		var reflection uint64
-		if group.Reflection != nil {
-			reflection = group.Reflection.bindlessHandle(group.Reflection.repeat)
-			if reflection == 0 {
-				return false
-			}
-		}
-		b.materials = append(b.materials, skinDrawMaterial{
-			uint32(handle), uint32(handle >> 32), uint32(reflection), uint32(reflection >> 32), group.AlphaRef, light,
-		})
+		b.materials = append(b.materials, skinDrawMaterial{uint32(handle), uint32(handle >> 32), group.AlphaRef, light})
 	}
 	return len(b.commands) > len(b.runs)
 }

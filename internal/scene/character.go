@@ -56,19 +56,18 @@ func (a Appearance) HeightScale() float32 {
 }
 
 type skinPart struct {
-	vertices   []render.SkinVertex // retained for posed shadow bounds
-	bounds     []boneBounds
-	bounded    bool
-	top        render.SkinVertex
-	min, max   render.V3
-	mesh       *render.SkinMesh
-	tex        *render.Texture
-	reflection *render.Texture
-	bones      []render.M4 // B (inverse bind) per bone
-	cut        bool        // MLT Visibility mode: alpha test
-	unlit      bool        // native cloak shoulder disables lighting
-	twoSided   bool        // native cloak shoulder keeps D3DCULL_NONE
-	pose       []render.M4
+	vertices []render.SkinVertex // retained for posed shadow bounds
+	bounds   []boneBounds
+	bounded  bool
+	top      render.SkinVertex
+	min, max render.V3
+	mesh     *render.SkinMesh
+	tex      *render.Texture
+	bones    []render.M4 // B (inverse bind) per bone
+	cut      bool        // MLT Visibility mode: alpha test
+	unlit    bool        // native cloak shoulder disables lighting
+	twoSided bool        // native cloak shoulder keeps D3DCULL_NONE
+	pose     []render.M4
 }
 
 // Character is a posed, animated actor.
@@ -237,10 +236,7 @@ func BuildCharacter(s *Assets, a Appearance, clip string) (*Character, error) {
 		if r.Texture >= 0 && int(r.Texture) < len(m.Textures) {
 			cp.tex = s.modelTexture(fmt.Sprintf("Character/%s/DDS/%s", folder, DDSName(path.Base(m.Textures[r.Texture]))))
 		}
-		cp.cut = r.Material == 0
-		if !cp.cut && cp.tex != nil {
-			cp.reflection = s.modelTexture("spheremap.bmp")
-		}
+		cp.cut = r.Alpha == 0
 		c.parts = append(c.parts, &cp)
 		if part == "face" {
 			c.head = &cp
@@ -808,7 +804,11 @@ func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
 		if p.unlit {
 			k.SetAmbient(1)
 		}
-		k.DrawMaterial(p.mesh, p.tex, p.reflection, ref, p.twoSided)
+		if p.twoSided {
+			k.DrawTwoSided(p.mesh, p.tex, ref)
+		} else {
+			k.Draw(p.mesh, p.tex, ref)
+		}
 		if p.unlit {
 			k.SetAmbient(ambient)
 		}
