@@ -291,7 +291,7 @@ func (k *Skinner) Draw(m *SkinMesh, t *Texture, alphaRef float32) {
 	k.draw(m, t, alphaRef, false)
 }
 
-// DrawTwoSided preserves the native cloak-shoulder pass's D3DCULL_NONE.
+// DrawTwoSided preserves D3DCULL_NONE for thin character surfaces.
 func (k *Skinner) DrawTwoSided(m *SkinMesh, t *Texture, alphaRef float32) {
 	k.draw(m, t, alphaRef, true)
 }

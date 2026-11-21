@@ -66,7 +66,7 @@ type skinPart struct {
 	bones    []render.M4 // B (inverse bind) per bone
 	cut      bool        // MLT Visibility mode: alpha test
 	unlit    bool        // native cloak shoulder disables lighting
-	twoSided bool        // native cloak shoulder keeps D3DCULL_NONE
+	twoSided bool        // draw thin shells and cloak shoulders from either side
 	pose     []render.M4
 }
 
@@ -237,6 +237,9 @@ func BuildCharacter(s *Assets, a Appearance, clip string) (*Character, error) {
 			cp.tex = s.modelTexture(fmt.Sprintf("Character/%s/DDS/%s", folder, DDSName(path.Base(m.Textures[r.Texture]))))
 		}
 		cp.cut = r.Alpha == 0
+		// The native character pass draws both sides (0x41520c). A helmet
+		// can be an open shell, so culling its reverse faces exposes holes.
+		cp.twoSided = part == "helmet"
 		c.parts = append(c.parts, &cp)
 		if part == "face" {
 			c.head = &cp

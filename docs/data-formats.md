@@ -35,6 +35,12 @@ GX indexes loose file paths once at startup and preserves the old case-insensiti
 | Text and map configuration | `sysmsg-uni.txt`, existing map metadata | Read by their dedicated loaders; not a general document/config importer |
 | Server maps | SVMAP | GX Server data, separate from client WLD/Field assets |
 
+### Helmet surfaces
+
+The original character pass sets D3DCULL_NONE (`Game.exe` 0x41520c).
+GX draws helmet shells from both sides, including their textured interior.
+The part retains its MLT alpha-test mode and the original DDS.
+
 Format support means the layouts implemented by the corresponding [image](../internal/data/image), [model](../internal/data/model), [world](../internal/data/world), [effect](../internal/data/effect) and [SData](../internal/data/sdata) parsers. It does not imply every episode/version or every effect branch is implemented.
 
 ```mermaid
