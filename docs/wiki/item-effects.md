@@ -244,8 +244,8 @@ extraction requires a selected socket and an extraction hammer.
 
 The active item catalog has two entries, ItemID `100047` (type 100, variant 47) and ItemID `100089` (type 100, variant 89). Both use Special 33.
 
-The skill reset restores the original EP4.5 budget of five starting skill
-points plus three per level gained (four in Hard and five in Ultimate).
+The skill reset restores five starting skill points plus five points per level
+gained under GX’s unified progression.
 Learned skills and their shortcuts are cleared. Cooldown deadlines remain
 keyed by skill ID in SQLite so relearning or reconnecting cannot reset them.
 

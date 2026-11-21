@@ -25,6 +25,14 @@ SVMAP respawn group. If neither provides an eligible destination, the character
 returns to their racial birth position. Instance schedules remain part of the
 map row, while [obelisk rules](obelisks.md) retain their own configuration.
 
+## Portal volumes
+
+GX World reads `data/game/PortalBounds.json` alongside the maps. It uses
+248 recovered original trigger volumes on matching routes. Routes without a
+match retain their map-defined bounds, including custom routes. In Cloron's
+Lair, C2 → C1 uses the original trigger volume and C2 → C3 lands on walkable
+ground.
+
 ## Character progression and revival
 
 Every character follows one progression. Base HP, MP and SP use a 1.5
@@ -63,6 +71,12 @@ founding form also accepts the initial notice. In an unlocked guild bank,
 ranks 1–8 can deposit in empty slots and ranks 1–2 can withdraw, rearrange
 or swap items. Ranks 3–9 are ordinary members.
 
+The guild's ranking does not gate house purchases or active house services.
+The house has its own merchants, gatekeeper, blacksmith and guild warehouse.
+Their rates and upkeep are configured in `GuildHouse.ini`. Running out of
+etin at settlement suspends the house until upkeep can be paid. A GM-founded
+guild receives an active house immediately and is exempt from upkeep.
+
 ## Guild Ranking Battle
 
 While a Guild Ranking Battle is open, each guild uses its own instance of the
@@ -76,6 +90,8 @@ instance. Eligible monsters have `Money1 = 0` and `Money2 > 0`, with `Money2`
 setting the point award, up to 65,535 per kill. Entries and duels award zero points. When the battle
 closes, the server sends remaining players to their bind point and removes the
 empty instances. The standings are published 30 minutes after closing.
+A GM who leads a guild can use its instance outside the schedule. The guild
+receives eligible points when that GM leaves.
 
 ## Weather and map curses
 

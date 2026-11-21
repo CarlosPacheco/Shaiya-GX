@@ -1,7 +1,7 @@
 # Teleport runes
 
 Fixed-destination runes use item `Special` 47. Set the native `ReqVg`
-(Variant) in Item.SData and the matching server item definition to a row's
+(Variant) in Item.SData and the matching server item definition to
 the index of a `[Rune_N]` section in `data/game/TeleportRunes.ini`. Indices range from 1 to 32767.
 When upgrading an existing file-based installation, carry over your edited
 `TeleportRUnes.ini` as `TeleportRunes.ini`.
@@ -25,7 +25,7 @@ Travel takes five seconds and consumes the rune only after the destination
 is validated and the transfer is saved. The server checks the current
 character's faction, map permissions and ground at the configured point.
 A guild house destination opens or reuses the member's private guild instance
-only for a ranked guild with its house purchased and enabled.
+when the guild has purchased and enabled its house.
 
 Migration 22 updates the five original server item definitions. To synchronize
 an existing client's native Item.SData, apply this CSV with `cmd/itempatch`

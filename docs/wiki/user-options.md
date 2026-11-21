@@ -89,6 +89,14 @@ There is no distance check.
 During the five seconds of Blizzard each landing shard renews a 0.5 s shake, which
 reads as a continuous tremor.
 
+## Sound Options
+
+Risk Sensor controls the original battle music that plays while nearby enemies
+activate the warning. The minimap warning remains visible with the music off.
+Character Sound controls nearby player voices for attacks, hits and deaths.
+Weapon, spell and interface sounds use their usual audio settings.
+NPC Sound is reserved and currently has no effect.
+
 ## Evidence
 
 Client settings are read by `0x408bf0` and written by `0x4f9000`; the window copy
