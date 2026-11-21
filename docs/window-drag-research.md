@@ -33,10 +33,14 @@ Frame sizes (width x height) recovered from constructors:
 | Revolver | 58x58 / 58x158 | `0x4e7be0`, `0x4e65c0` |
 | Waypoint 255x360, gatekeeper 507, auction 740x600, party 160x52, raid 98x35/111x37/125x45, quest 252x510, mailbox 364x346, My Shop 452x445, guild windows 505x363 | | various |
 
-GX now drags inventory, Status, Skills, Sub actions, warehouse and the player portrait
-from any empty part of the frame. Remaining NPC/service windows still use their
-title strip and are the next candidates (their free-area predicates are needed
-first).
+GX now drags every personal and service frame from any empty part of it:
+inventory, Status, Skills, Sub actions, portrait, warehouse, market, personal
+market, exchange/duel, blacksmith, emblem, quest log, guild, guild directory,
+guild house, NPC talk/quest, gatekeeper, PvP rewards, mall and recorded points.
+Controls are detected through the window's own `Button` fields
+(`ui.ButtonHit`); item cells, lists and scroll areas are excluded explicitly.
+Still on title strips: the gift box, the raid configuration window, the full map
+(whose body pans) and the auction house (its frame has no free body).
 
 ## Status (T) sheet
 

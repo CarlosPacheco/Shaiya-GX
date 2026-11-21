@@ -31,6 +31,7 @@ func TestNPCConversationLeadsToServiceOrQuest(t *testing.T) {
 				a.worldControls(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 1024, 768)
 			}
 			x, y := a.npcTalkUI.Origin(1024, 768)
+			a.worldControls(&platform.Input{MouseX: 1, MouseY: 1}, 1024, 768) // one frame places the controls
 			if quest {
 				click(x+145+10, y+336+8)
 				if a.shop.talk || !a.shop.questMode || a.npcQuest.npc != 42 || a.npcQuest.selected != 1 {

@@ -327,3 +327,21 @@ func TestStatusDragsFromBodyOnlyOutsideControlsAndExpandedGraph(t *testing.T) {
 		t.Fatal("expanded sheet body did not drag")
 	}
 }
+
+func TestServiceWindowsDragFromBodyButKeepListsAndButtons(t *testing.T) {
+	a := inputApp()
+	a.npcTalkUI, _ = ui.NewNPCTalk(inputTextures{})
+	a.shop.npcID, a.shop.talk = 42, true
+	a.state.Entities[42] = &game.Entity{Kind: game.KindNpc, NpcType: 3}
+	x, y := a.npcTalkUI.Origin(1024, 768)
+	a.worldControls(&platform.Input{MouseX: 1, MouseY: 1}, 1024, 768)
+	if a.updateWindowDrag(&platform.Input{MouseX: x + 100, MouseY: y + 150, Pressed: true, MouseDown: true}, 1024, 768) {
+		t.Fatal("text area started a drag")
+	}
+	if a.updateWindowDrag(&platform.Input{MouseX: x + 63, MouseY: y + 344, Pressed: true, MouseDown: true}, 1024, 768) {
+		t.Fatal("service button started a drag")
+	}
+	if !a.updateWindowDrag(&platform.Input{MouseX: x + 120, MouseY: y + 60, Pressed: true, MouseDown: true}, 1024, 768) {
+		t.Fatal("header body did not drag")
+	}
+}

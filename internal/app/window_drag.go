@@ -63,13 +63,33 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 		a.wv.uiLeft = -2
 		return true
 	}
+	// frameFree builds a free-area test: not on a control (found by reflection),
+	// not inside the listed window-relative rectangles {x, y, w, h}, and not
+	// accepted by the optional cell test.
+	frameFree := func(owner any, ox, oy int, cell func(rx, ry int) bool, rects ...[4]int) func() bool {
+		return func() bool {
+			if ui.ButtonHit(owner, in.MouseX, in.MouseY) {
+				return false
+			}
+			rx, ry := in.MouseX-ox, in.MouseY-oy
+			if cell != nil && cell(rx, ry) {
+				return false
+			}
+			for _, r := range rects {
+				if rx >= r[0] && rx < r[0]+r[2] && ry >= r[1] && ry < r[1]+r[3] {
+					return false
+				}
+			}
+			return true
+		}
+	}
 	if a.minimap != nil && a.wv.mapView.full {
 		x, y, scale := a.minimap.FullRect(w, h)
 		return start(&a.minimap.FullPosition, x, y, int(544*scale), int(579*scale), 8, int(450*scale))
 	}
 	if a.teleportStone.open && a.recordedPoints != nil {
 		x, y := a.recordedPoints.Origin(w, h)
-		if start(&a.recordedPoints.Position, x, y, ui.RecordedPointsWidth, ui.RecordedPointsHeight, 10, 212) {
+		if startFrame(&a.recordedPoints.Position, x, y, ui.RecordedPointsWidth, ui.RecordedPointsHeight, frameFree(a.recordedPoints, x, y, nil)) {
 			return true
 		}
 		if pointInside(in, x, y, ui.RecordedPointsWidth, ui.RecordedPointsHeight) {
@@ -88,7 +108,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			}
 		}
 		x, y := a.mallUI.Origin(w, h)
-		if start(&a.mallUI.Position, x, y, ui.MallWidth, ui.MallHeight, 20, 520) {
+		if startFrame(&a.mallUI.Position, x, y, ui.MallWidth, ui.MallHeight, frameFree(a.mallUI, x, y, nil, [4]int{16, 164, 540, 195}, [4]int{565, 184, 15, 156}, [4]int{10, 54, 312, 23})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.MallWidth, ui.MallHeight) {
@@ -97,7 +117,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.personalMarketOpen() {
 		x, y := a.personalMarketUI.Origin(w, h)
-		if start(&a.personalMarketUI.Position, x, y, ui.PersonalMarketWidth, ui.PersonalMarketHeight, 10, 150) {
+		if startFrame(&a.personalMarketUI.Position, x, y, ui.PersonalMarketWidth, ui.PersonalMarketHeight, frameFree(a.personalMarketUI, x, y, func(rx, ry int) bool { return ui.PersonalMarketCellAt(rx, ry) != ui.PersonalMarketNone })) {
 			return true
 		}
 		if pointInside(in, x, y, ui.PersonalMarketWidth, ui.PersonalMarketHeight) {
@@ -106,7 +126,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.guild.open && a.guildUI != nil {
 		x, y := a.guildUI.Origin(w, h)
-		if start(&a.guildUI.Position, x, y, ui.GuildWidth, ui.GuildHeight, 30, 270) {
+		if startFrame(&a.guildUI.Position, x, y, ui.GuildWidth, ui.GuildHeight, frameFree(a.guildUI, x, y, nil, [4]int{37, 112, 266, ui.GuildRows * 23}, [4]int{0, 61, 30, 242})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.GuildWidth, ui.GuildHeight) {
@@ -115,7 +135,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.questLog.open && a.questUI != nil {
 		x, y := a.questUI.Origin(w, h)
-		if start(&a.questUI.Position, x, y, ui.QuestWidth, ui.QuestHeight, 8, 460) {
+		if startFrame(&a.questUI.Position, x, y, ui.QuestWidth, ui.QuestHeight, frameFree(a.questUI, x, y, nil, [4]int{15, 54, 219, 228}, [4]int{275, 102, 215, 325}, [4]int{18, 320, 206, 130})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.QuestWidth, ui.QuestHeight) {
@@ -167,7 +187,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.duelUI != nil && a.state.Duel.Phase == game.DuelWager {
 		x, y := a.duelUI.Origin(w, h)
-		if start(&a.duelUI.Position, x, y, ui.ExchangeWidth, ui.ExchangeHeight, 48, 120) {
+		if startFrame(&a.duelUI.Position, x, y, ui.ExchangeWidth, ui.ExchangeHeight, frameFree(a.duelUI, x, y, func(rx, ry int) bool { _, ok := ui.ExchangeHit(rx, ry); return ok })) {
 			return true
 		}
 		if pointInside(in, x, y, ui.ExchangeWidth, ui.ExchangeHeight) {
@@ -176,7 +196,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.exchangeUI != nil && a.state.Exchange.Active {
 		x, y := a.exchangeUI.Origin(w, h)
-		if start(&a.exchangeUI.Position, x, y, ui.ExchangeWidth, ui.ExchangeHeight, 48, 120) {
+		if startFrame(&a.exchangeUI.Position, x, y, ui.ExchangeWidth, ui.ExchangeHeight, frameFree(a.exchangeUI, x, y, func(rx, ry int) bool { _, ok := ui.ExchangeHit(rx, ry); return ok })) {
 			return true
 		}
 		if pointInside(in, x, y, ui.ExchangeWidth, ui.ExchangeHeight) {
@@ -188,7 +208,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 		x, y := a.pvpRewardUI.Origin(w, h)
-		if start(&a.pvpRewardUI.Position, x, y, ui.PvPRewardWidth, ui.PvPRewardHeight, 75, 400) {
+		if startFrame(&a.pvpRewardUI.Position, x, y, ui.PvPRewardWidth, ui.PvPRewardHeight, frameFree(a.pvpRewardUI, x, y, nil, [4]int{15, 82, 240, 244})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.PvPRewardWidth, ui.PvPRewardHeight) {
@@ -197,7 +217,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if e := a.state.Entities[a.shop.npcID]; e != nil && a.shop.talk && a.npcTalkUI != nil {
 		x, y := a.npcTalkUI.Origin(w, h)
-		if start(&a.npcTalkUI.Position, x, y, ui.NPCTalkWidth, ui.NPCTalkHeight, 75, 145) {
+		if startFrame(&a.npcTalkUI.Position, x, y, ui.NPCTalkWidth, ui.NPCTalkHeight, frameFree(a.npcTalkUI, x, y, nil, [4]int{16, 82, 227, 225})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.NPCTalkWidth, ui.NPCTalkHeight) {
@@ -211,7 +231,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 		if a.npcQuest.selected != 0 {
 			height = 512
 		}
-		if start(&a.npcQuestUI.Position, x, y, ui.NPCQuestWidth, height, 75, 145) {
+		if startFrame(&a.npcQuestUI.Position, x, y, ui.NPCQuestWidth, height, frameFree(a.npcQuestUI, x, y, nil, [4]int{16, 110, 224, 360})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.NPCQuestWidth, height) {
@@ -220,7 +240,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if e := a.state.Entities[a.shop.npcID]; e != nil && e.NpcType == 2 && !a.shop.overlay() && a.gateUI != nil {
 		x, y := a.gateUI.Origin(w, h)
-		if start(&a.gateUI.Position, x, y, ui.GatekeeperWidth, ui.GatekeeperHeight, 265, 190) {
+		if startFrame(&a.gateUI.Position, x, y, ui.GatekeeperWidth, ui.GatekeeperHeight, frameFree(a.gateUI, x, y, nil, [4]int{16, 82, 226, 167})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.GatekeeperWidth, ui.GatekeeperHeight) {
@@ -229,7 +249,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.guildHouseUI != nil && a.houseWindowOpenNow() {
 		x, y := a.guildHouseUI.Origin(w, h)
-		if start(&a.guildHouseUI.Position, x, y, ui.GuildHouseWidth, ui.GuildHouseHeight, 8, 540) {
+		if startFrame(&a.guildHouseUI.Position, x, y, ui.GuildHouseWidth, ui.GuildHouseHeight, frameFree(a.guildHouseUI, x, y, nil, [4]int{270, 60, 305, 380})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.GuildHouseWidth, ui.GuildHouseHeight) {
@@ -238,7 +258,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.emblemOpen() {
 		x, y := a.emblemUI.Origin(w, h)
-		if start(&a.emblemUI.Position, x, y, ui.EmblemWidth, ui.EmblemHeight, 300, 300) {
+		if startFrame(&a.emblemUI.Position, x, y, ui.EmblemWidth, ui.EmblemHeight, frameFree(a.emblemUI, x, y, nil, [4]int{0x218, 0x3a, 0x50, 0x4e}, [4]int{0x199, 0xdd, 6 * 0x22, 0x88})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.EmblemWidth, ui.EmblemHeight) {
@@ -248,11 +268,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	if a.blacksmithOpen() {
 		x, y := a.blacksmithUI.Origin(w, h)
 		bw, bh := a.blacksmithUI.Size()
-		handleX, handleW := 270, 190
-		if a.blacksmithUI.Mode == ui.ForgeMenu {
-			handleX, handleW = 75, 145 // title band right of the portrait, clear of the close button
-		}
-		if start(&a.blacksmithUI.Position, x, y, bw, bh, handleX, handleW) {
+		if startFrame(&a.blacksmithUI.Position, x, y, bw, bh, frameFree(a.blacksmithUI, x, y, func(rx, ry int) bool { return a.blacksmithUI.Hit(rx, ry) >= 0 })) {
 			return true
 		}
 		if pointInside(in, x, y, bw, bh) {
@@ -271,7 +287,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if e := a.state.Entities[a.shop.npcID]; e != nil && e.NpcType == 1 && !a.auctionBoard(a.shop.npcID) && !a.shop.overlay() && a.marketUI != nil {
 		x, y := a.marketUI.Origin(w, h)
-		if start(&a.marketUI.Position, x, y, ui.MarketWidth, ui.MarketHeight, 8, 212) {
+		if startFrame(&a.marketUI.Position, x, y, ui.MarketWidth, ui.MarketHeight, frameFree(a.marketUI, x, y, nil, [4]int{15, 112, 230, 193})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.MarketWidth, ui.MarketHeight) {
@@ -280,7 +296,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if e := a.state.Entities[a.shop.npcID]; e != nil && e.NpcType == 11 && a.guildDirectoryUI != nil {
 		x, y := a.guildDirectoryUI.Origin(w, h)
-		if start(&a.guildDirectoryUI.Position, x, y, ui.GuildDirectoryWidth, ui.GuildDirectoryHeight, 268, 280) {
+		if startFrame(&a.guildDirectoryUI.Position, x, y, ui.GuildDirectoryWidth, ui.GuildDirectoryHeight, frameFree(a.guildDirectoryUI, x, y, nil, [4]int{0x112, 0x6e, 0x11e, ui.GuildDirectoryRows * 0x1b})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.GuildDirectoryWidth, ui.GuildDirectoryHeight) {
