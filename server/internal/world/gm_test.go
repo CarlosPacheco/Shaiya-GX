@@ -93,6 +93,13 @@ func TestGMCommandsRequireRoleAndToggleAuthoritativeState(t *testing.T) {
 		if !g.GM || g.Turbo != want || s.gmTurbo != want {
 			t.Fatal("bad toggle", g)
 		}
+		message := "GM: turbo disabled. Fall damage follows server settings. Server speed limits restored."
+		if want {
+			message = "GM: turbo enabled. Fall damage disabled. Server speed limits disabled."
+		}
+		if g.Message != message || s.movement.credit != 0 || s.movement.speedCorrectionPending {
+			t.Fatal("toggle retained movement credit or failed to report the rules", g)
+		}
 		// Exercise the exact server codec against the client state machine.
 		s.gmReply("")
 		p := <-packets

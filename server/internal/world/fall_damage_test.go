@@ -154,3 +154,32 @@ func TestFallDamageExplicitlyDisabled(t *testing.T) {
 		t.Fatal("disabled fall damage changed health or killed player")
 	}
 }
+
+func TestGMTurboFallKeepsGravityAndHealth(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		admin, turbo bool
+		survives     bool
+	}{
+		{"GM in turbo", true, true, true},
+		{"GM with turbo off", true, false, false},
+		{"ordinary player", false, true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, now := fallSession(t, 42)
+			before := s.char.CurrentHP
+			s.isAdmin, s.gmTurbo = tc.admin, tc.turbo
+			finishTestFall(s, now)
+			if s.char.PosY > .13 || s.movement.fallTracking {
+				t.Fatal("gravity or landing changed", s.movement.pos)
+			}
+			if tc.survives {
+				if s.dead || s.char.CurrentHP != before {
+					t.Fatal("turbo GM took fall damage")
+				}
+			} else if !s.dead {
+				t.Fatal("normal lethal fall was ignored")
+			}
+		})
+	}
+}

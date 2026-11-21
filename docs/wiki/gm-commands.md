@@ -10,9 +10,10 @@ intentionally selected offline database.
 GM characters display a light-blue `(GM)` prefix (`#66CCFF`) beside their white
 world name when visible to the viewer. GMs start visible and vulnerable;
 skill-based stealth follows the ordinary faction visibility rules. Stored character names are
-unchanged. Turbo starts disabled for GM sessions; `/turbo` enables it and multiplies movement speed by
-12, including backward movement, mounts and swimming; server immobilization and
-death still prevent movement.
+unchanged. Turbo starts disabled for GM sessions. When enabled, the client
+multiplies movement speed by 12, including backward movement, mounts and
+swimming. World skips the horizontal speed limit and fall damage for that GM.
+Map bounds, collision, gravity, immobilization and death still apply.
 
 The `/char` and `/attack` controls, including both on/off forms, are temporarily
 unavailable. Skill-based stealth remains available.
@@ -26,7 +27,7 @@ unavailable. Skill-based stealth remains available.
 | `/set level number` | Sets your own level from 1 through the server's EXP cap. Example: `/set level 30`. Starts at the new level’s EXP threshold and updates resource limits immediately. An actual change plays the faction’s level-up effect and sound. Equipped items, inventory, learned skills, attributes and unspent points are preserved. |
 | `/set kill count` | Sets your own kills to 0–1,000,000; larger values clamp to one million. Updates your rank/title and nearby nameplates immediately. Already claimed PvP rewards remain claimed. |
 | `/iclear` | Permanently deletes the issuing character's carried items (bags 1–5). Equipped items, mounts, other characters and account storage are preserved. |
-| `/turbo` | Toggles the issuing GM's turbo off/on for this session. |
+| `/turbo` | Toggles turbo for the issuing GM's session and reports the current fall-damage and speed rules. |
 | `/cure` | Restores your HP, MP and SP, clears active debuffs, and resets skill, consumable and mount cooldowns in the server and client. |
 | `/getitem type id [quantity]` | Defaults to one when quantity is omitted. Grants the complete quantity, respecting definition stack limits and free bag slots. `/getitem 25 1 200` grants 200 apples in one stack with the current 255 limit. |
 | `/mmake mobid [quantity=1]` | Spawns 1–100 live mobs around the GM, with their normal stats, AI and drops, without automatic respawn. |
@@ -77,9 +78,8 @@ Camera collision still applies.
 
 ## Practical examples
 
-Use `/turbo` once to enable fast movement and again to restore ordinary speed.
-It resets on the next session; the account remains a GM. Movement restrictions
-from death or immobilizing effects still apply.
+Use `/turbo` again to restore the normal movement speed limit and the server's
+fall-damage setting. Turbo resets on the next session.
 
 `/getitem 25 1 255` requests 255 units of Type 25, ID 1. Arguments are separate
 integers, not the packed item ID 25001. The request uses the selected definition's

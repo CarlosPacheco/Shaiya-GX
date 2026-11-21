@@ -391,3 +391,33 @@ func TestRunningGapKeepsSingleSampleLimit(t *testing.T) {
 		t.Fatalf("single sample spent the delayed packet budget: position %g correction %q", s.char.PosX, reason)
 	}
 }
+
+func TestGMTurboBypassesOnlyTheMovementSpeedLimit(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	s.movement.geometry.MapSize = 30
+	x, y, z := s.char.PosX, s.char.PosY, s.char.PosZ
+	s.gmTurbo = true // Stale state is insufficient without a GM account.
+	if ok, _ := s.validatePlayerMovement(x, y, z+20, 1, 0, now); !ok || s.char.PosZ > z+.21 {
+		t.Fatal("ordinary player bypassed the speed limit", s.char.PosZ)
+	}
+	s.isAdmin = true
+	if ok, reason := s.validatePlayerMovement(x, y, z+20, 1, 0, now); !ok || reason != "" || s.char.PosZ != z+20 {
+		t.Fatalf("GM was rate-limited in turbo: z=%g, %q", s.char.PosZ, reason)
+	}
+	s.attackMoveUntil = now.Add(time.Second)
+	if _, reason := s.validatePlayerMovement(x, y, z+21, 1, 0, now); reason != "movement paused by attack" || s.char.PosZ != z+20 {
+		t.Fatal("turbo moved during a combat movement lock", reason)
+	}
+	now = s.attackMoveUntil.Add(100 * time.Millisecond)
+	if _, reason := s.validatePlayerMovement(12, y, z+20, 1, 0, now); reason != "blocked or invalid horizontal path" || s.char.PosX > 9.8 {
+		t.Fatal("turbo bypassed solid geometry", reason, s.char.PosX)
+	}
+	if ok, reason := s.validatePlayerMovement(100, y, z+20, 1, 0, now); ok || reason != "position outside map" {
+		t.Fatal("out-of-bounds turbo position accepted", reason)
+	}
+	x = s.char.PosX
+	s.gmTurbo = false
+	if ok, _ := s.validatePlayerMovement(x, y, z+24, 1, 0, now); !ok || s.char.PosZ != z+20 {
+		t.Fatal("ordinary speed checking did not resume when turbo was disabled", s.char.PosZ)
+	}
+}

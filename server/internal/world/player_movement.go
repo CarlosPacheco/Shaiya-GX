@@ -7,7 +7,6 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/gm"
 	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -87,9 +86,6 @@ func (s *Session) movementSpeed() float32 {
 	speed := movespeed.Units(sp.move)
 	if s.mounted {
 		speed = s.mountSpeed()
-	}
-	if s.isAdmin && s.gmTurbo {
-		speed *= gm.TurboMultiplier
 	}
 	return speed
 }
@@ -275,6 +271,16 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	if math.IsNaN(float64(x)) || math.IsNaN(float64(y)) || math.IsNaN(float64(z)) || math.IsInf(float64(x), 0) || math.IsInf(float64(y), 0) || math.IsInf(float64(z), 0) {
 		return false, "non-finite position"
 	}
+	turbo := s.turboActive()
+	if turbo {
+		size, _ := mapSize(s.char.MapID)
+		if size == 0 {
+			size = float32(m.geometry.MapSize)
+		}
+		if x < 0 || z < 0 || x > size || z > size {
+			return false, "position outside map"
+		}
+	}
 	s.advancePlayerVertical(now)
 	if m.ladder.Active {
 		m.packetAt, m.budgetAt = now, now
@@ -297,18 +303,8 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	if attackPaused {
 		speed = 0
 	}
+	unlimited := turbo && speed > 0
 	rate := float64(speed)
-	sampleLimit := rate*.65 + .2
-	bankLimit := sampleLimit
-	if m.motion&0x3f != 0 && motion&0x3f != 0 && !m.jumping && motion&proto.MotionFlag80 == 0 {
-		// A stream interrupted while running can deliver several old samples
-		// together. Retain their elapsed budget, with the usual cap per sample.
-		bankLimit = rate*1.5 + .2
-	}
-	m.credit = min(bankLimit, m.credit+elapsed*rate)
-	if speed == 0 {
-		m.credit = 0
-	}
 	start := m.pos
 	oldX, oldZ := start[0], start[2]
 	dx, dz := float64(x)-float64(oldX), float64(z)-float64(oldZ)
@@ -318,22 +314,39 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		dx, dz = 0, 0
 	}
 	distance := math.Hypot(dx, dz)
-	available := min(sampleLimit, max(0, m.credit))
-	speedLimited := distance > available
 	reason := ""
 	if attackPaused && distance > .00001 {
 		reason = "movement paused by attack"
 	}
-	if speedLimited {
-		scale := available / distance
-		dx, dz = dx*scale, dz*scale
+	speedLimited := false
+	if unlimited {
+		m.credit = 0
+	} else {
+		sampleLimit := rate*.65 + .2
+		bankLimit := sampleLimit
+		if m.motion&0x3f != 0 && motion&0x3f != 0 && !m.jumping && motion&proto.MotionFlag80 == 0 {
+			// Retain elapsed budget when several old running samples arrive together.
+			bankLimit = rate*1.5 + .2
+		}
+		m.credit = min(bankLimit, m.credit+elapsed*rate)
+		if speed == 0 {
+			m.credit = 0
+		}
+		available := min(sampleLimit, max(0, m.credit))
+		speedLimited = distance > available
+		if speedLimited {
+			scale := available / distance
+			dx, dz = dx*scale, dz*scale
+		}
 	}
 	targetX, targetZ := float32(float64(oldX)+dx), float32(float64(oldZ)+dz)
 	delta := mapgeometry.Position{targetX - oldX, 0, targetZ - oldZ}
 	travel := math.Hypot(float64(delta[0]), float64(delta[2]))
 	// Account for the rounded endpoint, including a possible fractional debt.
 	// The next sample can spend only positive credit earned from server time.
-	m.credit -= travel
+	if !unlimited {
+		m.credit -= travel
+	}
 	// Integrate the unsupported part of a walk over its actual travel time,
 	// so batching movement packets cannot bridge a gap at a fixed altitude.
 	wasSupported := m.geometry.Supported(m.pos) && !m.jumping
@@ -342,8 +355,12 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		step := mapgeometry.HorizontalStep(start, delta, i, count)
 		m.pos = m.geometry.GroundMove(m.pos, step, m.jumping || m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5)
 		if wasSupported && !m.geometry.Supported(m.pos) && !m.jumping && speed > 0 {
+			travelTime := travel / rate
+			if unlimited {
+				travelTime = min(elapsed, 1)
+			}
 			saveAt := m.at
-			m.at = now.Add(-time.Duration(float64(time.Second) * travel / rate / float64(count)))
+			m.at = now.Add(-time.Duration(float64(time.Second) * travelTime / float64(count)))
 			s.advancePlayerVertical(now)
 			m.at = saveAt
 		}
@@ -372,8 +389,7 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		m.motion |= 0x80
 	}
 	s.commitMovement()
-	// Keep the authoritative speed cap for every sample. A small timing
-	// difference can resolve on the next sample, using the same threshold as
+	// A small timing difference can resolve on the next sample, using the same threshold as
 	// other horizontal discrepancies instead of correcting a few millimeters.
 	const correctionDistance = .12
 	shortfall := math.Hypot(float64(m.pos[0]-x), float64(m.pos[2]-z))

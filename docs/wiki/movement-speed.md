@@ -18,7 +18,7 @@ Equipment `Items.Speed` and skill ability **17** add signed tier offsets to
 normal. The total is clamped to tiers 0–4 after all modifiers; additional haste
 cannot exceed 7 units/s. Existing walking/backward and swimming rules still
 apply. Stun, sleep and movement-stop effects can prohibit movement entirely.
-The authorized GM `/turbo` extension remains a separate administrator mode.
+While a GM has `/turbo` enabled, World skips the horizontal speed limit and still checks the movement path against map geometry.
 
 ## Equipment, spells and consumables
 

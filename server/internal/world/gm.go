@@ -16,6 +16,8 @@ import (
 const gxGMState packet.Opcode = 0x7F01
 const gmMaxSpawn = 100
 
+func (s *Session) turboActive() bool { return s.isAdmin && s.gmTurbo }
+
 func (s *Session) gmReply(message string) {
 	if s.char == nil {
 		return
@@ -25,7 +27,7 @@ func (s *Session) gmReply(message string) {
 	role, turbo := uint8(0), uint8(0)
 	if s.isAdmin {
 		role = 1
-		if s.gmTurbo {
+		if s.turboActive() {
 			turbo = 1
 		}
 	}
@@ -88,11 +90,13 @@ func (s *Session) handleGMCommand(text string) bool {
 			break
 		}
 		s.gmTurbo = !s.gmTurbo
-		state := "disabled"
+		s.movement.budgetAt, s.movement.credit = time.Now(), 0
+		s.movement.speedCorrectionPending = false
 		if s.gmTurbo {
-			state = "enabled"
+			s.gmReply("GM: turbo enabled. Fall damage disabled. Server speed limits disabled.")
+		} else {
+			s.gmReply("GM: turbo disabled. Fall damage follows server settings. Server speed limits restored.")
 		}
-		s.gmReply("GM: turbo " + state + ".")
 	case "/amove", "/asummon":
 		if len(args) != 1 {
 			s.gmReply("Usage: " + command + " charname")

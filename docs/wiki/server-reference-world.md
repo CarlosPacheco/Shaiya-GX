@@ -1416,18 +1416,19 @@ Direct GX dependencies: `internal/gm`, `internal/proto`, `server/internal/db`, `
 |---|---|
 | [`gxGMState`](../../server/internal/world/gm.go#L16)<br>`const gxGMState = 0x7F01` | See the source definition and the subsystem ownership contract. |
 | [`gmMaxSpawn`](../../server/internal/world/gm.go#L17)<br>`const gmMaxSpawn = 100` | See the source definition and the subsystem ownership contract. |
-| [`gmReply`](../../server/internal/world/gm.go#L19)<br>`func (s *Session) gmReply(message string)` | See the source definition and the subsystem ownership contract. |
-| [`gmNumbers`](../../server/internal/world/gm.go#L39)<br>`func gmNumbers(args []string, bounds ...uint64) ([]uint64, error)` | See the source definition and the subsystem ownership contract. |
-| [`handleGMCommand`](../../server/internal/world/gm.go#L55)<br>`func (s *Session) handleGMCommand(text string) bool` | Known commands are consumed even when refused; they never become public chat. |
-| [`gmClearInventory`](../../server/internal/world/gm.go#L167)<br>`func (s *Session) gmClearInventory() error` | Clear carried inventory only. Equipped items and warehouse contents survive. |
-| [`planGMGrant`](../../server/internal/world/gm.go#L193)<br>`func planGMGrant(items []db.Item, def *db.ItemDef, quantity int) ([]db.Item, []db.Item, []db.Item, error)` | planGMGrant keeps the entire request atomic, including quantities above 255. |
-| [`gmGiveItem`](../../server/internal/world/gm.go#L225)<br>`func (s *Session) gmGiveItem(itemType, id uint8, quantity int) error` | See the source definition and the subsystem ownership contract. |
-| [`gmSpawnPositions`](../../server/internal/world/gm.go#L250)<br>`func gmSpawnPositions(mapID uint16, x, z float32, count int, entities *MapEntities) ([][2]float32, error)` | Spawn positions form expanding rings; occupied points and blocked cells are rejected, including entities created by earlier commands. |
-| [`gmSpawn`](../../server/internal/world/gm.go#L299)<br>`func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error` | See the source definition and the subsystem ownership contract. |
-| [`gmMove`](../../server/internal/world/gm.go#L376)<br>`func (s *Session) gmMove(mapID uint16) error` | See the source definition and the subsystem ownership contract. |
-| [`gmSetUsage`](../../server/internal/world/gm.go#L447)<br>`const gmSetUsage = "usage: /set money&#124;kill&#124;str&#124;dex&#124;rec&#124;int&#124;wis&#124;luc&#124;statpoint&#124;skillpoint&#124;level amount"` | See the source definition and the subsystem ownership contract. |
-| [`gmSet`](../../server/internal/world/gm.go#L450)<br>`func (s *Session) gmSet(args []string) error` | gmSet changes only the issuing character. Claimed rewards remain claimed. |
-| [`gmCure`](../../server/internal/world/gm.go#L539)<br>`func (s *Session) gmCure() error` | gmCure clears all debuffs and cooldowns and restores HP, MP and SP. |
+| [`turboActive`](../../server/internal/world/gm.go#L19)<br>`func (s *Session) turboActive() bool` | See the source definition and the subsystem ownership contract. |
+| [`gmReply`](../../server/internal/world/gm.go#L21)<br>`func (s *Session) gmReply(message string)` | See the source definition and the subsystem ownership contract. |
+| [`gmNumbers`](../../server/internal/world/gm.go#L41)<br>`func gmNumbers(args []string, bounds ...uint64) ([]uint64, error)` | See the source definition and the subsystem ownership contract. |
+| [`handleGMCommand`](../../server/internal/world/gm.go#L57)<br>`func (s *Session) handleGMCommand(text string) bool` | Known commands are consumed even when refused; they never become public chat. |
+| [`gmClearInventory`](../../server/internal/world/gm.go#L171)<br>`func (s *Session) gmClearInventory() error` | Clear carried inventory only. Equipped items and warehouse contents survive. |
+| [`planGMGrant`](../../server/internal/world/gm.go#L197)<br>`func planGMGrant(items []db.Item, def *db.ItemDef, quantity int) ([]db.Item, []db.Item, []db.Item, error)` | planGMGrant keeps the entire request atomic, including quantities above 255. |
+| [`gmGiveItem`](../../server/internal/world/gm.go#L229)<br>`func (s *Session) gmGiveItem(itemType, id uint8, quantity int) error` | See the source definition and the subsystem ownership contract. |
+| [`gmSpawnPositions`](../../server/internal/world/gm.go#L254)<br>`func gmSpawnPositions(mapID uint16, x, z float32, count int, entities *MapEntities) ([][2]float32, error)` | Spawn positions form expanding rings; occupied points and blocked cells are rejected, including entities created by earlier commands. |
+| [`gmSpawn`](../../server/internal/world/gm.go#L303)<br>`func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error` | See the source definition and the subsystem ownership contract. |
+| [`gmMove`](../../server/internal/world/gm.go#L380)<br>`func (s *Session) gmMove(mapID uint16) error` | See the source definition and the subsystem ownership contract. |
+| [`gmSetUsage`](../../server/internal/world/gm.go#L451)<br>`const gmSetUsage = "usage: /set money&#124;kill&#124;str&#124;dex&#124;rec&#124;int&#124;wis&#124;luc&#124;statpoint&#124;skillpoint&#124;level amount"` | See the source definition and the subsystem ownership contract. |
+| [`gmSet`](../../server/internal/world/gm.go#L454)<br>`func (s *Session) gmSet(args []string) error` | gmSet changes only the issuing character. Claimed rewards remain claimed. |
+| [`gmCure`](../../server/internal/world/gm.go#L543)<br>`func (s *Session) gmCure() error` | gmCure clears all debuffs and cooldowns and restores HP, MP and SP. |
 
 ### gm_level.go
 
@@ -3018,22 +3019,22 @@ type disguiseLook struct{ shape []byte }
 
 [server/internal/world/player_movement.go](../../server/internal/world/player_movement.go#L1)
 
-Direct GX dependencies: `internal/gm`, `internal/mapgeometry`, `internal/movespeed`, `internal/proto`, `server/internal/packet`.
+Direct GX dependencies: `internal/mapgeometry`, `internal/movespeed`, `internal/proto`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`playerMovement`](../../server/internal/world/player_movement.go#L16)<br>`type playerMovement` | See the source definition and the subsystem ownership contract. |
-| [`playerGeometry`](../../server/internal/world/player_movement.go#L36)<br>`func (s *Session) playerGeometry(mapID uint16) (*mapgeometry.Geometry, error)` | See the source definition and the subsystem ownership contract. |
-| [`initPlayerMovement`](../../server/internal/world/player_movement.go#L53)<br>`func (s *Session) initPlayerMovement(now time.Time) error` | See the source definition and the subsystem ownership contract. |
-| [`movementSpeed`](../../server/internal/world/player_movement.go#L79)<br>`func (s *Session) movementSpeed() float32` | See the source definition and the subsystem ownership contract. |
-| [`startMovementJump`](../../server/internal/world/player_movement.go#L96)<br>`func (s *Session) startMovementJump(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
-| [`advancePlayerVertical`](../../server/internal/world/player_movement.go#L120)<br>`func (s *Session) advancePlayerVertical(now time.Time)` | advancePlayerVertical uses server time and geometry. Client Y is never an integration input; a fake jump flag cannot grant another impulse in mid-air. |
-| [`tickPlayerMovement`](../../server/internal/world/player_movement.go#L212)<br>`func (s *Session) tickPlayerMovement(now time.Time)` | See the source definition and the subsystem ownership contract. |
-| [`commitMovement`](../../server/internal/world/player_movement.go#L246)<br>`func (s *Session) commitMovement()` | See the source definition and the subsystem ownership contract. |
-| [`correctMovement`](../../server/internal/world/player_movement.go#L251)<br>`func (s *Session) correctMovement(reason string)` | See the source definition and the subsystem ownership contract. |
-| [`validatePlayerMovement`](../../server/internal/world/player_movement.go#L270)<br>`func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, direction uint16, now time.Time) (bool, string)` | See the source definition and the subsystem ownership contract. |
-| [`sendPhysicsClock`](../../server/internal/world/player_movement.go#L405)<br>`func (s *Session) sendPhysicsClock()` | See the source definition and the subsystem ownership contract. |
-| [`groundTrustedDestination`](../../server/internal/world/player_movement.go#L417)<br>`func (s *Session) groundTrustedDestination(x, y, z float32) (mapgeometry.Position, bool)` | groundTrustedDestination normalizes a server-authored same-map relocation. A live selected session always has geometry; unselected sessions have none. |
+| [`playerMovement`](../../server/internal/world/player_movement.go#L15)<br>`type playerMovement` | See the source definition and the subsystem ownership contract. |
+| [`playerGeometry`](../../server/internal/world/player_movement.go#L35)<br>`func (s *Session) playerGeometry(mapID uint16) (*mapgeometry.Geometry, error)` | See the source definition and the subsystem ownership contract. |
+| [`initPlayerMovement`](../../server/internal/world/player_movement.go#L52)<br>`func (s *Session) initPlayerMovement(now time.Time) error` | See the source definition and the subsystem ownership contract. |
+| [`movementSpeed`](../../server/internal/world/player_movement.go#L78)<br>`func (s *Session) movementSpeed() float32` | See the source definition and the subsystem ownership contract. |
+| [`startMovementJump`](../../server/internal/world/player_movement.go#L92)<br>`func (s *Session) startMovementJump(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
+| [`advancePlayerVertical`](../../server/internal/world/player_movement.go#L116)<br>`func (s *Session) advancePlayerVertical(now time.Time)` | advancePlayerVertical uses server time and geometry. Client Y is never an integration input; a fake jump flag cannot grant another impulse in mid-air. |
+| [`tickPlayerMovement`](../../server/internal/world/player_movement.go#L208)<br>`func (s *Session) tickPlayerMovement(now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`commitMovement`](../../server/internal/world/player_movement.go#L242)<br>`func (s *Session) commitMovement()` | See the source definition and the subsystem ownership contract. |
+| [`correctMovement`](../../server/internal/world/player_movement.go#L247)<br>`func (s *Session) correctMovement(reason string)` | See the source definition and the subsystem ownership contract. |
+| [`validatePlayerMovement`](../../server/internal/world/player_movement.go#L266)<br>`func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, direction uint16, now time.Time) (bool, string)` | See the source definition and the subsystem ownership contract. |
+| [`sendPhysicsClock`](../../server/internal/world/player_movement.go#L421)<br>`func (s *Session) sendPhysicsClock()` | See the source definition and the subsystem ownership contract. |
+| [`groundTrustedDestination`](../../server/internal/world/player_movement.go#L433)<br>`func (s *Session) groundTrustedDestination(x, y, z float32) (mapgeometry.Position, bool)` | groundTrustedDestination normalizes a server-authored same-map relocation. A live selected session always has geometry; unselected sessions have none. |
 
 <details><summary>Type definitions and owned fields</summary>
 

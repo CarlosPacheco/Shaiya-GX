@@ -15,7 +15,7 @@ its vertical drop once a solid supported landing is reached.
 - At thirty units damage is 50% of maximum HP; around forty units it reaches
   maximum HP and can kill. This halves the previous uncapped damage curve.
 - Damage is capped to current HP. Actual damage uses current server stats,
-  ends stealth and cancels preparation. Existing GM immunity remains effective.
+  ends stealth and cancels preparation. GMs with `/turbo` enabled land without taking fall damage.
 
 Entry/teleport initialization does not carry an earlier fall into the new
 position. Falls are armed only after server-observed support; a character

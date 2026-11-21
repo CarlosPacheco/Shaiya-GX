@@ -16,7 +16,7 @@ func fallDamage(drop float32, maxHP uint32) uint32 {
 	return uint32(math.Ceil(float64(maxHP) * min(.5*fraction*fraction, 1)))
 }
 func (s *Session) applyFallDamage(drop float32) {
-	if !config.FallDamageEnabled() || s.char == nil || s.dead || s.invulnerable() {
+	if !config.FallDamageEnabled() || s.char == nil || s.dead || s.invulnerable() || s.turboActive() {
 		return
 	}
 	st := s.stats()

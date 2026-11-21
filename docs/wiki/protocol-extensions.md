@@ -16,7 +16,7 @@ Source notes: GXGMState is a GX-only server response: self ID:u32, GM:u8, turbo:
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [gmReply (server/internal/world/gm.go)](../../server/internal/world/gm.go#L19)
+**S→C serializers:** [gmReply (server/internal/world/gm.go)](../../server/internal/world/gm.go#L21)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1262)
 
@@ -26,7 +26,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>gmReply — server/internal/world/gm.go</summary>
 
-[Source definition](../../server/internal/world/gm.go#L19)
+[Source definition](../../server/internal/world/gm.go#L21)
 
 ```go
 func (s *Session) gmReply(message string) {
@@ -38,7 +38,7 @@ func (s *Session) gmReply(message string) {
 	role, turbo := uint8(0), uint8(0)
 	if s.isAdmin {
 		role = 1
-		if s.gmTurbo {
+		if s.turboActive() {
 			turbo = 1
 		}
 	}
@@ -359,7 +359,7 @@ Declarations: [proto.GXPhysicsClock](../../internal/proto/world.go#L255).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L405)
+**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L421)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1242)
 
@@ -369,7 +369,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendPhysicsClock — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L405)
+[Source definition](../../server/internal/world/player_movement.go#L421)
 
 ```go
 func (s *Session) sendPhysicsClock() {
@@ -393,7 +393,7 @@ Declarations: [proto.GXPlayerCorrection](../../internal/proto/player_physics.go#
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L251)
+**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L247)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1232)
 
@@ -403,7 +403,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>correctMovement — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L251)
+[Source definition](../../server/internal/world/player_movement.go#L247)
 
 ```go
 func (s *Session) correctMovement(reason string) {
@@ -1979,7 +1979,7 @@ Source notes: GXItemCooldownReset clears the recipient’s item and mount cooldo
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [gmCure (server/internal/world/gm.go)](../../server/internal/world/gm.go#L539)
+**S→C serializers:** [gmCure (server/internal/world/gm.go)](../../server/internal/world/gm.go#L543)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L248)
 
@@ -1989,7 +1989,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>gmCure — server/internal/world/gm.go</summary>
 
-[Source definition](../../server/internal/world/gm.go#L539)
+[Source definition](../../server/internal/world/gm.go#L543)
 
 ```go
 func (s *Session) gmCure() error {
