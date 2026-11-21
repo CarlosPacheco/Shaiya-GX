@@ -5,7 +5,6 @@ package app
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
-	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
 	"os"
@@ -72,7 +71,6 @@ func TestSharedCombatSpeedAgainstIsolatedGX(t *testing.T) {
 			default:
 				time.Sleep(time.Millisecond)
 			}
-			a.updateQueuedSkill(&platform.Input{})
 		}
 	}
 	next := func(count int) {
@@ -90,9 +88,6 @@ func TestSharedCombatSpeedAgainstIsolatedGX(t *testing.T) {
 	if kinds[0] != proto.CharacterUserAutoAttack {
 		t.Fatal("first action was not basic")
 	}
-	if a.prepareSkillMovement(proto.UseSkillPacket(42, st.SelfID, true)) || a.skills.queuedSkill == nil {
-		t.Fatal("spell not buffered behind basic recovery")
-	}
 	for range 40 {
 		send(proto.UseSkillPacket(43, st.SelfID, true))
 	}
@@ -104,9 +99,13 @@ func TestSharedCombatSpeedAgainstIsolatedGX(t *testing.T) {
 	if ids[1] != 31 {
 		t.Fatal("latest server-buffered skill did not release", ids)
 	}
-	if a.prepareSkillMovement(proto.UseSkillPacket(42, st.SelfID, true)) || a.skills.queuedSkill == nil {
-		t.Fatal("second combo skill was not buffered")
+	// The raw requests above bypassed local recording. The next normal client
+	// request can leave immediately, and the server must hold it until due.
+	second := proto.UseSkillPacket(42, st.SelfID, true)
+	if !a.prepareSkillMovement(second) {
+		t.Fatal("client did not prepare the second skill")
 	}
+	send(second)
 	next(3)
 	if ids[2] != 30 {
 		t.Fatal("queued second skill did not release", ids)
@@ -115,7 +114,7 @@ func TestSharedCombatSpeedAgainstIsolatedGX(t *testing.T) {
 	next(4)
 	send(proto.StopAttackPacket())
 	if kinds[3] != proto.CharacterUserAutoAttack {
-		t.Fatal("basic did not follow skill")
+		t.Fatal("basic did not follow skill", kinds, ids)
 	}
 	for i := 1; i < len(stamps); i++ {
 		gap := stamps[i].Sub(stamps[i-1])
