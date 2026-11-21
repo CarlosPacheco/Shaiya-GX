@@ -13,7 +13,7 @@ Changes since the gx-v0.1.14 full portable.
 
 ## Items and guilds
 
-- Restored original status cures, protection scrolls, linked Anti-Lapis immunity, skill reset items and consumable skill links. Resurrection uses its skill or normal revival flow. Obsolete utility, protection and resurrection entries were retired from their catalogs. Anti-Lapis tooltips show guaranteed immunity and use the matching icons.
+- Restored original status cures, protection scrolls, linked Anti-Lapis immunity, skill reset items and consumable skill links. Resurrection uses its skill or normal revival flow. Obsolete utility, protection and resurrection entries were retired from their catalogs. Anti-Lapis tooltips show guaranteed immunity and use the matching icons. The Uber Mystery Box now rolls from its remaining rewards after the old EXP protection item was retired.
 - Throw items onto the ground by dragging them out of the inventory. Inventory bags return with the right state after revival or teleport. Firecrackers play their effect and sound for nearby players and display the notice.
 - The cape merchant offers emblem customization with a movable window, a rear-view preview, cloth decals and live updates. Capes are excluded from lapis linking.
 - Found a guild solo or with an agreeing group. The configurable founding fee is charged once the guild is created, and characters can reapply immediately after leaving. Guild houses and their services can operate independently of ranking placement. Guild and personal warehouses have separate controls. The guild shop no longer stalls account logout after a purchase.
