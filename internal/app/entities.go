@@ -322,6 +322,33 @@ func projectLabel(p render.V3, vp render.M4, w, h int) (int, int, float32, bool)
 	return int((x/cw + 1) * float32(w) / 2), int((1 - y/cw) * float32(h) / 2), z / cw, true
 }
 
+// Phoenix uses the original NPC categories as a second line, omitting the
+// generic, gambling-house and animal categories.
+func npcTypeLabel(kind uint8) string {
+	switch kind {
+	case 1:
+		return "Merchant"
+	case 2:
+		return "Gate Keeper"
+	case 3:
+		return "Blacksmith"
+	case 4:
+		return "PvPManager"
+	case 6:
+		return "Warehouse"
+	case 8:
+		return "Guard"
+	case 10:
+		return "Apprentice"
+	case 11:
+		return "GuildMaster"
+	case 12:
+		return "DeadNpc"
+	default:
+		return ""
+	}
+}
+
 // Character entry contains only a guild ID. Resolve names exclusively from
 // Rapture's confirmed own-guild data or its directory, never guess unknown IDs.
 func guildCaption(s *game.State, guildID uint32) string {
@@ -577,7 +604,14 @@ func (a *App) drawPlayerNames(w, h int) {
 			label(mob.Name, mob.MonsterPlateAnchor(), ui.RGBColor(ui.MobNameRGB(mob.Level, slot.Level)), 0, playerPlate{}, marker)
 		case game.KindNpc:
 			if actor := v.npcs[e.ID]; actor != nil && actor.actor != nil {
-				label(actor.actor.Name, actor.actor.NPCPlateAnchor(e.NpcType, e.TypeID), ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID))
+				pos := actor.actor.NPCPlateAnchor(e.NpcType, e.TypeID)
+				// The MON height can sit inside the mesh; the depth-tested plate
+				// would then vanish behind its own NPC, so keep it above the crown.
+				if _, hi, ok := actor.actor.WorldBounds(); ok && e.NpcType != 12 && pos[1] < hi[1]+.15 {
+					pos[1] = hi[1] + .15
+				}
+				label(actor.actor.Name, pos, ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID))
+				label(npcTypeLabel(e.NpcType), pos, [4]float32{.35, .9, 1, 1}, a.font.Height-2, playerPlate{}, "")
 			}
 		}
 	}

@@ -357,7 +357,37 @@ func (a *App) drawMinimap(w, h int, full bool) {
 		}
 		return
 	}
+	a.updateMinimapAlarm()
 	view := projection.MinimapWindow(a.wv.pos[0], a.wv.pos[2], v.smallZoom)
 	a.minimap.Caption = time.Now().Format("02/01/2006 15:04:05")
 	a.minimap.Draw(a.sprites, a.font, v.image, a.white, w, h, view, u, z, heading, a.wv.mapID, a.wv.pos[0], a.wv.pos[2], markers)
+}
+
+// minimapAlarmExempt lists the maps where the alarm mechanic is disabled.
+func minimapAlarmExempt(mapID uint16) bool { return mapID >= 40 && mapID <= 42 }
+
+// updateMinimapAlarm follows 0x4c6550: the timer drops by twice the frame time
+// and restarts at 2 while an enemy-faction character is around.
+func (a *App) updateMinimapAlarm() {
+	t := a.minimap.Alarm - 2*float32(a.frameDT)
+	if t < 0 {
+		t = 0
+	}
+	if t == 0 && a.enemyNearby() {
+		t = 2
+	}
+	a.minimap.Alarm = t
+}
+
+func (a *App) enemyNearby() bool {
+	own, ok := a.selfSlot()
+	if !ok || minimapAlarmExempt(a.wv.mapID) {
+		return false
+	}
+	for _, e := range a.state.Entities {
+		if e.Kind == game.KindUser && e.ID != a.state.SelfID && e.Shape != nil && !e.Dead && own.Race/2 != e.Shape.Race/2 {
+			return true
+		}
+	}
+	return false
 }

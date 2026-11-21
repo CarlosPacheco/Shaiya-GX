@@ -57,6 +57,9 @@ type Minimap struct {
 	frame, arrow, party, questStart, questEnd, enemy, top, bottom, left, right *render.Texture
 	relics                                                                     [3]*render.Texture
 	relicPortal                                                                *render.Texture
+	alarm                                                                      *render.Texture
+	// Alarm is the native pulse timer (0x4c6550): 0..2 seconds-halves, 0 when idle.
+	Alarm float32
 	buttons                                                                    [3]Button
 	close                                                                      Button
 }
@@ -68,6 +71,9 @@ func NewMinimap(t Textures) (*Minimap, error) {
 		top: ld.get("map_up.png"), bottom: ld.get("map_bottom.png"),
 		left: ld.get("map_left.png"), right: ld.get("map_right.png")}
 	// Original minimap/map initializers 0x4c5bf0/0x4c0720.
+	if tex, err := t.Interface("main_map_alarm.png"); err == nil {
+		m.alarm = tex
+	}
 	for i := range m.relics {
 		if tex, err := t.Interface(fmt.Sprintf("obelisk_%d.png", i)); err == nil {
 			m.relics[i] = tex
@@ -218,6 +224,14 @@ func (m *Minimap) Draw(s *render.Sprites, f *Font, image, solid *render.Texture,
 	for i := range m.buttons {
 		m.buttons[i].OriginX, m.buttons[i].OriginY = x, y
 		m.buttons[i].Draw(s)
+	}
+	if m.alarm != nil && m.Alarm > 0 {
+		// 0x4c8462: triangle pulse, alpha = 255 * (t > 1 ? |t - 2| : t).
+		t := m.Alarm
+		if t > 1 {
+			t = float32(math.Abs(float64(t - 2)))
+		}
+		s.Draw(m.alarm, float32(x+4), float32(y+4), 256, 256, 0, 0, 1, 1, [4]float32{1, 1, 1, t})
 	}
 	label := m.Caption
 	if label == "" {
