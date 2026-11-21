@@ -75,7 +75,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 	ch := s.char
 	// CWorld::GetZoneByMapID: a guild ranking map resolves to the guild's
 	// instance while the battle is open; without one the move fails.
-	if !direct && !isInstanceZone(mapID) && mapCreateType(mapID) == grbCreateType {
+	if !direct && mapCreateType(mapID) == grbCreateType {
 		zone, ok := s.enterGuildRanking(mapID)
 		if !ok {
 			s.log.Printf("GX Server World guild ranking map %d refused (closed or no guild)", mapID)

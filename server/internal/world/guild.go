@@ -63,14 +63,13 @@ type guild struct {
 	UseHouse   uint8
 	EtinReturn uint32
 	KeepEtin   uint32
-	// Guild ranking battle, reset by each ranking (CGuild +0x98, +0x9c,
-	// +0xa0).
-	grbPoints, duelBonus, grbEntries uint32
-	gd                               guildDuel // guarded by duelMu
-	members                          map[uint32]*guildMember
-	applicants                       map[uint32]*guildMember
-	bank                             [guildBankSlots]*db.Item
-	npcs                             [guildNpcSlots]guildNpcSlot // CGuild +0x47c, guarded by guildMu
+	// Monster points earned in the current guild ranking battle.
+	grbPoints  uint32
+	gd         guildDuel // guarded by duelMu
+	members    map[uint32]*guildMember
+	applicants map[uint32]*guildMember
+	bank       [guildBankSlots]*db.Item
+	npcs       [guildNpcSlots]guildNpcSlot // CGuild +0x47c, guarded by guildMu
 }
 
 // guildCreate is CGuildCreate: a creation (disband false) or disband vote.

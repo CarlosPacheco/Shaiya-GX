@@ -14,11 +14,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 )
 
-// TestGuildRankingBattle enters map 50 while open (the guild's own
-// instance, one entry counted), kills a battle mob for its Money2 points,
-// closes the battle (everyone to the bind point, the instance removed)
-// and runs the ranking 30 minutes later: rank 1 with points + min(25 x
-// entries, points / 2), which opens the guild bank.
 func TestGuildRankingBattle(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
 		t.Chdir("../..")
@@ -54,6 +49,8 @@ func TestGuildRankingBattle(t *testing.T) {
 		grbNow = time.Now
 	}()
 	a, b := net.Pipe()
+	defer a.Close()
+	defer b.Close()
 	go io.Copy(io.Discard, b)
 	ch := &db.Character{ID: 990501, Name: "GrbTest", Level: 40, MapID: 53, PosX: 89, PosY: 8, PosZ: 115}
 	s := &Session{char: ch, log: logger.Tagged("grb"), logger: logger, faction: FactionLight, out: &connWriter{conn: a},
@@ -74,13 +71,15 @@ func TestGuildRankingBattle(t *testing.T) {
 	if ch.MapID != 53 {
 		t.Fatal("entered the battle before it opened")
 	}
-	grbNow = func() time.Time { return sunday(21, 30) }
+	now := sunday(21, 30)
+	grbNow = func() time.Time { return now }
 	TickGuildRanking(sunday(21, 30), logger)
 	s.applyTeleport(50, 507.78, 3.08, 98.41, "test")
 	zone := ch.MapID
-	if !isInstanceZone(zone) || realMap(zone) != 50 || g.grbEntries != 1 {
-		t.Fatalf("battle zone %d (map %d) entries %d", zone, realMap(zone), g.grbEntries)
+	if !isInstanceZone(zone) || realMap(zone) != 50 {
+		t.Fatalf("battle zone %d (map %d)", zone, realMap(zone))
 	}
+	t.Cleanup(func() { destroyInstance(zone) })
 	var mob MapMob
 	for _, m := range EntitiesOnMap(zone).Mobs {
 		if m.MoneyMin == 0 && m.MoneyMax > 1 {
@@ -91,6 +90,9 @@ func TestGuildRankingBattle(t *testing.T) {
 	if mob.ID == 0 {
 		t.Fatal("no battle mob in the instance")
 	}
+	if hit, ok := DamageMobFrom(zone, mob.ID, mob.CurrentHP, ch.ID); !ok || !hit.Killed {
+		t.Fatal("could not kill battle mob")
+	}
 	if !grbKill(zone, &mob, ch.ID) || g.grbPoints != mob.MoneyMax {
 		t.Fatalf("points %d after killing a %d-point mob", g.grbPoints, mob.MoneyMax)
 	}
@@ -98,19 +100,60 @@ func TestGuildRankingBattle(t *testing.T) {
 		t.Fatal("points outside the battle map")
 	}
 
-	TickGuildRanking(sunday(22, 1), logger)
+	s.applyTeleport(53, 89, 8, 115, "test leave")
+	if ch.MapID != 53 || len(PlayersOnMap(zone)) != 0 {
+		t.Fatal("battle instance did not become empty")
+	}
+	TickInstances(now, logger)
+	TickInstances(now.Add(mapConfig.Zones[50].Expire+time.Minute), logger)
+	s.applyTeleport(50, 507.78, 3.08, 98.41, "test reentry")
+	if ch.MapID != zone {
+		t.Fatalf("reentered zone %d, want original zone %d", ch.MapID, zone)
+	}
+	if dead, ok := MobByID(zone, mob.ID); !ok || dead.CurrentHP != 0 {
+		t.Fatal("battle mob state was lost during reentry")
+	}
+	if g.grbPoints != mob.MoneyMax {
+		t.Fatalf("reentry changed points to %d", g.grbPoints)
+	}
+
+	s.player.Unregister()
+	if len(PlayersOnMap(zone)) != 0 {
+		t.Fatal("disconnect left the instance occupied")
+	}
+	TickInstances(now, logger)
+	TickInstances(now.Add(mapConfig.Zones[50].Expire+time.Minute), logger)
+	// Login returns characters saved in instances to their bind map.
+	ch.MapID, ch.PosX, ch.PosY, ch.PosZ = 53, 89, 8, 115
+	s.player = RegisterPlayer(*ch, nil, false, FactionLight, s.out, logger)
+	guildMu.Lock()
+	s.player.guild.guild = g
+	g.members[ch.ID].player = s.player
+	guildMu.Unlock()
+	s.applyTeleport(50, 507.78, 3.08, 98.41, "test reentry after disconnect")
+	if ch.MapID != zone {
+		t.Fatalf("after reconnect entered zone %d, want original zone %d", ch.MapID, zone)
+	}
+
+	now = sunday(22, 1)
+	TickGuildRanking(now, logger)
 	tp := s.player.TakeTeleport()
 	if tp == nil || tp.MapID != 53 {
 		t.Fatalf("not sent to the bind point at the close: %+v", tp)
 	}
 	s.applyTeleport(tp.MapID, tp.X, tp.Y, tp.Z, "test close")
-	TickGuildRanking(sunday(22, 2), logger)
+	s.applyTeleport(zone, 507.78, 3.08, 98.41, "test closed reentry")
+	if ch.MapID != 53 {
+		t.Fatal("reentered the instance after the battle closed")
+	}
+	now = sunday(22, 2)
+	TickGuildRanking(now, logger)
 	if len(instanceZones(50)) != 0 {
 		t.Fatal("empty instance kept after the close")
 	}
-	points := mob.MoneyMax
-	TickGuildRanking(sunday(22, 32), logger)
-	want := points + min(25, points/2)
+	now = sunday(22, 32)
+	TickGuildRanking(now, logger)
+	want := mob.MoneyMax
 	if g.Rank != 1 || g.Points != want {
 		t.Fatalf("rank %d points %d, want 1 / %d", g.Rank, g.Points, want)
 	}

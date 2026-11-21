@@ -111,7 +111,8 @@ var (
 	instanceExpiry   = map[uint16]time.Time{}
 )
 
-// TickInstances is CWorldThread::Update's instance expiry.
+// TickInstances is CWorldThread::Update's instance expiry. The GRB owns
+// its instances until the battle closes, even when the entire guild leaves.
 func TickInstances(now time.Time, log logPrinter) {
 	realm.instanceMu.Lock()
 	zones := make(map[uint16]uint16, len(realm.instanceMaps))
@@ -127,7 +128,7 @@ func TickInstances(now time.Time, log logPrinter) {
 		}
 	}
 	for zone, m := range zones {
-		if len(PlayersOnMap(zone)) > 0 {
+		if mapConfig.Zones[m].CreateType == grbCreateType || len(PlayersOnMap(zone)) > 0 {
 			continue
 		}
 		at, set := instanceExpiry[zone]

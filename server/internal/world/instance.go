@@ -67,6 +67,7 @@ func createInstance(mapID uint16, owner uint32) (uint16, error) {
 	RegisterMapGrid(zone, load.mapSize, load.mask)
 	nav, err := loadMobNavigation(zone)
 	if err != nil {
+		destroyInstance(zone)
 		return 0, err
 	}
 	if nav != nil {

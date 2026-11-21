@@ -25,6 +25,20 @@ SVMAP respawn group. If neither provides an eligible destination, the character
 returns to their racial birth position. Instance schedules remain part of the
 map row, while [obelisk rules](obelisks.md) retain their own configuration.
 
+## Guild Ranking Battle
+
+While a Guild Ranking Battle is open, each guild uses its own instance of the
+battle map. Guild members can leave and reenter through the battle entrance
+until closing time, including after disconnecting. An empty battle instance
+keeps its map state. Monster respawns and drop expiration still follow their
+normal rules.
+
+The guild's score is the sum of points awarded by monster kills in its own
+instance. Eligible monsters have `Money1 = 0` and `Money2 > 0`, with `Money2`
+setting the point award, up to 65,535 per kill. Entries and duels award zero points. When the battle
+closes, the server sends remaining players to their bind point and removes the
+empty instances. The standings are published 30 minutes after closing.
+
 ## Weather and map curses
 
 | Column | Meaning |

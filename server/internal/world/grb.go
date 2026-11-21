@@ -13,7 +13,7 @@ import (
 // The guild ranking battle follows ps_game.exe: a Map.ini CreateType R map
 // (map type 5) opens on its CreateTime slots (CMap::IsGuildRankMapOpenTime
 // 0x00428d20); each guild enters its own instance (CWorld::GetZoneByMapID),
-// every entry counting for the guild (CUser::ZoneEnterUserMove, +0xa0); a
+// reusing that instance until the battle closes; a
 // mob with Money1 0 and Money2 > 0 killed there gives its Money2 to the
 // killer's guild instead of gold (CMob::ItemDrop -> CGuild::SendRankingZone
 // 0x0042c6e0, 0x0D27 to the members in the battle); notices go out on
@@ -30,7 +30,6 @@ const (
 	grbNoticeEnd1   = 102
 	grbUnranked     = 31
 	grbRankedGuilds = 30
-	grbEntryWeight  = 25
 )
 
 // grbNow is the clock the battle entry checks (tests replace it).
@@ -104,13 +103,12 @@ func grbNotice(slots []grbSlot, now time.Time) (uint8, bool) {
 
 var grbState = struct {
 	sync.Mutex
-	open        map[uint16]bool   // map -> was open at the last tick
-	instance    map[uint32]uint16 // guild id -> its battle zone
+	open        map[uint16]bool // map -> was open at the last tick
 	lastMinute  int64
 	rankAt      time.Time
 	maxPoints   [2]uint32 // g_dwRankingGetMaxPoint per country
 	maxPointsID [2]uint32
-}{open: map[uint16]bool{}, instance: map[uint32]uint16{}}
+}{open: map[uint16]bool{}}
 
 func grbMaps() []uint16 {
 	var out []uint16
@@ -124,37 +122,34 @@ func grbMaps() []uint16 {
 
 // enterGuildRanking resolves a teleport to a battle map: the guild's own
 // instance while the battle is open, otherwise no zone (the move fails).
-func (s *Session) enterGuildRanking(mapID uint16) (uint16, bool) {
+func (s *Session) enterGuildRanking(destination uint16) (uint16, bool) {
 	if s.player == nil {
 		return 0, false
 	}
 	guildMu.Lock()
 	g := s.player.guild.guild
 	guildMu.Unlock()
-	cfg := mapConfig.Zones[mapID]
-	if g == nil || !grbOpen(grbSlots(cfg), grbNow()) {
+	if g == nil {
 		return 0, false
 	}
+	mapID := realMap(destination)
+	cfg := mapConfig.Zones[mapID]
 	grbState.Lock()
-	zone, ok := grbState.instance[g.ID]
-	if ok && realMap(zone) != mapID {
-		ok = false
+	defer grbState.Unlock()
+	if !grbOpen(grbSlots(cfg), grbNow()) {
+		return 0, false
 	}
-	if !ok {
-		z, err := createInstance(mapID, g.ID)
-		if err != nil {
-			grbState.Unlock()
-			s.log.Printf("GX Server World guild ranking instance failed: %v", err)
-			return 0, false
-		}
-		zone = z
-		grbState.instance[g.ID] = zone
+	zone, found := findInstance(mapID, g.ID)
+	if isInstanceZone(destination) {
+		return zone, found && zone == destination
 	}
-	grbState.Unlock()
-	if s.char.MapID != zone {
-		guildMu.Lock()
-		g.grbEntries++
-		guildMu.Unlock()
+	if found {
+		return zone, true
+	}
+	zone, err := createInstance(mapID, g.ID)
+	if err != nil {
+		s.log.Printf("GX Server World guild ranking instance failed: %v", err)
+		return 0, false
 	}
 	return zone, true
 }
@@ -175,9 +170,14 @@ func grbKill(zone uint16, mob *MapMob, killerID uint32) bool {
 	if g == nil {
 		return true
 	}
-	g.grbPoints += uint32(min(mob.MoneyMax, 65535))
-	c := int(g.Country) & 1
+	mapID := realMap(zone)
 	grbState.Lock()
+	if owned, found := findInstance(mapID, g.ID); !found || owned != zone || !grbOpen(grbSlots(mapConfig.Zones[mapID]), grbNow()) {
+		grbState.Unlock()
+		return true
+	}
+	g.grbPoints = satAdd(g.grbPoints, uint32(min(mob.MoneyMax, 65535)))
+	c := int(g.Country) & 1
 	if g.grbPoints > grbState.maxPoints[c] {
 		grbState.maxPoints[c], grbState.maxPointsID[c] = g.grbPoints, g.ID
 	}
@@ -240,6 +240,11 @@ func TickGuildRanking(now time.Time, log *logx.Logger) {
 // grbCloseInstances is MoveAllBindPos at the close, then the empty
 // instances are removed.
 func grbCloseInstances(mapID uint16, log *logx.Logger) {
+	grbState.Lock()
+	defer grbState.Unlock()
+	if grbOpen(grbSlots(mapConfig.Zones[mapID]), grbNow()) {
+		return
+	}
 	for _, zone := range instanceZones(mapID) {
 		players := PlayersOnMap(zone)
 		for _, p := range players {
@@ -248,13 +253,6 @@ func grbCloseInstances(mapID uint16, log *logx.Logger) {
 			p.QueueTeleport(m, x, y, z)
 		}
 		if len(players) == 0 {
-			grbState.Lock()
-			for id, z := range grbState.instance {
-				if z == zone {
-					delete(grbState.instance, id)
-				}
-			}
-			grbState.Unlock()
 			destroyInstance(zone)
 			log.Printf("GX Server World guild ranking instance %d (map %d) closed", zone, mapID)
 		}
@@ -262,7 +260,7 @@ func grbCloseInstances(mapID uint16, log *logx.Logger) {
 }
 
 // updateGuildRanking is CGuildMgr::UpdateGuildPointRank: the value is the
-// battle points plus min(25 x entries + duel bonus, points / 2); guilds
+// sum of points from monster kills; guilds
 // with a value are ranked per country by it (equal values: the first guild
 // keeps the place, the others their rank, as the original's map insert),
 // the top 30 get 1-30 and the rest 31. Every guild is stored and each
@@ -283,12 +281,8 @@ func updateGuildRanking(log *logx.Logger) {
 	seen := [2]map[uint32]bool{{}, {}}
 	for _, id := range ids {
 		g := guildsByID[id]
-		value := uint32(0)
-		if g.grbPoints != 0 {
-			bonus := g.grbEntries*grbEntryWeight + g.duelBonus
-			value = g.grbPoints + min(bonus, g.grbPoints/2)
-		}
-		g.grbPoints, g.grbEntries, g.duelBonus = 0, 0, 0
+		value := g.grbPoints
+		g.grbPoints = 0
 		g.Points = value
 		c := int(g.Country) & 1
 		if value == 0 {
