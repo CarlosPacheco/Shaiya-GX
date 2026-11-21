@@ -33,10 +33,10 @@ const (
 
 // Results of 0x0D25 (CGuild::NpcUpgrade).
 const (
-	guildNpcOK        = 0
-	guildNpcNoEtin    = 1
-	guildNpcBadLevel  = 2
-	guildNpcRefused   = 3
+	guildNpcOK       = 0
+	guildNpcNoEtin   = 1
+	guildNpcBadLevel = 2
+	guildNpcRefused  = 3
 )
 
 // Results of 0x0D34.

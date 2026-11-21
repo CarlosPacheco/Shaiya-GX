@@ -350,15 +350,42 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	// Integrate the unsupported part of a walk over its actual travel time,
 	// so batching movement packets cannot bridge a gap at a fixed altitude.
 	wasSupported := m.geometry.Supported(m.pos) && !m.jumping
+	// A batch lasted as long as the client took to walk it. Slower stretches
+	// (stepping onto a ledge) need more frames than distance over speed says.
+	walkTime := min(elapsed, 1)
+	if !unlimited && rate > 0 {
+		walkTime = max(travel/rate, min(elapsed, 1))
+	}
+	walkTime = max(walkTime, 1.0/60)
 	count := mapgeometry.HorizontalStepCount(delta)
+	if mapgeometry.NativeContact {
+		// Walk a batch as the client predicts it: one step per 60 Hz frame.
+		count = max(count, int(math.Ceil(walkTime*60-1e-9)))
+	}
+	frameSpeed := travel / float64(count) // distance per frame when the speed is unlimited
+	if !unlimited && rate > 0 {
+		frameSpeed = rate * walkTime / float64(count)
+	}
 	for i := 0; i < count; i++ {
 		step := mapgeometry.HorizontalStep(start, delta, i, count)
-		m.pos = m.geometry.GroundMove(m.pos, step, m.jumping || m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5)
-		if wasSupported && !m.geometry.Supported(m.pos) && !m.jumping && speed > 0 {
-			travelTime := travel / rate
-			if unlimited {
-				travelTime = min(elapsed, 1)
+		if mapgeometry.NativeContact {
+			// Like the client: walk toward the target at full speed and stop on
+			// arrival, so a slowed stretch costs frames instead of shortening
+			// every step of the batch.
+			rx, rz := float64(targetX-m.pos[0]), float64(targetZ-m.pos[2])
+			if remaining := math.Hypot(rx, rz); remaining < 1e-6 {
+				step = mapgeometry.Position{}
+			} else if remaining <= frameSpeed*1.001 || i == count-1 {
+				step = mapgeometry.Position{targetX - m.pos[0], 0, targetZ - m.pos[2]} // arrive exactly
+			} else {
+				f := frameSpeed / remaining
+				step = mapgeometry.Position{float32(rx * f), 0, float32(rz * f)}
 			}
+		}
+		stepTime := float32(walkTime / float64(count))
+		m.pos = m.geometry.GroundMoveDT(m.pos, step, stepTime, m.jumping || m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5)
+		if wasSupported && !m.geometry.Supported(m.pos) && !m.jumping && speed > 0 {
+			travelTime := walkTime
 			saveAt := m.at
 			m.at = now.Add(-time.Duration(float64(time.Second) * travelTime / float64(count)))
 			s.advancePlayerVertical(now)

@@ -100,8 +100,9 @@ func TestStepAssistDoesNotClimbTallWallsOrCrossCeilings(t *testing.T) {
 			g.Add(tri)
 		}
 		p := Position{3, FootSkin, 4}
-		for range 600 {
-			p = g.GroundMove(p, Position{.1, 0, 0}, false)
+		// 60 Hz at 3 units/s; the original's step climbing depends on the frame step.
+		for range 1200 {
+			p = g.GroundMoveDT(p, Position{.05, 0, 0}, 1.0/60, false)
 		}
 		if p[0] > 4.9 || p[1] > .13 {
 			t.Fatal("step assistance climbed a high wall", height, p)

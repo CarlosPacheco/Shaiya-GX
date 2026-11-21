@@ -1,9 +1,9 @@
 package world
 
 import (
-	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 	"testing"

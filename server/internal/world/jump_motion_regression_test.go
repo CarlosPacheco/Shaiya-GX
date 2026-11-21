@@ -75,7 +75,12 @@ func TestJumpImpulseStartsAtLatestValidatedStep(t *testing.T) {
 	for _, tri := range collision.BlockerBox(collision.Vec{5, 0, 5.6}, collision.Vec{9, .4, 10}, 0) {
 		s.movement.geometry.Add(tri)
 	}
-	pending := s.movement.geometry.GroundMove(s.movement.pos, mapgeometry.Position{0, 0, .8}, false)
+	// Walk it the way the client predicts: one 60 Hz frame at a time.
+	pending := s.movement.pos
+	frame := s.movementSpeed() / 60
+	for range 10 {
+		pending = s.movement.geometry.GroundMoveDT(pending, mapgeometry.Position{0, 0, frame}, 1.0/60, false)
+	}
 	if pending[1] < .3 {
 		t.Fatal("fixture did not climb step", pending)
 	}

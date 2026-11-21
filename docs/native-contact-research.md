@@ -65,3 +65,16 @@ with the existing airborne code instead of being a per-call constant.
    push into a wall without any.
 4. Measure the real-map spots listed in the research report (map 1
    stairway05/06/08, Bridge00) on the client against World before and after.
+
+## Implemented (trial, 2026-11-21)
+
+`mapgeometry.GroundMoveDT` now walks with the plain ellipsoid slide plus the
+grounded fall of each step (-2.98 units/s times that step's duration), with no
+support, step-height, slope or clearance veto, no lift assist and a model slope
+limit of 85 degrees instead of 50. The client passes the frame time; World walks
+a movement batch one 60 Hz frame at a time at full speed toward the reported
+target, like the client predicts it. The shared vertical code (persistent fall
+speed, `Supported`, `StandingPosition`) is unchanged. In the 137-route replay
+with that flow the sum of final separations dropped from 130 to 25 units and the
+steep ramps and 0.60 / 0.75 curbs now climb. `GX_NATIVE_CONTACT=off` (client and
+World) restores the previous assisted controller.

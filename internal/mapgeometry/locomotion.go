@@ -3,9 +3,20 @@ package mapgeometry
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/collision"
 	"math"
+	"os"
 )
 
-const MaxGroundSlope = 50.0
+// MaxGroundSlope is the steepest face that can support a character. The
+// original has no such limit for models: the vertical contact of its grounded
+// fall step supports any upward face, and steepness only shows through the
+// ellipsoid slide. The earlier assisted rules cap it at 50 degrees.
+var MaxGroundSlope = func() float64 {
+	if os.Getenv("GX_NATIVE_CONTACT") == "off" {
+		return 50.0
+	}
+	return 85.0
+}()
+
 const MaxGroundStep = float32(.5)
 const FootSkin = float32(.045)
 
@@ -122,7 +133,64 @@ func (g *Geometry) DeepWater(p Position) bool {
 
 // GroundMove retains native horizontal edge sliding and adds a bounded swept
 // step only when it improves blocked ground movement onto a real support face.
+// NativeContact selects the original controller for walking: the ellipsoid
+// slide of 0x4383d0 followed by the grounded fall step, with no support,
+// step-height or clearance veto on top of it (0x442d9a..0x44305f).
+// GX_NATIVE_CONTACT=off restores the earlier assisted rules in client and
+// server. See docs/native-contact-research.md.
+var NativeContact = os.Getenv("GX_NATIVE_CONTACT") != "off"
+
+// NativeGroundFall is the grounded fall speed (-2.98 units/s). Every
+// horizontal sub-step is followed by that speed times its own duration, so
+// pushing against a ledge cannot ride its edge upward the way a sweep without
+// gravity would, and the result depends on the frame step like the original.
+const NativeGroundFall = float32(2.98)
+
+// GroundMove is GroundMoveDT for callers that do not know their duration: it
+// assumes the usual walking speed of about 3 units per second.
 func (g *Geometry) GroundMove(p, delta Position, airborne bool) Position {
+	dist := float32(math.Hypot(float64(delta[0]), float64(delta[2])))
+	return g.GroundMoveDT(p, delta, min(max(dist/3, 1.0/240), 1.0/20), airborne)
+}
+
+// GroundMoveDT walks delta over dt seconds.
+func (g *Geometry) GroundMoveDT(p, delta Position, dt float32, airborne bool) Position {
+	if !NativeContact {
+		return g.groundMoveAssisted(p, delta, airborne)
+	}
+	if delta[0] == 0 && delta[2] == 0 {
+		return p
+	}
+	start := p
+	count := HorizontalStepCount(delta)
+	settle := NativeGroundFall * dt / float32(count)
+	for i := 0; i < count; i++ {
+		move := HorizontalStep(start, delta, i, count)
+		next := Position{p[0] + move[0], p[1], p[2] + move[2]}
+		if g.HasTerrain() && (next[0] < 0 || next[2] < 0 || next[0] > float32(g.MapSize) || next[2] > float32(g.MapSize)) {
+			break
+		}
+		moved, _ := g.MoveFeet(p, move)
+		if !airborne {
+			moved, _ = g.MoveFeet(moved, Position{0, -settle, 0})
+		}
+		if !airborne && g.HasTerrain() {
+			h := g.Height(moved[0], moved[2])
+			if moved[1] < h {
+				moved[1] = h
+			}
+			if g.OnTerrain(p) {
+				if support, ok := g.modelSupport(moved, .13); !ok || support.feet < h {
+					moved[1] = h
+				}
+			}
+		}
+		p = moved
+	}
+	return p
+}
+
+func (g *Geometry) groundMoveAssisted(p, delta Position, airborne bool) Position {
 	start := p
 	count := HorizontalStepCount(delta)
 	for i := 0; i < count; i++ {

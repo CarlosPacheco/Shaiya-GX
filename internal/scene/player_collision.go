@@ -120,6 +120,14 @@ func (w *World) GroundPlayer(p, delta render.V3, airborne bool) render.V3 {
 	return render.V3(w.physics.GroundMove(mapgeometry.Position(p), mapgeometry.Position(delta), airborne))
 }
 
+// GroundPlayerDT walks delta over dt seconds (see mapgeometry.GroundMoveDT).
+func (w *World) GroundPlayerDT(p, delta render.V3, dt float64, airborne bool) render.V3 {
+	if w == nil || w.physics == nil {
+		return p.Add(delta)
+	}
+	return render.V3(w.physics.GroundMoveDT(mapgeometry.Position(p), mapgeometry.Position(delta), float32(dt), airborne))
+}
+
 func (w *World) StandingPosition(p render.V3) render.V3 {
 	if w == nil || w.physics == nil {
 		return p

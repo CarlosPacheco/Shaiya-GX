@@ -114,7 +114,7 @@ func (v *worldView) step(delta render.V3) bool {
 				pos[1] = max(v.pos[1], scene.SwimEntryY)
 			}
 		} else if v.world.HasPlayerCollision() {
-			pos = v.world.GroundPlayer(v.pos, delta, v.jumping)
+			pos = v.world.GroundPlayerDT(v.pos, delta, v.stepDT, v.jumping)
 			groundSolved = true
 		} else if !v.jumping {
 			pos[1] = v.world.Height(pos[0], pos[2])
@@ -122,7 +122,7 @@ func (v *worldView) step(delta render.V3) bool {
 	}
 	if v.world != nil {
 		if !v.world.HasTerrain() && v.world.HasPlayerCollision() {
-			pos = v.world.GroundPlayer(v.pos, delta, v.jumping)
+			pos = v.world.GroundPlayerDT(v.pos, delta, v.stepDT, v.jumping)
 			groundSolved = true
 		}
 		if !groundSolved {

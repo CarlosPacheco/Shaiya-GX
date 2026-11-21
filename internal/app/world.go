@@ -79,6 +79,7 @@ type worldView struct {
 	travel                      bool
 	approachTarget              uint32
 	worldPressActed             bool    // the world already acted on this left press
+	stepDT                      float64 // duration of the walking step being solved
 	engagedID                   uint32  // target of the last basic attack sent by the chase
 	engagedAt                   float64 // when it was sent
 	approachSkill               []byte
@@ -552,6 +553,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		if a.state.Self.IsGM && a.state.GMTurbo {
 			speed *= gm.TurboMultiplier
 		}
+		v.stepDT = min(float64(dt), float64(remaining)/float64(max(speed, .0001)))
 		moving = v.step(dir.Scale(min(speed*float32(dt), remaining)))
 	}
 	if v.evading {

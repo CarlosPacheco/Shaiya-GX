@@ -50,10 +50,11 @@ func TestOriginalIndexHeldMovementTrace(t *testing.T) {
 			}
 		}
 	}
+	// Re-captured for the native contact controller (docs/native-contact-research.md).
 	// Captured using the original, unfiltered cell scan. Compare float bits,
 	// including sliding, stepping and support, rather than approximate positions.
 	got := fmt.Sprintf("%x", trace.Sum(nil))
-	const original = "160ff96a46bc31bcb62b0b22a031e9d9f86e2d3554f0ce4df6296d29ccbde5af"
+	const original = "76e8a94948f9624e8104e48c68ed8383f49527803676708bb1729ae120989ddb"
 	if got != original {
 		t.Fatalf("original movement trace changed: %s", got)
 	}

@@ -64,7 +64,7 @@ func (m *SlopeMotion) Step(g *Geometry, p Position, dt float32) Position {
 func (m *SlopeMotion) Move(g *Geometry, p Position, dt float32) Position {
 	previous := m.Frames
 	delta := m.Step(g, p, dt)
-	next := g.GroundMove(p, delta, false)
+	next := g.GroundMoveDT(p, delta, dt, false)
 	if steps := HorizontalStepCount(delta); steps > 1 && next[0] == p[0] && next[2] == p[2] {
 		// An obstacle that stopped every sweep cannot build more pressure.
 		// Bleed off excess pressure if the player arrived after a long slide.
