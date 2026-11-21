@@ -100,7 +100,7 @@ tables preserve the direction and order of offers and turn-ins.
 
 | Native fields | Behaviour in GX |
 |---|---|
-| `MinLevel`, `MaxLevel`, `Faction`, `Mode`, six class flags | The client filters offers and map markers. World validates these fields at acceptance. `Faction` selects eligible character families. |
+| `MinLevel`, `MaxLevel`, `Faction`, six class flags | The client filters offers and map markers. World validates these fields at acceptance. `Faction` selects eligible character families. |
 | `Male`, `Female` | The original client checks these fields for NPC and item offers. GX applies them to offers, markers and World admission. Seven audited quests restrict one sex. |
 | `PrevQuest`, `HG`, `VG` | World admits the character after any of the configured quest IDs has been completed successfully. The client uses the same rule to present offers. |
 | `CG`, `OG`, `IG` | Optional minimum values of the corresponding character attributes at acceptance. Zero leaves the attribute unrestricted. |
@@ -116,7 +116,7 @@ tables preserve the direction and order of offers and turn-ins.
 | `Mob1ID`, `Mob1Count`, `Mob2ID`, `Mob2Count`, `PVPKills` | World tracks the two monster counters and the PvP kill counter, with native party credit for supported monster kills. |
 | `ResultType`, `UserSelect`, each variant's `NeedMobID`, `NeedMobCount`, `NeedItemID`, `NeedItemCount` | World uses the fixed reward, offers a reward choice, or selects a variant from the qualifying objective counts. The variant IDs in the `NeedMobID` and `NeedItemID` columns select objective slots. |
 | Each variant's `NeedTime`, `NeedHG`, `NeedVG`, `NeedOG` | Optional cumulative requirements on the reward variant. `NeedTime` sets the minimum seconds since acceptance. The other fields set minimum character HG, signed VG and OG. Zero disables that requirement. World checks them for fixed, automatic and chosen rewards. |
-| Each variant's `XP`, `Gold`, `ItemType`, `ItemTypeID` | World commits the reward with the quest and any item costs. Native rules double XP for quest modes 0–2. |
+| Each variant's `XP`, `Gold`, `ItemType`, `ItemTypeID` | World commits the reward with the quest and any item costs. The XP value is awarded as authored. |
 | Each variant's `NextQuest` | The original client reads this field from the confirmed reward variant. GX offers the next quest when the reward dialog is acknowledged and its NPC context and eligibility still apply. Acceptance is a separate request. The audited catalogs have 757 variant links, all with a turn-in NPC. |
 | `QuestName`, `MsgSummary`, `MsgTake`, `MsgComplete`, `MsgResponse1`, `MsgResponse2`, `MsgIncomplete` | GX uses these for quest titles, journal objectives, initial offers, completion messages by variant, and incomplete turn-ins. |
 | `MsgWelcome`, `MsgResponse4` | GX displays the welcome text before the offer. The alternate response appears when a quest fails or is abandoned. It also supplies the incomplete turn-in text when `MsgIncomplete` is empty. |

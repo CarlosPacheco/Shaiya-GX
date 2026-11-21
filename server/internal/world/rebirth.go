@@ -2,8 +2,6 @@ package world
 
 import (
 	"time"
-
-	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
 
 // Resurrection follows ps_game.exe: the 0x0553 request (CUser::PacketPC),
@@ -22,7 +20,6 @@ const (
 
 // CUser::Rebirth kind byte of 0x0551.
 const (
-	rebirthKindHere  = 1
 	rebirthKindBind  = 4
 	rebirthKindParty = 5
 )
@@ -33,11 +30,6 @@ const (
 	rebirthDeadline = 200 * time.Second
 	// partyRebirthWait is 0x0553 mode 3's tick + 30000.
 	partyRebirthWait = 30 * time.Second
-	// abilityUltimateRebirth (46, CUser +0x58d8) revives an ultimate-mode
-	// character without the rune.
-	abilityUltimateRebirth = 46
-	// Resurrection runes: real type 26, Special 37.
-	specialRebirth = 37
 )
 
 // startRebirthTimer is EnterDead's deadline (code 0).
@@ -51,18 +43,14 @@ func (s *Session) handleResurrect(p []byte) {
 		return
 	}
 	switch p[2] {
-	case reviveAtBind:
-		s.killSoul()
+	case reviveAtBind, reviveRuneAtBind, reviveRuneHere:
+		s.rebirthAtBind()
 	case reviveWithParty:
 		if !s.inParty() {
-			s.killSoul()
+			s.rebirthAtBind()
 			return
 		}
 		s.rebirthAt, s.rebirthParty = time.Now().Add(partyRebirthWait), true
-	case reviveRuneAtBind:
-		s.killSoulByItem(false)
-	case reviveRuneHere:
-		s.killSoulByItem(true)
 	}
 }
 
@@ -75,33 +63,7 @@ func (s *Session) tickRebirth(now time.Time) {
 		s.killSoulParty()
 		return
 	}
-	s.killSoul()
-}
-
-// killSoul is CUser::KillSoul. Outside ultimate mode: the death's exp
-// loss, then rebirth at the bind point with full pools. In ultimate mode
-// the character needs ability 46 or a resurrection rune (no exp loss, half
-// pools); without either the original ends the character.
-func (s *Session) killSoul() {
-	ch := s.char
-	if ch.Mode != growUltimate || s.deathLoss < 0 {
-		s.rebirthAtBind()
-		return
-	}
-	if s.hasBenefit(abilityUltimateRebirth) {
-		s.halfPools()
-		m, x, y, z := s.respawnDestination(ch)
-		s.rebirth(m, x, y, z, rebirthKindBind, false, 0)
-		return
-	}
-	if i := s.findRebirthItem(false); i >= 0 {
-		s.useRebirthItem(i)
-		s.halfPools()
-		m, x, y, z := s.respawnDestination(ch)
-		s.rebirth(m, x, y, z, rebirthKindBind, false, 0)
-		return
-	}
-	s.ultimateDeath()
+	s.rebirthAtBind()
 }
 
 // rebirthAtBind applies the normal death penalty and returns the user with full pools.
@@ -112,42 +74,14 @@ func (s *Session) rebirthAtBind() {
 	s.rebirth(m, x, y, z, rebirthKindBind, true, lost)
 }
 
-// killSoulByItem is KillSoulByItem (here false: bind point, preferring
-// runes with ReqVg set) and KillSoulByItemNoMove (here true: where the
-// character died, preferring runes with ReqVg 0). No exp loss, half pools;
-// without a rune it is KillSoul.
-func (s *Session) killSoulByItem(here bool) {
-	ch := s.char
-	i := -1
-	if s.deathLoss >= 0 {
-		i = s.findRebirthItem(here)
-	}
-	if i < 0 {
-		s.killSoul()
-		return
-	}
-	s.useRebirthItem(i)
-	s.halfPools()
-	if here {
-		s.rebirth(ch.MapID, ch.PosX, ch.PosY, ch.PosZ, rebirthKindHere, false, 0)
-		return
-	}
-	m, x, y, z := s.respawnDestination(ch)
-	s.rebirth(m, x, y, z, rebirthKindBind, false, 0)
-}
-
 // killSoulParty is KillSoulParty: at the party leader's position with
 // full pools (after the exp loss) when the leader is alive on the same
-// map; otherwise, and always in ultimate mode, KillSoul.
+// map; otherwise return to the bind point.
 func (s *Session) killSoulParty() {
 	ch := s.char
-	if ch.Mode == growUltimate {
-		s.killSoul()
-		return
-	}
 	l := s.partyLeader()
 	if l == nil || l == s.player || !l.IsAlive() || l.MapID() != ch.MapID {
-		s.killSoul()
+		s.rebirthAtBind()
 		return
 	}
 	lost := expDrop(ch, s.deathLoss, s.faction)
@@ -176,77 +110,14 @@ func (s *Session) partyLeader() *ConnectedPlayer {
 	return nil
 }
 
-// hasBenefit reports a positive ability of a buff still active (death
-// clears all but the KeepOnDeath ones first).
-func (s *Session) hasBenefit(kind uint8) bool {
-	for _, b := range s.buffs {
-		for _, a := range b.Abilities {
-			if a.Type == kind && a.Value > 0 {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// findRebirthItem is FindItemRebirth: bags 1.. in order, slots 0-23, a
-// rune (real type 26, Special 37), first one matching the preference
-// (noMove: ReqVg 0, otherwise ReqVg set), then any rune. -1 when none.
-func (s *Session) findRebirthItem(noMove bool) int {
-	defs := db.MustDefs()
-	best := func(prefer bool) int {
-		found := -1
-		for i, it := range s.items {
-			if it.Bag == 0 || it.Count == 0 {
-				continue
-			}
-			d := defs.Item(it.Type, it.TypeID)
-			if d == nil || realType(d.Type) != 26 || d.Special != specialRebirth {
-				continue
-			}
-			if prefer && (d.ReqVg == 0) != noMove {
-				continue
-			}
-			if found < 0 || it.Bag < s.items[found].Bag || (it.Bag == s.items[found].Bag && it.Slot < s.items[found].Slot) {
-				found = i
-			}
-		}
-		return found
-	}
-	if i := best(true); i >= 0 {
-		return i
-	}
-	return best(false)
-}
-
-// useRebirthItem is ItemUseNSend: one rune consumed, the client told.
-func (s *Session) useRebirthItem(i int) {
-	res, err := s.consumeOne(i)
-	if err != nil {
-		s.log.Printf("GX Server World failed to consume resurrection rune: %v", err)
-	}
-	s.send(buildUseItemResult(s.char.ID, &res), "0x050A resurrection rune")
-}
-
-// setPools sets current HP/MP/SP to the effective maxima (half when half).
-func (s *Session) setPools(half bool) {
+// refillPools sets current HP, MP and SP to their effective maxima.
+func (s *Session) refillPools() {
 	ch := s.char
 	full := StatsFor(ch, s.equipment())
-	target := func(m uint32) uint32 {
-		if half {
-			return m / 2
-		}
-		return m
-	}
-	ch.CurrentHP, ch.CurrentMP, ch.CurrentSP = target(full.MaxHP), target(full.MaxMP), target(full.MaxSP)
+	ch.CurrentHP, ch.CurrentMP, ch.CurrentSP = full.MaxHP, full.MaxMP, full.MaxSP
 }
 
-func (s *Session) halfPools() { s.setPools(true) }
-
-// rebirth is CUser::Rebirth: full pools when restore, the corpse leaves
-// the view (CZone::LeaveDead 0x0406), then on the same map the user moves
-// and 0x0551 (id, kind, exp, position) goes to the view; on another map
-// 0x0551 goes to the user before the zone change. 0x0505 sends the pools.
+// rebirth restores the character and publishes the result to the world.
 func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore bool, lost uint32) {
 	ch := s.char
 	if !s.canEnterMap(mapID, ch.Level) {
@@ -261,7 +132,7 @@ func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore boo
 		x, y, z = p[0], p[1], p[2]
 	}
 	if restore {
-		s.setPools(false)
+		s.refillPools()
 	}
 	s.broadcastNear(buildCharacterReviveInit(ch.ID), "0x0406 corpse leave", true)
 	s.dead, s.rebirthAt, s.rebirthParty = false, time.Time{}, false
@@ -298,29 +169,4 @@ func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore boo
 	}
 	s.log.Printf("GX Server World rebirth character_id=%d kind=%d map=%d pos=(%.2f, %.2f, %.2f) exp_lost=%d",
 		ch.ID, kind, mapID, x, y, z, lost)
-}
-
-// ultimateDeath is KillSoul's ultimate-mode end without ability 46 or a
-// rune: ExpDrop, the DB agent's 0x0406 (account, character), logout and
-// LeaveDead.
-func (s *Session) ultimateDeath() {
-	ch := s.char
-	expDrop(ch, s.deathLoss, s.faction)
-	s.persist()
-	s.log.Printf("GX Server World ultimate death character_id=%d (no resurrection rune)", ch.ID)
-	s.endUltimateCharacter()
-}
-
-// endUltimateCharacter is the rest of that branch: the character leaves the
-// world, is deleted (usp_Delete_Char_E, the DB agent's 0x0406 effect; the
-// usual restore window applies) and the connection closes (LogoutUser).
-func (s *Session) endUltimateCharacter() {
-	charID := s.char.ID
-	s.leaveWorld(true)
-	if ok, err := db.DeleteCharacter(s.accountID, charID); err != nil || !ok {
-		s.log.Printf("GX Server World ultimate death delete failed character_id=%d ok=%v: %v", charID, ok, err)
-	}
-	if s.conn != nil {
-		s.conn.Close()
-	}
 }

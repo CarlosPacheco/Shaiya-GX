@@ -40,14 +40,8 @@ func (c *Creation) controls(w, h int) {
 		c.jobs[i].UV = skin.UV
 		c.jobs[i].Checked = c.Draft.Class == job
 	}
-	for i := range c.modes {
-		c.modes[i].Checked = c.Draft.Mode == uint8(i)
-	}
 	for _, b := range c.buttons() {
 		b.OriginX, b.OriginY, b.Disabled = x, y, c.Busy
-	}
-	for i := range c.modes {
-		c.modes[i].Disabled = c.Busy || uint8(i) > c.MaxMode
 	}
 	c.OK.Disabled = c.Busy || len(c.cleanName()) < 2
 }
@@ -64,9 +58,6 @@ func (c *Creation) buttons() []*Button {
 	}
 	for i := range c.arrows {
 		out = append(out, &c.arrows[i])
-	}
-	for i := range c.modes {
-		out = append(out, &c.modes[i])
 	}
 	return out
 }
@@ -90,14 +81,6 @@ func (c *Creation) loadControls(ld *loader) {
 		*b = Button{Tex: tex, OffX: 97 + side*92, OffY: []int{440, 473, 507}[row], DrawW: 32, DrawH: 32, HitW: 23, HitH: 23}
 		for state, v := range []int{0, 1, 2, 2, 3} {
 			b.UV[state] = UV{float32(side) / 2, float32(v) / 4, float32(side+1) / 2, float32(v+1) / 4}
-		}
-	}
-	tex = ld.get("create_mode_button.png")
-	for i := range c.modes {
-		b := &c.modes[i]
-		*b = Button{Tex: tex, OffX: 70 + i%2*78, OffY: 554 + i/2*29, DrawW: 128, DrawH: 32, HitW: 68, HitH: 22, Toggle: true}
-		for state, row := range []int{0, 1, 2, 3, 4} {
-			b.UV[state] = UV{float32(i) / 4, float32(row) / 8, float32(i+1) / 4, float32(row+1) / 8}
 		}
 	}
 	for i, name := range []string{"af", "df", "pr", "sr", "am", "dm"} {

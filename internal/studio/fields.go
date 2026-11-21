@@ -34,7 +34,7 @@ var itemFields = func() []Field {
 	add("Client type flag 3", "Type3", "", shop, 15, 1)
 	add("Required level", "MinLevel", "Reqlevel", req, 4, 2)
 	add("Faction", "Country", "Country", req, 6, 1)
-	add("Growth mode", "Grow", "Grow", req, 13, 1)
+	add("Legacy item property", "Grow", "Grow", req, 13, 1)
 	for i, class := range classes {
 		add(class.label+" eligibility", class.field, class.field, req, 7+i, 1)
 	}
@@ -107,7 +107,6 @@ var skillFields = func() []Field {
 	for i, class := range classes {
 		add(class.label+" eligibility", class.field, req, 11+i, 1)
 	}
-	add("Growth mode", "Grow", req, 17, 1)
 	add("Skill point cost", "SkillPoint", req, 18, 1)
 	add("Visibility / learnability", "TypeShow", req, 19, 1)
 	add("Attack kind", "TypeAttack", cast, 20, 1)

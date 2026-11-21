@@ -26,8 +26,8 @@ Direct GX dependencies: `server/internal/config`, `server/internal/password`.
 | [`LoginDecision`](../../server/internal/db/account.go#L164)<br>`func LoginDecision(login LoginResult) (result uint8, permission uint8)` | LoginDecision maps the procedure's Status to the client's login result byte and permission (auth status), as recovered from the original ps_login (CUser login handling; see Eternity src/auth/login_protocol.cpp). Permission 11 is a regular account; 1..5 are the admin tiers. |
 | [`CanPlay`](../../server/internal/db/account.go#L222)<br>`func CanPlay(status int32) bool` | Account is the account state the world server needs. CanPlay rejects unrecognized authorization states rather than granting permissions from arbitrary legacy status bits. |
 | [`Account`](../../server/internal/db/account.go#L226)<br>`type Account` | See the source definition and the subsystem ownership contract. |
-| [`ErrNotFound`](../../server/internal/db/account.go#L238)<br>`var ErrNotFound` | See the source definition and the subsystem ownership contract. |
-| [`AccountByUID`](../../server/internal/db/account.go#L242)<br>`func AccountByUID(userUID int32) (Account, error)` | AccountByUID reads Users_Master plus the realm's UserMaxGrow row (PS_GameData.dbo.usp_Read_User_MaxGrow_R). |
+| [`ErrNotFound`](../../server/internal/db/account.go#L237)<br>`var ErrNotFound` | See the source definition and the subsystem ownership contract. |
+| [`AccountByUID`](../../server/internal/db/account.go#L241)<br>`func AccountByUID(userUID int32) (Account, error)` | AccountByUID reads Users_Master plus the realm's UserMaxGrow row (PS_GameData.dbo.usp_Read_User_MaxGrow_R). |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -49,7 +49,6 @@ type Account struct {
 	AdminLevel        uint8
 	Point             int32
 	Country           uint8 // 0 light, 1 dark, 2 none chosen yet
-	MaxGrow           uint8
 }
 ```
 
@@ -260,35 +259,35 @@ Direct GX dependencies: `internal/element`, `internal/itemstack`, `internal/pote
 | [`MaxStack`](../../server/internal/db/defs.go#L53)<br>`func (d *ItemDef) MaxStack() uint16` | MaxStack is the stack size (Items.Count, at least 1). |
 | [`SkillKey`](../../server/internal/db/defs.go#L55)<br>`type SkillKey` | See the source definition and the subsystem ownership contract. |
 | [`SkillDef`](../../server/internal/db/defs.go#L63)<br>`type SkillDef` | SkillDef is one PS_GameDefs.dbo.Skills row. ClassEligible is indexed by Chars.Job: Attackfighter, Defensefighter, Patrolrogue, Shootrogue, Attackmage, Defensemage. EP4.5 has three AbilityType/Value pairs. |
-| [`MobAttack`](../../server/internal/db/defs.go#L119)<br>`type MobAttack` | MobAttack is one of a mob's three attack slots (AttackTypeN..AttackokN). |
-| [`MobDef`](../../server/internal/db/defs.go#L130)<br>`type MobDef` | MobDef is the subset of PS_GameDefs.dbo.Mobs the world uses. |
-| [`MobDrop`](../../server/internal/db/defs.go#L163)<br>`type MobDrop` | See the source definition and the subsystem ownership contract. |
-| [`ProductItem`](../../server/internal/db/defs.go#L170)<br>`type ProductItem` | See the source definition and the subsystem ownership contract. |
-| [`Product`](../../server/internal/db/defs.go#L175)<br>`type Product` | See the source definition and the subsystem ownership contract. |
-| [`StatusKey`](../../server/internal/db/defs.go#L183)<br>`type StatusKey` | StatusKey indexes StatusDefs by level and job (Chars.Job). |
-| [`Status`](../../server/internal/db/defs.go#L189)<br>`type Status` | Status is a StatusDefs row: base max HP/SP/MP for a level and job. |
-| [`BaseItem`](../../server/internal/db/defs.go#L193)<br>`type BaseItem` | BaseItem is a BaseItemsDefs row: an item a new character of that family and job starts with, in inventory bag 1 at Slot. |
-| [`BaseItemKey`](../../server/internal/db/defs.go#L200)<br>`type BaseItemKey` | BaseItemKey indexes BaseItemsDefs by family (race) and job. |
-| [`Defs`](../../server/internal/db/defs.go#L203)<br>`type Defs` | Defs holds every PS_GameDefs table the world needs. |
-| [`defsOnce`](../../server/internal/db/defs.go#L218)<br>`var defsOnce sync.Once` | See the source definition and the subsystem ownership contract. |
-| [`defs`](../../server/internal/db/defs.go#L219)<br>`var defs *Defs` | See the source definition and the subsystem ownership contract. |
-| [`defsErr`](../../server/internal/db/defs.go#L220)<br>`var defsErr error` | See the source definition and the subsystem ownership contract. |
-| [`SetDefsForTest`](../../server/internal/db/defs.go#L224)<br>`func SetDefsForTest(d *Defs)` | SetDefsForTest installs definitions without a database (unit tests). |
-| [`ReloadDefsForTest`](../../server/internal/db/defs.go#L230)<br>`func ReloadDefsForTest() (*Defs, error)` | ReloadDefsForTest replaces test definitions with the database's again. |
-| [`Definitions`](../../server/internal/db/defs.go#L237)<br>`func Definitions() (*Defs, error)` | Definitions returns the cached definitions, loading them on first use. |
-| [`MustDefs`](../../server/internal/db/defs.go#L243)<br>`func MustDefs() *Defs` | MustDefs is for code paths that run only after a successful startup load. |
-| [`clampU8`](../../server/internal/db/defs.go#L251)<br>`func clampU8(v int64) uint8` | See the source definition and the subsystem ownership contract. |
-| [`clampU16`](../../server/internal/db/defs.go#L255)<br>`func clampU16(v int64) uint16` | See the source definition and the subsystem ownership contract. |
-| [`normalizeSkill`](../../server/internal/db/defs.go#L260)<br>`func normalizeSkill(s *SkillDef, defenceType, fixRange uint8, keep uint32, aggro uint16, need [15]uint8, shield uint8)` | normalizeSkill applies CGameData::LoadConstSkill's load-time rules. |
-| [`MobRespawnSeconds`](../../server/internal/db/defs.go#L306)<br>`func MobRespawnSeconds(special uint8) uint64` | MobRespawnSeconds maps Mobs.Attackspecial3 to the respawn delay. |
-| [`loadDefs`](../../server/internal/db/defs.go#L317)<br>`func loadDefs() (*Defs, error)` | See the source definition and the subsystem ownership contract. |
-| [`loadSkillCatalog`](../../server/internal/db/defs.go#L589)<br>`func loadSkillCatalog(ctx context.Context, pool *sql.DB, table, levelColumn string) (map[SkillKey]*SkillDef, error)` | See the source definition and the subsystem ownership contract. |
-| [`Item`](../../server/internal/db/defs.go#L647)<br>`func (d *Defs) Item(itemType, typeID uint8) *ItemDef` | Item returns the definition for (type, typeID), or nil. |
-| [`Skill`](../../server/internal/db/defs.go#L650)<br>`func (d *Defs) Skill(skillID uint16, level uint8) *SkillDef` | Skill returns the definition for (skillID, level), or nil. |
-| [`NPCSkillWireLevel`](../../server/internal/db/defs.go#L655)<br>`const NPCSkillWireLevel = 100` | NPCSkillWireLevel distinguishes NPC effects from player effects on the wire. |
-| [`NPCSkill`](../../server/internal/db/defs.go#L658)<br>`func (d *Defs) NPCSkill(skillID uint16) *SkillDef` | NPCSkill selects rank one from the independent NPC catalog. |
-| [`EffectSkill`](../../server/internal/db/defs.go#L663)<br>`func (d *Defs) EffectSkill(skillID uint16, wireLevel uint8) *SkillDef` | EffectSkill resolves a stored or transmitted effect's level discriminator. |
-| [`MobQuestItem`](../../server/internal/db/defs.go#L672)<br>`func MobQuestItem(index int32) ItemKey` | MobQuestItem decodes LoadConstMob's quest-only index. This is not the ordinary Type*1000+TypeID format. Native item IDs are truncated to a byte. |
+| [`MobAttack`](../../server/internal/db/defs.go#L118)<br>`type MobAttack` | MobAttack is one of a mob's three attack slots (AttackTypeN..AttackokN). |
+| [`MobDef`](../../server/internal/db/defs.go#L129)<br>`type MobDef` | MobDef is the subset of PS_GameDefs.dbo.Mobs the world uses. |
+| [`MobDrop`](../../server/internal/db/defs.go#L162)<br>`type MobDrop` | See the source definition and the subsystem ownership contract. |
+| [`ProductItem`](../../server/internal/db/defs.go#L169)<br>`type ProductItem` | See the source definition and the subsystem ownership contract. |
+| [`Product`](../../server/internal/db/defs.go#L174)<br>`type Product` | See the source definition and the subsystem ownership contract. |
+| [`StatusKey`](../../server/internal/db/defs.go#L182)<br>`type StatusKey` | StatusKey indexes StatusDefs by level and job (Chars.Job). |
+| [`Status`](../../server/internal/db/defs.go#L188)<br>`type Status` | Status is a StatusDefs row: base max HP/SP/MP for a level and job. |
+| [`BaseItem`](../../server/internal/db/defs.go#L192)<br>`type BaseItem` | BaseItem is a BaseItemsDefs row: an item a new character of that family and job starts with, in inventory bag 1 at Slot. |
+| [`BaseItemKey`](../../server/internal/db/defs.go#L199)<br>`type BaseItemKey` | BaseItemKey indexes BaseItemsDefs by family (race) and job. |
+| [`Defs`](../../server/internal/db/defs.go#L202)<br>`type Defs` | Defs holds every PS_GameDefs table the world needs. |
+| [`defsOnce`](../../server/internal/db/defs.go#L217)<br>`var defsOnce sync.Once` | See the source definition and the subsystem ownership contract. |
+| [`defs`](../../server/internal/db/defs.go#L218)<br>`var defs *Defs` | See the source definition and the subsystem ownership contract. |
+| [`defsErr`](../../server/internal/db/defs.go#L219)<br>`var defsErr error` | See the source definition and the subsystem ownership contract. |
+| [`SetDefsForTest`](../../server/internal/db/defs.go#L223)<br>`func SetDefsForTest(d *Defs)` | SetDefsForTest installs definitions without a database (unit tests). |
+| [`ReloadDefsForTest`](../../server/internal/db/defs.go#L229)<br>`func ReloadDefsForTest() (*Defs, error)` | ReloadDefsForTest replaces test definitions with the database's again. |
+| [`Definitions`](../../server/internal/db/defs.go#L236)<br>`func Definitions() (*Defs, error)` | Definitions returns the cached definitions, loading them on first use. |
+| [`MustDefs`](../../server/internal/db/defs.go#L242)<br>`func MustDefs() *Defs` | MustDefs is for code paths that run only after a successful startup load. |
+| [`clampU8`](../../server/internal/db/defs.go#L250)<br>`func clampU8(v int64) uint8` | See the source definition and the subsystem ownership contract. |
+| [`clampU16`](../../server/internal/db/defs.go#L254)<br>`func clampU16(v int64) uint16` | See the source definition and the subsystem ownership contract. |
+| [`normalizeSkill`](../../server/internal/db/defs.go#L259)<br>`func normalizeSkill(s *SkillDef, defenceType, fixRange uint8, keep uint32, aggro uint16, need [15]uint8, shield uint8)` | normalizeSkill applies CGameData::LoadConstSkill's load-time rules. |
+| [`MobRespawnSeconds`](../../server/internal/db/defs.go#L305)<br>`func MobRespawnSeconds(special uint8) uint64` | MobRespawnSeconds maps Mobs.Attackspecial3 to the respawn delay. |
+| [`loadDefs`](../../server/internal/db/defs.go#L316)<br>`func loadDefs() (*Defs, error)` | See the source definition and the subsystem ownership contract. |
+| [`loadSkillCatalog`](../../server/internal/db/defs.go#L588)<br>`func loadSkillCatalog(ctx context.Context, pool *sql.DB, table, levelColumn string) (map[SkillKey]*SkillDef, error)` | See the source definition and the subsystem ownership contract. |
+| [`Item`](../../server/internal/db/defs.go#L646)<br>`func (d *Defs) Item(itemType, typeID uint8) *ItemDef` | Item returns the definition for (type, typeID), or nil. |
+| [`Skill`](../../server/internal/db/defs.go#L649)<br>`func (d *Defs) Skill(skillID uint16, level uint8) *SkillDef` | Skill returns the definition for (skillID, level), or nil. |
+| [`NPCSkillWireLevel`](../../server/internal/db/defs.go#L654)<br>`const NPCSkillWireLevel = 100` | NPCSkillWireLevel distinguishes NPC effects from player effects on the wire. |
+| [`NPCSkill`](../../server/internal/db/defs.go#L657)<br>`func (d *Defs) NPCSkill(skillID uint16) *SkillDef` | NPCSkill selects rank one from the independent NPC catalog. |
+| [`EffectSkill`](../../server/internal/db/defs.go#L662)<br>`func (d *Defs) EffectSkill(skillID uint16, wireLevel uint8) *SkillDef` | EffectSkill resolves a stored or transmitted effect's level discriminator. |
+| [`MobQuestItem`](../../server/internal/db/defs.go#L671)<br>`func MobQuestItem(index int32) ItemKey` | MobQuestItem decodes LoadConstMob's quest-only index. This is not the ordinary Type*1000+TypeID format. Native item IDs are truncated to a byte. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -344,7 +343,6 @@ type SkillDef struct {
 	Name           string
 	Country        uint8
 	ReqLevel       uint16
-	Grow           uint8
 	SkillPointCost uint8
 	PrevSkillID    uint16
 	// ChangeType 101 and ChangeLevel: a transformation into the monster of that id (Degeneration).
@@ -546,9 +544,8 @@ Direct GX dependencies: `server/internal/config`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`FactionNone`](../../server/internal/db/faction.go#L11)<br>`const FactionNone = 2` | FactionNone is reported while the account has not chosen a faction yet. |
-| [`ReadMaxGrow`](../../server/internal/db/faction.go#L16)<br>`func ReadMaxGrow(userUID int32) (country, maxGrow uint8, err error)` | ReadMaxGrow runs PS_GameData.dbo.usp_Read_User_MaxGrow_R. The original procedure always reports MaxGrow 3; without a row the account has no faction yet. |
-| [`SaveCountry`](../../server/internal/db/faction.go#L38)<br>`func SaveCountry(userUID int32, country uint8) error` | SaveCountry runs PS_GameData.dbo.usp_Save_Char_Country_E, inserting the UserMaxGrow row the first time an account picks a faction. |
+| [`FactionNone`](../../server/internal/db/faction.go#L10)<br>`const FactionNone = 2` | FactionNone is reported while the account has not chosen a faction yet. |
+| [`SaveCountry`](../../server/internal/db/faction.go#L14)<br>`func SaveCountry(userUID int32, country uint8) error` | SaveCountry runs PS_GameData.dbo.usp_Save_Char_Country_E, inserting the UserMaxGrow row the first time an account picks a faction. |
 
 ### gameplay.go
 
@@ -848,8 +845,9 @@ Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `inte
 | [`pruneLegacyMigration`](../../server/internal/db/migrations.go#L37)<br>`var pruneLegacyMigration string` | See the source definition and the subsystem ownership contract. |
 | [`percentageSkillsMigration`](../../server/internal/db/migrations.go#L40)<br>`var percentageSkillsMigration string` | See the source definition and the subsystem ownership contract. |
 | [`restoreConsumablesMigration`](../../server/internal/db/migrations.go#L43)<br>`var restoreConsumablesMigration string` | See the source definition and the subsystem ownership contract. |
-| [`migrations`](../../server/internal/db/migrations.go#L45)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L206)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX migrations have their own transactional, checksummed ledger. |
+| [`removeGrowthModesMigration`](../../server/internal/db/migrations.go#L46)<br>`var removeGrowthModesMigration string` | See the source definition and the subsystem ownership contract. |
+| [`migrations`](../../server/internal/db/migrations.go#L48)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
+| [`migrate`](../../server/internal/db/migrations.go#L210)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 

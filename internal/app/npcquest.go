@@ -30,9 +30,6 @@ type npcQuestView struct {
 func (a *App) questRewardLabel(q sdata.Quest, i int) string {
 	r := q.Results[i]
 	experience := uint64(r.Experience)
-	if q.Mode <= 2 {
-		experience *= 2
-	}
 	reward := fmt.Sprintf("%d XP, %d gold", experience, r.Money)
 	if r.ItemType == 0 {
 		return fmt.Sprintf("%d: %s", i+1, reward)
@@ -133,20 +130,6 @@ func (a *App) questRequirementsVisible(q sdata.Quest) bool {
 		}
 		if !allowed {
 			return false
-		}
-		switch slot.Mode {
-		case 0:
-			if q.Mode != 0 {
-				return false
-			}
-		case 1:
-			if q.Mode > 1 {
-				return false
-			}
-		case 2:
-			if q.Mode == 3 {
-				return false
-			}
 		}
 	}
 	if a.state.FinishedQuests != nil {

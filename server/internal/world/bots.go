@@ -115,7 +115,7 @@ func (s *Session) gmBots(args []string) error {
 		} // A healer in each faction, including small scenarios.
 		b := worldBot{home: home, faction: faction, target: i ^ 1, char: db.Character{
 			ID: worldBots.nextID, Name: fmt.Sprintf("GX Bot %04d", i+1), MapID: s.char.MapID,
-			PosX: home[0], PosY: home[1], PosZ: home[2], Class: job, Race: [2][6]uint8{{0, 0, 1, 1, 1, 0}, {3, 3, 2, 2, 2, 2}}[faction][job], Mode: 3, Height: 2,
+			PosX: home[0], PosY: home[1], PosZ: home[2], Class: job, Race: [2][6]uint8{{0, 0, 1, 1, 1, 0}, {3, 3, 2, 2, 2, 2}}[faction][job], Height: 2,
 			Gender: uint8(rand.IntN(2)), Face: uint8(rand.IntN(3)), Hair: uint8(rand.IntN(3)), Level: defs.LevelCap,
 			MaxHP: botHealth, CurrentHP: botHealth, MaxMP: 3000, CurrentMP: 3000, MaxSP: 3000, CurrentSP: 3000,
 		}}
@@ -201,7 +201,7 @@ func (b *worldBot) equip(defs *db.Defs, gear [8][]*db.ItemDef) {
 	}
 	for _, skill := range defs.Skills {
 		if skill.SkillLevel == 1 && skill.ClassEligible[b.char.Class] && skill.ReqLevel <= b.char.Level &&
-			skillCountryAllows(skill.Country, b.char.Race) && skillGrowAllows(skill.Grow, b.char.Mode) && skill.TypeShow != 0 &&
+			skillCountryAllows(skill.Country, b.char.Race) && skill.TypeShow != 0 &&
 			(skill.TypeEffect == typeEffectAttack && skill.DamageHP > 0 || skill.TypeEffect == typeEffectHeal && skill.HealHP > 0) {
 			b.skills = append(b.skills, skill)
 		}

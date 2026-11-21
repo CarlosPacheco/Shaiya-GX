@@ -84,8 +84,8 @@ func TestPvPFinalRewardStageRemainsVisibleAndCannotReplay(t *testing.T) {
 	a.msg = map[int]string{5404: "final title", 5353: "<v>:<v2>", 5354: "level", 5355: "gold"}
 	a.state.Details.Kills, a.state.Details.Deaths = 1000000, 1000000
 	a.state.PvPRewards = proto.PvPRewards{Known: true, KillStage: 31, DeathStage: 31}
-	if state := a.pvpRewardState(); !state.CanKill || !state.CanDeath || state.Reward != "31:26" {
-		t.Fatal("rank31 must offer client-table Hard points", state)
+	if state := a.pvpRewardState(); !state.CanKill || !state.CanDeath || state.Reward != "31:30" {
+		t.Fatal("rank31 must offer unified points", state)
 	}
 	for _, op := range []proto.Opcode{proto.PvPRewardKill, proto.PvPRewardDeath} {
 		w := proto.NewWriter(op)
@@ -103,7 +103,7 @@ func TestPvPFinalRewardStageRemainsVisibleAndCannotReplay(t *testing.T) {
 		t.Fatal("final paid stage lost completion marker", a.state.PvPRewards)
 	}
 	s := a.pvpRewardState()
-	if s.CanKill || s.CanDeath || s.Reward != "31:26" || s.Kills != "1000000 / 1000000" || s.DeathLevel != "31 level / 31 level" || s.KillProgress != 1 || s.DeathProgress != 1 {
+	if s.CanKill || s.CanDeath || s.Reward != "31:30" || s.Kills != "1000000 / 1000000" || s.DeathLevel != "31 level / 31 level" || s.KillProgress != 1 || s.DeathProgress != 1 {
 		t.Fatal("paid final reward must remain visible without a stage32 preview or replay", s)
 	}
 	if a.statusState().Title != "final title" {
@@ -134,7 +134,7 @@ func TestStatusHidesModeAndUsesUpperArmorElement(t *testing.T) {
 	a.state.SelfID = 100
 	a.state.Slots[0] = proto.CharacterSlot{ID: 100, Mode: 3}
 	a.msg = map[int]string{473: "ULTIMATE", 5270: "Sin elemento", 5204: "Fuego", 5205: "Agua"}
-	if value := a.statusState(); value.Mode != "" || value.Element != "Sin elemento" {
+	if value := a.statusState(); value.Element != "Sin elemento" {
 		t.Fatal(value)
 	}
 	a.items = map[sdata.ItemKey]*sdata.Item{

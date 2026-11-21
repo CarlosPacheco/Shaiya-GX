@@ -38,7 +38,7 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 	case packet.AccountFaction:
 		if len(p) >= 3 && p[2] <= FactionDark && (s.faction == FactionNone || s.faction == p[2]) {
 			if s.faction == p[2] {
-				s.send(buildAccountFaction(s.faction, s.maxMode), "0x0109 account faction selected")
+				s.send(buildAccountFaction(s.faction), "0x0109 account faction selected")
 				return
 			}
 			if err := db.SaveCountry(int32(s.accountID), p[2]); err != nil {
@@ -46,7 +46,7 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 				return
 			}
 			s.faction = p[2]
-			s.send(buildAccountFaction(s.faction, s.maxMode), "0x0109 account faction selected")
+			s.send(buildAccountFaction(s.faction), "0x0109 account faction selected")
 		}
 	case packet.CreateCharacter:
 		s.handleCreateCharacter(p)

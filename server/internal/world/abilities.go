@@ -67,11 +67,10 @@ func applyAbility(e *EquipmentStats, effect, kind uint8, value int32) bool {
 		e.Mods[kind-29].Evasion += value
 	case 32, 33, 34:
 		e.Disabled[kind-32] += value
-	case 35, 36, 37, 38, 39, 44, 46:
+	case 35, 36, 37, 38, 39, 44:
 		// Benefits read where they apply: 38 prevents death EXP loss,
 		// 36 stops item wear
-		// (Session.wearExempt), 46 the ultimate-mode
-		// rebirth (Session.killSoul). 39 (Warehouse Call) is the client's
+		// (Session.wearExempt). 39 (Warehouse Call) is the client's
 		// remote warehouse: it only lives as the buff itself.
 	case 0:
 	default:

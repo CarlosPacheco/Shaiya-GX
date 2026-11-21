@@ -21,10 +21,10 @@ func buildWorldHandshake() []byte {
 	return w.MustFinish()
 }
 
-func buildAccountFaction(faction, maxMode uint8) []byte {
+func buildAccountFaction(faction uint8) []byte {
 	w := packet.New(packet.AccountFaction)
 	w.U8(faction)
-	w.U8(maxMode)
+	w.U8(0)
 	return w.MustFinish()
 }
 

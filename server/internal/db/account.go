@@ -232,7 +232,6 @@ type Account struct {
 	AdminLevel        uint8
 	Point             int32
 	Country           uint8 // 0 light, 1 dark, 2 none chosen yet
-	MaxGrow           uint8
 }
 
 var ErrNotFound = errors.New("not found")
@@ -260,6 +259,6 @@ func AccountByUID(userUID int32) (Account, error) {
 	if err != nil {
 		return Account{}, err
 	}
-	a.Country, a.MaxGrow = uint8(country), 3
+	a.Country = uint8(country)
 	return a, nil
 }

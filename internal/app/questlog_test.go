@@ -109,11 +109,11 @@ func TestQuestTextPreservesParagraphsAndDropsFormattingTags(t *testing.T) {
 func TestQuestRewardLabelIncludesItemAndServerRewardValues(t *testing.T) {
 	a := inputApp()
 	a.items = map[sdata.ItemKey]*sdata.Item{{Type: 1, TypeID: 4}: {Name: "Sword"}}
-	q := sdata.Quest{Mode: 1, Results: [3]sdata.QuestResult{{Experience: 50, Money: 330, ItemType: 1, ItemID: 4}}}
-	if got := a.questRewardLabel(q, 0); got != "1: Sword\n100 XP, 330 gold" {
+	q := sdata.Quest{Results: [3]sdata.QuestResult{{Experience: 50, Money: 330, ItemType: 1, ItemID: 4}}}
+	if got := a.questRewardLabel(q, 0); got != "1: Sword\n50 XP, 330 gold" {
 		t.Fatal(got)
 	}
-	q.Mode, q.Results[0].ItemID = 3, 99
+	q.Results[0].ItemID = 99
 	if got := a.questRewardLabel(q, 0); got != "1: Item 1/99\n50 XP, 330 gold" {
 		t.Fatal(got)
 	}

@@ -65,8 +65,8 @@ func TestSQLiteLifecycle(t *testing.T) {
 	if e = SaveCountry(a.UserUID, 0); e != nil {
 		t.Fatal(e)
 	}
-	if country, grow, e := ReadMaxGrow(a.UserUID); e != nil || country != 0 || grow != 3 {
-		t.Fatal("faction", country, grow, e)
+	if saved, err := AccountByUID(a.UserUID); err != nil || saved.Country != 0 {
+		t.Fatal("saved faction", saved.Country, err)
 	}
 	id, e := CreateCharacter(a, NewCharacter{Slot: 4, Name: "SQLiteProbe", MapID: 1, PosX: 578, PosY: 78, PosZ: 1762, HP: 100, MP: 80, SP: 70, Str: 14, Dex: 12, Rec: 9, Int: 8, Wis: 7, Luc: 15})
 	if e != nil {

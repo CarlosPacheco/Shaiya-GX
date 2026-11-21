@@ -56,7 +56,7 @@ func TestPreviewNavigationPressOwnershipAndPending(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c.Open(0, 0, 3)
+	c.Open(0, 0)
 	x, y := CreationNavigationOrigin(1024, 768)
 	draft := c.Draft
 	c.Update(&platform.Input{MouseX: x + 9, MouseY: y + 39, Pressed: true}, 1024, 768)
@@ -72,13 +72,13 @@ func TestPreviewNavigationPressOwnershipAndPending(t *testing.T) {
 	if c.Navigation.Face {
 		t.Fatal("pending creation accepted navigation")
 	}
-	c.Open(0, 0, 3)
+	c.Open(0, 0)
 	c.Update(&platform.Input{Keys: []platform.Key{platform.KeyUp, platform.KeyLeft}}, 1024, 768)
 	c.Navigation.Advance(1, .2)
 	if !c.Navigation.Face || c.Navigation.Angle != -.2 {
 		t.Fatal("keyboard navigation not connected to creation")
 	}
-	c.Open(1, 1, 3)
+	c.Open(1, 1)
 	if c.Navigation.Face || c.Navigation.Angle != 0 {
 		t.Fatal("new creation retained the previous camera")
 	}

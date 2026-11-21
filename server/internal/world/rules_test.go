@@ -7,6 +7,14 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
 
+// Historical Grow fixture values. Live rules ignore this column.
+const (
+	growEasy     = 0
+	growNormal   = 1
+	growHard     = 2
+	growUltimate = 3
+)
+
 func TestMobExperience(t *testing.T) {
 	cases := []struct {
 		mob, base, user uint16
@@ -37,16 +45,19 @@ func TestStartingStatsAndJobs(t *testing.T) {
 }
 
 func TestLevelUpAndReset(t *testing.T) {
-	ch := &db.Character{Class: 4, Mode: growHard, Level: 1, Int: 15}
+	ch := &db.Character{Race: 2, Class: 4, Level: 1}
+	ch.Str, ch.Dex, ch.Rec, ch.Int, ch.Wis, ch.Luc = startingStats(ch.Race, ch.Class)
 	for range 9 {
 		levelUp(ch)
 	}
-	if ch.Level != 10 || ch.Int != 24 || ch.StatPoint != 63 || ch.SkillPoint != 36 {
-		t.Errorf("after 9 hard level-ups: level %d int %d stat %d skill %d", ch.Level, ch.Int, ch.StatPoint, ch.SkillPoint)
+	if ch.Level != 10 || ch.Int != 26 || ch.StatPoint != 81 || ch.SkillPoint != 45 {
+		t.Errorf("after 9 level-ups: level %d int %d stat %d skill %d", ch.Level, ch.Int, ch.StatPoint, ch.SkillPoint)
 	}
-	ch.Race, ch.Wis, ch.StatPoint = 2, 40, 0
+	ch.Wis += 10
+	ch.StatPoint -= 10
+	ch.KillLevel = 4
 	resetStats(ch)
-	if ch.Int != 15+2+9 || ch.Wis != 12+2 || ch.StatPoint != 63 {
+	if ch.Int != 15+2+9 || ch.Wis != 12+2 || ch.StatPoint != 81 || ch.KillLevel != 4 {
 		t.Errorf("reset: int %d wis %d stat %d", ch.Int, ch.Wis, ch.StatPoint)
 	}
 }

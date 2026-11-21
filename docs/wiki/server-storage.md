@@ -85,6 +85,7 @@ published migration; append a new version.
 | 17 | `npc_quest` | Adds six tables for NPCs, shops, destinations, quest details and links |
 | 18 | `map_properties` | Adds map rules and racial birth positions |
 | 19 | `unified_experience` | Replaces mode-specific EXP rows with one threshold per level and migrates character progress |
+| 35 | `remove_growth_modes` | Credits the difference in level points once and neutralizes the legacy mode fields without changing faction or reward claims |
 | 20 | `separate_npc_skills` | Moves former level-100 NPC definitions to an independent `SkillID, Rank` catalog |
 | 21 | `server_notices` | Adds the former SQLite notice catalog |
 | 22 | `teleport_runes` | Adds the former SQLite rune destination catalog and updates item references |

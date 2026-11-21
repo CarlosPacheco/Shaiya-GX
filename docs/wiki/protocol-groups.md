@@ -135,7 +135,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -320,7 +320,7 @@ func PartyLeavePacket() []byte           { return NewWriter(PartyLeft).Bytes() }
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -360,7 +360,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -414,7 +414,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -648,7 +648,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -959,7 +959,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -999,7 +999,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -1149,7 +1149,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -1175,7 +1175,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -1288,7 +1288,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }

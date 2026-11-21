@@ -25,12 +25,8 @@ func (a *App) openPvPRewards() {
 		a.pvpRewardMessage.Visible = false
 	}
 	c, _ := a.selfSlot()
-	if c.Mode == 0 || c.Level < 16 {
-		id := 5346
-		if c.Mode != 0 {
-			id = 5347
-		}
-		a.questMessage(a.msg.Get(id))
+	if c.Level < 16 {
+		a.questMessage(a.msg.Get(5347))
 		a.shop.npcID = 0
 		return
 	}
@@ -68,10 +64,9 @@ func (a *App) confirmedPvPReward(op proto.Opcode) {
 }
 
 func (a *App) pvpRewardState() ui.PvPRewardState {
-	c, _ := a.selfSlot()
 	r := a.state.PvPRewards
-	threshold, points, _, killOK := pvprank.Reward(c.Mode, r.KillStage)
-	deathThreshold, _, gold, deathOK := pvprank.Reward(c.Mode, r.DeathStage)
+	threshold, points, _, killOK := pvprank.Reward(r.KillStage)
+	deathThreshold, _, gold, deathOK := pvprank.Reward(r.DeathStage)
 	state := ui.PvPRewardState{Description: a.msg.Get(5348), Busy: a.pvpReward.pending != 0,
 		CanKill:  r.Known && killOK && a.state.Details.Kills >= threshold,
 		CanDeath: r.Known && deathOK && a.state.Details.Deaths >= deathThreshold}
@@ -83,8 +78,8 @@ func (a *App) pvpRewardState() ui.PvPRewardState {
 		return state
 	}
 	killStage, deathStage := min(r.KillStage, pvprank.RewardCount), min(r.DeathStage, pvprank.RewardCount)
-	threshold, points, _, _ = pvprank.DisplayReward(c.Mode, killStage)
-	_, _, gold, _ = pvprank.DisplayReward(c.Mode, deathStage)
+	threshold, points, _, _ = pvprank.Reward(killStage)
+	_, _, gold, _ = pvprank.Reward(deathStage)
 	state.Reward = a.msg.Format(5353, map[string]string{"v": fmt.Sprint(killStage), "v2": fmt.Sprint(points)})
 	state.Kills = fmt.Sprintf("%d / %d", a.state.Details.Kills, threshold)
 	state.Deaths = fmt.Sprint(a.state.Details.Deaths)
@@ -127,13 +122,12 @@ func (a *App) updatePvPRewards(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if claim != 0 && a.pvpReward.pending == 0 && a.pvpRewardMessage != nil {
-		c, _ := a.selfSlot()
 		r := a.state.PvPRewards
 		stage := r.KillStage
 		if claim == 2 {
 			stage = r.DeathStage
 		}
-		count, points, _, ok := pvprank.Reward(c.Mode, stage)
+		count, points, _, ok := pvprank.Reward(stage)
 		if ok {
 			id := 5351
 			if claim == 2 {

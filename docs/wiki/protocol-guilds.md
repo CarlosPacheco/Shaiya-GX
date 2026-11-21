@@ -99,7 +99,7 @@ func GuildDisbandPacket() []byte { return NewWriter(GuildDisband).Bytes() }
 
 <details><summary>DecodeU8 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L188)
+[Source definition](../../internal/proto/world.go#L189)
 
 ```go
 func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return v, r.Err() }
@@ -157,7 +157,7 @@ func GuildDisbandAnswerPacket(accept bool) []byte {
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -211,7 +211,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -335,7 +335,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 <details><summary>DecodeU8 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L188)
+[Source definition](../../internal/proto/world.go#L189)
 
 ```go
 func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return v, r.Err() }
@@ -460,7 +460,7 @@ func GuildLeavePacket() []byte   { return NewWriter(GuildLeave).Bytes() }
 
 <details><summary>DecodeU8 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L188)
+[Source definition](../../internal/proto/world.go#L189)
 
 ```go
 func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return v, r.Err() }
@@ -746,7 +746,7 @@ func guildID32(op packet.Opcode, id uint32) []byte {
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -1127,7 +1127,7 @@ func guildID32(op packet.Opcode, id uint32) []byte {
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }
@@ -1479,7 +1479,7 @@ func GuildEtinPacket() []byte { return NewWriter(GuildEtin).Bytes() }
 
 <details><summary>DecodeU32 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L191)
+[Source definition](../../internal/proto/world.go#L192)
 
 ```go
 func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); return v, r.Err() }

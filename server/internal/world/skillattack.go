@@ -319,8 +319,8 @@ func (s *Session) clearBuffsOnDeath() {
 	s.deathLoss = s.deathExpLoss()
 	duelDeath := s.duelDeathMark
 	if duelDeath {
-		// A lost duel (m_nVehicleStatus -1): no exp loss, no ultimate
-		// death, and skills above 200 (not level 100) stay.
+		// A lost duel (m_nVehicleStatus -1): no EXP loss, and
+		// skills above 200 (except NPC skills) stay.
 		s.deathLoss, s.duelDeathMark = -1, false
 	}
 	s.startRebirthTimer()

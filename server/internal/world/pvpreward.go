@@ -11,7 +11,7 @@ import (
 // StatusKillResult/StatusDeathResult redeem exactly one unclaimed stage.
 func (s *Session) handlePvPReward(op packet.Opcode, p []byte) {
 	ch := s.char
-	if len(p) != 2 || ch == nil || ch.Mode < 1 || ch.Mode > 3 || ch.Level < 16 {
+	if len(p) != 2 || ch == nil || ch.Level < 16 {
 		return
 	}
 	if op == packet.Opcode(proto.PvPRewardStatus) {
@@ -51,7 +51,7 @@ func buildPvPRewardStatus(ch *db.Character) []byte {
 }
 
 func claimPvPReward(ch db.Character, death bool) (db.Character, uint32, bool) {
-	if ch.Mode < 1 || ch.Mode > 3 || ch.Level < 16 {
+	if ch.Level < 16 {
 		return ch, 0, false
 	}
 	stage, count := ch.KillLevel+1, ch.Kills
@@ -62,7 +62,7 @@ func claimPvPReward(ch db.Character, death bool) (db.Character, uint32, bool) {
 	if (!death && ch.KillLevel >= pvprank.RewardCount) || (death && ch.DeadLevel >= pvprank.RewardCount) {
 		return ch, 0, false
 	}
-	threshold, points, money, ok := pvprank.Reward(ch.Mode, stage)
+	threshold, points, money, ok := pvprank.Reward(stage)
 	if !ok || count < threshold {
 		return ch, 0, false
 	}

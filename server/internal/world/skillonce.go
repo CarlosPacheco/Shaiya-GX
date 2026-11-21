@@ -107,11 +107,11 @@ func (p *ConnectedPlayer) equipmentDefenseAttr() uint8 {
 }
 
 // buildDetectInfo (0x0558): target defence element u32, level u16, mode u8.
-func buildDetectInfo(attr uint32, level uint16, mode uint8) []byte {
+func buildDetectInfo(attr uint32, level uint16) []byte {
 	w := packet.New(packet.SkillDetectInfo)
 	w.U32(attr)
 	w.U16(level)
-	w.U8(mode)
+	w.U8(0)
 	return w.MustFinish()
 }
 
@@ -208,7 +208,7 @@ func (s *Session) skillOnce(k db.CharacterSkill, def *db.SkillDef, target uint32
 		}
 		result(skillResultNormal, p.CharacterID)
 		t := p.Snapshot()
-		s.send(buildDetectInfo(uint32(p.equipmentDefenseAttr()), t.Level, t.Mode), "0x0558 detect info")
+		s.send(buildDetectInfo(uint32(p.equipmentDefenseAttr()), t.Level), "0x0558 detect info")
 	case detailCheck:
 		if !s.skillOnceSucceeds(def, self) {
 			result(skillResultFailed, p.CharacterID)
@@ -262,7 +262,7 @@ func (s *Session) lifeSkill(l *pendingLifeSkill) {
 		return
 	}
 	s.broadcastNear(buildCharacterReviveInit(ch.ID), "0x0406 corpse leave", true)
-	s.setPools(false)
+	s.refillPools()
 	s.dead, s.rebirthAt, s.rebirthParty = false, time.Time{}, false
 	ch.PosX, ch.PosY, ch.PosZ = p[0], p[1], p[2]
 	if s.movement.geometry != nil {

@@ -20,10 +20,6 @@ func TestDeathDialogNativeButtonsAndCapture(t *testing.T) {
 	if got := click(x+129, y+115); got != 2 {
 		t.Fatal("party", got)
 	}
-	d.Set(DeathLocation, "where")
-	if got := click(x+144, y+115); got != 2 {
-		t.Fatal("here", got)
-	}
 	if got := click(x+39, y+115); got != 1 {
 		t.Fatal("bind", got)
 	}

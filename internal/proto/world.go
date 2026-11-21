@@ -125,11 +125,12 @@ func WhisperPacket(target, text string) []byte {
 // ---- server -> client ----
 
 // Faction is 0x0109: country and the highest creatable mode.
-type Faction struct{ Faction, MaxMode uint8 }
+type Faction struct{ Faction uint8 }
 
 func DecodeFaction(p []byte) (m Faction, err error) {
 	r := NewReader(p)
-	m.Faction, m.MaxMode = r.U8(), r.U8()
+	m.Faction = r.U8()
+	r.U8() // reserved byte
 	return m, r.Err()
 }
 

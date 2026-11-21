@@ -3,31 +3,32 @@ package sdata
 import (
 	"encoding/binary"
 	"fmt"
+	"strings"
 )
 
 // Skill: EP5 SkillDefinition in Parsec; nine levels per group, wire ID = group index + 1 (Rapture SkillID).
 // The fixed payload is 116 bytes after name and description.
 type Skill struct {
-	Name, Description                          string
-	Level                                      uint8
-	Icon, RequiredLevel                        uint16
-	Animation, Sound                           uint16
-	VisualCode, Detail                         uint16
-	Toggle                                     uint8
-	Country                                    uint8
-	Classes                                    [6]uint8
-	Grow, Points, Show, Attack, Effect, Target uint8
-	SP, MP, ResetTime                          uint16
-	ReadyTime                                  uint8
-	AttackRange, ApplyRange                    uint8
-	Attribute                                  uint8
-	SuccessType, SuccessValue                  uint8
-	KeepTime                                   uint16
-	FixRange                                   uint8
-	AbilityType                                [3]uint8
-	AbilityValue                               [3]int16
-	LimitHP                                    uint8
-	ChangeType, ChangeLevel                    uint16
+	Name, Description                    string
+	Level                                uint8
+	Icon, RequiredLevel                  uint16
+	Animation, Sound                     uint16
+	VisualCode, Detail                   uint16
+	Toggle                               uint8
+	Country                              uint8
+	Classes                              [6]uint8
+	Points, Show, Attack, Effect, Target uint8
+	SP, MP, ResetTime                    uint16
+	ReadyTime                            uint8
+	AttackRange, ApplyRange              uint8
+	Attribute                            uint8
+	SuccessType, SuccessValue            uint8
+	KeepTime                             uint16
+	FixRange                             uint8
+	AbilityType                          [3]uint8
+	AbilityValue                         [3]int16
+	LimitHP                              uint8
+	ChangeType, ChangeLevel              uint16
 }
 type SkillKey struct {
 	ID    uint16
@@ -47,6 +48,11 @@ func RetiredPlayerSkill(id uint16) bool {
 	}
 }
 
+var retiredGrowthText = strings.NewReplacer(
+	" (Use this skill in caution with Ultimate Mode.)", "",
+	" Only Ultimate Mode can learn this level of skill.", "",
+)
+
 func ParseSkills(raw []byte) (map[SkillKey]Skill, error) {
 	b, err := Decrypt(raw)
 	if err != nil {
@@ -60,7 +66,7 @@ func ParseSkills(raw []byte) (map[SkillKey]Skill, error) {
 	out := map[SkillKey]Skill{}
 	for id := 0; id < n && c.err == nil; id++ {
 		for level := 0; level < 9 && c.err == nil; level++ {
-			s := Skill{Name: c.str(), Description: c.str()}
+			s := Skill{Name: c.str(), Description: retiredGrowthText.Replace(c.str())}
 			p := c.take(116)
 			s.Level = p[0]
 			s.Icon = binary.LittleEndian.Uint16(p[1:])
@@ -72,7 +78,7 @@ func ParseSkills(raw []byte) (map[SkillKey]Skill, error) {
 			s.Country = p[10]
 			copy(s.Classes[:], p[11:17])
 			s.SuccessType, s.SuccessValue = p[54], p[55]
-			s.Grow, s.Points, s.Show, s.Attack, s.Effect = p[17], p[18], p[19], p[20], p[21]
+			s.Points, s.Show, s.Attack, s.Effect = p[18], p[19], p[20], p[21]
 			s.SP, s.MP = binary.LittleEndian.Uint16(p[40:]), binary.LittleEndian.Uint16(p[42:])
 			s.ReadyTime, s.ResetTime, s.Target = p[44], binary.LittleEndian.Uint16(p[45:]), p[56]
 			s.AttackRange, s.ApplyRange = p[47], p[57]

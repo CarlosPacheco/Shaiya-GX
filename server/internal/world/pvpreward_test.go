@@ -8,10 +8,10 @@ import (
 )
 
 func TestPvPRewardStagesCannotBeReplayedOrSkipped(t *testing.T) {
-	for mode := uint8(1); mode <= 3; mode++ {
+	for mode := uint8(0); mode <= 3; mode++ {
 		ch := db.Character{Mode: mode, Level: 16}
 		for stage := uint8(1); stage <= pvprank.RewardCount; stage++ {
-			count, points, gold, _ := pvprank.Reward(mode, stage)
+			count, points, gold, _ := pvprank.Reward(stage)
 			ch.Kills, ch.Deaths = count-1, count-1
 			if _, _, ok := claimPvPReward(ch, false); ok {
 				t.Fatal("kill reward before threshold")
@@ -38,28 +38,23 @@ func TestPvPRewardStagesCannotBeReplayedOrSkipped(t *testing.T) {
 				t.Fatal("death stage replay")
 			}
 		}
-		if ch.StatPoint != [4]uint16{0, 508, 637, 734}[mode] {
+		if ch.StatPoint != 734 {
 			t.Fatal("redeemed stat total")
 		}
+		ch.StatPoint -= 4
+		ch.Str, ch.Dex, ch.Rec, ch.Int, ch.Wis, ch.Luc = startingStats(ch.Race, ch.Class)
+		ch.Str += 19 // fifteen automatic level points and four allocated rewards
 		for range 2 {
 			resetStats(&ch)
-			base := 15 * [4]uint16{0, 5, 7, 9}[mode]
-			if ch.StatPoint != base || ch.KillLevel != 0 || ch.DeadLevel != pvprank.RewardCount || ch.Kills != pvprank.CounterCap {
-				t.Fatal("native reset must clear only kill claims and retain earned counters/death claims", ch)
+			if ch.StatPoint != 734 || ch.KillLevel != pvprank.RewardCount || ch.DeadLevel != pvprank.RewardCount || ch.Kills != pvprank.CounterCap {
+				t.Fatal("reset lost points or claims", ch)
 			}
-			for range pvprank.RewardCount {
-				next, _, ok := claimPvPReward(ch, false)
-				if !ok {
-					t.Fatal("reset did not permit earned PvP rewards to be redeemed again")
-				}
-				ch = next
-			}
-			if ch.StatPoint != base+[4]uint16{0, 508, 637, 734}[mode] {
-				t.Fatal("reclaim after reset duplicated or lost points")
+			if _, _, ok := claimPvPReward(ch, false); ok {
+				t.Fatal("reset allowed a previously claimed reward")
 			}
 		}
 	}
-	for _, ch := range []db.Character{{Mode: 0, Level: 60, Kills: 200000}, {Mode: 1, Level: 15, Kills: 200000}, {Mode: 255, Level: 60, Kills: 200000}} {
+	for _, ch := range []db.Character{{Mode: 0, Level: 15, Kills: 200000}, {Mode: 3, Level: 15, Kills: 200000}} {
 		if _, _, ok := claimPvPReward(ch, false); ok {
 			t.Fatal("ineligible character received reward")
 		}

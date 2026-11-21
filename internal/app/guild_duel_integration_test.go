@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
-	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -110,31 +108,17 @@ func TestGuildDuelAgainstRapture(t *testing.T) {
 	if !b.DeathLossFree || c.DeathLossFree {
 		t.Fatalf("personal death protection confused with guild result: dead=%v other=%v", b.DeathLossFree, c.DeathLossFree)
 	}
-	if os.Getenv("SHAIYA_TEST_GUILD_DUEL_RUNE") == "1" {
-		arc, err := archive.Open(os.Getenv("SHAIYA_DATA"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer arc.Close()
-		raw, err := arc.ReadFile("Item/Item.SData")
-		if err != nil {
-			t.Fatal(err)
-		}
-		appB.items, err = sdata.ParseItems(raw)
-		if err != nil || !appB.hasResurrectionRune() {
-			t.Fatal("guild duel rune fixture missing", err)
-		}
-		appB.deathUI, _ = ui.NewDeathDialog(inputTextures{})
-		appB.clock = 1
-		appB.updateDeath(&platform.Input{}, 1024, 768)
-		if appB.wv.death.rune {
-			t.Fatal("loss-free guild duel offered to consume the rune")
-		}
-		clickDeathChoice(appB, 1024/2-128+96)
-		poll(func() bool { return !b.Self.Dead })
-		if !appB.hasResurrectionRune() || b.DeathLossFree {
-			t.Fatal("revival consumed the rune or retained death protection")
-		}
+	appB.deathUI, _ = ui.NewDeathDialog(inputTextures{})
+	appB.clock = 1
+	appB.initDeath()
+	reviveX := 1024/2 - 128 + 96
+	if appB.wv.death.party {
+		reviveX = 1024/2 - 128 + 39
+	}
+	clickDeathChoice(appB, reviveX)
+	poll(func() bool { return !b.Self.Dead })
+	if b.DeathLossFree {
+		t.Fatal("revival retained death protection")
 	}
 	t.Log("guild duel rejection, acceptance, countdown, participant leaving, combat and result confirmed")
 }

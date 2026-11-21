@@ -148,7 +148,7 @@ func TestMobDamageCrossesEquipmentBonusAndPersistsZero(t *testing.T) {
 	d.ConstMP = 2000
 	d.ConstSP = 2000
 	s.items = []db.Item{{Bag: 0, Slot: 0, Type: 16, TypeID: 1, Count: 1}}
-	s.setPools(false)
+	s.refillPools()
 	full := s.stats().MaxHP
 	if full <= 2000 {
 		t.Fatal("missing equipment bonus")

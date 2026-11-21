@@ -25,12 +25,27 @@ SVMAP respawn group. If neither provides an eligible destination, the character
 returns to their racial birth position. Instance schedules remain part of the
 map row, while [obelisk rules](obelisks.md) retain their own configuration.
 
+## Character progression and revival
+
+Every character follows one progression. Base HP, MP and SP use a 1.5
+multiplier before race and attribute bonuses. Each level grants nine
+allocatable stat points and five skill points in addition to the automatic
+class stat. Existing characters receive the difference in per-level awards
+once. Previously allocated attributes, learned skills and claimed PvP stages
+are preserved.
+
+Characters can revive at their bind point or request revival at an eligible
+party leader. The automatic bind timer still applies. Death never deletes a
+character or ends the session. Quests grant their authored EXP and use their
+level, class, faction and other active eligibility rules. Skills use their
+level, class, faction and skill-point requirements.
+
 ## Guild founding and roles
 
 Create a guild at the guild manager. A solo character can found one
 immediately. A party or raid must have at least two founders, with everyone
 in the same map instance and faction. Every founder in the group must
-accept. Founders can be any level and growth mode. They must be free to
+accept. Founders can be any level. They must be free to
 join and choose an available guild name.
 
 The founder pays the fee once the guild is created. Set

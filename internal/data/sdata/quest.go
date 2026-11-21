@@ -19,7 +19,7 @@ type Quest struct {
 	ID                                                       uint16
 	Name, Summary                                            string
 	MinLevel, MaxLevel                                       uint16
-	Faction, Mode                                            uint8
+	Faction                                                  uint8
 	Male, Female                                             bool
 	Jobs                                                     [6]uint8
 	HG                                                       uint16
@@ -91,7 +91,8 @@ func ParseQuestCatalog(raw []byte) (map[NPCKey]NPC, []Quest, map[ItemKey]QuestIt
 	for i := 0; i < n && c.err == nil; i++ {
 		q := Quest{ID: c.u16(), Name: c.str(), Summary: c.str()}
 		q.MinLevel, q.MaxLevel = c.u16(), c.u16()
-		q.Faction, q.Mode = c.u8(), c.u8()
+		q.Faction = c.u8()
+		c.u8() // reserved catalog byte
 		q.Male, q.Female = c.u8() != 0, c.u8() != 0
 		for j := range q.Jobs {
 			q.Jobs[j] = c.u8()

@@ -42,9 +42,9 @@ func TestDeathDialogOriginalAssetsGL(t *testing.T) {
 	defer a.Close()
 	a.state = game.New()
 	a.state.Self.Dead = true
-	a.wv = &worldView{death: deathView{initialized: true, rune: true, party: true}}
-	draw := func(location bool) []byte {
-		a.wv.death.choosingLocation = location
+	a.wv = &worldView{death: deathView{initialized: true}}
+	draw := func(party bool) []byte {
+		a.wv.death.party = party
 		gl.Viewport(0, 0, 1024, 768)
 		gl.ClearColor(0, 0, 0, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -56,10 +56,10 @@ func TestDeathDialogOriginalAssetsGL(t *testing.T) {
 		return pixels
 	}
 	if bytes.Equal(draw(false), draw(true)) {
-		t.Fatal("location choice did not change dialog")
+		t.Fatal("party choice did not change dialog")
 	}
 	if dir := os.Getenv("SHAIYA_TEST_ARTIFACTS"); dir != "" {
-		if err := render.SavePNG(filepath.Join(dir, "death-location.png"), 1024, 768); err != nil {
+		if err := render.SavePNG(filepath.Join(dir, "death-party.png"), 1024, 768); err != nil {
 			t.Fatal(err)
 		}
 	}

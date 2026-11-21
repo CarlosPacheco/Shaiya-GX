@@ -38,7 +38,7 @@ type questDef struct {
 	ID                  uint16
 	Name                string
 	MinLevel, MaxLevel  uint16
-	Faction, Mode       uint8
+	Faction             uint8
 	Male, Female        bool
 	Jobs                [6]uint8
 	HG                  uint16 // also an alternative prerequisite quest
@@ -88,7 +88,8 @@ func sqliteQuest(row npcquest.Row) questDef {
 	word() // the original one-based row is the lookup key
 	q := questDef{ID: word(), Name: next().(string)}
 	q.MinLevel, q.MaxLevel = word(), word()
-	q.Faction, q.Mode = byteValue(), byteValue()
+	q.Faction = byteValue()
+	byteValue() // reserved catalog byte
 	q.Male, q.Female = byteValue() != 0, byteValue() != 0
 	for i := range q.Jobs {
 		q.Jobs[i] = byteValue()
@@ -322,7 +323,7 @@ func (s *Session) questPrerequisites(q *questDef) bool {
 }
 
 // questEnableStart is CUser::QuestEnableStart: level range, race
-// (Faction), job, mode and prerequisites.
+// (Faction), job and prerequisites.
 func (s *Session) questEnableStart(q *questDef) bool {
 	ch := s.char
 	if ch.Level < q.MinLevel || ch.Level > q.MaxLevel || ch.Class >= 6 || q.Jobs[ch.Class] == 0 {
@@ -333,20 +334,6 @@ func (s *Session) questEnableStart(q *questDef) bool {
 	}
 	if (ch.Gender == 0 && !q.Male) || (ch.Gender == 1 && !q.Female) {
 		return false
-	}
-	switch ch.Mode {
-	case growEasy:
-		if q.Mode != 0 {
-			return false
-		}
-	case growNormal:
-		if q.Mode > 1 {
-			return false
-		}
-	case growHard:
-		if q.Mode == 3 {
-			return false
-		}
 	}
 	return s.questPrerequisites(q)
 }
@@ -728,17 +715,13 @@ func (s *Session) handleQuestAbandon(p []byte) {
 	}
 }
 
-// awardQuest is award_quest_reward: exp (doubled unless the quest is
-// ultimate-only), gold and an item; 0x0903 reports them.
+// awardQuest sends the authored EXP, gold and item through 0x0903.
 func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32) {
 	if s.char == nil || q == nil || s.findQuest(q.ID) != q || variant >= 3 {
 		return
 	}
 	res := q.def.Results[variant]
 	exp := res.Exp
-	if q.def.Mode <= 2 {
-		exp += exp
-	}
 	change := db.CharacterChange{Before: *s.char, After: *s.char, ItemsBefore: s.items, ItemsAfter: append([]db.Item(nil), s.items...)}
 	var packets [][]byte
 	if q.def.EndType == 1 {

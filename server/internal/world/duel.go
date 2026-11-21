@@ -40,7 +40,7 @@ import (
 //     PvPChkLoseDeath: both wagers drop for the winner, victories + 1 and
 //     defeats + 1 (up to 0xFFFF), 0x2405 1 to the winner and 2 to the
 //     loser; no exp, kill or item drop, and the death keeps the exp, the
-//     ultimate mode and the item buffs (m_nVehicleStatus -1).
+//     item buffs (m_nVehicleStatus -1).
 //
 // As in the original, the window's 40-unit check during state 5 measures
 // from the last duel center (zero before the first duel), so moving with

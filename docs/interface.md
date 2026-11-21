@@ -309,15 +309,14 @@ SysMsg table; they are not translated or hardcoded in the client.
 
 The PvP Manager (NPC type 4) opens the original Warrior Reward panel, with its
 portrait, coloured explanation, rank guide, scroll controls and two confirmed
-claim actions. Normal mode or higher and level 16 are required. Native
+claim actions. Claiming requires level 16. Native
 0x0218/0x0219/0x021A carry next claim stages, awarded stat points and death-benefit
 gold. Each action redeems one earned stage; reconnects retain claimed stages.
 GX uses all 31 client-table ranks and reward stages, with kills/deaths capped
-at 1,000,000 by explicit request. Stat points for every mode and rank and all
+at 1,000,000 by explicit request. The unified stat points by rank and all
 death-benefit amounts come from the verified EP5 client tables; no high-rank
-placeholder values are used. A stat reset preserves the earned kill count
-and clears its claimed reward stages, allowing their points to be redeemed
-again; death-benefit claims are preserved.
+placeholder values are used. A stat reset preserves earned counters and both claimed reward stages.
+Allocated points return to the unspent pool.
 The kill progress strip shows kills divided by the next claim threshold;
 the death-benefit strip shows the next claim level divided by 31. Their
 native widths are 153px and 200px, using the red and violet atlas strips.
@@ -655,8 +654,7 @@ Full-map character coordinates sit four pixels higher above the map surface.
 
 ## Status fields and potion quantities
 
-The Status (T) Mode value remains empty; the original frame and its labels are
-retained. Stat shows the equipped upper armor's effective intrinsic/active-lapis
+Stat in the Status (T) window shows the equipped upper armor's effective intrinsic/active-lapis
 element, using the original SysMsg names and tier, or SysMsg 5270 for neutral.
 Long localized element names fit inside the existing field.
 

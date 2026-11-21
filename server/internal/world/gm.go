@@ -538,7 +538,7 @@ func (s *Session) gmCure() error {
 	if s.dead {
 		return fmt.Errorf("you are dead")
 	}
-	s.setPools(false)
+	s.refillPools()
 	s.persist()
 	st := s.stats()
 	s.send(buildCurrentHitpoints(&st), "0x0521 GM cure")

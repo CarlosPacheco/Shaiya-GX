@@ -29,7 +29,6 @@ const (
 	FactionLight      = 0
 	FactionDark       = 1
 	FactionNone       = 2
-	MaxModeUltimate   = 3
 	MaxCharacterSlots = 5
 
 	MotionSitDown = 1
@@ -608,7 +607,7 @@ func buildCharacterShapeGuild(ch *db.Character, faction uint8, items []db.Item, 
 	}
 	w.U8(faction)
 	if ch != nil {
-		w.Bytes([]byte{ch.Race, ch.Hair, ch.Face, ch.Height, ch.Class, ch.Gender, 0, ch.Mode})
+		w.Bytes([]byte{ch.Race, ch.Hair, ch.Face, ch.Height, ch.Class, ch.Gender, 0, 0})
 	} else {
 		w.Bytes(make([]byte, 8))
 	}
@@ -654,7 +653,7 @@ func buildCharacterListSlot(ch *db.Character, items []db.Item) []byte {
 	w.U32(ch.ID)
 	w.U32(0)
 	w.U16(ch.Level)
-	w.Bytes([]byte{ch.Race, ch.Mode, ch.Hair, ch.Face, ch.Height, ch.Class, ch.Gender})
+	w.Bytes([]byte{ch.Race, 0, ch.Hair, ch.Face, ch.Height, ch.Class, ch.Gender})
 	w.U16(ch.MapID)
 	for _, v := range []uint16{ch.Str, ch.Rec, ch.Int, ch.Wis, ch.Dex, ch.Luc} {
 		w.U16(v)

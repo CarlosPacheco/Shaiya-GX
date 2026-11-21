@@ -79,7 +79,7 @@ func TestPerfectPartyKillAndQuestExperiencePersistAndReachClient(t *testing.T) {
 	if len(s.player.peekRewardTotals().perfect) != 0 || s.char.Exp != before+936 {
 		t.Fatal("successful write replayed XP")
 	}
-	q := &activeQuest{ID: 1, def: &questDef{ID: 1, Mode: 3, Results: [3]questResult{{Exp: 25}}}}
+	q := &activeQuest{ID: 1, def: &questDef{ID: 1, Results: [3]questResult{{Exp: 25}}}}
 	s.quests = []*activeQuest{q}
 	if err := db.AddCharacterQuest(s.char.ID, db.CharQuest{QuestID: q.ID}); err != nil {
 		t.Fatal(err)

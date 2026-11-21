@@ -19,7 +19,7 @@ type MallProduct struct {
 	Icon                    *render.Texture
 	UV                      UV
 }
-type MallIdentity struct{ Name, Server, Class, Mode string }
+type MallIdentity struct{ Name, Server, Class string }
 
 type MallAction uint8
 
@@ -192,8 +192,9 @@ func (m *Mall) Draw(s *render.Sprites, f *Font, w, h int, products []MallProduct
 	s.Draw(m.frame, float32(x), float32(y), MallWidth, MallHeight, 0, 0, float32(MallWidth)/1024, float32(MallHeight)/512, white)
 	f.Draw(s, identity.Name, x+52, y+53, white, 165)
 	f.Draw(s, identity.Server, x+52, y+76, white, 165)
+	// Remove the unused label and field from the baked identity panel.
+	s.Draw(m.frame, float32(x+120), float32(y+97), 100, 17, 120.0/1024, 114.0/512, 220.0/1024, 120.0/512, white)
 	f.Draw(s, identity.Class, x+52, y+99, white, 59)
-	f.Draw(s, identity.Mode, x+158, y+99, white, 60)
 	pointText := "..."
 	if pointsReady {
 		pointText = fmt.Sprint(points)

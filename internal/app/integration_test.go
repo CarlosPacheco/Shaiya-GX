@@ -333,7 +333,7 @@ func TestCreationAgainstRapture(t *testing.T) {
 	}
 	a := inputApp()
 	a.state, a.world, a.create, a.creating = st, w, create, true
-	create.Open(0, st.Faction.Faction, st.Faction.MaxMode)
+	create.Open(0, st.Faction.Faction)
 	x, y := ui.CreationOrigin(1024, 768)
 	click := func(cx, cy int) {
 		t.Helper()
@@ -416,7 +416,7 @@ func TestAccountDialogsAgainstRapture(t *testing.T) {
 	// Rejected duplicate creation preserves the draft. Dismissing the dialog
 	// must not reuse its Enter to send another request.
 	a.creating = true
-	a.create.Open(1, st.Faction.Faction, st.Faction.MaxMode)
+	a.create.Open(1, st.Faction.Faction)
 	a.create.Name.Text = original.Name
 	frame(enter)
 	ack()

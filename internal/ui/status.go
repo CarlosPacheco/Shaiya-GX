@@ -25,7 +25,7 @@ type Status struct {
 
 type StatusState struct {
 	Title                  string
-	Class, Mode            string
+	Class                  string
 	Element                string
 	AttackSpeed, MoveSpeed string
 	Base                   proto.StatPoints
@@ -168,6 +168,9 @@ func (v *Status) Draw(s *render.Sprites, f *Font, w, h int, state StatusState) {
 		variant, width, mainX = 1, width+132, x+132
 	}
 	s.Draw(v.frames[variant], float32(x), float32(y), float32(width), StatusHeight, 0, 0, float32(width)/512, StatusHeight/512.0, white)
+	// Cover the unused field baked into both native frames with the panel background.
+	modeX := 150 + mainX - x
+	s.Draw(v.frames[variant], float32(mainX+150), float32(y+78), 107, 17, float32(modeX)/512, 115.0/512, float32(modeX+107)/512, 120.0/512, white)
 	// Phoenix stats_hud.gd: EXP (73,132) 183x15; pools (73,265+20i) 68x15.
 	xp := progress(state.Details.Exp, state.Details.PrevExp, state.Details.NextExp)
 	s.Draw(v.expBar, float32(mainX+73), float32(y+132), 183*xp, 15, 0, 0, 428.0/512*xp, 6.0/16, white)
@@ -181,7 +184,6 @@ func (v *Status) Draw(s *render.Sprites, f *Font, w, h int, state StatusState) {
 		drawStatusValue(s, f, value, mainX+dx, y+dy, width)
 	}
 	text(state.Class, left, 79, columnWidth)
-	text(state.Mode, right, 79, columnWidth)
 	text(state.Title, left, 99, 183)
 	text(fmt.Sprintf("%d / %d", state.Details.Exp, state.Details.NextExp), left, 132, 183)
 	for i, index := range statOrder {

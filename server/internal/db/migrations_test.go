@@ -133,3 +133,44 @@ func TestMigrationChecksumsAcrossLineEndings(t *testing.T) {
 		t.Fatal("accepted a changed statement")
 	}
 }
+
+func TestRemoveGrowthModesKeepsAllocatedPointsAndClaims(t *testing.T) {
+	p, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Close()
+	if _, err := p.Exec(`
+		CREATE TABLE PS_GameData_Chars(CharID INTEGER PRIMARY KEY,Grow INTEGER,Level INTEGER,StatPoint INTEGER,SkillPoint INTEGER,Str INTEGER,KillLevel INTEGER,DeadLevel INTEGER,Del INTEGER);
+		INSERT INTO PS_GameData_Chars VALUES
+			(1,0,10,3,2,50,0,0,0),(2,1,10,3,2,50,4,6,0),
+			(3,2,10,3,2,50,4,6,0),(4,3,10,3,2,50,4,6,1);
+		CREATE TABLE PS_GameData_UserMaxGrow(Country INTEGER,MaxGrow INTEGER);
+		INSERT INTO PS_GameData_UserMaxGrow VALUES (1,3);
+		CREATE TABLE PS_GameDefs_Skills(Grow INTEGER);
+		INSERT INTO PS_GameDefs_Skills VALUES (3);
+	`); err != nil {
+		t.Fatal(err)
+	}
+	steps := []migration{{1, "remove_growth_modes", removeGrowthModesMigration}}
+	for range 2 {
+		if err := migrate(context.Background(), p, steps); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for i, want := range [][2]int{{39, 20}, {39, 20}, {21, 11}, {3, 2}} {
+		var grow, stats, skills, str, kills, deaths, deleted int
+		err := p.QueryRow(`SELECT Grow,StatPoint,SkillPoint,Str,KillLevel,DeadLevel,Del FROM PS_GameData_Chars WHERE CharID=?`, i+1).
+			Scan(&grow, &stats, &skills, &str, &kills, &deaths, &deleted)
+		if err != nil || grow != 0 || stats != want[0] || skills != want[1] || str != 50 {
+			t.Fatalf("legacy mode %d: grow=%d stat=%d skill=%d str=%d err=%v", i, grow, stats, skills, str, err)
+		}
+		if i > 0 && (kills != 4 || deaths != 6) || (deleted == 1) != (i == 3) {
+			t.Fatalf("legacy mode %d changed reward stages or deletion status", i)
+		}
+	}
+	var country, maxGrow int
+	if err := p.QueryRow(`SELECT Country,MaxGrow FROM PS_GameData_UserMaxGrow`).Scan(&country, &maxGrow); err != nil || country != 1 || maxGrow != 0 {
+		t.Fatalf("account faction changed: faction=%d legacy=%d err=%v", country, maxGrow, err)
+	}
+}

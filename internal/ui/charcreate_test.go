@@ -11,7 +11,7 @@ func TestCreationNativeChoicesAndSubmission(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		c.Open(3, faction, 2)
+		c.Open(3, faction)
 		x, y := CreationOrigin(1024, 768)
 		click := func(cx, cy int) CharAction {
 			c.Update(&platform.Input{Pressed: true, MouseX: x + cx, MouseY: y + cy}, 1024, 768)
@@ -47,12 +47,9 @@ func TestCreationNativeChoicesAndSubmission(t *testing.T) {
 			t.Fatal("appearance controls", c.Draft)
 		}
 		click(71, 584)
-		if c.Draft.Mode != 2 {
-			t.Fatal("hard mode not selected")
-		}
 		click(149, 584)
-		if c.Draft.Mode != 2 {
-			t.Fatal("unavailable ultimate mode selected")
+		if c.Draft.Mode != 0 {
+			t.Fatal("retired mode row changed the reserved byte")
 		}
 		c.Name.Text = "A"
 		if got := click(38, 623); got != CharNone {
@@ -75,7 +72,7 @@ func TestCreationReleaseMustMatchPressedControl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c.Open(0, 0, 3)
+	c.Open(0, 0)
 	x, y := CreationOrigin(1024, 768)
 	c.Update(&platform.Input{Pressed: true, MouseX: x + 71, MouseY: y + 291}, 1024, 768)
 	c.Update(&platform.Input{Clicked: true, MouseX: x + 149, MouseY: y + 291}, 1024, 768)

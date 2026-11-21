@@ -713,7 +713,7 @@ func inventoryCount(st *game.State) uint32 {
 func (j *partyJourney) learnSkill(p *journeyPlayer) {
 	var skills []*db.SkillDef
 	for key, def := range db.MustDefs().Skills {
-		if key.Level == 1 && def.ReqLevel <= p.state.Slots[0].Level && def.ClassEligible[0] && def.TypeShow != 0 && def.Grow <= 1 && uint16(def.SkillPointCost) <= p.state.Details.SkillPoint && (def.Country == 0 || def.Country == 2 || def.Country >= 6) {
+		if key.Level == 1 && def.ReqLevel <= p.state.Slots[0].Level && def.ClassEligible[0] && def.TypeShow != 0 && uint16(def.SkillPointCost) <= p.state.Details.SkillPoint && (def.Country == 0 || def.Country == 2 || def.Country >= 6) {
 			skills = append(skills, def)
 		}
 	}

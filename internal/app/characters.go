@@ -86,7 +86,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 		case ui.CharCreate:
 			for slot := uint8(0); slot < 5; slot++ {
 				if _, used := a.state.Slots[slot]; !used {
-					a.create.Open(slot, a.state.Faction.Faction, a.state.Faction.MaxMode)
+					a.create.Open(slot, a.state.Faction.Faction)
 					a.creating = true
 					break
 				}

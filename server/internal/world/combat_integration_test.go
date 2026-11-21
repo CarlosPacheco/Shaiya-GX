@@ -600,7 +600,7 @@ func TestCraftRules(t *testing.T) {
 }
 
 // TestRebirth covers normal bind, fallback for legacy rune requests, the
-// automatic revive deadline and ultimate death with retired rune items.
+// automatic revival and survival for characters with a legacy mode.
 func TestRebirth(t *testing.T) {
 	if _, err := os.Stat("data/game"); err != nil {
 		t.Chdir("../..")
@@ -674,11 +674,13 @@ func TestRebirth(t *testing.T) {
 		t.Fatal("not revived at the deadline")
 	}
 
-	ch.Mode = growUltimate
-	die()
-	s.handleResurrect([]byte{0x53, 0x05, reviveAtBind})
-	if s.char != nil {
-		t.Fatal("ultimate death with retired runes kept the character")
+	for value := uint8(0); value < 4; value++ {
+		ch.Mode = value
+		die()
+		s.handleResurrect([]byte{0x53, 0x05, reviveAtBind})
+		if s.char == nil || s.dead || !inBox() {
+			t.Fatalf("legacy value %d did not revive normally", value)
+		}
 	}
 }
 

@@ -126,20 +126,6 @@ func skillCountryAllows(country, family uint8) bool {
 	return true
 }
 
-// skillGrowAllows: easy mode learns only Grow 0 skills, normal up to 1,
-// hard all but 3.
-func skillGrowAllows(grow, mode uint8) bool {
-	switch mode {
-	case 0:
-		return grow == 0
-	case 1:
-		return grow <= 1
-	case 2:
-		return grow != 3
-	}
-	return true
-}
-
 func buildLearnSkillResult(ok bool, number uint8, skillID uint16, level uint8) []byte {
 	w := packet.New(packet.LearnNewSkill)
 	w.U8(resultByte(ok))
@@ -160,7 +146,7 @@ func (s *Session) handleLearnSkill(p []byte) {
 	// CUser::LearnSkill / EnableLearnSkill (0x004842e0 / 0x00484080):
 	// levels 1-3; a new skill starts at level 1 and a known one goes to
 	// any higher level; then skill points (error 1), level (2), and the
-	// country, job, growth mode and TypeShow (3). No prerequisite skill.
+	// country, job and TypeShow (3). No prerequisite skill.
 	reject := func(code uint8, why string) {
 		s.log.Printf("GX Server World rejected learn skill skill_id=%d level=%d: %s", skillID, level, why)
 		s.send(buildLearnSkillError(code, skillID, level), "0x0209 learn skill rejected")
@@ -195,8 +181,8 @@ func (s *Session) handleLearnSkill(p []byte) {
 	case !skillCountryAllows(def.Country, ch.Race):
 		s.log.Printf("GX Server World rejected learn skill skill_id=%d: country %d", skillID, def.Country)
 		return
-	case int(ch.Class) >= len(def.ClassEligible) || !def.ClassEligible[ch.Class] || !skillGrowAllows(def.Grow, ch.Mode) || def.TypeShow == 0:
-		reject(3, "job, growth mode or hidden skill")
+	case int(ch.Class) >= len(def.ClassEligible) || !def.ClassEligible[ch.Class] || def.TypeShow == 0:
+		reject(3, "job or hidden skill")
 		return
 	}
 	var learned db.CharacterSkill

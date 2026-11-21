@@ -82,7 +82,7 @@ func TestGameplayAgainstRapture(t *testing.T) {
 	var candidate sdata.SkillKey
 	found = false
 	for key, d := range defs {
-		if key.Level != 1 || d.RequiredLevel > st.Slots[0].Level || d.Classes[0] == 0 || d.Show == 0 || d.Grow > 1 || uint16(d.Points) > st.Details.SkillPoint || d.Effect == 0 || d.Target != 2 {
+		if key.Level != 1 || d.RequiredLevel > st.Slots[0].Level || d.Classes[0] == 0 || d.Show == 0 || uint16(d.Points) > st.Details.SkillPoint || d.Effect == 0 || d.Target != 2 {
 			continue
 		}
 		if d.Country != 0 && d.Country != 2 && d.Country <= 5 {

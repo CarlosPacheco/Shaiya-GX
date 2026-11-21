@@ -35,7 +35,7 @@ func TestSkillResetStoneKeepsCooldownAfterLearningAgain(t *testing.T) {
 		}
 	})
 	s.handleUseItem(proto.UseItemPacket(1, 1))
-	if s.char.SkillPoint != 41 || len(s.skills) != 0 || len(s.quickSlots) != 1 || s.items[0].Count != 1 {
+	if s.char.SkillPoint != 50 || len(s.skills) != 0 || len(s.quickSlots) != 1 || s.items[0].Count != 1 {
 		t.Fatal("invalid reset state")
 	}
 	saved, err := db.ResetSkillCooldowns(s.char.ID)
@@ -47,7 +47,7 @@ func TestSkillResetStoneKeepsCooldownAfterLearningAgain(t *testing.T) {
 	if len(s.skills) != 1 || s.skillReady(skillID) || s.skills[0].Delay <= 0 {
 		t.Fatal("relearning bypassed cooldown")
 	}
-	if s.char.SkillPoint != 38 {
+	if s.char.SkillPoint != 47 {
 		t.Fatal("wrong points after relearning")
 	}
 }

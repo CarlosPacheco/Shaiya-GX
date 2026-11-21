@@ -36,7 +36,7 @@ func TestPvPRewardsAgainstIsolatedGX(t *testing.T) {
 		send(proto.NewWriter(proto.PvPRewardKill).Bytes())
 		wait(func() bool { return st.LastPvPReward.OK })
 		if st.LastPvPReward.Value != want || st.PvPRewards.KillStage != uint8(i+2) {
-			t.Fatal("hard-mode native stat reward", st.LastPvPReward)
+			t.Fatal("unified stat reward", st.LastPvPReward)
 		}
 	}
 	for _, want := range []uint32{100, 200, 500} {
@@ -59,22 +59,14 @@ func TestPvPRewardsAgainstIsolatedGX(t *testing.T) {
 		}
 	}
 	query(4, 4)
-	// A real native reset stone clears only kill claims, preserving earned
-	// counters and death benefits; the original requires reclaiming PvP points.
+	// The stat reset refunds allocations while preserving both claim stages.
 	if item, ok := st.Inventory[[2]uint8{1, 23}]; !ok || item.Type != 100 || item.TypeID != 48 {
 		t.Fatal("fixture reset stone missing")
 	}
 	send(proto.UseItemPacket(1, 23))
-	wait(func() bool { return st.Details.StatPoint == 39*7 && st.PvPRewards.KillStage == 1 })
-	query(1, 4)
-	for range 3 {
-		st.LastPvPReward = proto.PvPRewardResult{}
-		send(proto.NewWriter(proto.PvPRewardKill).Bytes())
-		wait(func() bool { return st.LastPvPReward.OK })
-	}
-	points = 39 * 7
-	if st.Details.StatPoint != points+9 || st.Details.Money != money+800 || st.Details.Kills != 300 || st.Details.Deaths != 300 {
-		t.Fatal("reset/reclaim changed earned counters or death benefits")
+	wait(func() bool { return st.Inventory[[2]uint8{1, 23}].Count < 1 })
+	if st.Details.StatPoint != points+9 || st.PvPRewards.KillStage != 4 || st.Details.Kills != 300 || st.Details.Deaths != 300 {
+		t.Fatal("reset changed claim stages, stat pool or earned counters")
 	}
 	query(4, 4)
 	id := st.SelfID
@@ -88,5 +80,5 @@ func TestPvPRewardsAgainstIsolatedGX(t *testing.T) {
 	query(4, 4)
 	send(proto.LogoutPacket())
 	wait(func() bool { return st.Phase == game.PhaseCharSelect })
-	t.Log("encrypted native 0218/0219/021A: separate stages, no replay, real reset stone/reclaim, preserved death benefits, persistence and re-entry")
+	t.Log("encrypted native 0218/0219/021A: separate stages, no replay, real reset stone, preserved death benefits, persistence and re-entry")
 }

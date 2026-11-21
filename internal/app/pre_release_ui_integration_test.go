@@ -76,9 +76,6 @@ func TestStatusAndPotionNativeFieldsGL(t *testing.T) {
 			view.Stats = proto.AdditionalStats{MinAttack: 12345, MaxAttack: 987654, MinMagic: 500, MaxMagic: 1000, Defense: 15500, Resistance: 29000}
 			view.Known = true
 		}
-		if view.Mode != "" {
-			t.Fatal("mode must remain empty")
-		}
 		gl.Viewport(0, 0, 800, 600)
 		gl.ClearColor(.15, .15, .15, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)

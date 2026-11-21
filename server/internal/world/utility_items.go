@@ -20,16 +20,9 @@ func (s *Session) resetSkillsWithItem(index int) bool {
 	if s.dead || ch.CurrentHP == 0 {
 		return false
 	}
-	perLevel := 3
-	switch ch.Mode {
-	case growHard:
-		perLevel = 4
-	case growUltimate:
-		perLevel = 5
-	}
 	var item db.Item
 	if !s.inventoryOperationWithCommit(func() {
-		s.char.SkillPoint = uint16(min(65535, 5+max(0, int(ch.Level)-1)*perLevel))
+		s.char.SkillPoint = uint16(min(65535, 5+max(0, int(ch.Level)-1)*5))
 		var err error
 		item, err = s.consumeOne(index)
 		s.operation.err = err

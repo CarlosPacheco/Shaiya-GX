@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
-	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -38,26 +36,10 @@ func TestDeathDialogAgainstRapture(t *testing.T) {
 	waitB(func() bool { return b.Self.Dead })
 	app := inputApp()
 	app.state, app.world = b, wb
-	app.items = map[sdata.ItemKey]*sdata.Item{}
-	if os.Getenv("SHAIYA_TEST_DEATH_DUEL_RUNE") == "1" {
-		arc, err := archive.Open(os.Getenv("SHAIYA_DATA"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer arc.Close()
-		raw, err := arc.ReadFile("Item/Item.SData")
-		if err != nil {
-			t.Fatal(err)
-		}
-		app.items, err = sdata.ParseItems(raw)
-		if err != nil || !app.hasResurrectionRune() {
-			t.Fatal("duel rune fixture missing", err)
-		}
-	}
 	app.deathUI, _ = ui.NewDeathDialog(inputTextures{})
 	app.clock = 1
 	app.updateDeath(&platform.Input{}, 1024, 768)
-	if !app.wv.death.initialized || app.wv.death.rune || app.wv.death.party {
+	if !app.wv.death.initialized || app.wv.death.party {
 		t.Fatalf("unexpected choices: %+v", app.wv.death)
 	}
 	x, y := 1024/2-128+96, 768/2-128+115
@@ -76,9 +58,6 @@ func TestDeathDialogAgainstRapture(t *testing.T) {
 	}
 	if b.Pools.HP == 0 {
 		t.Fatal("revived without confirmed HP")
-	}
-	if os.Getenv("SHAIYA_TEST_DEATH_DUEL_RUNE") == "1" && !app.hasResurrectionRune() {
-		t.Fatal("loss-free duel unexpectedly consumed a rune")
 	}
 	t.Log("bind-point choice sent via original dialog and confirmed by server")
 }
@@ -100,68 +79,6 @@ func clickDeathChoice(a *App, x int) {
 	a.updateDeath(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 1024, 768)
 }
 
-func TestDeathRuneHereAgainstRapture(t *testing.T) {
-	if os.Getenv("SHAIYA_TEST_DEATH_RUNE") != "1" {
-		t.Skip("requires disposable rune fixture")
-	}
-	st, w, send, wait := testworld.EnterAs(t, os.Getenv("SHAIYA_TEST_PARTNER"), os.Getenv("SHAIYA_TEST_PARTNER_PASSWORD"))
-	arc, err := archive.Open(os.Getenv("SHAIYA_DATA"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer arc.Close()
-	raw, err := arc.ReadFile("Item/Item.SData")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defs, err := sdata.ParseItems(raw)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var key [2]uint8
-	found := false
-	for k, it := range st.Inventory {
-		if it.Type == 100 && it.TypeID == 44 && it.Count > 0 {
-			key = k
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Fatal("rune fixture absent")
-	}
-	x, z := killDisposableWithMob(t, st, send, wait)
-	before := st.Inventory[key].Count
-	app := inputApp()
-	app.state, app.world, app.items = st, w, defs
-	app.deathUI, _ = ui.NewDeathDialog(inputTextures{})
-	app.clock = 1
-	app.updateDeath(&platform.Input{}, 1024, 768)
-	if !app.wv.death.rune {
-		t.Fatal("real rune did not enable choice")
-	}
-	clickDeathChoice(app, 1024/2-128+96)
-	if !app.wv.death.choosingLocation {
-		t.Fatal("rune location choice did not open")
-	}
-	clickDeathChoice(app, 1024/2-128+144)
-	if !st.Self.Dead {
-		t.Fatal("resurrection predicted before server confirmation")
-	}
-	deadline := time.Now().Add(15 * time.Second)
-	for st.Self.Dead || st.Inventory[key].Count >= before {
-		app.pumpWorld()
-		if app.state == nil || time.Now().After(deadline) {
-			t.Fatal("rune resurrection or consumption timeout")
-		}
-		time.Sleep(time.Millisecond)
-	}
-	if st.Self.X != x || st.Self.Z != z {
-		t.Fatalf("rune here moved from (%v,%v) to (%v,%v)", x, z, st.Self.X, st.Self.Z)
-	}
-	t.Log("rune consumed and resurrection confirmed at the death position")
-}
-
 func TestDeathPartyAgainstRapture(t *testing.T) {
 	if os.Getenv("SHAIYA_TEST_DEATH_PARTY") != "1" {
 		t.Skip("requires disposable party fixtures")
@@ -180,7 +97,6 @@ func TestDeathPartyAgainstRapture(t *testing.T) {
 	waitB(func() bool { e := st.Entities[leader.SelfID]; return e != nil && e.X == 780 && e.Z == 1650 })
 	app := inputApp()
 	app.state, app.world = st, w
-	app.items = map[sdata.ItemKey]*sdata.Item{}
 	app.deathUI, _ = ui.NewDeathDialog(inputTextures{})
 	app.clock = 1
 	app.updateDeath(&platform.Input{}, 1024, 768)

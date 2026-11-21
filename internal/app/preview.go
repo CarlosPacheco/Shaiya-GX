@@ -279,7 +279,7 @@ func (a *App) Preview(name string) error {
 			return err
 		}
 		if name == "create-fury" {
-			a.create.Open(0, 1, 3)
+			a.create.Open(0, 1)
 		} else {
 			a.create.Draft.Race, a.create.Draft.Class, a.create.Draft.Gender = 1, 4, 1
 		}
@@ -496,7 +496,7 @@ func (a *App) Preview(name string) error {
 		}
 		if name == "world-skills" {
 			a.skills.open = true
-			a.state.Slots[0] = proto.CharacterSlot{ID: 1, Race: 0, Class: 0, Level: 1, Mode: 1}
+			a.state.Slots[0] = proto.CharacterSlot{ID: 1, Race: 0, Class: 0, Level: 1}
 			a.state.Details.SkillPoint = 5
 		}
 		if name == "world-shop" || name == "world-shop-inventory" {
@@ -517,14 +517,14 @@ func (a *App) Preview(name string) error {
 		a.state = game.New()
 		a.state.Phase = game.PhaseCharSelect
 		a.screen = screenCharacters
-		a.create.Open(0, 0, 3)
+		a.create.Open(0, 0)
 		a.creating = true
 	case "chars":
 		a.state = game.New()
 		a.state.Phase = game.PhaseCharSelect
-		a.state.Slots[0] = proto.CharacterSlot{Slot: 0, ID: 1, Name: "Interloper", Level: 60, Race: 0, Class: 0, Mode: 2, MapID: 42, Hair: 1, Face: 1, Height: 2}
-		a.state.Slots[1] = proto.CharacterSlot{Slot: 1, ID: 2, Name: "Valiant", Level: 60, Class: 1, Mode: 2, MapID: 1}
-		a.state.Slots[3] = proto.CharacterSlot{Slot: 3, ID: 4, Name: "Sylvan", Level: 12, Class: 4, Mode: 1, MapID: 3}
+		a.state.Slots[0] = proto.CharacterSlot{Slot: 0, ID: 1, Name: "Interloper", Level: 60, Race: 0, Class: 0, MapID: 42, Hair: 1, Face: 1, Height: 2}
+		a.state.Slots[1] = proto.CharacterSlot{Slot: 1, ID: 2, Name: "Valiant", Level: 60, Class: 1, MapID: 1}
+		a.state.Slots[3] = proto.CharacterSlot{Slot: 3, ID: 4, Name: "Sylvan", Level: 12, Class: 4, MapID: 3}
 		a.screen = screenCharacters
 		a.chars.SetChars(a.state.Slots)
 		a.world = nil

@@ -4,11 +4,11 @@ package proto
 type DetectInfo struct {
 	DefenseElement uint32
 	Level          uint16
-	Mode           uint8
 }
 
 func DecodeDetectInfo(p []byte) (v DetectInfo, err error) {
 	r := NewReader(p)
-	v.DefenseElement, v.Level, v.Mode = r.U32(), r.U16(), r.U8()
+	v.DefenseElement, v.Level = r.U32(), r.U16()
+	r.U8() // reserved byte
 	return v, r.Err()
 }

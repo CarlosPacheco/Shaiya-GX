@@ -25,7 +25,7 @@ func TestPacketLayoutsMatchClient(t *testing.T) {
 	}{
 		{"0x0101 0058d860", buildCharacterListSlot(ch, nil), 81},
 		{"0x0105 0058dbd0", buildCharacterDetails(ch, st), 87},
-		{"0x0109 0058e0e0", buildAccountFaction(0, 3), 2},
+		{"0x0109 0058e0e0", buildAccountFaction(0), 2},
 		{"0x0201 0058e280", buildCharacterEnteredMap(ch, false, true), 27},
 		{"0x0204 0058e510", buildBagToBag(1, 1, nil, 1, 1, nil), 68},
 		{"0x0205 0058eb30", buildAddItem(it), 34},
@@ -96,7 +96,7 @@ func TestPacketLayoutsMatchClient(t *testing.T) {
 		{"0x0521 00595090", buildCurrentHitpoints(st), 12},
 		{"0x0526 12 dwords", buildAdditionalStats(st), 48},
 		{"0x0551 00592090", buildCharacterResurrect(1, 4, 0, 1, 1, 1), 21},
-		{"0x0558 0058ffd0", buildDetectInfo(1, 1, 1), 7},
+		{"0x0558 0058ffd0", buildDetectInfo(1, 1), 7},
 		{"0x0601 00590b50", buildMobEnter(m, false), 15},
 		{"0x0602 u32", buildMobLeave(1), 4},
 		{"0x0603 00590c00", buildMobMove(m, 0), 13},

@@ -66,7 +66,6 @@ type SkillDef struct {
 	Name           string
 	Country        uint8
 	ReqLevel       uint16
-	Grow           uint8
 	SkillPointCost uint8
 	PrevSkillID    uint16
 	// ChangeType 101 and ChangeLevel: a transformation into the monster of that id (Degeneration).
@@ -587,7 +586,7 @@ func loadDefs() (*Defs, error) {
 }
 
 func loadSkillCatalog(ctx context.Context, pool *sql.DB, table, levelColumn string) (map[SkillKey]*SkillDef, error) {
-	rows, err := pool.QueryContext(ctx, fmt.Sprintf(`SELECT SkillID, %s, COALESCE(SkillName,''), Country, ReqLevel, Grow,
+	rows, err := pool.QueryContext(ctx, fmt.Sprintf(`SELECT SkillID, %s, COALESCE(SkillName,''), Country, ReqLevel,
 		SkillPoint, PrevSkillID, Attackfighter, Defensefighter, Patrolrogue, Shootrogue, Attackmage, Defensemage,
 		SP, MP, ResetTime, ReadyTime, DamageHP, AddDamageHP, HealHP, HealSP, HealMP, TypeDetail, KeepTime,
 		TimeHealHP, TimeHealSP, TimeHealMP, AbilityType1, AbilityValue1, AbilityType2, AbilityValue2,
@@ -616,7 +615,7 @@ func loadSkillCatalog(ctx context.Context, pool *sql.DB, table, levelColumn stri
 			extra = append(extra, &need[i])
 		}
 		extra = append(extra, &shield, &s.TimeDamageType, &s.TypeShow, &s.ChangeType, &s.ChangeLevel)
-		if err := rows.Scan(append([]any{&skillID, &level, &s.Name, &s.Country, &reqLevel, &s.Grow, &s.SkillPointCost,
+		if err := rows.Scan(append([]any{&skillID, &level, &s.Name, &s.Country, &reqLevel, &s.SkillPointCost,
 			&prev, &classes[0], &classes[1], &classes[2], &classes[3], &classes[4], &classes[5], &sp, &mp,
 			&reset, &s.ReadyTime, &s.DamageHP, &s.AddDamageHP, &s.HealHP, &s.HealSP, &s.HealMP, &typeDetail,
 			&keep, &s.TimeHealHP, &s.TimeHealSP, &s.TimeHealMP, &s.AbilityType[0], &s.AbilityValue[0],

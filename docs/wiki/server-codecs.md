@@ -517,14 +517,14 @@ func ComposePacket(runeBag, runeSlot, itemBag, itemSlot uint8) []byte {
 type DetectInfo struct {
 	DefenseElement uint32
 	Level          uint16
-	Mode           uint8
 }
 ```
 
 ```go
 func DecodeDetectInfo(p []byte) (v DetectInfo, err error) {
 	r := NewReader(p)
-	v.DefenseElement, v.Level, v.Mode = r.U32(), r.U16(), r.U8()
+	v.DefenseElement, v.Level = r.U32(), r.U16()
+	r.U8() // reserved byte
 	return v, r.Err()
 }
 ```
@@ -5253,13 +5253,14 @@ func WhisperPacket(target, text string) []byte {
 ```
 
 ```go
-type Faction struct{ Faction, MaxMode uint8 }
+type Faction struct{ Faction uint8 }
 ```
 
 ```go
 func DecodeFaction(p []byte) (m Faction, err error) {
 	r := NewReader(p)
-	m.Faction, m.MaxMode = r.U8(), r.U8()
+	m.Faction = r.U8()
+	r.U8() // reserved byte
 	return m, r.Err()
 }
 ```

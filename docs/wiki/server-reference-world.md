@@ -22,7 +22,7 @@ Direct GX dependencies: `internal/skillchance`, `server/internal/db`.
 |---|---|
 | [`addSigned`](../../server/internal/world/abilities.go#L9)<br>`func addSigned(u uint32, v int32) uint32` | addSigned adds a signed change to an unsigned stat, flooring at 0. |
 | [`applyAbility`](../../server/internal/world/abilities.go#L19)<br>`func applyAbility(e *EquipmentStats, effect, kind uint8, value int32) bool` | applyAbility is CUser::SetSkillAbility (0x00485e00) for the abilities that change combat stats. Debuffs (effect 3) do not raise maximum pools. It reports whether the ability type is one it models. |
-| [`applyPassives`](../../server/internal/world/abilities.go#L87)<br>`func applyPassives(e *EquipmentStats, skills []db.CharacterSkill)` | applyPassives is CUser::InitPassive / AddSkillPassive (0x00489a80) over the learned skills in load order. Weapon masteries keep a per-type table and each one adds the table's running total for the equipped weapon, as the original does. |
+| [`applyPassives`](../../server/internal/world/abilities.go#L86)<br>`func applyPassives(e *EquipmentStats, skills []db.CharacterSkill)` | applyPassives is CUser::InitPassive / AddSkillPassive (0x00489a80) over the learned skills in load order. Weapon masteries keep a per-type table and each one adds the table's running total for the equipped weapon, as the original does. |
 
 ### attack_movement.go
 
@@ -182,59 +182,58 @@ Direct GX dependencies: `internal/element`, `internal/itemtype`, `server/interna
 | [`FactionLight`](../../server/internal/world/character.go#L29)<br>`const FactionLight = 0` | See the source definition and the subsystem ownership contract. |
 | [`FactionDark`](../../server/internal/world/character.go#L30)<br>`const FactionDark = 1` | See the source definition and the subsystem ownership contract. |
 | [`FactionNone`](../../server/internal/world/character.go#L31)<br>`const FactionNone = 2` | See the source definition and the subsystem ownership contract. |
-| [`MaxModeUltimate`](../../server/internal/world/character.go#L32)<br>`const MaxModeUltimate = 3` | See the source definition and the subsystem ownership contract. |
-| [`MaxCharacterSlots`](../../server/internal/world/character.go#L33)<br>`const MaxCharacterSlots = 5` | See the source definition and the subsystem ownership contract. |
-| [`MotionSitDown`](../../server/internal/world/character.go#L35)<br>`const MotionSitDown = 1` | See the source definition and the subsystem ownership contract. |
-| [`MotionStandUp`](../../server/internal/world/character.go#L36)<br>`const MotionStandUp = 0` | See the source definition and the subsystem ownership contract. |
-| [`consumableItemTypes`](../../server/internal/world/character.go#L39)<br>`var consumableItemTypes` | See the source definition and the subsystem ownership contract. |
-| [`isConsumableType`](../../server/internal/world/character.go#L41)<br>`func isConsumableType(t uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`satAdd`](../../server/internal/world/character.go#L50)<br>`func satAdd(a, b uint32) uint32` | See the source definition and the subsystem ownership contract. |
-| [`satSub`](../../server/internal/world/character.go#L57)<br>`func satSub(a, b uint32) uint32` | See the source definition and the subsystem ownership contract. |
-| [`satMul`](../../server/internal/world/character.go#L64)<br>`func satMul(a, b uint32) uint32` | See the source definition and the subsystem ownership contract. |
-| [`EquipmentStats`](../../server/internal/world/character.go#L73)<br>`type EquipmentStats` | EquipmentStats aggregates equipped items, gems and craft bonuses. |
-| [`CategoryMods`](../../server/internal/world/character.go#L110)<br>`type CategoryMods` | CategoryMods are SetSkillAbility's per-category additions. |
-| [`itemElement`](../../server/internal/world/character.go#L114)<br>`func itemElement(it *db.Item, d *db.ItemDef) uint8` | itemElement applies GX precedence: intrinsic element, otherwise the first elemental lapis in socket order. Later elemental lapis do not add an affinity. |
-| [`activeLapis`](../../server/internal/world/character.go#L133)<br>`func activeLapis(it *db.Item, definition *db.ItemDef) [6]*db.ItemDef` | activeLapis keeps all non-elemental lapis but excludes every inactive elemental lapis from stats, recovery, speed and triggered-item effects. |
-| [`gemItemType`](../../server/internal/world/character.go#L156)<br>`const gemItemType = 30` | See the source definition and the subsystem ownership contract. |
-| [`specialRecoverGem`](../../server/internal/world/character.go#L159)<br>`const specialRecoverGem = 16` | specialRecoverGem is the gem Special that turns its pools into recovery. |
-| [`IsWeaponItemType`](../../server/internal/world/character.go#L162)<br>`func IsWeaponItemType(t uint8) bool` | IsWeaponItemType: Type 1-15 and 45-65. |
-| [`IsArmorItemType`](../../server/internal/world/character.go#L165)<br>`func IsArmorItemType(t uint8) bool` | IsArmorItemType: Type 16-21, 31-36 and 66-92. |
-| [`CraftStats`](../../server/internal/world/character.go#L171)<br>`type CraftStats` | CraftStats is the decoded 20-digit Craftname: str dex rec int wis luc hp/100 mp/100 sp/100 enchant, two digits each. |
-| [`ParseCraftName`](../../server/internal/world/character.go#L177)<br>`func ParseCraftName(name string) (CraftStats, bool)` | See the source definition and the subsystem ownership contract. |
-| [`pos16`](../../server/internal/world/character.go#L194)<br>`func pos16(v int16) uint32` | See the source definition and the subsystem ownership contract. |
-| [`isAccessoryType`](../../server/internal/world/character.go#L196)<br>`func isAccessoryType(t uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`addItemDef`](../../server/internal/world/character.go#L199)<br>`func (e *EquipmentStats) addItemDef(itemType uint8, d *db.ItemDef)` | addItemDef adds full item effects; legacy stored quality never reduces stats. |
-| [`realType`](../../server/internal/world/character.go#L221)<br>`func realType(t uint8) uint8` | realType is GetItemRType (0x004bdad0): item types grouped by family. |
-| [`GetEquipmentStats`](../../server/internal/world/character.go#L224)<br>`func GetEquipmentStats(items []db.Item) EquipmentStats` | GetEquipmentStats sums every bag-0 item, its gems and craft bonuses. |
-| [`CharacterStats`](../../server/internal/world/character.go#L288)<br>`type CharacterStats` | CharacterStats derives maximum pools from stats/equipment. Current pools are absolute durable values; bonuses must never be re-added on every read. |
-| [`StatsFor`](../../server/internal/world/character.go#L324)<br>`func StatsFor(ch *db.Character, e EquipmentStats) CharacterStats` | See the source definition and the subsystem ownership contract. |
-| [`recoverBaseSitting`](../../server/internal/world/character.go#L364)<br>`const recoverBaseSitting = 28` | InitEquipment's base recovery: 28 per pool sitting, 4 standing, 0 in combat. |
-| [`recoverBaseStanding`](../../server/internal/world/character.go#L365)<br>`const recoverBaseStanding = 4` | InitEquipment's base recovery: 28 per pool sitting, 4 standing, 0 in combat. |
-| [`recoveryAmount`](../../server/internal/world/character.go#L368)<br>`func recoveryAmount(value, maxValue uint32, special uint8) uint32` | See the source definition and the subsystem ownership contract. |
-| [`charID`](../../server/internal/world/character.go#L375)<br>`func charID(ch *db.Character) uint32` | See the source definition and the subsystem ownership contract. |
-| [`charName`](../../server/internal/world/character.go#L382)<br>`func charName(ch *db.Character) string` | See the source definition and the subsystem ownership contract. |
-| [`charPos`](../../server/internal/world/character.go#L389)<br>`func charPos(ch *db.Character) (float32, float32, float32)` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterDetails`](../../server/internal/world/character.go#L401)<br>`func buildCharacterDetails(ch *db.Character, s *CharacterStats) []byte` | buildCharacterDetails (0x0105), per the client's reader (0x0058dbd0): stat point, skill point (u16), max HP, MP, SP (u32), direction (u16), then eleven u32 and the 25-byte guild name. The three exp fields are the cumulative exp at the level's start, the total for the next level and the current total; their order is not yet confirmed in game. |
-| [`buildAdditionalStats`](../../server/internal/world/character.go#L441)<br>`func buildAdditionalStats(s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildStatsReset`](../../server/internal/world/character.go#L450)<br>`func buildStatsReset(statPoint, str, rec, intel, wis, dex, luc uint16) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCurrentHitpoints`](../../server/internal/world/character.go#L459)<br>`func buildCurrentHitpoints(s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMaxHPMPSP`](../../server/internal/world/character.go#L467)<br>`func buildMaxHPMPSP(ch *db.Character, s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMaxEnergy`](../../server/internal/world/character.go#L477)<br>`func buildMaxEnergy(ch *db.Character, hitpointType uint8, value uint32) []byte` | buildMaxEnergy (0x050B): hitpointType 0 hp, 1 sp, 2 mp. |
-| [`buildCharacterEnteredMap`](../../server/internal/world/character.go#L486)<br>`func buildCharacterEnteredMap(ch *db.Character, isAdmin, firstLoad bool) []byte` | buildCharacterEnteredMap: marker 0 already present, 1 own first load, 2 admin. |
-| [`buildCharacterEnteredMapGuild`](../../server/internal/world/character.go#L490)<br>`func buildCharacterEnteredMapGuild(ch *db.Character, isAdmin, firstLoad bool, guildID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterMapPosition`](../../server/internal/world/character.go#L510)<br>`func buildCharacterMapPosition(ch *db.Character) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterMove`](../../server/internal/world/character.go#L525)<br>`func buildCharacterMove(ch *db.Character, motion uint8, direction uint16) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterMotion`](../../server/internal/world/character.go#L537)<br>`func buildCharacterMotion(characterID uint32, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildLeaveWorldAck`](../../server/internal/world/character.go#L544)<br>`func buildLeaveWorldAck(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`equippedItem`](../../server/internal/world/character.go#L550)<br>`func equippedItem(items []db.Item, slot uint8) *db.Item` | See the source definition and the subsystem ownership contract. |
-| [`enchantLevel`](../../server/internal/world/character.go#L559)<br>`func enchantLevel(it *db.Item) uint8` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterEquipment`](../../server/internal/world/character.go#L566)<br>`func buildCharacterEquipment(ch *db.Character, items []db.Item, slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildChangeAppearance`](../../server/internal/world/character.go#L588)<br>`func buildChangeAppearance(characterID uint32, hair, face, height, sex uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterShape`](../../server/internal/world/character.go#L596)<br>`func buildCharacterShape(ch *db.Character, faction uint8, items []db.Item, motion uint8) []byte` | buildCharacterShape (0x0303). The persistent motion is 1 only for sitting. |
-| [`buildCharacterShapeGuild`](../../server/internal/world/character.go#L600)<br>`func buildCharacterShapeGuild(ch *db.Character, faction uint8, items []db.Item, motion uint8, guildName string) []byte` | See the source definition and the subsystem ownership contract. |
-| [`statPackets`](../../server/internal/world/character.go#L633)<br>`func statPackets(ch *db.Character, s *CharacterStats) []labeled` | See the source definition and the subsystem ownership contract. |
-| [`buildEmptyCharacterListSlot`](../../server/internal/world/character.go#L644)<br>`func buildEmptyCharacterListSlot(slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterListSlot`](../../server/internal/world/character.go#L651)<br>`func buildCharacterListSlot(ch *db.Character, items []db.Item) []byte` | See the source definition and the subsystem ownership contract. |
+| [`MaxCharacterSlots`](../../server/internal/world/character.go#L32)<br>`const MaxCharacterSlots = 5` | See the source definition and the subsystem ownership contract. |
+| [`MotionSitDown`](../../server/internal/world/character.go#L34)<br>`const MotionSitDown = 1` | See the source definition and the subsystem ownership contract. |
+| [`MotionStandUp`](../../server/internal/world/character.go#L35)<br>`const MotionStandUp = 0` | See the source definition and the subsystem ownership contract. |
+| [`consumableItemTypes`](../../server/internal/world/character.go#L38)<br>`var consumableItemTypes` | See the source definition and the subsystem ownership contract. |
+| [`isConsumableType`](../../server/internal/world/character.go#L40)<br>`func isConsumableType(t uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`satAdd`](../../server/internal/world/character.go#L49)<br>`func satAdd(a, b uint32) uint32` | See the source definition and the subsystem ownership contract. |
+| [`satSub`](../../server/internal/world/character.go#L56)<br>`func satSub(a, b uint32) uint32` | See the source definition and the subsystem ownership contract. |
+| [`satMul`](../../server/internal/world/character.go#L63)<br>`func satMul(a, b uint32) uint32` | See the source definition and the subsystem ownership contract. |
+| [`EquipmentStats`](../../server/internal/world/character.go#L72)<br>`type EquipmentStats` | EquipmentStats aggregates equipped items, gems and craft bonuses. |
+| [`CategoryMods`](../../server/internal/world/character.go#L109)<br>`type CategoryMods` | CategoryMods are SetSkillAbility's per-category additions. |
+| [`itemElement`](../../server/internal/world/character.go#L113)<br>`func itemElement(it *db.Item, d *db.ItemDef) uint8` | itemElement applies GX precedence: intrinsic element, otherwise the first elemental lapis in socket order. Later elemental lapis do not add an affinity. |
+| [`activeLapis`](../../server/internal/world/character.go#L132)<br>`func activeLapis(it *db.Item, definition *db.ItemDef) [6]*db.ItemDef` | activeLapis keeps all non-elemental lapis but excludes every inactive elemental lapis from stats, recovery, speed and triggered-item effects. |
+| [`gemItemType`](../../server/internal/world/character.go#L155)<br>`const gemItemType = 30` | See the source definition and the subsystem ownership contract. |
+| [`specialRecoverGem`](../../server/internal/world/character.go#L158)<br>`const specialRecoverGem = 16` | specialRecoverGem is the gem Special that turns its pools into recovery. |
+| [`IsWeaponItemType`](../../server/internal/world/character.go#L161)<br>`func IsWeaponItemType(t uint8) bool` | IsWeaponItemType: Type 1-15 and 45-65. |
+| [`IsArmorItemType`](../../server/internal/world/character.go#L164)<br>`func IsArmorItemType(t uint8) bool` | IsArmorItemType: Type 16-21, 31-36 and 66-92. |
+| [`CraftStats`](../../server/internal/world/character.go#L170)<br>`type CraftStats` | CraftStats is the decoded 20-digit Craftname: str dex rec int wis luc hp/100 mp/100 sp/100 enchant, two digits each. |
+| [`ParseCraftName`](../../server/internal/world/character.go#L176)<br>`func ParseCraftName(name string) (CraftStats, bool)` | See the source definition and the subsystem ownership contract. |
+| [`pos16`](../../server/internal/world/character.go#L193)<br>`func pos16(v int16) uint32` | See the source definition and the subsystem ownership contract. |
+| [`isAccessoryType`](../../server/internal/world/character.go#L195)<br>`func isAccessoryType(t uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`addItemDef`](../../server/internal/world/character.go#L198)<br>`func (e *EquipmentStats) addItemDef(itemType uint8, d *db.ItemDef)` | addItemDef adds full item effects; legacy stored quality never reduces stats. |
+| [`realType`](../../server/internal/world/character.go#L220)<br>`func realType(t uint8) uint8` | realType is GetItemRType (0x004bdad0): item types grouped by family. |
+| [`GetEquipmentStats`](../../server/internal/world/character.go#L223)<br>`func GetEquipmentStats(items []db.Item) EquipmentStats` | GetEquipmentStats sums every bag-0 item, its gems and craft bonuses. |
+| [`CharacterStats`](../../server/internal/world/character.go#L287)<br>`type CharacterStats` | CharacterStats derives maximum pools from stats/equipment. Current pools are absolute durable values; bonuses must never be re-added on every read. |
+| [`StatsFor`](../../server/internal/world/character.go#L323)<br>`func StatsFor(ch *db.Character, e EquipmentStats) CharacterStats` | See the source definition and the subsystem ownership contract. |
+| [`recoverBaseSitting`](../../server/internal/world/character.go#L363)<br>`const recoverBaseSitting = 28` | InitEquipment's base recovery: 28 per pool sitting, 4 standing, 0 in combat. |
+| [`recoverBaseStanding`](../../server/internal/world/character.go#L364)<br>`const recoverBaseStanding = 4` | InitEquipment's base recovery: 28 per pool sitting, 4 standing, 0 in combat. |
+| [`recoveryAmount`](../../server/internal/world/character.go#L367)<br>`func recoveryAmount(value, maxValue uint32, special uint8) uint32` | See the source definition and the subsystem ownership contract. |
+| [`charID`](../../server/internal/world/character.go#L374)<br>`func charID(ch *db.Character) uint32` | See the source definition and the subsystem ownership contract. |
+| [`charName`](../../server/internal/world/character.go#L381)<br>`func charName(ch *db.Character) string` | See the source definition and the subsystem ownership contract. |
+| [`charPos`](../../server/internal/world/character.go#L388)<br>`func charPos(ch *db.Character) (float32, float32, float32)` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterDetails`](../../server/internal/world/character.go#L400)<br>`func buildCharacterDetails(ch *db.Character, s *CharacterStats) []byte` | buildCharacterDetails (0x0105), per the client's reader (0x0058dbd0): stat point, skill point (u16), max HP, MP, SP (u32), direction (u16), then eleven u32 and the 25-byte guild name. The three exp fields are the cumulative exp at the level's start, the total for the next level and the current total; their order is not yet confirmed in game. |
+| [`buildAdditionalStats`](../../server/internal/world/character.go#L440)<br>`func buildAdditionalStats(s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildStatsReset`](../../server/internal/world/character.go#L449)<br>`func buildStatsReset(statPoint, str, rec, intel, wis, dex, luc uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCurrentHitpoints`](../../server/internal/world/character.go#L458)<br>`func buildCurrentHitpoints(s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMaxHPMPSP`](../../server/internal/world/character.go#L466)<br>`func buildMaxHPMPSP(ch *db.Character, s *CharacterStats) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMaxEnergy`](../../server/internal/world/character.go#L476)<br>`func buildMaxEnergy(ch *db.Character, hitpointType uint8, value uint32) []byte` | buildMaxEnergy (0x050B): hitpointType 0 hp, 1 sp, 2 mp. |
+| [`buildCharacterEnteredMap`](../../server/internal/world/character.go#L485)<br>`func buildCharacterEnteredMap(ch *db.Character, isAdmin, firstLoad bool) []byte` | buildCharacterEnteredMap: marker 0 already present, 1 own first load, 2 admin. |
+| [`buildCharacterEnteredMapGuild`](../../server/internal/world/character.go#L489)<br>`func buildCharacterEnteredMapGuild(ch *db.Character, isAdmin, firstLoad bool, guildID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterMapPosition`](../../server/internal/world/character.go#L509)<br>`func buildCharacterMapPosition(ch *db.Character) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterMove`](../../server/internal/world/character.go#L524)<br>`func buildCharacterMove(ch *db.Character, motion uint8, direction uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterMotion`](../../server/internal/world/character.go#L536)<br>`func buildCharacterMotion(characterID uint32, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildLeaveWorldAck`](../../server/internal/world/character.go#L543)<br>`func buildLeaveWorldAck(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`equippedItem`](../../server/internal/world/character.go#L549)<br>`func equippedItem(items []db.Item, slot uint8) *db.Item` | See the source definition and the subsystem ownership contract. |
+| [`enchantLevel`](../../server/internal/world/character.go#L558)<br>`func enchantLevel(it *db.Item) uint8` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterEquipment`](../../server/internal/world/character.go#L565)<br>`func buildCharacterEquipment(ch *db.Character, items []db.Item, slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildChangeAppearance`](../../server/internal/world/character.go#L587)<br>`func buildChangeAppearance(characterID uint32, hair, face, height, sex uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterShape`](../../server/internal/world/character.go#L595)<br>`func buildCharacterShape(ch *db.Character, faction uint8, items []db.Item, motion uint8) []byte` | buildCharacterShape (0x0303). The persistent motion is 1 only for sitting. |
+| [`buildCharacterShapeGuild`](../../server/internal/world/character.go#L599)<br>`func buildCharacterShapeGuild(ch *db.Character, faction uint8, items []db.Item, motion uint8, guildName string) []byte` | See the source definition and the subsystem ownership contract. |
+| [`statPackets`](../../server/internal/world/character.go#L632)<br>`func statPackets(ch *db.Character, s *CharacterStats) []labeled` | See the source definition and the subsystem ownership contract. |
+| [`buildEmptyCharacterListSlot`](../../server/internal/world/character.go#L643)<br>`func buildEmptyCharacterListSlot(slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterListSlot`](../../server/internal/world/character.go#L650)<br>`func buildCharacterListSlot(ch *db.Character, items []db.Item) []byte` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3261,7 +3260,7 @@ Direct GX dependencies: `internal/textwire`, `server/internal/packet`.
 |---|---|
 | [`labeled`](../../server/internal/world/protocol.go#L11)<br>`type labeled` | labeled pairs a frame with its log label. |
 | [`buildWorldHandshake`](../../server/internal/world/protocol.go#L16)<br>`func buildWorldHandshake() []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildAccountFaction`](../../server/internal/world/protocol.go#L24)<br>`func buildAccountFaction(faction, maxMode uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildAccountFaction`](../../server/internal/world/protocol.go#L24)<br>`func buildAccountFaction(faction uint8) []byte` | See the source definition and the subsystem ownership contract. |
 | [`isValidFaction`](../../server/internal/world/protocol.go#L31)<br>`func isValidFaction(f uint8) bool` | See the source definition and the subsystem ownership contract. |
 | [`resultByte`](../../server/internal/world/protocol.go#L33)<br>`func resultByte(ok bool) uint8` | See the source definition and the subsystem ownership contract. |
 | [`buildCreateCharacterResult`](../../server/internal/world/protocol.go#L41)<br>`func buildCreateCharacterResult(ok bool) []byte` | buildCreateCharacterResult: one byte, 0 ok, 1 failure ("name in use"). |
@@ -3511,43 +3510,43 @@ Direct GX dependencies: `internal/npcquest`, `server/internal/db`, `server/inter
 | [`questItemLinks`](../../server/internal/world/quests.go#L76)<br>`var questItemLinks` | See the source definition and the subsystem ownership contract. |
 | [`mobQuestLinks`](../../server/internal/world/quests.go#L77)<br>`var mobQuestLinks` | See the source definition and the subsystem ownership contract. |
 | [`sqliteQuest`](../../server/internal/world/quests.go#L81)<br>`func sqliteQuest(row npcquest.Row) questDef` | sqliteQuest follows the native field order declared by QuestDetails. |
-| [`findQuestDef`](../../server/internal/world/quests.go#L132)<br>`func findQuestDef(id uint16) *questDef` | findQuestDef is GetQuest: by row (1-based), not the embedded id. |
-| [`buildMobQuestLinks`](../../server/internal/world/quests.go#L141)<br>`func buildMobQuestLinks()` | buildMobQuestLinks maps mobs to the mob-kill quests that count them, ascending by minimum level (MobQuestLinks::build). |
-| [`activeQuest`](../../server/internal/world/quests.go#L173)<br>`type activeQuest` | activeQuest is a quest in progress. |
-| [`delayMinutes`](../../server/internal/world/quests.go#L184)<br>`func (q *activeQuest) delayMinutes() int16` | See the source definition and the subsystem ownership contract. |
-| [`row`](../../server/internal/world/quests.go#L191)<br>`func (q *activeQuest) row() db.CharQuest` | See the source definition and the subsystem ownership contract. |
-| [`loadQuests`](../../server/internal/world/quests.go#L200)<br>`func (s *Session) loadQuests() error` | loadQuests restores the character's quests as PacketUserDBSetInfo does. |
-| [`questListPackets`](../../server/internal/world/quests.go#L253)<br>`func (s *Session) questListPackets() [][]byte` | questListPackets are 0x0901 (id, minutes left, counters) and 0x0906 (id, success), up to 255 entries each. |
-| [`questSnapshot`](../../server/internal/world/quests.go#L284)<br>`func (s *Session) questSnapshot() []db.CharQuest` | questSnapshot captures active timers and counters on exit. |
-| [`findQuest`](../../server/internal/world/quests.go#L292)<br>`func (s *Session) findQuest(id uint16) *activeQuest` | See the source definition and the subsystem ownership contract. |
-| [`questFinished`](../../server/internal/world/quests.go#L301)<br>`func (s *Session) questFinished(id uint16, onlySuccess bool) bool` | See the source definition and the subsystem ownership contract. |
-| [`questPrerequisites`](../../server/internal/world/quests.go#L311)<br>`func (s *Session) questPrerequisites(q *questDef) bool` | questPrerequisites: PrevQuest, HG or VG finished successfully (any). |
-| [`questEnableStart`](../../server/internal/world/quests.go#L326)<br>`func (s *Session) questEnableStart(q *questDef) bool` | questEnableStart is CUser::QuestEnableStart: level range, race (Faction), job, mode and prerequisites. |
-| [`raceAllowed`](../../server/internal/world/quests.go#L355)<br>`func raceAllowed(country, race uint8) bool` | raceAllowed is the Country/Faction race rule shared with items. |
-| [`npcMatches`](../../server/internal/world/quests.go#L371)<br>`func (s *Session) npcMatches(npcID uint32, npcType uint8, typeID uint16) (MapNpc, bool)` | See the source definition and the subsystem ownership contract. |
-| [`questNPCReach`](../../server/internal/world/quests.go#L377)<br>`const questNPCReach = 30.0` | Use the same authoritative interaction radius as other NPC services. |
-| [`questNPCInReach`](../../server/internal/world/quests.go#L379)<br>`func (s *Session) questNPCInReach(npc MapNpc) bool` | See the source definition and the subsystem ownership contract. |
-| [`questItemUse`](../../server/internal/world/quests.go#L383)<br>`type questItemUse` | See the source definition and the subsystem ownership contract. |
-| [`useQuestItem`](../../server/internal/world/quests.go#L391)<br>`func (s *Session) useQuestItem(index int) bool` | Native ItemUse (0x4655e0) opens the same window for types 27–29. Type 29 consumes one unit before the client can request the quest. |
-| [`handleQuestStart`](../../server/internal/world/quests.go#L416)<br>`func (s *Session) handleQuestStart(p []byte)` | handleQuestStart (0x0902): NPC or item context, followed by the quest row. |
-| [`startQuest`](../../server/internal/world/quests.go#L459)<br>`func (s *Session) startQuest(q *questDef, id uint16, npcID uint32)` | See the source definition and the subsystem ownership contract. |
-| [`questItemTotals`](../../server/internal/world/quests.go#L542)<br>`func questItemTotals(d *questDef, items []db.Item) (totals [3]int)` | questItemTotals counts actual items in carried bags. |
-| [`planQuestItems`](../../server/internal/world/quests.go#L557)<br>`func planQuestItems(d *questDef, r questResult, original []db.Item) (items []db.Item, packets [][]byte, ok bool)` | See the source definition and the subsystem ownership contract. |
-| [`handleQuestEnd`](../../server/internal/world/quests.go#L602)<br>`func (s *Session) handleQuestEnd(p []byte)` | handleQuestEnd (0x0903): npc id, quest id (quest_end_request). |
-| [`completeQuest`](../../server/internal/world/quests.go#L630)<br>`func (s *Session) completeQuest(q *activeQuest, ctx uint32, success, requested bool)` | completeQuest is quest_requests_complete. |
-| [`handleQuestChoose`](../../server/internal/world/quests.go#L692)<br>`func (s *Session) handleQuestChoose(p []byte)` | handleQuestChoose (0x0907): quest id, reward index. |
-| [`handleQuestAbandon`](../../server/internal/world/quests.go#L721)<br>`func (s *Session) handleQuestAbandon(p []byte)` | handleQuestAbandon (0x0908): quest id. |
-| [`awardQuest`](../../server/internal/world/quests.go#L733)<br>`func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32)` | awardQuest is award_quest_reward: exp (doubled unless the quest is ultimate-only), gold and an item; 0x0903 reports them. |
-| [`removeQuest`](../../server/internal/world/quests.go#L820)<br>`func (s *Session) removeQuest(q *activeQuest, success uint8) bool` | removeQuest is QuestRuntime::remove: repeatable quests (TickReceive) are deleted, others finish with their success flag. |
-| [`removeQuestFromMemory`](../../server/internal/world/quests.go#L835)<br>`func (s *Session) removeQuestFromMemory(q *activeQuest, success uint8)` | See the source definition and the subsystem ownership contract. |
-| [`bumpQuestCounter`](../../server/internal/world/quests.go#L847)<br>`func (s *Session) bumpQuestCounter(q *activeQuest, slot int)` | See the source definition and the subsystem ownership contract. |
-| [`questKill`](../../server/internal/world/quests.go#L865)<br>`func (s *Session) questKill(mobID uint16)` | questKill is update_mob_kill_quests for one kill of mobID. |
-| [`questKillCount`](../../server/internal/world/quests.go#L866)<br>`func (s *Session) questKillCount(mobID uint16, count uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`questNeeds`](../../server/internal/world/quests.go#L926)<br>`func (s *Session) questNeeds(t, id uint8) bool` | questNeeds: an item that starts a quest, or one an active quest ends with. |
-| [`questPickup`](../../server/internal/world/quests.go#L943)<br>`func (s *Session) questPickup(t, id uint8)` | questPickup is quest_requests_progress_pick_item. |
-| [`questTimers`](../../server/internal/world/quests.go#L967)<br>`func (s *Session) questTimers()` | questTimers fails timed quests whose time ran out. |
-| [`questItemDrop`](../../server/internal/world/quests.go#L981)<br>`func questItemDrop(mob *MapMob, recipients []*ConnectedPlayer) *db.ItemDef` | questItemDrop is mob_loot's quest item: Mobs.QuestItemID drops (chance = the item's Quality per cent) when it starts a quest or any recipient has a quest it ends. |
-| [`syncQuestIDs`](../../server/internal/world/quests.go#L1005)<br>`func (s *Session) syncQuestIDs()` | syncQuestIDs publishes the active quest ids for other sessions' loot. |
+| [`findQuestDef`](../../server/internal/world/quests.go#L133)<br>`func findQuestDef(id uint16) *questDef` | findQuestDef is GetQuest: by row (1-based), not the embedded id. |
+| [`buildMobQuestLinks`](../../server/internal/world/quests.go#L142)<br>`func buildMobQuestLinks()` | buildMobQuestLinks maps mobs to the mob-kill quests that count them, ascending by minimum level (MobQuestLinks::build). |
+| [`activeQuest`](../../server/internal/world/quests.go#L174)<br>`type activeQuest` | activeQuest is a quest in progress. |
+| [`delayMinutes`](../../server/internal/world/quests.go#L185)<br>`func (q *activeQuest) delayMinutes() int16` | See the source definition and the subsystem ownership contract. |
+| [`row`](../../server/internal/world/quests.go#L192)<br>`func (q *activeQuest) row() db.CharQuest` | See the source definition and the subsystem ownership contract. |
+| [`loadQuests`](../../server/internal/world/quests.go#L201)<br>`func (s *Session) loadQuests() error` | loadQuests restores the character's quests as PacketUserDBSetInfo does. |
+| [`questListPackets`](../../server/internal/world/quests.go#L254)<br>`func (s *Session) questListPackets() [][]byte` | questListPackets are 0x0901 (id, minutes left, counters) and 0x0906 (id, success), up to 255 entries each. |
+| [`questSnapshot`](../../server/internal/world/quests.go#L285)<br>`func (s *Session) questSnapshot() []db.CharQuest` | questSnapshot captures active timers and counters on exit. |
+| [`findQuest`](../../server/internal/world/quests.go#L293)<br>`func (s *Session) findQuest(id uint16) *activeQuest` | See the source definition and the subsystem ownership contract. |
+| [`questFinished`](../../server/internal/world/quests.go#L302)<br>`func (s *Session) questFinished(id uint16, onlySuccess bool) bool` | See the source definition and the subsystem ownership contract. |
+| [`questPrerequisites`](../../server/internal/world/quests.go#L312)<br>`func (s *Session) questPrerequisites(q *questDef) bool` | questPrerequisites: PrevQuest, HG or VG finished successfully (any). |
+| [`questEnableStart`](../../server/internal/world/quests.go#L327)<br>`func (s *Session) questEnableStart(q *questDef) bool` | questEnableStart is CUser::QuestEnableStart: level range, race (Faction), job and prerequisites. |
+| [`raceAllowed`](../../server/internal/world/quests.go#L342)<br>`func raceAllowed(country, race uint8) bool` | raceAllowed is the Country/Faction race rule shared with items. |
+| [`npcMatches`](../../server/internal/world/quests.go#L358)<br>`func (s *Session) npcMatches(npcID uint32, npcType uint8, typeID uint16) (MapNpc, bool)` | See the source definition and the subsystem ownership contract. |
+| [`questNPCReach`](../../server/internal/world/quests.go#L364)<br>`const questNPCReach = 30.0` | Use the same authoritative interaction radius as other NPC services. |
+| [`questNPCInReach`](../../server/internal/world/quests.go#L366)<br>`func (s *Session) questNPCInReach(npc MapNpc) bool` | See the source definition and the subsystem ownership contract. |
+| [`questItemUse`](../../server/internal/world/quests.go#L370)<br>`type questItemUse` | See the source definition and the subsystem ownership contract. |
+| [`useQuestItem`](../../server/internal/world/quests.go#L378)<br>`func (s *Session) useQuestItem(index int) bool` | Native ItemUse (0x4655e0) opens the same window for types 27–29. Type 29 consumes one unit before the client can request the quest. |
+| [`handleQuestStart`](../../server/internal/world/quests.go#L403)<br>`func (s *Session) handleQuestStart(p []byte)` | handleQuestStart (0x0902): NPC or item context, followed by the quest row. |
+| [`startQuest`](../../server/internal/world/quests.go#L446)<br>`func (s *Session) startQuest(q *questDef, id uint16, npcID uint32)` | See the source definition and the subsystem ownership contract. |
+| [`questItemTotals`](../../server/internal/world/quests.go#L529)<br>`func questItemTotals(d *questDef, items []db.Item) (totals [3]int)` | questItemTotals counts actual items in carried bags. |
+| [`planQuestItems`](../../server/internal/world/quests.go#L544)<br>`func planQuestItems(d *questDef, r questResult, original []db.Item) (items []db.Item, packets [][]byte, ok bool)` | See the source definition and the subsystem ownership contract. |
+| [`handleQuestEnd`](../../server/internal/world/quests.go#L589)<br>`func (s *Session) handleQuestEnd(p []byte)` | handleQuestEnd (0x0903): npc id, quest id (quest_end_request). |
+| [`completeQuest`](../../server/internal/world/quests.go#L617)<br>`func (s *Session) completeQuest(q *activeQuest, ctx uint32, success, requested bool)` | completeQuest is quest_requests_complete. |
+| [`handleQuestChoose`](../../server/internal/world/quests.go#L679)<br>`func (s *Session) handleQuestChoose(p []byte)` | handleQuestChoose (0x0907): quest id, reward index. |
+| [`handleQuestAbandon`](../../server/internal/world/quests.go#L708)<br>`func (s *Session) handleQuestAbandon(p []byte)` | handleQuestAbandon (0x0908): quest id. |
+| [`awardQuest`](../../server/internal/world/quests.go#L719)<br>`func (s *Session) awardQuest(q *activeQuest, variant uint8, ctx uint32)` | awardQuest sends the authored EXP, gold and item through 0x0903. |
+| [`removeQuest`](../../server/internal/world/quests.go#L803)<br>`func (s *Session) removeQuest(q *activeQuest, success uint8) bool` | removeQuest is QuestRuntime::remove: repeatable quests (TickReceive) are deleted, others finish with their success flag. |
+| [`removeQuestFromMemory`](../../server/internal/world/quests.go#L818)<br>`func (s *Session) removeQuestFromMemory(q *activeQuest, success uint8)` | See the source definition and the subsystem ownership contract. |
+| [`bumpQuestCounter`](../../server/internal/world/quests.go#L830)<br>`func (s *Session) bumpQuestCounter(q *activeQuest, slot int)` | See the source definition and the subsystem ownership contract. |
+| [`questKill`](../../server/internal/world/quests.go#L848)<br>`func (s *Session) questKill(mobID uint16)` | questKill is update_mob_kill_quests for one kill of mobID. |
+| [`questKillCount`](../../server/internal/world/quests.go#L849)<br>`func (s *Session) questKillCount(mobID uint16, count uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`questNeeds`](../../server/internal/world/quests.go#L909)<br>`func (s *Session) questNeeds(t, id uint8) bool` | questNeeds: an item that starts a quest, or one an active quest ends with. |
+| [`questPickup`](../../server/internal/world/quests.go#L926)<br>`func (s *Session) questPickup(t, id uint8)` | questPickup is quest_requests_progress_pick_item. |
+| [`questTimers`](../../server/internal/world/quests.go#L950)<br>`func (s *Session) questTimers()` | questTimers fails timed quests whose time ran out. |
+| [`questItemDrop`](../../server/internal/world/quests.go#L964)<br>`func questItemDrop(mob *MapMob, recipients []*ConnectedPlayer) *db.ItemDef` | questItemDrop is mob_loot's quest item: Mobs.QuestItemID drops (chance = the item's Quality per cent) when it starts a quest or any recipient has a quest it ends. |
+| [`syncQuestIDs`](../../server/internal/world/quests.go#L988)<br>`func (s *Session) syncQuestIDs()` | syncQuestIDs publishes the active quest ids for other sessions' loot. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3575,7 +3574,7 @@ type questDef struct {
 	ID                  uint16
 	Name                string
 	MinLevel, MaxLevel  uint16
-	Faction, Mode       uint8
+	Faction             uint8
 	Male, Female        bool
 	Jobs                [6]uint8
 	HG                  uint16 // also an alternative prerequisite quest
@@ -3705,38 +3704,25 @@ type realmState struct {
 
 [server/internal/world/rebirth.go](../../server/internal/world/rebirth.go#L1)
 
-Direct GX dependencies: `server/internal/db`.
-
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`reviveAtBind`](../../server/internal/world/rebirth.go#L17)<br>`const reviveAtBind = 2` | 0x0553 request byte. |
-| [`reviveWithParty`](../../server/internal/world/rebirth.go#L18)<br>`const reviveWithParty = 3` | 0x0553 request byte. |
-| [`reviveRuneAtBind`](../../server/internal/world/rebirth.go#L19)<br>`const reviveRuneAtBind = 4` | 0x0553 request byte. |
-| [`reviveRuneHere`](../../server/internal/world/rebirth.go#L20)<br>`const reviveRuneHere = 5` | 0x0553 request byte. |
-| [`rebirthKindHere`](../../server/internal/world/rebirth.go#L25)<br>`const rebirthKindHere = 1` | CUser::Rebirth kind byte of 0x0551. |
-| [`rebirthKindBind`](../../server/internal/world/rebirth.go#L26)<br>`const rebirthKindBind = 4` | CUser::Rebirth kind byte of 0x0551. |
-| [`rebirthKindParty`](../../server/internal/world/rebirth.go#L27)<br>`const rebirthKindParty = 5` | CUser::Rebirth kind byte of 0x0551. |
-| [`rebirthDeadline`](../../server/internal/world/rebirth.go#L33)<br>`const rebirthDeadline = 200 * time.Second` | rebirthDeadline is EnterDead's tick + 200000: the dead user is revived at the bind point when it has not chosen. |
-| [`partyRebirthWait`](../../server/internal/world/rebirth.go#L35)<br>`const partyRebirthWait = 30 * time.Second` | partyRebirthWait is 0x0553 mode 3's tick + 30000. |
-| [`abilityUltimateRebirth`](../../server/internal/world/rebirth.go#L38)<br>`const abilityUltimateRebirth = 46` | abilityUltimateRebirth (46, CUser +0x58d8) revives an ultimate-mode character without the rune. |
-| [`specialRebirth`](../../server/internal/world/rebirth.go#L40)<br>`const specialRebirth = 37` | Resurrection runes: real type 26, Special 37. |
-| [`startRebirthTimer`](../../server/internal/world/rebirth.go#L44)<br>`func (s *Session) startRebirthTimer()` | startRebirthTimer is EnterDead's deadline (code 0). |
-| [`handleResurrect`](../../server/internal/world/rebirth.go#L49)<br>`func (s *Session) handleResurrect(p []byte)` | handleResurrect (0x0553): mode byte. |
-| [`tickRebirth`](../../server/internal/world/rebirth.go#L70)<br>`func (s *Session) tickRebirth(now time.Time)` | tickRebirth is UpdateRebirth's death timer. |
-| [`killSoul`](../../server/internal/world/rebirth.go#L85)<br>`func (s *Session) killSoul()` | killSoul is CUser::KillSoul. Outside ultimate mode: the death's exp loss, then rebirth at the bind point with full pools. In ultimate mode the character needs ability 46 or a resurrection rune (no exp loss, half pools); without either the original ends the character. |
-| [`rebirthAtBind`](../../server/internal/world/rebirth.go#L108)<br>`func (s *Session) rebirthAtBind()` | rebirthAtBind applies the normal death penalty and returns the user with full pools. |
-| [`killSoulByItem`](../../server/internal/world/rebirth.go#L119)<br>`func (s *Session) killSoulByItem(here bool)` | killSoulByItem is KillSoulByItem (here false: bind point, preferring runes with ReqVg set) and KillSoulByItemNoMove (here true: where the character died, preferring runes with ReqVg 0). No exp loss, half pools; without a rune it is KillSoul. |
-| [`killSoulParty`](../../server/internal/world/rebirth.go#L142)<br>`func (s *Session) killSoulParty()` | killSoulParty is KillSoulParty: at the party leader's position with full pools (after the exp loss) when the leader is alive on the same map; otherwise, and always in ultimate mode, KillSoul. |
-| [`inParty`](../../server/internal/world/rebirth.go#L158)<br>`func (s *Session) inParty() bool` | See the source definition and the subsystem ownership contract. |
-| [`partyLeader`](../../server/internal/world/rebirth.go#L167)<br>`func (s *Session) partyLeader() *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`hasBenefit`](../../server/internal/world/rebirth.go#L181)<br>`func (s *Session) hasBenefit(kind uint8) bool` | hasBenefit reports a positive ability of a buff still active (death clears all but the KeepOnDeath ones first). |
-| [`findRebirthItem`](../../server/internal/world/rebirth.go#L195)<br>`func (s *Session) findRebirthItem(noMove bool) int` | findRebirthItem is FindItemRebirth: bags 1.. in order, slots 0-23, a rune (real type 26, Special 37), first one matching the preference (noMove: ReqVg 0, otherwise ReqVg set), then any rune. -1 when none. |
-| [`useRebirthItem`](../../server/internal/world/rebirth.go#L223)<br>`func (s *Session) useRebirthItem(i int)` | useRebirthItem is ItemUseNSend: one rune consumed, the client told. |
-| [`setPools`](../../server/internal/world/rebirth.go#L232)<br>`func (s *Session) setPools(half bool)` | setPools sets current HP/MP/SP to the effective maxima (half when half). |
-| [`halfPools`](../../server/internal/world/rebirth.go#L244)<br>`func (s *Session) halfPools()` | See the source definition and the subsystem ownership contract. |
-| [`rebirth`](../../server/internal/world/rebirth.go#L250)<br>`func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore bool, lost uint32)` | rebirth is CUser::Rebirth: full pools when restore, the corpse leaves the view (CZone::LeaveDead 0x0406), then on the same map the user moves and 0x0551 (id, kind, exp, position) goes to the view; on another map 0x0551 goes to the user before the zone change. 0x0505 sends the pools. |
-| [`ultimateDeath`](../../server/internal/world/rebirth.go#L306)<br>`func (s *Session) ultimateDeath()` | ultimateDeath is KillSoul's ultimate-mode end without ability 46 or a rune: ExpDrop, the DB agent's 0x0406 (account, character), logout and LeaveDead. |
-| [`endUltimateCharacter`](../../server/internal/world/rebirth.go#L317)<br>`func (s *Session) endUltimateCharacter()` | endUltimateCharacter is the rest of that branch: the character leaves the world, is deleted (usp_Delete_Char_E, the DB agent's 0x0406 effect; the usual restore window applies) and the connection closes (LogoutUser). |
+| [`reviveAtBind`](../../server/internal/world/rebirth.go#L15)<br>`const reviveAtBind = 2` | 0x0553 request byte. |
+| [`reviveWithParty`](../../server/internal/world/rebirth.go#L16)<br>`const reviveWithParty = 3` | 0x0553 request byte. |
+| [`reviveRuneAtBind`](../../server/internal/world/rebirth.go#L17)<br>`const reviveRuneAtBind = 4` | 0x0553 request byte. |
+| [`reviveRuneHere`](../../server/internal/world/rebirth.go#L18)<br>`const reviveRuneHere = 5` | 0x0553 request byte. |
+| [`rebirthKindBind`](../../server/internal/world/rebirth.go#L23)<br>`const rebirthKindBind = 4` | CUser::Rebirth kind byte of 0x0551. |
+| [`rebirthKindParty`](../../server/internal/world/rebirth.go#L24)<br>`const rebirthKindParty = 5` | CUser::Rebirth kind byte of 0x0551. |
+| [`rebirthDeadline`](../../server/internal/world/rebirth.go#L30)<br>`const rebirthDeadline = 200 * time.Second` | rebirthDeadline is EnterDead's tick + 200000: the dead user is revived at the bind point when it has not chosen. |
+| [`partyRebirthWait`](../../server/internal/world/rebirth.go#L32)<br>`const partyRebirthWait = 30 * time.Second` | partyRebirthWait is 0x0553 mode 3's tick + 30000. |
+| [`startRebirthTimer`](../../server/internal/world/rebirth.go#L36)<br>`func (s *Session) startRebirthTimer()` | startRebirthTimer is EnterDead's deadline (code 0). |
+| [`handleResurrect`](../../server/internal/world/rebirth.go#L41)<br>`func (s *Session) handleResurrect(p []byte)` | handleResurrect (0x0553): mode byte. |
+| [`tickRebirth`](../../server/internal/world/rebirth.go#L58)<br>`func (s *Session) tickRebirth(now time.Time)` | tickRebirth is UpdateRebirth's death timer. |
+| [`rebirthAtBind`](../../server/internal/world/rebirth.go#L70)<br>`func (s *Session) rebirthAtBind()` | rebirthAtBind applies the normal death penalty and returns the user with full pools. |
+| [`killSoulParty`](../../server/internal/world/rebirth.go#L80)<br>`func (s *Session) killSoulParty()` | killSoulParty is KillSoulParty: at the party leader's position with full pools (after the exp loss) when the leader is alive on the same map; otherwise return to the bind point. |
+| [`inParty`](../../server/internal/world/rebirth.go#L92)<br>`func (s *Session) inParty() bool` | See the source definition and the subsystem ownership contract. |
+| [`partyLeader`](../../server/internal/world/rebirth.go#L101)<br>`func (s *Session) partyLeader() *ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
+| [`refillPools`](../../server/internal/world/rebirth.go#L114)<br>`func (s *Session) refillPools()` | refillPools sets current HP, MP and SP to their effective maxima. |
+| [`rebirth`](../../server/internal/world/rebirth.go#L121)<br>`func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore bool, lost uint32)` | rebirth restores the character and publishes the result to the world. |
 
 ### recreation_runes.go
 
@@ -3945,27 +3931,22 @@ Direct GX dependencies: `server/internal/db`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`growEasy`](../../server/internal/world/rules.go#L17)<br>`const growEasy = 0` | Grow modes (Chars.Grow). |
-| [`growNormal`](../../server/internal/world/rules.go#L18)<br>`const growNormal = 1` | Grow modes (Chars.Grow). |
-| [`growHard`](../../server/internal/world/rules.go#L19)<br>`const growHard = 2` | Grow modes (Chars.Grow). |
-| [`growUltimate`](../../server/internal/world/rules.go#L20)<br>`const growUltimate = 3` | Grow modes (Chars.Grow). |
-| [`allowedJob`](../../server/internal/world/rules.go#L26)<br>`func allowedJob(family, job uint8) bool` | allowedJob is the family/job mask of CUser::PacketCharacter (0x0046bf20): humans fighter/defender/priest, elves ranger/archer/mage, vail ranger/mage/oracle, deatheaters warrior/guardian/hunter. |
-| [`growScale`](../../server/internal/world/rules.go#L33)<br>`func growScale(grow uint8) float64` | growScale is the HP/SP/MP multiplier of hard (1.1, single precision as in the original) and ultimate (1.5) modes. |
-| [`startingStats`](../../server/internal/world/rules.go#L45)<br>`func startingStats(family, job uint8) (str, dex, rec, intel, wis, luc uint16)` | startingStats are CUser::ProcessCharacterCreate (0x00480e90)'s base stats per job (str, dex, rec, int, wis, luc) plus the family bonus. |
-| [`familyPoolBonus`](../../server/internal/world/rules.go#L66)<br>`func familyPoolBonus(family uint8) (hp, mp, sp uint32)` | familyPoolBonus is the per-family flat HP/MP/SP of CUser::InitEquipment. |
-| [`statusRow`](../../server/internal/world/rules.go#L82)<br>`func statusRow(level uint16, job uint8) db.Status` | statusRow is StatusDefs for a job and level (falling back to the last defined level). |
-| [`basePools`](../../server/internal/world/rules.go#L97)<br>`func basePools(ch *db.Character) (hp, mp, sp uint32)` | basePools are a character's base max HP/MP/SP per CUser::InitEquipment (0x00454560): StatusDefs scaled by grow mode, the family bonus and 5 per point of REC (HP), DEX (SP) and WIS (MP). Equipment adds on top. |
-| [`newCharacterPools`](../../server/internal/world/rules.go#L113)<br>`func newCharacterPools(family, job, grow uint8, rec, dex, wis uint16) (hp, mp, sp uint16)` | newCharacterPools are the HP/MP/SP CUser::ProcessCharacterCreate stores: level-1 StatusDefs times the single-precision grow multiplier, plus the family bonus and the stat-derived part. |
-| [`starterItems`](../../server/internal/world/rules.go#L129)<br>`func starterItems(family, job uint8) []db.Item` | starterItems places BaseItemsDefs as CGameData::LoadBaseItem (0x004bf800) does: the configured Slot and Quality are ignored, the first item of type 1..19 is equipped as the weapon (slot 5) and the rest fill bag 1. |
-| [`levelUp`](../../server/internal/world/rules.go#L153)<br>`func levelUp(ch *db.Character)` | levelUp is StatusRules::level_up (CUser level-up path): +1 to the job's primary stat, stat and skill points by grow mode, and the pools follow the new level. |
-| [`mobExperience`](../../server/internal/world/rules.go#L186)<br>`func mobExperience(mobLevel, base, userLevel uint16) uint32` | mobExperience is CMob::GetExp (0x00491690) without the event multiplier: base * (1 + 0.2 * (mobLevel - userLevel + 1)), nothing when the mob is more than 9 levels above, never negative. |
-| [`sittingRecovery`](../../server/internal/world/rules.go#L202)<br>`func sittingRecovery(maxValue uint32, extraPct int32, flat uint32) uint32` | sittingRecovery is CUser::UpdateRecover's sitting amount: 5% of the maximum, plus the sitting-recovery abilities' percent (10-12), plus the flat sitting recovery, truncated (the FISTP runs in chop mode). |
-| [`resetStats`](../../server/internal/world/rules.go#L210)<br>`func resetStats(ch *db.Character)` | resetStats undoes stat allocation: the job's starting stats plus the automatic +1 per level, and every stat point the levels granted. |
-| [`equipSlotRealType`](../../server/internal/world/rules.go#L230)<br>`var equipSlotRealType` | equipSlotRealType is the real item type each equipment slot takes in CUser::EnableEquipment (0x0045b450); 0 means any weapon, -1 no check. |
-| [`isWeaponReal`](../../server/internal/world/rules.go#L233)<br>`func isWeaponReal(rt uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`isOneHandReal`](../../server/internal/world/rules.go#L234)<br>`func isOneHandReal(rt uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`canEquip`](../../server/internal/world/rules.go#L239)<br>`func canEquip(ch *db.Character, def *db.ItemDef, slot uint8, items []db.Item) bool` | canEquip is CUser::EnableEquipment: level, slot type, two-handed weapons against shields, race (Items.Country), class and the sex-only items (Special 64/65). |
-| [`equipFailure`](../../server/internal/world/rules.go#L243)<br>`func equipFailure(ch *db.Character, def *db.ItemDef, slot uint8, items []db.Item) string` | See the source definition and the subsystem ownership contract. |
+| [`allowedJob`](../../server/internal/world/rules.go#L18)<br>`func allowedJob(family, job uint8) bool` | allowedJob is the family/job mask of CUser::PacketCharacter (0x0046bf20): humans fighter/defender/priest, elves ranger/archer/mage, vail ranger/mage/oracle, deatheaters warrior/guardian/hunter. |
+| [`startingStats`](../../server/internal/world/rules.go#L25)<br>`func startingStats(family, job uint8) (str, dex, rec, intel, wis, luc uint16)` | startingStats are CUser::ProcessCharacterCreate (0x00480e90)'s base stats per job (str, dex, rec, int, wis, luc) plus the family bonus. |
+| [`familyPoolBonus`](../../server/internal/world/rules.go#L46)<br>`func familyPoolBonus(family uint8) (hp, mp, sp uint32)` | familyPoolBonus is the per-family flat HP/MP/SP of CUser::InitEquipment. |
+| [`statusRow`](../../server/internal/world/rules.go#L62)<br>`func statusRow(level uint16, job uint8) db.Status` | statusRow is StatusDefs for a job and level (falling back to the last defined level). |
+| [`basePools`](../../server/internal/world/rules.go#L77)<br>`func basePools(ch *db.Character) (hp, mp, sp uint32)` | basePools are a character's base max HP/MP/SP per CUser::InitEquipment (0x00454560): StatusDefs scaled by 1.5, the family bonus and 5 per point of REC (HP), DEX (SP) and WIS (MP). Equipment adds on top. |
+| [`newCharacterPools`](../../server/internal/world/rules.go#L93)<br>`func newCharacterPools(family, job uint8, rec, dex, wis uint16) (hp, mp, sp uint16)` | newCharacterPools are the HP/MP/SP CUser::ProcessCharacterCreate stores: level-1 StatusDefs times 1.5, plus the family bonus and the stat-derived part. |
+| [`starterItems`](../../server/internal/world/rules.go#L104)<br>`func starterItems(family, job uint8) []db.Item` | starterItems places BaseItemsDefs as CGameData::LoadBaseItem (0x004bf800) does: the configured Slot and Quality are ignored, the first item of type 1..19 is equipped as the weapon (slot 5) and the rest fill bag 1. |
+| [`levelUp`](../../server/internal/world/rules.go#L128)<br>`func levelUp(ch *db.Character)` | levelUp is StatusRules::level_up (CUser level-up path): +1 to the job's primary stat, nine stat points and five skill points, and the pools follow the new level. |
+| [`mobExperience`](../../server/internal/world/rules.go#L152)<br>`func mobExperience(mobLevel, base, userLevel uint16) uint32` | mobExperience is CMob::GetExp (0x00491690) without the event multiplier: base * (1 + 0.2 * (mobLevel - userLevel + 1)), nothing when the mob is more than 9 levels above, never negative. |
+| [`sittingRecovery`](../../server/internal/world/rules.go#L168)<br>`func sittingRecovery(maxValue uint32, extraPct int32, flat uint32) uint32` | sittingRecovery is CUser::UpdateRecover's sitting amount: 5% of the maximum, plus the sitting-recovery abilities' percent (10-12), plus the flat sitting recovery, truncated (the FISTP runs in chop mode). |
+| [`resetStats`](../../server/internal/world/rules.go#L176)<br>`func resetStats(ch *db.Character)` | resetStats undoes stat allocation: the job's starting stats plus the automatic +1 per level, and every stat point the levels granted. |
+| [`equipSlotRealType`](../../server/internal/world/rules.go#L195)<br>`var equipSlotRealType` | equipSlotRealType is the real item type each equipment slot takes in CUser::EnableEquipment (0x0045b450); 0 means any weapon, -1 no check. |
+| [`isWeaponReal`](../../server/internal/world/rules.go#L198)<br>`func isWeaponReal(rt uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`isOneHandReal`](../../server/internal/world/rules.go#L199)<br>`func isOneHandReal(rt uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`canEquip`](../../server/internal/world/rules.go#L204)<br>`func canEquip(ch *db.Character, def *db.ItemDef, slot uint8, items []db.Item) bool` | canEquip is CUser::EnableEquipment: level, slot type, two-handed weapons against shields, race (Items.Country), class and the sex-only items (Special 64/65). |
+| [`equipFailure`](../../server/internal/world/rules.go#L208)<br>`func equipFailure(ch *db.Character, def *db.ItemDef, slot uint8, items []db.Item) string` | See the source definition and the subsystem ownership contract. |
 
 ### session.go
 
@@ -3979,35 +3960,35 @@ Direct GX dependencies: `internal/proto`, `internal/skilltiming`, `server/intern
 | [`recoveryInterval`](../../server/internal/world/session.go#L26)<br>`const recoveryInterval = 5 * time.Second` | See the source definition and the subsystem ownership contract. |
 | [`characterListSize`](../../server/internal/world/session.go#L27)<br>`const characterListSize = MaxCharacterSlots` | See the source definition and the subsystem ownership contract. |
 | [`Session`](../../server/internal/world/session.go#L32)<br>`type Session` | Session is one client connection. Its loop owns its fields under stateMu. A paired trade may also update them while holding both sessions' state locks. |
-| [`acquireAccount`](../../server/internal/world/session.go#L142)<br>`func acquireAccount(uid uint32, id int64) bool` | See the source definition and the subsystem ownership contract. |
-| [`releaseAccount`](../../server/internal/world/session.go#L160)<br>`func releaseAccount(uid uint32, id int64)` | See the source definition and the subsystem ownership contract. |
-| [`Serve`](../../server/internal/world/session.go#L171)<br>`func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error` | Serve runs one client connection until it closes. |
-| [`processInput`](../../server/internal/world/session.go#L205)<br>`func (s *Session) processInput(n int, buf []byte, frames *netx.Frames) error` | processInput never holds the session lock while waiting for socket input. |
-| [`close`](../../server/internal/world/session.go#L249)<br>`func (s *Session) close()` | close persists the active character and releases the account. |
-| [`leaveWorld`](../../server/internal/world/session.go#L262)<br>`func (s *Session) leaveWorld(disconnect bool) bool` | leaveWorld saves and unregisters the active character. |
-| [`send`](../../server/internal/world/session.go#L291)<br>`func (s *Session) send(frame []byte, label string)` | send writes a frame to this client: AES-CTR until the initial character state, the stateless expanded XOR afterwards. |
-| [`equipment`](../../server/internal/world/session.go#L313)<br>`func (s *Session) equipment() EquipmentStats` | See the source definition and the subsystem ownership contract. |
-| [`stats`](../../server/internal/world/session.go#L338)<br>`func (s *Session) stats() CharacterStats` | See the source definition and the subsystem ownership contract. |
-| [`sendStatPackets`](../../server/internal/world/session.go#L346)<br>`func (s *Session) sendStatPackets()` | See the source definition and the subsystem ownership contract. |
-| [`drainRewards`](../../server/internal/world/session.go#L359)<br>`func (s *Session) drainRewards(p *ConnectedPlayer)` | drainRewards applies bounded, coalesced rewards before normal simulation or logout. Aggregation keeps individual scaling/rounding and caps unchanged. |
-| [`normalize`](../../server/internal/world/session.go#L410)<br>`func normalize(ch *db.Character)` | normalize derives the base pools from StatusDefs (Chars only stores the current HP/MP/SP). Effective clamping waits for equipment and buffs. |
-| [`tick`](../../server/internal/world/session.go#L417)<br>`func (s *Session) tick(idle bool)` | tick runs the per-iteration work: mailboxes, buffs, regen, casts and the auto-attack swing. |
-| [`applyTradeRefresh`](../../server/internal/world/session.go#L508)<br>`func (s *Session) applyTradeRefresh(r *tradeRefresh)` | See the source definition and the subsystem ownership contract. |
-| [`recoveryTick`](../../server/internal/world/session.go#L533)<br>`func (s *Session) recoveryTick()` | recoveryTick is CUser::UpdateRecover every 5 seconds: the mode seen at the previous tick decides the amount (0 sitting: 5% of each maximum plus the sitting abilities' percent plus the flat sitting recovery; 1 standing: the flat standing recovery; 2 in combat: the flat in-combat recovery), then the mode for the next tick is taken (in combat, else sitting or standing). Viewers get 0x0505 (absolute pools) and the character 0x0521. |
-| [`inCombat`](../../server/internal/world/session.go#L576)<br>`func (s *Session) inCombat() bool` | inCombat approximates the original attack mode: swinging, or a hit given or taken within the last recovery interval. |
-| [`deadGated`](../../server/internal/world/session.go#L581)<br>`func deadGated(op packet.Opcode) bool` | deadGated lists the inputs ignored while dead (revive is 0x0553). |
-| [`frame`](../../server/internal/world/session.go#L590)<br>`func (s *Session) frame(f []byte) error` | See the source definition and the subsystem ownership contract. |
-| [`handshake`](../../server/internal/world/session.go#L614)<br>`func (s *Session) handshake(f []byte) error` | See the source definition and the subsystem ownership contract. |
-| [`sendCharacterSelect`](../../server/internal/world/session.go#L655)<br>`func (s *Session) sendCharacterSelect()` | See the source definition and the subsystem ownership contract. |
-| [`logErr`](../../server/internal/world/session.go#L677)<br>`func (s *Session) logErr(what string, err error)` | See the source definition and the subsystem ownership contract. |
-| [`handleCreateCharacter`](../../server/internal/world/session.go#L684)<br>`func (s *Session) handleCreateCharacter(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`createCharacter`](../../server/internal/world/session.go#L693)<br>`func (s *Session) createCharacter(nc db.NewCharacter)` | See the source definition and the subsystem ownership contract. |
-| [`handleRename`](../../server/internal/world/session.go#L739)<br>`func (s *Session) handleRename(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`selectCharacter`](../../server/internal/world/session.go#L760)<br>`func (s *Session) selectCharacter(id uint32)` | See the source definition and the subsystem ownership contract. |
-| [`sendInitialState`](../../server/internal/world/session.go#L886)<br>`func (s *Session) sendInitialState(st *CharacterStats)` | sendInitialState is the captured character-select sequence; afterwards the server->client direction switches to the expanded XOR scheme. |
-| [`handleMapLoaded`](../../server/internal/world/session.go#L939)<br>`func (s *Session) handleMapLoaded()` | handleMapLoaded (0x0201 from the client): send the map state, register the player and exchange visibility with nearby players. |
-| [`handleMotion`](../../server/internal/world/session.go#L987)<br>`func (s *Session) handleMotion(p []byte)` | handleMotion (0x0506): sit/stand persist; other motions are one-shot. The sender gets its own echo, which the client needs to play it. |
-| [`handleLogout`](../../server/internal/world/session.go#L1019)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
+| [`acquireAccount`](../../server/internal/world/session.go#L141)<br>`func acquireAccount(uid uint32, id int64) bool` | See the source definition and the subsystem ownership contract. |
+| [`releaseAccount`](../../server/internal/world/session.go#L159)<br>`func releaseAccount(uid uint32, id int64)` | See the source definition and the subsystem ownership contract. |
+| [`Serve`](../../server/internal/world/session.go#L170)<br>`func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error` | Serve runs one client connection until it closes. |
+| [`processInput`](../../server/internal/world/session.go#L204)<br>`func (s *Session) processInput(n int, buf []byte, frames *netx.Frames) error` | processInput never holds the session lock while waiting for socket input. |
+| [`close`](../../server/internal/world/session.go#L248)<br>`func (s *Session) close()` | close persists the active character and releases the account. |
+| [`leaveWorld`](../../server/internal/world/session.go#L261)<br>`func (s *Session) leaveWorld(disconnect bool) bool` | leaveWorld saves and unregisters the active character. |
+| [`send`](../../server/internal/world/session.go#L290)<br>`func (s *Session) send(frame []byte, label string)` | send writes a frame to this client: AES-CTR until the initial character state, the stateless expanded XOR afterwards. |
+| [`equipment`](../../server/internal/world/session.go#L312)<br>`func (s *Session) equipment() EquipmentStats` | See the source definition and the subsystem ownership contract. |
+| [`stats`](../../server/internal/world/session.go#L337)<br>`func (s *Session) stats() CharacterStats` | See the source definition and the subsystem ownership contract. |
+| [`sendStatPackets`](../../server/internal/world/session.go#L345)<br>`func (s *Session) sendStatPackets()` | See the source definition and the subsystem ownership contract. |
+| [`drainRewards`](../../server/internal/world/session.go#L358)<br>`func (s *Session) drainRewards(p *ConnectedPlayer)` | drainRewards applies bounded, coalesced rewards before normal simulation or logout. Aggregation keeps individual scaling/rounding and caps unchanged. |
+| [`normalize`](../../server/internal/world/session.go#L409)<br>`func normalize(ch *db.Character)` | normalize derives the base pools from StatusDefs (Chars only stores the current HP/MP/SP). Effective clamping waits for equipment and buffs. |
+| [`tick`](../../server/internal/world/session.go#L416)<br>`func (s *Session) tick(idle bool)` | tick runs the per-iteration work: mailboxes, buffs, regen, casts and the auto-attack swing. |
+| [`applyTradeRefresh`](../../server/internal/world/session.go#L507)<br>`func (s *Session) applyTradeRefresh(r *tradeRefresh)` | See the source definition and the subsystem ownership contract. |
+| [`recoveryTick`](../../server/internal/world/session.go#L532)<br>`func (s *Session) recoveryTick()` | recoveryTick is CUser::UpdateRecover every 5 seconds: the mode seen at the previous tick decides the amount (0 sitting: 5% of each maximum plus the sitting abilities' percent plus the flat sitting recovery; 1 standing: the flat standing recovery; 2 in combat: the flat in-combat recovery), then the mode for the next tick is taken (in combat, else sitting or standing). Viewers get 0x0505 (absolute pools) and the character 0x0521. |
+| [`inCombat`](../../server/internal/world/session.go#L575)<br>`func (s *Session) inCombat() bool` | inCombat approximates the original attack mode: swinging, or a hit given or taken within the last recovery interval. |
+| [`deadGated`](../../server/internal/world/session.go#L580)<br>`func deadGated(op packet.Opcode) bool` | deadGated lists the inputs ignored while dead (revive is 0x0553). |
+| [`frame`](../../server/internal/world/session.go#L589)<br>`func (s *Session) frame(f []byte) error` | See the source definition and the subsystem ownership contract. |
+| [`handshake`](../../server/internal/world/session.go#L613)<br>`func (s *Session) handshake(f []byte) error` | See the source definition and the subsystem ownership contract. |
+| [`sendCharacterSelect`](../../server/internal/world/session.go#L654)<br>`func (s *Session) sendCharacterSelect()` | See the source definition and the subsystem ownership contract. |
+| [`logErr`](../../server/internal/world/session.go#L676)<br>`func (s *Session) logErr(what string, err error)` | See the source definition and the subsystem ownership contract. |
+| [`handleCreateCharacter`](../../server/internal/world/session.go#L683)<br>`func (s *Session) handleCreateCharacter(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`createCharacter`](../../server/internal/world/session.go#L692)<br>`func (s *Session) createCharacter(nc db.NewCharacter)` | See the source definition and the subsystem ownership contract. |
+| [`handleRename`](../../server/internal/world/session.go#L738)<br>`func (s *Session) handleRename(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`selectCharacter`](../../server/internal/world/session.go#L759)<br>`func (s *Session) selectCharacter(id uint32)` | See the source definition and the subsystem ownership contract. |
+| [`sendInitialState`](../../server/internal/world/session.go#L885)<br>`func (s *Session) sendInitialState(st *CharacterStats)` | sendInitialState is the captured character-select sequence; afterwards the server->client direction switches to the expanded XOR scheme. |
+| [`handleMapLoaded`](../../server/internal/world/session.go#L938)<br>`func (s *Session) handleMapLoaded()` | handleMapLoaded (0x0201 from the client): send the map state, register the player and exchange visibility with nearby players. |
+| [`handleMotion`](../../server/internal/world/session.go#L986)<br>`func (s *Session) handleMotion(p []byte)` | handleMotion (0x0506): sit/stand persist; other motions are one-shot. The sender gets its own echo, which the client needs to play it. |
+| [`handleLogout`](../../server/internal/world/session.go#L1018)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -4060,7 +4041,6 @@ type Session struct {
 	authorizationAt   time.Time
 	account           db.Account
 	faction           uint8
-	maxMode           uint8
 	isAdmin           bool
 
 	characters []db.Character
@@ -4298,7 +4278,7 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 | [`soulBurnRejection`](../../server/internal/world/skillonce.go#L88)<br>`func soulBurnRejection(source uint32, k db.CharacterSkill) []byte` | See the source definition and the subsystem ownership contract. |
 | [`rejectSoulBurn`](../../server/internal/world/skillonce.go#L92)<br>`func (s *Session) rejectSoulBurn(k db.CharacterSkill)` | See the source definition and the subsystem ownership contract. |
 | [`equipmentDefenseAttr`](../../server/internal/world/skillonce.go#L98)<br>`func (p *ConnectedPlayer) equipmentDefenseAttr() uint8` | equipmentDefenseAttr reads CUser +0x1284: live authoritative defense element, including application/removal events; equipment-only before entry. |
-| [`buildDetectInfo`](../../server/internal/world/skillonce.go#L110)<br>`func buildDetectInfo(attr uint32, level uint16, mode uint8) []byte` | buildDetectInfo (0x0558): target defence element u32, level u16, mode u8. |
+| [`buildDetectInfo`](../../server/internal/world/skillonce.go#L110)<br>`func buildDetectInfo(attr uint32, level uint16) []byte` | buildDetectInfo (0x0558): target defence element u32, level u16, mode u8. |
 | [`userSkillTarget`](../../server/internal/world/skillonce.go#L120)<br>`func (s *Session) userSkillTarget(def *db.SkillDef, target uint32) (*ConnectedPlayer, bool)` | userSkillTarget resolves a TypeEffect 6 target: the caster itself for self skills (TargetType 2), else a user on the caster's map. |
 | [`inUserSkillRange`](../../server/internal/world/skillonce.go#L132)<br>`func (s *Session) inUserSkillRange(p *ConnectedPlayer, def *db.SkillDef) bool` | inUserSkillRange checks launch reach and visibility without release grace. |
 | [`skillOnceSucceeds`](../../server/internal/world/skillonce.go#L143)<br>`func (s *Session) skillOnceSucceeds(def *db.SkillDef, self bool) bool` | skillOnceSucceeds is CUser::AttackSuccess 0x00456b10 for these skills: a block (ChkBlock; checked when the caster is the target) fails it, then SuccessType 1 rolls SuccessValue%. Types 2 and 3 add 100 x caster/(caster+target) LUC or WIS in integer division, which is 0 unless the target's stat is 0, so they roll SuccessValue% too. The level-based default and the state resistances are not modelled: every EP4.5 TypeEffect 6 skill is SuccessType 1. |
@@ -4355,10 +4335,9 @@ Direct GX dependencies: `internal/skilltiming`, `server/internal/db`, `server/in
 | [`handleSkillBar`](../../server/internal/world/skills.go#L80)<br>`func (s *Session) handleSkillBar(p []byte)` | See the source definition and the subsystem ownership contract. |
 | [`buildLearnSkillError`](../../server/internal/world/skills.go#L100)<br>`func buildLearnSkillError(reason uint8, skillID uint16, level uint8) []byte` | buildLearnSkillError (0x0209): reason, skill id, level. |
 | [`skillCountryAllows`](../../server/internal/world/skills.go#L111)<br>`func skillCountryAllows(country, family uint8) bool` | skillCountryAllows is EnableLearnSkill's Country byte by family (0 human, 1 elf, 2 vail, 3 deatheater). |
-| [`skillGrowAllows`](../../server/internal/world/skills.go#L131)<br>`func skillGrowAllows(grow, mode uint8) bool` | skillGrowAllows: easy mode learns only Grow 0 skills, normal up to 1, hard all but 3. |
-| [`buildLearnSkillResult`](../../server/internal/world/skills.go#L143)<br>`func buildLearnSkillResult(ok bool, number uint8, skillID uint16, level uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`handleLearnSkill`](../../server/internal/world/skills.go#L153)<br>`func (s *Session) handleLearnSkill(p []byte)` | handleLearnSkill (0x0209): skill id:u16, level. |
-| [`handleSetStatPoint`](../../server/internal/world/skills.go#L246)<br>`func (s *Session) handleSetStatPoint(p []byte)` | handleSetStatPoint (0x0208): six u16 deltas str, dex, rec, int, wis, luc. |
+| [`buildLearnSkillResult`](../../server/internal/world/skills.go#L129)<br>`func buildLearnSkillResult(ok bool, number uint8, skillID uint16, level uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`handleLearnSkill`](../../server/internal/world/skills.go#L139)<br>`func (s *Session) handleLearnSkill(p []byte)` | handleLearnSkill (0x0209): skill id:u16, level. |
+| [`handleSetStatPoint`](../../server/internal/world/skills.go#L232)<br>`func (s *Session) handleSetStatPoint(p []byte)` | handleSetStatPoint (0x0208): six u16 deltas str, dex, rec, int, wis, luc. |
 
 ### social.go
 
@@ -4742,8 +4721,8 @@ Direct GX dependencies: `server/internal/db`.
 | [`specialTargetResurrection`](../../server/internal/world/utility_items.go#L12)<br>`const specialTargetResurrection = 41` | See the source definition and the subsystem ownership contract. |
 | [`targetResurrectionRange`](../../server/internal/world/utility_items.go#L15)<br>`const targetResurrectionRange = CombatRadius` | EP4.5 checks the same zone without an explicit distance in ItemUse/LifeSkill. GX caps use at the combat visibility distance. |
 | [`resetSkillsWithItem`](../../server/internal/world/utility_items.go#L18)<br>`func (s *Session) resetSkillsWithItem(index int) bool` | See the source definition and the subsystem ownership contract. |
-| [`resurrectWithItem`](../../server/internal/world/utility_items.go#L56)<br>`func (s *Session) resurrectWithItem(index int, id uint32) bool` | See the source definition and the subsystem ownership contract. |
-| [`remainingSkillDelay`](../../server/internal/world/utility_items.go#L104)<br>`func (s *Session) remainingSkillDelay(skillID uint16) int16` | See the source definition and the subsystem ownership contract. |
+| [`resurrectWithItem`](../../server/internal/world/utility_items.go#L49)<br>`func (s *Session) resurrectWithItem(index int, id uint32) bool` | See the source definition and the subsystem ownership contract. |
+| [`remainingSkillDelay`](../../server/internal/world/utility_items.go#L97)<br>`func (s *Session) remainingSkillDelay(skillID uint16) int16` | See the source definition and the subsystem ownership contract. |
 
 ### vehicle.go
 

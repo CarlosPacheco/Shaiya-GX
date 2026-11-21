@@ -219,11 +219,7 @@ func (a *App) applyWorldPresentation(p []byte, op proto.Opcode) {
 	a.confirmedSkillFeedback(op)
 	if op == proto.SkillDetectInfo {
 		v := a.state.LastDetectInfo
-		mode := fmt.Sprintf("%d", v.Mode)
-		if int(v.Mode) < 4 {
-			mode = [4]string{"Easy", "Normal", "Hard", "Ultimate"}[v.Mode]
-		}
-		a.questMessage(fmt.Sprintf("Detection: level %d, %s mode, defense element %s.", v.Level, mode, elementName(uint8(v.DefenseElement), a.msg)))
+		a.questMessage(fmt.Sprintf("Detection: level %d, defense element %s.", v.Level, elementName(uint8(v.DefenseElement), a.msg)))
 	}
 	a.confirmedBuffs(op)
 	a.confirmedSocial(op)

@@ -225,7 +225,7 @@ success roll. GX keeps these flags in the current character session.
 | 1–15 on lapis | Trigger a defined attack/debuff skill at level 100 |
 | 16 on lapis | Resource recovery gem |
 | 17 | Percentage healing potion |
-| 33 | Reset learned skills and restore the original skill point budget for your level and mode |
+| 33 | Reset learned skills and restore the original skill point budget for your level |
 | 34 | Reset allocated character stats through the item-use path |
 | 36 | Linking hammer; ReqVg adds percentage points |
 | 44 | Appearance change; validated through the appearance workflow |

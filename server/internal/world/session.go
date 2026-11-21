@@ -77,7 +77,6 @@ type Session struct {
 	authorizationAt   time.Time
 	account           db.Account
 	faction           uint8
-	maxMode           uint8
 	isAdmin           bool
 
 	characters []db.Character
@@ -174,7 +173,7 @@ func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error {
 		return err
 	}
 	s := &Session{economy: netx.NewRateLimiter(1, policy.Economy, time.Second), inputReads: netx.NewRateLimiter(1, policy.InputFrames*4, time.Second), inputFrames: netx.NewRateLimiter(1, policy.InputFrames, time.Second), inputBytes: netx.NewRateLimiter(1, policy.InputBytes, time.Second), conn: conn, out: &connWriter{conn: conn, queued: netx.NewWriter(conn, policy.OutputPackets, policy.OutputBytes)}, log: log, logger: logger,
-		faction: FactionNone, maxMode: MaxModeUltimate,
+		faction:       FactionNone,
 		itemCooldowns: map[uint8]time.Time{}, skillCooldowns: map[uint16]time.Time{},
 		lastPositionSave: time.Now(), lastRegenAt: time.Now()}
 	defer s.out.queued.Close()
@@ -633,7 +632,7 @@ func (s *Session) handshake(f []byte) error {
 		}
 		s.account = a
 		s.gmTurbo = false
-		s.faction, s.maxMode, s.isAdmin = a.Country, a.MaxGrow, a.Admin
+		s.faction, s.isAdmin = a.Country, a.Admin
 		if !isValidFaction(s.faction) {
 			s.faction = FactionNone
 		}
@@ -646,7 +645,7 @@ func (s *Session) handshake(f []byte) error {
 	copy(loginIV[:], h.AESMaterial[16:])
 	iv := crypto.DeriveWorldAESIV(loginIV)
 	s.aesRecv, s.aesSend = crypto.NewAESCTR(key, iv), crypto.NewAESCTR(key, iv)
-	s.log.Printf("GX Server World session ready user_uid=%d faction=%d max_mode=%d admin=%t", uid, s.faction, s.maxMode, s.isAdmin)
+	s.log.Printf("GX Server World session ready user_uid=%d faction=%d admin=%t", uid, s.faction, s.isAdmin)
 	s.send(buildWorldHandshake(), "0xA301 handshake ok")
 	s.sendCharacterSelect()
 	return nil
@@ -671,7 +670,7 @@ func (s *Session) sendCharacterSelect() {
 			s.send(frame, "0x0101 character slot")
 		}
 	}
-	s.send(buildAccountFaction(s.faction, s.maxMode), "0x0109 account faction")
+	s.send(buildAccountFaction(s.faction), "0x0109 account faction")
 }
 
 func (s *Session) logErr(what string, err error) {
@@ -685,7 +684,7 @@ func (s *Session) handleCreateCharacter(p []byte) {
 	if len(p) < 10 {
 		return
 	}
-	nc := db.NewCharacter{Slot: p[2], Race: p[3], Mode: p[4], Hair: p[5], Face: p[6], Height: p[7], Class: p[8],
+	nc := db.NewCharacter{Slot: p[2], Race: p[3], Hair: p[5], Face: p[6], Height: p[7], Class: p[8],
 		Gender: p[9], Name: packet.FixedText(p[10:])}
 	s.createCharacter(nc)
 }
@@ -706,7 +705,7 @@ func (s *Session) createCharacter(nc db.NewCharacter) {
 		reject("name too short")
 		return
 	}
-	if !allowedJob(nc.Race, nc.Class) || nc.Mode > s.maxMode {
+	if !allowedJob(nc.Race, nc.Class) {
 		reject("invalid race, class or mode")
 		return
 	}
@@ -723,7 +722,7 @@ func (s *Session) createCharacter(nc db.NewCharacter) {
 	start := mapConfig.Start[nc.Race]
 	nc.MapID, nc.PosX, nc.PosY, nc.PosZ = start.MapID, start.X, start.Y, start.Z
 	nc.Str, nc.Dex, nc.Rec, nc.Int, nc.Wis, nc.Luc = startingStats(nc.Race, nc.Class)
-	nc.HP, nc.MP, nc.SP = newCharacterPools(nc.Race, nc.Class, nc.Mode, nc.Rec, nc.Dex, nc.Wis)
+	nc.HP, nc.MP, nc.SP = newCharacterPools(nc.Race, nc.Class, nc.Rec, nc.Dex, nc.Wis)
 	id, err := db.CreateCharacterWithItems(s.account, nc, starterItems(nc.Race, nc.Class))
 	if err != nil {
 		s.log.Printf("GX Server World create character failed: %v", err)

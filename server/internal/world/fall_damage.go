@@ -55,6 +55,6 @@ func (s *Session) applyFallDamage(drop float32) {
 	}
 	s.dead, s.autoAttack, s.cast = true, false, nil
 	s.clearBuffsOnDeath()
-	// Environmental deaths grant no PvP credit, item/XP loss or Ultimate deletion.
+	// Environmental deaths grant no PvP credit, item or XP loss.
 	s.deathLoss = -1
 }

@@ -17,14 +17,12 @@ type Creation struct {
 	races, sexes                   [2]Button
 	jobs                           [3]Button
 	arrows                         [6]Button
-	modes                          [4]Button
 	capabilities                   [6]*render.Texture
 	msg                            text.SysMsg
 	description, descriptionOffset int
 	OK, Cancel                     *Button
 	Name                           TextField
 	Draft                          proto.NewCharacter
-	MaxMode                        uint8
 	Busy                           bool
 }
 
@@ -41,14 +39,12 @@ func NewCharCreate(t Textures, msg text.SysMsg) (*Creation, error) {
 // Family/job mask: CUser::PacketCharacter, Rapture rules.go (0x46bf20).
 var familyJobs = [4][]uint8{{0, 1, 5}, {2, 3, 4}, {2, 4, 5}, {0, 1, 3}}
 
-func (c *Creation) Open(slot, faction, maxMode uint8) {
-	c.Draft = proto.NewCharacter{Slot: slot, Race: faction * 2, Mode: 1, Height: 2}
+func (c *Creation) Open(slot, faction uint8) {
+	c.Draft = proto.NewCharacter{Slot: slot, Race: faction * 2, Height: 2}
 	if faction == 1 {
 		c.Draft.Race = 3
 	}
 	c.Draft.Class = familyJobs[c.Draft.Race][0]
-	c.MaxMode = min(maxMode, 3)
-	c.Draft.Mode = min(c.Draft.Mode, c.MaxMode)
 	c.Name.Text, c.Busy = "", false
 	c.Navigation.Reset()
 	c.description, c.descriptionOffset = 0, 0
@@ -104,12 +100,6 @@ func (c *Creation) Update(in *platform.Input, w, h int) CharAction {
 			*field = uint8((int(*field) + 4 + (i%2)*2) % 5)
 		}
 	}
-	for i := range c.modes {
-		if c.modes[i].Update(in) {
-			d.Mode = uint8(i)
-			c.description, c.descriptionOffset = 2, 0
-		}
-	}
 	x, y := CreationOrigin(w, h)
 	if in.MouseX >= x+24 && in.MouseX < x+242 && in.MouseY >= y+28 && in.MouseY < y+195 {
 		if in.Wheel < 0 {
@@ -131,6 +121,9 @@ func (c *Creation) Draw(s *render.Sprites, f *Font, w, h int) {
 	c.controls(w, h)
 	x, y := CreationOrigin(w, h)
 	s.Draw(c.panel, float32(x), float32(y), 250, 670, 0, 0, 250.0/256, 670.0/1024, white)
+	// The stock panel has a baked heading at (20, 552). Cover it with
+	// the adjoining panel texture now that the row has no controls.
+	s.Draw(c.panel, float32(x+18), float32(y+551), 42, 15, 65.0/256, 551.0/1024, 107.0/256, 566.0/1024, white)
 	f.Draw(s, c.Name.Text+"_", x+72, y+253, white, 135)
 	for _, b := range c.buttons() {
 		b.Draw(s)
@@ -141,9 +134,6 @@ func (c *Creation) Draw(s *render.Sprites, f *Font, w, h int) {
 		if c.Draft.Race >= 2 {
 			id += 6
 		}
-	}
-	if c.description == 2 {
-		id = 0x13aa + int(c.Draft.Mode)
 	}
 	lines := wrapLines(f, c.msg.Get(id), 201)
 	c.descriptionOffset = max(0, min(c.descriptionOffset, max(0, len(lines)-9)))

@@ -52,14 +52,6 @@ func (a *App) canLearn(key sdata.SkillKey) bool {
 			return false
 		}
 	}
-	switch own.Mode {
-	case 0:
-		return d.Grow == 0
-	case 1:
-		return d.Grow <= 1
-	case 2:
-		return d.Grow != 3
-	}
 	return true
 }
 

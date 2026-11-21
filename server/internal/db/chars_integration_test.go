@@ -89,9 +89,6 @@ func TestCharacterLifecycle(t *testing.T) {
 	if ok, err := RestoreCharacter(10, id); !ok || err != nil {
 		t.Fatalf("restore = %v %v", ok, err)
 	}
-	if country, maxGrow, err := ReadMaxGrow(10); err != nil || maxGrow != 3 {
-		t.Fatalf("maxgrow = %d %d %v", country, maxGrow, err)
-	}
 	if defs, err := Definitions(); err != nil || len(defs.Items) == 0 {
 		t.Fatal(err)
 	}

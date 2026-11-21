@@ -696,7 +696,6 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		if d.Result == 1 {
 			s.Details.StatPoint, s.StatsKnown = d.Points, false
-			s.PvPRewards.KillStage = 1
 			for i, c := range s.Slots {
 				if c.ID == s.SelfID {
 					c.Str, c.Rec, c.Int, c.Wis, c.Dex, c.Luc = d.Str, d.Rec, d.Int, d.Wis, d.Dex, d.Luc
@@ -1098,7 +1097,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		} else if s.Phase < PhaseLoading {
 			s.Phase = PhaseCharSelect
 		}
-		ev.Text = fmt.Sprintf("faction=%d maxMode=%d", f.Faction, f.MaxMode)
+		ev.Text = fmt.Sprintf("faction=%d", f.Faction)
 	case proto.CharacterList:
 		c, err := proto.DecodeCharacterSlot(p)
 		if err != nil {

@@ -74,7 +74,7 @@ func TestDetectInfoIsAtomicAndDoesNotAssignTarget(t *testing.T) {
 	if _, err := s.Apply(w.Bytes()); err != nil {
 		t.Fatal(err)
 	}
-	want := proto.DetectInfo{DefenseElement: 4, Level: 57, Mode: 3}
+	want := proto.DetectInfo{DefenseElement: 4, Level: 57}
 	if s.LastDetectInfo != want || s.Target != 42 {
 		t.Fatal("detection changed target or decoded incorrectly")
 	}

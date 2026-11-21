@@ -31,7 +31,7 @@ gaps; **invented** marks GX Server rules. The [combat stats wiki](../../docs/wik
 | Skills | `CGameData::LoadConstSkill` 0x004bffe0, `CUser::SkillAttackSelect` / `SkillAttackRange` / `SkillAttackRangeSelect`, `CUser::AttackMob(skill)` 0x0044fd90, `CUser::HealUser` 0x00450670 | done: load-time normalization (kind = clamp(TypeAttack,1,3)-1, AttrType, StateType, MultiAttack, FixRange hours, detail 93/122), dispatch by TypeEffect, details 21-27 (22 multi-hit, 23 sacrifice, 27 drain with 0x0518; detail 25, an attack with extra HP/MP/SP damage, was folded into 21 by migration 7 since AddDamage comes from its own fields), area announce 0x0511, AddDamage 0x051A, cost reductions (cost 1 spends the whole pool), heal + 2 x WIS, buffs 82/91/94/95, ClearApplySkillByDeath. Item skills (`CUser::UseItemSkill`: Range/AttackTime name the skill; candies, remedies, charms) |
 | Skills on mobs | `CMob::AddApplySkill` 0x004a0aa0, `RemApplySkill`, `ChkKeepSkill` (every 3 s), `ChkEndTimeSkill` | done: 61 damage over time (TimeDamageType 0/3/4/5 x elapsed/3000), 62/67 ability loss, 63 whole-HP hit on expiry, 64 stun, 65 stop, 66 sleep (woken by damage), 68 no element, 72 target fixed on the caster; speed changes as 0x0609, damage as 0x0607. Selected-target effects use native 0x030B/C/D layouts: reader 0x5667a0 and target HUD 0x50b6a0, now recovered and implemented; GX subscribes with 0x7F0F |
 | Skills on players | `CUser::AddApplySkill` 0x00484850, `AddApplySkillDebuff` 0x004855b0, `ChkKeepSkill` 0x00487190, `TimeDamage` 0x00486290 | done: 0x050D (id, skill, level: 9 bytes), 0x050E, 61 damage over time (0x050F), 62/67, 63, 64/66 block actions and 65 movement (0x051C speeds 255), 66 woken by damage, 68, abilities 32-34 disable a category; level rules (same level refreshes, lower does not replace) |
-| Death | `CUser::Death` 0x004586a0, `CUser::KillSoul` 0x004599e0, `CUser::ExpDrop` 0x0045ad50 | done: buffs cleared, revive per `0x0553` (`CUser::PacketPC`): 2 bind point (KillSoul: exp loss, full pools), 3 wait 30 s for the party leader (KillSoulParty: at the leader if alive on the map, else KillSoul), legacy modes 4/5 fall back to KillSoul with the shipped catalog because resurrection rune definitions were retired, automatic KillSoul 200 s after death (UpdateRebirth); ultimate mode with ability 46 revives with half pools and zero EXP loss, otherwise the character is deleted and disconnected; 0x0406 corpse leave to the view, 0x0551 id/kind/exp/position. Bind point: `CMap::GetBindPos` 0x004295a0: uses the faction destination from SQLite, then the nearest eligible SVMAP group, then the racial birth position, 5% of the level's EXP lost above level 10 before country-tier mitigation. The Blue Dragon, White Tiger and Red Phoenix charms grant EXP gain bonuses. EXP loss protection skill 230 was retired |
+| Death | `CUser::Death` 0x004586a0, `CUser::KillSoul` 0x004599e0, `CUser::ExpDrop` 0x0045ad50 | done: buffs cleared, revive per `0x0553` (`CUser::PacketPC`): 2 bind point (KillSoul: exp loss, full pools), 3 wait 30 s for the party leader (KillSoulParty: at the leader if alive on the map, else KillSoul), legacy modes 4/5 fall back to KillSoul with the shipped catalog because resurrection rune definitions were retired, automatic KillSoul 200 s after death (UpdateRebirth); GX uses the same revival rules for all characters and omits the original permanent death branch; 0x0406 corpse leave to the view, 0x0551 id/kind/exp/position. Bind point: `CMap::GetBindPos` 0x004295a0: uses the faction destination from SQLite, then the nearest eligible SVMAP group, then the racial birth position, 5% of the level's EXP lost above level 10 before country-tier mitigation. The Blue Dragon, White Tiger and Red Phoenix charms grant EXP gain bonuses. EXP loss protection skill 230 was retired |
 | Attack range and speed | `CUser::EnableAttackRange`, `g_ConstUserAttackSpeed` 0x005424e0 | done: weapon reach + mob size + 2.3 + movement allowance (taken as its 2-unit floor); swing index moved by gems, passives and buffs |
 | Visibility | `CZone::EnterUser` / `MoveUserLocal` 0x00416370 / `MoveMob` 0x004169d0 / `SendMoveUser` 0x0041f350 / `SendMoveMob` 0x0041f860 / `SendCellInfoView`, `CCell::SendCellInfoEnter/Leave`, `CZone::PSendView` | done: 40-unit cells kept while inside the 60-unit view window (no flip-flop on borders), 5x5 cell view for users, mobs, NPCs, map items and other users; enter/leave only on cell changes, for both sides (0x0201/0x0202 users, 0x0601/0x0602, 0x0E01/0x0E02, 0x0401/0x0402); moves to the 5x5 view; combat and effects to 60 units; mob corpses leave 5 s after death (`CZone::UpdateMobDeath`). Before this GX Server used circles, re-sent mobs at every border crossing, never sent 0x0202 and sent every map item on entry |
 | NPC patrol | `CNpc::UpdateMove` 0x004bbeb0, `NpcQuest.SData` MoveDistance/MoveSpeed | done: steps of MoveDistance every MoveSpeed ms (16 units / 8 s in EP4.5 data), points walked forward then back, rest rand(10 s) + MoveSpeed + 10 s at each point |
@@ -160,12 +160,11 @@ Its `g_tKillInfo` at 0x00541d70 and `g_tDeathInfo` at 0x00541eb0 each have
 16 stages ending at 200,000; `g_nMaxKillGrow` at 0x00541f70 is 16 for all
 three eligible modes. GX deliberately extends `KillPCTo` / `KillPCFrom` to
 1,000,000 and all 31 reward stages by the user's explicit 2026-11-15 request.
-The amounts for every mode and all high ranks are recovered from the client
-tables at 0x0070b164/0x0070b1e4/0x0070b264/0x0070b364, not placeholders.
+GX uses the former Ultimate stat reward column for every character and keeps the original death amounts.
 The inactive NEW_SERVER doubling option is not enabled in GX.
 
 `CUser::PacketMaininterface` admits native reward requests 0x0218-0x021A
-for non-easy characters at level 16+. `StatusKillDeathResult` (0x0048c8a0)
+at level 16 and above. `StatusKillDeathResult` (0x0048c8a0)
 reports next stages. `StatusKillResult` (0x0048c640) and `StatusDeathResult`
 (0x0048c750) redeem the next earned stage only, saving `KillLevel`/`DeadLevel`
 with the updated stat pool/gold. The reply layouts are two u8 stage fields,
@@ -174,10 +173,7 @@ claim grants nothing; GX initializes its failed delta to zero. Gold addition
 saturates at uint32 maximum. No client-supplied count, point amount or gold
 amount is accepted.
 
-`StatResetStatus` (0x00480660, store 0x0048089e to CUser+0x15c) clears
-claimed kill rewards and restores level-derived points, leaving earned kills
-and death claims intact. Their PvP stat rewards can be claimed again after
-the reset. Claim stage 32 marks completion of the 31 available rewards; it is
+A GX stat reset refunds allocated points and preserves the claim stages and earned counters. Claim stage 32 marks completion of the 31 available rewards; it is
 not an extra display rank. The final rank remains visible with disabled claim
 controls, including after reconnecting. The client updates Title, stat pool,
 gold and claim controls from confirmed packets, including re-entry and reset.

@@ -207,9 +207,6 @@ func (a *App) drawMall(w, h int) {
 			faction := min(int(a.state.Faction.Faction), 1)
 			identity.Class = classes[faction][slot.Class]
 		}
-		if slot.Mode < 4 {
-			identity.Mode = [4]string{"Easy", "Normal", "Hard", "Ultimate"}[slot.Mode]
-		}
 	}
 	if a.servers != nil && a.servers.Selected >= 0 && a.servers.Selected < len(a.servers.Servers) {
 		identity.Server = a.servers.Servers[a.servers.Selected].Name

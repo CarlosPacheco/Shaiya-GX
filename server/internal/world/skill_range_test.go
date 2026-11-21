@@ -275,7 +275,7 @@ func TestIdlePositionUpdatesDoNotLosePreparedSpell(t *testing.T) {
 	}
 	s.skills = []db.CharacterSkill{{SkillID: 71, Level: 3, Number: 1}}
 	s.char.Wis = 60000
-	s.setPools(false)
+	s.refillPools()
 
 	for _, tri := range collision.BlockerBox(collision.Vec{-100, -2, -100}, collision.Vec{100, 0, 100}, 0) {
 		s.movement.geometry.Add(tri)

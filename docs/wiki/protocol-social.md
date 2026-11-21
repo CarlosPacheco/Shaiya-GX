@@ -2536,7 +2536,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>DecodeU8 — internal/proto/world.go</summary>
 
-[Source definition](../../internal/proto/world.go#L188)
+[Source definition](../../internal/proto/world.go#L189)
 
 ```go
 func DecodeU8(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(); return v, r.Err() }

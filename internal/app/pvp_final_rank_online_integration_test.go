@@ -34,7 +34,7 @@ func TestPvPFinalRankAgainstIsolatedGX(t *testing.T) {
 	for _, c := range []struct {
 		op     proto.Opcode
 		amount uint32
-	}{{proto.PvPRewardKill, 26}, {proto.PvPRewardDeath, 4000000}} {
+	}{{proto.PvPRewardKill, 30}, {proto.PvPRewardDeath, 4000000}} {
 		st.LastPvPReward = proto.PvPRewardResult{}
 		send(proto.NewWriter(c.op).Bytes())
 		wait(func() bool { return st.LastPvPReward.OK })
@@ -48,7 +48,7 @@ func TestPvPFinalRankAgainstIsolatedGX(t *testing.T) {
 		send(proto.NewWriter(op).Bytes())
 		wait(func() bool { return !st.LastPvPReward.OK })
 	}
-	if st.Details.StatPoint != points+26 || st.Details.Money != money+4000000 {
+	if st.Details.StatPoint != points+30 || st.Details.Money != money+4000000 {
 		t.Fatal("final reward duplicated or lost")
 	}
 	id := st.SelfID
@@ -57,7 +57,7 @@ func TestPvPFinalRankAgainstIsolatedGX(t *testing.T) {
 	send(proto.SelectCharacterPacket(id))
 	wait(func() bool { return st.Phase == game.PhaseInWorld && st.InventoryReady })
 	query(32)
-	if st.Details.StatPoint != points+26 || st.Details.Money != money+4000000 {
+	if st.Details.StatPoint != points+30 || st.Details.Money != money+4000000 {
 		t.Fatal("final reward did not persist")
 	}
 	send(proto.LogoutPacket())

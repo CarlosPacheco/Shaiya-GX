@@ -38,7 +38,7 @@ func TestPotentialTriggersBelowItsMarginOncePerReuse(t *testing.T) {
 	if s.hasBuff(24) || len(s.skillCooldowns) != 0 {
 		t.Fatal("triggered at full health")
 	}
-	s.char.CurrentHP = before.MaxHP * 20 / 100 // exactly on the margin is not below it
+	s.char.CurrentHP = (before.MaxHP*20 + 99) / 100 // first whole HP at or above the margin
 	s.tickPotentials(now)
 	if s.hasBuff(24) {
 		t.Fatal("triggered on the margin instead of below it")

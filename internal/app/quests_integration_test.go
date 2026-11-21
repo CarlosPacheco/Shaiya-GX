@@ -3,6 +3,7 @@
 package app
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -230,7 +231,7 @@ func TestQuestCompleteAgainstRapture(t *testing.T) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	if st.LastQuestEnd.ID != 1 || st.LastQuestEnd.Success != 1 || st.LastQuestEnd.Experience != 100 || st.LastQuestEnd.Money != 330 || st.Details.Money != beforeMoney+330 {
+	if st.LastQuestEnd.ID != 1 || st.LastQuestEnd.Success != 1 || st.LastQuestEnd.Experience != a.questDefs[0].Results[0].Experience || st.LastQuestEnd.Money != 330 || st.Details.Money != beforeMoney+330 {
 		t.Fatalf("incorrect reward: %+v money=%d before=%d", st.LastQuestEnd, st.Details.Money, beforeMoney)
 	}
 	if st.FinishedQuests[1] != 1 {
@@ -309,7 +310,7 @@ func TestQuestRewardChoiceAgainstRapture(t *testing.T) {
 	}
 	poll(func() bool { return st.QuestChoosing && st.QuestChoice == 226 })
 	label := a.questRewardLabel(a.questDefs[225], 1)
-	if !strings.Contains(label, "Noble Pelt Leggings") || !strings.Contains(label, "200 XP, 990 gold") {
+	if !strings.Contains(label, "Noble Pelt Leggings") || !strings.Contains(label, fmt.Sprintf("%d XP, 990 gold", a.questDefs[225].Results[1].Experience)) {
 		t.Fatalf("incorrect reward presentation: %q", label)
 	}
 	controls := a.worldControls(&platform.Input{MouseX: x + 30, MouseY: y + 160, Wheel: -120}, 1024, 768)
@@ -323,7 +324,7 @@ func TestQuestRewardChoiceAgainstRapture(t *testing.T) {
 	}
 	poll(func() bool { _, ok := st.Quests[226]; return !ok })
 	result := st.LastQuestEnd
-	if result.ID != 226 || result.Success != 1 || result.Variant != 1 || result.Experience != 200 || result.Money != 990 || result.Item[2] != 33 || result.Item[3] != 87 || st.Details.Money != before+990 {
+	if result.ID != 226 || result.Success != 1 || result.Variant != 1 || result.Experience != a.questDefs[225].Results[1].Experience || result.Money != 990 || result.Item[2] != 33 || result.Item[3] != 87 || st.Details.Money != before+990 {
 		t.Fatalf("incorrect selected reward: %+v money=%d before=%d", result, st.Details.Money, before)
 	}
 	item, ok := st.Inventory[[2]uint8{result.Item[0], result.Item[1]}]

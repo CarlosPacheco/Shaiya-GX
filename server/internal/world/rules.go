@@ -12,32 +12,12 @@ import (
 // Packet widths follow the 5.4 client, whose readers were checked in the
 // client source.
 
-// Grow modes (Chars.Grow).
-const (
-	growEasy     = 0
-	growNormal   = 1
-	growHard     = 2
-	growUltimate = 3
-)
-
 // allowedJob is the family/job mask of CUser::PacketCharacter (0x0046bf20):
 // humans fighter/defender/priest, elves ranger/archer/mage, vail
 // ranger/mage/oracle, deatheaters warrior/guardian/hunter.
 func allowedJob(family, job uint8) bool {
 	masks := [4]uint32{0x23, 0x1c, 0x34, 0x0b}
 	return family < 4 && job < 6 && masks[family]&(1<<job) != 0
-}
-
-// growScale is the HP/SP/MP multiplier of hard (1.1, single precision as
-// in the original) and ultimate (1.5) modes.
-func growScale(grow uint8) float64 {
-	switch grow {
-	case growHard:
-		return float64(float32(1.1))
-	case growUltimate:
-		return 1.5
-	}
-	return 1
 }
 
 // startingStats are CUser::ProcessCharacterCreate (0x00480e90)'s base
@@ -92,11 +72,11 @@ func statusRow(level uint16, job uint8) db.Status {
 }
 
 // basePools are a character's base max HP/MP/SP per CUser::InitEquipment
-// (0x00454560): StatusDefs scaled by grow mode, the family bonus and 5 per
+// (0x00454560): StatusDefs scaled by 1.5, the family bonus and 5 per
 // point of REC (HP), DEX (SP) and WIS (MP). Equipment adds on top.
 func basePools(ch *db.Character) (hp, mp, sp uint32) {
 	st := statusRow(ch.Level, ch.Class)
-	scale := growScale(ch.Mode)
+	const scale = 1.5
 	hp = uint32(math.Trunc(float64(st.HP) * scale))
 	mp = uint32(math.Trunc(float64(st.MP) * scale))
 	sp = uint32(math.Trunc(float64(st.SP) * scale))
@@ -108,16 +88,11 @@ func basePools(ch *db.Character) (hp, mp, sp uint32) {
 }
 
 // newCharacterPools are the HP/MP/SP CUser::ProcessCharacterCreate stores:
-// level-1 StatusDefs times the single-precision grow multiplier, plus the
+// level-1 StatusDefs times 1.5, plus the
 // family bonus and the stat-derived part.
-func newCharacterPools(family, job, grow uint8, rec, dex, wis uint16) (hp, mp, sp uint16) {
+func newCharacterPools(family, job uint8, rec, dex, wis uint16) (hp, mp, sp uint16) {
 	st := statusRow(1, job)
-	m := float32(1)
-	if grow == growHard {
-		m = 1.1
-	} else if grow == growUltimate {
-		m = 1.5
-	}
+	const m float32 = 1.5
 	h, s, p := uint32(float32(st.HP)*m), uint32(float32(st.SP)*m), uint32(float32(st.MP)*m)
 	fh, fm, fs := familyPoolBonus(family)
 	return uint16(h + fh + uint32(rec)*5), uint16(p + fm + uint32(wis)*5), uint16(s + fs + uint32(dex)*5)
@@ -148,7 +123,7 @@ func starterItems(family, job uint8) []db.Item {
 }
 
 // levelUp is StatusRules::level_up (CUser level-up path): +1 to the job's
-// primary stat, stat and skill points by grow mode, and the pools follow
+// primary stat, nine stat points and five skill points, and the pools follow
 // the new level.
 func levelUp(ch *db.Character) {
 	ch.Level++
@@ -166,18 +141,9 @@ func levelUp(ch *db.Character) {
 	case 5:
 		ch.Wis++
 	}
-	if ch.Mode > growUltimate {
-		return
-	}
-	statPts, skillPts := uint16(5), uint16(3)
-	switch ch.Mode {
-	case growHard:
-		statPts, skillPts = 7, 4
-	case growUltimate:
-		statPts, skillPts = 9, 5
-	}
-	ch.StatPoint += statPts
-	ch.SkillPoint += skillPts
+
+	ch.StatPoint += 9
+	ch.SkillPoint += 5
 }
 
 // mobExperience is CMob::GetExp (0x00491690) without the event
@@ -208,8 +174,9 @@ func sittingRecovery(maxValue uint32, extraPct int32, flat uint32) uint32 {
 // resetStats undoes stat allocation: the job's starting stats plus the
 // automatic +1 per level, and every stat point the levels granted.
 func resetStats(ch *db.Character) {
+	allocated := int(ch.Str) + int(ch.Dex) + int(ch.Rec) + int(ch.Int) + int(ch.Wis) + int(ch.Luc)
 	ch.Str, ch.Dex, ch.Rec, ch.Int, ch.Wis, ch.Luc = startingStats(ch.Race, ch.Class)
-	probe := db.Character{Class: ch.Class, Mode: ch.Mode, Level: 1}
+	probe := db.Character{Class: ch.Class, Level: 1}
 	for probe.Level < ch.Level {
 		levelUp(&probe)
 	}
@@ -219,10 +186,8 @@ func resetStats(ch *db.Character) {
 	ch.Int += probe.Int
 	ch.Wis += probe.Wis
 	ch.Luc += probe.Luc
-	ch.StatPoint = probe.StatPoint
-	// Native StatResetStatus 0x0048089e clears the claimed-kill threshold
-	// (CUser+0x15c). Earned kills remain; their rewards can be redeemed again.
-	ch.KillLevel = 0
+	base := int(ch.Str) + int(ch.Dex) + int(ch.Rec) + int(ch.Int) + int(ch.Wis) + int(ch.Luc)
+	ch.StatPoint = uint16(min(65535, int(ch.StatPoint)+max(0, allocated-base)))
 }
 
 // equipSlotRealType is the real item type each equipment slot takes in
