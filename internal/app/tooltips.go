@@ -150,7 +150,11 @@ func (a *App) drawSharedTooltipAt(w, h int, position *[2]int) {
 	if f == nil {
 		f = a.font
 	}
-	layout := layoutTooltip(f, a.tooltip, a.tooltipItem, a.tooltipDescription, len(a.tooltipSockets), a.tooltipExtra)
+	heading := a.tooltipHeadingFont
+	if heading == nil {
+		heading = f
+	}
+	layout := layoutTooltipWithHeading(f, heading, a.tooltip, a.tooltipItem, a.tooltipDescription, len(a.tooltipSockets), a.tooltipExtra)
 	scale := min(float32(1), min(float32(w)/208, float32(h)/float32(max(1, layout.height))))
 	left, top := ui.TooltipOriginFor(a.lastMouseX, a.lastMouseY, 208, layout.height, w, h, a.tooltipItem, scale)
 	if position != nil {
@@ -162,13 +166,17 @@ func (a *App) drawSharedTooltipAt(w, h int, position *[2]int) {
 	}
 	ui.DrawTipFrame(a.sprites, a.white, float32(left), float32(top), 208, float32(layout.height), scale, ui.TipFill, ui.TipBorder)
 	for _, run := range layout.runs {
+		face := f
+		if run.emphasis {
+			face = heading
+		}
 		if a.tooltipMuted {
 			run.color = [4]float32{.6, .6, .6, 1}
 		}
 		if run.shadow {
-			f.DrawScaled(a.sprites, run.text, float32(left)+float32(run.x+1)*scale, float32(top)+float32(run.y+1)*scale, scale, [4]float32{0, 0, 0, 1}, 185)
+			face.DrawScaled(a.sprites, run.text, float32(left)+float32(run.x+1)*scale, float32(top)+float32(run.y+1)*scale, scale, [4]float32{0, 0, 0, 1}, 185)
 		}
-		f.DrawScaled(a.sprites, run.text, float32(left)+float32(run.x)*scale, float32(top)+float32(run.y)*scale, scale, run.color, 185)
+		face.DrawScaled(a.sprites, run.text, float32(left)+float32(run.x)*scale, float32(top)+float32(run.y)*scale, scale, run.color, 185)
 	}
 	if a.tooltipItem {
 		i := 0

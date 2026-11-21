@@ -311,7 +311,7 @@ name has no added brackets: members use `#E4E4E4`, and the guild master uses
 `#E0AFFA` on the guild caption only. Character-name/GM/faction colours remain
 independent. The confirmed directory master or own-guild role determines the
 leader colour; remote shape packets supply guild text when the directory lacks
-that guild. Nameplates use a subtle half-pixel stroke and black outline. See the [original client typography audit](native-typography.md) for the native text and nameplate paths.
+that guild. Nameplates use a single foreground pass and a one-pixel outline on four sides. See the [original client typography audit](native-typography.md) for the native text and nameplate paths.
 Inventory and action-slot item counts share white text and a black outline,
 with counts remaining readable above cooldown shading. Skill levels keep
 their existing colour. The inventory actor has frontal light and full ambient

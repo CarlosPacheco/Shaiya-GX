@@ -93,12 +93,13 @@ Rebuilding does not take a new snapshot from a personal runtime. Refresh deliber
 
 ## External typography and UTF-8
 
-The game loads unmodified Wine Tahoma from `data/fonts/ui.ttf`, with 217 lazy
+The bundled regular face is unmodified Wine Tahoma in `data/fonts/ui.ttf`, with 217 lazy
 Noto Unicode/colour-emoji fallback faces indexed by `fonts.json`. The complete
 redistributable pack is versioned under `resources/fonts/` and included in both
 native client release archives. Preserve its LGPL/OFL license notices and per-font
 copyrights. No game fonts are embedded and no OS font installation is required.
-`SHAIYA_FONT` optionally overrides the primary face. `python3 tools/font_pack.py`
+Place your local Arial regular and bold files at `data/fonts/arial.ttf` and
+`data/fonts/arialbd.ttf`. `SHAIYA_FONT` and `SHAIYA_FONT_BOLD` override these paths. `python3 tools/font_pack.py`
 verifies the pack inventory and hashes; `tools/prepare_fonts.py` is an optional
 maintainer import step requiring fontTools, not a runtime/build dependency.
 

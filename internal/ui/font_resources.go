@@ -15,6 +15,7 @@ import (
 // Parsed faces and rune resolutions are shared by the UI fonts on their owner thread.
 type FontSource struct {
 	primaryData []byte
+	localArial  bool
 	primary     *textFont.Face
 	read        func(string) ([]byte, error)
 	entries     []fontResource
@@ -41,21 +42,26 @@ func LoadFontSource(read func(string) ([]byte, error)) (*FontSource, error) {
 			return nil, fmt.Errorf("font manifest: %w", err)
 		}
 	}
+	primaryPath := manifest.Primary
 	var data []byte
 	var err error
 	if override := os.Getenv("SHAIYA_FONT"); override != "" {
 		data, err = os.ReadFile(override)
 	} else {
-		data, err = read(manifest.Primary)
+		if arial, readErr := read("fonts/arial.ttf"); readErr == nil {
+			data, primaryPath = arial, "fonts/arial.ttf"
+		} else {
+			data, err = read(primaryPath)
+		}
 	}
 	if err != nil {
-		return nil, fmt.Errorf("external UI font %s: %w", manifest.Primary, err)
+		return nil, fmt.Errorf("external UI font %s: %w", primaryPath, err)
 	}
 	face, err := textFont.ParseTTF(bytes.NewReader(data))
 	if err != nil {
 		return nil, fmt.Errorf("UI font: %w", err)
 	}
-	return &FontSource{primaryData: data, primary: face, read: read, entries: manifest.Fallbacks, resolved: map[rune]*textFont.Face{}, color: map[*textFont.Face]bool{}}, nil
+	return &FontSource{primaryData: data, localArial: primaryPath == "fonts/arial.ttf", primary: face, read: read, entries: manifest.Fallbacks, resolved: map[rune]*textFont.Face{}, color: map[*textFont.Face]bool{}}, nil
 }
 func (s *FontSource) load(entry *fontResource) *textFont.Face {
 	if !entry.attempted {
@@ -113,6 +119,32 @@ func (s *FontSource) Load(height int) (*Font, error) {
 	}
 	return f, err
 }
+
+// LoadEmphasis uses the paired face when supplied and the regular face otherwise.
+func (s *FontSource) LoadEmphasis(height int) (*Font, error) {
+	var data []byte
+	var err error
+	if override := os.Getenv("SHAIYA_FONT_BOLD"); override != "" {
+		data, err = os.ReadFile(override)
+		if err != nil {
+			return nil, fmt.Errorf("UI emphasis font: %w", err)
+		}
+	} else if s.localArial {
+		data, _ = s.read("fonts/arialbd.ttf")
+	}
+	if len(data) == 0 {
+		return s.Load(height)
+	}
+	face, err := textFont.ParseTTF(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf("UI emphasis font: %w", err)
+	}
+	source := *s
+	source.primaryData, source.primary = data, face
+	source.resolved = map[rune]*textFont.Face{}
+	return source.Load(height)
+}
+
 func externalFontSource() (*FontSource, error) {
 	dir := os.Getenv("SHAIYA_DATA")
 	if dir == "" {

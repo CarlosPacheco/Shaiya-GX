@@ -129,13 +129,9 @@ func (f *Font) DrawOutlined(s *render.Sprites, text string, x, y int, tint [4]fl
 	f.Draw(s, text, x, y, tint, 0)
 }
 
-// DrawName adds a half-pixel stroke to the outlined name without changing metrics.
+// DrawName uses the US EP4 single foreground and four one-pixel outline passes.
 func (f *Font) DrawName(s *render.Sprites, text string, x, y int, tint [4]float32) {
-	for _, offset := range [][2]float32{{-1, 0}, {1.5, 0}, {0, -1}, {0, 1}} {
-		f.DrawScaled(s, text, float32(x)+offset[0], float32(y)+offset[1], 1, [4]float32{0, 0, 0, tint[3]}, 0)
-	}
-	f.DrawScaled(s, text, float32(x)+.5, float32(y), 1, tint, 0)
-	f.Draw(s, text, x, y, tint, 0)
+	f.DrawOutlined(s, text, x, y, tint)
 }
 
 // Draw renders UTF-8 text with its cell top-left at (x, y), clipped to

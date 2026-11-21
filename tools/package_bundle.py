@@ -94,7 +94,13 @@ def prepare(archives, data, output):
         merge(extracted / 'gx-client-windows-amd64', client)
         if data is not None:
             print('Copying local loose game data...', flush=True)
-            shutil.copytree(data, client / 'data', dirs_exist_ok=True)
+            def exclude_local_fonts(directory, names):
+                if Path(directory).parent != data:
+                    return ()
+                if Path(directory).name.casefold() != 'fonts':
+                    return ()
+                return [name for name in names if name.casefold() in {'arial.ttf', 'arialbd.ttf'}]
+            shutil.copytree(data, client / 'data', dirs_exist_ok=True, ignore=exclude_local_fonts)
         (client / 'data/filter.txt').write_bytes(b'')
         fonts = client / 'data/fonts'
         remove_readmes(fonts)

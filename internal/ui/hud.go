@@ -10,7 +10,7 @@ import (
 // HUD uses the native status art/layout (0x509f10, 0x5097b0), target
 // art/layout (0x50a2e0, 0x50b6a0).
 type HUD struct {
-	NumberFont                                                       *Font // native Tahoma 12-cell resource labels, separate from names
+	NumberFont                                                       *Font // 12px resource labels, separate from names
 	Position, TargetPosition                                         WindowPosition
 	status, bars, circle, portraitMask, target, targetBar, elemental *render.Texture
 }

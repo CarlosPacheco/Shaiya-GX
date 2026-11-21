@@ -134,8 +134,10 @@ The external font pack contains `fonts/ui.ttf`, `fonts/fonts.json` and unmodifie
 fallback faces/licenses under `fonts/unicode/`. The JSON coverage ranges allow
 script faces to load only when a character requires them. The UI fonts share
 parsed faces and rune resolution; shaped layouts and raster textures remain
-bounded. The primary face is Wine's metric-compatible Tahoma. `SHAIYA_FONT` can
-explicitly override the primary file while keeping the same external fallbacks.
+bounded. A local `fonts/arial.ttf` takes precedence over the bundled Wine Tahoma.
+Pair it with `fonts/arialbd.ttf` for 12 px emphasized tooltip headings.
+`SHAIYA_FONT` and `SHAIYA_FONT_BOLD` can explicitly select the two local files.
+The Unicode and color emoji fallbacks remain available with each face.
 `tools/prepare_fonts.py` indexes an existing primary/fallback source; fontTools is
 an offline import dependency, never a game runtime dependency. Keep the primary
 font's license beside `ui.ttf`. No font data is embedded in the game executable.

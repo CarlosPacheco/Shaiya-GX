@@ -96,8 +96,12 @@ class BinaryOnlyBundleTests(unittest.TestCase):
             data=root/'local-data';(data/'fonts').mkdir(parents=True)
             (data/'fonts/LICENSE.txt').write_text('local licensed font data')
             (data/'Cash.SData').write_bytes(b'local original catalog')
+            (data/'fonts/Arial.TTF').write_bytes(b'local regular face')
+            (data/'fonts/arialbd.ttf').write_bytes(b'local bold face')
             with patch('package_bundle.validate'):
                 prepare(archives,data,root/'with-data')
-            for source in data.rglob('*'):
-                if source.is_file():
-                    self.assertEqual(source.read_bytes(),(root/'with-data/Client/data'/source.relative_to(data)).read_bytes())
+            for relative in ('fonts/LICENSE.txt', 'Cash.SData'):
+                self.assertEqual((data/relative).read_bytes(), (root/'with-data/Client/data'/relative).read_bytes())
+            fonts = root/'with-data/Client/data/fonts'
+            self.assertFalse((fonts/'Arial.TTF').exists())
+            self.assertFalse((fonts/'arialbd.ttf').exists())

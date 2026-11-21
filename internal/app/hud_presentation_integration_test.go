@@ -168,17 +168,22 @@ func TestHUDPresentationGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	a.tooltipExtra = tooltipExtras{}
-	// Fixed documents under the current external font pack. The historical
-	// Phoenix reference used a taller font; retain strict current-font goldens.
+	// Check the rendered tooltip blocks with the active regular and heading
+	// faces. Line wrapping can vary with the user's external font.
 	a.lastMouseX, a.lastMouseY = 400, 100
 	a.tooltip = []itemDetailLine{{"Magic Arrow Lv1", [4]float32{1, 1, 0, 1}}, {"SP: 15", white}, {"MP: 20", white}, {"Cast time: 1.5 seconds", white}, {"Recharge time: 12 seconds", white}, {"Range: 27 m", white}}
 	a.tooltipItem = false
 	a.tooltipSockets = nil
 	a.tooltipDescription = "Launches a non-elemental magic arrow that causes 39 extra damage plus your Magic Power."
-	skillLayout := layoutTooltip(a.tooltipFont, a.tooltip, false, a.tooltipDescription, 0)
+	skillLayout := layoutTooltipWithHeading(a.tooltipFont, a.tooltipHeadingFont, a.tooltip, false, a.tooltipDescription, 0)
 	t.Logf("reference font height=%d ascent=%d skill height=%d", a.tooltipFont.Height, a.tooltipFont.Ascent, skillLayout.height)
-	if skillLayout.height != 159 {
-		t.Fatal("skill tooltip height differs from current font reference", skillLayout.height)
+	if len(skillLayout.runs) < len(a.tooltip)+1 || !skillLayout.runs[0].emphasis ||
+		skillLayout.runs[0].y != 10 || skillLayout.runs[1].y != 10+a.tooltipHeadingFont.Height+5 {
+		t.Fatal("skill tooltip heading and body did not retain their spacing", skillLayout)
+	}
+	lastSkillRun := skillLayout.runs[len(skillLayout.runs)-1]
+	if lastSkillRun.y+a.tooltipFont.Height > skillLayout.height {
+		t.Fatal("skill tooltip ends above its final text row", skillLayout)
 	}
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	a.sprites.Begin(1024, 768)
@@ -191,10 +196,14 @@ func TestHUDPresentationGL(t *testing.T) {
 	a.tooltipItem = true
 	a.tooltipSockets = []tooltipSocket{{}, {}}
 	a.tooltipDescription = "{c3}A coloured description{/c}\nA complete second line which wraps inside the tooltip."
-	itemLayout := layoutTooltip(a.tooltipFont, a.tooltip, true, a.tooltipDescription, 2)
+	itemLayout := layoutTooltipWithHeading(a.tooltipFont, a.tooltipHeadingFont, a.tooltip, true, a.tooltipDescription, 2)
 	t.Logf("item height=%d socket_y=%d", itemLayout.height, itemLayout.socketY)
-	if itemLayout.height != 197 || itemLayout.socketY != 166 {
-		t.Fatal("item tooltip blocks differ from current font reference", itemLayout.height, itemLayout.socketY)
+	if len(itemLayout.runs) < len(a.tooltip)+1 || !itemLayout.runs[0].emphasis || itemLayout.runs[1].y != 40 {
+		t.Fatal("item tooltip heading and stats did not retain their spacing", itemLayout)
+	}
+	lastItemRun := itemLayout.runs[len(itemLayout.runs)-1]
+	if lastItemRun.y+a.tooltipFont.Height > itemLayout.socketY || itemLayout.socketY+20 > itemLayout.height {
+		t.Fatal("item tooltip text or sockets escape their block", itemLayout)
 	}
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	a.sprites.Begin(1024, 768)

@@ -35,10 +35,11 @@ type tooltipSocket struct {
 	inactive   bool
 }
 type tooltipRun struct {
-	text   string
-	color  [4]float32
-	x, y   int
-	shadow bool
+	text     string
+	color    [4]float32
+	x, y     int
+	shadow   bool
+	emphasis bool
 }
 type tooltipLayout struct {
 	runs                 []tooltipRun
@@ -84,9 +85,17 @@ func wrapTooltip(f *ui.Font, text string, color [4]float32) [][]tooltipGlyph {
 // The two Phoenix classes have distinct block spacing, not a single list of
 // evenly spaced rows. Height is measured with the actual reference font.
 func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description string, sockets int, extras ...tooltipExtras) tooltipLayout {
+	return layoutTooltipWithHeading(f, f, rows, item, description, sockets, extras...)
+}
+
+func layoutTooltipWithHeading(f, heading *ui.Font, rows []itemDetailLine, item bool, description string, sockets int, extras ...tooltipExtras) tooltipLayout {
 	layout := tooltipLayout{}
-	block := func(text string, color [4]float32, y int, shadow bool) (height, lines int) {
-		wrapped := wrapTooltip(f, text, color)
+	block := func(text string, color [4]float32, y int, shadow, emphasis bool) (height, lines int) {
+		face := f
+		if emphasis {
+			face = heading
+		}
+		wrapped := wrapTooltip(face, text, color)
 		for i, line := range wrapped {
 			x := 10
 			for start := 0; start < len(line); {
@@ -99,22 +108,22 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 					text.WriteRune(g.char)
 				}
 				value := text.String()
-				layout.runs = append(layout.runs, tooltipRun{value, line[start].color, x, y + i*15, shadow})
-				x += f.Width(value)
+				layout.runs = append(layout.runs, tooltipRun{value, line[start].color, x, y + i*15, shadow, emphasis})
+				x += face.Width(value)
 				start = end
 			}
 		}
-		return f.Height + max(0, len(wrapped)-1)*15, len(wrapped)
+		return face.Height + max(0, len(wrapped)-1)*15, len(wrapped)
 	}
 	if len(rows) == 0 {
 		return layout
 	}
-	height, _ := block(rows[0].text, rows[0].color, 10, false)
+	height, _ := block(rows[0].text, rows[0].color, 10, false, true)
 	y := 10 + height + 5
 	if item {
 		y = max(40, y)
 		for _, row := range rows[1:] {
-			_, count := block(row.text, row.color, y, strings.Contains(row.text, "{r}"))
+			_, count := block(row.text, row.color, y, strings.Contains(row.text, "{r}"), false)
 			y += max(15, count*15)
 		}
 	} else if len(rows) > 1 {
@@ -122,7 +131,7 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 		top := y
 		count := 0
 		for _, row := range rows[1:] {
-			_, n := block(row.text, row.color, top+count*15, false)
+			_, n := block(row.text, row.color, top+count*15, false, false)
 			count += n
 		}
 		y = top + f.Height + max(0, count-1)*15 + 5
@@ -131,7 +140,7 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 		if item {
 			y += 5
 		}
-		height, _ := block(description, white, y, false)
+		height, _ := block(description, white, y, false, false)
 		y += height
 	}
 	if item && len(extras) > 0 {
@@ -141,7 +150,7 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 				return
 			}
 			y += 5
-			block(label, [4]float32{.75, .75, .75, 1}, y+3, false)
+			block(label, [4]float32{.75, .75, .75, 1}, y+3, false, false)
 			x := 16 + f.Width(label)
 			for _, skill := range skills {
 				chance := ""
@@ -156,7 +165,7 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 				}
 				layout.effectIcons = append(layout.effectIcons, [2]int{x, y})
 				if chance != "" {
-					layout.runs = append(layout.runs, tooltipRun{chance, white, x + 22, y + 3, false})
+					layout.runs = append(layout.runs, tooltipRun{chance, white, x + 22, y + 3, false, false})
 				}
 				x += width + 6
 			}
@@ -166,12 +175,12 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 		addEffects("Immune to", e.immunities, false)
 		if e.maxOJ > 0 {
 			y += 5
-			_, n := block(fmt.Sprintf("Max OJ %d/%d (%d stats)", e.maxOJ, e.maxOJ*100, e.maxOJStats), [4]float32{.6, 1, .6, 1}, y, false)
+			_, n := block(fmt.Sprintf("Max OJ %d/%d (%d stats)", e.maxOJ, e.maxOJ*100, e.maxOJStats), [4]float32{.6, 1, .6, 1}, y, false, false)
 			y += max(15, n*15)
 		}
 		if e.forgeInfo != "" {
 			y += 5
-			_, n := block(e.forgeInfo, [4]float32{.6, 1, .6, 1}, y, false)
+			_, n := block(e.forgeInfo, [4]float32{.6, 1, .6, 1}, y, false, false)
 			y += max(15, n*15)
 		}
 		if e.material != nil {
@@ -182,7 +191,7 @@ func layoutTooltip(f *ui.Font, rows []itemDetailLine, item bool, description str
 			for f.Width(gap) < 16 && len(gap) < 16 {
 				gap += " "
 			}
-			_, n := block(prefix+gap+e.material.Name, white, y, false)
+			_, n := block(prefix+gap+e.material.Name, white, y, false, false)
 			y += max(15, n*15)
 		}
 	}

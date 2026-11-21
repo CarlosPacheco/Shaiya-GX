@@ -11,7 +11,8 @@ func (a *App) Close() {
 	a.saveClientSettings()
 	a.collisionLines.Delete()
 	a.tooltipFont.Delete()
-	a.chatTextFont.Delete()
+	a.tooltipHeadingFont.Delete()
+	a.font.Delete()
 	if a.hud != nil {
 		a.hud.NumberFont.Delete()
 	}

@@ -36,10 +36,11 @@ font file. The matching EP4 archive contains no TTF, OTF, TTC, FON or FNT files.
 
 The D3DX draw wrapper at `0x538c90` uses the ANSI entry with `DT_NOCLIP`.
 The measurement routine uses the wide entry with `DT_CALCRECT`
-(`0x52f380–0x52f393`). For GX, the difference from this reference is both
-the face (Wine Tahoma instead of Arial) and the requested chat height
-(15 instead of 13 px). The nameplate height request matches at 13 px,
-with a different face and an extra half-pixel foreground pass in GX.
+(`0x52f380–0x52f393`). GX uses 13 px for chat and names, 12 px for small tooltip text, and
+12 px for tooltip headings. Its nameplates use the native five drawing passes.
+Place Arial regular and bold under `data/fonts/arial.ttf` and
+`data/fonts/arialbd.ttf` to select the local EP4 faces. The packaged fallback is
+Wine Tahoma. The UTF-8 shaping and emoji coverage apply to either setup.
 
 ## EP5.4 comparison
 
@@ -75,10 +76,10 @@ cases that read a `FontName` setting. Those cases have their own sizes.
 
 | Surface | Observed EP5.4 path | Current GX |
 | --- | --- | --- |
-| Chat history | `0x470b00–0x470fa5` uses the text wrappers at `0x5419e0` and `0x541aa0`. Ordinary lines use the default font slot. The original lays out the history on a 16 px row pitch, with channel color and text runs separate from the font. | A dedicated 15 px nominal cell for both histories. The external primary face is Wine Tahoma. History text has a dark shadow at `(+1,+1)`. |
-| Chat entry and selector | The channel label path at `0x4711ab` calls `0x543d30` with a width constraint. That helper measures successive text prefixes and selects a font slot by style, falling back to the default. The selector text starts at `(+7,+6)` relative to its control. | Same 15 px face as the histories. The entry also supports UTF-8 shaping and cluster-aware editing. |
-| Names above actors | The base outlined name texture is generated at `0x54a770`. At `0x54a8de–0x54a933` the routine draws four black copies at one pixel up, down, left and right of the white center. Monster name placement measures the width at `0x44c3ff`, halves it, and places the texture at the projected anchor. | Projects the nameplate and draws directly with the 13 px nominal face. It adds a half-pixel foreground stroke and extends the right outline to 1.5 px. |
-| Window and tooltip text | The common formatting and draw wrappers select existing font slots. `0x541b30` and `0x541b70` explicitly select the emphasis and small slots. `0x5418c0` selects the default slot. This lets individual controls choose their typography. | The general UI and tooltip faces both load Wine Tahoma at a 13 px nominal cell. Individual controls can also apply layout scaling and paint styles. |
+| Chat history | `0x470b00–0x470fa5` uses the text wrappers at `0x5419e0` and `0x541aa0`. Ordinary lines use the default font slot. The original lays out the history on a 16 px row pitch, with channel color and text runs separate from the font. | A 13 px nominal cell for both histories. The primary face comes from the external font pack. History text has a dark shadow at `(+1,+1)`. |
+| Chat entry and selector | The channel label path at `0x4711ab` calls `0x543d30` with a width constraint. That helper measures successive text prefixes and selects a font slot by style, falling back to the default. The selector text starts at `(+7,+6)` relative to its control. | Same 13 px face as the histories. The entry also supports UTF-8 shaping and cluster-aware editing. |
+| Names above actors | The base outlined name texture is generated at `0x54a770`. At `0x54a8de–0x54a933` the routine draws four black copies at one pixel up, down, left and right of the white center. Monster name placement measures the width at `0x44c3ff`, halves it, and places the texture at the projected anchor. | Projects the nameplate and draws directly with the 13 px nominal face. The four outline offsets are one pixel. |
+| Window and tooltip text | The common formatting and draw wrappers select existing font slots. `0x541b30` and `0x541b70` explicitly select the emphasis and small slots. `0x5418c0` selects the default slot. This lets individual controls choose their typography. | The general UI uses a 13 px nominal cell and tooltip text uses 12 px. Individual controls can also apply layout scaling and paint styles. |
 | Floating combat numbers | `0x42709f` loads `interface/count.TGA`. Digits, Critical and Miss use authored regions of the texture. | The loose `count.png` atlas supplies those shapes. Changes to the UI font do not change the floating digits. |
 
 The common draw wrapper `0x54be30` calls the D3DX font's ANSI draw entry,

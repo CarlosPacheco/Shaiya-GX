@@ -142,13 +142,11 @@ not a replacement for a matched native/live screenshot comparison.
 Renderer initialization `0x544620` selects font creation by locale, through
 helper `0x54bdf0`. Locale 3 creates a **15 px regular Arial** default font.
 The audited executable initializes locale 6, whose default is
-**13 px regular Tahoma**. GX chat uses a dedicated 15 px nominal font loaded
-from the external font pack; tooltips and
-other panels retain their sizes. The external primary face remains Tahoma, so
-matching the measured cell height does not claim identical Arial glyph raster.
+**13 px regular Tahoma**. GX follows the EP4 US 13 px nominal chat cell.
+A local Arial face takes precedence over the bundled Wine Tahoma. The renderer and text metrics can
+still differ from D3DX.
 The right-hand language icon has subsequently been removed by user request,
-while preserving the measured entry width/position. This supersedes the 13px
-and icon-preserved statements in the historical audit above.
+while preserving the measured entry width and position.
 
 Item-acquisition notice 52 includes the acquired item's atlas icon immediately
 before its name. The inline square follows chat font height, participates in the
