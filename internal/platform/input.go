@@ -71,7 +71,7 @@ type Input struct {
 	Space            bool    // space held
 	Wheel            float64 // wheel delta in Win32 units (120 per notch)
 	Down             string  // snapshot: held A..Z and arrow markers < > ^ v
-	SuppressAutoRun  bool    // modal/chat updates pause automatic travel
+	SuppressAutoRun  bool    // modal updates pause automatic travel
 }
 
 // Held reports whether a letter key or an arrow ('<' '>' '^' 'v') is down.

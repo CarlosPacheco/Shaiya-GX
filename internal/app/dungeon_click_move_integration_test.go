@@ -173,10 +173,42 @@ func TestDungeonClickMoveAgainstIsolatedGX(t *testing.T) {
 	a.pumpWorld()
 	v := a.wv
 	before := v.pos
-	a.moveToGround(&platform.Input{MouseX: W / 2, MouseY: H/2 + 120, Clicked: true}, W, H)
+	v.autoRun = true
+	a.updateCharacters(&platform.Input{Keys: []platform.Key{platform.KeyEnter}}, W, H, 1.0/60)
+	if !a.chatOpen || !v.autoRun || v.pos == before {
+		t.Fatal("opening chat interrupted auto-run")
+	}
+	time.Sleep(time.Second / 60)
+	a.updateCharacters(&platform.Input{Chars: []rune{'o', 'w'}, Down: "W", Space: true}, W, H, 1.0/60)
+	if a.chatInput.Text != "ow" || a.menuOpen || v.jumping || !v.autoRun {
+		t.Fatal("chat typing leaked into world controls")
+	}
+	time.Sleep(time.Second / 60)
+	before = v.pos
+	vp := a.scene3d.View.Mul(a.scene3d.Proj)
+	var click platform.Input
+	for y := H/2 + 100; y < H/2+220; y += 12 {
+		candidate := platform.Input{MouseX: W / 2, MouseY: y, Clicked: true}
+		origin, direction, ok := clickRay(candidate.MouseX, y, W, H, vp)
+		if !ok || a.pickMob(&candidate, W, H) != 0 || a.pickNPC(&candidate, W, H) != 0 || a.pickGroundModel(&candidate, W, H) != 0 {
+			continue
+		}
+		goal, ok := v.world.RayFloor(origin, direction, clickMoveDistance)
+		if ok && goal.Sub(before).Len() > .5 && goal.Sub(before).Len() < 30 {
+			click = candidate
+			break
+		}
+	}
+	if !click.Clicked {
+		t.Fatal("no clear dungeon floor under the cursor")
+	}
+	press := click
+	press.Pressed, press.MouseDown, press.Clicked = true, true, false
+	a.updateCharacters(&press, W, H, 0)
+	a.updateCharacters(&click, W, H, 0)
 	goal := v.destination
-	if !v.travel || v.travelEffect == nil {
-		t.Fatal("dungeon click did not start travel and marker")
+	if !a.chatOpen || !v.travel || v.autoRun || v.travelEffect == nil {
+		t.Fatalf("click did not start travel with chat open: chat=%t travel=%t auto-run=%t target=%d marker=%t", a.chatOpen, v.travel, v.autoRun, st.Target, v.travelEffect != nil)
 	}
 	if distance := goal.Sub(before).Len(); distance < .5 || distance > 30 {
 		t.Fatal("fixture selected unsuitable distance", before, goal)
@@ -187,13 +219,12 @@ func TestDungeonClickMoveAgainstIsolatedGX(t *testing.T) {
 		now := time.Now()
 		dt := now.Sub(last).Seconds()
 		last = now
-		a.clock += dt
 		a.frameDT = dt
 		a.pumpWorld()
 		if a.wv != v {
 			t.Fatal("left dungeon during click movement")
 		}
-		a.updateWorld(&platform.Input{}, dt)
+		a.updateCharacters(&platform.Input{}, W, H, dt)
 		a.updateTravelEffect(float32(dt))
 		time.Sleep(time.Second / 60)
 	}
@@ -213,6 +244,10 @@ func TestDungeonClickMoveAgainstIsolatedGX(t *testing.T) {
 		t.Fatal("server rejected click movement", st.LastPlayerCorrection)
 	}
 	t.Logf("map15 click movement accepted: %v -> %v (goal%v); point.EFT cleared on arrival", before, v.pos, goal)
+	if !a.chatOpen || a.chatInput.Text != "ow" {
+		t.Fatal("click travel closed chat or lost the draft")
+	}
+	a.updateCharacters(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, W, H, 0)
 	// A manual movement command cancels both travel and its marker.
 	v.travel = true
 	v.destination = v.pos.Add(v.facing.Scale(2))

@@ -92,7 +92,7 @@ The authored entry row sits at `height - 76`: a 64×22 selector followed by a 29
 **Use Mouse** controls whether clicking walkable ground starts movement. Mouse
 camera controls work with either setting.
 
-Both chat histories remain visible. Press Enter to open the chat entry row.
+Both chat histories remain visible. Press Enter to open the chat entry row. Auto-run and click-to-move continue while typing, and the chat panel handles clicks on its own controls.
 
 **Banned words Filter** in User Options masks matching text in received player chat and
 speech bubbles. Edit `data/filter.txt` next to `sysmsg-uni.txt` and restart the

@@ -265,22 +265,20 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 		}
 		allowsChat := a.shop.quantity == nil && !a.personalMarket.modal()
 		if allowsChat && a.updateChatItemDrag(in, w, h) {
-			a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
+			a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY}, dt)
 			return
 		}
-		if a.chatOpen && allowsChat {
-			popup := a.chatUI.PopupOpen()
-			if a.updateChatPointer(in, w, h) && popup && in.HasKey(platform.KeyEscape) {
-				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
-				return
-			}
+		if allowsChat && a.chatOpen && a.chatUI != nil && a.chatUI.PopupOpen() && in.HasKey(platform.KeyEscape) &&
+			a.updateChatPointer(in, w, h) {
+			a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY}, dt)
+			return
 		}
 		if allowsChat && a.updateChat(in) {
-			// Empty controls still let an active movement send its stop packet.
-			if a.wv != nil && a.world != nil && a.state != nil {
-				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
+			if a.wv == nil || a.world == nil || a.state == nil {
+				return
 			}
-			return
+			pointer := chatWorldInput(*in)
+			in = &pointer
 		}
 		controls := a.worldControls(in, w, h)
 		if a.state == nil {

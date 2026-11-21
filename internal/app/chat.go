@@ -357,6 +357,15 @@ func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
 	return ui.ChatEntry{Items: c.Items, ItemType: c.ItemType, ItemID: c.ItemID, Text: body, Repetitions: c.Repetitions, System: c.SystemPane(), Color: ui.RGBColor(rgb), Style: style, Markup: c.Op == 0}
 }
 
+// chatWorldInput keeps pointer routing and automatic travel active while the
+// composer owns keyboard input.
+func chatWorldInput(in platform.Input) platform.Input {
+	in.Chars, in.Keys, in.Actions = nil, nil, nil
+	in.Down, in.Released, in.KeypadChars = "", "", ""
+	in.Space, in.Shift, in.ActionHeld = false, false, 0
+	return in
+}
+
 func (a *App) updateChatPointer(in *platform.Input, w, h int) bool {
 	if a.chatUI == nil {
 		return false
