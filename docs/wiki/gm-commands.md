@@ -25,17 +25,6 @@ are cleared. Replies use the original system messages: "Character's transparent
 setting is on/off", "Won't be attacked anymore" and "Will be attacked". Both
 are on at every GM login; turbo is off.
 
-### GM modes bar
-
-GMs get a panel like the potion bar, widened to three cells: **Char** (Stealth
-icon), **Attack** (Untouchable icon) and **Turbo** (Sprinter icon). It sits above
-the potion bar by default and can be dragged anywhere by its frame. The modes
-have no duration. Hovering one shows its effect; clicking it sends the matching
-command (`/char on|off`, `/attack on|off`, `/turbo`) and further clicks on that
-mode are ignored for a second so a burst cannot flood the world. Modes that are
-off are drawn grey. The panel remembers its position with the other movable
-windows.
-
 | Command | Result |
 |---|---|
 | `/set money amount` | Sets your own gold to 0–4,000,000,000; larger values clamp to the cap. Example: `/set money 10000000`. |
@@ -71,8 +60,8 @@ response cannot grant server privileges. This extension requires the updated GX
 client and world server; the original client does not implement turbo state.
 
 `GXGMModes` (`0x7F29`) is sent to the GM on entry and after every change: self
-character ID `u32`, concealed `u8`, immune `u8`, turbo `u8` (each 0 or 1). It
-drives the modes bar.
+character ID `u32`, concealed `u8`, immune `u8`, turbo `u8` (each 0 or 1). A
+change of `/char` or `/attack` within 750 ms of the previous one is refused.
 
 All command responses, usage hints and validation messages are in English and
 use green system-chat style 4 (`#33FF33`), including refusals.
