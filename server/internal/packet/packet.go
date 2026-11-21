@@ -142,6 +142,7 @@ const (
 	ChatWorld                 Opcode = 0x1103
 	ChatError                 Opcode = 0x1106
 	ChatMap                   Opcode = 0x1111
+	ChatRaid                  Opcode = 0x1112 // raid leader/sub-leader notice: u32 sender, u8 length, text
 	WarehouseItemList         Opcode = 0x0711
 	ShopSell                  Opcode = 0x0703
 	SkillUseNoTarget          Opcode = 0x0511 // a skill on a user (CUser::ChkTargetUser)

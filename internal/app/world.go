@@ -264,15 +264,12 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 	}
 	settings := a.clientSettings()
 	pointer := *in
-	if !settings.UseMouse {
-		pointer.RightDown, pointer.RightPressed, pointer.MouseDown, pointer.Wheel = false, false, false, 0
-	}
 	if pointer.RightDown {
 		dx, dy := float64(pointer.MouseX-a.lastMouseX), float64(pointer.MouseY-a.lastMouseY)
 		if pointer.MouseLook {
 			dx, dy = pointer.MouseDX, pointer.MouseDY
 		}
-		factor := float64(settings.MouseSensitivity) / 3
+		factor := max(0.5, float64(settings.MouseSensitivity)) / 3
 		pointer.MouseDX, pointer.MouseDY = dx*factor, dy*factor
 		if settings.InvertY {
 			pointer.MouseDY = -pointer.MouseDY

@@ -553,6 +553,27 @@ func (s *Session) partyChat(message string, items proto.ChatItems) {
 	broadcast(members, chatWithItems(buildChatByID(packet.ChatParty, s.char.ID, message), items), "0x1105 party chat", s.logger)
 }
 
+// raidChat is the 0x1112 notice (client writer 0x59ca70, shown as "[Union] text"):
+// only the leader or the sub-leader of a raid may send it, and every member of
+// the raid receives it, whatever the map.
+func (s *Session) raidChat(message string) {
+	message = strings.TrimSpace(message)
+	if message == "" {
+		return
+	}
+	partyMu.Lock()
+	pt := partyOf(s.player)
+	var members []*ConnectedPlayer
+	if pt != nil && pt.isRaid() && (pt.leaderPlayer() == s.player || pt.subLeaderPlayer() == s.player) {
+		members = append(members, pt.members...)
+	}
+	partyMu.Unlock()
+	if len(members) == 0 {
+		return
+	}
+	broadcast(members, buildChatByID(packet.ChatRaid, s.char.ID, message), "0x1112 raid notice", s.logger)
+}
+
 // partyExpLevelShare is the level gap factor against the party's highest
 // level.
 func partyExpLevelShare(maxLevel, level uint16) float64 {

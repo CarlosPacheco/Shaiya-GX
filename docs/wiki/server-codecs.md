@@ -5227,6 +5227,8 @@ func ChatPacket(channel uint8, admin bool, text string) []byte {
 	admins := [...]Opcode{ChatNormalAdmin, ChatWorldAdmin, 0xF104, 0xF105}
 	var op Opcode
 	switch {
+	case channel == ChannelRaid:
+		op = ChatRaid
 	case admin && int(channel) < len(admins):
 		op = admins[channel]
 	case !admin && int(channel) < len(ops):

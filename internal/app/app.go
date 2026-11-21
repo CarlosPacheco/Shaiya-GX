@@ -73,6 +73,8 @@ type App struct {
 	buffLayout                          ui.BuffLayout
 	gameMenu                            *ui.GameMenu
 	menuOpen                            bool
+	raidOnce                            bool
+	raidReturn                          uint8
 	menuConfirm                         *ui.Message
 	menuIntent                          int
 	menuPending                         bool

@@ -91,6 +91,9 @@ const (
 	ChannelGuild
 	ChannelParty
 	ChannelShout
+	// ChannelWhisper is 5 in the UI; 6 is the raid notice (0x59ca70, sent as
+	// "/raid text" by a raid leader or sub-leader).
+	ChannelRaid uint8 = 6
 )
 
 // ChatPacket is writer 0x599a60: opcode by channel, len:u8 + text + NUL.
@@ -99,6 +102,8 @@ func ChatPacket(channel uint8, admin bool, text string) []byte {
 	admins := [...]Opcode{ChatNormalAdmin, ChatWorldAdmin, 0xF104, 0xF105}
 	var op Opcode
 	switch {
+	case channel == ChannelRaid:
+		op = ChatRaid
 	case admin && int(channel) < len(admins):
 		op = admins[channel]
 	case !admin && int(channel) < len(ops):

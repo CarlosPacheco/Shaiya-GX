@@ -229,6 +229,7 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x1109` | [MobSpeechText](protocol-chat.md#opcode-1109) | — | yes | yes |
 | `0x110A` | [MobSpeechIndex](protocol-chat.md#opcode-110a) | — | yes | yes |
 | `0x1111` | [ChatMap](protocol-chat.md#opcode-1111) | yes | yes | yes |
+| `0x1112` | [ChatRaid](protocol-chat.md#opcode-1112) | yes | yes | yes |
 | `0x2101` | [RelicList](protocol-social.md#opcode-2101) | — | yes | yes |
 | `0x2102` | [RelicOwner](protocol-social.md#opcode-2102) | — | yes | yes |
 | `0x2103` | [RelicNotice](protocol-social.md#opcode-2103) | — | yes | yes |
@@ -335,6 +336,6 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0xF501` | [GmCommandError](protocol-chat.md#opcode-f501) | — | — | — |
 | `0xF702` | [GmCommandGetItem](protocol-chat.md#opcode-f702) | — | — | — |
 
-Inventory: **324 numeric opcodes**, **535 typed declarations**, **15 families**.
+Inventory: **325 numeric opcodes**, **537 typed declarations**, **15 families**.
 
 Regenerate with `python3 tools/generate_server_reference.py`; verify freshness with `--check`. The generator parses source for both operating systems and tests are excluded from implementation evidence. Source links track main; use Git history when comparing older binaries.

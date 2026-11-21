@@ -71,17 +71,20 @@ type ChatPanel struct {
 	optionPress                             int
 	help, filter, icons, check              *render.Texture
 	scroll, input                           *render.Texture
-	ChannelNames                            [6]string
-	Recipient                               string
-	entries                                 []ChatEntry
-	panes                                   [2]chatPane
-	modeButton                              Button
-	Typing, ModeOpen                        bool
-	Rows                                    [2]int
-	resizePane, resizeY, resizeStart        int
-	resizing                                bool
-	Channel                                 uint8
-	modeHeld                                int
+	ChannelNames                            [7]string
+	// RaidAllowed shows the Raid channel in the list: only a raid leader or
+	// sub-leader may use it.
+	RaidAllowed                      bool
+	Recipient                        string
+	entries                          []ChatEntry
+	panes                            [2]chatPane
+	modeButton                       Button
+	Typing, ModeOpen                 bool
+	Rows                             [2]int
+	resizePane, resizeY, resizeStart int
+	resizing                         bool
+	Channel                          uint8
+	modeHeld                         int
 }
 
 func NewChatPanel(t Textures) (*ChatPanel, error) {
@@ -281,14 +284,15 @@ func (c *ChatPanel) Update(in *platform.Input, h int) bool {
 			return true
 		}
 		row := -1
-		if in.MouseX >= 0 && in.MouseX < 120 && in.MouseY >= inputY-len(chatChannelOrder)*chatModePitch && in.MouseY < inputY {
-			row = (in.MouseY - (inputY - len(chatChannelOrder)*chatModePitch)) / chatModePitch
+		channels := c.channelList()
+		if in.MouseX >= 0 && in.MouseX < 120 && in.MouseY >= inputY-len(channels)*chatModePitch && in.MouseY < inputY {
+			row = (in.MouseY - (inputY - len(channels)*chatModePitch)) / chatModePitch
 		}
 		if in.Pressed {
 			c.modeHeld = row
 		}
 		if in.Clicked && row >= 0 && c.modeHeld == row {
-			c.Channel = chatChannelOrder[row]
+			c.Channel = channels[row]
 			c.ChannelChanged = true
 			c.FocusRequested = true
 			c.RecipientFocus = c.Channel == 5 && c.Recipient == ""
@@ -409,7 +413,7 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 	y := chatInputY(h)
 	c.modeButton.OriginY = y
 	c.modeButton.Draw(s)
-	label := c.ChannelNames[min(int(c.Channel), 5)]
+	label := c.ChannelNames[min(int(c.Channel), 6)]
 	// Centre the font cell in the 22px row; a fixed +6 left the larger chat
 	// font touching the bottom border.
 	textY := chatEntryTextY(y, f.Height)
@@ -480,8 +484,18 @@ func chatEntryTextY(rowY, fontHeight int) int {
 	return rowY + max(0, 22-fontHeight)/2
 }
 
-var chatChannelNames = [6]string{"Normal", "Trade", "Guild", "Party", "Area", "Whisper"}
+var chatChannelNames = [7]string{"Normal", "Trade", "Guild", "Party", "Area", "Whisper", "Raid"}
 var chatChannelOrder = [6]uint8{0, 5, 3, 2, 1, 4}
+
+// channelList is the mode list in display order; Raid is last and only for a
+// raid leader or sub-leader.
+func (c *ChatPanel) channelList() []uint8 {
+	list := chatChannelOrder[:]
+	if c.RaidAllowed {
+		list = append(slices.Clone(list), 6)
+	}
+	return list
+}
 
 const chatModePitch = 15
 
@@ -494,9 +508,10 @@ func (c *ChatPanel) DrawOverlay(s *render.Sprites, f *Font, blank *render.Textur
 	if !c.Typing || !c.ModeOpen {
 		return
 	}
-	top := chatInputY(h) - len(chatChannelOrder)*chatModePitch
-	s.Draw(blank, 0, float32(top), 120, float32(len(chatChannelOrder)*chatModePitch), 0, 0, 1, 1, [4]float32{.114, .122, .141, .97})
-	for i, channel := range chatChannelOrder {
+	channels := c.channelList()
+	top := chatInputY(h) - len(channels)*chatModePitch
+	s.Draw(blank, 0, float32(top), 120, float32(len(channels)*chatModePitch), 0, 0, 1, 1, [4]float32{.114, .122, .141, .97})
+	for i, channel := range channels {
 		tint := white
 		if channel == c.Channel {
 			tint = RGBColor(0xffff00)

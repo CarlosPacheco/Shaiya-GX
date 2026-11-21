@@ -89,3 +89,23 @@ func TestSittingAndStandingPreserveWorldCamera(t *testing.T) {
 		}
 	}
 }
+
+func TestMouseCameraWorksWithGroundClickMovementDisabled(t *testing.T) {
+	a := inputApp()
+	a.gameMenu.Settings.UseMouse = false
+	a.gameMenu.Settings.MouseSensitivity = 0
+	v := a.wv
+	v.world = &scene.World{}
+	v.facing = render.V3{0, 0, 1}
+	v.resetCamera()
+	eye := v.eye
+	a.updateWorldStep(&platform.Input{RightDown: true, MouseLook: true, MouseDX: 120}, 1.0/60)
+	if v.eye == eye || !v.mouselook {
+		t.Fatal("right drag stopped controlling the camera")
+	}
+	distance := v.eye.Sub(v.cameraOrigin()).Len()
+	a.updateWorldStep(&platform.Input{Wheel: 120}, 1.0/60)
+	if v.eye.Sub(v.cameraOrigin()).Len() >= distance {
+		t.Fatal("mouse wheel stopped controlling camera zoom")
+	}
+}

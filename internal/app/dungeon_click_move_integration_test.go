@@ -119,7 +119,14 @@ func TestDungeonClickMoveSelectsFloorGL(t *testing.T) {
 	if !projected {
 		t.Fatal("field fixture point is outside camera")
 	}
-	a.moveToGround(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, W, H)
+	click := &platform.Input{MouseX: x, MouseY: y, Clicked: true}
+	a.gameMenu.Settings.UseMouse = false
+	a.moveToGround(click, W, H)
+	if v.travel || v.travelEffect != nil {
+		t.Fatal("terrain click moved the player with Use Mouse disabled")
+	}
+	a.gameMenu.Settings.UseMouse = true
+	a.moveToGround(click, W, H)
 	if !v.travel || v.destination.Sub(goal).Len() > .1 || v.travelEffect == nil || v.travelEffect.Origin != v.destination {
 		t.Fatal("field click behavior changed", goal, v.destination)
 	}

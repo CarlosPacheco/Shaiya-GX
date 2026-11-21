@@ -153,6 +153,12 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 				}
 			}
 		}
+	case packet.ChatRaid:
+		if s.char != nil && s.player != nil {
+			if msg, err := readChatMessage(p); err == nil {
+				s.raidChat(msg)
+			}
+		}
 	case packet.ChatGuild:
 		if s.char != nil && s.player != nil && len(p) >= 3 && p[2] > 1 && p[2] <= 0x80 {
 			if msg, err := readChatMessage(p); err == nil {

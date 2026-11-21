@@ -343,10 +343,12 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 		}
 		for i := 0; i < count; i++ {
 			sx, sy, length := 35, 106+50*i, 185
+			padX, padY := 5, 10
 			if m.Page == MenuUser {
-				sy = 140
+				sx, sy = 36, 140
+				padX, padY = 7, 14
 			}
-			if in.Pressed && in.MouseX >= x+sx-5 && in.MouseX <= x+sx+length+5 && in.MouseY >= y+sy-10 && in.MouseY <= y+sy+10 {
+			if in.Pressed && in.MouseX >= x+sx-padX && in.MouseX <= x+sx+length+padX && in.MouseY >= y+sy-padY && in.MouseY <= y+sy+padY {
 				m.dragSlider = i
 			}
 			if m.dragSlider == i {

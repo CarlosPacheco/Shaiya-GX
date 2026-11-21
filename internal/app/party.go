@@ -399,7 +399,11 @@ func (a *App) raidCommand(fields []string) bool {
 			return true
 		}
 	case "/raid":
-		if arg != "" && (p.Raid || len(p.Members) == 0) {
+		if arg != "" && p.Raid && a.unionRole() <= 1 {
+			// 0x46fcf0: from a raid leader or sub-leader "/raid text" is the raid
+			// notice; invitations use /raidinvite and /invite.
+			packet = proto.ChatPacket(proto.ChannelRaid, false, arg)
+		} else if arg != "" && (p.Raid || len(p.Members) == 0) {
 			// /raid <name> starts a raid by invitation, with no party first.
 			a.party.inviteName = arg
 			packet = proto.RaidNamePacket(proto.RaidInviteName, arg)

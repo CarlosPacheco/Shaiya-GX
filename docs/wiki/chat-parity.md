@@ -235,3 +235,14 @@ To use the original panel art with a loose data pack, convert
 Public chat follows faction rules for ordinary players. GMs receive nearby,
 area and trade chat from both factions within each channel's normal scope.
 Whispers identify direction with “Whisper from” and “Whisper to”.
+
+## Raid notice (GX addition over the original packet)
+
+The original sends a raid notice with `0x1112` (`0x59ca70`, typed as `/raid text`
+by a raid leader or sub-leader, `0x46fcf0`) and shows the reply (`0x596310`,
+u32 sender, u8 length, text) on screen in violet as SysMsg 6606 `[Union] <b>`,
+style `0x20` (`0x567980`). GX adds a Raid entry to the chat mode list for a
+raid leader or sub-leader, removed when the role is lost, and a one-shot
+shortcut, the apostrophe key, that writes a single notice without changing the
+selected channel. The server delivers it to every raid member on any map and
+ignores it from anyone else.

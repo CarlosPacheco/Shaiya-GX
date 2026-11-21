@@ -76,6 +76,10 @@ func (a *App) applyWorldPacket(p []byte) {
 		(previousForm.Kind == proto.FormDisguise || a.state.PlayerForms[a.state.SelfID].Kind == proto.FormDisguise) {
 		a.refreshSelf(a.wv)
 	}
+	if ev.Op == proto.ChatRaid {
+		a.showRaidNotice(a.state.RaidNotice)
+		return
+	}
 	if ev.ChatQuiet {
 		return
 	}

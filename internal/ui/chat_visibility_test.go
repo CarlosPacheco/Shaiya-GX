@@ -38,3 +38,18 @@ func TestUserOptionsUseBannedWordsInsteadOfRetiredChatPreference(t *testing.T) {
 		t.Fatal("saving options did not preserve the remaining chat settings")
 	}
 }
+
+func TestUserOptionsCanDragMinimumSensitivityThumb(t *testing.T) {
+	m, err := NewGameMenu(marketTextures{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Settings.MouseSensitivity = 0
+	m.Open(MenuUser)
+	x, y := m.Origin(1024, 768)
+	m.Update(&platform.Input{MouseX: x + 29, MouseY: y + 127, Pressed: true, MouseDown: true}, 1024, 768)
+	m.Update(&platform.Input{MouseX: x + 221, MouseY: y + 140, Clicked: true}, 1024, 768)
+	if m.Settings.MouseSensitivity != 6 {
+		t.Fatal("dragging the visible thumb at zero could not raise sensitivity")
+	}
+}

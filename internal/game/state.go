@@ -105,6 +105,8 @@ type Event struct {
 
 type State struct {
 	LastMobSpeech          proto.MobSpeech
+	RaidNotice             string // last 0x1112 raid notice text
+	RaidNoticeSerial       uint64
 	TargetEffects          proto.TargetEffectSnapshot
 	TargetEffectsSerial    uint64
 	LastSkillFailure       proto.SkillFailure
@@ -1266,7 +1268,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 	case proto.CharacterEnteredMap, proto.UserLeave, proto.MobLeave, proto.MapNpcLeave, proto.ChangeAppearance, proto.CharacterEquipment, proto.CharacterShape, proto.CharacterMove, proto.MobEnter, proto.GXMobEnter, proto.MobMove, proto.GXMobMove, proto.MapNpcEnter, proto.MapNpcMove, proto.MapNpcAttackPlayer, proto.MapNpcAttackMob:
 		return s.applyEntitiesPacket(p, ev)
-	case proto.MobSpeechText, proto.MobSpeechIndex, proto.ChatNormal, proto.ChatParty, proto.ChatShout, proto.ChatNormalAdmin, proto.ChatWorld, proto.ChatGuild, proto.ChatMap, proto.ChatWorldShout, proto.ChatWorldAdmin, proto.ChatWhisper, proto.ChatError:
+	case proto.MobSpeechText, proto.MobSpeechIndex, proto.ChatNormal, proto.ChatParty, proto.ChatShout, proto.ChatNormalAdmin, proto.ChatWorld, proto.ChatGuild, proto.ChatMap, proto.ChatRaid, proto.ChatWorldShout, proto.ChatWorldAdmin, proto.ChatWhisper, proto.ChatError:
 		return s.applyChatPacket(p, ev)
 	case proto.Logout:
 		s.Party = PartyState{}

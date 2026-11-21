@@ -16,6 +16,16 @@ import (
 // updateChat captures typing before world controls. Channel syntax is a
 // delivery adaptation; encoding and opcodes use the verified 0x599a60 writer.
 func (a *App) updateChat(in *platform.Input) bool {
+	a.syncRaidChannel()
+	if a.chatUI != nil && a.chatUI.RaidAllowed && !a.chatOpen && hasChar(in, '\'') {
+		// The apostrophe key writes one raid notice. The channel is not kept;
+		// picking Raid in the mode list keeps it.
+		a.openChatComposer()
+		a.raidOnce, a.raidReturn = true, a.chatUI.Channel
+		a.chatUI.Channel = proto.ChannelRaid
+		a.chatUI.RecipientFocus = false
+		return true
+	}
 	if a.chatUI != nil {
 		for _, shortcut := range [...]struct {
 			key     platform.Key
@@ -48,6 +58,7 @@ func (a *App) updateChat(in *platform.Input) bool {
 	if in.HasKey(platform.KeyEscape) {
 		a.chatItems = nil
 		a.chatOpen = false
+		a.endRaidOnce()
 		return true
 	}
 	if a.chatUI != nil && a.chatUI.Channel == 5 {
@@ -99,6 +110,7 @@ func (a *App) updateChat(in *platform.Input) bool {
 		defer func() {
 			if !a.chatOpen {
 				a.chatItems = nil
+				a.endRaidOnce()
 			}
 		}()
 		if text != "" {
@@ -469,4 +481,46 @@ func (a *App) updateChatItemDrag(in *platform.Input, w, h int) bool {
 		return true
 	}
 	return false
+}
+
+// raidChatAllowed: only a raid leader or sub-leader has the Raid channel.
+func (a *App) raidChatAllowed() bool {
+	return a.state != nil && a.state.Party.Raid && a.unionRole() <= 1
+}
+
+// syncRaidChannel shows or hides the Raid entry as the role changes. Losing the
+// role while Raid is selected drops back to the normal channel.
+func (a *App) syncRaidChannel() {
+	if a.chatUI == nil {
+		return
+	}
+	a.chatUI.RaidAllowed = a.raidChatAllowed()
+	if !a.chatUI.RaidAllowed && a.chatUI.Channel == proto.ChannelRaid {
+		a.chatUI.Channel = a.raidReturn
+		if a.raidReturn == proto.ChannelRaid {
+			a.chatUI.Channel = proto.ChannelNormal
+		}
+		a.raidOnce = false
+	}
+}
+
+// endRaidOnce restores the channel after the one-shot raid composer closes.
+func (a *App) endRaidOnce() {
+	if a.raidOnce && a.chatUI != nil && a.chatUI.Channel == proto.ChannelRaid {
+		a.chatUI.Channel = a.raidReturn
+	}
+	a.raidOnce = false
+}
+
+// showRaidNotice prints a received 0x1112 notice: SysMsg 6606 "[Union] <b>" on
+// screen in violet (style 0x20, 0x567980).
+func (a *App) showRaidNotice(body string) {
+	if a.chatFilter != nil && a.clientSettings().BannedWords {
+		body = a.chatFilter.Censor(body)
+	}
+	if a.msg.Get(6606) != "" {
+		a.systemMessage(32, 6606, map[string]string{"b": body})
+	} else {
+		a.addSystemText(32, 0, "[Union] "+body)
+	}
 }

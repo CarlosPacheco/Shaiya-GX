@@ -281,3 +281,22 @@ func TestBannedWordsRefreshReceivedChatWithoutChangingOriginal(t *testing.T) {
 		t.Fatal(got)
 	}
 }
+
+func TestRaidNoticesAppearOnThePacketThatDeliversThem(t *testing.T) {
+	a := inputApp()
+	a.msg = text.SysMsg{6606: "[Union] <b>"}
+	a.chatFilter = text.ParseWordFilter([]byte("1\t\t\"gate\""))
+	a.gameMenu.Settings.BannedWords = true
+	for i, body := range []string{"Gather at the gate", "Move now"} {
+		w := proto.NewWriter(proto.ChatRaid)
+		w.U32(7)
+		w.Text(body)
+		a.applyWorldPacket(w.Bytes())
+		if len(a.screenNotices) != i+1 || len(a.state.Chat) != i+1 {
+			t.Fatal("raid notice waited for another packet or duplicated", a.screenNotices, a.state.Chat)
+		}
+	}
+	if a.screenNotices[0].text != "[Union] Gather at the ****" || a.screenNotices[1].text != "[Union] Move now" {
+		t.Fatal(a.screenNotices)
+	}
+}

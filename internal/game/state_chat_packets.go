@@ -20,6 +20,13 @@ func (s *State) applyChatPacket(p []byte, ev Event) (Event, error) {
 			s.addChat(ChatLine{Op: op, SenderID: c.MobID, Text: c.Text, Style: 1})
 		}
 		ev.Text = fmt.Sprintf("mob speech %d: %d", c.MobID, c.MessageID)
+	case proto.ChatRaid:
+		c, err := proto.DecodeChatByID(p)
+		if err != nil {
+			return ev.packetError(err)
+		}
+		s.RaidNotice, s.RaidNoticeSerial = c.Text, s.RaidNoticeSerial+1
+		ev.ChatQuiet = true
 	case proto.ChatNormal, proto.ChatParty, proto.ChatShout, proto.ChatNormalAdmin:
 		c, err := proto.DecodeChatByID(p)
 		if err != nil {

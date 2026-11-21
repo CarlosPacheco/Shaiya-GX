@@ -103,6 +103,9 @@ The chat retains the chosen flat Phoenix-style plates while using recovered nati
 
 The authored entry row sits at `height - 76`: a 64×22 selector followed by a 292×22 field with its right-hand language icon removed by request. The combined visible width is 356px. Input text starts at X69 and the selector label at X7, both vertically centred in the 22px row (Y+3 with the 15px English chat font; a fixed Y+6 left the larger font touching the bottom border). A blinking vertical caret replaces the permanent underscore. Pointer bounds follow the corrected row.
 
+**Use Mouse** controls whether clicking walkable ground starts movement. Mouse
+camera controls work with either setting.
+
 Both chat histories remain visible. Press Enter to open the chat entry row.
 
 **Banned words Filter** in User Options masks matching text in received player chat and
