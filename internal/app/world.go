@@ -238,6 +238,7 @@ func (a *App) updateWorld(in *platform.Input, dt float64) {
 		remaining -= step
 		a.stepWorld(&controls, step, remaining < 1e-8)
 		if remaining < 1e-8 || a.wv == nil || a.state == nil {
+			a.checkNPCWindowRange()
 			return
 		}
 		controls.Chars, controls.Keys, controls.Actions = nil, nil, nil

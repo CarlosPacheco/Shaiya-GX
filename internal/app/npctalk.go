@@ -48,12 +48,53 @@ func (a *App) npcHasService(e *game.Entity) bool {
 	return false
 }
 
-func (a *App) closeNPC() {
-	if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-		a.backToLogin("Unable to close NPC conversation.")
+// Game.exe 0x4d58ce closes NPC windows when the 3D distance exceeds 3.
+const npcWindowRange = 3
+
+func (a *App) checkNPCWindowRange() {
+	id := a.shop.npcID
+	if id == 0 || a.state == nil || a.wv == nil {
 		return
 	}
+	e := a.state.Entities[id]
+	if e != nil && a.wv.mapID == a.state.MapID && !a.state.Self.Dead {
+		delta := a.visualEntityPosition(e).Sub(a.wv.pos)
+		if delta.Dot(delta) <= npcWindowRange*npcWindowRange {
+			return
+		}
+	}
+
+	// Discard unsent UI actions. Keep in-flight transactions so their
+	// acknowledgements can still update inventory, gold or position.
+	a.shop.quantity, a.shop.dragging = nil, false
+	a.npcQuest = npcQuestView{}
+	a.blacksmith = blacksmithView{}
+	if !a.gate.pending {
+		a.gate = gatekeeperView{}
+	}
+	if a.auction.npc == id {
+		a.auction = auctionView{}
+	}
+	if a.bank.npcID == id {
+		a.bank.selected, a.bank.dragging = false, false
+	}
+	a.house.npc, a.house.confirm = 0, houseConfirmNone
+	a.pvpReward.confirm = 0
+	for _, message := range []*ui.Message{a.gateConfirm, a.gemConfirm, a.auctionConfirm, a.house.confirmBox, a.pvpRewardMessage} {
+		if message != nil {
+			message.Visible = false
+		}
+	}
+	a.closeNPC()
+}
+
+func (a *App) closeNPC() {
 	a.shop.npcID, a.shop.talk, a.shop.questMode = 0, false, false
+	if a.world != nil {
+		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
+			a.backToLogin("Unable to close NPC conversation.")
+		}
+	}
 }
 
 // enterNPCService leaves the conversation for the NPC's own window.

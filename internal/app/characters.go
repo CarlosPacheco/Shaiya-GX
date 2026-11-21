@@ -119,6 +119,10 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 		}
 
 	case game.PhaseInWorld:
+		a.checkNPCWindowRange()
+		if a.state == nil {
+			return
+		}
 		if a.screen != screenWorld || a.wv == nil || a.wv.mapID != a.state.MapID {
 			a.screen = screenWorld
 			a.enterWorld()
