@@ -2967,12 +2967,12 @@ Direct GX dependencies: `internal/gm`, `internal/mapgeometry`, `internal/movespe
 | [`movementSpeed`](../../server/internal/world/player_movement.go#L78)<br>`func (s *Session) movementSpeed() float32` | See the source definition and the subsystem ownership contract. |
 | [`startMovementJump`](../../server/internal/world/player_movement.go#L95)<br>`func (s *Session) startMovementJump(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
 | [`advancePlayerVertical`](../../server/internal/world/player_movement.go#L119)<br>`func (s *Session) advancePlayerVertical(now time.Time)` | advancePlayerVertical uses server time and geometry. Client Y is never an integration input; a fake jump flag cannot grant another impulse in mid-air. |
-| [`tickPlayerMovement`](../../server/internal/world/player_movement.go#L212)<br>`func (s *Session) tickPlayerMovement(now time.Time)` | See the source definition and the subsystem ownership contract. |
-| [`commitMovement`](../../server/internal/world/player_movement.go#L246)<br>`func (s *Session) commitMovement()` | See the source definition and the subsystem ownership contract. |
-| [`correctMovement`](../../server/internal/world/player_movement.go#L251)<br>`func (s *Session) correctMovement(reason string)` | See the source definition and the subsystem ownership contract. |
-| [`validatePlayerMovement`](../../server/internal/world/player_movement.go#L270)<br>`func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, direction uint16, now time.Time) (bool, string)` | See the source definition and the subsystem ownership contract. |
-| [`sendPhysicsClock`](../../server/internal/world/player_movement.go#L383)<br>`func (s *Session) sendPhysicsClock()` | See the source definition and the subsystem ownership contract. |
-| [`groundTrustedDestination`](../../server/internal/world/player_movement.go#L395)<br>`func (s *Session) groundTrustedDestination(x, y, z float32) (mapgeometry.Position, bool)` | groundTrustedDestination normalizes a server-authored same-map relocation. A live selected session always has geometry; unselected sessions have none. |
+| [`tickPlayerMovement`](../../server/internal/world/player_movement.go#L211)<br>`func (s *Session) tickPlayerMovement(now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`commitMovement`](../../server/internal/world/player_movement.go#L245)<br>`func (s *Session) commitMovement()` | See the source definition and the subsystem ownership contract. |
+| [`correctMovement`](../../server/internal/world/player_movement.go#L250)<br>`func (s *Session) correctMovement(reason string)` | See the source definition and the subsystem ownership contract. |
+| [`validatePlayerMovement`](../../server/internal/world/player_movement.go#L269)<br>`func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, direction uint16, now time.Time) (bool, string)` | See the source definition and the subsystem ownership contract. |
+| [`sendPhysicsClock`](../../server/internal/world/player_movement.go#L382)<br>`func (s *Session) sendPhysicsClock()` | See the source definition and the subsystem ownership contract. |
+| [`groundTrustedDestination`](../../server/internal/world/player_movement.go#L394)<br>`func (s *Session) groundTrustedDestination(x, y, z float32) (mapgeometry.Position, bool)` | groundTrustedDestination normalizes a server-authored same-map relocation. A live selected session always has geometry; unselected sessions have none. |
 
 <details><summary>Type definitions and owned fields</summary>
 

@@ -157,3 +157,36 @@ func TestTerrainSlideDoesNotDependOnRenderingFPS(t *testing.T) {
 		}
 	}
 }
+
+func TestBlockedSlopeDoesNotAccumulatePressure(t *testing.T) {
+	g := &Geometry{MapSize: 128, Heights: make([]uint16, 65*65)}
+	for z := range 65 {
+		for x := range 65 {
+			g.Heights[z*65+x] = uint16(10000 + x*200)
+		}
+	}
+	g.Reindex()
+	for _, tri := range collision.BlockerBox(collision.Vec{26, 0, 20}, collision.Vec{27, 80, 40}, 0) {
+		g.Add(tri)
+	}
+	p := Position{30, g.Height(30, 30), 30}
+	var slide SlopeMotion
+	for range 1200 {
+		p = slide.Move(g, p, 1.0/120)
+	}
+	if p[0] < 27 || p[0] > 28 || slide.Frames > 150 {
+		t.Fatalf("expected bounded pressure at wall, position %v, pressure %v", p, slide.Frames)
+	}
+
+	slide.Frames = 1800
+	p = slide.Move(g, p, 1.0/120)
+	if slide.Frames >= 1800 {
+		t.Fatal("blocked contact kept the full pressure from a long slide")
+	}
+	p[2] = 45
+	before, pressure := p, slide.Frames
+	p = slide.Move(g, p, 1.0/120)
+	if p[0] >= before[0] || slide.Frames <= pressure {
+		t.Fatalf("downhill slide did not resume after leaving the wall: %v, pressure %v", p, slide.Frames)
+	}
+}

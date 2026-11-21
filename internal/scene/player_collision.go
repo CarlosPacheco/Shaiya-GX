@@ -131,8 +131,7 @@ func (w *World) SlidePlayer(p render.V3, dt float32, m *mapgeometry.SlopeMotion)
 	if w == nil || w.physics == nil {
 		return p
 	}
-	delta := m.Step(w.physics, mapgeometry.Position(p), dt)
-	return render.V3(w.physics.GroundMove(mapgeometry.Position(p), delta, false))
+	return render.V3(m.Move(w.physics, mapgeometry.Position(p), dt))
 }
 
 // PlayerSupported uses the same support contacts as the authoritative server.

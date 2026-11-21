@@ -153,8 +153,7 @@ func (s *Session) advancePlayerVertical(now time.Time) {
 			m.fallPeak = max(m.fallPeak, m.pos[1])
 		}
 		if !m.jumping {
-			delta := m.slope.Step(m.geometry, m.pos, dt)
-			m.pos = m.geometry.GroundMove(m.pos, delta, false)
+			m.pos = m.slope.Move(m.geometry, m.pos, dt)
 		} else {
 			m.slope.Frames = 0
 		}
