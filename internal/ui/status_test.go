@@ -49,3 +49,30 @@ func TestStatusDraftLimitsCancellationAndWireOrder(t *testing.T) {
 		t.Fatal("cancel retained unconfirmed points")
 	}
 }
+
+// 0x5037f0: the side tab only opens the sheet; Apply and Cancel fold it.
+func TestStatusTabOnlyOpensAndApplyFoldsSheet(t *testing.T) {
+	v, err := NewStatus(marketTextures{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := StatusState{Points: 3, Base: proto.StatPoints{10, 10, 10, 10, 10, 10}}
+	click := func(x, y int) bool {
+		v.Update(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, 1024, 768, state)
+		apply, _ := v.Update(&platform.Input{MouseX: x, MouseY: y, Clicked: true}, 1024, 768, state)
+		return apply
+	}
+	x, y := StatusOrigin(1024, 768, false)
+	click(x+1, y+157)
+	if !v.Expanded {
+		t.Fatal("tab did not open")
+	}
+	x, y = StatusOrigin(1024, 768, true)
+	click(x+132+1, y+157) // the tab is hidden while open
+	if !v.Expanded {
+		t.Fatal("tab folded the open sheet")
+	}
+	if !click(x+16, y+270) {
+		t.Fatal("empty Apply must still be accepted")
+	}
+}

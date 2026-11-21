@@ -129,3 +129,16 @@ func commerceOrigin(x, y, w, serviceWidth int) (int, int) {
 	}
 	return x, y
 }
+
+// FreeAt reports whether a press at the absolute point is on empty frame
+// background. Native 0x4f54e0 resolves item cells, bag tabs and the close
+// control first and drags the whole 256x486 frame otherwise.
+func (v *Inventory) FreeAt(mx, my, w, h int, bag uint8) bool {
+	x, y := v.Origin(w, h)
+	rx, ry := mx-x, my-y
+	// Every bag page shares one cell layout, so the grid is never free.
+	if _, ok := InventoryHit(rx, ry, max(bag, 1)); ok || InventoryBagTab(rx, ry) >= 0 {
+		return false
+	}
+	return !(rx >= 231 && rx < 253 && ry >= 8 && ry < 30) // native 22px close control
+}

@@ -90,3 +90,17 @@ func (p *SubActions) Draw(s *render.Sprites, w, h int, walking, autoRun bool) {
 		s.Draw(p.icons, float32(x+cx), float32(y+cy), 32, 32, u, v, u+.25, v+.25, col)
 	}
 }
+
+// FreeAt reports whether a press at the absolute point is empty background
+// that may start a window drag (cells, the side tabs and close keep clicks).
+func (p *SubActions) FreeAt(mx, my, w, h int) bool {
+	if p.CellAt(mx, my, w, h) >= 0 {
+		return false
+	}
+	x, y := p.Origin(w, h)
+	if mx >= x && mx < x+32 && my >= y+60 && my < y+278 {
+		return false
+	}
+	p.close.OriginX, p.close.OriginY = x, y
+	return !p.close.hit(&platform.Input{MouseX: mx, MouseY: my})
+}

@@ -220,6 +220,9 @@ func (a *App) prepareRemotePlayers() {
 		scale := render.Identity()
 		scale[5] = (scene.Appearance{Height: sh.Height}).HeightScale()
 		pos := cached.position.update(e, a.clock)
+		if e.ClimbMode != 0 && !e.Dead && !e.Mounted {
+			pos = v.world.LadderVisual(pos, -1)
+		}
 		if d, ok := v.dashes[id]; ok {
 			pos = render.V3(d.Position(a.skillPhysicsTime() - d.Started))
 			cached.position.pos, cached.position.from, cached.position.to = pos, pos, pos

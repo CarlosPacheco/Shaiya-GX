@@ -59,7 +59,8 @@ func NewStatus(t Textures) (*Status, error) {
 	tex := ld.get("stats_on_select_button.png")
 	for i := range v.steps {
 		b := &v.steps[i]
-		*b = Button{Tex: tex, OffX: 85 + i%2*26, OffY: 128 + i/2*20, DrawW: 32, DrawH: 32, HitW: 22, HitH: 20}
+		// Native hit box 0x16 x 0x16 (0x502df0).
+		*b = Button{Tex: tex, OffX: 85 + i%2*26, OffY: 128 + i/2*20, DrawW: 32, DrawH: 32, HitW: 22, HitH: 22}
 		for state, col := range []int{0, 1, 2, 2, 3} {
 			b.UV[state] = UV{float32(col) / 4, float32(i%2) / 2, float32(col+1) / 4, float32(i%2+1) / 2}
 		}
@@ -99,7 +100,35 @@ func (v *Status) controls(w, h int, state StatusState) {
 		b.OriginX, b.OriginY = x, y
 		b.Disabled = state.Busy
 	}
-	v.apply.Disabled = v.apply.Disabled || v.Draft.Total() == 0 || v.Draft.Total() > uint32(state.Points)
+	// Apply never greys out in the original: with nothing allocated it only folds the sheet.
+	v.apply.Disabled = v.apply.Disabled || v.Draft.Total() > uint32(state.Points)
+}
+
+// FreeAt reports whether a point of the sheet is empty background, where a
+// press starts a window drag. Controls keep their clicks, and the expanded
+// graph panel (x..x+0x9b, y+0x4e..y+0x12a in 0x5037f0) swallows the press.
+func (v *Status) FreeAt(mx, my, w, h int, state StatusState) bool {
+	v.controls(w, h, state)
+	x, y := v.Origin(w, h)
+	if v.Expanded && mx >= x && mx <= x+0x9b && my >= y+0x4e && my <= y+0x12a {
+		return false
+	}
+	active := []*Button{&v.close}
+	if v.Expanded {
+		active = append(active, &v.apply, &v.cancel)
+		for i := range v.steps {
+			active = append(active, &v.steps[i])
+		}
+	} else {
+		active = append(active, &v.expand)
+	}
+	probe := platform.Input{MouseX: mx, MouseY: my}
+	for _, b := range active {
+		if b.hit(&probe) {
+			return false
+		}
+	}
+	return true
 }
 
 // Update returns Apply and Close; Draft is never written into confirmed state.
@@ -113,15 +142,20 @@ func (v *Status) Update(in *platform.Input, w, h int, state StatusState) (bool, 
 	if v.close.Update(in) {
 		return false, true
 	}
-	if v.expand.Update(in) {
-		v.Expanded = !v.Expanded
-		return false, false
-	}
+	// The side tab only opens the sheet (0x5037f0); Apply and Cancel fold it.
 	if !v.Expanded {
+		if v.expand.Update(in) {
+			v.Expanded = true
+		}
 		return false, false
 	}
-	for i := range v.steps {
+	// The 22px hit boxes overlap on the 20px row pitch; like 0x5037f0 the last
+	// button under the pointer wins.
+	for i := len(v.steps) - 1; i >= 0; i-- {
 		if v.steps[i].Update(in) {
+			for j := range v.steps {
+				v.steps[j].held = false
+			}
 			index := statOrder[i/2]
 			if i%2 == 0 {
 				v.Draft[index]++
@@ -208,8 +242,9 @@ func (v *Status) Draw(s *render.Sprites, f *Font, w, h int, state StatusState) {
 		text(fmt.Sprint(value), left+i%2*(right-left), 405+i/2*20, columnWidth)
 	}
 	v.close.Draw(s)
-	v.expand.Draw(s)
-	if v.Expanded {
+	if !v.Expanded {
+		v.expand.Draw(s)
+	} else {
 		drawStatusValue(s, f, fmt.Sprint(uint32(state.Points)-min(uint32(state.Points), v.Draft.Total())), x+78, y+102, 68)
 		for i, index := range statOrder {
 			drawStatusValue(s, f, fmt.Sprint(v.Draft[index]), x+51, y+131+i*20, 30)

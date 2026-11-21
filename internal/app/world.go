@@ -912,6 +912,9 @@ func (a *App) prepareSelfForDraw() {
 			v.self.SetMountedClip(v.moving, scene.VehicleAlternate(a.state.Self.MountShape))
 		}
 		visualPos := v.visualPosition()
+		if v.ladder.Active && !a.state.Self.Mounted {
+			visualPos = v.world.LadderVisual(visualPos, v.ladder.Index)
+		}
 		riderPos := visualPos
 		heading := v.facing
 		if v.visualFacing.Len() > 0 {

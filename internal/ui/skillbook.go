@@ -181,3 +181,29 @@ func (b *SkillBook) Origin(w, h int) (int, int) {
 }
 
 func (b *SkillBook) CancelHeld() { b.rowHeld = -1 }
+
+// FreeAt reports whether a press at the absolute point is empty background
+// that may start a window drag; rows, tabs, learn buttons and the scroll
+// column keep their own gestures.
+func (b *SkillBook) FreeAt(mx, my, w, h int) bool {
+	x, y := b.Origin(w, h)
+	rx, ry := mx-x, my-y
+	if _, ok := SkillBookHit(rx, ry); ok {
+		return false
+	}
+	if rx >= 0 && rx < 26 && ry >= 70 && ry < 318 || rx >= 302 && rx < 315 && ry >= 68 && ry < 466 {
+		return false
+	}
+	probe := platform.Input{MouseX: mx, MouseY: my}
+	b.close.OriginX, b.close.OriginY = x, y
+	if b.close.hit(&probe) {
+		return false
+	}
+	for i := range b.learn {
+		b.learn[i].OriginX, b.learn[i].OriginY = x, y
+		if b.learn[i].hit(&probe) {
+			return false
+		}
+	}
+	return true
+}

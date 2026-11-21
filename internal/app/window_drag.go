@@ -53,6 +53,16 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 		a.wv.uiLeft = -2 // Title owns the entire drag, including release outside the panel.
 		return true
 	}
+	// Native frames (0x526f30) drag from anywhere inside their rectangle once the
+	// window's own controls and item cells have declined the press.
+	startFrame := func(position *ui.WindowPosition, x, y, width, height int, free func() bool) bool {
+		if !pointInside(in, x, y, width, height) || !free() {
+			return false
+		}
+		a.windowDrag = windowDrag{position: position, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: width, height: height}
+		a.wv.uiLeft = -2
+		return true
+	}
 	if a.minimap != nil && a.wv.mapView.full {
 		x, y, scale := a.minimap.FullRect(w, h)
 		return start(&a.minimap.FullPosition, x, y, int(544*scale), int(579*scale), 8, int(450*scale))
@@ -115,12 +125,13 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	// Match drawing order: the right-hand panels cover the shop when overlapped.
 	if a.status.open && a.statusUI != nil {
 		x, y := a.statusUI.Origin(w, h)
-		width, handleX := ui.StatusWidth, 0
+		width := ui.StatusWidth
 		if a.statusUI.Expanded {
 			width += 132
-			handleX = 132
 		}
-		if start(&a.statusUI.Position, x, y, width, ui.StatusHeight, handleX, 245) {
+		if startFrame(&a.statusUI.Position, x, y, width, ui.StatusHeight, func() bool {
+			return a.statusUI.FreeAt(in.MouseX, in.MouseY, w, h, a.statusState())
+		}) {
 			return true
 		}
 		if pointInside(in, x, y, width, ui.StatusHeight) {
@@ -129,7 +140,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.subActionsOpen && a.subActionsUI != nil {
 		x, y := a.subActionsUI.Origin(w, h)
-		if start(&a.subActionsUI.Position, x, y, ui.SubActionWidth, ui.SubActionHeight, 25, 225) {
+		if startFrame(&a.subActionsUI.Position, x, y, ui.SubActionWidth, ui.SubActionHeight, func() bool { return a.subActionsUI.FreeAt(in.MouseX, in.MouseY, w, h) }) {
 			return true
 		}
 		if pointInside(in, x, y, ui.SubActionWidth, ui.SubActionHeight) {
@@ -138,7 +149,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.skills.open && a.skillBook != nil {
 		x, y := a.skillBook.Origin(w, h)
-		if start(&a.skillBook.Position, x, y, ui.SkillBookWidth, ui.SkillBookHeight, 8, 288) {
+		if startFrame(&a.skillBook.Position, x, y, ui.SkillBookWidth, ui.SkillBookHeight, func() bool { return a.skillBook.FreeAt(in.MouseX, in.MouseY, w, h) }) {
 			return true
 		}
 		if pointInside(in, x, y, ui.SkillBookWidth, ui.SkillBookHeight) {
@@ -147,7 +158,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.inventory.open && a.inventoryUI != nil {
 		x, y := a.inventoryUI.Origin(w, h)
-		if _, _, docked := a.inventoryDockOrigin(w, h); !docked && start(&a.inventoryUI.Position, x, y, ui.InventoryWidth, ui.InventoryHeight, 8, 215) {
+		if _, _, docked := a.inventoryDockOrigin(w, h); !docked && startFrame(&a.inventoryUI.Position, x, y, ui.InventoryWidth, ui.InventoryHeight, func() bool { return a.inventoryUI.FreeAt(in.MouseX, in.MouseY, w, h, a.inventory.bag) }) {
 			return true
 		}
 		if pointInside(in, x, y, ui.InventoryWidth, ui.InventoryHeight) {
@@ -306,7 +317,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			a.wv.uiLeft = -2
 			return true
 		}
-		if start(&a.hud.Position, x, y, 213, 114, 80, 125) {
+		if startFrame(&a.hud.Position, x, y, 213, 114, func() bool { return true }) {
 			return true
 		}
 	}

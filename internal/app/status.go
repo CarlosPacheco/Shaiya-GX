@@ -74,6 +74,8 @@ func (a *App) updateStatus(in *platform.Input, w, h int) bool {
 			}
 			a.status.pending, a.status.deadline = true, a.clock+10
 		}
+		// Apply folds the sheet at once, sending only a non-empty draft (0x5037f0).
+		a.statusUI.Clear()
 	}
 	return captured
 }

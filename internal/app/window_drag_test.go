@@ -288,3 +288,42 @@ func TestRaid150PagesTabsAndCrossPageMove(t *testing.T) {
 		t.Fatal("move lost on page change")
 	}
 }
+
+// Native frames (0x526f30) drag from anywhere inside their rectangle once
+// the controls and item cells decline the press.
+func TestFramesDragFromEmptyBodyButControlsKeepTheirPress(t *testing.T) {
+	a := inputApp()
+	a.inventory.open, a.inventory.bag = true, 1
+	x, y := a.inventoryUI.Origin(1024, 768)
+	if !a.updateWindowDrag(&platform.Input{MouseX: x + 100, MouseY: y + 270 - 100, Pressed: true, MouseDown: true}, 1024, 768) {
+		t.Fatal("empty equipment body did not start a drag")
+	}
+	a.windowDrag = windowDrag{}
+	if a.updateWindowDrag(&platform.Input{MouseX: x + 15 + 2, MouseY: y + 283 + 2, Pressed: true, MouseDown: true}, 1024, 768) {
+		t.Fatal("bag cell started a drag")
+	}
+	if a.updateWindowDrag(&platform.Input{MouseX: x + 20, MouseY: y + 255, Pressed: true, MouseDown: true}, 1024, 768) {
+		t.Fatal("bag tab started a drag")
+	}
+}
+
+func TestStatusDragsFromBodyOnlyOutsideControlsAndExpandedGraph(t *testing.T) {
+	a := inputApp()
+	a.status.open = true
+	x, y := a.statusUI.Origin(1024, 768)
+	if !a.updateWindowDrag(&platform.Input{MouseX: x + 150, MouseY: y + 420, Pressed: true, MouseDown: true}, 1024, 768) {
+		t.Fatal("status body did not drag")
+	}
+	a.windowDrag = windowDrag{}
+	if a.updateWindowDrag(&platform.Input{MouseX: x + 3, MouseY: y + 160, Pressed: true, MouseDown: true}, 1024, 768) {
+		t.Fatal("expand tab started a drag")
+	}
+	a.statusUI.Expanded = true
+	x, y = a.statusUI.Origin(1024, 768)
+	if a.updateWindowDrag(&platform.Input{MouseX: x + 50, MouseY: y + 200, Pressed: true, MouseDown: true}, 1024, 768) {
+		t.Fatal("expanded graph panel must swallow the press like 0x5037f0")
+	}
+	if !a.updateWindowDrag(&platform.Input{MouseX: x + 50, MouseY: y + 400, Pressed: true, MouseDown: true}, 1024, 768) {
+		t.Fatal("expanded sheet body did not drag")
+	}
+}

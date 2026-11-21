@@ -165,3 +165,18 @@ func (w *World) AttachLadder(p, f render.V3, index int) (mapgeometry.LadderMotio
 func (w *World) StepLadder(m *mapgeometry.LadderMotion, p render.V3, dt float32) render.V3 {
 	return render.V3(m.Step(w.physics, mapgeometry.Position(p), dt))
 }
+
+// LadderVisual draws a climbing character on its guide line (see
+// mapgeometry.LadderVisualAnchor). A negative index searches for the guide.
+func (w *World) LadderVisual(p render.V3, index int) render.V3 {
+	if w == nil || w.physics == nil {
+		return p
+	}
+	if index >= 0 {
+		return render.V3(w.physics.LadderVisualAnchor(index, mapgeometry.Position(p)))
+	}
+	if q, ok := w.physics.NearestLadderVisualAnchor(mapgeometry.Position(p)); ok {
+		return render.V3(q)
+	}
+	return p
+}

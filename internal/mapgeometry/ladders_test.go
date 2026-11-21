@@ -153,3 +153,27 @@ func TestLadderClearsPlatformLipWithoutCrossingCeiling(t *testing.T) {
 		t.Fatal("could not clear platform lip", p, m)
 	}
 }
+
+// The original keeps a climber's root on the guide line; GX only keeps its
+// collision clearance offset in the simulated position.
+func TestLadderVisualAnchorPullsModelOntoGuideAndFadesAtTop(t *testing.T) {
+	g := ladderFixture()
+	on := g.LadderVisualAnchor(0, Position{5, 2, 5.55})
+	if on != (Position{5, 2, 5}) {
+		t.Fatal("model not on the guide line", on)
+	}
+	top := g.LadderVisualAnchor(0, Position{5.1, 5.55, 5.9})
+	if math.Abs(float64(top[2]-5.9)) > .001 || top[0] != 5.1 {
+		t.Fatal("landing step must keep its real position", top)
+	}
+	mid := g.LadderVisualAnchor(0, Position{5, 5.275, 5.55})
+	if mid[2] <= 5.1 || mid[2] >= 5.55 {
+		t.Fatal("top fade", mid)
+	}
+	if q, ok := g.NearestLadderVisualAnchor(Position{5, 2, -5.6}); ok || q != (Position{5, 2, -5.6}) {
+		t.Fatal("distant position matched a guide", q)
+	}
+	if q, ok := g.NearestLadderVisualAnchor(Position{5, 2, 4.5}); !ok || q != (Position{5, 2, 5}) {
+		t.Fatal("remote climber on the near side", q, ok)
+	}
+}

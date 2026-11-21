@@ -236,3 +236,59 @@ func ValidateLadders(ladders []Ladder) error {
 	}
 	return nil
 }
+
+// LadderVisualAnchor is where a climbing character's model is drawn. The
+// original keeps the character's root exactly on the guide line between the
+// two derived endpoints (Game.exe 0x537200 builds them from the model's
+// centre X, minimum Z and Y extent; 0x43aea0 and 0x43bfa0 never add a
+// sideways offset). GX keeps a clearance offset for collision, so only the
+// drawn position is pulled onto the guide. Past the top the character is
+// stepping onto the landing, so the pull fades out over 0.55 units.
+func (g *Geometry) LadderVisualAnchor(index int, p Position) Position {
+	if index < 0 || index >= len(g.Ladders) {
+		return p
+	}
+	return g.Ladders[index].visualAnchor(p)
+}
+
+// NearestLadderVisualAnchor finds the guide a remote climber is on. It
+// returns false when no guide plausibly holds the position.
+func (g *Geometry) NearestLadderVisualAnchor(p Position) (Position, bool) {
+	best, bestDepth := -1, float32(math.MaxFloat32)
+	for i, l := range g.Ladders {
+		if p[1] < l.Bottom[1]-.8 || p[1] > l.Top[1]+.8 {
+			continue
+		}
+		d := cv(p).Sub(cv(l.at(p[1])))
+		normal := cv(l.Normal)
+		depth := d.Dot(normal)
+		lateral := d.Sub(normal.Scale(depth))
+		lateral[1] = 0
+		if math.Abs(depth) > 1.6 || lateral.Len() > float64(min(l.Width, .9)+.3) {
+			continue
+		}
+		if a := float32(math.Abs(depth)); a < bestDepth {
+			best, bestDepth = i, a
+		}
+	}
+	if best < 0 {
+		return p, false
+	}
+	return g.Ladders[best].visualAnchor(p), true
+}
+
+func (l Ladder) visualAnchor(p Position) Position {
+	center := l.at(p[1])
+	depth := float32(cv(p).Sub(cv(center)).Dot(cv(l.Normal)))
+	keep := float32(0)
+	if over := p[1] - l.Top[1]; over > 0 {
+		keep = min(1, over/.55)
+	}
+	pull := depth * (1 - keep)
+	for a := range 3 {
+		if a != 1 {
+			p[a] -= l.Normal[a] * pull
+		}
+	}
+	return p
+}
