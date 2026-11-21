@@ -203,9 +203,6 @@ func TestSQLiteGuildAndWarehouse(t *testing.T) {
 	if e = AddGuildChar(guild, id, 1); e != nil {
 		t.Fatal("add member", e)
 	}
-	if n, e := GuildJoinRemainHours(id); e != nil || n < 71 || n > 72 {
-		t.Fatal("guild join", n, e)
-	}
 	if e = SaveGuildCharRank(id, 2); e != nil {
 		t.Fatal("guild rank", e)
 	}

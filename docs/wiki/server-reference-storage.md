@@ -663,13 +663,12 @@ type GuildNpcRow struct {
 | [`deleteGuildChar`](../../server/internal/db/guilds.go#L236)<br>`func deleteGuildChar(guildID, charID uint32, disband bool) error` | See the source definition and the subsystem ownership contract. |
 | [`DeleteGuild`](../../server/internal/db/guilds.go#L272)<br>`func DeleteGuild(guildID uint32) error` | DeleteGuild is usp_Delete_Guild_E. |
 | [`SaveGuildRemark`](../../server/internal/db/guilds.go#L292)<br>`func SaveGuildRemark(guildID uint32, remark string) error` | SaveGuildRemark stores the notice in GuildDetails (usp_Save_GuildRemark_E's update or insert). |
-| [`GuildJoinRemainHours`](../../server/internal/db/guilds.go#L298)<br>`func GuildJoinRemainHours(charID uint32) (int, error)` | GuildJoinRemainHours is usp_Read_Char_GuildJoinDate_R: hours left of the 72 hours after the character's last guild join. |
-| [`SaveGuildRanking`](../../server/internal/db/guilds.go#L315)<br>`func SaveGuildRanking(g GuildRow) error` | SaveGuildRanking is usp_Save_GuildInfo_E2 (the DB agent's 0x0B16 batch): guild points, rank and the house fields, then the CreatedGuilds copy. |
-| [`ReadGodBless`](../../server/internal/db/guilds.go#L338)<br>`func ReadGodBless() (light, dark uint32, err error)` | ReadGodBless is usp_Read_GodBless_R (ps_dbAgent CWorld::DBKillCountLoad): the light and dark country kill counts, 0 without a row. |
-| [`ErrNoWorldInfo`](../../server/internal/db/guilds.go#L358)<br>`var ErrNoWorldInfo` | ErrNoWorldInfo is usp_Save_GodBless_E's -1: PS_GameData.dbo.WorldInfo has no row yet (the world calendar creates it). |
-| [`SaveGodBless`](../../server/internal/db/guilds.go#L362)<br>`func SaveGodBless(light, dark uint32) error` | SaveGodBless is usp_Save_GodBless_E (CWorld::DBKillCountSave): 1 saved, -1 without a WorldInfo row. |
-| [`SaveWorldInfo`](../../server/internal/db/guilds.go#L372)<br>`func SaveWorldInfo(lastWorldTime int32) error` | SaveWorldInfo is usp_Save_WorldInfo_E (the DB agent's world calendar save), which creates the WorldInfo row when missing. |
-| [`ReadWorldInfo`](../../server/internal/db/guilds.go#L398)<br>`func ReadWorldInfo() (int32, error)` | ReadWorldInfo is usp_Read_WorldInfo_E: the packed world calendar base (0 without a row). |
+| [`SaveGuildRanking`](../../server/internal/db/guilds.go#L298)<br>`func SaveGuildRanking(g GuildRow) error` | SaveGuildRanking is usp_Save_GuildInfo_E2 (the DB agent's 0x0B16 batch): guild points, rank and the house fields, then the CreatedGuilds copy. |
+| [`ReadGodBless`](../../server/internal/db/guilds.go#L321)<br>`func ReadGodBless() (light, dark uint32, err error)` | ReadGodBless is usp_Read_GodBless_R (ps_dbAgent CWorld::DBKillCountLoad): the light and dark country kill counts, 0 without a row. |
+| [`ErrNoWorldInfo`](../../server/internal/db/guilds.go#L341)<br>`var ErrNoWorldInfo` | ErrNoWorldInfo is usp_Save_GodBless_E's -1: PS_GameData.dbo.WorldInfo has no row yet (the world calendar creates it). |
+| [`SaveGodBless`](../../server/internal/db/guilds.go#L345)<br>`func SaveGodBless(light, dark uint32) error` | SaveGodBless is usp_Save_GodBless_E (CWorld::DBKillCountSave): 1 saved, -1 without a WorldInfo row. |
+| [`SaveWorldInfo`](../../server/internal/db/guilds.go#L355)<br>`func SaveWorldInfo(lastWorldTime int32) error` | SaveWorldInfo is usp_Save_WorldInfo_E (the DB agent's world calendar save), which creates the WorldInfo row when missing. |
+| [`ReadWorldInfo`](../../server/internal/db/guilds.go#L381)<br>`func ReadWorldInfo() (int32, error)` | ReadWorldInfo is usp_Read_WorldInfo_E: the packed world calendar base (0 without a row). |
 
 <details><summary>Type definitions and owned fields</summary>
 

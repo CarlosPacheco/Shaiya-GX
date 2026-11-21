@@ -100,7 +100,7 @@ COMMIT; SELECT @uid;""", "PS_UserData"))
     # Map 1's 11/1 Guild-Master of Light is at this position in 1.svmap.
     if creation_mode:
         query(f"UPDATE dbo.Chars SET Map=1,PosX=999.836,PosY=12.76,PosZ=748.293 WHERE UserUID IN ({','.join(map(str,uids))});")
-        query(f"UPDATE dbo.Chars SET Level=11,Money=10000 WHERE UserUID={uids[0]} AND CharName='{names[0][2]}';")
+        query(f"UPDATE dbo.Chars SET Level=1,Money=1010000 WHERE UserUID={uids[0]} AND CharName='{names[0][2]}';")
         test_env = dict(env, SHAIYA_TEST_USER=names[0][0], SHAIYA_PASSWORD=names[0][1], SHAIYA_TEST_GUILD=guild_name,
                         SHAIYA_TEST_GUILD_ACCOUNTS=json.dumps([[user,password] for user,password,_ in names]))
         run_test("TestGuildCreationAgainstRapture", test_env)

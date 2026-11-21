@@ -205,7 +205,7 @@ Declarations: [packet.ChatGuild](../../server/internal/packet/packet.go#L191), [
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L156)
 
-**S→C serializers:** [guildChat (server/internal/world/guild.go)](../../server/internal/world/guild.go#L283)
+**S→C serializers:** [guildChat (server/internal/world/guild.go)](../../server/internal/world/guild.go#L273)
 
 **Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L108), [Apply (internal/game/state.go)](../../internal/game/state.go#L1268), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L32)
 
@@ -215,7 +215,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildChat — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L283)
+[Source definition](../../server/internal/world/guild.go#L273)
 
 ```go
 func (s *Session) guildChat(message string, items proto.ChatItems) {

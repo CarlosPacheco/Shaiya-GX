@@ -293,23 +293,6 @@ func SaveGuildRemark(guildID uint32, remark string) error {
 	return execSQL(GameData, `INSERT INTO PS_GameData_GuildDetails(GuildID,Remark) VALUES(?1,?2) ON CONFLICT(GuildID) DO UPDATE SET Remark=excluded.Remark`, int32(guildID), remark)
 }
 
-// GuildJoinRemainHours is usp_Read_Char_GuildJoinDate_R: hours left of the
-// 72 hours after the character's last guild join.
-func GuildJoinRemainHours(charID uint32) (int, error) {
-	p, e := Pool(GameData)
-	if e != nil {
-		return 0, e
-	}
-	c, cancel := ctx()
-	defer cancel()
-	var hours int
-	e = p.QueryRowContext(c, `SELECT MAX(0,72-CAST((julianday(strftime('%Y-%m-%d %H:00:00','now'))-julianday(strftime('%Y-%m-%d %H:00:00',JoinDate)))*24 AS INTEGER)) FROM PS_GameData_GuildChars WHERE CharID=?1 ORDER BY JoinDate DESC LIMIT 1`, int32(charID)).Scan(&hours)
-	if errors.Is(e, sql.ErrNoRows) {
-		return 0, nil
-	}
-	return hours, e
-}
-
 // SaveGuildRanking is usp_Save_GuildInfo_E2 (the DB agent's 0x0B16 batch):
 // guild points, rank and the house fields, then the CreatedGuilds copy.
 func SaveGuildRanking(g GuildRow) error {

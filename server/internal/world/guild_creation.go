@@ -5,53 +5,43 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 	"strings"
-	"time"
 )
 
+// guildCreateRequest (0x0D21) starts a solo foundation or a group vote.
 func (s *Session) guildCreateRequest(p []byte) {
 	ch, me := s.char, s.player
-	name, remark := fixedText(p, 2, 24), fixedText(p, 0x1b, 64)
+	name, remark := strings.TrimSpace(fixedText(p, 2, 24)), fixedText(p, 0x1b, 64)
 	fail := func(result uint8) {
 		s.send(buildGuildCreateResult(result, 0, 0, name, remark), "0x0D21 guild create refused")
 	}
-	if ch.Level < guildMinLevel {
-		fail(4)
-		return
-	}
-	if ch.Mode < growNormal {
-		fail(5)
+	if name == "" {
+		fail(6)
 		return
 	}
 	partyMu.Lock()
-	var party []*ConnectedPlayer
-	if pt := partyOf(me); pt != nil {
-		party = append(party, pt.members...)
+	group := partyOf(me)
+	players := []*ConnectedPlayer{me}
+	if group != nil {
+		players = append([]*ConnectedPlayer(nil), group.members...)
 	}
 	partyMu.Unlock()
+	if group != nil && len(players) < 2 {
+		fail(3)
+		return
+	}
 	guildMu.Lock()
 	defer guildMu.Unlock()
 	if me.guild.guild != nil || me.guild.create != nil {
 		fail(8)
 		return
 	}
-	if len(party) != guildCreateParty {
-		fail(3)
-		return
-	}
-	now := time.Now()
-	for _, m := range party {
+	for _, m := range players {
 		switch {
 		case m.guild.guild != nil:
 			fail(8)
 			return
-		case m.Snapshot().Mode < growNormal:
-			fail(5)
-			return
-		case m.guild.create != nil || m.MapID() != ch.MapID:
+		case m.guild.create != nil || m.MapID() != ch.MapID || m.Faction() != me.Faction():
 			fail(3)
-			return
-		case now.Before(m.guild.rejoinUntil):
-			fail(9)
 			return
 		}
 	}
@@ -62,12 +52,22 @@ func (s *Session) guildCreateRequest(p []byte) {
 		}
 	}
 	c := &guildCreate{name: name, remark: remark, masterID: ch.ID, master: me, pending: map[uint32]bool{}}
-	for _, m := range party {
+	for _, m := range players {
 		if g := m.guild.applied; g != nil {
 			g.cancelApplication(m)
+			if m.guild.applied != nil {
+				fail(0)
+				return
+			}
 		}
+	}
+	c.players = players
+	if group == nil {
+		c.complete(s.logger, s)
+		return
+	}
+	for _, m := range players {
 		c.pending[m.CharacterID] = true
-		c.players = append(c.players, m)
 		m.guild.create = c
 	}
 	// SendGuildCreateAgree (0x0D22): master id, name, remark to all.
@@ -102,7 +102,7 @@ func (c *guildCreate) reset() {
 	}
 }
 
-// guildCreateAnswer (0x0D22): accept byte; 7 acceptances create it.
+// guildCreateAnswer (0x0D22): the group must accept unanimously.
 func (s *Session) guildCreateAnswer(accept bool) {
 	guildMu.Lock()
 	defer guildMu.Unlock()
@@ -119,7 +119,7 @@ func (s *Session) guildCreateAnswer(accept bool) {
 		return
 	}
 	delete(c.pending, s.char.ID)
-	if c.accepted++; c.accepted >= guildCreateParty {
+	if len(c.pending) == 0 {
 		if c.complete(s.logger, s) {
 			c.reset()
 		}
@@ -149,7 +149,8 @@ func (c *guildCreate) complete(log *logx.Logger, caller *Session) bool {
 		return true
 	}
 	master := *owner.char
-	if master.Money < guildCreateFee {
+	fee := guildHouse.CreateMoney
+	if master.Money < fee {
 		c.sendAll(buildGuildCreateFailed(2, c.name), "0x0D01 guild create failed")
 		return true
 	}
@@ -163,14 +164,14 @@ func (c *guildCreate) complete(log *logx.Logger, caller *Session) bool {
 		}
 		founders = append(founders, db.GuildCharRow{CharID: p.CharacterID, Rank: rank})
 	}
-	if err := db.CreateGuildGroup(g.ID, g.Name, c.master.guild.userID, g.Remark, g.Country, master, guildCreateFee, founders); err != nil {
+	if err := db.CreateGuildGroup(g.ID, g.Name, c.master.guild.userID, g.Remark, g.Country, master, fee, founders); err != nil {
 		log.Printf("GX Server World guild create failed: %v", err)
 		c.sendAll(buildGuildCreateFailed(6, c.name), "0x0D01 guild create failed")
 		return true
 	}
 	nextGuildID++
 	guildsByID[g.ID] = g
-	owner.char.Money -= guildCreateFee
+	owner.char.Money -= fee
 	owner.syncPlayer()
 	owner.send(buildSetMoney(owner.char.Money), "0x0213 guild fee")
 	for _, p := range c.players {
@@ -206,7 +207,7 @@ func (s *Session) completePendingGuild() {
 	guildMu.Lock()
 	defer guildMu.Unlock()
 	c := s.player.guild.create
-	if c != nil && !c.disband && c.master == s.player && c.accepted >= guildCreateParty {
+	if c != nil && !c.disband && c.master == s.player && len(c.pending) == 0 {
 		if c.complete(s.logger, s) {
 			c.reset()
 		}

@@ -62,14 +62,14 @@ type guildServiceTable struct {
 // guildHouseSettings is everything InitGuildHouseIniFile loads, starting from
 // the executable's own defaults.
 type guildHouseSettings struct {
-	BuyMoney, DefaultKeep uint32
-	Services              [guildNpcServices]guildServiceTable // gate, weapon, defense, general, smith, potion, bank
-	ShopRate, PotionRate  [4]float64                          // g_GuildNpcShopDecreRate, g_GuildNpcPotionShopDecreRate
-	GateRate              [6]float64                          // g_GuildNpcGateKeeperDecreRate (MoveDecreRate)
-	RepairRate            [6]float64                          // g_GuildNpcSmithRepairDecreRate
-	MixRate               [6]float64                          // g_GuildNpcSmithRapiceMixDecreRate
-	MixPercent            [6]int32                            // g_GuildNpcSmithRapiceMixPercentRate
-	BankSlots             [6]uint16                           // g_GuildNpcBankMaxSlot (PermitSlot)
+	CreateMoney, BuyMoney, DefaultKeep uint32
+	Services                           [guildNpcServices]guildServiceTable // gate, weapon, defense, general, smith, potion, bank
+	ShopRate, PotionRate               [4]float64                          // g_GuildNpcShopDecreRate, g_GuildNpcPotionShopDecreRate
+	GateRate                           [6]float64                          // g_GuildNpcGateKeeperDecreRate (MoveDecreRate)
+	RepairRate                         [6]float64                          // g_GuildNpcSmithRepairDecreRate
+	MixRate                            [6]float64                          // g_GuildNpcSmithRapiceMixDecreRate
+	MixPercent                         [6]int32                            // g_GuildNpcSmithRapiceMixPercentRate
+	BankSlots                          [6]uint16                           // g_GuildNpcBankMaxSlot (PermitSlot)
 	// NpcIDs is g_GuildNpcIdShopOnLevel: [country][gate, weapon, defense,
 	// general][level 0-3][3 NPC type ids].
 	NpcIDs [2][4][4][3]uint16
@@ -77,7 +77,7 @@ type guildHouseSettings struct {
 
 func defaultGuildHouse() guildHouseSettings {
 	return guildHouseSettings{
-		BuyMoney: 50000000, DefaultKeep: 2000,
+		CreateMoney: 1_000_000, BuyMoney: 50000000, DefaultKeep: 2000,
 		Services: [guildNpcServices]guildServiceTable{
 			{Type: guildNpcGate, Cost: [7]uint16{0, 1000, 1500, 2000}, Keep: [6]uint16{0, 200, 500, 800}},
 			{Type: guildNpcWeapon, Cost: [7]uint16{0, 100, 200, 500}},
@@ -164,6 +164,11 @@ func fillI32(dst []int32, value string) {
 func parseGuildHouse(ini iniFile) guildHouseSettings {
 	h := defaultGuildHouse()
 	get := func(section, key string) string { return ini[section][key] }
+	if v := get("DEFAULTSET", "GUILDCREATEMONEY"); v != "" {
+		if n, err := strconv.ParseUint(strings.TrimSpace(v), 10, 32); err == nil {
+			h.CreateMoney = uint32(n)
+		}
+	}
 	if v := get("DEFAULTSET", "HOUSEBUYMONEY"); v != "" {
 		if n := iniInt(v); n > 0 {
 			h.BuyMoney = uint32(n)

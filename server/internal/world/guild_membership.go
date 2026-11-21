@@ -72,7 +72,6 @@ func (g *guild) joinUser(p *ConnectedPlayer, log *logx.Logger) bool {
 	g.members[m.CharID] = m
 	guildOfChar[m.CharID] = g
 	p.guild.guild = g
-	p.guild.rejoinUntil = time.Now().Add(guildRejoinTime)
 	p.Send(buildGuildJoined(1, g, m.Rank), "0x0D08 guild joined")
 	g.send(buildGuildMemberAdded(m), "0x0D14 guild member added", nil)
 	for _, f := range g.memberListPackets() {
@@ -92,13 +91,9 @@ func (s *Session) guildApply(guildID uint32) {
 	me, ch := s.player, s.char
 	guildMu.Lock()
 	defer guildMu.Unlock()
-	if time.Now().Before(me.guild.rejoinUntil) {
-		s.send(guildResult(packet.GuildApply, 2), "0x0D07 guild apply too soon")
-		return
-	}
 	g := guildsByID[guildID]
 	invited := me.guild.inviterID != 0 && time.Now().Before(me.guild.inviteUntil)
-	if ch.Mode == growEasy || me.guild.guild != nil || me.guild.create != nil || invited || g == nil ||
+	if me.guild.guild != nil || me.guild.create != nil || invited || g == nil ||
 		g.Country != s.faction || g.applicants[ch.ID] != nil {
 		s.send(guildResult(packet.GuildApply, 0), "0x0D07 guild apply refused")
 		return
@@ -174,7 +169,6 @@ func (s *Session) guildAnswerApplicant(accept bool, charID uint32) {
 	g.send(buildGuildMemberAdded(a), "0x0D14 guild member added", nil)
 	if p != nil {
 		p.guild.guild, p.guild.applied = g, nil
-		p.guild.rejoinUntil = time.Now().Add(guildRejoinTime)
 		p.Send(buildGuildJoined(1, g, a.Rank), "0x0D08 guild application accepted")
 		for _, f := range g.memberListPackets() {
 			p.Send(f, "0x0D12 guild members")

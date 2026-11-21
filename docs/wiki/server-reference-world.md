@@ -1501,44 +1501,40 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`guildRankAdmin`](../../server/internal/world/guild.go#L23)<br>`const guildRankAdmin = 2` | See the source definition and the subsystem ownership contract. |
 | [`guildRankMember`](../../server/internal/world/guild.go#L24)<br>`const guildRankMember = 9` | See the source definition and the subsystem ownership contract. |
 | [`guildMaxAdmins`](../../server/internal/world/guild.go#L25)<br>`const guildMaxAdmins = 7` | See the source definition and the subsystem ownership contract. |
-| [`guildCreateParty`](../../server/internal/world/guild.go#L26)<br>`const guildCreateParty = 7` | the creating party has exactly 7 members |
-| [`guildCreateFee`](../../server/internal/world/guild.go#L27)<br>`const guildCreateFee = 1000` | gold taken from the master |
-| [`guildMinLevel`](../../server/internal/world/guild.go#L28)<br>`const guildMinLevel = 11` | See the source definition and the subsystem ownership contract. |
-| [`guildInviteTime`](../../server/internal/world/guild.go#L29)<br>`const guildInviteTime = 30 * time.Second` | See the source definition and the subsystem ownership contract. |
-| [`guildRejoinTime`](../../server/internal/world/guild.go#L30)<br>`const guildRejoinTime = 72 * time.Hour` | join date + 72 h (usp_Read_Char_GuildJoinDate_R) |
-| [`guildListBatch`](../../server/internal/world/guild.go#L31)<br>`const guildListBatch = 14` | 0x0D2F entries per packet |
-| [`guildMemberBatch`](../../server/internal/world/guild.go#L32)<br>`const guildMemberBatch = 40` | 0x0D12/0x0D13/0x0D16 entries per packet |
-| [`guildStatusDisband`](../../server/internal/world/guild.go#L36)<br>`const guildStatusDisband = 0x65` | 0x0D0C status modes; a level byte (1-80) is a character level change and 200 + rank a rank change. |
-| [`guildStatusLeft`](../../server/internal/world/guild.go#L37)<br>`const guildStatusLeft = 0x66` | See the source definition and the subsystem ownership contract. |
-| [`guildStatusExpel`](../../server/internal/world/guild.go#L38)<br>`const guildStatusExpel = 0x67` | See the source definition and the subsystem ownership contract. |
-| [`guildStatusOnline`](../../server/internal/world/guild.go#L39)<br>`const guildStatusOnline = 0x68` | See the source definition and the subsystem ownership contract. |
-| [`guildStatusOffline`](../../server/internal/world/guild.go#L40)<br>`const guildStatusOffline = 0x69` | See the source definition and the subsystem ownership contract. |
-| [`guildStatusRank`](../../server/internal/world/guild.go#L41)<br>`const guildStatusRank = 200` | See the source definition and the subsystem ownership contract. |
-| [`guildMember`](../../server/internal/world/guild.go#L44)<br>`type guildMember` | See the source definition and the subsystem ownership contract. |
-| [`guild`](../../server/internal/world/guild.go#L53)<br>`type guild` | See the source definition and the subsystem ownership contract. |
-| [`guildCreate`](../../server/internal/world/guild.go#L76)<br>`type guildCreate` | guildCreate is CGuildCreate: a creation (disband false) or disband vote. |
-| [`playerGuildState`](../../server/internal/world/guild.go#L89)<br>`type playerGuildState` | Per-player guild state, guarded by guildMu. |
-| [`guildMu`](../../server/internal/world/guild.go#L100)<br>`var guildMu sync.Mutex` | See the source definition and the subsystem ownership contract. |
-| [`guildsByID`](../../server/internal/world/guild.go#L101)<br>`var guildsByID` | See the source definition and the subsystem ownership contract. |
-| [`guildOfChar`](../../server/internal/world/guild.go#L102)<br>`var guildOfChar` | members and applicants |
-| [`nextGuildID`](../../server/internal/world/guild.go#L103)<br>`var nextGuildID uint32` | See the source definition and the subsystem ownership contract. |
-| [`guildsLoaded`](../../server/internal/world/guild.go#L104)<br>`var guildsLoaded bool` | See the source definition and the subsystem ownership contract. |
-| [`LoadGuilds`](../../server/internal/world/guild.go#L108)<br>`func LoadGuilds(log *logx.Logger) error` | LoadGuilds is CGuildMgr::InitAddGuild / InitAddUser from the database. |
-| [`admins`](../../server/internal/world/guild.go#L164)<br>`func (g *guild) admins() int` | See the source definition and the subsystem ownership contract. |
-| [`send`](../../server/internal/world/guild.go#L175)<br>`func (g *guild) send(frame []byte, label string, except *ConnectedPlayer)` | send is CGuild::Send: every online member. |
-| [`sendAdmin`](../../server/internal/world/guild.go#L184)<br>`func (g *guild) sendAdmin(frame []byte, label string)` | sendAdmin is CGuild::SendAdmin: the online master and sub-masters. |
-| [`guildNameFor`](../../server/internal/world/guild.go#L192)<br>`func guildNameFor(charID uint32) string` | See the source definition and the subsystem ownership contract. |
-| [`guildIDFor`](../../server/internal/world/guild.go#L201)<br>`func guildIDFor(charID uint32) uint32` | See the source definition and the subsystem ownership contract. |
-| [`guildConnect`](../../server/internal/world/guild.go#L212)<br>`func (s *Session) guildConnect()` | guildConnect is CUser::InitGuild + CGuildMgr::ConnectUser + SendCharacterGuild at world entry, then CGuildMgr::SendGuildList. |
-| [`guildDisconnect`](../../server/internal/world/guild.go#L251)<br>`func (s *Session) guildDisconnect()` | guildListPackets is CGuildMgr::SendGuildList: 0x0D0D, the country's guilds in 0x0D2F batches of 14, 0x0D0E. |
-| [`guildLevelChanged`](../../server/internal/world/guild.go#L271)<br>`func (s *Session) guildLevelChanged()` | guildLevelChanged is CGuild::ChangeUserLevel on a level-up. |
-| [`guildChat`](../../server/internal/world/guild.go#L283)<br>`func (s *Session) guildChat(message string, items proto.ChatItems)` | guildChat (0x1104) is CGuild::SendAllGuildChat: sender name, text. |
-| [`handleGuild`](../../server/internal/world/guild.go#L297)<br>`func (s *Session) handleGuild(op packet.Opcode, p []byte)` | handleGuild dispatches the 0x0Dxx requests of CUser::PacketGuild. |
-| [`fixedText`](../../server/internal/world/guild.go#L387)<br>`func fixedText(p []byte, at, n int) string` | See the source definition and the subsystem ownership contract. |
-| [`guildDisbandRequest`](../../server/internal/world/guild.go#L402)<br>`func (s *Session) guildDisbandRequest()` | guildCreateRequest (0x0D21): name[25], remark[65] (64 characters). |
-| [`guildDisbandAnswer`](../../server/internal/world/guild.go#L448)<br>`func (s *Session) guildDisbandAnswer(accept bool)` | guildDisbandAnswer (0x0D04): more than 2 acceptances disband it. |
-| [`fire`](../../server/internal/world/guild.go#L470)<br>`func (g *guild) fire(log *logx.Logger, alreadyDeleted ...bool)` | fire is CGuildMgr::FireGuild / CGuild::Fire. |
-| [`guildRemark`](../../server/internal/world/guild.go#L498)<br>`func (s *Session) guildRemark(p []byte)` | guildInvite (0x0D05): an admin invites a user of its map and country. |
+| [`guildInviteTime`](../../server/internal/world/guild.go#L26)<br>`const guildInviteTime = 30 * time.Second` | See the source definition and the subsystem ownership contract. |
+| [`guildListBatch`](../../server/internal/world/guild.go#L27)<br>`const guildListBatch = 14` | 0x0D2F entries per packet |
+| [`guildMemberBatch`](../../server/internal/world/guild.go#L28)<br>`const guildMemberBatch = 40` | 0x0D12/0x0D13/0x0D16 entries per packet |
+| [`guildStatusDisband`](../../server/internal/world/guild.go#L32)<br>`const guildStatusDisband = 0x65` | 0x0D0C status modes; a level byte (1-80) is a character level change and 200 + rank a rank change. |
+| [`guildStatusLeft`](../../server/internal/world/guild.go#L33)<br>`const guildStatusLeft = 0x66` | See the source definition and the subsystem ownership contract. |
+| [`guildStatusExpel`](../../server/internal/world/guild.go#L34)<br>`const guildStatusExpel = 0x67` | See the source definition and the subsystem ownership contract. |
+| [`guildStatusOnline`](../../server/internal/world/guild.go#L35)<br>`const guildStatusOnline = 0x68` | See the source definition and the subsystem ownership contract. |
+| [`guildStatusOffline`](../../server/internal/world/guild.go#L36)<br>`const guildStatusOffline = 0x69` | See the source definition and the subsystem ownership contract. |
+| [`guildStatusRank`](../../server/internal/world/guild.go#L37)<br>`const guildStatusRank = 200` | See the source definition and the subsystem ownership contract. |
+| [`guildMember`](../../server/internal/world/guild.go#L40)<br>`type guildMember` | See the source definition and the subsystem ownership contract. |
+| [`guild`](../../server/internal/world/guild.go#L49)<br>`type guild` | See the source definition and the subsystem ownership contract. |
+| [`guildCreate`](../../server/internal/world/guild.go#L72)<br>`type guildCreate` | guildCreate is CGuildCreate: a creation (disband false) or disband vote. |
+| [`playerGuildState`](../../server/internal/world/guild.go#L85)<br>`type playerGuildState` | Per-player guild state, guarded by guildMu. |
+| [`guildMu`](../../server/internal/world/guild.go#L95)<br>`var guildMu sync.Mutex` | See the source definition and the subsystem ownership contract. |
+| [`guildsByID`](../../server/internal/world/guild.go#L96)<br>`var guildsByID` | See the source definition and the subsystem ownership contract. |
+| [`guildOfChar`](../../server/internal/world/guild.go#L97)<br>`var guildOfChar` | members and applicants |
+| [`nextGuildID`](../../server/internal/world/guild.go#L98)<br>`var nextGuildID uint32` | See the source definition and the subsystem ownership contract. |
+| [`guildsLoaded`](../../server/internal/world/guild.go#L99)<br>`var guildsLoaded bool` | See the source definition and the subsystem ownership contract. |
+| [`LoadGuilds`](../../server/internal/world/guild.go#L103)<br>`func LoadGuilds(log *logx.Logger) error` | LoadGuilds is CGuildMgr::InitAddGuild / InitAddUser from the database. |
+| [`admins`](../../server/internal/world/guild.go#L159)<br>`func (g *guild) admins() int` | See the source definition and the subsystem ownership contract. |
+| [`send`](../../server/internal/world/guild.go#L170)<br>`func (g *guild) send(frame []byte, label string, except *ConnectedPlayer)` | send is CGuild::Send: every online member. |
+| [`sendAdmin`](../../server/internal/world/guild.go#L179)<br>`func (g *guild) sendAdmin(frame []byte, label string)` | sendAdmin is CGuild::SendAdmin: the online master and sub-masters. |
+| [`guildNameFor`](../../server/internal/world/guild.go#L187)<br>`func guildNameFor(charID uint32) string` | See the source definition and the subsystem ownership contract. |
+| [`guildIDFor`](../../server/internal/world/guild.go#L196)<br>`func guildIDFor(charID uint32) uint32` | See the source definition and the subsystem ownership contract. |
+| [`guildConnect`](../../server/internal/world/guild.go#L207)<br>`func (s *Session) guildConnect()` | guildConnect is CUser::InitGuild + CGuildMgr::ConnectUser + SendCharacterGuild at world entry, then CGuildMgr::SendGuildList. |
+| [`guildDisconnect`](../../server/internal/world/guild.go#L241)<br>`func (s *Session) guildDisconnect()` | guildListPackets is CGuildMgr::SendGuildList: 0x0D0D, the country's guilds in 0x0D2F batches of 14, 0x0D0E. |
+| [`guildLevelChanged`](../../server/internal/world/guild.go#L261)<br>`func (s *Session) guildLevelChanged()` | guildLevelChanged is CGuild::ChangeUserLevel on a level-up. |
+| [`guildChat`](../../server/internal/world/guild.go#L273)<br>`func (s *Session) guildChat(message string, items proto.ChatItems)` | guildChat (0x1104) is CGuild::SendAllGuildChat: sender name, text. |
+| [`handleGuild`](../../server/internal/world/guild.go#L287)<br>`func (s *Session) handleGuild(op packet.Opcode, p []byte)` | handleGuild dispatches the 0x0Dxx requests of CUser::PacketGuild. |
+| [`fixedText`](../../server/internal/world/guild.go#L377)<br>`func fixedText(p []byte, at, n int) string` | See the source definition and the subsystem ownership contract. |
+| [`guildDisbandRequest`](../../server/internal/world/guild.go#L392)<br>`func (s *Session) guildDisbandRequest()` | guildDisbandRequest (0x0D03) starts the disband vote. |
+| [`guildDisbandAnswer`](../../server/internal/world/guild.go#L438)<br>`func (s *Session) guildDisbandAnswer(accept bool)` | guildDisbandAnswer (0x0D04): more than 2 acceptances disband it. |
+| [`fire`](../../server/internal/world/guild.go#L460)<br>`func (g *guild) fire(log *logx.Logger, alreadyDeleted ...bool)` | fire is CGuildMgr::FireGuild / CGuild::Fire. |
+| [`guildRemark`](../../server/internal/world/guild.go#L488)<br>`func (s *Session) guildRemark(p []byte)` | guildRemark (0x0D20) updates the notice for the entire guild. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -1598,7 +1594,6 @@ type playerGuildState struct {
 	inviterID   uint32
 	inviteUntil time.Time
 	applied     *guild
-	rejoinUntil time.Time
 	userID      string
 }
 ```
@@ -1613,13 +1608,13 @@ Direct GX dependencies: `server/internal/db`, `server/internal/logx`, `server/in
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`guildCreateRequest`](../../server/internal/world/guild_creation.go#L11)<br>`func (s *Session) guildCreateRequest(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`guildCreateRequest`](../../server/internal/world/guild_creation.go#L11)<br>`func (s *Session) guildCreateRequest(p []byte)` | guildCreateRequest (0x0D21) starts a solo foundation or a group vote. |
 | [`sendAll`](../../server/internal/world/guild_creation.go#L81)<br>`func (c *guildCreate) sendAll(frame []byte, label string)` | See the source definition and the subsystem ownership contract. |
 | [`fail`](../../server/internal/world/guild_creation.go#L88)<br>`func (c *guildCreate) fail(result uint8)` | fail is SendGuildCreateFailed / SendGuildFireFailed then ResetCreate. |
 | [`reset`](../../server/internal/world/guild_creation.go#L97)<br>`func (c *guildCreate) reset()` | See the source definition and the subsystem ownership contract. |
-| [`guildCreateAnswer`](../../server/internal/world/guild_creation.go#L106)<br>`func (s *Session) guildCreateAnswer(accept bool)` | guildCreateAnswer (0x0D22): accept byte; 7 acceptances create it. |
+| [`guildCreateAnswer`](../../server/internal/world/guild_creation.go#L106)<br>`func (s *Session) guildCreateAnswer(accept bool)` | guildCreateAnswer (0x0D22): the group must accept unanimously. |
 | [`complete`](../../server/internal/world/guild_creation.go#L130)<br>`func (c *guildCreate) complete(log *logx.Logger, caller *Session) bool` | complete is CGuildMgr::CreateGuild 0x004321e0. |
-| [`completePendingGuild`](../../server/internal/world/guild_creation.go#L202)<br>`func (s *Session) completePendingGuild()` | completePendingGuild retries a fully accepted group on the master's own session loop when its state lock was busy during another member's reply. |
+| [`completePendingGuild`](../../server/internal/world/guild_creation.go#L203)<br>`func (s *Session) completePendingGuild()` | completePendingGuild retries a fully accepted group on the master's own session loop when its state lock was busy during another member's reply. |
 
 ### guild_membership.go
 
@@ -1632,13 +1627,13 @@ Direct GX dependencies: `server/internal/db`, `server/internal/logx`, `server/in
 | [`guildInvite`](../../server/internal/world/guild_membership.go#L10)<br>`func (s *Session) guildInvite(targetID uint32)` | See the source definition and the subsystem ownership contract. |
 | [`guildInviteAnswer`](../../server/internal/world/guild_membership.go#L36)<br>`func (s *Session) guildInviteAnswer(accept bool)` | guildInviteAnswer (0x0D06): accept byte, answered to the inviter. |
 | [`joinUser`](../../server/internal/world/guild_membership.go#L65)<br>`func (g *guild) joinUser(p *ConnectedPlayer, log *logx.Logger) bool` | joinUser is CGuild::JoinUser: an online user joins at rank 9. |
-| [`guildApply`](../../server/internal/world/guild_membership.go#L91)<br>`func (s *Session) guildApply(guildID uint32)` | buildGuildMemberAdded (0x0D14): online byte and the 29-byte member. |
-| [`cancelApplication`](../../server/internal/world/guild_membership.go#L124)<br>`func (g *guild) cancelApplication(p *ConnectedPlayer)` | cancelApplication is CGuild::JoinRequestCancle. |
-| [`guildAnswerApplicant`](../../server/internal/world/guild_membership.go#L139)<br>`func (s *Session) guildAnswerApplicant(accept bool, charID uint32)` | guildAnswerApplicant (0x0D08): accept byte, char id; JoinOK / JoinNO. |
-| [`guildLeave`](../../server/internal/world/guild_membership.go#L193)<br>`func (s *Session) guildLeave()` | guildLeave (0x0D09): CGuild::JoinLeave; the master leaves only alone, and an emptied guild is disbanded. |
-| [`guildExpel`](../../server/internal/world/guild_membership.go#L231)<br>`func (s *Session) guildExpel(charID uint32)` | guildExpel (0x0D0A): CGuild::JoinExpel, only lower ranks. |
-| [`guildChangeRank`](../../server/internal/world/guild_membership.go#L271)<br>`func (s *Session) guildChangeRank(direction uint8, charID uint32)` | guildChangeRank (0x0D0C): direction (0 promote, 1 demote), char id; CGuild::ChangeGuildUserLevel. |
-| [`guildRankChange`](../../server/internal/world/guild_membership.go#L299)<br>`func guildRankChange(actor, target, direction uint8, admins int) (uint8, bool)` | See the source definition and the subsystem ownership contract. |
+| [`guildApply`](../../server/internal/world/guild_membership.go#L90)<br>`func (s *Session) guildApply(guildID uint32)` | buildGuildMemberAdded (0x0D14): online byte and the 29-byte member. |
+| [`cancelApplication`](../../server/internal/world/guild_membership.go#L119)<br>`func (g *guild) cancelApplication(p *ConnectedPlayer)` | cancelApplication is CGuild::JoinRequestCancle. |
+| [`guildAnswerApplicant`](../../server/internal/world/guild_membership.go#L134)<br>`func (s *Session) guildAnswerApplicant(accept bool, charID uint32)` | guildAnswerApplicant (0x0D08): accept byte, char id; JoinOK / JoinNO. |
+| [`guildLeave`](../../server/internal/world/guild_membership.go#L187)<br>`func (s *Session) guildLeave()` | guildLeave (0x0D09): CGuild::JoinLeave; the master leaves only alone, and an emptied guild is disbanded. |
+| [`guildExpel`](../../server/internal/world/guild_membership.go#L225)<br>`func (s *Session) guildExpel(charID uint32)` | guildExpel (0x0D0A): CGuild::JoinExpel, only lower ranks. |
+| [`guildChangeRank`](../../server/internal/world/guild_membership.go#L265)<br>`func (s *Session) guildChangeRank(direction uint8, charID uint32)` | guildChangeRank (0x0D0C): direction (0 promote, 1 demote), char id; CGuild::ChangeGuildUserLevel. |
+| [`guildRankChange`](../../server/internal/world/guild_membership.go#L293)<br>`func guildRankChange(actor, target, direction uint8, admins int) (uint8, bool)` | See the source definition and the subsystem ownership contract. |
 
 ### guild_packets.go
 
@@ -1775,29 +1770,29 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 | [`fillF64`](../../server/internal/world/guildhouse.go#L139)<br>`func fillF64(dst []float64, value string)` | See the source definition and the subsystem ownership contract. |
 | [`fillI32`](../../server/internal/world/guildhouse.go#L152)<br>`func fillI32(dst []int32, value string)` | See the source definition and the subsystem ownership contract. |
 | [`parseGuildHouse`](../../server/internal/world/guildhouse.go#L164)<br>`func parseGuildHouse(ini iniFile) guildHouseSettings` | parseGuildHouse applies GuildHouse.ini over the executable defaults. The original runs GetPrivateProfileString for each key and keeps the default when it is absent. |
-| [`loadGuildHouseIni`](../../server/internal/world/guildhouse.go#L223)<br>`func loadGuildHouseIni()` | See the source definition and the subsystem ownership contract. |
-| [`service`](../../server/internal/world/guildhouse.go#L233)<br>`func (h *guildHouseSettings) service(npcType uint16) *guildServiceTable` | service is the upgrade table of an NPC type (nil for an unknown type). |
-| [`npcLevel`](../../server/internal/world/guildhouse.go#L243)<br>`func (g *guild) npcLevel(npcType uint16) uint16` | npcLevel is the level of the guild's NPC of that type, 0 without it. |
-| [`houseEnabled`](../../server/internal/world/guildhouse.go#L253)<br>`func (g *guild) houseEnabled() bool` | houseEnabled is CGuild::EnableGuildHouse: ranked, active and bought. |
-| [`calculateKeepEtin`](../../server/internal/world/guildhouse.go#L259)<br>`func (g *guild) calculateKeepEtin()` | calculateKeepEtin is CGuild::CalculateKeepEtin: the default plus the upkeep of every NPC at its level. |
-| [`bankSlots`](../../server/internal/world/guildhouse.go#L274)<br>`func (g *guild) bankSlots() int` | bankSlots is GetGuildHouseBankAllowSlotCount: PermitSlot at the bank NPC level (the first entry without it). |
-| [`row`](../../server/internal/world/guildhouse.go#L282)<br>`func (g *guild) row() db.GuildRow` | See the source definition and the subsystem ownership contract. |
-| [`npcListPacket`](../../server/internal/world/guildhouse.go#L288)<br>`func (g *guild) npcListPacket() []byte` | npcListPacket is CGuild::SendNpcLvList (0x0D24); nil without NPCs. |
-| [`buildGuildNpcResult`](../../server/internal/world/guildhouse.go#L309)<br>`func buildGuildNpcResult(result uint8, npcType uint16, level, slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`guildNpcUpgrade`](../../server/internal/world/guildhouse.go#L320)<br>`func (s *Session) guildNpcUpgrade(g *guild, npcType uint16, level uint8)` | guildNpcUpgrade is 0x0D25 (CGuild::NpcUpgrade), reached for guild ranks 1 and 2 only. Called with guildMu held. |
-| [`buildGuildHouseBuy`](../../server/internal/world/guildhouse.go#L408)<br>`func buildGuildHouseBuy(result uint8, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`guildHouseBuy`](../../server/internal/world/guildhouse.go#L417)<br>`func (s *Session) guildHouseBuy(g *guild, rank uint8)` | guildHouseBuy is the 0x0D34 branch of CUser::PacketGuild. Called with guildMu held. |
-| [`guildEtinValue`](../../server/internal/world/guildhouse.go#L445)<br>`func guildEtinValue(it *db.Item) (value uint32, ok bool)` | guildEtinValue is the etin an item donates: Type 43 with Special 52..55. |
-| [`guildDonate`](../../server/internal/world/guildhouse.go#L469)<br>`func (s *Session) guildDonate(g *guild)` | guildDonate is the 0x0D35 branch: every etin item in the bags is consumed, its value added to the guild's etin and the return count incremented. Called with guildMu held. |
-| [`settleGuildHouse`](../../server/internal/world/guildhouse.go#L512)<br>`func (g *guild) settleGuildHouse()` | settleGuildHouse is the house part of CGuildMgr::UpdateGuildPointRank for a ranked guild: below the upkeep the house is suspended (UseHouse 2), otherwise the upkeep is paid from the etin. Called with guildMu held. |
-| [`inGuildHouseZone`](../../server/internal/world/guildhouse.go#L526)<br>`func (s *Session) inGuildHouseZone() bool` | inGuildHouseZone is CMap::IsGuildHouseMap for the character's zone. |
-| [`houseNpcRefusal`](../../server/internal/world/guildhouse.go#L532)<br>`func (s *Session) houseNpcRefusal(result, detail uint8)` | houseNpcRefusal answers a guild house service the guild cannot use with 0x0D28 {result, detail}, as PacketShop and PacketMaininterface do. |
-| [`houseNpcAbove`](../../server/internal/world/guildhouse.go#L538)<br>`func houseNpcAbove(country int32, kind int, from int, npcTypeID uint16) (level uint8, found bool)` | houseNpcColumn finds a NPC type id in the shop table of its kind and returns the level that unlocks it (0 when not listed above from). |
-| [`shopBuyRate`](../../server/internal/world/guildhouse.go#L555)<br>`func (g *guild) shopBuyRate(npcTypeID uint16, shopType uint8) (rate float64, result, detail uint8)` | shopBuyRate is CGuild::GetGuildHouseShopBuyRate: the price factor for a shop of the given type (1 weapon, 2 defense, 3 general, 4 potion), or the refusal result and detail (1 rank limit, 2 NPC level above the guild's). |
-| [`gateRate`](../../server/internal/world/guildhouse.go#L589)<br>`func (g *guild) gateRate(npcTypeID uint16) (rate float64, needLevel uint8, ok bool)` | gateRate is CGuild::GetGuildHouseUseGateRate: the fee factor, or the level the gatekeeper NPC needs when it is above the guild's. |
-| [`houseRound`](../../server/internal/world/guildhouse.go#L605)<br>`func houseRound(v float64) uint32` | roundHalfAway is the x87 ROUND of the original price products. |
-| [`smithIndex`](../../server/internal/world/guildhouse.go#L608)<br>`func (g *guild) smithIndex() int` | smithIndex is the blacksmith NPC level clamped to the six-entry tables. |
-| [`houseMix`](../../server/internal/world/guildhouse.go#L613)<br>`func (s *Session) houseMix() (rate float64, bonus int)` | houseMix returns the gem-linking cost factor (RapiceMixDecreRate) and the success bonus (RapiceMixPercentRate, active house only) for the guild smith inside a house map; (1, 0) elsewhere. |
+| [`loadGuildHouseIni`](../../server/internal/world/guildhouse.go#L228)<br>`func loadGuildHouseIni()` | See the source definition and the subsystem ownership contract. |
+| [`service`](../../server/internal/world/guildhouse.go#L238)<br>`func (h *guildHouseSettings) service(npcType uint16) *guildServiceTable` | service is the upgrade table of an NPC type (nil for an unknown type). |
+| [`npcLevel`](../../server/internal/world/guildhouse.go#L248)<br>`func (g *guild) npcLevel(npcType uint16) uint16` | npcLevel is the level of the guild's NPC of that type, 0 without it. |
+| [`houseEnabled`](../../server/internal/world/guildhouse.go#L258)<br>`func (g *guild) houseEnabled() bool` | houseEnabled is CGuild::EnableGuildHouse: ranked, active and bought. |
+| [`calculateKeepEtin`](../../server/internal/world/guildhouse.go#L264)<br>`func (g *guild) calculateKeepEtin()` | calculateKeepEtin is CGuild::CalculateKeepEtin: the default plus the upkeep of every NPC at its level. |
+| [`bankSlots`](../../server/internal/world/guildhouse.go#L279)<br>`func (g *guild) bankSlots() int` | bankSlots is GetGuildHouseBankAllowSlotCount: PermitSlot at the bank NPC level (the first entry without it). |
+| [`row`](../../server/internal/world/guildhouse.go#L287)<br>`func (g *guild) row() db.GuildRow` | See the source definition and the subsystem ownership contract. |
+| [`npcListPacket`](../../server/internal/world/guildhouse.go#L293)<br>`func (g *guild) npcListPacket() []byte` | npcListPacket is CGuild::SendNpcLvList (0x0D24); nil without NPCs. |
+| [`buildGuildNpcResult`](../../server/internal/world/guildhouse.go#L314)<br>`func buildGuildNpcResult(result uint8, npcType uint16, level, slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`guildNpcUpgrade`](../../server/internal/world/guildhouse.go#L325)<br>`func (s *Session) guildNpcUpgrade(g *guild, npcType uint16, level uint8)` | guildNpcUpgrade is 0x0D25 (CGuild::NpcUpgrade), reached for guild ranks 1 and 2 only. Called with guildMu held. |
+| [`buildGuildHouseBuy`](../../server/internal/world/guildhouse.go#L413)<br>`func buildGuildHouseBuy(result uint8, money uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`guildHouseBuy`](../../server/internal/world/guildhouse.go#L422)<br>`func (s *Session) guildHouseBuy(g *guild, rank uint8)` | guildHouseBuy is the 0x0D34 branch of CUser::PacketGuild. Called with guildMu held. |
+| [`guildEtinValue`](../../server/internal/world/guildhouse.go#L450)<br>`func guildEtinValue(it *db.Item) (value uint32, ok bool)` | guildEtinValue is the etin an item donates: Type 43 with Special 52..55. |
+| [`guildDonate`](../../server/internal/world/guildhouse.go#L474)<br>`func (s *Session) guildDonate(g *guild)` | guildDonate is the 0x0D35 branch: every etin item in the bags is consumed, its value added to the guild's etin and the return count incremented. Called with guildMu held. |
+| [`settleGuildHouse`](../../server/internal/world/guildhouse.go#L517)<br>`func (g *guild) settleGuildHouse()` | settleGuildHouse is the house part of CGuildMgr::UpdateGuildPointRank for a ranked guild: below the upkeep the house is suspended (UseHouse 2), otherwise the upkeep is paid from the etin. Called with guildMu held. |
+| [`inGuildHouseZone`](../../server/internal/world/guildhouse.go#L531)<br>`func (s *Session) inGuildHouseZone() bool` | inGuildHouseZone is CMap::IsGuildHouseMap for the character's zone. |
+| [`houseNpcRefusal`](../../server/internal/world/guildhouse.go#L537)<br>`func (s *Session) houseNpcRefusal(result, detail uint8)` | houseNpcRefusal answers a guild house service the guild cannot use with 0x0D28 {result, detail}, as PacketShop and PacketMaininterface do. |
+| [`houseNpcAbove`](../../server/internal/world/guildhouse.go#L543)<br>`func houseNpcAbove(country int32, kind int, from int, npcTypeID uint16) (level uint8, found bool)` | houseNpcColumn finds a NPC type id in the shop table of its kind and returns the level that unlocks it (0 when not listed above from). |
+| [`shopBuyRate`](../../server/internal/world/guildhouse.go#L560)<br>`func (g *guild) shopBuyRate(npcTypeID uint16, shopType uint8) (rate float64, result, detail uint8)` | shopBuyRate is CGuild::GetGuildHouseShopBuyRate: the price factor for a shop of the given type (1 weapon, 2 defense, 3 general, 4 potion), or the refusal result and detail (1 rank limit, 2 NPC level above the guild's). |
+| [`gateRate`](../../server/internal/world/guildhouse.go#L594)<br>`func (g *guild) gateRate(npcTypeID uint16) (rate float64, needLevel uint8, ok bool)` | gateRate is CGuild::GetGuildHouseUseGateRate: the fee factor, or the level the gatekeeper NPC needs when it is above the guild's. |
+| [`houseRound`](../../server/internal/world/guildhouse.go#L610)<br>`func houseRound(v float64) uint32` | roundHalfAway is the x87 ROUND of the original price products. |
+| [`smithIndex`](../../server/internal/world/guildhouse.go#L613)<br>`func (g *guild) smithIndex() int` | smithIndex is the blacksmith NPC level clamped to the six-entry tables. |
+| [`houseMix`](../../server/internal/world/guildhouse.go#L618)<br>`func (s *Session) houseMix() (rate float64, bonus int)` | houseMix returns the gem-linking cost factor (RapiceMixDecreRate) and the success bonus (RapiceMixPercentRate, active house only) for the guild smith inside a house map; (1, 0) elsewhere. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -1815,14 +1810,14 @@ type guildServiceTable struct {
 
 ```go
 type guildHouseSettings struct {
-	BuyMoney, DefaultKeep uint32
-	Services              [guildNpcServices]guildServiceTable // gate, weapon, defense, general, smith, potion, bank
-	ShopRate, PotionRate  [4]float64                          // g_GuildNpcShopDecreRate, g_GuildNpcPotionShopDecreRate
-	GateRate              [6]float64                          // g_GuildNpcGateKeeperDecreRate (MoveDecreRate)
-	RepairRate            [6]float64                          // g_GuildNpcSmithRepairDecreRate
-	MixRate               [6]float64                          // g_GuildNpcSmithRapiceMixDecreRate
-	MixPercent            [6]int32                            // g_GuildNpcSmithRapiceMixPercentRate
-	BankSlots             [6]uint16                           // g_GuildNpcBankMaxSlot (PermitSlot)
+	CreateMoney, BuyMoney, DefaultKeep uint32
+	Services                           [guildNpcServices]guildServiceTable // gate, weapon, defense, general, smith, potion, bank
+	ShopRate, PotionRate               [4]float64                          // g_GuildNpcShopDecreRate, g_GuildNpcPotionShopDecreRate
+	GateRate                           [6]float64                          // g_GuildNpcGateKeeperDecreRate (MoveDecreRate)
+	RepairRate                         [6]float64                          // g_GuildNpcSmithRepairDecreRate
+	MixRate                            [6]float64                          // g_GuildNpcSmithRapiceMixDecreRate
+	MixPercent                         [6]int32                            // g_GuildNpcSmithRapiceMixPercentRate
+	BankSlots                          [6]uint16                           // g_GuildNpcBankMaxSlot (PermitSlot)
 	// NpcIDs is g_GuildNpcIdShopOnLevel: [country][gate, weapon, defense,
 	// general][level 0-3][3 NPC type ids].
 	NpcIDs [2][4][4][3]uint16

@@ -16,8 +16,7 @@ import (
 )
 
 // TestGuildLifecycle runs the CUser::PacketGuild flows with seven
-// synthetic users: creation by a party of 7 (all accept, 1000 gold from the
-// master), invitation, application and acceptance, rank change, remark,
+// synthetic users: solo and grouped creation with the configured fee, invitation, application and acceptance, rank change, remark,
 // expel, leave and disband by vote, checking the realm.registry and the
 // GuildChars rows. Its rows are removed afterwards.
 func TestGuildLifecycle(t *testing.T) {
@@ -42,6 +41,7 @@ func TestGuildLifecycle(t *testing.T) {
 	session := func(_ uint32, name string) *Session {
 		a, b := net.Pipe()
 		go io.Copy(io.Discard, b)
+		t.Cleanup(func() { a.Close(); b.Close() })
 		account := testAccount(t)
 		id, err := db.CreateCharacter(account, db.NewCharacter{Slot: 0, Name: name, HP: 100, MP: 100, SP: 100})
 		if err != nil {
@@ -55,7 +55,7 @@ func TestGuildLifecycle(t *testing.T) {
 		ch.Level = 40
 		ch.Mode = growNormal
 		ch.Class = 1
-		ch.Money = 5000
+		ch.Money = guildHouse.CreateMoney + 5000
 		ch.MapID = mapID
 		ch.PosX = 100
 		ch.PosZ = 100
@@ -113,12 +113,75 @@ func TestGuildLifecycle(t *testing.T) {
 		return
 	}
 
-	name := make([]byte, 25)
-	copy(name, "RaptureTestGuild")
-	req := append([]byte{0x21, 0x0d}, name...)
-	req = append(req, make([]byte, 65)...)
-	copy(req[0x1b:], "hello")
-	ss[0].handleGuild(packet.GuildCreate, req)
+	request := func(name, remark string) []byte {
+		p := make([]byte, 2+25+65)
+		p[0], p[1] = 0x21, 0x0d
+		copy(p[2:27], name)
+		copy(p[27:], remark)
+		return p
+	}
+	for _, s := range []*Session{outsider, applicant} {
+		s.char.Level, s.char.Mode = 1, growEasy
+		s.syncPlayer()
+	}
+	trackGuild := func(g *guild) {
+		t.Cleanup(func() {
+			pool, _ := db.Pool(db.GameData)
+			pool.Exec(`DELETE FROM PS_GameData_GuildChars WHERE GuildID=?1;
+				DELETE FROM PS_GameData_GuildDetails WHERE GuildID=?1;
+				DELETE FROM PS_GameData_Guilds WHERE GuildID=?1;
+				DELETE FROM PS_UserData_CreatedGuilds WHERE ServerID=1 AND GuildID=?1`, g.ID)
+		})
+	}
+	originalFee := guildHouse.CreateMoney
+	t.Cleanup(func() { guildHouse.CreateMoney = originalFee })
+	guildHouse.CreateMoney = outsider.char.Money + 1
+	outsider.handleGuild(packet.GuildCreate, request("GXTestSolo", "Solo notice"))
+	if guildOf(outsider) != nil {
+		t.Fatal("solo founder created a guild without covering the fee")
+	}
+	guildHouse.CreateMoney = 2500
+	beforeGold := outsider.char.Money
+	outsider.handleGuild(packet.GuildCreate, request("GXTestSolo", "Solo notice"))
+	solo := guildOf(outsider)
+	if solo == nil || len(solo.members) != 1 || solo.Remark != "Solo notice" || outsider.char.Money != beforeGold-2500 {
+		t.Fatalf("solo founding failed: guild=%+v gold=%d", solo, outsider.char.Money)
+	}
+	trackGuild(solo)
+	if row, err := db.CharacterByID(outsider.char.ID); err != nil || row.Money != outsider.char.Money {
+		t.Fatalf("solo fee not persisted: gold=%d err=%v", row.Money, err)
+	}
+	outsider.guildLeave()
+	pair := &party{id: 990002, members: []*ConnectedPlayer{outsider.player, applicant.player}}
+	partyMu.Lock()
+	outsider.player.party, applicant.player.party = pair, pair
+	partyMu.Unlock()
+	applicant.handleGuild(packet.GuildCreate, request("GXTestPair", "Pair notice"))
+	applicant.guildCreateAnswer(true)
+	applicant.guildCreateAnswer(true)
+	if guildOf(applicant) != nil {
+		t.Fatal("pair guild created before both members accepted")
+	}
+	outsider.guildCreateAnswer(true)
+	gPair := guildOf(applicant)
+	if gPair == nil || len(gPair.members) != 2 || guildOf(outsider) != gPair || gPair.Master != applicant.char.Name {
+		t.Fatalf("pair founding failed: %+v", gPair)
+	}
+	trackGuild(gPair)
+	outsider.guildLeave()
+	outsider.guildApply(gPair.ID)
+	applicant.guildAnswerApplicant(true, outsider.char.ID)
+	if guildOf(outsider) != gPair {
+		t.Fatal("immediate reentry to the same guild failed")
+	}
+	outsider.guildLeave()
+	applicant.guildLeave()
+	partyMu.Lock()
+	outsider.player.party, applicant.player.party = nil, nil
+	partyMu.Unlock()
+	guildHouse.CreateMoney = originalFee
+
+	ss[0].handleGuild(packet.GuildCreate, request("RaptureTestGuild", "hello"))
 	for i, s := range ss {
 		if guildOf(s) != nil {
 			t.Fatalf("guild created before member %d accepted", i)
@@ -131,8 +194,8 @@ func TestGuildLifecycle(t *testing.T) {
 	}
 	created = g.ID
 	ss[0].completePendingGuild()
-	if ss[0].char.Money != 4000 {
-		t.Fatalf("master money %d, want 4000", ss[0].char.Money)
+	if ss[0].char.Money != 5000 {
+		t.Fatalf("master money %d, want 5000", ss[0].char.Money)
 	}
 	if m, _ := rows(g.ID); m != 7 {
 		t.Fatalf("GuildChars members %d, want 7", m)

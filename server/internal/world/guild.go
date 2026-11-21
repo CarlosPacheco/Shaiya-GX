@@ -23,13 +23,9 @@ const (
 	guildRankAdmin   = 2
 	guildRankMember  = 9
 	guildMaxAdmins   = 7
-	guildCreateParty = 7    // the creating party has exactly 7 members
-	guildCreateFee   = 1000 // gold taken from the master
-	guildMinLevel    = 11
 	guildInviteTime  = 30 * time.Second
-	guildRejoinTime  = 72 * time.Hour // join date + 72 h (usp_Read_Char_GuildJoinDate_R)
-	guildListBatch   = 14             // 0x0D2F entries per packet
-	guildMemberBatch = 40             // 0x0D12/0x0D13/0x0D16 entries per packet
+	guildListBatch   = 14 // 0x0D2F entries per packet
+	guildMemberBatch = 40 // 0x0D12/0x0D13/0x0D16 entries per packet
 
 	// 0x0D0C status modes; a level byte (1-80) is a character level change
 	// and 200 + rank a rank change.
@@ -92,7 +88,6 @@ type playerGuildState struct {
 	inviterID   uint32
 	inviteUntil time.Time
 	applied     *guild
-	rejoinUntil time.Time
 	userID      string
 }
 
@@ -214,13 +209,8 @@ func (s *Session) guildConnect() {
 	if p == nil || ch == nil {
 		return
 	}
-	hours, err := db.GuildJoinRemainHours(ch.ID)
-	s.logErr("guild join date", err)
 	guildMu.Lock()
 	p.guild.userID = s.account.UserID
-	if hours > 0 {
-		p.guild.rejoinUntil = time.Now().Add(time.Duration(hours) * time.Hour)
-	}
 	var lists [][]byte
 	if g := guildOfChar[ch.ID]; g != nil {
 		if m := g.members[ch.ID]; m != nil {
@@ -398,7 +388,7 @@ func fixedText(p []byte, at, n int) string {
 	return packet.FixedText(b)
 }
 
-// guildCreateRequest (0x0D21): name[25], remark[65] (64 characters).
+// guildDisbandRequest (0x0D03) starts the disband vote.
 func (s *Session) guildDisbandRequest() {
 	me := s.player
 	partyMu.Lock()
@@ -494,7 +484,7 @@ func (g *guild) fire(log *logx.Logger, alreadyDeleted ...bool) {
 	log.Printf("GX Server World guild disbanded id=%d name=%q", g.ID, g.Name)
 }
 
-// guildInvite (0x0D05): an admin invites a user of its map and country.
+// guildRemark (0x0D20) updates the notice for the entire guild.
 func (s *Session) guildRemark(p []byte) {
 	remark := fixedText(p, 2, 64)
 	reply := func(result uint8) {

@@ -7,8 +7,8 @@ import (
 
 func TestGuildHouseDefaultsMatchExecutable(t *testing.T) {
 	h := defaultGuildHouse()
-	if h.BuyMoney != 50000000 || h.DefaultKeep != 2000 {
-		t.Fatalf("defaults %d %d", h.BuyMoney, h.DefaultKeep)
+	if h.CreateMoney != 1_000_000 || h.BuyMoney != 50000000 || h.DefaultKeep != 2000 {
+		t.Fatalf("defaults %d %d %d", h.CreateMoney, h.BuyMoney, h.DefaultKeep)
 	}
 	if got := h.service(guildNpcSmith).Cost; got != [7]uint16{0, 500, 1000, 2000, 10000, 15000, 0} {
 		t.Fatalf("smith costs %v", got)
@@ -94,5 +94,14 @@ func TestGuildHouseRates(t *testing.T) {
 	g.npcs[1] = guildNpcSlot{Type: guildNpcGate, Level: 3}
 	if r, _, ok := g.gateRate(39); !ok || r != 0 {
 		t.Fatalf("level-3 gatekeeper: %v %v", r, ok)
+	}
+}
+
+func TestGuildCreateFeeINI(t *testing.T) {
+	for value, want := range map[string]uint32{"0": 0, "250000": 250000, "-1": 1000000, "4294967296": 1000000} {
+		h := parseGuildHouse(iniFile{"DEFAULTSET": {"GUILDCREATEMONEY": value}})
+		if h.CreateMoney != want {
+			t.Errorf("GuildCreateMoney %q = %d, want %d", value, h.CreateMoney, want)
+		}
 	}
 }

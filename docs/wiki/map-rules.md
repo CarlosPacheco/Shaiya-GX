@@ -25,6 +25,28 @@ SVMAP respawn group. If neither provides an eligible destination, the character
 returns to their racial birth position. Instance schedules remain part of the
 map row, while [obelisk rules](obelisks.md) retain their own configuration.
 
+## Guild founding and roles
+
+Create a guild at the guild manager. A solo character can found one
+immediately. A party or raid must have at least two founders, with everyone
+in the same map instance and faction. Every founder in the group must
+accept. Founders can be any level and growth mode. They must be free to
+join and choose an available guild name.
+
+The founder pays the fee once the guild is created. Set
+`GuildCreateMoney` under `[DefaultSet]` in `GuildHouse.ini`. The default
+is 1,000,000 gold. Leaving a guild carries no waiting period before
+applying again, including to the same guild. Normal approval still applies.
+
+The founder becomes rank 1 (master). Other founders and new members start at
+rank 9. Ranks 1 and 2 can invite, process applications, manage lower ranks
+and upgrade house NPCs, subject to the house requirements. A guild can
+have up to six rank 2 members. The master can create or dismiss rank 2
+members, buy the house, edit the notice and initiate disbanding. The
+founding form also accepts the initial notice. In an unlocked guild bank,
+ranks 1–8 can deposit in empty slots and ranks 1–2 can withdraw, rearrange
+or swap items. Ranks 3–9 are ordinary members.
+
 ## Guild Ranking Battle
 
 While a Guild Ranking Battle is open, each guild uses its own instance of the

@@ -157,7 +157,7 @@ func TestGuildCreationAgainstRapture(t *testing.T) {
 			t.Fatal("guild creation state mismatch")
 		}
 	}
-	poll(func() bool { return master.state.Details.Money == 9000 })
+	poll(func() bool { return master.state.Details.Money == 10_000 })
 	for _, a := range apps {
 		a.updateGuildVote(&platform.Input{}, 1024, 768)
 	}

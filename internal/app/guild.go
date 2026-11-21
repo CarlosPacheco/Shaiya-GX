@@ -229,12 +229,12 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 		v.createPending = false
 		v.voting = false
 		a.guildVoteMessage.Visible = false
-		messages := map[uint8]string{1: "Guild created.", 3: "A party of seven is required.", 4: "Guild creator must reach level 11.", 5: "Normal mode or higher is required.", 6: "Guild name is unavailable.", 8: "A party member already belongs to a guild.", 9: "A party member must wait before joining a guild."}
+		messages := map[uint8]string{1: "Guild created.", 6: "Guild name is unavailable.", 8: "A group member already belongs to a guild."}
 		msg := messages[g.CreateResult]
 		if msg == "" {
 			msg = "Guild creation refused."
 		}
-		ids := map[uint8]int{1: 372, 3: 374, 4: 375, 5: 376, 6: 377, 8: 379}
+		ids := map[uint8]int{1: 372, 6: 377, 8: 379}
 		id := ids[g.CreateResult]
 		if id == 0 {
 			id = 371
@@ -243,7 +243,11 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 		if name == "" && a.guildCreateUI != nil {
 			name = a.guildCreateUI.Name.Text
 		}
-		a.localizedNotice(17, id, map[string]string{"b": name}, msg)
+		if g.CreateResult == 3 {
+			a.addSystemText(17, 0, "Guild founding groups need at least two available members of the same faction on the same map.")
+		} else {
+			a.localizedNotice(17, id, map[string]string{"b": name}, msg)
+		}
 	}
 	if g.FailureSerial != v.failureSerial {
 		v.failureSerial = g.FailureSerial
