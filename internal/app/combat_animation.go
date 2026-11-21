@@ -1,6 +1,8 @@
 package app
 
 import (
+	"math/rand/v2"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -146,6 +148,9 @@ func (a *App) confirmedAnimation(p []byte) {
 		}
 		ranged := false
 		if actor := a.playerActor(result.Source); actor != nil {
+			if result.Result == 1 || rand.IntN(10) < 3 {
+				a.playCharacterVoice(result.Source, voiceAttack)
+			}
 			typ := a.playerWeapon(result.Source)
 			if result.Source == a.state.SelfID {
 				a.confirmAttackStop()
@@ -172,6 +177,7 @@ func (a *App) confirmedAnimation(p []byte) {
 			mob.actor.PlayOnce(mob.actor.AttackAction(0))
 		}
 		if !ranged && result.HP > 0 {
+			a.playCharacterDamageVoice(result.Target, result.Result, result.HP)
 			if mob := v.mobs[result.Target]; mob != nil && mob.actor != nil {
 				mob.actor.PlayOnce(7)
 			}

@@ -124,7 +124,7 @@ var riskMusic = [...]string{"bgm_battle01.ogg", "bgm_battle02.ogg", "bgm_battle0
 
 func (a *App) mixRiskMusic(targets []audio.LoopTarget, active bool) []audio.LoopTarget {
 	m := &a.mapAudio
-	if !active {
+	if !active || !a.clientSettings().RiskSensor {
 		m.riskTrack = ""
 		return targets
 	}

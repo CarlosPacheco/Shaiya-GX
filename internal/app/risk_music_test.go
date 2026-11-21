@@ -9,6 +9,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 func TestRiskMusicReplacesOnlyMapMusicWhileEnemiesAreNearby(t *testing.T) {
@@ -48,6 +49,15 @@ func TestRiskMusicReplacesOnlyMapMusicWhileEnemiesAreNearby(t *testing.T) {
 	}
 	if next := mix(); next[1] != got[1] {
 		t.Fatal("battle music switched during the encounter")
+	}
+	a.gameMenu = &ui.GameMenu{Settings: ui.DefaultClientSettings()}
+	a.gameMenu.Settings.RiskSensor = false
+	if got := mix(); got[0].File != "town.ogg" || a.mapAudio.riskTrack != "" {
+		t.Fatalf("disabled Risk Sensor replaced the map music: %+v", got)
+	}
+	a.gameMenu.Settings.RiskSensor = true
+	if got := mix(); got[1].File != a.mapAudio.riskTrack || a.mapAudio.riskTrack == "" {
+		t.Fatalf("enabled Risk Sensor did not resume battle music: %+v", got)
 	}
 	enemy.Dead = true
 	if got := mix(); got[0].File != "town.ogg" || a.mapAudio.riskTrack != "" {

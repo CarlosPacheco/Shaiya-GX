@@ -65,6 +65,7 @@ type ClientSettings struct {
 	ChatFilters                               uint8 `json:",omitempty"`
 	ChatTransparent                           bool  `json:",omitempty"`
 	Music, Effects, Ambient                   float64
+	CharacterSound, RiskSensor                bool
 	Glow, Brightness, Details, VisualDistance int
 	HideCloak, HideHelmet                     bool
 	MouseSensitivity                          int
@@ -76,7 +77,7 @@ type ClientSettings struct {
 }
 
 func DefaultClientSettings() ClientSettings {
-	return ClientSettings{Antialias: AntialiasOff, Glow: 2, Brightness: 2, Details: 2, VisualDistance: 2, ChatRows: [2]int{5, 5}, Music: 1, Effects: 1, Ambient: 1, MouseSensitivity: 3, UseMouse: true,
+	return ClientSettings{Antialias: AntialiasOff, Glow: 2, Brightness: 2, Details: 2, VisualDistance: 2, ChatRows: [2]int{5, 5}, Music: 1, Effects: 1, Ambient: 1, CharacterSound: true, RiskSensor: true, MouseSensitivity: 3, UseMouse: true,
 		OwnName: true, PlayerNames: true, MonsterNames: true, Shadows: true, Water: true, SkillEffects: true}
 }
 
@@ -302,6 +303,7 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 		switch m.Page {
 		case MenuSound:
 			m.Settings.Music, m.Settings.Effects, m.Settings.Ambient = defaults.Music, defaults.Effects, defaults.Ambient
+			m.Settings.CharacterSound, m.Settings.RiskSensor = defaults.CharacterSound, defaults.RiskSensor
 		case MenuUser:
 			m.Settings.UseMouse, m.Settings.InvertY, m.Settings.MouseSensitivity = true, false, 3
 			m.Settings.OwnName, m.Settings.PlayerNames, m.Settings.MonsterNames = true, true, true
@@ -408,6 +410,8 @@ func (m *GameMenu) checkSelected(c menuCheck) bool {
 func (m *GameMenu) checks() []menuCheck {
 	s := &m.Settings
 	switch m.Page {
+	case MenuSound:
+		return []menuCheck{{33, 284, &s.CharacterSound}, {33, 314, &s.RiskSensor}}
 	case MenuUser:
 		return []menuCheck{{34, 83, &s.UseMouse}, {137, 83, nil}, {241, 83, &s.InvertY}, {34, 202, &s.OwnName}, {137, 202, &s.PlayerNames}, {34, 228, &s.MonsterNames}, {137, 228, &s.BannedWords}}
 	case MenuGraphics:

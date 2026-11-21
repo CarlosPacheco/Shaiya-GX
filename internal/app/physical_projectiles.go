@@ -112,6 +112,7 @@ func (a *App) finishPhysicalProjectile(p *physicalProjectile) {
 			mob.actor.PlayOnce(7)
 		}
 		a.playSound(p.hitSound, p.destination[0], p.destination[2])
+		a.playCharacterDamageVoice(r.Target, r.Result, r.HP)
 	}
 	if p.impact != "" && r.Result <= 1 {
 		a.startSkillImpact(r.Target, p.impact, p.sequence)

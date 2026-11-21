@@ -382,6 +382,21 @@ the music channel. It holds a single track for the encounter, fades back to
 the map music when the alert clears, and keeps environmental ambience mixed
 in both cases.
 
+## Character voices
+
+The original `VOICE_CHAR` flag gates the attack grunt (`0x4102C0`),
+damage reaction (`0x40FF40`), and death cry (`0x418BA4`). Sounds vary by
+race and sex. The attack and damage paths always request a voice on critical
+results and sample ordinary attacks and hits. GX Sound Option uses
+**Character Sound** for local and nearby player voices and **Risk Sensor**
+for battle music. **Sound Effect** still controls weapon and spell audio.
+**NPC Sound** is kept as a display-only option.
+
+A loose pack needs the original character cues in `Sound/` as Ogg Vorbis.
+Use the same import command below with the stems
+`ch_ohat{m,w}{001,002,003,004}` and
+`ch_{hum,huw,elm,elw,vim,viw,dem,dew}_{dam,die}`.
+
 ## Player progression and map-entry effects
 
 The EP5 client uses sequence 0 of `Start.EFT` on fresh map entry (effect

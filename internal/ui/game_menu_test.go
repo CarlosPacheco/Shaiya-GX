@@ -180,3 +180,28 @@ func TestHelpPageTabsEntriesAndScroll(t *testing.T) {
 		t.Fatalf("play guide entry %d", m.help.entry)
 	}
 }
+
+func TestSoundOptionCheckboxes(t *testing.T) {
+	m, err := NewGameMenu(marketTextures{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Open(MenuSound)
+	x, y := m.Origin(1024, 768)
+	click := func(px, py int) int {
+		m.Update(&platform.Input{MouseX: x + px, MouseY: y + py, Pressed: true, MouseDown: true}, 1024, 768)
+		return m.Update(&platform.Input{MouseX: x + px, MouseY: y + py, Clicked: true}, 1024, 768)
+	}
+	if click(38, 289) != MenuChanged || m.Settings.CharacterSound || !m.Settings.RiskSensor {
+		t.Fatal("Character Sound checkbox did not toggle independently")
+	}
+	if click(38, 319) != MenuChanged || m.Settings.RiskSensor {
+		t.Fatal("Risk Sensor checkbox did not toggle")
+	}
+	if click(132, 289) != MenuNone || m.Settings.RiskSensor || m.Settings.CharacterSound {
+		t.Fatal("NPC Sound changed the settings")
+	}
+	if click(23, 368) != MenuChanged || !m.Settings.CharacterSound || !m.Settings.RiskSensor {
+		t.Fatal("Reset did not restore the sound options")
+	}
+}

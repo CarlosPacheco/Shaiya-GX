@@ -8,7 +8,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
-func TestAmbientSettingsMigrateAndPersist(t *testing.T) {
+func TestSoundSettingsMigrateAndPersist(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", dir)
 	t.Setenv("APPDATA", dir)
@@ -25,16 +25,18 @@ func TestAmbientSettingsMigrateAndPersist(t *testing.T) {
 	a := inputApp()
 	a.cfg.RememberLayout = true
 	a.loadClientSettings()
-	if a.gameMenu.Settings.Ambient != 1 || a.gameMenu.Settings.Music != .5 || a.gameMenu.Settings.Effects != .25 {
-		t.Fatal("old settings did not retain a usable ambient default")
+	if a.gameMenu.Settings.Ambient != 1 || a.gameMenu.Settings.Music != .5 || a.gameMenu.Settings.Effects != .25 ||
+		!a.gameMenu.Settings.CharacterSound || !a.gameMenu.Settings.RiskSensor {
+		t.Fatal("old settings did not retain sound defaults")
 	}
 	a.gameMenu.Settings.Ambient = .5
+	a.gameMenu.Settings.CharacterSound, a.gameMenu.Settings.RiskSensor = false, false
 	a.gameMenu.Open(ui.MenuSound)
 	a.saveClientSettings()
 	b := inputApp()
 	b.cfg.RememberLayout = true
 	b.loadClientSettings()
-	if b.gameMenu.Settings.Ambient != .5 {
-		t.Fatal("ambient volume did not survive restart")
+	if b.gameMenu.Settings.Ambient != .5 || b.gameMenu.Settings.CharacterSound || b.gameMenu.Settings.RiskSensor {
+		t.Fatal("sound settings did not survive restart")
 	}
 }

@@ -116,10 +116,12 @@ func (a *App) confirmedSound(p []byte) {
 		a.playSkillSound(r.Source, r.ID, r.Level, true)
 	case proto.SkillUse, proto.SkillUseNoTarget, proto.SkillUserDrain, proto.SkillMobDrain, proto.SkillPartyMember, proto.SkillMobOther:
 		r := a.state.LastSkill
+		a.playSkillDamageVoice()
 		if r.Result <= 4 && !(r.Result == 3 && r.Target == 0) {
 			a.playSkillSound(r.Source, r.ID, r.Level, false)
 		}
 	case proto.MobSkillUse, proto.MobSkillDrain, proto.MobSkillOther:
+		a.playSkillDamageVoice()
 		r := a.state.LastSkill
 		if m := a.wv.mobs[r.Source]; m != nil && m.actor != nil && (m.soundSkill != r.ID || a.clock-m.soundAt > .15) {
 			m.soundSkill, m.soundAt = r.ID, a.clock
@@ -130,6 +132,8 @@ func (a *App) confirmedSound(p []byte) {
 		if m := a.wv.mobs[id]; m != nil && m.actor != nil {
 			a.playSound(m.actor.Sound(0), m.pos[0], m.pos[2])
 		}
+	case proto.CharacterDeath:
+		a.playCharacterVoice(proto.NewReader(p).U32(), voiceDeath)
 	case proto.MobDeath:
 		id := proto.NewReader(p).U32()
 		if m := a.wv.mobs[id]; m != nil && m.actor != nil {
