@@ -3,6 +3,7 @@ package world
 import (
 	"testing"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -145,5 +146,13 @@ func TestPacketLayoutsMatchClient(t *testing.T) {
 		if got := len(c.frame) - 4; got != c.body {
 			t.Errorf("%s: body %d bytes, client reads %d", c.name, got, c.body)
 		}
+	}
+}
+
+func TestCharacterShapeIncludesCurrentPvPKills(t *testing.T) {
+	ch := &db.Character{ID: 42, Kills: 245}
+	shape, err := proto.DecodeUserShape(buildCharacterShapeGuild(ch, FactionLight, nil, 0, "")[2:])
+	if err != nil || shape.ID != ch.ID || shape.Kills != ch.Kills {
+		t.Fatalf("shape = %+v, error = %v", shape, err)
 	}
 }

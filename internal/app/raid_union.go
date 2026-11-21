@@ -98,7 +98,7 @@ func (a *App) portraitActions() []contextAction {
 // unionActions is popup mode 2, a slot of either union window.
 func (a *App) unionActions(slot int) []contextAction {
 	p := &a.state.Party
-	if !p.Raid || slot < 0 || slot >= 30 {
+	if !p.Raid || slot < 0 || slot >= proto.RaidSlots {
 		return nil
 	}
 	id := p.RaidSlots[uint16(slot)]
@@ -160,9 +160,12 @@ func (a *App) unionSlotAt(in *platform.Input, w, h int) (int, bool) {
 
 // finishMove is the left click of "Move Group" (0x5986c0): swap two slots.
 func (a *App) finishMove(slot int) {
+	if slot < 0 {
+		return // Page tabs and window controls are not destination slots.
+	}
 	from := a.party.moveSlot
 	a.party.moving = false
-	if slot < 0 || slot == from || a.world == nil {
+	if slot == from || a.world == nil {
 		return
 	}
 	if err := a.world.Send(proto.RaidSwapPacket(uint32(from), uint32(slot))); err != nil {

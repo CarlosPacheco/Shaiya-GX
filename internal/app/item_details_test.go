@@ -303,3 +303,22 @@ func TestAbsorptionTooltipUsesServerIniBonuses(t *testing.T) {
 		}
 	}
 }
+
+func TestItemClassWarningUsesSysMsgOnlyForRestrictedEquipment(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID = 1
+	a.state.Slots[0] = proto.CharacterSlot{ID: 1, Class: 4}
+	a.msg = text.SysMsg{456: "Clase no disponible"}
+	def := &sdata.Item{Type: 17, Classes: [6]uint8{1}}
+	line, ok := a.itemClassWarning(def)
+	if !ok || line.text != "Clase no disponible" || line.color != [4]float32{1, 0, 0, 1} {
+		t.Fatalf("warning = %+v, present = %t", line, ok)
+	}
+	def.Classes[4] = 1
+	if _, ok := a.itemClassWarning(def); ok {
+		t.Fatal("compatible equipment displayed a warning")
+	}
+	if _, ok := a.itemClassWarning(&sdata.Item{Type: 25}); ok {
+		t.Fatal("consumable displayed an equipment warning")
+	}
+}

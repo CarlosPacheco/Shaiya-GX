@@ -70,7 +70,7 @@ Declarations: [packet.ChatWhisper](../../server/internal/packet/packet.go#L192),
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L77)
 
-**S→C serializers:** [buildWhisper (server/internal/world/chat.go)](../../server/internal/world/chat.go#L136)
+**S→C serializers:** [buildWhisper (server/internal/world/chat.go)](../../server/internal/world/chat.go#L127)
 
 **Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L1267), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L42)
 
@@ -80,7 +80,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildWhisper — server/internal/world/chat.go</summary>
 
-[Source definition](../../server/internal/world/chat.go#L136)
+[Source definition](../../server/internal/world/chat.go#L127)
 
 ```go
 func buildWhisper(direction uint8, name, message string) []byte {

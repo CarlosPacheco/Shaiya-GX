@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 
@@ -114,15 +115,22 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 	if autoUser != "" {
 		auto = &app.Autoplay{User: autoUser, Password: os.Getenv("SHAIYA_PASSWORD"), StopAtSelect: autoSelect >= 0, Slot: autoSelect, CastSlot: uint8(autoCast), WaitResult: shotScreen == "world-projectile"}
 	}
+	lastWidth, lastHeight := w, h
 	frame := func(dt float64) {
 		fw, fh := win.GetFramebufferSize()
+		if fw > 0 && fh > 0 {
+			lastWidth, lastHeight = fw, fh
+		}
 		in := queue.Frame()
 		if auto != nil && auto.Inject(a, &in, dt) {
 			inWorld = true
 		}
-		a.Update(&in, fw, fh, dt)
+		a.Update(&in, lastWidth, lastHeight, dt)
 		fw, fh = win.GetFramebufferSize() // display changes preserve context but resize its targets
 		queue.SetMouseLook(a.MouseLookActive())
+		if fw <= 0 || fh <= 0 {
+			return
+		}
 		gl.Viewport(0, 0, int32(fw), int32(fh))
 		gl.ClearColor(0, 0, 0, 1)
 		gl.ClearDepth(1)
@@ -184,7 +192,11 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 		now := platform.Time()
 		frame(now - last)
 		last = now
-		win.SwapBuffers()
+		if win.Minimized() {
+			time.Sleep(time.Second / 60)
+		} else {
+			win.SwapBuffers()
+		}
 	}
 	return nil
 }

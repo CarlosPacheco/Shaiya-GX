@@ -15,6 +15,7 @@ type playerContext struct {
 	width, height int
 	heldLabel     string
 	open          bool
+	checkRange    bool
 	mode, slot    int // contextClassic, contextPortrait (own portrait) or contextUnion (a raid slot)
 }
 type contextAction struct {
@@ -205,11 +206,22 @@ func (a *App) performContextAction(id uint32, action contextAction) {
 	}
 }
 
+// EP5.4 0x47e29b checks 3D distance against the 10.0 value at 0x6bc9c8.
+func (a *App) playerContextInRange(id uint32) bool {
+	e := a.state.Entities[id]
+	if e == nil {
+		return false
+	}
+	pos := a.wv.visualPosition()
+	dx, dy, dz := pos[0]-e.X, pos[1]-e.Y, pos[2]-e.Z
+	return dx*dx+dy*dy+dz*dz <= 10*10
+}
+
 func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 	c := &a.playerContext
 	if c.open {
 		actions := a.menuActions(c)
-		if len(actions) == 0 || c.mode == contextClassic && a.state.Entities[c.id] == nil && a.state.Party.Member(c.id) == nil {
+		if len(actions) == 0 || c.checkRange && !a.playerContextInRange(c.id) || c.mode == contextClassic && a.state.Entities[c.id] == nil && a.state.Party.Member(c.id) == nil {
 			c.open = false
 			return false
 		}
@@ -265,6 +277,7 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 		hx, hy = a.hud.Origin(w, h)
 	}
 	mode, slot := contextClassic, 0
+	checkRange := false
 	if pointInside(in, hx, hy, 213, 114) && a.state.Party.Member(a.state.SelfID) != nil {
 		id, mode = a.state.SelfID, contextPortrait
 	}
@@ -279,11 +292,11 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 	if a.hud != nil {
 		tx, ty = a.hud.TargetOrigin(w, h)
 	}
-	if pointInside(in, tx, ty, 256, 64) {
+	if id == 0 && pointInside(in, tx, ty, 256, 64) {
 		if a.state.Target == a.state.SelfID {
 			id = a.state.SelfID
 		} else if e := a.state.Entities[a.state.Target]; e != nil && e.Kind == game.KindUser {
-			id = e.ID
+			id, checkRange = e.ID, true
 		}
 	}
 	if id == 0 && a.partyUI != nil && len(a.state.Party.Members) > 0 {
@@ -301,10 +314,13 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 		pointer.Clicked = true
 		picked := a.pickMob(&pointer, w, h)
 		if e := a.state.Entities[picked]; e != nil && e.Kind == game.KindUser {
-			id = picked
+			id, checkRange = picked, true
 		}
 	}
-	next := playerContext{id: id, mode: mode, slot: slot}
+	if checkRange && !a.playerContextInRange(id) {
+		return false
+	}
+	next := playerContext{id: id, mode: mode, slot: slot, checkRange: checkRange}
 	actions := a.menuActions(&next)
 	if len(actions) == 0 {
 		return false

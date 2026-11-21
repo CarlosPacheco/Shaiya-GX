@@ -57,3 +57,23 @@ func TestCompactRaidCapturesSelectionAndContext(t *testing.T) {
 		t.Fatal("compact row context menu failed")
 	}
 }
+
+func TestRaidMoveSurvivesPageTab(t *testing.T) {
+	a := unionApp(1)
+	a.party.moving, a.party.moveSlot = true, 2
+	const w, h = 1024, 768
+	x, y := a.partyUI.RaidGridOrigin(w, h)
+	mouse := platform.Input{MouseX: x + ui.RaidTabStep + 5, MouseY: y - 8}
+	mouse.Pressed, mouse.MouseDown = true, true
+	a.updateUnion(&mouse, w, h)
+	mouse.Pressed, mouse.MouseDown, mouse.Clicked = false, false, true
+	a.updateUnion(&mouse, w, h)
+	if !a.party.moving || a.party.moveSlot != 2 || a.partyUI.RaidPage != 1 {
+		t.Fatal("switching to the second raid lost the member being moved")
+	}
+	a.state.Party.RaidSlots[31] = 3
+	delete(a.state.Party.RaidSlots, 2)
+	if got := labels(a.unionActions(31)); len(got) == 0 || got[0] != "Move group" {
+		t.Fatalf("a second-page member cannot be moved: %v", got)
+	}
+}

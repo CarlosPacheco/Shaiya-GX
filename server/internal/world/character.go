@@ -611,7 +611,11 @@ func buildCharacterShapeGuild(ch *db.Character, faction uint8, items []db.Item, 
 	} else {
 		w.Bytes(make([]byte, 8))
 	}
-	w.U32(0) // kills
+	if ch != nil {
+		w.U32(ch.Kills)
+	} else {
+		w.U32(0)
+	}
 	for slot := uint8(0); slot < 8; slot++ {
 		if it := equippedItem(items, slot); it != nil {
 			w.Bytes([]byte{it.Type, it.TypeID, enchantLevel(it)})

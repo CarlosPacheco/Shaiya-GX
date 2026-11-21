@@ -19,8 +19,8 @@ func TestChatEntriesIdentifyChannelsAndWhisperDirection(t *testing.T) {
 	}{
 		{game.ChatLine{Op: proto.ChatParty, Sender: "Alice", Text: "Hi"}, "[Party]Alice : Hi", false},
 		{game.ChatLine{Op: proto.ChatGuild, Sender: "Alice", Text: "Hi"}, "[Guild]Alice : Hi", false},
-		{game.ChatLine{Op: proto.ChatWhisper, Sender: "Alice", Text: "Hi"}, "[Whisper]Alice : Hi", false},
-		{game.ChatLine{Op: proto.ChatWhisper, Sender: "Alice", Direction: 1, Text: "Hi"}, "[Whisper]Alice : Hi", false},
+		{game.ChatLine{Op: proto.ChatWhisper, Sender: "Alice", Text: "Hi"}, "Whisper from Alice: Hi", false},
+		{game.ChatLine{Op: proto.ChatWhisper, Sender: "Alice", Direction: 1, Text: "Hi"}, "Whisper to Alice: Hi", false},
 		{game.ChatLine{Op: proto.ChatError, Text: "Missing"}, "Missing", true},
 	} {
 		got := chatEntry(chatTestMessages, tc.line)

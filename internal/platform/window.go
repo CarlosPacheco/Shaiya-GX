@@ -98,5 +98,7 @@ func (w *Window) Poll() bool {
 	return !w.ShouldClose()
 }
 
+func (w *Window) Minimized() bool { return w.GetAttrib(glfw.Iconified) != 0 }
+
 // Time is seconds since GLFW initialization.
 func Time() float64 { return glfw.GetTime() }

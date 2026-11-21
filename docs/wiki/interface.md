@@ -48,11 +48,17 @@ Inventory (I), Status (T), Skills (K) and Actions (B) open independently through
 
 Options remains nonmodal: opening it preserves keyboard movement and automatic travel. Pointer gestures belong to the window where they started. Logout confirmations remain modal and await the server response.
 
+Duel movement checks use a 40-unit horizontal radius around the duel center. The wager window starts with the participants’ current midpoint.
+
+Automatic movement, queued actions and network updates keep running while
+the client is out of focus. The client ignores new physical input until
+focus returns.
+
 Visual approval and complete comparison against the original remain ongoing. Opt-in rendering tests exercise real archives and preserve captures only in ignored local directories.
 
 The player popup follows `0x47de10`/`0x47e1e0`: text starts at `(10,10)` with 15px rows. Its classic skin uses `TipBox.TGA`, 4px borders and the native `CD1D1F24` background. The `RightMenu_*` feature skin is absent from the local archive. The native minimum width is 90px of content plus borders; longer translated labels expand the width to fit the current font. Existing actions use original SysMsg labels, including party request/kick/leadership/leave (5002–5005), whisper (5007), battle (5008), transaction (5091), guild duel (5339) and raid leadership controls (6507–6509).
 
-Right-click another character, the target frame or a party/raid member to open their actions. Right-click the local portrait in a group to leave it. Whisper selects the recipient and focuses the existing chat input. The popup preserves held movement and owns its pointer gestures; changed rows cannot activate an action that replaced the one originally pressed. Group leadership, capacity, faction and guild eligibility filter supported requests; membership, trades and duels still await GX Server responses. Friends/ignore, inspect, follow and personal-shop services are not represented by invented actions.
+Right-click a character or its target frame within 10 units in 3D to open their actions. Party and raid roster menus remain available at any distance. Raid leaders and assistants can select Move Group, switch raid tabs and pick the destination slot. Right-click the local portrait in a group to leave it. Whisper selects the recipient and focuses the existing chat input. The popup preserves held movement and owns its pointer gestures; changed rows cannot activate an action that replaced the one originally pressed. Group leadership, capacity, faction and guild eligibility filter supported requests; membership, trades and duels still await GX Server responses. Friends/ignore, inspect, follow and personal-shop services are not represented by invented actions.
 
 ## Cloaks and combat presentation
 
@@ -149,7 +155,7 @@ Profanity, system notices and in-game item links are outside the content checks.
 
 ## Item details, cooldowns and cursors
 
-Item properties use original SysMsg labels, yellow titles/base bonuses, orange remake values and white prices. Recovery amounts on consumable families are no longer shown as permanent equipment bonuses. Classes, stack metadata and extra attribute requirements have been removed from the tooltip. Original inline description controls and confirmed gem sockets remain. Full modifier-key/rarity presentation still needs comparison.
+Equipment for a different class displays the red SysMsg 456 warning in its tooltip. Item properties use original SysMsg labels, yellow titles/base bonuses, orange remake values and white prices. Recovery amounts on consumable families are no longer shown as permanent equipment bonuses. Classes, stack metadata and extra attribute requirements have been removed from the tooltip. Original inline description controls and confirmed gem sockets remain. Full modifier-key/rarity presentation still needs comparison.
 
 K has nine rows in one column: icons at `(46,78+43*i)`, names at `(88,81+43*i)`, requirements at y=97+43*i, and 32px learn buttons at `(278,84+43*i)` with 22px hit regions. Original SysMsg labels and red unmet requirements replace the compact two-column labels. Learning, scrolling, drag/drop, tooltips and skill use share those rows.
 
@@ -306,7 +312,7 @@ Player names with PvP kills show the original kill rank icon from `grade2.tga`
 (31 ranks, from 1 to 1,000,000 kills; ranks 1-16 in the left column, 17-31 in
 the right) 1px to the right of the name and 3px above it. The name stays centred;
 the native temporary -6px offset is compensated before its final draw.
-Own kills come from 0x020E/0x0105 and other players' from 0x0522; a character
+Own kills come from 0x020E/0x0105. Other players receive the total in the initial 0x0303 appearance and subsequent 0x0522 updates. A character
 without kills shows no icon.
 
 Status (T) shows server-confirmed kills, deaths, duel victories and defeats.

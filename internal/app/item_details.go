@@ -95,6 +95,21 @@ func stripItemColors(text string) string {
 	return out.String()
 }
 
+func (a *App) itemClassWarning(def *sdata.Item) (itemDetailLine, bool) {
+	if a.state == nil || len(inventoryEquipSlots(def.Type)) == 0 {
+		return itemDetailLine{}, false
+	}
+	own, ok := a.selfSlot()
+	if !ok || int(own.Class) >= len(def.Classes) || def.Classes[own.Class] != 0 {
+		return itemDetailLine{}, false
+	}
+	label := a.msg.Get(456)
+	if label == "" {
+		label = "Unavailable class of item."
+	}
+	return itemDetailLine{label, [4]float32{1, 0, 0, 1}}, true
+}
+
 // Native 0x4a3950 distinguishes equipment bonuses from consumable restoration.
 // SysMsg owns labels; inline description controls remain archive data.
 func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint16, price string, gemName func(uint8) string, messages ...text.SysMsg) []itemDetailLine {

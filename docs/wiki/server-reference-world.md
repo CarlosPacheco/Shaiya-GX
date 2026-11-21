@@ -231,9 +231,9 @@ Direct GX dependencies: `internal/element`, `internal/itemtype`, `server/interna
 | [`buildChangeAppearance`](../../server/internal/world/character.go#L587)<br>`func buildChangeAppearance(characterID uint32, hair, face, height, sex uint8) []byte` | See the source definition and the subsystem ownership contract. |
 | [`buildCharacterShape`](../../server/internal/world/character.go#L595)<br>`func buildCharacterShape(ch *db.Character, faction uint8, items []db.Item, motion uint8) []byte` | buildCharacterShape (0x0303). The persistent motion is 1 only for sitting. |
 | [`buildCharacterShapeGuild`](../../server/internal/world/character.go#L599)<br>`func buildCharacterShapeGuild(ch *db.Character, faction uint8, items []db.Item, motion uint8, guildName string) []byte` | See the source definition and the subsystem ownership contract. |
-| [`statPackets`](../../server/internal/world/character.go#L632)<br>`func statPackets(ch *db.Character, s *CharacterStats) []labeled` | See the source definition and the subsystem ownership contract. |
-| [`buildEmptyCharacterListSlot`](../../server/internal/world/character.go#L643)<br>`func buildEmptyCharacterListSlot(slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterListSlot`](../../server/internal/world/character.go#L650)<br>`func buildCharacterListSlot(ch *db.Character, items []db.Item) []byte` | See the source definition and the subsystem ownership contract. |
+| [`statPackets`](../../server/internal/world/character.go#L636)<br>`func statPackets(ch *db.Character, s *CharacterStats) []labeled` | See the source definition and the subsystem ownership contract. |
+| [`buildEmptyCharacterListSlot`](../../server/internal/world/character.go#L647)<br>`func buildEmptyCharacterListSlot(slot uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterListSlot`](../../server/internal/world/character.go#L654)<br>`func buildCharacterListSlot(ch *db.Character, items []db.Item) []byte` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -342,11 +342,10 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`chatLength`](../../server/internal/world/chat.go#L25)<br>`func (s *Session) chatLength(p []byte, at int) bool` | chatLength validates the length byte at p[at]: ok false drops the message, and closes the connection when it is too long. |
 | [`handleChat`](../../server/internal/world/chat.go#L40)<br>`func (s *Session) handleChat(op packet.Opcode, p []byte)` | See the source definition and the subsystem ownership contract. |
 | [`handlePublicChat`](../../server/internal/world/chat.go#L62)<br>`func (s *Session) handlePublicChat(op packet.Opcode, message string, items proto.ChatItems)` | handlePublicChat delivers the normal, trade, shout and area channels. |
-| [`playersOfCountry`](../../server/internal/world/chat.go#L100)<br>`func playersOfCountry(country uint8) []*ConnectedPlayer` | See the source definition and the subsystem ownership contract. |
-| [`handleWhisper`](../../server/internal/world/chat.go#L114)<br>`func (s *Session) handleWhisper(p []byte)` | handleWhisper (0x1102): target name[21] (20 characters), length, text. The target (by name, same country) gets direction 0 with the sender's name; the sender gets direction 1 with the target's name; otherwise 0x1106 result 1. |
-| [`buildWhisper`](../../server/internal/world/chat.go#L136)<br>`func buildWhisper(direction uint8, name, message string) []byte` | See the source definition and the subsystem ownership contract. |
-| [`chatItemSnapshots`](../../server/internal/world/chat.go#L145)<br>`func (s *Session) chatItemSnapshots(p []byte, textOffset int) (items proto.ChatItems, ok bool)` | Build display data from server-owned inventory, never from chat text. |
-| [`chatWithItems`](../../server/internal/world/chat.go#L164)<br>`func chatWithItems(frame []byte, items proto.ChatItems) []byte` | See the source definition and the subsystem ownership contract. |
+| [`handleWhisper`](../../server/internal/world/chat.go#L105)<br>`func (s *Session) handleWhisper(p []byte)` | handleWhisper (0x1102): target name[21] (20 characters), length, text. The target (by name, same country) gets direction 0 with the sender's name; the sender gets direction 1 with the target's name; otherwise 0x1106 result 1. |
+| [`buildWhisper`](../../server/internal/world/chat.go#L127)<br>`func buildWhisper(direction uint8, name, message string) []byte` | See the source definition and the subsystem ownership contract. |
+| [`chatItemSnapshots`](../../server/internal/world/chat.go#L136)<br>`func (s *Session) chatItemSnapshots(p []byte, textOffset int) (items proto.ChatItems, ok bool)` | Build display data from server-owned inventory, never from chat text. |
+| [`chatWithItems`](../../server/internal/world/chat.go#L155)<br>`func chatWithItems(frame []byte, items proto.ChatItems) []byte` | See the source definition and the subsystem ownership contract. |
 
 ### cloak_fits.go
 
@@ -675,37 +674,37 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`duelNone`](../../server/internal/world/duel.go#L50)<br>`const duelNone = 0` | See the source definition and the subsystem ownership contract. |
-| [`duelAsking`](../../server/internal/world/duel.go#L51)<br>`const duelAsking = 1` | See the source definition and the subsystem ownership contract. |
-| [`duelAsked`](../../server/internal/world/duel.go#L52)<br>`const duelAsked = 2` | See the source definition and the subsystem ownership contract. |
-| [`duelCountdown`](../../server/internal/world/duel.go#L53)<br>`const duelCountdown = 3` | See the source definition and the subsystem ownership contract. |
-| [`duelFighting`](../../server/internal/world/duel.go#L54)<br>`const duelFighting = 4` | See the source definition and the subsystem ownership contract. |
-| [`duelWindow`](../../server/internal/world/duel.go#L55)<br>`const duelWindow = 5` | See the source definition and the subsystem ownership contract. |
-| [`duelRequestTime`](../../server/internal/world/duel.go#L57)<br>`const duelRequestTime = 10 * time.Second` | See the source definition and the subsystem ownership contract. |
-| [`duelCountdownTime`](../../server/internal/world/duel.go#L58)<br>`const duelCountdownTime = 5 * time.Second` | See the source definition and the subsystem ownership contract. |
-| [`duelRange`](../../server/internal/world/duel.go#L59)<br>`const duelRange = 40` | See the source definition and the subsystem ownership contract. |
-| [`duelWagerSlots`](../../server/internal/world/duel.go#L60)<br>`const duelWagerSlots = 8` | See the source definition and the subsystem ownership contract. |
-| [`duelCountCap`](../../server/internal/world/duel.go#L61)<br>`const duelCountCap = 0xFFFF` | See the source definition and the subsystem ownership contract. |
-| [`duelPick`](../../server/internal/world/duel.go#L64)<br>`type duelPick` | See the source definition and the subsystem ownership contract. |
-| [`duelState`](../../server/internal/world/duel.go#L71)<br>`type duelState` | duelState is a user's CExchangePvP and PvP fields (guarded by duelMu). |
-| [`duelMu`](../../server/internal/world/duel.go#L89)<br>`var duelMu sync.Mutex` | See the source definition and the subsystem ownership contract. |
-| [`duelPacket`](../../server/internal/world/duel.go#L91)<br>`func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte` | See the source definition and the subsystem ownership contract. |
-| [`duelResult`](../../server/internal/world/duel.go#L99)<br>`func duelResult(op packet.Opcode, result uint8, id uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`duelByte`](../../server/internal/world/duel.go#L103)<br>`func duelByte(op packet.Opcode, v uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`pendingDuelEnd`](../../server/internal/world/duel.go#L108)<br>`type pendingDuelEnd` | pendingDuelEnd asks a session to finish PvPModeEnd's own part. |
-| [`queueDuelEnd`](../../server/internal/world/duel.go#L110)<br>`func (p *ConnectedPlayer) queueDuelEnd(e pendingDuelEnd)` | See the source definition and the subsystem ownership contract. |
-| [`takeDuelEnds`](../../server/internal/world/duel.go#L121)<br>`func (p *ConnectedPlayer) takeDuelEnds() []pendingDuelEnd` | See the source definition and the subsystem ownership contract. |
-| [`duelStateOf`](../../server/internal/world/duel.go#L130)<br>`func duelStateOf(p *ConnectedPlayer) (int, uint32)` | duelStateOf reads a user's duel state and opponent. |
-| [`duelFoes`](../../server/internal/world/duel.go#L137)<br>`func duelFoes(a, b *ConnectedPlayer) bool` | duelFoes reports two users fighting each other (IsTeam's duel case). |
-| [`inActiveDuel`](../../server/internal/world/duel.go#L144)<br>`func inActiveDuel(p *ConnectedPlayer) bool` | inActiveDuel is IsTeamUsable's state-4 check. |
-| [`modeEndLocked`](../../server/internal/world/duel.go#L152)<br>`func (p *ConnectedPlayer) modeEndLocked()` | modeEnd is PvPModeEnd under duelMu (the debuffs and the ledger are cleared in the user's own session). |
-| [`dropWagerLocked`](../../server/internal/world/duel.go#L160)<br>`func dropWagerLocked(src, owner *ConnectedPlayer)` | dropWagerLocked is ItemDropPvP: src's held wager lies at owner's feet, owned by owner alone. |
-| [`endDuelLocked`](../../server/internal/world/duel.go#L184)<br>`func endDuelLocked(a, b *ConnectedPlayer, toA, toB []byte, label string)` | endDuelLocked ends a duel for both with each wager back to its owner; msg builds what each side receives (nil sends nothing). |
-| [`duelLeave`](../../server/internal/world/duel.go#L202)<br>`func duelLeave(p *ConnectedPlayer, fightCode uint8, toSelf bool)` | duelLeave is the shared shape of PvPChkLeaveByAttack / ByDeath / ByZoneLeave for p; fightCode is the 0x2406 result, toSelf whether p also gets it. |
-| [`duelHitBy`](../../server/internal/world/duel.go#L240)<br>`func duelHitBy(p *ConnectedPlayer, attacker uint32)` | duelHitBy is PvPChkLeaveByAttack when attacker (0 for a mob) hits p. |
-| [`handleDuel`](../../server/internal/world/duel.go#L252)<br>`func (s *Session) handleDuel(op packet.Opcode, p []byte)` | handleDuel dispatches 0x2401-0x240C. |
-| [`duelRequest`](../../server/internal/world/duel.go#L293)<br>`func (s *Session) duelRequest(target uint32)` | See the source definition and the subsystem ownership contract. |
-| [`duelAnswer`](../../server/internal/world/duel.go#L322)<br>`func (s *Session) duelAnswer(accept bool)` | See the source definition and the subsystem ownership contract. |
+| [`duelNone`](../../server/internal/world/duel.go#L48)<br>`const duelNone = 0` | See the source definition and the subsystem ownership contract. |
+| [`duelAsking`](../../server/internal/world/duel.go#L49)<br>`const duelAsking = 1` | See the source definition and the subsystem ownership contract. |
+| [`duelAsked`](../../server/internal/world/duel.go#L50)<br>`const duelAsked = 2` | See the source definition and the subsystem ownership contract. |
+| [`duelCountdown`](../../server/internal/world/duel.go#L51)<br>`const duelCountdown = 3` | See the source definition and the subsystem ownership contract. |
+| [`duelFighting`](../../server/internal/world/duel.go#L52)<br>`const duelFighting = 4` | See the source definition and the subsystem ownership contract. |
+| [`duelWindow`](../../server/internal/world/duel.go#L53)<br>`const duelWindow = 5` | See the source definition and the subsystem ownership contract. |
+| [`duelRequestTime`](../../server/internal/world/duel.go#L55)<br>`const duelRequestTime = 10 * time.Second` | See the source definition and the subsystem ownership contract. |
+| [`duelCountdownTime`](../../server/internal/world/duel.go#L56)<br>`const duelCountdownTime = 5 * time.Second` | See the source definition and the subsystem ownership contract. |
+| [`duelRange`](../../server/internal/world/duel.go#L57)<br>`const duelRange = 40` | See the source definition and the subsystem ownership contract. |
+| [`duelWagerSlots`](../../server/internal/world/duel.go#L58)<br>`const duelWagerSlots = 8` | See the source definition and the subsystem ownership contract. |
+| [`duelCountCap`](../../server/internal/world/duel.go#L59)<br>`const duelCountCap = 0xFFFF` | See the source definition and the subsystem ownership contract. |
+| [`duelPick`](../../server/internal/world/duel.go#L62)<br>`type duelPick` | See the source definition and the subsystem ownership contract. |
+| [`duelState`](../../server/internal/world/duel.go#L69)<br>`type duelState` | duelState is a user's CExchangePvP and PvP fields (guarded by duelMu). |
+| [`duelMu`](../../server/internal/world/duel.go#L87)<br>`var duelMu sync.Mutex` | See the source definition and the subsystem ownership contract. |
+| [`duelPacket`](../../server/internal/world/duel.go#L89)<br>`func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte` | See the source definition and the subsystem ownership contract. |
+| [`duelResult`](../../server/internal/world/duel.go#L97)<br>`func duelResult(op packet.Opcode, result uint8, id uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`duelByte`](../../server/internal/world/duel.go#L101)<br>`func duelByte(op packet.Opcode, v uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`pendingDuelEnd`](../../server/internal/world/duel.go#L106)<br>`type pendingDuelEnd` | pendingDuelEnd asks a session to finish PvPModeEnd's own part. |
+| [`queueDuelEnd`](../../server/internal/world/duel.go#L108)<br>`func (p *ConnectedPlayer) queueDuelEnd(e pendingDuelEnd)` | See the source definition and the subsystem ownership contract. |
+| [`takeDuelEnds`](../../server/internal/world/duel.go#L119)<br>`func (p *ConnectedPlayer) takeDuelEnds() []pendingDuelEnd` | See the source definition and the subsystem ownership contract. |
+| [`duelStateOf`](../../server/internal/world/duel.go#L128)<br>`func duelStateOf(p *ConnectedPlayer) (int, uint32)` | duelStateOf reads a user's duel state and opponent. |
+| [`duelFoes`](../../server/internal/world/duel.go#L135)<br>`func duelFoes(a, b *ConnectedPlayer) bool` | duelFoes reports two users fighting each other (IsTeam's duel case). |
+| [`inActiveDuel`](../../server/internal/world/duel.go#L142)<br>`func inActiveDuel(p *ConnectedPlayer) bool` | inActiveDuel is IsTeamUsable's state-4 check. |
+| [`modeEndLocked`](../../server/internal/world/duel.go#L150)<br>`func (p *ConnectedPlayer) modeEndLocked()` | modeEnd is PvPModeEnd under duelMu (the debuffs and the ledger are cleared in the user's own session). |
+| [`dropWagerLocked`](../../server/internal/world/duel.go#L158)<br>`func dropWagerLocked(src, owner *ConnectedPlayer)` | dropWagerLocked is ItemDropPvP: src's held wager lies at owner's feet, owned by owner alone. |
+| [`endDuelLocked`](../../server/internal/world/duel.go#L182)<br>`func endDuelLocked(a, b *ConnectedPlayer, toA, toB []byte, label string)` | endDuelLocked ends a duel for both with each wager back to its owner; msg builds what each side receives (nil sends nothing). |
+| [`duelLeave`](../../server/internal/world/duel.go#L200)<br>`func duelLeave(p *ConnectedPlayer, fightCode uint8, toSelf bool)` | duelLeave is the shared shape of PvPChkLeaveByAttack / ByDeath / ByZoneLeave for p; fightCode is the 0x2406 result, toSelf whether p also gets it. |
+| [`duelHitBy`](../../server/internal/world/duel.go#L238)<br>`func duelHitBy(p *ConnectedPlayer, attacker uint32)` | duelHitBy is PvPChkLeaveByAttack when attacker (0 for a mob) hits p. |
+| [`handleDuel`](../../server/internal/world/duel.go#L250)<br>`func (s *Session) handleDuel(op packet.Opcode, p []byte)` | handleDuel dispatches 0x2401-0x240C. |
+| [`duelRequest`](../../server/internal/world/duel.go#L291)<br>`func (s *Session) duelRequest(target uint32)` | See the source definition and the subsystem ownership contract. |
+| [`duelAnswer`](../../server/internal/world/duel.go#L320)<br>`func (s *Session) duelAnswer(accept bool)` | See the source definition and the subsystem ownership contract. |
 | [`duelGiveUp`](../../server/internal/world/duel.go#L351)<br>`func (s *Session) duelGiveUp()` | See the source definition and the subsystem ownership contract. |
 | [`windowPeerLocked`](../../server/internal/world/duel.go#L363)<br>`func (s *Session) windowPeerLocked() *ConnectedPlayer` | windowPeerLocked returns the opponent while both are in the window. |
 | [`cancelReadyLocked`](../../server/internal/world/duel.go#L376)<br>`func cancelReadyLocked(a, b *ConnectedPlayer)` | cancelReadyLocked is ExchangeCancleReadyPvP. |
@@ -718,11 +717,11 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 | [`exchangeWagerOther`](../../server/internal/world/duel.go#L541)<br>`func exchangeWagerOther(o *ConnectedPlayer, log logPrinter)` | exchangeWagerOther runs ExchangePvP for the opponent through the database; its session reloads with the trade-refresh mailbox. |
 | [`tickDuel`](../../server/internal/world/duel.go#L553)<br>`func (s *Session) tickDuel()` | tickDuel is PvPChkLeaveByTime and the session's part of PvPModeEnd. |
 | [`duelCheckMove`](../../server/internal/world/duel.go#L607)<br>`func (s *Session) duelCheckMove()` | duelCheckMove is PvPChkLeaveByMove after this user moved. |
-| [`duelDeath`](../../server/internal/world/duel.go#L639)<br>`func (s *Session) duelDeath(winner *ConnectedPlayer) bool` | duelDeath is PvPGetDeathType 4 + PvPChkLoseDeath for this (dead) user killed by winner; false when the death is not the duel's. |
-| [`queueDuelWin`](../../server/internal/world/duel.go#L668)<br>`func (p *ConnectedPlayer) queueDuelWin()` | See the source definition and the subsystem ownership contract. |
-| [`takeDuelWins`](../../server/internal/world/duel.go#L674)<br>`func (p *ConnectedPlayer) takeDuelWins() int` | See the source definition and the subsystem ownership contract. |
-| [`applyDuelWins`](../../server/internal/world/duel.go#L683)<br>`func (s *Session) applyDuelWins()` | applyDuelWins books victories in the winner's session. |
-| [`guildDuelState`](../../server/internal/world/duel.go#L698)<br>`func (p *ConnectedPlayer) guildDuelState() uint32` | guildDuelState is CUser +0x54e4 (non-zero in a guild duel), under duelMu. |
+| [`duelDeath`](../../server/internal/world/duel.go#L635)<br>`func (s *Session) duelDeath(winner *ConnectedPlayer) bool` | duelDeath is PvPGetDeathType 4 + PvPChkLoseDeath for this (dead) user killed by winner; false when the death is not the duel's. |
+| [`queueDuelWin`](../../server/internal/world/duel.go#L664)<br>`func (p *ConnectedPlayer) queueDuelWin()` | See the source definition and the subsystem ownership contract. |
+| [`takeDuelWins`](../../server/internal/world/duel.go#L670)<br>`func (p *ConnectedPlayer) takeDuelWins() int` | See the source definition and the subsystem ownership contract. |
+| [`applyDuelWins`](../../server/internal/world/duel.go#L679)<br>`func (s *Session) applyDuelWins()` | applyDuelWins books victories in the winner's session. |
+| [`guildDuelState`](../../server/internal/world/duel.go#L694)<br>`func (p *ConnectedPlayer) guildDuelState() uint32` | guildDuelState is CUser +0x54e4 (non-zero in a guild duel), under duelMu. |
 
 <details><summary>Type definitions and owned fields</summary>
 

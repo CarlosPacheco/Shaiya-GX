@@ -312,7 +312,12 @@ func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
 		case proto.ChatParty:
 			id, style = 353, 10
 		case proto.ChatWhisper:
-			id, style = 354, 11
+			style = 11
+			direction := "from"
+			if c.Direction == 1 {
+				direction = "to"
+			}
+			body = "Whisper " + direction + " " + name + ": " + c.Text
 		case proto.ChatGuild:
 			id, style = 370, 12
 		case proto.ChatWorld:
@@ -326,7 +331,7 @@ func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
 		}
 		if id != 0 && messages.Get(id) != "" {
 			body = messages.Format(id, map[string]string{"p": name, "b": c.Text})
-		} else {
+		} else if c.Op != proto.ChatWhisper {
 			body = name + " : " + c.Text
 		}
 	}

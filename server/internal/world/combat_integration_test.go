@@ -1185,6 +1185,12 @@ func TestDuel(t *testing.T) {
 	if state(a) != duelWindow || state(b) != duelWindow {
 		t.Fatalf("after accept: %d / %d", state(a), state(b))
 	}
+	a.char.PosX += 1
+	a.duelCheckMove()
+	if state(a) != duelWindow || state(b) != duelWindow {
+		t.Fatal("one unit of movement cancelled a duel away from the map origin")
+	}
+	a.char.PosX -= 1
 	// A wagers 300 gold; B wagers 200 gold and a weapon.
 	var weapon db.Item
 	for typeID := uint8(1); typeID < 60; typeID++ {

@@ -134,6 +134,10 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 		return ""
 	}, a.msg)
 
+	if warning, restricted := a.itemClassWarning(def); restricted {
+		lines = slices.Insert(lines, min(1, len(lines)), warning)
+	}
+
 	if lapisAbsorption > 0 || a.state != nil && a.state.EnchantRules != nil {
 		label := a.msg.Get(485)
 		if label == "" {

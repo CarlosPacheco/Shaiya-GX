@@ -1607,9 +1607,9 @@ type Reader struct {
 
 Declarations: [proto.DuelRequest](../../internal/proto/duel.go#L4).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L258)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L256)
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L35), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
@@ -1619,7 +1619,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -1671,7 +1671,7 @@ type DuelChallenge struct{ Requester, Target uint32 }
 
 Declarations: [proto.DuelAnswer](../../internal/proto/duel.go#L5).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L263)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L261)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1743,7 +1743,7 @@ Declarations: [proto.DuelCountdown](../../internal/proto/duel.go#L6).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89)
 
 **Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L69), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
@@ -1753,7 +1753,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -1789,7 +1789,7 @@ Declarations: [proto.DuelStart](../../internal/proto/duel.go#L7).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89)
 
 **Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L75), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
@@ -1799,7 +1799,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -1855,7 +1855,7 @@ func DecodeExchangeByte(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(
 
 Declarations: [proto.DuelEnd](../../internal/proto/duel.go#L9).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L267)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L265)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1919,7 +1919,7 @@ Declarations: [proto.DuelWindow](../../internal/proto/duel.go#L10).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89)
 
 **Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L59), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
@@ -1929,7 +1929,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -1990,9 +1990,9 @@ func DecodeExchangeByte(p []byte) (uint8, error) { r := NewReader(p); v := r.U8(
 
 Declarations: [proto.DuelReady](../../internal/proto/duel.go#L12).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L269)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L267)
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89)
 
 **Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L96), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
@@ -2002,7 +2002,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -2050,9 +2050,9 @@ type ExchangeUpdate struct{ Kind, Value uint8 }
 
 Declarations: [proto.DuelAdd](../../internal/proto/duel.go#L13).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L273)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L271)
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89)
 
 **Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L123), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
@@ -2062,7 +2062,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -2122,9 +2122,9 @@ type ExchangeOwnItem struct {
 
 Declarations: [proto.DuelRemove](../../internal/proto/duel.go#L14).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L281)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L279)
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89)
 
 **Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L139), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
@@ -2134,7 +2134,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -2182,9 +2182,9 @@ type ExchangeUpdate struct{ Kind, Value uint8 }
 
 Declarations: [proto.DuelMoney](../../internal/proto/duel.go#L15).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L285)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L224), [handleDuel (server/internal/world/duel.go)](../../server/internal/world/duel.go#L283)
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89)
 
 **Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L110), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
@@ -2194,7 +2194,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -2247,7 +2247,7 @@ Declarations: [proto.DuelAddOther](../../internal/proto/duel.go#L16).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89)
 
 **Client receive reducers:** [applyDuel (internal/game/duel.go)](../../internal/game/duel.go#L133), [Apply (internal/game/state.go)](../../internal/game/state.go#L641)
 
@@ -2257,7 +2257,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -2312,7 +2312,7 @@ Declarations: [proto.GuildDuelRequest](../../internal/proto/guild_duel.go#L4).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L226), [handleGuildDuel (server/internal/world/guildduel.go)](../../server/internal/world/guildduel.go#L125)
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L25), [Apply (internal/game/state.go)](../../internal/game/state.go#L629)
 
@@ -2322,7 +2322,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -2431,7 +2431,7 @@ Declarations: [proto.GuildDuelCountdown](../../internal/proto/guild_duel.go#L6).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89)
 
 **Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L52), [Apply (internal/game/state.go)](../../internal/game/state.go#L629)
 
@@ -2441,7 +2441,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -2484,7 +2484,7 @@ Declarations: [proto.GuildDuelStart](../../internal/proto/guild_duel.go#L7).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89)
 
 **Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L59), [Apply (internal/game/state.go)](../../internal/game/state.go#L629)
 
@@ -2494,7 +2494,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {
@@ -2552,7 +2552,7 @@ Declarations: [proto.GuildDuelLeave](../../internal/proto/guild_duel.go#L9).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L91)
+**S→C serializers:** [duelPacket (server/internal/world/duel.go)](../../server/internal/world/duel.go#L89)
 
 **Client receive reducers:** [applyGuildDuel (internal/game/guild_duel.go)](../../internal/game/guild_duel.go#L71), [Apply (internal/game/state.go)](../../internal/game/state.go#L629)
 
@@ -2562,7 +2562,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>duelPacket — server/internal/world/duel.go</summary>
 
-[Source definition](../../server/internal/world/duel.go#L91)
+[Source definition](../../server/internal/world/duel.go#L89)
 
 ```go
 func duelPacket(op packet.Opcode, write func(*packet.Writer)) []byte {

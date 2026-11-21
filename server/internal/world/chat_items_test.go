@@ -3,6 +3,7 @@ package world
 import (
 	"encoding/binary"
 	"testing"
+	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -50,5 +51,31 @@ func TestChatItemSnapshotPreservesInstanceProperties(t *testing.T) {
 		if _, ok := s.chatItemSnapshots(p, 2); ok {
 			t.Fatalf("invalid attachment accepted: %v", slot)
 		}
+	}
+}
+
+func TestPublicChatFactionAndGMRecipients(t *testing.T) {
+	const mapID = 60319
+	player := func(id uint32, faction uint8, gm bool) (*Session, <-chan []byte) {
+		s, frames := gmWireSession(t, db.Character{ID: id, Name: "ChatProbe", MapID: mapID, PosX: 10, PosZ: 10}, gm)
+		s.faction = faction
+		s.player = RegisterPlayer(*s.char, nil, gm, faction, s.out, s.logger, s)
+		t.Cleanup(s.player.Unregister)
+		return s, frames
+	}
+	light, own := player(990701, FactionLight, false)
+	_, ally := player(990702, FactionLight, false)
+	_, enemy := player(990703, FactionDark, false)
+	_, gm := player(990704, FactionDark, true)
+	for _, op := range []proto.Opcode{proto.ChatNormal, proto.ChatMap, proto.ChatShout, proto.ChatWorld} {
+		light.handlePublicChat(packet.Opcode(op), "Test", proto.ChatItems{})
+		for _, frames := range []<-chan []byte{own, ally, gm} {
+			waitWorldPacket(t, frames, op)
+		}
+	}
+	select {
+	case frame := <-enemy:
+		t.Fatalf("opposing player received public chat %x", frame)
+	case <-time.After(80 * time.Millisecond):
 	}
 }

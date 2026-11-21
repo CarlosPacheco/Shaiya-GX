@@ -231,3 +231,7 @@ To use the original panel art with a loose data pack, convert
 `interface/chat_config1.tga`, `interface/chat_config2.tga`, and
 `interface/chat_icon.tga` from the local archive to matching PNG files in
 `data/interface/`. The `assets png` command supports all three.
+
+Public chat follows faction rules for ordinary players. GMs receive nearby,
+area and trade chat from both factions within each channel's normal scope.
+Whispers identify direction with “Whisper from” and “Whisper to”.

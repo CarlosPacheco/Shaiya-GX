@@ -42,9 +42,7 @@ import (
 //     loser; no exp, kill or item drop, and the death keeps the exp, the
 //     item buffs (m_nVehicleStatus -1).
 //
-// As in the original, the window's 40-unit check during state 5 measures
-// from the last duel center (zero before the first duel), so moving with
-// the window open closes it.
+// The wager window starts with a fresh midpoint for its 40-unit check.
 
 const (
 	duelNone      = 0
@@ -336,8 +334,10 @@ func (s *Session) duelAnswer(accept bool) {
 		r.Send(duelResult(0x2402, 0, me.CharacterID), "0x2402 duel refused")
 		return
 	}
+	x, z := r.PositionXZ()
+	center := [2]float32{(s.char.PosX + x) / 2, (s.char.PosZ + z) / 2}
 	for _, p := range []*ConnectedPlayer{me, r} {
-		p.duel.state, p.duel.deadline = duelWindow, time.Time{}
+		p.duel.state, p.duel.deadline, p.duel.center = duelWindow, time.Time{}, center
 		p.duel.picks, p.duel.money, p.duel.ready = [duelWagerSlots]*duelPick{}, 0, false
 	}
 	r.Send(duelResult(0x2402, 1, me.CharacterID), "0x2402 duel accepted")
@@ -611,25 +611,21 @@ func (s *Session) duelCheckMove() {
 	}
 	s.guildDuelCheckMove()
 	duelMu.Lock()
+	defer duelMu.Unlock()
 	d := me.duel
-	duelMu.Unlock()
 	if DistanceXZ(d.center[0], d.center[1], s.char.PosX, s.char.PosZ) <= duelRange {
 		return
 	}
 	switch d.state {
 	case duelCountdown, duelFighting:
-		duelMu.Lock()
 		frame := duelResult(0x2406, 1, me.CharacterID)
 		endDuelLocked(me, FindPlayerByID(me.duel.opponent), frame, frame, "0x2406 duel left")
-		duelMu.Unlock()
 	case duelWindow:
-		duelMu.Lock()
 		if o := FindPlayerByID(me.duel.opponent); o != nil {
 			o.modeEndLocked()
 			o.Send(duelByte(0x2408, 3), "0x2408 duel window closed (moved)")
 		}
 		me.modeEndLocked()
-		duelMu.Unlock()
 		s.send(duelByte(0x2408, 2), "0x2408 duel window closed (moved)")
 	}
 }

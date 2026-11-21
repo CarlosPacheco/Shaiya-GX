@@ -258,8 +258,8 @@ func (q *InputQueue) Frame() Input {
 		q.lookX, q.lookY = x, y
 	}
 	if q.win.GetAttrib(glfw.Focused) == 0 {
-		in.RightDown, in.RightPressed, in.MouseDown = false, false, false
-		in.MouseDX, in.MouseDY = 0, 0
+		q.cur = Input{}
+		return Input{MouseX: in.MouseX, MouseY: in.MouseY}
 	}
 	var down [32]byte
 	n := 0
@@ -303,11 +303,6 @@ func (q *InputQueue) Frame() Input {
 		if q.win.GetKey(glfw.KeyKP0+glfw.Key(digit)) == glfw.Press {
 			in.ActionHeld |= 1 << (10 + slot)
 		}
-	}
-	if q.win.GetAttrib(glfw.Focused) == 0 {
-		in.Down, in.Space, in.SuppressAutoRun = "", false, true
-		in.ActionHeld = 0
-		in.Chars, in.Keys, in.Actions, in.Released = nil, nil, nil, ""
 	}
 	q.cur = Input{MouseDown: in.MouseDown, RightDown: in.RightDown, Shift: in.Shift}
 	return in

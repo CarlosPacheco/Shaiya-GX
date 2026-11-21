@@ -74,10 +74,10 @@ func TestMouseLookCaptureAndFocus(t *testing.T) {
 	defer other.Destroy()
 	other.Focus()
 	waitFocus(false)
-	q.cur.RightDown = true
+	q.cur.RightDown, q.cur.Clicked = true, true
 	in = q.Frame()
-	if in.RightDown || in.MouseDX != 0 || in.MouseDY != 0 {
-		t.Fatal("unfocused window retained camera input", in)
+	if in.SuppressAutoRun || in.Clicked || in.RightDown || in.MouseDX != 0 || in.MouseDY != 0 {
+		t.Fatal("unfocused window passed input or suspended automatic movement", in)
 	}
 	q.SetMouseLook(true)
 	if q.mouselook || win.GetInputMode(glfw.CursorMode) != glfw.CursorNormal {

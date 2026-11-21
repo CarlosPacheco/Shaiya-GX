@@ -73,7 +73,7 @@ func (s *Session) handlePublicChat(op packet.Opcode, message string, items proto
 		frame, to = buildChatByID(packet.ChatNormal, ch.ID, message), PlayersNear(ch.MapID, ch.PosX, ch.PosZ, chatNormalRadius)
 	case packet.ChatWorld, packet.ChatWorldAdmin:
 		// 0x1103 trade: name + text to the whole country (PSendAllCountry).
-		frame, to = buildChatByName(packet.ChatWorld, ch.Name, message), playersOfCountry(s.faction)
+		frame, to = buildChatByName(packet.ChatWorld, ch.Name, message), AllPlayers()
 	case packet.ChatShout:
 		// 0x1107: char id + text within 100 units, once every 30 s.
 		if time.Now().Before(s.shoutReadyAt) {
@@ -86,25 +86,16 @@ func (s *Session) handlePublicChat(op packet.Opcode, message string, items proto
 		// +0x5840); no item grants it yet.
 		return
 	default:
-		// 0x1111 area: name + text to the zone's users of the country.
-		for _, p := range PlayersOnMap(ch.MapID) {
-			if p.Faction() == s.faction {
-				to = append(to, p)
-			}
-		}
-		frame = buildChatByName(packet.ChatMap, ch.Name, message)
+		// 0x1111 area: name + text to the zone.
+		frame, to = buildChatByName(packet.ChatMap, ch.Name, message), PlayersOnMap(ch.MapID)
 	}
-	broadcast(to, chatWithItems(frame, items), "chat", s.logger)
-}
-
-func playersOfCountry(country uint8) []*ConnectedPlayer {
-	var out []*ConnectedPlayer
-	for _, p := range AllPlayers() {
-		if p.Faction() == country {
-			out = append(out, p)
+	recipients := make([]*ConnectedPlayer, 0, len(to))
+	for _, p := range to {
+		if p.IsAdmin || p.Faction() == s.faction {
+			recipients = append(recipients, p)
 		}
 	}
-	return out
+	broadcast(recipients, chatWithItems(frame, items), "chat", s.logger)
 }
 
 // handleWhisper (0x1102): target name[21] (20 characters), length, text.
