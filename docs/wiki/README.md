@@ -20,6 +20,7 @@ See the [gx-v0.1.15 upgrade guide](../releases/gx-v0.1.15-upgrade.md) to update 
 
 ## Gameplay and items
 
+- [Original client typography](native-typography.md) covers the native fonts, rendering paths and GX metrics.
 - [Chat controls and item links](chat-parity.md), [User Options](user-options.md) and [Revolver](revolver.md).
 - [Auction House](auction-house.md): listings, bids, buyout, favorites,
   item-family searches, escrow and claims.

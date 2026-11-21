@@ -140,10 +140,10 @@ not a replacement for a matched native/live screenshot comparison.
 ## Font measurement follow-up
 
 Renderer initialization `0x544620` selects font creation by locale, through
-helper `0x54bdf0`. English (locale3) creates the regular
-chat font at **15px, weight400, Arial**, and the optional large font belongs to
-other locale branches. GX was reusing its 13px tooltip font. Chat now owns a
-dedicated 15px font loaded from the existing external font pack; tooltips and
+helper `0x54bdf0`. Locale 3 creates a **15 px regular Arial** default font.
+The audited executable initializes locale 6, whose default is
+**13 px regular Tahoma**. GX chat uses a dedicated 15 px nominal font loaded
+from the external font pack; tooltips and
 other panels retain their sizes. The external primary face remains Tahoma, so
 matching the measured cell height does not claim identical Arial glyph raster.
 The right-hand language icon has subsequently been removed by user request,
