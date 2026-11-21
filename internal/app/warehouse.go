@@ -94,6 +94,8 @@ func (a *App) guildBankAllowed(source, destination [2]uint8) bool {
 // the warehouse can be opened from anywhere, and it cannot be cancelled.
 const warehouseCallSkill = 228
 
+const warehouseCallDescription = "Opens your personal warehouse without a banker. Click the Warehouse Call buff to reopen it while the effect lasts."
+
 func (a *App) hasWarehouseCall() bool {
 	if a.state == nil {
 		return false

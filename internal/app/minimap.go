@@ -360,7 +360,11 @@ func (a *App) drawMinimap(w, h int, full bool) {
 	a.updateMinimapAlarm()
 	view := projection.MinimapWindow(a.wv.pos[0], a.wv.pos[2], v.smallZoom)
 	a.minimap.Caption = time.Now().Format("02/01/2006 15:04:05")
-	a.minimap.Draw(a.sprites, a.font, v.image, a.white, w, h, view, u, z, heading, a.wv.mapID, a.wv.pos[0], a.wv.pos[2], markers)
+	clockFont := a.font
+	if a.hud != nil && a.hud.NumberFont != nil {
+		clockFont = a.hud.NumberFont
+	}
+	a.minimap.Draw(a.sprites, clockFont, v.image, a.white, w, h, view, u, z, heading, a.wv.mapID, a.wv.pos[0], a.wv.pos[2], markers)
 }
 
 // minimapAlarmExempt lists the maps where the alarm mechanic is disabled.

@@ -129,6 +129,10 @@ func (a *App) drawBuffTooltip(w, h int) {
 	a.tooltipSockets = nil
 	a.tooltipDescription = strings.ReplaceAll(b.def.Description, `\n`, "\n")
 
+	if b.buff.Skill == warehouseCallSkill {
+		a.tooltipDescription = warehouseCallDescription
+	}
+
 	a.tooltip = append(a.tooltip, itemDetailLine{ui.BuffDuration(b.seconds(a.clock), b.timed), white})
 	if b.def.Effect == 4 && b.buff.Level != 100 && b.buff.Skill != warehouseCallSkill {
 		a.tooltip = append(a.tooltip, itemDetailLine{"Right click: cancel", white})

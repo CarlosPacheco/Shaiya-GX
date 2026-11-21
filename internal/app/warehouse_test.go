@@ -3,6 +3,8 @@ package app
 import (
 	"testing"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
@@ -49,5 +51,22 @@ func TestWarehouseCallClickReopensPersonalBankAndStillAllowsDragging(t *testing.
 	a.state.Buffs = nil
 	if a.remoteWarehouseOpen() {
 		t.Fatal("the window remained open after the effect expired")
+	}
+}
+
+func TestWarehouseCallTooltipsExplainRemoteAccess(t *testing.T) {
+	a := inputApp()
+	key := sdata.SkillKey{ID: warehouseCallSkill, Level: 1}
+	def := sdata.Skill{Name: "Warehouse Call", Description: "Legacy ? ? ?", Effect: 4, KeepTime: 300}
+	a.skillDefs = map[sdata.SkillKey]sdata.Skill{key: def}
+	a.queueSkillTooltip(key)
+	if a.tooltipDescription != warehouseCallDescription || len(a.tooltip) != 2 || a.tooltip[1].text != "Duration: 5m" {
+		t.Fatalf("wrong skill tooltip: %q %+v", a.tooltipDescription, a.tooltip)
+	}
+	a.buffs.rows = []buffBadge{{buff: proto.ActiveBuff{Skill: warehouseCallSkill, Level: 1}, def: def, until: 20, timed: true}}
+	a.lastMouseX, a.lastMouseY = a.buffSlot(1024, 768, 0)
+	a.drawBuffTooltip(1024, 768)
+	if a.tooltipDescription != warehouseCallDescription || len(a.tooltip) != 2 || a.tooltip[1].text != "20s" {
+		t.Fatalf("wrong active buff tooltip: %q %+v", a.tooltipDescription, a.tooltip)
 	}
 }

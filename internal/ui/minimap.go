@@ -241,7 +241,7 @@ func (m *Minimap) Draw(s *render.Sprites, f *Font, image, solid *render.Texture,
 	if width := f.Width(label); width > 134 {
 		scale = 134 / float32(width)
 	}
-	drawStatusText(s, f, label, float32(x+84)-float32(f.Width(label))*scale/2, float32(y+168), scale, 0)
+	drawResourceText(s, f, label, float32(x+84)-float32(f.Width(label))*scale/2, float32(y+168), scale, 0)
 }
 
 func (m *Minimap) DrawFull(s *render.Sprites, f *Font, image, solid *render.Texture, w, h int, view UV, u, v, heading float32, mapID uint16, markers []MapMarker) {

@@ -102,8 +102,7 @@ func (h *HUD) Draw(s *render.Sprites, f *Font, state HUDState) {
 		// 0x5097b0 uses five pixels per ASCII character to center the
 		// rectangle; 0x509590 draws black then white one pixel up/left.
 		left, top := x+135-len(text)*5/2, y+[]int{41, 58, 73}[i]
-		numbers.Draw(s, text, left, top, [4]float32{0, 0, 0, 1}, 128)
-		numbers.Draw(s, text, left-1, top-1, white, 128)
+		drawResourceText(s, numbers, text, float32(left-1), float32(top-1), 1, 128)
 	}
 
 	if state.TargetName != "" {

@@ -13,7 +13,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 | Status | Allocation, EXP and current/max HP/MP/SP bars | Native graph and full attribute help |
 | Chat | Phoenix geometry, external Tahoma with Unicode fallbacks, channel colours, persistent grey histories, single input row, six-channel picker and original SysMsg messages | Remaining special notices and complete state comparison |
 | Effects | Independently draggable positive/negative strips; 32px icons, 6px gaps, native yellow duration bars and the original white debuff pulse | Full effect categories and all special states |
-| Maps | Native World Map with region previews, ring buttons, expanded-map name, original clock frame with date/seconds and portrait-name text styling and native zone/hover labels, draggable minimap/full map, pan and zoom | Remaining map services and indicator variants |
+| Maps | Native World Map with region previews, ring buttons, expanded-map name, original clock frame with date/seconds and portrait resource text styling and native zone/hover labels, draggable minimap/full map, pan and zoom | Remaining map services and indicator variants |
 | Options | Menu and six subpages; classic glow/brightness/detail/distance sliders, cloak/helmet visibility, audio, mouse, chat and monitor resolution selection | Other service controls and shortcut editing |
 | Party/raid | Member frames, invitations, leader and selection flows | Complete badges, buffs and visual variants |
 | Player context | Original classic TipBox frame, SysMsg rows, hover, character/target/party picking, whisper focus and supported party/trade/duel/guild actions | Inspect, follow, personal shops and remaining social windows/services |
@@ -396,7 +396,7 @@ The merchant's purchase/drag hint is removed; transaction errors remain visible.
 Player portrait clicks still select self, while a drag moves its frame. The whole
 target frame and minimap surface/information plate can be dragged; minimap buttons
 and wheel zoom retain their functions. The original clock plate is preserved unchanged; only its text displays
-`dd/mm/yyyy hh:mm:ss`, fitted to its existing interior.
+`dd/mm/yyyy hh:mm:ss`, fitted to its existing interior with the same white text and shadow as the portrait resource values.
 
 The movable 94×54 potion bar uses original `QuickPotion.png`, 32px slots at
 `(11 + 40*i,13)`, left Z and right X, outlined stack counts, shared confirmed

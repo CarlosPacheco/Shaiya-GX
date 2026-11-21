@@ -45,7 +45,8 @@ func (a *App) queueSkillTooltip(key sdata.SkillKey) {
 	} else if d.Detail == 94 || d.Detail == 95 {
 		rows = append(rows, itemDetailLine{elementName(0, a.msg), white})
 	}
-	if _, learned := a.learnedSkill(key.ID); key.Level != 100 && !learned {
+	warehouseCall := key.ID == warehouseCallSkill && key.Level == 1
+	if _, learned := a.learnedSkill(key.ID); key.Level != 100 && !learned && !warehouseCall {
 		rows = append(rows, itemDetailLine{fmt.Sprintf("Required level: %d", d.RequiredLevel), gray}, itemDetailLine{fmt.Sprintf("Skill points: %d", d.Points), gray})
 	}
 
@@ -53,6 +54,12 @@ func (a *App) queueSkillTooltip(key sdata.SkillKey) {
 	a.tooltipSockets = nil
 	a.tooltipDescription = strings.ReplaceAll(d.Description, `\n`, "\n")
 
+	if warehouseCall {
+		a.tooltipDescription = warehouseCallDescription
+		if seconds := d.KeepSeconds(); seconds > 0 {
+			rows = append(rows, itemDetailLine{"Duration: " + ui.BuffDuration(seconds, true), white})
+		}
+	}
 	a.tooltip = rows
 }
 func (a *App) queueActionTooltip(w, h int) {
