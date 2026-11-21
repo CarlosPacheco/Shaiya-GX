@@ -54,7 +54,7 @@ data. No gameplay change is made by this note.
    Needs an explicit decision because the EP5.4 server rule cannot be verified
    from the client.
 
-## Implemented (trial)
+## Implemented (permanent, confirmed in play 2026-11-21)
 
 - `skilltiming.IntervalFor` caps the table by the basic-attack clip (30 frames at
   the weapon-relative animation rate), shared by client and server, so the shared
