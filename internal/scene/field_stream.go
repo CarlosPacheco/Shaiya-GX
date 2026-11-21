@@ -94,7 +94,7 @@ type fieldStream struct {
 	lodInstances                       int
 	submittedTriangles                 int
 	detailCulled                       int
-	detailBias                         float32
+	geometryReduction                  int
 	drawSectors                        []fieldDrawSector
 	objectTests                        int
 	disableSectors                     bool // reference path for image/performance comparisons

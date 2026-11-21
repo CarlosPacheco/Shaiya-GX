@@ -78,7 +78,7 @@ func TestReducedDetailsLowersRealSceneSubmissionGL(t *testing.T) {
 				angle := float64(turn) * math.Pi / 2
 				r.View = render.LookAtLH(eye, eye.Add(render.V3{float32(math.Sin(angle)), -.1, float32(math.Cos(angle))}), render.V3{0, 1, 0})
 				draw := func(bias int) ([]byte, int, int, int, uint64) {
-					r.DetailBias = float32(bias)
+					r.GeometryReduction = bias
 					// Warm this preset before timing, keeping uploads and first shader use out.
 					gl.Viewport(0, 0, 640, 360)
 					gl.DepthMask(true)

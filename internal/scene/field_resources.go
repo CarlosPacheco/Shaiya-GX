@@ -231,12 +231,12 @@ func (s *fieldStream) draw(r *render.Scene3D) {
 }
 
 func (s *fieldStream) drawWithClipCulling(r *render.Scene3D, clipCulling bool) {
-	if s.detailBias != r.DetailBias {
+	if s.geometryReduction != r.GeometryReduction {
 		// Do not carry a reduced-quality LOD hysteresis choice back to default.
 		for i := range s.objects {
 			s.objects[i].drawLOD = 0
 		}
-		s.detailBias = r.DetailBias
+		s.geometryReduction = r.GeometryReduction
 	}
 	frustum := render.ViewFrustum(r.View, r.VisibilityProjection())
 	for _, batch := range s.terrainBatches {

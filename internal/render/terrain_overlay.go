@@ -82,7 +82,6 @@ func (s *Scene3D) drawTerrainOverlays(m *Mesh, layers []TerrainSplat, light *Tex
 	gl.Uniform4fv(8, 1, &s.ClipPlane[0])
 	gl.Uniform3fv(9, 1, &s.FogColor[0])
 	gl.Uniform2f(10, s.FogStart, s.FogEnd)
-	gl.Uniform1f(11, s.DetailBias)
 	var sizes [terrainOverlayLimit]float32
 	for i, layer := range layers {
 		sizes[i] = layer.TileSize
@@ -134,7 +133,6 @@ layout(binding=7) uniform sampler2D tiles[7];
 layout(binding=14) uniform sampler2D lightmap;
 layout(location=9) uniform vec3 fogColor;
 layout(location=10) uniform vec2 fogRange;
-layout(location=11) uniform float detailBias;
 layout(location=12) uniform int lit;
 layout(location=14) uniform float tileSizes[7];
 in vec2 vUV,vUV2;
@@ -142,7 +140,7 @@ in float vDepth;
 flat in int layer;
 out vec4 frag;
 void main() {
- vec4 c=vec4(texture(tiles[layer],vUV2/tileSizes[layer],detailBias).rgb,texture(masks[layer],vUV,detailBias).a);
+ vec4 c=vec4(texture(tiles[layer],vUV2/tileSizes[layer]).rgb,texture(masks[layer],vUV).a);
  if (lit != 0) c.rgb *= texture(lightmap,vUV).rgb;
  if (c.a <= 7.5/255.0) discard;
  if (fogRange.y > fogRange.x) {

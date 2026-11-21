@@ -169,7 +169,6 @@ type Skinner struct {
 	prog                                               uint32
 	uBoneCount, uWorld, uViewProj, uView, uLight, uAmb int32
 	uMode, uRef, uFogColor, uFogRange                  int32
-	uDetailBias                                        int32
 	uClipPlane                                         int32
 	uOpacity                                           int32
 	uCorpseFade                                        int32
@@ -208,7 +207,7 @@ func skinProgram(p, palette uint32) *Skinner {
 	u := func(n string) int32 { return gl.GetUniformLocation(p, gl.Str(n+"\x00")) }
 	return &Skinner{prog: p, uCrowdBase: u("crowdBase"), uCrowdDrawOffset: u("drawOffset"), palette: palette, uBoneCount: u("boneCount"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"),
 		uLight: u("lightDir"), uAmb: u("ambient"), uMode: u("mode"), uRef: u("alphaRef"),
-		uDetailBias: u("detailBias"), uFogColor: u("fogColor"), uFogRange: u("fogRange"), uClipPlane: u("clipPlane"), uOpacity: u("actorOpacity"), uCorpseFade: u("corpseFade")}
+		uFogColor: u("fogColor"), uFogRange: u("fogRange"), uClipPlane: u("clipPlane"), uOpacity: u("actorOpacity"), uCorpseFade: u("corpseFade")}
 }
 
 // Begin binds the program with the scene's camera, light and fog.
@@ -232,7 +231,6 @@ func (k *Skinner) Begin(s *Scene3D, ambient float32) {
 	gl.Uniform1f(k.uAmb, ambient)
 	gl.Uniform3f(k.uFogColor, s.FogColor[0], s.FogColor[1], s.FogColor[2])
 	gl.Uniform2f(k.uFogRange, s.FogStart, s.FogEnd)
-	gl.Uniform1f(k.uDetailBias, s.DetailBias)
 	// Native skin uses material/actor opacity, not DDS alpha, after the
 	// alpha-test decision. Low-alpha shoulder textures must still write an
 	// opaque surface into offscreen world and portrait buffers.

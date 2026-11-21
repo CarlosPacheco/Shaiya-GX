@@ -212,7 +212,6 @@ func (b *MapBatch) drawIndirect(s *Scene3D, p *mapPipeline) {
 	gl.Uniform1f(2, s.Ambient)
 	gl.Uniform3fv(3, 1, &s.FogColor[0])
 	gl.Uniform2f(4, s.FogStart, s.FogEnd)
-	gl.Uniform1f(5, s.DetailBias)
 	gl.Disable(gl.BLEND)
 	gl.BindVertexArray(b.vao)
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, b.commands.id)
@@ -326,7 +325,6 @@ const mapFS = `#version 450 core
 #extension GL_ARB_bindless_texture : require
 layout(location=3) uniform vec3 fogColor;
 layout(location=4) uniform vec2 fogRange;
-layout(location=5) uniform float detailBias;
 layout(std430,binding=3) readonly buffer Materials { uint data[]; };
 in vec2 vUV, vUV2;
 in float vDepth, vDiffuse;
@@ -334,10 +332,10 @@ flat in int material;
 out vec4 frag;
 void main() {
  int at=material*5;
- vec4 c=texture(sampler2D(uvec2(data[at],data[at+1])),vUV,detailBias);
+ vec4 c=texture(sampler2D(uvec2(data[at],data[at+1])),vUV);
  if (c.a <= uintBitsToFloat(data[at+4])) discard;
  uvec2 light=uvec2(data[at+2],data[at+3]);
- if (any(notEqual(light,uvec2(0)))) c.rgb*=texture(sampler2D(light),vUV2,detailBias).rgb;
+ if (any(notEqual(light,uvec2(0)))) c.rgb*=texture(sampler2D(light),vUV2).rgb;
  else c.rgb*=vDiffuse;
  if (fogRange.y > fogRange.x) {
   float f=clamp((fogRange.y-vDepth)/(fogRange.y-fogRange.x),0.0,1.0);

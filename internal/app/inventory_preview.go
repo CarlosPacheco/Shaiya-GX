@@ -61,7 +61,7 @@ func (a *App) actorPreviewScene() render.Scene3D {
 	s := *a.scene3d
 	s.Shadow = false
 	s.Occlusion = nil
-	s.DetailBias = 0
+	s.GeometryReduction = 0
 	s.ClipPlane = [4]float32{}
 	s.ReverseDepth = false
 	s.WaterReflection = nil

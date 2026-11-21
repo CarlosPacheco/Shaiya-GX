@@ -470,6 +470,11 @@ func (m *GameMenu) Draw(s *render.Sprites, f *Font, w, h int, solid ...*render.T
 		if len(solid) > 0 {
 			blank = solid[0]
 		}
+		if blank != nil {
+			s.Draw(blank, float32(x+29), float32(y+250), 109, 18, 0, 0, 1, 1, [4]float32{.045, .045, .04, 1})
+			f.Draw(s, "Geometry Quality", x+31, y+251, white, 105)
+		}
+		f.Draw(s, [...]string{"Low", "Medium", "High"}[m.Settings.Details], x+224, y+251, white, 56)
 		m.drawAntialias(s, f, blank, x, y)
 	case MenuKeys:
 		keys := [][2]string{{"A", "D"}, {"W", "S"}, {"Q", "E"}, {"Tab", "NumLock"}, {"C", "Space"}, {"T", "I"}, {"K", "B"}, {"U", "G"}, {"O", "M"}, {"", "Esc"}}

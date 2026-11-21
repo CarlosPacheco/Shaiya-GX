@@ -109,6 +109,10 @@ func TestClientPerformanceBaseline(t *testing.T) {
 	a.gameMenu.Settings = ui.DefaultClientSettings()
 	switch variant {
 	case "default":
+	case "geometry-medium":
+		a.gameMenu.Settings.Details = 1
+	case "geometry-low":
+		a.gameMenu.Settings.Details = 0
 	case "effects":
 		a.gameMenu.Settings.SkillEffects = true
 	case "no-effects":

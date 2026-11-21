@@ -700,7 +700,7 @@ func (a *App) drawWorldView(w, h int) {
 	s.StaticObjectLOD = true
 	s.ViewportW, s.ViewportH = w, h
 	s.HideWeaponEffects = !a.clientSettings().SkillEffects
-	s.DetailBias = float32(2 - a.clientSettings().Details)
+	s.GeometryReduction = 2 - a.clientSettings().Details
 	s.SetCameraView(eye, target, render.V3{0, 1, 0})
 	aspect := projectionAspect(w, h)
 	distanceScale := []float32{.5, .75, 1}[a.clientSettings().VisualDistance]
@@ -757,8 +757,8 @@ func (a *App) drawWorldView(w, h int) {
 	surfaceVisible, reflectionRegion := v.world.WaterCoverage(s.View, s.Proj, waterEffect && !underwater)
 	waterVisible := waterEffect && surfaceVisible
 	if waterVisible {
-		divisor := waterReflectionDivisor(a.clientSettings().Details)
-		width, height := max(1, w/divisor), max(1, h/divisor)
+		const reflectionDivisor = 2
+		width, height := max(1, w/reflectionDivisor), max(1, h/reflectionDivisor)
 		if v.waterReflection != nil && (v.waterWidth != width || v.waterHeight != height) {
 			v.waterReflection.Delete()
 			v.waterReflection, v.waterFailed = nil, false
