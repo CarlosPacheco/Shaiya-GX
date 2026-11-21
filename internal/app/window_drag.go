@@ -289,7 +289,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.warehouseOpen() {
 		x, y := a.bankUI.Origin(w, h)
-		if start(&a.bankUI.Position, x, y, ui.WarehouseWidth, ui.WarehouseHeight, 75, 226) {
+		if startFrame(&a.bankUI.Position, x, y, ui.WarehouseWidth, ui.WarehouseHeight, func() bool { return a.bankUI.FreeAt(in.MouseX, in.MouseY, w, h) }) {
 			return true
 		}
 		if pointInside(in, x, y, ui.WarehouseWidth, ui.WarehouseHeight) {

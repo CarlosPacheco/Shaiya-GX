@@ -93,3 +93,16 @@ func (v *Warehouse) Draw(s *render.Sprites, w, h, page int, portrait *render.Tex
 	v.close.OriginX, v.close.OriginY = x, y
 	v.close.Draw(s)
 }
+
+// FreeAt reports whether a press at the absolute point is empty frame
+// background (0x45fc50 drags the whole frame after cells, tabs and close).
+func (v *Warehouse) FreeAt(mx, my, w, h int) bool {
+	x, y := v.Origin(w, h)
+	rx, ry := mx-x, my-y
+	for page := 0; page < 6; page++ {
+		if _, ok := WarehouseHit(rx, ry, page); ok {
+			return false
+		}
+	}
+	return WarehouseTab(rx, ry) < 0 && !(rx >= 309 && rx < 331 && ry >= 5 && ry < 27)
+}
