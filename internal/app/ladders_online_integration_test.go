@@ -79,7 +79,12 @@ func TestLaddersAgainstIsolatedGX(t *testing.T) {
 	if v.pos[1] > held-.3 {
 		t.Fatal("did not descend", v.pos, held)
 	}
-	step('W', 6*time.Second)
+	remaining := max(0, l.Top[1]-v.pos[1])
+	climbTime := time.Duration(float64(remaining/mapgeometry.LadderSpeed(v.ladder.Tier)) * float64(time.Second))
+	deadline := time.Now().Add(climbTime + 3*time.Second)
+	for (v.ladder.Active || v.ladderFinishing || st.Self.ClimbMode != 0) && time.Now().Before(deadline) {
+		step('W', 100*time.Millisecond)
+	}
 	if v.ladder.Active || v.ladderFinishing || st.Self.ClimbMode != 0 || !v.world.PlayerSupported(v.pos) || v.pos[1] < start+8 {
 		t.Fatal("did not land above", v.pos, st.Self.ClimbMode)
 	}
