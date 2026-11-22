@@ -17,7 +17,7 @@ func NewLoadingScreen(t Textures) *LoadingScreen {
 	l.light, _ = t.Interface("loadbar_light.png")
 	return l
 }
-func (l *LoadingScreen) Draw(s *render.Sprites, f *Font, solid *render.Texture, w, h int, progress float32, status string) {
+func (l *LoadingScreen) Draw(s *render.Sprites, f *Font, solid *render.Texture, w, h int, progress float32, tip string) {
 	white := [4]float32{1, 1, 1, 1}
 	s.Draw(solid, 0, 0, float32(w), float32(h), 0, 0, 1, 1, [4]float32{.02, .02, .025, 1})
 	if l.art != nil {
@@ -46,5 +46,11 @@ func (l *LoadingScreen) Draw(s *render.Sprites, f *Font, solid *render.Texture, 
 	if p > 0 {
 		draw(l.light, 58+430*p-20, 31+9-26.5, 40, 53, 1)
 	}
-	f.DrawOutlined(s, status, int(x+276*scale)-f.Width(status)/2, int(y+68*scale), [4]float32{.98, .93, .8, 1})
+	if tip != "" {
+		center := w / 2
+		textY := int(y + 68*scale)
+		for i, line := range wrapLines(f, tip, max(1, w-32)) {
+			f.DrawOutlined(s, line, center-f.Width(line)/2, textY+i*f.Height, [4]float32{.98, .93, .8, 1})
+		}
+	}
 }

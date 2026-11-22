@@ -248,3 +248,18 @@ The tool copies known names for installed numeric WLD maps and adds `Map N`
 for unused slots. It removes the old map-name rows and preserves other entries,
 including previously configured names in the new range. To name a future map, edit
 or add its message in the same UTF-16LE format, then restart the client.
+
+## Loading tips
+
+Edit `data/Tip.INI` beside `sysmsg-uni.txt` in UTF-8. Assign one message to
+each unique key under `[Tips]`.
+
+```ini
+[Tips]
+1=Press U to open your quest journal.
+2=Use the mouse wheel to zoom the camera in or out.
+```
+
+Each loading screen randomly selects one nonempty message and keeps it
+visible until loading finishes. An empty or missing file leaves the progress
+bar without text. Restart the client after editing the file.

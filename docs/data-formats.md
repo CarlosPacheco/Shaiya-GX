@@ -429,3 +429,18 @@ for cue in ch_levup001 ui_skillnew001; do
         ffmpeg -n -i pipe:0 -ar 44100 -c:a libvorbis -q:a 6 "$GX_DATA_DIR/Sound/$cue.ogg"
 done
 ```
+
+## Loading tips
+
+Edit `data/Tip.INI` beside `sysmsg-uni.txt` in UTF-8. Assign one message to
+each unique key under `[Tips]`.
+
+```ini
+[Tips]
+1=Press U to open your quest journal.
+2=Use the mouse wheel to zoom the camera in or out.
+```
+
+Each loading screen randomly selects one nonempty message and keeps it
+visible until loading finishes. An empty or missing file leaves the progress
+bar without text. Restart the client after editing the file.

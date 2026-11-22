@@ -1,8 +1,14 @@
 package app
 
 import (
-	"fmt"
+	"errors"
+	"log"
+	"math/rand/v2"
+	"strings"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
+	"github.com/Spelunkern/Shaiya-GX/internal/gameini"
 )
 
 type mapLoading struct {
@@ -10,6 +16,41 @@ type mapLoading struct {
 	selection                         bool
 	mapID                             uint16
 	progress                          float32
+	tip                               string
+}
+
+func (a *App) beginMapLoading(mapID uint16, selection bool) {
+	a.loading = mapLoading{active: true, selection: selection, mapID: mapID, tip: a.randomLoadingTip()}
+}
+
+func (a *App) randomLoadingTip() string {
+	const name = "Tip.INI"
+	if a.arc == nil {
+		return ""
+	}
+	raw, err := a.arc.ReadFile(name)
+	if errors.Is(err, archive.ErrNotFound) {
+		return ""
+	}
+	if err != nil {
+		log.Printf("%s: %v", name, err)
+		return ""
+	}
+	config, err := gameini.Parse(raw)
+	if err != nil {
+		log.Printf("%s: %v", name, err)
+		return ""
+	}
+	var tips []string
+	for _, tip := range config["TIPS"] {
+		if strings.TrimSpace(tip) != "" {
+			tips = append(tips, tip)
+		}
+	}
+	if len(tips) == 0 {
+		return ""
+	}
+	return tips[rand.IntN(len(tips))]
 }
 
 // Present the overlay before synchronous map setup, then keep it up until
@@ -27,7 +68,7 @@ func (a *App) updateMapLoading() bool {
 		}
 		if _, loaded := a.worlds[key]; !loaded {
 			if !a.loading.active || !a.loading.selection {
-				a.loading = mapLoading{active: true, selection: true}
+				a.beginMapLoading(0, true)
 			}
 			if !a.loading.presented {
 				return true
@@ -46,12 +87,12 @@ func (a *App) updateMapLoading() bool {
 	}
 	needsWorld := phase == game.PhaseInWorld && (a.screen != screenWorld || a.wv == nil || a.wv.mapID != a.state.MapID)
 	if !a.loading.active && (phase == game.PhaseLoading || needsWorld) {
-		a.loading = mapLoading{active: true, mapID: a.state.MapID}
+		a.beginMapLoading(a.state.MapID, false)
 		a.menuOpen = false
 	}
 	// A transfer received during initial streaming supersedes the old plan.
 	if a.loading.active && a.loading.started && a.wv != nil && a.wv.mapID != a.state.MapID {
-		a.loading = mapLoading{active: true, mapID: a.state.MapID}
+		a.beginMapLoading(a.state.MapID, false)
 	}
 	l := &a.loading
 	if !l.active {
@@ -79,17 +120,12 @@ func (a *App) updateMapLoading() bool {
 }
 func (a *App) drawMapLoading(w, h int) {
 	l := &a.loading
-	status := "Connecting to the map..."
-	if l.selection {
-		status = "Loading character selection..."
-	}
 	if l.started && a.wv != nil && a.wv.world != nil {
 		l.progress = max(l.progress, .1+.9*a.wv.world.LoadProgress())
-		status = fmt.Sprintf("Loading map %d... %d%%", l.mapID, int(l.progress*100))
 		l.drawn = true
 	}
 	a.sprites.Begin(w, h)
-	a.loadingScreen.Draw(a.sprites, a.font, a.white, w, h, l.progress, status)
+	a.loadingScreen.Draw(a.sprites, a.font, a.white, w, h, l.progress, l.tip)
 	a.sprites.Flush()
 	l.presented = true
 }
