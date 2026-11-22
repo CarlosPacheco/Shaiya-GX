@@ -45,6 +45,7 @@ func TestGroundModelPickupAgainstRapture(t *testing.T) {
 	}
 	defer a.Close()
 	a.state, a.world = st, w
+	a.physW, a.physH = win.GetFramebufferSize()
 	a.wv = &worldView{pos: render.V3{st.Self.X, st.Self.Y, st.Self.Z}}
 	var key [2]uint8
 	var item proto.InventoryItem

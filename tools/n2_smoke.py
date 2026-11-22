@@ -154,7 +154,8 @@ with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
     if n==0:
      c.execute('INSERT INTO PS_GameData_CharSkills(CharID,SkillID,SkillLevel,Number,Delay,Del) VALUES(?,114,1,40,0,0)',(char_id,))
      item_uid=c.execute('SELECT COALESCE(MAX(ItemUID),0)+1 FROM PS_GameData_CharItems').fetchone()[0]
-     for item_type,type_id,bag,slot,count,gem in ((21,138,0,4,1,106),(25,177,1,19,3,0)):
+     # Sprinter requires a weapon. Equip a Short Blade alongside the Sonic boots.
+     for item_type,type_id,bag,slot,count,gem in ((21,138,0,4,1,106),(9,1,0,5,1,0),(25,177,1,19,3,0)):
       c.execute("INSERT INTO PS_GameData_CharItems(CharID,ItemID,ItemUID,Type,TypeID,Bag,Slot,Quality,Gem1,Gem2,Gem3,Gem4,Gem5,Gem6,Craftname,Count,Maketime,Maketype,Del) VALUES(?,?,?,?,?,?,?,0,?,0,0,0,0,0,'',?,datetime('now'),'N2',0)",(char_id,item_type*1000+type_id,item_uid,item_type,type_id,bag,slot,gem,count));item_uid+=1
   subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestPlayerSpeedAgainstIsolatedGX$','-count=1','-v'],cwd=client,env=dict(env,SHAIYA_TEST_PLAYER_SPEED='1'),check=True,timeout=90)
   # Attack cadence uses opposing factions, native Flash/mastery/ring and haste.

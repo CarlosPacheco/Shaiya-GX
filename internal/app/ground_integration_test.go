@@ -41,6 +41,7 @@ func TestGroundModelsOriginalAssetsGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer a.Close()
+	a.physW, a.physH = win.GetFramebufferSize()
 	a.state, a.wv = game.New(), &worldView{}
 	for i, typ := range []uint8{1, 22, 25, 26} {
 		for n := 0; n < 4; n++ {
