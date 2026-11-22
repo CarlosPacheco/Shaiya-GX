@@ -70,3 +70,18 @@ func TestSpinRepeatsThenExpiresAndCanBeReplaced(t *testing.T) {
 		t.Fatal("spin did not expire")
 	}
 }
+
+func TestLateSkillResultDoesNotCutTheJumpClip(t *testing.T) {
+	jump := &Character{locked: true, actionSlot: 8, clip: &Clip{ani: &model.ANI{Start: 0, End: 24}}}
+	jump.ReleaseActionExceptJump()
+	if !jump.PlayingAction(8) {
+		t.Fatal("a rejected skill released the jump clip")
+	}
+	pose := &Character{locked: true, actionSlot: 20, clip: &Clip{ani: &model.ANI{Start: 0, End: 24}}}
+	pose.ReleaseActionExceptJump()
+	if pose.ActionActive() {
+		t.Fatal("a skill pose must still be released")
+	}
+	var none *Character
+	none.ReleaseActionExceptJump()
+}

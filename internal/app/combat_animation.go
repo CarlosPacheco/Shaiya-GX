@@ -88,7 +88,7 @@ func (a *App) confirmedAnimation(p []byte) {
 			if current {
 				v.requestedSkill = nil
 				if r.Result > 4 || r.Result == 3 && r.Target == 0 {
-					v.self.ReleaseAction()
+					v.releaseSkillAction()
 				}
 			}
 			return
@@ -103,7 +103,7 @@ func (a *App) confirmedAnimation(p []byte) {
 		}
 		if predicted {
 			if r.Result > 4 || r.Result == 3 && r.Target == 0 {
-				a.wv.self.ReleaseAction()
+				a.wv.releaseSkillAction()
 			} else {
 				return
 			}

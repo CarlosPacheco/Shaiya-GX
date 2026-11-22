@@ -552,6 +552,14 @@ func (c *Character) ReleaseAction() {
 	}
 }
 
+// ReleaseActionExceptJump releases a pose that a late network result made
+// obsolete. The jump clip (ALT slot 8) always runs to its end.
+func (c *Character) ReleaseActionExceptJump() {
+	if c != nil && !c.PlayingAction(8) {
+		c.ReleaseAction()
+	}
+}
+
 func (c *Character) PlayCast(ready int, seconds float32) bool {
 	if seconds < 0 || math.IsNaN(float64(seconds)) || !c.PlayAction(ready, false) {
 		return false

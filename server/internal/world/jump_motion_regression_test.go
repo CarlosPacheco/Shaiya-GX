@@ -164,3 +164,44 @@ func TestCeilingEndsTheImpulseAndRestartsTheFall(t *testing.T) {
 		t.Fatal("the jump never reached the ceiling", s.movement.pos)
 	}
 }
+
+// A running jump up a slope keeps its impulse. Terrain that rises under the
+// jumper is floor contact, not a ceiling, and must not end the jump: a server
+// that landed it ~100 ms in rewound the client and cut the jump short.
+func TestRunningJumpUphillKeepsItsImpulse(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	g := &mapgeometry.Geometry{MapSize: 128, Heights: make([]uint16, 65*65)}
+	g.Reindex()
+	for z := 0; z < 65; z++ {
+		for x := 0; x < 65; x++ {
+			g.Heights[z*65+x] = uint16(10000 + x*45)
+		}
+	}
+	s.char.PosX, s.char.PosZ = 30, 30
+	s.char.PosY = g.Height(30, 30)
+	s.movement = playerMovement{geometry: g, mapID: s.char.MapID}
+	if err := s.initPlayerMovement(now); err != nil {
+		t.Fatal(err)
+	}
+	slope := (g.Height(31, 30) - g.Height(30, 30))
+	t.Logf("slope %.3f height per unit", slope)
+	if !s.startMovementJump(now) {
+		t.Fatal("jump refused")
+	}
+	// The 10 Hz position samples leave the server up to ~100 ms behind the
+	// client when it accepts the jump.
+	x, fall, y := float32(30)+.7, float32(-2.98), s.movement.pos[1]
+	for frame := 1; frame <= 24; frame++ { // the first 400 ms, 60 Hz client frames
+		dt := float32(1.0 / 60)
+		x += 7 * dt
+		fall = max(float32(-20), fall*(1+2.8*dt))
+		y = max(y+(9+fall)*dt, g.Height(x, 30))
+		now = now.Add(time.Second / 60)
+		if frame%6 == 0 {
+			_, reason := s.validatePlayerMovement(x, y, 30, 0x84, 0, now)
+			if !s.movement.jumping {
+				t.Fatalf("frame %d: server ended the jump on an uphill slope (reason=%q) y=%.3f server=%v", frame, reason, y, s.movement.pos)
+			}
+		}
+	}
+}

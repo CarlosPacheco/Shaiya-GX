@@ -185,8 +185,12 @@ func (s *Session) advancePlayerVertical(now time.Time) {
 				hit = true
 			}
 		}
+		// Only a vertical move that came up short is a ceiling. Terrain that
+		// rises under a running jumper pushes it up (it reaches or exceeds the
+		// requested height) and must not end the impulse.
+		ceiling := hit && dy > 0 && next[1]-m.pos[1] < dy-1e-4
 		m.pos = next
-		if hit {
+		if hit && (dy <= 0 || ceiling) {
 			if dy > 0 {
 				// A ceiling ends the impulse; the fall restarts at -2.98 (0x43bfa0).
 				m.jumping, m.fall = false, -2.98

@@ -111,7 +111,7 @@ func (a *App) rejectInstantPrediction(id uint16) {
 		if p.key.ID == id {
 			_, current := a.takeInstantPrediction(proto.SkillResult{Source: a.state.SelfID, ID: id, Level: p.key.Level, Result: 5})
 			if current {
-				a.wv.self.ReleaseAction()
+				a.wv.releaseSkillAction()
 				a.wv.requestedSkill = nil
 			}
 			return
