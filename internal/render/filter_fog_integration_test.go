@@ -103,14 +103,16 @@ func TestNativeTextureFogAndAsyncMetricsGL(t *testing.T) {
 
 	gl.Flush()
 	deadline := time.Now().Add(2 * time.Second)
-	for meter.Milliseconds() == 0 && time.Now().Before(deadline) {
+	for meter.samples < 2 && time.Now().Before(deadline) {
 		meter.Begin()
-		meter.End()
-		gl.Flush()
 		time.Sleep(time.Millisecond)
 	}
-	if meter.Milliseconds() <= 0 {
-		t.Fatal("GPU timing did not resolve asynchronously")
+	if total, count := meter.TakeTimingSamples(); count != 2 || total <= 0 {
+		t.Fatalf("GPU timings did not resolve asynchronously: got %d samples totaling %g ms", count, total)
+	}
+	meter.Begin()
+	if total, count := meter.TakeTimingSamples(); count != 0 || total != 0 {
+		t.Fatalf("GPU timings replayed: got %d samples totaling %g ms", count, total)
 	}
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("fog/filter/metrics GL error %#x", code)
