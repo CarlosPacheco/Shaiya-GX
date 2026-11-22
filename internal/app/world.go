@@ -80,6 +80,7 @@ type worldView struct {
 	approachTarget              uint32
 	worldPressActed             bool    // the world already acted on this left press
 	stepDT                      float64 // duration of the walking step being solved
+	attackSent                  bool    // a basic attack request may still be running on the server
 	engagedID                   uint32  // target of the last basic attack sent by the chase
 	engagedAt                   float64 // when it was sent
 	approachSkill               []byte
@@ -365,6 +366,12 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		v.autoRun = false
 	} else if in.HasKey(platform.KeyNumLock) {
 		v.autoRun = !v.autoRun
+	}
+	if !in.SuppressAutoRun && (in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeySpace) || in.HasKey(platform.KeyNumLock) || v.autoRun) {
+		// Explicit movement abandons the attack action at once (0x43bfa0).
+		if !a.abandonAttack() {
+			return
+		}
 	}
 	intent := characterControls(in, v.autoRun)
 	if !a.updateActionApproach(in) {

@@ -101,6 +101,12 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 				return
 			}
 		}
+		if target != a.state.Target && a.wv.engagedID != target {
+			// Selecting something else leaves the previous attack action.
+			if !a.abandonAttack() {
+				return
+			}
+		}
 		if e := a.state.Entities[target]; e != nil && e.Kind == game.KindUser && target != a.state.Target {
 			if old := a.state.Entities[a.state.Target]; old != nil && old.Kind == game.KindMob {
 				if err := a.world.Send(proto.StopAttackPacket()); err != nil {
@@ -237,6 +243,29 @@ func (a *App) keepChasing(id uint32) {
 	v.approachTarget, v.approachLoot, v.approachNPC = id, false, false
 	v.approachSkill = nil
 	v.engagedID, v.engagedAt = id, a.clock
+	v.attackSent = true
+}
+
+// abandonAttack drops the attack action: the server keeps swinging at its
+// target until told otherwise, and the swing pause would swallow the
+// movement keys that are abandoning it.
+func (a *App) abandonAttack() bool {
+	v := a.wv
+	if !v.attackSent && v.engagedID == 0 {
+		return true
+	}
+	if v.attackSent && a.world != nil {
+		if err := a.world.Send(proto.StopAttackPacket()); err != nil {
+			a.backToLogin("Unable to stop attack.")
+			return false
+		}
+	}
+	v.attackSent, v.engagedID = false, 0
+	v.attackMoveUntil, v.attackPose = 0, false
+	if v.approachTarget != 0 && !v.approachLoot && !v.approachNPC {
+		v.approachTarget, v.approachSkill = 0, nil
+	}
+	return true
 }
 
 func (a *App) drawCombat(w, h int) {

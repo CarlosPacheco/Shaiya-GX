@@ -45,6 +45,9 @@ var restoreConsumablesMigration string
 //go:embed remove_growth_modes.sql
 var removeGrowthModesMigration string
 
+//go:embed consumable_stacks.sql
+var consumableStacksMigration string
+
 var migrations = []migration{
 	{1, "atomic_session_handoff", `CREATE TABLE IF NOT EXISTS GX_SessionHandoff(UserUID INTEGER PRIMARY KEY,Identity BLOB NOT NULL,AESMaterial BLOB NOT NULL,SessionID INTEGER NOT NULL,ExpiresAt INTEGER NOT NULL)`},
 	{2, "indexed_account_lookup", `CREATE INDEX IF NOT EXISTS GX_Users_UserID ON PS_UserData_Users_Master(UserID)`},
@@ -203,6 +206,7 @@ var migrations = []migration{
 	{33, "explicit_experience_and_combat_chance_percentages", percentageSkillsMigration},
 	{34, "repair_consumable_links_and_retire_resurrection_items", restoreConsumablesMigration},
 	{35, "remove_growth_modes", removeGrowthModesMigration},
+	{36, "stack_all_consumables", consumableStacksMigration},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

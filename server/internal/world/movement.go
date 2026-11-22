@@ -241,16 +241,25 @@ func isTownCommand(message string) bool {
 // its map (also the escape hatch while dead).
 func (s *Session) executeTown() {
 	ch := s.char
-	area, ok := FindNearestSpawnArea(ch.MapID, s.faction, ch.PosX, ch.PosZ)
-	if !ok {
-		s.log.Printf("GX Server World town command found no spawn area map=%d faction=%d", ch.MapID, s.faction)
-		s.send(buildChatNormal(ch.ID, "No town spawn area was found for this map/faction."), "0x1101 town command result")
+	if area, ok := FindNearestSpawnArea(ch.MapID, s.faction, ch.PosX, ch.PosZ); ok {
+		x, y, z := area.RandomPoint()
+		s.applyTeleport(ch.MapID, x, y, z, "town teleport")
+		s.send(buildChatNormal(ch.ID, fmt.Sprintf("Returned to nearest town spawn (%.2f, %.2f, %.2f).", ch.PosX, ch.PosY, ch.PosZ)),
+			"0x1101 town command result")
 		return
 	}
-	x, y, z := area.RandomPoint()
-	s.applyTeleport(ch.MapID, x, y, z, "town teleport")
-	s.send(buildChatNormal(ch.ID, fmt.Sprintf("Returned to nearest town spawn (%.2f, %.2f, %.2f).", ch.PosX, ch.PosY, ch.PosZ)),
-		"0x1101 town command result")
+	// Dungeons usually have no spawn area of their own: their configured
+	// rebirth point lives on another map.
+	if p, ok := rebirthPosition(ch.MapID, s.faction); ok && mapLevelAllowed(p.MapID, ch.Level, s.isAdmin) {
+		if size, ok := mapSize(p.MapID); ok && p.X >= 0 && p.X < size && p.Z >= 0 && p.Z < size {
+			s.applyTeleport(p.MapID, p.X, p.Y+0.9, p.Z, "town teleport")
+			s.send(buildChatNormal(ch.ID, fmt.Sprintf("Returned to town (map %d: %.2f, %.2f, %.2f).", ch.MapID, ch.PosX, ch.PosY, ch.PosZ)),
+				"0x1101 town command result")
+			return
+		}
+	}
+	s.log.Printf("GX Server World town command found no spawn area or rebirth point map=%d faction=%d", ch.MapID, s.faction)
+	s.send(buildChatNormal(ch.ID, "No town spawn area was found for this map/faction."), "0x1101 town command result")
 }
 
 // deathExpPercent is CUser::Death's drop without protection (deathExpLoss).
