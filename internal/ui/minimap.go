@@ -256,7 +256,7 @@ func (m *Minimap) DrawFull(s *render.Sprites, f *Font, image, solid *render.Text
 		}
 		m.drawMarkers(s, markers, view, mapX, mapY, side, 12*scale, false, true)
 	} else {
-		f.Draw(s, "Map image unavailable", int(mapX+12), int(mapY+12), white, 0)
+		f.Draw(s, Tr(12371), int(mapX+12), int(mapY+12), white, 0)
 	}
 	s.Draw(m.top, float32(x), float32(y), 544*scale, 43*scale, 0, 0, 544.0/1024, 43.0/64, white)
 	s.Draw(m.bottom, float32(x), mapY+side, 544*scale, 24*scale, 0, 0, 544.0/1024, 24.0/32, white)
@@ -277,7 +277,7 @@ func (m *Minimap) DrawFull(s *render.Sprites, f *Font, image, solid *render.Text
 	}
 	label := m.MapName
 	if label == "" {
-		label = fmt.Sprintf("Map %d", mapID)
+		label = Trf(12369, mapID)
 	}
 	f.Draw(s, label, x+int(24*scale), y+int(14*scale), white, max(1, int(450*scale)))
 }

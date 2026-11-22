@@ -29,7 +29,7 @@ func (a *App) autoAttackNearest() bool {
 	}
 	if target != a.state.Target && a.state.Entities[target].Kind == game.KindMob {
 		if err := a.world.Send(proto.TargetMobPacket(target)); err != nil {
-			a.backToLogin("Unable to select target.")
+			a.backToLoginID(12003)
 			return false
 		}
 	}
@@ -161,7 +161,7 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 	}
 	if loot {
 		if err := a.world.Send(proto.PickupPacket(id)); err != nil {
-			a.backToLogin("Unable to request item pickup.")
+			a.backToLoginID(12004)
 			return false
 		}
 		return true
@@ -187,7 +187,7 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 			return true
 		}
 		if err := a.world.Send(packet); err != nil {
-			a.backToLogin("Unable to cast after approaching target.")
+			a.backToLoginID(12005)
 			return false
 		}
 		a.requestedSkillPresentation(packet)

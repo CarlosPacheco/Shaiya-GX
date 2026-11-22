@@ -6,6 +6,7 @@ package app
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -122,6 +123,7 @@ type App struct {
 	summonRune                          summonRuneView
 	summonMessage                       *ui.Message
 	gemConfirm                          *ui.Message
+	appearanceConfirm                   *ui.Message
 	party                               partyView
 	partyUI                             *ui.PartyPanel
 	partyMessage                        *ui.Message
@@ -196,6 +198,7 @@ type App struct {
 	aaContext                           [4]int
 	msaaFailed, fxaaFailed              bool
 	frameWidth, frameHeight             int
+	physW, physH                        int // framebuffer size; the UI may work in a smaller-scale virtual window
 	worlds                              map[string]*scene.World
 	skinner                             *render.Skinner
 	items                               map[sdata.ItemKey]*sdata.Item
@@ -215,6 +218,8 @@ type App struct {
 	dungeonMinimaps                     dungeonMinimapData
 	hoverPicking                        bool
 	hoveredMob                          uint32
+	attackCursorUntil                   time.Time
+	attackCursorX, attackCursorY        int
 	hoveredMobX, hoveredMobY            int
 	lastMouseX                          int
 	lastMouseY                          int
@@ -318,6 +323,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	} else {
 		a.msg = text.SysMsg{}
 	}
+	ui.SetText(a.msg.Lookup)
 	if b, err := arc.ReadFile("Filter.INI"); err == nil {
 		a.chatFilter = text.ParseWordFilter(b)
 	}
@@ -476,6 +482,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.blacksmithUI, err = ui.NewBlacksmith(a); err != nil {
 		return nil, err
 	}
+	if a.appearanceConfirm, err = ui.NewMessage(a); err != nil {
+		return nil, err
+	}
 	if a.gemConfirm, err = ui.NewMessage(a); err != nil {
 		return nil, err
 	}
@@ -606,6 +615,17 @@ func (a *App) Update(in *platform.Input, w, h int, dt float64) {
 		a.clock += dt
 		return
 	}
+	// Below the 1024x768 design the whole UI shrinks in proportion: it works in
+	// a virtual window of the design size and the pointer is converted to it.
+	a.physW, a.physH = w, h
+	if scale := a.uiScale(w, h); scale < 1 {
+		virtual := *in
+		virtual.MouseX, virtual.MouseY = int(float64(in.MouseX)/scale), int(float64(in.MouseY)/scale)
+		if a.screen != screenWorld {
+			virtual.MouseDX, virtual.MouseDY = in.MouseDX/scale, in.MouseDY/scale
+		}
+		in, w, h = &virtual, int(math.Round(float64(w)/scale)), int(math.Round(float64(h)/scale))
+	}
 	switch a.screen {
 	case screenLogin:
 		switch a.login.Update(in, w, h, dt) {
@@ -711,6 +731,12 @@ func (a *App) drawFrame(w, h int) {
 		}
 	}
 	uiBefore := render.DrawCalls()
+	a.physW, a.physH = w, h
+	render.SetUIScale(1)
+	if scale := a.uiScale(w, h); scale < 1 {
+		render.SetUIScale(scale)
+		w, h = int(math.Round(float64(w)/scale)), int(math.Round(float64(h)/scale))
+	}
 	a.sprites.Begin(w, h)
 	if a.screen == screenWorld {
 		a.drawSunFlare(w, h)
@@ -782,14 +808,14 @@ func (a *App) submitLogin() {
 	if id == "" || pw == "" || a.login.Busy {
 		return
 	}
-	a.login.Busy, a.login.Message = true, "Connecting..."
+	a.login.Busy, a.login.Message = true, a.tr(326)
 	a.saveID()
 	go func() {
 		l, err := session.Dial(a.cfg.LoginAddr, id, pw)
 		a.post(func() {
 			a.login.Busy = false
 			if err != nil {
-				a.login.Message = loginMessage(err)
+				a.login.Message = a.loginMessage(err)
 				return
 			}
 			a.sess = l
@@ -804,12 +830,20 @@ func (a *App) submitLogin() {
 }
 
 // NO VERIFICADO: the original maps each 0xA102 code to its own message.
-func loginMessage(err error) string {
+func (a *App) loginMessage(err error) string {
 	if le, ok := err.(session.LoginError); ok {
-		return fmt.Sprintf("Login failed (code %d).", le.Code)
+		return a.msg.Format(12277, map[string]string{"v": fmt.Sprint(le.Code)})
 	}
-	return "Unable to connect to the login server."
+	return a.tr(10019)
 }
+
+// backToLoginID is backToLogin with a SysMsg id (see tr).
+func (a *App) backToLoginID(id int) { a.backToLogin(a.tr(id)) }
+
+// tr is the SysMsg text for id: sysmsg-uni.txt first, then the embedded GX rows.
+// User-visible text lives in those tables, never in code, so a language is
+// one table.
+func (a *App) tr(id int) string { return a.msg.Lookup(id) }
 
 func (a *App) backToLogin(msg string) {
 	a.loading = mapLoading{}
@@ -931,7 +965,7 @@ func (a *App) connectWorld() {
 		a.post(func() {
 			a.servers.Busy = false
 			if err != nil {
-				a.backToLogin("Unable to connect to the game server.")
+				a.backToLoginID(12007)
 				return
 			}
 			a.world, a.state = w, game.New()
@@ -979,3 +1013,6 @@ func (a *App) saveID() {
 func (a *App) worldUIHidden() bool {
 	return a.uiHidden && a.screen == screenWorld && a.state != nil && !a.state.Self.Dead
 }
+
+// uiScale is ui.UIScale: windows smaller than 1024x768 draw the UI shrunk.
+func (a *App) uiScale(w, h int) float64 { return float64(ui.UIScale(w, h)) }

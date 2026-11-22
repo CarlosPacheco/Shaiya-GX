@@ -23,7 +23,7 @@ func (a *App) sendCompose(runeKey, itemKey [2]uint8) bool {
 	a.compose = composeView{rune: runeKey, item: itemKey, pending: true}
 	a.shop.pending, a.shop.deadline = true, a.clock+10
 	if err := a.world.Send(proto.ComposePacket(runeKey[0], runeKey[1], itemKey[0], itemKey[1])); err != nil {
-		a.backToLogin("Unable to request recreation.")
+		a.backToLoginID(12035)
 		return false
 	}
 	return true
@@ -46,7 +46,7 @@ func (a *App) confirmedCompose(p []byte) {
 		// The rune consumption packet follows 0x0806. Its ordered self-move
 		// confirms the final slot on success as well as on refusal.
 		if err := a.world.Send(proto.ItemMovePacket(v.rune[0], v.rune[1], v.rune[0], v.rune[1])); err != nil {
-			a.backToLogin("Unable to refresh recreation rune.")
+			a.backToLoginID(12036)
 		}
 	case proto.ItemBagToBag:
 		if v.refreshing && v.refresh.acknowledge(p) && len(v.refresh.pending) == 0 {
@@ -54,7 +54,7 @@ func (a *App) confirmedCompose(p []byte) {
 			a.syncBlacksmithItems()
 			a.forgeResult(v.success)
 			if !v.success {
-				a.questMessage("Recreation was refused.")
+				a.questMessageID(12037)
 			}
 		}
 	}

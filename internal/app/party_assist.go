@@ -36,7 +36,7 @@ func (a *App) selectGroupTarget(id uint32) {
 	if a.world != nil {
 		if e := a.state.Entities[id]; e != nil && e.Kind == game.KindMob {
 			if err := a.world.Send(proto.TargetMobPacket(id)); err != nil {
-				a.backToLogin("Unable to select target.")
+				a.backToLoginID(12003)
 				return
 			}
 		}
@@ -58,7 +58,7 @@ func (a *App) publishPartySelection() {
 		return
 	}
 	if err := a.world.Send(proto.PartyAssistPacket(proto.PartyAssistSelection, id)); err != nil {
-		a.backToLogin("Unable to share the selected target.")
+		a.backToLoginID(12158)
 		return
 	}
 	a.wv.partySelection = id
@@ -70,7 +70,7 @@ func (a *App) requestPartyAssist() {
 		return
 	}
 	if err := a.world.Send(proto.PartyAssistPacket(proto.PartyAssistRequest, id)); err != nil {
-		a.backToLogin("Unable to assist the selected party member.")
+		a.backToLoginID(12159)
 	}
 }
 

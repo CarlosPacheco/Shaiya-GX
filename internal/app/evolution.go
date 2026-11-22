@@ -114,7 +114,7 @@ func (a *App) sendEvolutionCast(packet []byte, target uint32) bool {
 		return false
 	}
 	if err := a.world.Send(packet); err != nil {
-		a.backToLogin("Unable to cast monster skill.")
+		a.backToLoginID(12061)
 		return false
 	}
 	return true

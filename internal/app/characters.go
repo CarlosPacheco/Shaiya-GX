@@ -18,7 +18,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 	}
 	a.clock += dt
 	if a.account.op != 0 && a.clock >= a.account.deadline {
-		a.backToLogin("Character request timed out. Reconnect to refresh the roster.")
+		a.backToLoginID(12015)
 		return
 	}
 	if a.updateAccountMessage(in, w, h) {
@@ -48,7 +48,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 		a.screen = screenCharacters
 		if a.creating {
 			if a.create.Busy && a.clock >= a.createDeadline {
-				a.backToLogin("Character creation timed out. Reconnect to refresh the roster.")
+				a.backToLoginID(12016)
 				return
 			}
 			switch a.create.Update(in, w, h) {
@@ -59,7 +59,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 				a.create.Busy = true
 				a.createDeadline = a.clock + 30
 				if err := a.world.Send(proto.CreateCharacterPacket(a.create.Draft)); err != nil {
-					a.backToLogin("Unable to send character creation request.")
+					a.backToLoginID(12017)
 				}
 			case ui.CharExit:
 				a.creating = false
@@ -102,7 +102,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 		}
 	case game.PhaseFaction:
 		if a.factionUI.Busy && a.clock >= a.factionDeadline {
-			a.backToLogin("Faction response timed out.")
+			a.backToLoginID(12018)
 			return
 		}
 		choice := a.factionUI.Update(in, w, h)
@@ -112,7 +112,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 		}
 		if choice >= 0 {
 			if err := a.world.Send(proto.FactionPacket(uint8(choice))); err != nil {
-				a.backToLogin("Unable to select faction.")
+				a.backToLoginID(12019)
 				return
 			}
 			a.factionUI.Busy, a.factionDeadline = true, a.clock+10
@@ -184,11 +184,31 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			return
 		}
 		if a.appearanceEdit != nil {
+			// The window never pauses the game: movement, camera and combat
+			// keep running. It only owns the pointer over itself.
+			over := a.appearanceEdit.confirming || a.appearanceUI.Contains(in.MouseX, in.MouseY, w, h) && !in.MouseLook
 			a.updateAppearanceEditor(in, w, h)
-			if a.state != nil && a.wv != nil && a.world != nil {
-				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
+			if a.state == nil || a.wv == nil || a.world == nil {
+				return
 			}
-			return
+			if a.appearanceEdit != nil && (over || a.windowDrag.position == &a.appearanceUI.Position) {
+				if a.updateWindowDrag(in, w, h) {
+					over = true
+				}
+			}
+			masked := *in
+			masked.Keys = nil
+			for _, k := range in.Keys {
+				if k != platform.KeyEscape {
+					masked.Keys = append(masked.Keys, k)
+				}
+			}
+			if over {
+				masked.Pressed, masked.Clicked, masked.MouseDown = false, false, false
+				masked.RightPressed, masked.RightDown, masked.MiddlePressed = false, false, false
+				masked.Wheel = 0
+			}
+			in = &masked
 		}
 		if a.updateGuildVote(in, w, h) {
 			if a.wv != nil && a.world != nil && a.state != nil {
@@ -409,6 +429,10 @@ func (a *App) drawCharacters(w, h int) {
 		a.drawMinimap(w, h, true)
 		if a.appearanceEdit != nil {
 			a.appearanceUI.Draw(a.sprites, a.font, w, h)
+			a.drawAppearancePreview(w, h)
+			if a.appearanceConfirm != nil {
+				a.appearanceConfirm.Draw(a.sprites, a.font, w, h)
+			}
 		}
 		if a.duel.quantity != nil {
 			a.quantityUI.Draw(a.sprites, a.font)

@@ -106,7 +106,7 @@ func (a *App) drawWorldMap(w, h int) {
 	atlas := &v.atlas
 	a.minimap.MapName = a.msg.Get(0x1530)
 	if a.minimap.MapName == "" {
-		a.minimap.MapName = "World Map"
+		a.minimap.MapName = a.tr(12274)
 	}
 	file := "interface/wm_map.png"
 	if atlas.preview >= 0 {

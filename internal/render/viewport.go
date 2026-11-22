@@ -2,6 +2,11 @@ package render
 
 import "github.com/go-gl/gl/v4.5-core/gl"
 
+var uiPixelScale = 1.0
+
+// SetUIScale tells InViewport how many framebuffer pixels one UI unit is.
+func SetUIScale(k float64) { uiPixelScale = k }
+
 // ClearBackground replaces only the colour buffer and preserves the caller's
 // clear colour; the world depth and later UI passes keep their existing state.
 func ClearBackground(color V3) {
@@ -11,7 +16,15 @@ func ClearBackground(color V3) {
 
 // InViewport draws a 3D UI region without clearing its background or changing
 // the enclosing viewport/scissor. Coordinates are framebuffer pixels from top left.
+//
+// When the UI is drawn in a virtual window (SetUIScale < 1), x, y, w, h and
+// screenHeight are virtual units and are converted to framebuffer pixels.
 func InViewport(x, y, w, h, screenHeight int, draw func()) {
+	if k := uiPixelScale; k != 1 {
+		x0, y0 := int(float64(x)*k+.5), int(float64(y)*k+.5)
+		x1, y1 := int(float64(x+w)*k+.5), int(float64(y+h)*k+.5)
+		x, y, w, h, screenHeight = x0, y0, max(1, x1-x0), max(1, y1-y0), int(float64(screenHeight)*k+.5)
+	}
 	var viewport, scissor [4]int32
 	var clearDepth float64
 	gl.GetIntegerv(gl.VIEWPORT, &viewport[0])

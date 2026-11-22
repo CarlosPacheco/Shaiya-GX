@@ -7,7 +7,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 | Account | Login, server list, faction, character selection/creation and account dialogs | Complete visual comparison and remaining variants |
 | HUD | Player portrait, resources, mob level colours, elemental target icon, selection dots, buffs/debuffs with applicable skill levels | Remaining target states and secondary indicators |
 | Action bars and skills | Three draggable/rotatable bars with five shared shortcut pages, drag and drop, original single-column skill book, confirmed reuse timers and native press feedback | Additional settings and complete state coverage |
-| Inventory | Equipment, bags, drag, left-click use, right-click equipment swaps, tooltips without zero sale prices and larger full-body preview | Remaining contexts and special dialogs |
+| Inventory | Equipment, bags, drag, right-click use and equipment swaps, tooltips without zero sale prices and larger full-body preview | Remaining contexts and special dialogs |
 | Weapon enchantments | Original Weapon.Seff enchantments plus four ITM-selected innate EFT glows, equipped and remote models, both dual bindings | Full visual comparison across animations; see [weapon enchantments](weapon-enchantments.md) |
 | Cloaks | Original PC/CTL/3DC loading, equipment slot 7, all body families, native spring modes and animated attachment pins | Body/ground contact adapter and map wind; full physical parity is not yet claimed. Cape emblems (patterns and colours from the emblem NPC) are drawn over the cloth |
 | Status | Allocation, EXP and current/max HP/MP/SP bars | Native graph and full attribute help |
@@ -171,10 +171,13 @@ All seven `Cursor/01.png` through `07.png` files load from loose data into OS cu
 
 ## Inventory, monster presentation and graphics controls
 
-An ordinary left click requests use of the inventory item. A drag still moves
-items; a release outside its source does not consume it. Right clicking a bag
-item selects its equipment slot and requests the native move/swap, including
-replacement. Accessory pairs choose an empty slot first. Results remain
+Items are used with the **right** button (a deliberate departure from the original,
+which used the left click, to match modern clients): right-clicking a bag item
+requests its use, and an equippable item selects its equipment slot and requests
+the native move/swap, including replacement. A left click only selects, and a drag
+still moves items; a release outside its source does not consume it. The Z/X potion
+bar follows the same rule: right click uses, left click does nothing. The action
+bars keep the original left click (hotkeys are unchanged). Accessory pairs choose an empty slot first. Results remain
 server-authoritative. Provisional inventory instructions/waiting messages are
 removed, and items with no sale value omit that line entirely.
 

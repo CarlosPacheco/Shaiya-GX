@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
@@ -27,19 +26,19 @@ func (a *App) checkPendingActions() bool {
 		deadline float64
 		name     string
 	}{
-		{a.inventory.pending, a.inventory.deadline, "Inventory"},
-		{a.vehicle.pending, a.vehicle.deadline, "Mount"},
-		{a.exchange.mutation != 0, a.exchange.deadline, "Trade"},
-		{a.duel.mutation != 0, a.duel.deadline, "Duel"},
-		{a.guild.createPending, a.guild.createDeadline, "Guild creation"},
-		{a.guild.lifecyclePending, a.guild.lifecycleDeadline, "Guild request"},
-		{a.shop.pending, a.shop.deadline, "Shop"},
-		{a.skills.pending, a.skills.deadline, "Skill"},
-		{a.status.pending, a.status.deadline, "Attributes"},
-		{sitPending, sitDeadline, "Sitting"},
+		{a.inventory.pending, a.inventory.deadline, a.tr(12266)},
+		{a.vehicle.pending, a.vehicle.deadline, a.tr(7034)},
+		{a.exchange.mutation != 0, a.exchange.deadline, a.tr(5089)},
+		{a.duel.mutation != 0, a.duel.deadline, a.tr(12267)},
+		{a.guild.createPending, a.guild.createDeadline, a.tr(12268)},
+		{a.guild.lifecyclePending, a.guild.lifecycleDeadline, a.tr(12269)},
+		{a.shop.pending, a.shop.deadline, a.tr(12270)},
+		{a.skills.pending, a.skills.deadline, a.tr(12271)},
+		{a.status.pending, a.status.deadline, a.tr(12272)},
+		{sitPending, sitDeadline, a.tr(12273)},
 	} {
 		if p.pending && a.clock >= p.deadline {
-			a.backToLogin(fmt.Sprintf("%s response timed out. Reconnect to refresh state.", p.name))
+			a.backToLogin(a.msg.Format(12278, map[string]string{"b": p.name}))
 			return false
 		}
 	}
@@ -70,10 +69,6 @@ func (a *App) worldControls(in *platform.Input, w, h int) platform.Input {
 			return controls
 		}
 		in = &controls
-	}
-	if a.appearanceEdit != nil {
-		a.updateAppearanceEditor(in, w, h)
-		return platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}
 	}
 	if a.personalMarket.modal() && a.updatePersonalMarketModal(in, w, h) {
 		return platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}

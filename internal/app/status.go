@@ -69,7 +69,7 @@ func (a *App) updateStatus(in *platform.Input, w, h int) bool {
 		d := a.statusUI.Draft
 		if d.Total() > 0 && d.Total() <= uint32(a.state.Details.StatPoint) && !a.state.Self.Dead {
 			if err := a.world.Send(proto.StatPointsPacket(d)); err != nil {
-				a.backToLogin("Unable to assign attributes.")
+				a.backToLoginID(12193)
 				return true
 			}
 			a.status.pending, a.status.deadline = true, a.clock+10

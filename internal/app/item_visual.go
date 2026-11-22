@@ -143,10 +143,7 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 	}
 
 	if lapisAbsorption > 0 || a.state != nil && a.state.EnchantRules != nil {
-		label := a.msg.Get(485)
-		if label == "" {
-			label = "Absorption"
-		}
+		label := a.tr(485)
 		base := itemAbsorption(def, instance)
 		total := base + lapisAbsorption
 		if a.state != nil && a.state.EnchantRules != nil {
@@ -172,7 +169,7 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 	if rt := itemtype.Real(def.Type); rt >= 1 && rt <= 15 && display.AttackTime != def.AttackTime {
 		label := a.msg.Get(5192 + int(attackspeed.Tier(display.AttackTime, 0)))
 		if label == "" {
-			label = "Attack speed"
+			label = a.tr(12256)
 		}
 		for i := range lines {
 			if lines[i].text == label {
@@ -214,7 +211,7 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 	if itemtype.IsAntiDebuffLapis(def.Type, def.TypeID) && len(immunities) == 1 {
 		a.tooltipDescription = "Blocks " + immunities[0].Name + " while linked to equipped gear."
 	}
-	a.tooltipExtra = tooltipExtras{forgeInfo: itemForgeInfo(def), effects: effects, immunities: immunities, effectChance: def.Type == 30 || rt >= 1 && rt <= 15}
+	a.tooltipExtra = tooltipExtras{forgeInfo: itemForgeInfo(def), effects: effects, immunities: immunities, effectChance: def.Type == 30 || rt >= 1 && rt <= 15, effectsLabel: a.tr(12264), immuneLabel: a.tr(12265)}
 	if rt := itemtype.Real(def.Type); rt >= 1 && rt <= 25 && def.Server > 0 && def.RequiredStats[4] > 0 {
 		a.tooltipExtra.maxOJ = min(def.RequiredStats[4], 99)
 		pool := uint8(9)

@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
@@ -243,7 +244,7 @@ func (a *App) Preview(name string) error {
 		}
 		if name == "create-error" {
 			a.create.Name.Text = "ExistingHero"
-			a.accountMessage.Open(a.accountText(5046, "Name already in use."), false)
+			a.accountMessage.Open(a.tr(5046), false)
 		} else {
 			ch := a.state.Slots[0]
 			ch.PendingDelete = name == "chars-restore"
@@ -347,7 +348,7 @@ func (a *App) Preview(name string) error {
 		}
 		a.servers.Selected = 0
 		a.screen = screenServers
-	case "world-players", "world-mobs", "world-inventory", "world-skills", "world-shop", "world-death", "world-equipment", "world-hud", "world-chat", "world-status", "world-status-expanded", "world-cast", "world-effect", "world-mesh", "world-projectile", "world-impact", "world-direct-impact", "world-self-effect", "world-shop-inventory":
+	case "world-players", "world-mobs", "world-inventory", "world-skills", "world-shop", "world-death", "world-equipment", "world-hud", "world-chat", "world-status", "world-status-expanded", "world-cast", "world-effect", "world-mesh", "world-projectile", "world-impact", "world-direct-impact", "world-self-effect", "world-shop-inventory", "world-appearance":
 		a.state = game.New()
 		a.state.Phase = game.PhaseInWorld
 		a.state.SelfID = 1
@@ -383,6 +384,12 @@ func (a *App) Preview(name string) error {
 			for i := uint32(1); i <= 3; i++ {
 				a.state.Entities[i+10] = &game.Entity{Kind: game.KindMob, ID: i + 10, TypeID: uint16(i), X: selectActorPos[0] + float32(i-2)*2, Y: selectActorPos[1], Z: selectActorPos[2]}
 			}
+		}
+		if name == "world-appearance" {
+			a.state.Slots[0] = proto.CharacterSlot{ID: 1, Name: "Preview", Level: 40, Race: 1, Gender: 1, Class: 2, Hair: 1, Face: 2, Height: 2}
+			a.state.Inventory[[2]uint8{1, 0}] = proto.InventoryItem{Bag: 1, Slot: 0, Type: 25, TypeID: 7, Count: 1}
+			a.items = map[sdata.ItemKey]*sdata.Item{{Type: 25, TypeID: 7}: {Special: 45}}
+			a.openAppearanceEditor([2]uint8{1, 0})
 		}
 		if name == "world-hud" {
 			a.state.Slots[0] = proto.CharacterSlot{ID: 1, Name: "HUD preview", Level: 4}

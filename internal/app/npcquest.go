@@ -34,7 +34,7 @@ func (a *App) questRewardLabel(q sdata.Quest, i int) string {
 	if r.ItemType == 0 {
 		return fmt.Sprintf("%d: %s", i+1, reward)
 	}
-	name := fmt.Sprintf("Item %d/%d", r.ItemType, r.ItemID)
+	name := a.msg.Format(12299, map[string]string{"v": fmt.Sprint(r.ItemType), "v2": fmt.Sprint(r.ItemID)})
 	if a.arc != nil || a.items != nil {
 		if item := a.itemsItem(r.ItemType, r.ItemID); item != nil && item.Name != "" {
 			name = item.Name
@@ -55,7 +55,7 @@ func (a *App) questResultText(q sdata.Quest, result *proto.QuestEndResult) strin
 	}
 	description += fmt.Sprintf("Received: %d XP, %d gold", result.Experience, result.Money)
 	if result.Item[2] != 0 {
-		name := fmt.Sprintf("Item %d/%d", result.Item[2], result.Item[3])
+		name := a.msg.Format(12299, map[string]string{"v": fmt.Sprint(result.Item[2]), "v2": fmt.Sprint(result.Item[3])})
 		if a.arc != nil || a.items != nil {
 			if item := a.itemsItem(result.Item[2], result.Item[3]); item != nil && item.Name != "" {
 				name = item.Name
@@ -208,7 +208,7 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 		*v = npcQuestView{npc: e.ID}
 		a.npcQuestUI.ResetDescriptionScroll()
 		if err := a.loadQuests(); err != nil {
-			a.questMessage("Quest data unavailable.")
+			a.questMessageID(12150)
 		}
 	}
 	entries := a.npcQuestEntries(e)
@@ -243,7 +243,7 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 	v.offset = action.Offset
 	if action.Close || action.Back || in.HasKey(platform.KeyEscape) {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-			a.backToLogin("Unable to close NPC conversation.")
+			a.backToLoginID(12011)
 		} else {
 			a.shop.npcID = 0
 		}
@@ -251,7 +251,7 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 	}
 	if action.Row >= 0 && choices > 0 {
 		if err := a.world.Send(proto.QuestChoosePacket(v.selected, uint8(action.Row))); err != nil {
-			a.backToLogin("Unable to choose quest reward.")
+			a.backToLoginID(12148)
 		}
 		return true
 	}
@@ -275,7 +275,7 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 			packet = proto.QuestEndPacket(e.ID, v.selected)
 		}
 		if err := a.world.Send(packet); err != nil {
-			a.backToLogin("Unable to send quest request.")
+			a.backToLoginID(12149)
 		}
 		return true
 	}

@@ -17,7 +17,10 @@ const (
 	antialiasLevels
 )
 
-var antialiasLabels = [antialiasLevels]string{"Off", "FXAA", "MSAA 2x", "MSAA 4x", "MSAA 8x", "MSAA 16x", "TAA"}
+// SysMsg ids of the antialias level names (GX rows).
+var antialiasLabelIDs = [antialiasLevels]int{12279, 12280, 12281, 12282, 12283, 12284, 12285}
+
+func antialiasLabel(level int) string { return Tr(antialiasLabelIDs[level]) }
 
 // AntialiasSamples is the MSAA sample count for a level (0 for Off and FXAA).
 func AntialiasSamples(level int) int {
@@ -128,15 +131,9 @@ func (m *GameMenu) updateAntialias(in *platform.Input, x, y int) (bool, int) {
 	return true, MenuNone
 }
 
-func (m *GameMenu) drawAntialias(s *render.Sprites, f *Font, solid *render.Texture, x, y int) {
-	// The frame art bakes "Color Bit" in; paint it over with the panel's
-	// background and label the slot "Antialias" instead.
-	if solid != nil {
-		s.Draw(solid, float32(x+156), float32(y+86), 49, 14, 0, 0, 1, 1, [4]float32{11.0 / 255, 10.0 / 255, 9.0 / 255, 1})
-	}
-	label := "Antialias"
-	f.Draw(s, label, x+202-f.Width(label), y+87, white, 60)
-	f.Draw(s, antialiasLabels[min(max(m.Settings.Antialias, 0), antialiasLevels-1)], x+211, y+87, white, 56)
+func (m *GameMenu) drawAntialias(s *render.Sprites, f *Font, x, y int) {
+	// The "Antialiasing" label is part of the frame art (tools/patch_option_graphic.py).
+	f.Draw(s, antialiasLabel(min(max(m.Settings.Antialias, 0), antialiasLevels-1)), x+211, y+87, white, 56)
 	m.antialiasButton.Draw(s)
 }
 
@@ -147,7 +144,7 @@ func (m *GameMenu) drawAntialiasPopup(s *render.Sprites, f *Font, solid *render.
 	rows := m.antialiasRows()
 	labels := make([]string, len(rows))
 	for i, level := range rows {
-		labels[i] = antialiasLabels[level]
+		labels[i] = antialiasLabel(level)
 	}
 	hover := m.antialiasHover
 	if hover < 0 {

@@ -97,6 +97,16 @@ func PerspectiveFovLH(fovY, aspect, zn, zf float32) M4 {
 	}
 }
 
+// OrthoOffCenterLH is D3DXMatrixOrthoOffCenterLH.
+func OrthoOffCenterLH(l, r, b, t, zn, zf float32) M4 {
+	return M4{
+		2 / (r - l), 0, 0, 0,
+		0, 2 / (t - b), 0, 0,
+		0, 0, 1 / (zf - zn), 0,
+		(l + r) / (l - r), (t + b) / (b - t), zn / (zn - zf), 1,
+	}
+}
+
 // Basis builds a world matrix from the WLD forward/up vectors and position
 // (rows: right, up, forward, position — left-handed).
 func Basis(pos, fwd, up V3) M4 {

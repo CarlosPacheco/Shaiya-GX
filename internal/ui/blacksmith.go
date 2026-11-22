@@ -199,20 +199,20 @@ func (v *Blacksmith) Draw(s *render.Sprites, f *Font, w, h int, name, welcome st
 			v.menu[i].Draw(s)
 		}
 		if busy {
-			f.Draw(s, "Waiting for server...", x+20, y+270, white, 208)
+			f.Draw(s, Tr(12259), x+20, y+270, white, 208)
 		}
 		v.menuClose.Draw(s)
 		return
 	}
 	frame := v.frame
-	text := "Place equipment and a recreation rune to recreate its attributes."
+	text := Tr(12364)
 	switch v.Mode {
 	case ForgeLapis:
 		frame = v.lapis
-		text = "Place equipment and lapis to link. For extraction, place an extraction hammer and click the lapis to recover."
+		text = Tr(12365)
 	case ForgeEnchant:
 		frame = v.enchantFrame
-		text = "Place equipment, lapisia and enhancement material. Enhancement can fail."
+		text = Tr(12366)
 	}
 	s.Draw(frame, float32(x), float32(y), 512, 446, 0, 0, 1, 446.0/512, white)
 	lines := wrapLines(f, text, 193)
@@ -233,7 +233,7 @@ func (v *Blacksmith) Draw(s *render.Sprites, f *Font, w, h int, name, welcome st
 		v.compose.Draw(s)
 	}
 	if busy {
-		f.Draw(s, "Waiting for server...", x+26, y+265, white, 208)
+		f.Draw(s, Tr(12259), x+26, y+265, white, 208)
 	}
 	v.close.Draw(s)
 }

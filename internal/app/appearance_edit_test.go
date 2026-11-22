@@ -29,7 +29,7 @@ func TestAppearanceConsumableOpensFromActionBar(t *testing.T) {
 	a.state.Inventory[[2]uint8{1, 2}] = proto.InventoryItem{Bag: 1, Slot: 2, Type: 25, TypeID: 7, Count: 1}
 	a.state.QuickSlots = []proto.QuickSlot{{Bar: 0, Slot: 0, Bag: 1, Number: 2}}
 	a.useAction(0)
-	if a.appearanceEdit == nil || !a.inventory.open || !a.appearanceUI.GenderEnabled {
+	if a.appearanceEdit == nil || !a.appearanceUI.GenderEnabled {
 		t.Fatal("action bar bypassed editor")
 	}
 }
@@ -63,5 +63,22 @@ func TestAppearanceEditorUsesConfirmedItemAndCancelsStaleDraft(t *testing.T) {
 	a.updateAppearanceEditor(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, 800, 600)
 	if a.appearanceEdit != nil || a.state.Inventory[key] != item {
 		t.Fatal("cancel changed item")
+	}
+}
+
+func TestAppearanceWindowDragsFromItsFrame(t *testing.T) {
+	a := inputApp()
+	a.appearanceUI, _ = ui.NewAppearanceEditor(inputTextures{})
+	a.appearanceEdit = &appearanceEdit{}
+	x, y := a.appearanceUI.Origin(1024, 768)
+	// Empty frame area, away from every control and the preview.
+	if !a.updateWindowDrag(&platform.Input{MouseX: x + 40, MouseY: y + 250, Pressed: true, MouseDown: true}, 1024, 768) {
+		t.Fatal("press on the free frame did not start a drag")
+	}
+	a.updateWindowDrag(&platform.Input{MouseX: x + 140, MouseY: y + 290, MouseDown: true}, 1024, 768)
+	a.updateWindowDrag(&platform.Input{MouseX: x + 140, MouseY: y + 290, Clicked: true}, 1024, 768)
+	nx, ny := a.appearanceUI.Origin(1024, 768)
+	if nx != x+100 || ny != y+40 {
+		t.Fatalf("window moved to %d,%d from %d,%d", nx, ny, x, y)
 	}
 }

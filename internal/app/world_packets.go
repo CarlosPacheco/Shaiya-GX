@@ -26,7 +26,7 @@ func (a *App) pumpWorld() {
 		select {
 		case p, ok := <-world.Packets:
 			if !ok {
-				a.backToLogin("Disconnected from the server.")
+				a.backToLoginID(12223)
 				return
 			}
 			a.applyWorldPacket(p)
@@ -221,9 +221,9 @@ func (a *App) applyGuildFeedback(p []byte, op proto.Opcode) {
 		a.guild.remarkPending = false
 		if a.state.Guild.RemarkResult == 1 {
 			a.guild.directoryDirty = true
-			a.questMessage("Guild notice updated.")
+			a.questMessageID(12224)
 		} else {
-			a.questMessage("Guild notice was refused.")
+			a.questMessageID(12225)
 		}
 	}
 }
@@ -253,9 +253,9 @@ func (a *App) applyInventoryFeedback(p []byte, op proto.Opcode, previousAppearan
 	if op == proto.UseItem && proto.NewReader(p).U32() == a.state.SelfID {
 		a.inventory.pending = false
 		if !a.compose.pending {
-			a.inventory.message = "Item used."
+			a.inventory.message = a.tr(12275)
 			if a.state.LastItemUse.Type == 0 {
-				a.inventory.message = "This item cannot be used."
+				a.inventory.message = a.tr(12276)
 			}
 		}
 	}

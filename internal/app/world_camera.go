@@ -26,24 +26,24 @@ func (a *App) cameraLimitCommand(text string) bool {
 		return true
 	}
 	if !a.state.Self.IsGM {
-		a.questMessage("GM: access denied.")
+		a.questMessageID(12026)
 		return true
 	}
 	if len(fields) != 1 {
-		a.questMessage("Usage: /camlimit")
+		a.questMessageID(12219)
 		return true
 	}
 	v := a.wv
 	if v == nil || v.world == nil {
-		a.questMessage("Enter a map to change the camera limit.")
+		a.questMessageID(12220)
 		return true
 	}
 	if v.extendedCameraZoom {
 		v.restoreCameraZoomLimit()
-		a.questMessage("Camera zoom limit restored to 13.")
+		a.questMessageID(12221)
 	} else {
 		v.extendedCameraZoom = true
-		a.questMessage("Camera zoom limit extended to 100.")
+		a.questMessageID(12222)
 	}
 	return true
 }

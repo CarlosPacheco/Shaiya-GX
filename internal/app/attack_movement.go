@@ -97,7 +97,7 @@ func (a *App) stopForAttack() bool {
 	}
 	if v.moving || v.motion != motion {
 		if err := a.world.Send(v.movePacket(motion)); err != nil {
-			a.backToLogin("Unable to stop for attack.")
+			a.backToLoginID(12009)
 			return false
 		}
 	}

@@ -325,7 +325,7 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 	}
 	if v.pending && a.clock >= v.nextRefresh {
 		v.pending = false
-		v.say("The market did not reply. Refresh before retrying.")
+		v.say(a.tr(12235))
 		v.nextRefresh = a.clock + 15
 	}
 	if !v.pending && v.modal == "" && v.focus < 0 && v.dropdown == 0 && a.clock >= v.nextRefresh {

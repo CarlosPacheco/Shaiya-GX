@@ -36,11 +36,11 @@ func (a *App) exchangeCommand(text string) bool {
 		}
 	}
 	if e == nil || e.Kind != game.KindUser || e.ID == a.state.SelfID || a.state.Exchange.Active || a.state.Duel.Phase != game.DuelNone || a.state.GuildDuel.Phase != game.DuelNone {
-		a.questMessage("Select a nearby player or use /trade character name.")
+		a.questMessageID(12068)
 		return true
 	}
 	if err := a.world.Send(proto.ExchangeRequestPacket(e.ID)); err != nil {
-		a.backToLogin("Unable to request trade.")
+		a.backToLoginID(12062)
 	}
 	return true
 }
@@ -55,12 +55,12 @@ func (a *App) updateExchangeInvite(in *platform.Input, w, h int) bool {
 		if x.InviteID != 0 && !x.Active && a.clientSettings().RejectTrade {
 			// Reject Trade (0x56c920): declined at once and silently.
 			if err := a.world.Send(proto.ExchangeAnswerPacket(false)); err != nil {
-				a.backToLogin("Unable to answer trade request.")
+				a.backToLoginID(12063)
 			}
 			return false
 		}
 		if x.InviteID != 0 && !x.Active {
-			name := fmt.Sprintf("Player %d", x.InviteID)
+			name := a.msg.Format(12296, map[string]string{"v": fmt.Sprint(x.InviteID)})
 			if e := a.state.Entities[x.InviteID]; e != nil && e.Shape != nil && e.Shape.Name != "" {
 				name = e.Shape.Name
 			}
@@ -70,7 +70,7 @@ func (a *App) updateExchangeInvite(in *platform.Input, w, h int) bool {
 	if x.AnswerSerial != v.answerSerial {
 		v.answerSerial = x.AnswerSerial
 		if x.Answer != 0 {
-			a.localizedNotice(1, 321, nil, "Trade request declined.")
+			a.localizedNotice(1, 321, nil)
 		}
 	}
 	if x.Active {
@@ -84,10 +84,10 @@ func (a *App) updateExchangeInvite(in *platform.Input, w, h int) bool {
 		accept := result == ui.MessageOK
 		if accept && (a.state.Duel.Phase != game.DuelNone || a.state.GuildDuel.Phase != game.DuelNone) {
 			accept = false
-			a.questMessage("Finish the current duel before trading.")
+			a.questMessageID(12069)
 		}
 		if err := a.world.Send(proto.ExchangeAnswerPacket(accept)); err != nil {
-			a.backToLogin("Unable to answer trade request.")
+			a.backToLoginID(12063)
 		}
 	}
 	return true
@@ -106,13 +106,13 @@ func (a *App) updateExchange(in *platform.Input, w, h int) bool {
 				if a.msg.Get(211) != "" {
 					a.systemMessage(3, 211, nil)
 				} else {
-					a.questMessage("Trade completed.")
+					a.questMessageID(12070)
 				}
 			} else {
 				if a.msg.Get(212) != "" {
 					a.systemMessage(3, 212, nil)
 				} else {
-					a.questMessage("Trade cancelled.")
+					a.questMessageID(12071)
 				}
 			}
 		}
@@ -127,7 +127,7 @@ func (a *App) updateExchange(in *platform.Input, w, h int) bool {
 	confirm, close := a.exchangeUI.Update(in, w, h)
 	if close || in.HasKey(platform.KeyEscape) {
 		if err := a.world.Send(proto.ExchangeReadyPacket(2)); err != nil {
-			a.backToLogin("Unable to cancel trade.")
+			a.backToLoginID(12064)
 		}
 		return true
 	}
@@ -138,11 +138,11 @@ func (a *App) updateExchange(in *platform.Input, w, h int) bool {
 				return true
 			}
 			if x.Other[slot].Type != 0 {
-				a.questMessage("Ask the other player to clear the matching slot before removing this item.")
+				a.questMessageID(12072)
 				return true
 			}
 			if err := a.world.Send(proto.ExchangeRemovePacket(uint8(slot))); err != nil {
-				a.backToLogin("Unable to remove trade item.")
+				a.backToLoginID(12065)
 				return true
 			}
 			a.state.MarkExchangeRemove(uint8(slot))
@@ -164,11 +164,11 @@ func (a *App) updateExchange(in *platform.Input, w, h int) bool {
 			ready = 0
 		}
 		if err := a.world.Send(proto.ExchangeReadyPacket(ready)); err != nil {
-			a.backToLogin("Unable to update trade.")
+			a.backToLoginID(12066)
 			return true
 		}
 		if err := a.world.Send(proto.ExchangeConfirmPacket(desired)); err != nil {
-			a.backToLogin("Unable to confirm trade.")
+			a.backToLoginID(12067)
 			return true
 		}
 		v.pending, v.desired = true, desired
@@ -181,7 +181,7 @@ func (a *App) drawExchange(w, h int) {
 		return
 	}
 	x := &a.state.Exchange
-	name := fmt.Sprintf("Player %d", x.PartnerID)
+	name := a.msg.Format(12296, map[string]string{"v": fmt.Sprint(x.PartnerID)})
 	if e := a.state.Entities[x.PartnerID]; e != nil && e.Shape != nil && e.Shape.Name != "" {
 		name = e.Shape.Name
 	}

@@ -11,7 +11,7 @@ import (
 func (a *App) sendLadderMode(mode uint8) {
 	v := a.wv
 	if err := a.world.Send(proto.LadderPacket(uint16(v.ladder.Index), mode)); err != nil {
-		a.backToLogin("Unable to send ladder movement.")
+		a.backToLoginID(12132)
 		return
 	}
 	v.ladderSentMode, v.ladderSendAt = mode, a.clock+.25
@@ -48,7 +48,7 @@ func (a *App) updateLadderMovement(in *platform.Input, forward, back bool, straf
 			}
 			// Flush the heading before requesting attachment: native direction remains authoritative.
 			if err := a.world.Send(v.movePacket(0)); err != nil {
-				a.backToLogin("Unable to send ladder position.")
+				a.backToLoginID(12133)
 				return false, false
 			}
 			v.place(p)

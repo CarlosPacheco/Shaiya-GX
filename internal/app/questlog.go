@@ -39,7 +39,7 @@ func (a *App) questTimeHint(def sdata.Quest, q proto.ActiveQuest) string {
 	if seconds <= 0 {
 		return "Time limit reached; awaiting server."
 	}
-	return fmt.Sprintf("Time remaining: under %d min", int(math.Ceil(seconds/60)))
+	return a.msg.Format(12310, map[string]string{"v": fmt.Sprint(int(math.Ceil(seconds / 60)))})
 }
 
 func (a *App) questIDs() []uint16 {
@@ -59,7 +59,7 @@ func (a *App) toggleQuestLog() {
 	a.guild.open = false
 	if err := a.loadQuests(); err != nil {
 		v.open = false
-		a.questMessage("Quest data unavailable.")
+		a.questMessageID(12150)
 		return
 	}
 	a.inventory.open, a.skills.open, a.status.open = false, false, false
@@ -85,7 +85,7 @@ func (a *App) updateQuestLog(in *platform.Input, w, h int) bool {
 		if result == ui.MessageOK {
 			if _, ok := a.state.Quests[v.confirm]; ok {
 				if err := a.world.Send(proto.QuestAbandonPacket(v.confirm)); err != nil {
-					a.backToLogin("Unable to abandon quest.")
+					a.backToLoginID(12174)
 				}
 			}
 		}
@@ -170,7 +170,7 @@ func (a *App) questObjective(def sdata.Quest, q proto.ActiveQuest) string {
 			if item.Type == 0 || item.Count == 0 {
 				continue
 			}
-			name := fmt.Sprintf("Item %d/%d", item.Type, item.ID)
+			name := a.msg.Format(12299, map[string]string{"v": fmt.Sprint(item.Type), "v2": fmt.Sprint(item.ID)})
 			if a.arc != nil || a.items != nil {
 				if d := a.itemsItem(item.Type, item.ID); d != nil {
 					name = d.Name
@@ -194,7 +194,7 @@ func (a *App) questObjective(def sdata.Quest, q proto.ActiveQuest) string {
 			if id == 0 || def.MobCounts[i] == 0 {
 				continue
 			}
-			name := fmt.Sprintf("Creature %d", id)
+			name := a.msg.Format(12311, map[string]string{"v": fmt.Sprint(id)})
 			if a.assets != nil {
 				if m, err := a.assets.MonsterDefinition(id); err == nil && m.Name != "" {
 					name = m.Name
@@ -203,12 +203,12 @@ func (a *App) questObjective(def sdata.Quest, q proto.ActiveQuest) string {
 			lines = append(lines, fmt.Sprintf("%s: %d / %d", name, q.Counters[i], def.MobCounts[i]))
 		}
 	case 3:
-		lines = append(lines, fmt.Sprintf("Defeat players: %d / %d", q.Counters[0], def.PVPKills))
+		lines = append(lines, a.msg.Format(12312, map[string]string{"v": fmt.Sprint(q.Counters[0]), "v2": fmt.Sprint(def.PVPKills)}))
 	}
 	if def.EndNPCType != 0 {
 		name := a.npcDefs[sdata.NPCKey{Type: def.EndNPCType, ID: def.EndNPCID}].Name
 		if name == "" {
-			name = fmt.Sprintf("NPC %d/%d", def.EndNPCType, def.EndNPCID)
+			name = a.msg.Format(12313, map[string]string{"v": fmt.Sprint(def.EndNPCType), "v2": fmt.Sprint(def.EndNPCID)})
 		}
 		if def.EndType == 0 {
 			lines = append(lines, "Speak with "+name)

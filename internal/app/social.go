@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
@@ -60,7 +59,7 @@ func (a *App) sendSocialPacket(p []byte) {
 		return
 	}
 	if err := a.world.Send(p); err != nil {
-		a.backToLogin("Unable to send social request.")
+		a.backToLoginID(12191)
 		return
 	}
 	a.social.pending, a.social.deadline = true, a.clock+10
@@ -71,7 +70,7 @@ func (a *App) confirmedSocial(op proto.Opcode) {
 	}
 	if op == proto.FriendInvite && a.socialInviteUI != nil {
 		a.social.inviteSerial = a.state.Social.InviteSerial
-		a.socialInviteUI.Open(fmt.Sprintf("Add %s to your Buddy list?", a.state.Social.Invitation), true)
+		a.socialInviteUI.Open(a.msg.Format(12319, map[string]string{"v": a.state.Social.Invitation}), true)
 	}
 	if op == proto.FriendAnswer && a.state.Social.Result <= 2 {
 		a.systemMessage(7, 399+int(a.state.Social.Result), nil)
@@ -116,7 +115,7 @@ func (a *App) updateSocial(in *platform.Input, w, h int) bool {
 	}
 	if a.social.pending && a.clock >= a.social.deadline {
 		a.social.pending = false
-		a.questMessage("Social request timed out.")
+		a.questMessageID(12192)
 	}
 	a.social.offset = max(0, min(a.social.offset, max(0, count-15)))
 	row, offset, action, closed := a.socialUI.Update(in, x, y, page, count, a.social.offset, a.social.selected != 0)

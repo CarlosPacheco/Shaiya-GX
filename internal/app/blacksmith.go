@@ -77,7 +77,7 @@ func (a *App) updateBlacksmith(in *platform.Input, w, h int) bool {
 	}
 	if (closed || in.HasKey(platform.KeyEscape)) && !busy {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-			a.backToLogin("Unable to close NPC conversation.")
+			a.backToLoginID(12011)
 			return true
 		}
 		v.quote = forgeQuoteView{}
@@ -205,7 +205,7 @@ func (a *App) updateGemConfirm(in *platform.Input, w, h int) {
 		return
 	}
 	if !a.blacksmithOpen() || !ready {
-		a.questMessage("The selected items are no longer available.")
+		a.questMessageID(12012)
 		return
 	}
 	if !a.blacksmith.quote.known || !a.blacksmith.quote.value.Valid || !a.nearBlacksmith() {

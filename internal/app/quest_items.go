@@ -64,11 +64,11 @@ func (a *App) acceptItemQuest(offer itemQuestOffer) {
 	}
 	if q.StartType == 4 {
 		if err := a.world.Send(proto.UseItemPacket(pos[0], pos[1])); err != nil {
-			a.backToLogin("Unable to use quest item.")
+			a.backToLoginID(12173)
 			return
 		}
 	}
 	if err := a.world.Send(proto.QuestStartPacket(uint32(q.StartItemID), offer.id)); err != nil {
-		a.backToLogin("Unable to send quest request.")
+		a.backToLoginID(12149)
 	}
 }

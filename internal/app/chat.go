@@ -103,7 +103,7 @@ func (a *App) updateChat(in *platform.Input) bool {
 				slots = append(slots, draft.slot)
 			} else {
 				a.chatItems = nil
-				a.questMessage("An attached item changed. Drag it into chat again.")
+				a.questMessageID(12023)
 				return true
 			}
 		}
@@ -125,9 +125,9 @@ func (a *App) updateChat(in *platform.Input) bool {
 		}
 		if _, _, known := gm.Parse(text); known {
 			if a.world == nil {
-				a.questMessage("Connect to GX World to use this command.")
+				a.questMessageID(12024)
 			} else if err := a.world.Send(proto.ChatPacket(proto.ChannelNormal, false, text)); err != nil {
-				a.backToLogin("Unable to send GM command.")
+				a.backToLoginID(12020)
 			}
 			a.chatOpen = false
 			return true
@@ -142,9 +142,9 @@ func (a *App) updateChat(in *platform.Input) bool {
 		}
 		if packet, handled := whisperCommand(text, len(slots) > 0); handled && !channelCommand {
 			if packet == nil {
-				a.questMessage("Use /w name message.")
+				a.questMessageID(12025)
 			} else if err := a.world.Send(proto.WithChatItemSlots(packet, slots)); err != nil {
-				a.backToLogin("Unable to send whisper.")
+				a.backToLoginID(12021)
 			}
 			a.chatOpen = false
 			return true
@@ -182,12 +182,12 @@ func (a *App) updateChat(in *platform.Input) bool {
 				}
 				packet = proto.WhisperPacket(recipient, chatBody(text, len(slots) > 0))
 				if packet == nil {
-					a.localizedNotice(1, 232, nil, "Use !name message.")
+					a.localizedNotice(1, 232, nil)
 					return true
 				}
 			}
 			if err := a.world.Send(proto.WithChatItemSlots(packet, slots)); err != nil {
-				a.backToLogin("Unable to send chat message.")
+				a.backToLoginID(12022)
 			}
 		}
 		a.chatOpen = false
@@ -260,8 +260,8 @@ func (a *App) drawChat(w, h int) {
 	a.chatUI.ViewportWidth = w
 	a.chatUI.Caret, a.chatUI.RecipientCaret = a.chatCaret, a.recipientCaret
 
-	for i, id := range [...]int{5086, 5089, 5088, 5087, 5388, 5377} {
-		if label := a.msg.Get(id); label != "" {
+	for i, id := range ui.ChatChannelIDs {
+		if label := a.tr(id); label != "" {
 			a.chatUI.ChannelNames[i] = label
 		}
 	}
@@ -315,7 +315,7 @@ func (a *App) formattedChat() []ui.ChatEntry {
 func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
 	name := c.Sender
 	if name == "" && c.SenderID != 0 {
-		name = fmt.Sprintf("Player %d", c.SenderID)
+		name = messages.Format(12296, map[string]string{"v": fmt.Sprint(c.SenderID)})
 	}
 	style := c.Style
 	body := c.Text

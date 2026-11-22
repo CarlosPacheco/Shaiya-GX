@@ -52,9 +52,9 @@ func (a *App) confirmedExchange(p []byte) {
 	if x.Desync && x.Active && !v.cancelSent {
 		v.cancelSent = true
 		v.mutation = 0
-		a.questMessage("Trade cancelled: simultaneous offer changes could not be distinguished.")
+		a.questMessageID(12076)
 		if err := a.world.Send(proto.ExchangeReadyPacket(2)); err != nil {
-			a.backToLogin("Unable to cancel ambiguous trade.")
+			a.backToLoginID(12073)
 		}
 	}
 }
@@ -64,7 +64,7 @@ func (a *App) exchangeCanEdit() bool {
 		return false
 	}
 	if x.OwnReady || x.OwnConfirmed {
-		a.questMessage("Undo your trade confirmation before editing the offer.")
+		a.questMessageID(12077)
 		return false
 	}
 	return true
@@ -74,7 +74,7 @@ func (a *App) sendExchangeOffer(source [2]uint8, item proto.InventoryItem, slot 
 		return
 	}
 	if err := a.world.Send(proto.ExchangeAddPacket(source[0], source[1], count, slot)); err != nil {
-		a.backToLogin("Unable to offer item.")
+		a.backToLoginID(12074)
 		return
 	}
 	a.exchange.mutation, a.exchange.slot, a.exchange.deadline = 1, slot, a.clock+10
@@ -127,16 +127,16 @@ func (a *App) updateExchangeDrag(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if item.Type == 27 || item.Type == 28 || item.Type == 29 {
-		a.localizedNotice(1, 231, nil, "Quest items cannot be traded.")
+		a.localizedNotice(1, 231, nil)
 		return true
 	}
 	if a.state.Exchange.Own[slot].Item.Type != 0 {
-		a.questMessage("Choose an empty trade slot.")
+		a.questMessageID(12078)
 		return true
 	}
 	for _, offer := range a.state.Exchange.Own {
 		if offer.Item.Type != 0 && offer.Source == source {
-			a.questMessage("That item is already offered.")
+			a.questMessageID(12079)
 			return true
 		}
 	}
@@ -182,7 +182,7 @@ func (a *App) updateExchangeModal(in *platform.Input) {
 		}
 		amount := uint32(min(money, uint64(a.state.Details.Money)))
 		if err := a.world.Send(proto.ExchangeMoneyPacket(amount)); err != nil {
-			a.backToLogin("Unable to offer gold.")
+			a.backToLoginID(12075)
 			return
 		}
 		v.mutation, v.deadline = 3, a.clock+10

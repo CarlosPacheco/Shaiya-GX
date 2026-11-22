@@ -41,7 +41,7 @@ func (a *App) sendPersonalMarket(p []byte) {
 		return
 	}
 	if err := a.world.Send(p); err != nil {
-		a.backToLogin("Unable to send market request.")
+		a.backToLoginID(12160)
 		return
 	}
 	a.personalMarket.pending, a.personalMarket.deadline = proto.Op(p), a.clock+8
@@ -83,12 +83,8 @@ func (a *App) canViewPersonalMarket(id uint32) bool {
 	return dx*dx+dz*dz <= proto.MyShopReach*proto.MyShopReach
 }
 
-func (a *App) personalMarketNotice(id int, fallback string, args map[string]string) {
-	if id != 0 && a.msg.Get(id) != "" {
-		a.systemMessage(7, id, args)
-	} else {
-		a.questMessage(fallback)
-	}
+func (a *App) personalMarketNotice(id int, args map[string]string) {
+	a.systemMessage(7, id, args)
 }
 
 func (a *App) confirmedPersonalMarket(op proto.Opcode) {
@@ -111,18 +107,18 @@ func (a *App) confirmedPersonalMarket(op proto.Opcode) {
 			if a.state.Faction.Faction == 1 {
 				id = 460
 			}
-			a.personalMarketNotice(id, "Markets can be set up in Apulune, Iris and the Auction House.", nil)
+			a.personalMarketNotice(id, nil)
 		default:
-			a.personalMarketNotice(0, "You cannot set up a market right now.", nil)
+			a.personalMarketNotice(12162, nil)
 		}
 	case proto.MyShopOpen:
 		v.editing = false
-		a.personalMarketNotice(409, "Market opened.", nil)
+		a.personalMarketNotice(409, nil)
 	case proto.MyShopStop:
-		a.personalMarketNotice(410, "Market closed.", nil)
+		a.personalMarketNotice(410, nil)
 	case proto.MyShopCancel:
 		*v = personalMarketView{selected: -1}
-		a.personalMarketNotice(410, "Market closed.", nil)
+		a.personalMarketNotice(410, nil)
 	case proto.MyShopEnter:
 		if buyer.EnterResult == proto.MyShopEnterOK {
 			*v = personalMarketView{selected: -1}
@@ -130,14 +126,14 @@ func (a *App) confirmedPersonalMarket(op proto.Opcode) {
 				a.personalMarketUI.CancelHeld()
 			}
 		} else if buyer.EnterResult == proto.MyShopEnterFull {
-			a.personalMarketNotice(0, "This market has too many buyers.", nil)
+			a.personalMarketNotice(12163, nil)
 		} else {
-			a.personalMarketNotice(0, "This market is unavailable.", nil)
+			a.personalMarketNotice(12164, nil)
 		}
 	case proto.MyShopSold:
 		name := a.personalMarketItemName(s.SoldItem)
 		gold := fmt.Sprint(s.SoldGold)
-		a.personalMarketNotice(412, fmt.Sprintf("Sold %d × %s for %s gold.", s.SoldCount, name, gold), map[string]string{"p": fmt.Sprintf("%d × %s", s.SoldCount, name), "b": gold})
+		a.personalMarketNotice(412, map[string]string{"p": fmt.Sprintf("%d × %s", s.SoldCount, name), "b": gold})
 	case proto.MyShopBuy:
 		buy := v.purchase
 		v.purchase = marketDialog{}
@@ -145,19 +141,19 @@ func (a *App) confirmedPersonalMarket(op proto.Opcode) {
 		case proto.MyShopBuyOK:
 			name := a.personalMarketItemName(buy.item)
 			gold := fmt.Sprint(uint64(buy.price) * uint64(buy.item.Count))
-			a.personalMarketNotice(415, fmt.Sprintf("Purchased %d × %s for %s gold.", buy.item.Count, name, gold), map[string]string{"p": fmt.Sprintf("%d × %s", buy.item.Count, name), "b": gold})
+			a.personalMarketNotice(415, map[string]string{"p": fmt.Sprintf("%d × %s", buy.item.Count, name), "b": gold})
 		case proto.MyShopBuyNoMoney:
-			a.personalMarketNotice(0, "You do not have enough gold.", nil)
+			a.personalMarketNotice(12165, nil)
 		case proto.MyShopBuySellerCap:
-			a.personalMarketNotice(469, "The seller cannot hold any more gold.", nil)
+			a.personalMarketNotice(469, nil)
 		case proto.MyShopBuyNoRoom:
-			a.personalMarketNotice(406, "Your inventory is full.", nil)
+			a.personalMarketNotice(406, nil)
 		default:
-			a.personalMarketNotice(413, "Unable to purchase this item.", nil)
+			a.personalMarketNotice(413, nil)
 		}
 	case proto.MyShopClosed:
 		*v = personalMarketView{selected: -1}
-		a.personalMarketNotice(447, "The market closed.", nil)
+		a.personalMarketNotice(447, nil)
 	case proto.MyShopLeave:
 		*v = personalMarketView{selected: -1}
 	}
@@ -172,7 +168,7 @@ func (a *App) personalMarketItemName(item proto.InventoryItem) string {
 			return d.Name
 		}
 	}
-	return "Item"
+	return a.tr(5289)
 }
 
 func (a *App) personalMarketTimeout() bool {
@@ -181,11 +177,11 @@ func (a *App) personalMarketTimeout() bool {
 		return false
 	}
 	if v.pending == proto.MyShopBuy {
-		a.backToLogin("Market purchase response timed out. Reconnect to refresh your inventory.")
+		a.backToLoginID(12161)
 		return true
 	}
 	v.pending = 0
-	a.personalMarketNotice(0, "The market request was not accepted.", nil)
+	a.personalMarketNotice(12166, nil)
 	return false
 }
 
@@ -234,7 +230,7 @@ func (a *App) updatePersonalMarket(in *platform.Input, w, h int) bool {
 		v.editing = true
 	case ui.PersonalMarketToggle:
 		if strings.TrimSpace(v.title.Text) == "" {
-			a.personalMarketNotice(10001, "Enter a market message.", nil)
+			a.personalMarketNotice(10001, nil)
 			return true
 		}
 		for _, item := range a.state.MyShop.Slots {
@@ -243,7 +239,7 @@ func (a *App) updatePersonalMarket(in *platform.Input, w, h int) bool {
 				return true
 			}
 		}
-		a.personalMarketNotice(10002, "Add an item before opening the market.", nil)
+		a.personalMarketNotice(10002, nil)
 	default:
 		if action >= 0 && action < proto.MyShopSlots && a.state.MyShop.Slots[action].Used {
 			entry := a.state.MyShop.Slots[action]
@@ -272,15 +268,15 @@ func (a *App) dropPersonalMarketItem(in *platform.Input, w, h int) bool {
 	}
 	item, ok := a.state.Inventory[key]
 	if key[0] == 0 {
-		a.personalMarketNotice(444, "Move the item to your bag first.", nil)
+		a.personalMarketNotice(444, nil)
 	} else if !ok || item.Count == 0 || itemtype.Real(item.Type) == 27 {
-		a.personalMarketNotice(443, "This item cannot be listed.", nil)
+		a.personalMarketNotice(443, nil)
 	} else if a.state.MyShop.Slots[index].Used {
-		a.personalMarketNotice(445, "That listing slot is occupied.", nil)
+		a.personalMarketNotice(445, nil)
 	} else {
 		for _, listed := range a.state.MyShop.Slots {
 			if listed.Used && key == [2]uint8{listed.Bag, listed.Slot} {
-				a.personalMarketNotice(446, "That item is already listed.", nil)
+				a.personalMarketNotice(446, nil)
 				return true
 			}
 		}
@@ -322,7 +318,7 @@ func (a *App) updatePersonalMarketModal(in *platform.Input, w, h int) bool {
 		entry := b.Items[d.index]
 		if !b.Open || b.Seller != d.seller || !b.Present[d.index] || entry.Price != d.price || entry.Item != d.item {
 			v.dialog = marketDialog{}
-			a.personalMarketNotice(413, "The selected listing changed.", nil)
+			a.personalMarketNotice(413, nil)
 			return true
 		}
 		count := a.quantityUI.Update(in)
@@ -341,7 +337,7 @@ func (a *App) updatePersonalMarketModal(in *platform.Input, w, h int) bool {
 			return true
 		}
 		if !cancel && (price == 0 || price > proto.MyShopPriceMax) {
-			a.personalMarketNotice(0, "Enter a unit price between 1 and 4,000,000,000 gold.", nil)
+			a.personalMarketNotice(12167, nil)
 			return true
 		}
 		v.dialog = marketDialog{}

@@ -120,7 +120,7 @@ func (h *HUD) Draw(s *render.Sprites, f *Font, state HUDState) {
 			s.Draw(h.targetBar, float32(tx+41), float32(ty+45), 140*n, 16, 0, 0, 140*n/256, 1, white)
 			text := fmt.Sprintf("%d/%d", state.TargetHP.Current, state.TargetHP.Max)
 			if state.TargetHP.Max == 0 {
-				text = fmt.Sprintf("HP %d", state.TargetHP.Current)
+				text = Trf(12370, state.TargetHP.Current)
 			}
 			// Centered on the 140px bar drawn at tx+41.
 			if !state.TargetNoValue {

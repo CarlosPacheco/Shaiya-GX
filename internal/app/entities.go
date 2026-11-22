@@ -228,8 +228,7 @@ func (a *App) prepareRemotePlayers() {
 		} else {
 			cached.facing = render.V3{}
 		}
-		scale := render.Identity()
-		scale[5] = (scene.Appearance{Height: sh.Height}).HeightScale()
+		scale := (scene.Appearance{Height: sh.Height}).ScaleMatrix()
 		pos := cached.position.update(e, a.clock)
 		if e.ClimbMode != 0 && !e.Dead && !e.Mounted {
 			pos = v.world.LadderVisual(pos, -1)
@@ -375,26 +374,26 @@ func projectLabel(p render.V3, vp render.M4, w, h int) (int, int, float32, bool)
 
 // Phoenix uses the original NPC categories as a second line, omitting the
 // generic, gambling-house and animal categories.
-func npcTypeLabel(kind uint8) string {
+func (a *App) npcTypeLabel(kind uint8) string {
 	switch kind {
 	case 1:
-		return "Merchant"
+		return a.tr(5154)
 	case 2:
-		return "Gate Keeper"
+		return a.tr(5160)
 	case 3:
-		return "Blacksmith"
+		return a.tr(5161)
 	case 4:
-		return "PvPManager"
+		return a.tr(12228)
 	case 6:
-		return "Warehouse"
+		return a.tr(5165)
 	case 8:
-		return "Guard"
+		return a.tr(5166)
 	case 10:
-		return "Apprentice"
+		return a.tr(5167)
 	case 11:
-		return "GuildMaster"
+		return a.tr(5168)
 	case 12:
-		return "DeadNpc"
+		return a.tr(12229)
 	default:
 		return ""
 	}
@@ -449,9 +448,9 @@ const guildCaptionOffset = 15 // Native 0x0044c100 subtracts float 0x006bc894.
 // fixed count of one and does not disclose the actual amount until pickup.
 func (a *App) groundItemName(it proto.GroundItem) string {
 	if it.Type == 26 && it.TypeID == 0 {
-		return "Gold"
+		return a.tr(5226)
 	}
-	name := fmt.Sprintf("Item %d/%d", it.Type, it.TypeID)
+	name := a.msg.Format(12299, map[string]string{"v": fmt.Sprint(it.Type), "v2": fmt.Sprint(it.TypeID)})
 	if a.arc != nil || a.items != nil {
 		if def := a.itemsItem(it.Type, it.TypeID); def != nil && def.Name != "" {
 			name = def.Name
@@ -532,7 +531,7 @@ func (a *App) drawPlayerNames(w, h int) {
 	// scene depth for clicking the mesh in that case too.
 	for _, batch := range v.groundBatches {
 		if len(batch) > 0 {
-			a.sprites.CaptureNameDepth(w, h)
+			a.sprites.CaptureNameDepth(a.physW, a.physH)
 			captured = true
 			break
 		}
@@ -541,7 +540,7 @@ func (a *App) drawPlayerNames(w, h int) {
 		frustum := render.ViewFrustum(a.scene3d.View, a.scene3d.VisibilityProjection())
 		for _, mob := range v.mobs {
 			if mob != nil && mob.actor != nil && mob.actor.Visible(frustum, a.scene3d.ClipPlane) {
-				a.sprites.CaptureNameDepth(w, h)
+				a.sprites.CaptureNameDepth(a.physW, a.physH)
 				captured = true
 				break
 			}
@@ -551,7 +550,7 @@ func (a *App) drawPlayerNames(w, h int) {
 		frustum := render.ViewFrustum(a.scene3d.View, a.scene3d.VisibilityProjection())
 		for _, player := range v.actors {
 			if player != nil && player.character != nil && player.character.Visible(frustum, a.scene3d.ClipPlane) {
-				a.sprites.CaptureNameDepth(w, h)
+				a.sprites.CaptureNameDepth(a.physW, a.physH)
 				captured = true
 				break
 			}
@@ -573,7 +572,7 @@ func (a *App) drawPlayerNames(w, h int) {
 			return
 		}
 		if !captured {
-			a.sprites.CaptureNameDepth(w, h)
+			a.sprites.CaptureNameDepth(a.physW, a.physH)
 			captured = true
 		}
 		a.sprites.NameDepth(depth)
@@ -689,7 +688,7 @@ func (a *App) drawPlayerNames(w, h int) {
 					pos[1] = hi[1] + .15
 				}
 				label(actor.actor.Name, pos, ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID), a.catalogNameSuffix(e))
-				label(npcTypeLabel(e.NpcType), pos, [4]float32{.35, .9, 1, 1}, a.font.Height-2, playerPlate{}, "", "")
+				label(a.npcTypeLabel(e.NpcType), pos, [4]float32{.35, .9, 1, 1}, a.font.Height-2, playerPlate{}, "", "")
 			}
 		}
 	}

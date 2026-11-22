@@ -70,7 +70,7 @@ func (v *Gatekeeper) Draw(s *render.Sprites, f *Font, w, h int, name, welcome st
 	if portrait != nil {
 		s.Draw(portrait, float32(x+7), float32(y+7), 64, 64, 0, 0, 1, 1, white)
 	}
-	lines := wrapLines(f, "Select a destination to travel.", 193)
+	lines := wrapLines(f, Tr(12368), 193)
 	v.textLines = len(lines)
 	v.textOffset = min(v.textOffset, max(0, len(lines)-10))
 	for i, line := range lines[v.textOffset:min(len(lines), v.textOffset+10)] {
@@ -83,7 +83,7 @@ func (v *Gatekeeper) Draw(s *render.Sprites, f *Font, w, h int, name, welcome st
 		}
 		label := g.Name
 		if label == "" {
-			label = fmt.Sprintf("Map %d", g.MapID)
+			label = Trf(12369, g.MapID)
 		}
 		f.Draw(s, label, x+292, y+84+i*101, white, 137)
 		currency := v.Currency

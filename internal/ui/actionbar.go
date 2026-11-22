@@ -53,7 +53,9 @@ func (b *ActionBar) Size(bar int) (int, int) {
 	}
 	return 448, 54
 }
-func ActionBarOrigin(w, h int) (int, int) { return max(0, (w-448)/2), max(0, h-64-8-54*2-6) }
+func ActionBarOrigin(w, h int) (int, int) {
+	return max(0, (w-448)/2), max(0, h-BottomBarHeight(w, h)-8-54*2-6)
+}
 func (b *ActionBar) Origin(bar, w, h int) (int, int) {
 	x, y := ActionBarOrigin(w, h)
 	if bar == 2 {

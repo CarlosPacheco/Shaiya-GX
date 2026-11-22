@@ -192,7 +192,7 @@ func (p *GuildPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, w, 
 		}
 	}
 	f.Draw(s, name, x+69, y+52, [4]float32{.6, .827, .106, 1}, 160)
-	classes := [6]string{"Fighter", "Defender", "Ranger", "Archer", "Mage", "Priest"}
+	classes := [6]string{Tr(5050), Tr(5051), Tr(5056), Tr(5057), Tr(5058), Tr(5052)}
 	for i, name := range p.ClassNames {
 		if name != "" {
 			classes[i] = name

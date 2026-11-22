@@ -80,7 +80,7 @@ func (a *App) updateBuffs(in *platform.Input, w, h int) bool {
 	if in.RightPressed && a.world != nil {
 		if p := a.buffCancelPacket(i); p != nil {
 			if err := a.world.Send(p); err != nil {
-				a.backToLogin("Unable to cancel effect.")
+				a.backToLoginID(12014)
 			}
 		}
 	}
@@ -122,7 +122,7 @@ func (a *App) drawBuffTooltip(w, h int) {
 	b := a.buffs.rows[i]
 	name := b.def.Name
 	if name == "" {
-		name = fmt.Sprintf("Skill %d, level %d", b.buff.Skill, b.buff.Level)
+		name = a.msg.Format(12295, map[string]string{"v": fmt.Sprint(b.buff.Skill), "v2": fmt.Sprint(b.buff.Level)})
 	}
 	a.tooltip = []itemDetailLine{{name, [4]float32{1, 1, 0, 1}}}
 	a.tooltipItem = false

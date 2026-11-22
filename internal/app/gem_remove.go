@@ -45,7 +45,7 @@ func (a *App) sendGemRemove(key [2]uint8, tool ...[2]uint8) bool {
 	packet := proto.GemRemoveHammerPacket(key, tool[0], uint8(socket))
 	a.shop.pending, a.shop.deadline = true, a.clock+10
 	if err := a.world.Send(packet); err != nil {
-		a.backToLogin("Unable to request lapis extraction.")
+		a.backToLoginID(12091)
 		return false
 	}
 	return true
@@ -74,7 +74,7 @@ func (a *App) confirmedGemRemove(p []byte) {
 		a.shop.deadline = a.clock + 10
 		for _, key := range keys {
 			if err := a.world.Send(proto.ItemMovePacket(key[0], key[1], key[0], key[1])); err != nil {
-				a.backToLogin("Unable to refresh extraction items.")
+				a.backToLoginID(12092)
 				return
 			}
 		}

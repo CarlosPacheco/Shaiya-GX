@@ -231,7 +231,7 @@ func (a *App) openHouse(e *game.Entity, kind ui.HouseKind) {
 
 func (a *App) closeHouse() {
 	if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-		a.backToLogin("Unable to close guild manager.")
+		a.backToLoginID(12098)
 		return
 	}
 	a.shop.npcID = 0
@@ -351,7 +351,7 @@ func (a *App) houseConfirmed() {
 	}
 	if p != nil && a.world != nil {
 		if err := a.world.Send(p); err != nil {
-			a.backToLogin("Unable to send guild request.")
+			a.backToLoginID(12105)
 		}
 	}
 }
@@ -385,8 +385,7 @@ func (a *App) houseEvents() {
 		// 0x5979b0 -> 0x569890: every refusal prints its SysMsg whichever service
 		// asked (bank, shop, gatekeeper, blacksmith); nothing else is awaited.
 		if id := map[uint8]int{1: 8026, 2: 8027, 3: 8028, 4: 2038}[g.BankResult.Result]; id != 0 {
-			fallback := map[uint8]string{1: "The guild must be ranked to use this service.", 2: "Insufficient guild permissions.", 3: "The guild's service NPC level is too low.", 4: "Your guild rank cannot do this."}[g.BankResult.Result]
-			a.localizedNotice(0, id, nil, fallback)
+			a.localizedNotice(0, id, nil)
 		}
 		a.shop.pending, a.inventory.pending, a.gate.pending = false, false, false
 	}

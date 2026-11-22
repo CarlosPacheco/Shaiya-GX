@@ -16,10 +16,6 @@ func (a *App) drawInventoryPreview(w, h int) {
 	if !ok {
 		return
 	}
-	if a.appearanceEdit != nil {
-		d := a.appearanceUI.Values
-		slot.Hair, slot.Face, slot.Height, slot.Gender = d[0], d[1], d[2], d[3]
-	}
 	v := &a.inventory
 	ap := a.appearance(&slot)
 	if !v.previewLoaded || ap != v.previewAppearance {
@@ -45,8 +41,7 @@ func (a *App) drawInventoryPreview(w, h int) {
 		s.LightDir = render.V3{-1, -1, -1}
 		s.CharacterAmbient = 1
 		s.Begin()
-		scale := render.Identity()
-		scale[5] = ap.HeightScale()
+		scale := ap.ScaleMatrix()
 		v.preview.World = scale.Mul(render.Basis(render.V3{}, render.V3{0, 0, -1}, render.V3{0, 1, 0}))
 		v.preview.Update(float32(a.frameDT))
 		v.preview.Draw(a.skinner, &s)

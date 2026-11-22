@@ -58,11 +58,11 @@ func (a *App) openMall() {
 	}
 	if err := a.prepareMall(); err != nil {
 		log.Printf("Item Mall catalog: %v", err)
-		a.questMessage("Item Mall catalog unavailable.")
+		a.questMessageID(12140)
 		return
 	}
 	if err := a.world.Send(proto.MallPointsPacket()); err != nil {
-		a.backToLogin("Unable to request Item Mall points.")
+		a.backToLoginID(12144)
 	}
 }
 
@@ -129,14 +129,14 @@ func (a *App) updateMall(in *platform.Input, w, h int) bool {
 	}
 	if a.mall.pending != 0 && a.clock >= a.mall.deadline {
 		a.mall.pending = 0
-		a.questMessage("Item Mall request timed out.")
+		a.questMessageID(12146)
 	}
 	busy := a.mall.pending != 0
 	if a.mallUI.GiftOpen {
 		slot, _, captured := a.mallUI.UpdateGifts(in, w, h, a.state.Mall.Stored, a.clock, busy)
 		if slot >= 0 && a.state.Mall.PendingClaim == nil {
 			if err := a.world.Send(proto.MallClaimPacket(uint8(slot))); err != nil {
-				a.backToLogin("Unable to claim gift.")
+				a.backToLoginID(12145)
 			} else {
 				a.mall.pending, a.mall.deadline = proto.PointStoredItemGet, a.clock+10
 			}
@@ -158,10 +158,10 @@ func (a *App) updateMall(in *platform.Input, w, h int) bool {
 			p := products[a.mallUI.Selected]
 			a.mall.modal, a.mall.code = action, p.Code
 			if action == ui.MallBuy {
-				a.mallConfirm.Open(fmt.Sprintf("Buy %s for %d points?", p.Name, p.Cost), true)
+				a.mallConfirm.Open(a.msg.Format(12307, map[string]string{"v": p.Name, "v2": fmt.Sprint(p.Cost)}), true)
 			} else {
 				a.mall.target = ui.TextField{Max: 20}
-				a.mallConfirm.Open(fmt.Sprintf("Gift %s to character:", p.Name), true)
+				a.mallConfirm.Open(a.msg.Format(12308, map[string]string{"v": p.Name}), true)
 			}
 		}
 	}
@@ -187,11 +187,11 @@ func (a *App) updateMallConfirm(in *platform.Input, w, h int) {
 		} else if target := strings.TrimSpace(a.mall.target.Text); target != "" {
 			packet, op = proto.MallGiftPacket(a.mall.code, target), proto.PointGiftSend
 		} else {
-			a.questMessage("Enter a character name for the gift.")
+			a.questMessageID(12147)
 		}
 		if packet != nil {
 			if err := a.world.Send(packet); err != nil {
-				a.backToLogin("Unable to send Item Mall request.")
+				a.backToLoginID(12136)
 			} else {
 				a.mall.pending, a.mall.deadline = op, a.clock+10
 			}
@@ -207,10 +207,10 @@ func (a *App) drawMall(w, h int) {
 	identity := ui.MallIdentity{}
 	if slot, ok := a.selfSlot(); ok {
 		identity.Name = slot.Name
-		classes := [2][6]string{{"Fighter", "Defender", "Ranger", "Archer", "Mage", "Priest"}, {"Warrior", "Guardian", "Assassin", "Hunter", "Pagan", "Oracle"}}
+		classes := [2][6]int{{5050, 5051, 5056, 5057, 5058, 5052}, {5047, 5048, 5053, 5049, 5054, 5055}}
 		if slot.Class < 6 {
 			faction := min(int(a.state.Faction.Faction), 1)
-			identity.Class = classes[faction][slot.Class]
+			identity.Class = a.tr(classes[faction][slot.Class])
 		}
 	}
 	if a.servers != nil && a.servers.Selected >= 0 && a.servers.Selected < len(a.servers.Servers) {

@@ -17,14 +17,14 @@ func (a *App) collisionViewCommand(text string) bool {
 		return true
 	}
 	if !a.state.Self.IsGM {
-		a.questMessage("GM: access denied.")
+		a.questMessageID(12026)
 		return true
 	}
 	if a.wv == nil {
 		return true
 	}
 	if len(fields) > 2 || len(fields) == 2 && fields[1] != "on" && fields[1] != "off" {
-		a.questMessage("Usage: /cview [on|off]")
+		a.questMessageID(12027)
 		return true
 	}
 	enabled := !a.wv.collisionView
@@ -33,9 +33,9 @@ func (a *App) collisionViewCommand(text string) bool {
 	}
 	a.wv.collisionView = enabled
 	if enabled {
-		a.questMessage("Collision view ON: gold = walls, cyan = support surfaces, blue = terrain, magenta = player ellipsoid. Client prediction only.")
+		a.questMessageID(12028)
 	} else {
-		a.questMessage("Collision view OFF.")
+		a.questMessageID(12029)
 	}
 	return true
 }

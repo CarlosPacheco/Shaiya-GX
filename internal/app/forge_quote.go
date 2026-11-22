@@ -47,7 +47,7 @@ func (a *App) requestForgeQuote(kind, confirm uint8, force bool) {
 		return
 	}
 	if err := a.world.Send(proto.ForgeQuotePacket(q)); err != nil {
-		a.backToLogin("Unable to request blacksmith details.")
+		a.backToLoginID(12080)
 	}
 }
 func (a *App) updateForgeQuote() {
@@ -92,7 +92,7 @@ func (a *App) confirmedForgeQuote(p []byte) {
 		return
 	}
 	if !q.Valid {
-		a.questMessage("The selected items cannot be used for this action.")
+		a.questMessageID(12081)
 		return
 	}
 	v.confirm = confirm
@@ -119,12 +119,12 @@ func (a *App) forgeConfirmation(q proto.ForgeQuote) string {
 		}
 		return value
 	}
-	action := "Link lapis"
+	action := a.tr(12246)
 	if q.Kind == proto.ForgeQuoteExtract {
-		action = "Extract lapis"
+		action = a.tr(12247)
 	}
 	if q.Kind == proto.ForgeQuoteEnchant {
-		action = "Enchant equipment"
+		action = a.tr(12248)
 	}
 	return fmt.Sprintf("%s?\nSuccess: %s%%\nGold: %d", action, forgePercent(q.Rate), q.Gold)
 }

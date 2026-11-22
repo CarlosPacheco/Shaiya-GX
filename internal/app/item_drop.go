@@ -83,7 +83,7 @@ func (a *App) sendItemDrop(count uint16) {
 		return
 	}
 	if err := a.world.Send(proto.ItemDropPacket(d.source[0], d.source[1], count)); err != nil {
-		a.backToLogin("Unable to throw the item away.")
+		a.backToLoginID(12131)
 	}
 }
 

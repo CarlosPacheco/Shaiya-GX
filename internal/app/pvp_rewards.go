@@ -39,7 +39,7 @@ func (a *App) sendPvPReward(op proto.Opcode) {
 		return
 	}
 	if err := a.world.Send(proto.NewWriter(op).Bytes()); err != nil {
-		a.backToLogin("Unable to request PvP reward.")
+		a.backToLoginID(12172)
 		return
 	}
 	a.pvpReward.pending, a.pvpReward.deadline = op, a.clock+10
@@ -115,7 +115,7 @@ func (a *App) updatePvPRewards(in *platform.Input, w, h int) bool {
 	if closed {
 		if a.world != nil {
 			if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-				a.backToLogin("Unable to close NPC conversation.")
+				a.backToLoginID(12011)
 			}
 		}
 		a.shop.npcID = 0

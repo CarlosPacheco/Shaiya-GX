@@ -36,7 +36,7 @@ func (a *App) requestVehicle() {
 		}
 	}
 	if err := a.world.Send(proto.UseVehiclePacket()); err != nil {
-		a.backToLogin("Unable to use mount.")
+		a.backToLoginID(12202)
 		return
 	}
 	a.vehicle.pending, a.vehicle.deadline = true, a.clock+10
@@ -212,7 +212,7 @@ func (a *App) updateVehicleInvite(in *platform.Input, w, h int) bool {
 	answer := a.vehicleMessage.Update(in, w, h)
 	if answer != ui.MessageNone && a.world != nil {
 		if err := a.world.Send(proto.VehicleAnswerPacket(answer == ui.MessageOK)); err != nil {
-			a.backToLogin("Unable to answer mount invitation.")
+			a.backToLoginID(12203)
 		}
 	}
 	return true

@@ -52,3 +52,27 @@ func (a *App) updateAttackSounds() {
 	clear(a.wv.attackSounds[len(kept):])
 	a.wv.attackSounds = kept
 }
+
+// pendingNumber is a blow's effects waiting for its swing's contact marker.
+type pendingNumber struct {
+	actionClock
+	apply func()
+}
+
+func (a *App) updatePendingNumbers() {
+	if a.wv == nil {
+		return
+	}
+	kept := a.wv.pendingNumbers[:0]
+	for _, n := range a.wv.pendingNumbers {
+		// A replaced or cancelled action must not swallow the result.
+		due, alive := n.ready(n.actor)
+		if !due && alive {
+			kept = append(kept, n)
+			continue
+		}
+		n.apply()
+	}
+	clear(a.wv.pendingNumbers[len(kept):])
+	a.wv.pendingNumbers = kept
+}

@@ -89,7 +89,7 @@ type ChatPanel struct {
 
 func NewChatPanel(t Textures) (*ChatPanel, error) {
 	ld := &loader{t: t}
-	c := &ChatPanel{scroll: ld.get("scrollbar.png"), ChannelNames: chatChannelNames, input: ld.get("chat.png"), modeHeld: -1, optionPress: -1, Caret: ChatCaret{Position: -1}, Rows: [2]int{5, 5}}
+	c := &ChatPanel{scroll: ld.get("scrollbar.png"), ChannelNames: chatChannelNames(), input: ld.get("chat.png"), modeHeld: -1, optionPress: -1, Caret: ChatCaret{Position: -1}, Rows: [2]int{5, 5}}
 	if optional, ok := t.(interface{ OptionalInterface(string) *render.Texture }); ok {
 		c.help = optional.OptionalInterface("chat_config1.png")
 		c.filter = optional.OptionalInterface("chat_config2.png")
@@ -484,7 +484,16 @@ func chatEntryTextY(rowY, fontHeight int) int {
 	return rowY + max(0, 22-fontHeight)/2
 }
 
-var chatChannelNames = [7]string{"Normal", "Trade", "Guild", "Party", "Area", "Whisper", "Raid"}
+// SysMsg ids of the channel names (native 5086.. and a GX row for Raid).
+var ChatChannelIDs = [7]int{5086, 5089, 5088, 5087, 5388, 5377, 12294}
+
+func chatChannelNames() (names [7]string) {
+	for i, id := range ChatChannelIDs {
+		names[i] = Tr(id)
+	}
+	return
+}
+
 var chatChannelOrder = [6]uint8{0, 5, 3, 2, 1, 4}
 
 // channelList is the mode list in display order; Raid is last and only for a

@@ -95,7 +95,7 @@ func (a *App) gameMenuControls(in *platform.Input, w, h int) (platform.Input, bo
 func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 	if a.menuPending {
 		if a.clock >= a.menuDeadline {
-			a.backToLogin("Character screen response timed out.")
+			a.backToLoginID(12082)
 		}
 		return
 	}
@@ -112,7 +112,7 @@ func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 				return
 			}
 			if err := a.world.Send(proto.LogoutPacket()); err != nil {
-				a.backToLogin("Unable to leave the map.")
+				a.backToLoginID(12083)
 				return
 			}
 			a.menuPending, a.menuDeadline = true, a.clock+10

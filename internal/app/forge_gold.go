@@ -20,6 +20,6 @@ func (a *App) insufficientForgeGold(balance, cost uint32, id int) bool {
 	if balance >= cost {
 		return false
 	}
-	a.localizedNotice(3, id, map[string]string{"b": strconv.FormatUint(uint64(cost), 10)}, "Insufficient gold")
+	a.localizedNotice(3, id, map[string]string{"b": strconv.FormatUint(uint64(cost), 10)})
 	return true
 }

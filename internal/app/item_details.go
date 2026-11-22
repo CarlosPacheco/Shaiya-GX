@@ -45,13 +45,13 @@ func parseCraftValues(name string) (craftValues, bool) {
 	return out, true
 }
 
-func craftSummary(name string) string {
+func (a *App) craftSummary(name string) string {
 	if strings.TrimSpace(name) == "" {
-		return "No bonus attributes"
+		return a.tr(12251)
 	}
 	v, ok := parseCraftValues(name)
 	if !ok {
-		return "Unavailable"
+		return a.tr(12252)
 	}
 	names := [9]string{"STR", "DEX", "REC", "INT", "WIS", "LUC", "HP", "MP", "SP"}
 	var parts []string
@@ -61,7 +61,7 @@ func craftSummary(name string) string {
 		}
 	}
 	if len(parts) == 0 {
-		return "No bonus attributes"
+		return a.tr(12251)
 	}
 	return strings.Join(parts, ", ")
 }
@@ -103,10 +103,7 @@ func (a *App) itemClassWarning(def *sdata.Item) (itemDetailLine, bool) {
 	if !ok || int(own.Class) >= len(def.Classes) || def.Classes[own.Class] != 0 {
 		return itemDetailLine{}, false
 	}
-	label := a.msg.Get(456)
-	if label == "" {
-		label = "Unavailable class of item."
-	}
+	label := a.tr(456)
 	return itemDetailLine{label, [4]float32{1, 0, 0, 1}}, true
 }
 
@@ -114,13 +111,11 @@ func (a *App) itemClassWarning(def *sdata.Item) (itemDetailLine, bool) {
 // SysMsg owns labels; inline description controls remain archive data.
 func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint16, price string, gemName func(uint8) string, messages ...text.SysMsg) []itemDetailLine {
 	instance = withoutCloakGems(instance)
-	label := func(id int, fallback string) string {
+	label := func(id int) string {
 		if len(messages) > 0 {
-			if value := messages[0].Get(id); value != "" {
-				return value
-			}
+			return messages[0].Lookup(id)
 		}
-		return fallback
+		return text.Defaults[id]
 	}
 	lines := make([]itemDetailLine, 0, 20)
 	add := func(text string, color [4]float32) {
@@ -140,28 +135,28 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 	rt := itemtype.Real(def.Type)
 	equipment := rt >= 1 && rt <= 25 && !itemHasRestoration(def.Type)
 	if rt >= 1 && rt <= 15 {
-		add(label(5192+int(attackspeed.Tier(def.AttackTime, 0)), "Attack speed"), white)
+		add(label(5192+int(attackspeed.Tier(def.AttackTime, 0))), white)
 	} else if (equipment || def.Type == 30) && def.AttackTime > 0 {
 		// SysMsg supplies the localized attack-speed prefix and the tier name.
-		prefix := strings.TrimSpace(strings.Replace(label(5197, "Attack speed normal"), label(5276, "normal"), "", 1))
+		prefix := strings.TrimSpace(strings.Replace(label(5197), label(5276), "", 1))
 		add(fmt.Sprintf("%s +%d", prefix, def.AttackTime), [4]float32{1, 1, 0, 1})
 	}
 	if (equipment || def.Type == 30) && def.Speed > 0 {
-		add(fmt.Sprintf("%s +%d", label(5209, "increase movement speed"), def.Speed), [4]float32{1, 1, 0, 1})
+		add(fmt.Sprintf("%s +%d", label(5209), def.Speed), [4]float32{1, 1, 0, 1})
 	}
 
 	if def.Attack != 0 || def.AttackAdd != 0 {
-		add(fmt.Sprintf("%s %d - %d", label(5191, "attack-power"), def.Attack, uint32(def.Attack)+uint32(def.AttackAdd)), white)
+		add(fmt.Sprintf("%s %d - %d", label(5191), def.Attack, uint32(def.Attack)+uint32(def.AttackAdd)), white)
 	}
 	if def.Def > 0 {
-		add(fmt.Sprintf("%s %d", label(5202, "defense-power"), def.Def), white)
+		add(fmt.Sprintf("%s %d", label(5202), def.Def), white)
 	}
 	if def.Resist > 0 {
-		add(fmt.Sprintf("%s %d", label(5203, "resistence"), def.Resist), white)
+		add(fmt.Sprintf("%s %d", label(5203), def.Resist), white)
 	}
 	if equipment || def.Type == 30 {
 		if absorption := itemAbsorption(def, instance); absorption > 0 {
-			add(fmt.Sprintf("%s %d", label(485, "Absorption"), absorption), white)
+			add(fmt.Sprintf("%s %d", label(485), absorption), white)
 		}
 	}
 	if def.Attribute >= 1 && def.Attribute <= 8 && proto.FirecrackerVariant(def.Type, def.TypeID) == 0 {
@@ -175,7 +170,7 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 		name   string
 		base   uint16
 		remake uint16
-	}{{label(5208, "max.") + " HP", hp, craft.stats[6]}, {label(5208, "max.") + " SP", sp, craft.stats[8]}, {label(5208, "max.") + " MP", mp, craft.stats[7]}}
+	}{{label(5208) + " HP", hp, craft.stats[6]}, {label(5208) + " SP", sp, craft.stats[8]}, {label(5208) + " MP", mp, craft.stats[7]}}
 	for i, name := range [6]string{"STR", "DEX", "REC", "INT", "WIS", "LUC"} {
 		specs = append(specs, struct {
 			name   string
@@ -200,27 +195,26 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 		}
 	}
 	if def.Type == 30 || def.Type == 95 {
-		add(label(5181, "Item possible to equip"), yellow)
+		add(label(5181), yellow)
 		// Use the same native target flags as placement. These fields are
 		// overloaded on lapis/lapisias, rather than character requirements.
 		for _, target := range []struct {
-			typ  uint8
-			msg  int
-			name string
+			typ uint8
+			msg int
 		}{
-			{1, 5182, "Weapons"}, {16, 5183, "Helmets"},
-			{17, 5184, "Upper armor"}, {18, 5185, "Lower armor"},
-			{21, 5186, "Shields"}, {19, 5187, "Gauntlet"},
-			{20, 5188, "Shoes"}, {22, 5189, "Rings"},
-			{23, 5190, "Necklaces"},
-			{40, 5381, "Bracelets"},
+			{1, 5182}, {16, 5183},
+			{17, 5184}, {18, 5185},
+			{21, 5186}, {19, 5187},
+			{20, 5188}, {22, 5189},
+			{23, 5190},
+			{40, 5381},
 		} {
 			if lapFitsItem(def, target.typ) {
-				add(label(target.msg, target.name), white)
+				add(label(target.msg), white)
 			}
 		}
 	} else if def.MinLevel > 0 {
-		add(fmt.Sprintf("%s %d", label(5211, "level"), def.MinLevel), white)
+		add(fmt.Sprintf("%s %d", label(5211), def.MinLevel), white)
 	}
 
 	if rest, ok := strings.CutPrefix(price, "HouseBuy:"); ok {
@@ -232,17 +226,17 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 			if parts[0] == "short" {
 				color = [4]float32{1, 0, 0, 1}
 			}
-			add(label(8025, "reduced rate")+" : "+parts[1], color)
-			add(label(5220, "Purchasing price")+" : "+parts[2], [4]float32{150.0 / 255, 150.0 / 255, 150.0 / 255, 1})
+			add(label(8025)+" : "+parts[1], color)
+			add(label(5220)+" : "+parts[2], [4]float32{150.0 / 255, 150.0 / 255, 150.0 / 255, 1})
 		}
 	} else if price != "" && price != "Sell: 0 gold" {
 		color := white
 		if strings.HasPrefix(price, "Buy:") {
 			price = strings.TrimPrefix(price, "Buy:")
-			price = label(5220, "Purchasing price") + " :" + price
+			price = label(5220) + " :" + price
 		} else if strings.HasPrefix(price, "Sell:") {
 			price = strings.TrimPrefix(price, "Sell:")
-			price = label(5219, "Selling price") + " :" + price
+			price = label(5219) + " :" + price
 		}
 		price = strings.TrimSuffix(price, " gold")
 		add(price, color)
@@ -259,7 +253,7 @@ func itemDetailLines(def *sdata.Item, instance *proto.InventoryItem, count uint1
 				name = gemName(id)
 			}
 			if name == "" {
-				name = fmt.Sprintf("Lapis %d", id)
+				name = strings.ReplaceAll(label(12303), "<v>", fmt.Sprint(id))
 			}
 			add("Lapis: "+name, white)
 		}

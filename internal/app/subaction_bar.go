@@ -20,7 +20,10 @@ type subActionDrag struct {
 	source, x, y, mouseX, mouseY int
 }
 
-var subActionNames = [ui.SubActionCount]string{"Sit / Stand", "Walk / Run", "Auto Run", "Pick Up", "Attack", "Victory", "Beg", "Love", "Laugh", "Clap", "Greet", "Start", "Defeat", "Provoke", "Insult", "Setup Market"}
+// SysMsg ids (GX rows) of the sub-action names.
+var subActionNameIDs = [ui.SubActionCount]int{12326, 12327, 12328, 12329, 12330, 12331, 12332, 12333, 12334, 12335, 12336, 12337, 12338, 12339, 12340, 12341}
+
+func (a *App) subActionName(action uint8) string { return a.tr(subActionNameIDs[action]) }
 
 type localActionStore map[string][ui.TotalActionSlots]uint8
 
@@ -179,7 +182,7 @@ func (a *App) updateLocalActionDrag(in *platform.Input, w, h int) bool {
 				}
 				if err != nil {
 					*d = subActionDrag{}
-					a.backToLogin("Unable to save action bar.")
+					a.backToLoginID(12187)
 					return true
 				}
 				a.state.QuickSlots = slots

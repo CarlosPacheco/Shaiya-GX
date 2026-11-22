@@ -97,7 +97,7 @@ func (a *App) updateShop(in *platform.Input, w, h int) bool {
 	}
 	if closed {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-			a.backToLogin("Unable to close NPC conversation.")
+			a.backToLoginID(12011)
 			return true
 		}
 		v.npcID = 0
@@ -149,7 +149,7 @@ func (a *App) openNPC(id uint32) {
 	a.wv.approachTarget, a.wv.approachSkill = 0, nil
 	a.wv.approachNPC, a.wv.travel, a.wv.autoRun = false, false, false
 	if err := a.world.Send(proto.NpcTalkPacket(id)); err != nil {
-		a.backToLogin("Unable to talk to NPC.")
+		a.backToLoginID(12184)
 		return
 	}
 	a.shop.npcID, a.shop.page, a.shop.questMode, a.shop.talk = id, 0, false, false
@@ -245,12 +245,12 @@ func (a *App) drawMarket(w, h int, def sdata.NPC) {
 	message := ""
 	switch a.state.LastShop.Result {
 	case 1:
-		message = "Not enough gold."
+		message = a.tr(12258)
 	case 2:
-		message = "Inventory is full."
+		message = a.tr(238)
 	}
 	if v.pending {
-		message = "Waiting for server..."
+		message = a.tr(12259)
 	}
 	a.font.Draw(a.sprites, message, x, y+ui.MarketHeight+4, white, 256)
 	if cell, ok := ui.MarketHit(a.lastMouseX-x, a.lastMouseY-y); ok && !v.dragging && start+cell < len(def.Items) {
@@ -263,7 +263,7 @@ func (a *App) drawMarket(w, h int, def sdata.NPC) {
 
 func (a *App) buyItem(index uint8, count uint16) {
 	if err := a.world.Send(proto.ShopBuyPacket(a.shop.npcID, index, count)); err != nil {
-		a.backToLogin("Unable to request purchase.")
+		a.backToLoginID(12185)
 		return
 	}
 	a.shop.pending, a.shop.deadline = true, a.clock+10
@@ -271,7 +271,7 @@ func (a *App) buyItem(index uint8, count uint16) {
 
 func (a *App) sellItem(source [2]uint8, count uint16) {
 	if err := a.world.Send(proto.ShopSellPacket(source[0], source[1], count)); err != nil {
-		a.backToLogin("Unable to request sale.")
+		a.backToLoginID(12186)
 		return
 	}
 	a.inventory.pending, a.inventory.deadline, a.inventory.selected = true, a.clock+10, false

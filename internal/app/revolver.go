@@ -191,7 +191,7 @@ func (a *App) useRevolver() {
 	}
 	v := a.revolverState()
 	slot := v.Slots[v.Page][v.selected]
-	if slot.Action > 0 && int(slot.Action) <= len(subActionNames) {
+	if slot.Action > 0 && int(slot.Action) <= len(subActionNameIDs) {
 		v.step(1)
 		a.activateSubAction(int(slot.Action) - 1)
 		return
@@ -347,7 +347,7 @@ func (a *App) updateRevolver(in *platform.Input, w, h int) bool {
 }
 
 func (a *App) revolverIcon(slot revolverSlot) (out ui.ActionSlot) {
-	if slot.Action > 0 && int(slot.Action) <= len(subActionNames) {
+	if slot.Action > 0 && int(slot.Action) <= len(subActionNameIDs) {
 		i := slot.Action - 1
 		u, v := float32(i%4)/4, float32(i/4)/4
 		return ui.ActionSlot{Icon: a.assets.Texture("interface/icon/icon_sub.png"), UV: ui.UV{U0: u, V0: v, U1: u + .25, V1: v + .25}}
@@ -430,7 +430,7 @@ func (a *App) dispatchShortcut(p []byte) bool {
 		return false
 	}
 	if err := a.world.Send(p); err != nil {
-		a.backToLogin("Unable to use action.")
+		a.backToLoginID(12183)
 		return false
 	}
 	a.requestedSkillPresentation(p)

@@ -32,12 +32,16 @@ func (a *App) loadQuests() error {
 	a.npcDefs, a.questDefs, a.questItemLinks = npcs, quests, links
 	return nil
 }
+
+// questMessageID adds the SysMsg text to the chat as a plain line.
+func (a *App) questMessageID(id int) { a.questMessage(a.tr(id)) }
+
 func (a *App) questMessage(message string) {
 	a.state.AddChat(game.ChatLine{Text: message})
 }
 func (a *App) questName(id uint16) string {
 	if id == 0 || int(id) > len(a.questDefs) {
-		return fmt.Sprintf("Quest %d", id)
+		return a.msg.Format(12314, map[string]string{"v": fmt.Sprint(id)})
 	}
 	return a.questDefs[id-1].Name
 }
@@ -86,7 +90,7 @@ func (a *App) confirmedQuest(p []byte) {
 	case proto.QuestChoose:
 		id, err := proto.DecodeQuestChoice(p)
 		if err == nil {
-			a.questMessage(fmt.Sprintf("Choose a reward: /quest choose %d 0-2", id))
+			a.questMessage(a.msg.Format(12315, map[string]string{"v": fmt.Sprint(id)}))
 		}
 	case proto.QuestEnd:
 		result, err := proto.DecodeQuestEnd(p)
@@ -132,7 +136,7 @@ func (a *App) confirmedQuest(p []byte) {
 				}
 				a.systemMessage(3, id, nil)
 			} else {
-				a.questMessage(fmt.Sprintf("Quest %s: %s", status, a.questName(result.ID)))
+				a.questMessage(a.msg.Format(12316, map[string]string{"v": status, "v2": a.questName(result.ID)}))
 			}
 			if result.Success != 0 && !dialogue {
 				var def sdata.Quest
@@ -157,7 +161,7 @@ func (a *App) questCommand(text string) bool {
 		return false
 	}
 	if err := a.loadQuests(); err != nil {
-		a.questMessage("Quest data unavailable.")
+		a.questMessageID(12150)
 		return true
 	}
 	if len(fields) == 1 || fields[1] == "list" {
@@ -174,22 +178,22 @@ func (a *App) questCommand(text string) bool {
 		if npc := a.state.Entities[a.shop.npcID]; npc != nil {
 			for _, entry := range a.npcQuestEntries(npc) {
 				if entry.ending {
-					a.questMessage(fmt.Sprintf("Hand in at NPC: %d: %s", entry.id, a.questName(entry.id)))
+					a.questMessage(a.msg.Format(12317, map[string]string{"v": fmt.Sprint(entry.id), "v2": a.questName(entry.id)}))
 				} else {
-					a.questMessage(fmt.Sprintf("NPC quest: %d: %s", entry.id, a.questName(entry.id)))
+					a.questMessage(a.msg.Format(12318, map[string]string{"v": fmt.Sprint(entry.id), "v2": a.questName(entry.id)}))
 				}
 			}
 		}
-		a.questMessage("/quest start|end|abandon ID, /quest choose ID 0-2")
+		a.questMessageID(12175)
 		return true
 	}
 	if len(fields) < 3 {
-		a.questMessage("Use /quest list for available commands.")
+		a.questMessageID(12176)
 		return true
 	}
 	parsed, err := strconv.ParseUint(fields[2], 10, 16)
 	if err != nil || parsed == 0 {
-		a.questMessage("Invalid quest number.")
+		a.questMessageID(12177)
 		return true
 	}
 	id := uint16(parsed)
@@ -213,7 +217,7 @@ func (a *App) questCommand(text string) bool {
 		}
 		npc := a.state.Entities[a.shop.npcID]
 		if npc == nil || npc.Kind != game.KindNpc {
-			a.questMessage("Talk to the quest NPC first.")
+			a.questMessageID(12178)
 			return true
 		}
 		if strings.EqualFold(fields[1], "start") {
@@ -225,21 +229,21 @@ func (a *App) questCommand(text string) bool {
 		packet = proto.QuestAbandonPacket(id)
 	case "choose":
 		if len(fields) != 4 {
-			a.questMessage("Choose a reward: /quest choose ID 0-2")
+			a.questMessageID(12179)
 			return true
 		}
 		choice, e := strconv.ParseUint(fields[3], 10, 8)
 		if e != nil || choice > 2 || !a.state.QuestChoosing || a.state.QuestChoice != id {
-			a.questMessage("No matching reward choice is pending.")
+			a.questMessageID(12180)
 			return true
 		}
 		packet = proto.QuestChoosePacket(id, uint8(choice))
 	default:
-		a.questMessage("Use /quest list for available commands.")
+		a.questMessageID(12176)
 		return true
 	}
 	if err := a.world.Send(packet); err != nil {
-		a.backToLogin("Unable to send quest request.")
+		a.backToLoginID(12149)
 	}
 	return true
 }

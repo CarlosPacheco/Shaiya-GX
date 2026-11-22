@@ -34,7 +34,7 @@ func (a *App) sendAccountAction(op proto.Opcode, id uint32) {
 		packet = proto.RestoreCharacterPacket(id)
 	}
 	if err := a.world.Send(packet); err != nil {
-		a.backToLogin("Unable to send character request.")
+		a.backToLoginID(12001)
 		return
 	}
 	a.account.op, a.account.id, a.account.deadline = op, id, a.clock+10
@@ -87,7 +87,7 @@ func (a *App) confirmedAccount(p []byte) {
 		if result == 0 {
 			a.creating, a.actor = false, nil
 		} else {
-			a.accountMessage.Open(a.accountText(5046, "Unable to create character. Check the name."), false)
+			a.accountMessage.Open(a.tr(5046), false)
 		}
 		return
 	}
@@ -104,12 +104,12 @@ func (a *App) confirmedAccount(p []byte) {
 	}
 	a.account, a.chars.Busy = accountAction{}, false
 	if r.Result != 0 {
-		a.accountMessage.Open("The server rejected the character request.", false)
+		a.accountMessage.Open(a.tr(12002), false)
 		return
 	}
 	if op == proto.DeleteCharacter {
-		a.accountMessage.Open(a.accountText(10092, "The character can be restored within two hours."), false)
+		a.accountMessage.Open(a.tr(10092), false)
 	} else if op == proto.RestoreCharacter {
-		a.accountMessage.Open(a.accountText(10094, "Character restored."), false)
+		a.accountMessage.Open(a.tr(10094), false)
 	}
 }

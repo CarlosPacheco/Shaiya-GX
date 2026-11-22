@@ -182,24 +182,24 @@ func (c *ChatPanel) drawOptions(s *render.Sprites, f *Font, blank *render.Textur
 	x, y, w, ht := c.optionBounds(h)
 	tex := c.help
 	boxes := chatHelpBoxes[:]
-	labels := []string{"Common", "Whisper", "Party", "Guild", "Trade", "Alpha"}
+	labels := []string{Tr(12288), Tr(5377), Tr(5087), Tr(5088), Tr(5089), Tr(12289)}
 	if c.option == chatFilters {
 		tex, boxes = c.filter, chatFilterBoxes[:]
-		labels = []string{"Damage", "Acquire", "Death", "Notice", "Common", "Party", "Guild", "Trade"}
+		labels = []string{Tr(5082), Tr(5083), Tr(5084), Tr(5085), Tr(12288), Tr(5087), Tr(5088), Tr(5089)}
 	}
 	if tex != nil {
 		s.Draw(tex, float32(x), float32(y), float32(w), float32(ht), 0, 0, float32(w)/256, float32(ht)/256, white)
 	} else {
 		DrawTipFrame(s, blank, float32(x), float32(y), float32(w), float32(ht), 1, TipFill, TipBorder)
 		if c.option == chatFilters {
-			f.Draw(s, "Message filters", x+16, y+25, white, 180)
-			f.Draw(s, "Conversation filters", x+16, y+112, white, 180)
+			f.Draw(s, Tr(12290), x+16, y+25, white, 180)
+			f.Draw(s, Tr(12291), x+16, y+112, white, 180)
 		} else {
-			f.Draw(s, "Help – Chat", x+65, y+12, white, 140)
+			f.Draw(s, Tr(12293), x+65, y+12, white, 140)
 			for i, line := range []string{"! name message", "@ party message", "$ trade message"} {
 				f.Draw(s, line, x+18, y+45+i*27, white, 180)
 			}
-			f.Draw(s, "Chat Mode", x+65, y+163, white, 140)
+			f.Draw(s, Tr(12292), x+65, y+163, white, 140)
 		}
 	}
 	for i, b := range boxes {

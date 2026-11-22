@@ -41,8 +41,10 @@ func TestLoadingTipStaysUntilNextScreen(t *testing.T) {
 	a.loading.started = true
 	a.wv = &worldView{mapID: 1}
 	a.state.MapID = 2
-	if !a.updateMapLoading() || a.loading.tip != "Segundo mapa." || a.loading.started {
-		t.Fatalf("new load did not select a new tip: %+v", a.loading)
+	// A transfer that supersedes the load restarts the plan but keeps the same
+	// loading screen (picture and tip), so it is not seen as a second screen.
+	if !a.updateMapLoading() || a.loading.tip != "Primera misión." || a.loading.started || a.loading.mapID != 2 {
+		t.Fatalf("superseded load changed its screen: %+v", a.loading)
 	}
 }
 

@@ -28,6 +28,8 @@ type Skill struct {
 	AbilityType                          [3]uint8
 	AbilityValue                         [3]int16
 	LimitHP                              uint8
+	NeedWeapon                           [15]bool // weapon real types 1..15 that may use it
+	NeedShield                           bool
 	ChangeType, ChangeLevel              uint16
 }
 type SkillKey struct {
@@ -89,6 +91,10 @@ func ParseSkills(raw []byte) (map[SkillKey]Skill, error) {
 				s.AbilityValue[i] = int16(binary.LittleEndian.Uint16(p[88+i*3:]))
 			}
 			s.LimitHP = p[110]
+			for i := range s.NeedWeapon {
+				s.NeedWeapon[i] = p[24+i] != 0
+			}
+			s.NeedShield = p[39] != 0
 			s.ChangeType, s.ChangeLevel = binary.LittleEndian.Uint16(p[112:]), binary.LittleEndian.Uint16(p[114:])
 			out[SkillKey{uint16(id + 1), s.Level}] = s
 		}

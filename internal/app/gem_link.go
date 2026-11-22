@@ -58,7 +58,7 @@ func (a *App) sendGemLink(gemKey, itemKey [2]uint8, hammer ...[2]uint8) bool {
 		packet = proto.GemAddHammerPacket(gemKey[0], gemKey[1], itemKey[0], itemKey[1], hammerKey[0], hammerKey[1])
 	}
 	if err := a.world.Send(packet); err != nil {
-		a.backToLogin("Unable to request gem link.")
+		a.backToLoginID(12089)
 		return false
 	}
 	return true
@@ -87,7 +87,7 @@ func (a *App) confirmedGemLink(p []byte) {
 		v.refresh.start(slots)
 		for key := range v.refresh.pending {
 			if err := a.world.Send(proto.ItemMovePacket(key[0], key[1], key[0], key[1])); err != nil {
-				a.backToLogin("Unable to refresh items after gem link.")
+				a.backToLoginID(12090)
 				return
 			}
 		}

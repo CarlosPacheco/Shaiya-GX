@@ -23,7 +23,7 @@ func (a *App) updateGatekeeper(in *platform.Input, w, h int, e *game.Entity) boo
 	choice, close := a.gateUI.Update(in, w, h, def.Gates, busy)
 	if (close || in.HasKey(platform.KeyEscape)) && !busy {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-			a.backToLogin("Unable to close NPC conversation.")
+			a.backToLoginID(12011)
 			return true
 		}
 		a.shop.npcID = 0
@@ -36,7 +36,7 @@ func (a *App) updateGatekeeper(in *platform.Input, w, h int, e *game.Entity) boo
 		if label == "" {
 			label = fmt.Sprintf("map %d", g.MapID)
 		}
-		a.gateConfirm.Open(fmt.Sprintf("Travel to %s? Listed price: %d gold.", label, g.Cost), true)
+		a.gateConfirm.Open(a.msg.Format(12300, map[string]string{"v": label, "v2": fmt.Sprint(g.Cost)}), true)
 		return true
 	}
 	return panelPointer(in, x, y, ui.GatekeeperWidth, ui.GatekeeperHeight)
@@ -49,16 +49,16 @@ func (a *App) updateGateConfirm(in *platform.Input, w, h int) {
 	e := a.state.Entities[v.npc]
 	if e == nil || e.NpcType != 2 || v.index >= 3 || a.shop.npcID != v.npc || a.shop.questMode || a.state.Self.Dead || a.shop.pending || a.inventory.pending ||
 		a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}].Gates[v.index] != v.destination {
-		a.questMessage("Gatekeeper destination is no longer available.")
+		a.questMessageID(12086)
 		return
 	}
 	dx, dz := e.X-a.wv.pos[0], e.Z-a.wv.pos[2]
 	if dx*dx+dz*dz >= 900 {
-		a.questMessage("Move closer to the gatekeeper.")
+		a.questMessageID(12087)
 		return
 	}
 	if err := a.world.Send(proto.GatekeeperPacket(v.npc, v.index)); err != nil {
-		a.backToLogin("Unable to request travel.")
+		a.backToLoginID(12084)
 		return
 	}
 	v.pending = true
@@ -75,11 +75,11 @@ func (a *App) confirmedGatekeeper(p []byte) {
 	}
 	v.pending, a.shop.pending = false, false
 	if r.Result == 0 {
-		a.questMessage("Gatekeeper refused travel.")
+		a.questMessageID(12088)
 		return
 	}
 	if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-		a.backToLogin("Unable to close gatekeeper conversation.")
+		a.backToLoginID(12085)
 		return
 	}
 	a.shop.npcID = 0

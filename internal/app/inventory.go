@@ -19,6 +19,7 @@ type inventoryView struct {
 	source                  [2]uint8
 	deadline                float64
 	cooldowns               map[uint8]float64
+	tap                     map[[2]uint8]float64 // use highlight on a bag cell until this time
 	restoration             *potionRestoration
 	message                 string
 	pressedItem, dragging   bool
@@ -101,8 +102,16 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 	}
 	v.hover, v.hovered = ui.InventoryHit(in.MouseX-x, in.MouseY-y, v.bag)
 	// Clicking uses an item; dragging keeps native bag positions authoritative.
+	// Right click uses an item (modern-client habit, not the original's):
+	// equipment is worn, everything else is used.
 	if in.RightPressed && v.hovered && !a.state.Self.Dead {
-		a.equipInventoryItem(v.hover)
+		if it, ok := a.state.Inventory[v.hover]; ok {
+			if v.hover[0] != 0 && len(inventoryEquipSlots(it.Type)) > 0 {
+				a.equipInventoryItem(v.hover)
+			} else {
+				a.useInventoryItem(v.hover)
+			}
+		}
 		return true
 	}
 	if in.Pressed && v.hovered && !a.state.Self.Dead {
@@ -134,12 +143,12 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 					return captured
 				}
 				if err := a.world.Send(proto.ItemMovePacket(v.source[0], v.source[1], key[0], key[1])); err != nil {
-					a.backToLogin("Unable to move inventory item.")
+					a.backToLoginID(12128)
 					return true
 				}
 				v.pending, v.deadline = true, a.clock+10
 			case pressedItem && key == v.source:
-				a.useInventoryItem(key)
+				// A left click only selects; items are used with the right button.
 			}
 		} else if dragged && !captured {
 			a.noteItemDrop(v.source)
@@ -228,10 +237,14 @@ func (a *App) useInventoryItem(key [2]uint8) {
 		return
 	}
 	if err := a.world.Send(a.inventoryUsePacket(key[0], key[1], it)); err != nil {
-		a.backToLogin("Unable to use item.")
+		a.backToLoginID(12129)
 		return
 	}
 	a.inventory.pending, a.inventory.deadline = true, a.clock+10
+	if a.inventory.tap == nil {
+		a.inventory.tap = map[[2]uint8]float64{}
+	}
+	a.inventory.tap[key] = a.clock + .12 // the icon is "tapped" like a pressed shortcut
 }
 func itemSellingPrice(price uint32) string {
 	if price == 0 {
@@ -256,7 +269,7 @@ func (a *App) equipInventoryItem(key [2]uint8) {
 		}
 	}
 	if err := a.world.Send(proto.ItemMovePacket(key[0], key[1], 0, slot)); err != nil {
-		a.backToLogin("Unable to equip item.")
+		a.backToLoginID(12130)
 		return
 	}
 	a.inventory.selected, a.inventory.dragging = false, false

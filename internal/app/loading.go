@@ -78,7 +78,7 @@ func (a *App) updateMapLoading() bool {
 				return true
 			}
 			if a.selectWorld(fury) == nil {
-				a.backToLogin("Unable to load character scenery.")
+				a.backToLoginID(12134)
 				return false
 			}
 			a.loading = mapLoading{}
@@ -96,7 +96,12 @@ func (a *App) updateMapLoading() bool {
 	}
 	// A transfer received during initial streaming supersedes the old plan.
 	if a.loading.active && a.loading.started && a.wv != nil && a.wv.mapID != a.state.MapID {
+		// Same loading screen, new plan: the picture and tip stay, so the
+		// restart is not seen as a second loading screen.
+		old := a.loading
 		a.beginMapLoading(a.state.MapID, false)
+		a.loading.art, a.loading.artMap, a.loading.artSet, a.loading.tip = old.art, old.artMap, old.artSet, old.tip
+		a.loading.presented, a.loading.progress = true, old.progress
 	}
 	l := &a.loading
 	if !l.active {
@@ -110,7 +115,7 @@ func (a *App) updateMapLoading() bool {
 		a.screen = screenWorld
 		a.enterWorld()
 		if a.wv == nil || a.wv.world == nil {
-			a.backToLogin("Unable to load map resources.")
+			a.backToLoginID(12135)
 			return false
 		}
 		l.started = true
@@ -129,8 +134,17 @@ func (a *App) drawMapLoading(w, h int) {
 		l.drawn = true
 	}
 	a.sprites.Begin(w, h)
-	if !l.artSet || l.artMap != l.mapID {
+	if !l.artSet {
 		l.art, l.artMap, l.artSet = a.loadingArt(l.mapID, l.selection), l.mapID, true
+	} else if l.artMap != l.mapID {
+		// The map id often arrives after the first frame (0 = unknown). Keep
+		// the picture on screen unless the map has a picture of its own.
+		if file, ok := a.mapScreens[l.mapID]; ok && !l.selection {
+			if _, found := a.arc.Lookup("interface/" + file); found {
+				l.art = a.loadingArt(l.mapID, false)
+			}
+		}
+		l.artMap = l.mapID
 	}
 	a.loadingScreen.Draw(a.sprites, a.font, a.white, w, h, l.progress, l.tip, l.art)
 	a.sprites.Flush()

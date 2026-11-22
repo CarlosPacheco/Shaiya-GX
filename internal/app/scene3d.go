@@ -71,9 +71,7 @@ func (a *App) drawWorld(w *scene.World, eye, target render.V3, width, height int
 		// Selection rotates the actor while the scenery camera stays fixed.
 		pos := selectActorPos
 		pos[1] = w.Height(pos[0], pos[2])
-		scale := a.actorAppearance.HeightScale()
-		m := render.Identity()
-		m[0], m[5], m[10] = scale, scale, scale
+		m := a.actorAppearance.ScaleMatrix()
 		actor.World = m.Mul(render.Basis(pos, rotatePreview(selectActorFwd.Scale(-1), nav.Angle), render.V3{0, 1, 0}))
 		actor.Update(float32(a.frameDT))
 		if !actor.ActionActive() {

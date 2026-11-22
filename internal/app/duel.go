@@ -46,16 +46,16 @@ func (a *App) confirmedDuel(p []byte) {
 			if e := a.state.Entities[d.Opponent]; e != nil && e.Kind == game.KindUser {
 				a.state.Target = d.Opponent
 			}
-			a.questMessage("Duel started.")
+			a.questMessageID(12046)
 		}
 	case proto.DuelResult:
 		if d.Outcome == 1 {
-			a.questMessage("Duel won.")
+			a.questMessageID(12047)
 		} else if d.Outcome == 2 {
-			a.questMessage("Duel lost.")
+			a.questMessageID(12048)
 		}
 	case proto.DuelEnd:
-		a.questMessage("Duel ended.")
+		a.questMessageID(12049)
 	case proto.DuelWindowEnd:
 		v.quantity = nil
 		v.moneyOpen = false
@@ -91,7 +91,7 @@ func (a *App) duelCommand(text string) bool {
 	if command == "/forfeit" {
 		if a.state.Duel.Phase == game.DuelFighting {
 			if err := a.world.Send(proto.DuelGiveUpPacket()); err != nil {
-				a.backToLogin("Unable to surrender duel.")
+				a.backToLoginID(12038)
 			}
 		}
 		return true
@@ -108,11 +108,11 @@ func (a *App) duelCommand(text string) bool {
 		}
 	}
 	if e == nil || e.Kind != game.KindUser || e.ID == a.state.SelfID || a.state.Duel.Phase != game.DuelNone || a.state.GuildDuel.Phase != game.DuelNone || a.state.Exchange.Active {
-		a.questMessage("Select an available player to duel.")
+		a.questMessageID(12050)
 		return true
 	}
 	if err := a.world.Send(proto.DuelRequestPacket(e.ID)); err != nil {
-		a.backToLogin("Unable to request duel.")
+		a.backToLoginID(12039)
 	}
 	return true
 }
@@ -126,14 +126,14 @@ func (a *App) updateDuelInvite(in *platform.Input, w, h int) bool {
 		if d.Phase == game.DuelIncoming && a.clientSettings().RejectBattle {
 			// Reject Battle (0x562a7e): declined at once with the "no" answer.
 			if err := a.world.Send(proto.DuelAnswerPacket(false)); err != nil {
-				a.backToLogin("Unable to answer duel.")
+				a.backToLoginID(12040)
 				return true
 			}
 			d.Phase = game.DuelNone
 			return false
 		}
 		if d.Phase == game.DuelIncoming {
-			name := fmt.Sprintf("Player %d", d.Opponent)
+			name := a.msg.Format(12296, map[string]string{"v": fmt.Sprint(d.Opponent)})
 			if e := a.state.Entities[d.Opponent]; e != nil && e.Shape != nil && e.Shape.Name != "" {
 				name = e.Shape.Name
 			}
@@ -159,10 +159,10 @@ func (a *App) updateDuelInvite(in *platform.Input, w, h int) bool {
 		accept := result == ui.MessageOK
 		if accept && (a.state.Exchange.Active || a.state.GuildDuel.Phase != game.DuelNone) {
 			accept = false
-			a.questMessage("Finish the current trade or guild duel first.")
+			a.questMessageID(12051)
 		}
 		if err := a.world.Send(proto.DuelAnswerPacket(accept)); err != nil {
-			a.backToLogin("Unable to answer duel.")
+			a.backToLoginID(12040)
 			return true
 		}
 		if !accept {
@@ -180,7 +180,7 @@ func (a *App) duelCanEdit() bool {
 		return false
 	}
 	if d.OwnReady {
-		a.questMessage("Undo your ready status before editing the wager.")
+		a.questMessageID(12052)
 		return false
 	}
 	return true
@@ -190,7 +190,7 @@ func (a *App) sendDuelOffer(source [2]uint8, item proto.InventoryItem, slot uint
 		return
 	}
 	if err := a.world.Send(proto.DuelAddPacket(source[0], source[1], count, slot)); err != nil {
-		a.backToLogin("Unable to offer duel item.")
+		a.backToLoginID(12041)
 		return
 	}
 	a.duel.mutation, a.duel.slot, a.duel.deadline = 1, slot, a.clock+10
@@ -242,16 +242,16 @@ func (a *App) updateDuelDrag(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if item.Type == 27 || item.Type == 28 || item.Type == 29 {
-		a.questMessage("Quest items cannot be wagered.")
+		a.questMessageID(12053)
 		return true
 	}
 	if a.state.Duel.Own[slot].Item.Type != 0 {
-		a.questMessage("Choose an empty wager slot.")
+		a.questMessageID(12054)
 		return true
 	}
 	for _, offer := range a.state.Duel.Own {
 		if offer.Item.Type != 0 && offer.Source == source {
-			a.questMessage("That item is already wagered.")
+			a.questMessageID(12055)
 			return true
 		}
 	}
@@ -297,7 +297,7 @@ func (a *App) updateDuelModal(in *platform.Input) {
 		}
 		money := uint32(min(value, uint64(a.state.Details.Money)))
 		if err := a.world.Send(proto.DuelMoneyPacket(money)); err != nil {
-			a.backToLogin("Unable to wager gold.")
+			a.backToLoginID(12042)
 			return
 		}
 		v.mutation, v.deadline = 3, a.clock+10
@@ -312,7 +312,7 @@ func (a *App) updateDuel(in *platform.Input, w, h int) bool {
 	if close || in.HasKey(platform.KeyEscape) {
 		if !v.cancelSent {
 			if err := a.world.Send(proto.DuelReadyPacket(2)); err != nil {
-				a.backToLogin("Unable to cancel duel.")
+				a.backToLoginID(12043)
 				return true
 			}
 			v.cancelSent = true
@@ -326,7 +326,7 @@ func (a *App) updateDuel(in *platform.Input, w, h int) bool {
 				return true
 			}
 			if err := a.world.Send(proto.DuelRemovePacket(uint8(slot))); err != nil {
-				a.backToLogin("Unable to remove wager.")
+				a.backToLoginID(12044)
 				return true
 			}
 			v.mutation, v.slot, v.deadline = 2, uint8(slot), a.clock+10
@@ -346,7 +346,7 @@ func (a *App) updateDuel(in *platform.Input, w, h int) bool {
 			ready = 1
 		}
 		if err := a.world.Send(proto.DuelReadyPacket(ready)); err != nil {
-			a.backToLogin("Unable to update duel readiness.")
+			a.backToLoginID(12045)
 			return true
 		}
 		v.mutation, v.deadline = 4, a.clock+10
@@ -361,12 +361,12 @@ func (a *App) drawDuel(w, h int) {
 	d := &a.state.Duel
 	if d.Phase == game.DuelCounting {
 		seconds := max(0, int(math.Ceil(a.duel.countdownUntil-a.clock)))
-		a.font.Draw(a.sprites, fmt.Sprintf("Duel begins in %d", seconds), w/2-60, 100, white, 160)
+		a.font.Draw(a.sprites, a.msg.Format(12298, map[string]string{"v": fmt.Sprint(seconds)}), w/2-60, 100, white, 160)
 	}
 	if d.Phase != game.DuelWager {
 		return
 	}
-	name := fmt.Sprintf("Player %d", d.Opponent)
+	name := a.msg.Format(12296, map[string]string{"v": fmt.Sprint(d.Opponent)})
 	if e := a.state.Entities[d.Opponent]; e != nil && e.Shape != nil && e.Shape.Name != "" {
 		name = e.Shape.Name
 	}

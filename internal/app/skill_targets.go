@@ -110,7 +110,7 @@ func (a *App) resolveSkillTarget(d sdata.Skill) uint32 {
 	if target != 0 {
 		if e := a.state.Entities[target]; e != nil && e.Kind == game.KindMob && a.world != nil {
 			if err := a.world.Send(proto.TargetMobPacket(target)); err != nil {
-				a.backToLogin("Unable to select target.")
+				a.backToLoginID(12003)
 				return 0
 			}
 		}

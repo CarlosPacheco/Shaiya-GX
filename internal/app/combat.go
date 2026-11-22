@@ -19,18 +19,18 @@ func (a *App) confirmedPickup(p []byte) {
 	if proto.Op(p) != proto.AddItem || len(p) != 4 || p[2] != 0 {
 		return
 	}
-	message := "Unable to pick up that item."
+	message := a.tr(12238)
 	switch p[3] {
 	case 0:
-		message = "That item is reserved for another player."
+		message = a.tr(12239)
 	case 1:
-		message = "Your inventory is full."
+		message = a.tr(12240)
 	case 2:
-		message = "You do not need that quest item."
+		message = a.tr(12241)
 	case 3:
-		message = "That item is no longer available."
+		message = a.tr(12242)
 	case 4:
-		message = "That item is too far away."
+		message = a.tr(12243)
 	}
 	ids := map[byte]int{0: 202, 1: 238, 3: 239, 4: 233}
 	if id := ids[p[3]]; id != 0 && a.msg.Get(id) != "" {
@@ -49,7 +49,7 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 		for _, r := range in.Chars {
 			if (r == 'r' || r == 'R') && a.clock >= a.wv.reviveAt {
 				if err := a.world.Send(proto.RevivePacket()); err != nil {
-					a.backToLogin("Unable to request resurrection.")
+					a.backToLoginID(12030)
 					return
 				}
 				a.wv.reviveAt = a.clock + 3
@@ -110,14 +110,14 @@ func (a *App) updateCombat(in *platform.Input, w, h int) {
 		if e := a.state.Entities[target]; e != nil && e.Kind == game.KindUser && target != a.state.Target {
 			if old := a.state.Entities[a.state.Target]; old != nil && old.Kind == game.KindMob {
 				if err := a.world.Send(proto.StopAttackPacket()); err != nil {
-					a.backToLogin("Unable to stop attack.")
+					a.backToLoginID(12031)
 					return
 				}
 			}
 		}
 		if e := a.state.Entities[target]; target != a.state.Target && e != nil && e.Kind == game.KindMob {
 			if err := a.world.Send(proto.TargetMobPacket(target)); err != nil {
-				a.backToLogin("Unable to select target.")
+				a.backToLoginID(12003)
 				return
 			}
 		}
@@ -167,7 +167,7 @@ func (a *App) attackTarget() bool {
 		if id := a.nearestHostileMob(); id != 0 {
 			if a.world != nil {
 				if err := a.world.Send(proto.TargetMobPacket(id)); err != nil {
-					a.backToLogin("Unable to select target.")
+					a.backToLoginID(12003)
 					return false
 				}
 			}
@@ -219,7 +219,7 @@ func (a *App) attackTarget() bool {
 	// guild duel). A client-side duel-only check would block normal PvP.
 	if e != nil && e.Kind == game.KindUser && e.ID != a.state.SelfID && !e.Dead {
 		if err := a.world.Send(proto.UserAttackPacket(e.ID)); err != nil {
-			a.backToLogin("Unable to attack duel opponent.")
+			a.backToLoginID(12032)
 			return false
 		}
 		a.keepChasing(e.ID)
@@ -227,7 +227,7 @@ func (a *App) attackTarget() bool {
 	}
 	if e != nil && e.Kind == game.KindMob && !e.Dead {
 		if err := a.world.Send(proto.MobAttackPacket(e.ID)); err != nil {
-			a.backToLogin("Unable to send attack request.")
+			a.backToLoginID(12033)
 			return false
 		}
 		a.keepChasing(e.ID)
@@ -256,7 +256,7 @@ func (a *App) abandonAttack() bool {
 	}
 	if v.attackSent && a.world != nil {
 		if err := a.world.Send(proto.StopAttackPacket()); err != nil {
-			a.backToLogin("Unable to stop attack.")
+			a.backToLoginID(12031)
 			return false
 		}
 	}
@@ -294,7 +294,7 @@ func (a *App) drawCombat(w, h int) {
 	if s.Target == s.SelfID && s.SelfID != 0 {
 		view.TargetName, view.TargetHP, view.TargetKnown = view.Name, view.HP, true
 	} else if e := s.Entities[s.Target]; e != nil && e.Kind == game.KindMob {
-		view.TargetName = fmt.Sprintf("Target %d", e.TypeID)
+		view.TargetName = a.msg.Format(12297, map[string]string{"v": fmt.Sprint(e.TypeID)})
 		if def, err := a.assets.MonsterDefinition(e.TypeID); err == nil {
 			view.TargetName, view.TargetHP.Max = def.Name, def.HP
 			view.TargetColor = ui.RGBColor(ui.MobNameRGB(def.Level, view.Level))
@@ -338,7 +338,7 @@ func (a *App) selectNPC(id uint32) {
 	if a.state.Target != id {
 		if old := a.state.Entities[a.state.Target]; old != nil && old.Kind == game.KindMob && a.world != nil {
 			if err := a.world.Send(proto.StopAttackPacket()); err != nil {
-				a.backToLogin("Unable to stop attack.")
+				a.backToLoginID(12031)
 				return
 			}
 		}
@@ -354,7 +354,7 @@ func (a *App) selectSelf() {
 	if a.state.Target != a.state.SelfID {
 		if old := a.state.Entities[a.state.Target]; old != nil && old.Kind == game.KindMob && a.world != nil {
 			if err := a.world.Send(proto.StopAttackPacket()); err != nil {
-				a.backToLogin("Unable to stop attack.")
+				a.backToLoginID(12031)
 				return
 			}
 		}

@@ -109,6 +109,9 @@ func (a *App) confirmedItems(op proto.Opcode) {
 }
 
 func (a *App) drawItemCooldown(it proto.InventoryItem, x, y, size int) {
+	if a.clock < a.inventory.tap[[2]uint8{it.Bag, it.Slot}] {
+		a.sprites.Draw(a.white, float32(x), float32(y), float32(size), float32(size), 0, 0, 1, 1, [4]float32{1, 1, 1, 80.0 / 255})
+	}
 	if left := a.itemCooldown(it); left > 0 {
 		d := a.itemsItem(it.Type, it.TypeID)
 		if d == nil {

@@ -47,6 +47,12 @@ func (a *App) confirmedAnimation(p []byte) {
 	case proto.GXFallDamage:
 		r := a.state.LastFallDamage
 		a.showCombatNumberAmount(r.Target, r.Amount, false, false, combatDamage)
+	case proto.ChangeAppearance:
+		// 0x56b840: ch_maready02.wav (range 10) and effect type 209
+		// (DA_target_commercialB.EFT) on the character that changed.
+		if m, err := proto.DecodeAppearanceChange(p); err == nil {
+			a.appearanceChanged(m.ID)
+		}
 	case proto.CharacterMotion:
 		m := a.state.LastMotion
 		if m.ID == a.state.SelfID && (m.Motion == proto.MotionSitDown || m.Motion == proto.MotionStandUp) {
@@ -185,14 +191,8 @@ func (a *App) confirmedAnimation(p []byte) {
 			mob.attackTarget = result.Target
 			mob.actor.PlayOnce(mob.actor.AttackAction(0))
 		}
-		if !ranged && result.HP > 0 {
-			a.playCharacterDamageVoice(result.Target, result.Result, result.HP)
-			if mob := v.mobs[result.Target]; mob != nil && mob.actor != nil {
-				mob.actor.PlayOnce(7)
-			}
-		}
-		if !ranged && (result.Source == a.state.SelfID || result.Target == a.state.SelfID || result.Target == a.state.Target) {
-			a.showCombatNumber(result.Target, result.HP, result.Result == 1, result.Result == 3, combatDamage)
+		if !ranged {
+			a.deliverAttackResult(result, a.playerActor(result.Source))
 		}
 	case proto.CharacterDeath:
 		id := proto.NewReader(p).U32()
@@ -241,9 +241,46 @@ func (a *App) faceRequestedTarget(target uint32) bool {
 	a.faceSkillTarget(a.state.SelfID, target)
 	if a.world != nil && previous.Sub(a.wv.facing).Len() > .0001 {
 		if err := a.world.Send(a.wv.movePacket(0)); err != nil {
-			a.backToLogin("Unable to turn toward target.")
+			a.backToLoginID(12034)
 			return false
 		}
 	}
 	return true
+}
+
+// deliverAttackResult mirrors Game.exe 0x418030/0x41b300: the confirmed blow is
+// stored on the attacker and applied when the swing crosses its contact
+// marker. The number, the pain voice and the target's hit reaction all happen
+// there. With two markers the damage is split in halves (first gets the
+// larger share), one application per marker. Without a marker it applies now.
+func (a *App) deliverAttackResult(result proto.AttackResult, actor *scene.Character) {
+	v := a.wv
+	apply := func(hp uint16) func() {
+		return func() {
+			if hp > 0 {
+				a.playCharacterDamageVoice(result.Target, result.Result, hp)
+				if mob := v.mobs[result.Target]; mob != nil && mob.actor != nil {
+					mob.actor.PlayOnce(7)
+				}
+			}
+			if result.Source == a.state.SelfID || result.Target == a.state.SelfID || result.Target == a.state.Target {
+				a.showCombatNumber(result.Target, hp, result.Result == 1, result.Result == 3, combatDamage)
+			}
+		}
+	}
+	if actor != nil && len(v.pendingNumbers) < 62 {
+		first, second := actor.ContactTimes()
+		switch {
+		case first > actor.Time && second > first:
+			half := result.HP / 2
+			v.pendingNumbers = append(v.pendingNumbers,
+				pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP - half)},
+				pendingNumber{actionClock{actor, actor.ActionID(), second}, apply(half)})
+			return
+		case first > actor.Time:
+			v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP)})
+			return
+		}
+	}
+	apply(result.HP)()
 }

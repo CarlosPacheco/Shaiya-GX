@@ -31,7 +31,7 @@ func (a *App) confirmedGuildDuel(p []byte) {
 			if a.guildDuelMessage != nil {
 				a.guildDuelMessage.Visible = false
 			}
-			a.questMessage("Guild duel declined or unavailable.")
+			a.questMessageID(12120)
 		}
 	case proto.GuildDuelCountdown:
 		v.countdownUntil = a.clock + 5
@@ -39,16 +39,16 @@ func (a *App) confirmedGuildDuel(p []byte) {
 			a.guildDuelMessage.Visible = false
 		}
 	case proto.GuildDuelStart:
-		a.questMessage("Guild duel started.")
+		a.questMessageID(12121)
 	case proto.GuildDuelLeave:
 		if d.LastLeave.Player == a.state.SelfID {
-			a.questMessage("You left the guild duel.")
+			a.questMessageID(12122)
 		}
 	case proto.GuildDuelResult:
 		if d.Outcome == 1 {
-			a.questMessage("Your guild won the duel.")
+			a.questMessageID(12123)
 		} else if d.Outcome == 2 {
-			a.questMessage("Your guild lost the duel.")
+			a.questMessageID(12124)
 		}
 	}
 }
@@ -61,7 +61,7 @@ func (a *App) updateGuildDuelInvite(in *platform.Input, w, h int) bool {
 	if d.RequestSerial != v.requestSerial {
 		v.requestSerial = d.RequestSerial
 		if d.Phase == game.DuelIncoming {
-			name := fmt.Sprintf("Player %d", d.Opponent)
+			name := a.msg.Format(12296, map[string]string{"v": fmt.Sprint(d.Opponent)})
 			if e := a.state.Entities[d.Opponent]; e != nil && e.Shape != nil && e.Shape.Name != "" {
 				name = e.Shape.Name
 			}
@@ -82,10 +82,10 @@ func (a *App) updateGuildDuelInvite(in *platform.Input, w, h int) bool {
 		accept := result == ui.MessageOK
 		if accept && (a.state.Duel.Phase != game.DuelNone || a.state.Exchange.Active) {
 			accept = false
-			a.questMessage("Finish the current trade or duel first.")
+			a.questMessageID(12125)
 		}
 		if err := a.world.Send(proto.GuildDuelAnswerPacket(accept)); err != nil {
-			a.backToLogin("Unable to answer guild duel.")
+			a.backToLoginID(12118)
 			return true
 		}
 		if !accept {
@@ -112,11 +112,11 @@ func (a *App) guildDuelCommand(text string) bool {
 		}
 	}
 	if a.state.Guild.ID == 0 || a.state.Guild.Rank == 0 || a.state.Guild.Rank > 4 || a.state.GuildDuel.Phase != game.DuelNone || a.state.Duel.Phase != game.DuelNone || a.state.Exchange.Active || e == nil || e.Kind != game.KindUser || e.ID == a.state.SelfID || e.GuildID == 0 || e.GuildID == a.state.Guild.ID {
-		a.questMessage("Select a member of another guild; rank 1-4 is required.")
+		a.questMessageID(12126)
 		return true
 	}
 	if err := a.world.Send(proto.GuildDuelRequestPacket(e.ID)); err != nil {
-		a.backToLogin("Unable to request guild duel.")
+		a.backToLoginID(12119)
 	}
 	return true
 }
@@ -126,5 +126,5 @@ func (a *App) drawGuildDuel(w, h int) {
 		return
 	}
 	seconds := max(0, int(math.Ceil(a.guildDuel.countdownUntil-a.clock)))
-	a.font.Draw(a.sprites, fmt.Sprintf("Guild duel begins in %d", seconds), w/2-75, 120, white, 200)
+	a.font.Draw(a.sprites, a.msg.Format(12301, map[string]string{"v": fmt.Sprint(seconds)}), w/2-75, 120, white, 200)
 }

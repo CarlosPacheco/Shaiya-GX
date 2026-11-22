@@ -163,7 +163,7 @@ func (a *App) updateEmblem(in *platform.Input, w, h int, e *game.Entity) bool {
 	act := a.emblemUI.Update(in, w, h, view)
 	if act.Close || in.HasKey(platform.KeyEscape) {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-			a.backToLogin("Unable to close NPC conversation.")
+			a.backToLoginID(12011)
 			return true
 		}
 		a.shop.npcID = 0
@@ -210,7 +210,7 @@ func (a *App) emblemApply() {
 	}
 	v.pending, v.serial, v.removeSerial = true, a.state.EmblemSerial, a.state.EmblemRemoveSerial
 	if err := a.world.Send(proto.EmblemApplyPacket(v.key[0], v.key[1], a.emblemPattern().Bytes())); err != nil {
-		a.backToLogin("Unable to send the cape customization.")
+		a.backToLoginID(12056)
 	}
 }
 
@@ -222,7 +222,7 @@ func (a *App) emblemRemove() {
 	}
 	v.pending, v.serial, v.removeSerial = true, a.state.EmblemSerial, a.state.EmblemRemoveSerial
 	if err := a.world.Send(proto.EmblemRemovePacket(v.key[0], v.key[1])); err != nil {
-		a.backToLogin("Unable to send the cape customization.")
+		a.backToLoginID(12056)
 	}
 }
 
@@ -232,7 +232,7 @@ func (a *App) emblemResult() {
 	v := &a.emblem
 	if a.state.EmblemRemoveSerial != v.removeSerial {
 		a.emblemPlace(v.key, a.state.Inventory[v.key])
-		a.emblemText("The cape's customization has been removed.")
+		a.emblemText(a.tr(12343))
 		return
 	}
 	if a.state.LastEmblem.Result == 0 {
@@ -240,7 +240,7 @@ func (a *App) emblemResult() {
 		return
 	}
 	a.emblemPlace(v.key, a.state.Inventory[v.key])
-	a.emblemText("Your cape has been customized.")
+	a.emblemText(a.tr(12344))
 }
 
 // updateEmblemDrag drops a dragged cape on the item slot (0x47f400 requires
@@ -339,8 +339,7 @@ func (a *App) drawEmblemPreview(w, h, wx, wy int) {
 		s.LightDir = render.V3{-1, -1, -1}
 		s.CharacterAmbient = 1
 		s.Begin()
-		scale := render.Identity()
-		scale[5] = ap.HeightScale()
+		scale := ap.ScaleMatrix()
 		yaw := emblemPreviewYaw
 		forward := render.V3{float32(math.Sin(yaw)), 0, -float32(math.Cos(yaw))}
 		v.preview.World = scale.Mul(render.Basis(render.V3{}, forward, render.V3{0, 1, 0}))

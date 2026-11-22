@@ -65,13 +65,13 @@ func (a *App) updatePartyInvite(in *platform.Input, w, h int) bool {
 				packet = proto.RaidAnswerPacket(false, a.state.SelfID)
 			}
 			if err := a.world.Send(packet); err != nil {
-				a.backToLogin("Unable to answer party invitation.")
+				a.backToLoginID(12151)
 			}
 			return false
 		}
 		name := p.InviteName
 		if name == "" {
-			name = fmt.Sprintf("Player %d", p.InviteID)
+			name = a.msg.Format(12296, map[string]string{"v": fmt.Sprint(p.InviteID)})
 		}
 		kind := "party"
 		if p.RaidInvite {
@@ -110,7 +110,7 @@ func (a *App) updatePartyInvite(in *platform.Input, w, h int) bool {
 			packet = proto.RaidAnswerPacket(answer == ui.MessageOK, a.state.SelfID)
 		}
 		if err := a.world.Send(packet); err != nil {
-			a.backToLogin("Unable to answer party invitation.")
+			a.backToLoginID(12151)
 		}
 	}
 	return true
@@ -215,7 +215,7 @@ func (a *App) applyUnionConfig() bool {
 	if a.party.creating {
 		a.partyUI.ApplyRaidViewSettings()
 		if err := a.world.Send(proto.RaidConvertPacket(1, auto, division)); err != nil {
-			a.backToLogin("Unable to create the union.")
+			a.backToLoginID(12152)
 			return true
 		}
 		a.closeUnionConfig()
@@ -225,13 +225,13 @@ func (a *App) applyUnionConfig() bool {
 	if p.Leader == a.state.SelfID {
 		if division != p.RaidDivision {
 			if err := a.world.Send(proto.RaidDivisionPacket(division)); err != nil {
-				a.backToLogin("Unable to update raid settings.")
+				a.backToLoginID(12153)
 				return true
 			}
 		}
 		if auto != p.RaidAutoJoin {
 			if err := a.world.Send(proto.RaidAutoJoinPacket(auto)); err != nil {
-				a.backToLogin("Unable to update raid settings.")
+				a.backToLoginID(12153)
 				return true
 			}
 		}
@@ -284,14 +284,14 @@ func (a *App) partyGlobalInvite(fields []string) bool {
 	if a.state.Party.Raid {
 		// Inside a raid it is the plain raid invitation, as /invite.
 		if err := a.world.Send(proto.RaidNamePacket(proto.RaidInviteName, fields[1])); err != nil {
-			a.backToLogin("Unable to send raid invitation.")
+			a.backToLoginID(12154)
 			return true
 		}
 		a.invitedNotice(fields[1])
 		return true
 	}
 	if err := a.world.Send(proto.PartyGlobalInvitePacket(fields[1])); err != nil {
-		a.backToLogin("Unable to send party invitation.")
+		a.backToLoginID(12155)
 		return true
 	}
 	a.invitedNotice(fields[1])
@@ -313,7 +313,7 @@ func (a *App) partyCommand(text string) bool {
 		name := strings.Join(fields[1:], " ")
 		a.party.inviteName = name
 		if err := a.world.Send(proto.RaidNamePacket(proto.RaidAutoJoinName, name)); err != nil {
-			a.backToLogin("Unable to send raid request.")
+			a.backToLoginID(12156)
 		}
 		return true
 	}
@@ -381,7 +381,7 @@ func (a *App) partyCommand(text string) bool {
 		return true
 	}
 	if err := a.world.Send(packet); err != nil {
-		a.backToLogin("Unable to send party request.")
+		a.backToLoginID(12157)
 		return true
 	}
 	if command == "/invite" {
@@ -474,7 +474,7 @@ func (a *App) raidCommand(fields []string) bool {
 		return true
 	}
 	if err := a.world.Send(packet); err != nil {
-		a.backToLogin("Unable to send raid request.")
+		a.backToLoginID(12156)
 	}
 	return true
 }
@@ -524,7 +524,7 @@ func (a *App) drawMemberBuffTooltip() {
 	def, _ := a.skillDefinition(b.Hover.Skill, b.Hover.Level)
 	name := def.Name
 	if name == "" {
-		name = fmt.Sprintf("Skill %d, level %d", b.Hover.Skill, b.Hover.Level)
+		name = a.msg.Format(12295, map[string]string{"v": fmt.Sprint(b.Hover.Skill), "v2": fmt.Sprint(b.Hover.Level)})
 	}
 	a.tooltip = []itemDetailLine{{name, [4]float32{1, 1, 0, 1}}}
 	a.tooltipItem, a.tooltipSockets = false, nil

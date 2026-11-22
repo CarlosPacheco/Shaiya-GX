@@ -8,12 +8,12 @@ func (a *App) requestPosture(motion uint8) bool {
 	if motion == proto.MotionSitDown {
 		a.wv.sitAttack = 0
 		if err := a.world.Send(proto.StopAttackPacket()); err != nil {
-			a.backToLogin("Unable to stop attack before sitting.")
+			a.backToLoginID(12170)
 			return false
 		}
 	}
 	if err := a.world.Send(proto.MotionPacket(motion)); err != nil {
-		a.backToLogin("Unable to change sitting state.")
+		a.backToLoginID(12171)
 		return false
 	}
 	a.wv.sitPending = true

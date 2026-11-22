@@ -32,13 +32,13 @@ func (a *App) deathText(id int, fallback string) string {
 func (a *App) configureDeath() {
 	d := &a.wv.death
 	kind := ui.DeathSingle
-	msg := a.deathText(10067, "You will return to the nearest town automatically.")
+	msg := a.tr(10067)
 	if d.waiting {
 		kind = ui.DeathWaiting
-		msg = fmt.Sprintf("%s (%d)", a.deathText(10068, "Resurrection at the party leader's location."), max(0, int(math.Ceil(d.waitUntil-a.clock))))
+		msg = fmt.Sprintf("%s (%d)", a.tr(10068), max(0, int(math.Ceil(d.waitUntil-a.clock))))
 	} else if d.pending {
 		kind = ui.DeathWaiting
-		msg = "Waiting for resurrection..."
+		msg = a.tr(12342)
 	} else if d.party {
 		kind = ui.DeathParty
 	}
@@ -49,7 +49,7 @@ func (a *App) requestDeathRevival(mode proto.ReviveMode) {
 		return
 	}
 	if err := a.world.Send(proto.ReviveChoicePacket(mode)); err != nil {
-		a.backToLogin("Unable to request resurrection.")
+		a.backToLoginID(12030)
 		return
 	}
 	a.wv.reviveAt = a.clock + 3

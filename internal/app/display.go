@@ -21,7 +21,7 @@ func (a *App) applyDisplaySettings() bool {
 		available = available || candidate == mode
 	}
 	if !available {
-		a.gameMenu.DisplayError = "Display mode unavailable."
+		a.gameMenu.DisplayError = a.tr(12244)
 		a.gameMenu.Settings.DisplayMode = a.appliedDisplay
 		log.Printf("display mode %s is not available", mode.Label())
 		return false
@@ -30,12 +30,12 @@ func (a *App) applyDisplaySettings() bool {
 		if err := a.cfg.ApplyDisplayMode(mode); err != nil {
 			log.Printf("apply display mode: %v", err)
 			a.displayConfigured = false
-			a.gameMenu.DisplayError = "Display change failed."
+			a.gameMenu.DisplayError = a.tr(12245)
 			a.gameMenu.Settings.DisplayMode = a.appliedDisplay
 			return false
 		}
 	} else if mode != (platform.DisplayMode{}) {
-		a.gameMenu.DisplayError = "Display mode unavailable."
+		a.gameMenu.DisplayError = a.tr(12244)
 		a.gameMenu.Settings.DisplayMode = a.appliedDisplay
 		return false
 	}

@@ -43,7 +43,7 @@ func (a *App) saveShortcut(index int, source *proto.QuickSlot, local uint8, from
 		err = a.world.Send(packet)
 	}
 	if err != nil {
-		a.backToLogin("Unable to save action bar.")
+		a.backToLoginID(12187)
 		return false
 	}
 	a.state.QuickSlots = slots

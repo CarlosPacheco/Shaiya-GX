@@ -29,7 +29,7 @@ func (a *App) drawPersonalMarket(w, h int) {
 	} else if v.editing {
 		title += "|"
 	} else if title == "" {
-		title = "Click to enter a message"
+		title = a.tr(12257)
 	}
 	var items [proto.MyShopSlots]proto.InventoryItem
 	var prices [proto.MyShopSlots]uint32

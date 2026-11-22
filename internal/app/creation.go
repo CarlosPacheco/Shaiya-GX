@@ -58,8 +58,7 @@ func (a *App) drawCreation(width, height int) {
 	}
 	w.DrawOpaque(s)
 	if actor := a.createActor; actor != nil {
-		scale := render.Identity()
-		scale[5] = ap.HeightScale()
+		scale := ap.ScaleMatrix()
 		actor.World = scale.Mul(render.Basis(pos, render.V3{0, 0, -1}, render.V3{0, 1, 0}))
 		actor.Update(float32(a.frameDT))
 		actor.Draw(a.skinner, s)

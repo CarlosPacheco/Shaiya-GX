@@ -20,7 +20,7 @@ func TestCraftValuesDecodeAndRejectInvalid(t *testing.T) {
 			t.Fatalf("invalid craft accepted: %q", bad)
 		}
 	}
-	if got := craftSummary("01000000000001000000"); got != "STR +1, HP +100" {
+	if got := (&App{}).craftSummary("01000000000001000000"); got != "STR +1, HP +100" {
 		t.Fatal(got)
 	}
 }

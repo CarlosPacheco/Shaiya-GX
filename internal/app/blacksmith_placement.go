@@ -139,7 +139,7 @@ func (a *App) nearBlacksmith() bool {
 	e := a.state.Entities[a.shop.npcID]
 	dx, dz := e.X-a.wv.pos[0], e.Z-a.wv.pos[2]
 	if dx*dx+dz*dz >= 100 {
-		a.questMessage("Move closer to the blacksmith.")
+		a.questMessageID(12013)
 		return false
 	}
 	return true

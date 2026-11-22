@@ -61,18 +61,18 @@ func (a *App) sendGesture(motion uint8) {
 		return
 	}
 	if a.state.Self.Dead || a.state.Self.Mounted || a.state.Self.Sitting || a.wv.sitPending || a.wv.self != nil && a.wv.self.PlayingAction(11) {
-		a.questMessage("Stand before using a gesture.")
+		a.questMessageID(12095)
 		return
 	}
 	if a.wv.moving || a.wv.world.SwimmingAt(a.wv.pos[0], a.wv.pos[1], a.wv.pos[2]) {
-		a.questMessage("Stop moving before using a gesture.")
+		a.questMessageID(12096)
 		return
 	}
 	if err := a.world.Send(proto.StopAttackPacket()); err != nil {
-		a.backToLogin("Unable to stop attack before gesture.")
+		a.backToLoginID(12093)
 		return
 	}
 	if err := a.world.Send(proto.MotionPacket(motion)); err != nil {
-		a.backToLogin("Unable to send gesture.")
+		a.backToLoginID(12094)
 	}
 }

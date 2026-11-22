@@ -84,7 +84,7 @@ func (a *App) sendAuction(req proto.AuctionRequest, view, page int) {
 		minLevel, _ := strconv.Atoi(v.minLevel)
 		maxLevel, _ := strconv.Atoi(v.maxLevel)
 		if minLevel > 65535 || maxLevel > 65535 || maxLevel > 0 && minLevel > maxLevel {
-			v.say("Enter a valid level range.")
+			v.say(a.tr(12233))
 			return
 		}
 		req.MinLevel, req.MaxLevel = minLevel, maxLevel
@@ -94,7 +94,7 @@ func (a *App) sendAuction(req proto.AuctionRequest, view, page int) {
 	}
 	if packet := proto.AuctionPacket(req); packet != nil {
 		if err := a.world.Send(packet); err != nil {
-			a.backToLogin("Unable to contact the market.")
+			a.backToLoginID(12010)
 			return
 		}
 		v.pending = true

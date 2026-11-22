@@ -150,10 +150,10 @@ func (a *App) contextLabels(actions []contextAction) []string {
 		case "Union whisper":
 			id = 6510
 		}
-		labels[i] = a.msg.Get(id)
-		if labels[i] == "" {
-			labels[i] = action.label
+		if action.label == "Invite to guild" {
+			id = 12227
 		}
+		labels[i] = a.tr(id)
 	}
 	return labels
 }
@@ -194,10 +194,10 @@ func (a *App) performContextAction(id uint32, action contextAction) {
 		a.vehicle.peerName = a.chatEntityName(id)
 	}
 	if action.label == "Trade" && a.state.Exchange.Active {
-		a.questMessage("Finish the current trade first.")
+		a.questMessageID(12169)
 	} else if a.world != nil && action.packet != nil {
 		if err := a.world.Send(action.packet); err != nil {
-			a.backToLogin("Unable to send player action.")
+			a.backToLoginID(12168)
 			return
 		}
 		if action.label == "Invite to party" || action.label == "Invite to raid" {
@@ -303,7 +303,7 @@ func (a *App) updatePlayerContext(in *platform.Input, w, h int) bool {
 			}
 		}
 	}
-	if id == 0 && !a.barCovered(in, w, h) && in.MouseY < h-64 {
+	if id == 0 && !a.barCovered(in, w, h) && in.MouseY < h-ui.BottomBarHeight(w, h) {
 		// Use the same model/depth picking as left-click selection. World
 		// right-click must not target a player through another actor or wall.
 		pointer := *in

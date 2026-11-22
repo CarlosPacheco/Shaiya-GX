@@ -130,9 +130,9 @@ func (s *ServerList) Draw(sp *render.Sprites, f *Font, w, h int) {
 func (s *ServerList) status(sv proto.Server) (string, uint32) {
 	switch sv.Status {
 	case 1:
-		return "Lock", 0xfff3a0a0
+		return Tr(10110), 0xfff3a0a0
 	case 2:
-		return "Closed", 0xfff3a0a0
+		return Tr(10111), 0xfff3a0a0
 	case 0:
 	default:
 		return "", 0
@@ -141,7 +141,7 @@ func (s *ServerList) status(sv proto.Server) (string, uint32) {
 	users := int(sv.Users)
 	switch {
 	case users > int(cap*0.85):
-		return "Full", 0xfff3a0a0
+		return Tr(10097), 0xfff3a0a0
 	case users > int(cap*0.45):
 		return s.msg.Get(0x2760), 0xfff3dea0
 	case users > int(cap*0.3):

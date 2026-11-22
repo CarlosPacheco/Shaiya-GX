@@ -9,7 +9,7 @@ import (
 const QuickPotionWidth, QuickPotionHeight = 94, 54
 
 func QuickPotionOrigin(p WindowPosition, w, h int) (int, int) {
-	return p.Origin(w, h, 94, 54, (w-448)/2-8-94, h-64-8-54)
+	return p.Origin(w, h, 94, 54, (w-448)/2-8-94, h-BottomBarHeight(w, h)-8-54)
 }
 func QuickPotionCell(mx, my, x, y int) int {
 	for i := 0; i < 2; i++ {
@@ -53,6 +53,9 @@ func drawQuickSlots(s *render.Sprites, f *Font, frame, blank *render.Texture, x,
 			s.DrawCooldown(blank, float32(cx), float32(cy), 32, ratio, [4]float32{1, 0, 0, 80.0 / 255})
 			label := fmt.Sprintf("%.0f", math.Ceil(slot.Cooldown))
 			f.DrawOutlined(s, label, cx+16-f.Width(label)/2, cy+9, [4]float32{1, 1, 0, 1})
+		}
+		if slot.Pressed && slot.Icon != nil {
+			s.Draw(blank, float32(cx), float32(cy), 32, 32, 0, 0, 1, 1, [4]float32{1, 1, 1, 80.0 / 255})
 		}
 		if potions && slot.Count > 0 {
 			// Native 0x4a3400 item-count anchor, called by the potion bar.

@@ -10,7 +10,7 @@ import (
 // systemMessage is the only formatter for native gameplay notices. The data
 // archive owns their language and wording; missing IDs do not invent messages.
 func (a *App) systemMessage(style uint8, id int, values map[string]string) {
-	if a.msg.Get(id) == "" {
+	if a.msg.Lookup(id) == "" {
 		return
 	}
 	a.addSystemText(style, id, a.msg.Format(id, values))
@@ -39,12 +39,8 @@ func (a *App) ReportScreenshot(filename string) {
 }
 
 // Keep diagnostic fallbacks usable without an archive in offline tools/tests.
-func (a *App) localizedNotice(style uint8, id int, values map[string]string, fallback string) {
-	if a.msg.Get(id) != "" {
-		a.systemMessage(style, id, values)
-	} else {
-		a.questMessage(fallback)
-	}
+func (a *App) localizedNotice(style uint8, id int, values map[string]string) {
+	a.systemMessage(style, id, values)
 }
 
 func (a *App) chatEntityName(id uint32) string {
@@ -86,6 +82,10 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 	switch proto.Op(p) {
 	case proto.MobSpeechIndex:
 		a.systemMessage(1, int(s.LastMobSpeech.MessageID), map[string]string{"p": a.chatEntityName(s.LastMobSpeech.MobID)})
+	case proto.ChangeSexDenied:
+		// 0x56b820: SysMsg 862 in style 17; the request is over.
+		a.inventory.pending = false
+		a.systemMessage(17, 862, nil)
 	case proto.GXSkillFailure:
 		style := uint8(1)
 		switch s.LastSkillFailure.Message {

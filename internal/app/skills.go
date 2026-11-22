@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/Spelunkern/Shaiya-GX/internal/itemtype"
 	"log"
 	"math"
 	"sort"
@@ -116,13 +117,19 @@ func (a *App) availableSkills() []sdata.SkillKey {
 			own = c
 		}
 	}
+	level := own.Level
+	if slot, ok := a.selfSlot(); ok {
+		level = slot.Level
+	}
 	learned := map[uint16]uint8{}
 	for _, k := range a.state.Skills {
 		learned[k.ID] = max(learned[k.ID], k.Level)
 	}
 	var keys []sdata.SkillKey
 	for key, d := range a.skillDefs {
-		if key.Level != learned[key.ID]+1 || key.Level > 3 || d.Show == 0 || own.Class >= 6 || d.Classes[own.Class] == 0 {
+		// Only the skills the character's level has unlocked are listed, as in
+		// the original window; the rest appear as the level rises.
+		if key.Level != learned[key.ID]+1 || key.Level > 3 || d.Show == 0 || own.Class >= 6 || d.Classes[own.Class] == 0 || d.RequiredLevel > level {
 			continue
 		}
 		// Presentation filter from EnableLearnSkill/Rapture; server validates requests.
@@ -247,7 +254,7 @@ func (a *App) updateSkills(in *platform.Input, w, h int) bool {
 		if k, ok := a.learnedSkill(keys[v.offset+action.Select].ID); ok && a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}].Effect != 0 && a.world != nil {
 			if packet := a.learnedSkillPacket(k); packet != nil && !a.approachSkillPacket(packet) && a.prepareSkillMovement(packet) {
 				if err := a.world.Send(packet); err != nil {
-					a.backToLogin("Unable to use skill.")
+					a.backToLoginID(12190)
 					return true
 				}
 				a.requestedSkillPresentation(packet)
@@ -260,7 +267,7 @@ func (a *App) updateSkills(in *platform.Input, w, h int) bool {
 			if a.clientSettings().WarningMsg && a.learnConfirm != nil {
 				// Warning Msg (0x502682): ask SysMsg 10086 before spending the point.
 				a.learnKey = key
-				a.learnConfirm.Open(a.msgOr(10086, "Do you want to spend the point?\n(Unable to restore it once it's been spent.)"), true)
+				a.learnConfirm.Open(a.tr(10086), true)
 				return true
 			}
 			if !a.sendLearnSkill(key) {
@@ -278,7 +285,7 @@ func (a *App) sendLearnSkill(key sdata.SkillKey) bool {
 		return false
 	}
 	if err := a.world.Send(proto.LearnSkillPacket(key.ID, key.Level)); err != nil {
-		a.backToLogin("Unable to learn skill.")
+		a.backToLoginID(320)
 		return false
 	}
 	a.skills.pending, a.skills.deadline = true, a.clock+10
@@ -551,7 +558,7 @@ func (a *App) drawActionBar(w, h int) {
 		}
 		it := a.state.Inventory[[2]uint8{q.Bag, uint8(q.Number)}]
 		slot := &slots[int(q.Bar)*ui.ActionSlots+int(q.Slot)]
-		slot.Label, slot.Count = "Empty", a.itemCount(it.Type, it.TypeID, it.Count)
+		slot.Label, slot.Count = a.tr(12263), a.itemCount(it.Type, it.TypeID, it.Count)
 		if d := a.itemsItem(it.Type, it.TypeID); d != nil {
 			slot.Label = fmt.Sprintf("%s x%d", d.Name, it.Count)
 			slot.Badge = a.itemBadge(d, &it)
@@ -565,7 +572,7 @@ func (a *App) drawActionBar(w, h int) {
 	for i := range slots {
 		if action, ok := a.localAction(i); ok {
 			u, v := float32(action%4)/4, float32(action/4)/4
-			slots[i] = ui.ActionSlot{Icon: a.assets.Texture("interface/icon/icon_sub.png"), UV: ui.UV{U0: u, V0: v, U1: u + .25, V1: v + .25}, Label: subActionNames[action]}
+			slots[i] = ui.ActionSlot{Icon: a.assets.Texture("interface/icon/icon_sub.png"), UV: ui.UV{U0: u, V0: v, U1: u + .25, V1: v + .25}, Label: a.subActionName(uint8(action))}
 		}
 	}
 	for i := range slots {
@@ -599,5 +606,28 @@ func (a *App) skillResourcesAvailable(d sdata.Skill) bool {
 			return false
 		}
 	}
-	return true
+	return a.skillWeaponAvailable(d)
+}
+
+// skillWeaponAvailable mirrors CUser::EnableUseSkillUser / client 0x5764d0:
+// no weapon, or one the skill does not list, gives SysMsg 314 and the error
+// sound. Skills listing no weapon at all (item buffs) are unrestricted.
+func (a *App) skillWeaponAvailable(d sdata.Skill) bool {
+	listed := d.NeedShield
+	for _, ok := range d.NeedWeapon {
+		listed = listed || ok
+	}
+	if !listed || a.state == nil {
+		return true
+	}
+	w := a.state.Inventory[[2]uint8{0, 5}]
+	rt := int(itemtype.Real(w.Type))
+	allowed := w.Type != 0 && (d.NeedShield || rt >= 1 && rt <= len(d.NeedWeapon) && d.NeedWeapon[rt-1])
+	if !allowed {
+		a.systemMessage(17, 314, nil)
+		if a.wv != nil {
+			a.playSound("ui_error001.wav", a.wv.pos[0], a.wv.pos[2])
+		}
+	}
+	return allowed
 }

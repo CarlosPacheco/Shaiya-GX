@@ -148,7 +148,7 @@ func (b *SkillBook) Draw(s *render.Sprites, f *Font, w, h, category, offset, cou
 	}
 	b.close.OriginX, b.close.OriginY = x, y
 	b.close.Draw(s)
-	label := "Point"
+	label := Tr(480)
 	if len(pointLabel) > 0 {
 		label = pointLabel[0]
 	}

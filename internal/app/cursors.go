@@ -3,10 +3,13 @@ package app
 import (
 	"fmt"
 	"log"
+	"math"
+	"time"
 
 	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 // LoadCursors reads lossless PNG artwork. All seven supplied cursors use
@@ -37,6 +40,23 @@ func (a *App) LoadCursors(window *platform.Window) *platform.Cursors {
 // path to the crosshair (07.png): no skill, approach or assignment state ever
 // selects it, so GX never shows it. Windows and the bottom UI keep the arrow.
 func (a *App) CursorIndex(w, h int) int {
+	if scale := a.uiScale(w, h); scale < 1 && a.screen == screenWorld {
+		w, h = int(math.Round(float64(w)/scale)), int(math.Round(float64(h)/scale))
+	}
+	index := a.cursorIndexRaw(w, h)
+	// Hover picks use asynchronous depth samples, so a single frame can miss
+	// a mob the pointer is still on. Keep the attack cursor briefly to stop
+	// it fighting with the arrow.
+	now := time.Now()
+	if index == 1 {
+		a.attackCursorUntil, a.attackCursorX, a.attackCursorY = now.Add(120*time.Millisecond), a.lastMouseX, a.lastMouseY
+	} else if index == 0 && now.Before(a.attackCursorUntil) && a.attackCursorX == a.lastMouseX && a.attackCursorY == a.lastMouseY && a.screen == screenWorld {
+		return 1
+	}
+	return index
+}
+
+func (a *App) cursorIndexRaw(w, h int) int {
 	a.hoveredMob = 0
 	a.hoverPicking = true
 	defer func() { a.hoverPicking = false }()
@@ -62,7 +82,7 @@ func (a *App) CursorIndex(w, h int) int {
 		x, y = a.hud.Origin(w, h)
 		tx, ty = a.hud.TargetOrigin(w, h)
 	}
-	if in.MouseY >= h-64 || pointInside(in, x, y, 213, 114) || a.state.Target != 0 && pointInside(in, tx, ty, 256, 64) {
+	if in.MouseY >= h-ui.BottomBarHeight(w, h) || pointInside(in, x, y, 213, 114) || a.state.Target != 0 && pointInside(in, tx, ty, 256, 64) {
 		return 0
 	}
 	if a.minimap != nil && !a.wv.mapView.compactHidden {
@@ -95,6 +115,11 @@ func (a *App) CursorIndex(w, h int) int {
 // Hover uses completed asynchronous depth samples; clicks validate the current
 // captured scene exactly, so cursor feedback cannot permit a click through walls.
 func (a *App) pickNameVisibleAt(x, y, w, h int, depth float32) bool {
+	// The depth copy has framebuffer size; w, h and the pointer are UI units.
+	if a.physW > 0 && a.physH > 0 && (w != a.physW || h != a.physH) {
+		x, y = int(float64(x)*float64(a.physW)/float64(w)), int(float64(y)*float64(a.physH)/float64(h))
+		w, h = a.physW, a.physH
+	}
 	if a.hoverPicking {
 		return a.sprites.NameHoverVisibleAt(x, y, w, h, depth)
 	}

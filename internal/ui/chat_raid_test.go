@@ -9,7 +9,7 @@ func TestRaidChannelListsOnlyForRaidLeadership(t *testing.T) {
 	}
 	c.RaidAllowed = true
 	got := c.channelList()
-	if len(got) != 7 || got[6] != 6 || chatChannelNames[6] != "Raid" {
+	if len(got) != 7 || got[6] != 6 || chatChannelNames()[6] != "Raid" {
 		t.Fatalf("leader list %v", got)
 	}
 	if len(chatChannelOrder) != 6 {

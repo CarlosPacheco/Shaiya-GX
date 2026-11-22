@@ -6,6 +6,14 @@ import (
 )
 
 // Skill damage is presentation only. HP and resources follow server snapshots.
+// Internal outcome kinds; never shown as text.
+const (
+	lblDamage = iota
+	lblMiss
+	lblHealing
+	lblReflected
+)
+
 func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 	if a.wv != nil {
 		a.wv.physicalSkillQueued = false
@@ -16,7 +24,7 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 	var source, target uint32
 	var value uint16
 	critical := false
-	label := "Damage"
+	label := lblDamage
 	switch op {
 	case proto.SkillUse, proto.SkillUseNoTarget, proto.SkillUserDrain, proto.SkillMobDrain, proto.SkillPartyMember, proto.SkillMobOther, proto.MobSkillUse, proto.MobSkillDrain, proto.MobSkillOther:
 		r := a.state.LastSkill
@@ -39,10 +47,10 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 			}
 		}
 		if r.Result == 3 {
-			label = "Miss"
+			label = lblMiss
 		} else {
 			if d, ok := a.skillDefinition(r.ID, r.Level); ok && d.Effect == 2 {
-				label = "Healing"
+				label = lblHealing
 			}
 		}
 	case proto.SkillUserExtraDamage, proto.SkillExtraDamage:
@@ -51,7 +59,7 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 	case proto.SkillUserReflectedDamage, proto.SkillMobReflectedDamage:
 		r := a.state.LastReflectedDamage
 		source, target, value = r.Source, r.Target, r.HP
-		label = "Reflected"
+		label = lblReflected
 	case proto.MobPeriodicDamage, proto.SkillKeep:
 		r := a.state.LastPeriodicEffect
 		target, value = r.Target, r.HP
@@ -72,14 +80,14 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 			}
 			switch d.Effect {
 			case 4:
-				label = "Healing"
+				label = lblHealing
 				if d.Detail == 84 { // Fire Thorn is a buff that hurts
-					label = "Damage"
+					label = lblDamage
 				}
 			case 2:
-				label = "Healing"
+				label = lblHealing
 			case 1, 3:
-				label = "Damage"
+				label = lblDamage
 			default:
 				return
 			}
@@ -90,12 +98,12 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 	if source != a.state.SelfID && target != a.state.SelfID && target != a.state.Target {
 		return
 	}
-	if label != "Miss" && value == 0 {
+	if label != lblMiss && value == 0 {
 		return
 	}
 	kind := combatDamage
-	if label == "Healing" {
+	if label == lblHealing {
 		kind = combatHealHP
 	}
-	a.showCombatNumber(target, value, critical, label == "Miss", kind)
+	a.showCombatNumber(target, value, critical, label == lblMiss, kind)
 }

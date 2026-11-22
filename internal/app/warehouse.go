@@ -39,7 +39,7 @@ func (a *App) guildBankAllowed(source, destination [2]uint8) bool {
 	}
 	if source[0] == proto.GuildBankBag {
 		if g.Rank > 2 {
-			a.questMessage("Only guild administrators can withdraw or rearrange items.")
+			a.questMessageID(12206)
 			return false
 		}
 		item, ok := g.Bank[source[1]]
@@ -47,7 +47,7 @@ func (a *App) guildBankAllowed(source, destination [2]uint8) bool {
 			return false
 		}
 		if source[1] >= 40 || destination[0] == proto.GuildBankBag && destination[1] >= 40 {
-			a.questMessage("This guild bank page is unavailable.")
+			a.questMessageID(12207)
 			return false
 		}
 		if destination[0] != proto.GuildBankBag && item.Type != 94 {
@@ -57,7 +57,7 @@ func (a *App) guildBankAllowed(source, destination [2]uint8) bool {
 			}
 			fee := uint32(float32(uint32(item.Count)*def.SellPrice) * .05)
 			if a.state.Details.Money < fee {
-				a.questMessage("Not enough gold for the guild bank withdrawal fee.")
+				a.questMessageID(12208)
 				return false
 			}
 		}
@@ -67,11 +67,11 @@ func (a *App) guildBankAllowed(source, destination [2]uint8) bool {
 		return false
 	}
 	if g.Rank == 9 {
-		a.questMessage("Your guild rank cannot deposit items.")
+		a.questMessageID(12209)
 		return false
 	}
 	if _, occupied := g.Bank[destination[1]]; occupied && g.Rank > 2 {
-		a.questMessage("Only guild administrators can replace stored items.")
+		a.questMessageID(12210)
 		return false
 	}
 	item, ok := a.state.Inventory[source]
@@ -79,12 +79,12 @@ func (a *App) guildBankAllowed(source, destination [2]uint8) bool {
 		return false
 	}
 	if item.Type == 27 || item.Type == 28 || item.Type == 29 {
-		a.questMessage("Quest items cannot be stored in the guild bank.")
+		a.questMessageID(12211)
 		return false
 	}
 	def := a.itemsItem(item.Type, item.TypeID)
 	if def == nil || def.ReqOG != 0 {
-		a.questMessage("This item cannot be stored in the guild bank.")
+		a.questMessageID(12212)
 		return false
 	}
 	return true
@@ -144,7 +144,7 @@ func (a *App) closeWarehouse() {
 		return
 	}
 	if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-		a.backToLogin("Unable to close warehouse.")
+		a.backToLoginID(12204)
 		return
 	}
 	a.shop.npcID = 0
@@ -187,7 +187,7 @@ func (a *App) updateWarehouse(in *platform.Input, w, h int) bool {
 					v.page = tab
 					a.moveWarehouseItem([2]uint8{bag, v.source}, [2]uint8{bag, slot})
 				} else {
-					a.questMessage("This warehouse page is full.")
+					a.questMessageID(12213)
 				}
 			}
 			v.selected = false
@@ -229,7 +229,7 @@ func (a *App) moveWarehouseItem(source, destination [2]uint8) {
 		a.bank.sourceMove, a.bank.destMove = source, destination
 	}
 	if err := a.world.Send(proto.ItemMovePacket(source[0], source[1], destination[0], destination[1])); err != nil {
-		a.backToLogin("Unable to move warehouse item.")
+		a.backToLoginID(12205)
 		return
 	}
 	a.inventory.pending, a.inventory.deadline = true, a.clock+10
@@ -299,9 +299,9 @@ func (a *App) drawWarehouse(w, h int, portrait *render.Texture) {
 			if d := a.itemsItem(it.Type, it.TypeID); d != nil {
 				var feeText string
 				if v.guild {
-					feeText = "Withdrawal fee: 5% of the stack's sell value."
+					feeText = a.tr(12362)
 					if it.Type == 94 {
-						feeText = "Free withdrawal."
+						feeText = a.tr(12363)
 					}
 				}
 				a.drawItemDetails(d, &it, it.Count, min(x+ui.WarehouseWidth+4, max(0, w-304)), min(y+140, max(0, h-110)), w, h, feeText)

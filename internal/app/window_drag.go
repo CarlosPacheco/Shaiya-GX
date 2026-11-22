@@ -256,6 +256,15 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 	}
+	if a.appearanceEdit != nil && !a.appearanceEdit.confirming && a.appearanceUI != nil {
+		x, y := a.appearanceUI.Origin(w, h)
+		if startFrame(&a.appearanceUI.Position, x, y, ui.AppearanceWidth, ui.AppearanceHeight, frameFree(a.appearanceUI, x, y, nil)) {
+			return true
+		}
+		if pointInside(in, x, y, ui.AppearanceWidth, ui.AppearanceHeight) {
+			return false
+		}
+	}
 	if a.emblemOpen() {
 		x, y := a.emblemUI.Origin(w, h)
 		if startFrame(&a.emblemUI.Position, x, y, ui.EmblemWidth, ui.EmblemHeight, frameFree(a.emblemUI, x, y, nil, [4]int{0x218, 0x3a, 0x50, 0x4e}, [4]int{0x199, 0xdd, 6 * 0x22, 0x88})) {
@@ -516,6 +525,9 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 	}
 	if a.guildHouseUI != nil {
 		out["guildHouse"] = &a.guildHouseUI.Position
+	}
+	if a.appearanceUI != nil {
+		out["appearance"] = &a.appearanceUI.Position
 	}
 	if a.emblemUI != nil {
 		out["emblem"] = &a.emblemUI.Position

@@ -34,7 +34,7 @@ func (a *App) sendEnchant(lapKey, materialKey, itemKey [2]uint8, count uint16) b
 	a.enchant = enchantView{lapCount: lap.Count, materialCount: material.Count, cost: cost, lap: lapKey, material: materialKey, item: itemKey, pending: true}
 	a.shop.pending, a.shop.deadline = true, a.clock+10
 	if err := a.world.Send(proto.EnchantPacket(lapKey[0], lapKey[1], materialKey[0], materialKey[1], count, itemKey[0], itemKey[1])); err != nil {
-		a.backToLogin("Unable to request enchantment.")
+		a.backToLoginID(12057)
 		return false
 	}
 	return true
@@ -56,7 +56,7 @@ func (a *App) confirmedEnchant(p []byte) {
 		v.refresh.start([][2]uint8{v.item})
 		a.shop.deadline = a.clock + 10
 		if err := a.world.Send(proto.ItemMovePacket(v.item[0], v.item[1], v.item[0], v.item[1])); err != nil {
-			a.backToLogin("Unable to refresh enchanted equipment.")
+			a.backToLoginID(12058)
 		}
 	case proto.ItemBagToBag:
 		if v.refreshing && v.refresh.acknowledge(p) && len(v.refresh.pending) == 0 {
@@ -66,9 +66,9 @@ func (a *App) confirmedEnchant(p []byte) {
 			if v.noGold {
 				a.insufficientForgeGold(0, v.cost, 10102)
 			} else if v.success {
-				a.questMessage("Equipment enchanted.")
+				a.questMessageID(12059)
 			} else {
-				a.questMessage("Enchantment failed or was refused.")
+				a.questMessageID(12060)
 			}
 		}
 	}

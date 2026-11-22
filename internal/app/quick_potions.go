@@ -19,6 +19,9 @@ type quickPotionView struct {
 	bindings       [2]sdata.ItemKey
 	profile        string
 	held           int
+	keyHeld        [2]bool    // Z / X down
+	mouseHeld      [2]bool    // pointer held on the cell
+	tap            [2]float64 // a use keeps the highlight visible this long
 }
 
 func (a *App) potionConfigPath() string {
@@ -102,6 +105,9 @@ func (a *App) quickPotionItem(cell int) ([2]uint8, proto.InventoryItem, bool) {
 }
 func (a *App) useQuickPotion(cell int) {
 	if key, _, ok := a.quickPotionItem(cell); ok {
+		// Original 0x4ddc30 shades the slot (0x50ffffff) while it is pressed;
+		// a quick tap keeps it visible for a moment so the use is seen.
+		a.quickPotions.tap[cell] = a.clock + .12
 		a.useInventoryItem(key)
 	}
 }
@@ -157,6 +163,11 @@ func (a *App) updateQuickPotions(in *platform.Input, w, h int) bool {
 		a.inventory.dragging, a.inventory.selected = false, false
 		return true
 	}
+	a.quickPotions.keyHeld = [2]bool{in.Held('Z'), in.Held('X')}
+	a.quickPotions.mouseHeld = [2]bool{}
+	if in.MouseDown && a.quickPotions.held >= 0 && a.quickPotions.held == cell {
+		a.quickPotions.mouseHeld[cell] = true
+	}
 	handled := false
 	for _, r := range in.Chars {
 		if r == 'z' || r == 'Z' {
@@ -179,10 +190,10 @@ func (a *App) updateQuickPotions(in *platform.Input, w, h int) bool {
 		a.quickPotions.held = cell
 		a.quickPotions.pressX, a.quickPotions.pressY = in.MouseX, in.MouseY
 	}
+	if in.RightPressed && cell >= 0 {
+		a.useQuickPotion(cell) // right click uses the potion
+	}
 	if in.Clicked {
-		if cell >= 0 && a.quickPotions.held == cell {
-			a.useQuickPotion(cell)
-		}
 		a.quickPotions.held = -1
 	}
 	return handled || in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.Wheel != 0
@@ -205,6 +216,7 @@ func (a *App) drawQuickPotions(w, h int) {
 			slots[i].Count = a.itemCount(it.Type, it.TypeID, it.Count)
 			slots[i].Cooldown = a.itemCooldown(it)
 			slots[i].CooldownDuration = itemReuseSeconds(d.ReqIg)
+			slots[i].Pressed = a.quickPotions.keyHeld[i] || a.quickPotions.mouseHeld[i] || a.clock < a.quickPotions.tap[i]
 		}
 	}
 	x, y := ui.QuickPotionOrigin(a.quickPotions.Position, w, h)

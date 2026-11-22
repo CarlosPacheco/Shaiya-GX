@@ -91,7 +91,7 @@ func (a *App) updateGuildDirectory(in *platform.Input, w, h int, e *game.Entity)
 	}
 	if join && canJoin {
 		if err := a.world.Send(proto.GuildApplyPacket(a.guild.directorySelected)); err != nil {
-			a.backToLogin("Unable to request guild membership.")
+			a.backToLoginID(12097)
 			return true
 		}
 	}
@@ -103,16 +103,16 @@ func (a *App) updateGuildDirectory(in *platform.Input, w, h int, e *game.Entity)
 		a.guild.confirmGuild = a.state.Guild.ID
 		if leave {
 			a.guild.confirmKind = 2
-			a.guildConfirm.Open(a.msgOr(10018, "Leave "+a.state.Guild.Name+"?"), true)
+			a.guildConfirm.Open(a.tr(10018), true)
 		} else {
 			a.guild.confirmKind = 3
-			a.guildConfirm.Open(a.msgOr(10005, "Disband "+a.state.Guild.Name+"?"), true)
+			a.guildConfirm.Open(a.tr(10005), true)
 		}
 		return true
 	}
 	if close || in.HasKey(platform.KeyEscape) {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-			a.backToLogin("Unable to close guild manager.")
+			a.backToLoginID(12098)
 		} else {
 			a.shop.npcID = 0
 			a.guild.directoryNPC = 0
@@ -129,7 +129,7 @@ func (a *App) drawGuildDirectory(w, h int) {
 	a.refreshGuildDirectory()
 	_, exists := a.state.Guild.Directory[a.guild.directorySelected]
 	available := !a.guild.lifecyclePending && !a.guild.voting
-	a.guildDirectoryUI.Subtitle = a.msgOr(5180, "Guild Master")
+	a.guildDirectoryUI.Subtitle = a.tr(5180)
 	if e := a.state.Entities[a.shop.npcID]; e != nil {
 		a.guildDirectoryUI.NPCName = a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}].Name
 	}
@@ -151,11 +151,11 @@ func (a *App) updateGuildCreate(in *platform.Input, w, h int) bool {
 	result := a.guildCreateUI.Update(in, w, h)
 	if result == ui.MessageOK && a.guildCreateUI.NoticeMode {
 		if a.state.Guild.ID == 0 || a.state.Guild.Rank != 1 || a.guild.remarkPending {
-			a.questMessage("Only the guild master can change the notice.")
+			a.questMessageID(12108)
 		} else if strings.ContainsRune(a.guildCreateUI.Remark.Text, '\'') {
-			a.questMessage("Guild notices cannot contain apostrophes.")
+			a.questMessageID(12109)
 		} else if err := a.world.Send(proto.GuildRemarkPacket(a.guildCreateUI.Remark.Text)); err != nil {
-			a.backToLogin("Unable to update guild notice.")
+			a.backToLoginID(12099)
 		} else {
 			a.guild.remarkPending, a.guild.remarkDeadline = true, a.clock+10
 		}
@@ -167,7 +167,7 @@ func (a *App) updateGuildCreate(in *platform.Input, w, h int) bool {
 		a.guild.pendingRemark = strings.TrimSpace(a.guildCreateUI.Remark.Text)
 		if a.guildVoteMessage != nil {
 			a.guild.confirmCreate = true
-			a.guildVoteMessage.Open(a.msgOr(10004, "Do you want to create a guild?"), true)
+			a.guildVoteMessage.Open(a.tr(10004), true)
 		}
 	}
 	return true
@@ -193,34 +193,28 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 		v.lifecyclePending = false
 		v.voting = true
 		v.disbandVote = true
-		a.guildVoteMessage.Open("Disband "+g.Name+" with your party?", true)
+		a.guildVoteMessage.Open(a.msg.Format(12230, map[string]string{"b": g.Name}), true)
 	}
 	if g.DisbandSerial != v.disbandSerial {
 		v.disbandSerial = g.DisbandSerial
 		v.lifecyclePending = false
 		v.voting = false
 		a.guildVoteMessage.Visible = false
-		msg := "Guild disband request refused."
-		if g.DisbandResult == 2 {
-			msg = "Two other guild administrators must join your party."
-		} else if g.DisbandResult == 3 {
-			msg = "Guild disband vote was declined."
-		}
 		id := 380
 		if g.DisbandResult == 2 {
 			id = 382
 		} else if g.DisbandResult == 3 {
 			id = 383
 		}
-		a.localizedNotice(1, id, nil, msg)
+		a.localizedNotice(1, id, nil)
 	}
 	if g.LeaveSerial != v.leaveSerial {
 		v.leaveSerial = g.LeaveSerial
 		v.lifecyclePending = false
 		if g.LeaveResult == 1 {
-			a.localizedNotice(17, 390, nil, "You left the guild.")
+			a.localizedNotice(17, 390, nil)
 		} else {
-			a.localizedNotice(1, 391, nil, "Guild leave request refused.")
+			a.localizedNotice(1, 391, nil)
 		}
 	}
 	if g.DisbandedSerial != v.disbandedSerial {
@@ -228,18 +222,13 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 		v.lifecyclePending = false
 		v.voting = false
 		a.guildVoteMessage.Visible = false
-		a.localizedNotice(17, 395, nil, "Guild disbanded.")
+		a.localizedNotice(17, 395, nil)
 	}
 	if g.CreateSerial != v.createSerial {
 		v.createSerial = g.CreateSerial
 		v.createPending = false
 		v.voting = false
 		a.guildVoteMessage.Visible = false
-		messages := map[uint8]string{1: "Guild created.", 6: "Guild name is unavailable.", 8: "A group member already belongs to a guild."}
-		msg := messages[g.CreateResult]
-		if msg == "" {
-			msg = "Guild creation refused."
-		}
 		ids := map[uint8]int{1: 372, 6: 377, 8: 379}
 		id := ids[g.CreateResult]
 		if id == 0 {
@@ -250,9 +239,9 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 			name = a.guildCreateUI.Name.Text
 		}
 		if g.CreateResult == 3 {
-			a.addSystemText(17, 0, "Guild founding groups need at least two available members of the same faction on the same map.")
+			a.systemMessage(17, 12226, nil)
 		} else {
-			a.localizedNotice(17, id, map[string]string{"b": name}, msg)
+			a.localizedNotice(17, id, map[string]string{"b": name})
 		}
 	}
 	if g.FailureSerial != v.failureSerial {
@@ -260,11 +249,6 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 		v.createPending = false
 		v.voting = false
 		a.guildVoteMessage.Visible = false
-		messages := map[uint8]string{2: "Not enough gold to create the guild.", 6: "Guild name is unavailable.", 7: "Guild creation was declined."}
-		msg := messages[g.CreateFailure]
-		if msg == "" {
-			msg = "Guild creation failed."
-		}
 		id := 371
 		switch g.CreateFailure {
 		case 2:
@@ -278,7 +262,7 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 		if name == "" && a.guildCreateUI != nil {
 			name = a.guildCreateUI.Name.Text
 		}
-		a.localizedNotice(1, id, map[string]string{"b": name}, msg)
+		a.localizedNotice(1, id, map[string]string{"b": name})
 	}
 	if !a.guildVoteMessage.Visible {
 		return false
@@ -288,7 +272,7 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 			v.confirmCreate = false
 			if result == ui.MessageOK && a.state.Guild.ID == 0 && !v.createPending {
 				if err := a.world.Send(proto.GuildCreatePacket(v.pendingName, v.pendingRemark)); err != nil {
-					a.backToLogin("Unable to request guild creation.")
+					a.backToLoginID(12100)
 				} else {
 					v.createPending, v.createDeadline = true, a.clock+10
 				}
@@ -300,7 +284,7 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 			packet = proto.GuildDisbandAnswerPacket(result == ui.MessageOK)
 		}
 		if err := a.world.Send(packet); err != nil {
-			a.backToLogin("Unable to answer guild vote.")
+			a.backToLoginID(12101)
 		}
 	}
 	return true
@@ -319,7 +303,7 @@ func (a *App) toggleGuild() {
 func (a *App) updateGuild(in *platform.Input, w, h int) bool {
 	if a.guild.remarkPending && a.clock >= a.guild.remarkDeadline {
 		a.guild.remarkPending = false
-		a.questMessage("Guild notice request timed out.")
+		a.questMessageID(12110)
 	}
 	for _, r := range in.Chars {
 		if (r == 'g' || r == 'G') && !(a.socialUI != nil && a.socialUI.Focus && a.guild.open && a.guildUI != nil && a.guildUI.Page != 0) {
@@ -341,7 +325,7 @@ func (a *App) updateGuild(in *platform.Input, w, h int) bool {
 	}
 	if a.state.Guild.ID != 0 && a.guild.etinRequestedFor != a.state.Guild.ID && a.world != nil {
 		if err := a.world.Send(proto.GuildEtinPacket()); err != nil {
-			a.backToLogin("Unable to request guild Etin.")
+			a.backToLoginID(12102)
 			return true
 		}
 		a.guild.etinRequestedFor = a.state.Guild.ID
@@ -500,7 +484,7 @@ func (a *App) answerGuildApplicant(accept bool) {
 		return
 	}
 	if err := a.world.Send(proto.GuildApplicantAnswerPacket(id, accept)); err != nil {
-		a.backToLogin("Unable to answer guild application.")
+		a.backToLoginID(12103)
 		return
 	}
 	a.guild.lastAction = a.clock + .5
@@ -532,7 +516,7 @@ func (a *App) guildAction(action int) {
 			a.guild.kickTarget = id
 			a.guild.confirmKind = 1
 			a.guild.confirmGuild = a.state.Guild.ID
-			a.guildConfirm.Open("Remove "+a.state.Guild.Members[id].Name+" from the guild?", true)
+			a.guildConfirm.Open(a.msg.Format(12231, map[string]string{"p": a.state.Guild.Members[id].Name}), true)
 		}
 		return
 	}
@@ -540,7 +524,7 @@ func (a *App) guildAction(action int) {
 		return
 	}
 	if err := a.world.Send(proto.GuildRankPacket(id, action == 1)); err != nil {
-		a.backToLogin("Unable to request guild rank change.")
+		a.backToLoginID(12104)
 		return
 	}
 	a.guild.lastAction = a.clock + .5
@@ -574,7 +558,7 @@ func (a *App) updateGuildConfirm(in *platform.Input, w, h int) bool {
 		}
 		if packet != nil {
 			if err := a.world.Send(packet); err != nil {
-				a.backToLogin("Unable to send guild request.")
+				a.backToLoginID(12105)
 			} else if kind == 2 || kind == 3 {
 				a.guild.lifecyclePending = true
 				a.guild.lifecycleDeadline = a.clock + 10
@@ -592,7 +576,7 @@ func (a *App) updateGuildInvite(in *platform.Input, w, h int) bool {
 	if g.InviteSerial != v.inviteSerial {
 		v.inviteSerial = g.InviteSerial
 		if g.InviteID != 0 && g.ID == 0 {
-			name := fmt.Sprintf("Player %d", g.InviteID)
+			name := a.msg.Format(12296, map[string]string{"v": fmt.Sprint(g.InviteID)})
 			if e := a.state.Entities[g.InviteID]; e != nil && e.Shape != nil && e.Shape.Name != "" {
 				name = e.Shape.Name
 			}
@@ -605,15 +589,15 @@ func (a *App) updateGuildInvite(in *platform.Input, w, h int) bool {
 	if g.ReplySerial != v.replySerial {
 		v.replySerial = g.ReplySerial
 		if g.LastReply.Result == 1 {
-			a.questMessage("Guild invitation accepted.")
+			a.questMessageID(12111)
 		} else {
-			a.questMessage("Guild invitation declined or unavailable.")
+			a.questMessageID(12112)
 		}
 	}
 	if g.ApplySerial != v.applySerial {
 		v.applySerial = g.ApplySerial
-		messages := [...]string{"Guild application refused.", "Guild application sent.", "You must wait before joining another guild."}
-		message := "Guild application failed."
+		messages := [...]string{a.tr(12345), a.tr(12346), a.tr(12347)}
+		message := a.tr(12348)
 		if int(g.ApplyResult) < len(messages) {
 			message = messages[g.ApplyResult]
 		}
@@ -622,9 +606,9 @@ func (a *App) updateGuildInvite(in *platform.Input, w, h int) bool {
 	if g.JoinSerial != v.joinSerial {
 		v.joinSerial = g.JoinSerial
 		if g.JoinResult == 0 {
-			a.localizedNotice(17, 385, nil, "Guild application declined.")
+			a.localizedNotice(17, 385, nil)
 		} else if g.JoinResult == 1 {
-			a.localizedNotice(17, 384, nil, "You joined a guild.")
+			a.localizedNotice(17, 384, nil)
 		}
 	}
 	if !a.guildMessage.Visible {
@@ -637,7 +621,7 @@ func (a *App) updateGuildInvite(in *platform.Input, w, h int) bool {
 	}
 	if answer := a.guildMessage.Update(in, w, h); answer != ui.MessageNone {
 		if err := a.world.Send(proto.GuildAnswerPacket(answer == ui.MessageOK)); err != nil {
-			a.backToLogin("Unable to answer guild invitation.")
+			a.backToLoginID(12106)
 			return true
 		}
 		// The server does not echo a declined invitation to its recipient.
@@ -653,26 +637,26 @@ func (a *App) guildCommand(text string) bool {
 	}
 	if strings.EqualFold(fields[0], "/guildapply") {
 		if len(fields) < 2 || a.state.Guild.ID != 0 {
-			a.questMessage("Use /guildapply guild name while not in a guild.")
+			a.questMessageID(12113)
 			return true
 		}
 		name := strings.Join(fields[1:], " ")
 		for id, guild := range a.state.Guild.Directory {
 			if strings.EqualFold(guild.Name, name) {
 				if err := a.world.Send(proto.GuildApplyPacket(id)); err != nil {
-					a.backToLogin("Unable to request guild membership.")
+					a.backToLoginID(12097)
 				}
 				return true
 			}
 		}
-		a.questMessage("Guild not found in the current directory.")
+		a.questMessageID(12114)
 		return true
 	}
 	if !strings.EqualFold(fields[0], "/guildinvite") {
 		return false
 	}
 	if a.state.Guild.ID == 0 || a.state.Guild.Rank == 0 || a.state.Guild.Rank > 2 {
-		a.questMessage("Only a guild master or administrator can invite.")
+		a.questMessageID(12115)
 		return true
 	}
 	e := a.state.Entities[a.state.Target]
@@ -687,15 +671,15 @@ func (a *App) guildCommand(text string) bool {
 		}
 	}
 	if e == nil || e.Kind != game.KindUser || e.ID == a.state.SelfID {
-		a.questMessage("Select a nearby player to invite.")
+		a.questMessageID(12116)
 		return true
 	}
 	if _, member := a.state.Guild.Members[e.ID]; member {
-		a.questMessage("Player is already in your guild.")
+		a.questMessageID(12117)
 		return true
 	}
 	if err := a.world.Send(proto.GuildInvitePacket(e.ID)); err != nil {
-		a.backToLogin("Unable to invite player to guild.")
+		a.backToLoginID(12107)
 	}
 	return true
 }

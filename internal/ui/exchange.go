@@ -63,10 +63,10 @@ func (p *ExchangePanel) Draw(s *render.Sprites, f *Font, w, h int, name string, 
 	f.Draw(s, fmt.Sprint(ownMoney), x+90, y+179, white, 90)
 	f.Draw(s, fmt.Sprint(otherMoney), x+90, y+416, white, 90)
 	if ready {
-		f.Draw(s, "Ready", x+72, y+242, white, 64)
+		f.Draw(s, Tr(12286), x+72, y+242, white, 64)
 	}
 	if otherReady {
-		f.Draw(s, "Ready", x+72, y+448, white, 64)
+		f.Draw(s, Tr(12286), x+72, y+448, white, 64)
 	}
 	p.confirm.OriginX, p.confirm.OriginY = x, y
 	p.close.OriginX, p.close.OriginY = x, y

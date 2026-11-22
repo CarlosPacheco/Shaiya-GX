@@ -144,6 +144,7 @@ type worldView struct {
 	areaShowers                 []skillAreaShower
 	impactCues                  []skillImpactCue
 	attackSounds                []attackSound
+	pendingNumbers              []pendingNumber
 	effectErrors                map[string]bool
 	groundBatches               [4][]render.M4
 	groundColors                [4][][4]float32
@@ -380,7 +381,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	if !a.updateActionApproach(in) {
 		return
 	}
-	if !in.SuppressAutoRun && (intent.forward || intent.back || intent.side != 0 || intent.turn != 0 || in.RightDown) {
+	if !in.SuppressAutoRun && (intent.forward || intent.back || intent.side != 0 || intent.turn != 0) {
 		v.restoreMovementHeading()
 	}
 	var dir render.V3
@@ -402,7 +403,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		}
 		if in.HasKey(platform.KeySpace) {
 			if err := a.world.Send(proto.VehicleLeavePacket()); err != nil {
-				a.backToLogin("Unable to dismount.")
+				a.backToLoginID(12214)
 				return
 			}
 		}
@@ -446,9 +447,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		if v.walking {
 			turnSpeed /= 2
 		}
-		if a.state.Self.IsGM && a.state.GMTurbo {
-			turnSpeed *= gm.TurboMultiplier
-		}
+		// Turbo never alters the A/D turn rate.
 		// EP5.4 0x43f4f5 turns 15 degrees per unit of this step's travel.
 		turn := float64(intent.turn) * float64(turnSpeed) * dt * (math.Pi / 12)
 		yaw += turn
@@ -470,7 +469,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	} else if v.diagonalHeading.Len() == 0 {
 		v.diagonalHeading = v.facing
 	}
-	if !diagonal && !blocked && speed > 0 && !a.state.Self.Dead && (in.RightDown || !v.travel && (intent.forward || intent.back)) {
+	if !diagonal && !blocked && speed > 0 && !a.state.Self.Dead && (in.RightDown && intent.side != 0 || !v.travel && (intent.forward || intent.back)) {
 		v.facing = fwd
 	}
 	right := render.V3{0, 1, 0}.Cross(v.facing)
@@ -509,7 +508,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 				v.evadeDirection = right
 			}
 			if err := a.world.Send(proto.MotionPacket(evadeMotion)); err != nil {
-				a.backToLogin("Unable to send evasive movement.")
+				a.backToLoginID(12215)
 				return
 			}
 		}
@@ -538,13 +537,13 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 			// first, so the server grants the impulse at the same support surface.
 			if v.moving || dir.Len() > 0 {
 				if err := a.world.Send(v.movePacket(v.motion &^ proto.MotionFlag80)); err != nil {
-					a.backToLogin("Unable to send jump position.")
+					a.backToLoginID(12216)
 					return
 				}
 			}
 			v.beginJump()
 			if err := a.world.Send(proto.MotionPacket(proto.MotionJump)); err != nil {
-				a.backToLogin("Unable to send jump.")
+				a.backToLoginID(12217)
 				return
 			}
 		}
@@ -751,7 +750,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	periodic := lastStep && v.sendT <= 0
 	if moving != v.moving || motion != v.motion || ((moving || v.jumping) && periodic) || (v.waterDirty && (periodic || (swimming && v.pos[1] >= scene.SwimSurfaceY))) {
 		if err := a.world.Send(v.movePacket(motion)); err != nil {
-			a.backToLogin("Unable to send movement.")
+			a.backToLoginID(12218)
 			return
 		}
 		nextSample := 0.1
@@ -1006,6 +1005,7 @@ func (a *App) prepareSelfForDraw() {
 		}
 		v.self.Concealed = a.state.Self.Concealed
 		v.self.World = render.Basis(riderPos, heading.Scale(-1), render.V3{0, 1, 0})
+		v.self.World = v.selfAppearance.ScaleMatrix().Mul(v.self.World)
 		a.prepareSelfSpirit()
 	}
 }
@@ -1092,7 +1092,7 @@ func (a *App) refreshSelf(v *worldView) {
 			slot.EquipType[i], slot.EquipTypeID[i] = item[0], item[1]
 		}
 	}
-	appearance := a.appearance(&slot)
+	appearance := a.editedSelfAppearance(a.appearance(&slot))
 	if form.Kind == proto.FormDisguise {
 		appearance.WeaponEnchant, appearance.OffhandEnchant = form.Shape.Equipment[5][2], form.Shape.Equipment[6][2]
 	}

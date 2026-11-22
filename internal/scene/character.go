@@ -55,6 +55,14 @@ func (a Appearance) HeightScale() float32 {
 	return s[min(int(a.Height), len(s)-1)]
 }
 
+// ScaleMatrix applies the height factor to all three axes: Game.exe 0x415248
+// pushes the same value three times into the model's scaling matrix.
+func (a Appearance) ScaleMatrix() render.M4 {
+	m, s := render.Identity(), a.HeightScale()
+	m[0], m[5], m[10] = s, s, s
+	return m
+}
+
 type skinPart struct {
 	vertices []render.SkinVertex // retained for posed shadow bounds
 	bounds   []boneBounds
@@ -210,6 +218,20 @@ func (s *Assets) mlt(folder, prefix, part string) (*model.MLT, error) {
 	return model.ParseMLT(b)
 }
 
+// StyleCounts returns how many hair and face styles the body's material lists
+// (<prefix>_hair.MLT, <prefix>_face.MLT) define; they differ by race, sex and
+// job body and bound what the appearance window may pick.
+func (s *Assets) StyleCounts(a Appearance) (hair, face int) {
+	folder, prefix := raceFolders[a.Race%4], a.Prefix()
+	count := func(part string) int {
+		if m, err := s.mlt(folder, prefix, part); err == nil {
+			return len(m.Records)
+		}
+		return 0
+	}
+	return max(1, count("hair")), max(1, count("face"))
+}
+
 // BuildCharacter loads the parts for an appearance with the given clip
 // suffix (e.g. "019_select").
 func BuildCharacter(s *Assets, a Appearance, clip string) (*Character, error) {
@@ -218,6 +240,16 @@ func BuildCharacter(s *Assets, a Appearance, clip string) (*Character, error) {
 	c := &Character{folder: folder, prefix: prefix, assets: s}
 	add := func(part string, index int) {
 		m, err := s.mlt(folder, prefix, part)
+		// A hair or face index the body's MLT does not define (or whose mesh
+		// is missing) shows style 1 instead of nothing; style 0 if only one.
+		if err == nil && (part == "hair" || part == "face") {
+			valid := func(i int) bool {
+				return i >= 0 && i < len(m.Records) && m.Records[i].Mesh >= 0 && int(m.Records[i].Mesh) < len(m.Meshes)
+			}
+			if !valid(index) {
+				index = min(1, len(m.Records)-1)
+			}
+		}
 		if err != nil || index < 0 || index >= len(m.Records) {
 			if err == nil {
 				err = fmt.Errorf("record %d of %d", index, len(m.Records))
@@ -625,6 +657,23 @@ func (c *Character) ContactTime() float32 {
 		}
 	}
 	return min(first/30, c.clip.Duration())
+}
+
+// ContactTimes returns the native first and second contact markers
+// (Metadata[2], Metadata[3], 30 phases/s, 0 when absent) of the playing action.
+func (c *Character) ContactTimes() (first, second float32) {
+	if c.actionSlot < 0 || c.actionSlot >= len(c.actions) || c.clip == nil || len(c.actions[c.actionSlot].Metadata) < 4 {
+		return 0, 0
+	}
+	m := c.actions[c.actionSlot].Metadata
+	d := c.clip.Duration()
+	if m[2] > 0 {
+		first = min(m[2]/30, d)
+	}
+	if m[3] > 0 {
+		second = min(m[3]/30, d)
+	}
+	return
 }
 
 // CastHand uses the same native hand bindings as weapon attachments. Births

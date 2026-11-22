@@ -34,7 +34,7 @@ func (a *App) queueSkillTooltip(key sdata.SkillKey) {
 			rows = append(rows, itemDetailLine{fmt.Sprintf("Cast time: %g seconds", float64(d.ReadyTime)*.25), white})
 		}
 		if d.ResetTime > 1 {
-			rows = append(rows, itemDetailLine{fmt.Sprintf("Recharge time: %d seconds", d.ResetTime), white})
+			rows = append(rows, itemDetailLine{a.msg.Format(12323, map[string]string{"v": fmt.Sprint(d.ResetTime)}), white})
 		}
 		if d.AttackRange > 0 {
 			rows = append(rows, itemDetailLine{fmt.Sprintf("Range: %d m", d.AttackRange), white})
@@ -47,7 +47,7 @@ func (a *App) queueSkillTooltip(key sdata.SkillKey) {
 	}
 	warehouseCall := key.ID == warehouseCallSkill && key.Level == 1
 	if _, learned := a.learnedSkill(key.ID); key.Level != 100 && !learned && !warehouseCall {
-		rows = append(rows, itemDetailLine{fmt.Sprintf("Required level: %d", d.RequiredLevel), gray}, itemDetailLine{fmt.Sprintf("Skill points: %d", d.Points), gray})
+		rows = append(rows, itemDetailLine{a.msg.Format(12324, map[string]string{"v": fmt.Sprint(d.RequiredLevel)}), gray}, itemDetailLine{a.msg.Format(12325, map[string]string{"v": fmt.Sprint(d.Points)}), gray})
 	}
 
 	a.tooltipItem = false
@@ -72,7 +72,7 @@ func (a *App) queueActionTooltip(w, h int) {
 		return
 	}
 	if action, ok := a.localAction(index); ok {
-		a.tooltip = []itemDetailLine{{subActionNames[action], white}}
+		a.tooltip = []itemDetailLine{{a.subActionName(uint8(action)), white}}
 		a.tooltipItem = false
 		a.tooltipDescription = ""
 		a.tooltipSockets = nil

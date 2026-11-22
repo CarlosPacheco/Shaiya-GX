@@ -16,6 +16,8 @@ type tooltipExtras struct {
 	effects      []tooltipItemEffect
 	immunities   []tooltipItemEffect
 	effectChance bool
+	// Headings come from SysMsg (the app fills them in).
+	effectsLabel, immuneLabel string
 }
 
 type tooltipItemEffect struct {
@@ -171,8 +173,8 @@ func layoutTooltipWithHeading(f, heading *ui.Font, rows []itemDetailLine, item b
 			}
 			y += 22
 		}
-		addEffects("Effects", e.effects, e.effectChance)
-		addEffects("Immune to", e.immunities, false)
+		addEffects(e.effectsLabel, e.effects, e.effectChance)
+		addEffects(e.immuneLabel, e.immunities, false)
 		if e.maxOJ > 0 {
 			y += 5
 			_, n := block(fmt.Sprintf("Max OJ %d/%d (%d stats)", e.maxOJ, e.maxOJ*100, e.maxOJStats), [4]float32{.6, 1, .6, 1}, y, false, false)

@@ -36,7 +36,7 @@ func (a *App) updateTargetEffects() {
 	}
 	if id != v.requestedID || kind != v.requestedKind {
 		if err := a.world.Send(proto.TargetEffectsQuery(kind, id)); err != nil {
-			a.backToLogin("Unable to query target effects.")
+			a.backToLoginID(12196)
 			return
 		}
 		v.requestedID, v.requestedKind = id, kind
@@ -103,7 +103,7 @@ func (a *App) drawTargetEffectTooltip(w, h int) {
 	b := a.targetEffects.rows[i]
 	name := b.def.Name
 	if name == "" {
-		name = fmt.Sprintf("Skill %d", b.buff.Skill)
+		name = a.msg.Format(12321, map[string]string{"v": fmt.Sprint(b.buff.Skill)})
 	}
 	a.tooltip = []itemDetailLine{{name, [4]float32{1, 1, 0, 1}}, {ui.BuffDuration(b.seconds(a.clock), b.timed), white}}
 	a.tooltipItem = false

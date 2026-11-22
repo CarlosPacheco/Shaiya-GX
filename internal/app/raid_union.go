@@ -169,7 +169,7 @@ func (a *App) finishMove(slot int) {
 		return
 	}
 	if err := a.world.Send(proto.RaidSwapPacket(uint32(from), uint32(slot))); err != nil {
-		a.backToLogin("Unable to move the group.")
+		a.backToLoginID(12181)
 	}
 }
 
@@ -229,7 +229,7 @@ func (a *App) updateUnionConfirm(in *platform.Input, w, h int) bool {
 	if result := a.unionConfirm.Update(in, w, h); result != ui.MessageNone {
 		if result == ui.MessageOK && a.state.Party.Raid && a.unionRole() == 0 && a.world != nil {
 			if err := a.world.Send(proto.RaidDisbandPacket()); err != nil {
-				a.backToLogin("Unable to dismantle the raid.")
+				a.backToLoginID(12182)
 			}
 		}
 	}

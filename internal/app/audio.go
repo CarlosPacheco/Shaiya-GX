@@ -55,6 +55,7 @@ func (a *App) updateAudio() {
 		return
 	}
 	a.updateAttackSounds()
+	a.updatePendingNumbers()
 	a.audioError("device", a.sound.Update())
 	music := ""
 	switch a.screen {

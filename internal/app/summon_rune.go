@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
@@ -60,7 +58,7 @@ func (a *App) confirmedSummonRune(p []byte) {
 		}
 		prompt := a.msg.Format(818, map[string]string{"p": r.Name})
 		if prompt == "" {
-			prompt = fmt.Sprintf("Do you want to accept %s's party member summon?", r.Name)
+			prompt = a.msg.Format(12320, map[string]string{"v": r.Name})
 		}
 		a.summonMessage.OpenWithDetail(prompt, ui.MapName(a.msg, r.Map), [4]float32{1, 1, 0, 1}, a.font)
 		v.id, v.expires = r.Offer, a.clock+float64(r.RemainingMS)/1000
@@ -81,7 +79,7 @@ func (a *App) updateSummonPrompt(in *platform.Input, w, h int) bool {
 	answer := a.summonMessage.Update(in, w, h)
 	if answer != ui.MessageNone {
 		if err := a.world.Send(proto.SummonAnswerPacket(v.id, answer == ui.MessageOK)); err != nil {
-			a.backToLogin("Unable to answer the party summon.")
+			a.backToLoginID(12194)
 		}
 	}
 	return true
@@ -92,7 +90,7 @@ func (a *App) updateSummonCancel(in *platform.Input) bool {
 		return false
 	}
 	if err := a.world.Send(proto.SummonCancelPacket()); err != nil {
-		a.backToLogin("Unable to cancel the party summon.")
+		a.backToLoginID(12195)
 	}
 	return true
 }

@@ -92,7 +92,7 @@ func (a *App) closeNPC() {
 	a.shop.npcID, a.shop.talk, a.shop.questMode = 0, false, false
 	if a.world != nil {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-			a.backToLogin("Unable to close NPC conversation.")
+			a.backToLoginID(12011)
 		}
 	}
 }

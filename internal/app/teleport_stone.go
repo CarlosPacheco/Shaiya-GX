@@ -21,7 +21,7 @@ func (a *App) loadRecordedPoints() bool {
 		}
 		panel, err := ui.NewRecordedPoints(textures)
 		if err != nil {
-			a.questMessage("Recorded Point interface resources are missing.")
+			a.questMessageID(12199)
 			return false
 		}
 		a.recordedPoints = panel
@@ -87,12 +87,12 @@ func (a *App) updateTeleportCast(in *platform.Input) bool {
 	}
 	if a.clock >= v.deadline {
 		a.stopTeleportCast()
-		a.questMessage("No teleportation response.")
+		a.questMessageID(12200)
 		return false
 	}
 	if in.HasKey(platform.KeyEscape) {
 		if err := a.world.Send(proto.TeleportStonePacket(proto.TeleportCancel, 0)); err != nil {
-			a.backToLogin("Unable to cancel the teleportation.")
+			a.backToLoginID(12197)
 		}
 		return true
 	}
@@ -106,7 +106,7 @@ func (a *App) updateTeleportStone(in *platform.Input, w, h int) bool {
 	}
 	if v.pending && a.clock >= v.deadline {
 		v.pending = false
-		a.questMessage("No response. Use the stone again to refresh.")
+		a.questMessageID(12201)
 	}
 	if !a.loadRecordedPoints() {
 		*v = teleportStoneView{}
@@ -122,7 +122,7 @@ func (a *App) updateTeleportStone(in *platform.Input, w, h int) bool {
 		return panelPointer(in, x, y, ui.RecordedPointsWidth, ui.RecordedPointsHeight)
 	}
 	if err := a.world.Send(proto.TeleportStonePacket(action, slot)); err != nil {
-		a.backToLogin("Unable to use a recorded point.")
+		a.backToLoginID(12198)
 		return true
 	}
 	v.pending, v.deadline = true, a.clock+10

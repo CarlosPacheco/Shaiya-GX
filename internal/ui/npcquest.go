@@ -199,7 +199,7 @@ func (v *NPCQuest) Draw(s *render.Sprites, f *Font, w, h int, name, greeting str
 		s.Draw(portrait, float32(x+7), float32(y+7), 64, 64, 0, 0, 1, 1, white)
 	}
 	if !detail {
-		f.Draw(s, "Choose a quest or service.", x+26, y+89, RGBColor(0xeee4ce), 196)
+		f.Draw(s, Tr(12367), x+26, y+89, RGBColor(0xeee4ce), 196)
 		v.finish.OriginX, v.finish.OriginY = x, y
 		v.finish.OffY = 336
 		v.finish.Disabled = false

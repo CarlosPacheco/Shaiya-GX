@@ -10,13 +10,12 @@ func elementName(value uint8, messages ...text.SysMsg) string {
 	value = element.Normalize(value)
 	family := element.Family(value)
 	id := 5270
-	name := "non-elemental"
 	if family != 0 {
 		id = 5203 + int(family)
-		name = [4]string{"Fire", "Water", "Earth", "Wind"}[family-1]
 	}
+	name := text.Defaults[id]
 	if len(messages) > 0 {
-		if translated := messages[0].Get(id); translated != "" {
+		if translated := messages[0].Lookup(id); translated != "" {
 			name = translated
 		}
 	}

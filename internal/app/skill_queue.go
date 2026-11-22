@@ -25,7 +25,7 @@ func (a *App) queueSkill(p []byte) {
 	}
 	if a.skills.queuedSkill == nil && a.world != nil {
 		if err := a.world.Send(proto.StopAttackPacket()); err != nil {
-			a.backToLogin("Unable to stop auto attack.")
+			a.backToLoginID(12188)
 			return
 		}
 	}
@@ -74,7 +74,7 @@ func (a *App) updateQueuedSkill(in *platform.Input) {
 		return
 	}
 	if err := a.world.Send(q.packet); err != nil {
-		a.backToLogin("Unable to cast queued skill.")
+		a.backToLoginID(12189)
 		return
 	}
 	a.requestedSkillPresentation(q.packet)
