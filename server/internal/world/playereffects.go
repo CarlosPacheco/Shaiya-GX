@@ -312,6 +312,9 @@ func (s *Session) tickDebuffs(now time.Time) bool {
 		default:
 			continue
 		}
+		if b.CasterUser != 0 && s.safeZoneProtection().protects(s.faction) {
+			continue
+		}
 		if damage[0] > 0 || damage[1] > 0 || damage[2] > 0 {
 			s.breakCombatForm()
 			s.cancelTravelCast()

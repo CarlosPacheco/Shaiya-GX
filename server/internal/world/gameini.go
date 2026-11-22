@@ -139,6 +139,9 @@ func LoadGameConfig(log *logx.Logger) error {
 	if err := loadMapProperties(log); err != nil {
 		return fmt.Errorf("map properties: %w", err)
 	}
+	if err := loadSafeZones(log); err != nil {
+		return fmt.Errorf("safe zones: %w", err)
+	}
 	if err := loadEnchantRules(log); err != nil {
 		return fmt.Errorf("enchant rules: %w", err)
 	}

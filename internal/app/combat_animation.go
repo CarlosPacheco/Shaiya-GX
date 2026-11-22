@@ -76,6 +76,12 @@ func (a *App) confirmedAnimation(p []byte) {
 			a.faceSkillTarget(r.Source, r.Target)
 			actor.PlayCast(scene.SkillCastAction(d.Animation, d.Effect), float32(d.ReadyTime)*.25)
 		}
+	case proto.GXSkillFailure:
+		r := a.state.LastSkillFailure
+		if r.Message == proto.MsgCannotUseSkill && a.state.LastCast.Source == a.state.SelfID &&
+			a.state.LastCast.ID == r.Skill && v.self != nil {
+			v.self.CancelCast()
+		}
 	case proto.SkillUse, proto.SkillUseNoTarget, proto.SkillUserDrain, proto.SkillMobDrain:
 		r := a.state.LastSkill
 		if r.Source == a.state.SelfID && a.state.Self.Mounted {

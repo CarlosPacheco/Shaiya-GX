@@ -140,8 +140,35 @@ masks. The installer verifies the archive, the complete set of map manifests,
 and each generated file by SHA-256. It requires a fresh directory when a
 different generation is present. Both native CI platforms use the same archive.
 Server portables include all the generated resources.
-For future or changed maps, regenerate the resources with the map builder
-described above and distribute the new generation with the server.
+
+Prepare every public game release from a clean checkout of its release commit
+using the exact loose client data intended for distribution.
+
+```sh
+python3 tools/release_geometry.py --data /path/to/Client/data --tag gx-vX.Y.Z --candidate /path/to/new-geometry
+```
+
+This rebuilds navigation, collision and player physics for every numbered
+client map using the checked-out server walk masks. It creates the local,
+annotated release tag only when the rebuilt manifests match the pinned
+generation. Push that tag to start the release workflow. CI requires the tag's
+geometry fingerprint and uses the pinned generation on both platforms.
+
+If the build produces a different generation, the command stops before
+tagging and writes the replacement archive and SHA-256 values to `--candidate`.
+Review and publish that geometry archive as a separate resource release, then
+commit its URL, archive checksum and manifest fingerprint in
+`tools/fetch_server_geometry.py` before rerunning the release command.
+
+Build the complete portable from the checked-out release tag using the same
+client data directory.
+
+```sh
+python3 tools/package_bundle.py --archives /path/to/archives --data /path/to/Client/data --tag gx-vX.Y.Z --output /path/to/portable
+```
+
+The packager verifies the pinned generation, staged client geometry sources and
+server walk masks before creating the portable folder.
 
 
 ## Native spell sight ray and monster effects

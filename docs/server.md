@@ -144,6 +144,10 @@ the INI and restart GX World to apply catalog changes.
 
 ## File-backed game catalogs
 
+`data/game/SafeZones.INI` defines the server's PvP sanctuaries for Light, Fury
+or both factions. Keep the file with the server data when upgrading. See the
+[map rules guide](wiki/map-rules.md#safe-zones) for the vertex syntax and combat rules.
+
 GX World reads the nine gameplay catalogs from `data/game` at startup.
 These files take precedence over the retired SQLite definition tables.
 Existing migration histories and rows are retained for upgrades and export.

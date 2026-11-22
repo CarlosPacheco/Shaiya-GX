@@ -21,7 +21,7 @@ var portalVolumes portalVolumeCatalog
 func readPortalVolumes(path string) (portalVolumeCatalog, error) {
 	raw, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
-		return nil, nil
+		return nativePortalVolumes, nil
 	}
 	if err != nil {
 		return nil, err

@@ -11,6 +11,8 @@ from pathlib import PurePosixPath
 import re
 import subprocess
 
+from item_sdata import RETIRED_STACK_CSV
+
 GAME_SUFFIXES = {'.sah', '.saf', '.sdata', '.exe', '.dll', '.dds', '.tga', '.bmp',
                  '.3dc', '.3do', '.smod', '.ani', '.wld', '.svmap', '.wav', '.mp3', '.ogg',
                  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.eft', '.3de', '.mlt',
@@ -37,6 +39,8 @@ def git(*args):
 
 def forbidden(path, historical=False):
     p = PurePosixPath(path)
+    if not historical and p.name.casefold() == RETIRED_STACK_CSV:
+        return True
     # Explicitly distributed server fixtures and historical authored artwork. This does
     # not permit personal runtime copies, client archives or build artifacts.
     if historical and path == 'server/cmd/gx_server/icon.png':

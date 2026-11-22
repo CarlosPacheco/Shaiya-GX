@@ -13,8 +13,11 @@ import tempfile
 import zipfile
 
 from cash_path import existing_cash_path
+from fetch_server_geometry import read_manifests, validate as validate_geometry
 from font_pack import remove_readmes, validate
 from gx_ini import FILTER_TEMPLATE
+from item_sdata import RETIRED_STACK_CSV, reconcile_stack_limits
+from release_geometry import verify_sources, verify_tag
 
 ARCHIVES = ('gx-client-linux-amd64.tar.gz', 'gx-client-windows-amd64.zip',
             'gx-server-linux-amd64.tar.gz', 'gx-server-windows-amd64.zip')
@@ -38,6 +41,8 @@ def text_content(data):
 
 def merge(source, destination):
     for path in sorted(source.rglob('*')):
+        if path.name.casefold() == RETIRED_STACK_CSV:
+            continue
         if path.is_symlink():
             raise ValueError('unexpected package symlink')
         if not path.is_file():
@@ -60,7 +65,7 @@ def verify_cash_copies(client_data, server_data):
         raise ValueError('server ProductList database is missing')
 
 
-def prepare(archives, data, output):
+def prepare(archives, data, output, *, require_pin=False):
     if output.exists():
         raise ValueError('output already exists; choose a new folder')
     if data is not None and (not data.is_dir() or output.is_relative_to(data)):
@@ -95,13 +100,12 @@ def prepare(archives, data, output):
         merge(extracted / 'gx-client-windows-amd64', client)
         if data is not None:
             print('Copying local loose game data...', flush=True)
-            def exclude_local_fonts(directory, names):
-                if Path(directory).parent != data:
-                    return ()
-                if Path(directory).name.casefold() != 'fonts':
-                    return ()
-                return [name for name in names if name.casefold() in {'arial.ttf', 'arialbd.ttf'}]
-            shutil.copytree(data, client / 'data', dirs_exist_ok=True, ignore=exclude_local_fonts)
+            def exclude_local_data(directory, names):
+                excluded = {RETIRED_STACK_CSV}
+                if Path(directory).parent == data and Path(directory).name.casefold() == 'fonts':
+                    excluded.update({'arial.ttf', 'arialbd.ttf'})
+                return [name for name in names if name.casefold() in excluded]
+            shutil.copytree(data, client / 'data', dirs_exist_ok=True, ignore=exclude_local_data)
         (client / 'data/Filter.INI').write_text(FILTER_TEMPLATE, encoding='utf-8', newline='\n')
         fonts = client / 'data/fonts'
         remove_readmes(fonts)
@@ -115,8 +119,17 @@ def prepare(archives, data, output):
                     raise ValueError('native server manifest mismatch: ' + name)
             manifest.unlink()
             merge(source, server)
+        server_data = server / 'data'
+        if require_pin or data is not None:
+            geometry = server_data / 'geometry'
+            catalog, manifests = validate_geometry(geometry) if require_pin else read_manifests(geometry)
+            client_data = client / 'data' if data is not None else None
+            verify_sources(catalog, manifests, server_data / 'maps', client_data)
         if data is not None:
-            verify_cash_copies(client / 'data', server / 'data')
+            verify_cash_copies(client / 'data', server_data)
+            changes = reconcile_stack_limits(client / 'data', server_data / 'rapture.sqlite')
+            if changes:
+                print(f'Synchronized {changes} stack limits in the staged Item.SData.', flush=True)
         for path in stage.rglob('*'):
             if path.is_file() and path.name.casefold().split('.')[0] == 'readme':
                 path.unlink()
@@ -137,9 +150,15 @@ def main():
     data_source.add_argument('--data', type=Path)
     data_source.add_argument('--without-data', action='store_true', help='Keep client game resources separate; include only packaged fonts')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--tag', help=argparse.SUPPRESS)
+    parser.add_argument('--tag', help='Require the public release tag and its pinned geometry')
     args = parser.parse_args()
-    prepare(args.archives.resolve(), args.data.resolve() if args.data is not None else None, args.output.resolve())
+    try:
+        if args.tag is not None:
+            verify_tag(args.tag)
+        data = args.data.resolve() if args.data is not None else None
+        prepare(args.archives.resolve(), data, args.output.resolve(), require_pin=args.tag is not None)
+    except (ValueError, OSError) as error:
+        parser.exit(1, f'{error}\n')
 
 
 if __name__ == '__main__':

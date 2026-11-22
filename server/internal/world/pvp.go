@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -133,6 +134,10 @@ func (s *Session) userAttackSwing(target uint32) bool {
 	if p == nil {
 		return false
 	}
+	if s.safeZoneBlocksUser(p) {
+		s.sendSkillMessage(0, proto.MsgCannotAttack)
+		return false
+	}
 	x, z := p.PositionXZ()
 	distance := DistanceXZ(ch.PosX, ch.PosZ, x, z)
 	if distance > wc.Range+float32(stats.Range)+userAttackRange+autoAttackRangeGrace {
@@ -187,7 +192,7 @@ func (s *Session) applyUserHit(h pendingUserHit) bool {
 		return false
 	}
 	ch := s.char
-	if ch == nil {
+	if ch == nil || s.safeZoneProtection().protects(s.faction) {
 		return false
 	}
 	stats := s.stats()

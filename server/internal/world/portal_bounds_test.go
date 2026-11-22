@@ -6,7 +6,7 @@ import (
 )
 
 func TestCloronPortalVolumesAndArrival(t *testing.T) {
-	catalog, err := readPortalVolumes(filepath.Join("..", "..", "data", "game", "PortalBounds.json"))
+	catalog, err := readPortalVolumes(filepath.Join(t.TempDir(), "PortalBounds.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

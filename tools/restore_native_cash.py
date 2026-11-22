@@ -7,7 +7,6 @@ character quantities above 255 are split without loss, with new item UIDs.
 import argparse
 import csv
 import hashlib
-import io
 import json
 import secrets
 import sqlite3
@@ -105,10 +104,9 @@ def main():
     args=ap.parse_args()
     rows=catalog(args.source)
     report={'products':len(rows),'databases':{}}
-    limits=None
     for path in args.database:
         if not path.is_file(): raise ValueError('missing database')
-        changes,limits=migrate(path,rows)
+        changes,_=migrate(path,rows)
         report['databases'][str(path)]=changes
         manifest=path.with_suffix('.manifest.json')
         if manifest.exists():
@@ -121,9 +119,6 @@ def main():
     target.parent.mkdir(parents=True,exist_ok=True)
     temporary=target.with_suffix('.SData.new')
     temporary.write_bytes(raw); temporary.replace(target)
-    out=io.StringIO(newline='')
-    writer=csv.writer(out,lineterminator='\n');writer.writerow(['item_id','max_stack']);writer.writerows(limits)
-    (args.client_data/'item-stack-limits.csv').write_text(out.getvalue())
     report['cash_sha256']=hashlib.sha256(raw).hexdigest()
     args.report.write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report))

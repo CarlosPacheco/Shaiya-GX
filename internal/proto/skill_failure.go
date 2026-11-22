@@ -5,6 +5,11 @@ import "fmt"
 // GXSkillFailure supplies a native SysMsg ID without inventing native result codes.
 const GXSkillFailure Opcode = 0x7F0E
 
+const (
+	MsgCannotUseSkill = 216
+	MsgCannotAttack   = 316
+)
+
 type SkillFailure struct{ Skill, Message uint16 }
 
 func DecodeSkillFailure(p []byte) (v SkillFailure, err error) {

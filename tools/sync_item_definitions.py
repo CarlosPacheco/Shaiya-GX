@@ -8,7 +8,6 @@ import argparse
 from contextlib import closing
 import csv
 import hashlib
-import io
 import json
 import os
 import tempfile
@@ -302,9 +301,6 @@ def synchronize(source, databases, backup_dir=None, apply=False, reference=None)
         raise ValueError('Client definitions changed during preflight')
     backup_dir.mkdir(parents=True, exist_ok=False, mode=0o700)
     (backup_dir / 'Item.SData').write_bytes(raw)
-    client_stack = source.parent.parent / 'item-stack-limits.csv'
-    if client_stack.exists():
-        (backup_dir / 'client.item-stack-limits.csv').write_bytes(client_stack.read_bytes())
     for n, path in enumerate(databases):
         with closing(connect_ro(path)) as db, closing(sqlite3.connect(backup_dir / f'database-{n}.sqlite')) as backup:
             db.backup(backup)
@@ -333,14 +329,6 @@ def synchronize(source, databases, backup_dir=None, apply=False, reference=None)
         raise ValueError('Client definitions changed during synchronization')
     if patched != raw:
         atomic_write(source, patched)
-    # Match the selected server's stack export without touching Cash/products.
-    with closing(connect_ro(databases[0])) as db:
-        limits = db.execute(f'SELECT ItemID,CASE WHEN Count>1 THEN 255 ELSE 1 END FROM {TABLE} ORDER BY ItemID').fetchall()
-    output = io.StringIO(newline='')
-    writer = csv.writer(output, lineterminator='\n')
-    writer.writerow(['item_id', 'max_stack'])
-    writer.writerows(limits)
-    atomic_write(client_stack, output.getvalue().encode())
     report['client_customizations_preserved'] = True
     report['noncustom_client_bytes_unchanged'] = True
     return report

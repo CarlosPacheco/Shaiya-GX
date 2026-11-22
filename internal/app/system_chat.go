@@ -88,7 +88,8 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		a.systemMessage(1, int(s.LastMobSpeech.MessageID), map[string]string{"p": a.chatEntityName(s.LastMobSpeech.MobID)})
 	case proto.GXSkillFailure:
 		style := uint8(1)
-		if s.LastSkillFailure.Message == 317 {
+		switch s.LastSkillFailure.Message {
+		case proto.MsgCannotUseSkill, proto.MsgCannotAttack, 317:
 			style = 17
 		}
 		a.systemMessage(style, int(s.LastSkillFailure.Message), nil)

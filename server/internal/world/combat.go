@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -78,6 +79,10 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	}
 	if s.cannotAct() {
 		return false // CUser::GetAttackSpeed is 255 while stunned or asleep
+	}
+	if s.safeZoneProtection() == safeBoth {
+		s.sendSkillMessage(0, proto.MsgCannotAttack)
+		return false
 	}
 	wc, ok := equippedWeaponCombat(s.items)
 	if !ok {

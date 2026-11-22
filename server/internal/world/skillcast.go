@@ -224,6 +224,10 @@ func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.Skil
 		s.resolveSkillDefinition(target, k, def, op, nil)
 		return
 	}
+	if s.safeZoneBlocksSkill(def, op, target) {
+		s.rejectSafeZoneSkill(k, false)
+		return
+	}
 	if !s.definitionReady(def) {
 		s.sendSkillMessage(k.SkillID, 215)
 		return
@@ -396,6 +400,10 @@ func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, ca
 }
 
 func (s *Session) resolveSkillDefinition(target uint32, k db.CharacterSkill, def *db.SkillDef, op packet.Opcode, cast *pendingCast) {
+	if s.safeZoneBlocksSkill(def, op, target) {
+		s.rejectSafeZoneSkill(k, cast != nil)
+		return
+	}
 	var castPos *[2]float32
 	if cast != nil {
 		castPos = cast.targetPos

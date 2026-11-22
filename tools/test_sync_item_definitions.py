@@ -1,7 +1,6 @@
 from contextlib import closing
 import csv
 import json
-import os
 from pathlib import Path
 import sqlite3
 import struct
@@ -93,9 +92,6 @@ class ItemSynchronizationTests(unittest.TestCase):
             manifest = database.with_suffix('.manifest.json')
             manifest.write_text(json.dumps({'sha256':'old', 'tables':{sync.TABLE:len(rows)-1,'Inventory':1}}))
             original = database.read_bytes()
-            legacy_stack = root/'older-portable-stack.csv'
-            legacy_stack.write_bytes(b'old stack limits')
-            os.link(legacy_stack, source.parent.parent/'item-stack-limits.csv')
             plan = sync.synchronize(source,[database])
             self.assertEqual(plan['databases'][0]['added'],1)
             self.assertEqual(database.read_bytes(),original)
@@ -103,8 +99,7 @@ class ItemSynchronizationTests(unittest.TestCase):
             report = sync.synchronize(source,[database],root/'backup',True)
             self.assertTrue(report['databases'][0]['other_tables_unchanged'])
             self.assertEqual((root/'backup/Item.SData').read_bytes(),raw)
-            self.assertEqual(legacy_stack.read_bytes(),b'old stack limits')
-            self.assertNotEqual((source.parent.parent/'item-stack-limits.csv').read_bytes(),b'old stack limits')
+            self.assertEqual({path.name for path in source.parent.parent.iterdir()}, {'Item'})
             with closing(sqlite3.connect(root/'backup/database-0.sqlite')) as saved:
                 self.assertEqual(saved.execute(f'SELECT ConstStr FROM {sync.TABLE} WHERE ItemID=1001').fetchone(),(3,))
                 self.assertEqual(saved.execute('SELECT * FROM Inventory').fetchall(),[(42,7)])

@@ -95,7 +95,7 @@ func gemCharSkill(sk *db.SkillDef) db.CharacterSkill {
 
 // gemCastsOnUser queues this user's gem skills on p.
 func (s *Session) gemCastsOnUser(p *ConnectedPlayer, skills []*db.SkillDef) {
-	if p == nil || !p.IsAlive() || s.char == nil || s.char.CurrentHP == 0 {
+	if p == nil || !p.IsAlive() || s.char == nil || s.char.CurrentHP == 0 || s.safeZoneBlocksUser(p) {
 		return
 	}
 	if len(skills) > 0 {

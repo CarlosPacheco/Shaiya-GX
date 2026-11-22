@@ -6,9 +6,7 @@ existing accounts, characters and inventory quantities are left untouched.
 Input client tables must be native plaintext SData (the installed GX format).
 """
 import argparse
-import csv
 import hashlib
-import io
 import json
 import os
 from pathlib import Path
@@ -229,8 +227,6 @@ def main():
         limits=current
     for target,content in ((item,patched_items),(cash,patched_cash)):
         staged=target.with_suffix('.gx-new');staged.write_bytes(content);os.replace(staged,target)
-    output=io.StringIO();writer=csv.writer(output,lineterminator='\n');writer.writerow(['item_id','max_stack']);writer.writerows(limits)
-    (args.client_data/'item-stack-limits.csv').write_text(output.getvalue())
     print(json.dumps({'runes':runes(),'products':len(products),'databases':[str(p) for p in args.database]},indent=2))
 
 if __name__=='__main__':main()

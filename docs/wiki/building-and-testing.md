@@ -124,8 +124,10 @@ SQLite stores the resulting text without an encoding migration.
 
 The current Drive bundle includes gx-v0.1.11 client/server binaries and complete
 client data. For later binary-only updates, update both endpoints from the
-matching GitHub release. Tagged releases use the reviewed notes in
-`docs/releases/<tag>.md`. Local work does not trigger publication automatically.
+matching GitHub release. Prepare each public tag with the
+[release geometry rebuild](mob-navigation.md#reproducible-release-resources),
+using the client data intended for that build. Tagged releases use the reviewed
+notes in `docs/releases/<tag>.md`. Local work does not trigger publication automatically.
 
 ## Server physics resources for a source checkout
 

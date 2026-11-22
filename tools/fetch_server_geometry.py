@@ -29,16 +29,25 @@ def manifest_digest(catalog, manifests):
     return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
 
 
-def validate(directory):
+def read_manifests(directory):
     catalog = json.loads((directory / 'catalog.json').read_text())
-    if catalog.get('version') != 1 or catalog.get('maps') != list(range(68)):
-        raise ValueError('Expected the complete 68-map physics generation')
+    maps = catalog.get('maps', [])
+    if (catalog.get('version') != 1 or not maps
+            or any(type(map_id) is not int or not 0 <= map_id <= 65535 for map_id in maps)
+            or maps != sorted(set(maps))):
+        raise ValueError('Invalid server physics catalog')
     manifests = [json.loads((directory / f'{map_id}.manifest.json').read_text())
-                 for map_id in catalog['maps']]
-    if manifest_digest(catalog, manifests) != MANIFESTS_SHA256:
-        raise ValueError(f'{directory} contains a different physics generation; '
-                         'choose a fresh --destination or move the existing directory before fetching')
-    for map_id, manifest in zip(catalog['maps'], manifests):
+                 for map_id in maps]
+    return catalog, manifests
+
+
+def validate(directory, *, require_pin=True):
+    catalog, manifests = read_manifests(directory)
+    if require_pin and manifest_digest(catalog, manifests) != MANIFESTS_SHA256:
+        raise ValueError(f'{directory} contains a different physics generation. '
+                         'Install the pinned generation into a fresh directory.')
+    maps = catalog['maps']
+    for map_id, manifest in zip(maps, manifests):
         if (manifest.get('version'), manifest.get('map_id'),
                 manifest.get('player_physics'), manifest.get('collision_rules')) != (1, map_id, 1, 2):
             raise ValueError(f'Incompatible physics generation: {map_id}')
@@ -46,6 +55,7 @@ def validate(directory):
             name = f'{map_id}.{extension}'
             if digest(directory / name) != manifest['files'].get(name):
                 raise ValueError(f'Physics checksum mismatch: {name}')
+    return catalog, manifests
 
 
 def install(destination, archive=None):
@@ -86,7 +96,7 @@ def install(destination, archive=None):
                     shutil.copyfileobj(stream, output)
         validate(temporary / 'geometry')
         (temporary / 'geometry').rename(destination)
-    print('Installed verified server physics for maps 0–67.', flush=True)
+    print('Installed the pinned server physics catalog.', flush=True)
 
 
 if __name__ == '__main__':

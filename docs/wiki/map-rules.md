@@ -27,11 +27,35 @@ map row, while [obelisk rules](obelisks.md) retain their own configuration.
 
 ## Portal volumes
 
-GX World reads `data/game/PortalBounds.json` alongside the maps. It uses
-248 recovered original trigger volumes on matching routes. Routes without a
-match retain their map-defined bounds, including custom routes. In Cloron's
-Lair, C2 → C1 uses the original trigger volume and C2 → C3 lands on walkable
-ground.
+GX World includes 248 original trigger volumes matched to the SVMAP routes.
+While a character moves, World detects those portals using the original
+boxes. Other routes keep the SVMAP point trigger. In Cloron's Lair, C2 → C1
+uses the original trigger volume and C2 → C3 lands in the upper entry corridor.
+Custom installations can replace the built-in catalog with
+`data/game/PortalBounds.json`.
+
+## Safe zones
+
+GX World enforces `data/game/SafeZones.INI` at startup. Each named section
+sets `Map`, `ProtectedFaction` and four `Vertices` in X, Z perimeter order.
+Either winding works. The strict interior applies at every height and in
+instances of the configured map. Restart GX World after editing the catalog.
+
+- `Light` and `Fury` protect members of that faction from player attacks.
+  A protected player can attack the opposing faction, subject to the target's
+  own protection.
+- `Both` protects both factions and blocks offensive actions from inside.
+  Players can still heal, buff and use other non-offensive skills.
+- Area attacks, traps, reflections and damage from player debuffs respect
+  each target's protection. Normal monster aggression and environmental
+  damage still apply.
+
+The default catalog preserves ten combat perimeters on maps 45, 46 and 47.
+The original EP5.4 reader (Game.exe `0x439270`) and position check
+(`0x438650`) distinguish these from the other tactical records. The shipped
+combat records share one rule code and name Light or Fury in their authored
+descriptions. GX uses those names to assign faction protection. Refused
+basic attacks and skills use native SysMsg IDs 316 and 216 respectively.
 
 ## Character progression and revival
 

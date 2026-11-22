@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Apply explicit forge item definitions to stopped, explicitly selected DBs.
 
-Only PS_GameDefs_Items.ReqVg/Count are changed. Character data is untouched.
+Only PS_GameDefs_Items.ReqVg/Count and the native client stack counts are changed.
 Backups are required and created using SQLite backup, never by replacing a
 personal runtime with the distributed seed.
 """
@@ -9,10 +9,11 @@ import argparse
 from contextlib import closing
 import csv
 import hashlib
-import io
 import json
 from pathlib import Path
 import sqlite3
+
+from item_sdata import item_sdata_path, patch_stack_limits
 
 
 def read_patches(path):
@@ -47,6 +48,10 @@ def main():
     ap.add_argument('--client-data',type=Path,required=True)
     args=ap.parse_args();args.backup_dir.mkdir(parents=True,exist_ok=True)
     patches=read_patches(args.patches)
+    item = item_sdata_path(args.client_data)
+    raw = item.read_bytes()
+    patched = patch_stack_limits(raw, {typ * 1000 + ident: stack for typ, ident, _, stack in patches if stack})
+    (args.backup_dir / 'Item.SData').write_bytes(raw)
     for n,path in enumerate(args.database):
         if not path.is_file():raise ValueError('missing database')
         backup=args.backup_dir/f'database-{n}-before.sqlite'
@@ -57,8 +62,10 @@ def main():
         current=apply(path,patches)
         if limits is not None and current!=limits:raise ValueError('target item definitions differ')
         limits=current
-    output=io.StringIO(newline='');w=csv.writer(output,lineterminator='\n');w.writerow(['item_id','max_stack']);w.writerows(limits)
-    (args.client_data/'item-stack-limits.csv').write_text(output.getvalue())
+    if patched != raw:
+        staged = item.with_suffix('.SData.gx-new')
+        staged.write_bytes(patched)
+        staged.replace(item)
     print(f'Updated {len(patches)} forge definitions in {len(args.database)} databases; no character rows edited')
 
 if __name__=='__main__':main()

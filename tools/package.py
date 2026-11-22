@@ -7,6 +7,7 @@ import shutil
 import subprocess
 from font_pack import FONT_PACK, validate
 from gx_ini import FILTER_TEMPLATE
+from item_sdata import RETIRED_STACK_CSV
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -25,12 +26,17 @@ def main():
     env = dict(os.environ, PATH=str(Path.home()/'.local/opt/go-1.27.4/bin')+os.pathsep+os.environ.get('PATH',''), GOTOOLCHAIN='local', GOPATH=os.environ.get('GOPATH',str(Path.home()/'.local/share/go')))
     staged = output/'.Shaiya GX.next'
     subprocess.run(['go','build','-o',str(staged),'./cmd/shaiya'],cwd=ROOT,env=env,check=True)
-    if not args.update: shutil.copytree(source,output/'data')
+    if not args.update:
+        shutil.copytree(source, output/'data', ignore=lambda _, names: [
+            name for name in names if name.casefold() == RETIRED_STACK_CSV])
     if not (output/'data/Filter.INI').exists():
         (output/'data/Filter.INI').write_text(FILTER_TEMPLATE, encoding='utf-8', newline='\n')
     validate()
     shutil.copytree(FONT_PACK,output/'data/fonts',dirs_exist_ok=True)
     staged.replace(output/'Shaiya GX')
+    for path in (output/'data').iterdir():
+        if path.name.casefold() == RETIRED_STACK_CSV and (path.is_file() or path.is_symlink()):
+            path.unlink()
     print(f'Client ready: {output}/Shaiya GX + data/',flush=True)
 
 
