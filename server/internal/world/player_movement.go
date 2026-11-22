@@ -281,7 +281,17 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 			return false, "position outside map"
 		}
 	}
-	s.advancePlayerVertical(now)
+	// While airborne the client advances every 60 Hz frame as horizontal then
+	// vertical. Integrating all the vertical time first, at the old horizontal
+	// position, lands a jump beside a ledge the client crossed in the air and
+	// then blocks the horizontal part against it: the abrupt snap against
+	// objects. Interleave them below instead.
+	interleave := mapgeometry.NativeContact && !m.ladder.Active && (m.jumping || !m.geometry.Supported(m.pos)) &&
+		!(m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5)
+	verticalFrom := m.at
+	if !interleave {
+		s.advancePlayerVertical(now)
+	}
 	if m.ladder.Active {
 		m.packetAt, m.budgetAt = now, now
 		m.speedCorrectionPending = false
@@ -358,9 +368,13 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	}
 	walkTime = max(walkTime, 1.0/60)
 	count := mapgeometry.HorizontalStepCount(delta)
+	airSpan := 0.0
+	if interleave {
+		airSpan = min(max(now.Sub(verticalFrom).Seconds(), 0), 1)
+	}
 	if mapgeometry.NativeContact {
 		// Walk a batch as the client predicts it: one step per 60 Hz frame.
-		count = max(count, int(math.Ceil(walkTime*60-1e-9)))
+		count = max(count, int(math.Ceil(walkTime*60-1e-9)), int(math.Ceil(airSpan*60-1e-9)))
 	}
 	frameSpeed := travel / float64(count) // distance per frame when the speed is unlimited
 	if !unlimited && rate > 0 {
@@ -383,7 +397,12 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 			}
 		}
 		stepTime := float32(walkTime / float64(count))
-		m.pos = m.geometry.GroundMoveDT(m.pos, step, stepTime, m.jumping || m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5)
+		m.pos = m.geometry.GroundMoveDT(m.pos, step, stepTime, interleave || m.jumping || m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5)
+		if interleave {
+			// The vertical half of this frame, at the position just reached.
+			m.at = verticalFrom.Add(time.Duration(float64(time.Second) * airSpan * float64(i) / float64(count)))
+			s.advancePlayerVertical(verticalFrom.Add(time.Duration(float64(time.Second) * airSpan * float64(i+1) / float64(count))))
+		}
 		if wasSupported && !m.geometry.Supported(m.pos) && !m.jumping && speed > 0 {
 			travelTime := walkTime
 			saveAt := m.at
@@ -391,6 +410,9 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 			s.advancePlayerVertical(now)
 			m.at = saveAt
 		}
+	}
+	if interleave {
+		s.advancePlayerVertical(now)
 	}
 	// Underwater input is bounded in both directions and cannot leave the water
 	// volume or cross its floor. No such vertical freedom exists on dry ground.

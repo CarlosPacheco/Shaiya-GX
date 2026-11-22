@@ -4,6 +4,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/collision"
 	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"math"
 	"testing"
 	"time"
 )
@@ -95,5 +96,45 @@ func TestJumpImpulseStartsAtLatestValidatedStep(t *testing.T) {
 	s.advancePlayerVertical(now.Add(100 * time.Millisecond))
 	if s.movement.pos[1] < base+.4 {
 		t.Fatal("jump impulse used previous ground height", base, s.movement.pos)
+	}
+}
+
+// The client predicts a jump one 60 Hz frame at a time, horizontal then
+// vertical. World must reach the same place when a jump crosses a ledge: with
+// all the vertical time integrated first, the player lands beside the ledge
+// and the horizontal part is then blocked against its face.
+func TestJumpAcrossLedgeMatchesFrameByFramePrediction(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	g := s.movement.geometry
+	for _, tri := range collision.BlockerBox(collision.Vec{5.2, 0, 0}, collision.Vec{8, 1.0, 30}, 0) {
+		g.Add(tri)
+	}
+	start := mapgeometry.Position{4.85, .045, 5}
+	s.movement.pos = start
+	s.char.PosX, s.char.PosY, s.char.PosZ = start[0], start[1], start[2]
+	s.commitMovement()
+	now = now.Add(100 * time.Millisecond)
+	if ok, why := s.validatePlayerMovement(start[0], start[1], start[2], 1, 0, now); !ok || why != "" {
+		t.Fatal("setup rejected", why)
+	}
+	if !s.startMovementJump(now) {
+		t.Fatal("jump rejected")
+	}
+	// Client prediction: 24 frames at 4.5 units per second.
+	p, fall, dt := start, float32(-2.98), float32(1.0/60)
+	frames := 18
+	for range frames {
+		p = g.GroundMoveDT(p, mapgeometry.Position{4.5 * dt, 0, 0}, dt, true)
+		fall = max(-20, fall*(1+2.8*dt))
+		p, _ = g.MoveFeet(p, mapgeometry.Position{0, (9 + fall) * dt, 0})
+	}
+	if p[0] < 5.3 || p[1] < .9 {
+		t.Fatal("fixture: the predicted jump did not climb onto the ledge", p)
+	}
+	now = now.Add(time.Duration(float64(frames) / 60 * float64(time.Second)))
+	ok, why := s.validatePlayerMovement(p[0], p[1], p[2], 1, 0, now)
+	got := s.movement.pos
+	if !ok || why != "" || math.Hypot(float64(got[0]-p[0]), float64(got[2]-p[2])) > .12 || math.Abs(float64(got[1]-p[1])) > .1 {
+		t.Fatalf("World left the predicted path: predicted %v, World %v (%s)", p, got, why)
 	}
 }
