@@ -13,7 +13,7 @@ ROOT=Path(__file__).resolve().parents[1]
 class NativeCashMigrationTests(unittest.TestCase):
     def test_preserves_products_and_splits_owned_quantities(self):
         rows=[]
-        for code,item in [('POTION','25001'),('RUNE','100067')]:
+        for code,item in [('POTION','25001'),('RUNE','101001')]:
             p=dict(index='1',category='1',icon='0',price='0',name=code,code=code,description='Test')
             for i in range(1,25):p[f'item_id_{i}']='0';p[f'quantity_{i}']='0'
             p['item_id_1']=item;p['quantity_1']='255'
@@ -28,7 +28,7 @@ class NativeCashMigrationTests(unittest.TestCase):
             with closing(sqlite3.connect(target)) as db, db:
                 db.row_factory=sqlite3.Row
                 item=dict(db.execute('SELECT * FROM PS_GameData_CharItems LIMIT 1').fetchone())
-                item.update(CharID=999001,ItemUID=999001,ItemID=100067,Type=100,TypeID=67,Bag=1,Slot=0,Count=999,Del=0)
+                item.update(CharID=999001,ItemUID=999001,ItemID=101001,Type=101,TypeID=1,Bag=1,Slot=0,Count=999,Del=0)
                 db.execute('INSERT INTO PS_GameData_CharItems('+','.join(item)+') VALUES('+','.join('?' for _ in item)+')',list(item.values()))
             changes,limits=migrate(target,rows)
             self.assertEqual(len(changes),1)

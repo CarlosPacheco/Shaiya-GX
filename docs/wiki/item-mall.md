@@ -21,16 +21,17 @@ to 255 per occupied bundle slot; non-stackable items remain single. Purchase,
 gift and claim storage remain authoritative in SQL. Native inventory icons are
 used when a testing product has no authored mall icon.
 
-The maximum item stack is 255. The server definition export
-`item-stack-limits.csv` preserves which items stack on the client. Quantity
-packets use native opcodes and one-byte counts. Internal arithmetic may use
+The maximum item stack is 255. The client uses the native `Item.SData`
+definitions, and the full portable packager synchronizes their stack fields
+with the included SQLite catalog. Quantity packets use native opcodes and
+one-byte counts. Internal arithmetic may use
 wider integers to avoid overflow; login revision `0x11122202` requires matching
 updated client and server binaries.
 
 `tools/restore_native_cash.py` is a one-time importer for a former CSV catalog.
 Use explicit stopped database paths and a client data directory. It writes the
 native Cash.SData table and matching SQL ProductList, caps catalog entries at
-255, exports stack definitions, and splits existing carried stacks above 255
+255 and splits existing carried stacks above 255
 without losing items. It aborts when there is insufficient room or unsupported
 oversized storage. Keep backups before running it. It never replaces a personal
 database with the distributed seed. The normal asset importer copies the binary catalog to

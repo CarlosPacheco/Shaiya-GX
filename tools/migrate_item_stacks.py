@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Legacy CSV import preparation: cap supplies at 255 and export client limits.
+"""Legacy mall import preparation: cap supplies and purchase quantities at 255.
 
 Runtime uses Cash.SData/ProductList; use restore_native_cash.py to install.
 
@@ -10,7 +10,6 @@ import argparse
 from contextlib import closing
 import csv
 import hashlib
-import io
 import json
 import sqlite3
 from pathlib import Path
@@ -37,12 +36,6 @@ def migrate(databases, catalog, client_data):
             doc=json.loads(manifest.read_text())
             doc['sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
             manifest.write_text(json.dumps(doc,indent=2)+'\n')
-    output=io.StringIO(newline='')
-    writer=csv.writer(output,lineterminator='\n')
-    writer.writerow(['item_id','max_stack'])
-    writer.writerows(sorted(limits.items()))
-    data=output.getvalue()
-    (client_data/'item-stack-limits.csv').write_text(data)
     with catalog.open(newline='') as f:
         rows=list(csv.reader(f))
     changed=0

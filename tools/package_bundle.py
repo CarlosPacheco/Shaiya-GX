@@ -15,6 +15,7 @@ import zipfile
 from cash_path import existing_cash_path
 from fetch_server_geometry import read_manifests, validate as validate_geometry
 from font_pack import remove_readmes, validate
+from item_sdata import RETIRED_STACK_CSV, reconcile_stack_limits
 from release_geometry import verify_sources, verify_tag
 
 ARCHIVES = ('gx-client-linux-amd64.tar.gz', 'gx-client-windows-amd64.zip',
@@ -39,6 +40,8 @@ def text_content(data):
 
 def merge(source, destination):
     for path in sorted(source.rglob('*')):
+        if path.name.casefold() == RETIRED_STACK_CSV:
+            continue
         if path.is_symlink():
             raise ValueError('unexpected package symlink')
         if not path.is_file():
@@ -96,13 +99,12 @@ def prepare(archives, data, output, *, require_pin=False):
         merge(extracted / 'gx-client-windows-amd64', client)
         if data is not None:
             print('Copying local loose game data...', flush=True)
-            def exclude_local_fonts(directory, names):
-                if Path(directory).parent != data:
-                    return ()
-                if Path(directory).name.casefold() != 'fonts':
-                    return ()
-                return [name for name in names if name.casefold() in {'arial.ttf', 'arialbd.ttf'}]
-            shutil.copytree(data, client / 'data', dirs_exist_ok=True, ignore=exclude_local_fonts)
+            def exclude_local_data(directory, names):
+                excluded = {RETIRED_STACK_CSV}
+                if Path(directory).parent == data and Path(directory).name.casefold() == 'fonts':
+                    excluded.update({'arial.ttf', 'arialbd.ttf'})
+                return [name for name in names if name.casefold() in excluded]
+            shutil.copytree(data, client / 'data', dirs_exist_ok=True, ignore=exclude_local_data)
         (client / 'data/filter.txt').write_bytes(b'')
         fonts = client / 'data/fonts'
         remove_readmes(fonts)
@@ -124,6 +126,9 @@ def prepare(archives, data, output, *, require_pin=False):
             verify_sources(catalog, manifests, server_data / 'maps', client_data)
         if data is not None:
             verify_cash_copies(client / 'data', server_data)
+            changes = reconcile_stack_limits(client / 'data', server_data / 'rapture.sqlite')
+            if changes:
+                print(f'Synchronized {changes} stack limits in the staged Item.SData.', flush=True)
         for path in stage.rglob('*'):
             if path.is_file() and path.name.casefold().split('.')[0] == 'readme':
                 path.unlink()

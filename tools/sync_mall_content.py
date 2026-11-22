@@ -7,9 +7,7 @@ Backups and disposable validation precede writes. Never replaces a runtime DB.
 """
 import argparse
 from contextlib import closing
-import csv
 import hashlib
-import io
 import json
 import os
 from pathlib import Path
@@ -186,10 +184,7 @@ def main():
             doc = json.loads(manifest.read_text())
             doc['sha256'] = hashlib.sha256(path.read_bytes()).hexdigest()
             manifest.write_text(json.dumps(doc, indent=2)+'\n')
-    out = io.StringIO(); writer = csv.writer(out, lineterminator='\n')
-    writer.writerow(['item_id','max_stack'])
-    writer.writerows((i, max(n,1)) for i,n in sorted(limits.items()))
-    targets = [(item_path, patched_items), (cash_path, patched_cash), (args.client_data/'item-stack-limits.csv', out.getvalue().encode())]
+    targets = [(item_path, patched_items), (cash_path, patched_cash)]
     for path, raw in targets:
         staged = path.with_suffix(path.suffix+'.gx-new')
         staged.write_bytes(raw); os.replace(staged, path)

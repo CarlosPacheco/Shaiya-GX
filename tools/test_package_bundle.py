@@ -47,12 +47,20 @@ class BinaryOnlyBundleTests(unittest.TestCase):
     def test_dual_os_bundle_keeps_client_resources_separate(self):
         import hashlib
         import json
+        import sqlite3
+        import struct
         import tarfile
         import zipfile
+        from contextlib import closing
         from unittest.mock import patch
+        from item_sdata import RETIRED_STACK_CSV
         from package_bundle import ARCHIVES, digest, prepare
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary);archives=root/'archives';archives.mkdir()
+            database = root/'seed.sqlite'
+            with closing(sqlite3.connect(database)) as db, db:
+                db.executescript('CREATE TABLE PS_GameDefs_Items(Type, TypeID, Count);'
+                                 'INSERT INTO PS_GameDefs_Items VALUES(1, 1, 5);')
             for name in ARCHIVES:
                 stem=name.removesuffix('.tar.gz').removesuffix('.zip')
                 source=root/'source'/stem;source.mkdir(parents=True)
@@ -65,10 +73,11 @@ class BinaryOnlyBundleTests(unittest.TestCase):
                     (fonts/'pack.json').write_text(json.dumps({'files': {'README.md': {}, 'LICENSE.txt': {}}}))
                     bindings=source/'data/Vehicle';bindings.mkdir()
                     (bindings/'bones.ini').write_text('[Human]\n0=25,-1\n')
+                    (source/'data'/RETIRED_STACK_CSV).write_text(stem)
                 else:
                     (source/'build').mkdir();(source/'data').mkdir()
                     (source/'build'/('gx_world.exe' if windows else 'gx_world')).write_bytes(b'native server')
-                    (source/'data/rapture.sqlite').write_bytes(b'approved development seed')
+                    (source/'data/rapture.sqlite').write_bytes(database.read_bytes())
                     geometry = source/'data/geometry'
                     maps = source/'data/maps'
                     geometry.mkdir()
@@ -110,6 +119,11 @@ class BinaryOnlyBundleTests(unittest.TestCase):
             (data/'fonts/arialbd.ttf').write_bytes(b'local bold face')
             (data/'World').mkdir()
             (data/'World/1.WLD').write_bytes(b'original world')
+            (data/'Item').mkdir()
+            old_item = struct.pack('<4I', 1, 1, 0, 0) + bytes((1, 1)) + bytes(78) + bytes((1,))
+            native = data/'Item/Item.SData'
+            native.write_bytes(old_item)
+            (data/RETIRED_STACK_CSV.upper()).write_text('old loose stack limits')
             with patch('package_bundle.validate'):
                 prepare(archives,data,root/'with-data')
             for relative in ('fonts/LICENSE.txt', 'Cash.SData'):
@@ -117,6 +131,10 @@ class BinaryOnlyBundleTests(unittest.TestCase):
             fonts = root/'with-data/Client/data/fonts'
             self.assertFalse((fonts/'Arial.TTF').exists())
             self.assertFalse((fonts/'arialbd.ttf').exists())
+            self.assertEqual(native.read_bytes(), old_item)
+            packaged = root/'with-data/Client/data/Item/Item.SData'
+            self.assertEqual(packaged.read_bytes(), old_item[:-1] + bytes((255,)))
+            self.assertFalse(any(p.name.casefold() == RETIRED_STACK_CSV for p in (root/'with-data').rglob('*')))
             (data/'World/1.WLD').write_bytes(b'different world')
             stale_output = root/'stale-data'
             with patch('package_bundle.validate'), self.assertRaisesRegex(ValueError, 'world/1.wld'):

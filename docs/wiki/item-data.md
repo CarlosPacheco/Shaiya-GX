@@ -9,7 +9,7 @@
 | Linking/extraction formulas | `server/internal/world/forge_quote.go` | Rebuild and restart world |
 | Item requirements, hammer ReqVg, stack limits | SQL `PS_GameDefs_Items` in the selected server DB | Restart world |
 | Item names, descriptions, icons and native flags shown by client | External `data/Item/Item.SData` | Restart client |
-| Client stackability matching SQL | `data/item-stack-limits.csv` | Restart client |
+| Client stackability matching SQL | `data/Item/Item.SData` | Restart client |
 | Mall display / actual products | Client Cash.SData / SQL ProductList | Restart affected component |
 
 The last consecutive level in each SQLite table sets its cap. The shipped
@@ -55,7 +55,7 @@ python3 tools/sync_item_definitions.py \
 This is read-only unless `--apply --backup-dir work/item-sync/NEW-BACKUP`
 is added. Stop the affected GX installations first. The tool validates all
 inputs before applying, creates SQLite backups, checks that every other SQL
-table stays identical, and refreshes existing seed manifests and stack exports.
+table stays identical, and refreshes existing seed manifests.
 Client files are replaced atomically to avoid modifying hardlinked portable
 copies. Keep backups private; never publish runtime databases or client SData.
 
@@ -95,7 +95,8 @@ part of the source repository.
 
 `tools/apply_forge_rules.py` applies only the specified SQL ReqVg and Count fields,
 creates SQLite backups in an explicit directory, updates a seed manifest when
-present and exports matching stack limits. Stop the affected services first.
+present and patches the matching stack counts in `Item.SData`. Stop the affected
+services first.
 It never replaces a personal runtime with the seed. The distributed seed and an
 existing personal runtime are separate targets and must be named explicitly.
 
