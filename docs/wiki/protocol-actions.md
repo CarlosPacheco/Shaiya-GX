@@ -97,7 +97,7 @@ Source notes: Opcodes not named in Rapture's catalog. client handler 0x0059cf70 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildUserLeave (server/internal/world/view.go)](../../server/internal/world/view.go#L229)
+**S→C serializers:** [buildUserLeave (server/internal/world/view.go)](../../server/internal/world/view.go#L230)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1285), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L38)
 
@@ -107,7 +107,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildUserLeave — server/internal/world/view.go</summary>
 
-[Source definition](../../server/internal/world/view.go#L229)
+[Source definition](../../server/internal/world/view.go#L230)
 
 ```go
 func buildUserLeave(id uint32) []byte {
@@ -1195,7 +1195,7 @@ func (s *Session) syncVisibility() {
 			s.autoAttack, s.cast = false, nil
 			s.send(packet.New(packet.AutoAttackStop).MustFinish(), "stealth attack stop")
 		}
-		s.refreshView()
+		s.refreshUserView()
 		frame := p.visibilityPacket()
 		s.send(frame, "GX visibility")
 		s.sendToViewers(frame, "GX visibility")

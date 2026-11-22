@@ -73,7 +73,7 @@ Declarations: [packet.MobLeave](../../server/internal/packet/packet.go#L109), [p
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildMobLeave (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1412)
+**S→C serializers:** [buildMobLeave (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1416)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1285), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L38)
 
@@ -83,7 +83,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobLeave — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1412)
+[Source definition](../../server/internal/world/entities.go#L1416)
 
 ```go
 func buildMobLeave(id uint32) []byte {
@@ -161,7 +161,7 @@ Declarations: [packet.MobAttackCharacter](../../server/internal/packet/packet.go
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildMobAttackCharacter (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1448)
+**S→C serializers:** [buildMobAttackCharacter (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1452)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1064)
 
@@ -171,7 +171,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobAttackCharacter — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1448)
+[Source definition](../../server/internal/world/entities.go#L1452)
 
 ```go
 func buildMobAttackCharacter(result uint8, mobID, characterID uint32, damage uint16) []byte {
@@ -220,7 +220,7 @@ Declarations: [packet.MobDeath](../../server/internal/packet/packet.go#L112), [p
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildMobDeathBy (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1507)
+**S→C serializers:** [buildMobDeathBy (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1511)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1070)
 
@@ -230,7 +230,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobDeathBy — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1507)
+[Source definition](../../server/internal/world/entities.go#L1511)
 
 ```go
 func buildMobDeathBy(mobID, killerID uint32, deathType uint8) []byte {
@@ -280,7 +280,7 @@ Declarations: [packet.MobPeriodicDamage](../../server/internal/packet/packet.go#
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildMobPeriodicDamage (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1515)
+**S→C serializers:** [buildMobPeriodicDamage (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1519)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L913)
 
@@ -290,7 +290,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobPeriodicDamage — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1515)
+[Source definition](../../server/internal/world/entities.go#L1519)
 
 ```go
 func buildMobPeriodicDamage(mobID uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte {
@@ -816,7 +816,7 @@ Declarations: [packet.MobCurrentHitpoints](../../server/internal/packet/packet.g
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildMobCurrentHP (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1526)
+**S→C serializers:** [buildMobCurrentHP (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1530)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1054)
 
@@ -826,7 +826,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobCurrentHP — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1526)
+[Source definition](../../server/internal/world/entities.go#L1530)
 
 ```go
 func buildMobCurrentHP(mobID, hp uint32) []byte {
@@ -868,7 +868,7 @@ Declarations: [packet.MapNpcEnter](../../server/internal/packet/packet.go#L115),
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildNpcEnter (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1341)
+**S→C serializers:** [buildNpcEnter (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1345)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1285), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L140)
 
@@ -878,7 +878,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildNpcEnter — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1341)
+[Source definition](../../server/internal/world/entities.go#L1345)
 
 ```go
 func buildNpcEnter(n *MapNpc) []byte {
@@ -936,7 +936,7 @@ Declarations: [packet.MapNpcLeave](../../server/internal/packet/packet.go#L116),
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildNpcLeave (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1356)
+**S→C serializers:** [buildNpcLeave (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1360)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1285), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L38)
 
@@ -946,7 +946,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildNpcLeave — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1356)
+[Source definition](../../server/internal/world/entities.go#L1360)
 
 ```go
 func buildNpcLeave(id uint32) []byte {
@@ -976,7 +976,7 @@ Declarations: [packet.MapNpcMove](../../server/internal/packet/packet.go#L117), 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildNpcMove (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1362)
+**S→C serializers:** [buildNpcMove (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1366)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1285), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L146)
 
@@ -986,7 +986,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildNpcMove — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1362)
+[Source definition](../../server/internal/world/entities.go#L1366)
 
 ```go
 func buildNpcMove(n *MapNpc, motion uint8) []byte {

@@ -359,7 +359,7 @@ Declarations: [proto.GXPhysicsClock](../../internal/proto/world.go#L255).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L421)
+**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L471)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1243)
 
@@ -369,7 +369,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendPhysicsClock — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L421)
+[Source definition](../../server/internal/world/player_movement.go#L471)
 
 ```go
 func (s *Session) sendPhysicsClock() {
@@ -393,7 +393,7 @@ Declarations: [proto.GXPlayerCorrection](../../internal/proto/player_physics.go#
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L247)
+**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L248)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1233)
 
@@ -403,7 +403,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>correctMovement — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L247)
+[Source definition](../../server/internal/world/player_movement.go#L248)
 
 ```go
 func (s *Session) correctMovement(reason string) {
@@ -1979,7 +1979,7 @@ Source notes: GXItemCooldownReset clears the recipient’s item and mount cooldo
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [gmCure (server/internal/world/gm.go)](../../server/internal/world/gm.go#L599)
+**S→C serializers:** [gmCure (server/internal/world/gm.go)](../../server/internal/world/gm.go#L615)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L249)
 
@@ -1989,7 +1989,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>gmCure — server/internal/world/gm.go</summary>
 
-[Source definition](../../server/internal/world/gm.go#L599)
+[Source definition](../../server/internal/world/gm.go#L615)
 
 ```go
 func (s *Session) gmCure() error {
