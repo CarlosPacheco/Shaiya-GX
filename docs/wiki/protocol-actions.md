@@ -371,7 +371,7 @@ Declarations: [packet.ExpGain](../../server/internal/packet/packet.go#L41), [pro
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L630)
+**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L635)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L951)
 
@@ -381,7 +381,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildExpGain — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L630)
+[Source definition](../../server/internal/world/combat.go#L635)
 
 ```go
 func buildExpGain(credited experienceCredit) []byte {
@@ -1051,6 +1051,10 @@ func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.Skil
 	castTime := time.Duration(def.ReadyTime) * 250 * time.Millisecond
 	if castTime == 0 {
 		s.resolveSkillDefinition(target, k, def, op, nil)
+		return
+	}
+	if s.safeZoneBlocksSkill(def, op, target) {
+		s.rejectSafeZoneSkill(k, false)
 		return
 	}
 	if !s.definitionReady(def) {

@@ -137,6 +137,9 @@ func (s *Session) areaUserHits(def *db.SkillDef, k db.CharacterSkill, x, y, z fl
 		n = def.MultiAttack
 	}
 	for _, p := range s.hostileUsersWithin(x, z, float32(def.ApplyRange)) {
+		if s.safeZoneBlocksUser(p) {
+			continue
+		}
 		c := p.Snapshot()
 		if s.skillAreaContains(skillrange.Position{x, y, z}, skillrange.Position{c.PosX, c.PosY, c.PosZ}, float32(def.ApplyRange)) {
 			s.queueSkillHits(p, def, false, n)

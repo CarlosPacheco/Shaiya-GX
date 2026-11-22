@@ -85,6 +85,9 @@ func (s *Session) fixedDamagePulse(def *db.SkillDef, x, y, z, reach float32) {
 		s.resolveMobDamage(&r)
 	}
 	for _, p := range s.hostileUsersWithin(x, z, radius) {
+		if s.safeZoneBlocksUser(p) {
+			continue
+		}
 		if c := p.Snapshot(); math.Abs(float64(c.PosY-y)) > pulseHeightReach {
 			continue
 		}

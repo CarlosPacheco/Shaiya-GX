@@ -240,7 +240,7 @@ func (s *Session) tickSkillOnce() {
 	}
 	if k := p.takeSoulKill(); k != nil {
 		ch := s.char
-		if !s.dead || s.invulnerable() || ch.MapID != k.mapID || p.lifeState.Load() != k.state {
+		if !s.dead || s.invulnerable() || ch.MapID != k.mapID || p.lifeState.Load() != k.state || s.safeZoneProtection().protects(s.faction) {
 			k.source.Send(soulBurnRejection(k.source.CharacterID, k.skill), "0x0511 Soul Burn corpse no longer available")
 			return
 		}

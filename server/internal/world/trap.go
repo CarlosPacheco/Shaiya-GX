@@ -125,7 +125,7 @@ func (s *Session) springTrap(t placedTrap) bool {
 	var mobID uint32
 	best := float32(-1)
 	for _, p := range s.hostileUsersWithin(t.x, t.z, radius) {
-		if !p.GMVisible() {
+		if !p.GMVisible() || s.safeZoneBlocksUser(p) {
 			continue
 		}
 		px, pz := p.PositionXZ()

@@ -820,7 +820,7 @@ func (s *Session) sendSkillMessage(skillID, message uint16) {
 
 <details><summary>DecodeSkillFailure — internal/proto/skill_failure.go</summary>
 
-[Source definition](../../internal/proto/skill_failure.go#L10)
+[Source definition](../../internal/proto/skill_failure.go#L15)
 
 ```go
 func DecodeSkillFailure(p []byte) (v SkillFailure, err error) {
