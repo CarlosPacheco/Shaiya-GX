@@ -464,6 +464,11 @@ func (s *Session) handleChangeAppearance(p []byte) {
 			return
 		}
 		newSex = sex
+		if s.genderRestrictedEquipment() {
+			// Client 0x56b820 (opcode 0x0228) shows SysMsg 862.
+			s.send(packet.New(packet.ChangeSexDenied).MustFinish(), "0x0228 change sex denied")
+			return
+		}
 	}
 	ch.Hair, ch.Face, ch.Height, ch.Gender = hair, face, height, newSex
 	if err := db.SaveAppearance(ch.ID, hair, face, height, newSex); err != nil {
@@ -479,6 +484,22 @@ func (s *Session) handleChangeAppearance(p []byte) {
 	s.send(buildUseItemResult(ch.ID, &res), "0x050A use item (change appearance)")
 	frame := buildChangeAppearance(ch.ID, hair, face, height, newSex)
 	s.broadcastNear(frame, "0x0226 change appearance", true)
+}
+
+// genderRestrictedEquipment follows CUser::PacketMaininterface case 0x226: the
+// sex stone is refused while any of the 13 equipment slots holds a sex-only
+// item (Special 64 or 65), whatever sex was requested.
+func (s *Session) genderRestrictedEquipment() bool {
+	for i := range s.items {
+		it := &s.items[i]
+		if it.Bag != 0 || it.Slot > 12 {
+			continue
+		}
+		if d := db.MustDefs().Item(it.Type, it.TypeID); d != nil && (d.Special == 64 || d.Special == 65) {
+			return true
+		}
+	}
+	return false
 }
 
 // broadcastNear sends to viewers within the viewport that may see this

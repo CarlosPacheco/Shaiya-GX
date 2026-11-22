@@ -94,6 +94,7 @@ const (
 	CharacterShape         Opcode = 0x0303
 	// Request bag,slot,hair,face,height,sex:u8; reply charId:u32,hair,face,height,sex:u8.
 	ChangeAppearance          Opcode = 0x0226
+	ChangeSexDenied           Opcode = 0x0228 // empty: client shows SysMsg 862
 	WorldDay                  Opcode = 0x0404
 	CharacterMove             Opcode = 0x0501
 	CharacterReviveHitpoints  Opcode = 0x0505 // charId:u32, hp,mp,sp:u32

@@ -162,6 +162,10 @@ func (s *Session) previousSkillCooling(def *db.SkillDef) bool {
 
 const msgPreviousSkillRequired = 315
 
+// msgUnavailableEquipment is the native text for skill-use result 7 (client
+// 0x5764d0 -> SysMsg 0x13a).
+const msgUnavailableEquipment = 314
+
 // handleUseSkill (0x0517 / 0x0511): bar number, target id. The ack echoes
 // the request opcode.
 func (s *Session) handleUseSkill(op packet.Opcode, p []byte) {
@@ -199,6 +203,10 @@ func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.Skil
 	number := k.Number
 	if def.TargetType == proto.SkillTargetRaid && !proto.SupportsRaidSkillTarget(def.TypeEffect) {
 		s.sendSkillMessage(k.SkillID, 317)
+		return
+	}
+	if !def.MobSkill && !s.skillWeaponAllowed(def) {
+		s.sendSkillMessage(k.SkillID, msgUnavailableEquipment)
 		return
 	}
 	s.autoAttack = false
@@ -554,4 +562,27 @@ func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error) {
 		out = append(out, newBuff(uint32(len(out)+1), def, now, now.Add(time.Duration(r.LeftSeconds)*time.Second), log))
 	}
 	return out, nil
+}
+
+// skillWeaponAllowed follows CUser::EnableUseSkillUser: a skill needs an
+// equipped weapon (error 7 otherwise) and, unless it is a shield skill, the
+// weapon's type must be listed in the skill's NeedWeapon flags. Skills that
+// list no weapon at all (item-granted buffs) are not restricted.
+func (s *Session) skillWeaponAllowed(def *db.SkillDef) bool {
+	listed := def.NeedShield
+	for _, ok := range def.NeedWeapon {
+		listed = listed || ok
+	}
+	if !listed {
+		return true
+	}
+	w := equippedItem(s.items, weaponSlot)
+	if w == nil || !IsWeaponItemType(w.Type) {
+		return false
+	}
+	if def.NeedShield {
+		return true
+	}
+	rt := int(realType(w.Type))
+	return rt >= 1 && rt <= len(def.NeedWeapon) && def.NeedWeapon[rt-1]
 }

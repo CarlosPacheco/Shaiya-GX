@@ -277,6 +277,7 @@ func TestIdlePositionUpdatesDoNotLosePreparedSpell(t *testing.T) {
 		t.Fatal("missing original Blizzard preparation")
 	}
 	s.skills = []db.CharacterSkill{{SkillID: 71, Level: 3, Number: 1}}
+	s.items = append(s.items, db.Item{Bag: 0, Slot: weaponSlot, Type: 13, TypeID: 1}) // skills need a weapon
 	s.char.Wis = 60000
 	s.refillPools()
 
@@ -350,5 +351,25 @@ func TestJumpCancelsPreparationAndBlocksSpellUse(t *testing.T) {
 	s.handleCharacterMove(proto.MovePacket(4|proto.MotionFlag80, 0, x+.1, s.char.PosY, z))
 	if s.char.PosX <= x || s.cast != nil || s.attackMovementAllowed() {
 		t.Fatal("movement during the jump authorized combat", s.char.PosX, x)
+	}
+}
+
+func TestSkillWithoutWeaponIsRejected(t *testing.T) {
+	s, _, _ := spellCastRangeFixture(t)
+	defs, err := db.ReloadDefsForTest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := defs.Skill(71, 3)
+	if d == nil {
+		t.Fatal("missing skill 71")
+	}
+	s.items = nil
+	if s.skillWeaponAllowed(d) {
+		t.Fatal("skill allowed without an equipped weapon")
+	}
+	s.items = []db.Item{{Bag: 0, Slot: weaponSlot, Type: 13, TypeID: 1}}
+	if !s.skillWeaponAllowed(d) {
+		t.Fatal("skill refused with a weapon its flags allow")
 	}
 }

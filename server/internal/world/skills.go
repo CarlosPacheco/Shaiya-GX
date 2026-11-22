@@ -228,7 +228,9 @@ func (s *Session) handleLearnSkill(p []byte) {
 	if learned.Delay > 0 {
 		s.sendSkillCooldown(skillID, uint16(learned.Delay), skilltiming.ReuseSeconds(def.ResetTimeSeconds))
 	}
-	s.syncPlayerSpeed(false)
+	// Passive bonuses (weapon/shield masteries, ability passives) change the
+	// final attack, defense and pools the moment the level is learned.
+	s.sendStatPackets()
 }
 
 // handleSetStatPoint (0x0208): six u16 deltas str, dex, rec, int, wis, luc.
