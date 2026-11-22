@@ -17,13 +17,19 @@ func NewLoadingScreen(t Textures) *LoadingScreen {
 	l.light, _ = t.Interface("loadbar_light.png")
 	return l
 }
-func (l *LoadingScreen) Draw(s *render.Sprites, f *Font, solid *render.Texture, w, h int, progress float32, status string) {
+
+// Draw shows art when given, otherwise the default picture.
+func (l *LoadingScreen) Draw(s *render.Sprites, f *Font, solid *render.Texture, w, h int, progress float32, status string, art ...*render.Texture) {
+	picture := l.art
+	if len(art) > 0 && art[0] != nil {
+		picture = art[0]
+	}
 	white := [4]float32{1, 1, 1, 1}
 	s.Draw(solid, 0, 0, float32(w), float32(h), 0, 0, 1, 1, [4]float32{.02, .02, .025, 1})
-	if l.art != nil {
-		scale := min(float32(w)/float32(l.art.W), float32(h)/float32(l.art.H))
-		aw, ah := float32(l.art.W)*scale, float32(l.art.H)*scale
-		s.Draw(l.art, (float32(w)-aw)/2, (float32(h)-ah)/2, aw, ah, 0, 0, 1, 1, white)
+	if picture != nil {
+		scale := min(float32(w)/float32(picture.W), float32(h)/float32(picture.H))
+		aw, ah := float32(picture.W)*scale, float32(picture.H)*scale
+		s.Draw(picture, (float32(w)-aw)/2, (float32(h)-ah)/2, aw, ah, 0, 0, 1, 1, white)
 	}
 	scale := max(.1, min(float32(1), min(float32(w-32)/552, float32(h-32)/180)))
 	x, y := (float32(w)-552*scale)/2, float32(h)-180*scale

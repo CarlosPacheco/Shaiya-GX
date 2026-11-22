@@ -64,6 +64,9 @@ type App struct {
 	skillSoundEvents                    map[skillSoundKey]float64
 	loading                             mapLoading
 	loadingScreen                       *ui.LoadingScreen
+	loadingRulesLoaded                  bool
+	mapScreens                          map[uint16]string
+	randomLoading                       []string
 	appliedDisplay                      platform.DisplayMode
 	displayConfigured                   bool
 	social                              socialView

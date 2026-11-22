@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
 type mapLoading struct {
@@ -10,6 +11,9 @@ type mapLoading struct {
 	selection                         bool
 	mapID                             uint16
 	progress                          float32
+	art                               *render.Texture
+	artMap                            uint16
+	artSet                            bool
 }
 
 // Present the overlay before synchronous map setup, then keep it up until
@@ -89,7 +93,10 @@ func (a *App) drawMapLoading(w, h int) {
 		l.drawn = true
 	}
 	a.sprites.Begin(w, h)
-	a.loadingScreen.Draw(a.sprites, a.font, a.white, w, h, l.progress, status)
+	if !l.artSet || l.artMap != l.mapID {
+		l.art, l.artMap, l.artSet = a.loadingArt(l.mapID, l.selection), l.mapID, true
+	}
+	a.loadingScreen.Draw(a.sprites, a.font, a.white, w, h, l.progress, status, l.art)
 	a.sprites.Flush()
 	l.presented = true
 }
