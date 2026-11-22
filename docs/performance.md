@@ -18,7 +18,7 @@ FPS | frame ms | CPU ms / GPU ms | RAM / VRAM~ MiB | DC
 | VRAM~ | Estimated GPU image/buffer storage tracked by GX, in MiB | Excludes driver overhead and the window-system framebuffer; not exact device-wide VRAM usage |
 | DC | Instrumented draw calls from the sampled frame | A rendering workload indicator, not a count of visible objects or triangles |
 
-Displayed values refresh approximately every 250 ms. FPS and timings are averaged over that interval; memory and draw-call counters are sampled when the display refreshes. GPU timestamps are read only when available, avoiding a forced GPU wait. CPU and GPU overlap, so adding their times does not give total frame time.
+Displayed values refresh approximately every 250 ms. FPS, frame time and CPU time use the frames in that interval. GPU time averages the timestamp results that became available during the interval and shows `--` if none arrived. Memory and draw-call counters are sampled when the display refreshes. GPU timestamps are read only when available, avoiding a forced GPU wait. CPU and GPU overlap, so adding their times does not give total frame time.
 
 ## Colors
 
