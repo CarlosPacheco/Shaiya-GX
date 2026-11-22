@@ -2,6 +2,21 @@
 
 This log records delivered changes and data-package updates. Client data is hosted separately on Drive; changing it does not automatically produce a new executable release.
 
+## gx-v0.1.16
+
+[Patch notes](docs/releases/gx-v0.1.16.md) · [Upgrade guide](docs/releases/gx-v0.1.16-upgrade.md).
+
+- Add underwater oxygen and drowning, and improve ground contact, jumps and dungeon transitions.
+- Restore equipment speed bonuses after revival, keep Status values current and fix warehouse dragging.
+- Restore original control details and save screenshots as PNG in the background.
+
+## gx-v0.1.15 — 2026-11-21
+
+[Patch notes](docs/releases/gx-v0.1.15.md) · [Upgrade guide](docs/releases/gx-v0.1.15-upgrade.md).
+
+- Restore portal trigger volumes, original consumable effects, cape emblems and character feedback.
+- Update guild founding, ranking battles, user options, combat audio and the schema-35 development seed.
+
 ## gx-v0.1.14 — 2026-11-20
 
 [Patch notes](docs/releases/gx-v0.1.14.md) · [Upgrade guide](docs/releases/gx-v0.1.14-upgrade.md).
