@@ -246,7 +246,7 @@ type Scene3D struct {
 }
 
 func NewScene3D() (*Scene3D, error) {
-	p, err := Program(sceneVS, sceneFS)
+	p, err := Program("3D scene", sceneVS, sceneFS)
 	if err != nil {
 		return nil, err
 	}

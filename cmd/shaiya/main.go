@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -102,6 +103,7 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 	cfg.DisplayModes, cfg.ApplyDisplayMode = win.DisplayModes, win.ApplyDisplayMode
 	cfg.CurrentDisplayMode = win.CurrentDisplayMode
 	cfg.OverrideDisplay = !restoreSize
+	log.Print("Initializing client resources")
 	a, err := app.New(cfg, arc)
 	if err != nil {
 		return fmt.Errorf("initialize client resources: %w", err)
@@ -111,6 +113,7 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 	defer cursors.Close()
 	queue := win.InstallInput()
 	queue.SetSwapMouse(a.MouseButtonsSwapped())
+	log.Print("Client resources ready")
 	var auto *app.Autoplay
 	inWorld := false
 	if autoUser != "" {

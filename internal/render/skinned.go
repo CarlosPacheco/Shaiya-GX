@@ -181,7 +181,7 @@ type Skinner struct {
 }
 
 func NewSkinner() (*Skinner, error) {
-	p, err := Program(skinVS, sceneFS)
+	p, err := Program("skinned instancing", skinVS, sceneFS)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func NewSkinner() (*Skinner, error) {
 	if skinIndirectSupported {
 		vertex := strings.Replace(skinVS, "#version 450 core\n", "#version 450 core\n#extension GL_ARB_shader_draw_parameters : require\n#define SKIN_INDIRECT\n", 1)
 		fragment := strings.Replace(sceneFS, "#version 450 core\n", "#version 450 core\n#extension GL_ARB_bindless_texture : require\n#define SKIN_INDIRECT\n", 1)
-		indirect, err := Program(vertex, fragment)
+		indirect, err := Program("skinned bindless indirect", vertex, fragment)
 		if err != nil {
 			log.Printf("skinned multi-draw unavailable: %v", err)
 		} else {

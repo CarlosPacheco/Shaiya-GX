@@ -80,7 +80,7 @@ func (s *Scene3D) drawTerrainOverlays(m *Mesh, layers []TerrainSplat, light, lay
 	t := &s.terrainOverlay
 	if !t.tried {
 		t.tried = true
-		p, err := Program(terrainOverlayVS, terrainOverlayFS)
+		p, err := Program("terrain overlay", terrainOverlayVS, terrainOverlayFS)
 		if err != nil {
 			log.Printf("terrain overlay shader: %v", err)
 		} else {

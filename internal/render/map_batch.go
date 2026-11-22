@@ -125,14 +125,9 @@ func (s *Scene3D) mapPrograms() *mapPipeline {
 		return p
 	}
 	var err error
-	p.draw, err = Program(mapVS, mapFS)
+	p.draw, err = Program("map bindless indirect", mapVS, mapFS)
 	if err == nil {
-		var compute uint32
-		compute, err = compile(gl.COMPUTE_SHADER, mapCS)
-		if err == nil {
-			p.compute, err = link(compute)
-			gl.DeleteShader(compute)
-		}
+		p.compute, err = computeProgram("map transforms", mapCS)
 	}
 	if err != nil {
 		log.Printf("map batch shaders: %v", err)

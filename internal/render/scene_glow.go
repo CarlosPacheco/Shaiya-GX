@@ -47,7 +47,7 @@ type SceneGlow struct {
 }
 
 func NewSceneGlow() (*SceneGlow, error) {
-	p, err := Program(glowVS, glowFS)
+	p, err := Program("scene glow", glowVS, glowFS)
 	if err != nil {
 		return nil, err
 	}

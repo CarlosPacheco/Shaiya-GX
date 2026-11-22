@@ -91,7 +91,7 @@ type TemporalAA struct {
 }
 
 func NewTemporalAA() (*TemporalAA, error) {
-	p, e := Program(glowVS, temporalFS)
+	p, e := Program("temporal antialiasing", glowVS, temporalFS)
 	if e != nil {
 		return nil, e
 	}

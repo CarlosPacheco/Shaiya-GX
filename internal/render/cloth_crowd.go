@@ -1,6 +1,7 @@
 package render
 
 import (
+	"log"
 	"math"
 	"slices"
 	"unsafe"
@@ -165,10 +166,10 @@ func (b *ClothCrowd) prepareScatter() bool {
 	if b.scatterUnavailable {
 		return false
 	}
-	shader, err := compile(gl.COMPUTE_SHADER, clothScatterCS)
-	if err == nil {
-		b.scatterProgram, err = link(shader)
-		gl.DeleteShader(shader)
+	var err error
+	b.scatterProgram, err = computeProgram("cloth positions", clothScatterCS)
+	if err != nil {
+		log.Printf("Cloth compute upload unavailable: %v", err)
 	}
 	b.scatterUnavailable = err != nil
 	return !b.scatterUnavailable

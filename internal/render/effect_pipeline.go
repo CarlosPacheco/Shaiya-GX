@@ -116,7 +116,7 @@ type effectPipeline struct {
 
 func (p *effectPipeline) init() {
 	p.tried = true
-	program, err := Program(effectVS, effectFS)
+	program, err := Program("effect instancing", effectVS, effectFS)
 	if err != nil {
 		log.Printf("compact effects unavailable: %v", err)
 		return
@@ -126,7 +126,7 @@ func (p *effectPipeline) init() {
 		const header = "#version 450 core\n"
 		vs := strings.Replace(effectVS, header, header+"#extension GL_ARB_shader_draw_parameters : require\n#define EFFECT_INDIRECT\n", 1)
 		fs := strings.Replace(effectFS, header, header+"#extension GL_ARB_bindless_texture : require\n#define EFFECT_INDIRECT\n", 1)
-		indirect, err := Program(vs, fs)
+		indirect, err := Program("effect bindless indirect", vs, fs)
 		if err != nil {
 			log.Printf("effect multi-draw unavailable: %v", err)
 		} else {
