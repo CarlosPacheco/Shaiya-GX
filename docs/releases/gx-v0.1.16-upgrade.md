@@ -7,3 +7,11 @@
 5. Open `Server/build/gx_console` or `gx_console.exe`, enter `start server`, then open the client for your OS.
 
 [Release notes](gx-v0.1.16.md) · [Portable layout and requirements](../client-portable.md)
+
+## Server geometry update
+
+The November 22 server packages on GitHub use geometry generated from the
+gx-v0.1.16 client data. For an existing installation, enter `shutdown server`
+and back up `Server/data/geometry/`. Replace that entire directory with
+`data/geometry/` from the updated server package, then restart from the console.
+This update uses your existing client and SQLite runtime.

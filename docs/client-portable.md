@@ -24,7 +24,8 @@ then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Sha
 Keep `Client/data/` beside the client executables.
 
 **Latest binary update: [gx-v0.1.16](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.16).**
-Preserve your server runtime when updating. See the [upgrade guide](releases/gx-v0.1.16-upgrade.md).
+For the November 22 server geometry update, see the
+[upgrade guide](releases/gx-v0.1.16-upgrade.md#server-geometry-update).
 GX Studio is in `Client/Studio/`.
 
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.

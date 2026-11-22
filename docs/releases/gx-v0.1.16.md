@@ -25,4 +25,6 @@ Changes since the gx-v0.1.15 full portable.
 
 The GitHub downloads include native Windows and Linux builds of Shaiya GX, GX Studio and GX Server, plus fonts, server resources and the schema-35 development seed. The [complete gx-v0.1.16 portable on Google Drive](https://drive.google.com/file/d/1-yK2bZAsWv3nKK-RBryVa-tstWfU3pRz/view?usp=sharing) includes the matching loose client game data and interface artwork.
 
+**Server geometry update, November 22.** The GitHub server packages and combined portable include freshly generated collision, player physics and navigation for all 68 maps, using the gx-v0.1.16 client data. If you installed the portable before this update, use the [server update instructions](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/releases/gx-v0.1.16-upgrade.md#server-geometry-update) to apply the corrected resources.
+
 [Upgrade guide](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/releases/gx-v0.1.16-upgrade.md) · [Quickstart](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/quickstart.md)
