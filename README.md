@@ -2,7 +2,7 @@
 
 ## Download and play
 
-### [Download the complete gx-v0.1.16 portable — Client + Server + Data](https://drive.google.com/file/d/1-yK2bZAsWv3nKK-RBryVa-tstWfU3pRz/view?usp=sharing)
+### [Download the complete gx-v0.1.16 portable — Client + Server + Data](https://drive.google.com/file/d/1WgqLXhO-JrUavk2cFzqxBlrKFJnGqzQ_/view?usp=sharing)
 
 **One Google Drive download for Windows and Linux. Includes the client, GX Server,
 game data, external fonts and the development database. Everything is included:
@@ -131,4 +131,4 @@ Inventory: left-click uses an item, right-click equips/replaces it, drag moves i
 
 Source is [BSD 3-Clause](LICENSE). The original server copyright and terms are retained in [server/LICENSE](server/LICENSE). Third-party notices are in [NOTICE](NOTICE). Original Shaiya game content and trademarks retain their respective ownership; the source license does not grant rights to game assets.
 
-The complete [Client + Server + Data portable](https://drive.google.com/file/d/1-yK2bZAsWv3nKK-RBryVa-tstWfU3pRz/view?usp=sharing) is hosted on Drive. Updated client builds with external fonts are available in [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest); those archives do not include game data. Both executables may share one adjacent `data/` directory; see [portable client instructions](docs/client-portable.md).
+The complete [Client + Server + Data portable](https://drive.google.com/file/d/1WgqLXhO-JrUavk2cFzqxBlrKFJnGqzQ_/view?usp=sharing) is hosted on Drive. Updated client builds with external fonts are available in [GX releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest); those archives do not include game data. Both executables may share one adjacent `data/` directory; see [portable client instructions](docs/client-portable.md).

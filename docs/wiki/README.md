@@ -1,6 +1,6 @@
 # Shaiya GX Wiki
 
-## [Download Shaiya GX — Client + Server + Data](https://drive.google.com/file/d/1-yK2bZAsWv3nKK-RBryVa-tstWfU3pRz/view?usp=sharing)
+## [Download Shaiya GX — Client + Server + Data](https://drive.google.com/file/d/1WgqLXhO-JrUavk2cFzqxBlrKFJnGqzQ_/view?usp=sharing)
 
 **Complete gx-v0.1.16 portable for Windows and Linux:** client, GX Server, GX Studio, game data,
 fonts and development database in one download. **No separate data download is
