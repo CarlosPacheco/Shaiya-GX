@@ -11,7 +11,7 @@ func TestRealWorldMapRegions(t *testing.T) {
 	if dir == "" {
 		t.Skip("resources")
 	}
-	b, err := os.ReadFile(filepath.Join(dir, "WorldMap.cfg"))
+	b, err := os.ReadFile(filepath.Join(dir, "WorldMap.INI"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -259,7 +259,7 @@ func TestNativeChatShortcutsRecipientCyclingAndEditing(t *testing.T) {
 
 func TestBannedWordsRefreshReceivedChatWithoutChangingOriginal(t *testing.T) {
 	a := inputApp()
-	a.chatFilter = text.ParseWordFilter([]byte("1\t\t\"bad\"\n2\t\t\"bad phrase\"\n3\t\t\"Árbol\""))
+	a.chatFilter = text.ParseWordFilter([]byte("[Filter]\nWord=bad\nWord=bad phrase\nWord=Árbol\n"))
 	a.state.Chat = []game.ChatLine{
 		{Op: proto.ChatWhisper, Sender: "bad", Text: "BAD PHRASE + árbol"},
 		{Op: proto.ChatWhisper, Sender: "bad", Direction: 1, Text: "bad"},
@@ -285,7 +285,7 @@ func TestBannedWordsRefreshReceivedChatWithoutChangingOriginal(t *testing.T) {
 func TestRaidNoticesAppearOnThePacketThatDeliversThem(t *testing.T) {
 	a := inputApp()
 	a.msg = text.SysMsg{6606: "[Union] <b>"}
-	a.chatFilter = text.ParseWordFilter([]byte("1\t\t\"gate\""))
+	a.chatFilter = text.ParseWordFilter([]byte("[Filter]\nWord=gate\n"))
 	a.gameMenu.Settings.BannedWords = true
 	for i, body := range []string{"Gather at the gate", "Move now"} {
 		w := proto.NewWriter(proto.ChatRaid)

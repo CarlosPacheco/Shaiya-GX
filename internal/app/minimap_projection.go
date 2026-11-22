@@ -19,8 +19,8 @@ func (a *App) loadDungeonMinimaps() {
 		return
 	}
 	a.dungeonMinimaps.loaded = true
-	if _, ok := a.arc.Lookup("Dungeon_MiniMap.cfg"); ok {
-		raw, err := a.arc.ReadFile("Dungeon_MiniMap.cfg")
+	if _, ok := a.arc.Lookup("DungeonMiniMaps.INI"); ok {
+		raw, err := a.arc.ReadFile("DungeonMiniMaps.INI")
 		if err == nil {
 			a.dungeonMinimaps.scales, err = world.ParseDungeonMinimap(raw)
 		}

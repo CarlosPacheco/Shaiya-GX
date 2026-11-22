@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 from font_pack import FONT_PACK, validate
+from gx_ini import FILTER_TEMPLATE
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -25,8 +26,8 @@ def main():
     staged = output/'.Shaiya GX.next'
     subprocess.run(['go','build','-o',str(staged),'./cmd/shaiya'],cwd=ROOT,env=env,check=True)
     if not args.update: shutil.copytree(source,output/'data')
-    if not (output/'data/filter.txt').exists():
-        (output/'data/filter.txt').touch()
+    if not (output/'data/Filter.INI').exists():
+        (output/'data/Filter.INI').write_text(FILTER_TEMPLATE, encoding='utf-8', newline='\n')
     validate()
     shutil.copytree(FONT_PACK,output/'data/fonts',dirs_exist_ok=True)
     staged.replace(output/'Shaiya GX')

@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 import unittest
 
+from gx_ini import FILTER_TEMPLATE
 from package_bundle import merge, verify_cash_copies
 
 
@@ -85,8 +86,8 @@ class BinaryOnlyBundleTests(unittest.TestCase):
                 self.assertEqual(validate.call_args.args[0].parts[-2:],('data','fonts'))
             self.assertTrue((output/'Client/Shaiya GX').is_file())
             self.assertTrue((output/'Client/Shaiya GX.exe').is_file())
-            self.assertEqual({p.name for p in (output/'Client/data').iterdir()},{'fonts','Vehicle','filter.txt'})
-            self.assertEqual((output/'Client/data/filter.txt').read_bytes(), b'')
+            self.assertEqual({p.name for p in (output/'Client/data').iterdir()},{'fonts','Vehicle','Filter.INI'})
+            self.assertEqual((output/'Client/data/Filter.INI').read_text(encoding='utf-8'), FILTER_TEMPLATE)
             self.assertFalse((output/'Client/data/Cash.SData').exists())
             self.assertTrue((output/'Server/data/rapture.sqlite').is_file())
             self.assertEqual(list(output.rglob('README*')), [])

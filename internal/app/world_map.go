@@ -24,7 +24,7 @@ func (a *App) loadWorldMap(v *mapView) {
 	if a.arc == nil {
 		return
 	}
-	raw, err := a.arc.ReadFile("WorldMap.cfg")
+	raw, err := a.arc.ReadFile("WorldMap.INI")
 	if err == nil {
 		v.atlas.regions, err = world.ParseWorldMap(raw)
 	}

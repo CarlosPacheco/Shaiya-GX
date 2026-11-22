@@ -1,32 +1,34 @@
 package text
 
 import (
-	"bytes"
 	"regexp"
 	"slices"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/data/ini"
 )
 
-// WordFilter masks literal rules from a local SysMsg-style table.
+// WordFilter masks literal rules from Filter.INI.
 type WordFilter struct {
 	pattern *regexp.Regexp
 	cache   map[string]string
 }
 
-// ParseWordFilter accepts the native UTF-16LE table and UTF-8 user edits.
-// An empty table returns nil so callers can skip filtering entirely.
+// ParseWordFilter reads Filter.INI: every Word= line is a literal, case-
+// insensitive rule (UTF-8 or UTF-16LE). No rules returns nil so callers can skip
+// filtering entirely.
+//
+//	[Filter]
+//	Word=example
+//	Word=another phrase
 func ParseWordFilter(data []byte) *WordFilter {
-	var table SysMsg
-	if bytes.Contains(data, []byte{0}) || !utf8.Valid(data) {
-		table = ParseSysMsg(data)
-	} else {
-		table = parseMessageTable(strings.TrimPrefix(string(data), "\ufeff"))
-	}
 	var terms []string
-	for _, value := range table {
-		if value != "" {
-			terms = append(terms, regexp.QuoteMeta(value))
+	for _, section := range ini.Parse(data) {
+		for _, value := range section.All("word") {
+			if value != "" {
+				terms = append(terms, regexp.QuoteMeta(value))
+			}
 		}
 	}
 	if len(terms) == 0 {

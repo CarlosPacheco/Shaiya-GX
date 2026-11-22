@@ -49,7 +49,7 @@ map. The audit reports them without altering server content.
 
 The installed `world/60.wld` is byte-identical to `world/25.wld`, a 1024-unit
 field. Core's `world/60.wld` is instead a dungeon using `EV_worldcup2010.dg`, and
-its numbered minimap depicts that stadium. Its `Dungeon_MiniMap.cfg` scale is
+its numbered minimap depicts that stadium. Its `DungeonMiniMaps.INI` scale is
 therefore not a calibration for the currently installed field. The importer
 skips that incompatible image. No world geometry, server spawns, map names or
 routes are changed by the minimap work.

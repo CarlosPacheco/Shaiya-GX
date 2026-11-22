@@ -318,7 +318,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	} else {
 		a.msg = text.SysMsg{}
 	}
-	if b, err := arc.ReadFile("filter.txt"); err == nil {
+	if b, err := arc.ReadFile("Filter.INI"); err == nil {
 		a.chatFilter = text.ParseWordFilter(b)
 	}
 	a.white = render.Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{255, 255, 255, 255}}})

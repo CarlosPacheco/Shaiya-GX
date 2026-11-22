@@ -14,6 +14,7 @@ import zipfile
 
 from cash_path import existing_cash_path
 from font_pack import remove_readmes, validate
+from gx_ini import FILTER_TEMPLATE
 
 ARCHIVES = ('gx-client-linux-amd64.tar.gz', 'gx-client-windows-amd64.zip',
             'gx-server-linux-amd64.tar.gz', 'gx-server-windows-amd64.zip')
@@ -101,7 +102,7 @@ def prepare(archives, data, output):
                     return ()
                 return [name for name in names if name.casefold() in {'arial.ttf', 'arialbd.ttf'}]
             shutil.copytree(data, client / 'data', dirs_exist_ok=True, ignore=exclude_local_fonts)
-        (client / 'data/filter.txt').write_bytes(b'')
+        (client / 'data/Filter.INI').write_text(FILTER_TEMPLATE, encoding='utf-8', newline='\n')
         fonts = client / 'data/fonts'
         remove_readmes(fonts)
         validate(fonts)

@@ -38,7 +38,7 @@ func TestOriginalDungeonMinimapsGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer arc.Close()
-	if _, ok := arc.Lookup("Dungeon_MiniMap.cfg"); !ok {
+	if _, ok := arc.Lookup("DungeonMiniMaps.INI"); !ok {
 		t.Skip("requires imported Core minimaps")
 	}
 	a, err := New(Config{}, arc)

@@ -5,10 +5,11 @@ import configparser
 import hashlib
 import json
 from pathlib import Path
-import shutil
 import struct
 
 from PIL import Image
+
+from gx_ini import dungeon_to_ini, read
 
 
 def child(parent, name):
@@ -97,9 +98,9 @@ def import_minimaps(source, data, server_maps):
     sizes_file = dest / 'map-sizes.json.importing'
     sizes_file.write_text(json.dumps(dict(sorted(sizes.items())), indent=2) + '\n')
     sizes_file.replace(dest / 'map-sizes.json')
-    cfg_file = data / 'Dungeon_MiniMap.cfg.importing'
-    shutil.copyfile(cfg, cfg_file)
-    cfg_file.replace(data / 'Dungeon_MiniMap.cfg')
+    cfg_file = data / 'DungeonMiniMaps.INI.importing'
+    cfg_file.write_text(dungeon_to_ini(read(cfg)), encoding='utf-8', newline='\n')
+    cfg_file.replace(data / 'DungeonMiniMaps.INI')
     return dict(imported=records, preserved=preserved, missing=missing, incompatible=incompatible,
                 calibration_sha256=hashlib.sha256(cfg.read_bytes()).hexdigest())
 

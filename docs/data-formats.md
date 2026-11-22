@@ -144,7 +144,7 @@ font's license beside `ui.ttf`. No font data is embedded in the game executable.
 Emoji ZWJ, flag, skin-tone and keycap clusters use the colour-emoji face, with a
 separate colour raster layer that preserves its pixels under chat tinting.
 
-The native World Map uses `WorldMap.cfg`, `interface/wm_map.png`, `wm_letter.png`,
+The World Map uses `WorldMap.INI` (one section per region: `Country`, `Map`, `Click`, `Image`; converted from the original `WorldMap.cfg`), `interface/wm_map.png`, `wm_letter.png`,
 `wm_warning.png`, `wm_button_m.png`, `wm_button_w.png`, region overlays
 `wm_e<MapNum>.png`, titles `wm_f<MapNum>.png`, and the existing full-map frame,
 arrow and `MiniMap/<MapNum>.png` previews. CFG coordinates refer to its original
@@ -221,9 +221,10 @@ preserves Cash.SData. See [cash catalog](cash-catalog.md).
 
 ## Dungeon minimaps
 
-Native `Dungeon_MiniMap.cfg` lists numbered image calibrations. Its `[WorldMap]`
-count enumerates `[0]`…`[count-1]`; each row has `MapNum`, `ImgPos_x`, `ImgPos_y`.
-The last two fields are independent fixed-point pixel scales, divided by 1000.
+`DungeonMiniMaps.INI` lists numbered image calibrations, one `[Map ID]` section
+each with `ScaleX` and `ScaleZ` (pixels per world unit; the original
+`Dungeon_MiniMap.cfg` stored them as `ImgPos_x/y` fixed-point values divided by
+1000). The two scales are independent.
 For an image of width W and height H, image U = world X × scaleX / W and
 V = 1 − world Z × scaleY / H. They are not offsets or the dungeon's physical
 size. Dungeon WLD files do not contain the field MapSize member.
@@ -429,3 +430,8 @@ for cue in ch_levup001 ui_skillnew001; do
         ffmpeg -n -i pipe:0 -ar 44100 -c:a libvorbis -q:a 6 "$GX_DATA_DIR/Sound/$cue.ogg"
 done
 ```
+
+
+## Loading pictures
+
+The random loading pool is every `random_loadingNN.png` in `interface/`. `MapScreens.INI`, beside `sysmsg-uni.txt`, lists `MapID=file` lines naming an interface picture for specific maps; invalid entries are ignored. Original EP5.4 only special-cased map 64 (`loading64.jpg`).

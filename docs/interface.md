@@ -104,10 +104,10 @@ camera controls work with either setting.
 Both chat histories remain visible. Press Enter to open the chat entry row. Auto-run and click-to-move continue while typing, and the chat panel handles clicks on its own controls.
 
 **Banned words Filter** in User Options masks matching text in received player chat and
-speech bubbles. Edit `data/filter.txt` next to `sysmsg-uni.txt` and restart the
-client to load your rules. Use one numeric ID and one quoted word or phrase per
-line, such as `1<TAB><TAB>"example"`. The file accepts UTF-16LE and UTF-8 and
-starts empty, and the checkbox starts off. Matching is case-insensitive and treats each rule as literal text.
+speech bubbles. Edit `data/Filter.INI` next to `sysmsg-uni.txt` and restart the
+client to load your rules. Add one `Word=` line per word or phrase under
+`[Filter]`, such as `Word=example`. The file accepts UTF-16LE and UTF-8 and
+starts with no rules, and the checkbox starts off. Matching is case-insensitive and treats each rule as literal text.
 
 Golden frames, Alpha/filter/help panels and the separate native whisper-recipient row remain retired under the chosen flat presentation. Histories retain a shared 300-message buffer and independent scroll anchors. Settings preserve row sizes and the selected channel; Whisper is not restored at startup. Whisper accepts the existing recipient syntax, including `!name message` and `/w name message`. Raid is outside the six-channel picker.
 
@@ -444,7 +444,7 @@ hides off camera/beyond 50 units and keeps the frame above the posed crown/name
 in GX's rig coordinate system. No client-side chat echo or server rule is added.
 
 Open the expanded minimap, then W for the native World Map. Its 19 regions come
-from `WorldMap.cfg`; hover draws authored `wm_e` overlays and `wm_f` title art
+from `WorldMap.INI`; hover draws authored `wm_e` overlays and `wm_f` title art
 under the original `wm_letter` labels. The current map has its marker. Clicking a
 friendly/neutral region previews its minimap image; clicking the current region
 returns to the live local map. Opposing-faction previews show the native warning.

@@ -39,7 +39,7 @@ class ImportMinimapsTest(unittest.TestCase):
             self.assertEqual([r['map'] for r in report['imported']],[3])
             with Image.open(data/'interface'/'MiniMap'/'3.png') as converted:
                 self.assertEqual(converted.convert('RGBA').getpixel((0,0)),(19,72,41,123))
-            self.assertEqual((data/'Dungeon_MiniMap.cfg').read_bytes(),raw)
+            self.assertIn('[Map 3]\nScaleX=1.036\nScaleZ=1.052\n',(data/'DungeonMiniMaps.INI').read_text(encoding='utf-8'))
             self.assertEqual(json.loads((data/'interface'/'MiniMap'/'map-sizes.json').read_text()),{'1':1024,'3':1024,'50':1024,'60':1024})
             again = import_minimaps(source,data,maps)
             self.assertEqual(again['imported'],[])

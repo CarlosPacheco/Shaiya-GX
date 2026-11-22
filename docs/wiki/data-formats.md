@@ -144,7 +144,7 @@ font's license beside `ui.ttf`. No font data is embedded in the game executable.
 Emoji ZWJ, flag, skin-tone and keycap clusters use the colour-emoji face, with a
 separate colour raster layer that preserves its pixels under chat tinting.
 
-The native World Map uses `WorldMap.cfg`, `interface/wm_map.png`, `wm_letter.png`,
+The World Map uses `WorldMap.INI` (one section per region: `Country`, `Map`, `Click`, `Image`; converted from the original `WorldMap.cfg`), `interface/wm_map.png`, `wm_letter.png`,
 `wm_warning.png`, `wm_button_m.png`, `wm_button_w.png`, region overlays
 `wm_e<MapNum>.png`, titles `wm_f<MapNum>.png`, and the existing full-map frame,
 arrow and `MiniMap/<MapNum>.png` previews. CFG coordinates refer to its original
@@ -248,3 +248,8 @@ The tool copies known names for installed numeric WLD maps and adds `Map N`
 for unused slots. It removes the old map-name rows and preserves other entries,
 including previously configured names in the new range. To name a future map, edit
 or add its message in the same UTF-16LE format, then restart the client.
+
+
+## Loading pictures
+
+The random loading pool is every `random_loadingNN.png` in `interface/`. `MapScreens.INI`, beside `sysmsg-uni.txt`, lists `MapID=file` lines naming an interface picture for specific maps; invalid entries are ignored. Original EP5.4 only special-cased map 64 (`loading64.jpg`).

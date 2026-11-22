@@ -8,6 +8,7 @@ import tarfile
 import zipfile
 from tempfile import TemporaryDirectory
 from font_pack import FONT_PACK, remove_readmes, validate
+from gx_ini import FILTER_TEMPLATE
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -48,7 +49,7 @@ def package_client(platform, output):
         shutil.copy2(ROOT/'build'/'GX Studio'/studio, stage/'Studio'/studio)
         fonts = stage/'data/fonts'
         shutil.copytree(FONT_PACK, fonts)
-        (stage/'data/filter.txt').touch()
+        (stage/'data/Filter.INI').write_text(FILTER_TEMPLATE, encoding='utf-8', newline='\n')
         remove_readmes(fonts)
         validate(fonts)
         shutil.copytree(ROOT/'resources/vehicle', stage/'data/Vehicle')
