@@ -16,15 +16,15 @@ p.add_argument('--output', type=Path, default=ROOT / 'work/mapbuild/generated')
 p.add_argument('--physics-only', action='store_true', help='extend an unchanged existing generation without rebaking navigation')
 p.add_argument('--recast-source', type=Path, default=ROOT / 'work/mapbuild/recast')
 a = p.parse_args()
-go = Path.home() / '.local/opt/go-1.27.3/bin/go'
+go = Path.home() / '.local/opt/go-1.27.4/bin/go'
 if not go.is_file():
     located = shutil.which('go')
     if not located:
-        raise SystemExit('Go 1.27.3 is required to build gx_mapbuild.')
+        raise SystemExit('Go 1.27.4 is required to build gx_mapbuild.')
     go = Path(located)
 version = subprocess.check_output([str(go), 'version'], text=True)
-if 'go1.27.3 ' not in version:
-    raise SystemExit('Expected Go 1.27.3; found ' + version.strip())
+if 'go1.27.4 ' not in version:
+    raise SystemExit('Expected Go 1.27.4; found ' + version.strip())
 env = dict(os.environ, GOTOOLCHAIN='local')
 if not a.physics_only:
     if not a.recast_source.exists():

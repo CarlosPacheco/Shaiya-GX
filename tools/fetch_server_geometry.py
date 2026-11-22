@@ -14,8 +14,9 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = ('https://github.com/Spelunkern/Shaiya-GX/releases/download/'
-       'gx-geometry-rules2-20261114/gx-server-geometry-rules2.tar.gz')
-SHA256 = '2acf507e99ba2e8ae41c037c6f8b58443179c5becf2d30c0d5bd0820cf3718d5'
+       'gx-geometry-rules2-20261122/gx-server-geometry-rules2.tar.gz')
+SHA256 = '020c170f908517961799a33e749dbc8dec8a2d17c6049b5ad2857fec90208073'
+MANIFESTS_SHA256 = '980578e3aa7ffbf3e8d393d694669e2fc4131b7645311d7caaa704fcee213316'
 
 
 def digest(path):
@@ -23,12 +24,21 @@ def digest(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
+def manifest_digest(catalog, manifests):
+    canonical = json.dumps([catalog, manifests], sort_keys=True, separators=(',', ':'))
+    return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+
+
 def validate(directory):
     catalog = json.loads((directory / 'catalog.json').read_text())
     if catalog.get('version') != 1 or catalog.get('maps') != list(range(68)):
         raise ValueError('Expected the complete 68-map physics generation')
-    for map_id in catalog['maps']:
-        manifest = json.loads((directory / f'{map_id}.manifest.json').read_text())
+    manifests = [json.loads((directory / f'{map_id}.manifest.json').read_text())
+                 for map_id in catalog['maps']]
+    if manifest_digest(catalog, manifests) != MANIFESTS_SHA256:
+        raise ValueError(f'{directory} contains a different physics generation; '
+                         'choose a fresh --destination or move the existing directory before fetching')
+    for map_id, manifest in zip(catalog['maps'], manifests):
         if (manifest.get('version'), manifest.get('map_id'),
                 manifest.get('player_physics'), manifest.get('collision_rules')) != (1, map_id, 1, 2):
             raise ValueError(f'Incompatible physics generation: {map_id}')

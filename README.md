@@ -18,7 +18,8 @@ preserve your existing runtime database when upgrading.
 **Latest binary release: [gx-v0.1.16](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.16).**
 The Drive package includes **gx-v0.1.16 client and server binaries, GX Studio, and complete data**
 for Windows and Linux. Preserve your runtime and configuration and use matching client data when updating.
-[Upgrade guide](docs/releases/gx-v0.1.16-upgrade.md).
+For the November 22 server geometry update, follow the
+[upgrade guide](docs/releases/gx-v0.1.16-upgrade.md#server-geometry-update).
 
 [Setup and requirements](docs/client-portable.md) · [Latest patch notes](docs/releases/gx-v0.1.16.md) · [GitHub binary updates (without client game data)](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
 

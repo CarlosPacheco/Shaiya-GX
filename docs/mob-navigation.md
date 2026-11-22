@@ -37,7 +37,7 @@ The offline baker also applies the original `.svmap` blocked cells before
 walkable-area erosion, allowing routes to detour around those restrictions.
 
 The wrapper builds the offline baker from the pinned official Recast v1.6.0
-checkout and then generates the requested maps. It requires Go 1.27.3, Python,
+checkout and then generates the requested maps. It requires Go 1.27.4, Python,
 Git and a C++ compiler. The runtime remains Go and needs no Recast installation.
 
 ```sh
@@ -134,11 +134,12 @@ collision floor or a hardcoded map-specific navigation rule.
 
 Run `python3 tools/fetch_server_geometry.py` before packaging or running a
 server from a fresh source checkout. The script downloads the pinned
-[68-map physics resource archive](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-geometry-rules2-20261114),
-checks its SHA-256 and every map manifest, and installs missing resources
-without replacing an existing generation. Both native CI platforms use this
-identical archive. Server portables include all resources; players do not need
-a separate geometry download. The original client artwork is not included.
+[68-map physics resource archive](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-geometry-rules2-20261122).
+This generation was built from the gx-v0.1.16 client data and server walk
+masks. The installer verifies the archive, the complete set of map manifests,
+and each generated file by SHA-256. It requires a fresh directory when a
+different generation is present. Both native CI platforms use the same archive.
+Server portables include all the generated resources.
 For future or changed maps, regenerate the resources with the map builder
 described above and distribute the new generation with the server.
 
