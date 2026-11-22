@@ -36,11 +36,11 @@ func (s *Scene3D) SetTerrainRanges(ranges []TerrainRange) {
 	addGPUBytes(bytes)
 }
 
-func (s *Scene3D) DrawTerrainRanges(m *Mesh, mask, tile, lightmap *Texture, tileSize float32, first bool, count int) {
+func (s *Scene3D) drawTerrainRanges(m *Mesh, layer TerrainSplat, light, layerBlocks *Texture, first bool, count int) {
 	if m == nil || m.Count == 0 || count == 0 {
 		return
 	}
-	s.terrainLayerState(mask, tile, lightmap, tileSize, first)
+	s.terrainLayerState(layer, light, layerBlocks, first)
 	gl.BindVertexArray(m.vao)
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, s.terrainIndirect)
 	gl.MultiDrawElementsIndirect(gl.TRIANGLES, m.indexType, nil, int32(count), 0)
@@ -50,11 +50,11 @@ func (s *Scene3D) DrawTerrainRanges(m *Mesh, mask, tile, lightmap *Texture, tile
 
 // DrawTerrainRange is also used to compare grouped rendering against the
 // original per-cell traversal.
-func (s *Scene3D) DrawTerrainRange(m *Mesh, mask, tile, lightmap *Texture, tileSize float32, first bool, r TerrainRange) {
+func (s *Scene3D) DrawTerrainRange(m *Mesh, layer TerrainSplat, light, layerBlocks *Texture, first bool, r TerrainRange) {
 	if m == nil || r.Count == 0 {
 		return
 	}
-	s.terrainLayerState(mask, tile, lightmap, tileSize, first)
+	s.terrainLayerState(layer, light, layerBlocks, first)
 	gl.BindVertexArray(m.vao)
 	gl.DrawElementsWithOffset(gl.TRIANGLES, int32(r.Count), m.indexType, uintptr(r.First)*m.indexBytes)
 	drawCalls++

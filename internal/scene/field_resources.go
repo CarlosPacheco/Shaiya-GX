@@ -10,19 +10,29 @@ import (
 )
 
 func (s *fieldStream) loadMaterial(sx, sz int) Section {
-	field := fmt.Sprintf("world/Field/%s/%s_%d%d", s.stem, s.stem, sz, sx)
-	sec := Section{}
-	for i, l := range s.world.WLD.Layers {
+	return s.world.loadTerrainMaterial(s.assets, s.stem, sx, sz)
+}
+
+func (w *World) loadTerrainLayerBlocks() {
+	if side, blocks := w.WLD.TerrainLayerBlocks(); side > 0 {
+		w.terrainLayerBlocks = render.UploadTerrainLayerBlocks(side, blocks)
+	}
+}
+
+func (w *World) loadTerrainMaterial(a *Assets, stem string, sx, sz int) Section {
+	field := fmt.Sprintf("world/Field/%s/%s_%d%d", stem, stem, sz, sx)
+	sec := Section{LayerBlocks: w.terrainLayerBlocks}
+	for i, l := range w.WLD.Layers {
 		var tile *render.Texture
 		if strings.TrimSpace(l.Texture) != "" {
-			tile = s.assets.worldTexture("Terrain/Detail/" + DDSName(path.Base(l.Texture)))
+			tile = a.worldTexture("Terrain/Detail/" + DDSName(path.Base(l.Texture)))
 			if tile != nil {
 				tile.SetWrap(true)
 			}
 		}
-		sec.Layers = append(sec.Layers, TerrainLayer{Tile: tile, TileSize: l.TileSize, Mask: s.assets.optionalTexture(fmt.Sprintf("%s_A%d.dds", field, i))})
+		sec.Layers = append(sec.Layers, TerrainLayer{Tile: tile, TileSize: l.TileSize, Mask: a.optionalTexture(fmt.Sprintf("%s_A%d.dds", field, i))})
 	}
-	sec.Lightmap = s.assets.optionalTexture(field + "_L.dds")
+	sec.Lightmap = a.optionalTexture(field + "_L.dds")
 	return sec
 }
 
@@ -407,6 +417,8 @@ func (w *World) Close() {
 	w.collision = nil
 	w.physics = nil
 	w.movingColliders = nil
+	w.terrainLayerBlocks.Delete()
+	w.terrainLayerBlocks = nil
 	if w.water != nil {
 		w.water.Delete()
 		w.water = nil

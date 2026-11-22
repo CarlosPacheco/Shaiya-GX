@@ -55,6 +55,7 @@ type World struct {
 	FogStart            float32
 	FogEnd              float32
 	heights             []float32
+	terrainLayerBlocks  *render.Texture
 	terrainFan          bool
 	side                int
 	step                float32
@@ -69,9 +70,10 @@ type TerrainLayer struct {
 // Section is one field section (1x1 below map size 1536, else 2x2; file
 // suffix <z><x>), with its own masks and lightmap.
 type Section struct {
-	Mesh     *render.Mesh
-	Layers   []TerrainLayer
-	Lightmap *render.Texture
+	Mesh        *render.Mesh
+	Layers      []TerrainLayer
+	Lightmap    *render.Texture
+	LayerBlocks *render.Texture
 }
 
 // LoadField loads world/<stem>.wld with its field data in
@@ -91,26 +93,12 @@ func LoadField(a *Assets, stem string) (*World, error) {
 	out := &World{WLD: w, FogColor: render.V3{w.FogColor[0] / 255, w.FogColor[1] / 255, w.FogColor[2] / 255},
 		FogStart: w.FogStart, FogEnd: w.FogEnd}
 	out.buildTerrain()
-	tiles := make([]*render.Texture, len(w.Layers))
-	for i, l := range w.Layers {
-		if strings.TrimSpace(l.Texture) == "" {
-			continue // unused layer slot
-		}
-		if tiles[i] = a.worldTexture("Terrain/Detail/" + DDSName(path.Base(l.Texture))); tiles[i] != nil {
-			tiles[i].SetWrap(true)
-		}
-	}
+	out.loadTerrainLayerBlocks()
 	n := out.sectionsPerSide()
-	for sz := 0; sz < n; sz++ {
-		for sx := 0; sx < n; sx++ {
-			sec := &out.Sections[sz*n+sx]
-			field := fmt.Sprintf("world/Field/%s/%s_%d%d", stem, stem, sz, sx)
-			for i, l := range w.Layers {
-				sec.Layers = append(sec.Layers, TerrainLayer{TileSize: l.TileSize, Tile: tiles[i],
-					Mask: a.optionalTexture(fmt.Sprintf("%s_A%d.dds", field, i))})
-			}
-			sec.Lightmap = a.optionalTexture(field + "_L.dds")
-		}
+	for i := range out.Sections {
+		sec := out.loadTerrainMaterial(a, stem, i%n, i/n)
+		sec.Mesh = out.Sections[i].Mesh
+		out.Sections[i] = sec
 	}
 	out.loadPlacedDungeons(a)
 	out.addObjects(a)

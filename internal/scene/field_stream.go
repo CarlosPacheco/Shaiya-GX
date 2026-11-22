@@ -136,6 +136,7 @@ func loadStreamedField(parent *Assets, stem string) (*World, error) {
 	if !w.heightsOnly() {
 		return nil, fmt.Errorf("field %s: invalid height grid", stem)
 	}
+	w.loadTerrainLayerBlocks()
 	s := &fieldStream{world: w, assets: NewAssets(parent.Arc), stem: stem, index: map[cellKey][]int{}, cells: map[cellKey]*fieldCell{}, materials: map[int]Section{}, vanis: map[string]*vaniAsset{}, terrainBatches: map[terrainBatchKey]*terrainBatch{}}
 	w.stream = s
 	w.loadPlacedDungeons(s.assets)

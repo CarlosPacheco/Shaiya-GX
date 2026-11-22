@@ -48,13 +48,13 @@ func drawSection(s *render.Scene3D, sec Section) {
 func drawTerrainSplats(s *render.Scene3D, mesh *render.Mesh, sec Section, ranges int) {
 	var local [8]render.TerrainSplat
 	layers := local[:0]
-	for _, l := range sec.Layers {
+	for slot, l := range sec.Layers {
 		if l.Mask == nil || l.Tile == nil || len(layers) != 0 && l.Mask.EmptyMask {
 			continue
 		}
-		layers = append(layers, render.TerrainSplat{Mask: l.Mask, Tile: l.Tile, TileSize: l.TileSize})
+		layers = append(layers, render.TerrainSplat{Mask: l.Mask, Tile: l.Tile, TileSize: l.TileSize, LayerBit: uint32(byte(1) << slot)})
 	}
-	s.DrawTerrainSplats(mesh, layers, sec.Lightmap, ranges)
+	s.DrawTerrainSplats(mesh, layers, sec.Lightmap, sec.LayerBlocks, ranges)
 }
 
 // Use the original finest fan topology rather than rendering every stored

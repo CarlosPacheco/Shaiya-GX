@@ -55,6 +55,19 @@ Real OpenGL checks cover maps 1, 2 and 19, shared borders, shadow receivers,
 streaming, water, occlusion and AA. Local logs and before/after captures are kept
 under `work/terrain-native/`.
 
+## Terrain layer placement
+
+Each 32-unit FLD block selects its texture layers from the WLD assignment
+grid. EP5 routine `0x5b4aa0` reads every second height-grid sample in X and Z,
+including a four-sample margin into neighbouring blocks. Both the local and
+transition flags enable the layer in GX, as in Phoenix's field repair.
+
+The eager and streamed renderers use the same block selection. Each overlay
+keeps its WLD slot and uses its original DDS alpha within enabled
+blocks. The opaque base pass, lightmaps, authored mip levels and texture tiling
+retain their existing behaviour. This removes stray opaque lava and grass
+from maps such as 43, 44 and 46 without rewriting their assets.
+
 ## Model and authored-volume collisions
 
 The terrain fan is distinct from world model blockers. See

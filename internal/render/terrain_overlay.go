@@ -8,10 +8,37 @@ import (
 )
 
 const terrainOverlayLimit = 7
+const terrainLayerBlocksUnit = 15
+
+const terrainLayerBlocksGLSL = `
+layout(binding=15) uniform usampler2D terrainLayerBlocks;
+bool terrainLayerEnabled(vec2 worldXZ, uint layerBit) {
+ if (layerBit == 0u) return true;
+ ivec2 block = clamp(ivec2(worldXZ / 32.0), ivec2(0), textureSize(terrainLayerBlocks, 0) - 1);
+ return (texelFetch(terrainLayerBlocks, block, 0).r & layerBit) != 0u;
+}
+`
 
 type TerrainSplat struct {
 	Mask, Tile *Texture
 	TileSize   float32
+	LayerBit   uint32 // logical WLD layer slot, even when preceding masks are absent
+}
+
+// UploadTerrainLayerBlocks stores one unfiltered byte of layer bits per block.
+func UploadTerrainLayerBlocks(side int, blocks []byte) *Texture {
+	t := &Texture{W: side, H: side, bytes: uint64(len(blocks))}
+	gl.CreateTextures(gl.TEXTURE_2D, 1, &t.ID)
+	gl.TextureStorage2D(t.ID, 1, gl.R8UI, int32(side), int32(side))
+	var alignment int32
+	gl.GetIntegerv(gl.UNPACK_ALIGNMENT, &alignment)
+	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+	gl.TextureSubImage2D(t.ID, 0, 0, 0, int32(side), int32(side), gl.RED_INTEGER, gl.UNSIGNED_BYTE, unsafe.Pointer(&blocks[0]))
+	gl.PixelStorei(gl.UNPACK_ALIGNMENT, alignment)
+	gl.TextureParameteri(t.ID, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TextureParameteri(t.ID, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	addGPUBytes(t.bytes)
+	return t
 }
 
 type terrainOverlay struct {
@@ -23,30 +50,30 @@ type terrainOverlay struct {
 
 // DrawTerrainSplats preserves the opaque base pass and each overlay's native
 // blend and depth operations. Compatible overlays share one GL submission.
-func (s *Scene3D) DrawTerrainSplats(m *Mesh, layers []TerrainSplat, light *Texture, ranges int) {
+func (s *Scene3D) DrawTerrainSplats(m *Mesh, layers []TerrainSplat, light, layerBlocks *Texture, ranges int) {
 	if len(layers) == 0 || m == nil || m.Count == 0 {
 		return
 	}
 	base := layers[0]
 	if ranges == 0 {
-		s.DrawTerrainLayer(m, base.Mask, base.Tile, light, base.TileSize, true)
+		s.DrawTerrainLayer(m, base, light, nil, true)
 	} else {
-		s.DrawTerrainRanges(m, base.Mask, base.Tile, light, base.TileSize, true, ranges)
+		s.drawTerrainRanges(m, base, light, nil, true, ranges)
 	}
 	layers = layers[1:]
-	if s.drawTerrainOverlays(m, layers, light, ranges) {
+	if s.drawTerrainOverlays(m, layers, light, layerBlocks, ranges) {
 		return
 	}
 	for _, layer := range layers {
 		if ranges == 0 {
-			s.DrawTerrainLayer(m, layer.Mask, layer.Tile, light, layer.TileSize, false)
+			s.DrawTerrainLayer(m, layer, light, layerBlocks, false)
 		} else {
-			s.DrawTerrainRanges(m, layer.Mask, layer.Tile, light, layer.TileSize, false, ranges)
+			s.drawTerrainRanges(m, layer, light, layerBlocks, false, ranges)
 		}
 	}
 }
 
-func (s *Scene3D) drawTerrainOverlays(m *Mesh, layers []TerrainSplat, light *Texture, ranges int) bool {
+func (s *Scene3D) drawTerrainOverlays(m *Mesh, layers []TerrainSplat, light, layerBlocks *Texture, ranges int) bool {
 	if len(layers) < 2 || len(layers) > terrainOverlayLimit || s.Shadow || !drawParametersSupported {
 		return false
 	}
@@ -83,8 +110,15 @@ func (s *Scene3D) drawTerrainOverlays(m *Mesh, layers []TerrainSplat, light *Tex
 	gl.Uniform3fv(9, 1, &s.FogColor[0])
 	gl.Uniform2f(10, s.FogStart, s.FogEnd)
 	var sizes [terrainOverlayLimit]float32
+	var bits [terrainOverlayLimit]uint32
+	if layerBlocks != nil {
+		gl.BindTextureUnit(terrainLayerBlocksUnit, layerBlocks.ID)
+	}
 	for i, layer := range layers {
 		sizes[i] = layer.TileSize
+		if layerBlocks != nil {
+			bits[i] = layer.LayerBit
+		}
 		gl.BindTextureUnit(uint32(i), layer.Mask.ID)
 		gl.BindTextureUnit(uint32(i+terrainOverlayLimit), layer.Tile.ID)
 	}
@@ -96,6 +130,7 @@ func (s *Scene3D) drawTerrainOverlays(m *Mesh, layers []TerrainSplat, light *Tex
 	gl.Uniform1i(12, lit)
 	gl.Uniform1i(13, int32(n))
 	gl.Uniform1fv(14, int32(len(layers)), &sizes[0])
+	gl.Uniform1uiv(21, int32(len(layers)), &bits[0])
 	s.blend(true)
 	gl.BindVertexArray(m.vao)
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, t.indirect.id)
@@ -135,14 +170,16 @@ layout(location=9) uniform vec3 fogColor;
 layout(location=10) uniform vec2 fogRange;
 layout(location=12) uniform int lit;
 layout(location=14) uniform float tileSizes[7];
+layout(location=21) uniform uint layerBits[7];
 in vec2 vUV,vUV2;
 in float vDepth;
 flat in int layer;
 out vec4 frag;
+` + terrainLayerBlocksGLSL + `
 void main() {
  vec4 c=vec4(texture(tiles[layer],vUV2/tileSizes[layer]).rgb,texture(masks[layer],vUV).a);
  if (lit != 0) c.rgb *= texture(lightmap,vUV).rgb;
- if (c.a <= 7.5/255.0) discard;
+ if (c.a <= 7.5/255.0 || !terrainLayerEnabled(vUV2, layerBits[layer])) discard;
  if (fogRange.y > fogRange.x) {
   float f=clamp((fogRange.y-vDepth)/(fogRange.y-fogRange.x),0.0,1.0);
   c.rgb=mix(fogColor,c.rgb,f);

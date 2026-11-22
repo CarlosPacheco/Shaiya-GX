@@ -78,6 +78,7 @@ layout(binding=4) uniform sampler2D waterBackground;
 layout(binding=5) uniform sampler2D waterNormalA;
 layout(binding=6) uniform sampler2D waterNormalB;
 uniform int hasTerrainLight;
+uniform uint terrainLayerBit;
 uniform int mode;
 uniform float alphaRef;
 uniform float corpseFade; // zero for all ordinary scene draws
@@ -101,6 +102,7 @@ flat in uvec2 vSkinTexture;
 flat in float vSkinAlphaRef;
 #endif
 out vec4 frag;
+` + terrainLayerBlocksGLSL + `
 void main() {
  float fade = mode == 10 ? max(corpseFade, vEffectColor.r) : corpseFade;
  if (fade > 0.0) {
@@ -149,6 +151,7 @@ void main() {
 	} else if (mode == 1) {
 		c = vec4(texture(tex1, vUV2 / tileSize).rgb, texture(tex0, vUV).a);
 		if (hasTerrainLight != 0) c.rgb *= texture(terrainLight, vUV).rgb;
+		if (!terrainLayerEnabled(vUV2, terrainLayerBit)) discard;
 	} else if (mode == 4) {
 		c = texture(tex0, vUV);
 		c.rgb *= texture(tex1, vUV2).rgb;
@@ -208,6 +211,7 @@ type Scene3D struct {
 	uEffectPoseOffset                                         int32
 	projection                                                M4 // current main/sky projection, combined before vertex transformation
 	uTerrainLight                                             int32
+	uTerrainLayerBit                                          int32
 	Shadow                                                    bool // native black silhouette capture, preserving texture alpha
 	effectStream                                              *Mesh
 	effectPass                                                effectPassState
@@ -247,7 +251,7 @@ func NewScene3D() (*Scene3D, error) {
 		return nil, err
 	}
 	u := func(n string) int32 { return gl.GetUniformLocation(p, gl.Str(n+"\x00")) }
-	return &Scene3D{prog: p, uClothBase: u("clothBase"), uInstanced: u("instanced"), uInstanceColorOffset: u("instanceColorOffset"), uEffectPoseOffset: u("effectPoseOffset"), uTerrainLight: u("hasTerrainLight"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"), uLight: u("lightDir"),
+	return &Scene3D{prog: p, uClothBase: u("clothBase"), uInstanced: u("instanced"), uInstanceColorOffset: u("instanceColorOffset"), uEffectPoseOffset: u("effectPoseOffset"), uTerrainLight: u("hasTerrainLight"), uTerrainLayerBit: u("terrainLayerBit"), uWorld: u("world"), uViewProj: u("worldViewProj"), uView: u("worldView"), uLight: u("lightDir"),
 		uAmb: u("ambient"), uLit: u("lit"), uMode: u("mode"), uRef: u("alphaRef"), uFogColor: u("fogColor"), uFogRange: u("fogRange"), uTile: u("tileSize"), uTint: u("tint"), uUVOff: u("uvOffset"), uClipPlane: u("clipPlane"), uWaterReflection: u("hasWaterReflection"), uWaterViewport: u("waterViewport"), uWaterNormals: u("hasWaterNormals"), uWaterTime: u("waterTime"), uWaterBelow: u("waterBelow"),
 		LightDir: V3{-1, -1, -1}, Ambient: 128.0 / 255}, nil
 }
@@ -368,13 +372,13 @@ func (s *Scene3D) drawVisibleModel(m *Mesh, t *Texture, world M4, alphaRef float
 }
 
 // DrawTerrainLayer draws one layer pass: first opaque, later alpha-blended.
-func (s *Scene3D) DrawTerrainLayer(m *Mesh, mask, tile, lightmap *Texture, tileSize float32, first bool) {
-	s.terrainLayerState(mask, tile, lightmap, tileSize, first)
+func (s *Scene3D) DrawTerrainLayer(m *Mesh, layer TerrainSplat, light, layerBlocks *Texture, first bool) {
+	s.terrainLayerState(layer, light, layerBlocks, first)
 	m.Draw()
 }
 
-func (s *Scene3D) terrainLayerState(mask, tile, lightmap *Texture, tileSize float32, first bool) {
-	gl.Uniform1f(s.uTile, tileSize)
+func (s *Scene3D) terrainLayerState(layer TerrainSplat, light, layerBlocks *Texture, first bool) {
+	gl.Uniform1f(s.uTile, layer.TileSize)
 	id := Identity()
 	s.setWorld(id)
 	gl.Uniform1i(s.uMode, 1)
@@ -386,11 +390,17 @@ func (s *Scene3D) terrainLayerState(mask, tile, lightmap *Texture, tileSize floa
 		gl.Uniform1f(s.uRef, 7.5/255)
 		s.blend(true)
 	}
-	gl.BindTextureUnit(0, mask.ID)
-	gl.BindTextureUnit(1, tile.ID)
+	var layerBit uint32
+	if !first && layerBlocks != nil {
+		gl.BindTextureUnit(terrainLayerBlocksUnit, layerBlocks.ID)
+		layerBit = layer.LayerBit
+	}
+	gl.Uniform1ui(s.uTerrainLayerBit, layerBit)
+	gl.BindTextureUnit(0, layer.Mask.ID)
+	gl.BindTextureUnit(1, layer.Tile.ID)
 	gl.Uniform1i(s.uTerrainLight, 0)
-	if lightmap != nil {
-		gl.BindTextureUnit(2, lightmap.ID)
+	if light != nil {
+		gl.BindTextureUnit(2, light.ID)
 		gl.Uniform1i(s.uTerrainLight, 1)
 	}
 }

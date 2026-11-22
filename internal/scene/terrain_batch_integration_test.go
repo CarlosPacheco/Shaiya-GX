@@ -9,11 +9,11 @@ func drawTerrainCell(s *render.Scene3D, b *terrainBatch, cell render.TerrainRang
 		return
 	}
 	first := true
-	for _, layer := range b.material.Layers {
+	for slot, layer := range b.material.Layers {
 		if layer.Mask == nil || layer.Tile == nil {
 			continue
 		}
-		s.DrawTerrainRange(b.mesh, layer.Mask, layer.Tile, b.material.Lightmap, layer.TileSize, first, cell)
+		s.DrawTerrainRange(b.mesh, render.TerrainSplat{Mask: layer.Mask, Tile: layer.Tile, TileSize: layer.TileSize, LayerBit: uint32(byte(1) << slot)}, b.material.Lightmap, b.material.LayerBlocks, first, cell)
 		first = false
 	}
 }

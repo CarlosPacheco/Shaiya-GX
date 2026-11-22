@@ -85,7 +85,7 @@ func TestNativeTextureFogAndAsyncMetricsGL(t *testing.T) {
 		meter.Begin()
 		s.Begin()
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-		s.DrawTerrainLayer(mesh, mask, tile, light, 1, true)
+		s.DrawTerrainLayer(mesh, TerrainSplat{Mask: mask, Tile: tile, TileSize: 1}, light, nil, true)
 		meter.End()
 		var pixel [4]byte
 		gl.ReadPixels(32, 32, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixel[0]))
