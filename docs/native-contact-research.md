@@ -66,7 +66,7 @@ with the existing airborne code instead of being a per-call constant.
 4. Measure the real-map spots listed in the research report (map 1
    stairway05/06/08, Bridge00) on the client against World before and after.
 
-## Implemented (trial, 2026-11-21)
+## Implemented (permanent, confirmed in play 2026-11-21)
 
 `mapgeometry.GroundMoveDT` now walks with the plain ellipsoid slide plus the
 grounded fall of each step (-2.98 units/s times that step's duration), with no
@@ -78,3 +78,8 @@ speed, `Supported`, `StandingPosition`) is unchanged. In the 137-route replay
 with that flow the sum of final separations dropped from 130 to 25 units and the
 steep ramps and 0.60 / 0.75 curbs now climb. `GX_NATIVE_CONTACT=off` (client and
 World) restores the previous assisted controller.
+
+World also walks airborne batches one 60 Hz frame at a time, horizontal then
+vertical, the way the client predicts a jump, and the jump clip is left to finish
+after landing (see terrain.md). `GX_NATIVE_CONTACT=off` remains only as a
+rollback switch.

@@ -78,6 +78,12 @@ Click-to-move does not add a new pathfinder around
 obstacles. Native ladder/ivy interaction and moving-platform passenger attachment remain
 outside the validated scope.
 
+> **Update:** ground walking no longer uses the support, step-height and
+> clearance rules described below. `GroundMoveDT` follows the original
+> controller: the ellipsoid slide plus the grounded fall of each frame. See
+> [native contact](native-contact-research.md). The sections below describe the
+> earlier assisted model and the shared collision core, which is unchanged.
+
 ## Step edges and model support
 
 Support uses a short downward sweep of the original player ellipsoid against
