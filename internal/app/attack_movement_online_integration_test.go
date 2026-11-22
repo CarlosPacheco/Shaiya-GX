@@ -3,11 +3,15 @@
 package app
 
 import (
-	"github.com/Spelunkern/Shaiya-GX/internal/proto"
-	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
 )
 
 func TestAttackMovementAgainstIsolatedGX(t *testing.T) {
@@ -64,33 +68,60 @@ func TestAttackMovementAgainstIsolatedGX(t *testing.T) {
 		t.Fatal("attack pause did not reject movement", c, x)
 	}
 	pump(1500 * time.Millisecond)
-	// A vertical jump alone remains a valid attacking stance.
+	// A direct request in a standing jump must fail. The client's normal
+	// attack entry point holds the request until movement and pose both end.
 	send(proto.MotionPacket(proto.MotionJump))
 	pump(50 * time.Millisecond)
-	hit()
-	pump(350 * time.Millisecond)
-	if !a.LastPlayerCorrection.Jumping {
-		t.Fatal("stationary jump was not physically airborne")
+	before := attacks
+	send(proto.UserAttackPacket(b.SelfID))
+	client := inputApp()
+	client.state, client.world = a, wire
+	weapon := a.Inventory[[2]uint8{0, 5}]
+	client.items = map[sdata.ItemKey]*sdata.Item{{Type: weapon.Type, TypeID: weapon.TypeID}: {Range: 4}}
+	client.wv.pos, client.wv.jumpActive = render.V3{x, y, z}, true
+	a.Target = b.SelfID
+	if !client.attackTarget() || client.wv.landingAction.target != b.SelfID {
+		t.Fatal("client did not hold the attack order")
 	}
-	pump(1300 * time.Millisecond)
+	client.updateLandingAction(&platform.Input{Space: true})
+	pump(350 * time.Millisecond)
+	if attacks != before || !a.LastPlayerCorrection.Jumping {
+		t.Fatal("stationary jump failed to become airborne or dealt a hit")
+	}
+	pump(450 * time.Millisecond)
+	if a.LastPlayerCorrection.Jumping || attacks != before {
+		t.Fatal("World did not land or retained the direct airborne request")
+	}
+	client.wv.jumpActive, client.clock = false, 3
+	client.updateLandingAction(&platform.Input{Space: true})
+	pump(150 * time.Millisecond)
+	if attacks != before+1 || client.wv.landingAction.target != 0 {
+		t.Fatal("client did not attack once on landing")
+	}
+	send(proto.StopAttackPacket())
+	pump(1500 * time.Millisecond)
 	send(proto.MotionPacket(proto.MotionJump))
 	pump(30 * time.Millisecond)
-	before := attacks
+	before = attacks
+	client.wv.jumpActive, client.wv.jumpMoved = true, true
+	if !client.attackTarget() || client.wv.landingAction.target != 0 {
+		t.Fatal("client buffered an order during a moving jump")
+	}
 	for i := 0; i < 5; i++ {
 		x += .05
 		send(proto.MovePacket(4|proto.MotionFlag80, 0, x, y, z))
 		send(proto.UserAttackPacket(b.SelfID))
 		pump(40 * time.Millisecond)
 	}
+	pump(900 * time.Millisecond)
 	if attacks != before {
 		t.Fatal("moving jumping attacker dealt a hit")
 	}
 	send(proto.StopAttackPacket())
-	pump(1100 * time.Millisecond)
 	// Movement by the victim is never immunity: attacker is now grounded.
 	sendB(proto.MotionPacket(proto.MotionJump))
 	sendB(proto.MovePacket(4|proto.MotionFlag80, 0, b.Self.X+.1, b.Self.Y, b.Self.Z))
 	pump(50 * time.Millisecond)
 	hit()
-	t.Log("encrypted PvP: 800ms movement stop enforced, vertical-jump attack allowed, moving-jump attacker denied, moving-jump victim remains hittable")
+	t.Log("encrypted PvP: ground recovery enforced, all airborne attacks denied, standing jump executes queued attack on landing, moving jump discards it")
 }

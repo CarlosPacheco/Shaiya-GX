@@ -359,7 +359,7 @@ Declarations: [proto.GXPhysicsClock](../../internal/proto/world.go#L255).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L471)
+**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L467)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1243)
 
@@ -369,7 +369,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendPhysicsClock — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L471)
+[Source definition](../../server/internal/world/player_movement.go#L467)
 
 ```go
 func (s *Session) sendPhysicsClock() {
@@ -393,7 +393,7 @@ Declarations: [proto.GXPlayerCorrection](../../internal/proto/player_physics.go#
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L248)
+**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L247)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1233)
 
@@ -403,7 +403,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>correctMovement — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L248)
+[Source definition](../../server/internal/world/player_movement.go#L247)
 
 ```go
 func (s *Session) correctMovement(reason string) {

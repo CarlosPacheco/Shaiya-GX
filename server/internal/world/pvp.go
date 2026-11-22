@@ -148,7 +148,7 @@ func (s *Session) userAttackSwing(target uint32) bool {
 	if stats.Disabled[kind] > 0 {
 		return true
 	}
-	if !s.attackMovementAllowed(time.Now()) {
+	if !s.attackMovementAllowed() {
 		return false
 	}
 	s.commitAttackStop(time.Now())

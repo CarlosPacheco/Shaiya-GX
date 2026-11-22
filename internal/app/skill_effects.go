@@ -59,6 +59,9 @@ func (a *App) confirmedEffects(p []byte) {
 		a.startSkillSecondaryEffect(a.state.LastSkill)
 	case proto.SkillCastStarted:
 		r := a.state.LastCast
+		if a.playerActor(r.Source).PlayingAction(8) {
+			return
+		}
 		a.stopCastEffects(r.Source)
 		a.loadSkills()
 		d := a.skillDefs[sdata.SkillKey{ID: r.ID, Level: r.Level}]

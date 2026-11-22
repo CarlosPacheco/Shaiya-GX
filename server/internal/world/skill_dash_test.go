@@ -21,6 +21,9 @@ func TestStingerServerSweepCannotCrossWallOrTrustClientPosition(t *testing.T) {
 	if !s.beginStinger(def, [3]float32{4, .05, 5}) || s.dash == nil {
 		t.Fatal("clear dash refused")
 	}
+	if s.startMovementJump(time.Now()) || s.movement.jumping {
+		t.Fatal("jump started during the server dash")
+	}
 	from := s.char.PosX
 	s.handleCharacterMove(proto.MovePacket(1, 0, 900, 900, 900))
 	if s.char.PosX != from {

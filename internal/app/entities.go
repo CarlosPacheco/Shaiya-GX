@@ -157,17 +157,16 @@ func (a *App) prepareRemotePlayers() {
 		cached.dead = e.Dead
 		if cached.gestureSerial != e.GestureSerial {
 			cached.gestureSerial = e.GestureSerial
-			if action, ok := proto.LocomotionAction(e.Gesture); ok && !e.Dead && !e.Mounted {
-				_, _, casting := c.CastTiming()
-				if action != 8 || !casting && !c.PlayingAction(8) {
-					c.PlayAction(action, false)
+			if action, ok := proto.LocomotionAction(e.Gesture); ok && !e.Dead && !e.Mounted && !c.PlayingAction(8) {
+				if c.PlayAction(action, false) && action == 8 {
+					a.stopCastEffects(id)
 				}
 			}
 			if action, ok := proto.GestureAction(e.Gesture); ok && !e.Dead && !e.Mounted && !moving && !c.PlayingAction(8) {
 				c.PlayAction(action, false)
 			}
 		}
-		if e.Motion == 4|proto.MotionFlag80 && moving {
+		if e.Motion == 4|proto.MotionFlag80 {
 			if _, _, casting := c.CastTiming(); casting {
 				c.CancelCast()
 				a.stopCastEffects(id)

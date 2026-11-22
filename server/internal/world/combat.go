@@ -127,7 +127,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	if stats.Disabled[kind] > 0 {
 		return true // the category is disabled (abilities 32-34); wait it out
 	}
-	if !s.attackMovementAllowed(time.Now()) {
+	if !s.attackMovementAllowed() {
 		return false
 	}
 	s.commitAttackStop(time.Now())

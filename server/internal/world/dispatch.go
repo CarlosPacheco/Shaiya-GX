@@ -250,7 +250,7 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 		s.dismount()
 	case packet.CharacterMobAutoAttack:
 		s.cancelMove()
-		if len(p) >= 6 && s.char != nil {
+		if len(p) >= 6 && s.char != nil && s.attackMovementAllowed() {
 			id, _ := packet.U32(p[2:])
 			s.autoAttack, s.autoAttackTarget, s.autoAttackUser = true, id, false
 			if !s.autoAttackSwing(id) {
@@ -260,7 +260,7 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 	case packet.CharacterUserAutoAttack:
 		// PacketPC 0x0502: only a hostile user starts the attack.
 		s.cancelMove()
-		if len(p) >= 6 && s.char != nil {
+		if len(p) >= 6 && s.char != nil && s.attackMovementAllowed() {
 			id, _ := packet.U32(p[2:])
 			if s.hostileUser(id) != nil {
 				s.autoAttack, s.autoAttackTarget, s.autoAttackUser = true, id, true

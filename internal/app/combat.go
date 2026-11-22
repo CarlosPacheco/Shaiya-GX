@@ -179,6 +179,10 @@ func (a *App) attackTarget() bool {
 		a.systemMessage(17, 317, nil)
 		return true
 	}
+	follow := a.followOnly(e)
+	if !follow && a.deferAirAction(e.ID, nil) {
+		return true
+	}
 	if a.state.Self.Sitting || a.wv.sitPending || a.wv.self != nil && a.wv.self.PlayingAction(11) {
 		a.wv.sitAttack = e.ID
 		if a.state.Self.Sitting && !a.wv.sitPending {
@@ -189,14 +193,14 @@ func (a *App) attackTarget() bool {
 	a.wv.approachTarget, a.wv.approachSkill = 0, nil
 	a.wv.approachNPC = false
 	a.wv.travel, a.wv.autoRun = false, false
-	if a.followOnly(e) {
+	if follow {
 		return a.followPlayer(e)
 	}
 	if !a.faceRequestedTarget(e.ID) {
 		return false
 	}
 	delta := render.V3{e.X - a.wv.pos[0], 0, e.Z - a.wv.pos[2]}
-	if delta.Len() > a.attackReachTo(e) || !a.attackMovementAllowed() || a.clock < a.wv.attackMoveUntil {
+	if delta.Len() > a.attackReachTo(e) || a.clock < a.wv.attackMoveUntil {
 		a.wv.autoRun = false
 		a.wv.approachTarget, a.wv.approachLoot = e.ID, false
 		a.wv.approachSkill = nil

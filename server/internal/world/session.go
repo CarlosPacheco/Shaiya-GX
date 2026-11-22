@@ -1016,8 +1016,15 @@ func (s *Session) handleMotion(p []byte) {
 		return
 	}
 	s.cancelVehicleCast()
-	if motion == 2 && !s.startMovementJump(time.Now()) {
-		return
+	if motion == proto.MotionJump {
+		if !s.startMovementJump(time.Now()) {
+			return
+		}
+		s.autoAttack, s.pendingCombo, s.pendingSkill = false, nil, nil
+		if s.cast != nil {
+			s.cast = nil
+			s.syncPlayerSpeed(false)
+		}
 	}
 	if s.player != nil {
 		switch motion {

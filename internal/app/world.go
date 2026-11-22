@@ -101,6 +101,8 @@ type worldView struct {
 	attackActionID              uint64
 	jumping                     bool
 	jumpPending                 bool // jump clip started, impulse not yet applied
+	jumpActive, jumpMoved       bool // track the whole jump, including its landing frames
+	landingAction               landingAction
 	jumpFall                    float32
 	jumpFloor                   float32
 	partySelection              uint32
@@ -268,6 +270,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	if v == nil {
 		return
 	}
+	startPos := v.pos
 	a.publishPartySelection()
 	if a.wv != v {
 		return
@@ -355,7 +358,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 			toggleSit = true
 		}
 	}
-	if a.state.Self.Dead || toggleSit || in.Space || in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeyNumLock) || in.RightDown && in.MouseDown {
+	if a.state.Self.Dead || toggleSit || in.HasKey(platform.KeySpace) || in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeyNumLock) || in.RightDown && in.MouseDown {
 		v.travel = false
 	}
 	if a.state.Self.Dead || toggleSit || in.Held('S') || backEvade {
@@ -409,7 +412,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		forward = v.travel
 	}
 	wantsMove := forward || back || strafe != 0 || intent.turn != 0 || in.HasKey(platform.KeySpace)
-	if !v.sitPending && !a.state.Self.Dead && !a.state.Self.Mounted && !swimming {
+	if !v.jumpActive && !v.sitPending && !a.state.Self.Dead && !a.state.Self.Mounted && !swimming {
 		motion := uint8(0)
 		request := false
 		if a.state.Self.Sitting && (toggleSit || wantsMove || v.sitAttack != 0) {
@@ -470,7 +473,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	if backEvade {
 		evadeMotion = proto.MotionBackstep
 	}
-	if evadeMotion != 0 && !v.ladder.Active && !v.evading && !blocked && !swimming && !v.jumping && speed > 0 && !a.state.Self.Dead && !a.state.Self.Mounted && v.self != nil {
+	if evadeMotion != 0 && !in.HasKey(platform.KeySpace) && !v.jumpActive && !v.ladder.Active && !v.evading && !blocked && !swimming && !v.jumping && speed > 0 && !a.state.Self.Dead && !a.state.Self.Mounted && v.self != nil {
 		action, _ := proto.LocomotionAction(evadeMotion)
 		v.evading = v.self.PlayAction(action, false)
 		if v.evading {
@@ -507,9 +510,6 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		// One frame after the key: the impulse, and the jump request, begin.
 		if !canJump {
 			v.jumpPending = false
-			if v.self != nil && v.self.PlayingAction(8) {
-				v.self.ReleaseAction()
-			}
 		} else {
 			// MotionJump has no position. Flush unsent walking/running progress
 			// first, so the server grants the impulse at the same support surface.
@@ -525,8 +525,11 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 				return
 			}
 		}
-	} else if jumpPressed && canJump {
+	} else if jumpPressed && canJump && !v.jumpActive {
 		v.startJumpAnimation()
+		v.approachTarget, v.approachSkill, v.engagedID = 0, nil, 0
+		a.skills.queuedSkill = nil
+		a.stopCastEffects(a.state.SelfID)
 	}
 	if a.clock < v.attackMoveUntil {
 		dir = render.V3{}
@@ -736,6 +739,13 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		v.waterDirty = false
 	}
 	a.state.Self.X, a.state.Self.Y, a.state.Self.Z = v.pos[0], v.pos[1], v.pos[2]
+	if v.jumpActive {
+		v.jumpMoved = v.jumpMoved || startPos[0] != v.pos[0] || startPos[2] != v.pos[2]
+		if (!v.jumpPending && !airborne && !v.self.PlayingAction(8)) || swimming {
+			v.jumpActive = false
+		}
+	}
+	a.updateLandingAction(in)
 }
 
 func (a *App) drawWorldView(w, h int) {

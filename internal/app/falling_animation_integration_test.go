@@ -43,6 +43,7 @@ func TestJumpActionFinishesOnceDuringLongFallGL(t *testing.T) {
 	for _, walking := range []bool{false, true} {
 		for _, fps := range []int{30, 60, 144} {
 			v.self.ReleaseAction()
+			v.jumpActive = false
 			v.place(start.Add(render.V3{0, 80, 0}))
 			v.walking = walking
 			v.startJumpAnimation()
@@ -87,6 +88,7 @@ func TestJumpActionFinishesOnceDuringLongFallGL(t *testing.T) {
 	// the frame where the one-shot jump finishes.
 	for _, walking := range []bool{false, true} {
 		v.self.ReleaseAction()
+		v.jumpActive = false
 		v.place(start.Add(render.V3{0, 80, 0}))
 		v.walking = walking
 		v.startJumpAnimation()
@@ -108,12 +110,25 @@ func TestJumpActionFinishesOnceDuringLongFallGL(t *testing.T) {
 		}
 	}
 
+	// Losing support between the key press and the deferred impulse can
+	// cancel takeoff. The clip has already started and runs to its end.
+	v.self.ReleaseAction()
+	v.jumpActive, v.jumping = false, false
+	v.place(start.Add(render.V3{0, 80, 0}))
+	v.startJumpAnimation()
+	v.moving, v.motion, v.sendT = false, 0, 1000
+	a.updateWorld(&platform.Input{}, 1.0/60)
+	if v.jumpPending || v.jumping || !v.self.PlayingAction(8) {
+		t.Fatal("loss of support cut the jump clip or created an impulse")
+	}
+
 	// Use level ground under the real character animation so we can check
 	// the few frames where physics has landed and action 8 is still playing.
 	world := v.world
 	v.world = nil
 	defer func() { v.world = world }()
 	v.self.ReleaseAction()
+	v.jumpActive = false
 	v.place(start)
 	v.startJumpAnimation()
 	v.beginJump()

@@ -31,7 +31,7 @@ func (a *App) updateLadderMovement(in *platform.Input, forward, back bool, straf
 		a.sendLadderMode(mapgeometry.LadderDetach)
 		return false, false
 	}
-	if !v.ladder.Active && !unavailable && !in.SuppressAutoRun && (forward || back) && a.clock >= v.ladderRetryAt && a.clock >= v.attackMoveUntil && !v.travel {
+	if !v.ladder.Active && !v.jumpActive && !unavailable && !in.SuppressAutoRun && (forward || back) && a.clock >= v.ladderRetryAt && a.clock >= v.attackMoveUntil && !v.travel {
 		for index := range v.world.PlayerLadders() {
 			m, p, ok := v.world.AttachLadder(v.pos, v.facing, index)
 			if !ok {

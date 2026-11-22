@@ -424,7 +424,7 @@ func (a *App) dispatchShortcut(p []byte) bool {
 		return true
 	}
 	if a.approachSkillPacket(p) {
-		return a.wv.approachSkill != nil
+		return a.wv.approachSkill != nil || a.wv.landingAction.packet != nil
 	}
 	if !a.prepareSkillMovement(p) {
 		return false

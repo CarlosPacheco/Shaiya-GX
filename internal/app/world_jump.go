@@ -8,16 +8,11 @@ import "github.com/Spelunkern/Shaiya-GX/internal/scene"
 // impulse waits for the next frame, when the clip has advanced
 // (0x43bfa0: DAT_0071d010 and +0xc8 > 0 before DAT_0071d008 = 1).
 func (v *worldView) startJumpAnimation() {
-	if v.self.PlayingAction(8) {
+	if v.jumpActive {
 		return // The landing frames can outlast the vertical impulse.
 	}
-	v.jumpPending = true
+	v.jumpPending, v.jumpActive, v.jumpMoved = true, true, false
 	if v.self != nil && !v.self.Mounted {
-		_, _, casting := v.self.CastTiming()
-		attacking := v.attackPose && v.self.ActionActive() && v.self.ActionID() == v.attackActionID
-		if casting || attacking {
-			return // Vertical movement can continue under a combat action.
-		}
 		v.self.PlayAction(8, false)
 	}
 }
@@ -26,7 +21,7 @@ func (v *worldView) startJumpAnimation() {
 func (v *worldView) beginJump() {
 	v.slope.Frames = 0
 	v.jumpPending = false
-	v.jumping, v.jumpFall, v.jumpFloor = true, -2.98, v.pos[1]
+	v.jumping, v.jumpActive, v.jumpFall, v.jumpFloor = true, true, -2.98, v.pos[1]
 }
 
 func (v *worldView) advanceJump(dt float32) bool {

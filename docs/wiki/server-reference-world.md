@@ -32,9 +32,8 @@ Direct GX dependencies: `internal/attackspeed`, `internal/proto`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`attackMotionFreshness`](../../server/internal/world/attack_movement.go#L9)<br>`const attackMotionFreshness = 150 * time.Millisecond` | See the source definition and the subsystem ownership contract. |
-| [`attackMovementAllowed`](../../server/internal/world/attack_movement.go#L13)<br>`func (s *Session) attackMovementAllowed(now time.Time) bool` | Jumping alone is allowed. Only the attacker's actual horizontal travel is relevant; the victim's jump or movement never grants damage immunity. |
-| [`commitAttackStop`](../../server/internal/world/attack_movement.go#L19)<br>`func (s *Session) commitAttackStop(now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`attackMovementAllowed`](../../server/internal/world/attack_movement.go#L10)<br>`func (s *Session) attackMovementAllowed() bool` | Attacks and spell casts require footing. Only the attacker is checked. |
+| [`commitAttackStop`](../../server/internal/world/attack_movement.go#L16)<br>`func (s *Session) commitAttackStop(now time.Time)` | See the source definition and the subsystem ownership contract. |
 
 ### auction.go
 
@@ -3033,17 +3032,17 @@ Direct GX dependencies: `internal/mapgeometry`, `internal/movespeed`, `internal/
 | Declaration | Responsibility / source comment |
 |---|---|
 | [`playerMovement`](../../server/internal/world/player_movement.go#L15)<br>`type playerMovement` | See the source definition and the subsystem ownership contract. |
-| [`playerGeometry`](../../server/internal/world/player_movement.go#L35)<br>`func (s *Session) playerGeometry(mapID uint16) (*mapgeometry.Geometry, error)` | See the source definition and the subsystem ownership contract. |
-| [`initPlayerMovement`](../../server/internal/world/player_movement.go#L52)<br>`func (s *Session) initPlayerMovement(now time.Time) error` | See the source definition and the subsystem ownership contract. |
-| [`movementSpeed`](../../server/internal/world/player_movement.go#L78)<br>`func (s *Session) movementSpeed() float32` | See the source definition and the subsystem ownership contract. |
-| [`startMovementJump`](../../server/internal/world/player_movement.go#L92)<br>`func (s *Session) startMovementJump(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
-| [`advancePlayerVertical`](../../server/internal/world/player_movement.go#L116)<br>`func (s *Session) advancePlayerVertical(now time.Time)` | advancePlayerVertical uses server time and geometry. Client Y is never an integration input; a fake jump flag cannot grant another impulse in mid-air. |
-| [`tickPlayerMovement`](../../server/internal/world/player_movement.go#L209)<br>`func (s *Session) tickPlayerMovement(now time.Time)` | See the source definition and the subsystem ownership contract. |
-| [`commitMovement`](../../server/internal/world/player_movement.go#L243)<br>`func (s *Session) commitMovement()` | See the source definition and the subsystem ownership contract. |
-| [`correctMovement`](../../server/internal/world/player_movement.go#L248)<br>`func (s *Session) correctMovement(reason string)` | See the source definition and the subsystem ownership contract. |
-| [`validatePlayerMovement`](../../server/internal/world/player_movement.go#L267)<br>`func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, direction uint16, now time.Time) (bool, string)` | See the source definition and the subsystem ownership contract. |
-| [`sendPhysicsClock`](../../server/internal/world/player_movement.go#L471)<br>`func (s *Session) sendPhysicsClock()` | See the source definition and the subsystem ownership contract. |
-| [`groundTrustedDestination`](../../server/internal/world/player_movement.go#L483)<br>`func (s *Session) groundTrustedDestination(x, y, z float32) (mapgeometry.Position, bool)` | groundTrustedDestination normalizes a server-authored same-map relocation. A live selected session always has geometry; unselected sessions have none. |
+| [`playerGeometry`](../../server/internal/world/player_movement.go#L34)<br>`func (s *Session) playerGeometry(mapID uint16) (*mapgeometry.Geometry, error)` | See the source definition and the subsystem ownership contract. |
+| [`initPlayerMovement`](../../server/internal/world/player_movement.go#L51)<br>`func (s *Session) initPlayerMovement(now time.Time) error` | See the source definition and the subsystem ownership contract. |
+| [`movementSpeed`](../../server/internal/world/player_movement.go#L77)<br>`func (s *Session) movementSpeed() float32` | See the source definition and the subsystem ownership contract. |
+| [`startMovementJump`](../../server/internal/world/player_movement.go#L91)<br>`func (s *Session) startMovementJump(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
+| [`advancePlayerVertical`](../../server/internal/world/player_movement.go#L115)<br>`func (s *Session) advancePlayerVertical(now time.Time)` | advancePlayerVertical uses server time and geometry. Client Y is never an integration input; a fake jump flag cannot grant another impulse in mid-air. |
+| [`tickPlayerMovement`](../../server/internal/world/player_movement.go#L208)<br>`func (s *Session) tickPlayerMovement(now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`commitMovement`](../../server/internal/world/player_movement.go#L242)<br>`func (s *Session) commitMovement()` | See the source definition and the subsystem ownership contract. |
+| [`correctMovement`](../../server/internal/world/player_movement.go#L247)<br>`func (s *Session) correctMovement(reason string)` | See the source definition and the subsystem ownership contract. |
+| [`validatePlayerMovement`](../../server/internal/world/player_movement.go#L266)<br>`func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, direction uint16, now time.Time) (bool, string)` | See the source definition and the subsystem ownership contract. |
+| [`sendPhysicsClock`](../../server/internal/world/player_movement.go#L467)<br>`func (s *Session) sendPhysicsClock()` | See the source definition and the subsystem ownership contract. |
+| [`groundTrustedDestination`](../../server/internal/world/player_movement.go#L479)<br>`func (s *Session) groundTrustedDestination(x, y, z float32) (mapgeometry.Position, bool)` | groundTrustedDestination normalizes a server-authored same-map relocation. A live selected session always has geometry; unselected sessions have none. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3061,7 +3060,6 @@ type playerMovement struct {
 	speedCorrectionPending         bool
 	jumping                        bool
 	jumpFall, fall, waterFall      float32
-	horizontalAt                   time.Time
 	motion                         uint8
 	direction                      uint16
 	fallPeak                       float32
@@ -4115,7 +4113,7 @@ Direct GX dependencies: `internal/proto`, `internal/skilltiming`, `server/intern
 | [`sendInitialState`](../../server/internal/world/session.go#L903)<br>`func (s *Session) sendInitialState(st *CharacterStats)` | sendInitialState is the captured character-select sequence; afterwards the server->client direction switches to the expanded XOR scheme. |
 | [`handleMapLoaded`](../../server/internal/world/session.go#L956)<br>`func (s *Session) handleMapLoaded()` | handleMapLoaded (0x0201 from the client): send the map state, register the player and exchange visibility with nearby players. |
 | [`handleMotion`](../../server/internal/world/session.go#L1006)<br>`func (s *Session) handleMotion(p []byte)` | handleMotion (0x0506): sit/stand persist; other motions are one-shot. The sender gets its own echo, which the client needs to play it. |
-| [`handleLogout`](../../server/internal/world/session.go#L1038)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
+| [`handleLogout`](../../server/internal/world/session.go#L1045)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
 
 <details><summary>Type definitions and owned fields</summary>
 

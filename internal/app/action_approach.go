@@ -34,6 +34,9 @@ func (a *App) autoAttackNearest() bool {
 		}
 	}
 	a.state.Target = target
+	if !a.followOnly(a.state.Entities[target]) && a.deferAirAction(target, nil) {
+		return true
+	}
 	a.wv.autoRun = false
 	a.wv.approachSkill = nil
 	a.wv.approachNPC = false
@@ -60,7 +63,7 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 		v.approachTarget = 0
 		return true
 	}
-	if a.state.Self.Dead || in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.Space || in.HasKey(platform.KeyNumLock) {
+	if a.state.Self.Dead || in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeySpace) || in.HasKey(platform.KeyNumLock) {
 		v.approachTarget, v.travel = 0, false
 		return true
 	}
@@ -87,6 +90,10 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 		e := a.state.Entities[v.approachTarget]
 		if e == nil || e.Dead && (len(v.approachSkill) == 0 || e.Kind == game.KindMob) || a.state.Target != v.approachTarget {
 			v.approachTarget, v.travel = 0, false
+			return true
+		}
+		if !a.attackMovementAllowed() && !a.followOnly(e) {
+			v.travel = false
 			return true
 		}
 		goal = render.V3{e.X, e.Y, e.Z}
@@ -130,8 +137,7 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 	}
 	// An attack clicked during the previous swing's movement pause stays
 	// queued at the target until it can actually be requested.
-	if !v.approachNPC && !v.approachLoot && len(v.approachSkill) == 0 &&
-		(!a.attackMovementAllowed() || a.clock < v.attackMoveUntil) {
+	if !v.approachNPC && !v.approachLoot && len(v.approachSkill) == 0 && a.clock < v.attackMoveUntil {
 		v.travel = false
 		return true
 	}
@@ -228,6 +234,9 @@ func (a *App) approachSkillPacket(packet []byte) bool {
 	}
 	r := proto.NewReader(packet)
 	number, target := r.U8(), r.U32()
+	if a.deferAirAction(target, packet) {
+		return true
+	}
 	// A new command replaces any queued approach, including when the new
 	// spell is already in range. Otherwise the old spell could fire later.
 	a.wv.approachTarget, a.wv.approachSkill = 0, nil

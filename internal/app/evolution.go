@@ -86,6 +86,9 @@ func (a *App) evolutionCastDefinition(packet []byte) (sdata.Skill, bool) {
 
 func (a *App) approachEvolutionCast(packet []byte, target uint32, reach uint8, d sdata.Skill) bool {
 	v := a.wv
+	if a.deferAirAction(target, packet) {
+		return true
+	}
 	v.approachTarget, v.approachSkill, v.approachNPC, v.approachLoot = 0, nil, false, false
 	v.travel, v.autoRun = false, false
 	e := a.state.Entities[target]
@@ -104,7 +107,7 @@ func (a *App) approachEvolutionCast(packet []byte, target uint32, reach uint8, d
 }
 
 func (a *App) sendEvolutionCast(packet []byte, target uint32) bool {
-	if a.world == nil || !a.faceRequestedTarget(target) {
+	if a.world == nil || a.wv != nil && !a.attackMovementAllowed() || !a.faceRequestedTarget(target) {
 		return false
 	}
 	if a.wv != nil && !a.stopForAttack() {

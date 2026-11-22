@@ -6,14 +6,11 @@ import (
 	"time"
 )
 
-const attackMotionFreshness = 150 * time.Millisecond
-
-// Jumping alone is allowed. Only the attacker's actual horizontal travel is
-// relevant; the victim's jump or movement never grants damage immunity.
-func (s *Session) attackMovementAllowed(now time.Time) bool {
+// Attacks and spell casts require footing. Only the attacker is checked.
+func (s *Session) attackMovementAllowed() bool {
 	m := &s.movement
-	airborne := m.jumping || m.geometry != nil && !m.geometry.Supported(m.pos)
-	return !airborne || m.horizontalAt.IsZero() || now.Sub(m.horizontalAt) >= attackMotionFreshness
+	return !m.jumping && (m.ladder.Active || m.geometry == nil || m.geometry.Supported(m.pos) ||
+		m.pos[1] <= -1.5 && m.geometry.DeepWater(m.pos))
 }
 
 func (s *Session) commitAttackStop(now time.Time) {

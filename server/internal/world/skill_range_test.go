@@ -20,6 +20,9 @@ func spellCastRangeFixture(t *testing.T) (*Session, *db.SkillDef, *mapShard) {
 	s.char.MapID, s.char.PosX, s.char.PosY, s.char.PosZ = 60044, 0, 0, 0
 	g := &mapgeometry.Geometry{}
 	g.Reindex()
+	for _, tri := range collision.BlockerBox(collision.Vec{-100, -2, -100}, collision.Vec{100, 0, 100}, 0) {
+		g.Add(tri)
+	}
 	s.movement.geometry = g
 	s.movement.mapID = s.char.MapID
 	d := &db.SkillDef{SkillID: 64001, SkillLevel: 1, TypeEffect: typeEffectAttack, TypeDetail: detailAttack, TargetType: 3, AttackRange: 10, ReadyTime: 4, ResetTimeSeconds: 5, SuccessType: 1, SuccessValue: 100, DamageHP: 10}
@@ -277,9 +280,6 @@ func TestIdlePositionUpdatesDoNotLosePreparedSpell(t *testing.T) {
 	s.char.Wis = 60000
 	s.refillPools()
 
-	for _, tri := range collision.BlockerBox(collision.Vec{-100, -2, -100}, collision.Vec{100, 0, 100}, 0) {
-		s.movement.geometry.Add(tri)
-	}
 	for attempt := 0; attempt < 20; attempt++ {
 		s.lastActionAt = time.Time{}
 		s.skillCooldowns = map[uint16]time.Time{}
@@ -328,24 +328,27 @@ func TestIdleCastUpdatesCannotHideHorizontalWalking(t *testing.T) {
 	}
 }
 
-func TestAirborneCastRequiresStationaryHorizontalPosition(t *testing.T) {
+func TestJumpCancelsPreparationAndBlocksSpellUse(t *testing.T) {
 	s, _ := forgeRuleSession(t)
 	physics, now := playerPhysicsFixture(t)
 	s.char.MapID, s.char.PosX, s.char.PosY, s.char.PosZ = physics.char.MapID, physics.char.PosX, physics.char.PosY, physics.char.PosZ
 	s.movement = physics.movement
 	s.lastPositionSave = now
-	if !s.startMovementJump(now.Add(-30 * time.Millisecond)) {
-		t.Fatal("fixture could not jump in place")
-	}
 	s.cast = &pendingCast{number: 1, readyAt: now.Add(time.Minute)}
+	s.handleMotion(proto.MotionPacket(proto.MotionJump))
+	if !s.movement.jumping || s.cast != nil {
+		t.Fatal("jump failed to cancel the previous cast")
+	}
 	x, z := s.char.PosX, s.char.PosZ
 	s.handleCharacterMove(proto.MovePacket(4|proto.MotionFlag80, 0, x, s.char.PosY, z))
-	if !s.movement.jumping || s.cast == nil || !s.attackMovementAllowed(now) {
-		t.Fatal("vertical movement interrupted preparation or blocked an attack")
+	before := *s.char
+	s.beginSkill(packet.SkillUse, db.CharacterSkill{SkillID: 71, Level: 3, Number: 1}, &db.SkillDef{ReadyTime: 8}, 0, 0, nil)
+	if !s.movement.jumping || s.cast != nil || s.attackMovementAllowed() || *s.char != before {
+		t.Fatal("stationary jump started a spell or committed resources")
 	}
 	s.movement.budgetAt = now.Add(-time.Second)
 	s.handleCharacterMove(proto.MovePacket(4|proto.MotionFlag80, 0, x+.1, s.char.PosY, z))
-	if s.char.PosX <= x || s.cast != nil || s.attackMovementAllowed(time.Now()) {
-		t.Fatal("accepted horizontal jump movement should cancel preparation and block attacks", s.char.PosX, x)
+	if s.char.PosX <= x || s.cast != nil || s.attackMovementAllowed() {
+		t.Fatal("movement during the jump authorized combat", s.char.PosX, x)
 	}
 }

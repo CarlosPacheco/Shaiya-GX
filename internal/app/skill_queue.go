@@ -56,7 +56,7 @@ func (a *App) updateQueuedSkill(in *platform.Input) {
 		a.skills.queuedSkill = nil
 		return
 	}
-	if a.world == nil || !a.skillActionReady(q.key.ID, a.skillDefs[q.key]) {
+	if a.world == nil || !a.attackMovementAllowed() || !a.skillActionReady(q.key.ID, a.skillDefs[q.key]) {
 		return
 	}
 	a.skills.queuedSkill = nil

@@ -67,7 +67,7 @@ func (a *App) updateSkillDashes() bool {
 				v.place(render.V3(d.To))
 			}
 			delete(v.dashes, id)
-			if actor := a.playerActor(id); actor != nil {
+			if actor := a.playerActor(id); actor != nil && actor.PlayingAction(101) {
 				actor.ReleaseAction()
 			}
 			continue
@@ -77,7 +77,7 @@ func (a *App) updateSkillDashes() bool {
 		if actor != nil && !actor.PlayingAction(101) {
 			actor.PlaySkillAction(56, 101)
 		}
-		if actor != nil {
+		if actor != nil && actor.PlayingAction(101) {
 			actor.SetActionFrame(d.Frame(elapsed))
 		}
 		if id == a.state.SelfID {

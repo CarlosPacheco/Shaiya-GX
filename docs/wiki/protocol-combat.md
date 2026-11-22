@@ -1266,6 +1266,9 @@ func (a *worldBotArena) applyRequest(i int, payload []byte, target int, now time
 
 ```go
 func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.SkillDef, target, evolution uint32, p []byte) {
+	if !s.attackMovementAllowed() {
+		return
+	}
 	ch := s.char
 	number := k.Number
 	if def.TargetType == proto.SkillTargetRaid && !proto.SupportsRaidSkillTarget(def.TypeEffect) {
@@ -1280,9 +1283,6 @@ func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.Skil
 			}
 			s.sendSkillMessage(k.SkillID, 215)
 		}
-		return
-	}
-	if (def.TypeEffect == typeEffectAttack || def.TypeEffect == typeEffectDebuff) && !s.attackMovementAllowed(time.Now()) {
 		return
 	}
 	if kind := formOf(def); kind == proto.FormMonsterCopy || kind == proto.FormDisguise {

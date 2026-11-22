@@ -30,24 +30,25 @@ func TestAttackStopBlocksMovementButNotJumpGravity(t *testing.T) {
 	if s.char.PosX != x || s.char.PosY <= oldY {
 		t.Fatal("attack stop froze vertical motion or allowed XZ")
 	}
-	if !s.attackMovementAllowed(now.Add(450 * time.Millisecond)) {
-		t.Fatal("stationary jumping attacker blocked")
+	if s.attackMovementAllowed() {
+		t.Fatal("stationary jump allowed an airborne attack")
 	}
 	s.movement.credit = 1
 	_, _ = s.validatePlayerMovement(x+.1, s.char.PosY, z, 4|proto.MotionFlag80, 0, now.Add(900*time.Millisecond))
 	if s.char.PosX <= x {
 		t.Fatal("movement did not resume after recovery")
 	}
-	if s.attackMovementAllowed(now.Add(900 * time.Millisecond)) {
+	if s.attackMovementAllowed() {
 		t.Fatal("moving jumping attacker allowed")
 	}
-	// Forged stationary packets cannot instantly erase observed travel.
+	// A stationary motion sample cannot authorize a hit before landing.
 	_, _ = s.validatePlayerMovement(s.char.PosX, s.char.PosY, s.char.PosZ, 4|proto.MotionFlag80, 0, now.Add(910*time.Millisecond))
-	if s.attackMovementAllowed(now.Add(910 * time.Millisecond)) {
-		t.Fatal("stationary spoof bypassed moving-jump restriction")
+	if s.attackMovementAllowed() {
+		t.Fatal("stationary sample bypassed airborne restriction")
 	}
-	if !s.attackMovementAllowed(now.Add(1100 * time.Millisecond)) {
-		t.Fatal("actually stopped airborne attacker remained blocked")
+	s.advancePlayerVertical(now.Add(1600 * time.Millisecond))
+	if !s.attackMovementAllowed() {
+		t.Fatal("landing did not allow a new attack")
 	}
 }
 

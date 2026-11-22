@@ -517,8 +517,9 @@ func (c *Character) PlayBasicAttack(weapon, variant uint8) bool {
 
 // PlayAction uses the original ALT index. Death holds the final frame;
 // other confirmed one-shots return to locomotion after their duration.
+// A running jump keeps its clip until it finishes or the actor dies.
 func (c *Character) PlayAction(slot int, hold bool) bool {
-	if c == nil || c.hold && slot != 9 {
+	if c == nil || slot != 9 && (c.hold || c.PlayingAction(8)) {
 		return false
 	}
 	c.loadActions()

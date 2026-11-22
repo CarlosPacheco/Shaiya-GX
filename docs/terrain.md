@@ -107,6 +107,10 @@ falling uses run or walk only while horizontal movement is active. Releasing
 movement returns to the standard idle pose, which uncommanded falls also use.
 Further jump presses are ignored until the active clip finishes. Locomotion
 resumes in the same frame that the clip ends, including on the ground.
+The clip can finish even when losing support cancels the deferred impulse.
+Delayed combat replies and evasive key sequences leave the jump clip playing.
+A combat order entered during a jump in place waits for the end of the clip
+and a supported landing.
 
 The WLD `Objects` group is Phoenix's `Ladder` section. Its original SMOD models
 are loaded by both static and streamed rendering, with two-sided surfaces so

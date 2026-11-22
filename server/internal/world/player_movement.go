@@ -25,7 +25,6 @@ type playerMovement struct {
 	speedCorrectionPending         bool
 	jumping                        bool
 	jumpFall, fall, waterFall      float32
-	horizontalAt                   time.Time
 	motion                         uint8
 	direction                      uint16
 	fallPeak                       float32
@@ -90,7 +89,7 @@ func (s *Session) movementSpeed() float32 {
 	return speed
 }
 func (s *Session) startMovementJump(now time.Time) bool {
-	if s.initPlayerMovement(now) != nil {
+	if s.dash != nil || s.initPlayerMovement(now) != nil {
 		return false
 	}
 	m := &s.movement
@@ -422,9 +421,6 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		dy := min(max(y-m.pos[1], -limit), limit)
 		dy = min(dy, -1.5-m.pos[1])
 		m.pos, _ = m.geometry.MoveFeet(m.pos, mapgeometry.Position{0, dy, 0})
-	}
-	if (m.pos[0]-oldX)*(m.pos[0]-oldX)+(m.pos[2]-oldZ)*(m.pos[2]-oldZ) > .00000001 {
-		m.horizontalAt = now
 	}
 	if attackPaused {
 		motion = 0

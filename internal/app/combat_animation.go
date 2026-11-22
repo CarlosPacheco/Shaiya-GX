@@ -53,7 +53,7 @@ func (a *App) confirmedAnimation(p []byte) {
 			v.sitPending = false
 		}
 		if m.Motion == proto.MotionSitDown || m.Motion == proto.MotionStandUp {
-			if actor := a.playerActor(m.ID); actor != nil {
+			if actor := a.playerActor(m.ID); actor != nil && !actor.PlayingAction(8) {
 				action := 10
 				if m.Motion == proto.MotionStandUp {
 					action = 11
@@ -70,7 +70,7 @@ func (a *App) confirmedAnimation(p []byte) {
 			v.requestedSkills = nil
 		}
 
-		if actor := a.playerActor(r.Source); actor != nil {
+		if actor := a.playerActor(r.Source); actor != nil && !actor.PlayingAction(8) {
 			a.loadSkills()
 			d, _ := a.skillDefinition(r.ID, r.Level)
 			a.faceSkillTarget(r.Source, r.Target)
@@ -114,7 +114,7 @@ func (a *App) confirmedAnimation(p []byte) {
 		if r.Result > 4 || r.Result == 3 && r.Target == 0 {
 			return
 		}
-		if actor := a.playerActor(r.Source); actor != nil {
+		if actor := a.playerActor(r.Source); actor != nil && !actor.PlayingAction(8) {
 			a.loadSkills()
 			d, ok := a.skillDefs[sdata.SkillKey{ID: r.ID, Level: r.Level}]
 			if !ok {
@@ -165,7 +165,7 @@ func (a *App) confirmedAnimation(p []byte) {
 				}
 			}
 			a.attackVariant++
-			if !a.playFormAttack(result.Source, 0) && actor.PlayBasicAttack(typ, a.attackVariant) {
+			if !actor.PlayingAction(8) && !a.playFormAttack(result.Source, 0) && actor.PlayBasicAttack(typ, a.attackVariant) {
 				if result.Source == a.state.SelfID {
 					v.attackActionID = actor.ActionID()
 				}
