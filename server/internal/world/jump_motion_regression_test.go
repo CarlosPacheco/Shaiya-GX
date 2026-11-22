@@ -138,3 +138,29 @@ func TestJumpAcrossLedgeMatchesFrameByFramePrediction(t *testing.T) {
 		t.Fatalf("World left the predicted path: predicted %v, World %v (%s)", p, got, why)
 	}
 }
+
+// A ceiling ends the jump impulse; the fall restarts at -2.98 instead of
+// decelerating from zero (0x43bfa0 clears the impulse on any vertical contact).
+func TestCeilingEndsTheImpulseAndRestartsTheFall(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	g := s.movement.geometry
+	for _, tri := range []collision.Triangle{{{0, 2.2, 0}, {30, 2.2, 30}, {0, 2.2, 30}}, {{0, 2.2, 0}, {30, 2.2, 0}, {30, 2.2, 30}}} {
+		g.Add(tri)
+	}
+	if !s.startMovementJump(now) {
+		t.Fatal("jump rejected")
+	}
+	for range 60 {
+		now = now.Add(time.Second / 60)
+		s.advancePlayerVertical(now)
+		if !s.movement.jumping {
+			break
+		}
+	}
+	if s.movement.jumping || s.movement.fall != -2.98 && s.movement.fall > -2.98 {
+		t.Fatalf("the ceiling did not end the impulse: jumping=%v fall=%v pos=%v", s.movement.jumping, s.movement.fall, s.movement.pos)
+	}
+	if s.movement.pos[1] < .3 {
+		t.Fatal("the jump never reached the ceiling", s.movement.pos)
+	}
+}

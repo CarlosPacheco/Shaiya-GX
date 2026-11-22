@@ -189,7 +189,8 @@ func (s *Session) advancePlayerVertical(now time.Time) {
 		m.pos = next
 		if hit {
 			if dy > 0 {
-				m.jumpFall = min(m.jumpFall, -9)
+				// A ceiling ends the impulse; the fall restarts at -2.98 (0x43bfa0).
+				m.jumping, m.fall = false, -2.98
 			} else {
 				m.jumping = false
 				if m.fallTracking {

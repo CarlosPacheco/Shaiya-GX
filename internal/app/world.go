@@ -100,6 +100,7 @@ type worldView struct {
 	attackPose                  bool
 	attackActionID              uint64
 	jumping                     bool
+	jumpPending                 bool // jump clip started, impulse not yet applied
 	jumpFall                    float32
 	jumpFloor                   float32
 	partySelection              uint32
@@ -501,20 +502,31 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		return
 	}
 	jumpPressed := in.HasKey(platform.KeySpace)
-	if jumpPressed && !climbFrame && !blocked && !swimming && !v.jumping && !v.evading && speed > 0 && !a.state.Self.Dead && a.state.Self.Vehicle.State != proto.VehiclePassenger && v.world.PlayerSupported(v.pos) {
-		// MotionJump has no position. Flush unsent walking/running progress
-		// first, so the server grants the impulse at the same support surface.
-		if v.moving || dir.Len() > 0 {
-			if err := a.world.Send(v.movePacket(v.motion &^ proto.MotionFlag80)); err != nil {
-				a.backToLogin("Unable to send jump position.")
+	canJump := !climbFrame && !blocked && !swimming && !v.jumping && !v.evading && speed > 0 && !a.state.Self.Dead && a.state.Self.Vehicle.State != proto.VehiclePassenger && v.world.PlayerSupported(v.pos)
+	if v.jumpPending {
+		// One frame after the key: the impulse, and the jump request, begin.
+		if !canJump {
+			v.jumpPending = false
+			if v.self != nil && v.self.PlayingAction(8) {
+				v.self.ReleaseAction()
+			}
+		} else {
+			// MotionJump has no position. Flush unsent walking/running progress
+			// first, so the server grants the impulse at the same support surface.
+			if v.moving || dir.Len() > 0 {
+				if err := a.world.Send(v.movePacket(v.motion &^ proto.MotionFlag80)); err != nil {
+					a.backToLogin("Unable to send jump position.")
+					return
+				}
+			}
+			v.beginJump()
+			if err := a.world.Send(proto.MotionPacket(proto.MotionJump)); err != nil {
+				a.backToLogin("Unable to send jump.")
 				return
 			}
 		}
-		v.beginJump()
-		if err := a.world.Send(proto.MotionPacket(proto.MotionJump)); err != nil {
-			a.backToLogin("Unable to send jump.")
-			return
-		}
+	} else if jumpPressed && canJump {
+		v.startJumpAnimation()
 	}
 	if a.clock < v.attackMoveUntil {
 		dir = render.V3{}
