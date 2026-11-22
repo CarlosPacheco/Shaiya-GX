@@ -6,6 +6,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
 	"os"
 	"testing"
@@ -36,7 +37,7 @@ func TestSharedCombatSpeedAgainstIsolatedGX(t *testing.T) {
 		t.Fatal(err)
 	}
 	a := inputApp()
-	a.state, a.world, a.skillDefs = st, wire, defs
+	a.state, a.world, a.arc, a.skillDefs = st, wire, arc, defs
 	started := time.Now()
 	var stamps []time.Time
 	var kinds []proto.Opcode
@@ -116,11 +117,12 @@ func TestSharedCombatSpeedAgainstIsolatedGX(t *testing.T) {
 	if kinds[3] != proto.CharacterUserAutoAttack {
 		t.Fatal("basic did not follow skill", kinds, ids)
 	}
+	interval, _ := skilltiming.IntervalFor(st.Self.Speed.Attack, 5, true)
 	for i := 1; i < len(stamps); i++ {
 		gap := stamps[i].Sub(stamps[i-1])
-		if gap < 940*time.Millisecond || gap > 1500*time.Millisecond {
+		if gap < interval-60*time.Millisecond || gap > interval+500*time.Millisecond {
 			t.Fatal("Ext. Fast shared interval mismatch", i, gap)
 		}
 	}
-	t.Log("encrypted basic -> buffered spell -> buffered spell -> basic: shared 1000ms cap, raw packet flooding produced just one buffered skill")
+	t.Log("encrypted basic -> buffered spell -> buffered spell -> basic: shared animation-bound interval, raw packet flooding produced just one buffered skill")
 }

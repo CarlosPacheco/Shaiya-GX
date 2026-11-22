@@ -271,7 +271,7 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 	}
 	for _, tc := range []movementProbe{
 		{"diagonal", platform.Input{Down: "WE"}, render.V3{1, 0, 1}.Norm()},
-		{"right mouse strafe", platform.Input{Down: "D", RightDown: true, MouseLook: true}, render.V3{1, 0, 0}},
+		{"right mouse strafe", platform.Input{Down: "E", RightDown: true, MouseLook: true}, render.V3{1, 0, 0}},
 		{"mouse chord", platform.Input{MouseDown: true, RightDown: true, MouseLook: true}, render.V3{0, 0, 1}},
 	} {
 		v.place(start)
@@ -359,7 +359,7 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 	if a.chatOpen || a.gameMenu.DisplayPopupOpen() || a.gameMenu.Settings.DisplayMode != (platform.DisplayMode{Width: 800, Height: 600}) {
 		t.Fatal("resolution dropdown leaked keyboard input")
 	}
-	for _, in := range []platform.Input{{MouseX: mx + 230, MouseY: my + 500, Pressed: true, MouseDown: true}, {MouseX: mx + 230, MouseY: my + 500, Clicked: true}} {
+	for _, in := range []platform.Input{{MouseX: mx + 230, MouseY: my + 645, Pressed: true, MouseDown: true}, {MouseX: mx + 230, MouseY: my + 645, Clicked: true}} {
 		a.updateCharacters(&in, 1024, 734, .01)
 	}
 	if a.gameMenu.Page != ui.MenuMain || a.gameMenu.Settings.DisplayMode != (platform.DisplayMode{Width: 1024, Height: 768}) {

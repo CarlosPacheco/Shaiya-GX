@@ -133,7 +133,7 @@ with tempfile.TemporaryDirectory(prefix='rapture-sqlite-n2-') as temp:
   # A real duel uses only these temporary fixtures and verifies live 0x020E counters.
   with sqlite3.connect(db) as c:
    for n,(_,_,uid) in enumerate(users):
-    c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=?,PosY=78,PosZ=1762,Family=0,Job=0,Level=40,Str=2000,Dex=2000,HP=?,MP=1000,SP=500,Money=50000 WHERE UserUID=?',(578+n*2,500 if n==0 else 1,uid))
+    c.execute('UPDATE PS_GameData_Chars SET Map=1,PosX=?,PosY=78,PosZ=1762,Family=0,Job=0,Level=40,Str=2000,Dex=2000,HP=?,MP=1000,SP=500,Money=50000 WHERE UserUID=?',(578+n*.8,500 if n==0 else 1,uid))
   subprocess.run(['nice','go','test','-tags','integration','./internal/app','-run','^TestDuelVictoryWagersAgainstRapture$','-count=1','-v'],cwd=client,env=env,check=True,timeout=90)
   # Moving jumps must land without rewinding to a stale horizontal snapshot.
   with sqlite3.connect(db) as c:

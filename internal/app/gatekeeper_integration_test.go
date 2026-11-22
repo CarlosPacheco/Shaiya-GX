@@ -66,6 +66,7 @@ func TestGatekeeperAgainstRapture(t *testing.T) {
 		t.Fatal("invalid destination not refused")
 	}
 	oldX, oldZ := st.Self.X, st.Self.Z
+	a.worldControls(&platform.Input{}, 1024, 768)
 	x, y := a.gateUI.Origin(1024, 768)
 	a.worldControls(&platform.Input{MouseX: x + 440, MouseY: y + 90, Pressed: true, MouseDown: true}, 1024, 768)
 	a.worldControls(&platform.Input{MouseX: x + 440, MouseY: y + 90, Clicked: true}, 1024, 768)
@@ -184,6 +185,7 @@ func TestGatekeeperCrossMapAgainstRapture(t *testing.T) {
 		if !a.shop.talk {
 			t.Fatal("paid gatekeeper did not start with its conversation")
 		}
+		a.worldControls(&platform.Input{}, 1024, 768)
 		x, y := a.npcTalkUI.Origin(1024, 768)
 		a.worldControls(&platform.Input{MouseX: x + 63, MouseY: y + 344, Pressed: true, MouseDown: true}, 1024, 768)
 		a.worldControls(&platform.Input{MouseX: x + 63, MouseY: y + 344, Clicked: true}, 1024, 768)
@@ -196,6 +198,7 @@ func TestGatekeeperCrossMapAgainstRapture(t *testing.T) {
 		t.Fatal("fixture does not leave map for a fee")
 	}
 	oldMoney, oldMap := st.Details.Money, st.MapID
+	a.worldControls(&platform.Input{}, 1024, 768)
 	x, y := a.gateUI.Origin(1024, 768)
 	a.worldControls(&platform.Input{MouseX: x + 440, MouseY: y + 90, Pressed: true, MouseDown: true}, 1024, 768)
 	a.worldControls(&platform.Input{MouseX: x + 440, MouseY: y + 90, Clicked: true}, 1024, 768)

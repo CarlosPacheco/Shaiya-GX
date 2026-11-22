@@ -27,8 +27,7 @@ func verifyPotionReuse(t *testing.T, a *App, pump func(func() bool)) {
 	a.inventory.open = true
 	x, y := a.inventoryUI.Origin(1024, 734)
 	cx, cy, _, _ := ui.InventoryCell(key[0], key[1])
-	a.updateInventory(&platform.Input{MouseX: x + cx + 2, MouseY: y + cy + 2, Pressed: true, MouseDown: true}, 1024, 734)
-	a.updateInventory(&platform.Input{MouseX: x + cx + 2, MouseY: y + cy + 2, Clicked: true}, 1024, 734)
+	a.updateInventory(&platform.Input{MouseX: x + cx + 2, MouseY: y + cy + 2, RightPressed: true, RightDown: true}, 1024, 734)
 	a.inventory.open = false
 	if a.actionPacket(1) != nil {
 		t.Fatal("second shortcut bypassed pending item use")
