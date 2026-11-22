@@ -50,6 +50,7 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x021E` | [VehicleAnswer](protocol-actions.md#opcode-021e) | yes | yes | yes |
 | `0x0225` | [TeleportSavePositionList](protocol-actions.md#opcode-0225) | — | yes | — |
 | `0x0226` | [ChangeAppearance](protocol-actions.md#opcode-0226) | yes | yes | yes |
+| `0x0228` | [ChangeSexDenied](protocol-actions.md#opcode-0228) | — | yes | — |
 | `0x0303` | [CharacterShape](protocol-targets.md#opcode-0303) | — | yes | yes |
 | `0x0304` | [TargetMobGetState](protocol-targets.md#opcode-0304) | yes | yes | yes |
 | `0x0305` | [TargetMobHpUpdate](protocol-targets.md#opcode-0305) | yes | yes | yes |
@@ -341,6 +342,6 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0xF501` | [GmCommandError](protocol-chat.md#opcode-f501) | — | — | — |
 | `0xF702` | [GmCommandGetItem](protocol-chat.md#opcode-f702) | — | — | — |
 
-Inventory: **330 numeric opcodes**, **542 typed declarations**, **15 families**.
+Inventory: **331 numeric opcodes**, **544 typed declarations**, **15 families**.
 
 Regenerate with `python3 tools/generate_server_reference.py`; verify freshness with `--check`. The generator parses source for both operating systems and tests are excluded from implementation evidence. Source links track main; use Git history when comparing older binaries.

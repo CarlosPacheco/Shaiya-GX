@@ -120,7 +120,7 @@ func (p *ConnectedPlayer) visibilityPacket() []byte {
 
 **`0x7F03` — GXForgeQuote**
 
-Declarations: [packet.GXForgeQuote](../../server/internal/packet/packet.go#L341), [proto.GXForgeQuote](../../internal/proto/forge_quote.go#L6).
+Declarations: [packet.GXForgeQuote](../../server/internal/packet/packet.go#L342), [proto.GXForgeQuote](../../internal/proto/forge_quote.go#L6).
 
 Source notes: GXForgeQuote is a read-only preview; execution still validates live inventory.
 
@@ -1406,7 +1406,7 @@ func SummonCancelPacket() []byte {
 
 **`0x7F15` — GXPartyInviteName**
 
-Declarations: [packet.GXPartyInviteName](../../server/internal/packet/packet.go#L344), [proto.GXPartyInviteName](../../internal/proto/party.go#L107).
+Declarations: [packet.GXPartyInviteName](../../server/internal/packet/packet.go#L345), [proto.GXPartyInviteName](../../internal/proto/party.go#L107).
 
 Source notes: GXPartyInviteName is the global /party <name> invitation request. GXPartyInviteName is the GX /party <name> request: the party invitation of 0x0B09 without the proximity or same-map requirement. The target still receives the native 0x0B09 prompt.
 

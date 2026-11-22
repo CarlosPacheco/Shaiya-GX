@@ -525,7 +525,7 @@ func Op(payload []byte) Opcode {
 
 **`0x0401` — MapAddItem**
 
-Declarations: [packet.MapAddItem](../../server/internal/packet/packet.go#L105), [proto.MapAddItem](../../internal/proto/opcodes.go#L89).
+Declarations: [packet.MapAddItem](../../server/internal/packet/packet.go#L106), [proto.MapAddItem](../../internal/proto/opcodes.go#L90).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -591,7 +591,7 @@ type GroundItem struct {
 
 **`0x0402` — MapRemoveItem**
 
-Declarations: [packet.MapRemoveItem](../../server/internal/packet/packet.go#L106), [proto.MapRemoveItem](../../internal/proto/opcodes.go#L90).
+Declarations: [packet.MapRemoveItem](../../server/internal/packet/packet.go#L107), [proto.MapRemoveItem](../../internal/proto/opcodes.go#L91).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -631,7 +631,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0404` — WorldDay**
 
-Declarations: [packet.WorldDay](../../server/internal/packet/packet.go#L97), [proto.WorldDay](../../internal/proto/opcodes.go#L81).
+Declarations: [packet.WorldDay](../../server/internal/packet/packet.go#L98), [proto.WorldDay](../../internal/proto/opcodes.go#L82).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -661,7 +661,7 @@ func buildWorldDay() []byte {
 
 **`0x0406` — CharacterReviveInit**
 
-Declarations: [packet.CharacterReviveInit](../../server/internal/packet/packet.go#L107), [proto.CharacterReviveInit](../../internal/proto/opcodes.go#L91).
+Declarations: [packet.CharacterReviveInit](../../server/internal/packet/packet.go#L108), [proto.CharacterReviveInit](../../internal/proto/opcodes.go#L92).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

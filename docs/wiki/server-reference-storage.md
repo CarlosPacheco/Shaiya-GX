@@ -849,8 +849,9 @@ Direct GX dependencies: `internal/blessingrules`, `internal/enchantrules`, `inte
 | [`percentageSkillsMigration`](../../server/internal/db/migrations.go#L40)<br>`var percentageSkillsMigration string` | See the source definition and the subsystem ownership contract. |
 | [`restoreConsumablesMigration`](../../server/internal/db/migrations.go#L43)<br>`var restoreConsumablesMigration string` | See the source definition and the subsystem ownership contract. |
 | [`removeGrowthModesMigration`](../../server/internal/db/migrations.go#L46)<br>`var removeGrowthModesMigration string` | See the source definition and the subsystem ownership contract. |
-| [`migrations`](../../server/internal/db/migrations.go#L48)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
-| [`migrate`](../../server/internal/db/migrations.go#L210)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX migrations have their own transactional, checksummed ledger. |
+| [`consumableStacksMigration`](../../server/internal/db/migrations.go#L49)<br>`var consumableStacksMigration string` | See the source definition and the subsystem ownership contract. |
+| [`migrations`](../../server/internal/db/migrations.go#L51)<br>`var migrations` | See the source definition and the subsystem ownership contract. |
+| [`migrate`](../../server/internal/db/migrations.go#L214)<br>`func migrate(ctx context.Context, pool *sql.DB, steps []migration) error` | Base user_version=1 remains compatible with the distributed development seed. GX migrations have their own transactional, checksummed ledger. |
 
 <details><summary>Type definitions and owned fields</summary>
 

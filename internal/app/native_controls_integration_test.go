@@ -122,6 +122,19 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 	if st.Self.Sitting || other.Entities[st.SelfID].Sitting {
 		t.Fatal("jump changed posture")
 	}
+	// Drive the observer's animation clock through the completed jump before
+	// testing its next one-shot action.
+	b.frameDT = 1.0 / 60
+	actor := b.wv.actors[st.SelfID].character
+	for range 180 {
+		if !actor.PlayingAction(8) {
+			break
+		}
+		b.prepareRemotePlayers()
+	}
+	if actor.PlayingAction(8) {
+		t.Fatal("observer did not finish its jump animation")
+	}
 	// Walk/run, both strafes, backwards and autorun use normal movement snapshots.
 	a.updateWorld(&platform.Input{Keys: []platform.Key{platform.KeyTab}}, .01)
 	if !v.walking {

@@ -91,7 +91,7 @@ type UserEnter struct {
 
 **`0x0202` — UserLeave**
 
-Declarations: [proto.UserLeave](../../internal/proto/opcodes.go#L230).
+Declarations: [proto.UserLeave](../../internal/proto/opcodes.go#L231).
 
 Source notes: Opcodes not named in Rapture's catalog. client handler 0x0059cf70 case 0x0202
 
@@ -420,7 +420,7 @@ Declarations: [packet.SetStatPoint](../../server/internal/packet/packet.go#L88),
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L227)
 
-**S→C serializers:** [handleSetStatPoint (server/internal/world/skills.go)](../../server/internal/world/skills.go#L235)
+**S→C serializers:** [handleSetStatPoint (server/internal/world/skills.go)](../../server/internal/world/skills.go#L237)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L679)
 
@@ -430,7 +430,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleSetStatPoint — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L235)
+[Source definition](../../server/internal/world/skills.go#L237)
 
 ```go
 func (s *Session) handleSetStatPoint(p []byte) {
@@ -915,7 +915,7 @@ type BlessingUpdate struct {
 
 **`0x0211` — BlessInit**
 
-Declarations: [packet.BlessInit](../../server/internal/packet/packet.go#L131), [proto.BlessInit](../../internal/proto/opcodes.go#L116).
+Declarations: [packet.BlessInit](../../server/internal/packet/packet.go#L132), [proto.BlessInit](../../internal/proto/opcodes.go#L117).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1007,7 +1007,7 @@ Declarations: [packet.AutoAttackStop](../../server/internal/packet/packet.go#L39
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L231)
 
-**S→C serializers:** [beginSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L194), [syncVisibility (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L40)
+**S→C serializers:** [beginSkill (server/internal/world/skillcast.go)](../../server/internal/world/skillcast.go#L198), [syncVisibility (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L40)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1017,7 +1017,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>beginSkill — server/internal/world/skillcast.go</summary>
 
-[Source definition](../../server/internal/world/skillcast.go#L194)
+[Source definition](../../server/internal/world/skillcast.go#L198)
 
 ```go
 func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.SkillDef, target, evolution uint32, p []byte) {
@@ -1028,6 +1028,10 @@ func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.Skil
 	number := k.Number
 	if def.TargetType == proto.SkillTargetRaid && !proto.SupportsRaidSkillTarget(def.TypeEffect) {
 		s.sendSkillMessage(k.SkillID, 317)
+		return
+	}
+	if !def.MobSkill && !s.skillWeaponAllowed(def) {
+		s.sendSkillMessage(k.SkillID, msgUnavailableEquipment)
 		return
 	}
 	s.autoAttack = false
@@ -1818,7 +1822,7 @@ type Reader struct {
 
 **`0x0225` — TeleportSavePositionList**
 
-Declarations: [packet.TeleportSavePositionList](../../server/internal/packet/packet.go#L130), [proto.TeleportSavePositionList](../../internal/proto/opcodes.go#L115).
+Declarations: [packet.TeleportSavePositionList](../../server/internal/packet/packet.go#L131), [proto.TeleportSavePositionList](../../internal/proto/opcodes.go#L116).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1913,6 +1917,77 @@ func DecodeAppearanceChange(p []byte) (m AppearanceChange, err error) {
 type AppearanceChange struct {
 	ID                         uint32
 	Hair, Face, Height, Gender uint8
+}
+```
+
+</details>
+
+## Opcode 0228
+
+**`0x0228` — ChangeSexDenied**
+
+Declarations: [packet.ChangeSexDenied](../../server/internal/packet/packet.go#L97), [proto.ChangeSexDenied](../../internal/proto/opcodes.go#L81).
+
+Source notes: empty; SysMsg 862, Game.exe 0x56b820
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** [handleChangeAppearance (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L444)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>handleChangeAppearance — server/internal/world/inventory.go</summary>
+
+[Source definition](../../server/internal/world/inventory.go#L444)
+
+```go
+func (s *Session) handleChangeAppearance(p []byte) {
+	if len(p) < 8 || s.char == nil {
+		return
+	}
+	ch := s.char
+	bag, slot, hair, face, height, sex := p[2], p[3], p[4], p[5], p[6], p[7]
+	if !isValidItemPosition(bag, slot) {
+		return
+	}
+	i := findItem(s.items, bag, slot)
+	if i < 0 || s.items[i].Count == 0 || !isConsumableType(s.items[i].Type) {
+		return
+	}
+	def := db.MustDefs().Item(s.items[i].Type, s.items[i].TypeID)
+	if def == nil || (def.Special != specialChangeAppearance && def.Special != specialChangeSex) {
+		return
+	}
+	newSex := ch.Gender
+	if def.Special == specialChangeSex {
+		if sex > 1 {
+			return
+		}
+		newSex = sex
+		if s.genderRestrictedEquipment() {
+			// Client 0x56b820 (opcode 0x0228) shows SysMsg 862.
+			s.send(packet.New(packet.ChangeSexDenied).MustFinish(), "0x0228 change sex denied")
+			return
+		}
+	}
+	ch.Hair, ch.Face, ch.Height, ch.Gender = hair, face, height, newSex
+	if err := db.SaveAppearance(ch.ID, hair, face, height, newSex); err != nil {
+		s.log.Printf("GX Server World failed to save appearance: %v", err)
+		return
+	}
+	res, err := s.consumeOne(i)
+	if err != nil {
+		s.log.Printf("GX Server World failed to consume item: %v", err)
+	}
+	s.syncPlayer()
+	s.log.Printf("GX Server World change appearance character_id=%d hair=%d face=%d height=%d sex=%d", ch.ID, hair, face, height, newSex)
+	s.send(buildUseItemResult(ch.ID, &res), "0x050A use item (change appearance)")
+	frame := buildChangeAppearance(ch.ID, hair, face, height, newSex)
+	s.broadcastNear(frame, "0x0226 change appearance", true)
 }
 ```
 

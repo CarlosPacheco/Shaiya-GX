@@ -77,7 +77,7 @@ func TestLoadingAndCharacterOptionsGL(t *testing.T) {
 		t.Fatal("character Options button did not open game menu")
 	}
 	mx, my := a.gameMenu.Origin(1024, 768)
-	for _, in := range []platform.Input{{MouseX: mx + 70, MouseY: my + 80, Pressed: true, MouseDown: true}, {MouseX: mx + 70, MouseY: my + 80, Clicked: true}} {
+	for _, in := range []platform.Input{{MouseX: mx + 100, MouseY: my + 25, Pressed: true, MouseDown: true}, {MouseX: mx + 100, MouseY: my + 25, Clicked: true}} {
 		a.Update(&in, 1024, 768, .016)
 	}
 	if a.gameMenu.Page != ui.MenuGraphics {

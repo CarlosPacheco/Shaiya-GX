@@ -40,6 +40,14 @@ func TestSpinComboAndStingerAgainstSQLite(t *testing.T) {
 		}
 	}
 	pool, _ := db.Pool(db.GameData)
+	// Wind Spin and its follow-up both allow the two-handed sword.
+	updated, err := pool.Exec("UPDATE PS_GameData_CharItems SET ItemID=2001, Type=2, TypeID=1 WHERE CharID=? AND Bag=0 AND Slot=5 AND Del=0", id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count, err := updated.RowsAffected(); err != nil || count != 1 {
+		t.Fatalf("equip the combo fixture: updated %d rows, error %v", count, err)
+	}
 	for i, skill := range []uint16{38, 156, 56, 40} {
 		if _, err := pool.Exec("INSERT INTO PS_GameData_CharSkills(CharID,SkillID,SkillLevel,Number,Delay,Del) VALUES(?,?,1,?,0,0)", id, skill, 70+i); err != nil {
 			t.Fatal(err)
