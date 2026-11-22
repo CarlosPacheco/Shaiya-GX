@@ -106,7 +106,7 @@ void main() {
 const spriteVertexBytes = int(unsafe.Sizeof(spriteVertex{}))
 
 func NewSprites(maxQuads int) (*Sprites, error) {
-	p, err := Program(spriteVS, spriteFS)
+	p, err := Program("UI sprites", spriteVS, spriteFS)
 	if err != nil {
 		return nil, err
 	}

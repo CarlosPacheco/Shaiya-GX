@@ -44,8 +44,9 @@ func Open(c Config) (*Window, error) {
 			c.Width, c.Height = saved.Width, saved.Height
 		}
 	}
+	log.Print("Initializing GLFW")
 	if err := glfw.Init(); err != nil {
-		return nil, fmt.Errorf("glfw: %w", err)
+		return nil, fmt.Errorf("initialize GLFW: %w", err)
 	}
 	glfw.WindowHint(glfw.ContextVersionMajor, 4)
 	glfw.WindowHint(glfw.ContextVersionMinor, 5)
@@ -58,12 +59,20 @@ func Open(c Config) (*Window, error) {
 	if c.Hidden {
 		glfw.WindowHint(glfw.Visible, glfw.False)
 	}
+	contextAPI := "OpenGL"
+	if glfw.GetPlatform() == glfw.PlatformWin32 {
+		contextAPI = "WGL"
+	}
+	log.Printf("Creating %s context: OpenGL 4.5 core forward-compatible, window=%dx%d debug=%t hidden=%t vsync=%t",
+		contextAPI, c.Width, c.Height, c.Debug, c.Hidden, c.VSync)
 	w, err := glfw.CreateWindow(c.Width, c.Height, c.Title, nil, nil)
 	if err != nil {
 		glfw.Terminate()
-		return nil, fmt.Errorf("window (OpenGL 4.5 core is required): %w", err)
+		return nil, fmt.Errorf("create %s context (OpenGL 4.5 core is required): %w", contextAPI, err)
 	}
 	w.MakeContextCurrent()
+	fw, fh := w.GetFramebufferSize()
+	log.Printf("OpenGL context current; framebuffer=%dx%d", fw, fh)
 	if c.VSync {
 		glfw.SwapInterval(1)
 	} else {

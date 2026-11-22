@@ -75,6 +75,13 @@ The publication check inspects staged source and, with `--history`, reachable hi
 
 ## Local assets and graphics checks
 
+When reporting a graphics problem, include `logs/client.log` from beside the
+client executable. It records the context request, graphics driver, enabled paths
+and the names of programs before compilation and linking. When the regular log
+cannot be written, the startup error shows the fallback path. Reproduce once
+with the default settings. If the client can create a context, `-gldebug` adds
+OpenGL driver messages to a second run.
+
 Place the converted loose `data/` directory beside the Shaiya GX executable, or set `SHAIYA_DATA` / `-data` to that directory. The game no longer reads SAH/SAF. See [data formats and conversion](data-formats.md). The client loads external fonts from `data/fonts/`. Release packaging installs the versioned `resources/fonts/` pack, including its coverage manifest and licenses; no OS font installation is used.
 
 ```sh

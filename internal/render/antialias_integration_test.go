@@ -79,7 +79,7 @@ func TestTemporalAAHistoryDepthAndStateGL(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	shader, e := Program(`#version 450 core
+	shader, e := Program("temporal antialiasing test scene", `#version 450 core
  uniform vec2 offset;uniform vec2 jitter;out vec2 uv;
  void main(){vec2 p[3]=vec2[3](vec2(-.8,-.8),vec2(.8,-.8),vec2(.8,.8));uv=p[gl_VertexID];gl_Position=vec4(uv+offset+jitter,.4,1);}`, `#version 450 core
  in vec2 uv;out vec4 frag;void main(){frag=vec4(.2,.8,.4,1);}`)

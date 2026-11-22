@@ -150,7 +150,7 @@ type FXAA struct {
 }
 
 func NewFXAA() (*FXAA, error) {
-	p, err := Program(glowVS, fxaaFS)
+	p, err := Program("FXAA", glowVS, fxaaFS)
 	if err != nil {
 		return nil, err
 	}

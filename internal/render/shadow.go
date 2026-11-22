@@ -54,7 +54,7 @@ void main() {
 }`
 
 func NewShadowMap() (*ShadowMap, error) {
-	p, err := Program(shadowVS, shadowFS)
+	p, err := Program("character shadow", shadowVS, shadowFS)
 	if err != nil {
 		return nil, err
 	}

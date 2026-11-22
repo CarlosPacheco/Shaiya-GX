@@ -121,7 +121,7 @@ func (t *WaterTarget) PresentBrightness(level int) {
 		return
 	}
 	if t.toneProgram == 0 {
-		p, err := Program(glowVS, `#version 450 core
+		p, err := Program("water tone", glowVS, `#version 450 core
 layout(binding=0) uniform sampler2D sceneTexture;
 uniform float exponent;
 in vec2 vUV;
