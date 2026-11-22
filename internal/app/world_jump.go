@@ -34,10 +34,7 @@ func (v *worldView) advanceJump(dt float32) bool {
 			if ascending {
 				v.jumpFall = min(v.jumpFall, -9)
 			} else {
-				v.jumping = false
-				if v.self != nil && v.self.PlayingAction(8) {
-					v.self.ReleaseAction()
-				}
+				v.jumping = false // the clip runs to its end, as in the original
 			}
 		}
 		pos = resolved
@@ -48,9 +45,6 @@ func (v *worldView) advanceJump(dt float32) bool {
 	if pos[1] <= floor {
 		pos[1] = floor
 		v.jumping = false
-		if v.self != nil && v.self.PlayingAction(8) {
-			v.self.ReleaseAction()
-		}
 	}
 	changed := pos != v.pos
 	v.place(pos)

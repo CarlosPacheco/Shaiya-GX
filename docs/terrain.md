@@ -88,7 +88,7 @@ update the physical position immediately. While walking or running, the visible
 model blends small corrections across clear ground over 180 ms. Falls, blocked
 paths and large corrections snap to the server position.
 
-Jump presentation plays original ALT action 8 once. Its animation duration is
+Jump presentation plays original ALT action 8 once and lets it run to its end even after the character lands: the 0.8 s clip outlasts the 0.69 s of a flat jump, and the original ends the jump state only when the clip finishes (0x418030, 0x419f60), so landing shows its last frames instead of cutting to idle. Its animation duration is
 independent of the physical time spent airborne. Once it finishes, continued
 falling uses run or walk only while horizontal movement is active. Releasing
 movement returns to the standard idle pose; uncommanded falls also use idle. Switching clips at action completion prevents a

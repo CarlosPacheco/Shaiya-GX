@@ -284,9 +284,6 @@ func (a *App) confirmedPosition(p []byte) {
 		v.motion = correction.Motion
 		v.waterFallSpeed = 0
 		v.sendT = .1
-		if !v.jumping && v.self != nil && v.self.PlayingAction(8) {
-			v.self.ReleaseAction()
-		}
 	case proto.CharacterMove, proto.CharacterMapTeleport, proto.CharacterResurrect:
 		if proto.NewReader(p).U32() != a.state.SelfID {
 			return
