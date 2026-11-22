@@ -20,7 +20,13 @@ func ParseSysMsg(b []byte) SysMsg {
 	for i := range u {
 		u[i] = uint16(b[2*i]) | uint16(b[2*i+1])<<8
 	}
-	return parseMessageTable(string(utf16.Decode(u)))
+	m := parseMessageTable(string(utf16.Decode(u)))
+	for id, v := range Defaults {
+		if _, ok := m[id]; !ok {
+			m[id] = v
+		}
+	}
+	return m
 }
 
 func parseMessageTable(content string) SysMsg {
