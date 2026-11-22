@@ -18,12 +18,11 @@ func DrawCalls() int          { return drawCalls }
 // FrameMeter uses timestamp pairs and only reads queries reported available.
 // A busy ring skips timing instead of waiting for the GPU.
 type FrameMeter struct {
-	queries            [4][2]uint32
-	pending            [4]bool
-	serial             [4]uint64
-	sequence, lastRead uint64
-	active             int
-	milliseconds       float64
+	queries [4][2]uint32
+	pending [4]bool
+	active  int
+	totalMS float64
+	samples int
 }
 
 func NewFrameMeter() *FrameMeter {
@@ -47,9 +46,9 @@ func (m *FrameMeter) Begin() {
 		var start, end uint64
 		gl.GetQueryObjectui64v(m.queries[i][0], gl.QUERY_RESULT, &start)
 		gl.GetQueryObjectui64v(m.queries[i][1], gl.QUERY_RESULT, &end)
-		if m.serial[i] > m.lastRead && end >= start {
-			m.milliseconds = float64(end-start) / 1e6
-			m.lastRead = m.serial[i]
+		if end >= start {
+			m.totalMS += float64(end-start) / 1e6
+			m.samples++
 		}
 		m.pending[i] = false
 	}
@@ -67,16 +66,18 @@ func (m *FrameMeter) End() {
 	}
 	i := m.active
 	gl.QueryCounter(m.queries[i][1], gl.TIMESTAMP)
-	m.sequence++
-	m.serial[i] = m.sequence
 	m.pending[i] = true
 	m.active = -1
 }
-func (m *FrameMeter) Milliseconds() float64 {
+
+// TakeTimingSamples returns and clears the completed GPU timings since the last call.
+func (m *FrameMeter) TakeTimingSamples() (totalMS float64, samples int) {
 	if m == nil {
-		return 0
+		return 0, 0
 	}
-	return m.milliseconds
+	totalMS, samples = m.totalMS, m.samples
+	m.totalMS, m.samples = 0, 0
+	return totalMS, samples
 }
 func (m *FrameMeter) Delete() {
 	if m == nil {

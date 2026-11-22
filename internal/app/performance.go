@@ -10,14 +10,15 @@ import (
 )
 
 type performanceHUD struct {
-	meter                       *render.FrameMeter
-	updateCPU, drawCPU          time.Duration
-	elapsed, cpuTotal, gpuTotal float64
-	frames                      int
-	fps, frameMS, cpuMS, gpuMS  float64
-	ram, vram                   uint64
-	ramTotal, vramTotal         uint64
-	calls                       int
+	meter                      *render.FrameMeter
+	updateCPU, drawCPU         time.Duration
+	elapsed, cpuTotal          float64
+	frames                     int
+	fps, frameMS, cpuMS, gpuMS float64
+	gpuSamples                 int
+	ram, vram                  uint64
+	ramTotal, vramTotal        uint64
+	calls                      int
 }
 
 func (p *performanceHUD) sample(dt float64) {
@@ -27,13 +28,17 @@ func (p *performanceHUD) sample(dt float64) {
 	p.elapsed += dt
 	p.frames++
 	p.cpuTotal += float64(p.updateCPU+p.drawCPU) / float64(time.Millisecond)
-	p.gpuTotal += p.meter.Milliseconds()
 	if p.elapsed < .25 {
 		return
 	}
 	p.fps = float64(p.frames) / p.elapsed
 	p.frameMS = p.elapsed * 1000 / float64(p.frames)
-	p.cpuMS, p.gpuMS = p.cpuTotal/float64(p.frames), p.gpuTotal/float64(p.frames)
+	p.cpuMS = p.cpuTotal / float64(p.frames)
+	gpuTotal, gpuSamples := p.meter.TakeTimingSamples()
+	p.gpuMS, p.gpuSamples = 0, gpuSamples
+	if gpuSamples > 0 {
+		p.gpuMS = gpuTotal / float64(gpuSamples)
+	}
 	p.ram, _ = platform.ResidentBytes()
 	p.vram = render.GPUBytes()
 	if p.ramTotal == 0 {
@@ -41,7 +46,7 @@ func (p *performanceHUD) sample(dt float64) {
 	}
 	p.vramTotal = render.GPUCapacity()
 	p.calls = render.DrawCalls()
-	p.elapsed, p.cpuTotal, p.gpuTotal, p.frames = 0, 0, 0, 0
+	p.elapsed, p.cpuTotal, p.frames = 0, 0, 0
 }
 func (a *App) drawPerformance(w int) {
 	p := &a.performance
@@ -50,7 +55,7 @@ func (a *App) drawPerformance(w int) {
 		fps = fmt.Sprintf("%.0f", p.fps)
 	}
 	gpu := "--"
-	if p.gpuMS > 0 {
+	if p.gpuSamples > 0 {
 		gpu = fmt.Sprintf("%.1f", p.gpuMS)
 	}
 	ram := "--"
