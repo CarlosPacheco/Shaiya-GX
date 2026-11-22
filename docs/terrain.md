@@ -82,6 +82,10 @@ on the same support surface, including small steps. The client checks the shared
 support geometry before predicting another jump; the server independently
 requires support and retains ownership of vertical physics.
 
+Rising terrain can lift a running jumper without ending the upward impulse.
+Client and World treat upward contact as a ceiling when it reduces the
+requested vertical movement. Ground contact ends the jump on descent.
+
 The server continues broadcasting gravity and landing to viewers. An active
 owner no longer receives an unconditional landing correction containing X/Z
 from its previous 10-Hz sample: that stale snapshot rewound newer predicted
@@ -108,7 +112,8 @@ movement returns to the standard idle pose, which uncommanded falls also use.
 Further jump presses are ignored until the active clip finishes. Locomotion
 resumes in the same frame that the clip ends, including on the ground.
 The clip can finish even when losing support cancels the deferred impulse.
-Delayed combat replies and evasive key sequences leave the jump clip playing.
+Delayed combat replies, including rejected skills, and evasive key sequences
+leave the jump clip playing.
 A combat order entered during a jump in place waits for the end of the clip
 and a supported landing.
 

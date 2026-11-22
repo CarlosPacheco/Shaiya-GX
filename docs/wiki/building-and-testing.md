@@ -11,7 +11,12 @@ sudo apt-get install build-essential pkg-config libgl1-mesa-dev xorg-dev libwayl
 ./tools/build.sh
 ```
 
-The script vets, builds client utilities into `build/`, builds server programs into `server/build/`, and runs ordinary unit tests. On other distributions install equivalent packages. The client needs an OpenGL 4.5-capable GPU/driver. GX Server is terminal-only and does not require these development packages. Build only the server with `./server/tools/build.sh` (Go alone, CGO=0).
+The script runs vet and unit tests. It builds `build/Shaiya GX`,
+`build/shaiyacli`, `build/assets`, `build/GX Studio/GX Studio` and the three
+GX Server programs in `server/build/`. On other distributions install the
+equivalent packages. The client needs an OpenGL 4.5-capable GPU and driver.
+To build the terminal-only server programs with Go and CGO disabled, use
+`./server/tools/build.sh`.
 
 ## Portable runtime requirements
 
@@ -36,7 +41,11 @@ $env:CGO_ENABLED = '1'
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/build.ps1
 ```
 
-Do not use a 32-bit compiler or MSVC `cl` as the CGO compiler. Output: `build/Shaiya GX.exe`, `build/shaiyacli.exe`, `build/assets.exe` and `server/build/gx_{login,world,console}.exe`. Server programs use CGO=0; building only the server does not require GCC. Audio uses the Windows backend; ALSA is only a Linux dependency. Run from a normal desktop with your GPU vendor's OpenGL 4.5 driver.
+Use 64-bit MinGW-w64 GCC for CGO. The script builds `build/Shaiya GX.exe`,
+`build/shaiyacli.exe`, `build/assets.exe`, `build/GX Studio/GX Studio.exe` and
+`server/build/gx_{login,world,console}.exe`. Server programs build with Go and
+CGO disabled. The client uses Windows audio. Run the client from a desktop
+session with your GPU vendor's OpenGL 4.5 driver.
 
 ## Windows cross build from Linux
 
