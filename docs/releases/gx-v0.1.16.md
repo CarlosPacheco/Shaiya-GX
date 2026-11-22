@@ -23,6 +23,6 @@ Changes since the gx-v0.1.15 full portable.
 
 - `/cure` clears current debuffs. `/char` and `/attack` control concealment and attackability. Protected GMs are ignored by guards, and `/attack on` also prevents monster aggro. `/turbo` reports that fall damage and the server's horizontal speed limit are disabled while active.
 
-The GitHub downloads include native Windows and Linux builds of Shaiya GX, GX Studio and GX Server, plus fonts, server resources and the schema-35 development seed. Supply matching loose client game data for the GitHub binary packages.
+The GitHub downloads include native Windows and Linux builds of Shaiya GX, GX Studio and GX Server, plus fonts, server resources and the schema-35 development seed. The [complete gx-v0.1.16 portable on Google Drive](https://drive.google.com/file/d/1-yK2bZAsWv3nKK-RBryVa-tstWfU3pRz/view?usp=sharing) includes the matching loose client game data and interface artwork.
 
 [Upgrade guide](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/releases/gx-v0.1.16-upgrade.md) · [Quickstart](https://github.com/Spelunkern/Shaiya-GX/blob/main/docs/quickstart.md)
