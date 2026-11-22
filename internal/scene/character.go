@@ -816,8 +816,10 @@ func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
 			k.SetAmbient(ambient)
 		}
 	}
-	if c.cloak != nil {
-		c.cloak.draw(s, c.World, c.Concealed)
+	// A concealed character (stealth, GM char mode) shows neither its cloak nor
+	// the emblem printed on it; only the faded body remains.
+	if c.cloak != nil && !c.Concealed {
+		c.cloak.draw(s, c.World, false)
 	}
 	if !c.Mounted {
 		c.drawAttachments(s, finals)
