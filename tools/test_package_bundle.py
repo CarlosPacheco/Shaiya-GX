@@ -74,6 +74,7 @@ class BinaryOnlyBundleTests(unittest.TestCase):
                     (fonts/'pack.json').write_text(json.dumps({'files': {'README.md': {}, 'LICENSE.txt': {}}}))
                     bindings=source/'data/Vehicle';bindings.mkdir()
                     (bindings/'bones.ini').write_text('[Human]\n0=25,-1\n')
+                    (source/'data/Tip.INI').write_text('[Tips]\n1=Packaged tip\n')
                     (source/'data'/RETIRED_STACK_CSV).write_text(stem)
                 else:
                     (source/'build').mkdir();(source/'data').mkdir()
@@ -105,7 +106,7 @@ class BinaryOnlyBundleTests(unittest.TestCase):
                 self.assertEqual(validate.call_args.args[0].parts[-2:],('data','fonts'))
             self.assertTrue((output/'Client/Shaiya GX').is_file())
             self.assertTrue((output/'Client/Shaiya GX.exe').is_file())
-            self.assertEqual({p.name for p in (output/'Client/data').iterdir()},{'fonts','Vehicle','Filter.INI'})
+            self.assertEqual({p.name for p in (output/'Client/data').iterdir()},{'fonts','Vehicle','Filter.INI','Tip.INI'})
             self.assertEqual((output/'Client/data/Filter.INI').read_text(encoding='utf-8'), FILTER_TEMPLATE)
             self.assertFalse((output/'Client/data/Cash.SData').exists())
             self.assertTrue((output/'Server/data/rapture.sqlite').is_file())
@@ -116,6 +117,7 @@ class BinaryOnlyBundleTests(unittest.TestCase):
             data=root/'local-data';(data/'fonts').mkdir(parents=True)
             (data/'fonts/LICENSE.txt').write_text('local licensed font data')
             (data/'Cash.SData').write_bytes(b'local original catalog')
+            (data/'tip.ini').write_text('[Tips]\n1=Custom tip\n')
             (data/'fonts/Arial.TTF').write_bytes(b'local regular face')
             (data/'fonts/arialbd.ttf').write_bytes(b'local bold face')
             (data/'World').mkdir()
@@ -127,8 +129,9 @@ class BinaryOnlyBundleTests(unittest.TestCase):
             (data/RETIRED_STACK_CSV.upper()).write_text('old loose stack limits')
             with patch('package_bundle.validate'):
                 prepare(archives,data,root/'with-data')
-            for relative in ('fonts/LICENSE.txt', 'Cash.SData'):
+            for relative in ('fonts/LICENSE.txt', 'Cash.SData', 'tip.ini'):
                 self.assertEqual((data/relative).read_bytes(), (root/'with-data/Client/data'/relative).read_bytes())
+            self.assertFalse((root/'with-data/Client/data/Tip.INI').exists())
             fonts = root/'with-data/Client/data/fonts'
             self.assertFalse((fonts/'Arial.TTF').exists())
             self.assertFalse((fonts/'arialbd.ttf').exists())

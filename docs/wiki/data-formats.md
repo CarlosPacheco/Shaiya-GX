@@ -253,3 +253,18 @@ or add its message in the same UTF-16LE format, then restart the client.
 ## Loading pictures
 
 The random loading pool is every `random_loadingNN.png` in `interface/`. `MapScreens.INI`, beside `sysmsg-uni.txt`, lists `MapID=file` lines naming an interface picture for specific maps; invalid entries are ignored. Original EP5.4 only special-cased map 64 (`loading64.jpg`).
+
+## Loading tips
+
+Edit `data/Tip.INI` beside `sysmsg-uni.txt` in UTF-8. Assign one message to
+each unique key under `[Tips]`.
+
+```ini
+[Tips]
+1=Press U to open your quest journal.
+2=Use the mouse wheel to zoom the camera in or out.
+```
+
+Each loading screen randomly selects one nonempty message and keeps it
+visible until loading finishes. An empty or missing file leaves the progress
+bar without text. Restart the client after editing the file.

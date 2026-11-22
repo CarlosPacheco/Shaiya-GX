@@ -50,6 +50,7 @@ def package_client(platform, output):
         fonts = stage/'data/fonts'
         shutil.copytree(FONT_PACK, fonts)
         (stage/'data/Filter.INI').write_text(FILTER_TEMPLATE, encoding='utf-8', newline='\n')
+        shutil.copy2(ROOT/'resources/client/Tip.INI', stage/'data')
         remove_readmes(fonts)
         validate(fonts)
         shutil.copytree(ROOT/'resources/vehicle', stage/'data/Vehicle')

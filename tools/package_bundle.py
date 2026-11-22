@@ -100,6 +100,8 @@ def prepare(archives, data, output, *, require_pin=False):
         merge(extracted / 'gx-client-windows-amd64', client)
         if data is not None:
             print('Copying local loose game data...', flush=True)
+            if any(path.is_file() and path.name.casefold() == 'tip.ini' for path in data.iterdir()):
+                (client / 'data/Tip.INI').unlink(missing_ok=True)
             def exclude_local_data(directory, names):
                 excluded = {RETIRED_STACK_CSV}
                 if Path(directory).parent == data and Path(directory).name.casefold() == 'fonts':

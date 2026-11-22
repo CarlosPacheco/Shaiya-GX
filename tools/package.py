@@ -31,6 +31,8 @@ def main():
             name for name in names if name.casefold() == RETIRED_STACK_CSV])
     if not (output/'data/Filter.INI').exists():
         (output/'data/Filter.INI').write_text(FILTER_TEMPLATE, encoding='utf-8', newline='\n')
+    if not any(path.name.casefold() == 'tip.ini' for path in (output/'data').iterdir()):
+        shutil.copy2(ROOT/'resources/client/Tip.INI', output/'data')
     validate()
     shutil.copytree(FONT_PACK,output/'data/fonts',dirs_exist_ok=True)
     staged.replace(output/'Shaiya GX')

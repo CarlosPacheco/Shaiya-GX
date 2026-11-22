@@ -19,7 +19,7 @@ func NewLoadingScreen(t Textures) *LoadingScreen {
 }
 
 // Draw shows art when given, otherwise the default picture.
-func (l *LoadingScreen) Draw(s *render.Sprites, f *Font, solid *render.Texture, w, h int, progress float32, status string, art ...*render.Texture) {
+func (l *LoadingScreen) Draw(s *render.Sprites, f *Font, solid *render.Texture, w, h int, progress float32, tip string, art ...*render.Texture) {
 	picture := l.art
 	if len(art) > 0 && art[0] != nil {
 		picture = art[0]
@@ -52,5 +52,11 @@ func (l *LoadingScreen) Draw(s *render.Sprites, f *Font, solid *render.Texture, 
 	if p > 0 {
 		draw(l.light, 58+430*p-20, 31+9-26.5, 40, 53, 1)
 	}
-	f.DrawOutlined(s, status, int(x+276*scale)-f.Width(status)/2, int(y+68*scale), [4]float32{.98, .93, .8, 1})
+	if tip != "" {
+		center := w / 2
+		textY := int(y + 68*scale)
+		for i, line := range wrapLines(f, tip, max(1, w-32)) {
+			f.DrawOutlined(s, line, center-f.Width(line)/2, textY+i*f.Height, [4]float32{.98, .93, .8, 1})
+		}
+	}
 }
