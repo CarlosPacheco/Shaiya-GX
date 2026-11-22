@@ -53,3 +53,23 @@ func TestMessageHeaderDragsOnlyWhenMovable(t *testing.T) {
 		t.Fatal("moved position lost when the dialog reopened")
 	}
 }
+
+func TestDeathDialogHeaderDrags(t *testing.T) {
+	const w, h = 1024, 768
+	d, err := NewDeathDialog(marketTextures{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	d.Set(DeathSingle, "dead")
+	x, y := d.Origin(w, h)
+	d.Update(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + 20, MouseY: y + 10}, w, h)
+	d.Update(&platform.Input{MouseDown: true, MouseX: x + 220, MouseY: y + 110}, w, h)
+	d.Update(&platform.Input{Clicked: true, MouseX: x + 220, MouseY: y + 110}, w, h)
+	if nx, ny := d.Origin(w, h); nx != x+200 || ny != y+100 {
+		t.Fatalf("header drag did not move the death dialog: %d,%d", nx, ny)
+	}
+	d.Reset()
+	if nx, ny := d.Origin(w, h); nx != x+200 || ny != y+100 {
+		t.Fatal("position lost when the dialog was reset")
+	}
+}

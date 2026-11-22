@@ -61,6 +61,8 @@ type worldView struct {
 	transforms                  map[uint32]*transformActor
 	world                       *scene.World
 	self                        *scene.Character
+	selfGhost                   *scene.Character // own spirit while dead
+	selfAppearance              scene.Appearance
 	selfMount                   *scene.Vehicle
 	selfMountShape              uint8
 	selfMountRace               uint8
@@ -990,7 +992,33 @@ func (a *App) prepareSelfForDraw() {
 		}
 		v.self.Concealed = a.state.Self.Concealed
 		v.self.World = render.Basis(riderPos, heading.Scale(-1), render.V3{0, 1, 0})
+		a.prepareSelfSpirit()
 	}
+}
+
+// prepareSelfSpirit gives the own character the same standing translucent
+// spirit that other dead players get once the fall clip has finished.
+func (a *App) prepareSelfSpirit() {
+	v := a.wv
+	if !a.state.Self.Dead || !v.self.PlayingAction(9) || !v.self.ActionFinished() {
+		if !a.state.Self.Dead {
+			v.selfGhost = nil
+		}
+		return
+	}
+	if v.selfGhost == nil {
+		ghost, err := scene.BuildCharacter(a.assets, v.selfAppearance, "000_normal")
+		if err != nil {
+			log.Printf("self spirit: %v", err)
+			return
+		}
+		v.selfGhost = ghost
+	}
+	g := v.selfGhost
+	g.Concealed, g.FadeOpacity, g.Mounted = true, render.GhostOpacity, false
+	g.SetClip("000_normal")
+	g.Update(float32(a.frameDT))
+	g.World = v.self.World
 }
 
 func (a *App) drawSelf() {
@@ -1008,6 +1036,9 @@ func (a *App) drawSelf() {
 	}
 	if v.self.Visible(frustum, a.scene3d.ClipPlane) {
 		v.self.Draw(a.skinner, a.scene3d)
+	}
+	if g := v.selfGhost; g != nil && g.Visible(frustum, a.scene3d.ClipPlane) {
+		g.Draw(a.skinner, a.scene3d)
 	}
 	a.drawSelfShadow()
 }
@@ -1059,6 +1090,7 @@ func (a *App) refreshSelf(v *worldView) {
 		ch.PlayAction(9, true)
 	}
 	v.self = ch
+	v.selfGhost, v.selfAppearance = nil, appearance
 }
 
 func (a *App) releaseWorld() {

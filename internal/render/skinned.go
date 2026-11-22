@@ -23,6 +23,10 @@ type SkinVertex struct {
 // that alpha made otherwise opaque clothing disappear.
 const StealthOpacity float32 = .65
 
+// GhostOpacity is the spirit of a dead player: Game.exe 0x414fb0 draws state-2
+// characters with texture factor 0x64FFFFFF, an alpha of 100/255.
+const GhostOpacity float32 = 100.0 / 255
+
 const MaxBones = 256 // EP5 bone indices occupy one byte.
 const skinVertexStride = int(unsafe.Sizeof(SkinVertex{}))
 

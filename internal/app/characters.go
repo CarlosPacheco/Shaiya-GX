@@ -164,7 +164,8 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			a.appearanceEdit = nil
 			a.updateDeath(in, w, h)
 			if a.state != nil && a.wv != nil && a.world != nil {
-				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
+				dead := a.deadCameraInput(in)
+				a.updateWorld(&dead, dt)
 			}
 			return
 		}
@@ -318,7 +319,8 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			return
 		}
 		if a.state.Self.Dead {
-			a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
+			dead := a.deadCameraInput(in)
+			a.updateWorld(&dead, dt)
 		} else {
 			a.updateWorld(&controls, dt)
 		}

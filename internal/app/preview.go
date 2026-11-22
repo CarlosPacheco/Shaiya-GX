@@ -505,6 +505,12 @@ func (a *App) Preview(name string) error {
 		}
 		if name == "world-death" {
 			a.state.Entities[2].Dead = true
+			// Let the fall finish so the standing spirit appears next to the body.
+			a.frameDT = .1
+			for i := 0; i < 40; i++ {
+				a.clock += .1
+				a.prepareRemotePlayers()
+			}
 		}
 		if name == "world-equipment" {
 			a.wv.eye = selectActorPos.Add(render.V3{0, 2, 7})

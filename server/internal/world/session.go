@@ -276,6 +276,7 @@ func (s *Session) leaveWorld(disconnect bool) bool {
 		s.tickPvP()
 		s.applyDuelWins()
 	}
+	s.reviveOnExit(s.exitDeathLoss())
 	if err := db.SaveCharacterExit(*s.char, s.buffSnapshot(), s.skillDelaySnapshot(), s.questSnapshot()); err != nil {
 		s.logErr("save character exit", err)
 		if !disconnect {
@@ -874,6 +875,7 @@ func (s *Session) selectCharacter(id uint32) {
 		return
 	}
 	s.mounted, s.dead, s.cast, s.autoAttack = false, false, nil, false
+	s.reviveOnExit(s.deathExpLoss()) // an older save left at 0 HP
 	s.statusItemProtection = 0
 	s.lastRegenAt, s.regenMode = time.Now(), 1 // InitEquipment
 	s.refreshMapCurses(false)

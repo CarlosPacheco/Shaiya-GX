@@ -77,6 +77,7 @@ type Character struct {
 	combatPoseLeft       float32
 	clipFile             string
 	Concealed            bool
+	FadeOpacity          float32 // replaces the stealth fade when set (spirits)
 	Hidden               bool    // shown as another creature instead (Degeneration)
 	CorpseFade           float32 // opaque screen-door coverage, 0 visible, 1 gone
 	enchantTime          float64
@@ -582,6 +583,18 @@ func (c *Character) CancelCast() {
 
 func (c *Character) ActionActive() bool { return c != nil && c.locked }
 
+// ActionFinished reports that the current one-shot clip reached its last frame.
+func (c *Character) ActionFinished() bool {
+	return c != nil && c.locked && c.clip != nil && c.Time >= c.clip.Duration()
+}
+
+func (c *Character) fadeOpacity() float32 {
+	if c.FadeOpacity > 0 {
+		return c.FadeOpacity
+	}
+	return render.StealthOpacity
+}
+
 func (c *Character) PlayingAction(slot int) bool {
 	return c != nil && c.locked && c.actionSlot == slot
 }
@@ -802,7 +815,7 @@ func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
 		k.SetCorpseFade(c.CorpseFade)
 	}
 	if c.Concealed {
-		k.SetOpacity(render.StealthOpacity)
+		k.SetOpacity(c.fadeOpacity())
 	}
 	paletteSource := -1
 	for i, p := range c.parts {

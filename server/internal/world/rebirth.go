@@ -171,3 +171,34 @@ func (s *Session) rebirth(mapID uint16, x, y, z float32, kind uint8, restore boo
 	s.log.Printf("GX Server World rebirth character_id=%d kind=%d map=%d pos=(%.2f, %.2f, %.2f) exp_lost=%d",
 		ch.ID, kind, mapID, x, y, z, lost)
 }
+
+// reviveOnExit settles a dead character that leaves the game, or that an older
+// save kept at 0 HP: it is revived at its bind point with full pools and the
+// usual experience loss, so it re-enters alive and the death is not kept.
+func (s *Session) reviveOnExit(loss int) {
+	ch := s.char
+	if ch == nil || !s.dead && ch.CurrentHP != 0 {
+		return
+	}
+	lost := expDrop(ch, loss, s.faction)
+	m, x, y, z := s.respawnDestination(ch)
+	if !s.canEnterMap(m, ch.Level) {
+		birth := birthPosition(ch)
+		m, x, y, z = birth.MapID, birth.X, birth.Y, birth.Z
+	}
+	ch.MapID, ch.PosX, ch.PosY, ch.PosZ = m, x, y, z
+	s.refillPools()
+	s.dead, s.rebirthAt, s.rebirthParty = false, time.Time{}, false
+	if s.player != nil {
+		s.player.SetAlive(true)
+	}
+	s.log.Printf("GX Server World revived at bind point on exit character_id=%d map=%d pos=(%.2f, %.2f, %.2f) exp_lost=%d", ch.ID, m, x, y, z, lost)
+}
+
+// exitDeathLoss is the experience percent a dead character pays when it leaves.
+func (s *Session) exitDeathLoss() int {
+	if s.dead {
+		return s.deathLoss
+	}
+	return s.deathExpLoss()
+}

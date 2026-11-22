@@ -35,6 +35,8 @@ type remoteActor struct {
 	hideCloak       bool
 	hideHelmet      bool
 	character       *scene.Character
+	ghost           *scene.Character // standing translucent spirit of a dead player
+	appearance      scene.Appearance
 	mount           *scene.Vehicle
 	mountShape      uint8
 	mountLoaded     bool
@@ -140,6 +142,7 @@ func (a *App) prepareRemotePlayers() {
 			// Cosmetics can replace the model, but must not reset which
 			// gestures have already been consumed for this entity.
 			cached.character, cached.shape = actor, sh
+			cached.ghost, cached.appearance = nil, appearance
 			cached.hideCloak, cached.hideHelmet = hideCloak, hideHelmet
 			cached.dead, cached.mountCasting = false, false
 		}
@@ -266,7 +269,35 @@ func (a *App) prepareRemotePlayers() {
 			cached.mount, cached.mountLoaded = nil, false
 		}
 		c.World = scale.Mul(render.Basis(pos, fwd.Scale(-1), render.V3{0, 1, 0}))
+		a.prepareSpirit(cached, e)
 	}
+}
+
+// prepareSpirit follows 0x41b300/0x419f60: when the death clip ends, the body
+// stays in its last frame and the character itself stands up again as a
+// translucent spirit. Only other players' actors get one; the own character
+// keeps showing just its body.
+func (a *App) prepareSpirit(cached *remoteActor, e *game.Entity) {
+	body := cached.character
+	if !e.Dead || !body.PlayingAction(9) || !body.ActionFinished() {
+		if !e.Dead {
+			cached.ghost = nil
+		}
+		return
+	}
+	if cached.ghost == nil {
+		ghost, err := scene.BuildCharacter(a.assets, cached.appearance, "000_normal")
+		if err != nil {
+			log.Printf("player %d spirit: %v", e.ID, err)
+			return
+		}
+		cached.ghost = ghost
+	}
+	g := cached.ghost
+	g.Concealed, g.FadeOpacity, g.Mounted = true, render.GhostOpacity, false
+	g.SetClip("000_normal")
+	g.Update(float32(a.frameDT))
+	g.World = body.World
 }
 
 func (a *App) drawRemotePlayers() {
@@ -292,6 +323,10 @@ func (a *App) drawRemotePlayers() {
 		}
 		v.visiblePlayers = append(v.visiblePlayers, cached.character)
 		v.visiblePlayerMounts = append(v.visiblePlayerMounts, mount)
+		if cached.ghost != nil && e.Dead {
+			v.visiblePlayers = append(v.visiblePlayers, cached.ghost)
+			v.visiblePlayerMounts = append(v.visiblePlayerMounts, nil)
+		}
 	}
 	scene.CullCrowdCharacters(v.visiblePlayers, frustum, a.scene3d)
 	for _, character := range v.visiblePlayers {
@@ -593,6 +628,11 @@ func (a *App) drawPlayerNames(w, h int) {
 	slot, hasSlot := a.selfSlot()
 	if hasSlot && v.self != nil && settings.OwnName {
 		pos, offset := a.playerNameplateAnchor(a.state.SelfID, v.self, slot.Race, a.state.Self.Dead || a.state.Self.Sitting, a.state.Self.Vehicle)
+		if v.selfGhost != nil && a.state.Self.Dead {
+			// Same split as other players: name on the body, full plate on the spirit.
+			label(slot.Name, pos, white, offset, playerPlate{}, "", "")
+			pos, offset = a.playerNameplateAnchor(a.state.SelfID, v.selfGhost, slot.Race, false, a.state.Self.Vehicle)
+		}
 		label(slot.Name, pos, white, offset, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills, party: a.partyBadgeKind(a.state.SelfID)}, targetMarker(a.state.SelfID), "")
 		label(guildCaption(a.state, a.state.Guild.ID), pos, guildCaptionColor(a.state, a.state.Guild.ID, a.state.SelfID, slot.Name), offset+guildCaptionOffset, playerPlate{}, "", "")
 	}
@@ -614,7 +654,16 @@ func (a *App) drawPlayerNames(w, h int) {
 			if hasSlot && slot.Race/2 != e.Shape.Race/2 {
 				tint = ui.RGBColor(0xff0000)
 			}
-			label(name, pos, tint, offset, playerPlate{gm: e.IsGM, kills: e.PvPKills, party: a.partyBadgeKind(e.ID)}, targetMarker(e.ID), "")
+			plate, plateMarker := playerPlate{gm: e.IsGM, kills: e.PvPKills, party: a.partyBadgeKind(e.ID)}, targetMarker(e.ID)
+			if actor.ghost != nil && e.Dead {
+				// The corpse copy keeps only the name (0x41b300 does not copy the
+				// guild or badges); the standing spirit carries the full plate.
+				label(name, pos, tint, offset, playerPlate{}, "", "")
+				pos, offset = a.playerNameplateAnchor(e.ID, actor.ghost, actor.shape.Race, false, e.Vehicle)
+				label(name, pos, tint, offset, plate, plateMarker, "")
+			} else {
+				label(name, pos, tint, offset, plate, plateMarker, "")
+			}
 			caption := guildCaption(a.state, e.GuildID)
 			if caption == "" && e.GuildID != 0 {
 				caption = e.Shape.Guild
