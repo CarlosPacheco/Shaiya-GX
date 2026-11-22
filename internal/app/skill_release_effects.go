@@ -42,7 +42,7 @@ func (a *App) startSkillReleaseEffect(r proto.SkillResult, d sdata.Skill) {
 	if file == "" || len(a.wv.releaseEffects) >= 32 {
 		return
 	}
-	matrix, ok := a.skillReleaseMatrix(r, file)
+	matrix, ok := a.skillReleaseMatrix(r)
 	if !ok {
 		return
 	}
@@ -61,14 +61,16 @@ func (a *App) startSkillReleaseEffect(r proto.SkillResult, d sdata.Skill) {
 	a.wv.releaseEffects = append(a.wv.releaseEffects, skillRelease{instance, elapsed})
 }
 
-func (a *App) skillReleaseMatrix(r proto.SkillResult, file string) (render.M4, bool) {
+func (a *App) skillReleaseMatrix(r proto.SkillResult) (render.M4, bool) {
 	matrix, ok := a.effectTargetMatrix(r.Source)
-	if !ok || r.ID != 40 || file != effect.ActivationLibrary(r.ID) {
+	if !ok {
 		return matrix, ok
 	}
 
-	// Ground Shock's ground meshes are authored at local Z = -1.6.
-	// Use the caster's heading as the input to the EFT basis for this release.
+	// EFT bodies are authored with the caster's front at local -Z (Ground
+	// Shock at -1.6, the generic cast bursts at -0.9), which is what a matrix
+	// whose Z is the heading produces. The actor matrix points Z backwards,
+	// so every release would otherwise appear behind the caster.
 	pos := render.V3{matrix[12], matrix[13], matrix[14]}
 	heading := render.V3{-matrix[8], 0, -matrix[10]}
 	if a.playerActor(r.Source) == nil || heading == (render.V3{}) {
