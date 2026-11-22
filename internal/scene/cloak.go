@@ -155,7 +155,7 @@ func (c *Character) attachCloak(a Appearance) {
 	// 0x415b75 disables lighting for this draw, then restores it.
 	// D3DCULL_NONE set at 0x415212 remains active until 0x415bdb,
 	// after the shoulder draw. Its winding is mixed; do not cull it.
-	cp.tex, cp.cut, cp.unlit, cp.twoSided = g.texture, false, true, true
+	cp.tex, cp.cut, cp.unlit, cp.twoSided, cp.shoulder = g.texture, false, true, true, true
 	c.parts = append(c.parts, &cp)
 	rest := make([]render.V3, len(g.vertices))
 	for i, v := range g.vertices {

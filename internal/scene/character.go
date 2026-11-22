@@ -67,6 +67,7 @@ type skinPart struct {
 	cut      bool        // MLT Visibility mode: alpha test
 	unlit    bool        // native cloak shoulder disables lighting
 	twoSided bool        // draw thin shells and cloak shoulders from either side
+	shoulder bool        // the cloak's skinned shoulder; hidden with the cloak
 	pose     []render.M4
 }
 
@@ -796,6 +797,9 @@ func (c *Character) Draw(k *render.Skinner, s *render.Scene3D) {
 	}
 	paletteSource := -1
 	for i, p := range c.parts {
+		if p.shoulder && c.Concealed {
+			continue // concealed characters show no cloak, emblem or shoulder
+		}
 		if source := c.poseSources[i]; source != paletteSource {
 			k.SetPalette(p.pose)
 			paletteSource = source
