@@ -72,6 +72,7 @@ type worldView struct {
 	facing                      render.V3 // logical heading; diagonals must not feed back into this
 	visualFacing                render.V3 // rendered diagonal heading, zero means logical heading
 	combatHeading               render.V3 // heading to restore after facing an attack target
+	diagonalHeading             render.V3 // W+Q/W+E heading latched when the combo began (0x43bfa0, 0x71d08c)
 	eye                         render.V3 // desired eye; follows the position delta
 	moving                      bool
 	walking                     bool
@@ -451,12 +452,25 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		v.facing = render.V3{0, 0, 1}
 	}
 	fwd := cameraHeading(v.target().Sub(v.eye), v.facing)
-	if !blocked && speed > 0 && !a.state.Self.Dead && (in.RightDown || !v.travel && (intent.forward || intent.back)) {
+	// Original 0x43bfa0: W+Q / W+E build the diagonal from the character's own
+	// facing, latched on the first frame and kept while both keys stay down, so
+	// the camera can orbit (look behind) without bending the run.
+	diagonal := !blocked && !v.travel && !in.SuppressAutoRun && in.Held('W') && intent.side != 0 && !intent.back
+	if !diagonal {
+		v.diagonalHeading = render.V3{}
+	} else if v.diagonalHeading.Len() == 0 {
+		v.diagonalHeading = v.facing
+	}
+	if !diagonal && !blocked && speed > 0 && !a.state.Self.Dead && (in.RightDown || !v.travel && (intent.forward || intent.back)) {
 		v.facing = fwd
 	}
 	right := render.V3{0, 1, 0}.Cross(v.facing)
 	if !blocked {
-		dir = controlVector(fwd, right, intent)
+		if diagonal {
+			dir = controlVector(v.diagonalHeading, render.V3{0, 1, 0}.Cross(v.diagonalHeading), intent)
+		} else {
+			dir = controlVector(fwd, right, intent)
+		}
 		if v.travel && !in.SuppressAutoRun {
 			dir = v.destination.Sub(v.pos)
 			dir[1] = 0

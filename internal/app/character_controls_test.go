@@ -44,6 +44,39 @@ func TestMouseAndKeyboardMovement(t *testing.T) {
 	}
 }
 
+func TestDiagonalMovementKeepsHeadingWhileCameraTurns(t *testing.T) {
+	for _, tc := range []struct {
+		keys string
+		side float32
+	}{
+		{keys: "WQ", side: -1},
+		{keys: "WE", side: 1},
+	} {
+		t.Run(tc.keys, func(t *testing.T) {
+			a := inputApp()
+			v := a.wv
+			v.facing = render.V3{0, 0, 1}
+			v.eye = render.V3{-5, 2, 0}
+			v.moving, v.motion, v.sendT = true, 1, 1 // No movement packet is due.
+			checkStep := func(in platform.Input, direction render.V3) {
+				t.Helper()
+				start := v.pos
+				a.updateWorld(&in, 1.0/60)
+				want := direction.Norm().Scale(runSpeed / 60)
+				if moved := v.pos.Sub(start); moved.Sub(want).Len() > .001 {
+					t.Fatalf("%+v: moved %v, want %v", in, moved, want)
+				}
+			}
+
+			startDirection := render.V3{tc.side, 0, 1}
+			checkStep(platform.Input{Down: tc.keys}, startDirection)
+			checkStep(platform.Input{Down: tc.keys, MiddlePressed: true}, startDirection)
+			checkStep(platform.Input{Down: "W"}, render.V3{-1, 0, 0})
+			checkStep(platform.Input{Down: tc.keys}, render.V3{-1, 0, tc.side})
+		})
+	}
+}
+
 func TestGameMenuKeepsMovementAndOwnsOnlyItsPointer(t *testing.T) {
 	a := inputApp()
 	a.wv.autoRun, a.wv.travel = true, true
