@@ -3361,6 +3361,15 @@ type portalVolumeCatalog map[uint16]map[uint8]portalVolume
 
 </details>
 
+### portal_bounds_native.go
+
+[server/internal/world/portal_bounds_native.go](../../server/internal/world/portal_bounds_native.go#L1)
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`cloronC3ArrivalY`](../../server/internal/world/portal_bounds_native.go#L5)<br>`var cloronC3ArrivalY float32` | EP5 WLD portal boxes matched to the distributed SVMAP routes. The C2 gate to C3 lands on the upper entrance corridor. |
+| [`nativePortalVolumes`](../../server/internal/world/portal_bounds_native.go#L7)<br>`var nativePortalVolumes` | See the source definition and the subsystem ownership contract. |
+
 ### potential.go
 
 [server/internal/world/potential.go](../../server/internal/world/potential.go#L1)

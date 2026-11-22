@@ -27,11 +27,12 @@ map row, while [obelisk rules](obelisks.md) retain their own configuration.
 
 ## Portal volumes
 
-GX World reads `data/game/PortalBounds.json` alongside the maps. It uses
-248 recovered original trigger volumes on matching routes. Routes without a
-match retain their map-defined bounds, including custom routes. In Cloron's
-Lair, C2 → C1 uses the original trigger volume and C2 → C3 lands on walkable
-ground.
+GX World includes 248 original trigger volumes matched to the SVMAP routes.
+While a character moves, World detects those portals using the original
+boxes. Other routes keep the SVMAP point trigger. In Cloron's Lair, C2 → C1
+uses the original trigger volume and C2 → C3 lands in the upper entry corridor.
+Custom installations can replace the built-in catalog with
+`data/game/PortalBounds.json`.
 
 ## Safe zones
 

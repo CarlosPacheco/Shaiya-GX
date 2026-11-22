@@ -27,7 +27,7 @@ PROGRAMS = ("gx_login", "gx_world", "gx_console")
 GAME_DATA = (
     "GuildHouse.ini", "Obelisk.ini", "ItemEnchant.ini", "MobAIMessages.ini",
     "KillStatus.ini", "WorldDrops.ini", "ItemBoxes.ini", "Map.ini",
-    "NpcQuest.SData", "TeleportRunes.ini", "Notices.ini", "PortalBounds.json", "SafeZones.INI",
+    "NpcQuest.SData", "TeleportRunes.ini", "Notices.ini", "SafeZones.INI",
 )
 GEOMETRY_EXTENSIONS = ("gxnav", "gxcol", "gxphysics", "manifest.json")
 
@@ -190,6 +190,9 @@ def copy_runtime_data(source, target):
     (target / "game").mkdir()
     for name in GAME_DATA:
         shutil.copy2(source / "game" / name, target / "game" / name)
+    portal_overrides = source / "game/PortalBounds.json"
+    if portal_overrides.is_file():
+        shutil.copy2(portal_overrides, target / "game")
     (target / "maps").mkdir()
     for path in (source / "maps").iterdir():
         if path.is_file() and re.fullmatch(r"[0-9]+\.svmap", path.name, re.IGNORECASE):

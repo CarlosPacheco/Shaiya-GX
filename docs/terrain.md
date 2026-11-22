@@ -133,10 +133,12 @@ with server-owned vertical motion and collision-checked landings. See
 
 ## Portal volumes
 
-World uses the original WLD trigger bounds for the matching maps and routes
-listed in `server/data/game/PortalBounds.json`. Each row is keyed by map and
-SVMAP portal index. The destination map and source position must match before
-World uses the bounds. Routes without a verified match keep the SVMAP point
-trigger. World checks the actor origin above the feet, as in EP5. The C2
-portal to Cloron's Lair C3 has an arrival height override for the upper entry
+GX World includes the original WLD trigger bounds for verified SVMAP routes.
+The destination map and source position must match before World uses a box
+to detect the portal while the character moves. Routes without a verified
+match keep the SVMAP point trigger. World checks the actor origin above the
+feet, as in EP5. The C2 portal to Cloron's Lair C3 lands in the upper entry
 corridor at the authored X/Z position.
+
+An existing custom `data/game/PortalBounds.json` can still replace the built-in
+catalog.
