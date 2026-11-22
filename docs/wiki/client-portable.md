@@ -23,7 +23,7 @@ Start `Server/build/gx_console` on Linux or `Server/build/gx_console.exe` on Win
 then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables.
 
-**Latest binary update: [gx-v0.1.16](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.16).**
+**Latest binary update: [gx-v0.1.17](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.17).**
 For the November 22 server geometry update, see the
 [upgrade guide](releases/gx-v0.1.16-upgrade.md#server-geometry-update).
 GX Studio is in `Client/Studio/`.

@@ -62,7 +62,7 @@ administration tools, not required for ordinary account creation.
 ## Run the client
 
 Download the [complete Client + Server + Data portable](https://drive.google.com/file/d/1-yK2bZAsWv3nKK-RBryVa-tstWfU3pRz/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. The Drive folder includes the matching gx-v0.1.16 client/server builds, GX Studio and complete game data. Follow the
-[upgrade guide](releases/gx-v0.1.16-upgrade.md).
+[gx-v0.1.17 upgrade guide](releases/gx-v0.1.17-upgrade.md) for the latest binary packages.
 The game discovers its data automatically; no build tools or data conversion are needed.
 
 See [portable client requirements and updates](client-portable.md). GitHub releases provide executable updates without data. Developers can instead [build from source](building.md) and [import their compatible archives](data-formats.md); keep game data outside Git. Do not use the original `Game.exe` to run GX.
@@ -83,7 +83,7 @@ SHAIYA_DATA=/path/to/ShaiyaGX/data \
   "./build/Shaiya GX" -login 127.0.0.1:30800
 ```
 
-Sign in, select the server, choose/create your character and enter the world. GX Server decides outcomes and saves progress. The client folder contains `Shaiya GX` (Linux) or `Shaiya GX.exe` (Windows) alongside `data/`. The executable discovers that adjacent folder automatically. The client embeds Liberation Sans; no external font file or `SHAIYA_FONT` setting is used. Start GX Server separately and run the Shaiya GX executable directly. Public GX server downloads do not include those client assets.
+Sign in, select the server, choose/create your character and enter the world. GX Server decides outcomes and saves progress. The client folder contains `Shaiya GX` (Linux) or `Shaiya GX.exe` (Windows) alongside `data/`. The executable discovers that adjacent folder automatically. Keep the packaged fonts in `data/fonts/`. Start GX Server separately and run the Shaiya GX executable directly. Public GX server downloads do not include those client assets.
 
 ## If startup fails
 
