@@ -19,6 +19,10 @@ import time
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT.parent))
+from tools.fetch_server_geometry import validate as validate_geometry
+from tools.release_geometry import verify_sources
+
 PROGRAMS = ("gx_login", "gx_world", "gx_console")
 GAME_DATA = (
     "GuildHouse.ini", "Obelisk.ini", "ItemEnchant.ini", "MobAIMessages.ini",
@@ -33,26 +37,14 @@ def checksum(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def check_navigation(root):
-    directory = root / "data/geometry"
-    catalog = json.loads((directory / "catalog.json").read_text())
-    maps = catalog.get("maps", [])
-    if catalog.get("version") != 1 or not maps or len(set(maps)) != len(maps):
-        raise ValueError("invalid server navigation catalog")
-    for map_id in maps:
-        manifest = json.loads((directory / f"{map_id}.manifest.json").read_text())
-        if manifest.get("version") != 1 or manifest.get("map_id") != map_id:
-            raise ValueError(f"invalid navigation generation: {map_id}")
-        if manifest.get("player_physics") != 1 or manifest.get("collision_rules") != 2:
-            raise ValueError(f"player physics or collision rules need regeneration: {map_id}")
-        for extension in ("gxnav", "gxcol", "gxphysics"):
-            name = f"{map_id}.{extension}"
-            if checksum(directory / name) != manifest["files"].get(name):
-                raise ValueError(f"server navigation checksum mismatch: {name}")
+def check_navigation(root, *, require_pin=False):
+    catalog, manifests = validate_geometry(root / "data/geometry", require_pin=require_pin)
+    if require_pin:
+        verify_sources(catalog, manifests, root / "data/maps")
 
 
-def check_seed(root):
-    check_navigation(root)
+def check_seed(root, *, require_pin=False):
+    check_navigation(root, require_pin=require_pin)
     seed = root / "data/rapture.sqlite"
     manifest = json.loads(seed.with_suffix(".manifest.json").read_text())
     if checksum(seed) != manifest["sha256"]:
@@ -214,7 +206,7 @@ def copy_runtime_data(source, target):
             shutil.copy2(geometry / name, target / "geometry" / name)
 
 
-def build_package(platform, output, go):
+def build_package(platform, output, go, *, require_pin):
     system, architecture = platform.split("-", 1)
     suffix = ".exe" if system == "windows" else ""
     name = "gx-server-" + platform
@@ -247,7 +239,7 @@ def build_package(platform, output, go):
             launcher = root / "Start GX Server.sh"
             launcher.write_text('#!/bin/sh\nset -eu\ncd "$(dirname "$0")"\nexec ./build/gx_console\n')
             launcher.chmod(0o755)
-        check_seed(root)
+        check_seed(root, require_pin=require_pin)
         files = {str(path.relative_to(root)).replace(os.sep, "/"): checksum(path)
                  for path in sorted(root.rglob("*")) if path.is_file()}
         (root / "package.manifest.json").write_text(json.dumps({"platform": platform, "files": files}, indent=2) + "\n")
@@ -273,6 +265,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--platform", action="append", choices=("linux-amd64", "windows-amd64"))
     parser.add_argument("--output", type=Path, default=ROOT / "out/portable")
+    parser.add_argument("--custom-geometry", action="store_true",
+                        help="Package a custom generation for a private server")
     args = parser.parse_args()
     go = shutil.which("go")
     if go is None:
@@ -280,10 +274,12 @@ def main():
         go = str(candidates[-1]) if candidates else None
     if go is None:
         parser.error("Go 1.27 or later is needed to build the packages")
-    check_seed(ROOT)
+    require_pin = not args.custom_geometry
+    check_seed(ROOT, require_pin=require_pin)
     output = args.output.expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
-    archives = [build_package(platform, output, go) for platform in (args.platform or ("linux-amd64", "windows-amd64"))]
+    archives = [build_package(platform, output, go, require_pin=require_pin)
+                for platform in (args.platform or ("linux-amd64", "windows-amd64"))]
     staged = output / ".SHA256SUMS.next"
     staged.write_text("".join(checksum(path) + "  " + path.name + "\n" for path in archives))
     os.replace(staged, output / "SHA256SUMS.txt")

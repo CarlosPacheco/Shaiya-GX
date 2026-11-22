@@ -69,6 +69,16 @@ class BinaryOnlyBundleTests(unittest.TestCase):
                     (source/'build').mkdir();(source/'data').mkdir()
                     (source/'build'/('gx_world.exe' if windows else 'gx_world')).write_bytes(b'native server')
                     (source/'data/rapture.sqlite').write_bytes(b'approved development seed')
+                    geometry = source/'data/geometry'
+                    maps = source/'data/maps'
+                    geometry.mkdir()
+                    maps.mkdir()
+                    mask = maps/'1.svmap'
+                    mask.write_bytes(b'original walk mask')
+                    (geometry/'catalog.json').write_text(json.dumps({'version': 1, 'maps': [1]}))
+                    sources = {'world/1.wld': hashlib.sha256(b'original world').hexdigest(),
+                               'server/maps/1.svmap': digest(mask)}
+                    (geometry/'1.manifest.json').write_text(json.dumps({'map_id': 1, 'sources': sources}))
                     record={'files':{p.relative_to(source).as_posix():digest(p) for p in source.rglob('*') if p.is_file()}}
                     (source/'package.manifest.json').write_text(json.dumps(record))
                 if name.endswith('.zip'):
@@ -98,6 +108,8 @@ class BinaryOnlyBundleTests(unittest.TestCase):
             (data/'Cash.SData').write_bytes(b'local original catalog')
             (data/'fonts/Arial.TTF').write_bytes(b'local regular face')
             (data/'fonts/arialbd.ttf').write_bytes(b'local bold face')
+            (data/'World').mkdir()
+            (data/'World/1.WLD').write_bytes(b'original world')
             with patch('package_bundle.validate'):
                 prepare(archives,data,root/'with-data')
             for relative in ('fonts/LICENSE.txt', 'Cash.SData'):
@@ -105,3 +117,8 @@ class BinaryOnlyBundleTests(unittest.TestCase):
             fonts = root/'with-data/Client/data/fonts'
             self.assertFalse((fonts/'Arial.TTF').exists())
             self.assertFalse((fonts/'arialbd.ttf').exists())
+            (data/'World/1.WLD').write_bytes(b'different world')
+            stale_output = root/'stale-data'
+            with patch('package_bundle.validate'), self.assertRaisesRegex(ValueError, 'world/1.wld'):
+                prepare(archives, data, stale_output)
+            self.assertFalse(stale_output.exists())

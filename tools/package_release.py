@@ -6,13 +6,15 @@ import shutil
 import tempfile
 
 from package_bundle import digest, prepare
+from release_geometry import verify_tag
 
 
 def package(archives, tag):
+    verify_tag(tag)
     archives = archives.resolve()
     with tempfile.TemporaryDirectory(prefix='gx-complete-release-') as temporary:
         portable = Path(temporary) / ('Shaiya GX ' + tag + ' Portable')
-        prepare(archives, None, portable)
+        prepare(archives, None, portable, require_pin=True)
         shutil.make_archive(str(archives / 'gx-portable-linux-windows'), 'zip',
                             root_dir=portable.parent, base_dir=portable.name)
     files = sorted(path for path in archives.iterdir()

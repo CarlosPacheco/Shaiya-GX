@@ -23,7 +23,9 @@ Output:
 Binaries are attached to GX releases, rather than committed into source history. Tagged release automation reproduces the packages on native runners. Archive manifests list every included file's SHA-256. Packaging validates seed integrity, manifest and table counts; it does not silently refresh the seed from personal runtime state.
 
 The package stages the SQLite seed and its manifest, the server game inputs,
-numbered maps in `data/maps/`, and geometry listed in its catalog. Server
+numbered maps in `data/maps/`, and geometry listed in its catalog. The packager
+checks the pinned release manifests and each corresponding walk mask. Use
+`--custom-geometry` for a private build with locally generated geometry. Server
 item definitions and stack limits come from SQLite. The stack-limit CSV is
 generated for the client data folder.
 

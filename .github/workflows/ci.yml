@@ -12,6 +12,17 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Verify geometry rebuild for the release tag
+        if: startsWith(github.ref, 'refs/tags/gx-v')
+        env:
+          GX_TAG: ${{ github.ref_name }}
+        run: |
+          git fetch --no-tags --depth=1 --force origin "$GITHUB_REF:$GITHUB_REF"
+          python3 tools/release_geometry.py --verify-tag "$GX_TAG"
+      - name: Release packaging checks
+        env:
+          PYTHONPATH: tools
+        run: python3 -m unittest test_release_geometry test_package_bundle
       - uses: actions/setup-go@v5
         with:
           go-version: '1.27.4'
@@ -22,7 +33,7 @@ jobs:
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./server/internal/... ./server/cmd/gx_login ./server/cmd/gx_world ./internal/transport ./internal/netx ./internal/session
       - name: Infrastructure concurrency
         run: go test -race ./server/internal/filelock ./server/internal/netx ./server/internal/session ./server/internal/password ./server/internal/db ./server/internal/scheduler ./server/internal/controlplane ./server/internal/logx ./server/internal/admin ./internal/authwire ./internal/transport
-      - name: Fetch verified server physics (68 maps)
+      - name: Fetch verified server physics
         run: python3 tools/fetch_server_geometry.py
       - name: Transaction and loot concurrency
         run: go test -race -tags integration ./server/internal/world -run 'TestAudit|TestTrade|TestQuestRollback|TestGuildLifecycle|TestConcurrentGoldPickup|TestInventoryOperationRollback' -count=1 -timeout=180s
@@ -89,7 +100,7 @@ jobs:
             out/client/*.tar.gz
             out/client/*.zip
           if-no-files-found: error
-      - name: Fetch verified server physics (68 maps)
+      - name: Fetch verified server physics
         shell: bash
         run: python tools/fetch_server_geometry.py
       - name: Server integration and storage tools
@@ -129,6 +140,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GX_TAG: ${{ github.ref_name }}
         run: |
+          git fetch --no-tags --depth=1 --force origin "$GITHUB_REF:$GITHUB_REF"
           mkdir release
           cp portable/gx-client-linux-amd64/*.tar.gz release/
           cp portable/gx-client-windows-amd64/*.zip release/
