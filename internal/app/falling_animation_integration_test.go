@@ -45,6 +45,7 @@ func TestJumpActionFinishesOnceDuringLongFallGL(t *testing.T) {
 			v.self.ReleaseAction()
 			v.place(start.Add(render.V3{0, 80, 0}))
 			v.walking = walking
+			v.startJumpAnimation()
 			v.beginJump()
 			if !v.self.PlayingAction(8) {
 				t.Fatal("jump did not start original one-shot")
@@ -88,6 +89,7 @@ func TestJumpActionFinishesOnceDuringLongFallGL(t *testing.T) {
 		v.self.ReleaseAction()
 		v.place(start.Add(render.V3{0, 80, 0}))
 		v.walking = walking
+		v.startJumpAnimation()
 		v.beginJump()
 		for frame := 0; frame < 180; frame++ {
 			in := &platform.Input{}
@@ -104,6 +106,55 @@ func TestJumpActionFinishesOnceDuringLongFallGL(t *testing.T) {
 				t.Fatalf("released movement forced locomotion during fall: walk=%v frame=%d", walking, frame)
 			}
 		}
+	}
+
+	// Use level ground under the real character animation so we can check
+	// the few frames where physics has landed and action 8 is still playing.
+	world := v.world
+	v.world = nil
+	defer func() { v.world = world }()
+	v.self.ReleaseAction()
+	v.place(start)
+	v.startJumpAnimation()
+	v.beginJump()
+	action := v.self.ActionID()
+	landed := false
+	for frame := 0; frame < 65; frame++ {
+		in := platform.Input{Keys: []platform.Key{platform.KeyEnter}}
+		if !a.updateChat(&in) {
+			t.Fatal("Enter was not captured by chat")
+		}
+		controls := chatWorldInput(in)
+		if landed && v.self.PlayingAction(8) {
+			// A second jump edge during the last frames must not restart them.
+			controls.Keys = []platform.Key{platform.KeySpace}
+		}
+		v.motion, v.sendT = 0, 1000
+		if v.jumping {
+			// Keep the movement send fixture away from the landing transition.
+			v.motion = 0x84
+			if v.pos[1]+(9+max(-20, v.jumpFall*(1+2.8/60)))/60 <= v.jumpFloor {
+				v.motion = 0
+			}
+		}
+		a.updateWorld(&controls, 1.0/60)
+		if v.jumpPending || v.self.PlayingAction(8) && v.self.ActionID() != action {
+			t.Fatalf("jump clip restarted on frame %d", frame)
+		}
+		if !v.jumping {
+			landed = landed || v.self.PlayingAction(8)
+			if !v.self.PlayingAction(8) && !v.self.PlayingClip("000_normal") {
+				t.Fatalf("grounded jump leaked its finished clip on frame %d", frame)
+			}
+		}
+	}
+	if !landed {
+		t.Fatal("fixture did not land while action 8 was active")
+	}
+	controls := platform.Input{Keys: []platform.Key{platform.KeySpace}}
+	a.updateWorld(&controls, 1.0/60)
+	if !v.jumpPending || !v.self.PlayingAction(8) || v.self.ActionID() == action {
+		t.Fatal("a new jump did not start after the previous clip completed")
 	}
 
 }

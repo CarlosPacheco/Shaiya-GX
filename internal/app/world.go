@@ -609,10 +609,12 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 			v.self.ReleaseAction()
 			v.attackPose = false
 		}
-		if moving || v.jumping {
+		if moving {
 			v.self.CancelCast()
-			cancelGesture(v.self)
 			a.stopCastEffects(a.state.SelfID)
+		}
+		if moving || v.jumping {
+			cancelGesture(v.self)
 		}
 		if a.state.Self.Dead && !v.dead {
 			v.self.PlayAction(9, true)
@@ -623,38 +625,41 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		v.dead = a.state.Self.Dead
 		if v.selfGestureSerial != a.state.Self.GestureSerial {
 			v.selfGestureSerial = a.state.Self.GestureSerial
-			if action, ok := proto.GestureAction(a.state.Self.Gesture); ok && !a.state.Self.Dead && !a.state.Self.Mounted && !moving {
+			if action, ok := proto.GestureAction(a.state.Self.Gesture); ok && !a.state.Self.Dead && !a.state.Self.Mounted && !moving && !v.self.PlayingAction(8) {
 				v.self.PlayAction(action, false)
 			}
 		}
 		v.self.Mounted = a.state.Self.Mounted
+		clip := "000_normal"
 		switch {
 		case climbFrame && !a.state.Self.Dead:
-			v.self.SetClip("018_ladder")
+			clip = "018_ladder"
 		case a.state.Self.Mounted:
 			v.self.SetMountedClip(moving, scene.VehicleAlternate(a.state.Self.MountShape))
+			clip = ""
 		case swimming && moving:
-			v.self.SetClip("007_swim")
+			clip = "007_swim"
 		case swimming:
-			v.self.SetClip("006_swnormal")
+			clip = "006_swnormal"
 		case a.state.Self.Sitting:
-			v.self.SetClip("012_sit")
+			clip = "012_sit"
 		case airborne && moving && v.walking:
-			v.self.SetClip("001_walk")
+			clip = "001_walk"
 		case airborne && moving:
-			v.self.SetClip("002_run")
+			clip = "002_run"
 		case moving && back:
-			v.self.SetClip("003_bstep")
+			clip = "003_bstep"
 		case moving && !forward && strafe < 0:
-			v.self.SetClip("004_lstep")
+			clip = "004_lstep"
 		case moving && !forward && strafe > 0:
-			v.self.SetClip("005_rstep")
+			clip = "005_rstep"
 		case moving && v.walking:
-			v.self.SetClip("001_walk")
+			clip = "001_walk"
 		case moving:
-			v.self.SetClip("002_run")
-		default:
-			v.self.SetClip("000_normal")
+			clip = "002_run"
+		}
+		if clip != "" {
+			v.self.SetClip(clip)
 		}
 		jumpAction := v.self.PlayingAction(8)
 		previousPoseTime := v.self.Time
@@ -663,15 +668,8 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		if climbFrame && !moving && !v.self.ActionActive() {
 			v.self.Time = previousPoseTime
 		}
-		// The jump is a single ALT action, not a looping airborne clip.
-		if jumpAction && !v.self.ActionActive() && airborne {
-			clip := "000_normal"
-			if moving {
-				clip = "002_run"
-				if v.walking {
-					clip = "001_walk"
-				}
-			}
+		// Drop the finished one-shot before drawing, including after landing.
+		if jumpAction && !v.self.ActionActive() && clip != "" {
 			v.self.SetClip(clip)
 		}
 	}

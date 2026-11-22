@@ -327,3 +327,25 @@ func TestIdleCastUpdatesCannotHideHorizontalWalking(t *testing.T) {
 		t.Fatal("real walking did not interrupt preparation")
 	}
 }
+
+func TestAirborneCastRequiresStationaryHorizontalPosition(t *testing.T) {
+	s, _ := forgeRuleSession(t)
+	physics, now := playerPhysicsFixture(t)
+	s.char.MapID, s.char.PosX, s.char.PosY, s.char.PosZ = physics.char.MapID, physics.char.PosX, physics.char.PosY, physics.char.PosZ
+	s.movement = physics.movement
+	s.lastPositionSave = now
+	if !s.startMovementJump(now.Add(-30 * time.Millisecond)) {
+		t.Fatal("fixture could not jump in place")
+	}
+	s.cast = &pendingCast{number: 1, readyAt: now.Add(time.Minute)}
+	x, z := s.char.PosX, s.char.PosZ
+	s.handleCharacterMove(proto.MovePacket(4|proto.MotionFlag80, 0, x, s.char.PosY, z))
+	if !s.movement.jumping || s.cast == nil || !s.attackMovementAllowed(now) {
+		t.Fatal("vertical movement interrupted preparation or blocked an attack")
+	}
+	s.movement.budgetAt = now.Add(-time.Second)
+	s.handleCharacterMove(proto.MovePacket(4|proto.MotionFlag80, 0, x+.1, s.char.PosY, z))
+	if s.char.PosX <= x || s.cast != nil || s.attackMovementAllowed(time.Now()) {
+		t.Fatal("accepted horizontal jump movement should cancel preparation and block attacks", s.char.PosX, x)
+	}
+}

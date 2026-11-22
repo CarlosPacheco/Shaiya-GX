@@ -94,6 +94,10 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 	}
 	floor := v.pos[1]
 	a.updateWorld(&platform.Input{Space: true, Keys: []platform.Key{platform.KeySpace}}, 1.0/60)
+	if !v.jumpPending || v.jumping || !v.self.PlayingAction(8) {
+		t.Fatal("jump animation should lead the impulse by one step")
+	}
+	a.updateWorld(&platform.Input{Space: true}, 1.0/60)
 	if !v.jumping || v.pos[1] <= floor || !v.self.PlayingAction(8) {
 		t.Fatal("local jump did not take off", v.pos, floor)
 	}

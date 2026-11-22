@@ -158,10 +158,19 @@ func (a *App) prepareRemotePlayers() {
 		if cached.gestureSerial != e.GestureSerial {
 			cached.gestureSerial = e.GestureSerial
 			if action, ok := proto.LocomotionAction(e.Gesture); ok && !e.Dead && !e.Mounted {
+				_, _, casting := c.CastTiming()
+				if action != 8 || !casting && !c.PlayingAction(8) {
+					c.PlayAction(action, false)
+				}
+			}
+			if action, ok := proto.GestureAction(e.Gesture); ok && !e.Dead && !e.Mounted && !moving && !c.PlayingAction(8) {
 				c.PlayAction(action, false)
 			}
-			if action, ok := proto.GestureAction(e.Gesture); ok && !e.Dead && !e.Mounted && !moving {
-				c.PlayAction(action, false)
+		}
+		if e.Motion == 4|proto.MotionFlag80 && moving {
+			if _, _, casting := c.CastTiming(); casting {
+				c.CancelCast()
+				a.stopCastEffects(id)
 			}
 		}
 		swimming := v.world.SwimmingAt(e.X, e.Y, e.Z)

@@ -8,9 +8,16 @@ import "github.com/Spelunkern/Shaiya-GX/internal/scene"
 // impulse waits for the next frame, when the clip has advanced
 // (0x43bfa0: DAT_0071d010 and +0xc8 > 0 before DAT_0071d008 = 1).
 func (v *worldView) startJumpAnimation() {
+	if v.self.PlayingAction(8) {
+		return // The landing frames can outlast the vertical impulse.
+	}
 	v.jumpPending = true
 	if v.self != nil && !v.self.Mounted {
-		v.self.ReleaseAction()
+		_, _, casting := v.self.CastTiming()
+		attacking := v.attackPose && v.self.ActionActive() && v.self.ActionID() == v.attackActionID
+		if casting || attacking {
+			return // Vertical movement can continue under a combat action.
+		}
 		v.self.PlayAction(8, false)
 	}
 }

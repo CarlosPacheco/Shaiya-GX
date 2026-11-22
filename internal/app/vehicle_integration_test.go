@@ -167,6 +167,7 @@ func TestVehicleAgainstRapture(t *testing.T) {
 	}
 	a.Update(&platform.Input{}, 1024, 734, .01)
 	a.Update(&platform.Input{Keys: []platform.Key{platform.KeySpace}}, 1024, 734, 1.0/120)
+	a.Update(&platform.Input{}, 1024, 734, 1.0/120)
 	if !a.wv.jumping || !st.Self.Mounted {
 		t.Fatal("driver could not jump while mounted")
 	}

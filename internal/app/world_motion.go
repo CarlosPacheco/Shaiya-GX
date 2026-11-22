@@ -307,7 +307,7 @@ func (a *App) confirmedPosition(p []byte) {
 		v.moving, v.motion, v.sendT = false, 0, 0
 		v.waterDirty = false
 		v.waterFallSpeed = 0
-		v.jumping = false
+		v.jumping, v.jumpPending = false, false
 		v.groundFall = 0
 		v.evading = false
 		v.travel = false

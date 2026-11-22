@@ -176,17 +176,18 @@ func (s *Session) handleCharacterMove(p []byte) {
 		s.correctMovement(reason)
 		return
 	}
-	// GX also sends motion-zero idle/height snapshots. Only accepted locomotion
-	// intent interrupts preparation; a synchronization packet is not a walk.
-	if proto.CastInterruptingMotion(motion) || ch.PosX != oldX || ch.PosZ != oldZ {
+	// GX also sends idle and jump-height snapshots. Horizontal movement can
+	// interrupt preparation even with the jump flag set.
+	moved := ch.PosX != oldX || ch.PosZ != oldZ
+	if proto.CastInterruptingMotion(motion) || moved {
 		s.cancelTravelCast()
+		if s.cast != nil {
+			s.log.Printf("GX Server World cast interrupted by locomotion skill_number=%d motion=0x%02X from=(%.3f,%.3f) to=(%.3f,%.3f)", s.cast.number, motion, oldX, oldZ, ch.PosX, ch.PosZ)
+			s.cast = nil
+			s.syncPlayerSpeed(false)
+		}
 	}
-	if s.cast != nil && proto.CastInterruptingMotion(motion) {
-		s.log.Printf("GX Server World cast interrupted by locomotion skill_number=%d motion=0x%02X from=(%.3f,%.3f) to=(%.3f,%.3f)", s.cast.number, motion, oldX, oldZ, ch.PosX, ch.PosZ)
-		s.cast = nil
-		s.syncPlayerSpeed(false)
-	}
-	if ch.PosX != oldX || ch.PosZ != oldZ {
+	if moved {
 		s.autoAttack = false
 		s.endMyShop() // moving cancels the personal market
 	}

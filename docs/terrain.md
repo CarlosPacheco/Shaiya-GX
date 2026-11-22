@@ -91,8 +91,9 @@ paths and large corrections snap to the server position.
 Jump presentation plays original ALT action 8 once and lets it run to its end even after the character lands: the 0.8 s clip outlasts the 0.69 s of a flat jump, and the original ends the jump state only when the clip finishes (0x418030, 0x419f60), so landing shows its last frames instead of cutting to idle. Its animation duration is
 independent of the physical time spent airborne. Once it finishes, continued
 falling uses run or walk only while horizontal movement is active. Releasing
-movement returns to the standard idle pose; uncommanded falls also use idle. Switching clips at action completion prevents a
-wrapped first jump frame from appearing during the transition.
+movement returns to the standard idle pose, which uncommanded falls also use.
+Further jump presses are ignored until the active clip finishes. Locomotion
+resumes in the same frame that the clip ends, including on the ground.
 
 The WLD `Objects` group is Phoenix's `Ladder` section. Its original SMOD models
 are loaded by both static and streamed rendering, with two-sided surfaces so

@@ -2535,15 +2535,15 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`syncPlayer`](../../server/internal/world/movement.go#L54)<br>`func (s *Session) syncPlayer()` | See the source definition and the subsystem ownership contract. |
 | [`applyTeleport`](../../server/internal/world/movement.go#L63)<br>`func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmDirect ...bool)` | applyTeleport is the single path for every teleport (portals, town, resurrection): moves the character, persists it, acks the client, introduces it to viewers at the destination and refreshes visibility. |
 | [`handleCharacterMove`](../../server/internal/world/movement.go#L147)<br>`func (s *Session) handleCharacterMove(p []byte)` | handleCharacterMove (0x0501): motion:u8, direction:u16, x, y, z:f32. |
-| [`handleEnteredPortal`](../../server/internal/world/movement.go#L221)<br>`func (s *Session) handleEnteredPortal(index uint8)` | See the source definition and the subsystem ownership contract. |
-| [`isTownCommand`](../../server/internal/world/movement.go#L234)<br>`func isTownCommand(message string) bool` | See the source definition and the subsystem ownership contract. |
-| [`executeTown`](../../server/internal/world/movement.go#L241)<br>`func (s *Session) executeTown()` | executeTown moves the character to the nearest faction spawn area on its map (also the escape hatch while dead). |
-| [`deathExpPercent`](../../server/internal/world/movement.go#L256)<br>`const deathExpPercent = 5` | deathExpPercent is CUser::Death's drop without protection (deathExpLoss). |
-| [`expDrop`](../../server/internal/world/movement.go#L260)<br>`func expDrop(ch *db.Character, percent int, faction uint8) uint32` | expDrop is CUser::ExpDrop (0x0045ad50): above level 10, percent of the level's exp span, never below the level's start. |
-| [`returnToTownDelay`](../../server/internal/world/movement.go#L280)<br>`const returnToTownDelay = 10 * time.Second` | returnToTownDelay is 0x0556's tick + 10000 (CUser::PacketPC). |
-| [`handleReturnToTown`](../../server/internal/world/movement.go#L284)<br>`func (s *Session) handleReturnToTown()` | handleReturnToTown (0x0556): alive and with no move pending, the user is moved to its bind point 10 s later (UpdateResetPosition, type 0). |
-| [`cancelMove`](../../server/internal/world/movement.go#L293)<br>`func (s *Session) cancelMove()` | cancelMove is CUser::CancleMove for the type-0 move: moving, attacking, casting or being hit drops it without a reply. |
-| [`tickReturnToTown`](../../server/internal/world/movement.go#L295)<br>`func (s *Session) tickReturnToTown()` | See the source definition and the subsystem ownership contract. |
+| [`handleEnteredPortal`](../../server/internal/world/movement.go#L222)<br>`func (s *Session) handleEnteredPortal(index uint8)` | See the source definition and the subsystem ownership contract. |
+| [`isTownCommand`](../../server/internal/world/movement.go#L235)<br>`func isTownCommand(message string) bool` | See the source definition and the subsystem ownership contract. |
+| [`executeTown`](../../server/internal/world/movement.go#L242)<br>`func (s *Session) executeTown()` | executeTown moves the character to the nearest faction spawn area on its map (also the escape hatch while dead). |
+| [`deathExpPercent`](../../server/internal/world/movement.go#L257)<br>`const deathExpPercent = 5` | deathExpPercent is CUser::Death's drop without protection (deathExpLoss). |
+| [`expDrop`](../../server/internal/world/movement.go#L261)<br>`func expDrop(ch *db.Character, percent int, faction uint8) uint32` | expDrop is CUser::ExpDrop (0x0045ad50): above level 10, percent of the level's exp span, never below the level's start. |
+| [`returnToTownDelay`](../../server/internal/world/movement.go#L281)<br>`const returnToTownDelay = 10 * time.Second` | returnToTownDelay is 0x0556's tick + 10000 (CUser::PacketPC). |
+| [`handleReturnToTown`](../../server/internal/world/movement.go#L285)<br>`func (s *Session) handleReturnToTown()` | handleReturnToTown (0x0556): alive and with no move pending, the user is moved to its bind point 10 s later (UpdateResetPosition, type 0). |
+| [`cancelMove`](../../server/internal/world/movement.go#L294)<br>`func (s *Session) cancelMove()` | cancelMove is CUser::CancleMove for the type-0 move: moving, attacking, casting or being hit drops it without a reply. |
+| [`tickReturnToTown`](../../server/internal/world/movement.go#L296)<br>`func (s *Session) tickReturnToTown()` | See the source definition and the subsystem ownership contract. |
 
 ### movement_rune.go
 

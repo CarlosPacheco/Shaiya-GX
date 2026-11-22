@@ -66,11 +66,28 @@ func TestAttackPauseStopsPredictedMovementGL(t *testing.T) {
 	}
 	// A previous attack must never cancel an unrelated later jump action.
 	v.attackPose = true
+	v.startJumpAnimation()
 	v.beginJump()
 	v.moving, v.motion, v.sendT = true, 0x84, 1000
 	a.updateWorld(&platform.Input{Down: "W"}, 1.0/60)
 	if !v.self.PlayingAction(8) {
 		t.Fatal("stale attack recovery canceled a later jump")
+	}
+
+	// A cast started in a standing jump stays visible throughout its vertical
+	// motion, and ends as soon as the character travels horizontally.
+	if !v.self.PlayCast(85, 2) {
+		t.Fatal("fixture could not start the cast")
+	}
+	v.moving, v.motion, v.sendT = false, 0x84, 1000
+	a.updateWorld(&platform.Input{}, 1.0/60)
+	if _, _, casting := v.self.CastTiming(); !casting || !v.jumping || !a.attackMovementAllowed() {
+		t.Fatal("stationary jump cancelled preparation or blocked an attack")
+	}
+	v.moving, v.motion, v.sendT = true, 0x84, 1000
+	a.updateWorld(&platform.Input{Down: "W"}, 1.0/60)
+	if _, _, casting := v.self.CastTiming(); casting || a.attackMovementAllowed() {
+		t.Fatal("horizontal movement preserved air preparation or allowed an attack")
 	}
 
 }

@@ -115,11 +115,12 @@ The weapon's attack interval remains independent and cannot be reset by
 stop/start requests. The pause clears horizontal movement credit rather than
 banking speed for a later burst; vertical gravity continues normally.
 
-The attacker may attack during a stationary jump. An attacker who is both
-moving horizontally and airborne cannot start a hit. The server checks its
-own physics and observed movement, so a forged stationary packet cannot
-immediately hide recent travel. The victim's jumping or movement never grants
-immunity. Existing cast preparation/cancellation rules remain in effect.
+The attacker may use a basic attack or prepare a spell during a stationary
+jump. An attacker who is both moving horizontally and airborne cannot start a
+hit. Accepted horizontal movement also interrupts a spell already in
+preparation. Vertical position updates preserve the cast and its effects.
+The server checks its own physics and observed movement. The victim's jumping
+or movement never grants immunity.
 
 Moving after the pause cancels the remaining attack animation and autoattack;
 it does not allow a running swing. Healing, buffs and self casts use the same movement pause. Client/server builds must be updated together for matching

@@ -44,6 +44,7 @@ func TestMovingJumpAgainstIsolatedGX(t *testing.T) {
 	a.pumpWorld()
 	v := a.wv
 	v.facing = render.V3{1, 0, 0}
+	v.resetCamera() // W follows the camera heading.
 	start, last := time.Now(), time.Now()
 	var jumped time.Time
 	initialY, peak := v.pos[1], v.pos[1]
@@ -77,7 +78,7 @@ func TestMovingJumpAgainstIsolatedGX(t *testing.T) {
 		}
 		a.updateWorld(in, dt)
 		peak = max(peak, v.pos[1])
-		if !jumped.IsZero() && now.Sub(jumped) < 450*time.Millisecond && !v.jumping {
+		if !jumped.IsZero() && now.Sub(jumped) < 450*time.Millisecond && !v.jumpPending && !v.jumping {
 			t.Fatalf("moving jump cancelled at %v; peak=%g startY=%g correctionCount=%d", now.Sub(jumped), peak, initialY, corrections)
 		}
 		time.Sleep(time.Second / 120)
