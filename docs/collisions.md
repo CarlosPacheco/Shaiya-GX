@@ -23,7 +23,7 @@ slots are `+0x13d02c`, `+0x13d0b8`, `+0x13d144`, `+0x13d25c` and
 | Empty SMOD collision | Follow the group construction mode; absence alone does not imply traversability |
 | VANI-A | Visual animation; excluded from movement, support, line of sight, navigation and camera collision |
 | VANI-B | Visual animation; excluded from collision queries |
-| Dungeon DG, including placed field dungeons | Explicit node collision meshes with the complete placement transform |
+| Dungeon DG, including placed field dungeons | Explicit node collision meshes with the complete placement transform. A node that carries none uses the triangles of its own display groups (`0x5a4990`-`0x5a4a80`, EP5.4): the Cryptic One's Throne platform and several small instance dungeons depend on it |
 | MANI instances | Visual animation; excluded from collision queries and navigation |
 | Explicit WLD blocker volumes | Original eight corners and twelve outward-facing faces, including authored yaw |
 | Terrain | Existing original height-fan surface; displayed separately by `/cview` |

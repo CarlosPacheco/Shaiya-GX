@@ -23,7 +23,7 @@ import (
 )
 
 const FormatVersion = 1
-const CollisionRulesVersion = 2
+const CollisionRulesVersion = 3
 const AnimationRulesVersion = 1 // VANI/MANI placements are never baked as solids.
 
 type Manifest struct {

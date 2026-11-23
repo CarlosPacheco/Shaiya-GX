@@ -122,16 +122,40 @@ func ParseDGCollisions(data []byte) ([]CollisionMesh, error) {
 		r.vec3()
 		r.box()
 		r.box()
+		// Game.exe 0x5a4990-0x5a4a80: a node without authored collision uses the
+		// triangles of its own display groups instead.
+		var display []CollisionMesh
 		for i, n := 0, r.count(8); i < n && r.err == nil; i++ {
 			r.i32()
 			for j, m := 0, r.count(12); j < m && r.err == nil; j++ {
 				r.i32()
-				r.take(r.count(44) * 44)
-				r.take(r.count(6) * 6)
+				nv := r.count(44)
+				mesh := CollisionMesh{Vertices: make([]Vec3, nv)}
+				for k := range mesh.Vertices {
+					mesh.Vertices[k] = r.vec3()
+					r.take(32)
+				}
+				for _, f := range r.faces() {
+					if int(f[0]) < nv && int(f[1]) < nv && int(f[2]) < nv {
+						mesh.Faces = append(mesh.Faces, f)
+					}
+				}
+				if nv > 0 && len(mesh.Faces) > 0 {
+					mesh.Bounds = Box{Min: mesh.Vertices[0], Max: mesh.Vertices[0]}
+					for _, v := range mesh.Vertices {
+						for axis := range 3 {
+							mesh.Bounds.Min[axis] = min(mesh.Bounds.Min[axis], v[axis])
+							mesh.Bounds.Max[axis] = max(mesh.Bounds.Max[axis], v[axis])
+						}
+					}
+					display = append(display, mesh)
+				}
 			}
 		}
 		if r.i32() == 1 {
 			meshes = append(meshes, r.collisionMesh())
+		} else {
+			meshes = append(meshes, display...)
 		}
 		for i := 0; i < 8 && r.err == nil; i++ {
 			if r.i32() > 0 {
