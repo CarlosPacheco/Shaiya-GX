@@ -148,7 +148,13 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 				}
 				v.pending, v.deadline = true, a.clock+10
 			case pressedItem && key == v.source:
-				// A left click only selects; items are used with the right button.
+				// A left click only selects, except the equipped mount: it is
+				// used with the left button (right click keeps working too).
+				if key == [2]uint8{0, 13} && !a.state.Self.Dead {
+					if it, ok := a.state.Inventory[key]; ok && it.Type == 42 {
+						a.useInventoryItem(key)
+					}
+				}
 			}
 		} else if dragged && !captured {
 			a.noteItemDrop(v.source)
