@@ -13,18 +13,27 @@ func (c *Character) invalidatePose() {
 }
 
 func (c *Character) startClip(next *Clip, oneShot bool) {
+	c.startClipWithBlend(next, oneShot, false)
+}
+
+func (c *Character) startClipWithBlend(next *Clip, oneShot, allowTrailingBones bool) {
 	previous := c.clip
-	compatible := previous != nil && len(previous.ani.Bones) > 0 && len(previous.ani.Bones) == len(next.ani.Bones)
+	count := len(next.ani.Bones)
+	compatible := false
+	if previous != nil && count > 0 {
+		previousCount := len(previous.ani.Bones)
+		// EP5.4's run-to-idle blend skips outgoing bones missing from idle.
+		compatible = previousCount == count || (allowTrailingBones && previousCount > count)
+	}
 	if compatible {
-		for i, bone := range previous.ani.Bones {
-			if bone.Parent != next.ani.Bones[i].Parent {
+		for i, bone := range next.ani.Bones {
+			if bone.Parent != previous.ani.Bones[i].Parent {
 				compatible = false
 				break
 			}
 		}
 	}
 	if compatible {
-		count := len(previous.ani.Bones)
 		if cap(c.blendFrom) < count {
 			c.blendFrom = make([]bonePose, count)
 		}

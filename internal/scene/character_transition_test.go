@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/model"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
@@ -61,6 +62,57 @@ func TestClipTransitionFallsBackForDifferentSkeletons(t *testing.T) {
 	c.startClip(second, false)
 	if c.blendLeft != 0 || c.finals()[1] != second.Finals(0)[1] {
 		t.Fatal("blended incompatible hierarchies")
+	}
+}
+
+func TestRunToNormalIdleBlendsSharedBones(t *testing.T) {
+	assets := NewAssets(nil)
+	run, idle := poseTestClip(3), poseTestClip(2)
+	assets.clips["ani:character/human/ani/humf_040_onrun.ani"] = run
+	assets.clips["ani:character/human/ani/humf_000_normal.ani"] = idle
+	assets.clips["ani:character/human/ani/humf_034_onready.ani"] = idle
+	assets.clips["ani:character/human/ani/humf_001_walk.ani"] = idle
+	actions := make([]model.Action, 41)
+	actions[40].Name = "humf_040_onrun.ANI"
+	actions[34].Name = "humf_034_onready.ANI"
+
+	for _, tc := range []struct {
+		name, destination string
+		combatPose        bool
+		blend             bool
+	}{
+		{name: "normal idle", destination: "000_normal", blend: true},
+		{name: "weapon ready", destination: "000_normal", combatPose: true},
+		{name: "walk", destination: "001_walk"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := &Character{assets: assets, folder: "Human", prefix: "humf", weaponType: 45, actionsLoaded: true, actions: actions}
+			c.SetClip("002_run")
+			c.Update(.5)
+			last := c.finals()[1]
+			if tc.combatPose {
+				c.combatPoseLeft = 10
+			}
+			c.SetClip(tc.destination)
+			if !tc.blend {
+				if c.blendLeft != 0 {
+					t.Fatal("blended mismatched skeletons outside the normal run stop")
+				}
+				return
+			}
+			if c.blendLeft != clipBlendDuration || c.finals()[1] != last {
+				t.Fatal("run stop dropped the outgoing pose")
+			}
+			c.Update(clipBlendDuration / 2)
+			c.SetClip("000_normal")
+			if c.Time != 0 || c.blendLeft != clipBlendDuration/2 || c.finals()[1] == last {
+				t.Fatal("run stop failed to interpolate while holding idle playback")
+			}
+			c.Update(clipBlendDuration / 2)
+			if c.blendLeft != 0 || c.finals()[1] != idle.Finals(0)[1] {
+				t.Fatal("run stop did not reach the idle pose")
+			}
+		})
 	}
 }
 

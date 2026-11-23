@@ -48,6 +48,12 @@ reference pose over five frames at 30 Hz. If another request interrupts the
 blend, it starts from the visible intermediate pose. The resulting skeletal
 palette also drives attachments, shadows, and skinned bounds.
 
+When a character stops running and enters normal idle, GX also blends when
+the idle skeleton is a matching prefix of the running skeleton. EP5.4
+requests normal idle (ALT slot 0) at `0x441d32` and samples the shared bones
+at `0x552cf0`. The male Human Fighter's weapon runs in slots 29, 40, 47
+and 54 have 38 bones. Normal idle has the same first 36 bones.
+
 One-shot actions retain their final keyed pose until the controller selects
 the next action. The local playback cursor waits for the blend. Externally
 driven action frames, cast countdowns, and the spin lifetime keep their own

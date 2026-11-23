@@ -174,6 +174,7 @@ func (c *Character) SetClip(name string) {
 		defer func() { c.rate.next = rateNone }()
 	}
 	file := c.locomotionFile(name)
+	runToIdle := c.clipName == "002_run" && name == "000_normal" && file == ""
 	if file == "" {
 		file = fmt.Sprintf("Character/%s/ANI/%s_%s.ANI", c.folder, c.prefix, fileName)
 	}
@@ -186,7 +187,7 @@ func (c *Character) SetClip(name string) {
 		return
 	}
 	c.clipFile = file
-	c.startClip(cl, false)
+	c.startClipWithBlend(cl, false, runToIdle)
 	c.clipName = name
 	c.actionID++
 }
