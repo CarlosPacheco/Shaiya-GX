@@ -573,6 +573,11 @@ func (c *Character) PlayAction(slot int, hold bool) bool {
 	c.actionSlot = slot
 	c.castLeft = 0
 	c.locked, c.hold = true, hold
+	// A one-shot whose ALT Next is the weapon's ready stance (every melee skill
+	// and swing) ends by blending into that stance, not into the relaxed idle.
+	if a := c.actions[slot]; a.Mode&0xff == 2 && a.Next != 0 && int(a.Next) == weaponLocomotionSlot(c.weaponType, false) {
+		c.combatPoseLeft = 10
+	}
 	return true
 }
 
