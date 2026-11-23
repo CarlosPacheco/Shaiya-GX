@@ -136,3 +136,25 @@ func TestAnimationBoundIntervalFollowsClipAndKeepsTableCeiling(t *testing.T) {
 		t.Fatal("blocked index acted")
 	}
 }
+
+// The original keeps the action busy until the skill's own animation ends, so
+// a skill clip is a floor the send-early window cannot cut.
+func TestSkillClipFloorBlocksEarlyRepeat(t *testing.T) {
+	a := inputApp()
+	a.state.Self.Speed = &proto.CharacterSpeed{Attack: 9}
+	a.clock = 10
+	a.markCombatAction()
+	a.skills.actionFloor = 1
+	a.clock = 10.7
+	if a.actionReadyWithin(skillSendEarly) {
+		t.Fatal("a skill repeated before its 1s clip ended")
+	}
+	a.clock = 11
+	if !a.actionReadyWithin(skillSendEarly) {
+		t.Fatal("a skill stayed blocked after its clip ended")
+	}
+	a.markCombatAction()
+	if a.skills.actionFloor != 0 {
+		t.Fatal("a basic attack kept the previous skill floor")
+	}
+}

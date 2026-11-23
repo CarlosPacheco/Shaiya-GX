@@ -576,6 +576,23 @@ func (c *Character) PlayAction(slot int, hold bool) bool {
 	return true
 }
 
+// ActionSeconds is the length of an ALT slot's clip at its authored 30 fps,
+// or zero when the slot or its file is missing.
+func (c *Character) ActionSeconds(slot int) float32 {
+	if c == nil {
+		return 0
+	}
+	c.loadActions()
+	if slot < 0 || slot >= len(c.actions) || c.actions[slot].Name == "" {
+		return 0
+	}
+	cl, err := c.assets.Clip(fmt.Sprintf("Character/%s/ANI/%s", c.folder, path.Base(c.actions[slot].Name)))
+	if err != nil || cl == nil {
+		return 0
+	}
+	return cl.Duration()
+}
+
 func (c *Character) ReleaseAction() {
 	if c != nil {
 		c.spinLeft, c.externalTime = 0, false

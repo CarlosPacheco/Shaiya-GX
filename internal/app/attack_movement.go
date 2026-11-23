@@ -145,6 +145,7 @@ func (a *App) prepareSkillMovement(p []byte) bool {
 	}
 	a.skills.queuedSkill = nil
 	a.markCombatAction()
+	a.skills.actionFloor = a.skillClipFloor(d)
 	a.skills.lastSkillID, a.skills.lastSkillAt = k.ID, a.clock
 	return true
 }

@@ -21,6 +21,7 @@ type skillsView struct {
 	lastSkillID         uint16
 	lastSkillAt         float64
 	lastActionAt        float64
+	actionFloor         float64 // the last skill clip: the next action waits for it to end
 	actionKnown         bool
 	queuedSkill         *queuedSkill
 	open, pending       bool

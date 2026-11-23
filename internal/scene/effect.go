@@ -53,15 +53,15 @@ type Effect struct {
 	// the placement basis, so a flying ring keeps the direction its authored
 	// offsets already follow (skill release effects).
 	VelocityFollowsBasis bool
-	meteor         bool
-	meteorWorld    render.M4
-	particleWorld  render.M4
-	batchWorld     []render.M4
-	batchColor     [][4]float32
-	batchFrames    []float32
-	batchPoses     []render.EffectPose
-	draws          []effectDraw
-	geometryCache  *render.EffectGeometryCache
+	meteor               bool
+	meteorWorld          render.M4
+	particleWorld        render.M4
+	batchWorld           []render.M4
+	batchColor           [][4]float32
+	batchFrames          []float32
+	batchPoses           []render.EffectPose
+	draws                []effectDraw
+	geometryCache        *render.EffectGeometryCache
 }
 
 type effectTemplate struct {
