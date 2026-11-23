@@ -36,6 +36,7 @@ type pendingUserHit struct {
 	Stats      CharacterStats // the attacker's, at the swing
 	Kind       int
 	Reflected  bool // a mirrored hit: Damage is final
+	Execute    bool // GM /kill: the target dies at once; the kill is credited to AttackerID
 	Fixed      bool // fixed skill damage (Fire Thorn): Damage is final, Skill names it
 	Trap       bool // a trap sprang on this user: the damage is worked out here (TrabDamage), Skill names it
 	Damage     [3]uint32
@@ -188,6 +189,9 @@ func (s *Session) tickUserHits() {
 // applyUserHit is the target side of CUser::AttackUser; true when this
 // character died.
 func (s *Session) applyUserHit(h pendingUserHit) bool {
+	if h.Execute {
+		return s.applyExecute(h)
+	}
 	if s.invulnerable() {
 		return false
 	}

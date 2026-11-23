@@ -136,6 +136,12 @@ func (s *Session) handleGMCommand(text string) bool {
 	switch command {
 	case "/bots":
 		err = s.gmBots(args)
+	case "/mera":
+		err = s.gmEraseMobs(args)
+	case "/nera":
+		err = s.gmEraseNPC(args)
+	case "/kill":
+		err = s.gmKill(args)
 	case "/notice":
 		err = s.gmNotice(strings.TrimSpace(strings.TrimSpace(text)[len(command):]))
 	case "/weather":

@@ -14,7 +14,7 @@ func Parse(text string) (string, []string, bool) {
 	}
 	command := strings.ToLower(fields[0])
 	switch command {
-	case "/set", "/iclear", "/turbo", "/char", "/attack", "/getitem", "/mmake", "/nmake", "/cmove", "/cure", "/amove", "/asummon", "/weather", "/notice", "/bots":
+	case "/set", "/iclear", "/turbo", "/char", "/attack", "/getitem", "/mmake", "/nmake", "/cmove", "/cure", "/amove", "/asummon", "/weather", "/notice", "/bots", "/mera", "/nera", "/kill":
 		return command, fields[1:], true
 	}
 	return "", nil, false

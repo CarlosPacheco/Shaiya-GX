@@ -124,6 +124,12 @@ func (a *App) updateChat(in *platform.Input) bool {
 			return true
 		}
 		if _, _, known := gm.Parse(text); known {
+			if rewritten, ok := a.gmTargetText(text); !ok {
+				a.chatOpen = false
+				return true
+			} else {
+				text = rewritten
+			}
 			if a.world == nil {
 				a.questMessageID(12024)
 			} else if err := a.world.Send(proto.ChatPacket(proto.ChannelNormal, false, text)); err != nil {

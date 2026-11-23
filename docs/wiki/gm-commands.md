@@ -9,7 +9,7 @@ intentionally selected offline database.
 
 GM characters display a light-blue `(GM)` prefix (`#66CCFF`) beside their white
 world name when visible to the viewer. GMs start transparent and unattackable
-(`/char on`, `/attack on`); skill-based stealth follows the ordinary faction
+(`/char on`, `/attack on`; these never protect from drowning or fall damage, and only `/turbo` cancels fall damage); skill-based stealth follows the ordinary faction
 visibility rules. Stored character names are unchanged. Turbo starts disabled
 for GM sessions. When enabled, the client
 multiplies movement speed by 12, including backward movement, mounts and
@@ -37,6 +37,10 @@ are on at every GM login; turbo is off.
 | `/char on` / `/char off` | Makes your character transparent / visible to non-GM players (original `bVisible`). |
 | `/attack on` / `/attack off` | Makes you unattackable / attackable again (original `bAttackable`). |
 | `/turbo` | Toggles turbo for the issuing GM's session and reports the current fall-damage and speed rules. |
+| `/mera t` | Kills the targeted monster with no drop, experience or kill credit. A monster with a common respawn comes back after its normal respawn time. |
+| `/mera <range>` | The same for every living monster within `<range>` units of you on this map (1 to 1000), for example `/mera 100`. |
+| `/nera t` | Removes the targeted NPC from its map until the server restarts (an ordinary svmap NPC returns then). |
+| `/kill t` | Kills the targeted monster or player at once, of any faction. A monster drops and rewards you as a legitimate kill; a player's death is credited to you like any player kill, even through immunity. |
 | `/cure` | Restores your HP, MP and SP, clears active debuffs, and resets skill, consumable and mount cooldowns in the server and client. |
 | `/getitem type id [quantity]` | Defaults to one when quantity is omitted. Grants the complete quantity, respecting definition stack limits and free bag slots. `/getitem 25 1 200` grants 200 apples in one stack with the current 255 limit. |
 | `/mmake mobid [quantity=1]` | Spawns 1–100 live mobs around the GM, with their normal stats, AI and drops, without automatic respawn. |
