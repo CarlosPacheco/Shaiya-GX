@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -30,7 +31,7 @@ func TestHoverDepthAsyncAndExactClicksGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer sprites.ResetHoverDepth()
-	capture := func(depth float64, reversed bool, width int) {
+	capture := func(depth float64, reversed bool, width int, occluder ...[2]int32) {
 		gl.Viewport(0, 0, 64, 64)
 		gl.DepthMask(true)
 		gl.DepthFunc(gl.LEQUAL)
@@ -39,6 +40,14 @@ func TestHoverDepthAsyncAndExactClicksGL(t *testing.T) {
 		}
 		gl.ClearDepth(depth)
 		gl.Clear(gl.DEPTH_BUFFER_BIT)
+		if len(occluder) != 0 {
+			x, y := occluder[0][0], occluder[0][1]
+			gl.Enable(gl.SCISSOR_TEST)
+			gl.Scissor(x, 63-y, 1, 1)
+			gl.ClearDepth(0)
+			gl.Clear(gl.DEPTH_BUFFER_BIT)
+			gl.Disable(gl.SCISSOR_TEST)
+		}
 		sprites.CaptureNameDepth(width, 64)
 	}
 	capture(.25, false, 64)
@@ -53,9 +62,26 @@ func TestHoverDepthAsyncAndExactClicksGL(t *testing.T) {
 	if !sprites.NameHoverVisibleAt(32, 32, 64, 64, .2) || sprites.NameHoverVisibleAt(32, 32, 64, 64, .3) {
 		t.Fatal("completed hover sample differs from click")
 	}
-	if sprites.NameHoverVisibleAt(31, 32, 64, 64, .2) {
-		t.Fatal("hover reused a different cursor position")
+	if !sprites.NameHoverVisibleAt(31, 32, 64, 64, .2) || sprites.NameHoverVisibleAt(20, 32, 64, 64, .2) {
+		t.Fatal("hover did not stay within the sampled region")
 	}
+	// Model four frames with no completed transfer while retaining the real GL sample.
+	frame, issued := sprites.depthFrame, sprites.hoverDepth.issued
+	capturedAt := sprites.hoverDepth.ready.capturedAt
+	sprites.depthFrame = sprites.hoverDepth.ready.frame + 4
+	sprites.hoverDepth.issued = sprites.depthFrame
+	sprites.hoverDepth.ready.capturedAt = time.Now()
+	if !sprites.NameAttackHoverVisibleAt(32, 32, 64, 64, .2) ||
+		sprites.NameAttackHoverVisibleAt(31, 32, 64, 64, .2) ||
+		sprites.NameHoverVisibleAt(32, 32, 64, 64, .2) {
+		t.Fatal("only stationary attack hover may use a delayed depth sample")
+	}
+	sprites.hoverDepth.ready.capturedAt = time.Now().Add(-attackHoverGrace)
+	if sprites.NameAttackHoverVisibleAt(32, 32, 64, 64, .2) {
+		t.Fatal("stationary attack hover exceeded its grace period")
+	}
+	sprites.depthFrame, sprites.hoverDepth.issued = frame, issued
+	sprites.hoverDepth.ready.capturedAt = capturedAt
 	capture(0, false, 64)
 	if sprites.NameVisibleAt(32, 32, 64, 64, .2) {
 		t.Fatal("stale hover depth permitted a click through a new wall")
@@ -78,9 +104,19 @@ func TestHoverDepthAsyncAndExactClicksGL(t *testing.T) {
 	if !sprites.NameHoverVisibleAt(32, 32, 64, 64, .2) {
 		t.Fatal("reverse-Z hover mismatch")
 	}
-	capture(.75, true, 32)
-	if sprites.NameHoverVisibleAt(16, 32, 32, 64, .2) {
-		t.Fatal("resize retained old hover samples")
+	edgeOccluder := [2]int32{1, 0}
+	capture(.25, false, 32, edgeOccluder)
+	if sprites.hoverDepth != (hoverDepthReadback{}) {
+		t.Fatal("resize retained old hover readback resources")
+	}
+	if sprites.NameHoverVisibleAt(0, 0, 32, 64, .2) {
+		t.Fatal("resized hover used an unfinished transfer")
+	}
+	gl.Finish()
+	capture(.25, false, 32, edgeOccluder)
+	if !sprites.NameHoverVisibleAt(0, 0, 32, 64, .2) || !sprites.NameHoverVisibleAt(1, 1, 32, 64, .2) ||
+		sprites.NameHoverVisibleAt(1, 0, 32, 64, .2) {
+		t.Fatal("hover sampled the wrong pixel next to an occluder at the framebuffer edge")
 	}
 	sprites.ResetHoverDepth()
 	if sprites.hoverDepth != (hoverDepthReadback{}) {

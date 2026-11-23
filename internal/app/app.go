@@ -218,8 +218,6 @@ type App struct {
 	dungeonMinimaps                     dungeonMinimapData
 	hoverPicking                        bool
 	hoveredMob                          uint32
-	attackCursorUntil                   time.Time
-	attackCursorX, attackCursorY        int
 	hoveredMobX, hoveredMobY            int
 	lastMouseX                          int
 	lastMouseY                          int
