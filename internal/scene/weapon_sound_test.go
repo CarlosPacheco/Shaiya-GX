@@ -59,3 +59,40 @@ func TestContactUsesFirstPositiveMarkerAndActionToken(t *testing.T) {
 		t.Fatal("release did not invalidate queued cues")
 	}
 }
+
+// Game.exe 0x57cd80/0x57d7c0: the animation byte of a damaging skill picks
+// ch_skill001/003/004/005/008, a physical debuff always uses 001, and ranged
+// weapons add ef_cst_crobow01.
+func TestSkillReleaseSounds(t *testing.T) {
+	for _, tc := range []struct {
+		animation              uint16
+		attack, effect, weapon uint8
+		want                   []string
+	}{
+		{100, 1, 1, 1, []string{"ch_skill001.ogg"}},
+		{102, 1, 1, 1, []string{"ch_skill003.ogg"}},
+		{103, 2, 1, 1, []string{"ch_skill004.ogg"}},
+		{104, 1, 1, 1, []string{"ch_skill005.ogg"}},
+		{107, 1, 1, 1, []string{"ch_skill008.ogg"}},
+		{101, 1, 1, 1, nil},
+		{105, 1, 1, 1, nil},
+		{110, 1, 1, 1, nil},
+		{103, 1, 3, 1, []string{"ch_skill001.ogg"}},
+		{0, 1, 1, 13, []string{"ef_cst_crobow01.ogg"}},
+		{0, 2, 1, 14, []string{"ef_cst_crobow01.ogg"}},
+		{102, 1, 1, 64, []string{"ch_skill003.ogg", "ef_cst_crobow01.ogg"}},
+		{0, 0, 1, 13, nil},
+		{0, 1, 2, 13, nil},
+		{0, 1, 4, 13, nil},
+	} {
+		got := SkillReleaseSounds(tc.animation, tc.attack, tc.effect, tc.weapon)
+		if len(got) != len(tc.want) {
+			t.Fatalf("%+v: got %v want %v", tc, got, tc.want)
+		}
+		for i := range got {
+			if got[i] != tc.want[i] {
+				t.Fatalf("%+v: got %v want %v", tc, got, tc.want)
+			}
+		}
+	}
+}

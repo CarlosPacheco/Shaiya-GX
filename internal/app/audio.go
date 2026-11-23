@@ -118,6 +118,7 @@ func (a *App) confirmedSound(p []byte) {
 		r := a.state.LastSkill
 		a.playSkillDamageVoice()
 		a.playSkillHitSound(r)
+		a.playSkillHealSound(r)
 		if r.Result <= 4 && !(r.Result == 3 && r.Target == 0) {
 			a.playSkillSound(r.Source, r.ID, r.Level, false)
 		}
@@ -176,6 +177,24 @@ func (a *App) playSkillSound(source uint32, id uint16, level uint8, preparing bo
 		name = "ef_in_spin01.ogg"
 	}
 	a.playSound(name, pos[0], pos[2])
+	if !preparing {
+		for _, extra := range scene.SkillReleaseSounds(d.Animation, d.Attack, d.Effect, a.playerWeapon(source)) {
+			a.playSound(extra, pos[0], pos[2])
+		}
+	}
+}
+
+// playSkillHealSound is the native heal impact (0x57d896): a heal that lands
+// plays ef_dmg_heal01 on its target, not on the caster.
+func (a *App) playSkillHealSound(r proto.SkillResult) {
+	if r.Result > 1 || r.Target == 0 || r.Level == 0 || r.Level == 100 {
+		return
+	}
+	if d, ok := a.skillDefinition(r.ID, r.Level); ok && d.Effect == 2 {
+		if pos, ok := a.effectPosition(r.Target); ok {
+			a.playSound(scene.HealImpactSound, pos[0], pos[2])
+		}
+	}
 }
 
 func (a *App) playUI() {

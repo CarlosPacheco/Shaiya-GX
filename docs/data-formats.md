@@ -421,13 +421,15 @@ ID (u32) and cue (u8, 1 for entry, 2 for skill, or 3 for an administrative level
 registration or a committed skill change, and respects stealth and view
 membership. The nearby skill confirmation is a GX presentation addition.
 
+`ch_skill*` (melee skill animations 100–107), `ef_cst_crobow01` (physical skills with a javelin, bow or crossbow) and `ef_dmg_heal01` (heal impact on the target) are skill cues played by the original EP5.4 and EP4 clients.
+
 For loose packs missing the original cues, import them from your own EP5
 archive with the GX asset tool and FFmpeg. Run from the repository root
 with `EP5_ARCHIVE_DIR` and `GX_DATA_DIR` set to the source archive directory
 and the destination loose `data` directory.
 
 ```sh
-for cue in ch_levup001 ui_skillnew001; do
+for cue in ch_levup001 ui_skillnew001 ch_skill001 ch_skill003 ch_skill004 ch_skill005 ch_skill008 ef_cst_crobow01 ef_dmg_heal01; do
     build/assets -data "$EP5_ARCHIVE_DIR" cat "Sound/$cue.wav" |
         ffmpeg -n -i pipe:0 -ar 44100 -c:a libvorbis -q:a 6 "$GX_DATA_DIR/Sound/$cue.ogg"
 done
