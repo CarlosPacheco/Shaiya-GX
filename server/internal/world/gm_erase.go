@@ -54,7 +54,7 @@ func (s *Session) eraseMob(id uint32) bool {
 	return true
 }
 
-// gmEraseMobs is /mera t (the client sends #<id>) or /mera <range>.
+// gmEraseMobs is /mera on the selected target (the client sends #<id>) or /mera <range>.
 func (s *Session) gmEraseMobs(args []string) error {
 	if id, target, err := gmTargetID(args); target {
 		if err != nil {
@@ -69,7 +69,7 @@ func (s *Session) gmEraseMobs(args []string) error {
 	}
 	n, err := gmNumbers(args, gmMaxEraseRange)
 	if err != nil {
-		s.gmReply("Usage: /mera t | /mera <range 1-1000>")
+		s.gmReply("Usage: /mera (your target) | /mera <range 1-1000>")
 		return nil
 	}
 	ch := s.char
@@ -87,7 +87,7 @@ func (s *Session) gmEraseMobs(args []string) error {
 func (s *Session) gmEraseNPC(args []string) error {
 	id, target, err := gmTargetID(args)
 	if !target || err != nil {
-		s.gmReply("Usage: /nera t")
+		s.gmReply("Usage: /nera (your target)")
 		return nil
 	}
 	sh := shard(s.char.MapID)
@@ -119,7 +119,7 @@ func (s *Session) gmEraseNPC(args []string) error {
 func (s *Session) gmKill(args []string) error {
 	id, target, err := gmTargetID(args)
 	if !target || err != nil {
-		s.gmReply("Usage: /kill t")
+		s.gmReply("Usage: /kill (your target)")
 		return nil
 	}
 	ch := s.char

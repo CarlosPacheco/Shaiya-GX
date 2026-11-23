@@ -5,12 +5,13 @@ import (
 	"strings"
 )
 
-// gmTargetText turns the target argument of /mera, /nera and /kill ("t") into
-// the id of the selected target, "#<id>", which the world server resolves. It
-// reports false, with a notice, when there is nothing valid to aim at.
+// gmTargetText aims /mera, /nera and /kill at the selected target: written
+// alone (or with the old "t" argument) they become "<command> #<id>", which the
+// world server resolves. "/mera <range>" is left as it is. It reports false,
+// with a notice, when there is nothing valid to aim at.
 func (a *App) gmTargetText(text string) (string, bool) {
 	fields := strings.Fields(text)
-	if len(fields) != 2 || !strings.EqualFold(fields[1], "t") {
+	if len(fields) == 0 || len(fields) > 2 || len(fields) == 2 && !strings.EqualFold(fields[1], "t") {
 		return text, true
 	}
 	switch strings.ToLower(fields[0]) {
