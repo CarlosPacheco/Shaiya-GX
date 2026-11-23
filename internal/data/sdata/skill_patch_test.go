@@ -3,6 +3,8 @@ package sdata
 import (
 	"bytes"
 	"encoding/binary"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -279,5 +281,30 @@ func TestRequireCooldown(t *testing.T) {
 	}
 	if levelSuffix.ReplaceAllString("Stun Crash Lv1", "") != "Stun Crash" {
 		t.Fatal("level suffix kept")
+	}
+}
+
+func TestEnhanceWindSpinAcceptsSpears(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), "Desktop/Shaiya GX/data/Character/Skill.SData"))
+	if err != nil {
+		t.Skip("client Skill.SData not available")
+	}
+	out, report, err := AllowSpearEnhanceWindSpin(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	again, second, err := AllowSpearEnhanceWindSpin(out)
+	if err != nil || len(second.WeaponFlags) != 0 || !bytes.Equal(again, out) {
+		t.Fatal("the patch is not idempotent", err, second.WeaponFlags)
+	}
+	skills, err := ParseSkills(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for level := uint8(1); level <= 3; level++ {
+		s := skills[SkillKey{ID: 156, Level: level}]
+		if !s.NeedWeapon[5] || !s.NeedWeapon[1] || !s.NeedWeapon[3] || !s.NeedWeapon[4] {
+			t.Fatalf("Enhance Wind Spin level %d weapons %v (patched %d levels)", level, s.NeedWeapon, len(report.WeaponFlags))
+		}
 	}
 }

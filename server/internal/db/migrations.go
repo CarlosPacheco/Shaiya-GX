@@ -207,6 +207,8 @@ var migrations = []migration{
 	{34, "repair_consumable_links_and_retire_resurrection_items", restoreConsumablesMigration},
 	{35, "remove_growth_modes", removeGrowthModesMigration},
 	{36, "stack_all_consumables", consumableStacksMigration},
+	{37, "enhance_wind_spin_spear", `-- The description lists spears; the weapon flags did not (real type 6).
+		UPDATE PS_GameDefs_Skills SET NeedWeapon6=1 WHERE SkillID=156 AND SkillLevel<100`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.

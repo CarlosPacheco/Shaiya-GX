@@ -88,12 +88,13 @@ type SkillCatalogReport struct {
 	TimeDamage      []SkillKey
 	TextFixes       int
 	DetailMoved     []SkillKey
-	FullyDeadSkills []uint16 // left untouched
+	WeaponFlags     []SkillKey // weapon eligibility corrected
+	FullyDeadSkills []uint16   // left untouched
 }
 
 func (r SkillCatalogReport) String() string {
-	return fmt.Sprintf("retired levels: %d; Soul Burn levels updated: %d; NPC skills repaired: %d; dead levels removed: %d; chain descriptions rewritten: %d; previous skill restored: %d; Mana/Stamina Shot texts: %d; Aggravation time damage cleared: %d; detail 25 -> 21: %d; descriptions corrected: %d; skills with no working level left alone: %v",
-		len(r.RetiredLevels), len(r.SoulBurnLevels), len(r.NPCSkills), len(r.DeadLevels), r.ChainTexts, len(r.PrevRestored), r.ManaStaminaText, len(r.TimeDamage), len(r.DetailMoved), r.TextFixes, r.FullyDeadSkills)
+	return fmt.Sprintf("retired levels: %d; Soul Burn levels updated: %d; NPC skills repaired: %d; dead levels removed: %d; chain descriptions rewritten: %d; previous skill restored: %d; Mana/Stamina Shot texts: %d; Aggravation time damage cleared: %d; detail 25 -> 21: %d; descriptions corrected: %d; weapon flags corrected: %d; skills with no working level left alone: %v",
+		len(r.RetiredLevels), len(r.SoulBurnLevels), len(r.NPCSkills), len(r.DeadLevels), r.ChainTexts, len(r.PrevRestored), r.ManaStaminaText, len(r.TimeDamage), len(r.DetailMoved), r.TextFixes, len(r.WeaponFlags), r.FullyDeadSkills)
 }
 
 type skillSlot struct {

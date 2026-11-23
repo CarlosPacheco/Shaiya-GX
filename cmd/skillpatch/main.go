@@ -18,6 +18,7 @@ func main() {
 	retiredOnly := flag.Bool("retired-only", false, "only remove retired player skills")
 	soulBurnOnly := flag.Bool("soul-burn-only", false, "only enable Soul Burn")
 	debuffTextOnly := flag.Bool("combat-debuff-text-only", false, "only update Slump Shot and Confusion tooltips")
+	spearWindSpinOnly := flag.Bool("spear-wind-spin-only", false, "allow spears for Enhance Wind Spin")
 	npcSpecialOnly := flag.Bool("npc-special-only", false, "repair Porcine Party, Ice Stun, and Wide Death Sentence in NpcSkill.SData")
 	flag.Parse()
 	if *input == "" || *output == "" || *input == *output {
@@ -32,6 +33,7 @@ func main() {
 		{*soulBurnOnly, sdata.EnableSoulBurn},
 		{*debuffTextOnly, sdata.UpdateCombatDebuffTooltips},
 		{*npcSpecialOnly, sdata.RepairNPCSkillCatalog},
+		{*spearWindSpinOnly, sdata.AllowSpearEnhanceWindSpin},
 	} {
 		if option.selected {
 			if patch != nil {
