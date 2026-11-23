@@ -213,6 +213,7 @@ func main() {
 		}
 		ext := strings.ToLower(path.Ext(file))
 		target := portablePath(file)
+		interfaceImage := strings.HasPrefix(strings.ToLower(file), "interface/")
 		if strings.EqualFold(file, cash.LegacySDataPath) || strings.EqualFold(file, cash.SDataPath) {
 			if current, exists := a.Lookup(cash.SDataPath); exists && current != f {
 				shadowed++
@@ -221,7 +222,10 @@ func main() {
 			target = cash.SDataPath
 		} else if ext == ".wav" {
 			target = portablePath(strings.TrimSuffix(file, path.Ext(file)) + ".ogg")
-		} else if strings.HasPrefix(strings.ToLower(file), "interface/") {
+		} else if strings.EqualFold(file, "cl.tga") {
+			target = "interface/cl.png"
+			interfaceImage = true
+		} else if interfaceImage {
 			stem := strings.TrimSuffix(file, path.Ext(file))
 			if ext == ".dds" {
 				stem += "_dds"
@@ -248,13 +252,8 @@ func main() {
 		}
 		r := record{Source: file, Output: target, OldBytes: f.Length, Kind: "copy"}
 		result := raw
-		if strings.HasPrefix(strings.ToLower(file), "interface/") {
+		if interfaceImage {
 			r.Kind = "png"
-			name := strings.TrimSuffix(file, path.Ext(file))
-			if ext == ".dds" {
-				name += "_dds"
-			}
-			r.Output = portablePath(name + ".png")
 			t, e := img.Decode(raw)
 			if e != nil {
 				add(r, e)

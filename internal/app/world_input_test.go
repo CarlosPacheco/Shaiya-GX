@@ -114,6 +114,29 @@ func TestOpenInventoryAllowsWorldKeysAndActionBar(t *testing.T) {
 		t.Fatal("escape should close inventory without logging out")
 	}
 }
+
+func TestPersonalLightTogglesOncePerPress(t *testing.T) {
+	a := inputApp()
+	press := platform.Input{Keys: []platform.Key{platform.KeyPersonalLight}}
+	a.updateWorld(&press, .1)
+	if !a.wv.personalLight {
+		t.Fatal("light did not turn on over a frame with multiple world steps")
+	}
+	a.updateWorld(&platform.Input{}, .1)
+	if !a.wv.personalLight {
+		t.Fatal("light did not stay on")
+	}
+	blocked := press
+	blocked.SuppressAutoRun = true
+	a.updateWorld(&blocked, .1)
+	if !a.wv.personalLight {
+		t.Fatal("blocked world input toggled the light")
+	}
+	a.updateWorld(&press, .1)
+	if a.wv.personalLight {
+		t.Fatal("second L press did not turn the light off")
+	}
+}
 func TestInventoryDoesNotBlockShopScrollingOrWorldZoom(t *testing.T) {
 	a := inputApp()
 	a.inventory.open = true

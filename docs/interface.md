@@ -29,6 +29,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 
 ## Recent recovered parameters
 
+- Press **L** in game to toggle the local character's light. It brightens the character in fields and dungeons and projects a warm halo at their feet on field terrain. An explicit hotkey assignment to **L** takes precedence.
 - Options construction: `0x4fbbb0`; subpage placement: `0x4fa800`. Main buttons are at `(64, 77 + 32*i)`, drawn at 128×32 with 128×22 hit regions. Original coordinates take precedence over Phoenix's compact spacing.
 - Cash catalog rendering: `0x4d8b10` calls `0x4a3400` with type 200 and `Cash.Icon - 1`. This selects the type-100 atlas, or type-102 after index 1000; it is not a normal consumable icon.
 - Duration bars: `0x4a2fa0`; a 32×5 black background below the icon contains a 30×3 yellow fill.

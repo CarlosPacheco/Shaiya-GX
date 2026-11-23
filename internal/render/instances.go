@@ -23,6 +23,7 @@ func (s *Scene3D) Delete() {
 	gl.DeleteProgram(s.mapPipeline.draw)
 	gl.DeleteProgram(s.mapPipeline.compute)
 	gl.DeleteProgram(s.terrainOverlay.prog)
+	gl.DeleteProgram(s.terrainHalo.program)
 	s.terrainOverlay.indirect.delete()
 	s.ReleaseWaterBackground()
 	if s.terrainIndirect != 0 {

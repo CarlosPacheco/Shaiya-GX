@@ -32,3 +32,21 @@ func TestBindingsRemapMovementPanelAndExtraBar(t *testing.T) {
 		t.Fatal("raw text or the debug key was changed")
 	}
 }
+
+func TestPersonalLightUsesUnboundLPress(t *testing.T) {
+	in := Input{physical: true, KeyPresses: []PhysicalKey{glfw.KeyL}, heldKeys: bindingKeyBit(glfw.KeyL)}
+	var bindings KeyBindings
+	if controls := in.WithBindings(bindings); !controls.HasKey(KeyPersonalLight) {
+		t.Fatal("L press did not toggle the light")
+	}
+	if !bindings.Bind(2, glfw.KeyL) {
+		t.Fatal("could not remap movement to L")
+	}
+	if controls := in.WithBindings(bindings); controls.HasKey(KeyPersonalLight) || controls.Down != "W" {
+		t.Fatalf("light interfered with movement remapped to L: %+v", controls)
+	}
+	in.KeyPresses = nil
+	if controls := in.WithBindings(KeyBindings{}); controls.HasKey(KeyPersonalLight) {
+		t.Fatal("holding L toggled the light again")
+	}
+}

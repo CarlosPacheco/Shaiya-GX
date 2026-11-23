@@ -200,6 +200,9 @@ func (in Input) WithBindings(b KeyBindings) Input {
 	}
 	for _, k := range in.KeyPresses {
 		slot := b.slot(k)
+		if k == glfw.KeyL && slot < 0 {
+			in.Keys = append(in.Keys, KeyPersonalLight)
+		}
 		if slot < 0 || movementBinding(slot) {
 			continue
 		}

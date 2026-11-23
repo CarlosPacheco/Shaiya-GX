@@ -62,6 +62,7 @@ type worldView struct {
 	world                       *scene.World
 	self                        *scene.Character
 	selfGhost                   *scene.Character // own spirit while dead
+	personalLight               bool
 	selfAppearance              scene.Appearance
 	selfMount                   *scene.Vehicle
 	selfMountShape              uint8
@@ -273,6 +274,9 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	v := a.wv
 	if v == nil {
 		return
+	}
+	if !in.SuppressAutoRun && in.HasKey(platform.KeyPersonalLight) {
+		v.personalLight = !v.personalLight
 	}
 	startPos := v.pos
 	a.publishPartySelection()
@@ -837,6 +841,10 @@ func (a *App) drawWorldView(w, h int) {
 	v.world.Update(float32(a.frameDT))
 	a.vehicle.effectBudget = 2
 	a.prepareSelfForDraw()
+	s.SetTerrainHalo(nil, render.V3{})
+	if v.personalLight && v.self != nil && v.world.HasTerrain() && !a.state.Self.Concealed {
+		s.SetTerrainHalo(a.assets.Texture("interface/cl.png"), v.visualPosition())
+	}
 	a.prepareRemotePlayers()
 	a.attachVehiclePassengers()
 	a.prepareMonsters()
@@ -932,6 +940,7 @@ func (a *App) drawWorldView(w, h int) {
 	}
 	s.WaterReflection = nil
 	s.WaterBelow = false
+	s.SetTerrainHalo(nil, render.V3{})
 	s.End()
 	v.sunFlare.update(v.world, eye, s.View, s.SkyProj, far, float32(a.frameDT))
 	a.drawCollisionView()
@@ -1050,12 +1059,19 @@ func (a *App) drawSelf() {
 		}
 	}
 	if v.self.Visible(frustum, a.scene3d.ClipPlane) {
+		ambient := a.scene3d.CharacterAmbient
+		if v.personalLight {
+			a.scene3d.CharacterAmbient = 1
+		}
 		v.self.Draw(a.skinner, a.scene3d)
+		a.scene3d.CharacterAmbient = ambient
 	}
 	if g := v.selfGhost; g != nil && g.Visible(frustum, a.scene3d.ClipPlane) {
 		g.Draw(a.skinner, a.scene3d)
 	}
-	a.drawSelfShadow()
+	if !a.scene3d.HasTerrainHalo() {
+		a.drawSelfShadow()
+	}
 }
 
 var _ = game.PhaseInWorld

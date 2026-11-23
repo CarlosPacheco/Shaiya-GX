@@ -61,16 +61,16 @@ func (s *Scene3D) DrawTerrainSplats(m *Mesh, layers []TerrainSplat, light, layer
 		s.drawTerrainRanges(m, base, light, nil, true, ranges)
 	}
 	layers = layers[1:]
-	if s.drawTerrainOverlays(m, layers, light, layerBlocks, ranges) {
-		return
-	}
-	for _, layer := range layers {
-		if ranges == 0 {
-			s.DrawTerrainLayer(m, layer, light, layerBlocks, false)
-		} else {
-			s.drawTerrainRanges(m, layer, light, layerBlocks, false, ranges)
+	if !s.drawTerrainOverlays(m, layers, light, layerBlocks, ranges) {
+		for _, layer := range layers {
+			if ranges == 0 {
+				s.DrawTerrainLayer(m, layer, light, layerBlocks, false)
+			} else {
+				s.drawTerrainRanges(m, layer, light, layerBlocks, false, ranges)
+			}
 		}
 	}
+	s.drawTerrainHalo(m, ranges)
 }
 
 func (s *Scene3D) drawTerrainOverlays(m *Mesh, layers []TerrainSplat, light, layerBlocks *Texture, ranges int) bool {

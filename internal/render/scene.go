@@ -229,6 +229,7 @@ type Scene3D struct {
 	terrainIndirectBytes                                      uint64
 	terrainCommands                                           []terrainCommand
 	terrainOverlay                                            terrainOverlay
+	terrainHalo                                               terrainHalo
 	View, Proj, SkyProj                                       M4
 	LightDir                                                  V3
 	Ambient                                                   float32

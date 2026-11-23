@@ -56,6 +56,7 @@ const (
 	KeyShowIDs
 	KeyAssist
 	KeyScreenshot
+	KeyPersonalLight
 )
 
 const KeySelfTarget = KeyParty2

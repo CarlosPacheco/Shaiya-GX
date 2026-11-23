@@ -78,6 +78,8 @@ Every image under `interface/` is converted from its actual decoded content, inc
 
 Some original TGA and DDS atlases share a stem while containing different artwork or layouts. DDS-origin files therefore use `_dds.png`, e.g. `icon/01_dds.png`, while the TGA counterpart becomes `icon/01.png`. Runtime references use these explicit PNG names.
 
+The migration tool converts the original root-level `cl.tga` to `data/interface/cl.png` for the local player's light halo. For an existing GX data directory, use `assets -data "$ORIGINAL_CLIENT" png cl.tga "$SHAIYA_DATA/interface/cl.png"`. The conversion preserves the 32×32 RGBA pixels.
+
 For compressed DDS, the importer reads back the same GPU-decoded pixels as the existing renderer. Authored mip levels are preserved as additional lossless PNG images in an optional private ancillary `gxMP` chunk. Standard PNG viewers display the base image normally; GX restores all authored levels and their original sampling behavior. Editing the base image requires regenerating or dropping its old mip chunk to avoid stale levels. Textures for 3D characters, world geometry and effects retain their original formats and GPU compression.
 
 ## Ogg Vorbis audio
