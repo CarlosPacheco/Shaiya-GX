@@ -46,6 +46,9 @@ instances of the configured map. Restart GX World after editing the catalog.
   own protection.
 - `Both` protects both factions and blocks offensive actions from inside.
   Players can still heal, buff and use other non-offensive skills.
+- Caster-centered offensive skills such as Frozen Ice, as well as traps and
+  hostile fields, cannot be cast inside any sanctuary. The server checks at
+  cast start and release.
 - Area attacks, traps, reflections and damage from player debuffs respect
   each target's protection. Normal monster aggression and environmental
   damage still apply.

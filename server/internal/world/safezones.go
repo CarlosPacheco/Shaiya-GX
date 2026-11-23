@@ -146,10 +146,15 @@ func (s *Session) safeZoneBlocksSkill(def *db.SkillDef, op packet.Opcode, target
 	if len(zones) == 0 {
 		return false
 	}
+	source := safeProtectionAt(zones, s.char.PosX, s.char.PosZ)
 	switch def.TypeEffect {
 	case typeEffectAttack, typeEffectDebuff:
+		if def.TargetType == targetTypeEnemiesNearCaster {
+			// The caster is the origin of this hostile area in every sanctuary.
+			return source != 0
+		}
 	case typeEffectField:
-		return s.safeZoneProtection() == safeBoth
+		return source != 0
 	case typeEffectOnce:
 		if def.TypeDetail != detailKillSoul {
 			return false
@@ -159,11 +164,8 @@ func (s *Session) safeZoneBlocksSkill(def *db.SkillDef, op packet.Opcode, target
 	default:
 		return false
 	}
-	if s.safeZoneProtection() == safeBoth {
+	if source == safeBoth {
 		return true
-	}
-	if def.TargetType == targetTypeEnemiesNearCaster {
-		return false // area targeting filters each hostile user at impact
 	}
 	if op == opUserSkillPvP {
 		p := s.hostileUser(target)

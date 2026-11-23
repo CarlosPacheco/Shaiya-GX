@@ -3,10 +3,12 @@ package world
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/gameini"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
 
 func TestSafeZonesImportedCamps(t *testing.T) {
@@ -137,5 +139,85 @@ func TestSafeZonesWorldCombat(t *testing.T) {
 		fury.safeZoneBlocksSkill(&db.SkillDef{TypeEffect: typeEffectHeal}, opUserSkillPvP, fury.char.ID) ||
 		fury.safeZoneBlocksSkill(&db.SkillDef{TypeEffect: typeEffectBuff}, opUserSkillPvP, fury.char.ID) {
 		t.Fatal("the mutual sanctuary did not distinguish offensive and friendly casts")
+	}
+}
+
+func TestSafeZonesRejectHostileSkillsWithoutTarget(t *testing.T) {
+	const zoneID = 59972
+	previous := safeZones
+	safeZones = map[uint16][]safeZone{zoneID: {
+		{safeLight, [4]safePoint{{490, 490}, {502, 490}, {502, 510}, {490, 510}}},
+	}}
+	t.Cleanup(func() { safeZones = previous })
+	const inside, outside = 500, 503
+
+	for _, tc := range []struct {
+		name    string
+		faction uint8
+		admin   bool
+		op      packet.Opcode
+		def     db.SkillDef
+	}{
+		{"Frozen Ice", FactionLight, false, opUserSkillPvP, db.SkillDef{
+			SkillID: 85, TypeEffect: typeEffectDebuff, TypeDetail: 65,
+			TargetType: targetTypeEnemiesNearCaster, ReadyTime: 12,
+		}},
+		{"Frozen Ice as GM with mob opcode", FactionDark, true, packet.SkillUse, db.SkillDef{
+			SkillID: 85, TypeEffect: typeEffectDebuff, TypeDetail: 65,
+			TargetType: targetTypeEnemiesNearCaster, ReadyTime: 12,
+		}},
+		{"instant area attack", FactionLight, false, opUserSkillPvP, db.SkillDef{
+			SkillID: 86, TypeEffect: typeEffectAttack, TypeDetail: detailAttack,
+			TargetType: targetTypeEnemiesNearCaster,
+		}},
+		{"instant trap", FactionDark, false, opUserSkillPvP, db.SkillDef{
+			SkillID: 87, TypeEffect: typeEffectField, TypeDetail: detailTrap,
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			const hp, mp, sp = 100, 100, 100
+			s, wire := gmWireSession(t, db.Character{
+				ID: 599721, MapID: zoneID, PosX: inside, PosY: 30, PosZ: 500,
+				Level: 40, Mode: growNormal, CurrentHP: hp, CurrentMP: mp, CurrentSP: sp,
+			}, tc.admin)
+			s.faction, s.gmImmune = tc.faction, tc.admin
+			s.skillCooldowns = make(map[uint16]time.Time)
+			def := tc.def
+			def.SkillLevel, def.MPCost, def.SPCost, def.ResetTimeSeconds = 1, 7, 9, 20
+			k := db.CharacterSkill{SkillID: def.SkillID, Level: 1, Number: 1}
+			expectFailure := func() {
+				t.Helper()
+				frame := waitWorldPacket(t, wire, proto.GXSkillFailure)
+				got, err := proto.DecodeSkillFailure(frame)
+				if err != nil || got.Skill != k.SkillID || got.Message != proto.MsgCannotUseSkill {
+					t.Fatalf("wrong safe zone refusal: %+v, %v", got, err)
+				}
+				if s.char.CurrentMP != mp || s.char.CurrentSP != sp || !s.skillReady(k.SkillID) || len(s.traps) != 0 {
+					t.Fatal("refused skill spent resources, started reuse, or placed a trap")
+				}
+			}
+
+			s.beginSkill(tc.op, k, &def, 0, 0, nil)
+			if s.cast != nil {
+				t.Fatal("a targetless offensive skill started inside the camp")
+			}
+			expectFailure()
+
+			s.char.PosX = outside
+			if s.safeZoneBlocksSkill(&def, tc.op, 0) {
+				t.Fatal("a targetless offensive skill was blocked outside the camp")
+			}
+			if def.ReadyTime != 0 {
+				s.beginSkill(tc.op, k, &def, 0, 0, nil)
+				if s.cast == nil {
+					t.Fatal("the cast did not start outside the camp")
+				}
+				s.char.PosX = inside
+				prepared := s.cast
+				s.cast = nil
+				s.resolveSkillDefinition(0, k, &def, tc.op, prepared)
+				expectFailure()
+			}
+		})
 	}
 }
