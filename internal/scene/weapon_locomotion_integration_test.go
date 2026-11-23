@@ -47,20 +47,24 @@ func TestOriginalWeaponLocomotionGL(t *testing.T) {
 				if !strings.Contains(strings.ToLower(c.clipFile), "run") || strings.Contains(c.clipFile, "002_run") {
 					t.Fatalf("generic run for weapon %d: %s", weapon, c.clipFile)
 				}
+				c.Update(clipBlendDuration)
 				c.combatPoseLeft = 10
 				c.SetClip("000_normal")
 				if !strings.Contains(strings.ToLower(c.clipFile), "ready") {
 					t.Fatalf("missing ready %d: %s", weapon, c.clipFile)
 				}
+				c.Update(clipBlendDuration)
 				c.combatPoseLeft = 0
 				c.SetClip("000_normal")
 				if !strings.Contains(c.clipFile, "000_normal") {
 					t.Fatalf("stance did not expire: %s", c.clipFile)
 				}
+				c.Update(clipBlendDuration)
 				c.SetClip("007_swim")
 				if !strings.Contains(c.clipFile, "007_swim") {
 					t.Fatal("weapon overrode swimming", c.clipFile)
 				}
+				c.Update(clipBlendDuration)
 			}
 
 		}

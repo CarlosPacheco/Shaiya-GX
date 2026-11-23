@@ -244,9 +244,13 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 		motion uint8
 	}{{"Q", 14, proto.MotionEvadeLeft}, {"E", 15, proto.MotionEvadeRight}} {
 		a.updateWorld(&platform.Input{Released: tc.key}, .1)
+		beforeEvade := v.pos
 		a.updateWorld(&platform.Input{Released: tc.key}, .1)
 		if !v.evading || !v.self.PlayingAction(tc.action) {
 			t.Fatal("lateral evasion did not start", tc.key)
+		}
+		if !v.self.ActionPlaybackStarted(tc.action) && (v.pos[0] != beforeEvade[0] || v.pos[2] != beforeEvade[2]) {
+			t.Fatal("lateral evasion displaced the character during its entry blend", tc.key)
 		}
 		pump(func() bool { return other.Entities[st.SelfID].Gesture == tc.motion })
 		b.prepareRemotePlayers()
@@ -258,6 +262,9 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 		}
 		for range 180 {
 			a.updateWorld(&platform.Input{}, 1.0/60)
+		}
+		if v.pos[0] == beforeEvade[0] && v.pos[2] == beforeEvade[2] {
+			t.Fatal("the lateral evasion never displaced the character", tc.key)
 		}
 	}
 	// Phoenix controls must preserve logical heading on a diagonal, steer from

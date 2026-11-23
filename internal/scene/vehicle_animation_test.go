@@ -2,7 +2,6 @@ package scene
 
 import (
 	"fmt"
-	"github.com/Spelunkern/Shaiya-GX/internal/data/model"
 	"testing"
 )
 
@@ -12,7 +11,9 @@ func TestVehicleBreathGestureReverseAndJump(t *testing.T) {
 	for index := range actor.visual.Animations {
 		name := fmt.Sprintf("%d.ani", index)
 		actor.visual.Animations[index] = name
-		assets.clips["ani:vehicle/ani/"+name] = &Clip{ani: &model.ANI{End: 60}}
+		clip := poseTestClip(2)
+		clip.ani.End = 60
+		assets.clips["ani:vehicle/ani/"+name] = clip
 	}
 	mount := &Vehicle{CreatureActor: actor}
 	mount.Update(1)
@@ -32,7 +33,7 @@ func TestVehicleBreathGestureReverseAndJump(t *testing.T) {
 		t.Fatal("gesture did not return to breathing")
 	}
 	mount.SetMotion(true, false, true, false)
-	mount.Update(.1)
+	mount.Update(.2)
 	if mount.action != 0 || mount.Time < 1.8 {
 		t.Fatal("backward walk did not start at end of clip", mount.Time)
 	}
@@ -43,16 +44,28 @@ func TestVehicleBreathGestureReverseAndJump(t *testing.T) {
 	}
 	mount.SetMotion(true, false, false, true)
 	mount.Update(.1)
-	if mount.action != 2 {
-		t.Fatal("jump did not select MON jump")
-	}
-	mount.Update(3)
-	if mount.Time >= 2 {
-		t.Fatal("jump looped")
+	if mount.action != 2 || mount.Time != .1 || mount.blendLeft != 0 {
+		t.Fatal("jump did not activate MON 2 directly")
 	}
 	mount.SetMotion(true, false, false, false)
 	mount.Update(.1)
+	if mount.action != 2 {
+		t.Fatal("physical landing cut the jump")
+	}
+	mount.Update(2)
+	if mount.action != 6 || mount.blendLeft != clipBlendDuration {
+		t.Fatal("jump did not finish by blending into breathing")
+	}
+	mount.Update(clipBlendDuration)
+	mount.Update(.1)
 	if mount.action != 1 {
 		t.Fatal("landing did not return to running")
+	}
+	mount.SetMotion(true, false, false, true)
+	mount.Update(2)
+	mount.Update(clipBlendDuration)
+	mount.Update(.1)
+	if mount.action != 1 {
+		t.Fatal("a sustained airborne flag restarted the jump clip")
 	}
 }

@@ -67,7 +67,7 @@ func TestLaddersAgainstIsolatedGX(t *testing.T) {
 	}
 	start := v.pos[1]
 	step('W', 500*time.Millisecond)
-	if !v.ladder.Active || st.Self.ClimbMode != mapgeometry.LadderUp || v.pos[1] < start+.5 {
+	if !v.ladder.Active || !v.self.PlayingClip("018_ladder") || st.Self.ClimbMode != mapgeometry.LadderUp || v.pos[1] < start+.5 {
 		t.Fatal("climb not confirmed", v.pos, st.Self.ClimbMode, v.ladder, st.LastPlayerCorrection, "start", start)
 	}
 	held := v.pos[1]

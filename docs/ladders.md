@@ -7,8 +7,9 @@ request detaches the character and resumes normal collision and gravity.
 Sitting, mounts, death and movement locks prevent attachment. Attack and skill
 movement pauses also stop vertical climbing for the existing 800ms interval.
 
-The original `018_ladder` character clip is used locally and for nearby players;
-its locomotion clock stops while holding. Confirmed actions can still finish.
+The original `018_ladder` character clip begins immediately, locally and
+for nearby players. Its locomotion clock stops while holding. Confirmed
+actions can still finish.
 Climbing uses 2.5 world units per second. This speed and the controls are GX
 implementation choices, not a claim that Phoenix already implements climbing.
 

@@ -118,7 +118,6 @@ type worldView struct {
 	evading                     bool
 	evadeAction                 int
 	evadeDirection              render.V3
-	evadeTime                   float32
 	sideRelease                 [2]float64
 	sideReleased                [2]bool
 	sitPending                  bool
@@ -502,7 +501,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		v.evading = v.self.PlayAction(action, false)
 		if v.evading {
 			v.autoRun, v.travel = false, false
-			v.evadeAction, v.evadeTime = action, 0
+			v.evadeAction = action
 			v.evadeDirection = fwd.Scale(-1)
 			if action == 14 {
 				v.evadeDirection = right.Scale(-1)
@@ -558,7 +557,15 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	if a.clock < v.attackMoveUntil {
 		dir = render.V3{}
 	}
-	moving := dir.Len() > 0 && speed > 0 && !a.state.Self.Dead
+	moveDT := dt
+	if v.evading && v.evadeAction != 13 {
+		moveDT = 0
+		if v.self.ActionPlaybackStarted(v.evadeAction) {
+			// EP5.4 applies lateral evasion during the first 15 playback frames.
+			moveDT = min(dt, float64(max(0, .5-v.self.Time)))
+		}
+	}
+	moving := dir.Len() > 0 && speed > 0 && moveDT > 0 && !a.state.Self.Dead
 	if climbFrame {
 		moving = climbMoving
 	}
@@ -575,9 +582,6 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		}
 		if v.evading && v.evadeAction != 13 {
 			speed = 3
-			if v.evadeTime >= .5 {
-				speed = 0
-			}
 		} else if !forward && strafe != 0 && !a.state.Self.Mounted {
 			speed = backwardMovementSpeed(a.state.Self.Speed, a.state.Self.Mounted)
 		} else if back {
@@ -592,11 +596,8 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		if a.state.Self.IsGM && a.state.GMTurbo {
 			speed *= gm.TurboMultiplier
 		}
-		v.stepDT = min(float64(dt), float64(remaining)/float64(max(speed, .0001)))
-		moving = v.step(dir.Scale(min(speed*float32(dt), remaining)))
-	}
-	if v.evading {
-		v.evadeTime += float32(dt)
+		v.stepDT = min(moveDT, float64(remaining)/float64(max(speed, .0001)))
+		moving = v.step(dir.Scale(min(speed*float32(moveDT), remaining)))
 	}
 	if dashing {
 		// Server-authored dash already placed the actor.
@@ -617,7 +618,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	}
 	swimming = v.world.SwimmingAt(v.pos[0], v.pos[1], v.pos[2])
 	if swimming && !v.waterPresentation.swimming && v.self != nil && !a.state.Self.Dead && !a.state.Self.Mounted {
-		v.self.ReleaseAction()
+		v.self.ReleaseActionExceptJump()
 	}
 	a.updateWaterPresentation(float32(dt), moving, swimming)
 	airborne := v.jumping || !v.world.PlayerSupported(v.pos)
@@ -662,7 +663,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		case climbFrame && !a.state.Self.Dead:
 			clip = "018_ladder"
 		case a.state.Self.Mounted:
-			v.self.SetMountedClip(moving, scene.VehicleAlternate(a.state.Self.MountShape))
+			v.self.SetMountedClip(moving || v.jumping || v.selfMount.PlayingJump(), scene.VehicleAlternate(a.state.Self.MountShape))
 			clip = ""
 		case swimming && moving:
 			clip = "007_swim"
@@ -968,7 +969,7 @@ func (a *App) prepareSelfForDraw() {
 	if v.self != nil {
 		v.self.Mounted = a.state.Self.Mounted
 		if v.self.Mounted {
-			v.self.SetMountedClip(v.moving, scene.VehicleAlternate(a.state.Self.MountShape))
+			v.self.SetMountedClip(v.moving || v.jumping || v.selfMount.PlayingJump(), scene.VehicleAlternate(a.state.Self.MountShape))
 		}
 		visualPos := v.visualPosition()
 		if v.ladder.Active && !a.state.Self.Mounted {

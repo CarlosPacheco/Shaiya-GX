@@ -56,7 +56,6 @@ func (r *remoteActor) observeMovement(e *game.Entity, now float64) (walking, mov
 		}
 		if e.Motion&0x3f == 0 && r.moveMode == 0 && dx*dx+dz*dz > 0.000001 {
 			r.walkUntil = now + .7
-			cancelGesture(r.character)
 		} else {
 			r.walkUntil = 0
 		}
@@ -151,6 +150,9 @@ func (a *App) prepareRemotePlayers() {
 			continue
 		}
 		walking, moving := cached.observeMovement(e, a.clock)
+		if moving {
+			cancelGesture(c)
+		}
 		if e.Dead && !cached.dead {
 			c.PlayAction(9, true)
 		}
@@ -177,7 +179,7 @@ func (a *App) prepareRemotePlayers() {
 		}
 		swimming := v.world.SwimmingAt(e.X, e.Y, e.Z)
 		if swimming && !cached.swimming && !e.Dead && !e.Mounted {
-			c.ReleaseAction()
+			c.ReleaseActionExceptJump()
 		}
 		cached.swimming = swimming
 		clip := remoteLocomotion(v.world, e)
@@ -209,7 +211,7 @@ func (a *App) prepareRemotePlayers() {
 		cached.mountCasting = casting
 		c.Mounted = e.Mounted
 		if e.Mounted {
-			c.SetMountedClip(moving, scene.VehicleAlternate(e.MountShape))
+			c.SetMountedClip(moving || e.Motion&proto.MotionFlag80 != 0 || cached.mount.PlayingJump(), scene.VehicleAlternate(e.MountShape))
 		} else {
 			c.SetClip(clip)
 		}

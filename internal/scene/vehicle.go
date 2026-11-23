@@ -17,6 +17,7 @@ type Vehicle struct {
 	passengerBone                     int
 	board                             bool
 	moving, walking, reverse, jumping bool
+	jumpPending, jumpRecovery         bool
 	idleTime                          float32
 }
 
@@ -70,8 +71,11 @@ func (s *Assets) BuildVehicle(race, shape uint8) (*Vehicle, error) {
 
 func (v *Vehicle) SetMoving(moving bool)              { v.SetLocomotion(moving, false) }
 func (v *Vehicle) SetLocomotion(moving, walking bool) { v.SetMotion(moving, walking, false, false) }
+func (v *Vehicle) PlayingJump() bool                  { return v != nil && v.action == 2 }
+
 func (v *Vehicle) SetMotion(moving, walking, reverse, jumping bool) {
 	if v != nil {
+		v.jumpPending = v.jumpPending || jumping && !v.jumping
 		v.moving, v.walking, v.reverse, v.jumping = moving, walking, reverse, jumping
 	}
 }
@@ -82,11 +86,32 @@ func (v *Vehicle) Update(dt float32) {
 	if v == nil {
 		return
 	}
+	if v.jumpPending {
+		v.jumpPending, v.jumpRecovery, v.idleTime = false, false, 0
+		if err := v.setAction(2, true, true); err != nil {
+			v.assets.Missing[err.Error()] = true
+		}
+	}
+	if v.action == 2 {
+		v.CreatureActor.Update(dt)
+		if end := v.clip.Duration(); v.Time >= end {
+			v.Time = end
+			// EP5.4 starts MON 2 immediately and blends to MON 6 at its end.
+			if err := v.SetAction(6); err != nil {
+				v.assets.Missing[err.Error()] = true
+			} else {
+				v.jumpRecovery = true
+			}
+		}
+		return
+	}
+	if v.jumpRecovery && v.blendLeft > 0 {
+		v.CreatureActor.Update(dt)
+		return
+	}
+	v.jumpRecovery = false
 	action := 6
-	if v.jumping {
-		action = 2
-		v.idleTime = 0
-	} else if v.moving {
+	if v.moving {
 		action = 1
 		if v.walking || v.reverse {
 			action = 0
@@ -113,7 +138,7 @@ func (v *Vehicle) Update(dt float32) {
 				if v.Time < 0 {
 					v.Time += duration
 				}
-			} else if action == 2 || action == 8 {
+			} else if action == 8 {
 				v.Time = min(v.Time, max(0, duration-.001))
 			}
 		}

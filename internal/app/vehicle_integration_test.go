@@ -171,6 +171,10 @@ func TestVehicleAgainstRapture(t *testing.T) {
 	if !a.wv.jumping || !st.Self.Mounted {
 		t.Fatal("driver could not jump while mounted")
 	}
+	a.Draw(1024, 734)
+	if !a.wv.selfMount.PlayingJump() || a.wv.selfMount.Time <= 0 {
+		t.Fatal("mount did not start the jump clip on the first frame")
+	}
 	for frame := 0; frame < 180 && a.wv.jumping; frame++ {
 		time.Sleep(time.Second / 120)
 		a.Update(&platform.Input{}, 1024, 734, 1.0/120)

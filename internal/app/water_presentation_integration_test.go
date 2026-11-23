@@ -72,7 +72,7 @@ func TestWaterLocomotionAndContactGL(t *testing.T) {
 		t.Fatal("surface entry ring missing")
 	}
 	v.moving, v.motion = true, 1
-	for range 20 {
+	for range 24 {
 		a.updateWorldStep(&platform.Input{Down: "W"}, 1.0/60)
 	}
 	if !v.self.PlayingClip("007_swim") {
@@ -127,6 +127,21 @@ func TestWaterLocomotionAndContactGL(t *testing.T) {
 	}
 	if err := gl.GetError(); err != gl.NO_ERROR {
 		t.Fatalf("water GL error: %#x", err)
+	}
+	v.place(render.V3{v.pos[0], scene.SwimSurfaceY, v.pos[2]})
+	if !v.self.PlayAction(8, false) {
+		t.Fatal("fixture could not start jump")
+	}
+	v.waterPresentation.swimming = false
+	a.updateWorldStep(&platform.Input{}, 1.0/60)
+	if !v.self.PlayingAction(8) {
+		t.Fatal("entering water cut the on-foot jump short")
+	}
+	for range 75 {
+		a.updateWorldStep(&platform.Input{}, 1.0/60)
+	}
+	if !v.self.PlayingClip("006_swnormal") {
+		t.Fatal("swimmer did not resume floating after the jump")
 	}
 	t.Log("real map update: prior pose → float → swim → float; authored wake visible and expires underwater")
 }

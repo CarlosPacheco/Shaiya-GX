@@ -95,6 +95,9 @@ behavior, and loads all 32 race/model combinations with real OpenGL.
 Vehicle MON animation slots 0/1/2 are walk/run/jump, 6 is breathing and 8 is
 an occasional idle gesture. Breathing is the resting loop; the gesture has an
 11-second wait and a 3-second window and never loops within that window.
+MON jump starts immediately, plays through its last frame even after physical
+landing, and blends to breathing before returning to travel. EP5.4 selects
+MON 2 at `0x418f20` and requests MON 6 at `0x4327a9`.
 Backward movement keeps the mount facing forward and plays walk backwards.
 Mounted lateral movement uses the same speed as forward movement. Ground
 support, vertical motion and repeated-jump rejection remain server-authoritative.

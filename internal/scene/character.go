@@ -109,7 +109,7 @@ type Character struct {
 	blendFrom            []bonePose
 	blendLeft            float32
 	blendToFirstFrame    bool
-	jumpLanding          bool
+	locomotionBlend      bool
 	oneShot              bool
 	folder               string
 	prefix               string
@@ -154,17 +154,26 @@ type Character struct {
 // SetClip switches to <prefix>_<name>.ANI (e.g. "000_normal", "002_run"),
 // restarting it; unknown clips keep the current one.
 func (c *Character) SetClip(name string) {
-	if c == nil || c.locked || c.jumpLanding && c.blendLeft > 0 {
+	if c == nil || c.locked || c.locomotionBlend && c.blendLeft > 0 && isLocomotionClip(name) {
 		return
 	}
 	c.setClip(name, false)
 }
 
-func (c *Character) setClip(name string, jumpLanding bool) {
-	// Apply the locomotion blend to the first selection after landing.
-	resumeAfterJump := c.jumpLanding
-	c.jumpLanding = false
-	blend := blendMatchingSkeletons
+func isLocomotionClip(name string) bool {
+	switch name {
+	case "000_normal", "001_walk", "002_run", "003_bstep", "004_lstep", "005_rstep", "006_swnormal", "007_swim":
+		return true
+	}
+	return false
+}
+
+func (c *Character) setClip(name string, normalIdle bool) {
+	locomotion := isLocomotionClip(name)
+	blend := blendSharedBones
+	if locomotion && name != "000_normal" {
+		blend = blendToFirstKey
+	}
 	fileName := name
 	// The four original Vile idle assets spell "nomal" (also in their ALT).
 	if c.folder == "Vile" && name == "000_normal" {
@@ -182,17 +191,10 @@ func (c *Character) setClip(name string, jumpLanding bool) {
 	case "001_walk", "002_run", "003_bstep", "004_lstep", "005_rstep":
 		c.rate.next = rateMove
 		defer func() { c.rate.next = rateNone }()
-		if resumeAfterJump {
-			blend = blendToLocomotionAfterJump
-		}
 	}
 	var file string
-	if !jumpLanding {
+	if !normalIdle {
 		file = c.locomotionFile(name)
-	}
-	runToIdle := c.clipName == "002_run" && name == "000_normal" && file == ""
-	if runToIdle || jumpLanding {
-		blend = blendToSmallerSkeleton
 	}
 	if file == "" {
 		file = fmt.Sprintf("Character/%s/ANI/%s_%s.ANI", c.folder, c.prefix, fileName)
@@ -206,8 +208,12 @@ func (c *Character) setClip(name string, jumpLanding bool) {
 		return
 	}
 	c.clipFile = file
-	c.startClipWithBlend(cl, false, blend)
-	c.jumpLanding = jumpLanding
+	if name == "018_ladder" {
+		c.startClipImmediately(cl, false)
+	} else {
+		c.startClipWithBlend(cl, false, blend)
+		c.locomotionBlend = locomotion
+	}
 	c.clipName = name
 	c.actionID++
 }
@@ -552,10 +558,21 @@ func (c *Character) Update(dt float32) {
 			c.Time = d
 			if !c.hold {
 				c.locked = false
-				if c.actionSlot == 8 {
-					// ALT 8 uses normal idle as its successor even when
-					// movement is held or a weapon-ready timer is active.
+				switch {
+				case c.actionSlot == 8:
+					// ALT 8 always ends in normal idle before locomotion.
 					c.setClip("000_normal", true)
+				case c.actionSlot == 10 || c.actionSlot == 11 ||
+					c.actionSlot >= 13 && c.actionSlot <= 15 ||
+					c.actionSlot >= 116 && c.actionSlot <= 125:
+					if action := c.actions[c.actionSlot]; uint8(action.Mode) == 2 {
+						switch action.Next {
+						case 0:
+							c.setClip("000_normal", true)
+						case 12:
+							c.setClip("012_sit", false)
+						}
+					}
 				}
 			}
 		}
@@ -595,10 +612,9 @@ func (c *Character) PlayAction(slot int, hold bool) bool {
 	c.clipFile = file
 	if slot == 8 {
 		// PS107 and EP5.4 activate the jump directly and cancel any blend.
-		c.blendLeft = 0
-		c.resetClip(cl, true)
+		c.startClipImmediately(cl, true)
 	} else {
-		c.startClip(cl, true)
+		c.startClipWithBlend(cl, true, blendSharedBones)
 	}
 	c.clipName = file
 	c.actionID++
@@ -684,6 +700,11 @@ func (c *Character) fadeOpacity() float32 {
 
 func (c *Character) PlayingAction(slot int) bool {
 	return c != nil && c.locked && c.actionSlot == slot
+}
+
+// ActionPlaybackStarted reports when the one-shot's entry blend has finished.
+func (c *Character) ActionPlaybackStarted(slot int) bool {
+	return c.PlayingAction(slot) && c.blendLeft <= 0
 }
 
 func (c *Character) PlayingClip(name string) bool {

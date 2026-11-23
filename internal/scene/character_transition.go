@@ -9,8 +9,8 @@ type clipBlendMode uint8
 
 const (
 	blendMatchingSkeletons clipBlendMode = iota
-	blendToSmallerSkeleton
-	blendToLocomotionAfterJump
+	blendSharedBones
+	blendToFirstKey
 )
 
 func (c *Character) invalidatePose() {
@@ -32,9 +32,7 @@ func (c *Character) startClipWithBlend(next *Clip, oneShot bool, mode clipBlendM
 	if previous != nil {
 		previousCount := len(previous.ani.Bones)
 		count = min(previousCount, nextCount)
-		compatible = count > 0 && (previousCount == nextCount ||
-			mode == blendToLocomotionAfterJump ||
-			mode == blendToSmallerSkeleton && previousCount > nextCount)
+		compatible = count > 0 && (previousCount == nextCount || mode != blendMatchingSkeletons)
 	}
 	if compatible {
 		for i, bone := range next.ani.Bones[:count] {
@@ -63,12 +61,17 @@ func (c *Character) startClipWithBlend(next *Clip, oneShot bool, mode clipBlendM
 		c.blendLeft = 0
 	}
 	c.resetClip(next, oneShot)
-	c.blendToFirstFrame = compatible && mode == blendToLocomotionAfterJump
+	c.blendToFirstFrame = compatible && mode == blendToFirstKey
+}
+
+func (c *Character) startClipImmediately(next *Clip, oneShot bool) {
+	c.blendLeft = 0
+	c.resetClip(next, oneShot)
 }
 
 func (c *Character) resetClip(next *Clip, oneShot bool) {
 	c.clip, c.Time, c.oneShot = next, 0, oneShot
-	c.jumpLanding = false
+	c.locomotionBlend = false
 	c.blendToFirstFrame = false
 	c.rate.kind, c.rate.next = c.rate.next, rateNone
 	c.invalidatePose()

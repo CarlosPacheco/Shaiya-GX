@@ -42,17 +42,20 @@ slot 10 leads to the seated loop (12). Mode comparisons use the low byte.
 
 ## GX implementation
 
-GX blends character and creature clips with matching bone counts and parent
-indices. It freezes the visible local pose and blends into the incoming ANI
-reference pose over five frames at 30 Hz. If another request interrupts the
-blend, it starts from the visible intermediate pose. The resulting skeletal
-palette also drives attachments, shadows, and skinned bounds.
+Player transitions blend the matching prefix of the two skeletons over five
+frames at 30 Hz. This covers locomotion, posture, gestures, weapon attacks,
+and rider clips with trailing bones on either side. Incoming-only bones use
+their authored local pose. Creature blends require the same skeleton size.
+The resulting palette also drives attachments, shadows, and skinned bounds.
 
-When a character stops running and enters normal idle, GX also blends when
-the idle skeleton is a matching prefix of the running skeleton. EP5.4
-requests normal idle (ALT slot 0) at `0x441d32` and samples the shared bones
-at `0x552cf0`. The male Human Fighter's weapon runs in slots 29, 40, 47
-and 54 have 38 bones. Normal idle has the same first 36 bones.
+Normal idle and one-shot entries use the incoming ANI reference pose.
+Walk, run, directional steps, swim, and float blend to their first keyed pose
+so playback starts continuously. A new locomotion request waits for the current
+locomotion blend to finish and the controller then uses the latest input.
+Explicit actions may still interrupt from the visible intermediate pose.
+EP5.4 requests normal idle at `0x441d32` and samples the shared bones at
+`0x552cf0`. The male Human Fighter's weapon runs in slots 29, 40, 47 and 54
+have 38 bones. Normal idle and walking have the same first 36 bones.
 
 The on-foot jump (ALT 8) cancels an active blend and starts immediately.
 When it finishes, it requests normal idle even while movement is held.
@@ -61,14 +64,15 @@ before the next locomotion clip. PS107 uses `0x43f125` / `0x54e4f3` for
 local / remote takeoff and `0x41aacd` for the ALT successor. EP5.4 uses
 `0x43f01d` / `0x560f31` and `0x41be49` respectively.
 
-When locomotion resumes immediately after that idle blend, GX blends the
-shared bones into the first keyed pose of the movement clip, including when
-the movement clip adds trailing bones. Extra incoming bones use their own
-local pose. This keeps the visible pose continuous at the start and end of
-the movement blend.
+The jump clip can finish after entering water. The character then resumes the
+applicable water locomotion. Ladder entry activates slot 18 immediately
+(`0x443a12` locally and `0x56492b` remotely in EP5.4). Lateral evasion
+displacement follows the first 15 playback frames after the entry blend.
 
-One-shot actions retain their final keyed pose until the controller selects
-the next action. The local playback cursor waits for the blend. Externally
+One-shot actions retain their final keyed pose when blending to their
+successor. Posture, lateral evasion, backstep, and social gestures honor their
+recorded ALT successors for normal idle and seated idle. The local playback
+cursor waits for the blend. Externally
 driven action frames, cast countdowns, and the spin lifetime keep their own
 clocks. The existing controllers still choose successor actions.
 

@@ -109,10 +109,10 @@ func (s *Assets) buildCreature(folder string, visual model.Creature, name string
 }
 
 func (m *CreatureActor) SetAction(action int) error {
-	return m.setAction(action, false)
+	return m.setAction(action, false, false)
 }
 
-func (m *CreatureActor) setAction(action int, oneShot bool) error {
+func (m *CreatureActor) setAction(action int, oneShot, immediate bool) error {
 	if action == 5 {
 		m.cueTime = 0
 	}
@@ -129,7 +129,11 @@ func (m *CreatureActor) setAction(action int, oneShot bool) error {
 	if err != nil {
 		return err
 	}
-	m.startClip(clip, oneShot || action == 5)
+	if immediate {
+		m.startClipImmediately(clip, oneShot)
+	} else {
+		m.startClip(clip, oneShot || action == 5)
+	}
 	m.action = action
 	if action == 5 {
 		m.queueModelEffect(action)
@@ -164,7 +168,7 @@ func (m *CreatureActor) PlayOnce(action int) {
 		return
 	}
 	m.cueTime = 0
-	if err := m.setAction(action, true); err != nil {
+	if err := m.setAction(action, true, false); err != nil {
 		m.assets.Missing[err.Error()] = true
 		return
 	}

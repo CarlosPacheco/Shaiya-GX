@@ -57,6 +57,7 @@ func TestSwimAnimationAliasesGL(t *testing.T) {
 					if !changed {
 						t.Fatalf("%s/%s pose is static", appearance.Prefix(), clip)
 					}
+					c.Update(clipBlendDuration)
 				}
 			}
 		}
