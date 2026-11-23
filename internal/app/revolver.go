@@ -277,8 +277,8 @@ func (a *App) updateRevolver(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if absInt(in.MouseX-v.startX) > 4 || absInt(in.MouseY-v.startY) > 4 {
-		if v.held == revolverBackground {
-			v.moving = true
+		if v.held == revolverBackground || v.held == revolverActiveCell {
+			v.moving = true // the R cell moves the bar when held and dragged, uses it when clicked
 		} else if v.held >= revolverEditorCell {
 			v.dragging = true
 		}
@@ -379,6 +379,10 @@ func (a *App) drawRevolver(w, h int) {
 	var slots [ui.RevolverSlots]ui.ActionSlot
 	for i := range v.count() {
 		slots[i] = a.revolverIcon(v.Slots[v.Page][i])
+	}
+	// A shortcut picked up from the editor leaves its cell while it is carried.
+	if v.dragging && v.held >= revolverEditorCell && v.held-revolverEditorCell < v.count() {
+		slots[v.held-revolverEditorCell] = ui.ActionSlot{}
 	}
 	layout := a.revolverLayout(w, h)
 	layout.Draw(a.sprites, a.font, art, a.white, slots, v.Page, v.selected, v.count())
