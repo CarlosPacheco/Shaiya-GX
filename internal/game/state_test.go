@@ -732,3 +732,21 @@ func TestGMModesPacketUpdatesOnlyOwnGM(t *testing.T) {
 		t.Fatal("non 0/1 mode accepted")
 	}
 }
+
+func TestSelectingACharacterClearsTheChat(t *testing.T) {
+	s := New()
+	s.AddChat(ChatLine{Text: "Returned to town", Style: 17})
+	s.AddChat(ChatLine{Text: "hello", Sender: "A"})
+	if len(s.Chat) != 2 {
+		t.Fatal("setup lines missing", len(s.Chat))
+	}
+	w := proto.NewWriter(proto.SelectCharacter)
+	w.U8(0)
+	w.U32(7)
+	if _, err := s.Apply(w.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	if len(s.Chat) != 0 {
+		t.Fatal("chat survived a character switch", s.Chat)
+	}
+}

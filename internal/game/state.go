@@ -1142,6 +1142,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		if r.Result == 0 {
 			s.SelfID, s.Phase = r.ID, PhaseLoading
+			s.Chat = nil // every chat pane, combat and system line belongs to the previous character
 			s.Oxygen = proto.OxygenStatus{}
 			s.StatsKnown = false
 			s.DeathLossFree = false
