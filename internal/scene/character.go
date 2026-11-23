@@ -108,6 +108,7 @@ type Character struct {
 	clipName             string
 	blendFrom            []bonePose
 	blendLeft            float32
+	blendToFirstFrame    bool
 	jumpLanding          bool
 	oneShot              bool
 	folder               string
@@ -160,6 +161,10 @@ func (c *Character) SetClip(name string) {
 }
 
 func (c *Character) setClip(name string, jumpLanding bool) {
+	// Apply the locomotion blend to the first selection after landing.
+	resumeAfterJump := c.jumpLanding
+	c.jumpLanding = false
+	blend := blendMatchingSkeletons
 	fileName := name
 	// The four original Vile idle assets spell "nomal" (also in their ALT).
 	if c.folder == "Vile" && name == "000_normal" {
@@ -177,12 +182,18 @@ func (c *Character) setClip(name string, jumpLanding bool) {
 	case "001_walk", "002_run", "003_bstep", "004_lstep", "005_rstep":
 		c.rate.next = rateMove
 		defer func() { c.rate.next = rateNone }()
+		if resumeAfterJump {
+			blend = blendToLocomotionAfterJump
+		}
 	}
 	var file string
 	if !jumpLanding {
 		file = c.locomotionFile(name)
 	}
 	runToIdle := c.clipName == "002_run" && name == "000_normal" && file == ""
+	if runToIdle || jumpLanding {
+		blend = blendToSmallerSkeleton
+	}
 	if file == "" {
 		file = fmt.Sprintf("Character/%s/ANI/%s_%s.ANI", c.folder, c.prefix, fileName)
 	}
@@ -195,7 +206,7 @@ func (c *Character) setClip(name string, jumpLanding bool) {
 		return
 	}
 	c.clipFile = file
-	c.startClipWithBlend(cl, false, runToIdle || jumpLanding)
+	c.startClipWithBlend(cl, false, blend)
 	c.jumpLanding = jumpLanding
 	c.clipName = name
 	c.actionID++

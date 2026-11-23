@@ -61,6 +61,12 @@ before the next locomotion clip. PS107 uses `0x43f125` / `0x54e4f3` for
 local / remote takeoff and `0x41aacd` for the ALT successor. EP5.4 uses
 `0x43f01d` / `0x560f31` and `0x41be49` respectively.
 
+When locomotion resumes immediately after that idle blend, GX blends the
+shared bones into the first keyed pose of the movement clip, including when
+the movement clip adds trailing bones. Extra incoming bones use their own
+local pose. This keeps the visible pose continuous at the start and end of
+the movement blend.
+
 One-shot actions retain their final keyed pose until the controller selects
 the next action. The local playback cursor waits for the blend. Externally
 driven action frames, cast countdowns, and the spin lifetime keep their own

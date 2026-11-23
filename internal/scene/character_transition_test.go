@@ -119,6 +119,8 @@ func TestRunToNormalIdleBlendsSharedBones(t *testing.T) {
 func TestJumpStartsImmediatelyAndReturnsThroughNormalIdle(t *testing.T) {
 	assets := NewAssets(nil)
 	run, jump, idle := poseTestClip(3), poseTestClip(3), poseTestClip(2)
+	run.restLocal[1][12] = 2
+	run.ani.Bones[1].Trans[0].T[0] = 1
 	assets.clips["ani:character/human/ani/humf_002_run.ani"] = run
 	assets.clips["ani:character/human/ani/humf_008_jump.ani"] = jump
 	assets.clips["ani:character/human/ani/humf_000_normal.ani"] = idle
@@ -154,9 +156,39 @@ func TestJumpStartsImmediatelyAndReturnsThroughNormalIdle(t *testing.T) {
 	if c.finals()[1] != idle.Finals(0)[1] {
 		t.Fatal("landing blend did not reach the opening idle pose")
 	}
+	lastIdle, firstRun := c.finals()[1], run.Finals(0)[1]
 	c.SetClip("002_run")
-	if !c.PlayingClip("002_run") {
-		t.Fatal("locomotion did not resume after the landing blend")
+	if !c.PlayingClip("002_run") || c.blendLeft != clipBlendDuration || c.finals()[1] != lastIdle {
+		t.Fatal("resuming locomotion dropped the pose of the shared bones")
+	}
+	c.Update(clipBlendDuration / 2)
+	if c.Time != 0 || math.Abs(float64(c.finals()[1][12]-(lastIdle[12]+firstRun[12])/2)) > .0001 {
+		t.Fatal("resuming locomotion did not blend toward its first keyed pose")
+	}
+	c.Update(clipBlendDuration / 2)
+	if c.finals()[1] != firstRun || c.blendLeft != 0 {
+		t.Fatal("resuming locomotion did not finish at the first keyed pose")
+	}
+
+	c.PlayAction(8, false)
+	c.Update(jump.Duration())
+	c.Update(clipBlendDuration)
+	c.SetClip("002_run")
+	c.Update(clipBlendDuration / 2)
+	extraBone := c.finals()[2]
+	c.startClip(poseTestClip(3), true)
+	if c.finals()[2] != extraBone {
+		t.Fatal("interrupting a locomotion blend dropped an incoming bone's pose")
+	}
+
+	c.PlayAction(8, false)
+	c.Update(jump.Duration())
+	c.Update(clipBlendDuration)
+	c.combatPoseLeft = 0
+	c.SetClip("000_normal")
+	c.SetClip("002_run")
+	if c.blendLeft != 0 {
+		t.Fatal("starting later from stationary idle must use the ordinary transition")
 	}
 }
 
