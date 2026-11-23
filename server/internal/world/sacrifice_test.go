@@ -3,8 +3,65 @@ package world
 import (
 	"testing"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
+
+func TestAttackSacrificeKillsCasterAfterMiss(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		level uint8
+		gm    bool
+	}{
+		{"single target", 1, false},
+		{"area", 2, false},
+		{"area with GM immunity", 3, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, wire := potentialSession(t)
+			s.isAdmin, s.gmImmune = tc.gm, tc.gm
+			defs := db.MustDefs()
+			k := db.CharacterSkill{SkillID: 87, Level: tc.level, Number: 1}
+			catalog := defs.Skill(k.SkillID, k.Level)
+			if catalog == nil || catalog.TypeEffect != typeEffectAttack || catalog.TypeDetail != detailSacrifice {
+				t.Fatal("fixture needs the catalog's Eraser")
+			}
+			def := *catalog
+			def.SuccessType, def.SuccessValue = 1, 0
+			defs.Skills[db.SkillKey{SkillID: k.SkillID, Level: k.Level}] = &def
+			s.skills = []db.CharacterSkill{k}
+
+			const mobID = 64913
+			defs.Mobs[mobID] = &db.MobDef{MobID: mobID, MaxHP: 1000, Country: 2}
+			sh := shard(s.char.MapID)
+			sh.mu.Lock()
+			sh.entities.Mobs = []MapMob{{ID: mobID, MobID: mobID, PosX: s.char.PosX + 1, PosY: s.char.PosY, PosZ: s.char.PosZ, CurrentHP: 1000, MaxHP: 1000}}
+			sh.mu.Unlock()
+			t.Cleanup(func() {
+				sh.mu.Lock()
+				sh.entities.Mobs = nil
+				sh.mu.Unlock()
+			})
+
+			s.handleUseSkill(packet.SkillUse, proto.UseSkillPacket(k.Number, 0, false))
+			if s.dead || !s.skillReady(k.SkillID) {
+				t.Fatal("a refused cast killed the caster or started reuse")
+			}
+			s.handleUseSkill(packet.SkillUse, proto.UseSkillPacket(k.Number, mobID, false))
+			if !s.dead || s.char.CurrentHP != 0 || s.player.IsAlive() || s.rebirthAt.IsZero() {
+				t.Fatal("accepted sacrificial attack did not leave the caster dead")
+			}
+			if mob, ok := MobByID(s.char.MapID, mobID); !ok || mob.CurrentHP != 1000 || s.skillReady(k.SkillID) {
+				t.Fatal("expected a miss with the accepted skill on cooldown")
+			}
+			die := proto.NewReader(waitWorldPacket(t, wire, proto.CharacterDeath))
+			if die.U32() != s.char.ID {
+				t.Fatal("the caster did not receive its death")
+			}
+		})
+	}
+}
 
 // Sacrifice (TypeEffect 2, TypeDetail 43): the caster pays its whole SP/MP pool
 // and the target recovers the caster's maximum SP (level 1), SP and MP (2) or

@@ -115,11 +115,11 @@ func (s *Session) skillAttack(k db.CharacterSkill, def *db.SkillDef, target uint
 		}
 		s.skillStrike(center.ID, def, k, true)
 	}
+	s.afterSkillStrikes(def)
 }
 
-// skillStrike is one target of a skill: detail 22 hits MultiAttack times
-// (stopping when the mob or the caster dies), 23 then sacrifices the
-// caster's remaining HP.
+// skillStrike is one target of a skill: detail 22 hits MultiAttack times,
+// stopping when the mob or the caster dies.
 func (s *Session) skillStrike(target uint32, def *db.SkillDef, k db.CharacterSkill, first bool) {
 	if def.TypeDetail == detailMulti {
 		for i := uint8(0); i < def.MultiAttack; i++ {
@@ -130,38 +130,32 @@ func (s *Session) skillStrike(target uint32, def *db.SkillDef, k db.CharacterSki
 		return
 	}
 	s.skillHit(target, def, k, first)
-	if def.TypeDetail == detailSacrifice && first {
-		s.sacrifice()
-	}
 }
 
-// sacrifice is detail 23's CUser::Damage of the caster's whole HP.
-func (s *Session) sacrifice() {
-	if s.invulnerable() {
-		return
-	}
-	s.breakStealth()
+// Detail 23 pays the caster's entire HP once after an accepted attack
+// resolves, including a miss. EP4.5 does this after the target loop at 0x451484.
+func (s *Session) afterSkillStrikes(def *db.SkillDef) {
 	ch := s.char
-	st := s.stats()
-	if st.CurrentHP == 0 {
+	if def.TypeDetail != detailSacrifice || s.dead || ch.CurrentHP == 0 {
 		return
 	}
+	s.cancelMove()
+	s.cancelTravelCast()
+	s.breakStealth()
 	ch.CurrentHP = 0
 	s.damageLedger = nil // CDamage::Reset
 	s.persist()
 	refreshed := s.stats()
 	s.send(buildCurrentHitpoints(&refreshed), "0x0521 current hp after sacrifice")
-	state, death := buildCharacterDeathState(ch.ID), buildCharacterDeath(ch.ID, deathTypeMob, ch.ID)
-	for _, p := range PlayersNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius) {
-		p.Send(state, "0x051C character death state")
-		p.Send(death, "0x0504 character death")
-	}
+	s.broadcastNear(buildCharacterDeathState(ch.ID), "0x051C character death state", true)
+	s.broadcastNear(buildCharacterDeath(ch.ID, deathTypeMob, ch.ID), "0x0504 character death", true)
 	if s.player != nil {
 		s.player.SetAlive(false)
 		duelLeave(s.player, 3, true) // PvPChkLeaveByDeath
 		guildDuelLeave(s.player, nil, 3)
 	}
 	s.dead, s.autoAttack, s.cast = true, false, nil
+	s.pendingCombo, s.pendingSkill = nil, nil
 	s.clearBuffsOnDeath()
 	s.log.Printf("GX Server World character sacrificed itself character_id=%d", ch.ID)
 }

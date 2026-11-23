@@ -147,13 +147,6 @@ func (s *Session) areaUserHits(def *db.SkillDef, k db.CharacterSkill, x, y, z fl
 	}
 }
 
-// afterSkillStrikes is detail 23's sacrifice of the caster after the hits.
-func (s *Session) afterSkillStrikes(def *db.SkillDef) {
-	if def.TypeDetail == detailSacrifice && s.char.CurrentHP > 0 {
-		s.sacrifice()
-	}
-}
-
 func (s *Session) queueSkillHits(p *ConnectedPlayer, def *db.SkillDef, first bool, n uint8) {
 	ch := s.char
 	stats := s.stats()

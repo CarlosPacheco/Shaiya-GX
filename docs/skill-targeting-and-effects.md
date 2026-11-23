@@ -72,6 +72,11 @@ native message ID, each uint16 after the opcode. It uses ordinary framing and
 avoids assigning invented meanings to native skill-result codes. No resource
 cost or cooldown starts on a reach refusal.
 
+Sacrificial attacks such as Eraser (TypeDetail 23) consume the caster's whole
+HP after an accepted cast resolves its targets. This applies to single-target
+and area casts against monsters and players, even if every hit misses. A
+refused cast leaves the caster alive.
+
 ## Native debuff pulse
 
 The original `0x4c0267–0x4c02c4` folds a one-second phase at 0.5, then multiplies
