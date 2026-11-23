@@ -163,6 +163,20 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 	return captured
 }
 
+// drawInventoryDrag draws the item held by the cursor above every window and
+// the action bars, which a drop can target.
+func (a *App) drawInventoryDrag() {
+	v := &a.inventory
+	if !v.open || !v.dragging || !v.selected {
+		return
+	}
+	if it, ok := a.state.Inventory[v.source]; ok {
+		if d := a.itemsItem(it.Type, it.TypeID); d != nil {
+			a.drawItemIcon(d, a.lastMouseX-16, a.lastMouseY-16, 32, [4]float32{1, 1, 1, .85}, &it)
+		}
+	}
+}
+
 func (a *App) drawInventory(w, h int) {
 	v := &a.inventory
 	if !v.open {
@@ -195,12 +209,7 @@ func (a *App) drawInventory(w, h int) {
 		}
 	}
 	if v.dragging && v.selected {
-		if it, ok := a.state.Inventory[v.source]; ok {
-			if d := a.itemsItem(it.Type, it.TypeID); d != nil {
-				a.drawItemIcon(d, a.lastMouseX-16, a.lastMouseY-16, 32, [4]float32{1, 1, 1, .85}, &it)
-			}
-		}
-		return
+		return // the dragged icon is drawn last, over every panel and bar
 	}
 
 	key, hovered := ui.InventoryHit(a.lastMouseX-x, a.lastMouseY-y, v.bag)

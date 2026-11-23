@@ -472,6 +472,7 @@ func (a *App) drawCharacters(w, h int) {
 		a.drawScreenNotices(w, h)
 		a.drawSharedTooltip(w, h)
 		a.drawWarehouseDrag()
+		a.drawInventoryDrag()
 		a.drawShortcutDrag()
 		a.drawRevolverDrag()
 		a.drawLocalActionDrag()
