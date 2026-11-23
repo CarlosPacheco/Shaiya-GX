@@ -138,8 +138,5 @@ func (s *Session) nextWake() time.Duration {
 	if s.pendingCombo != nil {
 		consider(s.pendingCombo.due)
 	}
-	if !s.drownedRiseAt.IsZero() {
-		consider(now.Add(50 * time.Millisecond)) // a drowned body rises smoothly
-	}
 	return wake
 }

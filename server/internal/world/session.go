@@ -118,7 +118,6 @@ type Session struct {
 	gmGRBGuild       uint32 // guild whose ranking participation this GM started
 	dash             *proto.SkillDash
 	lastActionAt     time.Time
-	drownedRiseAt    time.Time     // a drowned body is rising; the time of its last step
 	clipFloorAt      time.Time     // the lastActionAt the floor below belongs to
 	clipFloor        time.Duration // own animation of the last skill
 	attackMoveUntil  time.Time
@@ -499,7 +498,6 @@ func (s *Session) tick(idle bool) {
 	now := time.Now()
 	s.tickPlayerMovement(now)
 	s.tickOxygen(now)
-	s.tickDrownedFloat(now)
 	s.recoveryTick()
 	s.syncQuestNPCCatalog(false)
 	if time.Since(s.lastQuestCheck) >= 5*time.Second {
@@ -850,7 +848,6 @@ func (s *Session) selectCharacter(id uint32) {
 	s.speedKnown = false
 	s.movement = playerMovement{}
 	s.oxygen = oxygenState{}
-	s.drownedRiseAt = time.Time{}
 	s.elements = elementRuntime{}
 	// GMs start transparent and unattackable (the original admin switches).
 	s.gmConcealed, s.gmImmune = s.isAdmin, s.isAdmin

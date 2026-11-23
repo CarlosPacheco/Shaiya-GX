@@ -106,9 +106,9 @@ func TestSurfacingBeforeDrowningTickPreventsDamage(t *testing.T) {
 	}
 }
 
-// GM "attack on" gives no protection from the water, drowning announces its
-// own death and the body floats up to the surface pose.
-func TestGMImmunityDoesNotStopDrowningAndTheDrownedBodyFloats(t *testing.T) {
+// GM "attack on" gives no protection from the water and drowning announces its
+// own death.
+func TestGMImmunityDoesNotStopDrowningAndTheDeathIsAnnounced(t *testing.T) {
 	s, packets := oxygenFixture(t)
 	t.Setenv("RAPTURE_FALL_DAMAGE", "false")
 	s.isAdmin, s.gmImmune = true, true
@@ -130,20 +130,6 @@ func TestGMImmunityDoesNotStopDrowningAndTheDrownedBodyFloats(t *testing.T) {
 	id, err := proto.DecodeDrowningDeath(waitWorldPacket(t, packets, proto.GXDrowningDeath))
 	if err != nil || id != s.char.ID {
 		t.Fatalf("drowning death notice: %d, %v", id, err)
-	}
-	start := s.char.PosY
-	if start != -3 {
-		t.Fatalf("the body jumped to %.2f instead of rising", start)
-	}
-	step := now.Add(40 * time.Second)
-	s.drownedRiseAt = step
-	s.tickDrownedFloat(step.Add(500 * time.Millisecond))
-	if got := s.char.PosY; got <= start || got >= drownedFloatY {
-		t.Fatalf("half a second of rise left the body at %.2f", got)
-	}
-	s.tickDrownedFloat(step.Add(5 * time.Second))
-	if s.char.PosY != drownedFloatY || s.movement.pos[1] != drownedFloatY || !s.drownedRiseAt.IsZero() {
-		t.Fatalf("the drowned body did not settle at the surface: %.2f", s.char.PosY)
 	}
 }
 
