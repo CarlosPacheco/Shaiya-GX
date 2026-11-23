@@ -107,6 +107,18 @@ func TestSharedRecoveryBuffersOnlyLatestSkillAndMovementCancels(t *testing.T) {
 	}
 }
 
+func TestJumpKeepsQueuedSkill(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID = 1
+	a.state.Skills[1] = proto.LearnedSkill{ID: 90, Level: 1, Number: 1}
+	a.skillDefs = map[sdata.SkillKey]sdata.Skill{{ID: 90, Level: 1}: {Effect: 4, Target: 2}}
+	a.skills.queuedSkill = &queuedSkill{packet: proto.UseSkillPacket(1, 1, true), key: sdata.SkillKey{ID: 90, Level: 1}, expires: a.clock + 5}
+	a.updateQueuedSkill(&platform.Input{Space: true, Keys: []platform.Key{platform.KeySpace}})
+	if a.skills.queuedSkill == nil {
+		t.Fatal("jumping dropped the queued skill")
+	}
+}
+
 // Animation-bound cadence: the table is only a ceiling over the basic-attack
 // clip at the weapon-relative animation rate (30 frames at 15-45 fps).
 func TestAnimationBoundIntervalFollowsClipAndKeepsTableCeiling(t *testing.T) {

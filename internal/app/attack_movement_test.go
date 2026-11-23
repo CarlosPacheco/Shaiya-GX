@@ -54,11 +54,14 @@ func TestJumpBuffersOnlyStationaryCombatOrders(t *testing.T) {
 	}
 	a.wv.jumpMoved = true
 	a.updateLandingAction(&platform.Input{})
-	if a.wv.landingAction.target != 0 || a.wv.landingAction.packet != nil || !a.attackTarget() || a.wv.landingAction.target != 0 {
-		t.Fatal("moving jump retained or acquired an order")
+	if a.wv.landingAction.skill.ID != 77 {
+		t.Fatal("a moving jump dropped the order")
+	}
+	a.attackTarget()
+	if a.wv.landingAction.target != target {
+		t.Fatal("a moving jump did not keep the new order")
 	}
 	a.wv.jumpMoved = false
-	a.attackTarget()
 	a.state.Target = target + 1
 	a.updateLandingAction(&platform.Input{})
 	if a.wv.landingAction.target != 0 {

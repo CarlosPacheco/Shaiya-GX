@@ -63,11 +63,13 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 		v.approachTarget = 0
 		return true
 	}
-	if a.state.Self.Dead || in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeySpace) || in.HasKey(platform.KeyNumLock) {
+	if a.state.Self.Dead || in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeyNumLock) {
 		v.approachTarget, v.travel = 0, false
 		return true
 	}
 	var goal render.V3
+	// Airborne: keep chasing, but the attack or skill waits for the landing.
+	airborne := false
 	reach := float32(1.5)
 	if v.approachNPC {
 		e := a.state.Entities[v.approachTarget]
@@ -92,10 +94,7 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 			v.approachTarget, v.travel = 0, false
 			return true
 		}
-		if !a.attackMovementAllowed() && !a.followOnly(e) {
-			v.travel = false
-			return true
-		}
+		airborne = !a.attackMovementAllowed() && !a.followOnly(e)
 		goal = render.V3{e.X, e.Y, e.Z}
 		reach = a.attackReachTo(e)
 		if len(v.approachSkill) > 0 {
@@ -124,6 +123,10 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 		if v.engagedID == v.approachTarget {
 			v.engagedID = 0 // the target left reach: the chase attacks again on arrival
 		}
+		return true
+	}
+	if airborne {
+		v.travel = false
 		return true
 	}
 

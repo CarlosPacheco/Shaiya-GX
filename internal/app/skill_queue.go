@@ -52,7 +52,7 @@ func (a *App) updateQueuedSkill(in *platform.Input) {
 	reader.U8()
 	recipient := reader.U32()
 	selectionChanged := a.state.Target != q.selection && recipient != 0 && recipient != a.state.SelfID
-	if a.state.Self.Dead || a.state.Self.Mounted || selectionChanged || a.clock > q.expires || in.SuppressAutoRun || in.Clicked || in.Space || in.HasKey(platform.KeySpace) || in.HasKey(platform.KeyNumLock) || strings.ContainsAny(in.Down, "WSADQE^v<>") {
+	if a.state.Self.Dead || a.state.Self.Mounted || selectionChanged || a.clock > q.expires || in.SuppressAutoRun || in.Clicked || in.HasKey(platform.KeyNumLock) || strings.ContainsAny(in.Down, "WSADQE^v<>") {
 		a.skills.queuedSkill = nil
 		return
 	}

@@ -363,7 +363,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 			toggleSit = true
 		}
 	}
-	if a.state.Self.Dead || toggleSit || in.HasKey(platform.KeySpace) || in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeyNumLock) || in.RightDown && in.MouseDown {
+	if a.state.Self.Dead || toggleSit || in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeyNumLock) || in.RightDown && in.MouseDown {
 		v.travel = false
 	}
 	if a.state.Self.Dead || toggleSit || in.Held('S') || backEvade {
@@ -371,7 +371,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	} else if in.HasKey(platform.KeyNumLock) {
 		v.autoRun = !v.autoRun
 	}
-	if !in.SuppressAutoRun && (in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeySpace) || in.HasKey(platform.KeyNumLock) || v.autoRun) {
+	if !in.SuppressAutoRun && (in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeyNumLock) || v.autoRun) {
 		// Explicit movement abandons the attack action at once (0x43bfa0).
 		if !a.abandonAttack() {
 			return
@@ -381,7 +381,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	if !a.updateActionApproach(in) {
 		return
 	}
-	if !in.SuppressAutoRun && (intent.forward || intent.back || intent.side != 0 || intent.turn != 0) {
+	if !in.SuppressAutoRun && a.clock >= v.attackMoveUntil && (intent.forward || intent.back || intent.side != 0 || intent.turn != 0) {
 		v.restoreMovementHeading()
 	}
 	var dir render.V3
@@ -469,7 +469,9 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	} else if v.diagonalHeading.Len() == 0 {
 		v.diagonalHeading = v.facing
 	}
-	if !diagonal && !blocked && speed > 0 && !a.state.Self.Dead && (in.RightDown && intent.side != 0 || !v.travel && (intent.forward || intent.back)) {
+	// While an attack holds the character in place it keeps facing its target;
+	// the held movement key turns it only once the pause is over.
+	if !diagonal && !blocked && a.clock >= v.attackMoveUntil && speed > 0 && !a.state.Self.Dead && (in.RightDown && intent.side != 0 || !v.travel && (intent.forward || intent.back)) {
 		v.facing = fwd
 	}
 	right := render.V3{0, 1, 0}.Cross(v.facing)
@@ -527,7 +529,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		return
 	}
 	jumpPressed := in.HasKey(platform.KeySpace)
-	canJump := !climbFrame && !blocked && !swimming && !v.jumping && !v.evading && speed > 0 && !a.state.Self.Dead && a.state.Self.Vehicle.State != proto.VehiclePassenger && v.world.PlayerSupported(v.pos)
+	canJump := !climbFrame && !blocked && !swimming && !v.jumping && !v.evading && a.clock >= v.attackMoveUntil && speed > 0 && !a.state.Self.Dead && a.state.Self.Vehicle.State != proto.VehiclePassenger && v.world.PlayerSupported(v.pos)
 	if v.jumpPending {
 		// One frame after the key: the impulse, and the jump request, begin.
 		if !canJump {
@@ -548,9 +550,9 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 			}
 		}
 	} else if jumpPressed && canJump && !v.jumpActive {
+		// A jump does not abandon a click-to-move, a chase, an engaged target
+		// or a queued skill: they carry on through the air and after landing.
 		v.startJumpAnimation()
-		v.approachTarget, v.approachSkill, v.engagedID = 0, nil, 0
-		a.skills.queuedSkill = nil
 		a.stopCastEffects(a.state.SelfID)
 	}
 	if a.clock < v.attackMoveUntil {

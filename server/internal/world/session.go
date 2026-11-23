@@ -1019,6 +1019,10 @@ func (s *Session) handleMotion(p []byte) {
 	}
 	s.cancelVehicleCast()
 	if motion == proto.MotionJump {
+		// A swing or cast has just been committed: no jump for that instant.
+		if time.Now().Before(s.attackMoveUntil) {
+			return
+		}
 		if !s.startMovementJump(time.Now()) {
 			return
 		}

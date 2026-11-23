@@ -21,15 +21,15 @@ func (a *App) attackMovementAllowed() bool {
 		(v.ladder.Active || v.world.PlayerSupported(v.pos) || v.world.SwimmingAt(v.pos[0], v.pos[1], v.pos[2]))
 }
 
-// A single explicit combat order can wait through a jump in place. A jump
-// that has already travelled horizontally cannot start a landing order.
+// An explicit combat order given in the air always waits for the landing and
+// then goes out (with the usual short delay); it is never dropped.
 func (a *App) deferAirAction(target uint32, packet []byte) bool {
 	v := a.wv
 	v.landingAction = landingAction{}
 	if a.attackMovementAllowed() {
 		return false
 	}
-	if (!v.jumpActive && !v.jumping) || v.jumpMoved || v.moving || v.travel || v.autoRun || a.state.Self.Mounted {
+	if a.state.Self.Mounted {
 		return true
 	}
 	q := landingAction{target: target, selection: a.state.Target, packet: slices.Clone(packet)}
@@ -53,7 +53,7 @@ func (a *App) updateLandingAction(in *platform.Input) {
 	if q.target == 0 && q.packet == nil {
 		return
 	}
-	if v.jumpMoved || v.moving || v.travel || v.autoRun || a.state.Self.Dead || a.state.Self.Mounted || in.HasKey(platform.KeyEscape) ||
+	if a.state.Self.Dead || a.state.Self.Mounted || in.HasKey(platform.KeyEscape) ||
 		(q.target != 0 && q.target != a.state.SelfID && q.selection != a.state.Target) {
 		v.landingAction = landingAction{}
 		return
