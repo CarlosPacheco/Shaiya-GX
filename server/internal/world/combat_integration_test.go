@@ -461,6 +461,7 @@ func TestMobAI(t *testing.T) {
 	s.mu.Lock()
 	m := mob()
 	m.PosX, m.PosZ, m.nextAttackAt = 100, 100, time.Time{}
+	m.moveDuration = 0 // Clear the chase segment when placing the mob for the next attack.
 	s.mu.Unlock()
 	TickMobCombat([]PlayerCombatSnapshot{snap(1, 100.5, 100), other}, 64)
 	if mob().AggroTarget != 2 {
