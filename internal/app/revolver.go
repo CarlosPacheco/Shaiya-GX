@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
@@ -28,8 +29,10 @@ type revolverConfig struct {
 
 type revolverCast struct {
 	skill      sdata.SkillKey
+	packet     []byte
 	page, slot int
-	deadline   float64
+	deadline   float64 // zero while waiting on movement or the local skill queue
+	preparing  bool
 }
 
 const (
@@ -190,6 +193,9 @@ func (a *App) useRevolver() {
 		return
 	}
 	v := a.revolverState()
+	if a.revolverPending() {
+		return
+	}
 	slot := v.Slots[v.Page][v.selected]
 	if slot.Action > 0 && int(slot.Action) <= len(subActionNameIDs) {
 		v.step(1)
@@ -208,8 +214,40 @@ func (a *App) useRevolver() {
 		v.step(1)
 		return
 	}
-	if p := a.learnedSkillPacket(k); p != nil && a.dispatchShortcut(p) {
-		v.cast = revolverCast{skill: sdata.SkillKey{ID: k.ID, Level: k.Level}, page: v.Page, slot: v.selected, deadline: a.clock + 15}
+	if p := a.learnedSkillPacket(k); p != nil {
+		v.cast = revolverCast{skill: sdata.SkillKey{ID: k.ID, Level: k.Level}, packet: p, page: v.Page, slot: v.selected}
+		a.dispatchShortcut(p)
+		a.revolverPending()
+	}
+}
+
+// The shared skill paths can defer an order, replace it or cancel it before
+// sending. Keep the cell busy only while its order is still in one of them.
+func (a *App) revolverPending() bool {
+	cast := &a.revolver.cast
+	if cast.skill.ID == 0 {
+		return false
+	}
+	if cast.deadline != 0 {
+		if a.clock <= cast.deadline {
+			return true
+		}
+	} else if v := a.wv; v != nil &&
+		(v.approachTarget != 0 && slices.Equal(v.approachSkill, cast.packet) ||
+			slices.Equal(v.landingAction.packet, cast.packet) ||
+			a.skills.queuedSkill != nil && slices.Equal(a.skills.queuedSkill.packet, cast.packet)) {
+		return true
+	}
+	*cast = revolverCast{}
+	return false
+}
+
+func (a *App) markRevolverSent(packet []byte) {
+	cast := &a.revolver.cast
+	if cast.skill.ID != 0 && cast.deadline == 0 && slices.Equal(cast.packet, packet) {
+		// Recover when the server silently drops an order. An announced
+		// preparation gets its own longer result window.
+		cast.deadline = a.clock + 3
 	}
 }
 
@@ -217,7 +255,7 @@ func (a *App) useRevolver() {
 func (a *App) confirmRevolver(r proto.SkillResult) {
 	v := &a.revolver
 	cast := v.cast
-	if cast.skill.ID == 0 || r.Source != a.state.SelfID || cast.skill != (sdata.SkillKey{ID: r.ID, Level: r.Level}) {
+	if cast.deadline == 0 || r.Source != a.state.SelfID || cast.skill != (sdata.SkillKey{ID: r.ID, Level: r.Level}) {
 		return
 	}
 	v.cast = revolverCast{}

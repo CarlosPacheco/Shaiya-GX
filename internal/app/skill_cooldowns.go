@@ -10,6 +10,17 @@ import (
 // Server validation remains authoritative.
 func (a *App) confirmedSkills(op proto.Opcode) {
 	v := &a.skills
+	switch op {
+	case proto.SkillCastStarted:
+		c, cast := a.state.LastCast, &a.revolver.cast
+		if cast.deadline != 0 && c.Source == a.state.SelfID && cast.skill == (sdata.SkillKey{ID: c.ID, Level: c.Level}) {
+			cast.preparing, cast.deadline = true, a.clock+15
+		}
+	case proto.GXSkillFailure:
+		if cast := a.revolver.cast; cast.deadline != 0 && cast.skill.ID == a.state.LastSkillFailure.Skill {
+			a.revolver.cast = revolverCast{}
+		}
+	}
 	if op == proto.CharacterSkills {
 		a.revolver.cast = revolverCast{}
 		a.loadSkills()

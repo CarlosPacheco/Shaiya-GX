@@ -639,6 +639,9 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		}
 		if moving {
 			v.self.CancelCast()
+			if a.revolver.cast.preparing {
+				a.revolver.cast = revolverCast{}
+			}
 			a.stopCastEffects(a.state.SelfID)
 		}
 		if moving || v.jumping {
@@ -1106,6 +1109,7 @@ func (a *App) refreshSelf(v *worldView) {
 }
 
 func (a *App) releaseWorld() {
+	a.revolver.cast = revolverCast{}
 	a.sprites.ResetHoverDepth()
 	a.combatNumbers = nil
 	a.appearanceEdit = nil

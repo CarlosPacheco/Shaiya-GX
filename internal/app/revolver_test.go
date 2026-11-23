@@ -6,6 +6,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/session"
 )
 
 func TestRevolverPageControlsAndProfile(t *testing.T) {
@@ -83,6 +84,90 @@ func TestRevolverAdvancesOnlyOnceOnMatchingResult(t *testing.T) {
 	a.confirmRevolver(result)
 	if v.selected != 1 {
 		t.Fatal("expected one advance after the matching result", v.selected)
+	}
+}
+
+func TestRevolverKeepsOneOrderThroughLandingAndConfirmation(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID, a.clock = 90, 10
+	a.world = &session.World{}
+	a.revolver.profile = a.localActionsKey()
+	key := sdata.SkillKey{ID: 57, Level: 2}
+	a.state.Skills[1] = proto.LearnedSkill{ID: key.ID, Level: key.Level, Number: 1}
+	a.skillDefs[key] = sdata.Skill{Effect: 4, Target: 2}
+	a.revolver.Slots[0][0] = revolverSlot{Skill: key.ID}
+	press := func() { a.updateRevolver(&platform.Input{Keys: []platform.Key{platform.KeyRevolver}}, 1024, 768) }
+
+	a.wv.jumping = true
+	press()
+	first := a.wv.landingAction.packet
+	if len(first) == 0 || a.revolver.cast.deadline != 0 {
+		t.Fatal("the first press should wait for landing")
+	}
+	for range 10 {
+		press()
+		if got := a.wv.landingAction.packet; len(got) == 0 || &got[0] != &first[0] {
+			t.Fatal("another press replaced the pending landing order")
+		}
+	}
+
+	a.wv.landingAction = landingAction{}
+	a.wv.jumping = false
+	if !a.prepareSkillMovement(first) || !a.revolverPending() {
+		t.Fatal("the landing order should stay pending once ready to send")
+	}
+	press()
+	if a.state == nil || a.skills.queuedSkill != nil || a.revolver.selected != 0 {
+		t.Fatal("another press queued a duplicate before the result")
+	}
+
+	r := proto.SkillResult{ID: key.ID, Level: key.Level, Source: a.state.SelfID, Target: a.state.SelfID}
+	a.confirmRevolver(r)
+	a.confirmRevolver(r)
+	if a.revolver.selected != 1 || a.revolverPending() {
+		t.Fatal("the confirmation should advance one cell and release the order")
+	}
+}
+
+func TestRevolverReleasesCancelledOrRejectedOrder(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID, a.clock = 90, 12
+	key := sdata.SkillKey{ID: 57, Level: 2}
+	order := revolverCast{skill: key, packet: proto.UseSkillPacket(1, 90, true)}
+	a.revolver.cast = order
+	a.skills.queuedSkill = &queuedSkill{packet: order.packet}
+	if !a.revolverPending() {
+		t.Fatal("a locally queued order should reserve the slot")
+	}
+	a.updateQueuedSkill(&platform.Input{Down: "W"})
+	if a.revolverPending() {
+		t.Fatal("a cancelled queued order still reserved the slot")
+	}
+
+	a.revolver.cast = order
+	a.markRevolverSent(order.packet)
+	a.state.LastSkillFailure = proto.SkillFailure{Skill: key.ID + 1}
+	a.confirmedSkills(proto.GXSkillFailure)
+	if !a.revolverPending() {
+		t.Fatal("another skill's refusal released the order")
+	}
+	a.state.LastSkillFailure.Skill = key.ID
+	a.confirmedSkills(proto.GXSkillFailure)
+	if a.revolverPending() || a.revolver.selected != 0 {
+		t.Fatal("a refusal should release the order and keep the selected cell")
+	}
+
+	a.revolver.cast = order
+	a.markRevolverSent(order.packet)
+	a.state.LastCast = proto.SkillCast{Source: 90, ID: key.ID, Level: key.Level}
+	a.confirmedSkills(proto.SkillCastStarted)
+	a.clock += 4
+	if !a.revolverPending() || a.revolver.selected != 0 {
+		t.Fatal("an announced preparation should wait for its result")
+	}
+	a.clock += 15
+	if a.revolverPending() {
+		t.Fatal("a missing result should eventually release the order")
 	}
 }
 

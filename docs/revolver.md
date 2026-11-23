@@ -26,6 +26,10 @@ GX stores pages, lengths and bindings per character and server in
 stored by ID and resolved to their current learned level and slot during use.
 Position and orientation use the existing remembered UI layout. Combat uses
 the same requests, lookup, reach and reuse checks as the normal action bars.
+Each skill activation stays pending while it approaches its target, waits for
+recovery or awaits a server result. Repeated presses of R or clicks on the
+center cell during that time count as one activation. A confirmed use advances
+the cursor once. A rejected use leaves the skill selected for a retry.
 
 ## Original client evidence
 

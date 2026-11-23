@@ -147,5 +147,6 @@ func (a *App) prepareSkillMovement(p []byte) bool {
 	a.markCombatAction()
 	a.skills.actionFloor = a.skillClipFloor(d)
 	a.skills.lastSkillID, a.skills.lastSkillAt = k.ID, a.clock
+	a.markRevolverSent(p)
 	return true
 }
