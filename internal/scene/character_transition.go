@@ -22,7 +22,7 @@ func (c *Character) startClipWithBlend(next *Clip, oneShot, allowTrailingBones b
 	compatible := false
 	if previous != nil && count > 0 {
 		previousCount := len(previous.ani.Bones)
-		// EP5.4's run-to-idle blend skips outgoing bones missing from idle.
+		// EP5.4 skips outgoing bones missing from the destination clip.
 		compatible = previousCount == count || (allowTrailingBones && previousCount > count)
 	}
 	if compatible {
@@ -48,7 +48,12 @@ func (c *Character) startClipWithBlend(next *Clip, oneShot, allowTrailingBones b
 	} else {
 		c.blendLeft = 0
 	}
+	c.resetClip(next, oneShot)
+}
+
+func (c *Character) resetClip(next *Clip, oneShot bool) {
 	c.clip, c.Time, c.oneShot = next, 0, oneShot
+	c.jumpLanding = false
 	c.rate.kind, c.rate.next = c.rate.next, rateNone
 	c.invalidatePose()
 }

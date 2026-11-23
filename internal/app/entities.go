@@ -213,13 +213,9 @@ func (a *App) prepareRemotePlayers() {
 		} else {
 			c.SetClip(clip)
 		}
-		jumpAction := c.PlayingAction(8)
 		c.Update(float32(a.frameDT))
 		if e.ClimbMode == 1 && !c.ActionActive() {
 			c.Time -= float32(a.frameDT)
-		}
-		if jumpAction && !c.ActionActive() {
-			c.SetClip(clip)
 		}
 		angle := float64(e.Dir) / 65536 * 2 * math.Pi
 		fwd := render.V3{float32(math.Sin(angle)), 0, float32(math.Cos(angle))}

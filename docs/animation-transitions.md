@@ -54,6 +54,13 @@ requests normal idle (ALT slot 0) at `0x441d32` and samples the shared bones
 at `0x552cf0`. The male Human Fighter's weapon runs in slots 29, 40, 47
 and 54 have 38 bones. Normal idle has the same first 36 bones.
 
+The on-foot jump (ALT 8) cancels an active blend and starts immediately.
+When it finishes, it requests normal idle even while movement is held.
+That blend also accepts a matching prefix of the jump skeleton and completes
+before the next locomotion clip. PS107 uses `0x43f125` / `0x54e4f3` for
+local / remote takeoff and `0x41aacd` for the ALT successor. EP5.4 uses
+`0x43f01d` / `0x560f31` and `0x41be49` respectively.
+
 One-shot actions retain their final keyed pose until the controller selects
 the next action. The local playback cursor waits for the blend. Externally
 driven action frames, cast countdowns, and the spin lifetime keep their own

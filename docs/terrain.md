@@ -105,12 +105,15 @@ update the physical position immediately. While walking or running, the visible
 model blends small corrections across clear ground over 180 ms. Falls, blocked
 paths and large corrections snap to the server position.
 
-Jump presentation plays original ALT action 8 once and lets it run to its end even after the character lands: the 0.8 s clip outlasts the 0.69 s of a flat jump, and the original ends the jump state only when the clip finishes (0x418030, 0x419f60), so landing shows its last frames instead of cutting to idle. Its animation duration is
-independent of the physical time spent airborne. Once it finishes, continued
-falling uses run or walk only while horizontal movement is active. Releasing
-movement returns to the standard idle pose, which uncommanded falls also use.
-Further jump presses are ignored until the active clip finishes. Locomotion
-resumes in the same frame that the clip ends, including on the ground.
+The on-foot jump plays ALT action 8 immediately. EP5.4 selects it directly for
+both the local character (0x43f01d) and remote characters (0x560f31). The
+0.8 s clip can outlast the roughly 0.69 s flat-ground jump. At the end of the
+clip the original requests ALT 0 (0x41be49). GX blends from the last jump
+pose to normal idle for five animation frames at 30 Hz, including when the
+jump clip has additional bones. Movement input takes effect visually after
+that blend. When still falling, moving characters use run or walk and
+uncommanded falls use idle. The animation clock and ground contact remain
+independent. Further jump presses are ignored until the active clip finishes.
 The clip can finish even when losing support cancels the deferred impulse.
 Delayed combat replies, including rejected skills, and evasive key sequences
 leave the jump clip playing.

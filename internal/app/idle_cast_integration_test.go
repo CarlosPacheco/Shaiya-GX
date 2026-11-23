@@ -142,5 +142,28 @@ func TestRemoteJumpDoesNotReplayOnCosmeticOptionsGL(t *testing.T) {
 	if a.wv.actors[remote].character != model || model.PlayingAction(8) {
 		t.Fatal("effects toggle recreated remote model or replayed the jump")
 	}
+	a.frameDT = 1.0 / 60
 	jump()
+	if model.Time <= 0 {
+		t.Fatal("remote jump playback did not advance on its first update")
+	}
+	a.state.Entities[remote].Motion = 1
+	for range 60 {
+		a.prepareRemotePlayers()
+		if !model.PlayingAction(8) {
+			break
+		}
+	}
+	for range 10 {
+		if !model.PlayingClip("000_normal") {
+			t.Fatal("remote running skipped the landing blend")
+		}
+		a.prepareRemotePlayers()
+	}
+	for range 2 {
+		a.prepareRemotePlayers()
+	}
+	if !model.PlayingClip("002_run") {
+		t.Fatal("remote running did not resume after the landing blend")
+	}
 }

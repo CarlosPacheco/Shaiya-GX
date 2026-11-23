@@ -116,6 +116,50 @@ func TestRunToNormalIdleBlendsSharedBones(t *testing.T) {
 	}
 }
 
+func TestJumpStartsImmediatelyAndReturnsThroughNormalIdle(t *testing.T) {
+	assets := NewAssets(nil)
+	run, jump, idle := poseTestClip(3), poseTestClip(3), poseTestClip(2)
+	assets.clips["ani:character/human/ani/humf_002_run.ani"] = run
+	assets.clips["ani:character/human/ani/humf_008_jump.ani"] = jump
+	assets.clips["ani:character/human/ani/humf_000_normal.ani"] = idle
+	actions := make([]model.Action, 35)
+	actions[8] = model.Action{Name: "humf_008_jump.ANI", Mode: 2}
+	actions[34].Name = "humf_034_onready.ANI"
+	c := &Character{assets: assets, folder: "Human", prefix: "humf", weaponType: 45, actionsLoaded: true, actions: actions}
+	c.startClip(poseTestClip(3), false)
+	c.SetClip("002_run")
+	if c.blendLeft != clipBlendDuration {
+		t.Fatal("fixture must start in a locomotion blend")
+	}
+	if !c.PlayAction(8, false) || c.blendLeft != 0 || c.finals()[1] != jump.Finals(0)[1] {
+		t.Fatal("jump did not immediately replace the locomotion blend")
+	}
+	c.Update(.125)
+	if c.Time != .125 {
+		t.Fatalf("jump playback was delayed: cursor %v", c.Time)
+	}
+	jumpEnd := &Character{clip: jump, oneShot: true, Time: jump.Duration()}
+	c.combatPoseLeft = 10
+	c.Update(jump.Duration() - c.Time)
+	if !c.PlayingClip("000_normal") || c.blendLeft != clipBlendDuration || c.finals()[1] != jumpEnd.finals()[1] {
+		t.Fatal("jump did not blend from its last pose to normal idle")
+	}
+	c.SetClip("002_run")
+	c.Update(clipBlendDuration / 2)
+	c.SetClip("000_normal")
+	if !c.PlayingClip("000_normal") || c.Time != 0 || c.finals()[1] == jumpEnd.finals()[1] {
+		t.Fatal("locomotion or weapon-ready input interrupted the landing blend")
+	}
+	c.Update(clipBlendDuration / 2)
+	if c.finals()[1] != idle.Finals(0)[1] {
+		t.Fatal("landing blend did not reach the opening idle pose")
+	}
+	c.SetClip("002_run")
+	if !c.PlayingClip("002_run") {
+		t.Fatal("locomotion did not resume after the landing blend")
+	}
+}
+
 func TestClipTransitionUsesLocalQuaternionInterpolation(t *testing.T) {
 	first := poseTestClip(2)
 	second := poseTestClip(2)

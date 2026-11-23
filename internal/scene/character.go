@@ -108,6 +108,7 @@ type Character struct {
 	clipName             string
 	blendFrom            []bonePose
 	blendLeft            float32
+	jumpLanding          bool
 	oneShot              bool
 	folder               string
 	prefix               string
@@ -152,9 +153,13 @@ type Character struct {
 // SetClip switches to <prefix>_<name>.ANI (e.g. "000_normal", "002_run"),
 // restarting it; unknown clips keep the current one.
 func (c *Character) SetClip(name string) {
-	if c == nil || c.locked {
+	if c == nil || c.locked || c.jumpLanding && c.blendLeft > 0 {
 		return
 	}
+	c.setClip(name, false)
+}
+
+func (c *Character) setClip(name string, jumpLanding bool) {
 	fileName := name
 	// The four original Vile idle assets spell "nomal" (also in their ALT).
 	if c.folder == "Vile" && name == "000_normal" {
@@ -173,7 +178,10 @@ func (c *Character) SetClip(name string) {
 		c.rate.next = rateMove
 		defer func() { c.rate.next = rateNone }()
 	}
-	file := c.locomotionFile(name)
+	var file string
+	if !jumpLanding {
+		file = c.locomotionFile(name)
+	}
 	runToIdle := c.clipName == "002_run" && name == "000_normal" && file == ""
 	if file == "" {
 		file = fmt.Sprintf("Character/%s/ANI/%s_%s.ANI", c.folder, c.prefix, fileName)
@@ -187,7 +195,8 @@ func (c *Character) SetClip(name string) {
 		return
 	}
 	c.clipFile = file
-	c.startClipWithBlend(cl, false, runToIdle)
+	c.startClipWithBlend(cl, false, runToIdle || jumpLanding)
+	c.jumpLanding = jumpLanding
 	c.clipName = name
 	c.actionID++
 }
@@ -532,6 +541,11 @@ func (c *Character) Update(dt float32) {
 			c.Time = d
 			if !c.hold {
 				c.locked = false
+				if c.actionSlot == 8 {
+					// ALT 8 uses normal idle as its successor even when
+					// movement is held or a weapon-ready timer is active.
+					c.setClip("000_normal", true)
+				}
 			}
 		}
 	}
@@ -568,7 +582,13 @@ func (c *Character) PlayAction(slot int, hold bool) bool {
 	}
 	c.spinLeft, c.externalTime = 0, false
 	c.clipFile = file
-	c.startClip(cl, true)
+	if slot == 8 {
+		// PS107 and EP5.4 activate the jump directly and cancel any blend.
+		c.blendLeft = 0
+		c.resetClip(cl, true)
+	} else {
+		c.startClip(cl, true)
+	}
 	c.clipName = file
 	c.actionID++
 	c.actionSlot = slot

@@ -52,11 +52,15 @@ func TestJumpActionFinishesOnceDuringLongFallGL(t *testing.T) {
 				t.Fatal("jump did not start original one-shot")
 			}
 			action := v.self.ActionID()
+			idleFrames := 0
 			for range fps * 3 {
 				// This presentation fixture has no connection. Suppress packet scheduling;
 				// the network regression separately tests real moving-jump input.
 				v.moving, v.motion, v.sendT = true, 0x84, 1000
 				a.updateWorld(&platform.Input{Down: "W"}, 1/float64(fps))
+				if v.self.ActionID() > action && v.self.PlayingClip("000_normal") {
+					idleFrames++
+				}
 			}
 			want := "002_run"
 			if walking {
@@ -65,8 +69,8 @@ func TestJumpActionFinishesOnceDuringLongFallGL(t *testing.T) {
 			if !v.jumping || v.self.PlayingAction(8) || v.self.PlayingClip("008_jump") || !v.self.PlayingClip(want) {
 				t.Fatalf("walk=%v fps=%d long fall retained jump or wrong locomotion", walking, fps)
 			}
-			if v.self.ActionID() != action+1 {
-				t.Fatal("jump action restarted during fall")
+			if v.self.ActionID() != action+2 || idleFrames < fps/6 {
+				t.Fatalf("jump must finish through the 167 ms idle blend before resuming locomotion: idle frames=%d", idleFrames)
 			}
 		}
 	}

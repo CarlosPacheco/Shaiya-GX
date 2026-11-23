@@ -688,16 +688,11 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		if clip != "" {
 			v.self.SetClip(clip)
 		}
-		jumpAction := v.self.PlayingAction(8)
 		previousPoseTime := v.self.Time
 		a.setSelfAnimationRates(v.self)
 		v.self.Update(float32(dt))
 		if climbFrame && !moving && !v.self.ActionActive() {
 			v.self.Time = previousPoseTime
-		}
-		// Drop the finished one-shot before drawing, including after landing.
-		if jumpAction && !v.self.ActionActive() && clip != "" {
-			v.self.SetClip(clip)
 		}
 	}
 	if v.sitAttack != 0 && !a.state.Self.Sitting && !v.sitPending && (v.self == nil || !v.self.PlayingAction(11)) {
