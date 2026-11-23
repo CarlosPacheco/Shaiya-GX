@@ -85,3 +85,13 @@ func TestLateSkillResultDoesNotCutTheJumpClip(t *testing.T) {
 	var none *Character
 	none.ReleaseActionExceptJump()
 }
+
+// The Wind Spin returns early from Update; the cloak clock must still run or
+// the cape hangs frozen for the whole spin.
+func TestCloakKeepsSimulatingDuringSpin(t *testing.T) {
+	c := &Character{locked: true, spinLeft: 2, clip: &Clip{ani: &model.ANI{Start: 0, End: 6}}, cloak: &cloakInstance{}}
+	c.Update(1.0 / 60)
+	if c.cloak.elapsed <= 0 {
+		t.Fatal("cloak physics clock stopped while spinning")
+	}
+}

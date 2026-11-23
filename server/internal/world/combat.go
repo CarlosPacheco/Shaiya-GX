@@ -382,6 +382,12 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 		refreshed := s.stats()
 		stats = &refreshed
 	}
+	// A sacrifice skill (detail 23) pays the caster's whole HP after the blow
+	// resolves. For a mob ("Self Destruction") that means dying with no credit,
+	// drop or experience, exactly like the player's afterSkillStrikes.
+	if sk.TypeDetail == detailSacrifice {
+		s.eraseMob(d.MobGlobalID)
+	}
 	s.afterMobDamage(d, killed)
 	return killed
 }

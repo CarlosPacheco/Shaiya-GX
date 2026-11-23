@@ -50,3 +50,18 @@ func TestPersonalLightUsesUnboundLPress(t *testing.T) {
 		t.Fatal("holding L toggled the light again")
 	}
 }
+
+func TestCharRepeatsStayParallelToChars(t *testing.T) {
+	var bindings KeyBindings
+	bindings.Bind(2, glfw.KeyJ)
+	in := Input{
+		physical:    true,
+		Chars:       []rune("j55"),
+		CharRepeats: []bool{false, false, true},
+		charKeys:    []PhysicalKey{glfw.KeyJ, glfw.Key5, glfw.Key5},
+	}
+	got := in.WithBindings(bindings)
+	if string(got.Chars) != "55" || len(got.CharRepeats) != 2 || got.CharRepeats[0] || !got.CharRepeats[1] {
+		t.Fatalf("repeat flags lost their characters: %q %v", string(got.Chars), got.CharRepeats)
+	}
+}

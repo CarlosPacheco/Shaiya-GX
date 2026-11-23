@@ -73,6 +73,7 @@ type Input struct {
 	Clicked          bool    // left button released this frame
 	Pressed          bool    // left button pressed this frame
 	Chars            []rune
+	CharRepeats      []bool // parallel to Chars: true for OS key-repeat events
 	KeyPresses       []PhysicalKey
 	physical         bool
 	charKeys         []PhysicalKey
@@ -132,6 +133,7 @@ func (w *Window) InstallInput() *InputQueue {
 			q.cur.KeypadChars += string(r)
 		}
 		q.cur.Chars = append(q.cur.Chars, r)
+		q.cur.CharRepeats = append(q.cur.CharRepeats, q.charRepeat)
 		q.cur.charKeys = append(q.cur.charKeys, q.charKey)
 	})
 	w.SetKeyCallback(func(win *glfw.Window, k glfw.Key, _ int, a glfw.Action, mods glfw.ModifierKey) {
@@ -139,6 +141,7 @@ func (w *Window) InstallInput() *InputQueue {
 		q.keypadChar = false
 		q.suppressChordChar = false
 		q.charKey = k
+		q.charRepeat = a == glfw.Repeat
 		shortcut := mods&(glfw.ModControl|glfw.ModAlt|glfw.ModSuper) == 0
 		if a == glfw.Press && shortcut {
 			q.cur.KeyPresses = append(q.cur.KeyPresses, k)
@@ -274,6 +277,7 @@ type InputQueue struct {
 	mouselook         bool
 	swapMouse         bool
 	charKey           PhysicalKey
+	charRepeat        bool
 	keypadChar        bool
 	suppressChordChar bool
 	anchorX, anchorY  float64

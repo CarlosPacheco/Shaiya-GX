@@ -321,9 +321,14 @@ func (a *App) updateActions(in *platform.Input, w, h int) bool {
 		return true
 	}
 	keypad := in.KeypadChars
-	for _, r := range in.Chars {
+	for i, r := range in.Chars {
 		if len(keypad) > 0 && r == rune(keypad[0]) {
 			keypad = keypad[1:]
+			continue
+		}
+		// A held key must not re-fire the slot: consumables would be sent
+		// hundreds of times a second. Only the press edge uses it.
+		if i < len(in.CharRepeats) && in.CharRepeats[i] {
 			continue
 		}
 		index := int(r - '1')

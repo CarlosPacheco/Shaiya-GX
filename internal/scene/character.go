@@ -529,6 +529,11 @@ func (c *Character) Update(dt float32) {
 	} else {
 		c.Time += playback * c.rate.factor()
 	}
+	// The cloth keeps simulating through the spin, which returns early below.
+	if c.cloak != nil {
+		c.cloak.prepared = false
+		c.cloak.elapsed += max(0, dt)
+	}
 	if c.spinLeft > 0 {
 		c.spinLeft = max(0, c.spinLeft-dt)
 		if c.spinLeft == 0 {
@@ -537,10 +542,6 @@ func (c *Character) Update(dt float32) {
 			c.Time = float32(math.Mod(float64(c.Time), float64(c.clip.Duration())))
 			return
 		}
-	}
-	if c.cloak != nil {
-		c.cloak.prepared = false
-		c.cloak.elapsed += max(0, dt)
 	}
 	if c.castLeft > 0 {
 		c.castLeft = max(0, c.castLeft-dt)

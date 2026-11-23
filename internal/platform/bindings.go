@@ -148,12 +148,14 @@ func (in Input) WithBindings(b KeyBindings) Input {
 	}
 	mask := b.boundMask()
 	chars := make([]rune, 0, len(in.Chars))
+	repeats := make([]bool, 0, len(in.Chars))
 	for i, char := range in.Chars {
 		if i >= len(in.charKeys) || bindingKeyBit(in.charKeys[i])&mask == 0 {
 			chars = append(chars, char)
+			repeats = append(repeats, i < len(in.CharRepeats) && in.CharRepeats[i])
 		}
 	}
-	in.Chars, in.KeypadChars = chars, ""
+	in.Chars, in.CharRepeats, in.KeypadChars = chars, repeats, ""
 	keys := make([]Key, 0, len(in.Keys))
 	for _, key := range in.Keys {
 		switch key {
@@ -220,6 +222,7 @@ func (in Input) WithBindings(b KeyBindings) Input {
 				in.Actions = append(in.Actions, slot-10)
 			} else {
 				in.Chars = append(in.Chars, unicode.ToLower(rune(defaultBindings[slot])))
+				in.CharRepeats = append(in.CharRepeats, false)
 			}
 		}
 	}
