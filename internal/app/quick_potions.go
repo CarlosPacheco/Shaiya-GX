@@ -223,8 +223,8 @@ func (a *App) drawQuickPotions(w, h int) {
 	a.ensureQuickPotions()
 	var slots [2]ui.ActionSlot
 	for i, binding := range a.quickPotions.bindings {
-		if binding.Type == 0 {
-			continue
+		if binding.Type == 0 || a.quickPotions.dragging && a.quickPotions.held == i {
+			continue // a potion picked up from its cell leaves it while carried
 		}
 		d := a.itemsItem(binding.Type, binding.TypeID)
 		if d == nil {
