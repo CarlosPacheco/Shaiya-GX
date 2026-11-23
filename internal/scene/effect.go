@@ -49,6 +49,10 @@ type Effect struct {
 	stopped        bool
 	basis          render.M4
 	localParticles bool
+	// VelocityFollowsBasis rotates authored particle velocity and drift with
+	// the placement basis, so a flying ring keeps the direction its authored
+	// offsets already follow (skill release effects).
+	VelocityFollowsBasis bool
 	meteor         bool
 	meteorWorld    render.M4
 	particleWorld  render.M4
@@ -289,7 +293,11 @@ func (x *Effect) Update(dt float32) {
 					v.velocity = v.velocity.Add(attractor.Sub(v.pos).Norm().Scale(d.RotationMin / 60))
 				}
 				if d.Unk20 != 0 {
-					v.velocity = v.velocity.Add(render.V3(d.Trembling).Scale(1.0 / 60))
+					drift := render.V3(d.Trembling)
+					if x.VelocityFollowsBasis {
+						drift = effectPoint(drift, x.basis)
+					}
+					v.velocity = v.velocity.Add(drift.Scale(1.0 / 60))
 				}
 				v.angle += v.speed / 60
 				if e.geometry != nil {
@@ -344,6 +352,9 @@ func (x *Effect) Update(dt float32) {
 				}
 				if !(x.meteor && e.geometry != nil) {
 					v.pos = effectPoint(v.pos, x.basis).Add(x.Origin)
+					if x.VelocityFollowsBasis {
+						v.velocity = effectPoint(v.velocity, x.basis)
+					}
 				}
 				e.particles = append(e.particles, v)
 			}

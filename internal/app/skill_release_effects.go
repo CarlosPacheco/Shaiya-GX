@@ -53,6 +53,7 @@ func (a *App) startSkillReleaseEffect(r proto.SkillResult, d sdata.Skill) {
 	// 0x450340 captures the world transform at release. Walking away must
 	// not drag the already emitted activation along with the character.
 	instance.SetTransform(matrix)
+	instance.VelocityFollowsBasis = true
 	elapsed := float32(0)
 	if actor := a.playerActor(r.Source); actor != nil && actor.ActionActive() {
 		elapsed = actor.Time

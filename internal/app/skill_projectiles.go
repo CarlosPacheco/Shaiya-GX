@@ -17,6 +17,9 @@ type skillProjectile struct {
 	delay      float32
 	instance   *scene.Effect
 	arrived    bool
+	// follow keeps mesh bodies (the Choir ring) attached to the flying
+	// effect instead of leaving a trail of world-space copies.
+	follow bool
 }
 type skillImpact struct {
 	fixedWorld       *render.M4 // Native area announcements capture their release location.
@@ -50,7 +53,7 @@ func (a *App) startSkillProjectile(r proto.SkillResult, file, impact string) {
 	if actor := a.playerActor(r.Source); actor != nil && actor.ActionActive() {
 		elapsed = actor.Time
 	}
-	p := skillProjectile{target: r.Target, sequence: int(r.Level) - 1, impact: impact, pos: source.Add(render.V3{0, 1.6, 0}), instance: x, delay: .4, age: elapsed}
+	p := skillProjectile{target: r.Target, sequence: int(r.Level) - 1, impact: impact, pos: source.Add(render.V3{0, 1.6, 0}), instance: x, delay: .4, age: elapsed, follow: r.ID >= 164 && r.ID <= 167}
 	target, _ := a.effectPosition(r.Target)
 	target[1] += .9
 	flightElapsed := max(0, elapsed-p.delay)
@@ -67,7 +70,7 @@ func (a *App) startSkillProjectile(r proto.SkillResult, file, impact string) {
 			a.startSkillImpactAt(r.Target, impact, p.sequence, max(0, flightElapsed-travel))
 			return
 		}
-		p.instance.SetTransform(render.Basis(p.pos, dir, render.V3{0, 1, 0}))
+		p.setTransform(render.Basis(p.pos, dir, render.V3{0, 1, 0}))
 		p.instance.Update(flightElapsed)
 	}
 	a.wv.projectiles = append(a.wv.projectiles, p)
@@ -136,9 +139,12 @@ func (a *App) updateResolvedEffects() {
 			dir := p.move(target, dt)
 			if p.arrived {
 				p.instance.Stop()
+				if p.follow {
+					p.instance.FinishMeteor()
+				}
 				a.startSkillImpact(p.target, p.impact, p.sequence)
 			}
-			p.instance.SetTransform(render.Basis(p.pos, dir, render.V3{0, 1, 0}))
+			p.setTransform(render.Basis(p.pos, dir, render.V3{0, 1, 0}))
 		}
 		if p.age < p.delay && !p.arrived {
 			kept = append(kept, p)
@@ -236,4 +242,12 @@ func (a *App) impactTransform(p skillImpact) (render.M4, bool) {
 	matrix := render.Identity()
 	matrix[12], matrix[13], matrix[14] = point[0], point[1], point[2]
 	return matrix, ok
+}
+
+func (p *skillProjectile) setTransform(m render.M4) {
+	if p.follow {
+		p.instance.SetMeteorTransform(m)
+	} else {
+		p.instance.SetTransform(m)
+	}
 }
