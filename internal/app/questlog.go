@@ -51,6 +51,7 @@ func (a *App) questIDs() []uint16 {
 	return ids
 }
 func (a *App) toggleQuestLog() {
+	a.playUISound("ui_window.ogg")
 	v := &a.questLog
 	v.open = !v.open
 	if !v.open {

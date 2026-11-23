@@ -1,8 +1,10 @@
 package app
 
 import (
+	"fmt"
 	"log"
 	"math"
+	"math/rand/v2"
 	"strings"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
@@ -111,6 +113,40 @@ func (a *App) confirmedSound(p []byte) {
 			name := a.audioPath("ui_error001.wav", false)
 			a.audioError(name, a.sound.Play(name, 1))
 		}
+	// Native 0x56e5xx (item result): a refused pickup plays the UI error, a
+	// granted one ch_pikup001 on the local character.
+	case proto.AddItem:
+		name := "ch_pikup001.ogg"
+		if len(p) == 4 && p[2] == 0 {
+			name = "ui_error001.ogg"
+		}
+		a.playSound(name, a.wv.pos[0], a.wv.pos[2])
+	// Native 0x56e300 / 0x56aff0: a confirmed item move plays the cue of the
+	// item that landed (the destination slot, else the one it swapped out).
+	case proto.ItemBagToBag:
+		if moved, err := proto.DecodeItemMove(p); err == nil {
+			if t := moved[1].Type; t != 0 {
+				a.playItemSound(t)
+			} else {
+				a.playItemSound(moved[0].Type)
+			}
+		}
+	// Native 0x56b910 (buy), 0x56ba20 (sell): success pays with ui_pay001, a
+	// refusal plays the UI error. 0x56bb10: every repair plays ui_repair001.
+	case proto.ShopBuy:
+		if r := a.state.LastShop; r.Result == 0 {
+			a.playUISound("ui_pay001.ogg")
+		} else if r.Result <= 2 {
+			a.playUISound("ui_error001.ogg")
+		}
+	case proto.ShopSell:
+		if r := a.state.LastShop; r.Result == 0 {
+			a.playUISound("ui_pay001.ogg")
+		} else if r.Result == 1 {
+			a.playUISound("ui_error001.ogg")
+		}
+	case proto.ItemRepair:
+		a.playUISound("ui_repair001.ogg")
 	case proto.SkillCastStarted:
 		r := a.state.LastCast
 		a.playSkillSound(r.Source, r.ID, r.Level, true)
@@ -125,11 +161,13 @@ func (a *App) confirmedSound(p []byte) {
 	case proto.MobSkillUse, proto.MobSkillDrain, proto.MobSkillOther:
 		a.playSkillDamageVoice()
 		r := a.state.LastSkill
+		a.playMobHitSound(r.Target, r.Result)
 		if m := a.wv.mobs[r.Source]; m != nil && m.actor != nil && (m.soundSkill != r.ID || a.clock-m.soundAt > .15) {
 			m.soundSkill, m.soundAt = r.ID, a.clock
 			a.playSound(m.actor.Sound(int(min(r.AttackSlot, 2))), m.pos[0], m.pos[2])
 		}
 	case proto.MobAttackCharacter:
+		a.playMobHitSound(a.state.LastAttack.Target, a.state.LastAttack.Result)
 		id := a.state.LastAttack.Source
 		if m := a.wv.mobs[id]; m != nil && m.actor != nil {
 			a.playSound(m.actor.Sound(0), m.pos[0], m.pos[2])
@@ -197,6 +235,15 @@ func (a *App) playSkillHealSound(r proto.SkillResult) {
 	}
 }
 
+// playUISound plays a global interface cue (native position 0x22094c8).
+func (a *App) playUISound(name string) {
+	if a.sound == nil {
+		return
+	}
+	file := a.audioPath(name, false)
+	a.audioError(file, a.sound.Play(file, .6))
+}
+
 func (a *App) playUI() {
 	if a.sound != nil {
 		a.audioError("Sound/ui_button001.ogg", a.sound.Play("Sound/ui_button001.ogg", 0.4))
@@ -223,4 +270,22 @@ func (a *App) playSkillHitSound(r proto.SkillResult) {
 			a.playSound("ef_dmg_hit01.ogg", pos[0], pos[2])
 		}
 	}
+}
+
+// playMobHitSound is the impact of a creature's blow on a character (Game.exe
+// 0x4320fb, 0x433ad5 and 0x433c30): a normal hit picks mob_hit001 or 002 at
+// random, a critical uses mob_hit003, and only hits (result 0 or 1) sound.
+func (a *App) playMobHitSound(target uint32, result uint8) {
+	if result > 1 || target == 0 {
+		return
+	}
+	pos, ok := a.effectPosition(target)
+	if !ok {
+		return
+	}
+	name := "mob_hit003.ogg"
+	if result == 0 {
+		name = fmt.Sprintf("mob_hit00%d.ogg", 1+rand.IntN(2))
+	}
+	a.playSound(name, pos[0], pos[2])
 }

@@ -64,6 +64,7 @@ func (a *App) updateExchangeInvite(in *platform.Input, w, h int) bool {
 			if e := a.state.Entities[x.InviteID]; e != nil && e.Shape != nil && e.Shape.Name != "" {
 				name = e.Shape.Name
 			}
+			a.playUISound("ui_party001.ogg") // native 0x572e92 and friends: an incoming request
 			a.exchangeInvite.Open(name+" requests a trade. Accept?", true)
 		}
 	}

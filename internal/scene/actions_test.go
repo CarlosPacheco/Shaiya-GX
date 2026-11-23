@@ -134,3 +134,24 @@ func TestDamageReactionNeverInterruptsAnAction(t *testing.T) {
 		t.Fatal("a concealed character flinched")
 	}
 }
+
+// The edge test of Game.exe 0x41b300: a frame fires once, on the update that
+// carries the cursor from before it to at-or-after it, including a loop wrap.
+func TestCrossedFrameFiresOnceAtTheEdge(t *testing.T) {
+	c := &Character{clip: &Clip{ani: &model.ANI{Start: 0, End: 60}}}
+	c.eventPrev, c.eventCur = 3.0/30, 5.5/30
+	if !c.CrossedFrame(5) {
+		t.Fatal("frame 5 was passed but not reported")
+	}
+	c.eventPrev, c.eventCur = 5.5/30, 8.0/30
+	if c.CrossedFrame(5) {
+		t.Fatal("frame 5 fired twice")
+	}
+	c.eventPrev, c.eventCur = 28.0/30, 2.0/30 // looped
+	if !c.CrossedFrame(1) || c.CrossedFrame(10) || !c.CrossedFrame(29) {
+		t.Fatal("loop wrap misreported")
+	}
+	if (*Character)(nil).CrossedFrame(1) {
+		t.Fatal("nil character crossed a frame")
+	}
+}

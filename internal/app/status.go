@@ -15,6 +15,7 @@ type statusView struct {
 }
 
 func (a *App) toggleStatus() {
+	a.playUISound("ui_window.ogg")
 	a.status.open = !a.status.open
 	if a.statusUI != nil {
 		a.statusUI.Clear()

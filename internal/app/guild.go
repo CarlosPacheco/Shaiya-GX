@@ -291,6 +291,7 @@ func (a *App) updateGuildVote(in *platform.Input, w, h int) bool {
 }
 
 func (a *App) toggleGuild() {
+	a.playUISound("ui_window.ogg") // native 0x48cxxx: opening or closing a window
 	a.guild.open = !a.guild.open
 	if a.guild.open {
 		a.guildUI.GradeOpen = true

@@ -65,6 +65,7 @@ func (a *App) updateGuildDuelInvite(in *platform.Input, w, h int) bool {
 			if e := a.state.Entities[d.Opponent]; e != nil && e.Shape != nil && e.Shape.Name != "" {
 				name = e.Shape.Name
 			}
+			a.playUISound("ui_party001.ogg") // native 0x572e92 and friends: an incoming request
 			a.guildDuelMessage.Open(name+" challenges your guild. Accept?", true)
 			if v.inviteUntil == 0 {
 				v.inviteUntil = a.clock + 10

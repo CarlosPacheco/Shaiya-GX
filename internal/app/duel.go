@@ -137,6 +137,7 @@ func (a *App) updateDuelInvite(in *platform.Input, w, h int) bool {
 			if e := a.state.Entities[d.Opponent]; e != nil && e.Shape != nil && e.Shape.Name != "" {
 				name = e.Shape.Name
 			}
+			a.playUISound("ui_party001.ogg") // native 0x572e92 and friends: an incoming request
 			a.duelMessage.Open(name+" challenges you to a duel. Accept?", true)
 			v.inviteUntil = a.clock + 10
 		}

@@ -6,6 +6,7 @@ import (
 )
 
 func (a *App) toggleInventory() {
+	a.playUISound("ui_window.ogg")
 	a.inventory.open = !a.inventory.open
 	if a.inventory.open {
 		a.skills.assign = nil
@@ -32,6 +33,7 @@ func (a *App) inventoryDockOrigin(w, h int) (x, y int, active bool) {
 }
 
 func (a *App) toggleSkills(assign bool) {
+	a.playUISound("ui_window.ogg")
 	v := &a.skills
 	v.open = !v.open || v.assignMode != assign
 	v.assignMode = assign
@@ -62,7 +64,10 @@ func (a *App) updateBottom(in *platform.Input, w, h int) bool {
 	case ui.BottomOptions:
 		a.openGameMenu()
 	}
-	if action != ui.BottomNone {
+	switch action {
+	case ui.BottomNone, ui.BottomSkills, ui.BottomStatus, ui.BottomGuild, ui.BottomQuests:
+		// the window toggles play ui_window themselves
+	default:
 		a.playUI()
 	}
 	return captured

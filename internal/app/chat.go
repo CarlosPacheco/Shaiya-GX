@@ -478,7 +478,8 @@ func (a *App) updateChatItemDrag(in *platform.Input, w, h int) bool {
 		if in.Pressed && !in.Clicked {
 			x, y := a.inventoryUI.Origin(w, h)
 			if key, hit := ui.InventoryHit(in.MouseX-x, in.MouseY-y, v.bag); hit {
-				if _, ok := a.state.Inventory[key]; ok {
+				if it, ok := a.state.Inventory[key]; ok {
+					a.playItemSound(it.Type)
 					v.pressItem(key, in)
 					return true
 				}
@@ -491,7 +492,6 @@ func (a *App) updateChatItemDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.bottom != nil && a.bottom.UpdateInventoryButton(in, w, h, v.open) {
 		a.toggleInventory()
-		a.playUI()
 		return true
 	}
 	return false

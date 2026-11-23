@@ -84,6 +84,9 @@ type Character struct {
 	weaponType           uint8
 	combatPoseLeft       float32
 	reactionID           uint64 // actionID of the running damage reaction
+	eventAction          uint64 // actionID the frame-event window belongs to
+	eventPrev, eventCur  float32
+	eventClip            string
 	clipFile             string
 	Concealed            bool
 	FadeOpacity          float32 // replaces the stealth fade when set (spirits)
@@ -525,11 +528,17 @@ func (c *Character) Update(dt float32) {
 	c.combatPoseLeft = max(0, c.combatPoseLeft-dt)
 	c.enchantTime += float64(max(0, dt))
 	playback := c.advanceBlend(dt)
+	if c.eventAction != c.actionID || c.clipName != c.eventClip {
+		c.eventAction, c.eventClip, c.eventPrev = c.actionID, c.clipName, -1
+	} else {
+		c.eventPrev = c.eventCur
+	}
 	if c.externalTime {
 		c.externalTime = false
 	} else {
 		c.Time += playback * c.rate.factor()
 	}
+	c.eventCur = c.Time
 	// The cloth keeps simulating through the spin, which returns early below.
 	if c.cloak != nil {
 		c.cloak.prepared = false
@@ -657,6 +666,35 @@ func (c *Character) PlayDamageReaction(weapon uint8) bool {
 	}
 	c.reactionID = c.actionID
 	return true
+}
+
+// ActionSlot is the ALT index of the one-shot being played, or -1 when the
+// character is in ordinary locomotion.
+func (c *Character) ActionSlot() int {
+	if c == nil || !c.locked {
+		return -1
+	}
+	return c.actionSlot
+}
+
+// PlayingLocomotionClip reports a looping clip such as "007_swim".
+func (c *Character) PlayingLocomotionClip(name string) bool {
+	return c != nil && !c.locked && strings.Contains(strings.ToLower(c.clipName), name)
+}
+
+// CrossedFrame reports that the playing clip passed an authored frame (30 per
+// second) during the last Update, the edge test of Game.exe 0x41b300: the
+// cursor was before it and is now at or past it. A looping clip that wrapped
+// counts frames after the previous cursor or up to the new one.
+func (c *Character) CrossedFrame(frame float32) bool {
+	if c == nil || c.clip == nil {
+		return false
+	}
+	t := frame / 30
+	if c.eventCur < c.eventPrev {
+		return t > c.eventPrev || t <= c.eventCur
+	}
+	return c.eventPrev < t && t <= c.eventCur
 }
 
 // PlayingDamageReaction reports the hit reaction, which walking cancels.

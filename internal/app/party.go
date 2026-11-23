@@ -77,6 +77,7 @@ func (a *App) updatePartyInvite(in *platform.Input, w, h int) bool {
 		if p.RaidInvite {
 			kind = "raid"
 		}
+		a.playUISound("ui_party001.ogg") // native 0x572e92 and friends: an incoming request
 		a.partyMessage.Open(fmt.Sprintf("%s invites you to a %s. Join?", name, kind), true)
 		a.party.expires = a.clock + 30 // Rapture's invite window; expires only the prompt.
 	}
