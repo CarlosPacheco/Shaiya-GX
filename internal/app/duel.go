@@ -47,14 +47,17 @@ func (a *App) confirmedDuel(p []byte) {
 				a.state.Target = d.Opponent
 			}
 			a.questMessageID(12046)
+			a.playUISound("ui_challenge01.ogg") // native 0x421dcd: "start battle!!"
 		}
 	case proto.DuelResult:
+		a.playUISound("ui_challenge02.ogg") // native 0x422622: the battle is over
 		if d.Outcome == 1 {
 			a.questMessageID(12047)
 		} else if d.Outcome == 2 {
 			a.questMessageID(12048)
 		}
 	case proto.DuelEnd:
+		a.playUISound("ui_challenge02.ogg")
 		a.questMessageID(12049)
 	case proto.DuelWindowEnd:
 		v.quantity = nil

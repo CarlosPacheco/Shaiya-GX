@@ -176,3 +176,29 @@ func TestFootstepFileSurfaces(t *testing.T) {
 		t.Fatal("steps outside the map or without a world must be silent")
 	}
 }
+
+// Game.exe 0x40f7e0: the mount's footstep surface follows the terrain layer's
+// own step file; water and dungeons override it.
+func TestMountStepFileSurfaces(t *testing.T) {
+	layers := []world.TerrainLayer{{Sound: "ch_walks001.ogg"}, {Sound: "ch_walkg001.ogg"}, {Sound: "ch_walke001.ogg"}}
+	w := &world.WLD{MapSize: 4, TextureMap: []byte{0, 1, 2, 0, 1, 2, 0, 1, 2}, Layers: layers}
+	for range 15 {
+		for _, tc := range []struct {
+			race uint8
+			x, y float32
+			want string
+		}{
+			{0, 0, 5, "run_horse_st0"}, {1, 2, 5, "run_puma_gr0"}, {3, 4, 5, "run_baslk_ea0"}, {2, 2, .5, "run_puma_wa0"},
+		} {
+			if got := mountStepFile(w, tc.race, tc.x, tc.y, 0); len(got) != len(tc.want)+5 || got[:len(tc.want)] != tc.want {
+				t.Fatalf("race %d at (%v,%v): %q want prefix %q", tc.race, tc.x, tc.y, got, tc.want)
+			}
+		}
+		if got := mountStepFile(&world.WLD{Dungeon: true}, 0, 1, 5, 1); got[:len("run_horse_st0")] != "run_horse_st0" {
+			t.Fatalf("dungeon mount step %q", got)
+		}
+	}
+	if mountStepFile(nil, 0, 0, 0, 0) != "" || mountStepFile(w, 4, 0, 5, 0) != "" {
+		t.Fatal("no world or unknown race must be silent")
+	}
+}

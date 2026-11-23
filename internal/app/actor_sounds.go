@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"regexp"
+	"strings"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
@@ -96,5 +97,49 @@ func (a *App) updateActorSounds(mem *actorSoundMemory, c *scene.Character, x, y,
 		if c.CrossedFrame(1) {
 			a.playSound("ch_mswim001.ogg", x, z)
 		}
+	}
+}
+
+// mountStepFile is Game.exe 0x40f7e0: the mount type follows the rider's race
+// (horse, puma twice, basilisk); a dungeon is stone, wading water is "wa",
+// otherwise the terrain layer's own footstep file decides: ch_walks is stone,
+// ch_walkg grass and anything else earth. The variant is random.
+func mountStepFile(w *world.WLD, race uint8, x, y, z float32) string {
+	if w == nil || race > 3 {
+		return ""
+	}
+	kind := [4]string{"horse", "puma", "puma", "baslk"}[race]
+	surface := "st"
+	switch {
+	case w.Dungeon:
+	case y-0.9 < 0:
+		surface = "wa"
+	default:
+		layer := terrainWalkSound(w, x, z)
+		switch {
+		case layer == "":
+			return ""
+		case strings.HasPrefix(layer, "ch_walks"):
+		case strings.HasPrefix(layer, "ch_walkg"):
+			surface = "gr"
+		default:
+			surface = "ea"
+		}
+	}
+	return fmt.Sprintf("run_%s_%s%02d.ogg", kind, surface, 1+rand.IntN(3))
+}
+
+// updateMountSounds plays the hoof cue when a mount's animation passes one of
+// its step frames. prevAction and prevTime are StepCursor before the update.
+func (a *App) updateMountSounds(m *scene.Vehicle, prevAction int, prevTime float32, race uint8, x, y, z float32) {
+	if m == nil || a.sound == nil || a.wv == nil || a.wv.world == nil {
+		return
+	}
+	action, now := m.StepCursor()
+	if !scene.MountStepCrossed(prevAction, prevTime, action, now, race) {
+		return
+	}
+	if name := mountStepFile(a.wv.world.WLD, race, x, y, z); name != "" {
+		a.playSound(name, x, z)
 	}
 }

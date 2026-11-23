@@ -166,3 +166,45 @@ func (v *Vehicle) RiderSeat(passenger bool) render.V3 {
 	}
 	return render.V3{m[12], m[13] + max(.1, v.visual.Height*.7), m[14]}
 }
+
+// mountStepFrames are the frames at which a mount's hooves land, from the
+// tables at Game.exe 0x4192e4 (walk) and 0x4195b1 (run): rows are the mount
+// action (0 walk, 1 run), columns the rider's race (human horse, elf and vail
+// puma, death eater basilisk). A threshold of frame 0 can never be crossed.
+var mountStepFrames = [2][4][]float32{
+	{{7, 17, 2, 13}, {14, 4}, {15, 5, 20, 10}, {2, 12, 9, 19}},
+	{{15, 18, 7, 11}, {15, 11, 2, 18}, {9, 6, 17, 14}, {15, 0, 12, 17}},
+}
+
+// StepCursor is the playing action and clip time, for MountStepCrossed.
+func (v *Vehicle) StepCursor() (action int, seconds float32) {
+	if v == nil || v.CreatureActor == nil {
+		return -1, 0
+	}
+	return v.action, v.Time
+}
+
+// MountStepCrossed reports that the cursor moved over a hoof frame between two
+// StepCursor samples. A new action restarts at its first frame.
+func MountStepCrossed(prevAction int, prevTime float32, action int, time float32, race uint8) bool {
+	if action < 0 || action > 1 || race > 3 {
+		return false
+	}
+	if prevAction != action {
+		prevTime = -1
+	}
+	for _, frame := range mountStepFrames[action][race] {
+		t := frame / 30
+		if frame == 0 {
+			continue
+		}
+		if time < prevTime {
+			if t > prevTime || t <= time {
+				return true
+			}
+		} else if prevTime < t && t <= time {
+			return true
+		}
+	}
+	return false
+}

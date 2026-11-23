@@ -1011,7 +1011,9 @@ func (a *App) prepareSelfForDraw() {
 				}
 				if v.selfMount != nil {
 					v.selfMount.SetMotion(v.moving, v.walking || v.motion&0x3f == 0, v.motion&0x3f == 2, v.jumping)
+					stepAction, stepTime := v.selfMount.StepCursor()
 					v.selfMount.Update(float32(a.frameDT))
+					a.updateMountSounds(v.selfMount, stepAction, stepTime, slot.Race, v.pos[0], v.pos[1], v.pos[2])
 					v.selfMount.World = render.Basis(visualPos, heading.Scale(-1), render.V3{0, 1, 0})
 					riderPos = v.selfMount.Seat()
 					v.selfMount.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, true, &a.vehicle.effectBudget)

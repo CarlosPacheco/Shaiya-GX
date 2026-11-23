@@ -259,7 +259,9 @@ func (a *App) prepareRemotePlayers() {
 					}
 				}
 				cached.mount.SetMotion(moving, walking, reverse, e.Motion&proto.MotionFlag80 != 0)
+				stepAction, stepTime := cached.mount.StepCursor()
 				cached.mount.Update(float32(a.frameDT))
+				a.updateMountSounds(cached.mount, stepAction, stepTime, sh.Race, e.X, e.Y, e.Z)
 				cached.mount.World = render.Basis(pos, fwd.Scale(-1), render.V3{0, 1, 0})
 				pos = cached.mount.Seat()
 				cached.mount.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, true, &a.vehicle.effectBudget)
