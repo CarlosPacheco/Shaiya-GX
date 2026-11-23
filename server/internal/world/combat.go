@@ -93,7 +93,7 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	// CUser::GetAttackSpeedNow: the swing index moves with gems, passives
 	// and buffs (0..9 over g_ConstUserAttackSpeed).
 	wc.Delay, _ = weaponAttackDelay(attackspeed.Tier(wc.AttackTime, stats.AttackSpeed), wc.AttackTime)
-	if !s.lastActionAt.IsZero() && time.Since(s.lastActionAt) < wc.Delay {
+	if !s.lastActionAt.IsZero() && time.Since(s.lastActionAt) < max(wc.Delay, s.ownClip()) {
 		return true
 	}
 	mob, ok := MobByID(ch.MapID, target)

@@ -364,6 +364,9 @@ func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef, prepared 
 	}
 	s.pendingCombo = nil
 	s.lastSkillID, s.lastSkillAt = k.SkillID, s.lastActionAt
+	if len(prepared) == 0 || !prepared[0] {
+		s.clipFloorAt, s.clipFloor = s.lastActionAt, skilltiming.ClipFloor(k.SkillID, k.Level)
+	}
 	s.commitAttackStop(now)
 	if def.MobSkill {
 		if s.evolutionReadyAt == nil {

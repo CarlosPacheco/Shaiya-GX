@@ -149,3 +149,32 @@ func TestAnimationBoundIntervalWakesAtExactDeadline(t *testing.T) {
 		t.Fatal("idle loop must keep the regular tick", w)
 	}
 }
+
+// A skill's own animation is a floor for the next action, whatever the table
+// interval says; a later action stamp makes it stale.
+func TestOwnSkillClipHoldsTheNextAction(t *testing.T) {
+	s := cadenceSession(t, 0)
+	interval, _ := skilltiming.Interval(s.speeds().attack)
+	if interval >= time.Second {
+		t.Skip("table interval already covers the clip")
+	}
+	s.lastActionAt = time.Now().Add(-interval - 50*time.Millisecond)
+	if !s.combatActionReady(time.Now()) {
+		t.Fatal("recovered interval blocked without a clip floor")
+	}
+	s.clipFloorAt, s.clipFloor = s.lastActionAt, time.Second
+	if s.combatActionReady(time.Now()) {
+		t.Fatal("next action started before the skill's clip ended")
+	}
+	s.lastActionAt = s.lastActionAt.Add(-time.Second)
+	if !s.combatActionReady(time.Now()) {
+		t.Fatal("clip floor stayed after the clip ended")
+	}
+	s.lastActionAt = time.Now().Add(-interval - 50*time.Millisecond)
+	if !s.combatActionReady(time.Now()) {
+		t.Fatal("a stale floor from an earlier action blocked a later one")
+	}
+	if skilltiming.ClipFloor(55, 1) != time.Second {
+		t.Fatal("Rising Crash clip floor missing from the generated table")
+	}
+}

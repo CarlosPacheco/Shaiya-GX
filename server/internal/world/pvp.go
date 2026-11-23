@@ -127,7 +127,7 @@ func (s *Session) userAttackSwing(target uint32) bool {
 	}
 	stats := StatsFor(ch, s.equipment())
 	wc.Delay, _ = weaponAttackDelay(attackspeed.Tier(wc.AttackTime, stats.AttackSpeed), wc.AttackTime)
-	if !s.lastActionAt.IsZero() && time.Since(s.lastActionAt) < wc.Delay {
+	if !s.lastActionAt.IsZero() && time.Since(s.lastActionAt) < max(wc.Delay, s.ownClip()) {
 		return true
 	}
 	p := s.hostileUser(target)

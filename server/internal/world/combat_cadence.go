@@ -13,13 +13,29 @@ func (s *Session) actionInterval() (time.Duration, bool) {
 	return skilltiming.IntervalFor(s.speeds().attack, wc.AttackTime, have)
 }
 
+// ownClip is the animation floor of the last skill; any later action stamp
+// (basic attack, cast, item) makes it stale on its own.
+func (s *Session) ownClip() time.Duration {
+	if s.clipFloorAt.IsZero() || !s.clipFloorAt.Equal(s.lastActionAt) {
+		return 0
+	}
+	return s.clipFloor
+}
+
+// actionRecovery is how long after the last action the next one may start:
+// the shared interval, or the last skill's own clip when that is longer.
+func (s *Session) actionRecovery() (time.Duration, bool) {
+	interval, ok := s.actionInterval()
+	return max(interval, s.ownClip()), ok
+}
+
 // Both basic attack routes and skills recover from lastActionAt. Use the live
 // equipment/buff tier so haste, slow and gear changes affect recovery immediately.
 func (s *Session) combatActionReady(now time.Time) bool {
 	if s.dash != nil {
 		return false
 	}
-	interval, ok := s.actionInterval()
+	interval, ok := s.actionRecovery()
 	return ok && (s.lastActionAt.IsZero() || now.Sub(s.lastActionAt) >= interval)
 }
 
@@ -73,7 +89,7 @@ func (s *Session) holdSkillUse(def *db.SkillDef, op packet.Opcode, payload []byt
 	if payload == nil || s.dash != nil || !s.skillReady(def.SkillID) || s.lastActionAt.IsZero() {
 		return false
 	}
-	interval, ok := s.actionInterval()
+	interval, ok := s.actionRecovery()
 	if !ok {
 		return false
 	}
@@ -115,7 +131,7 @@ func (s *Session) nextWake() time.Duration {
 		wake = min(wake, max(due.Sub(now), minWake))
 	}
 	if s.char != nil && !s.lastActionAt.IsZero() && (s.pendingSkill != nil || s.autoAttack) {
-		if interval, ok := s.actionInterval(); ok {
+		if interval, ok := s.actionRecovery(); ok {
 			consider(s.lastActionAt.Add(interval))
 		}
 	}

@@ -118,6 +118,8 @@ type Session struct {
 	gmGRBGuild       uint32 // guild whose ranking participation this GM started
 	dash             *proto.SkillDash
 	lastActionAt     time.Time
+	clipFloorAt      time.Time     // the lastActionAt the floor below belongs to
+	clipFloor        time.Duration // own animation of the last skill
 	attackMoveUntil  time.Time
 
 	positionDirty        bool
