@@ -162,9 +162,24 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 				a.summonMessage.Visible = false
 			}
 			a.appearanceEdit = nil
-			a.updateDeath(in, w, h)
+			// The dead can still chat (the original keeps the chat line live).
+			// Typed text must not reach the death dialog, whose R key revives.
+			deathIn := in
+			if a.shop.quantity == nil && !a.personalMarket.modal() {
+				if a.updateChat(in) {
+					stripped := chatWorldInput(*in)
+					deathIn = &stripped
+				} else {
+					pointer := *in
+					pointer.Clicked, pointer.Pressed = false, false
+					if a.updateChatPointer(in, w, h) {
+						deathIn = &pointer
+					}
+				}
+			}
+			a.updateDeath(deathIn, w, h)
 			if a.state != nil && a.wv != nil && a.world != nil {
-				dead := a.deadCameraInput(in)
+				dead := a.deadCameraInput(deathIn)
 				a.updateWorld(&dead, dt)
 			}
 			return
