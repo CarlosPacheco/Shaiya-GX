@@ -113,14 +113,15 @@ type lapisTooltipBonuses struct {
 	enchantRules  *proto.EnchantRules
 }
 
+// formatDefenseBonusLine follows native 0x4a3950: the row exists only when the
+// item's own value is non-zero, and the active lapis total is appended as
+// " +%3d".
 func formatDefenseBonusLine(label string, base uint16, bonus uint32) string {
 	switch {
 	case base > 0 && bonus > 0:
-		return fmt.Sprintf("%s %d +%d", label, base, bonus)
+		return fmt.Sprintf("%s %d +%3d", label, base, bonus)
 	case base > 0:
 		return fmt.Sprintf("%s %d", label, base)
-	case bonus > 0:
-		return fmt.Sprintf("%s +%d", label, bonus)
 	default:
 		return ""
 	}
@@ -178,8 +179,11 @@ func itemDetailLinesWithBonuses(def *sdata.Item, instance *proto.InventoryItem, 
 		}
 		add(fmt.Sprintf("%s %d - %d", label(5191), minAttack, maxAttack), color)
 	}
-	add(formatDefenseBonusLine(label(5202), def.Def, bonuses.def), white)
-	add(formatDefenseBonusLine(label(5203), def.Resist, bonuses.resist), white)
+	// Native category 5 (weapons) never draws Defense/Resistance rows.
+	if rt := itemtype.Real(def.Type); rt < 1 || rt > 15 {
+		add(formatDefenseBonusLine(label(5202), def.Def, bonuses.def), white)
+		add(formatDefenseBonusLine(label(5203), def.Resist, bonuses.resist), white)
+	}
 	if equipment || def.Type == 30 {
 		if absorption := itemAbsorption(def, instance); absorption > 0 {
 			add(fmt.Sprintf("%s %d", label(485), absorption), white)

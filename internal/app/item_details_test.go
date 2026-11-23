@@ -381,8 +381,8 @@ func TestLapisTooltipDefenseResistAndInactiveElement(t *testing.T) {
 	a.drawItemDetails(armor, &it, 1, 0, 0, 1024, 768, "")
 
 	for _, want := range []itemDetailLine{
-		{"Defense 45 +12", white},
-		{"Resistance 10 +20", white},
+		{"Defense 45 + 12", white},
+		{"Resistance 10 + 20", white},
 		{"REC +14", [4]float32{1, 1, 0, 1}},
 	} {
 		if !slices.Contains(a.tooltip, want) {
@@ -395,14 +395,26 @@ func TestLapisTooltipDefenseResistAndInactiveElement(t *testing.T) {
 		}
 	}
 
-	// Base Def/Resist 0 still surfaces active lapis defense/resistance.
+	// Native 0x4a3950 draws no Defense/Resistance row when the item's own
+	// value is zero, even with active lapis.
 	zeroBase := &sdata.Item{Type: 16, TypeID: 2, Name: "Helmet"}
 	a.items[sdata.ItemKey{Type: 16, TypeID: 2}] = zeroBase
 	it = proto.InventoryItem{Type: 16, TypeID: 2, Gems: [6]uint8{1, 2}}
 	a.drawItemDetails(zeroBase, &it, 1, 0, 0, 1024, 768, "")
-	for _, want := range []itemDetailLine{{"Defense +12", white}, {"Resistance +20", white}} {
-		if !slices.Contains(a.tooltip, want) {
-			t.Fatalf("missing zero-base lapis row %+v in %+v", want, a.tooltip)
+	for _, row := range a.tooltip {
+		if strings.HasPrefix(row.text, "Defense") || strings.HasPrefix(row.text, "Resistance") {
+			t.Fatalf("zero-base item drew a lapis-only row: %+v", row)
+		}
+	}
+
+	// Weapons (native category 5) never draw Defense/Resistance rows.
+	blade := &sdata.Item{Type: 1, TypeID: 9, Name: "Blade", Attack: 10, Def: 7}
+	a.items[sdata.ItemKey{Type: 1, TypeID: 9}] = blade
+	it = proto.InventoryItem{Type: 1, TypeID: 9, Gems: [6]uint8{1, 2}}
+	a.drawItemDetails(blade, &it, 1, 0, 0, 1024, 768, "")
+	for _, row := range a.tooltip {
+		if strings.HasPrefix(row.text, "Defense") {
+			t.Fatalf("weapon drew a Defense row: %+v", row)
 		}
 	}
 

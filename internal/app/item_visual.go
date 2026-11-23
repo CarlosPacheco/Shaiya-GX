@@ -156,7 +156,8 @@ func (a *App) drawItemDetails(def *sdata.Item, instance *proto.InventoryItem, co
 		for k := range 6 {
 			display.Stats[k] = uint16(min(stats[k], 0xffff))
 		}
-		bonuses.attackChanged = display.Attack != def.Attack || display.AttackAdd != def.AttackAdd
+		// Native highlights only when linked lapis raise the minimum attack.
+		bonuses.attackChanged = display.Attack != def.Attack
 	}
 	lines := itemDetailLinesWithBonuses(&display, instance, count, price, func(id uint8) string {
 		if gem := a.itemsItem(30, id); gem != nil {
