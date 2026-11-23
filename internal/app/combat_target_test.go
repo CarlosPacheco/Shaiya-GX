@@ -67,6 +67,7 @@ func TestMobPickingUsesLiveMobsAndVisibleProjection(t *testing.T) {
 func TestHUDClickBlocksWorld(t *testing.T) {
 	for _, point := range [][2]int{{40, 50}, {300, 30}, {717, 715}} {
 		a := inputApp()
+		a.state.Entities[1] = &game.Entity{ID: 1, Kind: game.KindMob}
 		a.state.Target = 1
 		controls := a.worldControls(&platform.Input{MouseX: point[0], MouseY: point[1], Pressed: true, MouseDown: true, Down: "W"}, 1024, 768)
 		if controls.Pressed || controls.MouseDown || controls.Down != "W" {
@@ -125,21 +126,29 @@ func TestMonsterPickingAndEffectsFollowDisplayedPosition(t *testing.T) {
 	}
 }
 
-func TestNPCPickingUsesVisiblePositionAndConfirmedRange(t *testing.T) {
+func TestNPCPickingUsesTheCameraFacingRectangle(t *testing.T) {
 	a := inputApp()
 	a.scene3d = &render.Scene3D{View: render.LookAtLH(render.V3{0, 1, -5}, render.V3{0, 1, 0}, render.V3{0, 1, 0}), Proj: render.PerspectiveFovLH(math.Pi/4, 1, .1, 100)}
-	e := &game.Entity{ID: 42, Kind: game.KindNpc, X: 4}
+	e := &game.Entity{ID: 42, Kind: game.KindNpc}
 	a.state.Entities[42] = e
-	a.wv.npcs = map[uint32]*npcActor{42: {entity: e, actor: &scene.CreatureActor{}, position: remotePosition{initialized: true, pos: render.V3{0, 0, 0}}}}
-	in := &platform.Input{Clicked: true, MouseX: 256, MouseY: 256}
-	if got := a.pickNPC(in, 512, 512); got != 42 {
-		t.Fatalf("visible NPC not picked: %d", got)
+	actor := &scene.CreatureActor{Character: &scene.Character{World: render.Identity()}}
+	a.wv.npcs = map[uint32]*npcActor{42: {entity: e, actor: actor, position: remotePosition{initialized: true, pos: render.V3{0, 0, 0}}}}
+	vp := a.scene3d.View.Mul(a.scene3d.Proj)
+	click := func(p render.V3) *platform.Input {
+		x, y, _, _ := projectLabel(p, vp, 512, 512)
+		return &platform.Input{Clicked: true, MouseX: x, MouseY: y}
 	}
-	e.X = 10
-	if got := a.pickNPC(in, 512, 512); got != 0 {
-		t.Fatalf("distant NPC picked: %d", got)
+	// The rectangle is 0.6 wide and as tall as the plate height (0.3 here).
+	if got := a.pickNPC(click(render.V3{0, .15, 0}), 512, 512); got != 42 {
+		t.Fatalf("a click on the rectangle missed the NPC: %d", got)
 	}
-	e.X = 4
+	if got := a.pickNPC(click(render.V3{1, .15, 0}), 512, 512); got != 0 {
+		t.Fatalf("a click beside the rectangle picked the NPC: %d", got)
+	}
+	if got := a.pickNPC(click(render.V3{0, 1.2, 0}), 512, 512); got != 0 {
+		t.Fatalf("a click above the plate height picked the NPC: %d", got)
+	}
+	in := click(render.V3{0, .15, 0})
 	in.Clicked = false
 	if got := a.pickNPC(in, 512, 512); got != 0 {
 		t.Fatal("hover activated NPC")

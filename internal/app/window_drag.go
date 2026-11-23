@@ -330,7 +330,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if a.hud != nil {
-		if a.state.Target != 0 {
+		if a.targetFrameShown() {
 			x, y := a.hud.TargetOrigin(w, h)
 			if pointInside(in, x, y, 256, 64) {
 				a.windowDrag = windowDrag{position: &a.hud.TargetPosition, offsetX: in.MouseX - x, offsetY: in.MouseY - y, width: 256, height: 64}

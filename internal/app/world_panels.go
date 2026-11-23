@@ -79,7 +79,7 @@ func (a *App) updateHUDPointer(in *platform.Input, w, h int) bool {
 	if in.Clicked && in.MouseX >= x+17 && in.MouseX < x+72 && in.MouseY >= y+26 && in.MouseY < y+79 {
 		a.selectSelf()
 	}
-	return panelPointer(in, x, y, 213, 114) || a.state.Target != 0 && panelPointer(in, tx, ty, 256, 64)
+	return panelPointer(in, x, y, 213, 114) || a.targetFrameShown() && panelPointer(in, tx, ty, 256, 64)
 }
 
 func (a *App) personalPanelMask() uint8 {

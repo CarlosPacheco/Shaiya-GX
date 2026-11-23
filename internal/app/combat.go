@@ -5,7 +5,6 @@ import (
 	"log"
 	"math"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -305,11 +304,6 @@ func (a *App) drawCombat(w, h int) {
 		}
 		view.TargetHP.Current = uint32(max(e.HP, 0))
 		view.TargetKnown = e.HealthKnown
-	} else if e != nil && e.Kind == game.KindNpc {
-		a.loadNPCs()
-		view.TargetName = a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}].Name
-		view.TargetColor = [4]float32{1, .96, .3, 1}
-		view.TargetHP, view.TargetKnown, view.TargetNoValue = ui.Resource{Current: 1, Max: 1}, true, true
 	} else if e != nil && e.Kind == game.KindUser && e.Shape != nil {
 		view.TargetName = e.Shape.Name
 		if look := s.PlayerForms[e.ID]; look.Kind == proto.FormDisguise {
@@ -333,7 +327,8 @@ func (a *App) drawCombat(w, h int) {
 	a.drawBlessingBanner(w, h)
 }
 
-// selectNPC makes an NPC the current target (the NPC target frame shows its name).
+// selectNPC makes an NPC the current target. Its target frame is never drawn:
+// the original has no target UI for NPCs.
 func (a *App) selectNPC(id uint32) {
 	if a.state.Target != id {
 		if old := a.state.Entities[a.state.Target]; old != nil && old.Kind == game.KindMob && a.world != nil {
@@ -433,4 +428,17 @@ func (a *App) followPlayer(e *game.Entity) bool {
 	}
 	v.engagedID = 0
 	return a.updateActionApproach(&platform.Input{})
+}
+
+// targetFrameShown is whether the target frame is on screen: the original draws
+// it for monsters, players and yourself, never for an NPC.
+func (a *App) targetFrameShown() bool {
+	if a.state == nil || a.state.Target == 0 {
+		return false
+	}
+	if a.state.Target == a.state.SelfID {
+		return true
+	}
+	e := a.state.Entities[a.state.Target]
+	return e != nil && e.Kind != game.KindNpc
 }

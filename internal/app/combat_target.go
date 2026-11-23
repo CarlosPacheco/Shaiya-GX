@@ -3,6 +3,7 @@ package app
 import (
 	"math"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -48,6 +49,7 @@ func (a *App) pickNPC(in *platform.Input, w, h int) uint32 {
 	}
 	vp := a.scene3d.View.Mul(a.scene3d.Proj)
 	origin, direction, rayOK := clickRay(in.MouseX, in.MouseY, w, h, vp)
+	_, centre, _ := clickRay(w/2, h/2, w, h, vp) // the camera heading
 	best, bestDepth, id := float32(40*40), float32(math.MaxFloat32), uint32(0)
 	bestDistance := float32(math.MaxFloat32)
 	for key, e := range a.state.Entities {
@@ -58,20 +60,16 @@ func (a *App) pickNPC(in *platform.Input, w, h int) uint32 {
 		if actor == nil || actor.actor == nil || actor.entity != e {
 			continue
 		}
-		dx, dz := e.X-a.wv.pos[0], e.Z-a.wv.pos[2]
-		reach := float32(100)
-		if e.NpcType == 2 {
-			reach = 50 * 50
-		}
-		if dx*dx+dz*dz >= reach {
-			continue
-		}
-		if lo, hi, valid := actor.actor.WorldBounds(); valid && rayOK {
-			distance, hit := rayBox(origin, direction, lo, hi)
+		// 0x43baf0: the pick region is a camera-facing rectangle at the NPC's
+		// feet, 2*half-width wide and as tall as its plate (MON Height + 0.3);
+		// there is no distance cut-off beyond the NPC being in the list.
+		if rayOK {
+			distance, hit := a.npcBillboardHit(e, actor.actor, origin, direction, centre)
 			if !hit {
 				continue
 			}
-			_, _, depth, projected := projectLabel(origin.Add(direction.Scale(distance)), vp, w, h)
+			sample := origin.Add(direction.Scale(max(distance-1, 0)))
+			_, _, depth, projected := projectLabel(sample, vp, w, h)
 			if !projected || a.sprites != nil && !a.pickNameVisibleAt(in.MouseX, in.MouseY, w, h, depth) {
 				continue
 			}
@@ -294,4 +292,40 @@ func (a *App) pickMob(in *platform.Input, w, h int) uint32 {
 		return nextTarget
 	}
 	return target
+}
+
+// npcBillboardHit follows 0x43baf0. The half-width is 0.3 (1.0 for the dead NPC
+// type and model 55, whose height is fixed at 3.5) and the rectangle always
+// faces the camera horizontally.
+func (a *App) npcBillboardHit(e *game.Entity, actor *scene.CreatureActor, origin, direction, heading render.V3) (float32, bool) {
+	half, height := float32(.3), actor.NPCPlateAnchor(e.NpcType, e.TypeID)[1]-actor.World[13]
+	if e.NpcType == 12 {
+		half = 1
+	}
+	if a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}].Model == 55 {
+		half, height = 1, 3.5
+	}
+	forward := heading
+	forward[1] = 0
+	if forward.Len() < 1e-4 {
+		return 0, false
+	}
+	forward = forward.Norm()
+	denominator := direction[0]*forward[0] + direction[2]*forward[2]
+	if math.Abs(float64(denominator)) < 1e-6 {
+		return 0, false
+	}
+	feet := a.visualEntityPosition(e)
+	t := ((feet[0]-origin[0])*forward[0] + (feet[2]-origin[2])*forward[2]) / denominator
+	if t <= 0 {
+		return 0, false
+	}
+	hit := origin.Add(direction.Scale(t))
+	right := render.V3{forward[2], 0, -forward[0]}
+	lateral := (hit[0]-feet[0])*right[0] + (hit[2]-feet[2])*right[2]
+	vertical := hit[1] - feet[1]
+	if lateral < -half || lateral > half || vertical < 0 || vertical > height {
+		return 0, false
+	}
+	return t, true
 }

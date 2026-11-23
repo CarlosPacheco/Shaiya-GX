@@ -82,7 +82,7 @@ func (a *App) cursorIndexRaw(w, h int) int {
 		x, y = a.hud.Origin(w, h)
 		tx, ty = a.hud.TargetOrigin(w, h)
 	}
-	if in.MouseY >= h-ui.BottomBarHeight(w, h) || pointInside(in, x, y, 213, 114) || a.state.Target != 0 && pointInside(in, tx, ty, 256, 64) {
+	if in.MouseY >= h-ui.BottomBarHeight(w, h) || pointInside(in, x, y, 213, 114) || a.targetFrameShown() && pointInside(in, tx, ty, 256, 64) {
 		return 0
 	}
 	if a.minimap != nil && !a.wv.mapView.compactHidden {
