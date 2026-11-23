@@ -253,6 +253,20 @@ func (a *App) updateWarehouseDrag(in *platform.Input, w, h int) bool {
 	overInventory := a.inventory.open && pointInside(in, ix, iy, ui.InventoryWidth, ui.InventoryHeight)
 	if in.Clicked && v.selected && overInventory {
 		key, ok := ui.InventoryHit(in.MouseX-ix, in.MouseY-iy, a.inventory.bag)
+		// Dropped on a bag tab: the item goes to that bag's first empty slot
+		// (0x4f5e31) and the window stays on the bag it shows, as the inventory
+		// does for its own items.
+		if tab := ui.InventoryBagTab(in.MouseX-ix, in.MouseY-iy); !ok && tab >= 0 {
+			bag := uint8(tab + 1)
+			for slot := uint8(0); slot < ui.InventoryBagSlots; slot++ {
+				if _, occupied := a.state.Inventory[[2]uint8{bag, slot}]; !occupied {
+					a.moveWarehouseItem([2]uint8{a.warehouseBag(), v.source}, [2]uint8{bag, slot})
+					return true
+				}
+			}
+			v.selected, v.dragging = false, false
+			return true
+		}
 		if ok && key[0] != 0 {
 			a.moveWarehouseItem([2]uint8{a.warehouseBag(), v.source}, key)
 		} else {
