@@ -65,9 +65,24 @@ func TestNativeMinimapZoomScalesWithMap(t *testing.T) {
 		if view.U1-view.U0 != 136.0/512 || view.V1-view.V0 != 136.0/512 {
 			t.Fatalf("unexpected default coverage for %+v: %+v", p, view)
 		}
-		gotX, gotZ, ok := p.Coordinates(view, .5, .5)
-		if !ok || gotX != x || gotZ != z {
+		// The player is the anchor pixel of the circle, not its centre.
+		fx, fy := float32(ui.MinimapAnchorX-ui.MinimapCircleEdge)/ui.MinimapImageSize, float32(ui.MinimapAnchorY-ui.MinimapCircleEdge)/ui.MinimapImageSize
+		gotX, gotZ, ok := p.Coordinates(view, fx, fy)
+		if !ok || math.Abs(float64(gotX-x)) > .05*float64(p.Width)/512 || math.Abs(float64(gotZ-z)) > .05*float64(p.Height)/512 {
 			t.Fatal("minimap click and image projection disagreed", gotX, gotZ, ok)
 		}
+		// An edge position keeps the anchor fixed and slides the window past the map.
+		edge := p.MinimapWindow(0, 0, 1)
+		if edge.U0 >= 0 || edge.V1 <= 1 {
+			t.Fatal("the window was clamped at the map corner", edge)
+		}
+	}
+}
+
+func TestMinimapPositionIsTruncatedToTheNativeGrid(t *testing.T) {
+	p := ui.MapProjection{Width: 1024, Height: 1024}
+	a, b := p.MinimapWindow(100.9, 100.9, 1), p.MinimapWindow(100.1, 100.1, 1)
+	if a != b {
+		t.Fatal("positions inside one 1/512 cell moved the map", a, b)
 	}
 }

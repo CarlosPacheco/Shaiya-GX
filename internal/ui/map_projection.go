@@ -1,5 +1,7 @@
 package ui
 
+import "math"
+
 // MapProjection is the world-space width/height covered by the entire image.
 // Fields use their WLD size; dungeons use image pixels / native CFG scales.
 type MapProjection struct{ Width, Height float32 }
@@ -26,14 +28,22 @@ func (p MapProjection) Window(x, z, diameter float32) UV {
 	return MapWindowXY(u, v, diameter/p.Width, diameter/p.Height)
 }
 
-// MinimapWindow uses the native small-map sampling density: half the map
-// texture spans the 256-pixel backing quad at zoom 1 (EP5.4 0x4c7860).
+// MinimapWindow is the native small-map sampling (EP5.4 0x4c7860): half the
+// map texture spans the 256-pixel backing quad at zoom 1, the player is always
+// the pixel (MinimapAnchorX, MinimapAnchorY) of that quad whatever the map
+// edge, and its position is truncated to 1/512 of the map. The window is not
+// clamped: past the map edge it simply shows nothing.
 func (p MapProjection) MinimapWindow(x, z, zoom float32) UV {
-	u, v, _ := p.Position(x, z)
 	if p.Width <= 0 || p.Height <= 0 {
 		return MapWindow(.5, .5, 1)
 	}
-	return MapWindow(u, v, MinimapImageSize*zoom/512)
+	u := float32(math.Trunc(float64(x/p.Width*512))) / 512
+	v := 1 - float32(math.Trunc(float64(z/p.Height*512)))/512
+	s := zoom / 512 // map fraction per screen pixel
+	return UV{
+		u + (MinimapCircleEdge-MinimapAnchorX)*s, v + (MinimapCircleEdge-MinimapAnchorY)*s,
+		u + (MinimapCircleEdge+MinimapImageSize-MinimapAnchorX)*s, v + (MinimapCircleEdge+MinimapImageSize-MinimapAnchorY)*s,
+	}
 }
 
 // MapWindowXY preserves independent authored scales on the two image axes.

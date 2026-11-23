@@ -304,11 +304,14 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 		}
 	}
 	if action.Zoom != 0 || in.Wheel != 0 && panelPointer(in, x, y, ui.MinimapWidth, ui.MinimapHeight) {
-		steps := float64(action.Zoom)
+		// Held buttons move the zoom by one unit per second (0x4c6550);
+		// the wheel keeps its tenth-sized steps.
+		dt := float32(min(max(a.frameDT, 0), .25))
+		step := dt * float32(action.Zoom)
 		if in.Wheel != 0 {
-			steps += in.Wheel / 120
+			step += .1 * float32(in.Wheel/120)
 		}
-		v.smallZoom = min(1.5, max(.5, v.smallZoom-.1*float32(steps)))
+		v.smallZoom = min(1.5, max(.5, v.smallZoom-step))
 	}
 	return panelPointer(in, x, y, ui.MinimapWidth, ui.MinimapHeight)
 }

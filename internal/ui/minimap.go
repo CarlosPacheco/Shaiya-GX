@@ -11,6 +11,16 @@ import (
 const MinimapWidth, MinimapHeight = 196, 197
 const MinimapImageSize = 136
 
+// Native 0x4c7860 coordinates, relative to the frame art (drawn at the window
+// origin +4): the player arrow is a 32px quad centred on the anchor, and the
+// 136px circle starts at MinimapCircleEdge on both axes.
+const (
+	MinimapAnchorX, MinimapAnchorY = 70, 78
+	MinimapCircleEdge              = 12
+	minimapPartyRadius             = 60 // 0x6be974
+	minimapMarkerRadius            = 55 // 0x6c29bc
+)
+
 // Projection follows Phoenix tools/minimap_data.py: raw X grows right, raw
 // Z grows north (up). Image and map sizes supply their actual calibration.
 func MapPosition(x, z, mapSize float32) (u, v float32, ok bool) {
@@ -125,15 +135,18 @@ func (m *Minimap) Update(in *platform.Input, w, h int, full bool) MapAction {
 	x, y := m.Origin(w, h)
 	for i := range m.buttons {
 		m.buttons[i].OriginX, m.buttons[i].OriginY = x, y
-		if m.buttons[i].Update(in) {
+		clicked := m.buttons[i].Update(in)
+		// 0x4c6550: the zoom buttons act every frame while they are held.
+		if m.buttons[i].state == StatePressed {
 			switch i {
 			case 0:
 				action.Zoom = 1
 			case 1:
 				action.Zoom = -1
-			case 2:
-				action.Toggle = true
 			}
+		}
+		if clicked && i == 2 {
+			action.Toggle = true
 		}
 	}
 	return action
@@ -203,21 +216,57 @@ func (m *Minimap) drawMarkers(s *render.Sprites, markers []MapMarker, view UV, x
 	}
 }
 
+// drawSmallMarkers follows the native radar loops of 0x4c7860: a mark is placed
+// by its pixel offset from the player, shown only within 55px (60px for party
+// dots) of him, and its unscaled artwork is anchored 16px up and left of the
+// spot (so 32px cells centre on it and 16px dots sit 8px off).
+func (m *Minimap) drawSmallMarkers(s *render.Sprites, markers []MapMarker, view UV, x, y float32, allies bool) {
+	if view.U1 <= view.U0 || view.V1 <= view.V0 {
+		return
+	}
+	for _, mark := range markers {
+		if (mark.Kind == MapParty) != allies {
+			continue
+		}
+		texture, size, radius := m.party, float32(16), float32(minimapPartyRadius)
+		if !allies {
+			radius = minimapMarkerRadius
+		}
+		switch mark.Kind {
+		case MapQuestStart:
+			texture = m.questStart
+		case MapQuestEnd:
+			texture = m.questEnd
+		case MapQuestObjective:
+			texture = m.enemy
+		case MapRelicPortal:
+			texture, size = m.relicPortal, 32
+		case MapRelicNeutral, MapRelicLight, MapRelicFury:
+			texture, size = m.relics[mark.Kind-MapRelicNeutral], 32
+		}
+		if texture == nil {
+			continue
+		}
+		px := (mark.U - view.U0) / (view.U1 - view.U0) * MinimapImageSize
+		py := (mark.V - view.V0) / (view.V1 - view.V0) * MinimapImageSize
+		dx, dy := px-(MinimapAnchorX-MinimapCircleEdge), py-(MinimapAnchorY-MinimapCircleEdge)
+		if float32(math.Hypot(float64(dx), float64(dy))) >= radius {
+			continue
+		}
+		s.Draw(texture, x+px-16, y+py-16, size, size, 0, 0, 1, 1, white)
+	}
+}
+
 func (m *Minimap) Draw(s *render.Sprites, f *Font, image, solid *render.Texture, w, h int, view UV, u, v, heading float32, mapID uint16, rawX, rawZ float32, markers []MapMarker) {
 	x, y := m.Origin(w, h)
-	tex, tint := image, white
-	if tex == nil {
-		tex, tint = solid, [4]float32{.03, .04, .05, 1}
-	}
-	s.DrawCircle(tex, float32(x+16), float32(y+16), MinimapImageSize, view.U0, view.V0, view.U1, view.V1, tint)
+	// Whatever the window does not cover (past the map edge) stays dark.
+	s.DrawCircle(solid, float32(x+16), float32(y+16), MinimapImageSize, 0, 0, 1, 1, [4]float32{.03, .04, .05, 1})
 	if image != nil {
-		m.drawMarkers(s, markers, view, float32(x+16), float32(y+16), MinimapImageSize, 12, true, false)
-		px, py, ok := MapPoint(u, v, view)
-		dx, dy := px-.5, py-.5
-		if ok && dx*dx+dy*dy < .24 {
-			s.DrawRotated(m.arrow, float32(x+16)+px*MinimapImageSize, float32(y+16)+py*MinimapImageSize, 16, 16, heading, 0, 0, 1, 1, white)
-		}
-		m.drawMarkers(s, markers, view, float32(x+16), float32(y+16), MinimapImageSize, 12, true, true)
+		s.DrawCircleClipped(image, float32(x+16), float32(y+16), MinimapImageSize, view.U0, view.V0, view.U1, view.V1, white)
+		m.drawSmallMarkers(s, markers, view, float32(x+16), float32(y+16), false)
+		// 0x4c7860: the 32px arrow always sits on the anchor; the map moves.
+		s.DrawRotated(m.arrow, float32(x+4+MinimapAnchorX), float32(y+4+MinimapAnchorY), 32, 32, heading, 0, 0, 1, 1, white)
+		m.drawSmallMarkers(s, markers, view, float32(x+16), float32(y+16), true)
 	}
 	s.DrawImage(m.frame, float32(x+4), float32(y+4))
 	s.Draw(m.plate, float32(x+9), float32(y+157), 150, 40, 0, 0, 150.0/256, 40.0/64, white)
