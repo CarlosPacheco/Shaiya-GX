@@ -11,6 +11,7 @@ import (
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/glfw/v3.4/glfw"
 )
 
 var skinIndirectSupported bool
@@ -19,7 +20,7 @@ var drawParametersSupported bool
 // Init loads GL entry points; debug installs a KHR_debug logger.
 func Init(debug bool) error {
 	log.Print("Loading OpenGL entry points")
-	if err := gl.Init(); err != nil {
+	if err := loadGLEntryPoints(glfw.GetProcAddress); err != nil {
 		return fmt.Errorf("load OpenGL entry points: %w", err)
 	}
 	var major, minor int32
