@@ -200,23 +200,27 @@ func spawnEventActor(s *mapShard, a *eventActor, id uint16, pos [3]float32, now 
 	m.event = a
 	m.eventFresh = old.MobID != 0
 	m.spawnMinY, m.spawnMaxY, m.spawnHeightKnown = pos[1], pos[1], true
-	if !m.stationary() {
-		// Mobile companions are ordinary mobs: ground the randomly chosen XZ,
-		// then use the ordinary idle wander/chase path around that home point.
-		nav, err := loadMobNavigation(a.mapID)
-		if err != nil || !m.placeOnNavigation(nav, a.mapID) {
+	// Event mobs (obelisk bosses, their companions and chests) follow the same
+	// placement rules as every other mob: they are grounded on the navigation
+	// floor chosen by their authored height, so they neither float above open
+	// terrain nor sink to the floor of a dungeon. Where no floor accepts the
+	// spot, a stationary actor keeps its authored position instead of vanishing.
+	nav, err := loadMobNavigation(a.mapID)
+	if err != nil {
+		return false
+	}
+	placed := nav == nil || m.placeOnNavigation(nav, a.mapID)
+	if !placed {
+		if !m.stationary() {
 			return false
 		}
+		m.nav = nil
+		m.PosX, m.PosY, m.PosZ = pos[0], pos[1], pos[2]
+		m.homeY = pos[1]
+	}
+	if !m.stationary() {
+		// Mobile companions use the ordinary idle wander/chase path around that home point.
 		m.Area = &MobArea{LowerX: m.PosX - mobHomeRadius, LowerZ: m.PosZ - mobHomeRadius, UpperX: m.PosX + mobHomeRadius, UpperZ: m.PosZ + mobHomeRadius}
-	} else if a.boss != nil && a.spawn != nil {
-		// Stationary boss companions, including treasure chests, keep their XZ
-		// and settle onto the floor just below their authored spawn height.
-		if nav, err := loadMobNavigation(a.mapID); err == nil && nav != nil {
-			floor, _ := nav.PlayerGeometry()
-			if y, ok := floor.Below(pos[0], pos[1], pos[2], 2); ok {
-				m.PosY, m.homeY = y, y
-			}
-		}
 	}
 	a.generation++
 	m.eventGeneration = a.generation

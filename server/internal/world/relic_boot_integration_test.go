@@ -77,6 +77,22 @@ func TestObeliskOriginalWorldBoot(t *testing.T) {
 				if m.Area != nil {
 					t.Fatal("stationary event actor can wander", m.MobID)
 				}
+				// Obelisk bosses, their companions and chests are placed by the
+				// same rules as every other mob: standing on the floor, never
+				// hovering over open terrain.
+				nav, err := loadMobNavigation(mapID)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if nav != nil {
+					if m.nav == nil {
+						t.Fatalf("stationary event actor %d on %d was not grounded", m.MobID, mapID)
+					}
+					geometry, _ := nav.PlayerGeometry()
+					if _, supported := geometry.Support(m.PosX, m.PosY, m.PosZ, .05); !supported {
+						t.Fatalf("floating stationary actor %d on %d at %v", m.MobID, mapID, m.point())
+					}
+				}
 				continue
 			}
 			mobile++
