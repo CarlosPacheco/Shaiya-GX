@@ -579,10 +579,6 @@ func (a *App) drawActionBar(w, h int) {
 	for i := range slots {
 		slots[i].Pressed = a.skills.pressedUntil[i] > a.clock
 	}
-	// A shortcut picked up from the bar leaves its slot while it is carried.
-	if d := a.skills.drag; d.active && d.from >= 0 && d.from < len(slots) {
-		slots[d.from] = ui.ActionSlot{}
-	}
 	a.actionBar.Draw(a.sprites, a.font, a.white, w, h, slots, a.skills.heldActions)
 	a.queueActionTooltip(w, h)
 }
