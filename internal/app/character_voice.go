@@ -66,6 +66,12 @@ func (a *App) playCharacterVoice(id uint32, cue characterVoice) {
 
 // EP5 always plays the reaction on critical damage and samples normal hits.
 func (a *App) playCharacterDamageVoice(id uint32, result uint8, hp uint16) {
+	// Game.exe 0x40ff40 plays the weapon's damage action with the pain voice.
+	if hp > 0 && result <= 1 {
+		if actor := a.playerActor(id); actor != nil {
+			actor.PlayDamageReaction(a.playerWeapon(id))
+		}
+	}
 	if hp > 0 && (result == 1 || result == 0 && rand.IntN(3) == 0) {
 		a.playCharacterVoice(id, voiceDamage)
 	}

@@ -13,7 +13,9 @@ type attackSound struct {
 	pos            render.V3
 }
 
-func (a *App) queueAttackSounds(r proto.AttackResult, weapon uint8, actor *scene.Character) {
+// queueAttackSounds schedules the swing cue at the original animation threshold
+// (0x41b300). A ranged shot owns its hit cue: it lands when the missile does.
+func (a *App) queueAttackSounds(r proto.AttackResult, weapon uint8, actor *scene.Character, ranged bool) {
 	if a.sound == nil || len(a.wv.attackSounds)+3 > 64 || (r.Result != 0 && r.Result != 1 && r.Result != 3) {
 		return
 	}
@@ -28,7 +30,7 @@ func (a *App) queueAttackSounds(r proto.AttackResult, weapon uint8, actor *scene
 	// Two-hit actions (daggers, claws, dual swords) carry a second contact
 	// marker: deliverAttackResult splits the damage there, so the impact sound
 	// must follow every marker, not only the earliest one.
-	if r.Result <= 1 && r.HP > 0 {
+	if !ranged && r.Result <= 1 && r.HP > 0 {
 		first, second := actor.ContactTimes()
 		if first == 0 {
 			first = actor.ContactTime()

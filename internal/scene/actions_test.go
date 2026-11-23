@@ -95,3 +95,42 @@ func TestCloakKeepsSimulatingDuringSpin(t *testing.T) {
 		t.Fatal("cloak physics clock stopped while spinning")
 	}
 }
+
+// Game.exe 0x40ff40 maps each weapon kind to its ALT damage action, which sits
+// right after that kind's attack actions (ALT "..damage" follows "..attack04").
+func TestDamageReactionTableFollowsAttackActions(t *testing.T) {
+	for kind, want := range damageActions {
+		if kind == 0 {
+			continue
+		}
+		attack := AttackAction(uint8(kind), 0)
+		switch kind {
+		case 11, 14:
+			attack = 56
+		case 12:
+			attack = 60
+		case 13:
+			attack = 31
+		}
+		if want < attack || want > attack+4 {
+			t.Fatalf("kind %d damage slot %d is not next to its attack slot %d", kind, want, attack)
+		}
+	}
+}
+
+func TestDamageReactionNeverInterruptsAnAction(t *testing.T) {
+	busy := &Character{locked: true, clipName: "000_normal"}
+	if busy.PlayDamageReaction(1) {
+		t.Fatal("a running action was replaced")
+	}
+	moving := &Character{clipName: "002_run"}
+	if moving.PlayDamageReaction(1) {
+		t.Fatal("a running character flinched")
+	}
+	if (&Character{clipName: "000_normal"}).PlayDamageReaction(0) {
+		t.Fatal("an unarmed character used a weapon damage action")
+	}
+	if (&Character{clipName: "000_normal", Concealed: true}).PlayDamageReaction(1) {
+		t.Fatal("a concealed character flinched")
+	}
+}

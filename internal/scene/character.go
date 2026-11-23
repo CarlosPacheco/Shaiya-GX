@@ -83,6 +83,7 @@ type skinPart struct {
 type Character struct {
 	weaponType           uint8
 	combatPoseLeft       float32
+	reactionID           uint64 // actionID of the running damage reaction
 	clipFile             string
 	Concealed            bool
 	FadeOpacity          float32 // replaces the stealth fade when set (spirits)
@@ -629,6 +630,38 @@ func (c *Character) PlayAction(slot int, hold bool) bool {
 		c.combatPoseLeft = 10
 	}
 	return true
+}
+
+// damageActions is the ALT damage action of each weapon kind, from the table
+// at Game.exe 0x40ff40 (EP5.4): one-hand 39, two-hand 28, dagger 46, ...
+var damageActions = [...]int{0, 39, 28, 39, 28, 46, 53, 39, 28, 69, 83, 57, 62, 32, 57, 76}
+
+// PlayDamageReaction is the hit reaction of Game.exe 0x40ff40. It only starts
+// while the character stands idle or in its weapon-ready stance (native state
+// 0/8): attacks, casts, jumps, postures and walking are never interrupted.
+// The ALT Next of the action returns to the weapon-ready stance.
+func (c *Character) PlayDamageReaction(weapon uint8) bool {
+	if c == nil || c.locked || c.Mounted || c.Concealed {
+		return false
+	}
+	kind := weaponKind(weapon)
+	if kind == 0 {
+		return false
+	}
+	name := strings.ToLower(c.clipName)
+	if !strings.Contains(name, "normal") && !strings.Contains(name, "nomal") && !strings.Contains(name, "ready") {
+		return false
+	}
+	if !c.PlayAction(damageActions[kind], false) {
+		return false
+	}
+	c.reactionID = c.actionID
+	return true
+}
+
+// PlayingDamageReaction reports the hit reaction, which walking cancels.
+func (c *Character) PlayingDamageReaction() bool {
+	return c != nil && c.locked && c.reactionID != 0 && c.reactionID == c.actionID
 }
 
 // ActionSeconds is the length of an ALT slot's clip at its authored 30 fps,

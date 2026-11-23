@@ -18,6 +18,7 @@ type physicalProjectile struct {
 	speed, age       float32
 	numberHeight     float32
 	released         bool
+	swingQueued      bool // the auto-attack swing cue is scheduled separately
 	hitSound         string
 	impact           string
 	sequence         int
@@ -141,8 +142,10 @@ func (a *App) updatePhysicalProjectiles(dt float32) {
 			if p.weapon == 11 {
 				p.cue.actor.HideThrownWeapon(p.cue.action)
 			}
-			swing, _ := scene.WeaponSounds(p.weapon, p.result.Result == 1, 0)
-			a.playSound(swing, p.pos[0], p.pos[2])
+			if !p.swingQueued {
+				swing, _ := scene.WeaponSounds(p.weapon, p.result.Result == 1, 0)
+				a.playSound(swing, p.pos[0], p.pos[2])
+			}
 		}
 		destination := p.destination
 		if target, ok := a.effectPosition(p.result.Target); ok {

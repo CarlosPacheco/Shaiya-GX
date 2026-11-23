@@ -641,6 +641,9 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 			v.self.ReleaseAction()
 			v.attackPose = false
 		}
+		if moving && v.self.PlayingDamageReaction() {
+			v.self.ReleaseAction()
+		}
 		if moving {
 			v.self.CancelCast()
 			if a.revolver.cast.preparing {

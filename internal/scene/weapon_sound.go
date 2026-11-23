@@ -15,7 +15,9 @@ func weaponKind(weapon uint8) uint8 {
 }
 
 // WeaponSounds follows registration 0x53b9f0 and selectors 0x4101e0/0x410250.
-// Normal groups have two variants; criticals use 003. Crossbow has no hit group.
+// Normal groups have two variants; criticals use 003. The original registers
+// no crossbow hit group, although ch_hit_crobow001..003 ship in the data; GX
+// plays them so crossbow shots do not land silently.
 func WeaponSounds(weapon uint8, critical bool, variant uint8) (swing, hit string) {
 	kind := weaponKind(weapon)
 	if kind == 0 {
@@ -27,9 +29,7 @@ func WeaponSounds(weapon uint8, critical bool, variant uint8) (swing, hit string
 		n = 3
 	}
 	swing = fmt.Sprintf("ch_att_%s%03d.ogg", stem, n)
-	if kind != 14 {
-		hit = fmt.Sprintf("ch_hit_%s%03d.ogg", stem, n)
-	}
+	hit = fmt.Sprintf("ch_hit_%s%03d.ogg", stem, n)
 	return
 }
 

@@ -28,8 +28,11 @@ func TestWeaponSoundGroupsAndAliases(t *testing.T) {
 			t.Fatal("unknown/unarmed context acquired a weapon cue", weapon)
 		}
 	}
-	if _, hit := WeaponSounds(14, true, 0); hit != "" {
-		t.Fatal("crossbow acquired an absent native hit group")
+	if _, hit := WeaponSounds(14, true, 0); hit != "ch_hit_crobow003.ogg" {
+		t.Fatal("crossbow lost its shipped hit sound", hit)
+	}
+	if _, hit := WeaponSounds(14, false, 1); hit != "ch_hit_crobow002.ogg" {
+		t.Fatal("crossbow normal hit variant", hit)
 	}
 	for _, tc := range []struct {
 		weapon uint8

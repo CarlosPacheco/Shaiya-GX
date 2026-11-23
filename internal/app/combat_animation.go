@@ -182,9 +182,12 @@ func (a *App) confirmedAnimation(p []byte) {
 					v.attackActionID = actor.ActionID()
 				}
 				ranged = a.startPhysicalProjectile(result, typ, actor)
-				if !ranged {
-					a.queueAttackSounds(result, typ, actor)
+				if ranged {
+					// The string/shot cue follows the animation, not the missile's release,
+					// so a replaced action or a fast attack speed cannot swallow it.
+					a.wv.physicalProjectiles[len(a.wv.physicalProjectiles)-1].swingQueued = true
 				}
+				a.queueAttackSounds(result, typ, actor, ranged)
 			}
 		}
 		if mob := v.mobs[result.Source]; mob != nil && mob.actor != nil {
