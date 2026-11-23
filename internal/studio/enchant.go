@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
 	"os"
 	"path/filepath"
 	"slices"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/catalogfiles"
 	"github.com/Spelunkern/Shaiya-GX/internal/enchantrules"
 )
 
@@ -45,7 +45,10 @@ func OpenEnchant(ctx context.Context, path string) (*EnchantCatalog, error) {
 
 func SaveEnchant(ctx context.Context, root string, catalog *EnchantCatalog, levels enchantrules.Catalog) (string, error) {
 	if catalog.File != nil {
-		next := catalogfiles.EncodeEnchant(levels)
+		next, err := catalogfiles.UpdateEnchant(levels, catalog.File.original)
+		if err != nil {
+			return "", err
+		}
 		return saveServerCatalog(root, catalog.File, next, catalogfiles.ParseEnchant, func(v enchantrules.Catalog) bool {
 			return slices.Equal(v.Attack, levels.Attack) && slices.Equal(v.Defense, levels.Defense)
 		})

@@ -86,7 +86,9 @@ Select the server's `data/game` folder. **Enchant** edits the
 or enter a percentage with up to four decimal places. The columns stay in
 sync, so entering `12.5` in **Chance (%)** gives `125000` per million. Add or
 remove levels to adjust the cap for each equipment type, up to +49. Zero
-disables enchanting for that type.
+disables enchanting for that type. Saving preserves unrelated INI settings and
+inactive steps. A changed file is rewritten in normalized INI formatting,
+with the original comments and formatting available in the backup.
 
 ## File-backed server catalogs
 
