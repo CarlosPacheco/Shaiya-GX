@@ -258,7 +258,7 @@ func (a *App) pickMob(in *platform.Input, w, h int) uint32 {
 				}
 				if hit {
 					_, _, depth, projected := projectLabel(origin.Add(direction.Scale(occlusionDistance)), vp, w, h)
-					if projected && (a.sprites == nil || a.pickNameVisibleAt(in.MouseX, in.MouseY, w, h, depth)) && (monster && !bestMob || monster == bestMob && (distance < bestRay || distance == bestRay && (target == 0 || id < target))) {
+					if projected && (a.sprites == nil || a.pickDepthVisibleAt(in.MouseX, in.MouseY, w, h, depth, true)) && (monster && !bestMob || monster == bestMob && (distance < bestRay || distance == bestRay && (target == 0 || id < target))) {
 						bestRay, target, bestMob = distance, id, monster
 					}
 				}
@@ -280,7 +280,7 @@ func (a *App) pickMob(in *platform.Input, w, h int) uint32 {
 			if d > 60*60 {
 				continue
 			}
-			if a.sprites != nil && !a.pickNameVisibleAt(in.MouseX, in.MouseY, w, h, depth) {
+			if a.sprites != nil && !a.pickDepthVisibleAt(in.MouseX, in.MouseY, w, h, depth, true) {
 				continue
 			}
 		}
