@@ -30,7 +30,13 @@ func TestLooseDungeonTexturesKeepCanonicalPriority(t *testing.T) {
 	}
 	defer a.Close()
 	s := &Assets{Arc: a, Missing: map[string]bool{}}
+	if s.FindTexture("") != nil || s.Missing[""] {
+		t.Fatal("an untextured material reported a missing resource")
+	}
 	s.FindTexture("absent.dds") // Build the path index without uploading a texture.
+	if !s.Missing["absent.dds"] {
+		t.Fatal("a named missing texture went unreported")
+	}
 	if got := s.byStem["light"]; got != "world/dungeon/fort/light.dds" {
 		t.Fatal(got)
 	}

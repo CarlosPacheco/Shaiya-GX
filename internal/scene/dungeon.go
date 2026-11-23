@@ -42,6 +42,9 @@ func (s *Assets) findTextureFile(name string) (string, bool) {
 	return "", false
 }
 func (s *Assets) FindTexture(name string) *render.Texture {
+	if name == "" {
+		return nil
+	}
 	if p, ok := s.findTextureFile(name); ok {
 		return s.worldTexture(p)
 	}
