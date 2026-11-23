@@ -1394,9 +1394,14 @@ func buildNpcMove(n *MapNpc, motion uint8) []byte {
 	return w.MustFinish()
 }
 
+func (m *MapMob) wireHeightKnown() bool {
+	return m.nav != nil || m.event != nil && m.spawnHeightKnown
+}
+
 func buildMobEnter(m *MapMob, isNew bool) []byte {
 	op := packet.MobEnter
-	if m.nav != nil || m.def != nil && m.def.Country < 2 {
+	heightKnown := m.wireHeightKnown()
+	if heightKnown || m.def != nil && m.def.Country < 2 {
 		op = packet.Opcode(proto.GXMobEnter)
 	}
 	w := packet.New(op)
@@ -1410,25 +1415,26 @@ func buildMobEnter(m *MapMob, isNew bool) []byte {
 	w.F32(m.PosZ)
 	if m.def != nil && m.def.Country < 2 {
 		w.U8(m.def.Country)
-		w.Bool(m.nav != nil)
+		w.Bool(heightKnown)
 	}
 	return w.MustFinish()
 }
 
 func buildMobMove(m *MapMob, motion uint8) []byte {
 	op := packet.MobMove
-	if m.nav != nil {
+	heightKnown := m.wireHeightKnown()
+	if heightKnown {
 		op = packet.Opcode(proto.GXMobMove)
 	}
 	w := packet.New(op)
 	w.U32(m.ID)
 	w.U8(motion)
 	w.F32(m.PosX)
-	if m.nav != nil {
+	if heightKnown {
 		w.F32(m.PosY)
 	}
 	w.F32(m.PosZ)
-	if m.nav != nil {
+	if heightKnown {
 		w.U32(uint32(m.moveDuration / time.Millisecond))
 	}
 	return w.MustFinish()

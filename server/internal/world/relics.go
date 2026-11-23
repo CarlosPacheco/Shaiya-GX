@@ -208,6 +208,15 @@ func spawnEventActor(s *mapShard, a *eventActor, id uint16, pos [3]float32, now 
 			return false
 		}
 		m.Area = &MobArea{LowerX: m.PosX - mobHomeRadius, LowerZ: m.PosZ - mobHomeRadius, UpperX: m.PosX + mobHomeRadius, UpperZ: m.PosZ + mobHomeRadius}
+	} else if a.boss != nil && a.spawn != nil {
+		// Stationary boss companions, including treasure chests, keep their XZ
+		// and settle onto the floor just below their authored spawn height.
+		if nav, err := loadMobNavigation(a.mapID); err == nil && nav != nil {
+			floor, _ := nav.PlayerGeometry()
+			if y, ok := floor.Below(pos[0], pos[1], pos[2], 2); ok {
+				m.PosY, m.homeY = y, y
+			}
+		}
 	}
 	a.generation++
 	m.eventGeneration = a.generation

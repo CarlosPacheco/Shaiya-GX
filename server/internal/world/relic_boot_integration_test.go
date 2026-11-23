@@ -3,8 +3,10 @@
 package world
 
 import (
+	"math"
 	"testing"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
 )
@@ -102,4 +104,51 @@ func TestObeliskOriginalWorldBoot(t *testing.T) {
 		t.Fatalf("persistent keeps=%d error=%v", len(keeps), err)
 	}
 	t.Logf("Original world boot: %d standing relics, %d active guards, %d boss-map populations, %d persistent keeps", total, guards, len(relics.bosses), len(keeps))
+
+	t.Run("Fantasma treasure", func(t *testing.T) {
+		const mapID, dragonID, chestID = 17, 902, 1971
+		var boss *linkedBoss
+		for _, candidate := range relics.bosses[mapID] {
+			if candidate.mobs[0] == dragonID {
+				boss = candidate
+				break
+			}
+		}
+		if boss == nil {
+			t.Fatal("missing Fantasma Dragon event")
+		}
+		s := shard(mapID)
+		dragon := s.entities.Mobs[boss.principal.slot]
+		hit, ok := DamageMob(mapID, dragon.ID, dragon.CurrentHP)
+		if !ok || !hit.Killed {
+			t.Fatal("could not kill Fantasma Dragon")
+		}
+		eventMobDestroyed(nil, mapID, &hit.Mob, logger)
+		chests := 0
+		for _, g := range boss.guards {
+			for _, a := range g.actors {
+				m := &s.entities.Mobs[a.slot]
+				if m.MobID != chestID || m.CurrentHP == 0 {
+					continue
+				}
+				chests++
+				for _, fresh := range []bool{false, true} {
+					spawn, err := proto.DecodeMobEnter(buildMobEnter(m, fresh)[2:])
+					if err != nil || !spawn.HeightKnown || spawn.Y != m.PosY || spawn.New != fresh {
+						t.Fatalf("Fantasma chest at %v: invalid spawn %+v (fresh=%t): %v", m.point(), spawn, fresh, err)
+					}
+				}
+				move, err := proto.DecodeMobMove(buildMobMove(m, 0)[2:])
+				if err != nil || !move.HeightKnown || move.Y != m.PosY {
+					t.Fatalf("Fantasma chest at %v: invalid position update %+v: %v", m.point(), move, err)
+				}
+				if math.Abs(float64(m.PosY)-6.490642) > .01 {
+					t.Fatalf("Fantasma chest off the arena floor: %v", m.point())
+				}
+			}
+		}
+		if chests != 11 {
+			t.Fatalf("Fantasma Dragon spawned %d chests, want 11", chests)
+		}
+	})
 }
