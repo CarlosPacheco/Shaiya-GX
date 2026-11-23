@@ -49,7 +49,13 @@ func (s *Session) handleChat(op packet.Opcode, p []byte) {
 		return
 	}
 	if isTownCommand(msg) {
-		s.executeTown()
+		// Alive, it is the native return: the bind point after 10 s without
+		// moving (0x0556). The instant jump stays only as the dead escape hatch.
+		if s.dead {
+			s.executeTown()
+		} else {
+			s.handleReturnToTown()
+		}
 		return
 	}
 	items, ok := s.chatItemSnapshots(p, 2)

@@ -136,7 +136,7 @@ func (a *App) updateChat(in *platform.Input) bool {
 		if channelCommand {
 			text = channelText
 		}
-		if !channelCommand && (a.gestureCommand(text) || a.vehicleCommand(text) || a.partyCommand(text) || a.mallCommand(text) || a.questCommand(text) || a.exchangeCommand(text) || a.duelCommand(text) || a.guildCommand(text) || a.guildDuelCommand(text)) {
+		if !channelCommand && (a.townCommand(text) || a.gestureCommand(text) || a.vehicleCommand(text) || a.partyCommand(text) || a.mallCommand(text) || a.questCommand(text) || a.exchangeCommand(text) || a.duelCommand(text) || a.guildCommand(text) || a.guildDuelCommand(text)) {
 			a.chatOpen = false
 			return true
 		}
