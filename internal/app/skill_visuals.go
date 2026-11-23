@@ -34,7 +34,8 @@ func skillEffectLibraries(r proto.SkillResult, d sdata.Skill) (flight, impact st
 			}
 		}
 	}
-	if r.Result <= 1 && d.Target >= 1 && d.Target <= 7 {
+	// A resisted or missed spell (result 3) still plays its effect.
+	if r.Result <= 3 && d.Target >= 1 && d.Target <= 7 {
 		impact = effect.ImpactLibrary(r.ID)
 	}
 	return
@@ -129,7 +130,7 @@ func (a *App) startSkillSecondaryEffect(r proto.SkillResult) {
 	if a.wv != nil && a.wv.physicalSkillQueued {
 		return
 	}
-	if a.wv == nil || r.Level == 0 || r.Level == 100 || r.Target == 0 || r.Result > 1 {
+	if a.wv == nil || r.Level == 0 || r.Level == 100 || r.Target == 0 || r.Result > 3 {
 		return
 	}
 	a.loadSkills()
@@ -145,7 +146,7 @@ func (a *App) startSkillSecondaryEffect(r proto.SkillResult) {
 // 0x579390/0x5783d0 select the recipient effect independently of the
 // central announcement. A DA_area_* filename does not suppress that hit.
 func skillSecondaryLibrary(r proto.SkillResult, d sdata.Skill) (string, int) {
-	if r.Level == 0 || r.Level == 100 || r.Target == 0 || r.Result > 1 || d.Effect == 0 {
+	if r.Level == 0 || r.Level == 100 || r.Target == 0 || r.Result > 3 || d.Effect == 0 {
 		return "", 0
 	}
 	if d.Target == 7 && !areaShowerSkill(r.ID) {

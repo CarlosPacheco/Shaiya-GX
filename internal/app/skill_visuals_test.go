@@ -24,7 +24,7 @@ func TestSkillEffectsRouteDirectAndProjectileResults(t *testing.T) {
 		{57, 1, 1, 3, 1, "", "DA_target_generic.EFT"},
 		{35, 3, 3, 3, 0, "", "DA_target_root.EFT"},
 		{42, 3, 3, 3, 0, "", "DA_target_slumber.EFT"},
-		{57, 1, 1, 3, 3, "", ""}, // No direct hit for a miss/rejection.
+		{57, 1, 1, 3, 3, "", "DA_target_generic.EFT"}, // A missed spell still plays its effect.
 		{30, 0, 4, 2, 5, "", ""},
 		{30, 0, 4, 2, 4, "", ""}, // Area announcements do not duplicate impacts.
 		{38, 1, 1, 7, 0, "", "DA_target_generic.EFT"},
@@ -99,8 +99,12 @@ func TestSecondaryAttackUsesNativeElementSequence(t *testing.T) {
 		}
 	}
 	r.Result = 3
+	if file, _ := skillSecondaryLibrary(r, sdata.Skill{Effect: 3}); file == "" {
+		t.Fatal("miss dropped the recipient effect")
+	}
+	r.Result = 5
 	if file, _ := skillSecondaryLibrary(r, sdata.Skill{Effect: 3}); file != "" {
-		t.Fatal("miss emitted recipient effect")
+		t.Fatal("rejection emitted recipient effect")
 	}
 }
 
