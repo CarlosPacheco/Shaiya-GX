@@ -93,7 +93,12 @@ func op(p []byte) packet.Opcode { v, _ := packet.U16(p); return packet.BaseOpcod
 // until reads payloads until one has the wanted opcode.
 func (c *client) until(want packet.Opcode, seen map[packet.Opcode]int) []byte {
 	c.t.Helper()
-	deadline := time.Now().Add(10 * time.Second)
+	return c.untilWithin(want, seen, 10*time.Second)
+}
+
+func (c *client) untilWithin(want packet.Opcode, seen map[packet.Opcode]int, timeout time.Duration) []byte {
+	c.t.Helper()
+	deadline := time.Now().Add(timeout)
 	for {
 		p := c.read(time.Until(deadline))
 		if p == nil {
@@ -262,9 +267,12 @@ func TestWorldSessionAgainstSQLite(t *testing.T) {
 
 	town := msg(packet.ChatNormal, 6)
 	town = append(town, []byte("/town\x00")...)
+	started := time.Now()
 	c.write(town)
-	chat := c.until(packet.ChatNormal, seen)
-	t.Logf("town reply: %q", chat[7:])
+	c.untilWithin(packet.CharacterMapTeleport, seen, 15*time.Second)
+	if elapsed := time.Since(started); elapsed < 10*time.Second {
+		t.Fatalf("/town teleported before the return timer elapsed: %v", elapsed)
+	}
 
 	c.write(msg(packet.Ping))
 	c.until(packet.Ping, seen)

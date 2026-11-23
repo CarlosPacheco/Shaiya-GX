@@ -7,16 +7,13 @@ fonts and development database in one download. **No separate data download is
 needed.** Extract the package, start
 `Server/build/gx_console` (or `.exe`) in a terminal, enter `start server`, then open the executable in `Client/`.
 [Setup, requirements and updates](client-portable.md).
-Current binary release: [gx-v0.1.17](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.17).
+Current binary release: [gx-v0.1.18](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.18).
 
 The reference for current GX gameplay features, item data, administration and
 operation. GX is a Go client with an integrated authoritative world/login
 server, using original EP5 interface resources and protocol foundations.
 
-**Version scope:** these pages follow the current development branch. Use the
-release notes for the features and data shipped in a specific binary release.
-
-See the [gx-v0.1.17 upgrade guide](../releases/gx-v0.1.17-upgrade.md) to update and preserve your runtime database.
+These pages follow the current development branch. See the [binary update instructions](client-portable.md#updating-existing-client-data) to update and preserve your runtime database.
 
 ## Gameplay and items
 

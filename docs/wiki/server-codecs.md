@@ -3003,6 +3003,17 @@ func DecodeDrowningDamage(p []byte) (EnvironmentalDamage, error) {
 }
 ```
 
+```go
+func DecodeDrowningDeath(p []byte) (uint32, error) {
+	r := NewReader(p)
+	id := r.U32()
+	if Op(p) != GXDrowningDeath || r.Err() != nil || r.Remaining() != 0 {
+		return 0, fmt.Errorf("invalid drowning death")
+	}
+	return id, nil
+}
+```
+
 </details>
 
 ## party

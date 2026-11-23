@@ -30,6 +30,7 @@ func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 			once = true
 			return false
 		})
+		a.updatePendingNumbers()
 	}
 	walk := func(p render.V3) {
 		t.Helper()
@@ -116,10 +117,13 @@ func verifyNativeApproach(t *testing.T, a *App, pump func(func() bool)) {
 		t.Fatal("attack approach did not finish")
 	}
 	pump(func() bool { return st.LastAttack.Source == st.SelfID && st.LastAttack.Target == target })
+	send(proto.StopAttackPacket())
+	for i := 0; i < 90 && len(a.combatNumbers) == 0; i++ {
+		frame()
+	}
 	if len(a.combatNumbers) == 0 {
 		t.Fatal("confirmed basic attack had no combat number")
 	}
-	send(proto.StopAttackPacket())
 	// The selected-target action (F/double click) also starts approach itself.
 	enemy = testworld.LivingMob(t, st, send, pump)
 	st.Target = enemy.ID

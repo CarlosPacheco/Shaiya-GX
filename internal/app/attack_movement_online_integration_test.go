@@ -104,24 +104,32 @@ func TestAttackMovementAgainstIsolatedGX(t *testing.T) {
 	pump(30 * time.Millisecond)
 	before = attacks
 	client.wv.jumpActive, client.wv.jumpMoved = true, true
-	if !client.attackTarget() || client.wv.landingAction.target != 0 {
-		t.Fatal("client buffered an order during a moving jump")
+	if !client.attackTarget() || client.wv.landingAction.target != b.SelfID {
+		t.Fatal("client did not hold the attack order during a moving jump")
 	}
 	for i := 0; i < 5; i++ {
 		x += .05
 		send(proto.MovePacket(4|proto.MotionFlag80, 0, x, y, z))
 		send(proto.UserAttackPacket(b.SelfID))
+		client.updateLandingAction(&platform.Input{Down: "W"})
 		pump(40 * time.Millisecond)
 	}
 	pump(900 * time.Millisecond)
 	if attacks != before {
 		t.Fatal("moving jumping attacker dealt a hit")
 	}
+	client.wv.jumpActive, client.wv.jumpMoved, client.clock = false, false, 6
+	client.updateLandingAction(&platform.Input{})
+	pump(150 * time.Millisecond)
+	if attacks != before+1 || client.wv.landingAction.target != 0 {
+		t.Fatal("client did not attack once after the moving jump landed")
+	}
 	send(proto.StopAttackPacket())
+	pump(1500 * time.Millisecond)
 	// Movement by the victim is never immunity: attacker is now grounded.
 	sendB(proto.MotionPacket(proto.MotionJump))
 	sendB(proto.MovePacket(4|proto.MotionFlag80, 0, b.Self.X+.1, b.Self.Y, b.Self.Z))
 	pump(50 * time.Millisecond)
 	hit()
-	t.Log("encrypted PvP: ground recovery enforced, all airborne attacks denied, standing jump executes queued attack on landing, moving jump discards it")
+	t.Log("encrypted PvP: ground recovery enforced, all airborne attacks denied, standing and moving jumps execute queued attacks once on landing")
 }

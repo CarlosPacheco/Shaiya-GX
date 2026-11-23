@@ -18,7 +18,7 @@ Source notes: GXGMState is a GX-only server response: self ID:u32, GM:u8, turbo:
 
 **S→C serializers:** [gmReply (server/internal/world/gm.go)](../../server/internal/world/gm.go#L22)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1271)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1279)
 
 ### Wire layouts and validation
 
@@ -91,7 +91,7 @@ Source notes: GXVisibility: character ID:u32, concealed:u8. Sent only to authori
 
 **S→C serializers:** [visibilityPacket (server/internal/world/visibility.go)](../../server/internal/world/visibility.go#L27)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1253)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1261)
 
 ### Wire layouts and validation
 
@@ -199,7 +199,7 @@ Source notes: GXQuestNPCs supplies map metadata, not visible/interactive world e
 
 **S→C serializers:** [questNPCFrames (server/internal/world/quest_map.go)](../../server/internal/world/quest_map.go#L50)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L281)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L282)
 
 ### Wire layouts and validation
 
@@ -254,7 +254,7 @@ Declarations: [proto.GXMobEnter](../../internal/proto/world.go#L257).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1285), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L124)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1293), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L124)
 
 ### Wire layouts and validation
 
@@ -313,7 +313,7 @@ Declarations: [proto.GXMobMove](../../internal/proto/world.go#L258).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1285), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L130)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1293), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L130)
 
 ### Wire layouts and validation
 
@@ -361,7 +361,7 @@ Declarations: [proto.GXPhysicsClock](../../internal/proto/world.go#L255).
 
 **S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L471)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1243)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1251)
 
 ### Wire layouts and validation
 
@@ -395,7 +395,7 @@ Declarations: [proto.GXPlayerCorrection](../../internal/proto/player_physics.go#
 
 **S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L251)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1233)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1241)
 
 ### Wire layouts and validation
 
@@ -515,7 +515,7 @@ Source notes: GXOJLimits publishes static equipment recreation limits from the s
 
 **S→C serializers:** [sendOJLimits (server/internal/world/oj_limits.go)](../../server/internal/world/oj_limits.go#L32)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L270)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L271)
 
 ### Wire layouts and validation
 
@@ -600,7 +600,7 @@ Source notes: GXChestCloakFits supplies the native chest-dependent cloak fit. It
 
 **S→C serializers:** [sendChestCloakFits (server/internal/world/cloak_fits.go)](../../server/internal/world/cloak_fits.go#L28)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L253)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L254)
 
 ### Wire layouts and validation
 
@@ -684,7 +684,7 @@ Source notes: GXFallDamage is an additive server notification. Health still uses
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L907)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L914)
 
 ### Wire layouts and validation
 
@@ -718,7 +718,7 @@ Source notes: GXLadder is additive. Requests contain guide index + mode; notific
 
 **S→C serializers:** [buildLadderState (server/internal/world/ladders.go)](../../server/internal/world/ladders.go#L11)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L885)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L886)
 
 ### Wire layouts and validation
 
@@ -797,7 +797,7 @@ Source notes: GXSkillFailure supplies a native SysMsg ID without inventing nativ
 
 **S→C serializers:** [sendSkillMessage (server/internal/world/skill_range.go)](../../server/internal/world/skill_range.go#L50)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L879)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L880)
 
 ### Wire layouts and validation
 
@@ -884,7 +884,7 @@ Source notes: Native requests and invitation messages. 0x021C is also the server
 
 **S→C serializers:** [buildVehicleState (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L359)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L431)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L432)
 
 ### Wire layouts and validation
 
@@ -969,7 +969,7 @@ Source notes: GXSkillDash is a server-authored Stinger trajectory. Native skill 
 
 **S→C serializers:** [buildSkillDash (server/internal/world/skill_dash.go)](../../server/internal/world/skill_dash.go#L83)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1227)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1235)
 
 ### Wire layouts and validation
 
@@ -1077,7 +1077,7 @@ Source notes: GXEnchantRules publishes server enchant bonuses for authoritative 
 
 **S→C serializers:** [sendEnchantRules (server/internal/world/enchant_rules.go)](../../server/internal/world/enchant_rules.go#L80)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L264)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L265)
 
 ### Wire layouts and validation
 
@@ -1446,7 +1446,7 @@ Source notes: GXSkillCooldown tells the client that a skill's reuse timer has st
 
 **S→C serializers:** [sendSkillCooldown (server/internal/world/cooldown_reduction.go)](../../server/internal/world/cooldown_reduction.go#L33)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L816)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L817)
 
 ### Wire layouts and validation
 
@@ -1501,7 +1501,7 @@ Source notes: GXField announces a field left on the ground (Fire Bush's curtain 
 
 **S→C serializers:** [skillField (server/internal/world/trap.go)](../../server/internal/world/trap.go#L35)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L873)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L874)
 
 ### Wire layouts and validation
 
@@ -1587,7 +1587,7 @@ Source notes: GXTransform tells the users around a character that it looks like 
 
 **S→C serializers:** [buildTransform (server/internal/world/degeneration.go)](../../server/internal/world/degeneration.go#L31)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L860)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L861)
 
 ### Wire layouts and validation
 
@@ -1644,7 +1644,7 @@ Source notes: GXTargetHealth gives the HP of the user the client has selected (t
 
 **S→C serializers:** [sendTargetHealth (server/internal/world/target_effects.go)](../../server/internal/world/target_effects.go#L90)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L835)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L836)
 
 ### Wire layouts and validation
 
@@ -1711,7 +1711,7 @@ Source notes: GXKillNotice tells a user that it killed another player: the victi
 
 **S→C serializers:** [notifyKill (server/internal/world/pvpdeath.go)](../../server/internal/world/pvpdeath.go#L240)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L829)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L830)
 
 ### Wire layouts and validation
 
@@ -1760,7 +1760,7 @@ Source notes: GXBlessingSnapshot carries the server's presentation data independ
 
 **S→C serializers:** [blessingSnapshotLocked (server/internal/world/killcount.go)](../../server/internal/world/killcount.go#L299)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L316)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L317)
 
 ### Wire layouts and validation
 
@@ -1851,7 +1851,7 @@ Declarations: [proto.GXWeather](../../internal/proto/weather.go#L5).
 
 **S→C serializers:** [updateWeather (server/internal/world/weather.go)](../../server/internal/world/weather.go#L30)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L310)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L311)
 
 ### Wire layouts and validation
 
@@ -1923,7 +1923,7 @@ Source notes: GXServerNotice carries a global announcement as native length-pref
 
 **S→C serializers:** [broadcastNotice (server/internal/world/notices.go)](../../server/internal/world/notices.go#L107)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L398)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L399)
 
 ### Wire layouts and validation
 
@@ -1979,9 +1979,9 @@ Source notes: GXItemCooldownReset clears the recipient’s item and mount cooldo
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [gmCure (server/internal/world/gm.go)](../../server/internal/world/gm.go#L615)
+**S→C serializers:** [gmCure (server/internal/world/gm.go)](../../server/internal/world/gm.go#L621)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L249)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L250)
 
 ### Wire layouts and validation
 
@@ -1989,7 +1989,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>gmCure — server/internal/world/gm.go</summary>
 
-[Source definition](../../server/internal/world/gm.go#L615)
+[Source definition](../../server/internal/world/gm.go#L621)
 
 ```go
 func (s *Session) gmCure() error {
@@ -2080,7 +2080,7 @@ Source notes: GXLootNotice tells a party or raid which member just received an i
 
 **S→C serializers:** [announceLoot (server/internal/world/loot.go)](../../server/internal/world/loot.go#L177)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L822)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L823)
 
 ### Wire layouts and validation
 
@@ -2152,7 +2152,7 @@ Declarations: [proto.GXFormAppearance](../../internal/proto/player_forms.go#L6).
 
 **S→C serializers:** [buildFormAppearance (server/internal/world/player_forms.go)](../../server/internal/world/player_forms.go#L110)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L841)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L842)
 
 ### Wire layouts and validation
 
@@ -2260,7 +2260,7 @@ Declarations: [proto.GXEvolutionBar](../../internal/proto/player_forms.go#L7).
 
 **S→C serializers:** [sendEvolutionBar (server/internal/world/evolution.go)](../../server/internal/world/evolution.go#L57)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L854)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L855)
 
 ### Wire layouts and validation
 
@@ -2500,7 +2500,7 @@ Declarations: [proto.GXOxygen](../../internal/proto/oxygen.go#L9).
 
 **S→C serializers:** [sendOxygen (server/internal/world/oxygen.go)](../../server/internal/world/oxygen.go#L19)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L895)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L896)
 
 ### Wire layouts and validation
 
@@ -2524,7 +2524,7 @@ func (s *Session) sendOxygen() {
 
 <details><summary>OxygenPacket — internal/proto/oxygen.go</summary>
 
-[Source definition](../../internal/proto/oxygen.go#L31)
+[Source definition](../../internal/proto/oxygen.go#L32)
 
 ```go
 func OxygenPacket(v OxygenStatus) []byte {
@@ -2546,7 +2546,7 @@ type OxygenStatus struct {
 
 <details><summary>DecodeOxygen — internal/proto/oxygen.go</summary>
 
-[Source definition](../../internal/proto/oxygen.go#L38)
+[Source definition](../../internal/proto/oxygen.go#L39)
 
 ```go
 func DecodeOxygen(p []byte) (OxygenStatus, error) {
@@ -2577,7 +2577,7 @@ Declarations: [proto.GXDrowningDamage](../../internal/proto/oxygen.go#L10).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L901)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L902)
 
 ### Wire layouts and validation
 
@@ -2585,7 +2585,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>DecodeDrowningDamage — internal/proto/oxygen.go</summary>
 
-[Source definition](../../internal/proto/oxygen.go#L49)
+[Source definition](../../internal/proto/oxygen.go#L50)
 
 ```go
 func DecodeDrowningDamage(p []byte) (EnvironmentalDamage, error) {
@@ -2681,7 +2681,7 @@ Source notes: GXGMModes tells a GM's own client which modes are active: self ID:
 
 **S→C serializers:** [sendGMModes (server/internal/world/gm.go)](../../server/internal/world/gm.go#L43)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1263)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1271)
 
 ### Wire layouts and validation
 
@@ -2730,6 +2730,100 @@ func DecodeGMModes(p []byte) (GMModes, error) {
 type GMModes struct {
 	ID                       uint32
 	Concealed, Immune, Turbo bool
+}
+```
+
+</details>
+
+## Opcode 7f2a
+
+**`0x7F2A` — GXDrowningDeath**
+
+Declarations: [proto.GXDrowningDeath](../../internal/proto/oxygen.go#L11).
+
+Source notes: target u32: the target died of drowning
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** [applyEnvironmentalDamage (server/internal/world/fall_damage.go)](../../server/internal/world/fall_damage.go#L27)
+
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L908)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>applyEnvironmentalDamage — server/internal/world/fall_damage.go</summary>
+
+[Source definition](../../server/internal/world/fall_damage.go#L27)
+
+```go
+func (s *Session) applyEnvironmentalDamage(amount uint32, opcode proto.Opcode, cause string) {
+	// Environmental damage ignores GM immunity: "attack on" never stops drowning.
+	if s.char == nil || s.dead {
+		return
+	}
+	damage := min(s.char.CurrentHP, amount)
+	if damage == 0 {
+		return
+	}
+	s.cancelTravelCast()
+	s.commitMovement()
+	s.cancelMove()
+	s.breakStealth()
+	s.char.CurrentHP = satSub(s.char.CurrentHP, damage)
+	s.persist()
+	w := packet.New(packet.Opcode(opcode))
+	w.U32(s.char.ID)
+	w.U32(damage)
+	frame := w.MustFinish()
+	s.send(frame, "GX "+cause+" damage")
+	s.sendToViewers(frame, "GX "+cause+" damage (view)")
+	current := s.stats()
+	s.send(buildCurrentHitpoints(&current), "current hp after "+cause)
+	if current.CurrentHP > 0 {
+		s.wake()
+		return
+	}
+	s.damageLedger = nil
+	state, death := buildCharacterDeathState(s.char.ID), buildCharacterDeath(s.char.ID, deathTypeMob, 0)
+	s.send(state, cause+" death state")
+	s.send(death, cause+" death")
+	s.sendToViewers(state, cause+" death state (view)")
+	s.sendToViewers(death, cause+" death (view)")
+	if s.player != nil {
+		s.player.SetAlive(false)
+		duelLeave(s.player, 3, true)
+		guildDuelLeave(s.player, nil, 3)
+	}
+	s.dead, s.autoAttack, s.cast = true, false, nil
+	s.clearBuffsOnDeath()
+	// Environmental deaths grant no PvP credit, item or XP loss.
+	s.deathLoss = -1
+	if opcode == proto.GXDrowningDamage {
+		notice := packet.New(packet.Opcode(proto.GXDrowningDeath))
+		notice.U32(s.char.ID)
+		frame := notice.MustFinish()
+		s.send(frame, "GX drowning death")
+		s.sendToViewers(frame, "GX drowning death (view)")
+	}
+}
+```
+
+</details>
+
+<details><summary>DecodeDrowningDeath — internal/proto/oxygen.go</summary>
+
+[Source definition](../../internal/proto/oxygen.go#L55)
+
+```go
+func DecodeDrowningDeath(p []byte) (uint32, error) {
+	r := NewReader(p)
+	id := r.U32()
+	if Op(p) != GXDrowningDeath || r.Err() != nil || r.Remaining() != 0 {
+		return 0, fmt.Errorf("invalid drowning death")
+	}
+	return id, nil
 }
 ```
 

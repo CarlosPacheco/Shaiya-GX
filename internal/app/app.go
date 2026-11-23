@@ -610,6 +610,7 @@ func (a *App) Update(in *platform.Input, w, h int, dt float64) {
 		a.state.Blessing.Advance(dt)
 	}
 	loading := a.updateMapLoading()
+	a.updatePendingNumbers()
 	a.updateAudio()
 	if loading {
 		a.clock += dt

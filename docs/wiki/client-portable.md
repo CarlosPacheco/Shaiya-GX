@@ -1,6 +1,6 @@
 # Shaiya GX portable client and server
 
-## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1-yK2bZAsWv3nKK-RBryVa-tstWfU3pRz/view?usp=sharing)
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1WgqLXhO-JrUavk2cFzqxBlrKFJnGqzQ_/view?usp=sharing)
 
 **gx-v0.1.16 for Windows and Linux.** This Google Drive package includes both
 executables, GX Server, GX Studio, client game data, fonts and the development database.
@@ -23,7 +23,7 @@ Start `Server/build/gx_console` on Linux or `Server/build/gx_console.exe` on Win
 then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables.
 
-**Latest binary update: [gx-v0.1.17](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.17).**
+**Latest binary update: [gx-v0.1.18](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.18).**
 For the November 22 server geometry update, see the
 [upgrade guide](releases/gx-v0.1.16-upgrade.md#server-geometry-update).
 GX Studio is in `Client/Studio/`.
@@ -37,7 +37,7 @@ has the same `Client/` and `Server/` layout, with fonts and the server seed/maps
 and includes GX Studio under Client/Studio/. Supply loose client data matching the binary release. Original client
 resources are not included in the source repository or GitHub binary archives.
 
-[GitHub releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest) provide updated packages with external fonts for each OS, with `SHA256SUMS.txt`. To update, close the client, extract the appropriate package and replace that OS's executable and merge the included `data/fonts/` into your existing `data/`. Retain the accompanying notices and licenses. The GitHub client packages include fonts, authored mount bindings and licenses, but no original game artwork/audio/maps or server database; GX Server is already included in the complete Drive package. A future release may require a matching data update, so check its release notes.
+[GitHub releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest) provide updated packages with external fonts for each OS, with `SHA256SUMS.txt`. To update, close the client, extract the appropriate package and replace that OS's executable and merge the included `data/fonts/` into your existing `data/`. Retain the accompanying notices and licenses. The GitHub client packages include fonts, authored mount bindings and licenses, but no original game artwork/audio/maps or server database; GX Server is already included in the complete Drive package.
 
 Both executables can share the same folder and `data/` directory. Keep the included licenses and notices when redistributing. Start GX Server separately, then open the executable for your OS. The client defaults to login address 127.0.0.1:30800; use `-login IP:PORT` and `-world-port PORT` for another server. Fonts are external resources in `data/fonts/`, including lazy Unicode and colour-emoji fallbacks. Preserve that directory and its license files with the data pack. Vorbis decoding is built in. No launcher, Go installation or media tools are needed.
 
@@ -47,9 +47,22 @@ The executable discovers adjacent data independently of the working directory. F
 
 Source, build instructions and third-party font sources: https://github.com/Spelunkern/Shaiya-GX
 
-Update GX Server and the client together. Use a complete package containing matching client/server builds and game data; preserve existing server runtime
-databases when upgrading. See the [current patch notes](releases/gx-v0.1.16.md).
+## Updating existing client data
 
+Update GX Server and the client together and preserve the existing server runtime database.
+The complete gx-v0.1.16 Drive portable remains available as a base for a binary update.
+
+From a source checkout, with Go installed and the client closed, use the original
+client archive directory and your active loose-data directory:
+
+```sh
+go run ./cmd/assets -data "$ORIGINAL_CLIENT" png cl.tga "$SHAIYA_DATA/interface/cl.png"
+go run ./cmd/skillpatch -spear-wind-spin-only -input "$SHAIYA_DATA/Character/Skill.SData" -output "$SHAIYA_DATA/Character/Skill.v18.SData"
+```
+
+Back up `Character/Skill.SData`, then replace it with the generated
+`Skill.v18.SData` under the original filename. The light uses `interface/cl.png`
+and the skill catalog enables spears for Enhance Wind Spin.
 
 ## Optional maintainer packaging
 
