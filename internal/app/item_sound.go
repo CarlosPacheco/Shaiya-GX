@@ -25,3 +25,16 @@ func (a *App) playItemSound(itemType uint8) {
 		a.audioError(file, a.sound.Play(file, .6))
 	}
 }
+
+// groundDropSound is Game.exe 0x428470: a dropped item announces itself with a
+// cue chosen by its type. Money has its own; types 22-25, 27-30, 37-41, 44,
+// 78-80, 96-97 and 99-103 use ui_itemdrop2 and the rest ui_itemdrop1.
+func groundDropSound(itemType uint8) string {
+	switch itemType {
+	case 26:
+		return "ui_moneydrop1.ogg"
+	case 22, 23, 24, 25, 27, 28, 29, 30, 37, 38, 39, 40, 41, 44, 78, 79, 80, 96, 97, 99, 100, 101, 102, 103:
+		return "ui_itemdrop2.ogg"
+	}
+	return "ui_itemdrop1.ogg"
+}

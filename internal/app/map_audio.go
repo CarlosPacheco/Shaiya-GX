@@ -175,28 +175,8 @@ func (a *App) updateMapAudio() {
 	if w == nil {
 		return
 	}
-	v := a.wv
-	if !v.moving || v.jumping || v.evading || a.state == nil || a.state.Self.Dead || a.state.Self.Sitting || a.state.Self.Mounted || v.world.SwimmingAt(v.pos[0], v.pos[1], v.pos[2]) || math.Abs(float64(v.pos[1]-v.world.Height(v.pos[0], v.pos[2]))) > .2 {
-		m.step = 0
-		return
-	}
-	interval := .36
-	if v.walking {
-		interval = .52
-	}
-	if v.motion&0x3f >= 2 && v.motion&0x3f <= 4 {
-		interval *= 1.35
-	}
-	m.step += a.frameDT
-	if m.step < interval {
-		return
-	}
-	m.step = math.Mod(m.step, interval)
-	name := terrainWalkSound(w, v.pos[0], v.pos[2])
-	if name != "" {
-		file := a.audioPath(name, false)
-		a.audioError(file, a.sound.Play(file, .35))
-	}
+	// Footsteps follow the animation frames of every character; see
+	// updateActorSounds (Game.exe 0x41b300 and 0x40f700).
 }
 
 func terrainWalkSound(w *world.WLD, x, z float32) string {

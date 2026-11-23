@@ -677,6 +677,15 @@ func (c *Character) ActionSlot() int {
 	return c.actionSlot
 }
 
+// LocomotionClip is the name of the playing looping clip ("002_run"), or ""
+// while a one-shot action runs.
+func (c *Character) LocomotionClip() string {
+	if c == nil || c.locked {
+		return ""
+	}
+	return c.clipName
+}
+
 // PlayingLocomotionClip reports a looping clip such as "007_swim".
 func (c *Character) PlayingLocomotionClip(name string) bool {
 	return c != nil && !c.locked && strings.Contains(strings.ToLower(c.clipName), name)

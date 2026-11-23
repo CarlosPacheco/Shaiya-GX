@@ -145,6 +145,8 @@ type worldView struct {
 	impactCues                  []skillImpactCue
 	attackSounds                []attackSound
 	selfSounds                  actorSoundMemory
+	groundSeeded                bool
+	groundFirst                 float64
 	pendingNumbers              []pendingNumber
 	effectErrors                map[string]bool
 	groundBatches               [4][]render.M4
@@ -703,7 +705,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		previousPoseTime := v.self.Time
 		a.setSelfAnimationRates(v.self)
 		v.self.Update(float32(dt))
-		a.updateActorSounds(&v.selfSounds, v.self, v.pos[0], v.pos[2], a.state.Self.Sitting, a.state.Self.Dead, a.state.Self.Mounted)
+		a.updateActorSounds(&v.selfSounds, v.self, v.pos[0], v.pos[1], v.pos[2], a.state.Self.Sitting, a.state.Self.Dead, a.state.Self.Mounted)
 		if climbFrame && !moving && !v.self.ActionActive() {
 			v.self.Time = previousPoseTime
 		}

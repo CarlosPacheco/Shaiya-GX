@@ -8,6 +8,11 @@ import (
 
 func (a *App) drawGroundItems() {
 	v, s := a.wv, a.scene3d
+	if v.groundFirst == 0 {
+		v.groundFirst = a.clock + 1e-9
+	}
+	// Items of the entry snapshot arrive over the first moments; they stay silent.
+	v.groundSeeded = a.clock-v.groundFirst > 2
 	for id := range v.groundStart {
 		if _, exists := a.state.GroundItems[id]; !exists {
 			delete(v.groundStart, id)
@@ -29,6 +34,11 @@ func (a *App) drawGroundItems() {
 		if !exists {
 			start = a.clock
 			v.groundStart[id] = start
+			if v.groundSeeded && a.sound != nil {
+				// Only items that appear while we watch announce themselves,
+				// not the snapshot received on entering the map.
+				a.playSound(groundDropSound(item.Type), item.X, item.Z)
+			}
 		}
 		kind := scene.GroundItemModel(item.Type)
 		model := a.assets.GroundModel(kind)

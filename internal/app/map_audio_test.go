@@ -156,3 +156,23 @@ func TestRealMapAudioRegions(t *testing.T) {
 		t.Fatalf("map19 continuous field ambience missing: %+v", targets)
 	}
 }
+
+// Game.exe 0x40f700: a dungeon is stone, a walk under 0.9 units is water,
+// otherwise the layer under the foot gives the surface with a random 001-003.
+func TestFootstepFileSurfaces(t *testing.T) {
+	land := &world.WLD{MapSize: 4, TextureMap: []byte{0, 0, 0, 0, 0, 0, 0, 0, 0}, Layers: []world.TerrainLayer{{Sound: "ch_walkg002.ogg"}}}
+	for range 20 {
+		if got := footstepFile(land, 1, 5, 1); got != "ch_walkg001.ogg" && got != "ch_walkg002.ogg" && got != "ch_walkg003.ogg" {
+			t.Fatalf("terrain step %q", got)
+		}
+		if got := footstepFile(land, 1, .5, 1); got < "ch_walkw001.ogg" || got > "ch_walkw003.ogg" {
+			t.Fatalf("water step %q", got)
+		}
+		if got := footstepFile(&world.WLD{Dungeon: true}, 1, 5, 1); got < "ch_walks001.ogg" || got > "ch_walks003.ogg" {
+			t.Fatalf("dungeon step %q", got)
+		}
+	}
+	if footstepFile(nil, 0, 0, 0) != "" || footstepFile(land, -5, 5, 1) != "" {
+		t.Fatal("steps outside the map or without a world must be silent")
+	}
+}

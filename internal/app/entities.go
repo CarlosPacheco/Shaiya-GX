@@ -217,7 +217,7 @@ func (a *App) prepareRemotePlayers() {
 			c.SetClip(clip)
 		}
 		c.Update(float32(a.frameDT))
-		a.updateActorSounds(&cached.sounds, c, e.X, e.Z, e.Sitting, e.Dead, e.Mounted)
+		a.updateActorSounds(&cached.sounds, c, e.X, e.Y, e.Z, e.Sitting, e.Dead, e.Mounted)
 		if e.ClimbMode == 1 && !c.ActionActive() {
 			c.Time -= float32(a.frameDT)
 		}
