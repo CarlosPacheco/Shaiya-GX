@@ -687,6 +687,11 @@ func (a *App) drawPlayerNames(w, h int) {
 				if _, hi, ok := actor.actor.WorldBounds(); ok && e.NpcType != 12 && pos[1] < hi[1]+.15 {
 					pos[1] = hi[1] + .15
 				}
+				// The notice board's plate is hidden by its own board when seen
+				// from the front: raise it well above the board.
+				if a.auctionBoard(e.ID) {
+					pos[1] += noticeBoardPlateRise
+				}
 				label(actor.actor.Name, pos, ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID), a.catalogNameSuffix(e))
 				label(a.npcTypeLabel(e.NpcType), pos, [4]float32{.35, .9, 1, 1}, a.font.Height-2, playerPlate{}, "", "")
 			}
@@ -694,6 +699,9 @@ func (a *App) drawPlayerNames(w, h int) {
 	}
 	a.sprites.NameDepth(-1)
 }
+
+// noticeBoardPlateRise lifts the notice board name plate, in world units.
+const noticeBoardPlateRise = 1.5
 
 func absInt(n int) int {
 	if n < 0 {
