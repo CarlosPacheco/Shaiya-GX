@@ -120,14 +120,26 @@ func TestNativeRenderedCameraLagsAndResetSnaps(t *testing.T) {
 	}
 }
 
-func TestNativeBackwardSpeedTiers(t *testing.T) {
+func TestNativeDirectionalStepSpeedTiers(t *testing.T) {
 	for tier, want := range []float32{.5, 1, 1.5, 2, 2.5} {
-		if got := backwardMovementSpeed(&proto.CharacterSpeed{Move: uint8(tier)}, false); got != want {
-			t.Fatal(tier, got, want)
+		speed := &proto.CharacterSpeed{Move: uint8(tier)}
+		if got := directionalStepSpeed(speed, false); got != want {
+			t.Fatalf("tier %d on foot: got %v, want %v", tier, got, want)
+		}
+		if got := directionalStepSpeed(speed, true); got != want+2 {
+			t.Fatalf("tier %d mounted backward: got %v, want %v", tier, got, want+2)
 		}
 	}
-	if backwardMovementSpeed(nil, false) != 1.5 || backwardMovementSpeed(nil, true) != 2 || backwardMovementSpeed(&proto.CharacterSpeed{Move: 255}, false) != 0 {
-		t.Fatal("backward base/mount/blocked tiers")
+	if directionalStepSpeed(nil, false) != 1.5 || directionalStepSpeed(nil, true) != 3.5 {
+		t.Fatal("missing speed must use the normal step tier")
+	}
+	unknown := &proto.CharacterSpeed{Move: 5}
+	if directionalStepSpeed(unknown, false) != 0 || directionalStepSpeed(unknown, true) != 2 {
+		t.Fatal("an unknown tier should contribute only the mount bonus")
+	}
+	blocked := &proto.CharacterSpeed{Move: 255}
+	if directionalStepSpeed(blocked, false) != 0 || directionalStepSpeed(blocked, true) != 0 {
+		t.Fatal("movement lock must apply to directional steps")
 	}
 }
 

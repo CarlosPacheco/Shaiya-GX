@@ -21,7 +21,8 @@ func TestMouseAndKeyboardMovement(t *testing.T) {
 		{in: platform.Input{Down: "D", RightDown: true}, turn: -1},
 		{in: platform.Input{MouseDown: true, RightDown: true}, forward: true},
 		{in: platform.Input{Down: "WQ"}, forward: true, side: -1},
-		{in: platform.Input{Down: "SE"}, back: true, side: 1},
+		{in: platform.Input{Down: "SQ"}, side: -1},
+		{in: platform.Input{Down: "SE"}, side: 1},
 		{in: platform.Input{Down: "WASD", RightDown: true, MouseDown: true, SuppressAutoRun: true}},
 	} {
 		got := characterControls(&tc.in, false)

@@ -577,19 +577,19 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		}
 		dir = horizontal
 		if swimming {
-			dir = swimDirection(dir, v.target().Sub(v.eye), forward, in.Held('S'))
+			dir = swimDirection(dir, v.target().Sub(v.eye), forward, intent.back)
 			diving = dir[1] < -0.02
 		}
 		if v.evading && v.evadeAction != 13 {
 			speed = 3
-		} else if !forward && strafe != 0 && !a.state.Self.Mounted {
-			speed = backwardMovementSpeed(a.state.Self.Speed, a.state.Self.Mounted)
 		} else if back {
-			if v.evading {
+			speed = directionalStepSpeed(a.state.Self.Speed, a.state.Self.Mounted)
+			// EP5.4 0x43f2a1 checks the active backstep clip before boosting.
+			if v.evading && v.self.ActionPlaybackStarted(v.evadeAction) {
 				speed = 2.5
-			} else {
-				speed = backwardMovementSpeed(a.state.Self.Speed, a.state.Self.Mounted)
 			}
+		} else if !forward && strafe != 0 && !a.state.Self.Mounted {
+			speed = directionalStepSpeed(a.state.Self.Speed, false)
 		} else if v.walking {
 			speed /= 2
 		}

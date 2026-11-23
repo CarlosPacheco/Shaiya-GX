@@ -22,6 +22,10 @@ func characterControls(in *platform.Input, autoRun bool) movementControls {
 	if in.Held('E') {
 		c.side++
 	}
+	// EP5.4 0x43f064 skips the backward step after processing a strafe.
+	if c.side != 0 && !c.forward {
+		c.back = false
+	}
 	if in.Held('A') {
 		c.turn++
 	}

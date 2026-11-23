@@ -3,6 +3,7 @@
 package app
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/audio"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -155,8 +157,18 @@ func TestVehicleAgainstRapture(t *testing.T) {
 	beforeBack := a.wv.pos
 	a.Update(&platform.Input{Down: "S"}, 1024, 734, .1)
 	a.Draw(1024, 734)
-	if a.wv.pos == beforeBack || a.wv.visualFacing.Len() > 0 {
+	if a.wv.visualFacing.Len() > 0 {
 		t.Fatal("backing up rotated the mount")
+	}
+	backDelta := a.wv.pos.Sub(beforeBack)
+	backDelta[1] = 0
+	tier := movespeed.Normal
+	if st.Self.Speed != nil {
+		tier = st.Self.Speed.Move
+	}
+	wantBack := .1 * (2.5 + .5*float32(tier))
+	if got := backDelta.Len(); math.Abs(float64(got-wantBack)) > .005 {
+		t.Fatalf("mounted backward step moved %.4f, want %.4f (tier %d)", got, wantBack, tier)
 	}
 	beforeSide := a.wv.pos
 	a.Update(&platform.Input{Down: "E"}, 1024, 734, .1)

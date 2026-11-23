@@ -333,18 +333,24 @@ func (v *worldView) turnFacing(yaw float64) {
 	v.facing = render.V3{f[0]*c - f[2]*s, 0, f[0]*s + f[2]*c}
 }
 
-// Original 0x43f2b0: backward movement has its own tiers, not runSpeed/2.
-func backwardMovementSpeed(s *proto.CharacterSpeed, mounted bool) float32 {
-	if s != nil && s.Move == 255 {
+// EP5.4 0x43e8ad and 0x43f2aa share the side and backward step tiers.
+// A mount adds 2 to the base backward step at 0x43f341.
+func directionalStepSpeed(s *proto.CharacterSpeed, mounted bool) float32 {
+	tier := movespeed.Normal
+	if s != nil {
+		tier = s.Move
+	}
+	if tier == movespeed.Blocked {
 		return 0
 	}
+	var speed float32
+	if tier <= movespeed.Maximum {
+		speed = .5 + float32(tier)*.5
+	}
 	if mounted {
-		return 2
+		speed += 2
 	}
-	if s != nil && s.Move <= 4 {
-		return .5 + float32(s.Move)*.5
-	}
-	return 1.5
+	return speed
 }
 
 // Native gravity also runs after walking off model surfaces, not only jumping.
