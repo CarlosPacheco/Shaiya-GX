@@ -24,6 +24,18 @@ map physics clock drives prediction; stopped updates terminate both self and
 remote presentation at the server position. Destinations, speed and movement
 credit are never accepted from a client. Native skill/move layouts are unchanged.
 
+## Monster movement and contact
+
+World uses the same movement segment for its position queries and the duration
+in `GXMobMove` (`0x7F06`). When a moving mob dies, a zero-duration update can
+place the corpse at its last server position before `0x0606`. The client
+uses its rendered position to approach and aim, and presents a lethal melee
+or ranged weapon hit at its animation or projectile contact. HP and targeting
+still follow the server.
+
+Monster skill packets `0x060B` and `0x060C` carry the attack animation slot.
+Additional `0x060D` results apply their effects without replaying the cast.
+
 ## Map-load acknowledgements
 
 Initial character entry sends `0x0201` after the initial `0x010B` skill-bar

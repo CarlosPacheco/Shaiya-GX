@@ -123,7 +123,7 @@ func (a *App) evolutionSkillEffects(r proto.SkillResult, animate bool) bool {
 			}
 		}
 	}
-	a.startMobSkillEffects(r)
+	a.startMobSkillEffects(r, false)
 	return true
 }
 

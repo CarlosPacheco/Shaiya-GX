@@ -185,9 +185,18 @@ func queueMobAttack(a MobAttackAction) {
 	if sk.TargetType == targetTypeEnemiesNearTarget {
 		x, z = target.PositionXZ()
 	}
-	for _, p := range PlayersNear(target.MapID(), x, z, float32(sk.ApplyRange)) {
+	recipients := PlayersNear(target.MapID(), x, z, float32(sk.ApplyRange))
+	var primary *ConnectedPlayer
+	for _, p := range recipients {
+		if p.IsAlive() && !p.immune.Load() && (primary == nil || p == target) {
+			primary = p
+		}
+	}
+	for _, p := range recipients {
 		if p.IsAlive() && !p.immune.Load() {
-			p.QueueDamage(pendingDamage{MobGlobalID: a.MobGlobalID, MobID: a.MobID, Attack: a.Attack, Slot: a.Slot, First: false, SkillID: a.SkillID})
+			d := first
+			d.First, d.StartsCast = false, p == primary
+			p.QueueDamage(d)
 		}
 	}
 }
@@ -224,7 +233,7 @@ func runDotSweep(log *logx.Logger) {
 			continue
 		}
 		log.Printf("GX Server World skill effect kill character_id=%d mob_global_id=%d mob_id=%d", o.CasterID, m.ID, m.MobID)
-		sendNear(o.MapID, m.PosX, m.PosZ, CombatRadius, buildMobDeath(m.ID, mobDeathCredit(m, o.CasterID)), "0x0606 mob death (skill effect)")
+		sendMobDeath(o.MapID, m, mobDeathCredit(m, o.CasterID), "0x0606 mob death (skill effect)")
 		rewardKill(FindPlayerByID(o.CasterID), o.CasterID, o.MapID, m, log)
 	}
 }

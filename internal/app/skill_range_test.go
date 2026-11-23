@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"testing"
 )
@@ -43,7 +44,14 @@ func TestStationaryMobUnknownWireHeightUsesRenderedGround(t *testing.T) {
 	if p := a.skillTargetPosition(e); p != (render.V3{155, 39.43, 190}) {
 		t.Fatal(p)
 	}
-	e.MobHeightKnown = true
+	move := proto.NewWriter(proto.GXMobMove)
+	move.U32(77)
+	move.U8(0)
+	move.F32(155)
+	move.F32(0)
+	move.F32(190)
+	move.U32(0)
+	a.applyWorldPacket(move.Bytes())
 	if a.skillRequestReach(d, 77) {
 		t.Fatal("authoritative different floor ignored")
 	}

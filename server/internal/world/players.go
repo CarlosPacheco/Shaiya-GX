@@ -46,7 +46,8 @@ type pendingDamage struct {
 	MobID       uint16
 	Attack      uint32
 	Slot        uint8
-	First       bool // the skill's selected target (0x060D), else 0x060B
+	First       bool // the skill's selected target
+	StartsCast  bool // one area recipient carries the cast animation
 }
 
 // ConnectedPlayer is a player in the world, reachable from any session for

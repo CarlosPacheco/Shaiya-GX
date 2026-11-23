@@ -204,7 +204,12 @@ func (a *App) attackTarget() bool {
 	if !a.faceRequestedTarget(e.ID) {
 		return false
 	}
-	delta := render.V3{e.X - a.wv.pos[0], 0, e.Z - a.wv.pos[2]}
+	goal := render.V3{e.X, e.Y, e.Z}
+	if e.Kind == game.KindMob {
+		goal = a.visualEntityPosition(e)
+	}
+	delta := goal.Sub(a.wv.pos)
+	delta[1] = 0
 	if delta.Len() > a.attackReachTo(e) || a.clock < a.wv.attackMoveUntil {
 		a.wv.autoRun = false
 		a.wv.approachTarget, a.wv.approachLoot = e.ID, false
@@ -389,7 +394,8 @@ func (a *App) nearestHostileMob() uint32 {
 		if e.Kind != game.KindMob || e.Dead || a.friendlyMob(e) {
 			continue
 		}
-		dx, dz := e.X-a.wv.pos[0], e.Z-a.wv.pos[2]
+		pos := a.visualEntityPosition(e)
+		dx, dz := pos[0]-a.wv.pos[0], pos[2]-a.wv.pos[2]
 		if d := dx*dx + dz*dz; d < best || d == best && k < id {
 			id, best = k, d
 		}

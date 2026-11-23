@@ -364,8 +364,8 @@ func (h *mobAIHost) Call(name string, args []any) (any, error) {
 	case "refresh_target":
 		h.refreshTarget()
 	case "idle_wander":
-		if !aiBool(args, 0) && !o.hold && (m.def == nil || !m.def.Obelisk) && m.Area != nil && m.movable() && m.advanceRoam(h.mapID) {
-			h.tick.Moves = append(h.tick.Moves, m.relocate(h.mapID, mobMotionWalk))
+		if !aiBool(args, 0) && !o.hold && (m.def == nil || !m.def.Obelisk) && m.Area != nil && m.movable() {
+			m.advanceRoam(h.now, h.mapID, h.tick)
 		}
 	case "return_home":
 		mods := m.mods()
@@ -559,7 +559,8 @@ func (h *mobAIHost) refreshTarget() {
 		}
 	}
 	if target != nil && mods.VisionFix == 0 {
-		if DistanceXZ(target.PosX, target.PosZ, m.homeX, m.homeZ) > mobLeash || DistanceXZ(target.PosX, target.PosZ, m.PosX, m.PosZ) > mobLeash {
+		pos := m.positionAt(h.now)
+		if DistanceXZ(target.PosX, target.PosZ, m.homeX, m.homeZ) > mobLeash || DistanceXZ(target.PosX, target.PosZ, pos[0], pos[2]) > mobLeash {
 			m.dropTarget(true)
 			m.lua.needReset = true
 		}
@@ -569,7 +570,11 @@ func (h *mobAIHost) recruit(user uint32, x, z, radius float32, kind string) {
 	caller := h.mob
 	for i := range h.shard.entities.Mobs {
 		m := &h.shard.entities.Mobs[i]
-		if m.ID == caller.ID || m.CurrentHP == 0 || m.AggroTarget != 0 || m.returningHome || !isNeighborCell(m.cell, caller.cell) || DistanceXZ(x, z, m.PosX, m.PosZ) >= radius {
+		if m.ID == caller.ID || m.CurrentHP == 0 || m.AggroTarget != 0 || m.returningHome || !isNeighborCell(m.cell, caller.cell) {
+			continue
+		}
+		pos := m.positionAt(h.now)
+		if DistanceXZ(x, z, pos[0], pos[2]) >= radius {
 			continue
 		}
 		if kind == "same_template" && m.MobID != caller.MobID {
@@ -599,7 +604,7 @@ func (h *mobAIHost) selectDirection(extra float32) {
 func (h *mobAIHost) moveSelected(run bool) {
 	m := h.mob
 	o := &m.lua
-	if !o.selectedValid || o.hold || !m.movable() || h.now.Before(m.nextChaseAt) {
+	if !o.selectedValid || o.hold || m.movingAt(h.now) || !m.movable() || h.now.Before(m.nextChaseAt) {
 		return
 	}
 	goal := o.selected
@@ -614,57 +619,56 @@ func (h *mobAIHost) moveSelected(run bool) {
 	if !run && m.def != nil {
 		step = min(max(float32(m.def.NormalStep), 1), d)
 	}
+	next := mapnav.Point{m.PosX + (goal[0]-m.PosX)/d*step, m.PosY, m.PosZ + (goal[2]-m.PosZ)/d*step}
 	if m.nav != nil {
-		travelled, ok := m.navigate(h.mapID, goal, step)
+		var ok bool
+		next, ok = m.navigate(h.now, h.mapID, goal, step)
 		if !ok {
 			return
 		}
-		m.movementTiming(h.now, travelled, step, m.chaseInterval())
-	} else {
-		nx, nz := m.PosX+(goal[0]-m.PosX)/d*step, m.PosZ+(goal[2]-m.PosZ)/d*step
-		if !IsMapWalkable(h.mapID, nx, nz) {
-			return
-		}
-		m.PosX, m.PosZ = nx, nz
-		m.nextChaseAt = h.now.Add(m.chaseInterval())
+	} else if !IsMapWalkable(h.mapID, next[0], next[2]) {
+		return
 	}
 	motion := uint8(mobMotionWalk)
 	if run {
 		motion = mobMotionRun
 	}
-	h.tick.Moves = append(h.tick.Moves, m.relocate(h.mapID, motion))
-	if DistanceXZ(m.PosX, m.PosZ, goal[0], goal[2]) < .1 {
-		o.arrived = true
-		o.selectedValid = false
-	}
+	h.tick.Moves = append(h.tick.Moves, m.moveTo(h.mapID, h.now, next, motion))
 }
 
 func (h *mobAIHost) attack(stationary bool) {
 	m := h.mob
 	mods := m.mods()
-	if m.def == nil || !mods.canAct() || m.lua.fixed {
+	if m.def == nil || !mods.canAct() || m.lua.fixed || m.movingAt(h.now) {
 		return
 	}
 	target := m.liveTarget(h.players)
 	if target == nil {
 		return
 	}
+	canAttack := !h.now.Before(m.nextAttackAt)
+	var weakest *PlayerCombatSnapshot
+	if canAttack && mods.VisionFix == 0 {
+		weakest = m.targetWeakest(h.players)
+		m.retargetByAggro(h.players)
+		if t := m.liveTarget(h.players); t != nil {
+			target = t
+		} else {
+			m.AggroTarget = target.CharacterID
+		}
+	}
 	d := m.targetDistance(target)
-	// A mob that is still walking to its booked position attacks once it has
-	// arrived, so clients never see the attack play while it glides.
-	if !h.now.Before(m.nextAttackAt) && m.canReachTarget(target) && !m.hopActive(h.now) {
-		slot, ok, declinedSpell := m.pickAttackSlot(h.now, d, &mods, func() bool { return rand.IntN(2) == 0 })
+	if canAttack {
+		visible := m.canReachTarget(target)
+		slot, ok, declinedSpell := m.pickAttackSlot(h.now, &mods, func(slot int, reach float32) bool {
+			if weakest != nil && m.def.Attacks[slot].OK == 6 {
+				return m.targetDistance(weakest) <= reach && m.canReachTarget(weakest)
+			}
+			return d <= reach && visible
+		}, func() bool { return rand.IntN(2) == 0 })
 		if ok {
-			weakest := m.def.Attacks[slot].OK == 6 && mods.VisionFix == 0 && m.targetWeakest(h.players)
-			if !weakest {
-				m.retargetByAggro(h.players)
-			}
-			if t := m.liveTarget(h.players); t != nil {
-				target = t
-			}
-			if !m.canReachTarget(target) {
-				m.nextAttackAt = h.now.Add(mobAttackIdle)
-				return
+			if weakest != nil && m.def.Attacks[slot].OK == 6 {
+				m.AggroTarget = weakest.CharacterID
 			}
 			m.lastAttackAt = h.now
 			// It stays where it is while the attack animation plays.
@@ -672,14 +676,14 @@ func (h *mobAIHost) attack(stationary bool) {
 			if heal := m.useSlot(slot, h.now); heal != nil {
 				h.tick.Restores = append(h.tick.Restores, mapPacket{h.mapID, m.PosX, m.PosZ, heal})
 				if sk := db.MustDefs().NPCSkill(m.def.Attacks[slot].Type); sk != nil {
-					h.tick.Restores = append(h.tick.Restores, mapPacket{h.mapID, m.PosX, m.PosZ, buildMobSkillPacket(0x060D, 0, m.ID, m.ID, sk, [3]uint16{}, nil)})
+					h.tick.Restores = append(h.tick.Restores, mapPacket{h.mapID, m.PosX, m.PosZ, buildMobSkillPacket(0x060B, 0, m.ID, m.ID, sk, [3]uint16{}, nil, slot)})
 				}
 				return
 			}
 			h.tick.Attacks = append(h.tick.Attacks, MobAttackAction{MobGlobalID: m.ID, MobID: m.MobID, Attack: m.Attack, TargetCharacterID: m.AggroTarget, Slot: slot, MobX: m.PosX, MobZ: m.PosZ})
 			return
 		}
-		inBasicReach := d < m.attackReach()
+		inBasicReach := d <= m.attackReach() && visible
 		if declinedSpell || inBasicReach {
 			m.nextAttackAt = h.now.Add(mobAttackIdle + mods.attackDelayOffset())
 		}
@@ -697,25 +701,41 @@ func (h *mobAIHost) skill(id uint16) {
 	if sk == nil || m.def == nil || !m.mods().canAct() {
 		return
 	}
+	slot := uint8(0)
+	for i, attack := range m.def.Attacks {
+		if attack.Type == id {
+			slot = uint8(i)
+			break
+		}
+	}
+	pos := m.positionAt(h.now)
 	if sk.TypeEffect == 2 {
 		h.heal(uint32(max(sk.HealHP, 0)))
-		h.tick.Restores = append(h.tick.Restores, mapPacket{h.mapID, m.PosX, m.PosZ, buildMobSkillPacket(0x060D, 0, m.ID, m.ID, sk, [3]uint16{}, nil)})
+		h.tick.Restores = append(h.tick.Restores, mapPacket{h.mapID, pos[0], pos[2], buildMobSkillPacket(0x060B, 0, m.ID, m.ID, sk, [3]uint16{}, nil, slot)})
 		m.nextAttackAt = h.now.Add(mobAttackIdle + m.mods().attackDelayOffset())
 		return
 	}
 	target := m.liveTarget(h.players)
-	if target == nil || !m.canReachTarget(target) {
+	if target == nil {
 		return
 	}
-	if m.targetDistance(target) > float32(m.def.Size)+float32(sk.AttackRange)+.3 {
+	victim := mapnav.Point{target.PosX, target.PosY, target.PosZ}
+	distance := DistanceXZ(pos[0], pos[2], victim[0], victim[2])
+	if m.nav != nil {
+		if !m.nav.Visible(pos, victim) {
+			return
+		}
+		distance = mapnav.Distance(pos, victim)
+	}
+	if distance > float32(m.def.Size)+float32(sk.AttackRange)+.3 {
 		mods := m.mods()
 		if !m.lua.hold {
-			m.stepChase(h.now, h.mapID, target, m.targetDistance(target), &mods, h.tick)
+			m.stepChase(h.now, h.mapID, target, distance, &mods, h.tick)
 		}
 		return
 	}
 	m.nextAttackAt = h.now.Add(mobAttackIdle + m.mods().attackDelayOffset())
-	h.tick.Attacks = append(h.tick.Attacks, MobAttackAction{MobGlobalID: m.ID, MobID: m.MobID, Attack: m.Attack, TargetCharacterID: m.AggroTarget, Slot: 0, MobX: m.PosX, MobZ: m.PosZ, SkillID: id})
+	h.tick.Attacks = append(h.tick.Attacks, MobAttackAction{MobGlobalID: m.ID, MobID: m.MobID, Attack: m.Attack, TargetCharacterID: m.AggroTarget, Slot: slot, MobX: pos[0], MobZ: pos[2], SkillID: id})
 }
 
 type mobAICommand struct {

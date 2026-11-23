@@ -9,6 +9,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
+	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -61,13 +62,8 @@ func TestMonsterVisualMovementOnOriginalTerrainGL(t *testing.T) {
 	if mob.pos[0] != 500 {
 		t.Fatal("monster snapped to packet", mob.pos)
 	}
-	duration := float64(mob.actor.Definition.ChaseTimeMS) / 1000
-	if mob.actor.Definition.ChaseStep > 0 {
-		duration *= 4 / float64(mob.actor.Definition.ChaseStep)
-	}
-	if duration <= 0 {
-		duration = .5
-	}
+	def := mob.actor.Definition
+	duration := 4 / movespeed.MobUnitsPerSecond(int(def.ChaseStep), def.ChaseTimeMS, 2)
 	a.clock = 1 + duration/2
 	a.prepareMonsters()
 	if mob.pos[0] != 502 || mob.pos[1] != w.Height(502, 600) || mob.actor.World[12] != 502 {

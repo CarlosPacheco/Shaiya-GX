@@ -124,7 +124,6 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 		s.sendSkillMessage(0, 317)
 		return false
 	}
-	mc, _ := MobCombatByID(ch.MapID, target)
 	kind := attackMelee
 	if stats.RangedWeapon {
 		kind = attackRanged
@@ -139,10 +138,12 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	s.breakCombatForm()
 	s.breakStealth()
 	s.lastActionAt, s.lastCombatAt = time.Now(), time.Now()
-	SetMobAggro(ch.MapID, target, ch.ID)
+	if speed := wakeMob(ch.MapID, target); speed != nil {
+		sendNear(ch.MapID, mob.PosX, mob.PosZ, BroadcastRadius, speed, "0x0609 mob speed (woke)")
+	}
+	mc, _ := MobCombatByID(ch.MapID, target)
 	// 0x0503 result is 0 normal, 1 critical, 3 miss.
 	if !playerHits(&stats, &mc, kind) {
-		recordMobAIMiss(ch.MapID, mob.ID, ch.ID)
 		sendNear(ch.MapID, mob.PosX, mob.PosZ, CombatRadius,
 			buildCharacterMobAttack(ch.ID, mob.ID, attackResultMiss, 0), "0x0503 character mob auto attack (miss)")
 		return true
@@ -181,9 +182,16 @@ func (s *Session) resolveMobDamage(r *MobDamageResult) bool {
 		s.send(buildMobTargetHP(m), "0x0305 mob target hp after attack")
 		return true
 	}
-	sendNear(ch.MapID, m.PosX, m.PosZ, CombatRadius, buildMobDeath(m.ID, mobDeathCredit(m, ch.ID)), "0x0606 mob death")
+	sendMobDeath(ch.MapID, m, mobDeathCredit(m, ch.ID), "0x0606 mob death")
 	rewardKill(s.player, ch.ID, ch.MapID, m, s.logger)
 	return false
+}
+
+func sendMobDeath(mapID uint16, m *MapMob, killerID uint32, label string) {
+	if stop := m.deathPositionPacket(); stop != nil {
+		sendNear(mapID, m.PosX, m.PosZ, CombatRadius, stop, "mob death position")
+	}
+	sendNear(mapID, m.PosX, m.PosZ, CombatRadius, buildMobDeath(m.ID, killerID), label)
 }
 
 // applyIncomingMobDamage applies one queued mob attack; true when it
@@ -265,9 +273,8 @@ func (s *Session) applyIncomingMobDamage(d pendingDamage) bool {
 	return killed
 }
 
-// applyMobSkill is a mob skill on this player: 0x060D on the selected
-// target, 0x060B on area or repeated hits, 0x060C for a drain (the mob
-// heals), then 0x060E for the skill's AddDamage.
+// applyMobSkill sends the cast with its animation slot (0x060B or 0x060C)
+// and any subsequent results without a slot (0x060D).
 func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, sk *db.SkillDef, stats *CharacterStats) bool {
 	ch := s.char
 	mob, _ := MobByID(ch.MapID, d.MobGlobalID)
@@ -332,10 +339,10 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 				sendNear(ch.MapID, r.PosX, r.PosZ, CombatRadius, buildMobCurrentHP(r.ID, r.CurrentHP), "0x0610 mob hp after drain")
 			}
 			frame = buildMobSkillPacket(0x060C, result, d.MobGlobalID, ch.ID, sk, words, &healed, d.Slot)
-		case first:
-			frame = buildMobSkillPacket(0x060D, result, d.MobGlobalID, ch.ID, sk, words, nil, d.Slot)
-		default:
+		case i == 0 && (d.First || d.StartsCast):
 			frame = buildMobSkillPacket(0x060B, result, d.MobGlobalID, ch.ID, sk, words, nil, d.Slot)
+		default:
+			frame = buildMobSkillPacket(0x060D, result, d.MobGlobalID, ch.ID, sk, words, nil)
 		}
 		sendNear(ch.MapID, ch.PosX, ch.PosZ, CombatRadius, frame, "mob skill on character")
 		if mirrored {

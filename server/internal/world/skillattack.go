@@ -162,9 +162,9 @@ func (s *Session) afterSkillStrikes(def *db.SkillDef) {
 
 func (s *Session) skillMobsWithin(x, y, z, r float32) []uint32 {
 	var out []uint32
+	now := time.Now()
 	for _, m := range EntitiesOnMap(s.char.MapID).Mobs {
-		vx, vz := m.visualXZ(time.Now())
-		if m.CurrentHP > 0 && s.skillAreaContains(skillrange.Position{x, y, z}, skillrange.Position{vx, m.PosY, vz}, r) {
+		if m.CurrentHP > 0 && s.skillAreaContains(skillrange.Position{x, y, z}, skillrange.Position(m.positionAt(now)), r) {
 			out = append(out, m.ID)
 		}
 	}

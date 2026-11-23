@@ -82,7 +82,7 @@ func (n *MapNpc) point() mapnav.Point {
 	return mapnav.Point{n.PosX, n.PosY, n.PosZ}
 }
 
-func (n *MapNpc) findGuardTarget(s *mapShard, players []PlayerCombatSnapshot, country uint8, home NpcPatrolPoint, locked guardTarget) (guardTarget, mapnav.Point, *MapMob) {
+func (n *MapNpc) findGuardTarget(now time.Time, s *mapShard, players []PlayerCombatSnapshot, country uint8, home NpcPatrolPoint, locked guardTarget) (guardTarget, mapnav.Point, *MapMob) {
 	var target guardTarget
 	var point mapnav.Point
 	var mob *MapMob
@@ -112,8 +112,11 @@ func (n *MapNpc) findGuardTarget(s *mapShard, players []PlayerCombatSnapshot, co
 	}
 	for i := range s.entities.Mobs {
 		m := &s.entities.Mobs[i]
-		if m.CurrentHP != 0 && (country == 2 || m.def == nil || m.def.Country != country) &&
-			consider(guardTarget{id: m.ID, mob: true}, m.PosX, m.PosY, m.PosZ) {
+		if m.CurrentHP == 0 || (country != 2 && m.def != nil && m.def.Country == country) {
+			continue
+		}
+		pos := m.positionAt(now)
+		if consider(guardTarget{id: m.ID, mob: true}, pos[0], pos[1], pos[2]) {
 			mob = m
 		}
 	}
@@ -138,7 +141,7 @@ func (n *MapNpc) updateGuard(now time.Time, mapID uint16, s *mapShard, players [
 	home := n.patrol[n.patrolIndex]
 	point := mapnav.Point{home.X, home.Y, home.Z}
 	if !n.guardReturning {
-		target, goal, mob := n.findGuardTarget(s, players, def.Country, home, n.guardTarget)
+		target, goal, mob := n.findGuardTarget(now, s, players, def.Country, home, n.guardTarget)
 		if target.id != 0 {
 			if n.guardTarget.id == 0 {
 				if s.guardClaims == nil {
@@ -261,6 +264,9 @@ func buildNpcAttack(npcID, target uint32, mob bool, hp uint32) []byte {
 func dispatchNpcStrike(hit npcGuardStrike, log logPrinter) {
 	if hit.target.mob {
 		sendView(hit.mapID, hit.x, hit.z, buildNpcAttack(hit.guardID, hit.target.id, true, hit.hp), "0x0E06 guard attacks mob")
+		if stop := hit.mob.deathPositionPacket(); stop != nil {
+			sendView(hit.mapID, hit.mob.PosX, hit.mob.PosZ, stop, "mob death position")
+		}
 		sendView(hit.mapID, hit.mob.PosX, hit.mob.PosZ, buildMobDeathBy(hit.mob.ID, hit.guardID, deathTypeGuard), "guard mob death")
 		eventMobDestroyed(nil, hit.mapID, &hit.mob, log)
 	} else if player := FindPlayerByID(hit.target.id); player != nil && player.MapID() == hit.mapID {

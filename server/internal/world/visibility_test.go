@@ -130,7 +130,7 @@ func TestMobRetargetsOnlyVisibleCombatParticipants(t *testing.T) {
 	if m.AggroTarget != 0 {
 		t.Fatal("mob chose an uninvolved bystander")
 	}
-	if m.targetWeakest(players) {
+	if m.targetWeakest(players) != nil {
 		t.Fatal("weakest targeting bypassed concealment")
 	}
 }

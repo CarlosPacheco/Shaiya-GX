@@ -279,6 +279,18 @@ func (m *MapMob) removeSleep() []byte {
 	return buildMobSpeed(m)
 }
 
+func wakeMob(mapID uint16, id uint32) []byte {
+	s := shard(mapID)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i := range s.entities.Mobs {
+		if m := &s.entities.Mobs[i]; m.ID == id && m.CurrentHP > 0 && !m.returningHome {
+			return m.removeSleep()
+		}
+	}
+	return nil
+}
+
 // mobTimeDamage is the TimeDamage formula for a mob target: mode 0 the
 // raw values, 3 the mob's current pools times the value, 4 and 5 a
 // percentage of its maximum or current pools; then scaled by elapsed/3000
@@ -357,7 +369,7 @@ func tickMobEffects(now time.Time) []MobEffectOutcome {
 				} else if applied > 0 {
 					o.Speed = m.removeSleep()
 				}
-				o.Mob = cloneMob(m)
+				o.Mob = m.snapshotAt(now)
 				out = append(out, o)
 				return killed
 			}

@@ -136,6 +136,9 @@ func (s *State) applyEntitiesPacket(p []byte, ev Event) (Event, error) {
 			e.Motion, e.X, e.Y, e.Z, e.MobHeightKnown = m.Motion, m.X, m.Y, m.Z, m.HeightKnown
 			e.MobMoveDurationMS = m.DurationMS
 			e.MoveSerial++
+			if m.HeightKnown && m.DurationMS == 0 {
+				e.PositionResetSerial++
+			}
 		}
 	case proto.MapNpcEnter:
 		n, err := proto.DecodeNpcEnter(p)

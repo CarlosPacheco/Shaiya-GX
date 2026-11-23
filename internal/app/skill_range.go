@@ -46,16 +46,11 @@ func (a *App) skillApproachReach(d sdata.Skill, e *game.Entity) float32 {
 	return max(.5, float32(math.Sqrt(float64(max(0, reach*reach-height*height)))))
 }
 
-// Native 0601 and stationary GX spawns may omit ground height. Their wire
-// Y=0 is unknown, not a target under the terrain. Keep current network XZ.
 func (a *App) skillTargetPosition(e *game.Entity) render.V3 {
-	p := render.V3{e.X, e.Y, e.Z}
-	if e.Kind == game.KindMob && !e.MobHeightKnown && a.wv != nil {
-		if m := a.wv.mobs[e.ID]; m != nil && m.entity == e && m.position.initialized {
-			p[1] = m.pos[1]
-		} else if a.wv.world != nil && a.wv.world.HasTerrain() {
-			p[1] = a.wv.world.Height(e.X, e.Z)
+	if e.Kind == game.KindMob {
+		if m := a.trackMob(e); m != nil {
+			return m.pos
 		}
 	}
-	return p
+	return render.V3{e.X, e.Y, e.Z}
 }

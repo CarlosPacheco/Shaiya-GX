@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/mapnav"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
@@ -42,6 +43,35 @@ func luaWorldFixture(t testing.TB, code uint8) (*mapShard, *mobAIHost) {
 	})
 	return sh, h
 }
+
+func TestMobAttackWaitsForFirstChaseAndChecksRetargetedReach(t *testing.T) {
+	_, h := luaWorldFixture(t, 0)
+	m := h.mob
+	m.AggroTarget = 99
+	h.players = append(h.players, PlayerCombatSnapshot{CharacterID: 100, Alive: true, PosX: 130, PosZ: 100})
+	m.aggro = map[uint32]int64{99: 10, 100: 20}
+	h.attack(true)
+	if len(h.tick.Attacks) != 0 || m.AggroTarget != 100 {
+		t.Fatalf("stationary mob attacked the distant aggro leader: %+v", h.tick.Attacks)
+	}
+	m.nextAttackAt = time.Time{}
+	h.players[1].PosX = 106
+	h.attack(false)
+	if len(h.tick.Moves) != 1 || m.positionAt(h.now) != (mapnav.Point{100, 0, 100}) || !m.movingAt(h.now) {
+		t.Fatalf("first chase did not start from spawn: %+v", h.tick.Moves)
+	}
+	arrival := h.now.Add(m.moveDuration)
+	h.now = arrival.Add(-time.Millisecond)
+	h.attack(false)
+	if len(h.tick.Attacks) != 0 || len(h.tick.Moves) != 1 {
+		t.Fatal("attack or new movement before arrival")
+	}
+	h.now = arrival
+	h.attack(false)
+	if len(h.tick.Attacks) != 1 || h.tick.Attacks[0].TargetCharacterID != 100 {
+		t.Fatalf("aggro leader was not attacked at arrival: %+v", h.tick.Attacks)
+	}
+}
 func eventOK(t *testing.T, h *mobAIHost, event string, args ...any) {
 	t.Helper()
 	if !h.event(event, args...) {
@@ -62,7 +92,7 @@ func TestRoutineMobSpellSelection(t *testing.T) {
 	check := func(at time.Time, distance float32, cast bool, wantSlot uint8, wantFound, wantDeclined bool, wantRolls int) {
 		t.Helper()
 		rolls := 0
-		slot, found, declined := m.pickAttackSlot(at, distance, &mods, func() bool {
+		slot, found, declined := m.pickAttackSlot(at, &mods, func(_ int, reach float32) bool { return distance <= reach }, func() bool {
 			rolls++
 			return cast
 		})

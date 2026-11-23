@@ -2,15 +2,15 @@ package world
 
 import (
 	"fmt"
-	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
-	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 	"math"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"github.com/Spelunkern/Shaiya-GX/internal/mapnav"
+	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
 )
 
@@ -146,32 +146,28 @@ func mobSpawnHasExit(nav *mapnav.Map, mapID uint16, spawn mapnav.Point) bool {
 	return false
 }
 
-func (m *MapMob) navigate(mapID uint16, goal mapnav.Point, step float32) (float32, bool) {
-	if m.nav == nil {
-		return 0, false
-	}
+func (m *MapMob) navigate(now time.Time, mapID uint16, goal mapnav.Point, step float32) (mapnav.Point, bool) {
 	// Reuse a corridor while the target stays nearby, with bounded refresh.
-	if len(m.navPath) == 0 || time.Now().After(m.navRefresh) || mapnav.Distance(goal, m.navGoal) > 1 {
+	if len(m.navPath) == 0 || now.After(m.navRefresh) || mapnav.Distance(goal, m.navGoal) > 1 {
 		path, ok := m.nav.Path(m.point(), goal)
 		if !ok {
 			m.navPath = nil
-			return 0, false
+			return mapnav.Point{}, false
 		}
 		m.navPath = path
 		m.navGoal = goal
-		m.navRefresh = time.Now().Add(time.Second)
+		m.navRefresh = now.Add(time.Second)
 	}
 	for len(m.navPath) > 0 && mapnav.Distance(m.point(), m.navPath[0]) < .05 {
 		m.navPath = m.navPath[1:]
 	}
-	p, d, consumed, ok := m.nav.Step(m.point(), m.navPath, step, func(x, z float32) bool { return IsMapWalkable(mapID, x, z) })
+	p, _, consumed, ok := m.nav.Step(m.point(), m.navPath, step, func(x, z float32) bool { return IsMapWalkable(mapID, x, z) })
 	if !ok {
 		m.navPath = nil
-		return 0, false
+		return mapnav.Point{}, false
 	}
 	m.navPath = m.navPath[consumed:]
-	m.setPoint(p)
-	return d, true
+	return p, true
 }
 func (m *MapMob) targetDistance(t *PlayerCombatSnapshot) float32 {
 	if m.nav == nil {
@@ -216,19 +212,66 @@ func (m *MapMob) placeRespawn(mapID uint16) bool {
 // Corner arrivals need a finer scheduler than the legacy half-second sweep.
 const mobNavigationTick = 50 * time.Millisecond
 
-func (m *MapMob) movementTiming(now time.Time, travel, step float32, interval time.Duration) {
-	duration := time.Duration(float64(interval) * float64(min(1, travel/step)))
-	// Match the next scheduler boundary so the client does not finish early and
-	// stand idle while the next corner packet waits for a sweep.
-	duration = max(mobNavigationTick, (duration+mobNavigationTick-1)/mobNavigationTick*mobNavigationTick)
-	m.moveDuration = duration
-	m.navHop = true
-	if m.def != nil {
-		mods := m.mods()
-		if v := movespeed.MobUnitsPerSecond(int(m.def.ChaseStep), m.def.ChaseTimeMS, uint8(min(max(2+mods.MoveSpeed, 0), 4))); v > 0 {
-			// The client draws the hop at the original constant speed.
-			m.moveDuration = max(mobNavigationTick, time.Duration(float64(travel)/v*float64(time.Second)))
+func (m *MapMob) movingAt(now time.Time) bool {
+	return m.moveDuration > 0 && now.Before(m.moveStart.Add(m.moveDuration))
+}
+
+func (m *MapMob) positionAt(now time.Time) mapnav.Point {
+	p := m.point()
+	if !m.movingAt(now) {
+		return p
+	}
+	t := float32(max(0, now.Sub(m.moveStart))) / float32(m.moveDuration)
+	for i := range p {
+		p[i] = m.moveFrom[i] + (p[i]-m.moveFrom[i])*t
+	}
+	if m.nav != nil {
+		if nav, err := loadMobNavigation(m.nav.id); err == nil && nav != nil {
+			if g, ok := nav.PlayerGeometry(); ok {
+				if y, found := g.Support(p[0], p[1], p[2], .5); found {
+					p[1] = y
+				}
+			}
 		}
 	}
-	m.nextChaseAt = now.Add(duration)
+	return p
+}
+
+func (m *MapMob) moveTo(mapID uint16, now time.Time, to mapnav.Point, motion uint8) entityMove {
+	from := m.positionAt(now)
+	speed := 2.
+	if m.def != nil {
+		step, ms := m.def.NormalStep, m.def.NormalTimeMS
+		if motion == mobMotionRun || step == 0 || ms == 0 {
+			step, ms = m.def.ChaseStep, m.def.ChaseTimeMS
+		}
+		mods := m.mods()
+		if v := movespeed.MobUnitsPerSecond(int(step), ms, uint8(min(max(2+mods.MoveSpeed, 0), 4))); v > 0 {
+			speed = v
+		}
+	}
+	travel := DistanceXZ(from[0], from[2], to[0], to[2])
+	m.moveFrom, m.moveStart, m.moveMotion = from, now, motion
+	m.moveDuration = max(mobNavigationTick, time.Duration(math.Ceil(float64(travel)*1000/speed))*time.Millisecond)
+	if !m.wireHeightKnown() && travel >= 20 {
+		m.moveDuration = 0 // Native 0x0603 jumps at twenty horizontal units.
+	}
+	m.setPoint(to)
+	oldCell, fresh := m.cell, !m.hasCell
+	m.cell, m.hasCell = cellAfterMove(m.cell, m.hasCell, to[0], to[2]), true
+	entering := *m
+	entering.setPoint(from)
+	return entityMove{MapID: mapID, Kind: viewMob, ID: m.ID, From: oldCell, To: m.cell, Fresh: fresh,
+		Changed: fresh || oldCell != m.cell, Move: buildMobMove(m, motion), Enter: buildMobEnter(&entering, false)}
+}
+
+func (m *MapMob) appearance(now time.Time, fresh bool) (enter, move []byte) {
+	if !m.movingAt(now) {
+		return buildMobEnter(m, fresh), nil
+	}
+	snapshot := *m
+	snapshot.setPoint(m.positionAt(now))
+	remaining := *m
+	remaining.moveDuration = max(time.Millisecond, m.moveStart.Add(m.moveDuration).Sub(now))
+	return buildMobEnter(&snapshot, fresh), buildMobMove(&remaining, m.moveMotion)
 }

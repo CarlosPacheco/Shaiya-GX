@@ -395,6 +395,7 @@ func syncEventVisibility(mapID uint16) {
 	s.mu.Lock()
 	var moves []entityMove
 	var leaves []uint32
+	now := time.Now()
 	for i := range s.entities.Mobs {
 		m := &s.entities.Mobs[i]
 		if m.event == nil {
@@ -412,7 +413,8 @@ func syncEventVisibility(mapID uint16) {
 		if !m.visible() {
 			leaves = append(leaves, m.ID)
 		} else {
-			moves = append(moves, entityMove{MapID: mapID, Kind: viewMob, ID: m.ID, To: m.cell, Fresh: true, Enter: buildMobEnter(m, true)})
+			enter, move := m.appearance(now, true)
+			moves = append(moves, entityMove{MapID: mapID, Kind: viewMob, ID: m.ID, To: m.cell, Fresh: true, Enter: enter, Move: move})
 		}
 	}
 	s.mu.Unlock()

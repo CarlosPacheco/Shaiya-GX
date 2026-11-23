@@ -22,6 +22,8 @@ type physicalProjectile struct {
 	hitSound         string
 	impact           string
 	sequence         int
+	mob              *mobActor
+	showNumber       bool
 }
 
 func rangedFamily(weapon uint8) uint8 {
@@ -66,7 +68,11 @@ func (a *App) startPhysicalProjectile(r proto.AttackResult, weapon uint8, actor 
 		index = e.Speed.Attack
 	}
 	_, hit := scene.WeaponSounds(weapon, r.Result == 1, a.attackVariant)
-	a.wv.physicalProjectiles = append(a.wv.physicalProjectiles, physicalProjectile{numberHeight: a.combatNumberHeight(r.Target), cue: actionClock{actor, actor.ActionID(), physicalReleaseTime(kind, index)}, result: r, part: part, weapon: kind, destination: destination.Add(render.V3{0, .9, 0}), hitSound: hit})
+	a.wv.physicalProjectiles = append(a.wv.physicalProjectiles, physicalProjectile{
+		numberHeight: a.combatNumberHeight(r.Target), cue: actionClock{actor, actor.ActionID(), physicalReleaseTime(kind, index)},
+		result: r, part: part, weapon: kind, destination: destination.Add(render.V3{0, .9, 0}), hitSound: hit,
+		mob: a.waitForMobHit(r.Target, r.HP, r.Result), showNumber: a.showsAttackResult(r),
+	})
 	return true
 }
 func physicalFlightMatrix(pos, direction render.V3, weapon uint8) render.M4 {
@@ -101,7 +107,7 @@ func (p *physicalProjectile) move(destination render.V3, dt float32) bool {
 func (a *App) finishPhysicalProjectile(p *physicalProjectile) {
 	p.cue.actor.RestoreThrownWeapon(p.cue.action)
 	r := p.result
-	if r.Source == a.state.SelfID || r.Target == a.state.SelfID || r.Target == a.state.Target {
+	if p.showNumber || a.showsAttackResult(r) {
 		if _, ok := a.effectPosition(r.Target); ok {
 			a.showCombatNumber(r.Target, r.HP, r.Result == 1, r.Result == 3, combatDamage)
 		} else {
@@ -109,15 +115,13 @@ func (a *App) finishPhysicalProjectile(p *physicalProjectile) {
 		}
 	}
 	if r.HP > 0 && r.Result <= 1 {
-		if mob := a.wv.mobs[r.Target]; mob != nil && mob.actor != nil && (mob.entity == nil || !mob.entity.Dead) {
-			mob.actor.PlayOnce(7)
-		}
 		a.playSound(p.hitSound, p.destination[0], p.destination[2])
 		a.playCharacterDamageVoice(r.Target, r.Result, r.HP)
 	}
 	if p.impact != "" && r.Result <= 1 {
 		a.startSkillImpact(r.Target, p.impact, p.sequence)
 	}
+	a.finishMobHit(p.mob)
 }
 func (a *App) updatePhysicalProjectiles(dt float32) {
 	kept := a.wv.physicalProjectiles[:0]

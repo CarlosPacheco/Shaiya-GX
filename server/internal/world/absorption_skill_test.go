@@ -1,7 +1,6 @@
 package world
 
 import (
-	"encoding/binary"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"testing"
@@ -43,10 +42,10 @@ func TestMobSkillAbsorptionAndWireDamage(t *testing.T) {
 			for {
 				select {
 				case p := <-wire:
-					if proto.Op(p) != 0x060D {
+					if proto.Op(p) != proto.MobSkillUse {
 						continue
 					}
-					if len(p) < 20 || uint32(binary.LittleEndian.Uint16(p[14:])) != tt.want {
+					if result, err := proto.DecodeSkillResult(p); err != nil || uint32(result.HP) != tt.want {
 						t.Fatalf("wire HP differs from absorbed hit: %x", p)
 					}
 					return

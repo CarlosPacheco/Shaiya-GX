@@ -28,9 +28,14 @@ func MobIDsWithin(mapID uint16, x, z, radius float32) []uint32 {
 	sh.mu.Lock()
 	defer sh.mu.Unlock()
 	var out []uint32
+	now := time.Now()
 	for i := range sh.entities.Mobs {
 		m := &sh.entities.Mobs[i]
-		if m.CurrentHP > 0 && DistanceXZ(x, z, m.PosX, m.PosZ) <= radius {
+		if m.CurrentHP == 0 {
+			continue
+		}
+		pos := m.positionAt(now)
+		if DistanceXZ(x, z, pos[0], pos[2]) <= radius {
 			out = append(out, m.ID)
 		}
 	}
@@ -50,7 +55,7 @@ func (s *Session) eraseMob(id uint32) bool {
 	if !ok || !result.Killed {
 		return false
 	}
-	sendNear(mapID, result.Mob.PosX, result.Mob.PosZ, CombatRadius, buildMobDeath(result.Mob.ID, 0), "0x0606 mob death (GM erase)")
+	sendMobDeath(mapID, &result.Mob, 0, "0x0606 mob death (GM erase)")
 	return true
 }
 

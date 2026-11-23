@@ -20,6 +20,29 @@ func TestMissAcquiresIdleReactiveMobWithoutDamage(t *testing.T) {
 		t.Fatal("reactive mob did not retaliate after miss")
 	}
 }
+
+func TestBasicMissWakesMobWithoutAddingAggro(t *testing.T) {
+	s, defs := lapisSession(t)
+	id, md := lapisMob(t, s, defs)
+	s.char.PosX, s.char.PosZ = 1, 1
+	md.Dex = 65535
+	if _, ok := ApplyMobEffect(s.char.MapID, id, s.char.ID, defs.NPCSkill(241)); !ok {
+		t.Fatal("failed to put the mob to sleep")
+	}
+	combat := mobCombatFor(md)
+	stats := s.stats()
+	if chance := playerHitChance(&stats, &combat, attackMelee); chance != 0 {
+		t.Fatalf("expected a guaranteed miss, got chance %d", chance)
+	}
+	if !s.autoAttackSwing(id) {
+		t.Fatal("the attack on the sleeping mob was rejected")
+	}
+	mob, _ := MobByID(s.char.MapID, id)
+	if mob.CurrentHP != md.MaxHP || mob.AggroTarget != 0 || len(mob.aggro) != 0 || mob.mods().Sleep != 0 {
+		t.Fatalf("basic miss left HP=%d target=%d aggro=%v sleep=%d", mob.CurrentHP, mob.AggroTarget, mob.aggro, mob.mods().Sleep)
+	}
+}
+
 func TestMagicSpotForcedMissReturnsPacketAndAcquiresMob(t *testing.T) {
 	_, h := luaWorldFixture(t, 0)
 	s, packets := gmWireSession(t, db.Character{ID: 99, Level: 40, MapID: h.mapID, PosX: 102, PosZ: 100, CurrentHP: 500}, false)

@@ -4,9 +4,8 @@ import (
 	"math/rand/v2"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
-
+	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
-	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
@@ -156,7 +155,27 @@ func (a *App) confirmedAnimation(p []byte) {
 		if hit, err := proto.DecodeNpcAttack(p); err == nil && (hit.Target == a.state.SelfID || hit.Target == a.state.Target) {
 			a.showCombatNumber(hit.Target, hit.HP, false, false, combatDamage)
 		}
-	case proto.CharacterMobAutoAttack, proto.CharacterUserAutoAttack, proto.MobAttackCharacter:
+	case proto.MobEnter, proto.GXMobEnter:
+		a.trackMob(a.state.Entities[proto.NewReader(p).U32()])
+	case proto.MobMove, proto.GXMobMove:
+		if mob := a.trackMob(a.state.Entities[proto.NewReader(p).U32()]); mob != nil {
+			a.updateMobPosition(mob)
+		}
+	case proto.MobLeave:
+		id := proto.NewReader(p).U32()
+		if mob := v.mobs[id]; mob != nil {
+			a.finishMobAttack(mob)
+			delete(v.mobs, id)
+		}
+	case proto.MobDeath:
+		if mob := a.trackMob(a.state.Entities[proto.NewReader(p).U32()]); mob != nil {
+			if !mob.deathNotified {
+				mob.deathNotified, mob.deathSound = true, true
+			}
+		}
+	case proto.MobAttackCharacter:
+		a.startMobBasicAttack(a.state.LastAttack)
+	case proto.CharacterMobAutoAttack, proto.CharacterUserAutoAttack:
 		result := a.state.LastAttack
 		if a.state.SelfID != 0 && result.Source == a.state.SelfID {
 			a.markCombatAction()
@@ -169,12 +188,7 @@ func (a *App) confirmedAnimation(p []byte) {
 			typ := a.playerWeapon(result.Source)
 			if result.Source == a.state.SelfID {
 				a.confirmAttackStop()
-				if target := a.state.Entities[result.Target]; target != nil {
-					dir := (render.V3{target.X, 0, target.Z}).Sub(render.V3{v.pos[0], 0, v.pos[2]}).Norm()
-					if dir.Len() > 0 {
-						v.faceCombatTarget(dir)
-					}
-				}
+				a.faceSkillTarget(result.Source, result.Target)
 			}
 			a.attackVariant++
 			if !actor.PlayingAction(8) && !a.playFormAttack(result.Source, 0) && actor.PlayBasicAttack(typ, a.attackVariant) {
@@ -189,10 +203,6 @@ func (a *App) confirmedAnimation(p []byte) {
 				}
 				a.queueAttackSounds(result, typ, actor, ranged)
 			}
-		}
-		if mob := v.mobs[result.Source]; mob != nil && mob.actor != nil {
-			mob.attackTarget = result.Target
-			mob.actor.PlayOnce(mob.actor.AttackAction(0))
 		}
 		if !ranged {
 			a.deliverAttackResult(result, a.playerActor(result.Source))
@@ -251,6 +261,96 @@ func (a *App) faceRequestedTarget(target uint32) bool {
 	return true
 }
 
+type mobAttackImpact struct {
+	result     proto.AttackResult
+	target     *game.Entity
+	contact    float32
+	showNumber bool
+}
+
+func (a *App) startMobBasicAttack(result proto.AttackResult) {
+	impact := mobAttackImpact{result: result, target: a.state.Entities[result.Target], showNumber: a.showsAttackResult(result)}
+	if mob := a.trackMob(a.state.Entities[result.Source]); mob != nil && !mob.entity.Dead {
+		a.loadMobActor(mob)
+		if mob.actor != nil {
+			action := mob.actor.BasicAttackAction()
+			if a.playMobAttack(mob, result.Target, action) ||
+				action == 3 && mob.actor.Definition.AttackAnimations[0] == 1 && a.playMobAttack(mob, result.Target, 2) {
+				if impact.contact = mob.actor.AttackContactTime(); impact.contact > 0 {
+					mob.attackImpact = &impact
+					return
+				}
+			}
+		}
+	}
+	a.presentMobAttack(impact)
+}
+
+func (a *App) playMobAttack(m *mobActor, target uint32, action int) bool {
+	a.finishMobAttack(m)
+	if !m.actor.PlayOnce(action) {
+		return false
+	}
+	m.attackTarget = target
+	a.playSound(m.actor.Sound(action-2), m.pos[0], m.pos[2])
+	return true
+}
+
+func (a *App) finishMobAttack(m *mobActor) {
+	if impact := m.attackImpact; impact != nil {
+		m.attackImpact = nil
+		a.presentMobAttack(*impact)
+	}
+}
+
+func (a *App) presentMobAttack(impact mobAttackImpact) {
+	r := impact.result
+	if r.Target != a.state.SelfID && a.state.Entities[r.Target] != impact.target {
+		return
+	}
+	a.playMobHitSound(r.Target, r.Result)
+	a.playCharacterDamageVoice(r.Target, r.Result, r.HP)
+	if impact.showNumber {
+		a.showCombatNumber(r.Target, r.HP, r.Result == 1, r.Result == 3, combatDamage)
+	}
+}
+
+func (a *App) showsAttackResult(r proto.AttackResult) bool {
+	return r.Source == a.state.SelfID || r.Target == a.state.SelfID || r.Target == a.state.Target
+}
+
+// A confirmed hit retains its target's visual life until the animation or
+// projectile reaches contact. The entity remains dead for targeting and HP.
+func (a *App) waitForMobHit(target uint32, hp uint16, result uint8) *mobActor {
+	if hp == 0 || result > 1 {
+		return nil
+	}
+	m := a.trackMob(a.state.Entities[target])
+	if m == nil || m.entity.Dead {
+		return nil
+	}
+	m.incomingHits++
+	return m
+}
+
+func (a *App) finishMobHit(m *mobActor) {
+	if m == nil {
+		return
+	}
+	m.incomingHits--
+	if m.incomingHits == 0 && m.entity.Dead && m.actor != nil && a.state.Entities[m.entity.ID] == m.entity {
+		a.presentMobDeath(m)
+	} else {
+		a.reactToMobHit(m)
+	}
+}
+
+func (a *App) reactToMobHit(m *mobActor) {
+	if m != nil && m.actor != nil && !m.entity.Dead && a.state.Entities[m.entity.ID] == m.entity {
+		m.actor.PlayOnce(7)
+	}
+}
+
 // deliverAttackResult mirrors Game.exe 0x418030/0x41b300: the confirmed blow is
 // stored on the attacker and applied when the swing crosses its contact
 // marker. The number, the pain voice and the target's hit reaction all happen
@@ -258,15 +358,27 @@ func (a *App) faceRequestedTarget(target uint32) bool {
 // larger share), one application per marker. Without a marker it applies now.
 func (a *App) deliverAttackResult(result proto.AttackResult, actor *scene.Character) {
 	v := a.wv
-	apply := func(hp uint16) func() {
+	showNumber := a.showsAttackResult(result)
+	target := a.state.Entities[result.Target]
+	apply := func(hp uint16, pending bool) func() {
+		var mob *mobActor
+		if pending {
+			mob = a.waitForMobHit(result.Target, hp, result.Result)
+		}
 		return func() {
+			if pending {
+				defer a.finishMobHit(mob)
+			}
+			if result.Target != a.state.SelfID && a.state.Entities[result.Target] != target {
+				return
+			}
 			if hp > 0 {
 				a.playCharacterDamageVoice(result.Target, result.Result, hp)
-				if mob := v.mobs[result.Target]; mob != nil && mob.actor != nil {
-					mob.actor.PlayOnce(7)
+				if !pending && result.Result <= 1 {
+					a.reactToMobHit(v.mobs[result.Target])
 				}
 			}
-			if result.Source == a.state.SelfID || result.Target == a.state.SelfID || result.Target == a.state.Target {
+			if showNumber {
 				a.showCombatNumber(result.Target, hp, result.Result == 1, result.Result == 3, combatDamage)
 			}
 		}
@@ -277,13 +389,13 @@ func (a *App) deliverAttackResult(result proto.AttackResult, actor *scene.Charac
 		case first > actor.Time && second > first:
 			half := result.HP / 2
 			v.pendingNumbers = append(v.pendingNumbers,
-				pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP - half)},
-				pendingNumber{actionClock{actor, actor.ActionID(), second}, apply(half)})
+				pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP-half, true)},
+				pendingNumber{actionClock{actor, actor.ActionID(), second}, apply(half, true)})
 			return
 		case first > actor.Time:
-			v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP)})
+			v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP, true)})
 			return
 		}
 	}
-	apply(result.HP)()
+	apply(result.HP, false)()
 }

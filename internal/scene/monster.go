@@ -2,9 +2,10 @@ package scene
 
 import (
 	"fmt"
-	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
+	"math/rand/v2"
 	"path"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/model"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -157,20 +158,22 @@ func (m *CreatureActor) Update(dt float32) {
 }
 
 // PlayOnce presents a confirmed attack/hit; locomotion resumes afterward.
-func (m *CreatureActor) PlayOnce(action int) {
+func (m *CreatureActor) PlayOnce(action int) bool {
 	// Late attack, reaction or repeated death packets cannot restart a corpse.
 	// A real respawn switches back to a live action through SetAction.
 	if m.action == 5 {
-		return
+		return false
 	}
 	// A damage reaction must not restart or replace a confirmed attack.
 	if action == 7 && m.Attacking() {
-		return
+		return false
 	}
+	previous := m.cueTime
 	m.cueTime = 0
 	if err := m.setAction(action, true, false); err != nil {
+		m.cueTime = previous
 		m.assets.Missing[err.Error()] = true
-		return
+		return false
 	}
 	if action != 5 {
 		m.queueModelEffect(action)
@@ -178,6 +181,7 @@ func (m *CreatureActor) PlayOnce(action int) {
 	if m.clip != nil {
 		m.cueTime = m.clip.Duration() + m.blendLeft
 	}
+	return true
 }
 
 // Sound returns the original MON attack1/2/3 or death WAV reference.
@@ -189,6 +193,26 @@ func (m *CreatureActor) Sound(index int) string {
 }
 
 func (m *CreatureActor) Attacking() bool { return m.cueTime > 0 && m.action >= 2 && m.action <= 4 }
+
+func (m *CreatureActor) BasicAttackAction() int {
+	if m.Definition.AttackAnimations[0] == 1 {
+		return 2 + rand.IntN(2)
+	}
+	return m.AttackAction(0)
+}
+
+func (m *CreatureActor) AttackContactTime() float32 {
+	if m.Attacking() && m.clip != nil {
+		return m.clip.Duration() / 2
+	}
+	return 0
+}
+
+func (m *CreatureActor) PlayIdleVariation() {
+	if m.action == 6 && m.cueTime == 0 && len(m.visual.Animations) > 8 && m.visual.Animations[8] != "" {
+		m.PlayOnce(8)
+	}
+}
 func (m *CreatureActor) AttackAction(slot uint8) int {
 	if slot > 2 {
 		slot = 0

@@ -161,24 +161,11 @@ func (a *App) confirmedSound(p []byte) {
 	case proto.MobSkillUse, proto.MobSkillDrain, proto.MobSkillOther:
 		a.playSkillDamageVoice()
 		r := a.state.LastSkill
-		a.playMobHitSound(r.Target, r.Result)
-		if m := a.wv.mobs[r.Source]; m != nil && m.actor != nil && (m.soundSkill != r.ID || a.clock-m.soundAt > .15) {
-			m.soundSkill, m.soundAt = r.ID, a.clock
-			a.playSound(m.actor.Sound(int(min(r.AttackSlot, 2))), m.pos[0], m.pos[2])
-		}
-	case proto.MobAttackCharacter:
-		a.playMobHitSound(a.state.LastAttack.Target, a.state.LastAttack.Result)
-		id := a.state.LastAttack.Source
-		if m := a.wv.mobs[id]; m != nil && m.actor != nil {
-			a.playSound(m.actor.Sound(0), m.pos[0], m.pos[2])
+		if r.HP > 0 {
+			a.playMobHitSound(r.Target, r.Result)
 		}
 	case proto.CharacterDeath:
 		a.playCharacterVoice(proto.NewReader(p).U32(), voiceDeath)
-	case proto.MobDeath:
-		id := proto.NewReader(p).U32()
-		if m := a.wv.mobs[id]; m != nil && m.actor != nil {
-			a.playSound(m.actor.Sound(3), m.pos[0], m.pos[2])
-		}
 	}
 }
 

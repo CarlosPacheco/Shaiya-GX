@@ -92,7 +92,7 @@ func TestOriginalSocialAndGraphicsGL(t *testing.T) {
 	a.prepareMonsters()
 	a.loadSkills()
 	old := len(a.wv.impacts)
-	a.startMobSkillEffects(proto.SkillResult{Source: a.state.SelfID, Target: a.state.SelfID, ID: 33, Level: 100})
+	a.startMobSkillEffects(proto.SkillResult{Source: a.state.SelfID, Target: a.state.SelfID, ID: 33, Level: 100}, true)
 	if len(a.wv.impacts) <= old {
 		t.Fatal("monster level-100 result did not produce original impact")
 	}
@@ -103,10 +103,13 @@ func TestOriginalSocialAndGraphicsGL(t *testing.T) {
 		t.Fatal("missing original monster")
 	}
 	r := proto.SkillResult{Source: 900, Target: a.state.SelfID, ID: 33, Level: 100}
-	a.startMobSkillEffects(r)
-	mob.actor.Update(.1)
+	a.startMobSkillEffects(r, true)
+	mob.actor.Update(.25)
 	clock := mob.actor.Time
-	a.startMobSkillEffects(r)
+	if clock == 0 {
+		t.Fatal("monster animation did not advance after its blend")
+	}
+	a.startMobSkillEffects(r, false)
 	if mob.actor.Time != clock {
 		t.Fatal("same area attack restarted monster animation")
 	}

@@ -115,9 +115,11 @@ func TestOriginalMobNavigation(t *testing.T) {
 			origin := first.point()
 			first.def = &db.MobDef{ChaseStep: 2, ChaseTimeMS: 500}
 			for i := 0; i < 3000 && mapnav.Distance(first.point(), routeGoal) > .1; i++ {
-				if _, ok := first.navigate(id, routeGoal, 2); !ok {
+				next, ok := first.navigate(time.Now(), id, routeGoal, 2)
+				if !ok {
 					t.Fatalf("real route stalled at %v toward %v", first.point(), routeGoal)
 				}
+				first.setPoint(next)
 			}
 			if mapnav.Distance(first.point(), routeGoal) > .1 {
 				t.Fatal("real route did not finish")

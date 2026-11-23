@@ -39,7 +39,11 @@ func (r *remotePosition) update(e *game.Entity, now float64) render.V3 {
 	}
 	if e.MoveSerial != r.moveSerial {
 		delta := target.Sub(r.pos)
-		if delta.Dot(delta) > 400 || math.Abs(float64(delta[1])) > 8 {
+		snap := delta.Dot(delta) > 400 || math.Abs(float64(delta[1])) > 8
+		if e.Kind == game.KindMob {
+			snap = !e.MobHeightKnown && delta[0]*delta[0]+delta[2]*delta[2] >= 400
+		}
+		if snap {
 			r.pos, r.from, r.to = target, target, target
 			r.duration = 0
 		} else {

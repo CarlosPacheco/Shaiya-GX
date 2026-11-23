@@ -2,6 +2,7 @@ package world
 
 import (
 	"sync"
+	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
@@ -201,9 +202,12 @@ func dispatchEntityMove(e entityMove) {
 	for _, p := range viewers {
 		if !p.knows(e.Kind, e.ID) {
 			viewEnter(p, e.Kind, e.ID, e.Enter, "view enter")
+			if e.Kind == viewMob && e.Move != nil {
+				p.Send(e.Move, "view move")
+			}
 			continue
 		}
-		if e.Move != nil {
+		if e.Move != nil && !e.Fresh {
 			p.Send(e.Move, "view move")
 		}
 	}
@@ -259,10 +263,17 @@ func (s *Session) refreshViewFor(usersOnly bool) {
 	}
 	near := EntitiesInView(ch.MapID, c)
 	want := map[uint32]bool{}
+	now := time.Now()
 	for i := range near.Mobs {
 		m := &near.Mobs[i]
 		want[m.ID] = true
-		viewEnter(p, viewMob, m.ID, buildMobEnter(m, false), "0x0601 mob enter")
+		if p.know(viewMob, m.ID) {
+			enter, move := m.appearance(now, false)
+			p.Send(enter, "0x0601 mob enter")
+			if move != nil {
+				p.Send(move, "view move")
+			}
+		}
 	}
 	for _, id := range p.knownIDs(viewMob) {
 		if !want[id] {

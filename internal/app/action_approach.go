@@ -96,6 +96,9 @@ func (a *App) updateActionApproach(in *platform.Input) bool {
 		}
 		airborne = !a.attackMovementAllowed() && !a.followOnly(e)
 		goal = render.V3{e.X, e.Y, e.Z}
+		if e.Kind == game.KindMob {
+			goal = a.visualEntityPosition(e)
+		}
 		reach = a.attackReachTo(e)
 		if len(v.approachSkill) > 0 {
 			var def sdata.Skill

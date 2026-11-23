@@ -224,11 +224,16 @@ func (s *Session) applyTrapHit(h pendingUserHit) bool {
 // vertically.
 func (s *Session) mobsNear(x, z, r float32, height ...float32) []uint32 {
 	var out []uint32
+	now := time.Now()
 	for _, m := range EntitiesOnMap(s.char.MapID).Mobs {
-		if len(height) == 2 && float32(math.Abs(float64(m.PosY-height[0]))) > height[1] {
+		if m.CurrentHP == 0 {
 			continue
 		}
-		if m.CurrentHP > 0 && DistanceXZ(x, z, m.PosX, m.PosZ) <= r {
+		pos := m.positionAt(now)
+		if len(height) == 2 && float32(math.Abs(float64(pos[1]-height[0]))) > height[1] {
+			continue
+		}
+		if DistanceXZ(x, z, pos[0], pos[2]) <= r {
 			out = append(out, m.ID)
 		}
 	}

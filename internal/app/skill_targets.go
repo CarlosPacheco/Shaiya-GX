@@ -101,7 +101,8 @@ func (a *App) resolveSkillTarget(d sdata.Skill) uint32 {
 		if !hostile || !a.validSkillTarget(d, id) {
 			continue
 		}
-		dx, dz := e.X-a.wv.pos[0], e.Z-a.wv.pos[2]
+		pos := a.skillTargetPosition(e)
+		dx, dz := pos[0]-a.wv.pos[0], pos[2]-a.wv.pos[2]
 		distance := dx*dx + dz*dz
 		if distance < best || distance == best && (target == 0 || id < target) {
 			best, target = distance, id

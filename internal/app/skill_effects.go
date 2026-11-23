@@ -43,7 +43,7 @@ func (a *App) confirmedEffects(p []byte) {
 			}
 		}
 	case proto.MobSkillUse, proto.MobSkillDrain, proto.MobSkillOther:
-		a.startMobSkillEffects(a.state.LastSkill)
+		a.startMobSkillEffects(a.state.LastSkill, proto.Op(p) != proto.MobSkillOther)
 	case proto.CharacterMove:
 		if move, err := proto.DecodeUserMove(p); err == nil && proto.CastInterruptingMotion(move.Motion) {
 			a.stopCastEffects(move.ID)
