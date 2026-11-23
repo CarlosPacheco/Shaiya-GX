@@ -1,14 +1,14 @@
 # Shaiya GX portable client and server
 
-## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1WgqLXhO-JrUavk2cFzqxBlrKFJnGqzQ_/view?usp=sharing)
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1BhkQN69s9Bk0vwb2VsM3iphLwb2cIbBk/view?usp=sharing)
 
-**gx-v0.1.16 for Windows and Linux.** This Google Drive package includes both
+**gx-v0.1.18 for Windows and Linux.** This Google Drive package includes both
 executables, GX Server, GX Studio, client game data, fonts and the development database.
 **Everything is included; no separate data download is needed.**
 Extract the entire package into a writable folder:
 
 ```text
-Shaiya GX gx-v0.1.16 Portable/
+Shaiya GX gx-v0.1.18 Portable/
   Client/
     Shaiya GX
     Shaiya GX.exe
@@ -24,8 +24,6 @@ then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Sha
 Keep `Client/data/` beside the client executables.
 
 **Latest binary update: [gx-v0.1.18](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.18).**
-For the November 22 server geometry update, see the
-[upgrade guide](releases/gx-v0.1.16-upgrade.md#server-geometry-update).
 GX Studio is in `Client/Studio/`.
 
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
@@ -50,10 +48,10 @@ Source, build instructions and third-party font sources: https://github.com/Spel
 ## Updating existing client data
 
 Update GX Server and the client together and preserve the existing server runtime database.
-The complete gx-v0.1.16 Drive portable remains available as a base for a binary update.
 
-From a source checkout, with Go installed and the client closed, use the original
-client archive directory and your active loose-data directory:
+To update an older installation with the GitHub binaries, close the client and
+run the following commands from a source checkout. Set `ORIGINAL_CLIENT` to the
+original archive directory and `SHAIYA_DATA` to your active loose-data directory.
 
 ```sh
 go run ./cmd/assets -data "$ORIGINAL_CLIENT" png cl.tga "$SHAIYA_DATA/interface/cl.png"
