@@ -237,10 +237,10 @@ func (m *Minimap) Draw(s *render.Sprites, f *Font, image, solid *render.Texture,
 	if label == "" {
 		label = "--:--"
 	}
-	// 0x4c84fb..0x4c85b8: the clock is plain left-aligned text at the map
-	// origin +(46,167), unscaled and without a shadow. The map frame is drawn
-	// at the same origin, which this window places at (x+4, y+4).
-	f.Draw(s, label, x+4+46, y+4+167, white, 0)
+	// 0x4c84fb..0x4c85b8: unscaled text without a shadow at the map origin
+	// +(46,167); the window places that origin at (x+4, y+4). It is centred on
+	// the time plate (x+9..x+159) on whole pixels so it stays sharp.
+	f.Draw(s, label, x+84-f.Width(label)/2, y+4+167, white, 0)
 }
 
 func (m *Minimap) DrawFull(s *render.Sprites, f *Font, image, solid *render.Texture, w, h int, view UV, u, v, heading float32, mapID uint16, markers []MapMarker) {
