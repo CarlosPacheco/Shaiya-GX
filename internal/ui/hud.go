@@ -160,8 +160,8 @@ func (h *HUD) DrawOxygen(s *render.Sprites, solid *render.Texture, x, y int, fra
 	drawProgressColumn(s, solid, x, y, fill, oxygenColor)
 }
 
-// oxygenColor is the breath column: light cyan, so it never reads as the blue cast bar.
-var oxygenColor = [4]float32{.35, .85, 1, 1}
+// oxygenColor is the breath column.
+var oxygenColor = [4]float32{0, 0, 1, 1}
 
 func drawProgressColumn(s *render.Sprites, solid *render.Texture, x, y, fill int, color [4]float32) {
 	s.Draw(solid, float32(x), float32(y), 5, 64, 0, 0, 1, 1, [4]float32{0, 0, 0, 1})

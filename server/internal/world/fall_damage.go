@@ -5,6 +5,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 	"math"
+	"time"
 )
 
 // GX rule: six safe units; half the previous quadratic damage, capped at max HP.
@@ -77,21 +78,40 @@ func (s *Session) applyEnvironmentalDamage(amount uint32, opcode proto.Opcode, c
 }
 
 // drownedFloatY is the surface swimming pose: a drowned body and its spirit
-// rise to it instead of staying where the breath ran out.
-const drownedFloatY = float32(-1.5)
+// rise to it, steadily, instead of staying where the breath ran out.
+const (
+	drownedFloatY    = float32(-1.5)
+	drownedRiseSpeed = float32(1.2) // units per second
+)
 
+// floatDrownedBody starts the rise; tickDrownedFloat advances it.
 func (s *Session) floatDrownedBody() {
-	ch := s.char
-	if ch == nil || ch.PosY >= drownedFloatY {
+	if s.char != nil && s.char.PosY < drownedFloatY {
+		s.drownedRiseAt = time.Now()
+	}
+}
+
+func (s *Session) tickDrownedFloat(now time.Time) {
+	if s.drownedRiseAt.IsZero() {
 		return
 	}
-	ch.PosY = drownedFloatY
-	s.movement.pos[1] = drownedFloatY
+	ch := s.char
+	if ch == nil || !s.dead || ch.PosY >= drownedFloatY {
+		s.drownedRiseAt = time.Time{}
+		return
+	}
+	dt := float32(now.Sub(s.drownedRiseAt).Seconds())
+	s.drownedRiseAt = now
+	ch.PosY = min(drownedFloatY, ch.PosY+drownedRiseSpeed*dt)
+	s.movement.pos[1] = ch.PosY
 	if s.player != nil {
 		s.player.UpdateCharacter(*ch)
 	}
 	move := buildCharacterMove(ch, 0, 0)
-	s.send(move, "drowned body floats")
-	s.sendToViewers(move, "drowned body floats (view)")
+	s.send(move, "drowned body rises")
+	s.sendToViewers(move, "drowned body rises (view)")
 	s.positionDirty = true
+	if ch.PosY >= drownedFloatY {
+		s.drownedRiseAt = time.Time{}
+	}
 }

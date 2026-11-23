@@ -131,8 +131,19 @@ func TestGMImmunityDoesNotStopDrowningAndTheDrownedBodyFloats(t *testing.T) {
 	if err != nil || id != s.char.ID {
 		t.Fatalf("drowning death notice: %d, %v", id, err)
 	}
-	if s.char.PosY != drownedFloatY || s.movement.pos[1] != drownedFloatY {
-		t.Fatalf("the drowned body stayed at %.2f", s.char.PosY)
+	start := s.char.PosY
+	if start != -3 {
+		t.Fatalf("the body jumped to %.2f instead of rising", start)
+	}
+	step := now.Add(40 * time.Second)
+	s.drownedRiseAt = step
+	s.tickDrownedFloat(step.Add(500 * time.Millisecond))
+	if got := s.char.PosY; got <= start || got >= drownedFloatY {
+		t.Fatalf("half a second of rise left the body at %.2f", got)
+	}
+	s.tickDrownedFloat(step.Add(5 * time.Second))
+	if s.char.PosY != drownedFloatY || s.movement.pos[1] != drownedFloatY || !s.drownedRiseAt.IsZero() {
+		t.Fatalf("the drowned body did not settle at the surface: %.2f", s.char.PosY)
 	}
 }
 
