@@ -421,7 +421,7 @@ ID (u32) and cue (u8, 1 for entry, 2 for skill, or 3 for an administrative level
 registration or a committed skill change, and respects stealth and view
 membership. The nearby skill confirmation is a GX presentation addition.
 
-Action and interface cues of the original (EP5.4 `0x41b300` frame events, `0x560e30` sit/stand, `0x4c9140` item sounds, shop, repair, invitation and window cues): `ch_mback001` (evasion roll), `ch_mswim001`, `ch_mdown001`/`ch_mstup001`, `ch_pikup001`, `mob_hit001-003`, `ui_armor000-024`, `ui_itemdrop1-2`, `ui_moneydrop1` (a dropped item appearing), `ch_walk[deg nsw]001-003` (footsteps: dungeon floor `s`, wading water `w`, otherwise the terrain layer), `run_<horse|puma|baslk>_<ea|gr|st|wa>01-03` (mount hooves, per rider race and surface), `ui_challenge01-02` (duel start and end), `ui_pay001`, `ui_repair001`, `ui_party001`, `ui_window`.
+Action and interface cues of the original (EP5.4 `0x41b300` frame events, `0x560e30` sit/stand, `0x4c9140` item sounds, shop, repair, invitation and window cues): `ch_mback001` (evasion roll), `ch_mswim001`, `ch_mdown001`/`ch_mstup001`, `ch_pikup001`, `mob_hit001-003`, `ui_armor000-024`, `ui_itemdrop1-2`, `ui_moneydrop1` (a dropped item appearing), `ch_walk[deg nsw]001-003` (footsteps: dungeon floor `s`, wading water `w`, otherwise the terrain layer), `run_<horse|puma|baslk>_<ea|gr|st|wa>01-03` (mount hooves, per rider race and surface), `ui_challenge01-02` (duel start and end), `ui_party002` (joined a party), `ui_ask` (resurrection prompt), `ui_login001` (login or connection error), and `ui_error001` for every error-channel notice, `ui_pay001`, `ui_repair001`, `ui_party001`, `ui_window`.
 
 `ch_skill*` (melee skill animations 100–107), `ef_cst_crobow01` (physical skills with a javelin, bow or crossbow) and `ef_dmg_heal01` (heal impact on the target) are skill cues played by the original EP5.4 and EP4 clients.
 
@@ -434,7 +434,7 @@ and the destination loose `data` directory.
 for cue in ch_levup001 ui_skillnew001 ch_skill001 ch_skill003 ch_skill004 ch_skill005 ch_skill008 ef_cst_crobow01 ef_dmg_heal01 \
     ch_mback001 ch_mdown001 ch_mstup001 ch_mswim001 ch_pikup001 mob_hit001 mob_hit002 mob_hit003 \
     ui_pay001 ui_repair001 ui_party001 ui_window ui_itemdrop1 ui_itemdrop2 ui_moneydrop1 \
-    ui_challenge01 ui_challenge02 $(printf 'run_%s_%s0%d ' $(for m in horse puma baslk; do for k in ea gr st wa; do for n in 1 2 3; do echo $m $k $n; done; done; done)) \
+    ui_challenge01 ui_challenge02 ui_party002 ui_ask ui_login001 $(printf 'run_%s_%s0%d ' $(for m in horse puma baslk; do for k in ea gr st wa; do for n in 1 2 3; do echo $m $k $n; done; done; done)) \
     $(printf 'ui_armor%03d ' $(seq 0 24)) $(printf 'ch_walk%s00%d ' d 1 d 2 d 3 e 1 e 2 e 3 g 1 g 2 g 3 n 1 n 2 n 3 s 1 s 2 s 3 w 1 w 2 w 3); do
     build/assets -data "$EP5_ARCHIVE_DIR" cat "Sound/$cue.wav" |
         ffmpeg -n -i pipe:0 -ar 44100 -c:a libvorbis -q:a 6 "$GX_DATA_DIR/Sound/$cue.ogg"

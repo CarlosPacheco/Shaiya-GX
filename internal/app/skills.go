@@ -630,10 +630,7 @@ func (a *App) skillWeaponAvailable(d sdata.Skill) bool {
 	rt := int(itemtype.Real(w.Type))
 	allowed := w.Type != 0 && (d.NeedShield || rt >= 1 && rt <= len(d.NeedWeapon) && d.NeedWeapon[rt-1])
 	if !allowed {
-		a.systemMessage(17, 314, nil)
-		if a.wv != nil {
-			a.playSound("ui_error001.wav", a.wv.pos[0], a.wv.pos[2])
-		}
+		a.systemMessage(17, 314, nil) // plays the error cue itself
 	}
 	return allowed
 }

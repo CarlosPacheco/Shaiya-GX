@@ -845,6 +845,9 @@ func (a *App) backToLoginID(id int) { a.backToLogin(a.tr(id)) }
 func (a *App) tr(id int) string { return a.msg.Lookup(id) }
 
 func (a *App) backToLogin(msg string) {
+	if msg != "" {
+		a.playUISound("ui_login001.ogg") // native 0x4bc4a0 and 0x4eb3c7: a login or connection error
+	}
 	a.loading = mapLoading{}
 	a.menuOpen, a.menuPending = false, false
 	a.buffs = buffsView{}

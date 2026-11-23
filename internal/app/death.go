@@ -20,6 +20,7 @@ func (a *App) initDeath() {
 		return
 	}
 	d.initialized = true
+	a.playUISound("ui_ask.ogg") // native 0x4bf2e4: the resurrection prompt appears
 	a.deathUI.Reset()
 	d.party = a.state.Party.Leader != 0 && a.state.Party.Leader != a.state.SelfID
 }

@@ -47,8 +47,7 @@ func (a *App) dropReleased(in *platform.Input, w, h int, captured bool) {
 		return
 	}
 	if def.ReqOG != 0 {
-		a.playSound("ui_error001.wav", a.wv.pos[0], a.wv.pos[2])
-		a.systemMessage(17, 454, nil)
+		a.systemMessage(17, 454, nil) // plays the error cue itself
 		return
 	}
 	d.active, d.source, d.item = true, key, it

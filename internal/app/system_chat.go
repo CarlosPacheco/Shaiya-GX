@@ -24,6 +24,11 @@ func (a *App) addSystemText(style uint8, id int, text string) {
 	if style == 8 {
 		a.playNewsSound()
 	}
+	// Native: every refusal in the error channel (17) comes with ui_error001,
+	// 53 call sites in Game.exe from 0x4381ab to 0x5765a0.
+	if style == 17 {
+		a.playUISound("ui_error001.ogg")
+	}
 }
 
 // ReportScreenshot displays the native world notice after the PNG is written.
@@ -306,6 +311,7 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		}
 		a.systemMessage(17, 204, map[string]string{"p": name})
 	case proto.PartyJoined:
+		a.playUISound("ui_party002.ogg") // native 0x574544: you or a member joined the party
 		if m, err := proto.DecodePartyJoined(p); err == nil {
 			id := 205
 			if m.ID == s.SelfID {
