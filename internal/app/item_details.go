@@ -173,11 +173,18 @@ func itemDetailLinesWithBonuses(def *sdata.Item, instance *proto.InventoryItem, 
 	if def.Attack != 0 || def.AttackAdd != 0 || enchantAttack != 0 {
 		minAttack := uint32(def.Attack) + enchantAttack
 		maxAttack := minAttack + uint32(def.AttackAdd)
-		color := white
-		if bonuses.attackChanged || enchantAttack != 0 {
-			color = [4]float32{1, 1, 0, 1}
+		// Native 0x4a3950: linked lapis on the minimum attack tint the whole
+		// row; an enchant alone keeps the label white and the value yellow.
+		yellow := [4]float32{1, 1, 0, 1}
+		value := fmt.Sprintf("%d - %d", minAttack, maxAttack)
+		switch {
+		case bonuses.attackChanged:
+			add(fmt.Sprintf("%s %s", label(5191), value), yellow)
+		case enchantAttack != 0:
+			add(fmt.Sprintf("%s {c3}%s{/c}", label(5191), value), white)
+		default:
+			add(fmt.Sprintf("%s %s", label(5191), value), white)
 		}
-		add(fmt.Sprintf("%s %d - %d", label(5191), minAttack, maxAttack), color)
 	}
 	// Native category 5 (weapons) never draws Defense/Resistance rows.
 	if rt := itemtype.Real(def.Type); rt < 1 || rt > 15 {

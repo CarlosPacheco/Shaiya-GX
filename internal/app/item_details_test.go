@@ -465,7 +465,7 @@ func TestWeaponEnchantTooltipUsesDefaultAndServerRulesWithLapis(t *testing.T) {
 	it.Craft = "00000000000000000049"
 	it.Gems = [6]uint8{}
 	a.drawItemDetails(weapon, &it, 1, 0, 0, 1024, 768, "")
-	if !slices.Contains(a.tooltip, itemDetailLine{"Attack power 950 - 965", yellow}) {
+	if !slices.Contains(a.tooltip, itemDetailLine{"Attack power {c3}950 - 965{/c}", white}) {
 		t.Fatalf("expected server WeaponBonus[49]=900 attack 950 - 965, got %+v", a.tooltip)
 	}
 
@@ -482,5 +482,13 @@ func TestWeaponEnchantTooltipUsesDefaultAndServerRulesWithLapis(t *testing.T) {
 	a.drawItemDetails(weapon, &it, 1, 0, 0, 1024, 768, "")
 	if !slices.Contains(a.tooltip, itemDetailLine{"Attack power 50 - 65", white}) {
 		t.Fatalf("armor enchant encoding modified weapon attack: %+v", a.tooltip)
+	}
+
+	// Lapis that only widen the range leave the row white, as in the native client.
+	it.Craft = ""
+	it.Gems = [6]uint8{2}
+	a.drawItemDetails(weapon, &it, 1, 0, 0, 1024, 768, "")
+	if !slices.Contains(a.tooltip, itemDetailLine{"Attack power 50 - 77", white}) {
+		t.Fatalf("range-only lapis changed the row color: %+v", a.tooltip)
 	}
 }
