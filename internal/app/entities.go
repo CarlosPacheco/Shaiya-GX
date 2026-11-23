@@ -678,14 +678,15 @@ func (a *App) drawPlayerNames(w, h int) {
 			if element := mob.Definition.Element; e.ID == a.state.Target && int(element) < len(mobMarkers) {
 				marker = mobMarkers[element]
 			}
-			label(mob.Name, mob.MonsterPlateAnchor(), ui.RGBColor(ui.MobNameRGB(mob.Level, slot.Level)), 0, playerPlate{}, marker, a.catalogNameSuffix(e))
+			label(mob.Name, mob.FitPlate(mob.MonsterPlateAnchor(), .12), ui.RGBColor(ui.MobNameRGB(mob.Level, slot.Level)), 0, playerPlate{}, marker, a.catalogNameSuffix(e))
 		case game.KindNpc:
 			if actor := v.npcs[e.ID]; actor != nil && actor.actor != nil {
 				pos := actor.actor.NPCPlateAnchor(e.NpcType, e.TypeID)
-				// The MON height can sit inside the mesh; the depth-tested plate
-				// would then vanish behind its own NPC, so keep it above the crown.
-				if _, hi, ok := actor.actor.WorldBounds(); ok && e.NpcType != 12 && pos[1] < hi[1]+.15 {
-					pos[1] = hi[1] + .15
+				// MON heights end inside some bodies and float above others: fit
+				// the plate to the measured body. The authored low plates of the
+				// dead NPC type and the seasonal animals stay as they are.
+				if e.NpcType != 12 && !(e.NpcType == 7 && e.TypeID >= 541 && e.TypeID <= 543) {
+					pos = actor.actor.FitPlate(pos, .15)
 				}
 				label(actor.actor.Name, pos, ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID), a.catalogNameSuffix(e))
 				label(a.npcTypeLabel(e.NpcType), pos, [4]float32{.35, .9, 1, 1}, a.font.Height-2, playerPlate{}, "", "")

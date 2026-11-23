@@ -25,6 +25,9 @@ type CreatureActor struct {
 	action      int
 	cueTime     float32
 	visualScale float32
+
+	plateTop                     float32 // body height for FitPlate
+	plateTopReady, plateTopValid bool
 }
 
 func (s *Assets) MonsterDefinition(id uint16) (sdata.Monster, error) {
