@@ -68,7 +68,6 @@ func (a *App) checkNPCWindowRange() {
 	// acknowledgements can still update inventory, gold or position.
 	a.shop.quantity, a.shop.dragging = nil, false
 	a.npcQuest = npcQuestView{}
-	a.blacksmith = blacksmithView{}
 	if !a.gate.pending {
 		a.gate = gatekeeperView{}
 	}
@@ -90,6 +89,7 @@ func (a *App) checkNPCWindowRange() {
 
 func (a *App) closeNPC() {
 	a.shop.npcID, a.shop.talk, a.shop.questMode = 0, false, false
+	a.resetBlacksmith()
 	if a.world != nil {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
 			a.backToLoginID(12011)

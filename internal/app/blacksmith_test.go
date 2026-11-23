@@ -129,3 +129,37 @@ func TestForgeModeSwitchClearsSelectionsWithoutInventoryMutation(t *testing.T) {
 		}
 	}
 }
+
+func TestBlacksmithCloseResetsToMenuForSameNPC(t *testing.T) {
+	a := inputApp()
+	a.blacksmithUI, _ = ui.NewBlacksmith(inputTextures{})
+	a.state.Entities[42] = &game.Entity{ID: 42, Kind: game.KindNpc, NpcType: 3}
+
+	for _, closeAction := range []string{"close_button", "escape", "range_exit"} {
+		a.shop.npcID = 42
+		a.updateBlacksmith(&platform.Input{}, 1024, 768)
+		a.blacksmithUI.Mode = ui.ForgeLapis
+		a.blacksmith.selected[0] = true
+
+		switch closeAction {
+		case "close_button":
+			bx, by := a.blacksmithUI.Origin(1024, 768)
+			a.updateBlacksmith(&platform.Input{MouseX: bx + 490, MouseY: by + 10, Pressed: true, MouseDown: true}, 1024, 768)
+			a.updateBlacksmith(&platform.Input{MouseX: bx + 490, MouseY: by + 10, Clicked: true}, 1024, 768)
+		case "escape":
+			a.updateBlacksmith(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, 1024, 768)
+		case "range_exit":
+			a.closeNPC()
+		}
+
+		if a.shop.npcID != 0 || a.blacksmith.npcID != 0 || a.blacksmith.selected != [4]bool{} || a.blacksmithUI.Mode != ui.ForgeMenu {
+			t.Fatalf("%s did not reset blacksmith state: npc=%d view=%+v mode=%d", closeAction, a.shop.npcID, a.blacksmith, a.blacksmithUI.Mode)
+		}
+
+		a.shop.npcID = 42
+		a.updateBlacksmith(&platform.Input{}, 1024, 768)
+		if a.blacksmithUI.Mode != ui.ForgeMenu || a.blacksmith.selected != [4]bool{} {
+			t.Fatalf("%s reopened same blacksmith on stale page/selection: mode=%d selected=%v", closeAction, a.blacksmithUI.Mode, a.blacksmith.selected)
+		}
+	}
+}
