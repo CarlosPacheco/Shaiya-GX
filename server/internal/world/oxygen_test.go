@@ -105,3 +105,50 @@ func TestSurfacingBeforeDrowningTickPreventsDamage(t *testing.T) {
 		t.Fatal("surfaced character still drowned", v, err, s.char.CurrentHP)
 	}
 }
+
+// GM "attack on" gives no protection from the water, drowning announces its
+// own death and the body floats up to the surface pose.
+func TestGMImmunityDoesNotStopDrowningAndTheDrownedBodyFloats(t *testing.T) {
+	s, packets := oxygenFixture(t)
+	t.Setenv("RAPTURE_FALL_DAMAGE", "false")
+	s.isAdmin, s.gmImmune = true, true
+	now := time.Now()
+	s.movement.pos[1] = -3
+	s.char.PosY = -3
+	s.tickOxygen(now)
+	before := s.char.CurrentHP
+	s.tickOxygen(now.Add(30*time.Second + drowningInterval))
+	if s.char.CurrentHP >= before {
+		t.Fatal("an immune GM did not take drowning damage")
+	}
+	for i := 2; i <= 6 && !s.dead; i++ {
+		s.tickOxygen(now.Add(30*time.Second + time.Duration(i)*drowningInterval))
+	}
+	if !s.dead {
+		t.Fatal("the GM never drowned")
+	}
+	id, err := proto.DecodeDrowningDeath(waitWorldPacket(t, packets, proto.GXDrowningDeath))
+	if err != nil || id != s.char.ID {
+		t.Fatalf("drowning death notice: %d, %v", id, err)
+	}
+	if s.char.PosY != drownedFloatY || s.movement.pos[1] != drownedFloatY {
+		t.Fatalf("the drowned body stayed at %.2f", s.char.PosY)
+	}
+}
+
+func TestFallDamageIgnoresAttackOnButNotTurbo(t *testing.T) {
+	s, _ := oxygenFixture(t)
+	t.Setenv("RAPTURE_FALL_DAMAGE", "true")
+	s.isAdmin, s.gmImmune = true, true
+	full := s.char.CurrentHP
+	s.applyFallDamage(30)
+	if s.char.CurrentHP >= full {
+		t.Fatal("attack on protected a GM from fall damage")
+	}
+	s.char.CurrentHP = full
+	s.gmTurbo = true
+	s.applyFallDamage(30)
+	if s.char.CurrentHP != full {
+		t.Fatal("turbo no longer cancels fall damage")
+	}
+}

@@ -197,6 +197,7 @@ type State struct {
 	LastAttack             proto.AttackResult
 	LastFallDamage         proto.FallDamage
 	LastDrowningDamage     proto.EnvironmentalDamage
+	LastDrowningDeath      uint32
 	Oxygen                 proto.OxygenStatus
 	PvPCountsKnown         [4]bool
 	PvPRewards             proto.PvPRewards
@@ -904,6 +905,12 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			return fail(err)
 		}
 		s.LastDrowningDamage = result
+	case proto.GXDrowningDeath:
+		id, err := proto.DecodeDrowningDeath(p)
+		if err != nil {
+			return fail(err)
+		}
+		s.LastDrowningDeath = id
 	case proto.GXFallDamage:
 		result, err := proto.DecodeFallDamage(p)
 		if err != nil {

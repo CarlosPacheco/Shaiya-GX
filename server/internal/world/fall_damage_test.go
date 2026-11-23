@@ -72,9 +72,9 @@ func TestAuthoritativeLandingDamagesOnceAndCanKill(t *testing.T) {
 		})
 	}
 }
-func TestSpawnAndImmuneFallsDoNotDamage(t *testing.T) {
+func TestSpawnAndTurboFallsDoNotDamage(t *testing.T) {
 	for _, spawn := range []bool{false, true} {
-		name := "immune"
+		name := "turbo"
 		if spawn {
 			name = "spawn"
 		}
@@ -84,7 +84,7 @@ func TestSpawnAndImmuneFallsDoNotDamage(t *testing.T) {
 			if spawn {
 				s.movement.fallReady = false
 			} else {
-				s.isAdmin, s.gmImmune = true, true
+				s.isAdmin, s.gmTurbo = true, true // "attack on" no longer protects; turbo does
 			}
 			finishTestFall(s, now)
 			if s.char.CurrentHP != before {

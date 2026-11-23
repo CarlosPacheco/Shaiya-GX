@@ -101,6 +101,15 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		}
 	case proto.GXKillNotice:
 		a.systemMessage(1, 8, map[string]string{"t": s.LastKillNotice}) // red: "Killed <t>"
+	case proto.GXDrowningDamage:
+		r := s.LastDrowningDamage
+		if r.Target == s.SelfID {
+			a.combatMessage(1, 12372, map[string]string{"v": number(r.Amount)})
+		}
+	case proto.GXDrowningDeath:
+		if s.LastDrowningDeath == s.SelfID {
+			a.systemMessage(1, 12373, nil)
+		}
 	case proto.GXFallDamage:
 		r := s.LastFallDamage
 		if r.Target == s.SelfID {

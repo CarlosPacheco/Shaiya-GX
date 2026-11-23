@@ -16,7 +16,8 @@ func fallDamage(drop float32, maxHP uint32) uint32 {
 	return uint32(math.Ceil(float64(maxHP) * min(.5*fraction*fraction, 1)))
 }
 func (s *Session) applyFallDamage(drop float32) {
-	if !config.FallDamageEnabled() || s.char == nil || s.dead || s.invulnerable() || s.turboActive() {
+	// Only GM turbo cancels fall damage; "attack on" does not protect from it.
+	if !config.FallDamageEnabled() || s.char == nil || s.dead || s.turboActive() {
 		return
 	}
 	st := s.stats()
@@ -24,7 +25,8 @@ func (s *Session) applyFallDamage(drop float32) {
 }
 
 func (s *Session) applyEnvironmentalDamage(amount uint32, opcode proto.Opcode, cause string) {
-	if s.char == nil || s.dead || s.invulnerable() {
+	// Environmental damage ignores GM immunity: "attack on" never stops drowning.
+	if s.char == nil || s.dead {
 		return
 	}
 	damage := min(s.char.CurrentHP, amount)
@@ -64,4 +66,32 @@ func (s *Session) applyEnvironmentalDamage(amount uint32, opcode proto.Opcode, c
 	s.clearBuffsOnDeath()
 	// Environmental deaths grant no PvP credit, item or XP loss.
 	s.deathLoss = -1
+	if opcode == proto.GXDrowningDamage {
+		notice := packet.New(packet.Opcode(proto.GXDrowningDeath))
+		notice.U32(s.char.ID)
+		frame := notice.MustFinish()
+		s.send(frame, "GX drowning death")
+		s.sendToViewers(frame, "GX drowning death (view)")
+		s.floatDrownedBody()
+	}
+}
+
+// drownedFloatY is the surface swimming pose: a drowned body and its spirit
+// rise to it instead of staying where the breath ran out.
+const drownedFloatY = float32(-1.5)
+
+func (s *Session) floatDrownedBody() {
+	ch := s.char
+	if ch == nil || ch.PosY >= drownedFloatY {
+		return
+	}
+	ch.PosY = drownedFloatY
+	s.movement.pos[1] = drownedFloatY
+	if s.player != nil {
+		s.player.UpdateCharacter(*ch)
+	}
+	move := buildCharacterMove(ch, 0, 0)
+	s.send(move, "drowned body floats")
+	s.sendToViewers(move, "drowned body floats (view)")
+	s.positionDirty = true
 }

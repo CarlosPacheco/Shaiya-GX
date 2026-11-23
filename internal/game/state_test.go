@@ -750,3 +750,12 @@ func TestSelectingACharacterClearsTheChat(t *testing.T) {
 		t.Fatal("chat survived a character switch", s.Chat)
 	}
 }
+
+func TestDrowningDeathNoticeIsRecorded(t *testing.T) {
+	s := New()
+	w := proto.NewWriter(proto.GXDrowningDeath)
+	w.U32(77)
+	if _, err := s.Apply(w.Bytes()); err != nil || s.LastDrowningDeath != 77 {
+		t.Fatal("drowning death notice not applied", err, s.LastDrowningDeath)
+	}
+}

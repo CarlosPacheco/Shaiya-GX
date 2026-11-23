@@ -151,18 +151,21 @@ func (h *HUD) DrawCast(s *render.Sprites, solid *render.Texture, x, y int, left,
 	if !ok {
 		return
 	}
-	drawProgressColumn(s, solid, x, y, fill)
+	drawProgressColumn(s, solid, x, y, fill, [4]float32{0, 0, 1, 1})
 }
 
 // DrawOxygen reuses the cast column with the remaining fraction filled.
 func (h *HUD) DrawOxygen(s *render.Sprites, solid *render.Texture, x, y int, fraction float64) {
 	fill := int(math.RoundToEven(min(1, max(0, fraction)) * 62))
-	drawProgressColumn(s, solid, x, y, fill)
+	drawProgressColumn(s, solid, x, y, fill, oxygenColor)
 }
 
-func drawProgressColumn(s *render.Sprites, solid *render.Texture, x, y, fill int) {
+// oxygenColor is the breath column: light cyan, so it never reads as the blue cast bar.
+var oxygenColor = [4]float32{.35, .85, 1, 1}
+
+func drawProgressColumn(s *render.Sprites, solid *render.Texture, x, y, fill int, color [4]float32) {
 	s.Draw(solid, float32(x), float32(y), 5, 64, 0, 0, 1, 1, [4]float32{0, 0, 0, 1})
-	s.Draw(solid, float32(x+1), float32(y+63-fill), 3, float32(fill), 0, 0, 1, 1, [4]float32{0, 0, 1, 1})
+	s.Draw(solid, float32(x+1), float32(y+63-fill), 3, float32(fill), 0, 0, 1, 1, color)
 }
 
 func castFillHeight(left, total float32) (int, bool) {

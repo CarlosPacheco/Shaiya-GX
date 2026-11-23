@@ -452,3 +452,5 @@
 12369		"Map <v>"
 12370		"HP <v>"
 12371		"Map image unavailable"
+12372		"Took <v> damage from drowning"
+12373		"You drowned"
