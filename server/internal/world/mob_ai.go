@@ -650,7 +650,9 @@ func (h *mobAIHost) attack(stationary bool) {
 		return
 	}
 	d := m.targetDistance(target)
-	if !h.now.Before(m.nextAttackAt) && m.canReachTarget(target) {
+	// A mob that is still walking to its booked position attacks once it has
+	// arrived, so clients never see the attack play while it glides.
+	if !h.now.Before(m.nextAttackAt) && m.canReachTarget(target) && !m.hopActive(h.now) {
 		slot, ok, declinedSpell := m.pickAttackSlot(h.now, d, &mods, func() bool { return rand.IntN(2) == 0 })
 		if ok {
 			weakest := m.def.Attacks[slot].OK == 6 && mods.VisionFix == 0 && m.targetWeakest(h.players)
@@ -665,6 +667,8 @@ func (h *mobAIHost) attack(stationary bool) {
 				return
 			}
 			m.lastAttackAt = h.now
+			// It stays where it is while the attack animation plays.
+			m.nextChaseAt = later(m.nextChaseAt, h.now.Add(min(time.Duration(m.def.Attacks[slot].TimeMS)*time.Millisecond, mobAttackAnimation)))
 			if heal := m.useSlot(slot, h.now); heal != nil {
 				h.tick.Restores = append(h.tick.Restores, mapPacket{h.mapID, m.PosX, m.PosZ, heal})
 				if sk := db.MustDefs().NPCSkill(m.def.Attacks[slot].Type); sk != nil {

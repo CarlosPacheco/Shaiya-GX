@@ -63,55 +63,61 @@ func (a MobArea) contains(x, z float32) bool {
 }
 
 type MapMob struct {
-	aiMapID              uint16
-	aiSummoned           bool
-	aiAttackType         uint8
-	lua                  mobAIState
-	event                *eventActor
-	eventGeneration      uint64
-	eventFresh           bool
-	eventDamage          []eventDamageEntry
-	lootDamage           []eventDamageEntry // damage per attacker: who earns the loot
-	elementRestored      bool               // RemApplySkillDebuff68 restores base even with another68 active.
-	ID                   uint32
-	MobID                uint16
-	Level                uint16
-	PosX, PosY, PosZ     float32
-	nav                  *mobNav
-	navPath              []mapnav.Point
-	navGoal              mapnav.Point
-	navRefresh           time.Time
-	moveDuration         time.Duration
-	spawnMinY, spawnMaxY float32
-	spawnHeightKnown     bool
-	homeY                float32
-	homeX, homeZ         float32
-	CurrentHP, MaxHP     uint32
-	MoneyMin, MoneyMax   uint32
-	Exp                  uint32
-	Area                 *MobArea
-	respawnDelay         time.Duration // 0: no respawn (ungrouped) / immediate (grouped)
-	group                *mobGroup     // stMobRespawn: the area entry it belongs to
-	respawnAt            time.Time
-	roamStep             uint32
-	Attack               uint32
-	AI                   uint8
-	ChaseRange           float32
-	AggroTarget          uint32 // 0: none
-	lastAttackAt         time.Time
-	nextAttackAt         time.Time        // CMob m_dwNextAttackTime
-	noTargetUntil        time.Time        // CMob::Init: no target search for 5 s
-	aggro                map[uint32]int64 // CDamage ledger: damage and skill aggro
-	slotReadyAt          [3]time.Time     // per attack slot (AttackAI)
-	returningHome        bool
-	def                  *db.MobDef
-	nextMoveAt           time.Time   // idle wander
-	nextChaseAt          time.Time   // chase / return step
-	Effects              []MobEffect // applied skills (TypeEffect 3)
-	cell                 cell        // view cell, with the move hysteresis
-	hasCell              bool
-	diedAt               time.Time
-	corpseGone           bool // the corpse left the view (5 s after death)
+	aiMapID          uint16
+	aiSummoned       bool
+	aiAttackType     uint8
+	lua              mobAIState
+	event            *eventActor
+	eventGeneration  uint64
+	eventFresh       bool
+	eventDamage      []eventDamageEntry
+	lootDamage       []eventDamageEntry // damage per attacker: who earns the loot
+	elementRestored  bool               // RemApplySkillDebuff68 restores base even with another68 active.
+	ID               uint32
+	MobID            uint16
+	Level            uint16
+	PosX, PosY, PosZ float32
+	nav              *mobNav
+	navPath          []mapnav.Point
+	navGoal          mapnav.Point
+	navRefresh       time.Time
+	moveDuration     time.Duration
+	// The server moves a mob a whole hop at once while clients walk it there at
+	// constant speed; hop* is what they show, so combat uses the same place.
+	hopFromX, hopFromZ, hopToX, hopToZ float32
+	hopStart                           time.Time
+	hopFor                             time.Duration
+	hopSet, navHop                     bool
+	spawnMinY, spawnMaxY               float32
+	spawnHeightKnown                   bool
+	homeY                              float32
+	homeX, homeZ                       float32
+	CurrentHP, MaxHP                   uint32
+	MoneyMin, MoneyMax                 uint32
+	Exp                                uint32
+	Area                               *MobArea
+	respawnDelay                       time.Duration // 0: no respawn (ungrouped) / immediate (grouped)
+	group                              *mobGroup     // stMobRespawn: the area entry it belongs to
+	respawnAt                          time.Time
+	roamStep                           uint32
+	Attack                             uint32
+	AI                                 uint8
+	ChaseRange                         float32
+	AggroTarget                        uint32 // 0: none
+	lastAttackAt                       time.Time
+	nextAttackAt                       time.Time        // CMob m_dwNextAttackTime
+	noTargetUntil                      time.Time        // CMob::Init: no target search for 5 s
+	aggro                              map[uint32]int64 // CDamage ledger: damage and skill aggro
+	slotReadyAt                        [3]time.Time     // per attack slot (AttackAI)
+	returningHome                      bool
+	def                                *db.MobDef
+	nextMoveAt                         time.Time   // idle wander
+	nextChaseAt                        time.Time   // chase / return step
+	Effects                            []MobEffect // applied skills (TypeEffect 3)
+	cell                               cell        // view cell, with the move hysteresis
+	hasCell                            bool
+	diedAt                             time.Time
+	corpseGone                         bool // the corpse left the view (5 s after death)
 }
 
 type MapPortal struct {
@@ -385,7 +391,10 @@ func MobByID(mapID uint16, id uint32) (MapMob, bool) {
 	defer s.mu.Unlock()
 	for i := range s.entities.Mobs {
 		if s.entities.Mobs[i].ID == id {
-			return cloneMob(&s.entities.Mobs[i]), true
+			c := cloneMob(&s.entities.Mobs[i])
+			// Range checks use the place players see, not the hop's end.
+			c.PosX, c.PosZ = c.visualXZ(time.Now())
+			return c, true
 		}
 	}
 	return MapMob{}, false
@@ -697,6 +706,7 @@ func (m *MapMob) respawnSpot(mapID uint16) (float32, float32, bool) {
 // relocate updates the mob's cell after a position change and returns the
 // update for the users around it.
 func (m *MapMob) relocate(mapID uint16, motion uint8) entityMove {
+	m.startHop(time.Now(), motion, !m.hasCell)
 	from, fresh := m.cell, !m.hasCell
 	m.cell, m.hasCell = cellAfterMove(m.cell, m.hasCell, m.PosX, m.PosZ), true
 	return entityMove{MapID: mapID, Kind: viewMob, ID: m.ID, From: from, To: m.cell, Fresh: fresh,
@@ -1200,6 +1210,7 @@ func (m *MapMob) advanceRoam(mapID uint16) bool {
 			if v := movespeed.MobUnitsPerSecond(int(m.def.NormalStep), m.def.NormalTimeMS, uint8(min(max(2+mods.MoveSpeed, 0), 4))); v > 0 {
 				m.moveDuration = max(mobNavigationTick, time.Duration(float64(travelled)/v*float64(time.Second)))
 			}
+			m.navHop = true
 		}
 		return ok
 	}
@@ -1230,6 +1241,16 @@ func (m *MapMob) attackReach() float32 {
 		return MobAttackRange
 	}
 	return float32(m.def.Size) + float32(m.def.Attacks[0].Range) + 0.3
+}
+
+// mobAttackAnimation caps how long a mob holds still while an attack plays.
+const mobAttackAnimation = time.Second
+
+func later(a, b time.Time) time.Time {
+	if b.After(a) {
+		return b
+	}
+	return a
 }
 
 // mobAttackIdle is AttackAI's wait when no slot is ready (2500 ms plus
@@ -1562,4 +1583,59 @@ func (m *MapMob) recordLootDamage(id, damage uint32) {
 		}
 	}
 	m.lootDamage = append(m.lootDamage, eventDamageEntry{id, uint64(damage)})
+}
+
+// hopPoint is where the last hop's clients show the mob at now.
+func (m *MapMob) hopPoint(now time.Time) (float32, float32) {
+	if m.hopFor > 0 {
+		if el := now.Sub(m.hopStart); el < m.hopFor {
+			t := float32(el) / float32(m.hopFor)
+			return m.hopFromX + (m.hopToX-m.hopFromX)*t, m.hopFromZ + (m.hopToZ-m.hopFromZ)*t
+		}
+	}
+	return m.hopToX, m.hopToZ
+}
+
+// hopActive: the mob is still walking to the place the server already holds.
+func (m *MapMob) hopActive(now time.Time) bool {
+	return m.hopSet && m.hopFor > 0 && now.Before(m.hopStart.Add(m.hopFor))
+}
+
+// visualXZ is the position players see: combat range checks use it, not the
+// end of the hop the server has already booked.
+func (m *MapMob) visualXZ(now time.Time) (float32, float32) {
+	if m.hopActive(now) {
+		return m.hopPoint(now)
+	}
+	return m.PosX, m.PosZ
+}
+
+// startHop books the hop the move packet is about to announce (shard lock
+// held, PosX/PosZ already at its end).
+func (m *MapMob) startHop(now time.Time, motion uint8, fresh bool) {
+	if fresh || !m.hopSet {
+		m.hopFromX, m.hopFromZ, m.hopToX, m.hopToZ = m.PosX, m.PosZ, m.PosX, m.PosZ
+		m.hopStart, m.hopFor, m.hopSet, m.navHop = now, 0, true, false
+		return
+	}
+	fx, fz := m.hopPoint(now)
+	dur := time.Duration(0)
+	if distance := DistanceXZ(fx, fz, m.PosX, m.PosZ); distance > .01 {
+		if m.navHop {
+			dur = m.moveDuration
+		} else if m.def != nil {
+			// The client draws a hop without a duration at the constant speed of
+			// the mob's step and time (0x4312a0).
+			step, ms := m.def.NormalStep, m.def.NormalTimeMS
+			if motion == mobMotionRun {
+				step, ms = m.def.ChaseStep, m.def.ChaseTimeMS
+			}
+			mods := m.mods()
+			if v := movespeed.MobUnitsPerSecond(int(step), ms, uint8(min(max(2+mods.MoveSpeed, 0), 4))); v > 0 {
+				dur = time.Duration(float64(distance) / v * float64(time.Second))
+			}
+		}
+	}
+	m.hopFromX, m.hopFromZ, m.hopToX, m.hopToZ = fx, fz, m.PosX, m.PosZ
+	m.hopStart, m.hopFor, m.navHop = now, dur, false
 }

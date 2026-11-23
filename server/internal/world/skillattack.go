@@ -169,7 +169,8 @@ func (s *Session) sacrifice() {
 func (s *Session) skillMobsWithin(x, y, z, r float32) []uint32 {
 	var out []uint32
 	for _, m := range EntitiesOnMap(s.char.MapID).Mobs {
-		if m.CurrentHP > 0 && s.skillAreaContains(skillrange.Position{x, y, z}, skillrange.Position{m.PosX, m.PosY, m.PosZ}, r) {
+		vx, vz := m.visualXZ(time.Now())
+		if m.CurrentHP > 0 && s.skillAreaContains(skillrange.Position{x, y, z}, skillrange.Position{vx, m.PosY, vz}, r) {
 			out = append(out, m.ID)
 		}
 	}
