@@ -194,10 +194,31 @@ func (a *App) updateQuickPotions(in *platform.Input, w, h int) bool {
 		a.useQuickPotion(cell) // right click uses the potion
 	}
 	if in.Clicked {
+		// A left click that did not drag uses the potion, as on any bar.
+		if cell >= 0 && a.quickPotions.held == cell && !a.quickPotions.dragging {
+			a.useQuickPotion(cell)
+		}
 		a.quickPotions.held = -1
 	}
 	return handled || in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.Wheel != 0
 }
+
+// drawQuickPotionDrag shows the potion held by the cursor above every panel.
+func (a *App) drawQuickPotionDrag() {
+	v := &a.quickPotions
+	if !v.dragging || v.held < 0 {
+		return
+	}
+	binding := v.bindings[v.held]
+	if d := a.itemsItem(binding.Type, binding.TypeID); d != nil {
+		if file, uv, ok := ui.ItemIcon(binding.Type, d.Icon); ok {
+			if tex := a.assets.Texture("interface/" + file); tex != nil {
+				a.sprites.Draw(tex, float32(a.lastMouseX-16), float32(a.lastMouseY-16), 32, 32, uv.U0, uv.V0, uv.U1, uv.V1, [4]float32{1, 1, 1, .85})
+			}
+		}
+	}
+}
+
 func (a *App) drawQuickPotions(w, h int) {
 	a.ensureQuickPotions()
 	var slots [2]ui.ActionSlot

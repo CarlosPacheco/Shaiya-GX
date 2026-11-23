@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
@@ -322,7 +323,8 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 		}
 	}
 	xq, yq := ui.QuickPotionOrigin(a.quickPotions.Position, w, h)
-	if pointInside(in, xq, yq, 94, 54) && ui.QuickPotionCell(in.MouseX, in.MouseY, xq, yq) < 0 && !a.barCovered(in, w, h) {
+	// The frame and any empty cell move the bar; a filled cell is grabbed as a potion.
+	if cell := ui.QuickPotionCell(in.MouseX, in.MouseY, xq, yq); pointInside(in, xq, yq, 94, 54) && (cell < 0 || a.quickPotions.bindings[cell] == (sdata.ItemKey{})) && !a.barCovered(in, w, h) {
 		a.windowDrag = windowDrag{position: &a.quickPotions.Position, offsetX: in.MouseX - xq, offsetY: in.MouseY - yq, width: 94, height: 54}
 		a.wv.uiLeft = -2
 		return true

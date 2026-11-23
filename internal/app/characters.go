@@ -473,6 +473,7 @@ func (a *App) drawCharacters(w, h int) {
 		a.drawSharedTooltip(w, h)
 		a.drawWarehouseDrag()
 		a.drawInventoryDrag()
+		a.drawQuickPotionDrag()
 		a.drawShortcutDrag()
 		a.drawRevolverDrag()
 		a.drawLocalActionDrag()

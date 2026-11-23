@@ -213,3 +213,25 @@ func TestPotionBindingRequiresExplicitDragOutToRemove(t *testing.T) {
 		t.Fatal("explicit drag out did not remove binding")
 	}
 }
+
+// An empty potion cell moves the bar like its frame; a filled one is grabbed
+// as a potion instead.
+func TestQuickPotionEmptyCellMovesTheBarAndFilledCellDoesNot(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	a := inputApp()
+	a.state.SelfID = 78
+	a.ensureQuickPotions()
+	a.quickPotions.Position.Move(390, 220, 1024, 768, 94, 54)
+	x, y := ui.QuickPotionOrigin(a.quickPotions.Position, 1024, 768)
+	press := platform.Input{MouseX: x + 15, MouseY: y + 15, Pressed: true, MouseDown: true}
+	a.updateWindowDrag(&press, 1024, 768)
+	if a.windowDrag.position != &a.quickPotions.Position {
+		t.Fatal("an empty cell did not move the bar")
+	}
+	a.windowDrag = windowDrag{}
+	a.quickPotions.bindings[0] = sdata.ItemKey{Type: 25, TypeID: 4}
+	a.updateWindowDrag(&press, 1024, 768)
+	if a.windowDrag.position == &a.quickPotions.Position {
+		t.Fatal("a filled cell moved the bar instead of the potion")
+	}
+}
