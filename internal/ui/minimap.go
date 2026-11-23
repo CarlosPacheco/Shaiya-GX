@@ -237,11 +237,10 @@ func (m *Minimap) Draw(s *render.Sprites, f *Font, image, solid *render.Texture,
 	if label == "" {
 		label = "--:--"
 	}
-	scale := float32(1)
-	if width := f.Width(label); width > 134 {
-		scale = 134 / float32(width)
-	}
-	drawResourceText(s, f, label, float32(x+84)-float32(f.Width(label))*scale/2, float32(y+168), scale, 0)
+	// 0x4c84fb..0x4c85b8: the clock is plain left-aligned text at the map
+	// origin +(46,167), unscaled and without a shadow. The map frame is drawn
+	// at the same origin, which this window places at (x+4, y+4).
+	f.Draw(s, label, x+4+46, y+4+167, white, 0)
 }
 
 func (m *Minimap) DrawFull(s *render.Sprites, f *Font, image, solid *render.Texture, w, h int, view UV, u, v, heading float32, mapID uint16, markers []MapMarker) {
