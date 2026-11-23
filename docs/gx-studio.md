@@ -82,9 +82,11 @@ Keep the executable in a writable folder for the local backups and recovery jour
 ## Enchant
 
 Select the server's `data/game` folder. **Enchant** edits the
-`ItemEnchant.ini` rates per million and total bonuses. Add or remove levels
-to adjust the cap for each equipment type, up to +49. Zero disables
-enchanting for that type.
+`ItemEnchant.ini` success rates and total bonuses. Edit the chance per million
+or enter a percentage with up to four decimal places. The columns stay in
+sync, so entering `12.5` in **Chance (%)** gives `125000` per million. Add or
+remove levels to adjust the cap for each equipment type, up to +49. Zero
+disables enchanting for that type.
 
 ## File-backed server catalogs
 
