@@ -16,9 +16,14 @@ import (
 )
 
 type enchantRow struct {
-	level         uint8
-	chance, bonus *widget.Entry
+	level                  uint8
+	chance, percent, bonus *widget.Entry
 }
+
+const (
+	enchantChanceScale = 10_000
+	enchantChanceMax   = 100 * enchantChanceScale
+)
 
 func (e *editor) enchantCatalog() {
 	e.status = wrapped("")
@@ -27,15 +32,18 @@ func (e *editor) enchantCatalog() {
 	read := func() (enchantrules.Catalog, uint8, uint8, error) {
 		var rules enchantrules.Catalog
 		for i, group := range rows {
-			target := &rules.Attack
+			target, kind := &rules.Attack, "Attack"
 			if i == 1 {
-				target = &rules.Defense
+				target, kind = &rules.Defense, "Defense"
 			}
 			for _, row := range group {
-				chance, chanceErr := strconv.ParseUint(strings.TrimSpace(row.chance.Text), 10, 32)
-				bonus, bonusErr := strconv.ParseUint(strings.TrimSpace(row.bonus.Text), 10, 32)
-				if chanceErr != nil || bonusErr != nil {
-					return rules, 0, 0, fmt.Errorf("invalid number at level +%d", row.level)
+				chance, err := strconv.ParseUint(strings.TrimSpace(row.chance.Text), 10, 32)
+				if err != nil || chance > enchantChanceMax {
+					return rules, 0, 0, fmt.Errorf("%s +%d: enter a chance from 0 to 100%% with up to four decimals, or 0 to 1000000 per million", kind, row.level)
+				}
+				bonus, err := strconv.ParseUint(strings.TrimSpace(row.bonus.Text), 10, 31)
+				if err != nil {
+					return rules, 0, 0, fmt.Errorf("%s +%d: enter a whole bonus from 0 to 2147483647", kind, row.level)
 				}
 				*target = append(*target, enchantrules.Level{Number: row.level, SuccessChance: uint32(chance), Bonus: uint32(bonus)})
 			}
@@ -72,13 +80,13 @@ func (e *editor) enchantCatalog() {
 	})
 	save.Importance = widget.HighImportance
 	update = func() {
-		_, attack, defense, err := read()
+		rules, attack, defense, err := read()
 		if err != nil {
 			capLabel.SetText(err.Error())
 		} else {
 			capLabel.SetText(fmt.Sprintf("Attack cap +%d  ·  Defense cap +%d  ·  Maximum +%d", attack, defense, enchantrules.MaxLevel))
 		}
-		if err == nil && e.serverDraftDirty() && !e.busy {
+		if err == nil && !rules.Equal(catalog.Rules) && !e.busy {
 			save.Enable()
 		} else {
 			save.Disable()
@@ -86,7 +94,7 @@ func (e *editor) enchantCatalog() {
 	}
 	for i, levels := range [2][]enchantrules.Level{catalog.Rules.Attack, catalog.Rules.Defense} {
 		for _, level := range levels {
-			rows[i] = append(rows[i], enchantInputs(level))
+			rows[i] = append(rows[i], enchantInputs(level, update))
 		}
 	}
 	tabs.Append(container.NewTabItem("Attack", enchantTable(&rows[0], "Weapon", "Attack bonus", update)))
@@ -96,14 +104,72 @@ func (e *editor) enchantCatalog() {
 		container.NewHBox(widget.NewButton("Open another installation", func() { e.leave(e.start) }),
 			e.switcher(studio.Enchant), save),
 		wrapped(catalog.File.Path), capLabel,
-		wrapped("Chances are per million to reach the listed level. Bonuses are totals at the listed level."),
+		wrapped("Edit either chance column. Chances apply when reaching the listed level, and bonuses are totals at that level."),
 	)
 	e.window.SetContent(container.NewPadded(container.NewBorder(top, e.status, nil, nil, tabs)))
 }
 
-func enchantInputs(level enchantrules.Level) enchantRow {
-	return enchantRow{level: level.Number, chance: inspectorEntry(strconv.FormatUint(uint64(level.SuccessChance), 10)),
-		bonus: inspectorEntry(strconv.FormatUint(uint64(level.Bonus), 10))}
+func formatEnchantPercent(chance uint64) string {
+	return strings.TrimRight(strings.TrimRight(fmt.Sprintf("%d.%04d", chance/enchantChanceScale, chance%enchantChanceScale), "0"), ".")
+}
+
+func parseEnchantPercent(text string) (uint64, bool) {
+	text = strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(text), "%"))
+	whole, fraction, _ := strings.Cut(text, ".")
+	if whole == "" {
+		if fraction == "" {
+			return 0, false
+		}
+		whole = "0"
+	}
+	integer, err := strconv.ParseUint(whole, 10, 8)
+	if err != nil || len(fraction) > 4 {
+		return 0, false
+	}
+	decimal, err := strconv.ParseUint(fraction+strings.Repeat("0", 4-len(fraction)), 10, 16)
+	chance := integer*enchantChanceScale + decimal
+	return chance, err == nil && chance <= enchantChanceMax
+}
+
+func enchantInputs(level enchantrules.Level, update func()) enchantRow {
+	row := enchantRow{
+		level:   level.Number,
+		chance:  inspectorEntry(strconv.FormatUint(uint64(level.SuccessChance), 10)),
+		percent: inspectorEntry(formatEnchantPercent(uint64(level.SuccessChance))),
+		bonus:   inspectorEntry(strconv.FormatUint(uint64(level.Bonus), 10)),
+	}
+	syncing := false
+	syncEntry := func(entry *widget.Entry, text string) {
+		syncing = true
+		if entry.Text != text {
+			entry.SetText(text)
+		}
+		syncing = false
+		update()
+	}
+	row.chance.OnChanged = func(text string) {
+		if syncing {
+			return
+		}
+		chance, err := strconv.ParseUint(strings.TrimSpace(text), 10, 32)
+		percent := ""
+		if err == nil && chance <= enchantChanceMax {
+			percent = formatEnchantPercent(chance)
+		}
+		syncEntry(row.percent, percent)
+	}
+	row.percent.OnChanged = func(text string) {
+		if syncing {
+			return
+		}
+		raw := ""
+		if chance, ok := parseEnchantPercent(text); ok {
+			raw = strconv.FormatUint(chance, 10)
+		}
+		syncEntry(row.chance, raw)
+	}
+	row.bonus.OnChanged = func(string) { update() }
+	return row
 }
 
 func enchantTable(rows *[]enchantRow, prefix, bonusTitle string, update func()) fyne.CanvasObject {
@@ -115,20 +181,11 @@ func enchantTable(rows *[]enchantRow, prefix, bonusTitle string, update func()) 
 	render := func() {
 		body.Objects = nil
 		for _, row := range *rows {
-			percent := widget.NewLabel("")
-			updateChance := func(text string) {
-				value, err := strconv.ParseUint(strings.TrimSpace(text), 10, 32)
-				if err != nil || value > 1000000 {
-					percent.SetText("—")
-				} else {
-					percent.SetText(fmt.Sprintf("%.4f%%", float64(value)/10000))
-				}
-				update()
-			}
-			row.chance.OnChanged = updateChance
-			row.bonus.OnChanged = func(string) { update() }
-			updateChance(row.chance.Text)
-			body.Add(grid(widget.NewLabel(fmt.Sprintf("+%d", row.level)), container.NewVBox(small(fmt.Sprintf("%sStep%02d", prefix, row.level-1)), row.chance), percent, container.NewVBox(small(fmt.Sprintf("%sStep%02d", prefix, row.level)), row.bonus)))
+			rateKey := small(fmt.Sprintf("%sStep%02d", prefix, row.level-1))
+			bonusKey := small(fmt.Sprintf("%sStep%02d", prefix, row.level))
+			body.Add(grid(widget.NewLabel(fmt.Sprintf("+%d", row.level)),
+				container.NewVBox(rateKey, row.chance), container.NewBorder(nil, row.percent, nil, nil),
+				container.NewVBox(bonusKey, row.bonus)))
 		}
 		body.Refresh()
 		add.Enable()
@@ -142,7 +199,7 @@ func enchantTable(rows *[]enchantRow, prefix, bonusTitle string, update func()) 
 		update()
 	}
 	add.OnTapped = func() {
-		*rows = append(*rows, enchantInputs(enchantrules.Level{Number: uint8(len(*rows) + 1)}))
+		*rows = append(*rows, enchantInputs(enchantrules.Level{Number: uint8(len(*rows) + 1)}, update))
 		render()
 	}
 	remove.OnTapped = func() {
@@ -150,8 +207,8 @@ func enchantTable(rows *[]enchantRow, prefix, bonusTitle string, update func()) 
 		render()
 	}
 	render()
-	header := grid(fieldHeading("Level", "[Enchant]"), fieldHeading("Success chance", "[LapisianEnchantPercentRate]"),
-		widget.NewLabel("Percent"), fieldHeading(bonusTitle, "[LapisianEnchantAddValue]"))
+	header := grid(fieldHeading("Level", "[Enchant]"), fieldHeading("Chance per million", "[LapisianEnchantPercentRate]"),
+		widget.NewLabel("Chance (%)"), fieldHeading(bonusTitle, "[LapisianEnchantAddValue]"))
 	top := container.NewVBox(container.NewHBox(add, remove), header, widget.NewSeparator())
 	return container.NewBorder(top, nil, nil, nil, container.NewVScroll(body))
 }
