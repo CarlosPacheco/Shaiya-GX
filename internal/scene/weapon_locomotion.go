@@ -23,6 +23,7 @@ func weaponLocomotionSlot(weapon uint8, running bool) int {
 	}
 	return ready[k]
 }
+
 // isReadySlot reports whether an ALT slot is one of the weapon ready stances.
 func isReadySlot(slot int) bool {
 	for _, s := range readySlots {
