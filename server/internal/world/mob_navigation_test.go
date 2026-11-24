@@ -185,7 +185,7 @@ func TestTiarusasSpawnCanChaseInJungle(t *testing.T) {
 		mobNavigation.Unlock()
 	})
 
-	goal, ok := nav.Project(mapnav.Point{414, 7, 655}, .5, 2)
+	goal, ok := nav.Project(mapnav.Point{414, 7, 660}, .5, 2)
 	if !ok {
 		t.Fatal("missing ground at the player position")
 	}
@@ -200,6 +200,11 @@ func TestTiarusasSpawnCanChaseInJungle(t *testing.T) {
 		if !spawn.placeOnNavigation(nav, mapID) {
 			t.Fatal("monster failed to spawn")
 		}
+		// Start outside attack reach and acquire the target before idle wander.
+		if distance := spawn.targetDistance(&player); distance <= spawn.attackReach() || distance > spawn.ChaseRange {
+			t.Fatalf("player distance %.2f from %v does not require a chase in range", distance, spawn.point())
+		}
+		spawn.noTargetUntil = time.Time{}
 		tick := &MobCombatTick{}
 		h := &mobAIHost{mob: &spawn, shard: sh, mapID: mapID, now: time.Now(), players: []PlayerCombatSnapshot{player}, tick: tick}
 		for range 20 {
