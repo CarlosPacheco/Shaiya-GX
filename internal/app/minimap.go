@@ -195,6 +195,9 @@ func (a *App) loadMapImage(v *mapView) {
 		decoded, err = img.DecodeResource(file, b)
 		if err == nil {
 			v.image = render.Upload(decoded)
+			// Game.exe 0x4c7860 samples one quad whose UVs leave [0,1] at the map
+			// edge with WRAP addressing: the far side of the map shows there.
+			v.image.SetWrap(true)
 		}
 	}
 	if err != nil {
