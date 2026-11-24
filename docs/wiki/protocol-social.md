@@ -16,7 +16,7 @@ Source notes: EP5.4 SHA256 8e5ef14a...bb3263 readers 0x594d20/0x594d80/0x594dd0 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [relicListFor (server/internal/world/relics.go)](../../server/internal/world/relics.go#L534)
+**S→C serializers:** [relicListFor (server/internal/world/relics.go)](../../server/internal/world/relics.go#L549)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L376)
 
@@ -26,7 +26,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>relicListFor — server/internal/world/relics.go</summary>
 
-[Source definition](../../server/internal/world/relics.go#L534)
+[Source definition](../../server/internal/world/relics.go#L549)
 
 ```go
 func relicListFor(mapID uint16) [][]byte {

@@ -125,7 +125,7 @@ Declarations: [packet.TargetMobGetState](../../server/internal/packet/packet.go#
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L274)
 
-**S→C serializers:** [buildMobState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1452), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [buildMobState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1408), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1009)
 
@@ -135,7 +135,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobState — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1452)
+[Source definition](../../server/internal/world/entities.go#L1408)
 
 ```go
 func buildMobState(m *MapMob) []byte {
@@ -201,7 +201,7 @@ Declarations: [packet.TargetMobHpUpdate](../../server/internal/packet/packet.go#
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L274)
 
-**S→C serializers:** [buildMobTargetHP (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1444)
+**S→C serializers:** [buildMobTargetHP (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1400)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1061)
 
@@ -211,7 +211,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildMobTargetHP — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1444)
+[Source definition](../../server/internal/world/entities.go#L1400)
 
 ```go
 func buildMobTargetHP(m *MapMob) []byte {
@@ -665,7 +665,7 @@ Declarations: [packet.CharacterReviveInit](../../server/internal/packet/packet.g
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildCharacterReviveInit (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1500)
+**S→C serializers:** [buildCharacterReviveInit (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1456)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -675,7 +675,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterReviveInit — server/internal/world/entities.go</summary>
 
-[Source definition](../../server/internal/world/entities.go#L1500)
+[Source definition](../../server/internal/world/entities.go#L1456)
 
 ```go
 func buildCharacterReviveInit(characterID uint32) []byte {

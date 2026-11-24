@@ -97,7 +97,7 @@ Source notes: Opcodes not named in Rapture's catalog. client handler 0x0059cf70 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildUserLeave (server/internal/world/view.go)](../../server/internal/world/view.go#L230)
+**S→C serializers:** [buildUserLeave (server/internal/world/view.go)](../../server/internal/world/view.go#L234)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1293), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L38)
 
@@ -107,7 +107,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildUserLeave — server/internal/world/view.go</summary>
 
-[Source definition](../../server/internal/world/view.go#L230)
+[Source definition](../../server/internal/world/view.go#L234)
 
 ```go
 func buildUserLeave(id uint32) []byte {
@@ -371,7 +371,7 @@ Declarations: [packet.ExpGain](../../server/internal/packet/packet.go#L41), [pro
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L635)
+**S→C serializers:** [buildExpGain (server/internal/world/combat.go)](../../server/internal/world/combat.go#L648)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L958)
 
@@ -381,7 +381,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildExpGain — server/internal/world/combat.go</summary>
 
-[Source definition](../../server/internal/world/combat.go#L635)
+[Source definition](../../server/internal/world/combat.go#L648)
 
 ```go
 func buildExpGain(credited experienceCredit) []byte {
