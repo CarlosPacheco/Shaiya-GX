@@ -115,8 +115,13 @@ func TestGuildCaptionOriginalColorsAndSpacingGL(t *testing.T) {
 			clear()
 			a.sprites.Begin(w, h)
 			a.sprites.NameDepth(depth)
-			a.font.DrawName(a.sprites, slot.Name, x-a.font.Width(slot.Name)/2, y, white)
-			a.font.DrawName(a.sprites, "Guardians", x-a.font.Width("Guardians")/2, y-15, ui.RGBColor(tint))
+			// Names use the chat font, lifted by its extra height, with the 15px
+			// native caption spacing scaled to it.
+			nameFont := a.chatFont()
+			lift := nameFont.Height - a.font.Height
+			spacing := guildCaptionOffset * nameFont.Height / a.font.Height
+			nameFont.Draw(a.sprites, slot.Name, x-nameFont.Width(slot.Name)/2, y-lift, white, 0)
+			nameFont.Draw(a.sprites, "Guardians", x-nameFont.Width("Guardians")/2, y-lift-spacing, ui.RGBColor(tint), 0)
 			a.sprites.End()
 			want := pixels()
 			if !bytes.Equal(got, want) {

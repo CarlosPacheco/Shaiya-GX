@@ -17,6 +17,9 @@ func (a *App) systemMessage(style uint8, id int, values map[string]string) {
 }
 
 func (a *App) addSystemText(style uint8, id int, text string) {
+	if native, ok := nativeSystemStyle[id]; ok {
+		style = native
+	}
 	a.state.AddChat(game.ChatLine{Text: text, Style: style, MessageID: id})
 	if nativeNoticeStyle(style) {
 		a.addScreenNotice(style, text)
@@ -92,11 +95,8 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		a.inventory.pending = false
 		a.systemMessage(17, 862, nil)
 	case proto.GXSkillFailure:
-		style := uint8(1)
-		switch s.LastSkillFailure.Message {
-		case proto.MsgCannotUseSkill, proto.MsgCannotAttack, 317:
-			style = 17
-		}
+		// Every skill refusal is an error-channel line (style 17) in Game.exe.
+		style := uint8(17)
 		a.systemMessage(style, int(s.LastSkillFailure.Message), nil)
 	case proto.GXLootNotice:
 		n := s.LastLootNotice
@@ -191,7 +191,7 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 				}
 			}
 			if name := itemName(it.Type, it.TypeID); name != "" {
-				a.systemMessage(3, 111, map[string]string{"i": name})
+				a.systemMessage(4, 111, map[string]string{"i": name})
 			}
 		}
 	case proto.LearnNewSkill:
@@ -237,9 +237,9 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		if r.Result > 3 {
 			switch r.Result {
 			case 5:
-				a.systemMessage(1, 233, nil)
+				a.systemMessage(17, 233, nil)
 			case 11:
-				a.systemMessage(1, 317, nil)
+				a.systemMessage(17, 317, nil)
 			}
 			return
 		}
@@ -259,9 +259,9 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		}
 		if r.Result == 3 {
 			if r.Source == s.SelfID {
-				a.systemMessage(0, 1108, map[string]string{"s": name, "t": target})
+				a.systemMessage(5, 1108, map[string]string{"s": name, "t": target})
 			} else {
-				a.systemMessage(1, 1306, map[string]string{"s": name, "p": a.chatEntityName(r.Source)})
+				a.systemMessage(5, 1306, map[string]string{"s": name, "p": a.chatEntityName(r.Source)})
 			}
 			return
 		}
@@ -321,7 +321,7 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		}
 	case proto.PartyLeft, proto.PartyExpelled:
 		if id, err := proto.DecodeU32(p); err == nil && id == s.SelfID {
-			a.systemMessage(3, 358, nil)
+			a.systemMessage(7, 358, nil)
 		}
 	case proto.CharacterDeath:
 		r := proto.NewReader(p)

@@ -33,7 +33,7 @@ func (a *App) skillRequestReach(d sdata.Skill, target uint32) bool {
 		return false
 	}
 	if !skillrange.Within(skillrange.Position(a.wv.pos), skillrange.Position(goal), a.skillLaunchReach(d, e)) {
-		a.systemMessage(1, 312, nil)
+		a.systemMessage(17, 312, nil)
 		return false
 	}
 	return true

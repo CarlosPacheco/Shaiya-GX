@@ -188,7 +188,7 @@ func (a *App) updateChat(in *platform.Input) bool {
 				}
 				packet = proto.WhisperPacket(recipient, chatBody(text, len(slots) > 0))
 				if packet == nil {
-					a.localizedNotice(1, 232, nil)
+					a.localizedNotice(17, 232, nil)
 					return true
 				}
 			}

@@ -127,7 +127,7 @@ func (a *App) updateExchangeDrag(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if item.Type == 27 || item.Type == 28 || item.Type == 29 {
-		a.localizedNotice(1, 231, nil)
+		a.localizedNotice(17, 231, nil)
 		return true
 	}
 	if a.state.Exchange.Own[slot].Item.Type != 0 {

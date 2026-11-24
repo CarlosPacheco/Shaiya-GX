@@ -71,7 +71,7 @@ func (a *App) updateExchangeInvite(in *platform.Input, w, h int) bool {
 	if x.AnswerSerial != v.answerSerial {
 		v.answerSerial = x.AnswerSerial
 		if x.Answer != 0 {
-			a.localizedNotice(1, 321, nil)
+			a.localizedNotice(7, 321, nil)
 		}
 	}
 	if x.Active {
@@ -105,13 +105,13 @@ func (a *App) updateExchange(in *platform.Input, w, h int) bool {
 		if x.EndSerial > 0 {
 			if x.EndResult == 0 {
 				if a.msg.Get(211) != "" {
-					a.systemMessage(3, 211, nil)
+					a.systemMessage(7, 211, nil)
 				} else {
 					a.questMessageID(12070)
 				}
 			} else {
 				if a.msg.Get(212) != "" {
-					a.systemMessage(3, 212, nil)
+					a.systemMessage(7, 212, nil)
 				} else {
 					a.questMessageID(12071)
 				}
