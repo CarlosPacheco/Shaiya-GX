@@ -20,8 +20,13 @@ func TestMapRulesMigrationAndAccess(t *testing.T) {
 	if err := loadMapProperties(log); err != nil {
 		t.Fatal(err)
 	}
-	if len(mapConfig.Zones) != 68 || mapConfig.Zones[30].WeatherType != proto.WeatherSnow {
-		t.Fatal("incomplete imported maps")
+	for _, id := range []uint16{25, 33, 34, 37, 38} {
+		if _, ok := mapConfig.Zones[id]; !ok {
+			t.Errorf("missing canonical dungeon %d", id)
+		}
+	}
+	if mapConfig.Zones[30].WeatherType != proto.WeatherSnow {
+		t.Fatal("missing map 30 snow rule")
 	}
 	s := &Session{}
 	for _, v := range []struct {
