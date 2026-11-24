@@ -179,7 +179,11 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.inventory.open && a.inventoryUI != nil {
 		x, y := a.inventoryUI.Origin(w, h)
-		if _, _, docked := a.inventoryDockOrigin(w, h); !docked && startFrame(&a.inventoryUI.Position, x, y, ui.InventoryWidth, ui.InventoryHeight, func() bool { return a.inventoryUI.FreeAt(in.MouseX, in.MouseY, w, h, a.inventory.bag) }) {
+		position := &a.inventoryUI.Position
+		if _, _, docked := a.inventoryDockOrigin(w, h); docked {
+			position = &a.inventory.servicePosition
+		}
+		if startFrame(position, x, y, ui.InventoryWidth, ui.InventoryHeight, func() bool { return a.inventoryUI.FreeAt(in.MouseX, in.MouseY, w, h, a.inventory.bag) }) {
 			return true
 		}
 		if pointInside(in, x, y, ui.InventoryWidth, ui.InventoryHeight) {
@@ -450,9 +454,11 @@ func pointInside(in *platform.Input, x, y, w, h int) bool {
 	return in.MouseX >= x && in.MouseX < x+w && in.MouseY >= y && in.MouseY < y+h
 }
 func (a *App) finishWindowDrag() {
-	if a.windowDrag.position != nil {
+	if position := a.windowDrag.position; position != nil {
 		a.windowDrag = windowDrag{}
-		a.saveUILayout()
+		if position != &a.inventory.servicePosition {
+			a.saveUILayout()
+		}
 	}
 }
 func (a *App) layoutPositions() map[string]*ui.WindowPosition {

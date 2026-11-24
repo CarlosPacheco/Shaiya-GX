@@ -12,6 +12,7 @@ import (
 )
 
 type inventoryView struct {
+	servicePosition         ui.WindowPosition // temporary placement during a merchant or warehouse visit
 	open, selected, pending bool
 	bag                     uint8
 	hover                   [2]uint8
