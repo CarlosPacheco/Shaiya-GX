@@ -105,7 +105,7 @@ func (s *Session) handlePublicChat(op packet.Opcode, message string, items proto
 }
 
 // handleWhisper (0x1102): target name[21] (20 characters), length, text.
-// The target (by name, same country) gets direction 0 with the sender's
+// Another character (by name, same country) gets direction 0 with the sender's
 // name; the sender gets direction 1 with the target's name; otherwise
 // 0x1106 result 1.
 func (s *Session) handleWhisper(p []byte) {
@@ -118,7 +118,7 @@ func (s *Session) handleWhisper(p []byte) {
 		return
 	}
 	t := FindPlayerByName(target)
-	if t == nil || t.Faction() != s.faction || db.SocialBlocked(t.CharacterID, s.char.ID) {
+	if t == nil || t.CharacterID == s.char.ID || t.Faction() != s.faction || db.SocialBlocked(t.CharacterID, s.char.ID) {
 		s.send(buildChatError(1), "0x1106 whisper target not found")
 		return
 	}

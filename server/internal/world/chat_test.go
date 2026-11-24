@@ -1,11 +1,13 @@
 package world
 
 import (
+	"bytes"
 	"io"
 	"net"
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/crypto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
@@ -23,9 +25,10 @@ func TestWhisper(t *testing.T) {
 		a, b := net.Pipe()
 		p := RegisterPlayer(db.Character{ID: id, Name: name, MapID: 60040}, nil, false, faction, &connWriter{conn: a}, logger)
 		t.Cleanup(p.Unregister)
+		t.Cleanup(func() { _ = b.Close() })
 		return p, b
 	}
-	sender, _ := player(991001, "WhisperFrom", FactionLight)
+	sender, senderInbox := player(991001, "WhisperFrom", FactionLight)
 	_, inbox := player(991002, "WhisperTo", FactionLight)
 	_, other := player(991003, "WhisperFury", FactionDark)
 	go io.Copy(io.Discard, other)
@@ -57,4 +60,27 @@ func TestWhisper(t *testing.T) {
 
 	copy(req[2:], "WhisperFury\x00")
 	s.handleWhisper(req) // other country: only the sender's 0x1106 (dropped without a client)
+
+	s.expanded = true
+	s.out = sender.out
+	s.aesSend = crypto.NewAESCTR([16]byte{}, [16]byte{})
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		s.handleWhisper(proto.WhisperPacket("whisperfrom", "hi"))
+	}()
+	t.Cleanup(func() {
+		_ = senderInbox.Close()
+		<-done
+	})
+	if err := senderInbox.SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	var selfReply [5]byte
+	if _, err := io.ReadFull(senderInbox, selfReply[:]); err != nil {
+		t.Fatal(err)
+	}
+	if want := appendWorldFrame(nil, buildChatError(1)); !bytes.Equal(selfReply[:], want) {
+		t.Fatalf("whisper to self got %x, want %x", selfReply, want)
+	}
 }
