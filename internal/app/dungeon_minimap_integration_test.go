@@ -14,9 +14,9 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
-	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 func TestOriginalDungeonMinimapsGL(t *testing.T) {

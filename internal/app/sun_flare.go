@@ -4,8 +4,8 @@ import (
 	"math"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
 type sunFlare struct {
