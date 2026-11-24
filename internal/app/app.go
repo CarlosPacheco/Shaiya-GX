@@ -542,9 +542,6 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 			log.Printf("audio unavailable: %v", err)
 		}
 		a.soundErrors = map[string]bool{}
-		if a.sound != nil {
-			a.sound.Preload(a.audioPath("bgm_title.ogg", true))
-		}
 	}
 	a.loadingScreen = ui.NewLoadingScreen(a)
 	a.loadSavedID()
