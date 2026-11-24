@@ -110,7 +110,7 @@ client to load your rules. Add one `Word=` line per word or phrase under
 `[Filter]`, such as `Word=example`. The file accepts UTF-16LE and UTF-8 and
 starts with no rules, and the checkbox starts off. Matching is case-insensitive and treats each rule as literal text.
 
-Golden frames, Alpha/filter/help panels and the separate native whisper-recipient row remain retired under the chosen flat presentation. Histories retain a shared 300-message buffer and independent scroll anchors. Settings preserve row sizes and the selected channel; Whisper is not restored at startup. Whisper accepts the existing recipient syntax, including `!name message` and `/w name message`. Raid is outside the six-channel picker.
+Golden frames, Alpha/filter/help panels and the separate native whisper-recipient row remain retired under the chosen flat presentation. Histories retain a shared 300-message buffer and independent scroll anchors. Settings preserve row sizes. Chat starts in Normal on each login, and channel changes apply to the current session. Whisper accepts the existing recipient syntax, including `!name message` and `/w name message`. Raid is outside the six-channel picker.
 
 | Channel | Native RGB |
 |---|---|
@@ -444,7 +444,7 @@ Chat palette bytes now follow `Game.exe` 0x41cfe0, rather than Phoenix colour
 approximations: Normal `D5D4D3`, Party `A8F3A0`, Whisper `F3A0A0`, Guild `EEA4ED`,
 Trade `F3DEA0`, Area `FF3000`. SysMsg colours retain their corresponding original
 style rows. Raid is removed from this chat selector and no longer overrides Party
-colour. Saved Raid selection migrates to Normal without resetting other settings.
+colour. Older saved channel selections are ignored at startup.
 The histories use the native `9A1D1F24` background, eight-pixel separation and
 `rows+2`/`rows+4` visual-line capacities on the 16px grid. Footer button labels and
 custom hover boxes are removed.

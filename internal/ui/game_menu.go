@@ -62,7 +62,6 @@ type GameMenu struct {
 type ClientSettings struct {
 	DisplayMode                               platform.DisplayMode
 	ChatRows                                  [2]int
-	ChatChannel                               uint8
 	ChatFilters                               uint8 `json:",omitempty"`
 	ChatTransparent                           bool  `json:",omitempty"`
 	Music, Effects, Ambient                   float64
@@ -98,7 +97,7 @@ func (c ClientSettings) Valid() bool {
 			return false
 		}
 	}
-	return c.Bindings.Valid() && c.DisplayMode.Valid() && c.Antialias >= 0 && c.Antialias < antialiasLevels && c.Glow >= 0 && c.Glow <= 2 && c.Brightness >= 0 && c.Brightness <= 4 && c.Details >= 0 && c.Details <= 2 && c.VisualDistance >= 0 && c.VisualDistance <= 2 && c.ChatChannel <= 5 && !math.IsNaN(c.Music) && !math.IsNaN(c.Effects) && c.Music >= 0 && c.Music <= 1 && c.Effects >= 0 && c.Effects <= 1 && !math.IsNaN(c.Ambient) && c.Ambient >= 0 && c.Ambient <= 1 && c.MouseSensitivity >= 0 && c.MouseSensitivity <= 6
+	return c.Bindings.Valid() && c.DisplayMode.Valid() && c.Antialias >= 0 && c.Antialias < antialiasLevels && c.Glow >= 0 && c.Glow <= 2 && c.Brightness >= 0 && c.Brightness <= 4 && c.Details >= 0 && c.Details <= 2 && c.VisualDistance >= 0 && c.VisualDistance <= 2 && !math.IsNaN(c.Music) && !math.IsNaN(c.Effects) && c.Music >= 0 && c.Music <= 1 && c.Effects >= 0 && c.Effects <= 1 && !math.IsNaN(c.Ambient) && c.Ambient >= 0 && c.Ambient <= 1 && c.MouseSensitivity >= 0 && c.MouseSensitivity <= 6
 }
 
 func NewGameMenu(t Textures) (*GameMenu, error) {
@@ -527,13 +526,6 @@ func (m *GameMenu) Draw(s *render.Sprites, f *Font, w, h int, solid ...*render.T
 }
 
 func (m *GameMenu) SetChatRows(rows [2]int) { m.Settings.ChatRows = rows; m.original.ChatRows = rows }
-
-func (m *GameMenu) SetChatChannel(channel uint8) {
-	if channel == 5 {
-		channel = 0
-	}
-	m.Settings.ChatChannel, m.original.ChatChannel = channel, channel
-}
 
 func (m *GameMenu) SetChatOptions(filters uint8, transparent bool) {
 	m.Settings.ChatFilters, m.Settings.ChatTransparent = filters, transparent

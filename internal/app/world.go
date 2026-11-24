@@ -1150,6 +1150,11 @@ func (a *App) releaseWorld() {
 	}
 	a.finishWindowDrag()
 	if a.state == nil || a.state.Phase != game.PhaseInWorld && a.state.Phase != game.PhaseLoading {
+		if a.chatUI != nil {
+			a.chatUI.Channel = proto.ChannelNormal
+			a.chatUI.RecipientFocus = false
+		}
+		a.raidOnce, a.raidReturn = false, proto.ChannelNormal
 		a.screenNotices = nil
 		a.subActionsOpen = false
 		a.playerContext = playerContext{}

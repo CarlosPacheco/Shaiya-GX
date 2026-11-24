@@ -2,15 +2,43 @@ package app
 
 import (
 	"bytes"
-	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
+	"os"
+	"path/filepath"
+	"testing"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
-	"testing"
 )
+
+func TestChatStartsInNormalWithLegacyTradeSettings(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", dir)
+	t.Setenv("APPDATA", dir)
+	path, err := settingsPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(`{"ChatChannel":1,"ChatRows":[6,7]}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	a := inputApp()
+	a.cfg.RememberLayout = true
+	a.loadClientSettings()
+	if a.chatUI.Channel != proto.ChannelNormal || a.chatUI.Rows != [2]int{6, 7} {
+		t.Fatal("chat did not default to Normal with its saved layout")
+	}
+	a.updateChat(&platform.Input{Keys: []platform.Key{platform.KeyChatTrade}})
+	if a.chatUI.Channel != proto.ChannelTrade || !a.chatOpen {
+		t.Fatal("Trade shortcut did not select Trade for the session")
+	}
+}
 
 func TestChatEntriesIdentifyChannelsAndWhisperDirection(t *testing.T) {
 	for _, tc := range []struct {

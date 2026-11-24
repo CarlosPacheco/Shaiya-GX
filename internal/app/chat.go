@@ -386,10 +386,9 @@ func (a *App) updateChatPointer(in *platform.Input, w, h int) bool {
 		a.chatUI.RecipientFocus = true
 		a.recipientCaret.End(a.chatUI.Recipient)
 	}
-	if (a.chatUI.Resized || a.chatUI.ChannelChanged || a.chatUI.OptionsChanged) && a.gameMenu != nil {
+	if (a.chatUI.Resized || a.chatUI.OptionsChanged) && a.gameMenu != nil {
 		a.gameMenu.SetChatRows(a.chatUI.Rows)
 		a.gameMenu.SetChatOptions(a.chatUI.Filters, a.chatUI.Transparent)
-		a.gameMenu.SetChatChannel(a.chatUI.Channel)
 		a.saveClientSettings()
 	}
 	return captured

@@ -229,9 +229,6 @@ func (a *App) loadClientSettings() {
 		log.Printf("load settings: %v", err)
 		return
 	}
-	if value.ChatChannel == 6 {
-		value.ChatChannel = 0
-	}
 	if !value.Valid() {
 		log.Print("load settings: invalid values")
 		return
@@ -241,9 +238,6 @@ func (a *App) loadClientSettings() {
 		value.DisplayMode = platform.DisplayMode{}
 	}
 	a.gameMenu.Settings = value
-	if a.chatUI != nil {
-		a.chatUI.Channel = value.ChatChannel
-	}
 	a.applyClientSettings()
 	a.applyDisplaySettings()
 }
