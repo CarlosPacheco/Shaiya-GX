@@ -170,6 +170,12 @@ heights. Mesh, height queries and shadow receivers share this surface. See
 
 ### Standalone dungeon environments
 
+Map 67 uses an original EFT portal sequence whose emitters include stale
+texture indices alongside valid frames. The client skips indices outside the
+library's texture table and plays the remaining frames in their authored order.
+The WLD portal contact volumes and traversal rules are independent of the EFT.
+
+
 DUN keeps the black background when no valid sky layers are defined. Its native
 fog RGB, start and end fields are used when they contain a valid authored range.
 The stock grey RGB 128/128/128 with range 150–200 is treated as an unset

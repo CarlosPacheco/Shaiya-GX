@@ -147,8 +147,10 @@ func loadEffectLibrary(a *Assets, file string, sequence int, l *effect.Library) 
 		}
 		textures := make([]*render.Texture, 0, len(e.Textures))
 		for _, id := range e.Textures {
+			// Some original map emitters retain stale indices alongside
+			// valid frames for the same animation (the map 67 portals).
 			if id < 0 || int(id) >= len(l.Textures) {
-				return nil, fmt.Errorf("EFT: texture %d out of range", id)
+				continue
 			}
 			name := path.Base(strings.ReplaceAll(l.Textures[id], `\`, "/"))
 			t := a.Texture("Effect/DDS/" + name)
@@ -156,6 +158,9 @@ func loadEffectLibrary(a *Assets, file string, sequence int, l *effect.Library) 
 				return nil, fmt.Errorf("EFT: missing texture %s", name)
 			}
 			textures = append(textures, t)
+		}
+		if len(e.Textures) > 0 && len(textures) == 0 {
+			return nil, fmt.Errorf("EFT: emitter %d has no valid texture indices", r.Effect)
 		}
 		x.emitters = append(x.emitters, effectEmitter{definition: e, geometry: geometry, textures: textures, starts: r.Time, path: route})
 	}

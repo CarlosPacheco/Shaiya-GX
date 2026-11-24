@@ -171,3 +171,79 @@ func TestMapEffectsLoadAndReleaseGL(t *testing.T) {
 	}
 	t.Logf("indexed %d original map placements, exercised sequence %d", len(w.mapFX.instances), target.sequence)
 }
+
+func TestMap67PortalEffectsGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires GL and original assets")
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	const size = 128
+	win, err := platform.Open(platform.Config{Title: "map 67 portals", Width: size, Height: size, Hidden: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer win.Close()
+	if err := render.Init(true); err != nil {
+		t.Fatal(err)
+	}
+	arc, err := archive.Open(os.Getenv("SHAIYA_DATA"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer arc.Close()
+	w, err := LoadDungeon(NewAssets(arc), "world/67.wld")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w.Close()
+	if w.mapFX == nil {
+		t.Fatal("map 67 did not load its effect library")
+	}
+	s, err := render.NewScene3D()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Delete()
+	s.Proj = render.PerspectiveFovLH(math.Pi/4, 1, .1, 25)
+	gl.Viewport(0, 0, size, size)
+	frame := func() []byte {
+		pixels := make([]byte, size*size*4)
+		gl.ReadPixels(0, 0, size, size, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+		return pixels
+	}
+
+	portals := 0
+	for i := range w.mapFX.instances {
+		placed := &w.mapFX.instances[i]
+		if placed.sequence != 8 {
+			continue
+		}
+		portals++
+		eye := placed.position.Add(render.V3{-7, 2, -6})
+		look := placed.position.Add(render.V3{0, 1, 0})
+		s.View = render.LookAtLH(eye, look, render.V3{0, 1, 0})
+		for range 6 {
+			w.Update(.2)
+			w.PrepareMapEffects(s, eye)
+		}
+		if placed.instance == nil || len(placed.instance.emitters) != 5 {
+			t.Errorf("portal at %v did not load all five emitters", placed.position)
+			continue
+		}
+		gl.DepthMask(true)
+		gl.ClearColor(.1, .1, .1, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		before := frame()
+		placed.instance.Draw(s)
+		if bytes.Equal(before, frame()) {
+			t.Errorf("portal at %v produced no visible pixels", placed.position)
+		}
+	}
+	if portals != 6 {
+		t.Fatalf("found %d portal placements, want 6", portals)
+	}
+	if code := gl.GetError(); code != gl.NO_ERROR {
+		t.Fatalf("portal GL error %#x", code)
+	}
+}
