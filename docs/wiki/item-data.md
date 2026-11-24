@@ -100,7 +100,7 @@ accepted by the client. Use a distinct output file, verify it, then install it
 atomically with the client stopped. Original archives and client assets are not
 part of the source repository.
 
-`tools/apply_forge_rules.py` applies only the specified SQL ReqVg and Count fields,
+`tools/apply_forge_rules.py` applies the specified SQL ReqVg and Count fields plus the names and Special values of the two Cash Mall GM hammers,
 creates SQLite backups in an explicit directory, updates a seed manifest when
 present and patches the matching stack counts in `Item.SData`. Stop the affected
 services first.
