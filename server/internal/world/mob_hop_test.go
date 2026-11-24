@@ -7,7 +7,41 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/mapnav"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
+
+func TestSelectingMovingMobReturnsStateWithoutInterruptingMovement(t *testing.T) {
+	const mapID = 62085
+	s, wire := gmWireSession(t, db.Character{MapID: mapID}, false)
+	sh := shard(mapID)
+	now := time.Now()
+	sh.mu.Lock()
+	for i, known := range []bool{false, true} {
+		m := MapMob{ID: uint32(i + 1), CurrentHP: 100, spawnHeightKnown: known, event: &eventActor{}}
+		m.setPoint(mapnav.Point{100, 2, 100})
+		m.moveTo(mapID, now, mapnav.Point{110, 2, 100}, mobMotionWalk)
+		sh.entities.Mobs = append(sh.entities.Mobs, m)
+	}
+	sh.mu.Unlock()
+	t.Cleanup(func() {
+		sh.mu.Lock()
+		defer sh.mu.Unlock()
+		sh.entities.Mobs = nil
+	})
+	for range 3 {
+		for _, id := range []uint32{1, 2} {
+			s.dispatch(packet.TargetMobGetState, proto.TargetMobPacket(id))
+			select {
+			case p := <-wire:
+				if proto.Op(p) != proto.TargetMobGetState || proto.NewReader(p).U32() != id {
+					t.Fatalf("targeting mob %d returned %04x instead of its state", id, proto.Op(p))
+				}
+			case <-time.After(time.Second):
+				t.Fatalf("no state for mob %d", id)
+			}
+		}
+	}
+}
 
 func TestMobMovementUsesOnePositionAndClockForCombatAndPackets(t *testing.T) {
 	now := time.Now()

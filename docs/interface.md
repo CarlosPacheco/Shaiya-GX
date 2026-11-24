@@ -185,9 +185,11 @@ server-authoritative. Provisional inventory instructions/waiting messages are
 removed, and items with no sale value omit that line entirely.
 
 Monsters use Monster.SData normal/chase timing and attack animation fields.
-Movement and confirmed attacks interrupt idle variations. The run cycle
-continues across brief gaps between chase steps, and walking ends on arrival.
-Damage reactions cannot interrupt attacks, and attack facing follows the victim. Monster skill results use their own 0x060b/c/d layouts,
+Movement and confirmed attacks interrupt idle variations. If a hit draws aggro,
+the chase interrupts the damage reaction. The run cycle continues across brief
+gaps between chase steps, and walking ends on arrival. Selecting a monster
+updates its health and speed without restarting its movement. Damage reactions
+cannot interrupt attacks or locomotion, and attack facing follows the victim. Monster skill results use their own 0x060b/c/d layouts,
 including the attack-slot byte, level-one definition lookup and sequence-two
 native impact route. Wire level100 is a marker. Repeated recipients of one area
 attack do not restart its animation/audio. Speed changes and target snapshots

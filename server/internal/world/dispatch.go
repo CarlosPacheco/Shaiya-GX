@@ -278,7 +278,7 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 				if op == packet.TargetMobHpUpdate {
 					s.send(buildMobTargetHP(&m), "0x0305 mob target hp")
 				} else {
-					s.send(buildMobMove(&m, 0), "0x0603 mob target position")
+					// Visibility already publishes movement. A target snapshot would interrupt the active segment.
 					s.send(buildMobState(&m), "0x0304 mob state")
 				}
 			}

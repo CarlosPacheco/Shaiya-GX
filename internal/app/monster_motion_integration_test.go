@@ -49,6 +49,9 @@ func TestMonsterVisualMovementOnOriginalTerrainGL(t *testing.T) {
 	if mob == nil || mob.actor == nil {
 		t.Fatal("original monster failed to load")
 	}
+	if !mob.actor.PlayOnce(7) {
+		t.Fatal("original monster failed to start its damage reaction")
+	}
 	move := proto.NewWriter(proto.MobMove)
 	move.U32(42)
 	move.U8(1)
@@ -57,10 +60,18 @@ func TestMonsterVisualMovementOnOriginalTerrainGL(t *testing.T) {
 	if _, err := s.Apply(move.Bytes()); err != nil {
 		t.Fatal(err)
 	}
-	a.clock = 1
+	a.clock, a.frameDT = 1, .02
 	a.prepareMonsters()
 	if mob.pos[0] != 500 {
 		t.Fatal("monster snapped to packet", mob.pos)
+	}
+	if mob.actor.Time <= 0 {
+		t.Fatal("chase playback did not start on the first frame")
+	}
+	beforeHit := mob.actor.Time
+	a.reactToMobHit(mob)
+	if mob.actor.Time != beforeHit {
+		t.Fatal("hit interrupted active chase playback")
 	}
 	def := mob.actor.Definition
 	duration := 4 / movespeed.MobUnitsPerSecond(int(def.ChaseStep), def.ChaseTimeMS, 2)

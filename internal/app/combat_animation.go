@@ -352,7 +352,7 @@ func (a *App) finishMobHit(m *mobActor) {
 }
 
 func (a *App) reactToMobHit(m *mobActor) {
-	if m != nil && m.actor != nil && !m.entity.Dead && a.state.Entities[m.entity.ID] == m.entity {
+	if m != nil && m.actor != nil && !m.entity.Dead && a.state.Entities[m.entity.ID] == m.entity && m.locomotionAction(a.clock) == 6 {
 		m.actor.PlayOnce(7)
 	}
 }

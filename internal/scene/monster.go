@@ -110,8 +110,8 @@ func (s *Assets) buildCreature(folder string, visual model.Creature, name string
 }
 
 func (m *CreatureActor) SetAction(action int) error {
-	if m.folder == "Monster" && (action == 0 || action == 1) && (m.action == 6 || m.action == 8) {
-		// Locomotion must play as soon as the mob starts moving.
+	if m.folder == "Monster" && (action == 0 || action == 1) && (m.action == 6 || m.action == 7 || m.action == 8) {
+		// The hit that draws aggro can replace idle with a damage reaction.
 		previous := m.cueTime
 		m.cueTime = 0
 		if err := m.setAction(action, false, true); err != nil {

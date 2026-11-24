@@ -40,6 +40,15 @@ func TestMonsterIdleVariationYieldsToMovementAndAttack(t *testing.T) {
 		t.Fatal("same locomotion action restarted its cycle")
 	}
 	startIdle()
+	if !mob.PlayOnce(7) || mob.action != 7 {
+		t.Fatal("the hit that drew aggro did not start a reaction")
+	}
+	setAction(1)
+	mob.Update(.02)
+	if mob.action != 1 || mob.cueTime != 0 || mob.Time != .02 {
+		t.Fatal("damage reaction did not yield to the new chase")
+	}
+	startIdle()
 	if !mob.PlayOnce(2) || !mob.Attacking() || mob.blendLeft != 0 {
 		t.Fatal("attack did not immediately replace idle variation")
 	}
