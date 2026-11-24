@@ -42,7 +42,7 @@ func TestEquipmentRefreshKeepsPostureGL(t *testing.T) {
 	a.arc, a.assets = arc, scene.NewAssets(arc)
 	a.state.SelfID = 1
 	a.state.Slots[0] = proto.CharacterSlot{ID: 1, Height: 2}
-	a.wv = &worldView{}
+	a.wv = &worldView{world: &scene.World{}}
 	a.refreshSelf(a.wv)
 	press := &platform.Input{Chars: []rune{'c'}}
 	a.state.Self.Sitting = true
@@ -53,6 +53,13 @@ func TestEquipmentRefreshKeepsPostureGL(t *testing.T) {
 		}
 		actor.Update(.2)
 		a.state.Self.Sitting = action == 10
+		if action == 10 {
+			before := actor.Time
+			a.updateWorld(&platform.Input{Down: "W"}, 1.0/60)
+			if a.wv.sitPending || !actor.PlayingAction(10) || actor.Time <= before {
+				t.Fatal("movement interrupted the active sit animation")
+			}
+		}
 		a.refreshSelf(a.wv)
 		if a.wv.self == actor || !a.wv.self.PlayingAction(action) || a.wv.self.Time != actor.Time {
 			t.Fatalf("rebuilding changed posture action %d", action)
@@ -124,6 +131,11 @@ func TestSittingAgainstRapture(t *testing.T) {
 		t.Fatal("sit changed before server confirmation")
 	}
 	pump(func() bool { return st.Self.Sitting && !a.wv.sitPending })
+	actor, posBeforeSit := a.wv.self, a.wv.pos
+	a.updateWorld(&platform.Input{Down: "W"}, 1.0/60)
+	if !actor.PlayingAction(10) || a.wv.sitPending || a.wv.pos != posBeforeSit {
+		t.Fatal("movement interrupted the sit animation")
+	}
 	other, _, _, waitOther := testworld.EnterAs(t, os.Getenv("SHAIYA_TEST_PARTNER"), os.Getenv("SHAIYA_TEST_PARTNER_PASSWORD"))
 	waitOther(func() bool { e := other.Entities[st.SelfID]; return e != nil && e.Shape != nil && e.Sitting })
 	for i := 0; i < 150; i++ {

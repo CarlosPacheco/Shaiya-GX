@@ -21,6 +21,10 @@ func postureToggle(in *platform.Input, actor *scene.Character) bool {
 // Rapture retains auto-attack when a motion arrives. Stop it before sitting;
 // the posture itself remains pending until the echoed 0x0506 arrives.
 func (a *App) requestPosture(motion uint8) bool {
+	// Movement and queued attacks can stand up once the sit clip ends.
+	if motion == proto.MotionStandUp && a.wv.self.PlayingAction(10) {
+		return true
+	}
 	if motion == proto.MotionSitDown {
 		a.wv.sitAttack = 0
 		if err := a.world.Send(proto.StopAttackPacket()); err != nil {
