@@ -64,6 +64,12 @@ func (a *App) barCovered(in *platform.Input, w, h int) bool {
 	if a.wv != nil && a.wv.mapView.full {
 		return true
 	}
+	if a.questTracker.open && a.questTrackerUI != nil {
+		x, y := a.questTrackerUI.Origin(w, h)
+		if pointInside(in, x, y, ui.QuestTrackerWidth, ui.QuestTrackerHeight) {
+			return true
+		}
+	}
 	if a.personalMarketOpen() {
 		x, y := a.personalMarketUI.Origin(w, h)
 		if pointInside(in, x, y, ui.PersonalMarketWidth, ui.PersonalMarketHeight) {
