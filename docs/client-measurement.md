@@ -7,15 +7,7 @@ production code paths, edit a database, or replace personal client settings.
 
 ## Run on Linux
 
-From the repository root with a working desktop GL context and local data:
-
-```sh
-source tools/go-env.sh
-python3 tools/measure_client.py \
-  --data '/path/to/Shaiya GX/data' \
-  --output work/client-measure/baseline \
-  --frames 900 --repetitions 3 --load-label quiet
-```
+The measurements use a private runner with a working Linux desktop GL context and local client data.
 
 Close other graphics-heavy applications first. `quiet` is an operator-provided
 classification, not a claim of exclusive hardware ownership. The runner captures
@@ -107,13 +99,7 @@ the same harness/mode, and inspect submission, wait and whole-loop metrics toget
 
 ## Ablation and profiles
 
-Select cases and diagnostic settings explicitly:
-
-```sh
-python3 tools/measure_client.py --data '/path/to/data' \
-  --output work/client-measure/ablation --repetitions 3 \
-  --cases 'world-stream,world-stream:no-glow,world-stream:no-shadow,water-visible,water-visible:no-water,crowd-200,crowd-200:no-glow'
-```
+The measurement cases select diagnostic settings explicitly.
 
 Variants are `default`, `effects`, `no-effects`, `no-glow`, `no-shadow` and `no-water`.
 Use `crowd-400:no-effects` to measure remote player batching. Disabling a feature

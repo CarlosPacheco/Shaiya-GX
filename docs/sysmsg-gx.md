@@ -23,6 +23,6 @@ How code asks for text:
 `TestGXSysMsgIDsMatchTheEmbeddedRows` keeps code and rows in step: a GX id used in code needs
 a row, and a row nobody uses is rejected.
 
-`tools/sysmsg_codemod.py` was the one-off conversion of helper calls (`backToLogin`, `questMessage`,
+An internal migration script performed the one-off conversion of helper calls (`backToLogin`, `questMessage`,
 `personalMarketNotice`...). Text still in code, deliberately: internal keys compared as text
 (`Bid refund`, `Expired`, `Buy:`, `Sell:`), file and section names, fonts and the QA preview fixtures.

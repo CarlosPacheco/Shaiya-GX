@@ -38,7 +38,7 @@ SQLite is the primary production database, with embedded operation for straightf
 
 ## Tests and evidence
 
-Use unit tests for behavioral changes and isolated integration tests for wire/storage behavior. For UI/rendering changes provide comparable captures and describe the scene, resolution and data version. Use `tools/n2_smoke.py` for the Linux end-to-end disposable client/server probe. Never aim tests at a personal or production runtime. Native Windows CI and Linux CI must pass for supported targets; cross-build success alone is not runtime validation.
+Use unit tests for behavioral changes and isolated integration tests for wire/storage behavior. For UI/rendering changes provide comparable captures and describe the scene, resolution and data version. Use disposable fixtures for end-to-end client/server probes. Never aim tests at a personal or production runtime. Native Windows CI and Linux CI must pass for supported targets; cross-build success alone is not runtime validation.
 
 Report what was actually tested. Call out skipped tests, Wine versus native Windows, GPU/driver limitations and remaining parity gaps. CI lacks the proprietary client archives and cannot establish complete visual/gameplay parity.
 

@@ -269,20 +269,7 @@ reads the live defensive snapshot, rather than equipment without active effects.
 
 ## Reading the original
 
-Ghidra 12.1.3 opens Eternity's project read-only:
-
-```sh
-export JAVA_HOME=~/.cache/phoenix-reverse/ghidra/jdk-21.0.12.1+1
-~/.cache/phoenix-reverse/ghidra/ghidra_12.1.3_PUBLIC/support/analyzeHeadless \
-  ~/Projects/Eternity/work/ghidra-12.1.3 Eternity -process ps_game.exe \
-  -readOnly -noanalysis -scriptPath tools/ghidra -postScript Decomp.java "CUser::AttackDamage"
-```
-
-Other scripts in `tools/ghidra`: `ListFuncs.java <substring>` lists functions
-with their address and size, `Fields.java <struct>` prints a PDB structure's
-fields, and `Insns.java <address>... <filter>` prints a function's
-instructions containing the filter text (for example `"0x12"` to see which
-`CUser` fields it reads). The PDB's `CUser` field names are shifted against
+The analysis used a local read-only Ghidra project. The PDB's `CUser` field names are shifted against
 the shipped binary; field meanings above come from the instruction offsets
 (Str 0x1220, Dex 0x1224, Int 0x1228, Wis 0x122c, Rec 0x1230, Luc 0x1234,
 HP 0x1238, MP 0x123c, SP 0x1240), cross-checked with `CUser::SetAttack`.

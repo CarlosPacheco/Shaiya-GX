@@ -1,7 +1,7 @@
 # Guild house, guild NPCs and etin: original behaviour
 
 Evidence for the 1:1 port. Server rules come from EP4.5 `ps_game.exe` (PDB names,
-Eternity's Ghidra project, `tools/ghidra/env.sh` → `ghidra_run_server`); wire
+the local Ghidra project); wire
 layouts and UI come from the EP5.4 `Game.exe` (`ghidra_run`). Private decompiles
 live in `work/guild-house/` (not in Git).
 

@@ -102,7 +102,6 @@ memory; the distributed mall remains unchanged.
 go test -tags integration ./server/internal/db -run '^TestSQLiteConcurrentProcessesAndCrashRecovery$' -count=1 -v
 go test -race -tags integration ./server/cmd/gx_world -run '^(TestConcurrentClientsPurchaseLogoutAndRelog|TestTradeDurableBeforeAckAndDisconnectAgainstSQLite)$' -count=1 -timeout=300s -v
 python3 -m unittest discover -s server/tools -p 'test_*.py'
-python3 tools/n2_smoke.py
 ```
 
 All fixtures use disposable databases and isolated services. No personal runtime

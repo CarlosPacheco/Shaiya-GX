@@ -1,7 +1,7 @@
 # Clicking to attack: native flow
 
 Evidence from `Game.exe` EP5.4, world update `0x43bfa0` (helper scripts in
-`tools/ghidra`). The world keeps one action state (`DAT_0071d000`) and a target
+private Ghidra scripts). The world keeps one action state (`DAT_0071d000`) and a target
 id (`player+0x16c`).
 
 - **Selection.** A left press picks, in order, ground items (`0x43b650`, state 1,

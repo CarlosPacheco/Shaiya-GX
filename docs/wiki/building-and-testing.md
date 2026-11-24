@@ -91,7 +91,7 @@ SHAIYA_TEST_ARTIFACTS=/path/to/private/captures \
   -run 'TestHUDPolishOriginalAssetsGL|TestNativeChatAndLoginLogoGL' -count=1 -v
 ```
 
-`python3 tools/n2_smoke.py` is the Linux end-to-end client/server probe. It uses `server/build`, copies the distributed seed to temporary storage, creates disposable fixtures and uses ports 40800/40810. It does not use your mutable runtime DB or stop your personal services. `GX_SERVER_DIR` overrides the server directory; legacy `RAPTURE_DIR` remains accepted. Legacy SQL Server-only probes are disabled; use N2 for SQLite.
+The internal N2 probe exercises end-to-end client/server behavior on Linux with a disposable SQLite database and isolated ports. Public integration tests live in `internal/app` and `server/`.
 
 ## Package a portable server
 

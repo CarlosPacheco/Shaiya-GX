@@ -113,19 +113,7 @@ go test -tags integration ./server/... -count=1
 The forge regressions cover exact costs, level/Vg independence, additive hammers,
 INI cap/rates, safe enchant failures, selective extraction, repeated
 consumption, original SysMsg refusals and valid drop rolls surviving pickup and
-redrop. `tools/forge_smoke.py` additionally runs the continuous client workflow
-against isolated processes and a disposable DB. It creates temporary fixture
-accounts; it does not log into a personal character.
-
-For the isolated client workflow, first build native login/world binaries, then
-provide the external client data explicitly:
-
-```sh
-python3 tools/forge_smoke.py --data "/path/to/client/data" --item-data "/path/to/client/data/Item/Item.SData"
-```
-
-It uses ports 41800/41810 and refuses to start if either is occupied. Fixture
-accounts and all test mutations belong only to a temporary copy of the seed.
+redrop. An internal probe also exercised the client workflow against isolated processes with a disposable copy of the seed.
 
 
 Targeted recreation properties are implemented in

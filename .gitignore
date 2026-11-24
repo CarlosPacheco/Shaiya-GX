@@ -115,3 +115,17 @@ backups/
 .gxstudio.lock
 pending-save.json
 gx-studio.ini
+
+# Private reverse-engineering tools and local integration probes.
+/tools/ghidra/
+/server/tools/ghidra/
+/tools/forge_smoke.py
+/tools/guild_smoke.py
+/tools/measure_client.py
+/tools/n2_mounts.py
+/tools/n2_smoke.py
+/tools/play.py
+/tools/protomap.py
+/tools/raid_smoke.py
+/tools/sysmsg_codemod.py
+/tools/terrain_oracle.py

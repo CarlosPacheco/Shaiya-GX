@@ -1,7 +1,7 @@
 # Native window dragging and Status (T) sheet
 
 Evidence from `Game.exe` EP5.4 (read-only Ghidra project; helpers
-`tools/ghidra/DragRects.java` and `DragRectsImm.java`).
+private Ghidra scripts).
 
 ## Drag rule
 

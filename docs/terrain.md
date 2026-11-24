@@ -31,16 +31,7 @@ FLD source samples and all asset files remain unmodified. Unusual non-native
 small grids retain the previous fallback. Edge queries clamp safely to the map
 rather than reproducing the executable's out-of-buffer corner reads.
 
-`tools/terrain_oracle.py` requires optional `pefile` and `unicorn` analysis
-packages. It accepts only the reference hash and runs original height, variance,
-near-camera selection and mesh emission. Its only substituted game operation is
-heap allocation for nodes; it does not initialize the game or invoke OS,
-network or graphics APIs.
-
-```sh
-python tools/terrain_oracle.py /path/to/original/Game.exe \
-  --data /path/to/loose/data --output-dir work/terrain-native/oracle
-```
+A private terrain probe compared height, variance, near-camera selection and mesh emission against the original client.
 
 Validation covered 1,000 synthetic height queries, 24 real outdoor-map crops
 (16 native queries each), and exact synthetic mesh topology. Native float-store

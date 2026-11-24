@@ -85,7 +85,7 @@ migrated content. Do not substitute a personal runtime database for the public
 seed. The distributed seed definitions are updated independently.
 
 Validation: `tools/check.sh`; `python3 -m unittest discover -s tools -p
- 'test_update_mount_content.py'`; `python3 tools/n2_mounts.py` with local original
+ 'test_update_mount_content.py'`; the internal mount integration probe with local original
 assets and a working Linux graphics session. The latter creates disposable
 accounts and a database copy, checks two-client invitation/secondary-seat/jump
 behavior, and loads all 32 race/model combinations with real OpenGL.

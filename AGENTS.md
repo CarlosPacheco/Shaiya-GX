@@ -73,6 +73,6 @@ python3 -m unittest discover -s server/tools -p 'test_*.py'
 python3 tools/check_publication.py --history
 ```
 
-Use Go 1.27.4. Build Linux with `tools/build.sh`, Windows with `tools/build.ps1`; graphics require CGO and platform prerequisites. N2 uses `tools/n2_smoke.py` with local assets and a disposable server DB. Server portables: `python3 server/tools/package.py --output out/portable`. They must include the terminal console and login/world services, validate the seed and pass native relocated startup. Release assets belong to GX releases, never source-history binary blobs.
+Use Go 1.27.4. Build Linux with `tools/build.sh`, Windows with `tools/build.ps1`; graphics require CGO and platform prerequisites. The private N2 probe uses local assets and a disposable server DB. Server portables: `python3 server/tools/package.py --output out/portable`. They must include the terminal console and login/world services, validate the seed and pass native relocated startup. Release assets belong to GX releases, never source-history binary blobs.
 
 Run checks appropriate to changed behavior and report actual evidence. Windows cross-compilation or Wine is not native Windows validation. A CI build without game assets cannot establish full client visual parity. Update user-facing docs and local continuity when behavior/workflow changes. Avoid unnecessary architecture layers and keep rendering optimizations measured and visually comparable.

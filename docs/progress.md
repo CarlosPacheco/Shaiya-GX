@@ -26,7 +26,7 @@ project completion percentage.
 
 | Workflow | Implemented scope | Evidence |
 |---|---|---|
-| Account entry | Login, server selection, faction confirmation, character creation/selection and entry into the world | [Account integration tests](../internal/app/integration_test.go), [N2 probe](../tools/n2_smoke.py) |
+| Account entry | Login, server selection, faction confirmation, character creation/selection and entry into the world | [Account integration tests](../internal/app/integration_test.go) |
 | Movement and combat input | Movement, target turning/approach, server-confirmed attacks and skill cooldowns | [Native control tests](../internal/app/native_controls_integration_test.go) |
 | Skill presentation | Skill book and action bars, OGG cues, caster/target effects and area release synchronization | [Skill visuals](../internal/app/skill_visuals_integration_test.go), [area effects](../internal/app/area_effects_integration_test.go) |
 | Inventory and services | Inventory/equipment, merchant purchases, warehouse transfers and blacksmith interactions | [Service status](interface.md), [warehouse tests](../internal/app/warehouse_integration_test.go) |
