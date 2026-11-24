@@ -120,17 +120,27 @@ func TestDungeonClickMoveSelectsFloorGL(t *testing.T) {
 		t.Fatal("field fixture point is outside camera")
 	}
 	click := &platform.Input{MouseX: x, MouseY: y, Clicked: true}
+	a.state.Target = 7
+	a.keepChasing(a.state.Target)
+	v.attackMoveUntil = a.clock + 1
 	a.gameMenu.Settings.UseMouse = false
 	a.moveToGround(click, W, H)
-	if v.travel || v.travelEffect != nil {
-		t.Fatal("terrain click moved the player with Use Mouse disabled")
+	if v.travel || v.travelEffect != nil || !v.attackSent {
+		t.Fatal("terrain click affected movement or combat with Use Mouse disabled")
 	}
 	a.gameMenu.Settings.UseMouse = true
-	a.moveToGround(click, W, H)
+	a.updateCombat(click, W, H)
 	if !v.travel || v.destination.Sub(goal).Len() > .1 || v.travelEffect == nil || v.travelEffect.Origin != v.destination {
 		t.Fatal("field click behavior changed", goal, v.destination)
 	}
-	t.Logf("field click unchanged: expected%v selected%v", goal, v.destination)
+	if v.attackSent || v.engagedID != 0 || v.approachTarget != 0 || v.attackMoveUntil != 0 || a.state.Target != 7 {
+		t.Fatal("ground click did not abandon the attack while keeping its target selected")
+	}
+	a.state.LastAttack = proto.AttackResult{Source: a.state.SelfID, Target: 7}
+	a.confirmedAnimation(proto.NewWriter(proto.CharacterMobAutoAttack).Bytes())
+	if !v.travel || v.attackMoveUntil != 0 {
+		t.Fatal("late swing stopped ground travel")
+	}
 }
 
 // This test requires a disposable account positioned in map15 by the N2 runner.

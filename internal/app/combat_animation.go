@@ -179,6 +179,12 @@ func (a *App) confirmedAnimation(p []byte) {
 		result := a.state.LastAttack
 		if a.state.SelfID != 0 && result.Source == a.state.SelfID {
 			a.markCombatAction()
+			// A swing already in flight can arrive after a ground move
+			// abandoned the attack. Apply the hit without stopping travel.
+			if v.travel && v.approachTarget == 0 && !v.attackSent {
+				a.deliverAttackResult(result, nil)
+				return
+			}
 		}
 		ranged := false
 		if actor := a.playerActor(result.Source); actor != nil {

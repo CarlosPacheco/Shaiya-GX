@@ -16,6 +16,9 @@ func (a *App) moveToGround(in *platform.Input, width, height int) {
 		return
 	}
 	if p, hit := v.world.RayFloor(origin, direction, clickMoveDistance); hit {
+		if !a.abandonAttack() {
+			return
+		}
 		v.destination, v.travel, v.autoRun = p, true, false
 		a.startTravelEffect()
 	}
