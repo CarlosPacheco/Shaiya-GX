@@ -231,7 +231,7 @@ func (a *App) drawInventory(w, h int) {
 }
 
 func (a *App) inventoryComparison(bag, typ uint8) tooltipContent {
-	if bag == 0 {
+	if bag == 0 || typ == 42 {
 		return tooltipContent{}
 	}
 	slots := inventoryEquipSlots(typ)
