@@ -16,17 +16,20 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
+// textBorderAlpha is the default opacity of the black border drawn around UI text.
+const textBorderAlpha = .3
+
 // Font uses a fast Latin-1 atlas and shaped Unicode fallback. Height follows D3DXCreateFont with a
 // positive height: the cell (ascent + descent) is Height pixels.
 type Font struct {
-	tex           *render.Texture
-	glyphs        [256]glyph
-	unicode       *unicodeFont
-	Ascent        int
-	Height        int
-	atlasW        float32
-	atlasH        float32
-	subtleOutline bool
+	tex         *render.Texture
+	glyphs      [256]glyph
+	unicode     *unicodeFont
+	Ascent      int
+	Height      int
+	atlasW      float32
+	atlasH      float32
+	borderAlpha float32
 }
 
 type glyph struct {
@@ -108,6 +111,9 @@ func loadFontData(data []byte, cellHeight int, pixelSize bool) (*Font, error) {
 	return f, nil
 }
 
+// SetBorder sets the opacity of the black border drawn around the text (0 disables it).
+func (f *Font) SetBorder(alpha float32) { f.borderAlpha = alpha }
+
 // Width is the advance of s in pixels.
 func (f *Font) Width(s string) int {
 	if f.unicode != nil && needsUnicode(s) {
@@ -143,13 +149,12 @@ func (f *Font) Draw(s *render.Sprites, text string, x, y int, rgba [4]float32, m
 
 // DrawScaled keeps tooltip text and frame together on small viewports.
 func (f *Font) DrawScaled(s *render.Sprites, text string, x, y, scale float32, rgba [4]float32, maxW int) {
-	if f.subtleOutline && (rgba[0] != 0 || rgba[1] != 0 || rgba[2] != 0) && rgba[3] > 0 {
-		edge := .8 * scale
-		ink := [4]float32{0, 0, 0, rgba[3] * .30}
-		f.drawText(s, text, x-edge, y, scale, ink, maxW, true)
-		f.drawText(s, text, x+edge, y, scale, ink, maxW, true)
-		f.drawText(s, text, x, y-edge, scale, ink, maxW, true)
-		f.drawText(s, text, x, y+edge, scale, ink, maxW, true)
+	if f.borderAlpha > 0 && (rgba[0] != 0 || rgba[1] != 0 || rgba[2] != 0) && rgba[3] > 0 {
+		// One-pixel soft black border so every UI text stays readable on any plate.
+		ink := [4]float32{0, 0, 0, rgba[3] * f.borderAlpha}
+		for _, o := range [8][2]float32{{-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1}} {
+			f.drawText(s, text, x+o[0]*scale, y+o[1]*scale, scale, ink, maxW, true)
+		}
 	}
 	f.drawText(s, text, x, y, scale, rgba, maxW, false)
 }

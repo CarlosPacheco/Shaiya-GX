@@ -308,14 +308,18 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.font, err = fonts.Load(13); err != nil {
 		return nil, err
 	}
-	if a.tooltipFont, err = fonts.Load(12); err != nil {
+	if a.tooltipFont, err = fonts.Load(14); err != nil {
 		return nil, err
 	}
-	if a.tooltipHeadingFont, err = fonts.LoadEmphasis(12); err != nil {
+	if a.tooltipHeadingFont, err = fonts.LoadEmphasis(14); err != nil {
 		return nil, err
 	}
 
-	a.chatTextFont = a.font
+	// Chat is larger than the 13px UI cell.
+	if a.chatTextFont, err = fonts.Load(17); err != nil {
+		return nil, err
+	}
+	a.chatTextFont.SetBorder(.5)
 
 	if b, err := arc.ReadFile("sysmsg-uni.txt"); err == nil {
 		a.msg = text.ParseSysMsg(b)

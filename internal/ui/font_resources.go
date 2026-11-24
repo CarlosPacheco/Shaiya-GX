@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	textFont "github.com/go-text/typesetting/font"
 )
@@ -49,11 +48,7 @@ func LoadFontSource(read func(string) ([]byte, error)) (*FontSource, error) {
 	if override := os.Getenv("SHAIYA_FONT"); override != "" {
 		data, err = os.ReadFile(override)
 	} else {
-		if arial, readErr := read("fonts/arial.ttf"); readErr == nil {
-			data, primaryPath = arial, "fonts/arial.ttf"
-		} else {
-			data, err = read(primaryPath)
-		}
+		data, err = read(primaryPath)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("external UI font %s: %w", primaryPath, err)
@@ -115,7 +110,7 @@ func (s *FontSource) ResolveFace(r rune) *textFont.Face {
 func (s *FontSource) Load(height int) (*Font, error) {
 	f, err := loadFontData(s.primaryData, height, false)
 	if err == nil {
-		f.subtleOutline = strings.EqualFold(s.primary.Describe().Family, "Arial")
+		f.borderAlpha = textBorderAlpha
 		f.unicode.primary = s.primary
 		f.unicode.source = s
 	}

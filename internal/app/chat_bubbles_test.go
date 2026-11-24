@@ -51,3 +51,25 @@ func TestChatProtectionRunsBeforeHistoryAndBubbles(t *testing.T) {
 		t.Fatalf("unexpected unsafe-link presentation: %+v / %+v", a.state.Chat, a.chatBubbles)
 	}
 }
+
+func TestChatBubblesSkipConcealedSpeakersIncludingSelf(t *testing.T) {
+	a := inputApp()
+	a.clock = 10
+	a.state.SelfID = 1
+	a.state.Entities[7] = &game.Entity{ID: 7, Concealed: true}
+	for _, id := range []uint32{1, 7} {
+		a.state.Self.Concealed = id == 1
+		a.state.AddChat(game.ChatLine{Op: proto.ChatNormal, SenderID: id, Text: "psst"})
+		a.confirmedChatBubble(proto.ChatNormal)
+		if len(a.chatBubbles) != 0 {
+			t.Fatalf("concealed speaker %d produced a bubble", id)
+		}
+	}
+	a.state.Self.Concealed = false
+	a.state.Entities[7].Concealed = false
+	a.state.AddChat(game.ChatLine{Op: proto.ChatNormal, SenderID: 7, Text: "hi"})
+	a.confirmedChatBubble(proto.ChatNormal)
+	if len(a.chatBubbles) != 1 {
+		t.Fatal("visible speaker lost its bubble")
+	}
+}

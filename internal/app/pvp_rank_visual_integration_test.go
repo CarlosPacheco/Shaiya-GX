@@ -114,7 +114,8 @@ func TestPvPRankNameplateAndStatusGL(t *testing.T) {
 			a.drawPlayerNames(w, h)
 			a.sprites.End()
 			p := pixels()
-			left, top := x-a.font.Width(name)/2+a.font.Width(name)+1, y-3
+			nameFont := a.chatFont()
+			left, top := x-nameFont.Width(name)/2+nameFont.Width(name)+1, y-3+(nameFont.Height-a.font.Height)/2-(nameFont.Height-a.font.Height)
 			colored := 0
 			for dy := 0; dy < 32; dy++ {
 				for dx := 0; dx < 32; dx++ {

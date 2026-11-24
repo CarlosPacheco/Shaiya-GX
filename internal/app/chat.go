@@ -342,8 +342,11 @@ func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
 			id, style = 370, 12
 		case proto.ChatWorld:
 			id, style = 355, 13
-		case proto.ChatShout, proto.ChatWorldShout, proto.ChatMap:
+		case proto.ChatShout, proto.ChatWorldShout:
 			style = 14
+		case proto.ChatMap:
+			// Game.exe 0x566d60: SysMsg 482 "[area]<p> : <b>" with style 31, not the shout style.
+			id, style = 482, 31
 		case proto.ChatNormalAdmin:
 			style = 16
 		case proto.ChatWorldAdmin:

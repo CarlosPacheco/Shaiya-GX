@@ -150,7 +150,7 @@ func TestChatHistoryOwnsPointerWithoutBlockingHeldMovement(t *testing.T) {
 	}
 }
 
-var chatTestMessages = text.SysMsg{353: "[Party]<p> : <b>", 354: "[Whisper]<p> : <b>", 370: "[Guild]<p> : <b>"}
+var chatTestMessages = text.SysMsg{353: "[Party]<p> : <b>", 354: "[Whisper]<p> : <b>", 370: "[Guild]<p> : <b>", 482: "[area]<p> : <b>"}
 
 func TestPhoenixChatPickerOwnsClicksAboveActionBars(t *testing.T) {
 	a := inputApp()
@@ -198,7 +198,7 @@ func TestPhoenixChannelColoursKeepSysMsgText(t *testing.T) {
 	for _, tc := range []struct {
 		op  proto.Opcode
 		rgb uint32
-	}{{proto.ChatNormal, 0xd5d4d3}, {proto.ChatParty, 0xa8f3a0}, {proto.ChatGuild, 0xeea4ed}, {proto.ChatWhisper, 0xf3a0a0}, {proto.ChatMap, 0xff3000}, {proto.ChatWorld, 0xf3dea0}} {
+	}{{proto.ChatNormal, 0xd5d4d3}, {proto.ChatParty, 0xa8f3a0}, {proto.ChatGuild, 0xeea4ed}, {proto.ChatWhisper, 0xf3a0a0}, {proto.ChatMap, 0x7875e6}, {proto.ChatWorld, 0xf3dea0}} {
 		line := game.ChatLine{Op: tc.op, Sender: "Alice", Text: "Message"}
 		entry := chatEntry(chatTestMessages, line)
 		if entry.Color != ui.RGBColor(tc.rgb) {
@@ -207,6 +207,12 @@ func TestPhoenixChannelColoursKeepSysMsgText(t *testing.T) {
 		if tc.op == proto.ChatParty && entry.Text != chatTestMessages.Format(353, map[string]string{"p": "Alice", "b": "Message"}) {
 			t.Fatal("SysMsg template changed", entry)
 		}
+		if tc.op == proto.ChatMap && entry.Text != "[area]Alice : Message" {
+			t.Fatal("area prefix missing", entry)
+		}
+	}
+	if shout := chatEntry(chatTestMessages, game.ChatLine{Op: proto.ChatShout, Sender: "Alice", Text: "Message"}); shout.Color != ui.RGBColor(0xff3000) {
+		t.Fatal("shout keeps style 14", shout)
 	}
 }
 

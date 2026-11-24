@@ -58,8 +58,8 @@ pixel-identical glyphs.
 ## Palette and formatting
 
 `0x41cfe0` confirms the existing channel RGB values: Normal D5D4D3, Party
-A8F3A0, Whisper F3A0A0, Guild EEA4ED, Trade F3DEA0 and Area FF3000. These did not
-need replacement. Routing is separate: `0x41f120` sends gameplay styles to the
+A8F3A0, Whisper F3A0A0, Guild EEA4ED, Trade F3DEA0 and Shout FF3000. Area chat (`0x1111`, handler `0x566d60`) is
+style 31 (`7875E6`) with SysMsg 482 `[area]<p> : <b>`, not the shout style. Routing is separate: `0x41f120` sends gameplay styles to the
 upper history and conversation styles to the lower one.
 
 `0x41d4a0` expands native message placeholders. For `<hp>`, it calls `0x578230`,
@@ -143,7 +143,9 @@ Renderer initialization `0x544620` selects font creation by locale, through
 helper `0x54bdf0`. Locale 3 creates a **15 px regular Arial** default font.
 The audited executable initializes locale 6, whose default is
 **13 px regular Tahoma**. GX follows the EP4 US 13 px nominal chat cell.
-A local Arial face takes precedence over the bundled Wine Tahoma. The renderer and text metrics can
+GX deliberately departs from the original here: all text uses the bundled Tahoma; chat and
+names use a 17px cell with a soft one-pixel black border (50% opacity), other UI text a 30%
+border, and item/skill tooltips a 14px cell. The renderer and text metrics can
 still differ from D3DX.
 The right-hand language icon has subsequently been removed by user request,
 while preserving the measured entry width and position.

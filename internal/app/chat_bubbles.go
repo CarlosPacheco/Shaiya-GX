@@ -22,6 +22,9 @@ func (a *App) confirmedChatBubble(op proto.Opcode) {
 	if line.Op != op || line.SenderID == 0 || line.ChatProtected || strings.TrimSpace(line.Text) == "" {
 		return
 	}
+	if a.speakerConcealed(line.SenderID) {
+		return
+	}
 	for i := range a.chatBubbles {
 		if a.chatBubbles[i].speaker == line.SenderID {
 			a.chatBubbles[i] = chatBubble{line.SenderID, line.Text, a.clock + 5}
@@ -31,6 +34,17 @@ func (a *App) confirmedChatBubble(op proto.Opcode) {
 
 	a.chatBubbles = append(a.chatBubbles, chatBubble{line.SenderID, line.Text, a.clock + 5})
 }
+
+// speakerConcealed reports invisible characters, GMs included: their balloons
+// would otherwise reveal where they stand.
+func (a *App) speakerConcealed(id uint32) bool {
+	if id == a.state.SelfID {
+		return a.state.Self.Concealed
+	}
+	e := a.state.Entities[id]
+	return e != nil && e.Concealed
+}
+
 func (a *App) drawChatBubbles(w, h int) {
 	if a.wv == nil || a.scene3d == nil || !a.clientSettings().WordBalloon {
 		return // Word Balloon off (0x411e10): no balloon is updated or drawn
@@ -44,7 +58,7 @@ func (a *App) drawChatBubbles(w, h int) {
 			continue
 		}
 		pos, exists := a.effectPosition(b.speaker)
-		if !exists {
+		if !exists || a.speakerConcealed(b.speaker) {
 			continue
 		}
 		active = append(active, b)

@@ -145,8 +145,8 @@ The external font pack contains `fonts/ui.ttf`, `fonts/fonts.json` and unmodifie
 fallback faces/licenses under `fonts/unicode/`. The JSON coverage ranges allow
 script faces to load only when a character requires them. The UI fonts share
 parsed faces and rune resolution; shaped layouts and raster textures remain
-bounded. A local `fonts/arial.ttf` takes precedence over the bundled Wine Tahoma.
-Pair it with `fonts/arialbd.ttf` for 12 px emphasized tooltip headings.
+bounded. The bundled Wine Tahoma (`fonts/ui.ttf`) is the primary face for all text; a local
+Arial is not preferred. Without a bold face, tooltip headings use the regular one.
 `SHAIYA_FONT` and `SHAIYA_FONT_BOLD` can explicitly select the two local files.
 The Unicode and color emoji fallbacks remain available with each face.
 `tools/prepare_fonts.py` indexes an existing primary/fallback source; fontTools is

@@ -529,6 +529,12 @@ func (a *App) drawPlayerNames(w, h int) {
 	}
 	vp := a.scene3d.View.Mul(a.scene3d.Proj)
 	captured := false
+	// Names share the chat font (size and soft border); colours stay per entity.
+	nameFont := a.chatFont()
+	captionOffset := guildCaptionOffset * nameFont.Height / a.font.Height
+	// Plate icons were laid out against the 13px cell; keep them centred on the taller text.
+	iconDY := (nameFont.Height - a.font.Height) / 2
+	nameLift := nameFont.Height - a.font.Height // the taller text grows upward from the native anchor
 	// A model can be visible while its label anchor is off screen. Preserve
 	// scene depth for clicking the mesh in that case too.
 	for _, batch := range v.groundBatches {
@@ -567,10 +573,10 @@ func (a *App) drawPlayerNames(w, h int) {
 		if !ok {
 			return
 		}
-		nameWidth := a.font.Width(name)
-		width := nameWidth + a.font.Width(suffix)
-		left, top := x-width/2, y-offset
-		if a.scene3d.OccludedLabel(pos, left, top, width, a.font.Height, w, h) {
+		nameWidth := nameFont.Width(name)
+		width := nameWidth + nameFont.Width(suffix)
+		left, top := x-width/2, y-offset-nameLift
+		if a.scene3d.OccludedLabel(pos, left, top, width, nameFont.Height, w, h) {
 			return
 		}
 		if !captured {
@@ -581,9 +587,9 @@ func (a *App) drawPlayerNames(w, h int) {
 		if plate.gm {
 			tint = ui.RGBColor(0x3B6CFF)
 		}
-		a.font.DrawName(a.sprites, name, left, top, tint)
+		nameFont.Draw(a.sprites, name, left, top, tint, 0)
 		if suffix != "" {
-			a.font.DrawName(a.sprites, suffix, left+nameWidth, top, white)
+			nameFont.Draw(a.sprites, suffix, left+nameWidth, top, white, 0)
 		}
 		outerLeft, outerRight := left, left+width
 		rank, ranked := pvprank.Index(plate.kills)
@@ -597,14 +603,14 @@ func (a *App) drawPlayerNames(w, h int) {
 				if ranked {
 					outerLeft -= 6 // Match the early PvP-rank offset before it is compensated.
 				}
-				a.sprites.Draw(tex, float32(outerLeft), float32(top-3), 16, 16, 0, 0, 1, 1, white)
+				a.sprites.Draw(tex, float32(outerLeft), float32(top-3+iconDY), 16, 16, 0, 0, 1, 1, white)
 			}
 		}
 		if ranked {
 			if grade := a.assets.Texture("interface/grade2.png"); grade != nil {
 				outerRight += 1 + 32
 				u0, v0 := float32(rank/16)*.5, float32(rank%16)/16
-				a.sprites.Draw(grade, float32(left+width+1), float32(top-3), 32, 32, u0, v0, u0+.5, v0+1./16, white)
+				a.sprites.Draw(grade, float32(left+width+1), float32(top-3+iconDY), 32, 32, u0, v0, u0+.5, v0+1./16, white)
 			}
 		}
 		if marker != "" {
@@ -614,7 +620,7 @@ func (a *App) drawPlayerNames(w, h int) {
 			}
 			if dot != nil {
 				for _, edge := range []int{outerLeft - 17, outerRight + 1} {
-					a.sprites.Draw(dot, float32(edge), float32(top-3), 16, 16, 0, 0, 1, 1, white)
+					a.sprites.Draw(dot, float32(edge), float32(top-3+iconDY), 16, 16, 0, 0, 1, 1, white)
 				}
 			}
 		}
@@ -635,7 +641,7 @@ func (a *App) drawPlayerNames(w, h int) {
 			pos, offset = a.playerNameplateAnchor(a.state.SelfID, v.selfGhost, slot.Race, false, a.state.Self.Vehicle)
 		}
 		label(slot.Name, pos, white, offset, playerPlate{gm: a.state.Self.IsGM, kills: a.state.Details.Kills, party: a.partyBadgeKind(a.state.SelfID)}, targetMarker(a.state.SelfID), "")
-		label(guildCaption(a.state, a.state.Guild.ID), pos, guildCaptionColor(a.state, a.state.Guild.ID, a.state.SelfID, slot.Name), offset+guildCaptionOffset, playerPlate{}, "", "")
+		label(guildCaption(a.state, a.state.Guild.ID), pos, guildCaptionColor(a.state, a.state.Guild.ID, a.state.SelfID, slot.Name), offset+captionOffset, playerPlate{}, "", "")
 	}
 	hoveredMob := uint32(0)
 	if a.hoveredMob != 0 && a.hoveredMobX == a.lastMouseX && a.hoveredMobY == a.lastMouseY {
@@ -669,7 +675,7 @@ func (a *App) drawPlayerNames(w, h int) {
 			if caption == "" && e.GuildID != 0 {
 				caption = e.Shape.Guild
 			}
-			label(caption, pos, guildCaptionColor(a.state, e.GuildID, e.ID, name), offset+guildCaptionOffset, playerPlate{}, "", "")
+			label(caption, pos, guildCaptionColor(a.state, e.GuildID, e.ID, name), offset+captionOffset, playerPlate{}, "", "")
 		case game.KindMob:
 			actor := v.mobs[e.ID]
 			if (!settings.MonsterNames || e.ID != a.state.Target && e.ID != hoveredMob) || e.Dead || actor == nil || actor.actor == nil || actor.pos.Sub(v.pos).Len() > 100 {
@@ -695,7 +701,7 @@ func (a *App) drawPlayerNames(w, h int) {
 					pos[1] += noticeBoardPlateRise
 				}
 				label(actor.actor.Name, pos, ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID), a.catalogNameSuffix(e))
-				label(a.npcTypeLabel(e.NpcType), pos, [4]float32{.35, .9, 1, 1}, a.font.Height-2, playerPlate{}, "", "")
+				label(a.npcTypeLabel(e.NpcType), pos, [4]float32{.35, .9, 1, 1}, nameFont.Height-2, playerPlate{}, "", "")
 			}
 		}
 	}

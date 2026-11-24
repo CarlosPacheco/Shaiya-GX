@@ -43,8 +43,8 @@ func TestNativeChatBubblesWorldMapAndExternalFontsGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer a.Close()
-	if a.chatFont().Height != 13 || a.font.Height != 13 ||
-		a.tooltipFont.Height != 12 || a.tooltipHeadingFont.Height != 12 {
+	if a.chatFont().Height != 17 || a.font.Height != 13 ||
+		a.tooltipFont.Height != 14 || a.tooltipHeadingFont.Height != 14 {
 		t.Fatal("incorrect EP4 regular, small or emphasis font height")
 	}
 	if err = a.Preview("world-stream"); err != nil {

@@ -398,7 +398,6 @@ func (c *ChatPanel) Draw(s *render.Sprites, f *Font, blank *render.Texture, h in
 				if tint[3] == 0 {
 					tint = white
 				}
-				f.Draw(s, run.text, 26+run.x, yText+1, [4]float32{0, 0, 0, tint[3]}, 316-run.x)
 				f.Draw(s, run.text, 25+run.x, yText, tint, 316-run.x)
 			}
 		}
