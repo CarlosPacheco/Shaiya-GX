@@ -15,6 +15,7 @@ type Sprites struct {
 	prog                   uint32
 	vao, vbo               uint32
 	uScreen, uMasked       int32
+	uPixelScale            int32
 	uCircle                int32
 	uGrayscale             int32
 	nameDepth              float32
@@ -61,7 +62,8 @@ uniform int masked;
 uniform int grayscale;
 uniform int reversedDepth;
 uniform vec2 screen;
-uniform vec3 circle; // screen centre and radius; zero radius disables clipping
+uniform float pixelScale; // framebuffer pixels per UI unit (below 1 on small windows)
+uniform vec3 circle; // UI-unit centre and radius; zero radius disables clipping
 in vec2 vUV;
 in vec4 vColor;
 flat in vec2 vLabelState;
@@ -98,7 +100,11 @@ void main() {
   frag.rgb = vec3(gray);
  }
  if (circle.z > 0.0) {
-		float radius = length(vec2(gl_FragCoord.x, screen.y - gl_FragCoord.y) - circle.xy);
+		// gl_FragCoord is in framebuffer pixels while sprites, screen and circle
+		// are in UI units: convert before comparing.
+		float k = pixelScale > 0.0 ? pixelScale : 1.0;
+		vec2 unit = vec2(gl_FragCoord.x, screen.y * k - gl_FragCoord.y) / k;
+		float radius = length(unit - circle.xy);
 		frag.a *= 1.0 - smoothstep(circle.z - 1.0, circle.z, radius);
 	}
 }`
@@ -110,7 +116,7 @@ func NewSprites(maxQuads int) (*Sprites, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &Sprites{prog: p, uScreen: gl.GetUniformLocation(p, gl.Str("screen\x00")), cap: maxQuads, nameDepth: -1}
+	s := &Sprites{prog: p, uScreen: gl.GetUniformLocation(p, gl.Str("screen\x00")), uPixelScale: gl.GetUniformLocation(p, gl.Str("pixelScale\x00")), cap: maxQuads, nameDepth: -1}
 	s.uMasked = gl.GetUniformLocation(p, gl.Str("masked\x00"))
 	s.uCircle = gl.GetUniformLocation(p, gl.Str("circle\x00"))
 	s.uGrayscale = gl.GetUniformLocation(p, gl.Str("grayscale\x00"))
@@ -134,6 +140,7 @@ func (s *Sprites) Begin(w, h int) {
 	s.clipped = false
 	gl.UseProgram(s.prog)
 	gl.Uniform2f(s.uScreen, float32(w), float32(h))
+	gl.Uniform1f(s.uPixelScale, float32(uiPixelScale))
 	gl.BindVertexArray(s.vao)
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
