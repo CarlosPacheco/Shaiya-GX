@@ -5,6 +5,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
 func TestOrdinaryChatBubbleOnlyConfirmedEchoAndReplacement(t *testing.T) {
@@ -71,5 +72,25 @@ func TestChatBubblesSkipConcealedSpeakersIncludingSelf(t *testing.T) {
 	a.confirmedChatBubble(proto.ChatNormal)
 	if len(a.chatBubbles) != 1 {
 		t.Fatal("visible speaker lost its bubble")
+	}
+}
+
+func TestMountRiseEasesFromGroundToSeat(t *testing.T) {
+	var blend float32
+	ground, seat := render.V3{0, 10, 0}, render.V3{0, 11.5, 0}
+	first := mountRise(&blend, 1.0/60, ground, seat)
+	if first[1] <= 10 || first[1] > 10.1 {
+		t.Fatalf("first frame must barely rise, got %v", first)
+	}
+	var last render.V3
+	for range 30 {
+		last = mountRise(&blend, 1.0/60, ground, seat)
+	}
+	if last != seat {
+		t.Fatalf("rider must end on the seat, got %v", last)
+	}
+	blend = 0
+	if mountRise(&blend, 0, ground, seat) != ground {
+		t.Fatal("no time elapsed must keep the rider at the ground")
 	}
 }

@@ -41,6 +41,7 @@ type remoteActor struct {
 	mount           *scene.Vehicle
 	mountShape      uint8
 	mountLoaded     bool
+	mountBlend      float32 // 0 to 1: how far the rider has risen to the seat
 	mountCasting    bool
 	travelDirection render.V3
 	facing          render.V3
@@ -263,11 +264,11 @@ func (a *App) prepareRemotePlayers() {
 				cached.mount.Update(float32(a.frameDT))
 				a.updateMountSounds(cached.mount, stepAction, stepTime, sh.Race, e.X, e.Y, e.Z)
 				cached.mount.World = render.Basis(pos, fwd.Scale(-1), render.V3{0, 1, 0})
-				pos = cached.mount.Seat()
+				pos = mountRise(&cached.mountBlend, float32(a.frameDT), pos, cached.mount.Seat())
 				cached.mount.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, true, &a.vehicle.effectBudget)
 			}
 		} else {
-			cached.mount, cached.mountLoaded = nil, false
+			cached.mount, cached.mountLoaded, cached.mountBlend = nil, false, 0
 		}
 		c.World = scale.Mul(render.Basis(pos, fwd.Scale(-1), render.V3{0, 1, 0}))
 		a.prepareSpirit(cached, e)
@@ -742,4 +743,16 @@ func (a *App) partyBadgeKind(id uint32) uint8 {
 		return 1
 	}
 	return 0
+}
+
+// mountRiseSeconds is how long a rider takes to settle onto a mount that has just appeared.
+const mountRiseSeconds = .2
+
+// mountRise eases the rider from the ground to the seat so that mounting is a
+// short rise instead of a one-frame jump of the whole model.
+func mountRise(blend *float32, dt float32, ground, seat render.V3) render.V3 {
+	*blend = min(1, *blend+max(0, dt)/mountRiseSeconds)
+	t := *blend
+	t = t * t * (3 - 2*t)
+	return ground.Add(seat.Sub(ground).Scale(t))
 }

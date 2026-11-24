@@ -97,3 +97,35 @@ func TestMountStepCrossed(t *testing.T) {
 		t.Fatal("jump or unknown race stepped")
 	}
 }
+
+func TestMountStepsFollowBackwardPlayback(t *testing.T) {
+	// Human walk steps at frames 7, 17, 2, 13 (30 fps). Backwards from frame 10 to 9
+	// crosses none; from 14 to 12 crosses 13; wrapping back through the start from
+	// 1 to the end crosses the frame-2 hoof only when the cursor passes it.
+	f := func(frame float32) float32 { return frame / 30 }
+	if MountStepCrossedDirected(0, f(10), 0, f(9), 0, true) {
+		t.Fatal("a backward step with no hoof frame played a step")
+	}
+	if !MountStepCrossedDirected(0, f(14), 0, f(12), 0, true) {
+		t.Fatal("a backward step over frame 13 lost its hoof")
+	}
+	if !MountStepCrossedDirected(0, f(3), 0, f(29.5), 0, true) {
+		t.Fatal("a backward wrap over the clip start must cross the frame-2 hoof")
+	}
+	if MountStepCrossedDirected(0, f(1), 0, f(29.5), 0, true) {
+		t.Fatal("a backward wrap with no hoof frame played a step")
+	}
+	if !MountStepCrossedDirected(0, f(6), 0, f(8), 0, false) || MountStepCrossedDirected(0, f(8), 0, f(9), 0, false) {
+		t.Fatal("forward behaviour changed")
+	}
+	// The old forward-only test fired on nearly every backward frame.
+	fired := 0
+	for frame := float32(30); frame > 5; frame -= .4 {
+		if MountStepCrossedDirected(0, f(frame), 0, f(frame-.4), 0, true) {
+			fired++
+		}
+	}
+	if fired < 2 || fired > 5 {
+		t.Fatalf("backward walk fired %d steps over one cycle, want a handful", fired)
+	}
+}

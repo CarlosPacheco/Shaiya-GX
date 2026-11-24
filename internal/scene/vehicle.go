@@ -184,6 +184,24 @@ func (v *Vehicle) StepCursor() (action int, seconds float32) {
 	return v.action, v.Time
 }
 
+// PlayingReverse reports that the walk clip is running backwards (the mount is
+// retreating); its time then decreases between frames.
+func (v *Vehicle) PlayingReverse() bool { return v != nil && v.reverse && v.action == 0 }
+
+// MountStepCrossedDirected is MountStepCrossed for a clip that may play
+// backwards: a hoof frame is crossed when it lies between the two samples in
+// the direction of travel, with a wrap at the clip ends in either direction.
+func MountStepCrossedDirected(prevAction int, prevTime float32, action int, time float32, race uint8, reverse bool) bool {
+	if !reverse {
+		return MountStepCrossed(prevAction, prevTime, action, time, race)
+	}
+	if prevAction != action {
+		return false // a new action restarts; nothing was crossed
+	}
+	// Going backwards from prevTime to time is going forwards from time to prevTime.
+	return MountStepCrossed(action, time, action, prevTime, race)
+}
+
 // MountStepCrossed reports that the cursor moved over a hoof frame between two
 // StepCursor samples. A new action restarts at its first frame.
 func MountStepCrossed(prevAction int, prevTime float32, action int, time float32, race uint8) bool {

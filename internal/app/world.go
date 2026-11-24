@@ -68,6 +68,7 @@ type worldView struct {
 	selfMountShape              uint8
 	selfMountRace               uint8
 	selfMountLoaded             bool
+	selfMountBlend              float32
 	pos                         render.V3
 	visualCorrectionOffset      render.V3
 	visualCorrectionLeft        float32
@@ -1015,12 +1016,12 @@ func (a *App) prepareSelfForDraw() {
 					v.selfMount.Update(float32(a.frameDT))
 					a.updateMountSounds(v.selfMount, stepAction, stepTime, slot.Race, v.pos[0], v.pos[1], v.pos[2])
 					v.selfMount.World = render.Basis(visualPos, heading.Scale(-1), render.V3{0, 1, 0})
-					riderPos = v.selfMount.Seat()
+					riderPos = mountRise(&v.selfMountBlend, float32(a.frameDT), visualPos, v.selfMount.Seat())
 					v.selfMount.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, true, &a.vehicle.effectBudget)
 				}
 			}
 		} else {
-			v.selfMount, v.selfMountLoaded = nil, false
+			v.selfMount, v.selfMountLoaded, v.selfMountBlend = nil, false, 0
 		}
 		v.self.Concealed = a.state.Self.Concealed
 		v.self.World = render.Basis(riderPos, heading.Scale(-1), render.V3{0, 1, 0})

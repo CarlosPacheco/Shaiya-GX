@@ -136,7 +136,7 @@ func (a *App) updateMountSounds(m *scene.Vehicle, prevAction int, prevTime float
 		return
 	}
 	action, now := m.StepCursor()
-	if !scene.MountStepCrossed(prevAction, prevTime, action, now, race) {
+	if !scene.MountStepCrossedDirected(prevAction, prevTime, action, now, race, m.PlayingReverse()) {
 		return
 	}
 	if name := mountStepFile(a.wv.world.WLD, race, x, y, z); name != "" {
