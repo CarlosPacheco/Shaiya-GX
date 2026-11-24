@@ -13,7 +13,16 @@ import (
 // DecodeOGG decodes Ogg Vorbis into Oto's stereo signed 16-bit 44100 Hz stream.
 // Resampling is bounded and incremental: only two input frames and one small
 // decoder buffer are retained in addition to the final bounded PCM output.
-func DecodeOGG(raw []byte) ([]byte, error) {
+//
+// The Vorbis decoder is a third-party library that indexes tables read from the
+// stream and panics on some corrupt headers; a damaged audio file must be an
+// error, never a crash of the client.
+func DecodeOGG(raw []byte) (pcm []byte, err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			pcm, err = nil, fmt.Errorf("ogg: corrupt stream: %v", recovered)
+		}
+	}()
 	r, err := oggvorbis.NewReader(bytes.NewReader(raw))
 	if err != nil {
 		return nil, fmt.Errorf("ogg: %w", err)

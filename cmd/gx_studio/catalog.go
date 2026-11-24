@@ -45,13 +45,6 @@ func showIcon(icon *canvas.Image, target image.Image) {
 	icon.Refresh()
 }
 
-func category(n uint32) string {
-	if n >= uint32(len(categories)) {
-		return fmt.Sprintf("Unknown (%d)", n)
-	}
-	return categories[n]
-}
-
 func (e *editor) dirty() bool { return !slices.Equal(e.draft, e.project.Products) }
 
 func (e *editor) catalog() {

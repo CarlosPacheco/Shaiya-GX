@@ -72,7 +72,7 @@ func verifyNativeWeaponEnchants(t *testing.T, a, b *App, pump func(func() bool))
 		before := a.state.Inventory[key]
 		lapCount := a.state.Inventory[[2]uint8{1, 19}].Count
 		matCount := a.state.Inventory[[2]uint8{1, 18}].Count
-		if !a.sendEnchant([2]uint8{1, 19}, [2]uint8{1, 18}, key, 1) {
+		if !a.sendEnchant([2]uint8{1, 19}, [2]uint8{1, 18}, key) {
 			t.Fatal("enchant request refused")
 		}
 		if a.state.Inventory[key] != before {

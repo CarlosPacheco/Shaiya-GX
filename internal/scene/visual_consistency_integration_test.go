@@ -110,17 +110,33 @@ func TestCloakLightStabilityAndBasicOnlyCombatPoseGL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// A skill action enters the combat stance exactly when its ALT Next is a
+	// weapon-ready slot (the stance it ends in); the others leave it untouched.
+	endsInReady := func(slot int) bool {
+		fighter.loadActions()
+		a := fighter.actions[slot]
+		return a.Mode&0xff == 2 && isReadySlot(int(a.Next))
+	}
 	for _, slot := range []int{49, 93, 102} {
-		if !fighter.PlaySkillAction(38, slot) || fighter.combatPoseLeft != 0 {
-			t.Fatal("spell entered combat stance", slot, fighter.combatPoseLeft)
+		want := float32(0)
+		if endsInReady(slot) {
+			want = 10
 		}
+		if !fighter.PlaySkillAction(38, slot) || fighter.combatPoseLeft != want {
+			t.Fatal("skill action stance mismatch", slot, fighter.combatPoseLeft, want)
+		}
+		fighter.combatPoseLeft = 0
 	}
 	if !fighter.PlayBasicAttack(6, 0) || fighter.combatPoseLeft != 10 {
 		t.Fatal("basic attack did not enter combat stance")
 	}
 	fighter.combatPoseLeft = 3
-	if !fighter.PlaySkillAction(38, 102) || fighter.combatPoseLeft != 3 {
-		t.Fatal("spell refreshed previous basic stance")
+	want := float32(3)
+	if endsInReady(102) {
+		want = 10
+	}
+	if !fighter.PlaySkillAction(38, 102) || fighter.combatPoseLeft != want {
+		t.Fatal("skill refreshed the previous stance", fighter.combatPoseLeft, want)
 	}
 	if !c.PlayCast(88, 2) || c.combatPoseLeft != 0 {
 		t.Fatal("preparation entered combat stance")

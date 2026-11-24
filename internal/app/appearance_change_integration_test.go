@@ -13,8 +13,8 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"github.com/Spelunkern/Shaiya-GX/internal/session"
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/session"
 )
 
 func TestConfirmedAppearanceRefreshesActorsAndPortraitGL(t *testing.T) {
@@ -57,16 +57,16 @@ func TestConfirmedAppearanceRefreshesActorsAndPortraitGL(t *testing.T) {
 	if !a.openAppearanceEditor([2]uint8{1, 2}) {
 		t.Fatal("editor did not open")
 	}
-	a.appearanceUI.Update(&platform.Input{MouseX: 203, MouseY: 26, Pressed: true, MouseDown: true}, 96, 96)
-	a.appearanceUI.Update(&platform.Input{MouseX: 203, MouseY: 26, Clicked: true}, 96, 96)
+	a.appearanceUI.Update(&platform.Input{MouseX: 200, MouseY: 330, Pressed: true, MouseDown: true}, 96, 96)
+	a.appearanceUI.Update(&platform.Input{MouseX: 200, MouseY: 330, Clicked: true}, 96, 96)
 	if a.appearanceUI.Values[0] != 2 {
 		t.Fatal("hair control did not advance")
 	}
 	a.sprites.Begin(96, 96)
-	a.drawInventoryPreview(96, 96)
+	a.drawAppearancePreview(96, 96) // the editor draws its own preview from the draft
 	a.appearanceUI.Draw(a.sprites, a.font, 96, 96)
 	a.sprites.End()
-	if a.inventory.preview == nil || a.inventory.previewAppearance.Hair != 2 || a.state.Slots[0].Hair != 1 {
+	if a.appearanceEdit == nil || a.appearanceEdit.actor == nil || a.appearanceEdit.built.Hair != 2 || a.state.Slots[0].Hair != 1 {
 		t.Fatal("draft preview changed server state or failed to render")
 	}
 	a.updateAppearanceEditor(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, 96, 96)
@@ -76,6 +76,7 @@ func TestConfirmedAppearanceRefreshesActorsAndPortraitGL(t *testing.T) {
 	if remote == nil || remote.character == nil {
 		t.Fatal("initial remote actor missing")
 	}
+	oldCharacter := remote.character // the cached entry persists; its model is replaced
 	packets := make(chan []byte, 2)
 	a.world = &session.World{Packets: packets}
 	change := func(id uint32) []byte {
@@ -97,7 +98,7 @@ func TestConfirmedAppearanceRefreshesActorsAndPortraitGL(t *testing.T) {
 		t.Fatal("portrait did not refresh")
 	}
 	a.prepareRemotePlayers()
-	if a.wv.actors[42].character == nil || a.wv.actors[42] == remote || a.wv.actors[42].shape.Hair != 2 {
+	if a.wv.actors[42].character == nil || a.wv.actors[42].character == oldCharacter || a.wv.actors[42].shape.Hair != 2 {
 		t.Fatal("remote model did not refresh")
 	}
 }

@@ -53,8 +53,7 @@ func Str(str string) *uint8 {
 	if !strings.HasSuffix(str, "\x00") {
 		panic("str argument missing null terminator: " + str)
 	}
-	header := (*reflect.StringHeader)(unsafe.Pointer(&str))
-	return (*uint8)(unsafe.Pointer(header.Data))
+	return (*uint8)(unsafe.Pointer(unsafe.StringData(str)))
 }
 
 // GoStr takes a null-terminated string returned by OpenGL and constructs a

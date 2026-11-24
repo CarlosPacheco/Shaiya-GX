@@ -65,8 +65,8 @@ func (a *App) confirmedPvPReward(op proto.Opcode) {
 
 func (a *App) pvpRewardState() ui.PvPRewardState {
 	r := a.state.PvPRewards
-	threshold, points, _, killOK := pvprank.Reward(r.KillStage)
-	deathThreshold, _, gold, deathOK := pvprank.Reward(r.DeathStage)
+	threshold, _, _, killOK := pvprank.Reward(r.KillStage)
+	deathThreshold, _, _, deathOK := pvprank.Reward(r.DeathStage)
 	state := ui.PvPRewardState{Description: a.msg.Get(5348), Busy: a.pvpReward.pending != 0,
 		CanKill:  r.Known && killOK && a.state.Details.Kills >= threshold,
 		CanDeath: r.Known && deathOK && a.state.Details.Deaths >= deathThreshold}
@@ -78,8 +78,8 @@ func (a *App) pvpRewardState() ui.PvPRewardState {
 		return state
 	}
 	killStage, deathStage := min(r.KillStage, pvprank.RewardCount), min(r.DeathStage, pvprank.RewardCount)
-	threshold, points, _, _ = pvprank.Reward(killStage)
-	_, _, gold, _ = pvprank.Reward(deathStage)
+	threshold, points, _, _ := pvprank.Reward(killStage)
+	_, _, gold, _ := pvprank.Reward(deathStage)
 	state.Reward = a.msg.Format(5353, map[string]string{"v": fmt.Sprint(killStage), "v2": fmt.Sprint(points)})
 	state.Kills = fmt.Sprintf("%d / %d", a.state.Details.Kills, threshold)
 	state.Deaths = fmt.Sprint(a.state.Details.Deaths)

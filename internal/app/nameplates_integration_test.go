@@ -16,8 +16,8 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
 func TestNPCNameplateOriginalAssetsGL(t *testing.T) {
@@ -141,6 +141,9 @@ func TestNPCNameplateOriginalAssetsGL(t *testing.T) {
 	monster.World[13] += delta[1]
 	monster.World[14] += delta[2]
 	a.state.Entities[101] = &game.Entity{ID: 101, Kind: game.KindMob}
+	if a.wv.mobs == nil {
+		a.wv.mobs = map[uint32]*mobActor{} // created by the first monster update in play
+	}
 	a.wv.mobs[101] = &mobActor{entity: a.state.Entities[101], actor: monster, pos: render.V3{monster.World[12], monster.World[13], monster.World[14]}}
 	if a.pickMob(&platform.Input{Clicked: true, MouseX: mx, MouseY: my}, 1024, 734) != 101 {
 		t.Fatal("front monster was not selected over NPC")

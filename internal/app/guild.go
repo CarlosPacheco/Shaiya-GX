@@ -684,11 +684,3 @@ func (a *App) guildCommand(text string) bool {
 	}
 	return true
 }
-
-// msgOr is the client's SysMsg text, or the fallback when the table lacks it.
-func (a *App) msgOr(id int, fallback string) string {
-	if text := strings.TrimSpace(a.msg.Get(id)); text != "" {
-		return text
-	}
-	return fallback
-}

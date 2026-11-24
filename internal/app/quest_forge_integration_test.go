@@ -9,9 +9,9 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
-	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -90,7 +90,7 @@ func TestQuestIndicatorsAndNativeForgeModesGL(t *testing.T) {
 	def.StartQuests = []uint16{1}
 	def.EndQuests = []uint16{1}
 	a.npcDefs[key] = def
-	a.questDefs[0] = sdata.Quest{Name: "Indicator fixture", MinLevel: 0, MaxLevel: 65535, Faction: 6, Jobs: [6]uint8{1, 1, 1, 1, 1, 1}, StartNPCType: e.NpcType, StartNPCID: e.TypeID, EndNPCType: e.NpcType, EndNPCID: e.TypeID}
+	a.questDefs[0] = sdata.Quest{Name: "Indicator fixture", MinLevel: 0, MaxLevel: 65535, Faction: 6, Male: true, Female: true, Jobs: [6]uint8{1, 1, 1, 1, 1, 1}, StartNPCType: e.NpcType, StartNPCID: e.TypeID, EndNPCType: e.NpcType, EndNPCID: e.TypeID}
 	a.state.Quests = map[uint16]proto.ActiveQuest{}
 	a.state.FinishedQuests = nil
 	a.prepareNPCs()

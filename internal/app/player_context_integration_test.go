@@ -3,6 +3,7 @@
 package app
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -13,6 +14,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 func TestOriginalPlayerContextGL(t *testing.T) {
@@ -103,7 +105,11 @@ func TestOriginalPlayerContextGL(t *testing.T) {
 	a.state.Party.Leader = a.state.SelfID
 	a.playerContext.x, a.playerContext.y = 1020, 730
 	draw()
-	if a.playerContext.x+a.playerContext.width > 1024 || a.playerContext.y+a.playerContext.height > 734 {
+	// A 734-high window is below the 768 design height, so the UI is drawn in a
+	// virtual window scaled by ui.UIScale and the popup is kept inside that.
+	scale := float64(ui.UIScale(1024, 734))
+	virtualW, virtualH := int(math.Round(1024/scale)), int(math.Round(734/scale))
+	if a.playerContext.x+a.playerContext.width > virtualW || a.playerContext.y+a.playerContext.height > virtualH {
 		t.Fatal("popup escaped viewport after roster changed")
 	}
 	if err = render.SavePNG(filepath.Join(dir, "player-menu-party.png"), 1024, 734); err != nil {

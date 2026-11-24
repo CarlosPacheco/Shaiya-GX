@@ -178,14 +178,6 @@ func (a *App) serviceQuestOrigin(w, h int, e *game.Entity) (int, int) {
 	x, y := a.marketUI.Origin(w, h)
 	return x + 145, y + 75
 }
-func (a *App) drawServiceQuestButton(w, h int, e *game.Entity, def sdata.NPC) {
-	if a.npcQuestUI == nil || len(def.StartQuests)+len(def.EndQuests) == 0 {
-		return
-	}
-	x, y := a.serviceQuestOrigin(w, h, e)
-	a.npcQuestUI.DrawServiceButton(a.sprites, a.font, x, y, false, "")
-}
-
 func (a *App) npcQuestEntries(e *game.Entity) []npcQuestEntry {
 	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 	out := make([]npcQuestEntry, 0, len(def.StartQuests)+len(def.EndQuests))

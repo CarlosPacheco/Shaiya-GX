@@ -56,7 +56,8 @@ func TestRealCash(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(products) != 61 {
+	// The original EP5 catalog has 61 products; GX data may carry a larger one.
+	if len(products) < 61 {
 		t.Fatalf("unexpected product count %d", len(products))
 	}
 	if products[0].Code != "Basicos_1" || products[0].Items[0] != (CashItem{ItemID: 100067, Count: 255}) {

@@ -47,7 +47,6 @@ type houseView struct {
 	houseSerial           uint64
 	donateSerial          uint64
 	donatedValue          uint32
-	requestedEtinFor      uint32
 	availableCache        uint32
 }
 

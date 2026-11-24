@@ -41,7 +41,7 @@ func TestForgeRequestsRejectInsufficientGoldWithNativeNotice(t *testing.T) {
 		want := 10102
 		switch operation {
 		case "enchant":
-			sent = a.sendEnchant([2]uint8{1, 1}, [2]uint8{1, 2}, [2]uint8{1, 0}, 1)
+			sent = a.sendEnchant([2]uint8{1, 1}, [2]uint8{1, 2}, [2]uint8{1, 0})
 		case "link":
 			sent = a.sendGemLink([2]uint8{1, 3}, [2]uint8{1, 0})
 			want = 10010

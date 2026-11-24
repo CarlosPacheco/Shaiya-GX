@@ -28,8 +28,6 @@ func editText(value string, multiline bool) *widget.Entry {
 	return box
 }
 
-func number(value uint64) *widget.Entry { return editText(strconv.FormatUint(value, 10), false) }
-
 type productSlot struct {
 	id, count *widget.Entry
 }

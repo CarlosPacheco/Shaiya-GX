@@ -16,8 +16,8 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 func TestBlessingBarUsesOriginalFooterGL(t *testing.T) {
@@ -103,7 +103,9 @@ func TestBlessingBarUsesOriginalFooterGL(t *testing.T) {
 		gl.ReadPixels(0, 0, int32(width), 768, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
 		return pixels
 	}
-	for _, width := range []int{800, 1024} {
+	// Windows below 1024 wide draw the 1024 art shrunk by ui.UIScale instead of
+	// swapping to the 800 art, so the pixel-exact footer reference only exists at 1024.
+	for _, width := range []int{1024} {
 		for _, tc := range [][2]uint32{{0, 0}, {149, 0}, {6144, 0}, {12288, 0}, {12288, 300000}} {
 			actual := draw(width, true, tc[0], tc[1], false, 0)
 			expected := draw(width, true, tc[0], tc[1], true, 0)

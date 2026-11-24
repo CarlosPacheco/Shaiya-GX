@@ -77,9 +77,8 @@ func TestAuctionNativeControlsMatchOriginalGeometry(t *testing.T) {
 	want := map[string][2]int{"tab0": {0x43, 0x14}, "tab3": {0x229, 0x14}, "close": {0x2c5, 6}, "find": {0x293, 0x43},
 		"bid": {0x146, 0x233}, "exact": {0x272, 0x233}, "prev": {0x17f, 0x1f7}, "next": {0x1db, 0x1f7}, "cat4": {0x12, 0x84 + 4*0x19}}
 	for id, at := range want {
-		b := a.auctionUI.btn[id]
 		a.auctionControls(0, 0)
-		b = a.auctionUI.btn[id]
+		b := a.auctionUI.btn[id]
 		if b == nil || b.X() != at[0] || b.Y() != at[1] {
 			t.Fatalf("%s is not at %v", id, at)
 		}

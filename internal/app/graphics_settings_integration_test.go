@@ -10,8 +10,8 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 func TestAAAppliesAfterRestartGL(t *testing.T) {
@@ -52,8 +52,8 @@ func TestAAAppliesAfterRestartGL(t *testing.T) {
 		a.gameMenu.Open(ui.MenuGraphics)
 		a.gameMenu.Settings.Antialias = mode
 		x, y := a.gameMenu.Origin(960, 600)
-		a.updateGameMenu(&platform.Input{MouseX: x + 160, MouseY: y + 500, Pressed: true, MouseDown: true}, 960, 600)
-		a.updateGameMenu(&platform.Input{MouseX: x + 160, MouseY: y + 500, Clicked: true}, 960, 600)
+		a.updateGameMenu(&platform.Input{MouseX: x + 160, MouseY: y + 644, Pressed: true, MouseDown: true}, 960, 600)
+		a.updateGameMenu(&platform.Input{MouseX: x + 160, MouseY: y + 644, Clicked: true}, 960, 600)
 		if a.gameMenu.Page != ui.MenuMain {
 			t.Fatal("graphics OK did not save")
 		}

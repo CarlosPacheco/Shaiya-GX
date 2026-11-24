@@ -112,7 +112,7 @@ func (a *App) updateBlacksmith(in *platform.Input, w, h int) bool {
 	}
 	if enchant && a.nearBlacksmith() {
 		v.materialCount = 1
-		a.sendEnchant(v.keys[1], v.keys[2], v.keys[0], 1)
+		a.sendEnchant(v.keys[1], v.keys[2], v.keys[0])
 		return true
 	}
 	if compose && a.nearBlacksmith() {
@@ -221,7 +221,7 @@ func (a *App) updateGemConfirm(in *platform.Input, w, h int) {
 	case 2:
 		a.sendGemRemove(a.blacksmith.keys[0], a.blacksmith.keys[3])
 	case 5:
-		a.sendEnchant(a.blacksmith.keys[1], a.blacksmith.keys[2], a.blacksmith.keys[0], a.blacksmith.materialCount)
+		a.sendEnchant(a.blacksmith.keys[1], a.blacksmith.keys[2], a.blacksmith.keys[0])
 	}
 }
 

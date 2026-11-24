@@ -225,15 +225,6 @@ func (a *App) attackReachTo(e *game.Entity) float32 {
 	return max(reach, 1)
 }
 
-func (a *App) attackReach() float32 {
-	reach := float32(2)
-	weapon := a.state.Inventory[[2]uint8{0, 5}]
-	if def := a.itemsItem(weapon.Type, weapon.TypeID); def != nil {
-		reach = max(reach, float32(def.Range))
-	}
-	return reach
-}
-
 func (a *App) approachSkillPacket(packet []byte) bool {
 	if a.wv == nil || a.state.Self.Mounted || len(packet) != 7 || proto.Op(packet) != proto.SkillUse && proto.Op(packet) != proto.SkillUseNoTarget {
 		return false

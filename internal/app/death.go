@@ -24,12 +24,6 @@ func (a *App) initDeath() {
 	a.deathUI.Reset()
 	d.party = a.state.Party.Leader != 0 && a.state.Party.Leader != a.state.SelfID
 }
-func (a *App) deathText(id int, fallback string) string {
-	if s := a.msg[id]; s != "" {
-		return s
-	}
-	return fallback
-}
 func (a *App) configureDeath() {
 	d := &a.wv.death
 	kind := ui.DeathSingle

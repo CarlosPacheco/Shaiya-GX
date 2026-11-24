@@ -15,8 +15,8 @@ type enchantView struct {
 	refresh                      gemRefresh
 }
 
-func (a *App) sendEnchant(lapKey, materialKey, itemKey [2]uint8, count uint16) bool {
-	count = 1 // Each operation uses exactly one lapisia and one material.
+func (a *App) sendEnchant(lapKey, materialKey, itemKey [2]uint8) bool {
+	const count = 1 // Each operation uses exactly one lapisia and one material.
 	if a.state == nil || a.world == nil || a.state.Self.Dead || a.shop.pending || a.inventory.pending || a.state.Exchange.Active ||
 		a.state.Duel.Phase != game.DuelNone || lapKey == materialKey || lapKey == itemKey || materialKey == itemKey {
 		return false

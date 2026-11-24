@@ -203,8 +203,6 @@ func (a *App) updateChat(in *platform.Input) bool {
 
 func (a *App) openChatComposer() {
 	a.chatOpen = true
-	if a.wv != nil {
-	}
 	a.chatItems = nil
 	a.chatInput = ui.TextField{Max: 120}
 	a.chatCaret, a.chatRecipientIndex = ui.ChatCaret{}, -1

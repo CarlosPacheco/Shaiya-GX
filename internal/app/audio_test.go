@@ -115,8 +115,10 @@ func TestRealWeaponSounds(t *testing.T) {
 			}
 		}
 	}
-	if len(files) != 87 {
-		t.Fatalf("native weapon catalog resolved %d WAVs, want 87", len(files))
+	// The original registers 87 weapon cues; GX adds the three ch_hit_crobow
+	// files that ship in the data but that Game.exe never registers.
+	if len(files) != 90 {
+		t.Fatalf("weapon catalog resolved %d sounds, want 90 (87 native + 3 crossbow hits)", len(files))
 	}
-	t.Log("15 weapon categories resolved 87 original WAVs, all decoded within the voice budget")
+	t.Log("15 weapon categories resolved 90 sounds, all decoded within the voice budget")
 }
