@@ -31,6 +31,8 @@ library. Run `build/gx_console[.exe]`, then enter `start server` or
 `shutdown server`. Closing the console leaves the services running.
 
 The client needs system graphics/audio libraries and a working OpenGL 4.5 driver.
+GX selects rendering paths from driver capabilities using the same policy on
+Linux and Windows.
 Windows users should install their GPU vendor's driver. No Go toolchain or build
 headers are needed to run prebuilt programs. Older released packages may still
 contain the removed graphical controller; use their included terminal console.

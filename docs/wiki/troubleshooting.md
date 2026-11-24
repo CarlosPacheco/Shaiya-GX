@@ -27,12 +27,14 @@ blocking desktop dialog.
 
 ### Graphics startup on Windows
 
-GX requests an OpenGL 4.5 core context through GLFW. Windows uses texture
-bindings and ordinary draws or instancing. With `-verbose`, the log includes the driver's
-advertised extensions and the paths actually selected. Drivers with limited
+GX requests an OpenGL 4.5 core context through GLFW. Linux and Windows select
+the same rendering paths from the capabilities reported by the active driver.
+Drivers that advertise bindless textures and shader draw parameters can use
+indirect batches when their shader-storage limits allow it. GX uses ordinary
+draws or instancing on the remaining devices. With `-verbose`, the log records
+the advertised capabilities and the selected paths. Devices with limited
 vertex shader storage use uniform poses and CPU-sampled effect geometry. GX
-uploads decoded RGBA8 mip levels when the driver cannot store a DDS compression
-format directly.
+uploads decoded RGBA8 mip levels when native DDS compression is unavailable.
 
 - A `create WGL context` error points to window or driver
   initialization. Include the complete error and the graphics adapter and

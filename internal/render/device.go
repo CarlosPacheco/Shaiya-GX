@@ -6,7 +6,6 @@ package render
 import (
 	"fmt"
 	"log"
-	"runtime"
 	"strings"
 	"unsafe"
 
@@ -20,10 +19,8 @@ var drawParametersSupported bool
 var sceneStorageSupported bool
 var skinCrowdSupported bool
 
-func configureDrawPaths(platform string, bindless, drawParameters bool, vertexBlocks, fragmentBlocks int32) {
-	// Windows drivers have failed inside glLinkProgram on the optional
-	// bindless shaders. Use the same core paths as on devices without them.
-	drawParametersSupported = drawParameters && platform != "windows"
+func configureDrawPaths(bindless, drawParameters bool, vertexBlocks, fragmentBlocks int32) {
+	drawParametersSupported = drawParameters
 	sceneStorageSupported = vertexBlocks >= 4 // scene effects and cloth
 	skinCrowdSupported = vertexBlocks >= 2    // transforms and bone palettes
 	skinIndirectSupported = bindless && drawParametersSupported && sceneStorageSupported && fragmentBlocks >= 1
@@ -73,7 +70,7 @@ func Init(debug bool) error {
 	var vertexBlocks, fragmentBlocks int32
 	gl.GetIntegerv(gl.MAX_VERTEX_SHADER_STORAGE_BLOCKS, &vertexBlocks)
 	gl.GetIntegerv(gl.MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &fragmentBlocks)
-	configureDrawPaths(runtime.GOOS, bindless, drawParameters, vertexBlocks, fragmentBlocks)
+	configureDrawPaths(bindless, drawParameters, vertexBlocks, fragmentBlocks)
 	configureTextureFormats(s3tc, dxt1)
 	clientlog.Debugf("OpenGL capabilities: ARB_bindless_texture=%t ARB_shader_draw_parameters=%t EXT_texture_compression_s3tc=%t bindless_indirect_enabled=%t",
 		bindless, drawParameters, s3tc, skinIndirectSupported)
