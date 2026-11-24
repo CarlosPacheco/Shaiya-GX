@@ -76,6 +76,10 @@ Stage and verify the new directory and executable together before replacing an i
 
 Every image under `interface/` is converted from its actual decoded content, including files whose old extension did not match their header. TGA, DDS, JPEG and BMP become real PNG files; this is not an extension-only rename. Conversion is lossless relative to the existing decoded pixels, including dimensions, alpha and RGB under fully transparent pixels. PNG uses best-compression deflate and lossless optipng optimization; no palette quantization or resizing is applied.
 
+When GX decodes `interface/inspect.png`, it clears exterior black pixels
+connected to the atlas border. Interior black artwork and the on-disk PNG
+are preserved.
+
 Some original TGA and DDS atlases share a stem while containing different artwork or layouts. DDS-origin files therefore use `_dds.png`, e.g. `icon/01_dds.png`, while the TGA counterpart becomes `icon/01.png`. Runtime references use these explicit PNG names.
 
 The migration tool converts the original root-level `cl.tga` to `data/interface/cl.png` for the local player's light halo. For an existing GX data directory, use `assets -data "$ORIGINAL_CLIENT" png cl.tga "$SHAIYA_DATA/interface/cl.png"`. The conversion preserves the 32×32 RGBA pixels.

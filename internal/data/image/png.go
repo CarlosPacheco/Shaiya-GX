@@ -105,3 +105,46 @@ func DecodePNG(b []byte) (Texture, error) {
 	}
 	return result, nil
 }
+
+// The original inspect atlas has black pixels around its frame. Follow the
+// border through black and already transparent pixels to preserve black art
+// enclosed by the frame.
+func clearInspectMatte(pixels []byte, w, h int) {
+	seen := make([]bool, w*h)
+	queue := make([]int, 0, 2*(w+h))
+	visit := func(x, y int) {
+		i := y*w + x
+		if seen[i] {
+			return
+		}
+		seen[i] = true
+		p := pixels[4*i : 4*i+4]
+		if p[3] == 0 || p[0]|p[1]|p[2] == 0 {
+			p[3] = 0
+			queue = append(queue, i)
+		}
+	}
+	for x := range w {
+		visit(x, 0)
+		visit(x, h-1)
+	}
+	for y := range h {
+		visit(0, y)
+		visit(w-1, y)
+	}
+	for cursor := 0; cursor < len(queue); cursor++ {
+		x, y := queue[cursor]%w, queue[cursor]/w
+		if x > 0 {
+			visit(x-1, y)
+		}
+		if x+1 < w {
+			visit(x+1, y)
+		}
+		if y > 0 {
+			visit(x, y-1)
+		}
+		if y+1 < h {
+			visit(x, y+1)
+		}
+	}
+}

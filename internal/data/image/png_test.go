@@ -57,3 +57,45 @@ func TestPNGAuthoredMipmapsAndInvalidDimensions(t *testing.T) {
 		t.Fatal("wrong mip dimensions accepted")
 	}
 }
+
+func TestInspectResourceClearsOnlyExteriorBlack(t *testing.T) {
+	canvas := stdimage.NewNRGBA(stdimage.Rect(0, 0, 5, 5))
+	black := color.NRGBA{A: 255}
+	frame := color.NRGBA{R: 96, G: 64, B: 32, A: 255}
+	for y := range 5 {
+		for x := range 5 {
+			canvas.SetNRGBA(x, y, black)
+			if x >= 1 && x <= 3 && y >= 1 && y <= 3 && (x != 2 || y != 2) {
+				canvas.SetNRGBA(x, y, frame)
+			}
+		}
+	}
+	canvas.SetNRGBA(0, 0, color.NRGBA{})
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, canvas); err != nil {
+		t.Fatal(err)
+	}
+	original := bytes.Clone(buf.Bytes())
+	got, err := DecodeResource(`Interface\INSPECT.PNG`, buf.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []struct {
+		x, y  int
+		pixel color.NRGBA
+	}{{1, 0, color.NRGBA{}}, {1, 2, frame}, {2, 2, black}}
+	for _, tc := range want {
+		i := (tc.y*5 + tc.x) * 4
+		p := got.RGBA.Pix[i : i+4]
+		if !bytes.Equal(p, []byte{tc.pixel.R, tc.pixel.G, tc.pixel.B, tc.pixel.A}) {
+			t.Errorf("pixel (%d,%d) = %v, want %v", tc.x, tc.y, p, tc.pixel)
+		}
+	}
+	ordinary, err := DecodeResource("interface/other.png", buf.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ordinary.RGBA.Pix[7] != 255 || !bytes.Equal(original, buf.Bytes()) {
+		t.Fatal("inspect correction altered other textures or original PNG bytes")
+	}
+}

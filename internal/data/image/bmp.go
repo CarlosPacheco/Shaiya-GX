@@ -90,8 +90,21 @@ func Decode(b []byte) (Texture, error) {
 // DecodeResource enforces GX's PNG interface contract while retaining the
 // original GPU texture formats for world, model and effect resources.
 func DecodeResource(file string, b []byte) (Texture, error) {
-	if strings.HasPrefix(strings.ToLower(strings.ReplaceAll(file, `\`, "/")), "interface/") {
-		return DecodePNG(b)
+	name := strings.ToLower(strings.ReplaceAll(file, `\`, "/"))
+	if strings.HasPrefix(name, "interface/") {
+		texture, err := DecodePNG(b)
+		if err == nil && name == "interface/inspect.png" {
+			if texture.RGBA != nil {
+				clearInspectMatte(texture.RGBA.Pix, texture.RGBA.W, texture.RGBA.H)
+			} else {
+				w, h := texture.DDS.W, texture.DDS.H
+				for _, level := range texture.DDS.Levels {
+					clearInspectMatte(level, w, h)
+					w, h = max(1, w/2), max(1, h/2)
+				}
+			}
+		}
+		return texture, err
 	}
 	return Decode(b)
 }
