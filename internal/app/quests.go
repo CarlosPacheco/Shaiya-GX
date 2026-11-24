@@ -46,6 +46,55 @@ func (a *App) questName(id uint16) string {
 	return a.questDefs[id-1].Name
 }
 
+func (a *App) confirmedQuestProgress(id uint16, slot uint8) {
+	active, ok := a.state.Quests[id]
+	if !ok || int(slot) >= len(active.Counters) {
+		return
+	}
+	if !a.questDataLoaded && a.arc != nil {
+		_ = a.loadQuests()
+	}
+	if id == 0 || int(id) > len(a.questDefs) {
+		return
+	}
+
+	def := &a.questDefs[id-1]
+	switch def.EndType {
+	case 1:
+		a.questMessage(fmt.Sprintf("%s: objective %d = %d", def.Name, slot+1, active.Counters[slot]))
+	case 2:
+		if a.assets == nil || int(slot) >= len(def.MobIDs) || def.MobCounts[slot] == 0 {
+			return
+		}
+		// EP5.4 reports all configured mob objectives after a counter update.
+		for i, mobID := range def.MobIDs {
+			required := def.MobCounts[i]
+			if mobID == 0 || required == 0 {
+				continue
+			}
+			if mob, err := a.assets.MonsterDefinition(mobID); err == nil && mob.Name != "" {
+				a.questKillMessage(def, 351, mob.Name, active.Counters[i], required)
+			}
+		}
+	case 3:
+		if slot == 0 && def.PVPKills != 0 {
+			a.questKillMessage(def, 349, "", active.Counters[0], def.PVPKills)
+		}
+	}
+}
+
+func (a *App) questKillMessage(def *sdata.Quest, message int, target string, current, required uint8) {
+	values := map[string]string{"p": def.Name, "t": target}
+	// The native 0x0905 callback at 0x5745F0 selects the capped variant for either flag.
+	if def.ResultType != 0 || def.UserSelect != 0 {
+		message++
+		current = min(current, required)
+		values["v2"] = strconv.Itoa(int(required))
+	}
+	values["v"] = strconv.Itoa(int(current))
+	a.systemMessage(6, message, values)
+}
+
 // Presentation follows confirmed server messages, including automatic progress.
 func (a *App) confirmedQuest(p []byte) {
 	switch proto.Op(p) {
@@ -83,9 +132,9 @@ func (a *App) confirmedQuest(p []byte) {
 			a.offerItemQuest([2]uint8{item.Bag, item.Slot}, sdata.ItemKey{Type: item.Type, TypeID: item.TypeID}, 3)
 		}
 	case proto.QuestCounter:
-		id, slot, value, err := proto.DecodeQuestCounter(p)
-		if err == nil && slot < 3 {
-			a.questMessage(fmt.Sprintf("%s: objective %d = %d", a.questName(id), slot+1, value))
+		id, slot, _, err := proto.DecodeQuestCounter(p)
+		if err == nil {
+			a.confirmedQuestProgress(id, slot)
 		}
 	case proto.QuestChoose:
 		id, err := proto.DecodeQuestChoice(p)
