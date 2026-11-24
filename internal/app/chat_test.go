@@ -306,3 +306,11 @@ func TestRaidNoticesAppearOnThePacketThatDeliversThem(t *testing.T) {
 		t.Fatal(a.screenNotices)
 	}
 }
+
+func TestNoticeDisplayTextDropsFinalStop(t *testing.T) {
+	for in, want := range map[string]string{"Alice used a firecracker.": "Alice used a firecracker", "Done. ": "Done", "No stop": "No stop", "Wait...": "Wait.."} {
+		if got := noticeDisplayText(in); got != want {
+			t.Fatalf("%q -> %q, want %q", in, got, want)
+		}
+	}
+}

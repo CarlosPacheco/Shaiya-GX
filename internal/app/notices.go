@@ -1,6 +1,8 @@
 package app
 
 import (
+	"strings"
+
 	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
@@ -27,6 +29,18 @@ func (a *App) addScreenNotice(style uint8, text string) {
 		a.screenNotices = append(a.screenNotices[:0], a.screenNotices[len(a.screenNotices)-5:]...)
 	}
 }
+
+// noticeDisplayText drops the closing full stop of on-screen notices; the chat
+// history keeps the SysMsg text untouched.
+func noticeDisplayText(text string) string {
+	text = strings.TrimRight(text, " ")
+	return strings.TrimSuffix(strings.TrimSuffix(text, "."), "。")
+}
+
+// newsPanelOuterHeight is drawNewsPanel's full height for a 16px interior:
+// 4px borders plus (16+4) fill plus 4px borders.
+const newsPanelOuterHeight = 28
+
 func (a *App) drawScreenNotices(w, h int) {
 	rows := a.screenNotices[:0]
 	for _, n := range a.screenNotices {
@@ -45,7 +59,8 @@ func (a *App) drawScreenNotices(w, h int) {
 		return
 	}
 	for i, n := range rows {
-		width := f.Width(n.text)
+		text := noticeDisplayText(n.text)
+		width := f.Width(text)
 		x, y := w/2-width/2, h/2-150+i*17
 		// The native box (x-6, y-6, width+8, 12) is two pixels larger here so the
 		// 15px text sits inside it.
@@ -54,7 +69,8 @@ func (a *App) drawScreenNotices(w, h int) {
 		if n.style == 30 || n.style == 32 {
 			color = [4]float32{1, 128.0 / 255, 1, 1}
 		}
-		f.DrawOutlined(a.sprites, n.text, x, y, color)
+		// Centre the text line inside the panel (top edge is y-8).
+		f.DrawOutlined(a.sprites, text, x, y-8+(newsPanelOuterHeight-f.Height)/2, color)
 	}
 }
 
