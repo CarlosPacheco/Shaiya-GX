@@ -46,7 +46,7 @@ are on at every GM login; turbo is off.
 | `/getitem type id [quantity]` | Defaults to one when quantity is omitted. Grants the complete quantity, respecting definition stack limits and free bag slots. `/getitem 25 1 200` grants 200 apples in one stack with the current 255 limit. |
 | `/mmake mobid [quantity=1]` | Spawns 1–100 live mobs around the GM, with their normal stats, AI and drops, without automatic respawn. |
 | `/nmake type id` | Spawns exactly one static NPC around the GM, retaining its definition and services. `/nmake 1 1` selects merchant 1; `/nmake 2 1` selects gatekeeper 1. Type and row ID are separate arguments. |
-| `/cmove mapid` | Teleports to the nearest safe arrival relative to the current map position. Uses rebirth boxes, or authored portal/gatekeeper arrivals when no box is available. Secret Arena (39) and Prison (41) have GM arrivals when no such point is available. GM travel can inspect base instance maps without party/guild entry requirements. |
+| `/cmove mapid` | Teleports to the nearest safe arrival relative to the current map position. Uses rebirth boxes, or authored portal/gatekeeper arrivals when no box is available. With neither kind of arrival, it uses the destination map's configured faction bind if that bind stays on the same map. Secret Arena (39) has a dedicated GM arrival. GM travel can inspect base instance maps without party/guild entry requirements. |
 
 Item quantities are positive integers, up to 119,880; grants that do not fit are
 rejected entirely. Inventory changes are transactional. Spawns use expanding

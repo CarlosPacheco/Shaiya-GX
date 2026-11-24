@@ -515,16 +515,17 @@ func (s *Session) gmMove(mapID uint16) error {
 	if target != nil {
 		arrival = MapPos{mapID, (target.LowerX + target.UpperX) / 2, target.LowerY + .9, (target.LowerZ + target.UpperZ) / 2}
 	} else {
-		// These maps can be inspected without a portal or a spawn area.
-		switch mapID {
-		case 39: // Secret Arena
+		// Event maps can have a faction bind without an incoming portal.
+		if mapID == 39 { // Secret Arena has no local bind.
 			arrival = MapPos{39, 83, 2.13, 66}
-		case 41: // Prison
-			arrival, _ = rebirthPosition(mapID, s.faction)
-		default:
-			return fmt.Errorf("map has no safe arrival point")
+		} else {
+			var found bool
+			arrival, found = rebirthPosition(mapID, s.faction)
+			if !found || arrival.MapID != mapID {
+				return fmt.Errorf("map has no safe arrival point")
+			}
 		}
-		if arrival.MapID != mapID || !IsMapWalkable(mapID, arrival.X, arrival.Z) {
+		if !IsMapWalkable(mapID, arrival.X, arrival.Z) {
 			return fmt.Errorf("map has no safe arrival point")
 		}
 	}

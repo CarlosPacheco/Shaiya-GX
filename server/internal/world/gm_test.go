@@ -366,6 +366,28 @@ func TestGMMoveUsesRelativeSafeDestinationAndNormalTeleport(t *testing.T) {
 				if s.char.PosX != 35 || s.char.PosY != 40 || s.char.PosZ != 55 {
 					t.Fatal("wrong fallback position")
 				}
+				shard(source).entities.Portals = nil
+				mapConfig.Zones[target] = ZoneConfig{
+					RebirthLight: &MapPos{target, 30, 40, 55},
+					RebirthFury:  &MapPos{target, 45, 40, 55},
+				}
+				for _, tc := range []struct {
+					faction uint8
+					x       float32
+				}{{FactionLight, 30}, {FactionDark, 45}} {
+					s.faction = tc.faction
+					if err := s.gmMove(target); err != nil {
+						t.Fatalf("local faction bind: %v", err)
+					}
+					gmResponse(t, packets)
+					if s.char.PosX != tc.x || s.char.PosY != 40 || s.char.PosZ != 55 {
+						t.Fatalf("wrong faction bind: %+v", s.char)
+					}
+				}
+				mapConfig.Zones[target] = ZoneConfig{RebirthFury: &MapPos{source, 45, 40, 55}}
+				if err := s.gmMove(target); err == nil {
+					t.Fatal("accepted a bind that points to another map")
+				}
 				return
 			}
 		case <-time.After(3 * time.Second):
