@@ -16,7 +16,10 @@ ROOT = Path(__file__).resolve().parents[1]
 URL = ('https://github.com/Spelunkern/Shaiya-GX/releases/download/'
        'gx-geometry-rules3-20261123/gx-server-geometry-rules3.tar.gz')
 SHA256 = '4feb61ac11b1ed52979f5414fcdb58acee4ee94cc5858857afe92f86fa501f95'
-MANIFESTS_SHA256 = '1bc09817cdaf5c3106712ebbd724845f31dd77019a29cfa1a3dfde004f523e84'
+ARCHIVE_MANIFESTS_SHA256 = '1bc09817cdaf5c3106712ebbd724845f31dd77019a29cfa1a3dfde004f523e84'
+MANIFESTS_SHA256 = 'b1750b8a0bd4188291b4bacd54ef284b90aa3f821478ff9d6121f7c581d71ac8'
+RETIRED_MAPS = frozenset(range(59, 64))
+PORTAL_EDITS = (19, 20, 28, 29)
 COLLISION_RULES_VERSION = 3  # internal/mapnav.CollisionRulesVersion
 
 
@@ -63,8 +66,35 @@ def validate(directory, *, require_pin=True):
     return catalog, manifests
 
 
+def project_archive(directory):
+    # These portal-only SVMAP edits leave the walk masks used by the bake intact.
+    catalog, manifests = validate(directory, require_pin=False)
+    if manifest_digest(catalog, manifests) != ARCHIVE_MANIFESTS_SHA256:
+        raise ValueError('Unexpected source catalog for the geometry projection')
+    retained = {map_id: manifest for map_id, manifest in zip(catalog['maps'], manifests)
+                if map_id not in RETIRED_MAPS}
+    catalog['maps'] = list(retained)
+    for map_id in PORTAL_EDITS:
+        name = f'{map_id}.svmap'
+        retained[map_id]['sources'][f'server/maps/{name}'] = digest(ROOT / 'server/data/maps' / name)
+    if manifest_digest(catalog, list(retained.values())) != MANIFESTS_SHA256:
+        raise ValueError('Projected catalog differs from the pinned generation')
+    for map_id in PORTAL_EDITS:
+        path = directory / f'{map_id}.manifest.json'
+        path.write_text(json.dumps(retained[map_id], indent=2) + '\n')
+    (directory / 'catalog.json').write_text(json.dumps(catalog, indent=2) + '\n')
+    for map_id in RETIRED_MAPS:
+        for ext in ('manifest.json', 'gxnav', 'gxcol', 'gxphysics'):
+            (directory / f'{map_id}.{ext}').unlink()
+
+
 def install(destination, archive=None):
     if destination.exists():
+        catalog, manifests = read_manifests(destination)
+        if manifest_digest(catalog, manifests) == ARCHIVE_MANIFESTS_SHA256:
+            project_archive(destination)
+            print('Updated the existing server physics catalog.', flush=True)
+            return
         validate(destination)
         print('Existing server physics verified; no files replaced.', flush=True)
         return
@@ -99,7 +129,7 @@ def install(destination, archive=None):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 with source.extractfile(member) as stream, target.open('wb') as output:
                     shutil.copyfileobj(stream, output)
-        validate(temporary / 'geometry')
+        project_archive(temporary / 'geometry')
         (temporary / 'geometry').rename(destination)
     print('Installed the pinned server physics catalog.', flush=True)
 

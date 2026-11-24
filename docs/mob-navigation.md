@@ -18,11 +18,14 @@ required. Generated files are independent of the graphics engine:
 - `data/geometry/<id>.manifest.json`: format, agent profile, source hashes, player physics and collision-construction versions, and SHA-256 checksums for all three files.
 - `data/geometry/catalog.json`: complete map set for the installed generation.
 
-The runtime verifies checksums, format and collision construction revision 2 before use. Older construction manifests require regeneration; matching hashes alone cannot certify obsolete geometry. A missing catalogued map
+The runtime verifies checksums, format and collision construction revision 3 before use. Older construction manifests require regeneration; matching hashes alone cannot certify obsolete geometry. A missing catalogued map
 or corrupt generation fails startup with a diagnostic. A map with no reachable
 spawn surface logs rejected spawns; mobs are never placed under the layout to
 hide the error. Player entry into a map without generated physics is refused with a diagnostic; there is no unchecked movement fallback. Portable packaging requires and validates the complete catalog.
 Generated geometry belongs to the distributable data, not Git source history.
+The geometry installer verifies the pinned archive and projects it to the
+current catalog. It discards geometry for removed maps and updates source
+hashes for portal-only edits that preserve the baked walk masks.
 
 ## Building data
 
