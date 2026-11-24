@@ -32,7 +32,8 @@ func (p MapProjection) Window(x, z, diameter float32) UV {
 // map texture spans the 256-pixel backing quad at zoom 1, the player is always
 // the pixel (MinimapAnchorX, MinimapAnchorY) of that quad whatever the map
 // edge, and its position is truncated to 1/512 of the map. The window is not
-// clamped: past the map edge it simply shows nothing.
+// clamped: past the map edge the texture sampler clamps, so the border pixels
+// extend outward.
 func (p MapProjection) MinimapWindow(x, z, zoom float32) UV {
 	if p.Width <= 0 || p.Height <= 0 {
 		return MapWindow(.5, .5, 1)

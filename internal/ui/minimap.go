@@ -259,10 +259,13 @@ func (m *Minimap) drawSmallMarkers(s *render.Sprites, markers []MapMarker, view 
 
 func (m *Minimap) Draw(s *render.Sprites, f *Font, image, solid *render.Texture, w, h int, view UV, u, v, heading float32, mapID uint16, rawX, rawZ float32, markers []MapMarker) {
 	x, y := m.Origin(w, h)
-	// Whatever the window does not cover (past the map edge) stays dark.
+	// The backing is only visible when no map image is loaded.
 	s.DrawCircle(solid, float32(x+16), float32(y+16), MinimapImageSize, 0, 0, 1, 1, [4]float32{.03, .04, .05, 1})
 	if image != nil {
-		s.DrawCircleClipped(image, float32(x+16), float32(y+16), MinimapImageSize, view.U0, view.V0, view.U1, view.V1, white)
+		// 0x4c58c0 draws one 256px quad whose UVs may leave [0,1]; the UI sprite
+		// pass leaves the sampler on CLAMP (0x548880, 0x549130), so past the map
+		// edge the outermost pixels stretch outward instead of showing nothing.
+		s.DrawCircle(image, float32(x+16), float32(y+16), MinimapImageSize, view.U0, view.V0, view.U1, view.V1, white)
 		m.drawSmallMarkers(s, markers, view, float32(x+16), float32(y+16), false)
 		// 0x4c7860: the 32px arrow always sits on the anchor; the map moves.
 		s.DrawRotated(m.arrow, float32(x+4+MinimapAnchorX), float32(y+4+MinimapAnchorY), 32, 32, heading, 0, 0, 1, 1, white)
