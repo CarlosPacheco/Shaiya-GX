@@ -359,7 +359,7 @@ Declarations: [proto.GXPhysicsClock](../../internal/proto/world.go#L255).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L534)
+**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L516)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1251)
 
@@ -369,7 +369,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendPhysicsClock — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L534)
+[Source definition](../../server/internal/world/player_movement.go#L516)
 
 ```go
 func (s *Session) sendPhysicsClock() {
@@ -393,7 +393,7 @@ Declarations: [proto.GXPlayerCorrection](../../internal/proto/player_physics.go#
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L302)
+**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L287)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1241)
 
@@ -403,7 +403,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>correctMovement — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L302)
+[Source definition](../../server/internal/world/player_movement.go#L287)
 
 ```go
 func (s *Session) correctMovement(reason string) {
@@ -967,7 +967,7 @@ Source notes: GXSkillDash is a server-authored Stinger trajectory. Native skill 
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildSkillDash (server/internal/world/skill_dash.go)](../../server/internal/world/skill_dash.go#L83)
+**S→C serializers:** [buildSkillDash (server/internal/world/skill_dash.go)](../../server/internal/world/skill_dash.go#L86)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1235)
 
@@ -977,7 +977,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSkillDash — server/internal/world/skill_dash.go</summary>
 
-[Source definition](../../server/internal/world/skill_dash.go#L83)
+[Source definition](../../server/internal/world/skill_dash.go#L86)
 
 ```go
 func buildSkillDash(d proto.SkillDash) []byte {
@@ -1979,7 +1979,7 @@ Source notes: GXItemCooldownReset clears the recipient’s item and mount cooldo
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [gmCure (server/internal/world/gm.go)](../../server/internal/world/gm.go#L621)
+**S→C serializers:** [gmCure (server/internal/world/gm.go)](../../server/internal/world/gm.go#L634)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L250)
 
@@ -1989,7 +1989,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>gmCure — server/internal/world/gm.go</summary>
 
-[Source definition](../../server/internal/world/gm.go#L621)
+[Source definition](../../server/internal/world/gm.go#L634)
 
 ```go
 func (s *Session) gmCure() error {
