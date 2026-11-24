@@ -5,7 +5,11 @@ import "github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 // Only proven coincident front/back sheets are culled. Ordinary unpaired
 // sheets stay two-sided, including cutout vegetation and thin decorations.
 func beginWorldFaces(m *Mesh) bool {
-	if m == nil || !m.CullBack {
+	return beginModelFaces(m != nil && m.CullBack)
+}
+
+func beginModelFaces(cullBack bool) bool {
+	if !cullBack {
 		gl.Disable(gl.CULL_FACE)
 		gl.FrontFace(gl.CCW)
 		return false
@@ -15,7 +19,7 @@ func beginWorldFaces(m *Mesh) bool {
 	gl.CullFace(gl.BACK)
 	return true
 }
-func endWorldFaces(culled bool) {
+func endModelFaces(culled bool) {
 	if culled {
 		gl.Disable(gl.CULL_FACE)
 		gl.FrontFace(gl.CCW)
@@ -25,14 +29,14 @@ func endWorldFaces(culled bool) {
 func (s *Scene3D) DrawWorldModel(m *Mesh, t *Texture, world M4, alphaRef float32) {
 	culled := beginWorldFaces(m)
 	s.DrawModel(m, t, world, alphaRef, false)
-	endWorldFaces(culled)
+	endModelFaces(culled)
 }
 
 // DrawVisibleWorldModel accepts geometry already tested against its mesh bounds.
 func (s *Scene3D) DrawVisibleWorldModel(m *Mesh, t *Texture, world M4, alphaRef float32) {
 	culled := beginWorldFaces(m)
 	s.drawVisibleModel(m, t, world, alphaRef, false, true)
-	endWorldFaces(culled)
+	endModelFaces(culled)
 }
 
 func (s *Scene3D) WorldMeshHidden(m *Mesh, world M4) bool { return s.meshOccluded(m, world) }
@@ -40,7 +44,7 @@ func (s *Scene3D) WorldMeshHidden(m *Mesh, world M4) bool { return s.meshOcclude
 func (s *Scene3D) DrawWorldInstanced(m *Mesh, t *Texture, alphaRef float32) {
 	culled := beginWorldFaces(m)
 	s.DrawInstanced(m, t, alphaRef)
-	endWorldFaces(culled)
+	endModelFaces(culled)
 }
 
 // BeginTranslucentWorldModels uses the WLD blended pass state, with depth

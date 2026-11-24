@@ -262,7 +262,7 @@ func (b *CharacterBatch) flush(k *render.Skinner, s *render.Scene3D) {
 			group := &b.rigidGroups[i]
 			m := group.material
 			s.SetInstances(group.worlds)
-			s.DrawInstanced(m.mesh, m.texture, m.ref)
+			s.DrawEquipmentInstanced(m.mesh, m.texture, m.ref)
 			group.material = rigidMaterial{}
 			group.worlds = group.worlds[:0]
 		}

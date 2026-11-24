@@ -96,6 +96,13 @@ func (s *Scene3D) DrawInstanced(m *Mesh, t *Texture, alphaRef float32) {
 	s.drawInstances(m)
 }
 
+// DrawEquipmentInstanced uses the same raster state as DrawEquipment.
+func (s *Scene3D) DrawEquipmentInstanced(m *Mesh, t *Texture, alphaRef float32) {
+	beginModelFaces(true)
+	s.DrawInstanced(m, t, alphaRef)
+	endModelFaces(true)
+}
+
 func (s *Scene3D) drawInstances(m *Mesh) {
 	s.bindInstances(m)
 	gl.DrawElementsInstanced(gl.TRIANGLES, m.Count, m.indexType, nil, int32(s.instanceCount))

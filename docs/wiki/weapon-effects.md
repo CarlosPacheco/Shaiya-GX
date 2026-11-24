@@ -109,6 +109,13 @@ The original material flag is instead the last integer in each record
 (native `+0x24`, consumed by `0x42909b`/`0x4298a7`): zero enables alpha testing,
 nonzero disables it. Glow choice no longer changes mesh transparency.
 
+The rigid equipment pass draws clockwise front faces for individual and
+instanced characters. EP5.4 restores Direct3D back-face culling at
+`0x415bd5` before the attachment draw at `0x415da7`. Many original meshes,
+including claws, swords and bows, have coincident triangles facing opposite
+directions. Culling keeps the back surface from competing with the visible
+surface while the character moves.
+
 Linux GPU checks load all sixty family/glow combinations, render each of the
 four real staff variants at +0, check dual innate/enchantment coexistence and
 visibility/update rules, and retain the ninety enchantment-recipe regression.

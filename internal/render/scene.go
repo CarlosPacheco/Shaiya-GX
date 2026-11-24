@@ -360,6 +360,14 @@ func (s *Scene3D) DrawWater(m *Mesh, t *Texture, tileSize float32, tint [4]float
 func (s *Scene3D) DrawModel(m *Mesh, t *Texture, world M4, alphaRef float32, blend bool) {
 	s.drawModel(m, t, world, alphaRef, blend, true)
 }
+
+// DrawEquipment uses the clockwise front faces of the native rigid item pass.
+func (s *Scene3D) DrawEquipment(m *Mesh, t *Texture, world M4, alphaRef float32, blend bool) {
+	beginModelFaces(true)
+	s.DrawModel(m, t, world, alphaRef, blend)
+	endModelFaces(true)
+}
+
 func (s *Scene3D) drawModel(m *Mesh, t *Texture, world M4, alphaRef float32, blend, lit bool) {
 	if s.meshOccluded(m, world) {
 		return

@@ -157,7 +157,7 @@ func (c *Character) drawAttachments(s *render.Scene3D, finals []render.M4) {
 		if c.Concealed {
 			s.DrawModelFaded(a.part.Mesh, a.part.Tex, matrix, ref, c.fadeOpacity())
 		} else {
-			s.DrawModel(a.part.Mesh, a.part.Tex, matrix, ref, a.part.Alpha)
+			s.DrawEquipment(a.part.Mesh, a.part.Tex, matrix, ref, a.part.Alpha)
 		}
 	}
 	if c.Concealed {
