@@ -629,7 +629,7 @@ func (a *App) Update(in *platform.Input, w, h int, dt float64) {
 	case screenLogin:
 		switch a.login.Update(in, w, h, dt) {
 		case ui.LoginSubmit:
-			a.playUI()
+			a.playUISound("ui_login001.ogg") // native 0x4bc4a0: submitting the login
 			a.submitLogin()
 		case ui.LoginQuit:
 			a.Quit = true
@@ -845,9 +845,6 @@ func (a *App) backToLoginID(id int) { a.backToLogin(a.tr(id)) }
 func (a *App) tr(id int) string { return a.msg.Lookup(id) }
 
 func (a *App) backToLogin(msg string) {
-	if msg != "" {
-		a.playUISound("ui_login001.ogg") // native 0x4bc4a0 and 0x4eb3c7: a login or connection error
-	}
 	a.loading = mapLoading{}
 	a.menuOpen, a.menuPending = false, false
 	a.buffs = buffsView{}
@@ -970,6 +967,7 @@ func (a *App) connectWorld() {
 				a.backToLoginID(12007)
 				return
 			}
+			a.playUISound("ui_login001.ogg") // native 0x4eb3c7: connected to the game server
 			a.world, a.state = w, game.New()
 			a.characterSlotFile = characterSlotPath(a.cfg, sv.ID, l.Result.UserUID)
 			a.restoreCharacterSlot = true
