@@ -23,12 +23,12 @@ Start `Server/build/gx_console` on Linux or `Server/build/gx_console.exe` on Win
 then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Shaiya GX.exe`.
 Keep `Client/data/` beside the client executables.
 
-**Latest binary update: [gx-v0.1.18](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.18).**
+**Latest binary update: [GitHub Releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest).**
 GX Studio is in `Client/Studio/`.
 
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
-Server packages include all 68 physics/navigation maps, the approved development
-seed and the optional offline mount-definition migration tool.
+Server packages include the pinned physics and navigation catalog, the approved
+development seed and the optional offline mount-definition migration tool.
 
 The [GitHub combined binary portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip)
 has the same `Client/` and `Server/` layout, with fonts and the server seed/maps/physics,
