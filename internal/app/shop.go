@@ -246,6 +246,10 @@ func (a *App) drawMarket(w, h int, def sdata.NPC) {
 	switch a.state.LastShop.Result {
 	case 1:
 		message = a.tr(12258)
+		if a.state.LastShop.Bag != 0 {
+			// Sale refusals identify the source stack. Buy failures use bag zero.
+			message = a.tr(467)
+		}
 	case 2:
 		message = a.tr(238)
 	}

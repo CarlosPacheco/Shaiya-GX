@@ -258,7 +258,7 @@ func (s *Session) handleShopSell(p []byte) {
 	}
 	// npc_shop sell (CUser::PacketShop 0x0703): not from the equipment (bag
 	// 0), count 1..stack, else ignored; real type 27 pays nothing and a
-	// partial sale of it keeps the stack; overflowing gold is ignored.
+	// partial sale of it keeps the stack.
 	before := *s.char
 	after := before
 	ch := &after
@@ -283,7 +283,8 @@ func (s *Session) handleShopSell(p []byte) {
 	whole := it.Count == count
 	quest := realType(it.Type) == 27
 	proceeds := uint64(max(def.Sell, 0)) * uint64(count)
-	if !quest && uint64(ch.Money)+proceeds > uint64(^uint32(0)) {
+	if !quest && (ch.Money >= db.MoneyCap || uint64(ch.Money)+proceeds > db.MoneyCap) {
+		s.send(buildShopSellResult(1, bag, slot, it.Type, it.TypeID, it.Count, ch.Money), "0x0703 shop sell (gold limit)")
 		return
 	}
 	remaining := uint16(0)
@@ -298,7 +299,7 @@ func (s *Session) handleShopSell(p []byte) {
 		remaining = it.Count
 	}
 	if !quest {
-		ch.Money = uint32(min(uint64(ch.Money)+proceeds, db.MoneyCap))
+		ch.Money = uint32(uint64(ch.Money) + proceeds)
 	}
 	if err := db.CommitGameplay([]db.CharacterChange{{Before: before, After: after, ItemsBefore: s.items, ItemsAfter: items}}, nil); err != nil {
 		s.logErr("shop sale transaction", err)

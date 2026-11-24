@@ -422,6 +422,9 @@ independent draggable positions with Remember Layout. Quest conversations now
 participate in the same layout persistence and pointer ownership. Portraits use
 `NpcFace/<Model>.png`, with the original face 55 as a missing-resource fallback.
 The merchant's purchase/drag hint is removed; transaction errors remain visible.
+Merchant sales that would exceed the 4,000,000,000 gold cap are refused with
+SysMsg 467. Sale and drop quantity fields accept digits from the number row
+and numeric keypad.
 Player portrait clicks still select self, while a drag moves its frame. The whole
 target frame and minimap surface/information plate can be dragged; minimap buttons
 and wheel zoom retain their functions. The original clock plate is preserved unchanged; only its text displays

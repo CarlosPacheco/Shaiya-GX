@@ -2,6 +2,7 @@
 // sysmsg-uni.txt may lack. Same format as sysmsg-uni.txt (UTF-8 here).
 326		"Connecting to server, please be patient"
 456		"Unavailable class of item."
+467		"Cannot possess any more gold."
 480		"Point"
 485		"Absorption"
 2038		"Your guild rank cannot do this."

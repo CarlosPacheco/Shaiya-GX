@@ -263,6 +263,11 @@ func TestTradeQuantityCapturesBarKeysAndRejectsChangedItem(t *testing.T) {
 	a.state.Inventory[source] = it
 	a.shop.quantity = &tradeQuantity{npcID: 42, source: source, item: it}
 	a.quantityUI.Open(400, 300, 1024, 768, 3)
+	a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: a.quantityUI.X + 30, MouseY: a.quantityUI.Y + 40}, 1024, 768)
+	typed := a.worldControls(&platform.Input{Chars: []rune{'2'}, KeypadChars: "2", Actions: []int{11}}, 1024, 768)
+	if a.quantityUI.Value() != 2 || len(typed.Actions) != 0 {
+		t.Fatal("keypad digit did not edit the sale quantity or leaked to the action bar")
+	}
 	controls := a.worldControls(&platform.Input{Chars: []rune{'1'}, Keys: []platform.Key{platform.KeyEnter}, Clicked: true, MouseX: 5, MouseY: 5}, 1024, 768)
 	if controls.Clicked || len(controls.Chars) > 0 || len(controls.Keys) > 0 || a.shop.quantity == nil {
 		t.Fatal("quantity leaked an input or Enter confirmed without OK")
@@ -271,6 +276,20 @@ func TestTradeQuantityCapturesBarKeysAndRejectsChangedItem(t *testing.T) {
 	a.worldControls(&platform.Input{}, 1024, 768)
 	if a.shop.quantity != nil || a.inventory.pending {
 		t.Fatal("stale quantity dialog was not canceled")
+	}
+}
+
+func TestDropQuantityConsumesKeypadDigit(t *testing.T) {
+	a := inputApp()
+	item := proto.InventoryItem{Bag: 1, Slot: 0, Type: 25, TypeID: 4, Count: 5}
+	key := [2]uint8{item.Bag, item.Slot}
+	a.state.Inventory[key] = item
+	a.drop = itemDrop{active: true, stack: true, source: key, item: item}
+	a.quantityUI.Open(400, 300, 1024, 768, 5)
+	a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: a.quantityUI.X + 30, MouseY: a.quantityUI.Y + 40}, 1024, 768)
+	in := &platform.Input{Chars: []rune{'3'}, KeypadChars: "3", Actions: []int{12}}
+	if controls := a.worldControls(in, 1024, 768); a.quantityUI.Value() != 3 || len(controls.Actions) != 0 {
+		t.Fatal("keypad digit did not edit the drop quantity or leaked to the action bar")
 	}
 }
 

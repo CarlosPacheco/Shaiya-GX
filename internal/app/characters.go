@@ -346,7 +346,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			}
 			return
 		}
-		allowsChat := a.shop.quantity == nil && !a.personalMarket.modal()
+		allowsChat := a.shop.quantity == nil && !a.drop.active && !a.personalMarket.modal()
 		if allowsChat && a.updateChatItemDrag(in, w, h) {
 			a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY}, dt)
 			return
@@ -362,7 +362,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			}
 			pointer := chatWorldInput(*in)
 			in = &pointer
-		} else if a.auction.npc == 0 || a.auction.focus < 0 {
+		} else if allowsChat && (a.auction.npc == 0 || a.auction.focus < 0) {
 			gameplay := in.WithBindings(a.clientSettings().Bindings)
 			in = &gameplay
 		}
