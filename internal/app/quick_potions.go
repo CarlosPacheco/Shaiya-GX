@@ -169,7 +169,11 @@ func (a *App) updateQuickPotions(in *platform.Input, w, h int) bool {
 		a.quickPotions.mouseHeld[cell] = true
 	}
 	handled := false
-	for _, r := range in.Chars {
+	for i, r := range in.Chars {
+		// Z and X fire once per tap: OS key-repeat characters are ignored.
+		if i < len(in.CharRepeats) && in.CharRepeats[i] {
+			continue
+		}
 		if r == 'z' || r == 'Z' {
 			a.useQuickPotion(0)
 			handled = true

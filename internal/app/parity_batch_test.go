@@ -235,3 +235,24 @@ func TestQuickPotionEmptyCellMovesTheBarAndFilledCellDoesNot(t *testing.T) {
 		t.Fatal("a filled cell moved the bar instead of the potion")
 	}
 }
+
+func TestQuickPotionKeysFireOncePerTap(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	a := inputApp()
+	a.state.SelfID = 78
+	a.ensureQuickPotions()
+	a.quickPotions.bindings = [2]sdata.ItemKey{{Type: 25, TypeID: 4}, {Type: 25, TypeID: 5}}
+	a.state.Inventory = map[[2]uint8]proto.InventoryItem{{1, 0}: {Type: 25, TypeID: 4, Count: 50}, {1, 1}: {Type: 25, TypeID: 5, Count: 50}}
+	a.clock = 10
+	press := func(repeat bool) (uses [2]bool) {
+		a.quickPotions.tap = [2]float64{}
+		a.updateQuickPotions(&platform.Input{Chars: []rune{'z', 'X'}, CharRepeats: []bool{repeat, repeat}}, 1024, 768)
+		return [2]bool{a.quickPotions.tap[0] > 0, a.quickPotions.tap[1] > 0}
+	}
+	if got := press(false); got != [2]bool{true, true} {
+		t.Fatalf("a tap must use both potions, got %v", got)
+	}
+	if got := press(true); got != [2]bool{} {
+		t.Fatalf("held-key repeats must not use potions, got %v", got)
+	}
+}
