@@ -37,6 +37,12 @@ func WritePlayerPhysics(g *mapgeometry.Geometry, id uint16, directory string) er
 	if manifest.MapID != id || manifest.Version != FormatVersion || manifest.CollisionRules != CollisionRulesVersion {
 		return fmt.Errorf("incompatible map generation %d: run a full navigation bake", id)
 	}
+	for _, extension := range []string{"gxnav", "gxcol"} {
+		name := fmt.Sprintf("%d.%s", id, extension)
+		if len(manifest.Files[name]) != 64 {
+			return fmt.Errorf("missing navigation checksum for %s: run a full navigation bake", name)
+		}
+	}
 	if len(g.Sources) != len(manifest.Sources) {
 		return fmt.Errorf("map %d source set changed: regenerate navigation", id)
 	}
