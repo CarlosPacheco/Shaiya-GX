@@ -1,6 +1,9 @@
 package sdata
 
-import "testing"
+import (
+	"encoding/binary"
+	"testing"
+)
 
 func FuzzSkills(f *testing.F) {
 	f.Add([]byte{0, 0, 0, 0})
@@ -20,6 +23,14 @@ func TestSkillIDsAreOneBased(t *testing.T) {
 	b[12+22] = 121
 	b[12+59], b[12+60], b[12+111] = 2, 0, 1
 	b[12+87], b[12+88], b[12+89], b[12+110] = 18, 244, 255, 20
+	p := b[12:]
+	binary.LittleEndian.PutUint16(p[52:], 135)
+	p[58], p[67], p[74] = 3, 4, 5
+	for i, off := range []int{68, 75, 81, 96, 102} {
+		for j := range 3 {
+			binary.LittleEndian.PutUint16(p[off+2*j:], uint16(i*3+j+1))
+		}
+	}
 	defs, err := ParseSkills(b)
 	if err != nil {
 		t.Fatal(err)
@@ -38,5 +49,12 @@ func TestSkillIDsAreOneBased(t *testing.T) {
 	}
 	if d := defs[SkillKey{1, 1}]; d.AbilityType[0] != 18 || d.AbilityValue[0] != -12 || d.LimitHP != 20 {
 		t.Fatal("EP5 ability fields", d)
+	}
+	d := defs[SkillKey{1, 1}]
+	if d.PreviousSkill != 135 || d.MultiAttack != 3 || d.DamageType != 4 || d.TimeDamageType != 5 ||
+		d.Damage != [3]uint16{1, 2, 3} || d.TimeDamage != [3]uint16{4, 5, 6} ||
+		d.ExtraDamage != [3]uint16{7, 8, 9} || d.Heal != [3]int16{10, 11, 12} ||
+		d.TimeHeal != [3]int16{13, 14, 15} {
+		t.Fatalf("EP5 tooltip fields: %+v", d)
 	}
 }

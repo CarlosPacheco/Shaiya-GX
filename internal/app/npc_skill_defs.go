@@ -18,6 +18,7 @@ func (a *App) loadNPCSkills() {
 	if err == nil {
 		a.npcSkillDefs, err = sdata.ParseSkills(raw)
 		sdata.NormalizePercentageSkills(a.npcSkillDefs, true)
+		refreshSkillTooltips(a.npcSkillDefs, true)
 	}
 	if err != nil {
 		log.Printf("NpcSkill.SData: %v", err)

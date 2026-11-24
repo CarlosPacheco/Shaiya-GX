@@ -13,20 +13,23 @@ type Skill struct {
 	Level                                uint8
 	Icon, RequiredLevel                  uint16
 	Animation, Sound                     uint16
-	VisualCode, Detail                   uint16
+	VisualCode, Detail, PreviousSkill    uint16
 	Toggle                               uint8
 	Country                              uint8
 	Classes                              [6]uint8
 	Points, Show, Attack, Effect, Target uint8
 	SP, MP, ResetTime                    uint16
 	ReadyTime                            uint8
-	AttackRange, ApplyRange              uint8
+	AttackRange, ApplyRange, MultiAttack uint8
 	Attribute                            uint8
 	SuccessType, SuccessValue            uint8
 	KeepTime                             uint16
 	FixRange                             uint8
 	AbilityType                          [3]uint8
 	AbilityValue                         [3]int16
+	DamageType, TimeDamageType           uint8
+	Damage, TimeDamage, ExtraDamage      [3]uint16 // HP, SP, MP
+	Heal, TimeHeal                       [3]int16  // HP, SP, MP
 	LimitHP                              uint8
 	NeedWeapon                           [15]bool // weapon real types 1..15 that may use it
 	NeedShield                           bool
@@ -79,16 +82,26 @@ func ParseSkills(raw []byte) (map[SkillKey]Skill, error) {
 			s.RequiredLevel = binary.LittleEndian.Uint16(p[8:])
 			s.Country = p[10]
 			copy(s.Classes[:], p[11:17])
+			s.PreviousSkill = binary.LittleEndian.Uint16(p[52:])
 			s.SuccessType, s.SuccessValue = p[54], p[55]
 			s.Points, s.Show, s.Attack, s.Effect = p[18], p[19], p[20], p[21]
 			s.SP, s.MP = binary.LittleEndian.Uint16(p[40:]), binary.LittleEndian.Uint16(p[42:])
 			s.ReadyTime, s.ResetTime, s.Target = p[44], binary.LittleEndian.Uint16(p[45:]), p[56]
-			s.AttackRange, s.ApplyRange = p[47], p[57]
+			s.AttackRange, s.ApplyRange, s.MultiAttack = p[47], p[57], p[58]
 			s.Attribute = p[49]
 			s.KeepTime, s.FixRange = binary.LittleEndian.Uint16(p[59:]), p[111]
 			for i := range s.AbilityType {
 				s.AbilityType[i] = p[87+i*3]
 				s.AbilityValue[i] = int16(binary.LittleEndian.Uint16(p[88+i*3:]))
+			}
+			s.DamageType, s.TimeDamageType = p[67], p[74]
+			for i := range s.Damage {
+				offset := 2 * i
+				s.Damage[i] = binary.LittleEndian.Uint16(p[68+offset:])
+				s.TimeDamage[i] = binary.LittleEndian.Uint16(p[75+offset:])
+				s.ExtraDamage[i] = binary.LittleEndian.Uint16(p[81+offset:])
+				s.Heal[i] = int16(binary.LittleEndian.Uint16(p[96+offset:]))
+				s.TimeHeal[i] = int16(binary.LittleEndian.Uint16(p[102+offset:]))
 			}
 			s.LimitHP = p[110]
 			for i := range s.NeedWeapon {

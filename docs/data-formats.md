@@ -101,6 +101,15 @@ nine record slots per group. `Monster/NpcSkill.SData` holds NPC skills, and
 reads these and displays the mapped server fields alongside client fields.
 Use a matching loose data set when testing current source.
 
+The client corrects supported player and NPC spell tooltips when it loads the
+catalogs. It reads area radius, cooldown prerequisites, damage and healing
+pools, ability values, and duration from the EP5 records. The presentation
+also reflects GX Server rules such as twice the caster's WIS for player heals,
+three-second periodic damage, and mob heal spells restoring the caster's HP.
+This applies to skill panels and active effects. Corrections to names and
+descriptions are applied in memory. The client leaves the source SData and
+server definitions intact.
+
 
 Map audio retains WLD point emitters and terrain walk-sound references. Music
 fades with distance to each zone box; ambience uses spherical falloff, the

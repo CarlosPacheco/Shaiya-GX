@@ -136,6 +136,17 @@ func unchain(d string) (string, bool) {
 	return out, out != d
 }
 
+// SkillCooldownText removes legacy chain wording and describes the
+// prerequisite that GX checks against its current cooldown state.
+func SkillCooldownText(description, previousName string) string {
+	description, _ = unchain(description)
+	if previousName != "" {
+		description = cooldownSentence.ReplaceAllString(description, "")
+		description = requireCooldown(description, levelSuffix.ReplaceAllString(previousName, ""))
+	}
+	return description
+}
+
 func NormalizeSkillCatalog(raw []byte) ([]byte, SkillCatalogReport, error) {
 	return normalizeSkillCatalog(raw, skillTextFixesCSV)
 }
