@@ -1,9 +1,10 @@
 package render
 
 import (
+	"log"
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 
 	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
 )
@@ -24,6 +25,17 @@ type bindlessTextureView struct {
 }
 
 var fallbackDiffuse *Texture
+var compressedDDS [img.FormatDXT5 + 1]bool
+
+func configureTextureFormats(s3tc, dxt1 bool) {
+	for _, format := range [...]img.Format{img.FormatDXT1, img.FormatDXT3, img.FormatDXT5} {
+		var supported int32
+		if s3tc || (format == img.FormatDXT1 && dxt1) {
+			gl.GetInternalformativ(gl.TEXTURE_2D, dxtFormat(format), gl.INTERNALFORMAT_SUPPORTED, 1, &supported)
+		}
+		compressedDDS[format] = supported != 0
+	}
+}
 
 // A missing/untextured material must never inherit the preceding draw's
 // sampler. D3D's untextured diffuse stage corresponds to multiplying by white.
@@ -86,7 +98,7 @@ func (t *Texture) bindlessHandle(repeat bool) uint64 {
 	return 0
 }
 
-// Upload creates an immutable texture (DSA). DXT data is uploaded as-is.
+// Upload creates an immutable texture (DSA). Supported DXT stays compressed.
 func Upload(t img.Texture) *Texture { return uploadTexture(t, false) }
 
 // UploadWorld requests the full mip chain like Game.exe 0x5aff00/0x5ac500.
@@ -119,24 +131,30 @@ func uploadTexture(t img.Texture, world bool) *Texture {
 			levels = fullMipCount(d.W, d.H)
 		}
 		block := 0
-		if d.Format != img.FormatRGBA {
+		compressed := compressedDDS[d.Format]
+		if compressed {
 			block = 16
 			if d.Format == img.FormatDXT1 {
 				block = 8
 			}
 		}
 		tex.bytes = textureStorageBytes(d.W, d.H, int(levels), block)
-		if d.Format == img.FormatRGBA {
-			gl.TextureStorage2D(id, levels, gl.RGBA8, int32(d.W), int32(d.H))
-		} else {
+		if compressed {
 			gl.TextureStorage2D(id, levels, dxtFormat(d.Format), int32(d.W), int32(d.H))
+		} else {
+			gl.TextureStorage2D(id, levels, gl.RGBA8, int32(d.W), int32(d.H))
 		}
 		w, h := d.W, d.H
 		for i, l := range d.Levels {
-			if d.Format == img.FormatRGBA {
-				gl.TextureSubImage2D(id, int32(i), 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&l[0]))
-			} else {
+			if compressed {
 				gl.CompressedTextureSubImage2D(id, int32(i), 0, 0, int32(w), int32(h), dxtFormat(d.Format), int32(len(l)), unsafe.Pointer(&l[0]))
+			} else {
+				pixels, err := d.LevelRGBA(i)
+				if err != nil {
+					log.Printf("OpenGL upload DDS %dx%d format %d mip %d: %v", d.W, d.H, d.Format, i, err)
+					pixels = make([]byte, w*h*4)
+				}
+				gl.TextureSubImage2D(id, int32(i), 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&pixels[0]))
 			}
 			w, h = max(w/2, 1), max(h/2, 1)
 		}

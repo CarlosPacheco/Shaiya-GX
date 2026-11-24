@@ -1,6 +1,6 @@
 package render
 
-import "github.com/go-gl/gl/v4.5-core/gl"
+import "github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 
 // KeepSceneAlphaOpaque preserves destination alpha for native EFT layers that
 // blend against it (notably Dispel). Texture/source alpha still controls RGB

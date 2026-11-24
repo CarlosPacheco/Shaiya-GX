@@ -64,7 +64,7 @@ type CharacterBatch struct {
 
 func (b *CharacterBatch) Draw(k *render.Skinner, s *render.Scene3D, actors []*Character) {
 	b.Stats = CrowdDrawStats{}
-	if len(actors) < MinCrowdActors || s.Shadow {
+	if len(actors) < MinCrowdActors || s.Shadow || !k.CrowdInstancing() {
 		before := render.DrawCalls()
 		for _, c := range actors {
 			c.Draw(k, s)

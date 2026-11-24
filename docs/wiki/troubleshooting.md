@@ -18,6 +18,27 @@ uses Zenity or KDialog when available, with terminal and file diagnostics always
 available. Automated screenshot/autoplay runs log failures without opening a
 blocking desktop dialog.
 
+### Graphics startup on Windows
+
+GX requests an OpenGL 4.5 core context through GLFW. Windows uses texture
+bindings and ordinary draws or instancing. The log includes the driver's
+advertised extensions and the paths actually selected. Drivers with limited
+vertex shader storage use uniform poses and CPU-sampled effect geometry. GX
+uploads decoded RGBA8 mip levels when the driver cannot store a DDS compression
+format directly.
+
+- `Creating WGL context` followed by a context error points to window or driver
+  initialization. Include the complete error and the graphics adapter and
+  driver from Windows.
+- `load OpenGL entry points` names the command the current driver could not
+  resolve. GX resolves its commands through the current GLFW context.
+- `OpenGL compiling` or `OpenGL linking` identifies the program where a shader
+  error or native crash occurred. Include the whole log so the driver version
+  and selected paths are available.
+- After `Client resources ready`, include the step and scene where the problem
+  occurs and a capture of the result. Pass `-gldebug` on a second run to record
+  graphics API messages from the driver.
+
 ## Linking example
 
 For a lapis with ReqIg 31, without a blessing modifier, the base chance is

@@ -3,7 +3,7 @@ package render
 import (
 	"math"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // DrawCircle clips one minimap texture to a screen-space circle, like the

@@ -1,6 +1,6 @@
 package render
 
-import "github.com/go-gl/gl/v4.5-core/gl"
+import "github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 
 // CaptureNameDepth copies the current frame's depth once before annotations,
 // like Phoenix's classic overlay. No per-label CPU readback or raycasts.

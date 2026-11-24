@@ -3,16 +3,10 @@ package render
 import (
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 const indexedDrawStride = int(unsafe.Sizeof(indexedDrawCommand{}))
-
-// With DRAW_INDIRECT_BUFFER bound, GL interprets this argument as a byte
-// offset in GPU storage. Neither Go nor the driver dereferences it as a pointer.
-//
-//go:nocheckptr
-func indexedDrawOffset(byteOffset int) unsafe.Pointer { return gl.PtrOffset(byteOffset) }
 
 type indexedDrawCommand struct {
 	count, instances, first, baseVertex, baseInstance uint32
@@ -162,7 +156,7 @@ func (k *Skinner) DrawCrowdIndirect(s *Scene3D, b *SkinCrowd, groups []SkinGroup
 			end = b.runs[i+1].first
 		}
 		gl.Uniform1i(k.indirect.uCrowdDrawOffset, int32(run.first))
-		gl.MultiDrawElementsIndirect(gl.TRIANGLES, run.indexType, indexedDrawOffset(run.first*indexedDrawStride), int32(end-run.first), 0)
+		gl.MultiDrawElementsIndirectWithOffset(gl.TRIANGLES, run.indexType, uintptr(run.first*indexedDrawStride), int32(end-run.first), 0)
 		drawCalls++
 	}
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, 0)

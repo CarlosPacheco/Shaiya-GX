@@ -4,7 +4,7 @@ package render
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 	"os"
 	"runtime"
 	"testing"

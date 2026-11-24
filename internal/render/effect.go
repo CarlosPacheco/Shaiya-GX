@@ -1,6 +1,6 @@
 package render
 
-import "github.com/go-gl/gl/v4.5-core/gl"
+import "github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 
 type effectPassState struct {
 	active, repeat bool
@@ -90,6 +90,12 @@ func (s *Scene3D) drawEffectBatch(m *Mesh, t *Texture, worlds []M4, colors [][4]
 			return
 		}
 	}
+	if !sceneStorageSupported {
+		for i, world := range worlds {
+			s.drawEffect(m, t, world, colors[i], source, destination, clamp, true)
+		}
+		return
+	}
 	repeat := !clamp
 	if s.queueEffect(m, t, worlds, colors, nil, nil, src, dst, repeat) {
 		return
@@ -116,14 +122,23 @@ func (s *Scene3D) DrawGroundItems(m *Mesh, t *Texture, worlds []M4, colors [][4]
 	if len(worlds) == 0 {
 		return
 	}
-	s.uploadInstances(worlds, colors)
-	gl.Uniform1i(s.uInstanced, 1)
 	gl.Uniform1i(s.uMode, 8)
 	gl.Uniform1i(s.uLit, 0)
 	gl.Uniform1f(s.uRef, .5)
 	s.blend(false)
 	gl.DepthMask(true)
 	bindDiffuse(t)
+	if !sceneStorageSupported {
+		for i, world := range worlds {
+			s.setWorld(world)
+			gl.Uniform4fv(s.uTint, 1, &colors[i][0])
+			m.Draw()
+		}
+		return
+	}
+	s.uploadInstances(worlds, colors)
+	gl.Uniform1i(s.uInstanced, 1)
+	gl.Uniform4f(s.uTint, 1, 1, 1, 1)
 	s.drawInstances(m)
 	gl.Uniform1i(s.uInstanceColorOffset, 0)
 }

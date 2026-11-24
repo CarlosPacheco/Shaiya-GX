@@ -2,7 +2,7 @@ package render
 
 import (
 	"fmt"
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // TemporalJitter is a bounded, repeating subpixel Halton sequence in NDC.

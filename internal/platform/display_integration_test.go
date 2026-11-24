@@ -3,7 +3,7 @@
 package platform
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 	"github.com/go-gl/glfw/v3.4/glfw"
 	"os"
 	"runtime"

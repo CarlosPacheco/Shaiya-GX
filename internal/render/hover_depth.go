@@ -3,7 +3,7 @@ package render
 import (
 	"time"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 const (
@@ -91,7 +91,7 @@ func (s *Sprites) nameHoverVisibleAt(x, y, width, height int, depth float32, att
 				reversed: s.depthReversed, mouseX: x, mouseY: y, capturedAt: time.Now(),
 			}
 			gl.BindBuffer(gl.PIXEL_PACK_BUFFER, available.buffer)
-			gl.GetTextureSubImage(s.depth.ID, 0, int32(left), int32(height-bottom), 0, int32(regionWidth), int32(regionHeight), 1, gl.DEPTH_COMPONENT, gl.FLOAT, hoverDepthBytes, gl.PtrOffset(0))
+			gl.GetTextureSubImage(s.depth.ID, 0, int32(left), int32(height-bottom), 0, int32(regionWidth), int32(regionHeight), 1, gl.DEPTH_COMPONENT, gl.FLOAT, hoverDepthBytes, nil)
 			gl.BindBuffer(gl.PIXEL_PACK_BUFFER, 0)
 			available.fence = gl.FenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0)
 		}

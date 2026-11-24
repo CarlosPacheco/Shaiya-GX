@@ -4,7 +4,7 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // Vertex is the common 3D vertex: position, normal, two UV sets.

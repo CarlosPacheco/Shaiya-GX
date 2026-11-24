@@ -1,6 +1,6 @@
 package render
 
-import "github.com/go-gl/gl/v4.5-core/gl"
+import "github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 
 // Counters belong to the GL thread. VRAM estimates owned image/buffer storage;
 // driver overhead and the window-system framebuffer are deliberately excluded.

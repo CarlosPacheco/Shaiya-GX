@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // SkinVertex is the GPU layout of a skinned vertex: two bone influences
@@ -37,6 +37,7 @@ layout(location=2) in vec2 uv;
 layout(location=3) in vec3 skin; // weight, bone0, bone1
 layout(std140, binding=0) uniform BonePalette { mat4 bones[256]; };
 uniform int boneCount;
+#ifdef SKIN_CROWD
 struct CrowdInstance { mat4 model; mat4 modelView; mat4 modelViewProj; ivec4 palette; };
 layout(std430, binding=4) readonly buffer CrowdInstances { CrowdInstance instances[]; };
 layout(std430, binding=5) readonly buffer CrowdPalettes { mat4 crowdBones[]; };
@@ -52,6 +53,9 @@ uniform int crowdBase;
 mat4 skinBone(int i, int base) {
 	return crowdBase == 0 ? bones[i] : crowdBones[base+i];
 }
+#endif
+#else
+mat4 skinBone(int i, int base) { return bones[i]; }
 #endif
 uniform mat4 world;
 uniform mat4 worldViewProj;
@@ -73,6 +77,7 @@ void main() {
 	float instanceFade = 0.0;
 	float materialAmbient = ambient;
 	mat4 model = world, mv = worldView, mvp = worldViewProj;
+	#ifdef SKIN_CROWD
 	#ifdef SKIN_INDIRECT
 	SkinMaterial material = materials[drawOffset+gl_DrawIDARB];
 	vSkinTexture = material.handle;
@@ -91,6 +96,7 @@ void main() {
 		mv = instance.modelView;
 		mvp = instance.modelViewProj;
 	}
+	#endif
 	vEffectColor = vec4(instanceFade, 1.0, 1.0, actorOpacity);
 	if (count > 0) {
 		p = vec4(0.0); n = vec3(0.0);
@@ -185,7 +191,13 @@ type Skinner struct {
 }
 
 func NewSkinner() (*Skinner, error) {
-	p, err := Program("skinned instancing", skinVS, sceneFS)
+	vertex := skinVS
+	name := "skinned meshes"
+	if skinCrowdSupported {
+		vertex = strings.Replace(vertex, "#version 450 core\n", "#version 450 core\n#define SKIN_CROWD\n", 1)
+		name = "skinned instancing"
+	}
+	p, err := Program(name, vertex, sceneFS)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +207,7 @@ func NewSkinner() (*Skinner, error) {
 	addGPUBytes(MaxBones * 64)
 	k := skinProgram(p, palette)
 	if skinIndirectSupported {
-		vertex := strings.Replace(skinVS, "#version 450 core\n", "#version 450 core\n#extension GL_ARB_shader_draw_parameters : require\n#define SKIN_INDIRECT\n", 1)
+		vertex := strings.Replace(vertex, "#version 450 core\n", "#version 450 core\n#extension GL_ARB_shader_draw_parameters : require\n#define SKIN_INDIRECT\n", 1)
 		fragment := strings.Replace(sceneFS, "#version 450 core\n", "#version 450 core\n#extension GL_ARB_bindless_texture : require\n#define SKIN_INDIRECT\n", 1)
 		indirect, err := Program("skinned bindless indirect", vertex, fragment)
 		if err != nil {
@@ -206,6 +218,9 @@ func NewSkinner() (*Skinner, error) {
 	}
 	return k, nil
 }
+
+// CrowdInstancing reports whether this program can read batched poses.
+func (k *Skinner) CrowdInstancing() bool { return k.uCrowdBase >= 0 }
 
 func skinProgram(p, palette uint32) *Skinner {
 	u := func(n string) int32 { return gl.GetUniformLocation(p, gl.Str(n+"\x00")) }

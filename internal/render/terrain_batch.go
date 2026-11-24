@@ -3,7 +3,7 @@ package render
 import (
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // TerrainRange identifies one cell in a shared indexed terrain mesh.

@@ -8,7 +8,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/app"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // Allow one pending GPU transfer and one PNG writer to bound screenshot memory.

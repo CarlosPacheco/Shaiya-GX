@@ -1,6 +1,6 @@
 package render
 
-import "github.com/go-gl/gl/v4.5-core/gl"
+import "github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 
 type queuedEffect struct {
 	mesh       *Mesh
@@ -22,7 +22,7 @@ type effectQueue struct {
 // transparent pass. Individual draw ranges retain their original material.
 func (s *Scene3D) queueEffect(m *Mesh, texture *Texture, worlds []M4, colors [][4]float32, poses []EffectPose, geometry *EffectGeometry, src, dst uint32, repeat bool) bool {
 	const maxInstances = 16384
-	if !s.effectPass.active || m == nil || m == s.effectStream || len(worlds) > maxInstances {
+	if !sceneStorageSupported || !s.effectPass.active || m == nil || m == s.effectStream || len(worlds) > maxInstances {
 		return false
 	}
 	q := &s.effectQueue

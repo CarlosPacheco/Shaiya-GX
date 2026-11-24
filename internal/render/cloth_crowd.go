@@ -6,7 +6,7 @@ import (
 	"slices"
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 const clothScatterCS = `#version 450 core
@@ -70,6 +70,9 @@ func (b *ClothCrowd) Begin(actors int) {
 }
 
 func (b *ClothCrowd) Queue(s *Scene3D, mesh *Mesh, texture *Texture, id, version uint64, vertices []Vertex, world M4) bool {
+	if !sceneStorageSupported {
+		return false
+	}
 	if mesh.Count == 0 || len(vertices) == 0 {
 		return true
 	}

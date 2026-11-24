@@ -9,7 +9,7 @@ import (
 
 	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 func TestTerrainHaloMovesWithFeetGL(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // MapBatch retains immutable geometry and placements for one map. Each camera
@@ -223,7 +223,7 @@ func (b *MapBatch) drawIndirect(s *Scene3D, p *mapPipeline) {
 			end = b.runs[i+1].first
 		}
 		gl.Uniform1i(6, int32(run.first))
-		gl.MultiDrawElementsIndirect(gl.TRIANGLES, run.index, indexedDrawOffset(run.first*indexedDrawStride), int32(end-run.first), 0)
+		gl.MultiDrawElementsIndirectWithOffset(gl.TRIANGLES, run.index, uintptr(run.first*indexedDrawStride), int32(end-run.first), 0)
 		drawCalls++
 	}
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, 0)

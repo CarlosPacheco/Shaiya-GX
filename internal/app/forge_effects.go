@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 	"math"
 )
 

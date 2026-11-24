@@ -1,7 +1,9 @@
 package render
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"strings"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // Programs of the 3D passes. Colours stay in the texture's encoded space
@@ -14,6 +16,7 @@ layout(location=3) in vec2 uv2;
 layout(location=4) in mat4 instanceWorld;
 layout(location=8) in mat4 instanceWorldView;
 layout(location=12) in mat4 instanceWorldViewProj;
+#ifdef SCENE_STORAGE
 layout(std430, binding=3) readonly buffer EffectColors { vec4 colors[]; };
 struct EffectKey { vec4 position; vec4 uv; };
 layout(std430, binding=5) readonly buffer EffectKeyframes { EffectKey effectKeys[]; };
@@ -21,9 +24,10 @@ struct ClothPlacement { mat4 world; mat4 view; mat4 projection; ivec4 offsets; }
 layout(std430, binding=6) readonly buffer ClothPositions { vec4 clothPositions[]; };
 layout(std430, binding=7) readonly buffer ClothPlacements { ClothPlacement clothPlacements[]; };
 uniform int clothBase;
-uniform int instanced;
 uniform int instanceColorOffset;
 uniform int effectPoseOffset;
+#endif
+uniform int instanced;
 uniform mat4 world;
 uniform mat4 worldViewProj;
 uniform mat4 worldView;
@@ -39,6 +43,7 @@ out vec4 vEffectColor;
 void main() {
 	vec4 local = vec4(pos, 1.0);
 	vUV = uv; vUV2 = uv2;
+	#ifdef SCENE_STORAGE
 	if (effectPoseOffset != 0) {
 		vec4 pose = colors[effectPoseOffset + gl_InstanceID];
 		EffectKey a = effectKeys[int(pose.x) + gl_VertexID];
@@ -48,9 +53,12 @@ void main() {
 		local = vec4(p, 1.0);
 		vUV = u;
 	}
+	#endif
 	mat4 wm = instanced != 0 ? instanceWorld : world;
 	mat4 mv = instanced != 0 ? instanceWorldView : worldView;
 	mat4 mvp = instanced != 0 ? instanceWorldViewProj : worldViewProj;
+	vEffectColor = vec4(1.0);
+	#ifdef SCENE_STORAGE
 	if (clothBase != 0) {
 		ClothPlacement cloth = clothPlacements[clothBase-1+gl_InstanceID];
 		local = vec4(clothPositions[cloth.offsets.x+gl_VertexID].xyz, 1.0);
@@ -58,10 +66,11 @@ void main() {
 		mv = cloth.view;
 		mvp = cloth.projection;
 	}
+	if (instanceColorOffset != 0) vEffectColor = colors[instanceColorOffset + gl_InstanceID];
+	#endif
 	gl_Position = mvp * local;
 	gl_ClipDistance[0] = dot(wm * local, clipPlane);
 	vDepth = (mv * local).z;
-	vEffectColor = instanceColorOffset != 0 ? colors[instanceColorOffset + gl_InstanceID] : vec4(1.0);
 	vec3 n = normalize((wm * vec4(nrm, 0.0)).xyz);
 	vDiffuse = lit == 1 ? clamp(ambient + max(0.0, dot(n, -normalize(lightDir))), 0.0, 1.0) : 1.0;
 }`
@@ -118,7 +127,7 @@ void main() {
 		frag = vec4(0, 0, 0, a);
 		return;
 	} else if (mode == 8) {
-		c = texture(tex0, vUV) * vEffectColor;
+		c = texture(tex0, vUV) * vEffectColor * tint;
 	} else if (mode == 6) {
 		c = texture(tex0, vUV2 / tileSize) * tint;
 		if (hasWaterReflection != 0) {
@@ -247,7 +256,11 @@ type Scene3D struct {
 }
 
 func NewScene3D() (*Scene3D, error) {
-	p, err := Program("3D scene", sceneVS, sceneFS)
+	vertex := sceneVS
+	if sceneStorageSupported {
+		vertex = strings.Replace(vertex, "#version 450 core\n", "#version 450 core\n#define SCENE_STORAGE\n", 1)
+	}
+	p, err := Program("3D scene", vertex, sceneFS)
 	if err != nil {
 		return nil, err
 	}

@@ -3,7 +3,7 @@ package render
 import (
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // EffectKeyVertex stores the original position and UV of one 3DE key vertex.
@@ -32,7 +32,7 @@ type EffectGeometryCache struct {
 func (c *EffectGeometryCache) Geometry(id uint64, vertices []Vertex, indices []uint32, keyVertices int, sample func() []EffectKeyVertex) *EffectGeometry {
 	const byteLimit = 32 << 20
 	const maxGeometries = 256
-	if c == nil || len(vertices) == 0 || len(indices) == 0 {
+	if c == nil || len(vertices) == 0 || len(indices) == 0 || keyVertices != 0 && !sceneStorageSupported {
 		return nil
 	}
 	if g, ok := c.entries[id]; ok {

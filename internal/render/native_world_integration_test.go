@@ -4,12 +4,13 @@ package render
 
 import (
 	"bytes"
-	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
-	"github.com/Spelunkern/Shaiya-GX/internal/platform"
-	"github.com/go-gl/gl/v4.5-core/gl"
 	"os"
 	"runtime"
 	"testing"
+
+	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
+	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 func TestOriginalWorldTexturePolicyGL(t *testing.T) {
@@ -43,11 +44,13 @@ func TestOriginalWorldTexturePolicyGL(t *testing.T) {
 	if filter != gl.LINEAR_MIPMAP_NEAREST {
 		t.Fatal("native world mip selection changed", filter)
 	}
-	for i, want := range source.DDS.Levels {
-		got := make([]byte, len(want))
-		gl.GetCompressedTextureImage(tex.ID, int32(i), int32(len(got)), gl.Ptr(&got[0]))
-		if !bytes.Equal(got, want) {
-			t.Fatalf("overwrote authored level %d", i)
+	if compressedDDS[img.FormatDXT1] {
+		for i, want := range source.DDS.Levels {
+			got := make([]byte, len(want))
+			gl.GetCompressedTextureImage(tex.ID, int32(i), int32(len(got)), gl.Ptr(&got[0]))
+			if !bytes.Equal(got, want) {
+				t.Fatalf("overwrote authored level %d", i)
+			}
 		}
 	}
 	rgba := make([]byte, 4)
@@ -95,5 +98,51 @@ func TestOriginalWorldTexturePolicyGL(t *testing.T) {
 	}
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("native world GL error %#x", code)
+	}
+}
+
+func TestDDSUploadsWithoutS3TCGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires GL")
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	window, err := platform.Open(platform.Config{Width: 64, Height: 64, Hidden: true, Debug: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer window.Close()
+	if err := Init(true); err != nil {
+		t.Fatal(err)
+	}
+	native := compressedDDS
+	defer func() { compressedDDS = native }()
+	configureTextureFormats(false, false)
+	red := []byte{0, 248, 0, 248, 0, 0, 0, 0}
+	for _, tc := range []struct {
+		format img.Format
+		data   []byte
+		alpha  byte
+	}{
+		{img.FormatDXT1, red, 255},
+		{img.FormatDXT3, append(bytes.Repeat([]byte{0x88}, 8), red...), 136},
+		{img.FormatDXT5, append([]byte{64, 32, 0, 0, 0, 0, 0, 0}, red...), 64},
+	} {
+		tex := UploadWorld(img.Texture{DDS: &img.DDS{W: 4, H: 4, Format: tc.format, Levels: [][]byte{tc.data}}})
+		for mip := range int32(3) {
+			var format int32
+			gl.GetTextureLevelParameteriv(tex.ID, mip, gl.TEXTURE_INTERNAL_FORMAT, &format)
+			side := 4 >> mip
+			pixels := make([]byte, side*side*4)
+			gl.GetTextureImage(tex.ID, mip, gl.RGBA, gl.UNSIGNED_BYTE, int32(len(pixels)), gl.Ptr(pixels))
+			want := bytes.Repeat([]byte{255, 0, 0, tc.alpha}, side*side)
+			if format != gl.RGBA8 || !bytes.Equal(pixels, want) {
+				t.Errorf("DDS format %d mip %d read back format %#x pixel %v", tc.format, mip, format, pixels[:4])
+			}
+		}
+		tex.Delete()
+	}
+	if code := gl.GetError(); code != gl.NO_ERROR {
+		t.Fatalf("DDS fallback GL error %#x", code)
 	}
 }

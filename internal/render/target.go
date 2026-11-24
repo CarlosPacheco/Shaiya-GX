@@ -3,7 +3,7 @@ package render
 import (
 	"fmt"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // CaptureTexture renders a 4x MSAA snapshot with its own depth buffer, following

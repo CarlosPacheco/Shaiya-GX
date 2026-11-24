@@ -6,20 +6,33 @@ package render
 import (
 	"fmt"
 	"log"
+	"runtime"
 	"strings"
 	"time"
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
+	"github.com/go-gl/glfw/v3.4/glfw"
 )
 
 var skinIndirectSupported bool
 var drawParametersSupported bool
+var sceneStorageSupported bool
+var skinCrowdSupported bool
+
+func configureDrawPaths(platform string, bindless, drawParameters bool, vertexBlocks, fragmentBlocks int32) {
+	// Windows drivers have failed inside glLinkProgram on the optional
+	// bindless shaders. Use the same core paths as on devices without them.
+	drawParametersSupported = drawParameters && platform != "windows"
+	sceneStorageSupported = vertexBlocks >= 4 // scene effects and cloth
+	skinCrowdSupported = vertexBlocks >= 2    // transforms and bone palettes
+	skinIndirectSupported = bindless && drawParametersSupported && sceneStorageSupported && fragmentBlocks >= 1
+}
 
 // Init loads GL entry points; debug installs a KHR_debug logger.
 func Init(debug bool) error {
 	log.Print("Loading OpenGL entry points")
-	if err := gl.Init(); err != nil {
+	if err := gl.InitWithProcAddrFunc(glfw.GetProcAddress); err != nil {
 		return fmt.Errorf("load OpenGL entry points: %w", err)
 	}
 	var major, minor int32
@@ -37,7 +50,7 @@ func Init(debug bool) error {
 	log.Printf("OpenGL context profile_mask=%#x flags=%#x", profile, flags)
 	gpuBytes, drawCalls = 0, 0
 	gpuCapacity = 0
-	bindless, drawParameters, s3tc := false, false, false
+	bindless, drawParameters, s3tc, dxt1 := false, false, false, false
 	var extensionCount int32
 	gl.GetIntegerv(gl.NUM_EXTENSIONS, &extensionCount)
 	for i := int32(0); i < extensionCount; i++ {
@@ -48,6 +61,8 @@ func Init(debug bool) error {
 			drawParameters = true
 		case "GL_EXT_texture_compression_s3tc":
 			s3tc = true
+		case "GL_EXT_texture_compression_dxt1":
+			dxt1 = true
 		case "GL_NVX_gpu_memory_info":
 			var kib int32
 			gl.GetIntegerv(0x9047, &kib) // GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
@@ -56,10 +71,15 @@ func Init(debug bool) error {
 			}
 		}
 	}
-	skinIndirectSupported = bindless && drawParameters
-	drawParametersSupported = drawParameters
+	var vertexBlocks, fragmentBlocks int32
+	gl.GetIntegerv(gl.MAX_VERTEX_SHADER_STORAGE_BLOCKS, &vertexBlocks)
+	gl.GetIntegerv(gl.MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &fragmentBlocks)
+	configureDrawPaths(runtime.GOOS, bindless, drawParameters, vertexBlocks, fragmentBlocks)
+	configureTextureFormats(s3tc, dxt1)
 	log.Printf("OpenGL capabilities: ARB_bindless_texture=%t ARB_shader_draw_parameters=%t EXT_texture_compression_s3tc=%t bindless_indirect_enabled=%t",
 		bindless, drawParameters, s3tc, skinIndirectSupported)
+	log.Printf("OpenGL rendering paths: vertex_ssbo_limit=%d fragment_ssbo_limit=%d scene_storage=%t skin_instancing=%t terrain_multidraw=%t compressed_dds(DXT1,DXT3,DXT5)=%v",
+		vertexBlocks, fragmentBlocks, sceneStorageSupported, skinCrowdSupported, drawParametersSupported, compressedDDS[1:])
 	fallbackDiffuse = nil
 	if debug {
 		gl.Enable(gl.DEBUG_OUTPUT)
@@ -134,6 +154,7 @@ func link(name string, shaders ...uint32) (uint32, error) {
 		gl.GetProgramiv(p, gl.INFO_LOG_LENGTH, &n)
 		msg := strings.Repeat("\x00", int(n+1))
 		gl.GetProgramInfoLog(p, n, nil, gl.Str(msg))
+		gl.DeleteProgram(p)
 		return 0, fmt.Errorf("link %q: %s", name, strings.TrimRight(msg, "\x00"))
 	}
 	log.Printf("OpenGL linked %q in %s", name, time.Since(start).Round(time.Microsecond))

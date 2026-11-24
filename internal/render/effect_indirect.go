@@ -3,7 +3,7 @@ package render
 import (
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 type effectIndirectLocation struct {
@@ -116,7 +116,7 @@ func (p *effectIndirect) draw(s *Scene3D) {
 		}
 		s.effectBlend(run.src, run.dst)
 		gl.Uniform1i(1, int32(run.first))
-		gl.MultiDrawElementsIndirect(gl.TRIANGLES, run.indexType, indexedDrawOffset(run.first*indexedDrawStride), int32(end-run.first), 0)
+		gl.MultiDrawElementsIndirectWithOffset(gl.TRIANGLES, run.indexType, uintptr(run.first*indexedDrawStride), int32(end-run.first), 0)
 		drawCalls++
 	}
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, 0)

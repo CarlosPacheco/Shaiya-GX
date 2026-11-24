@@ -3,7 +3,7 @@ package render
 import (
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // Delete releases the scene's streaming buffer and shader on the GL thread.

@@ -4,6 +4,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math/bits"
+
+	"github.com/woozymasta/bcn"
 )
 
 type Format int
@@ -21,6 +24,27 @@ type DDS struct {
 	W, H   int
 	Format Format
 	Levels [][]byte
+}
+
+// LevelRGBA returns one authored mip as RGBA8 pixels.
+func (d *DDS) LevelRGBA(level int) ([]byte, error) {
+	if level < 0 || level >= len(d.Levels) {
+		return nil, fmt.Errorf("%w: dds mip level %d", ErrFormat, level)
+	}
+	data := d.Levels[level]
+	w, h := max(1, d.W>>level), max(1, d.H>>level)
+	switch d.Format {
+	case FormatDXT1:
+		return bcn.DecodeBC1(data, w, h)
+	case FormatDXT3:
+		return bcn.DecodeBC2(data, w, h)
+	case FormatDXT5:
+		return bcn.DecodeBC3(data, w, h)
+	case FormatRGBA:
+		return data, nil
+	default:
+		return nil, fmt.Errorf("%w: dds pixel format %d", ErrFormat, d.Format)
+	}
 }
 
 func blockBytes(f Format) int {
@@ -45,6 +69,7 @@ func DecodeDDS(b []byte) (*DDS, error) {
 	if w == 0 || h == 0 || w > maxSide || h > maxSide || mips > 16 {
 		return nil, fmt.Errorf("%w: dds %dx%d mips %d", ErrFormat, w, h, mips)
 	}
+	mips = min(mips, bits.Len(uint(max(w, h))))
 	pfFlags, fourCC, rgbBits := u32(80), string(b[84:88]), int(u32(88))
 	masks := [4]uint32{u32(92), u32(96), u32(100), u32(104)}
 	d := &DDS{W: w, H: h}

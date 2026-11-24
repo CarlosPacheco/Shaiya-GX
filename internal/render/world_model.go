@@ -1,6 +1,6 @@
 package render
 
-import "github.com/go-gl/gl/v4.5-core/gl"
+import "github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 
 // Only proven coincident front/back sheets are culled. Ordinary unpaired
 // sheets stay two-sided, including cutout vegetation and thin decorations.
