@@ -112,3 +112,41 @@ func TestMobPositionUsesServerDurationThroughCorners(t *testing.T) {
 		t.Fatal("presentation changed authoritative position")
 	}
 }
+
+func TestMobChaseAnimationSurvivesShortGapsBetweenMovementPackets(t *testing.T) {
+	a := inputApp()
+	e := &game.Entity{Kind: game.KindMob, MobHeightKnown: true}
+	mob := a.trackMob(e)
+	check := func(now float64, want int) {
+		t.Helper()
+		a.clock = now
+		a.updateMobPosition(mob)
+		if got := mob.locomotionAction(now); got != want {
+			t.Fatalf("at %.3fs: action = %d, want %d", now, got, want)
+		}
+	}
+	check(0, 6)
+	e.Motion, e.MobMoveDurationMS = 1, 25
+	for i := range 8 {
+		now := 1 + float64(i)*.1
+		e.X += .15
+		e.MoveSerial++
+		check(now, 1)
+		check(now+.02, 1)
+		check(now+.09, 1)
+	}
+	check(1.9, 6)
+
+	e.Motion, e.MobMoveDurationMS = 0, 80
+	e.X, e.MoveSerial = 2, e.MoveSerial+1
+	check(2, 0)
+	check(2.081, 6)
+
+	e.Motion, e.MobMoveDurationMS = 1, 30
+	e.X, e.MoveSerial = 3, e.MoveSerial+1
+	check(3, 1)
+	e.MobMoveDurationMS = 0
+	e.MoveSerial++
+	e.PositionResetSerial++
+	check(3.01, 6)
+}

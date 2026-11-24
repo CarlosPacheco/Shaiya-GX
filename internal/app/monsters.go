@@ -130,6 +130,25 @@ func (m *mobActor) placeActor() {
 	}
 }
 
+// Keep the run cycle across short gaps between chase steps. World checks mob
+// movement every 50 ms and receives player movement samples every 100 ms.
+const mobChaseAnimationGrace = .15
+
+func (m *mobActor) locomotionAction(now float64) int {
+	p := m.position
+	if p.duration <= 0 || p.from[0] == p.to[0] && p.from[2] == p.to[2] {
+		return 6
+	}
+	arrival := p.start + p.duration
+	if m.entity.Motion != 0 && now < arrival+mobChaseAnimationGrace {
+		return 1
+	}
+	if now < arrival {
+		return 0
+	}
+	return 6
+}
+
 func (a *App) prepareMonsters() {
 	effectBudget := 2
 	v := a.wv
@@ -171,12 +190,7 @@ func (a *App) prepareMonsters() {
 			turn := math.Remainder(m.heading-m.yaw, 2*math.Pi)
 			m.yaw += turn * min(1, max(0, a.frameDT)*4.5)
 			m.placeActor()
-			if m.pos[0] != e.X || m.pos[2] != e.Z {
-				action = 0
-				if e.Motion != 0 {
-					action = 1
-				}
-			}
+			action = m.locomotionAction(a.clock)
 			if action != 6 || m.actor.Attacking() {
 				m.idleAt = 0
 			} else if m.idleAt == 0 {

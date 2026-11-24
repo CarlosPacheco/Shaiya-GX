@@ -110,6 +110,16 @@ func (s *Assets) buildCreature(folder string, visual model.Creature, name string
 }
 
 func (m *CreatureActor) SetAction(action int) error {
+	if m.folder == "Monster" && (action == 0 || action == 1) && (m.action == 6 || m.action == 8) {
+		// Locomotion must play as soon as the mob starts moving.
+		previous := m.cueTime
+		m.cueTime = 0
+		if err := m.setAction(action, false, true); err != nil {
+			m.cueTime = previous
+			return err
+		}
+		return nil
+	}
 	return m.setAction(action, false, false)
 }
 
@@ -170,7 +180,8 @@ func (m *CreatureActor) PlayOnce(action int) bool {
 	}
 	previous := m.cueTime
 	m.cueTime = 0
-	if err := m.setAction(action, true, false); err != nil {
+	interruptIdle := m.folder == "Monster" && m.action == 8 && action >= 2 && action <= 4
+	if err := m.setAction(action, true, interruptIdle); err != nil {
 		m.cueTime = previous
 		m.assets.Missing[err.Error()] = true
 		return false
