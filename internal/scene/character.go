@@ -700,10 +700,26 @@ func (c *Character) CrossedFrame(frame float32) bool {
 		return false
 	}
 	t := frame / 30
-	if c.eventCur < c.eventPrev {
-		return t > c.eventPrev || t <= c.eventCur
+	// Time keeps growing while a clip loops, so compare positions inside the
+	// cycle; a different cycle number between the two samples is a wrap.
+	prev, cur := c.eventPrev, c.eventCur
+	duration := c.clip.Duration()
+	if duration <= 0 || cur < 0 {
+		return false
 	}
-	return c.eventPrev < t && t <= c.eventCur
+	cycle := func(v float32) (int, float32) {
+		n := int(v / duration)
+		return n, v - float32(n)*duration
+	}
+	cc, q := cycle(cur)
+	if prev < 0 { // the clip just started; its first frame has not been seen
+		return t <= q && t > prev
+	}
+	pc, p := cycle(prev)
+	if pc != cc || cur < prev {
+		return t > p || t <= q
+	}
+	return p < t && t <= q
 }
 
 // PlayingDamageReaction reports the hit reaction, which walking cancels.

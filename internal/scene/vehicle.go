@@ -181,6 +181,12 @@ func (v *Vehicle) StepCursor() (action int, seconds float32) {
 	if v == nil || v.CreatureActor == nil {
 		return -1, 0
 	}
+	// Time grows while a clip loops; hoof frames are positions inside the cycle.
+	if v.clip != nil {
+		if duration := v.clip.Duration(); duration > 0 && v.Time >= duration {
+			return v.action, v.Time - float32(int(v.Time/duration))*duration
+		}
+	}
 	return v.action, v.Time
 }
 

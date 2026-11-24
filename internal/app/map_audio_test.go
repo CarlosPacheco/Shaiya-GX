@@ -162,17 +162,23 @@ func TestRealMapAudioRegions(t *testing.T) {
 func TestFootstepFileSurfaces(t *testing.T) {
 	land := &world.WLD{MapSize: 4, TextureMap: []byte{0, 0, 0, 0, 0, 0, 0, 0, 0}, Layers: []world.TerrainLayer{{Sound: "ch_walkg002.ogg"}}}
 	for range 20 {
-		if got := footstepFile(land, 1, 5, 1); got != "ch_walkg001.ogg" && got != "ch_walkg002.ogg" && got != "ch_walkg003.ogg" {
+		if got := footstepFile(land, 1, 5, 1, false); got != "ch_walkg001.ogg" && got != "ch_walkg002.ogg" && got != "ch_walkg003.ogg" {
 			t.Fatalf("terrain step %q", got)
 		}
-		if got := footstepFile(land, 1, .5, 1); got < "ch_walkw001.ogg" || got > "ch_walkw003.ogg" {
+		if got := footstepFile(land, 1, .5, 1, false); got < "ch_walkw001.ogg" || got > "ch_walkw003.ogg" {
 			t.Fatalf("water step %q", got)
 		}
-		if got := footstepFile(&world.WLD{Dungeon: true}, 1, 5, 1); got < "ch_walks001.ogg" || got > "ch_walks003.ogg" {
+		if got := footstepFile(&world.WLD{Dungeon: true}, 1, 5, 1, false); got < "ch_walks001.ogg" || got > "ch_walks003.ogg" {
 			t.Fatalf("dungeon step %q", got)
 		}
 	}
-	if footstepFile(nil, 0, 0, 0) != "" || footstepFile(land, -5, 5, 1) != "" {
+	if got := footstepFile(land, 1, 5, 1, true); got < "ch_walks001.ogg" || got > "ch_walks003.ogg" {
+		t.Fatal("a step on an object must use stone, not the terrain layer", got)
+	}
+	if got := mountStepFile(land, 0, 1, 5, 1, true); got[:len("run_horse_st0")] != "run_horse_st0" {
+		t.Fatal("a hoof on an object must use stone", got)
+	}
+	if footstepFile(nil, 0, 0, 0, false) != "" || footstepFile(land, -5, 5, 1, false) != "" {
 		t.Fatal("steps outside the map or without a world must be silent")
 	}
 }
@@ -190,15 +196,15 @@ func TestMountStepFileSurfaces(t *testing.T) {
 		}{
 			{0, 0, 5, "run_horse_st0"}, {1, 2, 5, "run_puma_gr0"}, {3, 4, 5, "run_baslk_ea0"}, {2, 2, .5, "run_puma_wa0"},
 		} {
-			if got := mountStepFile(w, tc.race, tc.x, tc.y, 0); len(got) != len(tc.want)+5 || got[:len(tc.want)] != tc.want {
+			if got := mountStepFile(w, tc.race, tc.x, tc.y, 0, false); len(got) != len(tc.want)+5 || got[:len(tc.want)] != tc.want {
 				t.Fatalf("race %d at (%v,%v): %q want prefix %q", tc.race, tc.x, tc.y, got, tc.want)
 			}
 		}
-		if got := mountStepFile(&world.WLD{Dungeon: true}, 0, 1, 5, 1); got[:len("run_horse_st0")] != "run_horse_st0" {
+		if got := mountStepFile(&world.WLD{Dungeon: true}, 0, 1, 5, 1, false); got[:len("run_horse_st0")] != "run_horse_st0" {
 			t.Fatalf("dungeon mount step %q", got)
 		}
 	}
-	if mountStepFile(nil, 0, 0, 0, 0) != "" || mountStepFile(w, 4, 0, 5, 0) != "" {
+	if mountStepFile(nil, 0, 0, 0, 0, false) != "" || mountStepFile(w, 4, 0, 5, 0, false) != "" {
 		t.Fatal("no world or unknown race must be silent")
 	}
 }

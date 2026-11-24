@@ -26,13 +26,13 @@ var stepVariant = regexp.MustCompile(`^(.*?)\d+\.\w+$`)
 // footstepFile is Game.exe 0x40f700: a dungeon floor is stone, a walk below
 // 0.9 units is wading water, otherwise the terrain layer under the foot picks
 // the surface. The variant (001..003) is random.
-func footstepFile(w *world.WLD, x, y, z float32) string {
+func footstepFile(w *world.WLD, x, y, z float32, object bool) string {
 	if w == nil {
 		return ""
 	}
 	prefix := "ch_walks"
 	switch {
-	case w.Dungeon:
+	case w.Dungeon || object:
 	case y-0.9 < 0:
 		prefix = "ch_walkw"
 	default:
@@ -46,6 +46,18 @@ func footstepFile(w *world.WLD, x, y, z float32) string {
 		}
 	}
 	return fmt.Sprintf("%s%03d.ogg", prefix, 1+rand.IntN(3))
+}
+
+// objectSurfaceTolerance is the clearance (0x6bca18, 0.3) above the terrain at
+// which the feet count as resting on an object.
+const objectSurfaceTolerance = .3
+
+// onObjectSurface reports feet that stand on an object (bridge, stairs, floor of
+// a building) rather than the terrain. Game.exe 0x40f700 gives that contact the
+// stone step instead of the terrain layer's own sound (flag +0x268, raised by
+// the collision pass).
+func (a *App) onObjectSurface(x, y, z float32) bool {
+	return a.wv != nil && a.wv.world != nil && y-a.wv.world.Height(x, z) > objectSurfaceTolerance
 }
 
 // actorSoundMemory remembers what an actor's last frame looked like so edges
@@ -81,7 +93,7 @@ func (a *App) updateActorSounds(mem *actorSoundMemory, c *scene.Character, x, y,
 	if frames, ok := stepFrames[c.LocomotionClip()]; ok && c.ActionSlot() < 0 && !c.Concealed && a.wv != nil && a.wv.world != nil {
 		for _, frame := range frames {
 			if c.CrossedFrame(frame) {
-				if name := footstepFile(a.wv.world.WLD, x, y, z); name != "" {
+				if name := footstepFile(a.wv.world.WLD, x, y, z, a.onObjectSurface(x, y, z)); name != "" {
 					a.playSound(name, x, z)
 				}
 				break
@@ -104,14 +116,14 @@ func (a *App) updateActorSounds(mem *actorSoundMemory, c *scene.Character, x, y,
 // (horse, puma twice, basilisk); a dungeon is stone, wading water is "wa",
 // otherwise the terrain layer's own footstep file decides: ch_walks is stone,
 // ch_walkg grass and anything else earth. The variant is random.
-func mountStepFile(w *world.WLD, race uint8, x, y, z float32) string {
+func mountStepFile(w *world.WLD, race uint8, x, y, z float32, object bool) string {
 	if w == nil || race > 3 {
 		return ""
 	}
 	kind := [4]string{"horse", "puma", "puma", "baslk"}[race]
 	surface := "st"
 	switch {
-	case w.Dungeon:
+	case w.Dungeon || object:
 	case y-0.9 < 0:
 		surface = "wa"
 	default:
@@ -139,7 +151,7 @@ func (a *App) updateMountSounds(m *scene.Vehicle, prevAction int, prevTime float
 	if !scene.MountStepCrossedDirected(prevAction, prevTime, action, now, race, m.PlayingReverse()) {
 		return
 	}
-	if name := mountStepFile(a.wv.world.WLD, race, x, y, z); name != "" {
+	if name := mountStepFile(a.wv.world.WLD, race, x, y, z, a.onObjectSurface(x, y, z)); name != "" {
 		a.playSound(name, x, z)
 	}
 }
