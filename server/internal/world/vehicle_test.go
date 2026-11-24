@@ -174,13 +174,15 @@ func TestMountsStayOutOfDungeonsButCrossFieldMapsByPortal(t *testing.T) {
 	if !s.mounted {
 		t.Fatal("mount did not start on a field map")
 	}
-	if !s.keepsMountAcrossTeleport(field, "portal teleport") || !s.keepsMountAcrossTeleport(field, "explicit portal teleport") {
-		t.Fatal("a rider must keep the mount through a portal to a field map")
+	for _, label := range []string{"portal teleport", "explicit portal teleport", "GM cmove", "GM move", "gatekeeper", "return to town", "queued teleport"} {
+		if !s.keepsMountAcrossTeleport(field, label) {
+			t.Fatalf("a rider must keep the mount through %q to a field map", label)
+		}
 	}
 	if s.keepsMountAcrossTeleport(dungeon, "portal teleport") {
 		t.Fatal("a rider entering a dungeon must be left on foot")
 	}
-	if s.keepsMountAcrossTeleport(field, "resurrection") {
-		t.Fatal("only portals keep the mount")
+	if s.keepsMountAcrossTeleport(field, "rebirth") {
+		t.Fatal("rebirth must leave the character on foot")
 	}
 }

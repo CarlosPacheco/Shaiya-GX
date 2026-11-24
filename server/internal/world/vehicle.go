@@ -1,7 +1,6 @@
 package world
 
 import (
-	"strings"
 	"sync"
 	"time"
 
@@ -120,11 +119,12 @@ func mountForbiddenMap(mapID uint16) bool {
 	return ok && z.Dungeon
 }
 
-// keepsMountAcrossTeleport lets a lone rider travel through a portal to another
-// map that allows mounts. A passenger pair, any other kind of teleport and every
-// dungeon destination leave the character on foot.
+// keepsMountAcrossTeleport lets a lone rider keep the mount through every kind
+// of travel (portals, gatekeepers, GM moves, town return, queued moves) when the
+// destination allows mounts. Dungeons, a driver with a passenger and rebirth
+// leave the character on foot.
 func (s *Session) keepsMountAcrossTeleport(mapID uint16, label string) bool {
-	if s.player == nil || !s.mounted || mountForbiddenMap(mapID) || !strings.Contains(label, "portal teleport") {
+	if s.player == nil || !s.mounted || s.dead || mountForbiddenMap(mapID) || label == "rebirth" {
 		return false
 	}
 	v := s.player.vehicleState()
