@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
+	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 )
 
 type clientDiagnostics struct {
@@ -27,6 +30,7 @@ func startDiagnostics() *clientDiagnostics {
 	}
 	directories = append(directories, filepath.Join(os.TempDir(), "shaiya-gx-logs"))
 	d := openDiagnostics(directories)
+	d.logStartup()
 	if d.file != nil {
 		if err := debug.SetCrashOutput(d.file, debug.CrashOptions{}); err != nil {
 			log.Printf("Unable to attach crash diagnostics: %v", err)
@@ -34,15 +38,28 @@ func startDiagnostics() *clientDiagnostics {
 			d.crashOutput = true
 		}
 	}
-	log.Printf("Shaiya GX startup; platform=%s/%s; diagnostic=%s", runtime.GOOS, runtime.GOARCH, d.path)
+	return d
+}
+
+func (d *clientDiagnostics) logStartup() {
+	revision, modified := "unknown", "unknown"
 	if build, ok := debug.ReadBuildInfo(); ok {
-		for _, s := range build.Settings {
-			if s.Key == "vcs.revision" || s.Key == "vcs.modified" {
-				log.Printf("%s=%s", s.Key, s.Value)
+		for _, setting := range build.Settings {
+			switch setting.Key {
+			case "vcs.revision":
+				revision = setting.Value
+			case "vcs.modified":
+				modified = setting.Value
 			}
 		}
 	}
-	return d
+	log.Printf("Shaiya GX startup platform=%s/%s revision=%s modified=%s", runtime.GOOS, runtime.GOARCH, revision, modified)
+	ram := "unknown"
+	if bytes, err := platform.TotalMemoryBytes(); err == nil {
+		ram = fmt.Sprintf("%.0f MiB", float64(bytes)/(1<<20))
+	}
+	log.Printf("System OS=%q CPU=%q logical_cpus=%d physical_ram=%q",
+		platform.OSVersion(), platform.CPUModel(), runtime.NumCPU(), ram)
 }
 
 func openDiagnostics(directories []string) *clientDiagnostics {
@@ -73,6 +90,7 @@ func openDiagnostics(directories []string) *clientDiagnostics {
 	return d
 }
 func (d *clientDiagnostics) Close() {
+	clientlog.FlushWarnings()
 	log.SetOutput(d.previous)
 	if d.crashOutput {
 		_ = debug.SetCrashOutput(nil, debug.CrashOptions{})
@@ -88,8 +106,11 @@ func (d *clientDiagnostics) data(path string) {
 	}
 	log.Printf("Data directory: %s", absolute)
 }
-func (d *clientDiagnostics) fail(err error, interactive bool) {
-	log.Printf("ERROR: %v\n%s", err, debug.Stack())
+func (d *clientDiagnostics) fail(err error, interactive bool, stack []byte) {
+	log.Printf("ERROR: %v", err)
+	if len(stack) > 0 {
+		log.Print(string(stack))
+	}
 	message := fmt.Sprintf("Shaiya GX could not start or continue.\n\n%v", err)
 	if d.file != nil {
 		_ = d.file.Sync()

@@ -2,12 +2,12 @@ package scene
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"math/rand/v2"
 	"path"
 	"strings"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
@@ -35,7 +35,7 @@ func (a *Assets) weaponEnchantRecipe(record int32) *weaponEnchantRecipe {
 			a.weaponSEFF, err = effect.ParseSEFF(raw)
 		}
 		if err != nil {
-			log.Printf("Weapon.Seff: %v", err)
+			clientlog.Warnf("Weapon.Seff: %v", err)
 		}
 	}
 	if a.weaponSEFF == nil {
@@ -52,13 +52,13 @@ func (a *Assets) weaponEnchantRecipe(record int32) *weaponEnchantRecipe {
 	r := &weaponEnchantRecipe{}
 	for _, d := range definitions {
 		if !weaponSEFFSupported(d) {
-			log.Printf("Weapon.Seff record %d: unsupported emitter", record)
+			clientlog.Debugf("Weapon.Seff record %d: unsupported emitter", record)
 			return nil
 		}
 		name := path.Base(strings.ReplaceAll(d.Texture, `\`, "/"))
 		texture := a.worldTexture("Effect/DDS/" + name)
 		if texture == nil {
-			log.Printf("Weapon.Seff record %d: missing texture %q", record, name)
+			clientlog.Warnf("Weapon.Seff record %d: missing texture %q", record, name)
 			return nil
 		}
 		r.layers = append(r.layers, weaponEnchantLayer{definition: d, texture: texture})

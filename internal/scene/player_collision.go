@@ -1,10 +1,10 @@
 package scene
 
 import (
-	"log"
 	"math"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/collision"
 	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -36,7 +36,7 @@ func (w *World) prepareCollisions(a *Assets) error {
 	w.physics = geometry
 	geometry.SetDynamicClock(w.DynamicTime)
 	w.movingColliders = geometry.Dynamic
-	log.Printf("collision ready: %d static triangles, %d moving instances, %d resources in %s", geometry.Index.Len(), len(geometry.Dynamic), len(geometry.Sources), time.Since(started))
+	clientlog.Debugf("collision ready: %d static triangles, %d moving instances, %d resources in %s", geometry.Index.Len(), len(geometry.Dynamic), len(geometry.Sources), time.Since(started))
 	return nil
 }
 

@@ -1,8 +1,7 @@
 package app
 
 import (
-	"log"
-
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
@@ -31,7 +30,7 @@ func (a *App) beginSceneAntialias(w, h int) *render.MSAATarget {
 			var err error
 			a.taa, err = render.NewTemporalAA()
 			if err != nil {
-				log.Printf("taa: %v", err)
+				clientlog.Warnf("taa: %v", err)
 				a.taaFailed = true
 			}
 		}
@@ -73,7 +72,7 @@ func (a *App) beginSceneAntialias(w, h int) *render.MSAATarget {
 		var err error
 		a.msaaTarget, err = render.NewMSAATarget(w, h, samples)
 		if err != nil {
-			log.Printf("antialias: %v", err)
+			clientlog.Warnf("antialias: %v", err)
 			a.msaaFailed = true
 			return nil
 		}
@@ -91,7 +90,7 @@ func (a *App) endSceneAntialias(msaa *render.MSAATarget) {
 	}
 	if a.clientSettings().Antialias == ui.AntialiasTAA && a.taa != nil && !a.taaFailed && !a.loading.active && a.frameTarget != nil {
 		if err := a.taa.Apply(a.scene3d.View, a.scene3d.StableGPUProjection(), a.scene3d.TemporalJitter); err != nil {
-			log.Printf("taa: %v", err)
+			clientlog.Warnf("taa: %v", err)
 			a.taaFailed = true
 		}
 		return
@@ -106,13 +105,13 @@ func (a *App) endSceneAntialias(msaa *render.MSAATarget) {
 	if a.fxaa == nil {
 		var err error
 		if a.fxaa, err = render.NewFXAA(); err != nil {
-			log.Printf("fxaa: %v", err)
+			clientlog.Warnf("fxaa: %v", err)
 			a.fxaaFailed = true
 			return
 		}
 	}
 	if err := a.fxaa.Apply(); err != nil {
-		log.Printf("fxaa: %v", err)
+		clientlog.Warnf("fxaa: %v", err)
 		a.fxaaFailed = true
 	}
 }

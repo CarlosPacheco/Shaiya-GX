@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 )
 
 type linuxGPU struct {
@@ -101,7 +103,7 @@ func prepareGPU() {
 			}
 		}
 		if len(vars) > 0 {
-			log.Printf("GPU preference: dedicated adapter (%s); actual renderer follows in OpenGL log", vars["DRI_PRIME"])
+			clientlog.Debugf("GPU preference: dedicated adapter (%s); actual renderer follows in OpenGL log", vars["DRI_PRIME"])
 		}
 	})
 }

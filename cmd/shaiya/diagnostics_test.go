@@ -21,9 +21,10 @@ func TestDiagnosticsFallbackRotationAndFailure(t *testing.T) {
 		if d.path != filepath.Join(target, "client.log") {
 			t.Fatalf("fallback path: %q", d.path)
 		}
+		d.logStartup()
 		log.Print(text)
 		d.data("resources")
-		d.fail(errors.New("interface/example.png unavailable"), false)
+		d.fail(errors.New("interface/example.png unavailable"), false, nil)
 		d.Close()
 	}
 	current, err := os.ReadFile(filepath.Join(target, "client.log"))
@@ -34,7 +35,7 @@ func TestDiagnosticsFallbackRotationAndFailure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, expected := range []string{"third session", "Data directory:", "interface/example.png unavailable", "goroutine"} {
+	for _, expected := range []string{"third session", "Data directory:", "interface/example.png unavailable", "Shaiya GX startup platform=", "System OS=", "CPU=", "physical_ram="} {
 		if !strings.Contains(string(current), expected) {
 			t.Fatalf("missing diagnostic %q", expected)
 		}

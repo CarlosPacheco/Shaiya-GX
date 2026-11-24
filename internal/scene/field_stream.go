@@ -2,11 +2,11 @@ package scene
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"sort"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
@@ -252,7 +252,7 @@ func (w *World) UpdateVisible(eye render.V3, radius float32) {
 		s.lastTrim = time.Since(t)
 	}
 	for file := range s.assets.Missing {
-		log.Printf("field %s: missing %s", s.stem, file)
+		clientlog.Warnf("field %s: missing %s", s.stem, file)
 		delete(s.assets.Missing, file)
 	}
 }
@@ -314,7 +314,7 @@ func (s *fieldStream) loadCell(key cellKey) *fieldCell {
 			if _, ok := s.vanis[file]; !ok {
 				asset, err := loadVani(s.assets, file)
 				if err != nil {
-					log.Printf("field vani %s: %v", file, err)
+					clientlog.Warnf("field vani %s: %v", file, err)
 				}
 				s.vanis[file] = asset
 			}
@@ -324,7 +324,7 @@ func (s *fieldStream) loadCell(key cellKey) *fieldCell {
 			continue
 		}
 		if _, err := s.assets.SMOD(file); err != nil {
-			log.Printf("field model %s: %v", file, err)
+			clientlog.Warnf("field model %s: %v", file, err)
 			s.assets.models[file] = nil
 		}
 	}

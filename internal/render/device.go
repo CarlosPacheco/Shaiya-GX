@@ -8,9 +8,9 @@ import (
 	"log"
 	"runtime"
 	"strings"
-	"time"
 	"unsafe"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 	"github.com/go-gl/glfw/v3.4/glfw"
 )
@@ -31,7 +31,6 @@ func configureDrawPaths(platform string, bindless, drawParameters bool, vertexBl
 
 // Init loads GL entry points; debug installs a KHR_debug logger.
 func Init(debug bool) error {
-	log.Print("Loading OpenGL entry points")
 	if err := gl.InitWithProcAddrFunc(glfw.GetProcAddress); err != nil {
 		return fmt.Errorf("load OpenGL entry points: %w", err)
 	}
@@ -47,7 +46,7 @@ func Init(debug bool) error {
 	var profile, flags int32
 	gl.GetIntegerv(gl.CONTEXT_PROFILE_MASK, &profile)
 	gl.GetIntegerv(gl.CONTEXT_FLAGS, &flags)
-	log.Printf("OpenGL context profile_mask=%#x flags=%#x", profile, flags)
+	clientlog.Debugf("OpenGL context profile_mask=%#x flags=%#x", profile, flags)
 	gpuBytes, drawCalls = 0, 0
 	gpuCapacity = 0
 	bindless, drawParameters, s3tc, dxt1 := false, false, false, false
@@ -76,9 +75,9 @@ func Init(debug bool) error {
 	gl.GetIntegerv(gl.MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &fragmentBlocks)
 	configureDrawPaths(runtime.GOOS, bindless, drawParameters, vertexBlocks, fragmentBlocks)
 	configureTextureFormats(s3tc, dxt1)
-	log.Printf("OpenGL capabilities: ARB_bindless_texture=%t ARB_shader_draw_parameters=%t EXT_texture_compression_s3tc=%t bindless_indirect_enabled=%t",
+	clientlog.Debugf("OpenGL capabilities: ARB_bindless_texture=%t ARB_shader_draw_parameters=%t EXT_texture_compression_s3tc=%t bindless_indirect_enabled=%t",
 		bindless, drawParameters, s3tc, skinIndirectSupported)
-	log.Printf("OpenGL rendering paths: vertex_ssbo_limit=%d fragment_ssbo_limit=%d scene_storage=%t skin_instancing=%t terrain_multidraw=%t compressed_dds(DXT1,DXT3,DXT5)=%v",
+	clientlog.Debugf("OpenGL rendering paths: vertex_ssbo_limit=%d fragment_ssbo_limit=%d scene_storage=%t skin_instancing=%t terrain_multidraw=%t compressed_dds(DXT1,DXT3,DXT5)=%v",
 		vertexBlocks, fragmentBlocks, sceneStorageSupported, skinCrowdSupported, drawParametersSupported, compressedDDS[1:])
 	fallbackDiffuse = nil
 	if debug {
@@ -95,7 +94,7 @@ func Init(debug bool) error {
 }
 
 func compile(name, stage string, kind uint32, src string) (uint32, error) {
-	log.Printf("OpenGL compiling %q (%s shader)", name, stage)
+	clientlog.Debugf("OpenGL compiling %q (%s shader)", name, stage)
 	s := gl.CreateShader(kind)
 	cs, free := gl.Strs(src + "\x00")
 	gl.ShaderSource(s, 1, cs, nil)
@@ -144,8 +143,7 @@ func link(name string, shaders ...uint32) (uint32, error) {
 		gl.AttachShader(p, shader)
 	}
 	// Write the program name before entering the driver in case it terminates the process.
-	log.Printf("OpenGL linking %q", name)
-	start := time.Now()
+	clientlog.Debugf("OpenGL linking %q", name)
 	gl.LinkProgram(p)
 	var ok int32
 	gl.GetProgramiv(p, gl.LINK_STATUS, &ok)
@@ -157,6 +155,5 @@ func link(name string, shaders ...uint32) (uint32, error) {
 		gl.DeleteProgram(p)
 		return 0, fmt.Errorf("link %q: %s", name, strings.TrimRight(msg, "\x00"))
 	}
-	log.Printf("OpenGL linked %q in %s", name, time.Since(start).Round(time.Microsecond))
 	return p, nil
 }

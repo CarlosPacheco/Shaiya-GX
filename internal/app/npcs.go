@@ -2,9 +2,9 @@ package app
 
 import (
 	"fmt"
-	"log"
 	"math"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/npcquest"
@@ -54,7 +54,7 @@ func (a *App) loadNPCs() {
 		}
 	}
 	if err != nil {
-		log.Printf("NpcQuest.SData: %v", err)
+		clientlog.Warnf("NpcQuest.SData: %v", err)
 	}
 }
 
@@ -94,7 +94,7 @@ func (a *App) prepareNPCs() {
 				var err error
 				cached.actor, err = a.assets.BuildNPC(def)
 				if err != nil {
-					log.Printf("NPC %d (%d/%d): %v", id, key.Type, key.ID, err)
+					clientlog.Warnf("NPC %d (%d/%d): %v", id, key.Type, key.ID, err)
 				}
 			}
 			v.npcs[id] = cached

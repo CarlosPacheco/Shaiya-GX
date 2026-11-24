@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/audio"
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/cash"
 	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
@@ -577,7 +578,7 @@ func (a *App) Interface(name string) (*render.Texture, error) {
 		// Interface artwork is presentation, never authoritative game data.
 		// Cache a visible substitute so an absent atlas cannot prevent startup
 		// or flood the log on every frame. Keep normal control hit regions.
-		log.Printf("WARNING interface/%s: %v; using placeholder", name, err)
+		clientlog.Warnf("interface/%s: %v; using placeholder", name, err)
 		a.missingInterfaces++
 		t = missingInterfaceTexture()
 	}
@@ -659,7 +660,7 @@ func (a *App) Draw(w, h int) {
 		var err error
 		a.frameTarget, err = render.NewWaterTarget(w, h)
 		if err != nil {
-			log.Printf("frame target: %v", err)
+			clientlog.Warnf("frame target: %v", err)
 			a.drawFrame(w, h)
 			return
 		}
@@ -717,14 +718,14 @@ func (a *App) drawFrame(w, h int) {
 			var err error
 			a.sceneGlow, err = render.NewSceneGlow()
 			if err != nil {
-				log.Printf("default scene glow: %v", err)
+				clientlog.Warnf("default scene glow: %v", err)
 				a.sceneGlowFailed = true
 			}
 		}
 		if a.sceneGlow != nil {
 			a.sceneGlow.Level = a.clientSettings().Glow
 			if err := a.sceneGlow.Apply(); err != nil {
-				log.Printf("default scene glow: %v", err)
+				clientlog.Warnf("default scene glow: %v", err)
 				a.sceneGlowFailed = true
 			}
 		}
@@ -814,6 +815,9 @@ func (a *App) submitLogin() {
 		a.post(func() {
 			a.login.Busy = false
 			if err != nil {
+				if _, rejected := err.(session.LoginError); !rejected {
+					clientlog.Warnf("Login connection failed: %v", err)
+				}
 				a.login.Message = a.loginMessage(err)
 				return
 			}
@@ -964,6 +968,7 @@ func (a *App) connectWorld() {
 		a.post(func() {
 			a.servers.Busy = false
 			if err != nil {
+				clientlog.Warnf("World connection failed: %v", err)
 				a.backToLoginID(12007)
 				return
 			}

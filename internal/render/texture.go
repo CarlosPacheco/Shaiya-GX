@@ -1,9 +1,9 @@
 package render
 
 import (
-	"log"
 	"unsafe"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 
 	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
@@ -151,7 +151,7 @@ func uploadTexture(t img.Texture, world bool) *Texture {
 			} else {
 				pixels, err := d.LevelRGBA(i)
 				if err != nil {
-					log.Printf("OpenGL upload DDS %dx%d format %d mip %d: %v", d.W, d.H, d.Format, i, err)
+					clientlog.Warnf("OpenGL upload DDS %dx%d format %d mip %d: %v", d.W, d.H, d.Format, i, err)
 					pixels = make([]byte, w*h*4)
 				}
 				gl.TextureSubImage2D(id, int32(i), 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&pixels[0]))

@@ -1,11 +1,11 @@
 package scene
 
 import (
-	"log"
 	"math"
 	"path"
 	"strings"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -83,7 +83,7 @@ func loadWater(a *Assets, w *World) *waterSurface {
 		water.definition, err = world.ParseWTR(b)
 	}
 	if err != nil {
-		log.Printf("water %s: %v", file, err)
+		clientlog.Warnf("water %s: %v", file, err)
 		return water
 	}
 	d := water.definition
@@ -115,7 +115,7 @@ func loadWater(a *Assets, w *World) *waterSurface {
 			}
 		}
 		if err != nil {
-			log.Printf("water frame %s: %v", name, err)
+			clientlog.Warnf("water frame %s: %v", name, err)
 		}
 		water.frames = append(water.frames, t)
 	}

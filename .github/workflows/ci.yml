@@ -92,6 +92,9 @@ jobs:
           if (-not (Select-String -Path '.\build\logs\client.log' -Pattern 'platform=windows/amd64' -Quiet)) {
             throw 'The Windows client did not reach startup diagnostics.'
           }
+          if (-not (Select-String -Path '.\build\logs\client.log' -Pattern 'System OS="Windows [^"]+" CPU="[^"]+" logical_cpus=[1-9][0-9]* physical_ram="[1-9][0-9]* MiB"' -Quiet)) {
+            throw 'The Windows client did not record system specifications and physical RAM.'
+          }
       - name: Validate external fonts and Unicode coverage
         shell: bash
         env:

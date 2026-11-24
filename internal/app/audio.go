@@ -2,11 +2,11 @@ package app
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"math/rand/v2"
 	"strings"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -15,7 +15,7 @@ import (
 
 func (a *App) audioError(file string, err error) {
 	if err != nil && !a.soundErrors[file] {
-		log.Printf("audio %s: %v", file, err)
+		clientlog.Warnf("audio %s: %v", file, err)
 		a.soundErrors[file] = true
 	}
 }

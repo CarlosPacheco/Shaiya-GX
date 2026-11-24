@@ -83,12 +83,14 @@ check covers process loading before the game data and graphics initialization.
 
 ## Local assets and graphics checks
 
-When reporting a graphics problem, include `logs/client.log` from beside the
-client executable. It records the context request, graphics driver, enabled paths
-and the names of programs before compilation and linking. When the regular log
-cannot be written, the startup error shows the fallback path. Reproduce once
-with the default settings. If the client can create a context, `-gldebug` adds
-OpenGL driver messages to a second run.
+When reporting a client problem, include `logs/client.log` from beside the
+executable. The header records the build, OS, CPU and physical RAM. After
+graphics initialization begins, the log records the OpenGL renderer and driver.
+The default log keeps failures and limits recurring warnings. Run with
+`-verbose` for detailed graphics initialization, shader names and all recurring
+warnings. Add `-gldebug` to capture OpenGL driver messages when the client can
+create a context. If the regular log cannot be written, the startup error shows
+the fallback path.
 
 Place the converted loose `data/` directory beside the Shaiya GX executable, or set `SHAIYA_DATA` / `-data` to that directory. The game no longer reads SAH/SAF. See [data formats and conversion](data-formats.md). The client loads external fonts from `data/fonts/`. Release packaging installs the versioned `resources/fonts/` pack, including its coverage manifest and licenses; no OS font installation is used.
 

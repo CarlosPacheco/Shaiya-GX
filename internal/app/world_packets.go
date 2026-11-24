@@ -2,9 +2,9 @@ package app
 
 import (
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -26,6 +26,7 @@ func (a *App) pumpWorld() {
 		select {
 		case p, ok := <-world.Packets:
 			if !ok {
+				clientlog.Warnf("World connection closed: %v", world.Err())
 				a.backToLoginID(12223)
 				return
 			}
@@ -83,7 +84,7 @@ func (a *App) applyWorldPacket(p []byte) {
 	}
 	ev, err := a.state.Apply(p)
 	if err != nil {
-		log.Printf("packet: %v", err)
+		clientlog.Warnf("World packet %#04x: %v", proto.Op(p), err)
 		return
 	}
 	if previousPhase == game.PhaseLoading && a.state.Phase == game.PhaseInWorld {

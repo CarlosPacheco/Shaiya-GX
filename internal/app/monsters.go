@@ -1,10 +1,10 @@
 package app
 
 import (
-	"log"
 	"math"
 	"math/rand/v2"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/movespeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -60,7 +60,7 @@ func (a *App) loadMobActor(m *mobActor) {
 	m.modelLoaded = true
 	actor, err := a.assets.BuildMonster(m.entity.TypeID)
 	if err != nil {
-		log.Printf("mob %d type %d: %v", m.entity.ID, m.entity.TypeID, err)
+		clientlog.Warnf("mob %d type %d: %v", m.entity.ID, m.entity.TypeID, err)
 	}
 	m.actor = actor
 	m.placeActor()

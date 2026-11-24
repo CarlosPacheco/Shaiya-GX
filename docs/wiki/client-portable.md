@@ -80,6 +80,8 @@ keep an existing personal runtime separate during upgrades.
 
 Missing or damaged interface images use placeholders instead of aborting startup.
 See `logs/client.log` beside the executable (and `client.previous.log` for the
-preceding session). Read-only installations fall back to the user cache or
+preceding session). The log starts with the system specifications and records
+failures. Use `-verbose` for detailed graphics and resource diagnostics.
+Read-only installations fall back to the user cache or
 temporary directory. Blocking errors display the diagnostic location; see
 [troubleshooting](wiki/troubleshooting.md#startup-and-incomplete-interface-resources).

@@ -5,9 +5,16 @@
 The client writes `logs/client.log` beside its executable and retains the previous
 session in `client.previous.log`. If the installation is read-only, it tries
 `Shaiya GX/logs` under the user cache directory, then `shaiya-gx-logs` under the
-temporary directory. The log identifies the build, selected data directory and
-individual missing or damaged resources; it does not record command arguments,
-passwords or account credentials. Runtime crash output also goes to the log.
+temporary directory. The header records the build, OS version, architecture,
+CPU model, logical CPU count and physical RAM. The OpenGL renderer and driver
+appear as soon as graphics initialization begins. The log records the selected
+data directory and diagnostic errors. It omits command arguments and account
+credentials. Runtime crash output also goes to the log.
+
+The default log limits recurring warnings from sources such as assets and
+network packets. Run with `-verbose` to capture every occurrence and detailed
+graphics initialization. The performance HUD reports the client's resident RAM
+on Linux and its working set on Windows, in MiB.
 
 Missing or damaged interface images use a neutral checkerboard placeholder so
 controls can still initialize. A login warning identifies this degraded state;
@@ -21,21 +28,21 @@ blocking desktop dialog.
 ### Graphics startup on Windows
 
 GX requests an OpenGL 4.5 core context through GLFW. Windows uses texture
-bindings and ordinary draws or instancing. The log includes the driver's
+bindings and ordinary draws or instancing. With `-verbose`, the log includes the driver's
 advertised extensions and the paths actually selected. Drivers with limited
 vertex shader storage use uniform poses and CPU-sampled effect geometry. GX
 uploads decoded RGBA8 mip levels when the driver cannot store a DDS compression
 format directly.
 
-- `Creating WGL context` followed by a context error points to window or driver
+- A `create WGL context` error points to window or driver
   initialization. Include the complete error and the graphics adapter and
   driver from Windows.
 - `load OpenGL entry points` names the command the current driver could not
   resolve. GX resolves its commands through the current GLFW context.
-- `OpenGL compiling` or `OpenGL linking` identifies the program where a shader
-  error or native crash occurred. Include the whole log so the driver version
+- With `-verbose`, the last `OpenGL compiling` or `OpenGL linking` entry can
+  identify the shader involved in a native crash. Include the whole log so the driver version
   and selected paths are available.
-- After `Client resources ready`, include the step and scene where the problem
+- After `Client ready`, include the step and scene where the problem
   occurs and a capture of the result. Pass `-gldebug` on a second run to record
   graphics API messages from the driver.
 

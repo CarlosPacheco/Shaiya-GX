@@ -9,16 +9,17 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime/debug"
 	"syscall"
 	"time"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
-
 	"github.com/Spelunkern/Shaiya-GX/internal/app"
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 func init() { platform.LockMainThread() }
@@ -31,7 +32,7 @@ func clientMain() (code int) {
 	interactive := true
 	defer func() {
 		if value := recover(); value != nil {
-			diagnostics.fail(fmt.Errorf("unexpected client failure: %v", value), interactive)
+			diagnostics.fail(fmt.Errorf("unexpected client failure: %v", value), interactive, debug.Stack())
 			code = 1
 		}
 	}()
@@ -41,6 +42,7 @@ func clientMain() (code int) {
 	width := flag.Int("w", 1024, "window width")
 	height := flag.Int("h", 768, "window height")
 	volume := flag.Float64("volume", 0.6, "master audio volume (0..1; screenshots are silent)")
+	verbose := flag.Bool("verbose", false, "include detailed client diagnostics")
 	debug := flag.Bool("gldebug", false, "OpenGL debug context")
 	shot := flag.String("screenshot", "", "render offscreen to this PNG and exit")
 	shotScreen := flag.String("screenshot-screen", "login", "offscreen scene: login | servers | chars | create | faction | world-*")
@@ -48,6 +50,7 @@ func clientMain() (code int) {
 	autoCast := flag.Int("autoplay-cast-slot", 0, "with -autoplay: activate slot 1..10 and wait for cast start")
 	autoplay := flag.String("autoplay", "", "account to log in with (SHAIYA_PASSWORD) offscreen until in world, then save -screenshot")
 	flag.Parse()
+	clientlog.SetVerbose(*verbose)
 	interactive = *shot == "" && *autoplay == ""
 	if *dataDir == "" {
 		if exe, err := os.Executable(); err == nil {
@@ -58,16 +61,16 @@ func clientMain() (code int) {
 		}
 	}
 	if *autoCast < 0 || *autoCast > 10 {
-		diagnostics.fail(fmt.Errorf("-autoplay-cast-slot must be 0..10"), interactive)
+		diagnostics.fail(fmt.Errorf("-autoplay-cast-slot must be 0..10"), interactive, nil)
 		return 1
 	}
 	if *dataDir == "" {
-		diagnostics.fail(fmt.Errorf("place the data folder beside Shaiya GX, or set -data / SHAIYA_DATA"), interactive)
+		diagnostics.fail(fmt.Errorf("place the data folder beside Shaiya GX, or set -data / SHAIYA_DATA"), interactive, nil)
 		return 1
 	}
 	diagnostics.data(*dataDir)
 	if err := run(*dataDir, app.Config{LoginAddr: *login, WorldPort: *worldPort, Version: proto.ClientVersion, Volume: *volume}, *width, *height, *debug, *shot, *shotScreen, *autoplay, *autoSelect, *autoCast); err != nil {
-		diagnostics.fail(err, interactive)
+		diagnostics.fail(err, interactive, nil)
 		return 1
 	}
 	return 0
@@ -103,7 +106,6 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 	cfg.DisplayModes, cfg.ApplyDisplayMode = win.DisplayModes, win.ApplyDisplayMode
 	cfg.CurrentDisplayMode = win.CurrentDisplayMode
 	cfg.OverrideDisplay = !restoreSize
-	log.Print("Initializing client resources")
 	a, err := app.New(cfg, arc)
 	if err != nil {
 		return fmt.Errorf("initialize client resources: %w", err)
@@ -113,7 +115,8 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 	defer cursors.Close()
 	queue := win.InstallInput()
 	queue.SetSwapMouse(a.MouseButtonsSwapped())
-	log.Print("Client resources ready")
+	fw, fh := win.GetFramebufferSize()
+	log.Printf("Client ready framebuffer=%dx%d vsync=true", fw, fh)
 	var auto *app.Autoplay
 	inWorld := false
 	if autoUser != "" {

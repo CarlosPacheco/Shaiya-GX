@@ -8,6 +8,7 @@ import (
 	"log"
 	"runtime"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/go-gl/glfw/v3.4/glfw"
 )
 
@@ -44,7 +45,6 @@ func Open(c Config) (*Window, error) {
 			c.Width, c.Height = saved.Width, saved.Height
 		}
 	}
-	log.Print("Initializing GLFW")
 	if err := glfw.Init(); err != nil {
 		return nil, fmt.Errorf("initialize GLFW: %w", err)
 	}
@@ -63,7 +63,7 @@ func Open(c Config) (*Window, error) {
 	if glfw.GetPlatform() == glfw.PlatformWin32 {
 		contextAPI = "WGL"
 	}
-	log.Printf("Creating %s context: OpenGL 4.5 core forward-compatible, window=%dx%d debug=%t hidden=%t vsync=%t",
+	clientlog.Debugf("Creating %s context: OpenGL 4.5 core forward-compatible, window=%dx%d debug=%t hidden=%t vsync=%t",
 		contextAPI, c.Width, c.Height, c.Debug, c.Hidden, c.VSync)
 	w, err := glfw.CreateWindow(c.Width, c.Height, c.Title, nil, nil)
 	if err != nil {
@@ -71,8 +71,6 @@ func Open(c Config) (*Window, error) {
 		return nil, fmt.Errorf("create %s context (OpenGL 4.5 core is required): %w", contextAPI, err)
 	}
 	w.MakeContextCurrent()
-	fw, fh := w.GetFramebufferSize()
-	log.Printf("OpenGL context current; framebuffer=%dx%d", fw, fh)
 	if c.VSync {
 		glfw.SwapInterval(1)
 	} else {

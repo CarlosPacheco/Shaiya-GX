@@ -1,8 +1,7 @@
 package app
 
 import (
-	"log"
-
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
@@ -86,9 +85,9 @@ func (a *App) loadSkillEffect(file string, sequence int) *scene.Effect {
 	}
 	if !v.effectErrors[file] && (err != nil || x.Skipped > 0) {
 		if err != nil {
-			log.Printf("skill effect %s: %v", file, err)
+			clientlog.Warnf("skill effect %s: %v", file, err)
 		} else {
-			log.Printf("skill effect %s: %d unsupported emitters omitted", file, x.Skipped)
+			clientlog.Debugf("skill effect %s: %d unsupported emitters omitted", file, x.Skipped)
 		}
 		v.effectErrors[file] = true
 	}

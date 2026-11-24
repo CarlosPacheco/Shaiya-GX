@@ -2,9 +2,9 @@ package app
 
 import (
 	"fmt"
-	"log"
 	"math"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/pvprank"
@@ -137,7 +137,7 @@ func (a *App) prepareRemotePlayers() {
 			appearance.WeaponEnchant, appearance.OffhandEnchant = sh.Equipment[5][2], sh.Equipment[6][2]
 			actor, err := scene.BuildCharacter(a.assets, appearance, "000_normal")
 			if err != nil {
-				log.Printf("player %d model: %v", id, err)
+				clientlog.Warnf("player %d model: %v", id, err)
 			}
 			// Cosmetics can replace the model, but must not reset which
 			// gestures have already been consumed for this entity.
@@ -247,7 +247,7 @@ func (a *App) prepareRemotePlayers() {
 				var err error
 				cached.mount, err = a.assets.BuildVehicle(sh.Race, e.MountShape)
 				if err != nil {
-					log.Printf("player %d mount: %v", id, err)
+					clientlog.Warnf("player %d mount: %v", id, err)
 				}
 			}
 			if cached.mount != nil {
@@ -289,7 +289,7 @@ func (a *App) prepareSpirit(cached *remoteActor, e *game.Entity) {
 	if cached.ghost == nil {
 		ghost, err := scene.BuildCharacter(a.assets, cached.appearance, "000_normal")
 		if err != nil {
-			log.Printf("player %d spirit: %v", e.ID, err)
+			clientlog.Warnf("player %d spirit: %v", e.ID, err)
 			return
 		}
 		cached.ghost = ghost
