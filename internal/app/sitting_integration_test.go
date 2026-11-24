@@ -10,11 +10,76 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"github.com/Spelunkern/Shaiya-GX/internal/testworld"
 )
+
+func TestEquipmentRefreshKeepsPostureGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires original assets and OpenGL")
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	win, err := platform.Open(platform.Config{Width: 64, Height: 64, Hidden: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer win.Close()
+	if err = render.Init(false); err != nil {
+		t.Fatal(err)
+	}
+	arc, err := archive.OpenDirectory(os.Getenv("SHAIYA_DATA"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer arc.Close()
+	a := inputApp()
+	a.arc, a.assets = arc, scene.NewAssets(arc)
+	a.state.SelfID = 1
+	a.state.Slots[0] = proto.CharacterSlot{ID: 1, Height: 2}
+	a.wv = &worldView{}
+	a.refreshSelf(a.wv)
+	press := &platform.Input{Chars: []rune{'c'}}
+	a.state.Self.Sitting = true
+	for _, action := range []int{10, 11} {
+		actor := a.wv.self
+		if !actor.PlayAction(action, false) || postureToggle(press, actor) {
+			t.Fatalf("C should be ignored during action %d", action)
+		}
+		actor.Update(.2)
+		a.state.Self.Sitting = action == 10
+		a.refreshSelf(a.wv)
+		if a.wv.self == actor || !a.wv.self.PlayingAction(action) || a.wv.self.Time != actor.Time {
+			t.Fatalf("rebuilding changed posture action %d", action)
+		}
+	}
+	a.wv.self.ReleaseAction()
+	a.state.Self.Sitting = true
+	a.wv.self.SetClip("012_sit")
+	a.wv.self.Update(.2)
+	actor := a.wv.self
+	a.refreshSelf(a.wv)
+	if a.wv.self == actor || !a.wv.self.PlayingClip("012_sit") || a.wv.self.Time != actor.Time || !postureToggle(press, a.wv.self) {
+		t.Fatal("rebuilding reset the seated pose or blocked a fresh press")
+	}
+	remote := &game.Entity{ID: 2, Kind: game.KindUser, Sitting: true, Shape: &proto.UserShape{ID: 2, Height: 2}}
+	a.state.Entities[2] = remote
+	a.frameDT = .2
+	a.prepareRemotePlayers()
+	actor = a.wv.actors[2].character
+	remote.Shape.Equipment[5] = [3]uint8{1, 1, 0}
+	a.frameDT = 0
+	a.prepareRemotePlayers()
+	rebuilt := a.wv.actors[2].character
+	if rebuilt == actor || !rebuilt.PlayingClip("012_sit") || rebuilt.Time != actor.Time {
+		t.Fatal("remote equipment change reset the seated pose")
+	}
+}
 
 func TestSittingAgainstRapture(t *testing.T) {
 	if os.Getenv("SHAIYA_TEST_SITTING") != "1" || os.Getenv("SHAIYA_TEST_RENDER") != "1" {

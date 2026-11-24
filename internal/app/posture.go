@@ -1,6 +1,22 @@
 package app
 
-import "github.com/Spelunkern/Shaiya-GX/internal/proto"
+import (
+	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/scene"
+)
+
+func postureToggle(in *platform.Input, actor *scene.Character) bool {
+	if actor.PlayingAction(10) || actor.PlayingAction(11) {
+		return false
+	}
+	for i, c := range in.Chars {
+		if (c == 'c' || c == 'C') && (i >= len(in.CharRepeats) || !in.CharRepeats[i]) {
+			return true
+		}
+	}
+	return false
+}
 
 // Rapture retains auto-attack when a motion arrives. Stop it before sitting;
 // the posture itself remains pending until the echoed 0x0506 arrives.

@@ -136,12 +136,19 @@ func (a *App) prepareRemotePlayers() {
 			slot.Cloak = sh.Cloak
 			appearance := a.appearance(&slot)
 			appearance.WeaponEnchant, appearance.OffhandEnchant = sh.Equipment[5][2], sh.Equipment[6][2]
-			actor, err := scene.BuildCharacter(a.assets, appearance, "000_normal")
+			clip := "000_normal"
+			if e.Sitting && !e.Dead && !e.Mounted && remoteLocomotion(v.world, e) == "012_sit" {
+				clip = "012_sit"
+			}
+			actor, err := scene.BuildCharacter(a.assets, appearance, clip)
 			if err != nil {
 				clientlog.Warnf("player %d model: %v", id, err)
 			}
 			// Cosmetics can replace the model, but must not reset which
 			// gestures have already been consumed for this entity.
+			if !e.Dead && !e.Mounted {
+				actor.PreservePosture(cached.character)
+			}
 			cached.character, cached.shape = actor, sh
 			cached.ghost, cached.appearance = nil, appearance
 			cached.hideCloak, cached.hideHelmet = hideCloak, hideHelmet

@@ -186,6 +186,10 @@ All seven `Cursor/01.png` through `07.png` files load from loose data into OS cu
 
 ## Inventory, monster presentation and graphics controls
 
+Press C to sit or stand. Holding C triggers a single request, and a new press
+can change posture after the current transition finishes. Equipment changes
+retain the seated pose or the progress of the sit or stand animation.
+
 Equipment sounds play when World confirms a change to an equipped slot.
 
 An ordinary left click requests use of the inventory item. A drag still moves

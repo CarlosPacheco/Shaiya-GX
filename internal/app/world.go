@@ -368,12 +368,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	if in.HasKey(platform.KeyTab) {
 		v.walking = !v.walking
 	}
-	toggleSit := false
-	for _, c := range in.Chars {
-		if c == 'c' || c == 'C' {
-			toggleSit = true
-		}
-	}
+	toggleSit := postureToggle(in, v.self)
 	if a.state.Self.Dead || toggleSit || in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeyNumLock) || in.RightDown && in.MouseDown {
 		v.travel = false
 	}
@@ -1127,12 +1122,18 @@ func (a *App) refreshSelf(v *worldView) {
 	if form.Kind == proto.FormDisguise {
 		appearance.WeaponEnchant, appearance.OffhandEnchant = form.Shape.Equipment[5][2], form.Shape.Equipment[6][2]
 	}
-	ch, err := scene.BuildCharacter(a.assets, appearance, "000_normal")
+	clip := "000_normal"
+	if a.state.Self.Sitting && !a.state.Self.Dead && !a.state.Self.Mounted {
+		clip = "012_sit"
+	}
+	ch, err := scene.BuildCharacter(a.assets, appearance, clip)
 	if err != nil {
 		log.Printf("self character: %v", err)
 	}
 	if ch != nil && a.state.Self.Dead {
 		ch.PlayAction(9, true)
+	} else if !a.state.Self.Mounted {
+		ch.PreservePosture(v.self)
 	}
 	v.self = ch
 	v.selfGhost, v.selfAppearance = nil, appearance

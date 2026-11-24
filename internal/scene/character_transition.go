@@ -1,6 +1,24 @@
 package scene
 
-import "github.com/Spelunkern/Shaiya-GX/internal/render"
+import (
+	"slices"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
+)
+
+// PreservePosture transfers the seated pose or transition to a rebuilt body.
+func (c *Character) PreservePosture(previous *Character) {
+	if c == nil || previous == nil || c.prefix != previous.prefix || c.folder != previous.folder ||
+		!previous.PlayingAction(10) && !previous.PlayingAction(11) && !previous.PlayingClip("012_sit") {
+		return
+	}
+	c.clip, c.clipName, c.clipFile = previous.clip, previous.clipName, previous.clipFile
+	c.Time, c.oneShot, c.locked = previous.Time, previous.oneShot, previous.locked
+	c.actions, c.actionsLoaded, c.actionSlot = previous.actions, previous.actionsLoaded, previous.actionSlot
+	c.blendLeft, c.blendToFirstFrame = previous.blendLeft, previous.blendToFirstFrame
+	c.blendFrom = slices.Clone(previous.blendFrom)
+	c.invalidatePose()
+}
 
 // The original character and creature controllers blend for five frames at 30 Hz.
 const clipBlendDuration = float32(5.0 / 30)
