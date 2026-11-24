@@ -186,11 +186,32 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 		}
 		a.wv.death = deathView{}
 		if a.mallConfirm != nil && a.mallConfirm.Visible {
+			// The purchase prompt never pauses the game: movement, combat and
+			// hotkeys keep running. It owns the pointer over itself, Enter and
+			// Escape, and every key while a gift recipient is typed.
+			over := a.mallConfirm.Contains(in.MouseX, in.MouseY, w, h)
+			typing := a.mall.modal == ui.MallGift
 			a.updateMallConfirm(in, w, h)
-			if a.state != nil && a.wv != nil && a.world != nil {
-				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
+			if a.state == nil || a.wv == nil || a.world == nil {
+				return
 			}
-			return
+			masked := *in
+			if typing {
+				masked = chatWorldInput(masked)
+			} else {
+				masked.Keys = nil
+				for _, k := range in.Keys {
+					if k != platform.KeyEscape && k != platform.KeyEnter {
+						masked.Keys = append(masked.Keys, k)
+					}
+				}
+			}
+			if over {
+				masked.Pressed, masked.Clicked, masked.MouseDown = false, false, false
+				masked.RightPressed, masked.RightDown, masked.MiddlePressed = false, false, false
+				masked.Wheel = 0
+			}
+			in = &masked
 		}
 		if !a.checkPendingActions() {
 			return

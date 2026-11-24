@@ -36,6 +36,15 @@ func (m *Message) Origin(w, h int) (int, int) {
 	return m.Position.Origin(w, h, messageWidth, 256+m.extra, x, y)
 }
 
+// Contains reports whether the point is over the dialog body.
+func (m *Message) Contains(px, py, w, h int) bool {
+	if !m.Visible {
+		return false
+	}
+	x, y := m.Origin(w, h)
+	return px >= x && px < x+messageWidth && py >= y && py < y+146+m.extra
+}
+
 // drag handles the header drag; it reports whether the pointer is owned by it.
 func (m *Message) drag(in *platform.Input, w, h int) bool {
 	if !m.Movable {

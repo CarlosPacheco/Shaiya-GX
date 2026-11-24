@@ -22,6 +22,7 @@ type quickPotionView struct {
 	keyHeld        [2]bool    // Z / X down
 	mouseHeld      [2]bool    // pointer held on the cell
 	tap            [2]float64 // a use keeps the highlight visible this long
+	queued         [2]float64 // a tap made while the previous use awaited its reply; expiry time
 }
 
 func (a *App) potionConfigPath() string {
@@ -105,6 +106,13 @@ func (a *App) quickPotionItem(cell int) ([2]uint8, proto.InventoryItem, bool) {
 }
 func (a *App) useQuickPotion(cell int) {
 	if key, _, ok := a.quickPotionItem(cell); ok {
+		if a.inventory.pending || a.shop.pending {
+			// Keep one tap for the moment the server answers instead of losing it,
+			// so quick tapping flows without ever queueing a burst.
+			a.quickPotions.queued[cell] = a.clock + .6
+			return
+		}
+		a.quickPotions.queued[cell] = 0
 		// Original 0x4ddc30 shades the slot (0x50ffffff) while it is pressed;
 		// a quick tap keeps it visible for a moment so the use is seen.
 		a.quickPotions.tap[cell] = a.clock + .12
@@ -153,6 +161,16 @@ func (a *App) updateQuickPotions(in *platform.Input, w, h int) bool {
 		return false
 	}
 	a.ensureQuickPotions()
+	for c, until := range a.quickPotions.queued {
+		if until == 0 {
+			continue
+		}
+		if a.clock > until {
+			a.quickPotions.queued[c] = 0
+		} else if !a.inventory.pending && !a.shop.pending {
+			a.useQuickPotion(c)
+		}
+	}
 	x, y := ui.QuickPotionOrigin(a.quickPotions.Position, w, h)
 	cell := ui.QuickPotionCell(in.MouseX, in.MouseY, x, y)
 	if a.inventory.dragging && in.Clicked && cell >= 0 && !a.barCovered(in, w, h) {

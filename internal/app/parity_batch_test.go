@@ -256,3 +256,26 @@ func TestQuickPotionKeysFireOncePerTap(t *testing.T) {
 		t.Fatalf("held-key repeats must not use potions, got %v", got)
 	}
 }
+
+func TestQuickPotionTapDuringPendingUseIsKeptOnce(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	a := inputApp()
+	a.state.SelfID = 78
+	a.ensureQuickPotions()
+	a.quickPotions.bindings[0] = sdata.ItemKey{Type: 25, TypeID: 4}
+	a.state.Inventory = map[[2]uint8]proto.InventoryItem{{1, 0}: {Type: 25, TypeID: 4, Count: 50}}
+	a.clock = 10
+	a.inventory.pending = true
+	for range 5 { // five quick taps while the server has not answered
+		a.updateQuickPotions(&platform.Input{Chars: []rune{'z'}, CharRepeats: []bool{false}}, 1024, 768)
+	}
+	if a.quickPotions.queued[0] <= a.clock {
+		t.Fatal("tap was lost while a use was pending")
+	}
+	a.inventory.pending = false
+	a.clock = 10.2
+	a.updateQuickPotions(&platform.Input{}, 1024, 768)
+	if a.quickPotions.queued[0] != 0 {
+		t.Fatal("the kept tap was not used once the reply arrived")
+	}
+}
