@@ -33,7 +33,6 @@ VOLUME = "rapture-sqlserver-data"
 PORT = 14346
 IMAGE = "mcr.microsoft.com/mssql/server@sha256:4402d880dd4c34bfa7d8705e56a86cd6c88da80a1f6bbbe741f999e76264a090"
 SQLCMD = "/opt/mssql-tools18/bin/sqlcmd"
-DEFAULT_BACKUPS = Path.home() / "Desktop" / "ep4.5" / "PSM_Data"
 DATABASE_NAME = re.compile(r"(?:PS|OMG)_[A-Za-z0-9_]+")
 
 
@@ -197,7 +196,7 @@ def main():
     subs = parser.add_subparsers(dest="action", required=True)
     for action in ("start", "setup"):
         sub = subs.add_parser(action)
-        sub.add_argument("--backups", type=Path, default=DEFAULT_BACKUPS)
+        sub.add_argument("--backups", type=Path, required=True)
     for action in ("restore", "provision", "prepare"):
         subs.add_parser(action)
     sub = subs.add_parser("query")

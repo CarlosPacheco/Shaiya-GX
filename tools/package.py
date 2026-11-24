@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--source', type=Path, default=Path.home()/'Desktop/Go project/data', help='converted loose data directory')
-    p.add_argument('--output', type=Path, default=Path.home()/'Desktop/Go project')
+    p.add_argument('--source', type=Path, default=Path(os.environ.get('SHAIYA_DATA') or ROOT/'data'), help='converted loose data directory')
+    p.add_argument('--output', type=Path, required=True, help='destination play folder')
     p.add_argument('--update', action='store_true', help='replace executable atomically and preserve installed data/')
     args = p.parse_args()
     source, output = args.source.expanduser().resolve(), args.output.expanduser().resolve()

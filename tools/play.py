@@ -48,7 +48,7 @@ def interrupt(_signum, _frame):
 
 def main():
     parser = argparse.ArgumentParser(description="Inicia el cliente y GX Server local; limpia al salir.")
-    parser.add_argument("--data", type=Path, default=Path(os.environ.get("SHAIYA_DATA") or Path.home()/"Desktop/Go project/data"))
+    parser.add_argument("--data", type=Path, default=Path(os.environ.get("SHAIYA_DATA") or ROOT/"data"))
     parser.add_argument("--client", type=Path, default=ROOT/"build/Shaiya GX", help="ejecutable del cliente")
     parser.add_argument("--server", "--rapture", dest="rapture", type=Path, default=Path(os.environ.get("GX_SERVER_DIR") or os.environ.get("RAPTURE_DIR") or ROOT/"server"))
     parser.add_argument("--client-only", action="store_true", help="usar servidores ya levantados, sin administrarlos")

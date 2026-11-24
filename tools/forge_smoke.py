@@ -19,7 +19,7 @@ def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--world',type=Path,default=ROOT/'server/build/gx_world')
     ap.add_argument('--item-data',type=Path,required=True)
-    ap.add_argument('--data',type=Path,default=Path.home()/'Desktop/Shaiya GX/data')
+    ap.add_argument('--data',type=Path,default=Path(os.environ.get('SHAIYA_DATA') or ROOT/'data'))
     ap.add_argument('--inventory-only',action='store_true')
     args=ap.parse_args()
     logs=ROOT/'work/forge-rules';logs.mkdir(parents=True,exist_ok=True)
