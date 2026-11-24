@@ -93,7 +93,9 @@ func (t *WaterTarget) Delete() {
 	if t == nil {
 		return
 	}
-	gl.DeleteProgram(t.toneProgram)
+	if t.toneProgram != 0 {
+		gl.DeleteProgram(t.toneProgram)
+	}
 	gl.DeleteVertexArrays(1, &t.toneVAO)
 	gl.DeleteFramebuffers(1, &t.fbo)
 	gl.DeleteTextures(1, &t.color)

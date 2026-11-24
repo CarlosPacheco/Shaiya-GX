@@ -131,8 +131,10 @@ func (s *Scene3D) mapPrograms() *mapPipeline {
 	}
 	if err != nil {
 		log.Printf("map batch shaders: %v", err)
-		gl.DeleteProgram(p.draw)
-		p.draw = 0
+		if p.draw != 0 {
+			gl.DeleteProgram(p.draw)
+			p.draw = 0
+		}
 	}
 	return p
 }

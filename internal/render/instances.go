@@ -20,10 +20,11 @@ func (s *Scene3D) Delete() {
 		s.effectStream.Delete()
 	}
 	s.effectPipeline.delete()
-	gl.DeleteProgram(s.mapPipeline.draw)
-	gl.DeleteProgram(s.mapPipeline.compute)
-	gl.DeleteProgram(s.terrainOverlay.prog)
-	gl.DeleteProgram(s.terrainHalo.program)
+	for _, program := range [...]uint32{s.mapPipeline.draw, s.mapPipeline.compute, s.terrainOverlay.prog, s.terrainHalo.program} {
+		if program != 0 {
+			gl.DeleteProgram(program)
+		}
+	}
 	s.terrainOverlay.indirect.delete()
 	s.ReleaseWaterBackground()
 	if s.terrainIndirect != 0 {
