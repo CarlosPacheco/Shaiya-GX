@@ -14,9 +14,9 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = ('https://github.com/Spelunkern/Shaiya-GX/releases/download/'
-       'gx-geometry-rules2-20261122/gx-server-geometry-rules2.tar.gz')
-SHA256 = '020c170f908517961799a33e749dbc8dec8a2d17c6049b5ad2857fec90208073'
-MANIFESTS_SHA256 = '980578e3aa7ffbf3e8d393d694669e2fc4131b7645311d7caaa704fcee213316'
+       'gx-geometry-rules3-20261123/gx-server-geometry-rules3.tar.gz')
+SHA256 = '4feb61ac11b1ed52979f5414fcdb58acee4ee94cc5858857afe92f86fa501f95'
+MANIFESTS_SHA256 = '1bc09817cdaf5c3106712ebbd724845f31dd77019a29cfa1a3dfde004f523e84'
 COLLISION_RULES_VERSION = 3  # internal/mapnav.CollisionRulesVersion
 
 

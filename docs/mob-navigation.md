@@ -134,7 +134,7 @@ collision floor or a hardcoded map-specific navigation rule.
 
 Run `python3 tools/fetch_server_geometry.py` before packaging or running a
 server from a fresh source checkout. The script downloads the pinned
-[68-map physics resource archive](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-geometry-rules2-20261122).
+[68-map physics resource archive](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-geometry-rules3-20261123).
 This generation was built from the gx-v0.1.16 client data and server walk
 masks. The installer verifies the archive, the complete set of map manifests,
 and each generated file by SHA-256. It requires a fresh directory when a
