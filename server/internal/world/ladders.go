@@ -46,7 +46,9 @@ func (s *Session) handleLadder(p []byte) {
 	if err := s.initPlayerMovement(now); err != nil {
 		return
 	}
-	s.advancePlayerVertical(now)
+	if s.advancePlayerVertical(now) {
+		return
+	}
 	s.commitMovement()
 	m := &s.movement
 	if mode == mapgeometry.LadderDetach {

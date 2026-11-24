@@ -60,9 +60,9 @@ func (s *Session) syncPlayer() {
 // applyTeleport is the single path for every teleport (portals, town,
 // resurrection): moves the character, persists it, acks the client,
 // introduces it to viewers at the destination and refreshes visibility.
-func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmDirect ...bool) {
+func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmDirect ...bool) bool {
 	if s.char == nil || !s.canEnterMap(mapID, s.char.Level) {
-		return
+		return false
 	}
 	s.cancelTravelCast()
 	s.endMyShop()
@@ -82,7 +82,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 		zone, ok := s.enterGuildRanking(mapID)
 		if !ok {
 			s.log.Printf("GX Server World guild ranking map %d refused (closed or no guild)", mapID)
-			return
+			return false
 		}
 		mapID = zone
 	}
@@ -91,19 +91,19 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 		zone, ok := s.enterPartyInstance(mapID)
 		if !ok {
 			s.log.Printf("GX Server World party map %d refused (no party)", mapID)
-			return
+			return false
 		}
 		mapID = zone
 	}
 	g, err := s.playerGeometry(mapID)
 	if err != nil {
 		s.log.Printf("GX Server teleport refused: %v", err)
-		return
+		return false
 	}
 	destination, valid := g.Spawn([3]float32{x, y, z})
-	if !valid {
+	if !valid || !g.ValidPlayerHeight(destination[1]) {
 		s.log.Printf("GX Server teleport refused: map %d has no physical floor at destination", mapID)
-		return
+		return false
 	}
 	x, y, z = destination[0], destination[1], destination[2]
 	// LeaveUser / EnterUser: the old view goes (on the same map the client
@@ -121,9 +121,9 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 	s.clearView(mapID == ch.MapID)
 	changedMap := mapID != ch.MapID
 	ch.MapID, ch.PosX, ch.PosY, ch.PosZ = mapID, x, y, z
-	s.movement = playerMovement{geometry: g, mapID: mapID}
+	s.movement = playerMovement{geometry: g, mapID: mapID, ladder: s.movement.ladder}
 	if err := s.initPlayerMovement(time.Now()); err != nil {
-		return
+		return false
 	}
 	if s.player != nil {
 		s.player.SetSitting(false)
@@ -143,6 +143,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 		s.sendRelicList()
 	}
 	s.placeView()
+	return true
 }
 
 // handleCharacterMove (0x0501): motion:u8, direction:u16, x, y, z:f32.
@@ -176,6 +177,9 @@ func (s *Session) handleCharacterMove(p []byte) {
 	if !ok {
 		s.log.Printf("GX Server movement rejected: %s", reason)
 		s.correctMovement(reason)
+		return
+	}
+	if reason == heightRecovery {
 		return
 	}
 	// GX also sends idle and jump-height snapshots. Horizontal movement can

@@ -56,6 +56,9 @@ func (s *Session) tickStinger() bool {
 	delta := mapgeometry.Position{want[0] - old[0], want[1] - old[1], want[2] - old[2]}
 	next, hit := s.movement.geometry.MoveFeet(old, delta)
 	s.movement.pos = next
+	if s.recoverPlayerHeight() {
+		return true
+	}
 	s.movement.at = time.Now()
 	s.movement.budgetAt = s.movement.at
 	s.movement.credit = 0

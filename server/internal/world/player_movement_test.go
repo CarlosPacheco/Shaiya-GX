@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Spelunkern/Shaiya-GX/internal/collision"
 	"github.com/Spelunkern/Shaiya-GX/internal/mapgeometry"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"math"
 	"testing"
@@ -422,34 +423,49 @@ func TestGMTurboBypassesOnlyTheMovementSpeedLimit(t *testing.T) {
 	}
 }
 
-func TestVoidFallReturnsToSupportedPosition(t *testing.T) {
-	s, now := playerPhysicsFixture(t)
-	safe := s.movement.pos
-	// Start just off the fixture floor and advance server time without client
-	// height samples, until the lower height limit is crossed.
+func TestHeightLimitReturnsToRaceStart(t *testing.T) {
+	fixture, now := playerPhysicsFixture(t)
+	ch := *fixture.char
+	ch.Race = 1
+	s, packets := gmWireSession(t, ch, false)
+	s.movement = fixture.movement
+	oldStarts := mapConfig.Start
+	t.Cleanup(func() { mapConfig.Start = oldStarts })
+	mapConfig.Start[0] = MapPos{ch.MapID, 6, .05, 6}
+	mapConfig.Start[ch.Race] = MapPos{ch.MapID, 7, .05, 7}
+
+	// Ordinary client samples cannot trigger recovery by claiming an invalid Y.
+	_, high := s.movement.geometry.PlayerHeightLimits()
+	if ok, reason := s.validatePlayerMovement(ch.PosX, high+1, ch.PosZ, 0, 0, now); !ok || reason == heightRecovery {
+		t.Fatalf("unexpected result for spoofed Y: %v %q", ok, reason)
+	}
+
+	// Fall off the fixture floor without receiving client movement packets.
 	s.movement.pos[0] = -5
 	s.movement.fallTracking = true
-	s.movement.fallPeak = safe[1]
 	s.commitMovement()
 	recovered := false
 	for range 40 {
 		now = now.Add(100 * time.Millisecond)
-		recovered = s.advancePlayerVertical(now)
+		if s.advancePlayerVertical(now) {
+			recovered = true
+			break
+		}
 		s.commitMovement()
 		if !s.movement.geometry.ValidPlayerHeight(s.char.PosY) {
 			t.Fatalf("void published an out-of-range Y %g", s.char.PosY)
 		}
-		if recovered {
-			break
-		}
 	}
-	if !recovered || s.movement.pos != safe || s.movement.fallTracking || s.movement.jumping ||
+	if !recovered || s.char.PosX != 7 || s.char.PosZ != 7 || s.movement.fallTracking || s.movement.jumping ||
 		s.char.CurrentHP != 100 || !s.movement.geometry.Supported(s.movement.pos) {
-		t.Fatalf("failed to recover from the void: %+v", s.movement)
+		t.Fatalf("failed to return to the race start: %+v", s.movement)
 	}
-	_, high := s.movement.geometry.PlayerHeightLimits()
-	s.movement.pos[1] = high + 1
-	if !s.advancePlayerVertical(now.Add(time.Millisecond)) || s.movement.pos != safe {
-		t.Fatal("overflow above the map did not recover to the last supported position")
+	waitWorldPacket(t, packets, proto.CharacterMapTeleport)
+
+	// A server-simulated position above the ceiling has the same destination.
+	s.movement.pos = mapgeometry.Position{9, high + 1, 9}
+	if !s.advancePlayerVertical(now.Add(time.Millisecond)) || s.char.PosX != 7 || s.char.PosZ != 7 {
+		t.Fatal("overflow above the map did not return to the race start")
 	}
+	waitWorldPacket(t, packets, proto.CharacterMapTeleport)
 }

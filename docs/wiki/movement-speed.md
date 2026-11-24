@@ -21,9 +21,11 @@ apply. Stun, sleep and movement-stop effects can prohibit movement entirely.
 While a GM has `/turbo` enabled, World skips the horizontal speed limit and still checks the movement path against map geometry.
 
 World also bounds player height between −256 and +2048 units, with tighter
-bounds for static dungeons, regardless of movement tier. Crossing either limit resets movement at the last supported
-position and sends the owner an immediate correction. Client prediction
-uses the same bounds. Map 27 allows both factions through its open portals and retains portal level checks.
+bounds for static dungeons, regardless of movement tier. Crossing either limit
+makes World immediately teleport the character to their race's starting point.
+Out-of-range saved positions use the same destination on login. Client prediction
+uses the same bounds. Map 27 allows both factions through its open portals and
+retains portal level checks.
 
 ## Equipment, spells and consumables
 

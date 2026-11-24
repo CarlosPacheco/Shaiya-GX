@@ -795,18 +795,15 @@ func (s *Session) selectCharacter(id uint32) {
 	}
 	normalize(&ch)
 	originalMap := ch.MapID
-	// Instanced maps are not kept across sessions: a character saved in
-	// one starts at that map's bind point.
-	if !s.canEnterMap(ch.MapID, ch.Level) {
+	g, geometryErr := s.playerGeometry(ch.MapID)
+	relocatedHeight := geometryErr == nil && !g.ValidPlayerHeight(ch.PosY)
+	// Instanced maps are not kept across sessions. Out-of-range saves
+	// take precedence over the instance's usual bind point.
+	if relocatedHeight || !s.canEnterMap(ch.MapID, ch.Level) {
 		p := birthPosition(&ch)
 		ch.MapID, ch.PosX, ch.PosY, ch.PosZ = p.MapID, p.X, p.Y, p.Z
 	} else if mapCreateType(ch.MapID) != "" {
 		ch.MapID, ch.PosX, ch.PosY, ch.PosZ = s.respawnDestination(&ch)
-	}
-	relocatedHeight := false
-	if g, err := s.playerGeometry(ch.MapID); err == nil && !g.ValidPlayerHeight(ch.PosY) {
-		ch.MapID, ch.PosX, ch.PosY, ch.PosZ = s.respawnDestination(&ch)
-		relocatedHeight = true
 	}
 	s.char = &ch
 	s.log.SetTag(strings.SplitN(s.log.Tag(), "/", 3)[0] + "/" + s.account.UserID + "/" + ch.Name)
