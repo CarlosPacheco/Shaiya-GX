@@ -408,8 +408,8 @@ func (a *App) drawCharacters(w, h int) {
 			line("Loading...", white)
 		}
 	case game.PhaseInWorld:
-		a.tooltip = nil
-		a.tooltipMuted = false
+		a.tooltipContent = tooltipContent{}
+		a.tooltipComparison = tooltipContent{}
 		if a.worldUIHidden() {
 			break
 		}
