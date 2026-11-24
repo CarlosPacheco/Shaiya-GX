@@ -55,6 +55,10 @@ func (a *App) applyWorldPacket(p []byte) {
 		a.confirmedFirecracker(p)
 		return
 	}
+	if proto.Op(p) == proto.CharacterEnteredPortal {
+		a.confirmedPortalResult(p)
+		return
+	}
 	if proto.Op(p) == proto.GXAuction {
 		a.applyAuction(p)
 		return

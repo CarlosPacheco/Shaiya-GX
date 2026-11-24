@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -311,6 +312,18 @@ func TestNoticeDisplayTextDropsFinalStop(t *testing.T) {
 	for in, want := range map[string]string{"Alice used a firecracker.": "Alice used a firecracker", "Done. ": "Done", "No stop": "No stop", "Wait...": "Wait.."} {
 		if got := noticeDisplayText(in); got != want {
 			t.Fatalf("%q -> %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestPortalContactUsesTheActorOrigin(t *testing.T) {
+	portals := []world.Box{{Min: world.Vec3{111.8, 7.7, 450.4}, Max: world.Vec3{115.5, 14.9, 454.1}}, {Min: world.Vec3{567, 5.6, 179}, Max: world.Vec3{573, 16, 186}}}
+	for _, tc := range []struct {
+		x, y, z float32
+		want    int
+	}{{113, 7.5, 452, 0}, {570, 5, 182, 1}, {113, 7.5, 460, -1}, {113, 14.5, 452, -1}} {
+		if got := portalContact(portals, tc.x, tc.y, tc.z); got != tc.want {
+			t.Fatalf("(%v,%v,%v) -> portal %d, want %d", tc.x, tc.y, tc.z, got, tc.want)
 		}
 	}
 }

@@ -66,6 +66,7 @@ type Blocker struct {
 }
 
 type WLD struct {
+	Portals      []Box // contact volumes, indexed like the map's portal list
 	Blockers     []Blocker
 	NamedAreas   []NamedArea
 	SoundAssets  []string
@@ -189,8 +190,16 @@ func parseWLD(r *reader) (*WLD, error) {
 	for i, n := 0, r.count(28); i < n && r.err == nil; i++ {
 		w.Blockers = append(w.Blockers, Blocker{Bounds: r.box(), Yaw: r.f32()})
 	}
-	r.skipList(24 + 4 + 512 + 1 + 2 + 1 + 12) // portals
-	r.skipList(4 + 24 + 4 + 4 + 4)            // spawns
+	// Portals: the volume the client tests for contact; the rest of the record
+	// (name, comment, flags) is editor data.
+	{
+		const size = 24 + 4 + 512 + 1 + 2 + 1 + 12
+		for i, n := 0, r.count(size); i < n && r.err == nil; i++ {
+			w.Portals = append(w.Portals, r.box())
+			r.take(size - 24)
+		}
+	}
+	r.skipList(4 + 24 + 4 + 4 + 4) // spawns
 	for i, n := 0, r.count(24+4+512+4+4); i < n; i++ {
 		area := NamedArea{Box: r.box(), Radius: r.f32(), Text: r.fixed(256), Comment: r.fixed(256), Mode: r.i32(), Unknown: r.i32(), TextID: i}
 		w.NamedAreas = append(w.NamedAreas, area)

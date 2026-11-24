@@ -51,6 +51,8 @@ type worldView struct {
 	uiRight                     bool
 	npcs                        map[uint32]*npcActor
 	mapID                       uint16
+	portalAt                    int // 1-based index of the portal already requested; 0 for none
+	portalRetryAt               float64
 	actors                      map[uint32]*remoteActor
 	visiblePlayers              []*scene.Character
 	visiblePlayerMounts         []*scene.Vehicle
@@ -257,6 +259,7 @@ func (a *App) updateWorld(in *platform.Input, dt float64) {
 		a.stepWorld(&controls, step, remaining < 1e-8)
 		if remaining < 1e-8 || a.wv == nil || a.state == nil {
 			a.checkNPCWindowRange()
+			a.updatePortalContact()
 			return
 		}
 		controls.Chars, controls.Keys, controls.Actions = nil, nil, nil
@@ -272,6 +275,7 @@ func (a *App) updateWorldStep(in *platform.Input, dt float64) {
 		a.wv.controlTime += max(dt, 0)
 	}
 	a.stepWorld(in, dt, true)
+	a.updatePortalContact()
 }
 
 func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {

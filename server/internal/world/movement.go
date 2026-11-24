@@ -226,6 +226,12 @@ func (s *Session) handleEnteredPortal(index uint8) {
 		return
 	}
 	if portal, ok := s.usablePortal(s.char.PosX, s.char.PosY, s.char.PosZ, &index); ok {
+		// The request only counts while the character is in the portal: it can
+		// not teleport from across the map, and a stale request sent just
+		// before an automatic teleport finds no matching portal here.
+		if !portal.Contains(s.char.PosX, s.char.PosY, s.char.PosZ) {
+			return
+		}
 		if r := s.portalGate(portal.TargetMapID); r != 0 {
 			s.send(buildPortalResult(index, r), "0x020A portal refused")
 			return
