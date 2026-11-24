@@ -864,6 +864,14 @@ func (s *Session) selectCharacter(id uint32) {
 		failed("load quick slots", err)
 		return
 	}
+	count := len(s.quickSlots)
+	s.quickSlots = s.discardEmptyItemShortcuts(s.quickSlots)
+	if len(s.quickSlots) != count {
+		if err := db.SaveQuickSlots(id, s.quickSlots); err != nil {
+			failed("remove empty item shortcuts", err)
+			return
+		}
+	}
 	s.stored, err = db.StoredItems(s.accountID)
 	if err != nil {
 		failed("load warehouse", err)

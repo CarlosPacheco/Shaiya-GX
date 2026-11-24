@@ -155,25 +155,37 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 		}
 	})
 
-	for _, weapon := range []uint8{1, 13} {
-		name := "sword"
-		if weapon == 13 {
-			name = "bow"
-		}
-		t.Run(name+" lethal contact", func(t *testing.T) {
+	for _, tc := range []struct {
+		name                       string
+		weapon, race, job, variant uint8
+		twoHits                    bool
+	}{
+		{"sword", 1, 1, 2, 0, false},
+		{"dual swords", 5, 0, 0, 0, true},
+		{"daggers", 9, 2, 2, 0, true},
+		{"claws", 15, 2, 2, 1, true},
+		{"bow", 13, 1, 2, 0, false},
+	} {
+		t.Run(tc.name+" lethal contact", func(t *testing.T) {
+			weapon := tc.weapon
 			a := newApp(2009)
 			a.state.Target = mobID
 			a.wv.pos = render.V3{98, 2, 100}
 			a.state.Inventory[[2]uint8{0, 5}] = proto.InventoryItem{Type: weapon, TypeID: 1}
-			actor, err := scene.BuildCharacter(assets, scene.Appearance{Race: 1, Job: 2, Height: 2, Helmet: -1, WeaponType: weapon}, "000_normal")
+			actor, err := scene.BuildCharacter(assets, scene.Appearance{Race: tc.race, Job: tc.job, Height: 2, Helmet: -1, WeaponType: weapon}, "000_normal")
 			if err != nil {
 				t.Fatal(err)
 			}
 			a.wv.self = actor
+			a.attackVariant = tc.variant
 			move(a, 104, 6, 1000)
 			a.prepareMonsters()
 			m := a.wv.mobs[mobID]
 			strike(a, proto.CharacterMobAutoAttack, playerID, mobID, 100)
+			first, second := actor.ContactTimes()
+			if tc.twoHits && (first <= 0 || second <= first) {
+				t.Fatal("fixture needs two contact markers", first, second)
+			}
 			if m.incomingHits == 0 || len(a.combatNumbers) != 0 {
 				t.Fatal("lethal hit was not scheduled at contact")
 			}
@@ -192,18 +204,34 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 				t.Fatal("expected the death notice before arrow release")
 			}
 			started := a.clock
-			for frame := 0; frame < 180 && !m.dead; frame++ {
+			advance := func() {
 				a.clock += a.frameDT
 				actor.Update(float32(a.frameDT))
 				a.updatePendingNumbers()
 				a.prepareMonsters()
 				a.updatePhysicalProjectiles(float32(a.frameDT))
 			}
-			if !m.dead || m.incomingHits != 0 || len(a.combatNumbers) != 1 || a.combatNumbers[0].Amount != 100 ||
+			for frame := 0; frame < 180 && !m.dead; frame++ {
+				advance()
+			}
+			want := uint32(100)
+			if tc.twoHits {
+				want = 50
+			}
+			if !m.dead || m.incomingHits != 0 || len(a.combatNumbers) != 1 || a.combatNumbers[0].Amount != want ||
 				m.pos != (render.V3{102, 4, 100}) || m.deathAt != a.combatNumbers[0].Started {
 				t.Fatalf("death and impact diverged: dead=%t pending=%d pos=%v numbers=%+v", m.dead, m.incomingHits, m.pos, a.combatNumbers)
 			}
-			t.Logf("%s contact and death at %.3fs, corpse anchored at %v", name, a.clock-started, m.pos)
+			if tc.twoHits {
+				deathAt := m.deathAt
+				for frame := 0; frame < 180 && len(a.combatNumbers) < 2; frame++ {
+					advance()
+				}
+				if len(a.combatNumbers) != 2 || a.combatNumbers[1].Amount != 50 || m.deathAt != deathAt || a.combatNumbers[1].Started <= deathAt {
+					t.Fatal("second contact did not retain its number after death", a.combatNumbers)
+				}
+			}
+			t.Logf("%s contact and death at %.3fs, corpse anchored at %v", tc.name, m.deathAt-started, m.pos)
 		})
 	}
 }

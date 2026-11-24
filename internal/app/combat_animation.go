@@ -396,7 +396,8 @@ func (a *App) deliverAttackResult(result proto.AttackResult, actor *scene.Charac
 			half := result.HP / 2
 			v.pendingNumbers = append(v.pendingNumbers,
 				pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP-half, true)},
-				pendingNumber{actionClock{actor, actor.ActionID(), second}, apply(half, true)})
+				// One server attack can hold the death only until its first contact.
+				pendingNumber{actionClock{actor, actor.ActionID(), second}, apply(half, false)})
 			return
 		case first > actor.Time:
 			v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP, true)})

@@ -104,7 +104,8 @@ Mounted lateral movement uses the same speed as forward movement. Ground
 support, vertical motion and repeated-jump rejection remain server-authoritative.
 
 Native client 0x417cc0 plays `ef_dmg_transf01` and transformation EFT catalog
-124, sequence 0, on mount completion. It selects the appearance roar by race:
+124, sequence 0, on mount completion. GX reuses the transformation effect,
+sound and race-specific roar on confirmed dismount. The roar is selected by race:
 Human `run_horse-roar01`, Elf/Vail `run_pumav-roar01`, DeathEater
 `run_baslk-roar01`. Standing boards omit the animal roar. These cues are
 hardcoded in the original, rather than defined in the MON sound slots.

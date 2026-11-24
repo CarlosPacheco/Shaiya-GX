@@ -433,7 +433,7 @@ Declarations: [packet.CharacterItems](../../server/internal/packet/packet.go#L32
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildInventoryPackets (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L14), [buildZeroCount (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L74)
+**S→C serializers:** [buildInventoryPackets (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L15), [buildZeroCount (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L74)
 
 **Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L48), [Apply (internal/game/state.go)](../../internal/game/state.go#L997), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L22)
 
@@ -443,7 +443,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildInventoryPackets — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L14)
+[Source definition](../../server/internal/world/inventory.go#L15)
 
 ```go
 func buildInventoryPackets(items []db.Item) [][]byte {
@@ -779,7 +779,7 @@ Declarations: [packet.CharacterSkillBar](../../server/internal/packet/packet.go#
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L229)
 
-**S→C serializers:** [buildCharacterSkillBar (server/internal/world/skills.go)](../../server/internal/world/skills.go#L43)
+**S→C serializers:** [buildCharacterSkillBar (server/internal/world/skills.go)](../../server/internal/world/skills.go#L65)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L769)
 
@@ -789,7 +789,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildCharacterSkillBar — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L43)
+[Source definition](../../server/internal/world/skills.go#L65)
 
 ```go
 func buildCharacterSkillBar(slots []db.QuickSlot) []byte {

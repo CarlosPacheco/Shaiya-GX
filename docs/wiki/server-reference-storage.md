@@ -555,15 +555,15 @@ Direct GX dependencies: `server/internal/config`.
 |---|---|
 | [`sqlExecutor`](../../server/internal/db/gameplay.go#L9)<br>`type sqlExecutor` | See the source definition and the subsystem ownership contract. |
 | [`CharacterChange`](../../server/internal/db/gameplay.go#L15)<br>`type CharacterChange` | CharacterChange is a plan made under the owning sessions' state locks. Nothing is published in memory or to clients until CommitGameplay succeeds. |
-| [`QuestCompletion`](../../server/internal/db/gameplay.go#L20)<br>`type QuestCompletion` | See the source definition and the subsystem ownership contract. |
-| [`CommitGameplay`](../../server/internal/db/gameplay.go#L28)<br>`func CommitGameplay(changes []CharacterChange, quest *QuestCompletion) error` | CommitGameplay makes both trade participants, or one quest's entire reward, durable together. Expected inventory and money protect against stale plans. |
-| [`commitGameplayTx`](../../server/internal/db/gameplay.go#L38)<br>`func commitGameplayTx(c context.Context, tx *sql.Tx, changes []CharacterChange, quest *QuestCompletion) error` | See the source definition and the subsystem ownership contract. |
-| [`requireOne`](../../server/internal/db/gameplay.go#L93)<br>`func requireOne(result sql.Result) error` | See the source definition and the subsystem ownership contract. |
-| [`sameItemState`](../../server/internal/db/gameplay.go#L104)<br>`func sameItemState(a, b Item) bool` | See the source definition and the subsystem ownership contract. |
-| [`sameInventory`](../../server/internal/db/gameplay.go#L108)<br>`func sameInventory(a, b []Item) bool` | See the source definition and the subsystem ownership contract. |
-| [`writeInventoryChange`](../../server/internal/db/gameplay.go#L129)<br>`func writeInventoryChange(c context.Context, tx *sql.Tx, change CharacterChange) error` | See the source definition and the subsystem ownership contract. |
-| [`CommitItems`](../../server/internal/db/gameplay.go#L186)<br>`func CommitItems(charID uint32, before, after []Item) error` | CommitItems applies an inventory-only plan without overwriting character money/stats. Used by item grants whose character state is owned elsewhere. |
-| [`CommitStatusItem`](../../server/internal/db/gameplay.go#L206)<br>`func CommitStatusItem(change CharacterChange, buffs []AppliedBuff) error` | CommitStatusItem saves the consumed item and remaining effects together. |
+| [`QuestCompletion`](../../server/internal/db/gameplay.go#L21)<br>`type QuestCompletion` | See the source definition and the subsystem ownership contract. |
+| [`CommitGameplay`](../../server/internal/db/gameplay.go#L29)<br>`func CommitGameplay(changes []CharacterChange, quest *QuestCompletion) error` | CommitGameplay makes both trade participants, or one quest's entire reward, durable together. Expected inventory and money protect against stale plans. |
+| [`commitGameplayTx`](../../server/internal/db/gameplay.go#L39)<br>`func commitGameplayTx(c context.Context, tx *sql.Tx, changes []CharacterChange, quest *QuestCompletion) error` | See the source definition and the subsystem ownership contract. |
+| [`requireOne`](../../server/internal/db/gameplay.go#L94)<br>`func requireOne(result sql.Result) error` | See the source definition and the subsystem ownership contract. |
+| [`sameItemState`](../../server/internal/db/gameplay.go#L105)<br>`func sameItemState(a, b Item) bool` | See the source definition and the subsystem ownership contract. |
+| [`sameInventory`](../../server/internal/db/gameplay.go#L109)<br>`func sameInventory(a, b []Item) bool` | See the source definition and the subsystem ownership contract. |
+| [`writeInventoryChange`](../../server/internal/db/gameplay.go#L130)<br>`func writeInventoryChange(c context.Context, tx *sql.Tx, change CharacterChange) error` | See the source definition and the subsystem ownership contract. |
+| [`CommitItems`](../../server/internal/db/gameplay.go#L192)<br>`func CommitItems(charID uint32, before, after []Item, consumedSlots ...[2]uint8) error` | CommitItems applies an inventory-only plan without overwriting character money/stats. Used by item grants whose character state is owned elsewhere. |
+| [`CommitStatusItem`](../../server/internal/db/gameplay.go#L212)<br>`func CommitStatusItem(change CharacterChange, buffs []AppliedBuff) error` | CommitStatusItem saves the consumed item and remaining effects together. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -577,6 +577,7 @@ type sqlExecutor interface {
 type CharacterChange struct {
 	Before, After           Character
 	ItemsBefore, ItemsAfter []Item
+	ConsumedSlots           [][2]uint8 // bag/slot pairs whose last unit was consumed
 }
 ```
 

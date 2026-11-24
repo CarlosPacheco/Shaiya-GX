@@ -3,6 +3,7 @@ package world
 import (
 	"fmt"
 	"math"
+	"slices"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
@@ -217,6 +218,20 @@ func (s *Session) consumeOne(i int) (db.Item, error) {
 	}
 	it := s.items[i]
 	it.Count--
+	if it.Count == 0 && s.hasItemShortcut(it.Bag, it.Slot) {
+		slot := [2]uint8{it.Bag, it.Slot}
+		if s.operation != nil {
+			s.operation.consumedSlots = append(s.operation.consumedSlots, slot)
+		} else {
+			after := slices.Delete(slices.Clone(s.items), i, i+1)
+			if err := db.CommitItems(s.char.ID, s.items, after, slot); err != nil {
+				return it, err
+			}
+			s.items = after
+			s.clearConsumedShortcuts([][2]uint8{slot})
+			return it, nil
+		}
+	}
 	if err := s.saveInventoryItem(&it); err != nil {
 		return it, err
 	}
@@ -401,13 +416,14 @@ func (s *Session) handleUseItem(p []byte) {
 		reject("cooldown")
 		return
 	}
-	before := s.stats()
-	s.healDelta(recoveryAmount(hp, before.MaxHP, def.Special), recoveryAmount(mp, before.MaxMP, def.Special),
-		recoveryAmount(sp, before.MaxSP, def.Special))
 	res, err := s.consumeOne(i)
 	if err != nil {
 		s.log.Printf("GX Server World failed to consume item: %v", err)
+		return
 	}
+	before := s.stats()
+	s.healDelta(recoveryAmount(hp, before.MaxHP, def.Special), recoveryAmount(mp, before.MaxMP, def.Special),
+		recoveryAmount(sp, before.MaxSP, def.Special))
 	if cd > 0 {
 		s.itemCooldowns[def.ReqIg] = time.Now()
 	}

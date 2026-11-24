@@ -40,6 +40,28 @@ func isValidQuickSlot(q db.QuickSlot) bool {
 		((q.Bag <= InventoryLastBag && q.Number < 24) || (q.Bag == quickSlotSkillBag && q.Number > 0))
 }
 
+func (s *Session) hasItemShortcut(bag, slot uint8) bool {
+	return slices.ContainsFunc(s.quickSlots, func(q db.QuickSlot) bool {
+		return q.Bag == bag && q.Number == uint16(slot)
+	})
+}
+
+func (s *Session) clearConsumedShortcuts(slots [][2]uint8) {
+	if len(slots) == 0 {
+		return
+	}
+	s.quickSlots = slices.DeleteFunc(s.quickSlots, func(q db.QuickSlot) bool {
+		return q.Number < 24 && slices.Contains(slots, [2]uint8{q.Bag, uint8(q.Number)})
+	})
+	s.send(buildCharacterSkillBar(s.quickSlots), "0x010B depleted item shortcuts")
+}
+
+func (s *Session) discardEmptyItemShortcuts(slots []db.QuickSlot) []db.QuickSlot {
+	return slices.DeleteFunc(slots, func(q db.QuickSlot) bool {
+		return q.Bag > 0 && q.Bag <= InventoryLastBag && q.Number < 24 && findItem(s.items, q.Bag, uint8(q.Number)) < 0
+	})
+}
+
 func buildCharacterSkillBar(slots []db.QuickSlot) []byte {
 	var valid []db.QuickSlot
 	for _, q := range slots {
@@ -87,15 +109,21 @@ func (s *Session) handleSkillBar(p []byte) {
 		return
 	}
 	slots := parseSkillBar(p)
-	if slices.Equal(slots, s.quickSlots) {
-		return
+	count := len(slots)
+	slots = s.discardEmptyItemShortcuts(slots)
+	changed := !slices.Equal(slots, s.quickSlots)
+	if changed {
+		if err := db.SaveQuickSlots(s.char.ID, slots); err != nil {
+			s.log.Printf("GX Server World failed to save quick slots: %v", err)
+			return
+		}
+		s.quickSlots = slots
 	}
-	if err := db.SaveQuickSlots(s.char.ID, slots); err != nil {
-		s.log.Printf("GX Server World failed to save quick slots: %v", err)
-		return
+	// A bar edit can cross a depletion update in flight. Publish the saved
+	// bar so the client converges on the last request in packet order.
+	if changed || len(slots) != count {
+		s.send(buildCharacterSkillBar(s.quickSlots), "0x010B saved shortcuts")
 	}
-	s.quickSlots = slots
-
 }
 
 // buildLearnSkillError (0x0209): reason, skill id, level.

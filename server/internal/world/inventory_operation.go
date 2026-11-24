@@ -11,10 +11,11 @@ import (
 // equipment and packets while the session lock excludes other mutations.
 // No database write or player publication occurs until its guarded commit.
 type inventoryOperation struct {
-	packets []operationPacket
-	effects []func()
-	player  *ConnectedPlayer
-	err     error
+	packets       []operationPacket
+	effects       []func()
+	consumedSlots [][2]uint8
+	player        *ConnectedPlayer
+	err           error
 }
 type operationPacket struct {
 	frame []byte
@@ -73,12 +74,12 @@ func (s *Session) inventoryOperationWithCommit(run func(), commit func(db.Charac
 		return false
 	}
 	if commit != nil || before != after || !slices.Equal(items, s.items) {
-		change := db.CharacterChange{Before: before, After: after, ItemsBefore: items, ItemsAfter: s.items}
+		change := db.CharacterChange{Before: before, After: after, ItemsBefore: items, ItemsAfter: s.items, ConsumedSlots: op.consumedSlots}
 		var err error
 		if commit != nil {
 			err = commit(change)
 		} else if before == after {
-			err = db.CommitItems(before.ID, items, s.items)
+			err = db.CommitItems(before.ID, items, s.items, op.consumedSlots...)
 		} else {
 			err = db.CommitGameplay([]db.CharacterChange{change}, nil)
 		}
@@ -92,6 +93,7 @@ func (s *Session) inventoryOperationWithCommit(run func(), commit func(db.Charac
 	s.char = original
 	s.player = player
 	s.operation = nil
+	s.clearConsumedShortcuts(op.consumedSlots)
 	if player != nil {
 		player.UpdateItems(s.items)
 		s.syncPlayer()

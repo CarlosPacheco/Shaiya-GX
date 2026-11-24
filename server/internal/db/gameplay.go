@@ -15,6 +15,7 @@ type sqlExecutor interface {
 type CharacterChange struct {
 	Before, After           Character
 	ItemsBefore, ItemsAfter []Item
+	ConsumedSlots           [][2]uint8 // bag/slot pairs whose last unit was consumed
 }
 
 type QuestCompletion struct {
@@ -178,12 +179,17 @@ func writeInventoryChange(c context.Context, tx *sql.Tx, change CharacterChange)
 			}
 		}
 	}
+	for _, slot := range change.ConsumedSlots {
+		if _, err := tx.ExecContext(c, "DELETE FROM PS_GameData_CharQuickSlots WHERE CharID=? AND Bag=? AND Number=?", change.After.ID, slot[0], slot[1]); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 // CommitItems applies an inventory-only plan without overwriting character
 // money/stats. Used by item grants whose character state is owned elsewhere.
-func CommitItems(charID uint32, before, after []Item) error {
+func CommitItems(charID uint32, before, after []Item, consumedSlots ...[2]uint8) error {
 	pool, err := Pool(GameData)
 	if err != nil {
 		return err
@@ -198,7 +204,7 @@ func CommitItems(charID uint32, before, after []Item) error {
 		if !sameInventory(actual, before) {
 			return fmt.Errorf("grant inventory changed")
 		}
-		return writeInventoryChange(c, tx, CharacterChange{Before: Character{ID: charID}, After: Character{ID: charID}, ItemsBefore: before, ItemsAfter: after})
+		return writeInventoryChange(c, tx, CharacterChange{Before: Character{ID: charID}, After: Character{ID: charID}, ItemsBefore: before, ItemsAfter: after, ConsumedSlots: consumedSlots})
 	})
 }
 

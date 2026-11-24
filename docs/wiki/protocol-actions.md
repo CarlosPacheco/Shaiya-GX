@@ -137,7 +137,7 @@ Declarations: [packet.ItemBagToBag](../../server/internal/packet/packet.go#L85),
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L105)
 
-**S→C serializers:** [buildBagToBag (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L78)
+**S→C serializers:** [buildBagToBag (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L79)
 
 **Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L48), [Apply (internal/game/state.go)](../../internal/game/state.go#L997), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L31)
 
@@ -147,7 +147,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildBagToBag — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L78)
+[Source definition](../../server/internal/world/inventory.go#L79)
 
 ```go
 func buildBagToBag(srcBag, srcSlot uint8, src *db.Item, destBag, destSlot uint8, dest *db.Item) []byte {
@@ -207,7 +207,7 @@ Declarations: [packet.AddItem](../../server/internal/packet/packet.go#L86), [pro
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
 
-**S→C serializers:** [buildAddItem (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L85), [buildAddItemError (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L97), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [buildAddItem (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L86), [buildAddItemError (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L98), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L48), [Apply (internal/game/state.go)](../../internal/game/state.go#L997), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L52)
 
@@ -217,7 +217,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildAddItem — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L85)
+[Source definition](../../server/internal/world/inventory.go#L86)
 
 ```go
 func buildAddItem(it *db.Item) []byte {
@@ -231,7 +231,7 @@ func buildAddItem(it *db.Item) []byte {
 
 <details><summary>buildAddItemError — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L97)
+[Source definition](../../server/internal/world/inventory.go#L98)
 
 ```go
 func buildAddItemError(code uint8) []byte {
@@ -290,7 +290,7 @@ Declarations: [packet.RemoveItem](../../server/internal/packet/packet.go#L87), [
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L101)
 
-**S→C serializers:** [buildRemoveItem (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L117)
+**S→C serializers:** [buildRemoveItem (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L118)
 
 **Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L48), [Apply (internal/game/state.go)](../../internal/game/state.go#L997), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L66)
 
@@ -300,7 +300,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildRemoveItem — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L117)
+[Source definition](../../server/internal/world/inventory.go#L118)
 
 ```go
 func buildRemoveItem(it *db.Item, full bool) []byte {
@@ -420,7 +420,7 @@ Declarations: [packet.SetStatPoint](../../server/internal/packet/packet.go#L88),
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L227)
 
-**S→C serializers:** [handleSetStatPoint (server/internal/world/skills.go)](../../server/internal/world/skills.go#L237)
+**S→C serializers:** [handleSetStatPoint (server/internal/world/skills.go)](../../server/internal/world/skills.go#L265)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L680)
 
@@ -430,7 +430,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleSetStatPoint — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L237)
+[Source definition](../../server/internal/world/skills.go#L265)
 
 ```go
 func (s *Session) handleSetStatPoint(p []byte) {
@@ -531,7 +531,7 @@ Declarations: [packet.LearnNewSkill](../../server/internal/packet/packet.go#L90)
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L225)
 
-**S→C serializers:** [buildLearnSkillError (server/internal/world/skills.go)](../../server/internal/world/skills.go#L102), [buildLearnSkillResult (server/internal/world/skills.go)](../../server/internal/world/skills.go#L131)
+**S→C serializers:** [buildLearnSkillError (server/internal/world/skills.go)](../../server/internal/world/skills.go#L130), [buildLearnSkillResult (server/internal/world/skills.go)](../../server/internal/world/skills.go#L159)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L777)
 
@@ -541,7 +541,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildLearnSkillError — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L102)
+[Source definition](../../server/internal/world/skills.go#L130)
 
 ```go
 func buildLearnSkillError(reason uint8, skillID uint16, level uint8) []byte {
@@ -558,7 +558,7 @@ func buildLearnSkillError(reason uint8, skillID uint16, level uint8) []byte {
 
 <details><summary>buildLearnSkillResult — server/internal/world/skills.go</summary>
 
-[Source definition](../../server/internal/world/skills.go#L131)
+[Source definition](../../server/internal/world/skills.go#L159)
 
 ```go
 func buildLearnSkillResult(ok bool, number uint8, skillID uint16, level uint8) []byte {
@@ -1245,7 +1245,7 @@ Declarations: [packet.SetMoney](../../server/internal/packet/packet.go#L40), [pr
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildSetMoney (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L91)
+**S→C serializers:** [buildSetMoney (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L92)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L997), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L76)
 
@@ -1255,7 +1255,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSetMoney — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L91)
+[Source definition](../../server/internal/world/inventory.go#L92)
 
 ```go
 func buildSetMoney(money uint32) []byte {
@@ -1946,7 +1946,7 @@ Source notes: empty; SysMsg 862, Game.exe 0x56b820
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [handleChangeAppearance (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L444)
+**S→C serializers:** [handleChangeAppearance (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L460)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1956,7 +1956,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleChangeAppearance — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L444)
+[Source definition](../../server/internal/world/inventory.go#L460)
 
 ```go
 func (s *Session) handleChangeAppearance(p []byte) {

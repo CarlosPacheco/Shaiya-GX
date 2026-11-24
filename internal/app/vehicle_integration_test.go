@@ -296,6 +296,28 @@ func TestVehicleModelsRealGL(t *testing.T) {
 	}
 	defer arc.Close()
 	assets := scene.NewAssets(arc)
+	a := inputApp()
+	a.assets = assets
+	a.state.SelfID = 1
+	a.wv.pos = render.V3{10, 2, 20}
+	vehicle := proto.VehicleState{ID: 1, Race: 1, Model: 1, Speed: 4, Seats: 1, Driver: 1}
+	vehicle.State = proto.VehicleCasting
+	a.applyWorldPacket(proto.VehicleStatePacket(vehicle))
+	off := proto.VehicleStatePacket(proto.VehicleState{ID: 1})
+	a.applyWorldPacket(off)
+	if len(a.wv.impacts) != 0 {
+		t.Fatal("cancelling mount preparation replayed the transformation")
+	}
+	vehicle.State = proto.VehicleDriver
+	a.applyWorldPacket(proto.VehicleStatePacket(vehicle))
+	if len(a.wv.impacts) != 0 {
+		t.Fatal("mounted snapshot replayed the transformation")
+	}
+	a.applyWorldPacket(off)
+	a.applyWorldPacket(off)
+	if len(a.wv.impacts) != 1 || a.wv.impacts[0].instance.Origin != a.wv.pos {
+		t.Fatal("dismount must start one transformation at the rider")
+	}
 	for race := uint8(0); race < 4; race++ {
 		for index := uint8(0); index < 8; index++ {
 			mount, err := assets.BuildVehicle(race, index)

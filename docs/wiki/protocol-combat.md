@@ -590,7 +590,7 @@ Declarations: [packet.UseItem](../../server/internal/packet/packet.go#L121), [pr
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L85)
 
-**S→C serializers:** [buildUseItemResult (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L104)
+**S→C serializers:** [buildUseItemResult (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L105)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L735)
 
@@ -600,7 +600,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildUseItemResult — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L104)
+[Source definition](../../server/internal/world/inventory.go#L105)
 
 ```go
 func buildUseItemResult(characterID uint32, it *db.Item) []byte {

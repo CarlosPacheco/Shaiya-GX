@@ -16,7 +16,7 @@ type vehicleView struct {
 	expires, cooldownEnd      float64
 	castState                 uint8
 	peerName                  string
-	states                    map[uint32]uint8
+	states                    map[uint32]proto.VehicleState
 	pending                   bool
 	deadline                  float64
 }
@@ -61,12 +61,16 @@ func (a *App) confirmedVehicle(p []byte) {
 			return
 		}
 		if a.vehicle.states == nil {
-			a.vehicle.states = map[uint32]uint8{}
+			a.vehicle.states = map[uint32]proto.VehicleState{}
 		}
 		previous := a.vehicle.states[v.ID]
-		a.vehicle.states[v.ID] = v.State
+		if v.State == proto.VehicleOff {
+			delete(a.vehicle.states, v.ID)
+		} else {
+			a.vehicle.states[v.ID] = v
+		}
 		if a.wv != nil {
-			if v.State == proto.VehicleCasting && previous != v.State {
+			if v.State == proto.VehicleCasting && previous.State != v.State {
 				if actor := a.playerActor(v.ID); actor != nil {
 					actor.PlayCast(85, float32(v.CastMS)/1000)
 				}
@@ -75,7 +79,7 @@ func (a *App) confirmedVehicle(p []byte) {
 					a.playSound("ef_in_atrbu01.wav", pos[0], pos[2])
 				}
 			}
-			if previous == proto.VehicleCasting && v.State != previous {
+			if previous.State == proto.VehicleCasting && v.State != previous.State {
 				a.stopCastEffects(v.ID)
 				if actor := a.playerActor(v.ID); actor != nil {
 					actor.CancelCast()
@@ -84,11 +88,14 @@ func (a *App) confirmedVehicle(p []byte) {
 					a.startMountAppearance(v)
 				}
 			}
+			if v.State == proto.VehicleOff && previous.State >= proto.VehicleDriver {
+				a.startMountAppearance(previous)
+			}
 		}
 		if v.ID != a.state.SelfID {
 			return
 		}
-		if v.State >= proto.VehicleDriver && previous < proto.VehicleDriver {
+		if v.State >= proto.VehicleDriver && previous.State < proto.VehicleDriver {
 			a.cancelSkillIntentOnMount()
 		}
 		a.vehicle.cooldownEnd = a.clock + float64(v.CooldownMS)/1000
@@ -170,7 +177,7 @@ func (a *App) startMountAppearance(v proto.VehicleState) {
 	}
 	a.playSound(mountAppearanceSound(v.Race, v.Model), pos[0], pos[2])
 	a.playSound("ef_dmg_transf01.wav", pos[0], pos[2])
-	if len(a.wv.impacts) >= 32 {
+	if a.assets == nil || len(a.wv.impacts) >= 32 {
 		return
 	}
 	if x := a.loadSkillEffect("Effect/DA_target_transformation.EFT", 0); x != nil {

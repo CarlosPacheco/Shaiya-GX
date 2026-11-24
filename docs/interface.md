@@ -71,7 +71,7 @@ The CPU solver reproduces native directed springs, masses, forces, Euler integra
 
 Attacking or using a targeted skill turns toward the current target immediately and publishes the heading before the action packet. Targets outside weapon or skill range start an approach that updates as they move. A double click keeps the basic attack queued until it can be requested in range. Monster picking uses the original EP5 camera-facing rectangle, sized by Monster.SData Size and scaled MON height. Movement keys and clicks on walkable ground interrupt basic attacks and end the chase while keeping the target selected. Changing targets or issuing a new action also replaces the current request. This uses existing movement collision handling rather than a new pathfinding system. Results and resource changes remain server-owned.
 
-Floating numbers use `count.tga` digit cells of 26×32, the Critical region at `(260,0,156,32)` and Miss at `(416,0,96,32)`. Phoenix parameters are a one-second lifetime, 0.3-unit rise per second, 0.2-unit digit width and 1.1875 height ratio. Critical digits are 1.5 times wider; healing is native RGB `00FF00` (digit renderer `004274ff`). Numbers detach from the target's displayed position, retain world scale under camera movement and expire from a queue capped at 128 entries. Attack, skill, drain and periodic result packets supply the displayed values; ordinary HP snapshots do not invent healing events.
+Floating numbers use `count.tga` digit cells of 26×32, the Critical region at `(260,0,156,32)` and Miss at `(416,0,96,32)`. Phoenix parameters are a one-second lifetime, 0.3-unit rise per second, 0.2-unit digit width and 1.1875 height ratio. Critical digits are 1.5 times wider; healing is native RGB `00FF00` (digit renderer `004274ff`). Numbers detach from the target's displayed position, retain world scale under camera movement and expire from a queue capped at 128 entries. Attack, skill, drain and periodic result packets supply the displayed values; ordinary HP snapshots do not invent healing events. A lethal basic attack with two contact markers starts the monster’s death animation at the first impact and presents the second damage number at its own marker.
 
 Drain results (0x0512, 0x0518, 0x060C) show the actual resources gained above the caster using the healing-number animation. HP uses native recovery green `#00FF00`, SP uses the original gauge yellow `#F9BD0F`, and MP uses the original gauge blue `#00AFE5`. The examined EP4/EP5 digit renderer draws all three recovery types green. GX uses the tones from `main_stats_bar` to distinguish SP and MP.
 
@@ -417,7 +417,7 @@ cooldowns and depleted-icon dimming. Drag a consumable from inventory to bind it
 drag outside to clear, or drag between the two slots to swap. Clicks never remove bindings. Bindings are local
 per server/character and follow the item type when its bag position changes.
 X now activates the potion slot. Native server item-use requests and responses
-remain responsible for consuming items and starting reuse timers.
+remain responsible for consuming items and starting reuse timers. The server removes action-bar shortcuts to a stack when its last unit is consumed.
 
 NPC patrol smoothing uses `MoveDistance / MoveSpeed` (milliseconds per step)
 rather than the player packet interpolation interval, and display Y follows terrain during an active patrol segment and for GM summons. Other stationary
