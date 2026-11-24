@@ -43,6 +43,13 @@ NPC definitions in `PS_GameDefs_NpcSkills` are aligned with the installed
 `Monster/NpcSkill.SData`; player skills use `PS_GameDefs_Skills`. The server uses NPC rank 1 for
 monster and lapis effects and keeps the native level 100 in effect packets.
 
+Migration 38 restores 27 known consumable references that older SQLite
+runtimes could store as a single byte. It also restores skill 250/2 for the
+GM EXP Stone (44/242), granting 50% more monster EXP for 24 hours. The client
+expands the matching aliases when it loads Item.SData. Snowball (44/147)
+resolves to the targeted attack 193/1 and requires the original targeted-item
+cast route, which GX does not yet implement.
+
 ```sh
 python3 tools/sync_item_definitions.py \
   --item-sdata '/path/to/client/data/Item/Item.SData' \

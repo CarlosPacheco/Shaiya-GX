@@ -14,6 +14,14 @@ func NormalizePercentageSkills(skills map[SkillKey]Skill, npc bool) {
 			continue
 		}
 		switch {
+		case key == (SkillKey{250, 2}) && skill.Name == "Mini Sun EXP StoneED" &&
+			skill.Effect == 0 && skill.Detail == 0 && skill.KeepTime == 0 && skill.FixRange == 0 &&
+			skill.AbilityType == [3]uint8{} && skill.AbilityValue == [3]int16{}:
+			skill.Name = "GM EXP Stone"
+			skill.Effect, skill.Detail = 4, 82
+			skill.KeepTime, skill.FixRange = 24, 1
+			skill.AbilityType[0], skill.AbilityValue[0] = 35, 50
+			skill.Description = experienceDescription(50, skill.KeepSeconds())
 		case key.Level == 1 && skill.AbilityType[0] == 35 &&
 			(key.ID == 222 || key.ID == 223 || key.ID == 250 || key.ID == 251 || key.ID == 272):
 			if skill.AbilityValue[0] == 1 {
@@ -64,6 +72,10 @@ func experienceDescription(bonus int, seconds uint32) string {
 
 // NormalizePercentageItems replaces the legacy text on the affected consumables.
 func NormalizePercentageItems(items map[ItemKey]*Item) {
+	if item := items[ItemKey{44, 242}]; item != nil && item.Range == 250 && item.AttackTime == 2 && item.Special == 0 {
+		item.Name = "GM EXP Stone"
+		item.Description = experienceDescription(50, 24*3600)
+	}
 	for id, hours := range map[uint8]uint32{42: 168, 43: 720, 72: 240, 73: 720, 74: 720, 108: 1, 109: 12, 135: 24} {
 		if item := items[ItemKey{100, id}]; item != nil {
 			bonus := 50

@@ -29,11 +29,11 @@ func restoreConsumableSkill(id uint32, skill uint16) uint16 {
 		return 278
 	case id >= 44108 && id <= 44110 && skill == 23:
 		return 279
-	case id == 44223 && skill == 14:
+	case (id == 44091 || id == 44153 || id == 44223) && skill == 14:
 		return 270
-	case id == 44224 && skill == 13:
+	case (id == 44090 || id == 44154 || id == 44224) && skill == 13:
 		return 269
-	case id == 44225 && skill == 12:
+	case (id == 44089 || id == 44152 || id == 44225) && skill == 12:
 		return 268
 	case id >= 100092 && id <= 100094 && skill == 1:
 		return 257
@@ -45,6 +45,22 @@ func restoreConsumableSkill(id uint32, skill uint16) uint16 {
 		return 259
 	case id >= 100104 && id <= 100106 && skill == 4:
 		return 260
+	case id == 100114 && skill == 6:
+		return 262
+	case id >= 100118 && id <= 100120 && skill == 7:
+		return 263
+	case id >= 100121 && id <= 100123 && skill == 8:
+		return 264
+	case id >= 100124 && id <= 100126 && skill == 9:
+		return 265
+	case id == 100134 && skill == 15:
+		return 271
+	case (id == 44213 || id == 44214) && skill == 17:
+		return 273
+	case (id == 44217 || id == 44218 || id == 44221 || id == 100200) && skill == 18:
+		return 274
+	case (id == 44219 || id == 44220 || id == 44222 || id == 100201) && skill == 19:
+		return 275
 	case id >= 100145 && id <= 100147 && skill == 24:
 		return 280
 	case id >= 100148 && id <= 100150 && skill == 25:

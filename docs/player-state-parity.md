@@ -25,7 +25,7 @@ movement pause. It does not require a learned skill or charge spell MP/SP for an
 item cast. Item reuse groups and stronger-effect rejection remain authoritative.
 A rejected use does not emit the spell or consume an item.
 
-The supplied definitions contain 199 consumable skill references:
+The original consumable audit found 199 skill references:
 
 - 195 ordinary Special 0 buff references, including candies, remedies, charms and
   commercial skills.
@@ -37,6 +37,12 @@ The supplied definitions contain 199 consumable skill references:
 - Snowball 44/147, skill 193/1, is a targeted attack (Effect 1), not a self buff;
   it is deliberately excluded from this buff path. Targeted snowball use remains
   unsupported.
+
+Migration 38 expands the remaining 27 known compact references in legacy
+SQLite runtimes. The client expands the same low-byte aliases on load.
+The migration also restores the item-only skill 250/2 for the GM EXP Stone
+(44/242), using the historical 24-hour, 50% monster EXP bonus that persists
+through death. The regular Mini Sun EXP Stone (100/108) still uses rank 1.
 
 The implementation resolves definitions dynamically, rather than maintaining an
 item-name whitelist. Native addresses identify the locally inspected original

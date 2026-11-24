@@ -225,3 +225,52 @@ func TestExpWheelCastsAndSynchronizesAuthoritativeExperience(t *testing.T) {
 		}
 	}
 }
+
+func TestGMExperienceStoneRestoresHistoricalBuff(t *testing.T) {
+	s, add := forgeRuleSession(t)
+	defs, err := db.ReloadDefsForTest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	item := defs.Item(44, 242)
+	if item == nil || item.Range != 250 || item.AttackTime != 2 || item.Special != 0 {
+		t.Fatalf("GM EXP Stone reference: %+v", item)
+	}
+	rankOne := defs.Skill(250, 1)
+	if rankOne == nil || rankOne.KeepSeconds != 3600 || rankOne.AbilityValue[0] != 50 {
+		t.Fatalf("regular Mini Sun EXP Stone changed: %+v", rankOne)
+	}
+	snowball := defs.Item(44, 147)
+	if snowball == nil || itemBuffSkill(snowball) != nil {
+		t.Fatal("targeted Snowball was treated as a buff")
+	}
+	sk := itemBuffSkill(item)
+	if sk == nil || sk.SkillLevel != 2 || sk.KeepSeconds != 86400 || !sk.KeepOnDeath || sk.TypeShow != 0 {
+		t.Fatalf("restored item skill: %+v", sk)
+	}
+
+	add(db.Item{Bag: 1, Slot: 0, Type: 44, TypeID: 242, Count: 2})
+	wire, packets := gmWireSession(t, *s.char, false)
+	wire.items = s.items
+	wire.itemCooldowns = map[uint8]time.Time{}
+	wire.handleUseItem(proto.UseItemPacket(1, 0))
+	if wire.items[0].Count != 1 || wire.experienceBonus() != 50 || len(wire.buffs) != 1 {
+		t.Fatalf("use failed to consume once and grant 50%% EXP: items=%v buffs=%v", wire.items, wire.buffs)
+	}
+	deadline := time.After(time.Second)
+	for {
+		select {
+		case p := <-packets:
+			if proto.Op(p) != proto.SkillUseNoTarget {
+				continue
+			}
+			result, err := proto.DecodeSkillResult(p)
+			if err != nil || result.ID != 250 || result.Level != 2 {
+				t.Fatalf("item cast result=%+v error=%v", result, err)
+			}
+			return
+		case <-deadline:
+			t.Fatal("item cast did not announce the restored rank")
+		}
+	}
+}

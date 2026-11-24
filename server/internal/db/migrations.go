@@ -209,6 +209,23 @@ var migrations = []migration{
 	{36, "stack_all_consumables", consumableStacksMigration},
 	{37, "enhance_wind_spin_spear", `-- The description lists spears; the weapon flags did not (real type 6).
 		UPDATE PS_GameDefs_Skills SET NeedWeapon6=1 WHERE SkillID=156 AND SkillLevel<100`},
+	{38, "repair_remaining_consumable_skill_links", `-- Expand known native byte aliases without changing other Range fields.
+		UPDATE PS_GameDefs_Items SET Range=Range+256
+		WHERE (ItemID, Range) IN (VALUES
+			(44089,12),(44090,13),(44091,14),(44152,12),(44153,14),(44154,13),
+			(44213,17),(44214,17),(44217,18),(44218,18),(44219,19),(44220,19),(44221,18),(44222,19),
+			(100114,6),(100118,7),(100119,7),(100120,7),(100121,8),(100122,8),
+			(100123,8),(100124,9),(100125,9),(100126,9),(100134,15),(100200,18),(100201,19))
+		  AND AttackTime BETWEEN 1 AND 3 AND Special IN (0,50);
+		-- Item 44/242 still references the original 24-hour, 50% EXP buff.
+		UPDATE PS_GameDefs_Skills
+		SET SkillName='GM EXP Stone', TypeEffect=4, TypeDetail=82,
+		    KeepTime=24, FixRange=1, AbilityType1=35, AbilityValue1=50
+		WHERE SkillID=250 AND SkillLevel=2 AND SkillName='Mini Sun EXP StoneED'
+		  AND TypeEffect=0 AND TypeDetail=0 AND KeepTime=0 AND FixRange=0
+		  AND AbilityType1=0 AND AbilityValue1=0 AND AbilityType2=0 AND AbilityType3=0
+		  AND EXISTS (SELECT 1 FROM PS_GameDefs_Items
+		              WHERE Type=44 AND TypeID=242 AND Range=250 AND AttackTime=2 AND Special=0)`},
 }
 
 // Base user_version=1 remains compatible with the distributed development seed.
