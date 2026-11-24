@@ -44,9 +44,17 @@ func TestNativeTextureFogAndAsyncMetricsGL(t *testing.T) {
 	if levels != 2 {
 		t.Fatal("native DDS mip allocation changed", levels)
 	}
-	original := make([]byte, len(blue))
-	gl.GetCompressedTextureImage(tex.ID, 0, int32(len(original)), gl.Ptr(&original[0]))
-	if !bytes.Equal(original, blue) {
+	want := blue
+	if !compressedDDS[img.FormatDXT1] {
+		want = bytes.Repeat([]byte{0, 0, 255, 255}, 8*8)
+	}
+	original := make([]byte, len(want))
+	if compressedDDS[img.FormatDXT1] {
+		gl.GetCompressedTextureImage(tex.ID, 0, int32(len(original)), gl.Ptr(original))
+	} else {
+		gl.GetTextureImage(tex.ID, 0, gl.RGBA, gl.UNSIGNED_BYTE, int32(len(original)), gl.Ptr(original))
+	}
+	if !bytes.Equal(original, want) {
 		t.Fatal("world filtering overwrote authored DDS level")
 	}
 	tex.Delete()
