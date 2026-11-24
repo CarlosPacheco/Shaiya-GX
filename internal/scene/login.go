@@ -13,6 +13,7 @@ type LoginScene struct {
 	Camera     *LoginCamera
 	sky        *render.Texture
 	quad       *render.Mesh
+	skyBelow   *render.Mesh
 	back       *Model
 	smoke      *Model
 	rock       *Model
@@ -34,6 +35,15 @@ func LoadLoginScene(a *Assets) (*LoginScene, error) {
 		{Pos: render.V3{-1, 1, 0}, UV: [2]float32{0, 0}},
 		{Pos: render.V3{1, 1, 0}, UV: [2]float32{1, 0}},
 		{Pos: render.V3{1, -1, 0}, UV: [2]float32{1, 1}},
+	}, []uint32{0, 1, 2, 0, 2, 3})
+	// The sky plane ends 5000 below its centre; while the intro camera swings
+	// that edge crosses the screen and the black clear colour shows. Continue
+	// the bottom row of the texture downwards so no gap can appear.
+	s.skyBelow = render.NewMesh([]render.Vertex{
+		{Pos: render.V3{-1, -11, 0}, UV: [2]float32{0, 1}},
+		{Pos: render.V3{-1, -1, 0}, UV: [2]float32{0, 1}},
+		{Pos: render.V3{1, -1, 0}, UV: [2]float32{1, 1}},
+		{Pos: render.V3{1, -11, 0}, UV: [2]float32{1, 1}},
 	}, []uint32{0, 1, 2, 0, 2, 3})
 	return s, nil
 }
@@ -79,6 +89,7 @@ func (s *LoginScene) Draw(r *render.Scene3D, aspect float32) {
 		c := eye.Add(fwd.Scale(8000))
 		w := render.M4{10000, 0, 0, 0, 0, 5000, 0, 0, 0, 0, 1, 0, c[0], c[1], c[2], 1}
 		r.DrawTinted(s.quad, s.sky, w, [4]float32{0xbb / 255.0, 0xbb / 255.0, 0xbb / 255.0, 1}, false, false)
+		r.DrawTinted(s.skyBelow, s.sky, w, [4]float32{0xbb / 255.0, 0xbb / 255.0, 0xbb / 255.0, 1}, false, false)
 	}
 	if s.smoke != nil {
 		for _, p := range s.smoke.Parts {
