@@ -762,15 +762,15 @@ func runMobAICommands(tick *MobCombatTick) {
 		s.mu.Unlock()
 		for _, cmd := range commands {
 			s.mu.Lock()
-			valid := false
+			var owner *MapMob
 			for i := range s.entities.Mobs {
 				m := &s.entities.Mobs[i]
 				if m.ID == cmd.owner && m.lua.actor == cmd.actor && m.lua.fault == nil {
-					valid = true
+					owner = m
 					break
 				}
 			}
-			if !valid {
+			if owner == nil {
 				s.mu.Unlock()
 				continue
 			}
@@ -851,6 +851,9 @@ func runMobAICommands(tick *MobCombatTick) {
 				if !isInstanceZone(mapID) {
 					break
 				}
+				if cmd.id == 1001 && isSacraGuard(owner) && hasLivingSacraGuard(s.entities.Mobs) {
+					break
+				}
 				for i := range s.entities.Portals {
 					p := &s.entities.Portals[i]
 					if p.PortalID == int32(cmd.id) {
@@ -865,6 +868,21 @@ func runMobAICommands(tick *MobCombatTick) {
 			}
 		}
 	}
+}
+
+// Sacra's first-floor bosses each send the portal update on death. The
+// summoned encounter pair must both be defeated in this instance.
+func isSacraGuard(m *MapMob) bool {
+	return m.aiSummoned && m.MobID >= 2464 && m.MobID <= 2467
+}
+
+func hasLivingSacraGuard(mobs []MapMob) bool {
+	for i := range mobs {
+		if mobs[i].CurrentHP > 0 && isSacraGuard(&mobs[i]) {
+			return true
+		}
+	}
+	return false
 }
 
 func recordMobAIMiss(mapID uint16, id, user uint32) {

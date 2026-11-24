@@ -11,6 +11,7 @@ function M.define(spec)
         function self:event(context, name, ...)
             if name == "idle" then
                 lifecycle.idle(context)
+                if callbacks.idle and context:lua_callbacks_enabled() then callbacks.idle(context) end
                 if context:advance_selected_move() then return end
                 if context:status() == "return_home" then context:return_home(); return end
                 if context:status() == "idle" then

@@ -202,34 +202,48 @@ func TestLuaWorldMachineChangesActualCooldownAndStats(t *testing.T) {
 }
 func TestLuaWorldControllerInvulnerabilityAndMovement(t *testing.T) {
 	sh, h := luaWorldFixture(t, 115)
+	for id, code := range map[uint16]uint8{2464: 111, 2465: 114, 2466: 112, 2467: 113} {
+		db.MustDefs().Mobs[id].AI = code
+	}
+	sh.entities.Portals = []MapPortal{{PortalID: 1001, FactionOrPortalID: 1001}}
+	players := h.players
+	TickMobCombat(players, 64)
+	if len(sh.entities.Mobs) != 1 {
+		t.Fatal("controller summoned before being hit")
+	}
 	result, ok := DamageMobFrom(h.mapID, h.mob.ID, 9999, 99)
 	if !ok || result.AppliedHP != 0 || result.Killed || sh.entities.Mobs[0].CurrentHP != 1000 {
-		t.Fatal("controller was damaged before first tick")
+		t.Fatal("controller lost HP on the triggering hit")
 	}
-	h.mob.AggroTarget = 99
-	h.notifyTarget()
-	h.mob.nextAttackAt = h.now.Add(time.Hour)
-	eventOK(t, h, "combat", 100, 1)
+	// Start the retreat without an aggro target or a native attack deadline.
+	h.now = time.Now().Add(5 * time.Second)
+	eventOK(t, h, "idle")
 	if !h.mob.lua.fixed {
-		t.Fatal("controller did not enter fixed movement")
+		t.Fatal("controller did not start retreating")
 	}
 	runMobAICommands(h.tick)
 	if len(sh.entities.Mobs) != 3 {
-		t.Fatalf("summoned %d mobs", len(sh.entities.Mobs)-1)
+		t.Fatalf("summoned %d mobs, want 2", len(sh.entities.Mobs)-1)
 	}
-	// Slice may have moved when the deferred summons were applied.
-	h.mob = &sh.entities.Mobs[0]
-	h.mob.PosX, h.mob.PosZ = 173, 179
-	h.mob.nextChaseAt = time.Time{}
-	eventOK(t, h, "idle")
-	if !h.mob.lua.arrived {
-		t.Fatal("fixed movement did not finish")
+	// Give the controller a completed step at the destination and let the
+	// normal world tick deliver the movement completion callback.
+	m := &sh.entities.Mobs[0]
+	m.setPoint(m.lua.selected)
+	m.moveDuration = 0
+	m.nextChaseAt = time.Time{}
+	TickMobCombat(players, 64)
+	if !m.lua.arrived || m.CurrentHP != 0 {
+		t.Fatal("controller did not complete the move and disappear")
 	}
-	h.mob.lua.fixed = false
-	eventOK(t, h, "move_end")
-	runMobAICommands(h.tick)
-	if sh.entities.Mobs[0].CurrentHP != 0 || sh.entities.Mobs[0].corpseGone {
-		t.Fatal("controller was not removed on arrival")
+	for i := 1; i <= 2; i++ {
+		result, ok := DamageMobFrom(h.mapID, sh.entities.Mobs[i].ID, 1000, 99)
+		if !ok || !result.Killed {
+			t.Fatalf("guard %d was not killed", i)
+		}
+		TickMobCombat(players, 64)
+		if sh.entities.Portals[0].IsOpen() != (i == 2) {
+			t.Fatalf("unexpected portal state after defeating %d guard(s)", i)
+		}
 	}
 }
 func TestLuaWorldSplitUsesDeferredSpawnAndRemoval(t *testing.T) {

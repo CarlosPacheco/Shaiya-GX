@@ -2363,7 +2363,9 @@ Direct GX dependencies: `internal/mapnav`, `server/ai`, `server/internal/config`
 | [`skill`](../../server/internal/world/mob_ai.go#L698)<br>`func (h *mobAIHost) skill(id uint16)` | See the source definition and the subsystem ownership contract. |
 | [`mobAICommand`](../../server/internal/world/mob_ai.go#L741)<br>`type mobAICommand` | See the source definition and the subsystem ownership contract. |
 | [`runMobAICommands`](../../server/internal/world/mob_ai.go#L754)<br>`func runMobAICommands(tick *MobCombatTick)` | See the source definition and the subsystem ownership contract. |
-| [`recordMobAIMiss`](../../server/internal/world/mob_ai.go#L870)<br>`func recordMobAIMiss(mapID uint16, id, user uint32)` | See the source definition and the subsystem ownership contract. |
+| [`isSacraGuard`](../../server/internal/world/mob_ai.go#L875)<br>`func isSacraGuard(m *MapMob) bool` | Sacra's first-floor bosses each send the portal update on death. The summoned encounter pair must both be defeated in this instance. |
+| [`hasLivingSacraGuard`](../../server/internal/world/mob_ai.go#L879)<br>`func hasLivingSacraGuard(mobs []MapMob) bool` | See the source definition and the subsystem ownership contract. |
+| [`recordMobAIMiss`](../../server/internal/world/mob_ai.go#L888)<br>`func recordMobAIMiss(mapID uint16, id, user uint32)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
