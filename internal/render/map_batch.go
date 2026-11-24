@@ -13,12 +13,13 @@ import (
 type MapBatch struct {
 	Transforms []M4
 
-	vao, boundVertex, boundIndex    uint32
-	vertices, indices               packedMeshBuffer
-	meshes                          map[*Mesh]skinLocation
-	placements, matrices            effectUpload
-	references, commands, materials effectUpload
-	uploaded                        bool
+	vao                                     uint32
+	boundVertexCapacity, boundIndexCapacity int
+	vertices, indices                       packedMeshBuffer
+	meshes                                  map[*Mesh]skinLocation
+	placements, matrices                    effectUpload
+	references, commands, materials         effectUpload
+	uploaded                                bool
 
 	draws         []mapDraw
 	visible       []uint32
@@ -171,9 +172,9 @@ func (b *MapBatch) drawIndirect(s *Scene3D, p *mapPipeline) {
 	if b.vao == 0 {
 		gl.CreateVertexArrays(1, &b.vao)
 	}
-	if b.boundVertex != b.vertices.id || b.boundIndex != b.indices.id {
+	if b.boundVertexCapacity != b.vertices.capacity || b.boundIndexCapacity != b.indices.capacity {
 		bindMeshLayout(b.vao, b.vertices.id, b.indices.id)
-		b.boundVertex, b.boundIndex = b.vertices.id, b.indices.id
+		b.boundVertexCapacity, b.boundIndexCapacity = b.vertices.capacity, b.indices.capacity
 	}
 	if !b.uploaded {
 		b.placements.upload(len(b.Transforms)*64, unsafe.Pointer(&b.Transforms[0]))
@@ -252,7 +253,7 @@ func (b *MapBatch) Trim() {
 func (b *MapBatch) releaseGeometry() {
 	if b.vao != 0 {
 		gl.DeleteVertexArrays(1, &b.vao)
-		b.vao, b.boundVertex, b.boundIndex = 0, 0, 0
+		b.vao, b.boundVertexCapacity, b.boundIndexCapacity = 0, 0, 0
 	}
 	b.vertices.delete()
 	b.indices.delete()

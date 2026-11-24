@@ -17,14 +17,14 @@ type effectIndirectRun struct {
 }
 
 type effectIndirect struct {
-	program, vao            uint32
-	boundVertex, boundIndex uint32
-	vertices, indices, keys packedMeshBuffer
-	geometry                map[*Mesh]effectIndirectLocation
-	commands                []indexedDrawCommand
-	materials               [][4]uint32
-	runs                    []effectIndirectRun
-	commandData, drawData   effectUpload
+	program, vao                            uint32
+	boundVertexCapacity, boundIndexCapacity int
+	vertices, indices, keys                 packedMeshBuffer
+	geometry                                map[*Mesh]effectIndirectLocation
+	commands                                []indexedDrawCommand
+	materials                               [][4]uint32
+	runs                                    []effectIndirectRun
+	commandData, drawData                   effectUpload
 }
 
 func (p *effectIndirect) meshLocation(m *Mesh, g *EffectGeometry) (effectIndirectLocation, bool) {
@@ -97,9 +97,9 @@ func (p *effectIndirect) draw(s *Scene3D) {
 	if p.vao == 0 {
 		gl.CreateVertexArrays(1, &p.vao)
 	}
-	if p.boundVertex != p.vertices.id || p.boundIndex != p.indices.id {
+	if p.boundVertexCapacity != p.vertices.capacity || p.boundIndexCapacity != p.indices.capacity {
 		bindMeshLayout(p.vao, p.vertices.id, p.indices.id)
-		p.boundVertex, p.boundIndex = p.vertices.id, p.indices.id
+		p.boundVertexCapacity, p.boundIndexCapacity = p.vertices.capacity, p.indices.capacity
 	}
 	p.commandData.upload(len(p.commands)*indexedDrawStride, unsafe.Pointer(&p.commands[0]))
 	p.drawData.upload(len(p.materials)*int(unsafe.Sizeof(p.materials[0])), unsafe.Pointer(&p.materials[0]))
@@ -125,7 +125,7 @@ func (p *effectIndirect) draw(s *Scene3D) {
 func (p *effectIndirect) releaseGeometry() {
 	if p.vao != 0 {
 		gl.DeleteVertexArrays(1, &p.vao)
-		p.vao, p.boundVertex, p.boundIndex = 0, 0, 0
+		p.vao, p.boundVertexCapacity, p.boundIndexCapacity = 0, 0, 0
 	}
 	p.vertices.delete()
 	p.indices.delete()

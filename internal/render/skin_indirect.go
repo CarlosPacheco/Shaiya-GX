@@ -27,6 +27,9 @@ type skinDrawRun struct {
 	twoSided  bool
 }
 
+// Capacity increases on every replacement until deletion, which also drops the
+// VAO. Use capacity to detect a change: OpenGL can reuse a deleted buffer name
+// while an unbound VAO still references the previous allocation.
 type packedMeshBuffer struct {
 	id             uint32
 	used, capacity int
@@ -61,14 +64,14 @@ func (b *packedMeshBuffer) delete() {
 // SkinCrowd retains packed geometry for one scene. Meshes are immutable and
 // their assets must outlive the cache. The ordinary VAOs remain available.
 type SkinCrowd struct {
-	vao, indirect           uint32
-	boundVertex, boundIndex uint32
-	commandBytes            uint64
-	vertices, indices       packedMeshBuffer
-	meshes                  map[*SkinMesh]skinLocation
-	commands                []indexedDrawCommand
-	materials               []skinDrawMaterial
-	runs                    []skinDrawRun
+	vao, indirect                           uint32
+	boundVertexCapacity, boundIndexCapacity int
+	commandBytes                            uint64
+	vertices, indices                       packedMeshBuffer
+	meshes                                  map[*SkinMesh]skinLocation
+	commands                                []indexedDrawCommand
+	materials                               []skinDrawMaterial
+	runs                                    []skinDrawRun
 }
 
 func (b *SkinCrowd) meshLocation(m *SkinMesh) (skinLocation, bool) {
@@ -128,9 +131,9 @@ func (k *Skinner) DrawCrowdIndirect(s *Scene3D, b *SkinCrowd, groups []SkinGroup
 		gl.CreateVertexArrays(1, &b.vao)
 		gl.CreateBuffers(1, &b.indirect)
 	}
-	if b.boundVertex != b.vertices.id || b.boundIndex != b.indices.id {
+	if b.boundVertexCapacity != b.vertices.capacity || b.boundIndexCapacity != b.indices.capacity {
 		bindSkinMeshLayout(b.vao, b.vertices.id, b.indices.id)
-		b.boundVertex, b.boundIndex = b.vertices.id, b.indices.id
+		b.boundVertexCapacity, b.boundIndexCapacity = b.vertices.capacity, b.indices.capacity
 	}
 	commandBytes := len(b.commands) * indexedDrawStride
 	gl.NamedBufferData(b.indirect, commandBytes, unsafe.Pointer(&b.commands[0]), gl.STREAM_DRAW)
