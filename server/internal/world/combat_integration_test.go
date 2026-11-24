@@ -474,7 +474,7 @@ func TestMobAI(t *testing.T) {
 	mob().PosX = 130
 	mob().nextChaseAt = time.Now().Add(time.Minute)
 	s.mu.Unlock()
-	// The target runs past 45 units from home: the mob walks home.
+	// The target runs past 45 units from home, so the mob returns home.
 	far := snap(2, 100+mobLeash+5, 100)
 	TickMobCombat([]PlayerCombatSnapshot{far}, 64)
 	if mob().AggroTarget != 0 || !mob().returningHome {

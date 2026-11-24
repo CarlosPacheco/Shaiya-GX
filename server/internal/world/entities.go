@@ -85,6 +85,7 @@ type MapMob struct {
 	moveStart            time.Time
 	moveDuration         time.Duration
 	moveMotion           uint8
+	moveSpeedTier        uint8
 	stoppedOnDeath       bool
 	spawnMinY, spawnMaxY float32
 	spawnHeightKnown     bool
@@ -802,7 +803,7 @@ const (
 	mobHomeDone = 10.0 // ReturnHome completes within 10 units of home
 )
 
-// TickMobCombat advances targeting, attacks, chasing and walking home.
+// TickMobCombat advances targeting, attacks, chasing and returning home.
 func TickMobCombat(players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick {
 	var tick MobCombatTick
 	now := time.Now()
@@ -849,6 +850,7 @@ func TickMobCombat(players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick 
 				h.event("reset")
 			}
 			h.event("combat", int(int64(m.CurrentHP)*100/int64(max(m.MaxHP, 1))), m.lua.attackedCount)
+			m.refreshMoveSpeed(mapID, now, &tick)
 			if len(tick.Attacks)+len(tick.Moves) > before {
 				actions++
 			}
@@ -871,7 +873,7 @@ func (m *MapMob) liveTarget(players []PlayerCombatSnapshot) *PlayerCombatSnapsho
 	return nil
 }
 
-// dropTarget: status 0 (idle) or 3 (walk home).
+// dropTarget: status 0 (idle) or 3 (return home).
 func (m *MapMob) dropTarget(home bool) {
 	m.AggroTarget, m.lastAttackAt, m.nextAttackAt = 0, time.Time{}, time.Time{}
 	m.returningHome = home
@@ -965,7 +967,7 @@ func (m *MapMob) stepChase(now time.Time, mapID uint16, t *PlayerCombatSnapshot,
 	nz := m.PosZ + (t.PosZ-m.PosZ)/d*step
 	if !IsMapWalkable(mapID, nx, nz) {
 		// No straight line (the original then paths around walls; not
-		// modeled): give up and walk home.
+		// modeled): give up and return home.
 		m.dropTarget(true)
 		return false
 	}
@@ -973,7 +975,8 @@ func (m *MapMob) stepChase(now time.Time, mapID uint16, t *PlayerCombatSnapshot,
 	return true
 }
 
-// stepHome walks toward the spawn and clears effects and aggro on arrival.
+// stepHome runs toward the spawn and clears effects and aggro on arrival.
+// CMob::ReturnHome sends movement mode 1 with the chase step and time.
 func (m *MapMob) stepHome(now time.Time, mapID uint16, mods *mobMods, tick *MobCombatTick) bool {
 	if m.movingAt(now) || now.Before(m.nextChaseAt) {
 		return false
@@ -993,7 +996,7 @@ func (m *MapMob) stepHome(now time.Time, mapID uint16, mods *mobMods, tick *MobC
 			m.nextChaseAt = now.Add(time.Second)
 			return false
 		}
-		tick.Moves = append(tick.Moves, m.moveTo(mapID, now, next, mobMotionWalk))
+		tick.Moves = append(tick.Moves, m.moveTo(mapID, now, next, mobMotionRun))
 		return true
 	}
 	d := DistanceXZ(m.PosX, m.PosZ, m.homeX, m.homeZ)
@@ -1013,7 +1016,7 @@ func (m *MapMob) stepHome(now time.Time, mapID uint16, mods *mobMods, tick *MobC
 			next = mapnav.Point{nx, m.PosY, nz}
 		}
 	}
-	tick.Moves = append(tick.Moves, m.moveTo(mapID, now, next, mobMotionWalk))
+	tick.Moves = append(tick.Moves, m.moveTo(mapID, now, next, mobMotionRun))
 	return true
 }
 

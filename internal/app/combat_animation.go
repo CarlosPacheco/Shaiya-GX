@@ -157,7 +157,7 @@ func (a *App) confirmedAnimation(p []byte) {
 		}
 	case proto.MobEnter, proto.GXMobEnter:
 		a.trackMob(a.state.Entities[proto.NewReader(p).U32()])
-	case proto.MobMove, proto.GXMobMove:
+	case proto.MobMove, proto.GXMobMove, proto.MobSpeed, proto.TargetMobGetState:
 		if mob := a.trackMob(a.state.Entities[proto.NewReader(p).U32()]); mob != nil {
 			a.updateMobPosition(mob)
 		}

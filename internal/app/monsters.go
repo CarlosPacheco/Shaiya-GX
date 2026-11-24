@@ -18,6 +18,7 @@ type mobActor struct {
 	ground        mobGroundCache
 	pos           render.V3
 	position      remotePosition
+	moveSpeedTier uint8
 	yaw, heading  float64
 	idleAt        float64
 	attackTarget  uint32
@@ -73,35 +74,47 @@ func (a *App) updateMobPosition(m *mobActor) {
 		return
 	}
 	pos := m.position.update(e, a.clock)
-	if newMove && m.position.duration > 0 {
-		delta := m.position.to.Sub(m.position.from)
-		m.turnToward(delta)
+	if m.position.duration > 0 {
+		delta := m.position.to.Sub(pos)
+		if newMove {
+			m.turnToward(delta)
+		}
 		if !e.MobHeightKnown {
-			// Native 0x0603 does not carry a duration. Use the same constant
-			// ground speed as the original client and GX World.
-			speed := 2.
-			if a.assets != nil {
-				if def, err := a.assets.MonsterDefinition(e.TypeID); err == nil {
-					step, ms := def.NormalStep, def.NormalTimeMS
-					if e.Motion != 0 || step == 0 || ms == 0 {
-						step, ms = def.ChaseStep, def.ChaseTimeMS
-					}
-					tier := uint8(2)
-					if e.MobSpeedKnown {
-						tier = e.MobMoveSpeed
-					}
-					if v := movespeed.MobUnitsPerSecond(int(step), ms, tier); v > 0 {
-						speed = v
-					}
-				}
+			// 0x0603 supplies a destination. Read the native pace on move
+			// orders and whenever a speed packet changes the active tier.
+			tier := uint8(2)
+			if e.MobSpeedKnown {
+				tier = movespeed.MobMoveTier(e.MobMoveSpeed)
 			}
-			m.position.duration = max(.05, math.Hypot(float64(delta[0]), float64(delta[2]))/speed)
+			if newMove || tier != m.moveSpeedTier {
+				m.moveSpeedTier = tier
+				m.position.from, m.position.start = pos, a.clock
+				m.position.duration = math.Hypot(float64(delta[0]), float64(delta[2])) / a.legacyMobMoveSpeed(e, tier)
+			}
 		}
 	}
 	m.pos = m.ground.resolve(a.wv.world, pos, e.MobHeightKnown, e.PositionResetSerial)
 	if reset {
 		m.placeActor()
 	}
+}
+
+func (a *App) legacyMobMoveSpeed(e *game.Entity, tier uint8) float64 {
+	if a.assets == nil {
+		return 2
+	}
+	def, err := a.assets.MonsterDefinition(e.TypeID)
+	if err != nil {
+		return 2
+	}
+	step, ms := def.NormalStep, def.NormalTimeMS
+	if e.Motion != 0 || step == 0 || ms == 0 {
+		step, ms = def.ChaseStep, def.ChaseTimeMS
+	}
+	if speed := movespeed.MobUnitsPerSecond(int(step), ms, tier); speed > 0 {
+		return speed
+	}
+	return 2
 }
 
 func (m *mobActor) turnToward(dir render.V3) {

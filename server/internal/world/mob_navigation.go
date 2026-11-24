@@ -239,20 +239,22 @@ func (m *MapMob) positionAt(now time.Time) mapnav.Point {
 
 func (m *MapMob) moveTo(mapID uint16, now time.Time, to mapnav.Point, motion uint8) entityMove {
 	from := m.positionAt(now)
+	tier := movespeed.MobMoveTier(m.mods().moveSpeedIndex())
 	speed := 2.
 	if m.def != nil {
 		step, ms := m.def.NormalStep, m.def.NormalTimeMS
 		if motion == mobMotionRun || step == 0 || ms == 0 {
 			step, ms = m.def.ChaseStep, m.def.ChaseTimeMS
 		}
-		mods := m.mods()
-		if v := movespeed.MobUnitsPerSecond(int(step), ms, uint8(min(max(2+mods.MoveSpeed, 0), 4))); v > 0 {
+		if v := movespeed.MobUnitsPerSecond(int(step), ms, tier); v > 0 {
 			speed = v
 		}
 	}
 	travel := DistanceXZ(from[0], from[2], to[0], to[2])
-	m.moveFrom, m.moveStart, m.moveMotion = from, now, motion
-	m.moveDuration = max(mobNavigationTick, time.Duration(math.Ceil(float64(travel)*1000/speed))*time.Millisecond)
+	m.moveFrom, m.moveStart, m.moveMotion, m.moveSpeedTier = from, now, motion, tier
+	// Positive durations use the packet's millisecond resolution, including
+	// segments that finish before the next AI sweep.
+	m.moveDuration = max(time.Millisecond, time.Duration(math.Ceil(float64(travel)*1000/speed))*time.Millisecond)
 	if !m.wireHeightKnown() && travel >= 20 {
 		m.moveDuration = 0 // Native 0x0603 jumps at twenty horizontal units.
 	}
@@ -263,6 +265,15 @@ func (m *MapMob) moveTo(mapID uint16, now time.Time, to mapnav.Point, motion uin
 	entering.setPoint(from)
 	return entityMove{MapID: mapID, Kind: viewMob, ID: m.ID, From: oldCell, To: m.cell, Fresh: fresh,
 		Changed: fresh || oldCell != m.cell, Move: buildMobMove(m, motion), Enter: buildMobEnter(&entering, false)}
+}
+
+// The original client reads the current speed index every frame. Update the
+// active segment from its current position so World and the client keep the
+// same destination and arrival time when a speed effect changes.
+func (m *MapMob) refreshMoveSpeed(mapID uint16, now time.Time, tick *MobCombatTick) {
+	if m.movingAt(now) && movespeed.MobMoveTier(m.mods().moveSpeedIndex()) != m.moveSpeedTier {
+		tick.Moves = append(tick.Moves, m.moveTo(mapID, now, m.point(), m.moveMotion))
+	}
 }
 
 func (m *MapMob) appearance(now time.Time, fresh bool) (enter, move []byte) {

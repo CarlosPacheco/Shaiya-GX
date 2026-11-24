@@ -78,6 +78,19 @@ have been validated.
 | Attackspecial1/2/3 | First two retained codes require a dedicated use-site audit; third selects classic respawn delay |
 | Attackok1/2/3 | Slot enabled/conditions; GX scans 3→1 with HP windows and per-slot cooldowns; code 6 retargets weakest eligible enemy |
 
+### Chase and return speed
+
+`CMob::Chase` (`0x004a6de0`) and `CMob::ReturnHome` (`0x004a7670`) both
+send movement mode 1 and use `ChaseStep` and `ChaseTime`. The original clients
+at EP5.4 `0x004312a0` and PS107 `0x00431aa0` advance in XZ at
+`(step + tier offset) / time in seconds - 0.3` units per second. They read
+the current movement tier on each frame. For example, the Fantasma Dragon
+runs at about 6.367 units/s at the normal tier and 4.144 at tier 0.
+
+GX uses these speeds to time its chase and return segments, including segments
+shorter than one AI sweep. When the movement tier changes, World sends the
+updated duration from the mob's current position to the same destination.
+
 ### Corrected quest index
 
 Native loader maps `1..1000` to type 27, `1001..2000` to type 28, and larger

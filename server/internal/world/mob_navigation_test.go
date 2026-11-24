@@ -113,7 +113,7 @@ func TestOriginalMobNavigation(t *testing.T) {
 				mobNavigation.Unlock()
 			})
 			origin := first.point()
-			first.def = &db.MobDef{ChaseStep: 2, ChaseTimeMS: 500}
+			first.def = &db.MobDef{NormalStep: 2, NormalTimeMS: 2000, ChaseStep: 2, ChaseTimeMS: 500}
 			for i := 0; i < 3000 && mapnav.Distance(first.point(), routeGoal) > .1; i++ {
 				next, ok := first.navigate(time.Now(), id, routeGoal, 2)
 				if !ok {
@@ -141,9 +141,9 @@ func TestOriginalMobNavigation(t *testing.T) {
 			speed := float64(travelled) / elapsed
 			if speed < 3.2 {
 				_, backPath := nav.Path(first.point(), origin)
-				t.Fatalf("map %d path reduced nominal 4 units/s to %.2f (%g units / %.2fs); current=%v home=%v reversePath=%t", id, speed, travelled, elapsed, first.point(), origin, backPath)
+				t.Fatalf("map %d path reduced nominal 3.7 units/s to %.2f (%g units / %.2fs); current=%v home=%v reversePath=%t", id, speed, travelled, elapsed, first.point(), origin, backPath)
 			}
-			t.Logf("map %d simulated home speed %.2f units/s (nominal 4)", id, speed)
+			t.Logf("map %d simulated home speed %.2f units/s (nominal 3.7)", id, speed)
 			if first.returningHome || mapnav.Distance(first.point(), origin) > .1 {
 				t.Fatalf("home route failed: %v expected %v", first.point(), origin)
 			}

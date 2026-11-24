@@ -36,7 +36,7 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 	defer arc.Close()
 	assets := scene.NewAssets(arc)
 	const playerID, mobID = 1, 77
-	newApp := func() *App {
+	newApp := func(template uint16) *App {
 		a := inputApp()
 		a.assets = assets
 		a.clock, a.frameDT = 10, 1.0/60
@@ -44,7 +44,7 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 		spawn := proto.NewWriter(proto.GXMobEnter)
 		spawn.U32(mobID)
 		spawn.Bool(false)
-		spawn.U16(2009)
+		spawn.U16(template)
 		spawn.F32(100)
 		spawn.F32(2)
 		spawn.F32(100)
@@ -72,8 +72,50 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 		a.applyWorldPacket(w.Bytes())
 	}
 
+	t.Run("native running pace", func(t *testing.T) {
+		a := newApp(902)
+		m := a.wv.mobs[mobID]
+		legacyMove := func(x float32) {
+			w := proto.NewWriter(proto.MobMove)
+			w.U32(mobID)
+			w.U8(1)
+			w.F32(x)
+			w.F32(100)
+			a.applyWorldPacket(w.Bytes())
+		}
+		speed := func(tier uint8) {
+			w := proto.NewWriter(proto.MobSpeed)
+			w.U32(mobID)
+			w.U8(3)
+			w.U8(tier)
+			a.applyWorldPacket(w.Bytes())
+		}
+		sample := func(elapsed, want float64) {
+			t.Helper()
+			a.clock += elapsed
+			a.updateMobPosition(m)
+			if math.Abs(float64(m.pos[0])-want) > .00002 {
+				t.Fatalf("x = %g, want %.5f", m.pos[0], want)
+			}
+		}
+		legacyMove(100.16)
+		sample(1.0/60, 100.10611)
+		sample(1.0/60, 100.16)
+		legacyMove(112)
+		sample(.1, 100.79667)
+		speed(0)
+		sample(0, 100.79667)
+		sample(.1, 101.21111)
+		speed(255)
+		sample(.1, 101.84778)
+
+		move(a, 102, 2, 26)
+		speed(0)
+		sample(.026, 102)
+	})
+
 	t.Run("movement and mob swing", func(t *testing.T) {
-		a := newApp()
+		a := newApp(2009)
 		a.wv.pos = render.V3{101, 2, 100}
 		m := a.wv.mobs[mobID]
 		m.yaw, m.heading = 0, 0
@@ -105,7 +147,7 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 		}
 		t.Logf("Mob contact at %.3fs including blend, attack cursor %.3fs", a.clock-started, m.actor.Time)
 
-		a = newApp()
+		a = newApp(2009)
 		strike(a, proto.MobAttackCharacter, mobID, playerID, 123)
 		m = a.wv.mobs[mobID]
 		if m.actor == nil || !m.actor.Attacking() || len(a.combatNumbers) != 0 {
@@ -119,7 +161,7 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 			name = "bow"
 		}
 		t.Run(name+" lethal contact", func(t *testing.T) {
-			a := newApp()
+			a := newApp(2009)
 			a.state.Target = mobID
 			a.wv.pos = render.V3{98, 2, 100}
 			a.state.Inventory[[2]uint8{0, 5}] = proto.InventoryItem{Type: weapon, TypeID: 1}
