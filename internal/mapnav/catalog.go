@@ -88,8 +88,11 @@ func ValidateCatalog(directory string) (bool, error) {
 		if err = json.Unmarshal(raw, &manifest); err != nil {
 			return true, err
 		}
-		if manifest.MapID != id || manifest.Version != FormatVersion || manifest.CollisionRules != CollisionRulesVersion {
+		if manifest.MapID != id || manifest.Version != FormatVersion {
 			return true, fmt.Errorf("invalid navigation manifest for map %d", id)
+		}
+		if manifest.CollisionRules != CollisionRulesVersion {
+			return true, fmt.Errorf("map %d uses collision rules %d, expected %d; rebuild the geometry catalog", id, manifest.CollisionRules, CollisionRulesVersion)
 		}
 		if manifest.PlayerPhysics != PlayerPhysicsVersion {
 			return true, fmt.Errorf("map %d is missing player physics; run gx_mapbuild -physics-only", id)
