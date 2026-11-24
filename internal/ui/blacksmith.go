@@ -148,6 +148,11 @@ func (v *Blacksmith) place(x, y int, busy, ready, extractReady, enchantReady, co
 	v.back.Disabled = busy
 }
 
+// Reset restores the main menu page and clears scroll and socket state.
+func (v *Blacksmith) Reset() {
+	v.Mode, v.GemSlot, v.textOffset = ForgeMenu, 0, 0
+}
+
 // Update returns the close, link, extract, enchant and recreate actions.
 // Menu buttons and Cancel switch pages by themselves.
 func (v *Blacksmith) Update(in *platform.Input, w, h int, busy, ready, extractReady, enchantReady, composeReady bool) (bool, bool, bool, bool, bool) {
@@ -175,7 +180,7 @@ func (v *Blacksmith) Update(in *platform.Input, w, h int, busy, ready, extractRe
 		return v.menuClose.Update(in), false, false, false, false
 	}
 	if v.back.Update(in) {
-		v.Mode, v.textOffset = ForgeMenu, 0
+		v.Reset()
 		return false, false, false, false, false
 	}
 	v.textOffset = v.welcome.Update(in, x, y, v.textLines, 10, v.textOffset)

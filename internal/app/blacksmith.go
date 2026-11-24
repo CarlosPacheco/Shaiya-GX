@@ -52,11 +52,18 @@ func (a *App) blacksmithExtractReady() bool {
 	return v.selected[0] && a.state.Inventory[v.keys[0]] == v.items[0] && v.items[0].Gems != [6]uint8{} && v.selected[3] && a.isForgeHammer(v.items[3], 58)
 }
 
+func (a *App) resetBlacksmith() {
+	a.blacksmith = blacksmithView{}
+	if a.blacksmithUI != nil {
+		a.blacksmithUI.Reset()
+	}
+}
+
 func (a *App) updateBlacksmith(in *platform.Input, w, h int) bool {
 	v := &a.blacksmith
 	if v.npcID != a.shop.npcID {
-		*v = blacksmithView{npcID: a.shop.npcID}
-		a.blacksmithUI.Mode = ui.ForgeMenu
+		a.resetBlacksmith()
+		v.npcID = a.shop.npcID
 		if !a.inventory.open {
 			a.toggleInventory()
 		}
@@ -76,12 +83,7 @@ func (a *App) updateBlacksmith(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if (closed || in.HasKey(platform.KeyEscape)) && !busy {
-		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-			a.backToLoginID(12011)
-			return true
-		}
-		v.quote = forgeQuoteView{}
-		a.shop.npcID = 0
+		a.closeNPC()
 		return true
 	}
 	if !busy && in.Clicked && !a.inventory.dragging {
