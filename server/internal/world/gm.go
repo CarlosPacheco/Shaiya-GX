@@ -511,15 +511,27 @@ func (s *Session) gmMove(mapID uint16) error {
 			}
 		}
 	}
-	if target == nil {
-		return fmt.Errorf("map has no safe arrival point")
+	var arrival MapPos
+	if target != nil {
+		arrival = MapPos{mapID, (target.LowerX + target.UpperX) / 2, target.LowerY + .9, (target.LowerZ + target.UpperZ) / 2}
+	} else {
+		// These maps can be inspected without a portal or a spawn area.
+		switch mapID {
+		case 39: // Secret Arena
+			arrival = MapPos{39, 83, 2.13, 66}
+		case 41: // Prison
+			arrival, _ = rebirthPosition(mapID, s.faction)
+		default:
+			return fmt.Errorf("map has no safe arrival point")
+		}
+		if arrival.MapID != mapID || !IsMapWalkable(mapID, arrival.X, arrival.Z) {
+			return fmt.Errorf("map has no safe arrival point")
+		}
 	}
-	b := target
 	s.cast = nil
 	s.autoAttack = false
 	s.useNpc(0)
-	s.applyTeleport(mapID, (b.LowerX+b.UpperX)/2, b.LowerY+.9, (b.LowerZ+b.UpperZ)/2, "GM cmove", true)
-	if realMap(s.char.MapID) != mapID {
+	if !s.applyTeleport(mapID, arrival.X, arrival.Y, arrival.Z, "GM cmove", true) {
 		return fmt.Errorf("destination unavailable")
 	}
 	s.gmReply(fmt.Sprintf("GM: map %d.", mapID))

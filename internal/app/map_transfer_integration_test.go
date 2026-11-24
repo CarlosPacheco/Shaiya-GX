@@ -35,7 +35,7 @@ func TestRepeatedMapTransfersAgainstIsolatedGX(t *testing.T) {
 			time.Sleep(time.Millisecond)
 		}
 	}
-	for _, mapID := range []uint16{18, 45, 1, 18, 18, 45, 1} {
+	for _, mapID := range []uint16{18, 45, 39, 41, 1, 18, 18, 45, 1} {
 		send(proto.ChatPacket(proto.ChannelNormal, false, fmt.Sprintf("/cmove %d", mapID)))
 		wait(func() bool { return st.MapID == mapID })
 		// This command is admitted only after the load acknowledgement. Ping alone
@@ -49,5 +49,5 @@ func TestRepeatedMapTransfersAgainstIsolatedGX(t *testing.T) {
 	}
 	send(proto.LogoutPacket())
 	wait(func() bool { return st.Phase == game.PhaseCharSelect })
-	t.Log("Seven consecutive map commands, including same-map teleport, stayed connected and accepted gameplay commands")
+	t.Log("Nine consecutive map commands, including same-map teleport, stayed connected and accepted gameplay commands")
 }
