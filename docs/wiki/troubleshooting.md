@@ -18,12 +18,6 @@ uses Zenity or KDialog when available, with terminal and file diagnostics always
 available. Automated screenshot/autoplay runs log failures without opening a
 blocking desktop dialog.
 
-On Windows, `load OpenGL entry points: glGetnTexImage` means the OpenGL
-context was created and GX stopped while looking up a driver function.
-Current GX builds can start without that unused texture query. OpenGL 4.5
-core is still required. Include the GPU model, graphics driver version and
-`logs/client.log` when reporting a graphics startup failure.
-
 ## Linking example
 
 For a lapis with ReqIg 31, without a blessing modifier, the base chance is
