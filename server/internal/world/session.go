@@ -803,6 +803,11 @@ func (s *Session) selectCharacter(id uint32) {
 	} else if mapCreateType(ch.MapID) != "" {
 		ch.MapID, ch.PosX, ch.PosY, ch.PosZ = s.respawnDestination(&ch)
 	}
+	relocatedHeight := false
+	if g, err := s.playerGeometry(ch.MapID); err == nil && !g.ValidPlayerHeight(ch.PosY) {
+		ch.MapID, ch.PosX, ch.PosY, ch.PosZ = s.respawnDestination(&ch)
+		relocatedHeight = true
+	}
 	s.char = &ch
 	s.log.SetTag(strings.SplitN(s.log.Tag(), "/", 3)[0] + "/" + s.account.UserID + "/" + ch.Name)
 	s.items, err = db.CharacterItems(id)
@@ -889,7 +894,7 @@ func (s *Session) selectCharacter(id uint32) {
 		s.send(buildCharResult(packet.SelectCharacter, false, id), "collision resources unavailable")
 		return
 	}
-	if originalMap != ch.MapID {
+	if originalMap != ch.MapID || relocatedHeight {
 		if err := db.SaveCharacter(&ch); err != nil {
 			failed("relocate character", err)
 			return

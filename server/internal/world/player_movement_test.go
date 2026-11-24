@@ -421,3 +421,35 @@ func TestGMTurboBypassesOnlyTheMovementSpeedLimit(t *testing.T) {
 		t.Fatal("ordinary speed checking did not resume when turbo was disabled", s.char.PosZ)
 	}
 }
+
+func TestVoidFallReturnsToSupportedPosition(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	safe := s.movement.pos
+	// Start just off the fixture floor and advance server time without client
+	// height samples, until the lower height limit is crossed.
+	s.movement.pos[0] = -5
+	s.movement.fallTracking = true
+	s.movement.fallPeak = safe[1]
+	s.commitMovement()
+	recovered := false
+	for range 40 {
+		now = now.Add(100 * time.Millisecond)
+		recovered = s.advancePlayerVertical(now)
+		s.commitMovement()
+		if !s.movement.geometry.ValidPlayerHeight(s.char.PosY) {
+			t.Fatalf("void published an out-of-range Y %g", s.char.PosY)
+		}
+		if recovered {
+			break
+		}
+	}
+	if !recovered || s.movement.pos != safe || s.movement.fallTracking || s.movement.jumping ||
+		s.char.CurrentHP != 100 || !s.movement.geometry.Supported(s.movement.pos) {
+		t.Fatalf("failed to recover from the void: %+v", s.movement)
+	}
+	_, high := s.movement.geometry.PlayerHeightLimits()
+	s.movement.pos[1] = high + 1
+	if !s.advancePlayerVertical(now.Add(time.Millisecond)) || s.movement.pos != safe {
+		t.Fatal("overflow above the map did not recover to the last supported position")
+	}
+}

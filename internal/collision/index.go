@@ -42,9 +42,10 @@ func (r triangleRefs) visit(b Box, emit func(int)) {
 // Index is an immutable uniform-grid broad phase. Queries own their scratch
 // state; a prepared index can be read concurrently without render residency.
 type Index struct {
-	triangles []Triangle
-	cells     map[[2]int]triangleRefs
-	global    triangleRefs
+	triangles  []Triangle
+	cells      map[[2]int]triangleRefs
+	global     triangleRefs
+	minY, maxY float64
 }
 
 func NewIndex() *Index { return &Index{cells: map[[2]int]triangleRefs{}} }
@@ -54,6 +55,13 @@ func (i *Index) Len() int {
 	}
 	return len(i.triangles)
 }
+func (i *Index) VerticalBounds() (low, high float64, ok bool) {
+	if i.Len() == 0 {
+		return 0, 0, false
+	}
+	return i.minY, i.maxY, true
+}
+
 func (i *Index) Add(t Triangle) {
 	if !t.Valid() {
 		return
@@ -61,6 +69,11 @@ func (i *Index) Add(t Triangle) {
 	id := len(i.triangles)
 	i.triangles = append(i.triangles, t)
 	b := t.Bounds()
+	if id == 0 {
+		i.minY, i.maxY = b.Min[1], b.Max[1]
+	} else {
+		i.minY, i.maxY = min(i.minY, b.Min[1]), max(i.maxY, b.Max[1])
+	}
 	if !gridBox(b) {
 		i.global.add(id, b)
 		return

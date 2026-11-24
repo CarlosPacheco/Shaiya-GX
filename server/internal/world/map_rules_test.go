@@ -129,3 +129,32 @@ func TestClearWeatherPreviewRestoresScheduledWeather(t *testing.T) {
 		t.Fatalf("scheduled rain was not restored: %v", err)
 	}
 }
+
+func TestMap27OpenPortalsAllowBothFactions(t *testing.T) {
+	for _, mapID := range []uint16{27, 26} {
+		sh := shard(mapID)
+		sh.mu.Lock()
+		original := sh.entities.Portals
+		sh.entities.Portals = []MapPortal{
+			{Index: 0, TargetMapID: mapID, MaxLevel: 80, FactionOrPortalID: 2},
+			{Index: 1, TargetMapID: mapID, MaxLevel: 80, FactionOrPortalID: 3},
+			{Index: 2, TargetMapID: mapID, MinLevel: 80, MaxLevel: 80, FactionOrPortalID: 2},
+		}
+		sh.mu.Unlock()
+		t.Cleanup(func() { sh.mu.Lock(); sh.entities.Portals = original; sh.mu.Unlock() })
+	}
+	s, _ := gmWireSession(t, db.Character{MapID: 27, Level: 60, CurrentHP: 100}, false)
+	for _, faction := range []uint8{FactionLight, FactionDark} {
+		s.faction = faction
+		for index := range uint8(3) {
+			if _, ok := s.usablePortal(0, 0, 0, &index); ok != (index == 0) {
+				t.Errorf("map 27 portal %d: admission=%t for faction %d", index, ok, faction)
+			}
+		}
+	}
+	s.char.MapID, s.faction = 26, FactionLight
+	index := uint8(0)
+	if _, ok := s.usablePortal(0, 0, 0, &index); ok {
+		t.Fatal("map 26 lost its faction restriction")
+	}
+}

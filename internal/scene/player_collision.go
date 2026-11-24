@@ -50,6 +50,13 @@ func (w *World) visitCollisions(bounds collision.Box, emit func(collision.Triang
 	}
 }
 
+func (w *World) PlayerHeightLimits() (low, high float32) {
+	if w == nil {
+		return (*mapgeometry.Geometry)(nil).PlayerHeightLimits()
+	}
+	return w.physics.PlayerHeightLimits()
+}
+
 // MovePlayer adapts GX's foot position to the original ellipsoid centre.
 func (w *World) MovePlayer(feet, delta render.V3) (render.V3, bool) {
 	if w == nil || w.collision == nil {

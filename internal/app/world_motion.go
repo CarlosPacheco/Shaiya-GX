@@ -36,6 +36,11 @@ func playerMovementSpeed(s *proto.CharacterSpeed, mounted bool) float32 {
 
 // place keeps the complete camera offset, including elevation and user zoom.
 func (v *worldView) place(pos render.V3) {
+	low, high := v.world.PlayerHeightLimits()
+	if math.IsNaN(float64(pos[1])) {
+		pos[1] = v.pos[1]
+	}
+	pos[1] = min(max(pos[1], low), high)
 	if v.pos[0] != pos[0] || v.pos[2] != pos[2] {
 		v.movementRemainder = [2]float64{}
 	}

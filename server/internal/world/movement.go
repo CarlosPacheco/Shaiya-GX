@@ -28,7 +28,7 @@ func (s *Session) usablePortal(x, y, z float32, index *uint8) (MapPortal, bool) 
 	switch {
 	case !portal.IsOpen():
 		s.log.Printf("GX Server World rejected closed portal index=%d map=%d", portal.Index, ch.MapID)
-	case !portal.AllowsFaction(s.faction):
+	case realMap(ch.MapID) != 27 && !portal.AllowsFaction(s.faction):
 		s.log.Printf("GX Server World rejected portal faction index=%d map=%d faction=%d", portal.Index, ch.MapID, s.faction)
 	case !s.canEnterMap(portal.TargetMapID, ch.Level) || (!s.isAdmin && !portal.AllowsLevel(ch.Level)):
 		s.log.Printf("GX Server World rejected portal level index=%d map=%d level=%d", portal.Index, ch.MapID, ch.Level)

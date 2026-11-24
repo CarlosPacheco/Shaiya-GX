@@ -2565,16 +2565,16 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | [`savePosition`](../../server/internal/world/movement.go#L42)<br>`func (s *Session) savePosition()` | savePosition persists the character (usp_Save_Char_Info_E). |
 | [`syncPlayer`](../../server/internal/world/movement.go#L54)<br>`func (s *Session) syncPlayer()` | See the source definition and the subsystem ownership contract. |
 | [`applyTeleport`](../../server/internal/world/movement.go#L63)<br>`func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmDirect ...bool)` | applyTeleport is the single path for every teleport (portals, town, resurrection): moves the character, persists it, acks the client, introduces it to viewers at the destination and refreshes visibility. |
-| [`handleCharacterMove`](../../server/internal/world/movement.go#L147)<br>`func (s *Session) handleCharacterMove(p []byte)` | handleCharacterMove (0x0501): motion:u8, direction:u16, x, y, z:f32. |
-| [`handleEnteredPortal`](../../server/internal/world/movement.go#L222)<br>`func (s *Session) handleEnteredPortal(index uint8)` | See the source definition and the subsystem ownership contract. |
-| [`isTownCommand`](../../server/internal/world/movement.go#L235)<br>`func isTownCommand(message string) bool` | See the source definition and the subsystem ownership contract. |
-| [`executeTown`](../../server/internal/world/movement.go#L242)<br>`func (s *Session) executeTown()` | executeTown moves the character to the nearest faction spawn area on its map (also the escape hatch while dead). |
-| [`deathExpPercent`](../../server/internal/world/movement.go#L266)<br>`const deathExpPercent = 5` | deathExpPercent is CUser::Death's drop without protection (deathExpLoss). |
-| [`expDrop`](../../server/internal/world/movement.go#L270)<br>`func expDrop(ch *db.Character, percent int, faction uint8) uint32` | expDrop is CUser::ExpDrop (0x0045ad50): above level 10, percent of the level's exp span, never below the level's start. |
-| [`returnToTownDelay`](../../server/internal/world/movement.go#L290)<br>`const returnToTownDelay = 10 * time.Second` | returnToTownDelay is 0x0556's tick + 10000 (CUser::PacketPC). |
-| [`handleReturnToTown`](../../server/internal/world/movement.go#L294)<br>`func (s *Session) handleReturnToTown()` | handleReturnToTown (0x0556): alive and with no move pending, the user is moved to its bind point 10 s later (UpdateResetPosition, type 0). |
-| [`cancelMove`](../../server/internal/world/movement.go#L303)<br>`func (s *Session) cancelMove()` | cancelMove is CUser::CancleMove for the type-0 move: moving, attacking, casting or being hit drops it without a reply. |
-| [`tickReturnToTown`](../../server/internal/world/movement.go#L305)<br>`func (s *Session) tickReturnToTown()` | See the source definition and the subsystem ownership contract. |
+| [`handleCharacterMove`](../../server/internal/world/movement.go#L149)<br>`func (s *Session) handleCharacterMove(p []byte)` | handleCharacterMove (0x0501): motion:u8, direction:u16, x, y, z:f32. |
+| [`handleEnteredPortal`](../../server/internal/world/movement.go#L224)<br>`func (s *Session) handleEnteredPortal(index uint8)` | See the source definition and the subsystem ownership contract. |
+| [`isTownCommand`](../../server/internal/world/movement.go#L243)<br>`func isTownCommand(message string) bool` | See the source definition and the subsystem ownership contract. |
+| [`executeTown`](../../server/internal/world/movement.go#L250)<br>`func (s *Session) executeTown()` | executeTown moves the character to the nearest faction spawn area on its map (also the escape hatch while dead). |
+| [`deathExpPercent`](../../server/internal/world/movement.go#L274)<br>`const deathExpPercent = 5` | deathExpPercent is CUser::Death's drop without protection (deathExpLoss). |
+| [`expDrop`](../../server/internal/world/movement.go#L278)<br>`func expDrop(ch *db.Character, percent int, faction uint8) uint32` | expDrop is CUser::ExpDrop (0x0045ad50): above level 10, percent of the level's exp span, never below the level's start. |
+| [`returnToTownDelay`](../../server/internal/world/movement.go#L298)<br>`const returnToTownDelay = 10 * time.Second` | returnToTownDelay is 0x0556's tick + 10000 (CUser::PacketPC). |
+| [`handleReturnToTown`](../../server/internal/world/movement.go#L302)<br>`func (s *Session) handleReturnToTown()` | handleReturnToTown (0x0556): alive and with no move pending, the user is moved to its bind point 10 s later (UpdateResetPosition, type 0). |
+| [`cancelMove`](../../server/internal/world/movement.go#L311)<br>`func (s *Session) cancelMove()` | cancelMove is CUser::CancleMove for the type-0 move: moving, attacking, casting or being hit drops it without a reply. |
+| [`tickReturnToTown`](../../server/internal/world/movement.go#L313)<br>`func (s *Session) tickReturnToTown()` | See the source definition and the subsystem ownership contract. |
 
 ### movement_rune.go
 
@@ -3064,17 +3064,19 @@ Direct GX dependencies: `internal/mapgeometry`, `internal/movespeed`, `internal/
 | Declaration | Responsibility / source comment |
 |---|---|
 | [`playerMovement`](../../server/internal/world/player_movement.go#L15)<br>`type playerMovement` | See the source definition and the subsystem ownership contract. |
-| [`playerGeometry`](../../server/internal/world/player_movement.go#L34)<br>`func (s *Session) playerGeometry(mapID uint16) (*mapgeometry.Geometry, error)` | See the source definition and the subsystem ownership contract. |
-| [`initPlayerMovement`](../../server/internal/world/player_movement.go#L51)<br>`func (s *Session) initPlayerMovement(now time.Time) error` | See the source definition and the subsystem ownership contract. |
-| [`movementSpeed`](../../server/internal/world/player_movement.go#L77)<br>`func (s *Session) movementSpeed() float32` | See the source definition and the subsystem ownership contract. |
-| [`startMovementJump`](../../server/internal/world/player_movement.go#L91)<br>`func (s *Session) startMovementJump(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
-| [`advancePlayerVertical`](../../server/internal/world/player_movement.go#L115)<br>`func (s *Session) advancePlayerVertical(now time.Time)` | advancePlayerVertical uses server time and geometry. Client Y is never an integration input; a fake jump flag cannot grant another impulse in mid-air. |
-| [`tickPlayerMovement`](../../server/internal/world/player_movement.go#L212)<br>`func (s *Session) tickPlayerMovement(now time.Time)` | See the source definition and the subsystem ownership contract. |
-| [`commitMovement`](../../server/internal/world/player_movement.go#L246)<br>`func (s *Session) commitMovement()` | See the source definition and the subsystem ownership contract. |
-| [`correctMovement`](../../server/internal/world/player_movement.go#L251)<br>`func (s *Session) correctMovement(reason string)` | See the source definition and the subsystem ownership contract. |
-| [`validatePlayerMovement`](../../server/internal/world/player_movement.go#L270)<br>`func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, direction uint16, now time.Time) (bool, string)` | See the source definition and the subsystem ownership contract. |
-| [`sendPhysicsClock`](../../server/internal/world/player_movement.go#L471)<br>`func (s *Session) sendPhysicsClock()` | See the source definition and the subsystem ownership contract. |
-| [`groundTrustedDestination`](../../server/internal/world/player_movement.go#L483)<br>`func (s *Session) groundTrustedDestination(x, y, z float32) (mapgeometry.Position, bool)` | groundTrustedDestination normalizes a server-authored same-map relocation. A live selected session always has geometry; unselected sessions have none. |
+| [`playerGeometry`](../../server/internal/world/player_movement.go#L35)<br>`func (s *Session) playerGeometry(mapID uint16) (*mapgeometry.Geometry, error)` | See the source definition and the subsystem ownership contract. |
+| [`initPlayerMovement`](../../server/internal/world/player_movement.go#L52)<br>`func (s *Session) initPlayerMovement(now time.Time) error` | See the source definition and the subsystem ownership contract. |
+| [`movementSpeed`](../../server/internal/world/player_movement.go#L78)<br>`func (s *Session) movementSpeed() float32` | See the source definition and the subsystem ownership contract. |
+| [`startMovementJump`](../../server/internal/world/player_movement.go#L92)<br>`func (s *Session) startMovementJump(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
+| [`advancePlayerVertical`](../../server/internal/world/player_movement.go#L122)<br>`func (s *Session) advancePlayerVertical(now time.Time) bool` | advancePlayerVertical uses server time and geometry. Client Y is never an integration input; a fake jump flag cannot grant another impulse in mid-air. |
+| [`recoverHeight`](../../server/internal/world/player_movement.go#L228)<br>`func (m *playerMovement) recoverHeight(now time.Time) bool` | Recovery uses a server-observed grounded position from the current map. |
+| [`tickPlayerMovement`](../../server/internal/world/player_movement.go#L249)<br>`func (s *Session) tickPlayerMovement(now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`syncHeightRecovery`](../../server/internal/world/player_movement.go#L286)<br>`func (s *Session) syncHeightRecovery()` | See the source definition and the subsystem ownership contract. |
+| [`commitMovement`](../../server/internal/world/player_movement.go#L297)<br>`func (s *Session) commitMovement()` | See the source definition and the subsystem ownership contract. |
+| [`correctMovement`](../../server/internal/world/player_movement.go#L302)<br>`func (s *Session) correctMovement(reason string)` | See the source definition and the subsystem ownership contract. |
+| [`validatePlayerMovement`](../../server/internal/world/player_movement.go#L321)<br>`func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, direction uint16, now time.Time) (bool, string)` | See the source definition and the subsystem ownership contract. |
+| [`sendPhysicsClock`](../../server/internal/world/player_movement.go#L534)<br>`func (s *Session) sendPhysicsClock()` | See the source definition and the subsystem ownership contract. |
+| [`groundTrustedDestination`](../../server/internal/world/player_movement.go#L546)<br>`func (s *Session) groundTrustedDestination(x, y, z float32) (mapgeometry.Position, bool)` | groundTrustedDestination normalizes a server-authored same-map relocation. A live selected session always has geometry; unselected sessions have none. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -3086,7 +3088,8 @@ type playerMovement struct {
 	slope                          mapgeometry.SlopeMotion
 	geometry                       *mapgeometry.Geometry
 	mapID                          uint16
-	pos                            mapgeometry.Position
+	pos, safe                      mapgeometry.Position
+	hasSafe                        bool
 	at, packetAt, budgetAt, jumpAt time.Time
 	credit                         float64
 	speedCorrectionPending         bool
@@ -4199,10 +4202,10 @@ Direct GX dependencies: `internal/proto`, `internal/skilltiming`, `server/intern
 | [`createCharacter`](../../server/internal/world/session.go#L710)<br>`func (s *Session) createCharacter(nc db.NewCharacter)` | See the source definition and the subsystem ownership contract. |
 | [`handleRename`](../../server/internal/world/session.go#L756)<br>`func (s *Session) handleRename(p []byte)` | See the source definition and the subsystem ownership contract. |
 | [`selectCharacter`](../../server/internal/world/session.go#L777)<br>`func (s *Session) selectCharacter(id uint32)` | See the source definition and the subsystem ownership contract. |
-| [`sendInitialState`](../../server/internal/world/session.go#L907)<br>`func (s *Session) sendInitialState(st *CharacterStats)` | sendInitialState is the captured character-select sequence; afterwards the server->client direction switches to the expanded XOR scheme. |
-| [`handleMapLoaded`](../../server/internal/world/session.go#L960)<br>`func (s *Session) handleMapLoaded()` | handleMapLoaded (0x0201 from the client): send the map state, register the player and exchange visibility with nearby players. |
-| [`handleMotion`](../../server/internal/world/session.go#L1010)<br>`func (s *Session) handleMotion(p []byte)` | handleMotion (0x0506): sit/stand persist; other motions are one-shot. The sender gets its own echo, which the client needs to play it. |
-| [`handleLogout`](../../server/internal/world/session.go#L1053)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
+| [`sendInitialState`](../../server/internal/world/session.go#L912)<br>`func (s *Session) sendInitialState(st *CharacterStats)` | sendInitialState is the captured character-select sequence; afterwards the server->client direction switches to the expanded XOR scheme. |
+| [`handleMapLoaded`](../../server/internal/world/session.go#L965)<br>`func (s *Session) handleMapLoaded()` | handleMapLoaded (0x0201 from the client): send the map state, register the player and exchange visibility with nearby players. |
+| [`handleMotion`](../../server/internal/world/session.go#L1015)<br>`func (s *Session) handleMotion(p []byte)` | handleMotion (0x0506): sit/stand persist; other motions are one-shot. The sender gets its own echo, which the client needs to play it. |
+| [`handleLogout`](../../server/internal/world/session.go#L1058)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -4966,18 +4969,20 @@ Direct GX dependencies: `internal/movespeed`, `internal/proto`, `server/internal
 | [`mountDefinition`](../../server/internal/world/vehicle.go#L98)<br>`func (s *Session) mountDefinition() (*db.Item, *db.ItemDef)` | See the source definition and the subsystem ownership contract. |
 | [`validMount`](../../server/internal/world/vehicle.go#L105)<br>`func validMount(d *db.ItemDef) bool` | See the source definition and the subsystem ownership contract. |
 | [`vehicleResult`](../../server/internal/world/vehicle.go#L108)<br>`func (s *Session) vehicleResult(ok, on bool)` | See the source definition and the subsystem ownership contract. |
-| [`handleUseVehicle`](../../server/internal/world/vehicle.go#L114)<br>`func (s *Session) handleUseVehicle()` | See the source definition and the subsystem ownership contract. |
-| [`dismount`](../../server/internal/world/vehicle.go#L147)<br>`func (s *Session) dismount()` | See the source definition and the subsystem ownership contract. |
-| [`cancelVehicleCast`](../../server/internal/world/vehicle.go#L154)<br>`func (s *Session) cancelVehicleCast()` | See the source definition and the subsystem ownership contract. |
-| [`tickVehicle`](../../server/internal/world/vehicle.go#L160)<br>`func (s *Session) tickVehicle(now time.Time)` | See the source definition and the subsystem ownership contract. |
-| [`mountSpeed`](../../server/internal/world/vehicle.go#L235)<br>`func (s *Session) mountSpeed() float32` | See the source definition and the subsystem ownership contract. |
-| [`vehicleNear`](../../server/internal/world/vehicle.go#L244)<br>`func vehicleNear(a, b *ConnectedPlayer) bool` | See the source definition and the subsystem ownership contract. |
-| [`vehicleReply`](../../server/internal/world/vehicle.go#L252)<br>`func vehicleReply(p *ConnectedPlayer, code uint8)` | See the source definition and the subsystem ownership contract. |
-| [`handleVehicleInvite`](../../server/internal/world/vehicle.go#L259)<br>`func (s *Session) handleVehicleInvite(packetData []byte)` | See the source definition and the subsystem ownership contract. |
-| [`handleVehicleAnswer`](../../server/internal/world/vehicle.go#L297)<br>`func (s *Session) handleVehicleAnswer(data []byte)` | See the source definition and the subsystem ownership contract. |
-| [`vehicleBlocked`](../../server/internal/world/vehicle.go#L350)<br>`func (s *Session) vehicleBlocked() bool` | See the source definition and the subsystem ownership contract. |
-| [`ridingVehicle`](../../server/internal/world/vehicle.go#L355)<br>`func (s *Session) ridingVehicle() bool` | See the source definition and the subsystem ownership contract. |
-| [`buildVehicleState`](../../server/internal/world/vehicle.go#L359)<br>`func buildVehicleState(v proto.VehicleState) []byte` | See the source definition and the subsystem ownership contract. |
+| [`mountForbiddenMap`](../../server/internal/world/vehicle.go#L117)<br>`func mountForbiddenMap(mapID uint16) bool` | mountForbiddenMap reports maps that do not allow mounts: dungeons (Map.ini MapType D), including their party and guild instances. |
+| [`keepsMountAcrossTeleport`](../../server/internal/world/vehicle.go#L126)<br>`func (s *Session) keepsMountAcrossTeleport(mapID uint16, label string) bool` | keepsMountAcrossTeleport lets a lone rider keep the mount through every kind of travel (portals, gatekeepers, GM moves, town return, queued moves) when the destination allows mounts. Dungeons, a driver with a passenger and rebirth leave the character on foot. |
+| [`handleUseVehicle`](../../server/internal/world/vehicle.go#L134)<br>`func (s *Session) handleUseVehicle()` | See the source definition and the subsystem ownership contract. |
+| [`dismount`](../../server/internal/world/vehicle.go#L167)<br>`func (s *Session) dismount()` | See the source definition and the subsystem ownership contract. |
+| [`cancelVehicleCast`](../../server/internal/world/vehicle.go#L174)<br>`func (s *Session) cancelVehicleCast()` | See the source definition and the subsystem ownership contract. |
+| [`tickVehicle`](../../server/internal/world/vehicle.go#L180)<br>`func (s *Session) tickVehicle(now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`mountSpeed`](../../server/internal/world/vehicle.go#L255)<br>`func (s *Session) mountSpeed() float32` | See the source definition and the subsystem ownership contract. |
+| [`vehicleNear`](../../server/internal/world/vehicle.go#L264)<br>`func vehicleNear(a, b *ConnectedPlayer) bool` | See the source definition and the subsystem ownership contract. |
+| [`vehicleReply`](../../server/internal/world/vehicle.go#L272)<br>`func vehicleReply(p *ConnectedPlayer, code uint8)` | See the source definition and the subsystem ownership contract. |
+| [`handleVehicleInvite`](../../server/internal/world/vehicle.go#L279)<br>`func (s *Session) handleVehicleInvite(packetData []byte)` | See the source definition and the subsystem ownership contract. |
+| [`handleVehicleAnswer`](../../server/internal/world/vehicle.go#L317)<br>`func (s *Session) handleVehicleAnswer(data []byte)` | See the source definition and the subsystem ownership contract. |
+| [`vehicleBlocked`](../../server/internal/world/vehicle.go#L370)<br>`func (s *Session) vehicleBlocked() bool` | See the source definition and the subsystem ownership contract. |
+| [`ridingVehicle`](../../server/internal/world/vehicle.go#L375)<br>`func (s *Session) ridingVehicle() bool` | See the source definition and the subsystem ownership contract. |
+| [`buildVehicleState`](../../server/internal/world/vehicle.go#L379)<br>`func buildVehicleState(v proto.VehicleState) []byte` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 

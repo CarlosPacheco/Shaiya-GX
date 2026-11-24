@@ -641,6 +641,20 @@ func buildPortalResult(index, result uint8) []byte {
 
 </details>
 
+<details><summary>PortalRequestPacket — internal/proto/portal.go</summary>
+
+[Source definition](../../internal/proto/portal.go#L12)
+
+```go
+func PortalRequestPacket(index uint8) []byte {
+	w := NewWriter(CharacterEnteredPortal)
+	w.U8(index)
+	return w.Bytes()
+}
+```
+
+</details>
+
 ## Opcode 020b
 
 **`0x020B` — CharacterMapTeleport**
@@ -1397,7 +1411,7 @@ Source notes: Native requests and invitation messages. 0x021C is also the server
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [handleUseVehicle (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L114)
+**S→C serializers:** [handleUseVehicle (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L134)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L463)
 
@@ -1407,7 +1421,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleUseVehicle — server/internal/world/vehicle.go</summary>
 
-[Source definition](../../server/internal/world/vehicle.go#L114)
+[Source definition](../../server/internal/world/vehicle.go#L134)
 
 ```go
 func (s *Session) handleUseVehicle() {
@@ -1424,7 +1438,7 @@ func (s *Session) handleUseVehicle() {
 	vehicleMu.Lock()
 	cooldown := vehicleCooldowns[s.char.ID]
 	vehicleMu.Unlock()
-	if !validMount(d) || s.dead || s.cast != nil || s.player.IsSitting() || s.movement.ladder.Active || s.vehicleBlocked() || time.Now().Before(cooldown) || !canEquip(s.char, d, mountSlot, s.items) {
+	if !validMount(d) || mountForbiddenMap(s.char.MapID) || s.dead || s.cast != nil || s.player.IsSitting() || s.movement.ladder.Active || s.vehicleBlocked() || time.Now().Before(cooldown) || !canEquip(s.char, d, mountSlot, s.items) {
 		s.vehicleResult(false, false)
 		return
 	}
@@ -1641,7 +1655,7 @@ Source notes: Native requests and invitation messages. 0x021C is also the server
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L245)
 
-**S→C serializers:** [handleVehicleInvite (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L259)
+**S→C serializers:** [handleVehicleInvite (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L279)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L449)
 
@@ -1651,7 +1665,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleVehicleInvite — server/internal/world/vehicle.go</summary>
 
-[Source definition](../../server/internal/world/vehicle.go#L259)
+[Source definition](../../server/internal/world/vehicle.go#L279)
 
 ```go
 func (s *Session) handleVehicleInvite(packetData []byte) {
@@ -1748,7 +1762,7 @@ Source notes: Native requests and invitation messages. 0x021C is also the server
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L247)
 
-**S→C serializers:** [vehicleReply (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L252)
+**S→C serializers:** [vehicleReply (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L272)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L456)
 
@@ -1758,7 +1772,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>vehicleReply — server/internal/world/vehicle.go</summary>
 
-[Source definition](../../server/internal/world/vehicle.go#L252)
+[Source definition](../../server/internal/world/vehicle.go#L272)
 
 ```go
 func vehicleReply(p *ConnectedPlayer, code uint8) {

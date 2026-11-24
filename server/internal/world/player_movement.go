@@ -19,7 +19,8 @@ type playerMovement struct {
 	slope                          mapgeometry.SlopeMotion
 	geometry                       *mapgeometry.Geometry
 	mapID                          uint16
-	pos                            mapgeometry.Position
+	pos, safe                      mapgeometry.Position
+	hasSafe                        bool
 	at, packetAt, budgetAt, jumpAt time.Time
 	credit                         float64
 	speedCorrectionPending         bool
@@ -65,7 +66,7 @@ func (s *Session) initPlayerMovement(now time.Time) error {
 		return fmt.Errorf("map %d character has no physical spawn surface", realMap(ch.MapID))
 	}
 	wasClimbing := s.movement.ladder.Active
-	s.movement = playerMovement{geometry: g, mapID: ch.MapID, pos: p, at: now, packetAt: now, budgetAt: now, credit: .2, fall: -2.98}
+	s.movement = playerMovement{geometry: g, mapID: ch.MapID, pos: p, safe: p, hasSafe: true, at: now, packetAt: now, budgetAt: now, credit: .2, fall: -2.98}
 	s.movement.fallPeak, s.movement.fallReady = p[1], g.Supported(p)
 	ch.PosX, ch.PosY, ch.PosZ = p[0], p[1], p[2]
 	s.syncPlayer()
@@ -96,7 +97,13 @@ func (s *Session) startMovementJump(now time.Time) bool {
 	if m.jumping {
 		return false
 	}
-	s.advancePlayerVertical(now)
+	if s.advancePlayerVertical(now) {
+		s.commitMovement()
+		s.syncHeightRecovery()
+		s.sendToViewers(buildCharacterMove(s.char, 0, m.direction), "authoritative height recovery")
+		s.correctMovement("outside map height limits")
+		return false
+	}
 	s.commitMovement()
 	if m.jumping || s.player != nil && s.player.vehicleState().State == proto.VehiclePassenger || s.movementSpeed() == 0 || !m.geometry.Supported(m.pos) || now.Sub(m.jumpAt) < 450*time.Millisecond {
 		return false
@@ -112,15 +119,18 @@ func (s *Session) startMovementJump(now time.Time) bool {
 
 // advancePlayerVertical uses server time and geometry. Client Y is never an
 // integration input; a fake jump flag cannot grant another impulse in mid-air.
-func (s *Session) advancePlayerVertical(now time.Time) {
+func (s *Session) advancePlayerVertical(now time.Time) bool {
 	m := &s.movement
 	if m.geometry == nil {
-		return
+		return false
+	}
+	if m.recoverHeight(now) {
+		return true
 	}
 	elapsed := now.Sub(m.at).Seconds()
 	m.at = now
 	if elapsed <= 0 {
-		return
+		return false
 	}
 	elapsed = min(elapsed, 1)
 	for elapsed > 0 {
@@ -138,8 +148,11 @@ func (s *Session) advancePlayerVertical(now time.Time) {
 		}
 		old := m.pos
 		supported := m.geometry.Supported(m.pos)
-		if supported && !m.jumping && !m.fallTracking {
-			m.fallReady = true
+		if supported && !m.jumping {
+			m.safe, m.hasSafe = m.pos, true
+			if !m.fallTracking {
+				m.fallReady = true
+			}
 		}
 		if m.fallReady && (m.jumping || !supported) {
 			if !m.fallTracking {
@@ -208,7 +221,31 @@ func (s *Session) advancePlayerVertical(now time.Time) {
 			break
 		}
 	}
+	return m.recoverHeight(now)
 }
+
+// Recovery uses a server-observed grounded position from the current map.
+func (m *playerMovement) recoverHeight(now time.Time) bool {
+	if m.geometry.ValidPlayerHeight(m.pos[1]) {
+		return false
+	}
+	if m.hasSafe && m.geometry.ValidPlayerHeight(m.safe[1]) {
+		m.pos = m.safe
+	} else {
+		low, high := m.geometry.PlayerHeightLimits()
+		if math.IsNaN(float64(m.pos[1])) {
+			m.pos[1] = low
+		}
+		m.pos[1] = min(max(m.pos[1], low), high)
+	}
+	m.at, m.budgetAt = now, now
+	m.credit, m.speedCorrectionPending = 0, false
+	m.jumping, m.jumpFall, m.fall = false, 0, -2.98
+	m.fallTracking, m.fallReady = false, false
+	m.ladder, m.slope, m.motion = mapgeometry.LadderMotion{}, mapgeometry.SlopeMotion{}, 0
+	return true
+}
+
 func (s *Session) tickPlayerMovement(now time.Time) {
 	if s.tickStinger() {
 		return
@@ -225,12 +262,15 @@ func (s *Session) tickPlayerMovement(now time.Time) {
 	if err := s.initPlayerMovement(now); err != nil {
 		return
 	}
-	s.advancePlayerVertical(now)
+	recovered := s.advancePlayerVertical(now)
 	if !s.movement.jumping {
 		s.movement.motion &^= 0x80
 	}
 	s.commitMovement()
-	if s.movement.pos != old || previousMotion != s.movement.motion || previousJump != s.movement.jumping {
+	if recovered {
+		s.syncHeightRecovery()
+	}
+	if recovered || s.movement.pos != old || previousMotion != s.movement.motion || previousJump != s.movement.jumping {
 		s.positionDirty = true
 		s.sendToViewers(buildCharacterMove(s.char, s.movement.motion, s.movement.direction), "authoritative gravity")
 		// A client that stops sending still cannot freeze its height on the server.
@@ -238,11 +278,22 @@ func (s *Session) tickPlayerMovement(now time.Time) {
 		// the previous 10 Hz X/Z and would rewind newer client movement.
 		// Bad height/path samples still get corrected by validation; idle
 		// clients keep receiving authoritative gravity and landing updates.
-		if reset || now.Sub(s.movement.packetAt) > 300*time.Millisecond {
+		if recovered || reset || now.Sub(s.movement.packetAt) > 300*time.Millisecond {
 			s.correctMovement("authoritative gravity")
 		}
 	}
 }
+func (s *Session) syncHeightRecovery() {
+	s.positionDirty = true
+	if s.player != nil {
+		s.player.UpdateMotion(0, s.movement.direction)
+		if s.player.moveViewCell(s.char.PosX, s.char.PosZ) {
+			s.refreshView()
+		}
+		s.partyMove()
+	}
+}
+
 func (s *Session) commitMovement() {
 	m := &s.movement
 	s.char.PosX, s.char.PosY, s.char.PosZ = m.pos[0], m.pos[1], m.pos[2]
@@ -293,8 +344,9 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	interleave := mapgeometry.NativeContact && !m.ladder.Active && (m.jumping || !m.geometry.Supported(m.pos)) &&
 		!(m.geometry.DeepWater(m.pos) && m.pos[1] <= -1.5)
 	verticalFrom := m.at
-	if !interleave {
-		s.advancePlayerVertical(now)
+	if !interleave && s.advancePlayerVertical(now) {
+		s.commitMovement()
+		return true, "outside map height limits"
 	}
 	if m.ladder.Active {
 		m.packetAt, m.budgetAt = now, now
@@ -405,18 +457,25 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		if interleave {
 			// The vertical half of this frame, at the position just reached.
 			m.at = verticalFrom.Add(time.Duration(float64(time.Second) * airSpan * float64(i) / float64(count)))
-			s.advancePlayerVertical(verticalFrom.Add(time.Duration(float64(time.Second) * airSpan * float64(i+1) / float64(count))))
+			if s.advancePlayerVertical(verticalFrom.Add(time.Duration(float64(time.Second) * airSpan * float64(i+1) / float64(count)))) {
+				s.commitMovement()
+				return true, "outside map height limits"
+			}
 		}
 		if wasSupported && !m.geometry.Supported(m.pos) && !m.jumping && speed > 0 {
 			travelTime := walkTime
 			saveAt := m.at
 			m.at = now.Add(-time.Duration(float64(time.Second) * travelTime / float64(count)))
-			s.advancePlayerVertical(now)
+			if s.advancePlayerVertical(now) {
+				s.commitMovement()
+				return true, "outside map height limits"
+			}
 			m.at = saveAt
 		}
 	}
-	if interleave {
-		s.advancePlayerVertical(now)
+	if interleave && s.advancePlayerVertical(now) {
+		s.commitMovement()
+		return true, "outside map height limits"
 	}
 	// Underwater input is bounded in both directions and cannot leave the water
 	// volume or cross its floor. No such vertical freedom exists on dry ground.
@@ -425,6 +484,10 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 		dy := min(max(y-m.pos[1], -limit), limit)
 		dy = min(dy, -1.5-m.pos[1])
 		m.pos, _ = m.geometry.MoveFeet(m.pos, mapgeometry.Position{0, dy, 0})
+	}
+	if m.recoverHeight(now) {
+		s.commitMovement()
+		return true, "outside map height limits"
 	}
 	if attackPaused {
 		motion = 0

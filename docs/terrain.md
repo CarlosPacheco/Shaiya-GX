@@ -84,6 +84,14 @@ movement. Invalid height/path/speed samples still receive corrections, and an
 owner that stops sending input still receives authoritative gravity/landing
 updates after the 300-ms idle threshold.
 
+World bounds player height to −256 through +2048 units. Static dungeons
+further narrow that interval using their collision envelope plus 32 units of
+clearance. Client prediction stops at the same limits. Crossing
+one returns the player to the last supported position on that map and sends
+an immediate correction. An older save outside the envelope uses the
+character's normal respawn destination on login. In map 27, open portals admit both
+factions. Their trigger volumes, destinations and level checks still apply.
+
 The predictor carries the sub-coordinate fraction between frames. World
 subdivides the same horizontal displacement for collision checks while keeping
 the rounded endpoint, and charges that endpoint against its elapsed-time

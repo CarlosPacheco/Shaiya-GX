@@ -3438,6 +3438,50 @@ func DecodePlayerCorrection(p []byte) (c PlayerCorrection, err error) {
 
 </details>
 
+## portal
+
+[internal/proto/portal.go](../../internal/proto/portal.go#L1)
+
+<details><summary>Types and codecs</summary>
+
+```go
+type PortalResult struct{ Index, Code uint8 }
+```
+
+```go
+func PortalRequestPacket(index uint8) []byte {
+	w := NewWriter(CharacterEnteredPortal)
+	w.U8(index)
+	return w.Bytes()
+}
+```
+
+```go
+func DecodePortalResult(p []byte) (PortalResult, error) {
+	r := NewReader(p)
+	v := PortalResult{Index: r.U8(), Code: r.U8()}
+	if err := r.Err(); err != nil {
+		return v, err
+	}
+	if r.Remaining() != 0 {
+		return v, fmt.Errorf("invalid portal result length")
+	}
+	return v, nil
+}
+```
+
+```go
+func PortalMessageID(code uint8) int {
+	ids := [...]int{8038, 8039, 8040, 8041, 8042, 0, 8044, 8047, 8045, 6600, 6601, 6602, 6603}
+	if int(code) < len(ids) {
+		return ids[code]
+	}
+	return 0
+}
+```
+
+</details>
+
 ## pvp count
 
 [internal/proto/pvp_count.go](../../internal/proto/pvp_count.go#L1)

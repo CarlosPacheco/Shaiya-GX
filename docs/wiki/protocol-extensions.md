@@ -359,7 +359,7 @@ Declarations: [proto.GXPhysicsClock](../../internal/proto/world.go#L255).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L471)
+**S→C serializers:** [sendPhysicsClock (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L534)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1251)
 
@@ -369,7 +369,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>sendPhysicsClock — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L471)
+[Source definition](../../server/internal/world/player_movement.go#L534)
 
 ```go
 func (s *Session) sendPhysicsClock() {
@@ -393,7 +393,7 @@ Declarations: [proto.GXPlayerCorrection](../../internal/proto/player_physics.go#
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L251)
+**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L302)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1241)
 
@@ -403,7 +403,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>correctMovement — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L251)
+[Source definition](../../server/internal/world/player_movement.go#L302)
 
 ```go
 func (s *Session) correctMovement(reason string) {
@@ -882,7 +882,7 @@ Source notes: Native requests and invitation messages. 0x021C is also the server
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildVehicleState (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L359)
+**S→C serializers:** [buildVehicleState (server/internal/world/vehicle.go)](../../server/internal/world/vehicle.go#L379)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L432)
 
@@ -892,7 +892,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildVehicleState — server/internal/world/vehicle.go</summary>
 
-[Source definition](../../server/internal/world/vehicle.go#L359)
+[Source definition](../../server/internal/world/vehicle.go#L379)
 
 ```go
 func buildVehicleState(v proto.VehicleState) []byte {
