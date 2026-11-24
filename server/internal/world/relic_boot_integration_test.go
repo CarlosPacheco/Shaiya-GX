@@ -121,6 +121,50 @@ func TestObeliskOriginalWorldBoot(t *testing.T) {
 	}
 	t.Logf("Original world boot: %d standing relics, %d active guards, %d boss-map populations, %d persistent keeps", total, guards, len(relics.bosses), len(keeps))
 
+	t.Run("Cryptic Throne floors", func(t *testing.T) {
+		// The visible DG chamber floors, in portal order. The geometry also
+		// has a buried plane at Y=17.31, which would satisfy a support-only test.
+		floors := [...]float32{33.604, 33.673, 29.298, 32.894, 31.910, 42.794, 49.935}
+		for _, mapID := range []uint16{48, 49} {
+			bosses := relics.bosses[mapID]
+			if len(bosses) != len(floors) {
+				t.Fatalf("map %d loaded %d linked bosses, want %d", mapID, len(bosses), len(floors))
+			}
+			s := shard(mapID)
+			for _, boss := range bosses {
+				index := int(boss.portalID) - 1001
+				if index < 0 || index >= len(floors) {
+					t.Fatalf("map %d has unexpected boss portal %d", mapID, boss.portalID)
+				}
+				// Check startup, any intermediate phase, and the next cycle.
+				for cycle := 0; cycle <= len(boss.mobs); cycle++ {
+					m := &s.entities.Mobs[boss.principal.slot]
+					want := boss.mobs[cycle%len(boss.mobs)]
+					if m.CurrentHP == 0 || m.MobID != want || math.Abs(float64(m.PosY-floors[index])) > .01 {
+						t.Fatalf("map %d phase %d mob %d at %v, want a live mob %d on floor %.3f",
+							mapID, cycle, m.MobID, m.point(), want, floors[index])
+					}
+					spawn, err := proto.DecodeMobEnter(buildMobEnter(m, cycle > 0)[2:])
+					if err != nil || !spawn.HeightKnown || spawn.Y != m.PosY {
+						t.Fatalf("map %d mob %d invalid ground height in spawn %+v (%v)", mapID, m.MobID, spawn, err)
+					}
+					if cycle == len(boss.mobs) {
+						break
+					}
+					hit, ok := DamageMob(mapID, m.ID, m.CurrentHP)
+					if !ok || !hit.Killed {
+						t.Fatalf("could not kill boss %d on map %d", m.MobID, mapID)
+					}
+					eventMobDestroyed(nil, mapID, &hit.Mob, logger)
+					var publications []eventPublication
+					s.mu.Lock()
+					tickBossLocked(s, boss, boss.next, &publications)
+					s.mu.Unlock()
+				}
+			}
+		}
+	})
+
 	t.Run("Fantasma treasure", func(t *testing.T) {
 		const mapID, dragonID, chestID = 17, 902, 1971
 		var boss *linkedBoss
