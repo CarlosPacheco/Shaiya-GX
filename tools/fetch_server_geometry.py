@@ -17,6 +17,7 @@ URL = ('https://github.com/Spelunkern/Shaiya-GX/releases/download/'
        'gx-geometry-rules2-20261122/gx-server-geometry-rules2.tar.gz')
 SHA256 = '020c170f908517961799a33e749dbc8dec8a2d17c6049b5ad2857fec90208073'
 MANIFESTS_SHA256 = '980578e3aa7ffbf3e8d393d694669e2fc4131b7645311d7caaa704fcee213316'
+COLLISION_RULES_VERSION = 3  # internal/mapnav.CollisionRulesVersion
 
 
 def digest(path):
@@ -43,14 +44,18 @@ def read_manifests(directory):
 
 def validate(directory, *, require_pin=True):
     catalog, manifests = read_manifests(directory)
+    maps = catalog['maps']
+    for map_id, manifest in zip(maps, manifests):
+        if (manifest.get('version'), manifest.get('map_id'), manifest.get('player_physics')) != (1, map_id, 1):
+            raise ValueError(f'Incompatible physics generation: {map_id}')
+        rules = manifest.get('collision_rules')
+        if rules != COLLISION_RULES_VERSION:
+            raise ValueError(f'Map {map_id} uses collision rules {rules}; '
+                             f'GX Server requires {COLLISION_RULES_VERSION}. Rebuild the geometry catalog.')
     if require_pin and manifest_digest(catalog, manifests) != MANIFESTS_SHA256:
         raise ValueError(f'{directory} contains a different physics generation. '
                          'Install the pinned generation into a fresh directory.')
-    maps = catalog['maps']
     for map_id, manifest in zip(maps, manifests):
-        if (manifest.get('version'), manifest.get('map_id'),
-                manifest.get('player_physics'), manifest.get('collision_rules')) != (1, map_id, 1, 2):
-            raise ValueError(f'Incompatible physics generation: {map_id}')
         for extension in ('gxnav', 'gxcol', 'gxphysics'):
             name = f'{map_id}.{extension}'
             if digest(directory / name) != manifest['files'].get(name):

@@ -66,7 +66,13 @@ class NavigationDistributionTests(unittest.TestCase):
                 payload = name.encode()
                 (directory / name).write_bytes(payload)
                 files[name] = hashlib.sha256(payload).hexdigest()
-            (directory / "3.manifest.json").write_text(json.dumps({"version": 1, "map_id": 3,"player_physics":1,"collision_rules":2, "files": files}))
+            path = directory / "3.manifest.json"
+            manifest = {"version": 1, "map_id": 3, "player_physics": 1, "collision_rules": 2, "files": files}
+            path.write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError, "collision rules 2; GX Server requires 3"):
+                check_navigation(root)
+            manifest["collision_rules"] = 3
+            path.write_text(json.dumps(manifest))
             check_navigation(root)
             (directory / "3.gxcol").write_bytes(b"corrupt")
             with self.assertRaisesRegex(ValueError, "checksum"):
