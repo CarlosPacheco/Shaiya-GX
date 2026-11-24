@@ -173,13 +173,22 @@ func TestMapEffectsLoadAndReleaseGL(t *testing.T) {
 }
 
 func TestMap67PortalEffectsGL(t *testing.T) {
+	testDungeonMapEffectsGL(t, "67", 8, 6, 5)
+}
+
+func TestMap33WallEffectsGL(t *testing.T) {
+	testDungeonMapEffectsGL(t, "33", 1, 8, 3)
+}
+
+func testDungeonMapEffectsGL(t *testing.T, mapID string, sequence, placements, emitters int) {
+	t.Helper()
 	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
 		t.Skip("requires GL and original assets")
 	}
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	const size = 128
-	win, err := platform.Open(platform.Config{Title: "map 67 portals", Width: size, Height: size, Hidden: true})
+	win, err := platform.Open(platform.Config{Title: "Dungeon map effects", Width: size, Height: size, Hidden: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -192,13 +201,13 @@ func TestMap67PortalEffectsGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer arc.Close()
-	w, err := LoadDungeon(NewAssets(arc), "world/67.wld")
+	w, err := LoadDungeon(NewAssets(arc), "world/"+mapID+".wld")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer w.Close()
 	if w.mapFX == nil {
-		t.Fatal("map 67 did not load its effect library")
+		t.Fatal("dungeon did not load its effect library")
 	}
 	s, err := render.NewScene3D()
 	if err != nil {
@@ -213,13 +222,13 @@ func TestMap67PortalEffectsGL(t *testing.T) {
 		return pixels
 	}
 
-	portals := 0
+	matched := 0
 	for i := range w.mapFX.instances {
 		placed := &w.mapFX.instances[i]
-		if placed.sequence != 8 {
+		if placed.sequence != sequence {
 			continue
 		}
-		portals++
+		matched++
 		eye := placed.position.Add(render.V3{-7, 2, -6})
 		look := placed.position.Add(render.V3{0, 1, 0})
 		s.View = render.LookAtLH(eye, look, render.V3{0, 1, 0})
@@ -227,8 +236,8 @@ func TestMap67PortalEffectsGL(t *testing.T) {
 			w.Update(.2)
 			w.PrepareMapEffects(s, eye)
 		}
-		if placed.instance == nil || len(placed.instance.emitters) != 5 {
-			t.Errorf("portal at %v did not load all five emitters", placed.position)
+		if placed.instance == nil || len(placed.instance.emitters) != emitters {
+			t.Errorf("effect at %v did not load all %d emitters", placed.position, emitters)
 			continue
 		}
 		gl.DepthMask(true)
@@ -237,13 +246,13 @@ func TestMap67PortalEffectsGL(t *testing.T) {
 		before := frame()
 		placed.instance.Draw(s)
 		if bytes.Equal(before, frame()) {
-			t.Errorf("portal at %v produced no visible pixels", placed.position)
+			t.Errorf("effect at %v produced no visible pixels", placed.position)
 		}
 	}
-	if portals != 6 {
-		t.Fatalf("found %d portal placements, want 6", portals)
+	if matched != placements {
+		t.Fatalf("found %d placements, want %d", matched, placements)
 	}
 	if code := gl.GetError(); code != gl.NO_ERROR {
-		t.Fatalf("portal GL error %#x", code)
+		t.Fatalf("dungeon effect GL error %#x", code)
 	}
 }

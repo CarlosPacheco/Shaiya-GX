@@ -70,6 +70,15 @@ func (w *World) loadMapEffects(parent *Assets) {
 	if err != nil || lib.Format != "EFT" {
 		return
 	}
+	if strings.EqualFold(name, "L_A2_DUN3_1F.EFT") && len(lib.Meshes) == 1 &&
+		strings.EqualFold(lib.Meshes[0], "Gwall00.3DE") && len(lib.Effects) > 5 {
+		// Matching emitters in L_A1_DUN2_2F use slot 1 for Gwall00.
+		for _, index := range [...]int{3, 5} {
+			if lib.Effects[index].Mesh == 1 {
+				lib.Effects[index].Mesh = 0
+			}
+		}
+	}
 	f := &mapEffects{assets: NewAssets(parent.Arc), file: file, library: lib, failed: make(map[int]bool)}
 	bounds := effectSequenceBounds(parent, lib)
 	for _, placement := range w.WLD.Effects {

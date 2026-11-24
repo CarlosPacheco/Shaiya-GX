@@ -175,6 +175,10 @@ texture indices alongside valid frames. The client skips indices outside the
 library's texture table and plays the remaining frames in their authored order.
 The WLD portal contact volumes and traversal rules are independent of the EFT.
 
+Map 33's EFT contains `Gwall00.3DE` in slot 0. GX repairs two stale mesh
+references to slot 1 when it loads that library. Matching emitters in other
+original libraries identify the mesh through their names and textures.
+
 
 DUN keeps the black background when no valid sky layers are defined. Its native
 fog RGB, start and end fields are used when they contain a valid authored range.
