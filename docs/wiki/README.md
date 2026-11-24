@@ -1,8 +1,8 @@
 # Shaiya GX Wiki
 
-## [Download Shaiya GX — Client + Server + Data](https://drive.google.com/file/d/1BhkQN69s9Bk0vwb2VsM3iphLwb2cIbBk/view?usp=sharing)
+## [Download Shaiya GX — Client + Server + Data](https://drive.google.com/file/d/1jHGrS0KY3LRsDtzMgfFAH6BwmSX7Nasi/view?usp=sharing)
 
-**The complete gx-v0.1.18 portable for Windows and Linux includes the client, GX Server, GX Studio,
+**The complete gx-v0.1.19 portable for Windows and Linux includes the client, GX Server, GX Studio,
 game data, fonts and the development database.** Extract the package, start
 `Server/build/gx_console` (or `.exe`) in a terminal, enter `start server`, then open the executable in `Client/`.
 [Setup, requirements and updates](client-portable.md).
