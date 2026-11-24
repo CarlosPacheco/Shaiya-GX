@@ -163,6 +163,51 @@ func (e *Engine) Play(file string, gain float64) error {
 	e.voices = append(e.voices, voice{p, gain})
 	return nil
 }
+
+// Preload decodes a track in the background so the first Music call does not
+// stall the render thread (the login theme is ~190 ms of OGG decoding).
+func (e *Engine) Preload(file string) {
+	key := strings.ToLower(file)
+	if file == "" || e.failed[key] != nil || e.pending[key] != nil {
+		return
+	}
+	if _, ok := e.cache[key]; ok {
+		return
+	}
+	if e.pending == nil {
+		e.pending = map[string]chan decodedAudio{}
+	}
+	ch := make(chan decodedAudio, 1)
+	e.pending[key] = ch
+	read := e.read
+	go func() {
+		raw, err := read(file)
+		var pcm []byte
+		if err == nil {
+			pcm, err = DecodeOGG(raw)
+		}
+		if err != nil {
+			err = fmt.Errorf("%s: %w", file, err)
+		}
+		ch <- decodedAudio{pcm, err}
+	}()
+}
+
+// takePreloaded waits for a started preload and moves its result into the cache.
+func (e *Engine) takePreloaded(key string) {
+	ch := e.pending[key]
+	if ch == nil {
+		return
+	}
+	result := <-ch
+	delete(e.pending, key)
+	if result.err != nil {
+		e.failed[key] = result.err
+		return
+	}
+	e.rememberPCM(key, result.pcm)
+}
+
 func (e *Engine) Music(file string) error {
 	if !e.readyNow() || e.musicName == file {
 		return nil
@@ -179,6 +224,7 @@ func (e *Engine) Music(file string) error {
 	if file == "" || e.volume == 0 {
 		return nil
 	}
+	e.takePreloaded(strings.ToLower(file))
 	pcm, err := e.pcm(file)
 	if err != nil {
 		return err
