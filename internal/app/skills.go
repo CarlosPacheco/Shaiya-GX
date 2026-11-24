@@ -471,7 +471,7 @@ func (a *App) learnedSkillPacket(k proto.LearnedSkill) []byte {
 		return nil // triggers by itself; a bar slot only shows it and its reuse
 	}
 	if a.skills.cooldowns[k.ID] > a.clock {
-		a.systemMessage(17, 215, nil)
+		a.systemMessage(1, 215, nil)
 		return nil
 	}
 	if !a.skillResourcesAvailable(def) {

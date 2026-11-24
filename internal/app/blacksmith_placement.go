@@ -81,7 +81,7 @@ func (a *App) placeBlacksmithItem(slot int, key [2]uint8, it proto.InventoryItem
 		}
 		if mode == ui.ForgeLapis {
 			if !v.selected[0] {
-				a.systemMessage(17, 62, nil)
+				a.systemMessage(3, 62, nil)
 				return false
 			}
 			if id := a.gemPlacementFailure(v.items[0], it); id != 0 {
@@ -92,7 +92,7 @@ func (a *App) placeBlacksmithItem(slot int, key [2]uint8, it proto.InventoryItem
 		} else if mode == ui.ForgeEnchant {
 			accepted = it.Type == 95 && v.selected[0] && lapFitsItem(a.forgeDefinition(it), v.items[0].Type)
 			if !accepted {
-				a.systemMessage(17, 62, nil)
+				a.systemMessage(3, 62, nil)
 				return false
 			}
 		}

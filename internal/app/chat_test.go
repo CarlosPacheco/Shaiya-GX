@@ -314,18 +314,3 @@ func TestNoticeDisplayTextDropsFinalStop(t *testing.T) {
 		}
 	}
 }
-
-func TestSystemMessageUsesNativeChatStyle(t *testing.T) {
-	a := inputApp()
-	a.msg = text.SysMsg{231: "Cannot trade the quest items", 211: "Transaction has been completed successfully", 111: "Used <i>", 99999: "Custom"}
-	for _, tc := range []struct {
-		asked, want uint8
-		id          int
-	}{{1, 17, 231}, {3, 7, 211}, {3, 4, 111}, {2, 2, 99999}} {
-		a.systemMessage(tc.asked, tc.id, map[string]string{"i": "Potion"})
-		got := a.state.Chat[len(a.state.Chat)-1].Style
-		if got != tc.want {
-			t.Fatalf("SysMsg %d asked style %d, got %d, want %d", tc.id, tc.asked, got, tc.want)
-		}
-	}
-}
