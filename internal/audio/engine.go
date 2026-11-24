@@ -6,6 +6,7 @@ import (
 	"io"
 	"math"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ebitengine/oto/v3"
@@ -163,6 +164,53 @@ func (e *Engine) Play(file string, gain float64) error {
 	e.voices = append(e.voices, voice{p, gain})
 	return nil
 }
+
+var (
+	prewarmMu sync.Mutex
+	prewarmed = map[string]chan decodedAudio{}
+)
+
+// Prewarm starts decoding a track before any Engine exists, so it overlaps
+// window and renderer start-up instead of stalling the first frame (the login
+// theme takes ~190 ms to decode). The first Music call for the file adopts it.
+func Prewarm(read func(string) ([]byte, error), file string) {
+	key := strings.ToLower(file)
+	prewarmMu.Lock()
+	defer prewarmMu.Unlock()
+	if prewarmed[key] != nil {
+		return
+	}
+	ch := make(chan decodedAudio, 1)
+	prewarmed[key] = ch
+	go func() {
+		raw, err := read(file)
+		var pcm []byte
+		if err == nil {
+			pcm, err = DecodeOGG(raw)
+		}
+		if err != nil {
+			err = fmt.Errorf("%s: %w", file, err)
+		}
+		ch <- decodedAudio{pcm, err}
+	}()
+}
+
+// takePrewarmed moves a finished (or still running) prewarm into the cache.
+func (e *Engine) takePrewarmed(key string) {
+	prewarmMu.Lock()
+	ch := prewarmed[key]
+	delete(prewarmed, key)
+	prewarmMu.Unlock()
+	if ch == nil {
+		return
+	}
+	if result := <-ch; result.err != nil {
+		e.failed[key] = result.err
+	} else {
+		e.rememberPCM(key, result.pcm)
+	}
+}
+
 func (e *Engine) Music(file string) error {
 	if !e.readyNow() || e.musicName == file {
 		return nil
@@ -179,6 +227,7 @@ func (e *Engine) Music(file string) error {
 	if file == "" || e.volume == 0 {
 		return nil
 	}
+	e.takePrewarmed(strings.ToLower(file))
 	pcm, err := e.pcm(file)
 	if err != nil {
 		return err

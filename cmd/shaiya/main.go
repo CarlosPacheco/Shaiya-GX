@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/app"
+	"github.com/Spelunkern/Shaiya-GX/internal/audio"
 	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
@@ -84,6 +85,11 @@ func run(dataDir string, cfg app.Config, w, h int, debug bool, shot, shotScreen,
 		return fmt.Errorf("open game data %q: %w", dataDir, err)
 	}
 	defer arc.Close()
+	if shot == "" && autoUser == "" && cfg.Volume > 0 {
+		if _, ok := arc.Lookup("Sound/Music/bgm_title.ogg"); ok {
+			audio.Prewarm(arc.ReadFile, "Sound/Music/bgm_title.ogg")
+		}
+	}
 	restoreSize := true
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "w" || f.Name == "h" {
