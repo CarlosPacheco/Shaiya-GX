@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 )
 
 type Catalog struct {
@@ -37,7 +38,15 @@ func ReadCatalog(directory string) (Catalog, error) {
 // WriteCatalog publishes the completed map set. A listed missing map is an
 // installation error, never permission to silently revert to straight lines.
 func WriteCatalog(directory string, ids []uint16) error {
-	for _, id := range ids {
+	if len(ids) == 0 {
+		return fmt.Errorf("cannot publish an empty navigation catalog")
+	}
+	ids = slices.Clone(ids)
+	slices.Sort(ids)
+	for index, id := range ids {
+		if index > 0 && id == ids[index-1] {
+			return fmt.Errorf("duplicate navigation map %d", id)
+		}
 		raw, err := os.ReadFile(filepath.Join(directory, fmt.Sprintf("%d.manifest.json", id)))
 		if err != nil {
 			return err

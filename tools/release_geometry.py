@@ -10,9 +10,9 @@ import tarfile
 import tempfile
 
 if __package__:
-    from .fetch_server_geometry import MANIFESTS_SHA256, ROOT, digest, manifest_digest, validate
+    from .fetch_server_geometry import COLLISION_RULES_VERSION, MANIFESTS_SHA256, ROOT, digest, manifest_digest, validate
 else:
-    from fetch_server_geometry import MANIFESTS_SHA256, ROOT, digest, manifest_digest, validate
+    from fetch_server_geometry import COLLISION_RULES_VERSION, MANIFESTS_SHA256, ROOT, digest, manifest_digest, validate
 
 TAG_PREFIX = 'GX-Geometry-Manifests-SHA256: '
 TAG_PATTERN = re.compile(r'gx-v[0-9][a-zA-Z0-9._-]*')
@@ -87,7 +87,7 @@ def export_candidate(directory, candidate, fingerprint):
     with tempfile.TemporaryDirectory(prefix='.gx-physics-candidate-', dir=candidate.parent) as staging:
         staged = Path(staging) / 'resource'
         staged.mkdir()
-        archive = staged / 'gx-server-geometry-rules2.tar.gz'
+        archive = staged / f'gx-server-geometry-rules{COLLISION_RULES_VERSION}.tar.gz'
         with tarfile.open(archive, 'w:gz', compresslevel=4) as output:
             output.add(directory, arcname='geometry')
         (staged / 'SHA256SUMS.txt').write_text(f'{digest(archive)}  {archive.name}\n')
