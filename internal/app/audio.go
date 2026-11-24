@@ -121,16 +121,6 @@ func (a *App) confirmedSound(p []byte) {
 			name = "ui_error001.ogg"
 		}
 		a.playSound(name, a.wv.pos[0], a.wv.pos[2])
-	// Native 0x56e300 / 0x56aff0: a confirmed item move plays the cue of the
-	// item that landed (the destination slot, else the one it swapped out).
-	case proto.ItemBagToBag:
-		if moved, err := proto.DecodeItemMove(p); err == nil {
-			if t := moved[1].Type; t != 0 {
-				a.playItemSound(t)
-			} else {
-				a.playItemSound(moved[0].Type)
-			}
-		}
 	// Native 0x56b910 (buy), 0x56ba20 (sell): success pays with ui_pay001, a
 	// refusal plays the UI error. 0x56bb10: every repair plays ui_repair001.
 	case proto.ShopBuy:

@@ -172,6 +172,8 @@ All seven `Cursor/01.png` through `07.png` files load from loose data into OS cu
 
 ## Inventory, monster presentation and graphics controls
 
+Equipment sounds play when World confirms a change to an equipped slot.
+
 Items are used with the **right** button (a deliberate departure from the original,
 which used the left click, to match modern clients): right-clicking a bag item
 requests its use, and an equippable item selects its equipment slot and requests

@@ -115,8 +115,7 @@ func (a *App) updateInventory(in *platform.Input, w, h int) bool {
 		return true
 	}
 	if in.Pressed && v.hovered && !a.state.Self.Dead {
-		if it, ok := a.state.Inventory[v.hover]; ok {
-			a.playItemSound(it.Type)
+		if _, ok := a.state.Inventory[v.hover]; ok {
 			v.pressItem(v.hover, in)
 		}
 	}

@@ -1,10 +1,13 @@
 package app
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+)
 
 // itemSoundTable is Game.exe 0x4c9140: the ui_armorNNN cue of every item type
-// (1..97), played when an inventory slot is pressed (0x497129) and when the
-// server confirms a move (0x56e300, 0x56aff0). Types without an entry are mute.
+// (1..97). GX plays it when a confirmed move changes equipment.
 var itemSoundTable = [98]uint8{0, 14, 15, 12, 13, 6, 8, 10, 11, 16, 16, 8, 7, 17, 18, 9, 2, 0, 1, 5, 3, 4, 19, 20, 22, 23, 24, 23, 23, 23, 23, 2, 0, 1, 5, 3, 4, 19, 23, 22, 21, 23, 23, 23, 23, 14, 15, 12, 13, 6, 6, 8, 8, 10, 10, 11, 11, 16, 16, 8, 7, 7, 17, 17, 18, 9, 2, 0, 1, 5, 3, 4, 2, 0, 1, 5, 3, 4, 23, 23, 23, 2, 0, 1, 5, 3, 4, 2, 0, 1, 5, 3, 4, 23, 19, 23, 20, 21}
 
 func itemSoundName(itemType uint8) string {
@@ -12,6 +15,30 @@ func itemSoundName(itemType uint8) string {
 		return ""
 	}
 	return fmt.Sprintf("ui_armor%03d.ogg", itemSoundTable[itemType])
+}
+
+// Compare the confirmed slots with inventory before applying the packet.
+// World also echoes both slots unchanged when it refuses a move.
+func (a *App) equipmentMoveSoundType(p []byte) uint8 {
+	moved, err := proto.DecodeItemMove(p)
+	if err != nil || moved[0].Bag == moved[1].Bag && moved[0].Slot == moved[1].Slot {
+		return 0
+	}
+	// Prefer the destination equipment slot when a move changes both.
+	for _, after := range [2]proto.InventoryItem{moved[1], moved[0]} {
+		if after.Bag != 0 {
+			continue
+		}
+		before := a.state.Inventory[[2]uint8{after.Bag, after.Slot}]
+		if after.Type == 0 || after.Count == 0 {
+			if before.Type != 0 {
+				return before.Type
+			}
+		} else if after != before {
+			return after.Type
+		}
+	}
+	return 0
 }
 
 // playItemSound is a global interface cue (native position 0x22094c8, no

@@ -72,6 +72,10 @@ func (a *App) applyWorldPacket(p []byte) {
 	}
 	wasRaid := a.state.Party.Raid
 	previousForm := a.state.PlayerForms[a.state.SelfID]
+	var equipmentSoundType uint8
+	if proto.Op(p) == proto.ItemBagToBag && a.sound != nil && a.wv != nil {
+		equipmentSoundType = a.equipmentMoveSoundType(p)
+	}
 	var previousAppearance scene.Appearance
 	if proto.Op(p) == proto.ItemBagToBag || proto.Op(p) == proto.ChangeAppearance || proto.Op(p) == proto.EnchantAdd || proto.Op(p) == proto.CloakAdd || proto.Op(p) == proto.CloakRemove {
 		if slot, ok := a.selfSlot(); ok {
@@ -90,6 +94,9 @@ func (a *App) applyWorldPacket(p []byte) {
 	if err != nil {
 		clientlog.Warnf("World packet %#04x: %v", proto.Op(p), err)
 		return
+	}
+	if equipmentSoundType != 0 {
+		a.playItemSound(equipmentSoundType)
 	}
 	if previousPhase == game.PhaseLoading && a.state.Phase == game.PhaseInWorld {
 		a.rememberCharacterSlot()

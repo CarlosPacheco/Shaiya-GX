@@ -186,6 +186,8 @@ All seven `Cursor/01.png` through `07.png` files load from loose data into OS cu
 
 ## Inventory, monster presentation and graphics controls
 
+Equipment sounds play when World confirms a change to an equipped slot.
+
 An ordinary left click requests use of the inventory item. A drag still moves
 items; a release outside its source does not consume it. Right clicking a bag
 item selects its equipment slot and requests the native move/swap, including
