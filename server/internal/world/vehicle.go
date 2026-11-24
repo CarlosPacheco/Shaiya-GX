@@ -1,6 +1,7 @@
 package world
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -111,6 +112,25 @@ func (s *Session) vehicleResult(ok, on bool) {
 	w.Bool(on)
 	s.send(w.MustFinish(), "0x0216 vehicle result")
 }
+
+// mountForbiddenMap reports maps that do not allow mounts: dungeons (Map.ini
+// MapType D), including their party and guild instances.
+func mountForbiddenMap(mapID uint16) bool {
+	z, ok := mapConfig.Zones[realMap(mapID)]
+	return ok && z.Dungeon
+}
+
+// keepsMountAcrossTeleport lets a lone rider travel through a portal to another
+// map that allows mounts. A passenger pair, any other kind of teleport and every
+// dungeon destination leave the character on foot.
+func (s *Session) keepsMountAcrossTeleport(mapID uint16, label string) bool {
+	if s.player == nil || !s.mounted || mountForbiddenMap(mapID) || !strings.Contains(label, "portal teleport") {
+		return false
+	}
+	v := s.player.vehicleState()
+	return v.State == proto.VehicleDriver && v.Passenger == 0
+}
+
 func (s *Session) handleUseVehicle() {
 	if s.char == nil || s.player == nil {
 		return
@@ -125,7 +145,7 @@ func (s *Session) handleUseVehicle() {
 	vehicleMu.Lock()
 	cooldown := vehicleCooldowns[s.char.ID]
 	vehicleMu.Unlock()
-	if !validMount(d) || s.dead || s.cast != nil || s.player.IsSitting() || s.movement.ladder.Active || s.vehicleBlocked() || time.Now().Before(cooldown) || !canEquip(s.char, d, mountSlot, s.items) {
+	if !validMount(d) || mountForbiddenMap(s.char.MapID) || s.dead || s.cast != nil || s.player.IsSitting() || s.movement.ladder.Active || s.vehicleBlocked() || time.Now().Before(cooldown) || !canEquip(s.char, d, mountSlot, s.items) {
 		s.vehicleResult(false, false)
 		return
 	}

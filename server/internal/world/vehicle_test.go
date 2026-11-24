@@ -139,3 +139,48 @@ func TestVehicleRangeIsTenUnits(t *testing.T) {
 		t.Fatal("go-together and boarding range is 10 units")
 	}
 }
+
+func TestMountsStayOutOfDungeonsButCrossFieldMapsByPortal(t *testing.T) {
+	old := db.MustDefs()
+	t.Cleanup(func() { db.SetDefsForTest(old) })
+	d := &db.ItemDef{Type: 42, TypeID: 1, Range: 0, Speed: 4, AttackTime: 1, ReqIg: 20, Classes: [6]bool{true, true, true, true, true, true}}
+	db.SetDefsForTest(&db.Defs{Items: map[db.ItemKey]*db.ItemDef{{Type: 42, TypeID: 1}: d}})
+	const field, dungeon = uint16(60082), uint16(60083)
+	oldField, hadField := mapConfig.Zones[field]
+	oldDungeon, hadDungeon := mapConfig.Zones[dungeon]
+	mapConfig.Zones[field], mapConfig.Zones[dungeon] = ZoneConfig{}, ZoneConfig{Dungeon: true}
+	t.Cleanup(func() {
+		if hadField {
+			mapConfig.Zones[field] = oldField
+		} else {
+			delete(mapConfig.Zones, field)
+		}
+		if hadDungeon {
+			mapConfig.Zones[dungeon] = oldDungeon
+		} else {
+			delete(mapConfig.Zones, dungeon)
+		}
+	})
+	s := vehicleFixture(t, 990082, 0)
+	s.items = []db.Item{{UID: 1, Bag: 0, Slot: 13, Type: 42, TypeID: 1, Count: 1}}
+	s.char.MapID = dungeon
+	s.handleUseVehicle()
+	if s.player.vehicleState().State != proto.VehicleOff {
+		t.Fatal("a mount started casting inside a dungeon")
+	}
+	s.char.MapID = field
+	s.handleUseVehicle()
+	s.tickVehicle(time.Now().Add(3 * time.Second))
+	if !s.mounted {
+		t.Fatal("mount did not start on a field map")
+	}
+	if !s.keepsMountAcrossTeleport(field, "portal teleport") || !s.keepsMountAcrossTeleport(field, "explicit portal teleport") {
+		t.Fatal("a rider must keep the mount through a portal to a field map")
+	}
+	if s.keepsMountAcrossTeleport(dungeon, "portal teleport") {
+		t.Fatal("a rider entering a dungeon must be left on foot")
+	}
+	if s.keepsMountAcrossTeleport(field, "resurrection") {
+		t.Fatal("only portals keep the mount")
+	}
+}
