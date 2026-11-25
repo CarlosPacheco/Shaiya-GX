@@ -70,6 +70,10 @@ func (a *App) applyWorldPacket(p []byte) {
 	if a.state == nil {
 		return
 	}
+	if proto.Op(p) == proto.InspectEquipment {
+		a.confirmedInspect(p)
+		return
+	}
 	if proto.Op(p) == proto.GXEquipRefusal {
 		if typ, id, err := proto.DecodeEquipRefusal(p); err == nil {
 			if item := a.itemsItem(typ, id); item != nil {

@@ -161,6 +161,12 @@ func (a *App) barCovered(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
+	if a.inspect.open && a.inspectUI != nil {
+		x, y := a.inspectUI.Origin(w, h)
+		if pointInside(in, x, y, ui.InspectWidth, ui.InspectHeight) {
+			return true
+		}
+	}
 	if a.inventory.open && a.inventoryUI != nil {
 		x, y := a.inventoryUI.Origin(w, h)
 		if pointInside(in, x, y, ui.InventoryWidth, ui.InventoryHeight) {

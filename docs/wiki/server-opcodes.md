@@ -54,6 +54,7 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x0303` | [CharacterShape](protocol-targets.md#opcode-0303) | — | yes | yes |
 | `0x0304` | [TargetMobGetState](protocol-targets.md#opcode-0304) | yes | yes | yes |
 | `0x0305` | [TargetMobHpUpdate](protocol-targets.md#opcode-0305) | yes | yes | yes |
+| `0x0307` | [InspectEquipment](protocol-targets.md#opcode-0307) | yes | yes | — |
 | `0x030A` | [TargetClear](protocol-targets.md#opcode-030a) | yes | — | — |
 | `0x030B` | [TargetEffects](protocol-targets.md#opcode-030b) | — | yes | yes |
 | `0x030C` | [TargetEffectAdd](protocol-targets.md#opcode-030c) | — | — | yes |
@@ -345,6 +346,6 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0xF501` | [GmCommandError](protocol-chat.md#opcode-f501) | — | — | — |
 | `0xF702` | [GmCommandGetItem](protocol-chat.md#opcode-f702) | — | — | — |
 
-Inventory: **334 numeric opcodes**, **547 typed declarations**, **15 families**.
+Inventory: **335 numeric opcodes**, **549 typed declarations**, **15 families**.
 
 Regenerate with `python3 tools/generate_server_reference.py`; verify freshness with `--check`. The generator parses source for both operating systems and tests are excluded from implementation evidence. Source links track main; use Git history when comparing older binaries.

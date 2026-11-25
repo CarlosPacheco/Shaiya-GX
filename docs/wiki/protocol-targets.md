@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0303` — CharacterShape**
 
-Declarations: [packet.CharacterShape](../../server/internal/packet/packet.go#L94), [proto.CharacterShape](../../internal/proto/opcodes.go#L79).
+Declarations: [packet.CharacterShape](../../server/internal/packet/packet.go#L95), [proto.CharacterShape](../../internal/proto/opcodes.go#L79).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -123,7 +123,7 @@ type UserShape struct {
 
 Declarations: [packet.TargetMobGetState](../../server/internal/packet/packet.go#L81), [proto.TargetMobGetState](../../internal/proto/opcodes.go#L65).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L274)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L276)
 
 **S→C serializers:** [buildMobState (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1420), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
@@ -199,7 +199,7 @@ type Reader struct {
 
 Declarations: [packet.TargetMobHpUpdate](../../server/internal/packet/packet.go#L82), [proto.TargetMobHpUpdate](../../internal/proto/opcodes.go#L66).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L274)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L276)
 
 **S→C serializers:** [buildMobTargetHP (server/internal/world/entities.go)](../../server/internal/world/entities.go#L1412)
 
@@ -245,11 +245,73 @@ type MobHealth struct {
 
 </details>
 
+## Opcode 0307
+
+**`0x0307` — InspectEquipment**
+
+Declarations: [packet.InspectEquipment](../../server/internal/packet/packet.go#L83), [proto.InspectEquipment](../../internal/proto/inspect.go#L5).
+
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L274)
+
+**S→C serializers:** [buildInspectEquipment (server/internal/world/inspect.go)](../../server/internal/world/inspect.go#L49)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>buildInspectEquipment — server/internal/world/inspect.go</summary>
+
+[Source definition](../../server/internal/world/inspect.go#L49)
+
+```go
+func buildInspectEquipment(target uint32, items [proto.InspectSlots]db.Item) []byte {
+	w := packet.New(packet.InspectEquipment)
+	var count uint8
+	for _, item := range items {
+		if item.Type != 0 && item.TypeID != 0 {
+			count++
+		}
+	}
+	w.U8(count)
+	for slot, item := range items {
+		if item.Type == 0 || item.TypeID == 0 {
+			continue
+		}
+		w.U8(uint8(slot))
+		w.U8(item.Type)
+		w.U8(item.TypeID)
+		w.U16(item.Quality)
+		w.Bytes(item.Gems[:])
+		w.FixedString(item.CraftName, 21)
+	}
+	w.U32(target)
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>InspectPacket — internal/proto/inspect.go</summary>
+
+[Source definition](../../internal/proto/inspect.go#L10)
+
+```go
+func InspectPacket(target uint32) []byte {
+	w := NewWriter(InspectEquipment)
+	w.U32(target)
+	return w.Bytes()
+}
+```
+
+</details>
+
 ## Opcode 030a
 
 **`0x030A` — TargetClear**
 
-Declarations: [packet.TargetClear](../../server/internal/packet/packet.go#L83), [proto.TargetClear](../../internal/proto/opcodes.go#L67).
+Declarations: [packet.TargetClear](../../server/internal/packet/packet.go#L84), [proto.TargetClear](../../internal/proto/opcodes.go#L67).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L231)
 
@@ -525,7 +587,7 @@ func Op(payload []byte) Opcode {
 
 **`0x0401` — MapAddItem**
 
-Declarations: [packet.MapAddItem](../../server/internal/packet/packet.go#L106), [proto.MapAddItem](../../internal/proto/opcodes.go#L90).
+Declarations: [packet.MapAddItem](../../server/internal/packet/packet.go#L107), [proto.MapAddItem](../../internal/proto/opcodes.go#L90).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -591,7 +653,7 @@ type GroundItem struct {
 
 **`0x0402` — MapRemoveItem**
 
-Declarations: [packet.MapRemoveItem](../../server/internal/packet/packet.go#L107), [proto.MapRemoveItem](../../internal/proto/opcodes.go#L91).
+Declarations: [packet.MapRemoveItem](../../server/internal/packet/packet.go#L108), [proto.MapRemoveItem](../../internal/proto/opcodes.go#L91).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -631,7 +693,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0404` — WorldDay**
 
-Declarations: [packet.WorldDay](../../server/internal/packet/packet.go#L98), [proto.WorldDay](../../internal/proto/opcodes.go#L82).
+Declarations: [packet.WorldDay](../../server/internal/packet/packet.go#L99), [proto.WorldDay](../../internal/proto/opcodes.go#L82).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -661,7 +723,7 @@ func buildWorldDay() []byte {
 
 **`0x0406` — CharacterReviveInit**
 
-Declarations: [packet.CharacterReviveInit](../../server/internal/packet/packet.go#L108), [proto.CharacterReviveInit](../../internal/proto/opcodes.go#L92).
+Declarations: [packet.CharacterReviveInit](../../server/internal/packet/packet.go#L109), [proto.CharacterReviveInit](../../internal/proto/opcodes.go#L92).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

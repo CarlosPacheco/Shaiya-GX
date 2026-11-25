@@ -271,6 +271,8 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 		}
 	case packet.SkillUse, packet.SkillUseNoTarget:
 		s.handleUseSkill(op, p)
+	case packet.InspectEquipment:
+		s.handleInspectEquipment(p)
 	case packet.TargetMobHpUpdate, packet.TargetMobGetState:
 		if len(p) >= 6 && s.char != nil {
 			id, _ := packet.U32(p[2:])

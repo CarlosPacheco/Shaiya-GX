@@ -80,6 +80,7 @@ const (
 	LevelUpOther           Opcode = 0x051E
 	TargetMobGetState      Opcode = 0x0304
 	TargetMobHpUpdate      Opcode = 0x0305
+	InspectEquipment       Opcode = 0x0307
 	TargetClear            Opcode = 0x030A
 	UseVehicle             Opcode = 0x0216 // empty request; response ok:u8, isOnVehicle:u8
 	ItemBagToBag           Opcode = 0x0204

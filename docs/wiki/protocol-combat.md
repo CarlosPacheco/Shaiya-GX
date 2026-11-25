@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0501` — CharacterMove**
 
-Declarations: [packet.CharacterMove](../../server/internal/packet/packet.go#L99), [proto.CharacterMove](../../internal/proto/opcodes.go#L83).
+Declarations: [packet.CharacterMove](../../server/internal/packet/packet.go#L100), [proto.CharacterMove](../../internal/proto/opcodes.go#L83).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L215)
 
@@ -93,7 +93,7 @@ type UserMove struct {
 
 **`0x0502` — CharacterUserAutoAttack**
 
-Declarations: [packet.CharacterUserAutoAttack](../../server/internal/packet/packet.go#L101), [proto.CharacterUserAutoAttack](../../internal/proto/opcodes.go#L85).
+Declarations: [packet.CharacterUserAutoAttack](../../server/internal/packet/packet.go#L102), [proto.CharacterUserAutoAttack](../../internal/proto/opcodes.go#L85).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L260)
 
@@ -166,7 +166,7 @@ type AttackResult struct {
 
 **`0x0503` — CharacterMobAutoAttack**
 
-Declarations: [packet.CharacterMobAutoAttack](../../server/internal/packet/packet.go#L102), [proto.CharacterMobAutoAttack](../../internal/proto/opcodes.go#L86).
+Declarations: [packet.CharacterMobAutoAttack](../../server/internal/packet/packet.go#L103), [proto.CharacterMobAutoAttack](../../internal/proto/opcodes.go#L86).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L251)
 
@@ -239,7 +239,7 @@ type AttackResult struct {
 
 **`0x0504` — CharacterDeath**
 
-Declarations: [packet.CharacterDeath](../../server/internal/packet/packet.go#L103), [proto.CharacterDeath](../../internal/proto/opcodes.go#L87).
+Declarations: [packet.CharacterDeath](../../server/internal/packet/packet.go#L104), [proto.CharacterDeath](../../internal/proto/opcodes.go#L87).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -299,7 +299,7 @@ type Reader struct {
 
 **`0x0505` — CharacterReviveHitpoints**
 
-Declarations: [packet.CharacterReviveHitpoints](../../server/internal/packet/packet.go#L100), [proto.CharacterReviveHitpoints](../../internal/proto/opcodes.go#L84).
+Declarations: [packet.CharacterReviveHitpoints](../../server/internal/packet/packet.go#L101), [proto.CharacterReviveHitpoints](../../internal/proto/opcodes.go#L84).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -360,7 +360,7 @@ type Reader struct {
 
 **`0x0506` — CharacterMotion**
 
-Declarations: [packet.CharacterMotion](../../server/internal/packet/packet.go#L104), [proto.CharacterMotion](../../internal/proto/opcodes.go#L88).
+Declarations: [packet.CharacterMotion](../../server/internal/packet/packet.go#L105), [proto.CharacterMotion](../../internal/proto/opcodes.go#L88).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L217)
 
@@ -450,7 +450,7 @@ func GestureAction(motion uint8) (int, bool) {
 
 **`0x0507` — CharacterEquipment**
 
-Declarations: [packet.CharacterEquipment](../../server/internal/packet/packet.go#L105), [proto.CharacterEquipment](../../internal/proto/opcodes.go#L89).
+Declarations: [packet.CharacterEquipment](../../server/internal/packet/packet.go#L106), [proto.CharacterEquipment](../../internal/proto/opcodes.go#L89).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -586,7 +586,7 @@ type Reader struct {
 
 **`0x050A` — UseItem**
 
-Declarations: [packet.UseItem](../../server/internal/packet/packet.go#L121), [proto.UseItem](../../internal/proto/opcodes.go#L105).
+Declarations: [packet.UseItem](../../server/internal/packet/packet.go#L122), [proto.UseItem](../../internal/proto/opcodes.go#L105).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L85)
 
@@ -677,7 +677,7 @@ type ItemUseResult struct {
 
 **`0x050B` — CharacterMaxEnergy**
 
-Declarations: [packet.CharacterMaxEnergy](../../server/internal/packet/packet.go#L122), [proto.CharacterMaxEnergy](../../internal/proto/opcodes.go#L106).
+Declarations: [packet.CharacterMaxEnergy](../../server/internal/packet/packet.go#L123), [proto.CharacterMaxEnergy](../../internal/proto/opcodes.go#L106).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -731,7 +731,7 @@ type MaxEnergy struct {
 
 **`0x050C` — SkillUsedSpMp**
 
-Declarations: [packet.SkillUsedSpMp](../../server/internal/packet/packet.go#L123), [proto.SkillUsedSpMp](../../internal/proto/opcodes.go#L107).
+Declarations: [packet.SkillUsedSpMp](../../server/internal/packet/packet.go#L124), [proto.SkillUsedSpMp](../../internal/proto/opcodes.go#L107).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -790,7 +790,7 @@ type Reader struct {
 
 **`0x050D` — BuffAdd**
 
-Declarations: [packet.BuffAdd](../../server/internal/packet/packet.go#L125), [proto.BuffAdd](../../internal/proto/opcodes.go#L109).
+Declarations: [packet.BuffAdd](../../server/internal/packet/packet.go#L126), [proto.BuffAdd](../../internal/proto/opcodes.go#L109).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -846,7 +846,7 @@ type ActiveBuff struct {
 
 **`0x050E` — BuffRemove**
 
-Declarations: [packet.BuffRemove](../../server/internal/packet/packet.go#L126), [proto.BuffRemove](../../internal/proto/opcodes.go#L110).
+Declarations: [packet.BuffRemove](../../server/internal/packet/packet.go#L127), [proto.BuffRemove](../../internal/proto/opcodes.go#L110).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -960,7 +960,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x050F` — SkillKeep**
 
-Declarations: [packet.SkillKeep](../../server/internal/packet/packet.go#L127), [proto.SkillKeep](../../internal/proto/opcodes.go#L111).
+Declarations: [packet.SkillKeep](../../server/internal/packet/packet.go#L128), [proto.SkillKeep](../../internal/proto/opcodes.go#L111).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1190,7 +1190,7 @@ type PeriodicEffect struct {
 
 **`0x0510` — SkillCastStarted**
 
-Declarations: [packet.SkillCastStarted](../../server/internal/packet/packet.go#L124), [proto.SkillCastStarted](../../internal/proto/opcodes.go#L108).
+Declarations: [packet.SkillCastStarted](../../server/internal/packet/packet.go#L125), [proto.SkillCastStarted](../../internal/proto/opcodes.go#L108).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1443,7 +1443,7 @@ type SkillCast struct {
 
 **`0x0511` — SkillUseNoTarget**
 
-Declarations: [packet.SkillUseNoTarget](../../server/internal/packet/packet.go#L149), [proto.SkillUseNoTarget](../../internal/proto/opcodes.go#L134).
+Declarations: [packet.SkillUseNoTarget](../../server/internal/packet/packet.go#L150), [proto.SkillUseNoTarget](../../internal/proto/opcodes.go#L134).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L272)
 
@@ -1602,7 +1602,7 @@ type SkillResult struct {
 
 **`0x0513` — SkillPartyMember**
 
-Declarations: [packet.SkillPartyMember](../../server/internal/packet/packet.go#L150), [proto.SkillPartyMember](../../internal/proto/opcodes.go#L136).
+Declarations: [packet.SkillPartyMember](../../server/internal/packet/packet.go#L151), [proto.SkillPartyMember](../../internal/proto/opcodes.go#L136).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1881,7 +1881,7 @@ type ReflectedDamage struct {
 
 **`0x0517` — SkillUse**
 
-Declarations: [packet.SkillUse](../../server/internal/packet/packet.go#L200), [proto.SkillUse](../../internal/proto/opcodes.go#L187).
+Declarations: [packet.SkillUse](../../server/internal/packet/packet.go#L201), [proto.SkillUse](../../internal/proto/opcodes.go#L187).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L272)
 
@@ -2118,7 +2118,7 @@ type SkillResult struct {
 
 **`0x051A` — SkillExtraDamage**
 
-Declarations: [packet.SkillExtraDamage](../../server/internal/packet/packet.go#L201), [proto.SkillExtraDamage](../../internal/proto/opcodes.go#L188).
+Declarations: [packet.SkillExtraDamage](../../server/internal/packet/packet.go#L202), [proto.SkillExtraDamage](../../internal/proto/opcodes.go#L188).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2349,7 +2349,7 @@ type ReflectedDamage struct {
 
 **`0x051C` — CharacterDeathState**
 
-Declarations: [packet.CharacterDeathState](../../server/internal/packet/packet.go#L203), [proto.CharacterDeathState](../../internal/proto/opcodes.go#L191).
+Declarations: [packet.CharacterDeathState](../../server/internal/packet/packet.go#L204), [proto.CharacterDeathState](../../internal/proto/opcodes.go#L191).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2418,7 +2418,7 @@ type CharacterSpeed struct {
 
 **`0x051D` — CharacterMountShape**
 
-Declarations: [packet.CharacterMountShape](../../server/internal/packet/packet.go#L202), [proto.CharacterMountShape](../../internal/proto/opcodes.go#L190).
+Declarations: [packet.CharacterMountShape](../../server/internal/packet/packet.go#L203), [proto.CharacterMountShape](../../internal/proto/opcodes.go#L190).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2557,7 +2557,7 @@ type Reader struct {
 
 **`0x051F` — CharacterMaxHpMpSp**
 
-Declarations: [packet.CharacterMaxHpMpSp](../../server/internal/packet/packet.go#L128), [proto.CharacterMaxHpMpSp](../../internal/proto/opcodes.go#L112).
+Declarations: [packet.CharacterMaxHpMpSp](../../server/internal/packet/packet.go#L129), [proto.CharacterMaxHpMpSp](../../internal/proto/opcodes.go#L112).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2686,7 +2686,7 @@ type Reader struct {
 
 **`0x0521` — CharacterCurrentHitpoints**
 
-Declarations: [packet.CharacterCurrentHitpoints](../../server/internal/packet/packet.go#L129), [proto.CharacterCurrentHitpoints](../../internal/proto/opcodes.go#L113).
+Declarations: [packet.CharacterCurrentHitpoints](../../server/internal/packet/packet.go#L130), [proto.CharacterCurrentHitpoints](../../internal/proto/opcodes.go#L113).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2967,7 +2967,7 @@ func DecodeShopBubble(p []byte) (id uint32, title string, err error) {
 
 **`0x0526` — CharacterAdditionalStats**
 
-Declarations: [packet.CharacterAdditionalStats](../../server/internal/packet/packet.go#L130), [proto.CharacterAdditionalStats](../../internal/proto/opcodes.go#L115).
+Declarations: [packet.CharacterAdditionalStats](../../server/internal/packet/packet.go#L131), [proto.CharacterAdditionalStats](../../internal/proto/opcodes.go#L115).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -3023,7 +3023,7 @@ type AdditionalStats struct {
 
 **`0x0551` — CharacterResurrect**
 
-Declarations: [packet.CharacterResurrect](../../server/internal/packet/packet.go#L199), [proto.CharacterResurrect](../../internal/proto/opcodes.go#L186).
+Declarations: [packet.CharacterResurrect](../../server/internal/packet/packet.go#L200), [proto.CharacterResurrect](../../internal/proto/opcodes.go#L186).
 
 Source notes: charId:u32, 5-byte blob 04 46 AF 37 01 (verbatim), x,y,z:f32.
 
@@ -3084,7 +3084,7 @@ type Resurrection struct {
 
 **`0x0553` — ResurrectRequest**
 
-Declarations: [packet.ResurrectRequest](../../server/internal/packet/packet.go#L151), [proto.ResurrectRequest](../../internal/proto/opcodes.go#L141).
+Declarations: [packet.ResurrectRequest](../../server/internal/packet/packet.go#L152), [proto.ResurrectRequest](../../internal/proto/opcodes.go#L141).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L237)
 
@@ -3118,7 +3118,7 @@ type ReviveMode uint8
 
 **`0x0554` — ItemRepair**
 
-Declarations: [packet.ItemRepair](../../server/internal/packet/packet.go#L152), [proto.ItemRepair](../../internal/proto/opcodes.go#L142).
+Declarations: [packet.ItemRepair](../../server/internal/packet/packet.go#L153), [proto.ItemRepair](../../internal/proto/opcodes.go#L142).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L239)
 
@@ -3175,7 +3175,7 @@ type ItemRepairResult struct {
 
 **`0x0556` — ReturnToTown**
 
-Declarations: [packet.ReturnToTown](../../server/internal/packet/packet.go#L153), [proto.ReturnToTown](../../internal/proto/opcodes.go#L143).
+Declarations: [packet.ReturnToTown](../../server/internal/packet/packet.go#L154), [proto.ReturnToTown](../../internal/proto/opcodes.go#L143).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L241)
 
@@ -3189,7 +3189,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0x0558` — SkillDetectInfo**
 
-Declarations: [packet.SkillDetectInfo](../../server/internal/packet/packet.go#L197), [proto.SkillDetectInfo](../../internal/proto/opcodes.go#L185).
+Declarations: [packet.SkillDetectInfo](../../server/internal/packet/packet.go#L198), [proto.SkillDetectInfo](../../internal/proto/opcodes.go#L185).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

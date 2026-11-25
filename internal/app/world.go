@@ -1140,6 +1140,7 @@ func (a *App) refreshSelf(v *worldView) {
 }
 
 func (a *App) releaseWorld() {
+	a.inspect = inspectView{}
 	a.revolver.cast = revolverCast{}
 	a.sprites.ResetHoverDepth()
 	a.combatNumbers = nil

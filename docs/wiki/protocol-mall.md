@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x2601` — AccountPoints**
 
-Declarations: [packet.AccountPoints](../../server/internal/packet/packet.go#L204), [proto.AccountPoints](../../internal/proto/opcodes.go#L192).
+Declarations: [packet.AccountPoints](../../server/internal/packet/packet.go#L205), [proto.AccountPoints](../../internal/proto/opcodes.go#L192).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -41,9 +41,9 @@ func buildAccountPoints(points uint32) []byte {
 
 **`0x2602` — PointBuy**
 
-Declarations: [packet.PointBuy](../../server/internal/packet/packet.go#L205), [proto.PointBuy](../../internal/proto/opcodes.go#L193).
+Declarations: [packet.PointBuy](../../server/internal/packet/packet.go#L206), [proto.PointBuy](../../internal/proto/opcodes.go#L193).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L286)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L288)
 
 **S→C serializers:** [buildPointBuyResult (server/internal/world/itemmall.go)](../../server/internal/world/itemmall.go#L28)
 
@@ -145,9 +145,9 @@ type MallPurchase struct {
 
 **`0x2603` — PointGiftSend**
 
-Declarations: [packet.PointGiftSend](../../server/internal/packet/packet.go#L206), [proto.PointGiftSend](../../internal/proto/opcodes.go#L194).
+Declarations: [packet.PointGiftSend](../../server/internal/packet/packet.go#L207), [proto.PointGiftSend](../../internal/proto/opcodes.go#L194).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L288)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L290)
 
 **S→C serializers:** [buildGiftSendResult (server/internal/world/itemmall.go)](../../server/internal/world/itemmall.go#L43)
 
@@ -231,9 +231,9 @@ type MallGiftResult struct {
 
 **`0x2605` — CashPoint**
 
-Declarations: [packet.CashPoint](../../server/internal/packet/packet.go#L209), [proto.CashPoint](../../internal/proto/opcodes.go#L197).
+Declarations: [packet.CashPoint](../../server/internal/packet/packet.go#L210), [proto.CashPoint](../../internal/proto/opcodes.go#L197).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L296)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L298)
 
 **S→C serializers:** [buildCashPoints (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L95)
 
@@ -281,7 +281,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x2606` — PointStoredItemList**
 
-Declarations: [packet.PointStoredItemList](../../server/internal/packet/packet.go#L207), [proto.PointStoredItemList](../../internal/proto/opcodes.go#L195).
+Declarations: [packet.PointStoredItemList](../../server/internal/packet/packet.go#L208), [proto.PointStoredItemList](../../internal/proto/opcodes.go#L195).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -356,9 +356,9 @@ type MallStoredItem struct {
 
 **`0x2607` — PointStoredItemGet**
 
-Declarations: [packet.PointStoredItemGet](../../server/internal/packet/packet.go#L208), [proto.PointStoredItemGet](../../internal/proto/opcodes.go#L196).
+Declarations: [packet.PointStoredItemGet](../../server/internal/packet/packet.go#L209), [proto.PointStoredItemGet](../../internal/proto/opcodes.go#L196).
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L290)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L292)
 
 **S→C serializers:** [tradePacket (server/internal/world/trade.go)](../../server/internal/world/trade.go#L76)
 

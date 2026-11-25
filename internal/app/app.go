@@ -139,6 +139,8 @@ type App struct {
 	sprites                             *render.Sprites
 	actionBar                           *ui.ActionBar
 	inventoryUI                         *ui.Inventory
+	inspectUI                           *ui.Inspect
+	inspect                             inspectView
 	statusUI                            *ui.Status
 	marketUI                            *ui.Market
 	personalMarketUI                    *ui.PersonalMarket
@@ -391,6 +393,11 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		return nil, err
 	}
 	a.inventoryUI.DockOrigin = a.inventoryDockOrigin
+	if art := a.OptionalInterface("inspect.png"); art != nil {
+		if a.inspectUI, err = ui.NewInspect(a, art); err != nil {
+			return nil, err
+		}
+	}
 	if a.duelUI, err = ui.NewDuelPanel(a); err != nil {
 		return nil, err
 	}

@@ -16,7 +16,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 | Maps | Native World Map with region previews, ring buttons, expanded-map name, original clock frame with date/seconds and portrait resource text styling and native zone/hover labels, draggable minimap/full map, pan and zoom | Remaining map services and indicator variants |
 | Options | Menu and six subpages; classic glow/brightness/detail/distance sliders, cloak/helmet visibility, audio, mouse, chat, editable hotkeys and monitor resolution selection | Other service controls |
 | Party/raid | Member frames, invitations, leader and selection flows | Complete badges, buffs and visual variants |
-| Player context | Original classic TipBox frame, SysMsg rows, hover, character/target/party picking, whisper focus and supported party/trade/duel/guild actions | Inspect, follow, personal shops and remaining social windows/services |
+| Player context | Original classic TipBox frame, SysMsg rows, hover, character/target/party picking, whisper focus and supported inspect/party/trade/duel/guild actions | Follow, personal shops and remaining social windows/services |
 | Quests | Original U button, journal artwork, state icons, seven 31px rows, three scrollbars, selection and confirmed abandonment; NPC dialogs/rewards/progress and the native Quest Goal window | Remaining markers |
 | Trade/duels | Wager/item/money interfaces and confirmation flows | Complete comparison across all states |
 | Guild | Original G button, single roster sheet, native columns/rows, sorting, applicants, rank actions and notice editor; directory/creation/ranking flows; Buddy, Block and Search Party with native transport | Complete comparison of rare social states and remaining presentation |
@@ -68,7 +68,16 @@ Visual approval and complete comparison against the original remain ongoing. Opt
 
 The player popup follows `0x47de10`/`0x47e1e0`: text starts at `(10,10)` with 15px rows. Its classic skin uses `TipBox.TGA`, 4px borders and the native `CD1D1F24` background. The `RightMenu_*` feature skin is absent from the local archive. The native minimum width is 90px of content plus borders; longer translated labels expand the width to fit the current font. Existing actions use original SysMsg labels, including party request/kick/leadership/leave (5002–5005), whisper (5007), battle (5008), transaction (5091), guild duel (5339) and raid leadership controls (6507–6509).
 
-Right-click the selected character or its target frame within 10 units in 3D to open their actions. Party and raid roster menus remain available at any distance. Raid leaders and assistants can select Move Group, switch raid tabs and pick the destination slot. Right-click the local portrait in a group to leave it. Whisper selects the recipient and focuses the existing chat input. The popup preserves held movement and owns its pointer gestures; changed rows cannot activate an action that replaced the one originally pressed. Group leadership, capacity, faction and guild eligibility filter supported requests; membership, trades and duels still await GX Server responses. Friends/ignore, inspect, follow and personal-shop services are not represented by invented actions.
+Right-click the selected character or its target frame within 10 units in 3D to open their actions. Party and raid roster menus remain available at any distance. Raid leaders and assistants can select Move Group, switch raid tabs and pick the destination slot. Right-click the local portrait in a group to leave it. Whisper selects the recipient and focuses the existing chat input. The popup preserves held movement and owns its pointer gestures; changed rows cannot activate an action that replaced the one originally pressed. Group leadership, capacity, faction and guild eligibility filter supported requests; membership, trades and duels still await GX Server responses. Friends/ignore, follow and personal-shop services are not represented by invented actions.
+
+Choose **Inspect** from an ally's context menu. The inspection requires three
+units of 3D distance and closes when the player leaves that range or disappears.
+The panel uses `interface/inspect.png` from the loose data pack, displays a
+full-body preview and shows the original equipment slots 0–12. Their tooltips
+use the server-confirmed item quality, linked lapis, recreation and enchantment.
+World validates the faction, map instance, target and distance. The inspection
+request uses native `0x0307`. GX adds the target ID after the native response
+records so a late reply cannot open a different player's panel.
 
 ## Cloaks and combat presentation
 

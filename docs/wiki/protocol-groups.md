@@ -1762,7 +1762,7 @@ type Reader struct {
 
 **`0x0C13` — RaidLevel**
 
-Declarations: [packet.RaidLevel](../../server/internal/packet/packet.go#L348), [proto.RaidLevel](../../internal/proto/raid.go#L105).
+Declarations: [packet.RaidLevel](../../server/internal/packet/packet.go#L349), [proto.RaidLevel](../../internal/proto/raid.go#L105).
 
 Source notes: RaidLevel is the original member level notice, parallel to PartyLevel. RaidLevel updates a raid member's level (0x592b80).
 

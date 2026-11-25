@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0x0601` — MobEnter**
 
-Declarations: [packet.MobEnter](../../server/internal/packet/packet.go#L109), [proto.MobEnter](../../internal/proto/opcodes.go#L93).
+Declarations: [packet.MobEnter](../../server/internal/packet/packet.go#L110), [proto.MobEnter](../../internal/proto/opcodes.go#L93).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -69,7 +69,7 @@ type MobSpawn struct {
 
 **`0x0602` — MobLeave**
 
-Declarations: [packet.MobLeave](../../server/internal/packet/packet.go#L110), [proto.MobLeave](../../internal/proto/opcodes.go#L94).
+Declarations: [packet.MobLeave](../../server/internal/packet/packet.go#L111), [proto.MobLeave](../../internal/proto/opcodes.go#L94).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -109,7 +109,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0603` — MobMove**
 
-Declarations: [packet.MobMove](../../server/internal/packet/packet.go#L111), [proto.MobMove](../../internal/proto/opcodes.go#L95).
+Declarations: [packet.MobMove](../../server/internal/packet/packet.go#L112), [proto.MobMove](../../internal/proto/opcodes.go#L95).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -157,7 +157,7 @@ type MobMotion struct {
 
 **`0x0605` — MobAttackCharacter**
 
-Declarations: [packet.MobAttackCharacter](../../server/internal/packet/packet.go#L112), [proto.MobAttackCharacter](../../internal/proto/opcodes.go#L96).
+Declarations: [packet.MobAttackCharacter](../../server/internal/packet/packet.go#L113), [proto.MobAttackCharacter](../../internal/proto/opcodes.go#L96).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -216,7 +216,7 @@ type AttackResult struct {
 
 **`0x0606` — MobDeath**
 
-Declarations: [packet.MobDeath](../../server/internal/packet/packet.go#L113), [proto.MobDeath](../../internal/proto/opcodes.go#L97).
+Declarations: [packet.MobDeath](../../server/internal/packet/packet.go#L114), [proto.MobDeath](../../internal/proto/opcodes.go#L97).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -276,7 +276,7 @@ type Reader struct {
 
 **`0x0607` — MobPeriodicDamage**
 
-Declarations: [packet.MobPeriodicDamage](../../server/internal/packet/packet.go#L114), [proto.MobPeriodicDamage](../../internal/proto/opcodes.go#L98).
+Declarations: [packet.MobPeriodicDamage](../../server/internal/packet/packet.go#L115), [proto.MobPeriodicDamage](../../internal/proto/opcodes.go#L98).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -818,7 +818,7 @@ func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, s
 
 **`0x0610` — MobCurrentHitpoints**
 
-Declarations: [packet.MobCurrentHitpoints](../../server/internal/packet/packet.go#L115), [proto.MobCurrentHitpoints](../../internal/proto/opcodes.go#L99).
+Declarations: [packet.MobCurrentHitpoints](../../server/internal/packet/packet.go#L116), [proto.MobCurrentHitpoints](../../internal/proto/opcodes.go#L99).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -870,7 +870,7 @@ type MobHealth struct {
 
 **`0x0E01` — MapNpcEnter**
 
-Declarations: [packet.MapNpcEnter](../../server/internal/packet/packet.go#L116), [proto.MapNpcEnter](../../internal/proto/opcodes.go#L100).
+Declarations: [packet.MapNpcEnter](../../server/internal/packet/packet.go#L117), [proto.MapNpcEnter](../../internal/proto/opcodes.go#L100).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -938,7 +938,7 @@ type NpcSpawn struct {
 
 **`0x0E02` — MapNpcLeave**
 
-Declarations: [packet.MapNpcLeave](../../server/internal/packet/packet.go#L117), [proto.MapNpcLeave](../../internal/proto/opcodes.go#L101).
+Declarations: [packet.MapNpcLeave](../../server/internal/packet/packet.go#L118), [proto.MapNpcLeave](../../internal/proto/opcodes.go#L101).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -978,7 +978,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0E03` — MapNpcMove**
 
-Declarations: [packet.MapNpcMove](../../server/internal/packet/packet.go#L118), [proto.MapNpcMove](../../internal/proto/opcodes.go#L102).
+Declarations: [packet.MapNpcMove](../../server/internal/packet/packet.go#L119), [proto.MapNpcMove](../../internal/proto/opcodes.go#L102).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1034,7 +1034,7 @@ type NpcMotion struct {
 
 **`0x0E04` — NpcTalk**
 
-Declarations: [packet.NpcTalk](../../server/internal/packet/packet.go#L140), [proto.NpcTalk](../../internal/proto/opcodes.go#L125).
+Declarations: [packet.NpcTalk](../../server/internal/packet/packet.go#L141), [proto.NpcTalk](../../internal/proto/opcodes.go#L125).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L119)
 
@@ -1064,7 +1064,7 @@ func idPacket(op Opcode, id uint32) []byte {
 
 **`0x0E05` — MapNpcAttackPlayer**
 
-Declarations: [packet.MapNpcAttackPlayer](../../server/internal/packet/packet.go#L119), [proto.MapNpcAttackPlayer](../../internal/proto/opcodes.go#L103).
+Declarations: [packet.MapNpcAttackPlayer](../../server/internal/packet/packet.go#L120), [proto.MapNpcAttackPlayer](../../internal/proto/opcodes.go#L103).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1102,7 +1102,7 @@ type NpcAttack struct {
 
 **`0x0E06` — MapNpcAttackMob**
 
-Declarations: [packet.MapNpcAttackMob](../../server/internal/packet/packet.go#L120), [proto.MapNpcAttackMob](../../internal/proto/opcodes.go#L104).
+Declarations: [packet.MapNpcAttackMob](../../server/internal/packet/packet.go#L121), [proto.MapNpcAttackMob](../../internal/proto/opcodes.go#L104).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

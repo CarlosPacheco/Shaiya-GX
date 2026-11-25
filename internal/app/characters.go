@@ -433,6 +433,7 @@ func (a *App) drawCharacters(w, h int) {
 		a.drawGuildDuel(w, h)
 		a.drawGuildRanking(w, h)
 		a.drawInventory(w, h)
+		a.drawInspect(w, h)
 		a.drawSkills(w, h)
 		if a.subActionsOpen && a.subActionsUI != nil {
 			walking, autoRun := false, false

@@ -100,6 +100,9 @@ func (a *App) contextActions(id uint32) []contextAction {
 	if id != a.state.SelfID && a.chatEntityName(id) != "" {
 		out = append(out, contextAction{label: "Whisper", packet: nil})
 	}
+	if a.inspectUI != nil && a.inspectTarget(id) != nil {
+		out = append(out, contextAction{label: "Inspect"})
+	}
 	return out
 }
 
@@ -135,6 +138,8 @@ func (a *App) contextLabels(actions []contextAction) []string {
 			id = 5339
 		case "Whisper":
 			id = 5007
+		case "Inspect":
+			id = 5421
 		case "Create union":
 			id = 6500
 		case "Leave union":
@@ -160,6 +165,9 @@ func (a *App) contextLabels(actions []contextAction) []string {
 
 func (a *App) performContextAction(id uint32, action contextAction) {
 	switch action.label {
+	case "Inspect":
+		a.requestInspect(id)
+		return
 	case "View market":
 		a.viewPersonalMarket(id)
 		return

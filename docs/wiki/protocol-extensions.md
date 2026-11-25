@@ -120,11 +120,11 @@ func (p *ConnectedPlayer) visibilityPacket() []byte {
 
 **`0x7F03` — GXForgeQuote**
 
-Declarations: [packet.GXForgeQuote](../../server/internal/packet/packet.go#L342), [proto.GXForgeQuote](../../internal/proto/forge_quote.go#L6).
+Declarations: [packet.GXForgeQuote](../../server/internal/packet/packet.go#L343), [proto.GXForgeQuote](../../internal/proto/forge_quote.go#L6).
 
 Source notes: GXForgeQuote is a read-only preview; execution still validates live inventory.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L294)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L296)
 
 **S→C serializers:** [handleForgeQuote (server/internal/world/forge_quote.go)](../../server/internal/world/forge_quote.go#L105)
 
@@ -477,7 +477,7 @@ Declarations: [proto.GXGMMapTeleport](../../internal/proto/gm_map.go#L10).
 
 Source notes: GXGMMapTeleport requests an exact map-image coordinate. The server owns Y.
 
-**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L292)
+**C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L294)
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1406,7 +1406,7 @@ func SummonCancelPacket() []byte {
 
 **`0x7F15` — GXPartyInviteName**
 
-Declarations: [packet.GXPartyInviteName](../../server/internal/packet/packet.go#L345), [proto.GXPartyInviteName](../../internal/proto/party.go#L107).
+Declarations: [packet.GXPartyInviteName](../../server/internal/packet/packet.go#L346), [proto.GXPartyInviteName](../../internal/proto/party.go#L107).
 
 Source notes: GXPartyInviteName is the global /party <name> invitation request. GXPartyInviteName is the GX /party <name> request: the party invitation of 0x0B09 without the proximity or same-map requirement. The target still receives the native 0x0B09 prompt.
 

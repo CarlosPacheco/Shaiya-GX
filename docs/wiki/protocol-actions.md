@@ -133,7 +133,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0204` — ItemBagToBag**
 
-Declarations: [packet.ItemBagToBag](../../server/internal/packet/packet.go#L85), [proto.ItemBagToBag](../../internal/proto/opcodes.go#L69).
+Declarations: [packet.ItemBagToBag](../../server/internal/packet/packet.go#L86), [proto.ItemBagToBag](../../internal/proto/opcodes.go#L69).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L105)
 
@@ -203,7 +203,7 @@ func DecodeWarehouseMove(p []byte) (items [2]InventoryItem, money uint32, hasMon
 
 **`0x0205` — AddItem**
 
-Declarations: [packet.AddItem](../../server/internal/packet/packet.go#L86), [proto.AddItem](../../internal/proto/opcodes.go#L70).
+Declarations: [packet.AddItem](../../server/internal/packet/packet.go#L87), [proto.AddItem](../../internal/proto/opcodes.go#L70).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
 
@@ -286,7 +286,7 @@ type InventoryItem struct {
 
 **`0x0206` — RemoveItem**
 
-Declarations: [packet.RemoveItem](../../server/internal/packet/packet.go#L87), [proto.RemoveItem](../../internal/proto/opcodes.go#L71).
+Declarations: [packet.RemoveItem](../../server/internal/packet/packet.go#L88), [proto.RemoveItem](../../internal/proto/opcodes.go#L71).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L101)
 
@@ -416,7 +416,7 @@ type ExperienceGain struct{ Base, Perfect uint32 }
 
 **`0x0208` — SetStatPoint**
 
-Declarations: [packet.SetStatPoint](../../server/internal/packet/packet.go#L88), [proto.SetStatPoint](../../internal/proto/opcodes.go#L72).
+Declarations: [packet.SetStatPoint](../../server/internal/packet/packet.go#L89), [proto.SetStatPoint](../../internal/proto/opcodes.go#L72).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L227)
 
@@ -527,7 +527,7 @@ func DecodeStatPoints(p []byte) (d StatPoints, err error) {
 
 **`0x0209` — LearnNewSkill**
 
-Declarations: [packet.LearnNewSkill](../../server/internal/packet/packet.go#L90), [proto.LearnNewSkill](../../internal/proto/opcodes.go#L74).
+Declarations: [packet.LearnNewSkill](../../server/internal/packet/packet.go#L91), [proto.LearnNewSkill](../../internal/proto/opcodes.go#L74).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L225)
 
@@ -614,7 +614,7 @@ type LearnResult struct {
 
 **`0x020A` — CharacterEnteredPortal**
 
-Declarations: [packet.CharacterEnteredPortal](../../server/internal/packet/packet.go#L91), [proto.CharacterEnteredPortal](../../internal/proto/opcodes.go#L75).
+Declarations: [packet.CharacterEnteredPortal](../../server/internal/packet/packet.go#L92), [proto.CharacterEnteredPortal](../../internal/proto/opcodes.go#L75).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L219)
 
@@ -659,7 +659,7 @@ func PortalRequestPacket(index uint8) []byte {
 
 **`0x020B` — CharacterMapTeleport**
 
-Declarations: [packet.CharacterMapTeleport](../../server/internal/packet/packet.go#L92), [proto.CharacterMapTeleport](../../internal/proto/opcodes.go#L76).
+Declarations: [packet.CharacterMapTeleport](../../server/internal/packet/packet.go#L93), [proto.CharacterMapTeleport](../../internal/proto/opcodes.go#L76).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -793,7 +793,7 @@ type GatekeeperResult struct {
 
 **`0x020E` — UserKillCountUpdate**
 
-Declarations: [packet.UserKillCountUpdate](../../server/internal/packet/packet.go#L93), [proto.UserKillCountUpdate](../../internal/proto/opcodes.go#L77).
+Declarations: [packet.UserKillCountUpdate](../../server/internal/packet/packet.go#L94), [proto.UserKillCountUpdate](../../internal/proto/opcodes.go#L77).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -929,7 +929,7 @@ type BlessingUpdate struct {
 
 **`0x0211` — BlessInit**
 
-Declarations: [packet.BlessInit](../../server/internal/packet/packet.go#L132), [proto.BlessInit](../../internal/proto/opcodes.go#L117).
+Declarations: [packet.BlessInit](../../server/internal/packet/packet.go#L133), [proto.BlessInit](../../internal/proto/opcodes.go#L117).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1281,7 +1281,7 @@ func DecodeU32(p []byte) (uint32, error) { r := NewReader(p); v := r.U32(); retu
 
 **`0x0214` — StatsReset**
 
-Declarations: [packet.StatsReset](../../server/internal/packet/packet.go#L89), [proto.StatsReset](../../internal/proto/opcodes.go#L73).
+Declarations: [packet.StatsReset](../../server/internal/packet/packet.go#L90), [proto.StatsReset](../../internal/proto/opcodes.go#L73).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1340,7 +1340,7 @@ type StatReset struct {
 
 **`0x0216` — UseVehicle**
 
-Declarations: [packet.UseVehicle](../../server/internal/packet/packet.go#L84), [proto.UseVehicle](../../internal/proto/opcodes.go#L68).
+Declarations: [packet.UseVehicle](../../server/internal/packet/packet.go#L85), [proto.UseVehicle](../../internal/proto/opcodes.go#L68).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L243)
 
@@ -1836,7 +1836,7 @@ type Reader struct {
 
 **`0x0225` — TeleportSavePositionList**
 
-Declarations: [packet.TeleportSavePositionList](../../server/internal/packet/packet.go#L131), [proto.TeleportSavePositionList](../../internal/proto/opcodes.go#L116).
+Declarations: [packet.TeleportSavePositionList](../../server/internal/packet/packet.go#L132), [proto.TeleportSavePositionList](../../internal/proto/opcodes.go#L116).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1866,7 +1866,7 @@ func buildZeroCount(op packet.Opcode) []byte {
 
 **`0x0226` — ChangeAppearance**
 
-Declarations: [packet.ChangeAppearance](../../server/internal/packet/packet.go#L96), [proto.ChangeAppearance](../../internal/proto/opcodes.go#L80).
+Declarations: [packet.ChangeAppearance](../../server/internal/packet/packet.go#L97), [proto.ChangeAppearance](../../internal/proto/opcodes.go#L80).
 
 Source notes: Request bag,slot,hair,face,height,sex:u8; reply charId:u32,hair,face,height,sex:u8.
 
@@ -1940,7 +1940,7 @@ type AppearanceChange struct {
 
 **`0x0228` — ChangeSexDenied**
 
-Declarations: [packet.ChangeSexDenied](../../server/internal/packet/packet.go#L97), [proto.ChangeSexDenied](../../internal/proto/opcodes.go#L81).
+Declarations: [packet.ChangeSexDenied](../../server/internal/packet/packet.go#L98), [proto.ChangeSexDenied](../../internal/proto/opcodes.go#L81).
 
 Source notes: empty; SysMsg 862, Game.exe 0x56b820
 

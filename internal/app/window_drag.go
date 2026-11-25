@@ -177,6 +177,15 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 	}
+	if a.inspect.open && a.inspectUI != nil {
+		x, y := a.inspectUI.Origin(w, h)
+		if start(&a.inspectUI.Position, x, y, ui.InspectWidth, ui.InspectHeight, 20, 193) {
+			return true
+		}
+		if pointInside(in, x, y, ui.InspectWidth, ui.InspectHeight) {
+			return false
+		}
+	}
 	if a.inventory.open && a.inventoryUI != nil {
 		x, y := a.inventoryUI.Origin(w, h)
 		position := &a.inventoryUI.Position
@@ -523,6 +532,9 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 	}
 	if a.questTrackerUI != nil {
 		out["quest_tracker"] = &a.questTrackerUI.Position
+	}
+	if a.inspectUI != nil {
+		out["inspect"] = &a.inspectUI.Position
 	}
 	if a.inventoryUI != nil {
 		out["inventory"] = &a.inventoryUI.Position
