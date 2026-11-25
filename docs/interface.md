@@ -624,7 +624,7 @@ native Windtail Forest Wood Spirit model (ID 2025) and other Windtail creatures.
 
 ## Quest tracker
 
-Click a quest in the U journal to open the tracker. It stays visible when the journal closes. Click a title to expand or collapse its objectives, scroll for more quests, and drag the header to move it. The tracker uses confirmed progress and current bag contents. The Remember Layout setting saves its position separately from the journal. The objective list uses the original Quest Goal background when the loose data includes `interface/quest_mini.png` (the converted EP5.4 `quest_mini.tga`). Older data packs use the GX panel background.
+Click a quest in the U journal to open the tracker. It stays visible when the journal closes. Click a title to expand or collapse its objectives, scroll for more quests, and drag the header to move it. The tracker uses confirmed progress and current bag contents. The Remember Layout setting saves its position separately from the journal.
 
 ## Map-wide quest availability
 

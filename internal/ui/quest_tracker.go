@@ -33,7 +33,6 @@ type trackerRow struct {
 // QuestTracker owns layout and pointer state. Active quests belong to the game state.
 type QuestTracker struct {
 	Position WindowPosition
-	art      *render.Texture
 	close    Button
 	scroll   panelScroll
 	rows     []trackerRow
@@ -42,10 +41,9 @@ type QuestTracker struct {
 	pressed  uint16
 }
 
-func NewQuestTracker(t Textures, art *render.Texture) (*QuestTracker, error) {
+func NewQuestTracker(t Textures) (*QuestTracker, error) {
 	ld := &loader{t: t}
 	return &QuestTracker{
-		art:    art,
 		close:  nativeClose(ld.get("talk1_close_button.png"), QuestTrackerWidth-27, 5),
 		scroll: newPanelScroll(ld.get("scrollbar.png"), QuestTrackerWidth-18, trackerListY, trackerRowHeight*trackerVisibleRows),
 	}, ld.err
@@ -134,18 +132,11 @@ func (q *QuestTracker) Draw(s *render.Sprites, f *Font, flat *render.Texture, w,
 	edge := [4]float32{.38, .32, .24, .97}
 	ink := [4]float32{.85, .80, .71, 1}
 	rect(x, y, QuestTrackerWidth, QuestTrackerHeight, edge)
-	if q.art == nil {
-		rect(x+1, y+1, QuestTrackerWidth-2, QuestTrackerHeight-2, [4]float32{.064, .055, .046, .94})
-	} else {
-		// EP5.4 0x4dd090 loads quest_mini.TGA. Its central background
-		// fits our objective list independently of the baked title and rail.
-		s.Draw(q.art, float32(x+1), float32(y+1), QuestTrackerWidth-2, QuestTrackerHeight-2,
-			8.0/256, 27.0/256, 216.0/256, 114.0/256, white)
-	}
+	rect(x+1, y+1, QuestTrackerWidth-2, QuestTrackerHeight-2, [4]float32{.064, .055, .046, .94})
 	rect(x+1, y+1, QuestTrackerWidth-2, trackerListY-5, [4]float32{.16, .131, .097, .98})
-	f.Draw(s, Tr(12380), x+11, y+8, ink, QuestTrackerDragWidth-16)
+	f.Draw(s, "Quest Tracker", x+11, y+8, ink, QuestTrackerDragWidth-16)
 	if len(q.rows) == 0 {
-		f.Draw(s, Tr(12381), x+11, y+trackerListY+5, ink, trackerTextWidth)
+		f.Draw(s, "No active quests", x+11, y+trackerListY+5, ink, trackerTextWidth)
 	}
 	for i, row := range q.rows[q.offset:min(len(q.rows), q.offset+trackerVisibleRows)] {
 		top := y + trackerListY + i*trackerRowHeight

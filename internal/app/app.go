@@ -462,7 +462,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.questUI, err = ui.NewQuestLog(a); err != nil {
 		return nil, err
 	}
-	if a.questTrackerUI, err = ui.NewQuestTracker(a, a.OptionalInterface("quest_mini.png")); err != nil {
+	if a.questTrackerUI, err = ui.NewQuestTracker(a); err != nil {
 		return nil, err
 	}
 	if a.npcQuestUI, err = ui.NewNPCQuest(a); err != nil {

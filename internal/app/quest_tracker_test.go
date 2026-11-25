@@ -15,7 +15,7 @@ func trackerTestApp() *App {
 	a := inputApp()
 	a.questUI, _ = ui.NewQuestLog(inputTextures{})
 	a.questConfirm, _ = ui.NewMessage(inputTextures{})
-	a.questTrackerUI, _ = ui.NewQuestTracker(inputTextures{}, nil)
+	a.questTrackerUI, _ = ui.NewQuestTracker(inputTextures{})
 	a.questDataLoaded = true
 	a.font = &ui.Font{}
 	return a
