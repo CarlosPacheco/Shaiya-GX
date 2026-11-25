@@ -201,17 +201,30 @@ bars keep the original left click (hotkeys are unchanged). Accessory pairs choos
 server-authoritative. Provisional inventory instructions/waiting messages are
 removed, and items with no sale value omit that line entirely.
 
+Physical skill releases use the original animation cue and the equipped weapon's
+ranged release. Wind Spin and Enhance Wind Spin use their dedicated spin sound.
+A direct melee skill's confirmed weapon hit, damage number, and eligible
+target reaction follow the ALT contact markers. One result with two contacts divides
+its damage presentation between them. A lethal hit starts the monster's death
+at first contact.
+
+Spell impact audio uses separate target and area selectors. The primary area
+announcement places the cue at the caster or target center. Secondary player
+results can display recipient effects without replaying the release or area
+sound. Visual effect limits do not discard the spell cue.
+
 Monsters use Monster.SData normal/chase timing and attack animation fields.
 Movement and confirmed attacks interrupt idle variations. If a hit draws aggro,
 the chase interrupts the damage reaction. The run cycle continues across brief
 gaps between chase steps, and walking ends on arrival. Selecting a monster
 updates its health and speed without restarting its movement. Damage reactions
 cannot interrupt attacks or locomotion, and attack facing follows the victim. Monster skill results use their own 0x060b/c/d layouts,
-including the attack-slot byte, level-one definition lookup and sequence-two
-native impact route. Wire level100 is a marker. Repeated recipients of one area
-attack do not restart its animation/audio. Speed changes and target snapshots
-retain the monster's current server modifiers. Full per-monster comparison is
-still ongoing.
+including the attack-slot byte and level-one `NpcSkill.SData` lookup via wire
+level 100. Audio uses that record's visual selector. The starting cast uses
+the target sound table. A secondary result can use the area table when its
+target recipe is absent and the original handler allows the fallback.
+Recipient packets leave the caster's attack animation and sound running.
+Speed changes and target snapshots retain the monster's server modifiers.
 
 The original debuff overlay (`0x4bff80`/`0x4c02d0`) uses a one-second triangular white pulse
 from zero to 127/255 alpha and back to zero. Icon hit regions and authoritative buff

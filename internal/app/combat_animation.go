@@ -182,7 +182,7 @@ func (a *App) confirmedAnimation(p []byte) {
 			// A swing already in flight can arrive after a ground move
 			// abandoned the attack. Apply the hit without stopping travel.
 			if v.travel && v.approachTarget == 0 && !v.attackSent {
-				a.deliverAttackResult(result, nil)
+				a.deliverAttackResult(result, nil, "")
 				return
 			}
 		}
@@ -211,7 +211,7 @@ func (a *App) confirmedAnimation(p []byte) {
 			}
 		}
 		if !ranged {
-			a.deliverAttackResult(result, a.playerActor(result.Source))
+			a.deliverAttackResult(result, a.playerActor(result.Source), "")
 		}
 	case proto.CharacterDeath:
 		id := proto.NewReader(p).U32()
@@ -362,7 +362,7 @@ func (a *App) reactToMobHit(m *mobActor) {
 // marker. The number, the pain voice and the target's hit reaction all happen
 // there. With two markers the damage is split in halves (first gets the
 // larger share), one application per marker. Without a marker it applies now.
-func (a *App) deliverAttackResult(result proto.AttackResult, actor *scene.Character) {
+func (a *App) deliverAttackResult(result proto.AttackResult, actor *scene.Character, hitSound string) {
 	v := a.wv
 	showNumber := a.showsAttackResult(result)
 	target := a.state.Entities[result.Target]
@@ -379,6 +379,9 @@ func (a *App) deliverAttackResult(result proto.AttackResult, actor *scene.Charac
 				return
 			}
 			if hp > 0 {
+				if result.Result <= 1 {
+					a.playEntitySound(result.Target, hitSound)
+				}
 				a.playCharacterDamageVoice(result.Target, result.Result, hp)
 				if !pending && result.Result <= 1 {
 					a.reactToMobHit(v.mobs[result.Target])
@@ -392,12 +395,17 @@ func (a *App) deliverAttackResult(result proto.AttackResult, actor *scene.Charac
 	if actor != nil && len(v.pendingNumbers) < 62 {
 		first, second := actor.ContactTimes()
 		switch {
-		case first > actor.Time && second > first:
+		case first > 0 && second > first && second > actor.Time:
 			half := result.HP / 2
-			v.pendingNumbers = append(v.pendingNumbers,
-				pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP-half, true)},
-				// One server attack can hold the death only until its first contact.
-				pendingNumber{actionClock{actor, actor.ActionID(), second}, apply(half, false)})
+			firstPending := first > actor.Time
+			firstContact := apply(result.HP-half, firstPending)
+			if firstPending {
+				v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), first}, firstContact})
+			} else {
+				firstContact()
+			}
+			// The blow can hold a mob's death only until its first contact.
+			v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), second}, apply(half, false)})
 			return
 		case first > actor.Time:
 			v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP, true)})
