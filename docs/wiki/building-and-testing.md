@@ -77,6 +77,13 @@ The publication check inspects staged source and, with `--history`, reachable hi
 
 ## Local assets and graphics checks
 
+Linux CI checks OpenGL startup and runs asset-free renderer integration tests
+under Xvfb with Mesa software rendering.
+Windows CI verifies process startup with `-help`. Run `-gl-check` on a desktop
+with an OpenGL 4.5 driver to verify context creation, startup shaders and sprite
+output without game data. See [Troubleshooting](troubleshooting.md) for
+comparing bindless and ordinary texture bindings.
+
 When reporting a client problem, include `logs/client.log` from beside the
 executable. The header records the build, OS, CPU and physical RAM. After
 graphics initialization begins, the log records the OpenGL renderer and driver.

@@ -25,16 +25,23 @@ uses Zenity or KDialog when available, with terminal and file diagnostics always
 available. Automated screenshot/autoplay runs log failures without opening a
 blocking desktop dialog.
 
-### Graphics startup on Windows
+### Graphics startup
 
 GX requests an OpenGL 4.5 core context through GLFW. Linux and Windows select
 the same rendering paths from the capabilities reported by the active driver.
 Drivers that advertise bindless textures and shader draw parameters can use
-indirect batches when their shader-storage limits allow it. GX uses ordinary
-draws or instancing on the remaining devices. With `-verbose`, the log records
-the advertised capabilities and the selected paths. Devices with limited
+indirect batches when the required commands resolve and shader-storage limits
+allow it. GX uses ordinary draws or instancing on the remaining devices. The
+startup log records the advertised capabilities and selected paths. Devices with limited
 vertex shader storage use uniform poses and CPU-sampled effect geometry. GX
 uploads decoded RGBA8 mip levels when native DDS compression is unavailable.
+
+Run `-gl-check` to verify context creation, startup shader compilation,
+sprite output and swap without loading game data. In PowerShell, run
+`& '.\Shaiya GX.exe' -gl-check`. Save `logs/client.log`, then repeat with
+`-gl-check -gl-no-bindless` and keep the second log. For a problem that appears
+in gameplay, launch the game with `-gl-no-bindless` and compare the same map,
+camera, resolution and graphics settings.
 
 - A `create WGL context` error points to window or driver
   initialization. Include the complete error and the graphics adapter and

@@ -46,6 +46,32 @@ func TestGXOpenGLCommandsAndDrawPathsGL(t *testing.T) {
 	}); err == nil || err.Error() != "glDrawElements" {
 		t.Fatalf("missing draw command returned %v", err)
 	}
+	// A driver can advertise the optional extension while failing to
+	// resolve one of its commands for the current context.
+	missingNonResident := false
+	if err := initDevice(InitOptions{}, func(name string) unsafe.Pointer {
+		if name == "glMakeTextureHandleNonResidentARB" {
+			missingNonResident = true
+			return nil
+		}
+		return resolve(name)
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if !missingNonResident || skinIndirectSupported {
+		t.Fatal("missing bindless command did not select the ordinary drawing path")
+	}
+	if err := initDevice(InitOptions{DisableBindless: true}, func(name string) unsafe.Pointer {
+		if name == "glGetTextureHandleARB" {
+			t.Error("bindless command was resolved despite explicit opt-out")
+		}
+		return resolve(name)
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if skinIndirectSupported {
+		t.Fatal("bindless opt-out enabled the indirect path")
+	}
 	if err := Init(true); err != nil {
 		t.Fatal(err)
 	}

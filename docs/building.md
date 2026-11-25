@@ -82,17 +82,27 @@ The publication check inspects staged source and, with `--history`, reachable hi
 
 Windows CI also starts the client executable and checks its startup log. That
 check covers process loading before the game data and graphics initialization.
+Linux CI checks OpenGL startup and runs asset-free renderer integration tests
+using Mesa software rendering under Xvfb.
 
 ## Local assets and graphics checks
 
 When reporting a client problem, include `logs/client.log` from beside the
 executable. The header records the build, OS, CPU and physical RAM. After
 graphics initialization begins, the log records the OpenGL renderer and driver.
+It also records the selected rendering paths.
 The default log keeps failures and limits recurring warnings. Run with
 `-verbose` for detailed graphics initialization, shader names and all recurring
 warnings. Add `-gldebug` to capture OpenGL driver messages when the client can
 create a context. If the regular log cannot be written, the startup error shows
 the fallback path.
+
+Run the executable with `-gl-check` to open a small OpenGL 4.5 context,
+compile the startup shaders, verify sprite pixels and present a frame without
+loading game data. In PowerShell, run `& '.\Shaiya GX.exe' -gl-check`. Compare
+with `-gl-check -gl-no-bindless` to isolate the optional bindless texture path.
+The same `-gl-no-bindless` flag applies to ordinary gameplay on Linux and
+Windows. Save both logs when comparing runs.
 
 Place the converted loose `data/` directory beside the Shaiya GX executable, or set `SHAIYA_DATA` / `-data` to that directory. The game no longer reads SAH/SAF. See [data formats and conversion](data-formats.md). The client loads external fonts from `data/fonts/`. Release packaging installs the versioned `resources/fonts/` pack, including its coverage manifest and licenses; no OS font installation is used.
 
