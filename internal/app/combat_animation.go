@@ -137,10 +137,7 @@ func (a *App) confirmedAnimation(p []byte) {
 			weapon := a.playerWeapon(r.Source)
 			a.faceSkillTarget(r.Source, r.Target)
 			a.attackVariant++
-			if actor.PlaySkillAction(r.ID, scene.SkillAction(d.Animation, d.Attack, d.Effect, weapon, a.attackVariant)) && r.Source == a.state.SelfID && (d.Effect == 1 || d.Effect == 3) {
-				v.attackPose = true
-				v.attackActionID = actor.ActionID()
-			}
+			actor.PlaySkillAction(r.ID, scene.SkillAction(d.Animation, d.Attack, d.Effect, weapon, a.attackVariant))
 		}
 	case proto.CharacterMove:
 		if actor := a.playerActor(proto.NewReader(p).U32()); actor != nil {
@@ -179,9 +176,9 @@ func (a *App) confirmedAnimation(p []byte) {
 		result := a.state.LastAttack
 		if a.state.SelfID != 0 && result.Source == a.state.SelfID {
 			a.markCombatAction()
-			// A swing already in flight can arrive after a ground move
-			// abandoned the attack. Apply the hit without stopping travel.
-			if v.travel && v.approachTarget == 0 && !v.attackSent {
+			// Apply a swing already in flight after disengaging without
+			// replacing the current pose or pausing ongoing movement.
+			if (v.travel || v.moving) && v.approachTarget == 0 && !v.attackSent {
 				a.deliverAttackResult(result, nil, "")
 				return
 			}
@@ -198,9 +195,6 @@ func (a *App) confirmedAnimation(p []byte) {
 			}
 			a.attackVariant++
 			if !actor.PlayingAction(8) && !a.playFormAttack(result.Source, 0) && actor.PlayBasicAttack(typ, a.attackVariant) {
-				if result.Source == a.state.SelfID {
-					v.attackActionID = actor.ActionID()
-				}
 				ranged = a.startPhysicalProjectile(result, typ, actor)
 				if ranged {
 					// The string/shot cue follows the animation, not the missile's release,

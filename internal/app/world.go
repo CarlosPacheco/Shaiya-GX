@@ -107,8 +107,6 @@ type worldView struct {
 	shakeOffset                 render.V3
 	firstDirection              render.V3
 	attackMoveUntil             float64
-	attackPose                  bool
-	attackActionID              uint64
 	jumping                     bool
 	jumpPending                 bool // jump clip started, impulse not yet applied
 	jumpActive, jumpMoved       bool // track the whole jump, including its landing frames
@@ -381,7 +379,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		v.autoRun = !v.autoRun
 	}
 	if !in.SuppressAutoRun && (in.Held('W') || in.Held('S') || in.Held('A') || in.Held('D') || in.Held('Q') || in.Held('E') || in.HasKey(platform.KeyNumLock) || v.autoRun) {
-		// Explicit movement abandons the attack action at once (0x43bfa0).
+		// Manual movement ends the ongoing attack order (0x43bfa0).
 		if !a.abandonAttack() {
 			return
 		}
@@ -506,7 +504,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	if backEvade {
 		evadeMotion = proto.MotionBackstep
 	}
-	if evadeMotion != 0 && !in.HasKey(platform.KeySpace) && !v.jumpActive && !v.ladder.Active && !v.evading && !blocked && !swimming && !v.jumping && speed > 0 && !a.state.Self.Dead && !a.state.Self.Mounted && v.self != nil {
+	if evadeMotion != 0 && a.clock >= v.attackMoveUntil && !in.HasKey(platform.KeySpace) && !v.jumpActive && !v.ladder.Active && !v.evading && !blocked && !swimming && !v.jumping && speed > 0 && !a.state.Self.Dead && !a.state.Self.Mounted && v.self != nil {
 		action, _ := proto.LocomotionAction(evadeMotion)
 		v.evading = v.self.PlayAction(action, false)
 		if v.evading {
@@ -640,13 +638,6 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		}
 	}
 	if v.self != nil {
-		if v.attackPose && (!v.self.ActionActive() || v.self.ActionID() != v.attackActionID) {
-			v.attackPose = false
-		}
-		if moving && v.attackPose {
-			v.self.ReleaseAction()
-			v.attackPose = false
-		}
 		if moving && v.self.PlayingDamageReaction() {
 			v.self.ReleaseAction()
 		}

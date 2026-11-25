@@ -55,19 +55,36 @@ func TestCombatCuesAgainstRapture(t *testing.T) {
 	if a.wv.self == nil {
 		t.Fatal("fixture player model did not load")
 	}
-	a.wv.pos = render.V3{mob.X + 1, mob.Y, mob.Z}
-	send(proto.MovePacket(0, 0, a.wv.pos[0], a.wv.pos[1], a.wv.pos[2]))
-	send(proto.MobAttackPacket(mob.ID))
-	deadline := time.Now().Add(8 * time.Second)
+	st.Target = mob.ID
+	if !a.attackTarget() {
+		t.Fatal("could not start approaching the target")
+	}
+	const frame = time.Second / 60
+	deadline := time.Now().Add(12 * time.Second)
+	input := &platform.Input{}
 	for len(a.wv.attackSounds) < 2 {
 		a.pumpWorld()
-		a.updateAudio()
 		if a.state == nil || time.Now().After(deadline) {
 			t.Fatal("confirmed weapon hit did not queue its swing/contact", st.LastAttack)
 		}
-		time.Sleep(time.Millisecond)
+		if len(a.wv.attackSounds) >= 2 {
+			break
+		}
+		a.clock += frame.Seconds()
+		a.updateWorld(input, frame.Seconds())
+		a.updateAudio()
+		time.Sleep(frame)
 	}
-	send(proto.StopAttackPacket())
+	v := a.wv
+	position, action, recovery := v.pos, v.self.ActionID(), v.attackMoveUntil
+	a.updateWorld(&platform.Input{Down: "S"}, 1.0/60)
+	if v.attackSent || v.engagedID != 0 || v.approachTarget != 0 {
+		t.Fatal("backpedal did not stop the ongoing attack order")
+	}
+	if !v.self.ActionActive() || v.self.ActionID() != action || v.attackMoveUntil != recovery ||
+		v.pos[0] != position[0] || v.pos[2] != position[2] {
+		t.Fatal("backpedal cut the server-confirmed swing or bypassed its recovery")
+	}
 	result, pools := st.LastAttack, st.Pools
 	if result.Source != st.SelfID || result.Target != mob.ID || result.HP == 0 || result.Result > 1 {
 		t.Fatal("audio was not tied to confirmed positive damage", result)

@@ -129,7 +129,8 @@ func TestDungeonClickMoveSelectsFloorGL(t *testing.T) {
 	click := &platform.Input{MouseX: x, MouseY: y, Clicked: true}
 	a.state.Target = 7
 	a.keepChasing(a.state.Target)
-	v.attackMoveUntil = a.clock + 1
+	recovery := a.clock + 1
+	v.attackMoveUntil = recovery
 	a.gameMenu.Settings.UseMouse = false
 	a.moveToGround(click, W, H)
 	if v.travel || v.travelEffect != nil || !v.attackSent {
@@ -140,12 +141,12 @@ func TestDungeonClickMoveSelectsFloorGL(t *testing.T) {
 	if !v.travel || v.destination.Sub(goal).Len() > .1 || v.travelEffect == nil || v.travelEffect.Origin != v.destination {
 		t.Fatal("field click behavior changed", goal, v.destination)
 	}
-	if v.attackSent || v.engagedID != 0 || v.approachTarget != 0 || v.attackMoveUntil != 0 || a.state.Target != 7 {
+	if v.attackSent || v.engagedID != 0 || v.approachTarget != 0 || v.attackMoveUntil != recovery || a.state.Target != 7 {
 		t.Fatal("ground click did not abandon the attack while keeping its target selected")
 	}
 	a.state.LastAttack = proto.AttackResult{Source: a.state.SelfID, Target: 7}
 	a.confirmedAnimation(proto.NewWriter(proto.CharacterMobAutoAttack).Bytes())
-	if !v.travel || v.attackMoveUntil != 0 {
+	if !v.travel || v.attackMoveUntil != recovery {
 		t.Fatal("late swing stopped ground travel")
 	}
 }
