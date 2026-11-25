@@ -153,10 +153,10 @@ func (b *SkinCrowd) newRun(group SkinGroup) {
 
 // DrawCrowdIndirect submits consecutive groups with compatible raster state
 // together. Indirect commands retain the same mesh and instance ordering.
-func (k *Skinner) DrawCrowdIndirect(s *Scene3D, b *SkinCrowd, groups []SkinGroup, instances []SkinInstance, palettes []M4, ambient float32) bool {
+func (k *Skinner) DrawCrowdIndirect(s *Scene3D, b *SkinCrowd, groups []SkinGroup, instances []SkinInstance, palettes *CrowdPalettes, ambient float32) (bool, int) {
 	if k.indirect == nil || (s.Shadow && k.indirect.boundCrowdTextures) ||
 		len(instances) == 0 || len(groups) < 2 || !b.plan(groups, ambient, k.indirect.boundCrowdTextures) {
-		return false
+		return false, 0
 	}
 	if b.vao == 0 {
 		gl.CreateVertexArrays(1, &b.vao)
@@ -173,8 +173,9 @@ func (k *Skinner) DrawCrowdIndirect(s *Scene3D, b *SkinCrowd, groups []SkinGroup
 	addGPUBytes(b.commandBytes)
 
 	k.indirect.Begin(s, ambient)
-	k.uploadCrowdInstances(instances, palettes)
-	k.uploadCrowdBuffer(2, len(b.materials)*int(unsafe.Sizeof(b.materials[0])), unsafe.Pointer(&b.materials[0]))
+	k.uploadCrowdInstances(instances)
+	written := palettes.bind()
+	k.uploadCrowdBuffer(1, len(b.materials)*int(unsafe.Sizeof(b.materials[0])), unsafe.Pointer(&b.materials[0]))
 	gl.BindVertexArray(b.vao)
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, b.indirect)
 	gl.FrontFace(gl.CW)
@@ -197,7 +198,7 @@ func (k *Skinner) DrawCrowdIndirect(s *Scene3D, b *SkinCrowd, groups []SkinGroup
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, 0)
 	gl.Disable(gl.CULL_FACE)
 	gl.FrontFace(gl.CCW)
-	return true
+	return true, written
 }
 
 func (b *SkinCrowd) Delete() {

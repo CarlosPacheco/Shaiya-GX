@@ -152,6 +152,8 @@ func (m *mobActor) locomotionAction(now float64) int {
 func (a *App) prepareMonsters() {
 	effectBudget := 2
 	v := a.wv
+	v.mobPoseSamples.Reset()
+	effects := a.clientSettings().SkillEffects
 	a.updatePlayerAnimationRates()
 	for id, m := range v.mobs {
 		if e := a.state.Entities[id]; e == nil || e.Kind != game.KindMob {
@@ -215,7 +217,10 @@ func (a *App) prepareMonsters() {
 		if impact := m.attackImpact; impact != nil && (m.actor.Time >= impact.contact || !m.actor.Attacking()) {
 			a.finishMobAttack(m)
 		}
-		m.actor.PrepareEffects(float32(a.frameDT), a.clientSettings().SkillEffects, !death, &effectBudget)
+		if effects {
+			v.mobPoseSamples.Sample(m.actor.Character)
+		}
+		m.actor.PrepareEffects(float32(a.frameDT), effects, !death, &effectBudget)
 	}
 }
 
@@ -253,7 +258,7 @@ func (a *App) drawMonsters() {
 	s := a.scene3d
 	v := a.wv
 	frustum := render.ViewFrustum(s.View, s.VisibilityProjection())
-	effects := a.clientSettings().SkillEffects && !s.Shadow
+	effects := a.clientSettings().SkillEffects
 	for id, e := range a.state.Entities {
 		if e.Kind != game.KindMob {
 			continue
@@ -261,7 +266,10 @@ func (a *App) drawMonsters() {
 		if cached := v.mobs[id]; cached != nil && cached.actor != nil {
 			mob := cached.actor
 			if mob.CorpseFade < 1 && mob.Visible(frustum, s.ClipPlane) {
-				if effects && mob.HasDrawEffects() {
+				if !effects {
+					v.mobPoseSamples.Sample(mob.Character)
+				}
+				if effects && !s.Shadow && mob.HasDrawEffects() {
 					// Keep transparent effects in their original position
 					// relative to the surrounding opaque geometry.
 					a.flushCharacterBatch()

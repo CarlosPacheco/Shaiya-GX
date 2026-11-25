@@ -184,8 +184,8 @@ type Skinner struct {
 	uCorpseFade                                        int32
 	opacity                                            float32
 	uCrowdBase                                         int32
-	crowdBuffers                                       [3]uint32
-	crowdBytes                                         [3]uint64
+	crowdBuffers                                       [2]uint32 // instance and material buffers
+	crowdBytes                                         [2]uint64
 	indirect                                           *Skinner
 	boundCrowdTextures                                 bool
 	uCrowdDrawOffset                                   int32

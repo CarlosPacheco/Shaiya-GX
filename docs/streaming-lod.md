@@ -35,6 +35,12 @@ indirect skinned submission can use up to eight bound textures. A monster
 with active transparent effects is drawn at its original position in the
 draw sequence.
 
+Monsters with the same looping clip and exact animation phase can reuse
+one skeleton evaluation. Skin batches share palette ranges when the inverse
+binds and weighted bones match. The main and reflected views reuse existing
+palette ranges within the same frame while calculating their camera transforms
+and visibility independently.
+
 ## Asynchronous field loading
 
 Live network gameplay enables two CPU workers for file reads, texture decoding,

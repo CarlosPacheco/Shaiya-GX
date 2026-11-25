@@ -84,7 +84,8 @@ func testSkinIndirectGL(t *testing.T, disableBindless bool) {
 		}
 		instances = append(instances, instance)
 	}
-	palettes := []M4{Identity()}
+	palettes := CrowdPalettes{Matrices: []M4{Identity()}}
+	defer palettes.Delete()
 	draw := func(indirect bool) []byte {
 		gl.Viewport(0, 0, size, size)
 		gl.ClearDepth(1)
@@ -92,11 +93,11 @@ func testSkinIndirectGL(t *testing.T, disableBindless bool) {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		ResetDrawCalls()
 		if indirect {
-			if !k.DrawCrowdIndirect(s, &cache, groups, instances, palettes, .7) || DrawCalls() != 3 {
+			if ok, _ := k.DrawCrowdIndirect(s, &cache, groups, instances, &palettes, .7); !ok || DrawCalls() != 3 {
 				t.Fatal("four groups did not use the three ordered raster runs")
 			}
 		} else {
-			k.DrawCrowd(s, groups, instances, palettes, .7)
+			k.DrawCrowd(s, groups, instances, &palettes, .7)
 		}
 		pixels := make([]byte, size*size*4)
 		gl.ReadPixels(0, 0, size, size, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))

@@ -188,6 +188,29 @@ func testCharacterBatchPalettesGL(t *testing.T, disableBindless bool) {
 		t.Fatalf("monster batches changed the image or missed the draw reduction: %d -> %d draws", n, m)
 	}
 	t.Logf("monster poses, materials and corpse fade, %d -> %d draws", n, m)
+	batch.BeginFrame()
+	first, _ := capture(true)
+	written := batch.Stats.PaletteBytes
+	mirror := render.Identity()
+	mirror[5] = -1
+	s.View = mirror.Mul(s.View)
+	s.ClipPlane = [4]float32{0, 1, 0, -.18}
+	secondReference, _ := capture(false)
+	second, _ := capture(true)
+	secondWritten := batch.Stats.PaletteBytes
+	batch.EndFrame()
+	if written == 0 || secondWritten != 0 || !bytes.Equal(first, before) || !bytes.Equal(second, secondReference) {
+		t.Fatalf("camera passes did not share the palettes while preserving pixels: %d -> %d bytes", written, secondWritten)
+	}
+	t.Logf("mob palettes across two cameras: %d bytes then %d", written, secondWritten)
+	actors[0].Update(.12)
+	freshReference, _ := capture(false)
+	batch.BeginFrame()
+	fresh, _ := capture(true)
+	batch.EndFrame()
+	if batch.Stats.PaletteBytes == 0 || !bytes.Equal(fresh, freshReference) {
+		t.Fatal("the next frame did not upload the updated animation")
+	}
 	if err := gl.GetError(); err != gl.NO_ERROR {
 		t.Fatalf("OpenGL error %#x", err)
 	}

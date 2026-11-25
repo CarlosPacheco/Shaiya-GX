@@ -60,6 +60,7 @@ type worldView struct {
 	visiblePlayerCloth          []*scene.Character
 	crowdCharacters             []*scene.Character
 	crowdBatch                  scene.CharacterBatch
+	mobPoseSamples              scene.PoseSamples
 	mobs                        map[uint32]*mobActor
 	transforms                  map[uint32]*transformActor
 	world                       *scene.World
@@ -790,6 +791,8 @@ func (a *App) drawWorldView(w, h int) {
 		return
 	}
 	v.draws = worldDrawBreakdown{}
+	v.crowdBatch.BeginFrame()
+	defer v.crowdBatch.EndFrame()
 	drawStart := render.DrawCalls()
 	eye, target := v.eye, v.target()
 	if v.cameraReady {
