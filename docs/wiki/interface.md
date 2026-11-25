@@ -365,6 +365,8 @@ Allocated points return to the unspent pool.
 The kill progress strip shows kills divided by the next claim threshold;
 the death-benefit strip shows the next claim level divided by 31. Their
 native widths are 153px and 200px, using the red and violet atlas strips.
+The death count shows deaths divided by the next claim threshold. Each track
+shows **All rewards claimed** once its last reward has been collected.
 
 Diving below the swimming surface starts a 30-second oxygen bar. It uses the
 cast bar's shape and drains from full to empty. At the surface or on dry land
