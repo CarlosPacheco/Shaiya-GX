@@ -3,13 +3,14 @@ package render
 import (
 	"log"
 	"math"
+	"slices"
 	"unsafe"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 )
 
 // MapBatch retains immutable geometry and placements for one map. Each camera
-// uploads only its ordered draw commands, material handles and placement IDs.
+// uploads only its ordered draw commands, materials and placement IDs.
 type MapBatch struct {
 	Transforms []M4
 
@@ -37,15 +38,21 @@ type mapDraw struct {
 }
 
 type mapDrawRun struct {
-	first int
-	index uint32
-	cull  bool
+	first    int
+	index    uint32
+	cull     bool
+	textures []uint32
 }
 
 type mapPipeline struct {
-	draw, compute uint32
-	initialized   bool
+	draw, bound, compute uint32
+	initialized          bool
 }
+
+// Keep the ordinary scene's texture units intact. OpenGL 4.5 guarantees
+// sixteen fragment samplers and enough combined units for this range.
+const mapTextureUnit = 16
+const mapTextureLimit = 16
 
 func (b *MapBatch) Placements(ids []uint32) int {
 	first := len(b.visible)
@@ -90,7 +97,7 @@ func (b *MapBatch) location(m *Mesh) (skinLocation, bool) {
 	return loc, true
 }
 
-func (b *MapBatch) prepare() bool {
+func (b *MapBatch) prepare(bindless bool) bool {
 	b.drawCommands, b.drawMaterials, b.runs = b.drawCommands[:0], b.drawMaterials[:0], b.runs[:0]
 	for _, draw := range b.draws {
 		loc, ok := b.location(draw.mesh)
@@ -98,22 +105,69 @@ func (b *MapBatch) prepare() bool {
 			return false
 		}
 		t := diffuseTexture(draw.tex)
-		diffuse := t.bindlessHandle(t.repeat)
-		var light uint64
-		if draw.lightmap != nil {
-			light = draw.lightmap.bindlessHandle(draw.lightmap.repeat)
-		}
-		if diffuse == 0 || draw.lightmap != nil && light == 0 {
-			return false
-		}
 		m := draw.mesh
 		if n := len(b.runs); n == 0 || b.runs[n-1].index != m.indexType || b.runs[n-1].cull != m.CullBack {
-			b.runs = append(b.runs, mapDrawRun{len(b.drawCommands), m.indexType, m.CullBack})
+			b.newRun(m)
+		}
+		var diffuse, light uint64
+		if bindless {
+			diffuse = t.bindlessHandle(t.repeat)
+			if draw.lightmap != nil {
+				light = draw.lightmap.bindlessHandle(draw.lightmap.repeat)
+			}
+			if diffuse == 0 || draw.lightmap != nil && light == 0 {
+				return false
+			}
+		} else {
+			run := &b.runs[len(b.runs)-1]
+			diffuse, light, ok = run.textureSlots(t, draw.lightmap)
+			if !ok {
+				b.newRun(m)
+				diffuse, light, _ = b.runs[len(b.runs)-1].textureSlots(t, draw.lightmap)
+			}
 		}
 		b.drawCommands = append(b.drawCommands, indexedDrawCommand{uint32(m.Count), uint32(draw.count), uint32(loc.index / int(m.indexBytes)), uint32(loc.vertex), uint32(draw.first)})
 		b.drawMaterials = append(b.drawMaterials, [5]uint32{uint32(diffuse), uint32(diffuse >> 32), uint32(light), uint32(light >> 32), math.Float32bits(draw.alpha)})
 	}
 	return len(b.drawCommands) > len(b.runs)
+}
+
+func (b *MapBatch) newRun(m *Mesh) {
+	if len(b.runs) < cap(b.runs) {
+		b.runs = b.runs[:len(b.runs)+1]
+		run := &b.runs[len(b.runs)-1]
+		run.first, run.index, run.cull = len(b.drawCommands), m.indexType, m.CullBack
+		run.textures = run.textures[:0]
+		return
+	}
+	b.runs = append(b.runs, mapDrawRun{first: len(b.drawCommands), index: m.indexType, cull: m.CullBack})
+}
+
+func (r *mapDrawRun) textureSlots(diffuse, light *Texture) (uint64, uint64, bool) {
+	textures := r.textures
+	d := slices.Index(textures, diffuse.ID)
+	if d < 0 {
+		d = len(textures)
+		if d == mapTextureLimit {
+			return 0, 0, false
+		}
+		textures = append(textures, diffuse.ID)
+	}
+	if light == nil {
+		r.textures = textures
+		return uint64(d), 0, true
+	}
+	l := slices.Index(textures, light.ID)
+	if l < 0 {
+		l = len(textures)
+		if l == mapTextureLimit {
+			return 0, 0, false
+		}
+		textures = append(textures, light.ID)
+	}
+	r.textures = textures
+	// Zero reserves the existing material field for the no-lightmap case.
+	return uint64(d), uint64(l + 1), true
 }
 
 func (s *Scene3D) mapPrograms() *mapPipeline {
@@ -122,19 +176,27 @@ func (s *Scene3D) mapPrograms() *mapPipeline {
 		return p
 	}
 	p.initialized = true
-	if !skinIndirectSupported {
+	if !mapIndirectSupported {
 		return p
 	}
 	var err error
-	p.draw, err = Program("map bindless indirect", mapVS, mapFS)
-	if err == nil {
-		p.compute, err = computeProgram("map transforms", mapCS)
-	}
+	p.compute, err = computeProgram("map transforms", mapCS)
 	if err != nil {
 		log.Printf("map batch shaders: %v", err)
-		if p.draw != 0 {
-			gl.DeleteProgram(p.draw)
-			p.draw = 0
+		return p
+	}
+	if skinIndirectSupported {
+		p.draw, err = Program("map bindless indirect", mapVS, mapFS)
+		if err != nil {
+			log.Printf("map bindless shader: %v", err)
+		}
+	}
+	if p.draw == 0 {
+		p.bound, err = Program("map bound indirect", mapVS, mapBoundFS)
+		if err != nil {
+			log.Printf("map bound shader: %v", err)
+		} else {
+			log.Printf("OpenGL map draw path: indirect with bound textures")
 		}
 	}
 	return p
@@ -146,7 +208,7 @@ func (b *MapBatch) Draw(s *Scene3D) {
 		return
 	}
 	p := s.mapPrograms()
-	if s.Shadow || p.draw == 0 || len(b.draws) < 4 || !b.prepare() {
+	if s.Shadow || (p.draw == 0 && p.bound == 0) || len(b.draws) < 4 || !b.prepare(p.draw != 0) {
 		for _, d := range b.draws {
 			if d.lightmap != nil {
 				s.drawLightmapped(d.mesh, d.tex, d.lightmap, true)
@@ -203,7 +265,11 @@ func (b *MapBatch) drawIndirect(s *Scene3D, p *mapPipeline) {
 	gl.DispatchCompute(uint32((len(b.visible)+63)/64), 1, 1)
 	gl.MemoryBarrier(gl.SHADER_STORAGE_BARRIER_BIT)
 
-	gl.UseProgram(p.draw)
+	program := p.draw
+	if program == 0 {
+		program = p.bound
+	}
+	gl.UseProgram(program)
 	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, b.materials.id)
 	gl.Uniform4fv(0, 1, &s.ClipPlane[0])
 	gl.Uniform3fv(1, 1, &s.LightDir[0])
@@ -226,6 +292,9 @@ func (b *MapBatch) drawIndirect(s *Scene3D, p *mapPipeline) {
 			end = b.runs[i+1].first
 		}
 		gl.Uniform1i(6, int32(run.first))
+		if len(run.textures) != 0 {
+			gl.BindTextures(mapTextureUnit, int32(len(run.textures)), &run.textures[0])
+		}
 		gl.MultiDrawElementsIndirectWithOffset(gl.TRIANGLES, run.index, uintptr(run.first*indexedDrawStride), int32(end-run.first), 0)
 		drawCalls++
 	}
@@ -321,6 +390,14 @@ void main() {
 
 const mapFS = `#version 450 core
 #extension GL_ARB_bindless_texture : require
+` + mapFragment
+
+const mapBoundFS = `#version 450 core
+#define MAP_BOUND
+layout(binding=16) uniform sampler2D mapTextures[16];
+` + mapFragment
+
+const mapFragment = `
 layout(location=3) uniform vec3 fogColor;
 layout(location=4) uniform vec2 fogRange;
 layout(std430,binding=3) readonly buffer Materials { uint data[]; };
@@ -330,11 +407,19 @@ flat in int material;
 out vec4 frag;
 void main() {
  int at=material*5;
+#ifdef MAP_BOUND
+ vec4 c=texture(mapTextures[data[at]],vUV);
+ if (c.a <= uintBitsToFloat(data[at+4])) discard;
+ uint light=data[at+2];
+ if (light!=0u) c.rgb*=texture(mapTextures[light-1u],vUV2).rgb;
+ else c.rgb*=vDiffuse;
+#else
  vec4 c=texture(sampler2D(uvec2(data[at],data[at+1])),vUV);
  if (c.a <= uintBitsToFloat(data[at+4])) discard;
  uvec2 light=uvec2(data[at+2],data[at+3]);
  if (any(notEqual(light,uvec2(0)))) c.rgb*=texture(sampler2D(light),vUV2).rgb;
  else c.rgb*=vDiffuse;
+#endif
  if (fogRange.y > fogRange.x) {
   float f=clamp((fogRange.y-vDepth)/(fogRange.y-fogRange.x),0.0,1.0);
   c.rgb=mix(fogColor,c.rgb,f);

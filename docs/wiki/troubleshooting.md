@@ -31,8 +31,9 @@ GX requests an OpenGL 4.5 core context through GLFW. Linux and Windows select
 the same rendering paths from the capabilities reported by the active driver.
 Drivers that advertise bindless textures and shader draw parameters can use
 indirect batches when the required commands resolve and shader-storage limits
-allow it. GX uses ordinary draws or instancing on the remaining devices. The
-startup log records the advertised capabilities and selected paths. Devices with limited
+allow it. Static map geometry can also use indirect batches with ordinary
+texture bindings when shader draw parameters and shader storage are available.
+The log records the advertised capabilities and selected paths. Devices with limited
 vertex shader storage use uniform poses and CPU-sampled effect geometry. GX
 uploads decoded RGBA8 mip levels when native DDS compression is unavailable.
 

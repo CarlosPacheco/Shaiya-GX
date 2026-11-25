@@ -77,9 +77,11 @@ func TestGXOpenGLCommandsAndDrawPathsGL(t *testing.T) {
 	}
 	oldIndirect, oldDrawParameters := skinIndirectSupported, drawParametersSupported
 	oldSceneStorage, oldSkinCrowd := sceneStorageSupported, skinCrowdSupported
+	oldMapIndirect := mapIndirectSupported
 	defer func() {
 		skinIndirectSupported, drawParametersSupported = oldIndirect, oldDrawParameters
 		sceneStorageSupported, skinCrowdSupported = oldSceneStorage, oldSkinCrowd
+		mapIndirectSupported = oldMapIndirect
 	}()
 
 	configureDrawPaths(true, true, 8, 8)
@@ -87,7 +89,7 @@ func TestGXOpenGLCommandsAndDrawPathsGL(t *testing.T) {
 		t.Fatal("full driver capabilities did not enable accelerated paths")
 	}
 	configureDrawPaths(false, true, 8, 8)
-	if skinIndirectSupported || !drawParametersSupported {
+	if skinIndirectSupported || !drawParametersSupported || !mapIndirectSupported {
 		t.Fatal("missing bindless support changed independent draw-parameter support")
 	}
 
@@ -103,7 +105,7 @@ func TestGXOpenGLCommandsAndDrawPathsGL(t *testing.T) {
 	}
 	defer skin.Delete()
 	scene.effectPipeline.init()
-	if !skin.CrowdInstancing() || skin.indirect != nil || scene.mapPrograms().draw != 0 || scene.effectPipeline.indirect.program != 0 || drawParametersSupported {
+	if !skin.CrowdInstancing() || skin.indirect != nil || scene.mapPrograms().draw != 0 || scene.mapPrograms().bound != 0 || scene.effectPipeline.indirect.program != 0 || drawParametersSupported {
 		t.Fatal("core path loaded optional shaders without their advertised extensions")
 	}
 
