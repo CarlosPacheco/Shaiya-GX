@@ -12,7 +12,7 @@ sudo apt-get install build-essential pkg-config libgl1-mesa-dev xorg-dev libwayl
 ```
 
 The script runs vet and unit tests. It builds `build/Shaiya GX`,
-`build/shaiyacli`, `build/assets`, `build/GX Studio/GX Studio` and the three
+`build/shaiyacli`, `build/assets` and the three
 GX Server programs in `server/build/`. On other distributions install the
 equivalent packages. The client needs an OpenGL 4.5-capable GPU and driver.
 To build the terminal-only server programs with Go and CGO disabled, use
@@ -44,7 +44,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/build.ps1
 ```
 
 Use 64-bit MinGW-w64 GCC for CGO. The script builds `build/Shaiya GX.exe`,
-`build/shaiyacli.exe`, `build/assets.exe`, `build/GX Studio/GX Studio.exe` and
+`build/shaiyacli.exe`, `build/assets.exe` and
 `server/build/gx_{login,world,console}.exe`. Server programs build with Go and
 CGO disabled. The client uses Windows audio. Run the client from a desktop
 session with your GPU vendor's OpenGL 4.5 driver.

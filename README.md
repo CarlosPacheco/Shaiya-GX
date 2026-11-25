@@ -5,7 +5,7 @@
 ### [Download the complete gx-v0.1.20 portable — Client + Server + Data](https://drive.google.com/file/d/1ah4NBSVTW53U07MwnIsw-oHYjDE5QNqy/view?usp=sharing)
 
 **One Google Drive download for Windows and Linux. Includes the client, GX Server,
-GX Studio, game data, external fonts and the development database.**
+game data, external fonts and the development database.**
 
 1. Extract the entire package to a writable folder. Keep `Client/` and `Server/` intact.
 2. Open `Server/build/gx_console.exe` (Windows) or `Server/build/gx_console` in a terminal (Linux), then enter `start server`.
@@ -86,7 +86,7 @@ GX Server retains Rapture's gameplay and protocol behavior. Its programs are `gx
 
 ## Guides
 
-- [GX Studio desktop data editor](docs/gx-studio.md)
+- [GX Studio](https://github.com/Spelunkern/GX-Studio) is the independent desktop editor for Shaiya GX client data, SQLite and supported GX World files.
 - [Map rules, weather and experience progression](docs/wiki/map-rules.md)
 - [GitHub Wiki: features, item effects, GM commands and configuration](https://github.com/Spelunkern/Shaiya-GX/wiki)
 - [Complete server reference: architecture, all packages and packet layouts](https://github.com/Spelunkern/Shaiya-GX/wiki/Server-Architecture)

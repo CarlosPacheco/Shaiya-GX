@@ -108,7 +108,7 @@ Forge costs use the native ReqIg table without Vg/level discounts or the old
 free-cost environment override. GX World loads `ItemEnchant.ini` from `data/game`. The shipped
 cap is +20. `MaxLevel` configures both equipment types and
 `WeaponMaxLevel` or `DefenseMaxLevel` can override it up to +49.
-Restart GX World after editing the file in GX Studio.
+Back up `ItemEnchant.ini` before editing it. Restart GX World to load the changes.
 The client receives the server bonus tables for its tooltips. See the [feature wiki](wiki/README.md) for exact rules,
 item content fields, extraction, recreation and drop persistence.
 
@@ -151,7 +151,8 @@ or both factions. Keep the file with the server data when upgrading. See the
 GX World reads the nine gameplay catalogs from `data/game` at startup.
 These files take precedence over the retired SQLite definition tables.
 Existing migration histories and rows are retained for upgrades and export.
-Use GX Studio for structured edits and verified file backups.
+For NpcQuest, use the [standalone GX Studio](gx-studio.md). For other game
+files, keep a copy of the original and edit the file directly.
 
 To carry a customized SQLite catalog into a file-based installation, export
 from a verified SQLite backup into a new directory. Supply the matching
