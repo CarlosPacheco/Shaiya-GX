@@ -99,6 +99,7 @@ func (a *App) confirmedQuest(p []byte) {
 				a.startSkillImpact(a.state.SelfID, "Effect/up.EFT", 1)
 				a.playSound("bgm_quest02.wav", a.wv.pos[0], a.wv.pos[2])
 			}
+			delete(a.questTracker.expanded, result.ID)
 			delete(a.questStartedAt, result.ID)
 			delete(a.questSnapshotAt, result.ID)
 			// A timed or automatic quest can end before the quest UI has ever
