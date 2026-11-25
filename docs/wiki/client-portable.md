@@ -1,14 +1,14 @@
 # Shaiya GX portable client and server
 
-## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1jHGrS0KY3LRsDtzMgfFAH6BwmSX7Nasi/view?usp=sharing)
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1ah4NBSVTW53U07MwnIsw-oHYjDE5QNqy/view?usp=sharing)
 
-**gx-v0.1.19 for Windows and Linux.** This Google Drive package includes both
+**gx-v0.1.20 for Windows and Linux.** This Google Drive package includes both
 executables, GX Server, GX Studio, client game data, fonts and the development database.
 **Everything is included; no separate data download is needed.**
 Extract the entire package into a writable folder:
 
 ```text
-Shaiya GX gx-v0.1.19 Portable/
+Shaiya GX gx-v0.1.20 Portable/
   Client/
     Shaiya GX
     Shaiya GX.exe
