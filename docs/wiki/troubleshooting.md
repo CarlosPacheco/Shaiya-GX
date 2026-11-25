@@ -54,6 +54,9 @@ camera, resolution and graphics settings.
 - After `Client ready`, include the step and scene where the problem
   occurs and a capture of the result. Pass `-gldebug` on a second run to record
   graphics API messages from the driver.
+- An incomplete color/depth framebuffer logs the target size and status.
+  GX falls back to direct rendering or basic water and tries again when
+  the relevant target size changes.
 
 ## Linking example
 

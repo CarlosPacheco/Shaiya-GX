@@ -177,6 +177,16 @@ func TestUnderwaterViewTransitionsGL(t *testing.T) {
 	if again := draw(-2); !bytes.Equal(submerged, again) {
 		t.Fatal("returning underwater changed a stationary scene")
 	}
+	v.waterReflection.Delete()
+	v.waterReflection, v.waterFailed = nil, true
+	draw(-2)
+	if v.waterReflection != nil {
+		t.Fatal("reallocated a rejected water capture without a resize")
+	}
+	a.drawWorldView(240, 240)
+	if v.waterReflection == nil || v.waterFailed || v.waterWidth != 120 || v.waterHeight != 120 {
+		t.Fatal("did not recover from failed water capture allocation after resize")
+	}
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		t.Fatalf("underwater GL error %#x", code)
 	}

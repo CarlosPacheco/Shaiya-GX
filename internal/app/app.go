@@ -662,18 +662,21 @@ func (a *App) Draw(w, h int) {
 	if w <= 0 || h <= 0 {
 		return
 	}
-	if a.frameTarget == nil || a.frameWidth != w || a.frameHeight != h {
+	if a.frameWidth != w || a.frameHeight != h {
 		if a.frameTarget != nil {
 			a.frameTarget.Delete()
 		}
+		// Keep the direct-render fallback at this size if allocation fails.
+		a.frameWidth, a.frameHeight = w, h
 		var err error
 		a.frameTarget, err = render.NewWaterTarget(w, h)
 		if err != nil {
 			clientlog.Warnf("frame target: %v", err)
-			a.drawFrame(w, h)
-			return
 		}
-		a.frameWidth, a.frameHeight = w, h
+	}
+	if a.frameTarget == nil {
+		a.drawFrame(w, h)
+		return
 	}
 	previousDepth := a.scene3d.ReverseDepth
 	a.scene3d.SetReverseDepth(true)

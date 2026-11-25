@@ -871,14 +871,16 @@ func (a *App) drawWorldView(w, h int) {
 	if waterVisible {
 		const reflectionDivisor = 2
 		width, height := max(1, w/reflectionDivisor), max(1, h/reflectionDivisor)
-		if v.waterReflection != nil && (v.waterWidth != width || v.waterHeight != height) {
-			v.waterReflection.Delete()
+		if v.waterWidth != width || v.waterHeight != height {
+			if v.waterReflection != nil {
+				v.waterReflection.Delete()
+			}
 			v.waterReflection, v.waterFailed = nil, false
+			v.waterWidth, v.waterHeight = width, height
 		}
 		if v.waterReflection == nil && !v.waterFailed {
 			var err error
 			v.waterReflection, err = render.NewWaterTarget(width, height)
-			v.waterWidth, v.waterHeight = width, height
 			if err != nil {
 				v.waterFailed = true
 				log.Printf("water reflection: %v", err)
