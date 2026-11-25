@@ -113,4 +113,18 @@ func TestStatusAndPotionNativeFieldsGL(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	a.status.open = true
+	x, y := a.statusUI.Origin(800, 600)
+	a.lastMouseX, a.lastMouseY = x+60, y+133
+	a.sprites.Begin(800, 600)
+	a.drawStatus(800, 600)
+	want := a.msg.Get(5283)
+	if want == "" || len(a.tooltip) != 1 || a.tooltip[0].text != want || a.tooltipItem {
+		t.Fatalf("hover did not queue the original STR text in the shared tooltip: %v", a.tooltip)
+	}
+	a.drawSharedTooltip(800, 600)
+	a.sprites.End()
+	if code := gl.GetError(); code != gl.NO_ERROR {
+		t.Fatal(code)
+	}
 }

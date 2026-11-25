@@ -10,7 +10,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 | Inventory | Equipment, bags, drag, right-click use and equipment swaps, tooltips without zero sale prices and larger full-body preview | Remaining contexts and special dialogs |
 | Weapon enchantments | Original Weapon.Seff enchantments plus four ITM-selected innate EFT glows, equipped and remote models, both dual bindings | Full visual comparison across animations; see [weapon enchantments](weapon-enchantments.md) |
 | Cloaks | Original PC/CTL/3DC loading, equipment slot 7, all body families, native spring modes and animated attachment pins | Body/ground contact adapter and map wind; full physical parity is not yet claimed. Cape emblems (patterns and colours from the emblem NPC) are drawn over the cloth |
-| Status | Allocation, EXP and current/max HP/MP/SP bars | Native graph and full attribute help |
+| Status | Allocation, EXP, current/max HP/MP/SP bars and native hover help for six attributes (SysMsg 5283–5288) | Native graph |
 | Chat | Phoenix geometry, external Tahoma with Unicode fallbacks, channel colours, persistent grey histories, single input row, six-channel picker and original SysMsg messages | Remaining special notices and complete state comparison |
 | Effects | Independently draggable positive/negative strips; 32px icons, 6px gaps, native yellow duration bars and the original white debuff pulse | Full effect categories and all special states |
 | Maps | Native World Map with region previews, ring buttons, expanded-map name, original clock frame with date/seconds and portrait resource text styling and native zone/hover labels, draggable minimap/full map, pan and zoom | Remaining map services and indicator variants |

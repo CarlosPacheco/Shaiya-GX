@@ -196,3 +196,33 @@ func TestStatusMinusButtonRepeatsLikeTheNativeRepeatButtons(t *testing.T) {
 		t.Fatal("half a second on the minus button must take back the press plus five", v.Draft[0])
 	}
 }
+
+func TestStatusAttributeHover(t *testing.T) {
+	const w, h = 1024, 768
+	v := Status{}
+	for _, expanded := range []bool{false, true} {
+		v.Expanded = expanded
+		v.Position.Move(82, 41, w, h, StatusWidth, StatusHeight)
+		x, y := v.Origin(w, h)
+		mainX := x
+		if expanded {
+			mainX += 132
+		}
+		for i := range 6 {
+			mx, my := mainX+90+(i/3)*115, y+174+(i%3)*20
+			if got := v.AttributeMessageAt(mx, my, w, h); got != 5283+i {
+				t.Errorf("main attribute %d, expanded=%v: SysMsg %d", i, expanded, got)
+			}
+			if expanded {
+				if got := v.AttributeMessageAt(x+60, y+133+i*20, w, h); got != 5283+i {
+					t.Errorf("allocation attribute %d: SysMsg %d", i, got)
+				}
+			}
+		}
+		for _, point := range [][2]int{{mainX + 90, y + 188}, {mainX + 145, y + 174}, {mainX + 90, y + 265}, {x - 1, y + 174}} {
+			if got := v.AttributeMessageAt(point[0], point[1], w, h); got != 0 {
+				t.Errorf("point %v outside an attribute, expanded=%v: SysMsg %d", point, expanded, got)
+			}
+		}
+	}
+}
