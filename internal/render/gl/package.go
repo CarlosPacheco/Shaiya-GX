@@ -198,6 +198,7 @@ package gl
 // typedef void  (APIENTRYP GPUSEPROGRAM)(GLuint  program);
 // typedef void  (APIENTRYP GPVERTEXARRAYATTRIBBINDING)(GLuint  vaobj, GLuint  attribindex, GLuint  bindingindex);
 // typedef void  (APIENTRYP GPVERTEXARRAYATTRIBFORMAT)(GLuint  vaobj, GLuint  attribindex, GLint  size, GLenum  type, GLboolean  normalized, GLuint  relativeoffset);
+// typedef void  (APIENTRYP GPVERTEXARRAYATTRIBIFORMAT)(GLuint  vaobj, GLuint  attribindex, GLint  size, GLenum  type, GLuint  relativeoffset);
 // typedef void  (APIENTRYP GPVERTEXARRAYBINDINGDIVISOR)(GLuint  vaobj, GLuint  bindingindex, GLuint  divisor);
 // typedef void  (APIENTRYP GPVERTEXARRAYELEMENTBUFFER)(GLuint  vaobj, GLuint  buffer);
 // typedef void  (APIENTRYP GPVERTEXARRAYVERTEXBUFFER)(GLuint  vaobj, GLuint  bindingindex, GLuint  buffer, GLintptr  offset, GLsizei  stride);
@@ -595,6 +596,9 @@ package gl
 // static void  glowVertexArrayAttribFormat(GPVERTEXARRAYATTRIBFORMAT fnptr, GLuint  vaobj, GLuint  attribindex, GLint  size, GLenum  type, GLboolean  normalized, GLuint  relativeoffset) {
 //   (*fnptr)(vaobj, attribindex, size, type, normalized, relativeoffset);
 // }
+// static void  glowVertexArrayAttribIFormat(GPVERTEXARRAYATTRIBIFORMAT fnptr, GLuint  vaobj, GLuint  attribindex, GLint  size, GLenum  type, GLuint  relativeoffset) {
+//   (*fnptr)(vaobj, attribindex, size, type, relativeoffset);
+// }
 // static void  glowVertexArrayBindingDivisor(GPVERTEXARRAYBINDINGDIVISOR fnptr, GLuint  vaobj, GLuint  bindingindex, GLuint  divisor) {
 //   (*fnptr)(vaobj, bindingindex, divisor);
 // }
@@ -888,6 +892,7 @@ var (
 	gpUseProgram                          C.GPUSEPROGRAM
 	gpVertexArrayAttribBinding            C.GPVERTEXARRAYATTRIBBINDING
 	gpVertexArrayAttribFormat             C.GPVERTEXARRAYATTRIBFORMAT
+	gpVertexArrayAttribIFormat            C.GPVERTEXARRAYATTRIBIFORMAT
 	gpVertexArrayBindingDivisor           C.GPVERTEXARRAYBINDINGDIVISOR
 	gpVertexArrayElementBuffer            C.GPVERTEXARRAYELEMENTBUFFER
 	gpVertexArrayVertexBuffer             C.GPVERTEXARRAYVERTEXBUFFER
@@ -1526,6 +1531,9 @@ func VertexArrayAttribBinding(vaobj uint32, attribindex uint32, bindingindex uin
 func VertexArrayAttribFormat(vaobj uint32, attribindex uint32, size int32, xtype uint32, normalized bool, relativeoffset uint32) {
 	C.glowVertexArrayAttribFormat(gpVertexArrayAttribFormat, (C.GLuint)(vaobj), (C.GLuint)(attribindex), (C.GLint)(size), (C.GLenum)(xtype), (C.GLboolean)(boolToInt(normalized)), (C.GLuint)(relativeoffset))
 }
+func VertexArrayAttribIFormat(vaobj uint32, attribindex uint32, size int32, xtype uint32, relativeoffset uint32) {
+	C.glowVertexArrayAttribIFormat(gpVertexArrayAttribIFormat, (C.GLuint)(vaobj), (C.GLuint)(attribindex), (C.GLint)(size), (C.GLenum)(xtype), (C.GLuint)(relativeoffset))
+}
 
 // modify the rate at which generic vertex attributes     advance
 func VertexArrayBindingDivisor(vaobj uint32, bindingindex uint32, divisor uint32) {
@@ -2077,6 +2085,10 @@ func InitWithProcAddrFunc(getProcAddr func(name string) unsafe.Pointer) error {
 	gpVertexArrayAttribFormat = (C.GPVERTEXARRAYATTRIBFORMAT)(getProcAddr("glVertexArrayAttribFormat"))
 	if gpVertexArrayAttribFormat == nil {
 		return errors.New("glVertexArrayAttribFormat")
+	}
+	gpVertexArrayAttribIFormat = (C.GPVERTEXARRAYATTRIBIFORMAT)(getProcAddr("glVertexArrayAttribIFormat"))
+	if gpVertexArrayAttribIFormat == nil {
+		return errors.New("glVertexArrayAttribIFormat")
 	}
 	gpVertexArrayBindingDivisor = (C.GPVERTEXARRAYBINDINGDIVISOR)(getProcAddr("glVertexArrayBindingDivisor"))
 	if gpVertexArrayBindingDivisor == nil {

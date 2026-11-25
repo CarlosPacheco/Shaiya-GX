@@ -100,9 +100,12 @@ the fallback path.
 Run the executable with `-gl-check` to open a small OpenGL 4.5 context,
 compile the startup shaders, verify sprite pixels and present a frame without
 loading game data. In PowerShell, run `& '.\Shaiya GX.exe' -gl-check`. Compare
-with `-gl-check -gl-no-bindless` to isolate the optional bindless texture path.
-The same `-gl-no-bindless` flag applies to ordinary gameplay on Linux and
-Windows. Save both logs when comparing runs.
+with `-gl-check -gl-no-bindless` to isolate the optional bindless texture path,
+or with `-gl-check -gl-no-draw-parameters` to disable the optional
+`GL_ARB_shader_draw_parameters` extension. Both flags also apply to
+ordinary gameplay on Linux and Windows. Static map geometry and effects
+retain indirect batches through OpenGL 4.5 instanced attributes when shader
+draw parameters are unavailable. Save the logs when comparing runs.
 
 Place the converted loose `data/` directory beside the Shaiya GX executable, or set `SHAIYA_DATA` / `-data` to that directory. The game no longer reads SAH/SAF. See [data formats and conversion](data-formats.md). The client loads external fonts from `data/fonts/`. Release packaging installs the versioned `resources/fonts/` pack, including its coverage manifest and licenses; no OS font installation is used.
 

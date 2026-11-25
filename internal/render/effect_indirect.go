@@ -19,7 +19,7 @@ type effectIndirectRun struct {
 
 type effectIndirect struct {
 	program, vao                            uint32
-	bound                                   bool
+	bound, materialAttribute                bool
 	boundVertexCapacity, boundIndexCapacity int
 	vertices, indices, keys                 packedMeshBuffer
 	geometry                                map[*Mesh]effectIndirectLocation
@@ -103,8 +103,14 @@ func (p *effectIndirect) plan(draws []queuedEffect) bool {
 				return false
 			}
 		}
-		p.commands = append(p.commands, indexedDrawCommand{uint32(draw.mesh.Count), uint32(draw.end - draw.first), uint32(loc.index / int(draw.mesh.indexBytes)), uint32(loc.vertex), uint32(draw.first)})
-		p.materials = append(p.materials, [4]uint32{uint32(textureRef), uint32(textureRef >> 32), loc.keys, uint32(loc.vertex)})
+		command := indexedDrawCommand{uint32(draw.mesh.Count), uint32(draw.end - draw.first), uint32(loc.index / int(draw.mesh.indexBytes)), uint32(loc.vertex), uint32(draw.first)}
+		material := [4]uint32{uint32(textureRef), uint32(textureRef >> 32), loc.keys, uint32(loc.vertex)}
+		if p.materialAttribute {
+			material[1] = command.baseInstance
+			command.baseInstance = uint32(len(p.materials))
+		}
+		p.commands = append(p.commands, command)
+		p.materials = append(p.materials, material)
 	}
 	return len(p.commands) > len(p.runs)
 }
@@ -134,7 +140,11 @@ func (p *effectIndirect) draw(s *Scene3D) {
 	gl.UseProgram(p.program)
 	gl.Uniform4fv(0, 1, &s.ClipPlane[0])
 	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 5, p.keys.id)
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 7, p.drawData.id)
+	if p.materialAttribute {
+		bindDrawMaterial(p.vao, p.drawData.id, int32(unsafe.Sizeof(p.materials[0])))
+	} else {
+		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 7, p.drawData.id)
+	}
 	gl.BindVertexArray(p.vao)
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, p.commandData.id)
 	for i, run := range p.runs {
@@ -143,7 +153,9 @@ func (p *effectIndirect) draw(s *Scene3D) {
 			end = p.runs[i+1].first
 		}
 		s.effectBlend(run.src, run.dst)
-		gl.Uniform1i(1, int32(run.first))
+		if !p.materialAttribute {
+			gl.Uniform1i(1, int32(run.first))
+		}
 		run.textures.bind()
 		gl.MultiDrawElementsIndirectWithOffset(gl.TRIANGLES, run.indexType, uintptr(run.first*indexedDrawStride), int32(end-run.first), 0)
 		drawCalls++

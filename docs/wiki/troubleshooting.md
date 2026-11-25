@@ -33,7 +33,9 @@ Drivers that advertise bindless textures and shader draw parameters can use
 indirect batches when the required commands resolve and shader-storage limits
 allow it. Static map geometry, effects and skinned crowds can also use
 indirect batches with ordinary texture bindings when shader draw parameters
-and shader storage are available.
+and shader storage are available. Static map geometry and effects also have
+an OpenGL 4.5 indirect path that uses instanced material attributes when
+shader draw parameters are unavailable or their shaders fail to build.
 The log records the advertised capabilities and selected paths. Devices with limited
 vertex shader storage use uniform poses and CPU-sampled effect geometry. GX
 uploads decoded RGBA8 mip levels when native DDS compression is unavailable.
@@ -41,9 +43,9 @@ uploads decoded RGBA8 mip levels when native DDS compression is unavailable.
 Run `-gl-check` to verify context creation, startup shader compilation,
 sprite output and swap without loading game data. In PowerShell, run
 `& '.\Shaiya GX.exe' -gl-check`. Save `logs/client.log`, then repeat with
-`-gl-check -gl-no-bindless` and keep the second log. For a problem that appears
-in gameplay, launch the game with `-gl-no-bindless` and compare the same map,
-camera, resolution and graphics settings.
+`-gl-check -gl-no-bindless` or `-gl-check -gl-no-draw-parameters` and keep
+the comparison logs. In gameplay, use the same flags to compare the same
+map, camera, resolution and graphics settings. Both flags can be combined.
 
 - A `create WGL context` error points to window or driver
   initialization. Include the complete error and the graphics adapter and

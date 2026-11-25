@@ -23,7 +23,7 @@ var skinCrowdSupported bool
 
 func configureDrawPaths(bindless, drawParameters bool, vertexBlocks, fragmentBlocks int32) {
 	drawParametersSupported = drawParameters
-	mapIndirectSupported = drawParameters && vertexBlocks >= 1 && fragmentBlocks >= 1
+	mapIndirectSupported = vertexBlocks >= 1 && fragmentBlocks >= 1
 	sceneStorageSupported = vertexBlocks >= 4                    // scene effects and cloth
 	skinCrowdSupported = vertexBlocks >= 2                       // transforms and bone palettes
 	skinMultidrawSupported = drawParameters && vertexBlocks >= 3 // per-draw materials
@@ -35,10 +35,11 @@ func Init(debug bool) error {
 	return InitWithOptions(InitOptions{Debug: debug})
 }
 
-// InitOptions controls diagnostics and the use of optional bindless textures.
+// InitOptions controls diagnostics and optional OpenGL extensions.
 type InitOptions struct {
-	Debug           bool
-	DisableBindless bool
+	Debug                 bool
+	DisableBindless       bool
+	DisableDrawParameters bool
 }
 
 // InitWithOptions loads entry points and selects paths for the current context.
@@ -114,10 +115,10 @@ func initDevice(options InitOptions, resolve func(string) unsafe.Pointer) error 
 	if bindless && len(missingBindless) > 0 {
 		log.Printf("OpenGL bindless unavailable: missing commands %s", strings.Join(missingBindless, ", "))
 	}
-	configureDrawPaths(bindless && !options.DisableBindless && len(missingBindless) == 0, drawParameters, vertexBlocks, fragmentBlocks)
+	configureDrawPaths(bindless && !options.DisableBindless && len(missingBindless) == 0, drawParameters && !options.DisableDrawParameters, vertexBlocks, fragmentBlocks)
 	configureTextureFormats(s3tc, dxt1)
-	log.Printf("OpenGL paths: bindless_indirect=%t bindless_advertised=%t bindless_disabled=%t terrain_multidraw=%t scene_storage=%t skin_instancing=%t vertex_ssbo_limit=%d fragment_ssbo_limit=%d compressed_dds(DXT1,DXT3,DXT5)=%v",
-		skinIndirectSupported, bindless, options.DisableBindless, drawParametersSupported, sceneStorageSupported, skinCrowdSupported, vertexBlocks, fragmentBlocks, compressedDDS[1:])
+	log.Printf("OpenGL paths: bindless_indirect=%t bindless_advertised=%t bindless_disabled=%t draw_parameters=%t draw_parameters_advertised=%t draw_parameters_disabled=%t terrain_multidraw=%t scene_storage=%t skin_instancing=%t vertex_ssbo_limit=%d fragment_ssbo_limit=%d compressed_dds(DXT1,DXT3,DXT5)=%v",
+		skinIndirectSupported, bindless, options.DisableBindless, drawParametersSupported, drawParameters, options.DisableDrawParameters, drawParametersSupported, sceneStorageSupported, skinCrowdSupported, vertexBlocks, fragmentBlocks, compressedDDS[1:])
 	fallbackDiffuse = nil
 	if options.Debug {
 		gl.Enable(gl.DEBUG_OUTPUT)

@@ -95,7 +95,9 @@ func TestGXOpenGLCommandsAndDrawPathsGL(t *testing.T) {
 		t.Fatal("missing bindless support changed independent draw-parameter support")
 	}
 
-	configureDrawPaths(false, false, 8, 8)
+	if err := InitWithOptions(InitOptions{DisableBindless: true, DisableDrawParameters: true}); err != nil {
+		t.Fatal(err)
+	}
 	scene, err := NewScene3D()
 	if err != nil {
 		t.Fatal(err)
@@ -107,8 +109,14 @@ func TestGXOpenGLCommandsAndDrawPathsGL(t *testing.T) {
 	}
 	defer skin.Delete()
 	scene.effectPipeline.init()
-	if !skin.CrowdInstancing() || skin.indirect != nil || scene.mapPrograms().draw != 0 || scene.mapPrograms().bound != 0 || scene.effectPipeline.indirect.program != 0 || drawParametersSupported {
-		t.Fatal("core path loaded optional shaders without their advertised extensions")
+	if !skin.CrowdInstancing() || skin.indirect != nil || drawParametersSupported {
+		t.Fatal("extension override did not preserve ordinary crowd instancing")
+	}
+	if p := scene.mapPrograms(); p.draw != 0 || p.bound == 0 || !p.materialAttribute {
+		t.Fatal("extension override did not select core map batching")
+	}
+	if p := &scene.effectPipeline.indirect; p.program == 0 || !p.bound || !p.materialAttribute {
+		t.Fatal("extension override did not select core effect batching")
 	}
 
 	configureDrawPaths(false, false, 0, 0)

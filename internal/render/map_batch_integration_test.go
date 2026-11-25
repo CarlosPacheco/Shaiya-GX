@@ -17,6 +17,12 @@ func TestBoundMapBatchPreservesMaterialsAndOrderGL(t *testing.T) {
 	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
 		t.Skip("requires GL")
 	}
+	t.Run("automatic", func(t *testing.T) { testBoundMapBatchPreservesMaterialsAndOrderGL(t, false) })
+	t.Run("core", func(t *testing.T) { testBoundMapBatchPreservesMaterialsAndOrderGL(t, true) })
+}
+
+func testBoundMapBatchPreservesMaterialsAndOrderGL(t *testing.T, core bool) {
+	t.Helper()
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	const width, height = 128, 32
@@ -25,7 +31,7 @@ func TestBoundMapBatchPreservesMaterialsAndOrderGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer win.Close()
-	if err := InitWithOptions(InitOptions{DisableBindless: true, Debug: true}); err != nil {
+	if err := InitWithOptions(InitOptions{DisableBindless: true, DisableDrawParameters: core, Debug: true}); err != nil {
 		t.Fatal(err)
 	}
 	s, err := NewScene3D()
@@ -34,13 +40,19 @@ func TestBoundMapBatchPreservesMaterialsAndOrderGL(t *testing.T) {
 	}
 	defer s.Delete()
 	if !mapIndirectSupported {
-		t.Skip("requires shader draw parameters and storage blocks")
+		t.Skip("requires shader storage blocks")
 	}
 	if s.mapPrograms().bound == 0 {
 		t.Fatal("bound map program failed to link")
 	}
+	if core && !s.mapPrograms().materialAttribute {
+		t.Fatal("bound map program did not select the core material attribute")
+	}
 	s.View, s.Proj, s.Ambient = Identity(), Identity(), 1
-	batch := MapBatch{Transforms: []M4{Identity()}}
+	batch := MapBatch{Transforms: []M4{Identity(), Identity()}}
+	batch.Transforms[1][13] = .8
+	allPlacements := batch.Placements([]uint32{0, 1})
+	firstPlacement := batch.Placements([]uint32{0})
 	defer batch.Delete()
 	light := Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{128, 255, 255, 255}}})
 	defer light.Delete()
@@ -63,7 +75,11 @@ func TestBoundMapBatchPreservesMaterialsAndOrderGL(t *testing.T) {
 		if i%5 == 0 {
 			lightmap = light
 		}
-		batch.Add(mesh, texture, lightmap, NativeWorldAlphaRef(true), batch.Placements([]uint32{0}), 1)
+		if lightmap != nil {
+			batch.Add(mesh, texture, lightmap, NativeWorldAlphaRef(true), firstPlacement, 1)
+		} else {
+			batch.Add(mesh, texture, nil, NativeWorldAlphaRef(true), allPlacements, 2)
+		}
 	}
 	begin := func() {
 		gl.Viewport(0, 0, width, height)
@@ -83,7 +99,9 @@ func TestBoundMapBatchPreservesMaterialsAndOrderGL(t *testing.T) {
 		if d.lightmap != nil {
 			s.drawLightmapped(d.mesh, d.tex, d.lightmap, true)
 		} else {
-			s.DrawVisibleWorldModel(d.mesh, d.tex, Identity(), d.alpha)
+			for _, id := range batch.visible[d.first : d.first+d.count] {
+				s.DrawVisibleWorldModel(d.mesh, d.tex, batch.Transforms[id], d.alpha)
+			}
 		}
 	}
 	want := read()
@@ -121,7 +139,7 @@ func TestMapBatchDrawsAfterPackedBufferGrowthGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Delete()
-	if s.mapPrograms().draw == 0 {
+	if p := s.mapPrograms(); p.draw == 0 && p.bound == 0 {
 		t.Skip("requires indirect map drawing")
 	}
 	s.View, s.Proj, s.Ambient = Identity(), Identity(), 1

@@ -91,7 +91,10 @@ func TestClientPerformanceBaseline(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer win.Close()
-	if err = render.Init(false); err != nil {
+	if err = render.InitWithOptions(render.InitOptions{
+		DisableBindless:       os.Getenv("GX_MEASURE_NO_BINDLESS") == "1",
+		DisableDrawParameters: os.Getenv("GX_MEASURE_NO_DRAW_PARAMETERS") == "1",
+	}); err != nil {
 		t.Fatal(err)
 	}
 	renderer, vendor, version := gl.GoStr(gl.GetString(gl.RENDERER)), gl.GoStr(gl.GetString(gl.VENDOR)), gl.GoStr(gl.GetString(gl.VERSION))

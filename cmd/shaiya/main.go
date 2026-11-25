@@ -47,6 +47,7 @@ func clientMain() (code int) {
 	debug := flag.Bool("gldebug", false, "OpenGL debug context")
 	glCheck := flag.Bool("gl-check", false, "check graphics startup without game data and exit")
 	noBindless := flag.Bool("gl-no-bindless", false, "use texture bindings instead of optional bindless draws")
+	noDrawParameters := flag.Bool("gl-no-draw-parameters", false, "use OpenGL 4.5 drawing without optional shader draw parameters")
 	shot := flag.String("screenshot", "", "render offscreen to this PNG and exit")
 	shotScreen := flag.String("screenshot-screen", "login", "offscreen scene: login | servers | chars | create | faction | world-*")
 	autoSelect := flag.Int("autoplay-select", -1, "with -autoplay: stop at character select on this slot")
@@ -54,7 +55,7 @@ func clientMain() (code int) {
 	autoplay := flag.String("autoplay", "", "account to log in with (SHAIYA_PASSWORD) offscreen until in world, then save -screenshot")
 	flag.Parse()
 	clientlog.SetVerbose(*verbose || *glCheck)
-	graphics := render.InitOptions{Debug: *debug, DisableBindless: *noBindless}
+	graphics := render.InitOptions{Debug: *debug, DisableBindless: *noBindless, DisableDrawParameters: *noDrawParameters}
 	if *glCheck {
 		interactive = false
 		if err := checkGraphics(graphics); err != nil {

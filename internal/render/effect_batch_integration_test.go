@@ -82,11 +82,14 @@ func TestOrderedEffectMultiDrawGL(t *testing.T) {
 	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
 		t.Skip("requires GL")
 	}
-	t.Run("automatic", func(t *testing.T) { testOrderedEffectMultiDrawGL(t, false) })
-	t.Run("bound", func(t *testing.T) { testOrderedEffectMultiDrawGL(t, true) })
+	t.Run("automatic", func(t *testing.T) { testOrderedEffectMultiDrawGL(t, InitOptions{}) })
+	t.Run("bound", func(t *testing.T) { testOrderedEffectMultiDrawGL(t, InitOptions{DisableBindless: true}) })
+	t.Run("core", func(t *testing.T) {
+		testOrderedEffectMultiDrawGL(t, InitOptions{DisableBindless: true, DisableDrawParameters: true})
+	})
 }
 
-func testOrderedEffectMultiDrawGL(t *testing.T, disableBindless bool) {
+func testOrderedEffectMultiDrawGL(t *testing.T, options InitOptions) {
 	t.Helper()
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -95,7 +98,7 @@ func testOrderedEffectMultiDrawGL(t *testing.T, disableBindless bool) {
 		t.Fatal(err)
 	}
 	defer window.Close()
-	if err := InitWithOptions(InitOptions{DisableBindless: disableBindless}); err != nil {
+	if err := InitWithOptions(options); err != nil {
 		t.Fatal(err)
 	}
 	s, err := NewScene3D()
@@ -141,11 +144,14 @@ func testOrderedEffectMultiDrawGL(t *testing.T, disableBindless bool) {
 	}
 	pipe := &s.effectPipeline
 	pipe.init()
-	if pipe.program == 0 || (drawParametersSupported && sceneStorageSupported && pipe.indirect.program == 0) {
+	if pipe.program == 0 || (sceneStorageSupported && pipe.indirect.program == 0) {
 		t.Fatal("supported ordered effect shader did not link")
 	}
-	if disableBindless && pipe.indirect.program != 0 && !pipe.indirect.bound {
+	if options.DisableBindless && pipe.indirect.program != 0 && !pipe.indirect.bound {
 		t.Fatal("effect batching selected bindless despite the override")
+	}
+	if options.DisableDrawParameters && sceneStorageSupported && !pipe.indirect.materialAttribute {
+		t.Fatal("effect batching did not select the core material attribute")
 	}
 	compact, indirect := pipe.program, pipe.indirect.program
 	defer func() { pipe.program, pipe.indirect.program = compact, indirect }()

@@ -87,6 +87,9 @@ comparing bindless and ordinary texture bindings.
 When reporting a client problem, include `logs/client.log` from beside the
 executable. The header records the build, OS, CPU and physical RAM. After
 graphics initialization begins, the log records the OpenGL renderer and driver.
+Use `-gl-no-bindless` and `-gl-no-draw-parameters` to compare the optional
+graphics paths on the same driver and scene. The flags also work with
+`-gl-check` for startup diagnostics.
 The default log keeps failures and limits recurring warnings. Run with
 `-verbose` for detailed graphics initialization, shader names and all recurring
 warnings. Add `-gldebug` to capture OpenGL driver messages when the client can
