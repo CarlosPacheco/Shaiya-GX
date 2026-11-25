@@ -456,3 +456,5 @@
 12372		"Took <v> damage from drowning"
 12373		"You drowned"
 12374		"Select a target first"
+12380		"Quest Tracker"
+12381		"No active quests"

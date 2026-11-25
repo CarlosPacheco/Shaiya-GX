@@ -244,6 +244,8 @@ type App struct {
 	questStartedAt    map[uint16]time.Time
 	questSnapshotAt   map[uint16]time.Time
 	questUI           *ui.QuestLog
+	questTrackerUI    *ui.QuestTracker
+	questTracker      questTrackerView
 	questConfirm      *ui.Message
 	questItemOffer    itemQuestOffer
 	questItemLinks    map[sdata.ItemKey]sdata.QuestItemLinks
@@ -458,6 +460,9 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		return nil, err
 	}
 	if a.questUI, err = ui.NewQuestLog(a); err != nil {
+		return nil, err
+	}
+	if a.questTrackerUI, err = ui.NewQuestTracker(a, a.OptionalInterface("quest_mini.png")); err != nil {
 		return nil, err
 	}
 	if a.npcQuestUI, err = ui.NewNPCQuest(a); err != nil {
