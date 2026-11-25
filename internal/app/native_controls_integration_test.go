@@ -135,6 +135,16 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 	if actor.PlayingAction(8) {
 		t.Fatal("observer did not finish its jump animation")
 	}
+	// Stationary A/D rotation broadcasts 0x0501 heading updates while staying idle.
+	startDir := other.Entities[st.SelfID].Dir
+	a.updateWorld(&platform.Input{Down: "A"}, .15)
+	a.updateWorld(&platform.Input{}, .02)
+	pump(func() bool { return other.Entities[st.SelfID].Dir != startDir && other.Entities[st.SelfID].Motion == 0 })
+	b.clock += .2
+	b.prepareRemotePlayers()
+	if !actor.PlayingClip("000_normal") {
+		t.Fatal("stationary A/D turn animated footsteps on observer")
+	}
 	// Walk/run, both strafes, backwards and autorun use normal movement snapshots.
 	a.updateWorld(&platform.Input{Keys: []platform.Key{platform.KeyTab}}, .01)
 	if !v.walking {
