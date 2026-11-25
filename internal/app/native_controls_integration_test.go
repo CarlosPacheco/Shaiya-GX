@@ -330,6 +330,12 @@ func TestNativeControlsAgainstRapture(t *testing.T) {
 	})
 	a.updateWorld(&platform.Input{Chars: []rune{'c'}}, .01)
 	pump(func() bool { return st.Self.Sitting && !v.sitPending })
+	for i := 0; i < 600 && v.self.PlayingAction(10); i++ {
+		a.updateWorld(&platform.Input{}, 1.0/60)
+	}
+	if v.self.PlayingAction(10) || !st.Self.Sitting {
+		t.Fatal("sit animation did not settle into the seated posture")
+	}
 	a.updateWorld(&platform.Input{Chars: []rune{'c'}}, .01)
 	pump(func() bool { return !st.Self.Sitting && !v.sitPending })
 	// Advance both real time and App.clock: the earlier self buff now has
