@@ -7,12 +7,31 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
 
+func TestStatusDisplayUsesConfirmedAttributes(t *testing.T) {
+	state := StatusState{
+		Base:  proto.StatPoints{20, 21, 22, 23, 24, 25},
+		Stats: proto.AdditionalStats{Str: 28, Rec: 32, Int: 17, Wis: 65536, Dex: 0, Luc: 38},
+	}
+	if got, want := state.displayedAttributes(), ([6]uint32{20, 22, 23, 24, 21, 25}); got != want {
+		t.Fatalf("base attributes before the first snapshot = %v, want %v", got, want)
+	}
+	state.Known = true
+	if got, want := state.displayedAttributes(), ([6]uint32{28, 32, 17, 65536, 0, 38}); got != want {
+		t.Fatalf("confirmed attribute totals = %v, want %v", got, want)
+	}
+}
+
 func TestStatusDraftLimitsCancellationAndWireOrder(t *testing.T) {
 	v, err := NewStatus(marketTextures{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	state := StatusState{Points: 3, Base: proto.StatPoints{65535, 10, 10, 10, 10, 10}}
+	state := StatusState{
+		Points: 3,
+		Base:   proto.StatPoints{65535, 10, 10, 10, 10, 10},
+		Stats:  proto.AdditionalStats{Str: 65000, Rec: 66000, Dex: 66001},
+		Known:  true,
+	}
 	click := func(x, y int) bool {
 		t.Helper()
 		v.Update(&platform.Input{MouseX: x, MouseY: y, Pressed: true, MouseDown: true}, 1024, 768, state, 0)

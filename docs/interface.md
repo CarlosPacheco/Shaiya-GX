@@ -698,6 +698,8 @@ Full-map character coordinates sit four pixels higher above the map surface.
 
 ## Status fields and potion quantities
 
+The main attribute grid shows confirmed server totals, including equipped gear and active lapis. The allocation sheet uses base attributes and shows draft points until they are confirmed.
+
 Stat in the Status (T) window shows the equipped upper armor's effective intrinsic/active-lapis
 element, using the original SysMsg names and tier, or SysMsg 5270 for neutral.
 Long localized element names fit inside the existing field.

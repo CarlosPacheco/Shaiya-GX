@@ -42,6 +42,20 @@ type StatusState struct {
 // Display order STR/REC/INT/WIS/DEX/LUC differs from the allocation wire order.
 var statOrder = [...]int{0, 2, 3, 4, 1, 5}
 
+// displayedAttributes returns the main grid in STR/REC/INT/WIS/DEX/LUC order.
+// The base allocation values are shown until an additional-stats snapshot arrives.
+func (s StatusState) displayedAttributes() [6]uint32 {
+	if s.Known {
+		d := s.Stats
+		return [6]uint32{d.Str, d.Rec, d.Int, d.Wis, d.Dex, d.Luc}
+	}
+	var base [6]uint32
+	for i, index := range statOrder {
+		base[i] = uint32(s.Base[index])
+	}
+	return base
+}
+
 func StatusOrigin(w, h int, expanded bool) (int, int) {
 	width := StatusWidth
 	if expanded {
@@ -267,8 +281,8 @@ func (v *Status) Draw(s *render.Sprites, f *Font, w, h int, state StatusState) {
 	text(state.Class, left, 79, columnWidth)
 	text(state.Title, left, 99, 183)
 	text(fmt.Sprintf("%d / %d", state.Details.Exp, state.Details.NextExp), left, 132, 183)
-	for i, index := range statOrder {
-		text(fmt.Sprint(state.Base[index]), left+i/3*(right-left), 172+i%3*20, columnWidth)
+	for i, value := range state.displayedAttributes() {
+		text(fmt.Sprint(value), left+i/3*(right-left), 172+i%3*20, columnWidth)
 	}
 	text(fmt.Sprint(state.Points), right, 232, columnWidth)
 	for i, pool := range []Resource{{state.HP, state.Details.MaxHP}, {state.MP, state.Details.MaxMP}, {state.SP, state.Details.MaxSP}} {
