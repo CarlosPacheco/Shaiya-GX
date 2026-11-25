@@ -170,7 +170,7 @@ func (s *Session) dispatch(op packet.Opcode, p []byte) {
 			}
 		}
 	case packet.GuildCreate, packet.GuildCreateAgree, packet.GuildDisband, packet.GuildDisbandAgree,
-		packet.GuildInvite, packet.GuildInviteAnswer, packet.GuildApply, packet.GuildJoinResult,
+		packet.GuildApply, packet.GuildJoinResult,
 		packet.GuildLeave, packet.GuildExpel, packet.GuildStatus, packet.GuildRemark, packet.GuildEtin,
 		packet.GuildNpcUpgrade, packet.GuildHouseBuy, packet.GuildDonate:
 		s.handleGuild(op, p)

@@ -90,13 +90,6 @@ func (a *App) contextActions(id uint32) []contextAction {
 			out = append(out, contextAction{label: "Guild duel", packet: proto.GuildDuelRequestPacket(id)})
 		}
 	}
-	if id != a.state.SelfID && a.state.Guild.ID != 0 && a.state.Guild.Rank > 0 && a.state.Guild.Rank <= 2 {
-		if e := a.state.Entities[id]; e != nil && e.GuildID == 0 {
-			if _, member := a.state.Guild.Members[id]; !member {
-				out = append(out, contextAction{label: "Invite to guild", packet: proto.GuildInvitePacket(id)})
-			}
-		}
-	}
 	if id != a.state.SelfID && a.chatEntityName(id) != "" {
 		out = append(out, contextAction{label: "Whisper", packet: nil})
 	}
@@ -154,9 +147,6 @@ func (a *App) contextLabels(actions []contextAction) []string {
 			id = 6507
 		case "Union whisper":
 			id = 6510
-		}
-		if action.label == "Invite to guild" {
-			id = 12227
 		}
 		labels[i] = a.tr(id)
 	}

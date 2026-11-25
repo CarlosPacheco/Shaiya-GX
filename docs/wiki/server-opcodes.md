@@ -180,8 +180,6 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0x0D01` | [GuildCreateFailed](protocol-guilds.md#opcode-0d01) | — | yes | yes |
 | `0x0D03` | [GuildDisband](protocol-guilds.md#opcode-0d03) | yes | yes | yes |
 | `0x0D04` | [GuildDisbandAgree](protocol-guilds.md#opcode-0d04) | yes | yes | yes |
-| `0x0D05` | [GuildInvite](protocol-guilds.md#opcode-0d05) | yes | yes | yes |
-| `0x0D06` | [GuildInviteAnswer](protocol-guilds.md#opcode-0d06) | yes | yes | yes |
 | `0x0D07` | [GuildApply](protocol-guilds.md#opcode-0d07) | yes | yes | yes |
 | `0x0D08` | [GuildJoinResult](protocol-guilds.md#opcode-0d08) | yes | yes | yes |
 | `0x0D09` | [GuildLeave](protocol-guilds.md#opcode-0d09) | yes | yes | yes |
@@ -346,6 +344,6 @@ Read [wire conventions and session phases](server-protocol.md) first. The family
 | `0xF501` | [GmCommandError](protocol-chat.md#opcode-f501) | — | — | — |
 | `0xF702` | [GmCommandGetItem](protocol-chat.md#opcode-f702) | — | — | — |
 
-Inventory: **335 numeric opcodes**, **549 typed declarations**, **15 families**.
+Inventory: **333 numeric opcodes**, **545 typed declarations**, **15 families**.
 
 Regenerate with `python3 tools/generate_server_reference.py`; verify freshness with `--check`. The generator parses source for both operating systems and tests are excluded from implementation evidence. Source links track main; use Git history when comparing older binaries.

@@ -289,12 +289,6 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			}
 			return
 		}
-		if a.updateGuildInvite(in, w, h) {
-			if a.wv != nil && a.world != nil && a.state != nil {
-				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
-			}
-			return
-		}
 		if a.exchange.quantity != nil || a.exchange.moneyOpen {
 			a.updateExchangeModal(in)
 			if a.wv != nil && a.world != nil && a.state != nil {

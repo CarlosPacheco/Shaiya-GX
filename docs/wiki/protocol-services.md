@@ -236,7 +236,7 @@ type WarehouseList struct {
 
 **`0x0801` — GemAdd**
 
-Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L224), [proto.GemAdd](../../internal/proto/opcodes.go#L211).
+Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L222), [proto.GemAdd](../../internal/proto/opcodes.go#L209).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L91)
 
@@ -329,7 +329,7 @@ type GemAddResult struct {
 
 **`0x0802` — GemRemove**
 
-Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L225), [proto.GemRemove](../../internal/proto/opcodes.go#L212).
+Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L223), [proto.GemRemove](../../internal/proto/opcodes.go#L210).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L93)
 
@@ -534,7 +534,7 @@ type GemRemoveResult struct {
 
 **`0x0803` — CloakAdd**
 
-Declarations: [packet.CloakAdd](../../server/internal/packet/packet.go#L226), [proto.CloakAdd](../../internal/proto/opcodes.go#L213).
+Declarations: [packet.CloakAdd](../../server/internal/packet/packet.go#L224), [proto.CloakAdd](../../internal/proto/opcodes.go#L211).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L95)
 
@@ -613,7 +613,7 @@ type EmblemResult struct {
 
 **`0x0804` — CloakRemove**
 
-Declarations: [packet.CloakRemove](../../server/internal/packet/packet.go#L227), [proto.CloakRemove](../../internal/proto/opcodes.go#L214).
+Declarations: [packet.CloakRemove](../../server/internal/packet/packet.go#L225), [proto.CloakRemove](../../internal/proto/opcodes.go#L212).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L97)
 
@@ -694,7 +694,7 @@ type EmblemRemoved struct{ Bag, Slot uint8 }
 
 **`0x0805` — EnchantAdd**
 
-Declarations: [packet.EnchantAdd](../../server/internal/packet/packet.go#L222), [proto.EnchantAdd](../../internal/proto/opcodes.go#L209).
+Declarations: [packet.EnchantAdd](../../server/internal/packet/packet.go#L220), [proto.EnchantAdd](../../internal/proto/opcodes.go#L207).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L89)
 
@@ -783,7 +783,7 @@ type EnchantResult struct {
 
 **`0x0806` — ItemCompose**
 
-Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L223), [proto.ItemCompose](../../internal/proto/opcodes.go#L210).
+Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L221), [proto.ItemCompose](../../internal/proto/opcodes.go#L208).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L99)
 
@@ -855,7 +855,7 @@ type ComposeResult struct {
 
 **`0x0809` — GemAddPossibility**
 
-Declarations: [packet.GemAddPossibility](../../server/internal/packet/packet.go#L228), [proto.GemAddPossibility](../../internal/proto/opcodes.go#L215).
+Declarations: [packet.GemAddPossibility](../../server/internal/packet/packet.go#L226), [proto.GemAddPossibility](../../internal/proto/opcodes.go#L213).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -869,7 +869,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0x080A` — GemRemovePossibility**
 
-Declarations: [packet.GemRemovePossibility](../../server/internal/packet/packet.go#L229), [proto.GemRemovePossibility](../../internal/proto/opcodes.go#L216).
+Declarations: [packet.GemRemovePossibility](../../server/internal/packet/packet.go#L227), [proto.GemRemovePossibility](../../internal/proto/opcodes.go#L214).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -883,7 +883,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0xB101` — BankItemList**
 
-Declarations: [packet.BankItemList](../../server/internal/packet/packet.go#L211), [proto.BankItemList](../../internal/proto/opcodes.go#L198).
+Declarations: [packet.BankItemList](../../server/internal/packet/packet.go#L209), [proto.BankItemList](../../internal/proto/opcodes.go#L196).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

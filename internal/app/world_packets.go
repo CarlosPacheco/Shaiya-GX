@@ -230,14 +230,28 @@ func (a *App) applyWorldPacket(p []byte) {
 }
 
 func (a *App) applyGuildFeedback(p []byte, op proto.Opcode) {
-	if op == proto.GuildInvite {
-		a.guild.expires = a.clock + 30
-	}
 	switch op {
 	case proto.GuildListBegin, proto.GuildList, proto.GuildListEnd, proto.GuildNew, proto.GuildDisbanded:
 		a.guild.directoryDirty = true
 	case proto.GuildOnlineList, proto.GuildOfflineList, proto.GuildMemberAdded, proto.GuildApplicantList, proto.GuildApplicant, proto.GuildApplicantRemoved, proto.GuildStatus, proto.GuildJoinResult, proto.GuildCreate, proto.GuildLeave, proto.GuildExpel:
 		a.guild.rosterDirty = true
+	}
+	switch op {
+	case proto.GuildApply:
+		messages := [...]string{a.tr(12345), a.tr(12346), a.tr(12347)}
+		result := a.state.Guild.ApplyResult
+		message := a.tr(12348)
+		if int(result) < len(messages) {
+			message = messages[result]
+		}
+		a.questMessage(message)
+	case proto.GuildJoinResult:
+		switch a.state.Guild.JoinResult {
+		case 0:
+			a.localizedNotice(17, 385, nil)
+		case 1:
+			a.localizedNotice(17, 384, nil)
+		}
 	}
 	a.confirmedDuel(p)
 	a.confirmedGuildDuel(p)

@@ -87,7 +87,6 @@ type App struct {
 	menuPending                         bool
 	menuDeadline                        float64
 	deathUI                             *ui.DeathDialog
-	guildMessage                        *ui.Message
 	guildConfirm                        *ui.Message
 	unionConfirm                        *ui.Message // confirm before dismantling a raid
 	guildVoteMessage                    *ui.Message
@@ -402,9 +401,6 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 		return nil, err
 	}
 	if a.duelMessage, err = ui.NewMessage(a); err != nil {
-		return nil, err
-	}
-	if a.guildMessage, err = ui.NewMessage(a); err != nil {
 		return nil, err
 	}
 	if a.guildConfirm, err = ui.NewMessage(a); err != nil {
@@ -773,9 +769,6 @@ func (a *App) drawFrame(w, h int) {
 	if a.screen == screenWorld && !a.worldUIHidden() && a.exchangeInvite != nil {
 		a.exchangeInvite.Draw(a.sprites, a.font, w, h)
 	}
-	if a.screen == screenWorld && !a.worldUIHidden() && a.guildMessage != nil {
-		a.guildMessage.Draw(a.sprites, a.font, w, h)
-	}
 	if a.screen == screenWorld && !a.worldUIHidden() && a.auctionConfirm != nil {
 		a.auctionConfirm.Draw(a.sprites, a.font, w, h)
 	}
@@ -927,9 +920,6 @@ func (a *App) backToLogin(msg string) {
 	a.guildDuel = guildDuelView{}
 	if a.guildDuelMessage != nil {
 		a.guildDuelMessage.Visible = false
-	}
-	if a.guildMessage != nil {
-		a.guildMessage.Visible = false
 	}
 	if a.unionConfirm != nil {
 		a.unionConfirm.Visible = false

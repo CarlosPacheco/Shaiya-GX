@@ -10,7 +10,7 @@ Client codecs operate on opcode + body; server packet.Writer emits length + opco
 
 **`0xA101` — LoginHandshake**
 
-Declarations: [packet.LoginHandshake](../../server/internal/packet/packet.go#L212), [proto.LoginHandshake](../../internal/proto/opcodes.go#L199).
+Declarations: [packet.LoginHandshake](../../server/internal/packet/packet.go#L210), [proto.LoginHandshake](../../internal/proto/opcodes.go#L197).
 
 **C→S receive adapters:** [frame (server/cmd/gx_login/main.go)](../../server/cmd/gx_login/main.go#L198)
 
@@ -63,7 +63,7 @@ func KeyReply(block []byte) ([]byte, error) {
 
 **`0xA102` — LoginRequest**
 
-Declarations: [packet.LoginRequest](../../server/internal/packet/packet.go#L213), [proto.LoginRequest](../../internal/proto/opcodes.go#L200).
+Declarations: [packet.LoginRequest](../../server/internal/packet/packet.go#L211), [proto.LoginRequest](../../internal/proto/opcodes.go#L198).
 
 **C→S receive adapters:** [frame (server/cmd/gx_login/main.go)](../../server/cmd/gx_login/main.go#L224)
 
@@ -113,7 +113,7 @@ func LoginRequestPacket(user, password string) []byte {
 
 **`0xA106` — LoginRequestEx**
 
-Declarations: [proto.LoginRequestEx](../../internal/proto/opcodes.go#L232).
+Declarations: [proto.LoginRequestEx](../../internal/proto/opcodes.go#L230).
 
 Source notes: Opcodes not named in Rapture's catalog. 0x5992f0 with its flag set: 33-byte password
 
@@ -129,7 +129,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0xA201` — ServerList**
 
-Declarations: [packet.ServerList](../../server/internal/packet/packet.go#L214), [proto.ServerList](../../internal/proto/opcodes.go#L201).
+Declarations: [packet.ServerList](../../server/internal/packet/packet.go#L212), [proto.ServerList](../../internal/proto/opcodes.go#L199).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -164,7 +164,7 @@ func serverList() []byte {
 
 **`0xA202` — SelectServer**
 
-Declarations: [packet.SelectServer](../../server/internal/packet/packet.go#L215), [proto.SelectServer](../../internal/proto/opcodes.go#L202).
+Declarations: [packet.SelectServer](../../server/internal/packet/packet.go#L213), [proto.SelectServer](../../internal/proto/opcodes.go#L200).
 
 **C→S receive adapters:** [frame (server/cmd/gx_login/main.go)](../../server/cmd/gx_login/main.go#L273)
 
@@ -214,7 +214,7 @@ func SelectServerPacket(serverID uint8, version uint32) []byte {
 
 **`0xA301` — GameHandshake**
 
-Declarations: [packet.GameHandshake](../../server/internal/packet/packet.go#L216), [proto.GameHandshake](../../internal/proto/opcodes.go#L203).
+Declarations: [packet.GameHandshake](../../server/internal/packet/packet.go#L214), [proto.GameHandshake](../../internal/proto/opcodes.go#L201).
 
 **C→S receive adapters:** [frame (server/internal/world/session.go)](../../server/internal/world/session.go#L608)
 
@@ -261,7 +261,7 @@ func WorldHelloPacket(userUID uint32, token [16]byte) []byte {
 
 **`0xA303` — Ping**
 
-Declarations: [packet.Ping](../../server/internal/packet/packet.go#L217), [proto.Ping](../../internal/proto/opcodes.go#L204).
+Declarations: [packet.Ping](../../server/internal/packet/packet.go#L215), [proto.Ping](../../internal/proto/opcodes.go#L202).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L300)
 

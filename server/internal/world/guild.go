@@ -7,7 +7,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 	"strings"
 	"sync"
-	"time"
 )
 
 // Guilds follow ps_game.exe CGuildMgr / CGuild / CGuildCreate and
@@ -23,7 +22,6 @@ const (
 	guildRankAdmin   = 2
 	guildRankMember  = 9
 	guildMaxAdmins   = 7
-	guildInviteTime  = 30 * time.Second
 	guildListBatch   = 14 // 0x0D2F entries per packet
 	guildMemberBatch = 40 // 0x0D12/0x0D13/0x0D16 entries per packet
 
@@ -89,12 +87,10 @@ type guildCreate struct {
 
 // Per-player guild state, guarded by guildMu.
 type playerGuildState struct {
-	guild       *guild
-	create      *guildCreate
-	inviterID   uint32
-	inviteUntil time.Time
-	applied     *guild
-	userID      string
+	guild   *guild
+	create  *guildCreate
+	applied *guild
+	userID  string
 }
 
 var (
@@ -310,15 +306,6 @@ func (s *Session) handleGuild(op packet.Opcode, p []byte) {
 	case packet.GuildDisbandAgree:
 		if len(p) >= 3 {
 			s.guildDisbandAnswer(p[2] == 1)
-		}
-	case packet.GuildInvite:
-		if len(p) >= 6 {
-			id, _ := packet.U32(p[2:])
-			s.guildInvite(id)
-		}
-	case packet.GuildInviteAnswer:
-		if len(p) >= 3 {
-			s.guildInviteAnswer(p[2] == 1)
 		}
 	case packet.GuildApply:
 		if len(p) >= 6 {

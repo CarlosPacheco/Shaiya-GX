@@ -335,7 +335,7 @@ type PeriodicEffect struct {
 
 **`0x0609` — MobSpeed**
 
-Declarations: [proto.MobSpeed](../../internal/proto/opcodes.go#L242).
+Declarations: [proto.MobSpeed](../../internal/proto/opcodes.go#L240).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -396,7 +396,7 @@ type Reader struct {
 
 **`0x060B` — MobSkillUse**
 
-Declarations: [proto.MobSkillUse](../../internal/proto/opcodes.go#L237).
+Declarations: [proto.MobSkillUse](../../internal/proto/opcodes.go#L235).
 
 Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 
@@ -488,7 +488,7 @@ type SkillResult struct {
 
 **`0x060C` — MobSkillDrain**
 
-Declarations: [proto.MobSkillDrain](../../internal/proto/opcodes.go#L238).
+Declarations: [proto.MobSkillDrain](../../internal/proto/opcodes.go#L236).
 
 Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 
@@ -580,7 +580,7 @@ type SkillResult struct {
 
 **`0x060D` — MobSkillOther**
 
-Declarations: [proto.MobSkillOther](../../internal/proto/opcodes.go#L239).
+Declarations: [proto.MobSkillOther](../../internal/proto/opcodes.go#L237).
 
 Source notes: Monster skill results: native handlers 0x57add0/0x579b80/0x57a2c0.
 

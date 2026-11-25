@@ -63,6 +63,8 @@ The player popup follows `0x47de10`/`0x47e1e0`: text starts at `(10,10)` with 15
 
 Right-click the selected character in the world, the target frame or a party/raid member to open their actions. Right-click the local portrait in a group to leave it. Whisper selects the recipient and focuses the existing chat input. The popup preserves held movement and owns its pointer gestures; changed rows cannot activate an action that replaced the one originally pressed. Group leadership, capacity, faction and guild eligibility filter supported requests; membership, trades and duels still await GX Server responses. Friends/ignore, follow and personal-shop services are not represented by invented actions.
 
+Players join guilds by applying through the guild directory and receiving approval from the guild.
+
 Choose **Inspect** from an ally's context menu. The inspection requires three
 units of 3D distance and closes when the player leaves that range or disappears.
 The panel uses `interface/inspect.png` from the loose data pack, displays a

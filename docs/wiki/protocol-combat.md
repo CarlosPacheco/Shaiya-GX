@@ -1881,7 +1881,7 @@ type ReflectedDamage struct {
 
 **`0x0517` — SkillUse**
 
-Declarations: [packet.SkillUse](../../server/internal/packet/packet.go#L201), [proto.SkillUse](../../internal/proto/opcodes.go#L187).
+Declarations: [packet.SkillUse](../../server/internal/packet/packet.go#L199), [proto.SkillUse](../../internal/proto/opcodes.go#L185).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L272)
 
@@ -2118,7 +2118,7 @@ type SkillResult struct {
 
 **`0x051A` — SkillExtraDamage**
 
-Declarations: [packet.SkillExtraDamage](../../server/internal/packet/packet.go#L202), [proto.SkillExtraDamage](../../internal/proto/opcodes.go#L188).
+Declarations: [packet.SkillExtraDamage](../../server/internal/packet/packet.go#L200), [proto.SkillExtraDamage](../../internal/proto/opcodes.go#L186).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2278,7 +2278,7 @@ type SkillResult struct {
 
 **`0x051B` — SkillMobReflectedDamage**
 
-Declarations: [proto.SkillMobReflectedDamage](../../internal/proto/opcodes.go#L189).
+Declarations: [proto.SkillMobReflectedDamage](../../internal/proto/opcodes.go#L187).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2349,7 +2349,7 @@ type ReflectedDamage struct {
 
 **`0x051C` — CharacterDeathState**
 
-Declarations: [packet.CharacterDeathState](../../server/internal/packet/packet.go#L204), [proto.CharacterDeathState](../../internal/proto/opcodes.go#L191).
+Declarations: [packet.CharacterDeathState](../../server/internal/packet/packet.go#L202), [proto.CharacterDeathState](../../internal/proto/opcodes.go#L189).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -2418,7 +2418,7 @@ type CharacterSpeed struct {
 
 **`0x051D` — CharacterMountShape**
 
-Declarations: [packet.CharacterMountShape](../../server/internal/packet/packet.go#L203), [proto.CharacterMountShape](../../internal/proto/opcodes.go#L190).
+Declarations: [packet.CharacterMountShape](../../server/internal/packet/packet.go#L201), [proto.CharacterMountShape](../../internal/proto/opcodes.go#L188).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -3023,7 +3023,7 @@ type AdditionalStats struct {
 
 **`0x0551` — CharacterResurrect**
 
-Declarations: [packet.CharacterResurrect](../../server/internal/packet/packet.go#L200), [proto.CharacterResurrect](../../internal/proto/opcodes.go#L186).
+Declarations: [packet.CharacterResurrect](../../server/internal/packet/packet.go#L198), [proto.CharacterResurrect](../../internal/proto/opcodes.go#L184).
 
 Source notes: charId:u32, 5-byte blob 04 46 AF 37 01 (verbatim), x,y,z:f32.
 
@@ -3189,7 +3189,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0x0558` — SkillDetectInfo**
 
-Declarations: [packet.SkillDetectInfo](../../server/internal/packet/packet.go#L198), [proto.SkillDetectInfo](../../internal/proto/opcodes.go#L185).
+Declarations: [packet.SkillDetectInfo](../../server/internal/packet/packet.go#L196), [proto.SkillDetectInfo](../../internal/proto/opcodes.go#L183).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 

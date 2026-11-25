@@ -66,7 +66,7 @@ type Chat struct {
 
 **`0x1102` — ChatWhisper**
 
-Declarations: [packet.ChatWhisper](../../server/internal/packet/packet.go#L195), [proto.ChatWhisper](../../internal/proto/opcodes.go#L182).
+Declarations: [packet.ChatWhisper](../../server/internal/packet/packet.go#L193), [proto.ChatWhisper](../../internal/proto/opcodes.go#L180).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L79)
 
@@ -201,11 +201,11 @@ type Chat struct {
 
 **`0x1104` — ChatGuild**
 
-Declarations: [packet.ChatGuild](../../server/internal/packet/packet.go#L194), [proto.ChatGuild](../../internal/proto/opcodes.go#L181).
+Declarations: [packet.ChatGuild](../../server/internal/packet/packet.go#L192), [proto.ChatGuild](../../internal/proto/opcodes.go#L179).
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L164)
 
-**S→C serializers:** [guildChat (server/internal/world/guild.go)](../../server/internal/world/guild.go#L283)
+**S→C serializers:** [guildChat (server/internal/world/guild.go)](../../server/internal/world/guild.go#L279)
 
 **Client receive reducers:** [audience (internal/game/chat_protection.go)](../../internal/game/chat_protection.go#L108), [Apply (internal/game/state.go)](../../internal/game/state.go#L1305), [applyChatPacket (internal/game/state_chat_packets.go)](../../internal/game/state_chat_packets.go#L39)
 
@@ -215,7 +215,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>guildChat — server/internal/world/guild.go</summary>
 
-[Source definition](../../server/internal/world/guild.go#L283)
+[Source definition](../../server/internal/world/guild.go#L279)
 
 ```go
 func (s *Session) guildChat(message string, items proto.ChatItems) {
@@ -377,7 +377,7 @@ type Reader struct {
 
 **`0x1107` — ChatShout**
 
-Declarations: [packet.ChatShout](../../server/internal/packet/packet.go#L196), [proto.ChatShout](../../internal/proto/opcodes.go#L183).
+Declarations: [packet.ChatShout](../../server/internal/packet/packet.go#L194), [proto.ChatShout](../../internal/proto/opcodes.go#L181).
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L83), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L76)
 
@@ -433,7 +433,7 @@ type Chat struct {
 
 **`0x1108` — ChatWorldShout**
 
-Declarations: [packet.ChatWorldShout](../../server/internal/packet/packet.go#L197), [proto.ChatWorldShout](../../internal/proto/opcodes.go#L184).
+Declarations: [packet.ChatWorldShout](../../server/internal/packet/packet.go#L195), [proto.ChatWorldShout](../../internal/proto/opcodes.go#L182).
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L90), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L76)
 
@@ -762,7 +762,7 @@ type Chat struct {
 
 **`0xF101` — ChatNormalAdmin**
 
-Declarations: [packet.ChatNormalAdmin](../../server/internal/packet/packet.go#L218), [proto.ChatNormalAdmin](../../internal/proto/opcodes.go#L205).
+Declarations: [packet.ChatNormalAdmin](../../server/internal/packet/packet.go#L216), [proto.ChatNormalAdmin](../../internal/proto/opcodes.go#L203).
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L77), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L76)
 
@@ -803,7 +803,7 @@ type Chat struct {
 
 **`0xF103` — ChatWorldAdmin**
 
-Declarations: [packet.ChatWorldAdmin](../../server/internal/packet/packet.go#L219), [proto.ChatWorldAdmin](../../internal/proto/opcodes.go#L206).
+Declarations: [packet.ChatWorldAdmin](../../server/internal/packet/packet.go#L217), [proto.ChatWorldAdmin](../../internal/proto/opcodes.go#L204).
 
 **C→S receive adapters:** [handlePublicChat (server/internal/world/chat.go)](../../server/internal/world/chat.go#L80), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L76)
 
@@ -844,7 +844,7 @@ type Chat struct {
 
 **`0xF501` — GmCommandError**
 
-Declarations: [packet.GmCommandError](../../server/internal/packet/packet.go#L220), [proto.GmCommandError](../../internal/proto/opcodes.go#L207).
+Declarations: [packet.GmCommandError](../../server/internal/packet/packet.go#L218), [proto.GmCommandError](../../internal/proto/opcodes.go#L205).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -858,7 +858,7 @@ The shape is decoded inline, delegated, or only declared. Use the linked adapter
 
 **`0xF702` — GmCommandGetItem**
 
-Declarations: [packet.GmCommandGetItem](../../server/internal/packet/packet.go#L221), [proto.GmCommandGetItem](../../internal/proto/opcodes.go#L208).
+Declarations: [packet.GmCommandGetItem](../../server/internal/packet/packet.go#L219), [proto.GmCommandGetItem](../../internal/proto/opcodes.go#L206).
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
