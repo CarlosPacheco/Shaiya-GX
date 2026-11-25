@@ -82,7 +82,7 @@ type worldView struct {
 	combatHeading               render.V3 // heading to restore after facing an attack target
 	diagonalHeading             render.V3 // W+Q/W+E heading latched when the combo began (0x43bfa0, 0x71d08c)
 	eye                         render.V3 // desired eye; follows the position delta
-	moving                      bool
+	moving, turning             bool
 	walking                     bool
 	autoRun                     bool
 	travel                      bool
@@ -546,7 +546,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		} else {
 			// MotionJump has no position. Flush unsent walking/running progress
 			// first, so the server grants the impulse at the same support surface.
-			if v.moving || dir.Len() > 0 {
+			if (v.moving || v.turning || dir.Len() > 0) && a.world != nil {
 				if err := a.world.Send(v.movePacket(v.motion &^ proto.MotionFlag80)); err != nil {
 					a.backToLoginID(12216)
 					return
@@ -762,17 +762,23 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	v.updateRenderedCamera(float32(dt))
 	// A slow frame can run several physics steps at once. Periodic packets
 	// must represent the position at the end of that frame, when they are sent.
-	periodic := lastStep && v.sendT <= 0
-	if moving != v.moving || motion != v.motion || ((moving || v.jumping) && periodic) || (v.waterDirty && (periodic || (swimming && v.pos[1] >= scene.SwimSurfaceY))) {
-		if err := a.world.Send(v.movePacket(motion)); err != nil {
-			a.backToLoginID(12218)
-			return
+	// EP5.4 0x43ef4c/0x43f0df + 0x436945..0x436ba8 also broadcasts stationary
+	// A/D turns periodically and flushes the final heading on release.
+	turning := !moving && !v.jumping && !climbFrame && !blocked && a.clock >= v.attackMoveUntil && speed > 0 && (dt > 0 || v.turning) && !a.state.Self.Dead && intent.turn != 0
+	periodic := lastStep && v.sendT <= 1e-8
+	turnChanged := lastStep && turning != v.turning
+	if moving != v.moving || motion != v.motion || turnChanged || ((moving || v.jumping || turning) && periodic) || (v.waterDirty && (periodic || (swimming && v.pos[1] >= scene.SwimSurfaceY))) {
+		if a.world != nil {
+			if err := a.world.Send(v.movePacket(motion)); err != nil {
+				a.backToLoginID(12218)
+				return
+			}
 		}
 		nextSample := 0.1
-		if periodic && moving == v.moving && motion == v.motion && (moving || v.jumping) {
-			nextSample = max(0, nextSample+v.sendT)
+		if periodic && moving == v.moving && motion == v.motion && !turnChanged && (moving || v.jumping || turning) {
+			nextSample = max(0, nextSample+min(0, v.sendT))
 		}
-		v.sendT, v.moving, v.motion = nextSample, moving, motion
+		v.sendT, v.moving, v.turning, v.motion = nextSample, moving, turning, motion
 		v.waterDirty = false
 	}
 	a.state.Self.X, a.state.Self.Y, a.state.Self.Z = v.pos[0], v.pos[1], v.pos[2]
