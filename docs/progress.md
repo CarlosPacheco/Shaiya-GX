@@ -82,7 +82,7 @@ See the [release notes](releases/gx-v0.1.11.md) and [upgrade guide](releases/gx-
 | Original parity | Full visual comparisons and rare gameplay/service states |
 | Navigation | Complete collision/navigation behavior and remaining actions |
 | Cloaks | Body/ground contact and map wind |
-| Interface | Remaining quest markers, speech bubbles, remaining target indicators and service windows |
+| Interface | Quest tracker/markers, speech bubbles, remaining target indicators and service windows |
 | Options | Shortcut editing and remaining controls; resolution selection is implemented |
 | Server rules | Remaining partial workflows in the [parity table](../server/docs/original-parity.md) |
 | Persistence | SQLite is the primary production database; maintain consistent backups and validated restores |

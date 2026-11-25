@@ -326,16 +326,6 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 	}
-	if a.questTracker.open && a.questTrackerUI != nil {
-		q := a.questTrackerUI
-		x, y := q.Origin(w, h)
-		if start(&q.Position, x, y, ui.QuestTrackerWidth, ui.QuestTrackerHeight, 0, ui.QuestTrackerDragWidth) {
-			return true
-		}
-		if pointInside(in, x, y, ui.QuestTrackerWidth, ui.QuestTrackerHeight) {
-			return false
-		}
-	}
 	xq, yq := ui.QuickPotionOrigin(a.quickPotions.Position, w, h)
 	// The frame and any empty cell move the bar; a filled cell is grabbed as a potion.
 	if cell := ui.QuickPotionCell(in.MouseX, in.MouseY, xq, yq); pointInside(in, xq, yq, 94, 54) && (cell < 0 || a.quickPotions.bindings[cell] == (sdata.ItemKey{})) && !a.barCovered(in, w, h) {
@@ -519,9 +509,6 @@ func (a *App) layoutPositions() map[string]*ui.WindowPosition {
 	}
 	if a.questUI != nil {
 		out["quest"] = &a.questUI.Position
-	}
-	if a.questTrackerUI != nil {
-		out["quest_tracker"] = &a.questTrackerUI.Position
 	}
 	if a.inventoryUI != nil {
 		out["inventory"] = &a.inventoryUI.Position

@@ -334,9 +334,6 @@ func RegisterPlayer(ch db.Character, items []db.Item, isAdmin bool, faction uint
 		gmVisible: true, mapID: ch.MapID, character: ch, items: append([]db.Item(nil), items...), faction: faction}
 	if len(owner) > 0 {
 		p.owner = owner[0]
-		if p.owner != nil {
-			p.owner.syncQuestIDs(p)
-		}
 	}
 	p.lifeState.Store(1)
 	realm.registryMu.Lock()
