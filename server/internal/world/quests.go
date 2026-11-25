@@ -505,6 +505,7 @@ func (s *Session) startQuest(q *questDef, id uint16, npcID uint32) {
 	}
 	s.items = after
 	s.quests = append(s.quests, aq)
+	s.syncQuestIDs(s.player)
 	if s.player != nil {
 		s.player.UpdateItems(s.items)
 	}
@@ -819,6 +820,7 @@ func (s *Session) removeQuestFromMemory(q *activeQuest, success uint8) {
 	for i, active := range s.quests {
 		if active == q {
 			s.quests = append(s.quests[:i], s.quests[i+1:]...)
+			s.syncQuestIDs(s.player)
 			break
 		}
 	}
@@ -984,14 +986,14 @@ func questItemDrop(mob *MapMob, recipients []*ConnectedPlayer) *db.ItemDef {
 	return nil
 }
 
-// syncQuestIDs publishes the active quest ids for other sessions' loot.
-func (s *Session) syncQuestIDs() {
-	if s.player == nil {
+// syncQuestIDs publishes committed quest membership for mob rewards.
+func (s *Session) syncQuestIDs(player *ConnectedPlayer) {
+	if player == nil {
 		return
 	}
 	ids := make([]uint16, 0, len(s.quests))
 	for _, q := range s.quests {
 		ids = append(ids, q.ID)
 	}
-	s.player.setQuests(ids)
+	player.setQuests(ids)
 }

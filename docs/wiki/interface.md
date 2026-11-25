@@ -17,7 +17,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 | Options | Menu and six subpages; classic glow/brightness/detail/distance sliders, cloak/helmet visibility, audio, mouse, chat, editable hotkeys and monitor resolution selection | Other service controls |
 | Party/raid | Member frames, invitations, leader and selection flows | Complete badges, buffs and visual variants |
 | Player context | Original classic TipBox frame, SysMsg rows, hover, character/target/party picking, whisper focus and supported party/trade/duel/guild actions | Inspect, follow, personal shops and remaining social windows/services |
-| Quests | Original U button, journal artwork, state icons, seven 31px rows, three scrollbars, selection and confirmed abandonment; NPC dialogs/rewards/progress | Native tracker and remaining markers |
+| Quests | Original U button, journal artwork, state icons, seven 31px rows, three scrollbars, selection and confirmed abandonment; NPC dialogs/rewards/progress and independent objective tracker | Remaining markers |
 | Trade/duels | Wager/item/money interfaces and confirmation flows | Complete comparison across all states |
 | Guild | Original G button, single roster sheet, native columns/rows, sorting, applicants, rank actions and notice editor; directory/creation/ranking flows; Buddy, Block and Search Party with native transport | Complete comparison of rare social states and remaining presentation |
 | NPC services | Merchant, storage, blacksmith, gems/enchant and original portal window; portal approach, confirmation, same-map and cross-map travel | Remaining service types and special states |
@@ -632,6 +632,10 @@ writes and the current normal/reversed-depth convention before drawing. A prior
 UI, shadow or transparent emitter pass cannot make the next actor ignore terrain
 or leave its first material without depth writes. The regression includes the
 native Windtail Forest Wood Spirit model (ID 2025) and other Windtail creatures.
+
+## Quest tracker
+
+Click a quest in the U journal to open the tracker. It stays visible when the journal closes. Click a title to expand or collapse its objectives, scroll for more quests, and drag the header to move it. The tracker uses confirmed progress and current bag contents. The Remember Layout setting saves its position separately from the journal.
 
 ## Map-wide quest availability
 

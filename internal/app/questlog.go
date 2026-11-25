@@ -118,6 +118,7 @@ func (a *App) updateQuestLog(in *platform.Input, w, h int) bool {
 	v.offset = offset
 	if row >= 0 {
 		v.selected = ids[row]
+		a.showQuestTracker(v.selected)
 	}
 	if previous != v.selected {
 		a.questUI.ResetDescriptionScroll()

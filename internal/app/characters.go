@@ -426,6 +426,7 @@ func (a *App) drawCharacters(w, h int) {
 		a.drawQuickPotions(w, h)
 		a.drawEvolutionBar(w, h)
 		a.drawRevolver(w, h)
+		a.drawQuestTracker(w, h)
 		a.drawShop(w, h)
 		a.drawExchange(w, h)
 		a.drawDuel(w, h)
