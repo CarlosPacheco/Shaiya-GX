@@ -44,8 +44,8 @@ func TestBoundMapBatchPreservesMaterialsAndOrderGL(t *testing.T) {
 	defer batch.Delete()
 	light := Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{128, 255, 255, 255}}})
 	defer light.Delete()
-	for i := range mapTextureLimit + 3 {
-		x := -.94 + float32(i%mapTextureLimit)*.12
+	for i := range drawTextureLimit + 3 {
+		x := -.94 + float32(i%drawTextureLimit)*.12
 		vertices := []Vertex{
 			{Pos: V3{x - .05, -.75, .5}, Normal: V3{0, 1, 0}},
 			{Pos: V3{x + .05, -.75, .5}, Normal: V3{0, 1, 0}},
@@ -54,7 +54,7 @@ func TestBoundMapBatchPreservesMaterialsAndOrderGL(t *testing.T) {
 		mesh := NewMesh(vertices, []uint32{0, 1, 2})
 		defer mesh.Delete()
 		pixels := []byte{byte(10 + 11*i), 96, 160, 255}
-		if i == mapTextureLimit+1 {
+		if i == drawTextureLimit+1 {
 			pixels[3] = 0
 		}
 		texture := Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: pixels}})

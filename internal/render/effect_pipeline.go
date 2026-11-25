@@ -67,7 +67,11 @@ in vec4 vColor;
 out vec4 frag;
 void main() {
 	#ifdef EFFECT_INDIRECT
+	#ifdef EFFECT_BOUND
+	frag = texture(effectTextures[vTexture.x], vUV) * vColor;
+	#else
 	frag = texture(sampler2D(vTexture), vUV) * vColor;
+	#endif
 	#else
 	frag = texture(tex0, vUV) * vColor;
 	#endif
@@ -122,15 +126,25 @@ func (p *effectPipeline) init() {
 		return
 	}
 	p.program = program
-	if skinIndirectSupported {
+	if drawParametersSupported && sceneStorageSupported {
 		const header = "#version 450 core\n"
 		vs := strings.Replace(effectVS, header, header+"#extension GL_ARB_shader_draw_parameters : require\n#define EFFECT_INDIRECT\n", 1)
-		fs := strings.Replace(effectFS, header, header+"#extension GL_ARB_bindless_texture : require\n#define EFFECT_INDIRECT\n", 1)
-		indirect, err := Program("effect bindless indirect", vs, fs)
-		if err != nil {
-			log.Printf("effect multi-draw unavailable: %v", err)
-		} else {
-			p.indirect.program = indirect
+		if skinIndirectSupported {
+			fs := strings.Replace(effectFS, header, header+"#extension GL_ARB_bindless_texture : require\n#define EFFECT_INDIRECT\n", 1)
+			p.indirect.program, err = Program("effect bindless indirect", vs, fs)
+			if err != nil {
+				log.Printf("effect bindless shader: %v", err)
+			}
+		}
+		if p.indirect.program == 0 {
+			fs := strings.Replace(effectFS, header, header+"#define EFFECT_INDIRECT\n#define EFFECT_BOUND\nlayout(binding=16) uniform sampler2D effectTextures[16];\n", 1)
+			p.indirect.program, err = Program("effect bound indirect", vs, fs)
+			if err != nil {
+				log.Printf("effect bound shader: %v", err)
+			} else {
+				p.indirect.bound = true
+				log.Printf("OpenGL effect draw path: indirect with bound textures")
+			}
 		}
 	}
 }

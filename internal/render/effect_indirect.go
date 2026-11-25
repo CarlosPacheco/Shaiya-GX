@@ -14,10 +14,12 @@ type effectIndirectLocation struct {
 type effectIndirectRun struct {
 	first               int
 	indexType, src, dst uint32
+	textures            drawTextures
 }
 
 type effectIndirect struct {
 	program, vao                            uint32
+	bound                                   bool
 	boundVertexCapacity, boundIndexCapacity int
 	vertices, indices, keys                 packedMeshBuffer
 	geometry                                map[*Mesh]effectIndirectLocation
@@ -79,18 +81,44 @@ func (p *effectIndirect) plan(draws []queuedEffect) bool {
 			}
 			return false
 		}
-		handle := draw.texture.bindlessHandle(draw.repeat)
-		if handle == 0 {
-			return false
-		}
 		indexType := draw.mesh.indexType
 		if n := len(p.runs); n == 0 || p.runs[n-1].indexType != indexType || p.runs[n-1].src != draw.src || p.runs[n-1].dst != draw.dst {
-			p.runs = append(p.runs, effectIndirectRun{len(p.commands), indexType, draw.src, draw.dst})
+			p.newRun(draw)
+		}
+		var textureRef uint64
+		if p.bound {
+			view := draw.texture.samplingView(draw.repeat)
+			if view == nil {
+				return false
+			}
+			slot, ok := p.runs[len(p.runs)-1].textures.slot(view.id)
+			if !ok {
+				p.newRun(draw)
+				slot, _ = p.runs[len(p.runs)-1].textures.slot(view.id)
+			}
+			textureRef = uint64(slot)
+		} else {
+			textureRef = draw.texture.bindlessHandle(draw.repeat)
+			if textureRef == 0 {
+				return false
+			}
 		}
 		p.commands = append(p.commands, indexedDrawCommand{uint32(draw.mesh.Count), uint32(draw.end - draw.first), uint32(loc.index / int(draw.mesh.indexBytes)), uint32(loc.vertex), uint32(draw.first)})
-		p.materials = append(p.materials, [4]uint32{uint32(handle), uint32(handle >> 32), loc.keys, uint32(loc.vertex)})
+		p.materials = append(p.materials, [4]uint32{uint32(textureRef), uint32(textureRef >> 32), loc.keys, uint32(loc.vertex)})
 	}
 	return len(p.commands) > len(p.runs)
+}
+
+func (p *effectIndirect) newRun(draw queuedEffect) {
+	run := effectIndirectRun{first: len(p.commands), indexType: draw.mesh.indexType, src: draw.src, dst: draw.dst}
+	if len(p.runs) < cap(p.runs) {
+		i := len(p.runs)
+		p.runs = p.runs[:i+1]
+		run.textures = p.runs[i].textures[:0]
+		p.runs[i] = run
+	} else {
+		p.runs = append(p.runs, run)
+	}
 }
 
 func (p *effectIndirect) draw(s *Scene3D) {
@@ -116,6 +144,7 @@ func (p *effectIndirect) draw(s *Scene3D) {
 		}
 		s.effectBlend(run.src, run.dst)
 		gl.Uniform1i(1, int32(run.first))
+		run.textures.bind()
 		gl.MultiDrawElementsIndirectWithOffset(gl.TRIANGLES, run.indexType, uintptr(run.first*indexedDrawStride), int32(end-run.first), 0)
 		drawCalls++
 	}

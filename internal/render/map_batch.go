@@ -3,7 +3,6 @@ package render
 import (
 	"log"
 	"math"
-	"slices"
 	"unsafe"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
@@ -41,18 +40,13 @@ type mapDrawRun struct {
 	first    int
 	index    uint32
 	cull     bool
-	textures []uint32
+	textures drawTextures
 }
 
 type mapPipeline struct {
 	draw, bound, compute uint32
 	initialized          bool
 }
-
-// Keep the ordinary scene's texture units intact. OpenGL 4.5 guarantees
-// sixteen fragment samplers and enough combined units for this range.
-const mapTextureUnit = 16
-const mapTextureLimit = 16
 
 func (b *MapBatch) Placements(ids []uint32) int {
 	first := len(b.visible)
@@ -145,25 +139,17 @@ func (b *MapBatch) newRun(m *Mesh) {
 
 func (r *mapDrawRun) textureSlots(diffuse, light *Texture) (uint64, uint64, bool) {
 	textures := r.textures
-	d := slices.Index(textures, diffuse.ID)
-	if d < 0 {
-		d = len(textures)
-		if d == mapTextureLimit {
-			return 0, 0, false
-		}
-		textures = append(textures, diffuse.ID)
+	d, ok := textures.slot(diffuse.ID)
+	if !ok {
+		return 0, 0, false
 	}
 	if light == nil {
 		r.textures = textures
 		return uint64(d), 0, true
 	}
-	l := slices.Index(textures, light.ID)
-	if l < 0 {
-		l = len(textures)
-		if l == mapTextureLimit {
-			return 0, 0, false
-		}
-		textures = append(textures, light.ID)
+	l, ok := textures.slot(light.ID)
+	if !ok {
+		return 0, 0, false
 	}
 	r.textures = textures
 	// Zero reserves the existing material field for the no-lightmap case.
@@ -292,9 +278,7 @@ func (b *MapBatch) drawIndirect(s *Scene3D, p *mapPipeline) {
 			end = b.runs[i+1].first
 		}
 		gl.Uniform1i(6, int32(run.first))
-		if len(run.textures) != 0 {
-			gl.BindTextures(mapTextureUnit, int32(len(run.textures)), &run.textures[0])
-		}
+		run.textures.bind()
 		gl.MultiDrawElementsIndirectWithOffset(gl.TRIANGLES, run.index, uintptr(run.first*indexedDrawStride), int32(end-run.first), 0)
 		drawCalls++
 	}

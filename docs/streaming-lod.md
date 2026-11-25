@@ -15,7 +15,7 @@ In a map-1 comparison, 16,917 resident placements required 895 individual tests
 for one view. Across 32 sampled views on maps 1, 2 and 19, sector culling and
 asynchronous loading preserved full-detail images byte for byte.
 
-## Static map draw batches
+## Map and effect draw batches
 
 GX can submit packed static map geometry through indirect draws. With shader
 draw parameters and shader storage available, devices can batch with ordinary
@@ -24,6 +24,10 @@ use up to 16 diffuse textures and lightmaps in total, in the authored draw order
 When a submission reaches that texture limit or the next mesh needs different
 index or culling state, GX starts a new submission. Ordinary direct drawing
 remains available when the driver or mesh cannot use packed batches.
+
+Effects can use the same texture bindings with indirect drawing. Effect
+batches preserve draw order, blend factors, animated geometry and each
+material's wrap mode. Texture views share the original texel storage.
 
 ## Asynchronous field loading
 
