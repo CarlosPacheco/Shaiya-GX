@@ -13,11 +13,12 @@ import (
 )
 
 type vaniPart struct {
-	mesh     *render.Mesh
-	texture  *render.Texture
-	frames   [][]world.Vertex
-	faces    []world.Face
-	vertices []render.Vertex
+	mesh        *render.Mesh
+	frameMeshes []*render.Mesh
+	texture     *render.Texture
+	frames      [][]world.Vertex
+	faces       []world.Face
+	vertices    []render.Vertex
 }
 
 func loadVani(a *Assets, file string) (*vaniAsset, error) {
@@ -35,7 +36,7 @@ func uploadVani(a *Assets, file string, parsed *world.VANI) (*vaniAsset, error) 
 	asset := &vaniAsset{frame: -1, count: parsed.FrameCount, frameMilliseconds: parsed.FrameMilliseconds, center: render.V3(parsed.Center), radius: parsed.Radius}
 	asset.unlit = strings.EqualFold(path.Base(file), "Login_effect_water01a.VANI")
 	for _, m := range parsed.Meshes {
-		part := vaniPart{texture: a.FindTexture(m.Texture), frames: m.Frames, faces: m.Faces, vertices: make([]render.Vertex, len(m.Frames[0]))}
+		part := vaniPart{texture: a.FindTexture(m.Texture)}
 		if part.texture != nil {
 			part.texture.SetWrap(true)
 		}
@@ -43,7 +44,20 @@ func uploadVani(a *Assets, file string, parsed *world.VANI) (*vaniAsset, error) 
 		for _, face := range m.Faces {
 			indices = append(indices, uint32(face[0]), uint32(face[1]), uint32(face[2]))
 		}
-		part.mesh = render.NewAnimatedMesh(len(part.vertices), indices)
+		if len(m.Frames) > 0 {
+			vertices := make([]render.Vertex, len(m.Frames[0]))
+			part.frameMeshes = make([]*render.Mesh, len(m.Frames))
+			for f, frame := range m.Frames {
+				if len(vertices) != len(frame) {
+					vertices = make([]render.Vertex, len(frame))
+				}
+				for j, src := range frame {
+					vertices[j] = render.Vertex{Pos: render.V3(src.Pos), Normal: render.V3(src.Normal), UV: src.UV}
+				}
+				part.frameMeshes[f] = render.NewMesh(vertices, indices)
+			}
+			part.mesh = part.frameMeshes[0]
+		}
 		asset.parts = append(asset.parts, part)
 	}
 	return asset, nil
@@ -84,18 +98,33 @@ func (v *vaniAsset) updatePose(elapsed float64) {
 	if frame != v.frame {
 		for i := range v.parts {
 			p := &v.parts[i]
-			for j, src := range p.frames[frame] {
-				p.vertices[j] = render.Vertex{Pos: render.V3(src.Pos), Normal: render.V3(src.Normal), UV: src.UV}
+			if frame < len(p.frameMeshes) {
+				p.mesh = p.frameMeshes[frame]
+				continue
 			}
-			p.mesh.UpdateVertices(p.vertices)
+			if frame < len(p.frames) {
+				for j, src := range p.frames[frame] {
+					p.vertices[j] = render.Vertex{Pos: render.V3(src.Pos), Normal: render.V3(src.Normal), UV: src.UV}
+				}
+				p.mesh.UpdateVertices(p.vertices)
+			}
 		}
 		v.frame = frame
 	}
 }
 
 func (v *vaniAsset) close() {
-	for _, part := range v.parts {
-		part.mesh.Delete()
+	for i := range v.parts {
+		p := &v.parts[i]
+		if len(p.frameMeshes) > 0 {
+			for _, m := range p.frameMeshes {
+				m.Delete()
+			}
+			p.frameMeshes = nil
+			p.mesh = nil
+		} else {
+			p.mesh.Delete()
+		}
 	}
 }
 
@@ -143,8 +172,9 @@ func (w *World) queueBlendedVani(s *render.Scene3D, asset *vaniAsset, matrix ren
 }
 
 // DrawTranslucentVANI runs after opaque geometry and actors so that transparent
-// texels reveal the correct surface. Consecutive one-part placements can share
-// an instanced draw without changing the back-to-front compositing order.
+// texels reveal the correct surface. All visible placements are sorted strictly
+// back-to-front and submitted through vaniBatch so mixed foliage assets share
+// indirect draw calls without changing compositing order.
 func (w *World) DrawTranslucentVANI(s *render.Scene3D) {
 	if s.Shadow {
 		return
@@ -164,28 +194,30 @@ func (w *World) DrawTranslucentVANI(s *render.Scene3D) {
 		return
 	}
 	slices.SortStableFunc(visible, func(a, b vaniPlacement) int { return cmp.Compare(b.depth, a.depth) })
-	s.BeginTranslucentWorldModels()
+	batch := &w.vaniBatch
+	batch.ResetTransforms()
+	batch.Transforms = batch.Transforms[:0]
+	w.vaniBlendIDs = w.vaniBlendIDs[:0]
+	for i, placement := range visible {
+		batch.Transforms = append(batch.Transforms, placement.matrix)
+		w.vaniBlendIDs = append(w.vaniBlendIDs, uint32(i))
+	}
+	firstPlacement := batch.Placements(w.vaniBlendIDs)
 	for i := 0; i < len(visible); {
 		asset := visible[i].asset
 		asset.updatePose(w.elapsed)
-		run := visible[i : i+1]
+		runLen := 1
 		if len(asset.parts) == 1 {
-			end := i + 1
-			for end < len(visible) && visible[end].asset == asset {
-				end++
+			for i+runLen < len(visible) && visible[i+runLen].asset == asset {
+				runLen++
 			}
-			run = visible[i:end]
-		}
-		w.vaniBlendRun = w.vaniBlendRun[:0]
-		for _, placement := range run {
-			w.vaniBlendRun = append(w.vaniBlendRun, placement.matrix)
 		}
 		for _, part := range asset.parts {
-			s.DrawTranslucentWorldModel(part.mesh, part.texture, w.vaniBlendRun, !asset.unlit)
+			batch.AddTranslucent(part.mesh, part.texture, !asset.unlit, firstPlacement+i, runLen)
 		}
-		i += len(run)
+		i += runLen
 	}
-	s.EndTranslucentWorldModels()
+	batch.DrawTranslucent(s)
 	clear(visible)
 	w.visibleBlendedVani = visible[:0]
 }

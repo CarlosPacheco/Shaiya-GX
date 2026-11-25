@@ -297,3 +297,190 @@ func TestMapBatchPartialFallbackPreservesPixelsAndBatchingGL(t *testing.T) {
 		t.Fatalf("GL error %#x", code)
 	}
 }
+
+func TestMapBatchTranslucentPixelParityGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires GL")
+	}
+	for _, tc := range []struct {
+		name            string
+		disableBindless bool
+		disableDrawParm bool
+	}{
+		{"bindless", false, false},
+		{"bound", true, false},
+		{"core", true, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			runtime.LockOSThread()
+			defer runtime.UnlockOSThread()
+			const width, height = 96, 96
+			win, err := platform.Open(platform.Config{Width: width, Height: height, Hidden: true, Debug: true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer win.Close()
+			if err := InitWithOptions(InitOptions{
+				DisableBindless:       tc.disableBindless,
+				DisableDrawParameters: tc.disableDrawParm,
+				Debug:                 true,
+			}); err != nil {
+				t.Fatal(err)
+			}
+			s, err := NewScene3D()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer s.Delete()
+			if !mapIndirectSupported {
+				t.Skip("requires shader storage blocks")
+			}
+			p := s.mapPrograms()
+			if p.draw == 0 && p.bound == 0 {
+				t.Fatal("map indirect program failed to link")
+			}
+			if tc.disableDrawParm && !p.materialAttribute {
+				t.Fatal("expected core material attribute path")
+			}
+			s.View = Identity()
+			s.Proj = Identity()
+			s.LightDir = V3{-1, -1, -1}
+			s.Ambient = 0.35
+			s.FogColor = V3{0.2, 0.3, 0.4}
+			s.FogStart, s.FogEnd = 0.2, 0.9
+			s.ClipPlane = [4]float32{1, 0, 0, 0.45} // clip x < -0.45
+
+			// Create 4 overlapping semi-transparent quads at decreasing depths (back-to-front),
+			// mixing lit/unlit and distinct textures, plus one mutable mesh for ordered fallback.
+			makeQuad := func(z float32, nrm V3) []Vertex {
+				return []Vertex{
+					{Pos: V3{-0.7, -0.7, z}, Normal: nrm, UV: [2]float32{0, 0}},
+					{Pos: V3{0.7, -0.7, z}, Normal: nrm, UV: [2]float32{1, 0}},
+					{Pos: V3{0.7, 0.7, z}, Normal: nrm, UV: [2]float32{1, 1}},
+					{Pos: V3{-0.7, 0.7, z}, Normal: nrm, UV: [2]float32{0, 1}},
+				}
+			}
+			quadIdx := []uint32{0, 1, 2, 0, 2, 3}
+			colors := [][4]byte{
+				{220, 60, 40, 140},
+				{40, 200, 80, 130},
+				{50, 90, 230, 150},
+				{230, 210, 50, 120},
+				{200, 60, 220, 110},
+			}
+			var meshes []*Mesh
+			var textures []*Texture
+			for i, col := range colors {
+				z := 0.8 - float32(i)*0.12
+				nrm := V3{0, 1, 0}
+				if i%2 == 1 {
+					nrm = V3{0.4, 0.6, 0.7}
+				}
+				m := NewMesh(makeQuad(z, nrm), quadIdx)
+				m.CullBack = true // verify translucent keeps two-sided faces
+				defer m.Delete()
+				meshes = append(meshes, m)
+				tex := Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: col[:]}})
+				defer tex.Delete()
+				textures = append(textures, tex)
+			}
+			mutableVerts := makeQuad(0.56, V3{0, 1, 0})
+			mutableMesh := NewAnimatedMesh(len(mutableVerts), quadIdx)
+			mutableMesh.UpdateVertices(mutableVerts)
+			defer mutableMesh.Delete()
+
+			begin := func() {
+				gl.Viewport(0, 0, width, height)
+				gl.DepthMask(true)
+				gl.ClearColor(0.1, 0.15, 0.2, 1)
+				gl.ClearDepth(1)
+				gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+				s.Begin()
+			}
+			read := func() []byte {
+				pixels := make([]byte, width*height*4)
+				gl.ReadPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+				return pixels
+			}
+
+			// Case 1: All immutable meshes -> 1 indirect draw call, pixel-identical to serial.
+			type layer struct {
+				mesh *Mesh
+				tex  *Texture
+				lit  bool
+			}
+			allImmutable := []layer{
+				{meshes[0], textures[0], true},
+				{meshes[1], textures[1], false},
+				{meshes[2], textures[2], true},
+				{meshes[3], textures[3], false},
+				{meshes[4], textures[4], true},
+			}
+			begin()
+			s.BeginTranslucentWorldModels()
+			for _, l := range allImmutable {
+				s.DrawTranslucentWorldModel(l.mesh, l.tex, []M4{Identity()}, l.lit)
+			}
+			s.EndTranslucentWorldModels()
+			want := read()
+
+			var batch MapBatch
+			defer batch.Delete()
+			batch.Transforms = []M4{Identity()}
+			p0 := batch.Placements([]uint32{0})
+			for _, l := range allImmutable {
+				batch.AddTranslucent(l.mesh, l.tex, l.lit, p0, 1)
+			}
+			begin()
+			ResetDrawCalls()
+			batch.DrawTranslucent(s)
+			if calls := DrawCalls(); calls != 1 {
+				t.Fatalf("expected 1 indirect draw call for 5 translucent layers, got %d", calls)
+			}
+			var depthMask bool
+			gl.GetBooleanv(gl.DEPTH_WRITEMASK, &depthMask)
+			if !depthMask || gl.IsEnabled(gl.BLEND) || gl.IsEnabled(gl.CULL_FACE) {
+				t.Fatalf("GL state not restored after DrawTranslucent: depthMask=%v blend=%v cull=%v",
+					depthMask, gl.IsEnabled(gl.BLEND), gl.IsEnabled(gl.CULL_FACE))
+			}
+			if got := read(); !bytes.Equal(got, want) {
+				t.Fatal("batched translucent pixels differ from serial DrawTranslucentWorldModel")
+			}
+
+			// Case 2: Mutable mesh in the middle -> 3 ordered draw calls [indirect, serial, indirect],
+			// preserving exact back-to-front alpha compositing.
+			withMutable := []layer{
+				{meshes[0], textures[0], true},
+				{meshes[1], textures[1], false},
+				{mutableMesh, textures[2], true},
+				{meshes[3], textures[3], false},
+				{meshes[4], textures[4], true},
+			}
+			begin()
+			s.BeginTranslucentWorldModels()
+			for _, l := range withMutable {
+				s.DrawTranslucentWorldModel(l.mesh, l.tex, []M4{Identity()}, l.lit)
+			}
+			s.EndTranslucentWorldModels()
+			wantMixed := read()
+
+			batch.ResetTransforms()
+			p1 := batch.Placements([]uint32{0})
+			for _, l := range withMutable {
+				batch.AddTranslucent(l.mesh, l.tex, l.lit, p1, 1)
+			}
+			begin()
+			ResetDrawCalls()
+			batch.DrawTranslucent(s)
+			if calls := DrawCalls(); calls != 3 {
+				t.Fatalf("expected 3 ordered draw calls (indirect, serial, indirect), got %d", calls)
+			}
+			if got := read(); !bytes.Equal(got, wantMixed) {
+				t.Fatal("ordered fallback translucent pixels differ from serial reference")
+			}
+			if code := gl.GetError(); code != gl.NO_ERROR {
+				t.Fatalf("GL error %#x", code)
+			}
+		})
+	}
+}

@@ -42,10 +42,13 @@ type mapDraw struct {
 	tex, lightmap *Texture
 	first, count  int
 	alpha         float32
+	unlit         bool
 }
 
 type mapDrawRun struct {
 	first    int
+	count    int
+	serial   int
 	index    uint32
 	cull     bool
 	textures drawTextures
@@ -63,19 +66,36 @@ func (b *MapBatch) Placements(ids []uint32) int {
 	return first
 }
 
+// ResetTransforms marks b.Transforms dirty so the next indirect draw re-uploads
+// the placement buffer. Used for per-frame dynamic placement lists such as
+// depth-sorted translucent VANI foliage.
+func (b *MapBatch) ResetTransforms() {
+	b.uploaded = false
+}
+
 func (b *MapBatch) Add(mesh *Mesh, tex, lightmap *Texture, alpha float32, first, count int) {
+	b.add(mesh, tex, lightmap, alpha, false, first, count)
+}
+
+// AddTranslucent queues a blended world-model draw (alpha test disabled,
+// two-sided) for DrawTranslucent while preserving exact submission order.
+func (b *MapBatch) AddTranslucent(mesh *Mesh, tex *Texture, lit bool, first, count int) {
+	b.add(mesh, tex, nil, -1, !lit, first, count)
+}
+
+func (b *MapBatch) add(mesh *Mesh, tex, lightmap *Texture, alpha float32, unlit bool, first, count int) {
 	if mesh == nil || mesh.Count == 0 || count <= 0 {
 		return
 	}
 	if n := len(b.draws); n > 0 {
 		last := &b.draws[n-1]
 		if last.mesh == mesh && last.tex == tex && last.lightmap == lightmap &&
-			last.alpha == alpha && last.first+last.count == first {
+			last.alpha == alpha && last.unlit == unlit && last.first+last.count == first {
 			last.count += count
 			return
 		}
 	}
-	b.draws = append(b.draws, mapDraw{mesh, tex, lightmap, first, count, alpha})
+	b.draws = append(b.draws, mapDraw{mesh, tex, lightmap, first, count, alpha, unlit})
 }
 
 func (b *MapBatch) vertexLimit() int {
@@ -109,11 +129,19 @@ func (b *MapBatch) location(m *Mesh) (skinLocation, bool) {
 }
 
 func (b *MapBatch) prepare(bindless, materialAttribute bool) bool {
+	return b.prepareMode(bindless, materialAttribute, false)
+}
+
+func (b *MapBatch) prepareMode(bindless, materialAttribute, translucent bool) bool {
 	b.drawCommands, b.drawMaterials, b.runs, b.serialDraws = b.drawCommands[:0], b.drawMaterials[:0], b.runs[:0], b.serialDraws[:0]
-	for _, draw := range b.draws {
+	for i, draw := range b.draws {
 		loc, ok := b.location(draw.mesh)
 		if !ok {
-			b.serialDraws = append(b.serialDraws, draw)
+			if translucent {
+				b.newSerialRun(i)
+			} else {
+				b.serialDraws = append(b.serialDraws, draw)
+			}
 			continue
 		}
 		t := diffuseTexture(draw.tex)
@@ -125,20 +153,28 @@ func (b *MapBatch) prepare(bindless, materialAttribute bool) bool {
 				light = draw.lightmap.bindlessHandle(draw.lightmap.repeat)
 			}
 			if diffuse == 0 || draw.lightmap != nil && light == 0 {
-				b.serialDraws = append(b.serialDraws, draw)
+				if translucent {
+					b.newSerialRun(i)
+				} else {
+					b.serialDraws = append(b.serialDraws, draw)
+				}
 				continue
 			}
 		}
-		if n := len(b.runs); n == 0 || b.runs[n-1].index != m.indexType || b.runs[n-1].cull != m.CullBack {
-			b.newRun(m)
+		cull := m.CullBack && !translucent
+		if n := len(b.runs); n == 0 || b.runs[n-1].serial >= 0 || b.runs[n-1].index != m.indexType || b.runs[n-1].cull != cull {
+			b.newRun(m.indexType, cull)
 		}
 		if !bindless {
 			run := &b.runs[len(b.runs)-1]
 			diffuse, light, ok = run.textureSlots(t, draw.lightmap)
 			if !ok {
-				b.newRun(m)
+				b.newRun(m.indexType, cull)
 				diffuse, light, _ = b.runs[len(b.runs)-1].textureSlots(t, draw.lightmap)
 			}
+		}
+		if draw.unlit && draw.lightmap == nil {
+			light = ^uint64(0)
 		}
 		command := indexedDrawCommand{uint32(m.Count), uint32(draw.count), uint32(loc.index / int(m.indexBytes)), uint32(loc.vertex), uint32(draw.first)}
 		alpha := math.Float32bits(draw.alpha)
@@ -149,19 +185,34 @@ func (b *MapBatch) prepare(bindless, materialAttribute bool) bool {
 		}
 		b.drawCommands = append(b.drawCommands, command)
 		b.drawMaterials = append(b.drawMaterials, material)
+		b.runs[len(b.runs)-1].count++
+	}
+	if translucent {
+		return len(b.drawCommands) > 0 && len(b.runs) < len(b.draws)
 	}
 	return len(b.drawCommands) > len(b.runs)
 }
 
-func (b *MapBatch) newRun(m *Mesh) {
+func (b *MapBatch) newRun(index uint32, cull bool) {
 	if len(b.runs) < cap(b.runs) {
 		b.runs = b.runs[:len(b.runs)+1]
 		run := &b.runs[len(b.runs)-1]
-		run.first, run.index, run.cull = len(b.drawCommands), m.indexType, m.CullBack
+		run.first, run.count, run.serial, run.index, run.cull = len(b.drawCommands), 0, -1, index, cull
 		run.textures = run.textures[:0]
 		return
 	}
-	b.runs = append(b.runs, mapDrawRun{first: len(b.drawCommands), index: m.indexType, cull: m.CullBack})
+	b.runs = append(b.runs, mapDrawRun{first: len(b.drawCommands), serial: -1, index: index, cull: cull})
+}
+
+func (b *MapBatch) newSerialRun(drawIndex int) {
+	if len(b.runs) < cap(b.runs) {
+		b.runs = b.runs[:len(b.runs)+1]
+		run := &b.runs[len(b.runs)-1]
+		run.first, run.count, run.serial, run.index, run.cull = 0, 0, drawIndex, 0, false
+		run.textures = run.textures[:0]
+		return
+	}
+	b.runs = append(b.runs, mapDrawRun{serial: drawIndex})
 }
 
 func (r *mapDrawRun) textureSlots(diffuse, light *Texture) (uint64, uint64, bool) {
@@ -234,12 +285,44 @@ func (b *MapBatch) Draw(s *Scene3D) {
 	if s.Shadow || (p.draw == 0 && p.bound == 0) || len(b.draws) < 4 || !b.prepare(p.draw != 0, p.materialAttribute) {
 		b.drawSerial(s, b.draws)
 	} else {
-		b.drawIndirect(s, p)
+		b.drawIndirect(s, p, false)
 		b.drawSerial(s, b.serialDraws)
 	}
 	clear(b.draws)
 	clear(b.serialDraws)
 	b.draws, b.serialDraws, b.visible = b.draws[:0], b.serialDraws[:0], b.visible[:0]
+}
+
+// DrawTranslucent renders queued translucent world models in exact submission
+// order with source-alpha blending, read-only depth testing and two-sided faces,
+// matching BeginTranslucentWorldModels / DrawTranslucentWorldModel.
+func (b *MapBatch) DrawTranslucent(s *Scene3D) {
+	if len(b.draws) == 0 || s.Shadow {
+		clear(b.draws)
+		b.draws, b.visible = b.draws[:0], b.visible[:0]
+		return
+	}
+	s.BeginTranslucentWorldModels()
+	p := s.mapPrograms()
+	if (p.draw == 0 && p.bound == 0) || len(b.draws) < 2 || !b.prepareMode(p.draw != 0, p.materialAttribute, true) {
+		for _, d := range b.draws {
+			b.drawSerialTranslucentOne(s, d)
+		}
+	} else {
+		b.drawIndirect(s, p, true)
+	}
+	s.EndTranslucentWorldModels()
+	clear(b.draws)
+	clear(b.serialDraws)
+	b.draws, b.serialDraws, b.visible = b.draws[:0], b.serialDraws[:0], b.visible[:0]
+}
+
+func (b *MapBatch) drawSerialTranslucentOne(s *Scene3D, d mapDraw) {
+	b.fallback = b.fallback[:0]
+	for _, id := range b.visible[d.first : d.first+d.count] {
+		b.fallback = append(b.fallback, b.Transforms[id])
+	}
+	s.DrawTranslucentWorldModel(d.mesh, d.tex, b.fallback, !d.unlit)
 }
 
 func (b *MapBatch) drawSerial(s *Scene3D, draws []mapDraw) {
@@ -259,7 +342,7 @@ func (b *MapBatch) drawSerial(s *Scene3D, draws []mapDraw) {
 	}
 }
 
-func (b *MapBatch) drawIndirect(s *Scene3D, p *mapPipeline) {
+func (b *MapBatch) drawIndirect(s *Scene3D, p *mapPipeline, translucent bool) {
 	if b.vao == 0 {
 		gl.CreateVertexArrays(1, &b.vao)
 	}
@@ -299,44 +382,72 @@ func (b *MapBatch) drawIndirect(s *Scene3D, p *mapPipeline) {
 	if program == 0 {
 		program = p.bound
 	}
-	gl.UseProgram(program)
-	if p.materialAttribute {
-		bindDrawMaterial(b.vao, b.materials.id, int32(materialStride))
-	} else {
-		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, b.materials.id)
-	}
-	gl.Uniform4fv(0, 1, &s.ClipPlane[0])
-	gl.Uniform3fv(1, 1, &s.LightDir[0])
-	gl.Uniform1f(2, s.Ambient)
-	gl.Uniform3fv(3, 1, &s.FogColor[0])
-	gl.Uniform2f(4, s.FogStart, s.FogEnd)
-	gl.Disable(gl.BLEND)
-	gl.BindVertexArray(b.vao)
-	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, b.commands.id)
-	gl.FrontFace(gl.CW)
-	gl.CullFace(gl.BACK)
-	for i, run := range b.runs {
-		if run.cull {
-			gl.Enable(gl.CULL_FACE)
+	bindIndirect := func() {
+		gl.UseProgram(program)
+		if p.materialAttribute {
+			bindDrawMaterial(b.vao, b.materials.id, int32(materialStride))
 		} else {
-			gl.Disable(gl.CULL_FACE)
+			gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, b.materials.id)
 		}
-		end := len(b.drawCommands)
-		if i+1 < len(b.runs) {
-			end = b.runs[i+1].first
+		gl.Uniform4fv(0, 1, &s.ClipPlane[0])
+		gl.Uniform3fv(1, 1, &s.LightDir[0])
+		gl.Uniform1f(2, s.Ambient)
+		gl.Uniform3fv(3, 1, &s.FogColor[0])
+		gl.Uniform2f(4, s.FogStart, s.FogEnd)
+		if translucent {
+			s.blend(true)
+			gl.DepthMask(false)
+			gl.Disable(gl.CULL_FACE)
+		} else {
+			gl.Disable(gl.BLEND)
+			gl.FrontFace(gl.CW)
+			gl.CullFace(gl.BACK)
+		}
+		gl.BindVertexArray(b.vao)
+		gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, b.commands.id)
+	}
+	indirectBound := false
+	for _, run := range b.runs {
+		if run.serial >= 0 {
+			if indirectBound {
+				gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, 0)
+				gl.UseProgram(s.prog)
+				s.worldUniformsValid = false
+				indirectBound = false
+			} else {
+				gl.UseProgram(s.prog)
+				s.worldUniformsValid = false
+			}
+			b.drawSerialTranslucentOne(s, b.draws[run.serial])
+			continue
+		}
+		if !indirectBound {
+			bindIndirect()
+			indirectBound = true
+		}
+		if !translucent {
+			if run.cull {
+				gl.Enable(gl.CULL_FACE)
+			} else {
+				gl.Disable(gl.CULL_FACE)
+			}
 		}
 		if !p.materialAttribute {
 			gl.Uniform1i(6, int32(run.first))
 		}
 		run.textures.bind()
-		gl.MultiDrawElementsIndirectWithOffset(gl.TRIANGLES, run.index, uintptr(run.first*indexedDrawStride), int32(end-run.first), 0)
+		gl.MultiDrawElementsIndirectWithOffset(gl.TRIANGLES, run.index, uintptr(run.first*indexedDrawStride), int32(run.count), 0)
 		drawCalls++
 	}
-	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, 0)
-	gl.Disable(gl.CULL_FACE)
-	gl.FrontFace(gl.CCW)
-	gl.UseProgram(s.prog)
-	s.worldUniformsValid = false
+	if indirectBound {
+		gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, 0)
+		if !translucent {
+			gl.Disable(gl.CULL_FACE)
+			gl.FrontFace(gl.CCW)
+		}
+		gl.UseProgram(s.prog)
+		s.worldUniformsValid = false
+	}
 }
 
 // Reclaim dead meshes on residency changes. Retain packed copies of surviving
@@ -459,7 +570,8 @@ void main() {
 #ifdef DRAW_MATERIAL_ATTRIBUTE
  vec4 c=sampleDrawTexture(material.x,vUV);
  vec3 lighting=vec3(vDiffuse);
- if (material.y!=0u) lighting=sampleDrawTexture(material.y-1u,vUV2).rgb;
+ if (material.y==0xffffffffu) lighting=vec3(1.0);
+ else if (material.y!=0u) lighting=sampleDrawTexture(material.y-1u,vUV2).rgb;
  if (c.a <= uintBitsToFloat(material.z)) discard;
  c.rgb*=lighting;
 #else
@@ -468,13 +580,15 @@ void main() {
  vec4 c=texture(mapTextures[data[at]],vUV);
  if (c.a <= uintBitsToFloat(data[at+4])) discard;
  uint light=data[at+2];
- if (light!=0u) c.rgb*=texture(mapTextures[light-1u],vUV2).rgb;
+ if (light==0xffffffffu) {}
+ else if (light!=0u) c.rgb*=texture(mapTextures[light-1u],vUV2).rgb;
  else c.rgb*=vDiffuse;
 #else
  vec4 c=texture(sampler2D(uvec2(data[at],data[at+1])),vUV);
  if (c.a <= uintBitsToFloat(data[at+4])) discard;
  uvec2 light=uvec2(data[at+2],data[at+3]);
- if (any(notEqual(light,uvec2(0)))) c.rgb*=texture(sampler2D(light),vUV2).rgb;
+ if (all(equal(light,uvec2(0xffffffffu)))) {}
+ else if (any(notEqual(light,uvec2(0)))) c.rgb*=texture(sampler2D(light),vUV2).rgb;
  else c.rgb*=vDiffuse;
 #endif
 #endif
