@@ -263,7 +263,7 @@ func TestClientPerformanceBaseline(t *testing.T) {
 			t.Fatal("water fixture did not show a water surface")
 		}
 		wantsReflection := a.gameMenu.Settings.Water && a.gameMenu.Settings.Details > 0
-		if (a.wv.draws.Reflected > 0) != wantsReflection {
+		if (a.wv.draws.Reflected > 0 || a.wv.draws.ReflectionReused) != wantsReflection {
 			t.Fatalf("water fixture reflection draws = %d, expected reflection = %t", a.wv.draws.Reflected, wantsReflection)
 		}
 	}

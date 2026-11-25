@@ -38,6 +38,7 @@ type worldView struct {
 	shadow                      *render.ShadowMap
 	shadowAttempted             bool
 	waterReflection             *render.WaterTarget
+	waterCapture                reflectionCapture
 	waterWidth, waterHeight     int
 	waterFailed                 bool
 	sunFlare                    sunFlare
@@ -158,10 +159,11 @@ type worldView struct {
 }
 
 type worldDrawBreakdown struct {
-	WorldGeometry int `json:"main_map_geometry"`
-	Reflected     int `json:"reflection_pass"`
-	WorldScene    int `json:"total_world_scene"`
-	UI            int `json:"ui"`
+	WorldGeometry    int  `json:"main_map_geometry"`
+	Reflected        int  `json:"reflection_pass"`
+	ReflectionReused bool `json:"reflection_reused"`
+	WorldScene       int  `json:"total_world_scene"`
+	UI               int  `json:"ui"`
 }
 
 const (
@@ -890,27 +892,46 @@ func (a *App) drawWorldView(w, h int) {
 	beforeReflection := render.DrawCalls()
 	if v.waterReflection != nil && waterVisible && !underwater {
 		view := s.View
+		// Widen by two target texels for bilinear filtering and scissor rounding.
+		reflectionRegion = reflectionRegion.Expand(2/float32(v.waterWidth), 2/float32(v.waterHeight))
+		input := reflectionInput{
+			target: v.waterReflection, world: v.world, revision: v.world.StreamRevision(),
+			view: view, projection: s.Proj, sky: s.SkyProj, jitter: s.TemporalJitter,
+			region: reflectionRegion, fog: s.FogColor, fogStart: s.FogStart, fogEnd: s.FogEnd,
+			weather: v.weather.blend, settings: settings, personalLight: v.personalLight, reverseDepth: s.ReverseDepth,
+		}
 		mirror := render.Identity()
 		mirror[5] = -1
 		reflectedView := mirror.Mul(view)
 		reflectedEye := eye
 		reflectedEye[1] = -reflectedEye[1]
-		// Widen by two target texels for bilinear filtering and scissor rounding.
-		reflectionRegion = reflectionRegion.Expand(2/float32(v.waterWidth), 2/float32(v.waterHeight))
+		// Keep advancing reflected emitters even when the cached color is reused.
 		v.world.PrepareMapEffects(s, eye, scene.EffectCamera{Eye: reflectedEye, View: reflectedView, Projection: s.Proj})
-		v.waterReflection.CaptureRegion(s.FogColor, reflectionRegion, func() {
-			s.View, s.ClipPlane = reflectedView, [4]float32{0, 1, 0, 0}
-			s.CullProjection = reflectionRegion.CropProjection(s.Proj)
+		resident := v.world.Ready()
+		if resident && v.waterCapture.reuse(input, a.frameDT) {
+			v.draws.ReflectionReused = true
+		} else {
+			projection := reflectionRegion.CropProjection(s.Proj)
+			v.waterReflection.CaptureRegion(s.FogColor, reflectionRegion, func() {
+				s.View, s.ClipPlane = reflectedView, [4]float32{0, 1, 0, 0}
+				s.CullProjection = projection
+				s.Begin()
+				a.drawWorldContents(reflectedEye, false)
+				v.world.DrawTranslucentVANI(s)
+				v.world.RenderMapEffects(s)
+			})
+			s.CullProjection = render.M4{}
+			s.View, s.ClipPlane = view, [4]float32{}
 			s.Begin()
-			a.drawWorldContents(reflectedEye, false)
-			v.world.DrawTranslucentVANI(s)
-			v.world.RenderMapEffects(s)
-		})
-		s.CullProjection = render.M4{}
-		s.View, s.ClipPlane = view, [4]float32{}
-		s.Begin()
+			if resident {
+				v.waterCapture = reflectionCapture{input: input}
+			} else {
+				v.waterCapture = reflectionCapture{}
+			}
+		}
 		s.WaterReflection = v.waterReflection
 	} else if v.waterReflection != nil && waterVisible && underwater {
+		v.waterCapture = reflectionCapture{}
 		v.world.PrepareMapEffects(s, eye)
 		fogColor, fogStart, fogEnd := s.FogColor, s.FogStart, s.FogEnd
 		s.FogColor, s.FogStart, s.FogEnd = weatherColor, weatherNear, weatherFar
@@ -926,12 +947,15 @@ func (a *App) drawWorldView(w, h int) {
 		s.Begin()
 		s.WaterReflection, s.WaterBelow = v.waterReflection, true
 	} else {
+		v.waterCapture = reflectionCapture{}
 		v.world.PrepareMapEffects(s, eye)
 	}
 	v.draws.Reflected = render.DrawCalls() - beforeReflection
 	a.drawWorldContents(eye, underwater)
 	if s.WaterReflection != nil && !s.WaterBelow && v.world.HasWaterNormals() {
-		s.CaptureWaterBackground()
+		// Refraction has a shorter displacement than reflection and can use
+		// the same conservative region, including its filtering border.
+		s.CaptureWaterBackgroundRegion(reflectionRegion)
 	}
 	// Water Surface Effect controls reflection/refraction, not water visibility.
 	if surfaceVisible {

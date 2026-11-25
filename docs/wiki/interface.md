@@ -322,6 +322,10 @@ switching Off releases them. Shadows and clipped reflections remain unjittered.
 **Water Surface Effect** changes reflection/refraction work, not the visibility
 of the surface. With the option disabled, the original animated WTR water stays
 visible and the extra reflection scene and refraction capture are skipped.
+Above water, GX can reuse the reflection image for less than 1/30 s while
+the camera and capture settings match. Waves and refraction update each frame.
+Camera movement, temporal jitter and underwater views use a new capture.
+Refraction copies only the area covered by the water when its bounds are known.
 Re-enabling the option restores the advanced path, including when a reflection
 target already exists from an earlier frame.
 
