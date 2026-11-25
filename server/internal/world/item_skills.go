@@ -21,6 +21,7 @@ func itemBuffSkill(d *db.ItemDef) *db.SkillDef {
 func (s *Session) announceItemSkill(sk *db.SkillDef) {
 	now := time.Now()
 	s.lastActionAt = now
+	s.reserveBasicAttack(now, s.speeds().attack)
 	s.lastSkillID = 0
 	s.pendingCombo = nil
 	s.pendingSkill = nil

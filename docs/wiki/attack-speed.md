@@ -1,10 +1,5 @@
 # Attack speed
 
-The shared-clock rules below describe GX. The
-[original timing investigation](../spell-fluidity-research.md) distinguishes
-native execution deadlines, per-skill reuse and animation replacement, and
-records remaining parity gaps. It does not establish faster combo damage.
-
 GX Server derives attack speed from the weapon's native `Items.AttackTime`,
 equipped item bonuses, active lapis, learned weapon masteries and applied ability
 **16**. The final index is clamped to 0–9 after adding all signed modifiers.
@@ -24,18 +19,19 @@ The weapon field is the index itself: subtracting one selects the wrong delay.
 | 9 | Extremely fast | 1000 |
 | 255 | Cannot attack | Blocked |
 
-PvE basics, PvP basics, player skills and combos use this table and **one shared
-server-side action timestamp**. Instant skills reserve it on release; prepared
-casts reserve it on start and complete without charging the interval twice.
-Extremely Fast has a **1000ms** ordinary recovery. There is no
-independent 300ms spell rate. The client buffers only the latest spell intent
-during recovery and stops basic auto-repeat so the queued spell gets its turn.
-Restart requests, target switches, stop/start floods and client speed packets do
-not reset that clock. Removing or expiring a bonus changes the next allowed
-swing according to the new derived interval. Stun, sleep, mounting and active
-cast preparation prohibit normal attacks. Beginning preparation stops an existing
-autoattack; attack speed is published as blocked until preparation ends or is
-cancelled. Spell cooldowns and preparation times retain their own skill rules.
+PvE and PvP basic attacks share one server deadline. At each accepted swing,
+including a miss, GX adds the table interval for the attacker's current index
+to the execution time. Equipment, mastery, haste and slow changes apply when
+the next swing sets a new deadline. Restart requests, target switches and
+client packets cannot reset a committed deadline. Weapon-relative animation
+speed controls playback independently of the next swing's time.
+
+Successful skill releases and consumable skill actions also reserve basic
+attack recovery using the table. Player skill recovery and per-skill reuse
+follow the separate [skill timing and effects](../skill-targeting-and-effects.md)
+rules. Stun, sleep, mounting and active cast preparation prohibit normal
+attacks. Beginning preparation stops autoattack and publishes attack speed as
+blocked until preparation ends or is cancelled.
 
 Wind Spin → a distinct spin or instant hostile caster-centred area has an
 explicit exception: after the native first contact (4/30 s), the new skill can
@@ -92,8 +88,13 @@ Reference `ps_game.exe` SHA-256:
 adds `stItemInfo +0x44` directly at `0x454fac`. Accessories add the same field at
 `0x454d0a`; gem addition is at `0x456122`. `GetAttackSpeed`/`GetAttackSpeedNow`
 (`0x48a460`/`0x48a4b0`) clamp to 0–9, and `g_ConstUserAttackSpeed` at `0x5424e0`
-contains the ten millisecond intervals above. Isolated execution verifies 108
-weapon/accessory/Flash/Sonic accumulation combinations.
+contains the ten millisecond intervals above. In `CUser::UpdateAttack`,
+`0x48ca63` checks the current tick against the stored deadline at
+`CUser +0x1450`. Both basic attack paths reach `0x48cd88`, where the server
+looks up the interval, adds the tick and stores the next deadline. Isolated
+execution verifies 108 weapon/accessory/Flash/Sonic accumulation combinations.
+See the [original timing investigation](../spell-fluidity-research.md) for
+skill reuse, preparation and animation evidence.
 
 Reference `Game.exe` SHA-256:
 `8e5ef14a2a3bfef15bae61b03d185e551b6c3fd44d09a2861d57428400bb3263`.

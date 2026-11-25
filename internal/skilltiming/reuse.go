@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// Interval uses the same native attack-speed table for basics and skills.
-// Invalid/blocked indices cannot perform an action; Ext. Fast caps at 1000ms.
+// Interval returns the original server delay at the zero-based attack index.
+// Invalid and blocked indices have no interval.
 func Interval(tier uint8) (time.Duration, bool) {
 	ms, ok := attackspeed.Milliseconds(tier)
 	return time.Duration(ms) * time.Millisecond, ok
@@ -23,19 +23,16 @@ func ReuseSeconds(seconds uint16) uint16 {
 	return seconds
 }
 
-// AnimationBound makes the shared action interval follow the basic-attack clip
-// at the character's animation rate, like the original client (which waits for
-// the action animation, 0x418030/0x40ff40) instead of a fixed table. The table
-// stays the ceiling. Client and server read the same default; set
-// GX_ANIMATION_CADENCE=off in both to restore the pure table of ps_game 0x5424e0.
+// AnimationBound makes GX skill recovery follow the character's attack clip
+// rate, capped by the original server interval. Client and server read the
+// same default. GX_ANIMATION_CADENCE=off uses the table for skill recovery.
 var AnimationBound = os.Getenv("GX_ANIMATION_CADENCE") != "off"
 
 // AttackClipFrames is the length of the longest basic-attack clips (26-30).
 const AttackClipFrames = 30
 
-// IntervalFor is the interval between two actions for a character whose attack
-// index is tier and whose weapon has the given AttackTime. Without a weapon the
-// animation runs at the neutral rate.
+// IntervalFor returns GX skill recovery for the character's attack index and
+// weapon baseline. Without a weapon, the animation runs at the neutral rate.
 func IntervalFor(tier, weaponBase uint8, haveWeapon bool) (time.Duration, bool) {
 	table, ok := Interval(tier)
 	if !ok || !AnimationBound {

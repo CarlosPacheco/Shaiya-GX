@@ -1,13 +1,30 @@
 package world
 
 import (
+	"time"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
-	"time"
 )
 
-// actionInterval is the shared interval at the live attack index and weapon.
+// reserveBasicAttack applies the absolute execution deadline used by
+// CUser::UpdateAttack. Skill recovery may allow a release before a previous
+// basic deadline, so a new reservation can only extend that deadline.
+func (s *Session) reserveBasicAttack(now time.Time, tier uint8) {
+	interval, ok := skilltiming.Interval(tier)
+	if due := now.Add(interval); ok && due.After(s.nextBasicAttackAt) {
+		s.nextBasicAttackAt = due
+	}
+}
+
+func (s *Session) commitBasicAttack(now time.Time, tier uint8) {
+	s.lastActionAt, s.lastCombatAt = now, now
+	s.reserveBasicAttack(now, tier)
+	s.commitAttackStop(now)
+}
+
+// actionInterval is the skill execution interval at the live attack index and weapon.
 func (s *Session) actionInterval() (time.Duration, bool) {
 	wc, have := equippedWeaponCombat(s.items)
 	return skilltiming.IntervalFor(s.speeds().attack, wc.AttackTime, have)
@@ -22,15 +39,14 @@ func (s *Session) ownClip() time.Duration {
 	return s.clipFloor
 }
 
-// actionRecovery is how long after the last action the next one may start:
-// the shared interval, or the last skill's own clip when that is longer.
+// actionRecovery is the next skill's interval, with a floor for the previous
+// skill's own clip.
 func (s *Session) actionRecovery() (time.Duration, bool) {
 	interval, ok := s.actionInterval()
 	return max(interval, s.ownClip()), ok
 }
 
-// Both basic attack routes and skills recover from lastActionAt. Use the live
-// equipment/buff tier so haste, slow and gear changes affect recovery immediately.
+// combatActionReady checks skill recovery with the live equipment and buff tier.
 func (s *Session) combatActionReady(now time.Time) bool {
 	if s.dash != nil {
 		return false
@@ -130,10 +146,13 @@ func (s *Session) nextWake() time.Duration {
 	consider := func(due time.Time) {
 		wake = min(wake, max(due.Sub(now), minWake))
 	}
-	if s.char != nil && !s.lastActionAt.IsZero() && (s.pendingSkill != nil || s.autoAttack) {
+	if s.char != nil && !s.lastActionAt.IsZero() && s.pendingSkill != nil {
 		if interval, ok := s.actionRecovery(); ok {
 			consider(s.lastActionAt.Add(interval))
 		}
+	}
+	if s.autoAttack && !s.nextBasicAttackAt.IsZero() {
+		consider(s.nextBasicAttackAt)
 	}
 	if s.pendingCombo != nil {
 		consider(s.pendingCombo.due)

@@ -34,8 +34,17 @@ func TestBasicMissWakesMobWithoutAddingAggro(t *testing.T) {
 	if chance := playerHitChance(&stats, &combat, attackMelee); chance != 0 {
 		t.Fatalf("expected a guaranteed miss, got chance %d", chance)
 	}
+	now := time.Now()
+	s.lastActionAt, s.clipFloorAt, s.clipFloor = now, now, 5*time.Second
 	if !s.autoAttackSwing(id) {
 		t.Fatal("the attack on the sleeping mob was rejected")
+	}
+	deadline := s.nextBasicAttackAt
+	if s.lastActionAt.Before(now) || deadline.Sub(s.lastActionAt) != 2*time.Second {
+		t.Fatalf("accepted normal-speed miss did not reserve 2s: %v", deadline.Sub(s.lastActionAt))
+	}
+	if !s.autoAttackSwing(id) || !s.nextBasicAttackAt.Equal(deadline) {
+		t.Fatal("repeated basic attack changed the committed deadline")
 	}
 	mob, _ := MobByID(s.char.MapID, id)
 	if mob.CurrentHP != md.MaxHP || mob.AggroTarget != 0 || len(mob.aggro) != 0 || mob.mods().Sleep != 0 {

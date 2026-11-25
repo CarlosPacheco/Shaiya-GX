@@ -120,9 +120,13 @@ func TestSharedCombatSpeedAgainstIsolatedGX(t *testing.T) {
 	interval, _ := skilltiming.IntervalFor(st.Self.Speed.Attack, 5, true)
 	for i := 1; i < len(stamps); i++ {
 		gap := stamps[i].Sub(stamps[i-1])
-		if gap < interval-60*time.Millisecond || gap > interval+500*time.Millisecond {
-			t.Fatal("Ext. Fast shared interval mismatch", i, gap)
+		expected := interval
+		if kinds[i] == proto.CharacterUserAutoAttack {
+			expected, _ = skilltiming.Interval(st.Self.Speed.Attack)
+		}
+		if gap < expected-60*time.Millisecond || gap > expected+500*time.Millisecond {
+			t.Fatalf("Ext. Fast action %d took %v, want %v", i, gap, expected)
 		}
 	}
-	t.Log("encrypted basic -> buffered spell -> buffered spell -> basic: shared animation-bound interval, raw packet flooding produced just one buffered skill")
+	t.Log("encrypted basic -> buffered spell -> buffered spell -> basic: skill recovery and native basic interval; raw packet flooding produced just one buffered skill")
 }

@@ -94,12 +94,16 @@ func TestPreparedReleaseDoesNotChargeASecondAttackInterval(t *testing.T) {
 		t.Fatal("prepared cast not started")
 	}
 	start := s.lastActionAt
+	beforeRelease := time.Now()
 	s.cast.readyAt = time.Now().Add(-time.Second)
 	s.processPendingCast()
 	if s.cast != nil || s.char.CurrentHP <= 1 || s.lastActionAt != start || s.ownClip() != 0 {
-		t.Fatal("prepared release restarted attack recovery")
+		t.Fatal("prepared release restarted skill recovery")
 	}
 	interval, _ := skilltiming.Interval(s.speeds().attack)
+	if s.nextBasicAttackAt.Before(beforeRelease.Add(interval)) || s.nextBasicAttackAt.After(time.Now().Add(interval)) {
+		t.Fatal("prepared release did not reserve native basic recovery")
+	}
 	if !s.combatActionReady(start.Add(interval)) {
 		t.Fatal("prepared cast charged two intervals")
 	}

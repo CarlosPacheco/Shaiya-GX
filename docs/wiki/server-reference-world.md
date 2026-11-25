@@ -361,50 +361,47 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 
 [server/internal/world/combat.go](../../server/internal/world/combat.go#L1)
 
-Direct GX dependencies: `internal/attackspeed`, `internal/proto`, `internal/skilltiming`, `server/internal/db`, `server/internal/netx`, `server/internal/packet`.
+Direct GX dependencies: `internal/attackspeed`, `internal/proto`, `server/internal/db`, `server/internal/netx`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`weaponSlot`](../../server/internal/world/combat.go#L15)<br>`const weaponSlot = 5` | See the source definition and the subsystem ownership contract. |
-| [`autoAttackRangeGrace`](../../server/internal/world/combat.go#L16)<br>`const autoAttackRangeGrace = 2.0` | See the source definition and the subsystem ownership contract. |
-| [`autoAttackCancelRange`](../../server/internal/world/combat.go#L17)<br>`const autoAttackCancelRange = 80.0` | See the source definition and the subsystem ownership contract. |
-| [`attackSuccessNormal`](../../server/internal/world/combat.go#L18)<br>`const attackSuccessNormal = 0` | See the source definition and the subsystem ownership contract. |
-| [`attackResultCritical`](../../server/internal/world/combat.go#L19)<br>`const attackResultCritical = 1` | See the source definition and the subsystem ownership contract. |
-| [`attackResultMiss`](../../server/internal/world/combat.go#L20)<br>`const attackResultMiss = 3` | See the source definition and the subsystem ownership contract. |
-| [`deathTypeMob`](../../server/internal/world/combat.go#L21)<br>`const deathTypeMob = 0x02` | See the source definition and the subsystem ownership contract. |
-| [`weaponCombat`](../../server/internal/world/combat.go#L24)<br>`type weaponCombat` | See the source definition and the subsystem ownership contract. |
-| [`weaponAttackDelay`](../../server/internal/world/combat.go#L32)<br>`func weaponAttackDelay(tier, weaponBase uint8) (time.Duration, bool)` | weaponAttackDelay takes the native zero-based attack index, not index+1. |
-| [`equippedWeaponCombat`](../../server/internal/world/combat.go#L36)<br>`func equippedWeaponCombat(items []db.Item) (weaponCombat, bool)` | See the source definition and the subsystem ownership contract. |
-| [`sendNear`](../../server/internal/world/combat.go#L60)<br>`func sendNear(mapID uint16, x, z, radius float32, frame []byte, label string)` | See the source definition and the subsystem ownership contract. |
-| [`autoAttackSwing`](../../server/internal/world/combat.go#L67)<br>`func (s *Session) autoAttackSwing(target uint32) bool` | autoAttackSwing resolves one swing; false cancels the auto-attack. |
-| [`resolveMobDamage`](../../server/internal/world/combat.go#L174)<br>`func (s *Session) resolveMobDamage(r *MobDamageResult) bool` | resolveMobDamage handles the aftermath of any damage to a mob: death, drops and exp, or an HP sync. Returns whether the mob is still alive. |
-| [`sendMobDeath`](../../server/internal/world/combat.go#L190)<br>`func sendMobDeath(mapID uint16, m *MapMob, killerID uint32, label string)` | See the source definition and the subsystem ownership contract. |
-| [`applyIncomingMobDamage`](../../server/internal/world/combat.go#L200)<br>`func (s *Session) applyIncomingMobDamage(d pendingDamage) bool` | applyIncomingMobDamage applies one queued mob attack; true when it killed. Slot attacks with a skill (Attacktype = a level-100 Skills row) go through CMob::AttackUser(skill); others are CMob::Attack. |
-| [`applyMobSkill`](../../server/internal/world/combat.go#L278)<br>`func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, sk *db.SkillDef, stats *CharacterStats) bool` | applyMobSkill sends the cast with its animation slot (0x060B or 0x060C) and any subsequent results without a slot (0x060D). |
-| [`buildMobSkillPacket`](../../server/internal/world/combat.go#L405)<br>`func buildMobSkillPacket(op packet.Opcode, result uint8, mobID, target uint32, sk *db.SkillDef, damage [3]uint16, healed *[3]uint16, attackSlot ...uint8) []byte` | buildMobSkillPacket: result, mob id, target id, a byte the client reads before the skill id (0x060B/0x060C only), skill id, level, HP/SP/MP damage and, for 0x060C, the healed HP/SP/MP. |
-| [`takeMobDamage`](../../server/internal/world/combat.go#L431)<br>`func (s *Session) takeMobDamage(d pendingDamage, damage uint32, stats *CharacterStats) bool` | takeMobDamage lowers the character's HP; true when it died. |
-| [`afterMobDamage`](../../server/internal/world/combat.go#L459)<br>`func (s *Session) afterMobDamage(d pendingDamage, killed bool)` | See the source definition and the subsystem ownership contract. |
-| [`persist`](../../server/internal/world/combat.go#L483)<br>`func (s *Session) persist()` | persist saves the active character (usp_Save_Char_Info_E) and refreshes the shared snapshot. |
-| [`applyExpGain`](../../server/internal/world/combat.go#L505)<br>`func applyExpGain(ch *db.Character, gained uint32) (levels uint16, credited uint32)` | applyExpGain returns the levels gained and experience actually credited. |
-| [`experienceCredit`](../../server/internal/world/combat.go#L524)<br>`type experienceCredit` | See the source definition and the subsystem ownership contract. |
-| [`applyExperienceAward`](../../server/internal/world/combat.go#L529)<br>`func applyExperienceAward(ch *db.Character, amount uint32, perfect bool) experienceCredit` | CUser::AddExpFromUser (0x458240) grants an equal extra amount to a normal seven-member party when the base award alone is below the next threshold. Process any level crossed by the bonus immediately using the GX curve. |
-| [`expBounds`](../../server/internal/world/combat.go#L543)<br>`func expBounds(ch *db.Character) (prev, next uint32)` | expBounds returns the cumulative thresholds used by the character's bar. |
-| [`rewardKill`](../../server/internal/world/combat.go#L556)<br>`func rewardKill(killer *ConnectedPlayer, killerID uint32, mapID uint16, m *MapMob, log logPrinter)` | rewardKill hands out a kill's loot and exp: drops on the ground, gold split across the party (or dropped for a solo killer) and each share of exp queued to its recipient's session. An offline DoT caster gets the solo exp straight in the database. |
-| [`experienceBonus`](../../server/internal/world/combat.go#L615)<br>`func (s *Session) experienceBonus() uint32` | Active skill IDs are unique within each skill catalog. Each EXP ability contributes percentage points to the total applied to monster rewards. |
-| [`notifyExpGain`](../../server/internal/world/combat.go#L627)<br>`func (s *Session) notifyExpGain(credited experienceCredit, levels uint16)` | See the source definition and the subsystem ownership contract. |
-| [`buildExpGain`](../../server/internal/world/combat.go#L648)<br>`func buildExpGain(credited experienceCredit) []byte` | buildExpGain (0x0207): base experience and the extra Perfect Party EXP. |
-| [`buildLevelUp`](../../server/internal/world/combat.go#L657)<br>`func buildLevelUp(op packet.Opcode, ch *db.Character) []byte` | buildLevelUp (0x0508 self / 0x051E others): character id, level, stat points, skill points, exp at the level's start and for the next level. |
-| [`grantOfflineKillExp`](../../server/internal/world/combat.go#L670)<br>`func grantOfflineKillExp(characterID uint32, mobID, mobLevel uint16, mobExp uint32, log logPrinter)` | grantOfflineKillExp credits a DoT kill to a caster who went offline. |
-| [`logPrinter`](../../server/internal/world/combat.go#L687)<br>`type logPrinter` | See the source definition and the subsystem ownership contract. |
+| [`weaponSlot`](../../server/internal/world/combat.go#L14)<br>`const weaponSlot = 5` | See the source definition and the subsystem ownership contract. |
+| [`autoAttackRangeGrace`](../../server/internal/world/combat.go#L15)<br>`const autoAttackRangeGrace = 2.0` | See the source definition and the subsystem ownership contract. |
+| [`autoAttackCancelRange`](../../server/internal/world/combat.go#L16)<br>`const autoAttackCancelRange = 80.0` | See the source definition and the subsystem ownership contract. |
+| [`attackSuccessNormal`](../../server/internal/world/combat.go#L17)<br>`const attackSuccessNormal = 0` | See the source definition and the subsystem ownership contract. |
+| [`attackResultCritical`](../../server/internal/world/combat.go#L18)<br>`const attackResultCritical = 1` | See the source definition and the subsystem ownership contract. |
+| [`attackResultMiss`](../../server/internal/world/combat.go#L19)<br>`const attackResultMiss = 3` | See the source definition and the subsystem ownership contract. |
+| [`deathTypeMob`](../../server/internal/world/combat.go#L20)<br>`const deathTypeMob = 0x02` | See the source definition and the subsystem ownership contract. |
+| [`weaponCombat`](../../server/internal/world/combat.go#L23)<br>`type weaponCombat` | See the source definition and the subsystem ownership contract. |
+| [`equippedWeaponCombat`](../../server/internal/world/combat.go#L28)<br>`func equippedWeaponCombat(items []db.Item) (weaponCombat, bool)` | See the source definition and the subsystem ownership contract. |
+| [`sendNear`](../../server/internal/world/combat.go#L47)<br>`func sendNear(mapID uint16, x, z, radius float32, frame []byte, label string)` | See the source definition and the subsystem ownership contract. |
+| [`autoAttackSwing`](../../server/internal/world/combat.go#L54)<br>`func (s *Session) autoAttackSwing(target uint32) bool` | autoAttackSwing resolves one swing; false cancels the auto-attack. |
+| [`resolveMobDamage`](../../server/internal/world/combat.go#L157)<br>`func (s *Session) resolveMobDamage(r *MobDamageResult) bool` | resolveMobDamage handles the aftermath of any damage to a mob: death, drops and exp, or an HP sync. Returns whether the mob is still alive. |
+| [`sendMobDeath`](../../server/internal/world/combat.go#L173)<br>`func sendMobDeath(mapID uint16, m *MapMob, killerID uint32, label string)` | See the source definition and the subsystem ownership contract. |
+| [`applyIncomingMobDamage`](../../server/internal/world/combat.go#L183)<br>`func (s *Session) applyIncomingMobDamage(d pendingDamage) bool` | applyIncomingMobDamage applies one queued mob attack; true when it killed. Slot attacks with a skill (Attacktype = a level-100 Skills row) go through CMob::AttackUser(skill); others are CMob::Attack. |
+| [`applyMobSkill`](../../server/internal/world/combat.go#L261)<br>`func (s *Session) applyMobSkill(d pendingDamage, md *db.MobDef, mc *mobCombat, sk *db.SkillDef, stats *CharacterStats) bool` | applyMobSkill sends the cast with its animation slot (0x060B or 0x060C) and any subsequent results without a slot (0x060D). |
+| [`buildMobSkillPacket`](../../server/internal/world/combat.go#L388)<br>`func buildMobSkillPacket(op packet.Opcode, result uint8, mobID, target uint32, sk *db.SkillDef, damage [3]uint16, healed *[3]uint16, attackSlot ...uint8) []byte` | buildMobSkillPacket: result, mob id, target id, a byte the client reads before the skill id (0x060B/0x060C only), skill id, level, HP/SP/MP damage and, for 0x060C, the healed HP/SP/MP. |
+| [`takeMobDamage`](../../server/internal/world/combat.go#L414)<br>`func (s *Session) takeMobDamage(d pendingDamage, damage uint32, stats *CharacterStats) bool` | takeMobDamage lowers the character's HP; true when it died. |
+| [`afterMobDamage`](../../server/internal/world/combat.go#L442)<br>`func (s *Session) afterMobDamage(d pendingDamage, killed bool)` | See the source definition and the subsystem ownership contract. |
+| [`persist`](../../server/internal/world/combat.go#L466)<br>`func (s *Session) persist()` | persist saves the active character (usp_Save_Char_Info_E) and refreshes the shared snapshot. |
+| [`applyExpGain`](../../server/internal/world/combat.go#L488)<br>`func applyExpGain(ch *db.Character, gained uint32) (levels uint16, credited uint32)` | applyExpGain returns the levels gained and experience actually credited. |
+| [`experienceCredit`](../../server/internal/world/combat.go#L507)<br>`type experienceCredit` | See the source definition and the subsystem ownership contract. |
+| [`applyExperienceAward`](../../server/internal/world/combat.go#L512)<br>`func applyExperienceAward(ch *db.Character, amount uint32, perfect bool) experienceCredit` | CUser::AddExpFromUser (0x458240) grants an equal extra amount to a normal seven-member party when the base award alone is below the next threshold. Process any level crossed by the bonus immediately using the GX curve. |
+| [`expBounds`](../../server/internal/world/combat.go#L526)<br>`func expBounds(ch *db.Character) (prev, next uint32)` | expBounds returns the cumulative thresholds used by the character's bar. |
+| [`rewardKill`](../../server/internal/world/combat.go#L539)<br>`func rewardKill(killer *ConnectedPlayer, killerID uint32, mapID uint16, m *MapMob, log logPrinter)` | rewardKill hands out a kill's loot and exp: drops on the ground, gold split across the party (or dropped for a solo killer) and each share of exp queued to its recipient's session. An offline DoT caster gets the solo exp straight in the database. |
+| [`experienceBonus`](../../server/internal/world/combat.go#L598)<br>`func (s *Session) experienceBonus() uint32` | Active skill IDs are unique within each skill catalog. Each EXP ability contributes percentage points to the total applied to monster rewards. |
+| [`notifyExpGain`](../../server/internal/world/combat.go#L610)<br>`func (s *Session) notifyExpGain(credited experienceCredit, levels uint16)` | See the source definition and the subsystem ownership contract. |
+| [`buildExpGain`](../../server/internal/world/combat.go#L631)<br>`func buildExpGain(credited experienceCredit) []byte` | buildExpGain (0x0207): base experience and the extra Perfect Party EXP. |
+| [`buildLevelUp`](../../server/internal/world/combat.go#L640)<br>`func buildLevelUp(op packet.Opcode, ch *db.Character) []byte` | buildLevelUp (0x0508 self / 0x051E others): character id, level, stat points, skill points, exp at the level's start and for the next level. |
+| [`grantOfflineKillExp`](../../server/internal/world/combat.go#L653)<br>`func grantOfflineKillExp(characterID uint32, mobID, mobLevel uint16, mobExp uint32, log logPrinter)` | grantOfflineKillExp credits a DoT kill to a caster who went offline. |
+| [`logPrinter`](../../server/internal/world/combat.go#L670)<br>`type logPrinter` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
 ```go
 type weaponCombat struct {
-	ItemType, TypeID uint8
-	AttackTime       uint8
-	Range            float32
-	Delay            time.Duration
+	AttackTime uint8
+	Range      float32
 }
 ```
 
@@ -428,19 +425,21 @@ Direct GX dependencies: `internal/skilltiming`, `server/internal/db`, `server/in
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`actionInterval`](../../server/internal/world/combat_cadence.go#L11)<br>`func (s *Session) actionInterval() (time.Duration, bool)` | actionInterval is the shared interval at the live attack index and weapon. |
-| [`ownClip`](../../server/internal/world/combat_cadence.go#L18)<br>`func (s *Session) ownClip() time.Duration` | ownClip is the animation floor of the last skill; any later action stamp (basic attack, cast, item) makes it stale on its own. |
-| [`actionRecovery`](../../server/internal/world/combat_cadence.go#L27)<br>`func (s *Session) actionRecovery() (time.Duration, bool)` | actionRecovery is how long after the last action the next one may start: the shared interval, or the last skill's own clip when that is longer. |
-| [`combatActionReady`](../../server/internal/world/combat_cadence.go#L34)<br>`func (s *Session) combatActionReady(now time.Time) bool` | Both basic attack routes and skills recover from lastActionAt. Use the live equipment/buff tier so haste, slow and gear changes affect recovery immediately. |
-| [`skillActionReady`](../../server/internal/world/combat_cadence.go#L42)<br>`func (s *Session) skillActionReady(def *db.SkillDef, now time.Time) bool` | See the source definition and the subsystem ownership contract. |
-| [`pendingSpinCombo`](../../server/internal/world/combat_cadence.go#L53)<br>`type pendingSpinCombo` | See the source definition and the subsystem ownership contract. |
-| [`queueSpinCombo`](../../server/internal/world/combat_cadence.go#L59)<br>`func (s *Session) queueSpinCombo(def *db.SkillDef, op packet.Opcode, payload []byte) bool` | See the source definition and the subsystem ownership contract. |
-| [`processSpinCombo`](../../server/internal/world/combat_cadence.go#L67)<br>`func (s *Session) processSpinCombo()` | See the source definition and the subsystem ownership contract. |
-| [`pendingSkillUse`](../../server/internal/world/combat_cadence.go#L82)<br>`type pendingSkillUse` | pendingSkillUse is the classic one-slot selection: a request that reaches the server before the shared execution deadline is kept (latest wins) and runs the moment the interval allows, instead of being refused by a few milliseconds of network jitter. Own reuse, costs and validation are checked again at release. |
-| [`holdSkillUse`](../../server/internal/world/combat_cadence.go#L88)<br>`func (s *Session) holdSkillUse(def *db.SkillDef, op packet.Opcode, payload []byte, now time.Time) bool` | See the source definition and the subsystem ownership contract. |
-| [`processPendingSkill`](../../server/internal/world/combat_cadence.go#L100)<br>`func (s *Session) processPendingSkill()` | See the source definition and the subsystem ownership contract. |
-| [`minWake`](../../server/internal/world/combat_cadence.go#L123)<br>`const minWake = 5 * time.Millisecond` | minWake keeps a blocked pending action from spinning the loop. |
-| [`nextWake`](../../server/internal/world/combat_cadence.go#L128)<br>`func (s *Session) nextWake() time.Duration` | nextWake is how long the session loop may sleep: the usual tick, shortened to the moment a held skill, a spin combo or the next auto-attack swing becomes due, so those run at their exact deadline instead of the next 100 ms tick. |
+| [`reserveBasicAttack`](../../server/internal/world/combat_cadence.go#L14)<br>`func (s *Session) reserveBasicAttack(now time.Time, tier uint8)` | reserveBasicAttack applies the absolute execution deadline used by CUser::UpdateAttack. Skill recovery may allow a release before a previous basic deadline, so a new reservation can only extend that deadline. |
+| [`commitBasicAttack`](../../server/internal/world/combat_cadence.go#L21)<br>`func (s *Session) commitBasicAttack(now time.Time, tier uint8)` | See the source definition and the subsystem ownership contract. |
+| [`actionInterval`](../../server/internal/world/combat_cadence.go#L28)<br>`func (s *Session) actionInterval() (time.Duration, bool)` | actionInterval is the skill execution interval at the live attack index and weapon. |
+| [`ownClip`](../../server/internal/world/combat_cadence.go#L35)<br>`func (s *Session) ownClip() time.Duration` | ownClip is the animation floor of the last skill; any later action stamp (basic attack, cast, item) makes it stale on its own. |
+| [`actionRecovery`](../../server/internal/world/combat_cadence.go#L44)<br>`func (s *Session) actionRecovery() (time.Duration, bool)` | actionRecovery is the next skill's interval, with a floor for the previous skill's own clip. |
+| [`combatActionReady`](../../server/internal/world/combat_cadence.go#L50)<br>`func (s *Session) combatActionReady(now time.Time) bool` | combatActionReady checks skill recovery with the live equipment and buff tier. |
+| [`skillActionReady`](../../server/internal/world/combat_cadence.go#L58)<br>`func (s *Session) skillActionReady(def *db.SkillDef, now time.Time) bool` | See the source definition and the subsystem ownership contract. |
+| [`pendingSpinCombo`](../../server/internal/world/combat_cadence.go#L69)<br>`type pendingSpinCombo` | See the source definition and the subsystem ownership contract. |
+| [`queueSpinCombo`](../../server/internal/world/combat_cadence.go#L75)<br>`func (s *Session) queueSpinCombo(def *db.SkillDef, op packet.Opcode, payload []byte) bool` | See the source definition and the subsystem ownership contract. |
+| [`processSpinCombo`](../../server/internal/world/combat_cadence.go#L83)<br>`func (s *Session) processSpinCombo()` | See the source definition and the subsystem ownership contract. |
+| [`pendingSkillUse`](../../server/internal/world/combat_cadence.go#L98)<br>`type pendingSkillUse` | pendingSkillUse is the classic one-slot selection: a request that reaches the server before the shared execution deadline is kept (latest wins) and runs the moment the interval allows, instead of being refused by a few milliseconds of network jitter. Own reuse, costs and validation are checked again at release. |
+| [`holdSkillUse`](../../server/internal/world/combat_cadence.go#L104)<br>`func (s *Session) holdSkillUse(def *db.SkillDef, op packet.Opcode, payload []byte, now time.Time) bool` | See the source definition and the subsystem ownership contract. |
+| [`processPendingSkill`](../../server/internal/world/combat_cadence.go#L116)<br>`func (s *Session) processPendingSkill()` | See the source definition and the subsystem ownership contract. |
+| [`minWake`](../../server/internal/world/combat_cadence.go#L139)<br>`const minWake = 5 * time.Millisecond` | minWake keeps a blocked pending action from spinning the loop. |
+| [`nextWake`](../../server/internal/world/combat_cadence.go#L144)<br>`func (s *Session) nextWake() time.Duration` | nextWake is how long the session loop may sleep: the usual tick, shortened to the moment a held skill, a spin combo or the next auto-attack swing becomes due, so those run at their exact deadline instead of the next 100 ms tick. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -2027,7 +2026,7 @@ Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
 |---|---|
 | [`itemBuffSkill`](../../server/internal/world/item_skills.go#L11)<br>`func itemBuffSkill(d *db.ItemDef) *db.SkillDef` | All consumable Range/AttackTime buff references use the same native UseItemSkill -> BuffUser presentation, including commercial item skills. |
 | [`announceItemSkill`](../../server/internal/world/item_skills.go#L21)<br>`func (s *Session) announceItemSkill(sk *db.SkillDef)` | See the source definition and the subsystem ownership contract. |
-| [`canUseExpReset`](../../server/internal/world/item_skills.go#L33)<br>`func (s *Session) canUseExpReset() bool` | Native ItemUse special 50: only the two arena maps, after half a level. |
+| [`canUseExpReset`](../../server/internal/world/item_skills.go#L34)<br>`func (s *Session) canUseExpReset() bool` | Native ItemUse special 50: only the two arena maps, after half a level. |
 
 ### itemboxes.go
 
@@ -3494,11 +3493,11 @@ Direct GX dependencies: `internal/attackspeed`, `internal/proto`, `server/intern
 | [`isTeam`](../../server/internal/world/pvp.go#L92)<br>`func (s *Session) isTeam(p *ConnectedPlayer) bool` | isTeam is CUser::IsTeam without duels (none exist yet): the user itself, anyone on a WarType P map, or the same country. isTeam is CUser::IsTeam: the user itself, else not the duel opponent, then a WarType P map or the same country. |
 | [`hostileUser`](../../server/internal/world/pvp.go#L106)<br>`func (s *Session) hostileUser(id uint32) *ConnectedPlayer` | hostileUser finds an attackable user for a normal attack. |
 | [`userAttackSwing`](../../server/internal/world/pvp.go#L119)<br>`func (s *Session) userAttackSwing(target uint32) bool` | userAttackSwing is one UpdateAttack step on a user target; false ends the auto-attack. |
-| [`tickUserHits`](../../server/internal/world/pvp.go#L169)<br>`func (s *Session) tickUserHits()` | tickUserHits resolves the user attacks queued on this session. |
-| [`applyUserHit`](../../server/internal/world/pvp.go#L191)<br>`func (s *Session) applyUserHit(h pendingUserHit) bool` | applyUserHit is the target side of CUser::AttackUser; true when this character died. |
-| [`takeUserDamage`](../../server/internal/world/pvp.go#L272)<br>`func (s *Session) takeUserDamage(attackerID, damage uint32) bool` | takeUserDamage is CUser::Damage's HP part; true when it killed. |
-| [`afterUserDamage`](../../server/internal/world/pvp.go#L299)<br>`func (s *Session) afterUserDamage(killerID uint32, killed bool)` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterUserAttack`](../../server/internal/world/pvp.go#L320)<br>`func buildCharacterUserAttack(attackerID, targetID uint32, result uint8, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`tickUserHits`](../../server/internal/world/pvp.go#L167)<br>`func (s *Session) tickUserHits()` | tickUserHits resolves the user attacks queued on this session. |
+| [`applyUserHit`](../../server/internal/world/pvp.go#L189)<br>`func (s *Session) applyUserHit(h pendingUserHit) bool` | applyUserHit is the target side of CUser::AttackUser; true when this character died. |
+| [`takeUserDamage`](../../server/internal/world/pvp.go#L270)<br>`func (s *Session) takeUserDamage(attackerID, damage uint32) bool` | takeUserDamage is CUser::Damage's HP part; true when it killed. |
+| [`afterUserDamage`](../../server/internal/world/pvp.go#L297)<br>`func (s *Session) afterUserDamage(killerID uint32, killed bool)` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterUserAttack`](../../server/internal/world/pvp.go#L318)<br>`func buildCharacterUserAttack(attackerID, targetID uint32, result uint8, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -4202,35 +4201,35 @@ Direct GX dependencies: `internal/proto`, `internal/skilltiming`, `server/intern
 | [`recoveryInterval`](../../server/internal/world/session.go#L26)<br>`const recoveryInterval = 5 * time.Second` | See the source definition and the subsystem ownership contract. |
 | [`characterListSize`](../../server/internal/world/session.go#L27)<br>`const characterListSize = MaxCharacterSlots` | See the source definition and the subsystem ownership contract. |
 | [`Session`](../../server/internal/world/session.go#L32)<br>`type Session` | Session is one client connection. Its loop owns its fields under stateMu. A paired trade may also update them while holding both sessions' state locks. |
-| [`acquireAccount`](../../server/internal/world/session.go#L148)<br>`func acquireAccount(uid uint32, id int64) bool` | See the source definition and the subsystem ownership contract. |
-| [`releaseAccount`](../../server/internal/world/session.go#L166)<br>`func releaseAccount(uid uint32, id int64)` | See the source definition and the subsystem ownership contract. |
-| [`Serve`](../../server/internal/world/session.go#L177)<br>`func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error` | Serve runs one client connection until it closes. |
-| [`processInput`](../../server/internal/world/session.go#L214)<br>`func (s *Session) processInput(n int, buf []byte, frames *netx.Frames) error` | processInput never holds the session lock while waiting for socket input. |
-| [`close`](../../server/internal/world/session.go#L258)<br>`func (s *Session) close()` | close persists the active character and releases the account. |
-| [`leaveWorld`](../../server/internal/world/session.go#L271)<br>`func (s *Session) leaveWorld(disconnect bool) bool` | leaveWorld saves and unregisters the active character. |
-| [`send`](../../server/internal/world/session.go#L302)<br>`func (s *Session) send(frame []byte, label string)` | send writes a frame to this client: AES-CTR until the initial character state, the stateless expanded XOR afterwards. |
-| [`equipment`](../../server/internal/world/session.go#L324)<br>`func (s *Session) equipment() EquipmentStats` | See the source definition and the subsystem ownership contract. |
-| [`stats`](../../server/internal/world/session.go#L349)<br>`func (s *Session) stats() CharacterStats` | See the source definition and the subsystem ownership contract. |
-| [`sendStatPackets`](../../server/internal/world/session.go#L357)<br>`func (s *Session) sendStatPackets()` | See the source definition and the subsystem ownership contract. |
-| [`drainRewards`](../../server/internal/world/session.go#L370)<br>`func (s *Session) drainRewards(p *ConnectedPlayer)` | drainRewards applies bounded, coalesced rewards before normal simulation or logout. Aggregation keeps individual scaling/rounding and caps unchanged. |
-| [`normalize`](../../server/internal/world/session.go#L421)<br>`func normalize(ch *db.Character)` | normalize derives the base pools from StatusDefs (Chars only stores the current HP/MP/SP). Effective clamping waits for equipment and buffs. |
-| [`tick`](../../server/internal/world/session.go#L428)<br>`func (s *Session) tick(idle bool)` | tick runs the per-iteration work: mailboxes, buffs, regen, casts and the auto-attack swing. |
-| [`applyTradeRefresh`](../../server/internal/world/session.go#L523)<br>`func (s *Session) applyTradeRefresh(r *tradeRefresh)` | See the source definition and the subsystem ownership contract. |
-| [`recoveryTick`](../../server/internal/world/session.go#L548)<br>`func (s *Session) recoveryTick()` | recoveryTick is CUser::UpdateRecover every 5 seconds: the mode seen at the previous tick decides the amount (0 sitting: 5% of each maximum plus the sitting abilities' percent plus the flat sitting recovery; 1 standing: the flat standing recovery; 2 in combat: the flat in-combat recovery), then the mode for the next tick is taken (in combat, else sitting or standing). Viewers get 0x0505 (absolute pools) and the character 0x0521. |
-| [`inCombat`](../../server/internal/world/session.go#L594)<br>`func (s *Session) inCombat() bool` | inCombat approximates the original attack mode: swinging, or a hit given or taken within the last recovery interval. |
-| [`deadGated`](../../server/internal/world/session.go#L599)<br>`func deadGated(op packet.Opcode) bool` | deadGated lists the inputs ignored while dead (revive is 0x0553). |
-| [`frame`](../../server/internal/world/session.go#L608)<br>`func (s *Session) frame(f []byte) error` | See the source definition and the subsystem ownership contract. |
-| [`handshake`](../../server/internal/world/session.go#L632)<br>`func (s *Session) handshake(f []byte) error` | See the source definition and the subsystem ownership contract. |
-| [`sendCharacterSelect`](../../server/internal/world/session.go#L673)<br>`func (s *Session) sendCharacterSelect()` | See the source definition and the subsystem ownership contract. |
-| [`logErr`](../../server/internal/world/session.go#L695)<br>`func (s *Session) logErr(what string, err error)` | See the source definition and the subsystem ownership contract. |
-| [`handleCreateCharacter`](../../server/internal/world/session.go#L702)<br>`func (s *Session) handleCreateCharacter(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`createCharacter`](../../server/internal/world/session.go#L711)<br>`func (s *Session) createCharacter(nc db.NewCharacter)` | See the source definition and the subsystem ownership contract. |
-| [`handleRename`](../../server/internal/world/session.go#L757)<br>`func (s *Session) handleRename(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`selectCharacter`](../../server/internal/world/session.go#L778)<br>`func (s *Session) selectCharacter(id uint32)` | See the source definition and the subsystem ownership contract. |
-| [`sendInitialState`](../../server/internal/world/session.go#L918)<br>`func (s *Session) sendInitialState(st *CharacterStats)` | sendInitialState is the captured character-select sequence; afterwards the server->client direction switches to the expanded XOR scheme. |
-| [`handleMapLoaded`](../../server/internal/world/session.go#L971)<br>`func (s *Session) handleMapLoaded()` | handleMapLoaded (0x0201 from the client): send the map state, register the player and exchange visibility with nearby players. |
-| [`handleMotion`](../../server/internal/world/session.go#L1022)<br>`func (s *Session) handleMotion(p []byte)` | handleMotion (0x0506): sit/stand persist; other motions are one-shot. The sender gets its own echo, which the client needs to play it. |
-| [`handleLogout`](../../server/internal/world/session.go#L1065)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
+| [`acquireAccount`](../../server/internal/world/session.go#L150)<br>`func acquireAccount(uid uint32, id int64) bool` | See the source definition and the subsystem ownership contract. |
+| [`releaseAccount`](../../server/internal/world/session.go#L168)<br>`func releaseAccount(uid uint32, id int64)` | See the source definition and the subsystem ownership contract. |
+| [`Serve`](../../server/internal/world/session.go#L179)<br>`func Serve(conn net.Conn, logger *logx.Logger, log *logx.Tag) error` | Serve runs one client connection until it closes. |
+| [`processInput`](../../server/internal/world/session.go#L216)<br>`func (s *Session) processInput(n int, buf []byte, frames *netx.Frames) error` | processInput never holds the session lock while waiting for socket input. |
+| [`close`](../../server/internal/world/session.go#L260)<br>`func (s *Session) close()` | close persists the active character and releases the account. |
+| [`leaveWorld`](../../server/internal/world/session.go#L273)<br>`func (s *Session) leaveWorld(disconnect bool) bool` | leaveWorld saves and unregisters the active character. |
+| [`send`](../../server/internal/world/session.go#L304)<br>`func (s *Session) send(frame []byte, label string)` | send writes a frame to this client: AES-CTR until the initial character state, the stateless expanded XOR afterwards. |
+| [`equipment`](../../server/internal/world/session.go#L326)<br>`func (s *Session) equipment() EquipmentStats` | See the source definition and the subsystem ownership contract. |
+| [`stats`](../../server/internal/world/session.go#L351)<br>`func (s *Session) stats() CharacterStats` | See the source definition and the subsystem ownership contract. |
+| [`sendStatPackets`](../../server/internal/world/session.go#L359)<br>`func (s *Session) sendStatPackets()` | See the source definition and the subsystem ownership contract. |
+| [`drainRewards`](../../server/internal/world/session.go#L372)<br>`func (s *Session) drainRewards(p *ConnectedPlayer)` | drainRewards applies bounded, coalesced rewards before normal simulation or logout. Aggregation keeps individual scaling/rounding and caps unchanged. |
+| [`normalize`](../../server/internal/world/session.go#L423)<br>`func normalize(ch *db.Character)` | normalize derives the base pools from StatusDefs (Chars only stores the current HP/MP/SP). Effective clamping waits for equipment and buffs. |
+| [`tick`](../../server/internal/world/session.go#L430)<br>`func (s *Session) tick(idle bool)` | tick runs the per-iteration work: mailboxes, buffs, regen, casts and the auto-attack swing. |
+| [`applyTradeRefresh`](../../server/internal/world/session.go#L525)<br>`func (s *Session) applyTradeRefresh(r *tradeRefresh)` | See the source definition and the subsystem ownership contract. |
+| [`recoveryTick`](../../server/internal/world/session.go#L550)<br>`func (s *Session) recoveryTick()` | recoveryTick is CUser::UpdateRecover every 5 seconds: the mode seen at the previous tick decides the amount (0 sitting: 5% of each maximum plus the sitting abilities' percent plus the flat sitting recovery; 1 standing: the flat standing recovery; 2 in combat: the flat in-combat recovery), then the mode for the next tick is taken (in combat, else sitting or standing). Viewers get 0x0505 (absolute pools) and the character 0x0521. |
+| [`inCombat`](../../server/internal/world/session.go#L596)<br>`func (s *Session) inCombat() bool` | inCombat approximates the original attack mode: swinging, or a hit given or taken within the last recovery interval. |
+| [`deadGated`](../../server/internal/world/session.go#L601)<br>`func deadGated(op packet.Opcode) bool` | deadGated lists the inputs ignored while dead (revive is 0x0553). |
+| [`frame`](../../server/internal/world/session.go#L610)<br>`func (s *Session) frame(f []byte) error` | See the source definition and the subsystem ownership contract. |
+| [`handshake`](../../server/internal/world/session.go#L634)<br>`func (s *Session) handshake(f []byte) error` | See the source definition and the subsystem ownership contract. |
+| [`sendCharacterSelect`](../../server/internal/world/session.go#L675)<br>`func (s *Session) sendCharacterSelect()` | See the source definition and the subsystem ownership contract. |
+| [`logErr`](../../server/internal/world/session.go#L697)<br>`func (s *Session) logErr(what string, err error)` | See the source definition and the subsystem ownership contract. |
+| [`handleCreateCharacter`](../../server/internal/world/session.go#L704)<br>`func (s *Session) handleCreateCharacter(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`createCharacter`](../../server/internal/world/session.go#L713)<br>`func (s *Session) createCharacter(nc db.NewCharacter)` | See the source definition and the subsystem ownership contract. |
+| [`handleRename`](../../server/internal/world/session.go#L759)<br>`func (s *Session) handleRename(p []byte)` | See the source definition and the subsystem ownership contract. |
+| [`selectCharacter`](../../server/internal/world/session.go#L780)<br>`func (s *Session) selectCharacter(id uint32)` | See the source definition and the subsystem ownership contract. |
+| [`sendInitialState`](../../server/internal/world/session.go#L920)<br>`func (s *Session) sendInitialState(st *CharacterStats)` | sendInitialState is the captured character-select sequence; afterwards the server->client direction switches to the expanded XOR scheme. |
+| [`handleMapLoaded`](../../server/internal/world/session.go#L973)<br>`func (s *Session) handleMapLoaded()` | handleMapLoaded (0x0201 from the client): send the map state, register the player and exchange visibility with nearby players. |
+| [`handleMotion`](../../server/internal/world/session.go#L1024)<br>`func (s *Session) handleMotion(p []byte)` | handleMotion (0x0506): sit/stand persist; other motions are one-shot. The sender gets its own echo, which the client needs to play it. |
+| [`handleLogout`](../../server/internal/world/session.go#L1067)<br>`func (s *Session) handleLogout()` | handleLogout (0x0107) returns to character select on the same connection; the account stays held. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -4328,6 +4327,8 @@ type Session struct {
 	clipFloorAt      time.Time     // the lastActionAt the floor below belongs to
 	clipFloor        time.Duration // own animation of the last skill
 	attackMoveUntil  time.Time
+
+	nextBasicAttackAt time.Time
 
 	positionDirty        bool
 	lastPositionSave     time.Time
@@ -4445,18 +4446,18 @@ Direct GX dependencies: `internal/proto`, `internal/skillchance`, `internal/skil
 | [`beginSkill`](../../server/internal/world/skillcast.go#L198)<br>`func (s *Session) beginSkill(op packet.Opcode, k db.CharacterSkill, def *db.SkillDef, target, evolution uint32, p []byte)` | See the source definition and the subsystem ownership contract. |
 | [`processPendingCast`](../../server/internal/world/skillcast.go#L344)<br>`func (s *Session) processPendingCast()` | See the source definition and the subsystem ownership contract. |
 | [`startCooldown`](../../server/internal/world/skillcast.go#L360)<br>`func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef, prepared ...bool)` | See the source definition and the subsystem ownership contract. |
-| [`resolveSkill`](../../server/internal/world/skillcast.go#L399)<br>`func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, cast *pendingCast)` | See the source definition and the subsystem ownership contract. |
-| [`resolveSkillDefinition`](../../server/internal/world/skillcast.go#L414)<br>`func (s *Session) resolveSkillDefinition(target uint32, k db.CharacterSkill, def *db.SkillDef, op packet.Opcode, cast *pendingCast)` | See the source definition and the subsystem ownership contract. |
-| [`sendBuffStats`](../../server/internal/world/skillcast.go#L471)<br>`func (s *Session) sendBuffStats(why string)` | See the source definition and the subsystem ownership contract. |
-| [`processBuffs`](../../server/internal/world/skillcast.go#L481)<br>`func (s *Session) processBuffs()` | processBuffs ticks heal-over-time and debuff damage, then expires applied skills (CUser::ChkKeepSkill / ChkEndTimeSkill). |
-| [`processBuffsAt`](../../server/internal/world/skillcast.go#L485)<br>`func (s *Session) processBuffsAt(now time.Time)` | See the source definition and the subsystem ownership contract. |
-| [`persistBuffs`](../../server/internal/world/skillcast.go#L508)<br>`func (s *Session) persistBuffs()` | persistBuffs snapshots remaining buff time (frozen while offline). |
-| [`buffSnapshot`](../../server/internal/world/skillcast.go#L517)<br>`func (s *Session) buffSnapshot() []db.AppliedBuff` | See the source definition and the subsystem ownership contract. |
-| [`buffSnapshotExcept`](../../server/internal/world/skillcast.go#L521)<br>`func (s *Session) buffSnapshotExcept(exclude func(*ActiveBuff) bool) []db.AppliedBuff` | See the source definition and the subsystem ownership contract. |
-| [`persistSkillDelays`](../../server/internal/world/skillcast.go#L532)<br>`func (s *Session) persistSkillDelays()` | See the source definition and the subsystem ownership contract. |
-| [`skillDelaySnapshot`](../../server/internal/world/skillcast.go#L539)<br>`func (s *Session) skillDelaySnapshot() []db.CharacterSkill` | skillDelaySnapshot captures changes to remaining cooldown. |
-| [`restoreBuffs`](../../server/internal/world/skillcast.go#L554)<br>`func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error)` | See the source definition and the subsystem ownership contract. |
-| [`skillWeaponAllowed`](../../server/internal/world/skillcast.go#L575)<br>`func (s *Session) skillWeaponAllowed(def *db.SkillDef) bool` | skillWeaponAllowed follows CUser::EnableUseSkillUser: a skill needs an equipped weapon (error 7 otherwise) and, unless it is a shield skill, the weapon's type must be listed in the skill's NeedWeapon flags. Skills that list no weapon at all (item-granted buffs) are not restricted. |
+| [`resolveSkill`](../../server/internal/world/skillcast.go#L400)<br>`func (s *Session) resolveSkill(target uint32, number uint8, op packet.Opcode, cast *pendingCast)` | See the source definition and the subsystem ownership contract. |
+| [`resolveSkillDefinition`](../../server/internal/world/skillcast.go#L415)<br>`func (s *Session) resolveSkillDefinition(target uint32, k db.CharacterSkill, def *db.SkillDef, op packet.Opcode, cast *pendingCast)` | See the source definition and the subsystem ownership contract. |
+| [`sendBuffStats`](../../server/internal/world/skillcast.go#L472)<br>`func (s *Session) sendBuffStats(why string)` | See the source definition and the subsystem ownership contract. |
+| [`processBuffs`](../../server/internal/world/skillcast.go#L482)<br>`func (s *Session) processBuffs()` | processBuffs ticks heal-over-time and debuff damage, then expires applied skills (CUser::ChkKeepSkill / ChkEndTimeSkill). |
+| [`processBuffsAt`](../../server/internal/world/skillcast.go#L486)<br>`func (s *Session) processBuffsAt(now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`persistBuffs`](../../server/internal/world/skillcast.go#L509)<br>`func (s *Session) persistBuffs()` | persistBuffs snapshots remaining buff time (frozen while offline). |
+| [`buffSnapshot`](../../server/internal/world/skillcast.go#L518)<br>`func (s *Session) buffSnapshot() []db.AppliedBuff` | See the source definition and the subsystem ownership contract. |
+| [`buffSnapshotExcept`](../../server/internal/world/skillcast.go#L522)<br>`func (s *Session) buffSnapshotExcept(exclude func(*ActiveBuff) bool) []db.AppliedBuff` | See the source definition and the subsystem ownership contract. |
+| [`persistSkillDelays`](../../server/internal/world/skillcast.go#L533)<br>`func (s *Session) persistSkillDelays()` | See the source definition and the subsystem ownership contract. |
+| [`skillDelaySnapshot`](../../server/internal/world/skillcast.go#L540)<br>`func (s *Session) skillDelaySnapshot() []db.CharacterSkill` | skillDelaySnapshot captures changes to remaining cooldown. |
+| [`restoreBuffs`](../../server/internal/world/skillcast.go#L555)<br>`func restoreBuffs(charID uint32, log logPrinter) ([]ActiveBuff, error)` | See the source definition and the subsystem ownership contract. |
+| [`skillWeaponAllowed`](../../server/internal/world/skillcast.go#L576)<br>`func (s *Session) skillWeaponAllowed(def *db.SkillDef) bool` | skillWeaponAllowed follows CUser::EnableUseSkillUser: a skill needs an equipped weapon (error 7 otherwise) and, unless it is a shield skill, the weapon's type must be listed in the skill's NeedWeapon flags. Skills that list no weapon at all (item-granted buffs) are not restricted. |
 
 <details><summary>Type definitions and owned fields</summary>
 

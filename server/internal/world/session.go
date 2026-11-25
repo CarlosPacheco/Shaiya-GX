@@ -123,6 +123,8 @@ type Session struct {
 	clipFloor        time.Duration // own animation of the last skill
 	attackMoveUntil  time.Time
 
+	nextBasicAttackAt time.Time
+
 	positionDirty        bool
 	lastPositionSave     time.Time
 	lastRegenAt          time.Time
@@ -452,7 +454,7 @@ func (s *Session) tick(idle bool) {
 			}
 			if s.applyIncomingMobDamage(d) {
 				s.dead, s.autoAttack, s.cast = true, false, nil
-				s.lastActionAt = time.Time{}
+				s.lastActionAt, s.nextBasicAttackAt = time.Time{}, time.Time{}
 				s.dash = nil
 				s.pendingCombo = nil
 				s.pendingSkill = nil
@@ -819,7 +821,7 @@ func (s *Session) selectCharacter(id uint32) {
 		return
 	}
 	s.effectWatchID = 0
-	s.lastActionAt = time.Time{}
+	s.lastActionAt, s.nextBasicAttackAt = time.Time{}, time.Time{}
 	s.dash = nil
 	s.pendingCombo = nil
 	s.pendingSkill = nil

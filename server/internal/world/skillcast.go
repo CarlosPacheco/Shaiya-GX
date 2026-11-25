@@ -359,6 +359,7 @@ func (s *Session) processPendingCast() {
 
 func (s *Session) startCooldown(k db.CharacterSkill, def *db.SkillDef, prepared ...bool) {
 	now := time.Now()
+	s.reserveBasicAttack(now, s.speeds().attack)
 	if len(prepared) == 0 || !prepared[0] {
 		s.lastActionAt = now
 		s.clipFloorAt, s.clipFloor = now, 0

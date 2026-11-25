@@ -1,13 +1,12 @@
 package world
 
 import (
-	"github.com/Spelunkern/Shaiya-GX/server/internal/netx"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
-	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/netx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
 
@@ -22,15 +21,8 @@ const (
 )
 
 type weaponCombat struct {
-	ItemType, TypeID uint8
-	AttackTime       uint8
-	Range            float32
-	Delay            time.Duration
-}
-
-// weaponAttackDelay takes the native zero-based attack index, not index+1.
-func weaponAttackDelay(tier, weaponBase uint8) (time.Duration, bool) {
-	return skilltiming.IntervalFor(tier, weaponBase, true)
+	AttackTime uint8
+	Range      float32
 }
 
 func equippedWeaponCombat(items []db.Item) (weaponCombat, bool) {
@@ -45,16 +37,11 @@ func equippedWeaponCombat(items []db.Item) (weaponCombat, bool) {
 	if d.AttackTime == 0 {
 		return weaponCombat{}, false
 	}
-	at := d.AttackTime
-	delay, ok := weaponAttackDelay(attackspeed.Tier(at, 0), at)
-	if !ok {
-		return weaponCombat{}, false
-	}
 	r := float32(d.Range)
 	if r <= 0 {
 		r = 2
 	}
-	return weaponCombat{d.Type, d.TypeID, at, r, delay}, true
+	return weaponCombat{AttackTime: d.AttackTime, Range: r}, true
 }
 
 func sendNear(mapID uint16, x, z, radius float32, frame []byte, label string) {
@@ -89,13 +76,10 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 		s.log.Printf("GX Server World cancelled auto attack without valid weapon character_id=%d mob_global_id=%d", ch.ID, target)
 		return false
 	}
-	stats := StatsFor(ch, s.equipment())
-	// CUser::GetAttackSpeedNow: the swing index moves with gems, passives
-	// and buffs (0..9 over g_ConstUserAttackSpeed).
-	wc.Delay, _ = weaponAttackDelay(attackspeed.Tier(wc.AttackTime, stats.AttackSpeed), wc.AttackTime)
-	if !s.lastActionAt.IsZero() && time.Since(s.lastActionAt) < max(wc.Delay, s.ownClip()) {
+	if time.Now().Before(s.nextBasicAttackAt) {
 		return true
 	}
+	stats := StatsFor(ch, s.equipment())
 	mob, ok := MobByID(ch.MapID, target)
 	if !ok || mob.CurrentHP == 0 {
 		s.log.Printf("GX Server World cancelled auto attack unknown or dead mob character_id=%d mob_global_id=%d", ch.ID, target)
@@ -134,10 +118,9 @@ func (s *Session) autoAttackSwing(target uint32) bool {
 	if !s.attackMovementAllowed() {
 		return false
 	}
-	s.commitAttackStop(time.Now())
+	s.commitBasicAttack(time.Now(), attackspeed.Tier(wc.AttackTime, stats.AttackSpeed))
 	s.breakCombatForm()
 	s.breakStealth()
-	s.lastActionAt, s.lastCombatAt = time.Now(), time.Now()
 	if speed := wakeMob(ch.MapID, target); speed != nil {
 		sendNear(ch.MapID, mob.PosX, mob.PosZ, BroadcastRadius, speed, "0x0609 mob speed (woke)")
 	}

@@ -30,7 +30,7 @@ data. No gameplay change is made by this note.
 | Magic ready / attack | 12 / 28 | 0.4 / 0.93 s | - |
 | Buff ready / attack | 14 / 34 | 0.47 / 1.13 s | - |
 
-## What GX does
+## GX before the November 21 update
 
 - Client (`combat_cadence.go`) and server (`combat_cadence.go`) both gate every
   swing and skill on one shared interval from the EP4.5 table: 1000 ms at the
@@ -54,7 +54,7 @@ data. No gameplay change is made by this note.
    Needs an explicit decision because the EP5.4 server rule cannot be verified
    from the client.
 
-## Implemented (permanent, confirmed in play 2026-11-21)
+## November 21 implementation
 
 - `skilltiming.IntervalFor` caps the table by the basic-attack clip (30 frames at
   the weapon-relative animation rate), shared by client and server, so the shared
@@ -68,3 +68,10 @@ data. No gameplay change is made by this note.
   per `SkillID`. The selected skill definition still supplies `ReadyTime` for
   casting. Magic Arrow's instant rank uses the clip floor, while its timed
   ranks finish through the cast path and the shared action cadence.
+
+## Current basic attack cadence
+
+GX now follows `ps_game.exe` and stores an absolute server deadline for each
+accepted basic attack. The attack-speed index selects the interval. The
+weapon-relative FPS still governs playback, and `IntervalFor` remains in use
+for GX skill recovery. See [Attack speed](wiki/attack-speed.md).

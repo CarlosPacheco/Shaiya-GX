@@ -126,11 +126,10 @@ func (s *Session) userAttackSwing(target uint32) bool {
 	if !ok {
 		return false
 	}
-	stats := StatsFor(ch, s.equipment())
-	wc.Delay, _ = weaponAttackDelay(attackspeed.Tier(wc.AttackTime, stats.AttackSpeed), wc.AttackTime)
-	if !s.lastActionAt.IsZero() && time.Since(s.lastActionAt) < max(wc.Delay, s.ownClip()) {
+	if time.Now().Before(s.nextBasicAttackAt) {
 		return true
 	}
+	stats := StatsFor(ch, s.equipment())
 	p := s.hostileUser(target)
 	if p == nil {
 		return false
@@ -157,10 +156,9 @@ func (s *Session) userAttackSwing(target uint32) bool {
 	if !s.attackMovementAllowed() {
 		return false
 	}
-	s.commitAttackStop(time.Now())
+	s.commitBasicAttack(time.Now(), attackspeed.Tier(wc.AttackTime, stats.AttackSpeed))
 	s.breakCombatForm()
 	s.breakStealth()
-	s.lastActionAt, s.lastCombatAt = time.Now(), time.Now()
 	p.QueueUserHit(pendingUserHit{AttackerID: ch.ID, Stats: stats, Kind: kind})
 	return true
 }
@@ -180,7 +178,7 @@ func (s *Session) tickUserHits() {
 		}
 		if s.applyUserHit(h) {
 			s.dead, s.autoAttack, s.cast = true, false, nil
-			s.lastActionAt = time.Time{}
+			s.lastActionAt, s.nextBasicAttackAt = time.Time{}, time.Time{}
 			s.clearBuffsOnDeath()
 		}
 	}

@@ -68,10 +68,10 @@ There **is also a shared execution deadline** in this original server:
 - The table is 4000, 3000, 2750, 2500, 2250, 2000, 1750, 1500, 1250, 1000 ms.
   No same-ID versus different-ID exception was found in this execution path.
 - Prepared skills first schedule their preparation deadline. After release,
-  `UpdateAttack` writes a new attack interval at `0x48cf71`. GX instead reserves
-  recovery at preparation start and does not charge it again on release.
-- The original stores an absolute deadline. GX re-evaluates elapsed time
-  against the live speed tier; changing speed during recovery differs too.
+  `UpdateAttack` writes a new attack interval at `0x48cf71`. GX starts skill
+  recovery at preparation start and reserves basic attack recovery on release.
+- GX reproduces the stored native deadline for basic attacks. GX skill recovery
+  re-evaluates elapsed time against the live speed tier.
 
 Incoming `0x0511` / `0x0517` requests in `CUser::PacketPC` (`0x46a230`) select
 skill/target without rejecting solely because `+0x1450` is in the future. The

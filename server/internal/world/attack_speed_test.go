@@ -3,7 +3,6 @@ package world
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
-	"github.com/Spelunkern/Shaiya-GX/internal/skilltiming"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 	"testing"
@@ -64,29 +63,34 @@ func TestNativeWeaponAccessoryLapisMasteryAndBuffSpeed(t *testing.T) {
 }
 
 func TestAttackCadenceCannotBeBypassedByRestartOrTargetSwitch(t *testing.T) {
-	skilltiming.AnimationBound = false
-	t.Cleanup(func() { skilltiming.AnimationBound = true })
 	s, _ := gmWireSession(t, db.Character{ID: 990070, MapID: 60094, CurrentHP: 100}, false)
 	old := db.MustDefs()
 	t.Cleanup(func() { db.SetDefsForTest(old) })
-	db.SetDefsForTest(&db.Defs{Items: map[db.ItemKey]*db.ItemDef{{Type: 1, TypeID: 1}: {Type: 1, TypeID: 1, AttackTime: 5}}})
+	db.SetDefsForTest(&db.Defs{Items: map[db.ItemKey]*db.ItemDef{
+		{Type: 1, TypeID: 1}: {Type: 1, TypeID: 1, AttackTime: 5},
+		{Type: 1, TypeID: 2}: {Type: 1, TypeID: 2, AttackTime: 9},
+	}})
 	s.items = []db.Item{{Bag: 0, Slot: 5, Type: 1, TypeID: 1}}
-	for tier := uint8(0); tier <= 9; tier++ {
-		s.buffs = []ActiveBuff{{Effect: typeEffectBuff, Abilities: [3]buffAbility{{Type: 16, Value: int32(tier) - 5}}}}
-		ms, _ := attackspeed.Milliseconds(tier)
-		if d, ok := weaponAttackDelay(tier, 5); !ok || d != time.Duration(ms)*time.Millisecond {
-			t.Fatal("delay mismatch")
+	for tier, ms := range [...]int{4000, 3000, 2750, 2500, 2250, 2000, 1750, 1500, 1250, 1000} {
+		s.nextBasicAttackAt = time.Time{}
+		interval := time.Duration(ms) * time.Millisecond
+		past := time.Now().Add(200*time.Millisecond - interval)
+		s.commitBasicAttack(past, uint8(tier))
+		deadline := past.Add(interval)
+		if !s.nextBasicAttackAt.Equal(deadline) {
+			t.Fatalf("tier %d recovery = %v, want %v", tier, s.nextBasicAttackAt.Sub(past), interval)
 		}
-		s.lastActionAt = time.Now().Add(-time.Duration(ms-100) * time.Millisecond)
-		last := s.lastActionAt
-		// Fake targets must not even reach target lookup while still cooling down.
+		// Equip a faster weapon and change targets without resetting the commitment.
+		s.items[0].TypeID = 2
 		for i := range 200 {
 			s.dispatch(packet.AutoAttackStop, proto.StopAttackPacket())
 			s.dispatch(packet.CharacterMobAutoAttack, proto.MobAttackPacket(uint32(980000+i)))
-			if s.lastActionAt != last || !s.autoAttack {
-				t.Fatalf("tier %d restart bypassed cadence", tier)
+			if !s.autoAttack || !s.userAttackSwing(uint32(990000+i)) ||
+				!s.nextBasicAttackAt.Equal(deadline) || !s.lastActionAt.Equal(past) {
+				t.Fatalf("tier %d restart or equipment change bypassed cadence", tier)
 			}
 		}
+		s.items[0].TypeID = 1
 	}
 	s.cast = &pendingCast{}
 	if s.speeds().attack != 255 || s.autoAttackSwing(980000) || s.userAttackSwing(980000) {
@@ -96,6 +100,20 @@ func TestAttackCadenceCannotBeBypassedByRestartOrTargetSwitch(t *testing.T) {
 	s.buffs = []ActiveBuff{{Effect: typeEffectDebuff, Detail: detailStun}}
 	if s.autoAttackSwing(980000) {
 		t.Fatal("stun allowed attack")
+	}
+}
+
+func TestBasicAttackWakeUsesNativeDeadline(t *testing.T) {
+	now := time.Now()
+	s := &Session{autoAttack: true, lastActionAt: now.Add(-time.Second)}
+	s.clipFloorAt, s.clipFloor = s.lastActionAt, 5*time.Second
+	s.nextBasicAttackAt = now.Add(-time.Millisecond)
+	if got := s.nextWake(); got != minWake {
+		t.Fatalf("auto attack stayed asleep after its deadline: %v", got)
+	}
+	s.nextBasicAttackAt = now.Add(time.Second)
+	if got := s.nextWake(); got != loopTick {
+		t.Fatalf("auto attack woke before its deadline: %v", got)
 	}
 }
 

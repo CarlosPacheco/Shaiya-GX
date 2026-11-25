@@ -18,17 +18,16 @@ one-second *remaining* portion of a longer cooldown. Entry snapshots, server
 reuse validation/persistence, confirmed client timers and action-bar duration
 use this same rule. Mob AI reuse is unchanged.
 
-Basic attacks, skills and combos now use **one shared attack-speed action clock**.
-The live server index selects the native interval: 4000ms unarmed, 2000ms Normal,
-1500ms Fast, 1250ms Very Fast and **1000ms Extremely Fast**. The full 0–9 table is
-in [Attack speed](wiki/attack-speed.md). Equipment, mastery, haste and slows affect
-this same recovery immediately. Ordinary alternation and stop/start requests
-cannot bypass it; the spin follow-up exception below is intentional. The temporary fixed 300ms spell interval has been removed.
+Basic attacks use the absolute server deadline from the
+[original attack-speed table](wiki/attack-speed.md). GX skill recovery uses the
+live attack index, the weapon-relative animation rate and any clip floor set by
+the previous instant skill. `GX_ANIMATION_CADENCE=off` uses the native interval
+in place of the weapon-relative interval for skill recovery.
 
-An accepted instant skill reserves the action clock at release. A prepared skill
-reserves it at the start; its release completes without charging a second full
-attack interval. Authored preparation times and longer per-skill cooldowns still
-apply. The separate 800ms movement stop is unchanged.
+An instant skill starts skill recovery at release. For a prepared spell, skill
+recovery starts at the beginning of preparation. A successful release of either
+kind also reserves the next basic attack interval. Authored preparation and
+per-skill reuse still apply. Both actions trigger the 800 ms movement pause.
 
 Wind Spin and Reinforced Wind Spin repeat their native action-102 cycle for
 up to two seconds. After the first contact (ALT frame 4 at 30 fps), another
@@ -53,8 +52,8 @@ obstruction or disabling effect can stop travel. Matching client/server builds
 are required. See [the recovered state machines](spell-fluidity-research.md).
 
 The client retains only the latest spell pressed during recovery. It stops basic
-auto-repeat without clearing the shared clock, then revalidates and sends that
-spell when recovery permits it. This avoids automatic basics consuming every
+auto-repeat, then revalidates and sends that spell when skill recovery
+permits it. This avoids automatic basics consuming every
 available action slot. Manual movement, death, mounting, expiry or a changed
 non-self recipient cancel the queued intent; repeated keys replace it rather than
 building a burst. Buff cancellation and ordinary item reuse are unaffected.

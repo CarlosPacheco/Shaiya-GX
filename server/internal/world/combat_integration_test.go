@@ -933,7 +933,7 @@ func TestUserAttack(t *testing.T) {
 	if n := len(enemy.player.userHits); n != 1 {
 		t.Fatalf("queued %d hits, want 1", n)
 	}
-	attacker.lastActionAt = time.Time{}
+	attacker.nextBasicAttackAt = time.Time{}
 	if attacker.userAttackSwing(ally.char.ID) {
 		t.Fatal("swing on an ally kept the attack")
 	}

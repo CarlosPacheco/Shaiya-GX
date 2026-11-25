@@ -60,8 +60,9 @@ func TestAttackSpeedAgainstIsolatedGX(t *testing.T) {
 		// Check three intervals as one window; strict per-swing cooldowns are
 		// independently covered by server world tests.
 		span := lastSwing.Sub(first)
-		interval, _ := skilltiming.IntervalFor(a.Self.Speed.Attack, 5, true)
+		interval, _ := skilltiming.Interval(a.Self.Speed.Attack)
 		expected := 3 * interval
+		t.Logf("tier %d: three basic intervals took %v (native %v)", a.Self.Speed.Attack, span, expected)
 		if span < expected-250*time.Millisecond || span > expected+1500*time.Millisecond {
 			t.Fatalf("tier %d three-interval cadence %v expected %v", a.Self.Speed.Attack, span, expected)
 		}
@@ -91,5 +92,5 @@ func TestAttackSpeedAgainstIsolatedGX(t *testing.T) {
 			t.Fatal("GM control accepted a non-admin request")
 		}
 	}
-	t.Log("encrypted PvP: native weapon + Flash + mastery + ring + active buff, viewer updates and animation-bound cadence survive stop/start packet floods")
+	t.Log("encrypted PvP: native weapon + Flash + mastery + ring + active buff, viewer updates and native basic-attack cadence survive stop/start packet floods")
 }
