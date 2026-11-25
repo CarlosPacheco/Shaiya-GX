@@ -29,6 +29,12 @@ Effects can use the same texture bindings with indirect drawing. Effect
 batches preserve draw order, blend factors, animated geometry and each
 material's wrap mode. Texture views share the original texel storage.
 
+Crowded characters and monsters can share skinned draw batches while keeping
+individual bone palettes and material settings. Without bindless, each
+indirect skinned submission can use up to eight bound textures. A monster
+with active transparent effects is drawn at its original position in the
+draw sequence.
+
 ## Asynchronous field loading
 
 Live network gameplay enables two CPU workers for file reads, texture decoding,

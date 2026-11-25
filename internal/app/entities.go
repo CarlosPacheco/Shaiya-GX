@@ -344,14 +344,9 @@ func (a *App) drawRemotePlayers() {
 		}
 	}
 	scene.PrepareCrowdCloth(v.visiblePlayerCloth, a.scene3d)
-	flush := func() {
-		v.crowdBatch.Draw(a.skinner, a.scene3d, v.crowdCharacters)
-		clear(v.crowdCharacters)
-		v.crowdCharacters = v.crowdCharacters[:0]
-	}
 	for i, character := range v.visiblePlayers {
 		if mount := v.visiblePlayerMounts[i]; mount != nil {
-			flush()
+			a.flushCharacterBatch()
 			mount.Draw(a.skinner, a.scene3d)
 			mount.DrawEffects(a.scene3d)
 		}
@@ -359,10 +354,20 @@ func (a *App) drawRemotePlayers() {
 			v.crowdCharacters = append(v.crowdCharacters, character)
 		}
 	}
-	flush()
+	a.flushCharacterBatch()
 	clear(v.visiblePlayers)
 	clear(v.visiblePlayerMounts)
 	clear(v.visiblePlayerCloth)
+}
+
+func (a *App) flushCharacterBatch() {
+	v := a.wv
+	if len(v.crowdCharacters) == 0 {
+		return
+	}
+	v.crowdBatch.Draw(a.skinner, a.scene3d, v.crowdCharacters)
+	clear(v.crowdCharacters)
+	v.crowdCharacters = v.crowdCharacters[:0]
 }
 
 // projectName maps a world point to the UI's top-left pixel coordinates.

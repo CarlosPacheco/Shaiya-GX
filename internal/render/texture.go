@@ -32,12 +32,12 @@ const drawTextureLimit = 16
 
 type drawTextures []uint32
 
-func (t *drawTextures) slot(id uint32) (int, bool) {
+func (t *drawTextures) slot(id uint32, limit int) (int, bool) {
 	if index := slices.Index(*t, id); index >= 0 {
 		return index, true
 	}
 	index := len(*t)
-	if index == drawTextureLimit {
+	if index == limit {
 		return 0, false
 	}
 	*t = append(*t, id)

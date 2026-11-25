@@ -18,6 +18,12 @@ func TestSkinIndirectKeepsIndexWidthAndMaterialOrderGL(t *testing.T) {
 	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
 		t.Skip("requires local GL context")
 	}
+	t.Run("automatic", func(t *testing.T) { testSkinIndirectGL(t, false) })
+	t.Run("bound", func(t *testing.T) { testSkinIndirectGL(t, true) })
+}
+
+func testSkinIndirectGL(t *testing.T, disableBindless bool) {
+	t.Helper()
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	const size = 80
@@ -26,10 +32,10 @@ func TestSkinIndirectKeepsIndexWidthAndMaterialOrderGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer win.Close()
-	if err = Init(true); err != nil {
+	if err = InitWithOptions(InitOptions{Debug: true, DisableBindless: disableBindless}); err != nil {
 		t.Fatal(err)
 	}
-	if !skinIndirectSupported {
+	if !skinMultidrawSupported {
 		t.Skip("driver uses ordinary instancing")
 	}
 	s, err := NewScene3D()
@@ -43,6 +49,9 @@ func TestSkinIndirectKeepsIndexWidthAndMaterialOrderGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer k.Delete()
+	if k.indirect == nil || (disableBindless && !k.indirect.boundCrowdTextures) {
+		t.Fatal("expected an indirect skin program")
+	}
 	vertices := []SkinVertex{
 		{Pos: V3{-.15, -.11, .5}, Normal: V3{0, 0, 1}, UV: [2]float32{1.25, .5}, Weight: 1},
 		{Pos: V3{0, .21, .5}, Normal: V3{0, 0, 1}, UV: [2]float32{1.25, .5}, Weight: 1},
@@ -70,6 +79,9 @@ func TestSkinIndirectKeepsIndexWidthAndMaterialOrderGL(t *testing.T) {
 		world[12] = -.66 + float32(i)*.44
 		instance := s.CrowdSkinInstance(world)
 		instance.Palette[1] = 1
+		if i == 1 {
+			instance.Palette[2] = int32(math.Float32bits(.37))
+		}
 		instances = append(instances, instance)
 	}
 	palettes := []M4{Identity()}

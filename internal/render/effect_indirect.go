@@ -91,10 +91,10 @@ func (p *effectIndirect) plan(draws []queuedEffect) bool {
 			if view == nil {
 				return false
 			}
-			slot, ok := p.runs[len(p.runs)-1].textures.slot(view.id)
+			slot, ok := p.runs[len(p.runs)-1].textures.slot(view.id, drawTextureLimit)
 			if !ok {
 				p.newRun(draw)
-				slot, _ = p.runs[len(p.runs)-1].textures.slot(view.id)
+				slot, _ = p.runs[len(p.runs)-1].textures.slot(view.id, drawTextureLimit)
 			}
 			textureRef = uint64(slot)
 		} else {

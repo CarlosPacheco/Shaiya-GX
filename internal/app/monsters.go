@@ -250,20 +250,30 @@ func (a *App) updatePlayerAnimationRates() {
 }
 
 func (a *App) drawMonsters() {
-	frustum := render.ViewFrustum(a.scene3d.View, a.scene3d.VisibilityProjection())
+	s := a.scene3d
+	v := a.wv
+	frustum := render.ViewFrustum(s.View, s.VisibilityProjection())
+	effects := a.clientSettings().SkillEffects && !s.Shadow
 	for id, e := range a.state.Entities {
 		if e.Kind != game.KindMob {
 			continue
 		}
-		if cached := a.wv.mobs[id]; cached != nil && cached.actor != nil {
-			if cached.actor.CorpseFade < 1 && cached.actor.Visible(frustum, a.scene3d.ClipPlane) {
-				cached.actor.Draw(a.skinner, a.scene3d)
-				if a.clientSettings().SkillEffects {
-					cached.actor.DrawEffects(a.scene3d)
+		if cached := v.mobs[id]; cached != nil && cached.actor != nil {
+			mob := cached.actor
+			if mob.CorpseFade < 1 && mob.Visible(frustum, s.ClipPlane) {
+				if effects && mob.HasDrawEffects() {
+					// Keep transparent effects in their original position
+					// relative to the surrounding opaque geometry.
+					a.flushCharacterBatch()
+					mob.Draw(a.skinner, s)
+					mob.DrawEffects(s)
+				} else {
+					v.crowdCharacters = append(v.crowdCharacters, mob.Character)
 				}
 			}
 		}
 	}
+	a.flushCharacterBatch()
 }
 
 // Phoenix's deliberate alternative to native corpse sinking: hold the death

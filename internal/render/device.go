@@ -15,6 +15,7 @@ import (
 )
 
 var skinIndirectSupported bool
+var skinMultidrawSupported bool
 var mapIndirectSupported bool
 var drawParametersSupported bool
 var sceneStorageSupported bool
@@ -23,8 +24,9 @@ var skinCrowdSupported bool
 func configureDrawPaths(bindless, drawParameters bool, vertexBlocks, fragmentBlocks int32) {
 	drawParametersSupported = drawParameters
 	mapIndirectSupported = drawParameters && vertexBlocks >= 1 && fragmentBlocks >= 1
-	sceneStorageSupported = vertexBlocks >= 4 // scene effects and cloth
-	skinCrowdSupported = vertexBlocks >= 2    // transforms and bone palettes
+	sceneStorageSupported = vertexBlocks >= 4                    // scene effects and cloth
+	skinCrowdSupported = vertexBlocks >= 2                       // transforms and bone palettes
+	skinMultidrawSupported = drawParameters && vertexBlocks >= 3 // per-draw materials
 	skinIndirectSupported = bindless && drawParametersSupported && sceneStorageSupported && fragmentBlocks >= 1
 }
 

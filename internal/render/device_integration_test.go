@@ -78,10 +78,12 @@ func TestGXOpenGLCommandsAndDrawPathsGL(t *testing.T) {
 	oldIndirect, oldDrawParameters := skinIndirectSupported, drawParametersSupported
 	oldSceneStorage, oldSkinCrowd := sceneStorageSupported, skinCrowdSupported
 	oldMapIndirect := mapIndirectSupported
+	oldSkinMultidraw := skinMultidrawSupported
 	defer func() {
 		skinIndirectSupported, drawParametersSupported = oldIndirect, oldDrawParameters
 		sceneStorageSupported, skinCrowdSupported = oldSceneStorage, oldSkinCrowd
 		mapIndirectSupported = oldMapIndirect
+		skinMultidrawSupported = oldSkinMultidraw
 	}()
 
 	configureDrawPaths(true, true, 8, 8)
@@ -89,7 +91,7 @@ func TestGXOpenGLCommandsAndDrawPathsGL(t *testing.T) {
 		t.Fatal("full driver capabilities did not enable accelerated paths")
 	}
 	configureDrawPaths(false, true, 8, 8)
-	if skinIndirectSupported || !drawParametersSupported || !mapIndirectSupported {
+	if skinIndirectSupported || !drawParametersSupported || !mapIndirectSupported || !skinMultidrawSupported {
 		t.Fatal("missing bindless support changed independent draw-parameter support")
 	}
 

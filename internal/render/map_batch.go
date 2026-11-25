@@ -139,7 +139,7 @@ func (b *MapBatch) newRun(m *Mesh) {
 
 func (r *mapDrawRun) textureSlots(diffuse, light *Texture) (uint64, uint64, bool) {
 	textures := r.textures
-	d, ok := textures.slot(diffuse.ID)
+	d, ok := textures.slot(diffuse.ID, drawTextureLimit)
 	if !ok {
 		return 0, 0, false
 	}
@@ -147,7 +147,7 @@ func (r *mapDrawRun) textureSlots(diffuse, light *Texture) (uint64, uint64, bool
 		r.textures = textures
 		return uint64(d), 0, true
 	}
-	l, ok := textures.slot(light.ID)
+	l, ok := textures.slot(light.ID, drawTextureLimit)
 	if !ok {
 		return 0, 0, false
 	}
