@@ -503,6 +503,7 @@ func (s *Session) tick(idle bool) {
 	if time.Since(s.lastQuestCheck) >= 5*time.Second {
 		s.lastQuestCheck = time.Now()
 		s.questTimers()
+		s.syncQuestIDs()
 	}
 	s.processSpinCombo()
 	s.processPendingSkill()

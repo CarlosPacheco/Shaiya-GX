@@ -17,7 +17,7 @@ The interface is being reconstructed incrementally from original EP5 artwork and
 | Options | Menu and six subpages; classic glow/brightness/detail/distance sliders, cloak/helmet visibility, audio, mouse, chat, editable hotkeys and monitor resolution selection | Other service controls |
 | Party/raid | Member frames, invitations, leader and selection flows, member effect icons (`0x50abd0`, packets 0x0C04/0x0C05/0x0C0E/0x0C10), union (raid) portrait/slot menus, create/config window and event notices (`0x47ebe0`, `0x48e050`) | Complete badges and visual variants |
 | Player context | Original classic TipBox frame, SysMsg rows, hover, character/target/party picking, whisper focus and supported party/trade/duel/guild actions | Inspect, follow, personal shops and remaining social windows/services |
-| Quests | Original U button, journal artwork, state icons, seven 31px rows, three scrollbars, selection and confirmed abandonment; NPC dialogs/rewards/progress and independent objective tracker | Remaining markers |
+| Quests | Original U button, journal artwork, state icons, seven 31px rows, three scrollbars, selection and confirmed abandonment; NPC dialogs/rewards/progress | Native tracker and remaining markers |
 | Trade/duels | Wager/item/money interfaces and confirmation flows | Complete comparison across all states |
 | Auction House | Realm-wide NPC market with four tabs, posting, bidding, buyout, claims and watched listings | Legacy visual and protocol details tracked in [Auction House research](auction-house-research.md) |
 | Guild | Original G button, single roster sheet, native columns/rows, sorting, applicants, rank actions and notice editor; directory/creation/ranking flows; Buddy, Block and Search Party with native transport | Complete comparison of rare social states and remaining presentation |
@@ -621,10 +621,6 @@ writes and the current normal/reversed-depth convention before drawing. A prior
 UI, shadow or transparent emitter pass cannot make the next actor ignore terrain
 or leave its first material without depth writes. The regression includes the
 native Windtail Forest Wood Spirit model (ID 2025) and other Windtail creatures.
-
-## Quest tracker
-
-Click a quest in the U journal to open the tracker. It stays visible when the journal closes. Click a title to expand or collapse its objectives, scroll for more quests, and drag the header to move it. The tracker uses confirmed progress and current bag contents. The Remember Layout setting saves its position separately from the journal.
 
 ## Map-wide quest availability
 

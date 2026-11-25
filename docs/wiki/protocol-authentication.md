@@ -216,7 +216,7 @@ func SelectServerPacket(serverID uint8, version uint32) []byte {
 
 Declarations: [packet.GameHandshake](../../server/internal/packet/packet.go#L215), [proto.GameHandshake](../../internal/proto/opcodes.go#L203).
 
-**C→S receive adapters:** [frame (server/internal/world/session.go)](../../server/internal/world/session.go#L606)
+**C→S receive adapters:** [frame (server/internal/world/session.go)](../../server/internal/world/session.go#L607)
 
 **S→C serializers:** [buildWorldHandshake (server/internal/world/protocol.go)](../../server/internal/world/protocol.go#L16)
 
