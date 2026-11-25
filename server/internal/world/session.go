@@ -56,6 +56,7 @@ type Session struct {
 	movement          playerMovement
 	oxygen            oxygenState
 	questNPCCatalog   questNPCCatalogState
+	questMobCatalog   questMobCatalogState
 	gmTurbo           bool
 	gmImmune          bool
 	gmConcealed       bool
@@ -500,6 +501,7 @@ func (s *Session) tick(idle bool) {
 	s.tickOxygen(now)
 	s.recoveryTick()
 	s.syncQuestNPCCatalog(false)
+	s.syncQuestMobCatalog(false)
 	if time.Since(s.lastQuestCheck) >= 5*time.Second {
 		s.lastQuestCheck = time.Now()
 		s.questTimers()
@@ -1009,6 +1011,7 @@ func (s *Session) handleMapLoaded() {
 	s.placeView()
 	s.sendPlayerFeedback(proto.PlayerSpawnFeedback)
 	s.syncQuestNPCCatalog(true)
+	s.syncQuestMobCatalog(true)
 	near := EntitiesInView(ch.MapID, cellFor(ch.PosX, ch.PosZ))
 	others := s.player.knownIDs(viewUser)
 	s.log.Printf("GX Server World map loaded map=%d npcs=%d mobs=%d players=%d", ch.MapID, len(near.NPCs), len(near.Mobs), len(others))

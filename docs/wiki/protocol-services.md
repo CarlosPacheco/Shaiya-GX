@@ -16,7 +16,7 @@ Declarations: [packet.ShopBuy](../../server/internal/packet/packet.go#L78), [pro
 
 **S→C serializers:** [buildShopBuyResult (server/internal/world/npcquest.go)](../../server/internal/world/npcquest.go#L130)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L748)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L756)
 
 ### Wire layouts and validation
 
@@ -87,7 +87,7 @@ Declarations: [packet.ShopSell](../../server/internal/packet/packet.go#L148), [p
 
 **S→C serializers:** [buildShopSellResult (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L246)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L748)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L756)
 
 ### Wire layouts and validation
 
@@ -157,7 +157,7 @@ Declarations: [packet.WarehouseItemList](../../server/internal/packet/packet.go#
 
 **S→C serializers:** [buildWarehouseItemList (server/internal/world/warehouse.go)](../../server/internal/world/warehouse.go#L27)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L997), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L42)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1005), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L42)
 
 ### Wire layouts and validation
 
@@ -242,7 +242,7 @@ Declarations: [packet.GemAdd](../../server/internal/packet/packet.go#L223), [pro
 
 **S→C serializers:** [buildGemAddResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L188)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L603)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L611)
 
 ### Wire layouts and validation
 
@@ -335,7 +335,7 @@ Declarations: [packet.GemRemove](../../server/internal/packet/packet.go#L224), [
 
 **S→C serializers:** [planGemRemove (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L366)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L554)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L562)
 
 ### Wire layouts and validation
 
@@ -540,7 +540,7 @@ Declarations: [packet.CloakAdd](../../server/internal/packet/packet.go#L225), [p
 
 **S→C serializers:** [buildEmblemAddResult (server/internal/world/emblem.go)](../../server/internal/world/emblem.go#L15)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L575)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L583)
 
 ### Wire layouts and validation
 
@@ -619,7 +619,7 @@ Declarations: [packet.CloakRemove](../../server/internal/packet/packet.go#L226),
 
 **S→C serializers:** [planCloakRemove (server/internal/world/emblem.go)](../../server/internal/world/emblem.go#L64)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L592)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L600)
 
 ### Wire layouts and validation
 
@@ -700,7 +700,7 @@ Declarations: [packet.EnchantAdd](../../server/internal/packet/packet.go#L221), 
 
 **S→C serializers:** [buildEnchantResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L37)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L527)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L535)
 
 ### Wire layouts and validation
 
@@ -789,7 +789,7 @@ Declarations: [packet.ItemCompose](../../server/internal/packet/packet.go#L222),
 
 **S→C serializers:** [buildComposeResult (server/internal/world/crafting.go)](../../server/internal/world/crafting.go#L501)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L511)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L519)
 
 ### Wire layouts and validation
 

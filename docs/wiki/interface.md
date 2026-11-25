@@ -645,7 +645,11 @@ Quest giver and ready turn-in markers cover the complete map independently of
 NPC visibility range. Their eligibility is cached and refreshed on quest,
 character, relevant inventory, catalog or minimum-time changes; moving the
 camera or player does not rescan every quest. Distant NPCs remain metadata, not
-3D entities. Party and nearby creature-objective positions stay live overlays.
+3D entities. Unfinished monster objectives mark spawn sites across the current
+map, including event spawns while enabled. The compact minimap clips markers to
+its visible area. Objective markers use `radar_part.png` when present, with
+`radar_party.png` for older packs. Changing maps resets the spawn catalog, and
+finishing or abandoning the quest clears its markers.
 
 Cooldowns use a red sweep and centered yellow seconds across item/skill icons,
 without flashing when ready. Reuse timing remains server-confirmed.

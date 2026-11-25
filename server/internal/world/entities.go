@@ -209,6 +209,10 @@ type mapShard struct {
 	aiPendingSummons int
 	npcRevision      atomic.Uint64
 	questNPCs        questNPCCatalogCache
+	questMobSpawns   []proto.QuestMobSpawn
+	questEventSpawns map[uint32]proto.QuestMobSpawn
+	questMobRevision atomic.Uint64
+	questMobCatalog  [][]byte
 	mu               sync.Mutex
 	entities         MapEntities
 }
@@ -1027,6 +1031,14 @@ func AddEntities(mapID uint16, e MapEntities) {
 	s.entities.NPCs = append(s.entities.NPCs, e.NPCs...)
 	if len(e.NPCs) > 0 {
 		s.npcRevision.Add(1)
+	}
+	for _, mob := range e.Mobs {
+		if mob.MobID != 0 {
+			s.questMobSpawns = append(s.questMobSpawns, proto.QuestMobSpawn{MobID: mob.MobID, X: mob.PosX, Z: mob.PosZ})
+		}
+	}
+	if len(e.Mobs) > 0 {
+		s.invalidateQuestMobCatalog()
 	}
 	s.entities.Mobs = append(s.entities.Mobs, e.Mobs...)
 	s.entities.Portals = append(s.entities.Portals, e.Portals...)

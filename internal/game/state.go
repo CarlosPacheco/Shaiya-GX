@@ -120,6 +120,10 @@ type State struct {
 	PhysicsTime            float64
 	MapQuestNPCs           []proto.QuestNPC
 	MapQuestNPCsReady      bool
+	MapQuestMobs           []proto.QuestMobSpawn
+	MapQuestMobsReady      bool
+	questMobStaging        []proto.QuestMobSpawn
+	questMobStagingActive  bool
 	QuestMapRevision       uint64
 	QuestInventoryRevision uint64
 	questNPCStaging        []proto.QuestNPC
@@ -278,6 +282,10 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		}
 		for _, limit := range limits {
 			s.OJLimits[[2]uint8{limit.Type, limit.TypeID}] = limit
+		}
+	case proto.GXQuestMobs:
+		if err := s.applyQuestMobs(p); err != nil {
+			return fail(err)
 		}
 	case proto.GXQuestNPCs:
 		if err := s.applyQuestNPCs(p); err != nil {
@@ -1184,6 +1192,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			s.SkillBarReady = false
 			s.MapQuestNPCs, s.MapQuestNPCsReady = nil, false
 			s.questNPCStaging, s.questNPCStagingActive = nil, false
+			s.resetQuestMobs()
 			s.GroundItems = map[uint32]proto.GroundItem{}
 			s.Entities = map[uint32]*Entity{}
 			s.MyShop, s.ShopView, s.ShopSigns = MyShopState{}, ShopViewState{}, nil
@@ -1211,6 +1220,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 				s.Relics = nil // a map without relics sends no 0x2101
 				s.MapQuestNPCs, s.MapQuestNPCsReady = nil, false
 				s.questNPCStaging, s.questNPCStagingActive = nil, false
+				s.resetQuestMobs()
 				s.Guild.RankingPointsKnown = false
 				s.GroundItems = map[uint32]proto.GroundItem{}
 				s.Entities = map[uint32]*Entity{}
