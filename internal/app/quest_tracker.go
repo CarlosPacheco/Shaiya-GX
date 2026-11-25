@@ -95,14 +95,14 @@ func (a *App) questTrackerLines(def sdata.Quest, q proto.ActiveQuest) []string {
 			if def.MobCounts[i] == 0 {
 				continue
 			}
-			if a.assets == nil {
-				continue
+			// 0x4dc9b0 still advances the row when 0x460900 finds no monster.
+			line := ""
+			if a.assets != nil {
+				if m, err := a.assets.MonsterDefinition(id); err == nil && m.Name != "" {
+					line = count(m.Name+" "+ui.Tr(439), q.Counters[i], def.MobCounts[i])
+				}
 			}
-			m, err := a.assets.MonsterDefinition(id)
-			if err != nil || m.Name == "" {
-				continue // 0x460900 returned no monster: no row
-			}
-			lines = append(lines, count(m.Name+" "+ui.Tr(439), q.Counters[i], def.MobCounts[i]))
+			lines = append(lines, line)
 		}
 	}
 	for _, item := range def.FarmItems {
@@ -170,6 +170,7 @@ func (a *App) updateQuestTracker(in *platform.Input, w, h int) bool {
 		v.expanded[id] = !v.expanded[id]
 		v.cachedState = nil
 		a.refreshQuestTracker()
+		a.playUI() // 0x4dc540 plays sound 0x1e, registered as ui_button001 in 0x40b2d0
 		return true
 	}
 	x, y := q.Origin(w, h)

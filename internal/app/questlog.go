@@ -119,6 +119,7 @@ func (a *App) updateQuestLog(in *platform.Input, w, h int) bool {
 	if row >= 0 {
 		v.selected = ids[row]
 		a.showQuestTracker(v.selected, w, h)
+		a.playUI() // 0x4ffb00 plays sound 0x1e (ui_button001) on a row press
 	}
 	if previous != v.selected {
 		a.questUI.ResetDescriptionScroll()

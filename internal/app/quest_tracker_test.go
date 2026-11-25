@@ -68,3 +68,11 @@ func TestQuestTrackerFollowsOriginalFlow(t *testing.T) {
 		t.Fatal("close button must close the window and keep per-quest expansion")
 	}
 }
+
+func TestQuestTrackerKeepsUnknownMonsterRow(t *testing.T) {
+	a := trackerTestApp()
+	def := sdata.Quest{EndType: 2, MobIDs: [2]uint16{9, 10}, MobCounts: [2]uint8{1, 2}}
+	if lines := a.questTrackerLines(def, proto.ActiveQuest{}); len(lines) != 2 || lines[0] != "" || lines[1] != "" {
+		t.Fatalf("unknown monsters must keep their rows: %q", lines)
+	}
+}
