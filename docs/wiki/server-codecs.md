@@ -2159,6 +2159,15 @@ func DecodeItemAdd(p []byte) (InventoryItem, error) {
 ```
 
 ```go
+func DecodeEquipRefusal(p []byte) (typ, id uint8, err error) {
+	if len(p) != 4 || Op(p) != GXEquipRefusal || p[2] == 0 || p[3] == 0 {
+		return 0, 0, fmt.Errorf("invalid equipment refusal")
+	}
+	return p[2], p[3], nil
+}
+```
+
+```go
 func ItemMovePacket(srcBag, srcSlot, dstBag, dstSlot uint8) []byte {
 	w := NewWriter(ItemBagToBag)
 	w.Raw([]byte{srcBag, srcSlot, dstBag, dstSlot})

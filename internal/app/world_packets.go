@@ -70,6 +70,15 @@ func (a *App) applyWorldPacket(p []byte) {
 	if a.state == nil {
 		return
 	}
+	if proto.Op(p) == proto.GXEquipRefusal {
+		if typ, id, err := proto.DecodeEquipRefusal(p); err == nil {
+			if item := a.itemsItem(typ, id); item != nil {
+				// EP5.4 0x4df4dd uses native SysMsg 229 in error chat style 17.
+				a.systemMessage(17, 229, map[string]string{"i": item.Name})
+			}
+		}
+		return
+	}
 	wasRaid := a.state.Party.Raid
 	previousForm := a.state.PlayerForms[a.state.SelfID]
 	var equipmentSoundType uint8

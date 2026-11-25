@@ -137,7 +137,7 @@ Declarations: [packet.ItemBagToBag](../../server/internal/packet/packet.go#L85),
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L105)
 
-**S→C serializers:** [buildBagToBag (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L79)
+**S→C serializers:** [buildBagToBag (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L88)
 
 **Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L48), [Apply (internal/game/state.go)](../../internal/game/state.go#L997), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L31)
 
@@ -147,7 +147,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildBagToBag — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L79)
+[Source definition](../../server/internal/world/inventory.go#L88)
 
 ```go
 func buildBagToBag(srcBag, srcSlot uint8, src *db.Item, destBag, destSlot uint8, dest *db.Item) []byte {
@@ -162,7 +162,7 @@ func buildBagToBag(srcBag, srcSlot uint8, src *db.Item, destBag, destSlot uint8,
 
 <details><summary>ItemMovePacket — internal/proto/inventory.go</summary>
 
-[Source definition](../../internal/proto/inventory.go#L60)
+[Source definition](../../internal/proto/inventory.go#L70)
 
 ```go
 func ItemMovePacket(srcBag, srcSlot, dstBag, dstSlot uint8) []byte {
@@ -207,7 +207,7 @@ Declarations: [packet.AddItem](../../server/internal/packet/packet.go#L86), [pro
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L103)
 
-**S→C serializers:** [buildAddItem (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L86), [buildAddItemError (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L98), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
+**S→C serializers:** [buildAddItem (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L95), [buildAddItemError (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L107), [idPacket (internal/proto/world.go)](../../internal/proto/world.go#L39)
 
 **Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L48), [Apply (internal/game/state.go)](../../internal/game/state.go#L997), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L52)
 
@@ -217,7 +217,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildAddItem — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L86)
+[Source definition](../../server/internal/world/inventory.go#L95)
 
 ```go
 func buildAddItem(it *db.Item) []byte {
@@ -231,7 +231,7 @@ func buildAddItem(it *db.Item) []byte {
 
 <details><summary>buildAddItemError — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L98)
+[Source definition](../../server/internal/world/inventory.go#L107)
 
 ```go
 func buildAddItemError(code uint8) []byte {
@@ -290,7 +290,7 @@ Declarations: [packet.RemoveItem](../../server/internal/packet/packet.go#L87), [
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L101)
 
-**S→C serializers:** [buildRemoveItem (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L118)
+**S→C serializers:** [buildRemoveItem (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L127)
 
 **Client receive reducers:** [questMapInventoryChanged (internal/game/quest_map.go)](../../internal/game/quest_map.go#L48), [Apply (internal/game/state.go)](../../internal/game/state.go#L997), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L66)
 
@@ -300,7 +300,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildRemoveItem — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L118)
+[Source definition](../../server/internal/world/inventory.go#L127)
 
 ```go
 func buildRemoveItem(it *db.Item, full bool) []byte {
@@ -1245,7 +1245,7 @@ Declarations: [packet.SetMoney](../../server/internal/packet/packet.go#L40), [pr
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [buildSetMoney (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L92)
+**S→C serializers:** [buildSetMoney (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L101)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L997), [applyInventoryPacket (internal/game/state_inventory_packets.go)](../../internal/game/state_inventory_packets.go#L76)
 
@@ -1255,7 +1255,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildSetMoney — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L92)
+[Source definition](../../server/internal/world/inventory.go#L101)
 
 ```go
 func buildSetMoney(money uint32) []byte {
@@ -1946,7 +1946,7 @@ Source notes: empty; SysMsg 862, Game.exe 0x56b820
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [handleChangeAppearance (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L460)
+**S→C serializers:** [handleChangeAppearance (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L469)
 
 **Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
 
@@ -1956,7 +1956,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>handleChangeAppearance — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L460)
+[Source definition](../../server/internal/world/inventory.go#L469)
 
 ```go
 func (s *Session) handleChangeAppearance(p []byte) {

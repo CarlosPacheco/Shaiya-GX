@@ -564,7 +564,7 @@ func buildMapAddItem(m *MapItem) []byte {
 
 <details><summary>DecodeGroundItem — internal/proto/inventory.go</summary>
 
-[Source definition](../../internal/proto/inventory.go#L74)
+[Source definition](../../internal/proto/inventory.go#L84)
 
 ```go
 func DecodeGroundItem(p []byte) (m GroundItem, err error) {

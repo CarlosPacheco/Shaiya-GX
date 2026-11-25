@@ -1923,48 +1923,49 @@ Direct GX dependencies: `server/internal/db`.
 
 [server/internal/world/inventory.go](../../server/internal/world/inventory.go#L1)
 
-Direct GX dependencies: `server/internal/db`, `server/internal/packet`.
+Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`inventoryChunk`](../../server/internal/world/inventory.go#L13)<br>`const inventoryChunk = 50` | See the source definition and the subsystem ownership contract. |
-| [`buildInventoryPackets`](../../server/internal/world/inventory.go#L15)<br>`func buildInventoryPackets(items []db.Item) [][]byte` | See the source definition and the subsystem ownership contract. |
-| [`isValidItemPosition`](../../server/internal/world/inventory.go#L40)<br>`func isValidItemPosition(bag, slot uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`findItem`](../../server/internal/world/inventory.go#L42)<br>`func findItem(items []db.Item, bag, slot uint8) int` | See the source definition and the subsystem ownership contract. |
-| [`findItemByUID`](../../server/internal/world/inventory.go#L51)<br>`func findItemByUID(items []db.Item, uid int64) int` | See the source definition and the subsystem ownership contract. |
-| [`writeSlot`](../../server/internal/world/inventory.go#L60)<br>`func writeSlot(w *packet.Writer, bag, slot uint8, it *db.Item)` | See the source definition and the subsystem ownership contract. |
-| [`buildBagToBag`](../../server/internal/world/inventory.go#L79)<br>`func buildBagToBag(srcBag, srcSlot uint8, src *db.Item, destBag, destSlot uint8, dest *db.Item) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildAddItem`](../../server/internal/world/inventory.go#L86)<br>`func buildAddItem(it *db.Item) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildSetMoney`](../../server/internal/world/inventory.go#L92)<br>`func buildSetMoney(money uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildAddItemError`](../../server/internal/world/inventory.go#L98)<br>`func buildAddItemError(code uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildUseItemResult`](../../server/internal/world/inventory.go#L105)<br>`func buildUseItemResult(characterID uint32, it *db.Item) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildRemoveItem`](../../server/internal/world/inventory.go#L118)<br>`func buildRemoveItem(it *db.Item, full bool) []byte` | See the source definition and the subsystem ownership contract. |
-| [`freeInventorySlots`](../../server/internal/world/inventory.go#L132)<br>`func freeInventorySlots(items []db.Item) [][2]uint8` | See the source definition and the subsystem ownership contract. |
-| [`itemsMatch`](../../server/internal/world/inventory.go#L144)<br>`func itemsMatch(a, b *db.Item) bool` | See the source definition and the subsystem ownership contract. |
-| [`itemsCanStack`](../../server/internal/world/inventory.go#L149)<br>`func itemsCanStack(src, dest *db.Item) bool` | itemsCanStack: same item, and the destination is not equipped. |
-| [`maxStackOf`](../../server/internal/world/inventory.go#L151)<br>`func maxStackOf(t, id uint8) uint16` | See the source definition and the subsystem ownership contract. |
-| [`findStackable`](../../server/internal/world/inventory.go#L158)<br>`func findStackable(items []db.Item, tpl *db.Item, maxStack uint16) int` | See the source definition and the subsystem ownership contract. |
-| [`wouldFit`](../../server/internal/world/inventory.go#L168)<br>`func wouldFit(items []db.Item, tpl *db.Item, count, maxStack uint16) bool` | wouldFit simulates giveItem on a copy of the inventory. |
-| [`giveItem`](../../server/internal/world/inventory.go#L192)<br>`func (s *Session) giveItem(tpl *db.Item, count, maxStack uint16) ([][]byte, uint16, error)` | giveItem stacks onto existing items, then fills free slots, persisting each change. Returns the 0x0205 packets and what did not fit. |
-| [`giveItemTo`](../../server/internal/world/inventory.go#L200)<br>`func giveItemTo(charID uint32, items *[]db.Item, tpl *db.Item, count, maxStack uint16) ([][]byte, uint16, error)` | See the source definition and the subsystem ownership contract. |
-| [`consumeOne`](../../server/internal/world/inventory.go#L215)<br>`func (s *Session) consumeOne(i int) (db.Item, error)` | consumeOne decrements the item at index i by one, persisting it. |
-| [`cooldownForReqIg`](../../server/internal/world/inventory.go#L246)<br>`func cooldownForReqIg(reqIg uint8) time.Duration` | See the source definition and the subsystem ownership contract. |
-| [`handleUseItem`](../../server/internal/world/inventory.go#L252)<br>`func (s *Session) handleUseItem(p []byte)` | handleUseItem (0x050A): bag, slot. |
-| [`healDelta`](../../server/internal/world/inventory.go#L441)<br>`func (s *Session) healDelta(hp, mp, sp uint32) (uint32, uint32, uint32)` | healDelta raises effective HP/MP/SP by up to the given amounts, applied to the durable absolute fields. Returns the actual amounts gained. |
-| [`spendDelta`](../../server/internal/world/inventory.go#L452)<br>`func (s *Session) spendDelta(mp, sp uint32)` | spendDelta lowers effective MP/SP by the given amounts (as deltas). |
-| [`handleChangeAppearance`](../../server/internal/world/inventory.go#L460)<br>`func (s *Session) handleChangeAppearance(p []byte)` | handleChangeAppearance (0x0226): bag, slot, hair, face, height, sex. |
-| [`genderRestrictedEquipment`](../../server/internal/world/inventory.go#L508)<br>`func (s *Session) genderRestrictedEquipment() bool` | genderRestrictedEquipment follows CUser::PacketMaininterface case 0x226: the sex stone is refused while any of the 13 equipment slots holds a sex-only item (Special 64 or 65), whatever sex was requested. |
-| [`broadcastNear`](../../server/internal/world/inventory.go#L523)<br>`func (s *Session) broadcastNear(frame []byte, label string, includeSelf bool)` | broadcastNear sends to viewers within the viewport that may see this character; includeSelf also echoes it to this session. |
-| [`handleDropItem`](../../server/internal/world/inventory.go#L533)<br>`func (s *Session) handleDropItem(p []byte)` | handleDropItem (0x0206): bag, slot, count. |
-| [`equipmentChanged`](../../server/internal/world/inventory.go#L591)<br>`func (s *Session) equipmentChanged(slots []uint8)` | equipmentChanged pushes 0x0507 for the slots to self and viewers. |
-| [`mobGoldBonus`](../../server/internal/world/inventory.go#L606)<br>`func (s *Session) mobGoldBonus(amount uint32) uint32` | mobGoldBonus applies the dedicated mob-gold ability. |
-| [`handlePickupItem`](../../server/internal/world/inventory.go#L619)<br>`func (s *Session) handlePickupItem(p []byte)` | handlePickupItem (0x0205): map item id. |
-| [`moveItem`](../../server/internal/world/inventory.go#L693)<br>`func (s *Session) moveItem(srcBag, srcSlot, destBag, destSlot uint8) (frame []byte, ok bool)` | moveItem performs an inventory move/swap/merge and returns the 0x0204. |
-| [`planMoveItem`](../../server/internal/world/inventory.go#L699)<br>`func (s *Session) planMoveItem(srcBag, srcSlot, destBag, destSlot uint8) ([]byte, bool)` | See the source definition and the subsystem ownership contract. |
-| [`handleItemBagToBag`](../../server/internal/world/inventory.go#L753)<br>`func (s *Session) handleItemBagToBag(p []byte)` | handleItemBagToBag (0x0204): src bag/slot, dest bag/slot. |
-| [`equipAllowed`](../../server/internal/world/inventory.go#L803)<br>`func (s *Session) equipAllowed(srcBag, srcSlot, destBag, destSlot uint8) bool` | equipAllowed checks both directions of a move that touches the equipment bag. |
-| [`equipmentMoveFailure`](../../server/internal/world/inventory.go#L807)<br>`func (s *Session) equipmentMoveFailure(srcBag, srcSlot, destBag, destSlot uint8) string` | See the source definition and the subsystem ownership contract. |
-| [`planGiveItem`](../../server/internal/world/inventory.go#L833)<br>`func planGiveItem(items *[]db.Item, tpl *db.Item, count, maxStack uint16) (packets [][]byte, left uint16)` | planGiveItem uses the native placement/stacking rules on a private copy. It allocates identifiers but performs no writes or network operations. |
+| [`inventoryChunk`](../../server/internal/world/inventory.go#L15)<br>`const inventoryChunk = 50` | See the source definition and the subsystem ownership contract. |
+| [`buildInventoryPackets`](../../server/internal/world/inventory.go#L17)<br>`func buildInventoryPackets(items []db.Item) [][]byte` | See the source definition and the subsystem ownership contract. |
+| [`isValidItemPosition`](../../server/internal/world/inventory.go#L42)<br>`func isValidItemPosition(bag, slot uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`findItem`](../../server/internal/world/inventory.go#L44)<br>`func findItem(items []db.Item, bag, slot uint8) int` | See the source definition and the subsystem ownership contract. |
+| [`findItemByUID`](../../server/internal/world/inventory.go#L53)<br>`func findItemByUID(items []db.Item, uid int64) int` | See the source definition and the subsystem ownership contract. |
+| [`writeSlot`](../../server/internal/world/inventory.go#L62)<br>`func writeSlot(w *packet.Writer, bag, slot uint8, it *db.Item)` | See the source definition and the subsystem ownership contract. |
+| [`buildEquipRefusal`](../../server/internal/world/inventory.go#L81)<br>`func buildEquipRefusal(item db.Item) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildBagToBag`](../../server/internal/world/inventory.go#L88)<br>`func buildBagToBag(srcBag, srcSlot uint8, src *db.Item, destBag, destSlot uint8, dest *db.Item) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildAddItem`](../../server/internal/world/inventory.go#L95)<br>`func buildAddItem(it *db.Item) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildSetMoney`](../../server/internal/world/inventory.go#L101)<br>`func buildSetMoney(money uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildAddItemError`](../../server/internal/world/inventory.go#L107)<br>`func buildAddItemError(code uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildUseItemResult`](../../server/internal/world/inventory.go#L114)<br>`func buildUseItemResult(characterID uint32, it *db.Item) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildRemoveItem`](../../server/internal/world/inventory.go#L127)<br>`func buildRemoveItem(it *db.Item, full bool) []byte` | See the source definition and the subsystem ownership contract. |
+| [`freeInventorySlots`](../../server/internal/world/inventory.go#L141)<br>`func freeInventorySlots(items []db.Item) [][2]uint8` | See the source definition and the subsystem ownership contract. |
+| [`itemsMatch`](../../server/internal/world/inventory.go#L153)<br>`func itemsMatch(a, b *db.Item) bool` | See the source definition and the subsystem ownership contract. |
+| [`itemsCanStack`](../../server/internal/world/inventory.go#L158)<br>`func itemsCanStack(src, dest *db.Item) bool` | itemsCanStack: same item, and the destination is not equipped. |
+| [`maxStackOf`](../../server/internal/world/inventory.go#L160)<br>`func maxStackOf(t, id uint8) uint16` | See the source definition and the subsystem ownership contract. |
+| [`findStackable`](../../server/internal/world/inventory.go#L167)<br>`func findStackable(items []db.Item, tpl *db.Item, maxStack uint16) int` | See the source definition and the subsystem ownership contract. |
+| [`wouldFit`](../../server/internal/world/inventory.go#L177)<br>`func wouldFit(items []db.Item, tpl *db.Item, count, maxStack uint16) bool` | wouldFit simulates giveItem on a copy of the inventory. |
+| [`giveItem`](../../server/internal/world/inventory.go#L201)<br>`func (s *Session) giveItem(tpl *db.Item, count, maxStack uint16) ([][]byte, uint16, error)` | giveItem stacks onto existing items, then fills free slots, persisting each change. Returns the 0x0205 packets and what did not fit. |
+| [`giveItemTo`](../../server/internal/world/inventory.go#L209)<br>`func giveItemTo(charID uint32, items *[]db.Item, tpl *db.Item, count, maxStack uint16) ([][]byte, uint16, error)` | See the source definition and the subsystem ownership contract. |
+| [`consumeOne`](../../server/internal/world/inventory.go#L224)<br>`func (s *Session) consumeOne(i int) (db.Item, error)` | consumeOne decrements the item at index i by one, persisting it. |
+| [`cooldownForReqIg`](../../server/internal/world/inventory.go#L255)<br>`func cooldownForReqIg(reqIg uint8) time.Duration` | See the source definition and the subsystem ownership contract. |
+| [`handleUseItem`](../../server/internal/world/inventory.go#L261)<br>`func (s *Session) handleUseItem(p []byte)` | handleUseItem (0x050A): bag, slot. |
+| [`healDelta`](../../server/internal/world/inventory.go#L450)<br>`func (s *Session) healDelta(hp, mp, sp uint32) (uint32, uint32, uint32)` | healDelta raises effective HP/MP/SP by up to the given amounts, applied to the durable absolute fields. Returns the actual amounts gained. |
+| [`spendDelta`](../../server/internal/world/inventory.go#L461)<br>`func (s *Session) spendDelta(mp, sp uint32)` | spendDelta lowers effective MP/SP by the given amounts (as deltas). |
+| [`handleChangeAppearance`](../../server/internal/world/inventory.go#L469)<br>`func (s *Session) handleChangeAppearance(p []byte)` | handleChangeAppearance (0x0226): bag, slot, hair, face, height, sex. |
+| [`genderRestrictedEquipment`](../../server/internal/world/inventory.go#L517)<br>`func (s *Session) genderRestrictedEquipment() bool` | genderRestrictedEquipment follows CUser::PacketMaininterface case 0x226: the sex stone is refused while any of the 13 equipment slots holds a sex-only item (Special 64 or 65), whatever sex was requested. |
+| [`broadcastNear`](../../server/internal/world/inventory.go#L532)<br>`func (s *Session) broadcastNear(frame []byte, label string, includeSelf bool)` | broadcastNear sends to viewers within the viewport that may see this character; includeSelf also echoes it to this session. |
+| [`handleDropItem`](../../server/internal/world/inventory.go#L542)<br>`func (s *Session) handleDropItem(p []byte)` | handleDropItem (0x0206): bag, slot, count. |
+| [`equipmentChanged`](../../server/internal/world/inventory.go#L600)<br>`func (s *Session) equipmentChanged(slots []uint8)` | equipmentChanged pushes 0x0507 for the slots to self and viewers. |
+| [`mobGoldBonus`](../../server/internal/world/inventory.go#L615)<br>`func (s *Session) mobGoldBonus(amount uint32) uint32` | mobGoldBonus applies the dedicated mob-gold ability. |
+| [`handlePickupItem`](../../server/internal/world/inventory.go#L628)<br>`func (s *Session) handlePickupItem(p []byte)` | handlePickupItem (0x0205): map item id. |
+| [`moveItem`](../../server/internal/world/inventory.go#L702)<br>`func (s *Session) moveItem(srcBag, srcSlot, destBag, destSlot uint8) (frame []byte, ok bool)` | moveItem performs an inventory move/swap/merge and returns the 0x0204. |
+| [`planMoveItem`](../../server/internal/world/inventory.go#L708)<br>`func (s *Session) planMoveItem(srcBag, srcSlot, destBag, destSlot uint8) ([]byte, bool)` | See the source definition and the subsystem ownership contract. |
+| [`handleItemBagToBag`](../../server/internal/world/inventory.go#L762)<br>`func (s *Session) handleItemBagToBag(p []byte)` | handleItemBagToBag (0x0204): src bag/slot, dest bag/slot. |
+| [`equipAllowed`](../../server/internal/world/inventory.go#L812)<br>`func (s *Session) equipAllowed(srcBag, srcSlot, destBag, destSlot uint8) bool` | equipAllowed checks both directions of a move that touches the equipment bag. |
+| [`equipmentMoveFailure`](../../server/internal/world/inventory.go#L817)<br>`func (s *Session) equipmentMoveFailure(srcBag, srcSlot, destBag, destSlot uint8) (db.Item, string)` | See the source definition and the subsystem ownership contract. |
+| [`planGiveItem`](../../server/internal/world/inventory.go#L843)<br>`func planGiveItem(items *[]db.Item, tpl *db.Item, count, maxStack uint16) (packets [][]byte, left uint16)` | planGiveItem uses the native placement/stacking rules on a private copy. It allocates identifiers but performs no writes or network operations. |
 
 ### inventory_operation.go
 

@@ -2828,3 +2828,36 @@ func DecodeDrowningDeath(p []byte) (uint32, error) {
 ```
 
 </details>
+
+## Opcode 7f2b
+
+**`0x7F2B` — GXEquipRefusal**
+
+Declarations: [proto.GXEquipRefusal](../../internal/proto/inventory.go#L59).
+
+Source notes: GXEquipRefusal identifies the item for native SysMsg 229.
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** [buildEquipRefusal (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L81)
+
+**Client receive reducers:** no direct mapping found; inspect source before assuming support or direction.
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>buildEquipRefusal — server/internal/world/inventory.go</summary>
+
+[Source definition](../../server/internal/world/inventory.go#L81)
+
+```go
+func buildEquipRefusal(item db.Item) []byte {
+	w := packet.New(packet.Opcode(proto.GXEquipRefusal))
+	w.U8(item.Type)
+	w.U8(item.TypeID)
+	return w.MustFinish()
+}
+```
+
+</details>

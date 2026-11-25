@@ -232,7 +232,7 @@ func TestSonicLinkAndExtractionRefreshEquippedSpeed(t *testing.T) {
 	}
 	add(db.Item{Bag: 0, Slot: 4, Type: 21, TypeID: 53, Count: 1})
 	add(db.Item{Bag: 1, Slot: 0, Type: 30, TypeID: 106, Count: 2})
-	add(db.Item{Bag: 1, Slot: 1, Type: 100, TypeID: 82, Count: 1}) // Native 100-point linking hammer.
+	add(db.Item{Bag: 1, Slot: 1, Type: 100, TypeID: 192, Count: 1}) // GM linking hammer guarantees success.
 	s.syncPlayerSpeed(true)
 	s.handleGemAdd(proto.GemAddHammerPacket(1, 0, 0, 4, 1, 1))
 	if sp := s.speeds(); sp.move != 3 || s.lastSpeeds.move != 3 || s.items[0].Gems[0] != 106 {

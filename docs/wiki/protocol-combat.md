@@ -590,7 +590,7 @@ Declarations: [packet.UseItem](../../server/internal/packet/packet.go#L121), [pr
 
 **C→S receive adapters:** [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L23), [dispatch (server/internal/world/dispatch.go)](../../server/internal/world/dispatch.go#L85)
 
-**S→C serializers:** [buildUseItemResult (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L105)
+**S→C serializers:** [buildUseItemResult (server/internal/world/inventory.go)](../../server/internal/world/inventory.go#L114)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L735)
 
@@ -600,7 +600,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>buildUseItemResult — server/internal/world/inventory.go</summary>
 
-[Source definition](../../server/internal/world/inventory.go#L105)
+[Source definition](../../server/internal/world/inventory.go#L114)
 
 ```go
 func buildUseItemResult(characterID uint32, it *db.Item) []byte {
@@ -621,7 +621,7 @@ func buildUseItemResult(characterID uint32, it *db.Item) []byte {
 
 <details><summary>UseItemPacket — internal/proto/inventory.go</summary>
 
-[Source definition](../../internal/proto/inventory.go#L86)
+[Source definition](../../internal/proto/inventory.go#L96)
 
 ```go
 func UseItemPacket(bag, slot uint8) []byte {
@@ -636,7 +636,7 @@ func UseItemPacket(bag, slot uint8) []byte {
 
 <details><summary>TargetResurrectionItemPacket — internal/proto/inventory.go</summary>
 
-[Source definition](../../internal/proto/inventory.go#L94)
+[Source definition](../../internal/proto/inventory.go#L104)
 
 ```go
 func TargetResurrectionItemPacket(bag, slot uint8, target uint32) []byte {
@@ -652,7 +652,7 @@ func TargetResurrectionItemPacket(bag, slot uint8, target uint32) []byte {
 
 <details><summary>DecodeItemUse — internal/proto/inventory.go</summary>
 
-[Source definition](../../internal/proto/inventory.go#L108)
+[Source definition](../../internal/proto/inventory.go#L118)
 
 ```go
 func DecodeItemUse(p []byte) (m ItemUseResult, err error) {
