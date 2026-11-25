@@ -1914,7 +1914,7 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`, `server/internal
 | Declaration | Responsibility / source comment |
 |---|---|
 | [`handleInspectEquipment`](../../server/internal/world/inspect.go#L9)<br>`func (s *Session) handleInspectEquipment(p []byte)` | See the source definition and the subsystem ownership contract. |
-| [`inspectEquipment`](../../server/internal/world/inspect.go#L31)<br>`func (p *ConnectedPlayer) inspectEquipment(viewer *db.Character, faction uint8) (items [proto.InspectSlots]db.Item, ok bool)` | See the source definition and the subsystem ownership contract. |
+| [`inspectEquipment`](../../server/internal/world/inspect.go#L31)<br>`func (p *ConnectedPlayer) inspectEquipment(viewer *db.Character, faction uint8, viewerIsAdmin bool) (items [proto.InspectSlots]db.Item, ok bool)` | See the source definition and the subsystem ownership contract. |
 | [`buildInspectEquipment`](../../server/internal/world/inspect.go#L49)<br>`func buildInspectEquipment(target uint32, items [proto.InspectSlots]db.Item) []byte` | See the source definition and the subsystem ownership contract. |
 
 ### instance.go

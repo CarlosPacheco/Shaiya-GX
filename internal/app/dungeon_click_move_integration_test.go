@@ -60,7 +60,14 @@ func TestDungeonClickMoveSelectsFloorGL(t *testing.T) {
 	if a.wv.world.HasTerrain() {
 		t.Fatal("map 15 should be a dungeon")
 	}
-	a.moveToGround(&platform.Input{MouseX: W / 2, MouseY: H/2 + 120, Clicked: true}, W, H)
+	groundClick := &platform.Input{MouseX: W / 2, MouseY: H/2 + 120, Clicked: true}
+	a.state.Self.Sitting = true
+	a.moveToGround(groundClick, W, H)
+	if a.wv.travel || a.wv.travelEffect != nil || a.wv.sitPending {
+		t.Fatal("a floor click started travel while seated")
+	}
+	a.state.Self.Sitting = false
+	a.moveToGround(groundClick, W, H)
 	d := a.wv.destination
 	if !a.wv.travel || d[1] > a.wv.pos[1]+.5 || d.Sub(a.wv.pos).Len() > 40 {
 		t.Fatalf("destination %v travel %v from %v", d, a.wv.travel, a.wv.pos)

@@ -68,7 +68,8 @@ units of 3D distance and closes when the player leaves that range or disappears.
 The panel uses `interface/inspect.png` from the loose data pack, displays a
 full-body preview and shows the original equipment slots 0–12. Their tooltips
 use the server-confirmed item quality, linked lapis, recreation and enchantment.
-World validates the faction, map instance, target and distance. The inspection
+World validates the faction, map instance, target and distance. Allied GMs
+can inspect one another. The inspection
 request uses native `0x0307`. GX adds the target ID after the native response
 records so a late reply cannot open a different player's panel.
 
@@ -78,7 +79,7 @@ Cloaks use original archive files directly, without converted or recreated meshe
 
 The CPU solver reproduces native directed springs, masses, forces, Euler integration and both cloth modes. Synthetic one-step tests compare outputs with the original executable. Real-archive GL checks load all 3,072 body/fit/model combinations and simulate/render all 16 body families. The current runtime uses the native no-contact branch; body/ground contacts and map wind remain incomplete. Cape emblem decals are rendered on a 3x3 cloth patch (see [emblem research](emblem-research.md)).
 
-Attacking or using a targeted skill turns toward the current target immediately and publishes the heading before the action packet. Targets outside weapon or skill range start an approach that updates as they move. A double click keeps the basic attack queued until it can be requested in range. Monster picking uses the original EP5 camera-facing rectangle, sized by Monster.SData Size and scaled MON height. Movement keys and clicks on walkable ground interrupt basic attacks and end the chase while keeping the target selected. Changing targets or issuing a new action also replaces the current request. This uses existing movement collision handling rather than a new pathfinding system. Results and resource changes remain server-owned.
+Attacking or using a targeted skill turns toward the current target immediately and publishes the heading before the action packet. Targets outside weapon or skill range start an approach that updates as they move. A double click keeps the basic attack queued until it can be requested in range. Monster picking uses the original EP5 camera-facing rectangle, sized by Monster.SData Size and scaled MON height. Movement keys and clicks on walkable ground interrupt basic attacks and end the chase while keeping the target selected. While seated, only keyboard movement can stand the character for travel. Ground clicks leave the character seated. Changing targets or issuing a new action also replaces the current request. This uses existing movement collision handling rather than a new pathfinding system. Results and resource changes remain server-owned.
 
 Floating numbers use `count.tga` digit cells of 26×32, the Critical region at `(260,0,156,32)` and Miss at `(416,0,96,32)`. Phoenix parameters are a one-second lifetime, 0.3-unit rise per second, 0.2-unit digit width and 1.1875 height ratio. Critical digits are 1.5 times wider; healing is native RGB `00FF00` (digit renderer `004274ff`). Numbers detach from the target's displayed position, retain world scale under camera movement and expire from a queue capped at 128 entries. Attack, skill, drain and periodic result packets supply the displayed values; ordinary HP snapshots do not invent healing events. A lethal basic attack with two contact markers starts the monster’s death animation at the first impact and presents the second damage number at its own marker.
 

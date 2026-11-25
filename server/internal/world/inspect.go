@@ -21,17 +21,17 @@ func (s *Session) handleInspectEquipment(p []byte) {
 		realm.registryMu.Unlock()
 		return
 	}
-	items, ok := target.inspectEquipment(s.char, s.faction)
+	items, ok := target.inspectEquipment(s.char, s.faction, s.isAdmin)
 	realm.registryMu.Unlock()
 	if ok {
 		s.send(buildInspectEquipment(id, items), "0x0307 inspect equipment")
 	}
 }
 
-func (p *ConnectedPlayer) inspectEquipment(viewer *db.Character, faction uint8) (items [proto.InspectSlots]db.Item, ok bool) {
+func (p *ConnectedPlayer) inspectEquipment(viewer *db.Character, faction uint8, viewerIsAdmin bool) (items [proto.InspectSlots]db.Item, ok bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.IsAdmin || p.faction != faction || p.mapID != viewer.MapID {
+	if p.IsAdmin && !viewerIsAdmin || p.faction != faction || p.mapID != viewer.MapID {
 		return items, false
 	}
 	dx, dy, dz := viewer.PosX-p.character.PosX, viewer.PosY-p.character.PosY, viewer.PosZ-p.character.PosZ

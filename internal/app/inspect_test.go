@@ -26,6 +26,14 @@ func TestInspectKeepsRequestedAllyAndClosesOutside3DRange(t *testing.T) {
 	if !hasInspect(42) || hasInspect(43) || hasInspect(1) {
 		t.Fatal("context did not limit inspection to other allies")
 	}
+	a.state.Entities[42].IsGM = true
+	if hasInspect(42) {
+		t.Fatal("regular player can inspect a GM")
+	}
+	a.state.Self.IsGM = true
+	if !hasInspect(42) || hasInspect(43) {
+		t.Fatal("GM should inspect allied GMs only")
+	}
 	a.inspect = inspectView{target: 42, deadline: a.clock + 5}
 	reply := func(id uint32) []byte {
 		w := proto.NewWriter(proto.InspectEquipment)

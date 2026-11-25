@@ -26,7 +26,7 @@ func (a *App) inspectTarget(id uint32) *game.Entity {
 		return nil
 	}
 	e := a.state.Entities[id]
-	if e == nil || e.Kind != game.KindUser || e.Shape == nil || e.IsGM || e.Concealed {
+	if e == nil || e.Kind != game.KindUser || e.Shape == nil || (e.IsGM || e.Concealed) && !a.state.Self.IsGM {
 		return nil
 	}
 	if own, ok := a.selfSlot(); !ok || own.Race/2 != e.Shape.Race/2 {

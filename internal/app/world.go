@@ -432,7 +432,7 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 	if !v.jumpActive && !v.sitPending && !a.state.Self.Dead && !a.state.Self.Mounted && !swimming {
 		motion := uint8(0)
 		request := false
-		if a.state.Self.Sitting && (toggleSit || wantsMove || v.sitAttack != 0) {
+		if a.state.Self.Sitting && (toggleSit || keyboardPostureMovement(in, v.autoRun) || v.sitAttack != 0) {
 			motion = proto.MotionStandUp
 			request = true
 		} else if !a.state.Self.Sitting && toggleSit && !wantsMove {

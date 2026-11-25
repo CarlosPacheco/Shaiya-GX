@@ -28,6 +28,18 @@ func TestInspectOnlyNearbyAlliedEquipment(t *testing.T) {
 		t.Fatal("core response must remain native", native, err)
 	}
 
+	gm := RegisterPlayer(db.Character{ID: 920003, MapID: mapID, PosX: 20, PosY: 5, PosZ: 20}, []db.Item{item}, true, FactionLight, nil, nil)
+	t.Cleanup(gm.Unregister)
+	if _, ok := gm.inspectEquipment(s.char, s.faction, false); ok {
+		t.Fatal("a regular character could inspect a GM")
+	}
+	s.isAdmin = true
+	s.dispatch(packet.InspectEquipment, proto.InspectPacket(gm.CharacterID))
+	gmReply := waitWorldPacket(t, packets, proto.InspectEquipment)
+	if id, _, err := proto.DecodeInspectEquipment(gmReply); err != nil || id != gm.CharacterID {
+		t.Fatal("GM inspection did not return the nearby allied GM", id, err)
+	}
+
 	for _, tc := range []struct {
 		name    string
 		mapID   uint16
@@ -43,7 +55,7 @@ func TestInspectOnlyNearbyAlliedEquipment(t *testing.T) {
 			target.mu.Lock()
 			target.character.PosY, target.faction = tc.y, tc.faction
 			target.mu.Unlock()
-			if _, ok := target.inspectEquipment(s.char, s.faction); ok {
+			if _, ok := target.inspectEquipment(s.char, s.faction, s.isAdmin); ok {
 				t.Fatal("inspection should be refused")
 			}
 		})
