@@ -200,3 +200,112 @@ func testOrderedEffectMultiDrawGL(t *testing.T, options InitOptions) {
 		t.Fatalf("GL error %#x", code)
 	}
 }
+
+func TestOrderedEffectPartialFallbackPreservesOrderGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires GL")
+	}
+	t.Run("automatic", func(t *testing.T) { testOrderedEffectPartialFallbackGL(t, InitOptions{}) })
+	t.Run("bound", func(t *testing.T) { testOrderedEffectPartialFallbackGL(t, InitOptions{DisableBindless: true}) })
+	t.Run("core", func(t *testing.T) {
+		testOrderedEffectPartialFallbackGL(t, InitOptions{DisableBindless: true, DisableDrawParameters: true})
+	})
+}
+
+func testOrderedEffectPartialFallbackGL(t *testing.T, options InitOptions) {
+	t.Helper()
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	window, err := platform.Open(platform.Config{Title: "ordered effect fallback", Width: 64, Height: 64, Hidden: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer window.Close()
+	if err := InitWithOptions(options); err != nil {
+		t.Fatal(err)
+	}
+	s, err := NewScene3D()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Delete()
+	s.SetCameraView(V3{0, 0, -3}, V3{0, 0, 0}, V3{0, 1, 0})
+	s.Proj = PerspectiveFovLH(1.1, 1, .1, 20)
+	verts := []Vertex{
+		{Pos: V3{-.7, -.7, 0}, UV: [2]float32{0, 0}},
+		{Pos: V3{.7, -.7, 0}, UV: [2]float32{1, 0}},
+		{Pos: V3{.7, .7, 0}, UV: [2]float32{1, 1}},
+		{Pos: V3{-.7, .7, 0}, UV: [2]float32{0, 1}},
+	}
+	indices := []uint32{0, 1, 2, 0, 2, 3}
+	quad := NewMesh(verts, indices)
+	defer quad.Delete()
+	var frames EffectGeometryCache
+	defer frames.Delete()
+	animated := func(id uint64, shift float32) *EffectGeometry {
+		return frames.Geometry(id, verts, indices, 8, func() []EffectKeyVertex {
+			keys := make([]EffectKeyVertex, 0, 8)
+			for i := range 2 {
+				for _, v := range verts {
+					keys = append(keys, EffectKeyVertex{Position: [4]float32{v.Pos[0] + shift*float32(i), v.Pos[1], v.Pos[2], 1}, UV: [4]float32{v.UV[0], v.UV[1] + .25*float32(i)}})
+				}
+			}
+			return keys
+		})
+	}
+	left, overflow := animated(1, -.25), animated(2, .25)
+	a := Upload(img.Texture{RGBA: &img.RGBA{W: 2, H: 1, Pix: []byte{255, 80, 30, 190, 50, 200, 150, 40}}})
+	b := Upload(img.Texture{RGBA: &img.RGBA{W: 2, H: 1, Pix: []byte{30, 80, 255, 170, 20, 230, 80, 60}}})
+	defer a.Delete()
+	defer b.Delete()
+	worlds, colors, poses := make([]M4, 3), make([][4]float32, 3), make([]EffectPose, 3)
+	for i := range worlds {
+		worlds[i] = Identity()
+		worlds[i][12], worlds[i][13] = float32(i-1)*.18, float32(i-1)*.12
+		colors[i] = [4]float32{.6, .7, .9, .52}
+		poses[i] = EffectPose{0, 4, float32(i+1) / 4}
+	}
+	pipe := &s.effectPipeline
+	pipe.init()
+	if pipe.indirect.program == 0 {
+		t.Skip("requires indirect effect drawing")
+	}
+	// Cap packed effect geometry at 2 meshes so quad + left pack while overflow
+	// falls back serially in-place without collapsing surrounding indirect runs.
+	pipe.indirect.maxMeshes = 2
+	compact, indirect := pipe.program, pipe.indirect.program
+	defer func() { pipe.program, pipe.indirect.program = compact, indirect }()
+	gl.Viewport(0, 0, 64, 64)
+	draw := func(multi uint32) ([]byte, int) {
+		pipe.indirect.program = multi
+		s.Begin()
+		gl.ClearColor(.06, .07, .1, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		s.End()
+		ResetDrawCalls()
+		s.BeginEffects()
+		s.DrawEffectBatch(quad, a, worlds, colors, 4, 5, true)
+		s.DrawEffectGeometry(left, b, worlds, colors, poses, 4, 5)
+		s.DrawEffectBatch(quad, a, worlds, colors, 4, 5)
+		s.DrawEffectGeometry(overflow, a, worlds, colors, poses, 4, 5)
+		s.DrawEffectBatch(quad, b, worlds, colors, 4, 5)
+		s.DrawEffectGeometry(left, a, worlds, colors, poses, 4, 5)
+		s.DrawEffectBatch(quad, a, worlds, colors, 4, 1)
+		s.DrawEffectGeometry(left, b, worlds, colors, poses, 4, 1)
+		s.EndEffects()
+		pixels := make([]byte, 64*64*4)
+		gl.ReadPixels(0, 0, 64, 64, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+		return pixels, DrawCalls()
+	}
+	reference, serialCalls := draw(0)
+	got, partialCalls := draw(indirect)
+	if serialCalls != 8 || partialCalls != 4 {
+		t.Fatalf("expected 8 serial calls -> 4 ordered partial-indirect calls (indirect, serial, indirect, additive indirect), got %d -> %d", serialCalls, partialCalls)
+	}
+	if !bytes.Equal(reference, got) {
+		t.Fatal("partial indirect effect fallback changed blended pixels")
+	}
+	if code := gl.GetError(); code != gl.NO_ERROR {
+		t.Fatalf("GL error %#x", code)
+	}
+}

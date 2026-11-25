@@ -1,11 +1,17 @@
 package render
 
 import (
+	"cmp"
 	"log"
 	"math"
 	"unsafe"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
+)
+
+const (
+	defaultMapMaxVertices = 128 << 20
+	defaultMapMaxIndices  = 64 << 20
 )
 
 // MapBatch retains immutable geometry and placements for one map. Each camera
@@ -15,6 +21,7 @@ type MapBatch struct {
 
 	vao                                     uint32
 	boundVertexCapacity, boundIndexCapacity int
+	maxVertices, maxIndices                 int
 	vertices, indices                       packedMeshBuffer
 	meshes                                  map[*Mesh]skinLocation
 	placements, matrices                    effectUpload
@@ -22,6 +29,7 @@ type MapBatch struct {
 	uploaded                                bool
 
 	draws         []mapDraw
+	serialDraws   []mapDraw
 	visible       []uint32
 	drawCommands  []indexedDrawCommand
 	drawMaterials [][5]uint32
@@ -70,11 +78,19 @@ func (b *MapBatch) Add(mesh *Mesh, tex, lightmap *Texture, alpha float32, first,
 	b.draws = append(b.draws, mapDraw{mesh, tex, lightmap, first, count, alpha})
 }
 
+func (b *MapBatch) vertexLimit() int {
+	return cmp.Or(b.maxVertices, defaultMapMaxVertices)
+}
+
+func (b *MapBatch) indexLimit() int {
+	return cmp.Or(b.maxIndices, defaultMapMaxIndices)
+}
+
 func (b *MapBatch) location(m *Mesh) (skinLocation, bool) {
 	if loc, ok := b.meshes[m]; ok {
 		return loc, m.vbo != 0
 	}
-	const maxVertices, maxIndices = 40 << 20, 20 << 20
+	maxVertices, maxIndices := b.vertexLimit(), b.indexLimit()
 	indexBytes := int(m.Count) * int(m.indexBytes)
 	vertexBytes := int(m.bytes) - indexBytes
 	at := (b.indices.used + 3) &^ 3
@@ -93,17 +109,15 @@ func (b *MapBatch) location(m *Mesh) (skinLocation, bool) {
 }
 
 func (b *MapBatch) prepare(bindless, materialAttribute bool) bool {
-	b.drawCommands, b.drawMaterials, b.runs = b.drawCommands[:0], b.drawMaterials[:0], b.runs[:0]
+	b.drawCommands, b.drawMaterials, b.runs, b.serialDraws = b.drawCommands[:0], b.drawMaterials[:0], b.runs[:0], b.serialDraws[:0]
 	for _, draw := range b.draws {
 		loc, ok := b.location(draw.mesh)
 		if !ok {
-			return false
+			b.serialDraws = append(b.serialDraws, draw)
+			continue
 		}
 		t := diffuseTexture(draw.tex)
 		m := draw.mesh
-		if n := len(b.runs); n == 0 || b.runs[n-1].index != m.indexType || b.runs[n-1].cull != m.CullBack {
-			b.newRun(m)
-		}
 		var diffuse, light uint64
 		if bindless {
 			diffuse = t.bindlessHandle(t.repeat)
@@ -111,9 +125,14 @@ func (b *MapBatch) prepare(bindless, materialAttribute bool) bool {
 				light = draw.lightmap.bindlessHandle(draw.lightmap.repeat)
 			}
 			if diffuse == 0 || draw.lightmap != nil && light == 0 {
-				return false
+				b.serialDraws = append(b.serialDraws, draw)
+				continue
 			}
-		} else {
+		}
+		if n := len(b.runs); n == 0 || b.runs[n-1].index != m.indexType || b.runs[n-1].cull != m.CullBack {
+			b.newRun(m)
+		}
+		if !bindless {
 			run := &b.runs[len(b.runs)-1]
 			diffuse, light, ok = run.textureSlots(t, draw.lightmap)
 			if !ok {
@@ -213,25 +232,31 @@ func (b *MapBatch) Draw(s *Scene3D) {
 	}
 	p := s.mapPrograms()
 	if s.Shadow || (p.draw == 0 && p.bound == 0) || len(b.draws) < 4 || !b.prepare(p.draw != 0, p.materialAttribute) {
-		for _, d := range b.draws {
-			if d.lightmap != nil {
-				s.drawLightmapped(d.mesh, d.tex, d.lightmap, true)
-			} else if d.count == 1 {
-				s.DrawVisibleWorldModel(d.mesh, d.tex, b.Transforms[b.visible[d.first]], d.alpha)
-			} else {
-				b.fallback = b.fallback[:0]
-				for _, id := range b.visible[d.first : d.first+d.count] {
-					b.fallback = append(b.fallback, b.Transforms[id])
-				}
-				s.SetInstances(b.fallback)
-				s.DrawWorldInstanced(d.mesh, d.tex, d.alpha)
-			}
-		}
+		b.drawSerial(s, b.draws)
 	} else {
 		b.drawIndirect(s, p)
+		b.drawSerial(s, b.serialDraws)
 	}
 	clear(b.draws)
-	b.draws, b.visible = b.draws[:0], b.visible[:0]
+	clear(b.serialDraws)
+	b.draws, b.serialDraws, b.visible = b.draws[:0], b.serialDraws[:0], b.visible[:0]
+}
+
+func (b *MapBatch) drawSerial(s *Scene3D, draws []mapDraw) {
+	for _, d := range draws {
+		if d.lightmap != nil {
+			s.drawLightmapped(d.mesh, d.tex, d.lightmap, true)
+		} else if d.count == 1 {
+			s.DrawVisibleWorldModel(d.mesh, d.tex, b.Transforms[b.visible[d.first]], d.alpha)
+		} else {
+			b.fallback = b.fallback[:0]
+			for _, id := range b.visible[d.first : d.first+d.count] {
+				b.fallback = append(b.fallback, b.Transforms[id])
+			}
+			s.SetInstances(b.fallback)
+			s.DrawWorldInstanced(d.mesh, d.tex, d.alpha)
+		}
+	}
 }
 
 func (b *MapBatch) drawIndirect(s *Scene3D, p *mapPipeline) {
@@ -323,7 +348,7 @@ func (b *MapBatch) Trim() {
 			dead++
 		}
 	}
-	if dead > 0 && (dead*4 >= len(b.meshes) || b.vertices.used > 36<<20 || b.indices.used > 18<<20) {
+	if dead > 0 && (dead*4 >= len(b.meshes) || b.vertices.used > b.vertexLimit()*9/10 || b.indices.used > b.indexLimit()*9/10) {
 		b.releaseGeometry()
 	}
 }

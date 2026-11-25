@@ -206,3 +206,94 @@ func TestMapBatchDrawsAfterPackedBufferGrowthGL(t *testing.T) {
 		t.Fatalf("GL error %#x", code)
 	}
 }
+
+func TestMapBatchPartialFallbackPreservesPixelsAndBatchingGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires GL")
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	const width, height = 128, 32
+	win, err := platform.Open(platform.Config{Width: width, Height: height, Hidden: true, Debug: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer win.Close()
+	if err := Init(true); err != nil {
+		t.Fatal(err)
+	}
+	s, err := NewScene3D()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Delete()
+	if p := s.mapPrograms(); p.draw == 0 && p.bound == 0 {
+		t.Skip("requires indirect map drawing")
+	}
+	s.View, s.Proj, s.Ambient = Identity(), Identity(), 1
+
+	const smallCount = 6
+	batch := MapBatch{
+		Transforms:  []M4{Identity()},
+		maxVertices: smallCount * 3 * vertexSize,
+	}
+	defer batch.Delete()
+	placement := batch.Placements([]uint32{0})
+
+	for i := range smallCount {
+		x := -.85 + float32(i)*.24
+		verts := []Vertex{
+			{Pos: V3{x - .08, -.7, .5}, Normal: V3{0, 1, 0}},
+			{Pos: V3{x + .08, -.7, .5}, Normal: V3{0, 1, 0}},
+			{Pos: V3{x, .7, .5}, Normal: V3{0, 1, 0}},
+		}
+		mesh := NewMesh(verts, []uint32{0, 1, 2})
+		defer mesh.Delete()
+		tex := Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{byte(40 + 30*i), 110, 200, 255}}})
+		defer tex.Delete()
+		batch.Add(mesh, tex, nil, -1, placement, 1)
+	}
+	// One extra mesh exceeds maxVertices and must fall back serially without
+	// collapsing the six packed draws out of indirect rendering.
+	overflowVerts := make([]Vertex, 64)
+	overflowVerts[0] = Vertex{Pos: V3{.55, -.7, .4}, Normal: V3{0, 1, 0}}
+	overflowVerts[1] = Vertex{Pos: V3{.9, -.7, .4}, Normal: V3{0, 1, 0}}
+	overflowVerts[2] = Vertex{Pos: V3{.72, .7, .4}, Normal: V3{0, 1, 0}}
+	overflowMesh := NewMesh(overflowVerts, []uint32{0, 1, 2})
+	defer overflowMesh.Delete()
+	overflowTex := Upload(img.Texture{RGBA: &img.RGBA{W: 1, H: 1, Pix: []byte{250, 210, 40, 255}}})
+	defer overflowTex.Delete()
+	batch.Add(overflowMesh, overflowTex, nil, -1, placement, 1)
+
+	begin := func() {
+		gl.Viewport(0, 0, width, height)
+		gl.DepthMask(true)
+		gl.ClearColor(0, 0, 0, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		s.Begin()
+	}
+	read := func() []byte {
+		pixels := make([]byte, width*height*4)
+		gl.ReadPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+		return pixels
+	}
+
+	begin()
+	for _, d := range batch.draws {
+		s.DrawVisibleWorldModel(d.mesh, d.tex, batch.Transforms[batch.visible[d.first]], d.alpha)
+	}
+	want := read()
+
+	begin()
+	ResetDrawCalls()
+	batch.Draw(s)
+	if calls := DrawCalls(); calls != 2 {
+		t.Fatalf("expected 1 indirect + 1 serial draw call, got %d", calls)
+	}
+	if got := read(); !bytes.Equal(got, want) {
+		t.Fatal("partial fallback pixels differ from serial reference")
+	}
+	if code := gl.GetError(); code != gl.NO_ERROR {
+		t.Fatalf("GL error %#x", code)
+	}
+}
