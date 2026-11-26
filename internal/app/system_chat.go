@@ -85,8 +85,12 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 	}
 	skillName := func(id uint16, level uint8) string { d, _ := a.skillDefinition(id, level); return d.Name }
 	switch proto.Op(p) {
+	case proto.MobSpeechText:
+		if s.LastMobSpeech.Text != "" {
+			a.addSystemText(30, 0, s.LastMobSpeech.Text)
+		}
 	case proto.MobSpeechIndex:
-		a.systemMessage(1, int(s.LastMobSpeech.MessageID), map[string]string{"p": a.chatEntityName(s.LastMobSpeech.MobID)})
+		a.systemMessage(30, int(s.LastMobSpeech.MessageID), nil)
 	case proto.ChangeSexDenied:
 		// 0x56b820: SysMsg 862 in style 17; the request is over.
 		a.inventory.pending = false

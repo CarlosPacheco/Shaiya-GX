@@ -16,9 +16,6 @@ func (s *State) applyChatPacket(p []byte, ev Event) (Event, error) {
 			return ev.packetError(err)
 		}
 		s.LastMobSpeech = c
-		if op == proto.MobSpeechText {
-			s.addChat(ChatLine{Op: op, SenderID: c.MobID, Text: c.Text, Style: 1})
-		}
 		ev.Text = fmt.Sprintf("mob speech %d: %d", c.MobID, c.MessageID)
 	case proto.ChatRaid:
 		c, err := proto.DecodeChatByID(p)

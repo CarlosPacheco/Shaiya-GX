@@ -307,7 +307,7 @@ func (a *App) formattedChat() []ui.ChatEntry {
 	clear(a.chatEntries)
 	a.chatEntries = a.chatEntries[:0]
 	for _, line := range a.state.Chat {
-		if filter && line.Op != 0 && line.Op != proto.ChatError && line.Op != proto.MobSpeechText && line.Direction != 1 {
+		if filter && line.Op != 0 && line.Op != proto.ChatError && line.Direction != 1 {
 			line.Text = a.chatFilter.Censor(line.Text)
 		}
 		a.chatEntries = append(a.chatEntries, chatEntry(a.msg, line))

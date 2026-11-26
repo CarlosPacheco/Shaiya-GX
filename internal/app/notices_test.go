@@ -2,10 +2,12 @@ package app
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
-	"testing"
+	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 func TestScreenNewsPreservesChatCapsQueueAndExpires(t *testing.T) {
@@ -51,5 +53,35 @@ func TestServerNoticeUsesAltarNewsPresentation(t *testing.T) {
 	if len(a.state.Chat) != 1 || a.state.Chat[0].Style != 8 || !game.ChatSystemPane(a.state.Chat[0].Style) ||
 		len(a.screenNotices) != 1 || a.screenNotices[0].text != a.state.Chat[0].Text {
 		t.Fatalf("announcement missing altar presentation: chat=%v screen=%v", a.state.Chat, a.screenNotices)
+	}
+}
+
+func TestMobSpeechUsesVioletNewsAndUpperChat(t *testing.T) {
+	const body = "You have crossed a line."
+	raw := proto.NewWriter(proto.MobSpeechText)
+	raw.U8(1)
+	raw.U32(42)
+	raw.Text(body)
+	indexed := proto.NewWriter(proto.MobSpeechIndex)
+	indexed.U32(42)
+	indexed.U16(6401)
+
+	for _, packet := range []*proto.Writer{raw, indexed} {
+		a := inputApp()
+		a.msg = text.SysMsg{6401: body}
+		if _, err := a.state.Apply(packet.Bytes()); err != nil {
+			t.Fatal(err)
+		}
+		a.confirmedSystemChat(packet.Bytes(), 0)
+		if len(a.screenNotices) != 1 || a.screenNotices[0].text != body || a.screenNotices[0].style != 30 {
+			t.Fatalf("unexpected boss news: %v", a.screenNotices)
+		}
+		if len(a.state.Chat) != 1 {
+			t.Fatalf("expected one boss chat entry: %v", a.state.Chat)
+		}
+		entry := chatEntry(a.msg, a.state.Chat[0])
+		if entry.Text != body || !entry.System || entry.Color != ui.RGBColor(0xff80ff) {
+			t.Fatalf("unexpected boss chat entry: %+v", entry)
+		}
 	}
 }
