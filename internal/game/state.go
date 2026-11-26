@@ -91,6 +91,7 @@ type ChatLine struct {
 	ItemType, ItemID uint8
 	Raid             bool
 	MessageID        int
+	GMReply          *proto.GMReply
 	Style            uint8
 	Op               proto.Opcode
 	Direction        uint8
@@ -1304,8 +1305,8 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			if !g.GM {
 				s.GMConcealed, s.GMImmune = false, false
 			}
-			if g.Message != "" {
-				s.addChat(ChatLine{Op: proto.ChatError, Text: g.Message, Style: 4})
+			if g.Message != "" || g.Reply.ID != 0 {
+				s.addChat(ChatLine{Op: proto.ChatError, Text: g.Message, Style: 4, MessageID: int(g.Reply.ID), GMReply: &g.Reply})
 			}
 		}
 	case proto.CharacterEnteredMap, proto.UserLeave, proto.MobLeave, proto.MapNpcLeave, proto.ChangeAppearance, proto.CharacterEquipment, proto.CharacterShape, proto.CharacterMove, proto.MobEnter, proto.GXMobEnter, proto.MobMove, proto.GXMobMove, proto.MapNpcEnter, proto.MapNpcMove, proto.MapNpcAttackPlayer, proto.MapNpcAttackMob:

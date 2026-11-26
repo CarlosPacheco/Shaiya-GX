@@ -364,6 +364,8 @@ func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
 			presentation = &resolved
 		}
 		switch {
+		case presentation.Template != "" && c.GMReply != nil:
+			body = text.FormatMessage(presentation.Template, c.GMReply.Values)
 		case presentation.Template != "":
 			body = text.FormatMessage(presentation.Template, map[string]string{"p": presentation.Sender, "b": c.Text})
 		case c.Op == proto.ChatWhisper:

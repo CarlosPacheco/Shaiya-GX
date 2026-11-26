@@ -62,7 +62,7 @@ func (a *App) confirmedQuestProgress(id uint16, slot uint8) {
 	def := &localized
 	switch def.EndType {
 	case 1:
-		a.questMessage(fmt.Sprintf("%s: objective %d = %d", def.Name, slot+1, active.Counters[slot]))
+		a.questMessage(a.msg.Format(12450, map[string]string{"p": def.Name, "v": fmt.Sprint(slot + 1), "b": fmt.Sprint(active.Counters[slot])}))
 	case 2:
 		if int(slot) >= len(def.MobIDs) || def.MobCounts[slot] == 0 {
 			return
@@ -80,7 +80,7 @@ func (a *App) confirmedQuestProgress(id uint16, slot uint8) {
 				}
 			}
 			if i == int(slot) {
-				a.questMessage(fmt.Sprintf("%s: objective %d = %d", def.Name, slot+1, active.Counters[slot]))
+				a.questMessage(a.msg.Format(12450, map[string]string{"p": def.Name, "v": fmt.Sprint(slot + 1), "b": fmt.Sprint(active.Counters[slot])}))
 			}
 		}
 	case 3:
@@ -131,7 +131,7 @@ func (a *App) confirmedQuest(p []byte) {
 			if a.msg.Get(219) != "" {
 				a.systemMessage(3, 219, nil)
 			} else {
-				a.questMessage("Quest started: " + a.questName(id))
+				a.questMessage(a.msg.Format(12451, map[string]string{"p": a.questName(id)}))
 			}
 		}
 	case proto.AddItem:
@@ -182,9 +182,9 @@ func (a *App) confirmedQuest(p []byte) {
 					a.npcQuestUI.ResetDescriptionScroll()
 				}
 			}
-			status := "ended"
+			status := a.tr(12456)
 			if result.Success != 0 {
-				status = "completed"
+				status = a.tr(12457)
 			}
 			if a.msg.Get(243) != "" {
 				id := 244

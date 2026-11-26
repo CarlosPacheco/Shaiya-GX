@@ -1,7 +1,6 @@
 package world
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -48,18 +47,18 @@ func (s *Session) updateWeather(now time.Time, force bool) {
 
 func (s *Session) gmWeather(args []string) error {
 	if len(args) != 1 || (args[0] != "0" && args[0] != "1" && args[0] != "2") {
-		return fmt.Errorf("usage: /weather 0, 1 or 2")
+		return newGMError(12455)
 	}
 	now := time.Now()
 	s.weatherOverride = args[0][0] - '0'
 	if s.weatherOverride == proto.WeatherClear {
 		s.weatherOverrideUntil = time.Time{}
 		s.updateWeather(now, true)
-		s.gmReply("GM: local weather preview cleared.")
+		s.gmMessage(12445)
 		return nil
 	}
 	s.weatherOverrideUntil = now.Add(weatherDuration)
 	s.updateWeather(now, true)
-	s.gmReply("GM: local weather enabled for 10 minutes.")
+	s.gmMessage(12446)
 	return nil
 }

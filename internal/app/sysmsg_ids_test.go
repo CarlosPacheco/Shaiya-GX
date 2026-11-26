@@ -14,8 +14,9 @@ import (
 // every embedded GX row must be used, so the tables and the code never drift.
 func TestGXSysMsgIDsMatchTheEmbeddedRows(t *testing.T) {
 	use := regexp.MustCompile(`(?:\.tr|Tr|Trf|Format|systemMessage|questMessageID|backToLoginID|personalMarketNotice|localizedNotice)\((?:[^,()]*, )?(12[0-9]{3})\b|\b(12[0-9]{3})\b`)
+	serverUse := regexp.MustCompile(`(?:gmMessage|newGMError)\((12[0-9]{3})\b`)
 	used := map[int]bool{}
-	for _, dir := range []string{".", "../ui"} {
+	for _, dir := range []string{".", "../ui", "../../server/internal/world"} {
 		files, _ := filepath.Glob(filepath.Join(dir, "*.go"))
 		for _, f := range files {
 			if filepath.Base(f) == "sysmsg_ids_test.go" || len(f) > 8 && f[len(f)-8:] == "_test.go" {
@@ -25,7 +26,11 @@ func TestGXSysMsgIDsMatchTheEmbeddedRows(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			for _, m := range use.FindAllStringSubmatch(string(b), -1) {
+			matcher := use
+			if dir == "../../server/internal/world" {
+				matcher = serverUse
+			}
+			for _, m := range matcher.FindAllStringSubmatch(string(b), -1) {
 				for _, g := range m[1:] {
 					if g == "" {
 						continue

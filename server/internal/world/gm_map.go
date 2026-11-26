@@ -14,11 +14,11 @@ func (s *Session) handleGMMapTeleport(p []byte) {
 		return
 	}
 	if !s.isAdmin {
-		s.gmReply("GM: access denied.")
+		s.gmMessage(12387)
 		return
 	}
 	if tradeFor(s.char.ID) != nil {
-		s.gmReply("GM: finish trading before teleporting.")
+		s.gmMessage(12427)
 		return
 	}
 	mapID, u, v, err := proto.DecodeGMMapTeleport(p)
@@ -26,26 +26,26 @@ func (s *Session) handleGMMapTeleport(p []byte) {
 		err = s.gmMapTeleport(mapID, u, v)
 	}
 	if err != nil {
-		s.gmReply("GM: " + err.Error() + ".")
+		s.gmFailure(err)
 	}
 }
 
 func (s *Session) gmMapTeleport(mapID uint16, u, v float32) error {
 	size, ok := mapSize(mapID)
 	if !ok || size <= 0 || isInstanceZone(mapID) {
-		return fmt.Errorf("unknown map")
+		return newGMError(12408)
 	}
 	x, z := u*size, (1-v)*size
 	if x < 0 || z < 0 || x > size || z > size {
-		return fmt.Errorf("destination is outside the playable map")
+		return newGMError(12428)
 	}
 	nav, err := loadMobNavigation(mapID)
 	if err != nil || nav == nil {
-		return fmt.Errorf("destination collision resources unavailable")
+		return newGMError(12429)
 	}
 	g, ok := nav.PlayerGeometry()
 	if !ok {
-		return fmt.Errorf("destination physics unavailable")
+		return newGMError(12430)
 	}
 	// Use the nearest navigable layer as a height hint, never as an X/Z snap.
 	hint := g.Height(x, z)
@@ -54,7 +54,7 @@ func (s *Session) gmMapTeleport(mapID uint16, u, v float32) error {
 	}
 	at, ok := nearbyMapDestination(nav, g, mapID, size, x, hint, z)
 	if !ok {
-		return fmt.Errorf("no safe destination within 32 units")
+		return newGMError(12431)
 	}
 
 	s.cancelMove()
@@ -64,9 +64,9 @@ func (s *Session) gmMapTeleport(mapID uint16, u, v float32) error {
 	s.useNpc(0)
 	s.applyTeleport(mapID, at[0], at[1], at[2], "GM map teleport", true)
 	if s.char.MapID != mapID || math.Abs(float64(s.char.PosX-at[0])) > .001 || math.Abs(float64(s.char.PosZ-at[2])) > .001 {
-		return fmt.Errorf("destination unavailable")
+		return newGMError(12410)
 	}
-	s.gmReply(fmt.Sprintf("GM: map %d, X %.2f Y %.2f Z %.2f.", mapID, s.char.PosX, s.char.PosY, s.char.PosZ))
+	s.gmMessage(12426, mapID, fmt.Sprintf("%.2f", s.char.PosX), fmt.Sprintf("%.2f", s.char.PosY), fmt.Sprintf("%.2f", s.char.PosZ))
 	return nil
 }
 

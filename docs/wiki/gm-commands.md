@@ -26,6 +26,11 @@ entire HP. Replies use the original system messages: "Character's transparent
 setting is on/off", "Won't be attacked anymore" and "Will be attacked". Both
 are on at every GM login; turbo is off.
 
+Command feedback uses the selected client language, including errors and usage
+hints. Command names and accepted arguments stay the same in every language.
+The player sees the original body of a custom or configured `/notice`. Update
+the client and world server together to use localized command feedback.
+
 | Command | Result |
 |---|---|
 | `/set money amount` | Sets your own gold to 0–4,000,000,000; larger values clamp to the cap. Example: `/set money 10000000`. |

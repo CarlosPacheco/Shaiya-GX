@@ -118,7 +118,7 @@ func (s *Session) gmNotice(message string) error {
 		strings.Trim(suffix, "0123456789") == "" {
 		index, err := strconv.ParseUint(suffix, 10, 32)
 		if err != nil || index == 0 {
-			return fmt.Errorf("invalid notice index")
+			return newGMError(12447)
 		}
 		for _, n := range noticeCatalog {
 			if uint64(n.Index) == index {
@@ -126,10 +126,10 @@ func (s *Session) gmNotice(message string) error {
 				return nil
 			}
 		}
-		return fmt.Errorf("notice index %d not found", index)
+		return newGMError(12448, index)
 	}
 	if !validNoticeMessage(message) {
-		return fmt.Errorf("usage: /notice message or /notice indexX")
+		return newGMError(12449)
 	}
 	broadcastNotice(message)
 	return nil

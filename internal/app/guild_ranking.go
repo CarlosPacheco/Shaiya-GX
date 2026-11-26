@@ -25,7 +25,7 @@ func (a *App) confirmedGuildRanking(p []byte) {
 			message = a.tr(12250)
 		default:
 			if n.Kind < 24 {
-				message = fmt.Sprintf("Guild ranking battle on map %d opens at %02d:00 server time.", n.Map, n.Kind)
+				message = a.msg.Format(12458, map[string]string{"v": fmt.Sprint(n.Map), "b": fmt.Sprintf("%02d", n.Kind)})
 			}
 		}
 		if message != "" {

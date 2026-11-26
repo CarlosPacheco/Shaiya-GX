@@ -53,18 +53,18 @@ var worldBots struct {
 func (s *Session) gmBots(args []string) error {
 	host, _, err := net.SplitHostPort(config.WorldListen())
 	if err != nil || !net.ParseIP(host).IsLoopback() && host != "localhost" {
-		return fmt.Errorf("/bots requires a loopback world listener")
+		return newGMError(12442)
 	}
 	if len(args) == 1 && strings.EqualFold(args[0], "off") {
 		worldBots.Lock()
 		clearWorldBots()
 		worldBots.Unlock()
-		s.gmReply("PvP bots removed.")
+		s.gmMessage(12441)
 		return nil
 	}
 	n, err := gmNumbers(args, 1000)
 	if err != nil {
-		return fmt.Errorf("usage: /bots 1-1000 or /bots off")
+		return newGMError(12443)
 	}
 	g, err := s.playerGeometry(s.char.MapID)
 	if err != nil {
@@ -94,7 +94,7 @@ func (s *Session) gmBots(args []string) error {
 		z := s.char.PosZ + radius*float32(sin) + side*float32(cos)
 		home, ok := separatedBotHome(g, x, s.char.PosY, z, homes)
 		if !ok {
-			return fmt.Errorf("not enough open terrain for %d PvP bots around you", n[0])
+			return newGMError(12444, n[0])
 		}
 		homes = append(homes, home)
 	}
@@ -131,7 +131,7 @@ func (s *Session) gmBots(args []string) error {
 	}
 	clearWorldBots()
 	worldBots.arena = a
-	s.gmReply(fmt.Sprintf("Spawned %d PvP bots around you.", len(a.bots)))
+	s.gmMessage(12440, len(a.bots))
 	return nil
 }
 

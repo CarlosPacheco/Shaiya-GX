@@ -355,3 +355,29 @@ func TestPortalContactUsesTheActorOrigin(t *testing.T) {
 		}
 	}
 }
+
+func TestGMReplyUsesLocalizedTemplate(t *testing.T) {
+	const id = 12382
+	reply := proto.GMReply{ID: id, Values: map[string]string{"v": "2", "v2": "Arma <v>", "v3": "1", "v4": "3"}}
+	fallback := "GM: received 2 x Arma <v> (1/3)."
+	w := proto.NewWriter(proto.GXGMState)
+	w.U32(42)
+	w.U8(1)
+	w.U8(0)
+	w.U16(uint16(len(fallback)))
+	w.Raw([]byte(fallback))
+	w.Raw(reply.Encode())
+	state := game.New()
+	state.SelfID = 42
+	if _, err := state.Apply(w.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	line := state.Chat[0]
+	if got := chatEntry(text.SysMsg{}, line).Text; got != fallback {
+		t.Fatalf("fallback = %q", got)
+	}
+	messages := text.SysMsg{id: "GM: recibiste <v> x <v2> (<v3>/<v4>)."}
+	if got := chatEntry(messages, line).Text; got != "GM: recibiste 2 x Arma <v> (1/3)." {
+		t.Fatalf("Spanish reply = %q", got)
+	}
+}

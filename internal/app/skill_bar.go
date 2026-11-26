@@ -1,7 +1,7 @@
 package app
 
 import (
-	"fmt"
+	"log"
 	"sort"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
@@ -131,7 +131,8 @@ func (a *App) updateBarEditing(in *platform.Input, w, h int) bool {
 		err = a.world.Send(p)
 	}
 	if err != nil {
-		a.backToLogin(fmt.Sprintf("Unable to save action bar: %v", err))
+		log.Printf("unable to save action bar: %v", err)
+		a.backToLoginID(12454)
 		return true
 	}
 	if a.world != nil {
