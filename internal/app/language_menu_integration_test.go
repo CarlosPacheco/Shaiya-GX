@@ -75,11 +75,11 @@ func TestLanguageMenuGL(t *testing.T) {
 	}
 	a.gameMenu.Open(ui.MenuUser)
 	click(265, 55)
-	click(265, 109)
+	click(265, 325) // Tiếng Việt
 	click(245, 404) // OK
 	fresh := inputApp()
 	fresh.loadClientLanguage()
-	if fresh.gameMenu.Settings.LanguageID != 2 {
-		t.Fatal("language did not persist with layout saving disabled")
+	if fresh.gameMenu.Settings.LanguageID != 10 {
+		t.Fatal("Vietnamese did not persist with layout saving disabled")
 	}
 }

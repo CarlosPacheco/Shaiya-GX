@@ -194,7 +194,7 @@ a mount.
 Equipment sounds play when World confirms a change to an equipped slot.
 
 The language selector beside **Control Setup** in User Options saves the
-preferred content language independently of window layout. English is the default. This selector preview exposes nine
+preferred content language independently of window layout. English is the default. This selector preview exposes ten
 language choices with flags and native names. Game text stays in English until
 translation loading is implemented.
 

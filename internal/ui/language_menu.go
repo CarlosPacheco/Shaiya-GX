@@ -13,7 +13,7 @@ var gameLanguages = [...]struct {
 	name string
 	flag string
 }{
-	{1, "English", "🇬🇧"},
+	{EnglishLanguageID, "English", "🇺🇸"},
 	{2, "Español", "🇪🇸"},
 	{3, "Português (Brasil)", "🇧🇷"},
 	{4, "Français", "🇫🇷"},
@@ -22,6 +22,7 @@ var gameLanguages = [...]struct {
 	{7, "Polski", "🇵🇱"},
 	{8, "Türkçe", "🇹🇷"},
 	{9, "Русский", "🇷🇺"},
+	{10, "Tiếng Việt", "🇻🇳"},
 }
 
 const (
@@ -104,8 +105,8 @@ func (m *GameMenu) drawLanguage(s *render.Sprites, f *Font, solid *render.Textur
 	fill[3] = 1
 	drawRow := func(index, rowY int) {
 		language := gameLanguages[index]
-		f.DrawScaled(s, language.flag, float32(px+9), float32(rowY+5), 1.15, white, 27)
-		f.DrawScaled(s, language.name, float32(px+39), float32(rowY+5), 1.1, white, languageW-59)
+		f.Draw(s, language.flag, px+9, rowY+6, white, 27)
+		f.Draw(s, language.name, px+39, rowY+6, white, languageW-59)
 	}
 	DrawTipFrame(s, solid, float32(px), float32(py), languageW, languageH, 1, fill, TipBorder)
 	drawRow(languageIndex(m.Settings.LanguageID), py)
