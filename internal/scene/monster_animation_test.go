@@ -56,4 +56,14 @@ func TestMonsterIdleVariationYieldsToMovementAndAttack(t *testing.T) {
 	if !mob.Attacking() || mob.PlayOnce(7) {
 		t.Fatal("locomotion or damage reaction cut a confirmed attack")
 	}
+	setAction(5)
+	mob.Update(.02)
+	if mob.action != 5 || mob.cueTime != 0 || mob.blendLeft != 0 || mob.Time != .02 || !mob.oneShot {
+		t.Fatal("death did not immediately replace the active attack")
+	}
+	setAction(5)
+	mob.Update(.02)
+	if mob.Time != .04 {
+		t.Fatal("reapplying death restarted its clip")
+	}
 }

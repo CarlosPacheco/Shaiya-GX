@@ -189,6 +189,13 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 			if m.incomingHits == 0 || len(a.combatNumbers) != 0 {
 				t.Fatal("lethal hit was not scheduled at contact")
 			}
+			var laterHit *mobActor
+			if tc.name == "sword" {
+				laterHit = a.waitForMobHit(mobID, 1, 0)
+				if laterHit != m {
+					t.Fatal("expected a second hit still in flight")
+				}
+			}
 			move(a, 102, 4, 0)
 			death := proto.NewWriter(proto.MobDeath)
 			death.U32(mobID)
@@ -218,9 +225,26 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 			if tc.twoHits {
 				want = 50
 			}
-			if !m.dead || m.incomingHits != 0 || len(a.combatNumbers) != 1 || a.combatNumbers[0].Amount != want ||
+			pending := 0
+			if laterHit != nil {
+				pending = 1
+			}
+			if !m.dead || m.incomingHits != pending || len(a.combatNumbers) != 1 || a.combatNumbers[0].Amount != want ||
 				m.pos != (render.V3{102, 4, 100}) || m.deathAt != a.combatNumbers[0].Started {
 				t.Fatalf("death and impact diverged: dead=%t pending=%d pos=%v numbers=%+v", m.dead, m.incomingHits, m.pos, a.combatNumbers)
+			}
+			if laterHit != nil {
+				deathAt := m.deathAt
+				for range 2 {
+					advance()
+				}
+				if m.actor.Time <= 0 || m.deathAt != deathAt || m.incomingHits != 1 {
+					t.Fatal("another pending hit delayed or interrupted the death clip")
+				}
+				a.finishMobHit(laterHit)
+				if m.incomingHits != 0 || m.deathAt != deathAt {
+					t.Fatal("later contact restarted the death")
+				}
 			}
 			if tc.twoHits {
 				deathAt := m.deathAt

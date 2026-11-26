@@ -182,7 +182,7 @@ func (a *App) prepareMonsters() {
 		a.updateMobPosition(m)
 
 		action := 6
-		death := e.Dead && m.incomingHits == 0
+		death := e.Dead && (m.dead || m.incomingHits == 0)
 		if e.Dead {
 			if !m.deathFrozen {
 				m.freezeCorpse(e, a.clock)

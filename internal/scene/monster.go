@@ -120,7 +120,7 @@ func (m *CreatureActor) SetAction(action int) error {
 		}
 		return nil
 	}
-	return m.setAction(action, false, false)
+	return m.setAction(action, false, m.folder == "Monster" && action == 5)
 }
 
 func (m *CreatureActor) setAction(action int, oneShot, immediate bool) error {
@@ -141,7 +141,7 @@ func (m *CreatureActor) setAction(action int, oneShot, immediate bool) error {
 		return err
 	}
 	if immediate {
-		m.startClipImmediately(clip, oneShot)
+		m.startClipImmediately(clip, oneShot || action == 5)
 	} else {
 		m.startClip(clip, oneShot || action == 5)
 	}

@@ -29,9 +29,12 @@ credit are never accepted from a client. Native skill/move layouts are unchanged
 World uses the same movement segment for its position queries and the duration
 in `GXMobMove` (`0x7F06`). When a moving mob dies, a zero-duration update can
 place the corpse at its last server position before `0x0606`. The client
-uses its rendered position to approach and aim, and presents a lethal melee
-or ranged weapon hit at its animation or projectile contact. HP and targeting
-still follow the server.
+uses its rendered position to approach and aim. The original EP5.4 client
+records death at `0x564e50` and can start its animation from the next impact
+(`0x4332c0`), setting frame zero directly (`0x4321a0`). GX likewise starts
+the death clip at contact when a hit is pending and plays it immediately when
+no contact is pending. Other hits can still present their damage at their own
+contact. HP and targeting follow the server.
 
 Monster skill packets `0x060B` and `0x060C` carry the attack animation slot.
 Additional `0x060D` results apply their effects without replaying the cast.

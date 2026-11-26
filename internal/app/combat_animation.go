@@ -319,8 +319,8 @@ func (a *App) showsAttackResult(r proto.AttackResult) bool {
 	return r.Source == a.state.SelfID || r.Target == a.state.SelfID || r.Target == a.state.Target
 }
 
-// A confirmed hit retains its target's visual life until the animation or
-// projectile reaches contact. The entity remains dead for targeting and HP.
+// Confirmed hits defer presentation to contact. Once a death notice arrives,
+// the next contact can start the death animation while other hits are pending.
 func (a *App) waitForMobHit(target uint32, hp uint16, result uint8) *mobActor {
 	if hp == 0 || result > 1 {
 		return nil
@@ -338,7 +338,7 @@ func (a *App) finishMobHit(m *mobActor) {
 		return
 	}
 	m.incomingHits--
-	if m.incomingHits == 0 && m.entity.Dead && m.actor != nil && a.state.Entities[m.entity.ID] == m.entity {
+	if m.entity.Dead && !m.dead && m.actor != nil && a.state.Entities[m.entity.ID] == m.entity {
 		a.presentMobDeath(m)
 	} else {
 		a.reactToMobHit(m)
