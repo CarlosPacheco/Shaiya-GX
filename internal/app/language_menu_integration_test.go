@@ -1,0 +1,85 @@
+//go:build integration
+
+package app
+
+import (
+	"os"
+	"path/filepath"
+	"runtime"
+	"testing"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/ui"
+)
+
+func TestLanguageMenuGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires GL and original assets")
+	}
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	win, err := platform.Open(platform.Config{Width: 1024, Height: 768, Hidden: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer win.Close()
+	if err := render.Init(false); err != nil {
+		t.Fatal(err)
+	}
+	arc, err := archive.OpenDirectory(os.Getenv("SHAIYA_DATA"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer arc.Close()
+	a, err := New(Config{}, arc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer a.Close()
+	a.screen = screenCharacters
+	a.openGameMenu()
+	a.gameMenu.Open(ui.MenuUser)
+	x, y := a.gameMenu.Origin(1024, 768)
+	click := func(px, py int) {
+		in := platform.Input{MouseX: x + px, MouseY: y + py, Pressed: true, MouseDown: true}
+		a.updateGameMenu(&in, 1024, 768)
+		in.Pressed, in.MouseDown, in.Clicked = false, false, true
+		a.updateGameMenu(&in, 1024, 768)
+	}
+	click(280, 365)
+	if !a.gameMenu.PopupOpen() {
+		t.Fatal("language dropdown did not open")
+	}
+	if dir := os.Getenv("SHAIYA_TEST_ARTIFACTS"); dir != "" {
+		gl.Viewport(0, 0, 1024, 768)
+		gl.ClearColor(.12, .14, .16, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		a.sprites.Begin(1024, 768)
+		a.gameMenu.Draw(a.sprites, a.font, 1024, 768, a.white)
+		a.sprites.End()
+		if err := render.SavePNG(filepath.Join(dir, "shaiya-gx-language.png"), 1024, 768); err != nil {
+			t.Fatal(err)
+		}
+	}
+	click(280, 181) // Español
+	if a.gameMenu.PopupOpen() || a.gameMenu.Settings.LanguageID != 2 {
+		t.Fatal("Español was not selected")
+	}
+	click(310, 404) // Cancel
+	if a.gameMenu.Settings.LanguageID != ui.EnglishLanguageID {
+		t.Fatal("Cancel did not restore English")
+	}
+	a.gameMenu.Open(ui.MenuUser)
+	click(280, 365)
+	click(280, 181)
+	click(245, 404) // OK
+	fresh := inputApp()
+	fresh.loadClientLanguage()
+	if fresh.gameMenu.Settings.LanguageID != 2 {
+		t.Fatal("language did not persist with layout saving disabled")
+	}
+}

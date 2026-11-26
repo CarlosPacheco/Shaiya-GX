@@ -193,6 +193,11 @@ a mount.
 
 Equipment sounds play when World confirms a change to an equipped slot.
 
+**Language** in User Options saves the preferred content language independently
+of window layout. English is the default. This selector preview exposes nine
+language choices with flags and native names. Game text stays in English until
+translation loading is implemented.
+
 Items are used with the **right** button (a deliberate departure from the original,
 which used the left click, to match modern clients): right-clicking a bag item
 requests its use, and an equippable item selects its equipment slot and requests

@@ -552,6 +552,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	a.loadingScreen = ui.NewLoadingScreen(a)
 	a.loadSavedID()
 	a.loadUILayout()
+	a.loadClientLanguage()
 	a.loadClientSettings()
 	a.gameMenu.Settings.Antialias = ui.NormalizeAntialias(a.gameMenu.Settings.Antialias, a.aaSamples)
 	if a.gameMenu.Settings.DisplayMode == (platform.DisplayMode{}) && cfg.CurrentDisplayMode != nil {

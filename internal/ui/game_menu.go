@@ -25,6 +25,10 @@ const MenuNone, MenuClose, MenuCharacters, MenuExit, MenuChanged, MenuSave = 0, 
 // Game.exe 0x4fbbb0 constructs the widgets and 0x4fa800 places subpage
 // controls. These coordinates take precedence over Phoenix's compact menu.
 type GameMenu struct {
+	languageButton                              Button
+	languageOpen                                bool
+	languageCursor, languageHover, languageHeld int
+
 	displayButton              Button
 	displayScroll              panelScroll
 	displayHover               int
@@ -60,6 +64,8 @@ type GameMenu struct {
 // Only settings with a runtime consumer are editable. Other original controls
 // remain visible in their original art until their subsystems are implemented.
 type ClientSettings struct {
+	LanguageID int `json:"-"`
+
 	DisplayMode                               platform.DisplayMode
 	ChatRows                                  [2]int
 	ChatFilters                               uint8 `json:",omitempty"`
@@ -86,7 +92,7 @@ type ClientSettings struct {
 }
 
 func DefaultClientSettings() ClientSettings {
-	return ClientSettings{Antialias: AntialiasOff, Glow: 2, Brightness: 2, Details: 2, VisualDistance: 2, ChatRows: [2]int{5, 5}, Music: 1, Effects: 1, Ambient: 1, CharacterSound: true, RiskSensor: true, MouseSensitivity: 3, UseMouse: true,
+	return ClientSettings{LanguageID: EnglishLanguageID, Antialias: AntialiasOff, Glow: 2, Brightness: 2, Details: 2, VisualDistance: 2, ChatRows: [2]int{5, 5}, Music: 1, Effects: 1, Ambient: 1, CharacterSound: true, RiskSensor: true, MouseSensitivity: 3, UseMouse: true,
 		OwnName: true, PlayerNames: true, MonsterNames: true, Shadows: true, Water: true, SkillEffects: true,
 		WarningMsg: true, ShakeScreen: true, WordBalloon: true}
 }
@@ -116,6 +122,7 @@ func NewGameMenu(t Textures) (*GameMenu, error) {
 		}
 	}
 	m.help = newMenuHelp(ld)
+	m.languageButton = Button{OffX: languageX, OffY: languageY, HitW: languageW, HitH: languageH}
 	m.close = nativeClose(ld.get("talk1_close_button.png"), 228, 5)
 	m.back = Button{Tex: ld.get("option_main_button2.png"), DrawW: 128, DrawH: 32, HitW: 128, HitH: 22, UV: FourRowUV}
 	m.ok = Button{Tex: ld.get("ok_button.png"), DrawW: 128, DrawH: 32, HitW: 65, HitH: 25, UV: FourRowUV}
@@ -169,6 +176,8 @@ func (m *GameMenu) Open(page MenuPage) {
 	}
 	m.Page = page
 	m.bindingSlot = 0
+	m.languageOpen, m.languageHover, m.languageHeld = false, -1, -1
+	m.languageButton.held = false
 	m.displayOpen = false
 	m.displayHeld = -1
 	m.displayButton.held = false
@@ -256,6 +265,9 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 			return result
 		}
 	}
+	if m.Page == MenuUser && m.updateLanguage(in, x, y) {
+		return MenuNone
+	}
 	if in.Pressed {
 		m.pressedCheck = nil
 		m.dragSlider = -1
@@ -319,6 +331,7 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 			m.Settings.Music, m.Settings.Effects, m.Settings.Ambient = defaults.Music, defaults.Effects, defaults.Ambient
 			m.Settings.CharacterSound, m.Settings.RiskSensor = defaults.CharacterSound, defaults.RiskSensor
 		case MenuUser:
+			m.Settings.LanguageID = defaults.LanguageID
 			m.Settings.UseMouse, m.Settings.InvertY, m.Settings.SwapMouse = defaults.UseMouse, defaults.InvertY, defaults.SwapMouse
 			m.Settings.MouseSensitivity = defaults.MouseSensitivity
 			m.Settings.OwnName, m.Settings.PlayerNames, m.Settings.MonsterNames = true, true, true
@@ -523,6 +536,7 @@ func (m *GameMenu) Draw(s *render.Sprites, f *Font, w, h int, solid ...*render.T
 	if len(solid) > 0 {
 		m.drawDisplayModes(s, f, solid[0], x, y)
 		m.drawAntialiasPopup(s, f, solid[0], x, y)
+		m.drawLanguage(s, f, solid[0], x, y)
 	}
 }
 

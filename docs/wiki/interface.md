@@ -207,6 +207,11 @@ a mount.
 
 Equipment sounds play when World confirms a change to an equipped slot.
 
+**Language** in User Options saves the preferred content language independently
+of window layout. English is the default. This selector preview exposes nine
+language choices with flags and native names. Game text stays in English until
+translation loading is implemented.
+
 An ordinary left click requests use of the inventory item. A drag still moves
 items; a release outside its source does not consume it. Right clicking a bag
 item selects its equipment slot and requests the native move/swap, including
