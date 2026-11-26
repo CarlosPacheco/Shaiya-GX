@@ -14,6 +14,7 @@ import (
 	textFont "github.com/go-text/typesetting/font"
 	"github.com/go-text/typesetting/segmenter"
 	"github.com/go-text/typesetting/shaping"
+	xdraw "golang.org/x/image/draw"
 	"golang.org/x/image/math/fixed"
 	"golang.org/x/text/unicode/norm"
 )
@@ -115,23 +116,29 @@ func (u *unicodeFont) rasterize(s string) *unicodeTexture {
 	l := u.layout(s)
 	pad := int(math.Ceil(float64(u.size*2))) + 2
 	width, height := max(1, l.width+pad*2), max(1, u.height+pad*2)
-	mono := image.NewNRGBA(image.Rect(0, 0, width, height))
+	// Rasterize outlines above the target resolution so small accented and
+	// Cyrillic glyphs keep their strokes when reduced to the UI cell.
+	const outlineScale = 3
+	mono := image.NewNRGBA(image.Rect(0, 0, width*outlineScale, height*outlineScale))
 	var colored *image.NRGBA
 	x := fixed.I(pad)
-	renderer := textRender.Renderer{FontSize: u.size, Color: color.White}
+	outline := textRender.Renderer{FontSize: u.size, PixScale: outlineScale, Color: color.White}
+	bitmap := textRender.Renderer{FontSize: u.size, Color: color.White}
 	for _, run := range l.runs {
-		target := mono
 		if u.source.color[run.Face] {
 			if colored == nil {
-				colored = image.NewNRGBA(mono.Bounds())
+				colored = image.NewNRGBA(image.Rect(0, 0, width, height))
 			}
-			target = colored
+			bitmap.DrawShapedRunAt(run, colored, x.Round(), pad+u.ascent)
+		} else {
+			outline.DrawShapedRunAt(run, mono, (x * outlineScale).Round(), (pad+u.ascent)*outlineScale)
 		}
-		renderer.DrawShapedRunAt(run, target, x.Round(), pad+u.ascent)
 		x += run.Advance
 	}
+	raster := image.NewNRGBA(image.Rect(0, 0, width, height))
+	xdraw.CatmullRom.Scale(raster, raster.Bounds(), mono, mono.Bounds(), xdraw.Src, nil)
 	t := &unicodeTexture{pad: pad, width: width, height: height}
-	t.mono = render.Upload(img.Texture{RGBA: &img.RGBA{W: width, H: height, Pix: mono.Pix}})
+	t.mono = render.Upload(img.Texture{RGBA: &img.RGBA{W: width, H: height, Pix: raster.Pix}})
 	t.bytes = width * height * 4
 	if colored != nil {
 		t.colored = render.Upload(img.Texture{RGBA: &img.RGBA{W: width, H: height, Pix: colored.Pix}})
