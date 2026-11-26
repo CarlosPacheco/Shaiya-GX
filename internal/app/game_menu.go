@@ -161,9 +161,9 @@ func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 			return
 		}
 		a.menuIntent = action
-		text := "Return to the character screen?"
+		text := a.tr(12463)
 		if action == ui.MenuExit {
-			text = "Exit the game?"
+			text = a.tr(12464)
 		}
 		a.menuConfirm.Open(text, true)
 	case ui.MenuChanged:

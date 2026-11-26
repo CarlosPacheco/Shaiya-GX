@@ -3,6 +3,7 @@
 package app
 
 import (
+	"bytes"
 	"maps"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
@@ -73,6 +75,29 @@ func TestLanguageMenuGL(t *testing.T) {
 	click(310, 404) // Cancel
 	if a.gameMenu.Settings.LanguageID != ui.EnglishLanguageID {
 		t.Fatal("Cancel did not restore English")
+	}
+	a.chars.SetChars(map[uint8]proto.CharacterSlot{0: {ID: 1, Name: "Test", Level: 10, MapID: 1}})
+	a.servers.Servers = []proto.Server{{ID: 1, Name: "Test", Status: 2}}
+	draw := func(screen func(*render.Sprites, *ui.Font, int, int)) []byte {
+		gl.Viewport(0, 0, 1024, 768)
+		gl.Clear(gl.COLOR_BUFFER_BIT)
+		a.sprites.Begin(1024, 768)
+		screen(a.sprites, a.font, 1024, 768)
+		a.sprites.End()
+		pixels := make([]byte, 1024*768*4)
+		gl.ReadPixels(0, 0, 1024, 768, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&pixels[0]))
+		return pixels
+	}
+	englishChars, englishServers := draw(a.chars.Draw), draw(a.servers.Draw)
+	a.gameMenu.Open(ui.MenuUser)
+	click(265, 55)
+	click(265, 109) // Español
+	click(245, 404) // OK
+	if a.msg.Get(5065) != a.englishMsg.Get(5065) && bytes.Equal(draw(a.chars.Draw), englishChars) {
+		t.Fatal("character selection kept rendering English")
+	}
+	if a.msg.Get(10111) != a.englishMsg.Get(10111) && bytes.Equal(draw(a.servers.Draw), englishServers) {
+		t.Fatal("server selection kept rendering English")
 	}
 	a.gameMenu.Open(ui.MenuUser)
 	click(265, 55)

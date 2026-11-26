@@ -181,6 +181,7 @@ type App struct {
 	chatFilterApplied                   bool
 	msg                                 text.SysMsg
 	englishMsg                          text.SysMsg
+	localizedLoadingTips                map[string]string
 	localized                           sdata.Translations
 	localizedItems                      map[sdata.ItemKey]*sdata.Item
 	white                               *render.Texture
@@ -328,6 +329,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	english, messages := loadContentMessages(arc.ReadFile, languageID)
 	a.msg, a.englishMsg = messages, english
 	a.loadSDataTranslations(languageID)
+	a.loadLocalizedLoadingTips(languageID)
 	ui.SetText(english.Lookup)
 	if b, err := arc.ReadFile("Filter.INI"); err == nil {
 		a.chatFilter = text.ParseWordFilter(b)
@@ -336,10 +338,10 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.login, err = ui.NewLogin(a); err != nil {
 		return nil, err
 	}
-	if a.servers, err = ui.NewServerList(a, english, a.white); err != nil {
+	if a.servers, err = ui.NewServerList(a, messages, a.white); err != nil {
 		return nil, err
 	}
-	if a.chars, err = ui.NewCharSelect(a, english); err != nil {
+	if a.chars, err = ui.NewCharSelect(a, messages); err != nil {
 		return nil, err
 	}
 	if a.create, err = ui.NewCharCreate(a, messages); err != nil {
@@ -562,7 +564,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	}
 	a.applyClientSettings()
 	if a.missingInterfaces > 0 {
-		a.login.Message = "Interface resources missing or damaged. See diagnostic log."
+		a.login.Message = a.tr(12462)
 	}
 	return a, nil
 }

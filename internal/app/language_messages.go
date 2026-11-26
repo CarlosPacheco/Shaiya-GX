@@ -36,6 +36,7 @@ func (a *App) reloadContentMessages(languageID int) {
 		return
 	}
 	a.loadSDataTranslations(languageID)
+	a.loadLocalizedLoadingTips(languageID)
 	a.refreshMallText()
 	a.questTracker.cachedState = nil
 	a.tooltipContent = tooltipContent{}
@@ -54,6 +55,12 @@ func (a *App) reloadContentMessages(languageID int) {
 		}
 	}
 	a.msg = messages
+	if a.servers != nil {
+		a.servers.SetMessages(messages)
+	}
+	if a.chars != nil {
+		a.chars.SetMessages(messages)
+	}
 	if a.create != nil {
 		a.create.SetMessages(messages)
 	}

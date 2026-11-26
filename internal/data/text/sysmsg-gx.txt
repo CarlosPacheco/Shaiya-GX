@@ -539,3 +539,6 @@
 12459		"Cast time: <v> seconds"
 12460		"Range: <v> m"
 12461		"Duration: <v>"
+12462		"Interface resources missing or damaged. See diagnostic log."
+12463		"Return to the character screen?"
+12464		"Exit the game?"

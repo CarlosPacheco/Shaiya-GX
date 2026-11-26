@@ -65,6 +65,12 @@ language code apply. Quote fields containing commas, quotes or line breaks
 using standard CSV rules. The next OK in User Options rereads the active
 language from disk.
 
+Character and server selection, character creation, and faction selection
+read from the selected SysMsg catalog. Button artwork stays shared. Loading
+tips can use `Languages/Tips/tip_<code>.ini` in UTF-8. Match the keys in the
+`[Tips]` section of `Tip.INI` to replace individual tips. Missing keys use the
+English tip.
+
 How code asks for text:
 
 | Place | Call |

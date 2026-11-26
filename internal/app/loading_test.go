@@ -69,3 +69,40 @@ func TestLoadingWithoutTipsShowsNoMessage(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadingTipTranslationFallsBackToEnglish(t *testing.T) {
+	root := t.TempDir()
+	tips := filepath.Join(root, "Languages", "Tips")
+	if err := os.MkdirAll(tips, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "Tip.INI"), []byte("[Tips]\n1=Welcome\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	arc, err := archive.OpenDirectory(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer arc.Close()
+	a := &App{arc: arc}
+	for _, tc := range []struct{ content, want string }{
+		{"", "Welcome"},
+		{"[Tips]\n2=Otro consejo\n", "Welcome"},
+		{"[Tips]\n1=\n", "Welcome"},
+		{"[Tips]\n1=Bienvenido\n", "Bienvenido"},
+	} {
+		if tc.content != "" {
+			if err := os.WriteFile(filepath.Join(tips, "tip_es.ini"), []byte(tc.content), 0644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		a.loadLocalizedLoadingTips(2)
+		if got := a.randomLoadingTip(); got != tc.want {
+			t.Fatalf("tip for %q = %q, want %q", tc.content, got, tc.want)
+		}
+	}
+	a.loadLocalizedLoadingTips(1)
+	if got := a.randomLoadingTip(); got != "Welcome" {
+		t.Fatalf("switching to English kept %q", got)
+	}
+}

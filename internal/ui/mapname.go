@@ -18,5 +18,5 @@ func MapName(messages text.SysMsg, id uint16) string {
 			return name
 		}
 	}
-	return "Map " + strconv.Itoa(int(id))
+	return messages.Format(12369, map[string]string{"v": strconv.Itoa(int(id))})
 }
