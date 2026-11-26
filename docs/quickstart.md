@@ -61,7 +61,7 @@ administration tools, not required for ordinary account creation.
 
 ## Run the client
 
-Download the [complete gx-v0.1.20 portable](https://drive.google.com/file/d/1CUvqxL3oxPZp_HJ_m6X54TWuV-61dAc6/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. To update an existing installation using the GitHub binaries, follow the [binary update instructions](client-portable.md#updating-existing-client-data).
+Download the [complete gx-v0.1.22 portable](https://drive.google.com/file/d/1ju67PBPpMO6W68-bQ15QXVBdRO9qF6_U/view?usp=sharing) from Drive and extract it. Start `Server/build/gx_console` (Linux) or `Server/build/gx_console.exe` (Windows), enter `start server`, then open `Client/Shaiya GX` or `Client/Shaiya GX.exe`. Keep `Client/data/` beside the client executables. To update an existing installation using the GitHub binaries, follow the [binary update instructions](client-portable.md#updating-existing-client-data).
 The game discovers its data automatically; no build tools or data conversion are needed.
 
 See [portable client requirements and updates](client-portable.md). GitHub releases provide executable updates without data. Developers can instead [build from source](building.md) and [import their compatible archives](data-formats.md); keep game data outside Git. Do not use the original `Game.exe` to run GX.

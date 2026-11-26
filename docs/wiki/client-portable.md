@@ -1,14 +1,14 @@
 # Shaiya GX portable client and server
 
-## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1CUvqxL3oxPZp_HJ_m6X54TWuV-61dAc6/view?usp=sharing)
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1ju67PBPpMO6W68-bQ15QXVBdRO9qF6_U/view?usp=sharing)
 
-**gx-v0.1.21 for Windows and Linux.** This Google Drive package includes both
+**gx-v0.1.22 for Windows and Linux.** This Google Drive package includes both
 executables, GX Server, client game data, fonts and the development database.
 **Everything is included; no separate data download is needed.**
 Extract the entire package into a writable folder:
 
 ```text
-Shaiya GX gx-v0.1.21 Portable/
+Shaiya GX gx-v0.1.22 Portable/
   Client/
     Shaiya GX
     Shaiya GX.exe
@@ -48,7 +48,7 @@ Source, build instructions and third-party font sources: https://github.com/Spel
 ## Updating existing client data
 
 Update GX Server and the client together and preserve the existing server runtime database.
-See the [gx-v0.1.21 upgrade guide](../releases/gx-v0.1.21-upgrade.md).
+See the [gx-v0.1.22 upgrade guide](../releases/gx-v0.1.22-upgrade.md).
 
 To update an older installation with the GitHub binaries, close the client and
 run the following commands from a source checkout. Set `ORIGINAL_CLIENT` to the
