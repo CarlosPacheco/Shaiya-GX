@@ -10,7 +10,8 @@ import (
 // Throwing an item on the ground follows the inventory object of Game.exe
 // (0x4f54e0): a bag item released over the world asks "Do you want to throw
 // away the item?" (SysMsg 455), or for stacks opens the quantity window, and
-// the answer goes out as 0x0206 (bag, slot, amount). Items whose ReqOG byte
+// the answer goes out as 0x0206 (bag, slot, amount). Equipped items (bag 0)
+// are ignored and must be unequipped first. Items whose ReqOG byte
 // (record offset 0x24) is set refuse with SysMsg 454 and the error sound.
 type itemDrop struct {
 	candidate *[2]uint8
@@ -24,6 +25,9 @@ type itemDrop struct {
 // noteItemDrop remembers a bag item released outside its window; worldControls
 // decides after every panel had its say whether the release was over the world.
 func (a *App) noteItemDrop(key [2]uint8) {
+	if key[0] == 0 {
+		return
+	}
 	a.drop.candidate = &key
 }
 
@@ -34,7 +38,7 @@ func (a *App) dropReleased(in *platform.Input, w, h int, captured bool) {
 	}
 	key := *d.candidate
 	d.candidate = nil
-	if captured || a.wv == nil || a.barCovered(in, w, h) || a.emblemCovers(in, w, h) || a.actionBar.SlotAt(in.MouseX, in.MouseY, w, h) >= 0 ||
+	if key[0] == 0 || captured || a.wv == nil || a.barCovered(in, w, h) || a.emblemCovers(in, w, h) || a.actionBar.SlotAt(in.MouseX, in.MouseY, w, h) >= 0 ||
 		a.state.Self.Dead || a.inventory.pending || a.shop.pending {
 		return
 	}
