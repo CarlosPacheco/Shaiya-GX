@@ -1,14 +1,14 @@
 # Shaiya GX portable client and server
 
-## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1ah4NBSVTW53U07MwnIsw-oHYjDE5QNqy/view?usp=sharing)
+## [Download the complete portable — Client + Server + Data](https://drive.google.com/file/d/1CUvqxL3oxPZp_HJ_m6X54TWuV-61dAc6/view?usp=sharing)
 
-**gx-v0.1.20 for Windows and Linux.** This Google Drive package includes both
+**gx-v0.1.21 for Windows and Linux.** This Google Drive package includes both
 executables, GX Server, client game data, fonts and the development database.
 **Everything is included; no separate data download is needed.**
 Extract the entire package into a writable folder:
 
 ```text
-Shaiya GX gx-v0.1.20 Portable/
+Shaiya GX gx-v0.1.21 Portable/
   Client/
     Shaiya GX
     Shaiya GX.exe
@@ -23,8 +23,7 @@ then enter `start server` in the console. Open `Client/Shaiya GX` or `Client/Sha
 Keep `Client/data/` beside the client executables.
 
 **Latest binary update: [GitHub Releases](https://github.com/Spelunkern/Shaiya-GX/releases/latest).**
-The archived Drive package contains the former editor in `Client/Studio/`.
-Download the current [GX Studio](https://github.com/Spelunkern/GX-Studio/releases) separately.
+The Drive portable includes [GX Studio](https://github.com/Spelunkern/GX-Studio/releases) in `GX Studio/`, with Windows, Linux and macOS builds.
 
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
 Server packages include the pinned player and structural dungeon mob
