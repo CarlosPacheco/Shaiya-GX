@@ -315,51 +315,68 @@ func (a *App) formattedChat() []ui.ChatEntry {
 	return a.chatEntries
 }
 
-// Native prefixes use the runtime message table, never a translated copy.
-func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
+func chatStyle(c game.ChatLine) (style uint8, messageID int) {
+	switch c.Op {
+	case 0:
+		return c.Style, 0
+	case proto.ChatError:
+		return c.Style, c.MessageID
+	case proto.ChatParty:
+		return 10, 353
+	case proto.ChatWhisper:
+		return 11, 0
+	case proto.ChatGuild:
+		return 12, 370
+	case proto.ChatWorld:
+		return 13, 355
+	case proto.ChatShout, proto.ChatWorldShout:
+		return 14, 0
+	case proto.ChatMap:
+		return 31, 482
+	case proto.ChatNormalAdmin:
+		return 16, 0
+	case proto.ChatWorldAdmin:
+		return 15, 356
+	default:
+		return 9, 0
+	}
+}
+
+func chatPresentation(messages text.SysMsg, c game.ChatLine, id int) game.ChatPresentation {
 	name := c.Sender
 	if name == "" && c.SenderID != 0 {
 		name = messages.Format(12296, map[string]string{"v": fmt.Sprint(c.SenderID)})
 	}
-	style := c.Style
+	var template string
+	if id != 0 && messages.Get(id) != "" {
+		template = messages.Lookup(id)
+	}
+	return game.ChatPresentation{Sender: name, Template: template}
+}
+
+func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
+	style, id := chatStyle(c)
 	body := c.Text
-	if c.Op == proto.ChatError && c.MessageID != 0 && messages.Get(c.MessageID) != "" {
-		body = messages.Format(c.MessageID, map[string]string{"p": name, "b": c.Text})
-	} else if c.Op != 0 && c.Op != proto.ChatError {
-		id := 0
-		style = 9
-		switch c.Op {
-		case proto.ChatParty:
-			id, style = 353, 10
-		case proto.ChatWhisper:
-			style = 11
+	if c.Op != 0 {
+		presentation := c.Presentation
+		if presentation == nil {
+			resolved := chatPresentation(messages, c, id)
+			presentation = &resolved
+		}
+		switch {
+		case presentation.Template != "":
+			body = text.FormatMessage(presentation.Template, map[string]string{"p": presentation.Sender, "b": c.Text})
+		case c.Op == proto.ChatWhisper:
 			direction := "from"
 			if c.Direction == 1 {
 				direction = "to"
 			}
-			body = "Whisper " + direction + " " + name + ": " + c.Text
-		case proto.ChatGuild:
-			id, style = 370, 12
-		case proto.ChatWorld:
-			id, style = 355, 13
-		case proto.ChatShout, proto.ChatWorldShout:
-			style = 14
-		case proto.ChatMap:
-			// Game.exe 0x566d60: SysMsg 482 "[area]<p> : <b>" with style 31, not the shout style.
-			id, style = 482, 31
-		case proto.ChatNormalAdmin:
-			style = 16
-		case proto.ChatWorldAdmin:
-			id, style = 356, 15
-		}
-		if id != 0 && messages.Get(id) != "" {
-			body = messages.Format(id, map[string]string{"p": name, "b": c.Text})
-		} else if c.Op != proto.ChatWhisper {
-			body = name + " : " + c.Text
+			body = "Whisper " + direction + " " + presentation.Sender + ": " + c.Text
+		case c.Op != proto.ChatError:
+			body = presentation.Sender + " : " + c.Text
 		}
 	}
 	rgb := ui.ChatRGB(style)
-
 	return ui.ChatEntry{Items: c.Items, ItemType: c.ItemType, ItemID: c.ItemID, Text: body, Repetitions: c.Repetitions, System: c.SystemPane(), Color: ui.RGBColor(rgb), Style: style, Markup: c.Op == 0}
 }
 

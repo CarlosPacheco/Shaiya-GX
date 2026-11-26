@@ -18,7 +18,7 @@ Keep game rules and persistence authoritative on the server. Preserve protocol f
 
 The playable client is `Shaiya GX` (`Shaiya GX.exe` on Windows), with loose `data/` beside it. Runtime uses the directory loader, Ogg Vorbis sounds and PNG interface images; SAH/SAF and WAV remain import tools only. Preserve `_dds.png` atlas distinctions, authored PNG mipmaps and legacy filename aliases; see `docs/data-formats.md`. Do not restore old archive packaging. By explicit user request, fonts are external resources under `data/fonts/`, with a coverage manifest and lazy Unicode/colour-emoji fallbacks. Do not embed game fonts or depend on OS font installations. Preserve the licenses and unmodified font metadata in the external resource pack; retain the source font license notices.
 
-Load only the selected content translation at client startup. English opens no
+Load only the selected content translation at startup or when applying a language. English opens no
 translation catalog. A missing catalog or row must always fall back to the
 English text, including for descriptions and formatted messages.
 

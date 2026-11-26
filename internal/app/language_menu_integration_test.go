@@ -3,6 +3,7 @@
 package app
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -79,5 +80,8 @@ func TestLanguageMenuGL(t *testing.T) {
 	click(245, 404) // OK
 	if loadClientLanguage() != 10 {
 		t.Fatal("Vietnamese did not persist with layout saving disabled")
+	}
+	if want := translatedMessages(a.englishMsg, arc.ReadLiveFile, 10); !maps.Equal(a.msg, want) {
+		t.Fatal("the chosen catalog was not applied when OK was pressed")
 	}
 }

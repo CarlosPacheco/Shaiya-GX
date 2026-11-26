@@ -146,3 +146,5 @@ func (c *Creation) Draw(s *render.Sprites, f *Font, w, h int) {
 }
 
 func (c *Creation) cleanName() string { return strings.ReplaceAll(c.Name.Text, " ", "") }
+
+func (v *Creation) SetMessages(messages text.SysMsg) { v.msg = messages }

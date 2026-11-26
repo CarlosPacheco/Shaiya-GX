@@ -154,3 +154,5 @@ func (v *FactionScreen) Draw(s *render.Sprites, f *Font, w, h int) {
 		v.cancel.Draw(s)
 	}
 }
+
+func (v *FactionScreen) SetMessages(messages text.SysMsg) { v.msg = messages }

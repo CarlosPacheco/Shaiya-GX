@@ -10,7 +10,8 @@ The base content catalog is `data/sysmsg-uni.txt` (UTF-16LE).
 
 ## Translation catalogs
 
-Select a language in User Options and restart the client. English (ID 1) uses
+Select a language in User Options and press OK to apply it immediately. Press
+OK again after editing the active catalog to reload the changes. English (ID 1) uses
 only the base catalog. For other languages, the client opens one file at
 `data/Languages/Messages/sysmgtxt-<code>.txt`.
 
@@ -31,7 +32,8 @@ For example, `2<TAB><TAB>"<p> ha muerto"` is a Spanish row for the
 English message `<p> died`. Keep substitutions such as `<p>` and `<v>`,
 literal `\n` line breaks, and formatting tags. The file can contain any subset
 of rows. Missing files and missing, empty or invalid entries use the English
-row. Menu labels still use the English catalog.
+row. Menu labels still use the English catalog. Existing chat lines keep
+their original language.
 
 How code asks for text:
 

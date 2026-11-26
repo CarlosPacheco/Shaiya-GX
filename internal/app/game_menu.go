@@ -169,8 +169,12 @@ func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 	case ui.MenuChanged:
 		a.applyClientSettings()
 	case ui.MenuSave:
-		if id := a.gameMenu.Settings.LanguageID; id != savedLanguage {
-			a.saveClientLanguage(id)
+		if previousPage == ui.MenuUser {
+			id := a.gameMenu.Settings.LanguageID
+			if id != savedLanguage {
+				a.saveClientLanguage(id)
+			}
+			a.reloadContentMessages(id)
 		}
 		a.applyClientSettings()
 		if a.applyDisplaySettings() {

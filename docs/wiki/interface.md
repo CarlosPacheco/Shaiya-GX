@@ -209,7 +209,7 @@ Equipment sounds play when World confirms a change to an equipped slot.
 
 The language selector beside **Control Setup** in User Options saves the
 preferred content language independently of window layout. English is the
-default. Restart the client to load the selected SysMsg catalog. Missing
+default. Press OK to apply the selected SysMsg catalog immediately. Missing
 translations fall back to the English text. Interface labels use English.
 
 An ordinary left click requests use of the inventory item. A drag still moves
