@@ -806,8 +806,11 @@ const (
 
 // TickMobCombat advances targeting, attacks, chasing and returning home.
 func TickMobCombat(players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick {
+	return tickMobCombat(time.Now(), players, maxPerMap)
+}
+
+func tickMobCombat(now time.Time, players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick {
 	var tick MobCombatTick
-	now := time.Now()
 	byMap := map[uint16][]PlayerCombatSnapshot{}
 	for _, p := range players {
 		byMap[p.MapID] = append(byMap[p.MapID], p)
@@ -827,6 +830,12 @@ func TickMobCombat(players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick 
 			}
 			h := &mobAIHost{mob: m, shard: s, mapID: mapID, now: now, players: mapPlayers, tick: &tick}
 			if !m.ensureAI(h) {
+				continue
+			}
+			if !m.mobAIUpdateDue(now) {
+				before := len(tick.Moves)
+				m.refreshMoveSpeed(mapID, now, &tick)
+				actions += len(tick.Moves) - before
 				continue
 			}
 			h.notifyTarget()

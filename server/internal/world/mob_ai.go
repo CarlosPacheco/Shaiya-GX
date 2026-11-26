@@ -60,7 +60,7 @@ type mobAIState struct {
 	damage, speed, defense, recovery             float32
 	mask                                         uint8
 	invulnerable, hold, disabled, recoverEnabled bool
-	recoverAt                                    time.Time
+	recoverAt, nextFSMUpdate                     time.Time
 	recoverPeriod                                time.Duration
 	attacked, recentHit, counting                bool
 	hits, attackedCount                          int
@@ -71,6 +71,19 @@ type mobAIState struct {
 	selectedValid, fixed, arrived                bool
 	fixedRun                                     bool
 	escapeX, escapeY, escapeZ                    float32
+}
+
+// The native zone scheduler runs UpdateIdle every 1000 ms (0x407646,
+// 0x40766d). FSM cases advance there, even while the mob is in combat.
+func (m *MapMob) mobAIUpdateDue(now time.Time) bool {
+	if m.AI < 10 || m.AI > 36 {
+		return true
+	}
+	if now.Before(m.lua.nextFSMUpdate) {
+		return false
+	}
+	m.lua.nextFSMUpdate = now.Add(time.Second)
+	return true
 }
 
 func (m *MapMob) resetAI() {

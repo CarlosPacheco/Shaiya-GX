@@ -52,6 +52,15 @@ combat. File FSM states and Lua callbacks both reuse native targeting, movement,
 attacks and skills. In particular an empty Lua combat callback does **not** mean
 that the mob cannot attack.
 
+### File-driven state cadence
+
+The zone scheduler at `0x407646` calls `CMob::UpdateIdle` via
+`0x421a00` and sets its next deadline to current time plus 1000 ms at
+`0x40766d`. Status 100 evaluates one FSM transition during this update.
+GX evaluates the file-driven cases at that cadence while retaining the
+faster movement scheduler. In AI 36, the unconditional transitions
+between Battle and UseMobSkill1 take two updates per repeat of skill 174.
+
 ### Routine spell timing
 
 The EP4.5 server's `CMob::UpdateAttack` (`0x004a7db0`) checks the shared

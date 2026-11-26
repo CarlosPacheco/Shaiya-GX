@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -462,5 +463,25 @@ func TestMobInterruptsIdleWalkOnFirstCombatTick(t *testing.T) {
 				t.Fatalf("chase did not start from the interrupted walk: from=%v move=%+v", m.moveFrom, move)
 			}
 		})
+	}
+}
+
+func TestFreezingFSMUsesNativeIdleCadence(t *testing.T) {
+	_, h := luaWorldFixture(t, 36)
+	db.MustDefs().NPCSkills = map[db.SkillKey]*db.SkillDef{
+		{SkillID: 174, Level: 1}: {TypeEffect: 1, AttackRange: 8},
+	}
+	var casts []time.Duration
+	for elapsed := time.Duration(0); elapsed <= 9*time.Second; elapsed += mobNavigationTick {
+		tick := tickMobCombat(h.now.Add(elapsed), h.players, 10)
+		for _, attack := range tick.Attacks {
+			if attack.SkillID == 174 {
+				casts = append(casts, elapsed)
+			}
+		}
+	}
+	want := []time.Duration{3 * time.Second, 5 * time.Second, 7 * time.Second, 9 * time.Second}
+	if !slices.Equal(casts, want) {
+		t.Fatalf("skill 174 cast times = %v, want %v", casts, want)
 	}
 }
