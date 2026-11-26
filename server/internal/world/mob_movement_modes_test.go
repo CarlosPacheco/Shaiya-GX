@@ -45,6 +45,7 @@ func TestMobMovementModesOnRealMaps(t *testing.T) {
 		{"field prop", 1, mapnav.Point{1517.0399, 16.851233, 926.8113}, mapnav.Point{1529.0399, 18.017159, 926.8113}, true},
 		{"field climb", 1, mapnav.Point{1117.6882, -2.4364212, 429.29654}, mapnav.Point{1117.6882, 4.586901, 445.29654}, true},
 		{"dungeon prop", 3, mapnav.Point{405.85962, 13.241182, 255.15433}, mapnav.Point{409.85962, 13.241182, 255.15433}, true},
+		{"dungeon prop elevated target", 3, mapnav.Point{405.85962, 13.241182, 255.15433}, mapnav.Point{409.85962, 40, 255.15433}, true},
 		{"dungeon wall", 3, mapnav.Point{320.8829, 13.241196, 287.5975}, mapnav.Point{323.7109, 12.92228, 290.4255}, true},
 		{"connected floors", 3, mapnav.Point{134.67891, 18.190376, 27.616495}, mapnav.Point{126.67891, 20.4074, 27.616495}, true},
 		{"separate floors", 3, mapnav.Point{146.5, 19.76707, 44.5}, mapnav.Point{146.5, 17.663082, 44.5}, false},
@@ -66,18 +67,18 @@ func TestMobMovementModesOnRealMaps(t *testing.T) {
 			target := PlayerCombatSnapshot{CharacterID: 1, PosX: tc.end[0], PosY: tc.end[1], PosZ: tc.end[2], Alive: true}
 			mods, tick, now := m.mods(), MobCombatTick{}, time.Unix(1, 0)
 			for range 1200 {
-				if m.AggroTarget == 0 || (len(tick.Moves) > 0 && mapnav.Distance(m.point(), tc.end) < 1.4) {
+				if m.AggroTarget == 0 || (len(tick.Moves) > 0 && m.targetDistance(&target) < 1.4) {
 					break
 				}
 				m.stepChase(now, tc.id, &target, m.targetDistance(&target), &mods, &tick)
 				now = now.Add(mobNavigationTick)
 			}
 			if tc.moves {
-				if len(tick.Moves) == 0 || mapnav.Distance(m.point(), tc.end) >= 1.4 {
+				if len(tick.Moves) == 0 || m.targetDistance(&target) >= 1.4 {
 					t.Fatalf("chase ended at %v after %d moves", m.point(), len(tick.Moves))
 				}
-			} else if len(tick.Moves) != 0 || m.AggroTarget != 0 {
-				t.Fatalf("unreachable floor produced %d moves, aggro=%d", len(tick.Moves), m.AggroTarget)
+			} else if len(tick.Moves) != 0 || m.AggroTarget != target.CharacterID {
+				t.Fatalf("target already in XZ range produced %d moves, aggro=%d", len(tick.Moves), m.AggroTarget)
 			}
 		})
 	}

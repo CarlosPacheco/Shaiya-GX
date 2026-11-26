@@ -94,7 +94,10 @@ Respawn, roaming, chase, home return, GM spawning and instanced copies use the
 same ground navigation. A* must reach the requested polygon; partial paths are
 rejected. Movement consumes collinear polygon crossings together and stops at actual
 horizontal turns. It samples support along every segment and checks the server mask. Portal Y is resolved from the corridor polygon's detailed surface before original support checks, preserving the floor on steep terrain instead of rejecting a valid return route. Returning home follows a path and cannot teleport
-through a wall in a dungeon. Attack range and line of sight use the existing full geometry.
+through a wall in a dungeon. Basic mob attacks and scripted mob skills use
+horizontal reach (X/Z), including targets above or below the mob. Collision
+geometry still governs movement. If the target's floor is unreachable, a
+dungeon chase tries the target's X/Z on the mob's floor.
 
 GX packets `0x7F05` (mob enter) and `0x7F06` (mob movement) carry XYZ for grounded
 mobs. Factioned spawns append country U8 (0 Light, 1 Fury, 2 neutral) and

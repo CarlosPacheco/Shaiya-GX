@@ -72,6 +72,40 @@ func TestMobAttackWaitsForFirstChaseAndChecksRetargetedReach(t *testing.T) {
 		t.Fatalf("aggro leader was not attacked at arrival: %+v", h.tick.Attacks)
 	}
 }
+func TestMobAttacksUseHorizontalReach(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		x, y float32
+		want bool
+	}{
+		{"above", 102, 100, true},
+		{"directly above", 100, 100, true},
+		{"below", 102, -100, true},
+		{"out of range", 110, 100, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, h := luaWorldFixture(t, 0)
+			const skillID = 610
+			db.MustDefs().NPCSkills = map[db.SkillKey]*db.SkillDef{
+				{SkillID: skillID, Level: 1}: {TypeEffect: 1, AttackRange: 3},
+			}
+			h.mob.nav = &mobNav{dungeon: true}
+			h.players[0].PosX, h.players[0].PosY = tc.x, tc.y
+			h.mob.AggroTarget = h.players[0].CharacterID
+			h.attack(true)
+			if got := len(h.tick.Attacks) == 1; got != tc.want {
+				t.Fatalf("basic attack queued = %t, want %t", got, tc.want)
+			}
+			h.tick.Attacks = nil
+			h.mob.lua.hold = true
+			h.skill(skillID)
+			if got := len(h.tick.Attacks) == 1; got != tc.want {
+				t.Fatalf("scripted skill queued = %t, want %t", got, tc.want)
+			}
+		})
+	}
+}
+
 func eventOK(t *testing.T, h *mobAIHost, event string, args ...any) {
 	t.Helper()
 	if !h.event(event, args...) {

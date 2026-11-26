@@ -945,15 +945,20 @@ func (m *MapMob) stepChase(now time.Time, mapID uint16, t *PlayerCombatSnapshot,
 	if m.movingAt(now) || now.Before(m.nextChaseAt) || !mods.canMove() || m.def == nil || m.stationary() {
 		return false
 	}
-	step := m.chaseStep(mods)
-	if m.canReachTarget(t) {
-		if d <= m.attackReach() {
-			return false
-		}
-		step = min(step, d-(m.attackReach()-.1))
+	reach := m.attackReach()
+	if d <= reach {
+		return false
 	}
+	step := min(m.chaseStep(mods), d-(reach-.1))
 	if m.nav != nil {
-		next, ok := m.navigate(now, mapID, mapnav.Point{t.PosX, t.PosY, t.PosZ}, step)
+		goal := mapnav.Point{t.PosX, t.PosY, t.PosZ}
+		next, ok := m.navigate(now, mapID, goal, step)
+		if !ok && m.nav.dungeon {
+			// A target above this corridor may have no route to its actual
+			// feet. Try the same X/Z on the mob's floor.
+			goal[1] = m.PosY
+			next, ok = m.navigate(now, mapID, goal, step)
+		}
 		if !ok {
 			m.nextChaseAt = now.Add(time.Second)
 			m.dropTarget(true)
@@ -1191,7 +1196,7 @@ func (m *MapMob) chaseStep(mods *mobMods) float32 {
 	return max(float32(m.def.ChaseStep)+mobSpeedOffsets[idx], 1)
 }
 
-// attackReach is vertical_mobs_attack_range: Size + Attackrange + 0.3.
+// attackReach is the native Size + Attackrange + 0.3.
 func (m *MapMob) attackReach() float32 {
 	if m.def == nil {
 		return MobAttackRange

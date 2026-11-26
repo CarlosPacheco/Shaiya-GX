@@ -659,12 +659,11 @@ func (h *mobAIHost) attack(stationary bool) {
 	}
 	d := m.targetDistance(target)
 	if canAttack {
-		visible := m.canReachTarget(target)
 		slot, ok, declinedSpell := m.pickAttackSlot(h.now, &mods, func(slot int, reach float32) bool {
 			if weakest != nil && m.def.Attacks[slot].OK == 6 {
-				return m.targetDistance(weakest) <= reach && m.canReachTarget(weakest)
+				return m.targetDistance(weakest) <= reach
 			}
-			return d <= reach && visible
+			return d <= reach
 		}, func() bool { return rand.IntN(2) == 0 })
 		if ok {
 			if weakest != nil && m.def.Attacks[slot].OK == 6 {
@@ -683,7 +682,7 @@ func (h *mobAIHost) attack(stationary bool) {
 			h.tick.Attacks = append(h.tick.Attacks, MobAttackAction{MobGlobalID: m.ID, MobID: m.MobID, Attack: m.Attack, TargetCharacterID: m.AggroTarget, Slot: slot, MobX: m.PosX, MobZ: m.PosZ})
 			return
 		}
-		inBasicReach := d <= m.attackReach() && visible
+		inBasicReach := d <= m.attackReach()
 		if declinedSpell || inBasicReach {
 			m.nextAttackAt = h.now.Add(mobAttackIdle + mods.attackDelayOffset())
 		}
@@ -719,14 +718,7 @@ func (h *mobAIHost) skill(id uint16) {
 	if target == nil {
 		return
 	}
-	victim := mapnav.Point{target.PosX, target.PosY, target.PosZ}
-	distance := DistanceXZ(pos[0], pos[2], victim[0], victim[2])
-	if m.nav != nil {
-		if !m.nav.Visible(pos, victim) {
-			return
-		}
-		distance = mapnav.Distance(pos, victim)
-	}
+	distance := DistanceXZ(pos[0], pos[2], target.PosX, target.PosZ)
 	if distance > float32(m.def.Size)+float32(sk.AttackRange)+.3 {
 		mods := m.mods()
 		if !m.lua.hold {

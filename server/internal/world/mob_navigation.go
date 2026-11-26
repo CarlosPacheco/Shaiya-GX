@@ -229,17 +229,11 @@ func (m *MapMob) navigate(now time.Time, mapID uint16, goal mapnav.Point, step f
 	m.navPath = m.navPath[consumed:]
 	return p, true
 }
+
+// Combat reach uses the horizontal plane. Height still comes from the map
+// when the mob moves along its walkable surface.
 func (m *MapMob) targetDistance(t *PlayerCombatSnapshot) float32 {
-	if m.nav == nil {
-		return DistanceXZ(m.PosX, m.PosZ, t.PosX, t.PosZ)
-	}
-	return mapnav.Distance(m.point(), mapnav.Point{t.PosX, t.PosY, t.PosZ})
-}
-func (m *MapMob) canReachTarget(t *PlayerCombatSnapshot) bool {
-	if m.nav == nil {
-		return true
-	}
-	return m.nav.Visible(m.point(), mapnav.Point{t.PosX, t.PosY, t.PosZ})
+	return DistanceXZ(m.PosX, m.PosZ, t.PosX, t.PosZ)
 }
 
 // Mobs retain a lightweight map reference. The decoded geometry cache is bounded
@@ -282,10 +276,6 @@ func (n *mobNav) Step(a mapnav.Point, path []mapnav.Point, d float32, walkable f
 		return a, 0, 0, false
 	}
 	return m.Step(a, path, d, walkable)
-}
-func (n *mobNav) Visible(a, b mapnav.Point) bool {
-	m, err := loadMobNavigation(n.id)
-	return err == nil && m != nil && m.Visible(a, b)
 }
 func (m *MapMob) placeRespawn(mapID uint16) bool {
 	nav, err := loadMobNavigation(mapID)
