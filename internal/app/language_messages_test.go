@@ -11,9 +11,7 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
-	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
-	"github.com/Spelunkern/Shaiya-GX/internal/game"
-	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
 func TestContentMessageFallback(t *testing.T) {
@@ -67,62 +65,7 @@ func TestContentMessageFallback(t *testing.T) {
 	}
 }
 
-func TestReloadContentMessagesKeepsChatHistory(t *testing.T) {
-	root := t.TempDir()
-	assets, err := archive.OpenDirectory(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer assets.Close()
-
-	a := inputApp()
-	a.arc = assets
-	a.englishMsg = text.SysMsg{1: "You died.", 2: "English description.", 353: "[Party] <p>: <b>"}
-	a.msg = a.englishMsg
-	addChat := func(body string) {
-		a.state.AddChat(game.ChatLine{Op: proto.ChatParty, Sender: "Alice", Text: body})
-	}
-	addChat("before")
-
-	dir := filepath.Join(root, "Languages", "Messages")
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	file := filepath.Join(dir, "sysmgtxt-es.txt")
-	writeSpanish := func(message string) {
-		t.Helper()
-		if err := os.WriteFile(file, []byte("1\t\""+message+"\"\n353\t\"[Grupo] <p>: <b>\"\n"), 0644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	writeSpanish("Moriste.")
-	a.reloadContentMessages(2)
-	if a.tr(1) != "Moriste." || a.tr(2) != "English description." || a.interfaceText(1) != "You died." {
-		t.Fatal("live translation or English fallback was not applied")
-	}
-	addChat("after")
-	writeSpanish("Tu personaje ha muerto.")
-	a.reloadContentMessages(2)
-	if a.tr(1) != "Tu personaje ha muerto." {
-		t.Fatal("an edit to the selected catalog was not reloaded")
-	}
-	if err := os.Remove(file); err != nil {
-		t.Fatal(err)
-	}
-	a.reloadContentMessages(2)
-	if a.tr(1) != "You died." {
-		t.Fatal("removing the selected catalog did not restore English")
-	}
-	addChat("later")
-	entries := a.formattedChat()
-	got := []string{entries[0].Text, entries[1].Text, entries[2].Text}
-	want := []string{"[Party] Alice: before", "[Grupo] Alice: after", "[Party] Alice: later"}
-	if !slices.Equal(got, want) {
-		t.Fatalf("chat history = %q, want %q", got, want)
-	}
-}
-
-func TestRankedSkillTranslationsReloadAndKeepEnglishFallback(t *testing.T) {
+func TestRankedSkillTranslationsAndEnglishFallback(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "Languages", "skills")
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -139,7 +82,7 @@ func TestRankedSkillTranslationsReloadAndKeepEnglishFallback(t *testing.T) {
 	defer arc.Close()
 
 	a := inputApp()
-	a.arc = arc
+	a.arc, a.assets = arc, scene.NewAssets(arc)
 	first := sdata.SkillKey{ID: 31, Level: 1}
 	second := sdata.SkillKey{ID: 31, Level: 2}
 	third := sdata.SkillKey{ID: 31, Level: 3}
@@ -148,8 +91,7 @@ func TestRankedSkillTranslationsReloadAndKeepEnglishFallback(t *testing.T) {
 		second: {Name: "Spell 2", Description: "Deals 20 damage.", MP: 5},
 		third:  {Name: "Spell 3", Description: "Deals 30 damage.", MP: 6},
 	}
-	a.buffs.rows = []buffBadge{{buff: proto.ActiveBuff{Skill: 31, Level: 2}, until: 42}}
-	a.reloadContentMessages(2)
+	a.loadLanguage(2)
 	if d, _ := a.skillDefinition(first.ID, first.Level); d.Name != "Hechizo" || d.Description != "Inflige 10 de daño." || d.MP != 4 {
 		t.Fatalf("rank 1: %+v", d)
 	}
@@ -159,17 +101,17 @@ func TestRankedSkillTranslationsReloadAndKeepEnglishFallback(t *testing.T) {
 	if d, _ := a.skillDefinition(third.ID, third.Level); d != a.skillDefs[third] {
 		t.Fatalf("missing rank 3: %+v", d)
 	}
-	if b := a.buffs.rows[0]; b.def.Description != "Inflige 20 de daño." || b.until != 42 {
-		t.Fatalf("translated active buff: %+v", b)
-	}
 	if err := os.Remove(path); err != nil {
 		t.Fatal(err)
 	}
-	a.reloadContentMessages(2)
-	if d, _ := a.skillDefinition(first.ID, first.Level); d != a.skillDefs[first] {
-		t.Fatalf("missing Spanish catalog: %+v", d)
+	arcWithoutSpanish, err := archive.OpenDirectory(root)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if b := a.buffs.rows[0]; b.def != a.skillDefs[second] || b.until != 42 {
-		t.Fatalf("English fallback active buff: %+v", b)
+	defer arcWithoutSpanish.Close()
+	withoutSpanish := &App{arc: arcWithoutSpanish, assets: scene.NewAssets(arcWithoutSpanish), skillDefs: a.skillDefs}
+	withoutSpanish.loadLanguage(2)
+	if d, _ := withoutSpanish.skillDefinition(first.ID, first.Level); d != a.skillDefs[first] {
+		t.Fatalf("missing Spanish catalog: %+v", d)
 	}
 }

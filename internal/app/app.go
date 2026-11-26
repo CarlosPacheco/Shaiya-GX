@@ -182,6 +182,8 @@ type App struct {
 	msg                                 text.SysMsg
 	englishMsg                          text.SysMsg
 	localizedLoadingTips                map[string]string
+	activeLanguageID                    int
+	languageRestartUntil                float64
 	localized                           sdata.Translations
 	localizedItems                      map[sdata.ItemKey]*sdata.Item
 	white                               *render.Texture
@@ -326,12 +328,8 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	a.chatTextFont.SetBorder(.5)
 
 	languageID := loadClientLanguage()
-	a.assets.UseInterfaceLanguage(ui.MessageLanguageCode(languageID))
-	english, messages := loadContentMessages(arc.ReadFile, languageID)
-	a.msg, a.englishMsg = messages, english
-	a.loadSDataTranslations(languageID)
-	a.loadLocalizedLoadingTips(languageID)
-	ui.SetText(english.Lookup)
+	a.loadLanguage(languageID)
+	ui.SetText(a.englishMsg.Lookup)
 	if b, err := arc.ReadFile("Filter.INI"); err == nil {
 		a.chatFilter = text.ParseWordFilter(b)
 	}
@@ -339,13 +337,13 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.login, err = ui.NewLogin(a); err != nil {
 		return nil, err
 	}
-	if a.servers, err = ui.NewServerList(a, messages, a.white); err != nil {
+	if a.servers, err = ui.NewServerList(a, a.msg, a.white); err != nil {
 		return nil, err
 	}
-	if a.chars, err = ui.NewCharSelect(a, messages); err != nil {
+	if a.chars, err = ui.NewCharSelect(a, a.msg); err != nil {
 		return nil, err
 	}
-	if a.create, err = ui.NewCharCreate(a, messages); err != nil {
+	if a.create, err = ui.NewCharCreate(a, a.msg); err != nil {
 		return nil, err
 	}
 	if a.accountMessage, err = ui.NewMessage(a); err != nil {
@@ -545,7 +543,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.skillBook, err = ui.NewSkillBook(a); err != nil {
 		return nil, err
 	}
-	if a.factionUI, err = ui.NewFaction(a, messages); err != nil {
+	if a.factionUI, err = ui.NewFaction(a, a.msg); err != nil {
 		return nil, err
 	}
 	if cfg.Volume > 0 {
@@ -802,6 +800,7 @@ func (a *App) drawFrame(w, h int) {
 		a.drawMallConfirm(w, h)
 	}
 	a.drawPerformance(w)
+	a.drawLanguageRestartNotice(w)
 	a.sprites.End()
 	if a.screen == screenWorld && a.wv != nil {
 		a.wv.draws.UI = render.DrawCalls() - uiBefore

@@ -542,3 +542,4 @@
 12462		"Interface resources missing or damaged. See diagnostic log."
 12463		"Return to the character screen?"
 12464		"Exit the game?"
+12465		"Restart the client to apply the language change."

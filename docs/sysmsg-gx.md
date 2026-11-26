@@ -10,8 +10,8 @@ The base content catalog is `data/sysmsg-uni.txt` (UTF-16LE).
 
 ## Translation catalogs
 
-Select a language in User Options and press OK to apply it immediately. Press
-OK again after editing the active catalog to reload the changes. English (ID 1) uses
+Select a language in User Options and press OK to save it. Restart the client
+to apply the saved language or to load edits to a catalog. English (ID 1) uses
 only the base catalog. For other languages, the client opens one file at
 `data/Languages/Messages/sysmgtxt-<code>.txt`.
 
@@ -28,8 +28,7 @@ For example, `2<TAB><TAB>"<p> ha muerto"` is a Spanish row for the
 English message `<p> died`. Keep substitutions such as `<p>` and `<v>`,
 literal `\n` line breaks, and formatting tags. The file can contain any subset
 of rows. Missing files and missing, empty or invalid entries use the English
-row. Menu labels still use the English catalog. Existing chat lines keep
-their original language.
+row. Menu labels still use the English catalog.
 
 ## SData text overlays
 
@@ -58,8 +57,7 @@ GX quest indices. Player skill rows use the exact skill ID and rank from
 resolved to rank 1 before lookup. Skill translations change only names and
 descriptions. The quest file is shared and only rows with the selected
 language code apply. Quote fields containing commas, quotes or line breaks
-using standard CSV rules. The next OK in User Options rereads the active
-language from disk.
+using standard CSV rules. The client reads these files at startup.
 
 Character and server selection, character creation, and faction selection
 read from the selected SysMsg catalog. Loading
@@ -78,9 +76,8 @@ multiple sprites.
 
 The client reads individual textures when requested and uses the base
 texture when a replacement is absent or unreadable. English uses base art
-only. Restart the client to apply the artwork after changing the language
-or the replacement files. Text, CSV overlays, and loading tips continue
-to reload through User Options.
+only. Artwork, messages, CSV overlays, and loading tips use the same
+startup language.
 
 How code asks for text:
 

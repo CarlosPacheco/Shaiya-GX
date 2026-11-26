@@ -342,40 +342,35 @@ func chatStyle(c game.ChatLine) (style uint8, messageID int) {
 	}
 }
 
-func chatPresentation(messages text.SysMsg, c game.ChatLine, id int) game.ChatPresentation {
-	name := c.Sender
+func chatPresentation(messages text.SysMsg, c game.ChatLine, id int) (name, template string) {
+	name = c.Sender
 	if name == "" && c.SenderID != 0 {
 		name = messages.Format(12296, map[string]string{"v": fmt.Sprint(c.SenderID)})
 	}
-	var template string
 	if id != 0 && messages.Get(id) != "" {
 		template = messages.Lookup(id)
 	}
-	return game.ChatPresentation{Sender: name, Template: template}
+	return name, template
 }
 
 func chatEntry(messages text.SysMsg, c game.ChatLine) ui.ChatEntry {
 	style, id := chatStyle(c)
 	body := c.Text
 	if c.Op != 0 {
-		presentation := c.Presentation
-		if presentation == nil {
-			resolved := chatPresentation(messages, c, id)
-			presentation = &resolved
-		}
+		name, template := chatPresentation(messages, c, id)
 		switch {
-		case presentation.Template != "" && c.GMReply != nil:
-			body = text.FormatMessage(presentation.Template, c.GMReply.Values)
-		case presentation.Template != "":
-			body = text.FormatMessage(presentation.Template, map[string]string{"p": presentation.Sender, "b": c.Text})
+		case template != "" && c.GMReply != nil:
+			body = text.FormatMessage(template, c.GMReply.Values)
+		case template != "":
+			body = text.FormatMessage(template, map[string]string{"p": name, "b": c.Text})
 		case c.Op == proto.ChatWhisper:
 			direction := "from"
 			if c.Direction == 1 {
 				direction = "to"
 			}
-			body = "Whisper " + direction + " " + presentation.Sender + ": " + c.Text
+			body = "Whisper " + direction + " " + name + ": " + c.Text
 		case c.Op != proto.ChatError:
-			body = presentation.Sender + " : " + c.Text
+			body = name + " : " + c.Text
 		}
 	}
 	rgb := ui.ChatRGB(style)

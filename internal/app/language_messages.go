@@ -1,8 +1,6 @@
 package app
 
 import (
-	"maps"
-
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
@@ -31,54 +29,14 @@ func (a *App) interfaceText(id int) string {
 	return a.msg.Get(id)
 }
 
-func (a *App) reloadContentMessages(languageID int) {
-	if a.arc == nil {
-		return
-	}
-	a.loadSDataTranslations(languageID)
-	a.loadLocalizedLoadingTips(languageID)
-	a.refreshMallText()
-	a.questTracker.cachedState = nil
-	a.tooltipContent = tooltipContent{}
-	messages := translatedMessages(a.englishMsg, a.arc.ReadLiveFile, languageID)
-	if maps.Equal(a.msg, messages) {
-		return
-	}
-	if a.state != nil {
-		for i := range a.state.Chat {
-			line := &a.state.Chat[i]
-			if line.Op != 0 && line.Presentation == nil {
-				_, id := chatStyle(*line)
-				presentation := chatPresentation(a.msg, *line, id)
-				line.Presentation = &presentation
-			}
-		}
-	}
-	a.msg = messages
-	if a.servers != nil {
-		a.servers.SetMessages(messages)
-	}
-	if a.chars != nil {
-		a.chars.SetMessages(messages)
-	}
-	if a.create != nil {
-		a.create.SetMessages(messages)
-	}
-	if a.factionUI != nil {
-		a.factionUI.SetMessages(messages)
-	}
-}
-
-func (a *App) loadSDataTranslations(languageID int) {
-	a.localized = sdata.LoadTranslations(a.arc.ReadLiveFile, ui.MessageLanguageCode(languageID))
-	a.localizedItems = nil
-	for _, rows := range [][]buffBadge{a.buffs.rows, a.targetEffects.rows} {
-		for i := range rows {
-			if def, ok := a.skillDefinition(rows[i].buff.Skill, rows[i].buff.Level); ok {
-				rows[i].def = def
-			}
-		}
-	}
+// loadLanguage sets the catalog for the lifetime of this client.
+func (a *App) loadLanguage(id int) {
+	a.activeLanguageID = ui.NormalizeLanguageID(id)
+	code := ui.MessageLanguageCode(a.activeLanguageID)
+	a.assets.UseInterfaceLanguage(code)
+	a.englishMsg, a.msg = loadContentMessages(a.arc.ReadFile, a.activeLanguageID)
+	a.localized = sdata.LoadTranslations(a.arc.ReadFile, code)
+	a.loadLocalizedLoadingTips(a.activeLanguageID)
 }
 
 func (a *App) npcDefinition(key sdata.NPCKey) sdata.NPC {
@@ -109,20 +67,4 @@ func (a *App) questDefinition(id uint16) sdata.Quest {
 func (a *App) mallProductText(p sdata.CashProduct) sdata.CashProduct {
 	a.localized.Cash[p.Code].Apply(&p.Name, &p.Description)
 	return p
-}
-
-func (a *App) refreshMallText() {
-	var positions [4]int
-	for _, base := range a.mallCatalog {
-		if base.Bag == 0 {
-			continue
-		}
-		category := min(int(base.Bag)-1, 3)
-		i := positions[category]
-		positions[category]++
-		if products := a.mall.products[category]; i < len(products) && products[i].Code == base.Code {
-			p := a.mallProductText(base)
-			products[i].Name, products[i].Description = p.Name, p.Description
-		}
-	}
 }

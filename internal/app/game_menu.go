@@ -172,9 +172,15 @@ func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 		if previousPage == ui.MenuUser {
 			id := a.gameMenu.Settings.LanguageID
 			if id != savedLanguage {
-				a.saveClientLanguage(id)
+				if saveClientLanguage(id) {
+					a.languageRestartUntil = 0
+					if id != a.activeLanguageID {
+						a.languageRestartUntil = a.clock + 10
+					}
+				} else {
+					a.gameMenu.Settings.LanguageID = savedLanguage
+				}
 			}
-			a.reloadContentMessages(id)
 		}
 		a.applyClientSettings()
 		if a.applyDisplaySettings() {
@@ -320,7 +326,7 @@ func loadClientLanguage() int {
 	return ui.NormalizeLanguageID(id)
 }
 
-func (a *App) saveClientLanguage(id int) {
+func saveClientLanguage(id int) bool {
 	path, err := languageSettingsPath()
 	if err == nil {
 		err = writeClientPreference(path, ui.NormalizeLanguageID(id))
@@ -328,6 +334,7 @@ func (a *App) saveClientLanguage(id int) {
 	if err != nil {
 		log.Printf("save language: %v", err)
 	}
+	return err == nil
 }
 
 // gameMenuOwnsInput reports whether this frame's input belongs to the options

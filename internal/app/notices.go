@@ -124,3 +124,15 @@ func (a *App) tipFrame() *render.Texture {
 	a.tipTexture = render.Upload(t)
 	return a.tipTexture
 }
+
+func (a *App) drawLanguageRestartNotice(w int) {
+	if a.clock >= a.languageRestartUntil {
+		return
+	}
+	f := a.chatFont()
+	message := a.tr(12465)
+	width := f.Width(message)
+	x := (w - width) / 2
+	a.drawNewsPanel(x-8, 16, width+12, 16)
+	f.DrawOutlined(a.sprites, message, x, 16+(newsPanelOuterHeight-f.Height)/2, white)
+}

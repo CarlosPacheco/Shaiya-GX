@@ -78,13 +78,6 @@ type Entity struct {
 	Speed                        *proto.CharacterSpeed
 }
 
-// ChatPresentation retains the sender and format used for an existing line
-// when the content language changes. The raw message remains available to filters.
-type ChatPresentation struct {
-	Sender   string
-	Template string
-}
-
 // ChatLine is one received message.
 type ChatLine struct {
 	Items            proto.ChatItems
@@ -100,7 +93,6 @@ type ChatLine struct {
 	Text             string
 	Repetitions      uint16
 	ChatProtected    bool
-	Presentation     *ChatPresentation
 	chatSerial       uint64
 }
 

@@ -15,6 +15,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
+	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
@@ -93,11 +94,11 @@ func TestLanguageMenuGL(t *testing.T) {
 	click(265, 55)
 	click(265, 109) // Español
 	click(245, 404) // OK
-	if a.msg.Get(5065) != a.englishMsg.Get(5065) && bytes.Equal(draw(a.chars.Draw), englishChars) {
-		t.Fatal("character selection kept rendering English")
+	if loadClientLanguage() != 2 || a.languageRestartUntil <= a.clock || a.activeLanguageID != ui.EnglishLanguageID {
+		t.Fatal("Spanish was not saved as pending with a restart notice")
 	}
-	if a.msg.Get(10111) != a.englishMsg.Get(10111) && bytes.Equal(draw(a.servers.Draw), englishServers) {
-		t.Fatal("server selection kept rendering English")
+	if !bytes.Equal(draw(a.chars.Draw), englishChars) || !bytes.Equal(draw(a.servers.Draw), englishServers) {
+		t.Fatal("a screen switched languages before restart")
 	}
 	a.gameMenu.Open(ui.MenuUser)
 	click(265, 55)
@@ -106,7 +107,12 @@ func TestLanguageMenuGL(t *testing.T) {
 	if loadClientLanguage() != 3 {
 		t.Fatal("Portuguese did not persist with layout saving disabled")
 	}
-	if want := translatedMessages(a.englishMsg, arc.ReadLiveFile, 3); !maps.Equal(a.msg, want) {
-		t.Fatal("the chosen catalog was not applied when OK was pressed")
+	if !maps.Equal(a.msg, a.englishMsg) {
+		t.Fatal("the active catalog changed before restart")
+	}
+	fresh := &App{arc: arc, assets: scene.NewAssets(arc)}
+	fresh.loadLanguage(loadClientLanguage())
+	if want := translatedMessages(a.englishMsg, arc.ReadFile, 3); fresh.activeLanguageID != 3 || !maps.Equal(fresh.msg, want) {
+		t.Fatal("a new client did not load the saved Portuguese catalog")
 	}
 }

@@ -170,8 +170,6 @@ func (c *CharSelect) Update(in *platform.Input, w, h int, dt float64) CharAction
 	return act
 }
 
-func (c *CharSelect) SetMessages(messages text.SysMsg) { c.msg = messages }
-
 func (c *CharSelect) className(class uint8) string {
 	return ClassName(c.msg, c.Light, class)
 }

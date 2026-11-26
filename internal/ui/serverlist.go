@@ -122,8 +122,6 @@ func (s *ServerList) Draw(sp *render.Sprites, f *Font, w, h int) {
 	s.Cancel.Draw(sp)
 }
 
-func (s *ServerList) SetMessages(messages text.SysMsg) { s.msg = messages }
-
 // status follows 0x4ea820..0x4ea9e2 (locale 6).
 func (s *ServerList) status(sv proto.Server) (string, uint32) {
 	switch sv.Status {
