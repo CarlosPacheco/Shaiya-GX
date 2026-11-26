@@ -60,6 +60,9 @@ The zone scheduler at `0x407646` calls `CMob::UpdateIdle` via
 GX evaluates the file-driven cases at that cadence while retaining the
 faster movement scheduler. In AI 36, the unconditional transitions
 between Battle and UseMobSkill1 take two updates per repeat of skill 174.
+Its Idle state acquires players by proximity through `IsFirstAttack`, which
+calls `CMob::FindTarget` directly. The generic acquisition warm-up applies
+when the policy explicitly checks it.
 
 ### Routine spell timing
 

@@ -900,11 +900,10 @@ func (m *MapMob) dropTarget(home bool) {
 	m.returningHome = home
 }
 
-// findTarget is CMob::FindTarget for AI 1 and 3: the first living user of
-// another country within ChaseRange, cell by cell over the 3x3 cells
-// around the mob.
+// findTarget implements the native proximity search. Generic AI checks
+// acquisition_ready before calling it. FSM IsFirstAttack calls it directly.
 func (m *MapMob) findTarget(now time.Time, players []PlayerCombatSnapshot, extended bool) *PlayerCombatSnapshot {
-	if m.def == nil || m.ChaseRange <= 0 || now.Before(m.noTargetUntil) {
+	if m.def == nil || m.ChaseRange <= 0 {
 		return nil
 	}
 	radius := int32(1)

@@ -466,14 +466,18 @@ func TestMobInterruptsIdleWalkOnFirstCombatTick(t *testing.T) {
 	}
 }
 
-func TestFreezingFSMUsesNativeIdleCadence(t *testing.T) {
+func TestFreezingFSMAcquiresByProximityAndUsesNativeIdleCadence(t *testing.T) {
 	_, h := luaWorldFixture(t, 36)
+	h.mob.noTargetUntil = h.now.Add(5 * time.Second)
 	db.MustDefs().NPCSkills = map[db.SkillKey]*db.SkillDef{
 		{SkillID: 174, Level: 1}: {TypeEffect: 1, AttackRange: 8},
 	}
 	var casts []time.Duration
 	for elapsed := time.Duration(0); elapsed <= 9*time.Second; elapsed += mobNavigationTick {
 		tick := tickMobCombat(h.now.Add(elapsed), h.players, 10)
+		if elapsed == time.Second && (h.mob.AggroTarget != h.players[0].CharacterID || h.mob.lua.attackedCount != 0) {
+			t.Fatal("Freezing did not acquire the nearby player before any incoming attack")
+		}
 		for _, attack := range tick.Attacks {
 			if attack.SkillID == 174 {
 				casts = append(casts, elapsed)
@@ -483,5 +487,18 @@ func TestFreezingFSMUsesNativeIdleCadence(t *testing.T) {
 	want := []time.Duration{3 * time.Second, 5 * time.Second, 7 * time.Second, 9 * time.Second}
 	if !slices.Equal(casts, want) {
 		t.Fatalf("skill 174 cast times = %v, want %v", casts, want)
+	}
+}
+
+func TestGenericMobRespectsSpawnAcquisitionDelay(t *testing.T) {
+	_, h := luaWorldFixture(t, 1)
+	h.mob.noTargetUntil = h.now.Add(5 * time.Second)
+	tickMobCombat(h.now, h.players, 10)
+	if h.mob.AggroTarget != 0 {
+		t.Fatal("generic mob acquired before its spawn delay")
+	}
+	tickMobCombat(h.mob.noTargetUntil, h.players, 10)
+	if h.mob.AggroTarget != h.players[0].CharacterID {
+		t.Fatal("generic mob did not acquire when its spawn delay expired")
 	}
 }
