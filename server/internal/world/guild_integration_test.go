@@ -3,15 +3,17 @@
 package world
 
 import (
-	"io"
 	"net"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/crypto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/logx"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/netx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
 
@@ -38,9 +40,35 @@ func TestGuildLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 	const mapID = 60030
+	houseQuotes := make(map[*Session]chan proto.GuildHouseServices)
 	session := func(_ uint32, name string) *Session {
 		a, b := net.Pipe()
-		go io.Copy(io.Discard, b)
+		quotes := make(chan proto.GuildHouseServices, 16)
+		go func() {
+			defer close(quotes)
+			var frames netx.Frames
+			var buf [4096]byte
+			for {
+				n, err := b.Read(buf[:])
+				if err != nil {
+					return
+				}
+				batch, ok := frames.Push(buf[:n])
+				if !ok {
+					return
+				}
+				for _, frame := range batch {
+					p := crypto.ExpandedXOR(frame[2:])
+					if proto.Op(p) == proto.GXGuildHouseServices {
+						v, err := proto.DecodeGuildHouseServices(p)
+						if err != nil {
+							return
+						}
+						quotes <- v
+					}
+				}
+			}
+		}()
 		t.Cleanup(func() { a.Close(); b.Close() })
 		account := testAccount(t)
 		id, err := db.CreateCharacter(account, db.NewCharacter{Slot: 0, Name: name, HP: 100, MP: 100, SP: 100})
@@ -69,7 +97,9 @@ func TestGuildLifecycle(t *testing.T) {
 			pool.Exec(`DELETE FROM PS_GameData_Chars WHERE CharID=?`, id)
 		})
 		s := &Session{char: ch, log: logger.Tagged(name), logger: logger, faction: FactionLight,
-			skillCooldowns: map[uint16]time.Time{}, out: &connWriter{conn: a}}
+			skillCooldowns: map[uint16]time.Time{}, out: &connWriter{conn: a},
+			aesSend: crypto.NewAESCTR([16]byte{}, [16]byte{}), expanded: true}
+		houseQuotes[s] = quotes
 		s.account = account
 		s.accountID = uint32(account.UserUID)
 		s.player = RegisterPlayer(*ch, nil, false, FactionLight, s.out, logger, s)
@@ -260,6 +290,23 @@ func TestGuildLifecycle(t *testing.T) {
 		pool.QueryRow(`SELECT BuyHouse,UseHouse,Etin,KeepEtin,EtinReturnCnt FROM PS_GameData_GuildDetails WHERE GuildID=?1`, int32(g.ID)).Scan(&buy, &use, &etin, &keep, &ret)
 		return
 	}
+	quote := func(s *Session) proto.GuildHouseServices {
+		t.Helper()
+		select {
+		case v, ok := <-houseQuotes[s]:
+			if !ok || v.GuildID != g.ID {
+				t.Fatalf("guild house quote %+v for guild %d", v, g.ID)
+			}
+			return v
+		case <-time.After(time.Second):
+			t.Fatal("missing guild house quote from World")
+			return proto.GuildHouseServices{}
+		}
+	}
+	ss[0].handleGuild(packet.GuildEtin, proto.GuildEtinPacket())
+	if v := quote(ss[0]); v.Active || v.BuyGold != guildHouse.BuyMoney || v.Upkeep != guildHouse.DefaultKeep {
+		t.Fatalf("initial guild house quote %+v", v)
+	}
 	ss[5].handleGuild(packet.GuildHouseBuy, []byte{0x34, 0x0d, 0, 0, 0, 0})
 	ss[0].handleGuild(packet.GuildHouseBuy, []byte{0x34, 0x0d, 0, 0, 0, 0}) // 4000 gold only
 	if g.BuyHouse != 0 {
@@ -272,6 +319,11 @@ func TestGuildLifecycle(t *testing.T) {
 	ss[0].handleGuild(packet.GuildHouseBuy, []byte{0x34, 0x0d, 0, 0, 0, 0})
 	if buy, _, _, keep, _ := houseRow(); g.BuyHouse != 1 || ss[0].char.Money != 10 || buy != 1 || keep != int(guildHouse.DefaultKeep) {
 		t.Fatalf("house purchase: guild %d money %d row buy %d keep %d", g.BuyHouse, ss[0].char.Money, buy, keep)
+	}
+	for _, member := range []*Session{ss[0], ss[5]} {
+		if v := quote(member); v.Active || v.Upkeep != g.KeepEtin {
+			t.Fatalf("purchase quote %+v", v)
+		}
 	}
 	upgrade := func(s *Session, npcType uint16, level uint8) {
 		s.handleGuild(packet.GuildNpcUpgrade, []byte{0x25, 0x0d, byte(npcType), byte(npcType >> 8), level})
@@ -298,6 +350,13 @@ func TestGuildLifecycle(t *testing.T) {
 	upgrade(ss[0], guildNpcGate, 1)
 	if g.npcs[0] != (guildNpcSlot{Type: guildNpcGate, Level: 1}) || g.Etin != 4000 || g.KeepEtin != guildHouse.DefaultKeep+uint32(guildHouse.Services[0].Keep[1]) {
 		t.Fatalf("gate upgrade: slots %v etin %d keep %d", g.npcs, g.Etin, g.KeepEtin)
+	}
+	for _, member := range []*Session{ss[0], ss[5]} {
+		v := quote(member)
+		gate, ok := v.Service(guildNpcGate)
+		if !v.Active || v.Upkeep != g.KeepEtin || !ok || gate.Level != 1 || gate.NextCost != guildHouse.service(guildNpcGate).Cost[2] {
+			t.Fatalf("gate upgrade quote %+v (%+v)", v, gate)
+		}
 	}
 	upgrade(ss[0], guildNpcGate, 1) // repeated
 	upgrade(ss[0], guildNpcBank, 1)

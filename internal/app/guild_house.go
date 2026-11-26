@@ -20,11 +20,19 @@ const etinManagerMerchant = 100
 
 var houseMaps = map[uint16]bool{51: true, 52: true}
 
-// Service display order of both windows (0x481450); index 5 is the unused
-// apprentice slot.
-var houseServiceTypes = [8]uint16{2, 0x101, 0x201, 6, 0x301, 0, 3, 0x401}
-var houseServiceNames = [8]int{0x1428, 0x1423, 0x1424, 0x142d, 0x1425, 0, 0x1429, 0x1426}
-var houseServiceMax = [8]uint8{3, 3, 3, 5, 3, 0, 5, 3}
+// Service icons and strings in the original UI order.
+var houseServiceDisplay = [...]struct {
+	npcType             uint16
+	icon, title, textID int
+}{
+	{0x002, 24, 0x1428, 8011},  // gatekeeper
+	{0x101, 19, 0x1423, 8012},  // weapon shop
+	{0x201, 53, 0x1424, 8013},  // armor shop
+	{0x006, 248, 0x142d, 8015}, // warehouse
+	{0x301, 247, 0x1425, 8014}, // general shop
+	{0x003, 233, 0x1429, 8017}, // blacksmith
+	{0x401, 192, 0x1426, 8018}, // potion shop
+}
 
 const (
 	houseConfirmNone = iota
@@ -40,14 +48,12 @@ type houseView struct {
 	confirm               int
 	upType                uint16
 	upLevel               uint8
-	data                  *sdata.GuildHouseData
-	dataTried             bool
+	confirmGuild          uint32
 	confirmBox            *ui.Message
 	npcSerial, bankSerial uint64
 	houseSerial           uint64
 	donateSerial          uint64
 	donatedValue          uint32
-	availableCache        uint32
 }
 
 // houseKind reports which house window an NPC opens.
@@ -66,42 +72,11 @@ func (a *App) houseKind(e *game.Entity) (ui.HouseKind, bool) {
 	return 0, false
 }
 
-func (a *App) houseData() *sdata.GuildHouseData {
-	h := &a.house
-	if !h.dataTried && a.arc != nil {
-		h.dataTried = true
-		if b, err := a.arc.ReadFile("Npc/GuildHouse.SData"); err == nil {
-			h.data, _ = sdata.ParseGuildHouse(b)
-		}
-	}
-	return h.data
-}
-
-// houseServiceLevel is the guild's level of an NPC type (0xd24 / 0xd25).
-func (a *App) houseServiceLevel(npcType uint16) uint8 {
-	for _, n := range a.state.Guild.Npcs {
-		if n.Type == npcType {
-			return n.Level
-		}
-	}
-	return 0
-}
-
-// houseRecord is FUN_004cbc20: the record of a type at a level, the level
-// clamped to the type's maximum.
-func houseRecord(d *sdata.GuildHouseData, npcType uint16, level uint8) *sdata.GuildHouseService {
-	limit := uint8(3)
-	if npcType == 6 || npcType == 3 {
-		limit = 5
-	}
-	return d.Service(npcType, min(level, limit))
-}
-
 // houseView builds what the window draws for the current page.
 func (a *App) houseBuildView(kind ui.HouseKind, e *game.Entity) *ui.HouseView {
 	h := &a.house
 	g := &a.state.Guild
-	d := a.houseData()
+	services := g.HouseServices
 	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 	v := &ui.HouseView{Portrait: a.npcPortrait(def), NpcName: def.Name, Selected: h.selected,
 		CanManage: g.ID != 0 && g.Rank >= 1 && g.Rank <= 2, ListOffset: h.listOffset}
@@ -110,76 +85,40 @@ func (a *App) houseBuildView(kind ui.HouseKind, e *game.Entity) *ui.HouseView {
 	} else {
 		v.Title = a.msg.Get(8010)
 		v.HouseOwned = g.HouseBought
-		v.CanBuy = g.ID != 0 && g.Rank == 1 && !g.HouseBought
+		v.CanBuy = g.ID != 0 && g.Rank == 1 && !g.HouseBought && services != nil
 	}
-	if d == nil {
-		return v
-	}
-	etin := g.Etin
-	keepDefault := d.DefaultKeep
-	if keepDefault == 0 {
-		keepDefault = 2000
-	}
-	total := keepDefault
-	for i, t := range houseServiceTypes {
-		if i == 5 {
-			continue
-		}
-		if rec := houseRecord(d, t, a.houseServiceLevel(t)); rec != nil {
-			total += uint32(rec.KeepEtin)
-		}
-	}
-	available := uint32(0)
-	if total < etin {
-		available = etin - total
-	}
-	h.availableCache = available
-	v.Etin, v.Available, v.Total = strconv.FormatUint(uint64(etin), 10), strconv.FormatUint(uint64(available), 10), strconv.FormatUint(uint64(total), 10)
-	etinWord := a.msg.Get(8021)
-	for i, t := range houseServiceTypes {
-		if i == 5 {
-			continue
-		}
-		level := a.houseServiceLevel(t)
-		cur := houseRecord(d, t, level)
-		next := houseRecord(d, t, level+1)
-		if cur == nil || next == nil {
-			v.Rows = append(v.Rows, ui.HouseRow{})
-			continue
-		}
-		canLevel := level < houseServiceMax[i]
-		row := ui.HouseRow{Show: true, Icon: int(cur.Icon), ShowUpgrade: canLevel}
-		name := a.msg.Get(houseServiceNames[i])
-		row.Title = fmt.Sprintf("%s %s%d", name, a.msg.Get(5211), level)
-		if kind == ui.HouseEtinManager {
-			feeOK := uint32(cur.KeepEtin) <= available
-			row.FeeText = fmt.Sprintf("%s %d %s", a.msg.Get(8020), cur.KeepEtin, etinWord)
-			row.RankOK, row.FeeOK, row.IconDim = true, feeOK, !feeOK
-		} else {
-			costOK := uint32(next.UpgradeEtin) <= available
-			row.Title = fmt.Sprintf("%s %s%d", name, a.msg.Get(5211), next.Level)
-			row.FeeText = fmt.Sprintf("%s %d %s", a.msg.Get(8048), next.UpgradeEtin, etinWord)
-			row.RankOK, row.FeeOK, row.IconDim = true, costOK, !costOK
-			row.UpgradeLook = costOK && canLevel
-			row.UpgradeOn = uint32(next.KeepEtin) <= available && canLevel
-		}
-		v.Rows = append(v.Rows, row)
-	}
-	// The tooltip of the selected service fills the left text box (0x49de50).
-	if h.mode == ui.HouseModeInfo {
-		k := 0
-		for i, t := range houseServiceTypes {
-			if i == 5 {
+	if services != nil {
+		available := g.Etin - min(g.Etin, services.Upkeep)
+		v.Etin = strconv.FormatUint(uint64(g.Etin), 10)
+		v.Available = strconv.FormatUint(uint64(available), 10)
+		v.Total = strconv.FormatUint(uint64(services.Upkeep), 10)
+		etinWord, levelWord := a.msg.Get(8021), a.msg.Get(5211)
+		v.Rows = make([]ui.HouseRow, len(houseServiceDisplay))
+		for i, display := range houseServiceDisplay {
+			service, ok := services.Service(display.npcType)
+			if !ok {
 				continue
 			}
-			if k == h.selected {
-				if rec := houseRecord(d, t, a.houseServiceLevel(t)); rec != nil {
-					v.Text = a.msg.Get(int(rec.TextID))
+			name := a.msg.Get(display.title)
+			level, fee, feeLabel := service.Level, service.Upkeep, 8020
+			row := ui.HouseRow{Show: true, Icon: display.icon, RankOK: true}
+			if kind == ui.HouseGuildManager {
+				row.ShowUpgrade = service.NextCost != 0
+				if row.ShowUpgrade {
+					level++
 				}
-				break
+				fee, feeLabel = service.NextCost, 8048
+				row.UpgradeOn = v.CanManage && services.Active && row.ShowUpgrade && uint32(fee) <= available
 			}
-			k++
+			row.Title = fmt.Sprintf("%s %s%d", name, levelWord, level)
+			row.FeeText = fmt.Sprintf("%s %d %s", a.msg.Get(feeLabel), fee, etinWord)
+			row.FeeOK = uint32(fee) <= available
+			row.IconDim = !row.FeeOK
+			v.Rows[i] = row
 		}
+	}
+	if h.mode == ui.HouseModeInfo && h.selected >= 0 && h.selected < len(houseServiceDisplay) {
+		v.Text = a.msg.Get(houseServiceDisplay[h.selected].textID)
 	}
 	// 0x483210: the Etin manager's text box is filled with SysMsg 8031 at creation
 	// and keeps it on every page except the service information.
@@ -273,8 +212,7 @@ func (a *App) updateHouse(in *platform.Input, w, h int, e *game.Entity, kind ui.
 	}
 	switch {
 	case act.Buy && view.CanBuy:
-		hv.confirm = houseConfirmBuy
-		hv.confirmBox.Open(a.msg.Get(8032), true)
+		a.houseAskBuy()
 	case act.Donate:
 		if a.houseEtinInInventory() {
 			hv.confirm = houseConfirmDonate
@@ -292,34 +230,20 @@ func (a *App) updateHouse(in *platform.Input, w, h int, e *game.Entity, kind ui.
 	return captured
 }
 
-// houseAskUpgrade opens the 0x1f71 confirmation for the service row.
+func (a *App) houseAskBuy() {
+	g, hv := &a.state.Guild, &a.house
+	hv.confirm, hv.confirmGuild = houseConfirmBuy, g.ID
+	text := a.msg.Format(12377, map[string]string{"v": ui.GoldText(g.HouseServices.BuyGold)})
+	hv.confirmBox.Open(text, true)
+}
+
 func (a *App) houseAskUpgrade(row int) {
-	d := a.houseData()
-	hv := &a.house
-	if d == nil {
-		return
-	}
-	k := 0
-	for i, t := range houseServiceTypes {
-		if i == 5 {
-			continue
-		}
-		if k == row {
-			level := a.houseServiceLevel(t)
-			if level >= houseServiceMax[i] {
-				return
-			}
-			rec := houseRecord(d, t, level+1)
-			if rec == nil {
-				return
-			}
-			hv.upType, hv.upLevel, hv.confirm = t, level+1, houseConfirmUpgrade
-			text := a.msg.Format(8049, map[string]string{"v": strconv.Itoa(int(rec.UpgradeEtin))})
-			hv.confirmBox.Open(text, true)
-			return
-		}
-		k++
-	}
+	g, hv := &a.state.Guild, &a.house
+	npcType := houseServiceDisplay[row].npcType
+	service, _ := g.HouseServices.Service(npcType)
+	hv.upType, hv.upLevel, hv.confirm, hv.confirmGuild = npcType, service.Level+1, houseConfirmUpgrade, g.ID
+	text := a.msg.Format(8049, map[string]string{"v": strconv.Itoa(int(service.NextCost))})
+	hv.confirmBox.Open(text, true)
 }
 
 func (a *App) houseEtinInInventory() bool {
@@ -332,11 +256,13 @@ func (a *App) houseEtinInInventory() bool {
 }
 
 func (a *App) houseConfirmed() {
-	hv := &a.house
+	g, hv := &a.state.Guild, &a.house
 	var p []byte
 	switch hv.confirm {
 	case houseConfirmBuy:
-		p = proto.GuildHouseBuyPacket()
+		if g.ID == hv.confirmGuild && g.Rank == 1 && !g.HouseBought && g.HouseServices != nil {
+			p = proto.GuildHouseBuyPacket()
+		}
 	case houseConfirmDonate:
 		p = proto.GuildDonatePacket()
 		hv.donatedValue = 0
@@ -346,7 +272,9 @@ func (a *App) houseConfirmed() {
 			}
 		}
 	case houseConfirmUpgrade:
-		p = proto.GuildNpcUpgradePacket(hv.upType, hv.upLevel)
+		if g.ID == hv.confirmGuild {
+			p = proto.GuildNpcUpgradePacket(hv.upType, hv.upLevel)
+		}
 	}
 	if p != nil && a.world != nil {
 		if err := a.world.Send(p); err != nil {

@@ -18,7 +18,9 @@ func (s *State) applyEntitiesPacket(p []byte, ev Event) (Event, error) {
 			if !s.Self.IsGM {
 				s.GMTurbo = false
 			}
-			s.Guild.ID = u.GuildID
+			if s.Guild.ID != u.GuildID {
+				s.Guild.ID, s.Guild.HouseServices = u.GuildID, nil
+			}
 			if info, ok := s.Guild.Directory[u.GuildID]; ok {
 				s.Guild.Remark, s.Guild.RemarkKnown = info.Remark, true
 			}

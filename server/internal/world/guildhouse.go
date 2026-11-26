@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -54,6 +55,7 @@ type guildNpcSlot struct{ Type, Level uint16 }
 // index is the NPC level (1-5).
 type guildServiceTable struct {
 	Type uint16
+	Max  uint8
 	Cost [7]uint16
 	Keep [6]uint16
 }
@@ -77,13 +79,13 @@ func defaultGuildHouse() guildHouseSettings {
 	return guildHouseSettings{
 		CreateMoney: 1_000_000, BuyMoney: 50000000, DefaultKeep: 2000,
 		Services: [guildNpcServices]guildServiceTable{
-			{Type: guildNpcGate, Cost: [7]uint16{0, 1000, 1500, 2000}, Keep: [6]uint16{0, 200, 500, 800}},
-			{Type: guildNpcWeapon, Cost: [7]uint16{0, 100, 200, 500}},
-			{Type: guildNpcDefense, Cost: [7]uint16{0, 100, 200, 500}},
-			{Type: guildNpcGeneral, Cost: [7]uint16{0, 50, 100, 200}},
-			{Type: guildNpcSmith, Cost: [7]uint16{0, 500, 1000, 2000, 10000, 15000}, Keep: [6]uint16{0, 100, 200, 500, 800, 1000}},
-			{Type: guildNpcPotion, Cost: [7]uint16{0, 2000, 5000, 10000}, Keep: [6]uint16{0, 50, 200, 500}},
-			{Type: guildNpcBank, Cost: [7]uint16{0, 200, 500, 1000, 2000, 5000}, Keep: [6]uint16{0, 100, 200, 500, 800, 1000}},
+			{Type: guildNpcGate, Max: 3, Cost: [7]uint16{0, 1000, 1500, 2000}, Keep: [6]uint16{0, 200, 500, 800}},
+			{Type: guildNpcWeapon, Max: 3, Cost: [7]uint16{0, 100, 200, 500}},
+			{Type: guildNpcDefense, Max: 3, Cost: [7]uint16{0, 100, 200, 500}},
+			{Type: guildNpcGeneral, Max: 5, Cost: [7]uint16{0, 50, 100, 200}},
+			{Type: guildNpcSmith, Max: 5, Cost: [7]uint16{0, 500, 1000, 2000, 10000, 15000}, Keep: [6]uint16{0, 100, 200, 500, 800, 1000}},
+			{Type: guildNpcPotion, Max: 3, Cost: [7]uint16{0, 2000, 5000, 10000}, Keep: [6]uint16{0, 50, 200, 500}},
+			{Type: guildNpcBank, Max: 5, Cost: [7]uint16{0, 200, 500, 1000, 2000, 5000}, Keep: [6]uint16{0, 100, 200, 500, 800, 1000}},
 		},
 		ShopFactor: [5][4]float64{{}, {0.99, 0.98, 0.95, 0.9}, {0.99, 0.98, 0.95, 0.9}, {0.99, 0.98, 0.95, 0.9}, {0.9, 0.8, 0.7, 0.6}},
 		RepairRate: [6]float64{0.99, 0.95, 0.95, 0.9, 0.9, 0.9},
@@ -312,43 +314,63 @@ func buildGuildNpcResult(result uint8, npcType uint16, level, slot uint8) []byte
 	return w.MustFinish()
 }
 
+// houseServicesPacket quotes the amounts World uses for the guild house UI.
+// A nil guild receives the initial service levels and default upkeep.
+func (g *guild) houseServicesPacket() []byte {
+	var id uint32
+	upkeep, active := guildHouse.DefaultKeep, uint8(0)
+	if g != nil {
+		id = g.ID
+		if g.BuyHouse != 0 {
+			upkeep = g.KeepEtin
+		}
+		if g.houseEnabled() {
+			active = 1
+		}
+	}
+	w := packet.New(packet.Opcode(proto.GXGuildHouseServices))
+	w.U32(id)
+	w.U32(guildHouse.BuyMoney)
+	w.U32(upkeep)
+	w.U8(active)
+	w.U8(uint8(len(guildHouse.Services)))
+	for _, table := range guildHouse.Services {
+		var level uint16
+		if g != nil {
+			level = min(g.npcLevel(table.Type), uint16(table.Max))
+		}
+		var nextCost uint16
+		if level < uint16(table.Max) {
+			nextCost = table.Cost[level+1]
+		}
+		w.U16(table.Type)
+		w.U8(uint8(level))
+		w.U16(table.Keep[level])
+		w.U16(nextCost)
+	}
+	return w.MustFinish()
+}
+
 // guildNpcUpgrade is 0x0D25 (CGuild::NpcUpgrade), reached for guild ranks 1
 // and 2 only. Called with guildMu held.
 func (s *Session) guildNpcUpgrade(g *guild, npcType uint16, level uint8) {
 	refuse := func(result uint8) { s.send(buildGuildNpcResult(result, npcType, level, 0), "0x0D25 guild NPC refused") }
-	if !g.houseEnabled() || level == 0 || level > 5 {
+	table := guildHouse.service(npcType)
+	if !g.houseEnabled() || table == nil || level == 0 || level > table.Max {
 		refuse(guildNpcRefused)
 		return
 	}
-	switch npcType {
-	case guildNpcGate, guildNpcWeapon, guildNpcDefense:
-		if level > 3 {
-			refuse(guildNpcRefused)
-			return
-		}
-	case guildNpcSmith:
-	case guildNpcPotion:
-		if level > 3 {
-			refuse(guildNpcRefused)
-			return
-		}
-	case guildNpcBank, guildNpcGeneral:
-	default:
-		refuse(guildNpcRefused)
-		return
-	}
-	available := int32(g.Etin - g.KeepEtin)
-	if available < 1 {
+	available := g.Etin - min(g.Etin, g.KeepEtin)
+	if available == 0 {
 		refuse(guildNpcNoEtin)
 		return
 	}
-	table := guildHouse.service(npcType)
-	if table == nil || table.Cost[level] == 0 {
+	if table.Cost[level] == 0 {
 		refuse(guildNpcRefused)
 		return
 	}
 	cost := table.Cost[level]
-	if available < int32(cost) {
+	if available < uint32(cost) {
 		refuse(guildNpcNoEtin)
 		return
 	}
@@ -391,7 +413,8 @@ func (s *Session) guildNpcUpgrade(g *guild, npcType uint16, level uint8) {
 	}
 	g.npcs, g.KeepEtin, g.Etin = next.npcs, next.KeepEtin, next.Etin
 	g.send(buildGuildNpcResult(guildNpcOK, npcType, level, uint8(slot)), "0x0D25 guild NPC upgraded", nil)
-	s.send(guildID32(packet.GuildEtin, g.Etin), "0x0D23 guild etin")
+	g.send(guildID32(packet.GuildEtin, g.Etin), "0x0D23 guild etin", nil)
+	g.send(g.houseServicesPacket(), "0x7F2D guild house services", nil)
 	if f := g.houseStatusPacket(); f != nil {
 		g.send(f, "0x0D33 guild house bonuses", nil)
 	}
@@ -433,6 +456,7 @@ func (s *Session) guildHouseBuy(g *guild, rank uint8) {
 		if f := g.houseStatusPacket(); f != nil {
 			g.send(f, "0x0D33 guild house owned", nil)
 		}
+		g.send(g.houseServicesPacket(), "0x7F2D guild house services", nil)
 	}
 }
 
@@ -512,13 +536,20 @@ func (g *guild) settleGuildHouse() {
 	if g.BuyHouse != 1 {
 		return
 	}
+	wasActive := g.houseEnabled()
 	if g.Etin < g.KeepEtin {
 		g.UseHouse = 2
+		if wasActive {
+			g.send(g.houseServicesPacket(), "0x7F2D guild house services", nil)
+		}
 		return
 	}
 	g.Etin -= g.KeepEtin
 	g.UseHouse = 1
 	g.send(guildID32(packet.GuildEtin, g.Etin), "0x0D23 guild etin", nil)
+	if !wasActive {
+		g.send(g.houseServicesPacket(), "0x7F2D guild house services", nil)
+	}
 }
 
 // inGuildHouseZone is CMap::IsGuildHouseMap for the character's zone.

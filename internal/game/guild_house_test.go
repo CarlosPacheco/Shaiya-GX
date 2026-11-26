@@ -54,3 +54,35 @@ func TestGuildHousePackets(t *testing.T) {
 		t.Fatalf("donation: %v", s.Inventory)
 	}
 }
+
+func TestGuildHouseServicesFollowCurrentGuild(t *testing.T) {
+	s := New()
+	s.Guild.ID = 42
+	apply := func(p []byte) {
+		t.Helper()
+		if _, err := s.Apply(p); err != nil {
+			t.Fatal(err)
+		}
+	}
+	w := proto.NewWriter(proto.GXGuildHouseServices)
+	w.U32(42)
+	w.U32(54_321_000)
+	w.U32(987)
+	w.U8(1)
+	w.U8(1)
+	w.U16(2)
+	w.U8(1)
+	w.U16(187)
+	w.U16(733)
+	apply(w.Bytes())
+	if v := s.Guild.HouseServices; v == nil || v.BuyGold != 54_321_000 || v.Upkeep != 987 || !v.Active || v.Rows[0].NextCost != 733 {
+		t.Fatalf("guild house services %+v", v)
+	}
+	leave := proto.NewWriter(proto.GuildLeave)
+	leave.U8(1)
+	apply(leave.Bytes())
+	apply(w.Bytes())
+	if s.Guild.HouseServices != nil {
+		t.Fatal("old guild's house services survived leaving")
+	}
+}

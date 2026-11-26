@@ -333,15 +333,12 @@ func (s *Session) handleGuild(op packet.Opcode, p []byte) {
 		s.guildRemark(p)
 	case packet.GuildEtin:
 		guildMu.Lock()
+		defer guildMu.Unlock()
 		g := s.player.guild.guild
-		var etin uint32
 		if g != nil {
-			etin = g.Etin
+			s.send(guildID32(packet.GuildEtin, g.Etin), "0x0D23 guild etin")
 		}
-		guildMu.Unlock()
-		if g != nil {
-			s.send(guildID32(packet.GuildEtin, etin), "0x0D23 guild etin")
-		}
+		s.send(g.houseServicesPacket(), "0x7F2D guild house services")
 	case packet.GuildNpcUpgrade:
 		if len(p) < 5 {
 			return

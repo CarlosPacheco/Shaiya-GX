@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
@@ -47,9 +48,53 @@ func TestGuildHouseWindowsGL(t *testing.T) {
 	g := &a.state.Guild
 	g.ID, g.Name, g.Rank, g.Etin = 1, "Guardians", 1, 9000
 	g.Directory = map[uint32]proto.GuildInfo{1: {ID: 1, Name: "Guardians", Master: "Alpha", Rank: 3, Points: 120}, 2: {ID: 2, Name: "Others", Master: "Beta", Rank: 31}}
-	g.Npcs = map[uint8]proto.GuildNpc{0: {Type: 2, Level: 1, Slot: 0}, 1: {Type: 6, Level: 2, Slot: 1}, 2: {Type: 3, Level: 3, Slot: 2}}
 	manager := &game.Entity{ID: 10, Kind: game.KindNpc, NpcType: 11, TypeID: 5}
 	etin := &game.Entity{ID: 11, Kind: game.KindNpc, NpcType: 1, TypeID: 217}
+	a.house.mode = ui.HouseModeList
+	if view := a.houseBuildView(ui.HouseEtinManager, etin); len(view.List) != 2 || view.CanBuy {
+		t.Fatalf("ranking and buy controls before World reply: %+v", view)
+	}
+	w := proto.NewWriter(proto.GXGuildHouseServices)
+	w.U32(g.ID)
+	w.U32(54_321_000)
+	w.U32(3000)
+	w.U8(1)
+	w.U8(7)
+	for _, row := range []proto.GuildHouseService{
+		{Type: 2, Level: 1, Upkeep: 187, NextCost: 733},
+		{Type: 0x101, NextCost: 6100},
+		{Type: 0x201, Level: 3},
+		{Type: 6, Level: 2, Upkeep: 200, NextCost: 1000},
+		{Type: 0x301, NextCost: 150},
+		{Type: 3, Level: 3, Upkeep: 500, NextCost: 10000},
+		{Type: 0x401, NextCost: 2000},
+	} {
+		w.U16(row.Type)
+		w.U8(row.Level)
+		w.U16(row.Upkeep)
+		w.U16(row.NextCost)
+	}
+	if _, err := a.state.Apply(w.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	a.house.confirmBox = &ui.Message{}
+	a.houseAskBuy()
+	if !strings.Contains(a.house.confirmBox.Text, "54,321,000") {
+		t.Fatalf("buy confirmation %q", a.house.confirmBox.Text)
+	}
+	view := a.houseBuildView(ui.HouseEtinManager, etin)
+	if !view.CanBuy || view.Total != "3000" || view.Available != "6000" || !strings.Contains(view.Rows[0].FeeText, "187") {
+		t.Fatalf("house upkeep view %+v", view)
+	}
+	view = a.houseBuildView(ui.HouseGuildManager, manager)
+	if !view.Rows[0].UpgradeOn || view.Rows[1].UpgradeOn || view.Rows[2].ShowUpgrade {
+		t.Fatalf("upgrade controls %+v", view.Rows[:3])
+	}
+	a.houseAskUpgrade(0)
+	if a.house.upLevel != 2 || !strings.Contains(a.house.confirmBox.Text, "733") {
+		t.Fatalf("upgrade confirmation %q for level %d", a.house.confirmBox.Text, a.house.upLevel)
+	}
+	a.house.confirmBox = nil
 	draw := func(name string, e *game.Entity, mode int) {
 		kind, ok := a.houseKind(e)
 		if !ok {

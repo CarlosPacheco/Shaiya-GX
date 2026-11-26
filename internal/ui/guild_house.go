@@ -34,7 +34,6 @@ type HouseRow struct {
 	Show                     bool
 	ShowUpgrade              bool // Manager page: the service can still be upgraded (texts and button)
 	UpgradeOn                bool // the click is accepted (rank, upkeep and level checks)
-	UpgradeLook              bool // the button is drawn enabled (rank and fee affordable)
 	Icon                     int  // icon_skill cell (32 px, 16 per row)
 	IconDim                  bool
 	Title, RankText, FeeText string
@@ -325,7 +324,7 @@ func (w *GuildHouseWindow) drawServices(s *render.Sprites, f *Font, blank *rende
 		if mode == HouseModeManager {
 			cell := func(c int) (float32, float32, float32, float32) { return float32(c) / 4, 0, float32(c+1) / 4, 1 }
 			bx, by := float32(x+0x201), float32(top)
-			if r.UpgradeLook && r.ShowUpgrade {
+			if r.UpgradeOn {
 				u0, v0, u1, v1 := cell(0)
 				s.Draw(w.skill, bx, by, 32, 32, u0, v0, u1, v1, white)
 				if w.hover == i {

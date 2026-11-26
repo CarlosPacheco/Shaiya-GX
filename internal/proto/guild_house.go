@@ -4,6 +4,47 @@ package proto
 // the EP5.4 readers FUN_005977d0, FUN_00597940, FUN_005978f0, FUN_00597780 and
 // the writers FUN_0059c730/760/790/7c0.
 
+// GXGuildHouseServices follows a GuildEtin request and updates on house changes.
+const GXGuildHouseServices Opcode = 0x7F2D
+
+type GuildHouseServices struct {
+	GuildID uint32
+	BuyGold uint32
+	Upkeep  uint32
+	Active  bool
+	Rows    []GuildHouseService
+}
+
+type GuildHouseService struct {
+	Type     uint16
+	Level    uint8
+	Upkeep   uint16
+	NextCost uint16 // zero when the next level is unavailable
+}
+
+func DecodeGuildHouseServices(p []byte) (GuildHouseServices, error) {
+	r := NewReader(p)
+	v := GuildHouseServices{GuildID: r.U32(), BuyGold: r.U32(), Upkeep: r.U32(), Active: r.Bool()}
+	n := int(r.U8())
+	if n > r.Remaining()/7 {
+		return GuildHouseServices{}, ErrShort
+	}
+	v.Rows = make([]GuildHouseService, n)
+	for i := range v.Rows {
+		v.Rows[i] = GuildHouseService{Type: r.U16(), Level: r.U8(), Upkeep: r.U16(), NextCost: r.U16()}
+	}
+	return v, r.Err()
+}
+
+func (v *GuildHouseServices) Service(npcType uint16) (GuildHouseService, bool) {
+	for _, row := range v.Rows {
+		if row.Type == npcType {
+			return row, true
+		}
+	}
+	return GuildHouseService{}, false
+}
+
 // GuildNpc is one guild house NPC slot of 0x0D24 or the result of 0x0D25.
 type GuildNpc struct {
 	Type  uint16

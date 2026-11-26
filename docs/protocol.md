@@ -24,6 +24,20 @@ map physics clock drives prediction; stopped updates terminate both self and
 remote presentation at the server position. Destinations, speed and movement
 credit are never accepted from a client. Native skill/move layouts are unchanged.
 
+## Guild house services
+
+World sends `GXGuildHouseServices` (`0x7F2D`) after the native Etin request
+(`0x0D23`) and broadcasts it after purchase, upgrades and changes in house
+activation. The body is guild ID, purchase price in gold and reserved upkeep
+in Etin (three uint32), active and row count (two uint8), then one row per
+service (type uint16, level uint8, upkeep uint16, next upgrade cost uint16).
+A zero next upgrade cost means that upgrade is unavailable. A guild ID of
+zero identifies the initial view for players without a guild.
+
+GX clients use these values for both guild house windows. The original
+`Npc/GuildHouse.SData` is optional, and purchase and upgrade controls require
+a World build that sends the new packet.
+
 ## Monster movement and contact
 
 World uses the same movement segment for its position queries and the duration

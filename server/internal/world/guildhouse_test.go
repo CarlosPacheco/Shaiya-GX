@@ -3,6 +3,8 @@ package world
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
 
 func TestGuildHouseDefaultsMatchExecutable(t *testing.T) {
@@ -87,6 +89,52 @@ func TestGuildHouseKeepEtinAndList(t *testing.T) {
 	g.npcs[1] = guildNpcSlot{Type: guildNpcBank, Level: 3}
 	if g.bankSlots() != 160 {
 		t.Fatalf("bank slots %d", g.bankSlots())
+	}
+}
+
+func TestGuildHouseServicesQuoteUsesServerSettings(t *testing.T) {
+	old := guildHouse
+	t.Cleanup(func() { guildHouse = old })
+	guildHouse = parseGuildHouse(iniFile{
+		"HOUSE":       {"HOUSECOST": "54321000", "BASEUPKEEP": "0"},
+		"PORTAL":      {"LEVEL1": "Upkeep 187", "LEVEL2": "Upgrade 733"},
+		"GENERALSHOP": {"LEVEL3": "Upgrade 0"},
+	})
+	decode := func(g *guild) proto.GuildHouseServices {
+		t.Helper()
+		frame := g.houseServicesPacket()
+		if proto.Op(frame[2:]) != proto.GXGuildHouseServices {
+			t.Fatalf("guild house services frame %x", frame)
+		}
+		quote, err := proto.DecodeGuildHouseServices(frame[2:])
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := proto.DecodeGuildHouseServices(frame[2 : len(frame)-1]); err == nil {
+			t.Fatal("truncated guild house services frame accepted")
+		}
+		return quote
+	}
+	if quote := decode(nil); quote.GuildID != 0 || quote.BuyGold != 54_321_000 || quote.Upkeep != 0 || quote.Active || len(quote.Rows) != 7 {
+		t.Fatalf("initial quote %+v", quote)
+	}
+	g := &guild{ID: 44, BuyHouse: 1, UseHouse: 1}
+	g.npcs[0] = guildNpcSlot{Type: guildNpcGate, Level: 1}
+	g.npcs[1] = guildNpcSlot{Type: guildNpcGeneral, Level: 2}
+	g.npcs[2] = guildNpcSlot{Type: guildNpcBank, Level: 5}
+	g.calculateKeepEtin()
+	quote := decode(g)
+	if quote.GuildID != g.ID || quote.Upkeep != 1187 || !quote.Active {
+		t.Fatalf("owned house quote %+v", quote)
+	}
+	gate, ok := quote.Service(guildNpcGate)
+	if !ok || gate.Level != 1 || gate.Upkeep != 187 || gate.NextCost != 733 {
+		t.Fatalf("gate quote %+v", gate)
+	}
+	for _, npc := range []uint16{guildNpcGeneral, guildNpcBank} {
+		if service, ok := quote.Service(npc); !ok || service.NextCost != 0 {
+			t.Fatalf("unavailable upgrade quote %+v", service)
+		}
 	}
 }
 
