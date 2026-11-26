@@ -46,6 +46,7 @@ func (v *Gatekeeper) controls(w, h int, gates [3]sdata.NPCGate, busy bool) {
 }
 func (v *Gatekeeper) Update(in *platform.Input, w, h int, gates [3]sdata.NPCGate, busy bool) (int, bool) {
 	v.controls(w, h, gates, busy)
+	v.close.Disabled = busy
 	x, y := v.Origin(w, h)
 	if in.MouseX >= x+16 && in.MouseX < x+242 && in.MouseY >= y+82 && in.MouseY < y+249 && in.Wheel != 0 {
 		if in.Wheel < 0 {

@@ -3,6 +3,16 @@ package proto
 import "fmt"
 
 const WarehouseBag, WarehouseSlots = 100, 240
+const MsgInsufficientGold = 303
+
+// WarehouseWithdrawFee mirrors CUser::ItemBankToBag: round the count times
+// sell price to float32, multiply by the native 5% constant, then truncate.
+func WarehouseWithdrawFee(itemType uint8, count uint16, sell uint32) uint32 {
+	if itemType == 94 {
+		return 0
+	}
+	return uint32(float64(float32(uint32(count)*sell)) * float64(float32(.05)))
+}
 
 // WarehouseList: Game.exe reader 0x591030, account gold then counted records.
 // Stored records omit Bag and place Count after Gems, unlike 0x0204 updates.

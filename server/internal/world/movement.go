@@ -199,7 +199,7 @@ func (s *Session) handleCharacterMove(p []byte) {
 		s.endMyShop() // moving cancels the personal market
 	}
 	x, y, z = ch.PosX, ch.PosY, ch.PosZ
-	motion = s.movement.motion
+	motion, direction = s.movement.motion, s.movement.direction
 	if reason != "" {
 		s.correctMovement(reason)
 	}

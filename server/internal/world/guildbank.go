@@ -265,10 +265,7 @@ func (s *Session) guildBankRearrange(g *guild, rank, src, dest uint8) {
 			a.Count -= moved
 
 			if a.Count == 0 {
-
 				g.bank[src] = nil
-			} else {
-
 			}
 			s.guildPublication(g, buildBagToBag(guildBankBag, src, g.bank[src], guildBankBag, dest, b), "0x0204 guild bank merge", nil)
 			return
@@ -279,7 +276,6 @@ func (s *Session) guildBankRearrange(g *guild, rank, src, dest uint8) {
 
 	if b != nil {
 		b.Slot = src
-
 	}
 	s.guildPublication(g, buildBagToBag(guildBankBag, src, b, guildBankBag, dest, a), "0x0204 guild bank move", nil)
 }

@@ -105,7 +105,12 @@ func (a *App) enterNPCService(e *game.Entity) {
 		a.closeNPC()
 		return
 	}
-	if (a.merchantOpen() || a.warehouseOpen()) && !a.inventory.open {
+	merchant := a.merchantOpen()
+	if merchant && a.inventoryUI != nil {
+		a.shop.inventoryAnchor = a.inventoryUI.Position
+		a.marketUI.MerchantPosition = ui.WindowPosition{}
+	}
+	if (merchant || a.warehouseOpen()) && !a.inventory.open {
 		a.toggleInventory()
 	}
 	if e.NpcType == 4 {
@@ -126,7 +131,7 @@ func (a *App) updateNPCTalk(in *platform.Input, w, h int, e *game.Entity) bool {
 	captured := panelPointer(in, x, y, ui.NPCTalkWidth, ui.NPCTalkHeight)
 	closed, service, quest := a.npcTalkUI.Update(in, w, h, len(entries) > 0)
 	switch {
-	case closed || in.HasKey(platform.KeyEscape):
+	case closed || in.CloseOnEscape():
 		a.closeNPC()
 	case service:
 		a.enterNPCService(e)

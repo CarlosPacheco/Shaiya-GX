@@ -170,11 +170,11 @@ func (w *World) PlayerLadders() []mapgeometry.Ladder {
 	}
 	return w.physics.Ladders
 }
-func (w *World) AttachLadder(p, f render.V3, index int) (mapgeometry.LadderMotion, render.V3, bool) {
+func (w *World) AttachLadder(p, f render.V3, index int, mode uint8) (mapgeometry.LadderMotion, render.V3, bool) {
 	if w == nil || w.physics == nil {
 		return mapgeometry.LadderMotion{}, p, false
 	}
-	m, q, ok := w.physics.AttachLadder(mapgeometry.Position(p), mapgeometry.Position(f), index)
+	m, q, ok := w.physics.AttachLadder(mapgeometry.Position(p), mapgeometry.Position(f), index, mode)
 	return m, render.V3(q), ok
 }
 func (w *World) StepLadder(m *mapgeometry.LadderMotion, p render.V3, dt float32) render.V3 {

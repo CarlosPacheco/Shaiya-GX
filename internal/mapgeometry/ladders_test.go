@@ -16,7 +16,7 @@ func ladderFixture() *Geometry {
 }
 func TestLadderClimbHoldDownAndLanding(t *testing.T) {
 	g := ladderFixture()
-	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0)
+	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0, LadderUp)
 	m.Tier = 2
 	if !ok {
 		t.Fatal("cannot attach")
@@ -56,12 +56,12 @@ func TestLadderRejectsRemoteFacingWallAndCeiling(t *testing.T) {
 	for _, tc := range []struct {
 		p, f  Position
 		index int
-	}{{Position{20, 0, 20}, Position{0, 0, -1}, 0}, {Position{5, .045, 5.55}, Position{0, 0, 1}, 0}, {Position{5, 10, 5.55}, Position{0, 0, -1}, 0}, {Position{5, .045, 5.55}, Position{0, 0, -1}, 42}} {
-		if _, _, ok := g.AttachLadder(tc.p, tc.f, tc.index); ok {
+	}{{Position{20, 0, 20}, Position{0, 0, -1}, 0}, {Position{5, .045, 5.55}, Position{0, 0, 1}, 0}, {Position{5, .045, 4.45}, Position{0, 0, 1}, 0}, {Position{5, 5.045, 4.45}, Position{0, 0, 1}, 0}, {Position{5, 10, 5.55}, Position{0, 0, -1}, 0}, {Position{5, .045, 5.55}, Position{0, 0, -1}, 42}} {
+		if _, _, ok := g.AttachLadder(tc.p, tc.f, tc.index, LadderUp); ok {
 			t.Fatal("invalid attachment allowed", tc)
 		}
 	}
-	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0)
+	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0, LadderUp)
 	m.Speed = 2.5
 	if !ok {
 		t.Fatal("fixture attachment")
@@ -97,7 +97,7 @@ func TestNativeLadderCatalog(t *testing.T) {
 
 func TestLadderDescendsFromUpperLanding(t *testing.T) {
 	g := ladderFixture()
-	m, p, ok := g.AttachLadder(Position{5, 5.045, 4.45}, Position{0, 0, 1}, 0)
+	m, p, ok := g.AttachLadder(Position{5, 5.045, 4.45}, Position{0, 0, 1}, 0, LadderDown)
 	m.Speed = 2.5
 	if !ok {
 		t.Fatal("cannot board from upper landing")
@@ -117,7 +117,7 @@ func TestLadderNarrowLandingAboveVisualRungs(t *testing.T) {
 	g.Reindex()
 	g.Add(collision.Triangle{{4, 5.35, 4.88}, {4, 5.35, 5.12}, {6, 5.35, 4.88}})
 	g.Add(collision.Triangle{{6, 5.35, 5.12}, {6, 5.35, 4.88}, {4, 5.35, 5.12}})
-	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0)
+	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0, LadderUp)
 	m.Speed = 2.5
 	if !ok {
 		t.Fatal("cannot attach")
@@ -140,7 +140,7 @@ func TestLadderClearsPlatformLipWithoutCrossingCeiling(t *testing.T) {
 	g.Add(collision.Triangle{{7, 5, 5.7}, {7, 5, 2}, {3, 5, 5.7}})
 	g.Add(collision.Triangle{{3, 5, 2}, {7, 5, 2}, {3, 5, 5.7}})
 	g.Add(collision.Triangle{{7, 5, 5.7}, {3, 5, 5.7}, {7, 5, 2}})
-	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0)
+	m, p, ok := g.AttachLadder(Position{5, .045, 5.55}, Position{0, 0, -1}, 0, LadderUp)
 	m.Speed = 2.5
 	if !ok {
 		t.Fatal("cannot attach")

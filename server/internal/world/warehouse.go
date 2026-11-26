@@ -2,8 +2,8 @@ package world
 
 import (
 	"encoding/binary"
-	"math"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 )
@@ -197,8 +197,8 @@ func (s *warehousePlan) warehouseWithdraw(src, destBag, destSlot uint8) []byte {
 	// CUser::ItemBankToBag: taking an item out costs 5% of its Sell price
 	// times the count (item mall type 94 is free).
 	fee := uint32(0)
-	if d := db.MustDefs().Item(a.Type, a.TypeID); d != nil && a.Type != 94 {
-		fee = uint32(math.RoundToEven(float64(float32(uint32(a.Count)*uint32(max(d.Sell, 0)))) * float64(float32(0.05))))
+	if d := db.MustDefs().Item(a.Type, a.TypeID); d != nil {
+		fee = proto.WarehouseWithdrawFee(a.Type, a.Count, uint32(max(d.Sell, 0)))
 	}
 	if ch.Money < fee {
 		var d *db.Item

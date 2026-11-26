@@ -40,6 +40,7 @@ type Button struct {
 	Toggle            bool // checkbox: a click flips Checked
 	state             int
 	held              bool
+	closesWindow      bool
 }
 
 func (b *Button) X() int { return b.OriginX + b.OffX }
@@ -74,8 +75,13 @@ func (b *Button) Update(in *platform.Input) bool {
 	default:
 		b.state = StateNormal
 	}
-	if clicked && b.Toggle {
-		b.Checked = !b.Checked
+	if clicked {
+		if b.Toggle {
+			b.Checked = !b.Checked
+		}
+		if b.closesWindow {
+			in.NotifyWindowClosed()
+		}
 	}
 	return clicked
 }
@@ -131,7 +137,7 @@ func (t *TextField) Shown() string {
 
 // nativeClose is the shared 22px control on a 128x32 atlas.
 func nativeClose(tex *render.Texture, x, y int) Button {
-	b := Button{Tex: tex, OffX: x, OffY: y, DrawW: 22, DrawH: 22, HitW: 22, HitH: 22}
+	b := Button{Tex: tex, OffX: x, OffY: y, DrawW: 22, DrawH: 22, HitW: 22, HitH: 22, closesWindow: true}
 	for i, state := range []int{0, 1, 2, 2, 0} {
 		b.UV[i] = UV{float32(state*32) / 128, 0, float32(state*32+22) / 128, 22.0 / 32}
 	}

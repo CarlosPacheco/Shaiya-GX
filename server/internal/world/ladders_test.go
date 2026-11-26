@@ -76,3 +76,27 @@ func TestLadderRejectsDistantUnknownAndMalformedRequests(t *testing.T) {
 		t.Fatal("invalid ladder request changed physics", now)
 	}
 }
+
+func TestLadderRejectsRearAtBottomAndKeepsCanonicalFacing(t *testing.T) {
+	s, now := playerPhysicsFixture(t)
+	s.movement.geometry.Ladders = []mapgeometry.Ladder{{Bottom: mapgeometry.Position{8, 0, 5}, Top: mapgeometry.Position{8, 8, 5}, Normal: mapgeometry.Position{0, 0, 1}, Width: .7}}
+	s.movement.pos[2] = 4.45
+	s.movement.direction = 0
+	s.commitMovement()
+	s.handleLadder(proto.LadderPacket(0, mapgeometry.LadderUp))
+	s.handleLadder(proto.LadderPacket(0, mapgeometry.LadderDown))
+	if s.movement.ladder.Active {
+		t.Fatal("server accepted rear attachment at the bottom")
+	}
+	s.movement.pos[2] = 5.55
+	s.movement.direction = 32768
+	s.commitMovement()
+	s.handleLadder(proto.LadderPacket(0, mapgeometry.LadderUp))
+	if !s.movement.ladder.Active || s.movement.ladder.Side != 1 {
+		t.Fatal("server refused the front face")
+	}
+	_, _ = s.validatePlayerMovement(8, .15, 5.55, 1, 0, maxTime(now, s.movement.at))
+	if s.movement.direction != 32768 {
+		t.Fatal("movement packet turned a climber away from the rungs")
+	}
+}

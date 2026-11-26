@@ -25,6 +25,9 @@ to the execution time. Equipment, mastery, haste and slow changes apply when
 the next swing sets a new deadline. Restart requests, target switches and
 client packets cannot reset a committed deadline. Weapon-relative animation
 speed controls playback independently of the next swing's time.
+The world server checks for a due swing during read timeouts and after handling
+incoming commands, so normal traffic keeps the cadence and a stop already
+received takes effect before the next swing.
 
 Successful skill releases and consumable skill actions also reserve basic
 attack recovery using the table. Player skill recovery and per-skill reuse

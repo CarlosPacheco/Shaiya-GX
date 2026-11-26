@@ -69,15 +69,14 @@ func (s *ServerList) Update(in *platform.Input, w, h int, dt float64) ServerActi
 	ox, oy := serverOrigin(w, h)
 	for _, b := range []*Button{s.OK, s.Cancel} {
 		b.OriginX, b.OriginY = ox, oy
-		b.Disabled = s.Busy
 	}
-	s.OK.Disabled = s.Busy || s.Selected < 0
+	s.OK.Disabled = s.Busy || s.Selected < 0 || s.Selected >= len(s.Servers)
 	act := ServerNone
 	if s.OK.Update(in) {
 		act = ServerConnect
 	}
-	if s.Cancel.Update(in) {
-		act = ServerBack
+	if s.Cancel.Update(in) || in.HasKey(platform.KeyEscape) {
+		return ServerBack
 	}
 	if s.Busy {
 		return act
@@ -95,11 +94,8 @@ func (s *ServerList) Update(in *platform.Input, w, h int, dt float64) ServerActi
 			}
 		}
 	}
-	if in.HasKey(platform.KeyEnter) && s.Selected >= 0 {
+	if in.HasKey(platform.KeyEnter) && s.Selected >= 0 && s.Selected < len(s.Servers) {
 		act = ServerConnect
-	}
-	if in.HasKey(platform.KeyEscape) {
-		act = ServerBack
 	}
 	return act
 }

@@ -21,7 +21,7 @@ func (a *App) updateGatekeeper(in *platform.Input, w, h int, e *game.Entity) boo
 	x, y := a.gateUI.Origin(w, h)
 	busy := a.shop.pending || a.inventory.pending
 	choice, close := a.gateUI.Update(in, w, h, def.Gates, busy)
-	if (close || in.HasKey(platform.KeyEscape)) && !busy {
+	if !busy && (close || in.CloseOnEscape()) {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
 			a.backToLoginID(12011)
 			return true

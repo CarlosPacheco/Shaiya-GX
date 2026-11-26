@@ -137,6 +137,7 @@ func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 		}
 	}()
 	if !a.gameMenu.BindingCapture() && hasChar(in, 'o') {
+		in.NotifyWindowClosed()
 		a.gameMenu.DiscardPage()
 		a.applyClientSettings()
 		a.menuOpen = false

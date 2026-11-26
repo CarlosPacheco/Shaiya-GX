@@ -37,7 +37,7 @@ func TestWindowDragOwnsMotionReleaseAndRespectsClose(t *testing.T) {
 			case "shop":
 				a.shop.npcID = 42
 				a.state.Entities[42] = &game.Entity{Kind: game.KindNpc, NpcType: 1}
-				position = &a.marketUI.Position
+				position = &a.marketUI.MerchantPosition
 				x, y = a.marketUI.Origin(1024, 768)
 			}
 			controls := a.worldControls(&platform.Input{MouseX: x + 50, MouseY: y + 15, Pressed: true, MouseDown: true, Down: "W"}, 1024, 768)

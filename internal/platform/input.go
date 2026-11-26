@@ -82,6 +82,7 @@ type Input struct {
 	Keys             []Key
 	ReadClipboard    func() string
 	WriteClipboard   func(string)
+	WindowClosed     func() // presentation callback for native close controls
 	Shift            bool
 	MiddlePressed    bool    // middle button pressed this frame
 	Released         string  // released A..Z, for native double-tap controls
@@ -103,6 +104,20 @@ func (in *Input) HasKey(k Key) bool {
 		}
 	}
 	return false
+}
+
+func (in *Input) NotifyWindowClosed() {
+	if in.WindowClosed != nil {
+		in.WindowClosed()
+	}
+}
+
+func (in *Input) CloseOnEscape() bool {
+	if !in.HasKey(KeyEscape) {
+		return false
+	}
+	in.NotifyWindowClosed()
+	return true
 }
 
 var keyMap = map[glfw.Key]Key{

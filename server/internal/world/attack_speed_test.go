@@ -3,7 +3,9 @@ package world
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/attackspeed"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/crypto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/netx"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/packet"
 	"testing"
 	"time"
@@ -114,6 +116,38 @@ func TestBasicAttackWakeUsesNativeDeadline(t *testing.T) {
 	s.nextBasicAttackAt = now.Add(time.Second)
 	if got := s.nextWake(); got != loopTick {
 		t.Fatalf("auto attack woke before its deadline: %v", got)
+	}
+}
+
+func TestBasicAttackDeadlineDuringInput(t *testing.T) {
+	s, defs := lapisSession(t)
+	id, _ := lapisMob(t, s, defs)
+	s.char.PosX, s.char.PosZ = 1, 1
+	s.authorizationAt = time.Now().Add(time.Minute)
+	s.autoAttack, s.autoAttackTarget = true, id
+	s.nextBasicAttackAt = time.Now().Add(-time.Second)
+
+	var key, iv [16]byte
+	s.aesRecv = crypto.NewAESCTR(key, iv)
+	peer := crypto.NewAESCTR(key, iv)
+	var frames netx.Frames
+	receive := func(op packet.Opcode) {
+		t.Helper()
+		frame := packet.New(op).MustFinish()
+		copy(frame[2:], peer.Transform(frame[2:]))
+		if err := s.processInput(len(frame), frame, &frames); err != nil {
+			t.Fatal(err)
+		}
+	}
+	receive(packet.Ping)
+	if !s.autoAttack || time.Until(s.nextBasicAttackAt) <= 0 {
+		t.Fatal("complete input failed to resolve the due attack")
+	}
+	deadline := time.Now().Add(-time.Second)
+	s.nextBasicAttackAt = deadline
+	receive(packet.AutoAttackStop)
+	if s.autoAttack || s.nextBasicAttackAt != deadline {
+		t.Fatal("due attack resolved before processing the stop")
 	}
 }
 

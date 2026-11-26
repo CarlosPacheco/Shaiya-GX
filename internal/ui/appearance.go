@@ -114,7 +114,7 @@ func (e *AppearanceEditor) Update(in *platform.Input, w, h int) int {
 			e.Values[3] = uint8(i)
 		}
 	}
-	if in.HasKey(platform.KeyEscape) || e.cancel.Update(in) || e.close.Update(in) {
+	if e.close.Update(in) || in.CloseOnEscape() || e.cancel.Update(in) {
 		return MessageCancel
 	}
 	if e.ok.Update(in) {

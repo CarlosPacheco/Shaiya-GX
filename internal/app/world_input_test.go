@@ -53,6 +53,7 @@ func inputApp() *App {
 	}
 	a := &App{gameMenu: menu, menuConfirm: message, statusUI: status, chatUI: chat, bottom: bottom, subActionsUI: sub, accountMessage: message, skillBook: book, quantityUI: quantity, state: game.New(), wv: &worldView{}, login: &ui.Login{}, actionBar: &ui.ActionBar{Hover: -1}, inventoryUI: &ui.Inventory{}, marketUI: market, skillDefs: map[sdata.SkillKey]sdata.Skill{}, npcDefs: map[sdata.NPCKey]sdata.NPC{}}
 	a.inventoryUI.DockOrigin = a.inventoryDockOrigin
+	a.marketUI.MerchantOrigin = a.merchantOrigin
 	return a
 }
 
@@ -149,7 +150,7 @@ func TestInventoryDoesNotBlockShopScrollingOrWorldZoom(t *testing.T) {
 	if a.shop.page != 1 || controls.Wheel != 0 {
 		t.Fatal("shop did not own its wheel with inventory open")
 	}
-	in.MouseX = 700
+	in.MouseX = mx - 40
 	in.MouseY = 400
 	controls = a.worldControls(&in, 1024, 768)
 	if controls.Wheel != -120 || a.shop.page != 1 {

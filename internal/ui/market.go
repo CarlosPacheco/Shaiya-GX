@@ -33,10 +33,12 @@ func MarketHit(x, y int) (int, bool) {
 
 // Market owns the original art and controls (0x5080a0), not transactions.
 type Market struct {
-	Position WindowPosition
-	frame    *render.Texture
-	arrows   [2]Button
-	close    Button
+	Position         WindowPosition
+	MerchantPosition WindowPosition
+	MerchantOrigin   func(w, h int) (x, y int, open bool)
+	frame            *render.Texture
+	arrows           [2]Button
+	close            Button
 }
 
 func NewMarket(t Textures) (*Market, error) {
@@ -94,10 +96,34 @@ func (m *Market) Draw(s *render.Sprites, f *Font, w, h, page, count int, busy bo
 // Native sale drop area, including gaps between product cells (0x5082d0).
 func MarketDropHit(x, y int) bool { return x >= 15 && x <= 245 && y >= 112 && y <= 305 }
 
+// FreeAt uses the current origin so a freshly moved frame never swallows a
+// press intended for its close or page controls.
+func (m *Market) FreeAt(mx, my, w, h int) bool {
+	x, y := m.Origin(w, h)
+	in := platform.Input{MouseX: mx, MouseY: my}
+	close := m.close
+	close.OriginX, close.OriginY = x, y
+	if close.hit(&in) || MarketDropHit(mx-x, my-y) {
+		return false
+	}
+	for _, arrow := range m.arrows {
+		arrow.OriginX, arrow.OriginY = x, y
+		if arrow.hit(&in) {
+			return false
+		}
+	}
+	return true
+}
+
 func (m *Market) Origin(w, h int) (int, int) {
 	x, y := MarketOrigin(w, h)
 	if m == nil {
 		return x, y
+	}
+	if m.MerchantOrigin != nil {
+		if ix, iy, open := m.MerchantOrigin(w, h); open {
+			return m.MerchantPosition.Origin(w, h, MarketWidth, MarketHeight, ix, iy)
+		}
 	}
 	x, y = m.Position.Origin(w, h, MarketWidth, MarketHeight, x, y)
 	return commerceOrigin(x, y, w, MarketWidth)

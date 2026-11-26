@@ -61,7 +61,7 @@ func (v *PvPRewardPanel) Reset() { v.offset = 0 }
 
 func (v *PvPRewardPanel) Update(in *platform.Input, w, h int, state PvPRewardState) (claim int, close bool) {
 	v.controls(w, h, state)
-	if v.close.Update(in) || in.HasKey(platform.KeyEscape) {
+	if v.close.Update(in) || in.CloseOnEscape() {
 		return 0, true
 	}
 	for i := range v.claims {

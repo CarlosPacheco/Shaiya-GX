@@ -264,7 +264,7 @@ func TestMovementOnlyInterruptsCastAfterValidationAndWithoutNativeFlag(t *testin
 }
 
 func TestIdlePositionUpdatesDoNotLosePreparedSpell(t *testing.T) {
-	s, d, sh := spellCastRangeFixture(t)
+	s, _, sh := spellCastRangeFixture(t)
 	// Use the real Blizzard definition and costs, not an instant or zero-cost skill.
 	mobDef := db.MustDefs().Mobs[64001]
 	defs, err := db.ReloadDefsForTest()
@@ -272,7 +272,7 @@ func TestIdlePositionUpdatesDoNotLosePreparedSpell(t *testing.T) {
 		t.Fatal(err)
 	}
 	defs.Mobs[64001] = mobDef
-	d = defs.Skill(71, 3)
+	d := defs.Skill(71, 3)
 	if d == nil || d.ReadyTime != 8 {
 		t.Fatal("missing original Blizzard preparation")
 	}

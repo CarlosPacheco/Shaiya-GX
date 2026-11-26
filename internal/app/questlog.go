@@ -101,7 +101,7 @@ func (a *App) updateQuestLog(in *platform.Input, w, h int) bool {
 	if !v.open {
 		return false
 	}
-	if in.HasKey(platform.KeyEscape) {
+	if in.CloseOnEscape() {
 		v.open = false
 		return true
 	}

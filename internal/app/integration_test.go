@@ -68,15 +68,19 @@ func TestPanelsAgainstRapture(t *testing.T) {
 	savedInventory := a.inventoryUI.Position
 	send(proto.NpcTalkPacket(merchant))
 	a.shop.npcID = merchant
+	a.enterNPCService(st.Entities[merchant])
 	sx, sy := a.marketUI.Origin(1024, 768)
+	if sx != 650-ui.MarketWidth || sy != 100 {
+		t.Fatal("merchant did not open beside the current inventory", sx, sy)
+	}
 	drag(sx, sy, 50, 100)
-	if !savedInventory.Moved || a.inventoryUI.Position != savedInventory || !a.marketUI.Position.Moved {
-		t.Fatal("service docking changed the saved inventory position")
+	if !savedInventory.Moved || a.inventoryUI.Position != savedInventory || !a.marketUI.MerchantPosition.Moved {
+		t.Fatal("dragging the merchant changed the saved inventory position")
 	}
 	ix, iy = a.inventoryUI.Origin(1024, 768)
 	sx, sy = a.marketUI.Origin(1024, 768)
-	if ix+ui.InventoryWidth != sx || iy != sy {
-		t.Fatal("inventory did not follow the moved merchant")
+	if ix != 650 || iy != 100 || sx != 50 || sy != 100 {
+		t.Fatal("merchant and inventory did not keep independent positions", ix, iy, sx, sy)
 	}
 	ack := func(cond func() bool) {
 		t.Helper()
@@ -213,7 +217,7 @@ func TestPanelsAgainstRapture(t *testing.T) {
 	if q, _ := a.shortcutAt(0); q == nil || q.Bag != item.Bag || q.Number != uint16(item.Slot) {
 		t.Fatal("inventory drag did not bind the primary action bar", q)
 	}
-	click(x+cx+1, y+cy+1, false)
+	a.worldControls(&platform.Input{MouseX: x + cx + 1, MouseY: y + cy + 1, RightPressed: true}, 1024, 768)
 	ack(func() bool { return st.LastItemUse.ID == st.SelfID })
 	if !a.inventory.open || a.inventory.dragging || a.inventory.selected ||
 		st.LastItemUse.Type != item.Type || st.LastItemUse.Count != item.Count-1 {

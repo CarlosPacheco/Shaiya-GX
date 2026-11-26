@@ -82,7 +82,7 @@ func (a *App) updateBlacksmith(in *platform.Input, w, h int) bool {
 		*v = blacksmithView{npcID: a.shop.npcID}
 		return true
 	}
-	if (closed || in.HasKey(platform.KeyEscape)) && !busy {
+	if !busy && (closed || in.CloseOnEscape()) {
 		a.closeNPC()
 		return true
 	}

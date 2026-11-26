@@ -4,6 +4,7 @@
 package session
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -46,16 +47,27 @@ func readOp(c *netx.Conn, want proto.Opcode, timeout time.Duration) ([]byte, err
 
 // Dial connects to the login server and authenticates.
 func Dial(addr, user, password string) (*Login, error) {
+	return DialContext(context.Background(), addr, user, password)
+}
+
+// DialContext supports cancellation until login and the server list are ready.
+func DialContext(ctx context.Context, addr, user, password string) (*Login, error) {
 	if err := authwire.Validate(user, password); err != nil {
 		return nil, err
 	}
-	c, err := netx.Dial(addr, DialTimeout)
+	c, err := netx.DialContext(ctx, addr, DialTimeout)
 	if err != nil {
 		return nil, err
 	}
 	l := &Login{conn: c}
-	if err := l.authenticate(user, password); err != nil {
-		c.Close()
+	stop := context.AfterFunc(ctx, func() { c.Abort() })
+	defer stop()
+	err = l.authenticate(user, password)
+	if ctx.Err() != nil {
+		err = ctx.Err()
+	}
+	if err != nil {
+		c.Abort()
 		return nil, err
 	}
 	return l, nil
@@ -113,7 +125,7 @@ func (l *Login) authenticate(user, password string) error {
 }
 
 // Close cancels a login or server selection and releases its socket.
-func (l *Login) Close() error { return l.conn.Close() }
+func (l *Login) Close() error { return l.conn.Abort() }
 
 // SelectServer asks for a world's address and closes the login connection.
 func (l *Login) SelectServer(id uint8, version uint32) (net.IP, error) {
@@ -139,24 +151,35 @@ var ErrHandshake = errors.New("world handshake rejected")
 
 // DialWorld connects to ip:port and performs the 0xA301 handshake.
 func (l *Login) DialWorld(ip net.IP, port int) (*World, error) {
-	c, err := netx.Dial(net.JoinHostPort(ip.String(), strconv.Itoa(port)), DialTimeout)
+	return l.DialWorldContext(context.Background(), ip, port)
+}
+
+// DialWorldContext supports cancellation until the World handshake completes.
+func (l *Login) DialWorldContext(ctx context.Context, ip net.IP, port int) (*World, error) {
+	c, err := netx.DialContext(ctx, net.JoinHostPort(ip.String(), strconv.Itoa(port)), DialTimeout)
 	if err != nil {
 		return nil, err
 	}
+	stop := context.AfterFunc(ctx, func() { c.Abort() })
+	defer stop()
 	if err := c.Write(proto.WorldHelloPacket(l.Result.UserUID, l.Result.Token)); err != nil {
-		c.Close()
+		c.Abort()
 		return nil, err
 	}
 	// 0x4013a0: both streams restart from SHA-256(login nonce).
 	c.EnableAES(l.material.Key(), l.material.WorldCounter())
 	p, err := readOp(c, proto.GameHandshake, DialTimeout)
+	if ctx.Err() != nil {
+		c.Abort()
+		return nil, ctx.Err()
+	}
 	if err != nil {
-		c.Close()
+		c.Abort()
 		return nil, fmt.Errorf("waiting for 0xA301: %w", err)
 	}
 	hs, err := proto.DecodeWorldHandshake(p)
 	if err != nil || hs.Status != 0 {
-		c.Close()
+		c.Abort()
 		return nil, ErrHandshake
 	}
 	c.SetTableMode(hs.Mode, hs.Seed)

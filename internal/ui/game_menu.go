@@ -261,7 +261,7 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 		m.dragSlider = -1
 	}
 	if m.CharSelect && m.Page == MenuMain {
-		if in.HasKey(platform.KeyEscape) {
+		if in.CloseOnEscape() {
 			return MenuClose
 		}
 		for i := 0; i < 3; i++ {
@@ -272,7 +272,7 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 		}
 		return MenuNone
 	}
-	if m.close.Update(in) || in.HasKey(platform.KeyEscape) {
+	if m.close.Update(in) || in.CloseOnEscape() {
 		if m.Page != MenuMain {
 			m.Settings = m.original
 			m.Open(MenuMain)
@@ -282,6 +282,7 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 	}
 	if m.Page == MenuMain {
 		if m.back.Update(in) {
+			in.NotifyWindowClosed()
 			return MenuClose
 		}
 		for i := range m.buttons {

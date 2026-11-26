@@ -90,7 +90,7 @@ func (a *App) updateTeleportCast(in *platform.Input) bool {
 		a.questMessageID(12200)
 		return false
 	}
-	if in.HasKey(platform.KeyEscape) {
+	if in.CloseOnEscape() {
 		if err := a.world.Send(proto.TeleportStonePacket(proto.TeleportCancel, 0)); err != nil {
 			a.backToLoginID(12197)
 		}

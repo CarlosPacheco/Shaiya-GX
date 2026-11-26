@@ -158,6 +158,7 @@ func (v *Blacksmith) Reset() {
 func (v *Blacksmith) Update(in *platform.Input, w, h int, busy, ready, extractReady, enchantReady, composeReady bool) (bool, bool, bool, bool, bool) {
 	x, y := v.Origin(w, h)
 	v.place(x, y, busy, ready, extractReady, enchantReady, composeReady)
+	v.close.Disabled, v.menuClose.Disabled = busy, busy
 	if v.Mode == ForgeMenu {
 		for i := range v.menu {
 			if !v.menu[i].Update(in) {

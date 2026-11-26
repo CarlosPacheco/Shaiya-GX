@@ -338,7 +338,6 @@ func (s *Session) validatePlayerMovement(x, y, z float32, motion uint8, directio
 	if m.ladder.Active {
 		m.packetAt, m.budgetAt = now, now
 		m.speedCorrectionPending = false
-		m.direction = direction
 		s.commitMovement()
 		if math.Abs(float64(m.pos[1]-y)) > .35 || math.Hypot(float64(m.pos[0]-x), float64(m.pos[2]-z)) > .2 {
 			return true, "ladder position differs from server"

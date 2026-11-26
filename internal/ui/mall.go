@@ -121,7 +121,7 @@ func (m *Mall) Update(in *platform.Input, w, h, count int, busy bool) (MallActio
 	}
 	m.close.OriginX, m.close.OriginY = x, y
 	m.cancel.OriginX, m.cancel.OriginY = x, y
-	if m.close.Update(in) || m.cancel.Update(in) || in.HasKey(platform.KeyEscape) {
+	if m.close.Update(in) || in.CloseOnEscape() || m.cancel.Update(in) {
 		return MallClose, true
 	}
 	m.giftBox.OriginX, m.giftBox.OriginY = x, y
@@ -248,7 +248,7 @@ func (m *Mall) Draw(s *render.Sprites, f *Font, w, h int, products []MallProduct
 func (m *Mall) UpdateGifts(in *platform.Input, w, h int, stored map[uint8]proto.MallStoredItem, now float64, busy bool) (int, MallAction, bool) {
 	x, y := m.GiftOrigin(w, h)
 	m.giftClose.OriginX, m.giftClose.OriginY = x, y
-	if m.giftClose.Update(in) || in.HasKey(platform.KeyEscape) {
+	if m.giftClose.Update(in) || in.CloseOnEscape() {
 		m.GiftOpen = false
 		return -1, MallCloseGifts, true
 	}

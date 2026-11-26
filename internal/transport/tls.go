@@ -2,6 +2,7 @@
 package transport
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -39,6 +40,11 @@ func Listen(addr string) (net.Listener, error) {
 // Dial uses system trust or an explicit PEM CA. Verification is never disabled;
 // a configured TLS connection never falls back to plaintext on failure.
 func Dial(addr string, timeout time.Duration) (net.Conn, error) {
+	return DialContext(context.Background(), addr, timeout)
+}
+
+// DialContext also accepts cancellation during dialing and the TLS handshake.
+func DialContext(ctx context.Context, addr string, timeout time.Duration) (net.Conn, error) {
 	options, err := clientOptions()
 	if err != nil {
 		return nil, err
@@ -55,8 +61,9 @@ func Dial(addr string, timeout time.Duration) (net.Conn, error) {
 	if ca != "" || name != "" {
 		secure = true
 	}
+	dialer := &net.Dialer{Timeout: timeout}
 	if !secure {
-		return net.DialTimeout("tcp", addr, timeout)
+		return dialer.DialContext(ctx, "tcp", addr)
 	}
 	cfg := &tls.Config{MinVersion: tls.VersionTLS13, ServerName: name}
 	if ca != "" {
@@ -70,7 +77,7 @@ func Dial(addr string, timeout time.Duration) (net.Conn, error) {
 		}
 		cfg.RootCAs = roots
 	}
-	return tls.DialWithDialer(&net.Dialer{Timeout: timeout}, "tcp", addr, cfg)
+	return (&tls.Dialer{NetDialer: dialer, Config: cfg}).DialContext(ctx, "tcp", addr)
 }
 
 func localHost(host string) bool {

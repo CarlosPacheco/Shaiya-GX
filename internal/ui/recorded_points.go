@@ -64,7 +64,7 @@ func (v *RecordedPoints) Update(in *platform.Input, w, h int, busy bool, points 
 			return proto.TeleportTravel, uint8(i), false
 		}
 	}
-	return 0, 0, v.close.Update(in) || !busy && in.HasKey(platform.KeyEscape)
+	return 0, 0, v.close.Update(in) || !busy && in.CloseOnEscape()
 }
 
 func (v *RecordedPoints) Draw(s *render.Sprites, f *Font, messages text.SysMsg, w, h int, busy bool, points [proto.TeleportPointCount]proto.TeleportPoint) {

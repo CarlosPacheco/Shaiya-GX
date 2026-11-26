@@ -12,24 +12,42 @@ import (
 )
 
 type shopView struct {
-	quantity  *tradeQuantity
-	npcID     uint32
-	page      int
-	pending   bool
-	deadline  float64
-	dragging  bool
-	questMode bool
-	talk      bool // the NPC conversation window precedes the service
-	dragIndex uint8
+	quantity        *tradeQuantity
+	inventoryAnchor ui.WindowPosition
+	npcID           uint32
+	page            int
+	pending         bool
+	deadline        float64
+	dragging        bool
+	questMode       bool
+	talk            bool // the NPC conversation window precedes the service
+	dragIndex       uint8
 }
 
 func (a *App) merchantOpen() bool {
+	if a.state == nil {
+		return false
+	}
 	e := a.state.Entities[a.shop.npcID]
 	if a.marketUI == nil || e == nil || e.NpcType != 1 || a.shop.overlay() || a.state.Self.Dead || a.auctionBoard(a.shop.npcID) || a.emblemNPC(e) {
 		return false
 	}
 	_, house := a.houseKind(e)
 	return !house
+}
+
+// The native merchant uses the inventory's opening position, placing the
+// catalog to its left when there is room and to its right otherwise.
+func (a *App) merchantOrigin(w, h int) (int, int, bool) {
+	if !a.merchantOpen() {
+		return 0, 0, false
+	}
+	x, y := ui.InventoryOrigin(w, h)
+	x, y = a.shop.inventoryAnchor.Origin(w, h, ui.InventoryWidth, ui.InventoryHeight, x, y)
+	if x >= ui.MarketWidth {
+		return x - ui.MarketWidth, y, true
+	}
+	return x + ui.InventoryWidth, y, true
 }
 
 func (a *App) updateShop(in *platform.Input, w, h int) bool {
@@ -89,18 +107,12 @@ func (a *App) updateShop(in *platform.Input, w, h int) bool {
 	}
 	captured := panelPointer(in, x, y, width, height)
 	busy := v.pending || a.inventory.pending
-	closed := in.HasKey(platform.KeyEscape)
+	closed := false
 	if e.NpcType == 1 {
-		var clickedClose bool
-		v.page, clickedClose = a.marketUI.Update(in, w, h, v.page, len(def.Items), busy)
-		closed = closed || clickedClose
+		v.page, closed = a.marketUI.Update(in, w, h, v.page, len(def.Items), busy)
 	}
-	if closed {
-		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
-			a.backToLoginID(12011)
-			return true
-		}
-		v.npcID = 0
+	if closed || in.CloseOnEscape() {
+		a.closeNPC()
 		return true
 	}
 	if busy || e.NpcType != 1 {

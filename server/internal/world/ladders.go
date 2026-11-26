@@ -71,7 +71,7 @@ func (s *Session) handleLadder(p []byte) {
 	if !m.ladder.Active || m.ladder.Index != index {
 		angle := float64(m.direction) / 65536 * 2 * math.Pi
 		facing := mapgeometry.Position{float32(math.Sin(angle)), 0, float32(math.Cos(angle))}
-		state, pos, ok := m.geometry.AttachLadder(m.pos, facing, index)
+		state, pos, ok := m.geometry.AttachLadder(m.pos, facing, index, mode)
 		if !ok {
 			m.ladder.Active = false
 			s.notifyLadder()
@@ -79,6 +79,8 @@ func (s *Session) handleLadder(p []byte) {
 			return
 		}
 		m.ladder, m.pos = state, pos
+		normal := m.geometry.Ladders[index].Normal
+		m.direction = uint16(int(math.Atan2(-float64(normal[0]), -float64(normal[2])) * 65536 / (2 * math.Pi)))
 		m.jumping = false
 		m.fallTracking = false
 		m.fallReady = true

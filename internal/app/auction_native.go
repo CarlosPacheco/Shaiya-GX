@@ -221,7 +221,10 @@ func auctionGroupY(group, i int) int {
 func (a *App) auctionControls(ox, oy int) []auctionControl {
 	v := &a.auction
 	var c []auctionControl
-	c = append(c, auctionControl{a.colButton("close", "talk1_close_button", 22, ox, oy, 0x2c5, 6), true, a.auctionClose})
+	c = append(c, auctionControl{a.colButton("close", "talk1_close_button", 22, ox, oy, 0x2c5, 6), true, func() {
+		a.playWindowSound()
+		a.auctionClose()
+	}})
 	tab := auctionTab(v.view)
 	for i := range 4 {
 		rows := auctionRowsUV
@@ -339,7 +342,7 @@ func (a *App) updateAuction(in *platform.Input, w, h int) bool {
 		}
 	}
 	dx, dz := e.X-a.wv.pos[0], e.Z-a.wv.pos[2]
-	if dx*dx+dz*dz > 100 || in.HasKey(platform.KeyEscape) && v.modal == "" && v.dropdown == 0 && v.focus < 0 {
+	if dx*dx+dz*dz > 100 || v.modal == "" && v.dropdown == 0 && v.focus < 0 && in.CloseOnEscape() {
 		a.auctionClose()
 		return true
 	}

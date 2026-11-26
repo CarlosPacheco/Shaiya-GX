@@ -162,7 +162,6 @@ func (a *App) updateQuestTracker(in *platform.Input, w, h int) bool {
 	id, close, captured := q.Update(in, w, h)
 	if close {
 		a.closeQuestTracker()
-		a.playUISound("ui_window.ogg")
 		return true
 	}
 	if id != 0 {

@@ -106,7 +106,7 @@ func (a *App) updateGuildDirectory(in *platform.Input, w, h int, e *game.Entity)
 		}
 		return true
 	}
-	if close || in.HasKey(platform.KeyEscape) {
+	if close || in.CloseOnEscape() {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
 			a.backToLoginID(12098)
 		} else {
@@ -365,7 +365,7 @@ func (a *App) updateGuild(in *platform.Input, w, h int) bool {
 			a.guildAction(action)
 		}
 	}
-	if close || in.HasKey(platform.KeyEscape) {
+	if close || in.CloseOnEscape() {
 		a.guild.open = false
 		return true
 	}

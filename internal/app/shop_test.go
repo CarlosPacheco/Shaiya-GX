@@ -82,53 +82,75 @@ func TestNPCWindowRangeTracksMovingNPCAndLeavesRemoteWarehouseOpen(t *testing.T)
 	}
 }
 
-func TestInventoryDocksAndDragsWithoutSavingServicePosition(t *testing.T) {
-	for _, npcType := range []uint8{1, 6} {
+func TestWarehouseInventoryDocksAndDragsWithoutSavingServicePosition(t *testing.T) {
+	a := inputApp()
+	a.bankUI, _ = ui.NewWarehouse(inputTextures{})
+	const w, h = 1024, 768
+	a.inventoryUI.Position.Move(740, 190, w, h, ui.InventoryWidth, ui.InventoryHeight)
+	saved := a.inventoryUI.Position
+	e := &game.Entity{ID: 42, Kind: game.KindNpc, NpcType: 6}
+	a.state.Entities[e.ID] = e
+	a.shop.npcID, a.shop.talk = e.ID, true
+	a.enterNPCService(e)
+	if !a.inventory.open {
+		t.Fatal("warehouse did not open inventory")
+	}
+	a.bankUI.Position.Move(600, 110, w, h, ui.WarehouseWidth, ui.WarehouseHeight)
+	ix, iy := a.inventoryUI.Origin(w, h)
+	if ix+ui.InventoryWidth != 600 || iy != 110 || a.inventoryUI.Position != saved {
+		t.Fatal("warehouse dock changed the inventory's saved position")
+	}
+	a.worldControls(&platform.Input{MouseX: ix + 40, MouseY: iy + 15, Pressed: true, MouseDown: true}, w, h)
+	a.worldControls(&platform.Input{MouseX: ix + 70, MouseY: iy + 45, Clicked: true}, w, h)
+	a.bankUI.Position.Move(400, 90, w, h, ui.WarehouseWidth, ui.WarehouseHeight)
+	if x, y := a.inventoryUI.Origin(w, h); x != ix+30 || y != iy+30 || a.inventoryUI.Position != saved {
+		t.Fatalf("warehouse inventory drag landed at %d,%d", x, y)
+	}
+	a.closeNPC()
+	if x, y := a.inventoryUI.Origin(w, h); x != 740 || y != 190 {
+		t.Fatalf("inventory returned to %d,%d", x, y)
+	}
+}
+
+func TestMerchantAnchorsToSavedInventoryAndMovesIndependently(t *testing.T) {
+	const w, h = 1024, 768
+	for _, tc := range []struct{ inventoryX, merchantX int }{{740, 484}, {80, 336}} {
 		a := inputApp()
-		a.bankUI, _ = ui.NewWarehouse(inputTextures{})
-		a.inventoryUI.Position.Move(740, 190, 1024, 768, ui.InventoryWidth, ui.InventoryHeight)
-		saved := a.inventoryUI.Position
-		e := &game.Entity{ID: 42, Kind: game.KindNpc, NpcType: npcType}
+		a.inventoryUI.Position.Move(tc.inventoryX, 190, w, h, ui.InventoryWidth, ui.InventoryHeight)
+		a.marketUI.Position.Move(210, 110, w, h, ui.MarketWidth, ui.MarketHeight)
+		e := &game.Entity{ID: 42, Kind: game.KindNpc, NpcType: 1}
 		a.state.Entities[e.ID] = e
-		a.shop.npcID, a.shop.talk = e.ID, true
-		a.enterNPCService(e)
-		a.placeNewPersonalPanels(0, 1024, 768)
-		if !a.inventory.open {
-			t.Fatalf("service type %d did not open inventory", npcType)
+		open := func() {
+			a.shop.npcID, a.shop.talk = e.ID, true
+			a.enterNPCService(e)
 		}
-		position := &a.marketUI.Position
-		origin := a.marketUI.Origin
-		width, height := ui.MarketWidth, ui.MarketHeight
-		if npcType == 6 {
-			position, origin = &a.bankUI.Position, a.bankUI.Origin
-			width, height = ui.WarehouseWidth, ui.WarehouseHeight
+		open()
+		mx, my := a.marketUI.Origin(w, h)
+		if mx != tc.merchantX || my != 190 || !a.inventory.open {
+			t.Fatalf("merchant opened at %d,%d with inventory at x=%d", mx, my, tc.inventoryX)
 		}
-		for _, x := range []int{32, 600} {
-			position.Move(x, 110, 1024, 768, width, height)
-			sx, sy := origin(1024, 768)
-			ix, iy := a.inventoryUI.Origin(1024, 768)
-			if ix+ui.InventoryWidth != sx || iy != sy || a.inventoryUI.Position != saved {
-				t.Fatalf("service type %d: invalid docking or saved position changed", npcType)
-			}
+		a.worldControls(&platform.Input{MouseX: mx + 50, MouseY: my + 15, Pressed: true, MouseDown: true}, w, h)
+		a.worldControls(&platform.Input{MouseX: mx + 65, MouseY: my + 5, Clicked: true}, w, h)
+		if x, y := a.marketUI.Origin(w, h); x != mx+15 || y != my-10 {
+			t.Fatalf("merchant did not move independently: %d,%d", x, y)
 		}
-		ix, iy := a.inventoryUI.Origin(1024, 768)
-		a.worldControls(&platform.Input{MouseX: ix + 40, MouseY: iy + 15, Pressed: true, MouseDown: true}, 1024, 768)
-		a.worldControls(&platform.Input{MouseX: ix + 70, MouseY: iy + 45, MouseDown: true}, 1024, 768)
-		a.worldControls(&platform.Input{MouseX: ix + 70, MouseY: iy + 45, Clicked: true}, 1024, 768)
-		position.Move(400, 90, 1024, 768, width, height)
-		if x, y := a.inventoryUI.Origin(1024, 768); x != ix+30 || y != iy+30 || a.inventoryUI.Position != saved {
-			t.Fatalf("service type %d: drag did not move inventory independently: %d,%d", npcType, x, y)
+		if x, y := a.inventoryUI.Origin(w, h); x != tc.inventoryX || y != 190 {
+			t.Fatalf("dragging merchant moved inventory to %d,%d", x, y)
 		}
-		a.closeNPC()
-		x, y := a.inventoryUI.Origin(1024, 768)
-		if x != 740 || y != 190 {
-			t.Fatalf("service type %d: original position not restored: %d,%d", npcType, x, y)
+		a.toggleInventory()
+		mx, my = a.marketUI.Origin(w, h)
+		var closeCues int
+		in := platform.Input{MouseX: mx + 232, MouseY: my + 10, Pressed: true, MouseDown: true}
+		in.WindowClosed = func() { closeCues++ }
+		a.worldControls(&in, w, h)
+		in.Pressed, in.MouseDown, in.Clicked = false, false, true
+		a.worldControls(&in, w, h)
+		if a.shop.npcID != 0 || a.inventory.open || closeCues != 1 {
+			t.Fatal("merchant close changed the inventory or missed its close cue", closeCues)
 		}
-		a.shop.npcID, a.shop.talk = e.ID, true
-		a.enterNPCService(e)
-		sx, sy := origin(1024, 768)
-		if ix, iy := a.inventoryUI.Origin(1024, 768); ix+ui.InventoryWidth != sx || iy != sy {
-			t.Fatalf("service type %d: inventory did not re-anchor on re-entry", npcType)
+		open()
+		if x, y := a.marketUI.Origin(w, h); x != tc.merchantX || y != 190 {
+			t.Fatalf("reopening merchant reused last drag location: %d,%d", x, y)
 		}
 	}
 }

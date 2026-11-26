@@ -32,7 +32,7 @@ func (m *ExchangeMoney) Open(w, h int, current uint32) {
 func (m *ExchangeMoney) Update(in *platform.Input) (value uint64, done, cancel bool) {
 	m.ok.OriginX, m.ok.OriginY = m.X, m.Y
 	m.close.OriginX, m.close.OriginY = m.X, m.Y
-	if in.HasKey(platform.KeyEscape) || m.close.Update(in) {
+	if m.close.Update(in) || in.CloseOnEscape() {
 		return 0, true, true
 	}
 	if in.HasKey(platform.KeyBackspace) {

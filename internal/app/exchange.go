@@ -126,7 +126,7 @@ func (a *App) updateExchange(in *platform.Input, w, h int) bool {
 		v.pending = false
 	}
 	confirm, close := a.exchangeUI.Update(in, w, h)
-	if close || in.HasKey(platform.KeyEscape) {
+	if close || in.CloseOnEscape() {
 		if err := a.world.Send(proto.ExchangeReadyPacket(2)); err != nil {
 			a.backToLoginID(12064)
 		}

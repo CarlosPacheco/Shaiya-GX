@@ -61,7 +61,7 @@ func (a *App) updateStatus(in *platform.Input, w, h int) bool {
 	}
 	captured := panelPointer(in, x, y, width, ui.StatusHeight)
 	apply, close := a.statusUI.Update(in, w, h, a.statusState(), a.frameDT)
-	if close || in.HasKey(platform.KeyEscape) {
+	if close || in.CloseOnEscape() {
 		a.status.open = false
 		a.statusUI.Clear()
 		return true

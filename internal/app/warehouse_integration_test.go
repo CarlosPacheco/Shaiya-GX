@@ -118,7 +118,7 @@ func TestWarehouseMovesAgainstRapture(t *testing.T) {
 	}
 	tabX := func(page int) int { return bx + 12 + page*52 }
 	drag(bx+dx+1, by+dy+1, tabX(nextPage), by+115)
-	if !a.inventory.pending || a.bank.page != nextPage || st.Warehouse[slot].Type != before.Type {
+	if !a.inventory.pending || a.bank.page != originalPage || st.Warehouse[slot].Type != before.Type {
 		t.Fatal("dropping on another tab did not request a move")
 	}
 	ack()
@@ -128,6 +128,7 @@ func TestWarehouseMovesAgainstRapture(t *testing.T) {
 		t.Fatal("cross-page tab drop did not move to the first empty slot")
 	}
 
+	drag(tabX(nextPage), by+115, tabX(nextPage), by+115)
 	nx, ny, _ := ui.WarehouseCell(nextPage, nextSlot)
 	drag(bx+nx+1, by+ny+1, bx+nx+1, by+ny+1)
 	drag(tabX(originalPage), by+115, tabX(originalPage), by+115)
@@ -153,6 +154,15 @@ func TestWarehouseMovesAgainstRapture(t *testing.T) {
 	}
 	if st.Inventory[source].Type != before.Type {
 		t.Fatal("withdrawal missing from bag")
+	}
+	drag(ix+sx+1, iy+sy+1, tabX(nextPage), by+115)
+	if !a.inventory.pending || a.bank.page != originalPage {
+		t.Fatal("deposit onto another page did not preserve the visible tab")
+	}
+	ack()
+	want.Slot = nextSlot
+	if _, exists := st.Inventory[source]; exists || st.Warehouse[nextSlot] != want {
+		t.Fatal("deposit onto another page did not reach the first free slot")
 	}
 }
 

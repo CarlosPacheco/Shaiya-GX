@@ -224,7 +224,7 @@ func (a *App) updateMinimap(in *platform.Input, w, h int) bool {
 			return true
 		}
 	}
-	if v.full && in.HasKey(platform.KeyEscape) {
+	if v.full && in.CloseOnEscape() {
 		v.click = mapClick{}
 		v.full, v.dragging = false, false
 		return true

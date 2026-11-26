@@ -99,7 +99,7 @@ func (p *SocialPanel) Update(in *platform.Input, x, y, page, count, offset int, 
 	row, action = -1, -1
 	scroll = offset
 	p.close.OriginX, p.close.OriginY = x, y
-	closed = p.close.Update(in) || in.HasKey(platform.KeyEscape)
+	closed = p.close.Update(in) || in.CloseOnEscape()
 	if in.Pressed {
 		p.Focus = page != 3 && in.MouseX >= x+60 && in.MouseX < x+230 && in.MouseY >= y+43 && in.MouseY < y+69
 	}

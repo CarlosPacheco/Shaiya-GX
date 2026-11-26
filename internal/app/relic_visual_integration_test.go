@@ -69,7 +69,12 @@ func TestRelicMarkersOriginalPixelsMiniAndFullMapGL(t *testing.T) {
 				a.minimap.DrawFull(a.sprites, a.font, a.white, a.white, 1280, 800, ui.UV{U1: 1, V1: 1}, .9, .9, 0, 0, markers)
 			} else {
 				x, y := a.minimap.Origin(1280, 800)
-				left, top = x+68, y+68
+				// Keep the cell within radar range and clear of the player arrow
+				// so the framebuffer can be compared to the relic artwork alone.
+				const markerX, markerY = 92, 48
+				markers[0].U = float32(markerX) / ui.MinimapImageSize
+				markers[0].V = float32(markerY) / ui.MinimapImageSize
+				left, top = x+markerX, y+markerY
 				a.minimap.Draw(a.sprites, a.font, a.white, a.white, 1280, 800, ui.UV{U1: 1, V1: 1}, .9, .9, 0, 0, 0, 0, markers)
 			}
 			a.sprites.End()

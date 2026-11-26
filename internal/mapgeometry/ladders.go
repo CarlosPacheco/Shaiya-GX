@@ -101,7 +101,7 @@ type LadderMotion struct {
 	Speed float32
 }
 
-func (g *Geometry) AttachLadder(p, facing Position, index int) (LadderMotion, Position, bool) {
+func (g *Geometry) AttachLadder(p, facing Position, index int, mode uint8) (LadderMotion, Position, bool) {
 	if index < 0 || index >= len(g.Ladders) {
 		return LadderMotion{}, p, false
 	}
@@ -126,18 +126,14 @@ func (g *Geometry) AttachLadder(p, facing Position, index int) (LadderMotion, Po
 	if cv(facing).Dot(normal)*float64(side) > -.25 {
 		return LadderMotion{}, p, false
 	}
-	if g.Supported(p) && p[1] > l.Bottom[1]+1.5 {
-		other := center
-		for a := range 3 {
-			other[a] -= l.Normal[a] * side * .55
-		}
-		if !g.Supported(other) && g.clearBody(other) {
-			side = -side
-		}
+	// Game.exe 0x443893/0x443977 faces against the authored forward
+	// vector at both ends. An upper landing can reach that face to descend.
+	if side < 0 && (mode != LadderDown || p[1] < l.Top[1]-1.5 || !g.Supported(p)) {
+		return LadderMotion{}, p, false
 	}
 	q := center
 	for a := range 3 {
-		q[a] += l.Normal[a] * side * .55
+		q[a] += l.Normal[a] * .55
 	}
 	q[1] = max(l.Bottom[1], min(l.Top[1]+.55, p[1]))
 	if !g.clearBody(q) {
@@ -149,7 +145,7 @@ func (g *Geometry) AttachLadder(p, facing Position, index int) (LadderMotion, Po
 	if cv(next).Sub(cv(q)).Len() > .12 {
 		return LadderMotion{}, p, false
 	}
-	return LadderMotion{Active: true, Index: index, Side: side, Mode: LadderHold}, q, true
+	return LadderMotion{Active: true, Index: index, Side: 1, Mode: LadderHold}, q, true
 }
 func (l Ladder) at(y float32) Position {
 	t := max(float32(0), min(float32(1), (y-l.Bottom[1])/(l.Top[1]-l.Bottom[1])))

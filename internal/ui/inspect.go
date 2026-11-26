@@ -24,7 +24,7 @@ func (v *Inspect) Origin(w, h int) (int, int) {
 
 func (v *Inspect) Update(in *platform.Input, w, h int) bool {
 	v.close.OriginX, v.close.OriginY = v.Origin(w, h)
-	return v.close.Update(in) || in.HasKey(platform.KeyEscape)
+	return v.close.Update(in) || in.CloseOnEscape()
 }
 
 func (v *Inspect) Draw(s *render.Sprites, f *Font, w, h int, name string) {

@@ -10,11 +10,14 @@ movement pauses also stop vertical climbing for the existing 800ms interval.
 The original `018_ladder` character clip begins immediately, locally and
 for nearby players. Its locomotion clock stops while holding. Confirmed
 actions can still finish.
-Climbing uses 2.5 world units per second. This speed and the controls are GX
-implementation choices, not a claim that Phoenix already implements climbing.
+The original speed table uses 0.8, 1.3, 1.8, 2.3 and 2.8 world units per
+second for movement tiers 0–4. Game.exe faces the climber against the WLD
+object's authored forward vector at both ends (`0x443893` and `0x443977`).
 
 Client and server use shared CPU ladder physics. Attachment requires proximity,
-facing and a clear collision path. Vertical travel is integrated using server
+facing and a clear collision path on the rung face. The back of the guide
+can admit descent from a supported upper landing onto that same face.
+Vertical travel is integrated using server
 time; movement samples cannot choose height, escape the guide or gain speed by
 sending extra packets. Walls and ceilings still block movement. Nearby real
 walkable landings permit automatic dismount, including below the model's raised

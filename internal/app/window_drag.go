@@ -308,9 +308,11 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			return false
 		}
 	}
-	if e := a.state.Entities[a.shop.npcID]; e != nil && e.NpcType == 1 && !a.auctionBoard(a.shop.npcID) && !a.shop.overlay() && a.marketUI != nil {
+	if a.merchantOpen() {
 		x, y := a.marketUI.Origin(w, h)
-		if startFrame(&a.marketUI.Position, x, y, ui.MarketWidth, ui.MarketHeight, frameFree(a.marketUI, x, y, nil, [4]int{15, 112, 230, 193})) {
+		if startFrame(&a.marketUI.MerchantPosition, x, y, ui.MarketWidth, ui.MarketHeight, func() bool {
+			return a.marketUI.FreeAt(in.MouseX, in.MouseY, w, h)
+		}) {
 			return true
 		}
 		if pointInside(in, x, y, ui.MarketWidth, ui.MarketHeight) {
@@ -476,7 +478,7 @@ func pointInside(in *platform.Input, x, y, w, h int) bool {
 func (a *App) finishWindowDrag() {
 	if position := a.windowDrag.position; position != nil {
 		a.windowDrag = windowDrag{}
-		if position != &a.inventory.servicePosition {
+		if position != &a.inventory.servicePosition && (a.marketUI == nil || position != &a.marketUI.MerchantPosition) {
 			a.saveUILayout()
 		}
 	}

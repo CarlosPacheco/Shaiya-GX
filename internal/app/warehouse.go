@@ -165,7 +165,7 @@ func (a *App) updateWarehouse(in *platform.Input, w, h int) bool {
 	v.guild = !a.remoteBank && houseMaps[a.state.MapID]
 	page, close := a.bankUI.Update(in, w, h, v.page)
 	v.page = page
-	if close || in.HasKey(platform.KeyEscape) {
+	if close || in.CloseOnEscape() {
 		a.closeWarehouse()
 		return true
 	}
@@ -185,7 +185,6 @@ func (a *App) updateWarehouse(in *platform.Input, w, h int) bool {
 			if tab != int(v.source)/ui.WarehousePageSize {
 				if slot, ok := firstFreeWarehouseSlot(a.warehouseItems(), tab); ok {
 					bag := a.warehouseBag()
-					v.page = tab
 					a.moveWarehouseItem([2]uint8{bag, v.source}, [2]uint8{bag, slot})
 				} else {
 					a.questMessageID(12213)
@@ -228,6 +227,15 @@ func (a *App) moveWarehouseItem(source, destination [2]uint8) {
 		}
 		a.bank.guildPending = true
 		a.bank.sourceMove, a.bank.destMove = source, destination
+	} else if source[0] == proto.WarehouseBag && destination[0] != proto.WarehouseBag {
+		// Game.exe 0x49f4ce reports native SysMsg 303 in error channel 17.
+		it := a.state.Warehouse[source[1]]
+		if def := a.itemsItem(it.Type, it.TypeID); def != nil &&
+			a.state.Details.Money < proto.WarehouseWithdrawFee(it.Type, it.Count, def.SellPrice) {
+			a.bank.selected, a.bank.dragging = false, false
+			a.systemMessage(17, proto.MsgInsufficientGold, nil)
+			return
+		}
 	}
 	if err := a.world.Send(proto.ItemMovePacket(source[0], source[1], destination[0], destination[1])); err != nil {
 		a.backToLoginID(12205)
@@ -277,9 +285,20 @@ func (a *App) updateWarehouseDrag(in *platform.Input, w, h int) bool {
 	}
 	if in.Clicked && a.inventory.selected && !overInventory {
 		slot, ok := ui.WarehouseHit(in.MouseX-bx, in.MouseY-by, v.page)
-		if ok && a.inventory.source[0] != 0 {
-			a.moveWarehouseItem(a.inventory.source, [2]uint8{a.warehouseBag(), slot})
-			return true
+		if a.inventory.source[0] != 0 {
+			if ok {
+				a.moveWarehouseItem(a.inventory.source, [2]uint8{a.warehouseBag(), slot})
+				return true
+			}
+			if tab := ui.WarehouseTab(in.MouseX-bx, in.MouseY-by); a.inventory.dragging && tab >= 0 {
+				if slot, ok := firstFreeWarehouseSlot(a.warehouseItems(), tab); ok {
+					a.moveWarehouseItem(a.inventory.source, [2]uint8{a.warehouseBag(), slot})
+				} else {
+					a.questMessageID(12213)
+				}
+				a.inventory.cancelItemPointer()
+				return true
+			}
 		}
 	}
 	return false

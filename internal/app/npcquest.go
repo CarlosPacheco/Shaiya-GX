@@ -233,7 +233,10 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 	a.npcQuestUI.ActionDisabled = v.ending && v.result == nil && v.selected > 0 && int(v.selected) <= len(a.questDefs) && !questMapReady(a.questDefs[v.selected-1], a.state.Quests[v.selected], a.state)
 	action := a.npcQuestUI.Update(in, w, h, len(entries), v.offset, v.selected != 0, v.ending, choices)
 	v.offset = action.Offset
-	if action.Close || action.Back || in.HasKey(platform.KeyEscape) {
+	if action.Back {
+		in.NotifyWindowClosed()
+	}
+	if action.Close || action.Back || in.CloseOnEscape() {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
 			a.backToLoginID(12011)
 		} else {

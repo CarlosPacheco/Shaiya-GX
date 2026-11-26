@@ -365,7 +365,7 @@ func (a *App) updatePersonalMarketBuyer(in *platform.Input, w, h int) bool {
 		return capture
 	}
 	_, closed := a.marketUI.Update(in, w, h, 0, proto.MyShopSlots, false)
-	if closed || in.HasKey(platform.KeyEscape) {
+	if closed || in.CloseOnEscape() {
 		a.sendPersonalMarket(proto.NewWriter(proto.MyShopLeave).Bytes())
 		return true
 	}

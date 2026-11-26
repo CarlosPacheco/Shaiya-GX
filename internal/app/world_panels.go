@@ -5,8 +5,12 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
+func (a *App) playWindowSound() {
+	a.playUISound("ui_window.ogg") // Game.exe sound bank 0x20.
+}
+
 func (a *App) toggleInventory() {
-	a.playUISound("ui_window.ogg")
+	a.playWindowSound()
 	a.inventory.open = !a.inventory.open
 	if a.inventory.open {
 		a.inventory.servicePosition = ui.WindowPosition{}
@@ -16,21 +20,15 @@ func (a *App) toggleInventory() {
 	}
 }
 
-// EP5.4 merchant 0x43e1c2 and warehouse 0x440369 align both panels at the
-// same Y and put their edges together. GX starts the inventory on the left
-// and uses a temporary position once the player drags it.
+// The warehouse uses a temporary inventory position for the visit.
 func (a *App) inventoryDockOrigin(w, h int) (x, y int, active bool) {
 	if a.state == nil {
 		return 0, 0, false
 	}
-	switch {
-	case a.warehouseOpen():
-		x, y = a.bankUI.Origin(w, h)
-	case a.merchantOpen():
-		x, y = a.marketUI.Origin(w, h)
-	default:
+	if !a.warehouseOpen() {
 		return 0, 0, false
 	}
+	x, y = a.bankUI.Origin(w, h)
 	x, y = a.inventory.servicePosition.Origin(w, h, ui.InventoryWidth, ui.InventoryHeight, x-ui.InventoryWidth, y)
 	return x, y, true
 }
@@ -68,7 +66,7 @@ func (a *App) updateBottom(in *platform.Input, w, h int) bool {
 		a.openGameMenu()
 	}
 	switch action {
-	case ui.BottomNone, ui.BottomSkills, ui.BottomStatus, ui.BottomGuild, ui.BottomQuests:
+	case ui.BottomNone, ui.BottomInventory, ui.BottomSkills, ui.BottomSubActions, ui.BottomStatus, ui.BottomGuild, ui.BottomQuests:
 		// the window toggles play ui_window themselves
 	default:
 		a.playUI()
@@ -130,8 +128,9 @@ func (a *App) placeNewPersonalPanels(previous uint8, w, h int) {
 		frames[3] = frame{&a.statusUI.Position, a.statusUI.Origin, width, ui.StatusHeight}
 	}
 	_, _, inventoryDocked := a.inventoryDockOrigin(w, h)
+	keepInventoryPosition := inventoryDocked || a.merchantOpen()
 	for i, f := range frames {
-		if mask&^previous&(1<<i) == 0 || f.position == nil || f.position.Moved || i == 0 && inventoryDocked {
+		if mask&^previous&(1<<i) == 0 || f.position == nil || f.position.Moved || i == 0 && keepInventoryPosition {
 			continue
 		}
 		x, y := f.origin(w, h)

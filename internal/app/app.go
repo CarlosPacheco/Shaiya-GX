@@ -284,12 +284,12 @@ type App struct {
 	oxygenAt float64
 	frameDT  float64
 
-	posted chan func()
-	Quit   bool
+	connection *connectionAttempt
+	Quit       bool
 }
 
 func New(cfg Config, arc *archive.Archive) (*App, error) {
-	a := &App{cfg: cfg, arc: arc, cache: map[string]*render.Texture{}, posted: make(chan func(), 64),
+	a := &App{cfg: cfg, arc: arc, cache: map[string]*render.Texture{},
 		assets: scene.NewAssets(arc), worlds: map[string]*scene.World{}}
 	var err error
 	if a.scene3d, err = render.NewScene3D(); err != nil {
@@ -505,6 +505,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.marketUI, err = ui.NewMarket(a); err != nil {
 		return nil, err
 	}
+	a.marketUI.MerchantOrigin = a.merchantOrigin
 	if a.personalMarketUI, err = ui.NewPersonalMarket(a); err != nil {
 		return nil, err
 	}
@@ -596,23 +597,16 @@ func (a *App) Interface(name string) (*render.Texture, error) {
 	return tex, nil
 }
 
-func (a *App) post(f func()) { a.posted <- f }
-
 // Update runs one frame of logic.
 func (a *App) Update(in *platform.Input, w, h int, dt float64) {
+	input := *in
+	input.WindowClosed = a.playWindowSound
+	in = &input
 	started := time.Now()
 	defer func() { a.performance.updateCPU = time.Since(started) }()
 	a.frameDT = dt
 	a.skills.heldActions = 0
-	for {
-		select {
-		case f := <-a.posted:
-			f()
-			continue
-		default:
-		}
-		break
-	}
+	a.pollConnection()
 	a.pumpWorld()
 	if a.state != nil {
 		a.state.Blessing.Advance(dt)
@@ -819,9 +813,11 @@ func (a *App) submitLogin() {
 	}
 	a.login.Busy, a.login.Message = true, a.tr(326)
 	a.saveID()
+	attempt := a.beginConnection()
+	address := a.cfg.LoginAddr
 	go func() {
-		l, err := session.Dial(a.cfg.LoginAddr, id, pw)
-		a.post(func() {
+		l, err := session.DialContext(attempt.ctx, address, id, pw)
+		attempt.deliver(func() {
 			a.login.Busy = false
 			if err != nil {
 				if _, rejected := err.(session.LoginError); !rejected {
@@ -833,10 +829,15 @@ func (a *App) submitLogin() {
 			a.sess = l
 			a.login.Message, a.login.Password.Text = "", ""
 			a.servers.Servers, a.servers.Selected = l.Servers, -1
+			a.servers.Scroll = 0
 			if len(l.Servers) > 0 {
 				a.servers.Selected = 0
 			}
 			a.screen = screenServers
+		}, func() {
+			if l != nil {
+				l.Close()
+			}
 		})
 	}()
 }
@@ -858,20 +859,17 @@ func (a *App) backToLoginID(id int) { a.backToLogin(a.tr(id)) }
 func (a *App) tr(id int) string { return a.msg.Lookup(id) }
 
 func (a *App) backToLogin(msg string) {
+	a.cancelConnection()
 	a.loading = mapLoading{}
 	a.menuOpen, a.menuPending = false, false
-	a.buffs = buffsView{}
 	a.targetEffects = targetEffectsView{}
-	a.party = partyView{}
-	if a.partyMessage != nil {
-		a.partyMessage.Visible = false
-	}
+	a.state = nil
 	a.releaseWorld()
 	if a.world != nil {
 		a.world.Close()
 		a.world = nil
 	}
-	a.sess, a.state, a.uiHidden = nil, nil, false
+	a.uiHidden = false
 	a.creating = false
 	a.account = accountAction{}
 	a.playerFeedback = a.playerFeedback[:0]
@@ -911,36 +909,13 @@ func (a *App) backToLogin(msg string) {
 	a.enchant = enchantView{}
 	a.compose = composeView{}
 	a.bank = warehouseView{}
-	a.pvpReward = pvpRewardView{}
-	if a.pvpRewardMessage != nil {
-		a.pvpRewardMessage.Visible = false
-	}
-	a.questLog = questLogView{}
 	a.exchange = exchangeView{}
-	a.playerContext = playerContext{}
 	a.duel = duelView{}
-	a.guild = guildView{}
-	a.guildDuel = guildDuelView{}
-	if a.guildDuelMessage != nil {
-		a.guildDuelMessage.Visible = false
-	}
-	if a.unionConfirm != nil {
-		a.unionConfirm.Visible = false
-	}
-	if a.guildConfirm != nil {
-		a.guildConfirm.Visible = false
-	}
 	if a.auctionConfirm != nil {
 		a.auctionConfirm.Visible = false
 	}
-	if a.guildVoteMessage != nil {
-		a.guildVoteMessage.Visible = false
-	}
 	if a.learnConfirm != nil {
 		a.learnConfirm.Visible = false
-	}
-	if a.guildCreateUI != nil {
-		a.guildCreateUI.Visible = false
 	}
 	if a.duelMessage != nil {
 		a.duelMessage.Visible = false
@@ -949,29 +924,33 @@ func (a *App) backToLogin(msg string) {
 		a.exchangeInvite.Visible = false
 	}
 	a.npcQuest = npcQuestView{}
-	a.questItemOffer = itemQuestOffer{}
-	if a.questConfirm != nil {
-		a.questConfirm.Visible = false
-	}
 	a.screen = screenLogin
 	a.login.Message = msg
 	a.login.Focus = 1
 }
 
 func (a *App) connectWorld() {
-	if a.servers.Busy || a.sess == nil || a.servers.Selected < 0 {
+	if a.servers.Busy || a.sess == nil || a.servers.Selected < 0 || a.servers.Selected >= len(a.servers.Servers) {
 		return
 	}
 	sv := a.servers.Servers[a.servers.Selected]
 	a.servers.Busy = true
 	l := a.sess
+	version, port := a.cfg.Version, a.cfg.WorldPort
+	attempt := a.beginConnection()
 	go func() {
-		ip, err := l.SelectServer(sv.ID, a.cfg.Version)
+		ip, err := l.SelectServer(sv.ID, version)
+		select {
+		case <-attempt.ctx.Done():
+			return
+		default:
+		}
 		var w *session.World
 		if err == nil {
-			w, err = l.DialWorld(ip, a.cfg.WorldPort)
+			w, err = l.DialWorldContext(attempt.ctx, ip, port)
 		}
-		a.post(func() {
+		attempt.deliver(func() {
+			a.sess = nil // SelectServer closed the login socket.
 			a.servers.Busy = false
 			if err != nil {
 				clientlog.Warnf("World connection failed: %v", err)
@@ -983,6 +962,10 @@ func (a *App) connectWorld() {
 			a.characterSlotFile = characterSlotPath(a.cfg, sv.ID, l.Result.UserUID)
 			a.restoreCharacterSlot = true
 			a.screen = screenCharacters
+		}, func() {
+			if w != nil {
+				w.Close()
+			}
 		})
 	}()
 }

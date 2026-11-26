@@ -313,7 +313,7 @@ func (a *App) updateDuel(in *platform.Input, w, h int) bool {
 	}
 	d, v := &a.state.Duel, &a.duel
 	confirm, close := a.duelUI.Update(in, w, h)
-	if close || in.HasKey(platform.KeyEscape) {
+	if close || in.CloseOnEscape() {
 		if !v.cancelSent {
 			if err := a.world.Send(proto.DuelReadyPacket(2)); err != nil {
 				a.backToLoginID(12043)

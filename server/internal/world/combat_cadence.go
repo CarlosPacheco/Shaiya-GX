@@ -24,6 +24,19 @@ func (s *Session) commitBasicAttack(now time.Time, tier uint8) {
 	s.commitAttackStop(now)
 }
 
+func (s *Session) tickAutoAttack() {
+	if !s.autoAttack {
+		return
+	}
+	swing := s.autoAttackSwing
+	if s.autoAttackUser {
+		swing = s.userAttackSwing
+	}
+	if !swing(s.autoAttackTarget) {
+		s.autoAttack = false
+	}
+}
+
 // actionInterval is the skill execution interval at the live attack index and weapon.
 func (s *Session) actionInterval() (time.Duration, bool) {
 	wc, have := equippedWeaponCombat(s.items)

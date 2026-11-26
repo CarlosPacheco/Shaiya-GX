@@ -65,7 +65,7 @@ func (p *PersonalMarket) CancelHeld() {
 func (p *PersonalMarket) Update(in *platform.Input, w, h int, buyer bool) int {
 	x, y := p.Origin(w, h)
 	p.close.OriginX, p.close.OriginY = x, y
-	if p.close.Update(in) || in.HasKey(platform.KeyEscape) {
+	if p.close.Update(in) || in.CloseOnEscape() {
 		return PersonalMarketClose
 	}
 	hit := PersonalMarketNone

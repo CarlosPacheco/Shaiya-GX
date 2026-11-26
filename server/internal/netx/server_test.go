@@ -10,8 +10,10 @@ import (
 func TestRateLimiterBoundsAndRefill(t *testing.T) {
 	l := NewRateLimiter(2, 2, time.Minute)
 	now := time.Now()
-	if !l.allow("a", now) || !l.allow("a", now) || l.allow("a", now) {
-		t.Fatal("burst")
+	for i := range 3 {
+		if l.allow("a", now) != (i < 2) {
+			t.Fatal("burst")
+		}
 	}
 	if !l.allow("b", now) || l.allow("c", now) {
 		t.Fatal("memory bound")

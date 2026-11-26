@@ -253,6 +253,12 @@ func (s *Session) processInput(n int, buf []byte, frames *netx.Frames) error {
 		}
 	}
 
+	// Consume stops and movement before resolving a due swing. A busy
+	// connection might never reach the read-timeout branch above.
+	if len(list) > 0 && s.autoAttack && !time.Now().Before(s.nextBasicAttackAt) {
+		s.tickAutoAttack()
+	}
+
 	return nil
 }
 
@@ -511,14 +517,8 @@ func (s *Session) tick(idle bool) {
 	s.processSpinCombo()
 	s.processPendingSkill()
 	s.processPendingCast()
-	if idle && s.autoAttack {
-		swing := s.autoAttackSwing
-		if s.autoAttackUser {
-			swing = s.userAttackSwing
-		}
-		if !swing(s.autoAttackTarget) {
-			s.autoAttack = false
-		}
+	if idle {
+		s.tickAutoAttack()
 	}
 	s.tickIdleVariation(now)
 }

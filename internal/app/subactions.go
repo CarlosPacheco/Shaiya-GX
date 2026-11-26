@@ -6,6 +6,7 @@ import (
 )
 
 func (a *App) toggleSubActions() {
+	a.playWindowSound()
 	a.subActionsOpen = !a.subActionsOpen
 	if a.subActionsOpen {
 		a.skills.assign = nil
@@ -21,7 +22,7 @@ func (a *App) updateSubActions(in *platform.Input, w, h int) bool {
 	if !a.subActionsOpen || a.subActionsUI == nil {
 		return false
 	}
-	if in.HasKey(platform.KeyEscape) {
+	if in.CloseOnEscape() {
 		a.subActionsOpen = false
 		return true
 	}

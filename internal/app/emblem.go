@@ -161,7 +161,7 @@ func (a *App) updateEmblem(in *platform.Input, w, h int, e *game.Entity) bool {
 	}
 	view := a.emblemView()
 	act := a.emblemUI.Update(in, w, h, view)
-	if act.Close || in.HasKey(platform.KeyEscape) {
+	if act.Close || in.CloseOnEscape() {
 		if err := a.world.Send(proto.NpcTalkPacket(0)); err != nil {
 			a.backToLoginID(12011)
 			return true

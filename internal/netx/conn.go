@@ -2,6 +2,7 @@ package netx
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"encoding/binary"
 	"io"
@@ -35,7 +36,11 @@ type Conn struct {
 }
 
 func Dial(addr string, timeout time.Duration) (*Conn, error) {
-	nc, err := transport.Dial(addr, timeout)
+	return DialContext(context.Background(), addr, timeout)
+}
+
+func DialContext(ctx context.Context, addr string, timeout time.Duration) (*Conn, error) {
+	nc, err := transport.DialContext(ctx, addr, timeout)
 	if err != nil {
 		return nil, err
 	}

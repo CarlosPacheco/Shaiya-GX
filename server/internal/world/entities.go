@@ -534,10 +534,9 @@ func (b viewerBuckets) nearAny(x, z float32, radius float32) bool {
 func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []entityMove {
 	var out []entityMove
 	now := time.Now()
-	for mapID, viewers := range viewersByMap {
+	for mapID := range viewersByMap {
 		s := shard(mapID)
 		s.mu.Lock()
-		buckets := bucketViewers(viewers)
 		respawned := 0
 		for i := range s.entities.Mobs {
 			if respawned >= maxPerMap {
@@ -588,8 +587,6 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 			m.PosX, m.PosZ, m.homeX, m.homeZ = x, z, x, z
 			m.CurrentHP = max(m.MaxHP, 1)
 			m.lootDamage = nil
-			if m.def != nil {
-			}
 			m.resetAI()
 			m.respawnAt = time.Time{}
 			m.AggroTarget, m.lastAttackAt, m.nextAttackAt, m.returningHome = 0, time.Time{}, time.Time{}, false
@@ -600,7 +597,6 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 			m.noTargetUntil, m.aggro = now.Add(5*time.Second), nil
 			out = append(out, entityMove{MapID: mapID, Kind: viewMob, ID: m.ID, To: m.cell,
 				Fresh: true, Changed: true, Enter: buildMobEnter(m, true)})
-			_ = buckets
 		}
 		s.mu.Unlock()
 	}
@@ -1113,8 +1109,6 @@ func NewStaticMob(def *db.MobDef, mobID uint16, x, z float32, area *MobArea, res
 	// CMob::Init: the first wander comes within a minute.
 	m.nextMoveAt = time.Now().Add(time.Duration(rand.IntN(60000)) * time.Millisecond)
 	m.CurrentHP = m.MaxHP
-	if m.def != nil {
-	}
 	m.resetAI()
 	m.cell, m.hasCell = cellFor(x, z), true
 	m.noTargetUntil = time.Now().Add(5 * time.Second)

@@ -8,6 +8,7 @@ import (
 )
 
 func (a *App) Close() {
+	a.cancelConnection()
 	a.saveClientSettings()
 	a.collisionLines.Delete()
 	a.tooltipFont.Delete()
