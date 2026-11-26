@@ -40,13 +40,13 @@ func (a *App) queueSkillTooltip(key sdata.SkillKey) {
 			rows = append(rows, itemDetailLine{"MP: " + a.skillCostValue(d.MP), white})
 		}
 		if d.ReadyTime > 0 {
-			rows = append(rows, itemDetailLine{fmt.Sprintf("Cast time: %g seconds", float64(d.ReadyTime)*.25), white})
+			rows = append(rows, itemDetailLine{a.msg.Format(12459, map[string]string{"v": strconv.FormatFloat(float64(d.ReadyTime)*.25, 'g', -1, 64)}), white})
 		}
 		if d.ResetTime > 1 {
 			rows = append(rows, itemDetailLine{a.msg.Format(12323, map[string]string{"v": fmt.Sprint(d.ResetTime)}), white})
 		}
 		if d.AttackRange > 0 {
-			rows = append(rows, itemDetailLine{fmt.Sprintf("Range: %d m", d.AttackRange), white})
+			rows = append(rows, itemDetailLine{a.msg.Format(12460, map[string]string{"v": fmt.Sprint(d.AttackRange)}), white})
 		}
 	}
 	if d.Attribute >= 1 && d.Attribute <= 8 {
@@ -64,9 +64,9 @@ func (a *App) queueSkillTooltip(key sdata.SkillKey) {
 	a.tooltipDescription = strings.ReplaceAll(d.Description, `\n`, "\n")
 
 	if warehouseCall {
-		a.tooltipDescription = warehouseCallDescription
+		a.tooltipDescription = a.warehouseCallTooltip()
 		if seconds := d.KeepSeconds(); seconds > 0 {
-			rows = append(rows, itemDetailLine{"Duration: " + ui.BuffDuration(seconds, true), white})
+			rows = append(rows, itemDetailLine{a.msg.Format(12461, map[string]string{"v": ui.BuffDuration(seconds, true)}), white})
 		}
 	}
 	a.tooltip = rows

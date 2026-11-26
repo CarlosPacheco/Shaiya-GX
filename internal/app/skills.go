@@ -359,12 +359,12 @@ func (a *App) drawSkills(w, h int) {
 	a.skillBook.Draw(a.sprites, a.font, w, h, int(a.skills.category), a.skills.offset, len(keys), a.state.Details.SkillPoint, a.learnableRows(keys), a.interfaceText(480))
 	for row := 0; row < ui.SkillBookRows && a.skills.offset+row < len(keys); row++ {
 		key := keys[a.skills.offset+row]
-		d := a.skillDefs[key]
+		d, _ := a.skillDefinition(key.ID, key.Level)
 		cx, cy, _ := ui.SkillBookRow(row)
 		iconDef := d
 		for _, learned := range a.state.Skills {
 			if learned.ID == key.ID {
-				iconDef = a.skillDefs[sdata.SkillKey{ID: key.ID, Level: learned.Level}]
+				iconDef, _ = a.skillDefinition(key.ID, learned.Level)
 				break
 			}
 		}
@@ -549,7 +549,7 @@ func (a *App) drawActionBar(w, h int) {
 		if k == nil {
 			continue
 		}
-		d := a.skillDefs[sdata.SkillKey{ID: k.ID, Level: k.Level}]
+		d, _ := a.skillDefinition(k.ID, k.Level)
 		slot := &slots[i]
 		slot.Cooldown = max(0, a.skills.cooldowns[k.ID]-a.clock)
 		slot.CooldownDuration = a.skillCooldownTotal(k.ID, d)

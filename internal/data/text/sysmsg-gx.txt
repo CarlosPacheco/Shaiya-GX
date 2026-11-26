@@ -536,3 +536,6 @@
 12456		"ended"
 12457		"completed"
 12458		"Guild ranking battle on map <v> opens at <b>:00 server time."
+12459		"Cast time: <v> seconds"
+12460		"Range: <v> m"
+12461		"Duration: <v>"

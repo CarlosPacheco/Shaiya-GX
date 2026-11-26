@@ -51,11 +51,16 @@ English name or description whenever the file, row or field is missing.
 | `npc/npcnames_<code>.csv` | `type,id,name` |
 | `npc/npcdescription_<code>.csv` | `type,id,description` |
 | `npc/npcquest.csv` | `language,id,name,summary,offer,journal,reminder,alternate,completion1,completion2,completion3` |
+| `skills/skills_<code>.csv` | `id,level,name,description` |
 | `npcskills/npcskills_<code>.csv` | `id,level,name,description` |
 
 Item IDs are the type and type ID pair. Monster IDs are zero-based SData
 indices. NPC IDs are one-based within their type and quest IDs are one-based
-GX quest indices. The quest file is shared and only rows with the selected
+GX quest indices. Player skill rows use the exact skill ID and rank from
+`Character/Skill.SData`. NPC skill rows use their own IDs from
+`Monster/NpcSkill.SData` and rank 1. The packet-level NPC marker 100 is
+resolved to rank 1 before lookup. Skill translations change only names and
+descriptions. The quest file is shared and only rows with the selected
 language code apply. Quote fields containing commas, quotes or line breaks
 using standard CSV rules. The next OK in User Options rereads the active
 language from disk.

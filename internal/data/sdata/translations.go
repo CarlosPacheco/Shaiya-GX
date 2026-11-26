@@ -17,6 +17,7 @@ type Translations struct {
 	Monsters  map[uint16]string
 	NPCs      map[NPCKey]TranslatedText
 	Quests    map[uint16][]string
+	Skills    map[SkillKey]TranslatedText
 	NPCSkills map[SkillKey]TranslatedText
 }
 
@@ -62,7 +63,7 @@ func LoadTranslations(read func(string) ([]byte, error), code string) Translatio
 	t := Translations{
 		Cash: map[string]TranslatedText{}, Items: map[ItemKey]TranslatedText{},
 		Monsters: map[uint16]string{}, NPCs: map[NPCKey]TranslatedText{},
-		Quests: map[uint16][]string{}, NPCSkills: map[SkillKey]TranslatedText{},
+		Quests: map[uint16][]string{}, Skills: map[SkillKey]TranslatedText{}, NPCSkills: map[SkillKey]TranslatedText{},
 	}
 	localized := func(name string) string { return name + "_" + code + ".csv" }
 	load := func(file, header string, apply func([]string)) {
@@ -127,12 +128,16 @@ func LoadTranslations(read func(string) ([]byte, error), code string) Translatio
 			t.Quests[key] = fields
 		}
 	})
-	load(localized("npcskills/npcskills"), "id,level,name,description", func(r []string) {
-		key, valid := id(r[0], 16)
-		level, ok := id(r[1], 8)
-		if valid && ok {
-			t.NPCSkills[SkillKey{key, uint8(level)}] = TranslatedText{validTranslation(r[2]), validTranslation(r[3])}
-		}
-	})
+	loadSkills := func(path string, dst map[SkillKey]TranslatedText) {
+		load(localized(path), "id,level,name,description", func(r []string) {
+			key, valid := id(r[0], 16)
+			level, ok := id(r[1], 8)
+			if valid && ok {
+				dst[SkillKey{key, uint8(level)}] = TranslatedText{validTranslation(r[2]), validTranslation(r[3])}
+			}
+		})
+	}
+	loadSkills("skills/skills", t.Skills)
+	loadSkills("npcskills/npcskills", t.NPCSkills)
 	return t
 }

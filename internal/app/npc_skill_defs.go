@@ -32,12 +32,18 @@ func (a *App) skillDefinition(id uint16, level uint8) (sdata.Skill, bool) {
 		a.loadNPCSkills()
 		key := sdata.SkillKey{ID: id, Level: 1}
 		d, ok := a.npcSkillDefs[key]
-		a.localized.NPCSkills[key].Apply(&d.Name, &d.Description)
+		if ok {
+			a.localized.NPCSkills[key].Apply(&d.Name, &d.Description)
+		}
 		return d, ok
 	}
 	if a.arc != nil {
 		a.loadSkills()
 	}
-	d, ok := a.skillDefs[sdata.SkillKey{ID: id, Level: level}]
+	key := sdata.SkillKey{ID: id, Level: level}
+	d, ok := a.skillDefs[key]
+	if ok {
+		a.localized.Skills[key].Apply(&d.Name, &d.Description)
+	}
 	return d, ok
 }

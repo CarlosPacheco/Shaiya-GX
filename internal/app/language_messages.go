@@ -65,6 +65,13 @@ func (a *App) reloadContentMessages(languageID int) {
 func (a *App) loadSDataTranslations(languageID int) {
 	a.localized = sdata.LoadTranslations(a.arc.ReadLiveFile, ui.MessageLanguageCode(languageID))
 	a.localizedItems = nil
+	for _, rows := range [][]buffBadge{a.buffs.rows, a.targetEffects.rows} {
+		for i := range rows {
+			if def, ok := a.skillDefinition(rows[i].buff.Skill, rows[i].buff.Level); ok {
+				rows[i].def = def
+			}
+		}
+	}
 }
 
 func (a *App) npcDefinition(key sdata.NPCKey) sdata.NPC {

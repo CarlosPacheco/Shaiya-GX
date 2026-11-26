@@ -10,6 +10,7 @@ import (
 	"unicode/utf16"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/text"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -117,5 +118,57 @@ func TestReloadContentMessagesKeepsChatHistory(t *testing.T) {
 	want := []string{"[Party] Alice: before", "[Grupo] Alice: after", "[Party] Alice: later"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("chat history = %q, want %q", got, want)
+	}
+}
+
+func TestRankedSkillTranslationsReloadAndKeepEnglishFallback(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "Languages", "skills")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "skills_es.csv")
+	if err := os.WriteFile(path, []byte("id,level,name,description\n31,1,Hechizo,Inflige 10 de daño.\n31,2,,Inflige 20 de daño.\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	arc, err := archive.OpenDirectory(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer arc.Close()
+
+	a := inputApp()
+	a.arc = arc
+	first := sdata.SkillKey{ID: 31, Level: 1}
+	second := sdata.SkillKey{ID: 31, Level: 2}
+	third := sdata.SkillKey{ID: 31, Level: 3}
+	a.skillDefs = map[sdata.SkillKey]sdata.Skill{
+		first:  {Name: "Spell 1", Description: "Deals 10 damage.", MP: 4},
+		second: {Name: "Spell 2", Description: "Deals 20 damage.", MP: 5},
+		third:  {Name: "Spell 3", Description: "Deals 30 damage.", MP: 6},
+	}
+	a.buffs.rows = []buffBadge{{buff: proto.ActiveBuff{Skill: 31, Level: 2}, until: 42}}
+	a.reloadContentMessages(2)
+	if d, _ := a.skillDefinition(first.ID, first.Level); d.Name != "Hechizo" || d.Description != "Inflige 10 de daño." || d.MP != 4 {
+		t.Fatalf("rank 1: %+v", d)
+	}
+	if d, _ := a.skillDefinition(second.ID, second.Level); d.Name != "Spell 2" || d.Description != "Inflige 20 de daño." || d.MP != 5 {
+		t.Fatalf("rank 2 with partial translation: %+v", d)
+	}
+	if d, _ := a.skillDefinition(third.ID, third.Level); d != a.skillDefs[third] {
+		t.Fatalf("missing rank 3: %+v", d)
+	}
+	if b := a.buffs.rows[0]; b.def.Description != "Inflige 20 de daño." || b.until != 42 {
+		t.Fatalf("translated active buff: %+v", b)
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	a.reloadContentMessages(2)
+	if d, _ := a.skillDefinition(first.ID, first.Level); d != a.skillDefs[first] {
+		t.Fatalf("missing Spanish catalog: %+v", d)
+	}
+	if b := a.buffs.rows[0]; b.def != a.skillDefs[second] || b.until != 42 {
+		t.Fatalf("English fallback active buff: %+v", b)
 	}
 }
