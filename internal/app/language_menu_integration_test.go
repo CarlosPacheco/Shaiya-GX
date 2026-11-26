@@ -50,7 +50,7 @@ func TestLanguageMenuGL(t *testing.T) {
 		in.Pressed, in.MouseDown, in.Clicked = false, false, true
 		a.updateGameMenu(&in, 1024, 768)
 	}
-	click(280, 365)
+	click(265, 55)
 	if !a.gameMenu.PopupOpen() {
 		t.Fatal("language dropdown did not open")
 	}
@@ -65,7 +65,7 @@ func TestLanguageMenuGL(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	click(280, 181) // Español
+	click(265, 109) // Español
 	if a.gameMenu.PopupOpen() || a.gameMenu.Settings.LanguageID != 2 {
 		t.Fatal("Español was not selected")
 	}
@@ -74,8 +74,8 @@ func TestLanguageMenuGL(t *testing.T) {
 		t.Fatal("Cancel did not restore English")
 	}
 	a.gameMenu.Open(ui.MenuUser)
-	click(280, 365)
-	click(280, 181)
+	click(265, 55)
+	click(265, 109)
 	click(245, 404) // OK
 	fresh := inputApp()
 	fresh.loadClientLanguage()

@@ -25,10 +25,10 @@ var gameLanguages = [...]struct {
 }
 
 const (
-	languageX = 204
-	languageY = 355
-	languageW = 148
-	languageH = 23
+	languageX = 177
+	languageY = 42
+	languageW = 175
+	languageH = 27
 )
 
 func languageIndex(id int) int {
@@ -68,9 +68,9 @@ func (m *GameMenu) updateLanguage(in *platform.Input, x, y int) bool {
 		m.languageCursor = min(len(gameLanguages)-1, m.languageCursor+1)
 	}
 
-	top := y + languageY - len(gameLanguages)*languageH
+	top := y + languageY + languageH
 	row := -1
-	if in.MouseX >= x+languageX && in.MouseX < x+languageX+languageW && in.MouseY >= top && in.MouseY < y+languageY {
+	if in.MouseX >= x+languageX && in.MouseX < x+languageX+languageW && in.MouseY >= top && in.MouseY < top+len(gameLanguages)*languageH {
 		row = (in.MouseY - top) / languageH
 	}
 	m.languageHover = row
@@ -104,19 +104,18 @@ func (m *GameMenu) drawLanguage(s *render.Sprites, f *Font, solid *render.Textur
 	fill[3] = 1
 	drawRow := func(index, rowY int) {
 		language := gameLanguages[index]
-		f.Draw(s, language.flag, px+7, rowY+4, white, 26)
-		f.Draw(s, language.name, px+35, rowY+4, white, languageW-40)
+		f.DrawScaled(s, language.flag, float32(px+9), float32(rowY+5), 1.15, white, 27)
+		f.DrawScaled(s, language.name, float32(px+39), float32(rowY+5), 1.1, white, languageW-59)
 	}
-	f.Draw(s, "Language", x+143, py+4, white, 60)
 	DrawTipFrame(s, solid, float32(px), float32(py), languageW, languageH, 1, fill, TipBorder)
 	drawRow(languageIndex(m.Settings.LanguageID), py)
-	f.Draw(s, "▾", px+languageW-15, py+4, white, 12)
+	f.Draw(s, "▾", px+languageW-15, py+6, white, 12)
 	if !m.languageOpen {
 		return
 	}
 
-	top := py - len(gameLanguages)*languageH
-	DrawTipFrame(s, solid, float32(px), float32(top), languageW, float32(py-top), 1, fill, TipBorder)
+	top := py + languageH
+	DrawTipFrame(s, solid, float32(px), float32(top), languageW, float32(len(gameLanguages)*languageH), 1, fill, TipBorder)
 	highlight := m.languageCursor
 	if m.languageHover >= 0 {
 		highlight = m.languageHover
