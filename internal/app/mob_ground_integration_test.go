@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
+	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
@@ -127,5 +128,47 @@ func TestMobGroundCachePreservesTerrainHeight(t *testing.T) {
 	}
 	if p := cache.resolve(w, render.V3{995.8, 0, 797.3}, false, 0); p[1] == 0 {
 		t.Fatal("fixture did not exercise terrain grounding")
+	}
+}
+
+// Exercise the movement actor itself, including the midpoint of a network
+// segment. The full collision surface remains available to other callers.
+func TestMovingMobIgnoresPlacedCollisionWhenRendered(t *testing.T) {
+	t.Run("field", func(t *testing.T) {
+		w := mobGroundMap(t, 19)
+		// This segment crosses a real collider in the field's full geometry.
+		p, q := render.V3{1570.3013, 0, 1102.9619}, render.V3{1576.3013, 0, 1102.9619}
+		p[1], q[1] = w.Height(p[0], p[2]), w.Height(q[0], q[2])
+		testVisualMobSegment(t, w, p, q, func(mid render.V3) render.V3 {
+			mid[1] = w.Height(mid[0], mid[2])
+			return mid
+		})
+	})
+	t.Run("dungeon", func(t *testing.T) {
+		w := mobGroundMap(t, 15)
+		p := render.V3{135.27, 6.6, 229.12186}
+		q := render.V3{137.27, 6.6, 229.12186}
+		mid := p.Add(q.Sub(p).Scale(.5))
+		if w.MobGroundPosition(mid) == mid {
+			t.Fatal("fixture does not distinguish full collision snapping")
+		}
+		testVisualMobSegment(t, w, p, q, func(mid render.V3) render.V3 { return mid })
+	})
+}
+
+func testVisualMobSegment(t *testing.T, w *scene.World, from, to render.V3, wantMid func(render.V3) render.V3) {
+	t.Helper()
+	a := &App{wv: &worldView{world: w}}
+	e := &game.Entity{Kind: game.KindMob, MobHeightKnown: true, X: from[0], Y: from[1], Z: from[2]}
+	m := &mobActor{entity: e}
+	a.updateMobPosition(m)
+	e.X, e.Y, e.Z = to[0], to[1], to[2]
+	e.MoveSerial, e.MobMoveDurationMS = 1, 1000
+	a.updateMobPosition(m)
+	a.clock = .5
+	a.updateMobPosition(m)
+	want := wantMid(from.Add(to.Sub(from).Scale(.5)))
+	if m.pos != want {
+		t.Fatalf("mid-segment mob position %v, want %v", m.pos, want)
 	}
 }

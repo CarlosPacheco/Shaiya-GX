@@ -15,7 +15,6 @@ type mobActor struct {
 	entity        *game.Entity
 	actor         *scene.CreatureActor
 	modelLoaded   bool
-	ground        mobGroundCache
 	pos           render.V3
 	position      remotePosition
 	moveSpeedTier uint8
@@ -93,7 +92,12 @@ func (a *App) updateMobPosition(m *mobActor) {
 			}
 		}
 	}
-	m.pos = m.ground.resolve(a.wv.world, pos, e.MobHeightKnown, e.PositionResetSerial)
+	// Field mobs follow the terrain heightfield. In dungeons the
+	// server's movement segments already select the structural floor.
+	if w := a.wv.world; w.HasTerrain() {
+		pos[1] = w.Height(pos[0], pos[2])
+	}
+	m.pos = pos
 	if reset {
 		m.placeActor()
 	}
@@ -171,7 +175,7 @@ func (a *App) prepareMonsters() {
 			continue
 		}
 		if m.deathFrozen && !e.Dead {
-			m.position, m.ground = remotePosition{}, mobGroundCache{}
+			m.position = remotePosition{}
 			m.deathFrozen, m.deathSound, m.deathNotified = false, false, false
 			m.idleAt = 0
 		}
