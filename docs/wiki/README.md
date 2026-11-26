@@ -27,7 +27,7 @@ These pages follow the current development branch. See the [binary update instru
 - [Combat stats and damage](combat-stats.md) covers the live damage, critical,
   accuracy, evasion and higher-level monster rules.
 - [Combat, world and interface changes in v0.1.17](../releases/gx-v0.1.17.md).
-- [gx-v0.1.21 patch notes](../releases/gx-v0.1.21.md) and [upgrade guide](../releases/gx-v0.1.21-upgrade.md).
+- [gx-v0.1.22 patch notes](../releases/gx-v0.1.22.md) and [upgrade guide](../releases/gx-v0.1.22-upgrade.md).
 
 
 - [Map rules, weather and progression](map-rules.md): map access and respawn,
