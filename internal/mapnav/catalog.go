@@ -8,6 +8,8 @@ import (
 	"slices"
 )
 
+const MobDungeonDirectory = "mob-dungeons"
+
 type Catalog struct {
 	Version int      `json:"version"`
 	Maps    []uint16 `json:"maps"`

@@ -14,26 +14,39 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/server/internal/config"
 )
 
-var mobNavigation = struct {
+type mobNavigationCache struct {
 	sync.Mutex
 	maps      map[uint16]*mapnav.Map
 	directory string
 	used      map[uint16]time.Time
-}{maps: make(map[uint16]*mapnav.Map)}
+	missing   map[uint16]bool
+}
+
+var mobNavigation, dungeonMobNavigation mobNavigationCache
 
 func loadMobNavigation(mapID uint16) (*mapnav.Map, error) {
-	id := realMap(mapID)
-	directory := filepath.Join(config.DataDir(), "geometry")
-	mobNavigation.Lock()
-	defer mobNavigation.Unlock()
-	if directory != mobNavigation.directory {
-		mobNavigation.directory = directory
-		mobNavigation.maps = make(map[uint16]*mapnav.Map)
-		mobNavigation.used = make(map[uint16]time.Time)
+	return mobNavigation.load(realMap(mapID), filepath.Join(config.DataDir(), "geometry"), true)
+}
+
+func loadDungeonMobNavigation(id uint16) (*mapnav.Map, error) {
+	return dungeonMobNavigation.load(id, filepath.Join(config.DataDir(), "geometry", mapnav.MobDungeonDirectory), false)
+}
+
+func (cache *mobNavigationCache) load(id uint16, directory string, playerLadders bool) (*mapnav.Map, error) {
+	cache.Lock()
+	defer cache.Unlock()
+	if directory != cache.directory {
+		cache.directory = directory
+		cache.maps = make(map[uint16]*mapnav.Map)
+		cache.used = make(map[uint16]time.Time)
+		cache.missing = make(map[uint16]bool)
 	}
-	if nav, ok := mobNavigation.maps[id]; ok {
-		mobNavigation.used[id] = time.Now()
+	if nav, ok := cache.maps[id]; ok {
+		cache.used[id] = time.Now()
 		return nav, nil
+	}
+	if cache.missing[id] {
+		return nil, nil
 	}
 	if _, err := os.Stat(filepath.Join(directory, fmt.Sprintf("%d.manifest.json", id))); os.IsNotExist(err) {
 		if catalog, e := mapnav.ReadCatalog(directory); e == nil {
@@ -45,32 +58,39 @@ func loadMobNavigation(mapID uint16) (*mapnav.Map, error) {
 		} else if !os.IsNotExist(e) {
 			return nil, e
 		}
+		if !playerLadders {
+			cache.missing[id] = true
+		}
 		return nil, nil
 	}
 	nav, err := mapnav.Load(directory, id)
 	if err != nil {
 		return nil, fmt.Errorf("map %d navigation: %w", id, err)
 	}
-	if g, ok := nav.PlayerGeometry(); ok {
+	if g, ok := nav.PlayerGeometry(); ok && playerLadders {
 		g.Ladders = mapgeometry.NativeLadders(id)
 	}
-	if len(mobNavigation.maps) >= 4 {
+	if len(cache.maps) >= 4 {
 		var oldest uint16
 		var at time.Time
-		for key, used := range mobNavigation.used {
+		for key, used := range cache.used {
 			if at.IsZero() || used.Before(at) {
 				oldest, at = key, used
 			}
 		}
-		delete(mobNavigation.maps, oldest)
-		delete(mobNavigation.used, oldest)
+		delete(cache.maps, oldest)
+		delete(cache.used, oldest)
 	}
-	mobNavigation.maps[id] = nav
-	mobNavigation.used[id] = time.Now()
+	cache.maps[id] = nav
+	cache.used[id] = time.Now()
 	return nav, nil
 }
 func (m *MapMob) point() mapnav.Point     { return mapnav.Point{m.PosX, m.PosY, m.PosZ} }
 func (m *MapMob) setPoint(p mapnav.Point) { m.PosX, m.PosY, m.PosZ = p[0], p[1], p[2] }
+
+func usesDungeonMobNavigation(nav *mapnav.Map, id uint16) bool {
+	return mapConfig.Zones[id].Dungeon || nav.Terrain() == nil
+}
 
 func (m *MapMob) placeOnNavigation(nav *mapnav.Map, mapID uint16) bool {
 	if nav == nil {
@@ -79,6 +99,30 @@ func (m *MapMob) placeOnNavigation(nav *mapnav.Map, mapID uint16) bool {
 		m.nav = &mobNav{id: realMap(mapID)}
 	}
 	if nav == nil {
+		return true
+	}
+	id := m.nav.id
+	if usesDungeonMobNavigation(nav, id) {
+		// Startup validates the companion generation. Existing installations
+		// without it retain the original full-mesh dungeon navigation.
+		structural, err := loadDungeonMobNavigation(id)
+		if err != nil {
+			return false
+		}
+		if structural != nil {
+			nav = structural
+			m.nav.dungeon = true
+		}
+	} else {
+		m.nav.terrain = nav.Terrain()
+	}
+	if terrain := m.nav.terrain; terrain != nil {
+		p := m.point()
+		if !m.nav.allowsXZ(mapID, p[0], p[2]) {
+			return false
+		}
+		p[1] = terrain.Height(p[0], p[2])
+		m.setMobGround(p)
 		return true
 	}
 	hint := m.point()
@@ -103,7 +147,7 @@ func (m *MapMob) placeOnNavigation(nav *mapnav.Map, mapID uint16) bool {
 			hint[0], hint[2] = p.x, p.z
 		}
 		p, ok := nav.Spawn(hint, .75, tolerance)
-		if !ok || !IsMapWalkable(mapID, p[0], p[2]) {
+		if !ok || !m.nav.allowsXZ(mapID, p[0], p[2]) {
 			continue
 		}
 		if m.Area != nil {
@@ -115,7 +159,7 @@ func (m *MapMob) placeOnNavigation(nav *mapnav.Map, mapID uint16) bool {
 		if !found {
 			spawn, found = p, true
 		}
-		if !checkExit || mobSpawnHasExit(nav, mapID, p) {
+		if !checkExit || m.mobSpawnHasExit(nav, mapID, p) {
 			spawn = p
 			break
 		}
@@ -123,14 +167,18 @@ func (m *MapMob) placeOnNavigation(nav *mapnav.Map, mapID uint16) bool {
 	if !found {
 		return false
 	}
-	m.setPoint(spawn)
-	m.cell, m.hasCell = cellFor(spawn[0], spawn[2]), true
-	m.homeX, m.homeY, m.homeZ = spawn[0], spawn[1], spawn[2]
-	m.navPath = nil
+	m.setMobGround(spawn)
 	return true
 }
 
-func mobSpawnHasExit(nav *mapnav.Map, mapID uint16, spawn mapnav.Point) bool {
+func (m *MapMob) setMobGround(p mapnav.Point) {
+	m.setPoint(p)
+	m.cell, m.hasCell = cellFor(p[0], p[2]), true
+	m.homeX, m.homeY, m.homeZ = p[0], p[1], p[2]
+	m.navPath = nil
+}
+
+func (m *MapMob) mobSpawnHasExit(nav *mapnav.Map, mapID uint16, spawn mapnav.Point) bool {
 	const distance = 6
 	for _, offset := range [][2]float32{{distance, 0}, {-distance, 0}, {0, distance}, {0, -distance}} {
 		goal := mapnav.Point{spawn[0] + offset[0], spawn[1], spawn[2] + offset[1]}
@@ -139,7 +187,7 @@ func mobSpawnHasExit(nav *mapnav.Map, mapID uint16, spawn mapnav.Point) bool {
 			continue
 		}
 		end := path[len(path)-1]
-		if IsMapWalkable(mapID, end[0], end[2]) {
+		if m.nav.allowsXZ(mapID, end[0], end[2]) {
 			return true
 		}
 	}
@@ -147,6 +195,18 @@ func mobSpawnHasExit(nav *mapnav.Map, mapID uint16, spawn mapnav.Point) bool {
 }
 
 func (m *MapMob) navigate(now time.Time, mapID uint16, goal mapnav.Point, step float32) (mapnav.Point, bool) {
+	if terrain := m.nav.terrain; terrain != nil {
+		p := m.point()
+		d := DistanceXZ(p[0], p[2], goal[0], goal[2])
+		if d < .015 || !m.nav.allowsXZ(mapID, goal[0], goal[2]) {
+			return p, false
+		}
+		f := min(step/d, 1)
+		p[0] += (goal[0] - p[0]) * f
+		p[2] += (goal[2] - p[2]) * f
+		p[1] = terrain.Height(p[0], p[2])
+		return p, true
+	}
 	// Reuse a corridor while the target stays nearby, with bounded refresh.
 	if len(m.navPath) == 0 || now.After(m.navRefresh) || mapnav.Distance(goal, m.navGoal) > 1 {
 		path, ok := m.nav.Path(m.point(), goal)
@@ -161,7 +221,7 @@ func (m *MapMob) navigate(now time.Time, mapID uint16, goal mapnav.Point, step f
 	for len(m.navPath) > 0 && mapnav.Distance(m.point(), m.navPath[0]) < .05 {
 		m.navPath = m.navPath[1:]
 	}
-	p, _, consumed, ok := m.nav.Step(m.point(), m.navPath, step, func(x, z float32) bool { return IsMapWalkable(mapID, x, z) })
+	p, _, consumed, ok := m.nav.Step(m.point(), m.navPath, step, func(x, z float32) bool { return m.nav.allowsXZ(mapID, x, z) })
 	if !ok {
 		m.navPath = nil
 		return mapnav.Point{}, false
@@ -184,17 +244,40 @@ func (m *MapMob) canReachTarget(t *PlayerCombatSnapshot) bool {
 
 // Mobs retain a lightweight map reference. The decoded geometry cache is bounded
 // instead of keeping every world map resident merely because it has spawns.
-type mobNav struct{ id uint16 }
+type mobNav struct {
+	id      uint16
+	terrain *mapgeometry.Geometry
+	dungeon bool
+}
+
+func (n *mobNav) allowsXZ(mapID uint16, x, z float32) bool {
+	if n != nil {
+		if n.terrain != nil {
+			return x >= 0 && z >= 0 && x <= float32(n.terrain.MapSize) && z <= float32(n.terrain.MapSize)
+		}
+		if n.dungeon {
+			return true
+		} // The structural mesh constrains movement.
+	}
+	return IsMapWalkable(mapID, x, z)
+}
+
+func (n *mobNav) movementMap() (*mapnav.Map, error) {
+	if n.dungeon {
+		return loadDungeonMobNavigation(n.id)
+	}
+	return loadMobNavigation(n.id)
+}
 
 func (n *mobNav) Path(a, b mapnav.Point) ([]mapnav.Point, bool) {
-	m, err := loadMobNavigation(n.id)
+	m, err := n.movementMap()
 	if err != nil || m == nil {
 		return nil, false
 	}
 	return m.Path(a, b)
 }
 func (n *mobNav) Step(a mapnav.Point, path []mapnav.Point, d float32, walkable func(float32, float32) bool) (mapnav.Point, float32, int, bool) {
-	m, err := loadMobNavigation(n.id)
+	m, err := n.movementMap()
 	if err != nil || m == nil {
 		return a, 0, 0, false
 	}
@@ -226,7 +309,11 @@ func (m *MapMob) positionAt(now time.Time) mapnav.Point {
 		p[i] = m.moveFrom[i] + (p[i]-m.moveFrom[i])*t
 	}
 	if m.nav != nil {
-		if nav, err := loadMobNavigation(m.nav.id); err == nil && nav != nil {
+		if terrain := m.nav.terrain; terrain != nil {
+			p[1] = terrain.Height(p[0], p[2])
+			return p
+		}
+		if nav, err := m.nav.movementMap(); err == nil && nav != nil {
 			if g, ok := nav.PlayerGeometry(); ok {
 				if y, found := g.Support(p[0], p[1], p[2], .5); found {
 					p[1] = y

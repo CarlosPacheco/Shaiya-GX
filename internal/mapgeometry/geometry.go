@@ -79,6 +79,15 @@ func (g *Geometry) Reindex() {
 		g.Index.Add(t)
 	}
 }
+
+// LoadDungeonStructure loads the base dungeon, structural DG instances and
+// WLD blockers. Placed models remain part of the full player geometry.
+func LoadDungeonStructure(readFile func(string) ([]byte, error), layout *world.WLD) (*Geometry, error) {
+	structure := *layout
+	structure.Buildings, structure.Shapes, structure.Trees = world.Group{}, world.Group{}, world.Group{}
+	return Load(readFile, &structure)
+}
+
 func Load(readFile func(string) ([]byte, error), layout *world.WLD) (*Geometry, error) {
 	g := &Geometry{Water: !layout.Dungeon && strings.EqualFold(path.Ext(layout.Layout), ".wtr"), Index: collision.NewIndex(), MapSize: layout.MapSize, Heights: layout.Heights, Sources: map[string]string{}}
 	read := func(file string) ([]byte, error) {

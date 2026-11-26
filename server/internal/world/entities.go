@@ -1174,7 +1174,7 @@ func (m *MapMob) advanceRoam(now time.Time, mapID uint16, tick *MobCombatTick) {
 	angle := float64(rand.IntN(10000)) * math.Pi / 180
 	nx := m.PosX - float32(math.Sin(angle))*length
 	nz := m.PosZ + float32(math.Cos(angle))*length
-	if DistanceXZ(nx, nz, m.homeX, m.homeZ) >= mobHomeRadius || !IsMapWalkable(mapID, nx, nz) {
+	if DistanceXZ(nx, nz, m.homeX, m.homeZ) >= mobHomeRadius || !m.nav.allowsXZ(mapID, nx, nz) {
 		return
 	}
 	next := mapnav.Point{nx, m.PosY, nz}

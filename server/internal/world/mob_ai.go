@@ -496,7 +496,7 @@ func (h *mobAIHost) Call(name string, args []any) (any, error) {
 			o.arrived = false
 		}
 	case "fixed_move":
-		if o.hold || m.returningHome || m.CurrentHP == 0 || !IsMapWalkable(h.mapID, float32(n(1)), float32(n(2))) {
+		if o.hold || m.returningHome || m.CurrentHP == 0 || !m.nav.allowsXZ(h.mapID, float32(n(1)), float32(n(2))) {
 			return nil, nil
 		}
 		if n(0) != 0 && n(0) != 1 {

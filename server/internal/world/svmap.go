@@ -113,12 +113,16 @@ func LoadSvmaps(log *logx.Logger) error {
 	if err := loadPortalVolumes(); err != nil {
 		return fmt.Errorf("portal bounds: %w", err)
 	}
-	complete, err := mapnav.ValidateCatalog(filepath.Join(config.DataDir(), "geometry"))
+	geometry := filepath.Join(config.DataDir(), "geometry")
+	complete, err := mapnav.ValidateCatalog(geometry)
 	if err != nil {
 		return fmt.Errorf("server navigation installation: %w", err)
 	}
 	if !complete {
 		log.Printf("GX Server: no complete navigation catalog; only individually generated maps use ground navigation")
+	}
+	if _, err := mapnav.ValidateCatalog(filepath.Join(geometry, mapnav.MobDungeonDirectory)); err != nil {
+		return fmt.Errorf("dungeon mob navigation installation: %w", err)
 	}
 	if err := ensureMapDataDir(); err != nil {
 		return err
@@ -150,6 +154,17 @@ func LoadSvmaps(log *logx.Logger) error {
 			return navErr
 		}
 		if nav != nil {
+			mode := "field-xz"
+			if usesDungeonMobNavigation(nav, uint16(id)) {
+				structural, err := loadDungeonMobNavigation(uint16(id))
+				if err != nil {
+					return fmt.Errorf("map %d structural mob navigation: %w", id, err)
+				}
+				mode = "dungeon-full"
+				if structural != nil {
+					mode = "dungeon-structure"
+				}
+			}
 			valid := load.entities.Mobs[:0]
 			skipped := 0
 			for i := range load.entities.Mobs {
@@ -164,7 +179,7 @@ func LoadSvmaps(log *logx.Logger) error {
 				valid = append(valid, m)
 			}
 			load.entities.Mobs = valid
-			log.Printf("GX Server navigation map=%d grounded=%d rejected=%d", id, len(valid), skipped)
+			log.Printf("GX Server navigation map=%d grounded=%d rejected=%d mode=%s", id, len(valid), skipped, mode)
 		}
 		AddEntities(uint16(id), load.entities)
 		maps++

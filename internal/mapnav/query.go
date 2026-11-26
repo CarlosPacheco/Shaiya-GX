@@ -26,6 +26,7 @@ type Map struct {
 	mu            sync.Mutex // Detour queries use mutable search state.
 	query         *detour.NavMeshQuery
 	geometry      *mapgeometry.Geometry
+	terrain       *mapgeometry.Geometry
 	filter        *detour.StandardQueryFilter
 	corridor      []detour.PolyRef
 	points        []d3.Vec3
@@ -116,8 +117,16 @@ func Load(directory string, id uint16) (result *Map, err error) {
 	for i := range points {
 		points[i] = make(d3.Vec3, 3)
 	}
-	return &Map{playerPhysics: hasPlayerPhysics, query: q, geometry: g, filter: detour.NewStandardQueryFilter(), corridor: make([]detour.PolyRef, 2048), points: points, flags: make([]uint8, 2048), refs: make([]detour.PolyRef, 2048)}, nil
+	var terrain *mapgeometry.Geometry
+	if g.HasTerrain() {
+		terrain = &mapgeometry.Geometry{MapSize: g.MapSize, Heights: g.Heights}
+	}
+	return &Map{playerPhysics: hasPlayerPhysics, query: q, geometry: g, terrain: terrain, filter: detour.NewStandardQueryFilter(), corridor: make([]detour.PolyRef, 2048), points: points, flags: make([]uint8, 2048), refs: make([]detour.PolyRef, 2048)}, nil
 }
+
+// Terrain returns the heightfield without retaining the collision index or mesh.
+func (m *Map) Terrain() *mapgeometry.Geometry { return m.terrain }
+
 func valid(p Point) bool {
 	for _, v := range p {
 		if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {

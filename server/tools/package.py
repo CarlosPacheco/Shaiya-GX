@@ -199,14 +199,24 @@ def copy_runtime_data(source, target):
             shutil.copy2(path, target / "maps" / path.name)
     geometry = source / "geometry"
     (target / "geometry").mkdir()
-    catalog = json.loads((geometry / "catalog.json").read_text())
-    shutil.copy2(geometry / "catalog.json", target / "geometry" / "catalog.json")
+    copy_navigation(geometry, target / "geometry")
+    dungeon_mobs = geometry / "mob-dungeons"
+    if (dungeon_mobs / "catalog.json").is_file():
+        validate_geometry(dungeon_mobs, require_pin=False)
+        destination = target / "geometry/mob-dungeons"
+        destination.mkdir()
+        copy_navigation(dungeon_mobs, destination)
+
+
+def copy_navigation(source, target):
+    catalog = json.loads((source / "catalog.json").read_text())
+    shutil.copy2(source / "catalog.json", target / "catalog.json")
     for map_id in catalog["maps"]:
         if type(map_id) is not int or not 0 <= map_id <= 65535:
             raise ValueError("invalid map ID in server navigation catalog")
         for extension in GEOMETRY_EXTENSIONS:
             name = f"{map_id}.{extension}"
-            shutil.copy2(geometry / name, target / "geometry" / name)
+            shutil.copy2(source / name, target / name)
 
 
 def build_package(platform, output, go, *, require_pin):

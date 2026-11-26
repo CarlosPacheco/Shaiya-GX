@@ -25,8 +25,15 @@ func main() {
 	output := flag.String("output", "server/data/geometry", "server geometry output directory")
 	serverMaps := flag.String("server-maps", "server/data/maps", "server svmap directory for authoritative walk masks")
 	physicsOnly := flag.Bool("physics-only", false, "add player collision resources to an unchanged existing navigation generation")
+	mobDungeons := flag.Bool("mob-dungeons-only", false, "generate structure-only dungeon navigation under output/mob-dungeons")
 	selected := flag.String("maps", "3", "comma-separated map IDs or all")
 	flag.Parse()
+	if *mobDungeons {
+		if *physicsOnly {
+			log.Fatal("-mob-dungeons-only and -physics-only are mutually exclusive")
+		}
+		*output = filepath.Join(*output, mapnav.MobDungeonDirectory)
+	}
 	arc, err := archive.OpenDirectory(*data)
 	if err != nil {
 		log.Fatal(err)
@@ -52,6 +59,7 @@ func main() {
 		}
 	}
 	sort.Ints(ids)
+	var built []uint16
 	for _, id := range ids {
 		started := time.Now()
 		file := fmt.Sprintf("world/%d.wld", id)
@@ -63,14 +71,21 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		geometry, err := mapgeometry.Load(arc.ReadFile, layout)
+		load := mapgeometry.Load
+		if *mobDungeons {
+			if !layout.Dungeon {
+				continue
+			}
+			load = mapgeometry.LoadDungeonStructure
+		}
+		geometry, err := load(arc.ReadFile, layout)
 		if err != nil {
 			log.Fatal(err)
 		}
 		geometry.Sources[file] = fmt.Sprintf("%x", sha256.Sum256(raw))
 		var masks []mapnav.WalkMask
 		maskPath := filepath.Join(*serverMaps, fmt.Sprintf("%d.svmap", id))
-		if raw, e := os.ReadFile(maskPath); e == nil {
+		if raw, e := os.ReadFile(maskPath); !*mobDungeons && e == nil {
 			if len(raw) < 4 {
 				log.Fatal("short svmap")
 			}
@@ -81,7 +96,7 @@ func main() {
 			}
 			masks = append(masks, mapnav.WalkMask{Size: size, Bits: raw[4 : 4+length]})
 			geometry.Sources[fmt.Sprintf("server/maps/%d.svmap", id)] = fmt.Sprintf("%x", sha256.Sum256(raw))
-		} else if !os.IsNotExist(e) {
+		} else if !*mobDungeons && !os.IsNotExist(e) {
 			log.Fatal(e)
 		}
 		if *physicsOnly {
@@ -92,6 +107,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		built = append(built, uint16(id))
 		log.Printf("map %d: navigation and collision generation ready in %s", id, time.Since(started))
 	}
 	// Merge successful selections into the catalog, including a single new map.
@@ -104,13 +120,16 @@ func main() {
 	} else if !os.IsNotExist(e) {
 		log.Fatal(e)
 	}
-	for _, id := range ids {
-		seen[uint16(id)] = true
+	for _, id := range built {
+		seen[id] = true
 	}
 	for id := range seen {
 		maps = append(maps, id)
 	}
 	sort.Slice(maps, func(i, j int) bool { return maps[i] < maps[j] })
+	if len(maps) == 0 && *mobDungeons {
+		return
+	}
 	if err = mapnav.WriteCatalog(*output, maps); err != nil {
 		log.Fatal(err)
 	}
