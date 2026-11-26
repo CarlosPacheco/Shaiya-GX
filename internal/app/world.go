@@ -658,8 +658,10 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 			v.self.ReleaseAction()
 		}
 		v.dead = a.state.Self.Dead
+		var idleVariation uint8
 		if v.selfGestureSerial != a.state.Self.GestureSerial {
 			v.selfGestureSerial = a.state.Self.GestureSerial
+			idleVariation = a.state.Self.Gesture
 			if action, ok := proto.GestureAction(a.state.Self.Gesture); ok && !a.state.Self.Dead && !a.state.Self.Mounted && !moving && !v.self.PlayingAction(8) {
 				v.self.PlayAction(action, false)
 			}
@@ -695,6 +697,9 @@ func (a *App) stepWorld(in *platform.Input, dt float64, lastStep bool) {
 		}
 		if clip != "" {
 			v.self.SetClip(clip)
+		}
+		if clip == "000_normal" && !airborne && !a.state.Self.Dead {
+			v.self.PlayIdleVariation(int(idleVariation))
 		}
 		previousPoseTime := v.self.Time
 		a.setSelfAnimationRates(v.self)
@@ -1166,6 +1171,8 @@ func (a *App) refreshSelf(v *worldView) {
 }
 
 func (a *App) releaseWorld() {
+	a.drop = itemDrop{}
+	a.remoteBank = false
 	a.inspect = inspectView{}
 	a.revolver.cast = revolverCast{}
 	a.sprites.ResetHoverDepth()

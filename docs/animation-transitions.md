@@ -76,6 +76,16 @@ cursor waits for the blend. Externally
 driven action frames, cast countdowns, and the spin lifetime keep their own
 clocks. The existing controllers still choose successor actions.
 
+### Idle variations
+
+Game.exe checks 10,000 ms of standing idle at `0x4191cd` and `0x41c39c`
+and chooses ALT 16 or 17 with equal probability. Both entries return to
+normal idle (ALT 0). GX World sends its choice on character motion `0x0506`
+to the owner and current viewers. Both paths use the five-frame character
+blend into and out of the variation. Movement and foreground actions can
+interrupt it.
+
+
 ## Verification
 
 The observations come from Ghidra and disassembly of the original binaries,

@@ -520,6 +520,7 @@ func (s *Session) tick(idle bool) {
 			s.autoAttack = false
 		}
 	}
+	s.tickIdleVariation(now)
 }
 
 func (s *Session) applyTradeRefresh(r *tradeRefresh) {
@@ -1026,6 +1027,10 @@ func (s *Session) handleMotion(p []byte) {
 		return
 	}
 	motion := p[2]
+	if proto.IsIdleVariation(motion) {
+		return // idle variations are selected by World
+	}
+	s.movement.idleSince = time.Time{}
 	if motion == 2 && s.player != nil && s.player.vehicleState().State == proto.VehiclePassenger {
 		s.dismount()
 		return

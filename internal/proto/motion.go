@@ -9,6 +9,8 @@ const (
 	MotionBackstep   uint8 = 3 // Game.exe 0x560e30, ALT 13.
 	MotionSitDown    uint8 = 1
 	MotionStandUp    uint8 = 0
+	MotionIdle1      uint8 = 16 // GX relays native idle ALT slots through 0x0506.
+	MotionIdle2      uint8 = 17
 )
 
 // The first four social pairs swap ALT slots; Provoke/Insult use their
@@ -21,6 +23,10 @@ func GestureAction(motion uint8) (int, bool) {
 		return int(motion), true
 	}
 	return int(motion ^ 1), true
+}
+
+func IsIdleVariation(motion uint8) bool {
+	return motion == MotionIdle1 || motion == MotionIdle2
 }
 
 type CharacterMotionResult struct {

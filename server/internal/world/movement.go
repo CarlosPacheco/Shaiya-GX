@@ -194,6 +194,7 @@ func (s *Session) handleCharacterMove(p []byte) {
 		}
 	}
 	if moved {
+		s.movement.idleSince = time.Time{}
 		s.autoAttack = false
 		s.endMyShop() // moving cancels the personal market
 	}

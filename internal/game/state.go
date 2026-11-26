@@ -313,7 +313,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 			e.Sitting = true
 		} else if m.Motion == proto.MotionStandUp {
 			e.Sitting = false
-		} else if _, ok := proto.GestureAction(m.Motion); ok || m.Motion == proto.MotionJump || m.Motion == proto.MotionBackstep || m.Motion == proto.MotionEvadeLeft || m.Motion == proto.MotionEvadeRight {
+		} else if _, ok := proto.GestureAction(m.Motion); ok || proto.IsIdleVariation(m.Motion) || m.Motion == proto.MotionJump || m.Motion == proto.MotionBackstep || m.Motion == proto.MotionEvadeLeft || m.Motion == proto.MotionEvadeRight {
 			e.Gesture, e.GestureSerial = m.Motion, e.GestureSerial+1
 		}
 	case proto.GXWeather:

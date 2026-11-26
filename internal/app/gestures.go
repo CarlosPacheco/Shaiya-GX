@@ -13,7 +13,7 @@ var gestures = map[string]uint8{
 }
 
 func cancelGesture(actor *scene.Character) {
-	if actor.PlayingGesture() {
+	if actor.PlayingGesture() || actor.PlayingIdleVariation() {
 		actor.ReleaseAction()
 	}
 }

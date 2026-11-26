@@ -169,8 +169,10 @@ func (a *App) prepareRemotePlayers() {
 			c.ReleaseAction()
 		}
 		cached.dead = e.Dead
+		var idleVariation uint8
 		if cached.gestureSerial != e.GestureSerial {
 			cached.gestureSerial = e.GestureSerial
+			idleVariation = e.Gesture
 			if action, ok := proto.LocomotionAction(e.Gesture); ok && !e.Dead && !e.Mounted && !c.PlayingAction(8) {
 				if c.PlayAction(action, false) && action == 8 {
 					a.stopCastEffects(id)
@@ -223,6 +225,9 @@ func (a *App) prepareRemotePlayers() {
 			c.SetMountedClip(moving || e.Motion&proto.MotionFlag80 != 0 || cached.mount.PlayingJump(), scene.VehicleAlternate(e.MountShape))
 		} else {
 			c.SetClip(clip)
+		}
+		if clip == "000_normal" && !moving && !e.Mounted && !e.Dead && e.Motion&proto.MotionFlag80 == 0 {
+			c.PlayIdleVariation(int(idleVariation))
 		}
 		c.Update(float32(a.frameDT))
 		a.updateActorSounds(&cached.sounds, c, e.X, e.Y, e.Z, e.Sitting, e.Dead, e.Mounted)

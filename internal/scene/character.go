@@ -158,7 +158,13 @@ type Character struct {
 // SetClip switches to <prefix>_<name>.ANI (e.g. "000_normal", "002_run"),
 // restarting it; unknown clips keep the current one.
 func (c *Character) SetClip(name string) {
-	if c == nil || c.locked || c.locomotionBlend && c.blendLeft > 0 && isLocomotionClip(name) {
+	if c == nil {
+		return
+	}
+	if name != "000_normal" && c.PlayingIdleVariation() {
+		c.ReleaseAction()
+	}
+	if c.locked || c.locomotionBlend && c.blendLeft > 0 && isLocomotionClip(name) {
 		return
 	}
 	c.setClip(name, false)
@@ -574,7 +580,7 @@ func (c *Character) Update(dt float32) {
 					// ALT 8 always ends in normal idle before locomotion.
 					c.setClip("000_normal", true)
 				case c.actionSlot == 10 || c.actionSlot == 11 ||
-					c.actionSlot >= 13 && c.actionSlot <= 15 ||
+					c.actionSlot >= 13 && c.actionSlot <= 17 ||
 					c.actionSlot >= 116 && c.actionSlot <= 125:
 					if action := c.actions[c.actionSlot]; uint8(action.Mode) == 2 {
 						switch action.Next {
@@ -650,7 +656,7 @@ var damageActions = [...]int{0, 39, 28, 39, 28, 46, 53, 39, 28, 69, 83, 57, 62, 
 // 0/8): attacks, casts, jumps, postures and walking are never interrupted.
 // The ALT Next of the action returns to the weapon-ready stance.
 func (c *Character) PlayDamageReaction(weapon uint8) bool {
-	if c == nil || c.locked || c.Mounted || c.Concealed {
+	if c == nil || c.locked && !c.PlayingIdleVariation() || c.Mounted || c.Concealed {
 		return false
 	}
 	kind := weaponKind(weapon)
@@ -658,7 +664,7 @@ func (c *Character) PlayDamageReaction(weapon uint8) bool {
 		return false
 	}
 	name := strings.ToLower(c.clipName)
-	if !strings.Contains(name, "normal") && !strings.Contains(name, "nomal") && !strings.Contains(name, "ready") {
+	if !c.PlayingIdleVariation() && !strings.Contains(name, "normal") && !strings.Contains(name, "nomal") && !strings.Contains(name, "ready") {
 		return false
 	}
 	if !c.PlayAction(damageActions[kind], false) {
@@ -809,6 +815,14 @@ func (c *Character) PlayingClip(name string) bool {
 }
 
 // The original social gesture clips occupy consecutive ALT slots 116..125.
+func (c *Character) PlayIdleVariation(slot int) bool {
+	return (slot == 16 || slot == 17) && c.PlayingLocomotionClip("000_normal") && c.PlayAction(slot, false)
+}
+
+func (c *Character) PlayingIdleVariation() bool {
+	return c.PlayingAction(16) || c.PlayingAction(17)
+}
+
 func (c *Character) PlayingGesture() bool {
 	return c != nil && c.locked && c.actionSlot >= 116 && c.actionSlot <= 125
 }

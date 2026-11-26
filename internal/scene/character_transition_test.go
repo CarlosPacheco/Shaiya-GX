@@ -210,3 +210,41 @@ func TestClipTransitionUsesLocalQuaternionInterpolation(t *testing.T) {
 		t.Fatal("blend did not keep a rigid rotation", m)
 	}
 }
+
+func TestIdleVariationBlendsBothDirectionsAndYieldsToMovement(t *testing.T) {
+	assets := NewAssets(nil)
+	rest, variation, run := poseTestClip(2), poseTestClip(3), poseTestClip(3)
+	assets.clips["ani:character/human/ani/humf_000_normal.ani"] = rest
+	assets.clips["ani:character/human/ani/humf_016_idle1.ani"] = variation
+	assets.clips["ani:character/human/ani/humf_017_idle2.ani"] = variation
+	assets.clips["ani:character/human/ani/humf_002_run.ani"] = run
+	actions := make([]model.Action, 18)
+	actions[16] = model.Action{Name: "humf_016_idle1.ANI", Mode: 2}
+	actions[17] = model.Action{Name: "humf_017_idle2.ANI", Mode: 2}
+	c := &Character{assets: assets, folder: "Human", prefix: "humf", actions: actions, actionsLoaded: true}
+	c.SetClip("000_normal")
+	c.Update(.25)
+	previous := c.finals()[1]
+	if !c.PlayIdleVariation(16) || c.blendLeft != clipBlendDuration || c.finals()[1] != previous {
+		t.Fatal("idle variation snapped from the previous pose")
+	}
+	c.Update(clipBlendDuration)
+	if c.Time != 0 || !c.PlayingIdleVariation() || c.PlayIdleVariation(17) {
+		t.Fatal("variation missed its first frame or was restarted during playback")
+	}
+	c.Update(variation.Duration())
+	final := (&Character{clip: variation, Time: variation.Duration(), oneShot: true}).finals()[1]
+	if !c.PlayingLocomotionClip("000_normal") || c.blendLeft != clipBlendDuration || c.finals()[1] != final {
+		t.Fatal("variation did not blend from its final frame into normal idle")
+	}
+	c.Update(clipBlendDuration)
+	if !c.PlayIdleVariation(17) {
+		t.Fatal("second native variation could not play")
+	}
+	c.Update(.05)
+	visible := c.finals()[1]
+	c.SetClip("002_run")
+	if !c.PlayingLocomotionClip("002_run") || c.finals()[1] != visible {
+		t.Fatal("running did not interrupt the variation from the visible pose")
+	}
+}

@@ -25,6 +25,7 @@ type playerMovement struct {
 	speedCorrectionPending         bool
 	jumping                        bool
 	jumpFall, fall, waterFall      float32
+	idleSince                      time.Time
 	motion                         uint8
 	direction                      uint16
 	fallPeak                       float32
