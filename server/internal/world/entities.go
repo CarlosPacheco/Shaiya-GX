@@ -85,6 +85,7 @@ type MapMob struct {
 	moveStart            time.Time
 	moveDuration         time.Duration
 	moveMotion           uint8
+	idleWalk             bool
 	moveSpeedTier        uint8
 	stoppedOnDeath       bool
 	spawnMinY, spawnMaxY float32
@@ -849,8 +850,19 @@ func TickMobCombat(players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick 
 				m.lua.mask = 15
 				h.event("reset")
 			}
+			walkInterrupted := m.idleWalk && m.movingAt(now) && !m.lua.fixed && m.liveTarget(mapPlayers) != nil
+			moveStart := len(tick.Moves)
+			if walkInterrupted {
+				m.setPoint(m.positionAt(now))
+				m.moveDuration, m.idleWalk = 0, false
+				m.navPath = nil
+				m.lua.selectedValid = false
+			}
 			h.event("combat", int(int64(m.CurrentHP)*100/int64(max(m.MaxHP, 1))), m.lua.attackedCount)
 			m.refreshMoveSpeed(mapID, now, &tick)
+			if walkInterrupted && len(tick.Moves) == moveStart {
+				tick.Moves = append(tick.Moves, m.stopMovePacket(mapID))
+			}
 			if len(tick.Attacks)+len(tick.Moves) > before {
 				actions++
 			}

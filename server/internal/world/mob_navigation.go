@@ -329,6 +329,7 @@ func (m *MapMob) moveTo(mapID uint16, now time.Time, to mapnav.Point, motion uin
 	}
 	travel := DistanceXZ(from[0], from[2], to[0], to[2])
 	m.moveFrom, m.moveStart, m.moveMotion, m.moveSpeedTier = from, now, motion, tier
+	m.idleWalk = motion == mobMotionWalk && m.AggroTarget == 0 && !m.returningHome && !m.lua.fixed
 	// Positive durations use the packet's millisecond resolution, including
 	// segments that finish before the next AI sweep.
 	m.moveDuration = max(time.Millisecond, time.Duration(math.Ceil(float64(travel)*1000/speed))*time.Millisecond)
@@ -342,6 +343,14 @@ func (m *MapMob) moveTo(mapID uint16, now time.Time, to mapnav.Point, motion uin
 	entering.setPoint(from)
 	return entityMove{MapID: mapID, Kind: viewMob, ID: m.ID, From: oldCell, To: m.cell, Fresh: fresh,
 		Changed: fresh || oldCell != m.cell, Move: buildMobMove(m, motion), Enter: buildMobEnter(&entering, false)}
+}
+
+// stopMovePacket syncs the interrupted walk when combat starts in place.
+func (m *MapMob) stopMovePacket(mapID uint16) entityMove {
+	oldCell, fresh := m.cell, !m.hasCell
+	m.cell, m.hasCell = cellAfterMove(m.cell, m.hasCell, m.PosX, m.PosZ), true
+	return entityMove{MapID: mapID, Kind: viewMob, ID: m.ID, From: oldCell, To: m.cell, Fresh: fresh,
+		Changed: fresh || oldCell != m.cell, Move: buildMobMove(m, mobMotionWalk), Enter: buildMobEnter(m, false)}
 }
 
 // The original client reads the current speed index every frame. Update the

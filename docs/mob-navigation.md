@@ -97,7 +97,9 @@ horizontal turns. It samples support along every segment and checks the server m
 through a wall in a dungeon. Basic mob attacks and scripted mob skills use
 horizontal reach (X/Z), including targets above or below the mob. Collision
 geometry still governs movement. If the target's floor is unreachable, a
-dungeon chase tries the target's X/Z on the mob's floor.
+dungeon chase tries the target's X/Z on the mob's floor. When a mob gains
+a combat target during an idle walk, it stops that walk at its current
+position and can begin chasing or attacking in the same combat update.
 
 GX packets `0x7F05` (mob enter) and `0x7F06` (mob movement) carry XYZ for grounded
 mobs. Factioned spawns append country U8 (0 Light, 1 Fury, 2 neutral) and

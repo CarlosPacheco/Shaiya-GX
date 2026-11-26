@@ -414,3 +414,53 @@ func TestLuaWorldRecoveryHonorsStatusAndDeadline(t *testing.T) {
 		t.Fatal("recovery did not resume at deadline")
 	}
 }
+
+func TestMobInterruptsIdleWalkOnFirstCombatTick(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		targetX float32
+		miss    bool
+		cast    bool
+	}{
+		{name: "hit starts chase", targetX: 90},
+		{name: "hit in reach stops and attacks", targetX: 101, cast: true},
+		{name: "skill miss starts chase", targetX: 90, miss: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, h := luaWorldFixture(t, 0)
+			m := h.mob
+			m.event, m.spawnHeightKnown = &eventActor{}, true
+			m.def.NormalStep, m.def.NormalTimeMS = 10, 20000
+			h.players[0].PosX = tc.targetX
+			h.players[0].Cell = cellFor(tc.targetX, h.players[0].PosZ)
+			m.moveTo(h.mapID, time.Now().Add(-2*time.Second), mapnav.Point{112, 0, 100}, mobMotionWalk)
+			if !m.movingAt(time.Now()) || !m.idleWalk {
+				t.Fatal("fixture has no active idle walk")
+			}
+			user := h.players[0].CharacterID
+			if tc.miss {
+				recordMobAIMiss(h.mapID, m.ID, user)
+			} else {
+				if _, ok := DamageMobFrom(h.mapID, m.ID, 1, user); !ok {
+					t.Fatal("hit failed")
+				}
+				AddMobAggro(h.mapID, m.ID, user, 1)
+			}
+			tick := TickMobCombat(h.players, 10)
+			if len(tick.Moves) != 1 || (len(tick.Attacks) == 1) != tc.cast || m.AggroTarget != user {
+				t.Fatalf("first combat tick: moves=%d attacks=%d target=%d", len(tick.Moves), len(tick.Attacks), m.AggroTarget)
+			}
+			move, err := proto.DecodeMobMove(tick.Moves[0].Move[2:])
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tc.cast {
+				if move.DurationMS != 0 || move.X <= 100 || move.X >= 112 {
+					t.Fatalf("stop should use the position reached during the walk: %+v", move)
+				}
+			} else if move.Motion != mobMotionRun || move.DurationMS == 0 || m.moveFrom[0] <= 100 || m.moveFrom[0] >= 112 || move.X >= m.moveFrom[0] {
+				t.Fatalf("chase did not start from the interrupted walk: from=%v move=%+v", m.moveFrom, move)
+			}
+		})
+	}
+}

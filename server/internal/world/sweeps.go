@@ -84,10 +84,10 @@ func StartSweeps(ctx context.Context, log *logx.Logger, onFatal ...context.Cance
 		}
 		snaps := snapshotCombatPlayers(players)
 		tick := TickMobCombat(snaps, 256)
+		dispatchMoves(tick.Moves)
 		for _, a := range tick.Attacks {
 			queueMobAttack(a)
 		}
-		dispatchMoves(tick.Moves)
 		for _, r := range tick.Restores {
 			sendView(r.MapID, r.X, r.Z, r.Packet, "0x0610 mob hp restore")
 		}
