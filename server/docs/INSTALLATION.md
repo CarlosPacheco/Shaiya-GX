@@ -14,17 +14,15 @@ GX Server is now part of the parent Shaiya GX repository. Follow the maintained 
 
 Field mobs use the terrain heightfield for movement. Dungeon mobs can use a
 separate navigation generation built from the dungeon structure and WLD
-blockers. Generate it from loose client data with the same Recast baker used
-for the main server geometry:
+blockers. Generate it from loose client data with the standard map builder:
 
 ```sh
-GX_RECAST_BAKER=/path/to/gx_recast_baker go run ./server/cmd/gx_mapbuild \
-  -data /path/to/client/data -maps all -mob-dungeons-only \
-  -output /path/to/server/data/geometry
+python3 server/tools/mapbuild/generate.py \
+  --data /path/to/client/data --maps all --mob-dungeons-only \
+  --output /path/to/server/data/geometry
 ```
 
 This writes `geometry/mob-dungeons/` alongside the full geometry. Restart
-`gx_world` to load it. The server package includes the companion catalog when
-installed under `server/data/geometry`. Maps without a companion mesh continue
-using the full dungeon geometry for mobs. Player collision uses the main
-geometry generation.
+`gx_world` to load it. Published server packages include the pinned companion
+catalog. Maps without a companion mesh use the full dungeon geometry for
+mobs. Player collision uses the main geometry generation.

@@ -18,6 +18,10 @@ URL = ('https://github.com/Spelunkern/Shaiya-GX/releases/download/'
 SHA256 = '4feb61ac11b1ed52979f5414fcdb58acee4ee94cc5858857afe92f86fa501f95'
 ARCHIVE_MANIFESTS_SHA256 = '1bc09817cdaf5c3106712ebbd724845f31dd77019a29cfa1a3dfde004f523e84'
 MANIFESTS_SHA256 = 'b1750b8a0bd4188291b4bacd54ef284b90aa3f821478ff9d6121f7c581d71ac8'
+MOB_DUNGEON_URL = ('https://github.com/Spelunkern/Shaiya-GX/releases/download/'
+                   'gx-mob-dungeons-20261126/gx-mob-dungeons.tar.gz')
+MOB_DUNGEON_SHA256 = '581ad50b27f8f33d1388f0183558eddaa2e3619c5b9e69d7571b81ceff9ddbf5'
+MOB_DUNGEON_MANIFESTS_SHA256 = '29284e76862106ff07973b7cc2bd971de2b3b9333a5787d68884ade20a0cb315'
 RETIRED_MAPS = frozenset(range(59, 64))
 PORTAL_EDITS = (19, 20, 28, 29)
 COLLISION_RULES_VERSION = 3  # internal/mapnav.CollisionRulesVersion
@@ -66,6 +70,13 @@ def validate(directory, *, require_pin=True):
     return catalog, manifests
 
 
+def validate_dungeon_mobs(directory, *, require_pin=True):
+    catalog, manifests = validate(directory, require_pin=False)
+    if require_pin and manifest_digest(catalog, manifests) != MOB_DUNGEON_MANIFESTS_SHA256:
+        raise ValueError('Unexpected dungeon mob physics generation')
+    return catalog, manifests
+
+
 def project_archive(directory):
     # These portal-only SVMAP edits leave the walk masks used by the bake intact.
     catalog, manifests = validate(directory, require_pin=False)
@@ -88,6 +99,37 @@ def project_archive(directory):
             (directory / f'{map_id}.{ext}').unlink()
 
 
+def unpack(archive, temporary, url, checksum):
+    if archive is None:
+        archive = temporary / 'download.tar.gz'
+        for attempt in range(8):
+            try:
+                with urllib.request.urlopen(url, timeout=120) as response, archive.open('wb') as target:
+                    shutil.copyfileobj(response, target)
+                break
+            except (urllib.error.URLError, TimeoutError):
+                if attempt == 7:
+                    raise
+                time.sleep(15)
+    if digest(archive) != checksum:
+        raise ValueError('Pinned physics archive checksum mismatch')
+    with tarfile.open(archive, 'r:gz') as source:
+        members = source.getmembers()
+        allowed = re.compile(r'geometry/(?:catalog\.json|\d+\.(?:manifest\.json|gxnav|gxcol|gxphysics))\Z')
+        if sum(member.size for member in members) > 1536 * 1024 * 1024:
+            raise ValueError('Oversized physics archive')
+        for member in members:
+            if member.isdir() and member.name == 'geometry':
+                continue
+            if not member.isfile() or not allowed.fullmatch(member.name):
+                raise ValueError(f'Unexpected physics archive member: {member.name}')
+            target = temporary / member.name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with source.extractfile(member) as stream, target.open('xb') as output:
+                shutil.copyfileobj(stream, output)
+    return temporary / 'geometry'
+
+
 def install(destination, archive=None):
     if destination.exists():
         catalog, manifests = read_manifests(destination)
@@ -100,43 +142,29 @@ def install(destination, archive=None):
         return
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='.gx-geometry-', dir=destination.parent) as temporary:
-        temporary = Path(temporary)
-        if archive is None:
-            archive = temporary / 'download.tar.gz'
-            # A source push can start CI while its pinned resource upload finishes.
-            for attempt in range(8):
-                try:
-                    with urllib.request.urlopen(URL, timeout=120) as response, archive.open('wb') as target:
-                        shutil.copyfileobj(response, target)
-                    break
-                except (urllib.error.URLError, TimeoutError):
-                    if attempt == 7:
-                        raise
-                    time.sleep(15)
-        if digest(archive) != SHA256:
-            raise ValueError('Pinned physics archive checksum mismatch')
-        with tarfile.open(archive, 'r:gz') as source:
-            members = source.getmembers()
-            allowed = re.compile(r'geometry/(?:catalog\.json|\d+\.(?:manifest\.json|gxnav|gxcol|gxphysics))\Z')
-            if sum(member.size for member in members) > 1536 * 1024 * 1024:
-                raise ValueError('Oversized physics archive')
-            for member in members:
-                if member.isdir() and member.name == 'geometry':
-                    continue
-                if not member.isfile() or not allowed.fullmatch(member.name):
-                    raise ValueError(f'Unexpected physics archive member: {member.name}')
-                target = temporary / member.name
-                target.parent.mkdir(parents=True, exist_ok=True)
-                with source.extractfile(member) as stream, target.open('wb') as output:
-                    shutil.copyfileobj(stream, output)
-        project_archive(temporary / 'geometry')
-        (temporary / 'geometry').rename(destination)
+        staged = unpack(archive, Path(temporary), URL, SHA256)
+        project_archive(staged)
+        staged.rename(destination)
     print('Installed the pinned server physics catalog.', flush=True)
+
+
+def install_dungeon_mobs(destination, archive=None):
+    if destination.exists():
+        validate_dungeon_mobs(destination)
+        print('Existing dungeon mob physics verified.', flush=True)
+        return
+    with tempfile.TemporaryDirectory(prefix='.gx-mob-dungeons-', dir=destination.parent) as temporary:
+        staged = unpack(archive, Path(temporary), MOB_DUNGEON_URL, MOB_DUNGEON_SHA256)
+        validate_dungeon_mobs(staged)
+        staged.rename(destination)
+    print('Installed the pinned dungeon mob physics catalog.', flush=True)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--destination', type=Path, default=ROOT / 'server/data/geometry')
     parser.add_argument('--archive', type=Path, help='Use an already downloaded pinned archive')
+    parser.add_argument('--mob-archive', type=Path, help='Use an already downloaded dungeon mob archive')
     args = parser.parse_args()
     install(args.destination.resolve(), args.archive)
+    install_dungeon_mobs(args.destination.resolve() / 'mob-dungeons', args.mob_archive)

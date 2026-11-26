@@ -21,6 +21,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT.parent))
 from tools.fetch_server_geometry import validate as validate_geometry
+from tools.fetch_server_geometry import validate_dungeon_mobs
 from tools.release_geometry import verify_sources
 
 PROGRAMS = ("gx_login", "gx_world", "gx_console")
@@ -38,7 +39,11 @@ def checksum(path):
 
 
 def check_navigation(root, *, require_pin=False):
-    catalog, manifests = validate_geometry(root / "data/geometry", require_pin=require_pin)
+    geometry = root / "data/geometry"
+    catalog, manifests = validate_geometry(geometry, require_pin=require_pin)
+    dungeon_mobs = geometry / "mob-dungeons"
+    if require_pin or dungeon_mobs.exists():
+        validate_dungeon_mobs(dungeon_mobs, require_pin=require_pin)
     if require_pin:
         verify_sources(catalog, manifests, root / "data/maps")
 
@@ -202,7 +207,6 @@ def copy_runtime_data(source, target):
     copy_navigation(geometry, target / "geometry")
     dungeon_mobs = geometry / "mob-dungeons"
     if (dungeon_mobs / "catalog.json").is_file():
-        validate_geometry(dungeon_mobs, require_pin=False)
         destination = target / "geometry/mob-dungeons"
         destination.mkdir()
         copy_navigation(dungeon_mobs, destination)

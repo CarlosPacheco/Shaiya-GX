@@ -9,6 +9,7 @@ SQLite is the primary production database. Packages include the embedded databas
 From the GX root, with Go 1.27.4 and Python 3 installed:
 
 ```sh
+python3 tools/fetch_server_geometry.py
 python3 server/tools/package.py --output out/portable
 ```
 
@@ -23,8 +24,9 @@ Output:
 Binaries are attached to GX releases, rather than committed into source history. Tagged release automation reproduces the packages on native runners. Archive manifests list every included file's SHA-256. Packaging validates seed integrity, manifest and table counts; it does not silently refresh the seed from personal runtime state.
 
 The package stages the SQLite seed and its manifest, the server game inputs,
-numbered maps in `data/maps/`, and geometry listed in its catalog. The packager
-checks the pinned release manifests and each corresponding walk mask. Use
+numbered maps in `data/maps/`, and the player and dungeon mob geometry
+catalogs. The packager checks both pinned catalog manifests and the player
+geometry's source walk masks. Use
 `--custom-geometry` for a private build with locally generated geometry. Server
 item definitions and stack limits come from SQLite. When preparing a complete
 portable, the packager synchronizes the staged client `Item.SData` stack fields

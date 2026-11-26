@@ -13,7 +13,7 @@ import tempfile
 import zipfile
 
 from cash_path import existing_cash_path
-from fetch_server_geometry import read_manifests, validate as validate_geometry
+from fetch_server_geometry import read_manifests, validate as validate_geometry, validate_dungeon_mobs
 from font_pack import remove_readmes, validate
 from gx_ini import FILTER_TEMPLATE
 from item_sdata import RETIRED_STACK_CSV, reconcile_stack_limits
@@ -40,6 +40,8 @@ def text_content(data):
 
 
 def merge(source, destination):
+    if not source.is_dir():
+        raise ValueError('native package folder is missing: ' + source.name)
     for path in sorted(source.rglob('*')):
         if path.name.casefold() == RETIRED_STACK_CSV:
             continue
@@ -100,17 +102,26 @@ def prepare(archives, data, output, *, require_pin=False):
         client, server = stage / 'Client', stage / 'Server'
         merge(extracted / 'gx-client-linux-amd64', client)
         merge(extracted / 'gx-client-windows-amd64', client)
+        local_config = set()
         if data is not None:
             print('Copying local loose game data...', flush=True)
-            if any(path.is_file() and path.name.casefold() == 'tip.ini' for path in data.iterdir()):
-                (client / 'data/Tip.INI').unlink(missing_ok=True)
+            for path in data.iterdir():
+                name = path.name.casefold()
+                if path.is_file() and name in {'tip.ini', 'filter.ini'}:
+                    if name in local_config:
+                        raise ValueError('ambiguous local configuration: ' + path.name)
+                    local_config.add(name)
+            for name in ('Tip.INI', 'Filter.INI'):
+                if name.casefold() in local_config:
+                    (client / 'data' / name).unlink(missing_ok=True)
             def exclude_local_data(directory, names):
                 excluded = {RETIRED_STACK_CSV}
                 if Path(directory).parent == data and Path(directory).name.casefold() == 'fonts':
                     excluded.update({'arial.ttf', 'arialbd.ttf'})
                 return [name for name in names if name.casefold() in excluded]
             shutil.copytree(data, client / 'data', dirs_exist_ok=True, ignore=exclude_local_data)
-        (client / 'data/Filter.INI').write_text(FILTER_TEMPLATE, encoding='utf-8', newline='\n')
+        if 'filter.ini' not in local_config:
+            (client / 'data/Filter.INI').write_text(FILTER_TEMPLATE, encoding='utf-8', newline='\n')
         fonts = client / 'data/fonts'
         remove_readmes(fonts)
         validate(fonts)
@@ -129,6 +140,8 @@ def prepare(archives, data, output, *, require_pin=False):
             catalog, manifests = validate_geometry(geometry) if require_pin else read_manifests(geometry)
             client_data = client / 'data' if data is not None else None
             verify_sources(catalog, manifests, server_data / 'maps', client_data)
+            if require_pin:
+                validate_dungeon_mobs(geometry / 'mob-dungeons')
         if data is not None:
             verify_cash_copies(client / 'data', server_data)
             changes = reconcile_stack_limits(client / 'data', server_data / 'rapture.sqlite')

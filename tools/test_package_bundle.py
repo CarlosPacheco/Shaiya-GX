@@ -7,6 +7,14 @@ from package_bundle import merge, verify_cash_copies
 
 
 class NativeBundleMergeTests(unittest.TestCase):
+    def test_missing_native_root_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            destination = root / 'bundle'
+            with self.assertRaisesRegex(ValueError, 'native package folder is missing'):
+                merge(root / 'missing', destination)
+            self.assertFalse(destination.exists())
+
     def test_windows_ansi_readme_matches_linux_utf8_without_changing_linux_bytes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -118,6 +126,7 @@ class BinaryOnlyBundleTests(unittest.TestCase):
             (data/'fonts/LICENSE.txt').write_text('local licensed font data')
             (data/'Cash.SData').write_bytes(b'local original catalog')
             (data/'tip.ini').write_text('[Tips]\n1=Custom tip\n')
+            (data/'filter.ini').write_bytes(b'[Filter]\r\nWord=local term\r\n')
             (data/'fonts/Arial.TTF').write_bytes(b'local regular face')
             (data/'fonts/arialbd.ttf').write_bytes(b'local bold face')
             (data/'World').mkdir()
@@ -129,9 +138,11 @@ class BinaryOnlyBundleTests(unittest.TestCase):
             (data/RETIRED_STACK_CSV.upper()).write_text('old loose stack limits')
             with patch('package_bundle.validate'):
                 prepare(archives,data,root/'with-data')
-            for relative in ('fonts/LICENSE.txt', 'Cash.SData', 'tip.ini'):
+            for relative in ('fonts/LICENSE.txt', 'Cash.SData', 'tip.ini', 'filter.ini'):
                 self.assertEqual((data/relative).read_bytes(), (root/'with-data/Client/data'/relative).read_bytes())
-            self.assertFalse((root/'with-data/Client/data/Tip.INI').exists())
+            packaged_config = {p.name for p in (root/'with-data/Client/data').iterdir()}
+            self.assertNotIn('Tip.INI', packaged_config)
+            self.assertNotIn('Filter.INI', packaged_config)
             fonts = root/'with-data/Client/data/fonts'
             self.assertFalse((fonts/'Arial.TTF').exists())
             self.assertFalse((fonts/'arialbd.ttf').exists())

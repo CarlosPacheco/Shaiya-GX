@@ -13,7 +13,9 @@ p.add_argument('--data', type=Path, required=True, help='loose client data direc
 p.add_argument('--server-maps', type=Path, default=ROOT / 'server/data/maps')
 p.add_argument('--maps', default='all', help='all or comma-separated numeric map IDs')
 p.add_argument('--output', type=Path, default=ROOT / 'work/mapbuild/generated')
-p.add_argument('--physics-only', action='store_true', help='extend an unchanged existing generation without rebaking navigation')
+mode = p.add_mutually_exclusive_group()
+mode.add_argument('--physics-only', action='store_true', help='extend an unchanged existing generation without rebaking navigation')
+mode.add_argument('--mob-dungeons-only', action='store_true', help='build structural dungeon mob navigation')
 p.add_argument('--recast-source', type=Path, default=ROOT / 'work/mapbuild/recast')
 a = p.parse_args()
 go = Path.home() / '.local/opt/go-1.27.4/bin/go'
@@ -39,6 +41,8 @@ command = [str(go), 'run', './server/cmd/gx_mapbuild', '-data', str(a.data.resol
            '-server-maps', str(a.server_maps.resolve()), '-maps', a.maps, '-output', str(a.output.resolve())]
 if a.physics_only:
     command += ['-physics-only']
+if a.mob_dungeons_only:
+    command += ['-mob-dungeons-only']
 subprocess.run(command, cwd=ROOT, env=env, check=True)
 print('Generated resources: ' + str(a.output.resolve()))
 print('Install the complete generation with the world stopped; include its catalog and manifests.')

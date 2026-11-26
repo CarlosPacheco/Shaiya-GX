@@ -1,13 +1,47 @@
+import json
+import tarfile
 import tempfile
 from pathlib import Path
 import unittest
 from unittest.mock import patch
 
+import fetch_server_geometry as resources
 from fetch_server_geometry import MANIFESTS_SHA256, digest
 import release_geometry
 
 
 class ReleaseGeometryTests(unittest.TestCase):
+    def test_install_checks_the_dungeon_mob_manifest_pin(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / 'geometry'
+            source.mkdir()
+            catalog = {'version': 1, 'maps': [3]}
+            (source / 'catalog.json').write_text(json.dumps(catalog))
+            files = {}
+            for extension in ('gxnav', 'gxcol', 'gxphysics'):
+                filename = f'3.{extension}'
+                (source / filename).write_bytes(extension.encode())
+                files[filename] = digest(source / filename)
+            manifest = {
+                'map_id': 3, 'version': 1, 'player_physics': 1,
+                'collision_rules': resources.COLLISION_RULES_VERSION, 'files': files,
+            }
+            (source / '3.manifest.json').write_text(json.dumps(manifest))
+            archive = root / 'mob.tar.gz'
+            with tarfile.open(archive, 'w:gz') as tar:
+                tar.add(source, arcname='geometry')
+            destination = root / 'mob-dungeons'
+            with patch.object(resources, 'MOB_DUNGEON_SHA256', digest(archive)):
+                with self.assertRaisesRegex(ValueError, 'Unexpected dungeon mob'):
+                    resources.install_dungeon_mobs(destination, archive)
+                self.assertFalse(destination.exists())
+                fingerprint = resources.manifest_digest(catalog, [manifest])
+                with patch.object(resources, 'MOB_DUNGEON_MANIFESTS_SHA256', fingerprint):
+                    resources.install_dungeon_mobs(destination, archive)
+                    resources.install_dungeon_mobs(destination, archive)
+                    self.assertEqual(resources.validate_dungeon_mobs(destination), (catalog, [manifest]))
+
     def test_server_walk_mask_must_match_even_without_client_data(self):
         with tempfile.TemporaryDirectory() as temporary:
             maps = Path(temporary)
