@@ -159,7 +159,28 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 		}
 	})
 
-	t.Run("Demon Hushing lethal cues", func(t *testing.T) {
+	t.Run("death before the model is loaded", func(t *testing.T) {
+		a := newApp(327)
+		m := a.wv.mobs[mobID]
+		if m.actor != nil {
+			t.Fatal("fixture already loaded the actor")
+		}
+		const unseenKiller = 42
+		w := proto.NewWriter(proto.MobDeath)
+		w.U32(mobID)
+		w.U8(1)
+		w.U32(unseenKiller)
+		a.applyWorldPacket(w.Bytes())
+		if !m.deathFrozen {
+			t.Fatal("the death notice did not anchor the corpse")
+		}
+		a.prepareMonsters()
+		if !m.dead || m.actor == nil || m.actor.Time <= 0 {
+			t.Fatal("the model did not play death on its first drawable frame")
+		}
+	})
+
+	t.Run("Demon Hushing death notice and separate impact", func(t *testing.T) {
 		if os.Getenv("SHAIYA_AUDIO_TEST") != "1" {
 			t.Skip("requires a local audio device")
 		}
@@ -212,8 +233,11 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 		death.U32(playerID)
 		a.applyWorldPacket(death.Bytes())
 		first, _ := actor.ContactTimes()
-		if !actor.PlayingAction(109) || first <= 0 || mob.incomingHits == 0 || !mob.entity.Dead || len(a.wv.impactCues) != 1 {
-			t.Fatal("missing a confirmed lethal hit on the original clip", first, mob.incomingHits)
+		if !actor.PlayingAction(109) || first <= 0 || !mob.entity.Dead || !mob.dead || mob.deathAt != began || len(a.wv.impactCues) != 1 {
+			t.Fatal("death did not start on the notice with a skill contact still pending")
+		}
+		if soundAt != 0 || len(a.combatNumbers) != 0 {
+			t.Fatal("the death notice played the attack impact")
 		}
 		var impactAt float64
 		for range 120 {
@@ -222,16 +246,14 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 			a.updatePendingNumbers()
 			a.prepareMonsters()
 			a.updateSkillImpactCues()
-			if impactAt == 0 && len(a.wv.impacts) == 1 {
+			if len(a.wv.impacts) == 1 {
 				impactAt = a.clock
-			}
-			if mob.dead {
 				break
 			}
 		}
-		t.Logf("confirmed %.3fs, sound %.3fs, effect %.3fs, death %.3fs, ALT contact %.3fs", began, soundAt, impactAt, mob.deathAt, first)
-		if !mob.dead || len(a.combatNumbers) != 1 || mob.deathAt != a.combatNumbers[0].Started || soundAt != mob.deathAt || impactAt != mob.deathAt {
-			t.Fatalf("lethal hit split across frames: sound=%g effect=%g death=%g numbers=%+v", soundAt, impactAt, mob.deathAt, a.combatNumbers)
+		t.Logf("notice %.3fs, death %.3fs, sound %.3fs, effect %.3fs, ALT contact %.3fs", began, mob.deathAt, soundAt, impactAt, first)
+		if len(a.combatNumbers) != 1 || impactAt <= began || soundAt != impactAt || a.combatNumbers[0].Started != impactAt || mob.deathAt != began {
+			t.Fatalf("contact feedback changed the death time or split across frames: sound=%g effect=%g death=%g numbers=%+v", soundAt, impactAt, mob.deathAt, a.combatNumbers)
 		}
 	})
 
@@ -266,31 +288,23 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 			if tc.twoHits && (first <= 0 || second <= first) {
 				t.Fatal("fixture needs two contact markers", first, second)
 			}
-			if m.incomingHits == 0 || len(a.combatNumbers) != 0 {
-				t.Fatal("lethal hit was not scheduled at contact")
-			}
-			var laterHit *mobActor
-			if tc.name == "sword" {
-				laterHit = a.waitForMobHit(mobID, 1, 0)
-				if laterHit != m {
-					t.Fatal("expected a second hit still in flight")
-				}
+			if len(a.combatNumbers) != 0 || len(a.wv.pendingNumbers)+len(a.wv.physicalProjectiles) == 0 {
+				t.Fatal("attack was not scheduled at contact")
 			}
 			move(a, 102, 4, 0)
 			death := proto.NewWriter(proto.MobDeath)
 			death.U32(mobID)
 			death.U8(1)
 			death.U32(playerID)
+			started := a.clock
 			a.applyWorldPacket(death.Bytes())
-			a.prepareMonsters()
-			if !m.entity.Dead || a.state.Target != 0 || m.dead || len(a.combatNumbers) != 0 ||
+			if !m.entity.Dead || a.state.Target != 0 || !m.dead || m.deathAt != started || m.actor.Time != 0 || len(a.combatNumbers) != 0 ||
 				m.position.duration != 0 || m.pos != (render.V3{102, 4, 100}) {
-				t.Fatalf("death failed to freeze at the server point while waiting for contact: %v", m.pos)
+				t.Fatalf("death notice did not start the clip and freeze at the server point: %v", m.pos)
 			}
 			if weapon == 13 && (len(a.wv.physicalProjectiles) != 1 || a.wv.physicalProjectiles[0].released) {
-				t.Fatal("expected the death notice before arrow release")
+				t.Fatal("expected death before arrow release")
 			}
-			started := a.clock
 			advance := func() {
 				a.clock += a.frameDT
 				actor.Update(float32(a.frameDT))
@@ -298,33 +312,21 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 				a.prepareMonsters()
 				a.updatePhysicalProjectiles(float32(a.frameDT))
 			}
-			for frame := 0; frame < 180 && !m.dead; frame++ {
+			for frame := 0; frame < 180 && len(a.combatNumbers) == 0; frame++ {
 				advance()
 			}
 			want := uint32(100)
 			if tc.twoHits {
 				want = 50
 			}
-			pending := 0
-			if laterHit != nil {
-				pending = 1
+			if len(a.combatNumbers) != 1 || a.combatNumbers[0].Amount != want || m.pos != (render.V3{102, 4, 100}) ||
+				m.deathAt != started || a.combatNumbers[0].Started <= started {
+				t.Fatalf("attack contact moved or restarted the corpse: death=%g pos=%v numbers=%+v", m.deathAt, m.pos, a.combatNumbers)
 			}
-			if !m.dead || m.incomingHits != pending || len(a.combatNumbers) != 1 || a.combatNumbers[0].Amount != want ||
-				m.pos != (render.V3{102, 4, 100}) || m.deathAt != a.combatNumbers[0].Started {
-				t.Fatalf("death and impact diverged: dead=%t pending=%d pos=%v numbers=%+v", m.dead, m.incomingHits, m.pos, a.combatNumbers)
-			}
-			if laterHit != nil {
-				deathAt := m.deathAt
-				for range 2 {
-					advance()
-				}
-				if m.actor.Time <= 0 || m.deathAt != deathAt || m.incomingHits != 1 {
-					t.Fatal("another pending hit delayed or interrupted the death clip")
-				}
-				a.finishMobHit(laterHit)
-				if m.incomingHits != 0 || m.deathAt != deathAt {
-					t.Fatal("later contact restarted the death")
-				}
+			clipTime := m.actor.Time
+			a.applyWorldPacket(death.Bytes())
+			if m.actor.Time != clipTime || m.deathAt != started {
+				t.Fatal("duplicate death notice restarted the clip")
 			}
 			if tc.twoHits {
 				deathAt := m.deathAt
@@ -335,7 +337,7 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 					t.Fatal("second contact did not retain its number after death", a.combatNumbers)
 				}
 			}
-			t.Logf("%s contact and death at %.3fs, corpse anchored at %v", tc.name, m.deathAt-started, m.pos)
+			t.Logf("%s death on notice, first contact %.3fs later, corpse anchored at %v", tc.name, a.combatNumbers[0].Started-started, m.pos)
 		})
 	}
 }

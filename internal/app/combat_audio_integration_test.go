@@ -156,18 +156,18 @@ func TestShadowAttackWeaponContactGL(t *testing.T) {
 	result := proto.SkillResult{ID: skill, Level: 1, Source: 1, Target: victim.ID, HP: 11}
 	miss := result
 	miss.Result, miss.HP = 3, 0
-	if a.deliverMeleeSkillHit(miss, def, false) || mob.incomingHits != 0 {
+	if a.deliverMeleeSkillHit(miss, def, false) || len(a.wv.pendingNumbers) != 0 {
 		t.Fatal("a miss queued a weapon impact")
 	}
 	a.state.LastSkill = result
 	a.confirmedSkillFeedback(proto.SkillUse)
-	if mob.incomingHits != 1 || len(a.combatNumbers) != 0 {
+	if len(a.wv.pendingNumbers) == 0 || len(a.combatNumbers) != 0 {
 		t.Fatal("the confirmed hit was presented before contact")
 	}
 	mob.actor.Time = .1
 	actor.Time = first
 	a.updatePendingNumbers()
-	if mob.incomingHits != 0 || mob.actor.Time >= .1 || len(a.combatNumbers) != 1 {
+	if mob.actor.Time >= .1 || len(a.combatNumbers) != 1 {
 		t.Fatal("first contact did not present the hit and monster reaction")
 	}
 	if second > first {
@@ -182,15 +182,19 @@ func TestShadowAttackWeaponContactGL(t *testing.T) {
 		t.Fatal("could not replay Shadow Attack")
 	}
 	a.confirmedSkillFeedback(proto.SkillUse)
-	victim.Dead = true
-	a.updatePendingNumbers()
-	if mob.deathFrozen {
-		t.Fatal("the monster died visually before the lethal strike")
+	death := proto.NewWriter(proto.MobDeath)
+	death.U32(victim.ID)
+	death.U8(1)
+	death.U32(a.state.SelfID)
+	a.applyWorldPacket(death.Bytes())
+	if !mob.dead || !mob.deathFrozen {
+		t.Fatal("the death notice did not start the monster's death before attack contact")
 	}
+	count := len(a.combatNumbers)
 	actor.Time = first
 	a.updatePendingNumbers()
-	if !mob.deathFrozen || mob.incomingHits != 0 {
-		t.Fatal("the first contact failed to release the monster's death")
+	if len(a.combatNumbers) != count+1 {
+		t.Fatal("the pending skill did not present damage at contact")
 	}
 	t.Logf("Shadow Attack native contact %.3fs, second %.3fs", first, second)
 }

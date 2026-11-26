@@ -70,10 +70,14 @@ func (a *App) startPhysicalProjectile(r proto.AttackResult, weapon uint8, actor 
 		index = e.Speed.Attack
 	}
 	_, hit := scene.WeaponSounds(weapon, r.Result == 1, a.attackVariant)
+	var mob *mobActor
+	if r.HP > 0 && r.Result <= 1 {
+		mob = a.trackMob(a.state.Entities[r.Target])
+	}
 	a.wv.physicalProjectiles = append(a.wv.physicalProjectiles, physicalProjectile{
 		numberHeight: a.combatNumberHeight(r.Target), cue: actionClock{actor, actor.ActionID(), physicalReleaseTime(kind, index)},
 		result: r, part: part, weapon: kind, destination: destination.Add(render.V3{0, .9, 0}), hitSound: hit,
-		mob: a.waitForMobHit(r.Target, r.HP, r.Result), showNumber: a.showsAttackResult(r),
+		mob: mob, showNumber: a.showsAttackResult(r),
 	})
 	return true
 }
@@ -127,7 +131,7 @@ func (a *App) finishPhysicalProjectile(p *physicalProjectile) {
 			a.startSkillImpact(r.Target, p.impact, p.sequence)
 		}
 	}
-	a.finishMobHit(p.mob)
+	a.reactToMobHit(p.mob)
 }
 func (a *App) updatePhysicalProjectiles(dt float32) {
 	kept := a.wv.physicalProjectiles[:0]

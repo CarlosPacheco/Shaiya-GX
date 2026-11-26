@@ -169,6 +169,7 @@ func (a *App) confirmedAnimation(p []byte) {
 			if !mob.deathNotified {
 				mob.deathNotified, mob.deathSound = true, true
 			}
+			a.presentMobDeath(mob)
 		}
 	case proto.MobAttackCharacter:
 		a.startMobBasicAttack(a.state.LastAttack)
@@ -319,32 +320,6 @@ func (a *App) showsAttackResult(r proto.AttackResult) bool {
 	return r.Source == a.state.SelfID || r.Target == a.state.SelfID || r.Target == a.state.Target
 }
 
-// Confirmed hits defer presentation to contact. Once a death notice arrives,
-// the next contact can start the death animation while other hits are pending.
-func (a *App) waitForMobHit(target uint32, hp uint16, result uint8) *mobActor {
-	if hp == 0 || result > 1 {
-		return nil
-	}
-	m := a.trackMob(a.state.Entities[target])
-	if m == nil || m.entity.Dead {
-		return nil
-	}
-	m.incomingHits++
-	return m
-}
-
-func (a *App) finishMobHit(m *mobActor) {
-	if m == nil {
-		return
-	}
-	m.incomingHits--
-	if m.entity.Dead && !m.dead && m.actor != nil && a.state.Entities[m.entity.ID] == m.entity {
-		a.presentMobDeath(m)
-	} else {
-		a.reactToMobHit(m)
-	}
-}
-
 func (a *App) reactToMobHit(m *mobActor) {
 	if m != nil && m.actor != nil && !m.entity.Dead && a.state.Entities[m.entity.ID] == m.entity && m.locomotionAction(a.clock) == 6 {
 		m.actor.PlayOnce(7)
@@ -360,15 +335,8 @@ func (a *App) deliverAttackResult(result proto.AttackResult, actor *scene.Charac
 	v := a.wv
 	showNumber := a.showsAttackResult(result)
 	target := a.state.Entities[result.Target]
-	apply := func(hp uint16, pending, first bool) func() {
-		var mob *mobActor
-		if pending {
-			mob = a.waitForMobHit(result.Target, hp, result.Result)
-		}
+	apply := func(hp uint16, first bool) func() {
 		return func() {
-			if pending {
-				defer a.finishMobHit(mob)
-			}
 			if result.Target != a.state.SelfID && a.state.Entities[result.Target] != target {
 				return
 			}
@@ -380,7 +348,7 @@ func (a *App) deliverAttackResult(result proto.AttackResult, actor *scene.Charac
 					}
 				}
 				a.playCharacterDamageVoice(result.Target, result.Result, hp)
-				if !pending && result.Result <= 1 {
+				if result.Result <= 1 {
 					a.reactToMobHit(v.mobs[result.Target])
 				}
 			}
@@ -395,19 +363,18 @@ func (a *App) deliverAttackResult(result proto.AttackResult, actor *scene.Charac
 		case first > 0 && second > first && second > actor.Time:
 			half := result.HP / 2
 			firstPending := first > actor.Time
-			firstContact := apply(result.HP-half, firstPending, true)
+			firstContact := apply(result.HP-half, true)
 			if firstPending {
 				v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), first}, firstContact})
 			} else {
 				firstContact()
 			}
-			// The blow can hold a mob's death only until its first contact.
-			v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), second}, apply(half, false, false)})
+			v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), second}, apply(half, false)})
 			return
 		case first > actor.Time:
-			v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP, true, true)})
+			v.pendingNumbers = append(v.pendingNumbers, pendingNumber{actionClock{actor, actor.ActionID(), first}, apply(result.HP, true)})
 			return
 		}
 	}
-	apply(result.HP, false, true)()
+	apply(result.HP, true)()
 }

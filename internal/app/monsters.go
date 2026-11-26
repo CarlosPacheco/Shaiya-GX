@@ -22,7 +22,6 @@ type mobActor struct {
 	idleAt        float64
 	attackTarget  uint32
 	attackImpact  *mobAttackImpact
-	incomingHits  int
 	deathAt       float64
 	deathFrozen   bool
 	deathSound    bool
@@ -181,12 +180,8 @@ func (a *App) prepareMonsters() {
 		}
 		a.updateMobPosition(m)
 
-		action := 6
-		death := e.Dead && (m.dead || m.incomingHits == 0)
 		if e.Dead {
-			if !m.deathFrozen {
-				m.freezeCorpse(e, a.clock)
-			}
+			a.presentMobDeath(m)
 		} else {
 			if m.actor.Attacking() && m.attackTarget != 0 && m.attackTarget != e.ID {
 				if target, ok := a.effectPosition(m.attackTarget); ok {
@@ -196,7 +191,7 @@ func (a *App) prepareMonsters() {
 			turn := math.Remainder(m.heading-m.yaw, 2*math.Pi)
 			m.yaw += turn * min(1, max(0, a.frameDT)*4.5)
 			m.placeActor()
-			action = m.locomotionAction(a.clock)
+			action := m.locomotionAction(a.clock)
 			if action != 6 || m.actor.Attacking() {
 				m.idleAt = 0
 			} else if m.idleAt == 0 {
@@ -207,10 +202,6 @@ func (a *App) prepareMonsters() {
 					m.actor.PlayIdleVariation()
 				}
 			}
-		}
-		if death {
-			a.presentMobDeath(m)
-		} else {
 			if err := m.actor.SetAction(action); err != nil {
 				a.assets.Missing[err.Error()] = true
 			}
@@ -224,13 +215,17 @@ func (a *App) prepareMonsters() {
 		if effects {
 			v.mobPoseSamples.Sample(m.actor.Character)
 		}
-		m.actor.PrepareEffects(float32(a.frameDT), effects, !death, &effectBudget)
+		m.actor.PrepareEffects(float32(a.frameDT), effects, !e.Dead, &effectBudget)
 	}
 }
 
 func (a *App) presentMobDeath(m *mobActor) {
 	if !m.deathFrozen {
 		m.freezeCorpse(m.entity, a.clock)
+		m.placeActor()
+	}
+	if m.actor == nil {
+		return
 	}
 	a.finishMobAttack(m)
 	if !m.dead {
