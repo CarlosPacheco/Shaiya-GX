@@ -180,6 +180,7 @@ type App struct {
 	chatFilter                          *text.WordFilter
 	chatFilterApplied                   bool
 	msg                                 text.SysMsg
+	englishMsg                          text.SysMsg
 	white                               *render.Texture
 	cache                               map[string]*render.Texture
 	assets                              *scene.Assets
@@ -321,12 +322,10 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	}
 	a.chatTextFont.SetBorder(.5)
 
-	if b, err := arc.ReadFile("sysmsg-uni.txt"); err == nil {
-		a.msg = text.ParseSysMsg(b)
-	} else {
-		a.msg = text.SysMsg{}
-	}
-	ui.SetText(a.msg.Lookup)
+	languageID := loadClientLanguage()
+	english, messages := loadContentMessages(arc.ReadFile, languageID)
+	a.msg, a.englishMsg = messages, english
+	ui.SetText(english.Lookup)
 	if b, err := arc.ReadFile("Filter.INI"); err == nil {
 		a.chatFilter = text.ParseWordFilter(b)
 	}
@@ -334,13 +333,13 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.login, err = ui.NewLogin(a); err != nil {
 		return nil, err
 	}
-	if a.servers, err = ui.NewServerList(a, a.msg, a.white); err != nil {
+	if a.servers, err = ui.NewServerList(a, english, a.white); err != nil {
 		return nil, err
 	}
-	if a.chars, err = ui.NewCharSelect(a, a.msg); err != nil {
+	if a.chars, err = ui.NewCharSelect(a, english); err != nil {
 		return nil, err
 	}
-	if a.create, err = ui.NewCharCreate(a, a.msg); err != nil {
+	if a.create, err = ui.NewCharCreate(a, messages); err != nil {
 		return nil, err
 	}
 	if a.accountMessage, err = ui.NewMessage(a); err != nil {
@@ -367,6 +366,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if cfg.DisplayModes != nil {
 		a.gameMenu.SetDisplayModes(cfg.DisplayModes())
 	}
+	a.gameMenu.Settings.LanguageID = languageID
 	a.aaSamples = render.SupportedMSAASamples()
 	a.gameMenu.SetAntialiasSamples(a.aaSamples)
 	if a.menuConfirm, err = ui.NewMessage(a); err != nil {
@@ -539,7 +539,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if a.skillBook, err = ui.NewSkillBook(a); err != nil {
 		return nil, err
 	}
-	if a.factionUI, err = ui.NewFaction(a, a.msg); err != nil {
+	if a.factionUI, err = ui.NewFaction(a, messages); err != nil {
 		return nil, err
 	}
 	if cfg.Volume > 0 {
@@ -552,7 +552,6 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	a.loadingScreen = ui.NewLoadingScreen(a)
 	a.loadSavedID()
 	a.loadUILayout()
-	a.loadClientLanguage()
 	a.loadClientSettings()
 	a.gameMenu.Settings.Antialias = ui.NormalizeAntialias(a.gameMenu.Settings.Antialias, a.aaSamples)
 	if a.gameMenu.Settings.DisplayMode == (platform.DisplayMode{}) && cfg.CurrentDisplayMode != nil {
@@ -854,9 +853,7 @@ func (a *App) loginMessage(err error) string {
 // backToLoginID is backToLogin with a SysMsg id (see tr).
 func (a *App) backToLoginID(id int) { a.backToLogin(a.tr(id)) }
 
-// tr is the SysMsg text for id: sysmsg-uni.txt first, then the embedded GX rows.
-// User-visible text lives in those tables, never in code, so a language is
-// one table.
+// tr resolves the selected content message with the English catalog as fallback.
 func (a *App) tr(id int) string { return a.msg.Lookup(id) }
 
 func (a *App) backToLogin(msg string) {

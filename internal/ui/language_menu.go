@@ -12,17 +12,18 @@ var gameLanguages = [...]struct {
 	id   int
 	name string
 	flag string
+	code string
 }{
-	{EnglishLanguageID, "English", "🇺🇸"},
-	{2, "Español", "🇪🇸"},
-	{3, "Português (Brasil)", "🇧🇷"},
-	{4, "Français", "🇫🇷"},
-	{5, "Deutsch", "🇩🇪"},
-	{6, "Italiano", "🇮🇹"},
-	{7, "Polski", "🇵🇱"},
-	{8, "Türkçe", "🇹🇷"},
-	{9, "Русский", "🇷🇺"},
-	{10, "Tiếng Việt", "🇻🇳"},
+	{EnglishLanguageID, "English", "🇺🇸", ""},
+	{2, "Español", "🇪🇸", "es"},
+	{3, "Português (Brasil)", "🇧🇷", "pt-BR"},
+	{4, "Français", "🇫🇷", "fr"},
+	{5, "Deutsch", "🇩🇪", "de"},
+	{6, "Italiano", "🇮🇹", "it"},
+	{7, "Polski", "🇵🇱", "pl"},
+	{8, "Türkçe", "🇹🇷", "tr"},
+	{9, "Русский", "🇷🇺", "ru"},
+	{10, "Tiếng Việt", "🇻🇳", "vi"},
 }
 
 const (
@@ -42,6 +43,9 @@ func languageIndex(id int) int {
 }
 
 func NormalizeLanguageID(id int) int { return gameLanguages[languageIndex(id)].id }
+
+// MessageLanguageCode is empty for English and unknown IDs.
+func MessageLanguageCode(id int) string { return gameLanguages[languageIndex(id)].code }
 
 func (m *GameMenu) PopupOpen() bool {
 	return m.DisplayPopupOpen() || m != nil && m.Page == MenuUser && m.languageOpen

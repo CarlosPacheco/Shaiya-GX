@@ -72,6 +72,6 @@ func (a *App) drawGuildRanking(w, h int) {
 		top = info.Name
 	}
 	a.guildPointUI.Draw(a.sprites, a.font,
-		[3]string{a.msg.Get(8036), a.msg.Get(8056), a.msg.Get(8055)},
+		[3]string{a.interfaceText(8036), a.interfaceText(8056), a.interfaceText(8055)},
 		[3]string{strconv.FormatUint(uint64(v.Points), 10), top, strconv.FormatUint(uint64(v.Maximum), 10)})
 }

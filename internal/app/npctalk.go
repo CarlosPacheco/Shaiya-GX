@@ -34,7 +34,7 @@ func (a *App) npcServiceLabel(e *game.Entity, def sdata.NPC) string {
 	case 11:
 		id = 0x14b5
 	}
-	return a.msg.Get(id)
+	return a.interfaceText(id)
 }
 
 // npcHasService reports whether the NPC has a window of its own in GX.
@@ -147,7 +147,7 @@ func (a *App) updateNPCTalk(in *platform.Input, w, h int, e *game.Entity) bool {
 func (a *App) drawNPCTalk(w, h int, e *game.Entity) {
 	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 	canQuest := len(a.npcQuestEntries(e)) > 0
-	a.npcTalkUI.Draw(a.sprites, a.font, w, h, def.Name, questText(def.Welcome), a.npcServiceLabel(e, def), a.msg.Get(0x14ad), canQuest)
+	a.npcTalkUI.Draw(a.sprites, a.font, w, h, def.Name, questText(def.Welcome), a.npcServiceLabel(e, def), a.interfaceText(0x14ad), canQuest)
 	if portrait := a.npcPortrait(def); portrait != nil {
 		x, y := a.npcTalkUI.Origin(w, h)
 		a.sprites.Draw(portrait, float32(x+7), float32(y+7), 64, 64, 0, 0, 1, 1, white)

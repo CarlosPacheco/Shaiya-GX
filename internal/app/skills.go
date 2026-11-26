@@ -356,7 +356,7 @@ func (a *App) drawSkills(w, h int) {
 	a.clearTooltipUnderPanel(x, y, ui.SkillBookWidth, ui.SkillBookHeight)
 	keys := a.visibleSkills()
 	a.skills.offset = max(0, min(a.skills.offset, max(0, len(keys)-ui.SkillBookRows)))
-	a.skillBook.Draw(a.sprites, a.font, w, h, int(a.skills.category), a.skills.offset, len(keys), a.state.Details.SkillPoint, a.learnableRows(keys), a.msg.Get(480))
+	a.skillBook.Draw(a.sprites, a.font, w, h, int(a.skills.category), a.skills.offset, len(keys), a.state.Details.SkillPoint, a.learnableRows(keys), a.interfaceText(480))
 	for row := 0; row < ui.SkillBookRows && a.skills.offset+row < len(keys); row++ {
 		key := keys[a.skills.offset+row]
 		d := a.skillDefs[key]
@@ -401,8 +401,8 @@ func (a *App) drawSkills(w, h int) {
 			if a.state.Details.SkillPoint < uint16(d.Points) {
 				pointColor = [4]float32{1, 100.0 / 255, 100.0 / 255, 1}
 			}
-			a.font.Draw(a.sprites, fmt.Sprintf("%s : %s %2d", a.msg.Get(5249), a.msg.Get(5065), d.RequiredLevel), x+88, y+cy+19, levelColor, 100)
-			a.font.Draw(a.sprites, fmt.Sprintf("%s %2d", a.msg.Get(480), d.Points), x+190, y+cy+19, pointColor, 85)
+			a.font.Draw(a.sprites, fmt.Sprintf("%s : %s %2d", a.interfaceText(5249), a.interfaceText(5065), d.RequiredLevel), x+88, y+cy+19, levelColor, 100)
+			a.font.Draw(a.sprites, fmt.Sprintf("%s %2d", a.interfaceText(480), d.Points), x+190, y+cy+19, pointColor, 85)
 		}
 	}
 

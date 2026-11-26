@@ -295,15 +295,15 @@ func languageSettingsPath() (string, error) {
 	return filepath.Join(filepath.Dir(path), "language.json"), err
 }
 
-func (a *App) loadClientLanguage() {
+func loadClientLanguage() int {
 	path, err := languageSettingsPath()
 	if err != nil {
 		log.Printf("load language: %v", err)
-		return
+		return ui.EnglishLanguageID
 	}
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return
+		return ui.EnglishLanguageID
 	}
 	var id int
 	if err == nil {
@@ -311,9 +311,9 @@ func (a *App) loadClientLanguage() {
 	}
 	if err != nil {
 		log.Printf("load language: %v", err)
-		return
+		return ui.EnglishLanguageID
 	}
-	a.gameMenu.Settings.LanguageID = ui.NormalizeLanguageID(id)
+	return ui.NormalizeLanguageID(id)
 }
 
 func (a *App) saveClientLanguage(id int) {

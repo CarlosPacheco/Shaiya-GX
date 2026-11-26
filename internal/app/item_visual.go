@@ -204,7 +204,7 @@ func (a *App) itemTooltip(def *sdata.Item, instance *proto.InventoryItem, count 
 	}
 
 	if rt := itemtype.Real(def.Type); rt >= 1 && rt <= 15 && display.AttackTime != def.AttackTime {
-		label := a.msg.Get(5192 + int(attackspeed.Tier(display.AttackTime, 0)))
+		label := a.interfaceText(5192 + int(attackspeed.Tier(display.AttackTime, 0)))
 		if label == "" {
 			label = a.tr(12256)
 		}
@@ -234,7 +234,7 @@ func (a *App) itemTooltip(def *sdata.Item, instance *proto.InventoryItem, count 
 	}
 	if own, ok := a.selfSlot(); ok {
 		for i := range rows {
-			if strings.HasPrefix(rows[i].text, a.msg.Get(5211)+" ") && own.Level < def.MinLevel {
+			if strings.HasPrefix(rows[i].text, a.interfaceText(5211)+" ") && own.Level < def.MinLevel {
 				rows[i].color = [4]float32{1, 0, 0, 1}
 			}
 		}

@@ -194,9 +194,9 @@ a mount.
 Equipment sounds play when World confirms a change to an equipped slot.
 
 The language selector beside **Control Setup** in User Options saves the
-preferred content language independently of window layout. English is the default. This selector preview exposes ten
-language choices with flags and native names. Game text stays in English until
-translation loading is implemented.
+preferred content language independently of window layout. English is the
+default. Restart the client to load the selected SysMsg catalog. Missing
+translations fall back to the English text. Interface labels use English.
 
 Items are used with the **right** button (a deliberate departure from the original,
 which used the left click, to match modern clients): right-clicking a bag item

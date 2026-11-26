@@ -1,17 +1,37 @@
 # Client text and SysMsg
 
-All user-visible text of the client lives in SysMsg tables, never in code, so a
-language is a single `sysmsg-uni.txt`:
+The base content catalog is `data/sysmsg-uni.txt` (UTF-16LE).
 
-- **Native ids** (1..11100) are the original rows. Code asks for them by id and prefers them.
-- **GX ids** (12001+) are rows the client adds where the original has no text. They are
-  listed in `internal/data/text/sysmsg-gx.txt` (same row format, UTF-8), embedded in the
-  executable as defaults, and written into the data folder's `sysmsg-uni.txt` by
-  `tools/patch_sysmsg.py <data dir> [--native]` so they can be translated in place.
-  The same file also holds default text for native ids an older table may lack
-  (`--native` writes those too).
-- `sysmsg-uni.txt` always wins; the embedded rows only answer for ids it lacks
-  (`SysMsg.Lookup`, `App.tr`, `ui.Tr`).
+- **Native IDs** (1–11100) are the original rows.
+- **GX IDs** (12001+) and defaults for native rows missing in older files are
+  embedded from `internal/data/text/sysmsg-gx.txt`.
+  `tools/patch_sysmsg.py <data dir> [--native]` can install these rows in the
+  English catalog for editing.
+
+## Translation catalogs
+
+Select a language in User Options and restart the client. English (ID 1) uses
+only the base catalog. For other languages, the client opens one file at
+`data/Languages/Messages/sysmgtxt-<code>.txt`.
+
+| ID | Language | Code |
+| --- | --- | --- |
+| 2 | Español | `es` |
+| 3 | Português (Brasil) | `pt-BR` |
+| 4 | Français | `fr` |
+| 5 | Deutsch | `de` |
+| 6 | Italiano | `it` |
+| 7 | Polski | `pl` |
+| 8 | Türkçe | `tr` |
+| 9 | Русский | `ru` |
+| 10 | Tiếng Việt | `vi` |
+
+Use UTF-8 and the same numeric IDs and quoted rows as the English table.
+For example, `2<TAB><TAB>"<p> ha muerto"` is a Spanish row for the
+English message `<p> died`. Keep substitutions such as `<p>` and `<v>`,
+literal `\n` line breaks, and formatting tags. The file can contain any subset
+of rows. Missing files and missing, empty or invalid entries use the English
+row. Menu labels still use the English catalog.
 
 How code asks for text:
 

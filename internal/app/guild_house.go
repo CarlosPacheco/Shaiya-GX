@@ -81,9 +81,9 @@ func (a *App) houseBuildView(kind ui.HouseKind, e *game.Entity) *ui.HouseView {
 	v := &ui.HouseView{Portrait: a.npcPortrait(def), NpcName: def.Name, Selected: h.selected,
 		CanManage: g.ID != 0 && g.Rank >= 1 && g.Rank <= 2, ListOffset: h.listOffset}
 	if kind == ui.HouseGuildManager {
-		v.Title = a.msg.Get(8009)
+		v.Title = a.interfaceText(8009)
 	} else {
-		v.Title = a.msg.Get(8010)
+		v.Title = a.interfaceText(8010)
 		v.HouseOwned = g.HouseBought
 		v.CanBuy = g.ID != 0 && g.Rank == 1 && !g.HouseBought && services != nil
 	}
@@ -92,14 +92,14 @@ func (a *App) houseBuildView(kind ui.HouseKind, e *game.Entity) *ui.HouseView {
 		v.Etin = strconv.FormatUint(uint64(g.Etin), 10)
 		v.Available = strconv.FormatUint(uint64(available), 10)
 		v.Total = strconv.FormatUint(uint64(services.Upkeep), 10)
-		etinWord, levelWord := a.msg.Get(8021), a.msg.Get(5211)
+		etinWord, levelWord := a.interfaceText(8021), a.interfaceText(5211)
 		v.Rows = make([]ui.HouseRow, len(houseServiceDisplay))
 		for i, display := range houseServiceDisplay {
 			service, ok := services.Service(display.npcType)
 			if !ok {
 				continue
 			}
-			name := a.msg.Get(display.title)
+			name := a.interfaceText(display.title)
 			level, fee, feeLabel := service.Level, service.Upkeep, 8020
 			row := ui.HouseRow{Show: true, Icon: display.icon, RankOK: true}
 			if kind == ui.HouseGuildManager {
@@ -111,7 +111,7 @@ func (a *App) houseBuildView(kind ui.HouseKind, e *game.Entity) *ui.HouseView {
 				row.UpgradeOn = v.CanManage && services.Active && row.ShowUpgrade && uint32(fee) <= available
 			}
 			row.Title = fmt.Sprintf("%s %s%d", name, levelWord, level)
-			row.FeeText = fmt.Sprintf("%s %d %s", a.msg.Get(feeLabel), fee, etinWord)
+			row.FeeText = fmt.Sprintf("%s %d %s", a.interfaceText(feeLabel), fee, etinWord)
 			row.FeeOK = uint32(fee) <= available
 			row.IconDim = !row.FeeOK
 			v.Rows[i] = row

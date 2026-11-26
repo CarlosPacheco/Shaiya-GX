@@ -641,8 +641,8 @@ func (a *App) auctionLeftText(ends int64, x, y int) {
 
 // auctionBids draws the "Bid now / Buy now" pair shared by every list.
 func (a *App) auctionBids(r proto.AuctionRow, labelX, bidY, buyY, right int) {
-	a.auctionText(a.msg.Get(7041), labelX, bidY, white)
-	a.auctionText(a.msg.Get(7042), labelX, buyY, auctionRed)
+	a.auctionText(a.interfaceText(7041), labelX, bidY, white)
+	a.auctionText(a.interfaceText(7042), labelX, buyY, auctionRed)
 	a.auctionGold(r.Price, right, bidY)
 	a.auctionAmount(r.Buyout, right, buyY, auctionRed)
 }
@@ -667,9 +667,9 @@ func (a *App) drawAuctionBrowseRows(ox, oy int, rows []proto.AuctionRow, first, 
 		a.auctionIcon(r, ox+0xa6, by+0x87)
 		a.auctionText(r.Name, ox+0xdb, by+nameY, a.auctionNameColor(r))
 		if markers && r.Mine {
-			a.auctionText(a.msg.Get(7054), ox+0x168, by+0x9b, white)
+			a.auctionText(a.interfaceText(7054), ox+0x168, by+0x9b, white)
 		} else if markers && r.HighBidder {
-			a.auctionText(a.msg.Get(7055), ox+0x168, by+0x9b, white)
+			a.auctionText(a.interfaceText(7055), ox+0x168, by+0x9b, white)
 		}
 		a.auctionText(a.auctionLevel(r), ox+0x1b4, by+0x8e, white)
 		a.auctionLeftText(r.Ends, ox+0x1fc, by+0x8e)
@@ -715,7 +715,7 @@ func (a *App) drawAuctionEnded(ox, oy int, items, gold auctionList, view int) {
 			a.auctionBox(ox+0xe, by+0x7f, 0x159, 0x2e, auctionSelection)
 		}
 		msg, c := auctionItemOutcome(r.Reason)
-		a.auctionText(a.msg.Get(msg), ox+0x24, by+0x94, c)
+		a.auctionText(a.interfaceText(msg), ox+0x24, by+0x94, c)
 		a.auctionLeftText(r.Ends, ox+0x7b, by+0x94)
 		a.auctionIcon(r, ox+0xaa, by+0x8b)
 		a.auctionText(a.fitText(r.Name, 0x82), ox+0xce, by+0x94, a.auctionNameColor(r))
@@ -727,14 +727,14 @@ func (a *App) drawAuctionEnded(ox, oy int, items, gold auctionList, view int) {
 		}
 		a.auctionLeftText(r.Ends, ox+0x1ea, by+0x94)
 		if r.Reason == "Bid refund" {
-			a.auctionText(a.msg.Get(7047), ox+0x19a, by+0x94, auctionBlue)
-			a.auctionText(a.msg.Get(7043), ox+0x22b, by+0x94, white)
+			a.auctionText(a.interfaceText(7047), ox+0x19a, by+0x94, auctionBlue)
+			a.auctionText(a.interfaceText(7043), ox+0x22b, by+0x94, white)
 			a.auctionGold(r.Gold, ox+0x2c4, by+0x94)
 			continue
 		}
-		a.auctionText(a.msg.Get(7048), ox+0x19a, by+0x94, auctionYellow)
-		a.auctionText(a.msg.Get(7044), ox+0x22b, by+0x8b, white)
-		a.auctionText(a.msg.Get(7045), ox+0x22b, by+0x9f, white)
+		a.auctionText(a.interfaceText(7048), ox+0x19a, by+0x94, auctionYellow)
+		a.auctionText(a.interfaceText(7044), ox+0x22b, by+0x8b, white)
+		a.auctionText(a.interfaceText(7045), ox+0x22b, by+0x9f, white)
 		a.auctionGold(r.Price, ox+0x2c4, by+0x8b)
 		a.auctionGold(r.Gold, ox+0x2c4, by+0x9f)
 	}
@@ -760,7 +760,7 @@ func (a *App) auctionGradeText(grade int) (string, [4]float32) {
 	case 7:
 		idx = 10
 	}
-	return a.msg.Get(7000 + grade), auctionRGB(ui.ItemNameRGB(uint8(idx)))
+	return a.interfaceText(7000 + grade), auctionRGB(ui.ItemNameRGB(uint8(idx)))
 }
 
 func (a *App) drawAuctionSearchBar(ox, oy int) {
@@ -801,7 +801,7 @@ func (a *App) drawAuctionSearchBar(ox, oy int) {
 					a.sprites.Draw(tex, float32(ox+0x16), float32(top+0x16+i*0x16), 32, 32, .5, 0, 1, .25, white)
 				}
 			}
-			a.auctionText(a.msg.Get(group.msg+i), ox+0x30, top+0x1c+i*0x16, c)
+			a.auctionText(a.interfaceText(group.msg+i), ox+0x30, top+0x1c+i*0x16, c)
 		}
 	}
 }
