@@ -3,11 +3,15 @@
 package app
 
 import (
+	"errors"
 	"math"
 	"os"
 	"runtime"
+	"strings"
 	"testing"
+	"time"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/audio"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -152,6 +156,82 @@ func TestMobMovementAndAttackContactGL(t *testing.T) {
 		m = a.wv.mobs[mobID]
 		if m.actor == nil || !m.actor.Attacking() || len(a.combatNumbers) != 0 {
 			t.Fatal("enter followed by attack in the same packet batch lost the swing")
+		}
+	})
+
+	t.Run("Demon Hushing lethal cues", func(t *testing.T) {
+		if os.Getenv("SHAIYA_AUDIO_TEST") != "1" {
+			t.Skip("requires a local audio device")
+		}
+		a := newApp(327)
+		a.skillDefs = nil
+		a.arc = arc
+		a.wv.pos = render.V3{98, 2, 100}
+		a.state.Target = mobID
+		a.state.Inventory[[2]uint8{0, 5}] = proto.InventoryItem{Type: 2, TypeID: 106}
+		actor, err := scene.BuildCharacter(assets, scene.Appearance{Race: 0, Job: 0, Height: 4, Helmet: -1, WeaponType: 2}, "000_normal")
+		if err != nil {
+			t.Fatal(err)
+		}
+		a.wv.self = actor
+		a.prepareMonsters()
+		mob := a.wv.mobs[mobID]
+		var soundAt float64
+		a.sound, err = audio.New(func(name string) ([]byte, error) {
+			if strings.HasSuffix(strings.ToLower(name), "/ef_dmg_hit01.ogg") {
+				soundAt = a.clock
+			}
+			return nil, errors.New("silent probe")
+		}, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer a.sound.Close()
+		a.soundErrors = map[string]bool{}
+		for deadline := time.Now().Add(time.Second); a.sound.Play("ready", 1) == nil; {
+			if time.Now().After(deadline) {
+				t.Fatal("audio did not initialize")
+			}
+			time.Sleep(time.Millisecond)
+		}
+
+		began := a.clock
+		result := proto.NewWriter(proto.SkillUse)
+		result.U8(0)
+		result.U32(playerID)
+		result.U32(mobID)
+		result.U16(171)
+		result.U8(3)
+		result.U16(280)
+		result.U16(0)
+		result.U16(0)
+		a.applyWorldPacket(result.Bytes())
+		death := proto.NewWriter(proto.MobDeath)
+		death.U32(mobID)
+		death.U8(1)
+		death.U32(playerID)
+		a.applyWorldPacket(death.Bytes())
+		first, _ := actor.ContactTimes()
+		if !actor.PlayingAction(109) || first <= 0 || mob.incomingHits == 0 || !mob.entity.Dead || len(a.wv.impactCues) != 1 {
+			t.Fatal("missing a confirmed lethal hit on the original clip", first, mob.incomingHits)
+		}
+		var impactAt float64
+		for range 120 {
+			a.clock += a.frameDT
+			actor.Update(float32(a.frameDT))
+			a.updatePendingNumbers()
+			a.prepareMonsters()
+			a.updateSkillImpactCues()
+			if impactAt == 0 && len(a.wv.impacts) == 1 {
+				impactAt = a.clock
+			}
+			if mob.dead {
+				break
+			}
+		}
+		t.Logf("confirmed %.3fs, sound %.3fs, effect %.3fs, death %.3fs, ALT contact %.3fs", began, soundAt, impactAt, mob.deathAt, first)
+		if !mob.dead || len(a.combatNumbers) != 1 || mob.deathAt != a.combatNumbers[0].Started || soundAt != mob.deathAt || impactAt != mob.deathAt {
+			t.Fatalf("lethal hit split across frames: sound=%g effect=%g death=%g numbers=%+v", soundAt, impactAt, mob.deathAt, a.combatNumbers)
 		}
 	})
 

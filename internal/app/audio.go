@@ -142,13 +142,10 @@ func (a *App) confirmedSound(p []byte) {
 		a.playSkillSound(r.Source, r.ID, r.Level, true)
 	case proto.SkillUse, proto.SkillUseNoTarget, proto.SkillUserDrain, proto.SkillMobDrain:
 		r := a.state.LastSkill
-		a.playSkillHitSound(r)
 		a.playSkillHealSound(r)
 		if r.Result <= 4 && !(r.Result == 3 && r.Target == 0) {
 			a.playSkillSound(r.Source, r.ID, r.Level, false)
 		}
-	case proto.SkillPartyMember, proto.SkillMobOther:
-		a.playSkillHitSound(a.state.LastSkill)
 	case proto.MobSkillUse, proto.MobSkillDrain, proto.MobSkillOther:
 		r := a.state.LastSkill
 		if r.HP > 0 {
@@ -254,16 +251,15 @@ type skillSoundKey struct {
 // Trap and Demon Hushing have no sound in the original (no voice for clips
 // 108/109 and no impact id in 0x5761b0). GX gives their damage the registered
 // but otherwise unused hit cue ef_dmg_hit01 (0x426613, id 0x30) on the target.
-func (a *App) playSkillHitSound(r proto.SkillResult) {
-	if r.HP == 0 || r.Result > 1 || r.Target == 0 {
-		return
+func skillHitSound(r proto.SkillResult) string {
+	if r.HP == 0 || r.Result > 1 || r.Target == 0 || r.Level == 100 {
+		return ""
 	}
 	switch r.ID {
 	case 113, 169, 171:
-		if pos, ok := a.effectPosition(r.Target); ok {
-			a.playSound("ef_dmg_hit01.ogg", pos[0], pos[2])
-		}
+		return "ef_dmg_hit01.ogg"
 	}
+	return ""
 }
 
 // playMobHitSound is the impact of a creature's blow on a character (Game.exe

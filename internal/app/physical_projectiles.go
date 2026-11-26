@@ -22,6 +22,7 @@ type physicalProjectile struct {
 	hitSound         string
 	impact           string
 	impactSound      string
+	skillHitSound    string
 	sequence         int
 	mob              *mobActor
 	showNumber       bool
@@ -117,6 +118,7 @@ func (a *App) finishPhysicalProjectile(p *physicalProjectile) {
 	}
 	if r.HP > 0 && r.Result <= 1 {
 		a.playSound(p.hitSound, p.destination[0], p.destination[2])
+		a.playSound(p.skillHitSound, p.destination[0], p.destination[2])
 		a.playCharacterDamageVoice(r.Target, r.Result, r.HP)
 	}
 	if r.Result <= 1 {
@@ -206,6 +208,7 @@ func (a *App) queuePhysicalSkill(r proto.SkillResult, d sdata.Skill, secondary b
 	}
 	p := &a.wv.physicalProjectiles[len(a.wv.physicalProjectiles)-1]
 	p.impact, p.sequence = effect.ImpactLibrary(r.ID), int(r.Level)-1
+	p.skillHitSound = skillHitSound(r)
 	if secondary {
 		p.impact, p.sequence = skillSecondaryLibrary(r, d)
 		p.swingQueued = true

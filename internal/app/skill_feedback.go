@@ -49,6 +49,7 @@ func (a *App) confirmedSkillFeedback(op proto.Opcode) {
 				a.playCharacterDamageVoice(r.Target, r.Result, r.HP)
 			}
 		}
+		a.playEntitySound(r.Target, skillHitSound(r))
 		if r.Result == 3 {
 			label = lblMiss
 		} else if ok && d.Effect == 2 {
@@ -131,6 +132,6 @@ func (a *App) deliverMeleeSkillHit(r proto.SkillResult, d sdata.Skill, secondary
 		}
 		_, hit = scene.WeaponSounds(weapon, r.Result == 1, a.attackVariant)
 	}
-	a.deliverAttackResult(proto.AttackResult{Source: r.Source, Target: r.Target, HP: r.HP, SP: r.SP, MP: r.MP, Result: r.Result}, actor, hit)
+	a.deliverAttackResult(proto.AttackResult{Source: r.Source, Target: r.Target, HP: r.HP, SP: r.SP, MP: r.MP, Result: r.Result}, actor, hit, skillHitSound(r))
 	return true
 }

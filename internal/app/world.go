@@ -861,6 +861,9 @@ func (a *App) drawWorldView(w, h int) {
 	}
 	a.prepareRemotePlayers()
 	a.attachVehiclePassengers()
+	// Player clocks advanced since Update. Resolve their contacts before
+	// sampling the monster pose and spawning the impact effects.
+	a.updatePendingNumbers()
 	a.prepareMonsters()
 	a.prepareTransforms()
 	a.prepareNPCs()
