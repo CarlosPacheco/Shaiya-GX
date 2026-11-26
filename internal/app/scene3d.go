@@ -135,7 +135,21 @@ func (a *App) itemsItem(typ, id uint8) *sdata.Item {
 			}
 		}
 	}
-	def := a.items[sdata.ItemKey{Type: typ, TypeID: id}]
+	key := sdata.ItemKey{Type: typ, TypeID: id}
+	def := a.items[key]
+	if translation, ok := a.localized.Items[key]; def != nil && ok {
+		localized := a.localizedItems[key]
+		if localized == nil {
+			if a.localizedItems == nil {
+				a.localizedItems = make(map[sdata.ItemKey]*sdata.Item)
+			}
+			localized = new(sdata.Item)
+			*localized = *def
+			translation.Apply(&localized.Name, &localized.Description)
+			a.localizedItems[key] = localized
+		}
+		def = localized
+	}
 	if def != nil && a.state != nil {
 		if limit, ok := a.state.OJLimits[[2]uint8{typ, id}]; ok {
 			// These two overloaded fields are equipment OJ metadata. Socket tooltip

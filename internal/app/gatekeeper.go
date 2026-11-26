@@ -17,7 +17,7 @@ type gatekeeperView struct {
 }
 
 func (a *App) updateGatekeeper(in *platform.Input, w, h int, e *game.Entity) bool {
-	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
+	def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
 	x, y := a.gateUI.Origin(w, h)
 	busy := a.shop.pending || a.inventory.pending
 	choice, close := a.gateUI.Update(in, w, h, def.Gates, busy)

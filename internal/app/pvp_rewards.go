@@ -71,7 +71,7 @@ func (a *App) pvpRewardState() ui.PvPRewardState {
 		CanKill:  r.Known && killOK && a.state.Details.Kills >= threshold,
 		CanDeath: r.Known && deathOK && a.state.Details.Deaths >= deathThreshold}
 	if e := a.state.Entities[a.shop.npcID]; e != nil {
-		def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
+		def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
 		state.Name, state.Portrait = def.Name, a.npcPortrait(def)
 	}
 	if !r.Known {

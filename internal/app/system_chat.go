@@ -59,7 +59,7 @@ func (a *App) chatEntityName(id uint32) string {
 			return e.Shape.Name
 		}
 		if e.Kind == game.KindMob && a.assets != nil {
-			if d, err := a.assets.MonsterDefinition(e.TypeID); err == nil {
+			if d, err := a.monsterDefinition(e.TypeID); err == nil {
 				return d.Name
 			}
 		}
@@ -142,7 +142,7 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 	case proto.RelicNotice:
 		v := s.LastRelicNotice
 		if id, ok := relicNoticeMessage(v.OldOwner, v.NewOwner, s.Faction.Faction); ok && a.assets != nil {
-			if d, err := a.assets.MonsterDefinition(v.MobID); err == nil {
+			if d, err := a.monsterDefinition(v.MobID); err == nil {
 				style := relicNoticeStyle(s.MapID)
 				a.systemMessage(style, id, map[string]string{"p": d.Name})
 			}

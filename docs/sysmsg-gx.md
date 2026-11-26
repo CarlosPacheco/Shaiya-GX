@@ -35,6 +35,30 @@ of rows. Missing files and missing, empty or invalid entries use the English
 row. Menu labels still use the English catalog. Existing chat lines keep
 their original language.
 
+## SData text overlays
+
+The same selector loads UTF-8 CSV overlays from `data/Languages/`. The
+Spanish seed is extracted from the original PS0085 client and matched against
+GX identities. SData remains the authority for gameplay and supplies the
+English name or description whenever the file, row or field is missing.
+
+| File | Header |
+| --- | --- |
+| `cash/cash_<code>.csv` | `code,name,description` |
+| `item/item_<code>.csv` | `type,id,name,description` |
+| `monster/monster_<code>.csv` | `id,name` |
+| `npc/npcnames_<code>.csv` | `type,id,name` |
+| `npc/npcdescription_<code>.csv` | `type,id,description` |
+| `npc/npcquest.csv` | `language,id,name,summary,offer,journal,reminder,alternate,completion1,completion2,completion3` |
+| `npcskills/npcskills_<code>.csv` | `id,level,name,description` |
+
+Item IDs are the type and type ID pair. Monster IDs are zero-based SData
+indices. NPC IDs are one-based within their type and quest IDs are one-based
+GX quest indices. The quest file is shared and only rows with the selected
+language code apply. Quote fields containing commas, quotes or line breaks
+using standard CSV rules. The next OK in User Options rereads the active
+language from disk.
+
 How code asks for text:
 
 | Place | Call |

@@ -199,7 +199,7 @@ func (a *App) questObjective(def sdata.Quest, q proto.ActiveQuest) string {
 			}
 			name := a.msg.Format(12311, map[string]string{"v": fmt.Sprint(id)})
 			if a.assets != nil {
-				if m, err := a.assets.MonsterDefinition(id); err == nil && m.Name != "" {
+				if m, err := a.monsterDefinition(id); err == nil && m.Name != "" {
 					name = m.Name
 				}
 			}
@@ -209,7 +209,7 @@ func (a *App) questObjective(def sdata.Quest, q proto.ActiveQuest) string {
 		lines = append(lines, a.msg.Format(12312, map[string]string{"v": fmt.Sprint(q.Counters[0]), "v2": fmt.Sprint(def.PVPKills)}))
 	}
 	if def.EndNPCType != 0 {
-		name := a.npcDefs[sdata.NPCKey{Type: def.EndNPCType, ID: def.EndNPCID}].Name
+		name := a.npcDefinition(sdata.NPCKey{Type: def.EndNPCType, ID: def.EndNPCID}).Name
 		if name == "" {
 			name = a.msg.Format(12313, map[string]string{"v": fmt.Sprint(def.EndNPCType), "v2": fmt.Sprint(def.EndNPCID)})
 		}
@@ -250,7 +250,7 @@ func (a *App) drawQuestLog(w, h int) {
 		q := a.state.Quests[id]
 		objective = fmt.Sprintf("Progress: %d / %d / %d", q.Counters[0], q.Counters[1], q.Counters[2])
 		if int(id) <= len(a.questDefs) {
-			def := a.questDefs[id-1]
+			def := a.questDefinition(id)
 			description = questText(def.Summary)
 			if description == "" {
 				description = questText(def.Descriptions[0])

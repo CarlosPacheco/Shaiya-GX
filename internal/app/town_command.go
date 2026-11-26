@@ -24,7 +24,8 @@ func (a *App) sendTown(command string) bool {
 	if alias == "" {
 		alias = "/return"
 	}
-	if !strings.EqualFold(command, "/town") && !strings.EqualFold(command, alias) {
+	if !strings.EqualFold(command, "/town") && !strings.EqualFold(command, "/return") &&
+		!strings.EqualFold(command, alias) && !strings.EqualFold(command, a.englishMsg.Get(5076)) {
 		return false
 	}
 	if err := a.world.Send(proto.NewWriter(proto.ReturnToTown).Bytes()); err != nil {

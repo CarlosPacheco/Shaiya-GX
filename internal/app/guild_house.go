@@ -65,7 +65,7 @@ func (a *App) houseKind(e *game.Entity) (ui.HouseKind, bool) {
 		return ui.HouseGuildManager, true
 	}
 	if e.NpcType == 1 {
-		if def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]; def.MerchantType == etinManagerMerchant {
+		if def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}); def.MerchantType == etinManagerMerchant {
 			return ui.HouseEtinManager, true
 		}
 	}
@@ -77,7 +77,7 @@ func (a *App) houseBuildView(kind ui.HouseKind, e *game.Entity) *ui.HouseView {
 	h := &a.house
 	g := &a.state.Guild
 	services := g.HouseServices
-	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
+	def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
 	v := &ui.HouseView{Portrait: a.npcPortrait(def), NpcName: def.Name, Selected: h.selected,
 		CanManage: g.ID != 0 && g.Rank >= 1 && g.Rank <= 2, ListOffset: h.listOffset}
 	if kind == ui.HouseGuildManager {

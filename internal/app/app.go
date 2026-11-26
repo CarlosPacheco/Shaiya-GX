@@ -181,6 +181,8 @@ type App struct {
 	chatFilterApplied                   bool
 	msg                                 text.SysMsg
 	englishMsg                          text.SysMsg
+	localized                           sdata.Translations
+	localizedItems                      map[sdata.ItemKey]*sdata.Item
 	white                               *render.Texture
 	cache                               map[string]*render.Texture
 	assets                              *scene.Assets
@@ -325,6 +327,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	languageID := loadClientLanguage()
 	english, messages := loadContentMessages(arc.ReadFile, languageID)
 	a.msg, a.englishMsg = messages, english
+	a.loadSDataTranslations(languageID)
 	ui.SetText(english.Lookup)
 	if b, err := arc.ReadFile("Filter.INI"); err == nil {
 		a.chatFilter = text.ParseWordFilter(b)

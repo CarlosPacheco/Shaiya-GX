@@ -122,7 +122,7 @@ func (a *App) enterNPCService(e *game.Entity) {
 }
 
 func (a *App) updateNPCTalk(in *platform.Input, w, h int, e *game.Entity) bool {
-	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
+	def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
 	if len(def.StartQuests)+len(def.EndQuests) > 0 && !a.questDataLoaded && a.arc != nil {
 		_ = a.loadQuests()
 	}
@@ -145,7 +145,7 @@ func (a *App) updateNPCTalk(in *platform.Input, w, h int, e *game.Entity) bool {
 }
 
 func (a *App) drawNPCTalk(w, h int, e *game.Entity) {
-	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
+	def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
 	canQuest := len(a.npcQuestEntries(e)) > 0
 	a.npcTalkUI.Draw(a.sprites, a.font, w, h, def.Name, questText(def.Welcome), a.npcServiceLabel(e, def), a.interfaceText(0x14ad), canQuest)
 	if portrait := a.npcPortrait(def); portrait != nil {

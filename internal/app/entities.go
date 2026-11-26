@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/clientlog"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/pvprank"
@@ -707,7 +708,7 @@ func (a *App) drawPlayerNames(w, h int) {
 			if element := mob.Definition.Element; e.ID == a.state.Target && int(element) < len(mobMarkers) {
 				marker = mobMarkers[element]
 			}
-			label(mob.Name, mob.MonsterPlateAnchor(), ui.RGBColor(ui.MobNameRGB(mob.Level, slot.Level)), 0, playerPlate{}, marker, a.catalogNameSuffix(e))
+			label(a.monsterName(e.TypeID, mob.Name), mob.MonsterPlateAnchor(), ui.RGBColor(ui.MobNameRGB(mob.Level, slot.Level)), 0, playerPlate{}, marker, a.catalogNameSuffix(e))
 		case game.KindNpc:
 			if actor := v.npcs[e.ID]; actor != nil && actor.actor != nil {
 				pos := actor.actor.NPCPlateAnchor(e.NpcType, e.TypeID)
@@ -721,7 +722,11 @@ func (a *App) drawPlayerNames(w, h int) {
 				if a.auctionBoard(e.ID) {
 					pos[1] += noticeBoardPlateRise
 				}
-				label(actor.actor.Name, pos, ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID), a.catalogNameSuffix(e))
+				name := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}).Name
+				if name == "" {
+					name = actor.actor.Name
+				}
+				label(name, pos, ui.RGBColor(0xffff00), 0, playerPlate{}, targetMarker(e.ID), a.catalogNameSuffix(e))
 				label(a.npcTypeLabel(e.NpcType), pos, [4]float32{.35, .9, 1, 1}, nameFont.Height-2, playerPlate{}, "", "")
 			}
 		}

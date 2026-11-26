@@ -21,6 +21,8 @@ The playable client is `Shaiya GX` (`Shaiya GX.exe` on Windows), with loose `dat
 Load only the selected content translation at startup or when applying a language. English opens no
 translation catalog. A missing catalog or row must always fall back to the
 English text, including for descriptions and formatted messages.
+Use canonical PS0085 text for the Spanish SysMsg and SData CSV overlays. Keep
+English when no source match exists and edit Spanish only to correct verified errors.
 
 **GX Server** is terminal-only: `server/cmd/gx_console` controls `gx_login` and `gx_world`. Do not restore a graphical server controller or its icon. Keep `RAPTURE_*` environment keys, `rapture.sqlite` and `Rapture_LoginLog` compatible unless explicitly migrating them with tests and documentation.
 

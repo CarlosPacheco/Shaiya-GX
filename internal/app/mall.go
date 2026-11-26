@@ -98,7 +98,7 @@ func (a *App) mallCommand(text string) bool {
 		}
 		a.questMessage(a.msg.Format(12305, map[string]string{"v": fmt.Sprint(page), "v2": fmt.Sprint(pages)}))
 		for _, product := range visible[(page-1)*pageSize : min(page*pageSize, len(visible))] {
-			a.questMessage(fmt.Sprintf("%s: %s (%d points)", product.Code, product.Name, product.Cost))
+			a.questMessage(fmt.Sprintf("%s: %s (%d points)", product.Code, a.mallProductText(product).Name, product.Cost))
 		}
 		return true
 	} else if len(fields) == 2 && strings.EqualFold(fields[1], "points") {

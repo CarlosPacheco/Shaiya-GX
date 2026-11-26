@@ -43,7 +43,7 @@ func (a *App) questName(id uint16) string {
 	if id == 0 || int(id) > len(a.questDefs) {
 		return a.msg.Format(12314, map[string]string{"v": fmt.Sprint(id)})
 	}
-	return a.questDefs[id-1].Name
+	return a.questDefinition(id).Name
 }
 
 func (a *App) confirmedQuestProgress(id uint16, slot uint8) {
@@ -58,7 +58,8 @@ func (a *App) confirmedQuestProgress(id uint16, slot uint8) {
 		return
 	}
 
-	def := &a.questDefs[id-1]
+	localized := a.questDefinition(id)
+	def := &localized
 	switch def.EndType {
 	case 1:
 		a.questMessage(fmt.Sprintf("%s: objective %d = %d", def.Name, slot+1, active.Counters[slot]))
@@ -73,7 +74,7 @@ func (a *App) confirmedQuestProgress(id uint16, slot uint8) {
 				continue
 			}
 			if a.assets != nil {
-				if mob, err := a.assets.MonsterDefinition(mobID); err == nil && mob.Name != "" {
+				if mob, err := a.monsterDefinition(mobID); err == nil && mob.Name != "" {
 					a.questKillMessage(def, 351, mob.Name, active.Counters[i], required)
 					continue
 				}
@@ -197,11 +198,11 @@ func (a *App) confirmedQuest(p []byte) {
 			if result.Success != 0 && !dialogue {
 				var def sdata.Quest
 				if result.ID > 0 && int(result.ID) <= len(a.questDefs) {
-					def = a.questDefs[result.ID-1]
+					def = a.questDefinition(result.ID)
 				}
 				a.questMessage(a.questResultText(def, &result))
 			} else if result.Success == 0 && result.ID > 0 && int(result.ID) <= len(a.questDefs) {
-				if text := questText(a.questDefs[result.ID-1].Descriptions[3]); text != "" {
+				if text := questText(a.questDefinition(result.ID).Descriptions[3]); text != "" {
 					a.questMessage(text)
 				}
 			}
@@ -265,7 +266,7 @@ func (a *App) questCommand(text string) bool {
 				break
 			}
 		} else if int(id) <= len(a.questDefs) {
-			q := a.questDefs[id-1]
+			q := a.questDefinition(id)
 			if q.EndType >= 1 && q.EndType <= 3 && q.EndNPCType == 0 {
 				packet = proto.QuestEndPacket(0, id)
 				break
