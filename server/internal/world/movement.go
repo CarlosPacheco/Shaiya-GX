@@ -87,7 +87,7 @@ func (s *Session) applyTeleport(mapID uint16, x, y, z float32, label string, gmD
 		mapID = zone
 	}
 	// GetZoneByMapID's party case: the party's own instance.
-	if !direct && !isInstanceZone(mapID) && mapCreateType(mapID) == partyCreateType {
+	if !direct && mapID != ch.MapID && !isInstanceZone(mapID) && mapCreateType(mapID) == partyCreateType {
 		zone, ok := s.enterPartyInstance(mapID)
 		if !ok {
 			s.log.Printf("GX Server World party map %d refused (no party)", mapID)
@@ -212,7 +212,7 @@ func (s *Session) handleCharacterMove(p []byte) {
 	s.duelCheckMove()
 	// A gated map (0x020A refusals) is left to the explicit portal request.
 	if portal, ok := s.usablePortal(x, y, z, nil); ok && s.portalGate(portal.TargetMapID) == 0 {
-		s.applyTeleport(portal.TargetMapID, portal.TargetX, portal.TargetY, portal.TargetZ, "portal teleport")
+		s.applyTeleport(s.portalDestinationZone(portal.TargetMapID), portal.TargetX, portal.TargetY, portal.TargetZ, "portal teleport")
 		return
 	}
 	// CZone::MoveUser: a cell change updates the view first, then the move
@@ -241,7 +241,7 @@ func (s *Session) handleEnteredPortal(index uint8) {
 			s.send(buildPortalResult(index, r), "0x020A portal refused")
 			return
 		}
-		s.applyTeleport(portal.TargetMapID, portal.TargetX, portal.TargetY, portal.TargetZ, "explicit portal teleport")
+		s.applyTeleport(s.portalDestinationZone(portal.TargetMapID), portal.TargetX, portal.TargetY, portal.TargetZ, "explicit portal teleport")
 	}
 }
 

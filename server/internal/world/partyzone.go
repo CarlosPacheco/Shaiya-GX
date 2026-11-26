@@ -58,9 +58,20 @@ func partyOfPlayer(p *ConnectedPlayer) (uint32, int) {
 	return 0, 0
 }
 
+// Portals within a dungeon floor keep the current copy of that floor.
+func (s *Session) portalDestinationZone(target uint16) uint16 {
+	if target == realMap(s.char.MapID) {
+		return s.char.MapID
+	}
+	return target
+}
+
 // portalGate is the 0x020A checks for an instanced target map; 0 lets the
 // user through.
 func (s *Session) portalGate(target uint16) uint8 {
+	if s.char != nil && target == realMap(s.char.MapID) {
+		return 0
+	}
 	z, ok := mapConfig.Zones[target]
 	if !ok || z.CreateType != partyCreateType {
 		return 0

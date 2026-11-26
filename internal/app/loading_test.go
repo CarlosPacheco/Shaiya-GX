@@ -7,6 +7,8 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
+	"github.com/Spelunkern/Shaiya-GX/internal/proto"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"github.com/Spelunkern/Shaiya-GX/internal/session"
 )
 
@@ -104,5 +106,23 @@ func TestLoadingTipTranslationFallsBackToEnglish(t *testing.T) {
 	a.loadLocalizedLoadingTips(1)
 	if got := a.randomLoadingTip(); got != "Welcome" {
 		t.Fatalf("switching to English kept %q", got)
+	}
+}
+
+func TestLogoutDiscardsPreviousCharacterLoadingMap(t *testing.T) {
+	a := inputApp()
+	a.sprites = &render.Sprites{}
+	a.wv = nil
+	a.world = &session.World{}
+	a.screen = screenWorld
+	a.state.Phase, a.state.SelfID, a.state.MapID = game.PhaseInWorld, 20, 64
+	a.beginMapLoading(64, false)
+
+	a.applyWorldPacket(proto.NewWriter(proto.Logout).Bytes())
+	if a.screen != screenCharacters || a.loading.active || a.state.MapID != 0 {
+		t.Fatalf("logout retained the island: screen=%d loading=%+v map=%d", a.screen, a.loading, a.state.MapID)
+	}
+	if !a.updateMapLoading() || !a.loading.selection || a.loading.mapID != 0 {
+		t.Fatalf("roster did not get its own loading screen: %+v", a.loading)
 	}
 }

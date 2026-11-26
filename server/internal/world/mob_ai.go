@@ -851,10 +851,11 @@ func runMobAICommands(tick *MobCombatTick) {
 					tick.Restores = append(tick.Restores, mapPacket{mapID, m.PosX, m.PosZ, buildMobCurrentHP(m.ID, 0)})
 				}
 			case "portal":
-				if !isInstanceZone(mapID) {
+				sacraGate := cmd.id == 1001 && isSacraGuard(owner)
+				if !isInstanceZone(mapID) && !(sacraGate && (mapID == 65 || mapID == 66)) {
 					break
 				}
-				if cmd.id == 1001 && isSacraGuard(owner) && hasLivingSacraGuard(s.entities.Mobs) {
+				if sacraGate && hasLivingSacraGuard(s.entities.Mobs) {
 					break
 				}
 				for i := range s.entities.Portals {

@@ -106,6 +106,17 @@ func (v *EmblemWindow) place(x, y int, view *EmblemView) {
 // 32x32 swatches every 34 pixels from (0x199, 0xdd).
 func PaletteCell(i int) (int, int) { return 0x199 + (i%6)*0x22, 0xdd + (i/6)*0x22 }
 
+// EmblemPaletteHit returns the clickable swatch at window-relative coordinates.
+func EmblemPaletteHit(x, y int) int {
+	for i := range emblem.PaletteSize {
+		cx, cy := PaletteCell(i)
+		if x >= cx && x <= cx+0x1e && y >= cy && y <= cy+0x1e {
+			return i
+		}
+	}
+	return -1
+}
+
 func (v *EmblemWindow) Update(in *platform.Input, w, h int, view *EmblemView) EmblemAction {
 	x, y := v.Origin(w, h)
 	v.place(x, y, view)
@@ -130,12 +141,7 @@ func (v *EmblemWindow) Update(in *platform.Input, w, h int, view *EmblemView) Em
 		}
 	}
 	if view.Active != 0 {
-		for i := range emblem.PaletteSize {
-			cx, cy := PaletteCell(i)
-			if rx >= cx && rx <= cx+0x1e && ry >= cy && ry <= cy+0x1e {
-				act.Color = i
-			}
-		}
+		act.Color = EmblemPaletteHit(rx, ry)
 	}
 	return act
 }

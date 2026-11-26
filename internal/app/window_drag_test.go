@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Spelunkern/Shaiya-GX/internal/data/emblem"
+	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -343,5 +345,26 @@ func TestServiceWindowsDragFromBodyButKeepListsAndButtons(t *testing.T) {
 	}
 	if !a.updateWindowDrag(&platform.Input{MouseX: x + 120, MouseY: y + 60, Pressed: true, MouseDown: true}, 1024, 768) {
 		t.Fatal("header body did not drag")
+	}
+}
+
+func TestEmblemSwatchesDoNotStartWindowDrag(t *testing.T) {
+	a := inputApp()
+	a.emblemUI, _ = ui.NewEmblemWindow(inputTextures{})
+	a.shop.npcID = 42
+	a.state.Entities[42] = &game.Entity{Kind: game.KindNpc, NpcType: 1, TypeID: 1}
+	a.npcDefs[sdata.NPCKey{Type: 1, ID: 1}] = sdata.NPC{MerchantType: emblemMerchant}
+	x, y := a.emblemUI.Origin(1024, 768)
+	view := &ui.EmblemView{HasItem: true, Active: 1}
+	for i := range emblem.PaletteSize {
+		cx, cy := ui.PaletteCell(i)
+		in := platform.Input{MouseX: x + cx + 15, MouseY: y + cy + 15, Pressed: true, MouseDown: true}
+		if a.updateWindowDrag(&in, 1024, 768) {
+			t.Fatalf("drag intercepted swatch %d", i)
+		}
+		in.Pressed, in.MouseDown, in.Clicked = false, false, true
+		if act := a.emblemUI.Update(&in, 1024, 768, view); act.Color != i {
+			t.Fatalf("swatch %d selected %d", i, act.Color)
+		}
 	}
 }

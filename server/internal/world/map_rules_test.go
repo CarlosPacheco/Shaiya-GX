@@ -163,3 +163,25 @@ func TestMap27OpenPortalsAllowBothFactions(t *testing.T) {
 		t.Fatal("map 26 lost its faction restriction")
 	}
 }
+
+func TestSacraUsesFactionRebirths(t *testing.T) {
+	old, started := mapConfig, weatherStarted
+	t.Cleanup(func() { mapConfig, weatherStarted = old, started })
+	log, err := logx.New("gx_map_rules_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer log.Close()
+	if err := loadMapProperties(log); err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []uint16{65, 66, 67} {
+		for _, faction := range []uint8{FactionLight, FactionDark} {
+			base, _ := rebirthPosition(47, faction)
+			pos, ok := rebirthPosition(id, faction)
+			if !ok || pos.MapID != base.MapID || pos.X != base.X || pos.Z != base.Z {
+				t.Fatalf("map %d faction %d rebirth=%+v, want Jungle base %+v", id, faction, pos, base)
+			}
+		}
+	}
+}

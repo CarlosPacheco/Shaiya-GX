@@ -1312,7 +1312,7 @@ func (s *State) Apply(p []byte) (result Event, applyErr error) {
 		s.LastRelicNotice = proto.RelicDestroyed{}
 		s.LastPortalNotice = proto.PortalOwnerNotice{}
 		s.GuildDuel = GuildDuelState{}
-		s.Phase, s.SelfID = PhaseCharSelect, 0
+		s.Phase, s.SelfID, s.MapID = PhaseCharSelect, 0, 0
 		s.PlayerForms, s.Transforms, s.Evolution = nil, nil, proto.EvolutionBar{}
 		s.Target = 0
 		s.Entities = map[uint32]*Entity{}

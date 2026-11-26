@@ -281,7 +281,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 	}
 	if a.emblemOpen() {
 		x, y := a.emblemUI.Origin(w, h)
-		if startFrame(&a.emblemUI.Position, x, y, ui.EmblemWidth, ui.EmblemHeight, frameFree(a.emblemUI, x, y, nil, [4]int{0x218, 0x3a, 0x50, 0x4e}, [4]int{0x199, 0xdd, 6 * 0x22, 0x88})) {
+		if startFrame(&a.emblemUI.Position, x, y, ui.EmblemWidth, ui.EmblemHeight, frameFree(a.emblemUI, x, y, func(rx, ry int) bool { return ui.EmblemPaletteHit(rx, ry) >= 0 }, [4]int{0x218, 0x3a, 0x50, 0x4e})) {
 			return true
 		}
 		if pointInside(in, x, y, ui.EmblemWidth, ui.EmblemHeight) {

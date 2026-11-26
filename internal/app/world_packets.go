@@ -141,6 +141,8 @@ func (a *App) applyWorldPacket(p []byte) {
 			a.Quit = true
 		}
 		a.menuOpen, a.menuPending = false, false
+		a.loading = mapLoading{}
+		a.screen = screenCharacters
 		a.releaseWorld()
 	}
 	if ev.Op == proto.AccountFaction && a.factionUI != nil {

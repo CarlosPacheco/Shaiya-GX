@@ -533,3 +533,52 @@ func TestFreezingReacquiresByProximityAfterKillingPlayer(t *testing.T) {
 		t.Fatalf("boss did not restart combat on proximity alone: target=%d attacked=%t", h.mob.AggroTarget, retaliated)
 	}
 }
+
+func TestSacraGuardPortalKeepsCurrentFloor(t *testing.T) {
+	oldConfig := mapConfig
+	mapConfig.Zones = map[uint16]ZoneConfig{65: {CreateType: partyCreateType}}
+	t.Cleanup(func() { mapConfig = oldConfig })
+	const instance = 62081
+	realm.instanceMu.Lock()
+	realm.instanceMaps[instance] = 65
+	realm.instanceMu.Unlock()
+	t.Cleanup(func() {
+		realm.instanceMu.Lock()
+		delete(realm.instanceMaps, instance)
+		realm.instanceMu.Unlock()
+	})
+	data, err := loadSvmapFile(65, "../../data/maps/65.svmap", &db.Defs{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, zone := range []uint16{65, instance} {
+		t.Run(fmt.Sprint(zone), func(t *testing.T) {
+			sh := shard(zone)
+			t.Cleanup(func() {
+				realm.shardsMu.Lock()
+				delete(realm.shards, zone)
+				realm.shardsMu.Unlock()
+			})
+			sh.entities.Portals = slices.Clone(data.entities.Portals)
+			sh.entities.Mobs = []MapMob{
+				{ID: 1, MobID: 2464, aiSummoned: true},
+				{ID: 2, MobID: 2465, aiSummoned: true, CurrentHP: 1},
+			}
+			sh.aiCommands = []mobAICommand{{kind: "portal", id: 1001, owner: 1}}
+			runMobAICommands(&MobCombatTick{})
+			portal, ok := FindPortalByIndex(zone, 1)
+			if !ok || portal.IsOpen() {
+				t.Fatal("first guard opened the portal")
+			}
+			sh.entities.Mobs[1].CurrentHP = 0
+			sh.aiCommands = []mobAICommand{{kind: "portal", id: 1001, owner: 2}}
+			runMobAICommands(&MobCombatTick{})
+			s := &Session{char: &db.Character{MapID: zone, Level: 60}}
+			index := uint8(1)
+			portal, ok = s.usablePortal(0, 0, 0, &index)
+			if !ok || s.portalGate(portal.TargetMapID) != 0 || s.portalDestinationZone(portal.TargetMapID) != zone {
+				t.Fatalf("open portal did not stay on its floor: %+v", portal)
+			}
+		})
+	}
+}
