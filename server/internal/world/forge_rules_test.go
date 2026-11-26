@@ -253,3 +253,19 @@ func TestConfiguredEnchantCapAndRates(t *testing.T) {
 		t.Fatal("rate over 100% accepted")
 	}
 }
+
+func TestDropEquippedItemRejected(t *testing.T) {
+	s, _ := forgeRuleSession(t)
+	s.items = []db.Item{{UID: 9001, Bag: 0, Slot: 5, Type: 1, TypeID: 1, Count: 1}}
+	p := proto.NewWriter(proto.RemoveItem)
+	p.U8(0)
+	p.U8(5)
+	p.Count(1)
+	s.handleDropItem(p.Bytes())
+	if len(s.items) != 1 || s.items[0].Bag != 0 || s.items[0].Slot != 5 {
+		t.Fatalf("equipped item was modified by drop: %+v", s.items)
+	}
+	if ground := itemsOnMap(s.char.MapID); len(ground) != 0 {
+		t.Fatalf("equipped item was dropped onto the map: %+v", ground)
+	}
+}

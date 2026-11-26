@@ -549,7 +549,8 @@ func (s *Session) handleDropItem(p []byte) {
 	if r.Err() != nil {
 		return
 	}
-	if !isValidItemPosition(bag, slot) {
+	// Equipped items (bag 0) must be unequipped before they can be dropped.
+	if bag == 0 || !isValidItemPosition(bag, slot) {
 		return
 	}
 	i := findItem(s.items, bag, slot)
@@ -588,12 +589,6 @@ func (s *Session) handleDropItem(p []byte) {
 	s.log.Printf("GX Server World dropped item uid=%d map_item_id=%d type=%d/%d count=%d remaining=%d", it.UID, mi.ID, it.Type, it.TypeID, n, res.Count)
 	s.send(buildRemoveItem(&res, res.Count == 0), "0x0206 drop remove item")
 	dispatchItemEnter(ch.MapID, &mi, "0x0401 drop map add item")
-	if bag == 0 {
-		if slot < 8 {
-			s.equipmentChanged([]uint8{slot})
-		}
-		s.sendStatPackets()
-	}
 }
 
 // equipmentChanged pushes 0x0507 for the slots to self and viewers.

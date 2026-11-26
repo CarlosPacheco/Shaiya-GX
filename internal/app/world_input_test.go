@@ -357,3 +357,18 @@ func TestCatalogIDsToggleAndItemTooltip(t *testing.T) {
 		}
 	}
 }
+
+func TestEquippedItemCannotBeDroppedOutsideInventory(t *testing.T) {
+	a := inputApp()
+	key := [2]uint8{0, 5}
+	a.state.Inventory[key] = proto.InventoryItem{Bag: 0, Slot: 5, Type: 1, TypeID: 1, Count: 1}
+	a.noteItemDrop(key)
+	if a.drop.candidate != nil {
+		t.Fatal("noteItemDrop accepted an equipped item")
+	}
+	a.drop.candidate = &key
+	a.dropReleased(&platform.Input{Clicked: true, MouseX: 100, MouseY: 100}, 1024, 768, false)
+	if a.drop.candidate != nil || a.drop.active {
+		t.Fatal("dropReleased opened drop prompt for an equipped item")
+	}
+}
