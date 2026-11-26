@@ -19,13 +19,9 @@ only the base catalog. For other languages, the client opens one file at
 | --- | --- | --- |
 | 2 | Español | `es` |
 | 3 | Português (Brasil) | `pt-BR` |
-| 4 | Français | `fr` |
-| 5 | Deutsch | `de` |
-| 6 | Italiano | `it` |
-| 7 | Polski | `pl` |
-| 8 | Türkçe | `tr` |
-| 9 | Русский | `ru` |
-| 10 | Tiếng Việt | `vi` |
+
+Saved IDs outside English, Spanish, and Brazilian Portuguese resolve to
+English. These IDs remain reserved for future variants.
 
 Use UTF-8 and the same numeric IDs and quoted rows as the English table.
 For example, `2<TAB><TAB>"<p> ha muerto"` is a Spanish row for the

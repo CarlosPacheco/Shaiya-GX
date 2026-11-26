@@ -101,12 +101,12 @@ func TestLanguageMenuGL(t *testing.T) {
 	}
 	a.gameMenu.Open(ui.MenuUser)
 	click(265, 55)
-	click(265, 325) // Tiếng Việt
+	click(265, 138) // Português (Brasil)
 	click(245, 404) // OK
-	if loadClientLanguage() != 10 {
-		t.Fatal("Vietnamese did not persist with layout saving disabled")
+	if loadClientLanguage() != 3 {
+		t.Fatal("Portuguese did not persist with layout saving disabled")
 	}
-	if want := translatedMessages(a.englishMsg, arc.ReadLiveFile, 10); !maps.Equal(a.msg, want) {
+	if want := translatedMessages(a.englishMsg, arc.ReadLiveFile, 3); !maps.Equal(a.msg, want) {
 		t.Fatal("the chosen catalog was not applied when OK was pressed")
 	}
 }

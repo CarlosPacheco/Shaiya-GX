@@ -17,13 +17,6 @@ var gameLanguages = [...]struct {
 	{EnglishLanguageID, "English", "🇺🇸", ""},
 	{2, "Español", "🇪🇸", "es"},
 	{3, "Português (Brasil)", "🇧🇷", "pt-BR"},
-	{4, "Français", "🇫🇷", "fr"},
-	{5, "Deutsch", "🇩🇪", "de"},
-	{6, "Italiano", "🇮🇹", "it"},
-	{7, "Polski", "🇵🇱", "pl"},
-	{8, "Türkçe", "🇹🇷", "tr"},
-	{9, "Русский", "🇷🇺", "ru"},
-	{10, "Tiếng Việt", "🇻🇳", "vi"},
 }
 
 const (

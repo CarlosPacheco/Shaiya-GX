@@ -32,7 +32,8 @@ func TestContentMessageFallback(t *testing.T) {
 	}{
 		{"English", 1, []string{basePath}, "You died"},
 		{"unknown", 99, []string{basePath}, "You died"},
-		{"missing Vietnamese", 10, []string{basePath, "Languages/Messages/sysmgtxt-vi.txt"}, "You died"},
+		{"removed Vietnamese falls back to English", 10, []string{basePath}, "You died"},
+		{"missing Portuguese", 3, []string{basePath, "Languages/Messages/sysmgtxt-pt-BR.txt"}, "You died"},
 		{"partial Spanish", 2, []string{basePath, spanishPath}, "Has muerto"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
