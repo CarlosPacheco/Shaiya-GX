@@ -326,6 +326,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	a.chatTextFont.SetBorder(.5)
 
 	languageID := loadClientLanguage()
+	a.assets.UseInterfaceLanguage(ui.MessageLanguageCode(languageID))
 	english, messages := loadContentMessages(arc.ReadFile, languageID)
 	a.msg, a.englishMsg = messages, english
 	a.loadSDataTranslations(languageID)
@@ -571,7 +572,7 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 
 // OptionalInterface allows interface panels to work with older data packs.
 func (a *App) OptionalInterface(name string) *render.Texture {
-	if _, ok := a.arc.Lookup("interface/" + name); !ok {
+	if !a.assets.HasTexture("interface/" + name) {
 		return nil
 	}
 	t, _ := a.Interface(name)
@@ -584,11 +585,7 @@ func (a *App) Interface(name string) (*render.Texture, error) {
 	if t, ok := a.cache[key]; ok {
 		return t, nil
 	}
-	b, err := a.arc.ReadFile("interface/" + name)
-	var t img.Texture
-	if err == nil {
-		t, err = img.DecodeResource("interface/"+name, b)
-	}
+	t, err := a.assets.ReadTexture("interface/" + name)
 	if err != nil {
 		// Interface artwork is presentation, never authoritative game data.
 		// Cache a visible substitute so an absent atlas cannot prevent startup

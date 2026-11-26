@@ -3,7 +3,6 @@ package app
 import (
 	"strings"
 
-	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
@@ -112,11 +111,7 @@ func (a *App) tipFrame() *render.Texture {
 	if a.tipTexture != nil || a.arc == nil {
 		return a.tipTexture
 	}
-	b, err := a.arc.ReadFile("interface/tipbox.png")
-	if err != nil {
-		return nil
-	}
-	t, err := img.DecodeResource("interface/tipbox.png", b)
+	t, err := a.assets.ReadTexture("interface/tipbox.png")
 	if err != nil || t.RGBA == nil {
 		return nil
 	}

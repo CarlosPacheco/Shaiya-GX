@@ -11,7 +11,6 @@ import (
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
-	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/model"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
@@ -27,6 +26,7 @@ type Assets struct {
 	emblemMesh           *render.Mesh
 	Arc                  *archive.Archive
 	textures             map[string]*render.Texture
+	interfaceOverlay     string
 	models               map[string]*Model
 	parts                map[string]*skinPart
 	clips                map[string]*Clip
@@ -82,13 +82,11 @@ func (s *Assets) texture(file string, world bool) *render.Texture {
 		return t
 	}
 	var tex *render.Texture
-	if b, err := s.Arc.ReadFile(file); err == nil {
-		if t, err := img.DecodeResource(file, b); err == nil {
-			if world {
-				tex = render.UploadWorld(t)
-			} else {
-				tex = render.Upload(t)
-			}
+	if t, err := s.ReadTexture(file); err == nil {
+		if world {
+			tex = render.UploadWorld(t)
+		} else {
+			tex = render.Upload(t)
 		}
 	}
 	if tex == nil {

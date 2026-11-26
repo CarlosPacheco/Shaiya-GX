@@ -62,10 +62,25 @@ using standard CSV rules. The next OK in User Options rereads the active
 language from disk.
 
 Character and server selection, character creation, and faction selection
-read from the selected SysMsg catalog. Button artwork stays shared. Loading
+read from the selected SysMsg catalog. Loading
 tips can use `Languages/Tips/tip_<code>.ini` in UTF-8. Match the keys in the
 `[Tips]` section of `Tip.INI` to replace individual tips. Missing keys use the
 English tip.
+
+## Localized interface artwork
+
+Place PNG replacements under `data/Languages/interface/interface_es/` or
+`data/Languages/interface/interface_pt-BR/`. Use the same relative paths as
+`data/interface/`, including subfolders. For example, a replacement for
+`data/interface/icon/icon_sub.png` goes in `interface_es/icon/icon_sub.png`
+for Spanish. Retain the original atlas layout for images that contain
+multiple sprites.
+
+The client reads individual textures when requested and uses the base
+texture when a replacement is absent or unreadable. English uses base art
+only. Restart the client to apply the artwork after changing the language
+or the replacement files. Text, CSV overlays, and loading tips continue
+to reload through User Options.
 
 How code asks for text:
 
