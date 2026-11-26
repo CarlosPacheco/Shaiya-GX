@@ -786,14 +786,16 @@ func ForceMobTarget(mapID uint16, id, characterID uint32) {
 // ClearMobAggro is CMob::Attack after killing its target: back to idle
 // (status 0) with the dead user's aggro gone; UpdateIdle walks it home
 // when it is more than 10 units away.
-func ClearMobAggro(mapID uint16, id uint32) {
+func ClearMobAggro(mapID uint16, id, killedUser uint32) {
 	s := shard(mapID)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for i := range s.entities.Mobs {
 		if m := &s.entities.Mobs[i]; m.ID == id {
-			delete(m.aggro, m.AggroTarget)
-			m.dropTarget(false)
+			delete(m.aggro, killedUser)
+			if m.AggroTarget == killedUser {
+				m.dropTarget(false)
+			}
 		}
 	}
 }
@@ -896,14 +898,14 @@ func (m *MapMob) liveTarget(players []PlayerCombatSnapshot) *PlayerCombatSnapsho
 
 // dropTarget: status 0 (idle) or 3 (return home).
 func (m *MapMob) dropTarget(home bool) {
+	m.lua.needReset = true
 	m.AggroTarget, m.lastAttackAt, m.nextAttackAt = 0, time.Time{}, time.Time{}
 	m.returningHome = home
 }
 
-// findTarget implements the native proximity search. Generic AI checks
-// acquisition_ready before calling it. FSM IsFirstAttack calls it directly.
+// findTarget picks the first eligible nearby user within the mob’s ChaseRange.
 func (m *MapMob) findTarget(now time.Time, players []PlayerCombatSnapshot, extended bool) *PlayerCombatSnapshot {
-	if m.def == nil || m.ChaseRange <= 0 {
+	if m.def == nil || m.ChaseRange <= 0 || now.Before(m.noTargetUntil) {
 		return nil
 	}
 	radius := int32(1)

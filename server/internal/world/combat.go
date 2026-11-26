@@ -452,12 +452,12 @@ func (s *Session) afterMobDamage(d pendingDamage, killed bool) {
 		p.Send(state, "0x051C character death state")
 		p.Send(death, "0x0504 character death")
 	}
-	ClearMobAggro(ch.MapID, d.MobGlobalID)
 	if s.player != nil {
 		s.player.SetAlive(false)
 		duelLeave(s.player, 3, true) // PvPChkLeaveByDeath
 		guildDuelLeave(s.player, nil, 3)
 	}
+	ClearMobAggro(ch.MapID, d.MobGlobalID, ch.ID)
 	s.log.Printf("GX Server World character died character_id=%d killer_mob_global_id=%d mob_id=%d", ch.ID, d.MobGlobalID, d.MobID)
 }
 

@@ -468,7 +468,6 @@ func TestMobInterruptsIdleWalkOnFirstCombatTick(t *testing.T) {
 
 func TestFreezingFSMAcquiresByProximityAndUsesNativeIdleCadence(t *testing.T) {
 	_, h := luaWorldFixture(t, 36)
-	h.mob.noTargetUntil = h.now.Add(5 * time.Second)
 	db.MustDefs().NPCSkills = map[db.SkillKey]*db.SkillDef{
 		{SkillID: 174, Level: 1}: {TypeEffect: 1, AttackRange: 8},
 	}
@@ -500,5 +499,37 @@ func TestGenericMobRespectsSpawnAcquisitionDelay(t *testing.T) {
 	tickMobCombat(h.mob.noTargetUntil, h.players, 10)
 	if h.mob.AggroTarget != h.players[0].CharacterID {
 		t.Fatal("generic mob did not acquire when its spawn delay expired")
+	}
+}
+
+func TestFreezingReacquiresByProximityAfterKillingPlayer(t *testing.T) {
+	_, h := luaWorldFixture(t, 36)
+	db.MustDefs().NPCSkills = map[db.SkillKey]*db.SkillDef{
+		{SkillID: 174, Level: 1}: {TypeEffect: 1, AttackRange: 8},
+	}
+	for i := range 4 {
+		tickMobCombat(h.now.Add(time.Duration(i)*time.Second), h.players, 10)
+	}
+	if h.mob.AggroTarget != h.players[0].CharacterID {
+		t.Fatal("boss did not acquire the first player")
+	}
+	// The boss kills the target. This is the same cleanup used by afterMobDamage.
+	h.players[0].Alive = false
+	ClearMobAggro(h.mapID, h.mob.ID, h.players[0].CharacterID)
+	next := h.players[0]
+	next.CharacterID++
+	next.Alive = true
+	h.players = append(h.players, next)
+	var retaliated bool
+	for i := 4; i <= 10; i++ {
+		tick := tickMobCombat(h.now.Add(time.Duration(i)*time.Second), h.players, 10)
+		for _, attack := range tick.Attacks {
+			if attack.TargetCharacterID == next.CharacterID {
+				retaliated = true
+			}
+		}
+	}
+	if h.mob.AggroTarget != next.CharacterID || !retaliated || h.mob.lua.attackedCount != 0 {
+		t.Fatalf("boss did not restart combat on proximity alone: target=%d attacked=%t", h.mob.AggroTarget, retaliated)
 	}
 }

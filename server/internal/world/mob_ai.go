@@ -568,14 +568,12 @@ func (h *mobAIHost) refreshTarget() {
 		target = m.liveTarget(h.players)
 		if target == nil {
 			m.dropTarget(true)
-			m.lua.needReset = true
 		}
 	}
 	if target != nil && mods.VisionFix == 0 {
 		pos := m.positionAt(h.now)
 		if DistanceXZ(target.PosX, target.PosZ, m.homeX, m.homeZ) > mobLeash || DistanceXZ(target.PosX, target.PosZ, pos[0], pos[2]) > mobLeash {
 			m.dropTarget(true)
-			m.lua.needReset = true
 		}
 	}
 }

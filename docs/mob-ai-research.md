@@ -61,8 +61,9 @@ GX evaluates the file-driven cases at that cadence while retaining the
 faster movement scheduler. In AI 36, the unconditional transitions
 between Battle and UseMobSkill1 take two updates per repeat of skill 174.
 Its Idle state acquires players by proximity through `IsFirstAttack`, which
-calls `CMob::FindTarget` directly. The generic acquisition warm-up applies
-when the policy explicitly checks it.
+calls `CMob::FindTarget`. GX resets the FSM when the boss loses or kills its
+target. The unconditional combat transitions would otherwise keep it from
+entering Idle to look for another player.
 
 ### Routine spell timing
 
