@@ -151,6 +151,7 @@ func (s *fieldStream) trim() {
 		delete(s.assets.textures, file)
 	}
 	s.world.mapBatch.Trim()
+	s.world.vaniBatch.Trim()
 	s.prepareDrawEntries()
 }
 
@@ -429,7 +430,7 @@ func (w *World) Close() {
 	w.vanis = nil
 	w.blendedVani = nil
 	w.visibleBlendedVani = nil
-	w.vaniBlendRun = nil
+	w.vaniBlendIDs = nil
 	if w.mapFX != nil {
 		w.mapFX.close()
 		w.mapFX = nil
@@ -441,6 +442,7 @@ func (w *World) Close() {
 	w.dgOrder = nil
 	w.dungeonOccluders = nil
 	w.mapBatch.Delete()
+	w.vaniBatch.Delete()
 	w.dungeonPlan = dungeonDrawPlan{}
 	w.occlusion = nil
 	if w.Sky != nil {

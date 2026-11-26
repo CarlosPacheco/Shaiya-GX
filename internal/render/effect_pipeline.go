@@ -218,7 +218,7 @@ func (s *Scene3D) drawCompactEffects(q *effectQueue) bool {
 		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 6, p.clip.id)
 	}
 	if p.indirect.plan(q.draws) {
-		p.indirect.draw(s)
+		p.indirect.draw(s, p, q.draws)
 	} else {
 		p.drawSerial(s, q.draws)
 	}
@@ -264,25 +264,30 @@ func (p *effectPipeline) drawSerial(s *Scene3D, draws []queuedEffect) {
 	gl.Uniform1i(2, 0)
 	var boundKeys uint32
 	for _, draw := range draws {
-		gl.Uniform1i(1, int32(draw.first))
-		var keys uint32
-		if draw.geometry != nil {
-			keys = draw.geometry.keys
-		}
-		if keys != boundKeys {
-			if keys == 0 {
-				gl.Uniform1i(2, 0)
-			} else {
-				gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 5, keys)
-				if boundKeys == 0 {
-					gl.Uniform1i(2, 1)
-				}
-			}
-			boundKeys = keys
-		}
-		s.effectMaterial(draw.texture, draw.src, draw.dst, draw.repeat)
-		gl.BindVertexArray(draw.mesh.vao)
-		gl.DrawElementsInstanced(gl.TRIANGLES, draw.mesh.Count, draw.mesh.indexType, nil, int32(draw.end-draw.first))
-		drawCalls++
+		boundKeys = p.drawSerialOne(s, draw, boundKeys)
 	}
+}
+
+func (p *effectPipeline) drawSerialOne(s *Scene3D, draw queuedEffect, boundKeys uint32) uint32 {
+	gl.Uniform1i(1, int32(draw.first))
+	var keys uint32
+	if draw.geometry != nil {
+		keys = draw.geometry.keys
+	}
+	if keys != boundKeys {
+		if keys == 0 {
+			gl.Uniform1i(2, 0)
+		} else {
+			gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 5, keys)
+			if boundKeys == 0 {
+				gl.Uniform1i(2, 1)
+			}
+		}
+		boundKeys = keys
+	}
+	s.effectMaterial(draw.texture, draw.src, draw.dst, draw.repeat)
+	gl.BindVertexArray(draw.mesh.vao)
+	gl.DrawElementsInstanced(gl.TRIANGLES, draw.mesh.Count, draw.mesh.indexType, nil, int32(draw.end-draw.first))
+	drawCalls++
+	return boundKeys
 }

@@ -52,7 +52,10 @@ func TestStaticLODUsesScreenErrorAndExcludesOtherPasses(t *testing.T) {
 	}
 	s.Shadow = false
 	s.ClipPlane = [4]float32{0, 1, 0, 0}
-	if e.chooseLOD(s, render.V3{0, 0, 300}, 1) != 0 {
-		t.Fatal("reflection inherited display LOD")
+	if n := e.chooseLOD(s, render.V3{0, 0, 300}, 1); n != 2 {
+		t.Fatal("distant reflection mesh did not reduce", n)
+	}
+	if n := e.chooseLOD(s, render.V3{0, 0, 10}, 1); n != 0 {
+		t.Fatal("near reflection mesh lost detail", n)
 	}
 }

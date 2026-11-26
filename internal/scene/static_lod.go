@@ -111,7 +111,7 @@ func projectedLODError(error float32, center render.V3, radius float32, s *rende
 	return error / (z - error) * max(fx, fy)
 }
 func (e *fieldDrawEntry) chooseLOD(s *render.Scene3D, center render.V3, radius float32) int {
-	if !s.StaticObjectLOD || s.Shadow || (s.ClipPlane != [4]float32{} && s.GeometryReduction == 0) || e.object.rotor != nil {
+	if !s.StaticObjectLOD || s.Shadow || e.object.rotor != nil {
 		return 0
 	}
 	m := e.batch.model

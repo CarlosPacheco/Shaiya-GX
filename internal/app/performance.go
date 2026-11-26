@@ -13,7 +13,7 @@ type performanceHUD struct {
 	meter                      *render.FrameMeter
 	updateCPU, drawCPU         time.Duration
 	elapsed, cpuTotal          float64
-	frames                     int
+	frames, callsTotal         int
 	fps, frameMS, cpuMS, gpuMS float64
 	gpuSamples                 int
 	ram, vram                  uint64
@@ -22,12 +22,16 @@ type performanceHUD struct {
 }
 
 func (p *performanceHUD) sample(dt float64) {
+	p.sampleCalls(dt, render.DrawCalls())
+}
+func (p *performanceHUD) sampleCalls(dt float64, calls int) {
 	if dt <= 0 {
 		return
 	}
 	p.elapsed += dt
 	p.frames++
 	p.cpuTotal += float64(p.updateCPU+p.drawCPU) / float64(time.Millisecond)
+	p.callsTotal += calls
 	if p.elapsed < .25 {
 		return
 	}
@@ -45,8 +49,8 @@ func (p *performanceHUD) sample(dt float64) {
 		p.ramTotal, _ = platform.TotalMemoryBytes()
 	}
 	p.vramTotal = render.GPUCapacity()
-	p.calls = render.DrawCalls()
-	p.elapsed, p.cpuTotal, p.frames = 0, 0, 0
+	p.calls = (p.callsTotal + p.frames/2) / p.frames
+	p.elapsed, p.cpuTotal, p.frames, p.callsTotal = 0, 0, 0, 0
 }
 func (a *App) drawPerformance(w int) {
 	p := &a.performance

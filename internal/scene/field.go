@@ -25,6 +25,7 @@ type World struct {
 	physics             *mapgeometry.Geometry
 	movingColliders     []mapgeometry.Dynamic
 	mapBatch            render.MapBatch
+	vaniBatch           render.MapBatch
 	dungeonPlan         dungeonDrawPlan
 	occlusion           *render.TerrainOcclusion
 	occlusionRevision   uint64
@@ -41,7 +42,7 @@ type World struct {
 	vanis               []*vaniAsset
 	blendedVani         []vaniPlacement
 	visibleBlendedVani  []vaniPlacement
-	vaniBlendRun        []render.M4
+	vaniBlendIDs        []uint32
 	mapFX               *mapEffects
 	frameDT             float32
 	Sky                 *Sky
