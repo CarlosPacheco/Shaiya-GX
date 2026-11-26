@@ -38,8 +38,9 @@ their original language.
 ## SData text overlays
 
 The same selector loads UTF-8 CSV overlays from `data/Languages/`. The
-Spanish seed is extracted from the original PS0085 client and matched against
-GX identities. SData remains the authority for gameplay and supplies the
+Spanish catalog uses the original PS0085 text where it matches GX identities
+and manually translated GX text for the remaining usable fields. SData remains
+the authority for gameplay and supplies the
 English name or description whenever the file, row or field is missing.
 
 | File | Header |
