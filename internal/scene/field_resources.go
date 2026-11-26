@@ -166,6 +166,11 @@ func (s *fieldStream) prepareDrawEntries() {
 	s.drawEntries = s.drawEntries[:0]
 	s.modelBatches = s.modelBatches[:0]
 	s.batchPreparation++
+	s.world.clearBlendedVANI()
+	// Both cameras use the authored transforms until residency changes.
+	vaniBatch := &s.world.vaniBatch
+	vaniBatch.Transforms = vaniBatch.Transforms[:0]
+	vaniBatch.ResetTransforms()
 	if s.resourceIndex == nil || s.resourceObjectCount != len(s.objects) {
 		s.indexResources()
 	}
@@ -198,6 +203,10 @@ func (s *fieldStream) prepareDrawEntries() {
 				continue
 			}
 			entry.center, entry.radius = transformPoint(o.center, o.world), o.radius*o.scale
+			if o.blendedVani {
+				entry.placement = uint32(len(vaniBatch.Transforms))
+				vaniBatch.Transforms = append(vaniBatch.Transforms, o.world)
+			}
 		} else {
 			m := resource.model
 			if m == nil {
@@ -225,6 +234,7 @@ func (s *fieldStream) prepareDrawEntries() {
 		}
 		s.drawEntries = append(s.drawEntries, entry)
 	}
+	s.world.vaniResidentCount = len(vaniBatch.Transforms)
 	s.prepareSectors()
 	slices.SortFunc(s.modelBatches, func(a, b *fieldModelBatch) int {
 		if a.key.mani != b.key.mani {
@@ -341,7 +351,7 @@ func (s *fieldStream) drawWithClipCulling(r *render.Scene3D, clipCulling bool) {
 		if e.vani != nil {
 			if e.object.blendedVani {
 				if !r.Shadow {
-					s.world.queueBlendedVani(r, e.vani, transform, e.center)
+					s.world.queueIndexedVANI(r, e.vani, e.placement, e.center)
 				}
 			} else {
 				e.vani.worlds = append(e.vani.worlds, transform)
@@ -431,6 +441,8 @@ func (w *World) Close() {
 	w.blendedVani = nil
 	w.visibleBlendedVani = nil
 	w.vaniBlendIDs = nil
+	w.vaniBlendOrder = nil
+	w.vaniResidentCount = 0
 	if w.mapFX != nil {
 		w.mapFX.close()
 		w.mapFX = nil

@@ -3,6 +3,7 @@
 package scene
 
 import (
+	"bytes"
 	"cmp"
 	"math"
 	"os"
@@ -299,5 +300,104 @@ func TestTranslucentVANIBatchingPixelParityGL(t *testing.T) {
 				t.Fatalf("GL error %#x", code)
 			}
 		})
+	}
+}
+
+func TestStreamedWaterReflectionKeepsVANIOrderGL(t *testing.T) {
+	if os.Getenv("SHAIYA_TEST_RENDER") != "1" {
+		t.Skip("requires GL and original assets")
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	const width, height = 640, 360
+	win, err := platform.Open(platform.Config{Title: "streamed VANI reflection", Width: width, Height: height, Hidden: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer win.Close()
+	if err := render.Init(false); err != nil {
+		t.Fatal(err)
+	}
+	arc, err := archive.Open(os.Getenv("SHAIYA_DATA"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer arc.Close()
+	w, err := loadStreamedField(NewAssets(arc), "1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w.Close()
+	eye := render.V3{600, 6, 610}
+	for i := 0; i < 500 && !w.Ready(); i++ {
+		w.UpdateVisible(eye, 800)
+	}
+	if !w.Ready() {
+		t.Fatal("field not resident")
+	}
+	scene, err := render.NewScene3D()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer scene.Delete()
+	scene.Proj = render.PerspectiveFovLH(math.Pi/4, float32(width)/height, .1, 650)
+	scene.ClipPlane = [4]float32{0, 1, 0, 0}
+	mirror := render.Identity()
+	mirror[5] = -1
+	gl.Viewport(0, 0, width, height)
+	expected := make(map[uint32]render.M4)
+	for _, e := range w.stream.drawEntries {
+		if e.vani != nil && e.object.blendedVani {
+			expected[e.placement] = e.object.world
+		}
+	}
+	clearFrame := func() {
+		gl.DepthMask(true)
+		gl.ClearColor(.13, .17, .2, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	}
+	normal, reflected := make([]byte, width*height*4), make([]byte, width*height*4)
+	for _, dx := range []float32{-1, 0, 1} {
+		scene.View = mirror.Mul(render.LookAtLH(eye, eye.Add(render.V3{dx, -3, 10}), render.V3{0, 1, 0}))
+		clearFrame()
+		scene.Begin()
+		w.DrawOpaque(scene)
+		if n := len(w.visibleBlendedVani); n < 20 {
+			t.Fatalf("expected foliage in reflection, got %d placements", n)
+		}
+		reference := append([]visibleVANI(nil), w.visibleBlendedVani...)
+		slices.SortStableFunc(reference, func(a, b visibleVANI) int { return cmp.Compare(b.depth, a.depth) })
+		visible := append([]visibleVANI(nil), w.visibleBlendedVani...)
+		scene.BeginTranslucentWorldModels()
+		for _, placed := range reference {
+			matrix, ok := expected[placed.placement]
+			if !ok || matrix != w.vaniBatch.Transforms[placed.placement] {
+				t.Fatalf("reflected VANI %d lost its authored transform", placed.placement)
+			}
+			placed.asset.updatePose(w.elapsed)
+			for _, part := range placed.asset.parts {
+				scene.DrawTranslucentWorldModel(part.mesh, part.texture, []render.M4{matrix}, !placed.asset.unlit)
+			}
+		}
+		scene.EndTranslucentWorldModels()
+		gl.ReadPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&normal[0]))
+
+		clearFrame()
+		scene.Begin()
+		w.DrawOpaque(scene)
+		if !slices.Equal(w.visibleBlendedVani, visible) {
+			t.Fatal("replaying the camera changed the visible placements")
+		}
+		w.DrawTranslucentVANI(scene)
+		if len(w.vaniBatch.Transforms) != w.vaniResidentCount || w.vaniBatch.Transforms[reference[0].placement] != expected[reference[0].placement] {
+			t.Fatal("drawing changed the resident placement list")
+		}
+		gl.ReadPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(&reflected[0]))
+		if !bytes.Equal(normal, reflected) {
+			t.Fatalf("VANI pixels differ in the reflected camera at dx=%v", dx)
+		}
+	}
+	if code := gl.GetError(); code != gl.NO_ERROR {
+		t.Fatalf("GL error %#x", code)
 	}
 }

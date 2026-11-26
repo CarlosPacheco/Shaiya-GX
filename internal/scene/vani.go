@@ -1,7 +1,6 @@
 package scene
 
 import (
-	"cmp"
 	"fmt"
 	"math"
 	"path"
@@ -166,9 +165,50 @@ func (w *World) addVanis(a *Assets) {
 	}
 }
 
+type visibleVANI struct {
+	asset     *vaniAsset
+	placement uint32
+	depth     float32
+}
+
 func (w *World) queueBlendedVani(s *render.Scene3D, asset *vaniAsset, matrix render.M4, center render.V3) {
+	batch := &w.vaniBatch
+	placement := uint32(len(batch.Transforms))
+	batch.Transforms = append(batch.Transforms, matrix)
+	batch.ResetTransforms()
+	w.queueIndexedVANI(s, asset, placement, center)
+}
+
+func (w *World) queueIndexedVANI(s *render.Scene3D, asset *vaniAsset, placement uint32, center render.V3) {
 	depth := center[0]*s.View[2] + center[1]*s.View[6] + center[2]*s.View[10]
-	w.visibleBlendedVani = append(w.visibleBlendedVani, vaniPlacement{asset: asset, matrix: matrix, depth: depth})
+	w.visibleBlendedVani = append(w.visibleBlendedVani, visibleVANI{asset, placement, depth})
+}
+
+func (w *World) clearBlendedVANI() {
+	clear(w.visibleBlendedVani)
+	w.visibleBlendedVani = w.visibleBlendedVani[:0]
+	if len(w.vaniBatch.Transforms) > w.vaniResidentCount {
+		w.vaniBatch.Transforms = w.vaniBatch.Transforms[:w.vaniResidentCount]
+		w.vaniBatch.ResetTransforms()
+	}
+}
+
+// Order floats back-to-front and retain submission order for ties.
+// Canonicalize signed zero and place NaNs last, like cmp.Compare.
+func vaniDepthKey(depth float32, index uint32) uint64 {
+	bits := math.Float32bits(depth)
+	if depth == 0 {
+		bits = 0
+	}
+	if math.IsNaN(float64(depth)) {
+		return uint64(0xffffffff)<<32 | uint64(index)
+	}
+	if bits>>31 == 0 {
+		bits ^= 0x80000000
+	} else {
+		bits = ^bits
+	}
+	return uint64(^bits)<<32 | uint64(index)
 }
 
 // DrawTranslucentVANI runs after opaque geometry and actors so that transparent
@@ -193,22 +233,24 @@ func (w *World) DrawTranslucentVANI(s *render.Scene3D) {
 	if len(visible) == 0 {
 		return
 	}
-	slices.SortStableFunc(visible, func(a, b vaniPlacement) int { return cmp.Compare(b.depth, a.depth) })
 	batch := &w.vaniBatch
-	batch.ResetTransforms()
-	batch.Transforms = batch.Transforms[:0]
-	w.vaniBlendIDs = w.vaniBlendIDs[:0]
+	order := w.vaniBlendOrder[:0]
 	for i, placement := range visible {
-		batch.Transforms = append(batch.Transforms, placement.matrix)
-		w.vaniBlendIDs = append(w.vaniBlendIDs, uint32(i))
+		order = append(order, vaniDepthKey(placement.depth, uint32(i)))
+	}
+	slices.Sort(order)
+	w.vaniBlendOrder = order
+	w.vaniBlendIDs = w.vaniBlendIDs[:0]
+	for _, key := range order {
+		w.vaniBlendIDs = append(w.vaniBlendIDs, visible[uint32(key)].placement)
 	}
 	firstPlacement := batch.Placements(w.vaniBlendIDs)
-	for i := 0; i < len(visible); {
-		asset := visible[i].asset
+	for i := 0; i < len(order); {
+		asset := visible[uint32(order[i])].asset
 		asset.updatePose(w.elapsed)
 		runLen := 1
 		if len(asset.parts) == 1 {
-			for i+runLen < len(visible) && visible[i+runLen].asset == asset {
+			for i+runLen < len(order) && visible[uint32(order[i+runLen])].asset == asset {
 				runLen++
 			}
 		}
@@ -218,8 +260,7 @@ func (w *World) DrawTranslucentVANI(s *render.Scene3D) {
 		i += runLen
 	}
 	batch.DrawTranslucent(s)
-	clear(visible)
-	w.visibleBlendedVani = visible[:0]
+	w.clearBlendedVANI()
 }
 
 func (v *vaniAsset) frameAt(elapsed float64) int {

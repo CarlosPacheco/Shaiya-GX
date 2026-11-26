@@ -41,7 +41,9 @@ type World struct {
 	rotors              []maniRotor
 	vanis               []*vaniAsset
 	blendedVani         []vaniPlacement
-	visibleBlendedVani  []vaniPlacement
+	visibleBlendedVani  []visibleVANI
+	vaniBlendOrder      []uint64
+	vaniResidentCount   int
 	vaniBlendIDs        []uint32
 	mapFX               *mapEffects
 	frameDT             float32
@@ -229,8 +231,7 @@ func (w *World) Draw(s *render.Scene3D) {
 
 // DrawOpaque renders terrain and the world geometry that writes depth.
 func (w *World) DrawOpaque(s *render.Scene3D) {
-	clear(w.visibleBlendedVani)
-	w.visibleBlendedVani = w.visibleBlendedVani[:0]
+	w.clearBlendedVANI()
 	if len(w.mapBatch.Transforms) == 0 {
 		w.prepareMapBatch()
 	}
