@@ -376,6 +376,25 @@ func TestGMReplyUsesLocalizedTemplate(t *testing.T) {
 	if got := chatEntry(text.SysMsg{}, line).Text; got != fallback {
 		t.Fatalf("fallback = %q", got)
 	}
+	for _, tc := range []struct {
+		name    string
+		spanish []byte
+	}{
+		{name: "missing catalogs"},
+		{name: "missing Spanish row", spanish: []byte("263\t\"Transparencia activada\"\n")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, messages := loadContentMessages(func(path string) ([]byte, error) {
+				if path == "Languages/Messages/sysmgtxt-es.txt" && tc.spanish != nil {
+					return tc.spanish, nil
+				}
+				return nil, os.ErrNotExist
+			}, 2)
+			if got := chatEntry(messages, line).Text; got != fallback {
+				t.Fatalf("English fallback = %q", got)
+			}
+		})
+	}
 	messages := text.SysMsg{id: "GM: recibiste <v> x <v2> (<v3>/<v4>)."}
 	if got := chatEntry(messages, line).Text; got != "GM: recibiste 2 x Arma <v> (1/3)." {
 		t.Fatalf("Spanish reply = %q", got)
