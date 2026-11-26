@@ -44,6 +44,12 @@ func (w *World) WaterContactAt(pos render.V3) bool {
 	return floor < 0 && pos[1] < .1 && pos[1] >= SwimEntryY-.18 && pos[1] >= floor-.1
 }
 
+// WaterFootstepAt requires feet below the authored plane. Splash effects
+// tolerate a small gap near the surface, while footsteps use dry audio there.
+func (w *World) WaterFootstepAt(x, y, z float32) bool {
+	return y < waterSurfaceY && w.WaterContactAt(render.V3{x, y, z})
+}
+
 // UnderwaterFogAt follows the camera, including in shallow water. The fog
 // colour blends Phoenix's underwater reference with the map-authored WTR tint;
 // the precise original-client underwater shader remains unverified.

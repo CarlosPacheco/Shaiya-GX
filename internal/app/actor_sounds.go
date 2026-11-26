@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
@@ -23,20 +22,19 @@ var stepFrames = map[string][]float32{
 
 var stepVariant = regexp.MustCompile(`^(.*?)\d+\.\w+$`)
 
-// footstepFile is Game.exe 0x40f700: a dungeon floor is stone, a walk below
-// 0.9 units is wading water, otherwise the terrain layer under the foot picks
-// the surface. The variant (001..003) is random.
-func footstepFile(w *world.WLD, x, y, z float32, object bool) string {
-	if w == nil {
+// footstepFile selects stone on dungeon floors and solid objects. Water
+// requires contact with the map's water surface; dry steps use the terrain layer.
+func footstepFile(w *scene.World, x, y, z float32, object bool) string {
+	if w == nil || w.WLD == nil {
 		return ""
 	}
 	prefix := "ch_walks"
 	switch {
-	case w.Dungeon || object:
-	case y-0.9 < 0:
+	case w.WLD.Dungeon || object:
+	case w.WaterFootstepAt(x, y, z):
 		prefix = "ch_walkw"
 	default:
-		layer := terrainWalkSound(w, x, z)
+		layer := terrainWalkSound(w.WLD, x, z)
 		if layer == "" {
 			return ""
 		}
@@ -93,7 +91,7 @@ func (a *App) updateActorSounds(mem *actorSoundMemory, c *scene.Character, x, y,
 	if frames, ok := stepFrames[c.LocomotionClip()]; ok && c.ActionSlot() < 0 && !c.Concealed && a.wv != nil && a.wv.world != nil {
 		for _, frame := range frames {
 			if c.CrossedFrame(frame) {
-				if name := footstepFile(a.wv.world.WLD, x, y, z, a.onObjectSurface(x, y, z)); name != "" {
+				if name := footstepFile(a.wv.world, x, y, z, a.onObjectSurface(x, y, z)); name != "" {
 					a.playSound(name, x, z)
 				}
 				break
@@ -116,18 +114,18 @@ func (a *App) updateActorSounds(mem *actorSoundMemory, c *scene.Character, x, y,
 // (horse, puma twice, basilisk); a dungeon is stone, wading water is "wa",
 // otherwise the terrain layer's own footstep file decides: ch_walks is stone,
 // ch_walkg grass and anything else earth. The variant is random.
-func mountStepFile(w *world.WLD, race uint8, x, y, z float32, object bool) string {
-	if w == nil || race > 3 {
+func mountStepFile(w *scene.World, race uint8, x, y, z float32, object bool) string {
+	if w == nil || w.WLD == nil || race > 3 {
 		return ""
 	}
 	kind := [4]string{"horse", "puma", "puma", "baslk"}[race]
 	surface := "st"
 	switch {
-	case w.Dungeon || object:
-	case y-0.9 < 0:
+	case w.WLD.Dungeon || object:
+	case w.WaterFootstepAt(x, y, z):
 		surface = "wa"
 	default:
-		layer := terrainWalkSound(w, x, z)
+		layer := terrainWalkSound(w.WLD, x, z)
 		switch {
 		case layer == "":
 			return ""
@@ -151,7 +149,7 @@ func (a *App) updateMountSounds(m *scene.Vehicle, prevAction int, prevTime float
 	if !scene.MountStepCrossedDirected(prevAction, prevTime, action, now, race, m.PlayingReverse()) {
 		return
 	}
-	if name := mountStepFile(a.wv.world.WLD, race, x, y, z, a.onObjectSurface(x, y, z)); name != "" {
+	if name := mountStepFile(a.wv.world, race, x, y, z, a.onObjectSurface(x, y, z)); name != "" {
 		a.playSound(name, x, z)
 	}
 }

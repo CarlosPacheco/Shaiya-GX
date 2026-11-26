@@ -9,6 +9,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/data/world"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
 func TestMapAudioFadeAndDeduplication(t *testing.T) {
@@ -157,18 +158,19 @@ func TestRealMapAudioRegions(t *testing.T) {
 	}
 }
 
-// Game.exe 0x40f700: a dungeon is stone, a walk under 0.9 units is water,
-// otherwise the layer under the foot gives the surface with a random 001-003.
+// A dungeon is stone. Dry ground at any height uses its own terrain layer.
 func TestFootstepFileSurfaces(t *testing.T) {
-	land := &world.WLD{MapSize: 4, TextureMap: []byte{0, 0, 0, 0, 0, 0, 0, 0, 0}, Layers: []world.TerrainLayer{{Sound: "ch_walkg002.ogg"}}}
+	land := &scene.World{WLD: &world.WLD{MapSize: 4, TextureMap: []byte{0, 0, 0, 0, 0, 0, 0, 0, 0}, Layers: []world.TerrainLayer{{Sound: "ch_walkg002.ogg"}}}}
 	for range 20 {
 		if got := footstepFile(land, 1, 5, 1, false); got != "ch_walkg001.ogg" && got != "ch_walkg002.ogg" && got != "ch_walkg003.ogg" {
 			t.Fatalf("terrain step %q", got)
 		}
-		if got := footstepFile(land, 1, .5, 1, false); got < "ch_walkw001.ogg" || got > "ch_walkw003.ogg" {
-			t.Fatalf("water step %q", got)
+		for _, y := range []float32{.5, -.5} {
+			if got := footstepFile(land, 1, y, 1, false); got < "ch_walkg001.ogg" || got > "ch_walkg003.ogg" {
+				t.Fatalf("dry terrain below 0.9 played %q", got)
+			}
 		}
-		if got := footstepFile(&world.WLD{Dungeon: true}, 1, 5, 1, false); got < "ch_walks001.ogg" || got > "ch_walks003.ogg" {
+		if got := footstepFile(&scene.World{WLD: &world.WLD{Dungeon: true}}, 1, 5, 1, false); got < "ch_walks001.ogg" || got > "ch_walks003.ogg" {
 			t.Fatalf("dungeon step %q", got)
 		}
 	}
@@ -187,20 +189,20 @@ func TestFootstepFileSurfaces(t *testing.T) {
 // own step file; water and dungeons override it.
 func TestMountStepFileSurfaces(t *testing.T) {
 	layers := []world.TerrainLayer{{Sound: "ch_walks001.ogg"}, {Sound: "ch_walkg001.ogg"}, {Sound: "ch_walke001.ogg"}}
-	w := &world.WLD{MapSize: 4, TextureMap: []byte{0, 1, 2, 0, 1, 2, 0, 1, 2}, Layers: layers}
+	w := &scene.World{WLD: &world.WLD{MapSize: 4, TextureMap: []byte{0, 1, 2, 0, 1, 2, 0, 1, 2}, Layers: layers}}
 	for range 15 {
 		for _, tc := range []struct {
 			race uint8
 			x, y float32
 			want string
 		}{
-			{0, 0, 5, "run_horse_st0"}, {1, 2, 5, "run_puma_gr0"}, {3, 4, 5, "run_baslk_ea0"}, {2, 2, .5, "run_puma_wa0"},
+			{0, 0, 5, "run_horse_st0"}, {1, 2, 5, "run_puma_gr0"}, {3, 4, 5, "run_baslk_ea0"}, {2, 2, .5, "run_puma_gr0"}, {2, 2, -.5, "run_puma_gr0"},
 		} {
 			if got := mountStepFile(w, tc.race, tc.x, tc.y, 0, false); len(got) != len(tc.want)+5 || got[:len(tc.want)] != tc.want {
 				t.Fatalf("race %d at (%v,%v): %q want prefix %q", tc.race, tc.x, tc.y, got, tc.want)
 			}
 		}
-		if got := mountStepFile(&world.WLD{Dungeon: true}, 0, 1, 5, 1, false); got[:len("run_horse_st0")] != "run_horse_st0" {
+		if got := mountStepFile(&scene.World{WLD: &world.WLD{Dungeon: true}}, 0, 1, 5, 1, false); got[:len("run_horse_st0")] != "run_horse_st0" {
 			t.Fatalf("dungeon mount step %q", got)
 		}
 	}

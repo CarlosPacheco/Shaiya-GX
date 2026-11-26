@@ -116,3 +116,25 @@ func BenchmarkWaterVisibilityReal(b *testing.B) {
 		})
 	}
 }
+
+func TestWaterFootstepChecksTerrainAndImmersion(t *testing.T) {
+	w := &World{WLD: &world.WLD{MapSize: 4}, side: 3, step: 2,
+		heights: []float32{.5, -.5, -3, .5, -.5, -3, .5, -.5, -3}, water: &waterSurface{}}
+	for _, test := range []struct {
+		x, y float32
+		wet  bool
+	}{
+		{0, .5, false}, {0, -.01, false}, // Dry ground and a point below it.
+		{2, .05, false}, {2, 0, false}, // Feet above or at the plane.
+		{2, -.5, true}, // Grounded in shallow water.
+		{4, -2.5, false}, {-1, -.5, false},
+	} {
+		if got := w.WaterFootstepAt(test.x, test.y, 1); got != test.wet {
+			t.Errorf("footstep at x=%g y=%g: wet=%t, want %t", test.x, test.y, got, test.wet)
+		}
+	}
+	w.water = nil
+	if w.WaterFootstepAt(2, -.5, 1) {
+		t.Fatal("low terrain on a map without water was wet")
+	}
+}

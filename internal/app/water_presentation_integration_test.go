@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
@@ -144,4 +145,29 @@ func TestWaterLocomotionAndContactGL(t *testing.T) {
 		t.Fatal("swimmer did not resume floating after the jump")
 	}
 	t.Log("real map update: prior pose → float → swim → float; authored wake visible and expires underwater")
+}
+
+func TestLowDryGroundAndWadingFootstepsGL(t *testing.T) {
+	w := mobGroundMap(t, 19)
+	for _, tc := range []struct {
+		name string
+		x, z float32
+		wet  bool
+	}{
+		{"dry bank", 12, 1440, false},
+		{"shallow water", 4, 1444, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			y := w.Height(tc.x, tc.z)
+			if y >= .9 || (y < 0) != tc.wet {
+				t.Fatalf("fixture no longer samples low terrain on the expected side of the water plane: y=%g", y)
+			}
+			foot := footstepFile(w, tc.x, y, tc.z, false)
+			hoof := mountStepFile(w, 0, tc.x, y, tc.z, false)
+			if foot == "" || hoof == "" || strings.HasPrefix(foot, "ch_walkw") != tc.wet || strings.HasPrefix(hoof, "run_horse_wa") != tc.wet {
+				t.Fatalf("map 19 at (%g, %g, %g): foot=%q hoof=%q wet=%t", tc.x, y, tc.z, foot, hoof, tc.wet)
+			}
+			t.Logf("map 19 at (%g, %g, %g): foot=%q hoof=%q", tc.x, y, tc.z, foot, hoof)
+		})
+	}
 }
