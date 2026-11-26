@@ -144,15 +144,14 @@ func (a *App) prepareRemotePlayers() {
 			if err != nil {
 				clientlog.Warnf("player %d model: %v", id, err)
 			}
-			// Cosmetics can replace the model, but must not reset which
-			// gestures have already been consumed for this entity.
-			if !e.Dead && !e.Mounted {
-				actor.PreservePosture(cached.character)
+			preserved := !e.Dead && !cached.dead && actor.PreserveAnimation(cached.character)
+			if !preserved {
+				cached.mountCasting = false
 			}
 			cached.character, cached.shape = actor, sh
 			cached.ghost, cached.appearance = nil, appearance
 			cached.hideCloak, cached.hideHelmet = hideCloak, hideHelmet
-			cached.dead, cached.mountCasting = false, false
+			cached.dead = false
 		}
 		c := cached.character
 		if c == nil {

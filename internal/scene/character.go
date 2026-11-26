@@ -114,6 +114,7 @@ type Character struct {
 	blendLeft            float32
 	blendToFirstFrame    bool
 	locomotionBlend      bool
+	keepLocomotionClip   bool // weapon changed while this locomotion clip was playing
 	oneShot              bool
 	folder               string
 	prefix               string
@@ -165,6 +166,9 @@ func (c *Character) SetClip(name string) {
 		c.ReleaseAction()
 	}
 	if c.locked || c.locomotionBlend && c.blendLeft > 0 && isLocomotionClip(name) {
+		return
+	}
+	if c.keepLocomotionClip && c.clipName == name {
 		return
 	}
 	c.setClip(name, false)

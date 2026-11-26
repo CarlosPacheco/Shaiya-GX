@@ -86,6 +86,24 @@ func TestEquipmentRefreshKeepsPostureGL(t *testing.T) {
 	if rebuilt == actor || !rebuilt.PlayingClip("012_sit") || rebuilt.Time != actor.Time {
 		t.Fatal("remote equipment change reset the seated pose")
 	}
+
+	remote.Sitting = false
+	remote.Vehicle = proto.VehicleState{State: proto.VehicleCasting, CastMS: 2000}
+	a.frameDT = .2
+	a.prepareRemotePlayers()
+	actor = a.wv.actors[2].character
+	remaining, total, casting := actor.CastTiming()
+	if !casting || remaining <= 0 || remaining >= total {
+		t.Fatal("remote mount cast did not advance")
+	}
+	remote.Shape.Equipment[5] = [3]uint8{}
+	a.frameDT = 0
+	a.prepareRemotePlayers()
+	rebuilt = a.wv.actors[2].character
+	gotRemaining, gotTotal, gotCasting := rebuilt.CastTiming()
+	if rebuilt == actor || !gotCasting || gotRemaining != remaining || gotTotal != total || rebuilt.Time != actor.Time {
+		t.Fatal("remote equipment change restarted the mount cast")
+	}
 }
 
 func TestSittingAgainstRapture(t *testing.T) {

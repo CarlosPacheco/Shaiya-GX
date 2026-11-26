@@ -6,18 +6,32 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
-// PreservePosture transfers the seated pose or transition to a rebuilt body.
-func (c *Character) PreservePosture(previous *Character) {
-	if c == nil || previous == nil || c.prefix != previous.prefix || c.folder != previous.folder ||
-		!previous.PlayingAction(10) && !previous.PlayingAction(11) && !previous.PlayingClip("012_sit") {
-		return
+// PreserveAnimation transfers the active animation state to a rebuilt body.
+// Swapping equipment or appearance on the same body preserves locomotion,
+// posture, mounted clips, actions, casts, blends, playback rate, and
+// frame-event cursors instead of restarting from idle.
+func (c *Character) PreserveAnimation(previous *Character) bool {
+	if c == nil || previous == nil || previous.clip == nil || c.prefix != previous.prefix || c.folder != previous.folder {
+		return false
 	}
 	c.clip, c.clipName, c.clipFile = previous.clip, previous.clipName, previous.clipFile
-	c.Time, c.oneShot, c.locked = previous.Time, previous.oneShot, previous.locked
-	c.actions, c.actionsLoaded, c.actionSlot = previous.actions, previous.actionsLoaded, previous.actionSlot
-	c.blendLeft, c.blendToFirstFrame = previous.blendLeft, previous.blendToFirstFrame
+	c.Time, c.oneShot, c.locked, c.hold = previous.Time, previous.oneShot, previous.locked, previous.hold
+	c.actions, c.actionsLoaded, c.actionSlot, c.actionID = previous.actions, previous.actionsLoaded, previous.actionSlot, previous.actionID
+	c.reactionID, c.combatPoseLeft = previous.reactionID, previous.combatPoseLeft
+	c.castLeft, c.castTotal, c.castLoop = previous.castLeft, previous.castTotal, previous.castLoop
+	c.spinLeft, c.externalTime, c.hiddenWeaponAction = previous.spinLeft, previous.externalTime, previous.hiddenWeaponAction
+	c.eventAction, c.eventPrev, c.eventCur, c.eventClip = previous.eventAction, previous.eventPrev, previous.eventCur, previous.eventClip
+	c.rate = previous.rate
+	c.keepLocomotionClip = previous.keepLocomotionClip || (!previous.oneShot && isLocomotionClip(previous.clipName) && c.weaponType != previous.weaponType)
+	c.blendLeft, c.blendToFirstFrame, c.locomotionBlend = previous.blendLeft, previous.blendToFirstFrame, previous.locomotionBlend
 	c.blendFrom = slices.Clone(previous.blendFrom)
+	c.enchantTime = previous.enchantTime
+	c.Mounted = previous.Mounted
+	if c.cloak != nil && previous.cloak != nil {
+		c.cloak.elapsed = previous.cloak.elapsed
+	}
 	c.invalidatePose()
+	return true
 }
 
 // The original character and creature controllers blend for five frames at 30 Hz.
@@ -90,6 +104,7 @@ func (c *Character) startClipImmediately(next *Clip, oneShot bool) {
 func (c *Character) resetClip(next *Clip, oneShot bool) {
 	c.clip, c.Time, c.oneShot = next, 0, oneShot
 	c.locomotionBlend = false
+	c.keepLocomotionClip = false
 	c.blendToFirstFrame = false
 	c.rate.kind, c.rate.next = c.rate.next, rateNone
 	c.invalidatePose()

@@ -187,8 +187,9 @@ All seven `Cursor/01.png` through `07.png` files load from loose data into OS cu
 
 Press C to sit or stand. Holding C triggers a single request, and a new press
 can change posture after the current transition finishes. Hold a movement key
-to stand once the sit animation finishes. Equipment changes retain the seated
-pose or the progress of the sit or stand animation.
+to stand once the sit animation finishes. Equipment changes preserve the
+current pose and animation progress, including sitting, standing and summoning
+a mount.
 
 Equipment sounds play when World confirms a change to an equipped slot.
 
