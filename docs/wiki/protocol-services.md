@@ -190,7 +190,7 @@ func buildWarehouseItemList(items []db.Item) []byte {
 
 <details><summary>DecodeWarehouse — internal/proto/warehouse.go</summary>
 
-[Source definition](../../internal/proto/warehouse.go#L14)
+[Source definition](../../internal/proto/warehouse.go#L24)
 
 ```go
 func DecodeWarehouse(p []byte) (list WarehouseList, err error) {

@@ -20,6 +20,12 @@ GX `0x7F04` sends an atomically assembled, chunked map quest-NPC catalog. It
 contains definition keys and X/Z anchors without interactive entity IDs. See
 [Quests and map markers](quests-and-map.md) for layout and cache invalidation.
 
+World sends `0x7F2D` after an Etin request and refreshes it when the guild
+house is bought, receives an upgrade or changes activation. It carries the
+guild ID, price in gold, reserved upkeep, activation and service rows with
+current level, upkeep and next upgrade cost. See
+[GX protocol extensions](protocol-extensions.md) for field widths.
+
 ## Map-click GM teleport
 
 Revision `0x11122208` adds client request `0x7F09`: map ID (`uint16`),

@@ -99,7 +99,7 @@ Source notes: Opcodes not named in Rapture's catalog. client handler 0x0059cf70 
 
 **S→C serializers:** [buildUserLeave (server/internal/world/view.go)](../../server/internal/world/view.go#L234)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1303), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L38)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1303), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L40)
 
 ### Wire layouts and validation
 
@@ -176,7 +176,7 @@ func ItemMovePacket(srcBag, srcSlot, dstBag, dstSlot uint8) []byte {
 
 <details><summary>DecodeWarehouseMove — internal/proto/warehouse.go</summary>
 
-[Source definition](../../internal/proto/warehouse.go#L45)
+[Source definition](../../internal/proto/warehouse.go#L55)
 
 ```go
 func DecodeWarehouseMove(p []byte) (items [2]InventoryItem, money uint32, hasMoney bool, err error) {
@@ -1874,7 +1874,7 @@ Source notes: Request bag,slot,hair,face,height,sex:u8; reply charId:u32,hair,fa
 
 **S→C serializers:** [buildChangeAppearance (server/internal/world/character.go)](../../server/internal/world/character.go#L587)
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1303), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L52)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1303), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L54)
 
 ### Wire layouts and validation
 

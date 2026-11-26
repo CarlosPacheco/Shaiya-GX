@@ -2,9 +2,15 @@
 
 This log records delivered changes and data-package updates. Client data is hosted separately on Drive; changing it does not automatically produce a new executable release.
 
-## Unreleased
+## gx-v0.1.21 — 2026-11-26
+
+[Patch notes](docs/releases/gx-v0.1.21.md) · [Upgrade guide](docs/releases/gx-v0.1.21-upgrade.md).
 
 - Move the data editor to the independent [GX Studio](https://github.com/Spelunkern/GX-Studio) project. Client builds and new GX packages omit the retired Go editor.
+- Restore field and dungeon mob movement, immediate death animations, player idle variations and stable chat bubbles.
+- Fix basic attack timing on busy connections, remote turns, ladder facing, merchant window placement, warehouse fees and water footsteps.
+- Use World prices and upkeep in Guild House windows. Include verified structural dungeon navigation in the Windows and Linux server packages.
+- Improve OpenGL batching for blended vegetation and keep map and effect batching available on supported driver fallback paths.
 
 ## gx-v0.1.16
 

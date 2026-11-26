@@ -1,9 +1,11 @@
 # Authoritative ground navigation
 
-GX Server owns player positions, gravity and jump impulses, and mob foot height and movement paths. The same implementation
-handles terrain fields, placed buildings, bridges and dungeon floors. Map 3 is
-the initial dungeon regression fixture; map 1 is the outdoor regression fixture.
-Player packets request horizontal movement; client Y is not used as a ground or jump input.
+GX Server owns player positions, gravity, jump impulses and mob movement.
+Players use full collision geometry in fields and dungeons. Field mobs follow
+terrain height and dungeon mobs use a dedicated structure-only mesh when it
+is installed. Map 1 is the outdoor regression fixture and map 3 is the
+dungeon fixture. Player packets request horizontal movement. World derives
+player ground and jump height.
 
 ## Server files
 
@@ -17,6 +19,8 @@ required. Generated files are independent of the graphics engine:
 - `data/geometry/<id>.gxphysics`: terrain and original collision geometry, including water flags, for authoritative player sweeps.
 - `data/geometry/<id>.manifest.json`: format, agent profile, source hashes, player physics and collision-construction versions, and SHA-256 checksums for all three files.
 - `data/geometry/catalog.json`: complete map set for the installed generation.
+- `data/geometry/mob-dungeons/`: companion catalog and geometry for dungeon
+  mobs, built from the dungeon layout, structural instances and WLD blockers.
 
 The runtime verifies checksums, format and collision construction revision 3 before use. Older construction manifests require regeneration; matching hashes alone cannot certify obsolete geometry. A missing catalogued map
 or corrupt generation fails startup with a diagnostic. A map with no reachable
@@ -57,7 +61,11 @@ catalog. The command merges the selected IDs into `catalog.json`. Install the
 complete directory with the world stopped and ship the same client dataset.
 Use `--maps 3` for one dungeon, or `--maps 1,3` for selected maps. Regenerate
 whenever client geometry, terrain, server masks or the agent profile changes.
-The baker pin is checked; licenses accompany server packages. Dense tiles retry larger 256/512-cell partitions when the Detour polygon-reference limit is reached, retaining the same cell resolution and agent profile. The manifest records `tile_size`.
+The baker pin is checked. Licenses accompany server packages. Dense tiles retry larger 256/512-cell partitions when the Detour polygon-reference limit is reached, retaining the same cell resolution and agent profile. The manifest records `tile_size`.
+
+Pass `--mob-dungeons-only` to generate the companion catalog in the
+`mob-dungeons/` subdirectory of the output path. Regenerate it when a
+dungeon layout or structural resource changes.
 
 An existing unchanged navigation generation can gain player physics with
 `--physics-only --output /path/to/existing/geometry`. This checks original source hashes and collision construction rules. Changed content or older construction rules require a full bake. This mode
@@ -65,13 +73,17 @@ does not replace `.gxnav` or `.gxcol`. Neither mode writes into the client data.
 
 ## Movement contract
 
-The initial ground-agent profile uses height 1.8, radius 0.3, maximum climb 0.5
-and slope 50 degrees. Collision geometry determines clearance and connected
-surfaces. `MobDef.Size` remains combat reach; it is not assumed to be a physical
-radius. This profile does not introduce flight, swimming, ladders or moving
-platform passenger attachment. Mob routes bake animated rotors in their base pose. Player sweeps use their actual animated pose with a server-synchronized monotonic clock. Moving-platform passenger attachment and dynamic mob rerouting are not implemented.
+Field mobs pursue and move in XZ. For rendering and ground placement, World
+samples terrain Y at their current XZ. Placed scenery and player collision
+stay outside the field mob movement path. Dungeon mobs path on the companion
+mesh, so structural walls and changes of floor still constrain them.
+When the companion is absent for a map, World uses its full dungeon mesh.
 
-Spawn selects the first supporting surface under the original spawn volume,
+The dungeon agent profile uses height 1.8, radius 0.3, maximum climb 0.5
+and slope 50 degrees. `MobDef.Size` determines combat reach. Players keep
+their original collision surfaces and sweep against the animated rotor pose.
+
+Dungeon spawn selects the first supporting surface under the original spawn volume,
 with a small upward tolerance. Buried outdoor volumes fall back to the native
 terrain base. It never chooses a global highest surface. Missing clearance or
 missing physical support rejects the spawn with map-level diagnostics. When a
@@ -82,8 +94,7 @@ Respawn, roaming, chase, home return, GM spawning and instanced copies use the
 same ground navigation. A* must reach the requested polygon; partial paths are
 rejected. Movement consumes collinear polygon crossings together and stops at actual
 horizontal turns. It samples support along every segment and checks the server mask. Portal Y is resolved from the corridor polygon's detailed surface before original support checks, preserving the floor on steep terrain instead of rejecting a valid return route. Returning home follows a path and cannot teleport
-through a wall. Height-aware distance and original-surface line of sight keep
-mobs from attacking through walls or intervening floors.
+through a wall in a dungeon. Attack range and line of sight use the existing full geometry.
 
 GX packets `0x7F05` (mob enter) and `0x7F06` (mob movement) carry XYZ for grounded
 mobs. Factioned spawns append country U8 (0 Light, 1 Fury, 2 neutral) and
@@ -95,11 +106,10 @@ prediction; the client uses localized SysMsg 317 (Wrong target), style 17.
 Movement additionally carries its server-selected duration in milliseconds
 as a trailing uint32. A 50 ms scheduler and matching client interpolation keep
 short corner segments from becoming long stop-and-go pauses. Original `0x0601`/`0x0603` layouts remain unchanged for legacy entities.
-The shared client revision is `0x11122209`; update Linux client and server
-together. The client retains server Y and only refines interpolation against a
-nearby original surface. It no longer replaces dungeon or bridge height with
-zero or terrain height. The decoded map cache is bounded to four maps; mobs
-retain lightweight map references rather than keeping every map resident.
+The shared client revision is `0x11122209`. Update the client and server
+together. The client interpolates server-supplied ground movement and keeps
+field visuals on the terrain. Each decoded navigation cache is bounded to
+four maps.
 
 ## Player authority
 
@@ -139,7 +149,9 @@ Run `python3 tools/fetch_server_geometry.py` before packaging or running a
 server from a fresh source checkout. The script downloads the pinned
 [68-map physics resource archive](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-geometry-rules3-20261123).
 This generation was built from the gx-v0.1.16 client data and server walk
-masks. The installer verifies the archive, the complete set of map manifests,
+masks. The installer also fetches the
+[structural dungeon mob archive](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-mob-dungeons-20261126).
+It verifies the archives, the complete sets of map manifests,
 and each generated file by SHA-256. It requires a fresh directory when a
 different generation is present. Both native CI platforms use the same archive.
 Server portables include all the generated resources.

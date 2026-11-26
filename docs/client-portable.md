@@ -27,8 +27,9 @@ The archived Drive package contains the former editor in `Client/Studio/`.
 Download the current [GX Studio](https://github.com/Spelunkern/GX-Studio/releases) separately.
 
 Client packages now include `data/Vehicle/bones.ini` alongside fonts; merge both.
-Server packages include the pinned physics and navigation catalog, the approved
-development seed and the optional offline mount-definition migration tool.
+Server packages include the pinned player and structural dungeon mob
+geometry catalogs, the approved development seed and the offline
+mount-definition migration tool.
 
 The [GitHub combined binary portable](https://github.com/Spelunkern/Shaiya-GX/releases/latest/download/gx-portable-linux-windows.zip)
 has the same `Client/` and `Server/` layout, with fonts and the server seed/maps/physics.
@@ -48,6 +49,7 @@ Source, build instructions and third-party font sources: https://github.com/Spel
 ## Updating existing client data
 
 Update GX Server and the client together and preserve the existing server runtime database.
+See the [gx-v0.1.21 upgrade guide](releases/gx-v0.1.21-upgrade.md).
 
 To update an older installation with the GitHub binaries, close the client and
 run the following commands from a source checkout. Set `ORIGINAL_CLIENT` to the

@@ -1863,6 +1863,52 @@ func GuildDuelAnswerPacket(accept bool) []byte {
 <details><summary>Types and codecs</summary>
 
 ```go
+type GuildHouseServices struct {
+	GuildID uint32
+	BuyGold uint32
+	Upkeep  uint32
+	Active  bool
+	Rows    []GuildHouseService
+}
+```
+
+```go
+type GuildHouseService struct {
+	Type     uint16
+	Level    uint8
+	Upkeep   uint16
+	NextCost uint16 // zero when the next level is unavailable
+}
+```
+
+```go
+func DecodeGuildHouseServices(p []byte) (GuildHouseServices, error) {
+	r := NewReader(p)
+	v := GuildHouseServices{GuildID: r.U32(), BuyGold: r.U32(), Upkeep: r.U32(), Active: r.Bool()}
+	n := int(r.U8())
+	if n > r.Remaining()/7 {
+		return GuildHouseServices{}, ErrShort
+	}
+	v.Rows = make([]GuildHouseService, n)
+	for i := range v.Rows {
+		v.Rows[i] = GuildHouseService{Type: r.U16(), Level: r.U8(), Upkeep: r.U16(), NextCost: r.U16()}
+	}
+	return v, r.Err()
+}
+```
+
+```go
+func (v *GuildHouseServices) Service(npcType uint16) (GuildHouseService, bool) {
+	for _, row := range v.Rows {
+		if row.Type == npcType {
+			return row, true
+		}
+	}
+	return GuildHouseService{}, false
+}
+```
+
+```go
 type GuildNpc struct {
 	Type  uint16
 	Level uint8
@@ -2714,6 +2760,12 @@ func GestureAction(motion uint8) (int, bool) {
 		return int(motion), true
 	}
 	return int(motion ^ 1), true
+}
+```
+
+```go
+func IsIdleVariation(motion uint8) bool {
+	return motion == MotionIdle1 || motion == MotionIdle2
 }
 ```
 
@@ -5289,6 +5341,15 @@ func UseVehiclePacket() []byte { return NewWriter(UseVehicle).Bytes() }
 [internal/proto/warehouse.go](../../internal/proto/warehouse.go#L1)
 
 <details><summary>Types and codecs</summary>
+
+```go
+func WarehouseWithdrawFee(itemType uint8, count uint16, sell uint32) uint32 {
+	if itemType == 94 {
+		return 0
+	}
+	return uint32(float64(float32(uint32(count)*sell)) * float64(float32(.05)))
+}
+```
 
 ```go
 type WarehouseList struct {

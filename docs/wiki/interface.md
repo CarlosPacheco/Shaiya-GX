@@ -117,7 +117,7 @@ sent icon to open the standard tooltip with the item's lapis, recreation and
 enchantment as they were when sent. Stackable items show the sent quantity in parentheses beside their icon.
 
 
-The login logo stays visible during server selection and disappears with the login scenery.
+The login logo stays visible during server selection and disappears with the login scenery. Back and Escape cancel an in-progress connection to the selected server.
 
 Chat uses runtime `sysmsg-uni.txt` entries, including channel templates 353/354/355/370 and channel names 5086–5089/5377/5388. The formatter replaces native placeholders once; message bodies cannot introduce more placeholders. Normal messages use the native `name : message` format. Combat, experience, acquired gold/items, item use, learned skills, level changes, party invitations/membership, quest kill progress and outcomes, trade and supported guild lifecycle notices use their original message IDs. Diagnostic commands retain explanatory fallback text where no native equivalent has been connected. Special service and third-party combat notices remain incomplete; ordinary speech bubbles follow confirmed chat echoes. Quest kill progress uses SysMsg 349–352 for PvP and monster objectives. The updated objective uses a generic notice if its monster name is unavailable. Equipment refusals show SysMsg 229 with the item name in the upper system chat.
 
@@ -135,6 +135,7 @@ speech bubbles. Edit `data/Filter.INI` next to `sysmsg-uni.txt` and restart the
 client to load your rules. Add one `Word=` line per word or phrase under
 `[Filter]`, such as `Word=example`. The file accepts UTF-16LE and UTF-8 and
 starts with no rules, and the checkbox starts off. Matching is case-insensitive and treats each rule as literal text.
+The local bundle builder preserves an existing Filter.INI alongside Tip.INI.
 
 Golden frames, Alpha/filter/help panels and the separate native whisper-recipient row remain retired under the chosen flat presentation. Histories retain a shared 300-message buffer and independent scroll anchors. Settings preserve row sizes. Chat starts in Normal on each login, and channel changes apply to the current session. Whisper accepts the existing recipient syntax, including `!name message` and `/w name message`. Raid is outside the six-channel picker.
 
@@ -409,7 +410,8 @@ race/sex filename aliases. Entering swimming releases a previous locked pose;
 water locomotion takes precedence over sitting in presentation. Surface contact
 leaves the extracted Cwater.EFT rings in place, using Phoenix's contact spacing
 and a ring on entering flotation. Deep divers, mounted/dead actors and dry ground
-do not create new surface marks. Existing particles expire normally. Contact
+do not create new surface marks. Existing particles expire normally.
+Footsteps and hooves switch to water sounds when they touch an actual water surface or water flag. Contact
 scheduling is adapted from Phoenix, not a claim of exact native emission cadence.
 
 
@@ -498,9 +500,9 @@ custom hover boxes are removed.
 Only confirmed ordinary-chat echoes create a speech bubble. New text replaces
 that actor's bubble and resets its five-second lifetime. The native single-line
 grey `80484848` rectangle has measured text width plus 20px and 30px height;
-text stays white, with coloured emoji preserved. Projection follows the actor,
-hides off camera/beyond 50 units and keeps the frame above the posed crown/name
-in GX's rig coordinate system. No client-side chat echo or server rule is added.
+text stays white, with coloured emoji preserved. Projection follows the
+rendered actor origin with a fixed height offset, using the resting seat
+position for mounted speakers. Bubbles are hidden off camera and beyond 50 units.
 
 Open the expanded minimap, then W for the native World Map. Its 19 regions come
 from `WorldMap.INI`; hover draws authored `wm_e` overlays and `wm_f` title art
@@ -756,10 +758,27 @@ filled cells, including three-digit stacks.
 
 ## Personal warehouse
 
-Merchants and bankers open the inventory flush to the left of the service window. The inventory returns to its saved position when the service closes.
+The merchant opens beside the inventory's current position. It opens to the
+left when there is room and to the right otherwise. The two frames can be moved
+independently during a visit. Closing the merchant preserves the inventory's
+open state. Bankers use a temporary dock beside the warehouse. Closing controls
+play the native `ui_window` cue (sound bank entry `0x20`).
 
 A personal banker opens account storage. While Warehouse Call is active,
 click its buff icon to reopen personal storage and the inventory. Drag the
 icon to reposition the buff strip. The remote window has an empty portrait
 slot. Both personal warehouse entry points use the same six storage pages.
-Drop a stored item on a page tab to move it to that page’s first free slot. For an exact destination, select the item, switch tabs and click the slot. Guild storage opens through its own banker in the guild house.
+Drop an item on a warehouse tab to move it to the first free slot on that
+page while keeping the current page visible. Select an item, switch tabs and
+click a slot to choose an exact destination. Personal withdrawals charge the
+native fee of 5% of the stack's sell price, truncated to whole gold. Type 94
+withdrawals are free. Insufficient funds use `sysmsg-uni.txt` message 303, as
+in Game.exe at `0x49f4ce` and `0x50e0e6`. Guild storage opens through its own
+banker in the guild house.
+
+## Guild House
+
+The Guild Manager and Etin Manager use the purchase price, reserved upkeep
+and service levels and upgrade costs supplied by World. The client can start
+and use both windows without Npc/GuildHouse.SData. Use matching GX client
+and World builds. The warehouse in the guild house keeps its own rules.

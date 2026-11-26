@@ -254,7 +254,7 @@ Declarations: [proto.GXMobEnter](../../internal/proto/world.go#L257).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1303), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L124)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1303), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L126)
 
 ### Wire layouts and validation
 
@@ -313,7 +313,7 @@ Declarations: [proto.GXMobMove](../../internal/proto/world.go#L258).
 
 **S→C serializers:** no direct mapping found; inspect source before assuming support or direction.
 
-**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1303), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L130)
+**Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1303), [applyEntitiesPacket (internal/game/state_entities_packets.go)](../../internal/game/state_entities_packets.go#L132)
 
 ### Wire layouts and validation
 
@@ -393,7 +393,7 @@ Declarations: [proto.GXPlayerCorrection](../../internal/proto/player_physics.go#
 
 **C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
 
-**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L287)
+**S→C serializers:** [correctMovement (server/internal/world/player_movement.go)](../../server/internal/world/player_movement.go#L288)
 
 **Client receive reducers:** [Apply (internal/game/state.go)](../../internal/game/state.go#L1251)
 
@@ -403,7 +403,7 @@ These are the exact source serializers/decoders. Parameter names and assignments
 
 <details><summary>correctMovement — server/internal/world/player_movement.go</summary>
 
-[Source definition](../../server/internal/world/player_movement.go#L287)
+[Source definition](../../server/internal/world/player_movement.go#L288)
 
 ```go
 func (s *Session) correctMovement(reason string) {
@@ -2923,6 +2923,108 @@ func (sh *mapShard) questMobFrames(mapID uint16) (uint64, [][]byte) {
 		}
 		start = end
 	}
+}
+```
+
+</details>
+
+## Opcode 7f2d
+
+**`0x7F2D` — GXGuildHouseServices**
+
+Declarations: [proto.GXGuildHouseServices](../../internal/proto/guild_house.go#L8).
+
+Source notes: GXGuildHouseServices follows a GuildEtin request and updates on house changes.
+
+**C→S receive adapters:** no direct mapping found; inspect source before assuming support or direction.
+
+**S→C serializers:** [houseServicesPacket (server/internal/world/guildhouse.go)](../../server/internal/world/guildhouse.go#L319)
+
+**Client receive reducers:** [applyGuild (internal/game/guild.go)](../../internal/game/guild.go#L92), [Apply (internal/game/state.go)](../../internal/game/state.go#L635)
+
+### Wire layouts and validation
+
+These are the exact source serializers/decoders. Parameter names and assignments identify fields; conditions identify optional variants. Referenced helpers and domain validation remain authoritative at the linked source.
+
+<details><summary>houseServicesPacket — server/internal/world/guildhouse.go</summary>
+
+[Source definition](../../server/internal/world/guildhouse.go#L319)
+
+```go
+func (g *guild) houseServicesPacket() []byte {
+	var id uint32
+	upkeep, active := guildHouse.DefaultKeep, uint8(0)
+	if g != nil {
+		id = g.ID
+		if g.BuyHouse != 0 {
+			upkeep = g.KeepEtin
+		}
+		if g.houseEnabled() {
+			active = 1
+		}
+	}
+	w := packet.New(packet.Opcode(proto.GXGuildHouseServices))
+	w.U32(id)
+	w.U32(guildHouse.BuyMoney)
+	w.U32(upkeep)
+	w.U8(active)
+	w.U8(uint8(len(guildHouse.Services)))
+	for _, table := range guildHouse.Services {
+		var level uint16
+		if g != nil {
+			level = min(g.npcLevel(table.Type), uint16(table.Max))
+		}
+		var nextCost uint16
+		if level < uint16(table.Max) {
+			nextCost = table.Cost[level+1]
+		}
+		w.U16(table.Type)
+		w.U8(uint8(level))
+		w.U16(table.Keep[level])
+		w.U16(nextCost)
+	}
+	return w.MustFinish()
+}
+```
+
+</details>
+
+<details><summary>DecodeGuildHouseServices — internal/proto/guild_house.go</summary>
+
+[Source definition](../../internal/proto/guild_house.go#L25)
+
+```go
+func DecodeGuildHouseServices(p []byte) (GuildHouseServices, error) {
+	r := NewReader(p)
+	v := GuildHouseServices{GuildID: r.U32(), BuyGold: r.U32(), Upkeep: r.U32(), Active: r.Bool()}
+	n := int(r.U8())
+	if n > r.Remaining()/7 {
+		return GuildHouseServices{}, ErrShort
+	}
+	v.Rows = make([]GuildHouseService, n)
+	for i := range v.Rows {
+		v.Rows[i] = GuildHouseService{Type: r.U16(), Level: r.U8(), Upkeep: r.U16(), NextCost: r.U16()}
+	}
+	return v, r.Err()
+}
+```
+
+```go
+type GuildHouseServices struct {
+	GuildID uint32
+	BuyGold uint32
+	Upkeep  uint32
+	Active  bool
+	Rows    []GuildHouseService
+}
+```
+
+```go
+type GuildHouseService struct {
+	Type     uint16
+	Level    uint8
+	Upkeep   uint16
+	NextCost uint16 // zero when the next level is unavailable
 }
 ```
 

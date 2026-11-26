@@ -25,6 +25,14 @@ SVMAP respawn group. If neither provides an eligible destination, the character
 returns to their racial birth position. Instance schedules remain part of the
 map row, while [obelisk rules](obelisks.md) retain their own configuration.
 
+## Mob movement
+
+Field mobs pursue on XZ and follow terrain height. They can pass through
+placed props. Dungeon mobs follow a navigation mesh built from the layout
+and structural collision. The Linux and Windows server packages include the
+companion catalog. Players continue using the full collision geometry.
+See the [navigation guide](../mob-navigation.md) for custom maps.
+
 ## Portal volumes
 
 GX World includes 248 original trigger volumes matched to the SVMAP routes.
