@@ -72,14 +72,14 @@ Windows PowerShell, from the GX checkout:
 
 ```powershell
 $env:SHAIYA_DATA = 'C:\Games\Shaiya GX\data'
-& '.\build\Shaiya GX.exe' -login 127.0.0.1:30800
+& '.\build\Shaiya GX.exe' -login 127.0.0.1:31000
 ```
 
 Linux:
 
 ```sh
 SHAIYA_DATA=/path/to/ShaiyaGX/data \
-  "./build/Shaiya GX" -login 127.0.0.1:30800
+  "./build/Shaiya GX" -login 127.0.0.1:31000
 ```
 
 Sign in, select the server, choose/create your character and enter the world. GX Server decides outcomes and saves progress. The client folder contains `Shaiya GX` (Linux) or `Shaiya GX.exe` (Windows) alongside `data/`. The executable discovers that adjacent folder automatically. Keep the packaged fonts in `data/fonts/`. Start GX Server separately and run the Shaiya GX executable directly. Public GX server downloads do not include those client assets.
@@ -87,7 +87,7 @@ Sign in, select the server, choose/create your character and enter the world. GX
 ## If startup fails
 
 - No login/world ON: read the end of the server logs. Check that `build/` and `data/` are still together and the folder is writable.
-- Address already in use: another instance is using 30800 or 30810. Reuse it or stop it through its own control app; do not kill unrelated game sessions.
+- Address already in use: another instance is using 31000 or 31010. Reuse it or stop it through its own control app; do not kill unrelated game sessions.
 - Client cannot create a graphics context: install your GPU vendor's driver with OpenGL 4.5 support. A working server does not imply working client graphics.
 - Login succeeds but world fails: check the advertised world address, world port and firewall. See [LAN configuration](server.md#lan-connections).
 - Changes appear missing: confirm which `runtime/rapture.sqlite` is being used. Extracting a new folder creates a different independent runtime. Preserve your old runtime when updating.

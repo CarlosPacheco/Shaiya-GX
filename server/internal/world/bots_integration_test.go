@@ -11,7 +11,7 @@ import (
 )
 
 func TestWorldBotsSixHundred(t *testing.T) {
-	t.Setenv("RAPTURE_WORLD_LISTEN", "127.0.0.1:30810")
+	t.Setenv("RAPTURE_WORLD_LISTEN", "127.0.0.1:31010")
 	s, packets := gmWireSession(t, db.Character{ID: 891234, MapID: 1, PosX: 577.98, PosY: 78.56, PosZ: 1762.12}, true)
 	// Use the real map geometry while keeping the observers disconnected
 	// from this throughput check so their output queues cannot dominate it.

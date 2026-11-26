@@ -17,7 +17,7 @@ func TestFlowAgainstRapture(t *testing.T) {
 		t.Skip("SHAIYA_TEST_USER / SHAIYA_PASSWORD not set")
 	}
 	// No movement: the test must not move the account's characters.
-	if err := run("127.0.0.1:30800", 30810, user, pw, 0, -1, 0, "", "shaiyacli integration", 0, time.Second, false); err != nil {
+	if err := run("127.0.0.1:31000", 31010, user, pw, 0, -1, 0, "", "shaiyacli integration", 0, time.Second, false); err != nil {
 		t.Fatal(err)
 	}
 }

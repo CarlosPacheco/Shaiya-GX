@@ -38,8 +38,8 @@ func clientMain() (code int) {
 		}
 	}()
 	dataDir := flag.String("data", os.Getenv("SHAIYA_DATA"), "loose data directory (defaults to data beside the executable)")
-	login := flag.String("login", "127.0.0.1:30800", "login server address")
-	worldPort := flag.Int("world-port", 30810, "world server port")
+	login := flag.String("login", "127.0.0.1:31000", "login server address")
+	worldPort := flag.Int("world-port", 31010, "world server port")
 	width := flag.Int("w", 1024, "window width")
 	height := flag.Int("h", 768, "window height")
 	volume := flag.Float64("volume", 0.6, "master audio volume (0..1; screenshots are silent)")

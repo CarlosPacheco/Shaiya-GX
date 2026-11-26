@@ -137,8 +137,8 @@ func DataDir() string { return env("RAPTURE_DATA_DIR", "data") }
 // PublicIP is the world address sent to clients after server selection.
 func PublicIP() string { return env("RAPTURE_PUBLIC_IP", "127.0.0.1") }
 
-func LoginListen() string { return env("RAPTURE_LOGIN_LISTEN", "127.0.0.1:30800") }
-func WorldListen() string { return env("RAPTURE_WORLD_LISTEN", "127.0.0.1:30810") }
+func LoginListen() string { return env("RAPTURE_LOGIN_LISTEN", "127.0.0.1:31000") }
+func WorldListen() string { return env("RAPTURE_WORLD_LISTEN", "127.0.0.1:31010") }
 
 const (
 	DefaultCombatDEXFirst  = 500

@@ -13,7 +13,7 @@ func TestRememberCharacterSlotAcrossLogins(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", dir)
 	t.Setenv("AppData", dir)
-	cfg := Config{LoginAddr: "localhost:30800", WorldPort: 30810}
+	cfg := Config{LoginAddr: "localhost:31000", WorldPort: 31010}
 	path := characterSlotPath(cfg, 1, 42)
 	a := &App{state: game.New(), characterSlotFile: path}
 	a.state.Slots[3] = proto.CharacterSlot{ID: 90}

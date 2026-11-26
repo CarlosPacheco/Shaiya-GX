@@ -16,7 +16,7 @@ func TestLocalActionsPersistPerCharacterAndServer(t *testing.T) {
 	t.Setenv("APPDATA", testConfigDir)
 	a := inputApp()
 	a.cfg.LoginAddr = "localhost"
-	a.cfg.WorldPort = 30810
+	a.cfg.WorldPort = 31010
 	a.state.SelfID = 42
 	a.wv.localActions[4] = 11
 	a.saveLocalActions()

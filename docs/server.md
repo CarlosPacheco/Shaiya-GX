@@ -24,13 +24,13 @@ Existing `RAPTURE_*` configuration names and SQLite filenames are retained for c
 
 ## LAN connections
 
-Defaults listen on `127.0.0.1:30800` (login) and `127.0.0.1:30810` (world). To accept another computer, set the following before starting the controller.
+Defaults listen on `127.0.0.1:31000` (login) and `127.0.0.1:31010` (world). These defaults let GX share a machine with a legacy server using TCP 30800 and 30810. To accept another computer, set the following before starting the controller.
 
 Windows PowerShell (replace the example IP with your server's reachable IPv4 address):
 
 ```powershell
-$env:RAPTURE_LOGIN_LISTEN = '0.0.0.0:30800'
-$env:RAPTURE_WORLD_LISTEN = '0.0.0.0:30810'
+$env:RAPTURE_LOGIN_LISTEN = '0.0.0.0:31000'
+$env:RAPTURE_WORLD_LISTEN = '0.0.0.0:31010'
 $env:RAPTURE_PUBLIC_IP = '192.168.1.20'
 .\build\gx_console.exe
 ```
@@ -38,11 +38,11 @@ $env:RAPTURE_PUBLIC_IP = '192.168.1.20'
 Linux:
 
 ```sh
-RAPTURE_LOGIN_LISTEN=0.0.0.0:30800 RAPTURE_WORLD_LISTEN=0.0.0.0:30810 \
+RAPTURE_LOGIN_LISTEN=0.0.0.0:31000 RAPTURE_WORLD_LISTEN=0.0.0.0:31010 \
 RAPTURE_PUBLIC_IP=192.168.1.20 ./build/gx_console
 ```
 
-Allow inbound TCP 30800/30810 on the server firewall. Connect the client with `-login 192.168.1.20:30800`. If using another world port, also pass `-world-port PORT` to the GX client. `RAPTURE_PUBLIC_IP` is the address advertised to the client for world, so it must be reachable from the client's computer; `0.0.0.0` is a listen wildcard, not an advertised address.
+Allow inbound TCP 31000/31010 on the server firewall. Connect the client with `-login 192.168.1.20:31000`. If using another world port, also pass `-world-port PORT` to the GX client. `RAPTURE_PUBLIC_IP` is the address advertised to the client for world, so it must be reachable from the client's computer; `0.0.0.0` is a listen wildcard, not an advertised address.
 
 For persistent overrides create `.local/runtime.env` in the server directory. Explicit environment values take priority. `RAPTURE_DATA_DIR`, `RAPTURE_DB_PATH` and `RAPTURE_DB_SEED` select data/runtime/seed locations independently. Relative paths in overrides are resolved against the server folder when using the controllers. Prefer absolute paths for direct headless launches with explicit overrides.
 

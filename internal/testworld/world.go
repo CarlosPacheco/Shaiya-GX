@@ -53,7 +53,7 @@ func ConnectAs(t *testing.T, user, password string) (*game.State, *session.World
 	}
 	address := os.Getenv("SHAIYA_TEST_LOGIN_ADDR")
 	if address == "" {
-		address = "127.0.0.1:30800"
+		address = "127.0.0.1:31000"
 	}
 	l, err := session.Dial(address, user, password)
 	if err != nil {
@@ -66,7 +66,7 @@ func ConnectAs(t *testing.T, user, password string) (*game.State, *session.World
 	if err != nil {
 		t.Fatal(err)
 	}
-	port := 30810
+	port := 31010
 	if value := os.Getenv("SHAIYA_TEST_WORLD_PORT"); value != "" {
 		n, e := strconv.ParseUint(value, 10, 16)
 		if e != nil {

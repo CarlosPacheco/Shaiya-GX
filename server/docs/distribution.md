@@ -38,7 +38,7 @@ Keep the directory structure intact in a writable folder. Open `build/gx_console
 
 The headless server and console need no Go, Python, Docker, SQL Server or separate SQLite library. Python 3 is optional for administration tools in `tools/`.
 
-Default endpoints are 127.0.0.1:30800 and :30810. Use `RAPTURE_LOGIN_LISTEN`, `RAPTURE_WORLD_LISTEN` and `RAPTURE_PUBLIC_IP` for other addresses. See the [server operation guide](../../docs/server.md).
+Default endpoints are 127.0.0.1:31000 and :31010. Use `RAPTURE_LOGIN_LISTEN`, `RAPTURE_WORLD_LISTEN` and `RAPTURE_PUBLIC_IP` for other addresses. See the [server operation guide](../../docs/server.md).
 
 ## Seed updates and validation
 

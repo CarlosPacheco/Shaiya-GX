@@ -19,8 +19,8 @@ import (
 )
 
 func main() {
-	login := flag.String("login", "127.0.0.1:30800", "login server address")
-	worldPort := flag.Int("world-port", 30810, "world server port")
+	login := flag.String("login", "127.0.0.1:31000", "login server address")
+	worldPort := flag.Int("world-port", 31010, "world server port")
 	user := flag.String("user", "", "account name")
 	serverID := flag.Int("server", 0, "server id (0 = first listed)")
 	slot := flag.Int("slot", -1, "character slot to play (-1 = first used)")
