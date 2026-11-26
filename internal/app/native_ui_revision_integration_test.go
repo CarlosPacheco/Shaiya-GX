@@ -84,6 +84,27 @@ func TestNativeChatBubblesWorldMapAndExternalFontsGL(t *testing.T) {
 	if len(a.chatBubbles) != 1 {
 		t.Fatal("ordinary bubble missing")
 	}
+	actor := a.wv.self
+	origin, _ := a.chatBubbleOrigin(a.state.SelfID)
+	crown, ok := actor.NameAnchor()
+	if !ok {
+		t.Fatal("preview actor has no crown")
+	}
+	actor.SetClip("002_run")
+	crownMoved := false
+	for range 12 {
+		actor.Update(1.0 / 30)
+		if got, ok := a.chatBubbleOrigin(a.state.SelfID); !ok || got != origin {
+			t.Fatalf("chat bubble origin moved with the skeleton: %v, want %v", got, origin)
+		}
+		if head, ok := actor.NameAnchor(); ok && head.Sub(crown).Len() > .01 {
+			crownMoved = true
+		}
+	}
+	if !crownMoved {
+		t.Fatal("run did not exercise head movement")
+	}
+	actor.SetClip("000_normal")
 	v := a.mapState()
 	v.full = true
 	a.loadWorldMap(v)

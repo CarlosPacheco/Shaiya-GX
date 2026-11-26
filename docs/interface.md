@@ -487,9 +487,9 @@ custom hover boxes are removed.
 Only confirmed ordinary-chat echoes create a speech bubble. New text replaces
 that actor's bubble and resets its five-second lifetime. The native single-line
 grey `80484848` rectangle has measured text width plus 20px and 30px height;
-text stays white, with coloured emoji preserved. Projection follows the actor,
-hides off camera/beyond 50 units and keeps the frame above the posed crown/name
-in GX's rig coordinate system. No client-side chat echo or server rule is added.
+text stays white, with coloured emoji preserved. Projection follows the
+rendered actor origin with a fixed height offset, using the resting seat
+position for mounted speakers. Bubbles are hidden off camera and beyond 50 units.
 
 Open the expanded minimap, then W for the native World Map. Its 19 regions come
 from `WorldMap.INI`; hover draws authored `wm_e` overlays and `wm_f` title art

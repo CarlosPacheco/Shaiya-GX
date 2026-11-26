@@ -6,6 +6,7 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
+	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 )
 
 func TestOrdinaryChatBubbleOnlyConfirmedEchoAndReplacement(t *testing.T) {
@@ -92,5 +93,32 @@ func TestMountRiseEasesFromGroundToSeat(t *testing.T) {
 	blend = 0
 	if mountRise(&blend, 0, ground, seat) != ground {
 		t.Fatal("no time elapsed must keep the rider at the ground")
+	}
+}
+
+func TestChatBubbleFollowsRenderedPlayerOrigin(t *testing.T) {
+	a := inputApp()
+	a.state.SelfID = 1
+	a.wv.pos = render.V3{80, 17, 60}
+	at := func(pos render.V3) render.M4 {
+		return render.Basis(pos, render.V3{0, 0, -1}, render.V3{0, 1, 0})
+	}
+	self := &scene.Character{World: at(render.V3{40, 4, 35})}
+	a.wv.self = self
+	remote := &scene.Character{World: at(render.V3{41, 6, 35})}
+	a.wv.actors = map[uint32]*remoteActor{2: {character: remote}}
+	a.state.Entities[2] = &game.Entity{ID: 2, Kind: game.KindUser, X: 100, Y: 12, Z: 10}
+	for id, want := range map[uint32]render.V3{1: {40, 4, 35}, 2: {41, 6, 35}} {
+		if got, ok := a.chatBubbleOrigin(id); !ok || got != want {
+			t.Fatalf("speaker %d origin %v, want %v", id, got, want)
+		}
+	}
+	remote.World = at(render.V3{42, 7, 36})
+	if got, ok := a.chatBubbleOrigin(2); !ok || got != (render.V3{42, 7, 36}) {
+		t.Fatalf("remote bubble failed to follow the rendered movement: %v", got)
+	}
+	delete(a.state.Entities, 2)
+	if _, ok := a.chatBubbleOrigin(2); ok {
+		t.Fatal("bubble kept a stale speaker")
 	}
 }

@@ -1,9 +1,10 @@
 package app
 
 import (
+	"strings"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"strings"
 )
 
 type chatBubble struct {
@@ -45,6 +46,32 @@ func (a *App) speakerConcealed(id uint32) bool {
 	return e != nil && e.Concealed
 }
 
+func (a *App) chatBubbleOrigin(id uint32) (render.V3, bool) {
+	var pos render.V3
+	var vehicle proto.VehicleState
+	if id == a.state.SelfID {
+		pos, vehicle = a.wv.visualPosition(), a.state.Self.Vehicle
+	} else if e := a.state.Entities[id]; e != nil {
+		pos, vehicle = a.visualEntityPosition(e), e.Vehicle
+	} else {
+		return render.V3{}, false
+	}
+	if actor := a.playerActor(id); actor != nil {
+		pos = render.V3{actor.World[12], actor.World[13], actor.World[14]}
+		if actor.Mounted {
+			driver := id
+			passenger := vehicle.State == proto.VehiclePassenger
+			if passenger {
+				driver = vehicle.Driver
+			}
+			if mount := a.driverMount(driver); mount != nil {
+				pos = mount.RestRiderSeat(passenger)
+			}
+		}
+	}
+	return pos, true
+}
+
 func (a *App) drawChatBubbles(w, h int) {
 	if a.wv == nil || a.scene3d == nil || !a.clientSettings().WordBalloon {
 		return // Word Balloon off (0x411e10): no balloon is updated or drawn
@@ -57,7 +84,7 @@ func (a *App) drawChatBubbles(w, h int) {
 		if a.clock >= b.until {
 			continue
 		}
-		pos, exists := a.effectPosition(b.speaker)
+		pos, exists := a.chatBubbleOrigin(b.speaker)
 		if !exists || a.speakerConcealed(b.speaker) {
 			continue
 		}
@@ -65,21 +92,11 @@ func (a *App) drawChatBubbles(w, h int) {
 		if pos.Sub(a.wv.pos).Len() > 50 {
 			continue
 		}
-		// Native 0x41c830 adds 1.5 world units to the actor's logical origin.
-		pos = pos.Add(render.V3{0, 1.5, 0})
+		// 0x411e57 passes the actor origin to 0x41c830, which adds 1.5.
+		pos[1] += nativeCharacterOriginHeight + 1.5
 		x, y, _, ok := projectLabel(pos, vp, w, h)
 		if !ok {
 			continue
-		}
-		// Rig heights differ from the original actor origin. Keep the native
-		// frame clear of the posed crown and its nameplate, including mounts.
-		if actor := a.playerActor(b.speaker); actor != nil {
-			if head, valid := actor.NameAnchor(); valid {
-				if hx, hy, _, visible := projectLabel(head, vp, w, h); visible {
-					x = hx
-					y = min(y, hy-f.Height-24)
-				}
-			}
 		}
 		body := b.text
 		if filter {

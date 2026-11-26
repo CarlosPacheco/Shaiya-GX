@@ -325,8 +325,15 @@ func TestVehicleModelsRealGL(t *testing.T) {
 				t.Fatalf("race %d MON %d: %v", race, index, err)
 			}
 			mount.World = render.Identity()
+			rest := mount.RestRiderSeat(false)
+			if rest.Sub(mount.Seat()).Len() > .001 {
+				t.Fatalf("reference seat does not match the initial seat: %v", rest)
+			}
 			mount.SetMoving(true)
 			mount.Update(.1)
+			if got := mount.RestRiderSeat(false); got != rest {
+				t.Fatalf("reference seat moved with the run pose: %v, want %v", got, rest)
+			}
 			primary := mount.Seat()
 			if primary[1] < .1 || primary[1] > 4 {
 				t.Fatal("invalid primary seat", race, index, primary)

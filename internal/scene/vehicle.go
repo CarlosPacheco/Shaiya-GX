@@ -15,6 +15,7 @@ type Vehicle struct {
 	*CreatureActor
 	seatBone                          int
 	passengerBone                     int
+	restSeats                         [2]render.V3
 	board                             bool
 	moving, walking, reverse, jumping bool
 	jumpPending, jumpRecovery         bool
@@ -66,7 +67,16 @@ func (s *Assets) BuildVehicle(race, shape uint8) (*Vehicle, error) {
 	if bones.Rider >= len(poses) || bones.Passenger >= len(poses) {
 		return nil, fmt.Errorf("vehicle seat bone outside skeleton")
 	}
-	return &Vehicle{CreatureActor: actor, seatBone: bones.Rider, passengerBone: bones.Passenger, board: VehicleAlternate(shape)}, nil
+	rider := poses[bones.Rider]
+	passenger := rider
+	if bones.Passenger >= 0 {
+		passenger = poses[bones.Passenger]
+	}
+	return &Vehicle{
+		CreatureActor: actor, seatBone: bones.Rider, passengerBone: bones.Passenger,
+		restSeats: [2]render.V3{{rider[12], rider[13], rider[14]}, {passenger[12], passenger[13], passenger[14]}},
+		board:     VehicleAlternate(shape),
+	}, nil
 }
 
 func (v *Vehicle) SetMoving(moving bool)              { v.SetLocomotion(moving, false) }
@@ -147,6 +157,17 @@ func (v *Vehicle) Update(dt float32) {
 
 // Seat uses the same cached pose as drawing, including before the first draw.
 func (v *Vehicle) Seat() render.V3 { return v.RiderSeat(false) }
+
+// RestRiderSeat follows the vehicle's world transform without the seat's
+// animated displacement.
+func (v *Vehicle) RestRiderSeat(passenger bool) render.V3 {
+	i := 0
+	if passenger {
+		i = 1
+	}
+	return transformPoint(v.restSeats[i], v.World)
+}
+
 func (v *Vehicle) RiderSeat(passenger bool) render.V3 {
 	if v == nil {
 		return render.V3{}
