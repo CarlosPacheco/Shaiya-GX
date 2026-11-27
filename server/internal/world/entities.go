@@ -48,6 +48,7 @@ type MapNpc struct {
 	guardReady       time.Time
 	guardTarget      guardTarget
 	guardReturning   bool
+	svRoute          svRoute
 }
 
 type MobArea struct{ LowerX, LowerZ, UpperX, UpperZ float32 }
@@ -78,6 +79,7 @@ type MapMob struct {
 	PosX, PosY, PosZ float32
 	nav              *mobNav
 	navPath          []mapnav.Point
+	svRoute          svRoute
 	navGoal          mapnav.Point
 	navRefresh       time.Time
 	// Pos is the destination while a movement segment is in progress.
@@ -248,6 +250,7 @@ func cloneMob(m *MapMob) MapMob {
 	c := *m
 	c.lua.actor = nil
 	c.lua.rng = nil
+	c.svRoute = svRoute{}
 	c.Effects = append([]MobEffect(nil), m.Effects...)
 	c.eventDamage = append([]eventDamageEntry(nil), m.eventDamage...)
 	c.lootDamage = append([]eventDamageEntry(nil), m.lootDamage...)
@@ -564,7 +567,7 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 					}
 					m.PosY, m.homeY = copy.PosY, copy.homeY
 					x, z = copy.PosX, copy.PosZ
-					m.navPath = nil
+					m.navPath, m.svRoute = nil, svRoute{}
 				}
 				g.alive++
 				g.respawnAt = now.Add(m.respawnDelay)
@@ -582,7 +585,7 @@ func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []enti
 					}
 					m.PosY, m.homeY = copy.PosY, copy.homeY
 					x, z = copy.PosX, copy.PosZ
-					m.navPath = nil
+					m.navPath, m.svRoute = nil, svRoute{}
 				}
 			}
 			m.PosX, m.PosZ, m.homeX, m.homeZ = x, z, x, z
@@ -866,7 +869,7 @@ func tickMobCombat(now time.Time, players []PlayerCombatSnapshot, maxPerMap int)
 			if walkInterrupted {
 				m.setPoint(m.positionAt(now))
 				m.moveDuration, m.idleWalk = 0, false
-				m.navPath = nil
+				m.navPath, m.svRoute = nil, svRoute{}
 				m.lua.selectedValid = false
 			}
 			h.event("combat", int(int64(m.CurrentHP)*100/int64(max(m.MaxHP, 1))), m.lua.attackedCount)
@@ -987,6 +990,11 @@ func (m *MapMob) stepChase(now time.Time, mapID uint16, t *PlayerCombatSnapshot,
 			m.noTargetUntil = now.Add(mobAttackIdle)
 			return false
 		}
+		if m.nav.grid {
+			if g, ok := gridFor(mapID); ok {
+				m.svRoute.addTrail(g, tileOf(m.PosX, m.PosZ))
+			}
+		}
 		tick.Moves = append(tick.Moves, m.moveTo(mapID, now, next, mobMotionRun))
 		return true
 	}
@@ -1018,6 +1026,9 @@ func (m *MapMob) stepHome(now time.Time, mapID uint16, mods *mobMods, tick *MobC
 			return false
 		}
 		step := m.chaseStep(mods)
+		if m.nav.grid {
+			goal = m.svmapHomeGoal(mapID, goal)
+		}
 		next, ok := m.navigate(now, mapID, goal, step)
 		if !ok {
 			m.nextChaseAt = now.Add(time.Second)

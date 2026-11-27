@@ -1,6 +1,7 @@
 package world
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -36,21 +37,9 @@ func TestMobMovementModesOnRealMaps(t *testing.T) {
 		t.Skip("requires full geometry and structure-only dungeon navigation")
 	}
 	t.Setenv("RAPTURE_DATA_DIR", data)
-	for _, tc := range []struct {
-		name       string
-		id         uint16
-		start, end mapnav.Point
-		moves      bool
-	}{
-		{"field prop", 1, mapnav.Point{1517.0399, 16.851233, 926.8113}, mapnav.Point{1529.0399, 18.017159, 926.8113}, true},
-		{"field climb", 1, mapnav.Point{1117.6882, -2.4364212, 429.29654}, mapnav.Point{1117.6882, 4.586901, 445.29654}, true},
-		{"dungeon prop", 3, mapnav.Point{405.85962, 13.241182, 255.15433}, mapnav.Point{409.85962, 13.241182, 255.15433}, true},
-		{"dungeon prop elevated target", 3, mapnav.Point{405.85962, 13.241182, 255.15433}, mapnav.Point{409.85962, 40, 255.15433}, true},
-		{"dungeon wall", 3, mapnav.Point{320.8829, 13.241196, 287.5975}, mapnav.Point{323.7109, 12.92228, 290.4255}, true},
-		{"connected floors", 3, mapnav.Point{134.67891, 18.190376, 27.616495}, mapnav.Point{126.67891, 20.4074, 27.616495}, true},
-		{"separate floors", 3, mapnav.Point{146.5, 19.76707, 44.5}, mapnav.Point{146.5, 17.663082, 44.5}, false},
-		{"separate floors reverse", 3, mapnav.Point{146.5, 17.663082, 44.5}, mapnav.Point{146.5, 19.76707, 44.5}, false},
-	} {
+	defer func(v bool) { svmapNavigationEnabled = v }(svmapNavigationEnabled)
+	svmapNavigationEnabled = false // GX_MOB_NAV=geometry rollback
+	for _, tc := range mobMovementCases {
 		t.Run(tc.name, func(t *testing.T) {
 			nav, err := loadMobNavigation(tc.id)
 			if err != nil || nav == nil {
@@ -79,6 +68,79 @@ func TestMobMovementModesOnRealMaps(t *testing.T) {
 				}
 			} else if len(tick.Moves) != 0 || m.AggroTarget != target.CharacterID {
 				t.Fatalf("target already in XZ range produced %d moves, aggro=%d", len(tick.Moves), m.AggroTarget)
+			}
+		})
+	}
+}
+
+var mobMovementCases = []struct {
+	name       string
+	id         uint16
+	start, end mapnav.Point
+	moves      bool
+}{
+	{"field prop", 1, mapnav.Point{1517.0399, 16.851233, 926.8113}, mapnav.Point{1529.0399, 18.017159, 926.8113}, true},
+	{"field climb", 1, mapnav.Point{1117.6882, -2.4364212, 429.29654}, mapnav.Point{1117.6882, 4.586901, 445.29654}, true},
+	{"dungeon prop", 3, mapnav.Point{405.85962, 13.241182, 255.15433}, mapnav.Point{409.85962, 13.241182, 255.15433}, true},
+	{"dungeon prop elevated target", 3, mapnav.Point{405.85962, 13.241182, 255.15433}, mapnav.Point{409.85962, 40, 255.15433}, true},
+	{"dungeon wall", 3, mapnav.Point{320.8829, 13.241196, 287.5975}, mapnav.Point{323.7109, 12.92228, 290.4255}, true},
+	{"connected floors", 3, mapnav.Point{134.67891, 18.190376, 27.616495}, mapnav.Point{126.67891, 20.4074, 27.616495}, true},
+	{"separate floors", 3, mapnav.Point{146.5, 19.76707, 44.5}, mapnav.Point{146.5, 17.663082, 44.5}, false},
+	{"separate floors reverse", 3, mapnav.Point{146.5, 17.663082, 44.5}, mapnav.Point{146.5, 19.76707, 44.5}, false},
+}
+
+// The same chases over the original .svmap mask. Heights still follow the
+// floor nearest the mob; X/Z obey only the mask.
+func TestSvmapMobMovementOnRealMaps(t *testing.T) {
+	data := os.Getenv("GX_TEST_MOB_MOVEMENT_DATA")
+	if data == "" {
+		t.Skip("requires installed svmap and geometry data")
+	}
+	t.Setenv("RAPTURE_DATA_DIR", data)
+	defer func(v bool) { svmapNavigationEnabled = v }(svmapNavigationEnabled)
+	svmapNavigationEnabled = true
+	for _, id := range []uint16{1, 3} {
+		load, err := loadSvmapFile(id, filepath.Join(data, "maps", fmt.Sprint(id)+".svmap"), &db.Defs{Mobs: map[uint16]*db.MobDef{}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		RegisterMapGrid(id, load.mapSize, load.mask)
+	}
+	for _, tc := range mobMovementCases {
+		t.Run(tc.name, func(t *testing.T) {
+			nav, err := loadMobNavigation(tc.id)
+			if err != nil || nav == nil {
+				t.Fatalf("load map %d: %v", tc.id, err)
+			}
+			m := MapMob{AggroTarget: 1, def: &db.MobDef{ChaseStep: 2, ChaseTimeMS: 500, Size: 1}}
+			m.setPoint(tc.start)
+			m.spawnHeightKnown, m.spawnMinY, m.spawnMaxY = true, tc.start[1]+.5, tc.start[1]+.5
+			if !IsMapWalkable(tc.id, tc.start[0], tc.start[2]) {
+				// The original mask forbids this tile; the mob is not placed.
+				if m.placeOnNavigation(nav, tc.id) {
+					t.Fatal("placed a mob on a blocked svmap tile")
+				}
+				return
+			}
+			if !m.placeOnNavigation(nav, tc.id) || !m.nav.grid {
+				t.Fatalf("map %d did not use svmap navigation", tc.id)
+			}
+			m.setPoint(tc.start)
+			target := PlayerCombatSnapshot{CharacterID: 1, PosX: tc.end[0], PosY: tc.end[1], PosZ: tc.end[2], Alive: true}
+			mods, tick, now := m.mods(), MobCombatTick{}, time.Unix(1, 0)
+			for range 1200 {
+				if m.AggroTarget == 0 || (len(tick.Moves) > 0 && m.targetDistance(&target) < 1.4) {
+					break
+				}
+				m.stepChase(now, tc.id, &target, m.targetDistance(&target), &mods, &tick)
+				now = now.Add(mobNavigationTick)
+			}
+			if !IsMapWalkable(tc.id, m.PosX, m.PosZ) {
+				t.Fatalf("mob left the mask at %v", m.point())
+			}
+			t.Logf("%s: %d moves, end %v, distance %.2f, aggro %d", tc.name, len(tick.Moves), m.point(), m.targetDistance(&target), m.AggroTarget)
+			if tc.moves && (len(tick.Moves) == 0 || m.targetDistance(&target) >= 1.4) {
+				t.Fatalf("chase ended at %v after %d moves", m.point(), len(tick.Moves))
 			}
 		})
 	}

@@ -121,8 +121,10 @@ func LoadSvmaps(log *logx.Logger) error {
 	if !complete {
 		log.Printf("GX Server: no complete navigation catalog; only individually generated maps use ground navigation")
 	}
-	if _, err := mapnav.ValidateCatalog(filepath.Join(geometry, mapnav.MobDungeonDirectory)); err != nil {
-		return fmt.Errorf("dungeon mob navigation installation: %w", err)
+	if !svmapNavigationEnabled {
+		if _, err := mapnav.ValidateCatalog(filepath.Join(geometry, mapnav.MobDungeonDirectory)); err != nil {
+			return fmt.Errorf("dungeon mob navigation installation: %w", err)
+		}
 	}
 	if err := ensureMapDataDir(); err != nil {
 		return err
@@ -155,7 +157,9 @@ func LoadSvmaps(log *logx.Logger) error {
 		}
 		if nav != nil {
 			mode := "field-xz"
-			if usesDungeonMobNavigation(nav, uint16(id)) {
+			if svmapNavigationEnabled {
+				mode = "svmap-mask"
+			} else if usesDungeonMobNavigation(nav, uint16(id)) {
 				structural, err := loadDungeonMobNavigation(uint16(id))
 				if err != nil {
 					return fmt.Errorf("map %d structural mob navigation: %w", id, err)

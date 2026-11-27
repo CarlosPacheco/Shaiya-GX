@@ -1,9 +1,10 @@
 # Authoritative ground navigation
 
 GX Server owns player positions, gravity, jump impulses and mob movement.
-Players use full collision geometry in fields and dungeons. Field mobs follow
-terrain height and dungeon mobs use a dedicated structure-only mesh when it
-is installed. Map 1 is the outdoor regression fixture and map 3 is the
+Players use full collision geometry in fields and dungeons. Mobs and guards
+move over the original `.svmap` walk mask (see
+[Original mask navigation](#original-mask-navigation)); the navigation-mesh
+movement described further below remains available with `GX_MOB_NAV=geometry`. Map 1 is the outdoor regression fixture and map 3 is the
 dungeon fixture. Player packets request horizontal movement. World derives
 player ground and jump height.
 
@@ -71,7 +72,48 @@ An existing unchanged navigation generation can gain player physics with
 `--physics-only --output /path/to/existing/geometry`. This checks original source hashes and collision construction rules. Changed content or older construction rules require a full bake. This mode
 does not replace `.gxnav` or `.gxcol`. Neither mode writes into the client data.
 
-## Movement contract
+## Original mask navigation
+
+`ps_game.exe` never loads map geometry. `CMap` keeps the `.svmap` mask: one
+bit per world unit, index `z * size + x`, least significant bit first, `1`
+blocked (`CMap::IsBlock` 0042ab40; outside tiles are blocked). GX reproduces
+its movement for mobs and guards:
+
+- `CMap::EnableLine` 0042ab80/0042ade0 samples the tiles after the start with
+  the original float accumulator. A clear line moves straight to the target.
+- A blocked line runs `AStar::FindPath` 0048eda0: eight neighbors in the
+  original order, squared step and heuristic costs, a search window of half
+  the span (at most 20 tiles) around both ends, and collinear compression.
+  A target on a blocked tile, or out of the window, ends the chase.
+- `ChasePathList::AddPath` 0048f660 records the chase trail; returning home
+  retraces it while home is out of line.
+- Spawns keep the svmap X/Z and are rejected on blocked tiles.
+
+The open list is indexed by tile key instead of scanned; each key is open at
+most once, so results are unchanged. Vectors produced by executing the
+original instructions (4096 line and 1536 A* cases) are in
+`server/internal/world/testdata/svnav/`.
+
+X/Z obey only the mask. GX packets still carry Y: terrain height in fields and
+the supporting floor nearest the previous height in dungeons, from the
+player geometry already loaded for that map. The `mob-dungeons/` companion
+catalog is neither validated nor loaded in this mode.
+
+Measured on maps 1, 3, 9 and 47 (200 chases each, Ryzen 7 5700G,
+`BenchmarkMobChase`):
+
+| Map | Navigation mesh | `.svmap` mask |
+| --- | --- | --- |
+| 1 field | 340 ns/step, 100% arrive | 640 ns/step, 99% arrive |
+| 47 field | 355 ns/step, 100% arrive | 480-565 ns/step, 100% arrive |
+| 3 dungeon | 41.4 µs/step, 12.6 MB/run | 4.7 µs/step, 0.8 MB/run |
+| 9 dungeon | 24.7 µs/step, 13.8 MB/run | 2.2 µs/step, 0.9 MB/run |
+
+Field steps cost more because the previous field mode ignored the mask
+entirely; both remain below one microsecond. Startup skips the 45 structural
+dungeon maps (about 220 ms and 120 MiB of transient heap).
+
+## Movement contract (`GX_MOB_NAV=geometry`)
 
 Field mobs pursue and move in XZ. For rendering and ground placement, World
 samples terrain Y at their current XZ. Placed scenery and player collision

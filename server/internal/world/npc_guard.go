@@ -180,7 +180,7 @@ func (n *MapNpc) guardChase(now time.Time, mapID uint16, s *mapShard, def *npcDe
 		return false
 	}
 	reach := float32(guardContact)
-	if mapnav.Distance(n.point(), goal) <= reach && (nav == nil || nav.Visible(n.point(), goal)) {
+	if mapnav.Distance(n.point(), goal) <= reach && guardSees(mapID, nav, n.point(), goal) {
 		hit := npcGuardStrike{mapID: mapID, guardID: n.ID, target: target, x: n.PosX, y: n.PosY, z: n.PosZ}
 		n.guardTarget, n.guardReturning = guardTarget{}, true
 		n.guardReady = now.Add(time.Second)
@@ -207,7 +207,18 @@ func (n *MapNpc) guardMove(now time.Time, mapID uint16, nav *mapnav.Map, def *np
 	length := min(step, max(dist-reach*.75, .05))
 	var travelled float32
 	var next mapnav.Point
-	if nav != nil {
+	if g, ok := gridFor(mapID); ok && svmapNavigationEnabled {
+		if dist <= .01 {
+			return false
+		}
+		next, ok = svNext(g, &n.svRoute, pos, goal, length)
+		if !ok {
+			n.svRoute = svRoute{}
+			return false
+		}
+		travelled = DistanceXZ(pos[0], pos[2], next[0], next[2])
+		next[1] = svmapGuardGround(nav, next, pos[1])
+	} else if nav != nil {
 		path, ok := nav.Path(pos, goal)
 		if !ok {
 			return false
@@ -308,4 +319,27 @@ func (s *Session) applyGuardStrike(hit npcGuardStrike) bool {
 		guildDuelLeave(s.player, nil, 3)
 	}
 	return true
+}
+
+// guardSees is CMap::EnableLine 0042ade0 under svmap navigation.
+func guardSees(mapID uint16, nav *mapnav.Map, a, b mapnav.Point) bool {
+	if g, ok := gridFor(mapID); ok && svmapNavigationEnabled {
+		return g.enableLine(tileOf(a[0], a[2]), tileOf(b[0], b[2]), nil)
+	}
+	return nav == nil || nav.Visible(a, b)
+}
+
+func svmapGuardGround(nav *mapnav.Map, p mapnav.Point, previous float32) float32 {
+	if nav == nil {
+		return previous
+	}
+	if t := nav.Terrain(); t != nil {
+		return t.Height(p[0], p[2])
+	}
+	if g, ok := nav.PlayerGeometry(); ok {
+		if y, found := g.Support(p[0], previous, p[2], 3); found {
+			return y
+		}
+	}
+	return previous
 }

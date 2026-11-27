@@ -102,6 +102,9 @@ func (m *MapMob) placeOnNavigation(nav *mapnav.Map, mapID uint16) bool {
 		return true
 	}
 	id := m.nav.id
+	if svmapNavigationEnabled {
+		return m.placeOnSvmap(nav, mapID)
+	}
 	if usesDungeonMobNavigation(nav, id) {
 		// Startup validates the companion generation. Existing installations
 		// without it retain the original full-mesh dungeon navigation.
@@ -175,7 +178,84 @@ func (m *MapMob) setMobGround(p mapnav.Point) {
 	m.setPoint(p)
 	m.cell, m.hasCell = cellFor(p[0], p[2]), true
 	m.homeX, m.homeY, m.homeZ = p[0], p[1], p[2]
-	m.navPath = nil
+	m.navPath, m.svRoute = nil, svRoute{}
+}
+
+// placeOnSvmap keeps the svmap spawn X/Z, as ps_game.exe does, and only
+// resolves the floor height that GX movement packets carry.
+func (m *MapMob) placeOnSvmap(nav *mapnav.Map, mapID uint16) bool {
+	m.nav.grid = true
+	m.nav.terrain = nav.Terrain()
+	p := m.point()
+	if !IsMapWalkable(mapID, p[0], p[2]) {
+		return false
+	}
+	if t := m.nav.terrain; t != nil {
+		p[1] = t.Height(p[0], p[2])
+	} else if g, ok := nav.PlayerGeometry(); ok {
+		hint := p
+		if m.spawnHeightKnown {
+			hint[1] = (m.spawnMinY + m.spawnMaxY) / 2
+		}
+		s, ok := g.Spawn(mapgeometry.Position(hint))
+		if !ok {
+			return false
+		}
+		p[1] = s[1]
+	}
+	m.setMobGround(p)
+	return true
+}
+
+// svmapGround follows the floor nearest the previous height.
+func (n *mobNav) svmapGround(p mapnav.Point, previous float32) float32 {
+	if n.terrain != nil {
+		return n.terrain.Height(p[0], p[2])
+	}
+	if nav, err := n.movementMap(); err == nil && nav != nil {
+		if g, ok := nav.PlayerGeometry(); ok {
+			if y, found := g.Support(p[0], previous, p[2], 3); found {
+				return y
+			}
+		}
+	}
+	return previous
+}
+
+// svmapHomeGoal retraces the chase trail while home is out of line, as
+// CMob::ReturnHome 004a7670 pops ChasePathList before falling back to A*.
+func (m *MapMob) svmapHomeGoal(mapID uint16, home mapnav.Point) mapnav.Point {
+	g, ok := gridFor(mapID)
+	if !ok {
+		return home
+	}
+	from := tileOf(m.PosX, m.PosZ)
+	r := &m.svRoute
+	for len(r.trail) > 0 && r.trail[len(r.trail)-1] == from {
+		r.trail = r.trail[:len(r.trail)-1]
+	}
+	if len(r.waypoints) > 0 || len(r.trail) == 0 || g.enableLine(from, tileOf(home[0], home[2]), nil) {
+		if g.enableLine(from, tileOf(home[0], home[2]), nil) {
+			r.trail = r.trail[:0]
+		}
+		return home
+	}
+	t := r.trail[len(r.trail)-1]
+	return mapnav.Point{float32(t.x) + .5, m.PosY, float32(t.z) + .5}
+}
+
+// svmapNavigate moves over the .svmap mask like CMob::Chase/ReturnHome.
+func (m *MapMob) svmapNavigate(mapID uint16, goal mapnav.Point, step float32) (mapnav.Point, bool) {
+	g, ok := gridFor(mapID)
+	if !ok {
+		return mapnav.Point{}, false
+	}
+	next, ok := svNext(g, &m.svRoute, m.point(), goal, step)
+	if !ok {
+		return mapnav.Point{}, false
+	}
+	next[1] = m.nav.svmapGround(next, m.PosY)
+	return next, true
 }
 
 func (m *MapMob) mobSpawnHasExit(nav *mapnav.Map, mapID uint16, spawn mapnav.Point) bool {
@@ -195,6 +275,9 @@ func (m *MapMob) mobSpawnHasExit(nav *mapnav.Map, mapID uint16, spawn mapnav.Poi
 }
 
 func (m *MapMob) navigate(now time.Time, mapID uint16, goal mapnav.Point, step float32) (mapnav.Point, bool) {
+	if m.nav.grid {
+		return m.svmapNavigate(mapID, goal, step)
+	}
 	if terrain := m.nav.terrain; terrain != nil {
 		p := m.point()
 		d := DistanceXZ(p[0], p[2], goal[0], goal[2])
@@ -242,10 +325,11 @@ type mobNav struct {
 	id      uint16
 	terrain *mapgeometry.Geometry
 	dungeon bool
+	grid    bool // .svmap mask navigation
 }
 
 func (n *mobNav) allowsXZ(mapID uint16, x, z float32) bool {
-	if n != nil {
+	if n != nil && !n.grid {
 		if n.terrain != nil {
 			return x >= 0 && z >= 0 && x <= float32(n.terrain.MapSize) && z <= float32(n.terrain.MapSize)
 		}

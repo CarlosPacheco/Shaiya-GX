@@ -27,10 +27,13 @@ map row, while [obelisk rules](obelisks.md) retain their own configuration.
 
 ## Mob movement
 
-Field mobs pursue on XZ and follow terrain height. They can pass through
-placed props. Dungeon mobs follow a navigation mesh built from the layout
-and structural collision. The Linux and Windows server packages include the
-companion catalog. Players continue using the full collision geometry.
+Mobs and guards move over the original `.svmap` walk mask, as `ps_game.exe`
+does: straight lines are sampled tile by tile, and blocked lines use the
+original grid A* and chase trail. Field masks are almost entirely open;
+dungeon masks hold the wall limits. Heights follow the terrain in fields and
+the nearest supporting floor in dungeons. Players continue using the full
+collision geometry. Set `GX_MOB_NAV=geometry` to restore the previous
+navigation-mesh movement.
 See the [navigation guide](../mob-navigation.md) for custom maps.
 
 ## Portal volumes
