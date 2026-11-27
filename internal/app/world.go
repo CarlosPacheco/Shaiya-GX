@@ -195,6 +195,7 @@ func (a *App) enterWorld() {
 	}
 	v.resetCamera()
 	a.wv = v
+	installClothGround(w)
 	a.chatBubbles = nil
 	a.loadLocalActions()
 }
@@ -1252,6 +1253,7 @@ func (a *App) releaseWorld() {
 		a.wv.world.Close()
 	}
 	a.wv = nil
+	installClothGround(nil)
 }
 
 // SceneReady is used by offline captures, not by the player's movement/input.

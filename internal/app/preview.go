@@ -354,6 +354,7 @@ func (a *App) Preview(name string) error {
 		a.state.SelfID = 1
 		a.screen = screenWorld
 		a.wv = &worldView{world: a.selectWorld(false), pos: selectActorPos, facing: render.V3{0, 0, 1}, eye: selectActorPos.Add(render.V3{0, 2, -7})}
+		installClothGround(a.wv.world)
 		if name == "world-status" || name == "world-status-expanded" {
 			a.state.Slots[0] = proto.CharacterSlot{ID: 1, Name: "Status preview", Level: 4, Class: 0, Str: 24, Dex: 17, Rec: 19, Int: 8, Wis: 11, Luc: 13}
 			a.state.Details = proto.Details{StatPoint: 12, SkillPoint: 5, MaxHP: 1234, MaxMP: 567, MaxSP: 890, Exp: 250, NextExp: 1000}

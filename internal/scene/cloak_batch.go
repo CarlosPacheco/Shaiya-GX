@@ -80,6 +80,8 @@ func (c *Character) prepareCrowdCloak(s *render.Scene3D) {
 	}
 	origin := render.V3{c.World[12], c.World[13], c.World[14]}
 	depth := transformPoint(origin, s.View)[2]
+	// Native character+0x2c0: no body or floor collision beyond 20 units.
+	cloak.collide = transformPoint(origin, s.View).Len() <= clothCollisionRange
 	height := float32(s.ViewportH) * s.Proj[5] * render.V3{c.World[4], c.World[5], c.World[6]}.Len() / max(depth, .01)
 	reduced := cloak.geometry.grid != nil && (height < 38 || cloak.usingGrid && height < 44)
 	if height >= 72 || !cloak.initialized || origin.Sub(render.V3{cloak.world[12], cloak.world[13], cloak.world[14]}).Len() > .8 {

@@ -95,7 +95,9 @@ func newClothPhysics(rest []render.V3, columns, rows int, mode int) *clothPhysic
 	}
 	return c
 }
-func (c *clothPhysics) force(wind render.V3) {
+// force reports false for a zero-length spring (0x582d90 returns -1).
+func (c *clothPhysics) force(wind render.V3) bool {
+	ok := true
 	for i, v := range c.velocity {
 		c.forces[i] = render.V3{}
 		if !c.pins[i] {
@@ -115,7 +117,11 @@ func (c *clothPhysics) force(wind render.V3) {
 			force = c.springForces[-link.cache-1]
 		} else {
 			delta := c.positions[link.a].Sub(c.positions[link.b])
-			if distance := delta.Len(); distance >= .000001 {
+			distance := delta.Len()
+			if distance == 0 {
+				ok = false
+			}
+			if distance >= .000001 {
 				normal := delta.Scale(1 / distance)
 				force = normal.Scale(-((distance-link.rest)*stiffness + c.velocity[link.a].Sub(c.velocity[link.b]).Dot(normal)*damping))
 			}
@@ -130,10 +136,15 @@ func (c *clothPhysics) force(wind render.V3) {
 			c.forces[link.b] = c.forces[link.b].Sub(force)
 		}
 	}
+	return ok
 }
-func (c *clothPhysics) step(dt float32) { c.stepWithWind(dt, render.V3{}) }
-func (c *clothPhysics) stepWithWind(dt float32, wind render.V3) {
-	c.force(wind)
+func (c *clothPhysics) step(dt float32) bool { return c.stepWithWind(dt, render.V3{}) }
+
+// stepWithWind advances one sub-step; false asks for the native reset.
+func (c *clothPhysics) stepWithWind(dt float32, wind render.V3) bool {
+	if !c.force(wind) {
+		return false
+	}
 	if c.mode == 1 {
 		for i := c.columns; i < len(c.positions); i++ {
 			if c.pins[i] {
@@ -168,5 +179,18 @@ func (c *clothPhysics) stepWithWind(dt float32, wind render.V3) {
 				c.positions[i] = c.positions[i].Add(d.Scale((length - limit) / length))
 			}
 		}
+	}
+	return true
+}
+
+// reset is 0x5819d0: the rest shape moved to the character position
+// (without its rotation), at rest.
+func (c *clothPhysics) reset(origin render.V3) {
+	for i, v := range c.rest {
+		if !c.pins[i] {
+			c.positions[i] = v.Add(origin)
+		}
+		c.velocity[i] = render.V3{}
+		c.forces[i] = render.V3{}
 	}
 }

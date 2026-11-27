@@ -36,6 +36,8 @@ type cloakInstance struct {
 	world       render.M4
 	elapsed     float32
 	lodInterval float64
+	bodyType    int
+	collide     bool
 	lodAt       float64
 }
 
@@ -165,7 +167,7 @@ func (c *Character) attachCloak(a Appearance) {
 	for _, pin := range g.record.Pins {
 		p.pins[pin.Vertex] = true
 	}
-	c.cloak = &cloakInstance{id: cloakIDs.Add(1), geometry: g, physics: p, vertices: append([]render.Vertex(nil), g.vertices...)}
+	c.cloak = &cloakInstance{id: cloakIDs.Add(1), geometry: g, physics: p, vertices: append([]render.Vertex(nil), g.vertices...), bodyType: clothBodyType(a), collide: true}
 	c.cloak.emblem = c.assets.newCloakEmblem(a.CloakEmblem, *g)
 	c.cloak.assets = c.assets
 }
@@ -219,8 +221,13 @@ func (c *cloakInstance) updateGrid(world render.M4, finals []render.M4, budget i
 	if c.geometry.record.Mode == 1 {
 		steps *= 3
 	}
+	env := c.environment(world, finals, c.collide)
+	origin := render.V3{world[12], world[13], world[14]}
 	for range steps {
-		p.step(.0005)
+		if !p.stepWithWind(.0005, env.wind) {
+			p.reset(origin)
+		}
+		p.collide(&env)
 	}
 	// Cloth is unlit in every pass. Keep authored normals and update the
 	// positions and bounds used for depth, clipping and the silhouette.
