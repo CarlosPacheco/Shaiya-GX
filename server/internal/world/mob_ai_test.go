@@ -250,25 +250,28 @@ func TestLuaWorldControllerInvulnerabilityAndMovement(t *testing.T) {
 	if !ok || result.AppliedHP != 0 || result.Killed || sh.entities.Mobs[0].CurrentHP != 1000 {
 		t.Fatal("controller lost HP on the triggering hit")
 	}
-	// Start the retreat without an aggro target or a native attack deadline.
-	h.now = time.Now().Add(5 * time.Second)
-	eventOK(t, h, "idle")
-	if !h.mob.lua.fixed {
-		t.Fatal("controller did not start retreating")
-	}
+	// The false Exiel stays in place and immortal until it vanishes.
+	start := h.mob.point()
+	h.mob.AggroTarget = 99
+	h.now = time.Now().Add(4 * time.Second)
+	eventOK(t, h, "combat", 100, 1)
 	runMobAICommands(h.tick)
-	if len(sh.entities.Mobs) != 3 {
-		t.Fatalf("summoned %d mobs, want 2", len(sh.entities.Mobs)-1)
+	if len(sh.entities.Mobs) != 1 || !h.mob.lua.hold {
+		t.Fatal("controller acted before five seconds or is not held")
 	}
-	// Give the controller a completed step at the destination and let the
-	// normal world tick deliver the movement completion callback.
-	m := &sh.entities.Mobs[0]
-	m.setPoint(m.lua.selected)
-	m.moveDuration = 0
-	m.nextChaseAt = time.Time{}
 	TickMobCombat(players, 64)
-	if !m.lua.arrived || m.CurrentHP != 0 {
-		t.Fatal("controller did not complete the move and disappear")
+	if sh.entities.Mobs[0].point() != start || sh.entities.Mobs[0].CurrentHP != 1000 {
+		t.Fatal("controller moved or lost HP while waiting")
+	}
+	h.mob = &sh.entities.Mobs[0]
+	h.now = time.Now().Add(5 * time.Second)
+	eventOK(t, h, "combat", 100, 1)
+	runMobAICommands(h.tick)
+	if len(sh.entities.Mobs) != 3 || sh.entities.Mobs[0].CurrentHP != 0 {
+		t.Fatalf("after five seconds: %d mobs, controller HP %d; want guards and no controller", len(sh.entities.Mobs), sh.entities.Mobs[0].CurrentHP)
+	}
+	if sh.entities.Mobs[0].point() != start {
+		t.Fatal("controller moved before vanishing")
 	}
 	for i := 1; i <= 2; i++ {
 		result, ok := DamageMobFrom(h.mapID, sh.entities.Mobs[i].ID, 1000, 99)

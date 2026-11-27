@@ -133,20 +133,18 @@ for pair,ids in ipairs({{2464,2465},{2464,2466},{2464,2467},{2465,2466},{2465,24
         ctx.now=15000;ai:event(ctx,"idle")
         assert(ctx:count("announce")==2 and ctx:last("announce")[2]==6402)
         local mobs={};for _,e in ipairs(ctx.log) do if e[1]=="create_mobs" then mobs[#mobs+1]=e[2];assert(e[4]==220 and e[5]==180) end end
-        assert(mobs[1]==ids[1] and mobs[2]==ids[2] and ctx:count("fixed_move")==1)
-        ai:event(ctx,"attacked");ai:event(ctx,"idle");assert(ctx:count("create_mobs")==2)
-        ai:event(ctx,"move_end");assert(ctx:last("remove_mobs")[2]==2471)
-        ai:event(ctx,"move_end");assert(ctx:count("remove_mobs")==1)
+        assert(mobs[1]==ids[1] and mobs[2]==ids[2] and ctx:count("fixed_move")==0)
+        assert(ctx:last("remove_mobs")[2]==2471 and ctx:last("hold_position")[2]==true)
+        ai:event(ctx,"attacked");ai:event(ctx,"idle");ai:tick(ctx,100,1)
+        assert(ctx:count("create_mobs")==2 and ctx:count("remove_mobs")==1)
     end)
 end
 
-test("Dios controller leaves if withdrawal stalls, even across clock wrap",function()
+test("Dios controller vanishes from combat, even across clock wrap",function()
     local ctx=host.new();local ai=catalog.new(115,ctx)
     ctx.now=0xffffffff-1000;ai:event(ctx,"attacked")
-    ctx.now=3998;ai:event(ctx,"idle");assert(ctx:count("fixed_move")==0)
-    ctx.now=3999;ai:event(ctx,"idle");assert(ctx:count("fixed_move")==1)
-    ctx.now=33998;ai:event(ctx,"idle");assert(ctx:count("remove_mobs")==0)
-    ctx.now=33999;ai:event(ctx,"idle");assert(ctx:count("remove_mobs")==1)
+    ctx.now=3998;ai:tick(ctx,100,1);assert(ctx:count("remove_mobs")==0)
+    ctx.now=3999;ai:tick(ctx,100,1);assert(ctx:count("remove_mobs")==1 and ctx:count("create_mobs")==2)
 end)
 
 test("Dios split delay and deliberately empty reset",function()

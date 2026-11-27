@@ -256,11 +256,11 @@ and duplicate package copies compared. Isolated LuaJIT5.1 tests ran the eight
 unaltered scripts against logging-only native API stubs: **13 cases passed**,
 including all six AI115 pairs, phase deadlines, skipped HP bands and reset behavior.
 
-GX corrects AI115 in Caelum Sacra. A hit on the invulnerable controller starts
-the first message, followed five seconds later by the second message, guard
-summons and retreat. The controller is removed on arrival or after 30 seconds
-if it cannot finish the move. The next-floor portal opens after both summoned
-guards die in the instance.
+GX corrects AI115 in Caelum Sacra. The false Exiel holds its position and
+stays invulnerable. A hit starts the first message; five seconds later the
+second message plays, the controller disappears and the guard pair appears.
+It never walks. The next-floor portal opens after both summoned guards die
+in the instance.
 An isolated x86 execution of original server code passed **12 API checks**.
 Four unused prototype names (`Addint`, `Func`, `GetBloodType`, `TestArg`) have no
 matching dispatcher branch in this binary; declarations alone do not add them.

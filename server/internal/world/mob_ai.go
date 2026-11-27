@@ -382,7 +382,9 @@ func (h *mobAIHost) Call(name string, args []any) (any, error) {
 		}
 	case "return_home":
 		mods := m.mods()
-		if m.stepHome(h.now, h.mapID, &mods, h.tick) {
+		if o.hold {
+			m.returningHome = false // a held actor never walks home
+		} else if m.stepHome(h.now, h.mapID, &mods, h.tick) {
 			return nil, nil
 		}
 		if !m.returningHome {
