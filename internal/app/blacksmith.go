@@ -250,7 +250,7 @@ func (a *App) drawBlacksmith(w, h int, name, welcome string) {
 		a.font.Draw(a.sprites, text, x+0x41+(0xff-0x41-a.font.Width(text))/2, y+0x2e, [4]float32{1, 1, 0, 1}, 0)
 	}
 	if e := a.state.Entities[a.shop.npcID]; e != nil {
-		def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
+		def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 		if portrait := a.npcPortrait(def); portrait != nil {
 			a.sprites.Draw(portrait, float32(x+7), float32(y+7), 64, 64, 0, 0, 1, 1, white)
 		}

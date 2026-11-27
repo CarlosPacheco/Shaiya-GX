@@ -71,7 +71,7 @@ func (a *App) pvpRewardState() ui.PvPRewardState {
 		CanKill:  r.Known && killOK && a.state.Details.Kills >= threshold,
 		CanDeath: r.Known && deathOK && a.state.Details.Deaths >= deathThreshold}
 	if e := a.state.Entities[a.shop.npcID]; e != nil {
-		def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
+		def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 		state.Name, state.Portrait = def.Name, a.npcPortrait(def)
 	}
 	if !r.Known {
@@ -83,8 +83,8 @@ func (a *App) pvpRewardState() ui.PvPRewardState {
 	state.Reward = a.msg.Format(5353, map[string]string{"v": fmt.Sprint(killStage), "v2": fmt.Sprint(points)})
 	state.Kills = fmt.Sprintf("%d / %d", a.state.Details.Kills, threshold)
 	state.Deaths = fmt.Sprintf("%d / %d", a.state.Details.Deaths, deathThreshold)
-	state.DeathLevel = fmt.Sprintf("%d %s / %d %s", deathStage, a.interfaceText(5354), pvprank.RewardCount, a.interfaceText(5354))
-	state.Gold = fmt.Sprintf("%s %s", ui.GoldText(gold), a.interfaceText(5355))
+	state.DeathLevel = fmt.Sprintf("%d %s / %d %s", deathStage, a.msg.Get(5354), pvprank.RewardCount, a.msg.Get(5354))
+	state.Gold = fmt.Sprintf("%s %s", ui.GoldText(gold), a.msg.Get(5355))
 	if r.KillStage == proto.PvPRewardFinishedStage {
 		state.KillStatus = a.msg.Lookup(12376)
 	}

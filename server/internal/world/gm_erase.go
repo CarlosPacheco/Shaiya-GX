@@ -66,15 +66,15 @@ func (s *Session) gmEraseMobs(args []string) error {
 			return err
 		}
 		if !s.eraseMob(id) {
-			s.gmMessage(12415)
+			s.gmReply("GM: that target is not a living monster.")
 			return nil
 		}
-		s.gmMessage(12416)
+		s.gmReply("GM: monster erased.")
 		return nil
 	}
 	n, err := gmNumbers(args, gmMaxEraseRange)
 	if err != nil {
-		s.gmMessage(12417)
+		s.gmReply("Usage: /mera (your target) | /mera <range 1-1000>")
 		return nil
 	}
 	ch := s.char
@@ -84,7 +84,7 @@ func (s *Session) gmEraseMobs(args []string) error {
 			count++
 		}
 	}
-	s.gmMessage(12414, count)
+	s.gmReply(fmt.Sprintf("GM: %d monsters erased.", count))
 	return nil
 }
 
@@ -92,7 +92,7 @@ func (s *Session) gmEraseMobs(args []string) error {
 func (s *Session) gmEraseNPC(args []string) error {
 	id, target, err := gmTargetID(args)
 	if !target || err != nil {
-		s.gmMessage(12418)
+		s.gmReply("Usage: /nera (your target)")
 		return nil
 	}
 	sh := shard(s.char.MapID)
@@ -109,13 +109,13 @@ func (s *Session) gmEraseNPC(args []string) error {
 	}
 	sh.mu.Unlock()
 	if gone == nil {
-		s.gmMessage(12419)
+		s.gmReply("GM: that target is not an NPC.")
 		return nil
 	}
 	for _, p := range PlayersViewing(s.char.MapID, gone.cell) {
 		viewLeave(p, viewNpc, gone.ID, buildNpcLeave(gone.ID), "GM NPC erase")
 	}
-	s.gmMessage(12420)
+	s.gmReply("GM: NPC removed until the next server restart.")
 	return nil
 }
 
@@ -124,18 +124,18 @@ func (s *Session) gmEraseNPC(args []string) error {
 func (s *Session) gmKill(args []string) error {
 	id, target, err := gmTargetID(args)
 	if !target || err != nil {
-		s.gmMessage(12421)
+		s.gmReply("Usage: /kill (your target)")
 		return nil
 	}
 	ch := s.char
 	if id == ch.ID {
-		s.gmMessage(12422)
+		s.gmReply("GM: choose another target.")
 		return nil
 	}
 	if m, ok := MobByID(ch.MapID, id); ok {
 		result, ok := DamageMobFrom(ch.MapID, id, m.CurrentHP, ch.ID)
 		if !ok || !result.Killed {
-			s.gmMessage(12423)
+			s.gmReply("GM: that monster cannot be killed.")
 			return nil
 		}
 		AddMobAggro(ch.MapID, id, ch.ID, 0)
@@ -144,10 +144,10 @@ func (s *Session) gmKill(args []string) error {
 	}
 	if p := FindPlayerByID(id); p != nil && p.MapID() == ch.MapID && p.IsAlive() {
 		p.QueueUserHit(pendingUserHit{AttackerID: ch.ID, Execute: true})
-		s.gmMessage(12424)
+		s.gmReply("GM: target executed.")
 		return nil
 	}
-	s.gmMessage(12425)
+	s.gmReply("GM: that target cannot be killed.")
 	return nil
 }
 

@@ -3,6 +3,7 @@ package app
 import (
 	"strings"
 
+	img "github.com/Spelunkern/Shaiya-GX/internal/data/image"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
@@ -111,7 +112,11 @@ func (a *App) tipFrame() *render.Texture {
 	if a.tipTexture != nil || a.arc == nil {
 		return a.tipTexture
 	}
-	t, err := a.assets.ReadTexture("interface/tipbox.png")
+	b, err := a.arc.ReadFile("interface/tipbox.png")
+	if err != nil {
+		return nil
+	}
+	t, err := img.DecodeResource("interface/tipbox.png", b)
 	if err != nil || t.RGBA == nil {
 		return nil
 	}
@@ -123,16 +128,4 @@ func (a *App) tipFrame() *render.Texture {
 	}
 	a.tipTexture = render.Upload(t)
 	return a.tipTexture
-}
-
-func (a *App) drawLanguageRestartNotice(w int) {
-	if a.clock >= a.languageRestartUntil {
-		return
-	}
-	f := a.chatFont()
-	message := a.tr(12465)
-	width := f.Width(message)
-	x := (w - width) / 2
-	a.drawNewsPanel(x-8, 16, width+12, 16)
-	f.DrawOutlined(a.sprites, message, x, 16+(newsPanelOuterHeight-f.Height)/2, white)
 }

@@ -19,7 +19,7 @@ const gxGMModes packet.Opcode = 0x7F29
 
 func (s *Session) turboActive() bool { return s.isAdmin && s.gmTurbo }
 
-func (s *Session) gmReply(message string, reply ...proto.GMReply) {
+func (s *Session) gmReply(message string) {
 	if s.char == nil {
 		return
 	}
@@ -36,9 +36,6 @@ func (s *Session) gmReply(message string, reply ...proto.GMReply) {
 	w.U8(turbo)
 	w.U16(uint16(len(message)))
 	w.Bytes([]byte(message))
-	if len(reply) > 0 {
-		w.Bytes(reply[0].Encode())
-	}
 	s.send(w.MustFinish(), "GX GM state")
 }
 
@@ -71,7 +68,7 @@ func (s *Session) sendGMModes() {
 func (s *Session) gmModeGuard() bool {
 	now := time.Now()
 	if now.Sub(s.lastGMModeAt) < 750*time.Millisecond {
-		s.gmMessage(12386)
+		s.gmReply("GM: wait a moment before changing this again.")
 		return false
 	}
 	s.lastGMModeAt = now
@@ -82,9 +79,9 @@ func (s *Session) setGMChar(on bool) {
 	s.gmConcealed = on
 	s.syncVisibility()
 	if on {
-		s.gmMessage(263)
+		s.gmReply("Character's transparent setting is on")
 	} else {
-		s.gmMessage(264)
+		s.gmReply("Character's transparent setting is off")
 	}
 	s.sendGMModes()
 }
@@ -96,9 +93,9 @@ func (s *Session) setGMAttack(on bool) {
 	}
 	s.syncVisibility()
 	if on {
-		s.gmMessage(265)
+		s.gmReply("Won't be attacked anymore")
 	} else {
-		s.gmMessage(266)
+		s.gmReply("Will be attacked")
 	}
 	s.sendGMModes()
 }
@@ -128,11 +125,11 @@ func (s *Session) handleGMCommand(text string) bool {
 		return true
 	}
 	if !s.isAdmin {
-		s.gmMessage(12387)
+		s.gmReply("GM: access denied.")
 		return true
 	}
 	if tradeFor(s.char.ID) != nil { // Inventory must not change underneath an exchange.
-		s.gmMessage(12388)
+		s.gmReply("GM: finish trading before using commands.")
 		return true
 	}
 	var err error
@@ -153,7 +150,7 @@ func (s *Session) handleGMCommand(text string) bool {
 		err = s.gmSet(args)
 	case "/char", "/attack":
 		if len(args) != 1 || (!strings.EqualFold(args[0], "on") && !strings.EqualFold(args[0], "off")) {
-			s.gmMessage(12379, command)
+			s.gmReply("Usage: " + command + " on|off")
 			break
 		}
 		if !s.gmModeGuard() {
@@ -166,7 +163,7 @@ func (s *Session) handleGMCommand(text string) bool {
 		}
 	case "/turbo":
 		if len(args) != 0 {
-			s.gmMessage(12389)
+			s.gmReply("Usage: /turbo")
 			break
 		}
 		s.gmTurbo = !s.gmTurbo
@@ -174,13 +171,13 @@ func (s *Session) handleGMCommand(text string) bool {
 		s.movement.budgetAt, s.movement.credit = time.Now(), 0
 		s.movement.speedCorrectionPending = false
 		if s.gmTurbo {
-			s.gmMessage(12390)
+			s.gmReply("GM: turbo enabled. Fall damage disabled. Server speed limits disabled.")
 		} else {
-			s.gmMessage(12391)
+			s.gmReply("GM: turbo disabled. Fall damage follows server settings. Server speed limits restored.")
 		}
 	case "/amove", "/asummon":
 		if len(args) != 1 {
-			s.gmMessage(12380, command)
+			s.gmReply("Usage: " + command + " charname")
 			break
 		}
 		if command == "/amove" {
@@ -190,13 +187,13 @@ func (s *Session) handleGMCommand(text string) bool {
 		}
 	case "/cure":
 		if len(args) != 0 {
-			s.gmMessage(12392)
+			s.gmReply("Usage: /cure")
 			break
 		}
 		err = s.gmCure()
 	case "/iclear":
 		if len(args) != 0 {
-			s.gmMessage(12393)
+			s.gmReply("Usage: /iclear")
 			break
 		}
 		err = s.gmClearInventory()
@@ -206,7 +203,7 @@ func (s *Session) handleGMCommand(text string) bool {
 		}
 		n, e := gmNumbers(args, 255, 255, 5*24*255)
 		if e != nil {
-			s.gmMessage(12394)
+			s.gmReply("Usage: /getitem type id [quantity=1]")
 			break
 		}
 		err = s.gmGiveItem(uint8(n[0]), uint8(n[1]), int(n[2]))
@@ -216,31 +213,31 @@ func (s *Session) handleGMCommand(text string) bool {
 		}
 		n, e := gmNumbers(args, 65535, gmMaxSpawn)
 		if e != nil {
-			s.gmMessage(12395)
+			s.gmReply("Usage: /mmake mobid [quantity=1] (1-100)")
 			break
 		}
 		err = s.gmSpawn(uint16(n[0]), int(n[1]), 0)
 	case "/nmake":
 		n, e := gmNumbers(args, npcTypeCount, 65535)
 		if e != nil {
-			s.gmMessage(12396)
+			s.gmReply("Usage: /nmake type id")
 			break
 		}
 		err = s.gmSpawn(uint16(n[1]), 1, uint8(n[0]))
 	case "/cmove":
 		if len(args) != 1 {
-			s.gmMessage(12397)
+			s.gmReply("Usage: /cmove mapid")
 			break
 		}
 		n, e := strconv.ParseUint(args[0], 10, 16)
 		if e != nil {
-			s.gmMessage(12397)
+			s.gmReply("Usage: /cmove mapid")
 			break
 		}
 		err = s.gmMove(uint16(n))
 	}
 	if err != nil {
-		s.gmFailure(err)
+		s.gmReply("GM: " + err.Error())
 	}
 	if s.log != nil {
 		s.log.Printf("GX GM account_id=%d character_id=%d command=%q error=%v", s.accountID, s.char.ID, text, err)
@@ -270,14 +267,14 @@ func (s *Session) gmClearInventory() error {
 	for i := range removed {
 		s.send(buildRemoveItem(&removed[i], true), "GM inventory clear")
 	}
-	s.gmMessage(12381, len(removed))
+	s.gmReply(fmt.Sprintf("GM: inventory cleared (%d carried items).", len(removed)))
 	return nil
 }
 
 // planGMGrant keeps the entire request atomic, including quantities above 255.
 func planGMGrant(items []db.Item, def *db.ItemDef, quantity int) ([]db.Item, []db.Item, []db.Item, error) {
 	if def == nil || quantity <= 0 || quantity > 5*24*255 {
-		return nil, nil, nil, newGMError(12399)
+		return nil, nil, nil, fmt.Errorf("invalid item or quantity")
 	}
 	sim := append([]db.Item(nil), items...)
 	tpl := db.Item{Type: def.Type, TypeID: def.TypeID, Quality: def.Quality, MakeType: "G"}
@@ -293,7 +290,7 @@ func planGMGrant(items []db.Item, def *db.ItemDef, quantity int) ([]db.Item, []d
 		}
 		free := freeInventorySlots(sim)
 		if len(free) == 0 {
-			return nil, nil, nil, newGMError(12400)
+			return nil, nil, nil, fmt.Errorf("not enough space for the entire quantity")
 		}
 		it := tpl
 		it.UID = db.NewItemUID()
@@ -326,7 +323,7 @@ func (s *Session) gmGiveItem(itemType, id uint8, quantity int) error {
 	if s.player != nil {
 		s.player.UpdateItems(s.items)
 	}
-	s.gmMessage(12382, quantity, def.Name, itemType, id)
+	s.gmReply(fmt.Sprintf("GM: received %d x %s (%d/%d).", quantity, def.Name, itemType, id))
 	return nil
 }
 
@@ -335,7 +332,7 @@ func (s *Session) gmGiveItem(itemType, id uint8, quantity int) error {
 func gmSpawnPositions(mapID uint16, x, z float32, count int, entities *MapEntities) ([][2]float32, error) {
 	size, exists := mapSize(mapID)
 	if !exists || size <= 0 {
-		return nil, newGMError(12401)
+		return nil, fmt.Errorf("map unavailable")
 	}
 	var result [][2]float32
 	for ring := 1; ring <= 16 && len(result) < count; ring++ {
@@ -376,29 +373,29 @@ func gmSpawnPositions(mapID uint16, x, z float32, count int, entities *MapEntiti
 		}
 	}
 	if len(result) != count {
-		return nil, newGMError(12402)
+		return nil, fmt.Errorf("no nearby free space")
 	}
 	return result, nil
 }
 
 func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error {
 	if count < 1 || count > gmMaxSpawn {
-		return newGMError(12403)
+		return fmt.Errorf("quantity out of range")
 	}
 	var nd *npcDef
 	var md *db.MobDef
 	if npcType != 0 {
 		if count != 1 {
-			return newGMError(12404)
+			return fmt.Errorf("nmake summons exactly one NPC")
 		}
 		nd = findNpcDef(npcType, id)
 		if nd == nil {
-			return newGMError(12405)
+			return fmt.Errorf("unknown NPC; use /nmake type id (1 1 = merchant 1)")
 		}
 	} else {
 		md = db.MustDefs().Mobs[id]
 		if md == nil {
-			return newGMError(12406)
+			return fmt.Errorf("unknown mob")
 		}
 	}
 	sh := shard(s.char.MapID)
@@ -452,16 +449,16 @@ func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error {
 	}
 	spawned := len(npcs) + len(mobs)
 	if spawned == 0 {
-		return newGMError(12407, id)
+		return fmt.Errorf("no valid navigable spawn surface for id %d", id)
 	}
-	s.gmMessage(12383, spawned, id)
+	s.gmReply(fmt.Sprintf("GM: summoned %d (id %d).", spawned, id))
 	return nil
 }
 
 func (s *Session) gmMove(mapID uint16) error {
 	size, ok := mapSize(mapID)
 	if !ok || size <= 0 || isInstanceZone(mapID) {
-		return newGMError(12408)
+		return fmt.Errorf("unknown map")
 	}
 	// The server owns bind heights, not terrain geometry. Choose the closest
 	// bind to the equivalent relative X/Z rather than guessing an unsafe Y.
@@ -525,27 +522,29 @@ func (s *Session) gmMove(mapID uint16) error {
 			var found bool
 			arrival, found = rebirthPosition(mapID, s.faction)
 			if !found || arrival.MapID != mapID {
-				return newGMError(12409)
+				return fmt.Errorf("map has no safe arrival point")
 			}
 		}
 		if !IsMapWalkable(mapID, arrival.X, arrival.Z) {
-			return newGMError(12409)
+			return fmt.Errorf("map has no safe arrival point")
 		}
 	}
 	s.cast = nil
 	s.autoAttack = false
 	s.useNpc(0)
 	if !s.applyTeleport(mapID, arrival.X, arrival.Y, arrival.Z, "GM cmove", true) {
-		return newGMError(12410)
+		return fmt.Errorf("destination unavailable")
 	}
-	s.gmMessage(12384, mapID)
+	s.gmReply(fmt.Sprintf("GM: map %d.", mapID))
 	return nil
 }
+
+const gmSetUsage = "usage: /set money|kill|str|dex|rec|int|wis|luc|statpoint|skillpoint|level amount"
 
 // gmSet changes only the issuing character. Claimed rewards remain claimed.
 func (s *Session) gmSet(args []string) error {
 	if len(args) != 2 {
-		return newGMError(12411)
+		return fmt.Errorf("%s", gmSetUsage)
 	}
 	field := strings.ToLower(args[0])
 	if field == "level" {
@@ -560,16 +559,16 @@ func (s *Session) gmSet(args []string) error {
 	case "str", "dex", "rec", "int", "wis", "luc", "statpoint", "skillpoint":
 		cap = db.BaseStatCap
 	default:
-		return newGMError(12411)
+		return fmt.Errorf("%s", gmSetUsage)
 	}
 	// Saturate while parsing so even an arbitrarily large decimal cannot overflow.
 	var value uint64
 	if args[1] == "" {
-		return newGMError(12412)
+		return fmt.Errorf("amount must be a non-negative integer")
 	}
 	for _, digit := range args[1] {
 		if digit < '0' || digit > '9' {
-			return newGMError(12412)
+			return fmt.Errorf("amount must be a non-negative integer")
 		}
 		value = min(value*10+uint64(digit-'0'), cap)
 	}
@@ -627,14 +626,14 @@ func (s *Session) gmSet(args []string) error {
 		s.sendStatPackets()
 		s.partyPools()
 	}
-	s.gmMessage(12385, field, value)
+	s.gmReply(fmt.Sprintf("GM: %s set to %d.", field, value))
 	return nil
 }
 
 // gmCure clears all debuffs and cooldowns and restores HP, MP and SP.
 func (s *Session) gmCure() error {
 	if s.dead {
-		return newGMError(12413)
+		return fmt.Errorf("you are dead")
 	}
 	s.removeEffectsInternal(func(b *ActiveBuff) bool { return b.Effect == typeEffectDebuff }, "GM cure", true)
 	s.refillPools()
@@ -651,6 +650,6 @@ func (s *Session) gmCure() error {
 	vehicleMu.Unlock()
 	s.send(packet.New(packet.Opcode(proto.GXItemCooldownReset)).MustFinish(), "GM item cooldown reset")
 	s.persistSkillDelays()
-	s.gmMessage(12398)
+	s.gmReply("GM: restored HP, MP and SP and cleared all debuffs and cooldowns.")
 	return nil
 }

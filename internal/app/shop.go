@@ -99,7 +99,7 @@ func (a *App) updateShop(in *platform.Input, w, h int) bool {
 	if e.NpcType != 1 && e.NpcType != 6 && a.npcQuestUI != nil {
 		return a.updateNPCQuest(in, w, h, e)
 	}
-	def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
+	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 	x, y := a.marketUI.Origin(w, h)
 	width, height := ui.MarketWidth, ui.MarketHeight
 	if e.NpcType != 1 {
@@ -215,7 +215,7 @@ func (a *App) drawShop(w, h int) {
 		a.drawGuildDirectory(w, h)
 		return
 	}
-	def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
+	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 	if e.NpcType == 2 && a.gateUI != nil {
 		a.drawGatekeeper(w, h, e, def)
 		return

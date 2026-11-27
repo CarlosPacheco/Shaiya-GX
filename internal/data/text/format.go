@@ -5,11 +5,7 @@ import "strings"
 // Format expands native SysMsgTxt placeholders in a single pass. Substituted
 // names and chat bodies are opaque: text containing <p> cannot inject a token.
 func (m SysMsg) Format(id int, values map[string]string) string {
-	return FormatMessage(m.Lookup(id), values)
-}
-
-// FormatMessage expands the placeholders in a resolved message template.
-func FormatMessage(template string, values map[string]string) string {
+	template := m.Lookup(id)
 	var out strings.Builder
 	for len(template) > 0 {
 		start := strings.IndexByte(template, '<')

@@ -125,7 +125,7 @@ func (a *App) emblemView() *ui.EmblemView {
 	v := &a.emblem
 	view := &ui.EmblemView{Selection: v.selection, Colors: v.colors, Counts: a.emblemCounts(), Active: v.active,
 		HasItem: v.hasItem, Busy: v.pending || a.shop.pending || a.inventory.pending, Cost: emblem.Fee,
-		Gold: ui.GoldText(emblem.Fee) + " " + a.interfaceText(0x146a)}
+		Gold: ui.GoldText(emblem.Fee) + " " + a.msg.Get(0x146a)}
 	for i := range view.Textures {
 		if v.selection[i] >= 0 {
 			view.Textures[i] = a.assets.EmblemTexture(i, uint8(v.selection[i]+1))

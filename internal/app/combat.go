@@ -297,7 +297,7 @@ func (a *App) drawCombat(w, h int) {
 		view.TargetName, view.TargetHP, view.TargetKnown = view.Name, view.HP, true
 	} else if e := s.Entities[s.Target]; e != nil && e.Kind == game.KindMob {
 		view.TargetName = a.msg.Format(12297, map[string]string{"v": fmt.Sprint(e.TypeID)})
-		if def, err := a.monsterDefinition(e.TypeID); err == nil {
+		if def, err := a.assets.MonsterDefinition(e.TypeID); err == nil {
 			view.TargetName, view.TargetHP.Max = def.Name, def.HP
 			view.TargetColor = ui.RGBColor(ui.MobNameRGB(def.Level, view.Level))
 			view.TargetElement = def.Element

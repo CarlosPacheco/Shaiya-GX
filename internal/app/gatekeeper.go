@@ -17,7 +17,7 @@ type gatekeeperView struct {
 }
 
 func (a *App) updateGatekeeper(in *platform.Input, w, h int, e *game.Entity) bool {
-	def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
+	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 	x, y := a.gateUI.Origin(w, h)
 	busy := a.shop.pending || a.inventory.pending
 	choice, close := a.gateUI.Update(in, w, h, def.Gates, busy)
@@ -86,6 +86,6 @@ func (a *App) confirmedGatekeeper(p []byte) {
 }
 func (a *App) drawGatekeeper(w, h int, e *game.Entity, def sdata.NPC) {
 	portrait := a.assets.Texture(fmt.Sprintf("interface/NpcFace/%d.png", def.Model))
-	a.gateUI.Currency = a.interfaceText(0x146a)
+	a.gateUI.Currency = a.msg.Get(0x146a)
 	a.gateUI.Draw(a.sprites, a.font, w, h, def.Name, questText(def.Welcome), portrait, def.Gates, a.shop.pending || a.inventory.pending)
 }

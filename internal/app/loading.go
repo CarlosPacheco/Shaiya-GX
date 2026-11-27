@@ -5,13 +5,11 @@ import (
 	"log"
 	"math/rand/v2"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/game"
 	"github.com/Spelunkern/Shaiya-GX/internal/gameini"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
 type mapLoading struct {
@@ -27,22 +25,6 @@ type mapLoading struct {
 
 func (a *App) beginMapLoading(mapID uint16, selection bool) {
 	a.loading = mapLoading{active: true, selection: selection, mapID: mapID, tip: a.randomLoadingTip()}
-}
-
-func (a *App) loadLocalizedLoadingTips(languageID int) {
-	a.localizedLoadingTips = nil
-	code := ui.MessageLanguageCode(languageID)
-	if code == "" {
-		return
-	}
-	raw, err := a.arc.ReadLiveFile("Languages/Tips/tip_" + code + ".ini")
-	if err != nil || !utf8.Valid(raw) {
-		return
-	}
-	config, err := gameini.Parse(raw)
-	if err == nil {
-		a.localizedLoadingTips = config["TIPS"]
-	}
 }
 
 func (a *App) randomLoadingTip() string {
@@ -64,14 +46,10 @@ func (a *App) randomLoadingTip() string {
 		return ""
 	}
 	var tips []string
-	for key, tip := range config["TIPS"] {
-		if strings.TrimSpace(tip) == "" {
-			continue
+	for _, tip := range config["TIPS"] {
+		if strings.TrimSpace(tip) != "" {
+			tips = append(tips, tip)
 		}
-		if translated := a.localizedLoadingTips[key]; strings.TrimSpace(translated) != "" && !strings.ContainsAny(translated, "\x00\ufffd") {
-			tip = translated
-		}
-		tips = append(tips, tip)
 	}
 	if len(tips) == 0 {
 		return ""

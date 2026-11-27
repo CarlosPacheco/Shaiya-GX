@@ -18,13 +18,6 @@ Keep game rules and persistence authoritative on the server. Preserve protocol f
 
 The playable client is `Shaiya GX` (`Shaiya GX.exe` on Windows), with loose `data/` beside it. Runtime uses the directory loader, Ogg Vorbis sounds and PNG interface images; SAH/SAF and WAV remain import tools only. Preserve `_dds.png` atlas distinctions, authored PNG mipmaps and legacy filename aliases; see `docs/data-formats.md`. Do not restore old archive packaging. By explicit user request, fonts are external resources under `data/fonts/`, with a coverage manifest and lazy Unicode/colour-emoji fallbacks. Do not embed game fonts or depend on OS font installations. Preserve the licenses and unmodified font metadata in the external resource pack; retain the source font license notices.
 
-Load only the selected content translation at startup or when applying a language. English opens no
-translation catalog. A missing catalog or row must always fall back to the
-English text, including for descriptions and formatted messages.
-Use canonical PS0085 text for Spanish SysMsg and SData CSV overlays where it
-matches GX. Translate missing usable GX text manually and correct verified
-errors. Leave placeholder records without usable source text unlocalized.
-
 **GX Server** is terminal-only: `server/cmd/gx_console` controls `gx_login` and `gx_world`. Do not restore a graphical server controller or its icon. Keep `RAPTURE_*` environment keys, `rapture.sqlite` and `Rapture_LoginLog` compatible unless explicitly migrating them with tests and documentation.
 
 SQLite is the primary production database. Keep storage behind `server/internal/db` and document SQLite operations, backups and deployment accurately. Do not describe it as a temporary backend or promise a replacement.

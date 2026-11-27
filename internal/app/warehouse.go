@@ -3,7 +3,6 @@ package app
 import (
 	"fmt"
 
-	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
@@ -96,13 +95,6 @@ func (a *App) guildBankAllowed(source, destination [2]uint8) bool {
 const warehouseCallSkill = 228
 
 const warehouseCallDescription = "Opens your personal warehouse without a banker. Click the Warehouse Call buff to reopen it while the effect lasts."
-
-func (a *App) warehouseCallTooltip() string {
-	if translated := a.localized.Skills[sdata.SkillKey{ID: warehouseCallSkill, Level: 1}].Description; translated != "" {
-		return translated
-	}
-	return warehouseCallDescription
-}
 
 func (a *App) hasWarehouseCall() bool {
 	if a.state == nil {

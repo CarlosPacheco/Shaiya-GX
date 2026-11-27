@@ -180,7 +180,7 @@ func (a *App) drawAuctionDialog(w, h int) {
 		}
 		a.dialogValue(b, 0x5a, v.fields[1], v.focus == 1)
 		a.dialogValue(b, 0x78, v.fields[2], v.focus == 2)
-		hour, day := a.interfaceText(7036), a.interfaceText(7037)
+		hour, day := a.msg.Get(7036), a.msg.Get(7037)
 		a.auctionText(auctionDuration(v.duration, hour, day), b.x+100, b.y+0x90, white)
 		start, _ := strconv.ParseUint(v.fields[1], 10, 32)
 		a.auctionGoldAt(proto.AuctionDeposit(uint32(start), v.duration), b.x+100, b.y+0xac)
@@ -202,7 +202,7 @@ func (a *App) drawAuctionDialog(w, h int) {
 				if int(v.duration) == i {
 					c = [4]float32{1, 0, 1, 1}
 				}
-				a.auctionText(auctionDuration(uint8(i), a.interfaceText(7036), a.interfaceText(7037)), b.x+100, b.y+0xa4+i*0xf, c)
+				a.auctionText(auctionDuration(uint8(i), a.msg.Get(7036), a.msg.Get(7037)), b.x+100, b.y+0xa4+i*0xf, c)
 			}
 		}
 	}
@@ -224,25 +224,25 @@ func (a *App) drawAuctionDetails(b auctionBounds, r proto.AuctionRow, w, h int) 
 	t := time.Unix(r.Ends, 0)
 	date := fmt.Sprintf("%d/%d %d:%d", int(t.Month()), t.Day(), t.Hour(), t.Minute())
 	_, color := auctionLeft(r.Ends, time.Now())
-	label := a.interfaceText(7053)
+	label := a.msg.Get(7053)
 	if v.detail == proto.AuctionItems || v.detail == proto.AuctionGold {
-		label = a.interfaceText(7050)
+		label = a.msg.Get(7050)
 	}
 	a.auctionText(label, b.x+0xe, b.y+0x172, white)
 	a.auctionText(date, b.x+0x5e, b.y+0x172, color)
 	switch v.detail {
 	case proto.AuctionItems:
 	case proto.AuctionGold:
-		a.auctionText(a.interfaceText(7045), b.x+0xe, b.y+0x181, white)
+		a.auctionText(a.msg.Get(7045), b.x+0xe, b.y+0x181, white)
 		a.auctionText(ui.GoldText(r.Gold), b.x+0x5e, b.y+0x181, auctionRGB(ui.GoldRGB(r.Gold)))
 		if r.Reason != "Bid refund" {
-			a.auctionText(a.interfaceText(7051), b.x+0xe, b.y+0x190, white)
+			a.auctionText(a.msg.Get(7051), b.x+0xe, b.y+0x190, white)
 			a.auctionText(ui.GoldText(r.Price/50), b.x+0x5e, b.y+0x190, auctionRGB(ui.GoldRGB(r.Price/50)))
 		}
 	default:
-		a.auctionText(a.interfaceText(7041), b.x+0xe, b.y+0x181, white)
+		a.auctionText(a.msg.Get(7041), b.x+0xe, b.y+0x181, white)
 		a.auctionText(ui.GoldText(r.Price), b.x+0x5e, b.y+0x181, auctionRGB(ui.GoldRGB(r.Price)))
-		a.auctionText(a.interfaceText(7042), b.x+0xe, b.y+0x190, white)
+		a.auctionText(a.msg.Get(7042), b.x+0xe, b.y+0x190, white)
 		a.auctionText(ui.GoldText(r.Buyout), b.x+0x5e, b.y+0x190, auctionRed)
 	}
 }

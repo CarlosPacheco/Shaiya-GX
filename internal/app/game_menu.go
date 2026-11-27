@@ -36,7 +36,7 @@ func (a *App) openGameMenu() {
 func (a *App) gameMenuControls(in *platform.Input, w, h int) (platform.Input, bool) {
 	controls := *in
 	bindingCapture := a.gameMenu.BindingCapture()
-	keyboardCapture := a.gameMenu.PopupOpen() || bindingCapture
+	keyboardCapture := a.gameMenu.DisplayPopupOpen() || bindingCapture
 	modal := a.menuPending || a.menuConfirm != nil && a.menuConfirm.Visible
 	width, height := a.gameMenu.Size()
 	x, y := a.gameMenu.Origin(w, h)
@@ -144,7 +144,6 @@ func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 		return
 	}
 	previousPage := a.gameMenu.Page
-	savedLanguage := a.gameMenu.SavedSettings().LanguageID
 	action := a.gameMenu.Update(in, w, h)
 	if previousPage != a.gameMenu.Page && a.gameMenu.Page == ui.MenuGraphics && a.cfg.DisplayModes != nil {
 		a.gameMenu.SetDisplayModes(a.cfg.DisplayModes())
@@ -161,27 +160,14 @@ func (a *App) updateGameMenu(in *platform.Input, w, h int) {
 			return
 		}
 		a.menuIntent = action
-		text := a.tr(12463)
+		text := "Return to the character screen?"
 		if action == ui.MenuExit {
-			text = a.tr(12464)
+			text = "Exit the game?"
 		}
 		a.menuConfirm.Open(text, true)
 	case ui.MenuChanged:
 		a.applyClientSettings()
 	case ui.MenuSave:
-		if previousPage == ui.MenuUser {
-			id := a.gameMenu.Settings.LanguageID
-			if id != savedLanguage {
-				if saveClientLanguage(id) {
-					a.languageRestartUntil = 0
-					if id != a.activeLanguageID {
-						a.languageRestartUntil = a.clock + 10
-					}
-				} else {
-					a.gameMenu.Settings.LanguageID = savedLanguage
-				}
-			}
-		}
 		a.applyClientSettings()
 		if a.applyDisplaySettings() {
 			a.saveClientSettings()
@@ -237,7 +223,6 @@ func (a *App) loadClientSettings() {
 		return
 	}
 	value := ui.DefaultClientSettings()
-	value.LanguageID = a.gameMenu.Settings.LanguageID
 	if err == nil {
 		err = json.Unmarshal(data, &value)
 	}
@@ -263,84 +248,41 @@ func (a *App) saveClientSettings() {
 		return
 	}
 	path, err := settingsPath()
-	value := a.clientSettings()
-	if a.gameMenu != nil {
-		value = a.gameMenu.SavedSettings()
+	if err == nil {
+		err = os.MkdirAll(filepath.Dir(path), 0700)
 	}
 	if err == nil {
-		err = writeClientPreference(path, value)
+		var data []byte
+		value := a.clientSettings()
+		if a.gameMenu != nil {
+			value = a.gameMenu.SavedSettings()
+		}
+		data, err = json.Marshal(value)
+		if err == nil {
+			var file *os.File
+			file, err = os.CreateTemp(filepath.Dir(path), ".settings-*")
+			if err == nil {
+				defer os.Remove(file.Name())
+				_, err = file.Write(data)
+				closeErr := file.Close()
+				if err == nil {
+					err = closeErr
+				}
+				if err == nil {
+					err = os.Rename(file.Name(), path)
+				}
+			}
+		}
 	}
 	if err != nil {
 		log.Printf("save settings: %v", err)
 	}
 }
 
-func writeClientPreference(path string, value any) error {
-	data, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0700); err != nil {
-		return err
-	}
-	file, err := os.CreateTemp(dir, ".settings-*")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(file.Name())
-	_, err = file.Write(data)
-	closeErr := file.Close()
-	if err != nil {
-		return err
-	}
-	if closeErr != nil {
-		return closeErr
-	}
-	return os.Rename(file.Name(), path)
-}
-
-func languageSettingsPath() (string, error) {
-	path, err := settingsPath()
-	return filepath.Join(filepath.Dir(path), "language.json"), err
-}
-
-func loadClientLanguage() int {
-	path, err := languageSettingsPath()
-	if err != nil {
-		log.Printf("load language: %v", err)
-		return ui.EnglishLanguageID
-	}
-	data, err := os.ReadFile(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return ui.EnglishLanguageID
-	}
-	var id int
-	if err == nil {
-		err = json.Unmarshal(data, &id)
-	}
-	if err != nil {
-		log.Printf("load language: %v", err)
-		return ui.EnglishLanguageID
-	}
-	return ui.NormalizeLanguageID(id)
-}
-
-func saveClientLanguage(id int) bool {
-	path, err := languageSettingsPath()
-	if err == nil {
-		err = writeClientPreference(path, ui.NormalizeLanguageID(id))
-	}
-	if err != nil {
-		log.Printf("save language: %v", err)
-	}
-	return err == nil
-}
-
 // gameMenuOwnsInput reports whether this frame's input belongs to the options
 // window rather than to the screen behind it (character selection).
 func (a *App) gameMenuOwnsInput(in *platform.Input, w, h int) bool {
-	if a.menuPending || a.menuConfirm.Visible || a.gameMenu.PopupOpen() || a.gameMenu.BindingCapture() || a.windowDrag.position == &a.gameMenu.Position || hasChar(in, 'o') || in.HasKey(platform.KeyEscape) {
+	if a.menuPending || a.menuConfirm.Visible || a.gameMenu.DisplayPopupOpen() || a.gameMenu.BindingCapture() || a.windowDrag.position == &a.gameMenu.Position || hasChar(in, 'o') || in.HasKey(platform.KeyEscape) {
 		return true
 	}
 	width, height := a.gameMenu.Size()

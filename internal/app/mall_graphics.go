@@ -77,7 +77,6 @@ func (a *App) prepareMall() error {
 			continue
 		}
 		category := min(int(p.Bag)-1, 3)
-		p = a.mallProductText(p)
 		product := ui.MallProduct{Name: p.Name, Code: p.Code, Description: p.Description, Cost: p.Cost}
 		for _, entry := range p.Items {
 			if entry.ItemID != 0 && !slices.Contains(product.ItemIDs, entry.ItemID) {

@@ -25,7 +25,7 @@ func (a *App) confirmedGuildRanking(p []byte) {
 			message = a.tr(12250)
 		default:
 			if n.Kind < 24 {
-				message = a.msg.Format(12458, map[string]string{"v": fmt.Sprint(n.Map), "b": fmt.Sprintf("%02d", n.Kind)})
+				message = fmt.Sprintf("Guild ranking battle on map %d opens at %02d:00 server time.", n.Map, n.Kind)
 			}
 		}
 		if message != "" {
@@ -72,6 +72,6 @@ func (a *App) drawGuildRanking(w, h int) {
 		top = info.Name
 	}
 	a.guildPointUI.Draw(a.sprites, a.font,
-		[3]string{a.interfaceText(8036), a.interfaceText(8056), a.interfaceText(8055)},
+		[3]string{a.msg.Get(8036), a.msg.Get(8056), a.msg.Get(8055)},
 		[3]string{strconv.FormatUint(uint64(v.Points), 10), top, strconv.FormatUint(uint64(v.Maximum), 10)})
 }

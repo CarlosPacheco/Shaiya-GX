@@ -127,11 +127,11 @@ func (a *App) drawGuildDirectory(w, h int) {
 	available := !a.guild.lifecyclePending && !a.guild.voting
 	a.guildDirectoryUI.Subtitle = a.tr(5180)
 	if e := a.state.Entities[a.shop.npcID]; e != nil {
-		a.guildDirectoryUI.NPCName = a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}).Name
+		a.guildDirectoryUI.NPCName = a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}].Name
 	}
 	a.guildDirectoryUI.Draw(a.sprites, a.font, a.white, w, h, a.guild.directory, a.guild.directoryOffset, a.guild.directorySelected, exists && a.state.Guild.ID == 0 && a.state.Guild.DirectoryReady, a.state.Guild.ID == 0 && !a.guild.createPending && !a.guild.voting, a.state.Guild.ID != 0 && a.state.Guild.Rank > 1 && available, a.state.Guild.ID != 0 && a.state.Guild.Rank == 1 && available)
 	if e := a.state.Entities[a.shop.npcID]; e != nil {
-		def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
+		def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 		x, y := a.guildDirectoryUI.Origin(w, h)
 		if portrait := a.npcPortrait(def); portrait != nil {
 			a.sprites.Draw(portrait, float32(x+7), float32(y+7), 64, 64, 0, 0, 1, 1, white)

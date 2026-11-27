@@ -130,7 +130,7 @@ func (a *App) drawBuffTooltip(w, h int) {
 	a.tooltipDescription = strings.ReplaceAll(b.def.Description, `\n`, "\n")
 
 	if b.buff.Skill == warehouseCallSkill {
-		a.tooltipDescription = a.warehouseCallTooltip()
+		a.tooltipDescription = warehouseCallDescription
 	}
 
 	if b.timed {

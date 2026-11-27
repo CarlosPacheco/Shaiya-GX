@@ -324,7 +324,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
 			return
 		}
-		if a.menuOpen && (a.menuPending || a.menuConfirm != nil && a.menuConfirm.Visible || a.gameMenu.PopupOpen() || a.gameMenu.BindingCapture()) {
+		if a.menuOpen && (a.menuPending || a.menuConfirm != nil && a.menuConfirm.Visible || a.gameMenu.DisplayPopupOpen() || a.gameMenu.BindingCapture()) {
 			controls := a.worldControls(in, w, h)
 			if a.wv != nil && a.world != nil && a.state != nil {
 				a.updateWorld(&controls, dt)

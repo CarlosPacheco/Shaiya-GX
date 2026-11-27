@@ -43,7 +43,7 @@ func (a *App) questName(id uint16) string {
 	if id == 0 || int(id) > len(a.questDefs) {
 		return a.msg.Format(12314, map[string]string{"v": fmt.Sprint(id)})
 	}
-	return a.questDefinition(id).Name
+	return a.questDefs[id-1].Name
 }
 
 func (a *App) confirmedQuestProgress(id uint16, slot uint8) {
@@ -58,11 +58,10 @@ func (a *App) confirmedQuestProgress(id uint16, slot uint8) {
 		return
 	}
 
-	localized := a.questDefinition(id)
-	def := &localized
+	def := &a.questDefs[id-1]
 	switch def.EndType {
 	case 1:
-		a.questMessage(a.msg.Format(12450, map[string]string{"p": def.Name, "v": fmt.Sprint(slot + 1), "b": fmt.Sprint(active.Counters[slot])}))
+		a.questMessage(fmt.Sprintf("%s: objective %d = %d", def.Name, slot+1, active.Counters[slot]))
 	case 2:
 		if int(slot) >= len(def.MobIDs) || def.MobCounts[slot] == 0 {
 			return
@@ -74,13 +73,13 @@ func (a *App) confirmedQuestProgress(id uint16, slot uint8) {
 				continue
 			}
 			if a.assets != nil {
-				if mob, err := a.monsterDefinition(mobID); err == nil && mob.Name != "" {
+				if mob, err := a.assets.MonsterDefinition(mobID); err == nil && mob.Name != "" {
 					a.questKillMessage(def, 351, mob.Name, active.Counters[i], required)
 					continue
 				}
 			}
 			if i == int(slot) {
-				a.questMessage(a.msg.Format(12450, map[string]string{"p": def.Name, "v": fmt.Sprint(slot + 1), "b": fmt.Sprint(active.Counters[slot])}))
+				a.questMessage(fmt.Sprintf("%s: objective %d = %d", def.Name, slot+1, active.Counters[slot]))
 			}
 		}
 	case 3:
@@ -131,7 +130,7 @@ func (a *App) confirmedQuest(p []byte) {
 			if a.msg.Get(219) != "" {
 				a.systemMessage(3, 219, nil)
 			} else {
-				a.questMessage(a.msg.Format(12451, map[string]string{"p": a.questName(id)}))
+				a.questMessage("Quest started: " + a.questName(id))
 			}
 		}
 	case proto.AddItem:
@@ -182,9 +181,9 @@ func (a *App) confirmedQuest(p []byte) {
 					a.npcQuestUI.ResetDescriptionScroll()
 				}
 			}
-			status := a.tr(12456)
+			status := "ended"
 			if result.Success != 0 {
-				status = a.tr(12457)
+				status = "completed"
 			}
 			if a.msg.Get(243) != "" {
 				id := 244
@@ -198,11 +197,11 @@ func (a *App) confirmedQuest(p []byte) {
 			if result.Success != 0 && !dialogue {
 				var def sdata.Quest
 				if result.ID > 0 && int(result.ID) <= len(a.questDefs) {
-					def = a.questDefinition(result.ID)
+					def = a.questDefs[result.ID-1]
 				}
 				a.questMessage(a.questResultText(def, &result))
 			} else if result.Success == 0 && result.ID > 0 && int(result.ID) <= len(a.questDefs) {
-				if text := questText(a.questDefinition(result.ID).Descriptions[3]); text != "" {
+				if text := questText(a.questDefs[result.ID-1].Descriptions[3]); text != "" {
 					a.questMessage(text)
 				}
 			}
@@ -266,7 +265,7 @@ func (a *App) questCommand(text string) bool {
 				break
 			}
 		} else if int(id) <= len(a.questDefs) {
-			q := a.questDefinition(id)
+			q := a.questDefs[id-1]
 			if q.EndType >= 1 && q.EndType <= 3 && q.EndNPCType == 0 {
 				packet = proto.QuestEndPacket(0, id)
 				break

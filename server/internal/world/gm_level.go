@@ -1,6 +1,8 @@
 package world
 
 import (
+	"fmt"
+
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
@@ -9,7 +11,7 @@ func (s *Session) gmSetLevel(args []string) error {
 	defs := db.MustDefs()
 	values, err := gmNumbers(args, uint64(defs.LevelCap))
 	if err != nil {
-		return newGMError(12433, defs.LevelCap)
+		return fmt.Errorf("usage: /set level <1-%d>", defs.LevelCap)
 	}
 	level := uint16(values[0])
 	if level != s.char.Level {
@@ -35,6 +37,6 @@ func (s *Session) gmSetLevel(args []string) error {
 			s.guildLevelChanged()
 		}
 	}
-	s.gmMessage(12432, level)
+	s.gmReply(fmt.Sprintf("GM: level set to %d.", level))
 	return nil
 }

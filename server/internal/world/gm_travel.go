@@ -1,6 +1,8 @@
 package world
 
-import ()
+import (
+	"fmt"
+)
 
 // forcedTeleport is a GM's /asummon: where the user is taken, at once.
 type forcedTeleport struct {
@@ -49,10 +51,10 @@ func (s *Session) tickForcedTeleport() {
 func (s *Session) gmTarget(name string, mustBeAlive bool) (*ConnectedPlayer, error) {
 	p := FindPlayerByName(name)
 	if p == nil || p == s.player {
-		return nil, newGMError(12436, name)
+		return nil, fmt.Errorf("%s is not online", name)
 	}
 	if mustBeAlive && !p.IsAlive() {
-		return nil, newGMError(12437, p.CharacterName)
+		return nil, fmt.Errorf("%s is dead", p.CharacterName)
 	}
 	return p, nil
 }
@@ -61,7 +63,7 @@ func (s *Session) gmTarget(name string, mustBeAlive bool) (*ConnectedPlayer, err
 // another character is (dead or alive), on any map.
 func (s *Session) gmGoTo(name string) error {
 	if s.dead || s.char.CurrentHP == 0 {
-		return newGMError(12413)
+		return fmt.Errorf("you are dead")
 	}
 	p, err := s.gmTarget(name, false) // a dead character can be moved to
 	if err != nil {
@@ -77,7 +79,7 @@ func (s *Session) gmGoTo(name string) error {
 	s.cancelMove()
 	s.cast, s.autoAttack = nil, false
 	s.applyTeleport(ch.MapID, pos[0], pos[1], pos[2], "GM move", true)
-	s.gmMessage(12434, p.CharacterName)
+	s.gmReply("GM: moved to " + p.CharacterName + ".")
 	return nil
 }
 
@@ -89,12 +91,12 @@ func (s *Session) gmBring(name string) error {
 		return err
 	}
 	if tradeFor(p.CharacterID) != nil {
-		return newGMError(12438, p.CharacterName)
+		return fmt.Errorf("%s is trading", p.CharacterName)
 	}
 	if !mapLevelAllowed(s.char.MapID, p.Snapshot().Level, p.IsAdmin) {
-		return newGMError(12439, p.CharacterName)
+		return fmt.Errorf("%s is outside the destination's level range", p.CharacterName)
 	}
 	p.queueForcedTeleport(forcedTeleport{mapID: s.char.MapID, pos: [3]float32{s.char.PosX, s.char.PosY, s.char.PosZ}})
-	s.gmMessage(12435, p.CharacterName)
+	s.gmReply("GM: summoned " + p.CharacterName + ".")
 	return nil
 }

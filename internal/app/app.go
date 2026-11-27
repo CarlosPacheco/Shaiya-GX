@@ -180,12 +180,6 @@ type App struct {
 	chatFilter                          *text.WordFilter
 	chatFilterApplied                   bool
 	msg                                 text.SysMsg
-	englishMsg                          text.SysMsg
-	localizedLoadingTips                map[string]string
-	activeLanguageID                    int
-	languageRestartUntil                float64
-	localized                           sdata.Translations
-	localizedItems                      map[sdata.ItemKey]*sdata.Item
 	white                               *render.Texture
 	cache                               map[string]*render.Texture
 	assets                              *scene.Assets
@@ -327,9 +321,12 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	}
 	a.chatTextFont.SetBorder(.5)
 
-	languageID := loadClientLanguage()
-	a.loadLanguage(languageID)
-	ui.SetText(a.englishMsg.Lookup)
+	if b, err := arc.ReadFile("sysmsg-uni.txt"); err == nil {
+		a.msg = text.ParseSysMsg(b)
+	} else {
+		a.msg = text.SysMsg{}
+	}
+	ui.SetText(a.msg.Lookup)
 	if b, err := arc.ReadFile("Filter.INI"); err == nil {
 		a.chatFilter = text.ParseWordFilter(b)
 	}
@@ -370,7 +367,6 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	if cfg.DisplayModes != nil {
 		a.gameMenu.SetDisplayModes(cfg.DisplayModes())
 	}
-	a.gameMenu.Settings.LanguageID = languageID
 	a.aaSamples = render.SupportedMSAASamples()
 	a.gameMenu.SetAntialiasSamples(a.aaSamples)
 	if a.menuConfirm, err = ui.NewMessage(a); err != nil {
@@ -563,14 +559,14 @@ func New(cfg Config, arc *archive.Archive) (*App, error) {
 	}
 	a.applyClientSettings()
 	if a.missingInterfaces > 0 {
-		a.login.Message = a.tr(12462)
+		a.login.Message = "Interface resources missing or damaged. See diagnostic log."
 	}
 	return a, nil
 }
 
 // OptionalInterface allows interface panels to work with older data packs.
 func (a *App) OptionalInterface(name string) *render.Texture {
-	if !a.assets.HasTexture("interface/" + name) {
+	if _, ok := a.arc.Lookup("interface/" + name); !ok {
 		return nil
 	}
 	t, _ := a.Interface(name)
@@ -583,7 +579,11 @@ func (a *App) Interface(name string) (*render.Texture, error) {
 	if t, ok := a.cache[key]; ok {
 		return t, nil
 	}
-	t, err := a.assets.ReadTexture("interface/" + name)
+	b, err := a.arc.ReadFile("interface/" + name)
+	var t img.Texture
+	if err == nil {
+		t, err = img.DecodeResource("interface/"+name, b)
+	}
 	if err != nil {
 		// Interface artwork is presentation, never authoritative game data.
 		// Cache a visible substitute so an absent atlas cannot prevent startup
@@ -800,7 +800,6 @@ func (a *App) drawFrame(w, h int) {
 		a.drawMallConfirm(w, h)
 	}
 	a.drawPerformance(w)
-	a.drawLanguageRestartNotice(w)
 	a.sprites.End()
 	if a.screen == screenWorld && a.wv != nil {
 		a.wv.draws.UI = render.DrawCalls() - uiBefore
@@ -854,7 +853,9 @@ func (a *App) loginMessage(err error) string {
 // backToLoginID is backToLogin with a SysMsg id (see tr).
 func (a *App) backToLoginID(id int) { a.backToLogin(a.tr(id)) }
 
-// tr resolves the selected content message with the English catalog as fallback.
+// tr is the SysMsg text for id: sysmsg-uni.txt first, then the embedded GX rows.
+// User-visible text lives in those tables, never in code, so a language is
+// one table.
 func (a *App) tr(id int) string { return a.msg.Lookup(id) }
 
 func (a *App) backToLogin(msg string) {

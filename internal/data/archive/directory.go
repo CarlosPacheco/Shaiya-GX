@@ -87,27 +87,3 @@ func OpenDirectory(root string) (*Archive, error) {
 	}
 	return a, nil
 }
-
-// ReadLiveFile reads an editable loose asset at its current size. It also
-// finds files added after the archive was indexed at the exact given path.
-func (a *Archive) ReadLiveFile(path string) ([]byte, error) {
-	if a.directory == "" {
-		return a.ReadFile(path)
-	}
-	local, err := filepath.Localize(path)
-	if err != nil {
-		return nil, err
-	}
-	if file, ok := a.Lookup(path); ok {
-		local, err = filepath.Rel(a.directory, file.diskPath)
-		if err != nil {
-			return nil, err
-		}
-	}
-	root, err := os.OpenRoot(a.directory)
-	if err != nil {
-		return nil, err
-	}
-	defer root.Close()
-	return root.ReadFile(local)
-}

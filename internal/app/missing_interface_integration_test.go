@@ -11,7 +11,6 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/archive"
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"github.com/Spelunkern/Shaiya-GX/internal/scene"
 	"github.com/Spelunkern/Shaiya-GX/internal/ui"
 )
 
@@ -42,7 +41,7 @@ func TestMissingInterfaceLoginGL(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer arc.Close()
-	a := &App{arc: arc, assets: scene.NewAssets(arc), cache: map[string]*render.Texture{}}
+	a := &App{arc: arc, cache: map[string]*render.Texture{}}
 	defer func() {
 		for _, texture := range a.cache {
 			texture.Delete()

@@ -98,7 +98,7 @@ func (a *App) questTrackerLines(def sdata.Quest, q proto.ActiveQuest) []string {
 			// 0x4dc9b0 still advances the row when 0x460900 finds no monster.
 			line := ""
 			if a.assets != nil {
-				if m, err := a.monsterDefinition(id); err == nil && m.Name != "" {
+				if m, err := a.assets.MonsterDefinition(id); err == nil && m.Name != "" {
 					line = count(m.Name+" "+ui.Tr(439), q.Counters[i], def.MobCounts[i])
 				}
 			}
@@ -139,7 +139,7 @@ func (a *App) refreshQuestTracker() {
 		if id == 0 || int(id) > len(a.questDefs) {
 			continue
 		}
-		def, q := a.questDefinition(id), s.Quests[id]
+		def, q := a.questDefs[id-1], s.Quests[id]
 		entry := ui.QuestTrackerEntry{ID: id, Title: a.questName(id), Expanded: v.expanded[id], Ready: a.questObjectivesReady(def, q)}
 		if minutes, ok := a.questMinutesLeft(def, q); ok {
 			entry.Time = fmt.Sprintf("%5d%s", minutes, ui.Tr(440))

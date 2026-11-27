@@ -179,7 +179,7 @@ func (a *App) serviceQuestOrigin(w, h int, e *game.Entity) (int, int) {
 	return x + 145, y + 75
 }
 func (a *App) npcQuestEntries(e *game.Entity) []npcQuestEntry {
-	def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
+	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 	out := make([]npcQuestEntry, 0, len(def.StartQuests)+len(def.EndQuests))
 	for _, id := range def.EndQuests {
 		if _, ok := a.state.Quests[id]; ok {
@@ -304,7 +304,7 @@ func (a *App) npcQuestCanOffer(id uint16, e *game.Entity) bool {
 func (a *App) drawNPCQuest(w, h int, e *game.Entity) {
 	v := &a.npcQuest
 	a.npcQuestUI.Detail = v.selected != 0
-	def := a.npcDefinition(sdata.NPCKey{Type: e.NpcType, ID: e.TypeID})
+	def := a.npcDefs[sdata.NPCKey{Type: e.NpcType, ID: e.TypeID}]
 	entries := a.npcQuestEntries(e)
 	names := make([]string, len(entries))
 	for i, entry := range entries {
@@ -314,7 +314,7 @@ func (a *App) drawNPCQuest(w, h int, e *game.Entity) {
 	var choices []string
 	a.npcQuestUI.RewardText = ""
 	if v.selected > 0 && int(v.selected) <= len(a.questDefs) {
-		q := a.questDefinition(v.selected)
+		q := a.questDefs[v.selected-1]
 		title = q.Name
 		description = questText(q.Summary)
 		if !v.ending {
