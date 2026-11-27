@@ -93,6 +93,15 @@ func Open(c Config) (*Window, error) {
 	return win, nil
 }
 
+// SetVSync switches the swap interval of the window's current context.
+func (w *Window) SetVSync(on bool) {
+	if on {
+		glfw.SwapInterval(1)
+	} else {
+		glfw.SwapInterval(0)
+	}
+}
+
 func (w *Window) Close() {
 	w.saveSize()
 	w.Destroy()

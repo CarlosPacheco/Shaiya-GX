@@ -123,6 +123,9 @@ func run(dataDir string, cfg app.Config, w, h int, graphics render.InitOptions, 
 	cfg.RememberLayout = shot == "" && autoUser == ""
 	cfg.DisplayModes, cfg.ApplyDisplayMode = win.DisplayModes, win.ApplyDisplayMode
 	cfg.CurrentDisplayMode = win.CurrentDisplayMode
+	if shot == "" && autoUser == "" {
+		cfg.SetVSync = win.SetVSync
+	}
 	cfg.OverrideDisplay = !restoreSize
 	a, err := app.New(cfg, arc)
 	if err != nil {
@@ -134,7 +137,7 @@ func run(dataDir string, cfg app.Config, w, h int, graphics render.InitOptions, 
 	queue := win.InstallInput()
 	queue.SetSwapMouse(a.MouseButtonsSwapped())
 	fw, fh := win.GetFramebufferSize()
-	log.Printf("Client ready framebuffer=%dx%d vsync=true", fw, fh)
+	log.Printf("Client ready framebuffer=%dx%d", fw, fh)
 	var auto *app.Autoplay
 	inWorld := false
 	if autoUser != "" {

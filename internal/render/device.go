@@ -88,7 +88,7 @@ func initDevice(options InitOptions, resolve func(string) unsafe.Pointer) error 
 	clientlog.Debugf("OpenGL context profile_mask=%#x flags=%#x", profile, flags)
 	gpuBytes, drawCalls = 0, 0
 	gpuCapacity = 0
-	bindless, drawParameters, s3tc, dxt1 := false, false, false, false
+	bindless, drawParameters, s3tc, dxt1, anisotropic := false, false, false, false, false
 	var extensionCount int32
 	gl.GetIntegerv(gl.NUM_EXTENSIONS, &extensionCount)
 	for i := int32(0); i < extensionCount; i++ {
@@ -101,6 +101,8 @@ func initDevice(options InitOptions, resolve func(string) unsafe.Pointer) error 
 			s3tc = true
 		case "GL_EXT_texture_compression_dxt1":
 			dxt1 = true
+		case "GL_ARB_texture_filter_anisotropic", "GL_EXT_texture_filter_anisotropic":
+			anisotropic = true
 		case "GL_NVX_gpu_memory_info":
 			var kib int32
 			gl.GetIntegerv(0x9047, &kib) // GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
@@ -117,6 +119,7 @@ func initDevice(options InitOptions, resolve func(string) unsafe.Pointer) error 
 	}
 	configureDrawPaths(bindless && !options.DisableBindless && len(missingBindless) == 0, drawParameters && !options.DisableDrawParameters, vertexBlocks, fragmentBlocks)
 	configureTextureFormats(s3tc, dxt1)
+	configureAnisotropy(anisotropic)
 	log.Printf("OpenGL paths: bindless_indirect=%t bindless_advertised=%t bindless_disabled=%t draw_parameters=%t draw_parameters_advertised=%t draw_parameters_disabled=%t terrain_multidraw=%t scene_storage=%t skin_instancing=%t vertex_ssbo_limit=%d fragment_ssbo_limit=%d compressed_dds(DXT1,DXT3,DXT5)=%v",
 		skinIndirectSupported, bindless, options.DisableBindless, drawParametersSupported, drawParameters, options.DisableDrawParameters, drawParametersSupported, sceneStorageSupported, skinCrowdSupported, vertexBlocks, fragmentBlocks, compressedDDS[1:])
 	fallbackDiffuse = nil

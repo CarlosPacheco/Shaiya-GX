@@ -75,8 +75,10 @@ type ClientSettings struct {
 	BannedWords                               bool `json:",omitempty"`
 	Shadows, Water, SkillEffects              bool
 	Antialias                                 int `json:",omitempty"`
-	// Thirteen unlabeled checkboxes reserved in the graphics page for future
-	// options; they toggle and persist but nothing reads them yet.
+	VSync, Anisotropic                        bool
+	// Unlabeled checkboxes reserved in the graphics page for future options;
+	// they toggle and persist but nothing reads them yet. Slots 0 and 4 now
+	// hold Anisotropic and VSync, kept in the array for saved-file layout.
 	Spare [13]bool `json:",omitempty"`
 	// "Other Setup" of the User Option page. The original's All Windows and
 	// Re-open UI checkboxes had no effect and were removed.
@@ -87,7 +89,7 @@ type ClientSettings struct {
 
 func DefaultClientSettings() ClientSettings {
 	return ClientSettings{Antialias: AntialiasOff, Glow: 2, Brightness: 2, Details: 2, VisualDistance: 2, ChatRows: [2]int{5, 5}, Music: 1, Effects: 1, Ambient: 1, CharacterSound: true, RiskSensor: true, MouseSensitivity: 3, UseMouse: true,
-		OwnName: true, PlayerNames: true, MonsterNames: true, Shadows: true, Water: true, SkillEffects: true,
+		OwnName: true, PlayerNames: true, MonsterNames: true, Shadows: true, Water: true, SkillEffects: true, VSync: true, Anisotropic: true,
 		WarningMsg: true, ShakeScreen: true, WordBalloon: true}
 }
 
@@ -338,6 +340,7 @@ func (m *GameMenu) Update(in *platform.Input, w, h int) int {
 			m.Settings.DisplayMode = platform.DisplayMode{}
 			m.Settings.Antialias = defaults.Antialias
 			m.Settings.Spare = defaults.Spare
+			m.Settings.VSync, m.Settings.Anisotropic = defaults.VSync, defaults.Anisotropic
 		}
 		return MenuChanged
 	}
@@ -444,7 +447,7 @@ func (m *GameMenu) checks() []menuCheck {
 			{34, 358, &s.HideDamage}}
 	case MenuGraphics:
 		return []menuCheck{{35, 404, &s.Shadows}, {156, 404, &s.Water}, {35, 429, &s.HideCloak}, {156, 429, &s.HideHelmet}, {35, 451, &s.SkillEffects},
-			{35, 475, &s.Spare[0]}, {156, 475, &s.Spare[1]}, {35, 499, &s.Spare[2]}, {156, 499, &s.Spare[3]}, {156, 451, &s.Spare[4]},
+			{35, 475, &s.Anisotropic}, {156, 475, &s.Spare[1]}, {35, 499, &s.Spare[2]}, {156, 499, &s.Spare[3]}, {156, 451, &s.VSync},
 			{35, 523, &s.Spare[5]}, {156, 523, &s.Spare[6]}, {35, 547, &s.Spare[7]}, {156, 547, &s.Spare[8]},
 			{35, 571, &s.Spare[9]}, {156, 571, &s.Spare[10]}, {35, 595, &s.Spare[11]}, {156, 595, &s.Spare[12]}}
 	}

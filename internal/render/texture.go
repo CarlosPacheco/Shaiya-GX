@@ -17,7 +17,8 @@ type Texture struct {
 	ID            uint32
 	W, H          int
 	repeat        bool
-	samplingViews [2]textureSamplingView
+	world         bool // mipmapped world texture: follows the anisotropy setting
+	samplingViews [4]textureSamplingView // [anisotropic*2 + repeat]
 }
 
 type textureSamplingView struct {
@@ -88,6 +89,11 @@ func (t *Texture) samplingView(repeat bool) *textureSamplingView {
 		index = 1
 		mode = gl.REPEAT
 	}
+	aniso := int32(1)
+	if t.world && anisotropyLevel > 1 {
+		index += 2
+		aniso = anisotropyLevel
+	}
 	v := &t.samplingViews[index]
 	if v.id != 0 {
 		return v
@@ -112,6 +118,9 @@ func (t *Texture) samplingView(repeat bool) *textureSamplingView {
 		var value int32
 		gl.GetTextureParameteriv(t.ID, parameter, &value)
 		gl.TextureParameteri(v.id, parameter, value)
+	}
+	if anisotropySupported {
+		gl.TextureParameteri(v.id, textureMaxAnisotropy, aniso)
 	}
 	gl.TextureParameteri(v.id, gl.TEXTURE_WRAP_S, mode)
 	gl.TextureParameteri(v.id, gl.TEXTURE_WRAP_T, mode)
@@ -159,7 +168,7 @@ func fullMipCount(w, h int) int32 {
 func uploadTexture(t img.Texture, world bool) *Texture {
 	var id uint32
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &id)
-	tex := &Texture{ID: id}
+	tex := &Texture{ID: id, world: world}
 	if world {
 		tex.Opaque = img.Opaque(t)
 		tex.EmptyMask = !tex.Opaque && img.TerrainMaskEmpty(t)
@@ -233,6 +242,9 @@ func uploadTexture(t img.Texture, world bool) *Texture {
 	gl.TextureParameteri(id, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.TextureParameteri(id, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TextureParameteri(id, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	if world {
+		registerAnisotropic(tex)
+	}
 	addGPUBytes(tex.bytes)
 	return tex
 }
@@ -261,6 +273,9 @@ func (t *Texture) Delete() {
 			gl.DeleteTextures(1, &v.id)
 			*v = textureSamplingView{}
 		}
+	}
+	if t.world {
+		delete(worldTextures, t)
 	}
 	gl.DeleteTextures(1, &t.ID)
 	removeGPUBytes(t.bytes)

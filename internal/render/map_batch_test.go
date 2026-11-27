@@ -53,7 +53,7 @@ func TestMapBatchPartialFallbackOnOverflow(t *testing.T) {
 	}
 	tex := &Texture{
 		ID: 1,
-		samplingViews: [2]textureSamplingView{
+		samplingViews: [4]textureSamplingView{
 			{id: 11, handle: 1001},
 			{id: 12, handle: 1002},
 		},
@@ -125,7 +125,7 @@ func TestMapBatchTranslucentOrderedFallbackPlan(t *testing.T) {
 	}
 	tex := &Texture{
 		ID: 1,
-		samplingViews: [2]textureSamplingView{
+		samplingViews: [4]textureSamplingView{
 			{id: 11, handle: 1001},
 			{id: 12, handle: 1002},
 		},
@@ -221,7 +221,7 @@ func TestEffectIndirectPartialFallbackPlan(t *testing.T) {
 	}
 	tex := &Texture{
 		ID: 1,
-		samplingViews: [2]textureSamplingView{
+		samplingViews: [4]textureSamplingView{
 			{id: 21, handle: 2001},
 			{id: 22, handle: 2002},
 		},

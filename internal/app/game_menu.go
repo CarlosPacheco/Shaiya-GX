@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"errors"
+	"github.com/Spelunkern/Shaiya-GX/internal/render"
 	"log"
 	"os"
 	"path/filepath"
@@ -202,6 +203,11 @@ func (a *App) applyClientSettings() {
 	if a.sound != nil {
 		s := a.clientSettings()
 		a.sound.SetMix(s.Music, s.Effects, s.Ambient)
+	}
+	settings := a.clientSettings()
+	render.SetAnisotropic(settings.Anisotropic)
+	if a.cfg.SetVSync != nil {
+		a.cfg.SetVSync(settings.VSync)
 	}
 }
 

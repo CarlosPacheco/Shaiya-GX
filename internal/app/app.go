@@ -32,6 +32,7 @@ type Config struct {
 	DisplayModes       func() []platform.DisplayMode
 	CurrentDisplayMode func() platform.DisplayMode
 	ApplyDisplayMode   func(platform.DisplayMode) error
+	SetVSync           func(bool)
 	OverrideDisplay    bool
 	RememberLayout     bool
 	Volume             float64
