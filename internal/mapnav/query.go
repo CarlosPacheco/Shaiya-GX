@@ -79,10 +79,6 @@ func Load(directory string, id uint16) (result *Map, err error) {
 	} else if info.Size() > 256<<20 {
 		return nil, fmt.Errorf("oversized navigation file %s", navName)
 	}
-	col, err := read("gxcol")
-	if err != nil {
-		return nil, err
-	}
 	var g *mapgeometry.Geometry
 	hasPlayerPhysics := manifest.PlayerPhysics == PlayerPhysicsVersion
 	if hasPlayerPhysics {
@@ -95,6 +91,10 @@ func Load(directory string, id uint16) (result *Map, err error) {
 			return nil, e
 		}
 	} else {
+		col, err := read("gxcol")
+		if err != nil {
+			return nil, err
+		}
 		gz, err := gzip.NewReader(bytes.NewReader(col))
 		if err != nil {
 			return nil, err

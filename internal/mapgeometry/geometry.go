@@ -75,9 +75,7 @@ func (g *Geometry) Add(t collision.Triangle) {
 }
 func (g *Geometry) Reindex() {
 	g.Index = collision.NewIndex()
-	for _, t := range g.Triangles {
-		g.Index.Add(t)
-	}
+	g.Index.AddAll(g.Triangles)
 }
 
 // LoadDungeonStructure loads the base dungeon, structural DG instances and

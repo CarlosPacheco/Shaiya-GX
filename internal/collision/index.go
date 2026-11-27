@@ -10,11 +10,11 @@ const (
 // triangleRefs preserves insertion order while bounding consecutive groups of
 // references. Bounds are built once; queries skip distant groups before dedup.
 type triangleRefs struct {
-	ids    []int
+	ids    []int32
 	bounds []Box
 }
 
-func (r *triangleRefs) add(id int, b Box) {
+func (r *triangleRefs) add(id int32, b Box) {
 	block := len(r.ids) / triangleBlockSize
 	if len(r.ids)%triangleBlockSize == 0 {
 		r.bounds = append(r.bounds, b)
@@ -27,7 +27,7 @@ func (r *triangleRefs) add(id int, b Box) {
 	r.ids = append(r.ids, id)
 }
 
-func (r triangleRefs) visit(b Box, emit func(int)) {
+func (r triangleRefs) visit(b Box, emit func(int32)) {
 	for block, bounds := range r.bounds {
 		if !b.Overlaps(bounds) {
 			continue
@@ -43,6 +43,7 @@ func (r triangleRefs) visit(b Box, emit func(int)) {
 // state; a prepared index can be read concurrently without render residency.
 type Index struct {
 	triangles  []Triangle
+	boxes      []Box // per-triangle bounds, computed once
 	cells      map[[2]int]triangleRefs
 	global     triangleRefs
 	minY, maxY float64
@@ -66,9 +67,35 @@ func (i *Index) Add(t Triangle) {
 	if !t.Valid() {
 		return
 	}
-	id := len(i.triangles)
 	i.triangles = append(i.triangles, t)
-	b := t.Bounds()
+	i.insert(int32(len(i.triangles)-1), t.Bounds())
+}
+
+// AddAll indexes ts. When every triangle is valid and the index is empty,
+// it keeps ts as its storage instead of copying it.
+func (i *Index) AddAll(ts []Triangle) {
+	shared := len(i.triangles) == 0
+	for _, t := range ts {
+		if !t.Valid() {
+			shared = false
+			break
+		}
+	}
+	if !shared {
+		for _, t := range ts {
+			i.Add(t)
+		}
+		return
+	}
+	i.triangles = ts
+	i.boxes = make([]Box, 0, len(ts))
+	for id, t := range ts {
+		i.insert(int32(id), t.Bounds())
+	}
+}
+
+func (i *Index) insert(id int32, b Box) {
+	i.boxes = append(i.boxes, b)
 	if id == 0 {
 		i.minY, i.maxY = b.Min[1], b.Max[1]
 	} else {
@@ -92,6 +119,7 @@ func (i *Index) Add(t Triangle) {
 		}
 	}
 }
+
 func cells(b Box) (int, int, int, int) {
 	return int(math.Floor(b.Min[0] / cellSize)), int(math.Floor(b.Max[0] / cellSize)), int(math.Floor(b.Min[2] / cellSize)), int(math.Floor(b.Max[2] / cellSize))
 }
@@ -99,35 +127,42 @@ func (i *Index) Visit(b Box, visit func(Triangle)) {
 	if i == nil {
 		return
 	}
-	seen := map[int]struct{}{}
-	emit := func(id int) {
-		t := i.triangles[id]
-		if !b.Overlaps(t.Bounds()) {
-			return
+	// Global and cell references are disjoint. A cell triangle spanning
+	// several visited cells is emitted at the first of them in z/x order,
+	// which is where the former seen-set admitted it.
+	i.global.visit(b, func(id int32) {
+		if b.Overlaps(i.boxes[id]) {
+			visit(i.triangles[id])
 		}
-		if _, ok := seen[id]; ok {
-			return
-		}
-		seen[id] = struct{}{}
-		visit(t)
+	})
+	all := !gridBox(b)
+	var x0, x1, z0, z1 int
+	if !all {
+		x0, x1, z0, z1 = cells(b)
+		all = (x1-x0+1)*(z1-z0+1) > 4096
 	}
-	i.global.visit(b, emit)
-	if !gridBox(b) {
+	if all {
+		global := map[int32]struct{}{}
+		i.global.visit(b, func(id int32) { global[id] = struct{}{} })
 		for id := range i.triangles {
-			emit(id)
-		}
-		return
-	}
-	x0, x1, z0, z1 := cells(b)
-	if (x1-x0+1)*(z1-z0+1) > 4096 {
-		for id := range i.triangles {
-			emit(id)
+			if _, ok := global[int32(id)]; !ok && b.Overlaps(i.boxes[id]) {
+				visit(i.triangles[id])
+			}
 		}
 		return
 	}
 	for z := z0; z <= z1; z++ {
 		for x := x0; x <= x1; x++ {
-			i.cells[[2]int{x, z}].visit(b, emit)
+			i.cells[[2]int{x, z}].visit(b, func(id int32) {
+				tb := i.boxes[id]
+				if !b.Overlaps(tb) {
+					return
+				}
+				tx0, _, tz0, _ := cells(tb)
+				if x == max(x0, tx0) && z == max(z0, tz0) {
+					visit(i.triangles[id])
+				}
+			})
 		}
 	}
 }
