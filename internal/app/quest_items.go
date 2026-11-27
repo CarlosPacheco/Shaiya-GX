@@ -131,7 +131,10 @@ func (a *App) drawItemQuest(w, h int) {
 	}
 	q := a.questDefs[offer.id-1]
 	a.npcQuestUI.RewardText = ""
-	a.npcQuestUI.Draw(a.sprites, a.font, w, h, "", "", nil, nil, 0, true, false, q.Name, questOfferText(q), nil)
+	// 0x4d0120 sets the window's face id (+0x37f8) to 55 and 0x4db2ba draws
+	// data/interface/NpcFace/<id>.tga: the empty dark orb, not the item icon.
+	face := a.assets.Texture("interface/NpcFace/55.png")
+	a.npcQuestUI.Draw(a.sprites, a.font, w, h, "", "", face, nil, 0, true, false, q.Name, questOfferText(q), nil)
 }
 
 func (a *App) acceptItemQuest(offer itemQuestOffer) {
