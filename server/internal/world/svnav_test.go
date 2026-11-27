@@ -9,6 +9,9 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/Spelunkern/Shaiya-GX/internal/mapnav"
+	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
 
 // The vectors under testdata/svnav were produced by executing the original
@@ -168,4 +171,34 @@ func TestSvNextRoutesAroundWall(t *testing.T) {
 		}
 	}
 	t.Fatalf("did not arrive, at %v", pos)
+}
+
+func TestSvmapChaseTowardTargetOnBlockedTile(t *testing.T) {
+	const id, size = 62091, 64
+	mask := make([]byte, size*size/8)
+	for z := range int32(size) {
+		for x := int32(30); x < size; x++ { // wall from x=30 on
+			i := z*size + x
+			mask[i/8] |= 1 << (i % 8)
+		}
+	}
+	RegisterMapGrid(id, size, mask)
+	def := &db.MobDef{Size: 1, ChaseStep: 2, ChaseTimeMS: 500}
+	def.Attacks[0].Range = 2
+	m := MapMob{def: def, nav: &mobNav{id: id, grid: true}}
+	m.setPoint(mapnav.Point{10.5, 0, 10.5})
+	// Target 1.5 units into the wall: within size+range+0.3 of tile 29.
+	goal, ok := m.svmapChaseGoal(id, mapnav.Point{30.5, 0, 10.5})
+	if !ok || goal[0] != 29.5 || goal[2] != 10.5 {
+		t.Fatalf("near target: goal %v ok %v", goal, ok)
+	}
+	// Target deep in the wall: give up.
+	if _, ok := m.svmapChaseGoal(id, mapnav.Point{40.5, 0, 10.5}); ok {
+		t.Fatal("chased a target out of reach of the last free tile")
+	}
+	// Already on the last free tile: give up.
+	m.setPoint(mapnav.Point{29.5, 0, 10.5})
+	if _, ok := m.svmapChaseGoal(id, mapnav.Point{30.5, 0, 10.5}); ok {
+		t.Fatal("kept chasing from the last free tile")
+	}
 }

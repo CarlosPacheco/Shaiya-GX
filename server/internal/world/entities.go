@@ -977,6 +977,15 @@ func (m *MapMob) stepChase(now time.Time, mapID uint16, t *PlayerCombatSnapshot,
 	step := min(m.chaseStep(mods), d-(reach-.1))
 	if m.nav != nil {
 		goal := mapnav.Point{t.PosX, t.PosY, t.PosZ}
+		if m.nav.grid {
+			var reachable bool
+			if goal, reachable = m.svmapChaseGoal(mapID, goal); !reachable {
+				m.nextChaseAt = now.Add(time.Second)
+				m.dropTarget(true)
+				m.noTargetUntil = now.Add(mobAttackIdle)
+				return false
+			}
+		}
 		next, ok := m.navigate(now, mapID, goal, step)
 		if !ok && m.nav.dungeon {
 			// A target above this corridor may have no route to its actual

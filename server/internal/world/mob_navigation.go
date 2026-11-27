@@ -222,6 +222,37 @@ func (n *mobNav) svmapGround(p mapnav.Point, previous float32) float32 {
 	return previous
 }
 
+// svmapChaseGoal handles a target standing on a blocked tile like the
+// blocked-target arm of CMob::Chase 0x4a6de0: the mob walks to the last free
+// tile of the line toward the target when the target is within attack reach
+// of it, and gives up when it already stands there or the target is farther.
+func (m *MapMob) svmapChaseGoal(mapID uint16, goal mapnav.Point) (mapnav.Point, bool) {
+	g, ok := gridFor(mapID)
+	if !ok {
+		return goal, true
+	}
+	to := tileOf(goal[0], goal[2])
+	if !g.blocked(to) {
+		return goal, true
+	}
+	var previous svTile
+	if g.enableLine(tileOf(m.PosX, m.PosZ), to, &previous) {
+		return goal, false
+	}
+	px, pz := float32(previous.x), float32(previous.z)
+	if abs32(m.PosX-px) <= 1 && abs32(m.PosZ-pz) <= 1 {
+		return goal, false
+	}
+	limit := float32(.3)
+	if m.def != nil {
+		limit += float32(m.def.Size) + float32(m.def.Attacks[0].Range)
+	}
+	if DistanceXZ(goal[0], goal[2], px, pz) > limit {
+		return goal, false
+	}
+	return mapnav.Point{px + .5, m.PosY, pz + .5}, true
+}
+
 // svmapHomeGoal retraces the chase trail while home is out of line, as
 // CMob::ReturnHome 004a7670 pops ChasePathList before falling back to A*.
 func (m *MapMob) svmapHomeGoal(mapID uint16, home mapnav.Point) mapnav.Point {

@@ -84,7 +84,11 @@ its movement for mobs and guards:
 - A blocked line runs `AStar::FindPath` 0048eda0: eight neighbors in the
   original order, squared step and heuristic costs, a search window of half
   the span (at most 20 tiles) around both ends, and collinear compression.
-  A target on a blocked tile, or out of the window, ends the chase.
+  A target out of the window ends the chase. A target on a blocked tile is
+  approached through the last free tile of the line toward it when the target
+  is within size + attack range + 0.3 of that tile; otherwise, or when the mob
+  already stands there, the chase ends (blocked-target arm of `CMob::Chase`
+  0x4a6de0).
 - `ChasePathList::AddPath` 0048f660 records the chase trail; returning home
   retraces it while home is out of line.
 - Spawns keep the svmap X/Z and are rejected on blocked tiles.
