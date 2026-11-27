@@ -74,6 +74,7 @@ func forEachCrowdCharacter(characters []*Character, visit func(int, *Character))
 
 func (c *Character) prepareCrowdCloak(s *render.Scene3D) {
 	cloak := c.cloak
+	cloak.noGround = c.UIActor
 	if s == nil || s.Shadow || s.ClipPlane != [4]float32{} || s.ViewportH <= 0 {
 		cloak.update(c.World, c.finals())
 		return

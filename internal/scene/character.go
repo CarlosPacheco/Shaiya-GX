@@ -81,6 +81,9 @@ type skinPart struct {
 
 // Character is a posed, animated actor.
 type Character struct {
+	// UIActor marks inventory/portrait models drawn outside the world: their
+	// cloak must not collide with the terrain under the world origin.
+	UIActor              bool
 	weaponType           uint8
 	combatPoseLeft       float32
 	reactionID           uint64 // actionID of the running damage reaction
@@ -1015,6 +1018,7 @@ func (c *Character) prepareDrawPose(shadow bool) ([]render.M4, bool) {
 	}
 	finals := c.preparePose()
 	if c.cloak != nil {
+		c.cloak.noGround = c.UIActor
 		if !c.cloak.prepared {
 			c.cloak.update(c.World, finals)
 		}

@@ -95,6 +95,7 @@ func newClothPhysics(rest []render.V3, columns, rows int, mode int) *clothPhysic
 	}
 	return c
 }
+
 // force reports false for a zero-length spring (0x582d90 returns -1).
 func (c *clothPhysics) force(wind render.V3) bool {
 	ok := true

@@ -38,6 +38,7 @@ type cloakInstance struct {
 	lodInterval float64
 	bodyType    int
 	collide     bool
+	noGround    bool // UI actor: no terrain floor (it is not standing in the world)
 	lodAt       float64
 }
 

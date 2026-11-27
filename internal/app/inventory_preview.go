@@ -46,6 +46,7 @@ func (a *App) drawEquipmentActor(actor *scene.Character, ap scene.Appearance, x,
 		s.CharacterAmbient = 1
 		s.Begin()
 		scale := ap.ScaleMatrix()
+		actor.UIActor = true
 		actor.World = scale.Mul(render.Basis(render.V3{}, render.V3{0, 0, -1}, render.V3{0, 1, 0}))
 		actor.Update(float32(a.frameDT))
 		actor.Draw(a.skinner, &s)

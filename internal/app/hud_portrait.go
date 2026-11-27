@@ -83,6 +83,7 @@ func (a *App) hudPortrait(w, h int) *render.Texture {
 		s.FogStart, s.FogEnd = 0, 0
 		s.LightDir = render.V3{-.513, -1, .858}
 		s.Begin()
+		actor.UIActor = true
 		actor.World = render.Identity()
 		actor.Draw(a.skinner, &s)
 		s.End()

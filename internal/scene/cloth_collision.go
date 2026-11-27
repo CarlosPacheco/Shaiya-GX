@@ -83,7 +83,7 @@ func (c *cloakInstance) environment(world render.M4, finals []render.M4, collide
 				e.count++
 			}
 		}
-		if h := clothGround.Load(); h != nil {
+		if h := clothGround.Load(); h != nil && !c.noGround {
 			e.floor, e.hasFloor = (*h)(world[12], world[14]), true
 		}
 	}
