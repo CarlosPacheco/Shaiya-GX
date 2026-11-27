@@ -32,6 +32,8 @@ type Map struct {
 	points        []d3.Vec3
 	flags         []uint8
 	refs          []detour.PolyRef
+	navRead       func() ([]byte, error)
+	navErr        error
 }
 
 // Load verifies the complete generation before making it available to AI.
@@ -69,13 +71,13 @@ func Load(directory string, id uint16) (result *Map, err error) {
 		}
 		return b, e
 	}
-	nav, err := read("gxnav")
-	if err != nil {
-		return nil, err
-	}
-	mesh, err := detour.Decode(bytes.NewReader(nav))
-	if err != nil {
-		return nil, err
+	// The Detour mesh is decoded on first query; mobs and guards use the
+	// .svmap mask, so ordinary play never needs it.
+	navName := fmt.Sprintf("%d.gxnav", id)
+	if info, e := os.Stat(filepath.Join(directory, navName)); e != nil {
+		return nil, e
+	} else if info.Size() > 256<<20 {
+		return nil, fmt.Errorf("oversized navigation file %s", navName)
 	}
 	col, err := read("gxcol")
 	if err != nil {
@@ -109,19 +111,48 @@ func Load(directory string, id uint16) (result *Map, err error) {
 		g.Reindex()
 	}
 	g.SetDynamicClock(mapgeometry.PhysicsSeconds)
-	status, q := detour.NewNavMeshQuery(mesh, 8192)
-	if detour.StatusFailed(status) {
-		return nil, status
-	}
-	points := make([]d3.Vec3, 2048)
-	for i := range points {
-		points[i] = make(d3.Vec3, 3)
-	}
 	var terrain *mapgeometry.Geometry
 	if g.HasTerrain() {
 		terrain = &mapgeometry.Geometry{MapSize: g.MapSize, Heights: g.Heights}
 	}
-	return &Map{playerPhysics: hasPlayerPhysics, query: q, geometry: g, terrain: terrain, filter: detour.NewStandardQueryFilter(), corridor: make([]detour.PolyRef, 2048), points: points, flags: make([]uint8, 2048), refs: make([]detour.PolyRef, 2048)}, nil
+	return &Map{playerPhysics: hasPlayerPhysics, geometry: g, terrain: terrain, navRead: func() ([]byte, error) { return read("gxnav") }}, nil
+}
+
+// loadQuery decodes the navigation mesh once. Callers hold m.mu.
+func (m *Map) loadQuery() bool {
+	if m.query != nil {
+		return true
+	}
+	if m.navErr != nil || m.navRead == nil {
+		return false
+	}
+	m.navErr = func() (err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("invalid navigation mesh: %v", r)
+			}
+		}()
+		nav, err := m.navRead()
+		if err != nil {
+			return err
+		}
+		mesh, err := detour.Decode(bytes.NewReader(nav))
+		if err != nil {
+			return err
+		}
+		status, q := detour.NewNavMeshQuery(mesh, 8192)
+		if detour.StatusFailed(status) {
+			return status
+		}
+		points := make([]d3.Vec3, 2048)
+		for i := range points {
+			points[i] = make(d3.Vec3, 3)
+		}
+		m.query, m.filter, m.points = q, detour.NewStandardQueryFilter(), points
+		m.corridor, m.flags, m.refs = make([]detour.PolyRef, 2048), make([]uint8, 2048), make([]detour.PolyRef, 2048)
+		return nil
+	}()
+	return m.navErr == nil
 }
 
 // Terrain returns the heightfield without retaining the collision index or mesh.
@@ -136,6 +167,9 @@ func valid(p Point) bool {
 	return true
 }
 func (m *Map) nearest(p Point, horizontal, vertical float32) (detour.PolyRef, Point, bool) {
+	if !m.loadQuery() {
+		return 0, Point{}, false
+	}
 	if !valid(p) {
 		return 0, Point{}, false
 	}

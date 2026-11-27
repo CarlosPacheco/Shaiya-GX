@@ -23,7 +23,7 @@ required. Generated files are independent of the graphics engine:
 - `data/geometry/mob-dungeons/`: companion catalog and geometry for dungeon
   mobs, built from the dungeon layout, structural instances and WLD blockers.
 
-The runtime verifies checksums, format and collision construction revision 3 before use. Older construction manifests require regeneration; matching hashes alone cannot certify obsolete geometry. A missing catalogued map
+The runtime verifies checksums, format and collision construction revision 3 before use. The `.gxnav` mesh is read, verified and decoded on its first query (GM ground projection or `GX_MOB_NAV=geometry`), so ordinary map loads skip it. Older construction manifests require regeneration; matching hashes alone cannot certify obsolete geometry. A missing catalogued map
 or corrupt generation fails startup with a diagnostic. A map with no reachable
 spawn surface logs rejected spawns; mobs are never placed under the layout to
 hide the error. Player entry into a map without generated physics is refused with a diagnostic; there is no unchecked movement fallback. Portable packaging requires and validates the complete catalog.
