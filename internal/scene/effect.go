@@ -630,6 +630,40 @@ func (x *Effect) SetTransform(m render.M4) {
 	x.basis = nativeEffectBasis(m)
 }
 
+// SetScaledTransform places the effect like SetTransform and then scales its
+// authored offsets uniformly (Game.exe 0x432bc0 draws MON action effects
+// under the monster's visual scale matrix).
+func (x *Effect) SetScaledTransform(m render.M4, scale float32) {
+	x.SetTransform(m)
+	for i := range 3 {
+		x.basis[i] *= scale
+		x.basis[4+i] *= scale
+		x.basis[8+i] *= scale
+	}
+}
+
+// ScaleParticleSizes multiplies both bounds of every size key, as native
+// 0x432890 does to a MON attachment's emitter copy (+0x158) after creation.
+// Definitions are shared, so each emitter gets its own scaled copy.
+func (x *Effect) ScaleParticleSizes(scale float32) {
+	if scale == 1 {
+		return
+	}
+	for i := range x.emitters {
+		e := &x.emitters[i]
+		if e.definition == nil || len(e.definition.Sub3) == 0 {
+			continue
+		}
+		d := *e.definition
+		d.Sub3 = append([]effect.Sub3Frame(nil), d.Sub3...)
+		for k := range d.Sub3 {
+			d.Sub3[k].Unk1 *= scale
+			d.Sub3[k].Unk2 *= scale
+		}
+		e.definition = &d
+	}
+}
+
 // SetMeteorTransform carries the CMeteor placement into the existing EFT.
 // Mesh bodies simulate locally and follow the drop; billboard trails retain
 // world-space births. This changes matrices only, not geometry or draw passes.

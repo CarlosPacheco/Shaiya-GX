@@ -89,6 +89,8 @@ func (m *CreatureActor) PrepareEffects(dt float32, enabled, alive bool, budget *
 			e.instance, err = m.assets.monsterEmitter(e.index)
 			if err != nil {
 				m.assets.Missing[err.Error()] = true
+			} else {
+				e.instance.ScaleParticleSizes(m.modelScale())
 			}
 		}
 		if e.instance != nil {
@@ -108,11 +110,13 @@ func (m *CreatureActor) PrepareEffects(dt float32, enabled, alive bool, budget *
 			m.assets.Missing[err.Error()] = true
 			continue
 		}
-		x.SetTransform(m.World)
 		m.attackEffects = append(m.attackEffects, x)
 	}
 	kept := m.attackEffects[:0]
 	for _, x := range m.attackEffects {
+		// Native 0x432bc0 copies the monster's current position and facing
+		// into every live action effect each frame, under its visual scale.
+		x.SetScaledTransform(m.World, m.modelScale())
 		if m.cueTime <= 0 && m.action != 5 {
 			x.Stop()
 		}
