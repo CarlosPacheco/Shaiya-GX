@@ -633,3 +633,30 @@ func TestGMSetStatAndSkillPoints(t *testing.T) {
 		}
 	}
 }
+
+// /bless raises the GM's country to the top tier unless a blessing is active.
+func TestGMBlessActivatesOnlyWithoutBlessing(t *testing.T) {
+	withTiers(t)
+	s, _ := potentialSession(t)
+	s.isAdmin = true
+	c := int(s.faction)
+	AddKillCount(uint8(c), 1, nopLog{})
+	if !s.handleGMCommand("/bless") {
+		t.Fatal("/bless escaped to public chat")
+	}
+	kcMu.Lock()
+	count, hold := kcWorld[c].count, kcWorld[c].resetAt
+	kcMu.Unlock()
+	if count != 4 || hold.IsZero() {
+		t.Fatalf("after /bless count=%d hold=%v", count, hold)
+	}
+	// An active blessing on either country leaves everything unchanged.
+	s.faction = uint8(1 - c)
+	s.handleGMCommand("/bless")
+	kcMu.Lock()
+	other, otherHold := kcWorld[1-c].count, kcWorld[1-c].resetAt
+	kcMu.Unlock()
+	if other != 0 || !otherHold.IsZero() {
+		t.Fatalf("/bless during a blessing changed country %d: count=%d", 1-c, other)
+	}
+}

@@ -185,6 +185,12 @@ func (s *Session) handleGMCommand(text string) bool {
 		} else {
 			err = s.gmBring(args[0])
 		}
+	case "/bless":
+		if len(args) != 0 {
+			s.gmReply("Usage: /bless")
+			break
+		}
+		s.gmBless()
 	case "/cure":
 		if len(args) != 0 {
 			s.gmReply("Usage: /cure")
@@ -631,6 +637,32 @@ func (s *Session) gmSet(args []string) error {
 }
 
 // gmCure clears all debuffs and cooldowns and restores HP, MP and SP.
+// gmBless raises the GM's country to the top kill-count tier through
+// CWorld::AddKillCount, activating the goddess blessing at once. It does
+// nothing while either country already holds a blessing.
+func (s *Session) gmBless() {
+	c := s.faction
+	if c > 1 {
+		return
+	}
+	kcMu.Lock()
+	active := !kcWorld[0].resetAt.IsZero() || !kcWorld[1].resetAt.IsZero()
+	count, top := kcWorld[c].count, kcMaxKill()
+	kcMu.Unlock()
+	if active || top == 0 {
+		return
+	}
+	var log logPrinter = discardLog{}
+	if s.log != nil {
+		log = s.log
+	}
+	AddKillCount(c, max(top-min(count, top), 1), log)
+}
+
+type discardLog struct{}
+
+func (discardLog) Printf(string, ...any) {}
+
 func (s *Session) gmCure() error {
 	if s.dead {
 		return fmt.Errorf("you are dead")
