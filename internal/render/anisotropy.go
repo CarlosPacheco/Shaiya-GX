@@ -16,7 +16,7 @@ var (
 	anisotropySupported bool
 	anisotropyMax       int32
 	anisotropyLevel     int32 = 1
-	worldTextures           = map[*Texture]struct{}{}
+	worldTextures             = map[*Texture]struct{}{}
 )
 
 func configureAnisotropy(supported bool) {

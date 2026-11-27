@@ -9,17 +9,17 @@ const NPCQuestWidth = 256
 const NPCQuestRows = 6
 
 type NPCQuest struct {
-	hoverRow                    int
-	storyScroll, listScroll     panelScroll
-	textLines                   int
+	hoverRow                int
+	storyScroll, listScroll panelScroll
+	textLines               int
 	// Rewards are the quest's reward rows (Shaiya Core style, not in EP5.4):
 	// up to three, each with an item icon drawn by DrawRewardIcon. When
 	// RewardSelectable is set a click picks RewardSelected.
-	Rewards          []NPCQuestReward
-	RewardSelectable bool
-	RewardSelected   int
-	DrawRewardIcon   func(index, x, y int)
-	rewardHover      int
+	Rewards                     []NPCQuestReward
+	RewardSelectable            bool
+	RewardSelected              int
+	DrawRewardIcon              func(index, x, y int)
+	rewardHover                 int
 	Detail                      bool
 	Position                    WindowPosition
 	HasService, ActionDisabled  bool

@@ -17,7 +17,7 @@ type Texture struct {
 	ID            uint32
 	W, H          int
 	repeat        bool
-	world         bool // mipmapped world texture: follows the anisotropy setting
+	world         bool                   // mipmapped world texture: follows the anisotropy setting
 	samplingViews [4]textureSamplingView // [anisotropic*2 + repeat]
 }
 
