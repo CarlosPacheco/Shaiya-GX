@@ -1,6 +1,7 @@
 package scene
 
 import (
+	"math"
 	"testing"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/data/effect"
@@ -25,5 +26,19 @@ func TestScaledEffectFollowsAndScales(t *testing.T) {
 	x.SetScaledTransform(render.Basis(render.V3{9, 0, 1}, render.V3{1, 0, 0}, render.V3{0, 1, 0}), 1)
 	if x.Origin != (render.V3{9, 0, 1}) {
 		t.Fatal("did not follow", x.Origin)
+	}
+}
+
+func TestCreatureEffectMatchesModelSpace(t *testing.T) {
+	for _, yaw := range []float64{0, 1, 2.5, -2} {
+		sin, cos := math.Sincos(yaw)
+		w := render.Basis(render.V3{3, 1, 4}, render.V3{-float32(sin), 0, -float32(cos)}, render.V3{0, 1, 0})
+		head := render.V3{1, 10, -6}
+		model := render.V3{head[0]*w[0] + head[1]*w[4] + head[2]*w[8] + w[12], head[0]*w[1] + head[1]*w[5] + head[2]*w[9] + w[13], head[0]*w[2] + head[1]*w[6] + head[2]*w[10] + w[14]}
+		x := &Effect{}
+		x.SetScaledTransform(creatureEffectWorld(w), 1)
+		if got := effectPoint(head, x.basis).Add(x.Origin); got.Sub(model).Len() > 1e-4 {
+			t.Fatalf("yaw %v: effect %v, model %v", yaw, got, model)
+		}
 	}
 }

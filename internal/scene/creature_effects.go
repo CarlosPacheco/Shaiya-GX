@@ -116,7 +116,7 @@ func (m *CreatureActor) PrepareEffects(dt float32, enabled, alive bool, budget *
 	for _, x := range m.attackEffects {
 		// Native 0x432bc0 copies the monster's current position and facing
 		// into every live action effect each frame, under its visual scale.
-		x.SetScaledTransform(m.World, m.modelScale())
+		x.SetScaledTransform(creatureEffectWorld(m.World), m.modelScale())
 		if m.cueTime <= 0 && m.action != 5 {
 			x.Stop()
 		}
@@ -154,4 +154,16 @@ func (m *CreatureActor) DrawEffects(s *render.Scene3D) {
 	for _, e := range m.attackEffects {
 		e.Draw(s)
 	}
+}
+
+// creatureEffectWorld turns the creature's model matrix into the placement
+// SetTransform expects. EFT space is the model space of the MON (the dragon
+// breath paths start at the head, model -Z), but nativeEffectBasis reflects
+// X/Z for skill placements, so the model matrix alone lands the effect 180°
+// around Y: on the back instead of the mouth. Half a turn about Y cancels it.
+func creatureEffectWorld(w render.M4) render.M4 {
+	for _, i := range [...]int{0, 1, 2, 8, 9, 10} {
+		w[i] = -w[i]
+	}
+	return w
 }
