@@ -143,6 +143,7 @@ func (a *App) Preview(name string) error {
 			a.state.Quests = map[uint16]proto.ActiveQuest{226: {ID: 226, Counters: [3]uint8{5}}}
 			a.state.QuestChoosing, a.state.QuestChoice = true, 226
 			a.npcQuest.selected, a.npcQuest.ending = 226, true
+			a.npcQuestUI.RewardSelected = 1
 		}
 		return nil
 	}

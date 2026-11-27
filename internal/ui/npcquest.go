@@ -3,7 +3,6 @@ package ui
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
-	"strings"
 )
 
 const NPCQuestWidth = 256
@@ -13,7 +12,14 @@ type NPCQuest struct {
 	hoverRow                    int
 	storyScroll, listScroll     panelScroll
 	textLines                   int
-	RewardText                  string
+	// Rewards are the quest's reward rows (Shaiya Core style, not in EP5.4):
+	// up to three, each with an item icon drawn by DrawRewardIcon. When
+	// RewardSelectable is set a click picks RewardSelected.
+	Rewards          []NPCQuestReward
+	RewardSelectable bool
+	RewardSelected   int
+	DrawRewardIcon   func(index, x, y int)
+	rewardHover      int
 	Detail                      bool
 	Position                    WindowPosition
 	HasService, ActionDisabled  bool
@@ -24,16 +30,42 @@ type NPCQuest struct {
 	textOffset                  int
 }
 
+// shortText reports whether the description shares the page with rewards.
+func (v *NPCQuest) shortText(ending bool) bool { return ending || len(v.Rewards) > 0 }
+
 func (v *NPCQuest) ResetDescriptionScroll() { v.textOffset = 0 }
 
 type NPCQuestAction struct {
 	Row, Offset         int
 	Close, Back, Accept bool
+	// Reward is the reward row clicked this frame, or -1.
+	Reward int
+}
+
+// NPCQuestReward is one reward row: the item name (empty for no item) and
+// the experience/gold line.
+type NPCQuestReward struct {
+	Item, Detail string
+	Icon         bool
+}
+
+// Reward rows below the shortened description.
+const (
+	npcQuestRewardTop    = 306
+	npcQuestRewardHeight = 40
+)
+
+func (v *NPCQuest) rewardAt(in *platform.Input, x, y int) int {
+	top := y + npcQuestRewardTop
+	if in.MouseX < x+20 || in.MouseX >= x+236 || in.MouseY < top || in.MouseY >= top+len(v.Rewards)*npcQuestRewardHeight {
+		return -1
+	}
+	return (in.MouseY - top) / npcQuestRewardHeight
 }
 
 func NewNPCQuest(t Textures) (*NPCQuest, error) {
 	ld := &loader{t: t}
-	v := &NPCQuest{list: ld.get("talk1_bg.png"), take: ld.get("quest_take.png"), complete: ld.get("quest_complete.png"), held: -1, hoverRow: -1}
+	v := &NPCQuest{RewardSelected: -1, rewardHover: -1, list: ld.get("talk1_bg.png"), take: ld.get("quest_take.png"), complete: ld.get("quest_complete.png"), held: -1, hoverRow: -1}
 	v.storyScroll = newPanelScroll(ld.get("scrollbar.png"), 227, 114, 329)
 	v.listScroll = newPanelScroll(ld.get("scrollbar.png"), 227, 142, 166)
 	v.close = nativeClose(ld.get("talk1_close_button.png"), 228, 5)
@@ -76,7 +108,7 @@ func (v *NPCQuest) Origin(w, h int) (int, int) {
 	}
 	return v.Position.Origin(w, h, NPCQuestWidth, height, x, y)
 }
-func (v *NPCQuest) Update(in *platform.Input, w, h, count, offset int, detail, ending bool, choices int) NPCQuestAction {
+func (v *NPCQuest) Update(in *platform.Input, w, h, count, offset int, detail, ending bool) NPCQuestAction {
 	v.Detail = detail
 	x, y := v.Origin(w, h)
 	height := 391
@@ -95,12 +127,13 @@ func (v *NPCQuest) Update(in *platform.Input, w, h, count, offset int, detail, e
 	}
 	v.action.Disabled, v.finish.Disabled = v.ActionDisabled, detail && v.ActionDisabled
 	v.back.OffY = height - 46
-	out := NPCQuestAction{Row: -1, Offset: max(0, min(offset, max(0, count-NPCQuestRows)))}
+	out := NPCQuestAction{Row: -1, Reward: -1, Offset: max(0, min(offset, max(0, count-NPCQuestRows)))}
 	out.Close = v.close.Update(in)
 	if detail {
+		short := v.shortText(ending)
 		bottom := y + 437
-		if choices > 0 {
-			bottom = y + 300
+		if short {
+			bottom = y + 297
 		}
 		if in.MouseX >= x+20 && in.MouseX < x+235 && in.MouseY >= y+110 && in.MouseY < bottom && in.Wheel != 0 {
 			if in.Wheel < 0 {
@@ -111,7 +144,7 @@ func (v *NPCQuest) Update(in *platform.Input, w, h, count, offset int, detail, e
 		}
 		visible := 23
 		scrollHeight := 329
-		if ending || choices > 0 {
+		if short {
 			visible = 13
 			scrollHeight = 183
 		}
@@ -120,24 +153,18 @@ func (v *NPCQuest) Update(in *platform.Input, w, h, count, offset int, detail, e
 		if v.textLines > 0 {
 			v.textOffset = v.storyScroll.Update(in, x, y, v.textLines, visible, v.textOffset)
 		}
-		if choices > 0 {
-			row := -1
-			if in.MouseX >= x+20 && in.MouseX < x+235 && in.MouseY >= y+310 && in.MouseY < y+310+choices*40 {
-				row = (in.MouseY - y - 310) / 40
-			}
+		v.rewardHover = v.rewardAt(in, x, y)
+		if v.RewardSelectable {
 			if in.Pressed {
-				v.held = row
+				v.held = v.rewardHover
 			}
 			if in.Clicked {
-				if row >= 0 && row == v.held {
-					out.Row = row
+				if v.rewardHover >= 0 && v.rewardHover == v.held {
+					v.RewardSelected = v.rewardHover
+					out.Reward = v.rewardHover
 				}
 				v.held = -1
 			}
-			if !v.HasService {
-				out.Back = v.back.Update(in)
-			}
-			return out
 		}
 		if ending {
 			out.Accept = v.finish.Update(in)
@@ -182,7 +209,7 @@ func (v *NPCQuest) Update(in *platform.Input, w, h, count, offset int, detail, e
 	}
 	return out
 }
-func (v *NPCQuest) Draw(s *render.Sprites, f *Font, w, h int, name, greeting string, portrait *render.Texture, entries []string, offset int, detail, ending bool, title, description string, choices []string) {
+func (v *NPCQuest) Draw(s *render.Sprites, f *Font, w, h int, name, greeting string, portrait *render.Texture, entries []string, offset int, detail, ending bool, title, description string) {
 	v.Detail = detail
 	x, y := v.Origin(w, h)
 	height := 391
@@ -221,8 +248,9 @@ func (v *NPCQuest) Draw(s *render.Sprites, f *Font, w, h int, name, greeting str
 	} else {
 		f.Draw(s, title, x+25, y+86, white, 205)
 		lines := wrapLines(f, description, 196)
+		short := v.shortText(ending)
 		limit := 23
-		if ending || len(choices) > 0 {
+		if short {
 			limit = 13
 		}
 		v.textLines = len(lines)
@@ -231,7 +259,7 @@ func (v *NPCQuest) Draw(s *render.Sprites, f *Font, w, h int, name, greeting str
 			f.Draw(s, line, x+25, y+115+i*14, white, 205)
 		}
 		scrollHeight := 329
-		if ending || len(choices) > 0 {
+		if short {
 			scrollHeight = 183
 		}
 		v.storyScroll.height = scrollHeight
@@ -239,12 +267,25 @@ func (v *NPCQuest) Draw(s *render.Sprites, f *Font, w, h int, name, greeting str
 		if len(lines) > limit {
 			v.storyScroll.Draw(s, x, y, len(lines), limit, v.textOffset)
 		}
-		if ending && len(choices) == 0 && v.RewardText != "" {
-			for i, line := range wrapLines(f, v.RewardText, 196) {
-				if i >= 8 {
-					break
-				}
-				f.Draw(s, line, x+26, y+310+i*15, RGBColor(0xeee4ce), 196)
+		for i, r := range v.Rewards {
+			ry := y + npcQuestRewardTop + i*npcQuestRewardHeight
+			tint := RGBColor(0xeee4ce)
+			switch {
+			case v.RewardSelectable && i == v.RewardSelected:
+				tint = RGBColor(0xffd67f)
+			case v.RewardSelectable && i == v.rewardHover:
+				tint = white
+			}
+			tx := x + 26
+			if r.Icon && v.DrawRewardIcon != nil {
+				v.DrawRewardIcon(i, x+24, ry+2)
+				tx = x + 62
+			}
+			if r.Item != "" {
+				f.Draw(s, r.Item, tx, ry+4, tint, x+236-tx)
+				f.Draw(s, r.Detail, tx, ry+19, tint, x+236-tx)
+			} else {
+				f.Draw(s, r.Detail, tx, ry+11, tint, x+236-tx)
 			}
 		}
 		v.action.OriginX, v.action.OriginY = x, y
@@ -252,20 +293,9 @@ func (v *NPCQuest) Draw(s *render.Sprites, f *Font, w, h int, name, greeting str
 		v.back.OriginX, v.back.OriginY = x, y
 		v.action.OffY = height - 46
 		v.finish.OffY = height - 46
-		if !detail {
-			v.finish.OffY = 336
-		}
-		v.action.Disabled, v.finish.Disabled = v.ActionDisabled, detail && v.ActionDisabled
+		v.action.Disabled, v.finish.Disabled = v.ActionDisabled, v.ActionDisabled
 		v.back.OffY = height - 46
-		if len(choices) > 0 {
-			for i, choice := range choices {
-				for line, text := range strings.SplitN(choice, "\n", 2) {
-					f.Draw(s, text, x+25, y+313+i*40+line*14, white, 200)
-				}
-			}
-			v.finish.Disabled = true
-			v.finish.Draw(s)
-		} else if !ending {
+		if !ending {
 			v.action.Draw(s)
 		} else {
 			v.finish.Draw(s)
@@ -277,3 +307,6 @@ func (v *NPCQuest) Draw(s *render.Sprites, f *Font, w, h int, name, greeting str
 	v.close.OriginX, v.close.OriginY = x, y
 	v.close.Draw(s)
 }
+
+// RewardHover is the reward row under the pointer, or -1.
+func (v *NPCQuest) RewardHover() int { return v.rewardHover }

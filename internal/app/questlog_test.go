@@ -106,20 +106,26 @@ func TestQuestTextPreservesParagraphsAndDropsFormattingTags(t *testing.T) {
 	}
 }
 
-func TestQuestRewardLabelIncludesItemAndServerRewardValues(t *testing.T) {
+func TestQuestRewardRowsShowItemsAndChoice(t *testing.T) {
 	a := inputApp()
+	a.npcQuestUI, _ = ui.NewNPCQuest(inputTextures{})
 	a.items = map[sdata.ItemKey]*sdata.Item{{Type: 1, TypeID: 4}: {Name: "Sword"}}
-	q := sdata.Quest{Results: [3]sdata.QuestResult{{Experience: 50, Money: 330, ItemType: 1, ItemID: 4}}}
-	if got := a.questRewardLabel(q, 0); got != "1: Sword\n50 XP, 330 gold" {
-		t.Fatal(got)
+	q := sdata.Quest{UserSelect: 3, Results: [3]sdata.QuestResult{{Experience: 50, Money: 330, ItemType: 1, ItemID: 4}, {Experience: 7}, {ItemType: 1, ItemID: 99}}}
+	a.setQuestRewards(q, true)
+	r := a.npcQuestUI.Rewards
+	if len(r) != 3 || !a.npcQuestUI.RewardSelectable || r[0].Item != "Sword" || !r[0].Icon || r[0].Detail != "50 XP, 330 gold" {
+		t.Fatalf("rows %+v", r)
 	}
-	q.Results[0].ItemID = 99
-	if got := a.questRewardLabel(q, 0); got != "1: Item 1/99\n50 XP, 330 gold" {
-		t.Fatal(got)
+	if r[1].Item != "" || r[2].Item != "Item 1/99" || r[2].Icon {
+		t.Fatalf("rows %+v", r)
 	}
-	q.Results[0].ItemType = 0
-	if got := a.questRewardLabel(q, 0); got != "1: 50 XP, 330 gold" {
-		t.Fatal(got)
+	a.setQuestRewards(q, false)
+	if a.npcQuestUI.RewardSelectable {
+		t.Fatal("take page rewards are selectable")
+	}
+	q.UserSelect = 0
+	if a.setQuestRewards(q, true); len(a.npcQuestUI.Rewards) != 1 || a.npcQuestUI.RewardSelectable {
+		t.Fatal("default reward shown as a choice")
 	}
 }
 

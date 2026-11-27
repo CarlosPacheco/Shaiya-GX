@@ -46,9 +46,10 @@ func TestQuestRewardChoiceOriginalAssetsGL(t *testing.T) {
 	if q.UserSelect < 2 {
 		t.Fatalf("quest 226 offers %d choices", q.UserSelect)
 	}
-	for i := 0; i < int(q.UserSelect) && i < 3; i++ {
-		if label := a.questRewardLabel(q, i); !strings.Contains(label, " XP, ") || !strings.Contains(label, " gold") {
-			t.Fatalf("incomplete reward label: %q", label)
+	a.setQuestRewards(q, true)
+	for _, row := range a.npcQuestUI.Rewards {
+		if !strings.Contains(row.Detail, " XP, ") || !strings.Contains(row.Detail, " gold") {
+			t.Fatalf("incomplete reward row: %+v", row)
 		}
 	}
 	for i := 0; i < 240; i++ {

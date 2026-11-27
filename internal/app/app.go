@@ -250,6 +250,7 @@ type App struct {
 	questTracker      questTrackerView
 	questConfirm      *ui.Message
 	questItemOffer    itemQuestOffer
+	questRewardQuest  sdata.Quest
 	questItemLinks    map[sdata.ItemKey]sdata.QuestItemLinks
 	questLog          questLogView
 	exchangeUI        *ui.ExchangePanel

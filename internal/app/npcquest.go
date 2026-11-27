@@ -23,24 +23,8 @@ type npcQuestView struct {
 	followUp bool
 	offset   int
 	result   *proto.QuestEndResult
-}
-
-// Reward values mirror Rapture's awardQuest; the result packet remains the
-// authoritative record of what was actually granted.
-func (a *App) questRewardLabel(q sdata.Quest, i int) string {
-	r := q.Results[i]
-	experience := uint64(r.Experience)
-	reward := a.msg.Format(12383, map[string]string{"v": fmt.Sprint(experience), "v2": fmt.Sprint(r.Money)})
-	if r.ItemType == 0 {
-		return fmt.Sprintf("%d: %s", i+1, reward)
-	}
-	name := a.msg.Format(12299, map[string]string{"v": fmt.Sprint(r.ItemType), "v2": fmt.Sprint(r.ItemID)})
-	if a.arc != nil || a.items != nil {
-		if item := a.itemsItem(r.ItemType, r.ItemID); item != nil && item.Name != "" {
-			name = item.Name
-		}
-	}
-	return fmt.Sprintf("%d: %s\n%s", i+1, name, reward)
+	// chosen marks the reward choice already sent for the server prompt.
+	chosen bool
 }
 
 func (a *App) questResultText(q sdata.Quest, result *proto.QuestEndResult) string {
@@ -197,13 +181,19 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 		a.closeNPC()
 		return true
 	}
-	choices := 0
-	if v.result == nil && v.selected != 0 && a.state.QuestChoosing && a.state.QuestChoice == v.selected && int(v.selected) <= len(a.questDefs) {
-		choices = min(int(a.questDefs[v.selected-1].UserSelect), 3)
-	}
 	a.npcQuestUI.HasService = false
-	a.npcQuestUI.ActionDisabled = v.ending && v.result == nil && v.selected > 0 && int(v.selected) <= len(a.questDefs) && !questMapReady(a.questDefs[v.selected-1], a.state.Quests[v.selected], a.state)
-	action := a.npcQuestUI.Update(in, w, h, len(entries), v.offset, v.selected != 0, v.ending, choices)
+	a.prepareQuestRewards(v)
+	a.npcQuestUI.ActionDisabled = v.ending && v.result == nil && v.selected > 0 && int(v.selected) <= len(a.questDefs) && (!questMapReady(a.questDefs[v.selected-1], a.state.Quests[v.selected], a.state) || a.npcQuestUI.RewardSelectable && a.npcQuestUI.RewardSelected < 0)
+	choosing := v.result == nil && v.selected != 0 && a.state.QuestChoosing && a.state.QuestChoice == v.selected
+	if choosing && !v.chosen && a.npcQuestUI.RewardSelectable && a.npcQuestUI.RewardSelected >= 0 {
+		// The server asks for the reward (0x0907): answer with the row the
+		// player already picked instead of a second, blind prompt.
+		v.chosen = true
+		if err := a.world.Send(proto.QuestChoosePacket(v.selected, uint8(a.npcQuestUI.RewardSelected))); err != nil {
+			a.backToLoginID(12148)
+		}
+	}
+	action := a.npcQuestUI.Update(in, w, h, len(entries), v.offset, v.selected != 0, v.ending)
 	v.offset = action.Offset
 	if action.Back {
 		in.NotifyWindowClosed()
@@ -216,15 +206,17 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 		}
 		return true
 	}
-	if action.Row >= 0 && choices > 0 {
-		if err := a.world.Send(proto.QuestChoosePacket(v.selected, uint8(action.Row))); err != nil {
+	if action.Reward >= 0 && choosing && !v.chosen {
+		v.chosen = true
+		if err := a.world.Send(proto.QuestChoosePacket(v.selected, uint8(action.Reward))); err != nil {
 			a.backToLoginID(12148)
 		}
 		return true
 	}
 	if action.Row >= 0 {
 		entry := entries[action.Row]
-		v.selected, v.ending, v.followUp = entry.id, entry.ending, false
+		v.selected, v.ending, v.followUp, v.chosen = entry.id, entry.ending, false, false
+		a.npcQuestUI.RewardSelected = -1
 		a.npcQuestUI.ResetDescriptionScroll()
 	}
 	if action.Accept && v.result != nil {
@@ -237,6 +229,7 @@ func (a *App) updateNPCQuest(in *platform.Input, w, h int, e *game.Entity) bool 
 		return true
 	}
 	if action.Accept && v.selected != 0 {
+		v.chosen = false
 		packet := proto.QuestStartPacket(e.ID, v.selected)
 		if v.ending {
 			packet = proto.QuestEndPacket(e.ID, v.selected)
@@ -283,8 +276,7 @@ func (a *App) drawNPCQuest(w, h int, e *game.Entity) {
 		names[i] = a.questName(entry.id)
 	}
 	title, description := "", ""
-	var choices []string
-	a.npcQuestUI.RewardText = ""
+	a.prepareQuestRewards(v)
 	if v.selected > 0 && int(v.selected) <= len(a.questDefs) {
 		q := a.questDefs[v.selected-1]
 		title = q.Name
@@ -308,16 +300,9 @@ func (a *App) drawNPCQuest(w, h int, e *game.Entity) {
 			}
 			description += "\n\n" + a.questObjective(q, active)
 		}
-		if v.result == nil && v.ending {
-			a.npcQuestUI.RewardText = a.tr(12378) + "\n" + a.questRewardLabel(q, 0)
-		}
-		if a.state.QuestChoosing && a.state.QuestChoice == v.selected {
-			for i := 0; i < min(int(q.UserSelect), 3); i++ {
-				choices = append(choices, a.questRewardLabel(q, i))
-			}
-		}
 	}
-	a.npcQuestUI.Draw(a.sprites, a.font, w, h, def.Name, questText(def.Welcome), a.npcPortrait(def), names, v.offset, v.selected != 0, v.ending, title, description, choices)
+	a.npcQuestUI.Draw(a.sprites, a.font, w, h, def.Name, questText(def.Welcome), a.npcPortrait(def), names, v.offset, v.selected != 0, v.ending, title, description)
+	a.questRewardTooltip(w, h)
 }
 
 // questBranchOpen is the branch rule of Game.exe 0x4cf3d0: when this quest is

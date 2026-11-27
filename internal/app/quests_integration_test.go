@@ -304,24 +304,23 @@ func TestQuestRewardChoiceAgainstRapture(t *testing.T) {
 	if a.npcQuest.selected != 226 || !a.npcQuest.ending {
 		t.Fatal("completion detail not selected")
 	}
-	click(x+60, y+470)
-	if st.QuestChoosing {
-		t.Fatal("choice displayed before server response")
+	if !a.npcQuestUI.ActionDisabled {
+		t.Fatal("turn-in enabled before choosing a reward")
 	}
-	poll(func() bool { return st.QuestChoosing && st.QuestChoice == 226 })
-	label := a.questRewardLabel(a.questDefs[225], 1)
-	if !strings.Contains(label, "Noble Pelt Leggings") || !strings.Contains(label, fmt.Sprintf("%d XP, 990 gold", a.questDefs[225].Results[1].Experience)) {
-		t.Fatalf("incorrect reward presentation: %q", label)
+	row := a.npcQuestUI.Rewards[1]
+	if !strings.Contains(row.Item, "Noble Pelt Leggings") || row.Detail != fmt.Sprintf("%d XP, 990 gold", a.questDefs[225].Results[1].Experience) {
+		t.Fatalf("incorrect reward presentation: %+v", row)
 	}
 	controls := a.worldControls(&platform.Input{MouseX: x + 30, MouseY: y + 160, Wheel: -120}, 1024, 768)
-	if controls.Wheel != 0 || !st.QuestChoosing {
-		t.Fatal("scrolling interfered with reward choice")
+	if controls.Wheel != 0 {
+		t.Fatal("scrolling interfered with the reward rows")
 	}
 	before := st.Details.Money
-	click(x+30, y+355)
-	if _, ok := st.Quests[226]; !ok {
-		t.Fatal("quest removed before reward confirmation")
+	click(x+30, y+355) // second reward row
+	if a.npcQuestUI.RewardSelected != 1 {
+		t.Fatal("reward row not selected")
 	}
+	click(x+60, y+470)
 	poll(func() bool { _, ok := st.Quests[226]; return !ok })
 	result := st.LastQuestEnd
 	if result.ID != 226 || result.Success != 1 || result.Variant != 1 || result.Experience != a.questDefs[225].Results[1].Experience || result.Money != 990 || result.Item[2] != 33 || result.Item[3] != 87 || st.Details.Money != before+990 {

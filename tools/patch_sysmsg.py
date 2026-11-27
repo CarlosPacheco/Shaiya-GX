@@ -31,7 +31,20 @@ stale = {i for i in have if i >= 12001 and i not in rows}
 if stale:
     text = "".join(l for l in text.splitlines(True) if not (re.match(r"^(\d+)\s", l) and int(re.match(r"^(\d+)", l).group(1)) in stale))
     print(f"removed {len(stale)} stale GX rows")
-if not add and not stale:
+# GX rows follow the canonical list: an id reused for a new text replaces the
+# old row instead of keeping a stale meaning.
+changed = 0
+def refresh(m):
+    global changed
+    i = int(m.group(1))
+    if i >= 12001 and i in rows and m.group(2) != rows[i]:
+        changed += 1
+        return f'{i}\t\t"{rows[i]}"'
+    return m.group(0)
+text = re.sub(r'^(\d+)\s+"(.*)"[ \t]*(?=\r?$)', refresh, text, flags=re.M)
+if changed:
+    print(f"updated {changed} GX rows")
+if not add and not stale and not changed:
     print("nothing to add")
     sys.exit()
 if add and not text.endswith(eol):
