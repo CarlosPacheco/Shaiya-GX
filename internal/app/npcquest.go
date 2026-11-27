@@ -30,7 +30,7 @@ type npcQuestView struct {
 func (a *App) questRewardLabel(q sdata.Quest, i int) string {
 	r := q.Results[i]
 	experience := uint64(r.Experience)
-	reward := fmt.Sprintf("%d XP, %d gold", experience, r.Money)
+	reward := a.msg.Format(12383, map[string]string{"v": fmt.Sprint(experience), "v2": fmt.Sprint(r.Money)})
 	if r.ItemType == 0 {
 		return fmt.Sprintf("%d: %s", i+1, reward)
 	}
@@ -53,7 +53,7 @@ func (a *App) questResultText(q sdata.Quest, result *proto.QuestEndResult) strin
 	if description != "" {
 		description += "\n\n"
 	}
-	description += fmt.Sprintf("Received: %d XP, %d gold", result.Experience, result.Money)
+	description += a.msg.Format(12379, map[string]string{"v": fmt.Sprint(result.Experience), "v2": fmt.Sprint(result.Money)})
 	if result.Item[2] != 0 {
 		name := a.msg.Format(12299, map[string]string{"v": fmt.Sprint(result.Item[2]), "v2": fmt.Sprint(result.Item[3])})
 		if a.arc != nil || a.items != nil {
@@ -77,9 +77,6 @@ func questOfferText(q sdata.Quest) string {
 	}
 	if take != "" {
 		parts = append(parts, take)
-	}
-	if q.CG != 0 || q.OG != 0 || q.IG != 0 {
-		parts = append(parts, fmt.Sprintf("Minimum character attributes: CG %d, OG %d, IG %d.", q.CG, q.OG, q.IG))
 	}
 	return strings.Join(parts, "\n\n")
 }
@@ -115,37 +112,12 @@ func (a *App) questRequirementsVisible(q sdata.Quest) bool {
 		if (slot.Gender == 0 && !q.Male) || (slot.Gender == 1 && !q.Female) {
 			return false
 		}
-		allowed := true
-		switch q.Faction {
-		case 0, 1:
-			allowed = slot.Race == q.Faction
-		case 2:
-			allowed = slot.Race <= 1
-		case 3:
-			allowed = slot.Race == 3
-		case 4:
-			allowed = slot.Race == 2
-		case 5:
-			allowed = slot.Race == 2 || slot.Race == 3
-		}
-		if !allowed {
+		if !raceAllowedForQuest(q.Faction, slot.Race) {
 			return false
 		}
 	}
-	if a.state.FinishedQuests != nil {
-		ids := [3]uint16{q.PrevQuest, q.HG, uint16(q.VG)}
-		if ids != [3]uint16{} {
-			met := false
-			for _, id := range ids {
-				if id != 0 && a.state.FinishedQuests[id] != 0 {
-					met = true
-					break
-				}
-			}
-			if !met {
-				return false
-			}
-		}
+	if !a.questPrerequisitesMet(q) {
+		return false
 	}
 	if q.StartType == 2 && a.state.InventoryReady {
 		found := false
@@ -337,43 +309,75 @@ func (a *App) drawNPCQuest(w, h int, e *game.Entity) {
 			description += "\n\n" + a.questObjective(q, active)
 		}
 		if v.result == nil && v.ending {
-			a.npcQuestUI.RewardText = "Reward\n" + a.questRewardLabel(q, 0)
-			if q.ResultType == 1 {
-				description += questRewardRequirementsText(q, 0)
-			}
+			a.npcQuestUI.RewardText = a.tr(12378) + "\n" + a.questRewardLabel(q, 0)
 		}
 		if a.state.QuestChoosing && a.state.QuestChoice == v.selected {
 			for i := 0; i < min(int(q.UserSelect), 3); i++ {
 				choices = append(choices, a.questRewardLabel(q, i))
-				description += questRewardRequirementsText(q, i)
 			}
 		}
 	}
 	a.npcQuestUI.Draw(a.sprites, a.font, w, h, def.Name, questText(def.Welcome), a.npcPortrait(def), names, v.offset, v.selected != 0, v.ending, title, description, choices)
 }
 
-func questRewardRequirementsText(q sdata.Quest, i int) string {
-	r := q.Results[i]
-	var requirements []string
-	if r.NeedTime != 0 {
-		requirements = append(requirements, fmt.Sprintf("%d seconds since acceptance", r.NeedTime))
+// questBranchOpen is the branch rule of Game.exe 0x4cf3d0: when this quest is
+// one of its previous quest's result follow-ups and any of those follow-ups
+// is already finished successfully, the remaining branches are closed.
+func (a *App) questBranchOpen(q sdata.Quest) bool {
+	if q.PrevQuest == 0 || int(q.PrevQuest) > len(a.questDefs) {
+		return true
 	}
-	for _, entry := range []struct {
-		name  string
-		value int
-	}{{"HG", int(r.NeedHG)}, {"VG", int(r.NeedVG)}, {"OG", int(r.NeedOG)}} {
-		if entry.value != 0 {
-			requirements = append(requirements, fmt.Sprintf("%s ≥ %d", entry.name, entry.value))
+	prev := a.questDefs[q.PrevQuest-1]
+	branch := false
+	for _, r := range prev.Results {
+		if r.NextQuest != 0 && r.NextQuest == q.ID {
+			branch = true
 		}
 	}
-	if q.EndType == 2 && r.NeedMobCount != 0 {
-		requirements = append(requirements, fmt.Sprintf("%d kills for objective %d", r.NeedMobCount, r.NeedMobID))
+	if !branch {
+		return true
 	}
-	if q.EndType == 1 && r.NeedItemCount != 0 {
-		requirements = append(requirements, fmt.Sprintf("%d items for objective %d", r.NeedItemCount, r.NeedItemID))
+	for _, r := range prev.Results {
+		if r.NextQuest != 0 && a.state.FinishedQuests[r.NextQuest] != 0 {
+			return false
+		}
 	}
-	if len(requirements) == 0 {
-		return ""
+	return true
+}
+
+// questPrerequisitesMet: one of PrevQuest/HG/VG finished, and the branch open.
+func (a *App) questPrerequisitesMet(q sdata.Quest) bool {
+	if a.state.FinishedQuests == nil {
+		return true
 	}
-	return fmt.Sprintf("\n\nReward %d requires %s.", i+1, strings.Join(requirements, ", "))
+	ids := [3]uint16{q.PrevQuest, q.HG, uint16(q.VG)}
+	if ids != [3]uint16{} {
+		met := false
+		for _, id := range ids {
+			if id != 0 && a.state.FinishedQuests[id] != 0 {
+				met = true
+				break
+			}
+		}
+		if !met {
+			return false
+		}
+	}
+	return a.questBranchOpen(q)
+}
+
+func raceAllowedForQuest(faction, race uint8) bool {
+	switch faction {
+	case 0, 1:
+		return race == faction
+	case 2:
+		return race <= 1
+	case 3:
+		return race == 3
+	case 4:
+		return race == 2
+	case 5:
+		return race == 2 || race == 3
+	}
+	return true
 }

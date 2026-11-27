@@ -302,7 +302,7 @@ func (a *App) updateCharacters(in *platform.Input, w, h int, dt float64) {
 			}
 			return
 		}
-		if a.questConfirm != nil && a.questConfirm.Visible {
+		if a.questConfirm != nil && a.questConfirm.Visible || a.questItemOffer.id != 0 {
 			a.updateQuestLog(in, w, h)
 			if a.state != nil && a.wv != nil && a.world != nil {
 				a.updateWorld(&platform.Input{MouseX: in.MouseX, MouseY: in.MouseY, SuppressAutoRun: true}, dt)
@@ -454,6 +454,7 @@ func (a *App) drawCharacters(w, h int) {
 			a.gemConfirm.Draw(a.sprites, a.font, w, h)
 		}
 		a.drawDropDialog(w, h)
+		a.drawItemQuest(w, h)
 		if a.questConfirm != nil {
 			a.questConfirm.Draw(a.sprites, a.font, w, h)
 		}

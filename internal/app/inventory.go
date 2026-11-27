@@ -269,8 +269,8 @@ func (a *App) useInventoryItem(key [2]uint8) {
 	}
 	if isQuestInventoryItem(it.Type) {
 		item := sdata.ItemKey{Type: it.Type, TypeID: it.TypeID}
-		if !a.offerItemQuest(key, item, 4) {
-			a.offerItemQuest(key, item, 3)
+		if !a.offerItemQuest(key, item, 4, false) && !a.offerItemQuest(key, item, 3, false) && a.questItemOffer.id == 0 {
+			a.itemQuestRefusal(item)
 		}
 		return
 	}

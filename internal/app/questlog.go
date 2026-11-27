@@ -37,7 +37,7 @@ func (a *App) questTimeHint(def sdata.Quest, q proto.ActiveQuest) string {
 		return ""
 	}
 	if seconds <= 0 {
-		return "Time limit reached; awaiting server."
+		return a.tr(12380)
 	}
 	return a.msg.Format(12310, map[string]string{"v": fmt.Sprint(int(math.Ceil(seconds / 60)))})
 }
@@ -72,17 +72,12 @@ func (a *App) updateQuestLog(in *platform.Input, w, h int) bool {
 		return false
 	}
 	v := &a.questLog
+	if a.questItemOffer.id != 0 {
+		a.updateItemQuest(in, w, h)
+		return true
+	}
 	if a.questConfirm.Visible {
 		result := a.questConfirm.Update(in, w, h)
-		if offer := a.questItemOffer; offer.id != 0 {
-			if result != ui.MessageNone {
-				a.questItemOffer = itemQuestOffer{}
-			}
-			if result == ui.MessageOK {
-				a.acceptItemQuest(offer)
-			}
-			return true
-		}
 		if result == ui.MessageOK {
 			if _, ok := a.state.Quests[v.confirm]; ok {
 				if err := a.world.Send(proto.QuestAbandonPacket(v.confirm)); err != nil {
@@ -131,7 +126,7 @@ func (a *App) updateQuestLog(in *platform.Input, w, h int) bool {
 	if quit && v.selected != 0 {
 		v.confirm = v.selected
 		a.questItemOffer = itemQuestOffer{}
-		a.questConfirm.Open("Abandon "+a.questName(v.selected)+"?", true)
+		a.questConfirm.Open(a.msg.Format(12381, map[string]string{"v": a.questName(v.selected)}), true)
 		return true
 	}
 	x, y := a.questUI.Origin(w, h)

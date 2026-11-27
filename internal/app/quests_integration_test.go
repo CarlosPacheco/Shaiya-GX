@@ -40,7 +40,7 @@ func TestQuestItemOfferAgainstGX(t *testing.T) {
 			break
 		}
 	}
-	if pos[0] == 0 || !a.offerItemQuest(pos, sdata.ItemKey{Type: 29, TypeID: 1}, 4) || a.questItemOffer.id != id {
+	if pos[0] == 0 || !a.offerItemQuest(pos, sdata.ItemKey{Type: 29, TypeID: 1}, 4, false) || a.questItemOffer.id != id {
 		t.Fatal("authored letter failed to open its quest offer")
 	}
 	a.updateQuestLog(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, 1024, 768)

@@ -130,12 +130,12 @@ func (a *App) confirmedQuest(p []byte) {
 			if a.msg.Get(219) != "" {
 				a.systemMessage(3, 219, nil)
 			} else {
-				a.questMessage("Quest started: " + a.questName(id))
+				a.questMessage(a.msg.Format(12382, map[string]string{"v": a.questName(id)}))
 			}
 		}
 	case proto.AddItem:
 		if item, err := proto.DecodeItemAdd(p); err == nil && isQuestInventoryItem(item.Type) {
-			a.offerItemQuest([2]uint8{item.Bag, item.Slot}, sdata.ItemKey{Type: item.Type, TypeID: item.TypeID}, 3)
+			a.offerItemQuest([2]uint8{item.Bag, item.Slot}, sdata.ItemKey{Type: item.Type, TypeID: item.TypeID}, 3, false)
 		}
 	case proto.QuestCounter:
 		id, slot, _, err := proto.DecodeQuestCounter(p)

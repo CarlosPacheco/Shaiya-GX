@@ -49,6 +49,7 @@ func TestItemQuestOfferFiltersEligibilityAndCanBeCancelled(t *testing.T) {
 	a := inputApp()
 	a.questUI, _ = ui.NewQuestLog(inputTextures{})
 	a.questConfirm, _ = ui.NewMessage(inputTextures{})
+	a.npcQuestUI, _ = ui.NewNPCQuest(inputTextures{})
 	a.questDataLoaded = true
 	a.state.SelfID = 7
 	a.state.Slots[0] = proto.CharacterSlot{ID: 7, Level: 20, Gender: 1}
@@ -56,7 +57,7 @@ func TestItemQuestOfferFiltersEligibilityAndCanBeCancelled(t *testing.T) {
 	a.questDefs = []sdata.Quest{q}
 	item := sdata.ItemKey{Type: 29, TypeID: 6}
 	a.questItemLinks = map[sdata.ItemKey]sdata.QuestItemLinks{item: {Start: []uint16{1}}}
-	if a.offerItemQuest([2]uint8{1, 3}, item, 3) || !a.offerItemQuest([2]uint8{1, 3}, item, 4) {
+	if a.offerItemQuest([2]uint8{1, 3}, item, 3, false) || !a.offerItemQuest([2]uint8{1, 3}, item, 4, false) {
 		t.Fatal("inventory use should open only the matching offer")
 	}
 	a.updateQuestLog(&platform.Input{Keys: []platform.Key{platform.KeyEscape}}, 1024, 768)
@@ -64,7 +65,7 @@ func TestItemQuestOfferFiltersEligibilityAndCanBeCancelled(t *testing.T) {
 		t.Fatal("cancelling changed the quest or kept the offer")
 	}
 	a.state.Slots[0] = proto.CharacterSlot{ID: 7, Level: 20, Gender: 0}
-	if a.offerItemQuest([2]uint8{1, 3}, item, 4) {
+	if a.offerItemQuest([2]uint8{1, 3}, item, 4, false) {
 		t.Fatal("wrong gender received an offer")
 	}
 }

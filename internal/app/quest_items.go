@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/Spelunkern/Shaiya-GX/internal/data/sdata"
+	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
 )
 
@@ -34,8 +35,13 @@ func (a *App) itemQuestAt(item sdata.ItemKey, startType uint8) uint16 {
 	return 0
 }
 
-func (a *App) offerItemQuest(position [2]uint8, item sdata.ItemKey, startType uint8) bool {
-	if a.questConfirm == nil || a.questConfirm.Visible || a.state == nil || a.state.Self.Dead || position[0] < 1 || position[0] > 5 {
+// offerItemQuest is Game.exe 0x4d0120. A hidden item (start type 3) offers
+// its quest as soon as it reaches the inventory, and a usable one (type 4)
+// when it is used; the offer opens the quest conversation's take page
+// (window state 0x70), not a message box. Requirement notices are shown only
+// when the player uses the item (argument 1), never on pickup.
+func (a *App) offerItemQuest(position [2]uint8, item sdata.ItemKey, startType uint8, manual bool) bool {
+	if a.npcQuestUI == nil || a.questItemOffer.id != 0 || a.state == nil || a.state.Self.Dead || position[0] < 1 || position[0] > 5 {
 		return false
 	}
 	if err := a.loadQuests(); err != nil {
@@ -43,13 +49,89 @@ func (a *App) offerItemQuest(position [2]uint8, item sdata.ItemKey, startType ui
 	}
 	id := a.itemQuestAt(item, startType)
 	if id == 0 {
+		if manual {
+			a.itemQuestRefusal(item)
+		}
 		return false
 	}
-	q := a.questDefs[id-1]
-	text := questOfferText(q)
+	if a.shop.npcID != 0 {
+		a.closeNPC()
+	}
 	a.questItemOffer = itemQuestOffer{id: id, position: position}
-	a.questConfirm.OpenFull(q.Name+"\n\n"+text, true, a.font)
+	a.npcQuestUI.ResetDescriptionScroll()
 	return true
+}
+
+// itemQuestRefusal shows the native notice for the first linked quest that
+// cannot start: active 465, finished 466, prerequisite 464, country or sex
+// 246, job 248, level 311.
+func (a *App) itemQuestRefusal(item sdata.ItemKey) {
+	for _, id := range a.questItemLinks[item].Start {
+		if id == 0 || int(id) > len(a.questDefs) {
+			continue
+		}
+		q := a.questDefs[id-1]
+		if q.StartType < 3 || q.StartType > 4 || q.StartItemType != item.Type || q.StartItemID != item.TypeID {
+			continue
+		}
+		message := 0
+		slot, known := a.selfSlot()
+		_, active := a.state.Quests[id]
+		_, finished := a.state.FinishedQuests[id]
+		switch {
+		case active:
+			message = 465
+		case finished:
+			message = 466
+		case !a.questPrerequisitesMet(q):
+			message = 464
+		case known && (!raceAllowedForQuest(q.Faction, slot.Race) || slot.Gender == 0 && !q.Male || slot.Gender == 1 && !q.Female):
+			message = 246
+		case known && (slot.Class >= 6 || q.Jobs[slot.Class] == 0):
+			message = 248
+		case known && (slot.Level < q.MinLevel || slot.Level > q.MaxLevel):
+			message = 311
+		}
+		if message != 0 && a.tr(message) != "" {
+			a.questMessageID(message)
+		}
+		return
+	}
+}
+
+func (a *App) updateItemQuest(in *platform.Input, w, h int) bool {
+	offer := a.questItemOffer
+	if offer.id == 0 || int(offer.id) > len(a.questDefs) {
+		a.questItemOffer = itemQuestOffer{}
+		return false
+	}
+	ui := a.npcQuestUI
+	ui.HasService, ui.ActionDisabled = false, false
+	action := ui.Update(in, w, h, 0, 0, true, false, 0)
+	if action.Back {
+		in.NotifyWindowClosed()
+	}
+	if action.Close || action.Back || in.CloseOnEscape() {
+		a.questItemOffer = itemQuestOffer{}
+		return true
+	}
+	if action.Accept || in.HasKey(platform.KeyEnter) {
+		a.questItemOffer = itemQuestOffer{}
+		a.acceptItemQuest(offer)
+		return true
+	}
+	x, y := ui.Origin(w, h)
+	return panelPointer(in, x, y, npcQuestWindowWidth, 512)
+}
+
+func (a *App) drawItemQuest(w, h int) {
+	offer := a.questItemOffer
+	if offer.id == 0 || int(offer.id) > len(a.questDefs) || a.npcQuestUI == nil {
+		return
+	}
+	q := a.questDefs[offer.id-1]
+	a.npcQuestUI.RewardText = ""
+	a.npcQuestUI.Draw(a.sprites, a.font, w, h, "", "", nil, nil, 0, true, false, q.Name, questOfferText(q), nil)
 }
 
 func (a *App) acceptItemQuest(offer itemQuestOffer) {
@@ -72,3 +154,5 @@ func (a *App) acceptItemQuest(offer itemQuestOffer) {
 		a.backToLoginID(12149)
 	}
 }
+
+const npcQuestWindowWidth = 256
