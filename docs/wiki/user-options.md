@@ -95,7 +95,8 @@ Risk Sensor controls the original battle music that plays while nearby enemies
 activate the warning. The minimap warning remains visible with the music off.
 Character Sound controls nearby player voices for attacks, hits and deaths.
 Weapon, spell and interface sounds use their usual audio settings.
-NPC Sound is reserved and currently has no effect.
+The original NPC Sound checkbox is removed: it played NPC greeting voices
+(`Sound/Ment`) that the EP5 data does not include, so it never had an effect.
 
 ## Evidence
 

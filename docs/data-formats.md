@@ -415,7 +415,9 @@ race and sex. The attack and damage paths always request a voice on critical
 results and sample ordinary attacks and hits. GX Sound Option uses
 **Character Sound** for local and nearby player voices and **Risk Sensor**
 for battle music. **Sound Effect** still controls weapon and spell audio.
-**NPC Sound** is kept as a display-only option.
+The original **NPC Sound** option (`VOICE_NPC`) played `Sound/Ment` NPC
+greetings that the EP5 data does not ship; GX removes it from the art
+(`tools/patch_option_sound.py`).
 
 A loose pack needs the original character cues in `Sound/` as Ogg Vorbis.
 Use the same import command below with the stems

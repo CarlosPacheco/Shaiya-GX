@@ -199,7 +199,7 @@ func TestSoundOptionCheckboxes(t *testing.T) {
 		t.Fatal("Risk Sensor checkbox did not toggle")
 	}
 	if click(132, 289) != MenuNone || m.Settings.RiskSensor || m.Settings.CharacterSound {
-		t.Fatal("NPC Sound changed the settings")
+		t.Fatal("the removed NPC Sound area changed the settings")
 	}
 	if click(23, 368) != MenuChanged || !m.Settings.CharacterSound || !m.Settings.RiskSensor {
 		t.Fatal("Reset did not restore the sound options")
