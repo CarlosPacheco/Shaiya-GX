@@ -93,9 +93,8 @@ func (a *App) drawMallPreview(w, h int) {
 	case p.vehicle != nil:
 		a.drawMallVehicle(p.vehicle, x+px, y+py, pw, ph, w, h)
 	case p.actor != nil:
-		// Same framing as the inventory, centred in the wider box.
-		fw := min(pw, ph*136/200)
-		a.drawTurnedActor(p.actor, ap, x+px+(pw-fw)/2, y+py, fw, ph, w, h, a.mallUI.PreviewYaw)
+		// Inventory framing over the full box, so weapons fit at the sides.
+		a.drawTurnedActor(p.actor, ap, x+px, y+py, pw, ph, w, h, a.mallUI.PreviewYaw)
 	}
 }
 

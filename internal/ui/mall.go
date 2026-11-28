@@ -114,7 +114,7 @@ const (
 	mallButtonStep  = 92
 	mallTrack       = 320 - mallListTop - 20
 	mallProductWide = 174
-	mallPointsY     = 324
+	mallPointsY     = 337
 	// Bottom buttons, grouped and centred.
 	MallGiftBoxX = (MallWidth - 362) / 2
 	MallBuyX     = MallGiftBoxX + 113
@@ -124,7 +124,7 @@ const (
 func MallProductRect(index int) (int, int) { return 19 + (index%2)*mallColumn, mallListTop + (index/2)*65 }
 
 // MallPreviewRect is the character viewport, relative to the window.
-func MallPreviewRect() (x, y, w, h int) { return mallListRight + 14, 47, 566 + mallExtra - mallListRight - 14, 270 }
+func MallPreviewRect() (x, y, w, h int) { return mallListRight + 14, 47, 566 + mallExtra - mallListRight - 14, 282 }
 
 func (m *Mall) listCell(x, y, mouseX, mouseY, count int) int {
 	if mouseX < x+mallListLeft || mouseX >= x+mallListLeft+2*mallColumn || mouseY < y+mallListTop || mouseY >= y+mallListBottom {
@@ -272,26 +272,25 @@ func (m *Mall) drawLayout(s *render.Sprites, x, y int) {
 		w := min(126, px+pw+2-dx)
 		m.piece(s, x, y, dx, py+ph+1, w, 364-py-ph, 238, 44, w, 364-py-ph)
 	}
-	ox := mallPointsX()
-	m.piece(s, x, y, ox, mallPointsY, 196, 36, 372, 46, 196, 36)
-	m.piece(s, x, y, ox, mallPointsY+36, 196, 4, 372, 119, 196, 4)
-	m.piece(s, x, y, ox+6, mallPointsY+6, 70, 18, 380, 84, 70, 18)
-}
-
-func mallPointsX() int {
-	px, _, pw, _ := MallPreviewRect()
-	return px + (pw-196)/2
+	// Points strip: as wide as the preview, list-box finish and a gold rule.
+	m.piece(s, x, y, px, mallPointsY, pw, 24, 20, 200, 260, 24)
+	m.line(s, x+px-1, y+mallPointsY-1, pw+2, 1, edge)
+	m.line(s, x+px-1, y+mallPointsY+24, pw+2, 1, edge)
+	m.line(s, x+px-1, y+mallPointsY-1, 1, 26, edge)
+	m.line(s, x+px+pw, y+mallPointsY-1, 1, 26, edge)
+	m.line(s, x+px+8, y+mallPointsY+3, 2, 18, [4]float32{.95, .8, .45, .9})
 }
 
 func (m *Mall) Draw(s *render.Sprites, f *Font, w, h int, products []MallProduct, pointsLabel string, points uint32, pointsReady, busy bool) {
 	x, y := m.Origin(w, h)
 	m.drawLayout(s, x, y)
-	f.Draw(s, pointsLabel, x+mallPointsX()+10, y+mallPointsY+8, white, 70)
+	px, _, pw, _ := MallPreviewRect()
+	f.Draw(s, pointsLabel, x+px+16, y+mallPointsY+5, white, 80)
 	pointText := "..."
 	if pointsReady {
 		pointText = fmt.Sprint(points)
 	}
-	f.Draw(s, pointText, x+mallPointsX()+82, y+mallPointsY+7, white, 100)
+	f.Draw(s, pointText, x+px+pw-10-f.Width(pointText), y+mallPointsY+5, [4]float32{.95, .8, .45, 1}, 120)
 	for i := range m.tabs {
 		b := &m.tabs[i]
 		b.OriginX, b.OriginY, b.Checked = x, y, i == m.Category
