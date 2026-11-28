@@ -141,7 +141,7 @@ func (p *effectIndirect) plan(draws []queuedEffect) bool {
 		p.materials = append(p.materials, material)
 		p.runs[len(p.runs)-1].count++
 	}
-	if len(p.commands) == 0 || len(p.runs) >= len(draws) {
+	if len(p.commands) == 0 || len(p.runs) >= len(draws) || effectRunsFragmented(len(p.runs), len(p.commands)) {
 		if p.reclaimDead {
 			p.releaseGeometry()
 			p.reclaimDead = false
@@ -253,4 +253,14 @@ func (s *Scene3D) ReleasePackedEffects() {
 	if s != nil {
 		s.effectPipeline.indirect.releaseGeometry()
 	}
+}
+
+// effectRunsFragmented reports a plan split into many short runs. Effects keep
+// their blend order, so their runs cannot be merged by sorting; many short
+// MultiDrawElementsIndirect runs interleaved with blend and texture state hit
+// a steep slow path on Windows AMD OpenGL drivers (world-fx 9-11 ms -> 0.6 ms
+// on an RX 6600 with this fallback), while instanced draws lose nothing when
+// a run averages under eight commands. Contributed by Gexur (PR #40).
+func effectRunsFragmented(runs, commands int) bool {
+	return runs > 16 && commands < runs*8
 }
