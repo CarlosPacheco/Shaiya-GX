@@ -231,28 +231,52 @@ func TestRelicResetUsesNonneutralBaseAndRejectsStaleDeaths(t *testing.T) {
 		t.Fatal("restart lost packed owner/conqueror")
 	}
 }
-func TestLinkedRandomBossWaitsAndUsesConfiguredPositions(t *testing.T) {
-	r := relicFixture(t)
+func TestLinkedRandomBossRollsChanceAndPosition(t *testing.T) {
+	relicFixture(t)
+	// A common (non-instance) map id: the fixture's high id is an instance zone.
+	const mapID = 913
+	RegisterMapGrid(mapID, 2048, make([]byte, 2048*2048/8))
+	r := struct{ mapID uint16 }{mapID}
 	now := time.Now()
-	b := &linkedBoss{mapID: r.mapID, key: 24, mobs: []uint16{1974}, random: true, randomMin: 45 * time.Minute, randomRange: 60 * time.Minute, randomPositions: [3][3]float32{{200, 40, 200}, {300, 50, 300}, {400, 60, 400}}}
+	positions := [][3]float32{{200, 40, 200}, {300, 50, 300}, {400, 60, 400}}
+	b := &linkedBoss{mapID: r.mapID, key: 24, mobs: []uint16{1974}, random: true, positions: positions, lastPos: -1}
 	initializeBossLocked(r.mapID, b, now)
 	s := shard(r.mapID)
-	if b.next.Before(now.Add(45*time.Minute)) || !b.next.Before(now.Add(105*time.Minute)) {
-		t.Fatal("random startup timer out of configured bounds")
-	}
-	if s.entities.Mobs[b.principal.slot].CurrentHP != 0 {
-		t.Fatal("randomized boss appeared immediately on boot")
-	}
-	TickRelics(b.next, nopLog{})
 	m := s.entities.Mobs[b.principal.slot]
 	found := false
-	for _, p := range b.randomPositions {
+	for _, p := range positions {
 		if m.PosX == p[0] && m.PosY == p[1] && m.PosZ == p[2] {
 			found = true
 		}
 	}
 	if !found || m.CurrentHP == 0 {
-		t.Fatal("boss did not spawn at one of its three authored positions")
+		t.Fatal("a random boss without a chance must appear at once at an authored position")
+	}
+	// A failed roll waits for the mob's own respawn (at least a minute).
+	never := &linkedBoss{mapID: r.mapID, key: 25, mobs: []uint16{1974}, random: true, chance: 1e-9, positions: positions, lastPos: -1}
+	initializeBossLocked(r.mapID, never, now)
+	if s.entities.Mobs[never.principal.slot].CurrentHP != 0 || never.next.Before(now.Add(time.Minute)) {
+		t.Fatal("failed roll spawned or retried too soon", never.next.Sub(now))
+	}
+}
+
+func TestRandomBossRollAvoidsPreviousPosition(t *testing.T) {
+	b := &linkedBoss{positions: [][3]float32{{1}, {2}, {3}}, lastPos: -1}
+	for range 200 {
+		before := b.lastPos
+		if _, ok := bossRoll(b); !ok || b.lastPos == before {
+			t.Fatal("repeated the previous position")
+		}
+	}
+}
+
+func TestInstanceRandomBossRollsOnceAndNeverReturns(t *testing.T) {
+	b := &linkedBoss{mapID: instanceZoneBase + 7, mobs: []uint16{1}, random: true, chance: 1e-9, positions: [][3]float32{{1}}}
+	if _, ok := bossRoll(b); ok {
+		t.Fatal("near-zero chance succeeded")
+	}
+	if !bossRetry(b, time.Now()).IsZero() {
+		t.Fatal("an instance retried its random boss")
 	}
 }
 

@@ -35,21 +35,26 @@ type relic struct {
 	pending              *relicCapture
 }
 type linkedBoss struct {
-	mapID                  uint16
-	key                    uint32
-	pos                    [3]float32
-	mobs                   []uint16
-	guards                 []*eventSpawn
-	portalMap              uint16
-	portalID               int32
-	delay                  time.Duration
-	random                 bool
-	randomMin, randomRange time.Duration
-	randomPositions        [3][3]float32
-	stage                  int
-	portalOpen             bool
-	principal              *eventActor
-	next                   time.Time
+	mapID     uint16
+	key       uint32
+	pos       [3]float32
+	mobs      []uint16
+	guards    []*eventSpawn
+	portalMap uint16
+	portalID  int32
+	delay     time.Duration
+	// [RandomRespawn] (GX rule): the boss keeps its normal timing, but every
+	// appearance rolls chance (percent; 0 = always) and picks one of
+	// positions. In an instance the roll happens once, at creation.
+	random     bool
+	chance     float64
+	positions  [][3]float32
+	lastPos    int
+	spawnPos   [3]float32
+	stage      int
+	portalOpen bool
+	principal  *eventActor
+	next       time.Time
 }
 type relicPortal struct {
 	key, id  uint32
@@ -201,14 +206,27 @@ func parseRelicConfig(raw []byte) (relicConfig, error) {
 				boss.guards = append(boss.guards, spawn)
 			}
 		case strings.HasPrefix(lower, "[randomrespawn]"):
-			if boss == nil || len(n) != 11 || !eventInteger(n[0], math.MaxUint32) || !eventInteger(n[1], math.MaxUint32) {
+			// = [(percent),](X,Y,Z),... An optional leading percent; a legacy
+			// (minutes,range) pair is ignored: timing follows the mob.
+			if boss == nil || len(n) < 3 {
 				return fail()
 			}
-			boss.random = true
-			boss.randomMin = time.Duration(n[0]) * time.Minute
-			boss.randomRange = time.Duration(n[1]) * time.Minute
-			for i := range 3 {
-				boss.randomPositions[i] = eventPosition(n[2+i*3:])
+			boss.random, boss.chance, boss.positions, boss.lastPos = true, 0, nil, -1
+			switch len(n) % 3 {
+			case 1:
+				if n[0] < 0 || n[0] > 100 {
+					return fail()
+				}
+				boss.chance = n[0]
+				n = n[1:]
+			case 2:
+				n = n[2:]
+			}
+			if len(n) == 0 || len(n) > 16*3 {
+				return fail()
+			}
+			for i := 0; i+2 < len(n); i += 3 {
+				boss.positions = append(boss.positions, eventPosition(n[i:]))
 			}
 		case strings.HasPrefix(lower, "[light]"), strings.HasPrefix(lower, "[fury]"):
 			if portal == nil {

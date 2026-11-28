@@ -3,6 +3,8 @@ package world
 import (
 	"math/rand/v2"
 	"time"
+
+	"github.com/Spelunkern/Shaiya-GX/server/internal/db"
 )
 
 func initializeBossLocked(mapID uint16, b *linkedBoss, now time.Time) {
@@ -17,11 +19,15 @@ func initializeBossLocked(mapID uint16, b *linkedBoss, now time.Time) {
 		}
 	}
 	relics.bosses[mapID] = append(relics.bosses[mapID], b)
+	pos := b.pos
 	if b.random {
-		b.next = now.Add(bossRandomDelay(b))
-		return
+		var ok bool
+		if pos, ok = bossRoll(b); !ok {
+			b.next = bossRetry(b, now)
+			return
+		}
 	}
-	if !spawnEventActor(s, b.principal, b.mobs[0], b.pos, now) {
+	if !spawnEventActor(s, b.principal, b.mobs[0], pos, now) {
 		b.next = now.Add(time.Second)
 		return
 	}
@@ -29,12 +35,34 @@ func initializeBossLocked(mapID uint16, b *linkedBoss, now time.Time) {
 		populateEventSpawn(s, g, 0, now)
 	}
 }
-func bossRandomDelay(b *linkedBoss) time.Duration {
-	delay := b.randomMin
-	if seconds := int64(b.randomRange / time.Second); seconds > 0 {
-		delay += time.Duration(rand.Int64N(seconds)) * time.Second
+
+// bossRoll is the [RandomRespawn] appearance roll: chance percent (0 means
+// always) and a random authored position, not the previous one when there
+// are several. The chosen position is kept for the boss's later phases.
+func bossRoll(b *linkedBoss) ([3]float32, bool) {
+	if b.chance > 0 && rand.Float64()*100 >= b.chance {
+		return [3]float32{}, false
 	}
-	return delay
+	i := rand.IntN(len(b.positions))
+	if len(b.positions) > 1 && i == b.lastPos {
+		i = (i + 1 + rand.IntN(len(b.positions)-1)) % len(b.positions)
+	}
+	b.lastPos, b.spawnPos = i, b.positions[i]
+	return b.spawnPos, true
+}
+
+// bossRetry schedules the next roll after a failed one: the first phase's
+// own respawn (Attackspecial3), at least a minute. An instance rolls once,
+// at creation, so a failed roll leaves it without the boss.
+func bossRetry(b *linkedBoss, now time.Time) time.Time {
+	if isInstanceZone(b.mapID) {
+		return time.Time{}
+	}
+	delay := time.Minute
+	if def := db.MustDefs().Mobs[b.mobs[0]]; def != nil {
+		delay = max(delay, time.Duration(def.RespawnSeconds)*time.Second)
+	}
+	return now.Add(delay)
 }
 func bossPortalMap(b *linkedBoss) uint16 {
 	if realMap(b.mapID) == b.portalMap {
@@ -55,10 +83,10 @@ func bossDestroyedLocked(s *mapShard, b *linkedBoss, now time.Time, out *[]event
 		// No portal shard lock while holding the source shard. The actual write
 		// follows below in tickBossLocked, before the replacement can appear.
 		delay := b.delay + time.Duration(rand.IntN(120)-60)*time.Minute
-		if b.random {
-			delay = bossRandomDelay(b)
-		}
 		b.next = now.Add(mobCorpseDelay + max(delay, 0))
+		if b.random && isInstanceZone(b.mapID) {
+			b.next = time.Time{} // an instance's random boss does not come back
+		}
 		b.portalOpen = true
 		for _, g := range b.guards {
 			populateEventSpawn(s, g, len(b.mobs), now)
@@ -80,7 +108,14 @@ func tickBossLocked(s *mapShard, b *linkedBoss, now time.Time, out *[]eventPubli
 		}
 		pos := b.pos
 		if b.random {
-			pos = b.randomPositions[rand.IntN(3)]
+			pos = b.spawnPos
+			if b.stage == 0 {
+				var ok bool
+				if pos, ok = bossRoll(b); !ok {
+					b.next = bossRetry(b, now)
+					return
+				}
+			}
 		}
 		if spawnEventActor(s, b.principal, b.mobs[b.stage], pos, now) {
 			b.next = time.Time{}

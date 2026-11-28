@@ -71,9 +71,15 @@ per map instance. Principal death removes the current companions; intermediate
 phases use the defeated monster's respawn delay. The final phase opens the
 configured portal and creates the final companion group. The next cycle closes
 the portal and returns to phase zero. Final delays include the native random
-minus 60 through plus 59 minute adjustment. `RandomRespawn` records use their
-own configured minute interval/range and one of three positions, including a
-delayed first spawn. These populations run without nearby players and are not
+minus 60 through plus 59 minute adjustment.
+
+`RandomRespawn` is a GX rule, not the original minute window. The boss keeps
+its normal timing; every appearance rolls an optional chance percent and picks
+one of up to 16 positions, never the previous one twice in a row. A failed
+roll retries after the first phase's own respawn (Attackspecial3, at least a
+minute). Without a percent the boss always appears. In a party or guild
+instance the roll happens once at creation and a killed boss does not return.
+A legacy `(minutes,range)` pair is accepted and ignored. These populations run without nearby players and are not
 saved as relic Keeps. Party/guild instances get independent boss state.
 
 ## Client presentation and protocol

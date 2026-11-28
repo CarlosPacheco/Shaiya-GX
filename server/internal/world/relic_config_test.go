@@ -24,7 +24,7 @@ func TestOriginalObeliskConfiguration(t *testing.T) {
 	if cfg.relics[5].initial != 1 || cfg.relics[6].initial != 2 || cfg.relics[7].key != 18<<16|1 {
 		t.Fatal("country/key decoding")
 	}
-	if b := cfg.bosses[23]; !b.random || len(b.mobs) != 1 || b.mobs[0] != 2414 {
+	if b := cfg.bosses[23]; !b.random || len(b.mobs) != 1 || b.mobs[0] != 2414 || len(b.positions) != 3 {
 		t.Fatalf("random boss %+v", b)
 	}
 	t.Logf("original configuration: %d relics, %d bosses, %d portal declarations", len(cfg.relics), len(cfg.bosses), len(cfg.portals))
