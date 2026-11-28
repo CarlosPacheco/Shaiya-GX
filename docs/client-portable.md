@@ -48,7 +48,7 @@ Source, build instructions and third-party font sources: https://github.com/Spel
 ## Updating existing client data
 
 Update GX Server and the client together and preserve the existing server runtime database.
-See the [gx-v0.1.22 upgrade guide](releases/gx-v0.1.22-upgrade.md).
+See the [gx-v0.1.23 upgrade guide](releases/gx-v0.1.23-upgrade.md).
 
 To update an older installation with the GitHub binaries, close the client and
 run the following commands from a source checkout. Set `ORIGINAL_CLIENT` to the

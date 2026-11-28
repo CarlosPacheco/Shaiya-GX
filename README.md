@@ -14,7 +14,7 @@ game data, external fonts and the development database.**
 Requires a 64-bit OS and OpenGL 4.5. The server includes development test accounts;
 preserve your existing runtime database when upgrading.
 
-**Latest binary release: [gx-v0.1.22](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.22).**
+**Latest binary release: [gx-v0.1.23](https://github.com/Spelunkern/Shaiya-GX/releases/tag/gx-v0.1.23).**
 
 [Setup and requirements](docs/client-portable.md) · [GitHub binary updates (without client game data)](https://github.com/Spelunkern/Shaiya-GX/releases/latest)
 
