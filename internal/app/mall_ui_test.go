@@ -40,8 +40,8 @@ func TestMallOffersPurchaseWithoutCatalogHandshake(t *testing.T) {
 	a.mallUI.Selected = 0
 	x, y := a.mallUI.Origin(1024, 768)
 	click := func() {
-		a.updateMall(&platform.Input{MouseX: x + 295, MouseY: y + 410, Pressed: true, MouseDown: true}, 1024, 768)
-		a.updateMall(&platform.Input{MouseX: x + 295, MouseY: y + 410, Clicked: true}, 1024, 768)
+		a.updateMall(&platform.Input{MouseX: x + ui.MallBuyX + 8, MouseY: y + 410, Pressed: true, MouseDown: true}, 1024, 768)
+		a.updateMall(&platform.Input{MouseX: x + ui.MallBuyX + 8, MouseY: y + 410, Clicked: true}, 1024, 768)
 	}
 	click()
 	if !a.mallConfirm.Visible {

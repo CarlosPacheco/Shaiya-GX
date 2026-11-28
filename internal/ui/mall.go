@@ -74,13 +74,13 @@ func NewMall(t Textures, blank *render.Texture) (*Mall, error) {
 	}
 	tex := ld.get("ins_market_button.png")
 	for i, b := range []*Button{&m.buy, &m.gift} {
-		*b = Button{Tex: tex, OffX: MallBuyX + i*mallButtonStep, OffY: 401, DrawW: 128, DrawH: 32, HitW: 86, HitH: 26}
+		*b = Button{Tex: tex, OffX: []int{MallBuyX, MallGiftX}[i], OffY: 401, DrawW: 128, DrawH: 32, HitW: 86, HitH: 26}
 		for state, row := range []int{0, 1, 2, 2, 3} {
 			b.UV[state] = UV{float32(i) / 2, float32(row) / 8, float32(i+1) / 2, float32(row+1) / 8}
 		}
 	}
 	m.giftBox = Button{Tex: ld.get("ins_market_store_button.png"), OffX: MallGiftBoxX, OffY: 401, DrawW: 128, DrawH: 32, HitW: 107, HitH: 26, UV: FourRowUV}
-	m.cancel = Button{Tex: ld.get("cancel_button.png"), OffX: MallBuyX + 2*mallButtonStep, OffY: 401, DrawW: 128, DrawH: 32, HitW: 65, HitH: 25, UV: FourRowUV}
+	m.cancel = Button{Tex: ld.get("cancel_button.png"), OffX: MallBuyX + mallButtonStep, OffY: 401, DrawW: 128, DrawH: 32, HitW: 65, HitH: 25, UV: FourRowUV}
 	closeTex := ld.get("talk1_close_button.png")
 	m.close = nativeClose(closeTex, 554+mallExtra, 3)
 	m.giftClose = nativeClose(closeTex, 307, 4)
@@ -115,10 +115,10 @@ const (
 	mallTrack       = 320 - mallListTop - 20
 	mallProductWide = 174
 	mallPointsY     = 337
-	// Bottom buttons, grouped and centred.
-	MallGiftBoxX = (MallWidth - 362) / 2
-	MallBuyX     = MallGiftBoxX + 113
-	MallGiftX    = MallBuyX + mallButtonStep
+	// Bottom buttons: gifts on the left, buy and cancel on the right.
+	MallGiftBoxX = 24
+	MallGiftX    = MallGiftBoxX + 113
+	MallBuyX     = MallWidth - 91 - mallButtonStep
 )
 
 func MallProductRect(index int) (int, int) { return 19 + (index%2)*mallColumn, mallListTop + (index/2)*65 }
