@@ -190,7 +190,7 @@ func testOrderedEffectMultiDrawGL(t *testing.T, options InitOptions) {
 			}
 			if indirect != 0 {
 				now, calls := draw(compact, indirect)
-				if diff := maxRGBDiff(reference, now); calls != 1 || diff < 0 || diff > 2 {
+				if diff := maxRGBDiff(reference, now); calls != 1 || diff < 0 || diff > effectPremulTolerance {
 					t.Fatalf("multi-draw differs with clip=%v reverse=%v: calls=%d maxRGBDiff=%d", clip, reverse, calls, diff)
 				}
 			}
@@ -302,7 +302,7 @@ func testOrderedEffectPartialFallbackGL(t *testing.T, options InitOptions) {
 	if serialCalls != 8 || partialCalls != 3 {
 		t.Fatalf("expected 8 serial calls -> 3 ordered partial-indirect calls (indirect, serial, merged indirect), got %d -> %d", serialCalls, partialCalls)
 	}
-	if diff := maxRGBDiff(reference, got); diff < 0 || diff > 2 {
+	if diff := maxRGBDiff(reference, got); diff < 0 || diff > effectPremulTolerance {
 		t.Fatalf("partial indirect effect fallback changed blended pixels (maxRGBDiff=%d)", diff)
 	}
 	if code := gl.GetError(); code != gl.NO_ERROR {
@@ -328,3 +328,7 @@ func maxRGBDiff(a, b []byte) int {
 	}
 	return best
 }
+
+// effectPremulTolerance bounds the 8-bit rounding of premultiplying in the
+// shader instead of in the blender, accumulated over the stacked test layers.
+const effectPremulTolerance = 6

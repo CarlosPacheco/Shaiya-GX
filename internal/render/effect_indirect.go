@@ -88,6 +88,7 @@ func (p *effectIndirect) plan(draws []queuedEffect) bool {
 	}
 	p.commands, p.materials, p.runs = p.commands[:0], p.materials[:0], p.runs[:0]
 	p.reclaimDead = false
+	premul := !effectsReadDestAlpha(draws)
 	for i, draw := range draws {
 		loc, ok := p.meshLocation(draw.mesh, draw.geometry)
 		if !ok {
@@ -120,7 +121,10 @@ func (p *effectIndirect) plan(draws []queuedEffect) bool {
 			}
 		}
 		indexType := draw.mesh.indexType
-		runSrc, runDst, blendMode := effectPremulBlend(draw.src, draw.dst)
+		runSrc, runDst, blendMode := draw.src, draw.dst, uint32(0)
+		if premul {
+			runSrc, runDst, blendMode = effectPremulBlend(draw.src, draw.dst)
+		}
 		if n := len(p.runs); n == 0 || p.runs[n-1].serial >= 0 || p.runs[n-1].indexType != indexType || p.runs[n-1].src != runSrc || p.runs[n-1].dst != runDst {
 			p.newRun(indexType, runSrc, runDst)
 		}
@@ -152,6 +156,22 @@ func (p *effectIndirect) plan(draws []queuedEffect) bool {
 	return true
 }
 
+// effectsReadDestAlpha reports a pass that blends with the target's alpha.
+// Premultiplied runs leave a different destination alpha than the native
+// SRC_ALPHA factors, so such passes keep the original per-blend runs.
+func effectsReadDestAlpha(draws []queuedEffect) bool {
+	for _, d := range draws {
+		for _, f := range [2]uint32{d.src, d.dst} {
+			if f == gl.DST_ALPHA || f == gl.ONE_MINUS_DST_ALPHA || f == gl.SRC_ALPHA_SATURATE {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// effectPremulBlend maps the common effect blends to one premultiplied
+// ONE/ONE_MINUS_SRC_ALPHA run; the shader applies the per-draw mode.
 func effectPremulBlend(src, dst uint32) (runSrc, runDst, mode uint32) {
 	switch {
 	case src == gl.SRC_ALPHA && dst == gl.ONE_MINUS_SRC_ALPHA:

@@ -56,3 +56,24 @@ func TestEffectPremulMergesBlendRuns(t *testing.T) {
 		}
 	}
 }
+
+func TestEffectDestAlphaKeepsNativeRuns(t *testing.T) {
+	m := &Mesh{Count: 6, indexType: gl.UNSIGNED_SHORT, indexBytes: 2, immutable: true, vbo: 1, bytes: 256}
+	tex := &Texture{ID: 1, samplingViews: [4]textureSamplingView{{id: 21, handle: 2001}, {id: 22, handle: 2002}}}
+	p := effectIndirect{program: 1, bound: true, geometry: map[*Mesh]effectIndirectLocation{m: {vertex: 5}}}
+	draws := []queuedEffect{
+		{mesh: m, texture: tex, src: gl.SRC_ALPHA, dst: gl.ONE_MINUS_SRC_ALPHA, first: 0, end: 1},
+		{mesh: m, texture: tex, src: gl.SRC_ALPHA, dst: gl.ONE, first: 1, end: 2},
+		{mesh: m, texture: tex, src: gl.DST_ALPHA, dst: gl.ONE, first: 2, end: 3},
+		{mesh: m, texture: tex, src: gl.SRC_ALPHA, dst: gl.ONE_MINUS_SRC_ALPHA, first: 3, end: 4},
+		{mesh: m, texture: tex, src: gl.SRC_ALPHA, dst: gl.ONE_MINUS_SRC_ALPHA, first: 4, end: 5},
+	}
+	if !p.plan(draws) || len(p.runs) != 4 {
+		t.Fatalf("runs = %d, want the 4 native blend runs", len(p.runs))
+	}
+	for i := range p.materials {
+		if p.materials[i][3]>>30 != 0 {
+			t.Fatalf("material %d premultiplied in a dest-alpha pass", i)
+		}
+	}
+}

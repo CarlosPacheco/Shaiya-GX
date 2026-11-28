@@ -100,6 +100,10 @@ void main() {
 	#else
 	c = texture(sampler2D(vTexture), vUV) * vColor;
 	#endif
+	// Fixed-point targets clamp the fragment before the native blend factors.
+	if (vBlendMode != 0u) {
+		c = clamp(c, 0.0, 1.0);
+	}
 	if (vBlendMode == 1u) {
 		c.rgb *= c.a;
 	} else if (vBlendMode == 2u) {
