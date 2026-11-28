@@ -172,6 +172,7 @@ func (m *SkinMesh) Delete() {
 
 // Skinner draws skinned meshes with the shared fragment stage.
 type Skinner struct {
+	crowdOrder                                         []int
 	uniformWorld, uniformView, uniformVP               M4
 	camera                                             *Scene3D
 	view, projection                                   M4

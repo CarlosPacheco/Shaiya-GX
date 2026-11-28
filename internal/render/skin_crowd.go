@@ -102,7 +102,9 @@ func (k *Skinner) DrawCrowd(s *Scene3D, groups []SkinGroup, instances []SkinInst
 	written := palettes.bind()
 	gl.FrontFace(gl.CW)
 	gl.CullFace(gl.BACK)
-	for _, group := range groups {
+	k.crowdOrder = skinGroupOrder(k.crowdOrder, groups)
+	for _, gi := range k.crowdOrder {
+		group := groups[gi]
 		gl.Uniform1i(k.uCrowdBase, int32(group.First+1))
 		gl.Uniform1f(k.uRef, group.AlphaRef)
 		light := ambient

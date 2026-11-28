@@ -1,6 +1,8 @@
 package render
 
 import (
+	"cmp"
+	"slices"
 	"unsafe"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/render/gl"
@@ -77,6 +79,7 @@ type SkinCrowd struct {
 	commands                                []indexedDrawCommand
 	materials                               []skinDrawMaterial
 	runs                                    []skinDrawRun
+	order                                   []int
 }
 
 func (b *SkinCrowd) meshLocation(m *SkinMesh) (skinLocation, bool) {
@@ -102,7 +105,9 @@ func (b *SkinCrowd) plan(groups []SkinGroup, ambient float32, bound bool) bool {
 		b.meshes = make(map[*SkinMesh]skinLocation)
 	}
 	b.commands, b.materials, b.runs = b.commands[:0], b.materials[:0], b.runs[:0]
-	for _, group := range groups {
+	b.order = skinGroupOrder(b.order, groups)
+	for _, gi := range b.order {
+		group := groups[gi]
 		texture := diffuseTexture(group.Texture)
 		at, ok := b.meshLocation(group.Mesh)
 		if !ok {
@@ -210,4 +215,35 @@ func (b *SkinCrowd) Delete() {
 	b.indices.delete()
 	removeGPUBytes(b.commandBytes)
 	*b = SkinCrowd{}
+}
+
+// skinGroupOrder returns the groups' draw order, stably sorted by index type,
+// face culling and texture. The batch lists groups in actor order, so helmets
+// and cloaks (two-sided) interleave with ordinary parts; unsorted, every switch
+// split the multi-draw into a new run with a GL_CULL_FACE toggle, hundreds per
+// crowded frame (very costly on AMD drivers). Opaque and alpha-tested groups
+// are depth resolved, so their order does not change the image.
+func skinGroupOrder(order []int, groups []SkinGroup) []int {
+	order = order[:0]
+	for i := range groups {
+		order = append(order, i)
+	}
+	key := func(g *SkinGroup) (uint32, bool, uint32) {
+		return g.Mesh.indexType, g.TwoSided, diffuseTexture(g.Texture).ID
+	}
+	slices.SortStableFunc(order, func(a, b int) int {
+		ia, ta, xa := key(&groups[a])
+		ib, tb, xb := key(&groups[b])
+		if ia != ib {
+			return cmp.Compare(ia, ib)
+		}
+		if ta != tb {
+			if !ta {
+				return -1
+			}
+			return 1
+		}
+		return cmp.Compare(xa, xb)
+	})
+	return order
 }

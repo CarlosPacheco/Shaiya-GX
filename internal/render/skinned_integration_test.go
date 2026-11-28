@@ -93,8 +93,10 @@ func testSkinIndirectGL(t *testing.T, disableBindless bool) {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		ResetDrawCalls()
 		if indirect {
-			if ok, _ := k.DrawCrowdIndirect(s, &cache, groups, instances, &palettes, .7); !ok || DrawCalls() != 3 {
-				t.Fatal("four groups did not use the three ordered raster runs")
+			// Sorted by index width and culling: the three 16-bit culled groups
+			// share one run, the 32-bit two-sided group takes the second.
+			if ok, _ := k.DrawCrowdIndirect(s, &cache, groups, instances, &palettes, .7); !ok || DrawCalls() != 2 {
+				t.Fatal("four groups did not use the two sorted raster runs", DrawCalls())
 			}
 		} else {
 			k.DrawCrowd(s, groups, instances, &palettes, .7)
