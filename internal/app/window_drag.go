@@ -109,7 +109,7 @@ func (a *App) updateWindowDrag(in *platform.Input, w, h int) bool {
 			}
 		}
 		x, y := a.mallUI.Origin(w, h)
-		if startFrame(&a.mallUI.Position, x, y, ui.MallWidth, ui.MallHeight, frameFree(a.mallUI, x, y, nil, [4]int{16, 164, 540, 195}, [4]int{565, 184, 15, 156}, [4]int{10, 54, 312, 23})) {
+		if startFrame(&a.mallUI.Position, x, y, ui.MallWidth, ui.MallHeight, frameFree(a.mallUI, x, y, nil, ui.MallControlRects()...)) {
 			return true
 		}
 		if pointInside(in, x, y, ui.MallWidth, ui.MallHeight) {

@@ -18,17 +18,17 @@ func TestMallSelectionScrollingAndGiftClaim(t *testing.T) {
 		a, _ := m.Update(&platform.Input{Clicked: true, MouseX: x + dx, MouseY: y + dy}, 1024, 768, count, busy)
 		return a
 	}
-	if a := click(295, 410, 20, false); a != MallNone {
+	if a := click(MallBuyX+8, 410, 20, false); a != MallNone {
 		t.Fatal("buy without selection", a)
 	}
-	click(30, 175, 20, false)
+	click(30, 95, 20, false)
 	if m.Selected != 0 {
 		t.Fatal("product selection", m.Selected)
 	}
-	if a := click(295, 410, 20, true); a != MallNone {
+	if a := click(MallBuyX+8, 410, 20, true); a != MallNone {
 		t.Fatal("busy purchase accepted")
 	}
-	if a := click(295, 410, 20, false); a != MallBuy {
+	if a := click(MallBuyX+8, 410, 20, false); a != MallBuy {
 		t.Fatal("purchase action", a)
 	}
 	m.Update(&platform.Input{MouseX: x + 50, MouseY: y + 200, Wheel: -120}, 1024, 768, 20, false)
@@ -40,7 +40,7 @@ func TestMallSelectionScrollingAndGiftClaim(t *testing.T) {
 	if m.Scroll < 5 {
 		t.Fatal("scrollbar did not seek", m.Scroll)
 	}
-	if a := click(35, 410, 20, false); a != MallShowGifts || !m.GiftOpen {
+	if a := click(MallGiftBoxX+10, 410, 20, false); a != MallShowGifts || !m.GiftOpen {
 		t.Fatal("gift box action", a)
 	}
 	gx, gy := m.GiftOrigin(1024, 768)

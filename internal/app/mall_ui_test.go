@@ -13,8 +13,8 @@ func TestMallPointerDoesNotReachWorld(t *testing.T) {
 	a.mall.open = true
 	a.mall.products[0] = []ui.MallProduct{{Code: "test", Name: "Product"}}
 	x, y := a.mallUI.Origin(1024, 768)
-	pressed := a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + 25, MouseY: y + 175}, 1024, 768)
-	released := a.worldControls(&platform.Input{Clicked: true, MouseX: x + 25, MouseY: y + 175}, 1024, 768)
+	pressed := a.worldControls(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + 25, MouseY: y + 95}, 1024, 768)
+	released := a.worldControls(&platform.Input{Clicked: true, MouseX: x + 25, MouseY: y + 95}, 1024, 768)
 	if pressed.Pressed || released.Clicked || a.mallUI.Selected != 0 {
 		t.Fatal("product click leaked or was not selected")
 	}

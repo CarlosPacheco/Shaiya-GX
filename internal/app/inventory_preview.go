@@ -34,6 +34,11 @@ func (a *App) drawInventoryPreview(w, h int) {
 }
 
 func (a *App) drawEquipmentActor(actor *scene.Character, ap scene.Appearance, x, y, width, height, w, h int) {
+	a.drawTurnedActor(actor, ap, x, y, width, height, w, h, 0)
+}
+
+// drawTurnedActor is drawEquipmentActor turned by yaw radians.
+func (a *App) drawTurnedActor(actor *scene.Character, ap scene.Appearance, x, y, width, height, w, h int, yaw float32) {
 	a.sprites.Flush()
 	render.InViewport(x, y, width, height, h, func() {
 		s := a.actorPreviewScene()
@@ -47,7 +52,7 @@ func (a *App) drawEquipmentActor(actor *scene.Character, ap scene.Appearance, x,
 		s.Begin()
 		scale := ap.ScaleMatrix()
 		actor.UIActor = true
-		actor.World = scale.Mul(render.Basis(render.V3{}, render.V3{0, 0, -1}, render.V3{0, 1, 0}))
+		actor.World = scale.Mul(render.Basis(render.V3{}, render.V3{float32(math.Sin(float64(yaw))), 0, -float32(math.Cos(float64(yaw)))}, render.V3{0, 1, 0}))
 		actor.Update(float32(a.frameDT))
 		actor.Draw(a.skinner, &s)
 		s.End()

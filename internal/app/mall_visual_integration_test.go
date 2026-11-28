@@ -159,11 +159,11 @@ func TestMallOriginalAssetsGL(t *testing.T) {
 		a.updateMall(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + dx, MouseY: y + dy}, 1024, 768)
 		a.updateMall(&platform.Input{Clicked: true, MouseX: x + dx, MouseY: y + dy}, 1024, 768)
 	}
-	click(30, 175)
+	click(30, 95)
 	if a.mallUI.Selected != 0 {
 		t.Fatal("product not selected")
 	}
-	click(295, 410)
+	click(ui.MallBuyX+8, 410)
 	if !a.mallConfirm.Visible || a.mall.modal != ui.MallBuy {
 		t.Fatal("buy confirmation missing")
 	}
@@ -171,7 +171,7 @@ func TestMallOriginalAssetsGL(t *testing.T) {
 	if a.mallConfirm.Visible || a.mall.pending != 0 {
 		t.Fatal("cancelled purchase sent")
 	}
-	click(35, 410)
+	click(ui.MallGiftBoxX+10, 410)
 	if !a.mallUI.GiftOpen {
 		t.Fatal("gift box did not open")
 	}

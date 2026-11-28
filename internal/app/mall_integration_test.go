@@ -76,7 +76,7 @@ func TestMallAgainstRapture(t *testing.T) {
 			t.Fatal("product missing", code)
 		}
 		if a1.mallUI.Category != category {
-			click(a1, 20+category*128, 135)
+			click(a1, 20+category*92, 52)
 		}
 		a1.mallUI.Scroll = max(0, index/2-2)
 		x, y := ui.MallProductRect(index - a1.mallUI.Scroll*2)
@@ -109,7 +109,7 @@ func TestMallAgainstRapture(t *testing.T) {
 	}
 	before := len(s1.Inventory)
 	selectProduct("AP_1")
-	click(a1, 295, 410)
+	click(a1, ui.MallBuyX+8, 410)
 	if !a1.mallConfirm.Visible || a1.mall.modal != ui.MallBuy {
 		t.Fatal("buy dialog missing")
 	}
@@ -130,7 +130,7 @@ func TestMallAgainstRapture(t *testing.T) {
 	if s1.Mall.LastPurchase.Result != 1 || s1.Mall.Points != initialPoints-price {
 		t.Fatal("invalid product", s1.Mall.LastPurchase)
 	}
-	click(a1, 395, 410)
+	click(a1, ui.MallGiftX+8, 410)
 	if !a1.mallConfirm.Visible || a1.mall.modal != ui.MallGift {
 		t.Fatal("gift dialog missing")
 	}
@@ -153,7 +153,7 @@ func TestMallAgainstRapture(t *testing.T) {
 		t.Fatal("gift not delivered", s2.Mall.Stored)
 	}
 	before = len(s2.Inventory)
-	click(a2, 35, 410)
+	click(a2, ui.MallGiftBoxX+10, 410)
 	if !a2.mallUI.GiftOpen {
 		t.Fatal("gift box did not open")
 	}

@@ -94,8 +94,8 @@ func (a *App) drawMallPreview(w, h int) {
 		a.drawMallVehicle(p.vehicle, x+px, y+py, pw, ph, w, h)
 	case p.actor != nil:
 		// Same framing as the inventory, centred in the wider box.
-		fw := min(pw, ph*136/217)
-		a.drawEquipmentActor(p.actor, ap, x+px+(pw-fw)/2, y+py+6, fw, ph-12, w, h)
+		fw := min(pw, ph*136/200)
+		a.drawTurnedActor(p.actor, ap, x+px+(pw-fw)/2, y+py, fw, ph, w, h, a.mallUI.PreviewYaw)
 	}
 }
 
@@ -122,7 +122,7 @@ func (a *App) drawMallVehicle(v *scene.Vehicle, x, y, width, height, w, h int) {
 		s.LightDir = render.V3{-1, -1, -1}
 		s.CharacterAmbient = 1
 		s.Begin()
-		yaw := float32(-35 * math.Pi / 180)
+		yaw := float32(-35*math.Pi/180) + a.mallUI.PreviewYaw
 		facing := render.V3{float32(math.Sin(float64(yaw))), 0, -float32(math.Cos(float64(yaw)))}
 		v.UIActor = true
 		v.World = render.Basis(render.V3{-center[0], 0, -center[2]}, facing, render.V3{0, 1, 0})

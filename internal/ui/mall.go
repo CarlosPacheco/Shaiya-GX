@@ -10,7 +10,8 @@ import (
 	"github.com/Spelunkern/Shaiya-GX/internal/render"
 )
 
-const MallWidth, MallHeight = 580, 446
+// GX widens the original 580 px sheet by mallExtra for the preview.
+const MallWidth, MallHeight = 580 + mallExtra, 446
 const GiftBoxWidth, GiftBoxHeight = 333, 315
 
 type MallProduct struct {
@@ -40,7 +41,10 @@ type Mall struct {
 	tabs                                         [4]Button
 	buy, gift, giftBox, close, cancel, giftClose Button
 	arrows                                       [2]Button
-	scrolling                                    bool
+	scrolling, turning                           bool
+	turnX                                        int
+	// PreviewYaw turns the previewed character or mount (drag to rotate).
+	PreviewYaw float32
 	Category, Scroll, Selected, GiftPage         int
 	GiftOpen                                     bool
 	heldProduct, heldGift, heldTab               int
@@ -54,7 +58,7 @@ func NewMall(t Textures, blank *render.Texture) (*Mall, error) {
 	m := &Mall{frame: ld.get("ins_market.png"), giftFrame: ld.get("ins_market_store.png"), scrollbar: ld.get("scrollbar.png"), blank: blank, Selected: -1, heldProduct: -1, heldGift: -1, heldTab: -1, selectedGift: -1, lastGift: -1}
 	for i := range m.arrows {
 		b := &m.arrows[i]
-		*b = Button{Tex: m.scrollbar, OffX: 565 + mallListShift, OffY: 164 + i*176, DrawW: 16, DrawH: 32, HitW: 13, HitH: 19}
+		*b = Button{Tex: m.scrollbar, OffX: 565 + mallListShift, OffY: mallListTop + i*(340-mallListTop), DrawW: 16, DrawH: 32, HitW: 13, HitH: 19}
 		for state, col := range []int{0, 1, 1, 1, 2} {
 			b.UV[state] = UV{float32(col) / 8, float32(i) / 2, float32(col+1) / 8, float32(i+1) / 2}
 		}
@@ -63,22 +67,22 @@ func NewMall(t Textures, blank *render.Texture) (*Mall, error) {
 	for i := range m.tabs {
 		b := &m.tabs[i]
 		// GX: the four tabs are compacted over the product list.
-		*b = Button{Tex: tabs, OffX: 16 + i*mallTabStep, OffY: 130, DrawW: mallTabStep * 4 / 3, DrawH: 32, HitW: mallTabStep, HitH: 26, Toggle: true}
+		*b = Button{Tex: tabs, OffX: 16 + i*mallTabStep, OffY: 46, DrawW: mallTabStep * 4 / 3, DrawH: 32, HitW: mallTabStep, HitH: 26, Toggle: true}
 		for state, row := range []int{0, 1, 2, 1, 3} {
 			b.UV[state] = UV{float32(i) / 4, float32(row) / 4, float32(i+1) / 4, float32(row+1) / 4}
 		}
 	}
 	tex := ld.get("ins_market_button.png")
 	for i, b := range []*Button{&m.buy, &m.gift} {
-		*b = Button{Tex: tex, OffX: 287 + i*101, OffY: 401, DrawW: 128, DrawH: 32, HitW: 86, HitH: 26}
+		*b = Button{Tex: tex, OffX: MallBuyX + i*mallButtonStep, OffY: 401, DrawW: 128, DrawH: 32, HitW: 86, HitH: 26}
 		for state, row := range []int{0, 1, 2, 2, 3} {
 			b.UV[state] = UV{float32(i) / 2, float32(row) / 8, float32(i+1) / 2, float32(row+1) / 8}
 		}
 	}
-	m.giftBox = Button{Tex: ld.get("ins_market_store_button.png"), OffX: 24, OffY: 401, DrawW: 128, DrawH: 32, HitW: 107, HitH: 26, UV: FourRowUV}
-	m.cancel = Button{Tex: ld.get("cancel_button.png"), OffX: 489, OffY: 401, DrawW: 128, DrawH: 32, HitW: 65, HitH: 25, UV: FourRowUV}
+	m.giftBox = Button{Tex: ld.get("ins_market_store_button.png"), OffX: MallGiftBoxX, OffY: 401, DrawW: 128, DrawH: 32, HitW: 107, HitH: 26, UV: FourRowUV}
+	m.cancel = Button{Tex: ld.get("cancel_button.png"), OffX: MallBuyX + 2*mallButtonStep, OffY: 401, DrawW: 128, DrawH: 32, HitW: 65, HitH: 25, UV: FourRowUV}
 	closeTex := ld.get("talk1_close_button.png")
-	m.close = nativeClose(closeTex, 554, 3)
+	m.close = nativeClose(closeTex, 554+mallExtra, 3)
 	m.giftClose = nativeClose(closeTex, 307, 4)
 	return m, ld.err
 }
@@ -91,7 +95,7 @@ func (m *Mall) GiftOrigin(w, h int) (int, int) {
 func (m *Mall) Reset() {
 	m.Category, m.Scroll, m.Selected, m.GiftPage = 0, 0, -1, 0
 	m.GiftOpen = false
-	m.scrolling = false
+	m.scrolling, m.turning, m.PreviewYaw = false, false, 0
 	m.heldProduct, m.heldGift, m.heldTab, m.selectedGift, m.lastGift = -1, -1, -1, -1, -1
 }
 
@@ -103,17 +107,24 @@ const (
 	mallListRight   = 386
 	mallListShift   = mallListRight - 12 - 556 // scrollbar strip moved left
 	mallListLeft    = 16
-	mallListTop     = 164
-	mallListBottom  = 359
+	mallListTop     = 82
+	mallListRows    = 4
+	mallListBottom  = mallListTop + mallListRows*65
+	mallExtra       = 120
+	mallButtonStep  = 92
+	mallTrack       = 320 - mallListTop - 20
 	mallProductWide = 174
-	mallPointsX     = mallListRight - 196
-	mallPointsY     = 46
+	mallPointsY     = 324
+	// Bottom buttons, grouped and centred.
+	MallGiftBoxX = (MallWidth - 362) / 2
+	MallBuyX     = MallGiftBoxX + 113
+	MallGiftX    = MallBuyX + mallButtonStep
 )
 
-func MallProductRect(index int) (int, int) { return 19 + (index%2)*mallColumn, 164 + (index/2)*65 }
+func MallProductRect(index int) (int, int) { return 19 + (index%2)*mallColumn, mallListTop + (index/2)*65 }
 
 // MallPreviewRect is the character viewport, relative to the window.
-func MallPreviewRect() (x, y, w, h int) { return mallListRight + 14, 47, 566 - mallListRight - 14, 315 }
+func MallPreviewRect() (x, y, w, h int) { return mallListRight + 14, 47, 566 + mallExtra - mallListRight - 14, 270 }
 
 func (m *Mall) listCell(x, y, mouseX, mouseY, count int) int {
 	if mouseX < x+mallListLeft || mouseX >= x+mallListLeft+2*mallColumn || mouseY < y+mallListTop || mouseY >= y+mallListBottom {
@@ -162,7 +173,7 @@ func (m *Mall) Update(in *platform.Input, w, h, count int, busy bool) (MallActio
 		}
 	}
 	insideList := in.MouseX >= x+mallListLeft && in.MouseX < x+mallListRight && in.MouseY >= y+mallListTop && in.MouseY < y+mallListBottom
-	maxScroll := max(0, (count+1)/2-3)
+	maxScroll := max(0, (count+1)/2-mallListRows)
 	for i := range m.arrows {
 		b := &m.arrows[i]
 		b.OriginX, b.OriginY, b.Disabled = x, y, maxScroll == 0 || i == 0 && m.Scroll == 0 || i == 1 && m.Scroll >= maxScroll
@@ -170,12 +181,12 @@ func (m *Mall) Update(in *platform.Input, w, h, count int, busy bool) (MallActio
 			m.Scroll = max(0, min(maxScroll, m.Scroll+i*2-1))
 		}
 	}
-	if maxScroll > 0 && in.Pressed && in.MouseX >= x+565+mallListShift && in.MouseX < x+580+mallListShift && in.MouseY >= y+184 && in.MouseY < y+340 {
+	if maxScroll > 0 && in.Pressed && in.MouseX >= x+565+mallListShift && in.MouseX < x+580+mallListShift && in.MouseY >= y+mallListTop+20 && in.MouseY < y+340 {
 		m.scrolling = true
 	}
 	if m.scrolling {
 		if in.MouseDown || in.Clicked {
-			m.Scroll = max(0, min(maxScroll, int(math.Round(float64(in.MouseY-y-184)*float64(maxScroll)/148))))
+			m.Scroll = max(0, min(maxScroll, int(math.Round(float64(in.MouseY-y-mallListTop-20)*float64(maxScroll)/mallTrack))))
 		}
 		if in.Clicked || !in.MouseDown {
 			m.scrolling = false
@@ -189,6 +200,17 @@ func (m *Mall) Update(in *platform.Input, w, h, count int, busy bool) (MallActio
 		}
 		m.Scroll = max(0, min(m.Scroll, maxScroll))
 	}
+	px, py, pw, ph := MallPreviewRect()
+	if in.Pressed && in.MouseX >= x+px && in.MouseX < x+px+pw && in.MouseY >= y+py && in.MouseY < y+py+ph {
+		m.turning, m.turnX = true, in.MouseX
+	}
+	if m.turning {
+		m.PreviewYaw += float32(in.MouseX-m.turnX) * .012
+		m.turnX = in.MouseX
+		if in.Clicked || !in.MouseDown {
+			m.turning = false
+		}
+	}
 	hit := m.listCell(x, y, in.MouseX, in.MouseY, count)
 	if in.Pressed {
 		m.heldProduct = hit
@@ -200,7 +222,7 @@ func (m *Mall) Update(in *platform.Input, w, h, count int, busy bool) (MallActio
 		m.heldProduct = -1
 	}
 	inside := in.MouseX >= x && in.MouseX < x+MallWidth && in.MouseY >= y && in.MouseY < y+MallHeight
-	return MallNone, m.scrolling || inside && (in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.RightDown || in.Wheel != 0)
+	return MallNone, m.scrolling || m.turning || inside && (in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.RightDown || in.Wheel != 0)
 }
 
 // piece copies a frame region (sx,sy,sw,sh) to (dx,dy) at size (dw,dh).
@@ -217,47 +239,65 @@ func (m *Mall) line(s *render.Sprites, x, y, w, h int, c [4]float32) {
 // drawLayout rebuilds the original sheet into the GX layout: a points panel
 // in place of the identity panel, a narrower list and the preview box.
 func (m *Mall) drawLayout(s *render.Sprites, x, y int) {
-	s.Draw(m.frame, float32(x), float32(y), MallWidth, MallHeight, 0, 0, float32(MallWidth)/1024, float32(MallHeight)/512, white)
-	// Wall behind the old identity panel.
+	s.Draw(m.frame, float32(x), float32(y), 580, MallHeight, 0, 0, 580.0/1024, float32(MallHeight)/512, white)
+	// Widen: the right part of the sheet moves out, the title recentres.
+	m.piece(s, x, y, 360+mallExtra, 0, 220, MallHeight, 360, 0, 220, MallHeight)
+	m.piece(s, x, y, 360, 0, mallExtra, MallHeight, 360, 0, mallExtra, MallHeight)
+	m.piece(s, x, y, 240, 0, 60, 40, 380, 0, 60, 40)
+	m.piece(s, x, y, 240+mallExtra/2, 0, 120, 40, 240, 0, 120, 40)
+	// Wall over the old panels.
 	for dx := 14; dx < mallListRight+14; dx += 126 {
 		w := min(126, mallListRight+14-dx)
-		m.piece(s, x, y, dx, 44, w, 82, 238, 44, w, 82)
+		for _, r := range [][2]int{{44, 82}, {126, 82}, {208, 82}, {290, 74}} {
+			m.piece(s, x, y, dx, r[0], w, r[1], 238, 44, w, r[1])
+		}
 	}
-	// Points panel: the points row and the bottom edge of the original one.
-	m.piece(s, x, y, mallPointsX, mallPointsY, 196, 36, 372, 46, 196, 36)
-	m.piece(s, x, y, mallPointsX, mallPointsY+36, 196, 4, 372, 119, 196, 4)
-	m.piece(s, x, y, mallPointsX+6, mallPointsY+6, 70, 18, 380, 84, 70, 18)
-	// List scrollbar strip and right border moved to the narrower list.
-	m.piece(s, x, y, mallListRight-12, 162, 12, 202, 556, 162, 12, 202)
-	// Wall between the list and the preview box; the tab band runs under it.
-	for _, r := range [][2]int{{44, 84}, {162, 82}, {244, 82}, {326, 38}} {
-		m.piece(s, x, y, mallListRight, r[0], 14, r[1], 238, 44, 14, r[1])
-	}
-	// Preview box over the right half.
+	// Tab band and the taller list box under it.
+	m.piece(s, x, y, 6, 42, mallListRight-6, 36, 6, 127, mallListRight-6, 36)
+	top := mallListTop - 2
+	m.piece(s, x, y, 16, top, mallListRight-28, 6, 16, 162, mallListRight-28, 6)
+	m.piece(s, x, y, 16, top+6, mallListRight-28, 357-top, 16, 168, mallListRight-28, 189)
+	m.piece(s, x, y, 16, 357, mallListRight-28, 7, 16, 357, mallListRight-28, 7)
+	m.piece(s, x, y, mallListRight-12, top, 12, 364-top, 556, 162, 12, 202)
+	// Preview box and the points panel under it.
 	px, py, pw, ph := MallPreviewRect()
 	m.piece(s, x, y, px, py, pw, ph, 20, 166, 260, 192)
 	edge := [4]float32{55.0 / 255, 55.0 / 255, 54.0 / 255, 1}
 	m.line(s, x+px-1, y+py-1, pw+2, 1, edge)
 	m.line(s, x+px-1, y+py-1, 1, ph+2, edge)
 	m.line(s, x+px+pw, y+py-1, 1, ph+2, edge)
-	m.line(s, x+px-1, y+py+ph, pw+2, 1, [4]float32{62.0 / 255, 62.0 / 255, 59.0 / 255, 1})
+	m.line(s, x+px-1, y+py+ph, pw+2, 1, edge)
+	// Wall under the preview, around the points panel.
+	for dx := px - 2; dx < px+pw+2; dx += 126 {
+		w := min(126, px+pw+2-dx)
+		m.piece(s, x, y, dx, py+ph+1, w, 364-py-ph, 238, 44, w, 364-py-ph)
+	}
+	ox := mallPointsX()
+	m.piece(s, x, y, ox, mallPointsY, 196, 36, 372, 46, 196, 36)
+	m.piece(s, x, y, ox, mallPointsY+36, 196, 4, 372, 119, 196, 4)
+	m.piece(s, x, y, ox+6, mallPointsY+6, 70, 18, 380, 84, 70, 18)
+}
+
+func mallPointsX() int {
+	px, _, pw, _ := MallPreviewRect()
+	return px + (pw-196)/2
 }
 
 func (m *Mall) Draw(s *render.Sprites, f *Font, w, h int, products []MallProduct, pointsLabel string, points uint32, pointsReady, busy bool) {
 	x, y := m.Origin(w, h)
 	m.drawLayout(s, x, y)
-	f.Draw(s, pointsLabel, x+mallPointsX+10, y+mallPointsY+8, white, 70)
+	f.Draw(s, pointsLabel, x+mallPointsX()+10, y+mallPointsY+8, white, 70)
 	pointText := "..."
 	if pointsReady {
 		pointText = fmt.Sprint(points)
 	}
-	f.Draw(s, pointText, x+mallPointsX+82, y+mallPointsY+7, white, 100)
+	f.Draw(s, pointText, x+mallPointsX()+82, y+mallPointsY+7, white, 100)
 	for i := range m.tabs {
 		b := &m.tabs[i]
 		b.OriginX, b.OriginY, b.Checked = x, y, i == m.Category
 		b.Draw(s)
 	}
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 2*mallListRows; i++ {
 		index := m.Scroll*2 + i
 		if index >= len(products) {
 			break
@@ -285,15 +325,15 @@ func (m *Mall) Draw(s *render.Sprites, f *Font, w, h int, products []MallProduct
 		b.OriginX, b.OriginY = x, y
 		b.Draw(s)
 	}
-	last := max(0, (len(products)+1)/2-3)
+	last := max(0, (len(products)+1)/2-mallListRows)
 	for i := range m.arrows {
 		b := &m.arrows[i]
 		b.OriginX, b.OriginY, b.Disabled = x, y, last == 0 || i == 0 && m.Scroll == 0 || i == 1 && m.Scroll >= last
 		b.Draw(s)
 	}
-	thumb := 184
+	thumb := mallListTop + 20
 	if last > 0 {
-		thumb += m.Scroll * 148 / last
+		thumb += m.Scroll * mallTrack / last
 	}
 	s.Draw(m.scrollbar, float32(x+565+mallListShift), float32(y+thumb), 13, 8, .5, 0, .5+13.0/128, 8.0/64, white)
 }
@@ -396,4 +436,11 @@ func wrapWords(f *Font, text string, width, lines int) []string {
 		out = append(out, line)
 	}
 	return out
+}
+
+// MallControlRects are the window areas that keep presses from dragging it:
+// the product list, its scrollbar and the rotating preview.
+func MallControlRects() [][4]int {
+	px, py, pw, ph := MallPreviewRect()
+	return [][4]int{{mallListLeft, mallListTop, 2 * mallColumn, mallListBottom - mallListTop}, {565 + mallListShift, mallListTop, 15, 340 - mallListTop + 19}, {px, py, pw, ph}}
 }
