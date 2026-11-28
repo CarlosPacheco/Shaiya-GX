@@ -239,6 +239,7 @@ func (a *App) drawQuestLog(w, h int) {
 		}
 	}
 	var title, description, objective string
+	a.questUI.ObjectiveItems = nil
 	if selected >= 0 {
 		id := ids[selected]
 		title = a.questName(id)
@@ -251,12 +252,48 @@ func (a *App) drawQuestLog(w, h int) {
 				description = questText(def.Descriptions[0])
 			}
 			objective = a.questObjective(def, q)
+			first := 0
 			if hint := a.questTimeHint(def, q); hint != "" {
 				objective = hint + "\n" + objective
+				first = 1
 			}
+			a.setObjectiveItems(def, first)
 		}
 	}
 	a.questUI.Draw(a.sprites, a.font, w, h, names, a.questLog.offset, selected, title, description, objective)
+	if i := a.questUI.ObjectiveHover(); i >= 0 && selected >= 0 && int(ids[selected]) <= len(a.questDefs) {
+		item := a.questDefs[ids[selected]-1].FarmItems[i]
+		if d := a.itemsItem(item.Type, item.ID); d != nil {
+			a.drawItemDetails(d, nil, uint16(item.Count), 0, 0, w, h, "")
+		}
+	}
+}
+
+// setObjectiveItems marks the "required item" objective lines (EndType 1)
+// so the journal draws each item's icon beside it, with its tooltip on hover.
+// first is the line of the first objective after an optional time hint.
+func (a *App) setObjectiveItems(def sdata.Quest, first int) {
+	if def.EndType != 1 {
+		return
+	}
+	a.questUI.ObjectiveItems = map[int]int{}
+	line := first
+	for i, item := range def.FarmItems {
+		if item.Type == 0 || item.Count == 0 {
+			continue
+		}
+		if a.itemsItem(item.Type, item.ID) != nil {
+			a.questUI.ObjectiveItems[line] = i
+		}
+		line++
+	}
+	a.questUI.DrawObjectiveIcon = func(i, x, y int) {
+		if i < len(def.FarmItems) {
+			if d := a.itemsItem(def.FarmItems[i].Type, def.FarmItems[i].ID); d != nil {
+				a.drawItemIcon(d, x, y, 16, [4]float32{1, 1, 1, 1})
+			}
+		}
+	}
 }
 
 // This changes only the journal icon. Hand-in and rewards stay server-owned.

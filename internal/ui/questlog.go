@@ -20,13 +20,26 @@ type QuestLog struct {
 	close, quit                                    Button
 	held                                           int
 	textOffset                                     int
+	// ObjectiveItems maps an objective source line (before wrapping) to an
+	// item index; DrawObjectiveIcon draws that item's 16 px icon beside it.
+	ObjectiveItems    map[int]int
+	DrawObjectiveIcon func(item, x, y int)
+	objectiveIcons    []objectiveIcon
+	objectiveHover    int
 }
+
+type objectiveIcon struct{ item, x, y int }
+
+const objectiveIconSize = 16
+
+// ObjectiveHover is the item whose objective icon is under the pointer, or -1.
+func (q *QuestLog) ObjectiveHover() int { return q.objectiveHover }
 
 func (q *QuestLog) ResetDescriptionScroll() { q.textOffset, q.objectiveOffset = 0, 0 }
 
 func NewQuestLog(t Textures) (*QuestLog, error) {
 	ld := &loader{t: t}
-	q := &QuestLog{frame: ld.get("quest.png"), alarm: ld.get("quest_alarm.png"), line: ld.get("quest_line.png"), held: -1, hoverRow: -1}
+	q := &QuestLog{frame: ld.get("quest.png"), alarm: ld.get("quest_alarm.png"), line: ld.get("quest_line.png"), held: -1, hoverRow: -1, objectiveHover: -1}
 	scroll := ld.get("scrollbar.png")
 	q.listScroll = newPanelScroll(scroll, 227, 52, 237)
 	q.objectiveScroll = newPanelScroll(scroll, 227, 320, 130)
@@ -68,6 +81,12 @@ func (q *QuestLog) Update(in *platform.Input, w, h, count, offset int, selected 
 			q.objectiveOffset += 3
 		} else {
 			q.objectiveOffset = max(0, q.objectiveOffset-3)
+		}
+	}
+	q.objectiveHover = -1
+	for _, icon := range q.objectiveIcons {
+		if selected && in.MouseX >= icon.x && in.MouseX < icon.x+objectiveIconSize && in.MouseY >= icon.y && in.MouseY < icon.y+objectiveIconSize {
+			q.objectiveHover = icon.item
 		}
 	}
 	hit := -1
@@ -122,11 +141,42 @@ func (q *QuestLog) Draw(s *render.Sprites, f *Font, w, h int, names []string, of
 	for i, line := range lines[q.textOffset:min(len(lines), q.textOffset+18)] {
 		f.Draw(s, line, x+279, y+112+i*18, white, 196)
 	}
-	objectives := wrapLines(f, strings.TrimSpace(objective), 188)
+	// Item objective lines are indented behind their icon; each source line
+	// wraps on its own so the icon stays on the line it belongs to.
+	type objectiveLine struct {
+		text  string
+		item  int
+		inset bool
+	}
+	var objectives []objectiveLine
+	for source, text := range strings.Split(strings.TrimSpace(objective), "\n") {
+		item, ok := q.ObjectiveItems[source]
+		width := 188
+		if ok {
+			width -= objectiveIconSize + 4
+		}
+		for i, line := range wrapLines(f, text, width) {
+			l := objectiveLine{text: line, item: -1, inset: ok}
+			if ok && i == 0 {
+				l.item = item
+			}
+			objectives = append(objectives, l)
+		}
+	}
 	q.objectiveLines = len(objectives)
 	q.objectiveOffset = min(q.objectiveOffset, max(0, len(objectives)-6))
+	q.objectiveIcons = q.objectiveIcons[:0]
 	for i, line := range objectives[q.objectiveOffset:min(len(objectives), q.objectiveOffset+6)] {
-		f.Draw(s, line, x+18, y+326+i*18, white, 188)
+		ly := y + 326 + i*18
+		tx := x + 18
+		if line.inset {
+			tx += objectiveIconSize + 4
+		}
+		if line.item >= 0 && q.DrawObjectiveIcon != nil {
+			q.DrawObjectiveIcon(line.item, x+18, ly-2)
+			q.objectiveIcons = append(q.objectiveIcons, objectiveIcon{line.item, x + 18, ly - 2})
+		}
+		f.Draw(s, line.text, tx, ly, white, x+206-tx)
 	}
 	q.listScroll.Draw(s, x, y, len(names), QuestRows, offset)
 	q.descriptionScroll.Draw(s, x, y, len(lines), 18, q.textOffset)
