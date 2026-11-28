@@ -98,20 +98,22 @@ func (m *Mall) Reset() {
 // GX layout: the product list is compacted to the left half and the right
 // half shows the character (or mount) wearing the selected product.
 const (
-	mallTabStep     = 71
-	mallColumn      = 135
-	mallListRight   = 300
+	mallTabStep     = 92
+	mallColumn      = 178
+	mallListRight   = 386
 	mallListShift   = mallListRight - 12 - 556 // scrollbar strip moved left
 	mallListLeft    = 16
 	mallListTop     = 164
 	mallListBottom  = 359
-	mallProductWide = 131
+	mallProductWide = 174
+	mallPointsX     = mallListRight - 196
+	mallPointsY     = 46
 )
 
 func MallProductRect(index int) (int, int) { return 19 + (index%2)*mallColumn, 164 + (index/2)*65 }
 
 // MallPreviewRect is the character viewport, relative to the window.
-func MallPreviewRect() (x, y, w, h int) { return mallListRight + 14, 47, 552 - mallListRight, 315 }
+func MallPreviewRect() (x, y, w, h int) { return mallListRight + 14, 47, 566 - mallListRight - 14, 315 }
 
 func (m *Mall) listCell(x, y, mouseX, mouseY, count int) int {
 	if mouseX < x+mallListLeft || mouseX >= x+mallListLeft+2*mallColumn || mouseY < y+mallListTop || mouseY >= y+mallListBottom {
@@ -217,17 +219,19 @@ func (m *Mall) line(s *render.Sprites, x, y, w, h int, c [4]float32) {
 func (m *Mall) drawLayout(s *render.Sprites, x, y int) {
 	s.Draw(m.frame, float32(x), float32(y), MallWidth, MallHeight, 0, 0, float32(MallWidth)/1024, float32(MallHeight)/512, white)
 	// Wall behind the old identity panel.
-	m.piece(s, x, y, 14, 44, 126, 82, 238, 44, 126, 82)
-	m.piece(s, x, y, 140, 44, 96, 82, 238, 44, 96, 82)
+	for dx := 14; dx < mallListRight+14; dx += 126 {
+		w := min(126, mallListRight+14-dx)
+		m.piece(s, x, y, dx, 44, w, 82, 238, 44, w, 82)
+	}
 	// Points panel: the points row and the bottom edge of the original one.
-	m.piece(s, x, y, 16, 64, 196, 36, 372, 46, 196, 36)
-	m.piece(s, x, y, 16, 100, 196, 4, 372, 119, 196, 4)
-	m.piece(s, x, y, 22, 70, 70, 18, 380, 84, 70, 18)
+	m.piece(s, x, y, mallPointsX, mallPointsY, 196, 36, 372, 46, 196, 36)
+	m.piece(s, x, y, mallPointsX, mallPointsY+36, 196, 4, 372, 119, 196, 4)
+	m.piece(s, x, y, mallPointsX+6, mallPointsY+6, 70, 18, 380, 84, 70, 18)
 	// List scrollbar strip and right border moved to the narrower list.
 	m.piece(s, x, y, mallListRight-12, 162, 12, 202, 556, 162, 12, 202)
 	// Wall between the list and the preview box; the tab band runs under it.
 	for _, r := range [][2]int{{44, 84}, {162, 82}, {244, 82}, {326, 38}} {
-		m.piece(s, x, y, mallListRight, r[0], 13, r[1], 238, 44, 13, r[1])
+		m.piece(s, x, y, mallListRight, r[0], 14, r[1], 238, 44, 14, r[1])
 	}
 	// Preview box over the right half.
 	px, py, pw, ph := MallPreviewRect()
@@ -242,12 +246,12 @@ func (m *Mall) drawLayout(s *render.Sprites, x, y int) {
 func (m *Mall) Draw(s *render.Sprites, f *Font, w, h int, products []MallProduct, pointsLabel string, points uint32, pointsReady, busy bool) {
 	x, y := m.Origin(w, h)
 	m.drawLayout(s, x, y)
-	f.Draw(s, pointsLabel, x+26, y+72, white, 70)
+	f.Draw(s, pointsLabel, x+mallPointsX+10, y+mallPointsY+8, white, 70)
 	pointText := "..."
 	if pointsReady {
 		pointText = fmt.Sprint(points)
 	}
-	f.Draw(s, pointText, x+98, y+71, white, 100)
+	f.Draw(s, pointText, x+mallPointsX+82, y+mallPointsY+7, white, 100)
 	for i := range m.tabs {
 		b := &m.tabs[i]
 		b.OriginX, b.OriginY, b.Checked = x, y, i == m.Category
@@ -267,10 +271,11 @@ func (m *Mall) Draw(s *render.Sprites, f *Font, w, h int, products []MallProduct
 			s.Draw(p.Icon, float32(x+dx+4), float32(y+dy+6), 32, 32, p.UV.U0, p.UV.V0, p.UV.U1, p.UV.V1, white)
 			p.Badge.Draw(s, x+dx+4, y+dy+6, 32, white)
 		}
-		for i, line := range wrapWords(f, p.Name, mallProductWide-42, 2) {
+		lines := wrapWords(f, p.Name, mallProductWide-42, 2)
+		for i, line := range lines {
 			f.Draw(s, line, x+dx+40, y+dy+4+i*15, white, mallProductWide-42)
 		}
-		f.Draw(s, fmt.Sprintf("%d points", p.Cost), x+dx+40, y+dy+40, [4]float32{.95, .8, .45, 1}, mallProductWide-42)
+		f.Draw(s, fmt.Sprintf("%d points", p.Cost), x+dx+40, y+dy+8+len(lines)*15, [4]float32{.95, .8, .45, 1}, mallProductWide-42)
 	}
 	for _, b := range []*Button{&m.buy, &m.gift} {
 		b.OriginX, b.OriginY, b.Disabled = x, y, busy || m.Selected < 0 || m.Selected >= len(products)

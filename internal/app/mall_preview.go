@@ -94,7 +94,7 @@ func (a *App) drawMallPreview(w, h int) {
 		a.drawMallVehicle(p.vehicle, x+px, y+py, pw, ph, w, h)
 	case p.actor != nil:
 		// Same framing as the inventory, centred in the wider box.
-		fw := ph * 136 / 217
+		fw := min(pw, ph*136/217)
 		a.drawEquipmentActor(p.actor, ap, x+px+(pw-fw)/2, y+py+6, fw, ph-12, w, h)
 	}
 }
@@ -107,8 +107,12 @@ func (a *App) drawMallVehicle(v *scene.Vehicle, x, y, width, height, w, h int) {
 	}
 	const fov = 34 * math.Pi / 180
 	center := lo.Add(hi).Scale(.5)
-	radius := hi.Sub(lo).Len() / 2
-	distance := radius / float32(math.Sin(fov/2)) * .9
+	size := hi.Sub(lo)
+	// Fit height and the turned body length in their own view angles.
+	tanV := math.Tan(fov / 2)
+	tanH := tanV * float64(width) / float64(height)
+	length := float64(max(size[0], size[2]))
+	distance := float32(math.Max(float64(size[1])/2/tanV, length*.45/tanH)+length/2) * .85 // part boxes exceed the posed mesh
 	a.sprites.Flush()
 	render.InViewport(x, y, width, height, h, func() {
 		s := a.actorPreviewScene()
