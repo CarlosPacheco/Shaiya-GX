@@ -108,6 +108,8 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 			// SysMsg 61 "<p> attained <i>" for a group mate's item, with its link.
 			a.state.AddChat(game.ChatLine{Text: a.msg.Format(61, map[string]string{"p": a.chatEntityName(n.Receiver), "i": "\uFFFC " + name}), Style: 3, MessageID: 61, ItemType: n.Type, ItemID: n.TypeID})
 		}
+	case proto.MobDeath:
+		a.mobDeathMessage(p)
 	case proto.GXKillNotice:
 		a.systemMessage(1, 8, map[string]string{"t": s.LastKillNotice}) // red: "Killed <t>"
 	case proto.GXDrowningDamage:
@@ -332,6 +334,36 @@ func (a *App) confirmedSystemChat(p []byte, previousMoney uint32) {
 		id := r.U32()
 		if id == s.SelfID {
 			a.systemMessage(2, 1, nil)
+		}
+	}
+}
+
+// mobDeathMessage is Game.exe 0x431190, run by the 0x0606 handler 0x564e50
+// for a kill (death type 1): "<t> died" (SysMsg 3) when this character
+// killed the monster, "<p> killed <t>" (SysMsg 4) when a party member did.
+// Both use style 2; other killers print nothing.
+func (a *App) mobDeathMessage(p []byte) {
+	r := proto.NewReader(p)
+	id, deathType, killer := r.U32(), r.U8(), r.U32()
+	if r.Err() != nil || deathType != 1 || a.assets == nil {
+		return
+	}
+	e := a.state.Entities[id]
+	if e == nil || e.Kind != game.KindMob {
+		return
+	}
+	def, err := a.assets.MonsterDefinition(e.TypeID)
+	if err != nil || def.Name == "" {
+		return
+	}
+	if killer == a.state.SelfID {
+		a.systemMessage(2, 3, map[string]string{"t": def.Name})
+		return
+	}
+	for _, m := range a.state.Party.Members {
+		if m.ID == killer && killer != 0 {
+			a.systemMessage(2, 4, map[string]string{"p": m.Name, "t": def.Name})
+			return
 		}
 	}
 }
