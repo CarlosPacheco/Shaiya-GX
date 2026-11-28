@@ -10,7 +10,7 @@ Every production Go file is listed, including OS-specific alternatives. Signatur
 
 Authoritative realm, sessions, maps, actors, game rules, protocol adapters and commit-before-publication application actions.
 
-Tests: [absorption_skill_test.go](../../server/internal/world/absorption_skill_test.go), [absorption_test.go](../../server/internal/world/absorption_test.go), [attack_movement_test.go](../../server/internal/world/attack_movement_test.go), [attack_speed_test.go](../../server/internal/world/attack_speed_test.go), [auction_test.go](../../server/internal/world/auction_test.go), [blessing_lifecycle_test.go](../../server/internal/world/blessing_lifecycle_test.go), [bots_integration_test.go](../../server/internal/world/bots_integration_test.go), [bots_test.go](../../server/internal/world/bots_test.go), [change_sex_test.go](../../server/internal/world/change_sex_test.go), [character_enchant_test.go](../../server/internal/world/character_enchant_test.go), [chat_items_test.go](../../server/internal/world/chat_items_test.go), [chat_test.go](../../server/internal/world/chat_test.go), [cloak_fits_test.go](../../server/internal/world/cloak_fits_test.go), [combat_integration_test.go](../../server/internal/world/combat_integration_test.go), [combatformula_test.go](../../server/internal/world/combatformula_test.go), [cooldown_reduction_test.go](../../server/internal/world/cooldown_reduction_test.go), [degeneration_test.go](../../server/internal/world/degeneration_test.go), [detection_test.go](../../server/internal/world/detection_test.go), [drop_oj_limits_integration_test.go](../../server/internal/world/drop_oj_limits_integration_test.go), [drop_oj_limits_test.go](../../server/internal/world/drop_oj_limits_test.go), [drops_test.go](../../server/internal/world/drops_test.go), [durability_test.go](../../server/internal/world/durability_test.go), [elements_test.go](../../server/internal/world/elements_test.go), [emblem_test.go](../../server/internal/world/emblem_test.go), [enchant_ini_test.go](../../server/internal/world/enchant_ini_test.go), [equipment_rejection_test.go](../../server/internal/world/equipment_rejection_test.go), [experience_integration_test.go](../../server/internal/world/experience_integration_test.go), [experience_test.go](../../server/internal/world/experience_test.go), [fall_damage_test.go](../../server/internal/world/fall_damage_test.go), [firecracker_test.go](../../server/internal/world/firecracker_test.go), [firethorn_test.go](../../server/internal/world/firethorn_test.go), [forge_quote_test.go](../../server/internal/world/forge_quote_test.go), [forge_rules_test.go](../../server/internal/world/forge_rules_test.go), [free_mall_test.go](../../server/internal/world/free_mall_test.go), [gem_safety_test.go](../../server/internal/world/gem_safety_test.go), [gm_erase_test.go](../../server/internal/world/gm_erase_test.go), [gm_level_test.go](../../server/internal/world/gm_level_test.go), [gm_map_test.go](../../server/internal/world/gm_map_test.go), [gm_set_stats_test.go](../../server/internal/world/gm_set_stats_test.go), [gm_test.go](../../server/internal/world/gm_test.go), [grb_gm_integration_test.go](../../server/internal/world/grb_gm_integration_test.go), [grb_integration_test.go](../../server/internal/world/grb_integration_test.go), [guild_house_shop_integration_test.go](../../server/internal/world/guild_house_shop_integration_test.go), [guild_integration_test.go](../../server/internal/world/guild_integration_test.go), [guild_shop_session_test.go](../../server/internal/world/guild_shop_session_test.go), [guildhouse_test.go](../../server/internal/world/guildhouse_test.go), [healing_delta_test.go](../../server/internal/world/healing_delta_test.go), [healthassist_test.go](../../server/internal/world/healthassist_test.go), [idle_variation_test.go](../../server/internal/world/idle_variation_test.go), [inspect_test.go](../../server/internal/world/inspect_test.go), [inventory_operation_test.go](../../server/internal/world/inventory_operation_test.go), [isolation_test.go](../../server/internal/world/isolation_test.go), [item_shortcuts_test.go](../../server/internal/world/item_shortcuts_test.go), [itemboxes_test.go](../../server/internal/world/itemboxes_test.go), [jump_motion_regression_test.go](../../server/internal/world/jump_motion_regression_test.go), [killcount_test.go](../../server/internal/world/killcount_test.go), [ladders_test.go](../../server/internal/world/ladders_test.go), [lapis_debuff_test.go](../../server/internal/world/lapis_debuff_test.go), [lapis_mob_test.go](../../server/internal/world/lapis_mob_test.go), [loot_test.go](../../server/internal/world/loot_test.go), [mailbox_test.go](../../server/internal/world/mailbox_test.go), [map_rules_test.go](../../server/internal/world/map_rules_test.go), [mapitems_test.go](../../server/internal/world/mapitems_test.go), [miss_feedback_test.go](../../server/internal/world/miss_feedback_test.go), [mob_ai_leak_test.go](../../server/internal/world/mob_ai_leak_test.go), [mob_ai_test.go](../../server/internal/world/mob_ai_test.go), [mob_hop_test.go](../../server/internal/world/mob_hop_test.go), [mob_movement_modes_test.go](../../server/internal/world/mob_movement_modes_test.go), [mob_navigation_test.go](../../server/internal/world/mob_navigation_test.go), [mob_quest_drop_test.go](../../server/internal/world/mob_quest_drop_test.go), [mob_respawn_test.go](../../server/internal/world/mob_respawn_test.go), [mob_sacrifice_test.go](../../server/internal/world/mob_sacrifice_test.go), [myshop_integration_test.go](../../server/internal/world/myshop_integration_test.go), [myshop_test.go](../../server/internal/world/myshop_test.go), [notices_test.go](../../server/internal/world/notices_test.go), [npc_guard_test.go](../../server/internal/world/npc_guard_test.go), [npc_probe_test.go](../../server/internal/world/npc_probe_test.go), [npc_skill_repairs_test.go](../../server/internal/world/npc_skill_repairs_test.go), [oj_limits_test.go](../../server/internal/world/oj_limits_test.go), [oxygen_test.go](../../server/internal/world/oxygen_test.go), [party_global_test.go](../../server/internal/world/party_global_test.go), [passives_test.go](../../server/internal/world/passives_test.go), [periodic_healing_test.go](../../server/internal/world/periodic_healing_test.go), [persistence_audit_test.go](../../server/internal/world/persistence_audit_test.go), [phase_test.go](../../server/internal/world/phase_test.go), [player_feedback_test.go](../../server/internal/world/player_feedback_test.go), [player_forms_test.go](../../server/internal/world/player_forms_test.go), [player_movement_test.go](../../server/internal/world/player_movement_test.go), [player_speed_test.go](../../server/internal/world/player_speed_test.go), [player_state_fixes_test.go](../../server/internal/world/player_state_fixes_test.go), [portal_bounds_test.go](../../server/internal/world/portal_bounds_test.go), [potential_test.go](../../server/internal/world/potential_test.go), [previous_skill_test.go](../../server/internal/world/previous_skill_test.go), [protocol_layout_test.go](../../server/internal/world/protocol_layout_test.go), [pvp_test.go](../../server/internal/world/pvp_test.go), [pvpreward_test.go](../../server/internal/world/pvpreward_test.go), [quest_integration_test.go](../../server/internal/world/quest_integration_test.go), [quest_item_integration_test.go](../../server/internal/world/quest_item_integration_test.go), [quest_map_test.go](../../server/internal/world/quest_map_test.go), [quest_requirements_integration_test.go](../../server/internal/world/quest_requirements_integration_test.go), [raid_chat_test.go](../../server/internal/world/raid_chat_test.go), [raid_skill_test.go](../../server/internal/world/raid_skill_test.go), [rebirth_test.go](../../server/internal/world/rebirth_test.go), [recreation_runes_test.go](../../server/internal/world/recreation_runes_test.go), [reflect_test.go](../../server/internal/world/reflect_test.go), [relic_boot_integration_test.go](../../server/internal/world/relic_boot_integration_test.go), [relic_config_test.go](../../server/internal/world/relic_config_test.go), [relics_test.go](../../server/internal/world/relics_test.go), [revive_on_exit_test.go](../../server/internal/world/revive_on_exit_test.go), [rules_test.go](../../server/internal/world/rules_test.go), [runtime_test.go](../../server/internal/world/runtime_test.go), [sacrifice_test.go](../../server/internal/world/sacrifice_test.go), [safezones_test.go](../../server/internal/world/safezones_test.go), [shop_sell_test.go](../../server/internal/world/shop_sell_test.go), [skill_cadence_test.go](../../server/internal/world/skill_cadence_test.go), [skill_dash_test.go](../../server/internal/world/skill_dash_test.go), [skill_failure_test.go](../../server/internal/world/skill_failure_test.go), [skill_range_test.go](../../server/internal/world/skill_range_test.go), [soul_burn_test.go](../../server/internal/world/soul_burn_test.go), [spin_combo_test.go](../../server/internal/world/spin_combo_test.go), [stack_counts_test.go](../../server/internal/world/stack_counts_test.go), [status_items_test.go](../../server/internal/world/status_items_test.go), [summon_rune_test.go](../../server/internal/world/summon_rune_test.go), [target_effects_test.go](../../server/internal/world/target_effects_test.go), [taunt_test.go](../../server/internal/world/taunt_test.go), [teleport_rune_integration_test.go](../../server/internal/world/teleport_rune_integration_test.go), [teleport_stone_test.go](../../server/internal/world/teleport_stone_test.go), [trap_test.go](../../server/internal/world/trap_test.go), [utility_items_test.go](../../server/internal/world/utility_items_test.go), [vehicle_test.go](../../server/internal/world/vehicle_test.go), [visibility_test.go](../../server/internal/world/visibility_test.go), [worldcal_test.go](../../server/internal/world/worldcal_test.go), [worlddrops_test.go](../../server/internal/world/worlddrops_test.go).
+Tests: [absorption_skill_test.go](../../server/internal/world/absorption_skill_test.go), [absorption_test.go](../../server/internal/world/absorption_test.go), [attack_movement_test.go](../../server/internal/world/attack_movement_test.go), [attack_speed_test.go](../../server/internal/world/attack_speed_test.go), [auction_test.go](../../server/internal/world/auction_test.go), [blessing_lifecycle_test.go](../../server/internal/world/blessing_lifecycle_test.go), [bots_integration_test.go](../../server/internal/world/bots_integration_test.go), [bots_test.go](../../server/internal/world/bots_test.go), [change_sex_test.go](../../server/internal/world/change_sex_test.go), [character_enchant_test.go](../../server/internal/world/character_enchant_test.go), [chat_items_test.go](../../server/internal/world/chat_items_test.go), [chat_test.go](../../server/internal/world/chat_test.go), [cloak_fits_test.go](../../server/internal/world/cloak_fits_test.go), [combat_integration_test.go](../../server/internal/world/combat_integration_test.go), [combatformula_test.go](../../server/internal/world/combatformula_test.go), [cooldown_reduction_test.go](../../server/internal/world/cooldown_reduction_test.go), [degeneration_test.go](../../server/internal/world/degeneration_test.go), [detection_test.go](../../server/internal/world/detection_test.go), [drop_oj_limits_integration_test.go](../../server/internal/world/drop_oj_limits_integration_test.go), [drop_oj_limits_test.go](../../server/internal/world/drop_oj_limits_test.go), [drops_test.go](../../server/internal/world/drops_test.go), [durability_test.go](../../server/internal/world/durability_test.go), [elements_test.go](../../server/internal/world/elements_test.go), [emblem_test.go](../../server/internal/world/emblem_test.go), [enchant_ini_test.go](../../server/internal/world/enchant_ini_test.go), [equipment_rejection_test.go](../../server/internal/world/equipment_rejection_test.go), [experience_integration_test.go](../../server/internal/world/experience_integration_test.go), [experience_test.go](../../server/internal/world/experience_test.go), [fall_damage_test.go](../../server/internal/world/fall_damage_test.go), [firecracker_test.go](../../server/internal/world/firecracker_test.go), [firethorn_test.go](../../server/internal/world/firethorn_test.go), [forge_quote_test.go](../../server/internal/world/forge_quote_test.go), [forge_rules_test.go](../../server/internal/world/forge_rules_test.go), [free_mall_test.go](../../server/internal/world/free_mall_test.go), [gem_safety_test.go](../../server/internal/world/gem_safety_test.go), [gm_erase_test.go](../../server/internal/world/gm_erase_test.go), [gm_level_test.go](../../server/internal/world/gm_level_test.go), [gm_map_test.go](../../server/internal/world/gm_map_test.go), [gm_set_stats_test.go](../../server/internal/world/gm_set_stats_test.go), [gm_test.go](../../server/internal/world/gm_test.go), [grb_gm_integration_test.go](../../server/internal/world/grb_gm_integration_test.go), [grb_integration_test.go](../../server/internal/world/grb_integration_test.go), [guild_house_shop_integration_test.go](../../server/internal/world/guild_house_shop_integration_test.go), [guild_integration_test.go](../../server/internal/world/guild_integration_test.go), [guild_shop_session_test.go](../../server/internal/world/guild_shop_session_test.go), [guildhouse_test.go](../../server/internal/world/guildhouse_test.go), [healing_delta_test.go](../../server/internal/world/healing_delta_test.go), [healthassist_test.go](../../server/internal/world/healthassist_test.go), [idle_variation_test.go](../../server/internal/world/idle_variation_test.go), [inspect_test.go](../../server/internal/world/inspect_test.go), [inventory_operation_test.go](../../server/internal/world/inventory_operation_test.go), [isolation_test.go](../../server/internal/world/isolation_test.go), [item_shortcuts_test.go](../../server/internal/world/item_shortcuts_test.go), [itemboxes_test.go](../../server/internal/world/itemboxes_test.go), [jump_motion_regression_test.go](../../server/internal/world/jump_motion_regression_test.go), [killcount_test.go](../../server/internal/world/killcount_test.go), [ladders_test.go](../../server/internal/world/ladders_test.go), [lapis_debuff_test.go](../../server/internal/world/lapis_debuff_test.go), [lapis_mob_test.go](../../server/internal/world/lapis_mob_test.go), [loot_test.go](../../server/internal/world/loot_test.go), [mailbox_test.go](../../server/internal/world/mailbox_test.go), [map_rules_test.go](../../server/internal/world/map_rules_test.go), [mapitems_test.go](../../server/internal/world/mapitems_test.go), [miss_feedback_test.go](../../server/internal/world/miss_feedback_test.go), [mob_ai_leak_test.go](../../server/internal/world/mob_ai_leak_test.go), [mob_ai_test.go](../../server/internal/world/mob_ai_test.go), [mob_hop_test.go](../../server/internal/world/mob_hop_test.go), [mob_movement_modes_test.go](../../server/internal/world/mob_movement_modes_test.go), [mob_navigation_test.go](../../server/internal/world/mob_navigation_test.go), [mob_quest_drop_test.go](../../server/internal/world/mob_quest_drop_test.go), [mob_respawn_test.go](../../server/internal/world/mob_respawn_test.go), [mob_sacrifice_test.go](../../server/internal/world/mob_sacrifice_test.go), [myshop_integration_test.go](../../server/internal/world/myshop_integration_test.go), [myshop_test.go](../../server/internal/world/myshop_test.go), [notices_test.go](../../server/internal/world/notices_test.go), [npc_guard_test.go](../../server/internal/world/npc_guard_test.go), [npc_probe_test.go](../../server/internal/world/npc_probe_test.go), [npc_skill_repairs_test.go](../../server/internal/world/npc_skill_repairs_test.go), [oj_limits_test.go](../../server/internal/world/oj_limits_test.go), [oxygen_test.go](../../server/internal/world/oxygen_test.go), [party_global_test.go](../../server/internal/world/party_global_test.go), [passives_test.go](../../server/internal/world/passives_test.go), [periodic_healing_test.go](../../server/internal/world/periodic_healing_test.go), [persistence_audit_test.go](../../server/internal/world/persistence_audit_test.go), [phase_test.go](../../server/internal/world/phase_test.go), [player_feedback_test.go](../../server/internal/world/player_feedback_test.go), [player_forms_test.go](../../server/internal/world/player_forms_test.go), [player_movement_test.go](../../server/internal/world/player_movement_test.go), [player_speed_test.go](../../server/internal/world/player_speed_test.go), [player_state_fixes_test.go](../../server/internal/world/player_state_fixes_test.go), [portal_bounds_test.go](../../server/internal/world/portal_bounds_test.go), [potential_test.go](../../server/internal/world/potential_test.go), [previous_skill_test.go](../../server/internal/world/previous_skill_test.go), [protocol_layout_test.go](../../server/internal/world/protocol_layout_test.go), [pvp_test.go](../../server/internal/world/pvp_test.go), [pvpreward_test.go](../../server/internal/world/pvpreward_test.go), [quest_integration_test.go](../../server/internal/world/quest_integration_test.go), [quest_item_integration_test.go](../../server/internal/world/quest_item_integration_test.go), [quest_map_test.go](../../server/internal/world/quest_map_test.go), [quest_requirements_integration_test.go](../../server/internal/world/quest_requirements_integration_test.go), [raid_chat_test.go](../../server/internal/world/raid_chat_test.go), [raid_skill_test.go](../../server/internal/world/raid_skill_test.go), [rebirth_test.go](../../server/internal/world/rebirth_test.go), [recreation_runes_test.go](../../server/internal/world/recreation_runes_test.go), [reflect_test.go](../../server/internal/world/reflect_test.go), [relic_boot_integration_test.go](../../server/internal/world/relic_boot_integration_test.go), [relic_config_test.go](../../server/internal/world/relic_config_test.go), [relics_test.go](../../server/internal/world/relics_test.go), [revive_on_exit_test.go](../../server/internal/world/revive_on_exit_test.go), [rules_test.go](../../server/internal/world/rules_test.go), [runtime_test.go](../../server/internal/world/runtime_test.go), [sacrifice_test.go](../../server/internal/world/sacrifice_test.go), [safezones_test.go](../../server/internal/world/safezones_test.go), [shop_sell_test.go](../../server/internal/world/shop_sell_test.go), [skill_cadence_test.go](../../server/internal/world/skill_cadence_test.go), [skill_dash_test.go](../../server/internal/world/skill_dash_test.go), [skill_failure_test.go](../../server/internal/world/skill_failure_test.go), [skill_range_test.go](../../server/internal/world/skill_range_test.go), [soul_burn_test.go](../../server/internal/world/soul_burn_test.go), [spin_combo_test.go](../../server/internal/world/spin_combo_test.go), [stack_counts_test.go](../../server/internal/world/stack_counts_test.go), [status_items_test.go](../../server/internal/world/status_items_test.go), [summon_rune_test.go](../../server/internal/world/summon_rune_test.go), [svnav_bench_test.go](../../server/internal/world/svnav_bench_test.go), [svnav_test.go](../../server/internal/world/svnav_test.go), [target_effects_test.go](../../server/internal/world/target_effects_test.go), [taunt_test.go](../../server/internal/world/taunt_test.go), [teleport_rune_integration_test.go](../../server/internal/world/teleport_rune_integration_test.go), [teleport_stone_test.go](../../server/internal/world/teleport_stone_test.go), [trap_test.go](../../server/internal/world/trap_test.go), [utility_items_test.go](../../server/internal/world/utility_items_test.go), [vehicle_test.go](../../server/internal/world/vehicle_test.go), [visibility_test.go](../../server/internal/world/visibility_test.go), [worldcal_test.go](../../server/internal/world/worldcal_test.go), [worlddrops_test.go](../../server/internal/world/worlddrops_test.go).
 
 ### abilities.go
 
@@ -879,123 +879,123 @@ Direct GX dependencies: `internal/mapnav`, `internal/npcquest`, `internal/proto`
 | [`mobMotionWalk`](../../server/internal/world/entities.go#L27)<br>`const mobMotionWalk = 0` | Visibility and combat radii, matching the real server's cell view model. |
 | [`NpcPatrolPoint`](../../server/internal/world/entities.go#L30)<br>`type NpcPatrolPoint` | See the source definition and the subsystem ownership contract. |
 | [`MapNpc`](../../server/internal/world/entities.go#L35)<br>`type MapNpc` | See the source definition and the subsystem ownership contract. |
-| [`MobArea`](../../server/internal/world/entities.go#L53)<br>`type MobArea` | See the source definition and the subsystem ownership contract. |
-| [`normalized`](../../server/internal/world/entities.go#L55)<br>`func (a MobArea) normalized() MobArea` | See the source definition and the subsystem ownership contract. |
-| [`clampX`](../../server/internal/world/entities.go#L58)<br>`func (a MobArea) clampX(x float32) float32` | See the source definition and the subsystem ownership contract. |
-| [`clampZ`](../../server/internal/world/entities.go#L59)<br>`func (a MobArea) clampZ(z float32) float32` | See the source definition and the subsystem ownership contract. |
-| [`contains`](../../server/internal/world/entities.go#L60)<br>`func (a MobArea) contains(x, z float32) bool` | See the source definition and the subsystem ownership contract. |
-| [`MapMob`](../../server/internal/world/entities.go#L64)<br>`type MapMob` | See the source definition and the subsystem ownership contract. |
-| [`MapPortal`](../../server/internal/world/entities.go#L123)<br>`type MapPortal` | See the source definition and the subsystem ownership contract. |
-| [`Contains`](../../server/internal/world/entities.go#L134)<br>`func (p *MapPortal) Contains(x, y, z float32) bool` | See the source definition and the subsystem ownership contract. |
-| [`IsOpen`](../../server/internal/world/entities.go#L141)<br>`func (p *MapPortal) IsOpen() bool` | See the source definition and the subsystem ownership contract. |
-| [`AllowsFaction`](../../server/internal/world/entities.go#L142)<br>`func (p *MapPortal) AllowsFaction(f uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`AllowsLevel`](../../server/internal/world/entities.go#L151)<br>`func (p *MapPortal) AllowsLevel(level uint16) bool` | See the source definition and the subsystem ownership contract. |
-| [`MapSpawnArea`](../../server/internal/world/entities.go#L155)<br>`type MapSpawnArea` | MapSpawnArea is one stMapBind of the svmap: a rebirth group of boxes. Faction is its type: 1 light, 2 fury, 0 and 3 both. |
-| [`SpawnBox`](../../server/internal/world/entities.go#L160)<br>`type SpawnBox` | See the source definition and the subsystem ownership contract. |
-| [`distanceSq`](../../server/internal/world/entities.go#L167)<br>`func (a *MapSpawnArea) distanceSq(x, z float32) float32` | distanceSq is measured, as CMap::GetBindPos does, to the lower corner of the group's first box. |
-| [`allowsFaction`](../../server/internal/world/entities.go#L171)<br>`func (a *MapSpawnArea) allowsFaction(f uint8) bool` | See the source definition and the subsystem ownership contract. |
-| [`RandomPoint`](../../server/internal/world/entities.go#L185)<br>`func (a *MapSpawnArea) RandomPoint() (x, y, z float32)` | RandomPoint is GetBindPos's pick: a random box of the group and a random whole-unit offset inside it, 0.9 above its floor. |
-| [`MapEntities`](../../server/internal/world/entities.go#L197)<br>`type MapEntities` | MapEntities is one map's NPCs, mobs, portals and spawn areas. |
-| [`mapShard`](../../server/internal/world/entities.go#L204)<br>`type mapShard` | See the source definition and the subsystem ownership contract. |
-| [`mapGrid`](../../server/internal/world/entities.go#L221)<br>`type mapGrid` | See the source definition and the subsystem ownership contract. |
-| [`shard`](../../server/internal/world/entities.go#L226)<br>`func shard(mapID uint16) *mapShard` | See the source definition and the subsystem ownership contract. |
-| [`shardIDs`](../../server/internal/world/entities.go#L237)<br>`func shardIDs() []uint16` | See the source definition and the subsystem ownership contract. |
-| [`cloneMob`](../../server/internal/world/entities.go#L247)<br>`func cloneMob(m *MapMob) MapMob` | See the source definition and the subsystem ownership contract. |
-| [`snapshotAt`](../../server/internal/world/entities.go#L261)<br>`func (m *MapMob) snapshotAt(now time.Time) MapMob` | See the source definition and the subsystem ownership contract. |
-| [`EntitiesOnMap`](../../server/internal/world/entities.go#L269)<br>`func EntitiesOnMap(mapID uint16) MapEntities` | EntitiesOnMap returns a copy of a map's entities. |
-| [`RegisterMapGrid`](../../server/internal/world/entities.go#L282)<br>`func RegisterMapGrid(mapID uint16, size uint32, mask []byte)` | See the source definition and the subsystem ownership contract. |
-| [`mapSize`](../../server/internal/world/entities.go#L289)<br>`func mapSize(mapID uint16) (float32, bool)` | mapSize is the svmap's side length. |
-| [`hasGrid`](../../server/internal/world/entities.go#L296)<br>`func hasGrid(mapID uint16) bool` | See the source definition and the subsystem ownership contract. |
-| [`abs32`](../../server/internal/world/entities.go#L303)<br>`func abs32(v float32) float32` | See the source definition and the subsystem ownership contract. |
-| [`DistanceXZ`](../../server/internal/world/entities.go#L305)<br>`func DistanceXZ(ax, az, bx, bz float32) float32` | See the source definition and the subsystem ownership contract. |
-| [`cell`](../../server/internal/world/entities.go#L310)<br>`type cell` | See the source definition and the subsystem ownership contract. |
-| [`coordCell`](../../server/internal/world/entities.go#L312)<br>`func coordCell(v float32, size float32) int32` | See the source definition and the subsystem ownership contract. |
-| [`cellFor`](../../server/internal/world/entities.go#L319)<br>`func cellFor(x, z float32) cell` | See the source definition and the subsystem ownership contract. |
-| [`isNeighborCell`](../../server/internal/world/entities.go#L324)<br>`func isNeighborCell(a, b cell) bool` | isNeighborCell is the 5x5 view window. |
-| [`EntitiesNear`](../../server/internal/world/entities.go#L336)<br>`func EntitiesNear(mapID uint16, x, z float32) MapEntities` | EntitiesNear returns the entities in the 5x5 cell window around (x, z). |
-| [`EntitiesInView`](../../server/internal/world/entities.go#L342)<br>`func EntitiesInView(mapID uint16, viewer cell) MapEntities` | EntitiesInView returns the NPCs and the visible mobs whose cell is in the 5x5 window around the viewer's cell. |
-| [`IsMapWalkable`](../../server/internal/world/entities.go#L370)<br>`func IsMapWalkable(mapID uint16, x, z float32) bool` | See the source definition and the subsystem ownership contract. |
-| [`walkableInMask`](../../server/internal/world/entities.go#L380)<br>`func walkableInMask(size uint32, mask []byte, x, z float32) bool` | See the source definition and the subsystem ownership contract. |
-| [`MobByID`](../../server/internal/world/entities.go#L399)<br>`func MobByID(mapID uint16, id uint32) (MapMob, bool)` | See the source definition and the subsystem ownership contract. |
-| [`MobDamageResult`](../../server/internal/world/entities.go#L411)<br>`type MobDamageResult` | See the source definition and the subsystem ownership contract. |
-| [`DamageMob`](../../server/internal/world/entities.go#L421)<br>`func DamageMob(mapID uint16, id uint32, damage uint32) (MobDamageResult, bool)` | DamageMob applies damage unless the mob is dead or resetting home. |
-| [`DamageMobFrom`](../../server/internal/world/entities.go#L424)<br>`func DamageMobFrom(mapID uint16, id uint32, damage, attacker uint32) (MobDamageResult, bool)` | See the source definition and the subsystem ownership contract. |
-| [`PlayerCombatSnapshot`](../../server/internal/world/entities.go#L468)<br>`type PlayerCombatSnapshot` | See the source definition and the subsystem ownership contract. |
-| [`MobAttackAction`](../../server/internal/world/entities.go#L483)<br>`type MobAttackAction` | See the source definition and the subsystem ownership contract. |
-| [`mapPacket`](../../server/internal/world/entities.go#L494)<br>`type mapPacket` | mapPacket is a packet to broadcast near (x, z) on a map. |
-| [`MobCombatTick`](../../server/internal/world/entities.go#L500)<br>`type MobCombatTick` | See the source definition and the subsystem ownership contract. |
-| [`viewerBuckets`](../../server/internal/world/entities.go#L506)<br>`type viewerBuckets` | See the source definition and the subsystem ownership contract. |
-| [`bucketViewers`](../../server/internal/world/entities.go#L508)<br>`func bucketViewers(viewers [][2]float32) viewerBuckets` | See the source definition and the subsystem ownership contract. |
-| [`nearAny`](../../server/internal/world/entities.go#L517)<br>`func (b viewerBuckets) nearAny(x, z float32, radius float32) bool` | See the source definition and the subsystem ownership contract. |
-| [`TickMobRespawns`](../../server/internal/world/entities.go#L535)<br>`func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []entityMove` | TickMobRespawns revives due mobs at a fresh position in their area. |
-| [`stepPatrol`](../../server/internal/world/entities.go#L608)<br>`func (n *MapNpc) stepPatrol(now time.Time, mapID uint16) bool` | CNpc::UpdateMove pauses at each waypoint and reverses at route endpoints. |
-| [`mobGroup`](../../server/internal/world/entities.go#L655)<br>`type mobGroup` | mobGroup is stMobRespawn: an svmap area entry of Count mobs. The first corpse removal from a full group starts its timer (RespawnTime, +-60 min for Attackspecial3 >= 9, CZone::UpdateMobDeath); CZone::UpdateMobRespawn then brings back one mob each time the timer runs out, at a random spot of the area, restarting the timer. |
-| [`died`](../../server/internal/world/entities.go#L661)<br>`func (m *MapMob) died(now time.Time)` | died books a death (shard lock held). |
-| [`removeCorpse`](../../server/internal/world/entities.go#L679)<br>`func (m *MapMob) removeCorpse(now time.Time)` | removeCorpse books the native UpdateMobDeath removal (shard lock held). Group counts include corpses until this point; later deaths cannot start another timer while the group is still being replenished. |
-| [`respawnSpot`](../../server/internal/world/entities.go#L700)<br>`func (m *MapMob) respawnSpot(mapID uint16) (float32, float32, bool)` | respawnSpot is UpdateMobRespawn's position: lower + rand(width) on each axis; ok false when it is not walkable (the next update tries again). |
-| [`relocate`](../../server/internal/world/entities.go#L716)<br>`func (n *MapNpc) relocate(mapID uint16, motion uint8) entityMove` | See the source definition and the subsystem ownership contract. |
-| [`mobCorpseDelay`](../../server/internal/world/entities.go#L724)<br>`const mobCorpseDelay = 5 * time.Second` | mobCorpseDelay is CMob::Damage's death tick: the corpse stays 5 s. |
-| [`visible`](../../server/internal/world/entities.go#L727)<br>`func (m *MapMob) visible() bool` | visibleMob: alive, or dead with its corpse still shown. |
-| [`TickMobCorpses`](../../server/internal/world/entities.go#L731)<br>`func TickMobCorpses() []entityMove` | TickMobCorpses is CZone::UpdateMobDeath: corpses older than 5 s leave the view (0x0602). |
-| [`SetMobAggro`](../../server/internal/world/entities.go#L754)<br>`func SetMobAggro(mapID uint16, id, characterID uint32)` | SetMobAggro is CMob::SetTarget for a player's hit: an idle mob takes the attacker as its target. The ledger grows through AddMobAggro, with the original amount (hitAggro): the attacker's REC times ten plus the skill's Arrow, whatever the damage. CMob::AttackAI later turns to the top of the ledger (ReTargetByAggro). |
-| [`AddMobAggro`](../../server/internal/world/entities.go#L756)<br>`func AddMobAggro(mapID uint16, id, characterID uint32, amount int64)` | See the source definition and the subsystem ownership contract. |
-| [`ForceMobTarget`](../../server/internal/world/entities.go#L775)<br>`func ForceMobTarget(mapID uint16, id, characterID uint32)` | ForceMobTarget is CMob::SetTarget(user, true): the mob turns to the user at once; the next ReTargetByAggro may still pick whoever has more aggro. |
-| [`ClearMobAggro`](../../server/internal/world/entities.go#L789)<br>`func ClearMobAggro(mapID uint16, id, killedUser uint32)` | ClearMobAggro is CMob::Attack after killing its target: back to idle (status 0) with the dead user's aggro gone; UpdateIdle walks it home when it is more than 10 units away. |
-| [`mobLeash`](../../server/internal/world/entities.go#L805)<br>`const mobLeash = 45.0` | Mob combat as CMob::UpdateIdle / UpdateAttack / Chase / ReturnHome run it. target farther than this from home or from the mob |
-| [`mobHomeDone`](../../server/internal/world/entities.go#L806)<br>`const mobHomeDone = 10.0` | Mob combat as CMob::UpdateIdle / UpdateAttack / Chase / ReturnHome run it. ReturnHome completes within 10 units of home |
-| [`TickMobCombat`](../../server/internal/world/entities.go#L810)<br>`func TickMobCombat(players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick` | TickMobCombat advances targeting, attacks, chasing and returning home. |
-| [`tickMobCombat`](../../server/internal/world/entities.go#L814)<br>`func tickMobCombat(now time.Time, players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick` | See the source definition and the subsystem ownership contract. |
-| [`liveTarget`](../../server/internal/world/entities.go#L887)<br>`func (m *MapMob) liveTarget(players []PlayerCombatSnapshot) *PlayerCombatSnapshot` | See the source definition and the subsystem ownership contract. |
-| [`dropTarget`](../../server/internal/world/entities.go#L900)<br>`func (m *MapMob) dropTarget(home bool)` | dropTarget: status 0 (idle) or 3 (return home). |
-| [`findTarget`](../../server/internal/world/entities.go#L907)<br>`func (m *MapMob) findTarget(now time.Time, players []PlayerCombatSnapshot, extended bool) *PlayerCombatSnapshot` | findTarget picks the first eligible nearby user within the mob’s ChaseRange. |
-| [`targetWeakest`](../../server/internal/world/entities.go#L935)<br>`func (m *MapMob) targetWeakest(players []PlayerCombatSnapshot) *PlayerCombatSnapshot` | targetWeakest is CMob::FindAttackUserMinHP over the damage ledger. |
-| [`retargetByAggro`](../../server/internal/world/entities.go#L951)<br>`func (m *MapMob) retargetByAggro(players []PlayerCombatSnapshot)` | retargetByAggro is CMob::ReTargetByAggro: the living attacker on the map with the most aggro. |
-| [`stepChase`](../../server/internal/world/entities.go#L966)<br>`func (m *MapMob) stepChase(now time.Time, mapID uint16, t *PlayerCombatSnapshot, d float32, mods *mobMods, tick *MobCombatTick) bool` | stepChase advances toward the target, stopping just inside attack reach. |
-| [`stepHome`](../../server/internal/world/entities.go#L1007)<br>`func (m *MapMob) stepHome(now time.Time, mapID uint16, mods *mobMods, tick *MobCombatTick) bool` | stepHome runs toward the spawn and clears effects and aggro on arrival. CMob::ReturnHome sends movement mode 1 with the chase step and time. |
-| [`AddEntities`](../../server/internal/world/entities.go#L1050)<br>`func AddEntities(mapID uint16, e MapEntities)` | See the source definition and the subsystem ownership contract. |
-| [`FindNearestSpawnArea`](../../server/internal/world/entities.go#L1074)<br>`func FindNearestSpawnArea(mapID uint16, faction uint8, x, z float32) (MapSpawnArea, bool)` | FindNearestSpawnArea is CMap::GetBindPos's group choice: the nearest non-empty group open to the faction; when none is, the first group (the original's index stays 0), and ok is false only if that group is empty. |
-| [`FindPortalByIndex`](../../server/internal/world/entities.go#L1091)<br>`func FindPortalByIndex(mapID uint16, index uint8) (MapPortal, bool)` | See the source definition and the subsystem ownership contract. |
-| [`FindPortalAt`](../../server/internal/world/entities.go#L1100)<br>`func FindPortalAt(mapID uint16, x, y, z float32) (MapPortal, bool)` | See the source definition and the subsystem ownership contract. |
-| [`NewPatrolNpc`](../../server/internal/world/entities.go#L1117)<br>`func NewPatrolNpc(npcType uint8, typeID uint16, points []NpcPatrolPoint) (MapNpc, bool)` | See the source definition and the subsystem ownership contract. |
-| [`NewStaticMob`](../../server/internal/world/entities.go#L1128)<br>`func NewStaticMob(def *db.MobDef, mobID uint16, x, z float32, area *MobArea, respawnSeconds uint64) MapMob` | NewStaticMob builds a mob from its definition; respawn 0 never respawns. |
-| [`pickRespawnPosition`](../../server/internal/world/entities.go#L1149)<br>`func (m *MapMob) pickRespawnPosition(mapID uint16) (float32, float32)` | See the source definition and the subsystem ownership contract. |
-| [`mobSpeedOffsets`](../../server/internal/world/entities.go#L1172)<br>`var mobSpeedOffsets` | mobSpeedOffsets are the original move-speed step offsets (0x00542538); mobs start at speed 2 (no offset). |
-| [`mobHomeRadius`](../../server/internal/world/entities.go#L1174)<br>`const mobHomeRadius = 10.0` | See the source definition and the subsystem ownership contract. |
-| [`advanceRoam`](../../server/internal/world/entities.go#L1179)<br>`func (m *MapMob) advanceRoam(now time.Time, mapID uint16, tick *MobCombatTick)` | advanceRoam is the idle state's wander (update_mob_ai_idle): every 10 s + NormalTime + up to 30 s, a step of NormalStep + 0..4 units in a random direction, staying within 10 units of home. |
-| [`chaseStep`](../../server/internal/world/entities.go#L1213)<br>`func (m *MapMob) chaseStep(mods *mobMods) float32` | chaseStep is the maximum path segment for a chase or return home. |
-| [`attackReach`](../../server/internal/world/entities.go#L1222)<br>`func (m *MapMob) attackReach() float32` | attackReach is the native Size + Attackrange + 0.3. |
-| [`mobAttackAnimation`](../../server/internal/world/entities.go#L1230)<br>`const mobAttackAnimation = time.Second` | mobAttackAnimation caps how long a mob holds still while an attack plays. |
-| [`later`](../../server/internal/world/entities.go#L1232)<br>`func later(a, b time.Time) time.Time` | See the source definition and the subsystem ownership contract. |
-| [`mobAttackIdle`](../../server/internal/world/entities.go#L1241)<br>`const mobAttackIdle = 2500 * time.Millisecond` | mobAttackIdle is AttackAI's wait when no slot is ready (2500 ms plus g_ConstMobAttackSpeed, 0 at normal speed). |
-| [`pickAttackSlot`](../../server/internal/world/entities.go#L1246)<br>`func (m *MapMob) pickAttackSlot(now time.Time, mods *mobMods, inReach func(int, float32) bool, rollSpell func() bool) (slotIndex uint8, found, declinedSpell bool)` | pickAttackSlot keeps CMob::AttackAI's slot order and eligibility checks. GX draws once per decision for routine spells. A declined spell remains ready and the mob can still choose a basic or conditional attack. |
-| [`useSlot`](../../server/internal/world/entities.go#L1303)<br>`func (m *MapMob) useSlot(slot uint8, now time.Time) []byte` | useSlot starts a slot's cooldown and the next attack time. A mob heal skill (TypeEffect 2) applies at once and returns its HP packet. |
-| [`attackSpeedFactor`](../../server/internal/world/entities.go#L1323)<br>`func (m *MapMob) attackSpeedFactor() float32` | See the source definition and the subsystem ownership contract. |
-| [`movable`](../../server/internal/world/entities.go#L1331)<br>`func (m *MapMob) movable() bool` | movable: not stunned, asleep or stopped. |
-| [`attackInterval`](../../server/internal/world/entities.go#L1336)<br>`func (m *MapMob) attackInterval() time.Duration` | See the source definition and the subsystem ownership contract. |
-| [`roamWalkable`](../../server/internal/world/entities.go#L1343)<br>`func roamWalkable(mapID uint16, x, z float32, a MobArea) bool` | See the source definition and the subsystem ownership contract. |
-| [`buildNpcEnter`](../../server/internal/world/entities.go#L1349)<br>`func buildNpcEnter(n *MapNpc) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildNpcLeave`](../../server/internal/world/entities.go#L1364)<br>`func buildNpcLeave(id uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildNpcMove`](../../server/internal/world/entities.go#L1370)<br>`func buildNpcMove(n *MapNpc, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`wireHeightKnown`](../../server/internal/world/entities.go#L1380)<br>`func (m *MapMob) wireHeightKnown() bool` | See the source definition and the subsystem ownership contract. |
-| [`buildMobEnter`](../../server/internal/world/entities.go#L1384)<br>`func buildMobEnter(m *MapMob, isNew bool) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobMove`](../../server/internal/world/entities.go#L1406)<br>`func buildMobMove(m *MapMob, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobLeave`](../../server/internal/world/entities.go#L1426)<br>`func buildMobLeave(id uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobTargetHP`](../../server/internal/world/entities.go#L1433)<br>`func buildMobTargetHP(m *MapMob) []byte` | buildMobTargetHP (0x0305): mob id, HP (client reader 0x0058f2d0). |
-| [`buildMobState`](../../server/internal/world/entities.go#L1441)<br>`func buildMobState(m *MapMob) []byte` | buildMobState (0x0304): mob id, HP, attack speed, move speed. |
-| [`buildCharacterMobAttack`](../../server/internal/world/entities.go#L1451)<br>`func buildCharacterMobAttack(characterID, mobID uint32, result uint8, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobAttackCharacter`](../../server/internal/world/entities.go#L1462)<br>`func buildMobAttackCharacter(result uint8, mobID, characterID uint32, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterDeath`](../../server/internal/world/entities.go#L1473)<br>`func buildCharacterDeath(characterID uint32, deathType uint8, killerID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterDeathState`](../../server/internal/world/entities.go#L1481)<br>`func buildCharacterDeathState(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterReviveInit`](../../server/internal/world/entities.go#L1489)<br>`func buildCharacterReviveInit(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildCharacterResurrect`](../../server/internal/world/entities.go#L1497)<br>`func buildCharacterResurrect(characterID uint32, kind uint8, exp uint32, x, y, z float32) []byte` | buildCharacterResurrect (0x0551) is CUser::Rebirth's packet: id, kind (1 in place, 4 bind point, 5 party leader), current exp, position. |
-| [`buildCharacterReviveHitpoints`](../../server/internal/world/entities.go#L1508)<br>`func buildCharacterReviveHitpoints(characterID, hp, mp, sp uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobDeath`](../../server/internal/world/entities.go#L1517)<br>`func buildMobDeath(mobID, killerID uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`deathPositionPacket`](../../server/internal/world/entities.go#L1521)<br>`func (m *MapMob) deathPositionPacket() []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobDeathBy`](../../server/internal/world/entities.go#L1528)<br>`func buildMobDeathBy(mobID, killerID uint32, deathType uint8) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobPeriodicDamage`](../../server/internal/world/entities.go#L1536)<br>`func buildMobPeriodicDamage(mobID uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte` | See the source definition and the subsystem ownership contract. |
-| [`buildMobCurrentHP`](../../server/internal/world/entities.go#L1547)<br>`func buildMobCurrentHP(mobID, hp uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`HealMob`](../../server/internal/world/entities.go#L1555)<br>`func HealMob(mapID uint16, id, amount uint32) (MapMob, uint32, bool)` | HealMob restores HP to a living mob (a drain's heal); returns the mob. |
-| [`recordLootDamage`](../../server/internal/world/entities.go#L1571)<br>`func (m *MapMob) recordLootDamage(id, damage uint32)` | recordLootDamage books damage against the attacker for the loot owner. |
+| [`MobArea`](../../server/internal/world/entities.go#L54)<br>`type MobArea` | See the source definition and the subsystem ownership contract. |
+| [`normalized`](../../server/internal/world/entities.go#L56)<br>`func (a MobArea) normalized() MobArea` | See the source definition and the subsystem ownership contract. |
+| [`clampX`](../../server/internal/world/entities.go#L59)<br>`func (a MobArea) clampX(x float32) float32` | See the source definition and the subsystem ownership contract. |
+| [`clampZ`](../../server/internal/world/entities.go#L60)<br>`func (a MobArea) clampZ(z float32) float32` | See the source definition and the subsystem ownership contract. |
+| [`contains`](../../server/internal/world/entities.go#L61)<br>`func (a MobArea) contains(x, z float32) bool` | See the source definition and the subsystem ownership contract. |
+| [`MapMob`](../../server/internal/world/entities.go#L65)<br>`type MapMob` | See the source definition and the subsystem ownership contract. |
+| [`MapPortal`](../../server/internal/world/entities.go#L125)<br>`type MapPortal` | See the source definition and the subsystem ownership contract. |
+| [`Contains`](../../server/internal/world/entities.go#L136)<br>`func (p *MapPortal) Contains(x, y, z float32) bool` | See the source definition and the subsystem ownership contract. |
+| [`IsOpen`](../../server/internal/world/entities.go#L143)<br>`func (p *MapPortal) IsOpen() bool` | See the source definition and the subsystem ownership contract. |
+| [`AllowsFaction`](../../server/internal/world/entities.go#L144)<br>`func (p *MapPortal) AllowsFaction(f uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`AllowsLevel`](../../server/internal/world/entities.go#L153)<br>`func (p *MapPortal) AllowsLevel(level uint16) bool` | See the source definition and the subsystem ownership contract. |
+| [`MapSpawnArea`](../../server/internal/world/entities.go#L157)<br>`type MapSpawnArea` | MapSpawnArea is one stMapBind of the svmap: a rebirth group of boxes. Faction is its type: 1 light, 2 fury, 0 and 3 both. |
+| [`SpawnBox`](../../server/internal/world/entities.go#L162)<br>`type SpawnBox` | See the source definition and the subsystem ownership contract. |
+| [`distanceSq`](../../server/internal/world/entities.go#L169)<br>`func (a *MapSpawnArea) distanceSq(x, z float32) float32` | distanceSq is measured, as CMap::GetBindPos does, to the lower corner of the group's first box. |
+| [`allowsFaction`](../../server/internal/world/entities.go#L173)<br>`func (a *MapSpawnArea) allowsFaction(f uint8) bool` | See the source definition and the subsystem ownership contract. |
+| [`RandomPoint`](../../server/internal/world/entities.go#L187)<br>`func (a *MapSpawnArea) RandomPoint() (x, y, z float32)` | RandomPoint is GetBindPos's pick: a random box of the group and a random whole-unit offset inside it, 0.9 above its floor. |
+| [`MapEntities`](../../server/internal/world/entities.go#L199)<br>`type MapEntities` | MapEntities is one map's NPCs, mobs, portals and spawn areas. |
+| [`mapShard`](../../server/internal/world/entities.go#L206)<br>`type mapShard` | See the source definition and the subsystem ownership contract. |
+| [`mapGrid`](../../server/internal/world/entities.go#L223)<br>`type mapGrid` | See the source definition and the subsystem ownership contract. |
+| [`shard`](../../server/internal/world/entities.go#L228)<br>`func shard(mapID uint16) *mapShard` | See the source definition and the subsystem ownership contract. |
+| [`shardIDs`](../../server/internal/world/entities.go#L239)<br>`func shardIDs() []uint16` | See the source definition and the subsystem ownership contract. |
+| [`cloneMob`](../../server/internal/world/entities.go#L249)<br>`func cloneMob(m *MapMob) MapMob` | See the source definition and the subsystem ownership contract. |
+| [`snapshotAt`](../../server/internal/world/entities.go#L264)<br>`func (m *MapMob) snapshotAt(now time.Time) MapMob` | See the source definition and the subsystem ownership contract. |
+| [`EntitiesOnMap`](../../server/internal/world/entities.go#L272)<br>`func EntitiesOnMap(mapID uint16) MapEntities` | EntitiesOnMap returns a copy of a map's entities. |
+| [`RegisterMapGrid`](../../server/internal/world/entities.go#L285)<br>`func RegisterMapGrid(mapID uint16, size uint32, mask []byte)` | See the source definition and the subsystem ownership contract. |
+| [`mapSize`](../../server/internal/world/entities.go#L292)<br>`func mapSize(mapID uint16) (float32, bool)` | mapSize is the svmap's side length. |
+| [`hasGrid`](../../server/internal/world/entities.go#L299)<br>`func hasGrid(mapID uint16) bool` | See the source definition and the subsystem ownership contract. |
+| [`abs32`](../../server/internal/world/entities.go#L306)<br>`func abs32(v float32) float32` | See the source definition and the subsystem ownership contract. |
+| [`DistanceXZ`](../../server/internal/world/entities.go#L308)<br>`func DistanceXZ(ax, az, bx, bz float32) float32` | See the source definition and the subsystem ownership contract. |
+| [`cell`](../../server/internal/world/entities.go#L313)<br>`type cell` | See the source definition and the subsystem ownership contract. |
+| [`coordCell`](../../server/internal/world/entities.go#L315)<br>`func coordCell(v float32, size float32) int32` | See the source definition and the subsystem ownership contract. |
+| [`cellFor`](../../server/internal/world/entities.go#L322)<br>`func cellFor(x, z float32) cell` | See the source definition and the subsystem ownership contract. |
+| [`isNeighborCell`](../../server/internal/world/entities.go#L327)<br>`func isNeighborCell(a, b cell) bool` | isNeighborCell is the 5x5 view window. |
+| [`EntitiesNear`](../../server/internal/world/entities.go#L339)<br>`func EntitiesNear(mapID uint16, x, z float32) MapEntities` | EntitiesNear returns the entities in the 5x5 cell window around (x, z). |
+| [`EntitiesInView`](../../server/internal/world/entities.go#L345)<br>`func EntitiesInView(mapID uint16, viewer cell) MapEntities` | EntitiesInView returns the NPCs and the visible mobs whose cell is in the 5x5 window around the viewer's cell. |
+| [`IsMapWalkable`](../../server/internal/world/entities.go#L373)<br>`func IsMapWalkable(mapID uint16, x, z float32) bool` | See the source definition and the subsystem ownership contract. |
+| [`walkableInMask`](../../server/internal/world/entities.go#L383)<br>`func walkableInMask(size uint32, mask []byte, x, z float32) bool` | See the source definition and the subsystem ownership contract. |
+| [`MobByID`](../../server/internal/world/entities.go#L402)<br>`func MobByID(mapID uint16, id uint32) (MapMob, bool)` | See the source definition and the subsystem ownership contract. |
+| [`MobDamageResult`](../../server/internal/world/entities.go#L414)<br>`type MobDamageResult` | See the source definition and the subsystem ownership contract. |
+| [`DamageMob`](../../server/internal/world/entities.go#L424)<br>`func DamageMob(mapID uint16, id uint32, damage uint32) (MobDamageResult, bool)` | DamageMob applies damage unless the mob is dead or resetting home. |
+| [`DamageMobFrom`](../../server/internal/world/entities.go#L427)<br>`func DamageMobFrom(mapID uint16, id uint32, damage, attacker uint32) (MobDamageResult, bool)` | See the source definition and the subsystem ownership contract. |
+| [`PlayerCombatSnapshot`](../../server/internal/world/entities.go#L471)<br>`type PlayerCombatSnapshot` | See the source definition and the subsystem ownership contract. |
+| [`MobAttackAction`](../../server/internal/world/entities.go#L486)<br>`type MobAttackAction` | See the source definition and the subsystem ownership contract. |
+| [`mapPacket`](../../server/internal/world/entities.go#L497)<br>`type mapPacket` | mapPacket is a packet to broadcast near (x, z) on a map. |
+| [`MobCombatTick`](../../server/internal/world/entities.go#L503)<br>`type MobCombatTick` | See the source definition and the subsystem ownership contract. |
+| [`viewerBuckets`](../../server/internal/world/entities.go#L509)<br>`type viewerBuckets` | See the source definition and the subsystem ownership contract. |
+| [`bucketViewers`](../../server/internal/world/entities.go#L511)<br>`func bucketViewers(viewers [][2]float32) viewerBuckets` | See the source definition and the subsystem ownership contract. |
+| [`nearAny`](../../server/internal/world/entities.go#L520)<br>`func (b viewerBuckets) nearAny(x, z float32, radius float32) bool` | See the source definition and the subsystem ownership contract. |
+| [`TickMobRespawns`](../../server/internal/world/entities.go#L538)<br>`func TickMobRespawns(viewersByMap map[uint16][][2]float32, maxPerMap int) []entityMove` | TickMobRespawns revives due mobs at a fresh position in their area. |
+| [`stepPatrol`](../../server/internal/world/entities.go#L611)<br>`func (n *MapNpc) stepPatrol(now time.Time, mapID uint16) bool` | CNpc::UpdateMove pauses at each waypoint and reverses at route endpoints. |
+| [`mobGroup`](../../server/internal/world/entities.go#L658)<br>`type mobGroup` | mobGroup is stMobRespawn: an svmap area entry of Count mobs. The first corpse removal from a full group starts its timer (RespawnTime, +-60 min for Attackspecial3 >= 9, CZone::UpdateMobDeath); CZone::UpdateMobRespawn then brings back one mob each time the timer runs out, at a random spot of the area, restarting the timer. |
+| [`died`](../../server/internal/world/entities.go#L664)<br>`func (m *MapMob) died(now time.Time)` | died books a death (shard lock held). |
+| [`removeCorpse`](../../server/internal/world/entities.go#L682)<br>`func (m *MapMob) removeCorpse(now time.Time)` | removeCorpse books the native UpdateMobDeath removal (shard lock held). Group counts include corpses until this point; later deaths cannot start another timer while the group is still being replenished. |
+| [`respawnSpot`](../../server/internal/world/entities.go#L703)<br>`func (m *MapMob) respawnSpot(mapID uint16) (float32, float32, bool)` | respawnSpot is UpdateMobRespawn's position: lower + rand(width) on each axis; ok false when it is not walkable (the next update tries again). |
+| [`relocate`](../../server/internal/world/entities.go#L719)<br>`func (n *MapNpc) relocate(mapID uint16, motion uint8) entityMove` | See the source definition and the subsystem ownership contract. |
+| [`mobCorpseDelay`](../../server/internal/world/entities.go#L727)<br>`const mobCorpseDelay = 5 * time.Second` | mobCorpseDelay is CMob::Damage's death tick: the corpse stays 5 s. |
+| [`visible`](../../server/internal/world/entities.go#L730)<br>`func (m *MapMob) visible() bool` | visibleMob: alive, or dead with its corpse still shown. |
+| [`TickMobCorpses`](../../server/internal/world/entities.go#L734)<br>`func TickMobCorpses() []entityMove` | TickMobCorpses is CZone::UpdateMobDeath: corpses older than 5 s leave the view (0x0602). |
+| [`SetMobAggro`](../../server/internal/world/entities.go#L757)<br>`func SetMobAggro(mapID uint16, id, characterID uint32)` | SetMobAggro is CMob::SetTarget for a player's hit: an idle mob takes the attacker as its target. The ledger grows through AddMobAggro, with the original amount (hitAggro): the attacker's REC times ten plus the skill's Arrow, whatever the damage. CMob::AttackAI later turns to the top of the ledger (ReTargetByAggro). |
+| [`AddMobAggro`](../../server/internal/world/entities.go#L759)<br>`func AddMobAggro(mapID uint16, id, characterID uint32, amount int64)` | See the source definition and the subsystem ownership contract. |
+| [`ForceMobTarget`](../../server/internal/world/entities.go#L778)<br>`func ForceMobTarget(mapID uint16, id, characterID uint32)` | ForceMobTarget is CMob::SetTarget(user, true): the mob turns to the user at once; the next ReTargetByAggro may still pick whoever has more aggro. |
+| [`ClearMobAggro`](../../server/internal/world/entities.go#L792)<br>`func ClearMobAggro(mapID uint16, id, killedUser uint32)` | ClearMobAggro is CMob::Attack after killing its target: back to idle (status 0) with the dead user's aggro gone; UpdateIdle walks it home when it is more than 10 units away. |
+| [`mobLeash`](../../server/internal/world/entities.go#L808)<br>`const mobLeash = 45.0` | Mob combat as CMob::UpdateIdle / UpdateAttack / Chase / ReturnHome run it. target farther than this from home or from the mob |
+| [`mobHomeDone`](../../server/internal/world/entities.go#L809)<br>`const mobHomeDone = 10.0` | Mob combat as CMob::UpdateIdle / UpdateAttack / Chase / ReturnHome run it. ReturnHome completes within 10 units of home |
+| [`TickMobCombat`](../../server/internal/world/entities.go#L813)<br>`func TickMobCombat(players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick` | TickMobCombat advances targeting, attacks, chasing and returning home. |
+| [`tickMobCombat`](../../server/internal/world/entities.go#L817)<br>`func tickMobCombat(now time.Time, players []PlayerCombatSnapshot, maxPerMap int) MobCombatTick` | See the source definition and the subsystem ownership contract. |
+| [`liveTarget`](../../server/internal/world/entities.go#L890)<br>`func (m *MapMob) liveTarget(players []PlayerCombatSnapshot) *PlayerCombatSnapshot` | See the source definition and the subsystem ownership contract. |
+| [`dropTarget`](../../server/internal/world/entities.go#L903)<br>`func (m *MapMob) dropTarget(home bool)` | dropTarget: status 0 (idle) or 3 (return home). |
+| [`findTarget`](../../server/internal/world/entities.go#L910)<br>`func (m *MapMob) findTarget(now time.Time, players []PlayerCombatSnapshot, extended bool) *PlayerCombatSnapshot` | findTarget picks the first eligible nearby user within the mob’s ChaseRange. |
+| [`targetWeakest`](../../server/internal/world/entities.go#L938)<br>`func (m *MapMob) targetWeakest(players []PlayerCombatSnapshot) *PlayerCombatSnapshot` | targetWeakest is CMob::FindAttackUserMinHP over the damage ledger. |
+| [`retargetByAggro`](../../server/internal/world/entities.go#L954)<br>`func (m *MapMob) retargetByAggro(players []PlayerCombatSnapshot)` | retargetByAggro is CMob::ReTargetByAggro: the living attacker on the map with the most aggro. |
+| [`stepChase`](../../server/internal/world/entities.go#L969)<br>`func (m *MapMob) stepChase(now time.Time, mapID uint16, t *PlayerCombatSnapshot, d float32, mods *mobMods, tick *MobCombatTick) bool` | stepChase advances toward the target, stopping just inside attack reach. |
+| [`stepHome`](../../server/internal/world/entities.go#L1024)<br>`func (m *MapMob) stepHome(now time.Time, mapID uint16, mods *mobMods, tick *MobCombatTick) bool` | stepHome runs toward the spawn and clears effects and aggro on arrival. CMob::ReturnHome sends movement mode 1 with the chase step and time. |
+| [`AddEntities`](../../server/internal/world/entities.go#L1070)<br>`func AddEntities(mapID uint16, e MapEntities)` | See the source definition and the subsystem ownership contract. |
+| [`FindNearestSpawnArea`](../../server/internal/world/entities.go#L1094)<br>`func FindNearestSpawnArea(mapID uint16, faction uint8, x, z float32) (MapSpawnArea, bool)` | FindNearestSpawnArea is CMap::GetBindPos's group choice: the nearest non-empty group open to the faction; when none is, the first group (the original's index stays 0), and ok is false only if that group is empty. |
+| [`FindPortalByIndex`](../../server/internal/world/entities.go#L1111)<br>`func FindPortalByIndex(mapID uint16, index uint8) (MapPortal, bool)` | See the source definition and the subsystem ownership contract. |
+| [`FindPortalAt`](../../server/internal/world/entities.go#L1120)<br>`func FindPortalAt(mapID uint16, x, y, z float32) (MapPortal, bool)` | See the source definition and the subsystem ownership contract. |
+| [`NewPatrolNpc`](../../server/internal/world/entities.go#L1137)<br>`func NewPatrolNpc(npcType uint8, typeID uint16, points []NpcPatrolPoint) (MapNpc, bool)` | See the source definition and the subsystem ownership contract. |
+| [`NewStaticMob`](../../server/internal/world/entities.go#L1148)<br>`func NewStaticMob(def *db.MobDef, mobID uint16, x, z float32, area *MobArea, respawnSeconds uint64) MapMob` | NewStaticMob builds a mob from its definition; respawn 0 never respawns. |
+| [`pickRespawnPosition`](../../server/internal/world/entities.go#L1169)<br>`func (m *MapMob) pickRespawnPosition(mapID uint16) (float32, float32)` | See the source definition and the subsystem ownership contract. |
+| [`mobSpeedOffsets`](../../server/internal/world/entities.go#L1192)<br>`var mobSpeedOffsets` | mobSpeedOffsets are the original move-speed step offsets (0x00542538); mobs start at speed 2 (no offset). |
+| [`mobHomeRadius`](../../server/internal/world/entities.go#L1194)<br>`const mobHomeRadius = 10.0` | See the source definition and the subsystem ownership contract. |
+| [`advanceRoam`](../../server/internal/world/entities.go#L1199)<br>`func (m *MapMob) advanceRoam(now time.Time, mapID uint16, tick *MobCombatTick)` | advanceRoam is the idle state's wander (update_mob_ai_idle): every 10 s + NormalTime + up to 30 s, a step of NormalStep + 0..4 units in a random direction, staying within 10 units of home. |
+| [`chaseStep`](../../server/internal/world/entities.go#L1233)<br>`func (m *MapMob) chaseStep(mods *mobMods) float32` | chaseStep is the maximum path segment for a chase or return home. |
+| [`attackReach`](../../server/internal/world/entities.go#L1242)<br>`func (m *MapMob) attackReach() float32` | attackReach is the native Size + Attackrange + 0.3. |
+| [`mobAttackAnimation`](../../server/internal/world/entities.go#L1250)<br>`const mobAttackAnimation = time.Second` | mobAttackAnimation caps how long a mob holds still while an attack plays. |
+| [`later`](../../server/internal/world/entities.go#L1252)<br>`func later(a, b time.Time) time.Time` | See the source definition and the subsystem ownership contract. |
+| [`mobAttackIdle`](../../server/internal/world/entities.go#L1261)<br>`const mobAttackIdle = 2500 * time.Millisecond` | mobAttackIdle is AttackAI's wait when no slot is ready (2500 ms plus g_ConstMobAttackSpeed, 0 at normal speed). |
+| [`pickAttackSlot`](../../server/internal/world/entities.go#L1266)<br>`func (m *MapMob) pickAttackSlot(now time.Time, mods *mobMods, inReach func(int, float32) bool, rollSpell func() bool) (slotIndex uint8, found, declinedSpell bool)` | pickAttackSlot keeps CMob::AttackAI's slot order and eligibility checks. GX draws once per decision for routine spells. A declined spell remains ready and the mob can still choose a basic or conditional attack. |
+| [`useSlot`](../../server/internal/world/entities.go#L1323)<br>`func (m *MapMob) useSlot(slot uint8, now time.Time) []byte` | useSlot starts a slot's cooldown and the next attack time. A mob heal skill (TypeEffect 2) applies at once and returns its HP packet. |
+| [`attackSpeedFactor`](../../server/internal/world/entities.go#L1343)<br>`func (m *MapMob) attackSpeedFactor() float32` | See the source definition and the subsystem ownership contract. |
+| [`movable`](../../server/internal/world/entities.go#L1351)<br>`func (m *MapMob) movable() bool` | movable: not stunned, asleep or stopped. |
+| [`attackInterval`](../../server/internal/world/entities.go#L1356)<br>`func (m *MapMob) attackInterval() time.Duration` | See the source definition and the subsystem ownership contract. |
+| [`roamWalkable`](../../server/internal/world/entities.go#L1363)<br>`func roamWalkable(mapID uint16, x, z float32, a MobArea) bool` | See the source definition and the subsystem ownership contract. |
+| [`buildNpcEnter`](../../server/internal/world/entities.go#L1369)<br>`func buildNpcEnter(n *MapNpc) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildNpcLeave`](../../server/internal/world/entities.go#L1384)<br>`func buildNpcLeave(id uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildNpcMove`](../../server/internal/world/entities.go#L1390)<br>`func buildNpcMove(n *MapNpc, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`wireHeightKnown`](../../server/internal/world/entities.go#L1400)<br>`func (m *MapMob) wireHeightKnown() bool` | See the source definition and the subsystem ownership contract. |
+| [`buildMobEnter`](../../server/internal/world/entities.go#L1404)<br>`func buildMobEnter(m *MapMob, isNew bool) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobMove`](../../server/internal/world/entities.go#L1426)<br>`func buildMobMove(m *MapMob, motion uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobLeave`](../../server/internal/world/entities.go#L1446)<br>`func buildMobLeave(id uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobTargetHP`](../../server/internal/world/entities.go#L1453)<br>`func buildMobTargetHP(m *MapMob) []byte` | buildMobTargetHP (0x0305): mob id, HP (client reader 0x0058f2d0). |
+| [`buildMobState`](../../server/internal/world/entities.go#L1461)<br>`func buildMobState(m *MapMob) []byte` | buildMobState (0x0304): mob id, HP, attack speed, move speed. |
+| [`buildCharacterMobAttack`](../../server/internal/world/entities.go#L1471)<br>`func buildCharacterMobAttack(characterID, mobID uint32, result uint8, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobAttackCharacter`](../../server/internal/world/entities.go#L1482)<br>`func buildMobAttackCharacter(result uint8, mobID, characterID uint32, damage uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterDeath`](../../server/internal/world/entities.go#L1493)<br>`func buildCharacterDeath(characterID uint32, deathType uint8, killerID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterDeathState`](../../server/internal/world/entities.go#L1501)<br>`func buildCharacterDeathState(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterReviveInit`](../../server/internal/world/entities.go#L1509)<br>`func buildCharacterReviveInit(characterID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildCharacterResurrect`](../../server/internal/world/entities.go#L1517)<br>`func buildCharacterResurrect(characterID uint32, kind uint8, exp uint32, x, y, z float32) []byte` | buildCharacterResurrect (0x0551) is CUser::Rebirth's packet: id, kind (1 in place, 4 bind point, 5 party leader), current exp, position. |
+| [`buildCharacterReviveHitpoints`](../../server/internal/world/entities.go#L1528)<br>`func buildCharacterReviveHitpoints(characterID, hp, mp, sp uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobDeath`](../../server/internal/world/entities.go#L1537)<br>`func buildMobDeath(mobID, killerID uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`deathPositionPacket`](../../server/internal/world/entities.go#L1541)<br>`func (m *MapMob) deathPositionPacket() []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobDeathBy`](../../server/internal/world/entities.go#L1548)<br>`func buildMobDeathBy(mobID, killerID uint32, deathType uint8) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobPeriodicDamage`](../../server/internal/world/entities.go#L1556)<br>`func buildMobPeriodicDamage(mobID uint32, skillID uint16, level uint8, hp, sp, mp uint16) []byte` | See the source definition and the subsystem ownership contract. |
+| [`buildMobCurrentHP`](../../server/internal/world/entities.go#L1567)<br>`func buildMobCurrentHP(mobID, hp uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`HealMob`](../../server/internal/world/entities.go#L1575)<br>`func HealMob(mapID uint16, id, amount uint32) (MapMob, uint32, bool)` | HealMob restores HP to a living mob (a drain's heal); returns the mob. |
+| [`recordLootDamage`](../../server/internal/world/entities.go#L1591)<br>`func (m *MapMob) recordLootDamage(id, damage uint32)` | recordLootDamage books damage against the attacker for the loot owner. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -1023,6 +1023,7 @@ type MapNpc struct {
 	guardReady       time.Time
 	guardTarget      guardTarget
 	guardReturning   bool
+	svRoute          svRoute
 }
 ```
 
@@ -1048,6 +1049,7 @@ type MapMob struct {
 	PosX, PosY, PosZ float32
 	nav              *mobNav
 	navPath          []mapnav.Point
+	svRoute          svRoute
 	navGoal          mapnav.Point
 	navRefresh       time.Time
 	// Pos is the destination while a movement segment is in progress.
@@ -1438,21 +1440,33 @@ Direct GX dependencies: `internal/gm`, `internal/proto`, `server/internal/db`, `
 | [`gmMaxSpawn`](../../server/internal/world/gm.go#L17)<br>`const gmMaxSpawn = 100` | See the source definition and the subsystem ownership contract. |
 | [`gxGMModes`](../../server/internal/world/gm.go#L18)<br>`const gxGMModes = 0x7F29` | See the source definition and the subsystem ownership contract. |
 | [`turboActive`](../../server/internal/world/gm.go#L20)<br>`func (s *Session) turboActive() bool` | See the source definition and the subsystem ownership contract. |
-| [`gmReply`](../../server/internal/world/gm.go#L22)<br>`func (s *Session) gmReply(message string, reply ...proto.GMReply)` | See the source definition and the subsystem ownership contract. |
-| [`sendGMModes`](../../server/internal/world/gm.go#L46)<br>`func (s *Session) sendGMModes()` | sendGMModes publishes the three GM switches to the GM's own client. |
-| [`gmModeGuard`](../../server/internal/world/gm.go#L71)<br>`func (s *Session) gmModeGuard() bool` | setGMChar and setGMAttack are the original admin commands (CUser:: PacketAdminCmdE 0xFA01/0xFA02 bVisible and 0xFA05/0xFA06 bAttackable, chat "/char on&#124;off" and "/attack on&#124;off" at Game.exe 0x471c20). "/char on" makes the character transparent; "/attack on" makes it unattackable. gmModeGuard rejects a /char or /attack change that follows another within 750 ms. Each change re-evaluates who sees the GM, so a client that loops (or an input burst) must not be able to flood the world with them. |
-| [`setGMChar`](../../server/internal/world/gm.go#L81)<br>`func (s *Session) setGMChar(on bool)` | See the source definition and the subsystem ownership contract. |
-| [`setGMAttack`](../../server/internal/world/gm.go#L92)<br>`func (s *Session) setGMAttack(on bool)` | See the source definition and the subsystem ownership contract. |
-| [`gmNumbers`](../../server/internal/world/gm.go#L106)<br>`func gmNumbers(args []string, bounds ...uint64) ([]uint64, error)` | See the source definition and the subsystem ownership contract. |
-| [`handleGMCommand`](../../server/internal/world/gm.go#L122)<br>`func (s *Session) handleGMCommand(text string) bool` | Known commands are consumed even when refused; they never become public chat. |
-| [`gmClearInventory`](../../server/internal/world/gm.go#L252)<br>`func (s *Session) gmClearInventory() error` | Clear carried inventory only. Equipped items and warehouse contents survive. |
-| [`planGMGrant`](../../server/internal/world/gm.go#L278)<br>`func planGMGrant(items []db.Item, def *db.ItemDef, quantity int) ([]db.Item, []db.Item, []db.Item, error)` | planGMGrant keeps the entire request atomic, including quantities above 255. |
-| [`gmGiveItem`](../../server/internal/world/gm.go#L310)<br>`func (s *Session) gmGiveItem(itemType, id uint8, quantity int) error` | See the source definition and the subsystem ownership contract. |
-| [`gmSpawnPositions`](../../server/internal/world/gm.go#L335)<br>`func gmSpawnPositions(mapID uint16, x, z float32, count int, entities *MapEntities) ([][2]float32, error)` | Spawn positions form expanding rings; occupied points and blocked cells are rejected, including entities created by earlier commands. |
-| [`gmSpawn`](../../server/internal/world/gm.go#L384)<br>`func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error` | See the source definition and the subsystem ownership contract. |
-| [`gmMove`](../../server/internal/world/gm.go#L461)<br>`func (s *Session) gmMove(mapID uint16) error` | See the source definition and the subsystem ownership contract. |
-| [`gmSet`](../../server/internal/world/gm.go#L546)<br>`func (s *Session) gmSet(args []string) error` | gmSet changes only the issuing character. Claimed rewards remain claimed. |
-| [`gmCure`](../../server/internal/world/gm.go#L635)<br>`func (s *Session) gmCure() error` | gmCure clears all debuffs and cooldowns and restores HP, MP and SP. |
+| [`gmReply`](../../server/internal/world/gm.go#L22)<br>`func (s *Session) gmReply(message string)` | See the source definition and the subsystem ownership contract. |
+| [`sendGMModes`](../../server/internal/world/gm.go#L43)<br>`func (s *Session) sendGMModes()` | sendGMModes publishes the three GM switches to the GM's own client. |
+| [`gmModeGuard`](../../server/internal/world/gm.go#L68)<br>`func (s *Session) gmModeGuard() bool` | setGMChar and setGMAttack are the original admin commands (CUser:: PacketAdminCmdE 0xFA01/0xFA02 bVisible and 0xFA05/0xFA06 bAttackable, chat "/char on&#124;off" and "/attack on&#124;off" at Game.exe 0x471c20). "/char on" makes the character transparent; "/attack on" makes it unattackable. gmModeGuard rejects a /char or /attack change that follows another within 750 ms. Each change re-evaluates who sees the GM, so a client that loops (or an input burst) must not be able to flood the world with them. |
+| [`setGMChar`](../../server/internal/world/gm.go#L78)<br>`func (s *Session) setGMChar(on bool)` | See the source definition and the subsystem ownership contract. |
+| [`setGMAttack`](../../server/internal/world/gm.go#L89)<br>`func (s *Session) setGMAttack(on bool)` | See the source definition and the subsystem ownership contract. |
+| [`gmNumbers`](../../server/internal/world/gm.go#L103)<br>`func gmNumbers(args []string, bounds ...uint64) ([]uint64, error)` | See the source definition and the subsystem ownership contract. |
+| [`handleGMCommand`](../../server/internal/world/gm.go#L119)<br>`func (s *Session) handleGMCommand(text string) bool` | Known commands are consumed even when refused; they never become public chat. |
+| [`gmClearInventory`](../../server/internal/world/gm.go#L255)<br>`func (s *Session) gmClearInventory() error` | Clear carried inventory only. Equipped items and warehouse contents survive. |
+| [`planGMGrant`](../../server/internal/world/gm.go#L281)<br>`func planGMGrant(items []db.Item, def *db.ItemDef, quantity int) ([]db.Item, []db.Item, []db.Item, error)` | planGMGrant keeps the entire request atomic, including quantities above 255. |
+| [`gmGiveItem`](../../server/internal/world/gm.go#L313)<br>`func (s *Session) gmGiveItem(itemType, id uint8, quantity int) error` | See the source definition and the subsystem ownership contract. |
+| [`gmSpawnPositions`](../../server/internal/world/gm.go#L338)<br>`func gmSpawnPositions(mapID uint16, x, z float32, count int, entities *MapEntities) ([][2]float32, error)` | Spawn positions form expanding rings; occupied points and blocked cells are rejected, including entities created by earlier commands. |
+| [`gmSpawn`](../../server/internal/world/gm.go#L387)<br>`func (s *Session) gmSpawn(id uint16, count int, npcType uint8) error` | See the source definition and the subsystem ownership contract. |
+| [`gmMove`](../../server/internal/world/gm.go#L464)<br>`func (s *Session) gmMove(mapID uint16) error` | See the source definition and the subsystem ownership contract. |
+| [`gmSetUsage`](../../server/internal/world/gm.go#L548)<br>`const gmSetUsage = "usage: /set money&#124;kill&#124;str&#124;dex&#124;rec&#124;int&#124;wis&#124;luc&#124;statpoint&#124;skillpoint&#124;level amount"` | See the source definition and the subsystem ownership contract. |
+| [`gmSet`](../../server/internal/world/gm.go#L551)<br>`func (s *Session) gmSet(args []string) error` | gmSet changes only the issuing character. Claimed rewards remain claimed. |
+| [`gmBless`](../../server/internal/world/gm.go#L643)<br>`func (s *Session) gmBless()` | gmCure clears all debuffs and cooldowns and restores HP, MP and SP. gmBless raises the GM's country to the top kill-count tier through CWorld::AddKillCount, activating the goddess blessing at once. It does nothing while either country already holds a blessing. |
+| [`discardLog`](../../server/internal/world/gm.go#L662)<br>`type discardLog` | See the source definition and the subsystem ownership contract. |
+| [`Printf`](../../server/internal/world/gm.go#L664)<br>`func (discardLog) Printf(string, ...any)` | See the source definition and the subsystem ownership contract. |
+| [`gmCure`](../../server/internal/world/gm.go#L666)<br>`func (s *Session) gmCure() error` | See the source definition and the subsystem ownership contract. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type discardLog struct{}
+```
+
+</details>
 
 ### gm_erase.go
 
@@ -1477,7 +1491,7 @@ Direct GX dependencies: `internal/proto`, `server/internal/db`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`gmSetLevel`](../../server/internal/world/gm_level.go#L8)<br>`func (s *Session) gmSetLevel(args []string) error` | See the source definition and the subsystem ownership contract. |
+| [`gmSetLevel`](../../server/internal/world/gm_level.go#L10)<br>`func (s *Session) gmSetLevel(args []string) error` | See the source definition and the subsystem ownership contract. |
 
 ### gm_map.go
 
@@ -1492,45 +1506,19 @@ Direct GX dependencies: `internal/mapgeometry`, `internal/mapnav`, `internal/pro
 | [`exactMapDestination`](../../server/internal/world/gm_map.go#L73)<br>`func exactMapDestination(g *mapgeometry.Geometry, x, hint, z float32) (mapgeometry.Position, bool)` | See the source definition and the subsystem ownership contract. |
 | [`nearbyMapDestination`](../../server/internal/world/gm_map.go#L90)<br>`func nearbyMapDestination(nav *mapnav.Map, g *mapgeometry.Geometry, mapID uint16, size, x, hint, z float32) (mapgeometry.Position, bool)` | Prefer the exact click, then the nearest navmesh projection. If its player body is obstructed, search bounded expanding rings; never accept a floorless point, a blocked mask cell, or coordinates outside the destination map. |
 
-### gm_messages.go
-
-[server/internal/world/gm_messages.go](../../server/internal/world/gm_messages.go#L1)
-
-Direct GX dependencies: `internal/data/text`, `internal/proto`.
-
-| Declaration | Responsibility / source comment |
-|---|---|
-| [`gmError`](../../server/internal/world/gm_messages.go#L12)<br>`type gmError` | See the source definition and the subsystem ownership contract. |
-| [`Error`](../../server/internal/world/gm_messages.go#L16)<br>`func (e gmError) Error() string` | See the source definition and the subsystem ownership contract. |
-| [`gmReplyData`](../../server/internal/world/gm_messages.go#L20)<br>`func gmReplyData(id uint16, args ...any) proto.GMReply` | See the source definition and the subsystem ownership contract. |
-| [`newGMError`](../../server/internal/world/gm_messages.go#L35)<br>`func newGMError(id uint16, args ...any) error` | See the source definition and the subsystem ownership contract. |
-| [`gmMessage`](../../server/internal/world/gm_messages.go#L39)<br>`func (s *Session) gmMessage(id uint16, args ...any)` | See the source definition and the subsystem ownership contract. |
-| [`sendGMMessage`](../../server/internal/world/gm_messages.go#L43)<br>`func (s *Session) sendGMMessage(reply proto.GMReply)` | See the source definition and the subsystem ownership contract. |
-| [`gmFailure`](../../server/internal/world/gm_messages.go#L47)<br>`func (s *Session) gmFailure(err error)` | See the source definition and the subsystem ownership contract. |
-
-<details><summary>Type definitions and owned fields</summary>
-
-```go
-type gmError struct {
-	reply proto.GMReply
-}
-```
-
-</details>
-
 ### gm_travel.go
 
 [server/internal/world/gm_travel.go](../../server/internal/world/gm_travel.go#L1)
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`forcedTeleport`](../../server/internal/world/gm_travel.go#L6)<br>`type forcedTeleport` | forcedTeleport is a GM's /asummon: where the user is taken, at once. |
-| [`queueForcedTeleport`](../../server/internal/world/gm_travel.go#L11)<br>`func (p *ConnectedPlayer) queueForcedTeleport(f forcedTeleport)` | See the source definition and the subsystem ownership contract. |
-| [`takeForcedTeleport`](../../server/internal/world/gm_travel.go#L17)<br>`func (p *ConnectedPlayer) takeForcedTeleport() *forcedTeleport` | See the source definition and the subsystem ownership contract. |
-| [`tickForcedTeleport`](../../server/internal/world/gm_travel.go#L27)<br>`func (s *Session) tickForcedTeleport()` | tickForcedTeleport carries out a GM's /asummon on this user: no consumable, no cast and no confirmation. |
-| [`gmTarget`](../../server/internal/world/gm_travel.go#L49)<br>`func (s *Session) gmTarget(name string, mustBeAlive bool) (*ConnectedPlayer, error)` | gmTarget finds the character a GM command names. |
-| [`gmGoTo`](../../server/internal/world/gm_travel.go#L62)<br>`func (s *Session) gmGoTo(name string) error` | gmGoTo is /amove: the movement rune without the item or the cast, to where another character is (dead or alive), on any map. |
-| [`gmBring`](../../server/internal/world/gm_travel.go#L86)<br>`func (s *Session) gmBring(name string) error` | gmBring is /asummon: the summon rune without the item, the cast or the confirmation; the character is taken to the GM at once. |
+| [`forcedTeleport`](../../server/internal/world/gm_travel.go#L8)<br>`type forcedTeleport` | forcedTeleport is a GM's /asummon: where the user is taken, at once. |
+| [`queueForcedTeleport`](../../server/internal/world/gm_travel.go#L13)<br>`func (p *ConnectedPlayer) queueForcedTeleport(f forcedTeleport)` | See the source definition and the subsystem ownership contract. |
+| [`takeForcedTeleport`](../../server/internal/world/gm_travel.go#L19)<br>`func (p *ConnectedPlayer) takeForcedTeleport() *forcedTeleport` | See the source definition and the subsystem ownership contract. |
+| [`tickForcedTeleport`](../../server/internal/world/gm_travel.go#L29)<br>`func (s *Session) tickForcedTeleport()` | tickForcedTeleport carries out a GM's /asummon on this user: no consumable, no cast and no confirmation. |
+| [`gmTarget`](../../server/internal/world/gm_travel.go#L51)<br>`func (s *Session) gmTarget(name string, mustBeAlive bool) (*ConnectedPlayer, error)` | gmTarget finds the character a GM command names. |
+| [`gmGoTo`](../../server/internal/world/gm_travel.go#L64)<br>`func (s *Session) gmGoTo(name string) error` | gmGoTo is /amove: the movement rune without the item or the cast, to where another character is (dead or alive), on any map. |
+| [`gmBring`](../../server/internal/world/gm_travel.go#L88)<br>`func (s *Session) gmBring(name string) error` | gmBring is /asummon: the summon rune without the item, the cast or the confirmation; the character is taken to the GM at once. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -2239,15 +2227,18 @@ Direct GX dependencies: `internal/mapgeometry`, `internal/proto`, `server/intern
 
 [server/internal/world/linked_bosses.go](../../server/internal/world/linked_bosses.go#L1)
 
+Direct GX dependencies: `server/internal/db`.
+
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`initializeBossLocked`](../../server/internal/world/linked_bosses.go#L8)<br>`func initializeBossLocked(mapID uint16, b *linkedBoss, now time.Time)` | See the source definition and the subsystem ownership contract. |
-| [`bossRandomDelay`](../../server/internal/world/linked_bosses.go#L32)<br>`func bossRandomDelay(b *linkedBoss) time.Duration` | See the source definition and the subsystem ownership contract. |
-| [`bossPortalMap`](../../server/internal/world/linked_bosses.go#L39)<br>`func bossPortalMap(b *linkedBoss) uint16` | See the source definition and the subsystem ownership contract. |
-| [`bossDestroyedLocked`](../../server/internal/world/linked_bosses.go#L45)<br>`func bossDestroyedLocked(s *mapShard, b *linkedBoss, now time.Time, out *[]eventPublication)` | See the source definition and the subsystem ownership contract. |
-| [`tickBossLocked`](../../server/internal/world/linked_bosses.go#L70)<br>`func tickBossLocked(s *mapShard, b *linkedBoss, now time.Time, out *[]eventPublication)` | See the source definition and the subsystem ownership contract. |
-| [`initializeInstanceBosses`](../../server/internal/world/linked_bosses.go#L101)<br>`func initializeInstanceBosses(zone, base uint16)` | Each instance gets its own linked boss phases. Primary-map obelisks are deliberately not copied into party/guild instances. |
-| [`syncBossPortal`](../../server/internal/world/linked_bosses.go#L126)<br>`func syncBossPortal(b *linkedBoss)` | See the source definition and the subsystem ownership contract. |
+| [`initializeBossLocked`](../../server/internal/world/linked_bosses.go#L10)<br>`func initializeBossLocked(mapID uint16, b *linkedBoss, now time.Time)` | See the source definition and the subsystem ownership contract. |
+| [`bossRoll`](../../server/internal/world/linked_bosses.go#L42)<br>`func bossRoll(b *linkedBoss) ([3]float32, bool)` | bossRoll is the [RandomRespawn] appearance roll: chance percent (0 means always) and a random authored position, not the previous one when there are several. The chosen position is kept for the boss's later phases. |
+| [`bossRetry`](../../server/internal/world/linked_bosses.go#L57)<br>`func bossRetry(b *linkedBoss, now time.Time) time.Time` | bossRetry schedules the next roll after a failed one: the first phase's own respawn (Attackspecial3), at least a minute. An instance rolls once, at creation, so a failed roll leaves it without the boss. |
+| [`bossPortalMap`](../../server/internal/world/linked_bosses.go#L67)<br>`func bossPortalMap(b *linkedBoss) uint16` | See the source definition and the subsystem ownership contract. |
+| [`bossDestroyedLocked`](../../server/internal/world/linked_bosses.go#L73)<br>`func bossDestroyedLocked(s *mapShard, b *linkedBoss, now time.Time, out *[]eventPublication)` | See the source definition and the subsystem ownership contract. |
+| [`tickBossLocked`](../../server/internal/world/linked_bosses.go#L98)<br>`func tickBossLocked(s *mapShard, b *linkedBoss, now time.Time, out *[]eventPublication)` | See the source definition and the subsystem ownership contract. |
+| [`initializeInstanceBosses`](../../server/internal/world/linked_bosses.go#L136)<br>`func initializeInstanceBosses(zone, base uint16)` | Each instance gets its own linked boss phases. Primary-map obelisks are deliberately not copied into party/guild instances. |
+| [`syncBossPortal`](../../server/internal/world/linked_bosses.go#L161)<br>`func syncBossPortal(b *linkedBoss)` | See the source definition and the subsystem ownership contract. |
 
 ### loot.go
 
@@ -2407,18 +2398,18 @@ Direct GX dependencies: `internal/mapnav`, `server/ai`, `server/internal/config`
 | [`aiNumber`](../../server/internal/world/mob_ai.go#L193)<br>`func aiNumber(args []any, i int) float64` | See the source definition and the subsystem ownership contract. |
 | [`aiBool`](../../server/internal/world/mob_ai.go#L209)<br>`func aiBool(args []any, i int) bool` | See the source definition and the subsystem ownership contract. |
 | [`Call`](../../server/internal/world/mob_ai.go#L218)<br>`func (h *mobAIHost) Call(name string, args []any) (any, error)` | See the source definition and the subsystem ownership contract. |
-| [`heal`](../../server/internal/world/mob_ai.go#L543)<br>`func (h *mobAIHost) heal(amount uint32)` | See the source definition and the subsystem ownership contract. |
-| [`refreshTarget`](../../server/internal/world/mob_ai.go#L554)<br>`func (h *mobAIHost) refreshTarget()` | See the source definition and the subsystem ownership contract. |
-| [`recruit`](../../server/internal/world/mob_ai.go#L580)<br>`func (h *mobAIHost) recruit(user uint32, x, z, radius float32, kind string)` | See the source definition and the subsystem ownership contract. |
-| [`selectDirection`](../../server/internal/world/mob_ai.go#L604)<br>`func (h *mobAIHost) selectDirection(extra float32)` | See the source definition and the subsystem ownership contract. |
-| [`moveSelected`](../../server/internal/world/mob_ai.go#L615)<br>`func (h *mobAIHost) moveSelected(run bool)` | See the source definition and the subsystem ownership contract. |
-| [`attack`](../../server/internal/world/mob_ai.go#L650)<br>`func (h *mobAIHost) attack(stationary bool)` | See the source definition and the subsystem ownership contract. |
-| [`skill`](../../server/internal/world/mob_ai.go#L708)<br>`func (h *mobAIHost) skill(id uint16)` | See the source definition and the subsystem ownership contract. |
-| [`mobAICommand`](../../server/internal/world/mob_ai.go#L744)<br>`type mobAICommand` | See the source definition and the subsystem ownership contract. |
-| [`runMobAICommands`](../../server/internal/world/mob_ai.go#L757)<br>`func runMobAICommands(tick *MobCombatTick)` | See the source definition and the subsystem ownership contract. |
-| [`isSacraGuard`](../../server/internal/world/mob_ai.go#L879)<br>`func isSacraGuard(m *MapMob) bool` | Sacra's first-floor bosses each send the portal update on death. The summoned encounter pair must both be defeated in this instance. |
-| [`hasLivingSacraGuard`](../../server/internal/world/mob_ai.go#L883)<br>`func hasLivingSacraGuard(mobs []MapMob) bool` | See the source definition and the subsystem ownership contract. |
-| [`recordMobAIMiss`](../../server/internal/world/mob_ai.go#L892)<br>`func recordMobAIMiss(mapID uint16, id, user uint32)` | See the source definition and the subsystem ownership contract. |
+| [`heal`](../../server/internal/world/mob_ai.go#L545)<br>`func (h *mobAIHost) heal(amount uint32)` | See the source definition and the subsystem ownership contract. |
+| [`refreshTarget`](../../server/internal/world/mob_ai.go#L556)<br>`func (h *mobAIHost) refreshTarget()` | See the source definition and the subsystem ownership contract. |
+| [`recruit`](../../server/internal/world/mob_ai.go#L582)<br>`func (h *mobAIHost) recruit(user uint32, x, z, radius float32, kind string)` | See the source definition and the subsystem ownership contract. |
+| [`selectDirection`](../../server/internal/world/mob_ai.go#L606)<br>`func (h *mobAIHost) selectDirection(extra float32)` | See the source definition and the subsystem ownership contract. |
+| [`moveSelected`](../../server/internal/world/mob_ai.go#L617)<br>`func (h *mobAIHost) moveSelected(run bool)` | See the source definition and the subsystem ownership contract. |
+| [`attack`](../../server/internal/world/mob_ai.go#L652)<br>`func (h *mobAIHost) attack(stationary bool)` | See the source definition and the subsystem ownership contract. |
+| [`skill`](../../server/internal/world/mob_ai.go#L710)<br>`func (h *mobAIHost) skill(id uint16)` | See the source definition and the subsystem ownership contract. |
+| [`mobAICommand`](../../server/internal/world/mob_ai.go#L746)<br>`type mobAICommand` | See the source definition and the subsystem ownership contract. |
+| [`runMobAICommands`](../../server/internal/world/mob_ai.go#L759)<br>`func runMobAICommands(tick *MobCombatTick)` | See the source definition and the subsystem ownership contract. |
+| [`isSacraGuard`](../../server/internal/world/mob_ai.go#L881)<br>`func isSacraGuard(m *MapMob) bool` | Sacra's first-floor bosses each send the portal update on death. The summoned encounter pair must both be defeated in this instance. |
+| [`hasLivingSacraGuard`](../../server/internal/world/mob_ai.go#L885)<br>`func hasLivingSacraGuard(mobs []MapMob) bool` | See the source definition and the subsystem ownership contract. |
+| [`recordMobAIMiss`](../../server/internal/world/mob_ai.go#L894)<br>`func recordMobAIMiss(mapID uint16, id, user uint32)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -2507,23 +2498,28 @@ Direct GX dependencies: `internal/mapgeometry`, `internal/mapnav`, `internal/mov
 | [`setPoint`](../../server/internal/world/mob_navigation.go#L89)<br>`func (m *MapMob) setPoint(p mapnav.Point)` | See the source definition and the subsystem ownership contract. |
 | [`usesDungeonMobNavigation`](../../server/internal/world/mob_navigation.go#L91)<br>`func usesDungeonMobNavigation(nav *mapnav.Map, id uint16) bool` | See the source definition and the subsystem ownership contract. |
 | [`placeOnNavigation`](../../server/internal/world/mob_navigation.go#L95)<br>`func (m *MapMob) placeOnNavigation(nav *mapnav.Map, mapID uint16) bool` | See the source definition and the subsystem ownership contract. |
-| [`setMobGround`](../../server/internal/world/mob_navigation.go#L174)<br>`func (m *MapMob) setMobGround(p mapnav.Point)` | See the source definition and the subsystem ownership contract. |
-| [`mobSpawnHasExit`](../../server/internal/world/mob_navigation.go#L181)<br>`func (m *MapMob) mobSpawnHasExit(nav *mapnav.Map, mapID uint16, spawn mapnav.Point) bool` | See the source definition and the subsystem ownership contract. |
-| [`navigate`](../../server/internal/world/mob_navigation.go#L197)<br>`func (m *MapMob) navigate(now time.Time, mapID uint16, goal mapnav.Point, step float32) (mapnav.Point, bool)` | See the source definition and the subsystem ownership contract. |
-| [`targetDistance`](../../server/internal/world/mob_navigation.go#L235)<br>`func (m *MapMob) targetDistance(t *PlayerCombatSnapshot) float32` | Combat reach uses the horizontal plane. Height still comes from the map when the mob moves along its walkable surface. |
-| [`mobNav`](../../server/internal/world/mob_navigation.go#L241)<br>`type mobNav` | Mobs retain a lightweight map reference. The decoded geometry cache is bounded instead of keeping every world map resident merely because it has spawns. |
-| [`allowsXZ`](../../server/internal/world/mob_navigation.go#L247)<br>`func (n *mobNav) allowsXZ(mapID uint16, x, z float32) bool` | See the source definition and the subsystem ownership contract. |
-| [`movementMap`](../../server/internal/world/mob_navigation.go#L259)<br>`func (n *mobNav) movementMap() (*mapnav.Map, error)` | See the source definition and the subsystem ownership contract. |
-| [`Path`](../../server/internal/world/mob_navigation.go#L266)<br>`func (n *mobNav) Path(a, b mapnav.Point) ([]mapnav.Point, bool)` | See the source definition and the subsystem ownership contract. |
-| [`Step`](../../server/internal/world/mob_navigation.go#L273)<br>`func (n *mobNav) Step(a mapnav.Point, path []mapnav.Point, d float32, walkable func(float32, float32) bool) (mapnav.Point, float32, int, bool)` | See the source definition and the subsystem ownership contract. |
-| [`placeRespawn`](../../server/internal/world/mob_navigation.go#L280)<br>`func (m *MapMob) placeRespawn(mapID uint16) bool` | See the source definition and the subsystem ownership contract. |
-| [`mobNavigationTick`](../../server/internal/world/mob_navigation.go#L286)<br>`const mobNavigationTick = 50 * time.Millisecond` | Corner arrivals need a finer scheduler than the legacy half-second sweep. |
-| [`movingAt`](../../server/internal/world/mob_navigation.go#L288)<br>`func (m *MapMob) movingAt(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
-| [`positionAt`](../../server/internal/world/mob_navigation.go#L292)<br>`func (m *MapMob) positionAt(now time.Time) mapnav.Point` | See the source definition and the subsystem ownership contract. |
-| [`moveTo`](../../server/internal/world/mob_navigation.go#L317)<br>`func (m *MapMob) moveTo(mapID uint16, now time.Time, to mapnav.Point, motion uint8) entityMove` | See the source definition and the subsystem ownership contract. |
-| [`stopMovePacket`](../../server/internal/world/mob_navigation.go#L349)<br>`func (m *MapMob) stopMovePacket(mapID uint16) entityMove` | stopMovePacket syncs the interrupted walk when combat starts in place. |
-| [`refreshMoveSpeed`](../../server/internal/world/mob_navigation.go#L359)<br>`func (m *MapMob) refreshMoveSpeed(mapID uint16, now time.Time, tick *MobCombatTick)` | The original client reads the current speed index every frame. Update the active segment from its current position so World and the client keep the same destination and arrival time when a speed effect changes. |
-| [`appearance`](../../server/internal/world/mob_navigation.go#L365)<br>`func (m *MapMob) appearance(now time.Time, fresh bool) (enter, move []byte)` | See the source definition and the subsystem ownership contract. |
+| [`setMobGround`](../../server/internal/world/mob_navigation.go#L177)<br>`func (m *MapMob) setMobGround(p mapnav.Point)` | See the source definition and the subsystem ownership contract. |
+| [`placeOnSvmap`](../../server/internal/world/mob_navigation.go#L186)<br>`func (m *MapMob) placeOnSvmap(nav *mapnav.Map, mapID uint16) bool` | placeOnSvmap keeps the svmap spawn X/Z, as ps_game.exe does, and only resolves the floor height that GX movement packets carry. |
+| [`svmapGround`](../../server/internal/world/mob_navigation.go#L213)<br>`func (n *mobNav) svmapGround(p mapnav.Point, previous float32) float32` | svmapGround follows the floor nearest the previous height. |
+| [`svmapChaseGoal`](../../server/internal/world/mob_navigation.go#L231)<br>`func (m *MapMob) svmapChaseGoal(mapID uint16, goal mapnav.Point) (mapnav.Point, bool)` | svmapChaseGoal handles a target standing on a blocked tile like the blocked-target arm of CMob::Chase 0x4a6de0: the mob walks to the last free tile of the line toward the target when the target is within attack reach of it, and gives up when it already stands there or the target is farther. |
+| [`svmapHomeGoal`](../../server/internal/world/mob_navigation.go#L260)<br>`func (m *MapMob) svmapHomeGoal(mapID uint16, home mapnav.Point) mapnav.Point` | svmapHomeGoal retraces the chase trail while home is out of line, as CMob::ReturnHome 004a7670 pops ChasePathList before falling back to A*. |
+| [`svmapNavigate`](../../server/internal/world/mob_navigation.go#L281)<br>`func (m *MapMob) svmapNavigate(mapID uint16, goal mapnav.Point, step float32) (mapnav.Point, bool)` | svmapNavigate moves over the .svmap mask like CMob::Chase/ReturnHome. |
+| [`mobSpawnHasExit`](../../server/internal/world/mob_navigation.go#L294)<br>`func (m *MapMob) mobSpawnHasExit(nav *mapnav.Map, mapID uint16, spawn mapnav.Point) bool` | See the source definition and the subsystem ownership contract. |
+| [`navigate`](../../server/internal/world/mob_navigation.go#L310)<br>`func (m *MapMob) navigate(now time.Time, mapID uint16, goal mapnav.Point, step float32) (mapnav.Point, bool)` | See the source definition and the subsystem ownership contract. |
+| [`targetDistance`](../../server/internal/world/mob_navigation.go#L351)<br>`func (m *MapMob) targetDistance(t *PlayerCombatSnapshot) float32` | Combat reach uses the horizontal plane. Height still comes from the map when the mob moves along its walkable surface. |
+| [`mobNav`](../../server/internal/world/mob_navigation.go#L357)<br>`type mobNav` | Mobs retain a lightweight map reference. The decoded geometry cache is bounded instead of keeping every world map resident merely because it has spawns. |
+| [`allowsXZ`](../../server/internal/world/mob_navigation.go#L364)<br>`func (n *mobNav) allowsXZ(mapID uint16, x, z float32) bool` | See the source definition and the subsystem ownership contract. |
+| [`movementMap`](../../server/internal/world/mob_navigation.go#L376)<br>`func (n *mobNav) movementMap() (*mapnav.Map, error)` | See the source definition and the subsystem ownership contract. |
+| [`Path`](../../server/internal/world/mob_navigation.go#L383)<br>`func (n *mobNav) Path(a, b mapnav.Point) ([]mapnav.Point, bool)` | See the source definition and the subsystem ownership contract. |
+| [`Step`](../../server/internal/world/mob_navigation.go#L390)<br>`func (n *mobNav) Step(a mapnav.Point, path []mapnav.Point, d float32, walkable func(float32, float32) bool) (mapnav.Point, float32, int, bool)` | See the source definition and the subsystem ownership contract. |
+| [`placeRespawn`](../../server/internal/world/mob_navigation.go#L397)<br>`func (m *MapMob) placeRespawn(mapID uint16) bool` | See the source definition and the subsystem ownership contract. |
+| [`mobNavigationTick`](../../server/internal/world/mob_navigation.go#L403)<br>`const mobNavigationTick = 50 * time.Millisecond` | Corner arrivals need a finer scheduler than the legacy half-second sweep. |
+| [`movingAt`](../../server/internal/world/mob_navigation.go#L405)<br>`func (m *MapMob) movingAt(now time.Time) bool` | See the source definition and the subsystem ownership contract. |
+| [`positionAt`](../../server/internal/world/mob_navigation.go#L409)<br>`func (m *MapMob) positionAt(now time.Time) mapnav.Point` | See the source definition and the subsystem ownership contract. |
+| [`moveTo`](../../server/internal/world/mob_navigation.go#L434)<br>`func (m *MapMob) moveTo(mapID uint16, now time.Time, to mapnav.Point, motion uint8) entityMove` | See the source definition and the subsystem ownership contract. |
+| [`stopMovePacket`](../../server/internal/world/mob_navigation.go#L466)<br>`func (m *MapMob) stopMovePacket(mapID uint16) entityMove` | stopMovePacket syncs the interrupted walk when combat starts in place. |
+| [`refreshMoveSpeed`](../../server/internal/world/mob_navigation.go#L476)<br>`func (m *MapMob) refreshMoveSpeed(mapID uint16, now time.Time, tick *MobCombatTick)` | The original client reads the current speed index every frame. Update the active segment from its current position so World and the client keep the same destination and arrival time when a speed effect changes. |
+| [`appearance`](../../server/internal/world/mob_navigation.go#L482)<br>`func (m *MapMob) appearance(now time.Time, fresh bool) (enter, move []byte)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -2542,6 +2538,7 @@ type mobNav struct {
 	id      uint16
 	terrain *mapgeometry.Geometry
 	dungeon bool
+	grid    bool // .svmap mask navigation
 }
 ```
 
@@ -2823,10 +2820,12 @@ Direct GX dependencies: `internal/mapnav`, `server/internal/packet`.
 | [`updateGuard`](../../server/internal/world/npc_guard.go#L133)<br>`func (n *MapNpc) updateGuard(now time.Time, mapID uint16, s *mapShard, players []PlayerCombatSnapshot, out *npcTick) bool` | See the source definition and the subsystem ownership contract. |
 | [`guardChase`](../../server/internal/world/npc_guard.go#L174)<br>`func (n *MapNpc) guardChase(now time.Time, mapID uint16, s *mapShard, def *npcDef, home NpcPatrolPoint, target guardTarget, goal mapnav.Point, mob *MapMob, out *npcTick) bool` | See the source definition and the subsystem ownership contract. |
 | [`guardMove`](../../server/internal/world/npc_guard.go#L200)<br>`func (n *MapNpc) guardMove(now time.Time, mapID uint16, nav *mapnav.Map, def *npcDef, goal mapnav.Point, reach float32, out *npcTick) bool` | See the source definition and the subsystem ownership contract. |
-| [`npcDirection`](../../server/internal/world/npc_guard.go#L243)<br>`func npcDirection(dx, dz float32) uint16` | npcDirection is the 0x0E01 angle in whole degrees: the client turns it into the heading (-sin, cos) of angle*pi/180 (Game.exe 0x5659a0). |
-| [`buildNpcAttack`](../../server/internal/world/npc_guard.go#L251)<br>`func buildNpcAttack(npcID, target uint32, mob bool, hp uint32) []byte` | See the source definition and the subsystem ownership contract. |
-| [`dispatchNpcStrike`](../../server/internal/world/npc_guard.go#L264)<br>`func dispatchNpcStrike(hit npcGuardStrike, log logPrinter)` | See the source definition and the subsystem ownership contract. |
-| [`applyGuardStrike`](../../server/internal/world/npc_guard.go#L279)<br>`func (s *Session) applyGuardStrike(hit npcGuardStrike) bool` | The session owns player death. Revalidate map and contact after crossing its mailbox so a teleport cannot apply a stale strike to a new position. |
+| [`npcDirection`](../../server/internal/world/npc_guard.go#L254)<br>`func npcDirection(dx, dz float32) uint16` | npcDirection is the 0x0E01 angle in whole degrees: the client turns it into the heading (-sin, cos) of angle*pi/180 (Game.exe 0x5659a0). |
+| [`buildNpcAttack`](../../server/internal/world/npc_guard.go#L262)<br>`func buildNpcAttack(npcID, target uint32, mob bool, hp uint32) []byte` | See the source definition and the subsystem ownership contract. |
+| [`dispatchNpcStrike`](../../server/internal/world/npc_guard.go#L275)<br>`func dispatchNpcStrike(hit npcGuardStrike, log logPrinter)` | See the source definition and the subsystem ownership contract. |
+| [`applyGuardStrike`](../../server/internal/world/npc_guard.go#L290)<br>`func (s *Session) applyGuardStrike(hit npcGuardStrike) bool` | The session owns player death. Revalidate map and contact after crossing its mailbox so a teleport cannot apply a stale strike to a new position. |
+| [`guardSees`](../../server/internal/world/npc_guard.go#L325)<br>`func guardSees(mapID uint16, nav *mapnav.Map, a, b mapnav.Point) bool` | guardSees is CMap::EnableLine 0042ade0 under svmap navigation. |
+| [`svmapGuardGround`](../../server/internal/world/npc_guard.go#L332)<br>`func svmapGuardGround(nav *mapnav.Map, p mapnav.Point, previous float32) float32` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -4004,14 +4003,14 @@ Direct GX dependencies: `server/internal/db`.
 | [`eventSpawn`](../../server/internal/world/relic_config.go#L16)<br>`type eventSpawn` | Obelisk.ini uses repeated [Mob] keys and nested tuples, not an INI key map. Country/mob triplets here stay in wire/config order: neutral, Light, Fury. |
 | [`relic`](../../server/internal/world/relic_config.go#L24)<br>`type relic` | See the source definition and the subsystem ownership contract. |
 | [`linkedBoss`](../../server/internal/world/relic_config.go#L37)<br>`type linkedBoss` | See the source definition and the subsystem ownership contract. |
-| [`relicPortal`](../../server/internal/world/relic_config.go#L54)<br>`type relicPortal` | See the source definition and the subsystem ownership contract. |
-| [`relicConfig`](../../server/internal/world/relic_config.go#L63)<br>`type relicConfig` | See the source definition and the subsystem ownership contract. |
-| [`eventNumber`](../../server/internal/world/relic_config.go#L69)<br>`var eventNumber` | See the source definition and the subsystem ownership contract. |
-| [`eventNumbers`](../../server/internal/world/relic_config.go#L71)<br>`func eventNumbers(s string) ([]float64, error)` | See the source definition and the subsystem ownership contract. |
-| [`eventInteger`](../../server/internal/world/relic_config.go#L82)<br>`func eventInteger(v float64, max uint64) bool` | See the source definition and the subsystem ownership contract. |
-| [`eventPosition`](../../server/internal/world/relic_config.go#L85)<br>`func eventPosition(n []float64) [3]float32` | See the source definition and the subsystem ownership contract. |
-| [`eventMobIDs`](../../server/internal/world/relic_config.go#L88)<br>`func eventMobIDs(n []float64) ([]uint16, error)` | See the source definition and the subsystem ownership contract. |
-| [`parseRelicConfig`](../../server/internal/world/relic_config.go#L99)<br>`func parseRelicConfig(raw []byte) (relicConfig, error)` | See the source definition and the subsystem ownership contract. |
+| [`relicPortal`](../../server/internal/world/relic_config.go#L59)<br>`type relicPortal` | See the source definition and the subsystem ownership contract. |
+| [`relicConfig`](../../server/internal/world/relic_config.go#L68)<br>`type relicConfig` | See the source definition and the subsystem ownership contract. |
+| [`eventNumber`](../../server/internal/world/relic_config.go#L74)<br>`var eventNumber` | See the source definition and the subsystem ownership contract. |
+| [`eventNumbers`](../../server/internal/world/relic_config.go#L76)<br>`func eventNumbers(s string) ([]float64, error)` | See the source definition and the subsystem ownership contract. |
+| [`eventInteger`](../../server/internal/world/relic_config.go#L87)<br>`func eventInteger(v float64, max uint64) bool` | See the source definition and the subsystem ownership contract. |
+| [`eventPosition`](../../server/internal/world/relic_config.go#L90)<br>`func eventPosition(n []float64) [3]float32` | See the source definition and the subsystem ownership contract. |
+| [`eventMobIDs`](../../server/internal/world/relic_config.go#L93)<br>`func eventMobIDs(n []float64) ([]uint16, error)` | See the source definition and the subsystem ownership contract. |
+| [`parseRelicConfig`](../../server/internal/world/relic_config.go#L104)<br>`func parseRelicConfig(raw []byte) (relicConfig, error)` | See the source definition and the subsystem ownership contract. |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -4044,21 +4043,26 @@ type relic struct {
 
 ```go
 type linkedBoss struct {
-	mapID                  uint16
-	key                    uint32
-	pos                    [3]float32
-	mobs                   []uint16
-	guards                 []*eventSpawn
-	portalMap              uint16
-	portalID               int32
-	delay                  time.Duration
-	random                 bool
-	randomMin, randomRange time.Duration
-	randomPositions        [3][3]float32
-	stage                  int
-	portalOpen             bool
-	principal              *eventActor
-	next                   time.Time
+	mapID     uint16
+	key       uint32
+	pos       [3]float32
+	mobs      []uint16
+	guards    []*eventSpawn
+	portalMap uint16
+	portalID  int32
+	delay     time.Duration
+	// [RandomRespawn] (GX rule): the boss keeps its normal timing, but every
+	// appearance rolls chance (percent; 0 = always) and picks one of
+	// positions. In an instance the roll happens once, at creation.
+	random     bool
+	chance     float64
+	positions  [][3]float32
+	lastPos    int
+	spawnPos   [3]float32
+	stage      int
+	portalOpen bool
+	principal  *eventActor
+	next       time.Time
 }
 ```
 
@@ -4758,14 +4762,14 @@ Direct GX dependencies: `internal/mapnav`, `server/internal/config`, `server/int
 | [`mapDataDir`](../../server/internal/world/svmap.go#L97)<br>`func mapDataDir() string` | See the source definition and the subsystem ownership contract. |
 | [`ensureMapDataDir`](../../server/internal/world/svmap.go#L99)<br>`func ensureMapDataDir() error` | See the source definition and the subsystem ownership contract. |
 | [`LoadSvmaps`](../../server/internal/world/svmap.go#L112)<br>`func LoadSvmaps(log *logx.Logger) error` | LoadSvmaps loads every data/maps/<id>.svmap into the world. |
-| [`loadSvmapFile`](../../server/internal/world/svmap.go#L196)<br>`func loadSvmapFile(mapID uint16, path string, defs *db.Defs) (svmapLoad, error)` | See the source definition and the subsystem ownership contract. |
-| [`readMonsterAreas`](../../server/internal/world/svmap.go#L249)<br>`func readMonsterAreas(r *svmapReader, mapSize uint32, mask []byte, defs *db.Defs) ([]MapMob, error)` | See the source definition and the subsystem ownership contract. |
-| [`positionInArea`](../../server/internal/world/svmap.go#L305)<br>`func positionInArea(lower, upper vec3, index, mapSize uint32, mask []byte) vec3` | See the source definition and the subsystem ownership contract. |
-| [`areaCandidate`](../../server/internal/world/svmap.go#L315)<br>`func areaCandidate(lower, upper vec3, index uint32) vec3` | See the source definition and the subsystem ownership contract. |
-| [`readNpcs`](../../server/internal/world/svmap.go#L321)<br>`func readNpcs(r *svmapReader) ([]MapNpc, error)` | See the source definition and the subsystem ownership contract. |
-| [`yawToAngle`](../../server/internal/world/svmap.go#L365)<br>`func yawToAngle(yaw float32) uint16` | yawToAngle is the client's conversion: degrees = -yaw*180/pi in [0, 360). |
-| [`readPortals`](../../server/internal/world/svmap.go#L376)<br>`func readPortals(r *svmapReader) ([]MapPortal, error)` | See the source definition and the subsystem ownership contract. |
-| [`readSpawnAreas`](../../server/internal/world/svmap.go#L419)<br>`func readSpawnAreas(r *svmapReader) ([]MapSpawnArea, error)` | readSpawnAreas reads the rebirth groups as CMap::LoadMap does: per group count, type, an unused word, then count boxes (lower, upper). |
+| [`loadSvmapFile`](../../server/internal/world/svmap.go#L200)<br>`func loadSvmapFile(mapID uint16, path string, defs *db.Defs) (svmapLoad, error)` | See the source definition and the subsystem ownership contract. |
+| [`readMonsterAreas`](../../server/internal/world/svmap.go#L253)<br>`func readMonsterAreas(r *svmapReader, mapSize uint32, mask []byte, defs *db.Defs) ([]MapMob, error)` | See the source definition and the subsystem ownership contract. |
+| [`positionInArea`](../../server/internal/world/svmap.go#L309)<br>`func positionInArea(lower, upper vec3, index, mapSize uint32, mask []byte) vec3` | See the source definition and the subsystem ownership contract. |
+| [`areaCandidate`](../../server/internal/world/svmap.go#L319)<br>`func areaCandidate(lower, upper vec3, index uint32) vec3` | See the source definition and the subsystem ownership contract. |
+| [`readNpcs`](../../server/internal/world/svmap.go#L325)<br>`func readNpcs(r *svmapReader) ([]MapNpc, error)` | See the source definition and the subsystem ownership contract. |
+| [`yawToAngle`](../../server/internal/world/svmap.go#L369)<br>`func yawToAngle(yaw float32) uint16` | yawToAngle is the client's conversion: degrees = -yaw*180/pi in [0, 360). |
+| [`readPortals`](../../server/internal/world/svmap.go#L380)<br>`func readPortals(r *svmapReader) ([]MapPortal, error)` | See the source definition and the subsystem ownership contract. |
+| [`readSpawnAreas`](../../server/internal/world/svmap.go#L423)<br>`func readSpawnAreas(r *svmapReader) ([]MapSpawnArea, error)` | readSpawnAreas reads the rebirth groups as CMap::LoadMap does: per group count, type, an unused word, then count boxes (lower, upper). |
 
 <details><summary>Type definitions and owned fields</summary>
 
@@ -4786,6 +4790,89 @@ type svmapLoad struct {
 	cellSize uint32
 	mask     []byte
 	entities MapEntities
+}
+```
+
+</details>
+
+### svnav.go
+
+[server/internal/world/svnav.go](../../server/internal/world/svnav.go#L1)
+
+| Declaration | Responsibility / source comment |
+|---|---|
+| [`svmapNavigationEnabled`](../../server/internal/world/svnav.go#L18)<br>`var svmapNavigationEnabled` | svmapNavigationEnabled selects mask navigation. GX_MOB_NAV=geometry restores the previous navmesh movement. |
+| [`svTile`](../../server/internal/world/svnav.go#L20)<br>`type svTile` | See the source definition and the subsystem ownership contract. |
+| [`svGrid`](../../server/internal/world/svnav.go#L22)<br>`type svGrid` | See the source definition and the subsystem ownership contract. |
+| [`gridFor`](../../server/internal/world/svnav.go#L27)<br>`func gridFor(mapID uint16) (svGrid, bool)` | See the source definition and the subsystem ownership contract. |
+| [`tileOf`](../../server/internal/world/svnav.go#L38)<br>`func tileOf(x, z float32) svTile` | tileOf truncates like _ftol2. |
+| [`inside`](../../server/internal/world/svnav.go#L49)<br>`func (g svGrid) inside(t svTile) bool` | See the source definition and the subsystem ownership contract. |
+| [`blocked`](../../server/internal/world/svnav.go#L52)<br>`func (g svGrid) blocked(t svTile) bool` | blocked is CMap::IsBlockSafe 0041b420: outside tiles are blocked. |
+| [`enableLine`](../../server/internal/world/svnav.go#L66)<br>`func (g svGrid) enableLine(start, end svTile, previous *svTile) bool` | enableLine samples the tiles after start with the original float accumulator. On a blocked tile previous receives the last clear sample; a clear line leaves it at start. |
+| [`absI32`](../../server/internal/world/svnav.go#L114)<br>`func absI32(v int32) int32` | See the source definition and the subsystem ownership contract. |
+| [`astarNode`](../../server/internal/world/svnav.go#L123)<br>`type astarNode` | See the source definition and the subsystem ownership contract. |
+| [`svAStar`](../../server/internal/world/svnav.go#L134)<br>`type svAStar` | svAStar keeps the original node trees: open ordered by total cost, closed by packed key, insertion ties to the right, squared costs and a search window of half the span (at most 20 tiles) around both endpoints. |
+| [`alloc`](../../server/internal/world/svnav.go#L145)<br>`func (a *svAStar) alloc(p svTile) *astarNode` | See the source definition and the subsystem ownership contract. |
+| [`release`](../../server/internal/world/svnav.go#L157)<br>`func (a *svAStar) release(n *astarNode)` | See the source definition and the subsystem ownership contract. |
+| [`astarPush`](../../server/internal/world/svnav.go#L159)<br>`func astarPush(root **astarNode, n *astarNode, priority bool)` | See the source definition and the subsystem ownership contract. |
+| [`astarPop`](../../server/internal/world/svnav.go#L178)<br>`func astarPop(root **astarNode) *astarNode` | See the source definition and the subsystem ownership contract. |
+| [`find`](../../server/internal/world/svnav.go#L197)<br>`func (a *svAStar) find(root *astarNode, key int32, priority bool) *astarNode` | See the source definition and the subsystem ownership contract. |
+| [`astarRemove`](../../server/internal/world/svnav.go#L211)<br>`func astarRemove(root **astarNode, n *astarNode, priority bool)` | See the source definition and the subsystem ownership contract. |
+| [`clearTree`](../../server/internal/world/svnav.go#L228)<br>`func (a *svAStar) clearTree(root *astarNode, keepPath bool)` | See the source definition and the subsystem ownership contract. |
+| [`astarCost`](../../server/internal/world/svnav.go#L248)<br>`func astarCost(a, b svTile) float32` | See the source definition and the subsystem ownership contract. |
+| [`astarMargin`](../../server/internal/world/svnav.go#L253)<br>`func astarMargin(a, b int32) int32` | See the source definition and the subsystem ownership contract. |
+| [`astarOffsets`](../../server/internal/world/svnav.go#L255)<br>`var astarOffsets` | See the source definition and the subsystem ownership contract. |
+| [`path`](../../server/internal/world/svnav.go#L258)<br>`func (a *svAStar) path(g svGrid, from, to svTile, out []svTile) ([]svTile, bool)` | path returns the compressed waypoints after from, ending at to. |
+| [`compress`](../../server/internal/world/svnav.go#L350)<br>`func (a *svAStar) compress()` | compress drops interior nodes that continue the previous direction. |
+| [`svRoute`](../../server/internal/world/svnav.go#L372)<br>`type svRoute` | svRoute is a creature's cursor over its current A* route or its return trail, as in the original AStar/ChasePathList owners. |
+| [`reset`](../../server/internal/world/svnav.go#L378)<br>`func (r *svRoute) reset()` | See the source definition and the subsystem ownership contract. |
+| [`addTrail`](../../server/internal/world/svnav.go#L382)<br>`func (r *svRoute) addTrail(g svGrid, p svTile)` | addTrail is ChasePathList::AddPath: the head is replaced while the node after it still sees the new point. |
+| [`svPathfinders`](../../server/internal/world/svnav.go#L396)<br>`var svPathfinders` | Pathfinders are pooled so node storage is reused across AI shards. |
+| [`borrowAStar`](../../server/internal/world/svnav.go#L398)<br>`func borrowAStar() *svAStar` | See the source definition and the subsystem ownership contract. |
+| [`returnAStar`](../../server/internal/world/svnav.go#L407)<br>`func returnAStar(a *svAStar)` | See the source definition and the subsystem ownership contract. |
+| [`svNext`](../../server/internal/world/svnav.go#L417)<br>`func svNext(g svGrid, r *svRoute, pos, goal [3]float32, step float32) ([3]float32, bool)` | svNext returns the next movement target toward goal for a creature at pos, limited to step and to its next route corner. ok is false when the goal tile is blocked or unreachable. |
+
+<details><summary>Type definitions and owned fields</summary>
+
+```go
+type svTile struct{ x, z int32 }
+```
+
+```go
+type svGrid struct {
+	size int32
+	mask []byte
+}
+```
+
+```go
+type astarNode struct {
+	pos                     svTile
+	key                     int32
+	g, h, total             float32
+	parent, child           *astarNode
+	treeParent, left, right *astarNode
+}
+```
+
+```go
+type svAStar struct {
+	pool         []*astarNode
+	open, closed *astarNode
+	start, goal  *astarNode
+	successors   []*astarNode
+	pending      []*astarNode
+	// openKeys indexes the open tree. Each key is open at most once, so the
+	// lookup returns the node the original full-tree scan would find.
+	openKeys map[int32]*astarNode
+}
+```
+
+```go
+type svRoute struct {
+	waypoints []svTile
+	goal      svTile
+	trail     []svTile
 }
 ```
 
@@ -5230,11 +5317,11 @@ Direct GX dependencies: `internal/proto`, `server/internal/packet`.
 
 | Declaration | Responsibility / source comment |
 |---|---|
-| [`weatherDuration`](../../server/internal/world/weather.go#L10)<br>`const weatherDuration = 10 * time.Minute` | See the source definition and the subsystem ownership contract. |
-| [`weatherStarted`](../../server/internal/world/weather.go#L12)<br>`var weatherStarted time.Time` | See the source definition and the subsystem ownership contract. |
-| [`weatherAt`](../../server/internal/world/weather.go#L14)<br>`func weatherAt(zone ZoneConfig, start, now time.Time) uint8` | See the source definition and the subsystem ownership contract. |
-| [`updateWeather`](../../server/internal/world/weather.go#L29)<br>`func (s *Session) updateWeather(now time.Time, force bool)` | See the source definition and the subsystem ownership contract. |
-| [`gmWeather`](../../server/internal/world/weather.go#L48)<br>`func (s *Session) gmWeather(args []string) error` | See the source definition and the subsystem ownership contract. |
+| [`weatherDuration`](../../server/internal/world/weather.go#L11)<br>`const weatherDuration = 10 * time.Minute` | See the source definition and the subsystem ownership contract. |
+| [`weatherStarted`](../../server/internal/world/weather.go#L13)<br>`var weatherStarted time.Time` | See the source definition and the subsystem ownership contract. |
+| [`weatherAt`](../../server/internal/world/weather.go#L15)<br>`func weatherAt(zone ZoneConfig, start, now time.Time) uint8` | See the source definition and the subsystem ownership contract. |
+| [`updateWeather`](../../server/internal/world/weather.go#L30)<br>`func (s *Session) updateWeather(now time.Time, force bool)` | See the source definition and the subsystem ownership contract. |
+| [`gmWeather`](../../server/internal/world/weather.go#L49)<br>`func (s *Session) gmWeather(args []string) error` | See the source definition and the subsystem ownership contract. |
 
 ### worldcal.go
 

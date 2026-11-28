@@ -201,7 +201,9 @@ func (m *MapMob) placeOnSvmap(nav *mapnav.Map, mapID uint16) bool {
 		if !ok {
 			return false
 		}
-		p[1] = s[1]
+		// Spawn returns a standing player (floor + FootSkin); mobs stand on
+		// the floor itself, like svmapGround's Support.
+		p[1] = s[1] - mapgeometry.FootSkin
 	}
 	m.setMobGround(p)
 	return true
