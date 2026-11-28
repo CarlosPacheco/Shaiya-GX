@@ -74,7 +74,6 @@ func (p *SubActions) Update(in *platform.Input, w, h int) (int, bool) {
 func (p *SubActions) Draw(s *render.Sprites, w, h int, walking, autoRun bool) {
 	x, y := p.Origin(w, h)
 	s.Draw(p.frame, float32(x), float32(y), SubActionWidth, SubActionHeight, 0, 0, 275.0/512, 466.0/512, white)
-	s.Draw(p.tabs, float32(x), float32(y+60), 32, 128, .5, 0, 1, .25, [4]float32{.45, .45, .45, .65})
 	s.Draw(p.tabs, float32(x), float32(y+150), 32, 128, 0, 0, .5, .25, white)
 	p.close.OriginX, p.close.OriginY = x, y
 	p.close.Draw(s)
@@ -98,7 +97,7 @@ func (p *SubActions) FreeAt(mx, my, w, h int) bool {
 		return false
 	}
 	x, y := p.Origin(w, h)
-	if mx >= x && mx < x+32 && my >= y+60 && my < y+278 {
+	if mx >= x && mx < x+32 && my >= y+150 && my < y+278 {
 		return false
 	}
 	p.close.OriginX, p.close.OriginY = x, y

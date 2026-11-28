@@ -112,6 +112,48 @@ func TestMallOriginalAssetsGL(t *testing.T) {
 		}
 		a.mallUI.Category, a.mallUI.Scroll = 0, 0
 	}
+	// The preview wears the selected equipment, or shows the mount alone.
+	// The original catalog sells no mount; add one to exercise the vehicle.
+	for id := uint8(1); id < 255; id++ {
+		if def := a.itemsItem(mountItemType, id); def != nil && def.Range > 0 {
+			a.mall.products[3] = append(a.mall.products[3], ui.MallProduct{Name: def.Name, ItemIDs: []uint32{mountItemType*1000 + uint32(id)}})
+			break
+		}
+	}
+	for _, want := range []struct {
+		name  string
+		match func(typ uint8) bool
+	}{{"mall-preview-mount.png", func(typ uint8) bool { return typ == mountItemType }}, {"mall-preview-equipment.png", func(typ uint8) bool {
+		s := inventoryEquipSlots(typ)
+		return len(s) > 0 && s[0] <= 7
+	}}} {
+		found := false
+		for category, products := range a.mall.products {
+			for index, product := range products {
+				if found || len(product.ItemIDs) == 0 || !want.match(uint8(product.ItemIDs[0]/1000)) {
+					continue
+				}
+				found = true
+				a.mallUI.Category, a.mallUI.Scroll, a.mallUI.Selected = category, max(0, index/2-2), index
+				gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+				a.sprites.Begin(1024, 768)
+				a.drawMall(1024, 768)
+				a.sprites.End()
+				if (a.mall.preview.vehicle != nil) != (want.name == "mall-preview-mount.png") || a.mall.preview.actor == nil && a.mall.preview.vehicle == nil {
+					t.Fatalf("%s: preview not built for %s", want.name, product.Code)
+				}
+				if dir := os.Getenv("SHAIYA_TEST_ARTIFACTS"); dir != "" {
+					if err := render.SavePNG(filepath.Join(dir, want.name), 1024, 768); err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
+		}
+		if !found {
+			t.Logf("%s: no catalog product", want.name)
+		}
+	}
+	a.mallUI.Category, a.mallUI.Scroll, a.mallUI.Selected = 0, 0, -1
 	x, y := a.mallUI.Origin(1024, 768)
 	click := func(dx, dy int) {
 		a.updateMall(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + dx, MouseY: y + dy}, 1024, 768)

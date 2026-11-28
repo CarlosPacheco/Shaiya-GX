@@ -35,8 +35,8 @@ func TestMallSelectionScrollingAndGiftClaim(t *testing.T) {
 	if m.Scroll != 1 {
 		t.Fatal("wheel did not scroll", m.Scroll)
 	}
-	m.Update(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + 568, MouseY: y + 330}, 1024, 768, 20, false)
-	m.Update(&platform.Input{Clicked: true, MouseX: x + 568, MouseY: y + 330}, 1024, 768, 20, false)
+	m.Update(&platform.Input{Pressed: true, MouseDown: true, MouseX: x + 568 + mallListShift, MouseY: y + 330}, 1024, 768, 20, false)
+	m.Update(&platform.Input{Clicked: true, MouseX: x + 568 + mallListShift, MouseY: y + 330}, 1024, 768, 20, false)
 	if m.Scroll < 5 {
 		t.Fatal("scrollbar did not seek", m.Scroll)
 	}

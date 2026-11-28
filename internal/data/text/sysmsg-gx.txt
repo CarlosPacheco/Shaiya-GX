@@ -456,3 +456,4 @@
 12381		"Abandon <v>?"
 12382		"Quest started: <v>"
 12383		"<v> XP, <v2> gold"
+12384		"Points"

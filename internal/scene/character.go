@@ -1158,3 +1158,17 @@ func (c *Character) SetActionFrame(frame float32) {
 		c.externalTime = true
 	}
 }
+
+// PreviewBounds is the bind-pose box of every loaded part, for UI framing.
+func (c *Character) PreviewBounds() (lo, hi render.V3, ok bool) {
+	if c == nil || len(c.parts) == 0 {
+		return lo, hi, false
+	}
+	lo, hi = c.parts[0].min, c.parts[0].max
+	for _, p := range c.parts[1:] {
+		for i := range 3 {
+			lo[i], hi[i] = min(lo[i], p.min[i]), max(hi[i], p.max[i])
+		}
+	}
+	return lo, hi, true
+}

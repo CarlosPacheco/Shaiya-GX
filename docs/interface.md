@@ -555,6 +555,16 @@ Item Mall reads native `Cash.SData`; the server uses SQL ProductList. Purchases,
 gifts and claims use the original workflow without a catalog hash handshake.
 See [catalog format](cash-catalog.md).
 
+The GX Item Mall layout keeps the original sheet but compacts it to the left:
+a single **Points** panel replaces the name/server/class panel, and the four
+category tabs and the two product columns fit the left half. The right half
+renders your character like the inventory does. Select a product to preview
+its helmet, armor, gloves, boots, weapon, shield or cloak on the character
+(models missing for your race or gender keep your current look). Mount
+products show the mount itself, turned three quarters, instead of the character.
+
+The Sub Skill (B) window no longer shows the unused, dimmed craft-skill tab.
+
 All three action bars can display any of the five shared shortcut pages. Use
 the arrows at the numbered end of each bar to change its page. The +/− buttons
 on the first and second bars show or hide the next bar. The third bar starts

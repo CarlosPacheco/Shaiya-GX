@@ -22,6 +22,7 @@ type mallView struct {
 	target   ui.TextField
 	pending  proto.Opcode
 	deadline float64
+	preview  mallPreview
 }
 
 func (a *App) loadMallCatalog() error {
@@ -204,19 +205,8 @@ func (a *App) drawMall(w, h int) {
 	if !a.mall.open || a.mallUI == nil || a.state == nil {
 		return
 	}
-	identity := ui.MallIdentity{}
-	if slot, ok := a.selfSlot(); ok {
-		identity.Name = slot.Name
-		classes := [2][6]int{{5050, 5051, 5056, 5057, 5058, 5052}, {5047, 5048, 5053, 5049, 5054, 5055}}
-		if slot.Class < 6 {
-			faction := min(int(a.state.Faction.Faction), 1)
-			identity.Class = a.tr(classes[faction][slot.Class])
-		}
-	}
-	if a.servers != nil && a.servers.Selected >= 0 && a.servers.Selected < len(a.servers.Servers) {
-		identity.Server = a.servers.Servers[a.servers.Selected].Name
-	}
-	a.mallUI.Draw(a.sprites, a.font, w, h, a.mall.products[a.mallUI.Category], identity, a.state.Mall.Points, a.state.Mall.PointsReady, a.mall.pending != 0)
+	a.mallUI.Draw(a.sprites, a.font, w, h, a.mall.products[a.mallUI.Category], a.tr(12384), a.state.Mall.Points, a.state.Mall.PointsReady, a.mall.pending != 0)
+	a.drawMallPreview(w, h)
 	if a.mallUI.GiftOpen {
 		a.mallUI.DrawGifts(a.sprites, a.font, w, h, a.state.Mall.Stored, func(it proto.MallStoredItem) (*render.Texture, ui.UV, bool) {
 			def := a.itemsItem(it.Type, it.TypeID)

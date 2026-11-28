@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/Spelunkern/Shaiya-GX/internal/platform"
 	"github.com/Spelunkern/Shaiya-GX/internal/proto"
@@ -20,7 +21,6 @@ type MallProduct struct {
 	Icon                    *render.Texture
 	UV                      UV
 }
-type MallIdentity struct{ Name, Server, Class string }
 
 type MallAction uint8
 
@@ -54,7 +54,7 @@ func NewMall(t Textures, blank *render.Texture) (*Mall, error) {
 	m := &Mall{frame: ld.get("ins_market.png"), giftFrame: ld.get("ins_market_store.png"), scrollbar: ld.get("scrollbar.png"), blank: blank, Selected: -1, heldProduct: -1, heldGift: -1, heldTab: -1, selectedGift: -1, lastGift: -1}
 	for i := range m.arrows {
 		b := &m.arrows[i]
-		*b = Button{Tex: m.scrollbar, OffX: 565, OffY: 164 + i*176, DrawW: 16, DrawH: 32, HitW: 13, HitH: 19}
+		*b = Button{Tex: m.scrollbar, OffX: 565 + mallListShift, OffY: 164 + i*176, DrawW: 16, DrawH: 32, HitW: 13, HitH: 19}
 		for state, col := range []int{0, 1, 1, 1, 2} {
 			b.UV[state] = UV{float32(col) / 8, float32(i) / 2, float32(col+1) / 8, float32(i+1) / 2}
 		}
@@ -62,7 +62,8 @@ func NewMall(t Textures, blank *render.Texture) (*Mall, error) {
 	tabs := ld.get("ins_market_menu_button.png")
 	for i := range m.tabs {
 		b := &m.tabs[i]
-		*b = Button{Tex: tabs, OffX: 16 + i*128, OffY: 130, DrawW: 128, DrawH: 32, HitW: 96, HitH: 26, Toggle: true}
+		// GX: the four tabs are compacted over the product list.
+		*b = Button{Tex: tabs, OffX: 16 + i*mallTabStep, OffY: 130, DrawW: mallTabStep * 4 / 3, DrawH: 32, HitW: mallTabStep, HitH: 26, Toggle: true}
 		for state, row := range []int{0, 1, 2, 1, 3} {
 			b.UV[state] = UV{float32(i) / 4, float32(row) / 4, float32(i+1) / 4, float32(row+1) / 4}
 		}
@@ -94,20 +95,40 @@ func (m *Mall) Reset() {
 	m.heldProduct, m.heldGift, m.heldTab, m.selectedGift, m.lastGift = -1, -1, -1, -1, -1
 }
 
-func MallProductRect(index int) (int, int) { return 19 + (index%2)*270, 164 + (index/2)*65 }
+// GX layout: the product list is compacted to the left half and the right
+// half shows the character (or mount) wearing the selected product.
+const (
+	mallTabStep     = 71
+	mallColumn      = 135
+	mallListRight   = 300
+	mallListShift   = mallListRight - 12 - 556 // scrollbar strip moved left
+	mallListLeft    = 16
+	mallListTop     = 164
+	mallListBottom  = 359
+	mallProductWide = 131
+)
+
+func MallProductRect(index int) (int, int) { return 19 + (index%2)*mallColumn, 164 + (index/2)*65 }
+
+// MallPreviewRect is the character viewport, relative to the window.
+func MallPreviewRect() (x, y, w, h int) { return mallListRight + 14, 47, 552 - mallListRight, 315 }
+
+func (m *Mall) listCell(x, y, mouseX, mouseY, count int) int {
+	if mouseX < x+mallListLeft || mouseX >= x+mallListLeft+2*mallColumn || mouseY < y+mallListTop || mouseY >= y+mallListBottom {
+		return -1
+	}
+	col, row := (mouseX-x-mallListLeft)/mallColumn, (mouseY-y-mallListTop)/65
+	index := (m.Scroll+row)*2 + col
+	if index >= count {
+		return -1
+	}
+	return index
+}
 func MallGiftCell(slot int) (int, int)     { return 10 + (slot%40)%8*39, 78 + (slot%40)/8*39 }
 
 func (m *Mall) ProductAt(w, h, mouseX, mouseY, count int) int {
 	x, y := m.Origin(w, h)
-	if mouseX < x+16 || mouseX >= x+556 || mouseY < y+164 || mouseY >= y+359 {
-		return -1
-	}
-	col, row := (mouseX-x-16)/270, (mouseY-y-164)/65
-	index := (m.Scroll+row)*2 + col
-	if col > 1 || index >= count {
-		return -1
-	}
-	return index
+	return m.listCell(x, y, mouseX, mouseY, count)
 }
 
 func (m *Mall) Update(in *platform.Input, w, h, count int, busy bool) (MallAction, bool) {
@@ -138,7 +159,7 @@ func (m *Mall) Update(in *platform.Input, w, h, count int, busy bool) (MallActio
 			return MallGift, true
 		}
 	}
-	insideList := in.MouseX >= x+16 && in.MouseX < x+556 && in.MouseY >= y+164 && in.MouseY < y+359
+	insideList := in.MouseX >= x+mallListLeft && in.MouseX < x+mallListRight && in.MouseY >= y+mallListTop && in.MouseY < y+mallListBottom
 	maxScroll := max(0, (count+1)/2-3)
 	for i := range m.arrows {
 		b := &m.arrows[i]
@@ -147,7 +168,7 @@ func (m *Mall) Update(in *platform.Input, w, h, count int, busy bool) (MallActio
 			m.Scroll = max(0, min(maxScroll, m.Scroll+i*2-1))
 		}
 	}
-	if maxScroll > 0 && in.Pressed && in.MouseX >= x+565 && in.MouseX < x+580 && in.MouseY >= y+184 && in.MouseY < y+340 {
+	if maxScroll > 0 && in.Pressed && in.MouseX >= x+565+mallListShift && in.MouseX < x+580+mallListShift && in.MouseY >= y+184 && in.MouseY < y+340 {
 		m.scrolling = true
 	}
 	if m.scrolling {
@@ -166,15 +187,7 @@ func (m *Mall) Update(in *platform.Input, w, h, count int, busy bool) (MallActio
 		}
 		m.Scroll = max(0, min(m.Scroll, maxScroll))
 	}
-	hit := -1
-	if insideList {
-		col := (in.MouseX - x - 16) / 270
-		row := (in.MouseY - y - 164) / 65
-		hit = (m.Scroll+row)*2 + col
-		if col > 1 || hit >= count {
-			hit = -1
-		}
-	}
+	hit := m.listCell(x, y, in.MouseX, in.MouseY, count)
 	if in.Pressed {
 		m.heldProduct = hit
 	}
@@ -188,19 +201,53 @@ func (m *Mall) Update(in *platform.Input, w, h, count int, busy bool) (MallActio
 	return MallNone, m.scrolling || inside && (in.Pressed || in.Clicked || in.MouseDown || in.RightPressed || in.RightDown || in.Wheel != 0)
 }
 
-func (m *Mall) Draw(s *render.Sprites, f *Font, w, h int, products []MallProduct, identity MallIdentity, points uint32, pointsReady, busy bool) {
-	x, y := m.Origin(w, h)
+// piece copies a frame region (sx,sy,sw,sh) to (dx,dy) at size (dw,dh).
+func (m *Mall) piece(s *render.Sprites, x, y, dx, dy, dw, dh, sx, sy, sw, sh int) {
+	s.Draw(m.frame, float32(x+dx), float32(y+dy), float32(dw), float32(dh), float32(sx)/1024, float32(sy)/512, float32(sx+sw)/1024, float32(sy+sh)/512, white)
+}
+
+func (m *Mall) line(s *render.Sprites, x, y, w, h int, c [4]float32) {
+	if m.blank != nil {
+		s.Draw(m.blank, float32(x), float32(y), float32(w), float32(h), 0, 0, 1, 1, c)
+	}
+}
+
+// drawLayout rebuilds the original sheet into the GX layout: a points panel
+// in place of the identity panel, a narrower list and the preview box.
+func (m *Mall) drawLayout(s *render.Sprites, x, y int) {
 	s.Draw(m.frame, float32(x), float32(y), MallWidth, MallHeight, 0, 0, float32(MallWidth)/1024, float32(MallHeight)/512, white)
-	f.Draw(s, identity.Name, x+52, y+53, white, 165)
-	f.Draw(s, identity.Server, x+52, y+76, white, 165)
-	// Remove the unused label and field from the baked identity panel.
-	s.Draw(m.frame, float32(x+120), float32(y+97), 100, 17, 120.0/1024, 114.0/512, 220.0/1024, 120.0/512, white)
-	f.Draw(s, identity.Class, x+52, y+99, white, 59)
+	// Wall behind the old identity panel.
+	m.piece(s, x, y, 14, 44, 126, 82, 238, 44, 126, 82)
+	m.piece(s, x, y, 140, 44, 96, 82, 238, 44, 96, 82)
+	// Points panel: the points row and the bottom edge of the original one.
+	m.piece(s, x, y, 16, 64, 196, 36, 372, 46, 196, 36)
+	m.piece(s, x, y, 16, 100, 196, 4, 372, 119, 196, 4)
+	m.piece(s, x, y, 22, 70, 70, 18, 380, 84, 70, 18)
+	// List scrollbar strip and right border moved to the narrower list.
+	m.piece(s, x, y, mallListRight-12, 162, 12, 202, 556, 162, 12, 202)
+	// Wall between the list and the preview box; the tab band runs under it.
+	for _, r := range [][2]int{{44, 84}, {162, 82}, {244, 82}, {326, 38}} {
+		m.piece(s, x, y, mallListRight, r[0], 13, r[1], 238, 44, 13, r[1])
+	}
+	// Preview box over the right half.
+	px, py, pw, ph := MallPreviewRect()
+	m.piece(s, x, y, px, py, pw, ph, 20, 166, 260, 192)
+	edge := [4]float32{55.0 / 255, 55.0 / 255, 54.0 / 255, 1}
+	m.line(s, x+px-1, y+py-1, pw+2, 1, edge)
+	m.line(s, x+px-1, y+py-1, 1, ph+2, edge)
+	m.line(s, x+px+pw, y+py-1, 1, ph+2, edge)
+	m.line(s, x+px-1, y+py+ph, pw+2, 1, [4]float32{62.0 / 255, 62.0 / 255, 59.0 / 255, 1})
+}
+
+func (m *Mall) Draw(s *render.Sprites, f *Font, w, h int, products []MallProduct, pointsLabel string, points uint32, pointsReady, busy bool) {
+	x, y := m.Origin(w, h)
+	m.drawLayout(s, x, y)
+	f.Draw(s, pointsLabel, x+26, y+72, white, 70)
 	pointText := "..."
 	if pointsReady {
 		pointText = fmt.Sprint(points)
 	}
-	f.Draw(s, pointText, x+454, y+53, white, 100)
+	f.Draw(s, pointText, x+98, y+71, white, 100)
 	for i := range m.tabs {
 		b := &m.tabs[i]
 		b.OriginX, b.OriginY, b.Checked = x, y, i == m.Category
@@ -214,14 +261,16 @@ func (m *Mall) Draw(s *render.Sprites, f *Font, w, h int, products []MallProduct
 		p := products[index]
 		dx, dy := MallProductRect(i)
 		if index == m.Selected && m.blank != nil {
-			s.Draw(m.blank, float32(x+dx), float32(y+dy), 258, 60, 0, 0, 1, 1, [4]float32{.65, .53, .3, .28})
+			s.Draw(m.blank, float32(x+dx), float32(y+dy), mallProductWide, 60, 0, 0, 1, 1, [4]float32{.65, .53, .3, .28})
 		}
 		if p.Icon != nil {
 			s.Draw(p.Icon, float32(x+dx+4), float32(y+dy+6), 32, 32, p.UV.U0, p.UV.V0, p.UV.U1, p.UV.V1, white)
 			p.Badge.Draw(s, x+dx+4, y+dy+6, 32, white)
 		}
-		f.Draw(s, p.Name, x+dx+43, y+dy+5, white, 207)
-		f.Draw(s, fmt.Sprintf("%d points", p.Cost), x+dx+43, y+dy+24, [4]float32{.95, .8, .45, 1}, 190)
+		for i, line := range wrapWords(f, p.Name, mallProductWide-42, 2) {
+			f.Draw(s, line, x+dx+40, y+dy+4+i*15, white, mallProductWide-42)
+		}
+		f.Draw(s, fmt.Sprintf("%d points", p.Cost), x+dx+40, y+dy+40, [4]float32{.95, .8, .45, 1}, mallProductWide-42)
 	}
 	for _, b := range []*Button{&m.buy, &m.gift} {
 		b.OriginX, b.OriginY, b.Disabled = x, y, busy || m.Selected < 0 || m.Selected >= len(products)
@@ -241,7 +290,7 @@ func (m *Mall) Draw(s *render.Sprites, f *Font, w, h int, products []MallProduct
 	if last > 0 {
 		thumb += m.Scroll * 148 / last
 	}
-	s.Draw(m.scrollbar, float32(x+565), float32(y+thumb), 13, 8, .5, 0, .5+13.0/128, 8.0/64, white)
+	s.Draw(m.scrollbar, float32(x+565+mallListShift), float32(y+thumb), 13, 8, .5, 0, .5+13.0/128, 8.0/64, white)
 }
 
 // Gift box uses six pages of 40 slots; only a double click or right click claims.
@@ -320,4 +369,26 @@ func (m *Mall) DrawGifts(s *render.Sprites, f *Font, w, h int, stored map[uint8]
 	f.Draw(s, "Right-click to claim", x+14, y+282, [4]float32{.8, .8, .8, 1}, 240)
 	m.giftClose.OriginX, m.giftClose.OriginY = x, y
 	m.giftClose.Draw(s)
+}
+
+// wrapWords splits text into at most lines rows of width pixels.
+func wrapWords(f *Font, text string, width, lines int) []string {
+	var out []string
+	line := ""
+	for _, word := range strings.Fields(text) {
+		next := word
+		if line != "" {
+			next = line + " " + word
+		}
+		if line != "" && f.Width(next) > width && len(out) < lines-1 {
+			out = append(out, line)
+			line = word
+		} else {
+			line = next
+		}
+	}
+	if line != "" {
+		out = append(out, line)
+	}
+	return out
 }
